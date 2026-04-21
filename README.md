@@ -2,11 +2,9 @@
 
 DreamShader 是一个面向 Unreal 材质工作流的插件。它允许你使用 `DreamShaderLang` 编写 `.dsm` / `.dsh` 文本源文件，并自动生成或更新标准 Unreal `UMaterial` / `UMaterialFunction` 资产。
 
-> 后续可能支持RenderPass的编写
-
 ## 版本信息
 
-- Version：`1.0.0`
+- Version：`1.1.0`
 - Language：`DreamShaderLang`
 - Author：TypeDreamMoon
 - GitHub：<https://github.com/TypeDreamMoon>
@@ -27,7 +25,7 @@ DreamShader 是一个面向 Unreal 材质工作流的插件。它允许你使用
 ## 快速示例
 
 ```c
-import "Builtin/Texture.dsh";
+import "@typedreammoon/dreamshader-texture/Library/Texture";
 
 Shader(Name="DreamMaterials/M_Sample")
 {
@@ -68,8 +66,7 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 - 把共用 `Function` 写在 `DShader/**/*.dsh`
 - 通过 `import` 引入项目头文件或插件内置库
 - 通过 `import "@scope/package/Library/File.dsh";` 引入已安装 package
-- 常用内置库位于 `Plugins/DreamShader/Library/Builtin/*.dsh`
-- 第三方 package 位于 `DShader/Packages`
+- 第三方 package 位于 `项目根目录/DShader/Packages`
 - 保存文件后由 DreamShader 自动解析并更新 Unreal 资产
 - `.dsh` 变更会通过 import graph 只重编依赖它的 `.dsm`
 - 生成资产会写入 `DreamShader.SourceHash`，源内容未变化时会跳过重复生成
@@ -90,9 +87,6 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 - `Function Name(...) { ... }` 的函数体是原始 helper 代码块，适合写复用逻辑
 - `Namespace(Name="...") { Function ... }` 用来组织函数，调用格式为 `NamespaceName::FunctionName(...)`
 - `Function` 调用使用显式 `out` 参数，不再支持 `Res = MyFunction(...)` 这种返回值风格
-- 旧的 `Scalar` / `Color` / `Vector` 类型别名已经移除，请改用 `float` / `float2` / `float3` / `float4` 或 `vec*`
-- 内置库支持直接导入，例如 `import "Builtin/Texture.dsh";`
-- 当前内置库包含 `Common`、`Texture`、`Math`、`Color`、`UV`、`Noise`、`SDF`、`Normal`、`PBR`、`PostProcess`
 - Package 支持直接导入，例如 `import "@typedreammoon/dream-noise/Library/Noise.dsh";`
 - Unreal 侧 Parser 错误会尽量映射回真实 `.dsm/.dsh` 文件的行列，包含被 `import` 的头文件
 - Project Settings > Plugins > DreamShader 可配置源目录、内置库目录、生成目录、自动编译、防抖时间和详细日志
@@ -118,3 +112,7 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 - 快速创建 Material/Header/Texture Sample/Noise Material 模板
 
 扩展单独说明见 [Docs/VSCode.md](Docs/VSCode.md)。
+
+## RoadMap
+
+- Custom Render Pass

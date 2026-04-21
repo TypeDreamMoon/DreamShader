@@ -102,19 +102,19 @@ DreamShaderLang 的 VSCode 扩展位于：
 ## 3. 安装
 
 ```powershell
-cd I:\UnrealProject_Moon\VSCodeExt\dreamshader-language-support
+cd [PATH]\dreamshader-language-support
 npm install
 npm run package
 ```
 
 生成的扩展包：
 
-- `dreamshaderlang-language-support-1.0.0.vsix`
+- `dreamshaderlang-language-support-x.x.x.vsix`
 
 安装方式：
 
 ```powershell
-code --install-extension .\dreamshaderlang-language-support-1.0.0.vsix
+code --install-extension .\dreamshaderlang-language-support-x.x.x.vsix
 ```
 
 或在 VSCode 中通过 `Install from VSIX...` 安装。

@@ -2,7 +2,7 @@
 
 DreamShaderLang 是 DreamShader 插件使用的 `.dsm` / `.dsh` 文本语言。
 
-- 插件版本：`1.0.0`
+- 插件版本：`1.1.0`
 - 开发者：TypeDreamMoon
 - GitHub：<https://github.com/TypeDreamMoon>
 - Web：<https://dev.64hz.cn>
@@ -98,8 +98,6 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 
 ### 2.4 `Namespace(Name="...")`
 
-命名空间用于组织一组共用 `Function`，避免再靠 `DS_` 这类前缀规避命名冲突。
-
 ```c
 Namespace(Name="Texture")
 {
@@ -128,7 +126,6 @@ Texture::Sample2DRGB(MainTex, uv, sampled_rgb);
 ```c
 import "Shared/Common.dsh";
 import "Shared/Noise/FBM.dsh";
-import "Builtin/Texture.dsh";
 import "@typedreammoon/dream-noise/Library/Noise.dsh";
 ```
 
@@ -138,11 +135,6 @@ import "@typedreammoon/dream-noise/Library/Noise.dsh";
 - 支持递归导入
 - 会检测循环导入
 - Package import 推荐使用 `@scope/package/...` 形式
-
-常见内置头文件：
-
-- `Builtin/Common.dsh`
-- `Builtin/Texture.dsh`
 
 Package 相关说明见 [Package 系统](Packages.md)。
 
@@ -273,60 +265,7 @@ Properties = {
 - 如果未显式写 `.AssetName`，会自动补成合法 Unreal object path
 - 会校验声明类型和实际资产类型是否一致
 
-## 7. 插件内置库
-
-DreamShader 插件目录下自带一组可直接导入的头文件：
-
-```text
-Plugins/DreamShader/Library/Builtin/Common.dsh
-Plugins/DreamShader/Library/Builtin/Texture.dsh
-Plugins/DreamShader/Library/Builtin/Math.dsh
-Plugins/DreamShader/Library/Builtin/Color.dsh
-Plugins/DreamShader/Library/Builtin/UV.dsh
-Plugins/DreamShader/Library/Builtin/Noise.dsh
-Plugins/DreamShader/Library/Builtin/SDF.dsh
-Plugins/DreamShader/Library/Builtin/Normal.dsh
-Plugins/DreamShader/Library/Builtin/PBR.dsh
-Plugins/DreamShader/Library/Builtin/PostProcess.dsh
-```
-
-示例：
-
-```c
-import "Builtin/Texture.dsh";
-
-Code = {
-    float2 uv = UE.TexCoord(Index=0);
-    float3 sampled_rgb;
-    Texture::Sample2DRGB(MainTex, uv, sampled_rgb);
-    Res = sampled_rgb;
-}
-```
-
-当前常用命名空间：
-
-- `Texture::*`：纹理采样
-- `Math::*`：基础数学、remap、hash
-- `Color::*`：luminance、tint、HSV/RGB、gamma
-- `UV::*`：平移缩放、旋转、polar、radial mask
-- `Noise::*`：value noise、FBM
-- `SDF::*`：2D distance field helper
-- `Normal::*`：normal map pack/unpack/blend
-- `PBR::*`：F0、Fresnel、roughness helper
-- `PostProcess::*`：vignette、tonemap、film grain 等
-
-`Texture.dsh` 提供：
-
-- `Texture::Sample2D`
-- `Texture::Sample2DRGB`
-- `Texture::Sample2DAlpha`
-- `Texture::SampleCube`
-- `Texture::SampleCubeRGB`
-- `Texture::Sample2DArray`
-- `Texture::Sample2DArrayRGB`
-- `Texture::Sample2DArrayAlpha`
-
-## 8. `Function` 调用语义
+## 7. `Function` 调用语义
 
 当前使用显式 `out` 调用：
 
@@ -353,9 +292,9 @@ Code = {
 Res = ApplyTint(base, tint);
 ```
 
-## 9. `Code` 中支持的声明与构造
+## 8. `Code` 中支持的声明与构造
 
-### 9.1 仅声明
+### 8.1 仅声明
 
 ```c
 float a;
@@ -366,21 +305,21 @@ float4 sample_v4;
 
 标量和向量只声明时会自动初始化为 0。
 
-### 9.2 普通构造
+### 8.2 普通构造
 
 ```c
 float4 c = float4(color, 1.0);
 float3 rgb = float3(sample_v4.r, sample_v4.g, sample_v4.b);
 ```
 
-### 9.3 Brace initializer
+### 8.3 Brace initializer
 
 ```c
 float4 c = {color, 1.0};
 float3 d = {a, b, c};
 ```
 
-## 10. `UE.*` builtin
+## 9. `UE.*` builtin
 
 `Code` 中可直接生成 Unreal 材质节点，例如：
 
@@ -396,7 +335,7 @@ float3 d = {a, b, c};
 - `UE.TransformPosition(...)`
 - `UE.Expression(...)`
 
-## 11. 输出绑定
+## 10. 输出绑定
 
 `Shader` 的 `Outputs` 里既可以写变量声明，也可以写绑定：
 
@@ -410,7 +349,7 @@ Outputs = {
 }
 ```
 
-## 12. 编译体验与项目设置
+## 11. 编译体验与项目设置
 
 Unreal 插件会维护 import graph：
 
@@ -430,7 +369,7 @@ Project Settings > Plugins > DreamShader 可配置：
 - `SaveDebounceSeconds`
 - `VerboseLogs`
 
-## 13. 当前限制
+## 12. 当前限制
 
 - `Code` 不是完整通用语言
 - `Function` 调用必须显式传 `out`

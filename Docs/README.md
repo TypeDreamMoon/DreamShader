@@ -1,10 +1,10 @@
 # DreamShader 文档
 
-这份文档面向 DreamShader `1.0.0`，覆盖 `DreamShaderLang` 的文件结构、语法模型、VSCode 工作流，以及从旧语法迁移到新语法的方式。
+这份文档面向 DreamShader `1.1.0`，覆盖 `DreamShaderLang` 的文件结构、语法模型、VSCode 工作流，以及从旧语法迁移到新语法的方式。
 
 ## 发布信息
 
-- 插件版本：`1.0.0`
+- 插件版本：`1.1.0`
 - 语言名称：`DreamShaderLang`
 - 源文件：`.dsm` / `.dsh`
 - 开发者：TypeDreamMoon
@@ -40,12 +40,6 @@
   - GitHub 安装
   - package import
   - package store
-- [迁移说明](Migration.md)
-  - `.dsh` 到 `.dsm`
-  - 旧 helper block 到 `Function`
-  - `DS_` 前缀函数到 `Namespace::Function`
-  - 显式 `out` 调用
-  - 新的纹理默认值写法
 
 ## 当前推荐模型
 

@@ -73,10 +73,12 @@ Shader(Name="DreamMaterials/M_Imported")
 }
 ```
 
-## 4. 使用插件内置库采样纹理
+## 4. 使用外部库采样纹理
+
+先在VSCode中安装 `dreamshaderlang-language-support-1.1.0.vsix`
 
 ```c
-import "Builtin/Texture.dsh";
+import "@typedreammoon/dreamshader-texture/Library/Texture.dsh";
 
 Shader(Name="DreamMaterials/M_TextureBuiltin")
 {
@@ -104,37 +106,7 @@ Shader(Name="DreamMaterials/M_TextureBuiltin")
 }
 ```
 
-## 5. 使用内置 Noise 库
-
-```c
-import "Builtin/Noise.dsh";
-
-Shader(Name="DreamMaterials/M_NoiseBuiltin")
-{
-    Properties = {
-        float Scale = 8.0;
-    }
-
-    Settings = {
-        Domain = "Surface";
-        ShadingModel = "Unlit";
-    }
-
-    Outputs = {
-        vec3 Res;
-        EmissiveColor = Res;
-    }
-
-    Code = {
-        vec2 uv = UE.TexCoord(Index=0) * Scale;
-        float n;
-        Noise::FBM2D(uv, 5.0, n);
-        Res = vec3(n, n, n);
-    }
-}
-```
-
-## 6. `Function` 显式 out 调用
+## 5. `Function` 显式 out 调用
 
 ### 定义
 
@@ -231,4 +203,3 @@ ShaderFunction(Name="Functions/F_Tint")
 
 - `DShader/Sample.dsm`
 - `DShader/Shared/common.dsh`
-- `Plugins/DreamShader/Library/Builtin/Texture.dsh`
