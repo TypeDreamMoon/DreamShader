@@ -92,11 +92,7 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 
 ## VSCode 扩展
 
-VSCode 扩展位于：
-
-- `I:/UnrealProject_Moon/VSCodeExt/dreamshader-language-support`
-
-它当前支持：
+当前支持：
 
 - `DreamShaderLang` `.dsm` / `.dsh` 语法高亮
 - 作用域感知补全
