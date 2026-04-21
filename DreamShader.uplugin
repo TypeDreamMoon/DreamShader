@@ -4,7 +4,7 @@
 	"VersionName": "1.1.0",
 	"FriendlyName": "DreamShader",
 	"Description": "Author Unreal materials and material functions with DreamShaderLang .dsm/.dsh source files that auto-generate standard UMaterial and UMaterialFunction assets.",
-	"Category": "Rendering",
+	"Category": "DreamPlugin",
 	"CreatedBy": "TypeDreamMoon",
 	"CreatedByURL": "https://github.com/TypeDreamMoon",
 	"DocsURL": "https://github.com/TypeDreamMoon",
@@ -26,5 +26,6 @@
 			"Type": "Editor",
 			"LoadingPhase": "Default"
 		}
-	]
+	],
+	"IsExperimentalVersion": false
 }

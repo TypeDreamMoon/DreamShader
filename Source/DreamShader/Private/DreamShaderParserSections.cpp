@@ -466,10 +466,6 @@ namespace UE::DreamShader::Private
 			{
 				TargetText.RightChopInline(5, EAllowShrinking::No);
 				TargetText.TrimStartAndEndInline();
-			}
-
-			if (!TargetText.StartsWith(TEXT("Expression"), ESearchCase::IgnoreCase))
-			{
 				OutBinding.TargetKind = FTextShaderOutputBinding::ETargetKind::MaterialProperty;
 				OutBinding.MaterialProperty = TargetText;
 				if (OutBinding.MaterialProperty.IsEmpty())
@@ -478,6 +474,14 @@ namespace UE::DreamShader::Private
 					return false;
 				}
 				return true;
+			}
+
+			if (!TargetText.StartsWith(TEXT("Expression"), ESearchCase::IgnoreCase))
+			{
+				OutError = FString::Printf(
+					TEXT("Output binding target '%s' must start with Base. for material outputs or Expression(...) for output nodes."),
+					*InTargetText);
+				return false;
 			}
 
 			const int32 OpenParenIndex = TargetText.Find(TEXT("("));
@@ -574,8 +578,8 @@ namespace UE::DreamShader::Private
 			FString RightSide;
 			if (SplitTopLevelAssignment(Trimmed, LeftSide, RightSide))
 			{
-				Binding.VariableName = RightSide.TrimStartAndEnd();
-				if (Binding.VariableName.IsEmpty())
+				Binding.SourceText = RightSide.TrimStartAndEnd();
+				if (Binding.SourceText.IsEmpty())
 				{
 					OutError = FString::Printf(TEXT("Invalid output binding '%s'."), *Statement);
 					return false;

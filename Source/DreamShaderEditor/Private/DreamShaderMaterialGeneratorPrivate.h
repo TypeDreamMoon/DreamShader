@@ -176,6 +176,7 @@ namespace UE::DreamShader::Editor::Private
 			const TArray<FCodeStatement>& Statements,
 			TMap<FString, FCodeValue>& InOutValues,
 			FString& OutError);
+		bool EvaluateOutputExpression(const FString& ExpressionText, FCodeValue& OutValue, FString& OutError);
 
 	private:
 		UMaterial* Material = nullptr;
@@ -191,6 +192,7 @@ namespace UE::DreamShader::Editor::Private
 		UMaterialExpression* CreateExpression(TSubclassOf<UMaterialExpression> ExpressionClass, int32 PositionX, int32 PositionY) const;
 		UMaterialExpression* CreateScalarLiteralNode(double Value, int32 PositionY) const;
 		bool CreateDefaultValue(const FString& DeclaredType, FCodeValue& OutValue, FString& OutError);
+		bool CoerceValueToType(const FCodeValue& InValue, int32 ExpectedComponentCount, bool bExpectedTexture, FCodeValue& OutValue, FString& OutError);
 		bool EvaluateBraceInitializer(const FString& ConstructorType, const FString& InitializerText, FCodeValue& OutValue, FString& OutError);
 		bool ResolveTargetTypeForAssignment(const FCodeStatement& Statement, FString& OutTypeName, FString& OutError) const;
 

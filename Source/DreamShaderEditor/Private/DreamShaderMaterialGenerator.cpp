@@ -1428,38 +1428,28 @@ namespace UE::DreamShader::Editor
 
 			for (const FTextShaderOutputBinding& Binding : Definition.Outputs)
 			{
-				Private::FCodeValue* OutputValue = GeneratedCodeValues.Find(Binding.VariableName);
-				if (!OutputValue)
-				{
-					for (TPair<FString, Private::FCodeValue>& Pair : GeneratedCodeValues)
-					{
-						if (Pair.Key.Equals(Binding.VariableName, ESearchCase::IgnoreCase))
-						{
-							OutputValue = &Pair.Value;
-							break;
-						}
-					}
-				}
-
-				if (!OutputValue || !OutputValue->Expression)
+				Private::FCodeValue OutputValue;
+				FString OutputExpressionError;
+				if (!CodeGraphBuilder.EvaluateOutputExpression(Binding.SourceText, OutputValue, OutputExpressionError)
+					|| !OutputValue.Expression)
 				{
 					OutMessage = FString::Printf(
-						TEXT("%s: Code output '%s' was never assigned an expression."),
+						TEXT("%s: %s"),
 						*SourceFilePath,
-						*Binding.VariableName);
+						*OutputExpressionError);
 					return false;
 				}
 
 				int32 DeclaredComponents = 0;
 				bool bDeclaredTexture = false;
-				if (Private::TryResolveOutputVariableComponentCount(Definition, Binding.VariableName, DeclaredComponents, bDeclaredTexture))
+				if (Private::TryResolveOutputVariableComponentCount(Definition, Binding.SourceText, DeclaredComponents, bDeclaredTexture))
 				{
-					if (bDeclaredTexture || OutputValue->bIsTextureObject || DeclaredComponents != OutputValue->ComponentCount)
+					if (bDeclaredTexture || OutputValue.bIsTextureObject || DeclaredComponents != OutputValue.ComponentCount)
 					{
 						OutMessage = FString::Printf(
 							TEXT("%s: Code output '%s' does not match its declared type."),
 							*SourceFilePath,
-							*Binding.VariableName);
+							*Binding.SourceText);
 						return false;
 					}
 				}
@@ -1476,11 +1466,11 @@ namespace UE::DreamShader::Editor
 							TEXT("%s: Failed to find material property '%s' while connecting Code output '%s'."),
 							*SourceFilePath,
 							*Binding.MaterialProperty,
-							*Binding.VariableName);
+							*Binding.SourceText);
 						return false;
 					}
 
-					MaterialInput->Connect(OutputValue->OutputIndex, OutputValue->Expression);
+					MaterialInput->Connect(OutputValue.OutputIndex, OutputValue.Expression);
 				}
 				else
 				{
@@ -1494,9 +1484,9 @@ namespace UE::DreamShader::Editor
 						TargetExpression,
 						TargetError)
 						|| !ConnectExpressionSourceToTargetPin(
-							OutputValue->Expression,
-							OutputValue->OutputIndex,
-							Binding.VariableName,
+							OutputValue.Expression,
+							OutputValue.OutputIndex,
+							Binding.SourceText,
 							Binding,
 							TargetExpression,
 							BoundOutputTargetPins,
@@ -1552,13 +1542,13 @@ namespace UE::DreamShader::Editor
 			for (const FTextShaderOutputBinding& Binding : Definition.Outputs)
 			{
 				int32 SourceOutputIndex = 0;
-				if (!Binding.VariableName.Equals(TEXT("return"), ESearchCase::IgnoreCase)
-					&& !TryResolveExpressionOutputIndexByName(CustomExpression, Binding.VariableName, SourceOutputIndex))
+				if (!Binding.SourceText.Equals(TEXT("return"), ESearchCase::IgnoreCase)
+					&& !TryResolveExpressionOutputIndexByName(CustomExpression, Binding.SourceText, SourceOutputIndex))
 				{
 					OutMessage = FString::Printf(
 						TEXT("%s: Failed to resolve Custom output '%s'."),
 						*SourceFilePath,
-						*Binding.VariableName);
+						*Binding.SourceText);
 					return false;
 				}
 
@@ -1574,7 +1564,7 @@ namespace UE::DreamShader::Editor
 							TEXT("%s: Failed to find material property '%s' while connecting '%s'."),
 							*SourceFilePath,
 							*Binding.MaterialProperty,
-							*Binding.VariableName);
+							*Binding.SourceText);
 						return false;
 					}
 
@@ -1594,7 +1584,7 @@ namespace UE::DreamShader::Editor
 						|| !ConnectExpressionSourceToTargetPin(
 							CustomExpression,
 							SourceOutputIndex,
-							Binding.VariableName,
+							Binding.SourceText,
 							Binding,
 							TargetExpression,
 							BoundOutputTargetPins,

@@ -53,7 +53,7 @@ namespace UE::DreamShader
 		TMap<FString, FString> ExpressionArguments;
 		int32 ExpressionPinIndex = INDEX_NONE;
 		FString TargetText;
-		FString VariableName;
+		FString SourceText;
 	};
 
 	struct FTextShaderVariableDeclaration

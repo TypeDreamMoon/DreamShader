@@ -90,7 +90,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		else if (Matches(TEXT("Refraction")))
 		{
-			OutProperty = { MP_Refraction, CMOT_Float1 };
+			OutProperty = { MP_Refraction, CMOT_Float3 };
 		}
 		else if (Matches(TEXT("WorldPositionOffset")) || Matches(TEXT("WPO")))
 		{
@@ -111,6 +111,82 @@ namespace UE::DreamShader::Editor::Private
 		else if (Matches(TEXT("ClearCoatRoughness")))
 		{
 			OutProperty = { MP_CustomData1, CMOT_Float1 };
+		}
+		else if (Matches(TEXT("CustomData0")))
+		{
+			OutProperty = { MP_CustomData0, CMOT_Float1 };
+		}
+		else if (Matches(TEXT("CustomData1")))
+		{
+			OutProperty = { MP_CustomData1, CMOT_Float1 };
+		}
+		else if (Matches(TEXT("DiffuseColor")))
+		{
+			OutProperty = { MP_DiffuseColor, CMOT_Float3 };
+		}
+		else if (Matches(TEXT("SpecularColor")))
+		{
+			OutProperty = { MP_SpecularColor, CMOT_Float3 };
+		}
+		else if (Matches(TEXT("SurfaceThickness")))
+		{
+			OutProperty = { MP_SurfaceThickness, CMOT_Float1 };
+		}
+		else if (Matches(TEXT("Displacement")))
+		{
+			OutProperty = { MP_Displacement, CMOT_Float1 };
+		}
+		else if (Matches(TEXT("CustomizedUV0")) || Matches(TEXT("CustomizedUVs0")))
+		{
+			OutProperty = { MP_CustomizedUVs0, CMOT_Float2 };
+		}
+		else if (Matches(TEXT("CustomizedUV1")) || Matches(TEXT("CustomizedUVs1")))
+		{
+			OutProperty = { MP_CustomizedUVs1, CMOT_Float2 };
+		}
+		else if (Matches(TEXT("CustomizedUV2")) || Matches(TEXT("CustomizedUVs2")))
+		{
+			OutProperty = { MP_CustomizedUVs2, CMOT_Float2 };
+		}
+		else if (Matches(TEXT("CustomizedUV3")) || Matches(TEXT("CustomizedUVs3")))
+		{
+			OutProperty = { MP_CustomizedUVs3, CMOT_Float2 };
+		}
+		else if (Matches(TEXT("CustomizedUV4")) || Matches(TEXT("CustomizedUVs4")))
+		{
+			OutProperty = { MP_CustomizedUVs4, CMOT_Float2 };
+		}
+		else if (Matches(TEXT("CustomizedUV5")) || Matches(TEXT("CustomizedUVs5")))
+		{
+			OutProperty = { MP_CustomizedUVs5, CMOT_Float2 };
+		}
+		else if (Matches(TEXT("CustomizedUV6")) || Matches(TEXT("CustomizedUVs6")))
+		{
+			OutProperty = { MP_CustomizedUVs6, CMOT_Float2 };
+		}
+		else if (Matches(TEXT("CustomizedUV7")) || Matches(TEXT("CustomizedUVs7")))
+		{
+			OutProperty = { MP_CustomizedUVs7, CMOT_Float2 };
+		}
+		else if (Matches(TEXT("MooaEncodedAttribute0")))
+		{
+			OutProperty = { MP_MooaEncodedAttribute0, CMOT_Float4 };
+		}
+		else if (Matches(TEXT("MooaEncodedAttribute1")))
+		{
+			OutProperty = { MP_MooaEncodedAttribute1, CMOT_Float4 };
+		}
+		else if (Matches(TEXT("MooaEncodedAttribute2")))
+		{
+			OutProperty = { MP_MooaEncodedAttribute2, CMOT_Float4 };
+		}
+		else if (Matches(TEXT("MooaEncodedAttribute3")))
+		{
+			OutProperty = { MP_MooaEncodedAttribute3, CMOT_Float4 };
+		}
+		else if (Matches(TEXT("MooaEncodedAttribute4")))
+		{
+			OutProperty = { MP_MooaEncodedAttribute4, CMOT_Float4 };
 		}
 		else if (Matches(TEXT("Anisotropy")))
 		{
@@ -809,6 +885,119 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
+	static FString NormalizeMaterialSettingLookupKey(const FString& InKey)
+	{
+		FString Normalized = UE::DreamShader::NormalizeSettingKey(InKey);
+		Normalized.ReplaceInline(TEXT(" "), TEXT(""));
+		Normalized.ReplaceInline(TEXT("_"), TEXT(""));
+		Normalized.ReplaceInline(TEXT("-"), TEXT(""));
+		return Normalized;
+	}
+
+	static bool IsSpecialMaterialSettingKey(const FString& InKey)
+	{
+		const FString Key = NormalizeMaterialSettingLookupKey(InKey);
+		return Key == TEXT("blendmode")
+			|| Key == TEXT("rendertype")
+			|| Key == TEXT("shadingmodel")
+			|| Key == TEXT("materialdomain")
+			|| Key == TEXT("domain");
+	}
+
+	static const TMap<FString, FString>& GetMaterialSettingAliases()
+	{
+		static const TMap<FString, FString> Aliases = []()
+		{
+			TMap<FString, FString> Result;
+			Result.Add(TEXT("responsiveaa"), TEXT("bEnableResponsiveAA"));
+			Result.Add(TEXT("thinsurface"), TEXT("bIsThinSurface"));
+			return Result;
+		}();
+		return Aliases;
+	}
+
+	static bool ResolveMaterialSettingProperty(const FString& InKey, FProperty*& OutProperty)
+	{
+		FString LookupKey = NormalizeMaterialSettingLookupKey(InKey);
+		if (const FString* Alias = GetMaterialSettingAliases().Find(LookupKey))
+		{
+			LookupKey = NormalizeMaterialSettingLookupKey(*Alias);
+		}
+
+		for (TFieldIterator<FProperty> It(UMaterial::StaticClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
+		{
+			FProperty* Property = *It;
+			if (!Property)
+			{
+				continue;
+			}
+
+			const FString PropertyName = Property->GetName();
+			if (NormalizeMaterialSettingLookupKey(PropertyName) == LookupKey)
+			{
+				OutProperty = Property;
+				return true;
+			}
+
+			if (PropertyName.Len() > 1
+				&& PropertyName[0] == TCHAR('b')
+				&& FChar::IsUpper(PropertyName[1])
+				&& NormalizeMaterialSettingLookupKey(PropertyName.Mid(1)) == LookupKey)
+			{
+				OutProperty = Property;
+				return true;
+			}
+		}
+
+		OutProperty = nullptr;
+		return false;
+	}
+
+	static bool ValidateGenericMaterialSetting(const FString& InKey, const FString& InValue, FString& OutError)
+	{
+		FProperty* Property = nullptr;
+		if (!ResolveMaterialSettingProperty(InKey, Property))
+		{
+			OutError = FString::Printf(TEXT("Unsupported material setting '%s'."), *InKey);
+			return false;
+		}
+
+		UMaterial* ProbeMaterial = NewObject<UMaterial>(GetTransientPackage(), NAME_None, RF_Transient);
+		if (!ProbeMaterial)
+		{
+			OutError = TEXT("Failed to create a transient material for Settings validation.");
+			return false;
+		}
+
+		FString LiteralError;
+		if (!SetMaterialExpressionLiteralProperty(ProbeMaterial, Property, InValue, LiteralError))
+		{
+			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError);
+			return false;
+		}
+
+		return true;
+	}
+
+	static bool ApplyGenericMaterialSetting(UMaterial* Material, const FString& InKey, const FString& InValue, FString& OutError)
+	{
+		FProperty* Property = nullptr;
+		if (!ResolveMaterialSettingProperty(InKey, Property))
+		{
+			OutError = FString::Printf(TEXT("Unsupported material setting '%s'."), *InKey);
+			return false;
+		}
+
+		FString LiteralError;
+		if (!SetMaterialExpressionLiteralProperty(Material, Property, InValue, LiteralError))
+		{
+			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError);
+			return false;
+		}
+
+		return true;
+	}
+
 	FString EnsureTopLevelReturn(const FString& InHLSL)
 	{
 		const FString Sanitized = InHLSL.Replace(TEXT("\r\n"), TEXT("\n"));
@@ -1132,42 +1321,15 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		if (!ValidateBooleanSetting(Definition, TEXT("TwoSided"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("Wireframe"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("DitheredLODTransition"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("DitherOpacityMask"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("AllowNegativeEmissiveColor"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("CastDynamicShadowAsMasked"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("ResponsiveAA"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("ScreenSpaceReflections"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("ContactShadows"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("DisableDepthTest"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("OutputTranslucentVelocity"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("TangentSpaceNormal"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("FullyRough"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("IsSky"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("ThinSurface"), OutError)
-			|| !ValidateBooleanSetting(Definition, TEXT("HasPixelAnimation"), OutError))
+		for (const TPair<FString, FString>& Setting : Definition.Settings)
 		{
-			return false;
-		}
-
-		if (FString ClipValue; Definition.TryGetSetting(TEXT("OpacityMaskClipValue"), ClipValue))
-		{
-			double ParsedClipValue = 0.3333;
-			if (!ParseScalarLiteral(ClipValue, ParsedClipValue))
+			if (IsSpecialMaterialSettingKey(Setting.Key))
 			{
-				OutError = FString::Printf(TEXT("Invalid scalar value '%s' for OpacityMaskClipValue."), *ClipValue);
-				return false;
+				continue;
 			}
-		}
 
-		if (FString CustomizedUVValue; Definition.TryGetSetting(TEXT("NumCustomizedUVs"), CustomizedUVValue))
-		{
-			int32 ParsedCustomizedUVs = 0;
-			if (!ParseIntegerLiteral(CustomizedUVValue, ParsedCustomizedUVs) || ParsedCustomizedUVs < 0)
+			if (!ValidateGenericMaterialSetting(Setting.Key, Setting.Value, OutError))
 			{
-				OutError = FString::Printf(TEXT("Invalid integer value '%s' for NumCustomizedUVs."), *CustomizedUVValue);
 				return false;
 			}
 		}
@@ -1205,35 +1367,17 @@ namespace UE::DreamShader::Editor::Private
 			Material->MaterialDomain = Domain;
 		}
 
-		ApplyBooleanSetting(Material, Definition, TEXT("TwoSided"), [Material](const bool bValue) { Material->TwoSided = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("Wireframe"), [Material](const bool bValue) { Material->Wireframe = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("DitheredLODTransition"), [Material](const bool bValue) { Material->DitheredLODTransition = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("DitherOpacityMask"), [Material](const bool bValue) { Material->DitherOpacityMask = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("AllowNegativeEmissiveColor"), [Material](const bool bValue) { Material->bAllowNegativeEmissiveColor = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("CastDynamicShadowAsMasked"), [Material](const bool bValue) { Material->bCastDynamicShadowAsMasked = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("ResponsiveAA"), [Material](const bool bValue) { Material->bEnableResponsiveAA = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("ScreenSpaceReflections"), [Material](const bool bValue) { Material->bScreenSpaceReflections = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("ContactShadows"), [Material](const bool bValue) { Material->bContactShadows = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("DisableDepthTest"), [Material](const bool bValue) { Material->bDisableDepthTest = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("OutputTranslucentVelocity"), [Material](const bool bValue) { Material->bOutputTranslucentVelocity = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("TangentSpaceNormal"), [Material](const bool bValue) { Material->bTangentSpaceNormal = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("FullyRough"), [Material](const bool bValue) { Material->bFullyRough = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("IsSky"), [Material](const bool bValue) { Material->bIsSky = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("ThinSurface"), [Material](const bool bValue) { Material->bIsThinSurface = bValue; });
-		ApplyBooleanSetting(Material, Definition, TEXT("HasPixelAnimation"), [Material](const bool bValue) { Material->bHasPixelAnimation = bValue; });
-
-		if (FString ClipValue; Definition.TryGetSetting(TEXT("OpacityMaskClipValue"), ClipValue))
+		for (const TPair<FString, FString>& Setting : Definition.Settings)
 		{
-			double ParsedClipValue = 0.3333;
-			ParseScalarLiteral(ClipValue, ParsedClipValue);
-			Material->OpacityMaskClipValue = static_cast<float>(ParsedClipValue);
-		}
+			if (IsSpecialMaterialSettingKey(Setting.Key))
+			{
+				continue;
+			}
 
-		if (FString CustomizedUVValue; Definition.TryGetSetting(TEXT("NumCustomizedUVs"), CustomizedUVValue))
-		{
-			int32 ParsedCustomizedUVs = 0;
-			verify(ParseIntegerLiteral(CustomizedUVValue, ParsedCustomizedUVs));
-			Material->NumCustomizedUVs = ParsedCustomizedUVs;
+			if (!ApplyGenericMaterialSetting(Material, Setting.Key, Setting.Value, OutError))
+			{
+				return false;
+			}
 		}
 
 		return true;
@@ -2206,6 +2350,33 @@ namespace UE::DreamShader::Editor::Private
 		ECustomMaterialOutputType& OutReturnType,
 		FString& OutError)
 	{
+		const auto IsSimpleOutputReference = [](const FString& InText) -> bool
+		{
+			const FString Candidate = InText.TrimStartAndEnd();
+			if (Candidate.IsEmpty())
+			{
+				return false;
+			}
+
+			for (int32 Index = 0; Index < Candidate.Len(); ++Index)
+			{
+				const TCHAR Char = Candidate[Index];
+				if (Index == 0)
+				{
+					if (!(FChar::IsAlpha(Char) || Char == TCHAR('_')))
+					{
+						return false;
+					}
+				}
+				else if (!(FChar::IsAlnum(Char) || Char == TCHAR('_')))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		};
+
 		OutNamedOutputs.Reset();
 		bOutUsesReturn = false;
 		OutReturnType = CMOT_Float1;
@@ -2245,6 +2416,8 @@ namespace UE::DreamShader::Editor::Private
 		TMap<FString, int32> OutputOrder;
 		for (const FTextShaderOutputBinding& Binding : Definition.Outputs)
 		{
+			const FString SourceName = Binding.SourceText.TrimStartAndEnd();
+			const bool bIsSimpleSourceReference = IsSimpleOutputReference(SourceName);
 			ECustomMaterialOutputType BindingOutputType = CMOT_Float1;
 			bool bHasImplicitTypeFromTarget = false;
 			if (Binding.TargetKind == FTextShaderOutputBinding::ETargetKind::MaterialProperty)
@@ -2260,7 +2433,7 @@ namespace UE::DreamShader::Editor::Private
 				bHasImplicitTypeFromTarget = true;
 			}
 
-			if (Binding.VariableName.Equals(TEXT("return"), ESearchCase::IgnoreCase))
+			if (SourceName.Equals(TEXT("return"), ESearchCase::IgnoreCase))
 			{
 				if (Binding.TargetKind != FTextShaderOutputBinding::ETargetKind::MaterialProperty)
 				{
@@ -2282,28 +2455,33 @@ namespace UE::DreamShader::Editor::Private
 				continue;
 			}
 
-			if (const int32* ExistingIndex = OutputOrder.Find(Binding.VariableName))
+			if (!bIsSimpleSourceReference)
+			{
+				continue;
+			}
+
+			if (const int32* ExistingIndex = OutputOrder.Find(SourceName))
 			{
 				if (OutNamedOutputs[*ExistingIndex].OutputType != BindingOutputType && bHasImplicitTypeFromTarget)
 				{
-					OutError = FString::Printf(TEXT("Output variable '%s' is bound to incompatible material properties."), *Binding.VariableName);
+					OutError = FString::Printf(TEXT("Output variable '%s' is bound to incompatible material properties."), *SourceName);
 					return false;
 				}
 			}
 			else
 			{
 				FResolvedNamedOutput& Output = OutNamedOutputs.AddDefaulted_GetRef();
-				Output.Name = Binding.VariableName;
+				Output.Name = SourceName;
 				Output.OutputType = BindingOutputType;
 
-				if (const ECustomMaterialOutputType* DeclaredType = DeclaredOutputTypes.Find(Binding.VariableName))
+				if (const ECustomMaterialOutputType* DeclaredType = DeclaredOutputTypes.Find(SourceName))
 				{
 					if (bHasImplicitTypeFromTarget && *DeclaredType != BindingOutputType)
 					{
 						OutError = FString::Printf(
 							TEXT("Output variable '%s' is declared as '%s' but bound material property '%s' expects a different type."),
-							*Binding.VariableName,
-							*DeclaredOutputTypeTexts.FindChecked(Binding.VariableName),
+							*SourceName,
+							*DeclaredOutputTypeTexts.FindChecked(SourceName),
 							*Binding.MaterialProperty);
 						return false;
 					}
@@ -2314,12 +2492,12 @@ namespace UE::DreamShader::Editor::Private
 				{
 					OutError = FString::Printf(
 						TEXT("Output variable '%s' must declare an explicit type before binding to expression target '%s'."),
-						*Binding.VariableName,
+						*SourceName,
 						*Binding.TargetText);
 					return false;
 				}
 
-				OutputOrder.Add(Binding.VariableName, OutNamedOutputs.Num() - 1);
+				OutputOrder.Add(SourceName, OutNamedOutputs.Num() - 1);
 			}
 		}
 

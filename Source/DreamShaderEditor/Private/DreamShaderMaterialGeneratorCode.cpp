@@ -162,23 +162,25 @@ namespace UE::DreamShader::Editor::Private
 		return Output;
 	}
 
-	static TArray<FString> SplitStatements(const FString& BlockContent)
+	static TArray<FString> SplitTopLevelSegments(const FString& InText, const TCHAR Delimiter)
 	{
-		TArray<FString> Statements;
+		TArray<FString> Segments;
 		FString Current;
 		int32 ParenthesisDepth = 0;
+		int32 BraceDepth = 0;
+		int32 BracketDepth = 0;
 		bool bInString = false;
 
-		for (int32 Index = 0; Index < BlockContent.Len(); ++Index)
+		for (int32 Index = 0; Index < InText.Len(); ++Index)
 		{
-			const TCHAR Char = BlockContent[Index];
+			const TCHAR Char = InText[Index];
 
 			if (bInString)
 			{
 				Current.AppendChar(Char);
-				if (Char == TCHAR('\\') && BlockContent.IsValidIndex(Index + 1))
+				if (Char == TCHAR('\\') && InText.IsValidIndex(Index + 1))
 				{
-					Current.AppendChar(BlockContent[++Index]);
+					Current.AppendChar(InText[++Index]);
 				}
 				else if (Char == TCHAR('"'))
 				{
@@ -208,12 +210,40 @@ namespace UE::DreamShader::Editor::Private
 				continue;
 			}
 
-			if (Char == TCHAR(';') && ParenthesisDepth == 0)
+			if (Char == TCHAR('{'))
+			{
+				++BraceDepth;
+				Current.AppendChar(Char);
+				continue;
+			}
+
+			if (Char == TCHAR('}'))
+			{
+				BraceDepth = FMath::Max(0, BraceDepth - 1);
+				Current.AppendChar(Char);
+				continue;
+			}
+
+			if (Char == TCHAR('['))
+			{
+				++BracketDepth;
+				Current.AppendChar(Char);
+				continue;
+			}
+
+			if (Char == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+				Current.AppendChar(Char);
+				continue;
+			}
+
+			if (Char == Delimiter && ParenthesisDepth == 0 && BraceDepth == 0 && BracketDepth == 0)
 			{
 				Current.TrimStartAndEndInline();
 				if (!Current.IsEmpty())
 				{
-					Statements.Add(Current);
+					Segments.Add(Current);
 				}
 				Current.Reset();
 				continue;
@@ -225,15 +255,22 @@ namespace UE::DreamShader::Editor::Private
 		Current.TrimStartAndEndInline();
 		if (!Current.IsEmpty())
 		{
-			Statements.Add(Current);
+			Segments.Add(Current);
 		}
 
-		return Statements;
+		return Segments;
+	}
+
+	static TArray<FString> SplitStatements(const FString& BlockContent)
+	{
+		return SplitTopLevelSegments(BlockContent, TCHAR(';'));
 	}
 
 	static bool SplitTopLevelAssignment(const FString& InText, FString& OutLeft, FString& OutRight)
 	{
 		int32 ParenthesisDepth = 0;
+		int32 BraceDepth = 0;
+		int32 BracketDepth = 0;
 		bool bInString = false;
 
 		for (int32 Index = 0; Index < InText.Len(); ++Index)
@@ -271,7 +308,31 @@ namespace UE::DreamShader::Editor::Private
 				continue;
 			}
 
-			if (Char == TCHAR('=') && ParenthesisDepth == 0)
+			if (Char == TCHAR('{'))
+			{
+				++BraceDepth;
+				continue;
+			}
+
+			if (Char == TCHAR('}'))
+			{
+				BraceDepth = FMath::Max(0, BraceDepth - 1);
+				continue;
+			}
+
+			if (Char == TCHAR('['))
+			{
+				++BracketDepth;
+				continue;
+			}
+
+			if (Char == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+				continue;
+			}
+
+			if (Char == TCHAR('=') && ParenthesisDepth == 0 && BraceDepth == 0 && BracketDepth == 0)
 			{
 				OutLeft = InText.Left(Index).TrimStartAndEnd();
 				OutRight = InText.Mid(Index + 1).TrimStartAndEnd();
@@ -344,6 +405,31 @@ namespace UE::DreamShader::Editor::Private
 	{
 		const FString Trimmed = InText.TrimStartAndEnd();
 		return Trimmed.Len() >= 2 && Trimmed.StartsWith(TEXT("{")) && Trimmed.EndsWith(TEXT("}"));
+	}
+
+	static bool IsIdentifierToken(const FString& InText)
+	{
+		const FString Trimmed = InText.TrimStartAndEnd();
+		if (Trimmed.IsEmpty())
+		{
+			return false;
+		}
+
+		if (!(FChar::IsAlpha(Trimmed[0]) || Trimmed[0] == TCHAR('_')))
+		{
+			return false;
+		}
+
+		for (int32 Index = 1; Index < Trimmed.Len(); ++Index)
+		{
+			const TCHAR Char = Trimmed[Index];
+			if (!(FChar::IsAlnum(Char) || Char == TCHAR('_')))
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	class FCodeExpressionParser
@@ -728,6 +814,92 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString> Statements = SplitStatements(RemoveComments(InCode));
 		for (const FString& StatementText : Statements)
 		{
+			const auto ParseDeclarationStatement =
+				[&OutError](const FString& DeclaredType, const FString& TargetName, const FString* InitializerText, FCodeStatement& OutStatement) -> bool
+			{
+				OutStatement = FCodeStatement{};
+				OutStatement.bIsDeclaration = true;
+				OutStatement.DeclaredType = DeclaredType;
+				OutStatement.TargetName = TargetName;
+
+				if (!InitializerText)
+				{
+					return true;
+				}
+
+				OutStatement.InitializerText = *InitializerText;
+				if (IsBraceInitializerText(*InitializerText))
+				{
+					OutStatement.bUsesBraceInitializer = true;
+					return true;
+				}
+
+				FCodeExpressionParser ExpressionParser(*InitializerText);
+				if (!ExpressionParser.Parse(OutStatement.Expression, OutError))
+				{
+					return false;
+				}
+
+				return true;
+			};
+
+			const TArray<FString> Declarators = SplitTopLevelSegments(StatementText, TCHAR(','));
+			if (Declarators.Num() > 1)
+			{
+				FString FirstLeft;
+				FString FirstRight;
+				const bool bFirstHasAssignment = SplitTopLevelAssignment(Declarators[0], FirstLeft, FirstRight);
+				const FString FirstDeclaratorText = bFirstHasAssignment ? FirstLeft : Declarators[0];
+
+				FString SharedType;
+				FString FirstName;
+				if (SplitDeclarationTypeAndName(FirstDeclaratorText, SharedType, FirstName))
+				{
+					for (int32 DeclaratorIndex = 0; DeclaratorIndex < Declarators.Num(); ++DeclaratorIndex)
+					{
+						const FString& DeclaratorText = Declarators[DeclaratorIndex];
+						FCodeStatement Statement;
+
+						if (DeclaratorIndex == 0)
+						{
+							const FString* InitializerText = bFirstHasAssignment ? &FirstRight : nullptr;
+							if (!ParseDeclarationStatement(SharedType, FirstName, InitializerText, Statement))
+							{
+								OutError = FString::Printf(TEXT("In Code statement '%s': %s"), *StatementText, *OutError);
+								return false;
+							}
+						}
+						else
+						{
+							FString Left;
+							FString Right;
+							const bool bHasAssignment = SplitTopLevelAssignment(DeclaratorText, Left, Right);
+							const FString NameToken = bHasAssignment ? Left : DeclaratorText;
+							if (!IsIdentifierToken(NameToken))
+							{
+								OutError = FString::Printf(
+									TEXT("In Code statement '%s': '%s' is not a valid declarator in a comma-separated declaration."),
+									*StatementText,
+									*NameToken.TrimStartAndEnd());
+								return false;
+							}
+
+							const FString TrimmedNameToken = NameToken.TrimStartAndEnd();
+							const FString* InitializerText = bHasAssignment ? &Right : nullptr;
+							if (!ParseDeclarationStatement(SharedType, TrimmedNameToken, InitializerText, Statement))
+							{
+								OutError = FString::Printf(TEXT("In Code statement '%s': %s"), *StatementText, *OutError);
+								return false;
+							}
+						}
+
+						OutStatements.Add(Statement);
+					}
+
+					continue;
+				}
+			}
+
 			FCodeStatement Statement;
 
 			FString Left;
@@ -868,18 +1040,54 @@ namespace UE::DreamShader::Editor::Private
 					return false;
 				}
 
-				if (bExpectedTexture != EvaluatedValue.bIsTextureObject
-					|| (!bExpectedTexture && ExpectedComponentCount != EvaluatedValue.ComponentCount))
+				FCodeValue CoercedValue;
+				if (!CoerceValueToType(EvaluatedValue, ExpectedComponentCount, bExpectedTexture, CoercedValue, OutError))
 				{
 					OutError = FString::Printf(
-						TEXT("Code variable '%s' is declared as '%s' but assigned an incompatible value."),
+						TEXT("Code variable '%s' is declared as '%s' but assigned an incompatible value. %s"),
 						*Statement.TargetName,
-						*Statement.DeclaredType);
+						*Statement.DeclaredType,
+						*OutError);
 					return false;
 				}
+
+				EvaluatedValue = CoercedValue;
+			}
+			else if (const FCodeValue* ExistingValue = FindValue(Statement.TargetName))
+			{
+				FCodeValue CoercedValue;
+				if (!CoerceValueToType(EvaluatedValue, ExistingValue->ComponentCount, ExistingValue->bIsTextureObject, CoercedValue, OutError))
+				{
+					OutError = FString::Printf(
+						TEXT("Code variable '%s' was previously assigned an incompatible value. %s"),
+						*Statement.TargetName,
+						*OutError);
+					return false;
+				}
+
+				EvaluatedValue = CoercedValue;
 			}
 
 			(*Values).Add(Statement.TargetName, EvaluatedValue);
+		}
+
+		return true;
+	}
+
+	bool FCodeGraphBuilder::EvaluateOutputExpression(const FString& ExpressionText, FCodeValue& OutValue, FString& OutError)
+	{
+		FCodeExpressionParser ExpressionParser(ExpressionText);
+		TSharedPtr<FCodeExpression> ParsedExpression;
+		if (!ExpressionParser.Parse(ParsedExpression, OutError))
+		{
+			OutError = FString::Printf(TEXT("In output expression '%s': %s"), *ExpressionText, *OutError);
+			return false;
+		}
+
+		if (!EvaluateExpression(ParsedExpression, OutValue, OutError))
+		{
+			OutError = FString::Printf(TEXT("In output expression '%s': %s"), *ExpressionText, *OutError);
+			return false;
 		}
 
 		return true;
@@ -984,6 +1192,62 @@ namespace UE::DreamShader::Editor::Private
 
 		OutValue.ComponentCount = ComponentCount;
 		return true;
+	}
+
+	bool FCodeGraphBuilder::CoerceValueToType(
+		const FCodeValue& InValue,
+		const int32 ExpectedComponentCount,
+		const bool bExpectedTexture,
+		FCodeValue& OutValue,
+		FString& OutError)
+	{
+		if (bExpectedTexture)
+		{
+			if (!InValue.bIsTextureObject)
+			{
+				OutError = TEXT("Expected a texture object value.");
+				return false;
+			}
+
+			OutValue = InValue;
+			return true;
+		}
+
+		if (InValue.bIsTextureObject)
+		{
+			OutError = TEXT("Texture objects cannot be assigned to numeric outputs.");
+			return false;
+		}
+
+		if (InValue.ComponentCount == ExpectedComponentCount)
+		{
+			OutValue = InValue;
+			return true;
+		}
+
+		if (ExpectedComponentCount > 1 && InValue.ComponentCount == 1)
+		{
+			TArray<FCodeValue> ReplicatedParts;
+			ReplicatedParts.Reserve(ExpectedComponentCount);
+			for (int32 Index = 0; Index < ExpectedComponentCount; ++Index)
+			{
+				ReplicatedParts.Add(InValue);
+			}
+
+			if (!AppendValues(ReplicatedParts, OutValue, OutError))
+			{
+				return false;
+			}
+
+			OutValue.ComponentCount = ExpectedComponentCount;
+			return true;
+		}
+
+		OutError = FString::Printf(
+			TEXT("Expected %d component(s) but got %d."),
+			ExpectedComponentCount,
+			InValue.ComponentCount);
+		return false;
 	}
 
 	bool FCodeGraphBuilder::EvaluateBraceInitializer(
@@ -2334,425 +2598,304 @@ namespace UE::DreamShader::Editor::Private
 	{
 		const FString FunctionName = CalleeName.Mid(3);
 
-		if (FunctionName.Equals(TEXT("TexCoord"), ESearchCase::IgnoreCase))
+		auto HandleIntegerLiteralArgument = [&](const TCHAR* ArgumentName, int32& TargetField) -> bool
 		{
-			auto* Expression = Cast<UMaterialExpressionTextureCoordinate>(
-				CreateExpression(UMaterialExpressionTextureCoordinate::StaticClass(), 600, ConsumeNodeY()));
-			if (!Expression)
+			const FCodeCallArgument* Argument = FindNamedArgument(Arguments, ArgumentName);
+			if (!Argument)
 			{
-				OutError = TEXT("Failed to create UE.TexCoord.");
+				return true;
+			}
+
+			if (!TryExtractIntegerLiteral(Argument->Expression, TargetField))
+			{
+				OutError = FString::Printf(TEXT("UE.%s %s must be an integer literal."), *FunctionName, ArgumentName);
 				return false;
 			}
 
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Index")))
-			{
-				if (!TryExtractIntegerLiteral(Argument->Expression, Expression->CoordinateIndex))
-				{
-					OutError = TEXT("UE.TexCoord Index must be an integer literal.");
-					return false;
-				}
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("UTiling")))
-			{
-				double ParsedValue = 0.0;
-				if (!TryExtractScalarLiteral(Argument->Expression, ParsedValue))
-				{
-					OutError = TEXT("UE.TexCoord UTiling must be a numeric literal.");
-					return false;
-				}
-				Expression->UTiling = static_cast<float>(ParsedValue);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("VTiling")))
-			{
-				double ParsedValue = 0.0;
-				if (!TryExtractScalarLiteral(Argument->Expression, ParsedValue))
-				{
-					OutError = TEXT("UE.TexCoord VTiling must be a numeric literal.");
-					return false;
-				}
-				Expression->VTiling = static_cast<float>(ParsedValue);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("UnMirrorU")))
-			{
-				bool ParsedValue = false;
-				if (!TryExtractBooleanLiteral(Argument->Expression, ParsedValue))
-				{
-					OutError = TEXT("UE.TexCoord UnMirrorU must be a boolean literal.");
-					return false;
-				}
-				Expression->UnMirrorU = ParsedValue ? 1U : 0U;
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("UnMirrorV")))
-			{
-				bool ParsedValue = false;
-				if (!TryExtractBooleanLiteral(Argument->Expression, ParsedValue))
-				{
-					OutError = TEXT("UE.TexCoord UnMirrorV must be a boolean literal.");
-					return false;
-				}
-				Expression->UnMirrorV = ParsedValue ? 1U : 0U;
-			}
-
-			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 2;
 			return true;
-		}
+		};
 
-		if (FunctionName.Equals(TEXT("Time"), ESearchCase::IgnoreCase))
+		auto HandleScalarLiteralArgument = [&](const TCHAR* ArgumentName, float& TargetField) -> bool
 		{
-			auto* Expression = Cast<UMaterialExpressionTime>(
-				CreateExpression(UMaterialExpressionTime::StaticClass(), 600, ConsumeNodeY()));
-			if (!Expression)
+			const FCodeCallArgument* Argument = FindNamedArgument(Arguments, ArgumentName);
+			if (!Argument)
 			{
-				OutError = TEXT("Failed to create UE.Time.");
+				return true;
+			}
+
+			double ParsedValue = 0.0;
+			if (!TryExtractScalarLiteral(Argument->Expression, ParsedValue))
+			{
+				OutError = FString::Printf(TEXT("UE.%s %s must be a numeric literal."), *FunctionName, ArgumentName);
 				return false;
 			}
 
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Period")))
-			{
-				double ParsedValue = 0.0;
-				if (!TryExtractScalarLiteral(Argument->Expression, ParsedValue))
-				{
-					OutError = TEXT("UE.Time Period must be a numeric literal.");
-					return false;
-				}
-
-				Expression->bOverride_Period = true;
-				Expression->Period = static_cast<float>(ParsedValue);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("IgnorePause")))
-			{
-				bool ParsedValue = false;
-				if (!TryExtractBooleanLiteral(Argument->Expression, ParsedValue))
-				{
-					OutError = TEXT("UE.Time IgnorePause must be a boolean literal.");
-					return false;
-				}
-				Expression->bIgnorePause = ParsedValue ? 1U : 0U;
-			}
-
-			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 1;
+			TargetField = static_cast<float>(ParsedValue);
 			return true;
-		}
+		};
 
-		if (FunctionName.Equals(TEXT("Panner"), ESearchCase::IgnoreCase))
+		auto HandleBooleanLiteralArgument = [&](const TCHAR* ArgumentName, TFunctionRef<void(bool)> ApplyValue) -> bool
 		{
-			auto* Expression = Cast<UMaterialExpressionPanner>(
-				CreateExpression(UMaterialExpressionPanner::StaticClass(), 600, ConsumeNodeY()));
-			if (!Expression)
+			const FCodeCallArgument* Argument = FindNamedArgument(Arguments, ArgumentName);
+			if (!Argument)
 			{
-				OutError = TEXT("Failed to create UE.Panner.");
+				return true;
+			}
+
+			bool bParsedValue = false;
+			if (!TryExtractBooleanLiteral(Argument->Expression, bParsedValue))
+			{
+				OutError = FString::Printf(TEXT("UE.%s %s must be a boolean literal."), *FunctionName, ArgumentName);
 				return false;
 			}
 
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Coordinate")))
-			{
-				FCodeValue CoordinateValue;
-				if (!EvaluateExpression(Argument->Expression, CoordinateValue, OutError))
-				{
-					return false;
-				}
-				ConnectCodeValueToInput(Expression->Coordinate, CoordinateValue);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Time")))
-			{
-				FCodeValue TimeValue;
-				if (!EvaluateExpression(Argument->Expression, TimeValue, OutError))
-				{
-					return false;
-				}
-				ConnectCodeValueToInput(Expression->Time, TimeValue);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Speed")))
-			{
-				FCodeValue SpeedValue;
-				if (!EvaluateExpression(Argument->Expression, SpeedValue, OutError))
-				{
-					return false;
-				}
-				ConnectCodeValueToInput(Expression->Speed, SpeedValue);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("SpeedX")))
-			{
-				double ParsedValue = 0.0;
-				if (!TryExtractScalarLiteral(Argument->Expression, ParsedValue))
-				{
-					OutError = TEXT("UE.Panner SpeedX must be a numeric literal.");
-					return false;
-				}
-				Expression->SpeedX = static_cast<float>(ParsedValue);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("SpeedY")))
-			{
-				double ParsedValue = 0.0;
-				if (!TryExtractScalarLiteral(Argument->Expression, ParsedValue))
-				{
-					OutError = TEXT("UE.Panner SpeedY must be a numeric literal.");
-					return false;
-				}
-				Expression->SpeedY = static_cast<float>(ParsedValue);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("ConstCoordinate")))
-			{
-				int32 ParsedCoordinate = 0;
-				if (!TryExtractIntegerLiteral(Argument->Expression, ParsedCoordinate) || ParsedCoordinate < 0)
-				{
-					OutError = TEXT("UE.Panner ConstCoordinate must be an integer literal.");
-					return false;
-				}
-				Expression->ConstCoordinate = static_cast<uint32>(ParsedCoordinate);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("FractionalPart")))
-			{
-				bool ParsedValue = false;
-				if (!TryExtractBooleanLiteral(Argument->Expression, ParsedValue))
-				{
-					OutError = TEXT("UE.Panner FractionalPart must be a boolean literal.");
-					return false;
-				}
-				Expression->bFractionalPart = ParsedValue;
-			}
-
-			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 2;
+			ApplyValue(bParsedValue);
 			return true;
-		}
+		};
 
-		if (FunctionName.Equals(TEXT("WorldPosition"), ESearchCase::IgnoreCase))
+		auto HandleOptionalTextLiteralArgument = [&](const TCHAR* ArgumentName, FString& TargetValue) -> bool
 		{
-			auto* Expression = Cast<UMaterialExpressionWorldPosition>(
-				CreateExpression(UMaterialExpressionWorldPosition::StaticClass(), 600, ConsumeNodeY()));
-			if (!Expression)
+			const FCodeCallArgument* Argument = FindNamedArgument(Arguments, ArgumentName);
+			if (!Argument)
 			{
-				OutError = TEXT("Failed to create UE.WorldPosition.");
+				return true;
+			}
+
+			if (!TryExtractTextLiteral(Argument->Expression, TargetValue))
+			{
+				OutError = FString::Printf(TEXT("UE.%s %s must be a text value."), *FunctionName, ArgumentName);
 				return false;
 			}
 
-			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 3;
 			return true;
-		}
+		};
 
-		if (FunctionName.Equals(TEXT("ObjectPositionWS"), ESearchCase::IgnoreCase))
+		auto HandleOptionalInputArgument = [&](const TCHAR* ArgumentName, FExpressionInput& TargetInput) -> bool
 		{
-			auto* Expression = Cast<UMaterialExpressionObjectPositionWS>(
-				CreateExpression(UMaterialExpressionObjectPositionWS::StaticClass(), 600, ConsumeNodeY()));
-			if (!Expression)
+			const FCodeCallArgument* Argument = FindNamedArgument(Arguments, ArgumentName);
+			if (!Argument)
 			{
-				OutError = TEXT("Failed to create UE.ObjectPositionWS.");
+				return true;
+			}
+
+			FCodeValue InputValue;
+			if (!EvaluateExpression(Argument->Expression, InputValue, OutError))
+			{
 				return false;
 			}
 
-			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 3;
+			ConnectCodeValueToInput(TargetInput, InputValue);
 			return true;
-		}
+		};
 
-		if (FunctionName.Equals(TEXT("CameraVectorWS"), ESearchCase::IgnoreCase))
+		auto HandleRequiredInputArgument = [&](const TCHAR* ArgumentName, const int32 PositionalIndex, FExpressionInput& TargetInput) -> bool
 		{
-			auto* Expression = Cast<UMaterialExpressionCameraVectorWS>(
-				CreateExpression(UMaterialExpressionCameraVectorWS::StaticClass(), 600, ConsumeNodeY()));
-			if (!Expression)
+			const FCodeCallArgument* Argument = FindNamedArgument(Arguments, ArgumentName);
+			if (!Argument)
 			{
-				OutError = TEXT("Failed to create UE.CameraVectorWS.");
-				return false;
+				Argument = FindPositionalArgument(Arguments, PositionalIndex);
 			}
-
-			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 3;
-			return true;
-		}
-
-		if (FunctionName.Equals(TEXT("ScreenPosition"), ESearchCase::IgnoreCase))
-		{
-			auto* Expression = Cast<UMaterialExpressionScreenPosition>(
-				CreateExpression(UMaterialExpressionScreenPosition::StaticClass(), 600, ConsumeNodeY()));
-			if (!Expression)
+			if (!Argument)
 			{
-				OutError = TEXT("Failed to create UE.ScreenPosition.");
-				return false;
-			}
-
-			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 4;
-			return true;
-		}
-
-		if (FunctionName.Equals(TEXT("VertexColor"), ESearchCase::IgnoreCase))
-		{
-			auto* Expression = Cast<UMaterialExpressionVertexColor>(
-				CreateExpression(UMaterialExpressionVertexColor::StaticClass(), 600, ConsumeNodeY()));
-			if (!Expression)
-			{
-				OutError = TEXT("Failed to create UE.VertexColor.");
-				return false;
-			}
-
-			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 4;
-			return true;
-		}
-
-		if (FunctionName.Equals(TEXT("TransformVector"), ESearchCase::IgnoreCase))
-		{
-			const FCodeCallArgument* InputArgument = FindNamedArgument(Arguments, TEXT("Input"));
-			if (!InputArgument)
-			{
-				InputArgument = FindPositionalArgument(Arguments, 0);
-			}
-			if (!InputArgument)
-			{
-				OutError = TEXT("UE.TransformVector requires an input value.");
+				OutError = FString::Printf(TEXT("UE.%s requires parameter: %s"), *FunctionName, ArgumentName);
 				return false;
 			}
 
 			FCodeValue InputValue;
-			if (!EvaluateExpression(InputArgument->Expression, InputValue, OutError))
+			if (!EvaluateExpression(Argument->Expression, InputValue, OutError))
 			{
 				return false;
 			}
 
-			auto* Expression = Cast<UMaterialExpressionTransform>(
-				CreateExpression(UMaterialExpressionTransform::StaticClass(), 600, ConsumeNodeY()));
-			if (!Expression)
-			{
-				OutError = TEXT("Failed to create UE.TransformVector.");
-				return false;
-			}
-
-			ConnectCodeValueToInput(Expression->Input, InputValue);
-
-			FString SourceText = TEXT("Tangent");
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Source")))
-			{
-				if (!TryExtractTextLiteral(Argument->Expression, SourceText))
-				{
-					OutError = TEXT("UE.TransformVector Source must be a text value.");
-					return false;
-				}
-			}
-
-			FString DestinationText = TEXT("World");
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Destination")))
-			{
-				if (!TryExtractTextLiteral(Argument->Expression, DestinationText))
-				{
-					OutError = TEXT("UE.TransformVector Destination must be a text value.");
-					return false;
-				}
-			}
-
-			EMaterialVectorCoordTransformSource SourceBasis = TRANSFORMSOURCE_Tangent;
-			EMaterialVectorCoordTransform DestinationBasis = TRANSFORM_World;
-			if (!TryResolveVectorTransformBasis(SourceText, SourceBasis)
-				|| !TryResolveVectorTransformTarget(DestinationText, DestinationBasis))
-			{
-				OutError = TEXT("UE.TransformVector Source/Destination is invalid.");
-				return false;
-			}
-			Expression->TransformSourceType = SourceBasis;
-			Expression->TransformType = DestinationBasis;
-
-			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 3;
+			ConnectCodeValueToInput(TargetInput, InputValue);
 			return true;
-		}
+		};
 
-		if (FunctionName.Equals(TEXT("TransformPosition"), ESearchCase::IgnoreCase))
+		struct FUEBuiltinDescriptor
 		{
-			const FCodeCallArgument* InputArgument = FindNamedArgument(Arguments, TEXT("Input"));
-			if (!InputArgument)
-			{
-				InputArgument = FindPositionalArgument(Arguments, 0);
-			}
-			if (!InputArgument)
-			{
-				OutError = TEXT("UE.TransformPosition requires an input value.");
-				return false;
-			}
+			const TCHAR* Name = TEXT("");
+			TSubclassOf<UMaterialExpression> ExpressionClass;
+			int32 OutputComponents = 1;
+			TFunction<bool(UMaterialExpression*, FString&)> Configure;
+		};
 
-			FCodeValue InputValue;
-			if (!EvaluateExpression(InputArgument->Expression, InputValue, OutError))
-			{
-				return false;
-			}
-
-			auto* Expression = Cast<UMaterialExpressionTransformPosition>(
-				CreateExpression(UMaterialExpressionTransformPosition::StaticClass(), 600, ConsumeNodeY()));
+		auto TryEvaluateRegisteredBuiltin = [&](const FUEBuiltinDescriptor& Builtin) -> bool
+		{
+			UMaterialExpression* Expression = CreateExpression(Builtin.ExpressionClass, 600, ConsumeNodeY());
 			if (!Expression)
 			{
-				OutError = TEXT("Failed to create UE.TransformPosition.");
+				OutError = FString::Printf(TEXT("Failed to create UE.%s."), Builtin.Name);
 				return false;
 			}
 
-			ConnectCodeValueToInput(Expression->Input, InputValue);
-
-			FString SourceText = TEXT("Local");
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Source")))
+			if (Builtin.Configure && !Builtin.Configure(Expression, OutError))
 			{
-				if (!TryExtractTextLiteral(Argument->Expression, SourceText))
-				{
-					OutError = TEXT("UE.TransformPosition Source must be a text value.");
-					return false;
-				}
-			}
-
-			FString DestinationText = TEXT("World");
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Destination")))
-			{
-				if (!TryExtractTextLiteral(Argument->Expression, DestinationText))
-				{
-					OutError = TEXT("UE.TransformPosition Destination must be a text value.");
-					return false;
-				}
-			}
-
-			EMaterialPositionTransformSource SourceBasis = TRANSFORMPOSSOURCE_Local;
-			EMaterialPositionTransformSource DestinationBasis = TRANSFORMPOSSOURCE_World;
-			if (!TryResolvePositionTransformBasis(SourceText, SourceBasis)
-				|| !TryResolvePositionTransformBasis(DestinationText, DestinationBasis))
-			{
-				OutError = TEXT("UE.TransformPosition Source/Destination is invalid.");
 				return false;
-			}
-			Expression->TransformSourceType = SourceBasis;
-			Expression->TransformType = DestinationBasis;
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("PeriodicWorldTileSize")))
-			{
-				FCodeValue TileSizeValue;
-				if (!EvaluateExpression(Argument->Expression, TileSizeValue, OutError))
-				{
-					return false;
-				}
-				ConnectCodeValueToInput(Expression->PeriodicWorldTileSize, TileSizeValue);
-			}
-
-			if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("FirstPersonInterpolationAlpha")))
-			{
-				FCodeValue AlphaValue;
-				if (!EvaluateExpression(Argument->Expression, AlphaValue, OutError))
-				{
-					return false;
-				}
-				ConnectCodeValueToInput(Expression->FirstPersonInterpolationAlpha, AlphaValue);
 			}
 
 			OutValue.Expression = Expression;
-			OutValue.ComponentCount = 3;
+			OutValue.OutputIndex = 0;
+			OutValue.ComponentCount = Builtin.OutputComponents;
+			OutValue.bIsTextureObject = false;
 			return true;
+		};
+
+		// Register explicit DreamShader UE.* sugar here. Anything not listed falls back
+		// to the reflected generic MaterialExpression path below.
+		TArray<FUEBuiltinDescriptor> Builtins;
+		Builtins.Reserve(10);
+
+		Builtins.Add({
+			TEXT("TexCoord"),
+			UMaterialExpressionTextureCoordinate::StaticClass(),
+			2,
+			[&](UMaterialExpression* RawExpression, FString&) -> bool
+			{
+				auto* Expression = CastChecked<UMaterialExpressionTextureCoordinate>(RawExpression);
+				return HandleIntegerLiteralArgument(TEXT("Index"), Expression->CoordinateIndex)
+					&& HandleScalarLiteralArgument(TEXT("UTiling"), Expression->UTiling)
+					&& HandleScalarLiteralArgument(TEXT("VTiling"), Expression->VTiling)
+					&& HandleBooleanLiteralArgument(TEXT("UnMirrorU"), [&](const bool bValue) { Expression->UnMirrorU = bValue ? 1U : 0U; })
+					&& HandleBooleanLiteralArgument(TEXT("UnMirrorV"), [&](const bool bValue) { Expression->UnMirrorV = bValue ? 1U : 0U; });
+			}
+		});
+
+		Builtins.Add({
+			TEXT("Time"),
+			UMaterialExpressionTime::StaticClass(),
+			1,
+			[&](UMaterialExpression* RawExpression, FString& Error) -> bool
+			{
+				auto* Expression = CastChecked<UMaterialExpressionTime>(RawExpression);
+				if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Period")))
+				{
+					double Period = 0.0;
+					if (!TryExtractScalarLiteral(Argument->Expression, Period))
+					{
+						Error = FString::Printf(TEXT("UE.%s Period must be a numeric literal."), *FunctionName);
+						return false;
+					}
+
+					Expression->bOverride_Period = true;
+					Expression->Period = static_cast<float>(Period);
+				}
+
+				return HandleBooleanLiteralArgument(TEXT("IgnorePause"), [&](const bool bValue) { Expression->bIgnorePause = bValue ? 1U : 0U; });
+			}
+		});
+
+		Builtins.Add({
+			TEXT("Panner"),
+			UMaterialExpressionPanner::StaticClass(),
+			2,
+			[&](UMaterialExpression* RawExpression, FString&) -> bool
+			{
+				auto* Expression = CastChecked<UMaterialExpressionPanner>(RawExpression);
+				return HandleOptionalInputArgument(TEXT("Coordinate"), Expression->Coordinate)
+					&& HandleOptionalInputArgument(TEXT("Time"), Expression->Time)
+					&& HandleOptionalInputArgument(TEXT("Speed"), Expression->Speed)
+					&& HandleScalarLiteralArgument(TEXT("SpeedX"), Expression->SpeedX)
+					&& HandleScalarLiteralArgument(TEXT("SpeedY"), Expression->SpeedY)
+					&& HandleBooleanLiteralArgument(TEXT("FractionalPart"), [&](const bool bValue) { Expression->bFractionalPart = bValue ? 1U : 0U; });
+			}
+		});
+
+		Builtins.Add({ TEXT("WorldPosition"), UMaterialExpressionWorldPosition::StaticClass(), 3, {} });
+		Builtins.Add({ TEXT("ObjectPositionWS"), UMaterialExpressionObjectPositionWS::StaticClass(), 3, {} });
+		Builtins.Add({ TEXT("CameraVectorWS"), UMaterialExpressionCameraVectorWS::StaticClass(), 3, {} });
+		Builtins.Add({ TEXT("ScreenPosition"), UMaterialExpressionScreenPosition::StaticClass(), 4, {} });
+		Builtins.Add({ TEXT("VertexColor"), UMaterialExpressionVertexColor::StaticClass(), 4, {} });
+
+		Builtins.Add({
+			TEXT("TransformVector"),
+			UMaterialExpressionTransform::StaticClass(),
+			3,
+			[&](UMaterialExpression* RawExpression, FString& Error) -> bool
+			{
+				auto* Expression = CastChecked<UMaterialExpressionTransform>(RawExpression);
+				if (!HandleRequiredInputArgument(TEXT("Input"), 0, Expression->Input))
+				{
+					return false;
+				}
+
+				FString SourceText = TEXT("Tangent");
+				if (!HandleOptionalTextLiteralArgument(TEXT("Source"), SourceText))
+				{
+					return false;
+				}
+
+				FString DestinationText = TEXT("World");
+				if (!HandleOptionalTextLiteralArgument(TEXT("Destination"), DestinationText))
+				{
+					return false;
+				}
+
+				EMaterialVectorCoordTransformSource SourceBasis = TRANSFORMSOURCE_Tangent;
+				EMaterialVectorCoordTransform DestinationBasis = TRANSFORM_World;
+				if (!TryResolveVectorTransformBasis(SourceText, SourceBasis)
+					|| !TryResolveVectorTransformTarget(DestinationText, DestinationBasis))
+				{
+					Error = TEXT("UE.TransformVector Source/Destination is invalid.");
+					return false;
+				}
+
+				Expression->TransformSourceType = SourceBasis;
+				Expression->TransformType = DestinationBasis;
+				return true;
+			}
+		});
+
+		Builtins.Add({
+			TEXT("TransformPosition"),
+			UMaterialExpressionTransformPosition::StaticClass(),
+			3,
+			[&](UMaterialExpression* RawExpression, FString& Error) -> bool
+			{
+				auto* Expression = CastChecked<UMaterialExpressionTransformPosition>(RawExpression);
+				if (!HandleRequiredInputArgument(TEXT("Input"), 0, Expression->Input))
+				{
+					return false;
+				}
+
+				FString SourceText = TEXT("Local");
+				if (!HandleOptionalTextLiteralArgument(TEXT("Source"), SourceText))
+				{
+					return false;
+				}
+
+				FString DestinationText = TEXT("World");
+				if (!HandleOptionalTextLiteralArgument(TEXT("Destination"), DestinationText))
+				{
+					return false;
+				}
+
+				EMaterialPositionTransformSource SourceBasis = TRANSFORMPOSSOURCE_Local;
+				EMaterialPositionTransformSource DestinationBasis = TRANSFORMPOSSOURCE_World;
+				if (!TryResolvePositionTransformBasis(SourceText, SourceBasis)
+					|| !TryResolvePositionTransformBasis(DestinationText, DestinationBasis))
+				{
+					Error = TEXT("UE.TransformPosition Source/Destination is invalid.");
+					return false;
+				}
+
+				Expression->TransformSourceType = SourceBasis;
+				Expression->TransformType = DestinationBasis;
+
+				if (!HandleOptionalInputArgument(TEXT("PeriodicWorldTileSize"), Expression->PeriodicWorldTileSize))
+				{
+					return false;
+				}
+
+				return HandleOptionalInputArgument(TEXT("FirstPersonInterpolationAlpha"), Expression->FirstPersonInterpolationAlpha);
+			}
+		});
+
+		for (const FUEBuiltinDescriptor& Builtin : Builtins)
+		{
+			if (FunctionName.Equals(Builtin.Name, ESearchCase::IgnoreCase))
+			{
+				return TryEvaluateRegisteredBuiltin(Builtin);
+			}
 		}
 
 		for (const FCodeCallArgument& Argument : Arguments)
@@ -2814,8 +2957,7 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		auto* Expression = Cast<UMaterialExpression>(
-			CreateExpression(ExpressionClass, 600, ConsumeNodeY()));
+		auto* Expression = Cast<UMaterialExpression>(CreateExpression(ExpressionClass, 600, ConsumeNodeY()));
 		if (!Expression)
 		{
 			OutError = FString::Printf(TEXT("UE.%s failed to create '%s'."), *FunctionName, *ExpressionClass->GetName());
