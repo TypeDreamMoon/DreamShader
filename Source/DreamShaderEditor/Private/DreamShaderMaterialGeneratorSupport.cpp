@@ -3,6 +3,8 @@
 #include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
 
+#include "Misc/Crc.h"
+
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Factories/MaterialFunctionFactoryNew.h"
 #include "Factories/MaterialFactoryNew.h"
@@ -843,6 +845,31 @@ namespace UE::DreamShader::Editor::Private
 			GetSourcePathHash(SourceFilePath));
 	}
 
+	static FString RewriteDreamShaderFunctionReferences(
+		const FString& Source,
+		const TMap<FString, FString>& GeneratedFunctionNamesByDreamName)
+	{
+		FString Result = Source;
+		TArray<FString> FunctionNames;
+		GeneratedFunctionNamesByDreamName.GetKeys(FunctionNames);
+		FunctionNames.Sort([](const FString& Left, const FString& Right)
+		{
+			return Left.Len() > Right.Len();
+		});
+
+		for (const FString& FunctionName : FunctionNames)
+		{
+			const FString* GeneratedFunctionName = GeneratedFunctionNamesByDreamName.Find(FunctionName);
+			if (GeneratedFunctionName && !GeneratedFunctionName->Equals(FunctionName, ESearchCase::CaseSensitive))
+			{
+				const FString ReplacementName = *GeneratedFunctionName;
+				Result.ReplaceInline(*FunctionName, *ReplacementName, ESearchCase::CaseSensitive);
+			}
+		}
+
+		return Result;
+	}
+
 	static bool BuildFunctionIncludeSource(
 		const FString& SourceFilePath,
 		const FTextShaderDefinition& Definition,
@@ -858,6 +885,11 @@ namespace UE::DreamShader::Editor::Private
 
 		TSet<FString> SeenFunctionNames;
 		TSet<FString> SeenGeneratedFunctionNames;
+		TMap<FString, FString> GeneratedFunctionNamesByDreamName;
+		for (const FTextShaderFunctionDefinition& Function : Definition.Functions)
+		{
+			GeneratedFunctionNamesByDreamName.Add(Function.Name, BuildGeneratedFunctionSymbolName(Function));
+		}
 
 		for (const FTextShaderFunctionDefinition& Function : Definition.Functions)
 		{
@@ -911,8 +943,9 @@ namespace UE::DreamShader::Editor::Private
 				OutSource += FString::Printf(TEXT("\t%s = (%s)0;\n"), *Output.Name, *Output.Type);
 			}
 
-			OutSource += Function.HLSL;
-			if (!Function.HLSL.EndsWith(TEXT("\n")))
+			const FString RewrittenFunctionHLSL = RewriteDreamShaderFunctionReferences(Function.HLSL, GeneratedFunctionNamesByDreamName);
+			OutSource += RewrittenFunctionHLSL;
+			if (!RewrittenFunctionHLSL.EndsWith(TEXT("\n")))
 			{
 				OutSource += TEXT("\n");
 			}
@@ -2293,7 +2326,53 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
+	FString BuildSourceHash(const FString& SourceText)
+	{
+		return FString::Printf(TEXT("%08x"), FCrc::StrCrc32(*SourceText));
+	}
+
+	static FString GetSourceMetadataValue(UObject* Asset, const TCHAR* Key)
+	{
+		if (!Asset)
+		{
+			return FString();
+		}
+
+		UPackage* Package = Asset->GetOutermost();
+		if (!Package)
+		{
+			return FString();
+		}
+
+		return Package->GetMetaData().GetValue(Asset, Key);
+	}
+
+	bool IsGeneratedAssetSourceCurrent(UObject* Asset, const FString& SourceFilePath, const FString& SourceHash)
+	{
+		if (!Asset || SourceHash.IsEmpty())
+		{
+			return false;
+		}
+
+		const FString ExistingSourceFileRaw = GetSourceMetadataValue(Asset, TEXT("DreamShader.SourceFile"));
+		if (ExistingSourceFileRaw.IsEmpty())
+		{
+			return false;
+		}
+
+		const FString ExistingSourceFile = UE::DreamShader::NormalizeSourceFilePath(ExistingSourceFileRaw);
+		const FString ExistingSourceHash = GetSourceMetadataValue(Asset, TEXT("DreamShader.SourceHash"));
+
+		return ExistingSourceFile.Equals(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath), ESearchCase::IgnoreCase)
+			&& ExistingSourceHash.Equals(SourceHash, ESearchCase::CaseSensitive);
+	}
+
 	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath)
+	{
+		ApplySourceMetadata(Asset, SourceFilePath, FString());
+	}
+
+	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath, const FString& SourceHash)
 	{
 		if (!Asset)
 		{
@@ -2308,6 +2387,11 @@ namespace UE::DreamShader::Editor::Private
 
 		FMetaData& MetaData = Package->GetMetaData();
 		MetaData.SetValue(Asset, TEXT("DreamShader.SourceFile"), *UE::DreamShader::NormalizeSourceFilePath(SourceFilePath));
+		if (!SourceHash.IsEmpty())
+		{
+			MetaData.SetValue(Asset, TEXT("DreamShader.SourceHash"), *SourceHash);
+			MetaData.SetValue(Asset, TEXT("DreamShader.GeneratedAtUtc"), *FDateTime::UtcNow().ToIso8601());
+		}
 	}
 
 	bool SaveAssetPackage(UObject* Asset, FString& OutError)

@@ -104,7 +104,37 @@ Shader(Name="DreamMaterials/M_TextureBuiltin")
 }
 ```
 
-## 5. `Function` 显式 out 调用
+## 5. 使用内置 Noise 库
+
+```c
+import "Builtin/Noise.dsh";
+
+Shader(Name="DreamMaterials/M_NoiseBuiltin")
+{
+    Properties = {
+        float Scale = 8.0;
+    }
+
+    Settings = {
+        Domain = "Surface";
+        ShadingModel = "Unlit";
+    }
+
+    Outputs = {
+        vec3 Res;
+        EmissiveColor = Res;
+    }
+
+    Code = {
+        vec2 uv = UE.TexCoord(Index=0) * Scale;
+        float n;
+        Noise::FBM2D(uv, 5.0, n);
+        Res = vec3(n, n, n);
+    }
+}
+```
+
+## 6. `Function` 显式 out 调用
 
 ### 定义
 
@@ -133,7 +163,7 @@ Code = {
 }
 ```
 
-## 6. 变量声明与 brace initializer
+## 7. 变量声明与 brace initializer
 
 ```c
 Code = {
@@ -146,7 +176,7 @@ Code = {
 }
 ```
 
-## 7. 纹理默认值示例
+## 8. 纹理默认值示例
 
 ```c
 Properties = {
@@ -156,7 +186,7 @@ Properties = {
 }
 ```
 
-## 8. 使用 `UE.*` 构图
+## 9. 使用 `UE.*` 构图
 
 ```c
 Code = {
@@ -171,7 +201,7 @@ Code = {
 }
 ```
 
-## 9. `ShaderFunction` 示例
+## 10. `ShaderFunction` 示例
 
 ```c
 ShaderFunction(Name="Functions/F_Tint")
@@ -197,7 +227,7 @@ ShaderFunction(Name="Functions/F_Tint")
 }
 ```
 
-## 10. 当前仓库可直接参考
+## 11. 当前仓库可直接参考
 
 - `DShader/Sample.dsm`
 - `DShader/Shared/common.dsh`

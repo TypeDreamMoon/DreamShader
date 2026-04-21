@@ -29,6 +29,7 @@ DreamShaderLang 的 VSCode 扩展位于：
 - 材质输出名
 - `Path(...)` helper
 - `Builtin/*.dsh` import 路径
+- `DShader/Packages` package import 路径
 
 ### 作用域感知补全
 
@@ -43,6 +44,12 @@ DreamShaderLang 的 VSCode 扩展位于：
 - `import` 跳转到 `.dsh`
 - `Function` / `Namespace::Function` 跳转到定义
 - 项目头文件和插件内置头文件都会参与解析
+
+### Signature Help / Hover / References
+
+- 输入 `Texture::Sample2DRGB(` 会提示参数签名
+- 鼠标悬停 `Function`、`Property`、`Output`、`UE.TexCoord`、局部变量会显示类型或来源
+- `Find References` 可查找 `Function` / `Namespace::Function` 在工作区中的引用
 
 ### 格式化
 
@@ -73,11 +80,24 @@ DreamShaderLang 的 VSCode 扩展位于：
 
 - `DreamShaderLang: Recompile Current Source`
 - `DreamShaderLang: Recompile All DSM`
+- `DreamShaderLang: Install Package from GitHub`
+- `DreamShaderLang: Browse Package Store`：打开 VSCode 风格 Webview 商店面板
+- `DreamShaderLang: Update Installed Packages`
+- `DreamShaderLang: Remove Installed Package`
+- `DreamShaderLang: Open Packages Folder`
+- `DreamShaderLang: Add Package Store Index Source`
+- `DreamShaderLang: Remove Package Store Index Source`
+- `DreamShaderLang: Create Package Step by Step`
+- `DreamShaderLang: Create DreamShader Material`
+- `DreamShaderLang: Create DreamShader Header`
+- `DreamShaderLang: Create DreamShader Texture Sample`
+- `DreamShaderLang: Create DreamShader Noise Material`
 
 说明：
 
 - 对 `.dsh` 执行当前文件重编时，会自动扩展成相关 `.dsm` 刷新
 - Unreal 侧的错误会尽量回灌到 VSCode
+- Package 命令会把 GitHub 仓库安装到 `DShader/Packages`，并维护 `DShader/dreamshader.lock.json`
 
 ## 3. 安装
 
@@ -107,10 +127,21 @@ code --install-extension .\dreamshaderlang-language-support-1.0.0.vsix
 "dreamshader.projectRoot": "I:/UnrealProject_Moon/Moon_Dev"
 ```
 
+Package store 配置：
+
+```json
+"dreamshader.packageStoreIndexUrls": [
+    "https://raw.githubusercontent.com/TypeDreamMoon/dreamshader-package-index/main/packages.json"
+],
+"dreamshader.enableGitHubPackageSearch": true
+```
+
+`dreamshader.packageStoreIndexUrl` 旧单源配置仍兼容，但推荐使用 `dreamshader.packageStoreIndexUrls` 列表。
+
 ## 5. 当前边界
 
 - 本地诊断已经够开发使用，但还不是 clangd 级别的完整编译器
-- 某些 Unreal 侧错误仍然可能只有文件级/语句级信息，而不是精确列定位
+- Unreal Parser 错误会尽量通过 source map 精确到真实 `.dsm/.dsh` 文件行列；材质编译器内部错误仍可能只有 Unreal 原始信息
 - `Code` 语言服务主要面向图 DSL，不等同于完整 HLSL 语言服务器
 
 ## 6. 推荐使用方式
@@ -118,5 +149,7 @@ code --install-extension .\dreamshaderlang-language-support-1.0.0.vsix
 - `.dsm` 里写主逻辑
 - `.dsh` 里写共用 `Function` 或 `Namespace`
 - 常用共用能力可直接 `import "Builtin/Texture.dsh";`
+- 也可以直接导入 `Builtin/Math.dsh`、`Builtin/Color.dsh`、`Builtin/UV.dsh`、`Builtin/Noise.dsh`、`Builtin/SDF.dsh`、`Builtin/Normal.dsh`、`Builtin/PBR.dsh`、`Builtin/PostProcess.dsh`
+- 第三方 package 可直接 `import "@scope/package/Library/File.dsh";`
 - 尽量让 `Function` 名、参数名、输出名清晰稳定
 - 写 `Texture2D` 默认值时直接用 `Path(...)`，这样扩展和 Unreal 两侧都能识别

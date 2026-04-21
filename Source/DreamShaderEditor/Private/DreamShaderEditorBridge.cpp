@@ -2,6 +2,7 @@
 
 #include "DreamShaderMaterialGenerator.h"
 #include "DreamShaderModule.h"
+#include "DreamShaderSettings.h"
 
 #include "Async/Async.h"
 #include "DirectoryWatcherModule.h"
@@ -29,6 +30,210 @@ namespace UE::DreamShader::Editor::Private
 {
 	namespace
 	{
+		bool IsPathUnderDirectory(const FString& InPath, const FString& InDirectory)
+		{
+			const FString Path = UE::DreamShader::NormalizeSourceFilePath(InPath);
+			FString Directory = UE::DreamShader::NormalizeSourceFilePath(InDirectory);
+			Directory.RemoveFromEnd(TEXT("/"));
+
+			return Path.Equals(Directory, ESearchCase::IgnoreCase)
+				|| Path.StartsWith(Directory + TEXT("/"), ESearchCase::IgnoreCase);
+		}
+
+		bool IsPackageMaterialFile(const FString& InPath)
+		{
+			return UE::DreamShader::IsDreamShaderMaterialFile(InPath)
+				&& IsPathUnderDirectory(InPath, UE::DreamShader::GetPackageShaderDirectory());
+		}
+
+		bool TryExtractImportPathFromLine(const FString& Line, FString& OutPath)
+		{
+			FString TrimmedLine = Line.TrimStartAndEnd();
+			if (TrimmedLine.StartsWith(TEXT("//"))
+				|| !TrimmedLine.StartsWith(TEXT("import"), ESearchCase::CaseSensitive))
+			{
+				return false;
+			}
+
+			TrimmedLine.RightChopInline(6, EAllowShrinking::No);
+			TrimmedLine.TrimStartInline();
+			if (TrimmedLine.Len() < 2 || (TrimmedLine[0] != TCHAR('"') && TrimmedLine[0] != TCHAR('\'')))
+			{
+				return false;
+			}
+
+			const TCHAR Quote = TrimmedLine[0];
+			int32 ClosingQuoteIndex = INDEX_NONE;
+			for (int32 Index = 1; Index < TrimmedLine.Len(); ++Index)
+			{
+				if (TrimmedLine[Index] == Quote)
+				{
+					ClosingQuoteIndex = Index;
+					break;
+				}
+			}
+
+			if (ClosingQuoteIndex == INDEX_NONE)
+			{
+				return false;
+			}
+
+			OutPath = TrimmedLine.Mid(1, ClosingQuoteIndex - 1).TrimStartAndEnd();
+			return !OutPath.IsEmpty();
+		}
+
+		FString NormalizeDreamShaderImportSpecifier(const FString& ImportSpecifier)
+		{
+			FString Normalized = ImportSpecifier.TrimStartAndEnd();
+			Normalized.ReplaceInline(TEXT("\\"), TEXT("/"));
+			while (Normalized.StartsWith(TEXT("./")))
+			{
+				Normalized.RightChopInline(2, EAllowShrinking::No);
+			}
+
+			if (FPaths::GetExtension(Normalized, true).IsEmpty())
+			{
+				Normalized += TEXT(".dsh");
+			}
+
+			return Normalized;
+		}
+
+		bool ResolveDreamShaderImportPath(const FString& CurrentFilePath, const FString& ImportSpecifier, FString& OutResolvedPath)
+		{
+			const FString NormalizedImport = NormalizeDreamShaderImportSpecifier(ImportSpecifier);
+			if (NormalizedImport.IsEmpty())
+			{
+				return false;
+			}
+
+			const TArray<FString> Candidates =
+			{
+				FPaths::Combine(FPaths::GetPath(CurrentFilePath), NormalizedImport),
+				FPaths::Combine(UE::DreamShader::GetSourceShaderDirectory(), NormalizedImport),
+				FPaths::Combine(UE::DreamShader::GetPackageShaderDirectory(), NormalizedImport),
+				FPaths::Combine(UE::DreamShader::GetBuiltinShaderLibraryDirectory(), NormalizedImport)
+			};
+
+			for (const FString& Candidate : Candidates)
+			{
+				const FString NormalizedCandidate = UE::DreamShader::NormalizeSourceFilePath(Candidate);
+				if (IFileManager::Get().FileExists(*NormalizedCandidate))
+				{
+					OutResolvedPath = NormalizedCandidate;
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		void FindProjectMaterialSourceFiles(TArray<FString>& OutSourceFiles)
+		{
+			IFileManager::Get().FindFilesRecursive(
+				OutSourceFiles,
+				*UE::DreamShader::GetSourceShaderDirectory(),
+				TEXT("*.dsm"),
+				true,
+				false,
+				false);
+
+			for (FString& SourceFile : OutSourceFiles)
+			{
+				SourceFile = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
+			}
+
+			OutSourceFiles.RemoveAll([](const FString& SourceFile)
+			{
+				return IsPackageMaterialFile(SourceFile);
+			});
+		}
+
+		void CollectHeaderDependenciesRecursive(
+			const FString& SourceFilePath,
+			TSet<FString>& OutHeaders,
+			TSet<FString>& InOutVisitedFiles)
+		{
+			const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+			if (InOutVisitedFiles.Contains(NormalizedPath))
+			{
+				return;
+			}
+			InOutVisitedFiles.Add(NormalizedPath);
+
+			FString SourceText;
+			if (!FFileHelper::LoadFileToString(SourceText, *NormalizedPath))
+			{
+				return;
+			}
+
+			TArray<FString> Lines;
+			SourceText.ParseIntoArrayLines(Lines, false);
+			for (const FString& Line : Lines)
+			{
+				FString ImportPath;
+				if (!TryExtractImportPathFromLine(Line, ImportPath))
+				{
+					continue;
+				}
+
+				FString ResolvedImportPath;
+				if (!ResolveDreamShaderImportPath(NormalizedPath, ImportPath, ResolvedImportPath))
+				{
+					continue;
+				}
+
+				if (UE::DreamShader::IsDreamShaderHeaderFile(ResolvedImportPath))
+				{
+					OutHeaders.Add(ResolvedImportPath);
+				}
+
+				CollectHeaderDependenciesRecursive(ResolvedImportPath, OutHeaders, InOutVisitedFiles);
+			}
+		}
+
+		bool TryParseErrorLocation(
+			const FString& Line,
+			FString& OutFilePath,
+			int32& OutLine,
+			int32& OutColumn,
+			FString& OutMessage)
+		{
+			const int32 CloseMarkerIndex = Line.Find(TEXT("): "));
+			if (CloseMarkerIndex == INDEX_NONE)
+			{
+				return false;
+			}
+
+			const int32 OpenMarkerIndex = Line.Find(TEXT("("), ESearchCase::CaseSensitive, ESearchDir::FromEnd, CloseMarkerIndex);
+			if (OpenMarkerIndex == INDEX_NONE || OpenMarkerIndex >= CloseMarkerIndex)
+			{
+				return false;
+			}
+
+			const FString LocationText = Line.Mid(OpenMarkerIndex + 1, CloseMarkerIndex - OpenMarkerIndex - 1);
+			FString LineText;
+			FString ColumnText;
+			if (!LocationText.Split(TEXT(","), &LineText, &ColumnText))
+			{
+				return false;
+			}
+
+			LineText.TrimStartAndEndInline();
+			ColumnText.TrimStartAndEndInline();
+			if (!LineText.IsNumeric() || !ColumnText.IsNumeric())
+			{
+				return false;
+			}
+
+			OutLine = FMath::Max(1, FCString::Atoi(*LineText));
+			OutColumn = FMath::Max(1, FCString::Atoi(*ColumnText));
+
+			OutFilePath = UE::DreamShader::NormalizeSourceFilePath(Line.Left(OpenMarkerIndex));
+			OutMessage = Line.Mid(CloseMarkerIndex + 3).TrimStartAndEnd();
+			return !OutFilePath.IsEmpty() && !OutMessage.IsEmpty();
+		}
+
 		void AddDiagnosticJson(TArray<TSharedPtr<FJsonValue>>& OutDiagnostics, const FDreamShaderEditorBridge::FDiagnosticRecord& Diagnostic)
 		{
 			TSharedRef<FJsonObject> DiagnosticObject = MakeShared<FJsonObject>();
@@ -138,13 +343,12 @@ namespace UE::DreamShader::Editor::Private
 	void FDreamShaderEditorBridge::QueueFullScan()
 	{
 		TArray<FString> SourceFiles;
-		IFileManager::Get().FindFilesRecursive(SourceFiles, *UE::DreamShader::GetSourceShaderDirectory(), TEXT("*.dsm"), true, false, false);
+		FindProjectMaterialSourceFiles(SourceFiles);
+		RebuildDependencyGraph();
 
 		const double Now = FPlatformTime::Seconds();
 		for (FString& SourceFile : SourceFiles)
 		{
-			FPaths::NormalizeFilename(SourceFile);
-			FPaths::MakeStandardFilename(SourceFile);
 			PendingFiles.Add(UE::DreamShader::NormalizeSourceFilePath(SourceFile), Now);
 		}
 	}
@@ -154,11 +358,58 @@ namespace UE::DreamShader::Editor::Private
 		PendingFiles.Add(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath), FPlatformTime::Seconds());
 	}
 
+	void FDreamShaderEditorBridge::QueueDependentMaterialsForHeader(const FString& HeaderFilePath)
+	{
+		const FString NormalizedHeaderPath = UE::DreamShader::NormalizeSourceFilePath(HeaderFilePath);
+		TSet<FString> MaterialsToQueue;
+
+		if (const TSet<FString>* ExistingDependents = HeaderDependentsByFile.Find(NormalizedHeaderPath))
+		{
+			for (const FString& Dependent : *ExistingDependents)
+			{
+				MaterialsToQueue.Add(Dependent);
+			}
+		}
+
+		RebuildDependencyGraph();
+
+		if (const TSet<FString>* RebuiltDependents = HeaderDependentsByFile.Find(NormalizedHeaderPath))
+		{
+			for (const FString& Dependent : *RebuiltDependents)
+			{
+				MaterialsToQueue.Add(Dependent);
+			}
+		}
+
+		const double Now = FPlatformTime::Seconds();
+		for (const FString& MaterialFile : MaterialsToQueue)
+		{
+			PendingFiles.Add(MaterialFile, Now);
+		}
+
+		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+		if (Settings && Settings->bVerboseLogs)
+		{
+			UE_LOG(
+				LogDreamShader,
+				Display,
+				TEXT("DreamShader queued %d dependent .dsm file(s) for header '%s'."),
+				MaterialsToQueue.Num(),
+				*NormalizedHeaderPath);
+		}
+	}
+
 	void FDreamShaderEditorBridge::OnDirectoryChanged(const TArray<FFileChangeData>& FileChanges)
 	{
 		TArray<FFileChangeData> ChangesCopy = FileChanges;
 		AsyncTask(ENamedThreads::GameThread, [this, Changes = MoveTemp(ChangesCopy)]()
 		{
+			const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+			if (Settings && !Settings->bAutoCompileOnSave)
+			{
+				return;
+			}
+
 			for (const FFileChangeData& FileChange : Changes)
 			{
 				if (FileChange.Action == FFileChangeData::FCA_RescanRequired)
@@ -176,10 +427,15 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename))
 					{
-						QueueFullScan();
+						QueueDependentMaterialsForHeader(FileChange.Filename);
+					}
+					else if (IsPackageMaterialFile(FileChange.Filename))
+					{
+						continue;
 					}
 					else
 					{
+						RebuildDependencyGraph();
 						QueueSourceFile(FileChange.Filename);
 					}
 				}
@@ -188,12 +444,17 @@ namespace UE::DreamShader::Editor::Private
 					const FString SourceFile = UE::DreamShader::NormalizeSourceFilePath(FileChange.Filename);
 					if (UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename))
 					{
-						QueueFullScan();
+						QueueDependentMaterialsForHeader(FileChange.Filename);
+					}
+					else if (IsPackageMaterialFile(FileChange.Filename))
+					{
+						continue;
 					}
 					else
 					{
 						PendingFiles.Remove(SourceFile);
-						ClearDiagnostics(SourceFile);
+						ClearDiagnosticsForSourceAndDependencies(SourceFile);
+						RebuildDependencyGraph();
 						UpdateDiagnosticsFile();
 					}
 					UE_LOG(LogDreamShader, Display, TEXT("DreamShader source removed, existing generated assets were left untouched: %s"), *FileChange.Filename);
@@ -259,10 +520,12 @@ namespace UE::DreamShader::Editor::Private
 	void FDreamShaderEditorBridge::ProcessReadyFiles()
 	{
 		const double Now = FPlatformTime::Seconds();
+		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+		const double SaveDebounceSeconds = Settings ? FMath::Clamp(static_cast<double>(Settings->SaveDebounceSeconds), 0.05, 10.0) : 0.25;
 		TArray<FString> ReadyFiles;
 		for (const TPair<FString, double>& PendingFile : PendingFiles)
 		{
-			if (Now - PendingFile.Value >= 0.25)
+			if (Now - PendingFile.Value >= SaveDebounceSeconds)
 			{
 				ReadyFiles.Add(PendingFile.Key);
 			}
@@ -283,13 +546,14 @@ namespace UE::DreamShader::Editor::Private
 		FString Message;
 		if (FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message))
 		{
-			ClearDiagnostics(SourceFilePath);
+			ClearDiagnosticsForSourceAndDependencies(SourceFilePath);
 			UpdateDiagnosticsFile();
 			UE_LOG(LogDreamShader, Display, TEXT("%s"), *Message);
 			return;
 		}
 
 		TArray<FDiagnosticRecord> Diagnostics = BuildErrorDiagnostics(SourceFilePath, Message);
+		ClearDiagnosticsForSourceAndDependencies(SourceFilePath);
 		SetDiagnostics(SourceFilePath, MoveTemp(Diagnostics));
 		UpdateDiagnosticsFile();
 		UE_LOG(LogDreamShader, Error, TEXT("%s"), *Message);
@@ -356,21 +620,59 @@ namespace UE::DreamShader::Editor::Private
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader queued a full .dsm recompile scan."));
 	}
 
+	void FDreamShaderEditorBridge::RebuildDependencyGraph()
+	{
+		HeaderDependentsByFile.Reset();
+
+		TArray<FString> MaterialFiles;
+		FindProjectMaterialSourceFiles(MaterialFiles);
+		for (const FString& MaterialFile : MaterialFiles)
+		{
+			TSet<FString> Dependencies;
+			TSet<FString> VisitedFiles;
+			CollectHeaderDependenciesRecursive(MaterialFile, Dependencies, VisitedFiles);
+			for (const FString& HeaderFile : Dependencies)
+			{
+				HeaderDependentsByFile.FindOrAdd(HeaderFile).Add(MaterialFile);
+			}
+		}
+	}
+
 	void FDreamShaderEditorBridge::SetDiagnostics(const FString& SourceFilePath, TArray<FDiagnosticRecord>&& Diagnostics)
 	{
 		const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		DiagnosticsByFile.Remove(NormalizedPath);
 		if (Diagnostics.IsEmpty())
 		{
-			DiagnosticsByFile.Remove(NormalizedPath);
 			return;
 		}
 
-		DiagnosticsByFile.Add(NormalizedPath, MoveTemp(Diagnostics));
+		for (FDiagnosticRecord& Diagnostic : Diagnostics)
+		{
+			const FString DiagnosticFilePath = Diagnostic.FilePath.IsEmpty()
+				? NormalizedPath
+				: UE::DreamShader::NormalizeSourceFilePath(Diagnostic.FilePath);
+			Diagnostic.FilePath.Reset();
+			DiagnosticsByFile.FindOrAdd(DiagnosticFilePath).Add(MoveTemp(Diagnostic));
+		}
 	}
 
 	void FDreamShaderEditorBridge::ClearDiagnostics(const FString& SourceFilePath)
 	{
 		DiagnosticsByFile.Remove(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath));
+	}
+
+	void FDreamShaderEditorBridge::ClearDiagnosticsForSourceAndDependencies(const FString& SourceFilePath)
+	{
+		ClearDiagnostics(SourceFilePath);
+
+		TSet<FString> Dependencies;
+		TSet<FString> VisitedFiles;
+		CollectHeaderDependenciesRecursive(SourceFilePath, Dependencies, VisitedFiles);
+		for (const FString& HeaderFile : Dependencies)
+		{
+			ClearDiagnostics(HeaderFile);
+		}
 	}
 
 	void FDreamShaderEditorBridge::UpdateDiagnosticsFile() const
@@ -419,6 +721,20 @@ namespace UE::DreamShader::Editor::Private
 		const FString PathPrefix = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath) + TEXT(": ");
 		for (FString Line : Lines)
 		{
+			FString DiagnosticFilePath;
+			int32 DiagnosticLine = 1;
+			int32 DiagnosticColumn = 1;
+			FString DiagnosticMessage;
+			if (TryParseErrorLocation(Line, DiagnosticFilePath, DiagnosticLine, DiagnosticColumn, DiagnosticMessage))
+			{
+				FDiagnosticRecord& Diagnostic = Diagnostics.AddDefaulted_GetRef();
+				Diagnostic.FilePath = DiagnosticFilePath;
+				Diagnostic.Message = DiagnosticMessage;
+				Diagnostic.Line = DiagnosticLine;
+				Diagnostic.Column = DiagnosticColumn;
+				continue;
+			}
+
 			if (Line.StartsWith(PathPrefix))
 			{
 				Line.RightChopInline(PathPrefix.Len(), EAllowShrinking::No);

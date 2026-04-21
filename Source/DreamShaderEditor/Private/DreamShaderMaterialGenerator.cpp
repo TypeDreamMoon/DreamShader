@@ -513,6 +513,14 @@ namespace UE::DreamShader::Editor
 				return true;
 			}
 
+			const FString PackageCandidate = UE::DreamShader::NormalizeSourceFilePath(
+				FPaths::Combine(UE::DreamShader::GetPackageShaderDirectory(), NormalizedImport));
+			if (IFileManager::Get().FileExists(*PackageCandidate))
+			{
+				OutResolvedPath = PackageCandidate;
+				return true;
+			}
+
 			const FString BuiltinCandidate = UE::DreamShader::NormalizeSourceFilePath(
 				FPaths::Combine(UE::DreamShader::GetBuiltinShaderLibraryDirectory(), NormalizedImport));
 			if (IFileManager::Get().FileExists(*BuiltinCandidate))
@@ -526,6 +534,113 @@ namespace UE::DreamShader::Editor
 				*ImportSpecifier,
 				*CurrentFilePath);
 			return false;
+		}
+
+		static bool TryExtractPreparedSourceIndexFromError(const FString& Error, int32& OutIndex)
+		{
+			const FString Needle = TEXT("near index ");
+			const int32 NeedleIndex = Error.Find(Needle, ESearchCase::IgnoreCase);
+			if (NeedleIndex == INDEX_NONE)
+			{
+				return false;
+			}
+
+			int32 Cursor = NeedleIndex + Needle.Len();
+			while (Cursor < Error.Len() && FChar::IsWhitespace(Error[Cursor]))
+			{
+				++Cursor;
+			}
+
+			const int32 NumberStart = Cursor;
+			while (Cursor < Error.Len() && FChar::IsDigit(Error[Cursor]))
+			{
+				++Cursor;
+			}
+
+			if (Cursor == NumberStart)
+			{
+				return false;
+			}
+
+			OutIndex = FCString::Atoi(*Error.Mid(NumberStart, Cursor - NumberStart));
+			return OutIndex >= 0;
+		}
+
+		static bool TryMapPreparedSourceIndexToLocation(
+			const FString& PreparedSource,
+			const int32 SourceIndex,
+			FString& OutFilePath,
+			int32& OutLine,
+			int32& OutColumn)
+		{
+			const FString BeginMarker = TEXT("// Begin DreamShader source: ");
+			const FString EndMarker = TEXT("// End DreamShader source: ");
+
+			FString CurrentFilePath;
+			int32 CurrentSourceLine = 1;
+			int32 Cursor = 0;
+			while (Cursor <= PreparedSource.Len())
+			{
+				int32 LineEnd = PreparedSource.Find(TEXT("\n"), ESearchCase::CaseSensitive, ESearchDir::FromStart, Cursor);
+				if (LineEnd == INDEX_NONE)
+				{
+					LineEnd = PreparedSource.Len();
+				}
+
+				const FString LineText = PreparedSource.Mid(Cursor, LineEnd - Cursor);
+				if (LineText.StartsWith(BeginMarker))
+				{
+					CurrentFilePath = LineText.RightChop(BeginMarker.Len()).TrimStartAndEnd();
+					CurrentSourceLine = 1;
+				}
+				else if (LineText.StartsWith(EndMarker))
+				{
+					CurrentFilePath.Reset();
+					CurrentSourceLine = 1;
+				}
+				else
+				{
+					const int32 LineEndInclusive = LineEnd < PreparedSource.Len() ? LineEnd + 1 : LineEnd;
+					if (SourceIndex >= Cursor && SourceIndex <= LineEndInclusive && !CurrentFilePath.IsEmpty())
+					{
+						OutFilePath = CurrentFilePath;
+						OutLine = FMath::Max(1, CurrentSourceLine);
+						OutColumn = FMath::Max(1, SourceIndex - Cursor + 1);
+						return true;
+					}
+
+					if (!CurrentFilePath.IsEmpty())
+					{
+						++CurrentSourceLine;
+					}
+				}
+
+				if (LineEnd >= PreparedSource.Len())
+				{
+					break;
+				}
+				Cursor = LineEnd + 1;
+			}
+
+			return false;
+		}
+
+		static FString FormatParseErrorWithSourceLocation(
+			const FString& FallbackSourceFilePath,
+			const FString& PreparedSource,
+			const FString& ParseError)
+		{
+			int32 SourceIndex = INDEX_NONE;
+			FString MappedFilePath;
+			int32 MappedLine = 1;
+			int32 MappedColumn = 1;
+			if (TryExtractPreparedSourceIndexFromError(ParseError, SourceIndex)
+				&& TryMapPreparedSourceIndexToLocation(PreparedSource, SourceIndex, MappedFilePath, MappedLine, MappedColumn))
+			{
+				return FString::Printf(TEXT("%s(%d,%d): %s"), *MappedFilePath, MappedLine, MappedColumn, *ParseError);
+			}
+
+			return FString::Printf(TEXT("%s: %s"), *FallbackSourceFilePath, *ParseError);
 		}
 
 		static bool LoadPreparedDreamShaderSourceRecursive(
@@ -777,6 +892,7 @@ namespace UE::DreamShader::Editor
 
 		bool GenerateMaterialFunctionAsset(
 			const FString& SourceFilePath,
+			const FString& SourceHash,
 			const FTextShaderDefinition& RootDefinition,
 			const FTextShaderMaterialFunctionDefinition& FunctionDefinition,
 			FString& OutGeneratedAssetPath,
@@ -798,6 +914,12 @@ namespace UE::DreamShader::Editor
 			if (!Private::CreateOrReuseMaterialFunction(FunctionDefinition, MaterialFunction, OutError) || !MaterialFunction)
 			{
 				return false;
+			}
+
+			if (Private::IsGeneratedAssetSourceCurrent(MaterialFunction, SourceFilePath, SourceHash))
+			{
+				OutGeneratedAssetPath = MaterialFunction->GetPathName();
+				return true;
 			}
 
 			MaterialFunction->Modify();
@@ -1046,7 +1168,7 @@ namespace UE::DreamShader::Editor
 			UMaterialEditingLibrary::UpdateMaterialFunction(MaterialFunction, nullptr);
 			MaterialFunction->PostEditChange();
 			MaterialFunction->MarkPackageDirty();
-			Private::ApplySourceMetadata(MaterialFunction, SourceFilePath);
+			Private::ApplySourceMetadata(MaterialFunction, SourceFilePath, SourceHash);
 
 			FString SaveError;
 			if (!Private::SaveAssetPackage(MaterialFunction, SaveError))
@@ -1081,9 +1203,11 @@ namespace UE::DreamShader::Editor
 		FString ParseError;
 		if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *ParseError);
+			OutMessage = FormatParseErrorWithSourceLocation(SourceFilePath, SourceText, ParseError);
 			return false;
 		}
+
+		const FString SourceHash = Private::BuildSourceHash(SourceText);
 
 		bool bGeneratedHelperInclude = false;
 		if (!Definition.Functions.IsEmpty())
@@ -1103,7 +1227,7 @@ namespace UE::DreamShader::Editor
 		{
 			FString GeneratedAssetPath;
 			FString FunctionError;
-			if (!GenerateMaterialFunctionAsset(SourceFilePath, Definition, FunctionDefinition, GeneratedAssetPath, FunctionError))
+			if (!GenerateMaterialFunctionAsset(SourceFilePath, SourceHash, Definition, FunctionDefinition, GeneratedAssetPath, FunctionError))
 			{
 				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *FunctionError);
 				return false;
@@ -1164,9 +1288,11 @@ namespace UE::DreamShader::Editor
 		FString ParseError;
 		if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *ParseError);
+			OutMessage = FormatParseErrorWithSourceLocation(SourceFilePath, SourceText, ParseError);
 			return false;
 		}
+
+		const FString SourceHash = Private::BuildSourceHash(SourceText);
 
 		if (Definition.Name.IsEmpty())
 		{
@@ -1207,6 +1333,12 @@ namespace UE::DreamShader::Editor
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *MaterialError);
 			return false;
+		}
+
+		if (Private::IsGeneratedAssetSourceCurrent(Material, SourceFilePath, SourceHash))
+		{
+			OutMessage = FString::Printf(TEXT("Skipped %s from %s; source hash is unchanged."), *Material->GetPathName(), *SourceFilePath);
+			return true;
 		}
 
 		Material->Modify();
@@ -1479,7 +1611,7 @@ namespace UE::DreamShader::Editor
 		UMaterialEditingLibrary::RecompileMaterial(Material);
 		Material->PostEditChange();
 		Material->MarkPackageDirty();
-		Private::ApplySourceMetadata(Material, SourceFilePath);
+		Private::ApplySourceMetadata(Material, SourceFilePath, SourceHash);
 
 		FString SaveError;
 		if (!Private::SaveAssetPackage(Material, SaveError))

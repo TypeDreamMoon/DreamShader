@@ -14,6 +14,7 @@ namespace UE::DreamShader::Editor::Private
 	public:
 		struct FDiagnosticRecord
 		{
+			FString FilePath;
 			FString Message;
 			int32 Line = 1;
 			int32 Column = 1;
@@ -32,6 +33,7 @@ namespace UE::DreamShader::Editor::Private
 
 		void QueueFullScan();
 		void QueueSourceFile(const FString& SourceFilePath);
+		void QueueDependentMaterialsForHeader(const FString& HeaderFilePath);
 		void OnDirectoryChanged(const TArray<FFileChangeData>& FileChanges);
 		bool Tick(float DeltaSeconds);
 		void ProcessRequestFiles();
@@ -40,14 +42,17 @@ namespace UE::DreamShader::Editor::Private
 		void OnMaterialCompilationFinished(UMaterialInterface* MaterialInterface);
 		void RegisterMenus();
 		void RequestRecompileAll();
+		void RebuildDependencyGraph();
 		void SetDiagnostics(const FString& SourceFilePath, TArray<FDiagnosticRecord>&& Diagnostics);
 		void ClearDiagnostics(const FString& SourceFilePath);
+		void ClearDiagnosticsForSourceAndDependencies(const FString& SourceFilePath);
 		void UpdateDiagnosticsFile() const;
 		TArray<FDiagnosticRecord> BuildErrorDiagnostics(const FString& SourceFilePath, const FString& ErrorMessage) const;
 
 	private:
 		TMap<FString, double> PendingFiles;
 		TMap<FString, TArray<FDiagnosticRecord>> DiagnosticsByFile;
+		TMap<FString, TSet<FString>> HeaderDependentsByFile;
 		FDelegateHandle DirectoryWatcherHandle;
 		FTSTicker::FDelegateHandle TickerHandle;
 		FDelegateHandle MaterialCompilationFinishedHandle;

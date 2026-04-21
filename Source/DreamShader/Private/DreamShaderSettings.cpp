@@ -33,6 +33,10 @@ UDreamShaderSettings::UDreamShaderSettings()
 {
 	using namespace UE::DreamShader::Private;
 
+	SourceDirectory.Path = TEXT("DShader");
+	BuiltinLibraryDirectory.Path = TEXT("Plugins/DreamShader/Library");
+	GeneratedShaderDirectory.Path = TEXT("Intermediate/DreamShader/GeneratedShaders");
+
 	AddDefaultShadingModelMapping(ShadingModelMappings, TEXT("Unlit"), MSM_Unlit);
 	AddDefaultShadingModelMapping(ShadingModelMappings, TEXT("DefaultLit"), MSM_DefaultLit);
 	AddDefaultShadingModelMapping(ShadingModelMappings, TEXT("Default Lit"), MSM_DefaultLit);

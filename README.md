@@ -22,6 +22,7 @@ DreamShader 是一个面向 Unreal 材质工作流的插件。它允许你使用
 - `import`：在 `.dsm` 中引入 `.dsh`
 - `Path(...)`：为纹理属性声明默认 Unreal 贴图资产
 - `Plugins/DreamShader/Library`：插件内置 DreamShader 函数库
+- `DShader/Packages`：项目安装的 DreamShader Package 共享库
 
 ## 快速示例
 
@@ -66,8 +67,12 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 - 把材质实现写在 `DShader/*.dsm`
 - 把共用 `Function` 写在 `DShader/**/*.dsh`
 - 通过 `import` 引入项目头文件或插件内置库
+- 通过 `import "@scope/package/Library/File.dsh";` 引入已安装 package
 - 常用内置库位于 `Plugins/DreamShader/Library/Builtin/*.dsh`
+- 第三方 package 位于 `DShader/Packages`
 - 保存文件后由 DreamShader 自动解析并更新 Unreal 资产
+- `.dsh` 变更会通过 import graph 只重编依赖它的 `.dsm`
+- 生成资产会写入 `DreamShader.SourceHash`，源内容未变化时会跳过重复生成
 - 如果启用了 VSCode 扩展，可以直接获得补全、跳转、格式化和本地语法诊断
 
 ## 文档
@@ -75,6 +80,7 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 - [文档总览](Docs/README.md)
 - [语法参考](Docs/LanguageReference.md)
 - [示例与模式](Docs/Examples.md)
+- [Package 系统](Docs/Packages.md)
 - [VSCode 支持](Docs/VSCode.md)
 - [迁移说明](Docs/Migration.md)
 
@@ -86,6 +92,10 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 - `Function` 调用使用显式 `out` 参数，不再支持 `Res = MyFunction(...)` 这种返回值风格
 - 旧的 `Scalar` / `Color` / `Vector` 类型别名已经移除，请改用 `float` / `float2` / `float3` / `float4` 或 `vec*`
 - 内置库支持直接导入，例如 `import "Builtin/Texture.dsh";`
+- 当前内置库包含 `Common`、`Texture`、`Math`、`Color`、`UV`、`Noise`、`SDF`、`Normal`、`PBR`、`PostProcess`
+- Package 支持直接导入，例如 `import "@typedreammoon/dream-noise/Library/Noise.dsh";`
+- Unreal 侧 Parser 错误会尽量映射回真实 `.dsm/.dsh` 文件的行列，包含被 `import` 的头文件
+- Project Settings > Plugins > DreamShader 可配置源目录、内置库目录、生成目录、自动编译、防抖时间和详细日志
 - 纹理默认值现在支持：
   - `Texture2D Tex = Path(Game, "/Textures/T_Mask");`
   - `TextureCube Sky = Path("/Engine/EngineResources/DefaultTextureCube");`
@@ -98,8 +108,13 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 - 作用域感知补全
 - `Function` / `Namespace::Function` / `import` / `Path(...)` 联想
 - 跳转到 `Function` / `Namespace::Function` / `import`
+- Signature Help
+- Hover 类型/来源提示
+- Find References
 - 文档格式化
 - 本地语法诊断
 - Unreal 桥接诊断
+- GitHub Package 安装、更新、移除和商店浏览
+- 快速创建 Material/Header/Texture Sample/Noise Material 模板
 
 扩展单独说明见 [Docs/VSCode.md](Docs/VSCode.md)。

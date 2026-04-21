@@ -152,7 +152,10 @@ namespace UE::DreamShader::Editor::Private
 		bool& bOutUsesReturn,
 		ECustomMaterialOutputType& OutReturnType,
 		FString& OutError);
+	FString BuildSourceHash(const FString& SourceText);
+	bool IsGeneratedAssetSourceCurrent(UObject* Asset, const FString& SourceFilePath, const FString& SourceHash);
 	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath);
+	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath, const FString& SourceHash);
 	bool SaveAssetPackage(UObject* Asset, FString& OutError);
 	UClass* ResolveMaterialExpressionClass(const FString& ClassSpecifier);
 	FProperty* FindMaterialExpressionArgumentProperty(UClass* ExpressionClass, const FString& ArgumentName);

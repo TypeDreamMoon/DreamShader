@@ -1,5 +1,7 @@
 #include "DreamShaderModule.h"
 
+#include "DreamShaderSettings.h"
+
 #include "HAL/FileManager.h"
 #include "Misc/Char.h"
 #include "Misc/Paths.h"
@@ -12,21 +14,52 @@ namespace UE::DreamShader
 	namespace Private
 	{
 		static const FString GeneratedShaderVirtualDirectory = TEXT("/DreamShaderGenerated");
+
+		static FString ResolveProjectDirectory(const FString& ConfiguredPath, const FString& DefaultPath)
+		{
+			FString PathText = ConfiguredPath;
+			PathText.TrimStartAndEndInline();
+			if (PathText.IsEmpty())
+			{
+				PathText = DefaultPath;
+			}
+
+			FString ResolvedPath = FPaths::IsRelative(PathText)
+				? FPaths::Combine(FPaths::ProjectDir(), PathText)
+				: PathText;
+			FPaths::NormalizeFilename(ResolvedPath);
+			FPaths::MakeStandardFilename(ResolvedPath);
+			return ResolvedPath;
+		}
 	}
 
 	FString GetSourceShaderDirectory()
 	{
-		return FPaths::Combine(FPaths::ProjectDir(), TEXT("DShader"));
+		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+		return Private::ResolveProjectDirectory(
+			Settings ? Settings->SourceDirectory.Path : FString(),
+			TEXT("DShader"));
+	}
+
+	FString GetPackageShaderDirectory()
+	{
+		return FPaths::Combine(GetSourceShaderDirectory(), TEXT("Packages"));
 	}
 
 	FString GetBuiltinShaderLibraryDirectory()
 	{
-		return FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("DreamShader"), TEXT("Library"));
+		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+		return Private::ResolveProjectDirectory(
+			Settings ? Settings->BuiltinLibraryDirectory.Path : FString(),
+			TEXT("Plugins/DreamShader/Library"));
 	}
 
 	FString GetGeneratedShaderDirectory()
 	{
-		return FPaths::Combine(FPaths::ProjectIntermediateDir(), TEXT("DreamShader"), TEXT("GeneratedShaders"));
+		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+		return Private::ResolveProjectDirectory(
+			Settings ? Settings->GeneratedShaderDirectory.Path : FString(),
+			TEXT("Intermediate/DreamShader/GeneratedShaders"));
 	}
 
 	FString GetGeneratedShaderVirtualDirectory()
@@ -99,6 +132,7 @@ namespace UE::DreamShader
 void FDreamShaderModule::StartupModule()
 {
 	IFileManager::Get().MakeDirectory(*UE::DreamShader::GetSourceShaderDirectory(), true);
+	IFileManager::Get().MakeDirectory(*UE::DreamShader::GetPackageShaderDirectory(), true);
 	IFileManager::Get().MakeDirectory(*UE::DreamShader::GetBuiltinShaderLibraryDirectory(), true);
 	IFileManager::Get().MakeDirectory(*UE::DreamShader::GetGeneratedShaderDirectory(), true);
 

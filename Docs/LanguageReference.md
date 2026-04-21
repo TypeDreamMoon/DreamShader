@@ -129,18 +129,22 @@ Texture::Sample2DRGB(MainTex, uv, sampled_rgb);
 import "Shared/Common.dsh";
 import "Shared/Noise/FBM.dsh";
 import "Builtin/Texture.dsh";
+import "@typedreammoon/dream-noise/Library/Noise.dsh";
 ```
 
 规则：
 
-- 路径相对当前文件目录、项目 `DShader/` 根目录，或插件 `Plugins/DreamShader/Library/` 解析
+- 路径相对当前文件目录、项目 `DShader/` 根目录、项目 `DShader/Packages/`，或插件 `Plugins/DreamShader/Library/` 解析
 - 支持递归导入
 - 会检测循环导入
+- Package import 推荐使用 `@scope/package/...` 形式
 
 常见内置头文件：
 
 - `Builtin/Common.dsh`
 - `Builtin/Texture.dsh`
+
+Package 相关说明见 [Package 系统](Packages.md)。
 
 ## 4. Section 说明
 
@@ -276,6 +280,14 @@ DreamShader 插件目录下自带一组可直接导入的头文件：
 ```text
 Plugins/DreamShader/Library/Builtin/Common.dsh
 Plugins/DreamShader/Library/Builtin/Texture.dsh
+Plugins/DreamShader/Library/Builtin/Math.dsh
+Plugins/DreamShader/Library/Builtin/Color.dsh
+Plugins/DreamShader/Library/Builtin/UV.dsh
+Plugins/DreamShader/Library/Builtin/Noise.dsh
+Plugins/DreamShader/Library/Builtin/SDF.dsh
+Plugins/DreamShader/Library/Builtin/Normal.dsh
+Plugins/DreamShader/Library/Builtin/PBR.dsh
+Plugins/DreamShader/Library/Builtin/PostProcess.dsh
 ```
 
 示例：
@@ -291,7 +303,19 @@ Code = {
 }
 ```
 
-当前 `Texture.dsh` 提供：
+当前常用命名空间：
+
+- `Texture::*`：纹理采样
+- `Math::*`：基础数学、remap、hash
+- `Color::*`：luminance、tint、HSV/RGB、gamma
+- `UV::*`：平移缩放、旋转、polar、radial mask
+- `Noise::*`：value noise、FBM
+- `SDF::*`：2D distance field helper
+- `Normal::*`：normal map pack/unpack/blend
+- `PBR::*`：F0、Fresnel、roughness helper
+- `PostProcess::*`：vignette、tonemap、film grain 等
+
+`Texture.dsh` 提供：
 
 - `Texture::Sample2D`
 - `Texture::Sample2DRGB`
@@ -386,7 +410,27 @@ Outputs = {
 }
 ```
 
-## 12. 当前限制
+## 12. 编译体验与项目设置
+
+Unreal 插件会维护 import graph：
+
+- `.dsm` 直接生成资产
+- `.dsh` 不直接生成资产
+- `.dsh` 保存后只重编依赖它的 `.dsm`
+- Parser 错误会尽量通过 source map 映射回真实 `.dsm/.dsh` 文件行列
+- 生成资产会写入 `DreamShader.SourceFile`、`DreamShader.SourceHash`、`DreamShader.GeneratedAtUtc`
+- source hash 未变化时会跳过重复生成，减少保存时反复重编译
+
+Project Settings > Plugins > DreamShader 可配置：
+
+- `SourceDirectory`
+- `BuiltinLibraryDirectory`
+- `GeneratedShaderDirectory`
+- `AutoCompileOnSave`
+- `SaveDebounceSeconds`
+- `VerboseLogs`
+
+## 13. 当前限制
 
 - `Code` 不是完整通用语言
 - `Function` 调用必须显式传 `out`
