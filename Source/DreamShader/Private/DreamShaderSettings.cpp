@@ -59,7 +59,6 @@ UDreamShaderSettings::UDreamShaderSettings()
 	AddDefaultShadingModelMapping(ShadingModelMappings, TEXT("Thin Translucent"), MSM_ThinTranslucent);
 	AddDefaultShadingModelMapping(ShadingModelMappings, TEXT("Substrate"), MSM_Strata);
 	AddDefaultShadingModelMapping(ShadingModelMappings, TEXT("Strata"), MSM_Strata);
-	AddDefaultShadingModelMapping(ShadingModelMappings, TEXT("Toon"), MSM_Toon);
 
 	AddDefaultBlendModeMapping(BlendModeMappings, TEXT("Opaque"), BLEND_Opaque);
 	AddDefaultBlendModeMapping(BlendModeMappings, TEXT("Masked"), BLEND_Masked);
