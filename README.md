@@ -1,124 +1,195 @@
-# DreamShader - A Unreal Engine Material DSL
+# DreamShader
 
-> 该插件处于开发状态 | 但现在已经可以实现大部分功能 请酌情使用
+DreamShader 是一个 Unreal Engine 材质生成插件。它提供 `DreamShaderLang` 文本语言，让你用 `.dsm` / `.dsh` 源文件描述材质图、共享函数和材质函数，并自动生成标准 Unreal `UMaterial` / `UMaterialFunction` 资产。
 
-DreamShader 是一个面向 Unreal 材质工作流的插件。它允许你使用 `DreamShaderLang` 编写 `.dsm` / `.dsh` 文本源文件，并自动生成或更新标准 Unreal `UMaterial` / `UMaterialFunction` 资产。
+> 当前版本：`1.1.0`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
 
-### 目前支持如下特性
+## 核心能力
 
-- `Dream Shader Package` 类似npm包的Shader包 可以在VSCode拓展从存储库下载Package **我们也非常欢迎您的加入!**
-- 非Dream Shader插件项目支持，使用了此插件生成的材质 可以在没有安装DreamShader插件的情况下使用! *Function说明符需要带上 Inline 或 SelfContained 关键字*
-- HLSL Lang / GLSL Lang 语言语法支持
-- 完善的VSCode支持 例如函数跳转 / Package Store
-- 完全不需要在材质编辑器连连看! 也不需要在Detail面板调整材质球的任何属性!
-- 完整的UnrealEngine MaterialExpressions节点支持
-
-## 版本信息
-
-- Version：`1.1.0`
-- Language：`DreamShaderLang`
-- Author：TypeDreamMoon
-- GitHub：<https://github.com/TypeDreamMoon>
-- Web：<https://dev.64hz.cn>
-- Copyright：Copyright (c) 2026 TypeDreamMoon. All rights reserved.
+- 使用文本源文件维护材质逻辑，减少手动连材质节点的重复工作。
+- 从 `Shader(Name="...")` 生成 `UMaterial`，从 `ShaderFunction(Name="...")` 生成 `UMaterialFunction`。
+- 在 `Graph = { ... }` 中声明变量、调用 UE 材质节点、调用共享函数，并绑定材质输出。
+- 在 `Function` / `Namespace` 中编写可复用 HLSL 风格 helper。
+- 支持 `Inline` / `SelfContained` 函数，把依赖代码嵌入材质 Custom 节点，便于在未安装 DreamShader 的项目中继续使用生成资产。
+- 支持 `.dsh` import graph，头文件变更时只重编受影响的 `.dsm`。
+- 支持 DreamShader Package，通过 VSCode 扩展安装和导入共享库。
+- 支持 VSCode 语法高亮、补全、跳转、Hover、Signature Help、本地诊断和 Unreal 桥接诊断。
 
 ## 文件模型
 
-- `.dsm`：Dream Shader Material，材质实现文件
-- `.dsh`：Dream Shader Header，共用函数头文件
-- `Function`：推荐的共用函数语法
-- `Inline` `SelfContained`: 函数自包含，自动把着色器代码包含在Material中 不需要.ush
-- `Namespace`：组织共用函数，例如 `Texture::Sample2DRGB`
-- `import`：在 `.dsm` 中引入 `.dsh`
-- `Path(...)`：为纹理属性声明默认 Unreal 贴图资产
-- `DShader/Packages`：项目安装的 DreamShader Package 共享库
+| 文件或概念 | 用途 |
+| --- | --- |
+| `.dsm` | 材质实现文件，通常包含 `Shader(...)` 或 `ShaderFunction(...)`。 |
+| `.dsh` | 共享头文件，通常包含 `Function`、`Namespace` 和 `import`。 |
+| `Graph` | `Shader` / `ShaderFunction` 内的材质图 DSL，用于生成材质节点。 |
+| `Function` | 可复用 helper，函数体按 HLSL 风格编写。 |
+| `Namespace` | 组织一组 helper，例如 `Texture::Sample2DRGB(...)`。 |
+| `Path(...)` | 为纹理属性声明默认 Unreal 资产。 |
+| `DShader/Packages` | 项目安装的 DreamShader Package 目录。 |
 
-## 快速示例
+推荐项目结构：
 
-材质声明
+```text
+Moon_Dev/
+├─ DShader/
+│  ├─ Materials/
+│  │  └─ M_Sample.dsm
+│  ├─ Shared/
+│  │  └─ Common.dsh
+│  └─ Packages/
+└─ Plugins/
+   └─ DreamShader/
+```
+
+## 快速开始
+
+1. 把插件放入 Unreal 项目的 `Plugins/DreamShader`。
+2. 在 Unreal 中启用插件并重启编辑器。
+3. 在项目根目录创建 `DShader` 目录。
+4. 新建 `.dsm` 文件，例如 `DShader/Materials/M_Sample.dsm`。
+5. 保存文件后，DreamShader 会自动解析并生成或更新对应材质资产。
+
+Project Settings > Plugins > DreamShader 中可以配置：
+
+| 设置 | 默认值 | 说明 |
+| --- | --- | --- |
+| `SourceDirectory` | `DShader` | DreamShader 源文件根目录。 |
+| `GeneratedShaderDirectory` | `Intermediate/DreamShader/GeneratedShaders` | 生成 `.ush` 文件的目录。 |
+| `AutoCompileOnSave` | `true` | 保存 `.dsm` / `.dsh` 时自动刷新资产。 |
+| `SaveDebounceSeconds` | `0.25` | 保存防抖时间。 |
+| `VerboseLogs` | `false` | 输出更详细的日志。 |
+
+## 最小示例
 
 ```c
-// 此处使用了dreamshader-texture的DreamShaderPackage
-import "@typedreammoon/dreamshader-texture/Library/Texture";
-
-// 一个简单的材质声明
-Shader(Name="DreamMaterials/M_Sample")
+Shader(Name="DreamMaterials/M_Minimal")
 {
-	// 在Properties写的任何值 都会暴露成为属性 可以在MaterialInstance中修改
     Properties = {
-	    // Path()说明符 可以引用在Engine目录或者Game目录下资源
-        Texture2D DefaultTex = Path(Engine, "/EngineResources/DefaultTexture");
-        vec3 Tint = vec3(1.0, 1.0, 1.0);
+        vec3 Tint = vec3(1.0, 0.2, 0.2);
     }
 
-	// 材质设置 支持Unreal Material中的所有属性修改
     Settings = {
         Domain = "UI";
         ShadingModel = "Unlit";
     }
 
-	// 材质返回值
     Outputs = {
-	    // 为了更加规范的返回值 我们需要提前声明一下返回值类型
-        float3 Res;
-        float Tangent;
-
-		// 调用UE材质属性返回节点 将Res返回到EmissiveColor
-        Base.EmissiveColor = Res;
-        // 我们也支持直接写常量
-        Base.BaseColor = float3(1, 1, 1);
-        // 我们也支持类似TangentOutput节点的返回模式 只需要使用Expression(Class="").Pin[N] 会自动连接到节点的第N个引脚
-        Expression(Class="TangentOutput").Pin[0] = Tangent;
+        vec3 Color;
+        Base.EmissiveColor = Color;
     }
 
-	// 材质图域
-	// 这里就是要生成的材质节点实现的地方
-	// 我们支持单个的属性声明
-	// 这里支持基础 if / else 图分支；for / while 等复杂流程请写在 Function 里面
     Graph = {
-	    float a = 0;
-	    // 使用内置的TexCoord节点
-        float2 uv = UE.TexCoord(Index=0);
-        // Sample2DRGB的返回值
-        float3 sampled_rgb;
-        // 调用Package中的函数
-        Texture::Sample2DRGB(DefaultTex, uv, sampled_rgb); // 
-        // 调用定义的函数
-        ApplyTint(sampled_rgb, Tint, Res);
-        // 此外 我们还支持UE所有的UMatertialExpression节点 拿Sine节点为例
-        float s = UE.Expression(Class="Sine", OutputType="float1", Input=UE.Time());
+        Color = Tint;
     }
 }
 ```
 
-> Material Function 使用 `ShaderFunction(Name="...")` 声明 写法与 `Shader` 关键字差不多 就是没有Settings *对于Material Function 如果您项目使用我们的插件 且不打算把这个函数功能发送给不用DreamShader插件的用户的话 我们还是建议您直接使用`Function`来声明*
+## 共享函数示例
 
-函数声明
+`.dsh` 文件适合放共享函数：
 
 ```c
-// 该函数会定义在ush文件里面
-Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
-    result = color * tint;
-}
-
-// 带有 SelfContained 或 Inline 的函数 会自动包含在材质里面 可以给不使用Dream Shader插件的用户使用
-Function SelfContained/Inline Func(in float a, out float b)
+Namespace(Name="Color")
 {
-	b = a;
+    Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
+        result = color * tint;
+    }
 }
 ```
 
-## 当前推荐工作流
+`.dsm` 中通过 `import` 使用：
 
-- 把材质实现写在 `DShader/*.dsm`
-- 把共用 `Function` 写在 `DShader/**/*.dsh`
-- 通过 `import` 引入项目头文件或插件内置库
-- 通过 `import "@scope/package/Library/File.dsh";` 引入已安装 package
-- 第三方 package 位于 `项目根目录/DShader/Packages`
-- 保存文件后由 DreamShader 自动解析并更新 Unreal 资产
-- `.dsh` 变更会通过 import graph 只重编依赖它的 `.dsm`
-- 生成资产会写入 `DreamShader.SourceHash`，源内容未变化时会跳过重复生成
-- 如果启用了 VSCode 扩展，可以直接获得补全、跳转、格式化和本地语法诊断
+```c
+import "Shared/Color.dsh";
+
+Shader(Name="DreamMaterials/M_Tinted")
+{
+    Properties = {
+        vec3 Tint = vec3(1.0, 1.0, 1.0);
+    }
+
+    Settings = {
+        Domain = "UI";
+        ShadingModel = "Unlit";
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        vec3 baseColor = vec3(0.7, 0.2, 1.0);
+        Color::ApplyTint(baseColor, Tint, Color);
+    }
+}
+```
+
+## Graph 与 Function 的区别
+
+`Graph = { ... }` 是材质图 DSL，目标是生成 Unreal 材质节点。它支持声明、赋值、构造、`UE.*` builtin、`Function` 调用、`ShaderFunction` 调用以及基础 `if` / `else` 图分支。
+
+`Function Name(...) { ... }` 是共享 helper 代码，适合放更自由的 HLSL 风格逻辑，例如 `for` / `while` / 复杂条件。`Function` 调用必须显式传入 `out` 目标变量。
+
+> 迁移提示：`Shader` / `ShaderFunction` 的图逻辑使用 `Graph = { ... }`。`Code` 仍保留给 `Function` helper 语义，不再作为 `Shader` / `ShaderFunction` 的图 section 使用。
+
+## UE 材质节点
+
+`Graph` 中可以通过 `UE.*` 创建常用材质表达式：
+
+```c
+Graph = {
+    float2 uv = UE.TexCoord(Index=0);
+    float time = UE.Time();
+    float pulse = UE.Expression(Class="Sine", OutputType="float1", Input=time);
+
+    Color = vec3(pulse, pulse, pulse);
+}
+```
+
+也可以绑定辅助输出节点：
+
+```c
+Outputs = {
+    float Tangent;
+    Expression(Class="TangentOutput").Pin[0] = Tangent;
+}
+```
+
+## Package
+
+DreamShader Package 是可复用 `.dsh` 函数库的分发格式。安装后的包位于：
+
+```text
+DShader/Packages/@scope/package-name/
+```
+
+导入示例：
+
+```c
+import "@typedreammoon/dream-noise/Library/Noise.dsh";
+```
+
+更多说明见 [Docs/Packages.md](Docs/Packages.md)。
+
+## VSCode 扩展
+
+VSCode 扩展位于：
+
+```text
+I:/UnrealProject_Moon/VSCodeExt/dreamshader-language-support
+```
+
+扩展提供：
+
+- `.dsm` / `.dsh` 语法高亮和 snippets。
+- `Function`、`Namespace::Function`、`UE.*`、`Path(...)`、Package import 补全。
+- Go to Definition、Find References、Hover、Signature Help。
+- 本地语法诊断和 Unreal 桥接诊断。
+- Package 安装、更新、移除和商店浏览命令。
+- 快速创建 Material / Header / Texture Sample / Noise Material 模板。
+
+更多说明见 [Docs/VSCode.md](Docs/VSCode.md)。
 
 ## 文档
 
@@ -128,38 +199,19 @@ Function SelfContained/Inline Func(in float a, out float b)
 - [Package 系统](Docs/Packages.md)
 - [VSCode 支持](Docs/VSCode.md)
 
-## 重要说明
+## 版本信息
 
-- `Shader` / `ShaderFunction` 中的 `Graph = { ... }` 是 DreamShader 图表达式 DSL，不是原始 HLSL
-- `Function Name(...) { ... }` 的函数体是原始 helper 代码块，适合写复用逻辑
-- `Namespace(Name="...") { Function ... }` 用来组织函数，调用格式为 `NamespaceName::FunctionName(...)`
-- `Function` 调用使用显式 `out` 参数，不再支持 `Res = MyFunction(...)` 这种返回值风格
-- Package 支持直接导入，例如 `import "@typedreammoon/dream-noise/Library/Noise.dsh";`
-- Unreal 侧 Parser 错误会尽量映射回真实 `.dsm/.dsh` 文件的行列，包含被 `import` 的头文件
-- Project Settings > Plugins > DreamShader 可配置源目录、内置库目录、生成目录、自动编译、防抖时间和详细日志
-- 纹理默认值现在支持：
-  - `Texture2D Tex = Path(Game, "/Textures/T_Mask");`
-  - `TextureCube Sky = Path("/Engine/EngineResources/DefaultTextureCube");`
+| 项目 | 内容 |
+| --- | --- |
+| Version | `1.1.0` |
+| Language | `DreamShaderLang` |
+| Author | TypeDreamMoon |
+| GitHub | <https://github.com/TypeDreamMoon> |
+| Web | <https://dev.64hz.cn> |
+| Copyright | Copyright (c) 2026 TypeDreamMoon. All rights reserved. |
 
-## VSCode 扩展
+## Roadmap
 
-当前支持：
-
-- `DreamShaderLang` `.dsm` / `.dsh` 语法高亮
-- 作用域感知补全
-- `Function` / `Namespace::Function` / `import` / `Path(...)` 联想
-- 跳转到 `Function` / `Namespace::Function` / `import`
-- Signature Help
-- Hover 类型/来源提示
-- Find References
-- 文档格式化
-- 本地语法诊断
-- Unreal 桥接诊断
-- GitHub Package 安装、更新、移除和商店浏览
-- 快速创建 Material/Header/Texture Sample/Noise Material 模板
-
-扩展单独说明见 [Docs/VSCode.md](Docs/VSCode.md)。
-
-## RoadMap
-
-- Custom Render Pass
+- Custom Render Pass。
+- 更完整的 `Graph` 语义诊断。
+- 更多内置材质函数库和 Package 示例。

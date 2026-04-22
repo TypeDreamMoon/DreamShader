@@ -1,34 +1,37 @@
 # DreamShaderLang 语法参考
 
-DreamShaderLang 是 DreamShader 插件使用的 `.dsm` / `.dsh` 文本语言。
+DreamShaderLang 是 DreamShader 插件使用的文本语言。它用 `.dsm` / `.dsh` 源文件描述 Unreal 材质、材质函数和共享 helper，并由插件生成标准 Unreal 资产。
 
-- 插件版本：`1.1.0`
-- 开发者：TypeDreamMoon
-- GitHub：<https://github.com/TypeDreamMoon>
-- Web：<https://dev.64hz.cn>
-- Copyright：Copyright (c) 2026 TypeDreamMoon. All rights reserved.
+| 项目 | 内容 |
+| --- | --- |
+| 插件版本 | `1.1.0` |
+| 源文件 | `.dsm` / `.dsh` |
+| 主要产物 | `UMaterial` / `UMaterialFunction` |
+| 开发者 | TypeDreamMoon |
 
 ## 1. 文件类型
 
-### `.dsm`
+### 1.1 `.dsm`
 
-Dream Shader Material，实现文件。用于生成 `UMaterial` 或 `UMaterialFunction`，通常包含：
+Dream Shader Material。用于生成资产，通常包含：
 
 - `Shader(Name="...")`
 - `ShaderFunction(Name="...")`
 - `import "Shared/Common.dsh";`
 
-### `.dsh`
+一个 `.dsm` 可以包含共享 `Function` / `Namespace`，但推荐把可复用逻辑放入 `.dsh`，让材质文件更聚焦。
 
-Dream Shader Header，共用头文件，类似 C/C++ header。当前推荐只包含：
+### 1.2 `.dsh`
+
+Dream Shader Header。用于存放共享代码，通常包含：
 
 - `import "OtherHeader.dsh";`
 - `Function Name(...) { ... }`
 - `Namespace(Name="...") { ... }`
 
-`.dsh` 中不要放 `Shader(...)` 或 `ShaderFunction(...)`。
+`.dsh` 不建议包含 `Shader(...)` 或 `ShaderFunction(...)`。
 
-## 2. 顶层 Block
+## 2. 顶层声明
 
 ### 2.1 `Shader(Name="...")`
 
@@ -47,22 +50,28 @@ Shader(Name="DreamMaterials/M_Sample")
     }
 
     Outputs = {
-        float3 Res;
-        Base.EmissiveColor = Res;
+        float3 Color;
+        Base.EmissiveColor = Color;
     }
 
     Graph = {
-        Res = float3(Strength, Strength, Strength);
+        Color = float3(Strength, Strength, Strength);
     }
 }
 ```
+
+规则：
+
+- `Name` 必填，建议使用 Unreal package 风格路径。
+- `Properties` / `Settings` / `Outputs` / `Graph` 都是 section。
+- `Graph` 是材质图实现区域。
 
 ### 2.2 `ShaderFunction(Name="...")`
 
 生成 Unreal `UMaterialFunction`。
 
 ```c
-ShaderFunction(Name="Functions/TintColor")
+ShaderFunction(Name="Functions/F_Tint")
 {
     Inputs = {
         vec3 InColor;
@@ -73,31 +82,54 @@ ShaderFunction(Name="Functions/TintColor")
         vec3 OutColor;
     }
 
+    Settings = {
+        Description = "Tint helper";
+        ExposeToLibrary = true;
+    }
+
     Graph = {
         OutColor = InColor * InTint;
     }
 }
 ```
 
-### 2.3 `Function [Inline/SelfContained] Name(...) { ... }`
+规则：
 
-定义可复用 helper，是当前唯一推荐的 helper 语法。
+- `Name` 必填。
+- `Inputs` 声明输入 pin。
+- `Outputs` 声明输出 pin。
+- `Graph` 负责生成材质函数内部图。
+
+### 2.3 `Function [Inline|SelfContained] Name(...) { ... }`
+
+定义可复用 helper。函数体是 HLSL 风格代码。
 
 ```c
-Function [Inline/SelfContained] ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
+Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
+    result = color * tint;
+}
+```
+
+自包含写法：
+
+```c
+Function SelfContained ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
     result = color * tint;
 }
 ```
 
 规则：
 
-- 参数支持 `in` / `out`
-- 至少声明一个 `out`
-- 调用时显式传入 `out` 目标变量
-- 函数体是原始 helper 代码，可以写 `if` / `for` 等流程逻辑
-- 可以使用 [Inline/SelfContained] 标定此函数是否为自包含模式
+- 参数支持 `in` / `out`。
+- 至少声明一个 `out` 参数。
+- 调用时必须显式传入 `out` 目标变量。
+- `Inline` 是 `SelfContained` 的别名。
+- 普通 `Function` 会生成 `.ush` 并由 Custom 节点 include。
+- `SelfContained` / `Inline` 会把依赖代码嵌入 Custom 节点，便于生成资产脱离 DreamShader 插件使用。
 
 ### 2.4 `Namespace(Name="...")`
+
+组织一组共享 helper。
 
 ```c
 Namespace(Name="Texture")
@@ -111,39 +143,20 @@ Namespace(Name="Texture")
 调用方式：
 
 ```c
-Texture::Sample2DRGB(MainTex, uv, sampled_rgb);
+Texture::Sample2DRGB(MainTex, uv, sampledColor);
 ```
 
 规则：
 
-- `Namespace` 只能包含 `Function`
-- namespace 名必须是合法标识符
-- 生成 HLSL 时会自动把 `Texture::Sample2DRGB` 映射为安全的内部符号
+- `Namespace` 内只能包含 `Function`。
+- namespace 名必须是合法标识符。
+- 生成 HLSL 时会把 `Texture::Sample2DRGB` 映射为安全的内部符号。
 
-## 3. `import`
+## 3. Section
 
-在 `.dsm` 或 `.dsh` 顶部引入头文件：
+### 3.1 `Properties`
 
-```c
-import "Shared/Common.dsh";
-import "Shared/Noise/FBM.dsh";
-import "@typedreammoon/dream-noise/Library/Noise.dsh";
-```
-
-规则：
-
-- 路径相对当前文件目录、项目 `DShader/` 根目录、项目 `DShader/Packages/`，或插件 `Plugins/DreamShader/Library/` 解析
-- 支持递归导入
-- 会检测循环导入
-- Package import 推荐使用 `@scope/package/...` 形式
-
-Package 相关说明见 [Package 系统](Packages.md)。
-
-## 4. Section 说明
-
-### 4.1 `Properties`
-
-`Shader` 中声明材质输入参数或 UE builtin 属性。
+`Shader` 的材质输入参数。
 
 ```c
 Properties = {
@@ -153,105 +166,144 @@ Properties = {
 }
 ```
 
-### 4.2 `Inputs`
+### 3.2 `Inputs`
 
-`ShaderFunction` 输入 pin。
+`ShaderFunction` 的输入 pin。
 
-### 4.3 `Outputs`
+```c
+Inputs = {
+    vec3 InColor;
+    float Strength = 1.0;
+}
+```
 
-两种用途：
+### 3.3 `Outputs`
 
-- 在 `Shader` 中声明输出变量并绑定到 Unreal 材质输出
-- 在 `ShaderFunction` 中声明函数输出 pin
+`Shader` 中既能声明输出变量，也能绑定 Unreal 材质属性。
 
 ```c
 Outputs = {
-    float3 Res;
+    float3 Color;
     float OpacityValue;
 
-    Base.EmissiveColor = Res;
+    Base.EmissiveColor = Color;
     Base.Opacity = OpacityValue;
 }
 ```
 
-### 4.4 `Settings`
+`ShaderFunction` 中用于声明输出 pin：
 
-配置 Unreal 材质 / MaterialFunction 设置。
+```c
+Outputs = {
+    vec3 OutColor;
+}
+```
 
-常用项：
+### 3.4 `Settings`
 
-- `Domain` / `MaterialDomain`
-- `ShadingModel`
-- `BlendMode` / `RenderType`
-- `TwoSided`
-- `Wireframe`
-- `Description`
-- `ExposeToLibrary`
-- `UserExposedCaption`
-- `LibraryCategories`
+配置 Unreal 材质或 Material Function 属性。
 
-### 4.5 `Graph`
+常用设置：
 
-在 `Shader` / `ShaderFunction` 里，`Graph` 是 DreamShader 图 DSL。
+| 设置 | 示例 |
+| --- | --- |
+| `Domain` / `MaterialDomain` | `"Surface"` / `"UI"` / `"PostProcess"` |
+| `ShadingModel` | `"Unlit"` / `"DefaultLit"` |
+| `BlendMode` / `RenderType` | `"Opaque"` / `"Translucent"` |
+| `TwoSided` | `true` / `false` |
+| `Wireframe` | `true` / `false` |
+| `Description` | `"Tint helper"` |
+| `ExposeToLibrary` | `true` |
+| `LibraryCategories` | `"DreamShader,Color"` |
 
-它支持：
+### 3.5 `Graph`
 
-- 变量声明
-- 变量赋值
-- 标量和向量构造
-- brace initializer
-- `UE.*` builtin 调用
-- 独立 `Function(...)` 或 `Namespace::Function(...)` 调用
-- `if` / `else` 图分支
-- 将结果绑定到输出变量
+`Graph` 是 `Shader` / `ShaderFunction` 内的图 DSL，负责生成 Unreal 材质节点。
 
-`Graph` 中的 `if` / `else` 会生成 Unreal Material `If` 节点。分支里可以给同一个变量或输出赋值，生成器会把两侧结果合并成条件值。
+支持：
 
-不建议在 `Graph` 中写：
+- 变量声明和赋值。
+- 标量、向量构造。
+- Brace initializer。
+- `UE.*` builtin 调用。
+- `Function(...)` / `Namespace::Function(...)` 独立调用。
+- `ShaderFunction(...)` 值调用。
+- 基础 `if` / `else` 图分支。
+- 将结果绑定到输出变量。
 
-- `for`
-- `while`
-- 复杂流程控制
+限制：
 
-这些逻辑应放进 `Function`。
+- 不支持 `for` / `while`。
+- 不适合写复杂流程控制。
+- 条件分支会转换为 Material `If` 节点，而不是运行时普通 CPU 分支。
+
+## 4. `import`
+
+在 `.dsm` 或 `.dsh` 顶部引入头文件：
+
+```c
+import "Shared/Common.dsh";
+import "Builtin/Texture.dsh";
+import "@typedreammoon/dream-noise/Library/Noise.dsh";
+```
+
+解析顺序：
+
+| 路径形式 | 解析位置 |
+| --- | --- |
+| `"Shared/Common.dsh"` | 当前文件目录和项目 `DShader` 根目录。 |
+| `"Builtin/Texture.dsh"` | 插件内置库目录。 |
+| `"@scope/package/Library/File.dsh"` | 项目 `DShader/Packages`。 |
+
+规则：
+
+- 支持递归导入。
+- 会检测循环导入。
+- `.dsh` 变更后只刷新依赖它的 `.dsm`。
+
+Package 相关说明见 [Packages.md](Packages.md)。
 
 ## 5. 类型系统
 
-### 5.1 基础类型
+### 5.1 标量与向量
 
-- `float` / `float2` / `float3` / `float4`
-- `half` / `half2` / `half3` / `half4`
-- `int` / `int2` / `int3` / `int4`
-- `uint` / `uint2` / `uint3` / `uint4`
-- `bool` / `bool2` / `bool3` / `bool4`
+| 类型族 | 支持类型 |
+| --- | --- |
+| float | `float` / `float1` / `float2` / `float3` / `float4` |
+| half | `half` / `half1` / `half2` / `half3` / `half4` |
+| int | `int` / `int2` / `int3` / `int4` |
+| uint | `uint` / `uint2` / `uint3` / `uint4` |
+| bool | `bool` / `bool2` / `bool3` / `bool4` |
 
 ### 5.2 GLSL 风格别名
 
-- `vec2` = `float2`
-- `vec3` = `float3`
-- `vec4` = `float4`
-- `ivec*` / `uvec*` / `bvec*` 同理
-- `mat2` / `mat3` / `mat4` 对应 `float2x2` / `float3x3` / `float4x4`
+| 别名 | 等价类型 |
+| --- | --- |
+| `vec2` / `vec3` / `vec4` | `float2` / `float3` / `float4` |
+| `ivec2` / `ivec3` / `ivec4` | `int2` / `int3` / `int4` |
+| `uvec2` / `uvec3` / `uvec4` | `uint2` / `uint3` / `uint4` |
+| `bvec2` / `bvec3` / `bvec4` | `bool2` / `bool3` / `bool4` |
+| `mat2` / `mat3` / `mat4` | `float2x2` / `float3x3` / `float4x4` |
 
-### 5.3 纹理
+### 5.3 纹理与采样相关类型
 
 - `Texture2D`
 - `TextureCube`
 - `Texture2DArray`
 - `SamplerState`
 
-### 5.4 已移除旧别名
+### 5.4 已移除别名
 
-`Scalar` / `Color` / `Vector` 已移除。请改用：
+`Scalar` / `Color` / `Vector` 已移除。推荐使用：
 
 - `float`
 - `float2` / `vec2`
 - `float3` / `vec3`
 - `float4` / `vec4`
 
-## 6. 纹理默认值：`Path(...)`
+## 6. `Path(...)`
 
-纹理属性支持引用 Unreal 贴图资产：
+纹理属性支持通过 `Path(...)` 绑定默认 Unreal 资产。
 
 ```c
 Properties = {
@@ -263,14 +315,16 @@ Properties = {
 
 规则：
 
-- 单参数时必须是 `/Game/...` 或 `/Engine/...`
-- 双参数时根名支持 `Game` / `Engine`
-- 如果未显式写 `.AssetName`，会自动补成合法 Unreal object path
-- 会校验声明类型和实际资产类型是否一致
+- 单参数形式必须使用 `/Game/...` 或 `/Engine/...`。
+- 双参数形式的根名支持 `Game` / `Engine`。
+- 如果未显式写 `.AssetName`，会自动补成合法 Unreal object path。
+- 会校验声明类型和实际资产类型是否一致。
 
 ## 7. `Function` 调用语义
 
-当前使用显式 `out` 调用：
+DreamShader 使用显式 `out` 调用。
+
+定义：
 
 ```c
 Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
@@ -278,116 +332,157 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 }
 ```
 
-调用方式：
+调用：
 
 ```c
 Graph = {
     float3 base = vec3(1.0, 0.5, 0.2);
     float3 tint = vec3(0.5, 1.0, 1.0);
-    float3 res;
-    ApplyTint(base, tint, res);
+    float3 result;
+
+    ApplyTint(base, tint, result);
 }
 ```
 
 不支持返回值风格：
 
 ```c
-Res = ApplyTint(base, tint);
+result = ApplyTint(base, tint);
 ```
 
-## 8. `Graph` 中支持的声明、构造与分支
+## 8. `Graph` 语法
 
-### 8.1 仅声明
+### 8.1 声明
 
 ```c
 float a;
 float2 uv;
 float3 color;
-float4 sample_v4;
+float4 sampleValue;
 ```
 
-标量和向量只声明时会自动初始化为 0。
+标量和向量只声明时会自动初始化为 `0`。
 
-### 8.2 普通构造
+### 8.2 构造
 
 ```c
-float4 c = float4(color, 1.0);
-float3 rgb = float3(sample_v4.r, sample_v4.g, sample_v4.b);
+float4 colorA = float4(rgb, 1.0);
+float3 colorB = float3(sampleValue.r, sampleValue.g, sampleValue.b);
 ```
 
 ### 8.3 Brace initializer
 
 ```c
-float4 c = {color, 1.0};
-float3 d = {a, b, c};
+float4 colorA = {rgb, 1.0};
+float3 colorB = {r, g, b};
 ```
 
-### 8.4 `if` / `else`
+### 8.4 赋值
+
+```c
+Color = Tint;
+OpacityValue = 0.75;
+```
+
+### 8.5 `if` / `else`
 
 ```c
 if (Mask > 0.5) {
-    Res = Tint;
+    Color = Tint;
 } else {
-    Res = vec3(0.0, 0.0, 0.0);
+    Color = vec3(0.0, 0.0, 0.0);
 }
 ```
 
-条件两侧需要是标量值，支持 `>` / `<` / `>=` / `<=` / `==` / `!=`。也可以写 `if (Mask)`，等价于 `Mask > 0`。
+条件规则：
+
+- 条件两侧必须是标量。
+- 支持 `>` / `<` / `>=` / `<=` / `==` / `!=`。
+- `if (Mask)` 等价于 `Mask > 0`。
+- 分支中给同一变量或输出赋值时，生成器会用 Material `If` 节点合并两侧结果。
+- 不能用 `if` 选择 `Texture2D` 值。
 
 ## 9. `UE.*` builtin
 
-`Graph` 中可直接生成 Unreal 材质节点，例如：
+`Graph` 中可以通过 `UE.*` 创建 Unreal 材质节点。
 
-- `UE.TexCoord(Index=0)`
-- `UE.Time()`
-- `UE.Panner(...)`
-- `UE.WorldPosition()`
-- `UE.ObjectPositionWS()`
-- `UE.CameraVectorWS()`
-- `UE.ScreenPosition()`
-- `UE.VertexColor()`
-- `UE.TransformVector(...)`
-- `UE.TransformPosition(...)`
-- `UE.Expression(...)`
+常用 builtin：
+
+| 调用 | 说明 |
+| --- | --- |
+| `UE.TexCoord(Index=0)` | Texture Coordinate。 |
+| `UE.Time()` | Time。 |
+| `UE.Panner(...)` | Panner。 |
+| `UE.WorldPosition()` | World Position。 |
+| `UE.ObjectPositionWS()` | Object Position WS。 |
+| `UE.CameraVectorWS()` | Camera Vector WS。 |
+| `UE.ScreenPosition()` | Screen Position。 |
+| `UE.VertexColor()` | Vertex Color。 |
+| `UE.TransformVector(...)` | Vector Transform。 |
+| `UE.TransformPosition(...)` | Position Transform。 |
+| `UE.Expression(...)` | 泛型 MaterialExpression 创建入口。 |
+
+泛型示例：
+
+```c
+float pulse = UE.Expression(
+    Class="Sine",
+    OutputType="float1",
+    Input=UE.Time());
+```
 
 ## 10. 输出绑定
 
-`Shader` 的 `Outputs` 里既可以写变量声明，也可以写绑定：
+`Shader` 的 `Outputs` 支持材质属性绑定：
 
 ```c
 Outputs = {
-    float3 Res;
-    float AlphaValue;
+    float3 Color;
+    float Alpha;
 
-    Base.EmissiveColor = Res;
-    Base.Opacity = AlphaValue;
+    Base.BaseColor = Color;
+    Base.Opacity = Alpha;
 }
 ```
 
-## 11. 编译体验与项目设置
+辅助输出节点可以使用 `Expression(...).Pin[n]`：
 
-Unreal 插件会维护 import graph：
+```c
+Outputs = {
+    float Tangent;
+    Expression(Class="TangentOutput").Pin[0] = Tangent;
+}
+```
 
-- `.dsm` 直接生成资产
-- `.dsh` 不直接生成资产
-- `.dsh` 保存后只重编依赖它的 `.dsm`
-- Parser 错误会尽量通过 source map 映射回真实 `.dsm/.dsh` 文件行列
-- 生成资产会写入 `DreamShader.SourceFile`、`DreamShader.SourceHash`、`DreamShader.GeneratedAtUtc`
-- source hash 未变化时会跳过重复生成，减少保存时反复重编译
+## 11. 编译与缓存
 
-Project Settings > Plugins > DreamShader 可配置：
+DreamShader 会维护源文件和资产之间的关系：
 
-- `SourceDirectory`
-- `BuiltinLibraryDirectory`
-- `GeneratedShaderDirectory`
-- `AutoCompileOnSave`
-- `SaveDebounceSeconds`
-- `VerboseLogs`
+- `.dsm` 直接生成资产。
+- `.dsh` 不直接生成资产。
+- `.dsh` 保存后只重编依赖它的 `.dsm`。
+- Parser 错误会尽量通过 source map 映射回真实 `.dsm` / `.dsh` 行列。
+- 生成资产会写入 `DreamShader.SourceFile`、`DreamShader.SourceHash`、`DreamShader.GeneratedAtUtc`。
+- source hash 未变化时会跳过重复生成。
 
-## 12. 当前限制
+## 12. Project Settings
 
-- `Graph` 不是完整通用语言；支持基础 `if` / `else`，但不支持 `for` / `while`
-- `Function` 调用必须显式传 `out`
-- `Namespace` 当前只用于组织 `Function`
-- `Path(...)` 目前主要面向 `Game` / `Engine`
-- VSCode 诊断已经够日常开发，但仍不是完整编译器语义系统
+Project Settings > Plugins > DreamShader：
+
+| 设置 | 默认值 | 说明 |
+| --- | --- | --- |
+| `SourceDirectory` | `DShader` | 源文件根目录。 |
+| `GeneratedShaderDirectory` | `Intermediate/DreamShader/GeneratedShaders` | 生成 `.ush` 目录。 |
+| `AutoCompileOnSave` | `true` | 保存时自动生成资产。 |
+| `SaveDebounceSeconds` | `0.25` | 保存防抖时间。 |
+| `VerboseLogs` | `false` | 输出详细日志。 |
+
+## 13. 当前限制
+
+- `Graph` 不是完整通用语言。
+- `Graph` 支持基础 `if` / `else`，不支持 `for` / `while`。
+- 复杂流程建议放进 `Function`。
+- `Function` 调用必须显式传 `out` 目标变量。
+- `Namespace` 当前只用于组织 `Function`。
+- `Path(...)` 当前主要面向 `Game` / `Engine` 根路径。
+- VSCode 诊断是开发辅助，不等同于完整编译器语义系统。

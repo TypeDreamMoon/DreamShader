@@ -1,6 +1,8 @@
 # DreamShaderLang 示例与模式
 
-## 1. 最小材质示例
+本页提供可复制的 DreamShaderLang 片段。示例按常见工作流排列：最小材质、共享头文件、Package、函数调用、Graph 语法、UE 节点和 `ShaderFunction`。
+
+## 1. 最小材质
 
 ```c
 Shader(Name="DreamMaterials/M_Minimal")
@@ -15,17 +17,19 @@ Shader(Name="DreamMaterials/M_Minimal")
     }
 
     Outputs = {
-        vec3 Res;
-        Base.EmissiveColor = Res;
+        vec3 Color;
+        Base.EmissiveColor = Color;
     }
 
     Graph = {
-        Res = Tint;
+        Color = Tint;
     }
 }
 ```
 
-## 2. `.dsh` 头文件示例
+## 2. 共享 `.dsh` 头文件
+
+`DShader/Shared/Common.dsh`：
 
 ```c
 Namespace(Name="Common")
@@ -42,7 +46,7 @@ Namespace(Name="Common")
 }
 ```
 
-## 3. `.dsm` 引入 `.dsh`
+## 3. 在 `.dsm` 中引入 `.dsh`
 
 ```c
 import "Shared/Common.dsh";
@@ -59,33 +63,29 @@ Shader(Name="DreamMaterials/M_Imported")
     }
 
     Outputs = {
-        vec3 Res;
-        Base.EmissiveColor = Res;
+        vec3 Color;
+        Base.EmissiveColor = Color;
     }
 
     Graph = {
         vec2 uv = UE.TexCoord(Index=0);
         float t = UE.Time();
         vec3 pulse;
+
         Common::BuildPulse(t, uv, pulse);
-        Common::ApplyTint(pulse, Tint, Res);
+        Common::ApplyTint(pulse, Tint, Color);
     }
 }
 ```
 
-## 4. 使用外部库采样纹理
+## 4. 使用 Package 采样纹理
 
-1. 先在VSCode中安装 `dreamshaderlang-language-support-[version].vsix`
-2. 然后在VSCode中按下`Ctrl` + `Shift` + `P` 打开命令面板
-3. 搜索 `Dream Shader Lang: Browse Package Store` 打开
-4. 下载任意ShaderPackage
-
-> 如下代码使用了 `dreamshader-texture` 包
+安装 Package 后可以通过 `@scope/package/...` 导入。
 
 ```c
 import "@typedreammoon/dreamshader-texture/Library/Texture.dsh";
 
-Shader(Name="DreamMaterials/M_TextureBuiltin")
+Shader(Name="DreamMaterials/M_TexturePackage")
 {
     Properties = {
         Texture2D MainTex = Path(Engine, "/EngineResources/DefaultTexture");
@@ -98,26 +98,25 @@ Shader(Name="DreamMaterials/M_TextureBuiltin")
     }
 
     Outputs = {
-        vec3 Res;
-        Base.EmissiveColor = Res;
+        vec3 Color;
+        Base.EmissiveColor = Color;
     }
 
     Graph = {
         vec2 uv = UE.TexCoord(Index=0);
         vec3 sampled;
+
         Texture::Sample2DRGB(MainTex, uv, sampled);
-        Res = sampled * Tint;
+        Color = sampled * Tint;
     }
 }
 ```
 
+Package 命令见 [Packages.md](Packages.md) 和 [VSCode.md](VSCode.md)。
+
 ## 5. `Function` 显式 out 调用
 
-### 定义
-
-#### 普通模式
-
-> 普通模式下 会把编译后的Shader代码 写到`[ProjectDir]/Intermediate/DreamShader/GeneratedShaders` 文件目录下的 `[ShaderName]_[Hash].ush` 文件中 然后在 Material 的 Custom 节点中 include 这个ush 然后调用函数
+定义：
 
 ```c
 Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
@@ -125,20 +124,30 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 }
 ```
 
-#### 自包含模式
-
-> 自包含模式下 会将编译后的Shader代码写到Material中的Custom节点
-
-### 推荐调用
+调用：
 
 ```c
 Graph = {
     vec3 src = vec3(1.0, 0.4, 0.2);
     vec3 tint = vec3(0.5, 1.0, 1.0);
-    vec3 res;
-    ApplyTint(src, tint, res);
+    vec3 result;
+
+    ApplyTint(src, tint, result);
 }
 ```
+
+`Function` 不支持 `result = ApplyTint(...)` 这种返回值风格。
+
+## 6. `SelfContained` 函数
+
+普通 `Function` 会生成 `.ush` 并由材质 Custom 节点 include。`SelfContained` / `Inline` 会把依赖代码写入 Custom 节点，适合需要把生成材质交给未安装 DreamShader 插件的项目使用时使用。
+
+```c
+Function SelfContained Remap01(in float value, out float result) {
+    result = saturate(value * 0.5 + 0.5);
+}
+```
+
 ## 7. 变量声明与 brace initializer
 
 ```c
@@ -152,7 +161,7 @@ Graph = {
 }
 ```
 
-## 8. 纹理默认值示例
+## 8. 纹理默认值
 
 ```c
 Properties = {
@@ -169,11 +178,11 @@ Graph = {
     float2 uv = UE.TexCoord(Index=0);
     float time = UE.Time();
     float pulse = UE.Expression(
-        Class="MaterialExpressionSine",
+        Class="Sine",
         OutputType="float1",
         Input=time);
 
-    Res = vec3(pulse, pulse, pulse);
+    Color = vec3(pulse, pulse, pulse);
 }
 ```
 
@@ -185,14 +194,14 @@ Graph = {
     float mask = UE.Expression(Class="ComponentMask", OutputType="float1", Input=uv, R=true);
 
     if (mask > 0.5) {
-        Res = vec3(1.0, 0.2, 0.2);
+        Color = vec3(1.0, 0.2, 0.2);
     } else {
-        Res = vec3(0.0, 0.0, 0.0);
+        Color = vec3(0.0, 0.0, 0.0);
     }
 }
 ```
 
-## 11. `ShaderFunction` 示例
+## 11. `ShaderFunction`
 
 ```c
 ShaderFunction(Name="Functions/F_Tint")
