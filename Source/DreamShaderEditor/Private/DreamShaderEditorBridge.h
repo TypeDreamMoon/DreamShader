@@ -9,7 +9,7 @@ struct FFileChangeData;
 
 namespace UE::DreamShader::Editor::Private
 {
-	class FDreamShaderEditorBridge
+	class FDreamShaderEditorBridge : public TSharedFromThis<FDreamShaderEditorBridge, ESPMode::ThreadSafe>
 	{
 	public:
 		struct FDiagnosticRecord
@@ -61,8 +61,12 @@ namespace UE::DreamShader::Editor::Private
 		TMap<FString, double> PendingFiles;
 		TMap<FString, TArray<FDiagnosticRecord>> DiagnosticsByFile;
 		TMap<FString, TSet<FString>> HeaderDependentsByFile;
+		FString WatchedSourceDirectory;
 		FDelegateHandle DirectoryWatcherHandle;
 		FTSTicker::FDelegateHandle TickerHandle;
 		FDelegateHandle MaterialCompilationFinishedHandle;
+		FDelegateHandle ToolMenusStartupCallbackHandle;
+		bool bIsShuttingDown = false;
+		bool bMenusRegistered = false;
 	};
 }

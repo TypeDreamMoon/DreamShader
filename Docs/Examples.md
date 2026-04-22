@@ -75,7 +75,12 @@ Shader(Name="DreamMaterials/M_Imported")
 
 ## 4. 使用外部库采样纹理
 
-先在VSCode中安装 `dreamshaderlang-language-support-1.1.0.vsix`
+1. 先在VSCode中安装 `dreamshaderlang-language-support-[version].vsix`
+2. 然后在VSCode中按下`Ctrl` + `Shift` + `P` 打开命令面板
+3. 搜索 `Dream Shader Lang: Browse Package Store` 打开
+4. 下载任意ShaderPackage
+
+> 如下代码使用了 `dreamshader-texture` 包
 
 ```c
 import "@typedreammoon/dreamshader-texture/Library/Texture.dsh";
@@ -110,11 +115,19 @@ Shader(Name="DreamMaterials/M_TextureBuiltin")
 
 ### 定义
 
+#### 普通模式
+
+> 普通模式下 会把编译后的Shader代码 写到`[ProjectDir]/Intermediate/DreamShader/GeneratedShaders` 文件目录下的 `[ShaderName]_[Hash].ush` 文件中 然后在 Material 的 Custom 节点中 include 这个ush 然后调用函数
+
 ```c
 Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
     result = color * tint;
 }
 ```
+
+#### 自包含模式
+
+> 自包含模式下 会将编译后的Shader代码写到Material中的Custom节点
 
 ### 推荐调用
 
@@ -126,15 +139,6 @@ Code = {
     ApplyTint(src, tint, res);
 }
 ```
-
-### 不再推荐
-
-```c
-Code = {
-    Res = ApplyTint(src, tint);
-}
-```
-
 ## 7. 变量声明与 brace initializer
 
 ```c
@@ -199,7 +203,3 @@ ShaderFunction(Name="Functions/F_Tint")
 }
 ```
 
-## 11. 当前仓库可直接参考
-
-- `DShader/Sample.dsm`
-- `DShader/Shared/common.dsh`

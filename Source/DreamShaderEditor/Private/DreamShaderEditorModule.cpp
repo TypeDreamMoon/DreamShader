@@ -1,14 +1,14 @@
 #include "DreamShaderEditorBridge.h"
 
 #include "Modules/ModuleManager.h"
-#include "Templates/UniquePtr.h"
+#include "Templates/SharedPointer.h"
 
 class FDreamShaderEditorModule : public IModuleInterface
 {
 public:
 	virtual void StartupModule() override
 	{
-		Bridge = MakeUnique<UE::DreamShader::Editor::Private::FDreamShaderEditorBridge>();
+		Bridge = MakeShared<UE::DreamShader::Editor::Private::FDreamShaderEditorBridge, ESPMode::ThreadSafe>();
 		Bridge->Startup();
 	}
 
@@ -22,7 +22,7 @@ public:
 	}
 
 private:
-	TUniquePtr<UE::DreamShader::Editor::Private::FDreamShaderEditorBridge> Bridge;
+	TSharedPtr<UE::DreamShader::Editor::Private::FDreamShaderEditorBridge, ESPMode::ThreadSafe> Bridge;
 };
 
 IMPLEMENT_MODULE(FDreamShaderEditorModule, DreamShaderEditor)

@@ -5,6 +5,7 @@
 #include "DreamShaderSettings.h"
 
 #include "Async/Async.h"
+#include "CoreGlobals.h"
 #include "DirectoryWatcherModule.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
@@ -31,6 +32,8 @@ namespace UE::DreamShader::Editor::Private
 {
 	namespace
 	{
+		static const FName DreamShaderToolMenuOwnerName(TEXT("DreamShaderEditor"));
+
 		bool IsPathUnderDirectory(const FString& InPath, const FString& InDirectory)
 		{
 			const FString Path = UE::DreamShader::NormalizeSourceFilePath(InPath);
@@ -331,6 +334,8 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::Startup()
 	{
+		bIsShuttingDown = false;
+
 		IFileManager::Get().MakeDirectory(*GetBridgeDirectory(), true);
 		IFileManager::Get().MakeDirectory(*GetRequestDirectory(), true);
 
@@ -340,27 +345,30 @@ namespace UE::DreamShader::Editor::Private
 		FDirectoryWatcherModule& DirectoryWatcherModule = FModuleManager::LoadModuleChecked<FDirectoryWatcherModule>(TEXT("DirectoryWatcher"));
 		if (IDirectoryWatcher* DirectoryWatcher = DirectoryWatcherModule.Get())
 		{
+			WatchedSourceDirectory = UE::DreamShader::GetSourceShaderDirectory();
 			DirectoryWatcher->RegisterDirectoryChangedCallback_Handle(
-				UE::DreamShader::GetSourceShaderDirectory(),
-				IDirectoryWatcher::FDirectoryChanged::CreateRaw(this, &FDreamShaderEditorBridge::OnDirectoryChanged),
+				WatchedSourceDirectory,
+				IDirectoryWatcher::FDirectoryChanged::CreateSP(AsShared(), &FDreamShaderEditorBridge::OnDirectoryChanged),
 				DirectoryWatcherHandle,
 				IDirectoryWatcher::WatchOptions::IncludeDirectoryChanges);
 		}
 
-		MaterialCompilationFinishedHandle = UMaterial::OnMaterialCompilationFinished().AddRaw(
-			this,
+		MaterialCompilationFinishedHandle = UMaterial::OnMaterialCompilationFinished().AddSP(
+			AsShared(),
 			&FDreamShaderEditorBridge::OnMaterialCompilationFinished);
 
-		UToolMenus::RegisterStartupCallback(
-			FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FDreamShaderEditorBridge::RegisterMenus));
+		ToolMenusStartupCallbackHandle = UToolMenus::RegisterStartupCallback(
+			FSimpleMulticastDelegate::FDelegate::CreateSP(AsShared(), &FDreamShaderEditorBridge::RegisterMenus));
 
 		TickerHandle = FTSTicker::GetCoreTicker().AddTicker(
-			FTickerDelegate::CreateRaw(this, &FDreamShaderEditorBridge::Tick),
+			FTickerDelegate::CreateSP(AsShared(), &FDreamShaderEditorBridge::Tick),
 			0.1f);
 	}
 
 	void FDreamShaderEditorBridge::Shutdown()
 	{
+		bIsShuttingDown = true;
+
 		if (TickerHandle.IsValid())
 		{
 			FTSTicker::GetCoreTicker().RemoveTicker(TickerHandle);
@@ -373,8 +381,16 @@ namespace UE::DreamShader::Editor::Private
 			MaterialCompilationFinishedHandle.Reset();
 		}
 
-		UToolMenus::UnRegisterStartupCallback(this);
-		UToolMenus::UnregisterOwner(this);
+		if (ToolMenusStartupCallbackHandle.IsValid())
+		{
+			UToolMenus::UnRegisterStartupCallback(ToolMenusStartupCallbackHandle);
+			ToolMenusStartupCallbackHandle.Reset();
+		}
+
+		if (!IsEngineExitRequested() && !GExitPurge)
+		{
+			UToolMenus::UnregisterOwner(DreamShaderToolMenuOwnerName);
+		}
 
 		if (DirectoryWatcherHandle.IsValid())
 		{
@@ -382,11 +398,12 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (IDirectoryWatcher* DirectoryWatcher = DirectoryWatcherModule->Get())
 				{
-					DirectoryWatcher->UnregisterDirectoryChangedCallback_Handle(UE::DreamShader::GetSourceShaderDirectory(), DirectoryWatcherHandle);
+					DirectoryWatcher->UnregisterDirectoryChangedCallback_Handle(WatchedSourceDirectory, DirectoryWatcherHandle);
 				}
 			}
 
 			DirectoryWatcherHandle.Reset();
+			WatchedSourceDirectory.Reset();
 		}
 
 		PendingFiles.Reset();
@@ -455,8 +472,15 @@ namespace UE::DreamShader::Editor::Private
 	void FDreamShaderEditorBridge::OnDirectoryChanged(const TArray<FFileChangeData>& FileChanges)
 	{
 		TArray<FFileChangeData> ChangesCopy = FileChanges;
-		AsyncTask(ENamedThreads::GameThread, [this, Changes = MoveTemp(ChangesCopy)]()
+		TWeakPtr<FDreamShaderEditorBridge, ESPMode::ThreadSafe> WeakBridge = AsWeak();
+		AsyncTask(ENamedThreads::GameThread, [WeakBridge, Changes = MoveTemp(ChangesCopy)]()
 		{
+			TSharedPtr<FDreamShaderEditorBridge, ESPMode::ThreadSafe> Bridge = WeakBridge.Pin();
+			if (!Bridge.IsValid() || Bridge->bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
+			{
+				return;
+			}
+
 			const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
 			if (Settings && !Settings->bAutoCompileOnSave)
 			{
@@ -467,7 +491,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (FileChange.Action == FFileChangeData::FCA_RescanRequired)
 				{
-					QueueFullScan();
+					Bridge->QueueFullScan();
 					continue;
 				}
 
@@ -480,7 +504,7 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename))
 					{
-						QueueDependentMaterialsForHeader(FileChange.Filename);
+						Bridge->QueueDependentMaterialsForHeader(FileChange.Filename);
 					}
 					else if (IsPackageMaterialFile(FileChange.Filename))
 					{
@@ -488,8 +512,8 @@ namespace UE::DreamShader::Editor::Private
 					}
 					else
 					{
-						RebuildDependencyGraph();
-						QueueSourceFile(FileChange.Filename);
+						Bridge->RebuildDependencyGraph();
+						Bridge->QueueSourceFile(FileChange.Filename);
 					}
 				}
 				else if (FileChange.Action == FFileChangeData::FCA_Removed)
@@ -497,7 +521,7 @@ namespace UE::DreamShader::Editor::Private
 					const FString SourceFile = UE::DreamShader::NormalizeSourceFilePath(FileChange.Filename);
 					if (UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename))
 					{
-						QueueDependentMaterialsForHeader(FileChange.Filename);
+						Bridge->QueueDependentMaterialsForHeader(FileChange.Filename);
 					}
 					else if (IsPackageMaterialFile(FileChange.Filename))
 					{
@@ -505,10 +529,10 @@ namespace UE::DreamShader::Editor::Private
 					}
 					else
 					{
-						PendingFiles.Remove(SourceFile);
-						ClearDiagnosticsForSourceAndDependencies(SourceFile);
-						RebuildDependencyGraph();
-						UpdateDiagnosticsFile();
+						Bridge->PendingFiles.Remove(SourceFile);
+						Bridge->ClearDiagnosticsForSourceAndDependencies(SourceFile);
+						Bridge->RebuildDependencyGraph();
+						Bridge->UpdateDiagnosticsFile();
 					}
 					UE_LOG(LogDreamShader, Display, TEXT("DreamShader source removed, existing generated assets were left untouched: %s"), *FileChange.Filename);
 				}
@@ -519,6 +543,11 @@ namespace UE::DreamShader::Editor::Private
 	bool FDreamShaderEditorBridge::Tick(float DeltaSeconds)
 	{
 		(void)DeltaSeconds;
+
+		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
+		{
+			return false;
+		}
 
 		ProcessRequestFiles();
 		ProcessReadyFiles();
@@ -618,6 +647,11 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::OnMaterialCompilationFinished(UMaterialInterface* MaterialInterface)
 	{
+		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
+		{
+			return;
+		}
+
 		UMaterial* Material = Cast<UMaterial>(MaterialInterface);
 		if (!Material)
 		{
@@ -704,7 +738,14 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::RegisterMenus()
 	{
-		FToolMenuOwnerScoped MenuOwner(this);
+		if (bIsShuttingDown || bMenusRegistered || IsEngineExitRequested() || GExitPurge)
+		{
+			return;
+		}
+
+		bMenusRegistered = true;
+
+		FToolMenuOwnerScoped MenuOwner(DreamShaderToolMenuOwnerName);
 
 		if (UToolMenu* ToolsMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.MainMenu.Tools")))
 		{
@@ -714,13 +755,13 @@ namespace UE::DreamShader::Editor::Private
 				LOCTEXT("DreamShaderRecompileLabel", "Recompile DSM"),
 				LOCTEXT("DreamShaderRecompileTooltip", "Recompile all DreamShader .dsm files and refresh diagnostics."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Refresh")),
-				FUIAction(FExecuteAction::CreateRaw(this, &FDreamShaderEditorBridge::RequestRecompileAll)));
+				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestRecompileAll)));
 			Section.AddMenuEntry(
 				TEXT("DreamShader.CleanGeneratedShaders"),
 				LOCTEXT("DreamShaderCleanGeneratedShadersLabel", "Clean Generated Shaders"),
 				LOCTEXT("DreamShaderCleanGeneratedShadersTooltip", "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")),
-				FUIAction(FExecuteAction::CreateRaw(this, &FDreamShaderEditorBridge::RequestCleanGeneratedShaders)));
+				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestCleanGeneratedShaders)));
 		}
 
 		if (UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar.AssetsToolBar")))
@@ -728,7 +769,7 @@ namespace UE::DreamShader::Editor::Private
 			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection(TEXT("DreamShader"));
 			Section.AddEntry(FToolMenuEntry::InitToolBarButton(
 				TEXT("DreamShader.RecompileAllToolbar"),
-				FUIAction(FExecuteAction::CreateRaw(this, &FDreamShaderEditorBridge::RequestRecompileAll)),
+				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestRecompileAll)),
 				LOCTEXT("DreamShaderRecompileToolbarLabel", "DSM"),
 				LOCTEXT("DreamShaderRecompileToolbarTooltip", "Recompile all DreamShader .dsm files."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Refresh"))));
@@ -737,12 +778,22 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::RequestRecompileAll()
 	{
+		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
+		{
+			return;
+		}
+
 		QueueFullScan();
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader queued a full .dsm recompile scan."));
 	}
 
 	void FDreamShaderEditorBridge::RequestCleanGeneratedShaders()
 	{
+		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
+		{
+			return;
+		}
+
 		CleanGeneratedShaderDirectory();
 		QueueFullScan();
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader cleaned generated shader includes and queued a full .dsm recompile scan."));

@@ -79,12 +79,12 @@ ShaderFunction(Name="Functions/TintColor")
 }
 ```
 
-### 2.3 `Function Name(...) { ... }`
+### 2.3 `Function [Inline/SelfContained] Name(...) { ... }`
 
 定义可复用 helper，是当前唯一推荐的 helper 语法。
 
 ```c
-Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
+Function [Inline/SelfContained] ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
     result = color * tint;
 }
 ```
@@ -95,6 +95,7 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 - 至少声明一个 `out`
 - 调用时显式传入 `out` 目标变量
 - 函数体是原始 helper 代码，可以写 `if` / `for` 等流程逻辑
+- 可以使用 [Inline/SelfContained] 标定此函数是否为自包含模式
 
 ### 2.4 `Namespace(Name="...")`
 
