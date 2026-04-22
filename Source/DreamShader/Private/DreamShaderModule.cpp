@@ -3,9 +3,11 @@
 #include "DreamShaderSettings.h"
 
 #include "HAL/FileManager.h"
+#include "CoreGlobals.h"
 #include "Misc/Char.h"
 #include "Misc/Paths.h"
 #include "ShaderCore.h"
+#include "UObject/UObjectBase.h"
 
 DEFINE_LOG_CATEGORY(LogDreamShader);
 
@@ -14,6 +16,17 @@ namespace UE::DreamShader
 	namespace Private
 	{
 		static const FString GeneratedShaderVirtualDirectory = TEXT("/DreamShaderGenerated");
+
+		struct FConfiguredDirectories
+		{
+			FString Source;
+			FString Package;
+			FString BuiltinLibrary;
+			FString Generated;
+			bool bInitialized = false;
+		};
+
+		static FConfiguredDirectories ConfiguredDirectories;
 
 		static FString ResolveProjectDirectory(const FString& ConfiguredPath, const FString& DefaultPath)
 		{
@@ -31,35 +44,60 @@ namespace UE::DreamShader
 			FPaths::MakeStandardFilename(ResolvedPath);
 			return ResolvedPath;
 		}
+
+		static bool CanReadSettingsObject()
+		{
+			return UObjectInitialized() && !GExitPurge && !IsEngineExitRequested();
+		}
+
+		static void RefreshConfiguredDirectories()
+		{
+			const UDreamShaderSettings* Settings = CanReadSettingsObject()
+				? GetDefault<UDreamShaderSettings>()
+				: nullptr;
+
+			ConfiguredDirectories.Source = ResolveProjectDirectory(
+				Settings ? Settings->SourceDirectory.Path : FString(),
+				TEXT("DShader"));
+			ConfiguredDirectories.Package = FPaths::Combine(ConfiguredDirectories.Source, TEXT("Packages"));
+			ConfiguredDirectories.BuiltinLibrary = ResolveProjectDirectory(
+				Settings ? Settings->BuiltinLibraryDirectory.Path : FString(),
+				TEXT("Plugins/DreamShader/Library"));
+			ConfiguredDirectories.Generated = ResolveProjectDirectory(
+				Settings ? Settings->GeneratedShaderDirectory.Path : FString(),
+				TEXT("Intermediate/DreamShader/GeneratedShaders"));
+			ConfiguredDirectories.bInitialized = true;
+		}
+
+		static const FConfiguredDirectories& GetConfiguredDirectories()
+		{
+			if (!ConfiguredDirectories.bInitialized || CanReadSettingsObject())
+			{
+				RefreshConfiguredDirectories();
+			}
+
+			return ConfiguredDirectories;
+		}
 	}
 
 	FString GetSourceShaderDirectory()
 	{
-		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
-		return Private::ResolveProjectDirectory(
-			Settings ? Settings->SourceDirectory.Path : FString(),
-			TEXT("DShader"));
+		return Private::GetConfiguredDirectories().Source;
 	}
 
 	FString GetPackageShaderDirectory()
 	{
-		return FPaths::Combine(GetSourceShaderDirectory(), TEXT("Packages"));
+		return Private::GetConfiguredDirectories().Package;
 	}
 
 	FString GetBuiltinShaderLibraryDirectory()
 	{
-		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
-		return Private::ResolveProjectDirectory(
-			Settings ? Settings->BuiltinLibraryDirectory.Path : FString(),
-			TEXT("Plugins/DreamShader/Library"));
+		return Private::GetConfiguredDirectories().BuiltinLibrary;
 	}
 
 	FString GetGeneratedShaderDirectory()
 	{
-		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
-		return Private::ResolveProjectDirectory(
-			Settings ? Settings->GeneratedShaderDirectory.Path : FString(),
-			TEXT("Intermediate/DreamShader/GeneratedShaders"));
+		return Private::GetConfiguredDirectories().Generated;
 	}
 
 	FString GetGeneratedShaderVirtualDirectory()

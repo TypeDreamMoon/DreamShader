@@ -16,6 +16,12 @@ namespace UE::DreamShader::Editor::Private
 		{
 			FString FilePath;
 			FString Message;
+			FString Detail;
+			FString Stage;
+			FString AssetPath;
+			FString ShaderPlatform;
+			FString QualityLevel;
+			FString Code;
 			int32 Line = 1;
 			int32 Column = 1;
 			FString Severity = TEXT("error");
@@ -42,6 +48,8 @@ namespace UE::DreamShader::Editor::Private
 		void OnMaterialCompilationFinished(UMaterialInterface* MaterialInterface);
 		void RegisterMenus();
 		void RequestRecompileAll();
+		void RequestCleanGeneratedShaders();
+		void CleanGeneratedShaderDirectory();
 		void RebuildDependencyGraph();
 		void SetDiagnostics(const FString& SourceFilePath, TArray<FDiagnosticRecord>&& Diagnostics);
 		void ClearDiagnostics(const FString& SourceFilePath);

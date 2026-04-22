@@ -18,6 +18,7 @@
 #include "Modules/ModuleManager.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
+#include "ShaderCore.h"
 #include "Styling/AppStyle.h"
 #include "ToolMenu.h"
 #include "ToolMenus.h"
@@ -238,11 +239,63 @@ namespace UE::DreamShader::Editor::Private
 		{
 			TSharedRef<FJsonObject> DiagnosticObject = MakeShared<FJsonObject>();
 			DiagnosticObject->SetStringField(TEXT("message"), Diagnostic.Message);
+			if (!Diagnostic.Detail.IsEmpty())
+			{
+				DiagnosticObject->SetStringField(TEXT("detail"), Diagnostic.Detail);
+			}
+			if (!Diagnostic.Stage.IsEmpty())
+			{
+				DiagnosticObject->SetStringField(TEXT("stage"), Diagnostic.Stage);
+			}
+			if (!Diagnostic.AssetPath.IsEmpty())
+			{
+				DiagnosticObject->SetStringField(TEXT("assetPath"), Diagnostic.AssetPath);
+			}
+			if (!Diagnostic.ShaderPlatform.IsEmpty())
+			{
+				DiagnosticObject->SetStringField(TEXT("shaderPlatform"), Diagnostic.ShaderPlatform);
+			}
+			if (!Diagnostic.QualityLevel.IsEmpty())
+			{
+				DiagnosticObject->SetStringField(TEXT("qualityLevel"), Diagnostic.QualityLevel);
+			}
+			if (!Diagnostic.Code.IsEmpty())
+			{
+				DiagnosticObject->SetStringField(TEXT("code"), Diagnostic.Code);
+			}
 			DiagnosticObject->SetNumberField(TEXT("line"), Diagnostic.Line);
 			DiagnosticObject->SetNumberField(TEXT("column"), Diagnostic.Column);
 			DiagnosticObject->SetStringField(TEXT("severity"), Diagnostic.Severity);
 			DiagnosticObject->SetStringField(TEXT("source"), Diagnostic.Source);
 			OutDiagnostics.Add(MakeShared<FJsonValueObject>(DiagnosticObject));
+		}
+
+		FString GetShaderPlatformLabel(const EShaderPlatform ShaderPlatform)
+		{
+			const FName ShaderFormat = LegacyShaderPlatformToShaderFormat(ShaderPlatform);
+			return ShaderFormat.IsNone()
+				? FString::Printf(TEXT("Platform %d"), static_cast<int32>(ShaderPlatform))
+				: ShaderFormat.ToString();
+		}
+
+		FString GetMaterialQualityLevelLabel(const EMaterialQualityLevel::Type QualityLevel)
+		{
+			return LexToString(QualityLevel);
+		}
+
+		FString GetFirstMeaningfulErrorLine(const FString& InError)
+		{
+			TArray<FString> Lines;
+			InError.ParseIntoArrayLines(Lines, false);
+			for (const FString& Line : Lines)
+			{
+				const FString Trimmed = Line.TrimStartAndEnd();
+				if (!Trimmed.IsEmpty())
+				{
+					return Trimmed;
+				}
+			}
+			return InError.TrimStartAndEnd();
 		}
 	}
 
@@ -511,6 +564,10 @@ namespace UE::DreamShader::Editor::Private
 						}
 					}
 				}
+				else if (Action.Equals(TEXT("cleanGeneratedShaders"), ESearchCase::IgnoreCase))
+				{
+					RequestCleanGeneratedShaders();
+				}
 			}
 
 			IFileManager::Get().Delete(*RequestPath);
@@ -574,12 +631,70 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		TArray<FDiagnosticRecord> Diagnostics;
-		if (const FMaterialResource* MaterialResource = Material->GetMaterialResource(GMaxRHIShaderPlatform))
+		const FString MaterialAssetPath = Material->GetPathName();
+		TSet<FString> SeenDiagnosticKeys;
+		for (int32 ShaderPlatformIndex = 0; ShaderPlatformIndex < EShaderPlatform::SP_NumPlatforms; ++ShaderPlatformIndex)
 		{
-			for (const FString& Error : MaterialResource->GetCompileErrors())
+			const EShaderPlatform ShaderPlatform = static_cast<EShaderPlatform>(ShaderPlatformIndex);
+			for (int32 QualityLevelIndex = 0; QualityLevelIndex <= static_cast<int32>(EMaterialQualityLevel::Num); ++QualityLevelIndex)
 			{
-				FDiagnosticRecord& Diagnostic = Diagnostics.AddDefaulted_GetRef();
-				Diagnostic.Message = Error;
+				const EMaterialQualityLevel::Type QualityLevel = static_cast<EMaterialQualityLevel::Type>(QualityLevelIndex);
+				const FMaterialResource* MaterialResource = Material->GetMaterialResource(ShaderPlatform, QualityLevel);
+				if (!MaterialResource)
+				{
+					continue;
+				}
+
+				const FString ShaderPlatformLabel = GetShaderPlatformLabel(ShaderPlatform);
+				const FString QualityLabel = GetMaterialQualityLevelLabel(QualityLevel);
+				for (const FString& Error : MaterialResource->GetCompileErrors())
+				{
+					const FString RawError = Error.TrimStartAndEnd();
+					if (RawError.IsEmpty())
+					{
+						continue;
+					}
+
+					FString ParsedFilePath;
+					int32 ParsedLine = 1;
+					int32 ParsedColumn = 1;
+					FString ParsedMessage;
+					const bool bHasParsedLocation = TryParseErrorLocation(RawError, ParsedFilePath, ParsedLine, ParsedColumn, ParsedMessage);
+					const bool bMapsToDreamShaderSource = bHasParsedLocation && UE::DreamShader::IsDreamShaderSourceFile(ParsedFilePath);
+
+					const FString DisplayMessage = FString::Printf(
+						TEXT("[%s / %s] %s"),
+						*ShaderPlatformLabel,
+						*QualityLabel,
+						*(bHasParsedLocation ? ParsedMessage : GetFirstMeaningfulErrorLine(RawError)));
+
+					const FString DeduplicationKey = FString::Printf(
+						TEXT("%s|%s|%s|%s|%d|%d"),
+						*SourceFilePath,
+						*ShaderPlatformLabel,
+						*QualityLabel,
+						*DisplayMessage,
+						bMapsToDreamShaderSource ? ParsedLine : 1,
+						bMapsToDreamShaderSource ? ParsedColumn : 1);
+					if (SeenDiagnosticKeys.Contains(DeduplicationKey))
+					{
+						continue;
+					}
+					SeenDiagnosticKeys.Add(DeduplicationKey);
+
+					FDiagnosticRecord& Diagnostic = Diagnostics.AddDefaulted_GetRef();
+					Diagnostic.FilePath = bMapsToDreamShaderSource ? ParsedFilePath : SourceFilePath;
+					Diagnostic.Message = DisplayMessage;
+					Diagnostic.Detail = RawError;
+					Diagnostic.Stage = TEXT("materialCompile");
+					Diagnostic.AssetPath = MaterialAssetPath;
+					Diagnostic.ShaderPlatform = ShaderPlatformLabel;
+					Diagnostic.QualityLevel = QualityLabel;
+					Diagnostic.Code = TEXT("material-compile");
+					Diagnostic.Source = TEXT("DreamShader Material Compile");
+					Diagnostic.Line = bMapsToDreamShaderSource ? ParsedLine : 1;
+					Diagnostic.Column = bMapsToDreamShaderSource ? ParsedColumn : 1;
+				}
 			}
 		}
 
@@ -600,6 +715,12 @@ namespace UE::DreamShader::Editor::Private
 				LOCTEXT("DreamShaderRecompileTooltip", "Recompile all DreamShader .dsm files and refresh diagnostics."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Refresh")),
 				FUIAction(FExecuteAction::CreateRaw(this, &FDreamShaderEditorBridge::RequestRecompileAll)));
+			Section.AddMenuEntry(
+				TEXT("DreamShader.CleanGeneratedShaders"),
+				LOCTEXT("DreamShaderCleanGeneratedShadersLabel", "Clean Generated Shaders"),
+				LOCTEXT("DreamShaderCleanGeneratedShadersTooltip", "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")),
+				FUIAction(FExecuteAction::CreateRaw(this, &FDreamShaderEditorBridge::RequestCleanGeneratedShaders)));
 		}
 
 		if (UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar.AssetsToolBar")))
@@ -618,6 +739,39 @@ namespace UE::DreamShader::Editor::Private
 	{
 		QueueFullScan();
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader queued a full .dsm recompile scan."));
+	}
+
+	void FDreamShaderEditorBridge::RequestCleanGeneratedShaders()
+	{
+		CleanGeneratedShaderDirectory();
+		QueueFullScan();
+		UE_LOG(LogDreamShader, Display, TEXT("DreamShader cleaned generated shader includes and queued a full .dsm recompile scan."));
+	}
+
+	void FDreamShaderEditorBridge::CleanGeneratedShaderDirectory()
+	{
+		const FString GeneratedShaderDirectory = UE::DreamShader::GetGeneratedShaderDirectory();
+		IFileManager& FileManager = IFileManager::Get();
+
+		TArray<FString> GeneratedShaderFiles;
+		FileManager.FindFilesRecursive(
+			GeneratedShaderFiles,
+			*GeneratedShaderDirectory,
+			TEXT("*"),
+			true,
+			false,
+			false);
+
+		const int32 DeletedFileCount = GeneratedShaderFiles.Num();
+		FileManager.DeleteDirectory(*GeneratedShaderDirectory, false, true);
+		FileManager.MakeDirectory(*GeneratedShaderDirectory, true);
+
+		UE_LOG(
+			LogDreamShader,
+			Display,
+			TEXT("DreamShader deleted %d generated shader file(s) from '%s'."),
+			DeletedFileCount,
+			*GeneratedShaderDirectory);
 	}
 
 	void FDreamShaderEditorBridge::RebuildDependencyGraph()
@@ -730,6 +884,10 @@ namespace UE::DreamShader::Editor::Private
 				FDiagnosticRecord& Diagnostic = Diagnostics.AddDefaulted_GetRef();
 				Diagnostic.FilePath = DiagnosticFilePath;
 				Diagnostic.Message = DiagnosticMessage;
+				Diagnostic.Detail = Line;
+				Diagnostic.Stage = TEXT("generate");
+				Diagnostic.Code = TEXT("generate-error");
+				Diagnostic.Source = TEXT("DreamShader Generate");
 				Diagnostic.Line = DiagnosticLine;
 				Diagnostic.Column = DiagnosticColumn;
 				continue;
@@ -742,6 +900,10 @@ namespace UE::DreamShader::Editor::Private
 
 			FDiagnosticRecord& Diagnostic = Diagnostics.AddDefaulted_GetRef();
 			Diagnostic.Message = Line;
+			Diagnostic.Detail = Line;
+			Diagnostic.Stage = TEXT("generate");
+			Diagnostic.Code = TEXT("generate-error");
+			Diagnostic.Source = TEXT("DreamShader Generate");
 		}
 
 		return Diagnostics;

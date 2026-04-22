@@ -389,11 +389,24 @@ namespace UE::DreamShader
 			FTextShaderDefinition& OutDefinition,
 			FString& OutError)
 		{
+			FTextShaderFunctionDefinition Function;
+
 			FString FunctionName;
 			if (!Scanner.ParseIdentifier(FunctionName, OutError))
 			{
 				OutError = TEXT("Function declaration is missing a valid function name.");
 				return false;
+			}
+
+			if (FunctionName.Equals(TEXT("SelfContained"), ESearchCase::IgnoreCase)
+				|| FunctionName.Equals(TEXT("Inline"), ESearchCase::IgnoreCase))
+			{
+				Function.bSelfContained = true;
+				if (!Scanner.ParseIdentifier(FunctionName, OutError))
+				{
+					OutError = TEXT("Function declaration is missing a valid function name after SelfContained.");
+					return false;
+				}
 			}
 
 			const FString QualifiedFunctionName = NamespaceName.IsEmpty()
@@ -414,7 +427,6 @@ namespace UE::DreamShader
 				return false;
 			}
 
-			FTextShaderFunctionDefinition Function;
 			Function.Name = QualifiedFunctionName;
 			if (!ParseModernFunctionSignature(QualifiedFunctionName, ParameterBlock, Function, OutError))
 			{

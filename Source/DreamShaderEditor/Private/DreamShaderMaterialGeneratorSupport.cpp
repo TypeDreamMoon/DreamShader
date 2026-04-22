@@ -691,16 +691,250 @@ namespace UE::DreamShader::Editor::Private
 			&& StructProperty->Struct->GetFName() == NAME_ExpressionInput;
 	}
 
-	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, const FString& ValueText, FString& OutError)
+	struct FResolvedMaterialSettingTarget
 	{
-		if (!Target || !Property)
+		UObject* OwnerObject = nullptr;
+		void* ContainerPtr = nullptr;
+		FProperty* Property = nullptr;
+		int32 ArrayIndex = 0;
+	};
+
+	struct FParsedMaterialSettingSegment
+	{
+		FString Name;
+		int32 ArrayIndex = 0;
+		bool bHasArrayIndex = false;
+	};
+
+	static bool SplitSimpleArgumentList(const FString& InText, TArray<FString>& OutArguments)
+	{
+		OutArguments.Reset();
+
+		FString Current;
+		bool bInString = false;
+		for (int32 Index = 0; Index < InText.Len(); ++Index)
+		{
+			const TCHAR Character = InText[Index];
+			if (Character == TCHAR('"'))
+			{
+				bInString = !bInString;
+				Current.AppendChar(Character);
+				continue;
+			}
+
+			if (!bInString && Character == TCHAR(','))
+			{
+				OutArguments.Add(Current.TrimStartAndEnd());
+				Current.Reset();
+				continue;
+			}
+
+			Current.AppendChar(Character);
+		}
+
+		if (bInString)
+		{
+			return false;
+		}
+
+		OutArguments.Add(Current.TrimStartAndEnd());
+		return true;
+	}
+
+	static FString TrimMatchingQuotes(const FString& InText)
+	{
+		FString Result = InText.TrimStartAndEnd();
+		if (Result.Len() >= 2 && Result.StartsWith(TEXT("\"")) && Result.EndsWith(TEXT("\"")))
+		{
+			Result = Result.Mid(1, Result.Len() - 2);
+		}
+		return Result;
+	}
+
+	static bool TryParseAssetReferenceLiteral(const FString& InText, FString& OutObjectPath, FString& OutError)
+	{
+		OutObjectPath.Reset();
+
+		FString Candidate = InText.TrimStartAndEnd();
+		if (Candidate.IsEmpty())
+		{
+			OutError = TEXT("Asset reference cannot be empty.");
+			return false;
+		}
+
+		FString RootName;
+		FString AssetPath;
+		if (Candidate.StartsWith(TEXT("Path("), ESearchCase::IgnoreCase))
+		{
+			if (!Candidate.EndsWith(TEXT(")")))
+			{
+				OutError = TEXT("Asset Path(...) reference is missing a closing ')'.");
+				return false;
+			}
+
+			const FString ArgumentBlock = Candidate.Mid(5, Candidate.Len() - 6);
+			TArray<FString> Arguments;
+			if (!SplitSimpleArgumentList(ArgumentBlock, Arguments))
+			{
+				OutError = TEXT("Asset Path(...) contains an unterminated string literal.");
+				return false;
+			}
+
+			if (Arguments.Num() == 1)
+			{
+				AssetPath = Arguments[0];
+			}
+			else if (Arguments.Num() == 2)
+			{
+				RootName = Arguments[0];
+				AssetPath = Arguments[1];
+			}
+			else
+			{
+				OutError = TEXT("Asset Path(...) expects either 1 argument (/Game/... path) or 2 arguments (Game|Engine, asset path).");
+				return false;
+			}
+		}
+		else
+		{
+			AssetPath = Candidate;
+		}
+
+		RootName = TrimMatchingQuotes(RootName);
+		AssetPath = TrimMatchingQuotes(AssetPath);
+		AssetPath.ReplaceInline(TEXT("\\"), TEXT("/"));
+		if (AssetPath.IsEmpty())
+		{
+			OutError = TEXT("Asset reference requires a non-empty path.");
+			return false;
+		}
+
+		FString LongObjectPath;
+		if (AssetPath.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase)
+			|| AssetPath.StartsWith(TEXT("/Engine/"), ESearchCase::IgnoreCase))
+		{
+			LongObjectPath = AssetPath;
+		}
+		else
+		{
+			if (!AssetPath.StartsWith(TEXT("/")))
+			{
+				AssetPath = TEXT("/") + AssetPath;
+			}
+
+			if (RootName.Equals(TEXT("Game"), ESearchCase::IgnoreCase))
+			{
+				LongObjectPath = TEXT("/Game") + AssetPath;
+			}
+			else if (RootName.Equals(TEXT("Engine"), ESearchCase::IgnoreCase))
+			{
+				LongObjectPath = TEXT("/Engine") + AssetPath;
+			}
+			else
+			{
+				OutError = FString::Printf(TEXT("Unsupported asset Path root '%s'. Use Game or Engine."), *RootName);
+				return false;
+			}
+		}
+
+		const int32 LastSlashIndex = LongObjectPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+		const int32 LastDotIndex = LongObjectPath.Find(TEXT("."), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+		if (LastSlashIndex == INDEX_NONE || LastSlashIndex >= LongObjectPath.Len() - 1)
+		{
+			OutError = FString::Printf(TEXT("Invalid asset path '%s'."), *LongObjectPath);
+			return false;
+		}
+
+		if (LastDotIndex == INDEX_NONE || LastDotIndex < LastSlashIndex)
+		{
+			const FString AssetName = LongObjectPath.Mid(LastSlashIndex + 1);
+			LongObjectPath += TEXT(".") + AssetName;
+		}
+
+		FText PathError;
+		if (!FPackageName::IsValidObjectPath(LongObjectPath, &PathError))
+		{
+			OutError = PathError.ToString();
+			return false;
+		}
+
+		OutObjectPath = LongObjectPath;
+		return true;
+	}
+
+	static FString NormalizeEnumLookupKey(const FString& InKey)
+	{
+		FString Normalized = UE::DreamShader::NormalizeSettingKey(InKey);
+		Normalized.ReplaceInline(TEXT(" "), TEXT(""));
+		Normalized.ReplaceInline(TEXT("_"), TEXT(""));
+		Normalized.ReplaceInline(TEXT("-"), TEXT(""));
+		Normalized.ReplaceInline(TEXT(":"), TEXT(""));
+		Normalized.ReplaceInline(TEXT("."), TEXT(""));
+		Normalized.ReplaceInline(TEXT("/"), TEXT(""));
+		return Normalized;
+	}
+
+	static bool TryResolveEnumLiteral(UEnum* Enum, const FString& InValue, int64& OutEnumValue)
+	{
+		if (!Enum)
+		{
+			return false;
+		}
+
+		const FString Candidate = NormalizeEnumLookupKey(InValue);
+		for (int32 Index = 0; Index < Enum->NumEnums(); ++Index)
+		{
+			if (Enum->HasMetaData(TEXT("Hidden"), Index))
+			{
+				continue;
+			}
+
+			const FString ShortName = Enum->GetNameStringByIndex(Index);
+			const FString FullName = Enum->GetNameByIndex(Index).ToString();
+			const FString DisplayName = Enum->GetDisplayNameTextByIndex(Index).ToString();
+			const int32 PrefixSeparatorIndex = ShortName.Find(TEXT("_"));
+			const FString PrefixlessShortName = PrefixSeparatorIndex != INDEX_NONE ? ShortName.Mid(PrefixSeparatorIndex + 1) : FString();
+
+			const auto MatchesValue = [&Candidate](const FString& Name)
+			{
+				return !Name.IsEmpty() && NormalizeEnumLookupKey(Name) == Candidate;
+			};
+
+			if (MatchesValue(ShortName)
+				|| MatchesValue(FullName)
+				|| MatchesValue(DisplayName)
+				|| MatchesValue(PrefixlessShortName))
+			{
+				OutEnumValue = Enum->GetValueByIndex(Index);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, void* ValuePtr, const FString& ValueText, FString& OutError)
+	{
+		if (!Target || !Property || !ValuePtr)
 		{
 			OutError = TEXT("Invalid reflected property target.");
 			return false;
 		}
 
-		void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Target);
 		const FString TrimmedValue = ValueText.TrimStartAndEnd();
+		FString AssetObjectPath;
+		const bool bHasParsedAssetReference =
+			CastField<FObjectPropertyBase>(Property) != nullptr
+			&& TryParseAssetReferenceLiteral(TrimmedValue, AssetObjectPath, OutError);
+
+		if (CastField<FObjectPropertyBase>(Property) != nullptr
+			&& !bHasParsedAssetReference
+			&& (TrimmedValue.StartsWith(TEXT("Path("), ESearchCase::IgnoreCase)
+				|| TrimmedValue.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase)
+				|| TrimmedValue.StartsWith(TEXT("/Engine/"), ESearchCase::IgnoreCase)))
+		{
+			return false;
+		}
 
 		if (FBoolProperty* BoolProperty = CastField<FBoolProperty>(Property))
 		{
@@ -774,24 +1008,41 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
+		if (FObjectPropertyBase* ObjectProperty = CastField<FObjectPropertyBase>(Property))
+		{
+			if (!bHasParsedAssetReference)
+			{
+				OutError = FString::Printf(TEXT("Object property '%s' expects Path(...) or an absolute /Game/... object path."), *Property->GetName());
+				return false;
+			}
+
+			UObject* LoadedObject = StaticLoadObject(ObjectProperty->PropertyClass, nullptr, *AssetObjectPath);
+			if (!LoadedObject)
+			{
+				OutError = FString::Printf(TEXT("Failed to load asset '%s' for '%s'."), *AssetObjectPath, *Property->GetName());
+				return false;
+			}
+
+			if (!LoadedObject->IsA(ObjectProperty->PropertyClass))
+			{
+				OutError = FString::Printf(
+					TEXT("Asset '%s' is not compatible with '%s'. Expected '%s'."),
+					*AssetObjectPath,
+					*Property->GetName(),
+					*ObjectProperty->PropertyClass->GetName());
+				return false;
+			}
+
+			ObjectProperty->SetObjectPropertyValue(ValuePtr, LoadedObject);
+			return true;
+		}
+
 		if (FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property))
 		{
 			if (UEnum* Enum = EnumProperty->GetEnum())
 			{
 				int64 EnumValue = INDEX_NONE;
-				for (int32 Index = 0; Index < Enum->NumEnums(); ++Index)
-				{
-					const FString ShortName = Enum->GetNameStringByIndex(Index);
-					const FString FullName = Enum->GetNameByIndex(Index).ToString();
-					if (UE::DreamShader::NormalizeSettingKey(ShortName) == UE::DreamShader::NormalizeSettingKey(TrimmedValue)
-						|| UE::DreamShader::NormalizeSettingKey(FullName) == UE::DreamShader::NormalizeSettingKey(TrimmedValue))
-					{
-						EnumValue = Enum->GetValueByIndex(Index);
-						break;
-					}
-				}
-
-				if (EnumValue == INDEX_NONE)
+				if (!TryResolveEnumLiteral(Enum, TrimmedValue, EnumValue))
 				{
 					OutError = FString::Printf(TEXT("'%s' is not a valid enum value for '%s'."), *TrimmedValue, *Property->GetName());
 					return false;
@@ -807,19 +1058,7 @@ namespace UE::DreamShader::Editor::Private
 			if (UEnum* Enum = ByteProperty->Enum)
 			{
 				int64 EnumValue = INDEX_NONE;
-				for (int32 Index = 0; Index < Enum->NumEnums(); ++Index)
-				{
-					const FString ShortName = Enum->GetNameStringByIndex(Index);
-					const FString FullName = Enum->GetNameByIndex(Index).ToString();
-					if (UE::DreamShader::NormalizeSettingKey(ShortName) == UE::DreamShader::NormalizeSettingKey(TrimmedValue)
-						|| UE::DreamShader::NormalizeSettingKey(FullName) == UE::DreamShader::NormalizeSettingKey(TrimmedValue))
-					{
-						EnumValue = Enum->GetValueByIndex(Index);
-						break;
-					}
-				}
-
-				if (EnumValue == INDEX_NONE)
+				if (!TryResolveEnumLiteral(Enum, TrimmedValue, EnumValue))
 				{
 					OutError = FString::Printf(TEXT("'%s' is not a valid enum value for '%s'."), *TrimmedValue, *Property->GetName());
 					return false;
@@ -841,13 +1080,26 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		FOutputDeviceNull ImportErrors;
-		if (Property->ImportText_Direct(*TrimmedValue, ValuePtr, Target, PPF_None, &ImportErrors) != nullptr)
+		const FString ImportValue = bHasParsedAssetReference ? AssetObjectPath : TrimmedValue;
+		if (Property->ImportText_Direct(*ImportValue, ValuePtr, Target, PPF_None, &ImportErrors) != nullptr)
 		{
 			return true;
 		}
 
 		OutError = FString::Printf(TEXT("Property '%s' on '%s' is not a supported literal type yet."), *Property->GetName(), *Target->GetClass()->GetName());
 		return false;
+	}
+
+	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, const FString& ValueText, FString& OutError)
+	{
+		if (!Target || !Property)
+		{
+			OutError = TEXT("Invalid reflected property target.");
+			return false;
+		}
+
+		void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Target);
+		return SetMaterialExpressionLiteralProperty(Target, Property, ValuePtr, ValueText, OutError);
 	}
 
 	static bool TryGetSettingValue(const FTextShaderDefinition& Definition, const TCHAR* Key, FString& OutValue)
@@ -894,6 +1146,85 @@ namespace UE::DreamShader::Editor::Private
 		return Normalized;
 	}
 
+	static bool SplitMaterialSettingPath(const FString& InKey, TArray<FString>& OutSegments)
+	{
+		OutSegments.Reset();
+
+		FString Current;
+		int32 BracketDepth = 0;
+		for (int32 Index = 0; Index < InKey.Len(); ++Index)
+		{
+			const TCHAR Character = InKey[Index];
+			if (Character == TCHAR('['))
+			{
+				++BracketDepth;
+			}
+			else if (Character == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+			}
+			else if (Character == TCHAR('.') && BracketDepth == 0)
+			{
+				OutSegments.Add(Current.TrimStartAndEnd());
+				Current.Reset();
+				continue;
+			}
+
+			Current.AppendChar(Character);
+		}
+
+		if (!Current.IsEmpty())
+		{
+			OutSegments.Add(Current.TrimStartAndEnd());
+		}
+
+		return !OutSegments.IsEmpty();
+	}
+
+	static bool ParseMaterialSettingSegment(const FString& InSegmentText, FParsedMaterialSettingSegment& OutSegment, FString& OutError)
+	{
+		OutSegment = {};
+		FString Segment = InSegmentText.TrimStartAndEnd();
+		if (Segment.IsEmpty())
+		{
+			OutError = TEXT("Setting path segment cannot be empty.");
+			return false;
+		}
+
+		const int32 OpenBracketIndex = Segment.Find(TEXT("["));
+		if (OpenBracketIndex == INDEX_NONE)
+		{
+			OutSegment.Name = Segment;
+			return true;
+		}
+
+		const int32 CloseBracketIndex = Segment.Find(TEXT("]"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+		if (CloseBracketIndex == INDEX_NONE || CloseBracketIndex <= OpenBracketIndex || CloseBracketIndex != Segment.Len() - 1)
+		{
+			OutError = FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText);
+			return false;
+		}
+
+		const FString IndexText = Segment.Mid(OpenBracketIndex + 1, CloseBracketIndex - OpenBracketIndex - 1).TrimStartAndEnd();
+		int32 ParsedIndex = INDEX_NONE;
+		if (!ParseIntegerLiteral(IndexText, ParsedIndex) || ParsedIndex < 0)
+		{
+			OutError = FString::Printf(TEXT("Invalid array index '%s' in setting segment '%s'."), *IndexText, *InSegmentText);
+			return false;
+		}
+
+		OutSegment.Name = Segment.Left(OpenBracketIndex).TrimStartAndEnd();
+		OutSegment.ArrayIndex = ParsedIndex;
+		OutSegment.bHasArrayIndex = true;
+		if (OutSegment.Name.IsEmpty())
+		{
+			OutError = FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText);
+			return false;
+		}
+
+		return true;
+	}
+
 	static bool IsSpecialMaterialSettingKey(const FString& InKey)
 	{
 		const FString Key = NormalizeMaterialSettingLookupKey(InKey);
@@ -909,6 +1240,14 @@ namespace UE::DreamShader::Editor::Private
 		static const TMap<FString, FString> Aliases = []()
 		{
 			TMap<FString, FString> Result;
+			Result.Add(TEXT("lightingmode"), TEXT("TranslucencyLightingMode"));
+			Result.Add(TEXT("translucentlightingmode"), TEXT("TranslucencyLightingMode"));
+			Result.Add(TEXT("refractionmode"), TEXT("RefractionMethod"));
+			Result.Add(TEXT("physicalmaterial"), TEXT("PhysMaterial"));
+			Result.Add(TEXT("physicalmaterialmask"), TEXT("PhysMaterialMask"));
+			Result.Add(TEXT("lightmass"), TEXT("LightmassSettings"));
+			Result.Add(TEXT("mobileseparatetranslucency"), TEXT("bEnableMobileSeparateTranslucency"));
+			Result.Add(TEXT("alwaysevaluateworldpositionoffset"), TEXT("bAlwaysEvaluateWorldPositionOffset"));
 			Result.Add(TEXT("responsiveaa"), TEXT("bEnableResponsiveAA"));
 			Result.Add(TEXT("thinsurface"), TEXT("bIsThinSurface"));
 			return Result;
@@ -916,7 +1255,7 @@ namespace UE::DreamShader::Editor::Private
 		return Aliases;
 	}
 
-	static bool ResolveMaterialSettingProperty(const FString& InKey, FProperty*& OutProperty)
+	static bool TryResolveMaterialSettingPropertyOnStruct(const UStruct* InStruct, const FString& InKey, FProperty*& OutProperty)
 	{
 		FString LookupKey = NormalizeMaterialSettingLookupKey(InKey);
 		if (const FString* Alias = GetMaterialSettingAliases().Find(LookupKey))
@@ -924,7 +1263,7 @@ namespace UE::DreamShader::Editor::Private
 			LookupKey = NormalizeMaterialSettingLookupKey(*Alias);
 		}
 
-		for (TFieldIterator<FProperty> It(UMaterial::StaticClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
+		for (TFieldIterator<FProperty> It(InStruct, EFieldIteratorFlags::IncludeSuper); It; ++It)
 		{
 			FProperty* Property = *It;
 			if (!Property)
@@ -947,21 +1286,103 @@ namespace UE::DreamShader::Editor::Private
 				OutProperty = Property;
 				return true;
 			}
+
+			const FString DisplayName = Property->GetMetaData(TEXT("DisplayName"));
+			if (!DisplayName.IsEmpty() && NormalizeMaterialSettingLookupKey(DisplayName) == LookupKey)
+			{
+				OutProperty = Property;
+				return true;
+			}
 		}
 
 		OutProperty = nullptr;
 		return false;
 	}
 
-	static bool ValidateGenericMaterialSetting(const FString& InKey, const FString& InValue, FString& OutError)
+	static bool ResolveMaterialSettingTarget(UObject* RootObject, const FString& InKey, FResolvedMaterialSettingTarget& OutTarget, FString& OutError)
 	{
-		FProperty* Property = nullptr;
-		if (!ResolveMaterialSettingProperty(InKey, Property))
+		if (!RootObject)
 		{
-			OutError = FString::Printf(TEXT("Unsupported material setting '%s'."), *InKey);
+			OutError = TEXT("Invalid material setting target.");
 			return false;
 		}
 
+		TArray<FString> Segments;
+		if (!SplitMaterialSettingPath(InKey, Segments))
+		{
+			OutError = FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey);
+			return false;
+		}
+
+		void* CurrentContainer = RootObject;
+		const UStruct* CurrentStruct = RootObject->GetClass();
+
+		for (int32 SegmentIndex = 0; SegmentIndex < Segments.Num(); ++SegmentIndex)
+		{
+			FParsedMaterialSettingSegment Segment;
+			if (!ParseMaterialSettingSegment(Segments[SegmentIndex], Segment, OutError))
+			{
+				return false;
+			}
+
+			FProperty* Property = nullptr;
+			if (!TryResolveMaterialSettingPropertyOnStruct(CurrentStruct, Segment.Name, Property))
+			{
+				OutError = FString::Printf(TEXT("Unsupported material setting '%s'."), *InKey);
+				return false;
+			}
+
+			if (Segment.bHasArrayIndex)
+			{
+				if (Property->ArrayDim <= 1)
+				{
+					OutError = FString::Printf(TEXT("Setting '%s' is not an indexed array property."), *Segments[SegmentIndex]);
+					return false;
+				}
+
+				if (Segment.ArrayIndex >= Property->ArrayDim)
+				{
+					OutError = FString::Printf(
+						TEXT("Array index %d is out of range for setting '%s' (max %d)."),
+						Segment.ArrayIndex,
+						*Segments[SegmentIndex],
+						Property->ArrayDim - 1);
+					return false;
+				}
+			}
+			else if (Property->ArrayDim > 1)
+			{
+				OutError = FString::Printf(TEXT("Setting '%s' requires an explicit [index]."), *Segments[SegmentIndex]);
+				return false;
+			}
+
+			const int32 ArrayIndex = Segment.bHasArrayIndex ? Segment.ArrayIndex : 0;
+			if (SegmentIndex == Segments.Num() - 1)
+			{
+				OutTarget.OwnerObject = RootObject;
+				OutTarget.ContainerPtr = CurrentContainer;
+				OutTarget.Property = Property;
+				OutTarget.ArrayIndex = ArrayIndex;
+				return true;
+			}
+
+			const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
+			if (!StructProperty || !StructProperty->Struct)
+			{
+				OutError = FString::Printf(TEXT("Setting path '%s' cannot continue through '%s'."), *InKey, *Segments[SegmentIndex]);
+				return false;
+			}
+
+			CurrentContainer = StructProperty->ContainerPtrToValuePtr<void>(CurrentContainer, ArrayIndex);
+			CurrentStruct = StructProperty->Struct;
+		}
+
+		OutError = FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey);
+		return false;
+	}
+
+	static bool ValidateGenericMaterialSetting(const FString& InKey, const FString& InValue, FString& OutError)
+	{
 		UMaterial* ProbeMaterial = NewObject<UMaterial>(GetTransientPackage(), NAME_None, RF_Transient);
 		if (!ProbeMaterial)
 		{
@@ -969,8 +1390,15 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
+		FResolvedMaterialSettingTarget Target;
+		if (!ResolveMaterialSettingTarget(ProbeMaterial, InKey, Target, OutError))
+		{
+			return false;
+		}
+
 		FString LiteralError;
-		if (!SetMaterialExpressionLiteralProperty(ProbeMaterial, Property, InValue, LiteralError))
+		void* ValuePtr = Target.Property->ContainerPtrToValuePtr<void>(Target.ContainerPtr, Target.ArrayIndex);
+		if (!SetMaterialExpressionLiteralProperty(Target.OwnerObject, Target.Property, ValuePtr, InValue, LiteralError))
 		{
 			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError);
 			return false;
@@ -981,15 +1409,15 @@ namespace UE::DreamShader::Editor::Private
 
 	static bool ApplyGenericMaterialSetting(UMaterial* Material, const FString& InKey, const FString& InValue, FString& OutError)
 	{
-		FProperty* Property = nullptr;
-		if (!ResolveMaterialSettingProperty(InKey, Property))
+		FResolvedMaterialSettingTarget Target;
+		if (!ResolveMaterialSettingTarget(Material, InKey, Target, OutError))
 		{
-			OutError = FString::Printf(TEXT("Unsupported material setting '%s'."), *InKey);
 			return false;
 		}
 
 		FString LiteralError;
-		if (!SetMaterialExpressionLiteralProperty(Material, Property, InValue, LiteralError))
+		void* ValuePtr = Target.Property->ContainerPtrToValuePtr<void>(Target.ContainerPtr, Target.ArrayIndex);
+		if (!SetMaterialExpressionLiteralProperty(Target.OwnerObject, Target.Property, ValuePtr, InValue, LiteralError))
 		{
 			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError);
 			return false;
@@ -1034,29 +1462,582 @@ namespace UE::DreamShader::Editor::Private
 			GetSourcePathHash(SourceFilePath));
 	}
 
+	static bool IsFunctionIdentifierStart(const TCHAR Char)
+	{
+		return FChar::IsAlpha(Char) || Char == TCHAR('_');
+	}
+
+	static bool IsFunctionIdentifierPart(const TCHAR Char)
+	{
+		return FChar::IsAlnum(Char) || Char == TCHAR('_');
+	}
+
+	static int32 SkipInlineWhitespace(const FString& Source, int32 Index)
+	{
+		while (Source.IsValidIndex(Index) && FChar::IsWhitespace(Source[Index]))
+		{
+			++Index;
+		}
+		return Index;
+	}
+
+	static bool TryReadQualifiedIdentifierToken(const FString& Source, int32& InOutIndex, FString& OutIdentifier)
+	{
+		if (!Source.IsValidIndex(InOutIndex) || !IsFunctionIdentifierStart(Source[InOutIndex]))
+		{
+			return false;
+		}
+
+		const int32 IdentifierStart = InOutIndex++;
+		while (Source.IsValidIndex(InOutIndex) && IsFunctionIdentifierPart(Source[InOutIndex]))
+		{
+			++InOutIndex;
+		}
+
+		OutIdentifier = Source.Mid(IdentifierStart, InOutIndex - IdentifierStart);
+		while (Source.IsValidIndex(InOutIndex + 2)
+			&& Source[InOutIndex] == TCHAR(':')
+			&& Source[InOutIndex + 1] == TCHAR(':')
+			&& IsFunctionIdentifierStart(Source[InOutIndex + 2]))
+		{
+			const int32 NextIdentifierStart = InOutIndex + 2;
+			int32 NextIdentifierEnd = NextIdentifierStart + 1;
+			while (Source.IsValidIndex(NextIdentifierEnd) && IsFunctionIdentifierPart(Source[NextIdentifierEnd]))
+			{
+				++NextIdentifierEnd;
+			}
+
+			OutIdentifier += TEXT("::") + Source.Mid(NextIdentifierStart, NextIdentifierEnd - NextIdentifierStart);
+			InOutIndex = NextIdentifierEnd;
+		}
+
+		return true;
+	}
+
+	static void AddFunctionLookupEntries(
+		const FTextShaderFunctionDefinition& Function,
+		TMap<FString, const FTextShaderFunctionDefinition*>& OutFunctionsBySpelling,
+		TMap<FString, FString>& OutGeneratedNamesBySpelling)
+	{
+		const FString GeneratedName = BuildGeneratedFunctionSymbolName(Function);
+
+		OutFunctionsBySpelling.Add(Function.Name, &Function);
+		OutGeneratedNamesBySpelling.Add(Function.Name, GeneratedName);
+
+		if (!GeneratedName.Equals(Function.Name, ESearchCase::CaseSensitive))
+		{
+			OutFunctionsBySpelling.Add(GeneratedName, &Function);
+			OutGeneratedNamesBySpelling.Add(GeneratedName, GeneratedName);
+		}
+	}
+
+	static void CollectDreamShaderFunctionCalls(
+		const FString& Source,
+		const TMap<FString, const FTextShaderFunctionDefinition*>& FunctionsBySpelling,
+		TArray<const FTextShaderFunctionDefinition*>& OutFunctions)
+	{
+		TSet<const FTextShaderFunctionDefinition*> SeenFunctions;
+		bool bInString = false;
+		bool bInLineComment = false;
+		bool bInBlockComment = false;
+
+		for (int32 Index = 0; Index < Source.Len();)
+		{
+			const TCHAR Char = Source[Index];
+			const TCHAR Next = Source.IsValidIndex(Index + 1) ? Source[Index + 1] : TCHAR('\0');
+
+			if (bInLineComment)
+			{
+				if (Char == TCHAR('\n'))
+				{
+					bInLineComment = false;
+				}
+				++Index;
+				continue;
+			}
+
+			if (bInBlockComment)
+			{
+				if (Char == TCHAR('*') && Next == TCHAR('/'))
+				{
+					bInBlockComment = false;
+					Index += 2;
+				}
+				else
+				{
+					++Index;
+				}
+				continue;
+			}
+
+			if (bInString)
+			{
+				if (Char == TCHAR('\\') && Source.IsValidIndex(Index + 1))
+				{
+					Index += 2;
+				}
+				else
+				{
+					if (Char == TCHAR('"'))
+					{
+						bInString = false;
+					}
+					++Index;
+				}
+				continue;
+			}
+
+			if (Char == TCHAR('"'))
+			{
+				bInString = true;
+				++Index;
+				continue;
+			}
+
+			if (Char == TCHAR('/') && Next == TCHAR('/'))
+			{
+				bInLineComment = true;
+				Index += 2;
+				continue;
+			}
+
+			if (Char == TCHAR('/') && Next == TCHAR('*'))
+			{
+				bInBlockComment = true;
+				Index += 2;
+				continue;
+			}
+
+			if (IsFunctionIdentifierStart(Char))
+			{
+				int32 IdentifierEnd = Index;
+				FString Identifier;
+				if (TryReadQualifiedIdentifierToken(Source, IdentifierEnd, Identifier))
+				{
+					const int32 PostIdentifier = SkipInlineWhitespace(Source, IdentifierEnd);
+					if (Source.IsValidIndex(PostIdentifier) && Source[PostIdentifier] == TCHAR('('))
+					{
+						if (const FTextShaderFunctionDefinition* const* Function = FunctionsBySpelling.Find(Identifier))
+						{
+							if (!SeenFunctions.Contains(*Function))
+							{
+								SeenFunctions.Add(*Function);
+								OutFunctions.Add(*Function);
+							}
+						}
+					}
+
+					Index = IdentifierEnd;
+					continue;
+				}
+			}
+
+			++Index;
+		}
+	}
+
 	static FString RewriteDreamShaderFunctionReferences(
 		const FString& Source,
-		const TMap<FString, FString>& GeneratedFunctionNamesByDreamName)
+		const TMap<FString, FString>& ReplacementBySpelling)
 	{
-		FString Result = Source;
-		TArray<FString> FunctionNames;
-		GeneratedFunctionNamesByDreamName.GetKeys(FunctionNames);
-		FunctionNames.Sort([](const FString& Left, const FString& Right)
-		{
-			return Left.Len() > Right.Len();
-		});
+		FString Result;
+		Result.Reserve(Source.Len() + 128);
 
-		for (const FString& FunctionName : FunctionNames)
+		bool bInString = false;
+		bool bInLineComment = false;
+		bool bInBlockComment = false;
+
+		for (int32 Index = 0; Index < Source.Len();)
 		{
-			const FString* GeneratedFunctionName = GeneratedFunctionNamesByDreamName.Find(FunctionName);
-			if (GeneratedFunctionName && !GeneratedFunctionName->Equals(FunctionName, ESearchCase::CaseSensitive))
+			const TCHAR Char = Source[Index];
+			const TCHAR Next = Source.IsValidIndex(Index + 1) ? Source[Index + 1] : TCHAR('\0');
+
+			if (bInLineComment)
 			{
-				const FString ReplacementName = *GeneratedFunctionName;
-				Result.ReplaceInline(*FunctionName, *ReplacementName, ESearchCase::CaseSensitive);
+				Result.AppendChar(Char);
+				if (Char == TCHAR('\n'))
+				{
+					bInLineComment = false;
+				}
+				++Index;
+				continue;
 			}
+
+			if (bInBlockComment)
+			{
+				Result.AppendChar(Char);
+				if (Char == TCHAR('*') && Next == TCHAR('/'))
+				{
+					Result.AppendChar(Next);
+					bInBlockComment = false;
+					Index += 2;
+				}
+				else
+				{
+					++Index;
+				}
+				continue;
+			}
+
+			if (bInString)
+			{
+				Result.AppendChar(Char);
+				if (Char == TCHAR('\\') && Source.IsValidIndex(Index + 1))
+				{
+					Result.AppendChar(Source[Index + 1]);
+					Index += 2;
+				}
+				else
+				{
+					if (Char == TCHAR('"'))
+					{
+						bInString = false;
+					}
+					++Index;
+				}
+				continue;
+			}
+
+			if (Char == TCHAR('"'))
+			{
+				bInString = true;
+				Result.AppendChar(Char);
+				++Index;
+				continue;
+			}
+
+			if (Char == TCHAR('/') && Next == TCHAR('/'))
+			{
+				bInLineComment = true;
+				Result.AppendChar(Char);
+				Result.AppendChar(Next);
+				Index += 2;
+				continue;
+			}
+
+			if (Char == TCHAR('/') && Next == TCHAR('*'))
+			{
+				bInBlockComment = true;
+				Result.AppendChar(Char);
+				Result.AppendChar(Next);
+				Index += 2;
+				continue;
+			}
+
+			if (IsFunctionIdentifierStart(Char))
+			{
+				int32 IdentifierEnd = Index;
+				FString Identifier;
+				if (TryReadQualifiedIdentifierToken(Source, IdentifierEnd, Identifier))
+				{
+					const int32 PostIdentifier = SkipInlineWhitespace(Source, IdentifierEnd);
+					if (Source.IsValidIndex(PostIdentifier) && Source[PostIdentifier] == TCHAR('('))
+					{
+						if (const FString* Replacement = ReplacementBySpelling.Find(Identifier))
+						{
+							Result += *Replacement;
+							Index = IdentifierEnd;
+							continue;
+						}
+					}
+
+					Result += Source.Mid(Index, IdentifierEnd - Index);
+					Index = IdentifierEnd;
+					continue;
+				}
+			}
+
+			Result.AppendChar(Char);
+			++Index;
 		}
 
 		return Result;
+	}
+
+	static void AppendIndentedCode(FString& OutSource, const FString& Source, const FString& Indent)
+	{
+		int32 LineStart = 0;
+		while (LineStart < Source.Len())
+		{
+			const int32 NewLineIndex = Source.Find(TEXT("\n"), ESearchCase::CaseSensitive, ESearchDir::FromStart, LineStart);
+			const bool bHasNewLine = NewLineIndex != INDEX_NONE;
+			const int32 LineEnd = bHasNewLine ? NewLineIndex : Source.Len();
+
+			OutSource += Indent;
+			OutSource += Source.Mid(LineStart, LineEnd - LineStart);
+			OutSource += TEXT("\n");
+
+			if (!bHasNewLine)
+			{
+				break;
+			}
+
+			LineStart = NewLineIndex + 1;
+		}
+	}
+
+	static FString BuildGeneratedFunctionParameterList(const FTextShaderFunctionDefinition& Function)
+	{
+		TArray<FString> Parameters;
+		for (const FTextShaderFunctionParameter& Input : Function.Inputs)
+		{
+			Parameters.Add(FString::Printf(TEXT("%s %s"), *Input.Type, *Input.Name));
+			if (IsTextureFunctionParameterType(Input.Type))
+			{
+				Parameters.Add(FString::Printf(TEXT("SamplerState %sSampler"), *Input.Name));
+			}
+		}
+		for (int32 ResultIndex = 1; ResultIndex < Function.Results.Num(); ++ResultIndex)
+		{
+			const FTextShaderFunctionParameter& Output = Function.Results[ResultIndex];
+			Parameters.Add(FString::Printf(TEXT("out %s %s"), *Output.Type, *Output.Name));
+		}
+
+		return FString::Join(Parameters, TEXT(", "));
+	}
+
+	static void AppendGeneratedFunctionDefinition(
+		const FTextShaderFunctionDefinition& Function,
+		const TMap<FString, FString>& ReplacementBySpelling,
+		const FString& Indent,
+		FString& OutSource)
+	{
+		const FString ReturnType = Function.Results.IsEmpty() ? TEXT("void") : Function.Results[0].Type;
+		const FString GeneratedFunctionName = BuildGeneratedFunctionSymbolName(Function);
+
+		OutSource += FString::Printf(TEXT("%s%s %s(%s)\n%s{\n"), *Indent, *ReturnType, *GeneratedFunctionName, *BuildGeneratedFunctionParameterList(Function), *Indent);
+
+		if (!Function.Results.IsEmpty())
+		{
+			OutSource += FString::Printf(TEXT("%s\t%s %s = (%s)0;\n"), *Indent, *Function.Results[0].Type, *Function.Results[0].Name, *Function.Results[0].Type);
+		}
+
+		for (int32 ResultIndex = 1; ResultIndex < Function.Results.Num(); ++ResultIndex)
+		{
+			const FTextShaderFunctionParameter& Output = Function.Results[ResultIndex];
+			OutSource += FString::Printf(TEXT("%s\t%s = (%s)0;\n"), *Indent, *Output.Name, *Output.Type);
+		}
+
+		const FString RewrittenFunctionHLSL = RewriteDreamShaderFunctionReferences(Function.HLSL, ReplacementBySpelling);
+		AppendIndentedCode(OutSource, RewrittenFunctionHLSL, Indent + TEXT("\t"));
+
+		if (!Function.Results.IsEmpty())
+		{
+			OutSource += FString::Printf(TEXT("%s\treturn %s;\n"), *Indent, *Function.Results[0].Name);
+		}
+
+		OutSource += FString::Printf(TEXT("%s}\n"), *Indent);
+	}
+
+	static FString BuildSelfContainedWrapperTypeName(const FString& WrapperNameHint)
+	{
+		const FString SanitizedHint = UE::DreamShader::SanitizeIdentifier(WrapperNameHint.IsEmpty() ? TEXT("Generated") : WrapperNameHint);
+		return FString::Printf(TEXT("generated_wrapper_%s_%08X"), *SanitizedHint, FCrc::StrCrc32(*WrapperNameHint));
+	}
+
+	static FString BuildSelfContainedWrapperVariableName(const FString& WrapperNameHint)
+	{
+		return FString::Printf(TEXT("__ds_wrapper_%08X"), FCrc::StrCrc32(*WrapperNameHint));
+	}
+
+	static bool CollectEmbeddedFunctionClosure(
+		const FTextShaderDefinition& Definition,
+		const TArray<const FTextShaderFunctionDefinition*>& RootFunctions,
+		const TMap<FString, const FTextShaderFunctionDefinition*>& FunctionsBySpelling,
+		TArray<const FTextShaderFunctionDefinition*>& OutOrderedFunctions,
+		FString& OutError)
+	{
+		TMap<const FTextShaderFunctionDefinition*, TArray<const FTextShaderFunctionDefinition*>> DependenciesByFunction;
+		for (const FTextShaderFunctionDefinition& Function : Definition.Functions)
+		{
+			TArray<const FTextShaderFunctionDefinition*> Dependencies;
+			CollectDreamShaderFunctionCalls(Function.HLSL, FunctionsBySpelling, Dependencies);
+			DependenciesByFunction.Add(&Function, MoveTemp(Dependencies));
+		}
+
+		enum class EVisitState : uint8
+		{
+			Unvisited,
+			Visiting,
+			Visited
+		};
+
+		TMap<const FTextShaderFunctionDefinition*, EVisitState> VisitStates;
+		TArray<const FTextShaderFunctionDefinition*> VisitStack;
+		TFunction<bool(const FTextShaderFunctionDefinition*)> VisitFunction;
+		VisitFunction = [&](const FTextShaderFunctionDefinition* Function) -> bool
+		{
+			const EVisitState VisitState = VisitStates.FindRef(Function);
+			if (VisitState == EVisitState::Visited)
+			{
+				return true;
+			}
+
+			if (VisitState == EVisitState::Visiting)
+			{
+				int32 CycleStartIndex = VisitStack.IndexOfByKey(Function);
+				if (CycleStartIndex == INDEX_NONE)
+				{
+					CycleStartIndex = 0;
+				}
+
+				TArray<FString> CycleNames;
+				for (int32 Index = CycleStartIndex; Index < VisitStack.Num(); ++Index)
+				{
+					CycleNames.Add(VisitStack[Index]->Name);
+				}
+				CycleNames.Add(Function->Name);
+
+				OutError = FString::Printf(
+					TEXT("SelfContained Function cycle detected: %s. HLSL Custom nodes cannot compile recursive DreamShader functions."),
+					*FString::Join(CycleNames, TEXT(" -> ")));
+				return false;
+			}
+
+			VisitStates.Add(Function, EVisitState::Visiting);
+			VisitStack.Add(Function);
+
+			const TArray<const FTextShaderFunctionDefinition*>* Dependencies = DependenciesByFunction.Find(Function);
+			if (Dependencies)
+			{
+				for (const FTextShaderFunctionDefinition* Dependency : *Dependencies)
+				{
+					if (!VisitFunction(Dependency))
+					{
+						return false;
+					}
+				}
+			}
+
+			VisitStack.Pop();
+			VisitStates.Add(Function, EVisitState::Visited);
+			OutOrderedFunctions.Add(Function);
+			return true;
+		};
+
+		for (const FTextShaderFunctionDefinition* RootFunction : RootFunctions)
+		{
+			if (!RootFunction || !VisitFunction(RootFunction))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool PrepareCustomNodeCode(
+		const FTextShaderDefinition& Definition,
+		const FString& SourceCode,
+		const TArray<FString>& RequestedEmbeddedFunctionNames,
+		const FString& WrapperNameHint,
+		FString& OutCode,
+		bool& bOutUsesGeneratedInclude,
+		FString& OutError)
+	{
+		OutCode = SourceCode;
+		bOutUsesGeneratedInclude = false;
+		OutError.Reset();
+
+		if (Definition.Functions.IsEmpty())
+		{
+			return true;
+		}
+
+		TMap<FString, const FTextShaderFunctionDefinition*> FunctionsBySpelling;
+		TMap<FString, FString> GeneratedNamesBySpelling;
+		for (const FTextShaderFunctionDefinition& Function : Definition.Functions)
+		{
+			AddFunctionLookupEntries(Function, FunctionsBySpelling, GeneratedNamesBySpelling);
+		}
+
+		TArray<const FTextShaderFunctionDefinition*> DirectCalls;
+		CollectDreamShaderFunctionCalls(SourceCode, FunctionsBySpelling, DirectCalls);
+
+		TArray<const FTextShaderFunctionDefinition*> RootFunctions;
+		TSet<const FTextShaderFunctionDefinition*> SeenRoots;
+		if (!RequestedEmbeddedFunctionNames.IsEmpty())
+		{
+			for (const FString& RequestedName : RequestedEmbeddedFunctionNames)
+			{
+				const FTextShaderFunctionDefinition* const* Function = FunctionsBySpelling.Find(RequestedName);
+				if (!Function)
+				{
+					OutError = FString::Printf(TEXT("Unknown SelfContained DreamShader Function '%s'."), *RequestedName);
+					return false;
+				}
+
+				if (!SeenRoots.Contains(*Function))
+				{
+					SeenRoots.Add(*Function);
+					RootFunctions.Add(*Function);
+				}
+			}
+		}
+		else
+		{
+			for (const FTextShaderFunctionDefinition* Function : DirectCalls)
+			{
+				if (Function && Function->bSelfContained && !SeenRoots.Contains(Function))
+				{
+					SeenRoots.Add(Function);
+					RootFunctions.Add(Function);
+				}
+			}
+		}
+
+		if (RootFunctions.IsEmpty())
+		{
+			bOutUsesGeneratedInclude = !DirectCalls.IsEmpty();
+			return true;
+		}
+
+		TArray<const FTextShaderFunctionDefinition*> EmbeddedFunctions;
+		if (!CollectEmbeddedFunctionClosure(Definition, RootFunctions, FunctionsBySpelling, EmbeddedFunctions, OutError))
+		{
+			return false;
+		}
+
+		TSet<const FTextShaderFunctionDefinition*> EmbeddedFunctionSet;
+		TMap<FString, FString> EmbeddedReferenceReplacements;
+		for (const FTextShaderFunctionDefinition* Function : EmbeddedFunctions)
+		{
+			EmbeddedFunctionSet.Add(Function);
+		}
+
+		const FString WrapperTypeName = BuildSelfContainedWrapperTypeName(WrapperNameHint);
+		const FString WrapperVariableName = BuildSelfContainedWrapperVariableName(WrapperNameHint);
+		for (const FTextShaderFunctionDefinition* Function : EmbeddedFunctions)
+		{
+			const FString GeneratedFunctionName = BuildGeneratedFunctionSymbolName(*Function);
+			EmbeddedReferenceReplacements.Add(Function->Name, WrapperVariableName + TEXT(".") + GeneratedFunctionName);
+			if (!GeneratedFunctionName.Equals(Function->Name, ESearchCase::CaseSensitive))
+			{
+				EmbeddedReferenceReplacements.Add(GeneratedFunctionName, WrapperVariableName + TEXT(".") + GeneratedFunctionName);
+			}
+		}
+
+		FString WrapperSource;
+		WrapperSource += FString::Printf(TEXT("struct %s\n{\n"), *WrapperTypeName);
+		for (const FTextShaderFunctionDefinition* Function : EmbeddedFunctions)
+		{
+			AppendGeneratedFunctionDefinition(*Function, GeneratedNamesBySpelling, TEXT("\t"), WrapperSource);
+			WrapperSource += TEXT("\n");
+		}
+		WrapperSource += FString::Printf(TEXT("};\n%s %s;\n"), *WrapperTypeName, *WrapperVariableName);
+
+		OutCode = WrapperSource + TEXT("\n") + RewriteDreamShaderFunctionReferences(SourceCode, EmbeddedReferenceReplacements);
+
+		for (const FTextShaderFunctionDefinition* DirectCall : DirectCalls)
+		{
+			if (!EmbeddedFunctionSet.Contains(DirectCall))
+			{
+				bOutUsesGeneratedInclude = true;
+				break;
+			}
+		}
+
+		return true;
 	}
 
 	static bool BuildFunctionIncludeSource(
@@ -1074,10 +2055,15 @@ namespace UE::DreamShader::Editor::Private
 
 		TSet<FString> SeenFunctionNames;
 		TSet<FString> SeenGeneratedFunctionNames;
-		TMap<FString, FString> GeneratedFunctionNamesByDreamName;
+		TMap<FString, FString> GeneratedNamesBySpelling;
 		for (const FTextShaderFunctionDefinition& Function : Definition.Functions)
 		{
-			GeneratedFunctionNamesByDreamName.Add(Function.Name, BuildGeneratedFunctionSymbolName(Function));
+			const FString GeneratedName = BuildGeneratedFunctionSymbolName(Function);
+			GeneratedNamesBySpelling.Add(Function.Name, GeneratedName);
+			if (!GeneratedName.Equals(Function.Name, ESearchCase::CaseSensitive))
+			{
+				GeneratedNamesBySpelling.Add(GeneratedName, GeneratedName);
+			}
 		}
 
 		for (const FTextShaderFunctionDefinition& Function : Definition.Functions)
@@ -1102,49 +2088,8 @@ namespace UE::DreamShader::Editor::Private
 			}
 			SeenGeneratedFunctionNames.Add(NormalizedGeneratedFunctionName);
 
-			const FString ReturnType = Function.Results.IsEmpty() ? TEXT("void") : Function.Results[0].Type;
-
-			TArray<FString> Parameters;
-			for (const FTextShaderFunctionParameter& Input : Function.Inputs)
-			{
-				Parameters.Add(FString::Printf(TEXT("%s %s"), *Input.Type, *Input.Name));
-				if (IsTextureFunctionParameterType(Input.Type))
-				{
-					Parameters.Add(FString::Printf(TEXT("SamplerState %sSampler"), *Input.Name));
-				}
-			}
-			for (int32 ResultIndex = 1; ResultIndex < Function.Results.Num(); ++ResultIndex)
-			{
-				const FTextShaderFunctionParameter& Output = Function.Results[ResultIndex];
-				Parameters.Add(FString::Printf(TEXT("out %s %s"), *Output.Type, *Output.Name));
-			}
-
-			OutSource += FString::Printf(TEXT("%s %s(%s)\n{\n"), *ReturnType, *GeneratedFunctionName, *FString::Join(Parameters, TEXT(", ")));
-
-			if (!Function.Results.IsEmpty())
-			{
-				OutSource += FString::Printf(TEXT("\t%s %s = (%s)0;\n"), *Function.Results[0].Type, *Function.Results[0].Name, *Function.Results[0].Type);
-			}
-
-			for (int32 ResultIndex = 1; ResultIndex < Function.Results.Num(); ++ResultIndex)
-			{
-				const FTextShaderFunctionParameter& Output = Function.Results[ResultIndex];
-				OutSource += FString::Printf(TEXT("\t%s = (%s)0;\n"), *Output.Name, *Output.Type);
-			}
-
-			const FString RewrittenFunctionHLSL = RewriteDreamShaderFunctionReferences(Function.HLSL, GeneratedFunctionNamesByDreamName);
-			OutSource += RewrittenFunctionHLSL;
-			if (!RewrittenFunctionHLSL.EndsWith(TEXT("\n")))
-			{
-				OutSource += TEXT("\n");
-			}
-
-			if (!Function.Results.IsEmpty())
-			{
-				OutSource += FString::Printf(TEXT("\treturn %s;\n"), *Function.Results[0].Name);
-			}
-
-			OutSource += TEXT("}\n\n");
+			AppendGeneratedFunctionDefinition(Function, GeneratedNamesBySpelling, FString(), OutSource);
+			OutSource += TEXT("\n");
 		}
 
 		OutSource += FString::Printf(TEXT("#endif // %s\n"), *IncludeGuard);
@@ -1281,6 +2226,7 @@ namespace UE::DreamShader::Editor::Private
 		Material->bContactShadows = false;
 		Material->bDisableDepthTest = false;
 		Material->bOutputTranslucentVelocity = false;
+		Material->TranslucencyLightingMode = TLM_VolumetricNonDirectional;
 		Material->bTangentSpaceNormal = true;
 		Material->bFullyRough = false;
 		Material->bIsSky = false;
@@ -1654,7 +2600,8 @@ namespace UE::DreamShader::Editor::Private
 			else
 			{
 				FString LiteralError;
-				if (!SetMaterialExpressionLiteralProperty(Expression, BoundProperty, Argument.Value, LiteralError))
+				void* ValuePtr = BoundProperty->ContainerPtrToValuePtr<void>(Expression);
+				if (!SetMaterialExpressionLiteralProperty(Expression, BoundProperty, ValuePtr, Argument.Value, LiteralError))
 				{
 					OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"),
 						*Property.UEBuiltinFunctionName,

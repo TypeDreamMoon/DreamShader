@@ -1055,14 +1055,29 @@ namespace UE::DreamShader::Editor
 				}
 
 				CustomExpression->Description = FunctionDefinition.Name;
-				CustomExpression->Code = Private::EnsureTopLevelReturn(FunctionDefinition.HLSL);
 				CustomExpression->OutputType = OutputType;
 				CustomExpression->ShowCode = true;
 				CustomExpression->Inputs.Reset();
 				CustomExpression->AdditionalOutputs.Reset();
 				CustomExpression->IncludeFilePaths.Reset();
 
-				if (!RootDefinition.Functions.IsEmpty())
+				FString PreparedCustomCode;
+				bool bUsesGeneratedInclude = false;
+				if (!Private::PrepareCustomNodeCode(
+					RootDefinition,
+					FunctionDefinition.HLSL,
+					TArray<FString>(),
+					FunctionDefinition.Name,
+					PreparedCustomCode,
+					bUsesGeneratedInclude,
+					OutError))
+				{
+					OutError = FString::Printf(TEXT("ShaderFunction '%s': %s"), *FunctionDefinition.Name, *OutError);
+					return false;
+				}
+				CustomExpression->Code = Private::EnsureTopLevelReturn(PreparedCustomCode);
+
+				if (bUsesGeneratedInclude)
 				{
 					CustomExpression->IncludeFilePaths.Add(Private::BuildGeneratedIncludeVirtualPath(SourceFilePath));
 				}
@@ -1509,14 +1524,29 @@ namespace UE::DreamShader::Editor
 			}
 
 			CustomExpression->Description = Definition.Name;
-			CustomExpression->Code = Private::EnsureTopLevelReturn(Definition.HLSL);
 			CustomExpression->OutputType = bUsesReturn ? ReturnOutputType : CMOT_Float1;
 			CustomExpression->ShowCode = true;
 			CustomExpression->Inputs.Reset();
 			CustomExpression->AdditionalOutputs.Reset();
 			CustomExpression->IncludeFilePaths.Reset();
 
-			if (!Definition.Functions.IsEmpty())
+			FString PreparedCustomCode;
+			bool bUsesGeneratedInclude = false;
+			if (!Private::PrepareCustomNodeCode(
+				Definition,
+				Definition.HLSL,
+				TArray<FString>(),
+				Definition.Name,
+				PreparedCustomCode,
+				bUsesGeneratedInclude,
+				OutMessage))
+			{
+				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *OutMessage);
+				return false;
+			}
+			CustomExpression->Code = Private::EnsureTopLevelReturn(PreparedCustomCode);
+
+			if (bUsesGeneratedInclude)
 			{
 				CustomExpression->IncludeFilePaths.Add(Private::BuildGeneratedIncludeVirtualPath(SourceFilePath));
 			}

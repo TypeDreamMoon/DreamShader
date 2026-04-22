@@ -117,6 +117,14 @@ namespace UE::DreamShader::Editor::Private
 		FString& OutError);
 	UMaterialExpression* CreateScalarLiteralExpression(UMaterial* Material, double Value, int32 PositionY);
 	FString EnsureTopLevelReturn(const FString& InHLSL);
+	bool PrepareCustomNodeCode(
+		const FTextShaderDefinition& Definition,
+		const FString& SourceCode,
+		const TArray<FString>& RequestedEmbeddedFunctionNames,
+		const FString& WrapperNameHint,
+		FString& OutCode,
+		bool& bOutUsesGeneratedInclude,
+		FString& OutError);
 	bool IsTextureFunctionParameterType(const FString& InTypeName);
 	FString BuildGeneratedFunctionSymbolName(const FTextShaderFunctionDefinition& Function);
 	FString BuildGeneratedIncludeVirtualPath(const FString& SourceFilePath);

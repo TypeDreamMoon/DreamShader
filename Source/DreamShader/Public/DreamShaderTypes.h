@@ -71,6 +71,7 @@ namespace UE::DreamShader
 	struct FTextShaderFunctionDefinition
 	{
 		FString Name;
+		bool bSelfContained = false;
 		TArray<FTextShaderFunctionParameter> Inputs;
 		TArray<FTextShaderFunctionParameter> Results;
 		FString HLSL;

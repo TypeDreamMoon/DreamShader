@@ -2186,7 +2186,6 @@ namespace UE::DreamShader::Editor::Private
 		CustomExpression->Inputs.Reset();
 		CustomExpression->AdditionalOutputs.Reset();
 		CustomExpression->IncludeFilePaths.Reset();
-		CustomExpression->IncludeFilePaths.Add(IncludeVirtualPath);
 
 		for (int32 InputIndex = 0; InputIndex < Function.Inputs.Num(); ++InputIndex)
 		{
@@ -2226,7 +2225,37 @@ namespace UE::DreamShader::Editor::Private
 			*BuildGeneratedFunctionSymbolName(Function),
 			*BuildFunctionArgumentList(Function, SecondaryResultVariables),
 			*ResultVariableNames[0]);
-		CustomExpression->Code = CustomCode;
+
+		if (Function.bSelfContained)
+		{
+			TArray<FString> EmbeddedFunctionNames;
+			EmbeddedFunctionNames.Add(Function.Name);
+
+			FString PreparedCustomCode;
+			bool bUsesGeneratedInclude = false;
+			if (!PrepareCustomNodeCode(
+				Definition,
+				CustomCode,
+				EmbeddedFunctionNames,
+				Function.Name,
+				PreparedCustomCode,
+				bUsesGeneratedInclude,
+				OutError))
+			{
+				return false;
+			}
+
+			CustomExpression->Code = PreparedCustomCode;
+			if (bUsesGeneratedInclude)
+			{
+				CustomExpression->IncludeFilePaths.Add(IncludeVirtualPath);
+			}
+		}
+		else
+		{
+			CustomExpression->Code = CustomCode;
+			CustomExpression->IncludeFilePaths.Add(IncludeVirtualPath);
+		}
 
 		for (int32 ResultIndex = 1; ResultIndex < Function.Results.Num(); ++ResultIndex)
 		{
