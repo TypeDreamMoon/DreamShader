@@ -11,6 +11,7 @@
 #include "Materials/MaterialExpressionConstant.h"
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionDivide.h"
+#include "Materials/MaterialExpressionIf.h"
 #include "Materials/MaterialExpressionMultiply.h"
 #include "Materials/MaterialExpressionObjectPositionWS.h"
 #include "Materials/MaterialExpressionPanner.h"
@@ -261,9 +262,276 @@ namespace UE::DreamShader::Editor::Private
 		return Segments;
 	}
 
-	static TArray<FString> SplitStatements(const FString& BlockContent)
+	static bool IsIdentifierBoundary(const FString& Text, const int32 Index)
 	{
-		return SplitTopLevelSegments(BlockContent, TCHAR(';'));
+		if (!Text.IsValidIndex(Index))
+		{
+			return true;
+		}
+
+		const TCHAR Char = Text[Index];
+		return !(FChar::IsAlnum(Char) || Char == TCHAR('_'));
+	}
+
+	static bool MatchesKeywordAt(const FString& Text, const int32 Index, const TCHAR* Keyword)
+	{
+		const int32 KeywordLength = FCString::Strlen(Keyword);
+		return Text.IsValidIndex(Index)
+			&& Index + KeywordLength <= Text.Len()
+			&& Text.Mid(Index, KeywordLength).Equals(Keyword, ESearchCase::CaseSensitive)
+			&& IsIdentifierBoundary(Text, Index - 1)
+			&& IsIdentifierBoundary(Text, Index + KeywordLength);
+	}
+
+	static void SkipWhitespace(const FString& Text, int32& InOutIndex)
+	{
+		while (Text.IsValidIndex(InOutIndex) && FChar::IsWhitespace(Text[InOutIndex]))
+		{
+			++InOutIndex;
+		}
+	}
+
+	static bool FindMatchingDelimiter(
+		const FString& Text,
+		const int32 OpenIndex,
+		const TCHAR OpenChar,
+		const TCHAR CloseChar,
+		int32& OutCloseIndex)
+	{
+		if (!Text.IsValidIndex(OpenIndex) || Text[OpenIndex] != OpenChar)
+		{
+			return false;
+		}
+
+		int32 Depth = 0;
+		bool bInString = false;
+		for (int32 Index = OpenIndex; Index < Text.Len(); ++Index)
+		{
+			const TCHAR Char = Text[Index];
+
+			if (bInString)
+			{
+				if (Char == TCHAR('\\') && Text.IsValidIndex(Index + 1))
+				{
+					++Index;
+				}
+				else if (Char == TCHAR('"'))
+				{
+					bInString = false;
+				}
+				continue;
+			}
+
+			if (Char == TCHAR('"'))
+			{
+				bInString = true;
+				continue;
+			}
+
+			if (Char == OpenChar)
+			{
+				++Depth;
+				continue;
+			}
+
+			if (Char == CloseChar)
+			{
+				--Depth;
+				if (Depth == 0)
+				{
+					OutCloseIndex = Index;
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	static bool FindIfStatementEnd(const FString& Text, const int32 IfIndex, int32& OutEndIndex, FString& OutError)
+	{
+		if (!MatchesKeywordAt(Text, IfIndex, TEXT("if")))
+		{
+			OutError = TEXT("Expected 'if'.");
+			return false;
+		}
+
+		int32 Index = IfIndex + 2;
+		SkipWhitespace(Text, Index);
+		if (!Text.IsValidIndex(Index) || Text[Index] != TCHAR('('))
+		{
+			OutError = TEXT("Graph if statement is missing a condition block.");
+			return false;
+		}
+
+		int32 ConditionCloseIndex = INDEX_NONE;
+		if (!FindMatchingDelimiter(Text, Index, TCHAR('('), TCHAR(')'), ConditionCloseIndex))
+		{
+			OutError = TEXT("Graph if statement has an unterminated condition block.");
+			return false;
+		}
+
+		Index = ConditionCloseIndex + 1;
+		SkipWhitespace(Text, Index);
+		if (!Text.IsValidIndex(Index) || Text[Index] != TCHAR('{'))
+		{
+			OutError = TEXT("Graph if statement is missing a '{ ... }' body.");
+			return false;
+		}
+
+		int32 ThenCloseIndex = INDEX_NONE;
+		if (!FindMatchingDelimiter(Text, Index, TCHAR('{'), TCHAR('}'), ThenCloseIndex))
+		{
+			OutError = TEXT("Graph if statement has an unterminated body block.");
+			return false;
+		}
+
+		Index = ThenCloseIndex + 1;
+		SkipWhitespace(Text, Index);
+		if (MatchesKeywordAt(Text, Index, TEXT("else")))
+		{
+			Index += 4;
+			SkipWhitespace(Text, Index);
+			if (MatchesKeywordAt(Text, Index, TEXT("if")))
+			{
+				return FindIfStatementEnd(Text, Index, OutEndIndex, OutError);
+			}
+
+			if (!Text.IsValidIndex(Index) || Text[Index] != TCHAR('{'))
+			{
+				OutError = TEXT("Graph else statement is missing a '{ ... }' body.");
+				return false;
+			}
+
+			int32 ElseCloseIndex = INDEX_NONE;
+			if (!FindMatchingDelimiter(Text, Index, TCHAR('{'), TCHAR('}'), ElseCloseIndex))
+			{
+				OutError = TEXT("Graph else statement has an unterminated body block.");
+				return false;
+			}
+
+			OutEndIndex = ElseCloseIndex + 1;
+			return true;
+		}
+
+		OutEndIndex = Index;
+		return true;
+	}
+
+	static bool SplitStatements(const FString& BlockContent, TArray<FString>& OutStatements, FString& OutError)
+	{
+		OutStatements.Reset();
+
+		int32 Index = 0;
+		while (Index < BlockContent.Len())
+		{
+			SkipWhitespace(BlockContent, Index);
+			while (BlockContent.IsValidIndex(Index) && BlockContent[Index] == TCHAR(';'))
+			{
+				++Index;
+				SkipWhitespace(BlockContent, Index);
+			}
+
+			if (Index >= BlockContent.Len())
+			{
+				break;
+			}
+
+			const int32 StatementStartIndex = Index;
+			if (MatchesKeywordAt(BlockContent, Index, TEXT("if")))
+			{
+				int32 StatementEndIndex = INDEX_NONE;
+				if (!FindIfStatementEnd(BlockContent, Index, StatementEndIndex, OutError))
+				{
+					return false;
+				}
+
+				FString Statement = BlockContent.Mid(StatementStartIndex, StatementEndIndex - StatementStartIndex).TrimStartAndEnd();
+				if (!Statement.IsEmpty())
+				{
+					OutStatements.Add(Statement);
+				}
+				Index = StatementEndIndex;
+				continue;
+			}
+
+			int32 ParenthesisDepth = 0;
+			int32 BraceDepth = 0;
+			int32 BracketDepth = 0;
+			bool bInString = false;
+			for (; Index < BlockContent.Len(); ++Index)
+			{
+				const TCHAR Char = BlockContent[Index];
+
+				if (bInString)
+				{
+					if (Char == TCHAR('\\') && BlockContent.IsValidIndex(Index + 1))
+					{
+						++Index;
+					}
+					else if (Char == TCHAR('"'))
+					{
+						bInString = false;
+					}
+					continue;
+				}
+
+				if (Char == TCHAR('"'))
+				{
+					bInString = true;
+					continue;
+				}
+
+				if (Char == TCHAR('('))
+				{
+					++ParenthesisDepth;
+					continue;
+				}
+				if (Char == TCHAR(')'))
+				{
+					ParenthesisDepth = FMath::Max(0, ParenthesisDepth - 1);
+					continue;
+				}
+				if (Char == TCHAR('{'))
+				{
+					++BraceDepth;
+					continue;
+				}
+				if (Char == TCHAR('}'))
+				{
+					BraceDepth = FMath::Max(0, BraceDepth - 1);
+					continue;
+				}
+				if (Char == TCHAR('['))
+				{
+					++BracketDepth;
+					continue;
+				}
+				if (Char == TCHAR(']'))
+				{
+					BracketDepth = FMath::Max(0, BracketDepth - 1);
+					continue;
+				}
+
+				if (Char == TCHAR(';') && ParenthesisDepth == 0 && BraceDepth == 0 && BracketDepth == 0)
+				{
+					break;
+				}
+			}
+
+			FString Statement = BlockContent.Mid(StatementStartIndex, Index - StatementStartIndex).TrimStartAndEnd();
+			if (!Statement.IsEmpty())
+			{
+				OutStatements.Add(Statement);
+			}
+
+			if (BlockContent.IsValidIndex(Index) && BlockContent[Index] == TCHAR(';'))
+			{
+				++Index;
+			}
+		}
+
+		return true;
 	}
 
 	static bool SplitTopLevelAssignment(const FString& InText, FString& OutLeft, FString& OutRight)
@@ -451,7 +719,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (Peek().Type != ECodeTokenType::End)
 			{
-				OutError = FString::Printf(TEXT("Unexpected token '%s' in Code expression."), *Peek().Text);
+				OutError = FString::Printf(TEXT("Unexpected token '%s' in Graph expression."), *Peek().Text);
 				return false;
 			}
 
@@ -606,7 +874,7 @@ namespace UE::DreamShader::Editor::Private
 				return true;
 			}
 
-			OutError = FString::Printf(TEXT("Expected token type %d in Code expression near '%s'."), static_cast<int32>(Type), *Peek().Text);
+			OutError = FString::Printf(TEXT("Expected token type %d in Graph expression near '%s'."), static_cast<int32>(Type), *Peek().Text);
 			return false;
 		}
 
@@ -803,17 +1071,260 @@ namespace UE::DreamShader::Editor::Private
 				return Expression;
 			}
 
-			OutError = FString::Printf(TEXT("Unexpected token '%s' in Code expression."), *Peek().Text);
+			OutError = FString::Printf(TEXT("Unexpected token '%s' in Graph expression."), *Peek().Text);
 			return nullptr;
 		}
 	};
 
+	static bool SplitTopLevelComparison(const FString& InText, FString& OutLeft, FString& OutOperator, FString& OutRight)
+	{
+		static const TArray<FString> Operators = {
+			TEXT(">="),
+			TEXT("<="),
+			TEXT("=="),
+			TEXT("!="),
+			TEXT(">"),
+			TEXT("<"),
+		};
+
+		int32 ParenthesisDepth = 0;
+		int32 BraceDepth = 0;
+		int32 BracketDepth = 0;
+		bool bInString = false;
+
+		for (int32 Index = 0; Index < InText.Len(); ++Index)
+		{
+			const TCHAR Char = InText[Index];
+
+			if (bInString)
+			{
+				if (Char == TCHAR('\\') && InText.IsValidIndex(Index + 1))
+				{
+					++Index;
+				}
+				else if (Char == TCHAR('"'))
+				{
+					bInString = false;
+				}
+				continue;
+			}
+
+			if (Char == TCHAR('"'))
+			{
+				bInString = true;
+				continue;
+			}
+
+			if (Char == TCHAR('('))
+			{
+				++ParenthesisDepth;
+				continue;
+			}
+			if (Char == TCHAR(')'))
+			{
+				ParenthesisDepth = FMath::Max(0, ParenthesisDepth - 1);
+				continue;
+			}
+			if (Char == TCHAR('{'))
+			{
+				++BraceDepth;
+				continue;
+			}
+			if (Char == TCHAR('}'))
+			{
+				BraceDepth = FMath::Max(0, BraceDepth - 1);
+				continue;
+			}
+			if (Char == TCHAR('['))
+			{
+				++BracketDepth;
+				continue;
+			}
+			if (Char == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+				continue;
+			}
+
+			if (ParenthesisDepth != 0 || BraceDepth != 0 || BracketDepth != 0)
+			{
+				continue;
+			}
+
+			for (const FString& Operator : Operators)
+			{
+				if (Index + Operator.Len() <= InText.Len() && InText.Mid(Index, Operator.Len()) == Operator)
+				{
+					OutLeft = InText.Left(Index).TrimStartAndEnd();
+					OutOperator = Operator;
+					OutRight = InText.Mid(Index + Operator.Len()).TrimStartAndEnd();
+					return !OutLeft.IsEmpty() && !OutRight.IsEmpty();
+				}
+			}
+		}
+
+		return false;
+	}
+
+	static bool ParseCodeCondition(const FString& ConditionText, FCodeCondition& OutCondition, FString& OutError)
+	{
+		FString LeftText;
+		FString OperatorText;
+		FString RightText;
+		if (!SplitTopLevelComparison(ConditionText, LeftText, OperatorText, RightText))
+		{
+			LeftText = ConditionText.TrimStartAndEnd();
+			OperatorText = TEXT("truthy");
+		}
+
+		if (LeftText.IsEmpty())
+		{
+			OutError = TEXT("Graph if condition is empty.");
+			return false;
+		}
+
+		FCodeExpressionParser LeftParser(LeftText);
+		if (!LeftParser.Parse(OutCondition.Left, OutError))
+		{
+			OutError = FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError);
+			return false;
+		}
+
+		OutCondition.Operator = OperatorText;
+		if (OperatorText == TEXT("truthy"))
+		{
+			return true;
+		}
+
+		FCodeExpressionParser RightParser(RightText);
+		if (!RightParser.Parse(OutCondition.Right, OutError))
+		{
+			OutError = FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError);
+			return false;
+		}
+
+		return true;
+	}
+
+	static bool ParseIfStatement(const FString& StatementText, FCodeStatement& OutStatement, FString& OutError)
+	{
+		int32 Index = 0;
+		SkipWhitespace(StatementText, Index);
+		if (!MatchesKeywordAt(StatementText, Index, TEXT("if")))
+		{
+			return false;
+		}
+
+		Index += 2;
+		SkipWhitespace(StatementText, Index);
+		int32 ConditionCloseIndex = INDEX_NONE;
+		if (!StatementText.IsValidIndex(Index)
+			|| StatementText[Index] != TCHAR('(')
+			|| !FindMatchingDelimiter(StatementText, Index, TCHAR('('), TCHAR(')'), ConditionCloseIndex))
+		{
+			OutError = FString::Printf(TEXT("Invalid Graph if statement '%s'."), *StatementText);
+			return false;
+		}
+
+		const FString ConditionText = StatementText.Mid(Index + 1, ConditionCloseIndex - Index - 1).TrimStartAndEnd();
+		Index = ConditionCloseIndex + 1;
+		SkipWhitespace(StatementText, Index);
+
+		int32 ThenCloseIndex = INDEX_NONE;
+		if (!StatementText.IsValidIndex(Index)
+			|| StatementText[Index] != TCHAR('{')
+			|| !FindMatchingDelimiter(StatementText, Index, TCHAR('{'), TCHAR('}'), ThenCloseIndex))
+		{
+			OutError = FString::Printf(TEXT("Invalid Graph if body in '%s'."), *StatementText);
+			return false;
+		}
+
+		const FString ThenBody = StatementText.Mid(Index + 1, ThenCloseIndex - Index - 1);
+		Index = ThenCloseIndex + 1;
+		SkipWhitespace(StatementText, Index);
+
+		FString ElseBody;
+		if (MatchesKeywordAt(StatementText, Index, TEXT("else")))
+		{
+			Index += 4;
+			SkipWhitespace(StatementText, Index);
+
+			if (MatchesKeywordAt(StatementText, Index, TEXT("if")))
+			{
+				ElseBody = StatementText.Mid(Index).TrimStartAndEnd();
+				Index = StatementText.Len();
+			}
+			else
+			{
+				int32 ElseCloseIndex = INDEX_NONE;
+				if (!StatementText.IsValidIndex(Index)
+					|| StatementText[Index] != TCHAR('{')
+					|| !FindMatchingDelimiter(StatementText, Index, TCHAR('{'), TCHAR('}'), ElseCloseIndex))
+				{
+					OutError = FString::Printf(TEXT("Invalid Graph else body in '%s'."), *StatementText);
+					return false;
+				}
+
+				ElseBody = StatementText.Mid(Index + 1, ElseCloseIndex - Index - 1);
+				Index = ElseCloseIndex + 1;
+			}
+
+			SkipWhitespace(StatementText, Index);
+		}
+
+		if (Index < StatementText.Len())
+		{
+			OutError = FString::Printf(TEXT("Unexpected text after Graph if statement: '%s'."), *StatementText.Mid(Index).TrimStartAndEnd());
+			return false;
+		}
+
+		OutStatement = FCodeStatement{};
+		OutStatement.bIsIfStatement = true;
+		if (!ParseCodeCondition(ConditionText, OutStatement.Condition, OutError))
+		{
+			return false;
+		}
+
+		if (!ParseCodeStatements(ThenBody, OutStatement.ThenStatements, OutError))
+		{
+			OutError = FString::Printf(TEXT("In Graph if body: %s"), *OutError);
+			return false;
+		}
+
+		if (!ElseBody.IsEmpty() && !ParseCodeStatements(ElseBody, OutStatement.ElseStatements, OutError))
+		{
+			OutError = FString::Printf(TEXT("In Graph else body: %s"), *OutError);
+			return false;
+		}
+
+		return true;
+	}
+
 	bool ParseCodeStatements(const FString& InCode, TArray<FCodeStatement>& OutStatements, FString& OutError)
 	{
 		OutStatements.Reset();
-		const TArray<FString> Statements = SplitStatements(RemoveComments(InCode));
+		TArray<FString> Statements;
+		if (!SplitStatements(RemoveComments(InCode), Statements, OutError))
+		{
+			return false;
+		}
+
 		for (const FString& StatementText : Statements)
 		{
+			int32 StatementProbeIndex = 0;
+			SkipWhitespace(StatementText, StatementProbeIndex);
+			if (MatchesKeywordAt(StatementText, StatementProbeIndex, TEXT("if")))
+			{
+				FCodeStatement IfStatement;
+				if (!ParseIfStatement(StatementText, IfStatement, OutError))
+				{
+					return false;
+				}
+
+				OutStatements.Add(IfStatement);
+				continue;
+			}
+
 			const auto ParseDeclarationStatement =
 				[&OutError](const FString& DeclaredType, const FString& TargetName, const FString* InitializerText, FCodeStatement& OutStatement) -> bool
 			{
@@ -865,7 +1376,7 @@ namespace UE::DreamShader::Editor::Private
 							const FString* InitializerText = bFirstHasAssignment ? &FirstRight : nullptr;
 							if (!ParseDeclarationStatement(SharedType, FirstName, InitializerText, Statement))
 							{
-								OutError = FString::Printf(TEXT("In Code statement '%s': %s"), *StatementText, *OutError);
+								OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError);
 								return false;
 							}
 						}
@@ -878,7 +1389,7 @@ namespace UE::DreamShader::Editor::Private
 							if (!IsIdentifierToken(NameToken))
 							{
 								OutError = FString::Printf(
-									TEXT("In Code statement '%s': '%s' is not a valid declarator in a comma-separated declaration."),
+									TEXT("In Graph statement '%s': '%s' is not a valid declarator in a comma-separated declaration."),
 									*StatementText,
 									*NameToken.TrimStartAndEnd());
 								return false;
@@ -888,7 +1399,7 @@ namespace UE::DreamShader::Editor::Private
 							const FString* InitializerText = bHasAssignment ? &Right : nullptr;
 							if (!ParseDeclarationStatement(SharedType, TrimmedNameToken, InitializerText, Statement))
 							{
-								OutError = FString::Printf(TEXT("In Code statement '%s': %s"), *StatementText, *OutError);
+								OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError);
 								return false;
 							}
 						}
@@ -916,7 +1427,7 @@ namespace UE::DreamShader::Editor::Private
 				FCodeExpressionParser ExpressionParser(StatementText);
 				if (!ExpressionParser.Parse(Statement.Expression, OutError))
 				{
-					OutError = FString::Printf(TEXT("In Code statement '%s': %s"), *StatementText, *OutError);
+					OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError);
 					return false;
 				}
 
@@ -942,7 +1453,7 @@ namespace UE::DreamShader::Editor::Private
 			FCodeExpressionParser ExpressionParser(Right);
 			if (!ExpressionParser.Parse(Statement.Expression, OutError))
 			{
-				OutError = FString::Printf(TEXT("In Code statement '%s': %s"), *StatementText, *OutError);
+				OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError);
 				return false;
 			}
 
@@ -975,102 +1486,339 @@ namespace UE::DreamShader::Editor::Private
 
 		for (const FCodeStatement& Statement : Statements)
 		{
-			if (!Statement.Expression && !Statement.bIsDeclaration && !Statement.bUsesBraceInitializer)
+			if (!ExecuteStatement(Statement, OutError))
 			{
-				OutError = TEXT("Encountered an invalid empty Code statement.");
 				return false;
 			}
-
-			if (Statement.bIsExpressionStatement)
-			{
-				if (!ExecuteExpressionStatement(Statement.Expression, OutError))
-				{
-					return false;
-				}
-				continue;
-			}
-
-			if (Statement.TargetName.IsEmpty())
-			{
-				OutError = TEXT("Encountered a Code assignment without a target variable.");
-				return false;
-			}
-
-			if (Statement.bIsDeclaration && FindValue(Statement.TargetName))
-			{
-				OutError = FString::Printf(TEXT("Code variable '%s' is declared more than once."), *Statement.TargetName);
-				return false;
-			}
-
-			FCodeValue EvaluatedValue;
-			if (Statement.bUsesBraceInitializer)
-			{
-				FString TargetTypeName;
-				if (!ResolveTargetTypeForAssignment(Statement, TargetTypeName, OutError)
-					|| !EvaluateBraceInitializer(TargetTypeName, Statement.InitializerText, EvaluatedValue, OutError))
-				{
-					OutError = FString::Printf(TEXT("Failed to evaluate Code assignment for '%s'. %s"), *Statement.TargetName, *OutError);
-					return false;
-				}
-			}
-			else if (Statement.Expression)
-			{
-				if (!EvaluateExpression(Statement.Expression, EvaluatedValue, OutError))
-				{
-					OutError = FString::Printf(TEXT("Failed to evaluate Code assignment for '%s'. %s"), *Statement.TargetName, *OutError);
-					return false;
-				}
-			}
-			else if (Statement.bIsDeclaration)
-			{
-				if (!CreateDefaultValue(Statement.DeclaredType, EvaluatedValue, OutError))
-				{
-					OutError = FString::Printf(TEXT("Failed to declare Code variable '%s'. %s"), *Statement.TargetName, *OutError);
-					return false;
-				}
-			}
-
-			if (Statement.bIsDeclaration)
-			{
-				int32 ExpectedComponentCount = 1;
-				bool bExpectedTexture = false;
-				if (!TryResolveCodeDeclaredType(Statement.DeclaredType, ExpectedComponentCount, bExpectedTexture))
-				{
-					OutError = FString::Printf(TEXT("Unsupported Code variable type '%s' for '%s'."), *Statement.DeclaredType, *Statement.TargetName);
-					return false;
-				}
-
-				FCodeValue CoercedValue;
-				if (!CoerceValueToType(EvaluatedValue, ExpectedComponentCount, bExpectedTexture, CoercedValue, OutError))
-				{
-					OutError = FString::Printf(
-						TEXT("Code variable '%s' is declared as '%s' but assigned an incompatible value. %s"),
-						*Statement.TargetName,
-						*Statement.DeclaredType,
-						*OutError);
-					return false;
-				}
-
-				EvaluatedValue = CoercedValue;
-			}
-			else if (const FCodeValue* ExistingValue = FindValue(Statement.TargetName))
-			{
-				FCodeValue CoercedValue;
-				if (!CoerceValueToType(EvaluatedValue, ExistingValue->ComponentCount, ExistingValue->bIsTextureObject, CoercedValue, OutError))
-				{
-					OutError = FString::Printf(
-						TEXT("Code variable '%s' was previously assigned an incompatible value. %s"),
-						*Statement.TargetName,
-						*OutError);
-					return false;
-				}
-
-				EvaluatedValue = CoercedValue;
-			}
-
-			(*Values).Add(Statement.TargetName, EvaluatedValue);
 		}
 
+		return true;
+	}
+
+	bool FCodeGraphBuilder::ExecuteStatement(const FCodeStatement& Statement, FString& OutError)
+	{
+		if (Statement.bIsIfStatement)
+		{
+			return ExecuteIfStatement(Statement, OutError);
+		}
+
+		if (!Statement.Expression && !Statement.bIsDeclaration && !Statement.bUsesBraceInitializer)
+		{
+			OutError = TEXT("Encountered an invalid empty Graph statement.");
+			return false;
+		}
+
+		if (Statement.bIsExpressionStatement)
+		{
+			return ExecuteExpressionStatement(Statement.Expression, OutError);
+		}
+
+		if (Statement.TargetName.IsEmpty())
+		{
+			OutError = TEXT("Encountered a Graph assignment without a target variable.");
+			return false;
+		}
+
+		if (Statement.bIsDeclaration && FindValue(Statement.TargetName))
+		{
+			OutError = FString::Printf(TEXT("Graph variable '%s' is declared more than once."), *Statement.TargetName);
+			return false;
+		}
+
+		FCodeValue EvaluatedValue;
+		if (Statement.bUsesBraceInitializer)
+		{
+			FString TargetTypeName;
+			if (!ResolveTargetTypeForAssignment(Statement, TargetTypeName, OutError)
+				|| !EvaluateBraceInitializer(TargetTypeName, Statement.InitializerText, EvaluatedValue, OutError))
+			{
+				OutError = FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError);
+				return false;
+			}
+		}
+		else if (Statement.Expression)
+		{
+			if (!EvaluateExpression(Statement.Expression, EvaluatedValue, OutError))
+			{
+				OutError = FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError);
+				return false;
+			}
+		}
+		else if (Statement.bIsDeclaration)
+		{
+			if (!CreateDefaultValue(Statement.DeclaredType, EvaluatedValue, OutError))
+			{
+				OutError = FString::Printf(TEXT("Failed to declare Graph variable '%s'. %s"), *Statement.TargetName, *OutError);
+				return false;
+			}
+		}
+
+		if (Statement.bIsDeclaration)
+		{
+			int32 ExpectedComponentCount = 1;
+			bool bExpectedTexture = false;
+			if (!TryResolveCodeDeclaredType(Statement.DeclaredType, ExpectedComponentCount, bExpectedTexture))
+			{
+				OutError = FString::Printf(TEXT("Unsupported Graph variable type '%s' for '%s'."), *Statement.DeclaredType, *Statement.TargetName);
+				return false;
+			}
+
+			FCodeValue CoercedValue;
+			if (!CoerceValueToType(EvaluatedValue, ExpectedComponentCount, bExpectedTexture, CoercedValue, OutError))
+			{
+				OutError = FString::Printf(
+					TEXT("Graph variable '%s' is declared as '%s' but assigned an incompatible value. %s"),
+					*Statement.TargetName,
+					*Statement.DeclaredType,
+					*OutError);
+				return false;
+			}
+
+			EvaluatedValue = CoercedValue;
+		}
+		else if (const FCodeValue* ExistingValue = FindValue(Statement.TargetName))
+		{
+			FCodeValue CoercedValue;
+			if (!CoerceValueToType(EvaluatedValue, ExistingValue->ComponentCount, ExistingValue->bIsTextureObject, CoercedValue, OutError))
+			{
+				OutError = FString::Printf(
+					TEXT("Graph variable '%s' was previously assigned an incompatible value. %s"),
+					*Statement.TargetName,
+					*OutError);
+				return false;
+			}
+
+			EvaluatedValue = CoercedValue;
+		}
+
+		(*Values).Add(Statement.TargetName, EvaluatedValue);
+		return true;
+	}
+
+	static bool AreCodeValuesEquivalent(const FCodeValue& Left, const FCodeValue& Right)
+	{
+		return Left.Expression == Right.Expression
+			&& Left.OutputIndex == Right.OutputIndex
+			&& Left.ComponentCount == Right.ComponentCount
+			&& Left.bIsTextureObject == Right.bIsTextureObject;
+	}
+
+	static void CollectChangedValueNames(
+		const TMap<FString, FCodeValue>& BaseValues,
+		const TMap<FString, FCodeValue>& BranchValues,
+		TSet<FString>& OutNames)
+	{
+		for (const TPair<FString, FCodeValue>& Pair : BranchValues)
+		{
+			const FCodeValue* BaseValue = BaseValues.Find(Pair.Key);
+			if (!BaseValue || !AreCodeValuesEquivalent(*BaseValue, Pair.Value))
+			{
+				OutNames.Add(Pair.Key);
+			}
+		}
+	}
+
+	bool FCodeGraphBuilder::ExecuteIfStatement(const FCodeStatement& Statement, FString& OutError)
+	{
+		if (!Values)
+		{
+			OutError = TEXT("Graph builder is not initialized.");
+			return false;
+		}
+
+		TMap<FString, FCodeValue>* OuterValues = Values;
+		const TMap<FString, FCodeValue> BaseValues = *OuterValues;
+
+		TMap<FString, FCodeValue> ThenValues = BaseValues;
+		Values = &ThenValues;
+		for (const FCodeStatement& ThenStatement : Statement.ThenStatements)
+		{
+			if (!ExecuteStatement(ThenStatement, OutError))
+			{
+				Values = OuterValues;
+				OutError = FString::Printf(TEXT("In Graph if body: %s"), *OutError);
+				return false;
+			}
+		}
+
+		TMap<FString, FCodeValue> ElseValues = BaseValues;
+		Values = &ElseValues;
+		for (const FCodeStatement& ElseStatement : Statement.ElseStatements)
+		{
+			if (!ExecuteStatement(ElseStatement, OutError))
+			{
+				Values = OuterValues;
+				OutError = FString::Printf(TEXT("In Graph else body: %s"), *OutError);
+				return false;
+			}
+		}
+
+		Values = OuterValues;
+
+		TSet<FString> ChangedNames;
+		CollectChangedValueNames(BaseValues, ThenValues, ChangedNames);
+		CollectChangedValueNames(BaseValues, ElseValues, ChangedNames);
+
+		for (const FString& Name : ChangedNames)
+		{
+			const FCodeValue* ThenValue = ThenValues.Find(Name);
+			const FCodeValue* ElseValue = ElseValues.Find(Name);
+			if (!ThenValue || !ElseValue)
+			{
+				OutError = FString::Printf(TEXT("Graph if statement could not resolve both branch values for '%s'."), *Name);
+				return false;
+			}
+
+			int32 ExpectedComponentCount = ThenValue->ComponentCount;
+			bool bExpectedTexture = ThenValue->bIsTextureObject;
+			if (const FCodeValue* BaseValue = BaseValues.Find(Name))
+			{
+				ExpectedComponentCount = BaseValue->ComponentCount;
+				bExpectedTexture = BaseValue->bIsTextureObject;
+			}
+			else
+			{
+				int32 OutputComponentCount = 0;
+				bool bOutputIsTexture = false;
+				if (TryResolveOutputVariableComponentCount(Definition, Name, OutputComponentCount, bOutputIsTexture))
+				{
+					ExpectedComponentCount = OutputComponentCount;
+					bExpectedTexture = bOutputIsTexture;
+				}
+			}
+
+			if (bExpectedTexture)
+			{
+				OutError = FString::Printf(TEXT("Graph if statement cannot select Texture2D value '%s'."), *Name);
+				return false;
+			}
+
+			FCodeValue CoercedThenValue;
+			FCodeValue CoercedElseValue;
+			if (!CoerceValueToType(*ThenValue, ExpectedComponentCount, bExpectedTexture, CoercedThenValue, OutError)
+				|| !CoerceValueToType(*ElseValue, ExpectedComponentCount, bExpectedTexture, CoercedElseValue, OutError))
+			{
+				OutError = FString::Printf(TEXT("Graph if branches assign incompatible values to '%s'. %s"), *Name, *OutError);
+				return false;
+			}
+
+			FCodeValue ConditionalValue;
+			if (!CreateConditionalValue(Statement.Condition, CoercedThenValue, CoercedElseValue, ConditionalValue, OutError))
+			{
+				OutError = FString::Printf(TEXT("Graph if statement failed to merge '%s'. %s"), *Name, *OutError);
+				return false;
+			}
+
+			(*Values).Add(Name, ConditionalValue);
+		}
+
+		return true;
+	}
+
+	bool FCodeGraphBuilder::CreateConditionalValue(
+		const FCodeCondition& Condition,
+		const FCodeValue& TrueValue,
+		const FCodeValue& FalseValue,
+		FCodeValue& OutValue,
+		FString& OutError)
+	{
+		if (TrueValue.bIsTextureObject || FalseValue.bIsTextureObject)
+		{
+			OutError = TEXT("Texture2D values cannot be selected by Graph if statements.");
+			return false;
+		}
+
+		FCodeValue LeftValue;
+		if (!EvaluateExpression(Condition.Left, LeftValue, OutError))
+		{
+			OutError = FString::Printf(TEXT("Failed to evaluate Graph if condition. %s"), *OutError);
+			return false;
+		}
+
+		if (LeftValue.bIsTextureObject || LeftValue.ComponentCount != 1)
+		{
+			OutError = TEXT("Graph if condition left side must evaluate to a scalar value.");
+			return false;
+		}
+
+		FCodeValue RightValue;
+		if (Condition.Operator == TEXT("truthy"))
+		{
+			RightValue.Expression = CreateScalarLiteralNode(0.0, ConsumeNodeY());
+			if (!RightValue.Expression)
+			{
+				OutError = TEXT("Failed to create a zero literal for Graph if condition.");
+				return false;
+			}
+			RightValue.ComponentCount = 1;
+		}
+		else
+		{
+			if (!EvaluateExpression(Condition.Right, RightValue, OutError))
+			{
+				OutError = FString::Printf(TEXT("Failed to evaluate Graph if condition. %s"), *OutError);
+				return false;
+			}
+		}
+
+		if (RightValue.bIsTextureObject || RightValue.ComponentCount != 1)
+		{
+			OutError = TEXT("Graph if condition right side must evaluate to a scalar value.");
+			return false;
+		}
+
+		auto* IfExpression = Cast<UMaterialExpressionIf>(
+			CreateExpression(UMaterialExpressionIf::StaticClass(), 520, ConsumeNodeY()));
+		if (!IfExpression)
+		{
+			OutError = TEXT("Failed to create a Material If node.");
+			return false;
+		}
+
+		ConnectCodeValueToInput(IfExpression->A, LeftValue);
+		ConnectCodeValueToInput(IfExpression->B, RightValue);
+
+		const auto ConnectBranches = [&](const FCodeValue& GreaterValue, const FCodeValue& EqualValue, const FCodeValue& LessValue)
+		{
+			ConnectCodeValueToInput(IfExpression->AGreaterThanB, GreaterValue);
+			ConnectCodeValueToInput(IfExpression->AEqualsB, EqualValue);
+			ConnectCodeValueToInput(IfExpression->ALessThanB, LessValue);
+		};
+
+		if (Condition.Operator == TEXT("truthy") || Condition.Operator == TEXT(">"))
+		{
+			ConnectBranches(TrueValue, FalseValue, FalseValue);
+		}
+		else if (Condition.Operator == TEXT("<"))
+		{
+			ConnectBranches(FalseValue, FalseValue, TrueValue);
+		}
+		else if (Condition.Operator == TEXT(">="))
+		{
+			ConnectBranches(TrueValue, TrueValue, FalseValue);
+		}
+		else if (Condition.Operator == TEXT("<="))
+		{
+			ConnectBranches(FalseValue, TrueValue, TrueValue);
+		}
+		else if (Condition.Operator == TEXT("=="))
+		{
+			ConnectBranches(FalseValue, TrueValue, FalseValue);
+		}
+		else if (Condition.Operator == TEXT("!="))
+		{
+			ConnectBranches(TrueValue, FalseValue, TrueValue);
+		}
+		else
+		{
+			OutError = FString::Printf(TEXT("Unsupported Graph if comparison operator '%s'."), *Condition.Operator);
+			return false;
+		}
+
+		OutValue.Expression = IfExpression;
+		OutValue.OutputIndex = 0;
+		OutValue.ComponentCount = TrueValue.ComponentCount;
+		OutValue.bIsTextureObject = false;
 		return true;
 	}
 
@@ -1154,13 +1902,13 @@ namespace UE::DreamShader::Editor::Private
 		bool bIsTexture = false;
 		if (!TryResolveCodeDeclaredType(DeclaredType, ComponentCount, bIsTexture))
 		{
-			OutError = FString::Printf(TEXT("Unsupported Code variable type '%s'."), *DeclaredType);
+			OutError = FString::Printf(TEXT("Unsupported Graph variable type '%s'."), *DeclaredType);
 			return false;
 		}
 
 		if (bIsTexture)
 		{
-			OutError = FString::Printf(TEXT("Code variable type '%s' requires an explicit initializer."), *DeclaredType);
+			OutError = FString::Printf(TEXT("Graph variable type '%s' requires an explicit initializer."), *DeclaredType);
 			return false;
 		}
 
@@ -1521,14 +2269,14 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!Expression || Expression->Kind != ECodeExpressionKind::Call)
 		{
-			OutError = TEXT("Code expression statements currently support only Function calls with explicit out arguments.");
+			OutError = TEXT("Graph expression statements currently support only Function calls with explicit out arguments.");
 			return false;
 		}
 
 		FString CalleeName;
 		if (!TryFlattenQualifiedName(Expression->Left, CalleeName))
 		{
-			OutError = TEXT("Code expression statements must call a named Function.");
+			OutError = TEXT("Graph expression statements must call a named Function.");
 			return false;
 		}
 
@@ -1536,7 +2284,7 @@ namespace UE::DreamShader::Editor::Private
 		if (!Function)
 		{
 			OutError = FString::Printf(
-				TEXT("Code expression statement '%s' is unsupported. Only DreamShader Function calls may use statement syntax."),
+				TEXT("Graph expression statement '%s' is unsupported. Only DreamShader Function calls may use statement syntax."),
 				*CalleeName);
 			return false;
 		}
@@ -1548,7 +2296,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!Expression)
 		{
-			OutError = TEXT("Empty Code expression.");
+			OutError = TEXT("Empty Graph expression.");
 			return false;
 		}
 
@@ -1562,7 +2310,7 @@ namespace UE::DreamShader::Editor::Private
 				return true;
 			}
 
-			OutError = FString::Printf(TEXT("Unknown Code identifier '%s'."), *Expression->Text);
+			OutError = FString::Printf(TEXT("Unknown Graph identifier '%s'."), *Expression->Text);
 			return false;
 		}
 
@@ -1597,7 +2345,7 @@ namespace UE::DreamShader::Editor::Private
 			return EvaluateCall(Expression, OutValue, OutError);
 
 		default:
-			OutError = TEXT("Unsupported Code expression kind.");
+			OutError = TEXT("Unsupported Graph expression kind.");
 			return false;
 		}
 	}
@@ -1858,7 +2606,7 @@ namespace UE::DreamShader::Editor::Private
 		FString CalleeName;
 		if (!TryFlattenQualifiedName(Expression->Left, CalleeName))
 		{
-			OutError = TEXT("Code calls must target a named function.");
+			OutError = TEXT("Graph calls must target a named function.");
 			return false;
 		}
 
@@ -1876,7 +2624,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderMaterialFunctionDefinition* MaterialFunctionDefinition = FindMaterialFunctionDefinition(CalleeName);
 		if (CustomFunction && MaterialFunctionDefinition)
 		{
-			OutError = FString::Printf(TEXT("Code call '%s' is ambiguous because both Function and ShaderFunction definitions use that name."), *CalleeName);
+			OutError = FString::Printf(TEXT("Graph call '%s' is ambiguous because both Function and ShaderFunction definitions use that name."), *CalleeName);
 			return false;
 		}
 
@@ -2071,7 +2819,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderFunctionDefinition* Function = FindFunctionDefinition(FunctionName);
 		if (!Function)
 		{
-			OutError = FString::Printf(TEXT("Unknown Code function '%s'."), *FunctionName);
+			OutError = FString::Printf(TEXT("Unknown Graph function '%s'."), *FunctionName);
 			return false;
 		}
 
@@ -2944,7 +3692,7 @@ namespace UE::DreamShader::Editor::Private
 		if (!OutputTypeArgument)
 		{
 			OutError = FString::Printf(
-				TEXT("Unsupported UE builtin call '%s' in Code. For generic MaterialExpression calls, add OutputType=\"float1/2/3/4/Texture2D\"."),
+				TEXT("Unsupported UE builtin call '%s' in Graph. For generic MaterialExpression calls, add OutputType=\"float1/2/3/4/Texture2D\"."),
 				*CalleeName);
 			return false;
 		}

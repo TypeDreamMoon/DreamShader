@@ -906,7 +906,7 @@ namespace UE::DreamShader::Editor
 
 			if (FunctionDefinition.Code.IsEmpty())
 			{
-				OutError = FString::Printf(TEXT("ShaderFunction '%s' must provide a Code block."), *FunctionDefinition.Name);
+				OutError = FString::Printf(TEXT("ShaderFunction '%s' must provide a Graph block."), *FunctionDefinition.Name);
 				return false;
 			}
 
@@ -1416,7 +1416,7 @@ namespace UE::DreamShader::Editor
 		{
 			if (bUsesReturn)
 			{
-				OutMessage = FString::Printf(TEXT("%s: Code blocks do not support binding Outputs to the reserved name 'return'."), *SourceFilePath);
+				OutMessage = FString::Printf(TEXT("%s: Graph blocks do not support binding Outputs to the reserved name 'return'."), *SourceFilePath);
 				return false;
 			}
 
@@ -1462,7 +1462,7 @@ namespace UE::DreamShader::Editor
 					if (bDeclaredTexture || OutputValue.bIsTextureObject || DeclaredComponents != OutputValue.ComponentCount)
 					{
 						OutMessage = FString::Printf(
-							TEXT("%s: Code output '%s' does not match its declared type."),
+							TEXT("%s: Graph output '%s' does not match its declared type."),
 							*SourceFilePath,
 							*Binding.SourceText);
 						return false;
@@ -1478,7 +1478,7 @@ namespace UE::DreamShader::Editor
 					if (!MaterialInput)
 					{
 						OutMessage = FString::Printf(
-							TEXT("%s: Failed to find material property '%s' while connecting Code output '%s'."),
+							TEXT("%s: Failed to find material property '%s' while connecting Graph output '%s'."),
 							*SourceFilePath,
 							*Binding.MaterialProperty,
 							*Binding.SourceText);

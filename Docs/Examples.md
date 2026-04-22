@@ -19,7 +19,7 @@ Shader(Name="DreamMaterials/M_Minimal")
         Base.EmissiveColor = Res;
     }
 
-    Code = {
+    Graph = {
         Res = Tint;
     }
 }
@@ -63,7 +63,7 @@ Shader(Name="DreamMaterials/M_Imported")
         Base.EmissiveColor = Res;
     }
 
-    Code = {
+    Graph = {
         vec2 uv = UE.TexCoord(Index=0);
         float t = UE.Time();
         vec3 pulse;
@@ -102,7 +102,7 @@ Shader(Name="DreamMaterials/M_TextureBuiltin")
         Base.EmissiveColor = Res;
     }
 
-    Code = {
+    Graph = {
         vec2 uv = UE.TexCoord(Index=0);
         vec3 sampled;
         Texture::Sample2DRGB(MainTex, uv, sampled);
@@ -132,7 +132,7 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 ### 推荐调用
 
 ```c
-Code = {
+Graph = {
     vec3 src = vec3(1.0, 0.4, 0.2);
     vec3 tint = vec3(0.5, 1.0, 1.0);
     vec3 res;
@@ -142,7 +142,7 @@ Code = {
 ## 7. 变量声明与 brace initializer
 
 ```c
-Code = {
+Graph = {
     float a;
     float b = 1.0;
     float3 rgb = vec3(1.0, 0.5, 0.2);
@@ -165,7 +165,7 @@ Properties = {
 ## 9. 使用 `UE.*` 构图
 
 ```c
-Code = {
+Graph = {
     float2 uv = UE.TexCoord(Index=0);
     float time = UE.Time();
     float pulse = UE.Expression(
@@ -177,7 +177,22 @@ Code = {
 }
 ```
 
-## 10. `ShaderFunction` 示例
+## 10. `Graph` 中使用 `if` / `else`
+
+```c
+Graph = {
+    float2 uv = UE.TexCoord(Index=0);
+    float mask = UE.Expression(Class="ComponentMask", OutputType="float1", Input=uv, R=true);
+
+    if (mask > 0.5) {
+        Res = vec3(1.0, 0.2, 0.2);
+    } else {
+        Res = vec3(0.0, 0.0, 0.0);
+    }
+}
+```
+
+## 11. `ShaderFunction` 示例
 
 ```c
 ShaderFunction(Name="Functions/F_Tint")
@@ -197,9 +212,8 @@ ShaderFunction(Name="Functions/F_Tint")
         LibraryCategories = "DreamShader,Color";
     }
 
-    Code = {
+    Graph = {
         OutColor = InColor * InTint;
     }
 }
 ```
-

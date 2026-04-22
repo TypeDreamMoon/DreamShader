@@ -683,9 +683,14 @@ namespace UE::DreamShader::Private
 					return false;
 				}
 			}
-			else if (SectionName.Equals(TEXT("Code"), ESearchCase::IgnoreCase))
+			else if (SectionName.Equals(TEXT("Graph"), ESearchCase::IgnoreCase))
 			{
 				OutDefinition.Code = SectionBody.TrimStartAndEnd();
+			}
+			else if (SectionName.Equals(TEXT("Code"), ESearchCase::IgnoreCase))
+			{
+				OutError = TEXT("Shader graph sections now use Graph = { ... }. Function Code = { ... } is still supported.");
+				return false;
 			}
 			else
 			{
@@ -805,9 +810,14 @@ namespace UE::DreamShader::Private
 					return false;
 				}
 			}
-			else if (SectionName.Equals(TEXT("Code"), ESearchCase::IgnoreCase))
+			else if (SectionName.Equals(TEXT("Graph"), ESearchCase::IgnoreCase))
 			{
 				OutFunction.Code = SectionBody.TrimStartAndEnd();
+			}
+			else if (SectionName.Equals(TEXT("Code"), ESearchCase::IgnoreCase))
+			{
+				OutError = TEXT("ShaderFunction graph sections now use Graph = { ... }. Function Code = { ... } is still supported.");
+				return false;
 			}
 			else
 			{

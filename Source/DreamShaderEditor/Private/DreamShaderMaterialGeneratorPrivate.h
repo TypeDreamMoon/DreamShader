@@ -83,15 +83,26 @@ namespace UE::DreamShader::Editor::Private
 		TArray<FCodeCallArgument> Arguments;
 	};
 
+	struct FCodeCondition
+	{
+		FString Operator;
+		TSharedPtr<FCodeExpression> Left;
+		TSharedPtr<FCodeExpression> Right;
+	};
+
 	struct FCodeStatement
 	{
 		bool bIsDeclaration = false;
 		bool bIsExpressionStatement = false;
+		bool bIsIfStatement = false;
 		bool bUsesBraceInitializer = false;
 		FString DeclaredType;
 		FString TargetName;
 		FString InitializerText;
 		TSharedPtr<FCodeExpression> Expression;
+		FCodeCondition Condition;
+		TArray<FCodeStatement> ThenStatements;
+		TArray<FCodeStatement> ElseStatements;
 	};
 
 	struct FCodeValue
@@ -213,6 +224,14 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeCallArgument* FindNamedArgument(const TArray<FCodeCallArgument>& Arguments, const TCHAR* Name) const;
 		const FCodeCallArgument* FindPositionalArgument(const TArray<FCodeCallArgument>& Arguments, int32 PositionIndex) const;
 		bool ExecuteExpressionStatement(const TSharedPtr<FCodeExpression>& Expression, FString& OutError);
+		bool ExecuteStatement(const FCodeStatement& Statement, FString& OutError);
+		bool ExecuteIfStatement(const FCodeStatement& Statement, FString& OutError);
+		bool CreateConditionalValue(
+			const FCodeCondition& Condition,
+			const FCodeValue& TrueValue,
+			const FCodeValue& FalseValue,
+			FCodeValue& OutValue,
+			FString& OutError);
 		bool EvaluateExpression(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError);
 		bool EvaluateUnary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError);
 		bool EvaluateBinary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError);

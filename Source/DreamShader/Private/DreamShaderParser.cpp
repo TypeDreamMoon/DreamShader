@@ -621,7 +621,7 @@ namespace UE::DreamShader
 
 		if (bFoundShader && OutDefinition.Code.IsEmpty())
 		{
-			OutError = TEXT("Shader must provide a Code block.");
+			OutError = TEXT("Shader must provide a Graph block.");
 			return false;
 		}
 

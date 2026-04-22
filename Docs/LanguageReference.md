@@ -51,7 +51,7 @@ Shader(Name="DreamMaterials/M_Sample")
         Base.EmissiveColor = Res;
     }
 
-    Code = {
+    Graph = {
         Res = float3(Strength, Strength, Strength);
     }
 }
@@ -73,7 +73,7 @@ ShaderFunction(Name="Functions/TintColor")
         vec3 OutColor;
     }
 
-    Code = {
+    Graph = {
         OutColor = InColor * InTint;
     }
 }
@@ -190,9 +190,9 @@ Outputs = {
 - `UserExposedCaption`
 - `LibraryCategories`
 
-### 4.5 `Code`
+### 4.5 `Graph`
 
-在 `Shader` / `ShaderFunction` 里，`Code` 是 DreamShader 图 DSL。
+在 `Shader` / `ShaderFunction` 里，`Graph` 是 DreamShader 图 DSL。
 
 它支持：
 
@@ -202,11 +202,13 @@ Outputs = {
 - brace initializer
 - `UE.*` builtin 调用
 - 独立 `Function(...)` 或 `Namespace::Function(...)` 调用
+- `if` / `else` 图分支
 - 将结果绑定到输出变量
 
-不建议在 `Code` 中写：
+`Graph` 中的 `if` / `else` 会生成 Unreal Material `If` 节点。分支里可以给同一个变量或输出赋值，生成器会把两侧结果合并成条件值。
 
-- `if`
+不建议在 `Graph` 中写：
+
 - `for`
 - `while`
 - 复杂流程控制
@@ -279,7 +281,7 @@ Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 调用方式：
 
 ```c
-Code = {
+Graph = {
     float3 base = vec3(1.0, 0.5, 0.2);
     float3 tint = vec3(0.5, 1.0, 1.0);
     float3 res;
@@ -293,7 +295,7 @@ Code = {
 Res = ApplyTint(base, tint);
 ```
 
-## 8. `Code` 中支持的声明与构造
+## 8. `Graph` 中支持的声明、构造与分支
 
 ### 8.1 仅声明
 
@@ -320,9 +322,21 @@ float4 c = {color, 1.0};
 float3 d = {a, b, c};
 ```
 
+### 8.4 `if` / `else`
+
+```c
+if (Mask > 0.5) {
+    Res = Tint;
+} else {
+    Res = vec3(0.0, 0.0, 0.0);
+}
+```
+
+条件两侧需要是标量值，支持 `>` / `<` / `>=` / `<=` / `==` / `!=`。也可以写 `if (Mask)`，等价于 `Mask > 0`。
+
 ## 9. `UE.*` builtin
 
-`Code` 中可直接生成 Unreal 材质节点，例如：
+`Graph` 中可直接生成 Unreal 材质节点，例如：
 
 - `UE.TexCoord(Index=0)`
 - `UE.Time()`
@@ -372,7 +386,7 @@ Project Settings > Plugins > DreamShader 可配置：
 
 ## 12. 当前限制
 
-- `Code` 不是完整通用语言
+- `Graph` 不是完整通用语言；支持基础 `if` / `else`，但不支持 `for` / `while`
 - `Function` 调用必须显式传 `out`
 - `Namespace` 当前只用于组织 `Function`
 - `Path(...)` 目前主要面向 `Game` / `Engine`

@@ -36,7 +36,7 @@ DreamShaderLang 的 VSCode 扩展位于：
 当前扩展已经做了基础作用域隔离：
 
 - 在 `Function` 体里，只补当前函数参数和局部变量
-- 在 `Shader` 的 `Code` 里，只补当前 block 可见的 `Properties` / `Outputs` / 局部变量
+- 在 `Shader` 的 `Graph` 里，只补当前 block 可见的 `Properties` / `Outputs` / 局部变量
 - 不会再把 `Shader` 的 `Properties` 乱补到无关的 `Function` 体里
 
 ### 跳转
@@ -64,7 +64,7 @@ DreamShaderLang 的 VSCode 扩展位于：
 - `Function` 参数声明错误
 - `Function` 重复定义
 - `.dsm` / `.dsh` 顶层结构错误
-- `Code` 中的非法语句
+- `Graph` 中的非法语句
 - 未知变量 / 未知函数
 - `Function` 调用参数数量不匹配
 - `out` 参数不是合法变量名
@@ -142,7 +142,7 @@ Package store 配置：
 
 - 本地诊断已经够开发使用，但还不是 clangd 级别的完整编译器
 - Unreal Parser 错误会尽量通过 source map 精确到真实 `.dsm/.dsh` 文件行列；材质编译器内部错误仍可能只有 Unreal 原始信息
-- `Code` 语言服务主要面向图 DSL，不等同于完整 HLSL 语言服务器
+- `Graph` 语言服务主要面向图 DSL，不等同于完整 HLSL 语言服务器
 
 ## 6. 推荐使用方式
 

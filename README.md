@@ -74,8 +74,8 @@ Shader(Name="DreamMaterials/M_Sample")
 	// 材质图域
 	// 这里就是要生成的材质节点实现的地方
 	// 我们支持单个的属性声明
-	// 这里不支持 if, for, while这种关键字。如果有需要 请写在Function里面
-    Code = {
+	// 这里支持基础 if / else 图分支；for / while 等复杂流程请写在 Function 里面
+    Graph = {
 	    float a = 0;
 	    // 使用内置的TexCoord节点
         float2 uv = UE.TexCoord(Index=0);
@@ -130,7 +130,7 @@ Function SelfContained/Inline Func(in float a, out float b)
 
 ## 重要说明
 
-- `Shader` / `ShaderFunction` 中的 `Code = { ... }` 是 DreamShader 图表达式 DSL，不是原始 HLSL
+- `Shader` / `ShaderFunction` 中的 `Graph = { ... }` 是 DreamShader 图表达式 DSL，不是原始 HLSL
 - `Function Name(...) { ... }` 的函数体是原始 helper 代码块，适合写复用逻辑
 - `Namespace(Name="...") { Function ... }` 用来组织函数，调用格式为 `NamespaceName::FunctionName(...)`
 - `Function` 调用使用显式 `out` 参数，不再支持 `Res = MyFunction(...)` 这种返回值风格
