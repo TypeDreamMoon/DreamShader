@@ -2968,11 +2968,20 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		CustomCode += FString::Printf(
-			TEXT("%s = %s(%s);\nreturn %s;"),
+			TEXT("%s = %s(%s);\n"),
 			*ResultVariableNames[0],
 			*BuildGeneratedFunctionSymbolName(Function),
-			*BuildFunctionArgumentList(Function, SecondaryResultVariables),
-			*ResultVariableNames[0]);
+			*BuildFunctionArgumentList(Function, SecondaryResultVariables));
+
+		for (int32 ResultIndex = 1; ResultIndex < ResultVariableNames.Num(); ++ResultIndex)
+		{
+			CustomCode += FString::Printf(
+				TEXT("%s = %s;\n"),
+				*ResultTargetNames[ResultIndex],
+				*ResultVariableNames[ResultIndex]);
+		}
+
+		CustomCode += FString::Printf(TEXT("return %s;"), *ResultVariableNames[0]);
 
 		if (Function.bSelfContained)
 		{
