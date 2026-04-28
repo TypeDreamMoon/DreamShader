@@ -3236,9 +3236,11 @@ namespace UE::DreamShader::Editor::Private
 		{
 			OutPackagePath = TEXT("/Game");
 		}
-		else if (RootSegment.StartsWith(TEXT("Plugin."), ESearchCase::IgnoreCase))
+		else if (RootSegment.StartsWith(TEXT("Plugin."), ESearchCase::IgnoreCase)
+			|| RootSegment.StartsWith(TEXT("Plugins."), ESearchCase::IgnoreCase))
 		{
-			FString PluginName = RootSegment.Mid(7).TrimStartAndEnd();
+			const int32 PluginPrefixLength = RootSegment.StartsWith(TEXT("Plugins."), ESearchCase::IgnoreCase) ? 8 : 7;
+			FString PluginName = RootSegment.Mid(PluginPrefixLength).TrimStartAndEnd();
 			if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
 			{
 				OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid plugin name."), *Root);
@@ -3250,7 +3252,8 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 		}
-		else if (RootSegment.Equals(TEXT("Plugin"), ESearchCase::IgnoreCase) && Segments.IsValidIndex(1))
+		else if ((RootSegment.Equals(TEXT("Plugin"), ESearchCase::IgnoreCase)
+			|| RootSegment.Equals(TEXT("Plugins"), ESearchCase::IgnoreCase)) && Segments.IsValidIndex(1))
 		{
 			FString PluginName = Segments[1].TrimStartAndEnd();
 			if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
