@@ -2,7 +2,7 @@
 
 DreamShader 是一个 Unreal Engine 材质生成插件。它提供 `DreamShaderLang` 文本语言，让你用 `.dsm` / `.dsh` 源文件描述材质图、共享函数和材质函数，并自动生成标准 Unreal `UMaterial` / `UMaterialFunction` 资产。
 
-> 当前版本：`1.1.2`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
+> 当前版本：`1.1.3`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
 
 ## 核心能力
 
@@ -84,7 +84,7 @@ Shader(Name="DreamMaterials/M_Minimal")
 }
 ```
 
-`Root` 可省略，默认保存到 `/Game`。需要保存到已启用的内容插件根时可以写：
+`Root` 可省略，默认保存到 `/Game`。需要保存到已启用的项目内容插件根时可以写：
 
 ```c
 Shader(Name="DreamMaterials/M_Minimal", Root="Plugin.MyPlugin")
@@ -92,6 +92,8 @@ Shader(Name="DreamMaterials/M_Minimal", Root="Plugin.MyPlugin")
     // ...
 }
 ```
+
+这会使用 `/MyPlugin/DreamMaterials/M_Minimal.M_Minimal` 作为 Unreal object path，并物理保存到 `[Project]/Plugins/MyPlugin/Content/DreamMaterials/M_Minimal.uasset`。
 
 ## 共享函数示例
 
@@ -212,7 +214,7 @@ I:/UnrealProject_Moon/VSCodeExt/dreamshader-language-support
 
 | 项目 | 内容 |
 | --- | --- |
-| Version | `1.1.2` |
+| Version | `1.1.3` |
 | Language | `DreamShaderLang` |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |

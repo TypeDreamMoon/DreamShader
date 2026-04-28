@@ -9,6 +9,7 @@
 #include "Factories/MaterialFunctionFactoryNew.h"
 #include "Factories/MaterialFactoryNew.h"
 #include "FileHelpers.h"
+#include "Interfaces/IPluginManager.h"
 #include "MaterialEditingLibrary.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialExpression.h"
@@ -3123,6 +3124,73 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
+	static bool ResolveProjectContentPluginPackageRoot(
+		const FString& Root,
+		const FString& PluginName,
+		FString& OutPackagePath,
+		FString& OutError)
+	{
+		const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
+		if (!Plugin.IsValid())
+		{
+			OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but no enabled plugin with that name was found."), *Root, *PluginName);
+			return false;
+		}
+
+		const FString PluginBaseDir = FPaths::ConvertRelativePathToFull(Plugin->GetBaseDir());
+		const FString ProjectPluginsDir = FPaths::ConvertRelativePathToFull(FPaths::ProjectPluginsDir());
+		if (Plugin->GetType() != EPluginType::Project || !FPaths::IsUnderDirectory(PluginBaseDir, ProjectPluginsDir))
+		{
+			OutError = FString::Printf(TEXT("DreamShader Root '%s' must reference a project plugin under '%s'."), *Root, *ProjectPluginsDir);
+			return false;
+		}
+
+		if (!Plugin->IsEnabled())
+		{
+			OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but the plugin is not enabled."), *Root, *PluginName);
+			return false;
+		}
+
+		if (!Plugin->CanContainContent())
+		{
+			OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but the plugin cannot contain content."), *Root, *PluginName);
+			return false;
+		}
+
+		const FString ContentDir = FPaths::ConvertRelativePathToFull(Plugin->GetContentDir());
+		if (!IFileManager::Get().DirectoryExists(*ContentDir))
+		{
+			OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but its Content directory does not exist: '%s'."), *Root, *PluginName, *ContentDir);
+			return false;
+		}
+
+		if (!Plugin->IsMounted())
+		{
+			OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but the plugin content is not mounted."), *Root, *PluginName);
+			return false;
+		}
+
+		FString MountedAssetPath = Plugin->GetMountedAssetPath();
+		MountedAssetPath.TrimStartAndEndInline();
+		MountedAssetPath.ReplaceInline(TEXT("\\"), TEXT("/"));
+		while (MountedAssetPath.EndsWith(TEXT("/")))
+		{
+			MountedAssetPath.LeftChopInline(1, EAllowShrinking::No);
+		}
+		if (!MountedAssetPath.StartsWith(TEXT("/")))
+		{
+			MountedAssetPath = TEXT("/") + MountedAssetPath;
+		}
+
+		if (MountedAssetPath.IsEmpty() || MountedAssetPath == TEXT("/"))
+		{
+			MountedAssetPath = TEXT("/") + Plugin->GetName();
+		}
+
+		OutPackagePath = MountedAssetPath;
+		return true;
+	}
+
 	static bool ResolveDreamShaderRootPackagePath(
 		const FString& Root,
 		FString& OutPackagePath,
@@ -3177,7 +3245,10 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			OutPackagePath = TEXT("/") + PluginName;
+			if (!ResolveProjectContentPluginPackageRoot(Root, PluginName, OutPackagePath, OutError))
+			{
+				return false;
+			}
 		}
 		else if (RootSegment.Equals(TEXT("Plugin"), ESearchCase::IgnoreCase) && Segments.IsValidIndex(1))
 		{
@@ -3188,7 +3259,10 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			OutPackagePath = TEXT("/") + PluginName;
+			if (!ResolveProjectContentPluginPackageRoot(Root, PluginName, OutPackagePath, OutError))
+			{
+				return false;
+			}
 			FirstFolderSegmentIndex = 2;
 		}
 		else if (bHadLeadingSlash)

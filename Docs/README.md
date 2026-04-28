@@ -1,6 +1,6 @@
 # DreamShader 文档总览
 
-这份文档覆盖 DreamShader `1.1.2` 的核心工作流、DreamShaderLang 语法、VSCode 扩展、Package 系统和常见示例。
+这份文档覆盖 DreamShader `1.1.3` 的核心工作流、DreamShaderLang 语法、VSCode 扩展、Package 系统和常见示例。
 
 DreamShader 的推荐用法是：用 `.dsm` 描述材质资产，用 `.dsh` 组织共享 helper，用 `Graph` 生成材质节点，用 `Function` 编写可复用 HLSL 风格逻辑。
 
@@ -92,7 +92,7 @@ Moon_Dev/
 
 - `.dsm` / `.dsh` 文件模型。
 - `Shader` / `ShaderFunction` 资产生成。
-- `Shader` / `ShaderFunction` 可通过 `Root="Game"` 或 `Root="Plugin.PluginName"` 指定生成资产根路径。
+- `Shader` / `ShaderFunction` 可通过 `Root="Game"` 或 `Root="Plugin.PluginName"` 指定生成资产根路径；`Plugin.PluginName` 指向 `[Project]/Plugins/PluginName/Content`。
 - `Function Name(in ..., out ...) { ... }` helper。
 - `Function Inline` / `Function SelfContained` 自包含模式。
 - `Namespace(Name="...") { Function ... }` 命名空间。

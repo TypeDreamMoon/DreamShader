@@ -17,6 +17,7 @@ public class DreamShaderEditor : ModuleRules
 				"Engine",
 				"Json",
 				"MaterialEditor",
+				"Projects",
 				"RHI",
 				"Slate",
 				"SlateCore",

@@ -4,7 +4,7 @@ DreamShaderLang 是 DreamShader 插件使用的文本语言。它用 `.dsm` / `.
 
 | 项目 | 内容 |
 | --- | --- |
-| 插件版本 | `1.1.2` |
+| 插件版本 | `1.1.3` |
 | 源文件 | `.dsm` / `.dsh` |
 | 主要产物 | `UMaterial` / `UMaterialFunction` |
 | 开发者 | TypeDreamMoon |
@@ -63,9 +63,10 @@ Shader(Name="DreamMaterials/M_Sample")
 规则：
 
 - `Name` 必填，建议使用 Unreal package 风格路径。
-- `Root` 可选，默认 `Game`。`Root="Game"` 生成到 `/Game`，`Root="Plugin.PluginName"` 生成到插件内容根 `/PluginName`。
+- `Root` 可选，默认 `Game`。`Root="Game"` 生成到 `/Game`，`Root="Plugin.PluginName"` 生成到已启用的项目内容插件根 `/PluginName`，物理路径位于 `[Project]/Plugins/PluginName/Content`。
 - `Root` 可以追加子目录，例如 `Root="Game/Generated"` 或 `Root="Plugin.PluginName/Generated"`。
-- 插件目标需要是已启用且可包含内容的 Unreal 插件，否则 Unreal package 路径校验会失败。
+- 例如 `Shader(Name="Mat/Test", Root="Plugin.MoonToon")` 会生成 `/MoonToon/Mat/Test.Test`，并保存到 `[Project]/Plugins/MoonToon/Content/Mat/Test.uasset`。
+- 插件目标需要是已启用且可包含内容的项目 Unreal 插件，否则生成器会报错。
 - `Properties` / `Settings` / `Outputs` / `Graph` 都是 section。
 - `Graph` 是材质图实现区域。
 
