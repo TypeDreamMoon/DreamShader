@@ -3069,7 +3069,7 @@ namespace UE::DreamShader::Editor::Private
 		FString PackageName;
 		FString ObjectPath;
 		FString AssetName;
-		if (!ResolveDreamShaderAssetDestination(Function.Name, PackageName, ObjectPath, AssetName, OutError))
+		if (!ResolveDreamShaderAssetDestination(Function.Name, Function.Root, PackageName, ObjectPath, AssetName, OutError))
 		{
 			return false;
 		}

@@ -2,12 +2,12 @@
 
 DreamShader 是一个 Unreal Engine 材质生成插件。它提供 `DreamShaderLang` 文本语言，让你用 `.dsm` / `.dsh` 源文件描述材质图、共享函数和材质函数，并自动生成标准 Unreal `UMaterial` / `UMaterialFunction` 资产。
 
-> 当前版本：`1.1.0`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
+> 当前版本：`1.1.2`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
 
 ## 核心能力
 
 - 使用文本源文件维护材质逻辑，减少手动连材质节点的重复工作。
-- 从 `Shader(Name="...")` 生成 `UMaterial`，从 `ShaderFunction(Name="...")` 生成 `UMaterialFunction`。
+- 从 `Shader(Name="...", Root="Game")` 生成 `UMaterial`，从 `ShaderFunction(Name="...", Root="Game")` 生成 `UMaterialFunction`。
 - 在 `Graph = { ... }` 中声明变量、调用 UE 材质节点、调用共享函数，并绑定材质输出。
 - 在 `Function` / `Namespace` 中编写可复用 HLSL 风格 helper。
 - 支持 `Inline` / `SelfContained` 函数，把依赖代码嵌入材质 Custom 节点，便于在未安装 DreamShader 的项目中继续使用生成资产。
@@ -81,6 +81,15 @@ Shader(Name="DreamMaterials/M_Minimal")
     Graph = {
         Color = Tint;
     }
+}
+```
+
+`Root` 可省略，默认保存到 `/Game`。需要保存到已启用的内容插件根时可以写：
+
+```c
+Shader(Name="DreamMaterials/M_Minimal", Root="Plugin.MyPlugin")
+{
+    // ...
 }
 ```
 
@@ -203,7 +212,7 @@ I:/UnrealProject_Moon/VSCodeExt/dreamshader-language-support
 
 | 项目 | 内容 |
 | --- | --- |
-| Version | `1.1.0` |
+| Version | `1.1.2` |
 | Language | `DreamShaderLang` |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |

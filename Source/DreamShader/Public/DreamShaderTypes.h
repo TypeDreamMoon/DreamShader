@@ -80,6 +80,7 @@ namespace UE::DreamShader
 	struct FTextShaderMaterialFunctionDefinition
 	{
 		FString Name;
+		FString Root;
 		TArray<FTextShaderFunctionParameter> Inputs;
 		TArray<FTextShaderFunctionParameter> Outputs;
 		TMap<FString, FString> Settings;
@@ -90,6 +91,7 @@ namespace UE::DreamShader
 	struct FTextShaderDefinition
 	{
 		FString Name;
+		FString Root;
 		TArray<FTextShaderPropertyDefinition> Properties;
 		TMap<FString, FString> Settings;
 		TArray<FTextShaderVariableDeclaration> OutputDeclarations;

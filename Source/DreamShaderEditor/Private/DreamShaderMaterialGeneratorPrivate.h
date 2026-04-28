@@ -122,6 +122,7 @@ namespace UE::DreamShader::Editor::Private
 	bool ParseIntegerLiteral(const FString& InText, int32& OutValue);
 	bool ResolveDreamShaderAssetDestination(
 		const FString& AssetName,
+		const FString& Root,
 		FString& OutPackageName,
 		FString& OutObjectPath,
 		FString& OutAssetLeafName,

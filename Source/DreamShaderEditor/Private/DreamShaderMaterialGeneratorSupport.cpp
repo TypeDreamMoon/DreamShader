@@ -3099,8 +3099,128 @@ namespace UE::DreamShader::Editor::Private
 		return false;
 	}
 
+	static bool AppendSanitizedPackageSegment(
+		const FString& RawSegment,
+		const FString& ErrorContext,
+		FString& InOutPackagePath,
+		FString& OutError)
+	{
+		FString Segment = RawSegment.TrimStartAndEnd();
+		if (Segment.IsEmpty())
+		{
+			return true;
+		}
+
+		const FString FolderName = ObjectTools::SanitizeObjectName(Segment);
+		if (FolderName.IsEmpty())
+		{
+			OutError = FString::Printf(TEXT("%s contains an invalid folder segment."), *ErrorContext);
+			return false;
+		}
+
+		InOutPackagePath += TEXT("/");
+		InOutPackagePath += FolderName;
+		return true;
+	}
+
+	static bool ResolveDreamShaderRootPackagePath(
+		const FString& Root,
+		FString& OutPackagePath,
+		FString& OutError)
+	{
+		FString Normalized = Root;
+		Normalized.TrimStartAndEndInline();
+		Normalized.ReplaceInline(TEXT("\\"), TEXT("/"));
+
+		if (Normalized.IsEmpty())
+		{
+			OutPackagePath = TEXT("/Game");
+			return true;
+		}
+
+		const bool bHadLeadingSlash = Normalized.StartsWith(TEXT("/"));
+		while (Normalized.StartsWith(TEXT("/")))
+		{
+			Normalized.RightChopInline(1, EAllowShrinking::No);
+		}
+		while (Normalized.EndsWith(TEXT("/")))
+		{
+			Normalized.LeftChopInline(1, EAllowShrinking::No);
+		}
+
+		if (Normalized.IsEmpty())
+		{
+			OutPackagePath = TEXT("/Game");
+			return true;
+		}
+
+		TArray<FString> Segments;
+		Normalized.ParseIntoArray(Segments, TEXT("/"), true);
+		if (Segments.IsEmpty())
+		{
+			OutPackagePath = TEXT("/Game");
+			return true;
+		}
+
+		const FString RootSegment = Segments[0].TrimStartAndEnd();
+		int32 FirstFolderSegmentIndex = 1;
+		if (RootSegment.Equals(TEXT("Game"), ESearchCase::IgnoreCase))
+		{
+			OutPackagePath = TEXT("/Game");
+		}
+		else if (RootSegment.StartsWith(TEXT("Plugin."), ESearchCase::IgnoreCase))
+		{
+			FString PluginName = RootSegment.Mid(7).TrimStartAndEnd();
+			if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
+			{
+				OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid plugin name."), *Root);
+				return false;
+			}
+
+			OutPackagePath = TEXT("/") + PluginName;
+		}
+		else if (RootSegment.Equals(TEXT("Plugin"), ESearchCase::IgnoreCase) && Segments.IsValidIndex(1))
+		{
+			FString PluginName = Segments[1].TrimStartAndEnd();
+			if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
+			{
+				OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid plugin name."), *Root);
+				return false;
+			}
+
+			OutPackagePath = TEXT("/") + PluginName;
+			FirstFolderSegmentIndex = 2;
+		}
+		else if (bHadLeadingSlash)
+		{
+			if (RootSegment.IsEmpty() || ObjectTools::SanitizeObjectName(RootSegment) != RootSegment)
+			{
+				OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid package root."), *Root);
+				return false;
+			}
+
+			OutPackagePath = TEXT("/") + RootSegment;
+		}
+		else
+		{
+			OutPackagePath = TEXT("/Game");
+			FirstFolderSegmentIndex = 0;
+		}
+
+		for (int32 Index = FirstFolderSegmentIndex; Index < Segments.Num(); ++Index)
+		{
+			if (!AppendSanitizedPackageSegment(Segments[Index], FString::Printf(TEXT("DreamShader Root '%s'"), *Root), OutPackagePath, OutError))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	bool ResolveDreamShaderAssetDestination(
 		const FString& AssetName,
+		const FString& Root,
 		FString& OutPackageName,
 		FString& OutObjectPath,
 		FString& OutAssetLeafName,
@@ -3139,22 +3259,36 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		FString PackagePath = TEXT("/Game");
+		FString PackagePath;
+		if (!ResolveDreamShaderRootPackagePath(Root, PackagePath, OutError))
+		{
+			return false;
+		}
+
 		for (int32 Index = 0; Index < Segments.Num() - 1; ++Index)
 		{
-			const FString FolderName = ObjectTools::SanitizeObjectName(Segments[Index]);
-			if (FolderName.IsEmpty())
+			if (!AppendSanitizedPackageSegment(
+				Segments[Index],
+				FString::Printf(TEXT("DreamShader asset name '%s'"), *AssetName),
+				PackagePath,
+				OutError))
 			{
-				OutError = FString::Printf(TEXT("DreamShader asset name '%s' contains an invalid folder segment."), *AssetName);
 				return false;
 			}
-
-			PackagePath += TEXT("/");
-			PackagePath += FolderName;
 		}
 
 		OutPackageName = PackagePath + TEXT("/") + OutAssetLeafName;
 		OutObjectPath = FString::Printf(TEXT("%s.%s"), *OutPackageName, *OutAssetLeafName);
+		FText PathError;
+		if (!FPackageName::IsValidObjectPath(OutObjectPath, &PathError))
+		{
+			const FString PathErrorText = PathError.ToString();
+			OutError = PathErrorText.IsEmpty()
+				? FString::Printf(TEXT("DreamShader asset path '%s' is not a valid Unreal object path."), *OutObjectPath)
+				: PathErrorText;
+			return false;
+		}
+
 		return true;
 	}
 
@@ -3163,7 +3297,7 @@ namespace UE::DreamShader::Editor::Private
 		FString PackageName;
 		FString ObjectPath;
 		FString AssetName;
-		if (!ResolveDreamShaderAssetDestination(Definition.Name, PackageName, ObjectPath, AssetName, OutError))
+		if (!ResolveDreamShaderAssetDestination(Definition.Name, Definition.Root, PackageName, ObjectPath, AssetName, OutError))
 		{
 			return false;
 		}
@@ -3211,7 +3345,7 @@ namespace UE::DreamShader::Editor::Private
 		FString PackageName;
 		FString ObjectPath;
 		FString AssetName;
-		if (!ResolveDreamShaderAssetDestination(Definition.Name, PackageName, ObjectPath, AssetName, OutError))
+		if (!ResolveDreamShaderAssetDestination(Definition.Name, Definition.Root, PackageName, ObjectPath, AssetName, OutError))
 		{
 			return false;
 		}

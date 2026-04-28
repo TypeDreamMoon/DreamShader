@@ -4,7 +4,7 @@ DreamShaderLang 是 DreamShader 插件使用的文本语言。它用 `.dsm` / `.
 
 | 项目 | 内容 |
 | --- | --- |
-| 插件版本 | `1.1.0` |
+| 插件版本 | `1.1.2` |
 | 源文件 | `.dsm` / `.dsh` |
 | 主要产物 | `UMaterial` / `UMaterialFunction` |
 | 开发者 | TypeDreamMoon |
@@ -33,7 +33,7 @@ Dream Shader Header。用于存放共享代码，通常包含：
 
 ## 2. 顶层声明
 
-### 2.1 `Shader(Name="...")`
+### 2.1 `Shader(Name="...", Root="...")`
 
 生成 Unreal `UMaterial`。
 
@@ -63,15 +63,18 @@ Shader(Name="DreamMaterials/M_Sample")
 规则：
 
 - `Name` 必填，建议使用 Unreal package 风格路径。
+- `Root` 可选，默认 `Game`。`Root="Game"` 生成到 `/Game`，`Root="Plugin.PluginName"` 生成到插件内容根 `/PluginName`。
+- `Root` 可以追加子目录，例如 `Root="Game/Generated"` 或 `Root="Plugin.PluginName/Generated"`。
+- 插件目标需要是已启用且可包含内容的 Unreal 插件，否则 Unreal package 路径校验会失败。
 - `Properties` / `Settings` / `Outputs` / `Graph` 都是 section。
 - `Graph` 是材质图实现区域。
 
-### 2.2 `ShaderFunction(Name="...")`
+### 2.2 `ShaderFunction(Name="...", Root="...")`
 
 生成 Unreal `UMaterialFunction`。
 
 ```c
-ShaderFunction(Name="Functions/F_Tint")
+ShaderFunction(Name="Functions/F_Tint", Root="Plugin.MyPlugin")
 {
     Inputs = {
         vec3 InColor;
@@ -96,6 +99,7 @@ ShaderFunction(Name="Functions/F_Tint")
 规则：
 
 - `Name` 必填。
+- `Root` 可选，规则同 `Shader`。
 - `Inputs` 声明输入 pin。
 - `Outputs` 声明输出 pin。
 - `Graph` 负责生成材质函数内部图。

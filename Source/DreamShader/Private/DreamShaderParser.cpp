@@ -546,6 +546,10 @@ namespace UE::DreamShader
 					OutError = TEXT("Shader(Name=\"...\") is required.");
 					return false;
 				}
+				if (const FString* Root = Attributes.Find(TEXT("Root")))
+				{
+					OutDefinition.Root = *Root;
+				}
 
 				FString BodyContent;
 				if (!Scanner.ExtractBalancedBlock(BodyContent, OutError))
@@ -591,6 +595,10 @@ namespace UE::DreamShader
 				{
 					OutError = TEXT("ShaderFunction(Name=\"...\") is required.");
 					return false;
+				}
+				if (const FString* Root = Attributes.Find(TEXT("Root")))
+				{
+					Function.Root = *Root;
 				}
 
 				FString BodyContent;
