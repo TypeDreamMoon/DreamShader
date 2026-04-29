@@ -258,4 +258,4 @@ Graph = {
 }
 ```
 
-`Asset` 支持 `Path(Game, "...")`、`Path(Engine, "...")`、`Path(Plugin.PluginName, "...")` / `Path(Plugins.PluginName, "...")`，也支持完整 Unreal object path。Material Function 资产右键菜单和 Material Function 编辑器工具栏里的 `Copy VirtualFunction Definition` 可以自动生成完整 `Inputs` / `Outputs` / `Options`。
+`Asset` 支持 `Path(Game, "...")`、`Path(Engine, "...")`、`Path(Plugin.PluginName, "...")` / `Path(Plugins.PluginName, "...")`，也支持完整 Unreal object path。Material Function 资产右键菜单和 Material Function 编辑器工具栏里的 `DreamShader` 下拉菜单可以复制定义、创建 `.dsh` 定义文件，并复制 `Graph` 调用示例。

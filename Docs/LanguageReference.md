@@ -4,7 +4,7 @@ DreamShaderLang 是 DreamShader 插件使用的文本语言。它用 `.dsm` / `.
 
 | 项目 | 内容 |
 | --- | --- |
-| 插件版本 | `1.2.0` |
+| 插件版本 | `1.2.1` |
 | 源文件 | `.dsm` / `.dsh` |
 | 主要产物 | `UMaterial` / `UMaterialFunction` |
 | 开发者 | TypeDreamMoon |
@@ -136,7 +136,7 @@ VirtualFunction(Name="BufferWriter")
 - `Name` 必填，作为 `Graph` 中的调用名。
 - `Options.Asset` 必填，指向现有 `UMaterialFunction` 资产。
 - `Options.Asset` 支持 `Path(Game, "...")`、`Path(Engine, "...")`、`Path(Plugin.PluginName, "...")` / `Path(Plugins.PluginName, "...")`，也支持完整 `/Game/...`、`/Engine/...` 或插件挂载 object path。
-- `Inputs` / `Outputs` 必须与现有材质函数的输入输出顺序和名称对应；自动生成按钮会从资产读取完整签名。
+- `Inputs` / `Outputs` 必须与现有材质函数的输入输出顺序和名称对应；Material Function 的 `DreamShader` 下拉菜单会从资产读取完整签名。
 - 不支持 `Graph` / `Code` section。
 
 调用示例：

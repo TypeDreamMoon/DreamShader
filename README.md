@@ -2,7 +2,7 @@
 
 DreamShader 是一个 Unreal Engine 材质生成插件。它提供 `DreamShaderLang` 文本语言，让你用 `.dsm` / `.dsh` 源文件描述材质图、共享函数和材质函数，并自动生成标准 Unreal `UMaterial` / `UMaterialFunction` 资产。
 
-> 当前版本：`1.2.0`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
+> 当前版本：`1.2.1`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
 
 ## 核心能力
 
@@ -177,7 +177,7 @@ Shader(Name="DreamMaterials/M_UseBuffer")
 }
 ```
 
-`Asset` 支持 `Path(Game, "...")`、`Path(Engine, "...")`、`Path(Plugin.PluginName, "...")` / `Path(Plugins.PluginName, "...")`，也支持直接写完整 `/Game/...`、`/Engine/...` 或插件挂载路径。插件会在 Material Function 资产右键菜单和 Material Function 编辑器工具栏提供 `Copy VirtualFunction Definition`，自动把 Input / Output / Options 生成到剪贴板。
+`Asset` 支持 `Path(Game, "...")`、`Path(Engine, "...")`、`Path(Plugin.PluginName, "...")` / `Path(Plugins.PluginName, "...")`，也支持直接写完整 `/Game/...`、`/Engine/...` 或插件挂载路径。插件会在 Material Function 资产右键菜单和 Material Function 编辑器工具栏提供 `DreamShader` 下拉菜单，其中 `CopyVirtualFunction` 会把 Input / Output / Options 生成到剪贴板，`CreateVirtualFunction` 会在 `DShader/VirtualFunctions` 下创建 `.dsh` 定义文件，`CopyVirtualFunctionCall` 会复制可粘贴到 `Graph` 的调用示例。
 
 ## UE 材质节点
 
@@ -249,7 +249,7 @@ I:/UnrealProject_Moon/VSCodeExt/dreamshader-language-support
 
 | 项目 | 内容 |
 | --- | --- |
-| Version | `1.2.0` |
+| Version | `1.2.1` |
 | Language | `DreamShaderLang` |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |

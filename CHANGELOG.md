@@ -1,5 +1,14 @@
 # DreamShader ChangeLog
 
+## 1.2.1 - 2026-04-29
+
+### Editor Workflow
+
+- Replaced the single Material Function toolbar action with a `DreamShader` dropdown menu.
+- Added `CopyVirtualFunction`, `CreateVirtualFunction`, and `CopyVirtualFunctionCall` actions to the Material Function editor toolbar and Material Function asset context menu.
+- `CreateVirtualFunction` writes a `.dsh` declaration file under the configured `DShader/VirtualFunctions` directory and opens it in the default external editor.
+- `CopyVirtualFunctionCall` copies a ready-to-paste Graph call using the generated input names and first output.
+
 ## 1.2.0 - 2026-04-28
 
 ### VirtualFunction

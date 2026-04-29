@@ -6,6 +6,7 @@
 
 class UMaterialInterface;
 class UMaterialFunction;
+class UToolMenu;
 struct FFileChangeData;
 struct FToolMenuSection;
 
@@ -51,9 +52,12 @@ namespace UE::DreamShader::Editor::Private
 		void RegisterMenus();
 		void PopulateMaterialFunctionAssetMenu(FToolMenuSection& InSection);
 		void PopulateMaterialFunctionEditorToolbar(FToolMenuSection& InSection);
+		void PopulateMaterialFunctionDreamShaderMenu(UToolMenu* InMenu, TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void RequestRecompileAll();
 		void RequestCleanGeneratedShaders();
 		void CopyVirtualFunctionDefinition(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
+		void CreateVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
+		void CopyVirtualFunctionCall(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CleanGeneratedShaderDirectory();
 		void RebuildDependencyGraph();
 		void SetDiagnostics(const FString& SourceFilePath, TArray<FDiagnosticRecord>&& Diagnostics);

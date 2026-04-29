@@ -1,6 +1,6 @@
 # DreamShader 文档总览
 
-这份文档覆盖 DreamShader `1.2.0` 的核心工作流、DreamShaderLang 语法、VSCode 扩展、Package 系统和常见示例。
+这份文档覆盖 DreamShader `1.2.1` 的核心工作流、DreamShaderLang 语法、VSCode 扩展、Package 系统和常见示例。
 
 DreamShader 的推荐用法是：用 `.dsm` 描述材质资产，用 `.dsh` 组织共享 helper，用 `Graph` 生成材质节点，用 `Function` 编写可复用 HLSL 风格逻辑。
 
