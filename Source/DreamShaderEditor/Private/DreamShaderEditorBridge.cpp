@@ -364,18 +364,6 @@ namespace UE::DreamShader::Editor::Private
 			return FString::Printf(TEXT("\"%s\""), *Escaped);
 		}
 
-		FString MakeWorkspaceRelativePath(const FString& Path, const FString& WorkspaceDirectory)
-		{
-			FString RelativePath = UE::DreamShader::NormalizeSourceFilePath(Path);
-			FString BaseDirectory = UE::DreamShader::NormalizeSourceFilePath(WorkspaceDirectory);
-			if (FPaths::MakePathRelativeTo(RelativePath, *BaseDirectory))
-			{
-				FPaths::MakeStandardFilename(RelativePath);
-				return RelativePath;
-			}
-			return UE::DreamShader::NormalizeSourceFilePath(Path);
-		}
-
 		bool WriteDreamShaderWorkspaceFile(FString& OutWorkspaceFilePath, FString& OutError)
 		{
 			const FString SourceDirectory = UE::DreamShader::NormalizeSourceFilePath(UE::DreamShader::GetSourceShaderDirectory());
@@ -393,7 +381,6 @@ namespace UE::DreamShader::Editor::Private
 
 			const FString WorkspaceFilePath = UE::DreamShader::NormalizeSourceFilePath(
 				FPaths::Combine(SourceDirectory, TEXT("DreamShader.code-workspace")));
-			const FString BuiltinLibraryDirectory = UE::DreamShader::NormalizeSourceFilePath(UE::DreamShader::GetBuiltinShaderLibraryDirectory());
 
 			FString WorkspaceText;
 			const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&WorkspaceText);
@@ -405,19 +392,11 @@ namespace UE::DreamShader::Editor::Private
 			Writer->WriteValue(TEXT("path"), TEXT("."));
 			Writer->WriteObjectEnd();
 
-			if (!BuiltinLibraryDirectory.IsEmpty() && FPaths::DirectoryExists(BuiltinLibraryDirectory))
-			{
-				Writer->WriteObjectStart();
-				Writer->WriteValue(TEXT("name"), TEXT("DreamShader Builtin Library"));
-				Writer->WriteValue(TEXT("path"), MakeWorkspaceRelativePath(BuiltinLibraryDirectory, SourceDirectory));
-				Writer->WriteObjectEnd();
-			}
-
 			Writer->WriteArrayEnd();
 			Writer->WriteObjectStart(TEXT("settings"));
 			Writer->WriteObjectStart(TEXT("files.associations"));
-			Writer->WriteValue(TEXT("*.dsm"), TEXT("dreamshader"));
-			Writer->WriteValue(TEXT("*.dsh"), TEXT("dreamshader"));
+			Writer->WriteValue(TEXT("*.dsm"), TEXT("dreamshaderlang"));
+			Writer->WriteValue(TEXT("*.dsh"), TEXT("dreamshaderlang"));
 			Writer->WriteObjectEnd();
 			Writer->WriteObjectEnd();
 			Writer->WriteObjectEnd();
