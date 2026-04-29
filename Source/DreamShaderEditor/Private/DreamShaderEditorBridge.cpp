@@ -56,6 +56,8 @@ namespace UE::DreamShader::Editor::Private
 			FString FunctionName;
 			FString AssetObjectPath;
 			FString CurrentText;
+			TArray<FTextShaderFunctionParameter> Inputs;
+			TArray<FTextShaderFunctionParameter> Outputs;
 			int32 StartIndex = INDEX_NONE;
 			int32 EndIndex = INDEX_NONE;
 			int32 Line = 1;
@@ -308,6 +310,42 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
+		bool BuildVirtualFunctionCallTextFromSignature(
+			const FString& FunctionName,
+			const TArray<FTextShaderFunctionParameter>& Inputs,
+			const TArray<FTextShaderFunctionParameter>& Outputs,
+			FString& OutCallText,
+			FString& OutError)
+		{
+			if (FunctionName.TrimStartAndEnd().IsEmpty())
+			{
+				OutError = TEXT("VirtualFunction name cannot be empty.");
+				return false;
+			}
+
+			if (Outputs.IsEmpty())
+			{
+				OutError = FString::Printf(TEXT("VirtualFunction '%s' does not expose any outputs."), *FunctionName);
+				return false;
+			}
+
+			TArray<FString> Arguments;
+			for (int32 InputIndex = 0; InputIndex < Inputs.Num(); ++InputIndex)
+			{
+				Arguments.Add(MakeDreamShaderDeclarationName(Inputs[InputIndex].Name, TEXT("Input"), InputIndex));
+			}
+
+			Arguments.Add(FString::Printf(
+				TEXT("Output=\"%s\""),
+				*EscapeDreamShaderString(MakeDreamShaderDeclarationName(Outputs[0].Name, TEXT("Output"), 0))));
+
+			OutCallText = FString::Printf(
+				TEXT("%s(%s)"),
+				*MakeDreamShaderDeclarationName(FunctionName, TEXT("VirtualFunction"), 0),
+				*FString::Join(Arguments, TEXT(", ")));
+			return true;
+		}
+
 		bool BuildVirtualFunctionCallText(const UMaterialFunction* MaterialFunction, FString& OutCallText, FString& OutError)
 		{
 			if (!MaterialFunction)
@@ -316,39 +354,38 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			TArray<FFunctionExpressionInput> Inputs;
-			TArray<FFunctionExpressionOutput> Outputs;
-			MaterialFunction->GetInputsAndOutputs(Inputs, Outputs);
+			TArray<FFunctionExpressionInput> FunctionInputs;
+			TArray<FFunctionExpressionOutput> FunctionOutputs;
+			MaterialFunction->GetInputsAndOutputs(FunctionInputs, FunctionOutputs);
 
-			if (Outputs.IsEmpty())
+			TArray<FTextShaderFunctionParameter> Inputs;
+			for (int32 InputIndex = 0; InputIndex < FunctionInputs.Num(); ++InputIndex)
 			{
-				OutError = FString::Printf(TEXT("MaterialFunction '%s' does not expose any outputs."), *MaterialFunction->GetName());
-				return false;
-			}
-
-			TArray<FString> Arguments;
-			for (int32 InputIndex = 0; InputIndex < Inputs.Num(); ++InputIndex)
-			{
-				const FFunctionExpressionInput& Input = Inputs[InputIndex];
+				const FFunctionExpressionInput& Input = FunctionInputs[InputIndex];
 				const FString InputName = Input.ExpressionInput
 					? Input.ExpressionInput->InputName.ToString()
 					: Input.Input.InputName.ToString();
-				Arguments.Add(MakeDreamShaderDeclarationName(InputName, TEXT("Input"), InputIndex));
+				FTextShaderFunctionParameter& Parameter = Inputs.AddDefaulted_GetRef();
+				Parameter.Name = InputName;
 			}
 
-			const FFunctionExpressionOutput& Output = Outputs[0];
-			const FString OutputName = Output.ExpressionOutput
-				? Output.ExpressionOutput->OutputName.ToString()
-				: Output.Output.OutputName.ToString();
-			Arguments.Add(FString::Printf(
-				TEXT("Output=\"%s\""),
-				*EscapeDreamShaderString(MakeDreamShaderDeclarationName(OutputName, TEXT("Output"), 0))));
+			TArray<FTextShaderFunctionParameter> Outputs;
+			for (int32 OutputIndex = 0; OutputIndex < FunctionOutputs.Num(); ++OutputIndex)
+			{
+				const FFunctionExpressionOutput& Output = FunctionOutputs[OutputIndex];
+				const FString OutputName = Output.ExpressionOutput
+					? Output.ExpressionOutput->OutputName.ToString()
+					: Output.Output.OutputName.ToString();
+				FTextShaderFunctionParameter& Parameter = Outputs.AddDefaulted_GetRef();
+				Parameter.Name = OutputName;
+			}
 
-			OutCallText = FString::Printf(
-				TEXT("%s(%s)"),
-				*MakeDreamShaderDeclarationName(MaterialFunction->GetName(), TEXT("VirtualFunction"), 0),
-				*FString::Join(Arguments, TEXT(", ")));
-			return true;
+			return BuildVirtualFunctionCallTextFromSignature(
+				MaterialFunction->GetName(),
+				Inputs,
+				Outputs,
+				OutCallText,
+				OutError);
 		}
 
 		FString MakeVirtualFunctionDefinitionFilePath(const UMaterialFunction* MaterialFunction)
@@ -790,6 +827,8 @@ namespace UE::DreamShader::Editor::Private
 				Location.FunctionName = ParsedFunction.Name;
 				Location.AssetObjectPath = ObjectPath;
 				Location.CurrentText = BlockText;
+				Location.Inputs = ParsedFunction.Inputs;
+				Location.Outputs = ParsedFunction.Outputs;
 				Location.StartIndex = StartIndex;
 				Location.EndIndex = EndIndex;
 				Location.Line = Line;
@@ -1900,6 +1939,15 @@ namespace UE::DreamShader::Editor::Private
 					AsShared(),
 					&FDreamShaderEditorBridge::OpenVirtualFunctionDefinitionFile,
 					MaterialFunction)));
+			Section.AddMenuEntry(
+				TEXT("DreamShader.CopyVirtualFunctionReference"),
+				LOCTEXT("DreamShaderCopyVirtualFunctionReferenceLabel", "Copy Virtual Function Reference"),
+				LOCTEXT("DreamShaderCopyVirtualFunctionReferenceTooltip", "Copy a DreamShader Graph call that references this existing VirtualFunction."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Copy")),
+				FUIAction(FExecuteAction::CreateSP(
+					AsShared(),
+					&FDreamShaderEditorBridge::CopyVirtualFunctionReference,
+					MaterialFunction)));
 			return;
 		}
 
@@ -2138,6 +2186,62 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("Opened VirtualFunction definition '%s' for '%s'."),
 			*ExistingDefinition.SourceFilePath,
 			*Function->GetPathName());
+	}
+
+	void FDreamShaderEditorBridge::CopyVirtualFunctionReference(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
+	{
+		UMaterialFunction* Function = MaterialFunction.Get();
+		if (!Function)
+		{
+			ShowDreamShaderNotification(
+				LOCTEXT("DreamShaderCopyVirtualFunctionReferenceNoAsset", "DreamShader could not find the selected Material Function."),
+				SNotificationItem::CS_Fail);
+			return;
+		}
+
+		FVirtualFunctionDefinitionLocation ExistingDefinition;
+		if (!FindVirtualFunctionDefinitionForMaterialFunction(Function, ExistingDefinition))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("DreamShader could not find a VirtualFunction definition for %s."), *Function->GetName())),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("No VirtualFunction definition found for '%s'."), *Function->GetPathName());
+			return;
+		}
+
+		FString CallText;
+		FString Error;
+		if (!BuildVirtualFunctionCallTextFromSignature(
+			ExistingDefinition.FunctionName,
+			ExistingDefinition.Inputs,
+			ExistingDefinition.Outputs,
+			CallText,
+			Error))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("DreamShader failed to build VirtualFunction reference: %s"), *Error)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(
+				LogDreamShader,
+				Warning,
+				TEXT("Failed to build VirtualFunction reference for '%s' from '%s': %s"),
+				*Function->GetPathName(),
+				*ExistingDefinition.SourceFilePath,
+				*Error);
+			return;
+		}
+
+		FPlatformApplicationMisc::ClipboardCopy(*CallText);
+		ShowDreamShaderNotification(
+			FText::FromString(FString::Printf(TEXT("Copied VirtualFunction reference for %s."), *ExistingDefinition.FunctionName)),
+			SNotificationItem::CS_Success);
+		UE_LOG(
+			LogDreamShader,
+			Display,
+			TEXT("Copied VirtualFunction reference for '%s' from '%s': %s"),
+			*Function->GetPathName(),
+			*ExistingDefinition.SourceFilePath,
+			*CallText);
 	}
 
 	void FDreamShaderEditorBridge::CopyVirtualFunctionCall(TWeakObjectPtr<UMaterialFunction> MaterialFunction)

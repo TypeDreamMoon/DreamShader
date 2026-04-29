@@ -454,28 +454,66 @@ namespace UE::DreamShader::Editor
 		static bool TryExtractImportPathFromLine(const FString& Line, FString& OutImportPath)
 		{
 			FString Trimmed = Line.TrimStartAndEnd();
-			if (!Trimmed.StartsWith(TEXT("import "), ESearchCase::IgnoreCase))
+			if (!Trimmed.StartsWith(TEXT("import"), ESearchCase::IgnoreCase))
 			{
 				return false;
 			}
 
-			Trimmed.RightChopInline(7, EAllowShrinking::No);
-			Trimmed.TrimStartAndEndInline();
-			if (!Trimmed.EndsWith(TEXT(";")))
+			const int32 ImportKeywordLength = 6;
+			if (Trimmed.Len() > ImportKeywordLength
+				&& !FChar::IsWhitespace(Trimmed[ImportKeywordLength]))
 			{
 				return false;
 			}
-			Trimmed.LeftChopInline(1, EAllowShrinking::No);
-			Trimmed.TrimStartAndEndInline();
 
-			if ((Trimmed.StartsWith(TEXT("\"")) && Trimmed.EndsWith(TEXT("\"")))
-				|| (Trimmed.StartsWith(TEXT("'")) && Trimmed.EndsWith(TEXT("'"))))
+			Trimmed.RightChopInline(ImportKeywordLength, EAllowShrinking::No);
+			Trimmed.TrimStartAndEndInline();
+			if (Trimmed.Len() < 2 || (Trimmed[0] != TCHAR('"') && Trimmed[0] != TCHAR('\'')))
 			{
-				OutImportPath = Trimmed.Mid(1, Trimmed.Len() - 2).TrimStartAndEnd();
-				return !OutImportPath.IsEmpty();
+				return false;
 			}
 
-			return false;
+			const TCHAR Quote = Trimmed[0];
+			int32 ClosingQuoteIndex = INDEX_NONE;
+			bool bEscaped = false;
+			for (int32 Index = 1; Index < Trimmed.Len(); ++Index)
+			{
+				const TCHAR Character = Trimmed[Index];
+				if (bEscaped)
+				{
+					bEscaped = false;
+					continue;
+				}
+				if (Character == TCHAR('\\'))
+				{
+					bEscaped = true;
+					continue;
+				}
+				if (Character == Quote)
+				{
+					ClosingQuoteIndex = Index;
+					break;
+				}
+			}
+
+			if (ClosingQuoteIndex == INDEX_NONE)
+			{
+				return false;
+			}
+
+			FString TrailingText = Trimmed.Mid(ClosingQuoteIndex + 1).TrimStartAndEnd();
+			if (TrailingText.StartsWith(TEXT(";")))
+			{
+				TrailingText.RightChopInline(1, EAllowShrinking::No);
+				TrailingText.TrimStartAndEndInline();
+			}
+			if (!TrailingText.IsEmpty() && !TrailingText.StartsWith(TEXT("//")))
+			{
+				return false;
+			}
+
+			OutImportPath = Trimmed.Mid(1, ClosingQuoteIndex - 1).TrimStartAndEnd();
+			return !OutImportPath.IsEmpty();
 		}
 
 		static FString NormalizeDreamShaderImportSpecifier(const FString& InImportPath)
