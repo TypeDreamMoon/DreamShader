@@ -235,6 +235,8 @@ I:/UnrealProject_Moon/VSCodeExt/dreamshader-language-support
 - Package 安装、更新、移除和商店浏览命令。
 - 快速创建 Material / Header / Texture Sample / Noise Material 模板。
 
+Unreal 编辑器的 `Tools > DreamShader` 菜单和顶部 DreamShader 工具栏提供 `Open Dream Shader Workspace (VSCode)`。它会生成 `DShader/DreamShader.code-workspace`，优先用 VSCode 打开，找不到 VSCode 时会尝试默认编辑器，最后用记事本打开。
+
 更多说明见 [Docs/VSCode.md](Docs/VSCode.md)。
 
 ## 文档
@@ -244,6 +246,17 @@ I:/UnrealProject_Moon/VSCodeExt/dreamshader-language-support
 - [示例与模式](Docs/Examples.md)
 - [Package 系统](Docs/Packages.md)
 - [VSCode 支持](Docs/VSCode.md)
+
+## 发布 Release
+
+仓库包含 GitHub Actions 自动发布流程。推送与 `DreamShader.uplugin` 中 `VersionName` 一致的 tag 即可打包并发布 Release：
+
+```powershell
+git tag v1.2.1
+git push origin v1.2.1
+```
+
+也可以在 GitHub Actions 页面手动运行 `Release` workflow。发布包会生成 `DreamShader-<Version>.zip`，解压后是 `DreamShader` 插件目录，内容包含插件源码、资源、内置库、文档、README、CHANGELOG 和 LICENSE，不包含 `Binaries` / `Intermediate`。
 
 ## 版本信息
 

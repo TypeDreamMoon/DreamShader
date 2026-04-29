@@ -357,6 +357,190 @@ namespace UE::DreamShader::Editor::Private
 			return UE::DreamShader::NormalizeSourceFilePath(Candidate);
 		}
 
+		FString QuoteProcessArgument(const FString& Argument)
+		{
+			FString Escaped = Argument;
+			Escaped.ReplaceInline(TEXT("\""), TEXT("\\\""));
+			return FString::Printf(TEXT("\"%s\""), *Escaped);
+		}
+
+		FString MakeWorkspaceRelativePath(const FString& Path, const FString& WorkspaceDirectory)
+		{
+			FString RelativePath = UE::DreamShader::NormalizeSourceFilePath(Path);
+			FString BaseDirectory = UE::DreamShader::NormalizeSourceFilePath(WorkspaceDirectory);
+			if (FPaths::MakePathRelativeTo(RelativePath, *BaseDirectory))
+			{
+				FPaths::MakeStandardFilename(RelativePath);
+				return RelativePath;
+			}
+			return UE::DreamShader::NormalizeSourceFilePath(Path);
+		}
+
+		bool WriteDreamShaderWorkspaceFile(FString& OutWorkspaceFilePath, FString& OutError)
+		{
+			const FString SourceDirectory = UE::DreamShader::NormalizeSourceFilePath(UE::DreamShader::GetSourceShaderDirectory());
+			if (SourceDirectory.IsEmpty())
+			{
+				OutError = TEXT("DreamShader source directory is empty.");
+				return false;
+			}
+
+			if (!IFileManager::Get().MakeDirectory(*SourceDirectory, true))
+			{
+				OutError = FString::Printf(TEXT("Failed to create DreamShader source directory '%s'."), *SourceDirectory);
+				return false;
+			}
+
+			const FString WorkspaceFilePath = UE::DreamShader::NormalizeSourceFilePath(
+				FPaths::Combine(SourceDirectory, TEXT("DreamShader.code-workspace")));
+			const FString BuiltinLibraryDirectory = UE::DreamShader::NormalizeSourceFilePath(UE::DreamShader::GetBuiltinShaderLibraryDirectory());
+
+			FString WorkspaceText;
+			const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&WorkspaceText);
+			Writer->WriteObjectStart();
+			Writer->WriteArrayStart(TEXT("folders"));
+
+			Writer->WriteObjectStart();
+			Writer->WriteValue(TEXT("name"), TEXT("DreamShader Source"));
+			Writer->WriteValue(TEXT("path"), TEXT("."));
+			Writer->WriteObjectEnd();
+
+			if (!BuiltinLibraryDirectory.IsEmpty() && FPaths::DirectoryExists(BuiltinLibraryDirectory))
+			{
+				Writer->WriteObjectStart();
+				Writer->WriteValue(TEXT("name"), TEXT("DreamShader Builtin Library"));
+				Writer->WriteValue(TEXT("path"), MakeWorkspaceRelativePath(BuiltinLibraryDirectory, SourceDirectory));
+				Writer->WriteObjectEnd();
+			}
+
+			Writer->WriteArrayEnd();
+			Writer->WriteObjectStart(TEXT("settings"));
+			Writer->WriteObjectStart(TEXT("files.associations"));
+			Writer->WriteValue(TEXT("*.dsm"), TEXT("dreamshader"));
+			Writer->WriteValue(TEXT("*.dsh"), TEXT("dreamshader"));
+			Writer->WriteObjectEnd();
+			Writer->WriteObjectEnd();
+			Writer->WriteObjectEnd();
+			Writer->Close();
+
+			if (!FFileHelper::SaveStringToFile(WorkspaceText, *WorkspaceFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+			{
+				OutError = FString::Printf(TEXT("Failed to write DreamShader workspace file '%s'."), *WorkspaceFilePath);
+				return false;
+			}
+
+			OutWorkspaceFilePath = WorkspaceFilePath;
+			return true;
+		}
+
+		void AddExistingFileCandidate(TArray<FString>& OutCandidates, const FString& Candidate)
+		{
+			if (!Candidate.IsEmpty() && FPaths::FileExists(Candidate))
+			{
+				OutCandidates.AddUnique(UE::DreamShader::NormalizeSourceFilePath(Candidate));
+			}
+		}
+
+		TArray<FString> FindVSCodeExecutableCandidates()
+		{
+			TArray<FString> Candidates;
+
+			auto AddFromEnvironmentDirectory = [&Candidates](const TCHAR* VariableName, const TCHAR* RelativePath)
+			{
+				const FString Directory = FPlatformMisc::GetEnvironmentVariable(VariableName);
+				if (!Directory.IsEmpty())
+				{
+					AddExistingFileCandidate(Candidates, FPaths::Combine(Directory, RelativePath));
+				}
+			};
+
+			AddFromEnvironmentDirectory(TEXT("LOCALAPPDATA"), TEXT("Programs/Microsoft VS Code/Code.exe"));
+			AddFromEnvironmentDirectory(TEXT("LOCALAPPDATA"), TEXT("Programs/Microsoft VS Code/bin/code.cmd"));
+			AddFromEnvironmentDirectory(TEXT("LOCALAPPDATA"), TEXT("Programs/Microsoft VS Code Insiders/Code - Insiders.exe"));
+			AddFromEnvironmentDirectory(TEXT("LOCALAPPDATA"), TEXT("Programs/Microsoft VS Code Insiders/bin/code-insiders.cmd"));
+			AddFromEnvironmentDirectory(TEXT("ProgramFiles"), TEXT("Microsoft VS Code/Code.exe"));
+			AddFromEnvironmentDirectory(TEXT("ProgramFiles"), TEXT("Microsoft VS Code/bin/code.cmd"));
+			AddFromEnvironmentDirectory(TEXT("ProgramFiles(x86)"), TEXT("Microsoft VS Code/Code.exe"));
+			AddFromEnvironmentDirectory(TEXT("ProgramFiles(x86)"), TEXT("Microsoft VS Code/bin/code.cmd"));
+
+			const FString PathEnvironment = FPlatformMisc::GetEnvironmentVariable(TEXT("PATH"));
+			TArray<FString> PathEntries;
+			PathEnvironment.ParseIntoArray(PathEntries, TEXT(";"), true);
+			for (FString PathEntry : PathEntries)
+			{
+				PathEntry.TrimStartAndEndInline();
+				if (PathEntry.IsEmpty())
+				{
+					continue;
+				}
+
+				AddExistingFileCandidate(Candidates, FPaths::Combine(PathEntry, TEXT("code.cmd")));
+				AddExistingFileCandidate(Candidates, FPaths::Combine(PathEntry, TEXT("code.exe")));
+				AddExistingFileCandidate(Candidates, FPaths::Combine(PathEntry, TEXT("Code.exe")));
+				AddExistingFileCandidate(Candidates, FPaths::Combine(PathEntry, TEXT("code-insiders.cmd")));
+				AddExistingFileCandidate(Candidates, FPaths::Combine(PathEntry, TEXT("Code - Insiders.exe")));
+			}
+
+			return Candidates;
+		}
+
+		bool LaunchVSCodeWorkspace(const FString& WorkspaceFilePath)
+		{
+			for (const FString& Candidate : FindVSCodeExecutableCandidates())
+			{
+				FProcHandle ProcessHandle;
+				if (Candidate.EndsWith(TEXT(".cmd"), ESearchCase::IgnoreCase)
+					|| Candidate.EndsWith(TEXT(".bat"), ESearchCase::IgnoreCase))
+				{
+					FString CmdExe = FPlatformMisc::GetEnvironmentVariable(TEXT("ComSpec"));
+					if (CmdExe.IsEmpty())
+					{
+						CmdExe = TEXT("C:/Windows/System32/cmd.exe");
+					}
+
+					const FString Parameters = FString::Printf(
+						TEXT("/C \"\"%s\" --reuse-window %s\""),
+						*Candidate,
+						*QuoteProcessArgument(WorkspaceFilePath));
+					ProcessHandle = FPlatformProcess::CreateProc(*CmdExe, *Parameters, true, true, true, nullptr, 0, nullptr, nullptr);
+				}
+				else
+				{
+					const FString Parameters = FString::Printf(TEXT("--reuse-window %s"), *QuoteProcessArgument(WorkspaceFilePath));
+					ProcessHandle = FPlatformProcess::CreateProc(*Candidate, *Parameters, true, false, false, nullptr, 0, nullptr, nullptr);
+				}
+
+				if (ProcessHandle.IsValid())
+				{
+					FPlatformProcess::CloseProc(ProcessHandle);
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		bool LaunchWorkspaceWithNotepad(const FString& WorkspaceFilePath)
+		{
+			TArray<FString> Candidates;
+			const FString SystemRoot = FPlatformMisc::GetEnvironmentVariable(TEXT("SystemRoot"));
+			AddExistingFileCandidate(Candidates, FPaths::Combine(SystemRoot, TEXT("System32/notepad.exe")));
+			Candidates.Add(TEXT("notepad.exe"));
+
+			for (const FString& Candidate : Candidates)
+			{
+				const FString Parameters = QuoteProcessArgument(WorkspaceFilePath);
+				FProcHandle ProcessHandle = FPlatformProcess::CreateProc(*Candidate, *Parameters, true, false, false, nullptr, 0, nullptr, nullptr);
+				if (ProcessHandle.IsValid())
+				{
+					FPlatformProcess::CloseProc(ProcessHandle);
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		void ShowDreamShaderNotification(const FText& Message, SNotificationItem::ECompletionState CompletionState)
 		{
 			FNotificationInfo Info(Message);
@@ -1080,6 +1264,12 @@ namespace UE::DreamShader::Editor::Private
 				LOCTEXT("DreamShaderCleanGeneratedShadersTooltip", "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")),
 				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestCleanGeneratedShaders)));
+			Section.AddMenuEntry(
+				TEXT("DreamShader.OpenWorkspace"),
+				LOCTEXT("DreamShaderOpenWorkspaceLabel", "Open Dream Shader Workspace (VSCode)"),
+				LOCTEXT("DreamShaderOpenWorkspaceTooltip", "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor")),
+				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::OpenDreamShaderWorkspace)));
 		}
 
 		if (UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar.AssetsToolBar")))
@@ -1091,6 +1281,12 @@ namespace UE::DreamShader::Editor::Private
 				LOCTEXT("DreamShaderRecompileToolbarLabel", "DSM"),
 				LOCTEXT("DreamShaderRecompileToolbarTooltip", "Recompile all DreamShader .dsm files."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Refresh"))));
+			Section.AddEntry(FToolMenuEntry::InitToolBarButton(
+				TEXT("DreamShader.OpenWorkspaceToolbar"),
+				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::OpenDreamShaderWorkspace)),
+				LOCTEXT("DreamShaderOpenWorkspaceToolbarLabel", "Open Dream Shader Workspace (VSCode)"),
+				LOCTEXT("DreamShaderOpenWorkspaceToolbarTooltip", "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor"))));
 		}
 
 		if (UToolMenu* MaterialFunctionAssetMenu = UE::ContentBrowser::ExtendToolMenu_AssetContextMenu(UMaterialFunction::StaticClass()))
@@ -1236,6 +1432,57 @@ namespace UE::DreamShader::Editor::Private
 		CleanGeneratedShaderDirectory();
 		QueueFullScan();
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader cleaned generated shader includes and queued a full .dsm recompile scan."));
+	}
+
+	void FDreamShaderEditorBridge::OpenDreamShaderWorkspace()
+	{
+		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
+		{
+			return;
+		}
+
+		FString WorkspaceFilePath;
+		FString Error;
+		if (!WriteDreamShaderWorkspaceFile(WorkspaceFilePath, Error))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("DreamShader failed to create workspace: %s"), *Error)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to create DreamShader workspace: %s"), *Error);
+			return;
+		}
+
+		if (LaunchVSCodeWorkspace(WorkspaceFilePath))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("Opened DreamShader workspace in VSCode: %s"), *WorkspaceFilePath)),
+				SNotificationItem::CS_Success);
+			UE_LOG(LogDreamShader, Display, TEXT("Opened DreamShader workspace in VSCode: %s"), *WorkspaceFilePath);
+			return;
+		}
+
+		if (FPlatformProcess::LaunchFileInDefaultExternalApplication(*WorkspaceFilePath, nullptr, ELaunchVerb::Edit, false))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("Opened DreamShader workspace: %s"), *WorkspaceFilePath)),
+				SNotificationItem::CS_Success);
+			UE_LOG(LogDreamShader, Display, TEXT("Opened DreamShader workspace with the default editor: %s"), *WorkspaceFilePath);
+			return;
+		}
+
+		if (LaunchWorkspaceWithNotepad(WorkspaceFilePath))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("Opened DreamShader workspace in Notepad: %s"), *WorkspaceFilePath)),
+				SNotificationItem::CS_Success);
+			UE_LOG(LogDreamShader, Display, TEXT("Opened DreamShader workspace in Notepad: %s"), *WorkspaceFilePath);
+			return;
+		}
+
+		ShowDreamShaderNotification(
+			FText::FromString(FString::Printf(TEXT("DreamShader could not open workspace: %s"), *WorkspaceFilePath)),
+			SNotificationItem::CS_Fail);
+		UE_LOG(LogDreamShader, Warning, TEXT("Failed to open DreamShader workspace: %s"), *WorkspaceFilePath);
 	}
 
 	void FDreamShaderEditorBridge::CopyVirtualFunctionDefinition(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
