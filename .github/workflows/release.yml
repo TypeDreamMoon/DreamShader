@@ -1,0 +1,172 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version. Leave empty to use DreamShader.uplugin VersionName."
+        required: false
+        type: string
+      prerelease:
+        description: "Mark the GitHub Release as a pre-release."
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Package and publish
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $Descriptor = Get-Content -Raw -Path 'DreamShader.uplugin' | ConvertFrom-Json
+          $PluginVersion = [string]$Descriptor.VersionName
+          if ([string]::IsNullOrWhiteSpace($PluginVersion)) {
+            throw 'DreamShader.uplugin VersionName is empty.'
+          }
+
+          $InputVersion = '${{ github.event.inputs.version }}'.Trim()
+          $Version = if ([string]::IsNullOrWhiteSpace($InputVersion)) { $PluginVersion } else { $InputVersion.TrimStart('v') }
+          $TagName = "v$Version"
+
+          if ('${{ github.ref_type }}' -eq 'tag') {
+            $PushedTag = '${{ github.ref_name }}'
+            $PushedVersion = $PushedTag.TrimStart('v')
+            if ($PushedVersion -ne $PluginVersion) {
+              throw "Tag '$PushedTag' does not match DreamShader.uplugin VersionName '$PluginVersion'."
+            }
+            $Version = $PluginVersion
+            $TagName = $PushedTag
+          }
+
+          if ($Version -ne $PluginVersion) {
+            throw "Requested release version '$Version' does not match DreamShader.uplugin VersionName '$PluginVersion'."
+          }
+
+          "DREAMSHADER_VERSION=$Version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "DREAMSHADER_TAG=$TagName" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Package plugin
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $Version = $env:DREAMSHADER_VERSION
+          $StageRoot = Join-Path $env:RUNNER_TEMP 'DreamShaderRelease'
+          $PluginRoot = Join-Path $StageRoot 'DreamShader'
+          $ArtifactRoot = Join-Path $env:GITHUB_WORKSPACE 'artifacts'
+          $ZipPath = Join-Path $ArtifactRoot "DreamShader-$Version.zip"
+
+          Remove-Item -LiteralPath $StageRoot -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -LiteralPath $ArtifactRoot -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $PluginRoot -Force | Out-Null
+          New-Item -ItemType Directory -Path $ArtifactRoot -Force | Out-Null
+
+          $Items = @(
+            'Source',
+            'Resources',
+            'Library',
+            'Docs',
+            'DreamShader.uplugin',
+            'README.md',
+            'CHANGELOG.md',
+            'LICENSE'
+          )
+
+          foreach ($Item in $Items) {
+            if (!(Test-Path -LiteralPath $Item)) {
+              continue
+            }
+
+            Copy-Item -LiteralPath $Item -Destination $PluginRoot -Recurse -Force
+          }
+
+          Compress-Archive -Path $PluginRoot -DestinationPath $ZipPath -Force
+          "DREAMSHADER_ZIP=$ZipPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build release notes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $Version = $env:DREAMSHADER_VERSION
+          $NotesPath = Join-Path $env:RUNNER_TEMP 'DreamShaderReleaseNotes.md'
+          $Lines = Get-Content -Path 'CHANGELOG.md'
+          $StartIndex = -1
+
+          for ($Index = 0; $Index -lt $Lines.Count; ++$Index) {
+            if ($Lines[$Index] -match "^##\s+$([regex]::Escape($Version))\b") {
+              $StartIndex = $Index + 1
+              break
+            }
+          }
+
+          if ($StartIndex -ge 0) {
+            $EndIndex = $Lines.Count
+            for ($Index = $StartIndex; $Index -lt $Lines.Count; ++$Index) {
+              if ($Lines[$Index] -match '^##\s+') {
+                $EndIndex = $Index
+                break
+              }
+            }
+            $Body = ($Lines[$StartIndex..($EndIndex - 1)] -join "`n").Trim()
+          } else {
+            $Body = "DreamShader $Version release."
+          }
+
+          "# DreamShader $Version`n`n$Body" | Set-Content -Path $NotesPath -Encoding UTF8
+          "DREAMSHADER_NOTES=$NotesPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $TagName = $env:DREAMSHADER_TAG
+          $Title = "DreamShader $env:DREAMSHADER_VERSION"
+          $ZipPath = $env:DREAMSHADER_ZIP
+          $NotesPath = $env:DREAMSHADER_NOTES
+          $IsPrerelease = '${{ github.event.inputs.prerelease }}' -eq 'true'
+
+          $ReleaseArgs = @(
+            $TagName,
+            $ZipPath,
+            '--title', $Title,
+            '--notes-file', $NotesPath
+          )
+
+          if ($IsPrerelease) {
+            $ReleaseArgs += '--prerelease'
+          }
+
+          gh release view $TagName *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $TagName $ZipPath --clobber
+            gh release edit $TagName --title $Title --notes-file $NotesPath
+            if ($IsPrerelease) {
+              gh release edit $TagName --prerelease
+            }
+          } else {
+            if ('${{ github.ref_type }}' -ne 'tag') {
+              $ReleaseArgs += @('--target', '${{ github.sha }}')
+            }
+            gh release create @ReleaseArgs
+          }
