@@ -1,5 +1,18 @@
 # DreamShader ChangeLog
 
+## 1.2.2 - 2026-04-29
+
+### VirtualFunction Workflow
+
+- `CreateVirtualFunction` now reuses the existing declaration for the selected Material Function instead of creating duplicate `.dsh` files.
+- When a matching declaration already exists, the Material Function `DreamShader` menu shows `OpenVirtualFunction` and `Copy Virtual Function Reference` instead of the create/copy-definition actions.
+- `OpenVirtualFunction` opens the existing declaration in VSCode and jumps to the declaration location when possible.
+- Added startup validation and refresh for `VirtualFunction` declarations under `DShader`, reporting missing source `UMaterialFunction` assets and updating changed signatures.
+
+### Import Compatibility
+
+- `import "File.dsh"` now works with or without a trailing semicolon in the Unreal generator import pass.
+
 ## 1.2.1 - 2026-04-29
 
 ### Editor Workflow

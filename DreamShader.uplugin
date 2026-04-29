@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
-	"Version": 121,
-	"VersionName": "1.2.1",
+	"Version": 122,
+	"VersionName": "1.2.2",
 	"FriendlyName": "DreamShader",
 	"Description": "Author Unreal materials and material functions with DreamShaderLang .dsm/.dsh source files that auto-generate standard UMaterial and UMaterialFunction assets.",
 	"Category": "DreamPlugin",
