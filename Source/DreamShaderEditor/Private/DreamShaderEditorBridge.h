@@ -58,9 +58,11 @@ namespace UE::DreamShader::Editor::Private
 		void OpenDreamShaderWorkspace();
 		void CopyVirtualFunctionDefinition(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CreateVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
+		void OpenVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CopyVirtualFunctionCall(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CleanGeneratedShaderDirectory();
 		void RebuildDependencyGraph();
+		void SyncVirtualFunctionDefinitions();
 		void SetDiagnostics(const FString& SourceFilePath, TArray<FDiagnosticRecord>&& Diagnostics);
 		void ClearDiagnostics(const FString& SourceFilePath);
 		void ClearDiagnosticsForSourceAndDependencies(const FString& SourceFilePath);

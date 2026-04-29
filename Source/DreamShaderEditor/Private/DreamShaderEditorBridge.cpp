@@ -1,7 +1,9 @@
 #include "DreamShaderEditorBridge.h"
 
 #include "DreamShaderMaterialGenerator.h"
+#include "DreamShaderMaterialGeneratorPrivate.h"
 #include "DreamShaderModule.h"
+#include "DreamShaderParser.h"
 #include "DreamShaderSettings.h"
 
 #include "Async/Async.h"
@@ -26,6 +28,7 @@
 #include "MaterialEditorContext.h"
 #include "MaterialShared.h"
 #include "MaterialValueType.h"
+#include "Misc/Crc.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
@@ -46,6 +49,18 @@ namespace UE::DreamShader::Editor::Private
 	namespace
 	{
 		static const FName DreamShaderToolMenuOwnerName(TEXT("DreamShaderEditor"));
+
+		struct FVirtualFunctionDefinitionLocation
+		{
+			FString SourceFilePath;
+			FString FunctionName;
+			FString AssetObjectPath;
+			FString CurrentText;
+			int32 StartIndex = INDEX_NONE;
+			int32 EndIndex = INDEX_NONE;
+			int32 Line = 1;
+			int32 Column = 1;
+		};
 
 		bool IsPathUnderDirectory(const FString& InPath, const FString& InDirectory)
 		{
@@ -336,7 +351,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		FString MakeUniqueVirtualFunctionDefinitionFilePath(const UMaterialFunction* MaterialFunction)
+		FString MakeVirtualFunctionDefinitionFilePath(const UMaterialFunction* MaterialFunction)
 		{
 			const FString DefinitionDirectory = FPaths::Combine(
 				UE::DreamShader::GetSourceShaderDirectory(),
@@ -346,15 +361,471 @@ namespace UE::DreamShader::Editor::Private
 				TEXT("VirtualFunction"),
 				0);
 
-			FString Candidate = FPaths::Combine(DefinitionDirectory, BaseName + TEXT(".dsh"));
-			for (int32 Suffix = 2; IFileManager::Get().FileExists(*Candidate); ++Suffix)
+			const FString PreferredCandidate = FPaths::Combine(DefinitionDirectory, BaseName + TEXT(".dsh"));
+			if (!IFileManager::Get().FileExists(*PreferredCandidate) || !MaterialFunction)
 			{
-				Candidate = FPaths::Combine(
-					DefinitionDirectory,
-					FString::Printf(TEXT("%s_%d.dsh"), *BaseName, Suffix));
+				return UE::DreamShader::NormalizeSourceFilePath(PreferredCandidate);
 			}
 
-			return UE::DreamShader::NormalizeSourceFilePath(Candidate);
+			const uint32 AssetPathHash = FCrc::StrCrc32(*MaterialFunction->GetPathName());
+			return UE::DreamShader::NormalizeSourceFilePath(FPaths::Combine(
+				DefinitionDirectory,
+				FString::Printf(TEXT("%s_%08x.dsh"), *BaseName, AssetPathHash)));
+		}
+
+		bool IsIdentifierCharacter(TCHAR Character)
+		{
+			return FChar::IsAlnum(Character) || Character == TCHAR('_');
+		}
+
+		bool IsValidStringIndex(const FString& Text, int32 Index)
+		{
+			return Index >= 0 && Index < Text.Len();
+		}
+
+		bool IsKeywordAt(const FString& Text, int32 Index, const TCHAR* Keyword)
+		{
+			const int32 KeywordLength = FCString::Strlen(Keyword);
+			if (Index < 0 || Index + KeywordLength > Text.Len())
+			{
+				return false;
+			}
+
+			if (Index > 0 && IsIdentifierCharacter(Text[Index - 1]))
+			{
+				return false;
+			}
+
+			if (Index + KeywordLength < Text.Len() && IsIdentifierCharacter(Text[Index + KeywordLength]))
+			{
+				return false;
+			}
+
+			return Text.Mid(Index, KeywordLength).Equals(Keyword, ESearchCase::CaseSensitive);
+		}
+
+		void SkipQuotedString(const FString& Text, int32& Index)
+		{
+			if (!IsValidStringIndex(Text, Index) || (Text[Index] != TCHAR('"') && Text[Index] != TCHAR('\'')))
+			{
+				return;
+			}
+
+			const TCHAR Quote = Text[Index];
+			++Index;
+			bool bEscaped = false;
+			while (Index < Text.Len())
+			{
+				const TCHAR Character = Text[Index++];
+				if (bEscaped)
+				{
+					bEscaped = false;
+					continue;
+				}
+				if (Character == TCHAR('\\'))
+				{
+					bEscaped = true;
+					continue;
+				}
+				if (Character == Quote)
+				{
+					return;
+				}
+			}
+		}
+
+		bool TrySkipComment(const FString& Text, int32& Index)
+		{
+			if (Index + 1 >= Text.Len() || Text[Index] != TCHAR('/'))
+			{
+				return false;
+			}
+
+			if (Text[Index + 1] == TCHAR('/'))
+			{
+				Index += 2;
+				while (Index < Text.Len() && Text[Index] != TCHAR('\n'))
+				{
+					++Index;
+				}
+				return true;
+			}
+
+			if (Text[Index + 1] == TCHAR('*'))
+			{
+				Index += 2;
+				while (Index + 1 < Text.Len())
+				{
+					if (Text[Index] == TCHAR('*') && Text[Index + 1] == TCHAR('/'))
+					{
+						Index += 2;
+						return true;
+					}
+					++Index;
+				}
+				Index = Text.Len();
+				return true;
+			}
+
+			return false;
+		}
+
+		void SkipIgnoredText(const FString& Text, int32& Index)
+		{
+			while (Index < Text.Len())
+			{
+				if (FChar::IsWhitespace(Text[Index]))
+				{
+					++Index;
+					continue;
+				}
+				if (TrySkipComment(Text, Index))
+				{
+					continue;
+				}
+				return;
+			}
+		}
+
+		bool TryExtractBalancedRange(const FString& Text, int32 OpenIndex, TCHAR OpenCharacter, TCHAR CloseCharacter, int32& OutEndIndex)
+		{
+			OutEndIndex = INDEX_NONE;
+			if (!IsValidStringIndex(Text, OpenIndex) || Text[OpenIndex] != OpenCharacter)
+			{
+				return false;
+			}
+
+			int32 Depth = 0;
+			int32 Index = OpenIndex;
+			while (Index < Text.Len())
+			{
+				if (Text[Index] == TCHAR('"') || Text[Index] == TCHAR('\''))
+				{
+					SkipQuotedString(Text, Index);
+					continue;
+				}
+				if (TrySkipComment(Text, Index))
+				{
+					continue;
+				}
+
+				if (Text[Index] == OpenCharacter)
+				{
+					++Depth;
+				}
+				else if (Text[Index] == CloseCharacter)
+				{
+					--Depth;
+					if (Depth == 0)
+					{
+						OutEndIndex = Index + 1;
+						return true;
+					}
+				}
+				++Index;
+			}
+
+			return false;
+		}
+
+		void CalculateLineColumnForIndex(const FString& Text, int32 Position, int32& OutLine, int32& OutColumn)
+		{
+			OutLine = 1;
+			OutColumn = 1;
+			const int32 ClampedPosition = FMath::Clamp(Position, 0, Text.Len());
+			for (int32 Index = 0; Index < ClampedPosition; ++Index)
+			{
+				if (Text[Index] == TCHAR('\n'))
+				{
+					++OutLine;
+					OutColumn = 1;
+				}
+				else if (Text[Index] != TCHAR('\r'))
+				{
+					++OutColumn;
+				}
+			}
+		}
+
+		FString NormalizeVirtualFunctionDefinitionText(FString Text)
+		{
+			Text.ReplaceInline(TEXT("\r\n"), TEXT("\n"));
+			Text.ReplaceInline(TEXT("\r"), TEXT("\n"));
+			Text.TrimStartAndEndInline();
+			return Text;
+		}
+
+		FDreamShaderEditorBridge::FDiagnosticRecord MakeVirtualFunctionDiagnostic(
+			const FString& SourceFilePath,
+			const FString& Message,
+			const FString& Detail,
+			const FString& AssetPath,
+			int32 Line,
+			int32 Column)
+		{
+			FDreamShaderEditorBridge::FDiagnosticRecord Diagnostic;
+			Diagnostic.FilePath = SourceFilePath;
+			Diagnostic.Message = Message;
+			Diagnostic.Detail = Detail;
+			Diagnostic.Stage = TEXT("virtualFunctionSync");
+			Diagnostic.AssetPath = AssetPath;
+			Diagnostic.Code = TEXT("virtual-function-sync");
+			Diagnostic.Line = FMath::Max(1, Line);
+			Diagnostic.Column = FMath::Max(1, Column);
+			Diagnostic.Source = TEXT("DreamShader VirtualFunction");
+			return Diagnostic;
+		}
+
+		void FindProjectDreamShaderSourceFiles(TArray<FString>& OutSourceFiles)
+		{
+			TArray<FString> MaterialFiles;
+			TArray<FString> HeaderFiles;
+			IFileManager::Get().FindFilesRecursive(
+				MaterialFiles,
+				*UE::DreamShader::GetSourceShaderDirectory(),
+				TEXT("*.dsm"),
+				true,
+				false,
+				false);
+			IFileManager::Get().FindFilesRecursive(
+				HeaderFiles,
+				*UE::DreamShader::GetSourceShaderDirectory(),
+				TEXT("*.dsh"),
+				true,
+				false,
+				false);
+
+			OutSourceFiles.Reset();
+			OutSourceFiles.Append(MaterialFiles);
+			OutSourceFiles.Append(HeaderFiles);
+
+			for (FString& SourceFile : OutSourceFiles)
+			{
+				SourceFile = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
+			}
+
+			OutSourceFiles.RemoveAll([](const FString& SourceFile)
+			{
+				return IsPathUnderDirectory(SourceFile, UE::DreamShader::GetPackageShaderDirectory());
+			});
+			OutSourceFiles.Sort();
+		}
+
+		bool TryParseVirtualFunctionBlock(
+			const FString& BlockText,
+			FTextShaderVirtualFunctionDefinition& OutFunction,
+			FString& OutError)
+		{
+			FTextShaderDefinition ParsedDefinition;
+			if (!FTextShaderParser::Parse(BlockText, ParsedDefinition, OutError))
+			{
+				return false;
+			}
+
+			if (ParsedDefinition.VirtualFunctions.Num() != 1)
+			{
+				OutError = TEXT("Expected exactly one VirtualFunction block.");
+				return false;
+			}
+
+			OutFunction = ParsedDefinition.VirtualFunctions[0];
+			return true;
+		}
+
+		void CollectVirtualFunctionDefinitionLocationsFromFile(
+			const FString& SourceFilePath,
+			TArray<FVirtualFunctionDefinitionLocation>& OutLocations,
+			FString* OutSourceText = nullptr,
+			TArray<FDreamShaderEditorBridge::FDiagnosticRecord>* OutDiagnostics = nullptr)
+		{
+			OutLocations.Reset();
+
+			FString SourceText;
+			if (!FFileHelper::LoadFileToString(SourceText, *SourceFilePath))
+			{
+				if (OutDiagnostics)
+				{
+					OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
+						SourceFilePath,
+						FString::Printf(TEXT("DreamShader could not read VirtualFunction source file '%s'."), *SourceFilePath),
+						FString(),
+						FString(),
+						1,
+						1));
+				}
+				return;
+			}
+
+			if (OutSourceText)
+			{
+				*OutSourceText = SourceText;
+			}
+
+			int32 Index = 0;
+			while (Index < SourceText.Len())
+			{
+				if (SourceText[Index] == TCHAR('"') || SourceText[Index] == TCHAR('\''))
+				{
+					SkipQuotedString(SourceText, Index);
+					continue;
+				}
+				if (TrySkipComment(SourceText, Index))
+				{
+					continue;
+				}
+				if (!IsKeywordAt(SourceText, Index, TEXT("VirtualFunction")))
+				{
+					++Index;
+					continue;
+				}
+
+				const int32 StartIndex = Index;
+				Index += FCString::Strlen(TEXT("VirtualFunction"));
+				SkipIgnoredText(SourceText, Index);
+				if (!IsValidStringIndex(SourceText, Index) || SourceText[Index] != TCHAR('('))
+				{
+					Index = StartIndex + 1;
+					continue;
+				}
+
+				int32 AttributesEndIndex = INDEX_NONE;
+				if (!TryExtractBalancedRange(SourceText, Index, TCHAR('('), TCHAR(')'), AttributesEndIndex))
+				{
+					int32 Line = 1;
+					int32 Column = 1;
+					CalculateLineColumnForIndex(SourceText, StartIndex, Line, Column);
+					if (OutDiagnostics)
+					{
+						OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
+							SourceFilePath,
+							TEXT("VirtualFunction attributes are missing a closing ')'."),
+							FString(),
+							FString(),
+							Line,
+							Column));
+					}
+					Index = StartIndex + 1;
+					continue;
+				}
+
+				Index = AttributesEndIndex;
+				SkipIgnoredText(SourceText, Index);
+				if (!IsValidStringIndex(SourceText, Index) || SourceText[Index] != TCHAR('{'))
+				{
+					Index = StartIndex + 1;
+					continue;
+				}
+
+				int32 BodyEndIndex = INDEX_NONE;
+				if (!TryExtractBalancedRange(SourceText, Index, TCHAR('{'), TCHAR('}'), BodyEndIndex))
+				{
+					int32 Line = 1;
+					int32 Column = 1;
+					CalculateLineColumnForIndex(SourceText, StartIndex, Line, Column);
+					if (OutDiagnostics)
+					{
+						OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
+							SourceFilePath,
+							TEXT("VirtualFunction body is missing a closing '}'."),
+							FString(),
+							FString(),
+							Line,
+							Column));
+					}
+					Index = StartIndex + 1;
+					continue;
+				}
+
+				int32 EndIndex = BodyEndIndex;
+				int32 AfterBodyIndex = EndIndex;
+				SkipIgnoredText(SourceText, AfterBodyIndex);
+				if (IsValidStringIndex(SourceText, AfterBodyIndex) && SourceText[AfterBodyIndex] == TCHAR(';'))
+				{
+					EndIndex = AfterBodyIndex + 1;
+				}
+
+				const FString BlockText = SourceText.Mid(StartIndex, EndIndex - StartIndex);
+				int32 Line = 1;
+				int32 Column = 1;
+				CalculateLineColumnForIndex(SourceText, StartIndex, Line, Column);
+
+				FTextShaderVirtualFunctionDefinition ParsedFunction;
+				FString ParseError;
+				if (!TryParseVirtualFunctionBlock(BlockText, ParsedFunction, ParseError))
+				{
+					if (OutDiagnostics)
+					{
+						OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
+							SourceFilePath,
+							FString::Printf(TEXT("VirtualFunction declaration is invalid: %s"), *ParseError),
+							ParseError,
+							FString(),
+							Line,
+							Column));
+					}
+					Index = EndIndex;
+					continue;
+				}
+
+				FString ObjectPath;
+				FString ResolveError;
+				if (!TryResolveDreamShaderAssetReference(ParsedFunction.Asset, ObjectPath, ResolveError))
+				{
+					if (OutDiagnostics)
+					{
+						OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
+							SourceFilePath,
+							FString::Printf(TEXT("VirtualFunction '%s' asset reference is invalid: %s"), *ParsedFunction.Name, *ResolveError),
+							ResolveError,
+							ParsedFunction.Asset,
+							Line,
+							Column));
+					}
+					Index = EndIndex;
+					continue;
+				}
+
+				FVirtualFunctionDefinitionLocation& Location = OutLocations.AddDefaulted_GetRef();
+				Location.SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+				Location.FunctionName = ParsedFunction.Name;
+				Location.AssetObjectPath = ObjectPath;
+				Location.CurrentText = BlockText;
+				Location.StartIndex = StartIndex;
+				Location.EndIndex = EndIndex;
+				Location.Line = Line;
+				Location.Column = Column;
+
+				Index = EndIndex;
+			}
+		}
+
+		bool FindVirtualFunctionDefinitionForMaterialFunction(
+			const UMaterialFunction* MaterialFunction,
+			FVirtualFunctionDefinitionLocation& OutLocation)
+		{
+			if (!MaterialFunction)
+			{
+				return false;
+			}
+
+			const FString TargetObjectPath = MaterialFunction->GetPathName();
+			TArray<FString> SourceFiles;
+			FindProjectDreamShaderSourceFiles(SourceFiles);
+			for (const FString& SourceFile : SourceFiles)
+			{
+				TArray<FVirtualFunctionDefinitionLocation> Locations;
+				CollectVirtualFunctionDefinitionLocationsFromFile(SourceFile, Locations);
+				for (const FVirtualFunctionDefinitionLocation& Location : Locations)
+				{
+					if (Location.AssetObjectPath.Equals(TargetObjectPath, ESearchCase::IgnoreCase))
+					{
+						OutLocation = Location;
+						return true;
+					}
+				}
+			}
+
+			return false;
 		}
 
 		FString QuoteProcessArgument(const FString& Argument)
@@ -499,7 +970,49 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		bool LaunchWorkspaceWithNotepad(const FString& WorkspaceFilePath)
+		bool LaunchVSCodeFile(const FString& FilePath, int32 Line = 1, int32 Column = 1)
+		{
+			const FString GotoArgument = FString::Printf(
+				TEXT("%s:%d:%d"),
+				*FilePath,
+				FMath::Max(1, Line),
+				FMath::Max(1, Column));
+
+			for (const FString& Candidate : FindVSCodeExecutableCandidates())
+			{
+				FProcHandle ProcessHandle;
+				if (Candidate.EndsWith(TEXT(".cmd"), ESearchCase::IgnoreCase)
+					|| Candidate.EndsWith(TEXT(".bat"), ESearchCase::IgnoreCase))
+				{
+					FString CmdExe = FPlatformMisc::GetEnvironmentVariable(TEXT("ComSpec"));
+					if (CmdExe.IsEmpty())
+					{
+						CmdExe = TEXT("C:/Windows/System32/cmd.exe");
+					}
+
+					const FString Parameters = FString::Printf(
+						TEXT("/C \"\"%s\" --reuse-window -g %s\""),
+						*Candidate,
+						*QuoteProcessArgument(GotoArgument));
+					ProcessHandle = FPlatformProcess::CreateProc(*CmdExe, *Parameters, true, true, true, nullptr, 0, nullptr, nullptr);
+				}
+				else
+				{
+					const FString Parameters = FString::Printf(TEXT("--reuse-window -g %s"), *QuoteProcessArgument(GotoArgument));
+					ProcessHandle = FPlatformProcess::CreateProc(*Candidate, *Parameters, true, false, false, nullptr, 0, nullptr, nullptr);
+				}
+
+				if (ProcessHandle.IsValid())
+				{
+					FPlatformProcess::CloseProc(ProcessHandle);
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		bool LaunchTextFileWithNotepad(const FString& FilePath)
 		{
 			TArray<FString> Candidates;
 			const FString SystemRoot = FPlatformMisc::GetEnvironmentVariable(TEXT("SystemRoot"));
@@ -508,7 +1021,7 @@ namespace UE::DreamShader::Editor::Private
 
 			for (const FString& Candidate : Candidates)
 			{
-				const FString Parameters = QuoteProcessArgument(WorkspaceFilePath);
+				const FString Parameters = QuoteProcessArgument(FilePath);
 				FProcHandle ProcessHandle = FPlatformProcess::CreateProc(*Candidate, *Parameters, true, false, false, nullptr, 0, nullptr, nullptr);
 				if (ProcessHandle.IsValid())
 				{
@@ -518,6 +1031,19 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			return false;
+		}
+
+		bool LaunchTextFileInPreferredEditor(const FString& FilePath, int32 Line = 1, int32 Column = 1)
+		{
+			if (LaunchVSCodeFile(FilePath, Line, Column))
+			{
+				return true;
+			}
+			if (FPlatformProcess::LaunchFileInDefaultExternalApplication(*FilePath, nullptr, ELaunchVerb::Edit, false))
+			{
+				return true;
+			}
+			return LaunchTextFileWithNotepad(FilePath);
 		}
 
 		void ShowDreamShaderNotification(const FText& Message, SNotificationItem::ECompletionState CompletionState)
@@ -820,6 +1346,7 @@ namespace UE::DreamShader::Editor::Private
 		IFileManager::Get().MakeDirectory(*GetBridgeDirectory(), true);
 		IFileManager::Get().MakeDirectory(*GetRequestDirectory(), true);
 
+		SyncVirtualFunctionDefinitions();
 		QueueFullScan();
 		UpdateDiagnosticsFile();
 
@@ -1361,6 +1888,21 @@ namespace UE::DreamShader::Editor::Private
 		FToolMenuSection& Section = InMenu->AddSection(
 			TEXT("DreamShader.VirtualFunctionActions"),
 			LOCTEXT("DreamShaderVirtualFunctionActionsSection", "VirtualFunction"));
+		FVirtualFunctionDefinitionLocation ExistingDefinition;
+		if (FindVirtualFunctionDefinitionForMaterialFunction(MaterialFunction.Get(), ExistingDefinition))
+		{
+			Section.AddMenuEntry(
+				TEXT("DreamShader.OpenVirtualFunction"),
+				LOCTEXT("DreamShaderOpenVirtualFunctionLabel", "OpenVirtualFunction"),
+				LOCTEXT("DreamShaderOpenVirtualFunctionTooltip", "Open the existing DreamShader VirtualFunction definition in VSCode."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor")),
+				FUIAction(FExecuteAction::CreateSP(
+					AsShared(),
+					&FDreamShaderEditorBridge::OpenVirtualFunctionDefinitionFile,
+					MaterialFunction)));
+			return;
+		}
+
 		Section.AddMenuEntry(
 			TEXT("DreamShader.CopyVirtualFunction"),
 			LOCTEXT("DreamShaderCopyVirtualFunctionLabel", "CopyVirtualFunction"),
@@ -1449,7 +1991,7 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		if (LaunchWorkspaceWithNotepad(WorkspaceFilePath))
+		if (LaunchTextFileWithNotepad(WorkspaceFilePath))
 		{
 			ShowDreamShaderNotification(
 				FText::FromString(FString::Printf(TEXT("Opened DreamShader workspace in Notepad: %s"), *WorkspaceFilePath)),
@@ -1504,6 +2046,13 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
+		FVirtualFunctionDefinitionLocation ExistingDefinition;
+		if (FindVirtualFunctionDefinitionForMaterialFunction(Function, ExistingDefinition))
+		{
+			OpenVirtualFunctionDefinitionFile(MaterialFunction);
+			return;
+		}
+
 		FString DefinitionText;
 		FString Error;
 		if (!BuildVirtualFunctionDefinition(Function, DefinitionText, Error))
@@ -1515,7 +2064,7 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		const FString DefinitionFilePath = MakeUniqueVirtualFunctionDefinitionFilePath(Function);
+		const FString DefinitionFilePath = MakeVirtualFunctionDefinitionFilePath(Function);
 		const FString DefinitionDirectory = FPaths::GetPath(DefinitionFilePath);
 		if (!IFileManager::Get().MakeDirectory(*DefinitionDirectory, true))
 		{
@@ -1535,11 +2084,60 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		FPlatformProcess::LaunchFileInDefaultExternalApplication(*DefinitionFilePath, nullptr, ELaunchVerb::Edit);
+		if (!LaunchTextFileInPreferredEditor(DefinitionFilePath))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("Created VirtualFunction file but could not open it: %s"), *DefinitionFilePath)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Created VirtualFunction definition file '%s' but failed to open it."), *DefinitionFilePath);
+			return;
+		}
+
 		ShowDreamShaderNotification(
 			FText::FromString(FString::Printf(TEXT("Created VirtualFunction file: %s"), *DefinitionFilePath)),
 			SNotificationItem::CS_Success);
 		UE_LOG(LogDreamShader, Display, TEXT("Created VirtualFunction definition file '%s' for '%s'.\n%s"), *DefinitionFilePath, *Function->GetPathName(), *DefinitionText);
+	}
+
+	void FDreamShaderEditorBridge::OpenVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
+	{
+		UMaterialFunction* Function = MaterialFunction.Get();
+		if (!Function)
+		{
+			ShowDreamShaderNotification(
+				LOCTEXT("DreamShaderOpenVirtualFunctionNoAsset", "DreamShader could not find the selected Material Function."),
+				SNotificationItem::CS_Fail);
+			return;
+		}
+
+		FVirtualFunctionDefinitionLocation ExistingDefinition;
+		if (!FindVirtualFunctionDefinitionForMaterialFunction(Function, ExistingDefinition))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("DreamShader could not find a VirtualFunction definition for %s."), *Function->GetName())),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("No VirtualFunction definition found for '%s'."), *Function->GetPathName());
+			return;
+		}
+
+		if (!LaunchTextFileInPreferredEditor(ExistingDefinition.SourceFilePath, ExistingDefinition.Line, ExistingDefinition.Column))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("DreamShader could not open VirtualFunction file: %s"), *ExistingDefinition.SourceFilePath)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to open VirtualFunction definition file '%s'."), *ExistingDefinition.SourceFilePath);
+			return;
+		}
+
+		ShowDreamShaderNotification(
+			FText::FromString(FString::Printf(TEXT("Opened VirtualFunction definition: %s"), *ExistingDefinition.SourceFilePath)),
+			SNotificationItem::CS_Success);
+		UE_LOG(
+			LogDreamShader,
+			Display,
+			TEXT("Opened VirtualFunction definition '%s' for '%s'."),
+			*ExistingDefinition.SourceFilePath,
+			*Function->GetPathName());
 	}
 
 	void FDreamShaderEditorBridge::CopyVirtualFunctionCall(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
@@ -1612,6 +2210,142 @@ namespace UE::DreamShader::Editor::Private
 			{
 				HeaderDependentsByFile.FindOrAdd(HeaderFile).Add(MaterialFile);
 			}
+		}
+	}
+
+	void FDreamShaderEditorBridge::SyncVirtualFunctionDefinitions()
+	{
+		struct FVirtualFunctionReplacement
+		{
+			int32 StartIndex = INDEX_NONE;
+			int32 EndIndex = INDEX_NONE;
+			FString DefinitionText;
+		};
+
+		TArray<FString> SourceFiles;
+		FindProjectDreamShaderSourceFiles(SourceFiles);
+
+		int32 ScannedDefinitionCount = 0;
+		int32 UpdatedDefinitionCount = 0;
+		int32 ErrorCount = 0;
+
+		for (const FString& SourceFile : SourceFiles)
+		{
+			FString SourceText;
+			TArray<FVirtualFunctionDefinitionLocation> Locations;
+			TArray<FDiagnosticRecord> Diagnostics;
+			CollectVirtualFunctionDefinitionLocationsFromFile(SourceFile, Locations, &SourceText, &Diagnostics);
+
+			TArray<FVirtualFunctionReplacement> Replacements;
+			for (const FVirtualFunctionDefinitionLocation& Location : Locations)
+			{
+				++ScannedDefinitionCount;
+
+				UMaterialFunction* Function = LoadObject<UMaterialFunction>(nullptr, *Location.AssetObjectPath);
+				if (!Function)
+				{
+					Diagnostics.Add(MakeVirtualFunctionDiagnostic(
+						SourceFile,
+						FString::Printf(
+							TEXT("VirtualFunction '%s' references missing MaterialFunction '%s'."),
+							*Location.FunctionName,
+							*Location.AssetObjectPath),
+						FString(),
+						Location.AssetObjectPath,
+						Location.Line,
+						Location.Column));
+					continue;
+				}
+
+				FString GeneratedDefinition;
+				FString Error;
+				if (!BuildVirtualFunctionDefinition(Function, GeneratedDefinition, Error))
+				{
+					Diagnostics.Add(MakeVirtualFunctionDiagnostic(
+						SourceFile,
+						FString::Printf(
+							TEXT("VirtualFunction '%s' could not be refreshed from MaterialFunction '%s': %s"),
+							*Location.FunctionName,
+							*Location.AssetObjectPath,
+							*Error),
+						Error,
+						Location.AssetObjectPath,
+						Location.Line,
+						Location.Column));
+					continue;
+				}
+
+				if (NormalizeVirtualFunctionDefinitionText(Location.CurrentText)
+					!= NormalizeVirtualFunctionDefinitionText(GeneratedDefinition))
+				{
+					FVirtualFunctionReplacement& Replacement = Replacements.AddDefaulted_GetRef();
+					Replacement.StartIndex = Location.StartIndex;
+					Replacement.EndIndex = Location.EndIndex;
+					Replacement.DefinitionText = GeneratedDefinition;
+				}
+			}
+
+			if (!Replacements.IsEmpty())
+			{
+				FString UpdatedSourceText = SourceText;
+				Replacements.Sort([](const FVirtualFunctionReplacement& A, const FVirtualFunctionReplacement& B)
+				{
+					return A.StartIndex > B.StartIndex;
+				});
+
+				for (const FVirtualFunctionReplacement& Replacement : Replacements)
+				{
+					UpdatedSourceText =
+						UpdatedSourceText.Left(Replacement.StartIndex)
+						+ Replacement.DefinitionText
+						+ UpdatedSourceText.Mid(Replacement.EndIndex);
+				}
+
+				if (!FFileHelper::SaveStringToFile(UpdatedSourceText, *SourceFile, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+				{
+					Diagnostics.Add(MakeVirtualFunctionDiagnostic(
+						SourceFile,
+						FString::Printf(TEXT("DreamShader failed to update VirtualFunction source file '%s'."), *SourceFile),
+						FString(),
+						FString(),
+						1,
+						1));
+				}
+				else
+				{
+					UpdatedDefinitionCount += Replacements.Num();
+					UE_LOG(
+						LogDreamShader,
+						Display,
+						TEXT("DreamShader refreshed %d VirtualFunction definition(s) in '%s'."),
+						Replacements.Num(),
+						*SourceFile);
+				}
+			}
+
+			if (Diagnostics.IsEmpty())
+			{
+				if (!Locations.IsEmpty())
+				{
+					ClearDiagnostics(SourceFile);
+				}
+			}
+			else
+			{
+				ErrorCount += Diagnostics.Num();
+				SetDiagnostics(SourceFile, MoveTemp(Diagnostics));
+			}
+		}
+
+		if (ScannedDefinitionCount > 0 || UpdatedDefinitionCount > 0 || ErrorCount > 0)
+		{
+			UE_LOG(
+				LogDreamShader,
+				Display,
+				TEXT("DreamShader scanned %d VirtualFunction definition(s), refreshed %d, reported %d issue(s)."),
+				ScannedDefinitionCount,
+				UpdatedDefinitionCount,
+				ErrorCount);
 		}
 	}
 
