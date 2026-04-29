@@ -614,6 +614,67 @@ namespace UE::DreamShader
 
 				OutDefinition.MaterialFunctions.Add(Function);
 			}
+			else if (Scanner.TryConsumeKeyword(TEXT("VirtualFunction")))
+			{
+				TMap<FString, FString> Attributes;
+				if (!Scanner.ParseAttributes(Attributes, OutError))
+				{
+					return false;
+				}
+
+				FTextShaderVirtualFunctionDefinition Function;
+				if (const FString* Name = Attributes.Find(TEXT("Name")))
+				{
+					Function.Name = *Name;
+				}
+				else
+				{
+					OutError = TEXT("VirtualFunction(Name=\"...\") is required.");
+					return false;
+				}
+				Function.Name.TrimStartAndEndInline();
+				if (Function.Name.IsEmpty())
+				{
+					OutError = TEXT("VirtualFunction name cannot be empty.");
+					return false;
+				}
+				if (const FString* Asset = Attributes.Find(TEXT("Asset")))
+				{
+					Function.Asset = *Asset;
+				}
+
+				FString BodyContent;
+				if (!Scanner.ExtractBalancedBlock(BodyContent, OutError))
+				{
+					return false;
+				}
+
+				if (!Private::ParseVirtualFunctionBody(BodyContent, Function, OutError))
+				{
+					return false;
+				}
+
+				if (Function.Asset.TrimStartAndEnd().IsEmpty())
+				{
+					if (const FString* Asset = Function.Options.Find(NormalizeSettingKey(TEXT("Asset"))))
+					{
+						Function.Asset = *Asset;
+					}
+				}
+				Function.Asset.TrimStartAndEndInline();
+				if (Function.Asset.IsEmpty())
+				{
+					OutError = FString::Printf(TEXT("VirtualFunction '%s' must provide Options = { Asset = Path(...); }."), *Function.Name);
+					return false;
+				}
+				if (Function.Outputs.IsEmpty())
+				{
+					OutError = FString::Printf(TEXT("VirtualFunction '%s' must declare at least one output."), *Function.Name);
+					return false;
+				}
+
+				OutDefinition.VirtualFunctions.Add(Function);
+			}
 			else
 			{
 				OutError = FString::Printf(TEXT("Unexpected token near index %d."), Scanner.Index);
@@ -621,9 +682,9 @@ namespace UE::DreamShader
 			}
 		}
 
-		if (!bFoundShader && OutDefinition.Functions.IsEmpty() && OutDefinition.MaterialFunctions.IsEmpty())
+		if (!bFoundShader && OutDefinition.Functions.IsEmpty() && OutDefinition.MaterialFunctions.IsEmpty() && OutDefinition.VirtualFunctions.IsEmpty())
 		{
-			OutError = TEXT("A top-level Shader, Function, Namespace, or ShaderFunction block was not found.");
+			OutError = TEXT("A top-level Shader, Function, Namespace, ShaderFunction, or VirtualFunction block was not found.");
 			return false;
 		}
 

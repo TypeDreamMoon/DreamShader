@@ -54,4 +54,5 @@ namespace UE::DreamShader::Private
 	bool ParseShaderBody(const FString& BodyContent, FTextShaderDefinition& OutDefinition, FString& OutError);
 	bool ParseFunctionBody(const FString& BodyContent, FTextShaderFunctionDefinition& OutFunction, FString& OutError);
 	bool ParseMaterialFunctionBody(const FString& BodyContent, FTextShaderMaterialFunctionDefinition& OutFunction, FString& OutError);
+	bool ParseVirtualFunctionBody(const FString& BodyContent, FTextShaderVirtualFunctionDefinition& OutFunction, FString& OutError);
 }

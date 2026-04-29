@@ -13,6 +13,7 @@ public class DreamShader : ModuleRules
 				"CoreUObject",
 				"DeveloperSettings",
 				"Engine",
+				"Projects",
 				"RenderCore"
 			});
 	}

@@ -127,6 +127,7 @@ namespace UE::DreamShader::Editor::Private
 		FString& OutObjectPath,
 		FString& OutAssetLeafName,
 		FString& OutError);
+	bool TryResolveDreamShaderAssetReference(const FString& InText, FString& OutObjectPath, FString& OutError);
 	UMaterialExpression* CreateScalarLiteralExpression(UMaterial* Material, double Value, int32 PositionY);
 	FString EnsureTopLevelReturn(const FString& InHLSL);
 	bool PrepareCustomNodeCode(
@@ -264,6 +265,7 @@ namespace UE::DreamShader::Editor::Private
 			FString& OutError);
 		const FTextShaderFunctionDefinition* FindFunctionDefinition(const FString& FunctionName) const;
 		const FTextShaderMaterialFunctionDefinition* FindMaterialFunctionDefinition(const FString& FunctionName) const;
+		const FTextShaderVirtualFunctionDefinition* FindVirtualFunctionDefinition(const FString& FunctionName) const;
 		bool EvaluateCustomFunctionCall(
 			const FString& FunctionName,
 			const TArray<FCodeCallArgument>& Arguments,
@@ -275,6 +277,20 @@ namespace UE::DreamShader::Editor::Private
 			FString& OutError);
 		bool EvaluateMaterialFunctionCall(
 			const FTextShaderMaterialFunctionDefinition& Function,
+			const TArray<FCodeCallArgument>& Arguments,
+			FCodeValue& OutValue,
+			FString& OutError);
+		bool EvaluateVirtualFunctionCall(
+			const FTextShaderVirtualFunctionDefinition& Function,
+			const TArray<FCodeCallArgument>& Arguments,
+			FCodeValue& OutValue,
+			FString& OutError);
+		bool EvaluateMaterialFunctionCallAsset(
+			const FString& CallKind,
+			const FString& FunctionName,
+			const FString& ObjectPath,
+			const TArray<FTextShaderFunctionParameter>& Inputs,
+			const TArray<FTextShaderFunctionParameter>& Outputs,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
 			FString& OutError);

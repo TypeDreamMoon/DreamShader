@@ -2622,15 +2622,37 @@ namespace UE::DreamShader::Editor::Private
 
 		const FTextShaderFunctionDefinition* CustomFunction = FindFunctionDefinition(CalleeName);
 		const FTextShaderMaterialFunctionDefinition* MaterialFunctionDefinition = FindMaterialFunctionDefinition(CalleeName);
-		if (CustomFunction && MaterialFunctionDefinition)
+		const FTextShaderVirtualFunctionDefinition* VirtualFunctionDefinition = FindVirtualFunctionDefinition(CalleeName);
+
+		TArray<FString> MatchedKinds;
+		if (CustomFunction)
 		{
-			OutError = FString::Printf(TEXT("Graph call '%s' is ambiguous because both Function and ShaderFunction definitions use that name."), *CalleeName);
+			MatchedKinds.Add(TEXT("Function"));
+		}
+		if (MaterialFunctionDefinition)
+		{
+			MatchedKinds.Add(TEXT("ShaderFunction"));
+		}
+		if (VirtualFunctionDefinition)
+		{
+			MatchedKinds.Add(TEXT("VirtualFunction"));
+		}
+		if (MatchedKinds.Num() > 1)
+		{
+			OutError = FString::Printf(
+				TEXT("Graph call '%s' is ambiguous because multiple definitions use that name: %s."),
+				*CalleeName,
+				*FString::Join(MatchedKinds, TEXT(", ")));
 			return false;
 		}
 
 		if (MaterialFunctionDefinition)
 		{
 			return EvaluateMaterialFunctionCall(*MaterialFunctionDefinition, Expression->Arguments, OutValue, OutError);
+		}
+		if (VirtualFunctionDefinition)
+		{
+			return EvaluateVirtualFunctionCall(*VirtualFunctionDefinition, Expression->Arguments, OutValue, OutError);
 		}
 
 		return EvaluateCustomFunctionCall(CalleeName, Expression->Arguments, OutValue, OutError);
@@ -2787,6 +2809,32 @@ namespace UE::DreamShader::Editor::Private
 	const FTextShaderMaterialFunctionDefinition* FCodeGraphBuilder::FindMaterialFunctionDefinition(const FString& FunctionName) const
 	{
 		for (const FTextShaderMaterialFunctionDefinition& Function : Definition.MaterialFunctions)
+		{
+			if (Function.Name.Equals(FunctionName, ESearchCase::IgnoreCase))
+			{
+				return &Function;
+			}
+
+			FString ShortName = Function.Name;
+			ShortName.ReplaceInline(TEXT("\\"), TEXT("/"));
+			const int32 SlashIndex = ShortName.Find(TEXT("/"), ESearchCase::IgnoreCase, ESearchDir::FromEnd);
+			if (SlashIndex != INDEX_NONE)
+			{
+				ShortName.RightChopInline(SlashIndex + 1, EAllowShrinking::No);
+			}
+
+			if (ShortName.Equals(FunctionName, ESearchCase::IgnoreCase))
+			{
+				return &Function;
+			}
+		}
+
+		return nullptr;
+	}
+
+	const FTextShaderVirtualFunctionDefinition* FCodeGraphBuilder::FindVirtualFunctionDefinition(const FString& FunctionName) const
+	{
+		for (const FTextShaderVirtualFunctionDefinition& Function : Definition.VirtualFunctions)
 		{
 			if (Function.Name.Equals(FunctionName, ESearchCase::IgnoreCase))
 			{
@@ -3074,10 +3122,61 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
+		return EvaluateMaterialFunctionCallAsset(
+			TEXT("ShaderFunction"),
+			Function.Name,
+			ObjectPath,
+			Function.Inputs,
+			Function.Outputs,
+			Arguments,
+			OutValue,
+			OutError);
+	}
+
+	bool FCodeGraphBuilder::EvaluateVirtualFunctionCall(
+		const FTextShaderVirtualFunctionDefinition& Function,
+		const TArray<FCodeCallArgument>& Arguments,
+		FCodeValue& OutValue,
+		FString& OutError)
+	{
+		FString ObjectPath;
+		if (!TryResolveDreamShaderAssetReference(Function.Asset, ObjectPath, OutError))
+		{
+			OutError = FString::Printf(TEXT("VirtualFunction '%s' asset reference is invalid: %s"), *Function.Name, *OutError);
+			return false;
+		}
+
+		return EvaluateMaterialFunctionCallAsset(
+			TEXT("VirtualFunction"),
+			Function.Name,
+			ObjectPath,
+			Function.Inputs,
+			Function.Outputs,
+			Arguments,
+			OutValue,
+			OutError);
+	}
+
+	bool FCodeGraphBuilder::EvaluateMaterialFunctionCallAsset(
+		const FString& CallKind,
+		const FString& FunctionName,
+		const FString& ObjectPath,
+		const TArray<FTextShaderFunctionParameter>& Inputs,
+		const TArray<FTextShaderFunctionParameter>& Outputs,
+		const TArray<FCodeCallArgument>& Arguments,
+		FCodeValue& OutValue,
+		FString& OutError)
+	{
+		if (Outputs.IsEmpty())
+		{
+			OutError = FString::Printf(TEXT("%s '%s' must declare at least one output."), *CallKind, *FunctionName);
+			return false;
+		}
+
 		UMaterialFunction* MaterialFunctionAsset = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
 		if (!MaterialFunctionAsset)
 		{
-			OutError = FString::Printf(TEXT("ShaderFunction '%s' has not been generated yet."), *Function.Name);
+			OutError = FString::Printf(TEXT("%s '%s' could not load MaterialFunction asset '%s'."), *CallKind, *FunctionName, *ObjectPath);
 			return false;
 		}
 
@@ -3085,13 +3184,13 @@ namespace UE::DreamShader::Editor::Private
 			CreateExpression(UMaterialExpressionMaterialFunctionCall::StaticClass(), 600, ConsumeNodeY()));
 		if (!FunctionCall)
 		{
-			OutError = FString::Printf(TEXT("Failed to create a MaterialFunctionCall node for '%s'."), *Function.Name);
+			OutError = FString::Printf(TEXT("Failed to create a MaterialFunctionCall node for '%s'."), *FunctionName);
 			return false;
 		}
 
 		if (!FunctionCall->SetMaterialFunction(MaterialFunctionAsset))
 		{
-			OutError = FString::Printf(TEXT("Failed to assign material function '%s' to the generated call node."), *Function.Name);
+			OutError = FString::Printf(TEXT("Failed to assign material function '%s' to the generated call node."), *FunctionName);
 			return false;
 		}
 
@@ -3103,7 +3202,7 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeCallArgument* OutputIndexArgument = FindNamedArgument(Arguments, TEXT("OutputIndex"));
 		if (OutputNameArgument && OutputIndexArgument)
 		{
-			OutError = FString::Printf(TEXT("ShaderFunction '%s' cannot use OutputName/Output together with OutputIndex."), *Function.Name);
+			OutError = FString::Printf(TEXT("%s '%s' cannot use OutputName/Output together with OutputIndex."), *CallKind, *FunctionName);
 			return false;
 		}
 
@@ -3117,9 +3216,9 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		int32 PositionalArgumentIndex = 0;
-		for (int32 InputIndex = 0; InputIndex < Function.Inputs.Num(); ++InputIndex)
+		for (int32 InputIndex = 0; InputIndex < Inputs.Num(); ++InputIndex)
 		{
-			const FTextShaderFunctionParameter& InputDefinition = Function.Inputs[InputIndex];
+			const FTextShaderFunctionParameter& InputDefinition = Inputs[InputIndex];
 			const FCodeCallArgument* InputArgument = FindNamedArgument(Arguments, *InputDefinition.Name);
 			if (!InputArgument && PositionalArguments.IsValidIndex(PositionalArgumentIndex))
 			{
@@ -3128,24 +3227,41 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!InputArgument)
 			{
-				OutError = FString::Printf(TEXT("ShaderFunction '%s' is missing required input '%s'."), *Function.Name, *InputDefinition.Name);
+				OutError = FString::Printf(TEXT("%s '%s' is missing required input '%s'."), *CallKind, *FunctionName, *InputDefinition.Name);
 				return false;
 			}
 
-			if (!FunctionCall->FunctionInputs.IsValidIndex(InputIndex))
+			int32 FunctionInputIndex = INDEX_NONE;
+			for (int32 CandidateIndex = 0; CandidateIndex < FunctionCall->FunctionInputs.Num(); ++CandidateIndex)
 			{
-				OutError = FString::Printf(TEXT("ShaderFunction '%s' input layout does not match the generated MaterialFunction asset."), *Function.Name);
+				const FFunctionExpressionInput& CandidateInput = FunctionCall->FunctionInputs[CandidateIndex];
+				const FName CandidateName = CandidateInput.ExpressionInput
+					? CandidateInput.ExpressionInput->InputName
+					: CandidateInput.Input.InputName;
+				if (CandidateName.ToString().Equals(InputDefinition.Name, ESearchCase::IgnoreCase))
+				{
+					FunctionInputIndex = CandidateIndex;
+					break;
+				}
+			}
+			if (FunctionInputIndex == INDEX_NONE && FunctionCall->FunctionInputs.IsValidIndex(InputIndex))
+			{
+				FunctionInputIndex = InputIndex;
+			}
+			if (!FunctionCall->FunctionInputs.IsValidIndex(FunctionInputIndex))
+			{
+				OutError = FString::Printf(TEXT("%s '%s' input '%s' does not exist on MaterialFunction asset '%s'."), *CallKind, *FunctionName, *InputDefinition.Name, *ObjectPath);
 				return false;
 			}
 
 			FCodeValue InputValue;
 			if (!EvaluateExpression(InputArgument->Expression, InputValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("ShaderFunction '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError);
+				OutError = FString::Printf(TEXT("%s '%s' input '%s': %s"), *CallKind, *FunctionName, *InputDefinition.Name, *OutError);
 				return false;
 			}
 
-			ConnectCodeValueToInput(FunctionCall->FunctionInputs[InputIndex].Input, InputValue);
+			ConnectCodeValueToInput(FunctionCall->FunctionInputs[FunctionInputIndex].Input, InputValue);
 		}
 
 		for (const FCodeCallArgument& Argument : Arguments)
@@ -3164,7 +3280,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			bool bMatchesInput = false;
-			for (const FTextShaderFunctionParameter& Input : Function.Inputs)
+			for (const FTextShaderFunctionParameter& Input : Inputs)
 			{
 				if (Input.Name.Equals(Argument.Name, ESearchCase::IgnoreCase))
 				{
@@ -3175,7 +3291,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!bMatchesInput)
 			{
-				OutError = FString::Printf(TEXT("ShaderFunction '%s' does not have an input named '%s'."), *Function.Name, *Argument.Name);
+				OutError = FString::Printf(TEXT("%s '%s' does not have an input named '%s'."), *CallKind, *FunctionName, *Argument.Name);
 				return false;
 			}
 		}
@@ -3185,9 +3301,9 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!TryExtractIntegerLiteral(OutputIndexArgument->Expression, OutputIndex)
 				|| OutputIndex < 0
-				|| !Function.Outputs.IsValidIndex(OutputIndex))
+				|| !Outputs.IsValidIndex(OutputIndex))
 			{
-				OutError = FString::Printf(TEXT("ShaderFunction '%s' OutputIndex is out of range."), *Function.Name);
+				OutError = FString::Printf(TEXT("%s '%s' OutputIndex is out of range."), *CallKind, *FunctionName);
 				return false;
 			}
 		}
@@ -3196,14 +3312,14 @@ namespace UE::DreamShader::Editor::Private
 			FString OutputName;
 			if (!TryExtractLiteralText(OutputNameArgument->Expression, OutputName))
 			{
-				OutError = FString::Printf(TEXT("ShaderFunction '%s' OutputName must be a literal value."), *Function.Name);
+				OutError = FString::Printf(TEXT("%s '%s' OutputName must be a literal value."), *CallKind, *FunctionName);
 				return false;
 			}
 
 			OutputIndex = INDEX_NONE;
-			for (int32 CandidateIndex = 0; CandidateIndex < Function.Outputs.Num(); ++CandidateIndex)
+			for (int32 CandidateIndex = 0; CandidateIndex < Outputs.Num(); ++CandidateIndex)
 			{
-				if (Function.Outputs[CandidateIndex].Name.Equals(OutputName, ESearchCase::IgnoreCase))
+				if (Outputs[CandidateIndex].Name.Equals(OutputName, ESearchCase::IgnoreCase))
 				{
 					OutputIndex = CandidateIndex;
 					break;
@@ -3212,26 +3328,49 @@ namespace UE::DreamShader::Editor::Private
 
 			if (OutputIndex == INDEX_NONE)
 			{
-				OutError = FString::Printf(TEXT("ShaderFunction '%s' does not expose an output named '%s'."), *Function.Name, *OutputName);
+				OutError = FString::Printf(TEXT("%s '%s' does not expose an output named '%s'."), *CallKind, *FunctionName, *OutputName);
 				return false;
 			}
 		}
-		else if (Function.Outputs.Num() != 1)
+		else if (Outputs.Num() != 1)
 		{
-			OutError = FString::Printf(TEXT("ShaderFunction '%s' exposes multiple outputs. Specify Output=\"Name\" or OutputIndex=N."), *Function.Name);
+			OutError = FString::Printf(TEXT("%s '%s' exposes multiple outputs. Specify Output=\"Name\" or OutputIndex=N."), *CallKind, *FunctionName);
 			return false;
 		}
 
 		int32 OutputComponents = 0;
 		bool bIsTextureObject = false;
-		if (!TryResolveCodeDeclaredType(Function.Outputs[OutputIndex].Type, OutputComponents, bIsTextureObject))
+		if (!TryResolveCodeDeclaredType(Outputs[OutputIndex].Type, OutputComponents, bIsTextureObject))
 		{
-			OutError = FString::Printf(TEXT("ShaderFunction '%s' output '%s' uses unsupported type '%s'."), *Function.Name, *Function.Outputs[OutputIndex].Name, *Function.Outputs[OutputIndex].Type);
+			OutError = FString::Printf(TEXT("%s '%s' output '%s' uses unsupported type '%s'."), *CallKind, *FunctionName, *Outputs[OutputIndex].Name, *Outputs[OutputIndex].Type);
+			return false;
+		}
+
+		int32 FunctionOutputIndex = INDEX_NONE;
+		for (int32 CandidateIndex = 0; CandidateIndex < FunctionCall->FunctionOutputs.Num(); ++CandidateIndex)
+		{
+			const FFunctionExpressionOutput& CandidateOutput = FunctionCall->FunctionOutputs[CandidateIndex];
+			const FName CandidateName = CandidateOutput.ExpressionOutput
+				? CandidateOutput.ExpressionOutput->OutputName
+				: CandidateOutput.Output.OutputName;
+			if (CandidateName.ToString().Equals(Outputs[OutputIndex].Name, ESearchCase::IgnoreCase))
+			{
+				FunctionOutputIndex = CandidateIndex;
+				break;
+			}
+		}
+		if (FunctionOutputIndex == INDEX_NONE && FunctionCall->FunctionOutputs.IsValidIndex(OutputIndex))
+		{
+			FunctionOutputIndex = OutputIndex;
+		}
+		if (!FunctionCall->FunctionOutputs.IsValidIndex(FunctionOutputIndex))
+		{
+			OutError = FString::Printf(TEXT("%s '%s' output '%s' does not exist on MaterialFunction asset '%s'."), *CallKind, *FunctionName, *Outputs[OutputIndex].Name, *ObjectPath);
 			return false;
 		}
 
 		OutValue.Expression = FunctionCall;
-		OutValue.OutputIndex = OutputIndex;
+		OutValue.OutputIndex = FunctionOutputIndex;
 		OutValue.ComponentCount = OutputComponents;
 		OutValue.bIsTextureObject = bIsTextureObject;
 		return true;

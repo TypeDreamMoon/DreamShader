@@ -6,14 +6,25 @@
 
 #include "Async/Async.h"
 #include "CoreGlobals.h"
+#include "ContentBrowserMenuContexts.h"
 #include "DirectoryWatcherModule.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Framework/Commands/UIAction.h"
+#include "Framework/Notifications/NotificationManager.h"
 #include "HAL/FileManager.h"
+#include "HAL/PlatformApplicationMisc.h"
 #include "IDirectoryWatcher.h"
+#include "IMaterialEditor.h"
+#include "Interfaces/IPluginManager.h"
 #include "Materials/Material.h"
+#include "Materials/MaterialExpressionFunctionInput.h"
+#include "Materials/MaterialExpressionFunctionOutput.h"
+#include "Materials/MaterialExpressionMaterialFunctionCall.h"
+#include "Materials/MaterialFunction.h"
+#include "MaterialEditorContext.h"
 #include "MaterialShared.h"
+#include "MaterialValueType.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
@@ -25,6 +36,7 @@
 #include "ToolMenus.h"
 #include "UObject/MetaData.h"
 #include "UObject/Package.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "DreamShaderEditorBridge"
 
@@ -48,6 +60,247 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return UE::DreamShader::IsDreamShaderMaterialFile(InPath)
 				&& IsPathUnderDirectory(InPath, UE::DreamShader::GetPackageShaderDirectory());
+		}
+
+		FString EscapeDreamShaderString(const FString& InText)
+		{
+			FString Result = InText;
+			Result.ReplaceInline(TEXT("\\"), TEXT("\\\\"));
+			Result.ReplaceInline(TEXT("\""), TEXT("\\\""));
+			return Result;
+		}
+
+		FString GetDreamShaderTypeForFunctionInput(EFunctionInputType InputType)
+		{
+			switch (InputType)
+			{
+			case FunctionInput_Scalar:
+				return TEXT("float");
+			case FunctionInput_Vector2:
+				return TEXT("float2");
+			case FunctionInput_Vector3:
+				return TEXT("float3");
+			case FunctionInput_Vector4:
+				return TEXT("float4");
+			case FunctionInput_Texture2D:
+				return TEXT("Texture2D");
+			case FunctionInput_TextureCube:
+				return TEXT("TextureCube");
+			case FunctionInput_Texture2DArray:
+				return TEXT("Texture2DArray");
+			case FunctionInput_StaticBool:
+			case FunctionInput_Bool:
+				return TEXT("bool");
+			default:
+				return TEXT("float4");
+			}
+		}
+
+		FString GetDreamShaderTypeForMaterialValueType(EMaterialValueType ValueType)
+		{
+			switch (ValueType)
+			{
+			case MCT_Float:
+			case MCT_Float1:
+			case MCT_LWCScalar:
+				return TEXT("float");
+			case MCT_Float2:
+			case MCT_LWCVector2:
+				return TEXT("float2");
+			case MCT_Float3:
+			case MCT_LWCVector3:
+				return TEXT("float3");
+			case MCT_Float4:
+			case MCT_LWCVector4:
+				return TEXT("float4");
+			case MCT_Texture2D:
+				return TEXT("Texture2D");
+			case MCT_TextureCube:
+				return TEXT("TextureCube");
+			case MCT_Texture2DArray:
+				return TEXT("Texture2DArray");
+			case MCT_StaticBool:
+			case MCT_Bool:
+				return TEXT("bool");
+			default:
+				return TEXT("float4");
+			}
+		}
+
+		FString MakeDreamShaderDeclarationName(const FString& InName, const TCHAR* FallbackPrefix, int32 Index)
+		{
+			FString Result = UE::DreamShader::SanitizeIdentifier(InName.TrimStartAndEnd());
+			if (Result.IsEmpty() || Result == TEXT("DreamShaderSymbol"))
+			{
+				Result = FString::Printf(TEXT("%s%d"), FallbackPrefix, Index + 1);
+			}
+			return Result;
+		}
+
+		bool TryMakeVirtualFunctionAssetLiteral(const UMaterialFunction* MaterialFunction, FString& OutLiteral, FString& OutError)
+		{
+			if (!MaterialFunction)
+			{
+				OutError = TEXT("No MaterialFunction asset was provided.");
+				return false;
+			}
+
+			FString PackageName = MaterialFunction->GetOutermost() ? MaterialFunction->GetOutermost()->GetName() : FString();
+			PackageName.TrimStartAndEndInline();
+			PackageName.ReplaceInline(TEXT("\\"), TEXT("/"));
+			if (PackageName.IsEmpty() || !PackageName.StartsWith(TEXT("/")))
+			{
+				OutError = FString::Printf(TEXT("MaterialFunction '%s' does not have a valid package path."), *MaterialFunction->GetName());
+				return false;
+			}
+
+			const auto BuildLiteral = [&OutLiteral](const TCHAR* RootName, const FString& RelativePath)
+			{
+				OutLiteral = FString::Printf(TEXT("Path(%s, \"%s\")"), RootName, *EscapeDreamShaderString(RelativePath));
+			};
+
+			if (PackageName.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase))
+			{
+				BuildLiteral(TEXT("Game"), PackageName.Mid(6));
+				return true;
+			}
+			if (PackageName.StartsWith(TEXT("/Engine/"), ESearchCase::IgnoreCase))
+			{
+				BuildLiteral(TEXT("Engine"), PackageName.Mid(8));
+				return true;
+			}
+
+			FString BestPluginName;
+			FString BestMountedPath;
+			for (const TSharedRef<IPlugin>& Plugin : IPluginManager::Get().GetEnabledPluginsWithContent())
+			{
+				FString MountedPath = Plugin->GetMountedAssetPath();
+				MountedPath.TrimStartAndEndInline();
+				MountedPath.ReplaceInline(TEXT("\\"), TEXT("/"));
+				while (MountedPath.EndsWith(TEXT("/")))
+				{
+					MountedPath.LeftChopInline(1, EAllowShrinking::No);
+				}
+				if (!MountedPath.StartsWith(TEXT("/")))
+				{
+					MountedPath = TEXT("/") + MountedPath;
+				}
+				if (MountedPath.IsEmpty() || MountedPath == TEXT("/"))
+				{
+					MountedPath = TEXT("/") + Plugin->GetName();
+				}
+
+				if ((PackageName.Equals(MountedPath, ESearchCase::IgnoreCase)
+					|| PackageName.StartsWith(MountedPath + TEXT("/"), ESearchCase::IgnoreCase))
+					&& MountedPath.Len() > BestMountedPath.Len())
+				{
+					BestMountedPath = MountedPath;
+					BestPluginName = Plugin->GetName();
+				}
+			}
+
+			if (!BestPluginName.IsEmpty())
+			{
+				FString RelativePath = PackageName.Mid(BestMountedPath.Len());
+				while (RelativePath.StartsWith(TEXT("/")))
+				{
+					RelativePath.RightChopInline(1, EAllowShrinking::No);
+				}
+				OutLiteral = FString::Printf(
+					TEXT("Path(Plugins.%s, \"%s\")"),
+					*BestPluginName,
+					*EscapeDreamShaderString(RelativePath));
+				return true;
+			}
+
+			OutLiteral = FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(MaterialFunction->GetPathName()));
+			return true;
+		}
+
+		bool BuildVirtualFunctionDefinition(const UMaterialFunction* MaterialFunction, FString& OutDefinition, FString& OutError)
+		{
+			if (!MaterialFunction)
+			{
+				OutError = TEXT("No MaterialFunction asset was provided.");
+				return false;
+			}
+
+			FString AssetLiteral;
+			if (!TryMakeVirtualFunctionAssetLiteral(MaterialFunction, AssetLiteral, OutError))
+			{
+				return false;
+			}
+
+			TArray<FFunctionExpressionInput> Inputs;
+			TArray<FFunctionExpressionOutput> Outputs;
+			MaterialFunction->GetInputsAndOutputs(Inputs, Outputs);
+
+			if (Outputs.IsEmpty())
+			{
+				OutError = FString::Printf(TEXT("MaterialFunction '%s' does not expose any outputs."), *MaterialFunction->GetName());
+				return false;
+			}
+
+			TArray<FString> Lines;
+			Lines.Add(FString::Printf(
+				TEXT("VirtualFunction(Name=\"%s\")"),
+				*EscapeDreamShaderString(UE::DreamShader::SanitizeIdentifier(MaterialFunction->GetName()))));
+			Lines.Add(TEXT("{"));
+			Lines.Add(TEXT("\tOptions = {"));
+			Lines.Add(FString::Printf(TEXT("\t\tAsset = %s;"), *AssetLiteral));
+			Lines.Add(FString::Printf(
+				TEXT("\t\tDescription = \"Generated from %s\";"),
+				*EscapeDreamShaderString(MaterialFunction->GetPathName())));
+			Lines.Add(TEXT("\t}"));
+			Lines.Add(TEXT(""));
+			Lines.Add(TEXT("\tInputs = {"));
+			for (int32 InputIndex = 0; InputIndex < Inputs.Num(); ++InputIndex)
+			{
+				const FFunctionExpressionInput& Input = Inputs[InputIndex];
+				const FString InputName = Input.ExpressionInput
+					? Input.ExpressionInput->InputName.ToString()
+					: Input.Input.InputName.ToString();
+				const EFunctionInputType InputType = Input.ExpressionInput
+					? Input.ExpressionInput->InputType.GetValue()
+					: FunctionInput_Vector4;
+				Lines.Add(FString::Printf(
+					TEXT("\t\t%s %s;"),
+					*GetDreamShaderTypeForFunctionInput(InputType),
+					*MakeDreamShaderDeclarationName(InputName, TEXT("Input"), InputIndex)));
+			}
+			Lines.Add(TEXT("\t}"));
+			Lines.Add(TEXT(""));
+			Lines.Add(TEXT("\tOutputs = {"));
+			for (int32 OutputIndex = 0; OutputIndex < Outputs.Num(); ++OutputIndex)
+			{
+				const FFunctionExpressionOutput& Output = Outputs[OutputIndex];
+				const FString OutputName = Output.ExpressionOutput
+					? Output.ExpressionOutput->OutputName.ToString()
+					: Output.Output.OutputName.ToString();
+				const EMaterialValueType OutputType = Output.ExpressionOutput
+					? Output.ExpressionOutput->GetInputValueType(0)
+					: MCT_Float4;
+				Lines.Add(FString::Printf(
+					TEXT("\t\t%s %s;"),
+					*GetDreamShaderTypeForMaterialValueType(OutputType),
+					*MakeDreamShaderDeclarationName(OutputName, TEXT("Output"), OutputIndex)));
+			}
+			Lines.Add(TEXT("\t}"));
+			Lines.Add(TEXT("}"));
+
+			OutDefinition = FString::Join(Lines, TEXT("\n"));
+			return true;
+		}
+
+		void ShowDreamShaderNotification(const FText& Message, SNotificationItem::ECompletionState CompletionState)
+		{
+			FNotificationInfo Info(Message);
+			Info.ExpireDuration = 4.0f;
+			Info.bUseLargeFont = false;
+			if (TSharedPtr<SNotificationItem> Notification = FSlateNotificationManager::Get().AddNotification(Info))
+			{
+				Notification->SetCompletionState(CompletionState);
+			}
 		}
 
 		bool TryExtractImportPathFromLine(const FString& Line, FString& OutPath)
@@ -774,6 +1027,86 @@ namespace UE::DreamShader::Editor::Private
 				LOCTEXT("DreamShaderRecompileToolbarTooltip", "Recompile all DreamShader .dsm files."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Refresh"))));
 		}
+
+		if (UToolMenu* MaterialFunctionAssetMenu = UE::ContentBrowser::ExtendToolMenu_AssetContextMenu(UMaterialFunction::StaticClass()))
+		{
+			FToolMenuSection& Section = MaterialFunctionAssetMenu->FindOrAddSection(TEXT("GetAssetActions"));
+			Section.AddDynamicEntry(
+				TEXT("DreamShader.VirtualFunctionAssetActions"),
+				FNewToolMenuSectionDelegate::CreateSP(AsShared(), &FDreamShaderEditorBridge::PopulateMaterialFunctionAssetMenu));
+		}
+
+		if (UToolMenu* MaterialEditorToolbar = UToolMenus::Get()->ExtendMenu(TEXT("AssetEditor.MaterialEditor.ToolBar")))
+		{
+			FToolMenuSection& Section = MaterialEditorToolbar->FindOrAddSection(TEXT("DreamShader"));
+			Section.AddDynamicEntry(
+				TEXT("DreamShader.VirtualFunctionToolbarActions"),
+				FNewToolMenuSectionDelegate::CreateSP(AsShared(), &FDreamShaderEditorBridge::PopulateMaterialFunctionEditorToolbar));
+		}
+	}
+
+	void FDreamShaderEditorBridge::PopulateMaterialFunctionAssetMenu(FToolMenuSection& InSection)
+	{
+		const UContentBrowserAssetContextMenuContext* Context = UContentBrowserAssetContextMenuContext::FindContextWithAssets(InSection);
+		if (!Context || Context->SelectedAssets.Num() != 1 || !Context->SelectedAssets[0].IsInstanceOf(UMaterialFunction::StaticClass()))
+		{
+			return;
+		}
+
+		UMaterialFunction* MaterialFunction = Cast<UMaterialFunction>(Context->SelectedAssets[0].GetAsset());
+		if (!MaterialFunction)
+		{
+			return;
+		}
+
+		InSection.AddMenuEntry(
+			TEXT("DreamShader.CopyVirtualFunctionDefinition"),
+			LOCTEXT("DreamShaderCopyVirtualFunctionDefinitionLabel", "Copy VirtualFunction Definition"),
+			LOCTEXT("DreamShaderCopyVirtualFunctionDefinitionTooltip", "Generate a DreamShader VirtualFunction declaration for this Material Function and copy it to the clipboard."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Copy")),
+			FUIAction(FExecuteAction::CreateSP(
+				AsShared(),
+				&FDreamShaderEditorBridge::CopyVirtualFunctionDefinition,
+				TWeakObjectPtr<UMaterialFunction>(MaterialFunction))));
+	}
+
+	void FDreamShaderEditorBridge::PopulateMaterialFunctionEditorToolbar(FToolMenuSection& InSection)
+	{
+		const UMaterialEditorMenuContext* Context = InSection.FindContext<UMaterialEditorMenuContext>();
+		TSharedPtr<IMaterialEditor> MaterialEditor = Context ? Context->MaterialEditor.Pin() : nullptr;
+		if (!MaterialEditor.IsValid())
+		{
+			return;
+		}
+
+		UMaterialFunction* MaterialFunction = nullptr;
+		const TArray<UObject*>* EditingObjects = MaterialEditor->GetObjectsCurrentlyBeingEdited();
+		if (EditingObjects)
+		{
+			for (UObject* EditingObject : *EditingObjects)
+			{
+				MaterialFunction = Cast<UMaterialFunction>(EditingObject);
+				if (MaterialFunction)
+				{
+					break;
+				}
+			}
+		}
+
+		if (!MaterialFunction)
+		{
+			return;
+		}
+
+		InSection.AddEntry(FToolMenuEntry::InitToolBarButton(
+			TEXT("DreamShader.CopyVirtualFunctionDefinitionToolbar"),
+			FUIAction(FExecuteAction::CreateSP(
+				AsShared(),
+				&FDreamShaderEditorBridge::CopyVirtualFunctionDefinition,
+				TWeakObjectPtr<UMaterialFunction>(MaterialFunction))),
+			LOCTEXT("DreamShaderCopyVirtualFunctionDefinitionToolbarLabel", "VirtualFunction"),
+			LOCTEXT("DreamShaderCopyVirtualFunctionDefinitionToolbarTooltip", "Generate a DreamShader VirtualFunction declaration for this Material Function and copy it to the clipboard."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Copy"))));
 	}
 
 	void FDreamShaderEditorBridge::RequestRecompileAll()
@@ -797,6 +1130,35 @@ namespace UE::DreamShader::Editor::Private
 		CleanGeneratedShaderDirectory();
 		QueueFullScan();
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader cleaned generated shader includes and queued a full .dsm recompile scan."));
+	}
+
+	void FDreamShaderEditorBridge::CopyVirtualFunctionDefinition(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
+	{
+		UMaterialFunction* Function = MaterialFunction.Get();
+		if (!Function)
+		{
+			ShowDreamShaderNotification(
+				LOCTEXT("DreamShaderCopyVirtualFunctionNoAsset", "DreamShader could not find the selected Material Function."),
+				SNotificationItem::CS_Fail);
+			return;
+		}
+
+		FString DefinitionText;
+		FString Error;
+		if (!BuildVirtualFunctionDefinition(Function, DefinitionText, Error))
+		{
+			ShowDreamShaderNotification(
+				FText::FromString(FString::Printf(TEXT("DreamShader failed to build VirtualFunction: %s"), *Error)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to build VirtualFunction definition for '%s': %s"), *Function->GetPathName(), *Error);
+			return;
+		}
+
+		FPlatformApplicationMisc::ClipboardCopy(*DefinitionText);
+		ShowDreamShaderNotification(
+			FText::FromString(FString::Printf(TEXT("Copied VirtualFunction definition for %s."), *Function->GetName())),
+			SNotificationItem::CS_Success);
+		UE_LOG(LogDreamShader, Display, TEXT("Copied VirtualFunction definition for '%s'.\n%s"), *Function->GetPathName(), *DefinitionText);
 	}
 
 	void FDreamShaderEditorBridge::CleanGeneratedShaderDirectory()

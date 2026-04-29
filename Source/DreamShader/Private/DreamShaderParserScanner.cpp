@@ -1,5 +1,6 @@
 #include "DreamShaderParserInternal.h"
 
+#include "Interfaces/IPluginManager.h"
 #include "Misc/PackageName.h"
 
 namespace UE::DreamShader::Private
@@ -749,6 +750,135 @@ namespace UE::DreamShader::Private
 		return false;
 	}
 
+	bool IsValidPluginPathSegment(const FString& Segment)
+	{
+		if (Segment.IsEmpty())
+		{
+			return false;
+		}
+
+		for (const TCHAR Character : Segment)
+		{
+			if (!FChar::IsAlnum(Character) && Character != TCHAR('_'))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool ResolveTexturePluginRootPackagePath(const FString& Root, const FString& PluginName, FString& OutPackagePath, FString& OutError)
+	{
+		if (!IsValidPluginPathSegment(PluginName))
+		{
+			OutError = FString::Printf(TEXT("Texture Path root '%s' has an invalid plugin name."), *Root);
+			return false;
+		}
+
+		const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
+		if (!Plugin.IsValid())
+		{
+			OutError = FString::Printf(TEXT("Texture Path root '%s' references plugin '%s', but no enabled plugin with that name was found."), *Root, *PluginName);
+			return false;
+		}
+		if (!Plugin->IsEnabled())
+		{
+			OutError = FString::Printf(TEXT("Texture Path root '%s' references plugin '%s', but the plugin is not enabled."), *Root, *PluginName);
+			return false;
+		}
+		if (!Plugin->CanContainContent())
+		{
+			OutError = FString::Printf(TEXT("Texture Path root '%s' references plugin '%s', but the plugin cannot contain content."), *Root, *PluginName);
+			return false;
+		}
+
+		FString MountedPath = Plugin->GetMountedAssetPath();
+		MountedPath.TrimStartAndEndInline();
+		MountedPath.ReplaceInline(TEXT("\\"), TEXT("/"));
+		while (MountedPath.EndsWith(TEXT("/")))
+		{
+			MountedPath.LeftChopInline(1, EAllowShrinking::No);
+		}
+		if (!MountedPath.StartsWith(TEXT("/")))
+		{
+			MountedPath = TEXT("/") + MountedPath;
+		}
+		if (MountedPath.IsEmpty() || MountedPath == TEXT("/"))
+		{
+			MountedPath = TEXT("/") + PluginName;
+		}
+
+		OutPackagePath = MountedPath;
+		return true;
+	}
+
+	bool ResolveTexturePathRootPackagePath(const FString& Root, FString& OutPackagePath, FString& OutError)
+	{
+		FString Normalized = Unquote(Root.TrimStartAndEnd());
+		Normalized.ReplaceInline(TEXT("\\"), TEXT("/"));
+		while (Normalized.StartsWith(TEXT("/")))
+		{
+			Normalized.RightChopInline(1, EAllowShrinking::No);
+		}
+		while (Normalized.EndsWith(TEXT("/")))
+		{
+			Normalized.LeftChopInline(1, EAllowShrinking::No);
+		}
+
+		TArray<FString> Segments;
+		Normalized.ParseIntoArray(Segments, TEXT("/"), true);
+		if (Segments.IsEmpty())
+		{
+			OutError = TEXT("Relative texture Path(...) references require a root such as Game, Engine, or Plugin.PluginName.");
+			return false;
+		}
+
+		const FString RootSegment = Segments[0].TrimStartAndEnd();
+		int32 FirstFolderSegmentIndex = 1;
+		if (RootSegment.Equals(TEXT("Game"), ESearchCase::IgnoreCase))
+		{
+			OutPackagePath = TEXT("/Game");
+		}
+		else if (RootSegment.Equals(TEXT("Engine"), ESearchCase::IgnoreCase))
+		{
+			OutPackagePath = TEXT("/Engine");
+		}
+		else if (RootSegment.StartsWith(TEXT("Plugin."), ESearchCase::IgnoreCase)
+			|| RootSegment.StartsWith(TEXT("Plugins."), ESearchCase::IgnoreCase))
+		{
+			const int32 PluginPrefixLength = RootSegment.StartsWith(TEXT("Plugins."), ESearchCase::IgnoreCase) ? 8 : 7;
+			const FString PluginName = RootSegment.Mid(PluginPrefixLength).TrimStartAndEnd();
+			if (!ResolveTexturePluginRootPackagePath(Root, PluginName, OutPackagePath, OutError))
+			{
+				return false;
+			}
+		}
+		else if ((RootSegment.Equals(TEXT("Plugin"), ESearchCase::IgnoreCase)
+			|| RootSegment.Equals(TEXT("Plugins"), ESearchCase::IgnoreCase)) && Segments.IsValidIndex(1))
+		{
+			const FString PluginName = Segments[1].TrimStartAndEnd();
+			if (!ResolveTexturePluginRootPackagePath(Root, PluginName, OutPackagePath, OutError))
+			{
+				return false;
+			}
+			FirstFolderSegmentIndex = 2;
+		}
+		else
+		{
+			OutError = FString::Printf(TEXT("Unsupported texture Path root '%s'. Use Game, Engine, or Plugin.PluginName."), *Root);
+			return false;
+		}
+
+		for (int32 Index = FirstFolderSegmentIndex; Index < Segments.Num(); ++Index)
+		{
+			OutPackagePath += TEXT("/");
+			OutPackagePath += Segments[Index].TrimStartAndEnd();
+		}
+
+		return true;
+	}
+
 	bool ParseTextureAssetReference(const FString& InText, FString& OutObjectPath, FString& OutError)
 	{
 		const FString Trimmed = InText.TrimStartAndEnd();
@@ -757,7 +887,7 @@ namespace UE::DreamShader::Private
 		FString FunctionName;
 		if (!Scanner.ParseIdentifier(FunctionName, OutError) || !FunctionName.Equals(TEXT("Path"), ESearchCase::IgnoreCase))
 		{
-			OutError = TEXT("Texture defaults must use Path(Game|Engine, \"/Folder/Asset\") or Path(\"/Game/Folder/Asset\").");
+			OutError = TEXT("Texture defaults must use Path(Game|Engine|Plugin.PluginName, \"/Folder/Asset\") or Path(\"/Game/Folder/Asset\").");
 			return false;
 		}
 
@@ -808,29 +938,25 @@ namespace UE::DreamShader::Private
 			return false;
 		}
 
-		if (!AssetPath.StartsWith(TEXT("/")))
+		const bool bAssetPathIsAbsolute = AssetPath.StartsWith(TEXT("/"));
+		if (!bAssetPathIsAbsolute)
 		{
 			AssetPath = TEXT("/") + AssetPath;
 		}
 
 		FString LongObjectPath;
-		if (AssetPath.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase)
-			|| AssetPath.StartsWith(TEXT("/Engine/"), ESearchCase::IgnoreCase))
+		if (RootName.TrimStartAndEnd().IsEmpty() && bAssetPathIsAbsolute)
 		{
 			LongObjectPath = AssetPath;
 		}
-		else if (RootName.Equals(TEXT("Game"), ESearchCase::IgnoreCase))
-		{
-			LongObjectPath = TEXT("/Game") + AssetPath;
-		}
-		else if (RootName.Equals(TEXT("Engine"), ESearchCase::IgnoreCase))
-		{
-			LongObjectPath = TEXT("/Engine") + AssetPath;
-		}
 		else
 		{
-			OutError = FString::Printf(TEXT("Unsupported texture Path root '%s'. Use Game or Engine."), *RootName);
-			return false;
+			FString PackageRoot;
+			if (!ResolveTexturePathRootPackagePath(RootName, PackageRoot, OutError))
+			{
+				return false;
+			}
+			LongObjectPath = PackageRoot + AssetPath;
 		}
 
 		const int32 LastSlashIndex = LongObjectPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);

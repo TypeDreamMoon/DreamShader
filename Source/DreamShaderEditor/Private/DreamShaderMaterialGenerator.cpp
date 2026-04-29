@@ -1274,6 +1274,12 @@ namespace UE::DreamShader::Editor
 				return true;
 			}
 
+			if (!Definition.VirtualFunctions.IsEmpty())
+			{
+				OutMessage = FString::Printf(TEXT("DreamShader file '%s' contains VirtualFunction declarations only; no assets were generated."), *SourceFilePath);
+				return true;
+			}
+
 			OutMessage = FString::Printf(TEXT("DreamShader file '%s' did not contain any material or ShaderFunction assets to generate."), *SourceFilePath);
 			return false;
 		}

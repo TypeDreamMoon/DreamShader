@@ -5,7 +5,9 @@
 #include "Containers/Ticker.h"
 
 class UMaterialInterface;
+class UMaterialFunction;
 struct FFileChangeData;
+struct FToolMenuSection;
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -47,8 +49,11 @@ namespace UE::DreamShader::Editor::Private
 		void ProcessSourceFile(const FString& SourceFilePath);
 		void OnMaterialCompilationFinished(UMaterialInterface* MaterialInterface);
 		void RegisterMenus();
+		void PopulateMaterialFunctionAssetMenu(FToolMenuSection& InSection);
+		void PopulateMaterialFunctionEditorToolbar(FToolMenuSection& InSection);
 		void RequestRecompileAll();
 		void RequestCleanGeneratedShaders();
+		void CopyVirtualFunctionDefinition(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CleanGeneratedShaderDirectory();
 		void RebuildDependencyGraph();
 		void SetDiagnostics(const FString& SourceFilePath, TArray<FDiagnosticRecord>&& Diagnostics);

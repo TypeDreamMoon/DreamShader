@@ -752,7 +752,145 @@ namespace UE::DreamShader::Editor::Private
 		return Result;
 	}
 
-	static bool TryParseAssetReferenceLiteral(const FString& InText, FString& OutObjectPath, FString& OutError)
+	static bool ResolveContentPluginAssetReferenceRoot(
+		const FString& Root,
+		const FString& PluginName,
+		FString& OutPackagePath,
+		FString& OutError)
+	{
+		const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
+		if (!Plugin.IsValid())
+		{
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but no enabled plugin with that name was found."), *Root, *PluginName);
+			return false;
+		}
+
+		if (!Plugin->IsEnabled())
+		{
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but the plugin is not enabled."), *Root, *PluginName);
+			return false;
+		}
+
+		if (!Plugin->CanContainContent())
+		{
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but the plugin cannot contain content."), *Root, *PluginName);
+			return false;
+		}
+
+		const FString ContentDir = FPaths::ConvertRelativePathToFull(Plugin->GetContentDir());
+		if (!IFileManager::Get().DirectoryExists(*ContentDir))
+		{
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but its Content directory does not exist: '%s'."), *Root, *PluginName, *ContentDir);
+			return false;
+		}
+
+		if (!Plugin->IsMounted())
+		{
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but the plugin content is not mounted."), *Root, *PluginName);
+			return false;
+		}
+
+		FString MountedAssetPath = Plugin->GetMountedAssetPath();
+		MountedAssetPath.TrimStartAndEndInline();
+		MountedAssetPath.ReplaceInline(TEXT("\\"), TEXT("/"));
+		while (MountedAssetPath.EndsWith(TEXT("/")))
+		{
+			MountedAssetPath.LeftChopInline(1, EAllowShrinking::No);
+		}
+		if (!MountedAssetPath.StartsWith(TEXT("/")))
+		{
+			MountedAssetPath = TEXT("/") + MountedAssetPath;
+		}
+		if (MountedAssetPath.IsEmpty() || MountedAssetPath == TEXT("/"))
+		{
+			MountedAssetPath = TEXT("/") + Plugin->GetName();
+		}
+
+		OutPackagePath = MountedAssetPath;
+		return true;
+	}
+
+	static bool ResolveAssetReferenceRootPackagePath(
+		const FString& Root,
+		FString& OutPackagePath,
+		FString& OutError)
+	{
+		FString Normalized = Root;
+		Normalized.TrimStartAndEndInline();
+		Normalized.ReplaceInline(TEXT("\\"), TEXT("/"));
+		while (Normalized.StartsWith(TEXT("/")))
+		{
+			Normalized.RightChopInline(1, EAllowShrinking::No);
+		}
+		while (Normalized.EndsWith(TEXT("/")))
+		{
+			Normalized.LeftChopInline(1, EAllowShrinking::No);
+		}
+
+		TArray<FString> Segments;
+		Normalized.ParseIntoArray(Segments, TEXT("/"), true);
+		if (Segments.IsEmpty())
+		{
+			OutError = TEXT("Relative asset Path(...) references require a root such as Game, Engine, or Plugin.PluginName.");
+			return false;
+		}
+
+		const FString RootSegment = Segments[0].TrimStartAndEnd();
+		int32 FirstFolderSegmentIndex = 1;
+		if (RootSegment.Equals(TEXT("Game"), ESearchCase::IgnoreCase))
+		{
+			OutPackagePath = TEXT("/Game");
+		}
+		else if (RootSegment.Equals(TEXT("Engine"), ESearchCase::IgnoreCase))
+		{
+			OutPackagePath = TEXT("/Engine");
+		}
+		else if (RootSegment.StartsWith(TEXT("Plugin."), ESearchCase::IgnoreCase)
+			|| RootSegment.StartsWith(TEXT("Plugins."), ESearchCase::IgnoreCase))
+		{
+			const int32 PluginPrefixLength = RootSegment.StartsWith(TEXT("Plugins."), ESearchCase::IgnoreCase) ? 8 : 7;
+			const FString PluginName = RootSegment.Mid(PluginPrefixLength).TrimStartAndEnd();
+			if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
+			{
+				OutError = FString::Printf(TEXT("Asset Path root '%s' has an invalid plugin name."), *Root);
+				return false;
+			}
+			if (!ResolveContentPluginAssetReferenceRoot(Root, PluginName, OutPackagePath, OutError))
+			{
+				return false;
+			}
+		}
+		else if ((RootSegment.Equals(TEXT("Plugin"), ESearchCase::IgnoreCase)
+			|| RootSegment.Equals(TEXT("Plugins"), ESearchCase::IgnoreCase)) && Segments.IsValidIndex(1))
+		{
+			const FString PluginName = Segments[1].TrimStartAndEnd();
+			if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
+			{
+				OutError = FString::Printf(TEXT("Asset Path root '%s' has an invalid plugin name."), *Root);
+				return false;
+			}
+			if (!ResolveContentPluginAssetReferenceRoot(Root, PluginName, OutPackagePath, OutError))
+			{
+				return false;
+			}
+			FirstFolderSegmentIndex = 2;
+		}
+		else
+		{
+			OutError = FString::Printf(TEXT("Unsupported asset Path root '%s'. Use Game, Engine, or Plugin.PluginName."), *Root);
+			return false;
+		}
+
+		for (int32 Index = FirstFolderSegmentIndex; Index < Segments.Num(); ++Index)
+		{
+			OutPackagePath += TEXT("/");
+			OutPackagePath += Segments[Index].TrimStartAndEnd();
+		}
+
+		return true;
+	}
+
+	bool TryResolveDreamShaderAssetReference(const FString& InText, FString& OutObjectPath, FString& OutError)
 	{
 		OutObjectPath.Reset();
 
@@ -792,7 +930,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			else
 			{
-				OutError = TEXT("Asset Path(...) expects either 1 argument (/Game/... path) or 2 arguments (Game|Engine, asset path).");
+				OutError = TEXT("Asset Path(...) expects either 1 argument (/Game/... path) or 2 arguments (Game|Engine|Plugin.PluginName, asset path).");
 				return false;
 			}
 		}
@@ -811,31 +949,18 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		FString LongObjectPath;
-		if (AssetPath.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase)
-			|| AssetPath.StartsWith(TEXT("/Engine/"), ESearchCase::IgnoreCase))
+		if (AssetPath.StartsWith(TEXT("/")))
 		{
 			LongObjectPath = AssetPath;
 		}
 		else
 		{
-			if (!AssetPath.StartsWith(TEXT("/")))
+			FString PackageRoot;
+			if (!ResolveAssetReferenceRootPackagePath(RootName, PackageRoot, OutError))
 			{
-				AssetPath = TEXT("/") + AssetPath;
-			}
-
-			if (RootName.Equals(TEXT("Game"), ESearchCase::IgnoreCase))
-			{
-				LongObjectPath = TEXT("/Game") + AssetPath;
-			}
-			else if (RootName.Equals(TEXT("Engine"), ESearchCase::IgnoreCase))
-			{
-				LongObjectPath = TEXT("/Engine") + AssetPath;
-			}
-			else
-			{
-				OutError = FString::Printf(TEXT("Unsupported asset Path root '%s'. Use Game or Engine."), *RootName);
 				return false;
 			}
+			LongObjectPath = PackageRoot + TEXT("/") + AssetPath;
 		}
 
 		const int32 LastSlashIndex = LongObjectPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
@@ -926,13 +1051,12 @@ namespace UE::DreamShader::Editor::Private
 		FString AssetObjectPath;
 		const bool bHasParsedAssetReference =
 			CastField<FObjectPropertyBase>(Property) != nullptr
-			&& TryParseAssetReferenceLiteral(TrimmedValue, AssetObjectPath, OutError);
+			&& TryResolveDreamShaderAssetReference(TrimmedValue, AssetObjectPath, OutError);
 
 		if (CastField<FObjectPropertyBase>(Property) != nullptr
 			&& !bHasParsedAssetReference
 			&& (TrimmedValue.StartsWith(TEXT("Path("), ESearchCase::IgnoreCase)
-				|| TrimmedValue.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase)
-				|| TrimmedValue.StartsWith(TEXT("/Engine/"), ESearchCase::IgnoreCase)))
+				|| TrimmedValue.StartsWith(TEXT("/"))))
 		{
 			return false;
 		}
@@ -1013,7 +1137,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!bHasParsedAssetReference)
 			{
-				OutError = FString::Printf(TEXT("Object property '%s' expects Path(...) or an absolute /Game/... object path."), *Property->GetName());
+				OutError = FString::Printf(TEXT("Object property '%s' expects Path(...) or an absolute Unreal object path."), *Property->GetName());
 				return false;
 			}
 

@@ -1,6 +1,6 @@
 # DreamShaderLang 示例与模式
 
-本页提供可复制的 DreamShaderLang 片段。示例按常见工作流排列：最小材质、共享头文件、Package、函数调用、Graph 语法、UE 节点和 `ShaderFunction`。
+本页提供可复制的 DreamShaderLang 片段。示例按常见工作流排列：最小材质、共享头文件、Package、函数调用、Graph 语法、UE 节点、`ShaderFunction` 和 `VirtualFunction`。
 
 ## 1. 最小材质
 
@@ -226,3 +226,36 @@ ShaderFunction(Name="Functions/F_Tint")
     }
 }
 ```
+
+## 12. `VirtualFunction`
+
+`VirtualFunction` 用来声明项目里已经存在的 `UMaterialFunction`，不会生成或覆盖资产。
+
+```c
+VirtualFunction(Name="BufferWriter")
+{
+    Options = {
+        Asset = Path(Plugins.MoonToon, "MaterialFunctions/Buffer/Writer");
+        Description = "Existing MoonToon material function";
+    }
+
+    Inputs = {
+        float3 Color;
+        float Alpha;
+    }
+
+    Outputs = {
+        float3 Result;
+    }
+}
+```
+
+调用：
+
+```c
+Graph = {
+    float3 written = BufferWriter(Color, 1.0, Output="Result");
+}
+```
+
+`Asset` 支持 `Path(Game, "...")`、`Path(Engine, "...")`、`Path(Plugin.PluginName, "...")` / `Path(Plugins.PluginName, "...")`，也支持完整 Unreal object path。Material Function 资产右键菜单和 Material Function 编辑器工具栏里的 `Copy VirtualFunction Definition` 可以自动生成完整 `Inputs` / `Outputs` / `Options`。

@@ -4,7 +4,7 @@ DreamShaderLang 是 DreamShader 插件使用的文本语言。它用 `.dsm` / `.
 
 | 项目 | 内容 |
 | --- | --- |
-| 插件版本 | `1.1.4` |
+| 插件版本 | `1.2.0` |
 | 源文件 | `.dsm` / `.dsh` |
 | 主要产物 | `UMaterial` / `UMaterialFunction` |
 | 开发者 | TypeDreamMoon |
@@ -17,6 +17,7 @@ Dream Shader Material。用于生成资产，通常包含：
 
 - `Shader(Name="...")`
 - `ShaderFunction(Name="...")`
+- `VirtualFunction(Name="...")`
 - `import "Shared/Common.dsh";`
 
 一个 `.dsm` 可以包含共享 `Function` / `Namespace`，但推荐把可复用逻辑放入 `.dsh`，让材质文件更聚焦。
@@ -28,8 +29,9 @@ Dream Shader Header。用于存放共享代码，通常包含：
 - `import "OtherHeader.dsh";`
 - `Function Name(...) { ... }`
 - `Namespace(Name="...") { ... }`
+- `VirtualFunction(Name="...")`
 
-`.dsh` 不建议包含 `Shader(...)` 或 `ShaderFunction(...)`。
+`.dsh` 不建议包含 `Shader(...)` 或 `ShaderFunction(...)`，但可以包含 `VirtualFunction(...)` 这种只声明现有资产的签名。
 
 ## 2. 顶层声明
 
@@ -106,7 +108,46 @@ ShaderFunction(Name="Functions/F_Tint", Root="Plugin.MyPlugin")
 - `Outputs` 声明输出 pin。
 - `Graph` 负责生成材质函数内部图。
 
-### 2.3 `Function [Inline|SelfContained] Name(...) { ... }`
+### 2.3 `VirtualFunction(Name="...")`
+
+声明一个已经存在的 Unreal `UMaterialFunction`，让 `Graph` 可以像调用 `ShaderFunction` 一样调用它。`VirtualFunction` 不会生成、保存或覆盖对应资产。
+
+```c
+VirtualFunction(Name="BufferWriter")
+{
+    Options = {
+        Asset = Path(Plugins.MoonToon, "MaterialFunctions/Buffer/Writer");
+        Description = "Generated from /MoonToon/MaterialFunctions/Buffer/Writer";
+    }
+
+    Inputs = {
+        float3 Color;
+        float Alpha;
+    }
+
+    Outputs = {
+        float3 Result;
+    }
+}
+```
+
+规则：
+
+- `Name` 必填，作为 `Graph` 中的调用名。
+- `Options.Asset` 必填，指向现有 `UMaterialFunction` 资产。
+- `Options.Asset` 支持 `Path(Game, "...")`、`Path(Engine, "...")`、`Path(Plugin.PluginName, "...")` / `Path(Plugins.PluginName, "...")`，也支持完整 `/Game/...`、`/Engine/...` 或插件挂载 object path。
+- `Inputs` / `Outputs` 必须与现有材质函数的输入输出顺序和名称对应；自动生成按钮会从资产读取完整签名。
+- 不支持 `Graph` / `Code` section。
+
+调用示例：
+
+```c
+Graph = {
+    Result = BufferWriter(Color, 1.0, Output="Result");
+}
+```
+
+### 2.4 `Function [Inline|SelfContained] Name(...) { ... }`
 
 定义可复用 helper。函数体是 HLSL 风格代码。
 
@@ -133,7 +174,7 @@ Function SelfContained ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
 - 普通 `Function` 会生成 `.ush` 并由 Custom 节点 include。
 - `SelfContained` / `Inline` 会把依赖代码嵌入 Custom 节点，便于生成资产脱离 DreamShader 插件使用。
 
-### 2.4 `Namespace(Name="...")`
+### 2.5 `Namespace(Name="...")`
 
 组织一组共享 helper。
 
@@ -174,7 +215,7 @@ Properties = {
 
 ### 3.2 `Inputs`
 
-`ShaderFunction` 的输入 pin。
+`ShaderFunction` / `VirtualFunction` 的输入 pin。
 
 ```c
 Inputs = {
@@ -197,7 +238,7 @@ Outputs = {
 }
 ```
 
-`ShaderFunction` 中用于声明输出 pin：
+`ShaderFunction` / `VirtualFunction` 中用于声明输出 pin：
 
 ```c
 Outputs = {
@@ -222,7 +263,19 @@ Outputs = {
 | `ExposeToLibrary` | `true` |
 | `LibraryCategories` | `"DreamShader,Color"` |
 
-### 3.5 `Graph`
+### 3.5 `Options`
+
+`VirtualFunction` 中用于描述外部资产引用：
+
+```c
+Options = {
+    Asset = Path(Plugins.MoonToon, "MaterialFunctions/Buffer/Writer");
+}
+```
+
+`Settings` 也可作为兼容别名使用，但推荐新代码使用 `Options`。
+
+### 3.6 `Graph`
 
 `Graph` 是 `Shader` / `ShaderFunction` 内的图 DSL，负责生成 Unreal 材质节点。
 
@@ -233,7 +286,7 @@ Outputs = {
 - Brace initializer。
 - `UE.*` builtin 调用。
 - `Function(...)` / `Namespace::Function(...)` 独立调用。
-- `ShaderFunction(...)` 值调用。
+- `ShaderFunction(...)` / `VirtualFunction(...)` 值调用。
 - 基础 `if` / `else` 图分支。
 - 将结果绑定到输出变量。
 

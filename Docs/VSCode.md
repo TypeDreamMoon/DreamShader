@@ -15,6 +15,7 @@ DreamShaderLang 的 VSCode 扩展位于：
 - `Namespace`
 - `import`
 - `ShaderFunction`
+- `VirtualFunction`
 - HLSL 风格基础类型与 GLSL 风格别名
 - 常见流程关键字
 
@@ -28,6 +29,8 @@ DreamShaderLang 的 VSCode 扩展位于：
 - 设置项
 - 材质输出名
 - `Path(...)` helper
+- `Root="Plugin."` / `Path(Plugins.)` 后的项目内容插件名
+- `ShaderFunction` / `VirtualFunction` Graph 调用名
 - `Builtin/*.dsh` import 路径
 - `DShader/Packages` package import 路径
 
@@ -69,6 +72,7 @@ DreamShaderLang 的 VSCode 扩展位于：
 - `Function` 调用参数数量不匹配
 - `out` 参数不是合法变量名
 - 纹理默认值 `Path(...)` 语法错误
+- `VirtualFunction` 缺少 `Options.Asset` 或 `Outputs`
 
 另外还会读取 Unreal 桥接诊断：
 

@@ -2,12 +2,13 @@
 
 DreamShader 是一个 Unreal Engine 材质生成插件。它提供 `DreamShaderLang` 文本语言，让你用 `.dsm` / `.dsh` 源文件描述材质图、共享函数和材质函数，并自动生成标准 Unreal `UMaterial` / `UMaterialFunction` 资产。
 
-> 当前版本：`1.1.4`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
+> 当前版本：`1.2.0`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
 
 ## 核心能力
 
 - 使用文本源文件维护材质逻辑，减少手动连材质节点的重复工作。
 - 从 `Shader(Name="...", Root="Game")` 生成 `UMaterial`，从 `ShaderFunction(Name="...", Root="Game")` 生成 `UMaterialFunction`。
+- 使用 `VirtualFunction(Name="...")` 声明现有 Unreal `UMaterialFunction` 资产，并在 `Graph` 中直接调用，不会生成或覆盖资产。
 - 在 `Graph = { ... }` 中声明变量、调用 UE 材质节点、调用共享函数，并绑定材质输出。
 - 在 `Function` / `Namespace` 中编写可复用 HLSL 风格 helper。
 - 支持 `Inline` / `SelfContained` 函数，把依赖代码嵌入材质 Custom 节点，便于在未安装 DreamShader 的项目中继续使用生成资产。
@@ -19,12 +20,13 @@ DreamShader 是一个 Unreal Engine 材质生成插件。它提供 `DreamShaderL
 
 | 文件或概念 | 用途 |
 | --- | --- |
-| `.dsm` | 材质实现文件，通常包含 `Shader(...)` 或 `ShaderFunction(...)`。 |
-| `.dsh` | 共享头文件，通常包含 `Function`、`Namespace` 和 `import`。 |
+| `.dsm` | 材质实现文件，通常包含 `Shader(...)`、`ShaderFunction(...)` 或 `VirtualFunction(...)`。 |
+| `.dsh` | 共享头文件，通常包含 `Function`、`Namespace`、`VirtualFunction` 和 `import`。 |
 | `Graph` | `Shader` / `ShaderFunction` 内的材质图 DSL，用于生成材质节点。 |
 | `Function` | 可复用 helper，函数体按 HLSL 风格编写。 |
 | `Namespace` | 组织一组 helper，例如 `Texture::Sample2DRGB(...)`。 |
-| `Path(...)` | 为纹理属性声明默认 Unreal 资产。 |
+| `VirtualFunction` | 声明一个现有 `UMaterialFunction` 资产，供 `Graph` 作为值函数调用。 |
+| `Path(...)` | 为纹理属性、对象属性或 `VirtualFunction` 资产声明 Unreal 路径。 |
 | `DShader/Packages` | 项目安装的 DreamShader Package 目录。 |
 
 推荐项目结构：
@@ -139,11 +141,43 @@ Shader(Name="DreamMaterials/M_Tinted")
 
 ## Graph 与 Function 的区别
 
-`Graph = { ... }` 是材质图 DSL，目标是生成 Unreal 材质节点。它支持声明、赋值、构造、`UE.*` builtin、`Function` 调用、`ShaderFunction` 调用以及基础 `if` / `else` 图分支。
+`Graph = { ... }` 是材质图 DSL，目标是生成 Unreal 材质节点。它支持声明、赋值、构造、`UE.*` builtin、`Function` 调用、`ShaderFunction` / `VirtualFunction` 调用以及基础 `if` / `else` 图分支。
 
 `Function Name(...) { ... }` 是共享 helper 代码，适合放更自由的 HLSL 风格逻辑，例如 `for` / `while` / 复杂条件。`Function` 调用必须显式传入 `out` 目标变量。
 
 > 迁移提示：`Shader` / `ShaderFunction` 的图逻辑使用 `Graph = { ... }`。`Code` 仍保留给 `Function` helper 语义，不再作为 `Shader` / `ShaderFunction` 的图 section 使用。
+
+## VirtualFunction
+
+`VirtualFunction` 用于把项目里已有的 `UMaterialFunction` 暴露给 DreamShader Graph。它只声明调用签名，不生成、不保存、不覆盖对应资产。
+
+```c
+VirtualFunction(Name="BufferWriter")
+{
+    Options = {
+        Asset = Path(Plugins.MoonToon, "MaterialFunctions/Buffer/Writer");
+    }
+
+    Inputs = {
+        float3 Color;
+        float Alpha;
+    }
+
+    Outputs = {
+        float3 Result;
+    }
+}
+
+Shader(Name="DreamMaterials/M_UseBuffer")
+{
+    // ...
+    Graph = {
+        Color = BufferWriter(Tint, 1.0, Output="Result");
+    }
+}
+```
+
+`Asset` 支持 `Path(Game, "...")`、`Path(Engine, "...")`、`Path(Plugin.PluginName, "...")` / `Path(Plugins.PluginName, "...")`，也支持直接写完整 `/Game/...`、`/Engine/...` 或插件挂载路径。插件会在 Material Function 资产右键菜单和 Material Function 编辑器工具栏提供 `Copy VirtualFunction Definition`，自动把 Input / Output / Options 生成到剪贴板。
 
 ## UE 材质节点
 
@@ -215,7 +249,7 @@ I:/UnrealProject_Moon/VSCodeExt/dreamshader-language-support
 
 | 项目 | 内容 |
 | --- | --- |
-| Version | `1.1.4` |
+| Version | `1.2.0` |
 | Language | `DreamShaderLang` |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |

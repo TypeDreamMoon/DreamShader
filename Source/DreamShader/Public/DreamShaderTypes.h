@@ -88,6 +88,15 @@ namespace UE::DreamShader
 		FString HLSL;
 	};
 
+	struct FTextShaderVirtualFunctionDefinition
+	{
+		FString Name;
+		FString Asset;
+		TArray<FTextShaderFunctionParameter> Inputs;
+		TArray<FTextShaderFunctionParameter> Outputs;
+		TMap<FString, FString> Options;
+	};
+
 	struct FTextShaderDefinition
 	{
 		FString Name;
@@ -100,6 +109,7 @@ namespace UE::DreamShader
 		FString HLSL;
 		TArray<FTextShaderFunctionDefinition> Functions;
 		TArray<FTextShaderMaterialFunctionDefinition> MaterialFunctions;
+		TArray<FTextShaderVirtualFunctionDefinition> VirtualFunctions;
 		TArray<FString> Warnings;
 
 		DREAMSHADER_API bool TryGetSetting(const TCHAR* Key, FString& OutValue) const;

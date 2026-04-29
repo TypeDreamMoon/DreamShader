@@ -9,7 +9,9 @@ public class DreamShaderEditor : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new[]
 			{
+				"ApplicationCore",
 				"AssetRegistry",
+				"ContentBrowser",
 				"Core",
 				"CoreUObject",
 				"DirectoryWatcher",

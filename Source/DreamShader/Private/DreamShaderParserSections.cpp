@@ -828,4 +828,72 @@ namespace UE::DreamShader::Private
 			Scanner.TryConsume(TCHAR(';'));
 		}
 	}
+
+	bool ParseVirtualFunctionBody(const FString& BodyContent, FTextShaderVirtualFunctionDefinition& OutFunction, FString& OutError)
+	{
+		FScanner Scanner(BodyContent);
+		while (true)
+		{
+			Scanner.SkipIgnored();
+			if (Scanner.IsAtEnd())
+			{
+				return true;
+			}
+
+			FString SectionName;
+			if (!Scanner.ParseIdentifier(SectionName, OutError))
+			{
+				return false;
+			}
+
+			if (!Scanner.Expect(TCHAR('='), OutError))
+			{
+				return false;
+			}
+
+			FString SectionBody;
+			if (!Scanner.ExtractBalancedBlock(SectionBody, OutError))
+			{
+				return false;
+			}
+
+			if (SectionName.Equals(TEXT("Inputs"), ESearchCase::IgnoreCase)
+				|| SectionName.Equals(TEXT("Properties"), ESearchCase::IgnoreCase))
+			{
+				if (!ParseTypedParameterStatements(SectionBody, OutFunction.Inputs, OutError))
+				{
+					return false;
+				}
+			}
+			else if (SectionName.Equals(TEXT("Outputs"), ESearchCase::IgnoreCase)
+				|| SectionName.Equals(TEXT("Results"), ESearchCase::IgnoreCase))
+			{
+				if (!ParseTypedParameterStatements(SectionBody, OutFunction.Outputs, OutError))
+				{
+					return false;
+				}
+			}
+			else if (SectionName.Equals(TEXT("Options"), ESearchCase::IgnoreCase)
+				|| SectionName.Equals(TEXT("Settings"), ESearchCase::IgnoreCase))
+			{
+				if (!ParseSettingStatements(SectionBody, OutFunction.Options, OutError))
+				{
+					return false;
+				}
+			}
+			else if (SectionName.Equals(TEXT("Graph"), ESearchCase::IgnoreCase)
+				|| SectionName.Equals(TEXT("Code"), ESearchCase::IgnoreCase))
+			{
+				OutError = TEXT("VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections.");
+				return false;
+			}
+			else
+			{
+				OutError = FString::Printf(TEXT("Unknown VirtualFunction section '%s'."), *SectionName);
+				return false;
+			}
+
+			Scanner.TryConsume(TCHAR(';'));
+		}
+	}
 }
