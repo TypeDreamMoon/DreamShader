@@ -389,6 +389,7 @@ namespace UE::DreamShader::Private
 		TArray<FString> Statements;
 		FString Current;
 		int32 ParenthesisDepth = 0;
+		int32 BracketDepth = 0;
 		bool bInString = false;
 
 		for (int32 Index = 0; Index < BlockContent.Len(); ++Index)
@@ -430,7 +431,21 @@ namespace UE::DreamShader::Private
 				continue;
 			}
 
-			if (Char == TCHAR(';') && ParenthesisDepth == 0)
+			if (Char == TCHAR('['))
+			{
+				++BracketDepth;
+				Current.AppendChar(Char);
+				continue;
+			}
+
+			if (Char == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+				Current.AppendChar(Char);
+				continue;
+			}
+
+			if (Char == TCHAR(';') && ParenthesisDepth == 0 && BracketDepth == 0)
 			{
 				Current.TrimStartAndEndInline();
 				if (!Current.IsEmpty())
@@ -458,6 +473,7 @@ namespace UE::DreamShader::Private
 		TArray<FString> Parts;
 		FString Current;
 		int32 ParenthesisDepth = 0;
+		int32 BracketDepth = 0;
 		bool bInString = false;
 
 		for (int32 Index = 0; Index < Input.Len(); ++Index)
@@ -499,7 +515,21 @@ namespace UE::DreamShader::Private
 				continue;
 			}
 
-			if (Char == Delimiter && ParenthesisDepth == 0)
+			if (Char == TCHAR('['))
+			{
+				++BracketDepth;
+				Current.AppendChar(Char);
+				continue;
+			}
+
+			if (Char == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+				Current.AppendChar(Char);
+				continue;
+			}
+
+			if (Char == Delimiter && ParenthesisDepth == 0 && BracketDepth == 0)
 			{
 				Current.TrimStartAndEndInline();
 				if (!Current.IsEmpty())
@@ -525,6 +555,7 @@ namespace UE::DreamShader::Private
 	bool SplitTopLevelAssignment(const FString& InText, FString& OutLeft, FString& OutRight)
 	{
 		int32 ParenthesisDepth = 0;
+		int32 BracketDepth = 0;
 		bool bInString = false;
 
 		for (int32 Index = 0; Index < InText.Len(); ++Index)
@@ -562,7 +593,19 @@ namespace UE::DreamShader::Private
 				continue;
 			}
 
-			if (Char == TCHAR('=') && ParenthesisDepth == 0)
+			if (Char == TCHAR('['))
+			{
+				++BracketDepth;
+				continue;
+			}
+
+			if (Char == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+				continue;
+			}
+
+			if (Char == TCHAR('=') && ParenthesisDepth == 0 && BracketDepth == 0)
 			{
 				OutLeft = InText.Left(Index).TrimStartAndEnd();
 				OutRight = InText.Mid(Index + 1).TrimStartAndEnd();
@@ -577,6 +620,7 @@ namespace UE::DreamShader::Private
 	{
 		const FString Trimmed = InText.TrimStartAndEnd();
 		int32 ParenthesisDepth = 0;
+		int32 BracketDepth = 0;
 		bool bInString = false;
 		int32 LastWhitespaceIndex = INDEX_NONE;
 
@@ -615,7 +659,19 @@ namespace UE::DreamShader::Private
 				continue;
 			}
 
-			if (ParenthesisDepth == 0 && FChar::IsWhitespace(Char))
+			if (Char == TCHAR('['))
+			{
+				++BracketDepth;
+				continue;
+			}
+
+			if (Char == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+				continue;
+			}
+
+			if (ParenthesisDepth == 0 && BracketDepth == 0 && FChar::IsWhitespace(Char))
 			{
 				LastWhitespaceIndex = Index;
 			}

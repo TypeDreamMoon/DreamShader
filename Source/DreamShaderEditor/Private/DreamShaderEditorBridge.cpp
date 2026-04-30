@@ -155,6 +155,46 @@ namespace UE::DreamShader::Editor::Private
 			return Result;
 		}
 
+		FString MakeFunctionParameterMetadataSuffix(
+			const FString& Description,
+			const int32 SortPriority,
+			const int32 DefaultSortPriority)
+		{
+			TArray<FString> MetadataEntries;
+			if (!Description.TrimStartAndEnd().IsEmpty())
+			{
+				MetadataEntries.Add(FString::Printf(TEXT("Description=\"%s\""), *EscapeDreamShaderString(Description.TrimStartAndEnd())));
+			}
+			if (SortPriority != DefaultSortPriority)
+			{
+				MetadataEntries.Add(FString::Printf(TEXT("SortPriority=%d"), SortPriority));
+			}
+
+			return MetadataEntries.IsEmpty()
+				? FString()
+				: FString::Printf(TEXT(" [%s]"), *FString::Join(MetadataEntries, TEXT(", ")));
+		}
+
+		FString MakePreviewValueText(EFunctionInputType InputType, const FVector4f& PreviewValue)
+		{
+			switch (InputType)
+			{
+			case FunctionInput_Scalar:
+				return FString::SanitizeFloat(PreviewValue.X);
+			case FunctionInput_StaticBool:
+			case FunctionInput_Bool:
+				return PreviewValue.X != 0.0f ? TEXT("true") : TEXT("false");
+			case FunctionInput_Vector2:
+				return FString::Printf(TEXT("float2(%g, %g)"), PreviewValue.X, PreviewValue.Y);
+			case FunctionInput_Vector3:
+				return FString::Printf(TEXT("float3(%g, %g, %g)"), PreviewValue.X, PreviewValue.Y, PreviewValue.Z);
+			case FunctionInput_Vector4:
+				return FString::Printf(TEXT("float4(%g, %g, %g, %g)"), PreviewValue.X, PreviewValue.Y, PreviewValue.Z, PreviewValue.W);
+			default:
+				return FString();
+			}
+		}
+
 		bool TryMakeVirtualFunctionAssetLiteral(const UMaterialFunction* MaterialFunction, FString& OutLiteral, FString& OutError)
 		{
 			if (!MaterialFunction)
@@ -275,16 +315,30 @@ namespace UE::DreamShader::Editor::Private
 			for (int32 InputIndex = 0; InputIndex < Inputs.Num(); ++InputIndex)
 			{
 				const FFunctionExpressionInput& Input = Inputs[InputIndex];
-				const FString InputName = Input.ExpressionInput
+				const UMaterialExpressionFunctionInput* InputExpression = Input.ExpressionInput;
+				const FString InputName = InputExpression
 					? Input.ExpressionInput->InputName.ToString()
 					: Input.Input.InputName.ToString();
-				const EFunctionInputType InputType = Input.ExpressionInput
-					? Input.ExpressionInput->InputType.GetValue()
+				const EFunctionInputType InputType = InputExpression
+					? InputExpression->InputType.GetValue()
 					: FunctionInput_Vector4;
+				const bool bOptional = InputExpression && InputExpression->bUsePreviewValueAsDefault != 0;
+				const FString DefaultText = bOptional && InputExpression
+					? MakePreviewValueText(InputType, InputExpression->PreviewValue)
+					: FString();
+				const FString DefaultSuffix = DefaultText.IsEmpty()
+					? FString()
+					: FString::Printf(TEXT(" = %s"), *DefaultText);
+				const FString MetadataSuffix = InputExpression
+					? MakeFunctionParameterMetadataSuffix(InputExpression->Description, InputExpression->SortPriority, InputIndex)
+					: FString();
 				Lines.Add(FString::Printf(
-					TEXT("\t\t%s %s;"),
+					TEXT("\t\t%s%s %s%s%s;"),
+					bOptional ? TEXT("opt ") : TEXT(""),
 					*GetDreamShaderTypeForFunctionInput(InputType),
-					*MakeDreamShaderDeclarationName(InputName, TEXT("Input"), InputIndex)));
+					*MakeDreamShaderDeclarationName(InputName, TEXT("Input"), InputIndex),
+					*DefaultSuffix,
+					*MetadataSuffix));
 			}
 			Lines.Add(TEXT("\t}"));
 			Lines.Add(TEXT(""));
@@ -292,16 +346,21 @@ namespace UE::DreamShader::Editor::Private
 			for (int32 OutputIndex = 0; OutputIndex < Outputs.Num(); ++OutputIndex)
 			{
 				const FFunctionExpressionOutput& Output = Outputs[OutputIndex];
-				const FString OutputName = Output.ExpressionOutput
-					? Output.ExpressionOutput->OutputName.ToString()
+				UMaterialExpressionFunctionOutput* OutputExpression = Output.ExpressionOutput;
+				const FString OutputName = OutputExpression
+					? OutputExpression->OutputName.ToString()
 					: Output.Output.OutputName.ToString();
-				const EMaterialValueType OutputType = Output.ExpressionOutput
-					? Output.ExpressionOutput->GetInputValueType(0)
+				const EMaterialValueType OutputType = OutputExpression
+					? OutputExpression->GetInputValueType(0)
 					: MCT_Float4;
+				const FString MetadataSuffix = OutputExpression
+					? MakeFunctionParameterMetadataSuffix(OutputExpression->Description, OutputExpression->SortPriority, OutputIndex)
+					: FString();
 				Lines.Add(FString::Printf(
-					TEXT("\t\t%s %s;"),
+					TEXT("\t\t%s %s%s;"),
 					*GetDreamShaderTypeForMaterialValueType(OutputType),
-					*MakeDreamShaderDeclarationName(OutputName, TEXT("Output"), OutputIndex)));
+					*MakeDreamShaderDeclarationName(OutputName, TEXT("Output"), OutputIndex),
+					*MetadataSuffix));
 			}
 			Lines.Add(TEXT("\t}"));
 			Lines.Add(TEXT("}"));
@@ -332,7 +391,9 @@ namespace UE::DreamShader::Editor::Private
 			TArray<FString> Arguments;
 			for (int32 InputIndex = 0; InputIndex < Inputs.Num(); ++InputIndex)
 			{
-				Arguments.Add(MakeDreamShaderDeclarationName(Inputs[InputIndex].Name, TEXT("Input"), InputIndex));
+				Arguments.Add(Inputs[InputIndex].bOptional
+					? TEXT("default")
+					: MakeDreamShaderDeclarationName(Inputs[InputIndex].Name, TEXT("Input"), InputIndex));
 			}
 
 			Arguments.Add(FString::Printf(
@@ -367,6 +428,7 @@ namespace UE::DreamShader::Editor::Private
 					: Input.Input.InputName.ToString();
 				FTextShaderFunctionParameter& Parameter = Inputs.AddDefaulted_GetRef();
 				Parameter.Name = InputName;
+				Parameter.bOptional = Input.ExpressionInput && Input.ExpressionInput->bUsePreviewValueAsDefault != 0;
 			}
 
 			TArray<FTextShaderFunctionParameter> Outputs;

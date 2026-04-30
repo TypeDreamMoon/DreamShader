@@ -16,6 +16,8 @@
 #include "Materials/MaterialExpressionObjectPositionWS.h"
 #include "Materials/MaterialExpressionPanner.h"
 #include "Materials/MaterialExpressionScreenPosition.h"
+#include "Materials/MaterialExpressionStaticSwitchParameter.h"
+#include "Materials/MaterialExpressionCollectionParameter.h"
 #include "Materials/MaterialExpressionSubtract.h"
 #include "Materials/MaterialExpressionTextureCoordinate.h"
 #include "Materials/MaterialExpressionTime.h"
@@ -25,6 +27,8 @@
 #include "Materials/MaterialExpressionVertexColor.h"
 #include "Materials/MaterialExpressionWorldPosition.h"
 #include "Materials/MaterialFunction.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "UObject/UnrealType.h"
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -2164,6 +2168,59 @@ namespace UE::DreamShader::Editor::Private
 		return TryExtractTextLiteral(Expression, OutText);
 	}
 
+	bool FCodeGraphBuilder::TryExtractAssetReferenceText(const TSharedPtr<FCodeExpression>& Expression, FString& OutText) const
+	{
+		if (!Expression)
+		{
+			return false;
+		}
+
+		if (TryExtractLiteralText(Expression, OutText))
+		{
+			return true;
+		}
+
+		if (Expression->Kind != ECodeExpressionKind::Call)
+		{
+			return false;
+		}
+
+		FString CalleeName;
+		if (!TryFlattenQualifiedName(Expression->Left, CalleeName)
+			|| !CalleeName.Equals(TEXT("Path"), ESearchCase::IgnoreCase))
+		{
+			return false;
+		}
+
+		TArray<FString> Parts;
+		for (const FCodeCallArgument& Argument : Expression->Arguments)
+		{
+			if (Argument.bIsNamed)
+			{
+				return false;
+			}
+
+			if (Argument.Expression && Argument.Expression->Kind == ECodeExpressionKind::StringLiteral)
+			{
+				FString Escaped = Argument.Expression->Text;
+				Escaped.ReplaceInline(TEXT("\\"), TEXT("\\\\"));
+				Escaped.ReplaceInline(TEXT("\""), TEXT("\\\""));
+				Parts.Add(FString::Printf(TEXT("\"%s\""), *Escaped));
+				continue;
+			}
+
+			FString LiteralText;
+			if (!TryExtractLiteralText(Argument.Expression, LiteralText))
+			{
+				return false;
+			}
+			Parts.Add(LiteralText);
+		}
+
+		OutText = FString::Printf(TEXT("Path(%s)"), *FString::Join(Parts, TEXT(", ")));
+		return true;
+	}
+
 	bool FCodeGraphBuilder::TryExtractScalarLiteral(const TSharedPtr<FCodeExpression>& Expression, double& OutValue) const
 	{
 		if (!Expression)
@@ -2231,6 +2288,12 @@ namespace UE::DreamShader::Editor::Private
 
 		FString TextValue;
 		return TryExtractTextLiteral(Expression, TextValue) && ParseBooleanLiteral(TextValue, OutValue);
+	}
+
+	bool FCodeGraphBuilder::IsDefaultArgument(const TSharedPtr<FCodeExpression>& Expression)
+	{
+		FString Name;
+		return TryFlattenQualifiedName(Expression, Name) && Name.Equals(TEXT("default"), ESearchCase::IgnoreCase);
 	}
 
 	const FCodeCallArgument* FCodeGraphBuilder::FindNamedArgument(const TArray<FCodeCallArgument>& Arguments, const TCHAR* Name) const
@@ -2620,6 +2683,14 @@ namespace UE::DreamShader::Editor::Private
 			return EvaluateUEBuiltinCall(CalleeName, Expression->Arguments, OutValue, OutError);
 		}
 
+		if (const FTextShaderPropertyDefinition* Property = FindPropertyDefinition(CalleeName))
+		{
+			if (Property->ParameterNodeType.Equals(TEXT("StaticSwitchParameter"), ESearchCase::IgnoreCase))
+			{
+				return EvaluateStaticSwitchParameterCall(*Property, Expression->Arguments, OutValue, OutError);
+			}
+		}
+
 		const FTextShaderFunctionDefinition* CustomFunction = FindFunctionDefinition(CalleeName);
 		const FTextShaderMaterialFunctionDefinition* MaterialFunctionDefinition = FindMaterialFunctionDefinition(CalleeName);
 		const FTextShaderVirtualFunctionDefinition* VirtualFunctionDefinition = FindVirtualFunctionDefinition(CalleeName);
@@ -2790,6 +2861,127 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		OutValue.ComponentCount = ExpectedComponents;
+		return true;
+	}
+
+	const FTextShaderPropertyDefinition* FCodeGraphBuilder::FindPropertyDefinition(const FString& PropertyName) const
+	{
+		for (const FTextShaderPropertyDefinition& Property : Definition.Properties)
+		{
+			if (Property.Name.Equals(PropertyName, ESearchCase::IgnoreCase))
+			{
+				return &Property;
+			}
+		}
+
+		return nullptr;
+	}
+
+	bool FCodeGraphBuilder::EvaluateStaticSwitchParameterCall(
+		const FTextShaderPropertyDefinition& Property,
+		const TArray<FCodeCallArgument>& Arguments,
+		FCodeValue& OutValue,
+		FString& OutError)
+	{
+		const FCodeCallArgument* TrueArgument = FindNamedArgument(Arguments, TEXT("True"));
+		if (!TrueArgument)
+		{
+			TrueArgument = FindNamedArgument(Arguments, TEXT("A"));
+		}
+		if (!TrueArgument)
+		{
+			TrueArgument = FindPositionalArgument(Arguments, 0);
+		}
+
+		const FCodeCallArgument* FalseArgument = FindNamedArgument(Arguments, TEXT("False"));
+		if (!FalseArgument)
+		{
+			FalseArgument = FindNamedArgument(Arguments, TEXT("B"));
+		}
+		if (!FalseArgument)
+		{
+			FalseArgument = FindPositionalArgument(Arguments, 1);
+		}
+
+		if (!TrueArgument || !FalseArgument)
+		{
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' requires True=... and False=... inputs."), *Property.Name);
+			return false;
+		}
+
+		FCodeValue TrueValue;
+		if (!EvaluateExpression(TrueArgument->Expression, TrueValue, OutError))
+		{
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' True input: %s"), *Property.Name, *OutError);
+			return false;
+		}
+
+		FCodeValue FalseValue;
+		if (!EvaluateExpression(FalseArgument->Expression, FalseValue, OutError))
+		{
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' False input: %s"), *Property.Name, *OutError);
+			return false;
+		}
+
+		if (TrueValue.bIsTextureObject || FalseValue.bIsTextureObject)
+		{
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' cannot switch Texture object values."), *Property.Name);
+			return false;
+		}
+		if (TrueValue.ComponentCount != FalseValue.ComponentCount)
+		{
+			OutError = FString::Printf(
+				TEXT("StaticSwitchParameter '%s' branches must have the same component count, got %d and %d."),
+				*Property.Name,
+				TrueValue.ComponentCount,
+				FalseValue.ComponentCount);
+			return false;
+		}
+
+		UMaterialExpressionStaticSwitchParameter* SwitchExpression = nullptr;
+		if (FCodeValue* ExistingValue = FindValue(Property.Name))
+		{
+			SwitchExpression = Cast<UMaterialExpressionStaticSwitchParameter>(ExistingValue->Expression);
+		}
+
+		if (!SwitchExpression)
+		{
+			SwitchExpression = Cast<UMaterialExpressionStaticSwitchParameter>(
+				CreateExpression(UMaterialExpressionStaticSwitchParameter::StaticClass(), 600, ConsumeNodeY()));
+		}
+
+		if (!SwitchExpression)
+		{
+			OutError = FString::Printf(TEXT("Failed to create StaticSwitchParameter node '%s'."), *Property.Name);
+			return false;
+		}
+
+		SwitchExpression->ParameterName = FName(*Property.Name);
+		SwitchExpression->DefaultValue = Property.ScalarDefaultValue != 0.0 ? 1U : 0U;
+		if (!SwitchExpression->ExpressionGUID.IsValid())
+		{
+			SwitchExpression->ExpressionGUID = FGuid::NewGuid();
+		}
+		if (!Property.Metadata.Group.IsEmpty())
+		{
+			SwitchExpression->Group = FName(*Property.Metadata.Group);
+		}
+		if (Property.Metadata.bHasSortPriority)
+		{
+			SwitchExpression->SortPriority = Property.Metadata.SortPriority;
+		}
+		if (!Property.Metadata.Description.IsEmpty())
+		{
+			SwitchExpression->Desc = Property.Metadata.Description;
+		}
+
+		ConnectCodeValueToInput(SwitchExpression->A, TrueValue);
+		ConnectCodeValueToInput(SwitchExpression->B, FalseValue);
+
+		OutValue.Expression = SwitchExpression;
+		OutValue.OutputIndex = 0;
+		OutValue.ComponentCount = TrueValue.ComponentCount;
+		OutValue.bIsTextureObject = false;
 		return true;
 	}
 
@@ -3225,12 +3417,6 @@ namespace UE::DreamShader::Editor::Private
 				InputArgument = PositionalArguments[PositionalArgumentIndex++];
 			}
 
-			if (!InputArgument)
-			{
-				OutError = FString::Printf(TEXT("%s '%s' is missing required input '%s'."), *CallKind, *FunctionName, *InputDefinition.Name);
-				return false;
-			}
-
 			int32 FunctionInputIndex = INDEX_NONE;
 			for (int32 CandidateIndex = 0; CandidateIndex < FunctionCall->FunctionInputs.Num(); ++CandidateIndex)
 			{
@@ -3251,6 +3437,28 @@ namespace UE::DreamShader::Editor::Private
 			if (!FunctionCall->FunctionInputs.IsValidIndex(FunctionInputIndex))
 			{
 				OutError = FString::Printf(TEXT("%s '%s' input '%s' does not exist on MaterialFunction asset '%s'."), *CallKind, *FunctionName, *InputDefinition.Name, *ObjectPath);
+				return false;
+			}
+
+			if (!InputArgument)
+			{
+				if (InputDefinition.bOptional)
+				{
+					continue;
+				}
+
+				OutError = FString::Printf(TEXT("%s '%s' is missing required input '%s'."), *CallKind, *FunctionName, *InputDefinition.Name);
+				return false;
+			}
+
+			if (IsDefaultArgument(InputArgument->Expression))
+			{
+				if (InputDefinition.bOptional)
+				{
+					continue;
+				}
+
+				OutError = FString::Printf(TEXT("%s '%s' input '%s' is not optional and cannot use default."), *CallKind, *FunctionName, *InputDefinition.Name);
 				return false;
 			}
 
@@ -3636,6 +3844,182 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		};
 
+		if (FunctionName.Equals(TEXT("StaticSwitchParameter"), ESearchCase::IgnoreCase))
+		{
+			const FCodeCallArgument* NameArgument = FindNamedArgument(Arguments, TEXT("Name"));
+			if (!NameArgument)
+			{
+				NameArgument = FindNamedArgument(Arguments, TEXT("ParameterName"));
+			}
+			if (!NameArgument)
+			{
+				OutError = TEXT("UE.StaticSwitchParameter requires Name=\"ParameterName\".");
+				return false;
+			}
+
+			FString ParameterName;
+			if (!TryExtractTextLiteral(NameArgument->Expression, ParameterName) || ParameterName.TrimStartAndEnd().IsEmpty())
+			{
+				OutError = TEXT("UE.StaticSwitchParameter Name must be a text value.");
+				return false;
+			}
+
+			FTextShaderPropertyDefinition SwitchProperty;
+			SwitchProperty.Name = ParameterName.TrimStartAndEnd();
+			SwitchProperty.ParameterNodeType = TEXT("StaticSwitchParameter");
+			if (const FCodeCallArgument* DefaultArgument = FindNamedArgument(Arguments, TEXT("Default")))
+			{
+				bool bDefault = false;
+				if (!TryExtractBooleanLiteral(DefaultArgument->Expression, bDefault))
+				{
+					OutError = TEXT("UE.StaticSwitchParameter Default must be true or false.");
+					return false;
+				}
+				SwitchProperty.bHasDefaultValue = true;
+				SwitchProperty.ScalarDefaultValue = bDefault ? 1.0 : 0.0;
+			}
+			if (const FCodeCallArgument* GroupArgument = FindNamedArgument(Arguments, TEXT("Group")))
+			{
+				(void)TryExtractTextLiteral(GroupArgument->Expression, SwitchProperty.Metadata.Group);
+			}
+			if (const FCodeCallArgument* DescriptionArgument = FindNamedArgument(Arguments, TEXT("Description")))
+			{
+				(void)TryExtractTextLiteral(DescriptionArgument->Expression, SwitchProperty.Metadata.Description);
+			}
+			if (const FCodeCallArgument* SortArgument = FindNamedArgument(Arguments, TEXT("SortPriority")))
+			{
+				int32 SortPriority = 32;
+				if (!TryExtractIntegerLiteral(SortArgument->Expression, SortPriority))
+				{
+					OutError = TEXT("UE.StaticSwitchParameter SortPriority must be an integer literal.");
+					return false;
+				}
+				SwitchProperty.Metadata.bHasSortPriority = true;
+				SwitchProperty.Metadata.SortPriority = SortPriority;
+			}
+
+			return EvaluateStaticSwitchParameterCall(SwitchProperty, Arguments, OutValue, OutError);
+		}
+
+		if (FunctionName.Equals(TEXT("CollectionParam"), ESearchCase::IgnoreCase)
+			|| FunctionName.Equals(TEXT("CollectionParameter"), ESearchCase::IgnoreCase))
+		{
+			const FCodeCallArgument* CollectionArgument = FindNamedArgument(Arguments, TEXT("Collection"));
+			if (!CollectionArgument)
+			{
+				CollectionArgument = FindNamedArgument(Arguments, TEXT("Asset"));
+			}
+			if (!CollectionArgument)
+			{
+				OutError = TEXT("UE.CollectionParam requires Collection=Path(...).");
+				return false;
+			}
+
+			FString CollectionText;
+			if (!TryExtractAssetReferenceText(CollectionArgument->Expression, CollectionText))
+			{
+				OutError = TEXT("UE.CollectionParam Collection must be Path(...) or an Unreal object path.");
+				return false;
+			}
+
+			FString CollectionObjectPath;
+			if (!TryResolveDreamShaderAssetReference(CollectionText, CollectionObjectPath, OutError))
+			{
+				OutError = FString::Printf(TEXT("UE.CollectionParam Collection is invalid: %s"), *OutError);
+				return false;
+			}
+
+			UMaterialParameterCollection* Collection = LoadObject<UMaterialParameterCollection>(nullptr, *CollectionObjectPath);
+			if (!Collection)
+			{
+				OutError = FString::Printf(TEXT("UE.CollectionParam could not load MaterialParameterCollection '%s'."), *CollectionObjectPath);
+				return false;
+			}
+
+			const FCodeCallArgument* ParameterArgument = FindNamedArgument(Arguments, TEXT("Parameter"));
+			if (!ParameterArgument)
+			{
+				ParameterArgument = FindNamedArgument(Arguments, TEXT("ParameterName"));
+			}
+			if (!ParameterArgument)
+			{
+				OutError = TEXT("UE.CollectionParam requires Parameter=\"Name\".");
+				return false;
+			}
+
+			FString ParameterText;
+			if (!TryExtractTextLiteral(ParameterArgument->Expression, ParameterText) || ParameterText.TrimStartAndEnd().IsEmpty())
+			{
+				OutError = TEXT("UE.CollectionParam Parameter must be a text value.");
+				return false;
+			}
+
+			const FName ParameterName(*ParameterText.TrimStartAndEnd());
+			const bool bIsScalarParameter = Collection->GetScalarParameterByName(ParameterName) != nullptr;
+			const bool bIsVectorParameter = Collection->GetVectorParameterByName(ParameterName) != nullptr;
+			if (!bIsScalarParameter && !bIsVectorParameter)
+			{
+				OutError = FString::Printf(
+					TEXT("UE.CollectionParam collection '%s' does not contain parameter '%s'."),
+					*CollectionObjectPath,
+					*ParameterText);
+				return false;
+			}
+
+			auto* Expression = Cast<UMaterialExpressionCollectionParameter>(
+				CreateExpression(UMaterialExpressionCollectionParameter::StaticClass(), 600, ConsumeNodeY()));
+			if (!Expression)
+			{
+				OutError = TEXT("Failed to create UE.CollectionParam node.");
+				return false;
+			}
+
+			Expression->Collection = Collection;
+			Expression->ParameterName = ParameterName;
+			Expression->ParameterId = Collection->GetParameterId(ParameterName);
+			if (!Expression->ExpressionGUID.IsValid())
+			{
+				Expression->ExpressionGUID = FGuid::NewGuid();
+			}
+
+			FString GroupText;
+			if (HandleOptionalTextLiteralArgument(TEXT("Group"), GroupText) && !GroupText.IsEmpty())
+			{
+				Expression->Group = FName(*GroupText);
+			}
+			else if (!OutError.IsEmpty())
+			{
+				return false;
+			}
+
+			if (const FCodeCallArgument* SortArgument = FindNamedArgument(Arguments, TEXT("SortPriority")))
+			{
+				int32 SortPriority = 32;
+				if (!TryExtractIntegerLiteral(SortArgument->Expression, SortPriority))
+				{
+					OutError = TEXT("UE.CollectionParam SortPriority must be an integer literal.");
+					return false;
+				}
+				Expression->SortPriority = SortPriority;
+			}
+
+			FString DescriptionText;
+			if (HandleOptionalTextLiteralArgument(TEXT("Description"), DescriptionText) && !DescriptionText.IsEmpty())
+			{
+				Expression->Desc = DescriptionText;
+			}
+			else if (!OutError.IsEmpty())
+			{
+				return false;
+			}
+
+			OutValue.Expression = Expression;
+			OutValue.OutputIndex = 0;
+			OutValue.ComponentCount = bIsVectorParameter ? 4 : 1;
+			OutValue.bIsTextureObject = false;
+			return true;
+		}
+
 		struct FUEBuiltinDescriptor
 		{
 			const TCHAR* Name = TEXT("");
@@ -3930,7 +4314,16 @@ namespace UE::DreamShader::Editor::Private
 			else
 			{
 				FString LiteralText;
-				if (!TryExtractLiteralText(Argument.Expression, LiteralText))
+				const bool bWantsAssetReference = CastField<FObjectPropertyBase>(BoundProperty) != nullptr;
+				if (bWantsAssetReference)
+				{
+					if (!TryExtractAssetReferenceText(Argument.Expression, LiteralText))
+					{
+						OutError = FString::Printf(TEXT("UE.%s property '%s' must use Path(...) or an Unreal object path."), *FunctionName, *Argument.Name);
+						return false;
+					}
+				}
+				else if (!TryExtractLiteralText(Argument.Expression, LiteralText))
 				{
 					OutError = FString::Printf(TEXT("UE.%s property '%s' must use a literal value."), *FunctionName, *Argument.Name);
 					return false;

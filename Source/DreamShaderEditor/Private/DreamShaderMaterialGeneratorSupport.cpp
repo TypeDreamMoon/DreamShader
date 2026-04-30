@@ -21,16 +21,23 @@
 #include "Materials/MaterialExpressionConstant4Vector.h"
 #include "Materials/MaterialExpressionObjectPositionWS.h"
 #include "Materials/MaterialExpressionPanner.h"
+#include "Materials/MaterialExpressionParameter.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionScreenPosition.h"
+#include "Materials/MaterialExpressionStaticBoolParameter.h"
+#include "Materials/MaterialExpressionStaticSwitchParameter.h"
+#include "Materials/MaterialExpressionCollectionParameter.h"
 #include "Materials/MaterialExpressionTextureCoordinate.h"
+#include "Materials/MaterialExpressionTextureBase.h"
 #include "Materials/MaterialExpressionTextureObjectParameter.h"
+#include "Materials/MaterialExpressionTextureSampleParameter.h"
 #include "Materials/MaterialExpressionTime.h"
 #include "Materials/MaterialExpressionVectorParameter.h"
 #include "Materials/MaterialExpressionVertexColor.h"
 #include "Materials/MaterialExpressionWorldPosition.h"
 #include "Materials/MaterialFunction.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
+#include "Materials/MaterialParameterCollection.h"
 #include "Engine/Texture.h"
 #include "Engine/Texture2DArray.h"
 #include "Engine/TextureCube.h"
@@ -2468,6 +2475,186 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
+	static FString FormatMetadataContext(const FTextShaderPropertyDefinition& Property)
+	{
+		return FString::Printf(TEXT("property '%s'"), *Property.Name);
+	}
+
+	static void ApplyExpressionMetadata(UMaterialExpression* Expression, const FTextShaderMetadata& Metadata)
+	{
+		if (!Expression)
+		{
+			return;
+		}
+
+		if (!Metadata.Description.IsEmpty())
+		{
+			Expression->Desc = Metadata.Description;
+		}
+
+		if (UMaterialExpressionParameter* Parameter = Cast<UMaterialExpressionParameter>(Expression))
+		{
+			if (!Metadata.Group.IsEmpty())
+			{
+				Parameter->Group = FName(*Metadata.Group);
+			}
+			if (Metadata.bHasSortPriority)
+			{
+				Parameter->SortPriority = Metadata.SortPriority;
+			}
+		}
+
+		if (UMaterialExpressionTextureSampleParameter* TextureParameter = Cast<UMaterialExpressionTextureSampleParameter>(Expression))
+		{
+			if (!Metadata.Group.IsEmpty())
+			{
+				TextureParameter->Group = FName(*Metadata.Group);
+			}
+			if (Metadata.bHasSortPriority)
+			{
+				TextureParameter->SortPriority = Metadata.SortPriority;
+			}
+		}
+
+		if (UMaterialExpressionCollectionParameter* CollectionParameter = Cast<UMaterialExpressionCollectionParameter>(Expression))
+		{
+			if (!Metadata.Group.IsEmpty())
+			{
+				CollectionParameter->Group = FName(*Metadata.Group);
+			}
+			if (Metadata.bHasSortPriority)
+			{
+				CollectionParameter->SortPriority = Metadata.SortPriority;
+			}
+		}
+	}
+
+	static bool SetExpressionParameterName(UMaterialExpression* Expression, const FString& ParameterName, FString& OutError)
+	{
+		if (!Expression)
+		{
+			OutError = TEXT("Invalid parameter expression.");
+			return false;
+		}
+
+		if (FProperty* ParameterNameProperty = FindMaterialExpressionArgumentProperty(Expression->GetClass(), TEXT("ParameterName")))
+		{
+			return SetMaterialExpressionLiteralProperty(Expression, ParameterNameProperty, ParameterName, OutError);
+		}
+
+		OutError = FString::Printf(TEXT("'%s' does not expose a ParameterName property."), *Expression->GetClass()->GetName());
+		return false;
+	}
+
+	static bool SetExpressionDefaultValue(UMaterialExpression* Expression, const FTextShaderPropertyDefinition& Property, FString& OutError)
+	{
+		if (!Expression || !Property.bHasDefaultValue)
+		{
+			return true;
+		}
+
+		if (Property.Type == ETextShaderPropertyType::Texture2D || !Property.TextureDefaultObjectPath.IsEmpty())
+		{
+			if (Property.TextureDefaultObjectPath.IsEmpty())
+			{
+				return true;
+			}
+
+			if (FProperty* TextureProperty = FindMaterialExpressionArgumentProperty(Expression->GetClass(), TEXT("Texture")))
+			{
+				return SetMaterialExpressionLiteralProperty(Expression, TextureProperty, Property.TextureDefaultObjectPath, OutError);
+			}
+			if (FProperty* TextureObjectProperty = FindMaterialExpressionArgumentProperty(Expression->GetClass(), TEXT("TextureObject")))
+			{
+				return SetMaterialExpressionLiteralProperty(Expression, TextureObjectProperty, Property.TextureDefaultObjectPath, OutError);
+			}
+
+			OutError = FString::Printf(TEXT("'%s' does not expose a Texture property for %s."), *Expression->GetClass()->GetName(), *FormatMetadataContext(Property));
+			return false;
+		}
+
+		FProperty* DefaultValueProperty = FindMaterialExpressionArgumentProperty(Expression->GetClass(), TEXT("DefaultValue"));
+		if (!DefaultValueProperty)
+		{
+			return true;
+		}
+
+		if (Property.Type == ETextShaderPropertyType::Scalar)
+		{
+			if (Property.ParameterNodeType.Equals(TEXT("StaticBoolParameter"), ESearchCase::IgnoreCase)
+				|| Property.ParameterNodeType.Equals(TEXT("StaticSwitchParameter"), ESearchCase::IgnoreCase))
+			{
+				return SetMaterialExpressionLiteralProperty(
+					Expression,
+					DefaultValueProperty,
+					Property.ScalarDefaultValue != 0.0 ? TEXT("true") : TEXT("false"),
+					OutError);
+			}
+
+			return SetMaterialExpressionLiteralProperty(
+				Expression,
+				DefaultValueProperty,
+				FString::SanitizeFloat(Property.ScalarDefaultValue),
+				OutError);
+		}
+
+		const FString LinearColorText = FString::Printf(
+			TEXT("(R=%f,G=%f,B=%f,A=%f)"),
+			Property.VectorDefaultValue.R,
+			Property.VectorDefaultValue.G,
+			Property.VectorDefaultValue.B,
+			Property.VectorDefaultValue.A);
+		if (SetMaterialExpressionLiteralProperty(Expression, DefaultValueProperty, LinearColorText, OutError))
+		{
+			return true;
+		}
+
+		const FString VectorText = FString::Printf(
+			TEXT("(X=%f,Y=%f,Z=%f,W=%f)"),
+			Property.VectorDefaultValue.R,
+			Property.VectorDefaultValue.G,
+			Property.VectorDefaultValue.B,
+			Property.VectorDefaultValue.A);
+		return SetMaterialExpressionLiteralProperty(Expression, DefaultValueProperty, VectorText, OutError);
+	}
+
+	static UMaterialExpression* CreateGenericParameterNodeExpression(
+		UMaterial* Material,
+		const FTextShaderPropertyDefinition& Property,
+		const int32 PositionY,
+		FString& OutError)
+	{
+		UClass* ExpressionClass = ResolveMaterialExpressionClass(Property.ParameterNodeType);
+		if (!ExpressionClass)
+		{
+			OutError = FString::Printf(TEXT("Could not resolve MaterialExpression class for parameter type '%s'."), *Property.ParameterNodeType);
+			return nullptr;
+		}
+
+		auto* Expression = Cast<UMaterialExpression>(
+			UMaterialEditingLibrary::CreateMaterialExpression(Material, ExpressionClass, -800, PositionY));
+		if (!Expression)
+		{
+			OutError = FString::Printf(TEXT("Failed to create a '%s' node for property '%s'."), *Property.ParameterNodeType, *Property.Name);
+			return nullptr;
+		}
+
+		if (!SetExpressionParameterName(Expression, Property.Name, OutError)
+			|| !SetExpressionDefaultValue(Expression, Property, OutError))
+		{
+			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+			return nullptr;
+		}
+
+		if (UMaterialExpressionTextureBase* TextureExpression = Cast<UMaterialExpressionTextureBase>(Expression))
+		{
+			TextureExpression->AutoSetSampleType();
+		}
+
+		ApplyExpressionMetadata(Expression, Property.Metadata);
+		return Expression;
+	}
+
 	static UMaterialExpression* CreateParameterExpression(
 		UMaterial* Material,
 		const FTextShaderPropertyDefinition& Property,
@@ -2475,6 +2662,14 @@ namespace UE::DreamShader::Editor::Private
 		FString& OutError)
 	{
 		check(Material);
+
+		if (!Property.ParameterNodeType.IsEmpty()
+			&& !Property.ParameterNodeType.Equals(TEXT("ScalarParameter"), ESearchCase::IgnoreCase)
+			&& !Property.ParameterNodeType.Equals(TEXT("VectorParameter"), ESearchCase::IgnoreCase)
+			&& !Property.ParameterNodeType.Equals(TEXT("TextureObjectParameter"), ESearchCase::IgnoreCase))
+		{
+			return CreateGenericParameterNodeExpression(Material, Property, PositionY, OutError);
+		}
 
 		if (Property.Type == ETextShaderPropertyType::Scalar)
 		{
@@ -2491,6 +2686,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Expression->DefaultValue = static_cast<float>(Property.ScalarDefaultValue);
 			}
+			ApplyExpressionMetadata(Expression, Property.Metadata);
 			return Expression;
 		}
 
@@ -2509,6 +2705,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				ParameterExpression->DefaultValue = Property.VectorDefaultValue;
 			}
+			ApplyExpressionMetadata(ParameterExpression, Property.Metadata);
 
 			if (Property.ComponentCount >= 4)
 			{
@@ -2596,6 +2793,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			Expression->SetDefaultTexture();
 		}
+		ApplyExpressionMetadata(Expression, Property.Metadata);
 		return Expression;
 	}
 
@@ -2681,6 +2879,20 @@ namespace UE::DreamShader::Editor::Private
 			return nullptr;
 		}
 
+		if (!Property.UEBuiltinArguments.Contains(UE::DreamShader::NormalizeSettingKey(TEXT("ParameterName")))
+			&& FindMaterialExpressionArgumentProperty(ExpressionClass, TEXT("ParameterName")))
+		{
+			FString ParameterNameError;
+			if (!SetExpressionParameterName(Expression, Property.Name, ParameterNameError))
+			{
+				OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"),
+					*Property.UEBuiltinFunctionName,
+					*Property.Name,
+					*ParameterNameError);
+				return nullptr;
+			}
+		}
+
 		for (const TPair<FString, FString>& Argument : Property.UEBuiltinArguments)
 		{
 			if (Argument.Key == UE::DreamShader::NormalizeSettingKey(TEXT("Class"))
@@ -2737,6 +2949,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
+		ApplyExpressionMetadata(Expression, Property.Metadata);
 		return Expression;
 	}
 
@@ -2753,6 +2966,85 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *Message);
 		};
+
+		if (Property.UEBuiltinFunctionName.Equals(TEXT("CollectionParam"), ESearchCase::IgnoreCase)
+			|| Property.UEBuiltinFunctionName.Equals(TEXT("CollectionParameter"), ESearchCase::IgnoreCase))
+		{
+			static const TCHAR* AllowedArguments[] =
+			{
+				TEXT("Collection"),
+				TEXT("Asset"),
+				TEXT("Parameter"),
+				TEXT("ParameterName"),
+				TEXT("OutputType"),
+				TEXT("ResultType"),
+			};
+			if (!ValidateUEBuiltinArgumentNames(Property, AllowedArguments, OutError))
+			{
+				return nullptr;
+			}
+
+			FString CollectionText;
+			if (!TryGetUEBuiltinArgument(Property, TEXT("Collection"), CollectionText))
+			{
+				TryGetUEBuiltinArgument(Property, TEXT("Asset"), CollectionText);
+			}
+			if (CollectionText.IsEmpty())
+			{
+				OutError = MakeError(TEXT("CollectionParam requires Collection=Path(...)."));
+				return nullptr;
+			}
+
+			FString CollectionObjectPath;
+			if (!TryResolveDreamShaderAssetReference(CollectionText, CollectionObjectPath, OutError))
+			{
+				OutError = MakeError(FString::Printf(TEXT("Collection is invalid: %s"), *OutError));
+				return nullptr;
+			}
+
+			UMaterialParameterCollection* Collection = LoadObject<UMaterialParameterCollection>(nullptr, *CollectionObjectPath);
+			if (!Collection)
+			{
+				OutError = MakeError(FString::Printf(TEXT("Could not load MaterialParameterCollection '%s'."), *CollectionObjectPath));
+				return nullptr;
+			}
+
+			FString ParameterText;
+			if (!TryGetUEBuiltinArgument(Property, TEXT("Parameter"), ParameterText))
+			{
+				TryGetUEBuiltinArgument(Property, TEXT("ParameterName"), ParameterText);
+			}
+			if (ParameterText.IsEmpty())
+			{
+				OutError = MakeError(TEXT("CollectionParam requires Parameter=\"Name\"."));
+				return nullptr;
+			}
+
+			const FName ParameterName(*ParameterText);
+			if (!Collection->GetScalarParameterByName(ParameterName) && !Collection->GetVectorParameterByName(ParameterName))
+			{
+				OutError = MakeError(FString::Printf(TEXT("Collection '%s' does not contain parameter '%s'."), *CollectionObjectPath, *ParameterText));
+				return nullptr;
+			}
+
+			auto* Expression = Cast<UMaterialExpressionCollectionParameter>(
+				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionCollectionParameter::StaticClass(), -800, PositionY));
+			if (!Expression)
+			{
+				OutError = MakeError(TEXT("Failed to create the native CollectionParameter node."));
+				return nullptr;
+			}
+
+			Expression->Collection = Collection;
+			Expression->ParameterName = ParameterName;
+			Expression->ParameterId = Collection->GetParameterId(ParameterName);
+			if (!Expression->ExpressionGUID.IsValid())
+			{
+				Expression->ExpressionGUID = FGuid::NewGuid();
+			}
+			ApplyExpressionMetadata(Expression, Property.Metadata);
+			return Expression;
+		}
 
 		if (Property.UEBuiltinFunctionName.Equals(TEXT("TexCoord"), ESearchCase::IgnoreCase))
 		{
@@ -3595,6 +3887,15 @@ namespace UE::DreamShader::Editor::Private
 		bool& bOutIsTexture,
 		int32& OutFunctionInputTypeValue)
 	{
+		if (InTypeName.Equals(TEXT("StaticBool"), ESearchCase::IgnoreCase)
+			|| InTypeName.Equals(TEXT("StaticBoolParameter"), ESearchCase::IgnoreCase))
+		{
+			OutComponentCount = 1;
+			bOutIsTexture = false;
+			OutFunctionInputTypeValue = static_cast<int32>(FunctionInput_StaticBool);
+			return true;
+		}
+
 		if (!TryResolveCodeDeclaredType(InTypeName, OutComponentCount, bOutIsTexture))
 		{
 			return false;
@@ -3602,7 +3903,18 @@ namespace UE::DreamShader::Editor::Private
 
 		if (bOutIsTexture)
 		{
-			OutFunctionInputTypeValue = static_cast<int32>(FunctionInput_Texture2D);
+			if (InTypeName.Equals(TEXT("TextureCube"), ESearchCase::IgnoreCase))
+			{
+				OutFunctionInputTypeValue = static_cast<int32>(FunctionInput_TextureCube);
+			}
+			else if (InTypeName.Equals(TEXT("Texture2DArray"), ESearchCase::IgnoreCase))
+			{
+				OutFunctionInputTypeValue = static_cast<int32>(FunctionInput_Texture2DArray);
+			}
+			else
+			{
+				OutFunctionInputTypeValue = static_cast<int32>(FunctionInput_Texture2D);
+			}
 			return true;
 		}
 

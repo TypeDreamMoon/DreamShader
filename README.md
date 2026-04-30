@@ -2,13 +2,15 @@
 
 DreamShader 是一个 Unreal Engine 材质生成插件。它提供 `DreamShaderLang` 文本语言，让你用 `.dsm` / `.dsh` 源文件描述材质图、共享函数和材质函数，并自动生成标准 Unreal `UMaterial` / `UMaterialFunction` 资产。
 
-> 当前版本：`1.2.2`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
+> 当前版本：`1.2.3`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
 
 ## 核心能力
 
 - 使用文本源文件维护材质逻辑，减少手动连材质节点的重复工作。
 - 从 `Shader(Name="...", Root="Game")` 生成 `UMaterial`，从 `ShaderFunction(Name="...", Root="Game")` 生成 `UMaterialFunction`。
 - 使用 `VirtualFunction(Name="...")` 声明现有 Unreal `UMaterialFunction` 资产，并在 `Graph` 中直接调用，不会生成或覆盖资产。
+- `Properties` 支持显式 Parameter 节点、`StaticSwitchParameter`、`UE.CollectionParam(...)` 和 `[Group="...", SortPriority=32, Description="..."]` 元数据。
+- `ShaderFunction` / `VirtualFunction` 输入支持 `opt` 和调用侧 `default`，用于复用 Unreal FunctionInput 的预览默认值。
 - 在 `Graph = { ... }` 中声明变量、调用 UE 材质节点、调用共享函数，并绑定材质输出。
 - 在 `Function` / `Namespace` 中编写可复用 HLSL 风格 helper。
 - 支持 `Inline` / `SelfContained` 函数，把依赖代码嵌入材质 Custom 节点，便于在未安装 DreamShader 的项目中继续使用生成资产。
@@ -97,6 +99,52 @@ Shader(Name="DreamMaterials/M_Minimal", Root="Plugin.MyPlugin")
 
 这会使用 `/MyPlugin/DreamMaterials/M_Minimal.M_Minimal` 作为 Unreal object path，并物理保存到 `[Project]/Plugins/MyPlugin/Content/DreamMaterials/M_Minimal.uasset`。
 `Plugins.MyPlugin` / `Plugins/MyPlugin` 也作为兼容写法支持。
+
+## Parameter 与默认输入
+
+`Properties` 可以继续使用 `float` / `float3` / `Texture2D` 简写，也可以显式声明 Unreal Parameter 节点，并在声明尾部加元数据：
+
+```c
+Properties = {
+    ScalarParameter Roughness = 0.35 [Group="Surface", SortPriority=10, Description="Material roughness"];
+    VectorParameter Tint = float4(1.0, 0.9, 0.8, 1.0) [Group="Surface", SortPriority=20];
+    StaticSwitchParameter UseDetail = true [Group="Switches", SortPriority=30];
+}
+
+Graph = {
+    float3 baseCol = Tint.rgb;
+    float3 detailCol = baseCol * 2.0;
+    float3 finalCol = UseDetail(True=detailCol, False=baseCol);
+}
+```
+
+Material Parameter Collection 可以在 Graph 中直接读取：
+
+```c
+float wind = UE.CollectionParam(
+    Collection=Path(Game, "MaterialParameterCollections/MPC_Global"),
+    Parameter="WindStrength");
+```
+
+`ShaderFunction` / `VirtualFunction` 的输入可以标记 `opt`。调用时传 `default` 或省略尾部可选参数，会使用 Unreal FunctionInput 的预览默认值：
+
+```c
+ShaderFunction(Name="Functions/DebugValue")
+{
+    Inputs = {
+        float2 UV;
+        opt float4 ColorA = float4(0.3, 0.3, 0.7, 0.7) [Description="Debug color A"];
+    }
+
+    Outputs = {
+        float4 Result;
+    }
+
+    Graph = {
+        Result = ColorA;
+    }
+}
+```
 
 ## 共享函数示例
 

@@ -24,10 +24,19 @@ namespace UE::DreamShader
 		UEBuiltin,
 	};
 
+	struct FTextShaderMetadata
+	{
+		FString Group;
+		bool bHasSortPriority = false;
+		int32 SortPriority = 32;
+		FString Description;
+	};
+
 	struct FTextShaderPropertyDefinition
 	{
 		FString Name;
 		ETextShaderPropertySource Source = ETextShaderPropertySource::Parameter;
+		FString ParameterNodeType;
 		FString UEBuiltinFunctionName;
 		TMap<FString, FString> UEBuiltinArguments;
 		ETextShaderPropertyType Type = ETextShaderPropertyType::Scalar;
@@ -37,6 +46,7 @@ namespace UE::DreamShader
 		double ScalarDefaultValue = 0.0;
 		FLinearColor VectorDefaultValue = FLinearColor::White;
 		FString TextureDefaultObjectPath;
+		FTextShaderMetadata Metadata;
 	};
 
 	struct FTextShaderOutputBinding
@@ -66,6 +76,10 @@ namespace UE::DreamShader
 	{
 		FString Type;
 		FString Name;
+		bool bOptional = false;
+		bool bHasDefaultValue = false;
+		FString DefaultValueText;
+		FTextShaderMetadata Metadata;
 	};
 
 	struct FTextShaderFunctionDefinition

@@ -4,7 +4,7 @@ DreamShaderLang 是 DreamShader 插件使用的文本语言。它用 `.dsm` / `.
 
 | 项目 | 内容 |
 | --- | --- |
-| 插件版本 | `1.2.2` |
+| 插件版本 | `1.2.3` |
 | 源文件 | `.dsm` / `.dsh` |
 | 主要产物 | `UMaterial` / `UMaterialFunction` |
 | 开发者 | TypeDreamMoon |
@@ -210,6 +210,23 @@ Properties = {
     float Strength = 1.0;
     vec3 Tint = vec3(1.0, 1.0, 1.0);
     Texture2D MainTex = Path(Game, "/Textures/T_Main");
+    StaticSwitchParameter UseDetail = true [Group="Switches", SortPriority=30, Description="Use detail branch"];
+}
+```
+
+除 `float` / `vec3` / `Texture2D` 简写外，`Properties` 也支持常见显式 Parameter 节点类型，例如 `ScalarParameter`、`VectorParameter`、`DoubleVectorParameter`、`TextureObjectParameter`、`TextureSampleParameter2D`、`StaticBoolParameter`、`StaticSwitchParameter` 等。
+
+声明尾部可以加元数据：
+
+```c
+ScalarParameter Roughness = 0.35 [Group="Surface", SortPriority=10, Description="Material roughness"];
+```
+
+`StaticSwitchParameter` 在 `Graph` 中以同名函数形式使用：
+
+```c
+Graph = {
+    float3 finalColor = UseDetail(True=detailColor, False=baseColor);
 }
 ```
 
@@ -220,9 +237,17 @@ Properties = {
 ```c
 Inputs = {
     vec3 InColor;
-    float Strength = 1.0;
+    opt float Strength = 1.0 [Description="Preview default strength"];
 }
 ```
+
+`opt` 表示该输入可选，并使用 Unreal Function Input 的预览值作为默认值。调用 `ShaderFunction` / `VirtualFunction` 时可以传 `default`，也可以省略尾部可选参数：
+
+```c
+float3 color = MyFunction(InColor, default, Output="Result");
+```
+
+`ShaderFunction` / `VirtualFunction` 的 `Inputs` / `Outputs` 同样支持 `[SortPriority=..., Description="..."]` 元数据；`Group` 会被解析并保留在语法层，但 Unreal Function Input / Output 本身没有分组字段。
 
 ### 3.3 `Outputs`
 
@@ -285,6 +310,8 @@ Options = {
 - 标量、向量构造。
 - Brace initializer。
 - `UE.*` builtin 调用。
+- `UE.CollectionParam(Collection=Path(...), Parameter="Name")` 读取 Material Parameter Collection。
+- `UE.StaticSwitchParameter(...)` 或 `StaticSwitchParameter` 属性调用。
 - `Function(...)` / `Namespace::Function(...)` 独立调用。
 - `ShaderFunction(...)` / `VirtualFunction(...)` 值调用。
 - 基础 `if` / `else` 图分支。
@@ -375,7 +402,7 @@ Properties = {
 规则：
 
 - 单参数形式必须使用 `/Game/...` 或 `/Engine/...`。
-- 双参数形式的根名支持 `Game` / `Engine`。
+- 双参数形式的根名支持 `Game` / `Engine` / `Plugin.PluginName` / `Plugins.PluginName`。
 - 如果未显式写 `.AssetName`，会自动补成合法 Unreal object path。
 - 会校验声明类型和实际资产类型是否一致。
 

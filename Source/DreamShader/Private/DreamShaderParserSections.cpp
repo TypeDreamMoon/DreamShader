@@ -94,6 +94,189 @@ namespace UE::DreamShader::Private
 		return false;
 	}
 
+	static bool IsParameterNodeType(const FString& InTypeToken, const TCHAR* Candidate)
+	{
+		return InTypeToken.Equals(Candidate, ESearchCase::IgnoreCase);
+	}
+
+	static bool IsStaticSwitchParameterType(const FString& InTypeToken)
+	{
+		return IsParameterNodeType(InTypeToken, TEXT("StaticSwitchParameter"));
+	}
+
+	static bool IsStaticBoolParameterType(const FString& InTypeToken)
+	{
+		return IsParameterNodeType(InTypeToken, TEXT("StaticBoolParameter"));
+	}
+
+	static bool IsScalarParameterType(const FString& InTypeToken)
+	{
+		return IsParameterNodeType(InTypeToken, TEXT("ScalarParameter"))
+			|| IsStaticBoolParameterType(InTypeToken)
+			|| IsStaticSwitchParameterType(InTypeToken);
+	}
+
+	static bool IsVectorParameterType(const FString& InTypeToken)
+	{
+		return IsParameterNodeType(InTypeToken, TEXT("VectorParameter"))
+			|| IsParameterNodeType(InTypeToken, TEXT("DoubleVectorParameter"));
+	}
+
+	static bool IsTextureObjectParameterType(const FString& InTypeToken)
+	{
+		return IsParameterNodeType(InTypeToken, TEXT("TextureObjectParameter"));
+	}
+
+	static bool IsTextureSampleParameterType(const FString& InTypeToken)
+	{
+		return IsParameterNodeType(InTypeToken, TEXT("TextureSampleParameter2D"))
+			|| IsParameterNodeType(InTypeToken, TEXT("TextureSampleParameter2DArray"))
+			|| IsParameterNodeType(InTypeToken, TEXT("TextureSampleParameterCube"))
+			|| IsParameterNodeType(InTypeToken, TEXT("TextureSampleParameterCubeArray"))
+			|| IsParameterNodeType(InTypeToken, TEXT("TextureSampleParameterVolume"))
+			|| IsParameterNodeType(InTypeToken, TEXT("TextureSampleParameterSubUV"))
+			|| IsParameterNodeType(InTypeToken, TEXT("RuntimeVirtualTextureSampleParameter"))
+			|| IsParameterNodeType(InTypeToken, TEXT("SparseVolumeTextureSampleParameter"));
+	}
+
+	static bool IsKnownParameterNodeType(const FString& InTypeToken)
+	{
+		return IsScalarParameterType(InTypeToken)
+			|| IsVectorParameterType(InTypeToken)
+			|| IsTextureObjectParameterType(InTypeToken)
+			|| IsTextureSampleParameterType(InTypeToken)
+			|| IsParameterNodeType(InTypeToken, TEXT("ChannelMaskParameter"))
+			|| IsParameterNodeType(InTypeToken, TEXT("StaticComponentMaskParameter"))
+			|| IsParameterNodeType(InTypeToken, TEXT("TextureCollectionParameter"))
+			|| IsParameterNodeType(InTypeToken, TEXT("CurveAtlasRowParameter"))
+			|| IsParameterNodeType(InTypeToken, TEXT("DynamicParameter"))
+			|| IsParameterNodeType(InTypeToken, TEXT("FontSampleParameter"))
+			|| IsParameterNodeType(InTypeToken, TEXT("SpriteTextureSampler"))
+			|| IsParameterNodeType(InTypeToken, TEXT("SparseVolumeTextureObjectParameter"));
+	}
+
+	static bool ParseTrailingMetadata(FString& InOutStatement, FTextShaderMetadata& OutMetadata, FString& OutError)
+	{
+		FString Statement = InOutStatement.TrimStartAndEnd();
+		if (!Statement.EndsWith(TEXT("]")))
+		{
+			InOutStatement = Statement;
+			return true;
+		}
+
+		int32 MetadataStart = INDEX_NONE;
+		int32 ParenthesisDepth = 0;
+		int32 BracketDepth = 0;
+		bool bInString = false;
+		for (int32 Index = 0; Index < Statement.Len(); ++Index)
+		{
+			const TCHAR Char = Statement[Index];
+			if (bInString)
+			{
+				if (Char == TCHAR('\\') && Statement.IsValidIndex(Index + 1))
+				{
+					++Index;
+				}
+				else if (Char == TCHAR('"'))
+				{
+					bInString = false;
+				}
+				continue;
+			}
+
+			if (Char == TCHAR('"'))
+			{
+				bInString = true;
+				continue;
+			}
+			if (Char == TCHAR('('))
+			{
+				++ParenthesisDepth;
+				continue;
+			}
+			if (Char == TCHAR(')'))
+			{
+				ParenthesisDepth = FMath::Max(0, ParenthesisDepth - 1);
+				continue;
+			}
+			if (Char == TCHAR('['))
+			{
+				if (ParenthesisDepth == 0 && BracketDepth == 0)
+				{
+					MetadataStart = Index;
+				}
+				++BracketDepth;
+				continue;
+			}
+			if (Char == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+				continue;
+			}
+		}
+
+		if (MetadataStart == INDEX_NONE)
+		{
+			InOutStatement = Statement;
+			return true;
+		}
+
+		const FString MetadataBlock = Statement.Mid(MetadataStart + 1, Statement.Len() - MetadataStart - 2).TrimStartAndEnd();
+		FString Prefix = Statement.Left(MetadataStart).TrimStartAndEnd();
+		if (Prefix.IsEmpty())
+		{
+			OutError = TEXT("Metadata must follow a declaration.");
+			return false;
+		}
+
+		for (const FString& Entry : SplitTopLevelDelimited(MetadataBlock, TCHAR(',')))
+		{
+			FString Key;
+			FString Value;
+			if (!SplitTopLevelAssignment(Entry, Key, Value))
+			{
+				OutError = FString::Printf(TEXT("Metadata entry '%s' must use Key=Value syntax."), *Entry);
+				return false;
+			}
+
+			Key = NormalizeSettingKey(Key);
+			Value = Unquote(Value).TrimStartAndEnd();
+			if (Key.IsEmpty() || Value.IsEmpty())
+			{
+				OutError = FString::Printf(TEXT("Invalid metadata entry '%s'."), *Entry);
+				return false;
+			}
+
+			if (Key == NormalizeSettingKey(TEXT("Group")) || Key == NormalizeSettingKey(TEXT("Category")))
+			{
+				OutMetadata.Group = Value;
+			}
+			else if (Key == NormalizeSettingKey(TEXT("Description")) || Key == NormalizeSettingKey(TEXT("Desc")) || Key == NormalizeSettingKey(TEXT("Tooltip")))
+			{
+				OutMetadata.Description = Value;
+			}
+			else if (Key == NormalizeSettingKey(TEXT("SortPriority")) || Key == NormalizeSettingKey(TEXT("Sort")))
+			{
+				int32 SortPriority = 32;
+				if (!ParseIntegerLiteral(Value, SortPriority))
+				{
+					OutError = FString::Printf(TEXT("Metadata SortPriority value '%s' is not an integer."), *Value);
+					return false;
+				}
+				OutMetadata.bHasSortPriority = true;
+				OutMetadata.SortPriority = SortPriority;
+			}
+			else
+			{
+				OutError = FString::Printf(TEXT("Unsupported metadata key '%s'."), *Key);
+				return false;
+			}
+		}
+
+		InOutStatement = Prefix;
+		return true;
+	}
+
 	bool TryResolveUEBuiltinOutputSignature(
 		const FString& InFunctionName,
 		ETextShaderPropertyType& OutType,
@@ -221,11 +404,19 @@ namespace UE::DreamShader::Private
 
 		ETextShaderPropertyType BuiltinType = ETextShaderPropertyType::Scalar;
 		int32 BuiltinComponentCount = 1;
-		if (TryResolveUEBuiltinOutputSignature(FunctionName, BuiltinType, BuiltinComponentCount)
-			|| TryResolveExplicitOutputSignature(OutProperty.UEBuiltinArguments, BuiltinType, BuiltinComponentCount))
+		if (TryResolveExplicitOutputSignature(OutProperty.UEBuiltinArguments, BuiltinType, BuiltinComponentCount)
+			|| TryResolveUEBuiltinOutputSignature(FunctionName, BuiltinType, BuiltinComponentCount))
 		{
 			OutProperty.Type = BuiltinType;
 			OutProperty.ComponentCount = BuiltinComponentCount;
+			return true;
+		}
+
+		if (FunctionName.Equals(TEXT("CollectionParam"), ESearchCase::IgnoreCase)
+			|| FunctionName.Equals(TEXT("CollectionParameter"), ESearchCase::IgnoreCase))
+		{
+			OutProperty.Type = ETextShaderPropertyType::Scalar;
+			OutProperty.ComponentCount = 1;
 			return true;
 		}
 
@@ -248,6 +439,10 @@ namespace UE::DreamShader::Private
 			}
 
 			FTextShaderPropertyDefinition Property;
+			if (!ParseTrailingMetadata(Trimmed, Property.Metadata, OutError))
+			{
+				return false;
+			}
 
 			FString Left = Trimmed;
 			FString Right;
@@ -274,7 +469,97 @@ namespace UE::DreamShader::Private
 
 			Property.Name = NameToken;
 
-			if (TypeToken.StartsWith(TEXT("UE."), ESearchCase::IgnoreCase))
+			if (IsKnownParameterNodeType(TypeToken))
+			{
+				Property.ParameterNodeType = TypeToken;
+
+				if (IsScalarParameterType(TypeToken))
+				{
+					Property.Type = ETextShaderPropertyType::Scalar;
+					Property.ComponentCount = 1;
+					if (Property.bHasDefaultValue)
+					{
+						if (IsStaticBoolParameterType(TypeToken) || IsStaticSwitchParameterType(TypeToken))
+						{
+							bool bDefaultValue = false;
+							if (!ParseBooleanLiteral(Right, bDefaultValue))
+							{
+								OutError = FString::Printf(TEXT("Invalid boolean default value '%s' for property '%s'."), *Right, *Property.Name);
+								return false;
+							}
+							Property.ScalarDefaultValue = bDefaultValue ? 1.0 : 0.0;
+						}
+						else if (!ParseScalarLiteral(Right, Property.ScalarDefaultValue))
+						{
+							OutError = FString::Printf(TEXT("Invalid scalar default value '%s' for property '%s'."), *Right, *Property.Name);
+							return false;
+						}
+					}
+				}
+				else if (IsVectorParameterType(TypeToken)
+					|| IsParameterNodeType(TypeToken, TEXT("ChannelMaskParameter"))
+					|| IsParameterNodeType(TypeToken, TEXT("StaticComponentMaskParameter"))
+					|| IsParameterNodeType(TypeToken, TEXT("DynamicParameter"))
+					|| IsParameterNodeType(TypeToken, TEXT("FontSampleParameter"))
+					|| IsParameterNodeType(TypeToken, TEXT("CurveAtlasRowParameter"))
+					|| IsParameterNodeType(TypeToken, TEXT("SpriteTextureSampler")))
+				{
+					Property.Type = ETextShaderPropertyType::Vector;
+					Property.ComponentCount = IsParameterNodeType(TypeToken, TEXT("ChannelMaskParameter")) ? 1 : 4;
+					if (Property.bHasDefaultValue && !ParseVectorLiteral(Right, Property.VectorDefaultValue))
+					{
+						OutError = FString::Printf(TEXT("Invalid vector default value '%s' for property '%s'."), *Right, *Property.Name);
+						return false;
+					}
+				}
+				else if (IsTextureObjectParameterType(TypeToken)
+					|| IsParameterNodeType(TypeToken, TEXT("TextureCollectionParameter"))
+					|| IsParameterNodeType(TypeToken, TEXT("SparseVolumeTextureObjectParameter")))
+				{
+					Property.Type = ETextShaderPropertyType::Texture2D;
+					Property.ComponentCount = 0;
+					if (Property.bHasDefaultValue && !ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError))
+					{
+						OutError = FString::Printf(
+							TEXT("Invalid texture default value '%s' for property '%s'. %s"),
+							*Right,
+							*Property.Name,
+							*OutError);
+						return false;
+					}
+				}
+				else if (IsTextureSampleParameterType(TypeToken))
+				{
+					Property.Type = ETextShaderPropertyType::Vector;
+					Property.ComponentCount = 4;
+					if (TypeToken.Contains(TEXT("Cube"), ESearchCase::IgnoreCase))
+					{
+						Property.TextureType = ETextShaderTextureType::TextureCube;
+					}
+					else if (TypeToken.Contains(TEXT("Array"), ESearchCase::IgnoreCase))
+					{
+						Property.TextureType = ETextShaderTextureType::Texture2DArray;
+					}
+					if (Property.bHasDefaultValue && !ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError))
+					{
+						OutError = FString::Printf(
+							TEXT("Invalid texture sample default value '%s' for property '%s'. %s"),
+							*Right,
+							*Property.Name,
+							*OutError);
+						return false;
+					}
+				}
+				else
+				{
+					OutError = FString::Printf(
+						TEXT("Parameter node type '%s' is recognized but not supported as a plain Properties declaration yet. Use UE.%s(OutputType=\"float4\", ...) for reflected node creation."),
+						*TypeToken,
+						*TypeToken);
+					return false;
+				}
+			}
+			else if (TypeToken.StartsWith(TEXT("UE."), ESearchCase::IgnoreCase))
 			{
 				if (!ParseUEBuiltinPropertyType(TypeToken, Property, OutError))
 				{
@@ -611,16 +896,33 @@ namespace UE::DreamShader::Private
 		const TArray<FString> Statements = SplitStatements(RemoveComments(BlockContent));
 		for (const FString& Statement : Statements)
 		{
-			const FString Trimmed = Statement.TrimStartAndEnd();
-			const int32 LastSpaceIndex = Trimmed.Find(TEXT(" "), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
-			if (LastSpaceIndex == INDEX_NONE)
+			FString Trimmed = Statement.TrimStartAndEnd();
+			FTextShaderMetadata Metadata;
+			if (!ParseTrailingMetadata(Trimmed, Metadata, OutError))
+			{
+				return false;
+			}
+
+			bool bOptional = false;
+			if (Trimmed.StartsWith(TEXT("opt "), ESearchCase::IgnoreCase)
+				|| Trimmed.Equals(TEXT("opt"), ESearchCase::IgnoreCase))
+			{
+				bOptional = true;
+				Trimmed.RightChopInline(3, EAllowShrinking::No);
+				Trimmed.TrimStartAndEndInline();
+			}
+
+			FString Left = Trimmed;
+			FString Right;
+			const bool bHasDefaultValue = SplitTopLevelAssignment(Trimmed, Left, Right);
+			if (Left.TrimStartAndEnd().IsEmpty())
 			{
 				OutError = FString::Printf(TEXT("Invalid typed declaration '%s'."), *Statement);
 				return false;
 			}
 
 			FTextShaderVariableDeclaration Declaration;
-			if (!ParseTypedDeclarationStatement(Trimmed, Declaration, OutError))
+			if (!ParseTypedDeclarationStatement(Left, Declaration, OutError))
 			{
 				return false;
 			}
@@ -628,6 +930,10 @@ namespace UE::DreamShader::Private
 			FTextShaderFunctionParameter Parameter;
 			Parameter.Type = Declaration.Type;
 			Parameter.Name = Declaration.Name;
+			Parameter.bOptional = bOptional;
+			Parameter.bHasDefaultValue = bHasDefaultValue;
+			Parameter.DefaultValueText = Right.TrimStartAndEnd();
+			Parameter.Metadata = Metadata;
 			OutParameters.Add(Parameter);
 		}
 

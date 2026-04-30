@@ -1,5 +1,21 @@
 # DreamShader ChangeLog
 
+## 1.2.3 - 2026-04-29
+
+### Parameters
+
+- Added declaration metadata `[Group="...", SortPriority=32, Description="..."]` for material `Properties` and function input/output declarations.
+- Added explicit Parameter node declarations including `ScalarParameter`, `VectorParameter`, `TextureObjectParameter`, texture sample parameter nodes, `StaticBoolParameter`, and `StaticSwitchParameter`.
+- Added `StaticSwitchParameter` graph calls, for example `UseDetail(True=detailColor, False=baseColor)`.
+- Added `UE.CollectionParam(Collection=Path(...), Parameter="...")` for Material Parameter Collection reads.
+
+### Function Defaults
+
+- Added `opt` inputs for `ShaderFunction` and `VirtualFunction`.
+- Added `default` call arguments for optional material function inputs, preserving Unreal FunctionInput preview defaults.
+- Generated `ShaderFunction` assets now write input/output descriptions and sort priorities to FunctionInput / FunctionOutput nodes.
+- VirtualFunction copy/create/sync now emits optional inputs, preview defaults, and pin metadata when available.
+
 ## 1.2.2 - 2026-04-29
 
 ### VirtualFunction Workflow

@@ -40,6 +40,131 @@ namespace UE::DreamShader::Editor
 			return IsIdentifierBoundary(Text, Index - 1) && IsIdentifierBoundary(Text, Index + KeywordLength);
 		}
 
+		static bool TryParseFunctionInputPreviewLiteral(
+			const FString& InText,
+			const int32 ComponentCount,
+			FVector4f& OutPreviewValue)
+		{
+			if (ComponentCount <= 1)
+			{
+				double ScalarValue = 0.0;
+				if (!Private::ParseScalarLiteral(InText, ScalarValue))
+				{
+					return false;
+				}
+
+				const float Value = static_cast<float>(ScalarValue);
+				OutPreviewValue = FVector4f(Value, Value, Value, Value);
+				return true;
+			}
+
+			FString Candidate = InText.TrimStartAndEnd();
+			const int32 OpenParenIndex = Candidate.Find(TEXT("("));
+			const int32 CloseParenIndex = Candidate.Find(TEXT(")"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+			if (OpenParenIndex == INDEX_NONE || CloseParenIndex == INDEX_NONE || CloseParenIndex <= OpenParenIndex)
+			{
+				return false;
+			}
+
+			const FString ValueBlock = Candidate.Mid(OpenParenIndex + 1, CloseParenIndex - OpenParenIndex - 1);
+			TArray<FString> Parts;
+			ValueBlock.ParseIntoArray(Parts, TEXT(","), true);
+			if (Parts.IsEmpty() || Parts.Num() > 4)
+			{
+				return false;
+			}
+
+			float Parsed[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+			for (int32 Index = 0; Index < Parts.Num(); ++Index)
+			{
+				double ParsedValue = 0.0;
+				if (!Private::ParseScalarLiteral(Parts[Index], ParsedValue))
+				{
+					return false;
+				}
+				Parsed[Index] = static_cast<float>(ParsedValue);
+			}
+
+			if (Parts.Num() == 1)
+			{
+				Parsed[1] = Parsed[0];
+				Parsed[2] = Parsed[0];
+				Parsed[3] = Parsed[0];
+			}
+
+			OutPreviewValue = FVector4f(Parsed[0], Parsed[1], Parsed[2], Parsed[3]);
+			return true;
+		}
+
+		static bool ApplyFunctionInputPreviewDefault(
+			UMaterialFunction* MaterialFunction,
+			const FString& SourceFilePath,
+			const FTextShaderDefinition& RootDefinition,
+			const FTextShaderFunctionParameter& InputDefinition,
+			UMaterialExpressionFunctionInput* InputExpression,
+			const int32 ComponentCount,
+			const bool bIsTextureObject,
+			TMap<FString, Private::FCodeValue>& GeneratedValues,
+			FString& OutError)
+		{
+			if (!InputExpression || (!InputDefinition.bOptional && !InputDefinition.bHasDefaultValue))
+			{
+				return true;
+			}
+
+			InputExpression->bUsePreviewValueAsDefault = InputDefinition.bOptional ? 1U : 0U;
+			if (!InputDefinition.bHasDefaultValue)
+			{
+				return true;
+			}
+
+			if (bIsTextureObject)
+			{
+				OutError = FString::Printf(TEXT("Input '%s' texture defaults must be connected through the FunctionInput Preview pin in Unreal for now."), *InputDefinition.Name);
+				return false;
+			}
+
+			FVector4f PreviewValue;
+			if (TryParseFunctionInputPreviewLiteral(InputDefinition.DefaultValueText, ComponentCount, PreviewValue))
+			{
+				InputExpression->PreviewValue = PreviewValue;
+				return true;
+			}
+
+			Private::FCodeGraphBuilder PreviewGraphBuilder(
+				nullptr,
+				MaterialFunction,
+				RootDefinition,
+				SourceFilePath,
+				Private::BuildGeneratedIncludeVirtualPath(SourceFilePath));
+			TArray<Private::FCodeStatement> EmptyStatements;
+			FString BuildError;
+			if (!PreviewGraphBuilder.Build(EmptyStatements, GeneratedValues, BuildError))
+			{
+				OutError = BuildError;
+				return false;
+			}
+
+			Private::FCodeValue PreviewExpressionValue;
+			if (!PreviewGraphBuilder.EvaluateOutputExpression(InputDefinition.DefaultValueText, PreviewExpressionValue, OutError))
+			{
+				return false;
+			}
+
+			if (PreviewExpressionValue.bIsTextureObject || PreviewExpressionValue.ComponentCount != ComponentCount)
+			{
+				OutError = FString::Printf(
+					TEXT("Input '%s' default expression '%s' does not match declared type '%s'."),
+					*InputDefinition.Name,
+					*InputDefinition.DefaultValueText,
+					*InputDefinition.Type);
+				return false;
+			}
+
+			InputExpression->Preview.Connect(PreviewExpressionValue.OutputIndex, PreviewExpressionValue.Expression);
+			return true;
+		}
+
 		static bool FindMatchingDelimiter(
 			const FString& Text,
 			const int32 OpenIndex,
@@ -1012,6 +1137,7 @@ namespace UE::DreamShader::Editor
 			}
 
 			TMap<FString, Private::FCodeValue> GeneratedValues;
+			TMap<FString, UMaterialExpressionFunctionInput*> GeneratedInputExpressions;
 			int32 InputPositionY = -260;
 			for (int32 InputIndex = 0; InputIndex < FunctionDefinition.Inputs.Num(); ++InputIndex)
 			{
@@ -1040,7 +1166,10 @@ namespace UE::DreamShader::Editor
 
 				InputExpression->InputName = FName(*InputDefinition.Name);
 				InputExpression->InputType = static_cast<EFunctionInputType>(FunctionInputTypeValue);
-				InputExpression->SortPriority = InputIndex;
+				InputExpression->Description = InputDefinition.Metadata.Description;
+				InputExpression->SortPriority = InputDefinition.Metadata.bHasSortPriority
+					? InputDefinition.Metadata.SortPriority
+					: InputIndex;
 				InputExpression->ConditionallyGenerateId(false);
 
 				Private::FCodeValue InputValue;
@@ -1048,7 +1177,35 @@ namespace UE::DreamShader::Editor
 				InputValue.ComponentCount = ComponentCount;
 				InputValue.bIsTextureObject = bIsTextureObject;
 				GeneratedValues.Add(InputDefinition.Name, InputValue);
+				GeneratedInputExpressions.Add(InputDefinition.Name, InputExpression);
 				InputPositionY += 180;
+			}
+
+			for (const FTextShaderFunctionParameter& InputDefinition : FunctionDefinition.Inputs)
+			{
+				UMaterialExpressionFunctionInput** InputExpressionPtr = GeneratedInputExpressions.Find(InputDefinition.Name);
+				const Private::FCodeValue* InputValue = GeneratedValues.Find(InputDefinition.Name);
+				if (!InputExpressionPtr || !*InputExpressionPtr || !InputValue)
+				{
+					OutError = FString::Printf(TEXT("ShaderFunction '%s' failed to resolve generated input '%s'."), *FunctionDefinition.Name, *InputDefinition.Name);
+					return false;
+				}
+
+				FString PreviewError;
+				if (!ApplyFunctionInputPreviewDefault(
+					MaterialFunction,
+					SourceFilePath,
+					RootDefinition,
+					InputDefinition,
+					*InputExpressionPtr,
+					InputValue->ComponentCount,
+					InputValue->bIsTextureObject,
+					GeneratedValues,
+					PreviewError))
+				{
+					OutError = FString::Printf(TEXT("ShaderFunction '%s' input '%s': %s"), *FunctionDefinition.Name, *InputDefinition.Name, *PreviewError);
+					return false;
+				}
 			}
 
 			if (!FunctionDefinition.Code.IsEmpty())
@@ -1211,7 +1368,10 @@ namespace UE::DreamShader::Editor
 				}
 
 				OutputExpression->OutputName = FName(*OutputDefinition.Name);
-				OutputExpression->SortPriority = OutputIndex;
+				OutputExpression->Description = OutputDefinition.Metadata.Description;
+				OutputExpression->SortPriority = OutputDefinition.Metadata.bHasSortPriority
+					? OutputDefinition.Metadata.SortPriority
+					: OutputIndex;
 				OutputExpression->ConditionallyGenerateId(false);
 				OutputExpression->A.Connect(OutputValue->OutputIndex, OutputValue->Expression);
 				OutputPositionY += 180;

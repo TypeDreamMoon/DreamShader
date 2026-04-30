@@ -220,9 +220,11 @@ namespace UE::DreamShader::Editor::Private
 		static bool TryFlattenQualifiedName(const TSharedPtr<FCodeExpression>& Expression, FString& OutName);
 		bool TryExtractTextLiteral(const TSharedPtr<FCodeExpression>& Expression, FString& OutText) const;
 		bool TryExtractLiteralText(const TSharedPtr<FCodeExpression>& Expression, FString& OutText) const;
+		bool TryExtractAssetReferenceText(const TSharedPtr<FCodeExpression>& Expression, FString& OutText) const;
 		bool TryExtractScalarLiteral(const TSharedPtr<FCodeExpression>& Expression, double& OutValue) const;
 		bool TryExtractIntegerLiteral(const TSharedPtr<FCodeExpression>& Expression, int32& OutValue) const;
 		bool TryExtractBooleanLiteral(const TSharedPtr<FCodeExpression>& Expression, bool& OutValue) const;
+		static bool IsDefaultArgument(const TSharedPtr<FCodeExpression>& Expression);
 		const FCodeCallArgument* FindNamedArgument(const TArray<FCodeCallArgument>& Arguments, const TCHAR* Name) const;
 		const FCodeCallArgument* FindPositionalArgument(const TArray<FCodeCallArgument>& Arguments, int32 PositionIndex) const;
 		bool ExecuteExpressionStatement(const TSharedPtr<FCodeExpression>& Expression, FString& OutError);
@@ -260,6 +262,12 @@ namespace UE::DreamShader::Editor::Private
 		static int32 GetConstructorComponentCount(const FString& InName);
 		bool EvaluateVectorConstructor(
 			const FString& ConstructorName,
+			const TArray<FCodeCallArgument>& Arguments,
+			FCodeValue& OutValue,
+			FString& OutError);
+		const FTextShaderPropertyDefinition* FindPropertyDefinition(const FString& PropertyName) const;
+		bool EvaluateStaticSwitchParameterCall(
+			const FTextShaderPropertyDefinition& Property,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
 			FString& OutError);
