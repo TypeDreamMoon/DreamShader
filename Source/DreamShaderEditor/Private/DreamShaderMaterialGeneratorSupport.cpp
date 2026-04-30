@@ -29,6 +29,7 @@
 #include "Materials/MaterialExpressionCollectionParameter.h"
 #include "Materials/MaterialExpressionTextureCoordinate.h"
 #include "Materials/MaterialExpressionTextureBase.h"
+#include "Materials/MaterialExpressionTextureObject.h"
 #include "Materials/MaterialExpressionTextureObjectParameter.h"
 #include "Materials/MaterialExpressionTextureSampleParameter.h"
 #include "Materials/MaterialExpressionTime.h"
@@ -489,10 +490,24 @@ namespace UE::DreamShader::Editor::Private
 		return false;
 	}
 
-	UMaterialExpression* CreateScalarLiteralExpression(UMaterial* Material, const double Value, const int32 PositionY)
+	static UMaterialExpression* CreateOwnedMaterialExpression(
+		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
+		UClass* ExpressionClass,
+		const int32 PositionX,
+		const int32 PositionY)
+	{
+		return UMaterialEditingLibrary::CreateMaterialExpressionEx(Material, MaterialFunction, ExpressionClass, nullptr, PositionX, PositionY);
+	}
+
+	static UMaterialExpression* CreateScalarLiteralExpressionEx(
+		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
+		const double Value,
+		const int32 PositionY)
 	{
 		auto* Expression = Cast<UMaterialExpressionConstant>(
-			UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionConstant::StaticClass(), -1120, PositionY));
+			CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionConstant::StaticClass(), -1120, PositionY));
 		if (Expression)
 		{
 			Expression->R = static_cast<float>(Value);
@@ -500,8 +515,14 @@ namespace UE::DreamShader::Editor::Private
 		return Expression;
 	}
 
+	UMaterialExpression* CreateScalarLiteralExpression(UMaterial* Material, const double Value, const int32 PositionY)
+	{
+		return CreateScalarLiteralExpressionEx(Material, nullptr, Value, PositionY);
+	}
+
 	static UMaterialExpression* CreateVectorLiteralExpression(
 		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
 		const TArray<double>& Components,
 		const int32 ExpectedComponentCount,
 		const int32 PositionY)
@@ -509,7 +530,7 @@ namespace UE::DreamShader::Editor::Private
 		if (ExpectedComponentCount == 2)
 		{
 			auto* Expression = Cast<UMaterialExpressionConstant2Vector>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionConstant2Vector::StaticClass(), -1120, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionConstant2Vector::StaticClass(), -1120, PositionY));
 			if (Expression)
 			{
 				Expression->R = static_cast<float>(Components[0]);
@@ -521,7 +542,7 @@ namespace UE::DreamShader::Editor::Private
 		if (ExpectedComponentCount == 3)
 		{
 			auto* Expression = Cast<UMaterialExpressionConstant3Vector>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionConstant3Vector::StaticClass(), -1120, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionConstant3Vector::StaticClass(), -1120, PositionY));
 			if (Expression)
 			{
 				Expression->Constant = FLinearColor(
@@ -534,7 +555,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		auto* Expression = Cast<UMaterialExpressionConstant4Vector>(
-			UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionConstant4Vector::StaticClass(), -1120, PositionY));
+			CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionConstant4Vector::StaticClass(), -1120, PositionY));
 		if (Expression)
 		{
 			Expression->Constant = FLinearColor(
@@ -548,6 +569,7 @@ namespace UE::DreamShader::Editor::Private
 
 	static UMaterialExpression* CreateLiteralExpression(
 		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
 		const FString& InValueText,
 		const int32 ExpectedComponentCount,
 		const int32 PositionY,
@@ -562,7 +584,7 @@ namespace UE::DreamShader::Editor::Private
 				return nullptr;
 			}
 
-			UMaterialExpression* Expression = CreateScalarLiteralExpression(Material, ParsedValue, PositionY);
+			UMaterialExpression* Expression = CreateScalarLiteralExpressionEx(Material, MaterialFunction, ParsedValue, PositionY);
 			if (!Expression)
 			{
 				OutError = TEXT("Failed to create a scalar constant expression.");
@@ -587,7 +609,7 @@ namespace UE::DreamShader::Editor::Private
 			return nullptr;
 		}
 
-		UMaterialExpression* Expression = CreateVectorLiteralExpression(Material, Components, ExpectedComponentCount, PositionY);
+		UMaterialExpression* Expression = CreateVectorLiteralExpression(Material, MaterialFunction, Components, ExpectedComponentCount, PositionY);
 		if (!Expression)
 		{
 			OutError = FString::Printf(TEXT("Failed to create a float%d constant expression."), ExpectedComponentCount);
@@ -597,6 +619,7 @@ namespace UE::DreamShader::Editor::Private
 
 	static bool ResolveExpressionInputValue(
 		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
 		const FString& InValueText,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		const int32 ExpectedComponentCount,
@@ -609,7 +632,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutExpression = CreateLiteralExpression(Material, InValueText, ExpectedComponentCount, PositionY, OutError);
+		OutExpression = CreateLiteralExpression(Material, MaterialFunction, InValueText, ExpectedComponentCount, PositionY, OutError);
 		if (OutExpression)
 		{
 			return true;
@@ -2674,6 +2697,7 @@ namespace UE::DreamShader::Editor::Private
 
 	static UMaterialExpression* CreateGenericParameterNodeExpression(
 		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
 		const FTextShaderPropertyDefinition& Property,
 		const int32 PositionY,
 		FString& OutError)
@@ -2686,7 +2710,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		auto* Expression = Cast<UMaterialExpression>(
-			UMaterialEditingLibrary::CreateMaterialExpression(Material, ExpressionClass, -800, PositionY));
+			CreateOwnedMaterialExpression(Material, MaterialFunction, ExpressionClass, -800, PositionY));
 		if (!Expression)
 		{
 			OutError = FString::Printf(TEXT("Failed to create a '%s' node for property '%s'."), *Property.ParameterNodeType, *Property.Name);
@@ -2713,26 +2737,152 @@ namespace UE::DreamShader::Editor::Private
 		return Expression;
 	}
 
+	static UMaterialExpression* CreateConstPropertyExpression(
+		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
+		const FTextShaderPropertyDefinition& Property,
+		const int32 PositionY,
+		FString& OutError)
+	{
+		if (Property.Source == ETextShaderPropertySource::UEBuiltin || !Property.ParameterNodeType.IsEmpty())
+		{
+			OutError = FString::Printf(
+				TEXT("Const property '%s' must use a plain scalar, vector, or texture type instead of a parameter node or UE builtin declaration."),
+				*Property.Name);
+			return nullptr;
+		}
+
+		UMaterialExpression* Expression = nullptr;
+		if (Property.Type == ETextShaderPropertyType::Scalar)
+		{
+			Expression = CreateScalarLiteralExpressionEx(Material, MaterialFunction, Property.ScalarDefaultValue, PositionY);
+		}
+		else if (Property.Type == ETextShaderPropertyType::Vector)
+		{
+			TArray<double> Components;
+			Components.Reserve(Property.ComponentCount);
+			Components.Add(Property.VectorDefaultValue.R);
+			if (Property.ComponentCount >= 2)
+			{
+				Components.Add(Property.VectorDefaultValue.G);
+			}
+			if (Property.ComponentCount >= 3)
+			{
+				Components.Add(Property.VectorDefaultValue.B);
+			}
+			if (Property.ComponentCount >= 4)
+			{
+				Components.Add(Property.VectorDefaultValue.A);
+			}
+			Expression = CreateVectorLiteralExpression(Material, MaterialFunction, Components, Property.ComponentCount, PositionY);
+		}
+		else
+		{
+			auto* TextureObjectExpression = Cast<UMaterialExpressionTextureObject>(
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionTextureObject::StaticClass(), -800, PositionY));
+			if (!TextureObjectExpression)
+			{
+				OutError = FString::Printf(TEXT("Failed to create a texture object node for const property '%s'."), *Property.Name);
+				return nullptr;
+			}
+
+			if (!Property.TextureDefaultObjectPath.IsEmpty())
+			{
+				UTexture* DefaultTexture = LoadObject<UTexture>(nullptr, *Property.TextureDefaultObjectPath);
+				if (!DefaultTexture)
+				{
+					OutError = FString::Printf(
+						TEXT("Const texture property '%s' could not load asset '%s'."),
+						*Property.Name,
+						*Property.TextureDefaultObjectPath);
+					return nullptr;
+				}
+
+				if (Property.TextureType == ETextShaderTextureType::TextureCube)
+				{
+					if (!Cast<UTextureCube>(DefaultTexture))
+					{
+						OutError = FString::Printf(
+							TEXT("Const texture property '%s' expects %s but '%s' is a '%s'."),
+							*Property.Name,
+							GetTextureTypeLabel(Property.TextureType),
+							*Property.TextureDefaultObjectPath,
+							*DefaultTexture->GetClass()->GetName());
+						return nullptr;
+					}
+				}
+				else if (Property.TextureType == ETextShaderTextureType::Texture2DArray)
+				{
+					if (!Cast<UTexture2DArray>(DefaultTexture))
+					{
+						OutError = FString::Printf(
+							TEXT("Const texture property '%s' expects %s but '%s' is a '%s'."),
+							*Property.Name,
+							GetTextureTypeLabel(Property.TextureType),
+							*Property.TextureDefaultObjectPath,
+							*DefaultTexture->GetClass()->GetName());
+						return nullptr;
+					}
+				}
+				else if (Cast<UTextureCube>(DefaultTexture) || Cast<UTexture2DArray>(DefaultTexture))
+				{
+					OutError = FString::Printf(
+						TEXT("Const texture property '%s' expects %s but '%s' is a '%s'."),
+						*Property.Name,
+						GetTextureTypeLabel(Property.TextureType),
+						*Property.TextureDefaultObjectPath,
+						*DefaultTexture->GetClass()->GetName());
+					return nullptr;
+				}
+
+				TextureObjectExpression->Texture = DefaultTexture;
+				TextureObjectExpression->AutoSetSampleType();
+			}
+			else if (Property.TextureType != ETextShaderTextureType::Texture2D)
+			{
+				OutError = FString::Printf(
+					TEXT("Const texture property '%s' with type %s requires an explicit default asset."),
+					*Property.Name,
+					GetTextureTypeLabel(Property.TextureType));
+				return nullptr;
+			}
+
+			Expression = TextureObjectExpression;
+		}
+
+		if (!Expression)
+		{
+			OutError = FString::Printf(TEXT("Failed to create a const node for property '%s'."), *Property.Name);
+			return nullptr;
+		}
+
+		if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
+		{
+			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+			return nullptr;
+		}
+		return Expression;
+	}
+
 	static UMaterialExpression* CreateParameterExpression(
 		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
 		const FTextShaderPropertyDefinition& Property,
 		int32 PositionY,
 		FString& OutError)
 	{
-		check(Material);
-
 		if (!Property.ParameterNodeType.IsEmpty()
 			&& !Property.ParameterNodeType.Equals(TEXT("ScalarParameter"), ESearchCase::IgnoreCase)
 			&& !Property.ParameterNodeType.Equals(TEXT("VectorParameter"), ESearchCase::IgnoreCase)
 			&& !Property.ParameterNodeType.Equals(TEXT("TextureObjectParameter"), ESearchCase::IgnoreCase))
 		{
-			return CreateGenericParameterNodeExpression(Material, Property, PositionY, OutError);
+			return CreateGenericParameterNodeExpression(Material, MaterialFunction, Property, PositionY, OutError);
 		}
 
 		if (Property.Type == ETextShaderPropertyType::Scalar)
 		{
 			auto* Expression = Cast<UMaterialExpressionScalarParameter>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionScalarParameter::StaticClass(), -800, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionScalarParameter::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = FString::Printf(TEXT("Failed to create a scalar parameter node for property '%s'."), *Property.Name);
@@ -2755,7 +2905,7 @@ namespace UE::DreamShader::Editor::Private
 		if (Property.Type == ETextShaderPropertyType::Vector)
 		{
 			auto* ParameterExpression = Cast<UMaterialExpressionVectorParameter>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVectorParameter::StaticClass(), -800, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionVectorParameter::StaticClass(), -800, PositionY));
 			if (!ParameterExpression)
 			{
 				OutError = FString::Printf(TEXT("Failed to create a vector parameter node for property '%s'."), *Property.Name);
@@ -2779,7 +2929,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			auto* MaskExpression = Cast<UMaterialExpressionComponentMask>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionComponentMask::StaticClass(), -560, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionComponentMask::StaticClass(), -560, PositionY));
 			if (!MaskExpression)
 			{
 				OutError = FString::Printf(TEXT("Failed to create a component mask for property '%s'."), *Property.Name);
@@ -2795,7 +2945,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		auto* Expression = Cast<UMaterialExpressionTextureObjectParameter>(
-			UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionTextureObjectParameter::StaticClass(), -800, PositionY));
+			CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionTextureObjectParameter::StaticClass(), -800, PositionY));
 		if (!Expression)
 		{
 			OutError = FString::Printf(TEXT("Failed to create a texture parameter node for property '%s'."), *Property.Name);
@@ -2869,6 +3019,7 @@ namespace UE::DreamShader::Editor::Private
 
 	static bool ResolveFlexibleExpressionInputValue(
 		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
 		const FString& InValueText,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		const int32 PositionY,
@@ -2883,7 +3034,7 @@ namespace UE::DreamShader::Editor::Private
 		double ScalarValue = 0.0;
 		if (ParseScalarLiteral(InValueText, ScalarValue))
 		{
-			OutExpression = CreateScalarLiteralExpression(Material, ScalarValue, PositionY);
+			OutExpression = CreateScalarLiteralExpressionEx(Material, MaterialFunction, ScalarValue, PositionY);
 			if (!OutExpression)
 			{
 				OutError = TEXT("Failed to create a scalar constant expression.");
@@ -2902,7 +3053,7 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			OutExpression = CreateVectorLiteralExpression(Material, Components, ComponentCount, PositionY);
+			OutExpression = CreateVectorLiteralExpression(Material, MaterialFunction, Components, ComponentCount, PositionY);
 			if (!OutExpression)
 			{
 				OutError = FString::Printf(TEXT("Failed to create a float%d constant expression."), ComponentCount);
@@ -2917,6 +3068,7 @@ namespace UE::DreamShader::Editor::Private
 
 	static UMaterialExpression* CreateGenericUEExpression(
 		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
 		const FTextShaderPropertyDefinition& Property,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		const int32 PositionY,
@@ -2939,7 +3091,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		auto* Expression = Cast<UMaterialExpression>(
-			UMaterialEditingLibrary::CreateMaterialExpression(Material, ExpressionClass, -800, PositionY));
+			CreateOwnedMaterialExpression(Material, MaterialFunction, ExpressionClass, -800, PositionY));
 		if (!Expression)
 		{
 			OutError = FString::Printf(TEXT("UE.%s for property '%s': failed to create '%s'."),
@@ -2987,7 +3139,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				UMaterialExpression* InputExpression = nullptr;
 				FString InputError;
-				if (!ResolveFlexibleExpressionInputValue(Material, Argument.Value, AvailableExpressions, PositionY - 80, InputExpression, InputError))
+				if (!ResolveFlexibleExpressionInputValue(Material, MaterialFunction, Argument.Value, AvailableExpressions, PositionY - 80, InputExpression, InputError))
 				{
 					OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *InputError);
 					return nullptr;
@@ -3032,13 +3184,12 @@ namespace UE::DreamShader::Editor::Private
 
 	static UMaterialExpression* CreateUEBuiltinExpression(
 		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
 		const FTextShaderPropertyDefinition& Property,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		const int32 PositionY,
 		FString& OutError)
 	{
-		check(Material);
-
 		const auto MakeError = [&Property](const FString& Message)
 		{
 			return FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *Message);
@@ -3105,7 +3256,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			auto* Expression = Cast<UMaterialExpressionCollectionParameter>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionCollectionParameter::StaticClass(), -800, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionCollectionParameter::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = MakeError(TEXT("Failed to create the native CollectionParameter node."));
@@ -3144,7 +3295,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			auto* Expression = Cast<UMaterialExpressionTextureCoordinate>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionTextureCoordinate::StaticClass(), -800, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionTextureCoordinate::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = MakeError(TEXT("Failed to create the native TexCoord node."));
@@ -3234,7 +3385,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			auto* Expression = Cast<UMaterialExpressionTime>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionTime::StaticClass(), -800, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionTime::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = MakeError(TEXT("Failed to create the native Time node."));
@@ -3285,7 +3436,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			auto* Expression = Cast<UMaterialExpressionPanner>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionPanner::StaticClass(), -800, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionPanner::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = MakeError(TEXT("Failed to create the native Panner node."));
@@ -3303,7 +3454,7 @@ namespace UE::DreamShader::Editor::Private
 				{
 					UMaterialExpression* CoordinateExpression = nullptr;
 					FString InputError;
-					if (!ResolveExpressionInputValue(Material, CoordinateValue, AvailableExpressions, 2, PositionY - 80, CoordinateExpression, InputError))
+					if (!ResolveExpressionInputValue(Material, MaterialFunction, CoordinateValue, AvailableExpressions, 2, PositionY - 80, CoordinateExpression, InputError))
 					{
 						OutError = MakeError(FString::Printf(TEXT("Coordinate input is invalid. %s"), *InputError));
 						return nullptr;
@@ -3327,7 +3478,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				UMaterialExpression* TimeExpression = nullptr;
 				FString InputError;
-				if (!ResolveExpressionInputValue(Material, TimeValue, AvailableExpressions, 1, PositionY - 40, TimeExpression, InputError))
+				if (!ResolveExpressionInputValue(Material, MaterialFunction, TimeValue, AvailableExpressions, 1, PositionY - 40, TimeExpression, InputError))
 				{
 					OutError = MakeError(FString::Printf(TEXT("Time input is invalid. %s"), *InputError));
 					return nullptr;
@@ -3339,7 +3490,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				UMaterialExpression* SpeedExpression = nullptr;
 				FString InputError;
-				if (!ResolveExpressionInputValue(Material, SpeedValue, AvailableExpressions, 2, PositionY + 40, SpeedExpression, InputError))
+				if (!ResolveExpressionInputValue(Material, MaterialFunction, SpeedValue, AvailableExpressions, 2, PositionY + 40, SpeedExpression, InputError))
 				{
 					OutError = MakeError(FString::Printf(TEXT("Speed input is invalid. %s"), *InputError));
 					return nullptr;
@@ -3395,7 +3546,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			auto* Expression = Cast<UMaterialExpressionWorldPosition>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionWorldPosition::StaticClass(), -800, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionWorldPosition::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = MakeError(TEXT("Failed to create the native WorldPosition node."));
@@ -3428,7 +3579,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			auto* Expression = Cast<UMaterialExpressionObjectPositionWS>(
-				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionObjectPositionWS::StaticClass(), -800, PositionY));
+				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionObjectPositionWS::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = MakeError(TEXT("Failed to create the native ObjectPositionWS node."));
@@ -3459,7 +3610,7 @@ namespace UE::DreamShader::Editor::Private
 
 			UMaterialExpression* Expression =
 				Cast<UMaterialExpressionCameraVectorWS>(
-					UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionCameraVectorWS::StaticClass(), -800, PositionY));
+					CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionCameraVectorWS::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = MakeError(TEXT("Failed to create the native CameraVectorWS node."));
@@ -3477,7 +3628,7 @@ namespace UE::DreamShader::Editor::Private
 
 			UMaterialExpression* Expression =
 				Cast<UMaterialExpressionScreenPosition>(
-					UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionScreenPosition::StaticClass(), -800, PositionY));
+					CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionScreenPosition::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = MakeError(TEXT("Failed to create the native ScreenPosition node."));
@@ -3495,7 +3646,7 @@ namespace UE::DreamShader::Editor::Private
 
 			UMaterialExpression* Expression =
 				Cast<UMaterialExpressionVertexColor>(
-					UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVertexColor::StaticClass(), -800, PositionY));
+					CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionVertexColor::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
 				OutError = MakeError(TEXT("Failed to create the native VertexColor node."));
@@ -3506,11 +3657,40 @@ namespace UE::DreamShader::Editor::Private
 		if (Property.UEBuiltinArguments.Contains(UE::DreamShader::NormalizeSettingKey(TEXT("OutputType")))
 			|| Property.UEBuiltinArguments.Contains(UE::DreamShader::NormalizeSettingKey(TEXT("ResultType"))))
 		{
-			return CreateGenericUEExpression(Material, Property, AvailableExpressions, PositionY, OutError);
+			return CreateGenericUEExpression(Material, MaterialFunction, Property, AvailableExpressions, PositionY, OutError);
 		}
 
 		OutError = MakeError(TEXT("This builtin is not implemented by the material generator yet. For generic MaterialExpression support, add OutputType=\"float1/2/3/4/Texture2D\"."));
 		return nullptr;
+	}
+
+	UMaterialExpression* CreatePropertyExpression(
+		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
+		const FTextShaderPropertyDefinition& Property,
+		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
+		const int32 PositionY,
+		FString& OutError)
+	{
+		if (Property.bConst)
+		{
+			return CreateConstPropertyExpression(Material, MaterialFunction, Property, PositionY, OutError);
+		}
+
+		if (Property.Source == ETextShaderPropertySource::UEBuiltin)
+		{
+			return CreateUEBuiltinExpression(Material, MaterialFunction, Property, AvailableExpressions, PositionY, OutError);
+		}
+
+		UMaterialExpression* Expression = CreateParameterExpression(Material, MaterialFunction, Property, PositionY, OutError);
+		if (!Expression)
+		{
+			if (OutError.IsEmpty())
+			{
+				OutError = FString::Printf(TEXT("Failed to create a parameter node for property '%s'."), *Property.Name);
+			}
+		}
+		return Expression;
 	}
 
 	UMaterialExpression* CreatePropertyExpression(
@@ -3520,20 +3700,7 @@ namespace UE::DreamShader::Editor::Private
 		const int32 PositionY,
 		FString& OutError)
 	{
-		if (Property.Source == ETextShaderPropertySource::UEBuiltin)
-		{
-			return CreateUEBuiltinExpression(Material, Property, AvailableExpressions, PositionY, OutError);
-		}
-
-		UMaterialExpression* Expression = CreateParameterExpression(Material, Property, PositionY, OutError);
-		if (!Expression)
-		{
-			if (OutError.IsEmpty())
-			{
-				OutError = FString::Printf(TEXT("Failed to create a parameter node for property '%s'."), *Property.Name);
-			}
-		}
-		return Expression;
+		return CreatePropertyExpression(Material, nullptr, Property, AvailableExpressions, PositionY, OutError);
 	}
 
 	bool TryGetComponentCountForOutputType(const ECustomMaterialOutputType OutputType, int32& OutComponentCount)

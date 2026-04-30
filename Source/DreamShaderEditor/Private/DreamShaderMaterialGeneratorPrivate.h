@@ -154,6 +154,13 @@ namespace UE::DreamShader::Editor::Private
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		int32 PositionY,
 		FString& OutError);
+	UMaterialExpression* CreatePropertyExpression(
+		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
+		const FTextShaderPropertyDefinition& Property,
+		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
+		int32 PositionY,
+		FString& OutError);
 	bool TryGetComponentCountForOutputType(ECustomMaterialOutputType OutputType, int32& OutComponentCount);
 	bool IsMaterialAttributesType(const FString& InTypeName);
 	bool TryResolveCodeDeclaredType(const FString& InTypeName, int32& OutComponentCount, bool& bOutIsTexture);
@@ -194,7 +201,8 @@ namespace UE::DreamShader::Editor::Private
 			UMaterialFunction* InMaterialFunction,
 			const FTextShaderDefinition& InDefinition,
 			const FString& InSourceFilePath,
-			const FString& InIncludeVirtualPath);
+			const FString& InIncludeVirtualPath,
+			const TArray<FTextShaderPropertyDefinition>* InLocalProperties = nullptr);
 
 		bool Build(
 			const TArray<FCodeStatement>& Statements,
@@ -206,6 +214,7 @@ namespace UE::DreamShader::Editor::Private
 		UMaterial* Material = nullptr;
 		UMaterialFunction* MaterialFunction = nullptr;
 		const FTextShaderDefinition& Definition;
+		const TArray<FTextShaderPropertyDefinition>* LocalProperties = nullptr;
 		FString SourceFilePath;
 		FString IncludeVirtualPath;
 		TMap<FString, FCodeValue>* Values = nullptr;

@@ -1548,10 +1548,12 @@ namespace UE::DreamShader::Editor::Private
 		UMaterialFunction* InMaterialFunction,
 		const FTextShaderDefinition& InDefinition,
 		const FString& InSourceFilePath,
-		const FString& InIncludeVirtualPath)
+		const FString& InIncludeVirtualPath,
+		const TArray<FTextShaderPropertyDefinition>* InLocalProperties)
 		: Material(InMaterial)
 		, MaterialFunction(InMaterialFunction)
 		, Definition(InDefinition)
+		, LocalProperties(InLocalProperties)
 		, SourceFilePath(InSourceFilePath)
 		, IncludeVirtualPath(InIncludeVirtualPath)
 	{
@@ -3192,6 +3194,17 @@ namespace UE::DreamShader::Editor::Private
 
 	const FTextShaderPropertyDefinition* FCodeGraphBuilder::FindPropertyDefinition(const FString& PropertyName) const
 	{
+		if (LocalProperties)
+		{
+			for (const FTextShaderPropertyDefinition& Property : *LocalProperties)
+			{
+				if (Property.Name.Equals(PropertyName, ESearchCase::IgnoreCase))
+				{
+					return &Property;
+				}
+			}
+		}
+
 		for (const FTextShaderPropertyDefinition& Property : Definition.Properties)
 		{
 			if (Property.Name.Equals(PropertyName, ESearchCase::IgnoreCase))

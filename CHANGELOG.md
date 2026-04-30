@@ -1,5 +1,13 @@
 # DreamShader ChangeLog
 
+## 1.2.6 - 2026-04-30
+
+### ShaderFunction Properties
+
+- Added `ShaderFunction` `Properties` as material-function-local property nodes.
+- Added `const` property declarations for scalar, vector, and texture helper nodes that are not externally adjustable parameters.
+- `ShaderFunction` `Inputs` preview defaults can now reference generated `Properties`, including texture object previews such as `opt Texture2D BaseColorTex = Tex;`.
+
 ## 1.2.5 - 2026-04-30
 
 ### Material Attributes

@@ -554,6 +554,20 @@ namespace UE::DreamShader::Private
 				return false;
 			}
 
+			if (TypeToken.Len() >= 5
+				&& TypeToken.Left(5).Equals(TEXT("const"), ESearchCase::IgnoreCase)
+				&& (TypeToken.Len() == 5 || FChar::IsWhitespace(TypeToken[5])))
+			{
+				Property.bConst = true;
+				TypeToken.RightChopInline(5, EAllowShrinking::No);
+				TypeToken.TrimStartAndEndInline();
+				if (TypeToken.IsEmpty())
+				{
+					OutError = FString::Printf(TEXT("Missing property type after const in declaration '%s'."), *Statement);
+					return false;
+				}
+			}
+
 			Property.Name = NameToken;
 
 			if (IsKnownParameterNodeType(TypeToken))
@@ -1180,8 +1194,14 @@ namespace UE::DreamShader::Private
 				return false;
 			}
 
-			if (SectionName.Equals(TEXT("Inputs"), ESearchCase::IgnoreCase)
-				|| SectionName.Equals(TEXT("Properties"), ESearchCase::IgnoreCase))
+			if (SectionName.Equals(TEXT("Properties"), ESearchCase::IgnoreCase))
+			{
+				if (!ParsePropertyStatements(SectionBody, OutFunction.Properties, OutError))
+				{
+					return false;
+				}
+			}
+			else if (SectionName.Equals(TEXT("Inputs"), ESearchCase::IgnoreCase))
 			{
 				if (!ParseTypedParameterStatements(SectionBody, OutFunction.Inputs, OutError))
 				{

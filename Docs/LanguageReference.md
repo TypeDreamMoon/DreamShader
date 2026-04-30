@@ -4,7 +4,7 @@ DreamShaderLang 是 DreamShader 插件使用的文本语言。它用 `.dsm` / `.
 
 | 项目 | 内容 |
 | --- | --- |
-| 插件版本 | `1.2.5` |
+| 插件版本 | `1.2.6` |
 | 源文件 | `.dsm` / `.dsh` |
 | 主要产物 | `UMaterial` / `UMaterialFunction` |
 | 开发者 | TypeDreamMoon |
@@ -80,9 +80,14 @@ Shader(Name="DreamMaterials/M_Sample")
 ```c
 ShaderFunction(Name="Functions/F_Tint", Root="Plugin.MyPlugin")
 {
+    Properties = {
+        const Texture2D PreviewTex;
+    }
+
     Inputs = {
         vec3 InColor;
         vec3 InTint;
+        opt Texture2D BaseColorTex = PreviewTex;
     }
 
     Outputs = {
@@ -104,6 +109,7 @@ ShaderFunction(Name="Functions/F_Tint", Root="Plugin.MyPlugin")
 
 - `Name` 必填。
 - `Root` 可选，规则同 `Shader`。
+- `Properties` 可选，声明属于该材质函数内部的 parameter 或 `const` helper 节点。
 - `Inputs` 声明输入 pin。
 - `Outputs` 声明输出 pin。
 - `Graph` 负责生成材质函数内部图。
@@ -203,10 +209,11 @@ Texture::Sample2DRGB(MainTex, uv, sampledColor);
 
 ### 3.1 `Properties`
 
-`Shader` 的材质输入参数。
+`Shader` 的材质输入参数；在 `ShaderFunction` 中也可以使用，用于声明材质函数内部的 property/helper 节点。
 
 ```c
 Properties = {
+    const float DebugScale = 1.0;
     float Strength = 1.0;
     vec3 Tint = vec3(1.0, 1.0, 1.0);
     Texture2D MainTex = Path(Game, "/Textures/T_Main");
@@ -219,6 +226,8 @@ Properties = {
 ```
 
 除 `float` / `vec3` / `Texture2D` 简写外，`Properties` 也支持常见显式 Parameter 节点类型，例如 `ScalarParameter`、`VectorParameter`、`DoubleVectorParameter`、`TextureObjectParameter`、`TextureSampleParameter2D`、`StaticBoolParameter`、`StaticSwitchParameter` 等。
+
+在 `Properties` 声明前加 `const` 会生成不可外部调参的常量/helper 节点，而不是 parameter 节点。`const` 支持标量、向量和纹理简写类型；`const Texture2D` 默认创建 Unreal Texture Object 节点，可用 `= Path(...)` 指定预览纹理，不写时使用 Unreal 默认纹理。
 
 声明尾部可以加 `[...]` 反射属性块。属性块里的每一项都会按 Unreal `MaterialExpression` 的 UPROPERTY 名称写入生成节点；不写的字段保持 Unreal 默认值。`Group`、`SortPriority`、`Description` 是常用别名，其中 `Description` 会写到节点 `Desc`。
 
@@ -268,6 +277,18 @@ Inputs = {
 
 ```c
 float3 color = MyFunction(InColor, default, Output="Result");
+```
+
+在 `ShaderFunction` 中，`Inputs` 的默认值可以引用同一函数 `Properties` 中声明的节点，常用于纹理预览：
+
+```c
+Properties = {
+    const Texture2D PreviewTex;
+}
+
+Inputs = {
+    opt Texture2D BaseColorTex = PreviewTex;
+}
 ```
 
 `ShaderFunction` / `VirtualFunction` 的 `Inputs` / `Outputs` 同样支持 `[...]` 属性块中的 `SortPriority` 和 `Description`；`Group` 会被解析并保留在语法层，但 Unreal Function Input / Output 本身没有分组字段。

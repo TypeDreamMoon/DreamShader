@@ -105,6 +105,7 @@ namespace UE::DreamShader::Editor
 			UMaterialExpressionFunctionInput* InputExpression,
 			const int32 ComponentCount,
 			const bool bIsTextureObject,
+			const TArray<FTextShaderPropertyDefinition>* LocalProperties,
 			TMap<FString, Private::FCodeValue>& GeneratedValues,
 			FString& OutError)
 		{
@@ -119,15 +120,9 @@ namespace UE::DreamShader::Editor
 				return true;
 			}
 
-			if (bIsTextureObject)
-			{
-				OutError = FString::Printf(TEXT("Input '%s' texture defaults must be connected through the FunctionInput Preview pin in Unreal for now."), *InputDefinition.Name);
-				return false;
-			}
-
-			const bool bIsMaterialAttributes = ComponentCount == 0;
+			const bool bIsMaterialAttributes = ComponentCount == 0 && !bIsTextureObject;
 			FVector4f PreviewValue;
-			if (!bIsMaterialAttributes && TryParseFunctionInputPreviewLiteral(InputDefinition.DefaultValueText, ComponentCount, PreviewValue))
+			if (!bIsTextureObject && !bIsMaterialAttributes && TryParseFunctionInputPreviewLiteral(InputDefinition.DefaultValueText, ComponentCount, PreviewValue))
 			{
 				InputExpression->PreviewValue = PreviewValue;
 				return true;
@@ -138,7 +133,8 @@ namespace UE::DreamShader::Editor
 				MaterialFunction,
 				RootDefinition,
 				SourceFilePath,
-				Private::BuildGeneratedIncludeVirtualPath(SourceFilePath));
+				Private::BuildGeneratedIncludeVirtualPath(SourceFilePath),
+				LocalProperties);
 			TArray<Private::FCodeStatement> EmptyStatements;
 			FString BuildError;
 			if (!PreviewGraphBuilder.Build(EmptyStatements, GeneratedValues, BuildError))
@@ -153,7 +149,7 @@ namespace UE::DreamShader::Editor
 				return false;
 			}
 
-			if (PreviewExpressionValue.bIsTextureObject
+			if (PreviewExpressionValue.bIsTextureObject != bIsTextureObject
 				|| PreviewExpressionValue.bIsMaterialAttributes != bIsMaterialAttributes
 				|| PreviewExpressionValue.ComponentCount != ComponentCount)
 			{
@@ -1179,6 +1175,57 @@ namespace UE::DreamShader::Editor
 			}
 
 			TMap<FString, Private::FCodeValue> GeneratedValues;
+			TMap<FString, UMaterialExpression*> GeneratedPropertyExpressions;
+			int32 PropertyPositionY = -620;
+			for (const FTextShaderPropertyDefinition& Property : FunctionDefinition.Properties)
+			{
+				bool bNameConflict = false;
+				for (const TPair<FString, UMaterialExpression*>& ExistingProperty : GeneratedPropertyExpressions)
+				{
+					if (ExistingProperty.Key.Equals(Property.Name, ESearchCase::IgnoreCase))
+					{
+						bNameConflict = true;
+						break;
+					}
+				}
+
+				for (const FTextShaderFunctionParameter& InputDefinition : FunctionDefinition.Inputs)
+				{
+					if (InputDefinition.Name.Equals(Property.Name, ESearchCase::IgnoreCase))
+					{
+						bNameConflict = true;
+						break;
+					}
+				}
+
+				if (bNameConflict)
+				{
+					OutError = FString::Printf(
+						TEXT("ShaderFunction '%s' property '%s' conflicts with another property or input name."),
+						*FunctionDefinition.Name,
+						*Property.Name);
+					return false;
+				}
+
+				FString PropertyExpressionError;
+				UMaterialExpression* PropertyExpression =
+					Private::CreatePropertyExpression(nullptr, MaterialFunction, Property, GeneratedPropertyExpressions, PropertyPositionY, PropertyExpressionError);
+				if (!PropertyExpression)
+				{
+					OutError = FString::Printf(TEXT("ShaderFunction '%s' property '%s': %s"), *FunctionDefinition.Name, *Property.Name, *PropertyExpressionError);
+					return false;
+				}
+
+				GeneratedPropertyExpressions.Add(Property.Name, PropertyExpression);
+				Private::FCodeValue PropertyValue;
+				PropertyValue.Expression = PropertyExpression;
+				PropertyValue.ComponentCount = Property.Type == ETextShaderPropertyType::Texture2D ? 0 : Property.ComponentCount;
+				PropertyValue.bIsTextureObject = Property.Type == ETextShaderPropertyType::Texture2D;
+				PropertyValue.bIsMaterialAttributes = false;
+				GeneratedValues.Add(Property.Name, PropertyValue);
+				PropertyPositionY += 220;
+			}
+
 			TMap<FString, UMaterialExpressionFunctionInput*> GeneratedInputExpressions;
 			int32 InputPositionY = -260;
 			for (int32 InputIndex = 0; InputIndex < FunctionDefinition.Inputs.Num(); ++InputIndex)
@@ -1243,6 +1290,7 @@ namespace UE::DreamShader::Editor
 					*InputExpressionPtr,
 					InputValue->ComponentCount,
 					InputValue->bIsTextureObject,
+					&FunctionDefinition.Properties,
 					GeneratedValues,
 					PreviewError))
 				{
@@ -1286,7 +1334,8 @@ namespace UE::DreamShader::Editor
 					MaterialFunction,
 					RootDefinition,
 					SourceFilePath,
-					Private::BuildGeneratedIncludeVirtualPath(SourceFilePath));
+					Private::BuildGeneratedIncludeVirtualPath(SourceFilePath),
+					&FunctionDefinition.Properties);
 				FString CodeBuildError;
 				if (!CodeGraphBuilder.Build(CodeStatements, GeneratedValues, CodeBuildError))
 				{

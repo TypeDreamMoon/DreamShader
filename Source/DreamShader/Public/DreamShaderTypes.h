@@ -43,6 +43,7 @@ namespace UE::DreamShader
 		ETextShaderPropertyType Type = ETextShaderPropertyType::Scalar;
 		ETextShaderTextureType TextureType = ETextShaderTextureType::Texture2D;
 		int32 ComponentCount = 1;
+		bool bConst = false;
 		bool bHasDefaultValue = false;
 		double ScalarDefaultValue = 0.0;
 		FLinearColor VectorDefaultValue = FLinearColor::White;
@@ -96,6 +97,7 @@ namespace UE::DreamShader
 	{
 		FString Name;
 		FString Root;
+		TArray<FTextShaderPropertyDefinition> Properties;
 		TArray<FTextShaderFunctionParameter> Inputs;
 		TArray<FTextShaderFunctionParameter> Outputs;
 		TMap<FString, FString> Settings;
