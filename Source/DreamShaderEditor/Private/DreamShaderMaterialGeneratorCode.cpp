@@ -12,11 +12,14 @@
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionDivide.h"
 #include "Materials/MaterialExpressionIf.h"
+#include "Materials/MaterialExpressionBreakMaterialAttributes.h"
+#include "Materials/MaterialExpressionMakeMaterialAttributes.h"
 #include "Materials/MaterialExpressionMultiply.h"
 #include "Materials/MaterialExpressionObjectPositionWS.h"
 #include "Materials/MaterialExpressionPanner.h"
 #include "Materials/MaterialExpressionScreenPosition.h"
 #include "Materials/MaterialExpressionStaticSwitchParameter.h"
+#include "Materials/MaterialExpressionSetMaterialAttributes.h"
 #include "Materials/MaterialExpressionCollectionParameter.h"
 #include "Materials/MaterialExpressionSubtract.h"
 #include "Materials/MaterialExpressionTextureCoordinate.h"
@@ -90,6 +93,79 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		return false;
+	}
+
+	static bool IsMaterialAttributesComponentType(const int32 ComponentCount, const bool bIsTextureObject)
+	{
+		return ComponentCount == 0 && !bIsTextureObject;
+	}
+
+	static bool TrySplitMemberTarget(const FString& TargetText, FString& OutBaseName, FString& OutMemberName)
+	{
+		FString Left;
+		FString Right;
+		if (!TargetText.TrimStartAndEnd().Split(TEXT("."), &Left, &Right, ESearchCase::CaseSensitive, ESearchDir::FromStart))
+		{
+			return false;
+		}
+
+		OutBaseName = Left.TrimStartAndEnd();
+		OutMemberName = Right.TrimStartAndEnd();
+		return !OutBaseName.IsEmpty() && !OutMemberName.IsEmpty();
+	}
+
+	static bool ResolveTypeNameForComponentCount(const int32 ComponentCount, FString& OutTypeName)
+	{
+		switch (ComponentCount)
+		{
+		case 0: OutTypeName = TEXT("MaterialAttributes"); return true;
+		case 1: OutTypeName = TEXT("float"); return true;
+		case 2: OutTypeName = TEXT("float2"); return true;
+		case 3: OutTypeName = TEXT("float3"); return true;
+		case 4: OutTypeName = TEXT("float4"); return true;
+		default:
+			return false;
+		}
+	}
+
+	static bool TryResolveMaterialAttributesBreakOutputIndex(const EMaterialProperty Property, int32& OutOutputIndex)
+	{
+		switch (Property)
+		{
+		case MP_BaseColor: OutOutputIndex = 0; return true;
+		case MP_Metallic: OutOutputIndex = 1; return true;
+		case MP_Specular: OutOutputIndex = 2; return true;
+		case MP_Roughness: OutOutputIndex = 3; return true;
+		case MP_Anisotropy: OutOutputIndex = 4; return true;
+		case MP_EmissiveColor: OutOutputIndex = 5; return true;
+		case MP_Opacity: OutOutputIndex = 6; return true;
+		case MP_OpacityMask: OutOutputIndex = 7; return true;
+		case MP_Normal: OutOutputIndex = 8; return true;
+		case MP_Tangent: OutOutputIndex = 9; return true;
+		case MP_WorldPositionOffset: OutOutputIndex = 10; return true;
+		case MP_SubsurfaceColor: OutOutputIndex = 11; return true;
+		case MP_CustomData0: OutOutputIndex = 12; return true;
+		case MP_CustomData1: OutOutputIndex = 13; return true;
+		case MP_AmbientOcclusion: OutOutputIndex = 14; return true;
+		case MP_Refraction: OutOutputIndex = 15; return true;
+		case MP_CustomizedUVs0: OutOutputIndex = 16; return true;
+		case MP_CustomizedUVs1: OutOutputIndex = 17; return true;
+		case MP_CustomizedUVs2: OutOutputIndex = 18; return true;
+		case MP_CustomizedUVs3: OutOutputIndex = 19; return true;
+		case MP_CustomizedUVs4: OutOutputIndex = 20; return true;
+		case MP_CustomizedUVs5: OutOutputIndex = 21; return true;
+		case MP_CustomizedUVs6: OutOutputIndex = 22; return true;
+		case MP_CustomizedUVs7: OutOutputIndex = 23; return true;
+		case MP_PixelDepthOffset: OutOutputIndex = 24; return true;
+		case MP_Displacement: OutOutputIndex = 26; return true;
+		case MP_MooaEncodedAttribute0: OutOutputIndex = 27; return true;
+		case MP_MooaEncodedAttribute1: OutOutputIndex = 28; return true;
+		case MP_MooaEncodedAttribute2: OutOutputIndex = 29; return true;
+		case MP_MooaEncodedAttribute3: OutOutputIndex = 30; return true;
+		case MP_MooaEncodedAttribute4: OutOutputIndex = 31; return true;
+		default:
+			return false;
+		}
 	}
 
 	static FString RemoveComments(const FString& Input)
@@ -1523,6 +1599,47 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
+		if (!Statement.bIsDeclaration)
+		{
+			FString MemberBaseName;
+			FString MemberName;
+			if (TrySplitMemberTarget(Statement.TargetName, MemberBaseName, MemberName))
+			{
+				FCodeValue EvaluatedMemberValue;
+				if (Statement.bUsesBraceInitializer)
+				{
+					FString TargetTypeName;
+					if (!ResolveTargetTypeForAssignment(Statement, TargetTypeName, OutError)
+						|| !EvaluateBraceInitializer(TargetTypeName, Statement.InitializerText, EvaluatedMemberValue, OutError))
+					{
+						OutError = FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError);
+						return false;
+					}
+				}
+				else if (Statement.Expression)
+				{
+					if (!EvaluateExpression(Statement.Expression, EvaluatedMemberValue, OutError))
+					{
+						OutError = FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError);
+						return false;
+					}
+				}
+				else
+				{
+					OutError = FString::Printf(TEXT("MaterialAttributes member assignment '%s' requires a value."), *Statement.TargetName);
+					return false;
+				}
+
+				if (!AssignMaterialAttributesMember(Statement.TargetName, EvaluatedMemberValue, OutError))
+				{
+					OutError = FString::Printf(TEXT("Failed to assign Graph member '%s'. %s"), *Statement.TargetName, *OutError);
+					return false;
+				}
+
+				return true;
+			}
+		}
+
 		if (Statement.bIsDeclaration && FindValue(Statement.TargetName))
 		{
 			OutError = FString::Printf(TEXT("Graph variable '%s' is declared more than once."), *Statement.TargetName);
@@ -1604,7 +1721,8 @@ namespace UE::DreamShader::Editor::Private
 		return Left.Expression == Right.Expression
 			&& Left.OutputIndex == Right.OutputIndex
 			&& Left.ComponentCount == Right.ComponentCount
-			&& Left.bIsTextureObject == Right.bIsTextureObject;
+			&& Left.bIsTextureObject == Right.bIsTextureObject
+			&& Left.bIsMaterialAttributes == Right.bIsMaterialAttributes;
 	}
 
 	static void CollectChangedValueNames(
@@ -1731,6 +1849,11 @@ namespace UE::DreamShader::Editor::Private
 			OutError = TEXT("Texture2D values cannot be selected by Graph if statements.");
 			return false;
 		}
+		if (TrueValue.bIsMaterialAttributes != FalseValue.bIsMaterialAttributes)
+		{
+			OutError = TEXT("Graph if branches cannot mix MaterialAttributes and numeric values.");
+			return false;
+		}
 
 		FCodeValue LeftValue;
 		if (!EvaluateExpression(Condition.Left, LeftValue, OutError))
@@ -1739,7 +1862,7 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		if (LeftValue.bIsTextureObject || LeftValue.ComponentCount != 1)
+		if (LeftValue.bIsTextureObject || LeftValue.bIsMaterialAttributes || LeftValue.ComponentCount != 1)
 		{
 			OutError = TEXT("Graph if condition left side must evaluate to a scalar value.");
 			return false;
@@ -1765,7 +1888,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		if (RightValue.bIsTextureObject || RightValue.ComponentCount != 1)
+		if (RightValue.bIsTextureObject || RightValue.bIsMaterialAttributes || RightValue.ComponentCount != 1)
 		{
 			OutError = TEXT("Graph if condition right side must evaluate to a scalar value.");
 			return false;
@@ -1823,6 +1946,7 @@ namespace UE::DreamShader::Editor::Private
 		OutValue.OutputIndex = 0;
 		OutValue.ComponentCount = TrueValue.ComponentCount;
 		OutValue.bIsTextureObject = false;
+		OutValue.bIsMaterialAttributes = TrueValue.bIsMaterialAttributes;
 		return true;
 	}
 
@@ -1900,6 +2024,25 @@ namespace UE::DreamShader::Editor::Private
 		return Expression;
 	}
 
+	bool FCodeGraphBuilder::CreateMaterialAttributesValue(FCodeValue& OutValue, FString& OutError)
+	{
+		auto* Expression = Cast<UMaterialExpressionMakeMaterialAttributes>(
+			CreateExpression(UMaterialExpressionMakeMaterialAttributes::StaticClass(), 200, ConsumeNodeY()));
+		if (!Expression)
+		{
+			OutError = TEXT("Failed to create a MakeMaterialAttributes node.");
+			return false;
+		}
+
+		OutValue = FCodeValue{};
+		OutValue.Expression = Expression;
+		OutValue.OutputIndex = 0;
+		OutValue.ComponentCount = 0;
+		OutValue.bIsTextureObject = false;
+		OutValue.bIsMaterialAttributes = true;
+		return true;
+	}
+
 	bool FCodeGraphBuilder::CreateDefaultValue(const FString& DeclaredType, FCodeValue& OutValue, FString& OutError)
 	{
 		int32 ComponentCount = 1;
@@ -1908,6 +2051,11 @@ namespace UE::DreamShader::Editor::Private
 		{
 			OutError = FString::Printf(TEXT("Unsupported Graph variable type '%s'."), *DeclaredType);
 			return false;
+		}
+
+		if (IsMaterialAttributesComponentType(ComponentCount, bIsTexture))
+		{
+			return CreateMaterialAttributesValue(OutValue, OutError);
 		}
 
 		if (bIsTexture)
@@ -1953,6 +2101,18 @@ namespace UE::DreamShader::Editor::Private
 		FCodeValue& OutValue,
 		FString& OutError)
 	{
+		if (IsMaterialAttributesComponentType(ExpectedComponentCount, bExpectedTexture))
+		{
+			if (!InValue.bIsMaterialAttributes)
+			{
+				OutError = TEXT("Expected a MaterialAttributes value.");
+				return false;
+			}
+
+			OutValue = InValue;
+			return true;
+		}
+
 		if (bExpectedTexture)
 		{
 			if (!InValue.bIsTextureObject)
@@ -1963,6 +2123,12 @@ namespace UE::DreamShader::Editor::Private
 
 			OutValue = InValue;
 			return true;
+		}
+
+		if (InValue.bIsMaterialAttributes)
+		{
+			OutError = TEXT("MaterialAttributes values cannot be assigned to numeric outputs.");
+			return false;
 		}
 
 		if (InValue.bIsTextureObject)
@@ -2044,6 +2210,14 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
+		FString BaseName;
+		FString MemberName;
+		if (TrySplitMemberTarget(Statement.TargetName, BaseName, MemberName))
+		{
+			int32 MemberComponentCount = 0;
+			return ResolveMaterialAttributesMemberType(MemberName, MemberComponentCount, OutTypeName, OutError);
+		}
+
 		if (const FCodeValue* ExistingValue = FindValue(Statement.TargetName))
 		{
 			if (ExistingValue->bIsTextureObject)
@@ -2052,14 +2226,9 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			switch (ExistingValue->ComponentCount)
+			if (ResolveTypeNameForComponentCount(ExistingValue->ComponentCount, OutTypeName))
 			{
-			case 1: OutTypeName = TEXT("float"); return true;
-			case 2: OutTypeName = TEXT("float2"); return true;
-			case 3: OutTypeName = TEXT("float3"); return true;
-			case 4: OutTypeName = TEXT("float4"); return true;
-			default:
-				break;
+				return true;
 			}
 		}
 
@@ -2073,19 +2242,116 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			switch (OutputComponentCount)
+			if (ResolveTypeNameForComponentCount(OutputComponentCount, OutTypeName))
 			{
-			case 1: OutTypeName = TEXT("float"); return true;
-			case 2: OutTypeName = TEXT("float2"); return true;
-			case 3: OutTypeName = TEXT("float3"); return true;
-			case 4: OutTypeName = TEXT("float4"); return true;
-			default:
-				break;
+				return true;
 			}
 		}
 
 		OutError = FString::Printf(TEXT("Brace initializer assignment for '%s' requires a declared scalar or vector target type."), *Statement.TargetName);
 		return false;
+	}
+
+	bool FCodeGraphBuilder::ResolveMaterialAttributesMemberType(
+		const FString& MemberName,
+		int32& OutComponentCount,
+		FString& OutTypeName,
+		FString& OutError) const
+	{
+		FResolvedMaterialProperty ResolvedProperty;
+		if (!ResolveMaterialProperty(MemberName, ResolvedProperty)
+			|| ResolvedProperty.Property == MP_MaterialAttributes)
+		{
+			OutError = FString::Printf(TEXT("Unsupported MaterialAttributes member '%s'."), *MemberName);
+			return false;
+		}
+
+		if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, OutComponentCount)
+			|| OutComponentCount <= 0
+			|| !ResolveTypeNameForComponentCount(OutComponentCount, OutTypeName))
+		{
+			OutError = FString::Printf(TEXT("MaterialAttributes member '%s' does not have a numeric scalar/vector type."), *MemberName);
+			return false;
+		}
+
+		return true;
+	}
+
+	bool FCodeGraphBuilder::AssignMaterialAttributesMember(const FString& TargetName, const FCodeValue& InValue, FString& OutError)
+	{
+		FString BaseName;
+		FString MemberName;
+		if (!TrySplitMemberTarget(TargetName, BaseName, MemberName))
+		{
+			OutError = FString::Printf(TEXT("Invalid MaterialAttributes member assignment target '%s'."), *TargetName);
+			return false;
+		}
+
+		FCodeValue* BaseValue = FindValue(BaseName);
+		if (!BaseValue)
+		{
+			OutError = FString::Printf(TEXT("Unknown MaterialAttributes variable '%s'."), *BaseName);
+			return false;
+		}
+		if (!BaseValue->bIsMaterialAttributes)
+		{
+			OutError = FString::Printf(TEXT("Graph variable '%s' is not a MaterialAttributes value."), *BaseName);
+			return false;
+		}
+
+		FResolvedMaterialProperty ResolvedProperty;
+		if (!ResolveMaterialProperty(MemberName, ResolvedProperty)
+			|| ResolvedProperty.Property == MP_MaterialAttributes)
+		{
+			OutError = FString::Printf(TEXT("Unsupported MaterialAttributes member '%s'."), *MemberName);
+			return false;
+		}
+
+		int32 ExpectedComponentCount = 0;
+		if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, ExpectedComponentCount) || ExpectedComponentCount <= 0)
+		{
+			OutError = FString::Printf(TEXT("MaterialAttributes member '%s' cannot be assigned from Graph code."), *MemberName);
+			return false;
+		}
+
+		FCodeValue CoercedValue;
+		if (!CoerceValueToType(InValue, ExpectedComponentCount, false, CoercedValue, OutError))
+		{
+			OutError = FString::Printf(
+				TEXT("MaterialAttributes member '%s' expects %d component(s). %s"),
+				*MemberName,
+				ExpectedComponentCount,
+				*OutError);
+			return false;
+		}
+
+		UMaterialExpressionSetMaterialAttributes* SetAttributes = Cast<UMaterialExpressionSetMaterialAttributes>(
+			CreateExpression(UMaterialExpressionSetMaterialAttributes::StaticClass(), 320, ConsumeNodeY()));
+		if (!SetAttributes)
+		{
+			OutError = TEXT("Failed to create a SetMaterialAttributes node.");
+			return false;
+		}
+
+		if (!SetAttributes->ConnectInputAttribute(MP_MaterialAttributes, BaseValue->Expression, BaseValue->OutputIndex))
+		{
+			OutError = FString::Printf(TEXT("Failed to connect '%s' as the SetMaterialAttributes base value."), *BaseName);
+			return false;
+		}
+
+		if (!SetAttributes->ConnectInputAttribute(ResolvedProperty.Property, CoercedValue.Expression, CoercedValue.OutputIndex))
+		{
+			OutError = FString::Printf(TEXT("Failed to connect MaterialAttributes member '%s'."), *MemberName);
+			return false;
+		}
+
+		BaseValue->Expression = SetAttributes;
+		BaseValue->OutputIndex = 0;
+		BaseValue->ComponentCount = 0;
+		BaseValue->bIsTextureObject = false;
+		BaseValue->bIsMaterialAttributes = true;
+
+		return true;
 	}
 
 	bool FCodeGraphBuilder::TryFlattenQualifiedName(const TSharedPtr<FCodeExpression>& Expression, FString& OutName)
@@ -2464,6 +2730,11 @@ namespace UE::DreamShader::Editor::Private
 			OutError = TEXT("Arithmetic operators cannot be applied to Texture2D values.");
 			return false;
 		}
+		if (LeftValue.bIsMaterialAttributes || RightValue.bIsMaterialAttributes)
+		{
+			OutError = TEXT("Arithmetic operators cannot be applied to MaterialAttributes values.");
+			return false;
+		}
 
 		UMaterialExpression* Expression = nullptr;
 		const int32 PositionY = ConsumeNodeY();
@@ -2532,6 +2803,48 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
+		if (BaseValue.bIsMaterialAttributes)
+		{
+			FResolvedMaterialProperty ResolvedProperty;
+			if (!ResolveMaterialProperty(Expression->Text, ResolvedProperty)
+				|| ResolvedProperty.Property == MP_MaterialAttributes)
+			{
+				OutError = FString::Printf(TEXT("Unsupported MaterialAttributes member '%s'."), *Expression->Text);
+				return false;
+			}
+
+			int32 OutputComponents = 0;
+			if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, OutputComponents) || OutputComponents <= 0)
+			{
+				OutError = FString::Printf(TEXT("MaterialAttributes member '%s' cannot be read as a numeric value."), *Expression->Text);
+				return false;
+			}
+
+			auto* BreakAttributes = Cast<UMaterialExpressionBreakMaterialAttributes>(
+				CreateExpression(UMaterialExpressionBreakMaterialAttributes::StaticClass(), 420, ConsumeNodeY()));
+			if (!BreakAttributes)
+			{
+				OutError = TEXT("Failed to create a BreakMaterialAttributes node.");
+				return false;
+			}
+
+			ConnectCodeValueToInput(BreakAttributes->MaterialAttributes, BaseValue);
+			int32 OutputIndex = INDEX_NONE;
+			if (!TryResolveMaterialAttributesBreakOutputIndex(ResolvedProperty.Property, OutputIndex)
+				|| !BreakAttributes->Outputs.IsValidIndex(OutputIndex))
+			{
+				OutError = FString::Printf(TEXT("BreakMaterialAttributes does not expose member '%s'."), *Expression->Text);
+				return false;
+			}
+
+			OutValue.Expression = BreakAttributes;
+			OutValue.OutputIndex = OutputIndex;
+			OutValue.ComponentCount = OutputComponents;
+			OutValue.bIsTextureObject = false;
+			OutValue.bIsMaterialAttributes = false;
+			return true;
+		}
+
 		if (BaseValue.bIsTextureObject)
 		{
 			OutError = TEXT("Texture2D values do not support swizzle/member access in Code.");
@@ -2572,6 +2885,14 @@ namespace UE::DreamShader::Editor::Private
 		{
 			OutError = TEXT("Cannot build an empty vector.");
 			return false;
+		}
+		for (const FCodeValue& Part : Parts)
+		{
+			if (Part.bIsTextureObject || Part.bIsMaterialAttributes)
+			{
+				OutError = TEXT("AppendVector inputs must be numeric scalar/vector values.");
+				return false;
+			}
 		}
 
 		FCodeValue Current = Parts[0];
@@ -2812,6 +3133,11 @@ namespace UE::DreamShader::Editor::Private
 				OutError = FString::Printf(TEXT("Constructor '%s' cannot use Texture2D arguments."), *ConstructorName);
 				return false;
 			}
+			if (EvaluatedArgument.bIsMaterialAttributes)
+			{
+				OutError = FString::Printf(TEXT("Constructor '%s' cannot use MaterialAttributes arguments."), *ConstructorName);
+				return false;
+			}
 
 			Parts.Add(EvaluatedArgument);
 		}
@@ -2928,6 +3254,11 @@ namespace UE::DreamShader::Editor::Private
 			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' cannot switch Texture object values."), *Property.Name);
 			return false;
 		}
+		if (TrueValue.bIsMaterialAttributes != FalseValue.bIsMaterialAttributes)
+		{
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' cannot mix MaterialAttributes and numeric branches."), *Property.Name);
+			return false;
+		}
 		if (TrueValue.ComponentCount != FalseValue.ComponentCount)
 		{
 			OutError = FString::Printf(
@@ -2975,6 +3306,7 @@ namespace UE::DreamShader::Editor::Private
 		OutValue.OutputIndex = 0;
 		OutValue.ComponentCount = TrueValue.ComponentCount;
 		OutValue.bIsTextureObject = false;
+		OutValue.bIsMaterialAttributes = TrueValue.bIsMaterialAttributes;
 		return true;
 	}
 
@@ -3287,6 +3619,7 @@ namespace UE::DreamShader::Editor::Private
 			ResultValue.OutputIndex = ResultIndex;
 			ResultValue.ComponentCount = ResultComponents;
 			ResultValue.bIsTextureObject = false;
+			ResultValue.bIsMaterialAttributes = IsMaterialAttributesComponentType(ResultComponents, false);
 			(*Values).Add(ResultTargetNames[ResultIndex], ResultValue);
 		}
 
@@ -3574,6 +3907,7 @@ namespace UE::DreamShader::Editor::Private
 		OutValue.OutputIndex = FunctionOutputIndex;
 		OutValue.ComponentCount = OutputComponents;
 		OutValue.bIsTextureObject = bIsTextureObject;
+		OutValue.bIsMaterialAttributes = IsMaterialAttributesComponentType(OutputComponents, bIsTextureObject);
 		return true;
 	}
 
@@ -4010,6 +4344,7 @@ namespace UE::DreamShader::Editor::Private
 			OutValue.OutputIndex = 0;
 			OutValue.ComponentCount = bIsVectorParameter ? 4 : 1;
 			OutValue.bIsTextureObject = false;
+			OutValue.bIsMaterialAttributes = false;
 			return true;
 		}
 
@@ -4039,6 +4374,7 @@ namespace UE::DreamShader::Editor::Private
 			OutValue.OutputIndex = 0;
 			OutValue.ComponentCount = Builtin.OutputComponents;
 			OutValue.bIsTextureObject = false;
+			OutValue.bIsMaterialAttributes = false;
 			return true;
 		};
 
@@ -4379,6 +4715,7 @@ namespace UE::DreamShader::Editor::Private
 		OutValue.OutputIndex = ResolvedOutputIndex;
 		OutValue.ComponentCount = OutputComponents;
 		OutValue.bIsTextureObject = bIsTextureObject;
+		OutValue.bIsMaterialAttributes = IsMaterialAttributesComponentType(OutputComponents, bIsTextureObject);
 		return true;
 	}
 }

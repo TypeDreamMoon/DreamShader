@@ -111,6 +111,7 @@ namespace UE::DreamShader::Editor::Private
 		int32 OutputIndex = 0;
 		int32 ComponentCount = 1;
 		bool bIsTextureObject = false;
+		bool bIsMaterialAttributes = false;
 	};
 
 	bool ParseCodeStatements(const FString& InCode, TArray<FCodeStatement>& OutStatements, FString& OutError);
@@ -154,6 +155,7 @@ namespace UE::DreamShader::Editor::Private
 		int32 PositionY,
 		FString& OutError);
 	bool TryGetComponentCountForOutputType(ECustomMaterialOutputType OutputType, int32& OutComponentCount);
+	bool IsMaterialAttributesType(const FString& InTypeName);
 	bool TryResolveCodeDeclaredType(const FString& InTypeName, int32& OutComponentCount, bool& bOutIsTexture);
 	bool TryResolveOutputVariableComponentCount(
 		const FTextShaderDefinition& Definition,
@@ -213,10 +215,13 @@ namespace UE::DreamShader::Editor::Private
 		int32 ConsumeNodeY();
 		UMaterialExpression* CreateExpression(TSubclassOf<UMaterialExpression> ExpressionClass, int32 PositionX, int32 PositionY) const;
 		UMaterialExpression* CreateScalarLiteralNode(double Value, int32 PositionY) const;
+		bool CreateMaterialAttributesValue(FCodeValue& OutValue, FString& OutError);
 		bool CreateDefaultValue(const FString& DeclaredType, FCodeValue& OutValue, FString& OutError);
 		bool CoerceValueToType(const FCodeValue& InValue, int32 ExpectedComponentCount, bool bExpectedTexture, FCodeValue& OutValue, FString& OutError);
 		bool EvaluateBraceInitializer(const FString& ConstructorType, const FString& InitializerText, FCodeValue& OutValue, FString& OutError);
 		bool ResolveTargetTypeForAssignment(const FCodeStatement& Statement, FString& OutTypeName, FString& OutError) const;
+		bool ResolveMaterialAttributesMemberType(const FString& MemberName, int32& OutComponentCount, FString& OutTypeName, FString& OutError) const;
+		bool AssignMaterialAttributesMember(const FString& TargetName, const FCodeValue& InValue, FString& OutError);
 
 		static bool TryFlattenQualifiedName(const TSharedPtr<FCodeExpression>& Expression, FString& OutName);
 		bool TryExtractTextLiteral(const TSharedPtr<FCodeExpression>& Expression, FString& OutText) const;

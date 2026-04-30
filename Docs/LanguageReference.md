@@ -4,7 +4,7 @@ DreamShaderLang 是 DreamShader 插件使用的文本语言。它用 `.dsm` / `.
 
 | 项目 | 内容 |
 | --- | --- |
-| 插件版本 | `1.2.4` |
+| 插件版本 | `1.2.5` |
 | 源文件 | `.dsm` / `.dsh` |
 | 主要产物 | `UMaterial` / `UMaterialFunction` |
 | 开发者 | TypeDreamMoon |
@@ -294,6 +294,22 @@ Outputs = {
 }
 ```
 
+`MaterialAttributes` 可以作为 ShaderFunction / VirtualFunction 的输出类型，也可以在 `Shader` 中绑定到 `Base.MaterialAttributes`：
+
+```c
+Outputs = {
+    MaterialAttributes Attrs;
+    Base.MaterialAttributes = Attrs;
+}
+
+Graph = {
+    Attrs.BaseColor = Color;
+    Attrs.Roughness = Roughness;
+}
+```
+
+当 `Shader` 绑定 `Base.MaterialAttributes` 时，生成器会自动启用 Unreal 材质的 `Use Material Attributes`。
+
 ### 3.4 `Settings`
 
 配置 Unreal 材质或 Material Function 属性。
@@ -337,6 +353,7 @@ Options = {
 - `UE.StaticSwitchParameter(...)` 或 `StaticSwitchParameter` 属性调用。
 - `Function(...)` / `Namespace::Function(...)` 独立调用。
 - `ShaderFunction(...)` / `VirtualFunction(...)` 值调用。
+- `MaterialAttributes` 聚合值，以及 `Attrs.BaseColor = ...` / `Attrs.Roughness = ...` 形式的成员写入。
 - 基础 `if` / `else` 图分支。
 - 将结果绑定到输出变量。
 
@@ -551,6 +568,21 @@ Outputs = {
 
     Base.BaseColor = Color;
     Base.Opacity = Alpha;
+}
+```
+
+也可以把完整 Material Attributes 聚合值连接到材质主输出：
+
+```c
+Outputs = {
+    MaterialAttributes Attrs;
+    Base.MaterialAttributes = Attrs;
+}
+
+Graph = {
+    Attrs.BaseColor = Color;
+    Attrs.Roughness = Roughness;
+    Attrs.Metallic = Metallic;
 }
 ```
 

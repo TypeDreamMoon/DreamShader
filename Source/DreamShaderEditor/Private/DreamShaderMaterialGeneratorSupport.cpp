@@ -64,6 +64,10 @@ namespace UE::DreamShader::Editor::Private
 		{
 			OutProperty = { MP_BaseColor, CMOT_Float3 };
 		}
+		else if (Matches(TEXT("MaterialAttributes")) || Matches(TEXT("Attributes")))
+		{
+			OutProperty = { MP_MaterialAttributes, CMOT_MaterialAttributes };
+		}
 		else if (Matches(TEXT("EmissiveColor")) || Matches(TEXT("Emissive")))
 		{
 			OutProperty = { MP_EmissiveColor, CMOT_Float3 };
@@ -3548,9 +3552,20 @@ namespace UE::DreamShader::Editor::Private
 		case CMOT_Float4:
 			OutComponentCount = 4;
 			return true;
+		case CMOT_MaterialAttributes:
+			OutComponentCount = 0;
+			return true;
 		default:
 			return false;
 		}
+	}
+
+	bool IsMaterialAttributesType(const FString& InTypeName)
+	{
+		FString TypeName = InTypeName;
+		TypeName.TrimStartAndEndInline();
+		TypeName.ReplaceInline(TEXT(" "), TEXT(""));
+		return TypeName.Equals(TEXT("MaterialAttributes"), ESearchCase::IgnoreCase);
 	}
 
 	bool TryResolveCodeDeclaredType(const FString& InTypeName, int32& OutComponentCount, bool& bOutIsTexture)
@@ -3970,6 +3985,14 @@ namespace UE::DreamShader::Editor::Private
 			OutComponentCount = 1;
 			bOutIsTexture = false;
 			OutFunctionInputTypeValue = static_cast<int32>(FunctionInput_StaticBool);
+			return true;
+		}
+
+		if (IsMaterialAttributesType(InTypeName))
+		{
+			OutComponentCount = 0;
+			bOutIsTexture = false;
+			OutFunctionInputTypeValue = static_cast<int32>(FunctionInput_MaterialAttributes);
 			return true;
 		}
 

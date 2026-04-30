@@ -11,6 +11,7 @@
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
 #include "Materials/MaterialExpressionFunctionOutput.h"
+#include "Materials/MaterialExpressionMakeMaterialAttributes.h"
 #include "Materials/MaterialFunction.h"
 #include "Misc/FileHelper.h"
 
@@ -124,8 +125,9 @@ namespace UE::DreamShader::Editor
 				return false;
 			}
 
+			const bool bIsMaterialAttributes = ComponentCount == 0;
 			FVector4f PreviewValue;
-			if (TryParseFunctionInputPreviewLiteral(InputDefinition.DefaultValueText, ComponentCount, PreviewValue))
+			if (!bIsMaterialAttributes && TryParseFunctionInputPreviewLiteral(InputDefinition.DefaultValueText, ComponentCount, PreviewValue))
 			{
 				InputExpression->PreviewValue = PreviewValue;
 				return true;
@@ -151,7 +153,9 @@ namespace UE::DreamShader::Editor
 				return false;
 			}
 
-			if (PreviewExpressionValue.bIsTextureObject || PreviewExpressionValue.ComponentCount != ComponentCount)
+			if (PreviewExpressionValue.bIsTextureObject
+				|| PreviewExpressionValue.bIsMaterialAttributes != bIsMaterialAttributes
+				|| PreviewExpressionValue.ComponentCount != ComponentCount)
 			{
 				OutError = FString::Printf(
 					TEXT("Input '%s' default expression '%s' does not match declared type '%s'."),
@@ -162,6 +166,44 @@ namespace UE::DreamShader::Editor
 			}
 
 			InputExpression->Preview.Connect(PreviewExpressionValue.OutputIndex, PreviewExpressionValue.Expression);
+			return true;
+		}
+
+		static bool SeedMaterialAttributesGraphValue(
+			UMaterial* Material,
+			UMaterialFunction* MaterialFunction,
+			const FString& ValueName,
+			TMap<FString, Private::FCodeValue>& InOutGeneratedValues,
+			int32& InOutPositionY,
+			FString& OutError)
+		{
+			if (ValueName.IsEmpty() || InOutGeneratedValues.Contains(ValueName))
+			{
+				return true;
+			}
+
+			auto* Expression = Cast<UMaterialExpressionMakeMaterialAttributes>(
+				UMaterialEditingLibrary::CreateMaterialExpressionEx(
+					Material,
+					MaterialFunction,
+					UMaterialExpressionMakeMaterialAttributes::StaticClass(),
+					nullptr,
+					120,
+					InOutPositionY));
+			if (!Expression)
+			{
+				OutError = FString::Printf(TEXT("Failed to create a MakeMaterialAttributes node for '%s'."), *ValueName);
+				return false;
+			}
+
+			Private::FCodeValue Value;
+			Value.Expression = Expression;
+			Value.OutputIndex = 0;
+			Value.ComponentCount = 0;
+			Value.bIsTextureObject = false;
+			Value.bIsMaterialAttributes = true;
+			InOutGeneratedValues.Add(ValueName, Value);
+			InOutPositionY += 220;
 			return true;
 		}
 
@@ -1176,6 +1218,7 @@ namespace UE::DreamShader::Editor
 				InputValue.Expression = InputExpression;
 				InputValue.ComponentCount = ComponentCount;
 				InputValue.bIsTextureObject = bIsTextureObject;
+				InputValue.bIsMaterialAttributes = ComponentCount == 0 && !bIsTextureObject;
 				GeneratedValues.Add(InputDefinition.Name, InputValue);
 				GeneratedInputExpressions.Add(InputDefinition.Name, InputExpression);
 				InputPositionY += 180;
@@ -1205,6 +1248,26 @@ namespace UE::DreamShader::Editor
 				{
 					OutError = FString::Printf(TEXT("ShaderFunction '%s' input '%s': %s"), *FunctionDefinition.Name, *InputDefinition.Name, *PreviewError);
 					return false;
+				}
+			}
+
+			int32 MaterialAttributesSeedPositionY = 260;
+			for (const FTextShaderFunctionParameter& OutputDefinition : FunctionDefinition.Outputs)
+			{
+				if (Private::IsMaterialAttributesType(OutputDefinition.Type))
+				{
+					FString SeedError;
+					if (!SeedMaterialAttributesGraphValue(
+						nullptr,
+						MaterialFunction,
+						OutputDefinition.Name,
+						GeneratedValues,
+						MaterialAttributesSeedPositionY,
+						SeedError))
+					{
+						OutError = FString::Printf(TEXT("ShaderFunction '%s' output '%s': %s"), *FunctionDefinition.Name, *OutputDefinition.Name, *SeedError);
+						return false;
+					}
 				}
 			}
 
@@ -1315,6 +1378,7 @@ namespace UE::DreamShader::Editor
 				PrimaryOutputValue.ComponentCount = 0;
 				PrimaryOutputValue.bIsTextureObject = false;
 				verify(Private::TryResolveCodeDeclaredType(PrimaryOutput.Type, PrimaryOutputValue.ComponentCount, PrimaryOutputValue.bIsTextureObject));
+				PrimaryOutputValue.bIsMaterialAttributes = PrimaryOutputValue.ComponentCount == 0 && !PrimaryOutputValue.bIsTextureObject;
 				GeneratedValues.Add(PrimaryOutput.Name, PrimaryOutputValue);
 
 				for (int32 OutputIndex = 1; OutputIndex < FunctionDefinition.Outputs.Num(); ++OutputIndex)
@@ -1324,6 +1388,7 @@ namespace UE::DreamShader::Editor
 					OutputValue.Expression = CustomExpression;
 					OutputValue.OutputIndex = OutputIndex;
 					verify(Private::TryResolveCodeDeclaredType(OutputDefinition.Type, OutputValue.ComponentCount, OutputValue.bIsTextureObject));
+					OutputValue.bIsMaterialAttributes = OutputValue.ComponentCount == 0 && !OutputValue.bIsTextureObject;
 					GeneratedValues.Add(OutputDefinition.Name, OutputValue);
 				}
 			}
@@ -1353,6 +1418,7 @@ namespace UE::DreamShader::Editor
 				}
 
 				if (bExpectedTexture != OutputValue->bIsTextureObject
+					|| ((ExpectedComponentCount == 0 && !bExpectedTexture) != OutputValue->bIsMaterialAttributes)
 					|| (!bExpectedTexture && ExpectedComponentCount != OutputValue->ComponentCount))
 				{
 					OutError = FString::Printf(TEXT("ShaderFunction '%s' output '%s' does not match its declared type '%s'."), *FunctionDefinition.Name, *OutputDefinition.Name, *OutputDefinition.Type);
@@ -1616,6 +1682,27 @@ namespace UE::DreamShader::Editor
 			ParameterPositionY += 220;
 		}
 
+		int32 MaterialAttributesSeedPositionY = OutputTargetPositionY;
+		for (const FTextShaderVariableDeclaration& OutputDeclaration : Definition.OutputDeclarations)
+		{
+			if (Private::IsMaterialAttributesType(OutputDeclaration.Type))
+			{
+				FString SeedError;
+				if (!SeedMaterialAttributesGraphValue(
+					Material,
+					nullptr,
+					OutputDeclaration.Name,
+					GeneratedCodeValues,
+					MaterialAttributesSeedPositionY,
+					SeedError))
+				{
+					OutMessage = FString::Printf(TEXT("%s: Output '%s': %s"), *SourceFilePath, *OutputDeclaration.Name, *SeedError);
+					return false;
+				}
+			}
+		}
+		OutputTargetPositionY = FMath::Max(OutputTargetPositionY, MaterialAttributesSeedPositionY);
+
 		if (!Definition.Code.IsEmpty())
 		{
 			if (bUsesReturn)
@@ -1663,7 +1750,11 @@ namespace UE::DreamShader::Editor
 				bool bDeclaredTexture = false;
 				if (Private::TryResolveOutputVariableComponentCount(Definition, Binding.SourceText, DeclaredComponents, bDeclaredTexture))
 				{
-					if (bDeclaredTexture || OutputValue.bIsTextureObject || DeclaredComponents != OutputValue.ComponentCount)
+					const bool bDeclaredMaterialAttributes = DeclaredComponents == 0 && !bDeclaredTexture;
+					if (bDeclaredTexture
+						|| OutputValue.bIsTextureObject
+						|| bDeclaredMaterialAttributes != OutputValue.bIsMaterialAttributes
+						|| DeclaredComponents != OutputValue.ComponentCount)
 					{
 						OutMessage = FString::Printf(
 							TEXT("%s: Graph output '%s' does not match its declared type."),
@@ -1677,6 +1768,18 @@ namespace UE::DreamShader::Editor
 				{
 					Private::FResolvedMaterialProperty ResolvedProperty;
 					verify(Private::ResolveMaterialProperty(Binding.MaterialProperty, ResolvedProperty));
+					if (ResolvedProperty.OutputType == CMOT_MaterialAttributes)
+					{
+						if (!OutputValue.bIsMaterialAttributes)
+						{
+							OutMessage = FString::Printf(
+								TEXT("%s: Material output '%s' expects a MaterialAttributes value."),
+								*SourceFilePath,
+								*Binding.MaterialProperty);
+							return false;
+						}
+						Material->bUseMaterialAttributes = true;
+					}
 
 					FExpressionInput* MaterialInput = Material->GetExpressionInputForProperty(ResolvedProperty.Property);
 					if (!MaterialInput)
@@ -1790,6 +1893,10 @@ namespace UE::DreamShader::Editor
 				{
 					Private::FResolvedMaterialProperty ResolvedProperty;
 					verify(Private::ResolveMaterialProperty(Binding.MaterialProperty, ResolvedProperty));
+					if (ResolvedProperty.OutputType == CMOT_MaterialAttributes)
+					{
+						Material->bUseMaterialAttributes = true;
+					}
 
 					FExpressionInput* MaterialInput = Material->GetExpressionInputForProperty(ResolvedProperty.Property);
 					if (!MaterialInput)

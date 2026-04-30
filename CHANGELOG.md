@@ -1,5 +1,14 @@
 # DreamShader ChangeLog
 
+## 1.2.5 - 2026-04-30
+
+### Material Attributes
+
+- Added `MaterialAttributes` as a graph value type for `Shader`, `ShaderFunction`, and `VirtualFunction` signatures.
+- Added struct-like member writes such as `Attrs.BaseColor = Color;` and `Attrs.Roughness = Roughness;`.
+- Added `Base.MaterialAttributes = Attrs;` output binding support and automatic `Use Material Attributes` enablement on generated materials.
+- MaterialAttributes values can be returned from generated or virtual Material Functions and passed through Graph assignments.
+
 ## 1.2.4 - 2026-04-30
 
 ### Parameter Reflection
