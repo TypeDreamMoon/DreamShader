@@ -2962,17 +2962,10 @@ namespace UE::DreamShader::Editor::Private
 		{
 			SwitchExpression->ExpressionGUID = FGuid::NewGuid();
 		}
-		if (!Property.Metadata.Group.IsEmpty())
+		if (!ApplyExpressionMetadata(SwitchExpression, Property.Metadata, OutError))
 		{
-			SwitchExpression->Group = FName(*Property.Metadata.Group);
-		}
-		if (Property.Metadata.bHasSortPriority)
-		{
-			SwitchExpression->SortPriority = Property.Metadata.SortPriority;
-		}
-		if (!Property.Metadata.Description.IsEmpty())
-		{
-			SwitchExpression->Desc = Property.Metadata.Description;
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s': %s"), *Property.Name, *OutError);
+			return false;
 		}
 
 		ConnectCodeValueToInput(SwitchExpression->A, TrueValue);

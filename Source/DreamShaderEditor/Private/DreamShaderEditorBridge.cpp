@@ -163,16 +163,16 @@ namespace UE::DreamShader::Editor::Private
 			TArray<FString> MetadataEntries;
 			if (!Description.TrimStartAndEnd().IsEmpty())
 			{
-				MetadataEntries.Add(FString::Printf(TEXT("Description=\"%s\""), *EscapeDreamShaderString(Description.TrimStartAndEnd())));
+				MetadataEntries.Add(FString::Printf(TEXT("Description=\"%s\";"), *EscapeDreamShaderString(Description.TrimStartAndEnd())));
 			}
 			if (SortPriority != DefaultSortPriority)
 			{
-				MetadataEntries.Add(FString::Printf(TEXT("SortPriority=%d"), SortPriority));
+				MetadataEntries.Add(FString::Printf(TEXT("SortPriority=%d;"), SortPriority));
 			}
 
 			return MetadataEntries.IsEmpty()
 				? FString()
-				: FString::Printf(TEXT(" [%s]"), *FString::Join(MetadataEntries, TEXT(", ")));
+				: FString::Printf(TEXT(" [\n\t\t\t%s\n\t\t]"), *FString::Join(MetadataEntries, TEXT("\n\t\t\t")));
 		}
 
 		FString MakePreviewValueText(EFunctionInputType InputType, const FVector4f& PreviewValue)

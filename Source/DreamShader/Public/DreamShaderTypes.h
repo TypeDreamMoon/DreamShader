@@ -30,6 +30,7 @@ namespace UE::DreamShader
 		bool bHasSortPriority = false;
 		int32 SortPriority = 32;
 		FString Description;
+		TMap<FString, FString> ReflectedProperties;
 	};
 
 	struct FTextShaderPropertyDefinition

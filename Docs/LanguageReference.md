@@ -4,7 +4,7 @@ DreamShaderLang 是 DreamShader 插件使用的文本语言。它用 `.dsm` / `.
 
 | 项目 | 内容 |
 | --- | --- |
-| 插件版本 | `1.2.3` |
+| 插件版本 | `1.2.4` |
 | 源文件 | `.dsm` / `.dsh` |
 | 主要产物 | `UMaterial` / `UMaterialFunction` |
 | 开发者 | TypeDreamMoon |
@@ -210,17 +210,38 @@ Properties = {
     float Strength = 1.0;
     vec3 Tint = vec3(1.0, 1.0, 1.0);
     Texture2D MainTex = Path(Game, "/Textures/T_Main");
-    StaticSwitchParameter UseDetail = true [Group="Switches", SortPriority=30, Description="Use detail branch"];
+    StaticSwitchParameter UseDetail = true [
+        Group="Switches";
+        SortPriority=30;
+        Description="Use detail branch";
+    ];
 }
 ```
 
 除 `float` / `vec3` / `Texture2D` 简写外，`Properties` 也支持常见显式 Parameter 节点类型，例如 `ScalarParameter`、`VectorParameter`、`DoubleVectorParameter`、`TextureObjectParameter`、`TextureSampleParameter2D`、`StaticBoolParameter`、`StaticSwitchParameter` 等。
 
-声明尾部可以加元数据：
+声明尾部可以加 `[...]` 反射属性块。属性块里的每一项都会按 Unreal `MaterialExpression` 的 UPROPERTY 名称写入生成节点；不写的字段保持 Unreal 默认值。`Group`、`SortPriority`、`Description` 是常用别名，其中 `Description` 会写到节点 `Desc`。
 
 ```c
-ScalarParameter Roughness = 0.35 [Group="Surface", SortPriority=10, Description="Material roughness"];
+ScalarParameter Roughness = 0.35 [
+    Group="Surface";
+    SortPriority=10;
+    Description="Material roughness";
+];
+
+TextureSampleParameter2D MetallicMap = Path(Game, "Textures/T_White_Linear") [
+    Group="11 - Specular";
+    SortPriority=51;
+    SamplerType="LinearColor";
+    SamplerSource="FromTextureAsset";
+    MipValueMode="None";
+    AutomaticViewMipBias=true;
+    ConstCoordinate=0;
+    ConstMipValue=-1;
+];
 ```
+
+`float` / `float2` / `float3` / `float4` 和 `Texture2D` 简写也支持同样的属性块，因为它们最终会生成 Scalar / Vector / Texture Object Parameter 节点。
 
 `StaticSwitchParameter` 在 `Graph` 中以同名函数形式使用：
 
@@ -237,7 +258,9 @@ Graph = {
 ```c
 Inputs = {
     vec3 InColor;
-    opt float Strength = 1.0 [Description="Preview default strength"];
+    opt float Strength = 1.0 [
+        Description="Preview default strength";
+    ];
 }
 ```
 
@@ -247,7 +270,7 @@ Inputs = {
 float3 color = MyFunction(InColor, default, Output="Result");
 ```
 
-`ShaderFunction` / `VirtualFunction` 的 `Inputs` / `Outputs` 同样支持 `[SortPriority=..., Description="..."]` 元数据；`Group` 会被解析并保留在语法层，但 Unreal Function Input / Output 本身没有分组字段。
+`ShaderFunction` / `VirtualFunction` 的 `Inputs` / `Outputs` 同样支持 `[...]` 属性块中的 `SortPriority` 和 `Description`；`Group` 会被解析并保留在语法层，但 Unreal Function Input / Output 本身没有分组字段。
 
 ### 3.3 `Outputs`
 

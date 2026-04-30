@@ -182,6 +182,7 @@ namespace UE::DreamShader::Editor::Private
 	FProperty* FindMaterialExpressionArgumentProperty(UClass* ExpressionClass, const FString& ArgumentName);
 	bool IsMaterialExpressionInputProperty(const FProperty* Property);
 	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, const FString& ValueText, FString& OutError);
+	bool ApplyExpressionMetadata(UMaterialExpression* Expression, const FTextShaderMetadata& Metadata, FString& OutError);
 
 	class FCodeGraphBuilder
 	{

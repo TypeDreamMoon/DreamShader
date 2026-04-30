@@ -1,5 +1,14 @@
 # DreamShader ChangeLog
 
+## 1.2.4 - 2026-04-30
+
+### Parameter Reflection
+
+- Replaced the documented comma-style metadata suffix with a semicolon-based trailing reflection block for declarations.
+- Parameter reflection blocks can now set any reflected `UMaterialExpression` property exposed by the generated parameter node.
+- Basic `float` / vector / texture property shorthand declarations use the same reflection path as explicit parameter node declarations.
+- Texture sample parameters can now configure reflected properties such as `SamplerType`, `SamplerSource`, `MipValueMode`, `AutomaticViewMipBias`, `ConstCoordinate`, and `ConstMipValue`.
+
 ## 1.2.3 - 2026-04-29
 
 ### Parameters

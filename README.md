@@ -2,14 +2,14 @@
 
 DreamShader 是一个 Unreal Engine 材质生成插件。它提供 `DreamShaderLang` 文本语言，让你用 `.dsm` / `.dsh` 源文件描述材质图、共享函数和材质函数，并自动生成标准 Unreal `UMaterial` / `UMaterialFunction` 资产。
 
-> 当前版本：`1.2.3`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
+> 当前版本：`1.2.4`。插件仍在持续开发中，核心工作流已经可用，建议在项目中逐步接入并保留源文件版本管理。
 
 ## 核心能力
 
 - 使用文本源文件维护材质逻辑，减少手动连材质节点的重复工作。
 - 从 `Shader(Name="...", Root="Game")` 生成 `UMaterial`，从 `ShaderFunction(Name="...", Root="Game")` 生成 `UMaterialFunction`。
 - 使用 `VirtualFunction(Name="...")` 声明现有 Unreal `UMaterialFunction` 资产，并在 `Graph` 中直接调用，不会生成或覆盖资产。
-- `Properties` 支持显式 Parameter 节点、`StaticSwitchParameter`、`UE.CollectionParam(...)` 和 `[Group="...", SortPriority=32, Description="..."]` 元数据。
+- `Properties` 支持显式 Parameter 节点、`StaticSwitchParameter`、`UE.CollectionParam(...)` 和声明尾部 `[...]` 反射属性块。
 - `ShaderFunction` / `VirtualFunction` 输入支持 `opt` 和调用侧 `default`，用于复用 Unreal FunctionInput 的预览默认值。
 - 在 `Graph = { ... }` 中声明变量、调用 UE 材质节点、调用共享函数，并绑定材质输出。
 - 在 `Function` / `Namespace` 中编写可复用 HLSL 风格 helper。
@@ -102,13 +102,36 @@ Shader(Name="DreamMaterials/M_Minimal", Root="Plugin.MyPlugin")
 
 ## Parameter 与默认输入
 
-`Properties` 可以继续使用 `float` / `float3` / `Texture2D` 简写，也可以显式声明 Unreal Parameter 节点，并在声明尾部加元数据：
+`Properties` 可以继续使用 `float` / `float3` / `Texture2D` 简写，也可以显式声明 Unreal Parameter 节点，并在声明尾部加 `[...]` 反射属性块。属性块会按 Unreal `MaterialExpression` 的 UPROPERTY 反射写入节点；不写的字段保持 Unreal 默认值。
 
 ```c
 Properties = {
-    ScalarParameter Roughness = 0.35 [Group="Surface", SortPriority=10, Description="Material roughness"];
-    VectorParameter Tint = float4(1.0, 0.9, 0.8, 1.0) [Group="Surface", SortPriority=20];
-    StaticSwitchParameter UseDetail = true [Group="Switches", SortPriority=30];
+    ScalarParameter Roughness = 0.35 [
+        Group="Surface";
+        SortPriority=10;
+        Description="Material roughness";
+    ];
+
+    VectorParameter Tint = float4(1.0, 0.9, 0.8, 1.0) [
+        Group="Surface";
+        SortPriority=20;
+    ];
+
+    StaticSwitchParameter UseDetail = true [
+        Group="Switches";
+        SortPriority=30;
+    ];
+
+    TextureSampleParameter2D MetallicMap = Path(Game, "Textures/T_White_Linear") [
+        Group="11 - Specular";
+        SortPriority=51;
+        SamplerType="LinearColor";
+        SamplerSource="FromTextureAsset";
+        MipValueMode="None";
+        AutomaticViewMipBias=true;
+        ConstCoordinate=0;
+        ConstMipValue=-1;
+    ];
 }
 
 Graph = {
@@ -133,7 +156,9 @@ ShaderFunction(Name="Functions/DebugValue")
 {
     Inputs = {
         float2 UV;
-        opt float4 ColorA = float4(0.3, 0.3, 0.7, 0.7) [Description="Debug color A"];
+        opt float4 ColorA = float4(0.3, 0.3, 0.7, 0.7) [
+            Description="Debug color A";
+        ];
     }
 
     Outputs = {

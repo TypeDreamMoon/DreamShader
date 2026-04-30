@@ -688,6 +688,25 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
+		for (TFieldIterator<FProperty> It(ExpressionClass, EFieldIteratorFlags::IncludeSuper); It; ++It)
+		{
+			FProperty* Property = *It;
+			if (!CastField<FBoolProperty>(Property))
+			{
+				continue;
+			}
+
+			FString NormalizedPropertyName = UE::DreamShader::NormalizeSettingKey(Property->GetName());
+			if (NormalizedPropertyName.StartsWith(TEXT("b")))
+			{
+				NormalizedPropertyName.RightChopInline(1, EAllowShrinking::No);
+				if (NormalizedPropertyName == NormalizedArgument)
+				{
+					return Property;
+				}
+			}
+		}
+
 		return nullptr;
 	}
 
@@ -2480,53 +2499,84 @@ namespace UE::DreamShader::Editor::Private
 		return FString::Printf(TEXT("property '%s'"), *Property.Name);
 	}
 
-	static void ApplyExpressionMetadata(UMaterialExpression* Expression, const FTextShaderMetadata& Metadata)
+	static FString ResolveMetadataReflectionPropertyName(const FString& Key)
+	{
+		const FString NormalizedKey = UE::DreamShader::NormalizeSettingKey(Key);
+		if (NormalizedKey == UE::DreamShader::NormalizeSettingKey(TEXT("Description"))
+			|| NormalizedKey == UE::DreamShader::NormalizeSettingKey(TEXT("Tooltip")))
+		{
+			return TEXT("Desc");
+		}
+		if (NormalizedKey == UE::DreamShader::NormalizeSettingKey(TEXT("Category")))
+		{
+			return TEXT("Group");
+		}
+		if (NormalizedKey == UE::DreamShader::NormalizeSettingKey(TEXT("Sort")))
+		{
+			return TEXT("SortPriority");
+		}
+		return Key;
+	}
+
+	bool ApplyExpressionMetadata(UMaterialExpression* Expression, const FTextShaderMetadata& Metadata, FString& OutError)
 	{
 		if (!Expression)
 		{
-			return;
+			return true;
 		}
 
-		if (!Metadata.Description.IsEmpty())
+		TMap<FString, FString> ReflectedProperties = Metadata.ReflectedProperties;
+		const auto ContainsMetadataKey = [&ReflectedProperties](const TCHAR* Key)
 		{
-			Expression->Desc = Metadata.Description;
+			return ReflectedProperties.Contains(UE::DreamShader::NormalizeSettingKey(Key));
+		};
+
+		if (!Metadata.Group.IsEmpty()
+			&& !ContainsMetadataKey(TEXT("Group"))
+			&& !ContainsMetadataKey(TEXT("Category")))
+		{
+			ReflectedProperties.Add(UE::DreamShader::NormalizeSettingKey(TEXT("Group")), Metadata.Group);
+		}
+		if (Metadata.bHasSortPriority
+			&& !ContainsMetadataKey(TEXT("SortPriority"))
+			&& !ContainsMetadataKey(TEXT("Sort")))
+		{
+			ReflectedProperties.Add(UE::DreamShader::NormalizeSettingKey(TEXT("SortPriority")), FString::FromInt(Metadata.SortPriority));
+		}
+		if (!Metadata.Description.IsEmpty()
+			&& !ContainsMetadataKey(TEXT("Description"))
+			&& !ContainsMetadataKey(TEXT("Desc"))
+			&& !ContainsMetadataKey(TEXT("Tooltip")))
+		{
+			ReflectedProperties.Add(UE::DreamShader::NormalizeSettingKey(TEXT("Desc")), Metadata.Description);
 		}
 
-		if (UMaterialExpressionParameter* Parameter = Cast<UMaterialExpressionParameter>(Expression))
+		for (const TPair<FString, FString>& ReflectedProperty : ReflectedProperties)
 		{
-			if (!Metadata.Group.IsEmpty())
+			const FString PropertyName = ResolveMetadataReflectionPropertyName(ReflectedProperty.Key);
+			FProperty* Property = FindMaterialExpressionArgumentProperty(Expression->GetClass(), PropertyName);
+			if (!Property)
 			{
-				Parameter->Group = FName(*Metadata.Group);
+				OutError = FString::Printf(
+					TEXT("Metadata property '%s' is not a reflected property on '%s'."),
+					*PropertyName,
+					*Expression->GetClass()->GetName());
+				return false;
 			}
-			if (Metadata.bHasSortPriority)
+
+			FString LiteralError;
+			if (!SetMaterialExpressionLiteralProperty(Expression, Property, ReflectedProperty.Value, LiteralError))
 			{
-				Parameter->SortPriority = Metadata.SortPriority;
+				OutError = FString::Printf(
+					TEXT("Metadata property '%s' on '%s': %s"),
+					*PropertyName,
+					*Expression->GetClass()->GetName(),
+					*LiteralError);
+				return false;
 			}
 		}
 
-		if (UMaterialExpressionTextureSampleParameter* TextureParameter = Cast<UMaterialExpressionTextureSampleParameter>(Expression))
-		{
-			if (!Metadata.Group.IsEmpty())
-			{
-				TextureParameter->Group = FName(*Metadata.Group);
-			}
-			if (Metadata.bHasSortPriority)
-			{
-				TextureParameter->SortPriority = Metadata.SortPriority;
-			}
-		}
-
-		if (UMaterialExpressionCollectionParameter* CollectionParameter = Cast<UMaterialExpressionCollectionParameter>(Expression))
-		{
-			if (!Metadata.Group.IsEmpty())
-			{
-				CollectionParameter->Group = FName(*Metadata.Group);
-			}
-			if (Metadata.bHasSortPriority)
-			{
-				CollectionParameter->SortPriority = Metadata.SortPriority;
-			}
-		}
+		return true;
 	}
 
 	static bool SetExpressionParameterName(UMaterialExpression* Expression, const FString& ParameterName, FString& OutError)
@@ -2651,7 +2701,11 @@ namespace UE::DreamShader::Editor::Private
 			TextureExpression->AutoSetSampleType();
 		}
 
-		ApplyExpressionMetadata(Expression, Property.Metadata);
+		if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
+		{
+			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+			return nullptr;
+		}
 		return Expression;
 	}
 
@@ -2686,7 +2740,11 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Expression->DefaultValue = static_cast<float>(Property.ScalarDefaultValue);
 			}
-			ApplyExpressionMetadata(Expression, Property.Metadata);
+			if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
+			{
+				OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+				return nullptr;
+			}
 			return Expression;
 		}
 
@@ -2705,7 +2763,11 @@ namespace UE::DreamShader::Editor::Private
 			{
 				ParameterExpression->DefaultValue = Property.VectorDefaultValue;
 			}
-			ApplyExpressionMetadata(ParameterExpression, Property.Metadata);
+			if (!ApplyExpressionMetadata(ParameterExpression, Property.Metadata, OutError))
+			{
+				OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+				return nullptr;
+			}
 
 			if (Property.ComponentCount >= 4)
 			{
@@ -2793,7 +2855,11 @@ namespace UE::DreamShader::Editor::Private
 		{
 			Expression->SetDefaultTexture();
 		}
-		ApplyExpressionMetadata(Expression, Property.Metadata);
+		if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
+		{
+			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+			return nullptr;
+		}
 		return Expression;
 	}
 
@@ -2949,7 +3015,14 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		ApplyExpressionMetadata(Expression, Property.Metadata);
+		if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
+		{
+			OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"),
+				*Property.UEBuiltinFunctionName,
+				*Property.Name,
+				*OutError);
+			return nullptr;
+		}
 		return Expression;
 	}
 
@@ -3042,7 +3115,11 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Expression->ExpressionGUID = FGuid::NewGuid();
 			}
-			ApplyExpressionMetadata(Expression, Property.Metadata);
+			if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
+			{
+				OutError = MakeError(OutError);
+				return nullptr;
+			}
 			return Expression;
 		}
 

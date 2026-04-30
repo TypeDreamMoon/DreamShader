@@ -229,7 +229,91 @@ namespace UE::DreamShader::Private
 			return false;
 		}
 
-		for (const FString& Entry : SplitTopLevelDelimited(MetadataBlock, TCHAR(',')))
+		auto SplitMetadataEntries = [](const FString& Input)
+		{
+			TArray<FString> Entries;
+			FString Current;
+			int32 ParenthesisDepth = 0;
+			int32 BracketDepth = 0;
+			bool bInString = false;
+
+			for (int32 Index = 0; Index < Input.Len(); ++Index)
+			{
+				const TCHAR Char = Input[Index];
+
+				if (bInString)
+				{
+					Current.AppendChar(Char);
+					if (Char == TCHAR('\\') && Input.IsValidIndex(Index + 1))
+					{
+						Current.AppendChar(Input[++Index]);
+					}
+					else if (Char == TCHAR('"'))
+					{
+						bInString = false;
+					}
+					continue;
+				}
+
+				if (Char == TCHAR('"'))
+				{
+					bInString = true;
+					Current.AppendChar(Char);
+					continue;
+				}
+
+				if (Char == TCHAR('('))
+				{
+					++ParenthesisDepth;
+					Current.AppendChar(Char);
+					continue;
+				}
+
+				if (Char == TCHAR(')'))
+				{
+					ParenthesisDepth = FMath::Max(0, ParenthesisDepth - 1);
+					Current.AppendChar(Char);
+					continue;
+				}
+
+				if (Char == TCHAR('['))
+				{
+					++BracketDepth;
+					Current.AppendChar(Char);
+					continue;
+				}
+
+				if (Char == TCHAR(']'))
+				{
+					BracketDepth = FMath::Max(0, BracketDepth - 1);
+					Current.AppendChar(Char);
+					continue;
+				}
+
+				if ((Char == TCHAR(';') || Char == TCHAR(',')) && ParenthesisDepth == 0 && BracketDepth == 0)
+				{
+					Current.TrimStartAndEndInline();
+					if (!Current.IsEmpty())
+					{
+						Entries.Add(Current);
+					}
+					Current.Reset();
+					continue;
+				}
+
+				Current.AppendChar(Char);
+			}
+
+			Current.TrimStartAndEndInline();
+			if (!Current.IsEmpty())
+			{
+				Entries.Add(Current);
+			}
+
+			return Entries;
+		};
+
+		for (const FString& Entry : SplitMetadataEntries(MetadataBlock))
 		{
 			FString Key;
 			FString Value;
@@ -239,13 +323,21 @@ namespace UE::DreamShader::Private
 				return false;
 			}
 
+			const FString OriginalKey = Key.TrimStartAndEnd();
 			Key = NormalizeSettingKey(Key);
 			Value = Unquote(Value).TrimStartAndEnd();
-			if (Key.IsEmpty() || Value.IsEmpty())
+			if (Key.IsEmpty())
 			{
 				OutError = FString::Printf(TEXT("Invalid metadata entry '%s'."), *Entry);
 				return false;
 			}
+
+			if (OutMetadata.ReflectedProperties.Contains(Key))
+			{
+				OutError = FString::Printf(TEXT("Metadata key '%s' is declared more than once."), *OriginalKey);
+				return false;
+			}
+			OutMetadata.ReflectedProperties.Add(Key, Value);
 
 			if (Key == NormalizeSettingKey(TEXT("Group")) || Key == NormalizeSettingKey(TEXT("Category")))
 			{
@@ -265,11 +357,6 @@ namespace UE::DreamShader::Private
 				}
 				OutMetadata.bHasSortPriority = true;
 				OutMetadata.SortPriority = SortPriority;
-			}
-			else
-			{
-				OutError = FString::Printf(TEXT("Unsupported metadata key '%s'."), *Key);
-				return false;
 			}
 		}
 
