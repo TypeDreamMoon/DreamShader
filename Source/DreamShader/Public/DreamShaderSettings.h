@@ -15,8 +15,10 @@ public:
 	UDreamShaderSettings();
 
 	virtual FName GetContainerName() const override { return TEXT("Project"); }
-	virtual FName GetCategoryName() const override { return TEXT("Plugins"); }
+	virtual FName GetCategoryName() const override { return TEXT("DreamPlugin"); }
 	virtual FName GetSectionName() const override { return TEXT("DreamShader"); }
+	virtual FText GetSectionText() const override { return FText::FromString(TEXT("Dream Shader")); }
+	virtual FText GetSectionDescription() const override { return FText::FromString(TEXT("Dream Shader Settings")); }
 
 	bool TryResolveShadingModel(const FString& InName, EMaterialShadingModel& OutShadingModel) const;
 	bool TryResolveBlendMode(const FString& InName, EBlendMode& OutBlendMode) const;
@@ -48,6 +50,9 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category="Compiler")
 	bool bVerboseLogs = false;
+	
+	UPROPERTY(Config, EditAnywhere, Category="Editor")
+	bool bOpenInNewWindow = true;
 
 private:
 	static FString NormalizeShadingModelKey(const FString& InName);

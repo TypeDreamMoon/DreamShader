@@ -1039,6 +1039,8 @@ namespace UE::DreamShader::Editor::Private
 		{
 			for (const FString& Candidate : FindVSCodeExecutableCandidates())
 			{
+				const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+				
 				FProcHandle ProcessHandle;
 				if (Candidate.EndsWith(TEXT(".cmd"), ESearchCase::IgnoreCase)
 					|| Candidate.EndsWith(TEXT(".bat"), ESearchCase::IgnoreCase))
@@ -1048,16 +1050,19 @@ namespace UE::DreamShader::Editor::Private
 					{
 						CmdExe = TEXT("C:/Windows/System32/cmd.exe");
 					}
-
-					const FString Parameters = FString::Printf(
-						TEXT("/C \"\"%s\" --reuse-window %s\""),
+					
+					FString Parameters = FString::Printf(
+						TEXT("/C \"\"%s\" %s %s\""),
 						*Candidate,
+						((Settings && !Settings->bOpenInNewWindow) ? TEXT(" --reuse-window") : TEXT("")),
 						*QuoteProcessArgument(WorkspaceFilePath));
 					ProcessHandle = FPlatformProcess::CreateProc(*CmdExe, *Parameters, true, true, true, nullptr, 0, nullptr, nullptr);
 				}
 				else
 				{
-					const FString Parameters = FString::Printf(TEXT("--reuse-window %s"), *QuoteProcessArgument(WorkspaceFilePath));
+					const FString Parameters = FString::Printf(TEXT("%s %s"), 
+					((Settings && !Settings->bOpenInNewWindow) ? TEXT(" --reuse-window") : TEXT("")),
+					*QuoteProcessArgument(WorkspaceFilePath));
 					ProcessHandle = FPlatformProcess::CreateProc(*Candidate, *Parameters, true, false, false, nullptr, 0, nullptr, nullptr);
 				}
 
