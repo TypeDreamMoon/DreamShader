@@ -181,6 +181,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			OutProperty = { MP_CustomizedUVs7, CMOT_Float2 };
 		}
+#ifdef MOON_ENGINE
 		else if (Matches(TEXT("MooaEncodedAttribute0")))
 		{
 			OutProperty = { MP_MooaEncodedAttribute0, CMOT_Float4 };
@@ -201,6 +202,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			OutProperty = { MP_MooaEncodedAttribute4, CMOT_Float4 };
 		}
+#endif
 		else if (Matches(TEXT("Anisotropy")))
 		{
 			OutProperty = { MP_Anisotropy, CMOT_Float1 };

@@ -1,5 +1,6 @@
 #include "DreamShaderParser.h"
 
+#include "DreamShaderModule.h"
 #include "DreamShaderParserInternal.h"
 
 namespace UE::DreamShader
