@@ -7,6 +7,7 @@
 #include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
 #include "Misc/CommandLine.h"
+#include "Misc/CoreDelegates.h"
 #include "Modules/ModuleManager.h"
 #include "Templates/SharedPointer.h"
 
@@ -43,10 +44,11 @@ public:
 		{
 			if (IsCookCommandlet() && !IsCookWorkerProcess())
 			{
-				// Materials are always memory-only in the editor, so the cook must materialize every
-				// source file as a persistent asset for packaging. Director only -- workers load the
-				// saved packages (see IsCookWorkerProcess).
-				GenerateAllAssetsForCook();
+				// MaterialEditingLibrary accesses editor subsystems that are not ready while startup
+				// modules are loading. Generate after engine initialization but before commandlet Main.
+				CookPostEngineInitHandle = FCoreDelegates::GetOnPostEngineInit().AddRaw(
+					this,
+					&FDreamShaderEditorModule::HandlePostEngineInitForCook);
 			}
 			return;
 		}
@@ -64,6 +66,12 @@ public:
 
 	virtual void ShutdownModule() override
 	{
+		if (CookPostEngineInitHandle.IsValid())
+		{
+			FCoreDelegates::GetOnPostEngineInit().Remove(CookPostEngineInitHandle);
+			CookPostEngineInitHandle.Reset();
+		}
+
 		UE::DreamShader::Editor::Private::FDreamShaderMaterialBrowser::Unregister();
 
 		if (Bridge)
@@ -74,6 +82,14 @@ public:
 	}
 
 private:
+	void HandlePostEngineInitForCook()
+	{
+		// Materials are always memory-only in the editor, so the cook must materialize every
+		// source file as a persistent asset for packaging. Director only -- workers load the
+		// saved packages (see IsCookWorkerProcess).
+		GenerateAllAssetsForCook();
+	}
+
 	void GenerateAllAssetsForCook()
 	{
 		TArray<FString> SourceFiles;
@@ -121,6 +137,7 @@ private:
 	}
 
 	TSharedPtr<UE::DreamShader::Editor::Private::FDreamShaderEditorBridge, ESPMode::ThreadSafe> Bridge;
+	FDelegateHandle CookPostEngineInitHandle;
 };
 
 IMPLEMENT_MODULE(FDreamShaderEditorModule, DreamShaderEditor)
