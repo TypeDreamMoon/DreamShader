@@ -17,9 +17,14 @@ namespace UE::DreamShader::Editor::Private
 	{
 		FString EscapeDreamShaderString(const FString& InText)
 		{
+			// Same contract as the decompiler helper: the result goes inside a "..." literal, and a raw
+			// newline in a description would split the declaration across lines.
 			FString Result = InText;
 			Result.ReplaceInline(TEXT("\\"), TEXT("\\\\"));
 			Result.ReplaceInline(TEXT("\""), TEXT("\\\""));
+			Result.ReplaceInline(TEXT("\r"), TEXT("\\r"));
+			Result.ReplaceInline(TEXT("\n"), TEXT("\\n"));
+			Result.ReplaceInline(TEXT("\t"), TEXT("\\t"));
 			return Result;
 		}
 

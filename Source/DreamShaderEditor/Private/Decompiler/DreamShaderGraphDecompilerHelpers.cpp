@@ -94,21 +94,23 @@
 
 namespace UE::DreamShader::Editor::Private
 {
+	// Every caller writes the result inside a "..." literal, and the DSL scanner reads those literals one
+	// line at a time -- a raw newline (comment nodes and #Region names routinely carry them) would break
+	// the statement in half. The scanner unescapes \r \n \t, so escaping here round-trips exactly.
 	FString EscapeDreamShaderString(const FString& InText)
 	{
 		FString Result = InText;
 		Result.ReplaceInline(TEXT("\\"), TEXT("\\\\"));
 		Result.ReplaceInline(TEXT("\""), TEXT("\\\""));
+		Result.ReplaceInline(TEXT("\r"), TEXT("\\r"));
+		Result.ReplaceInline(TEXT("\n"), TEXT("\\n"));
+		Result.ReplaceInline(TEXT("\t"), TEXT("\\t"));
 		return Result;
 	}
 
 	FString EscapeDreamShaderCodeString(const FString& InText)
 	{
-		FString Result = EscapeDreamShaderString(InText);
-		Result.ReplaceInline(TEXT("\r"), TEXT("\\r"));
-		Result.ReplaceInline(TEXT("\n"), TEXT("\\n"));
-		Result.ReplaceInline(TEXT("\t"), TEXT("\\t"));
-		return Result;
+		return EscapeDreamShaderString(InText);
 	}
 
 	FString GetDreamShaderTypeForFunctionInput(EFunctionInputType InputType)
