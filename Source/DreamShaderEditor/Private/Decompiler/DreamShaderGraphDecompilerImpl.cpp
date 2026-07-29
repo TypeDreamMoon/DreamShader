@@ -1622,6 +1622,41 @@ namespace UE::DreamShader::Editor::Private
 			{
 				return CombinedValue;
 			}
+
+			// An append can never produce more than four components -- UE's own translator rejects it.
+			// If the resolved counts say otherwise, one of them was inferred (some nodes do not report an
+			// output value type), so mask the inputs down instead of emitting an impossible `float5(...)`
+			// that the generator cannot parse back.
+			if (A.ComponentCount + B.ComponentCount > 4)
+			{
+				const auto MaskValueDown = [](const FDecompiledValue& Value, const int32 ComponentCount)
+				{
+					if (Value.ComponentCount <= ComponentCount)
+					{
+						return Value;
+					}
+
+					return MakeValue(
+						MakeSwizzleExpression(Value.Text, FString(TEXT("rgba")).Left(ComponentCount)),
+						GetDreamShaderTypeForComponentCount(ComponentCount),
+						ComponentCount,
+						Value.bIsSimple);
+				};
+
+				const int32 ClampedComponentCountB = FMath::Clamp(B.ComponentCount, 1, 3);
+				const int32 ClampedComponentCountA = FMath::Clamp(4 - ClampedComponentCountB, 1, 3);
+				Warnings.AddUnique(FString::Printf(
+					TEXT("Append node '%s' resolved to %d + %d components, which cannot fit a float4; masked its inputs down to %d + %d. Review the emitted swizzle."),
+					*Expression->GetName(),
+					A.ComponentCount,
+					B.ComponentCount,
+					ClampedComponentCountA,
+					ClampedComponentCountB));
+
+				A = MaskValueDown(A, ClampedComponentCountA);
+				B = MaskValueDown(B, ClampedComponentCountB);
+			}
+
 			return MakeFunctionValue(TEXT("float") + FString::FromInt(A.ComponentCount + B.ComponentCount), { A, B }, A.ComponentCount + B.ComponentCount);
 		}
 
