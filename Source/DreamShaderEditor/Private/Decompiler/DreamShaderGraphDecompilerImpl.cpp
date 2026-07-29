@@ -1052,11 +1052,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		FDecompiledValue Value = CompileExpressionValue(DecompileInput.Expression, DecompileInput.OutputIndex);
-		const FString MaskSuffix = MakeInputMaskSuffix(Input);
-		if (!MaskSuffix.IsEmpty())
-		{
-			Value = MakeSwizzledValue(Value, MaskSuffix);
-		}
+		Value = ApplyConnectionInputMask(Value, DecompileInput.Expression, DecompileInput.OutputIndex, MakeInputMaskSuffix(Input));
 		return MaybeMaterializeValue(Value, DecompileInput.Expression->GetName());
 	}
 
@@ -1936,8 +1932,17 @@ namespace UE::DreamShader::Editor::Private
 
 		if (UMaterialExpressionVertexColor* VertexColor = Cast<UMaterialExpressionVertexColor>(Expression))
 		{
+			// VertexColor compiles to the full float4 no matter which pin is used -- the pin only carries
+			// the mask, which MakeExpressionOutputValue turns into the swizzle. Typing the base value
+			// from output 0 (whose mask is RGB) would emit `float3 ... .a` for the alpha pin, and a
+			// one-component swizzle of a three-component value does not generate back.
 			return MakeExpressionOutputValue(
-				MakeExpressionValue(Expression, 0, BuildUEExpressionCall(Expression, 0, {}), false),
+				MakeExpressionValueWithComponentCount(
+					Expression,
+					0,
+					BuildUEExpressionCallWithOutputType(Expression, 0, TEXT("float4"), {}),
+					false,
+					4),
 				Expression,
 				OutputIndex);
 		}
@@ -2037,36 +2042,85 @@ namespace UE::DreamShader::Editor::Private
 				Value.bIsSubstrateMaterial));
 	}
 
-	FString FDreamShaderGraphDecompiler::MakeExpressionOutputSelection(const FString& ExpressionText, UMaterialExpression* Expression, const int32 OutputIndex) const
+	FString FDreamShaderGraphDecompiler::MakeExpressionOutputMaskSuffix(UMaterialExpression* Expression, const int32 OutputIndex)
 	{
 		if (!Expression || !Expression->Outputs.IsValidIndex(OutputIndex))
 		{
-			return ExpressionText;
+			return FString();
 		}
 
 		const FExpressionOutput& Output = Expression->Outputs[OutputIndex];
 
-		// Channel selection for an output connection is driven SOLELY by the output's mask bits. The engine's
-		// FExpressionInput::Compile applies Compiler->ComponentMask(result, MaskR, MaskG, MaskB, MaskA) from
-		// the connected output (Materials/MaterialShared.cpp), and UMaterialExpressionTextureSample::
-		// ApplyChannelNames only rewrites the COSMETIC OutputName -- it never touches the mask. So a channel
-		// the author relabels must decompile from its MASK, never its display name: a green-masked output
-		// labelled "M" would otherwise emit an invalid ".m", and one labelled "R"/"A" (a swizzle-shaped label
-		// that denotes a DIFFERENT channel, as in a packed MRA/ORM texture) would silently select the wrong
-		// channel. The mask is authoritative in every case, so derive the swizzle from it and ignore the name.
+		// Channel selection for an output connection is driven SOLELY by mask bits. The engine's
+		// FExpressionInput::Compile applies Compiler->ComponentMask(result, MaskR, MaskG, MaskB, MaskA)
+		// (Materials/MaterialShared.cpp), and UMaterialExpressionTextureSample::ApplyChannelNames only
+		// rewrites the COSMETIC OutputName -- it never touches the mask. So a channel the author relabels
+		// must decompile from its MASK, never its display name: a green-masked output labelled "M" would
+		// otherwise emit an invalid ".m", and one labelled "R"/"A" (a swizzle-shaped label that denotes a
+		// DIFFERENT channel, as in a packed MRA/ORM texture) would silently select the wrong channel. The
+		// mask is authoritative in every case, so derive the swizzle from it and ignore the name.
 		FString MaskSwizzle;
 		if (Output.MaskR) MaskSwizzle += TEXT("r");
 		if (Output.MaskG) MaskSwizzle += TEXT("g");
 		if (Output.MaskB) MaskSwizzle += TEXT("b");
 		if (Output.MaskA) MaskSwizzle += TEXT("a");
 
-		// Empty mask (no component selection) or a full RGBA mask both mean "pass the whole value" -- no suffix.
-		if (MaskSwizzle.IsEmpty() || MaskSwizzle == TEXT("rgba"))
+		// Empty mask (no component selection) or a full RGBA mask both mean "pass the whole value".
+		return MaskSwizzle == TEXT("rgba") ? FString() : MaskSwizzle;
+	}
+
+	FString FDreamShaderGraphDecompiler::MakeExpressionOutputSelection(const FString& ExpressionText, UMaterialExpression* Expression, const int32 OutputIndex) const
+	{
+		const FString MaskSwizzle = MakeExpressionOutputMaskSuffix(Expression, OutputIndex);
+		if (MaskSwizzle.IsEmpty())
 		{
 			return ExpressionText;
 		}
 
 		return MakeSwizzleExpression(ExpressionText, MaskSwizzle);
+	}
+
+	FDecompiledValue FDreamShaderGraphDecompiler::ApplyConnectionInputMask(
+		const FDecompiledValue& Value,
+		UMaterialExpression* Expression,
+		const int32 OutputIndex,
+		const FString& InputMaskSuffix)
+	{
+		if (InputMaskSuffix.IsEmpty())
+		{
+			return Value;
+		}
+
+		// FExpressionInput::Connect copies the connected output's mask onto the input, and
+		// FExpressionInput::Compile then applies ONLY the input's mask to the node's unmasked result. So an
+		// input mask REPLACES the pin's mask rather than stacking on top of it. The two normally agree, but
+		// a graph built programmatically (DreamShader's own generator does this) can wire the RGB pin and
+		// carry an alpha mask -- valid in Unreal, yet stacking the suffixes emits `.rgb.a`, a swizzle of a
+		// swizzle that no longer generates back.
+		const FString OutputMaskSuffix = MakeExpressionOutputMaskSuffix(Expression, OutputIndex);
+		if (OutputMaskSuffix.Equals(InputMaskSuffix, ESearchCase::IgnoreCase))
+		{
+			return Value;
+		}
+
+		FString BaseText;
+		FString TrailingSwizzle;
+		if (!OutputMaskSuffix.IsEmpty()
+			&& TrySplitTrailingSwizzle(Value.Text, BaseText, TrailingSwizzle)
+			&& TrailingSwizzle.Equals(OutputMaskSuffix, ESearchCase::IgnoreCase))
+		{
+			// Peel the pin's mask back off so the input mask applies to the node's own value. The peeled
+			// value is that unmasked output, so it is at least as wide as either mask -- 4 keeps
+			// MakeSwizzledValue off its scalar-splat path.
+			const FDecompiledValue BaseValue = MakeValue(
+				BaseText,
+				GetDreamShaderTypeForComponentCount(4),
+				4,
+				Value.bIsSimple);
+			return MakeSwizzledValue(BaseValue, InputMaskSuffix);
+		}
+
+		return MakeSwizzledValue(Value, InputMaskSuffix);
 	}
 
 	FDecompiledValue FDreamShaderGraphDecompiler::MakeExpressionOutputValue(FDecompiledValue Source, UMaterialExpression* Expression, const int32 OutputIndex) const
