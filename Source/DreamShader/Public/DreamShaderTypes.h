@@ -43,6 +43,14 @@ namespace UE::DreamShader
 		TMap<FString, FString> UEBuiltinArguments;
 		ETextShaderPropertyType Type = ETextShaderPropertyType::Scalar;
 		ETextShaderTextureType TextureType = ETextShaderTextureType::Texture2D;
+		/**
+		 * True when the declared type token names the texture dimension (Texture2D / TextureCube /
+		 * Texture2DArray / VolumeTexture, or a TextureSampleParameter* variant). Tokens such as
+		 * TextureObjectParameter map to a single Unreal node class that holds any texture dimension, so
+		 * TextureType stays at its Texture2D default and the generator infers the real dimension from
+		 * the assigned default asset instead of rejecting it.
+		 */
+		bool bHasExplicitTextureType = false;
 		int32 ComponentCount = 1;
 		bool bConst = false;
 		bool bHasDefaultValue = false;

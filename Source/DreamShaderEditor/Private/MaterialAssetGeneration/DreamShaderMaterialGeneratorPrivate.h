@@ -275,6 +275,9 @@ namespace UE::DreamShader::Editor::Private
 		int32 PositionY,
 		FString& OutError);
 	bool TryGetComponentCountForOutputType(ECustomMaterialOutputType OutputType, int32& OutComponentCount);
+	// Declared texture dimension, or the dimension of the default asset when the type token does not
+	// name one (TextureObjectParameter and friends hold any dimension in a single node class).
+	ETextShaderTextureType ResolveEffectiveTextureType(const FTextShaderPropertyDefinition& Property);
 	bool IsMaterialAttributesType(const FString& InTypeName);
 	bool IsSubstrateMaterialType(const FString& InTypeName);
 	bool IsSubstrateMaterialTypeSupported();

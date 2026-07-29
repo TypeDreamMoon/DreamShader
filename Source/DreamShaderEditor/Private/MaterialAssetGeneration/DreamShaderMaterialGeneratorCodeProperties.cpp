@@ -123,7 +123,7 @@ namespace UE::DreamShader::Editor::Private
 			? 0
 			: Property->ComponentCount;
 		OutValue.bIsTextureObject = Property->Type == ETextShaderPropertyType::Texture2D;
-		OutValue.TextureType = Property->TextureType;
+		OutValue.TextureType = ResolveEffectiveTextureType(*Property);
 		OutValue.bIsMaterialAttributes = false;
 		Values->Add(Property->Name, OutValue);
 		NextPropertyNodeY += 220;
