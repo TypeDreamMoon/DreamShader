@@ -20,6 +20,10 @@ accepts (found on LGUI's `LexUI_ImageAndFont` / `LexUI_RectBlock` / `MF_LexUI_SD
   the input used to come back as a float and reject every static-bool value passed to it.
 - Comment / `#Region` / description text carrying newlines or tabs is escaped, so a multi-line
   comment no longer splits the directive across lines.
+- A Custom node's additional outputs are declared on every emission of that node, and reading one no
+  longer rewrites the node's own return type. Previously the emission that did not select the extra
+  output produced a node without it, and the code body assigning to it failed at shader-compile time
+  with "use of undeclared identifier" — long after generation reported success.
 
 ### Language
 

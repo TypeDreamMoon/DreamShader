@@ -2387,6 +2387,31 @@ namespace UE::DreamShader::Editor::Private
 				Arguments.Add({ TEXT("Output"), FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(OutputName)), false });
 			}
 		}
+		if (CustomExpression && CustomExpression->AdditionalOutputs.Num() > 0)
+		{
+			// Unreal turns each additional output into an `inout` parameter of the generated Custom
+			// function, so the code body can only assign to one that the node actually declares. A node
+			// is emitted once per output it feeds, and only the emission that selects the extra output
+			// used to declare it -- the other one compiled to "use of undeclared identifier". Declare the
+			// full set (names and per-output types) on every emission instead.
+			const UEnum* CustomOutputTypeEnum = StaticEnum<ECustomMaterialOutputType>();
+			TArray<FString> AdditionalOutputTexts;
+			AdditionalOutputTexts.Reserve(CustomExpression->AdditionalOutputs.Num());
+			for (const FCustomOutput& AdditionalOutput : CustomExpression->AdditionalOutputs)
+			{
+				AdditionalOutputTexts.Add(FString::Printf(
+					TEXT("(OutputName=\"%s\",OutputType=%s)"),
+					*AdditionalOutput.OutputName.ToString(),
+					*GetEnumLiteralText(CustomOutputTypeEnum, static_cast<int64>(AdditionalOutput.OutputType))));
+			}
+
+			Arguments.Add({
+				TEXT("AdditionalOutputs"),
+				FString::Printf(
+					TEXT("\"%s\""),
+					*EscapeDreamShaderString(FString::Printf(TEXT("(%s)"), *FString::Join(AdditionalOutputTexts, TEXT(","))))),
+				false });
+		}
 		if (CustomExpression)
 		{
 			for (const FCustomInput& CustomInput : CustomExpression->Inputs)
@@ -2400,7 +2425,15 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		return BuildUEExpressionCall(CustomExpression, OutputIndex, Arguments);
+		// OutputType on a Custom node declares the node's own return type, not the type of the output
+		// this call reads -- an additional output is typed by its own AdditionalOutputs entry. Emitting
+		// the selected output's type here would rewrite the node's return type (float4 -> float for the
+		// alpha-ish secondary output) and drag the secondary output's type along with it.
+		return BuildUEExpressionCallWithOutputType(
+			CustomExpression,
+			OutputIndex,
+			GetDreamShaderTypeForCustomOutputType(CustomExpression ? CustomExpression->OutputType.GetValue() : CMOT_Float1),
+			Arguments);
 	}
 
 	FString FDreamShaderGraphDecompiler::BuildMaterialFunctionCall(UMaterialExpressionMaterialFunctionCall* FunctionCall, const int32 OutputIndex)

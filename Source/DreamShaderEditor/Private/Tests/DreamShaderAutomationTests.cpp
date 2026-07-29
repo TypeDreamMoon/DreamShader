@@ -891,6 +891,152 @@ Shader(Name="DreamShaderTests/Automation/%s")
 }
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderRoundTripCustomAdditionalOutputTest,
+	FDreamShaderQuietAutomationTestBase,
+	"DreamShader.Roundtrip.CustomAdditionalOutputRegenerates",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Unreal turns a Custom node's additional outputs into `inout` parameters of the generated function,
+// so the code body may only assign to outputs the node declares. A node feeding two outputs is
+// emitted once per output, and only the emission carrying Output="..." used to declare the extra one
+// -- the other node compiled to "use of undeclared identifier" at shader-compile time, well after
+// generation reported success. Every emission must carry the full declaration.
+bool FDreamShaderRoundTripCustomAdditionalOutputTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_CustomOutputsSrc"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	const FString Source = FString::Printf(TEXT(R"DSM(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Settings = {
+        Domain = "Surface";
+        ShadingModel = "Unlit";
+        BlendMode = "Translucent";
+    }
+
+    Outputs = {
+        float3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float4 Packed = UE.Expression(
+            Class="Custom",
+            OutputType="float4",
+            Code="Extra = UV.x; return float4(UV, 0.0, 1.0);",
+            Description="Packer",
+            AdditionalOutputs="((OutputName=\"Extra\",OutputType=CMOT_Float1))",
+            UV=UE.Expression(Class="TextureCoordinate", OutputType="float2"));
+        float Extra = UE.Expression(
+            Class="Custom",
+            OutputType="float4",
+            Code="Extra = UV.x; return float4(UV, 0.0, 1.0);",
+            Description="Packer",
+            Output="Extra",
+            AdditionalOutputs="((OutputName=\"Extra\",OutputType=CMOT_Float1))",
+            UV=UE.Expression(Class="TextureCoordinate", OutputType="float2"));
+        Color = Packed.rgb;
+        Alpha = Extra;
+    }
+}
+)DSM"), *AssetName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+		FString::Printf(TEXT("Custom additional-output material generation succeeds: %s"), *Message),
+		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated Custom additional-output material loads"), Material))
+	{
+		return false;
+	}
+
+	const FString ReAssetName = MakeUniqueTestAssetName(TEXT("M_CustomOutputsRoundTrip"));
+	const FString ReObjectPath = MakeAutomationObjectPath(ReAssetName);
+	Artifacts.AddObjectPath(ReObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ReObjectPath);
+
+	FString DecompiledSource;
+	FString DecompileError;
+	if (!TestTrue(
+		FString::Printf(TEXT("Custom additional-output decompile succeeds: %s"), *DecompileError),
+		GetGraphDecompiler().DecompileMaterial(Material, FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *ReAssetName), DecompiledSource, DecompileError)))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("Decompiled Custom node declares its additional output."), DecompiledSource.Contains(TEXT("OutputName=\\\"Extra\\\",OutputType=CMOT_Float1")));
+	TestFalse(TEXT("Reading the secondary output does not rewrite the node's own OutputType."), DecompiledSource.Contains(TEXT("Class=\"Custom\", OutputType=\"float\"")));
+
+	FString ReSourceFilePath;
+	if (!WriteAutomationSourceFile(*this, ReAssetName + TEXT(".dsm"), DecompiledSource, ReSourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(ReSourceFilePath);
+
+	FString ReMessage;
+	if (!TestTrue(
+		FString::Printf(TEXT("Decompiled Custom additional-output source re-generates: %s"), *ReMessage),
+		FMaterialGenerator::GenerateMaterialFromFile(ReSourceFilePath, ReMessage, true)))
+	{
+		return false;
+	}
+
+	UMaterial* RegeneratedMaterial = LoadObject<UMaterial>(nullptr, *ReObjectPath);
+	if (!TestNotNull(TEXT("Regenerated Custom additional-output material loads"), RegeneratedMaterial))
+	{
+		return false;
+	}
+
+	int32 CustomNodeCount = 0;
+	for (auto&& ExpressionPtr : RegeneratedMaterial->GetExpressions())
+	{
+		UMaterialExpressionCustom* CustomExpression = Cast<UMaterialExpressionCustom>(ExpressionPtr);
+		if (!CustomExpression)
+		{
+			continue;
+		}
+
+		++CustomNodeCount;
+		TestEqual(TEXT("Regenerated Custom node keeps its own float4 return type."), static_cast<int32>(CustomExpression->OutputType.GetValue()), static_cast<int32>(CMOT_Float4));
+		if (TestEqual(TEXT("Regenerated Custom node declares exactly one additional output."), CustomExpression->AdditionalOutputs.Num(), 1))
+		{
+			TestEqual(TEXT("Regenerated additional output keeps its name."), CustomExpression->AdditionalOutputs[0].OutputName.ToString(), FString(TEXT("Extra")));
+			TestEqual(TEXT("Regenerated additional output keeps its own type."), static_cast<int32>(CustomExpression->AdditionalOutputs[0].OutputType.GetValue()), static_cast<int32>(CMOT_Float1));
+		}
+	}
+	TestTrue(TEXT("Regenerated material has at least one Custom node."), CustomNodeCount > 0);
+
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderRoundTripStaticBoolFunctionInputTest,
 	FDreamShaderQuietAutomationTestBase,
 	"DreamShader.Roundtrip.StaticBoolFunctionInputRegenerates",
