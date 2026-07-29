@@ -48,6 +48,9 @@ namespace UE::DreamShader::Editor::Private
 			case FunctionInput_Substrate:
 				return TEXT("Substrate");
 			case FunctionInput_StaticBool:
+				// Mirrors the decompiler: "bool" declares a scalar pin, so a static-bool input has to
+				// keep its own token or callers cannot pass a StaticBool value to it.
+				return TEXT("StaticBool");
 			case FunctionInput_Bool:
 				return TEXT("bool");
 			default:

@@ -116,6 +116,16 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
+		// StaticBool is a one-component compile-time value: it needs to resolve here so call sites can
+		// type-check arguments passed to a StaticBool function input (TryResolveMaterialFunctionParameterType
+		// maps the same token to FunctionInput_StaticBool when the input node itself is created).
+		if (InTypeName.Equals(TEXT("StaticBool"), ESearchCase::IgnoreCase)
+			|| InTypeName.Equals(TEXT("StaticBoolParameter"), ESearchCase::IgnoreCase))
+		{
+			OutComponentCount = 1;
+			return true;
+		}
+
 		ECustomMaterialOutputType OutputType = CMOT_Float1;
 		if (TryResolveCustomOutputType(InTypeName, OutputType) && TryGetComponentCountForOutputType(OutputType, OutComponentCount))
 		{

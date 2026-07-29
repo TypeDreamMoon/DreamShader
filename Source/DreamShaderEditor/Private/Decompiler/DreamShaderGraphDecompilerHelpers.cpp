@@ -135,6 +135,9 @@ namespace UE::DreamShader::Editor::Private
 		case FunctionInput_Substrate:
 			return TEXT("Substrate");
 		case FunctionInput_StaticBool:
+			// Not "bool": that token declares a scalar function input, so a StaticBool input would come
+			// back as a float pin and every static-bool value wired into it would be a type mismatch.
+			return TEXT("StaticBool");
 		case FunctionInput_Bool:
 			return TEXT("bool");
 		default:

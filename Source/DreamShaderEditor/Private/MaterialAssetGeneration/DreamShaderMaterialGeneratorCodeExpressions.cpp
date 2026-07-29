@@ -708,6 +708,29 @@ namespace UE::DreamShader::Editor::Private
 		return Expression;
 	}
 
+	UMaterialExpression* FCodeGraphBuilder::CreateStaticBoolLiteralNode(const bool bValue, const int32 PositionY)
+	{
+		const FString ReuseKey = FString::Printf(TEXT("static-bool-node|%d"), bValue ? 1 : 0);
+		FCodeValue ReusableValue;
+		if (TryFindReusableExpressionValue(ReuseKey, ReusableValue))
+		{
+			return ReusableValue.Expression;
+		}
+
+		auto* Expression = Cast<UMaterialExpressionStaticBool>(
+			CreateExpression(UMaterialExpressionStaticBool::StaticClass(), -1120, PositionY));
+		if (Expression)
+		{
+			Expression->Value = bValue ? 1U : 0U;
+			FCodeValue LiteralValue;
+			LiteralValue.Expression = Expression;
+			LiteralValue.OutputIndex = 0;
+			LiteralValue.ComponentCount = 1;
+			AddReusableExpressionValue(ReuseKey, LiteralValue);
+		}
+		return Expression;
+	}
+
 	bool FCodeGraphBuilder::CreateMaterialAttributesValue(FCodeValue& OutValue, FString& OutError)
 	{
 		auto* Expression = Cast<UMaterialExpressionMakeMaterialAttributes>(
@@ -1094,6 +1117,25 @@ namespace UE::DreamShader::Editor::Private
 			if (TryCreatePropertyValue(Expression->Text, OutValue, OutError))
 			{
 				return OutError.IsEmpty();
+			}
+
+			// `true` / `false` are compile-time bool literals and materialize as StaticBool nodes, the
+			// only way to feed a StaticSwitch / StaticBool function input. A StaticBool ShaderFunction
+			// input reaches this path through its declared default: UE ignores PreviewValue for
+			// static-bool inputs and compiles the node wired to the Preview pin instead.
+			bool bBoolLiteralValue = false;
+			if (ParseBooleanLiteral(Expression->Text, bBoolLiteralValue))
+			{
+				OutValue = FCodeValue{};
+				OutValue.Expression = CreateStaticBoolLiteralNode(bBoolLiteralValue, ConsumeNodeY());
+				OutValue.OutputIndex = 0;
+				OutValue.ComponentCount = 1;
+				if (!OutValue.Expression)
+				{
+					OutError = FString::Printf(TEXT("Failed to create a StaticBool node for literal '%s'."), *Expression->Text);
+					return false;
+				}
+				return true;
 			}
 
 			OutError = FString::Printf(TEXT("Unknown Graph identifier '%s'."), *Expression->Text);

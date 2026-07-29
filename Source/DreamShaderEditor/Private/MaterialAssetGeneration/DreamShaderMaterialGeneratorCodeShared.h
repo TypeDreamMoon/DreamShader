@@ -54,6 +54,7 @@
 #include "Materials/MaterialExpressionSetMaterialAttributes.h"
 #include "Materials/MaterialExpressionSine.h"
 #include "Materials/MaterialExpressionSquareRoot.h"
+#include "Materials/MaterialExpressionStaticBool.h"
 #include "Materials/MaterialExpressionStaticComponentMaskParameter.h"
 #include "Materials/MaterialExpressionStaticSwitchParameter.h"
 #include "Materials/MaterialExpressionSubtract.h"
