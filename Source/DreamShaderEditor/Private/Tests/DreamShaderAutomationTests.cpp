@@ -30,7 +30,9 @@
 #include "Materials/MaterialExpressionSine.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionVectorParameter.h"
+#include "Materials/MaterialExpressionComment.h"
 #include "Materials/MaterialExpressionDynamicParameter.h"
+#include "Materials/MaterialExpressionFunctionInput.h"
 #include "Decompiler/DreamShaderGraphDecompiler.h"
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Misc/AutomationTest.h"
@@ -759,6 +761,260 @@ bool FDreamShaderRoundTripSubstrateMaterialTest::RunTest(const FString& Paramete
 	TestTrue(
 		FString::Printf(TEXT("Decompiled Substrate source re-generates: %s"), *ReMessage),
 		FMaterialGenerator::GenerateMaterialFromFile(ReSourceFilePath, ReMessage, true));
+
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderRoundTripSwitchTypedAppendTest,
+	FDreamShaderQuietAutomationTestBase,
+	"DreamShader.Roundtrip.SwitchTypedAppendRegenerates",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Three decompiler sizing/escaping bugs that only show up at re-GENERATE time, all reachable from one
+// graph (they were found together on LGUI's LexUI_RectBlock / LexUI_ImageAndFont):
+//   1. Switch-style nodes report no output value type, so the "assume float4" fallback oversized them.
+//      An Append of such a value plus one more component was emitted as `float5(...)` -- not a type.
+//   2. VertexColor was typed from output 0 (the RGB pin) while the alpha pin's mask was appended as a
+//      swizzle, producing `.a` on a three-component value.
+//   3. Comment / #Region text carrying a newline was written raw into a "..." literal, splitting the
+//      directive across two lines.
+bool FDreamShaderRoundTripSwitchTypedAppendTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_SwitchAppendSrc"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	const FString Source = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Settings = {
+        Domain = "Surface";
+        ShadingModel = "Unlit";
+        BlendMode = "Translucent";
+    }
+
+    Outputs = {
+        float3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float3 VertexRgb = (UE.Expression(Class="VertexColor", OutputType="float4")).rgb;
+        float VertexAlpha = (UE.Expression(Class="VertexColor", OutputType="float4")).a;
+        float3 Dimmed = (VertexRgb * 0.5);
+        float3 Selected = UE.Expression(Class="StaticSwitch", OutputType="float3", True=Dimmed, False=VertexRgb, Value=true);
+        float4 Combined = float4(Selected, VertexAlpha);
+        Color = Combined.rgb;
+        Alpha = Combined.a;
+    }
+}
+)"), *AssetName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+		FString::Printf(TEXT("Switch/append material generation succeeds: %s"), *Message),
+		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated switch/append material loads"), Material))
+	{
+		return false;
+	}
+
+	// Stand in for a comment authored in the material editor (the decompiler skips its own
+	// "DreamShader: " layout chrome, so only a hand-authored comment exercises the emission path).
+	// Multi-line comment text is the common case and used to be written raw into the "..." literal.
+	if (UMaterialExpressionComment* Comment = NewObject<UMaterialExpressionComment>(Material, NAME_None, RF_Transactional))
+	{
+		Comment->Text = TEXT("Vertex color split\nacross two lines");
+		Comment->MaterialExpressionEditorX = -600;
+		Comment->MaterialExpressionEditorY = -200;
+		Comment->SizeX = 900;
+		Comment->SizeY = 600;
+		Material->GetExpressionCollection().AddComment(Comment);
+	}
+
+	const FString ReAssetName = MakeUniqueTestAssetName(TEXT("M_SwitchAppendRoundTrip"));
+	const FString ReObjectPath = MakeAutomationObjectPath(ReAssetName);
+	Artifacts.AddObjectPath(ReObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ReObjectPath);
+
+	FString DecompiledSource;
+	FString DecompileError;
+	if (!TestTrue(
+		FString::Printf(TEXT("Switch/append decompile succeeds: %s"), *DecompileError),
+		GetGraphDecompiler().DecompileMaterial(Material, FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *ReAssetName), DecompiledSource, DecompileError)))
+	{
+		return false;
+	}
+
+	TestFalse(TEXT("Decompiled source has no float5 constructor."), DecompiledSource.Contains(TEXT("float5(")));
+	TestTrue(TEXT("Decompiled VertexColor is typed float4 so its alpha swizzle is valid."), DecompiledSource.Contains(TEXT("Class=\"VertexColor\", OutputType=\"float4\"")));
+	TestTrue(TEXT("Decompiled comment text escapes its newline."), DecompiledSource.Contains(TEXT("Comment(Name=\"Vertex color split\\nacross two lines\"")));
+
+	FString ReSourceFilePath;
+	if (!WriteAutomationSourceFile(*this, ReAssetName + TEXT(".dsm"), DecompiledSource, ReSourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(ReSourceFilePath);
+
+	FString ReMessage;
+	TestTrue(
+		FString::Printf(TEXT("Decompiled switch/append source re-generates: %s"), *ReMessage),
+		FMaterialGenerator::GenerateMaterialFromFile(ReSourceFilePath, ReMessage, true));
+
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderRoundTripStaticBoolFunctionInputTest,
+	FDreamShaderQuietAutomationTestBase,
+	"DreamShader.Roundtrip.StaticBoolFunctionInputRegenerates",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A StaticBool function input with a default: Unreal ignores PreviewValue for static-bool inputs and
+// compiles whatever is wired to the Preview pin, so the default has to materialize as a StaticBool
+// node. The decompiler also has to keep the type token distinct -- "bool" declares a scalar pin, which
+// would silently turn the input into a float and reject every static-bool value passed to it.
+bool FDreamShaderRoundTripStaticBoolFunctionInputTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_StaticBoolSrc"));
+	const FString ObjectPath = MakeAutomationObjectPath(FunctionName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	const FString Source = FString::Printf(TEXT(R"(
+ShaderFunction(Name="DreamShaderTests/Automation/%s")
+{
+    Inputs = {
+        float3 Color;
+        opt StaticBool UseDimmed = false;
+    }
+
+    Outputs = {
+        float3 Result;
+    }
+
+    Graph = {
+        float3 Dimmed = (Color * 0.5);
+        Result = UE.Expression(Class="StaticSwitch", OutputType="float3", True=Dimmed, False=Color, Value=UseDimmed);
+    }
+}
+)"), *FunctionName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, FunctionName + TEXT(".dsf"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+		FString::Printf(TEXT("StaticBool function generation succeeds: %s"), *Message),
+		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	UMaterialFunction* GeneratedFunction = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated StaticBool function loads"), GeneratedFunction))
+	{
+		return false;
+	}
+
+	const FString ReFunctionName = MakeUniqueTestAssetName(TEXT("F_StaticBoolRoundTrip"));
+	const FString ReObjectPath = MakeAutomationObjectPath(ReFunctionName);
+	Artifacts.AddObjectPath(ReObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ReObjectPath);
+
+	FString DecompiledSource;
+	FString DecompileError;
+	if (!TestTrue(
+		FString::Printf(TEXT("StaticBool function decompile succeeds: %s"), *DecompileError),
+		GetGraphDecompiler().DecompileFunction(
+			GeneratedFunction,
+			FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *ReFunctionName),
+			EDreamShaderDecompiledFunctionKind::Function,
+			DecompiledSource,
+			DecompileError)))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("Decompiled input keeps the StaticBool type token."), DecompiledSource.Contains(TEXT("opt StaticBool UseDimmed = false")));
+	TestFalse(TEXT("Decompiled input is not downgraded to a scalar bool pin."), DecompiledSource.Contains(TEXT("opt bool UseDimmed")));
+
+	FString ReSourceFilePath;
+	if (!WriteAutomationSourceFile(*this, ReFunctionName + TEXT(".dsf"), DecompiledSource, ReSourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(ReSourceFilePath);
+
+	FString ReMessage;
+	if (!TestTrue(
+		FString::Printf(TEXT("Decompiled StaticBool function re-generates: %s"), *ReMessage),
+		FMaterialGenerator::GenerateAssetsFromFile(ReSourceFilePath, ReMessage, true)))
+	{
+		return false;
+	}
+
+	// The default has to survive as a node on the Preview pin, not just as PreviewValue.
+	UMaterialFunction* RegeneratedFunction = LoadObject<UMaterialFunction>(nullptr, *ReObjectPath);
+	if (!TestNotNull(TEXT("Regenerated StaticBool function loads"), RegeneratedFunction))
+	{
+		return false;
+	}
+
+	bool bFoundStaticBoolInput = false;
+	for (auto&& ExpressionPtr : RegeneratedFunction->GetExpressions())
+	{
+		UMaterialExpressionFunctionInput* FunctionInput = Cast<UMaterialExpressionFunctionInput>(ExpressionPtr);
+		if (!FunctionInput || FunctionInput->InputName != FName(TEXT("UseDimmed")))
+		{
+			continue;
+		}
+
+		bFoundStaticBoolInput = true;
+		TestEqual(TEXT("Regenerated input is a StaticBool function input."), static_cast<int32>(FunctionInput->InputType.GetValue()), static_cast<int32>(FunctionInput_StaticBool));
+		TestTrue(TEXT("Regenerated StaticBool input keeps its default."), FunctionInput->bUsePreviewValueAsDefault != 0);
+		TestNotNull(TEXT("Regenerated StaticBool default is a node on the Preview pin."), FunctionInput->Preview.GetTracedInput().Expression);
+	}
+	TestTrue(TEXT("Regenerated function exposes the UseDimmed input."), bFoundStaticBoolInput);
 
 	return true;
 }

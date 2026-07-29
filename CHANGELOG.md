@@ -1,5 +1,36 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Decompiler — round-trip fixes
+
+Decompiling a hand-authored material and generating it back could fail on graph shapes that Unreal
+accepts (found on LGUI's `LexUI_ImageAndFont` / `LexUI_RectBlock` / `MF_LexUI_SDF_Font`):
+
+- Switch-style nodes (`StaticSwitch`, `FeatureLevelSwitch`, `QualitySwitch`, `ShadingPathSwitch`,
+  `VertexInterpolator`, …) report no output value type, so the "assume float4" fallback oversized
+  them and everything downstream. An `AppendVector` fed by a float3 material-function output was
+  emitted as `float5(...)`; appends are now clamped to a float4 with a warning if a count still
+  disagrees.
+- `VertexColor` is emitted as float4 so the alpha pin's swizzle is valid — it used to be typed from
+  the RGB pin and produce `.a` on a three-component value.
+- An input's own channel mask now replaces the connected pin's mask instead of stacking on it
+  (`.rgb.a` no longer appears when a graph wires the RGB pin but masks alpha).
+- A `StaticBool` function input keeps the `StaticBool` type token; `bool` declares a scalar pin, so
+  the input used to come back as a float and reject every static-bool value passed to it.
+- Comment / `#Region` / description text carrying newlines or tabs is escaped, so a multi-line
+  comment no longer splits the directive across lines.
+
+### Language
+
+- `true` / `false` are graph literals and materialize as `StaticBool` nodes, so an
+  `opt StaticBool X = false` input default generates the Preview-pin node Unreal requires (it
+  ignores `PreviewValue` for static-bool inputs).
+- `StaticBool` resolves as a one-component type at call sites.
+- Texture parameter types whose token carries no dimension (`TextureObjectParameter`) take their
+  dimension from the assigned default asset, so a `Texture2DArray` / `TextureCube` / `VolumeTexture`
+  default is accepted. Explicit tokens (`Texture2D`, `Texture2DArray`, …) still validate strictly.
+
 ## 1.5.0 - Beta - 2026-07-16
 
 > Beta release. The unified backend and the new editor tooling are feature-complete and render-verified, but APIs and generated-asset layout may still change before the stable `1.5.0`. Please report issues.
