@@ -689,6 +689,7 @@ namespace UE::DreamShader::Private
 				{
 					Property.Type = ETextShaderPropertyType::Vector;
 					Property.ComponentCount = 4;
+					Property.bHasExplicitTextureType = true;
 					if (TypeToken.Contains(TEXT("Cube"), ESearchCase::IgnoreCase))
 					{
 						Property.TextureType = ETextShaderTextureType::TextureCube;
@@ -807,6 +808,7 @@ namespace UE::DreamShader::Private
 				|| TypeToken.Equals(TEXT("VolumeTexture"), ESearchCase::IgnoreCase))
 			{
 				Property.Type = ETextShaderPropertyType::Texture2D;
+				Property.bHasExplicitTextureType = true;
 				if (TypeToken.Equals(TEXT("TextureCube"), ESearchCase::IgnoreCase))
 				{
 					Property.TextureType = ETextShaderTextureType::TextureCube;

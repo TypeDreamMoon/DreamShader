@@ -9,10 +9,46 @@
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
 
+#include "Engine/Texture.h"
+#include "Engine/Texture2DArray.h"
+#include "Engine/TextureCube.h"
+#include "Engine/VolumeTexture.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
 
 namespace UE::DreamShader::Editor::Private
 {
+	ETextShaderTextureType ResolveEffectiveTextureType(const FTextShaderPropertyDefinition& Property)
+	{
+		// Type tokens that name the dimension win outright -- declaring `Texture2D` and pointing it at a
+		// Texture2DArray stays an error. Tokens like TextureObjectParameter map to one Unreal node class
+		// that carries any dimension, so the assigned asset is the only thing that knows which it is.
+		if (Property.bHasExplicitTextureType || Property.TextureDefaultObjectPath.IsEmpty())
+		{
+			return Property.TextureType;
+		}
+
+		const UTexture* DefaultTexture = LoadObject<UTexture>(nullptr, *Property.TextureDefaultObjectPath);
+		if (!DefaultTexture)
+		{
+			return Property.TextureType;
+		}
+
+		if (DefaultTexture->IsA<UTextureCube>())
+		{
+			return ETextShaderTextureType::TextureCube;
+		}
+		if (DefaultTexture->IsA<UTexture2DArray>())
+		{
+			return ETextShaderTextureType::Texture2DArray;
+		}
+		if (DefaultTexture->IsA<UVolumeTexture>())
+		{
+			return ETextShaderTextureType::VolumeTexture;
+		}
+
+		return ETextShaderTextureType::Texture2D;
+	}
+
 	bool TryGetComponentCountForOutputType(const ECustomMaterialOutputType OutputType, int32& OutComponentCount)
 	{
 		switch (OutputType)
@@ -77,6 +113,16 @@ namespace UE::DreamShader::Editor::Private
 			}
 			OutComponentCount = 0;
 			bOutIsSubstrateMaterial = true;
+			return true;
+		}
+
+		// StaticBool is a one-component compile-time value: it needs to resolve here so call sites can
+		// type-check arguments passed to a StaticBool function input (TryResolveMaterialFunctionParameterType
+		// maps the same token to FunctionInput_StaticBool when the input node itself is created).
+		if (InTypeName.Equals(TEXT("StaticBool"), ESearchCase::IgnoreCase)
+			|| InTypeName.Equals(TEXT("StaticBoolParameter"), ESearchCase::IgnoreCase))
+		{
+			OutComponentCount = 1;
 			return true;
 		}
 

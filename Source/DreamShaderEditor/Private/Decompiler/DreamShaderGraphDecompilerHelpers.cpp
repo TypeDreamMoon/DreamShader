@@ -63,6 +63,7 @@
 #include "Materials/MaterialExpressionSine.h"
 #include "Materials/MaterialExpressionSquareRoot.h"
 #include "Materials/MaterialExpressionStaticComponentMaskParameter.h"
+#include "Materials/MaterialExpressionStaticSwitch.h"
 #include "Materials/MaterialExpressionStaticSwitchParameter.h"
 #include "Materials/MaterialExpressionSubtract.h"
 #if DREAMSHADER_WITH_SUBSTRATE_BUILTINS
@@ -93,21 +94,23 @@
 
 namespace UE::DreamShader::Editor::Private
 {
+	// Every caller writes the result inside a "..." literal, and the DSL scanner reads those literals one
+	// line at a time -- a raw newline (comment nodes and #Region names routinely carry them) would break
+	// the statement in half. The scanner unescapes \r \n \t, so escaping here round-trips exactly.
 	FString EscapeDreamShaderString(const FString& InText)
 	{
 		FString Result = InText;
 		Result.ReplaceInline(TEXT("\\"), TEXT("\\\\"));
 		Result.ReplaceInline(TEXT("\""), TEXT("\\\""));
+		Result.ReplaceInline(TEXT("\r"), TEXT("\\r"));
+		Result.ReplaceInline(TEXT("\n"), TEXT("\\n"));
+		Result.ReplaceInline(TEXT("\t"), TEXT("\\t"));
 		return Result;
 	}
 
 	FString EscapeDreamShaderCodeString(const FString& InText)
 	{
-		FString Result = EscapeDreamShaderString(InText);
-		Result.ReplaceInline(TEXT("\r"), TEXT("\\r"));
-		Result.ReplaceInline(TEXT("\n"), TEXT("\\n"));
-		Result.ReplaceInline(TEXT("\t"), TEXT("\\t"));
-		return Result;
+		return EscapeDreamShaderString(InText);
 	}
 
 	FString GetDreamShaderTypeForFunctionInput(EFunctionInputType InputType)
@@ -135,6 +138,9 @@ namespace UE::DreamShader::Editor::Private
 		case FunctionInput_Substrate:
 			return TEXT("Substrate");
 		case FunctionInput_StaticBool:
+			// Not "bool": that token declares a scalar function input, so a StaticBool input would come
+			// back as a float pin and every static-bool value wired into it would be a type mismatch.
+			return TEXT("StaticBool");
 		case FunctionInput_Bool:
 			return TEXT("bool");
 		default:
@@ -695,6 +701,44 @@ namespace UE::DreamShader::Editor::Private
 		return nullptr;
 	}
 
+	// Switch-style nodes forward whichever input the platform/quality/static condition selects, so the
+	// node itself carries no size information -- UE reports MCT_Unknown (or a placeholder) for their
+	// output value type. Without resolving them from their connected inputs the generic fallback below
+	// assumes float4, which then oversizes everything downstream: an AppendVector fed by a float3
+	// material-function output was emitted as `float5(...)`, a type the language does not have, so the
+	// decompiled file could not be generated back. VertexInterpolator is the same shape (VS in, PS out).
+	static bool IsDreamShaderPassThroughExpression(const UMaterialExpression* Expression)
+	{
+		if (!Expression)
+		{
+			return false;
+		}
+
+		static const TCHAR* PassThroughClassNames[] =
+		{
+			TEXT("MaterialExpressionFeatureLevelSwitch"),
+			TEXT("MaterialExpressionQualitySwitch"),
+			TEXT("MaterialExpressionShadingPathSwitch"),
+			TEXT("MaterialExpressionShaderStageSwitch"),
+			TEXT("MaterialExpressionReflectionCapturePassSwitch"),
+			TEXT("MaterialExpressionPathTracingQualitySwitch"),
+			TEXT("MaterialExpressionRayTracingQualitySwitch"),
+			TEXT("MaterialExpressionPreviousFrameSwitch"),
+			TEXT("MaterialExpressionVertexInterpolator"),
+		};
+
+		const FString ClassName = Expression->GetClass()->GetName();
+		for (const TCHAR* PassThroughClassName : PassThroughClassNames)
+		{
+			if (ClassName.Equals(PassThroughClassName, ESearchCase::IgnoreCase))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	int32 GetExpressionOutputComponentCount(UMaterialExpression* Expression, const int32 OutputIndex, TSet<UMaterialExpression*>* VisitingExpressions)
 	{
 		if (!Expression)
@@ -907,6 +951,27 @@ namespace UE::DreamShader::Editor::Private
 			|| ClassName.Equals(TEXT("MaterialExpressionMaterialXLuminance"), ESearchCase::IgnoreCase))
 		{
 			return Finish(1);
+		}
+
+		if (UMaterialExpressionStaticSwitch* StaticSwitch = Cast<UMaterialExpressionStaticSwitch>(Expression))
+		{
+			return Finish(FMath::Max(ResolveInputComponentCount(StaticSwitch->A, 1), ResolveInputComponentCount(StaticSwitch->B, 1)));
+		}
+		if (IsDreamShaderPassThroughExpression(Expression))
+		{
+			int32 PassThroughComponentCount = 0;
+			const int32 InputCount = GetDreamShaderExpressionInputCount(Expression);
+			for (int32 InputIndex = 0; InputIndex < InputCount; ++InputIndex)
+			{
+				if (const FExpressionInput* Input = Expression->GetInput(InputIndex))
+				{
+					PassThroughComponentCount = FMath::Max(PassThroughComponentCount, ResolveInputComponentCount(*Input, 0));
+				}
+			}
+			if (PassThroughComponentCount > 0)
+			{
+				return Finish(PassThroughComponentCount);
+			}
 		}
 
 		const EMaterialValueType OutputType = GetDreamShaderExpressionOutputValueType(Expression, OutputIndex);

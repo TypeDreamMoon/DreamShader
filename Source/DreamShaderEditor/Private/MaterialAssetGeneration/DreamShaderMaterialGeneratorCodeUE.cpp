@@ -1039,7 +1039,18 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 
-			for (int32 AdditionalOutputIndex = 0; AdditionalOutputIndex < RequestedCustomOutputIndex; ++AdditionalOutputIndex)
+			// A node that declared its outputs explicitly (AdditionalOutputs=...) already has the one this
+			// call selects, with its real name and type. Only synthesize a placeholder set when the
+			// selector is all we were given.
+			const bool bRequestedOutputAlreadyDeclared = CustomOutputName.IsEmpty()
+				? CustomExpression->AdditionalOutputs.Num() >= RequestedCustomOutputIndex
+				: CustomExpression->AdditionalOutputs.ContainsByPredicate(
+					[&CustomOutputName](const FCustomOutput& AdditionalOutput)
+					{
+						return AdditionalOutput.OutputName.ToString().Equals(CustomOutputName, ESearchCase::IgnoreCase);
+					});
+
+			for (int32 AdditionalOutputIndex = 0; !bRequestedOutputAlreadyDeclared && AdditionalOutputIndex < RequestedCustomOutputIndex; ++AdditionalOutputIndex)
 			{
 				FCustomOutput CustomOutput;
 				CustomOutput.OutputName = FName(*(
@@ -1218,6 +1229,20 @@ namespace UE::DreamShader::Editor::Private
 				OutputComponents = ActualOutputComponents;
 				bIsTextureObject = false;
 				bIsSubstrateMaterial = false;
+				bHasAuthoritativeComponentCount = true;
+			}
+		}
+		else if (CustomExpression)
+		{
+			// OutputType declares the node's return type; a secondary output carries its own type in
+			// AdditionalOutputs, and UMaterialExpressionCustom::GetOutputValueType reports whichever one
+			// this call reads. Sizing the value from the declared OutputType would make every read of a
+			// secondary output claim the return type's width.
+			const int32 ActualOutputComponents = GetComponentCountForMaterialValueType(ActualOutputValueType);
+			if (ActualOutputComponents > 0)
+			{
+				OutputComponents = ActualOutputComponents;
+				bIsTextureObject = false;
 				bHasAuthoritativeComponentCount = true;
 			}
 		}

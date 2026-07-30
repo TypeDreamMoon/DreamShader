@@ -17,9 +17,14 @@ namespace UE::DreamShader::Editor::Private
 	{
 		FString EscapeDreamShaderString(const FString& InText)
 		{
+			// Same contract as the decompiler helper: the result goes inside a "..." literal, and a raw
+			// newline in a description would split the declaration across lines.
 			FString Result = InText;
 			Result.ReplaceInline(TEXT("\\"), TEXT("\\\\"));
 			Result.ReplaceInline(TEXT("\""), TEXT("\\\""));
+			Result.ReplaceInline(TEXT("\r"), TEXT("\\r"));
+			Result.ReplaceInline(TEXT("\n"), TEXT("\\n"));
+			Result.ReplaceInline(TEXT("\t"), TEXT("\\t"));
 			return Result;
 		}
 
@@ -48,6 +53,9 @@ namespace UE::DreamShader::Editor::Private
 			case FunctionInput_Substrate:
 				return TEXT("Substrate");
 			case FunctionInput_StaticBool:
+				// Mirrors the decompiler: "bool" declares a scalar pin, so a static-bool input has to
+				// keep its own token or callers cannot pass a StaticBool value to it.
+				return TEXT("StaticBool");
 			case FunctionInput_Bool:
 				return TEXT("bool");
 			default:

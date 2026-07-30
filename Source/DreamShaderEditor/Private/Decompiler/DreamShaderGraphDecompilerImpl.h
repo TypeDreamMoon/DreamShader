@@ -325,6 +325,12 @@ namespace UE::DreamShader::Editor::Private
 			const int32 OutputIndex);
 
 		FString MakeExpressionOutputSelection(const FString& ExpressionText, UMaterialExpression* Expression, const int32 OutputIndex) const;
+		static FString MakeExpressionOutputMaskSuffix(UMaterialExpression* Expression, const int32 OutputIndex);
+		FDecompiledValue ApplyConnectionInputMask(
+			const FDecompiledValue& Value,
+			UMaterialExpression* Expression,
+			const int32 OutputIndex,
+			const FString& InputMaskSuffix);
 
 		FDecompiledValue MakeExpressionOutputValue(FDecompiledValue Source, UMaterialExpression* Expression, const int32 OutputIndex) const;
 

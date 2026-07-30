@@ -279,6 +279,8 @@ Properties = {
 
 除 `float` / `vec3` / `Texture2D` 简写外，`Properties` 也支持常见显式 Parameter 节点类型，例如 `ScalarParameter`、`VectorParameter`、`DoubleVectorParameter`、`TextureObjectParameter`、`TextureSampleParameter2D`、`TextureSampleParameterVolume`、`StaticBoolParameter`、`StaticSwitchParameter` 等。
 
+`TextureObjectParameter` 这类类型名不带维度的写法，纹理维度取自 `= Path(...)` 指向的资产，因此可以直接指向 `Texture2DArray` / `TextureCube` / `VolumeTexture`；`Texture2D`、`Texture2DArray` 这些显式写法则维度固定，资产类型不符会报错。
+
 在 `Properties` 声明前加 `const` 会生成不可外部调参的常量/helper 节点，而不是 parameter 节点。`const` 支持标量、向量和纹理简写类型；`const Texture2D` 默认创建 Unreal Texture Object 节点，可用 `= Path(...)` 指定预览纹理，不写时使用 Unreal 默认纹理。`const TextureCube`、`const Texture2DArray`、`const VolumeTexture` 必须显式指定默认资产。
 
 声明尾部可以加 `[...]` 反射属性块。属性块里的每一项都会按 Unreal `MaterialExpression` 的 UPROPERTY 名称写入生成节点；不写的字段保持 Unreal 默认值。`Group`、`SortPriority`、`Description` 是常用别名，其中 `Description` 会写到节点 `Desc`。
@@ -342,6 +344,16 @@ Inputs = {
     opt Texture2D BaseColorTex = PreviewTex;
 }
 ```
+
+静态布尔输入写 `StaticBool`，对应 Unreal 的 `FunctionInput_StaticBool`（编译期分支，可直接接 `StaticSwitch`）。写 `bool` 得到的是标量 pin，静态布尔值接上去会类型不匹配，所以两者不能互换：
+
+```c
+Inputs = {
+    opt StaticBool UseVertexInterpolator = false;
+}
+```
+
+Unreal 对静态布尔输入忽略 PreviewValue、只编译 Preview pin 上的节点，因此 `= true` / `= false` 默认值会生成一个接在 Preview 上的 `StaticBool` 节点。`true` / `false` 在 `Graph` 表达式中同样是 `StaticBool` 字面量。
 
 `ShaderFunction` / `VirtualFunction` 的 `Inputs` / `Outputs` 同样支持 `[...]` 属性块中的 `SortPriority` 和 `Description`；`Group` 会被解析并保留在语法层，但 Unreal Function Input / Output 本身没有分组字段。
 

@@ -132,7 +132,8 @@ namespace UE::DreamShader::Editor::Private
 		const TCHAR* Context,
 		FString& OutError)
 	{
-		if (DoesTextureMatchType(Texture, Property.TextureType))
+		const ETextShaderTextureType ExpectedTextureType = ResolveEffectiveTextureType(Property);
+		if (DoesTextureMatchType(Texture, ExpectedTextureType))
 		{
 			return true;
 		}
@@ -141,7 +142,7 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("%s texture property '%s' expects %s but '%s' is a '%s'."),
 			Context,
 			*Property.Name,
-			GetTextureTypeLabel(Property.TextureType),
+			GetTextureTypeLabel(ExpectedTextureType),
 			Property.TextureDefaultObjectPath.IsEmpty() ? TEXT("<default>") : *Property.TextureDefaultObjectPath,
 			Texture ? *Texture->GetClass()->GetName() : TEXT("None"));
 		return false;
