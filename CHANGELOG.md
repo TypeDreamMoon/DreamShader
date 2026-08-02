@@ -1,5 +1,38 @@
 # DreamShader ChangeLog
 
+## 1.5.1 - 2026-08-02
+
+Documentation and tooling only. No plugin code changed, so a project on `1.5.0` needs no
+migration.
+
+### Added
+
+- `.skill/` — an agent skill set for DreamShaderLang, in the Claude Code `SKILL.md` format:
+  `dream-shader-create` (a description becomes a `.dsm` that provably compiles),
+  `dream-shader-optimize` (decompiler output becomes a source a human would write),
+  `dream-shader-decompile`, `dream-shader-verify` and `dream-shader-diagnose`.
+- `.skill/dsc.ps1` — a headless driver around `-run=DreamShader`. It resolves the engine from the
+  `.uproject`'s `EngineAssociation`, finds the project by walking up, de-duplicates the doubled
+  `LogInit` echo of every `LogDreamShader` line, and classifies each asset the run wrote against
+  git. `-CleanNew` then deletes exactly the untracked ones and prunes the emptied folders, so a
+  verification run no longer leaves `.uasset` files behind that shadow in-memory generation.
+- `.skill/sync-skills.ps1` — publishes the tree into `.claude/skills`, rewriting the relative
+  `Docs/` links and the driver path against the destination. `-Check` exits `1` on drift.
+- `.skill/reference/dreamshaderlang.md` — the grammar subset an author needs, including the traps
+  that only surface at compile time: the 19 reserved math builtins that shadow user code silently,
+  the whole-identifier GLSL rewrite inside `Function` bodies, and the absent matrix types.
+
+### Changed
+
+- Both READMEs restructured around the reference manual. The sections that had become abridged
+  copies of `Docs/` pages — Properties, Graph, MaterialAttributes, Substrate, Material Layers,
+  VirtualFunction, Configuration, Release — now link to the page that owns them, which is also the
+  page that gets maintained. The minimal material leads instead of sitting 130 lines down, and
+  in-memory generation is stated up front. 459 → 279 lines, and the two languages are kept
+  structurally identical.
+- Version references across `Docs/` updated to `1.5.1`. `(since 1.5.0)` feature markers are
+  unchanged — they record when a feature landed, not what the current version is.
+
 ## 1.5.0 - 2026-08-02
 
 ### Language (DreamShaderLang 1.5)
