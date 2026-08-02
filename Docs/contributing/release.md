@@ -178,6 +178,11 @@ well.
 - The workflow never runs the automation suite either. See [Testing](testing.md).
 - Re-running the workflow for an existing tag is safe: assets are clobbered and the notes are
   rewritten from the current `CHANGELOG.md`.
+- **Deleting a tag that already has a release turns that release into a draft.** Re-pushing the
+  tag re-runs the workflow, but the workflow *edits* the existing release rather than creating
+  one, so it stays a draft — invisible to users, and the previous version keeps the *Latest*
+  badge. Finish with `gh release edit v<slug> --draft=false --latest`. Observed while re-cutting
+  `v1.5.1`.
 - The VSCode extension is released from its own repository. The workflow always pulls that
   repository's **latest** release, so a plugin release published while the extension is mid-release
   will carry the previous `.vsix`.
