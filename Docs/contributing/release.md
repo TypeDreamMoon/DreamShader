@@ -78,35 +78,38 @@ The staging directory is `<RUNNER_TEMP>/DreamShaderRelease/DreamShader/`, and it
 `artifacts/DreamShader-<slug>.zip`. The archive's single top-level entry is the folder `DreamShader`,
 which is what the install instructions tell users to drop into `Plugins/`.
 
-Exactly seven items are copied. A missing item is skipped silently.
+Ten items are copied. A missing item is skipped rather than failing the release, but it now emits a
+`::warning::` annotation on the run summary — silence is how three of them stayed out of every
+archive up to `1.5.0` without anyone noticing.
 
-| Shipped |
-| :-- |
-| `Source/` |
-| `Resources/` |
-| `Docs/` |
-| `DreamShader.uplugin` |
-| `README.md` |
-| `CHANGELOG.md` |
-| `LICENSE` |
+| Shipped | |
+| :-- | :-- |
+| `Source/` | |
+| `Resources/` | |
+| `Shaders/` | *(since 1.5.1)* `DreamShaderBuiltins.ush`, so `/Plugin/DreamShader/…` resolves in an archive install |
+| `Docs/` | |
+| `.skill/` | *(since 1.5.1)* the agent skill set and its driver |
+| `DreamShader.uplugin` | |
+| `README.md` | |
+| `README.zh-CN.md` | *(since 1.5.1)* — `README.md` links to it, so the archive's link used to dangle |
+| `CHANGELOG.md` | |
+| `LICENSE` | |
 
 Everything else in the repository is absent:
 
 | Not shipped | Consequence for an archive install |
 | :-- | :-- |
-| `Shaders/` | `Shaders/DreamShaderBuiltins.ush` is missing, so the `/Plugin/DreamShader` virtual shader directory registered at module startup maps to a directory that does not exist |
 | `Tests/` | The fixture corpus is absent; the two data-driven runners enumerate zero sub-tests |
 | `Config/` | `FilterPlugin.ini` is absent. It only holds the stock commented template and declares no packaged files |
 | `Images/` | README artwork is missing, so the readme's images do not render locally |
-| `README.zh-CN.md` | Only the English readme ships |
 | `.github/` | The workflow itself is not redistributed |
 | `Binaries/`, `Intermediate/` | The archive is **source-only**; the consumer's first editor launch compiles the three modules |
 
-> [!WARNING]
-> The archive contains no `Shaders/` folder. Anything that resolves `/Plugin/DreamShader/...` — the
-> HLSL builtin library — has no file to read in an install made from the release zip. Copy
-> `Shaders/DreamShaderBuiltins.ush` from the repository into `<Plugin>/Shaders/` after extracting,
-> or install from a git checkout. See [HLSL library](../builtins/hlsl-library.md).
+> [!NOTE]
+> Up to and including `1.5.0` the archive shipped no `Shaders/` folder, so anything resolving
+> `/Plugin/DreamShader/...` had no file to read in an install made from the release zip. Installs
+> from those archives still need `Shaders/DreamShaderBuiltins.ush` copied in by hand. See
+> [HLSL library](../builtins/hlsl-library.md).
 
 > [!NOTE]
 > The archive ships no `Binaries/`, so the plugin is compiled by the consuming project. That
@@ -204,8 +207,10 @@ release      DreamShader 1.5.1
 tag          v1.5.1
 assets       DreamShader-1.5.1.zip
              <every asset from the latest dreamshader-language-support release, e.g. *.vsix>
-zip layout   DreamShader/Source/  DreamShader/Resources/  DreamShader/Docs/
-             DreamShader/DreamShader.uplugin  DreamShader/README.md
+zip layout   DreamShader/Source/  DreamShader/Resources/  DreamShader/Shaders/
+             DreamShader/Docs/  DreamShader/.skill/
+             DreamShader/DreamShader.uplugin
+             DreamShader/README.md  DreamShader/README.zh-CN.md
              DreamShader/CHANGELOG.md  DreamShader/LICENSE
 ```
 
@@ -213,7 +218,7 @@ zip layout   DreamShader/Source/  DreamShader/Resources/  DreamShader/Docs/
 
 - [Contributing](index.md) — building the plugin, the source tree, and the engine-version matrix
 - [Testing](testing.md) — the suite to run before tagging, and why the corpus is absent from the archive
-- [HLSL library](../builtins/hlsl-library.md) — `DreamShaderBuiltins.ush`, which the archive omits
+- [HLSL library](../builtins/hlsl-library.md) — `DreamShaderBuiltins.ush`, shipped in the archive since `1.5.1`
 - [Workspace and editor extensions](../tools/workspace.md) — the VSCode extension shipped alongside the plugin
 - [DreamShader module](../api/dreamshader-module.md) — the `/Plugin/DreamShader` shader mapping registered at startup
 - [DreamShader reference](../index.md) — the manual the `Docs/` folder becomes

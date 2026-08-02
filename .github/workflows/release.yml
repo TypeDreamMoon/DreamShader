@@ -102,15 +102,22 @@ jobs:
           $Items = @(
             'Source',
             'Resources',
+            'Shaders',
             'Docs',
+            '.skill',
             'DreamShader.uplugin',
             'README.md',
+            'README.zh-CN.md',
             'CHANGELOG.md',
             'LICENSE'
           )
 
           foreach ($Item in $Items) {
             if (!(Test-Path -LiteralPath $Item)) {
+              # Silently skipping is how Shaders/, README.zh-CN.md and .skill/ stayed out of every
+              # archive without anyone noticing. Still not fatal -- a release should not fail over a
+              # missing optional file -- but it is now visible on the run summary.
+              Write-Output "::warning::Release archive is missing '$Item'; it was not staged."
               continue
             }
 

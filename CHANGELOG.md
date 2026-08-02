@@ -33,6 +33,14 @@ migration.
 - Version references across `Docs/` updated to `1.5.1`. `(since 1.5.0)` feature markers are
   unchanged — they record when a feature landed, not what the current version is.
 
+### Fixed
+
+- The release archive now ships `Shaders/`, `README.zh-CN.md` and `.skill/`. Up to `1.5.0` the
+  packaging step copied a seven-item allowlist and skipped anything missing **silently**, so an
+  archive install had no `Shaders/DreamShaderBuiltins.ush` for the `/Plugin/DreamShader` virtual
+  shader directory to resolve against, and `README.md`'s link to the Chinese readme dangled. A
+  missing item now also emits a `::warning::` on the run summary instead of vanishing.
+
 ## 1.5.0 - 2026-08-02
 
 ### Language (DreamShaderLang 1.5)
