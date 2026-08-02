@@ -53,9 +53,9 @@ first, commit, then tag.
 | 6 | On a tag push, the pushed tag must equal the derived tag. On a manual run, a non-empty `version` input must equal the slug. |
 | 7 | Export `DREAMSHADER_VERSION`, `DREAMSHADER_BASE`, `DREAMSHADER_SLUG`, `DREAMSHADER_TAG` and `DREAMSHADER_PRERELEASE` for the later steps. |
 
-For the current descriptor — `VersionName` `1.5.0`, `IsBetaVersion` `false`, `Version` `150` —
-this yields base `1.5.0`, slug `1.5.0`, tag `v1.5.0`, pre-release `false`, and the archive
-`DreamShader-1.5.0.zip`.
+For the current descriptor — `VersionName` `1.5.1`, `IsBetaVersion` `false`, `Version` `151` —
+this yields base `1.5.1`, slug `1.5.1`, tag `v1.5.1`, pre-release `false`, and the archive
+`DreamShader-1.5.1.zip`.
 
 > [!NOTE]
 > `Version` (the integer, `150`) is never read by the workflow. It is the descriptor's own numeric
@@ -130,7 +130,7 @@ Changelog extraction details:
 
 - The section is found by matching `^##\s+<VersionName>\b`, so the changelog heading must *begin*
   with the `VersionName` exactly as written, decorations and all. Trailing text is fine, which is why
-  `## 1.5.0 - 2026-08-02` matches the current `VersionName` `1.5.0`. The failure runs the other way:
+  `## 1.5.1 - 2026-08-02` matches the current `VersionName` `1.5.1`. The failure runs the other way:
   a decorated name such as `1.5.0 - Beta` is **not** matched by a bare `## 1.5.0` heading.
 - It ends at the next `##` heading.
 - Leading blockquote lines are stripped, so the changelog's own beta note does not duplicate the
@@ -149,7 +149,7 @@ Changelog extraction details:
 | Beta, or the dispatch input `prerelease` is `true` | `--prerelease` on create, or a second `gh release edit --prerelease` on update |
 
 The release title is `DreamShader <VersionName>` — the name verbatim, decorations and all, for
-example `DreamShader 1.5.0`. Assets are the plugin zip followed by every file downloaded from the
+example `DreamShader 1.5.1`. Assets are the plugin zip followed by every file downloaded from the
 VSCode extension's latest release, sorted by name.
 
 ## Diagnostics
@@ -183,26 +183,26 @@ well.
 
 ## Example
 
-Cutting the `1.5.0` stable release:
+Cutting the `1.5.1` stable release:
 
 ```powershell
-# 1. Bump the descriptor: VersionName = "1.5.0", IsBetaVersion = false, Version = 150.
-# 2. Add a matching "## 1.5.0 - 2026-08-02" section to CHANGELOG.md.
+# 1. Bump the descriptor: VersionName = "1.5.1", IsBetaVersion = false, Version = 151.
+# 2. Add a matching "## 1.5.1 - 2026-08-02" section to CHANGELOG.md.
 git add DreamShader.uplugin CHANGELOG.md
-git commit -m "Release 1.5.0"
+git commit -m "Release 1.5.1"
 git push
 
-# 3. Tag exactly what the descriptor implies: base 1.5.0, no beta 'b'.
-git tag v1.5.0
-git push origin v1.5.0
+# 3. Tag exactly what the descriptor implies: base 1.5.1, no beta 'b'.
+git tag v1.5.1
+git push origin v1.5.1
 ```
 
 Published result:
 
 ```text
-release      DreamShader 1.5.0
-tag          v1.5.0
-assets       DreamShader-1.5.0.zip
+release      DreamShader 1.5.1
+tag          v1.5.1
+assets       DreamShader-1.5.1.zip
              <every asset from the latest dreamshader-language-support release, e.g. *.vsix>
 zip layout   DreamShader/Source/  DreamShader/Resources/  DreamShader/Docs/
              DreamShader/DreamShader.uplugin  DreamShader/README.md

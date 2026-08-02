@@ -27,7 +27,7 @@
     ./dsc.ps1 decompile /Game/Materials/M_Steel -Out I:/Work/M_Steel.dsm
 
 .NOTES
-    Written for and verified against UE 5.8 (source build) + DreamShader 1.5.0 on Win64.
+    Written for and verified against UE 5.8 (source build) + DreamShader 1.5.1 on Win64.
 #>
 [CmdletBinding()]
 param(
