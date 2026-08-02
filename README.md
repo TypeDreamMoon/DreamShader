@@ -13,7 +13,7 @@
       </p>
       <p>
         <img alt="Unreal Engine 5.3-5.8" src="https://img.shields.io/badge/Unreal%20Engine-5.3--5.8-313131" />
-        <img alt="Version 1.5.0 - Beta" src="https://img.shields.io/badge/version-1.5.0%20--%20Beta-orange" />
+        <img alt="Version 1.5.0" src="https://img.shields.io/badge/version-1.5.0-blue" />
         <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-green" />
       </p>
       <p>
@@ -43,10 +43,6 @@
     </td>
   </tr>
 </table>
-
-> [!NOTE]
->
-> **`1.5.0` is a Beta release.** The unified ThinCustom backend and the new Material Content Browser are render-verified, but generated-asset layout and some APIs may still change before the stable `1.5.0`. See the [changelog](CHANGELOG.md) for the full feature list.
 
 > [!TIP]
 >
@@ -298,7 +294,7 @@ Graph = {
 }
 ```
 
-Use `Substrate.*` wrappers for UE 5.7 Substrate nodes such as `Unlit`, `Slab`, `ConvertMaterialAttributes`, `VerticalLayer`, `Add`, `Weight`, `Select`, and utility nodes like `ThinFilm`. Generic `UE.Expression(..., OutputType="Substrate")` is also supported for non-Custom material expressions.
+Use `Substrate.*` wrappers for UE 5.4+ Substrate nodes such as `Unlit`, `Slab`, `ConvertMaterialAttributes`, `VerticalLayer`, `Add`, `Weight`, `Select`, and utility nodes like `ThinFilm`. Generic `UE.Expression(..., OutputType="Substrate")` is also supported for non-Custom material expressions.
 
 ### Material Layers
 
@@ -428,18 +424,18 @@ The repository includes a GitHub Actions release workflow. Push a tag whose vers
 git tag v1.5.0
 git push origin v1.5.0
 
-# Beta, VersionName "1.5.0 - Beta"
-git tag v1.5.0b
-git push origin v1.5.0b
+# Beta, VersionName "1.5.1 - Beta"
+git tag v1.5.1b
+git push origin v1.5.1b
 ```
 
-The release archive is named `DreamShader-<slug>.zip` (e.g. `DreamShader-1.5.0b.zip`) and contains the plugin source, resources, documentation, README, CHANGELOG, and LICENSE. It excludes `Binaries` and `Intermediate`. The release workflow also attaches the latest VSCode extension assets from `TypeDreamMoon/dreamshader-language-support`, and builds the release notes from the matching `CHANGELOG.md` section.
+The release archive is named `DreamShader-<slug>.zip` (e.g. `DreamShader-1.5.0.zip`) and contains the plugin source, resources, documentation, README, CHANGELOG, and LICENSE. It excludes `Binaries` and `Intermediate`. The release workflow also attaches the latest VSCode extension assets from `TypeDreamMoon/dreamshader-language-support`, and builds the release notes from the matching `CHANGELOG.md` section.
 
 ## Project Info
 
 | Item | Value |
 | :--- | :---- |
-| Version | `1.5.0 - Beta` |
+| Version | `1.5.0` |
 | Language | `DreamShaderLang` |
 | Unreal Engine | `5.3` - `5.8` |
 | Author | TypeDreamMoon |

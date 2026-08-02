@@ -12,7 +12,7 @@ can implement.
 | Export macros | `DREAMSHADER_API`, `DREAMSHADERCOMPILER_API` |
 | Reflected types in public headers | 2 `UCLASS`, 1 `UENUM` |
 | Delegates | none — the plugin declares no `DECLARE_DELEGATE*`, `DECLARE_EVENT*` or `DECLARE_DYNAMIC*` |
-| Plugin version | `1.5.0 - Beta` (`"Version": 150`) |
+| Plugin version | `1.5.0` (`"Version": 150`) |
 
 ## Modules
 
@@ -23,7 +23,7 @@ can implement.
 | `DreamShaderEditor` | `Editor` | `Default` | **0** | *(none used)* | Everything that actually builds assets: the generator, the decompiler, the bridge, the preview, the Material Content Browser, the commandlet, the workspace exporter. |
 
 All three are declared in `DreamShader.uplugin` and load at the `Default` phase. The plugin is
-`EnabledByDefault`, `CanContainContent`, and flagged `IsBetaVersion`.
+`EnabledByDefault` and `CanContainContent`; `IsBetaVersion` is `false`.
 
 ## Public headers
 

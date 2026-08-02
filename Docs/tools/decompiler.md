@@ -313,7 +313,7 @@ Logs: `Exported Material '{Asset}' to DSM '{File}'.` at Display, and
 
 ## Known round-trip gaps
 
-Verified behaviour of 1.5.0 - Beta. Each row is something the exported file will not reproduce.
+Verified behaviour of 1.5.0. Each row is something the exported file will not reproduce.
 
 | Gap | Effect | Work-around |
 | :-- | :-- | :-- |

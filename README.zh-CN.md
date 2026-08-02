@@ -13,7 +13,7 @@
       </p>
       <p>
         <img alt="Unreal Engine 5.3-5.8" src="https://img.shields.io/badge/Unreal%20Engine-5.3--5.8-313131" />
-        <img alt="Version 1.5.0 - Beta" src="https://img.shields.io/badge/version-1.5.0%20--%20Beta-orange" />
+        <img alt="Version 1.5.0" src="https://img.shields.io/badge/version-1.5.0-blue" />
         <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-green" />
       </p>
       <p>
@@ -43,10 +43,6 @@
     </td>
   </tr>
 </table>
-
-> [!NOTE]
->
-> **`1.5.0` 是 Beta 版本。** 统一的 ThinCustom 后端与全新的 Material Content Browser 已经过渲染验证，但在稳定版 `1.5.0` 之前，生成资产的布局和部分 API 仍可能调整。完整功能列表见 [changelog](CHANGELOG.md)。
 
 > [!TIP]
 >
@@ -298,7 +294,7 @@ Graph = {
 }
 ```
 
-推荐使用 `Substrate.*` 封装调用 UE 5.7 Substrate 节点，例如 `Unlit`、`Slab`、`ConvertMaterialAttributes`、`VerticalLayer`、`Add`、`Weight`、`Select`，以及 `ThinFilm` 等工具节点。非 Custom 材质表达式也可以通过 `UE.Expression(..., OutputType="Substrate")` 作为逃生口。
+推荐使用 `Substrate.*` 封装调用 UE 5.4+ Substrate 节点，例如 `Unlit`、`Slab`、`ConvertMaterialAttributes`、`VerticalLayer`、`Add`、`Weight`、`Select`，以及 `ThinFilm` 等工具节点。非 Custom 材质表达式也可以通过 `UE.Expression(..., OutputType="Substrate")` 作为逃生口。
 
 ### Material Layer
 
@@ -428,18 +424,18 @@ Unreal 编辑器的 `Tools > DreamShader` 菜单和 DreamShader 工具栏可以�
 git tag v1.5.0
 git push origin v1.5.0
 
-# Beta 版，VersionName "1.5.0 - Beta"
-git tag v1.5.0b
-git push origin v1.5.0b
+# Beta 版，VersionName "1.5.1 - Beta"
+git tag v1.5.1b
+git push origin v1.5.1b
 ```
 
-发布包名为 `DreamShader-<slug>.zip`（例如 `DreamShader-1.5.0b.zip`），包含插件源码、资源、文档、README、CHANGELOG 和 LICENSE，不包含 `Binaries` / `Intermediate`。Release workflow 还会附带 `TypeDreamMoon/dreamshader-language-support` 的最新 VSCode 扩展资产，并根据 `CHANGELOG.md` 中对应版本的段落生成发布说明。
+发布包名为 `DreamShader-<slug>.zip`（例如 `DreamShader-1.5.0.zip`），包含插件源码、资源、文档、README、CHANGELOG 和 LICENSE，不包含 `Binaries` / `Intermediate`。Release workflow 还会附带 `TypeDreamMoon/dreamshader-language-support` 的最新 VSCode 扩展资产，并根据 `CHANGELOG.md` 中对应版本的段落生成发布说明。
 
 ## 项目信息
 
 | 项目 | 内容 |
 | :--- | :--- |
-| Version | `1.5.0 - Beta` |
+| Version | `1.5.0` |
 | Language | `DreamShaderLang` |
 | Unreal Engine | `5.3` - `5.8` |
 | Author | TypeDreamMoon |
