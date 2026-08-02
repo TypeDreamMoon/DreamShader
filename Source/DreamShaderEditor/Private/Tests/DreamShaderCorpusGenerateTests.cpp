@@ -5,8 +5,8 @@
 // against the golden. Slow layer (EditorContext) — separate namespace "DreamShader.Gen.*" so CI can
 // run it in nightly while the fast "DreamShader.Lang.*" parse layer gates PRs.
 //
-// Some fixtures are deliberately RED: they encode a known generator bug (see
-// Docs/CompilerCorrectnessFindings.md). Each turns green when the corresponding bug is fixed.
+// Some fixtures are deliberately RED: they encode a known generator bug. Each turns green when the
+// corresponding bug is fixed; the fixture's own .expected.json records the expected outcome.
 
 #include "DreamShaderTestCommon.h"
 

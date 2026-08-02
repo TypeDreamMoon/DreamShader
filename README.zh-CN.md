@@ -18,10 +18,11 @@
       </p>
       <p>
         <a href="README.md">English</a> |
-        <a href="Docs/LanguageReference.md">语法参考</a> |
-        <a href="Docs/Examples.md">示例</a> |
-        <a href="Docs/Packages.md">Package</a> |
-        <a href="Docs/VSCode.md">VSCode</a> |
+        <a href="Docs/index.md">文档</a> |
+        <a href="Docs/language/index.md">语法参考</a> |
+        <a href="Docs/examples/index.md">示例</a> |
+        <a href="Docs/tools/packages.md">Package</a> |
+        <a href="Docs/tools/workspace.md">VSCode</a> |
         <a href="CHANGELOG.md">Changelog</a>
       </p>
       <p>
@@ -391,7 +392,7 @@ DShader/Packages/@scope/package-name/
 import "@typedreammoon/dream-noise/Library/Noise.dsh";
 ```
 
-Package 结构、锁文件、安装命令和包开发方式见 [Docs/Packages.md](Docs/Packages.md)。
+Package 结构、锁文件、安装命令和包开发方式见 [Docs/tools/packages.md](Docs/tools/packages.md)。
 
 ### 编辑器语言插件
 

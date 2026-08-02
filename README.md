@@ -18,10 +18,11 @@
       </p>
       <p>
         <a href="README.zh-CN.md">中文文档</a> |
-        <a href="Docs/LanguageReference.md">Language Reference</a> |
-        <a href="Docs/Examples.md">Examples</a> |
-        <a href="Docs/Packages.md">Packages</a> |
-        <a href="Docs/VSCode.md">VSCode</a> |
+        <a href="Docs/index.md">Documentation</a> |
+        <a href="Docs/language/index.md">Language Reference</a> |
+        <a href="Docs/examples/index.md">Examples</a> |
+        <a href="Docs/tools/packages.md">Packages</a> |
+        <a href="Docs/tools/workspace.md">VSCode</a> |
         <a href="CHANGELOG.md">Changelog</a>
       </p>
       <p>
@@ -391,7 +392,7 @@ Import example:
 import "@typedreammoon/dream-noise/Library/Noise.dsh";
 ```
 
-See [Docs/Packages.md](Docs/Packages.md) for package structure, lock files, install commands, and package authoring.
+See [Docs/tools/packages.md](Docs/tools/packages.md) for package structure, lock files, install commands, and package authoring.
 
 ### Editor Language Plugins
 
