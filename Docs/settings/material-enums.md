@@ -69,7 +69,7 @@ Reflected from `EMaterialShadingModel`, prefix `MSM_` stripped.
 | `Substrate` | explicit alias *(since UE 5.4)* | `MSM_Strata` |
 | `Strata` | explicit alias *(since UE 5.4)* — no-op, the reflected phase already registered this key | `MSM_Strata` |
 
-**15 distinct normalized aliases** on UE 5.4 – 5.7; **13** on UE 5.3, which has neither `strata` nor
+**15 distinct normalized aliases** on UE 5.4 – 5.8; **13** on UE 5.3, which has neither `strata` nor
 `substrate`.
 
 Excluded: `MSM_NUM`, `MSM_MAX` and — deliberately — **`MSM_FromMaterialExpression`**. Writing
@@ -99,7 +99,7 @@ Reflected from `EBlendMode`, prefix `BLEND_` stripped. The key may also be spell
 | `PremultipliedAlpha` | explicit alias | `BLEND_AlphaComposite` |
 | `Premultiplied` | explicit alias | `BLEND_AlphaComposite` |
 
-**12 distinct normalized aliases** on a stock UE 5.4 – 5.7 build. `TranslucentColoredTransmittance` is
+**12 distinct normalized aliases** on a stock UE 5.4 – 5.8 build. `TranslucentColoredTransmittance` is
 a Substrate-only enumerator, so the count is engine-version dependent.
 
 Excluded: `BLEND_MAX`, and the two engine enumerators marked hidden —
@@ -136,7 +136,7 @@ Reflected from `EMaterialDomain`, prefix `MD_` stripped. The key may also be spe
 | `VirtualTexture` | explicit alias | `MD_RuntimeVirtualTexture` |
 | `Virtual Texture` | explicit alias | `MD_RuntimeVirtualTexture` |
 
-**10 distinct normalized aliases**, stable across UE 5.3 – 5.7.
+**10 distinct normalized aliases**, stable across UE 5.3 – 5.8.
 
 Excluded: `MD_MAX`. Every other hidden enumerator is skipped, with `MD_RuntimeVirtualTexture` as the
 single deliberate exception — the engine marks it hidden, the plugin keeps it.
@@ -173,7 +173,7 @@ matter.
 - The reflected phase walks whatever the compiled engine's enum contains. **A modified engine build
   contributes its own values automatically**: an engine that adds `MSM_Toon` makes
   `ShadingModel = "Toon";` work with no plugin change and no project mapping. The tables above
-  describe a stock UE 5.3 – 5.7 build.
+  describe a stock UE 5.3 – 5.8 build.
 - Enumerator membership comes from the compiled engine, so it is engine-version dependent. The values
   the plugin itself gates are `Strata` / `Substrate`, which it registers only on UE 5.4 and newer.
 - Values carrying `Hidden` metadata are filtered out only in builds that keep editor-only data.

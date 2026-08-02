@@ -301,7 +301,7 @@ the resolver is pure reflection over the engine's own property set.
 
 - The reflection surface is the **engine's**, not the plugin's. A custom or modified engine build
   exposes its own properties and its own enum values through the same resolver, so this manual's
-  tables describe the stock UE 5.3 – 5.7 surface only.
+  tables describe the stock UE 5.3 – 5.8 surface only.
 - Under the [ThinCustom backend](backend.md) every setting lands on the **hidden base `UMaterial`**,
   not on the emitted `UDreamShaderMaterialInstance`. Reading the blend mode off the instance shows
   the inherited value.

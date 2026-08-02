@@ -13,7 +13,7 @@ Defined in header `DreamShaderVersionCompat.h`.
 | Include | `#include "DreamShaderVersionCompat.h"` |
 | Contents | 6 macros. **No types, no functions, no namespace.** |
 | Only dependency | `Runtime/Launch/Resources/Version.h` |
-| Verified engines | UE `5.3` – `5.7` (Win64) |
+| Verified engines | UE `5.3` – `5.8` (Win64) |
 
 ## Synopsis
 
@@ -151,7 +151,7 @@ threshold is the same 5.4.
 | **5.6** | `firstperson` / `firstpersontranslatedworld` transform bases · `UE.TransformPosition(FirstPersonInterpolationAlpha=…)` · plugin-mount validation for `Root=` and `Path(...)` · `TextureSample.GatherMode` round-trip · `FMetaData&`, `GetInputValueType`, `RebuildOutputs`, `ScreenPosition` resolved directly |
 | **5.7** | `Group` / `SortPriority` on collection parameters · `BlendInputRelevance` on layer-blend inputs · MPC `ExpressionGUID` repair · per-platform × per-quality material-resource diagnostics |
 
-Everything not listed above works identically on every engine from 5.3 to 5.7.
+Everything not listed above works identically on every engine from 5.3 to 5.8.
 
 ## Notes
 

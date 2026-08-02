@@ -9,7 +9,7 @@ version.
 | | |
 | :-- | :-- |
 | Applies to | DreamShaderLang `1.5.0 - Beta` |
-| Engines | UE `5.3` – `5.7`; anything version-gated is marked inline |
+| Engines | UE `5.3` – `5.8`; anything version-gated is marked inline |
 | Assumed source root | `<Project>/DShader` — the `SourceDirectory` [project setting](../settings/project.md) |
 | Generated output | in memory by default; see [In-memory materials](../generation/in-memory.md) |
 

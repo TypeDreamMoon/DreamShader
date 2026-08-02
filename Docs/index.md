@@ -8,7 +8,7 @@ output and can always be regenerated.
 | | |
 | :-- | :-- |
 | Version | `1.5.0 - Beta` |
-| Engines | Unreal Engine `5.3` – `5.7` (Win64 verified) |
+| Engines | Unreal Engine `5.3` – `5.8` (Win64 verified) |
 | Modules | `DreamShader` (Runtime), `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
 | Source extensions | `.dsm` material · `.dsf` function · `.dsh` header |
 | Project settings | *Project Settings ▸ DreamPlugin ▸ Dream Shader* |

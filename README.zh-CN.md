@@ -12,7 +12,7 @@
         <code>UMaterial</code>、<code>UMaterialFunction</code>、Material Layer 和 Material Layer Blend 资产。
       </p>
       <p>
-        <img alt="Unreal Engine 5.3-5.7" src="https://img.shields.io/badge/Unreal%20Engine-5.3--5.7-313131" />
+        <img alt="Unreal Engine 5.3-5.8" src="https://img.shields.io/badge/Unreal%20Engine-5.3--5.8-313131" />
         <img alt="Version 1.5.0 - Beta" src="https://img.shields.io/badge/version-1.5.0%20--%20Beta-orange" />
         <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-green" />
       </p>
@@ -50,7 +50,7 @@
 
 > [!TIP]
 >
-> DreamShader 目前基于 Unreal Engine `5.7` 持续开发，并已通过单插件 `BuildPlugin` 构建验证 Unreal Engine `5.3`、`5.4`、`5.5`、`5.6` 和 `5.7`。
+> DreamShader 目前基于 Unreal Engine `5.8` 持续开发，并已通过单插件 `BuildPlugin` 构建验证 Unreal Engine `5.3`、`5.4`、`5.5`、`5.6`、`5.7` 和 `5.8`。
 >
 > 建议把所有 `.dsm`、`.dsf` 和 `.dsh` 源文件纳入版本管理。生成的 Unreal 资产可以随时从源文件重新生成。
 >
@@ -114,6 +114,7 @@ DreamShader 面向 Unreal Engine 5，目前已在 Windows 上通过单插件 `Ru
 
 | Unreal Engine | 状态 |
 | :------------ | :--- |
+| `5.8` | 已验证 |
 | `5.7` | 已验证 |
 | `5.6` | 已验证 |
 | `5.5` | 已验证 |
@@ -440,7 +441,7 @@ git push origin v1.5.0b
 | :--- | :--- |
 | Version | `1.5.0 - Beta` |
 | Language | `DreamShaderLang` |
-| Unreal Engine | `5.3` - `5.7` |
+| Unreal Engine | `5.3` - `5.8` |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |
 | Docs | <https://lang.64hz.cn/> |

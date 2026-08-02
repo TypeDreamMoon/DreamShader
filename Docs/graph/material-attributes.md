@@ -110,7 +110,7 @@ message.
 > [!NOTE]
 > The engine fork macro `MOON_ENGINE` adds five further members, `MooaEncodedAttribute0` through
 > `MooaEncodedAttribute4` (4 components, Break output indices 27–31). They do not exist in a stock
-> UE 5.3–5.7 build.
+> UE 5.3–5.8 build.
 
 ### Reading a member
 

@@ -18,7 +18,7 @@ This page takes a project from "plugin copied in" to "a material generated from 
 
 | | |
 | :-- | :-- |
-| Engines | Unreal Engine `5.3` – `5.7`, Win64 verified |
+| Engines | Unreal Engine `5.3` – `5.8`, Win64 verified |
 | Modules loaded | `DreamShader`, `DreamShaderCompiler` (runtime) and `DreamShaderEditor` (editor) |
 
 ## Create the source directory

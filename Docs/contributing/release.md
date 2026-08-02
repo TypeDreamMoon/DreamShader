@@ -121,7 +121,7 @@ The body is assembled in this order.
 | :-- | :-- |
 | Pre-release callout | Added only for a beta: a warning that APIs and generated-asset layout may still change before the stable base version, with a link to the issue tracker |
 | Installation | Three steps: download `DreamShader-<slug>.zip`, extract the `DreamShader` folder into `Plugins/`, enable **DreamShader** in *Edit ▸ Plugins* and restart |
-| Compatibility line | The literal string `Compatible with Unreal Engine 5.3 - 5.7 (Win64).` |
+| Compatibility line | The literal string `Compatible with Unreal Engine 5.3 - 5.8 (Win64).` |
 | What's changed | The `## <VersionName>` section of `CHANGELOG.md`, verbatim |
 | Assets | A two-row table: the plugin zip, and `*.vsix` for the VSCode extension |
 | Links | Documentation `https://lang.64hz.cn/`, the changelog at the release tag, and the VSCode extension repository |

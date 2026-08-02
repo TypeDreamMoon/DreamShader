@@ -202,7 +202,7 @@ jobs:
           $Notes.Add("2. Extract the ``DreamShader`` folder into your project's ``Plugins/`` directory.")
           $Notes.Add("3. Enable **DreamShader** in *Edit -> Plugins* and restart the editor.")
           $Notes.Add("")
-          $Notes.Add("Compatible with Unreal Engine 5.3 - 5.7 (Win64).")
+          $Notes.Add("Compatible with Unreal Engine 5.3 - 5.8 (Win64).")
           $Notes.Add("")
           $Notes.Add("### :sparkles: What's changed")
           $Notes.Add("")

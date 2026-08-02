@@ -12,7 +12,7 @@
         <code>UMaterial</code>, <code>UMaterialFunction</code>, Material Layer, and Material Layer Blend assets.
       </p>
       <p>
-        <img alt="Unreal Engine 5.3-5.7" src="https://img.shields.io/badge/Unreal%20Engine-5.3--5.7-313131" />
+        <img alt="Unreal Engine 5.3-5.8" src="https://img.shields.io/badge/Unreal%20Engine-5.3--5.8-313131" />
         <img alt="Version 1.5.0 - Beta" src="https://img.shields.io/badge/version-1.5.0%20--%20Beta-orange" />
         <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-green" />
       </p>
@@ -50,7 +50,7 @@
 
 > [!TIP]
 >
-> DreamShader is actively developed against Unreal Engine `5.7` and has been verified with single-plugin `BuildPlugin` builds on Unreal Engine `5.3`, `5.4`, `5.5`, `5.6`, and `5.7`.
+> DreamShader is actively developed against Unreal Engine `5.8` and has been verified with single-plugin `BuildPlugin` builds on Unreal Engine `5.3`, `5.4`, `5.5`, `5.6`, `5.7`, and `5.8`.
 >
 > Keep all `.dsm`, `.dsf`, and `.dsh` source files in version control. The generated Unreal assets can always be rebuilt from source.
 >
@@ -114,6 +114,7 @@ DreamShader targets Unreal Engine 5 and is currently verified on Windows with si
 
 | Unreal Engine | Status |
 | :------------ | :----- |
+| `5.8` | Verified |
 | `5.7` | Verified |
 | `5.6` | Verified |
 | `5.5` | Verified |
@@ -440,7 +441,7 @@ The release archive is named `DreamShader-<slug>.zip` (e.g. `DreamShader-1.5.0b.
 | :--- | :---- |
 | Version | `1.5.0 - Beta` |
 | Language | `DreamShaderLang` |
-| Unreal Engine | `5.3` - `5.7` |
+| Unreal Engine | `5.3` - `5.8` |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |
 | Docs | <https://lang.64hz.cn/> |

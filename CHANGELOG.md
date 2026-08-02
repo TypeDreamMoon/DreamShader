@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Compatibility
+
+- Added Unreal Engine `5.8` support. The supported range is now `5.3` through `5.8` (Win64).
+
 ### Decompiler — round-trip fixes
 
 Decompiling a hand-authored material and generating it back could fail on graph shapes that Unreal

@@ -202,7 +202,7 @@ The material-property block titles come from a fixed table. Every name below pro
 `CustomizedUV7`, `Anisotropy`, `Tangent`.
 
 A custom engine build that defines `MOON_ENGINE` adds five more:
-`MooaEncodedAttribute0` … `MooaEncodedAttribute4`. Stock UE 5.3 – 5.7 does not.
+`MooaEncodedAttribute0` … `MooaEncodedAttribute4`. Stock UE 5.3 – 5.8 does not.
 
 ## Construction-time positions
 

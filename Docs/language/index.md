@@ -12,7 +12,7 @@ node graph inside them.
 | Kind | language |
 | Generates | `UMaterial`, `UMaterialFunction`, `UMaterialFunctionMaterialLayer`, `UMaterialFunctionMaterialLayerBlend` |
 | Version | `1.5.0 - Beta` |
-| Engines | Unreal Engine `5.3` – `5.7`; the accepted grammar is identical on every supported engine version |
+| Engines | Unreal Engine `5.3` – `5.8`; the accepted grammar is identical on every supported engine version |
 
 ## Synopsis
 

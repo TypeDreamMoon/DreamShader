@@ -45,7 +45,7 @@ UE.TransformVector ( { <expression> | Input = <expression> }
 ### Source basis names
 
 Nine spellings resolve to six engine values. Every spelling is available on all supported engine
-versions (UE 5.3 – 5.7).
+versions (UE 5.3 – 5.8).
 
 | Spelling | `EMaterialVectorCoordTransformSource` | Since UE |
 | :-- | :-- | :-- |
@@ -148,7 +148,7 @@ Alias groups: `World` / `AbsoluteWorld`; `TranslatedWorld` / `CameraRelativeWorl
 > without the pin connection. This is the only asymmetry between the two version-gated inputs —
 > `FirstPersonInterpolationAlpha` below UE 5.6 is a hard error
 > (`UE.TransformPosition FirstPersonInterpolationAlpha requires Unreal Engine 5.6 or newer.`).
-> To keep a source file portable across 5.3 – 5.7, guard the value on the authoring side rather
+> To keep a source file portable across 5.3 – 5.8, guard the value on the authoring side rather
 > than relying on the argument being rejected.
 
 ---
