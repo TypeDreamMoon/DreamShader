@@ -8,8 +8,10 @@
       <h1>DreamShader</h1>
       <p><strong>Text-first Unreal Engine material authoring with DreamShaderLang.</strong></p>
       <p>
-        DreamShader turns <code>.dsm</code>, <code>.dsf</code>, and <code>.dsh</code> source files into Unreal
-        <code>UMaterial</code>, <code>UMaterialFunction</code>, Material Layer, and Material Layer Blend assets.
+        DreamShader compiles <code>.dsm</code>, <code>.dsf</code> and <code>.dsh</code> source files into standard
+        Unreal <code>UMaterial</code>, <code>UMaterialFunction</code>, Material Layer and Material Layer Blend
+        assets. The source file is the authoring surface; the asset is build output, and can always be thrown
+        away and regenerated.
       </p>
       <p>
         <img alt="Unreal Engine 5.3-5.8" src="https://img.shields.io/badge/Unreal%20Engine-5.3--5.8-313131" />
@@ -17,17 +19,20 @@
         <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-green" />
       </p>
       <p>
-        <a href="README.zh-CN.md">中文文档</a> |
-        <a href="Docs/index.md">Documentation</a> |
-        <a href="Docs/language/index.md">Language Reference</a> |
-        <a href="Docs/examples/index.md">Examples</a> |
-        <a href="Docs/tools/packages.md">Packages</a> |
-        <a href="Docs/tools/workspace.md">VSCode</a> |
+        <a href="README.zh-CN.md">中文文档</a> &nbsp;·&nbsp;
+        <a href="Docs/index.md">Documentation</a> &nbsp;·&nbsp;
+        <a href="Docs/getting-started.md">Getting started</a> &nbsp;·&nbsp;
+        <a href="Docs/language/index.md">Language reference</a> &nbsp;·&nbsp;
+        <a href="Docs/examples/index.md">Examples</a> &nbsp;·&nbsp;
+        <a href=".skill/README.md">AI skills</a> &nbsp;·&nbsp;
         <a href="CHANGELOG.md">Changelog</a>
       </p>
       <p>
         <a href="https://github.com/TypeDreamMoon/DreamShader/issues">
           <img alt="Issues" src="https://img.shields.io/github/issues/TypeDreamMoon/DreamShader" />
+        </a>
+        <a href=".skill/README.md">
+          <img alt="Agent skills" src="https://img.shields.io/badge/Agent%20skills-5-8A2BE2" />
         </a>
         <a href="https://github.com/TypeDreamMoon/dreamshader-language-support/releases">
           <img alt="VSCode Extension" src="https://img.shields.io/badge/VSCode-DreamShaderLang-007ACC" />
@@ -45,91 +50,12 @@
 </table>
 
 > [!TIP]
->
-> DreamShader is actively developed against Unreal Engine `5.8` and has been verified with single-plugin `BuildPlugin` builds on Unreal Engine `5.3`, `5.4`, `5.5`, `5.6`, `5.7`, and `5.8`.
->
-> Keep all `.dsm`, `.dsf`, and `.dsh` source files in version control. The generated Unreal assets can always be rebuilt from source.
->
-> The decompiler is a migration helper. It handles many common materials and some large Lyra cases, but it is not intended to be a perfect round-trip system yet.
+> Keep every `.dsm`, `.dsf` and `.dsh` file in version control. The generated Unreal assets can
+> always be rebuilt from source, so they do not need to be.
 
-## Overview
+---
 
-<p align="center">
-  <img alt="DreamShader workflow overview" src="./Images/workflow-overview.png" />
-</p>
-
-| Workflow | Language | Tooling |
-| :------- | :------- | :------ |
-| Generate `UMaterial` from `Shader`. | Use `Graph = { ... }` as a node-oriented material DSL. | Auto-compile on save in the Unreal Editor. |
-| Generate `UMaterialFunction` from `ShaderFunction`. | Write HLSL-style helpers with `Function`, `GraphFunction`, and `Namespace`. | Open generated VSCode workspaces from the editor toolbar. |
-| Generate native Material Layer and Layer Blend functions. | Use typed `Properties` for scalars, vectors, textures, switches, MPC values, and reflected node settings. | Export existing materials and material functions to starter `.dsm` and `.dsf` files. |
-| Reference existing Unreal material functions with `VirtualFunction`. | Pass `Texture2D`, `Texture2DArray`, `VolumeTexture`, and `MaterialAttributes` values through graph code. | Use the VSCode extension or Rider plugin for highlighting, completion, navigation, diagnostics, and package tools. |
-
-## Quick Start
-
-1. Copy this plugin into your Unreal project:
-
-   ```text
-   MyProject/Plugins/DreamShader/
-   ```
-
-2. Enable `DreamShader` in Unreal Editor and restart the editor.
-3. Create a source directory in the project root:
-
-   ```text
-   MyProject/DShader/
-   ```
-
-4. Add a material source file, for example:
-
-   ```text
-   MyProject/DShader/Materials/M_Minimal.dsm
-   ```
-
-5. Save the file. DreamShader parses the source and generates or updates the target Unreal asset.
-
-Project settings are available under `Project Settings > DreamPlugin > Dream Shader`.
-
-Recommended layout:
-
-```text
-MyProject/
-|- DShader/
-|  |- Materials/
-|  |  `- M_Sample.dsm
-|  |- Shared/
-|  |  `- Common.dsh
-|  `- Packages/
-`- Plugins/
-   `- DreamShader/
-```
-
-## Compatibility
-
-DreamShader targets Unreal Engine 5 and is currently verified on Windows with single-plugin `RunUAT BuildPlugin` builds:
-
-| Unreal Engine | Status |
-| :------------ | :----- |
-| `5.8` | Verified |
-| `5.7` | Verified |
-| `5.6` | Verified |
-| `5.5` | Verified |
-| `5.4` | Verified |
-| `5.3` | Verified |
-
-Use Unreal's plugin packaging command when you want to validate the plugin without building a full project target:
-
-```powershell
-& "<EngineDir>\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin `
-  -Plugin="<ProjectDir>\Plugins\DreamShader\DreamShader.uplugin" `
-  -Package="<OutputDir>\DreamShader" `
-  -TargetPlatforms=Win64 `
-  -Rocket
-```
-
-On Windows, UE `5.3` and `5.4` may require the MSVC `14.38` toolchain. Newer compiler toolchains can fail while compiling older engine headers before plugin code is reached.
-
-## Minimal Material
+## What it looks like
 
 ```c
 Shader(Name="DreamMaterials/M_Minimal")
@@ -154,290 +80,182 @@ Shader(Name="DreamMaterials/M_Minimal")
 }
 ```
 
-`Root` is optional and defaults to `Game`. To generate into a project content plugin, use `Root="Plugin.MyPlugin"`:
+Save the file and DreamShader builds `/Game/DreamMaterials/M_Minimal`. `Name` is the asset path
+relative to `Root`, which defaults to `Game`; `Root="Plugin.MyPlugin"` generates into a content
+plugin instead.
 
-```c
-Shader(Name="DreamMaterials/M_Minimal", Root="Plugin.MyPlugin")
-{
-    // ...
-}
-```
+By default materials are generated **in memory** — no `.uasset` is written and nothing appears in
+the Content Browser, because the source file is what you edit. Cooking materialises them
+automatically, and you can materialise one by hand from the Material Content Browser.
 
-This produces `/MyPlugin/DreamMaterials/M_Minimal.M_Minimal` and saves the asset under `[Project]/Plugins/MyPlugin/Content/DreamMaterials/M_Minimal.uasset`.
+<p align="center">
+  <img alt="DreamShader workflow overview" src="./Images/workflow-overview.png" />
+</p>
 
-## Language Model
+## Quick start
+
+1. Copy the plugin into your project, enable **DreamShader** in *Edit ▸ Plugins*, and restart the
+   editor. The engine plugins `WebSocketNetworking` and `SQLiteCore` are enabled automatically.
+2. Create the source directory in the project root and add a `.dsm` file:
+
+   ```text
+   MyProject/
+   ├─ DShader/
+   │  ├─ Materials/   *.dsm   material implementations
+   │  ├─ Functions/   *.dsf   reusable material function assets
+   │  ├─ Shared/      *.dsh   headers: Function, GraphFunction, Namespace, VirtualFunction
+   │  └─ Packages/           installed shared libraries
+   └─ Plugins/
+      └─ DreamShader/
+   ```
+
+3. Save it. With *Auto Compile On Save* on — the default — the source is parsed after a short
+   debounce and the asset is built.
+
+Settings live under *Project Settings ▸ DreamPlugin ▸ Dream Shader*; every key and its default is on
+[Project settings](Docs/settings/project.md). The full walkthrough is
+[Getting started](Docs/getting-started.md).
+
+## What it generates
 
 <p align="center">
   <img alt="DreamShader language model" src="./Images/language-model.png" />
 </p>
 
-| Item | Purpose |
-| :--- | :------ |
-| `.dsm` | Material implementation file. Usually contains `Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend`, or `VirtualFunction` blocks. |
-| `.dsf` | Dream Shader Function file. Generates reusable `ShaderFunction`, `ShaderLayer`, and `ShaderLayerBlend` assets that can be imported by `.dsm` files. |
-| `.dsh` | Shared header file. Usually contains `import`, `Function`, `GraphFunction`, `Namespace`, and `VirtualFunction` declarations. |
-| `Shader` | Generates an Unreal `UMaterial`. |
-| `ShaderFunction` | Generates an Unreal `UMaterialFunction`. |
-| `ShaderLayer` | Generates a native `UMaterialFunctionMaterialLayer`. |
-| `ShaderLayerBlend` | Generates a native `UMaterialFunctionMaterialLayerBlend`. |
-| `VirtualFunction` | Describes an existing Unreal `UMaterialFunction` so it can be called from `Graph`. |
-| `Graph` | Node-oriented DSL used inside generated materials and functions. |
-| `Function` | Reusable HLSL-style helper. |
-| `GraphFunction` | Reusable Custom-node helper that can pull `UE.*` material nodes into generated Custom inputs. |
-| `Namespace` | Groups helpers, for example `Texture::Sample2DRGB(...)`. |
-| `Path(...)` | Declares Unreal asset paths for textures, object settings, or virtual functions. |
+| Block | Produces | Reference |
+| :-- | :-- | :-- |
+| `Shader` | a `UMaterial` | [Shader](Docs/language/shader.md) |
+| `ShaderFunction` | a `UMaterialFunction` | [ShaderFunction](Docs/language/shader-function.md) |
+| `ShaderLayer` | a native `UMaterialFunctionMaterialLayer` | [ShaderLayer](Docs/language/shader-layer.md) |
+| `ShaderLayerBlend` | a native `UMaterialFunctionMaterialLayerBlend` | [ShaderLayer](Docs/language/shader-layer.md) |
+| `VirtualFunction` | nothing — declares an **existing** asset so `Graph` can call it | [VirtualFunction](Docs/language/virtual-function.md) |
+| `Function` | one HLSL `Custom` node, via a generated `.ush` helper | [Function](Docs/language/function.md) |
+| `GraphFunction` | a `Custom` node that may pull `UE.*` nodes into its inputs | [GraphFunction](Docs/language/graph-function.md) |
+| `Namespace` | nothing — groups helpers as `Ns::Name` | [Namespace](Docs/language/namespace.md) |
 
-## Properties
+The three source kinds are not interchangeable: `.dsm` holds at most one `Shader`, `.dsf` holds
+function assets and may not declare a `Shader`, and `.dsh` is a header consumed through `import`.
+See [Source files](Docs/language/source-files.md).
 
-`Properties` can use compact types such as `float`, `float3`, `Texture2D`, `Texture2DArray`, and `VolumeTexture`, or explicit Unreal parameter node types. Reflected Unreal expression properties can be written in a trailing `[...]` block.
+`Graph = { … }` is where the node graph is written — declarations, arithmetic, swizzles, `UE.*`
+material nodes, math builtins, function calls and `if` / `else`. Typed `Properties` cover scalars,
+vectors, textures, switches, MPC values and reflected node settings. `MaterialAttributes` and
+`Substrate` (UE 5.4+) are first-class values that can be passed through graph code, function
+signatures and output bindings.
 
-```c
-Properties = {
-    ScalarParameter Roughness = 0.35 [
-        Group="Surface";
-        SortPriority=10;
-        Description="Material roughness";
-    ];
+## Documentation
 
-    VectorParameter Tint = float4(1.0, 0.9, 0.8, 1.0) [
-        Group="Surface";
-        SortPriority=20;
-    ];
+The full reference lives in [`Docs/`](Docs/index.md), and is published at
+**<https://lang.64hz.cn/docs>** in Chinese and English.
 
-    StaticSwitchParameter UseDetail = true [
-        Group="Switches";
-        SortPriority=30;
-    ];
+| | |
+| :-- | :-- |
+| **[Language reference](Docs/language/index.md)** | source files, lexical rules, top-level blocks, sections, types, `import` |
+| **[Graph language](Docs/graph/index.md)** | statements, expressions, conversions, swizzles, `if` / `else`, calls — and [what `Graph` is not](Docs/graph/unsupported.md) |
+| **[Builtins](Docs/builtins/index.md)** | the `UE.*` catalogue, [math builtins](Docs/builtins/math.md), [`Substrate.*`](Docs/builtins/substrate.md), the [`UE.Expression`](Docs/builtins/ue-expression.md) escape hatch |
+| **[Parameters](Docs/parameters/index.md)** | the 21 parameter-node tokens, compact types, [metadata keys](Docs/parameters/metadata.md), [`SamplerType`](Docs/parameters/sampler-type.md) |
+| **[Settings](Docs/settings/index.md)** | [material settings](Docs/settings/material.md) and their [enum values](Docs/settings/material-enums.md), function settings, [project settings](Docs/settings/project.md) |
+| **[Generation](Docs/generation/index.md)** | [asset paths](Docs/generation/asset-paths.md), [in-memory materials](Docs/generation/in-memory.md), [caching](Docs/generation/caching.md), [graph layout](Docs/generation/graph-layout.md) |
+| **[Editor tools](Docs/tools/index.md)** | browser, preview, decompiler, workspace, packages, bridge, [commandlet](Docs/tools/commandlet.md) |
+| **[Diagnostics](Docs/diagnostics/index.md)** | every message the compiler can emit, by pipeline stage |
+| **[Examples](Docs/examples/index.md)** | complete sources you can copy as they are |
+| **[C++ API](Docs/api/index.md)** | the public headers, for extending the plugin |
 
-    TextureSampleParameter2D Albedo = Path(Game, "Textures/T_Albedo") [
-        Group="Textures";
-        SamplerType="Color";
-    ];
-}
-```
-
-Material Parameter Collections can be read directly from graph code:
-
-```c
-Graph = {
-    float wind = UE.CollectionParam(
-        Collection=Path(Game, "MaterialParameterCollections/MPC_Global"),
-        Parameter="WindStrength");
-}
-```
-
-## Graph And Helpers
-
-`Graph = { ... }` is the material-node DSL. Use it for variable declarations, assignments, constructors, `UE.*` material nodes, DreamShader helper calls, generated or virtual material function calls, and simple graph branches.
-
-```c
-Graph = {
-    float2 uv = UE.TexCoord(Index=0);
-    float pulse = UE.Expression(Class="Sine", OutputType="float1", Input=UE.Time());
-    Color = vec3(pulse, pulse, pulse);
-}
-```
-
-`Function` is HLSL-style reusable code. It is better for calculations, loops, and logic that should live inside a Custom node.
-
-```c
-Namespace(Name="Color")
-{
-    Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
-        result = color * tint;
-    }
-}
-```
-
-Then import and call it:
-
-```c
-import "Shared/Color.dsh";
-
-Graph = {
-    Color::ApplyTint(BaseColor, Tint, Color);
-}
-```
-
-`GraphFunction` is also generated as a Custom node, but it can reference `UE.*` calls in the body. DreamShader creates those Unreal material nodes and wires their outputs into the Custom node as generated inputs.
-
-## Material Workflows
-
-### MaterialAttributes
-
-`MaterialAttributes` can be used as a graph value, a function output, a virtual function output, and a material output binding. When a `Shader` binds to `Base.MaterialAttributes`, DreamShader automatically enables Unreal's `Use Material Attributes` option on the generated material.
-
-```c
-Outputs = {
-    MaterialAttributes Attrs;
-    Base.MaterialAttributes = Attrs;
-}
-
-Graph = {
-    Attrs.BaseColor = Color;
-    Attrs.Roughness = Roughness;
-}
-```
-
-### Substrate
-
-`Substrate` can be used as a graph value, a `.dsf` / `ShaderFunction` / `VirtualFunction` input or output, and a material output binding through `Base.FrontMaterial`. Binding `Base.FrontMaterial` sets the generated material to the Substrate shading model unless `ShadingModel="Substrate"` / `"Strata"` is already set.
-
-```c
-Outputs = {
-    Substrate Surface;
-    Base.FrontMaterial = Surface;
-}
-
-Graph = {
-    Surface = Substrate.Unlit(EmissiveColor=Color);
-}
-```
-
-Use `Substrate.*` wrappers for UE 5.4+ Substrate nodes such as `Unlit`, `Slab`, `ConvertMaterialAttributes`, `VerticalLayer`, `Add`, `Weight`, `Select`, and utility nodes like `ThinFilm`. Generic `UE.Expression(..., OutputType="Substrate")` is also supported for non-Custom material expressions.
-
-### Material Layers
-
-`ShaderLayer` and `ShaderLayerBlend` generate native Unreal Material Layer function assets.
-
-```c
-ShaderLayer(Name="Layers/L_SimpleSurface")
-{
-    Outputs = {
-        MaterialAttributes Attrs;
-    }
-
-    Graph = {
-        Attrs.BaseColor = vec3(0.8, 0.2, 0.1);
-        Attrs.Roughness = 0.5;
-    }
-}
-```
-
-Current rules:
-
-- `ShaderLayer` creates `UMaterialFunctionMaterialLayer`.
-- `ShaderLayerBlend` creates `UMaterialFunctionMaterialLayerBlend`.
-- Both reuse the `ShaderFunction` sections: `Properties`, `Inputs`, `Outputs`, `Settings`, and `Graph`.
-- `ShaderLayer` may declare at most one input, and that input must be `MaterialAttributes`; use `Properties` for layer controls.
-- Both must declare exactly one `MaterialAttributes` output.
-- `ShaderLayerBlend` must declare exactly two inputs, both `MaterialAttributes`; use `Properties` for blend controls.
-- Legacy `MaterialLayer(...)` and `MaterialLayerBlend(...)` syntax still parses, but emits deprecation warnings.
-
-This is native layer-function generation. Full Material Layer Stack and Layer Instance workflow support is still on the roadmap.
-
-### VirtualFunction
-
-Use `VirtualFunction` to expose an existing Unreal `UMaterialFunction` to DreamShader without generating, saving, or overwriting that asset.
-
-```c
-VirtualFunction(Name="BufferWriter")
-{
-    Options = {
-        Asset = Path(Plugins.MoonToon, "MaterialFunctions/Buffer/Writer");
-    }
-
-    Inputs = {
-        float3 Color;
-        float Alpha;
-    }
-
-    Outputs = {
-        float3 Result;
-    }
-}
-
-Graph = {
-    Result = BufferWriter(Tint, 1.0, Output="Result");
-}
-```
-
-The Unreal Material Function asset context menu and editor toolbar include DreamShader actions for copying virtual function definitions, creating `.dsh` declarations, opening existing declarations, and copying call examples.
-
-## Editor Tools
+## Editor and tooling
 
 <p align="center">
   <img alt="DreamShader editor tools" src="./Images/editor-tools.png" />
 </p>
 
-### Material Content Browser
+| | |
+| :-- | :-- |
+| **[Material Content Browser](Docs/tools/material-browser.md)** | *Tools ▸ DreamShader*. The **Project** page browses every material under `/Game` with its full inheritance chain and one-click instance creation; the **Dream Shader Gen** page lists your sources with a live preview, compile-all and error surfacing |
+| **[Decompiler](Docs/tools/decompiler.md)** | right-click a `Material` or `Material Function` ▸ *DreamShader ▸ Export DSM/DSF*. A migration starting point — common nodes become graph text, the rest falls back to `UE.Expression(…)` so the structure stays regeneratable |
+| **[Packages](Docs/tools/packages.md)** | reusable `.dsh` libraries under `DShader/Packages/@scope/name/`, imported as `import "@typedreammoon/dream-noise/Library/Noise.dsh";` |
+| **[Workspace](Docs/tools/workspace.md)** | the generated `DShader/DreamShader.code-workspace`, opened in VSCode from the editor toolbar |
+| **[Commandlet](Docs/tools/commandlet.md)** | `-run=DreamShader compile \| decompile` — headless generation for CI |
 
-`Tools > DreamShader > Material Content Browser` opens a dedicated tab for managing and creating DreamShader materials, split into two pages:
+### Editor language extensions
 
-- **Project** — browse, filter, and inspect every material and material instance under `/Game`, with the full inheritance chain (hidden base → root instance → variants) and one-click **Create instance** into a folder you pick.
-- **Dream Shader Gen** — list your `.dsm` sources with a live preview, search and filters, compile-all, and load-time error surfacing.
+| Editor | Repository | Features |
+| :-- | :-- | :-- |
+| VSCode | [TypeDreamMoon/dreamshader-language-support](https://github.com/TypeDreamMoon/dreamshader-language-support/releases) | highlighting, snippets, completion, go to definition, find references, hover, signature help, local and bridge diagnostics, material preview, package commands, templates |
+| Rider | [tsdaer/dreamshader-language-support](https://github.com/tsdaer/dreamshader-language-support) | `.dsm` / `.dsf` / `.dsh` file types, grammar and PSI parsing, highlighting, completion, navigation, diagnostics, bridge integration, semantic tokens, inlay hints, package tools |
 
-It can also materialize memory-only (preview) materials to disk, and toggle whether DreamShader's memory-only materials appear in the Content Browser.
+## AI support
 
-### Decompiler Export
+DreamShaderLang is a text format, so a coding agent can author it — but only if it can *check its
+own work*. [`.skill/`](.skill/README.md) ships the harness that closes that loop: a headless driver
+plus five skills, in the [Claude Code](https://claude.com/claude-code) skill format.
 
-Right-click a `Material` or `Material Function` in the Content Browser and choose `DreamShader > Export DSM/DSF`. Exported files are written to `DShader/Decompiled/Materials` or `DShader/Decompiled/Functions` and opened in your preferred text editor.
+| Skill | Argument | Does |
+| :-- | :-- | :-- |
+| [`dream-shader-create`](.skill/dream-shader-create/SKILL.md) | `<description>` | writes a new material or function from plain language, then compiles it to prove it builds |
+| [`dream-shader-optimize`](.skill/dream-shader-optimize/SKILL.md) | `<file>` | dedupes, renames, retargets and restores lost state in a decompiled source |
+| [`dream-shader-decompile`](.skill/dream-shader-decompile/SKILL.md) | `<asset>` | exports an existing `UMaterial` / `UMaterialFunction` back to source |
+| [`dream-shader-verify`](.skill/dream-shader-verify/SKILL.md) | `<file>` \| `-All` | compiles headlessly; exit `0` / `1` |
+| [`dream-shader-diagnose`](.skill/dream-shader-diagnose/SKILL.md) | `<message>` | routes a diagnostic to its pipeline stage, explains it, fixes it |
 
-The exporter is intended as a migration starting point: common parameters, constants, arithmetic, swizzles, texture samples, Custom nodes, and MaterialFunctionCall nodes are emitted as DreamShader graph text. Less common reflected nodes fall back to `UE.Expression(...)` so the graph structure remains regeneratable.
-
-### Packages
-
-DreamShader packages are reusable `.dsh` libraries installed under:
-
-```text
-DShader/Packages/@scope/package-name/
-```
-
-Import example:
-
-```c
-import "@typedreammoon/dream-noise/Library/Noise.dsh";
-```
-
-See [Docs/tools/packages.md](Docs/tools/packages.md) for package structure, lock files, install commands, and package authoring.
-
-### Editor Language Plugins
-
-DreamShaderLang editor support is available for both VSCode and JetBrains Rider.
-
-| Editor | Repository | Main features |
-| :----- | :--------- | :------------ |
-| VSCode | [TypeDreamMoon/dreamshader-language-support](https://github.com/TypeDreamMoon/dreamshader-language-support/releases) | Syntax highlighting, snippets, completion, Go to Definition, Find References, Hover, Signature Help, local diagnostics, Unreal bridge diagnostics, package commands, and quick templates. |
-| Rider | [tsdaer/dreamshader-language-support](https://github.com/tsdaer/dreamshader-language-support) | `.dsm` / `.dsf` / `.dsh` file types, grammar and PSI parsing, highlighting, completion, navigation, diagnostics, Unreal Bridge integration, semantic tokens, inlay hints, and package tools. |
-
-The Unreal editor menu `Tools > DreamShader` and the DreamShader toolbar can open the generated `DShader/DreamShader.code-workspace` in VSCode.
-
-Extension releases are available from [dreamshader-language-support](https://github.com/TypeDreamMoon/dreamshader-language-support/releases).
-
-## Configuration
-
-| Setting | Default | Description |
-| :------ | :------ | :---------- |
-| `SourceDirectory` | `DShader` | Root directory for DreamShader source files. |
-| `GeneratedShaderDirectory` | `Intermediate/DreamShader/GeneratedShaders` | Output directory for generated `.ush` helper files. |
-| `AutoCompileOnSave` | `true` | Rebuild affected assets when `.dsm`, `.dsf`, or `.dsh` files are saved. |
-| `SaveDebounceSeconds` | `0.25` | File-save debounce time. |
-| `VerboseLogs` | `false` | Print more detailed logs. |
-| `OpenInNewWindow` | `true` | Open the generated VSCode workspace in a new window by default. |
-
-## Release
-
-The repository includes a GitHub Actions release workflow. Push a tag whose version matches `DreamShader.uplugin`. Stable releases use `vX.Y.Z`; Beta releases (`IsBetaVersion: true`, or a `VersionName` ending in `Beta`) use a `b` suffix and are published as GitHub pre-releases automatically:
+`dsc.ps1` wraps the [commandlet](Docs/tools/commandlet.md): it resolves the engine from the
+`.uproject`'s `EngineAssociation`, finds the project by walking up, prints only the `LogDreamShader`
+lines, and — because a headless compile writes real `.uasset` files where the editor generates in
+memory — classifies everything the run wrote against git so a probe asset never survives as
+untracked clutter.
 
 ```powershell
-# Stable, VersionName "1.5.0"
-git tag v1.5.0
-git push origin v1.5.0
-
-# Beta, VersionName "1.5.1 - Beta"
-git tag v1.5.1b
-git push origin v1.5.1b
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/Materials/M_Panel.dsm -Force -CleanNew
 ```
 
-The release archive is named `DreamShader-<slug>.zip` (e.g. `DreamShader-1.5.0.zip`) and contains the plugin source, resources, documentation, README, CHANGELOG, and LICENSE. It excludes `Binaries` and `Intermediate`. The release workflow also attaches the latest VSCode extension assets from `TypeDreamMoon/dreamshader-language-support`, and builds the release notes from the matching `CHANGELOG.md` section.
+Publish the skills into `.claude/skills/` once, and an agent working anywhere in the project loads
+them by name:
 
-## Project Info
+```powershell
+pwsh -File Plugins/DreamShader/.skill/sync-skills.ps1
+```
 
-| Item | Value |
-| :--- | :---- |
+> [!NOTE]
+> Only the auto-loading is Claude Code specific. The driver is a plain PowerShell script and each
+> `SKILL.md` is plain Markdown, so any agent — or any human — can read the instructions and run the
+> same commands. [`.skill/reference/dreamshaderlang.md`](.skill/reference/dreamshaderlang.md)
+> condenses the grammar an author actually needs, including the traps that only surface at compile
+> time: the 19 reserved math builtins that shadow user code silently, the whole-identifier GLSL
+> rewrite inside `Function` bodies, and the absent matrix types.
+
+## Compatibility
+
+Unreal Engine `5.3` – `5.8` on Win64, each verified with a single-plugin `RunUAT BuildPlugin` build.
+Active development targets `5.8`.
+
+<details>
+<summary>Validating the plugin without building a project target</summary>
+
+```powershell
+& "<EngineDir>\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin `
+  -Plugin="<ProjectDir>\Plugins\DreamShader\DreamShader.uplugin" `
+  -Package="<OutputDir>\DreamShader" `
+  -TargetPlatforms=Win64 `
+  -Rocket
+```
+
+On Windows, UE `5.3` and `5.4` may require the MSVC `14.38` toolchain — newer compilers can fail
+while compiling older engine headers, before plugin code is reached.
+
+</details>
+
+> [!NOTE]
+> The decompiler is a migration helper, not a round-trip guarantee. It handles many common materials
+> and some large Lyra cases, and leaves a `// Warning:` comment for everything it could not
+> reproduce. The [known round-trip gaps](Docs/tools/decompiler.md#known-round-trip-gaps) are worth
+> reading before deleting an original asset.
+
+## Project info
+
+| | |
+| :-- | :-- |
 | Version | `1.5.0` |
 | Language | `DreamShaderLang` |
-| Unreal Engine | `5.3` - `5.8` |
+| Unreal Engine | `5.3` – `5.8` |
+| Modules | `DreamShader`, `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |
 | Docs | <https://lang.64hz.cn/> |
@@ -445,15 +263,17 @@ The release archive is named `DreamShader-<slug>.zip` (e.g. `DreamShader-1.5.0.z
 | License | [MIT](LICENSE) |
 | Copyright | Copyright (c) 2026 TypeDreamMoon. All rights reserved. |
 
+Releasing is documented on [Release](Docs/contributing/release.md); building the plugin from source
+on [Contributing](Docs/contributing/index.md).
+
 ## Roadmap
 
 - Custom full-screen render pass support.
 - More complete VSCode semantic diagnostics.
-- Deeper Material Layer workflow support.
-- Deeper Moon Engine integration. Reference: <https://zhuanlan.zhihu.com/p/21979494450>
+- Deeper Material Layer Stack and Layer Instance workflow support.
+- Deeper Moon Engine integration — reference: <https://zhuanlan.zhihu.com/p/21979494450>
 
 ## License
 
-DreamShader is released under the [MIT license](LICENSE).
-
-For bug reports and feature requests, open an [issue](https://github.com/TypeDreamMoon/DreamShader/issues/new).
+DreamShader is released under the [MIT license](LICENSE). For bug reports and feature requests, open
+an [issue](https://github.com/TypeDreamMoon/DreamShader/issues/new).
