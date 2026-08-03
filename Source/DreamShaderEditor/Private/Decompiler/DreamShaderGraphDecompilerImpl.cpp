@@ -97,6 +97,67 @@ namespace UE::DreamShader::Editor::Private
 
 			OutputAssignments.Add(FormatGraphSetStatement(Binding.Name, CompileInput(*MaterialInput, Binding.DefaultValue)));
 		}
+
+		// A UMaterialExpressionCustomOutput node (ToonMaterialOutput, ClearCoatNormalCustomOutput,
+		// ThinTranslucentMaterialOutput, VertexInterpolator, ...) has no output pins, so nothing in
+		// the Bindings table above can reach it. Walking only from the material root would drop the
+		// node and its whole input subtree silently. Emit it in the form the generator already
+		// accepts: Expression(Class="...").Pin[N] = <var>. See Docs/language/output-bindings.md.
+		{
+			TMap<FString, int32> CustomOutputClassCounts;
+			for (UMaterialExpression* Expression : Material->GetExpressions())
+			{
+				UMaterialExpressionCustomOutput* CustomOutput = Cast<UMaterialExpressionCustomOutput>(Expression);
+				if (!CustomOutput)
+				{
+					continue;
+				}
+
+				// The generator de-duplicates output-target nodes by class plus argument list, so a
+				// second node of the same class would collapse onto the first instead of round
+				// tripping. Export the first and say so rather than emitting a wrong graph.
+				const FString ClassName = CustomOutput->GetClass()->GetName();
+				int32& SeenCount = CustomOutputClassCounts.FindOrAdd(ClassName);
+				if (SeenCount++ > 0)
+				{
+					Warnings.Add(FString::Printf(
+						TEXT("Material has more than one '%s' node; output targets are de-duplicated by class, so only the first was exported."),
+						*ClassName));
+					continue;
+				}
+
+				const TArrayView<FExpressionInput*> CustomOutputInputs = CustomOutput->GetInputsView();
+				for (int32 PinIndex = 0; PinIndex < CustomOutputInputs.Num(); ++PinIndex)
+				{
+					FExpressionInput* PinInput = CustomOutputInputs[PinIndex];
+					if (!PinInput || !PinInput->IsConnected())
+					{
+						continue;
+					}
+
+					FString PinName = CustomOutput->GetInputName(PinIndex).ToString();
+					if (PinName.IsEmpty())
+					{
+						PinName = FString::Printf(TEXT("Pin%d"), PinIndex);
+					}
+
+					const FString VariableName = MakeUniqueName(PinName, TEXT("CustomOutput"));
+					ReservedNames.Add(VariableName);
+
+					OutputDeclarations.Add(FString::Printf(
+						TEXT("\t\t%s %s;"),
+						*GetDreamShaderTypeForMaterialValueType(CustomOutput->GetInputValueType(PinIndex)),
+						*VariableName));
+					OutputBindings.Add(FString::Printf(
+						TEXT("\t\tExpression(Class=\"%s\").Pin[%d] = %s;"),
+						*ClassName,
+						PinIndex,
+						*VariableName));
+					OutputAssignments.Add(FormatGraphSetStatement(VariableName, CompileInput(*PinInput, TEXT("0.0"))));
+				}
+			}
+		}
+
 		FinalizeGraphLayoutMetadata();
 
 		TArray<FString> Lines;
