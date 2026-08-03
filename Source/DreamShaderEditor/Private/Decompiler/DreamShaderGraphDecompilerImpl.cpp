@@ -879,6 +879,46 @@ namespace UE::DreamShader::Editor::Private
 		return Name;
 	}
 
+	FString FDreamShaderGraphDecompiler::DeclareMaterialAttributesChain(UMaterialExpression* Expression, const FString& BaseValueText)
+	{
+		// Always introduce a fresh variable rather than writing members onto the upstream name.
+		// A member write rebinds the variable it targets, so mutating a shared value in place would
+		// change what every other reader of that value sees.
+		const FString BaseText = BaseValueText.TrimStartAndEnd();
+		FString Name;
+		if (BaseText.IsEmpty())
+		{
+			Name = MakeUniqueName(TEXT("Attributes"), TEXT("Attributes"));
+			GraphLines.Add(FString::Printf(TEXT("\t\tMaterialAttributes %s;"), *Name));
+			++NextTempIndex;
+		}
+		else
+		{
+			Name = AddTemp(TEXT("MaterialAttributes"), BaseText, TEXT("Attributes"));
+		}
+
+		RegisterExpressionName(Expression, Name);
+		return Name;
+	}
+
+	void FDreamShaderGraphDecompiler::EmitMaterialAttributeMemberWrite(
+		const FString& VariableName,
+		const FString& MemberName,
+		FExpressionInput* Input)
+	{
+		if (VariableName.IsEmpty() || MemberName.IsEmpty() || !Input || !Input->IsConnected())
+		{
+			return;
+		}
+
+		// CompileInput may append its own temporaries, so resolve the value before emitting the
+		// member write that consumes it.
+		const FString ValueText = CompileInput(*Input, TEXT("0.0"));
+		GraphLines.Add(FormatGraphSetStatement(
+			FString::Printf(TEXT("%s.%s"), *VariableName, *MemberName),
+			ValueText));
+	}
+
 	void FDreamShaderGraphDecompiler::RegisterExpressionName(UMaterialExpression* Expression, const FString& Name)
 	{
 		if (Expression && !Name.TrimStartAndEnd().IsEmpty())
@@ -1333,6 +1373,90 @@ namespace UE::DreamShader::Editor::Private
 		if (UMaterialExpressionNamedRerouteDeclaration* NamedRerouteDeclaration = Cast<UMaterialExpressionNamedRerouteDeclaration>(Expression))
 		{
 			return CacheExpressionValue(Key, CompileNamedRerouteDeclarationValue(NamedRerouteDeclaration, OutputIndex));
+		}
+
+		// Set/GetMaterialAttributes drive their pins through a dynamic FExpressionInput array paired
+		// with a TArray<FGuid>, not through reflected properties, so the generic UE.Expression path
+		// cannot round trip them — generation fails with
+		// "'BaseColor' is not a property on 'MaterialExpressionSetMaterialAttributes'".
+		// Emit the language's native MaterialAttributes syntax instead. MakeMaterialAttributes and
+		// BreakMaterialAttributes need no special case: their inputs are reflected FExpressionInput
+		// properties, so the generic path already handles them.
+		if (UMaterialExpressionSetMaterialAttributes* SetAttributes = Cast<UMaterialExpressionSetMaterialAttributes>(Expression))
+		{
+			// Input 0 is the attribute set being chained onto; inputs 1..N pair with AttributeSetTypes.
+			const TArrayView<FExpressionInput*> SetInputs = SetAttributes->GetInputsView();
+			FExpressionInput* BaseInput = SetInputs.IsValidIndex(0) ? SetInputs[0] : nullptr;
+			const FString BaseText = (BaseInput && BaseInput->IsConnected())
+				? CompileInput(*BaseInput, FString())
+				: FString();
+
+			const FString Name = DeclareMaterialAttributesChain(Expression, BaseText);
+			for (int32 SetIndex = 0; SetIndex < SetAttributes->AttributeSetTypes.Num(); ++SetIndex)
+			{
+				FExpressionInput* ValueInput = SetInputs.IsValidIndex(SetIndex + 1) ? SetInputs[SetIndex + 1] : nullptr;
+				EmitMaterialAttributeMemberWrite(
+					Name,
+					FMaterialAttributeDefinitionMap::GetAttributeName(SetAttributes->AttributeSetTypes[SetIndex]),
+					ValueInput);
+			}
+
+			return CacheExpressionValue(Key, MakeValue(Name, TEXT("MaterialAttributes"), 0, true, false, true));
+		}
+
+		if (UMaterialExpressionGetMaterialAttributes* GetAttributes = Cast<UMaterialExpressionGetMaterialAttributes>(Expression))
+		{
+			const FString BaseText = GetAttributes->MaterialAttributes.IsConnected()
+				? CompileInput(GetAttributes->MaterialAttributes, FString())
+				: FString();
+
+			// Output 0 hands back the whole attribute set; outputs 1..N pair with AttributeGetTypes.
+			if (OutputIndex <= 0)
+			{
+				const FString PassthroughText = BaseText.TrimStartAndEnd().IsEmpty()
+					? DeclareMaterialAttributesChain(Expression, FString())
+					: BaseText;
+				return CacheExpressionValue(Key, MakeValue(PassthroughText, TEXT("MaterialAttributes"), 0, true, false, true));
+			}
+
+			const int32 AttributeIndex = OutputIndex - 1;
+			if (!GetAttributes->AttributeGetTypes.IsValidIndex(AttributeIndex))
+			{
+				Warnings.AddUnique(FString::Printf(
+					TEXT("GetMaterialAttributes node '%s' has no attribute for output %d; emitted a default literal."),
+					*GetAttributes->GetName(),
+					OutputIndex));
+				return MakeDefaultValueForExpressionOutput(Expression, OutputIndex);
+			}
+
+			// A member read needs a plain variable on the left-hand side. Reading never mutates the
+			// chain, so an existing upstream variable can be shared here.
+			FString BaseName = BaseText.TrimStartAndEnd();
+			bool bIsPlainName = !BaseName.IsEmpty();
+			for (const TCHAR Character : BaseName)
+			{
+				if (!FChar::IsAlnum(Character) && Character != TEXT('_'))
+				{
+					bIsPlainName = false;
+					break;
+				}
+			}
+
+			if (!bIsPlainName)
+			{
+				BaseName = DeclareMaterialAttributesChain(nullptr, BaseName);
+			}
+
+			return CacheExpressionValue(
+				Key,
+				MakeValue(
+					FString::Printf(
+						TEXT("%s.%s"),
+						*BaseName,
+						*FMaterialAttributeDefinitionMap::GetAttributeName(GetAttributes->AttributeGetTypes[AttributeIndex])),
+					GetDreamShaderTypeForExpressionOutput(Expression, OutputIndex),
+					GetComponentCountForExpressionOutput(Expression, OutputIndex),
+					true));
 		}
 
 		if (UMaterialExpressionCurveAtlasRowParameter* CurveAtlas = Cast<UMaterialExpressionCurveAtlasRowParameter>(Expression))

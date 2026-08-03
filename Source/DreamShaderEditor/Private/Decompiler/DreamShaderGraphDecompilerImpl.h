@@ -21,6 +21,7 @@
 #include "Engine/Texture.h"
 #include "Interfaces/IPluginManager.h"
 #include "Materials/Material.h"
+#include "Materials/MaterialAttributeDefinitionMap.h"
 #include "Materials/MaterialExpression.h"
 #include "Materials/MaterialExpressionAbs.h"
 #include "Materials/MaterialExpressionAdd.h"
@@ -45,6 +46,7 @@
 #include "Materials/MaterialExpressionFrac.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
 #include "Materials/MaterialExpressionFunctionOutput.h"
+#include "Materials/MaterialExpressionGetMaterialAttributes.h"
 #include "Materials/MaterialExpressionIf.h"
 #include "Materials/MaterialExpressionLinearInterpolate.h"
 #include "Materials/MaterialExpressionMaterialFunctionCall.h"
@@ -62,6 +64,7 @@
 #include "Materials/MaterialExpressionSaturate.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionScreenPosition.h"
+#include "Materials/MaterialExpressionSetMaterialAttributes.h"
 #include "Materials/MaterialExpressionSine.h"
 #include "Materials/MaterialExpressionSquareRoot.h"
 #include "Materials/MaterialExpressionStaticComponentMaskParameter.h"
@@ -237,6 +240,10 @@ namespace UE::DreamShader::Editor::Private
 		void RegisterExpressionName(UMaterialExpression* Expression, const FString& Name);
 
 		FString AddTempForExpression(UMaterialExpression* Expression, const FString& Type, const FString& ExpressionText, const FString& BaseName);
+
+		FString DeclareMaterialAttributesChain(UMaterialExpression* Expression, const FString& BaseValueText);
+
+		void EmitMaterialAttributeMemberWrite(const FString& VariableName, const FString& MemberName, FExpressionInput* Input);
 
 		FString AddTempWithNameForExpression(UMaterialExpression* Expression, const FString& Type, const FString& ExpressionText, const FString& Name);
 
