@@ -346,16 +346,16 @@ namespace UE::DreamShader::Editor::Private
 			case MP_CustomizedUVs7:
 				return TEXT("CustomizedUV7");
 #ifdef MOON_ENGINE
-			case MP_MooaEncodedAttribute0:
-				return TEXT("MooaEncodedAttribute0");
-			case MP_MooaEncodedAttribute1:
-				return TEXT("MooaEncodedAttribute1");
-			case MP_MooaEncodedAttribute2:
-				return TEXT("MooaEncodedAttribute2");
-			case MP_MooaEncodedAttribute3:
-				return TEXT("MooaEncodedAttribute3");
-			case MP_MooaEncodedAttribute4:
-				return TEXT("MooaEncodedAttribute4");
+			case MP_MoonEncodedAttribute0:
+				return TEXT("MoonEncodedAttribute0");
+			case MP_MoonEncodedAttribute1:
+				return TEXT("MoonEncodedAttribute1");
+			case MP_MoonEncodedAttribute2:
+				return TEXT("MoonEncodedAttribute2");
+			case MP_MoonEncodedAttribute3:
+				return TEXT("MoonEncodedAttribute3");
+			case MP_MoonEncodedAttribute4:
+				return TEXT("MoonEncodedAttribute4");
 #endif
 			case MP_Anisotropy:
 				return TEXT("Anisotropy");
