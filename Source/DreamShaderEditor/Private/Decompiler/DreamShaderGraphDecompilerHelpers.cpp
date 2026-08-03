@@ -1238,6 +1238,36 @@ namespace UE::DreamShader::Editor::Private
 			return TEXT("Substrate");
 		}
 #endif
+
+		// Engine forks add their own shading models (MoonEngine's MSM_Toon). The generator resolves
+		// ShadingModel names by reflecting EMaterialShadingModel and stripping the "MSM_" prefix —
+		// see UDreamShaderSettings::BuildDefaultShadingModelMappings — so mirror that here. Without
+		// this, an engine-added model silently decompiles as "DefaultLit" and the round trip
+		// rewrites the material's shading model.
+		if (const UEnum* ShadingModelEnum = StaticEnum<EMaterialShadingModel>())
+		{
+			for (int32 EnumIndex = 0; EnumIndex < ShadingModelEnum->NumEnums(); ++EnumIndex)
+			{
+				const int64 EnumValue = ShadingModelEnum->GetValueByIndex(EnumIndex);
+				if (EnumValue < 0 || EnumValue >= static_cast<int64>(MSM_NUM))
+				{
+					continue;
+				}
+
+				if (!ShadingModels.HasShadingModel(static_cast<EMaterialShadingModel>(EnumValue)))
+				{
+					continue;
+				}
+
+				FString ModelName = ShadingModelEnum->GetNameStringByIndex(EnumIndex);
+				ModelName.RemoveFromStart(TEXT("MSM_"), ESearchCase::CaseSensitive);
+				if (!ModelName.IsEmpty())
+				{
+					return ModelName;
+				}
+			}
+		}
+
 		return TEXT("DefaultLit");
 	}
 
