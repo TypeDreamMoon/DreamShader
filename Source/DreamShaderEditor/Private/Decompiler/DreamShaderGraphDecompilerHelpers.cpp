@@ -525,6 +525,16 @@ namespace UE::DreamShader::Editor::Private
 			return FString::Printf(TEXT("Path(%s, \"%s\")"), RootName, *EscapeDreamShaderString(RelativePath));
 		};
 
+		// Everything below identifies an object by its *package*, which is fine for assets (one
+		// primary object per package) but wrong for native /Script/ packages, where one package holds
+		// every UClass/UENUM in a module. A scalar parameter whose Enumeration points at a C++ enum
+		// (e.g. /Script/Engine.EMoonToonShadingFeature) would otherwise decompile to the bare module
+		// name and resolve to nothing on the way back in, so emit the full object path for those.
+		if (PackageName.StartsWith(TEXT("/Script/"), ESearchCase::IgnoreCase))
+		{
+			return FString::Printf(TEXT("Path(\"%s\")"), *EscapeDreamShaderString(Object->GetPathName()));
+		}
+
 		if (PackageName.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase))
 		{
 			return BuildRootedLiteral(TEXT("Game"), PackageName.Mid(6));
