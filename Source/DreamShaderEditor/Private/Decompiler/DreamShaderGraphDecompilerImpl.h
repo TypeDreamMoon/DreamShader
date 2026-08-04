@@ -188,6 +188,14 @@ namespace UE::DreamShader::Editor::Private
 
 		static void AddParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionParameter* Parameter);
 
+		/**
+		 * ScalarParameter-only state that AddParameterMetadata cannot see: the UI block that drives how
+		 * the parameter is presented in a material instance (Numeric slider vs Enumeration dropdown) and
+		 * the CustomPrimitiveData binding. Dropping these silently downgrades an enum-backed parameter
+		 * to a raw float box on the next decompile -> recompile round trip.
+		 */
+		static void AddScalarParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionScalarParameter* Parameter);
+
 		static void AddTextureParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionTextureSampleParameter* Parameter);
 
 		static void AddTextureParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionTextureObjectParameter* Parameter);

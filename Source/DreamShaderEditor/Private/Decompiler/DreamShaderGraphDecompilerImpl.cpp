@@ -550,6 +550,44 @@ namespace UE::DreamShader::Editor::Private
 		AddStringMetadata(Entries, TEXT("Description"), Parameter->Desc);
 	}
 
+	void FDreamShaderGraphDecompiler::AddScalarParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionScalarParameter* Parameter)
+	{
+		if (!Parameter)
+		{
+			return;
+		}
+
+		AddEnumMetadata(
+			Entries,
+			TEXT("ControlType"),
+			StaticEnum<EMaterialScalarParameterControlType>(),
+			static_cast<int64>(Parameter->ControlType),
+			static_cast<int64>(EMaterialScalarParameterControlType::Numeric));
+
+		// The engine treats the slider bounds as disabled when SliderMax <= SliderMin, which is also the
+		// (0, 0) default -- so only an actually-configured range is worth emitting.
+		if (Parameter->SliderMax > Parameter->SliderMin)
+		{
+			Entries.Add(FString::Printf(TEXT("SliderMin=%s;"), *FormatDreamShaderFloat(Parameter->SliderMin)));
+			Entries.Add(FString::Printf(TEXT("SliderMax=%s;"), *FormatDreamShaderFloat(Parameter->SliderMax)));
+		}
+
+		// TSoftObjectPtr: read the path, not the resolved object, so an unloaded enum still round-trips.
+		if (!Parameter->Enumeration.IsNull())
+		{
+			Entries.Add(FString::Printf(
+				TEXT("Enumeration=%s;"),
+				*MakeDreamShaderObjectPathLiteral(Parameter->Enumeration.LoadSynchronous())));
+		}
+
+		AddIntMetadata(Entries, TEXT("EnumerationIndex"), static_cast<int32>(Parameter->EnumerationIndex), 0);
+		AddBoolMetadata(Entries, TEXT("UseCustomPrimitiveData"), Parameter->bUseCustomPrimitiveData, false);
+		if (Parameter->bUseCustomPrimitiveData)
+		{
+			AddIntMetadata(Entries, TEXT("PrimitiveDataIndex"), static_cast<int32>(Parameter->PrimitiveDataIndex), -1);
+		}
+	}
+
 	void FDreamShaderGraphDecompiler::AddTextureParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionTextureSampleParameter* Parameter)
 	{
 		if (!Parameter)
@@ -1531,6 +1569,7 @@ namespace UE::DreamShader::Editor::Private
 				TArray<FString> MetadataEntries;
 				AddParameterNameMetadataIfNeeded(MetadataEntries, Name, ScalarParameter->ParameterName);
 				AddParameterMetadata(MetadataEntries, ScalarParameter);
+				AddScalarParameterMetadata(MetadataEntries, ScalarParameter);
 				AddPropertyDeclaration(
 					Name,
 					FString::Printf(
