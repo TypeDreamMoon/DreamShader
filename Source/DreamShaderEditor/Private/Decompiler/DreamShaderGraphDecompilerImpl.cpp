@@ -1543,6 +1543,57 @@ namespace UE::DreamShader::Editor::Private
 			return CacheExpressionValue(Key, MakeValue(Name, TEXT("float"), 1, true));
 		}
 
+		// ChannelMaskParameter derives from VectorParameter but is NOT one: it carries an Input pin
+		// whose value it dot-masks with its one-hot parameter vector. Letting it fall into the
+		// VectorParameter branch below silently drops MaskChannel AND the entire Input subtree —
+		// the parameter then reads as its default constant, which is exactly how MooaToon's whole
+		// Global Mask Map subsystem vanished from a decompile.
+		if (UMaterialExpressionChannelMaskParameter* ChannelMask = Cast<UMaterialExpressionChannelMaskParameter>(Expression))
+		{
+			FString Name;
+			if (const FString* ExistingName = ExpressionNames.Find(Expression))
+			{
+				Name = *ExistingName;
+			}
+			else
+			{
+				Name = MakeUniquePropertyName(ChannelMask->ParameterName.ToString(), TEXT("ChannelMask"));
+				const TCHAR* MaskName = TEXT("Red");
+				switch (ChannelMask->MaskChannel)
+				{
+				case EChannelMaskParameterColor::Green: MaskName = TEXT("Green"); break;
+				case EChannelMaskParameterColor::Blue:  MaskName = TEXT("Blue");  break;
+				case EChannelMaskParameterColor::Alpha: MaskName = TEXT("Alpha"); break;
+				default: break;
+				}
+				TArray<FString> MetadataEntries;
+				AddParameterNameMetadataIfNeeded(MetadataEntries, Name, ChannelMask->ParameterName);
+				AddParameterMetadata(MetadataEntries, ChannelMask);
+				MetadataEntries.Add(FString::Printf(TEXT("MaskChannel=%s"), MaskName));
+				// Emit the one-hot DefaultValue too, so the mask is correct even if the metadata
+				// write does not run the node's PostEditChange MaskChannel->DefaultValue sync.
+				AddPropertyDeclaration(
+					Name,
+					FString::Printf(
+						TEXT("ChannelMaskParameter %s = %s%s;"),
+						*Name,
+						*FormatDreamShaderColor(ChannelMask->DefaultValue),
+						*BuildMetadataSuffix(MetadataEntries)));
+				RegisterExpressionName(Expression, Name);
+			}
+
+			if (ChannelMask->Input.GetTracedInput().Expression)
+			{
+				const FString InputText = CompileInput(ChannelMask->Input, TEXT("0.0"));
+				const FString Temp = AddTemp(
+					TEXT("float"),
+					FString::Printf(TEXT("%s(Input = %s)"), *Name, *InputText),
+					Name + TEXT("_Masked"));
+				return CacheExpressionValue(Key, MakeValue(Temp, TEXT("float"), 1, true));
+			}
+			return CacheExpressionValue(Key, MakeValue(Name, TEXT("float"), 1, true));
+		}
+
 		if (UMaterialExpressionVectorParameter* VectorParameter = Cast<UMaterialExpressionVectorParameter>(Expression))
 		{
 			FString Name;
