@@ -10,7 +10,7 @@ top-level blocks each may contain.
 | Declared in | — |
 | Kind | translation unit |
 | Extensions | `.dsm` material · `.dsf` function *(since 1.3.5)* · `.dsh` header |
-| Discovered under | `<Project>/DShader` by default; configurable |
+| Discovered under | `<Project>/DShader` by default, plus every enabled plugin's `DShader`; configurable |
 | Enforced by | the editor source loader, before parsing |
 
 ## Synopsis
@@ -90,18 +90,55 @@ The check lives in the editor source loader. The runtime parser entry point is e
 calling it directly on the text of a `.dsh` will happily parse a `Shader(…)` block out of it. See
 [`DreamShaderParser.h`](../api/parser.md).
 
+## Source roots
+
+Discovery runs over a list of **source roots**, not a single directory.
+
+| Root | Directory | Writable | Contributed when |
+| :-- | :-- | :-- | :-- |
+| Project | *Source Directory*, `<Project>/DShader` by default | yes | always |
+| *(one per plugin)* | `<Plugin>/DShader` | no | the plugin is enabled, the folder exists, and *Scan Plugin Source Directories* is on |
+
+Each root owns a `Packages` folder of its own at `<Root>/Packages`. A root is the unit of import
+resolution: an import specifier is resolved against the bases of the root that owns the importing
+file and never against another root's — see [`import`](import.md#roots).
+
+Only the project root is **writable**. Plugin roots are discovered, parsed and compiled like any
+other source, but the editor never rewrites a file under one: [VirtualFunction
+sync](../tools/virtual-function-tools.md) skips them, and every editor action that writes a source
+file targets the project root.
+
+> [!NOTE]
+> A plugin `DShader` folder that overlaps an existing root is ignored, with a warning naming both.
+> This happens when *Source Directory* is pointed at a plugin folder, or at a directory containing
+> one; without the check the same file would belong to two roots and its imports would resolve by
+> scan order.
+
+The source-directory watcher registers one watch per root, so *Auto Compile On Save* fires for a
+plugin's sources exactly as it does for the project's.
+
+> [!NOTE]
+> The root list is cached. A `DShader` folder created while the editor is open appears when
+> *DreamShader Gen ▸ Refresh* is pressed; its **watch**, registered once at startup, attaches on the
+> next editor start, so that root's *Auto Compile On Save* begins working then.
+
+A file under a plugin root that declares no `Root=` defaults to **that plugin's mount point** rather
+than to `/Game` — a `.dsm` in `Plugins/MoonToon/DShader` generates into `/MoonToon` with no attribute
+at all. Write `Root="/"` to opt back into `/Game`. See
+[Asset paths](../generation/asset-paths.md#the-plugin-source-root-default).
+
 ## File discovery
 
-Files are found by recursive scans of the source directory. Directories are not returned, and every
+Files are found by recursive scans of every source root. Directories are not returned, and every
 result is normalized to a full path.
 
 | Scan | Extensions | Excluded | Used for |
 | :-- | :-- | :-- | :-- |
-| All source files | `.dsm`, `.dsf`, `.dsh` | everything under the packages directory | dependency graph, workspace generation, editor file lists (result sorted) |
-| Generatable files | `.dsm`, `.dsf` | `.dsm` files under the packages directory | batch compile / generate-all |
+| All source files | `.dsm`, `.dsf`, `.dsh` | everything under any root's packages directory | dependency graph, workspace generation, editor file lists (result sorted) |
+| Generatable files | `.dsm`, `.dsf` | `.dsm` files under any root's packages directory | batch compile / generate-all |
 
 > [!NOTE]
-> The two exclusions are not symmetric. The all-sources scan drops **every** file under the packages
+> The two exclusions are not symmetric. The all-sources scan drops **every** file under a packages
 > directory; the generatable scan drops only package **`.dsm`** files. A `.dsf` shipped inside
 > `DShader/Packages` is therefore still picked up as a generatable file and will produce function
 > assets on a generate-all.
@@ -110,10 +147,13 @@ result is normalized to a full path.
 | :-- | :-- | :-- |
 | Source | `<Project>/DShader` | *Source Directory* |
 | Packages | `<Source>/Packages` | derived from *Source Directory*; not separately configurable |
+| Plugin source | `<Plugin>/DShader` | *Scan Plugin Source Directories* (on/off only; the path is fixed) |
+| Plugin packages | `<Plugin>/DShader/Packages` | derived; not separately configurable |
 | Generated shaders | `<Project>/Intermediate/DreamShader/GeneratedShaders` | *Generated Shader Directory* |
 
-A configured path that is relative is resolved against the project directory. All three directories
-are created at module startup. See [Project settings](../settings/project.md) and
+A configured path that is relative is resolved against the project directory. The project's source,
+packages and generated-shader directories are created at module startup; a plugin's `DShader` folder
+is never created, only discovered. See [Project settings](../settings/project.md) and
 [Packages](../tools/packages.md).
 
 ## What each kind generates
@@ -150,6 +190,7 @@ Runtime substitutions are shown as `{Placeholder}` throughout this table.
 | `DreamShader function file '{Path}' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks.` | a `.dsf` whose text contains `Shader(` |
 | `DreamShader could not read '{Path}'.` | the file exists in the dependency graph but could not be loaded |
 | `DreamShader import '{Specifier}' referenced from '{Path}' could not be resolved.` | see [`import`](import.md) |
+| `DreamShader import '{Specifier}' referenced from '{Path}' names source root '{Qualifier}', which is not a DreamShader source root.` | see [`import`](import.md#crossing-a-root-deliberately) |
 | `DreamShader import cycle detected at '{Path}'.` | see [`import`](import.md) |
 | `A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found.` | the translation unit declares no top-level block |
 | `Only one top-level Shader block is currently supported.` | a second `Shader` block anywhere in the import closure |

@@ -3,6 +3,9 @@
 #include "CoreMinimal.h"
 #include "DreamShaderTypes.h"
 
+// EBlendMode / EMaterialShadingModel, used by the resolver declarations below. Unity builds happened
+// to pull these in through a neighbouring TU; a non-unity compile of this header does not.
+#include "Engine/EngineTypes.h"
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionObjectPositionWS.h"
 #include "Materials/MaterialExpressionTransform.h"
@@ -180,6 +183,23 @@ namespace UE::DreamShader::Editor::Private
 		FString& OutObjectPath,
 		FString& OutAssetLeafName,
 		FString& OutError);
+	/**
+	 * Fills in the `Root` of every block in `Definition` that declared none, when the source file
+	 * lives under a plugin source root: the asset then defaults to the plugin that ships the source
+	 * instead of to `/Game`. Files under the project root are left alone, as is any block with an
+	 * explicit `Root=` — including `Root="/"`, which is how you ask a plugin-root file for `/Game`.
+	 *
+	 * No-op when the owning plugin cannot host generated content; `OutFallbackReason`, if given,
+	 * then explains why the block fell back to `/Game`.
+	 *
+	 * Must run before ResolveDreamShaderAssetDestination at *every* site that turns a source file
+	 * into an asset path, or the Gen page and the preview would name a different asset than the one
+	 * generation actually writes.
+	 */
+	void ApplyDefaultRootFromSourceFile(
+		const FString& SourceFilePath,
+		FTextShaderDefinition& Definition,
+		FString* OutFallbackReason = nullptr);
 	bool TryResolveDreamShaderAssetReference(const FString& InText, FString& OutObjectPath, FString& OutError);
 	UMaterialExpression* CreateScalarLiteralExpression(UMaterial* Material, double Value, int32 PositionY);
 	// Thin wrapper over UMaterialEditingLibrary::CreateMaterialExpressionEx, shared by literal

@@ -28,6 +28,7 @@ namespace UE::DreamShader::Editor::Private
 
 		FString SourceFilePath;   // absolute, normalized
 		FString DisplayName;      // clean filename with extension
+		FString RootName;         // owning plugin source root; empty for the project root
 		FString ObjectPath;       // resolved /Game object path (empty if unresolved / a function)
 		FString StatusDetail;     // tooltip detail (error/parse message, or object path)
 		EStatus Status = EStatus::NeverCompiled;

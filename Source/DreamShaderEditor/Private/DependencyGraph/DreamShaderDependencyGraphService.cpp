@@ -13,37 +13,120 @@ namespace UE::DreamShader::Editor::Private
 	{
 		bool IsPathUnderDirectory(const FString& InPath, const FString& InDirectory)
 		{
-			if (InPath.IsEmpty() || InDirectory.IsEmpty())
-			{
-				return false;
-			}
-
-			const FString Path = UE::DreamShader::NormalizeSourceFilePath(InPath);
-			FString Directory = UE::DreamShader::NormalizeSourceFilePath(InDirectory);
-			Directory.RemoveFromEnd(TEXT("/"));
-
-			return Path.Equals(Directory, ESearchCase::IgnoreCase)
-				|| Path.StartsWith(Directory + TEXT("/"), ESearchCase::IgnoreCase);
+			return UE::DreamShader::IsPathUnderSourceDirectory(InPath, InDirectory);
 		}
 
-		FString GetImportRootDirectoryForFile(const FString& CurrentFilePath)
+		/**
+		 * The directory a file's own-directory-relative import is confined to: the longest of every
+		 * root's source and Packages directories that contains the file. A `../` chain may walk up to
+		 * that boundary and no further. Files outside every root are confined to their own directory.
+		 */
+		FString GetImportBaseDirectoryForFile(const FString& CurrentFilePath)
 		{
-			const TArray<FString> RootDirectories =
+			FString BestBaseDirectory;
+			auto ConsiderBaseDirectory = [&CurrentFilePath, &BestBaseDirectory](const FString& BaseDirectory)
 			{
-				UE::DreamShader::GetSourceShaderDirectory(),
-				UE::DreamShader::GetPackageShaderDirectory()
+				if (IsPathUnderDirectory(CurrentFilePath, BaseDirectory)
+					&& BaseDirectory.Len() > BestBaseDirectory.Len())
+				{
+					BestBaseDirectory = BaseDirectory;
+				}
 			};
 
-			FString BestRootDirectory;
-			for (const FString& RootDirectory : RootDirectories)
+			for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
 			{
-				if (IsPathUnderDirectory(CurrentFilePath, RootDirectory) && RootDirectory.Len() > BestRootDirectory.Len())
+				ConsiderBaseDirectory(Root.Directory);
+				ConsiderBaseDirectory(Root.PackagesDirectory);
+			}
+
+			return BestBaseDirectory.IsEmpty() ? FPaths::GetPath(CurrentFilePath) : BestBaseDirectory;
+		}
+
+		struct FImportCandidate
+		{
+			FString Path;
+			FString RootDirectory;
+		};
+
+		bool TryResolveImportCandidates(const TArray<FImportCandidate>& Candidates, FString& OutResolvedPath)
+		{
+			for (const FImportCandidate& Candidate : Candidates)
+			{
+				const FString NormalizedCandidate = UE::DreamShader::NormalizeSourceFilePath(Candidate.Path);
+				if (!IsPathUnderDirectory(NormalizedCandidate, Candidate.RootDirectory))
 				{
-					BestRootDirectory = RootDirectory;
+					continue;
+				}
+
+				if (IFileManager::Get().FileExists(*NormalizedCandidate))
+				{
+					OutResolvedPath = NormalizedCandidate;
+					return true;
 				}
 			}
 
-			return BestRootDirectory.IsEmpty() ? FPaths::GetPath(CurrentFilePath) : BestRootDirectory;
+			return false;
+		}
+
+		/**
+		 * Recognizes the text before a `:` in an import specifier as a source-root qualifier. The
+		 * vocabulary is deliberately the one `Root=` already uses, minus the package-only spellings:
+		 * `Project`, `Plugin.<Name>`, `Plugins.<Name>`, `Plugin/<Name>`, `Plugins/<Name>`.
+		 *
+		 * Text that does not match one of those shapes is *not* a qualifier — `C:/Shared/Common.dsh`
+		 * has to keep failing the way it always did, not turn into an unknown-root error.
+		 */
+		bool TryParseRootQualifier(const FString& Text, bool& bOutIsProjectRoot, FString& OutPluginName)
+		{
+			FString Normalized = Text.TrimStartAndEnd();
+			Normalized.ReplaceInline(TEXT("\\"), TEXT("/"));
+
+			if (Normalized.Equals(TEXT("Project"), ESearchCase::IgnoreCase))
+			{
+				bOutIsProjectRoot = true;
+				OutPluginName.Reset();
+				return true;
+			}
+
+			// Longest first: "Plugins." must win over "Plugin" before the shorter spellings are tried.
+			static const TCHAR* PluginPrefixes[] = { TEXT("Plugins."), TEXT("Plugins/"), TEXT("Plugin."), TEXT("Plugin/") };
+			for (const TCHAR* Prefix : PluginPrefixes)
+			{
+				if (!Normalized.StartsWith(Prefix, ESearchCase::IgnoreCase))
+				{
+					continue;
+				}
+
+				FString PluginName = Normalized.Mid(FCString::Strlen(Prefix)).TrimStartAndEnd();
+				if (PluginName.IsEmpty() || PluginName.Contains(TEXT("/")))
+				{
+					return false;
+				}
+
+				bOutIsProjectRoot = false;
+				OutPluginName = MoveTemp(PluginName);
+				return true;
+			}
+
+			return false;
+		}
+
+		const UE::DreamShader::FDreamShaderSourceRoot* FindSourceRootByQualifier(
+			const bool bIsProjectRoot,
+			const FString& PluginName)
+		{
+			for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
+			{
+				const bool bMatches = bIsProjectRoot
+					? Root.bIsProjectRoot
+					: Root.PluginName.Equals(PluginName, ESearchCase::IgnoreCase);
+				if (bMatches)
+				{
+					return &Root;
+				}
+			}
+
+			return nullptr;
 		}
 	}
 
@@ -133,43 +216,85 @@ namespace UE::DreamShader::Editor::Private
 	bool FDreamShaderDependencyGraphService::ResolveImportPath(
 		const FString& CurrentFilePath,
 		const FString& ImportSpecifier,
-		FString& OutResolvedPath)
+		FString& OutResolvedPath,
+		FString* OutError)
 	{
+		if (OutError != nullptr)
+		{
+			OutError->Reset();
+		}
+
+		// A qualified specifier -- `Plugin.MoonToon:Shared/Common.dsh` -- is the one way to leave the
+		// importing file's own root, and it says so at the call site. The `:` is what makes it
+		// unambiguous: without it, `Plugin.MoonToon/Shared/Common.dsh` would be indistinguishable from
+		// a real folder of that name, and the resolver would be back to guessing by scan order.
+		FString RootQualifier;
+		FString QualifiedPath;
+		bool bIsProjectRoot = false;
+		FString PluginName;
+		if (ImportSpecifier.Split(TEXT(":"), &RootQualifier, &QualifiedPath)
+			&& !QualifiedPath.TrimStartAndEnd().IsEmpty()
+			&& TryParseRootQualifier(RootQualifier, bIsProjectRoot, PluginName))
+		{
+			const UE::DreamShader::FDreamShaderSourceRoot* TargetRoot =
+				FindSourceRootByQualifier(bIsProjectRoot, PluginName);
+			if (TargetRoot == nullptr)
+			{
+				if (OutError != nullptr)
+				{
+					*OutError = FString::Printf(
+						TEXT("DreamShader import '%s' referenced from '%s' names source root '%s', which is not a DreamShader source root."),
+						*ImportSpecifier,
+						*CurrentFilePath,
+						*RootQualifier.TrimStartAndEnd());
+				}
+				return false;
+			}
+
+			const FString NormalizedQualifiedImport = NormalizeImportSpecifier(QualifiedPath);
+			if (NormalizedQualifiedImport.IsEmpty())
+			{
+				return false;
+			}
+
+			// Rooted by construction, so there is no relative-to-the-importing-file candidate.
+			const TArray<FImportCandidate> QualifiedCandidates =
+			{
+				{ FPaths::Combine(TargetRoot->Directory, NormalizedQualifiedImport), TargetRoot->Directory },
+				{ FPaths::Combine(TargetRoot->PackagesDirectory, NormalizedQualifiedImport), TargetRoot->PackagesDirectory }
+			};
+
+			return TryResolveImportCandidates(QualifiedCandidates, OutResolvedPath);
+		}
+
 		const FString NormalizedImport = NormalizeImportSpecifier(ImportSpecifier);
 		if (NormalizedImport.IsEmpty())
 		{
 			return false;
 		}
 
-		struct FImportCandidate
-		{
-			FString Path;
-			FString RootDirectory;
-		};
+		// An unqualified import never crosses roots. A plugin's sources resolve against that plugin's
+		// own tree, so two plugins shipping the same relative path cannot shadow one another and a
+		// disabled plugin cannot silently change what another root's import means. A file that belongs
+		// to no root at all -- a test fixture, a commandlet -Source outside the tree -- still resolves
+		// against the project root, which is what it did before roots existed.
+		const UE::DreamShader::FDreamShaderSourceRoot* OwningRoot =
+			UE::DreamShader::FindSourceRootForFile(CurrentFilePath);
+		const FString RootDirectory = OwningRoot != nullptr
+			? OwningRoot->Directory
+			: UE::DreamShader::GetSourceShaderDirectory();
+		const FString PackagesDirectory = OwningRoot != nullptr
+			? OwningRoot->PackagesDirectory
+			: UE::DreamShader::GetPackageShaderDirectory();
 
 		const TArray<FImportCandidate> Candidates =
 		{
-			{ FPaths::Combine(FPaths::GetPath(CurrentFilePath), NormalizedImport), GetImportRootDirectoryForFile(CurrentFilePath) },
-			{ FPaths::Combine(UE::DreamShader::GetSourceShaderDirectory(), NormalizedImport), UE::DreamShader::GetSourceShaderDirectory() },
-			{ FPaths::Combine(UE::DreamShader::GetPackageShaderDirectory(), NormalizedImport), UE::DreamShader::GetPackageShaderDirectory() }
+			{ FPaths::Combine(FPaths::GetPath(CurrentFilePath), NormalizedImport), GetImportBaseDirectoryForFile(CurrentFilePath) },
+			{ FPaths::Combine(RootDirectory, NormalizedImport), RootDirectory },
+			{ FPaths::Combine(PackagesDirectory, NormalizedImport), PackagesDirectory }
 		};
 
-		for (const FImportCandidate& Candidate : Candidates)
-		{
-			const FString NormalizedCandidate = UE::DreamShader::NormalizeSourceFilePath(Candidate.Path);
-			if (!IsPathUnderDirectory(NormalizedCandidate, Candidate.RootDirectory))
-			{
-				continue;
-			}
-
-			if (IFileManager::Get().FileExists(*NormalizedCandidate))
-			{
-				OutResolvedPath = NormalizedCandidate;
-				return true;
-			}
-		}
-
-		return false;
+		return TryResolveImportCandidates(Candidates, OutResolvedPath);
 	}
 
 	void FDreamShaderDependencyGraphService::CollectHeaderDependenciesRecursive(

@@ -1872,6 +1872,13 @@ namespace UE::DreamShader::Editor
 			return false;
 		}
 
+		FString RootFallbackReason;
+		Private::ApplyDefaultRootFromSourceFile(SourceFilePath, Definition, &RootFallbackReason);
+		if (!RootFallbackReason.IsEmpty())
+		{
+			UE_LOG(LogDreamShader, Warning, TEXT("%s"), *RootFallbackReason);
+		}
+
 		const FString SourceHash = Private::BuildSourceHash(SourceText);
 
 		if (UE::DreamShader::IsDreamShaderFunctionFile(SourceFilePath) && !Definition.Name.IsEmpty())
@@ -2777,6 +2784,13 @@ namespace UE::DreamShader::Editor
 		{
 			OutMessage = FormatParseErrorWithSourceLocation(SourceFilePath, SourceText, ParseError);
 			return false;
+		}
+
+		FString RootFallbackReason;
+		Private::ApplyDefaultRootFromSourceFile(SourceFilePath, Definition, &RootFallbackReason);
+		if (!RootFallbackReason.IsEmpty())
+		{
+			UE_LOG(LogDreamShader, Warning, TEXT("%s"), *RootFallbackReason);
 		}
 
 		const FString SourceHash = Private::BuildSourceHash(SourceText);

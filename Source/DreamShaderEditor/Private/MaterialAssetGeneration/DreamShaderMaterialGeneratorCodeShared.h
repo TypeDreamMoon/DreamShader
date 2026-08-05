@@ -593,7 +593,9 @@ namespace UE::DreamShader::Editor::Private
 		case MP_CustomizedUVs7: OutOutputIndex = 23; return true;
 		case MP_PixelDepthOffset: OutOutputIndex = 24; return true;
 		case MP_Displacement: OutOutputIndex = 26; return true;
-#ifdef MOON_ENGINE
+#if DREAMSHADER_WITH_MOON_ENGINE
+		// Matches the tail of UMaterialExpressionBreakMaterialAttributes' output list, which appends
+		// these five after Displacement.
 		case MP_MoonEncodedAttribute0: OutOutputIndex = 27; return true;
 		case MP_MoonEncodedAttribute1: OutOutputIndex = 28; return true;
 		case MP_MoonEncodedAttribute2: OutOutputIndex = 29; return true;

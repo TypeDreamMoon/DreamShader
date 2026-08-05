@@ -1,5 +1,79 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Added
+
+- **Plugin source roots.** Every enabled plugin that ships a `DShader` folder now contributes its
+  own source root, so a plugin can carry the `.dsm`/`.dsf`/`.dsh` files that build its materials
+  instead of parking them in the project's tree. `Root="Plugin.<Name>"` has been able to *write*
+  assets into a plugin since `1.2.0`; the source half was missing. Discovery, the dependency graph
+  and generate-all pick plugin roots up with no further configuration.
+- *Project Settings ▸ DreamPlugin ▸ Dream Shader ▸ Paths ▸ **Scan Plugin Source Directories***
+  (`bScanPluginSourceDirectories`, default on) turns the plugin scan off.
+- **A plugin-root file defaults to its own plugin's mount point.** A `.dsm` under
+  `Plugins/MoonToon/DShader` with no `Root=` attribute now generates into `/MoonToon`, not `/Game` —
+  source and asset stay in the plugin that ships them. Only an absent or whitespace-only `Root` is
+  defaulted, so `Root="/"` opts back into `/Game`, and the default is applied per block. Skipped
+  with a `Warning` when the plugin cannot host content, in which case the block falls back to
+  `/Game` as before. Applied at generation, at the *DreamShader Gen* page's target column and at the
+  preview renderer alike, so all three name the same asset.
+- The source-directory watcher registers one watch per root, so *Auto Compile On Save* fires for a
+  plugin's sources the same way it does for the project's.
+- `DreamShader.code-workspace` lists one `folders` entry per root — the project as `"."`, then
+  `Plugin: <Name>` for each plugin root, relative to the workspace file (absolute when the root is
+  on another drive). The file stays at `<SourceDirectory>/DreamShader.code-workspace`, and the
+  project folder keeps its name and `"."` path, so VSCode's per-folder settings survive.
+- The *DreamShader Gen* page labels a plugin-root file with its root name in the row subtitle, and
+  the search box matches root names — typing a plugin's name filters to everything it ships.
+
+### Changed
+
+- **Imports never cross roots.** A file resolves its imports against its own root and that root's
+  `Packages` folder only. Two plugins shipping the same relative path can no longer shadow one
+  another, and disabling a plugin cannot silently change what another root's import means. Files
+  under the project root — every file that existed before this release — resolve exactly as they
+  did. A file outside every root (a test fixture, a commandlet `-Source` pointing elsewhere) still
+  falls back to the project root.
+- VirtualFunction sync skips files under a plugin root. Only the project root is writable: a plugin
+  ships its definitions as authored, and the editor no longer rewrites them.
+- A plugin `DShader` folder that overlaps an existing root — which happens when *Source Directory*
+  is pointed at a plugin folder or at something containing one — is ignored with a warning, rather
+  than handing the same file to two owners.
+
+### Fixed
+
+- `DreamShaderMaterialGeneratorPrivate.h` did not include `Engine/EngineTypes.h` despite declaring
+  functions that take `EBlendMode` and `EMaterialShadingModel`. Unity builds pulled the enums in
+  through a neighbouring translation unit; any non-unity compile of a file including it — which is
+  what UBT's adaptive non-unity does to whatever you are currently editing — failed with
+  `error C2061`.
+
+- **Root-qualified imports** — `import "Plugin.MoonToon:Shared/Toon.dsh";` — the one way to cross a
+  root deliberately. The qualifier is `Project`, `Plugin.<Name>` or `Plugins.<Name>` (`/` spells the
+  same as `.`), matched case-insensitively, using the vocabulary `Root=` already has. A qualified
+  specifier tries only the target root's source and packages directories, both containment-checked;
+  the importing file's own root is not consulted.
+
+  The `:` is load-bearing: `Plugin.MoonToon/Shared/Common.dsh` could not be told apart from a
+  relative path through a folder of that name, which would put the resolver back to guessing by scan
+  order. Text before a `:` that does not match a qualifier shape is not treated as one, so
+  `import "C:/Shared/Common.dsh"` keeps failing exactly as it did.
+
+  New diagnostic for a qualifier that parses but names no live root:
+  `DreamShader import '{Specifier}' referenced from '{Path}' names source root '{Qualifier}', which
+  is not a DreamShader source root.`
+
+### Known gaps
+
+Follow-up work, not regressions:
+
+- The root list is cached and only rebuilt when the *Source Directory* setting or the scan toggle
+  changes, or when *DreamShader Gen ▸ Refresh* is pressed — which is what picks up a `DShader`
+  folder you just created, or a plugin mounted mid-session. The **watcher** is still registered once
+  at startup, so *Auto Compile On Save* for a root that appeared mid-session starts working on the
+  next editor start.
+
 ## 1.5.1 - 2026-08-02
 
 Documentation and tooling only. No plugin code changed, so a project on `1.5.0` needs no

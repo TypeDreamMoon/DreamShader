@@ -17,7 +17,14 @@ A line directive that inlines another DreamShaderLang source file into the curre
 ```c
 import "<specifier>" [;] [// <comment>]
 import '<specifier>' [;] [// <comment>]
+
+<specifier>      := [ <root-qualifier> ":" ] <path>
+<root-qualifier> := Project | Plugin.<PluginName> | Plugins.<PluginName>
+                  | Plugin/<PluginName> | Plugins/<PluginName>
 ```
+
+A bare `<path>` resolves inside the importing file's own source root. The `<root-qualifier>` prefix
+*(since Unreleased)* is what lets an import reach a different root — see [Roots](#roots).
 
 The directive must be the first thing on its line — leading whitespace is allowed, anything else is
 not. After the closing quote only an optional `;` *(since 1.2.2)* and an optional `//` comment may
@@ -82,9 +89,9 @@ on disk wins.
 
 | # | Candidate | Containment root |
 | :-- | :-- | :-- |
-| 1 | `<directory of the importing file>/<specifier>` | the longer of the source directory and the packages directory that contains the importing file; the importing file's own directory when it is under neither |
-| 2 | `<source directory>/<specifier>` | the source directory |
-| 3 | `<packages directory>/<specifier>` | the packages directory |
+| 1 | `<directory of the importing file>/<specifier>` | the longest source or packages directory, across every root, that contains the importing file; the importing file's own directory when it is under none |
+| 2 | `<owning root's source directory>/<specifier>` | that source directory |
+| 3 | `<owning root's packages directory>/<specifier>` | that packages directory |
 
 | Directory | Default | Project setting |
 | :-- | :-- | :-- |
@@ -95,6 +102,59 @@ The containment comparison is case-insensitive on every platform. Whether a cand
 still goes through an ordinary file-existence check, which follows the file system's own case
 behaviour.
 
+### Roots
+
+Candidates 2 and 3 belong to the **owning root** of the importing file — the source root the file
+sits under. An unqualified specifier never leaves it: a `.dsm` under `Plugins/MoonToon/DShader`
+cannot reach `<Project>/DShader` by writing `Shared/Common.dsh`, and vice versa.
+
+The rule exists so that adding a plugin cannot change what an existing import means. Were the
+project root a global fallback, two plugins shipping `Shared/Common.dsh` would resolve by scan order,
+and disabling a plugin would silently redirect another root's imports.
+
+A file under **no** root — a test fixture, a commandlet `-Source` pointing outside the tree — takes
+the project's source and packages directories for candidates 2 and 3, which is what every file did
+before roots existed.
+
+### Crossing a root deliberately
+
+Prefix the specifier with a root qualifier and a `:`.
+
+| Specifier | Resolved against |
+| :-- | :-- |
+| `Project:Shared/Common.dsh` | `<Project>/DShader/Shared/Common.dsh`, then `<Project>/DShader/Packages/…` |
+| `Plugin.MoonToon:Shared/Toon.dsh` | `<MoonToon>/DShader/Shared/Toon.dsh`, then `<MoonToon>/DShader/Packages/…` |
+| `Plugins.MoonToon:Shared/Toon.dsh` | the same — `Plugin`/`Plugins`, `.`/`/` all spell the same thing |
+| `Plugin/MoonToon:Shared/Toon.dsh` | the same |
+
+The vocabulary is the one [`Root=`](../generation/asset-paths.md#root-dispatch) already uses, minus
+the package-only spellings, and the qualifier is matched case-insensitively. `Project` names the
+project root whatever *Source Directory* points at.
+
+A qualified specifier is rooted by construction, so only two candidates are tried — the target root's
+source directory and its packages directory, in that order — and both are containment-checked the
+same way. There is no relative-to-the-importing-file candidate, and the importing file's own root is
+not consulted.
+
+> [!NOTE]
+> The `:` is what makes the form unambiguous. Without it, `Plugin.MoonToon/Shared/Common.dsh` could
+> not be told apart from an ordinary relative path through a folder named `Plugin.MoonToon`, and the
+> resolver would be back to guessing — the very thing the same-root rule exists to prevent. `:`
+> cannot appear in a path segment on Windows, so no real specifier collides with it.
+
+> [!NOTE]
+> Text before a `:` that does **not** match one of the qualifier shapes is not treated as a
+> qualifier at all; the whole specifier is resolved as an ordinary path. That is what keeps
+> `import "C:/Shared/Common.dsh"` failing the way it always did instead of reporting an unknown
+> source root. A specifier that *does* match the shape but names a root that is not present —
+> `Plugin.NotInstalled:X.dsh` — gets the dedicated diagnostic below.
+
+> [!WARNING]
+> A plugin that qualifies its way into `Project:` is no longer self-contained: ship it to another
+> project and the import dangles. The form is deliberately verbose and greppable for that reason.
+
+See [Source files](source-files.md#source-roots) for the root list and how plugins contribute to it.
+
 The containment check is what stops a specifier from climbing out of the tree. `..` segments are
 resolved before the check, so:
 
@@ -103,8 +163,8 @@ resolved before the check, so:
   roots, so they are skipped by the same check;
 - from a file under `DShader/Packages/@scope/pkg/`, `..` may traverse anywhere inside
   `DShader/Packages`, because that is the containment root chosen for it;
-- for a source file under neither directory, the containment root is its own directory, so no `..`
-  specifier can resolve at all.
+- for a source file under no root's source or packages directory, the containment root is its own
+  directory, so no `..` specifier can resolve through candidate 1 at all.
 
 ### Package-style paths
 
@@ -184,7 +244,8 @@ Runtime substitutions are shown as `{Placeholder}` throughout this table.
 
 | Message | Cause |
 | :-- | :-- |
-| `DreamShader import '{Specifier}' referenced from '{Path}' could not be resolved.` | none of the three candidates existed, or every existing one was outside its containment root |
+| `DreamShader import '{Specifier}' referenced from '{Path}' could not be resolved.` | none of the candidates existed, or every existing one was outside its containment root |
+| `DreamShader import '{Specifier}' referenced from '{Path}' names source root '{Qualifier}', which is not a DreamShader source root.` | a root-qualified specifier whose qualifier matched the grammar but named no live root — a misspelt plugin name, a plugin that is disabled, or one that ships no `DShader` folder |
 | `DreamShader import cycle detected at '{Path}'.` | a file imported itself, directly or transitively |
 | `DreamShader could not read '{Path}'.` | the resolved file could not be loaded |
 | `Only one top-level Shader block is currently supported.` | two `Shader` blocks in the closure |

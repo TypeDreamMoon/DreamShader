@@ -285,6 +285,11 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderGenPage::Refresh()
 	{
+		// Creating <Plugin>/DShader is the first thing anyone does with plugin sources, and the root
+		// list is cached, so without this the folder stays invisible until the next editor start.
+		// Cheap next to the recursive scans and the graph rebuild below.
+		UE::DreamShader::RefreshSourceShaderRoots();
+
 		Items.Reset();
 
 		TArray<FString> SourceFiles;
@@ -300,6 +305,15 @@ namespace UE::DreamShader::Editor::Private
 			TSharedPtr<FDreamShaderSourceItem> Item = MakeShared<FDreamShaderSourceItem>();
 			Item->SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
 			Item->DisplayName = FPaths::GetCleanFilename(Item->SourceFilePath);
+
+			// Two roots can ship the same file name, and the clean filename alone would show them as
+			// the same row twice. Named only for plugin roots, so the project's list is unchanged.
+			if (const UE::DreamShader::FDreamShaderSourceRoot* Root =
+				UE::DreamShader::FindSourceRootForFile(Item->SourceFilePath))
+			{
+				Item->RootName = Root->bIsProjectRoot ? FString() : Root->DisplayName;
+			}
+
 			Item->bIsFunction = UE::DreamShader::IsDreamShaderFunctionFile(Item->SourceFilePath)
 				|| UE::DreamShader::IsDreamShaderHeaderFile(Item->SourceFilePath);
 			if (Item->bIsFunction)
@@ -353,7 +367,10 @@ namespace UE::DreamShader::Editor::Private
 			{
 				continue;
 			}
-			if (!SearchText.IsEmpty() && !Item->DisplayName.Contains(SearchText, ESearchCase::IgnoreCase))
+			// Matching the root name too makes a plugin's name a usable filter for everything it ships.
+			if (!SearchText.IsEmpty()
+				&& !Item->DisplayName.Contains(SearchText, ESearchCase::IgnoreCase)
+				&& !Item->RootName.Contains(SearchText, ESearchCase::IgnoreCase))
 			{
 				continue;
 			}
@@ -624,9 +641,16 @@ namespace UE::DreamShader::Editor::Private
 	TSharedRef<ITableRow> SDreamShaderGenPage::OnGenerateRow(TSharedPtr<FDreamShaderSourceItem> Item, const TSharedRef<STableViewBase>& OwnerTable)
 	{
 		const FStatusVisual Visual = GetStatusVisual(Item->Status);
-		const FText SubLabel = Item->bIsFunction
+		FText SubLabel = Item->bIsFunction
 			? FText::Format(LOCTEXT("FunctionUsedBy", "function · used by {0} material(s)"), FText::AsNumber(Item->DependentCount))
 			: Visual.Label;
+		if (!Item->RootName.IsEmpty())
+		{
+			SubLabel = FText::Format(
+				LOCTEXT("SubLabelWithRoot", "{0} · {1}"),
+				FText::FromString(Item->RootName),
+				SubLabel);
+		}
 
 		return SNew(STableRow<TSharedPtr<FDreamShaderSourceItem>>, OwnerTable)
 			.Padding(FMargin(4.0f, 3.0f))

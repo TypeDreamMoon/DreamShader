@@ -6,92 +6,81 @@
 
 namespace UE::DreamShader::Editor::Private
 {
+	namespace
+	{
+		void AppendSourceFilesWithExtension(
+			const FString& Directory,
+			const TCHAR* Wildcard,
+			TArray<FString>& OutSourceFiles)
+		{
+			TArray<FString> Files;
+			IFileManager::Get().FindFilesRecursive(
+				Files,
+				*Directory,
+				Wildcard,
+				true,
+				false,
+				false);
+
+			OutSourceFiles.Reserve(OutSourceFiles.Num() + Files.Num());
+			for (const FString& File : Files)
+			{
+				OutSourceFiles.Add(UE::DreamShader::NormalizeSourceFilePath(File));
+			}
+		}
+	}
+
 	bool FDreamShaderSourceFileUtils::IsPathUnderDirectory(const FString& InPath, const FString& InDirectory)
 	{
-		const FString Path = UE::DreamShader::NormalizeSourceFilePath(InPath);
-		FString Directory = UE::DreamShader::NormalizeSourceFilePath(InDirectory);
-		Directory.RemoveFromEnd(TEXT("/"));
-
-		return Path.Equals(Directory, ESearchCase::IgnoreCase)
-			|| Path.StartsWith(Directory + TEXT("/"), ESearchCase::IgnoreCase);
+		return UE::DreamShader::IsPathUnderSourceDirectory(InPath, InDirectory);
 	}
 
 	bool FDreamShaderSourceFileUtils::IsPackageMaterialFile(const FString& InPath)
 	{
-		return UE::DreamShader::IsDreamShaderMaterialFile(InPath)
-			&& IsPathUnderDirectory(InPath, UE::DreamShader::GetPackageShaderDirectory());
+		if (!UE::DreamShader::IsDreamShaderMaterialFile(InPath))
+		{
+			return false;
+		}
+
+		// Every root carries its own Packages tree, so "is this a package file" is a question about
+		// the root that owns the path, not about the project's Packages folder.
+		const UE::DreamShader::FDreamShaderSourceRoot* Root = UE::DreamShader::FindSourceRootForFile(InPath);
+		return Root != nullptr
+			&& UE::DreamShader::IsPathUnderSourceDirectory(InPath, Root->PackagesDirectory);
 	}
 
 	void FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(TArray<FString>& OutSourceFiles)
 	{
-		TArray<FString> MaterialFiles;
-		TArray<FString> HeaderFiles;
-		TArray<FString> FunctionFiles;
-		IFileManager::Get().FindFilesRecursive(
-			MaterialFiles,
-			*UE::DreamShader::GetSourceShaderDirectory(),
-			TEXT("*.dsm"),
-			true,
-			false,
-			false);
-		IFileManager::Get().FindFilesRecursive(
-			HeaderFiles,
-			*UE::DreamShader::GetSourceShaderDirectory(),
-			TEXT("*.dsh"),
-			true,
-			false,
-			false);
-		IFileManager::Get().FindFilesRecursive(
-			FunctionFiles,
-			*UE::DreamShader::GetSourceShaderDirectory(),
-			TEXT("*.dsf"),
-			true,
-			false,
-			false);
-
 		OutSourceFiles.Reset();
-		OutSourceFiles.Append(MaterialFiles);
-		OutSourceFiles.Append(HeaderFiles);
-		OutSourceFiles.Append(FunctionFiles);
 
-		for (FString& SourceFile : OutSourceFiles)
+		for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
 		{
-			SourceFile = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
+			TArray<FString> RootSourceFiles;
+			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsm"), RootSourceFiles);
+			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsh"), RootSourceFiles);
+			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsf"), RootSourceFiles);
+
+			// This scan drops every file under Packages; the generatable scan below drops only the
+			// package .dsm files. The asymmetry is deliberate -- see Docs/language/source-files.md.
+			RootSourceFiles.RemoveAll([&Root](const FString& SourceFile)
+			{
+				return UE::DreamShader::IsPathUnderSourceDirectory(SourceFile, Root.PackagesDirectory);
+			});
+
+			OutSourceFiles.Append(MoveTemp(RootSourceFiles));
 		}
 
-		OutSourceFiles.RemoveAll([](const FString& SourceFile)
-		{
-			return FDreamShaderSourceFileUtils::IsPathUnderDirectory(SourceFile, UE::DreamShader::GetPackageShaderDirectory());
-		});
 		OutSourceFiles.Sort();
 	}
 
 	void FDreamShaderSourceFileUtils::FindProjectMaterialSourceFiles(TArray<FString>& OutSourceFiles)
 	{
-		TArray<FString> MaterialFiles;
-		TArray<FString> FunctionFiles;
-		IFileManager::Get().FindFilesRecursive(
-			MaterialFiles,
-			*UE::DreamShader::GetSourceShaderDirectory(),
-			TEXT("*.dsm"),
-			true,
-			false,
-			false);
-		IFileManager::Get().FindFilesRecursive(
-			FunctionFiles,
-			*UE::DreamShader::GetSourceShaderDirectory(),
-			TEXT("*.dsf"),
-			true,
-			false,
-			false);
-
 		OutSourceFiles.Reset();
-		OutSourceFiles.Append(MaterialFiles);
-		OutSourceFiles.Append(FunctionFiles);
 
-		for (FString& SourceFile : OutSourceFiles)
+		for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
 		{
-			SourceFile = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
+			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsm"), OutSourceFiles);
+			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsf"), OutSourceFiles);
 		}
 
 		OutSourceFiles.RemoveAll([](const FString& SourceFile)

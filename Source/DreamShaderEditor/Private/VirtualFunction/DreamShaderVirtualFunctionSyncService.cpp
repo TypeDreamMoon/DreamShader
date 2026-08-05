@@ -455,6 +455,14 @@ namespace UE::DreamShader::Editor::Private
 		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles);
 		for (const FString& SourceFile : SourceFiles)
 		{
+			// Sync rewrites the file in place. A plugin ships its VirtualFunction definitions as
+			// authored, so a read-only root is skipped outright rather than scanned and reported as
+			// out of date on every sync.
+			if (!UE::DreamShader::IsWritableSourceFilePath(SourceFile))
+			{
+				continue;
+			}
+
 			FString SourceText;
 			TArray<FDreamShaderVirtualFunctionDefinitionLocation> Locations;
 			TArray<FDreamShaderDiagnosticRecord> Diagnostics;

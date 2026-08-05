@@ -345,7 +345,9 @@ namespace UE::DreamShader::Editor::Private
 				return TEXT("CustomizedUV6");
 			case MP_CustomizedUVs7:
 				return TEXT("CustomizedUV7");
-#ifdef MOON_ENGINE
+#if DREAMSHADER_WITH_MOON_ENGINE
+			// Emitted names, so they use the engine's current spelling. The parser still accepts the
+			// older Mooa one, which is what pre-rename sources contain.
 			case MP_MoonEncodedAttribute0:
 				return TEXT("MoonEncodedAttribute0");
 			case MP_MoonEncodedAttribute1:
