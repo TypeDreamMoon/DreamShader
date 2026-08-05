@@ -30,6 +30,10 @@ Unreal's JSON writer (tab indentation):
 		{
 			"name": "DreamShader Source",
 			"path": "."
+		},
+		{
+			"name": "Plugin: MoonToon",
+			"path": "../Plugins/MoonToon/DShader"
 		}
 	],
 	"settings": {
@@ -41,6 +45,12 @@ Unreal's JSON writer (tab indentation):
 	}
 }
 ```
+
+One `folders` entry per source root: the project root is always first and always `"."` (the workspace
+file lives in it), then one entry per plugin that ships a `DShader` folder, named `Plugin: <Name>`
+and pointed at a path relative to the workspace file. A root that has no relative form — an engine
+plugin on a different drive — gets its absolute path instead. See
+[Source files](../language/source-files.md#source-roots).
 
 ## Contents
 

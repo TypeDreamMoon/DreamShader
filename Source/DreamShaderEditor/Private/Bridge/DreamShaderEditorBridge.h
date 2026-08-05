@@ -79,8 +79,8 @@ namespace UE::DreamShader::Editor::Private
 		FDreamShaderDiagnosticsStore DiagnosticsStore;
 		TUniquePtr<FDreamShaderPreviewWebSocketServer> PreviewWebSocketServer;
 		TMap<FString, TSet<FString>> HeaderDependentsByFile;
-		FString WatchedSourceDirectory;
-		FDelegateHandle DirectoryWatcherHandle;
+		/** One registration per source root, keyed by the watched directory. */
+		TMap<FString, FDelegateHandle> DirectoryWatcherHandles;
 		FTSTicker::FDelegateHandle TickerHandle;
 		FTSTicker::FDelegateHandle PreviewTickerHandle;
 		FDelegateHandle MaterialCompilationFinishedHandle;

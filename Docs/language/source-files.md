@@ -114,14 +114,13 @@ file targets the project root.
 > one; without the check the same file would belong to two roots and its imports would resolve by
 > scan order.
 
-> [!WARNING]
-> The source-directory watcher currently watches the project root only, so *Auto Compile On Save*
-> does not fire for edits under a plugin root. Those are picked up by a full scan or an explicit
-> compile.
+The source-directory watcher registers one watch per root, so *Auto Compile On Save* fires for a
+plugin's sources exactly as it does for the project's.
 
-A plugin-root file still defaults to `/Game` when it declares no `Root=` attribute — write
-`Root="Plugin.<Name>"` to land the asset in the plugin that ships the source. See
-[Asset paths](../generation/asset-paths.md).
+A file under a plugin root that declares no `Root=` defaults to **that plugin's mount point** rather
+than to `/Game` — a `.dsm` in `Plugins/MoonToon/DShader` generates into `/MoonToon` with no attribute
+at all. Write `Root="/"` to opt back into `/Game`. See
+[Asset paths](../generation/asset-paths.md#the-plugin-source-root-default).
 
 ## File discovery
 

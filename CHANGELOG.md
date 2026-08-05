@@ -11,6 +11,21 @@
   and generate-all pick plugin roots up with no further configuration.
 - *Project Settings ▸ DreamPlugin ▸ Dream Shader ▸ Paths ▸ **Scan Plugin Source Directories***
   (`bScanPluginSourceDirectories`, default on) turns the plugin scan off.
+- **A plugin-root file defaults to its own plugin's mount point.** A `.dsm` under
+  `Plugins/MoonToon/DShader` with no `Root=` attribute now generates into `/MoonToon`, not `/Game` —
+  source and asset stay in the plugin that ships them. Only an absent or whitespace-only `Root` is
+  defaulted, so `Root="/"` opts back into `/Game`, and the default is applied per block. Skipped
+  with a `Warning` when the plugin cannot host content, in which case the block falls back to
+  `/Game` as before. Applied at generation, at the *DreamShader Gen* page's target column and at the
+  preview renderer alike, so all three name the same asset.
+- The source-directory watcher registers one watch per root, so *Auto Compile On Save* fires for a
+  plugin's sources the same way it does for the project's.
+- `DreamShader.code-workspace` lists one `folders` entry per root — the project as `"."`, then
+  `Plugin: <Name>` for each plugin root, relative to the workspace file (absolute when the root is
+  on another drive). The file stays at `<SourceDirectory>/DreamShader.code-workspace`, and the
+  project folder keeps its name and `"."` path, so VSCode's per-folder settings survive.
+- The *DreamShader Gen* page labels a plugin-root file with its root name in the row subtitle, and
+  the search box matches root names — typing a plugin's name filters to everything it ships.
 
 ### Changed
 
@@ -38,12 +53,11 @@
 
 Follow-up work, not regressions:
 
-- The source-directory watcher still only watches the project root, so edits to a plugin's sources
-  are picked up by a full scan or an explicit compile, not by auto-compile-on-save.
-- A plugin-root `.dsm` with no `Root=` attribute still generates into `/Game`. Defaulting it to the
-  owning plugin's mount point is the next change.
-- There is no syntax for a deliberate cross-root import yet.
-- `DreamShader.code-workspace` still describes the project root only.
+- There is no syntax for a deliberate cross-root import yet. A plugin that wants to build on the
+  project's shared headers has to vendor them, or the project has to move them into the plugin.
+- The root list is cached and only rebuilt when the *Source Directory* setting or the scan toggle
+  changes. A plugin mounted mid-session needs an editor restart (or a call to
+  `RefreshSourceShaderRoots()`) before its sources appear.
 
 ## 1.5.1 - 2026-08-02
 

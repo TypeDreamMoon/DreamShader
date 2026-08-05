@@ -179,12 +179,23 @@ namespace UE::DreamShader::Editor::Private
 		FDirectoryWatcherModule& DirectoryWatcherModule = FModuleManager::LoadModuleChecked<FDirectoryWatcherModule>(TEXT("DirectoryWatcher"));
 		if (IDirectoryWatcher* DirectoryWatcher = DirectoryWatcherModule.Get())
 		{
-			WatchedSourceDirectory = UE::DreamShader::GetSourceShaderDirectory();
-			DirectoryWatcher->RegisterDirectoryChangedCallback_Handle(
-				WatchedSourceDirectory,
-				IDirectoryWatcher::FDirectoryChanged::CreateSP(AsShared(), &FDreamShaderEditorBridge::OnDirectoryChanged),
-				DirectoryWatcherHandle,
-				IDirectoryWatcher::WatchOptions::IncludeDirectoryChanges);
+			// One watch per source root. Without this a plugin's sources would compile on a full scan
+			// but never on save, which reads as auto-compile being broken for that plugin.
+			for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
+			{
+				if (Root.Directory.IsEmpty() || DirectoryWatcherHandles.Contains(Root.Directory))
+				{
+					continue;
+				}
+
+				FDelegateHandle RootWatcherHandle;
+				DirectoryWatcher->RegisterDirectoryChangedCallback_Handle(
+					Root.Directory,
+					IDirectoryWatcher::FDirectoryChanged::CreateSP(AsShared(), &FDreamShaderEditorBridge::OnDirectoryChanged),
+					RootWatcherHandle,
+					IDirectoryWatcher::WatchOptions::IncludeDirectoryChanges);
+				DirectoryWatcherHandles.Add(Root.Directory, RootWatcherHandle);
+			}
 		}
 
 		MaterialCompilationFinishedHandle = UMaterial::OnMaterialCompilationFinished().AddSP(
@@ -260,18 +271,20 @@ namespace UE::DreamShader::Editor::Private
 			UToolMenus::UnregisterOwner(DreamShaderToolMenuOwnerName);
 		}
 
-		if (DirectoryWatcherHandle.IsValid())
+		if (!DirectoryWatcherHandles.IsEmpty())
 		{
 			if (FDirectoryWatcherModule* DirectoryWatcherModule = FModuleManager::GetModulePtr<FDirectoryWatcherModule>(TEXT("DirectoryWatcher")))
 			{
 				if (IDirectoryWatcher* DirectoryWatcher = DirectoryWatcherModule->Get())
 				{
-					DirectoryWatcher->UnregisterDirectoryChangedCallback_Handle(WatchedSourceDirectory, DirectoryWatcherHandle);
+					for (const TPair<FString, FDelegateHandle>& Watch : DirectoryWatcherHandles)
+					{
+						DirectoryWatcher->UnregisterDirectoryChangedCallback_Handle(Watch.Key, Watch.Value);
+					}
 				}
 			}
 
-			DirectoryWatcherHandle.Reset();
-			WatchedSourceDirectory.Reset();
+			DirectoryWatcherHandles.Reset();
 		}
 
 		PendingFiles.Reset();

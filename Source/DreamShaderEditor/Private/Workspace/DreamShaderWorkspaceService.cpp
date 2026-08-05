@@ -1136,10 +1136,35 @@ namespace UE::DreamShader::Editor::Private
 		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&WorkspaceText);
 		Writer->WriteObjectStart();
 		Writer->WriteArrayStart(TEXT("folders"));
-		Writer->WriteObjectStart();
-		Writer->WriteValue(TEXT("name"), TEXT("DreamShader Source"));
-		Writer->WriteValue(TEXT("path"), TEXT("."));
-		Writer->WriteObjectEnd();
+		for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
+		{
+			FString FolderPath;
+			if (Root.bIsProjectRoot)
+			{
+				// The workspace file lives in the project root, so this stays "." -- it keeps VSCode's
+				// folder identity (and therefore per-folder settings) stable across the upgrade.
+				FolderPath = TEXT(".");
+			}
+			else
+			{
+				FolderPath = Root.Directory;
+				// A root on another drive -- an engine plugin, with the engine on a different volume --
+				// has no relative form on Windows. An absolute path is still a valid workspace folder.
+				if (!FPaths::MakePathRelativeTo(FolderPath, *(SourceDirectory + TEXT("/"))))
+				{
+					FolderPath = Root.Directory;
+				}
+			}
+
+			Writer->WriteObjectStart();
+			Writer->WriteValue(
+				TEXT("name"),
+				Root.bIsProjectRoot
+					? FString(TEXT("DreamShader Source"))
+					: FString::Printf(TEXT("Plugin: %s"), *Root.DisplayName));
+			Writer->WriteValue(TEXT("path"), FolderPath);
+			Writer->WriteObjectEnd();
+		}
 		Writer->WriteArrayEnd();
 		Writer->WriteObjectStart(TEXT("settings"));
 		Writer->WriteObjectStart(TEXT("files.associations"));
