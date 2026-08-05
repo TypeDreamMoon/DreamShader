@@ -97,6 +97,67 @@ namespace UE::DreamShader::Editor::Private
 
 			OutputAssignments.Add(FormatGraphSetStatement(Binding.Name, CompileInput(*MaterialInput, Binding.DefaultValue)));
 		}
+
+		// A UMaterialExpressionCustomOutput node (ToonMaterialOutput, ClearCoatNormalCustomOutput,
+		// ThinTranslucentMaterialOutput, VertexInterpolator, ...) has no output pins, so nothing in
+		// the Bindings table above can reach it. Walking only from the material root would drop the
+		// node and its whole input subtree silently. Emit it in the form the generator already
+		// accepts: Expression(Class="...").Pin[N] = <var>. See Docs/language/output-bindings.md.
+		{
+			TMap<FString, int32> CustomOutputClassCounts;
+			for (UMaterialExpression* Expression : Material->GetExpressions())
+			{
+				UMaterialExpressionCustomOutput* CustomOutput = Cast<UMaterialExpressionCustomOutput>(Expression);
+				if (!CustomOutput)
+				{
+					continue;
+				}
+
+				// The generator de-duplicates output-target nodes by class plus argument list, so a
+				// second node of the same class would collapse onto the first instead of round
+				// tripping. Export the first and say so rather than emitting a wrong graph.
+				const FString ClassName = CustomOutput->GetClass()->GetName();
+				int32& SeenCount = CustomOutputClassCounts.FindOrAdd(ClassName);
+				if (SeenCount++ > 0)
+				{
+					Warnings.Add(FString::Printf(
+						TEXT("Material has more than one '%s' node; output targets are de-duplicated by class, so only the first was exported."),
+						*ClassName));
+					continue;
+				}
+
+				const TArrayView<FExpressionInput*> CustomOutputInputs = CustomOutput->GetInputsView();
+				for (int32 PinIndex = 0; PinIndex < CustomOutputInputs.Num(); ++PinIndex)
+				{
+					FExpressionInput* PinInput = CustomOutputInputs[PinIndex];
+					if (!PinInput || !PinInput->IsConnected())
+					{
+						continue;
+					}
+
+					FString PinName = CustomOutput->GetInputName(PinIndex).ToString();
+					if (PinName.IsEmpty())
+					{
+						PinName = FString::Printf(TEXT("Pin%d"), PinIndex);
+					}
+
+					const FString VariableName = MakeUniqueName(PinName, TEXT("CustomOutput"));
+					ReservedNames.Add(VariableName);
+
+					OutputDeclarations.Add(FString::Printf(
+						TEXT("\t\t%s %s;"),
+						*GetDreamShaderTypeForMaterialValueType(CustomOutput->GetInputValueType(PinIndex)),
+						*VariableName));
+					OutputBindings.Add(FString::Printf(
+						TEXT("\t\tExpression(Class=\"%s\").Pin[%d] = %s;"),
+						*ClassName,
+						PinIndex,
+						*VariableName));
+					OutputAssignments.Add(FormatGraphSetStatement(VariableName, CompileInput(*PinInput, TEXT("0.0"))));
+				}
+			}
+		}
+
 		FinalizeGraphLayoutMetadata();
 
 		TArray<FString> Lines;
@@ -489,6 +550,44 @@ namespace UE::DreamShader::Editor::Private
 		AddStringMetadata(Entries, TEXT("Description"), Parameter->Desc);
 	}
 
+	void FDreamShaderGraphDecompiler::AddScalarParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionScalarParameter* Parameter)
+	{
+		if (!Parameter)
+		{
+			return;
+		}
+
+		AddEnumMetadata(
+			Entries,
+			TEXT("ControlType"),
+			StaticEnum<EMaterialScalarParameterControlType>(),
+			static_cast<int64>(Parameter->ControlType),
+			static_cast<int64>(EMaterialScalarParameterControlType::Numeric));
+
+		// The engine treats the slider bounds as disabled when SliderMax <= SliderMin, which is also the
+		// (0, 0) default -- so only an actually-configured range is worth emitting.
+		if (Parameter->SliderMax > Parameter->SliderMin)
+		{
+			Entries.Add(FString::Printf(TEXT("SliderMin=%s;"), *FormatDreamShaderFloat(Parameter->SliderMin)));
+			Entries.Add(FString::Printf(TEXT("SliderMax=%s;"), *FormatDreamShaderFloat(Parameter->SliderMax)));
+		}
+
+		// TSoftObjectPtr: read the path, not the resolved object, so an unloaded enum still round-trips.
+		if (!Parameter->Enumeration.IsNull())
+		{
+			Entries.Add(FString::Printf(
+				TEXT("Enumeration=%s;"),
+				*MakeDreamShaderObjectPathLiteral(Parameter->Enumeration.LoadSynchronous())));
+		}
+
+		AddIntMetadata(Entries, TEXT("EnumerationIndex"), static_cast<int32>(Parameter->EnumerationIndex), 0);
+		AddBoolMetadata(Entries, TEXT("UseCustomPrimitiveData"), Parameter->bUseCustomPrimitiveData, false);
+		if (Parameter->bUseCustomPrimitiveData)
+		{
+			AddIntMetadata(Entries, TEXT("PrimitiveDataIndex"), static_cast<int32>(Parameter->PrimitiveDataIndex), -1);
+		}
+	}
+
 	void FDreamShaderGraphDecompiler::AddTextureParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionTextureSampleParameter* Parameter)
 	{
 		if (!Parameter)
@@ -816,6 +915,46 @@ namespace UE::DreamShader::Editor::Private
 		GraphLines.Add(FormatGraphAssignment(Type, Name, ExpressionText));
 		++NextTempIndex;
 		return Name;
+	}
+
+	FString FDreamShaderGraphDecompiler::DeclareMaterialAttributesChain(UMaterialExpression* Expression, const FString& BaseValueText)
+	{
+		// Always introduce a fresh variable rather than writing members onto the upstream name.
+		// A member write rebinds the variable it targets, so mutating a shared value in place would
+		// change what every other reader of that value sees.
+		const FString BaseText = BaseValueText.TrimStartAndEnd();
+		FString Name;
+		if (BaseText.IsEmpty())
+		{
+			Name = MakeUniqueName(TEXT("Attributes"), TEXT("Attributes"));
+			GraphLines.Add(FString::Printf(TEXT("\t\tMaterialAttributes %s;"), *Name));
+			++NextTempIndex;
+		}
+		else
+		{
+			Name = AddTemp(TEXT("MaterialAttributes"), BaseText, TEXT("Attributes"));
+		}
+
+		RegisterExpressionName(Expression, Name);
+		return Name;
+	}
+
+	void FDreamShaderGraphDecompiler::EmitMaterialAttributeMemberWrite(
+		const FString& VariableName,
+		const FString& MemberName,
+		FExpressionInput* Input)
+	{
+		if (VariableName.IsEmpty() || MemberName.IsEmpty() || !Input || !Input->IsConnected())
+		{
+			return;
+		}
+
+		// CompileInput may append its own temporaries, so resolve the value before emitting the
+		// member write that consumes it.
+		const FString ValueText = CompileInput(*Input, TEXT("0.0"));
+		GraphLines.Add(FormatGraphSetStatement(
+			FString::Printf(TEXT("%s.%s"), *VariableName, *MemberName),
+			ValueText));
 	}
 
 	void FDreamShaderGraphDecompiler::RegisterExpressionName(UMaterialExpression* Expression, const FString& Name)
@@ -1274,6 +1413,90 @@ namespace UE::DreamShader::Editor::Private
 			return CacheExpressionValue(Key, CompileNamedRerouteDeclarationValue(NamedRerouteDeclaration, OutputIndex));
 		}
 
+		// Set/GetMaterialAttributes drive their pins through a dynamic FExpressionInput array paired
+		// with a TArray<FGuid>, not through reflected properties, so the generic UE.Expression path
+		// cannot round trip them — generation fails with
+		// "'BaseColor' is not a property on 'MaterialExpressionSetMaterialAttributes'".
+		// Emit the language's native MaterialAttributes syntax instead. MakeMaterialAttributes and
+		// BreakMaterialAttributes need no special case: their inputs are reflected FExpressionInput
+		// properties, so the generic path already handles them.
+		if (UMaterialExpressionSetMaterialAttributes* SetAttributes = Cast<UMaterialExpressionSetMaterialAttributes>(Expression))
+		{
+			// Input 0 is the attribute set being chained onto; inputs 1..N pair with AttributeSetTypes.
+			const TArrayView<FExpressionInput*> SetInputs = SetAttributes->GetInputsView();
+			FExpressionInput* BaseInput = SetInputs.IsValidIndex(0) ? SetInputs[0] : nullptr;
+			const FString BaseText = (BaseInput && BaseInput->IsConnected())
+				? CompileInput(*BaseInput, FString())
+				: FString();
+
+			const FString Name = DeclareMaterialAttributesChain(Expression, BaseText);
+			for (int32 SetIndex = 0; SetIndex < SetAttributes->AttributeSetTypes.Num(); ++SetIndex)
+			{
+				FExpressionInput* ValueInput = SetInputs.IsValidIndex(SetIndex + 1) ? SetInputs[SetIndex + 1] : nullptr;
+				EmitMaterialAttributeMemberWrite(
+					Name,
+					FMaterialAttributeDefinitionMap::GetAttributeName(SetAttributes->AttributeSetTypes[SetIndex]),
+					ValueInput);
+			}
+
+			return CacheExpressionValue(Key, MakeValue(Name, TEXT("MaterialAttributes"), 0, true, false, true));
+		}
+
+		if (UMaterialExpressionGetMaterialAttributes* GetAttributes = Cast<UMaterialExpressionGetMaterialAttributes>(Expression))
+		{
+			const FString BaseText = GetAttributes->MaterialAttributes.IsConnected()
+				? CompileInput(GetAttributes->MaterialAttributes, FString())
+				: FString();
+
+			// Output 0 hands back the whole attribute set; outputs 1..N pair with AttributeGetTypes.
+			if (OutputIndex <= 0)
+			{
+				const FString PassthroughText = BaseText.TrimStartAndEnd().IsEmpty()
+					? DeclareMaterialAttributesChain(Expression, FString())
+					: BaseText;
+				return CacheExpressionValue(Key, MakeValue(PassthroughText, TEXT("MaterialAttributes"), 0, true, false, true));
+			}
+
+			const int32 AttributeIndex = OutputIndex - 1;
+			if (!GetAttributes->AttributeGetTypes.IsValidIndex(AttributeIndex))
+			{
+				Warnings.AddUnique(FString::Printf(
+					TEXT("GetMaterialAttributes node '%s' has no attribute for output %d; emitted a default literal."),
+					*GetAttributes->GetName(),
+					OutputIndex));
+				return MakeDefaultValueForExpressionOutput(Expression, OutputIndex);
+			}
+
+			// A member read needs a plain variable on the left-hand side. Reading never mutates the
+			// chain, so an existing upstream variable can be shared here.
+			FString BaseName = BaseText.TrimStartAndEnd();
+			bool bIsPlainName = !BaseName.IsEmpty();
+			for (const TCHAR Character : BaseName)
+			{
+				if (!FChar::IsAlnum(Character) && Character != TEXT('_'))
+				{
+					bIsPlainName = false;
+					break;
+				}
+			}
+
+			if (!bIsPlainName)
+			{
+				BaseName = DeclareMaterialAttributesChain(nullptr, BaseName);
+			}
+
+			return CacheExpressionValue(
+				Key,
+				MakeValue(
+					FString::Printf(
+						TEXT("%s.%s"),
+						*BaseName,
+						*FMaterialAttributeDefinitionMap::GetAttributeName(GetAttributes->AttributeGetTypes[AttributeIndex])),
+					GetDreamShaderTypeForExpressionOutput(Expression, OutputIndex),
+					GetComponentCountForExpressionOutput(Expression, OutputIndex),
+					true));
+		}
+
 		if (UMaterialExpressionCurveAtlasRowParameter* CurveAtlas = Cast<UMaterialExpressionCurveAtlasRowParameter>(Expression))
 		{
 			TArray<FExpressionCallArgument> Arguments;
@@ -1346,6 +1569,7 @@ namespace UE::DreamShader::Editor::Private
 				TArray<FString> MetadataEntries;
 				AddParameterNameMetadataIfNeeded(MetadataEntries, Name, ScalarParameter->ParameterName);
 				AddParameterMetadata(MetadataEntries, ScalarParameter);
+				AddScalarParameterMetadata(MetadataEntries, ScalarParameter);
 				AddPropertyDeclaration(
 					Name,
 					FString::Printf(
@@ -1354,6 +1578,57 @@ namespace UE::DreamShader::Editor::Private
 						*FormatDreamShaderFloat(ScalarParameter->DefaultValue),
 						*BuildMetadataSuffix(MetadataEntries)));
 				RegisterExpressionName(Expression, Name);
+			}
+			return CacheExpressionValue(Key, MakeValue(Name, TEXT("float"), 1, true));
+		}
+
+		// ChannelMaskParameter derives from VectorParameter but is NOT one: it carries an Input pin
+		// whose value it dot-masks with its one-hot parameter vector. Letting it fall into the
+		// VectorParameter branch below silently drops MaskChannel AND the entire Input subtree —
+		// the parameter then reads as its default constant, which is exactly how MooaToon's whole
+		// Global Mask Map subsystem vanished from a decompile.
+		if (UMaterialExpressionChannelMaskParameter* ChannelMask = Cast<UMaterialExpressionChannelMaskParameter>(Expression))
+		{
+			FString Name;
+			if (const FString* ExistingName = ExpressionNames.Find(Expression))
+			{
+				Name = *ExistingName;
+			}
+			else
+			{
+				Name = MakeUniquePropertyName(ChannelMask->ParameterName.ToString(), TEXT("ChannelMask"));
+				const TCHAR* MaskName = TEXT("Red");
+				switch (ChannelMask->MaskChannel)
+				{
+				case EChannelMaskParameterColor::Green: MaskName = TEXT("Green"); break;
+				case EChannelMaskParameterColor::Blue:  MaskName = TEXT("Blue");  break;
+				case EChannelMaskParameterColor::Alpha: MaskName = TEXT("Alpha"); break;
+				default: break;
+				}
+				TArray<FString> MetadataEntries;
+				AddParameterNameMetadataIfNeeded(MetadataEntries, Name, ChannelMask->ParameterName);
+				AddParameterMetadata(MetadataEntries, ChannelMask);
+				MetadataEntries.Add(FString::Printf(TEXT("MaskChannel=%s"), MaskName));
+				// Emit the one-hot DefaultValue too, so the mask is correct even if the metadata
+				// write does not run the node's PostEditChange MaskChannel->DefaultValue sync.
+				AddPropertyDeclaration(
+					Name,
+					FString::Printf(
+						TEXT("ChannelMaskParameter %s = %s%s;"),
+						*Name,
+						*FormatDreamShaderColor(ChannelMask->DefaultValue),
+						*BuildMetadataSuffix(MetadataEntries)));
+				RegisterExpressionName(Expression, Name);
+			}
+
+			if (ChannelMask->Input.GetTracedInput().Expression)
+			{
+				const FString InputText = CompileInput(ChannelMask->Input, TEXT("0.0"));
+				const FString Temp = AddTemp(
+					TEXT("float"),
+					FString::Printf(TEXT("%s(Input = %s)"), *Name, *InputText),
+					Name + TEXT("_Masked"));
+				return CacheExpressionValue(Key, MakeValue(Temp, TEXT("float"), 1, true));
 			}
 			return CacheExpressionValue(Key, MakeValue(Name, TEXT("float"), 1, true));
 		}

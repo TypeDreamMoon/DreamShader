@@ -218,25 +218,25 @@ namespace UE::DreamShader::Editor::Private
 			OutProperty = { MP_CustomizedUVs7, CMOT_Float2 };
 		}
 #ifdef MOON_ENGINE
-		else if (Matches(TEXT("MooaEncodedAttribute0")))
+		else if (Matches(TEXT("MoonEncodedAttribute0")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute0, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute0, CMOT_Float4 };
 		}
-		else if (Matches(TEXT("MooaEncodedAttribute1")))
+		else if (Matches(TEXT("MoonEncodedAttribute1")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute1, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute1, CMOT_Float4 };
 		}
-		else if (Matches(TEXT("MooaEncodedAttribute2")))
+		else if (Matches(TEXT("MoonEncodedAttribute2")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute2, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute2, CMOT_Float4 };
 		}
-		else if (Matches(TEXT("MooaEncodedAttribute3")))
+		else if (Matches(TEXT("MoonEncodedAttribute3")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute3, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute3, CMOT_Float4 };
 		}
-		else if (Matches(TEXT("MooaEncodedAttribute4")))
+		else if (Matches(TEXT("MoonEncodedAttribute4")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute4, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute4, CMOT_Float4 };
 		}
 #endif
 		else if (Matches(TEXT("Anisotropy")))
@@ -246,6 +246,14 @@ namespace UE::DreamShader::Editor::Private
 		else if (Matches(TEXT("Tangent")))
 		{
 			OutProperty = { MP_Tangent, CMOT_Float3 };
+		}
+		else if (Matches(TEXT("ShadingModel")))
+		{
+			// MP_ShadingModel carries MCT_ShadingModel, not a float vector. CMOT_Float1 is only a
+			// placeholder so the shared plumbing has something to report; the assignment path
+			// special-cases MP_ShadingModel and skips numeric coercion entirely, because the value
+			// has to come from a UMaterialExpressionShadingModel node.
+			OutProperty = { MP_ShadingModel, CMOT_Float1 };
 		}
 		else
 		{
