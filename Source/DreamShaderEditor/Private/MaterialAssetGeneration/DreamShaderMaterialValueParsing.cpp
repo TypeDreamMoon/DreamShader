@@ -250,6 +250,14 @@ namespace UE::DreamShader::Editor::Private
 		{
 			OutProperty = { MP_Tangent, CMOT_Float3 };
 		}
+		else if (Matches(TEXT("ShadingModel")))
+		{
+			// MP_ShadingModel carries MCT_ShadingModel, not a float vector. CMOT_Float1 is only a
+			// placeholder so the shared plumbing has something to report; the assignment path
+			// special-cases MP_ShadingModel and skips numeric coercion entirely, because the value
+			// has to come from a UMaterialExpressionShadingModel node.
+			OutProperty = { MP_ShadingModel, CMOT_Float1 };
+		}
 		else
 		{
 			return false;

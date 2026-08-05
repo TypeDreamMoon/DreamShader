@@ -964,21 +964,36 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		int32 ExpectedComponentCount = 0;
-		if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, ExpectedComponentCount) || ExpectedComponentCount <= 0)
-		{
-			OutError = FString::Printf(TEXT("MaterialAttributes member '%s' cannot be assigned from Graph code."), *MemberName);
-			return false;
-		}
+		// ShadingModel is the one writable attribute that is not a float vector: its pin carries
+		// MCT_ShadingModel and only accepts a UMaterialExpressionShadingModel node, so widening or
+		// masking the value the way every other member is handled would be wrong.
+		const bool bIsShadingModel = ResolvedProperty.Property == MP_ShadingModel;
 
-		FCodeValue CoercedValue;
-		if (!CoerceValueToType(InValue, ExpectedComponentCount, false, CoercedValue, OutError))
+		FCodeValue CoercedValue = InValue;
+		if (!bIsShadingModel)
+		{
+			int32 ExpectedComponentCount = 0;
+			if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, ExpectedComponentCount) || ExpectedComponentCount <= 0)
+			{
+				OutError = FString::Printf(TEXT("MaterialAttributes member '%s' cannot be assigned from Graph code."), *MemberName);
+				return false;
+			}
+
+			if (!CoerceValueToType(InValue, ExpectedComponentCount, false, CoercedValue, OutError))
+			{
+				OutError = FString::Printf(
+					TEXT("MaterialAttributes member '%s' expects %d component(s). %s"),
+					*MemberName,
+					ExpectedComponentCount,
+					*OutError);
+				return false;
+			}
+		}
+		else if (!InValue.Expression || InValue.bIsMaterialAttributes || InValue.bIsTextureObject || InValue.bIsSubstrateMaterial)
 		{
 			OutError = FString::Printf(
-				TEXT("MaterialAttributes member '%s' expects %d component(s). %s"),
-				*MemberName,
-				ExpectedComponentCount,
-				*OutError);
+				TEXT("MaterialAttributes member '%s' must be assigned a ShadingModel node, for example UE.Expression(Class=\"ShadingModel\", ShadingModel=\"MSM_DefaultLit\")."),
+				*MemberName);
 			return false;
 		}
 

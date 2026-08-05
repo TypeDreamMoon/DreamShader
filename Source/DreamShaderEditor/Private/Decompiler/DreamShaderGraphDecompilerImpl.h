@@ -21,12 +21,14 @@
 #include "Engine/Texture.h"
 #include "Interfaces/IPluginManager.h"
 #include "Materials/Material.h"
+#include "Materials/MaterialAttributeDefinitionMap.h"
 #include "Materials/MaterialExpression.h"
 #include "Materials/MaterialExpressionAbs.h"
 #include "Materials/MaterialExpressionAdd.h"
 #include "Materials/MaterialExpressionAppendVector.h"
 #include "Materials/MaterialExpressionCameraVectorWS.h"
 #include "Materials/MaterialExpressionCeil.h"
+#include "Materials/MaterialExpressionChannelMaskParameter.h"
 #include "Materials/MaterialExpressionClamp.h"
 #include "Materials/MaterialExpressionComponentMask.h"
 #include "Materials/MaterialExpressionComment.h"
@@ -37,6 +39,7 @@
 #include "Materials/MaterialExpressionCosine.h"
 #include "Materials/MaterialExpressionCurveAtlasRowParameter.h"
 #include "Materials/MaterialExpressionCustom.h"
+#include "Materials/MaterialExpressionCustomOutput.h"
 #include "Materials/MaterialExpressionDesaturation.h"
 #include "Materials/MaterialExpressionDivide.h"
 #include "Materials/MaterialExpressionDotProduct.h"
@@ -44,6 +47,7 @@
 #include "Materials/MaterialExpressionFrac.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
 #include "Materials/MaterialExpressionFunctionOutput.h"
+#include "Materials/MaterialExpressionGetMaterialAttributes.h"
 #include "Materials/MaterialExpressionIf.h"
 #include "Materials/MaterialExpressionLinearInterpolate.h"
 #include "Materials/MaterialExpressionMaterialFunctionCall.h"
@@ -61,6 +65,7 @@
 #include "Materials/MaterialExpressionSaturate.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionScreenPosition.h"
+#include "Materials/MaterialExpressionSetMaterialAttributes.h"
 #include "Materials/MaterialExpressionSine.h"
 #include "Materials/MaterialExpressionSquareRoot.h"
 #include "Materials/MaterialExpressionStaticComponentMaskParameter.h"
@@ -183,6 +188,14 @@ namespace UE::DreamShader::Editor::Private
 
 		static void AddParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionParameter* Parameter);
 
+		/**
+		 * ScalarParameter-only state that AddParameterMetadata cannot see: the UI block that drives how
+		 * the parameter is presented in a material instance (Numeric slider vs Enumeration dropdown) and
+		 * the CustomPrimitiveData binding. Dropping these silently downgrades an enum-backed parameter
+		 * to a raw float box on the next decompile -> recompile round trip.
+		 */
+		static void AddScalarParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionScalarParameter* Parameter);
+
 		static void AddTextureParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionTextureSampleParameter* Parameter);
 
 		static void AddTextureParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionTextureObjectParameter* Parameter);
@@ -236,6 +249,10 @@ namespace UE::DreamShader::Editor::Private
 		void RegisterExpressionName(UMaterialExpression* Expression, const FString& Name);
 
 		FString AddTempForExpression(UMaterialExpression* Expression, const FString& Type, const FString& ExpressionText, const FString& BaseName);
+
+		FString DeclareMaterialAttributesChain(UMaterialExpression* Expression, const FString& BaseValueText);
+
+		void EmitMaterialAttributeMemberWrite(const FString& VariableName, const FString& MemberName, FExpressionInput* Input);
 
 		FString AddTempWithNameForExpression(UMaterialExpression* Expression, const FString& Type, const FString& ExpressionText, const FString& Name);
 

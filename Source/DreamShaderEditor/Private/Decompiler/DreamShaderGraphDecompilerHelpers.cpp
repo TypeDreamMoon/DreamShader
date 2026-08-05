@@ -525,6 +525,16 @@ namespace UE::DreamShader::Editor::Private
 			return FString::Printf(TEXT("Path(%s, \"%s\")"), RootName, *EscapeDreamShaderString(RelativePath));
 		};
 
+		// Everything below identifies an object by its *package*, which is fine for assets (one
+		// primary object per package) but wrong for native /Script/ packages, where one package holds
+		// every UClass/UENUM in a module. A scalar parameter whose Enumeration points at a C++ enum
+		// (e.g. /Script/Engine.EMoonToonShadingFeature) would otherwise decompile to the bare module
+		// name and resolve to nothing on the way back in, so emit the full object path for those.
+		if (PackageName.StartsWith(TEXT("/Script/"), ESearchCase::IgnoreCase))
+		{
+			return FString::Printf(TEXT("Path(\"%s\")"), *EscapeDreamShaderString(Object->GetPathName()));
+		}
+
 		if (PackageName.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase))
 		{
 			return BuildRootedLiteral(TEXT("Game"), PackageName.Mid(6));
@@ -1238,6 +1248,36 @@ namespace UE::DreamShader::Editor::Private
 			return TEXT("Substrate");
 		}
 #endif
+
+		// Engine forks add their own shading models (MoonEngine's MSM_Toon). The generator resolves
+		// ShadingModel names by reflecting EMaterialShadingModel and stripping the "MSM_" prefix —
+		// see UDreamShaderSettings::BuildDefaultShadingModelMappings — so mirror that here. Without
+		// this, an engine-added model silently decompiles as "DefaultLit" and the round trip
+		// rewrites the material's shading model.
+		if (const UEnum* ShadingModelEnum = StaticEnum<EMaterialShadingModel>())
+		{
+			for (int32 EnumIndex = 0; EnumIndex < ShadingModelEnum->NumEnums(); ++EnumIndex)
+			{
+				const int64 EnumValue = ShadingModelEnum->GetValueByIndex(EnumIndex);
+				if (EnumValue < 0 || EnumValue >= static_cast<int64>(MSM_NUM))
+				{
+					continue;
+				}
+
+				if (!ShadingModels.HasShadingModel(static_cast<EMaterialShadingModel>(EnumValue)))
+				{
+					continue;
+				}
+
+				FString ModelName = ShadingModelEnum->GetNameStringByIndex(EnumIndex);
+				ModelName.RemoveFromStart(TEXT("MSM_"), ESearchCase::CaseSensitive);
+				if (!ModelName.IsEmpty())
+				{
+					return ModelName;
+				}
+			}
+		}
+
 		return TEXT("DefaultLit");
 	}
 
