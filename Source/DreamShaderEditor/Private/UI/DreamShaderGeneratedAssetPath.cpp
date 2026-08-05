@@ -48,6 +48,9 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
+		// Same default the generator applies, so the path shown here is the path that gets written.
+		ApplyDefaultRootFromSourceFile(SourceFilePath, Definition);
+
 		FString PackageName;
 		FString AssetName;
 		return ResolveDreamShaderAssetDestination(Definition.Name, Definition.Root, PackageName, OutObjectPath, AssetName, OutError);

@@ -219,6 +219,75 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
+	void ApplyDefaultRootFromSourceFile(
+		const FString& SourceFilePath,
+		FTextShaderDefinition& Definition,
+		FString* OutFallbackReason)
+	{
+		if (OutFallbackReason != nullptr)
+		{
+			OutFallbackReason->Reset();
+		}
+
+		const UE::DreamShader::FDreamShaderSourceRoot* SourceRoot =
+			UE::DreamShader::FindSourceRootForFile(SourceFilePath);
+		if (SourceRoot == nullptr || SourceRoot->PluginName.IsEmpty())
+		{
+			return;
+		}
+
+		auto DeclaresNoRoot = [](const FString& Root)
+		{
+			// Only an absent (or whitespace-only) Root counts. `Root="/"` resolves to /Game just as
+			// well and is the documented way for a plugin-root file to opt back out of the default.
+			return Root.TrimStartAndEnd().IsEmpty();
+		};
+
+		const bool bNeedsDefault = DeclaresNoRoot(Definition.Root)
+			|| Definition.MaterialFunctions.ContainsByPredicate(
+				[&DeclaresNoRoot](const FTextShaderMaterialFunctionDefinition& FunctionDefinition)
+				{
+					return DeclaresNoRoot(FunctionDefinition.Root);
+				});
+		if (!bNeedsDefault)
+		{
+			return;
+		}
+
+		const FString InferredRoot = FString::Printf(TEXT("Plugin.%s"), *SourceRoot->PluginName);
+
+		// Resolved before it is handed out: a plugin that cannot host content has no mount point to
+		// default to, and /Game -- what every file did before source roots existed -- is the only
+		// answer left. Silently emitting an unresolvable Root would turn a missing attribute into a
+		// compile error the author never wrote.
+		FString ResolvedPackagePath;
+		FString ResolveError;
+		if (!ResolveProjectContentPluginPackageRoot(InferredRoot, SourceRoot->PluginName, ResolvedPackagePath, ResolveError))
+		{
+			if (OutFallbackReason != nullptr)
+			{
+				*OutFallbackReason = FString::Printf(
+					TEXT("'%s' declares no Root= and plugin '%s' cannot host generated content, so its assets go to /Game. %s"),
+					*SourceFilePath,
+					*SourceRoot->PluginName,
+					*ResolveError);
+			}
+			return;
+		}
+
+		if (DeclaresNoRoot(Definition.Root))
+		{
+			Definition.Root = InferredRoot;
+		}
+		for (FTextShaderMaterialFunctionDefinition& FunctionDefinition : Definition.MaterialFunctions)
+		{
+			if (DeclaresNoRoot(FunctionDefinition.Root))
+			{
+				FunctionDefinition.Root = InferredRoot;
+			}
+		}
+	}
+
 	bool ResolveDreamShaderAssetDestination(
 		const FString& AssetName,
 		const FString& Root,

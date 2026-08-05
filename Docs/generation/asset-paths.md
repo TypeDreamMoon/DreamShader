@@ -9,7 +9,7 @@ object path, and a file on disk.
 | :-- | :-- |
 | Applies to | `Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend` — one resolver, identical for all four |
 | Kind | header attributes |
-| Since | `Root="Plugin.X"` — `1.2.0` |
+| Since | `Root="Plugin.X"` — `1.2.0`; the plugin-source-root default — *Unreleased* |
 
 ## Synopsis
 
@@ -61,6 +61,33 @@ Dispatch is on the **first** segment, compared case-insensitively.
 | *(omitted)* | `M_Flat` | `/Game/M_Flat` | `/Game/M_Flat.M_Flat` |
 | `""` | `Materials/M_Flat` | `/Game/Materials/M_Flat` | `/Game/Materials/M_Flat.M_Flat` |
 | `"/"` | `M_Flat` | `/Game/M_Flat` | `/Game/M_Flat.M_Flat` |
+
+#### The plugin source root default
+
+The table above is the **project root's** answer. A source file that lives under a plugin source
+root — `<Plugin>/DShader`, see [Source files](../language/source-files.md#source-roots) — defaults
+instead to that plugin's mount point, exactly as if it had written `Root="Plugin.<PluginName>"`.
+
+| Source file | `Root` | `Name` | Package |
+| :-- | :-- | :-- | :-- |
+| `<Project>/DShader/M.dsm` | *(omitted)* | `M_Flat` | `/Game/M_Flat` |
+| `Plugins/MoonToon/DShader/M.dsm` | *(omitted)* | `M_Flat` | `/MoonToon/M_Flat` |
+| `Plugins/MoonToon/DShader/M.dsm` | `"/"` | `M_Flat` | `/Game/M_Flat` |
+| `Plugins/MoonToon/DShader/M.dsm` | `Game/Legacy` | `M_Flat` | `/Game/Legacy/M_Flat` |
+
+Only an **absent or whitespace-only** `Root` is defaulted, so `Root="/"` (or any explicit spelling)
+is how a plugin-root file opts back into `/Game`. The default is applied per block: a file may leave
+its `Shader` block to the default and pin one `ShaderFunction` to `/Game`.
+
+> [!NOTE]
+> The default is skipped, and the block falls back to `/Game`, when the owning plugin cannot host
+> generated content — it is not a project plugin under `<Project>/Plugins`, is disabled, declares no
+> `CanContainContent`, has no `Content` directory, or is unmounted. A `Warning` naming the plugin and
+> the reason is logged to `LogDreamShader` on compile. An unresolvable inferred `Root` is never
+> emitted as an error, because the author never wrote one.
+
+The default is applied wherever a source file becomes an asset path — generation, the *DreamShader
+Gen* page's target column, and the preview renderer — so all three name the same asset.
 
 ### Branch — `Game`
 

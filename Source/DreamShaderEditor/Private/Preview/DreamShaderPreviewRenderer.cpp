@@ -86,6 +86,10 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
+			// Same default the generator applies, or the preview would look up an object path that
+			// generation never wrote.
+			ApplyDefaultRootFromSourceFile(SourceFilePath, Definition);
+
 			FString PackageName;
 			FString AssetName;
 			return ResolveDreamShaderAssetDestination(Definition.Name, Definition.Root, PackageName, OutObjectPath, AssetName, OutError);
