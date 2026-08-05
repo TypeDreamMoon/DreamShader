@@ -49,12 +49,25 @@
   what UBT's adaptive non-unity does to whatever you are currently editing — failed with
   `error C2061`.
 
+- **Root-qualified imports** — `import "Plugin.MoonToon:Shared/Toon.dsh";` — the one way to cross a
+  root deliberately. The qualifier is `Project`, `Plugin.<Name>` or `Plugins.<Name>` (`/` spells the
+  same as `.`), matched case-insensitively, using the vocabulary `Root=` already has. A qualified
+  specifier tries only the target root's source and packages directories, both containment-checked;
+  the importing file's own root is not consulted.
+
+  The `:` is load-bearing: `Plugin.MoonToon/Shared/Common.dsh` could not be told apart from a
+  relative path through a folder of that name, which would put the resolver back to guessing by scan
+  order. Text before a `:` that does not match a qualifier shape is not treated as one, so
+  `import "C:/Shared/Common.dsh"` keeps failing exactly as it did.
+
+  New diagnostic for a qualifier that parses but names no live root:
+  `DreamShader import '{Specifier}' referenced from '{Path}' names source root '{Qualifier}', which
+  is not a DreamShader source root.`
+
 ### Known gaps
 
 Follow-up work, not regressions:
 
-- There is no syntax for a deliberate cross-root import yet. A plugin that wants to build on the
-  project's shared headers has to vendor them, or the project has to move them into the plugin.
 - The root list is cached and only rebuilt when the *Source Directory* setting or the scan toggle
   changes, or when *DreamShader Gen ▸ Refresh* is pressed — which is what picks up a `DShader`
   folder you just created, or a plugin mounted mid-session. The **watcher** is still registered once

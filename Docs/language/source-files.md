@@ -190,6 +190,7 @@ Runtime substitutions are shown as `{Placeholder}` throughout this table.
 | `DreamShader function file '{Path}' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks.` | a `.dsf` whose text contains `Shader(` |
 | `DreamShader could not read '{Path}'.` | the file exists in the dependency graph but could not be loaded |
 | `DreamShader import '{Specifier}' referenced from '{Path}' could not be resolved.` | see [`import`](import.md) |
+| `DreamShader import '{Specifier}' referenced from '{Path}' names source root '{Qualifier}', which is not a DreamShader source root.` | see [`import`](import.md#crossing-a-root-deliberately) |
 | `DreamShader import cycle detected at '{Path}'.` | see [`import`](import.md) |
 | `A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found.` | the translation unit declares no top-level block |
 | `Only one top-level Shader block is currently supported.` | a second `Shader` block anywhere in the import closure |

@@ -21,7 +21,7 @@ compile and its message is returned as the compile result.
 | :-- | :-- | :-- | :-- |
 | 1 | Normalize path | full path, `NormalizeFilename`, `MakeStandardFilename` | — |
 | 2 | File-kind gate | `.dsh` never generates | `DreamShader header '{File}' does not generate assets directly. Recompile dependent .dsm or .dsf files instead.` |
-| 3 | Load prepared source | recursive `import` inlining into one text | `DreamShader import '{Import}' referenced from '{File}' could not be resolved.` · `DreamShader import cycle detected at '{File}'.` · `DreamShader could not read '{File}'.` |
+| 3 | Load prepared source | recursive `import` inlining into one text | `DreamShader import '{Import}' referenced from '{File}' could not be resolved.` · `DreamShader import '{Import}' referenced from '{File}' names source root '{Qualifier}', which is not a DreamShader source root.` · `DreamShader import cycle detected at '{File}'.` · `DreamShader could not read '{File}'.` |
 | 4 | Content gate | per-file substring scan, applied to each file's own text with its `import` lines blanked | `DreamShader header '{File}' may only declare Function/Namespace/GraphFunction/VirtualFunction blocks and imports.` · `DreamShader function file '{File}' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks.` |
 | 5 | Parse | the whole prepared text, one parse unit | any parse diagnostic — see the [diagnostics index](../diagnostics/index.md) |
 | 6 | Hash | CRC32 of the **prepared** text → the source hash | — |

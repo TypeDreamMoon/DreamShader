@@ -19,15 +19,24 @@ namespace UE::DreamShader::Editor
 		FString& OutResolvedPath,
 		FString& OutError)
 	{
-		if (Private::FDreamShaderDependencyGraphService::ResolveImportPath(CurrentFilePath, ImportSpecifier, OutResolvedPath))
+		FString ResolveError;
+		if (Private::FDreamShaderDependencyGraphService::ResolveImportPath(
+			CurrentFilePath,
+			ImportSpecifier,
+			OutResolvedPath,
+			&ResolveError))
 		{
 			return true;
 		}
 
-		OutError = FString::Printf(
-			TEXT("DreamShader import '%s' referenced from '%s' could not be resolved."),
-			*ImportSpecifier,
-			*CurrentFilePath);
+		// A root-qualified import that named an unknown root says so precisely; everything else is an
+		// ordinary miss, where naming the specifier and the importer is all there is to say.
+		OutError = ResolveError.IsEmpty()
+			? FString::Printf(
+				TEXT("DreamShader import '%s' referenced from '%s' could not be resolved."),
+				*ImportSpecifier,
+				*CurrentFilePath)
+			: ResolveError;
 		return false;
 	}
 

@@ -1,4 +1,5 @@
 #include "Commandlet/DreamShaderCommandletRunner.h"
+#include "DependencyGraph/DreamShaderDependencyGraphService.h"
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderParser.h"
@@ -13,6 +14,7 @@
 #include "Engine/Texture.h"
 #include "HAL/FileManager.h"
 #include "ImageUtils.h"
+#include "Interfaces/IPluginManager.h"
 #include "Misc/App.h"
 #include "RHI.h"
 #include "RenderingThread.h"
@@ -2921,6 +2923,128 @@ bool FDreamShaderGenerateInstanceBackendBaseOverridesTest::RunTest(const FString
 	// The legacy per-instance override route stays untouched: settings live on the base, inherited.
 	TestFalse(TEXT("No BlendMode base-property override on the instance."), Instance->BasePropertyOverrides.bOverride_BlendMode != 0);
 	TestFalse(TEXT("No ShadingModel base-property override on the instance."), Instance->BasePropertyOverrides.bOverride_ShadingModel != 0);
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderSourceRootImportIsolationTest,
+	"DreamShader.Compiler.Imports.SourceRootIsolation",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Locks in the rule the source-root design rests on: an unqualified import never leaves its own
+// root, and the only way across is the explicit `<root>:<path>` form. A regression here would not
+// fail any other test -- it would just quietly let one root shadow another.
+bool FDreamShaderSourceRootImportIsolationTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	// The DreamShader plugin ships no DShader folder, so creating one here manufactures a second
+	// source root without depending on whatever plugins this project happens to have.
+	const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("DreamShader"));
+	if (!TestTrue(TEXT("DreamShader plugin is discoverable."), Plugin.IsValid()))
+	{
+		return false;
+	}
+
+	const FString PluginRootDirectory = UE::DreamShader::NormalizeSourceFilePath(
+		FPaths::Combine(Plugin->GetBaseDir(), TEXT("DShader")));
+	const bool bPluginRootPreexisted = IFileManager::Get().DirectoryExists(*PluginRootDirectory);
+
+	const FString Probe = TEXT("Namespace(Name = \"RootIsolationProbe\") { Function Pass(in float a, out float b) { b = a; } }\n");
+	const FString RelativeProbeName = FString::Printf(TEXT("RootIsolation/%s.dsh"), *MakeUniqueTestAssetName(TEXT("Probe")));
+
+	FString ProjectProbePath;
+	if (!WriteAutomationSourceFile(*this, RelativeProbeName, Probe, ProjectProbePath))
+	{
+		return false;
+	}
+
+	const FString PluginProbePath = UE::DreamShader::NormalizeSourceFilePath(
+		FPaths::Combine(PluginRootDirectory, RelativeProbeName));
+	const FString PluginImporterPath = UE::DreamShader::NormalizeSourceFilePath(
+		FPaths::Combine(PluginRootDirectory, TEXT("RootIsolation"), TEXT("Importer.dsm")));
+
+	IFileManager::Get().MakeDirectory(*FPaths::GetPath(PluginProbePath), true);
+	const bool bWrotePluginProbe =
+		FFileHelper::SaveStringToFile(Probe, *PluginProbePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM)
+		&& FFileHelper::SaveStringToFile(Probe, *PluginImporterPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+
+	// The root list is cached; the folder created above is invisible until it is dropped.
+	UE::DreamShader::RefreshSourceShaderRoots();
+
+	if (TestTrue(TEXT("Plugin probe files were written."), bWrotePluginProbe))
+	{
+		// The project probe's path *relative to the project root*, which is exactly the specifier a
+		// plugin file would have to write if roots fell back to one another.
+		FString ProjectRelativeSpecifier = ProjectProbePath;
+		FPaths::MakePathRelativeTo(ProjectRelativeSpecifier, *(UE::DreamShader::GetSourceShaderDirectory() + TEXT("/")));
+
+		FString Resolved;
+		FString Error;
+
+		TestFalse(
+			TEXT("An unqualified specifier does not reach the project root from a plugin root."),
+			FDreamShaderDependencyGraphService::ResolveImportPath(PluginImporterPath, ProjectRelativeSpecifier, Resolved, &Error));
+		TestTrue(
+			TEXT("An ordinary miss carries no root-specific error."),
+			Error.IsEmpty());
+
+		Resolved.Reset();
+		TestTrue(
+			TEXT("A Project: qualified specifier does reach the project root."),
+			FDreamShaderDependencyGraphService::ResolveImportPath(
+				PluginImporterPath,
+				FString::Printf(TEXT("Project:%s"), *ProjectRelativeSpecifier),
+				Resolved,
+				&Error));
+		TestEqual(TEXT("It resolves to the project probe."), Resolved, ProjectProbePath);
+
+		Resolved.Reset();
+		TestTrue(
+			TEXT("A Plugin.<Name>: qualified specifier reaches that plugin's root from the project."),
+			FDreamShaderDependencyGraphService::ResolveImportPath(
+				ProjectProbePath,
+				FString::Printf(TEXT("Plugin.DreamShader:%s"), *RelativeProbeName),
+				Resolved,
+				&Error));
+		TestEqual(TEXT("It resolves to the plugin probe."), Resolved, PluginProbePath);
+
+		Resolved.Reset();
+		Error.Reset();
+		TestFalse(
+			TEXT("A qualifier naming no live root fails."),
+			FDreamShaderDependencyGraphService::ResolveImportPath(
+				ProjectProbePath,
+				TEXT("Plugin.NotInstalled:Whatever.dsh"),
+				Resolved,
+				&Error));
+		TestTrue(
+			TEXT("...with the dedicated diagnostic."),
+			Error.Contains(TEXT("is not a DreamShader source root")));
+
+		// A Windows drive letter must not be mistaken for a qualifier, or an absolute path would stop
+		// reporting the plain unresolved-import error it always reported.
+		Resolved.Reset();
+		Error.Reset();
+		TestFalse(
+			TEXT("An absolute path is not read as a root qualifier."),
+			FDreamShaderDependencyGraphService::ResolveImportPath(ProjectProbePath, TEXT("C:/Nowhere/Probe.dsh"), Resolved, &Error));
+		TestTrue(
+			TEXT("...and reports no root-specific error."),
+			Error.IsEmpty());
+	}
+
+	DeleteSourceFileForAutomation(ProjectProbePath);
+	DeleteSourceFileForAutomation(PluginProbePath);
+	DeleteSourceFileForAutomation(PluginImporterPath);
+	IFileManager::Get().DeleteDirectory(*FPaths::GetPath(PluginProbePath), false, true);
+	if (!bPluginRootPreexisted)
+	{
+		IFileManager::Get().DeleteDirectory(*PluginRootDirectory, false, true);
+	}
+	UE::DreamShader::RefreshSourceShaderRoots();
 
 	return true;
 }

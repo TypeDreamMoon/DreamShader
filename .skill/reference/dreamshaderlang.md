@@ -257,7 +257,13 @@ float  alpha      = MF_LexUI_RectBlock(MainTexture, OutputIndex=1);
 ```c
 import "Shared/Common.dsh";
 import "Functions/F_Tint.dsf";
+import "Plugin.MoonToon:Shared/Toon.dsh";   // another source root, explicitly
 ```
+
+An unqualified specifier resolves inside the importing file's **own** source root only — the project
+tree for a project file, `<Plugin>/DShader` for a plugin's. Reaching another root needs the
+`<root>:<path>` form, where `<root>` is `Project`, `Plugin.<Name>` or `Plugins.<Name>`. There is no
+implicit fallback between roots in either direction.
 
 The whole closure is inlined into **one** text before parsing. Consequences: at most one `Shader`
 block across the entire closure, and a `.dsh` that imports a `.dsf` full of `ShaderFunction(` blocks
