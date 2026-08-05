@@ -1,5 +1,50 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Added
+
+- **Plugin source roots.** Every enabled plugin that ships a `DShader` folder now contributes its
+  own source root, so a plugin can carry the `.dsm`/`.dsf`/`.dsh` files that build its materials
+  instead of parking them in the project's tree. `Root="Plugin.<Name>"` has been able to *write*
+  assets into a plugin since `1.2.0`; the source half was missing. Discovery, the dependency graph
+  and generate-all pick plugin roots up with no further configuration.
+- *Project Settings ▸ DreamPlugin ▸ Dream Shader ▸ Paths ▸ **Scan Plugin Source Directories***
+  (`bScanPluginSourceDirectories`, default on) turns the plugin scan off.
+
+### Changed
+
+- **Imports never cross roots.** A file resolves its imports against its own root and that root's
+  `Packages` folder only. Two plugins shipping the same relative path can no longer shadow one
+  another, and disabling a plugin cannot silently change what another root's import means. Files
+  under the project root — every file that existed before this release — resolve exactly as they
+  did. A file outside every root (a test fixture, a commandlet `-Source` pointing elsewhere) still
+  falls back to the project root.
+- VirtualFunction sync skips files under a plugin root. Only the project root is writable: a plugin
+  ships its definitions as authored, and the editor no longer rewrites them.
+- A plugin `DShader` folder that overlaps an existing root — which happens when *Source Directory*
+  is pointed at a plugin folder or at something containing one — is ignored with a warning, rather
+  than handing the same file to two owners.
+
+### Fixed
+
+- `DreamShaderMaterialGeneratorPrivate.h` did not include `Engine/EngineTypes.h` despite declaring
+  functions that take `EBlendMode` and `EMaterialShadingModel`. Unity builds pulled the enums in
+  through a neighbouring translation unit; any non-unity compile of a file including it — which is
+  what UBT's adaptive non-unity does to whatever you are currently editing — failed with
+  `error C2061`.
+
+### Known gaps
+
+Follow-up work, not regressions:
+
+- The source-directory watcher still only watches the project root, so edits to a plugin's sources
+  are picked up by a full scan or an explicit compile, not by auto-compile-on-save.
+- A plugin-root `.dsm` with no `Root=` attribute still generates into `/Game`. Defaulting it to the
+  owning plugin's mount point is the next change.
+- There is no syntax for a deliberate cross-root import yet.
+- `DreamShader.code-workspace` still describes the project root only.
+
 ## 1.5.1 - 2026-08-02
 
 Documentation and tooling only. No plugin code changed, so a project on `1.5.0` needs no

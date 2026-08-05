@@ -68,6 +68,11 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="Paths", meta=(RelativeToGameDir))
 	FDirectoryPath GeneratedShaderDirectory;
 
+	UPROPERTY(Config, EditAnywhere, Category="Paths",
+		meta=(DisplayName="Scan Plugin Source Directories",
+			ToolTip="When enabled, every enabled plugin that ships a DShader folder contributes its own source root, so a plugin can carry the .dsm/.dsf/.dsh files that build its materials. Plugin roots are discovered and compiled but never rewritten by the editor -- only the project's own source directory is writable. Imports never cross roots: a file resolves its imports against its own root and that root's Packages folder."))
+	bool bScanPluginSourceDirectories = true;
+
 	// The single compiler knob. DreamShader always generates materials in memory in the editor
 	// (source files are the authoring surface; the editor never writes per-material .uasset files) and
 	// materializes them as persistent assets during cooking — so there is no in-memory on/off toggle.

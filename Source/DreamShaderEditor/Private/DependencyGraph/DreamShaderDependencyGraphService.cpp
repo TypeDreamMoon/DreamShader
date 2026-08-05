@@ -13,37 +13,33 @@ namespace UE::DreamShader::Editor::Private
 	{
 		bool IsPathUnderDirectory(const FString& InPath, const FString& InDirectory)
 		{
-			if (InPath.IsEmpty() || InDirectory.IsEmpty())
-			{
-				return false;
-			}
-
-			const FString Path = UE::DreamShader::NormalizeSourceFilePath(InPath);
-			FString Directory = UE::DreamShader::NormalizeSourceFilePath(InDirectory);
-			Directory.RemoveFromEnd(TEXT("/"));
-
-			return Path.Equals(Directory, ESearchCase::IgnoreCase)
-				|| Path.StartsWith(Directory + TEXT("/"), ESearchCase::IgnoreCase);
+			return UE::DreamShader::IsPathUnderSourceDirectory(InPath, InDirectory);
 		}
 
-		FString GetImportRootDirectoryForFile(const FString& CurrentFilePath)
+		/**
+		 * The directory a file's own-directory-relative import is confined to: the longest of every
+		 * root's source and Packages directories that contains the file. A `../` chain may walk up to
+		 * that boundary and no further. Files outside every root are confined to their own directory.
+		 */
+		FString GetImportBaseDirectoryForFile(const FString& CurrentFilePath)
 		{
-			const TArray<FString> RootDirectories =
+			FString BestBaseDirectory;
+			auto ConsiderBaseDirectory = [&CurrentFilePath, &BestBaseDirectory](const FString& BaseDirectory)
 			{
-				UE::DreamShader::GetSourceShaderDirectory(),
-				UE::DreamShader::GetPackageShaderDirectory()
+				if (IsPathUnderDirectory(CurrentFilePath, BaseDirectory)
+					&& BaseDirectory.Len() > BestBaseDirectory.Len())
+				{
+					BestBaseDirectory = BaseDirectory;
+				}
 			};
 
-			FString BestRootDirectory;
-			for (const FString& RootDirectory : RootDirectories)
+			for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
 			{
-				if (IsPathUnderDirectory(CurrentFilePath, RootDirectory) && RootDirectory.Len() > BestRootDirectory.Len())
-				{
-					BestRootDirectory = RootDirectory;
-				}
+				ConsiderBaseDirectory(Root.Directory);
+				ConsiderBaseDirectory(Root.PackagesDirectory);
 			}
 
-			return BestRootDirectory.IsEmpty() ? FPaths::GetPath(CurrentFilePath) : BestRootDirectory;
+			return BestBaseDirectory.IsEmpty() ? FPaths::GetPath(CurrentFilePath) : BestBaseDirectory;
 		}
 	}
 
@@ -147,11 +143,25 @@ namespace UE::DreamShader::Editor::Private
 			FString RootDirectory;
 		};
 
+		// Imports never cross roots. A plugin's sources resolve against that plugin's own tree, so two
+		// plugins shipping the same relative path cannot shadow one another and a disabled plugin
+		// cannot silently change what another root's import means. A file that belongs to no root at
+		// all -- a test fixture, a commandlet -Source outside the tree -- still resolves against the
+		// project root, which is what it did before roots existed.
+		const UE::DreamShader::FDreamShaderSourceRoot* OwningRoot =
+			UE::DreamShader::FindSourceRootForFile(CurrentFilePath);
+		const FString RootDirectory = OwningRoot != nullptr
+			? OwningRoot->Directory
+			: UE::DreamShader::GetSourceShaderDirectory();
+		const FString PackagesDirectory = OwningRoot != nullptr
+			? OwningRoot->PackagesDirectory
+			: UE::DreamShader::GetPackageShaderDirectory();
+
 		const TArray<FImportCandidate> Candidates =
 		{
-			{ FPaths::Combine(FPaths::GetPath(CurrentFilePath), NormalizedImport), GetImportRootDirectoryForFile(CurrentFilePath) },
-			{ FPaths::Combine(UE::DreamShader::GetSourceShaderDirectory(), NormalizedImport), UE::DreamShader::GetSourceShaderDirectory() },
-			{ FPaths::Combine(UE::DreamShader::GetPackageShaderDirectory(), NormalizedImport), UE::DreamShader::GetPackageShaderDirectory() }
+			{ FPaths::Combine(FPaths::GetPath(CurrentFilePath), NormalizedImport), GetImportBaseDirectoryForFile(CurrentFilePath) },
+			{ FPaths::Combine(RootDirectory, NormalizedImport), RootDirectory },
+			{ FPaths::Combine(PackagesDirectory, NormalizedImport), PackagesDirectory }
 		};
 
 		for (const FImportCandidate& Candidate : Candidates)

@@ -82,9 +82,9 @@ on disk wins.
 
 | # | Candidate | Containment root |
 | :-- | :-- | :-- |
-| 1 | `<directory of the importing file>/<specifier>` | the longer of the source directory and the packages directory that contains the importing file; the importing file's own directory when it is under neither |
-| 2 | `<source directory>/<specifier>` | the source directory |
-| 3 | `<packages directory>/<specifier>` | the packages directory |
+| 1 | `<directory of the importing file>/<specifier>` | the longest source or packages directory, across every root, that contains the importing file; the importing file's own directory when it is under none |
+| 2 | `<owning root's source directory>/<specifier>` | that source directory |
+| 3 | `<owning root's packages directory>/<specifier>` | that packages directory |
 
 | Directory | Default | Project setting |
 | :-- | :-- | :-- |
@@ -95,6 +95,22 @@ The containment comparison is case-insensitive on every platform. Whether a cand
 still goes through an ordinary file-existence check, which follows the file system's own case
 behaviour.
 
+### Roots
+
+Candidates 2 and 3 belong to the **owning root** of the importing file — the source root the file
+sits under. Resolution never leaves it: a `.dsm` under `Plugins/MoonToon/DShader` cannot reach
+`<Project>/DShader` and vice versa, and there is no syntax yet for a deliberate cross-root import.
+
+The rule exists so that adding a plugin cannot change what an existing import means. Were the
+project root a global fallback, two plugins shipping `Shared/Common.dsh` would resolve by scan order,
+and disabling a plugin would silently redirect another root's imports.
+
+A file under **no** root — a test fixture, a commandlet `-Source` pointing outside the tree — takes
+the project's source and packages directories for candidates 2 and 3, which is what every file did
+before roots existed.
+
+See [Source files](source-files.md#source-roots) for the root list and how plugins contribute to it.
+
 The containment check is what stops a specifier from climbing out of the tree. `..` segments are
 resolved before the check, so:
 
@@ -103,8 +119,8 @@ resolved before the check, so:
   roots, so they are skipped by the same check;
 - from a file under `DShader/Packages/@scope/pkg/`, `..` may traverse anywhere inside
   `DShader/Packages`, because that is the containment root chosen for it;
-- for a source file under neither directory, the containment root is its own directory, so no `..`
-  specifier can resolve at all.
+- for a source file under no root's source or packages directory, the containment root is its own
+  directory, so no `..` specifier can resolve through candidate 1 at all.
 
 ### Package-style paths
 

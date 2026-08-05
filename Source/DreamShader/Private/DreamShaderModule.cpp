@@ -75,6 +75,107 @@ namespace UE::DreamShader
 
 			return ConfiguredDirectories;
 		}
+
+		/**
+		 * The root list is cached because building it stats one directory per enabled plugin, and
+		 * discovery calls this in loops. The two inputs that can change mid-session without a plugin
+		 * mount -- the configured source directory and the scan toggle -- are snapshotted and compared,
+		 * so a Project Settings edit still takes effect on the next call.
+		 */
+		struct FSourceRootCache
+		{
+			TArray<FDreamShaderSourceRoot> Roots;
+			FString ProjectDirectory;
+			bool bScannedPlugins = false;
+			bool bInitialized = false;
+		};
+
+		static FSourceRootCache SourceRootCache;
+
+		static FString CanonicalizeRootDirectory(const FString& InDirectory)
+		{
+			FString Result = NormalizeSourceFilePath(InDirectory);
+			Result.RemoveFromEnd(TEXT("/"));
+			return Result;
+		}
+
+		static void RebuildSourceRoots(const FString& InProjectDirectory, bool bInScanPlugins)
+		{
+			SourceRootCache.Roots.Reset();
+			SourceRootCache.ProjectDirectory = InProjectDirectory;
+			SourceRootCache.bScannedPlugins = bInScanPlugins;
+			SourceRootCache.bInitialized = true;
+
+			FDreamShaderSourceRoot& ProjectRoot = SourceRootCache.Roots.AddDefaulted_GetRef();
+			ProjectRoot.Directory = CanonicalizeRootDirectory(InProjectDirectory);
+			ProjectRoot.PackagesDirectory = CanonicalizeRootDirectory(
+				FPaths::Combine(InProjectDirectory, TEXT("Packages")));
+			ProjectRoot.DisplayName = TEXT("Project");
+			ProjectRoot.bIsProjectRoot = true;
+			ProjectRoot.bWritable = true;
+
+			if (!bInScanPlugins)
+			{
+				return;
+			}
+
+			for (const TSharedRef<IPlugin>& Plugin : IPluginManager::Get().GetEnabledPlugins())
+			{
+				const FString CandidateDirectory = CanonicalizeRootDirectory(
+					FPaths::Combine(Plugin->GetBaseDir(), TEXT("DShader")));
+				if (CandidateDirectory.IsEmpty() || !IFileManager::Get().DirectoryExists(*CandidateDirectory))
+				{
+					continue;
+				}
+
+				// Overlapping roots would hand the same file to two owners and make import resolution
+				// depend on scan order. Happens when Source Directory is pointed at a plugin folder, or
+				// at something that contains one.
+				const FDreamShaderSourceRoot* OverlappingRoot = SourceRootCache.Roots.FindByPredicate(
+					[&CandidateDirectory](const FDreamShaderSourceRoot& Existing)
+					{
+						return IsPathUnderSourceDirectory(CandidateDirectory, Existing.Directory)
+							|| IsPathUnderSourceDirectory(Existing.Directory, CandidateDirectory);
+					});
+				if (OverlappingRoot != nullptr)
+				{
+					UE_LOG(
+						LogDreamShader,
+						Warning,
+						TEXT("DreamShader ignored plugin source root '%s' because it overlaps the '%s' root at '%s'."),
+						*CandidateDirectory,
+						*OverlappingRoot->DisplayName,
+						*OverlappingRoot->Directory);
+					continue;
+				}
+
+				FDreamShaderSourceRoot& PluginRoot = SourceRootCache.Roots.AddDefaulted_GetRef();
+				PluginRoot.Directory = CandidateDirectory;
+				PluginRoot.PackagesDirectory = CanonicalizeRootDirectory(
+					FPaths::Combine(CandidateDirectory, TEXT("Packages")));
+				PluginRoot.DisplayName = Plugin->GetName();
+				PluginRoot.PluginName = Plugin->GetName();
+			}
+		}
+
+		static const TArray<FDreamShaderSourceRoot>& GetCachedSourceRoots()
+		{
+			const FString ProjectDirectory = GetConfiguredDirectories().Source;
+
+			const UDreamShaderSettings* Settings = CanReadSettingsObject()
+				? GetDefault<UDreamShaderSettings>()
+				: nullptr;
+			const bool bScanPlugins = Settings ? Settings->bScanPluginSourceDirectories : true;
+
+			if (!SourceRootCache.bInitialized
+				|| SourceRootCache.bScannedPlugins != bScanPlugins
+				|| !SourceRootCache.ProjectDirectory.Equals(ProjectDirectory, ESearchCase::IgnoreCase))
+			{
+				RebuildSourceRoots(ProjectDirectory, bScanPlugins);
+			}
+
+			return SourceRootCache.Roots;
+		}
 	}
 
 	FString GetSourceShaderDirectory()
@@ -85,6 +186,57 @@ namespace UE::DreamShader
 	FString GetPackageShaderDirectory()
 	{
 		return Private::GetConfiguredDirectories().Package;
+	}
+
+	// Game thread only: the returned reference points at a cache that a later call may rebuild.
+	const TArray<FDreamShaderSourceRoot>& GetSourceShaderRoots()
+	{
+		return Private::GetCachedSourceRoots();
+	}
+
+	const FDreamShaderSourceRoot* FindSourceRootForFile(const FString& InPath)
+	{
+		// Roots never overlap (RebuildSourceRoots drops the ones that would), so the longest match is
+		// only a defensive tie-break.
+		const FDreamShaderSourceRoot* BestRoot = nullptr;
+		for (const FDreamShaderSourceRoot& Root : GetSourceShaderRoots())
+		{
+			if (IsPathUnderSourceDirectory(InPath, Root.Directory)
+				&& (BestRoot == nullptr || Root.Directory.Len() > BestRoot->Directory.Len()))
+			{
+				BestRoot = &Root;
+			}
+		}
+
+		return BestRoot;
+	}
+
+	bool IsWritableSourceFilePath(const FString& InPath)
+	{
+		// A path outside every root is an ad-hoc source the caller named explicitly (a commandlet
+		// -Source, a test fixture); it is not the plugin's to protect.
+		const FDreamShaderSourceRoot* Root = FindSourceRootForFile(InPath);
+		return Root == nullptr || Root->bWritable;
+	}
+
+	void RefreshSourceShaderRoots()
+	{
+		Private::SourceRootCache.bInitialized = false;
+	}
+
+	bool IsPathUnderSourceDirectory(const FString& InPath, const FString& InDirectory)
+	{
+		if (InPath.IsEmpty() || InDirectory.IsEmpty())
+		{
+			return false;
+		}
+
+		const FString Path = NormalizeSourceFilePath(InPath);
+		FString Directory = NormalizeSourceFilePath(InDirectory);
+		Directory.RemoveFromEnd(TEXT("/"));
+
+		return Path.Equals(Directory, ESearchCase::IgnoreCase)
+			|| Path.StartsWith(Directory + TEXT("/"), ESearchCase::IgnoreCase);
 	}
 
 	FString GetGeneratedShaderDirectory()

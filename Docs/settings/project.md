@@ -2,7 +2,7 @@
 
 > [DreamShader](../index.md) » [Settings](index.md) » **Project settings**
 
-The project-wide configuration object: thirteen properties under *Project Settings ▸ DreamPlugin ▸
+The project-wide configuration object: fourteen properties under *Project Settings ▸ DreamPlugin ▸
 Dream Shader*, persisted to the project's `DefaultEngine.ini`.
 
 | | |
@@ -36,6 +36,7 @@ Every configurable property, grouped by the category it appears under in the pan
 | Mappings | Material Domain Mappings | `MaterialDomainMappings` | `TMap<FString, EMaterialDomain>` | *empty* | Extra or overriding spellings for `MaterialDomain` / `Domain`. |
 | Paths | Source Directory | `SourceDirectory` | `FDirectoryPath` | `DShader` | Root scanned for `.dsm` / `.dsf` / `.dsh` sources. Empty falls back to `DShader`; a relative path resolves against the project directory. `<Source>/Packages` is derived from it. |
 | Paths | Generated Shader Directory | `GeneratedShaderDirectory` | `FDirectoryPath` | `Intermediate/DreamShader/GeneratedShaders` | Where the generated `.ush` include is written and the virtual shader directory is mapped. Empty falls back to the default. |
+| Paths | **Scan Plugin Source Directories** | `bScanPluginSourceDirectories` | `bool` | `true` | When on, every enabled plugin that has a `DShader` folder contributes a source root of its own. Off leaves the project's *Source Directory* as the only root. |
 | Compiler | **Default Compiler Backend** | `DefaultBackend` | `EDreamShaderDefaultBackend` | `ThinCustom` | Backend for a source file that does not set `Settings = { Backend = … }`. Changing it regenerates every source file in memory. |
 | Compiler | **Show In-Memory Materials In Content Browser** | `bShowInMemoryMaterialsInContentBrowser` | `bool` | `false` | When off, memory-only DreamShader instances report themselves as non-assets and disappear from the Content Browser, asset-registry enumeration and save pickers. Read live, on every query. |
 | Compiler | Auto Compile On Save | `bAutoCompileOnSave` | `bool` | `true` | When off, the source-directory watcher ignores file changes entirely. |
@@ -60,6 +61,14 @@ Full behaviour, including how a per-file `Backend` setting overrides this, is on
 [Backend](backend.md#precedence).
 
 ## Verbatim tooltips
+
+*Scan Plugin Source Directories*:
+
+> When enabled, every enabled plugin that ships a DShader folder contributes its own source root, so
+> a plugin can carry the .dsm/.dsf/.dsh files that build its materials. Plugin roots are discovered
+> and compiled but never rewritten by the editor -- only the project's own source directory is
+> writable. Imports never cross roots: a file resolves its imports against its own root and that
+> root's Packages folder.
 
 *Default Compiler Backend*:
 

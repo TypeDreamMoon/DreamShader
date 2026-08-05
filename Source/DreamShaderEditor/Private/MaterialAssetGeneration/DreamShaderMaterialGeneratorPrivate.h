@@ -3,6 +3,9 @@
 #include "CoreMinimal.h"
 #include "DreamShaderTypes.h"
 
+// EBlendMode / EMaterialShadingModel, used by the resolver declarations below. Unity builds happened
+// to pull these in through a neighbouring TU; a non-unity compile of this header does not.
+#include "Engine/EngineTypes.h"
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionObjectPositionWS.h"
 #include "Materials/MaterialExpressionTransform.h"
