@@ -117,6 +117,11 @@ file targets the project root.
 The source-directory watcher registers one watch per root, so *Auto Compile On Save* fires for a
 plugin's sources exactly as it does for the project's.
 
+> [!NOTE]
+> The root list is cached. A `DShader` folder created while the editor is open appears when
+> *DreamShader Gen ▸ Refresh* is pressed; its **watch**, registered once at startup, attaches on the
+> next editor start, so that root's *Auto Compile On Save* begins working then.
+
 A file under a plugin root that declares no `Root=` defaults to **that plugin's mount point** rather
 than to `/Game` — a `.dsm` in `Plugins/MoonToon/DShader` generates into `/MoonToon` with no attribute
 at all. Write `Root="/"` to opt back into `/Game`. See

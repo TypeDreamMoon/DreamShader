@@ -285,6 +285,11 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderGenPage::Refresh()
 	{
+		// Creating <Plugin>/DShader is the first thing anyone does with plugin sources, and the root
+		// list is cached, so without this the folder stays invisible until the next editor start.
+		// Cheap next to the recursive scans and the graph rebuild below.
+		UE::DreamShader::RefreshSourceShaderRoots();
+
 		Items.Reset();
 
 		TArray<FString> SourceFiles;

@@ -56,8 +56,10 @@ Follow-up work, not regressions:
 - There is no syntax for a deliberate cross-root import yet. A plugin that wants to build on the
   project's shared headers has to vendor them, or the project has to move them into the plugin.
 - The root list is cached and only rebuilt when the *Source Directory* setting or the scan toggle
-  changes. A plugin mounted mid-session needs an editor restart (or a call to
-  `RefreshSourceShaderRoots()`) before its sources appear.
+  changes, or when *DreamShader Gen ▸ Refresh* is pressed — which is what picks up a `DShader`
+  folder you just created, or a plugin mounted mid-session. The **watcher** is still registered once
+  at startup, so *Auto Compile On Save* for a root that appeared mid-session starts working on the
+  next editor start.
 
 ## 1.5.1 - 2026-08-02
 
