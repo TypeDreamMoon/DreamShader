@@ -217,26 +217,29 @@ namespace UE::DreamShader::Editor::Private
 		{
 			OutProperty = { MP_CustomizedUVs7, CMOT_Float2 };
 		}
-#ifdef MOON_ENGINE
-		else if (Matches(TEXT("MooaEncodedAttribute0")))
+#if DREAMSHADER_WITH_MOON_ENGINE
+		// Both spellings resolve: the engine renamed these from Mooa to Moon, and sources written
+		// before that rename -- decompiled MooaToon material functions, for one -- still say Mooa.
+		// Only the Moon spelling is ever emitted; see the decompiler's property-name table.
+		else if (Matches(TEXT("MoonEncodedAttribute0")) || Matches(TEXT("MooaEncodedAttribute0")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute0, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute0, CMOT_Float4 };
 		}
-		else if (Matches(TEXT("MooaEncodedAttribute1")))
+		else if (Matches(TEXT("MoonEncodedAttribute1")) || Matches(TEXT("MooaEncodedAttribute1")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute1, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute1, CMOT_Float4 };
 		}
-		else if (Matches(TEXT("MooaEncodedAttribute2")))
+		else if (Matches(TEXT("MoonEncodedAttribute2")) || Matches(TEXT("MooaEncodedAttribute2")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute2, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute2, CMOT_Float4 };
 		}
-		else if (Matches(TEXT("MooaEncodedAttribute3")))
+		else if (Matches(TEXT("MoonEncodedAttribute3")) || Matches(TEXT("MooaEncodedAttribute3")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute3, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute3, CMOT_Float4 };
 		}
-		else if (Matches(TEXT("MooaEncodedAttribute4")))
+		else if (Matches(TEXT("MoonEncodedAttribute4")) || Matches(TEXT("MooaEncodedAttribute4")))
 		{
-			OutProperty = { MP_MooaEncodedAttribute4, CMOT_Float4 };
+			OutProperty = { MP_MoonEncodedAttribute4, CMOT_Float4 };
 		}
 #endif
 		else if (Matches(TEXT("Anisotropy")))
