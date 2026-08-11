@@ -163,7 +163,7 @@ namespace UE::DreamShader::Editor::Private
 
 		// Registered unconditionally and gated inside on the LIVE setting: caching the flag here
 		// made a mid-session Project Settings toggle silently ineffective until the next restart.
-		PostEngineInitHandle = FCoreDelegates::GetOnPostEngineInit().AddSP(
+		PostEngineInitHandle = DREAMSHADER_POST_ENGINE_INIT_DELEGATE().AddSP(
 			AsShared(),
 			&FDreamShaderEditorBridge::HandlePostEngineInit);
 		SettingsChangedHandle = FCoreUObjectDelegates::OnObjectPropertyChanged.AddSP(
@@ -244,7 +244,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (PostEngineInitHandle.IsValid())
 		{
-			FCoreDelegates::GetOnPostEngineInit().Remove(PostEngineInitHandle);
+			DREAMSHADER_POST_ENGINE_INIT_DELEGATE().Remove(PostEngineInitHandle);
 			PostEngineInitHandle.Reset();
 		}
 

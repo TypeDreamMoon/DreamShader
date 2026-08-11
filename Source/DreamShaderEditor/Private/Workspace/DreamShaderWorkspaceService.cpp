@@ -979,6 +979,36 @@ namespace UE::DreamShader::Editor::Private
 		WriteSettingsMappingsToBridgeDatabase(MappingEntries);
 	}
 
+	// Whether it is safe to ask this expression class's CDO for its input value types.
+	//
+	// UMaterialExpressionAggregate::GetInputValueType routes pin 0 through
+	// UMaterialAggregate::GetMaterialAttributes(), a lazy static that builds one aggregate attribute
+	// per material property. With Substrate enabled that list includes MP_FrontMaterial, whose value
+	// type is MCT_Substrate -- and before UE 5.8 MaterialValueTypeToMaterialAggregateAttributeType has
+	// no case for it and checkf(false)s on its default branch. The check fires inside the engine call,
+	// so there is no return value to inspect and nothing to catch: the only way to survive it is not to
+	// make the call. This manifest is exported during editor startup, which is why a Substrate project
+	// on 5.7 died on launch with the plugin enabled and started fine without it.
+	//
+	// Cost of skipping: those inputs keep their reflected property type name instead of the engine's
+	// value-type name, for one expression class, on engines that predate the fix.
+	//
+	// Looked up by path rather than StaticClass() because the class does not exist on every engine
+	// version this plugin supports, and a null result correctly means "nothing to avoid".
+	static bool CanQueryExpressionInputValueTypes(const UClass* Class)
+	{
+		if constexpr (DREAMSHADER_MATERIAL_AGGREGATE_HANDLES_SUBSTRATE)
+		{
+			return true;
+		}
+		else
+		{
+			static const UClass* AggregateExpressionClass =
+				FindObject<UClass>(nullptr, TEXT("/Script/Engine.MaterialExpressionAggregate"));
+			return !AggregateExpressionClass || !Class->IsChildOf(AggregateExpressionClass);
+		}
+	}
+
 	void FDreamShaderWorkspaceService::ExportMaterialExpressionManifest()
 	{
 		const FString ManifestPath = GetMaterialExpressionManifestFilePath();
@@ -1010,6 +1040,10 @@ namespace UE::DreamShader::Editor::Private
 			// Non-const: GetInputType/GetInputValueType are non-const virtuals on UMaterialExpression.
 			UMaterialExpression* DefaultExpression = Cast<UMaterialExpression>(Class->GetDefaultObject(false));
 
+			// Asking some CDOs for an input type takes the editor down rather than returning something
+			// we could validate, so the decision has to be made per class, before the call.
+			const bool bCanQueryInputValueTypes = CanQueryExpressionInputValueTypes(Class);
+
 			TArray<TSharedPtr<FJsonValue>> PropertyValues;
 			TArray<TSharedPtr<FJsonValue>> InputValues;
 			int32 NextInputIndex = 0;
@@ -1023,7 +1057,7 @@ namespace UE::DreamShader::Editor::Private
 
 				const bool bIsInput = UE::DreamShader::Editor::Private::IsMaterialExpressionInputProperty(Property);
 				FString PropertyType = GetReflectedPropertyTypeName(Property);
-				if (bIsInput && DefaultExpression)
+				if (bIsInput && DefaultExpression && bCanQueryInputValueTypes)
 				{
 #if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
 					const uint64 ValueTypeMask = static_cast<uint64>(DefaultExpression->GetInputValueType(NextInputIndex));

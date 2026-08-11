@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Misc/CoreDelegates.h"
 #include "Runtime/Launch/Resources/Version.h"
 
 #ifndef DREAMSHADER_UE_MAJOR
@@ -34,3 +35,27 @@
 #else
 #define DREAMSHADER_ALLOW_SHRINKING_NO false
 #endif
+
+// UE 5.8 added FCoreDelegates::GetOnPostEngineInit() and deprecated the OnPostEngineInit data member
+// it replaces; 5.7 and earlier only have the member, so naming either one directly breaks the other
+// engine (a hard compile error going back, a deprecation warning going forward). One accessor keeps
+// the version test here instead of at every subscribe/unsubscribe site.
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
+#define DREAMSHADER_POST_ENGINE_INIT_DELEGATE() FCoreDelegates::GetOnPostEngineInit()
+#else
+#define DREAMSHADER_POST_ENGINE_INIT_DELEGATE() FCoreDelegates::OnPostEngineInit
+#endif
+
+// EThumbnailPrimType gained TPT_ShaderBall in UE 5.8. Earlier engines stop at TPT_Cylinder, so the
+// shaderball preview falls back to the sphere -- the same shape ResolvePreviewPrimitiveType already
+// uses for an unrecognized mesh selector.
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
+#define DREAMSHADER_THUMBNAIL_PRIM_SHADERBALL TPT_ShaderBall
+#else
+#define DREAMSHADER_THUMBNAIL_PRIM_SHADERBALL TPT_Sphere
+#endif
+
+// UE 5.7's MaterialValueTypeToMaterialAggregateAttributeType (MaterialAggregate.cpp) has no case for
+// MCT_Substrate and checkf(false)s on its default branch. 5.8 added the missing case, so this is a
+// 5.7-and-earlier engine defect, not something the caller can validate around.
+#define DREAMSHADER_MATERIAL_AGGREGATE_HANDLES_SUBSTRATE DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)

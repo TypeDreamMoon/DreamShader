@@ -46,7 +46,7 @@ public:
 			{
 				// MaterialEditingLibrary accesses editor subsystems that are not ready while startup
 				// modules are loading. Generate after engine initialization but before commandlet Main.
-				CookPostEngineInitHandle = FCoreDelegates::GetOnPostEngineInit().AddRaw(
+				CookPostEngineInitHandle = DREAMSHADER_POST_ENGINE_INIT_DELEGATE().AddRaw(
 					this,
 					&FDreamShaderEditorModule::HandlePostEngineInitForCook);
 			}
@@ -68,7 +68,7 @@ public:
 	{
 		if (CookPostEngineInitHandle.IsValid())
 		{
-			FCoreDelegates::GetOnPostEngineInit().Remove(CookPostEngineInitHandle);
+			DREAMSHADER_POST_ENGINE_INIT_DELEGATE().Remove(CookPostEngineInitHandle);
 			CookPostEngineInitHandle.Reset();
 		}
 

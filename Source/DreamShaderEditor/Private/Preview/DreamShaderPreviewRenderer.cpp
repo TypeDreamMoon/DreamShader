@@ -115,7 +115,8 @@ namespace UE::DreamShader::Editor::Private
 			}
 			if (Mesh.Equals(TEXT("shaderball"), ESearchCase::IgnoreCase))
 			{
-				return TPT_ShaderBall;
+				// TPT_ShaderBall only exists from UE 5.8 on; older engines get the sphere.
+				return DREAMSHADER_THUMBNAIL_PRIM_SHADERBALL;
 			}
 			return TPT_Sphere;
 		}
