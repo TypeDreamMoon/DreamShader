@@ -373,6 +373,33 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader in-memory material generation complete: %d succeeded, %d failed."), SuccessCount, FailCount);
+
+		// A ThinCustom/Instance-backend material that is hiding itself reports "Generated ... (virtual)"
+		// like any other and then cannot be found anywhere — no Content Browser tile, no registry hit,
+		// no folder (AssetCreated no-ops on !IsAsset(), so it does not register its path either). That
+		// reads as a generation failure. Name the count and the way out once per pass so a successful
+		// build is never mistaken for a lost asset. Graph-backend materials are always visible and are
+		// deliberately not counted here.
+		if (!GetDefault<UDreamShaderSettings>()->bShowInMemoryMaterialsInContentBrowser)
+		{
+			int32 HiddenCount = 0;
+			for (TObjectIterator<UDreamShaderMaterialInstance> It; It; ++It)
+			{
+				const UDreamShaderMaterialInstance* Instance = *It;
+				if (IsValid(Instance) && Instance->GetPackage()->HasAnyPackageFlags(PKG_NewlyCreated))
+				{
+					++HiddenCount;
+				}
+			}
+
+			if (HiddenCount > 0)
+			{
+				UE_LOG(LogDreamShader, Display,
+					TEXT("  %d of them are memory-only ThinCustom materials hidden from the Content Browser and the asset registry (their folders will not appear either). ")
+					TEXT("Enable Tools > DreamShader > Show In-Memory Materials to browse them, or set Backend = \"Graph\" on a source to make it always visible."),
+					HiddenCount);
+			}
+		}
 	}
 
 	void FDreamShaderEditorBridge::QueueSourceFile(const FString& SourceFilePath)
@@ -783,7 +810,7 @@ namespace UE::DreamShader::Editor::Private
 			Section.AddMenuEntry(
 				TEXT("DreamShader.ToggleShowInMemoryMaterials"),
 				LOCTEXT("DreamShaderToggleShowInMemoryMaterialsLabel", "Show In-Memory Materials"),
-				LOCTEXT("DreamShaderToggleShowInMemoryMaterialsTooltip", "Show memory-only DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. While shown, an explicit Save on one would persist it to disk (the shadow warning and Clean command cover recovery)."),
+				LOCTEXT("DreamShaderToggleShowInMemoryMaterialsTooltip", "Show memory-only ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials and are always visible, so this toggle does not affect them. While shown, an explicit Save on one would persist it to disk (the shadow warning and Clean command cover recovery)."),
 				FSlateIcon(),
 				FUIAction(
 					FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::ToggleShowInMemoryMaterialsInContentBrowser),

@@ -5,6 +5,7 @@
 #include "DreamShaderVersionCompat.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetViewUtils.h"
 #include "Factories/MaterialFactoryNew.h"
 #include "Interfaces/IPluginManager.h"
 #include "Materials/Material.h"
@@ -375,6 +376,53 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
+	// Publish a freshly created generated asset to the editor's discovery surfaces.
+	//
+	// This runs for IN-MEMORY generation too, not just the persist path. The Content Browser's folder
+	// tree and the registry's recursive path expansion both read the registry path tree, and for a
+	// package with no file on disk the only thing that populates it is AssetCreated ->
+	// FAssetRegistryImpl::AddAssetPath. Skipping it meant any Shader(Name=...) naming a folder that no
+	// on-disk asset already occupied generated a material that exists and renders but that the browser
+	// has no route to: the folder never appeared, so nothing ever queried that package path, so the
+	// live-object enumeration that would have found it (it only tests IsAsset() plus a package-path
+	// match) was never asked. That is why the same source worked verbatim under an existing folder and
+	// vanished the moment a new folder segment was inserted. AssetCreated also broadcasts AssetAdded,
+	// so the tile appears immediately instead of on the next re-enumeration.
+	//
+	// AssetCreated alone is NOT enough for an in-memory folder. It adds the path and broadcasts, but it
+	// never calls AddAssetData -- in-memory assets never enter the registry's State, which is the
+	// on-disk cache. IAssetRegistry::HasAssets reads State, so a folder holding only in-memory
+	// materials reports empty forever and the Content Browser drops it the moment "Show Empty Folders"
+	// is off (UContentBrowserAssetDataSource::HideFolderIfEmpty). Measured, not inferred: an on-disk
+	// material reports STATE=true while a generated in-memory material reports STATE=false at the same
+	// moment its folder and tile are on screen. AssetViewUtils::OnAlwaysShowPath is the engine's own
+	// answer to exactly this -- it stamps EContentBrowserFolderAttributes::AlwaysVisible, which
+	// IsFolderVisible short-circuits on before it ever consults emptiness, and it walks up to the
+	// parents itself so one call covers a whole new chain of folders. It is the same call the Content
+	// Browser makes for a folder the user creates by hand, which is likewise empty at creation.
+	//
+	// Ordering is safe: generation runs off FCoreDelegates::OnPostEngineInit, which fires after the
+	// Default loading phase, and UContentBrowserAssetDataSource subscribes to the delegate in its
+	// Default-phase StartupModule -- so the listener is always bound before the first broadcast.
+	//
+	// In-memory hiding still wins where it applies: AssetCreated early-outs on !IsAsset(), so a hidden
+	// memory-only UDreamShaderMaterialInstance registers nothing, and the IsAsset() test here keeps us
+	// from force-showing a folder whose only occupant is invisible.
+	static void PublishGeneratedAsset(UObject* GeneratedAsset, const FString& PackageName, const bool bTransient)
+	{
+		if (!GeneratedAsset)
+		{
+			return;
+		}
+
+		FAssetRegistryModule::AssetCreated(GeneratedAsset);
+
+		if (bTransient && GeneratedAsset->IsAsset())
+		{
+			AssetViewUtils::OnAlwaysShowPath().Broadcast(FPackageName::GetLongPackagePath(PackageName));
+		}
+	}
+
 	bool CreateOrReuseMaterial(const FTextShaderDefinition& Definition, UMaterial*& OutMaterial, FString& OutError, const bool bTransient)
 	{
 		FString PackageName;
@@ -440,10 +488,9 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		if (!bTransient)
-		{
-			FAssetRegistryModule::AssetCreated(OutMaterial);
-		}
+		// A Graph-backend UMaterial has no IsAsset() override, so it was already visible under existing
+		// folders; publishing only makes the registry and the folder tree agree with that.
+		PublishGeneratedAsset(OutMaterial, PackageName, bTransient);
 		return true;
 	}
 
@@ -492,10 +539,11 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		if (!bTransient)
-		{
-			FAssetRegistryModule::AssetCreated(OutInstance);
-		}
+		// Self-limiting rather than redundant here: UDreamShaderMaterialInstance::IsAsset() is false
+		// while the package is PKG_NewlyCreated and Show In-Memory Materials is off, so a hidden
+		// instance publishes neither itself nor its folder. Both appear together when the toggle flips
+		// and re-runs AssetCreated (FDreamShaderEditorBridge::ToggleShowInMemoryMaterialsInContentBrowser).
+		PublishGeneratedAsset(OutInstance, PackageName, bTransient);
 		return true;
 	}
 
@@ -583,10 +631,9 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		if (!bTransient)
-		{
-			FAssetRegistryModule::AssetCreated(OutFunction);
-		}
+		// An in-memory function whose Name points at a not-yet-existing folder is otherwise unreachable
+		// from the Content Browser, same as a material.
+		PublishGeneratedAsset(OutFunction, PackageName, bTransient);
 		return true;
 	}
 }

@@ -83,7 +83,7 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category="Compiler",
 		meta=(DisplayName="Show In-Memory Materials In Content Browser",
-			ToolTip="When enabled, the memory-only DreamShader materials appear in the Content Browser like unsaved assets. Disabled by default: the source files are the intended authoring surface, and hiding the materials also prevents accidental Save actions from materializing them to disk."))
+			ToolTip="Applies to the ThinCustom/Instance backend only -- it is the only one that can hide itself, via UDreamShaderMaterialInstance::IsAsset. When enabled, those memory-only materials appear in the Content Browser like unsaved assets. Disabled by default: the source files are the intended authoring surface, and hiding the materials also prevents accidental Save actions from materializing them to disk. Graph-backend materials are plain UMaterials with no way to opt out of asset enumeration, so they are always visible and this setting does not affect them."))
 	bool bShowInMemoryMaterialsInContentBrowser = false;
 
 	UPROPERTY(Config, EditAnywhere, Category="Compiler")
