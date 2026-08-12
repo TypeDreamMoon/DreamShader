@@ -21,6 +21,7 @@ namespace UE::DreamShader::Editor::Private
 	public:
 		void Startup();
 		void Shutdown();
+		const TArray<FDreamShaderDiagnosticRecord>* GetDiagnosticsForSource(const FString& SourceFilePath) const { return DiagnosticsStore.FindDiagnostics(SourceFilePath); }
 
 	private:
 		static FString GetBridgeDirectory();
@@ -90,4 +91,6 @@ namespace UE::DreamShader::Editor::Private
 		bool bIsShuttingDown = false;
 		bool bMenusRegistered = false;
 	};
+
+	FDreamShaderEditorBridge* GetDreamShaderEditorBridge();
 }

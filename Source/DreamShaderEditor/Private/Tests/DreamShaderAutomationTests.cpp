@@ -44,6 +44,7 @@
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "ObjectTools.h"
+#include "Diagnostics/DreamShaderTextWireUtils.h"
 #include "UObject/UObjectGlobals.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -418,15 +419,15 @@ bool FDreamShaderSourceHashSkipTest::RunTest(const FString& Parameters)
 		return false;
 	}
 
-	FString SecondMessage;
+	FText SecondMessage;
 	const bool bSkipped = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, SecondMessage, false);
-	if (!TestTrue(FString::Printf(TEXT("Unchanged material generation succeeds: %s"), *SecondMessage), bSkipped))
+	if (!TestTrue(FString::Printf(TEXT("Unchanged material generation succeeds: %s"), *UE::DreamShader::Editor::Private::ToInvariantWireString(SecondMessage)), bSkipped))
 	{
 		return false;
 	}
 	TestTrue(
-		FString::Printf(TEXT("Unchanged source is skipped: %s"), *SecondMessage),
-		SecondMessage.Contains(TEXT("source hash is unchanged"), ESearchCase::IgnoreCase));
+		FString::Printf(TEXT("Unchanged source is skipped: %s"), *UE::DreamShader::Editor::Private::ToInvariantWireString(SecondMessage)),
+		UE::DreamShader::Editor::Private::ToInvariantWireString(SecondMessage).Contains(TEXT("source hash is unchanged"), ESearchCase::IgnoreCase));
 	return true;
 }
 

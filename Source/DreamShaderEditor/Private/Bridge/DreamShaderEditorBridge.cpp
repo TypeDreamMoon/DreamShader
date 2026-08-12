@@ -2,6 +2,7 @@
 
 #include "Bridge/DreamShaderPreviewWebSocketServer.h"
 #include "DreamShaderCompileService.h"
+#include "Diagnostics/DreamShaderTextWireUtils.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Decompiler/DreamShaderGraphDecompiler.h"
@@ -608,11 +609,11 @@ namespace UE::DreamShader::Editor::Private
 					FDreamShaderPreviewRenderer::WritePreviewResult(PreviewResult, bPreviewSucceeded ? TEXT("ready") : TEXT("error"), RequestId);
 					if (bPreviewSucceeded)
 					{
-						UE_LOG(LogDreamShader, Display, TEXT("DreamShader preview: %s"), *PreviewResult.Message);
+						UE_LOG(LogDreamShader, Display, TEXT("DreamShader preview: %s"), *PreviewResult.Message.ToString());
 					}
 					else
 					{
-						UE_LOG(LogDreamShader, Error, TEXT("DreamShader preview: %s"), *PreviewResult.Message);
+						UE_LOG(LogDreamShader, Error, TEXT("DreamShader preview: %s"), *PreviewResult.Message.ToString());
 					}
 				}
 			}
@@ -653,7 +654,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			ClearDiagnosticsForSourceAndDependencies(SourceFilePath);
 			UpdateDiagnosticsFile();
-			UE_LOG(LogDreamShader, Display, TEXT("%s"), *Result.Message);
+			UE_LOG(LogDreamShader, Display, TEXT("%s"), *ToInvariantWireString(Result.Message));
 			return;
 		}
 
@@ -662,7 +663,7 @@ namespace UE::DreamShader::Editor::Private
 		ClearDiagnosticsForSourceAndDependencies(SourceFilePath);
 		SetDiagnostics(SourceFilePath, MoveTemp(Diagnostics));
 		UpdateDiagnosticsFile();
-		UE_LOG(LogDreamShader, Error, TEXT("%s"), *Result.Message);
+		UE_LOG(LogDreamShader, Error, TEXT("%s"), *ToInvariantWireString(Result.Message));
 	}
 
 	void FDreamShaderEditorBridge::OnMaterialCompilationFinished(UMaterialInterface* MaterialInterface)
@@ -735,18 +736,30 @@ namespace UE::DreamShader::Editor::Private
 					const bool bHasParsedLocation = FDreamShaderDiagnosticsStore::TryParseErrorLocation(RawError, ParsedLocation);
 					const bool bMapsToDreamShaderSource = bHasParsedLocation && UE::DreamShader::IsDreamShaderSourceFile(ParsedLocation.FilePath);
 
-					const FString DisplayMessage = FString::Printf(
-						TEXT("[%s / %s] %s"),
-						*ShaderPlatformLabel,
-						*QualityLabel,
-						*(bHasParsedLocation ? ParsedLocation.Message : GetFirstMeaningfulErrorLine(RawError)));
+					// ParsedLocation.Message is FText (dynamic error text); the platform/quality labels
+					// are dynamic FStrings. The LOCTEXT pattern is the source-language literal, so the
+					// funnel serializes an English "[platform / quality] message" regardless of culture.
+					FText ErrorText;
+					if (bHasParsedLocation)
+					{
+						ErrorText = ParsedLocation.Message;
+					}
+					else
+					{
+						ErrorText = FText::FromString(GetFirstMeaningfulErrorLine(RawError));
+					}
+					const FText DisplayMessage = FText::Format(
+						LOCTEXT("MaterialCompileErrorHeader", "[{0} / {1}] {2}"),
+						FText::FromString(ShaderPlatformLabel),
+						FText::FromString(QualityLabel),
+						ErrorText);
 
 					const FString DeduplicationKey = FString::Printf(
 						TEXT("%s|%s|%s|%s|%d|%d"),
 						*SourceFilePath,
 						*ShaderPlatformLabel,
 						*QualityLabel,
-						*DisplayMessage,
+						*DisplayMessage.ToString(),
 						bMapsToDreamShaderSource ? ParsedLocation.Line : 1,
 						bMapsToDreamShaderSource ? ParsedLocation.Column : 1);
 					if (SeenDiagnosticKeys.Contains(DeduplicationKey))
@@ -758,7 +771,8 @@ namespace UE::DreamShader::Editor::Private
 					FDreamShaderDiagnosticRecord& Diagnostic = Diagnostics.AddDefaulted_GetRef();
 					Diagnostic.FilePath = bMapsToDreamShaderSource ? ParsedLocation.FilePath : SourceFilePath;
 					Diagnostic.Message = DisplayMessage;
-					Diagnostic.Detail = RawError;
+					// RawError is dynamic shader compiler output; FText::FromString keeps it out of gather.
+					Diagnostic.Detail = FText::FromString(RawError);
 					Diagnostic.Stage = TEXT("materialCompile");
 					Diagnostic.AssetPath = MaterialAssetPath;
 					Diagnostic.ShaderPlatform = ShaderPlatformLabel;

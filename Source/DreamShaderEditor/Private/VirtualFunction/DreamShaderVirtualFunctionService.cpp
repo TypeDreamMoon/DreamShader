@@ -11,6 +11,8 @@
 #include "Misc/Crc.h"
 #include "Misc/Paths.h"
 
+#define LOCTEXT_NAMESPACE "DreamShader.VirtualFunction"
+
 namespace UE::DreamShader::Editor::Private
 {
 	namespace
@@ -184,20 +186,22 @@ namespace UE::DreamShader::Editor::Private
 
 		bool TryMakeVirtualFunctionAssetLiteral(const UMaterialFunction* MaterialFunction, FString& OutLiteral, FString& OutError)
 		{
-			if (!MaterialFunction)
-			{
-				OutError = TEXT("No MaterialFunction asset was provided.");
-				return false;
-			}
+		if (!MaterialFunction)
+		{
+			OutError = LOCTEXT("NoMaterialFunctionAssetProvided", "No MaterialFunction asset was provided.").ToString();
+			return false;
+		}
 
 			FString PackageName = MaterialFunction->GetOutermost() ? MaterialFunction->GetOutermost()->GetName() : FString();
 			PackageName.TrimStartAndEndInline();
 			PackageName.ReplaceInline(TEXT("\\"), TEXT("/"));
-			if (PackageName.IsEmpty() || !PackageName.StartsWith(TEXT("/")))
-			{
-				OutError = FString::Printf(TEXT("MaterialFunction '%s' does not have a valid package path."), *MaterialFunction->GetName());
-				return false;
-			}
+		if (PackageName.IsEmpty() || !PackageName.StartsWith(TEXT("/")))
+		{
+			OutError = FText::Format(
+				LOCTEXT("InvalidMaterialFunctionPackagePath", "MaterialFunction '{0}' does not have a valid package path."),
+				FText::FromString(MaterialFunction->GetName())).ToString();
+			return false;
+		}
 
 			const auto BuildLiteral = [&OutLiteral](const TCHAR* RootName, const FString& RelativePath)
 			{
@@ -271,7 +275,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!MaterialFunction)
 		{
-			OutError = TEXT("No MaterialFunction asset was provided.");
+			OutError = LOCTEXT("NoMaterialFunctionAssetProvided", "No MaterialFunction asset was provided.").ToString();
 			return false;
 		}
 
@@ -287,7 +291,9 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Outputs.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("MaterialFunction '%s' does not expose any outputs."), *MaterialFunction->GetName());
+			OutError = FText::Format(
+				LOCTEXT("MaterialFunctionHasNoOutputs", "MaterialFunction '{0}' does not expose any outputs."),
+				FText::FromString(MaterialFunction->GetName())).ToString();
 			return false;
 		}
 
@@ -383,13 +389,15 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (FunctionName.TrimStartAndEnd().IsEmpty())
 		{
-			OutError = TEXT("VirtualFunction name cannot be empty.");
+			OutError = LOCTEXT("VirtualFunctionNameCannotBeEmpty", "VirtualFunction name cannot be empty.").ToString();
 			return false;
 		}
 
 		if (Outputs.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("VirtualFunction '%s' does not expose any outputs."), *FunctionName);
+			OutError = FText::Format(
+				LOCTEXT("VirtualFunctionHasNoOutputs", "VirtualFunction '{0}' does not expose any outputs."),
+				FText::FromString(FunctionName)).ToString();
 			return false;
 		}
 
@@ -423,7 +431,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!MaterialFunction)
 		{
-			OutError = TEXT("No MaterialFunction asset was provided.");
+			OutError = LOCTEXT("NoMaterialFunctionAssetProvided", "No MaterialFunction asset was provided.").ToString();
 			return false;
 		}
 
@@ -485,3 +493,5 @@ namespace UE::DreamShader::Editor::Private
 			FString::Printf(TEXT("%s_%08x.dsh"), *BaseName, AssetPathHash)));
 	}
 }
+
+#undef LOCTEXT_NAMESPACE
