@@ -74,14 +74,14 @@ namespace UE::DreamShader::Editor::Private
 		FString Message;
 		if (!FMaterialGenerator::GenerateAssetsFromFile(DreamInstance->SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ false))
 		{
-			OutError = FString::Printf(TEXT("Failed to materialize the material to disk: %s"), *Message);
+			OutError = FText::Format(LOCTEXT("FactoryMaterializeFailed", "Failed to materialize the material to disk: {0}"), FText::FromString(Message)).ToString();
 			return nullptr;
 		}
 
 		UMaterialInterface* Persisted = LoadObject<UMaterialInterface>(nullptr, *ObjectPath);
 		if (!Persisted)
 		{
-			OutError = FString::Printf(TEXT("Materialized the material but could not reload it at %s."), *ObjectPath);
+			OutError = FText::Format(LOCTEXT("FactoryReloadFailed", "Materialized the material but could not reload it at {0}."), FText::FromString(ObjectPath)).ToString();
 			return nullptr;
 		}
 		return Persisted;
@@ -103,7 +103,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString Subfolder = GetDefault<UDreamShaderSettings>()->InstanceSubfolder;
 		OutPackagePath = Subfolder.IsEmpty() ? ParentDir : (ParentDir / Subfolder);
 
-		const FString BasePackageName = OutPackagePath / FString::Printf(TEXT("MI_%s"), *ParentLeaf);
+		const FString BasePackageName = OutPackagePath / FString::Printf(TEXT("MI_%s"), *ParentLeaf); // I18N-EXEMPT: asset name prefix, not display text
 		FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
 		FString UniquePackageName;
 		AssetToolsModule.Get().CreateUniqueAssetName(BasePackageName, /*Suffix*/ TEXT(""), UniquePackageName, OutAssetName);
@@ -135,17 +135,17 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const FString PackageName = PackagePath / AssetName;
-		const FString ObjectPath = FString::Printf(TEXT("%s.%s"), *PackageName, *AssetName);
+		const FString ObjectPath = FString::Printf(TEXT("%s.%s"), *PackageName, *AssetName); // I18N-EXEMPT: object path construction, not display text
 		if (FPackageName::DoesPackageExist(PackageName) || FindObject<UObject>(nullptr, *ObjectPath))
 		{
-			Result.Error = FString::Printf(TEXT("An asset already exists at %s."), *PackageName);
+			Result.Error = FText::Format(LOCTEXT("FactoryAssetExists", "An asset already exists at {0}."), FText::FromString(PackageName)).ToString();
 			return Result;
 		}
 
 		UPackage* Package = CreatePackage(*PackageName);
 		if (!Package)
 		{
-			Result.Error = FString::Printf(TEXT("Failed to create package %s."), *PackageName);
+			Result.Error = FText::Format(LOCTEXT("FactoryCreatePackageFailed", "Failed to create package {0}."), FText::FromString(PackageName)).ToString();
 			return Result;
 		}
 
