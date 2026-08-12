@@ -2,6 +2,8 @@
 
 #include "DreamShaderModule.h"
 
+#include "Diagnostics/DreamShaderTextWireUtils.h"
+
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -9,6 +11,8 @@
 #include "Materials/MaterialFunction.h"
 #include "Materials/MaterialFunctionMaterialLayer.h"
 #include "Materials/MaterialFunctionMaterialLayerBlend.h"
+
+#define LOCTEXT_NAMESPACE "DreamShader.Decompiler.Service"
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -19,7 +23,7 @@ namespace UE::DreamShader::Editor::Private
 			FString Result = InSegment.TrimStartAndEnd();
 			if (Result.IsEmpty())
 			{
-				return FString::Printf(TEXT("%s%d"), FallbackPrefix, Index + 1);
+				return FString::Printf(TEXT("%s%d"), FallbackPrefix, Index + 1); // I18N-EXEMPT
 			}
 
 			Result.ReplaceInline(TEXT("\\"), TEXT("_"));
@@ -34,7 +38,7 @@ namespace UE::DreamShader::Editor::Private
 			FString Result = InSegment.TrimStartAndEnd();
 			if (Result.IsEmpty())
 			{
-				return FString::Printf(TEXT("%s%d"), FallbackPrefix, Index + 1);
+				return FString::Printf(TEXT("%s%d"), FallbackPrefix, Index + 1); // I18N-EXEMPT
 			}
 
 			for (int32 CharIndex = 0; CharIndex < Result.Len(); ++CharIndex)
@@ -57,7 +61,7 @@ namespace UE::DreamShader::Editor::Private
 
 			Result.TrimStartAndEndInline();
 			return Result.IsEmpty()
-				? FString::Printf(TEXT("%s%d"), FallbackPrefix, Index + 1)
+				? FString::Printf(TEXT("%s%d"), FallbackPrefix, Index + 1) // I18N-EXEMPT
 				: Result;
 		}
 
@@ -110,7 +114,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		return MakeStableDecompiledSourcePath(
 			MaterialFunction,
-			FString::Printf(TEXT("Decompiled/%s"), GetFunctionCategory(GetFunctionKind(MaterialFunction))),
+			FString::Printf(TEXT("Decompiled/%s"), GetFunctionCategory(GetFunctionKind(MaterialFunction))), // I18N-EXEMPT
 			TEXT(".dsf"));
 	}
 
@@ -176,32 +180,32 @@ namespace UE::DreamShader::Editor::Private
 			RelativeName += SanitizedSegment;
 		}
 
-		return FString::Printf(TEXT("Decompiled/%s/%s"), Category, *RelativeName);
+		return FString::Printf(TEXT("Decompiled/%s/%s"), Category, *RelativeName); // I18N-EXEMPT
 	}
 
 	bool FDecompiledSourceWriter::Save(const FDreamShaderDecompileResult& Result, FString& OutError)
 	{
 		if (!Result.bSucceeded)
 		{
-			OutError = Result.Error.IsEmpty() ? TEXT("Decompile did not produce source text.") : Result.Error;
+			OutError = Result.Error.IsEmpty() ? ToInvariantWireString(LOCTEXT("DecompileDidNotProduceSourceText", "Decompile did not produce source text.")) : Result.Error;
 			return false;
 		}
 		if (Result.OutputFilePath.IsEmpty())
 		{
-			OutError = TEXT("DreamShader failed to resolve an output file path.");
+			OutError = ToInvariantWireString(LOCTEXT("FailedToResolveOutputFilePath", "DreamShader failed to resolve an output file path."));
 			return false;
 		}
 
 		const FString OutputDirectory = FPaths::GetPath(Result.OutputFilePath);
 		if (!IFileManager::Get().MakeDirectory(*OutputDirectory, true))
 		{
-			OutError = FString::Printf(TEXT("DreamShader failed to create output directory '%s'."), *OutputDirectory);
+			OutError = ToInvariantWireString(FText::Format(LOCTEXT("FailedToCreateOutputDirectory", "DreamShader failed to create output directory '{0}'."), FText::FromString(OutputDirectory)));
 			return false;
 		}
 
 		if (!FFileHelper::SaveStringToFile(Result.SourceText, *Result.OutputFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 		{
-			OutError = FString::Printf(TEXT("DreamShader failed to write decompiled source '%s'."), *Result.OutputFilePath);
+			OutError = ToInvariantWireString(FText::Format(LOCTEXT("FailedToWriteDecompiledSource", "DreamShader failed to write decompiled source '{0}'."), FText::FromString(Result.OutputFilePath)));
 			return false;
 		}
 
@@ -213,7 +217,7 @@ namespace UE::DreamShader::Editor::Private
 		FDreamShaderDecompileResult Result;
 		if (!Request.Asset)
 		{
-			Result.Error = TEXT("No asset was provided.");
+			Result.Error = ToInvariantWireString(LOCTEXT("NoAssetProvided", "No asset was provided."));
 			return Result;
 		}
 
@@ -247,9 +251,9 @@ namespace UE::DreamShader::Editor::Private
 			return Result;
 		}
 
-		Result.Error = FString::Printf(
-			TEXT("DreamShader decompile supports Material and MaterialFunction assets only: %s"),
-			*Request.Asset->GetPathName());
+		Result.Error = ToInvariantWireString(FText::Format(LOCTEXT("UnsupportedAssetType", "DreamShader decompile supports Material and MaterialFunction assets only: {0}"), FText::FromString(Request.Asset->GetPathName())));
 		return Result;
 	}
+#undef LOCTEXT_NAMESPACE
+
 }
