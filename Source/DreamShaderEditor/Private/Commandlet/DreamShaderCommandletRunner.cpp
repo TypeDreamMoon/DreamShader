@@ -3,6 +3,7 @@
 #include "DreamShaderCompileService.h"
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Compile/DreamShaderEditorCompileAdapter.h"
+#include "Diagnostics/DreamShaderTextWireUtils.h"
 #include "DreamShaderModule.h"
 #include "SourceFiles/DreamShaderSourceFileUtils.h"
 
@@ -279,11 +280,11 @@ namespace UE::DreamShader::Editor::Private
 			const UE::DreamShader::Compiler::FDreamShaderCompileResult Result = CompileService.CompileAssets(SourceFile, bForce);
 			if (Result.bSucceeded)
 			{
-				UE_LOG(LogDreamShader, Display, TEXT("%s"), *Result.Message);
+				UE_LOG(LogDreamShader, Display, TEXT("%s"), *ToInvariantWireString(Result.Message));
 			}
 			else
 			{
-				UE_LOG(LogDreamShader, Error, TEXT("%s"), *Result.Message);
+				UE_LOG(LogDreamShader, Error, TEXT("%s"), *ToInvariantWireString(Result.Message));
 				bSucceeded = false;
 			}
 		}

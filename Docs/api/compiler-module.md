@@ -36,11 +36,11 @@ namespace UE::DreamShader::Compiler
         bool bTransient = false;
     };
 
-    struct DREAMSHADERCOMPILER_API FDreamShaderCompileResult
-    {
-        bool bSucceeded = false;
-        FString Message;
-    };
+	struct DREAMSHADERCOMPILER_API FDreamShaderCompileResult
+	{
+		bool bSucceeded = false;
+		FText Message;
+	};
 
     class DREAMSHADERCOMPILER_API IDreamShaderCompiler
     {
@@ -74,7 +74,7 @@ context, where the macro is not pre-defined.
 | Member | Type | Default | Meaning |
 | :-- | :-- | :-- | :-- |
 | `bSucceeded` | `bool` | `false` | Whether the compile completed. A skipped compile counts as success. |
-| `Message` | `FString` | `""` | On success: one line per generated asset, joined with `\n`, optionally followed by `"\nWarnings:\n"` and the joined parser warnings. On failure: the single diagnostic. |
+| `Message` | `FText` | `empty` | On success: one line per generated asset, joined with `\n`, optionally followed by `"\nWarnings:\n"` and the joined parser warnings. On failure: the single diagnostic. The wire-form remains English via `ToInvariantWireString()`. |
 
 There is no structured diagnostic list, no severity, and no line/column. `Message` is human-readable
 text; the machine-readable diagnostics go to the bridge's JSON files instead. See
@@ -208,7 +208,7 @@ namespace UE::DreamShader::Editor
 | `GetEditorCompileAdapter()` | Returns a function-local `static FEditorCompileAdapter` — a lazily constructed process-wide singleton. Initialization is thread-safe through magic statics; the adapter itself is not thread-safe. |
 
 Each adapter method does exactly one thing: call the generator static and copy its `bool` return into
-`bSucceeded` and its out-string into `Message`.
+`bSucceeded` and its out-text into `Message`.
 
 ### What a third party can and cannot do today
 

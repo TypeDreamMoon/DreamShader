@@ -18,7 +18,7 @@ namespace UE::DreamShader::Compiler
 	struct DREAMSHADERCOMPILER_API FDreamShaderCompileResult
 	{
 		bool bSucceeded = false;
-		FString Message;
+		FText Message;
 	};
 
 	class DREAMSHADERCOMPILER_API IDreamShaderCompiler

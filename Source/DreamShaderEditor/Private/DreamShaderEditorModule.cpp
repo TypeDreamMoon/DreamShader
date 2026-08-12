@@ -13,6 +13,8 @@
 
 namespace
 {
+	TWeakPtr<UE::DreamShader::Editor::Private::FDreamShaderEditorBridge, ESPMode::ThreadSafe> GDreamShaderEditorBridge;
+
 	bool ShouldSkipDreamShaderEditorBridge()
 	{
 		return FParse::Param(FCommandLine::Get(), TEXT("NoDreamShaderEditorBridge"));
@@ -59,6 +61,7 @@ public:
 		}
 
 		Bridge = MakeShared<UE::DreamShader::Editor::Private::FDreamShaderEditorBridge, ESPMode::ThreadSafe>();
+		GDreamShaderEditorBridge = Bridge;
 		Bridge->Startup();
 
 		UE::DreamShader::Editor::Private::FDreamShaderMaterialBrowser::Register();
@@ -79,6 +82,8 @@ public:
 			Bridge->Shutdown();
 			Bridge.Reset();
 		}
+
+		GDreamShaderEditorBridge.Reset();
 	}
 
 private:
@@ -139,5 +144,13 @@ private:
 	TSharedPtr<UE::DreamShader::Editor::Private::FDreamShaderEditorBridge, ESPMode::ThreadSafe> Bridge;
 	FDelegateHandle CookPostEngineInitHandle;
 };
+
+namespace UE::DreamShader::Editor::Private
+{
+	FDreamShaderEditorBridge* GetDreamShaderEditorBridge()
+	{
+		return GDreamShaderEditorBridge.Pin().Get();
+	}
+}
 
 IMPLEMENT_MODULE(FDreamShaderEditorModule, DreamShaderEditor)

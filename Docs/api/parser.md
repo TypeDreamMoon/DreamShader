@@ -22,13 +22,13 @@ Defined in header `DreamShaderParser.h`.
 
 namespace UE::DreamShader
 {
-    class DREAMSHADER_API FTextShaderParser
-    {
-    public:
-        static bool Parse(const FString& SourceText,
-                          FTextShaderDefinition& OutDefinition,
-                          FString& OutError);
-    };
+	class DREAMSHADER_API FTextShaderParser
+	{
+	public:
+		static bool Parse(const FString& SourceText,
+		                  FTextShaderDefinition& OutDefinition,
+		                  FText& OutError);
+	};
 }
 ```
 
@@ -38,14 +38,14 @@ a class shape; there is never a reason to instantiate it.
 ## `FTextShaderParser::Parse`
 
 ```cpp
-static bool Parse(const FString& SourceText, FTextShaderDefinition& OutDefinition, FString& OutError);
+static bool Parse(const FString& SourceText, FTextShaderDefinition& OutDefinition, FText& OutError);
 ```
 
 | Parameter | Direction | Contract |
 | :-- | :-- | :-- |
 | `SourceText` | in | The complete text of one translation unit, **already import-expanded**. `Parse` does not resolve `import` directives; it treats an `import` line as an unrecognized top-level token. |
 | `OutDefinition` | out | **Reset to a default-constructed `FTextShaderDefinition` on entry, unconditionally.** Any prior contents are discarded, including on the failure path. |
-| `OutError` | out | `Reset()` on entry. Written only on failure; empty after a successful parse. |
+| `OutError` | out | `Reset()` on entry. Written only on failure; empty after a successful parse. The wire text remains English via `ToInvariantWireString()`. |
 
 | | |
 | :-- | :-- |

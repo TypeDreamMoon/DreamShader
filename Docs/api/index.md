@@ -31,11 +31,11 @@ All three are declared in `DreamShader.uplugin` and load at the `Default` phase.
 | :-- | :-- | :-- | :-- |
 | `DreamShaderModule.h` | `DreamShader` | `#include "DreamShaderModule.h"` | `LogDreamShader`, `FDreamShaderModule`, ten exported free functions (paths, identifier sanitizing, file classification). |
 | `DreamShaderTypes.h` | `DreamShader` | `#include "DreamShaderTypes.h"` | The parsed-AST data model: 13 structs, 5 enums, `LexToString`, `NormalizeSettingKey`. |
-| `DreamShaderParser.h` | `DreamShader` | `#include "DreamShaderParser.h"` | `FTextShaderParser::Parse` — the one entry point into the DreamShaderLang front end. |
+| `DreamShaderParser.h` | `DreamShader` | `#include "DreamShaderParser.h"` | `FTextShaderParser::Parse` — the one entry point into the DreamShaderLang front end; `OutError` is `FText`. |
 | `DreamShaderSettings.h` | `DreamShader` | `#include "DreamShaderSettings.h"` | `EDreamShaderDefaultBackend`, `UDreamShaderSettings`, the enum-alias resolvers. |
 | `DreamShaderMaterialInstance.h` | `DreamShader` | `#include "DreamShaderMaterialInstance.h"` | `UDreamShaderMaterialInstance` — the asset the ThinCustom backend produces. |
 | `DreamShaderVersionCompat.h` | `DreamShader` | `#include "DreamShaderVersionCompat.h"` | Six engine-version macros. No types, no functions. |
-| `DreamShaderCompilerInterfaces.h` | `DreamShaderCompiler` | `#include "DreamShaderCompilerInterfaces.h"` | `FDreamShaderCompileRequest`, `FDreamShaderCompileResult`, `IDreamShaderCompiler`. |
+| `DreamShaderCompilerInterfaces.h` | `DreamShaderCompiler` | `#include "DreamShaderCompilerInterfaces.h"` | `FDreamShaderCompileRequest`, `FDreamShaderCompileResult` (`Message` is `FText`), `IDreamShaderCompiler`. |
 | `DreamShaderCompileService.h` | `DreamShaderCompiler` | `#include "DreamShaderCompileService.h"` | `FDreamShaderCompileService` — argument-packing wrapper over an `IDreamShaderCompiler&`. |
 | `DreamShaderCompilerModule.h` | `DreamShaderCompiler` | `#include "DreamShaderCompilerModule.h"` | `FDreamShaderCompilerModule`. Both lifecycle methods are empty. |
 

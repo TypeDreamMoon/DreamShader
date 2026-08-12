@@ -45,7 +45,7 @@ namespace UE::DreamShader::Editor::Private
 		FString AssetPath;
 		FString ImagePath;
 		FString Mesh;
-		FString Message;
+		FText Message;
 	};
 
 	// Owns a render target + thumbnail scene that persist across many streamed preview frames for

@@ -21,6 +21,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "ObjectTools.h"
+#include "Diagnostics/DreamShaderTextWireUtils.h"
 #include "RenderingThread.h"
 #include "RHI.h"
 #include "RHIGPUReadback.h"
@@ -31,6 +32,8 @@
 #include "ShaderCompiler.h"
 #include "ThumbnailHelpers.h"
 #include "ThumbnailRendering/SceneThumbnailInfoWithPrimitive.h"
+
+#define LOCTEXT_NAMESPACE "DreamShader.Preview"
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -52,11 +55,11 @@ namespace UE::DreamShader::Editor::Private
 		bool ResolveGeneratedMaterialPath(const FString& SourceFilePath, FString& OutObjectPath, FString& OutError)
 		{
 			FString SourceText;
-			if (!FFileHelper::LoadFileToString(SourceText, *SourceFilePath))
-			{
-				OutError = FString::Printf(TEXT("Failed to read DreamShader source '%s'."), *SourceFilePath);
-				return false;
-			}
+		if (!FFileHelper::LoadFileToString(SourceText, *SourceFilePath))
+		{
+			OutError = FText::Format(LOCTEXT("FailedToReadDreamShaderSource", "Failed to read DreamShader source '{0}'."), FText::FromString(SourceFilePath)).ToString();
+			return false;
+		}
 
 			TArray<FString> Lines;
 			SourceText.ParseIntoArrayLines(Lines, false);
@@ -74,17 +77,17 @@ namespace UE::DreamShader::Editor::Private
 
 			FTextShaderDefinition Definition;
 			FString ParseError;
-			if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
-			{
-				OutError = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *ParseError);
-				return false;
-			}
+		if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
+		{
+			OutError = FText::Format(LOCTEXT("DreamShaderSourceParseFailed", "{0}: {1}"), FText::FromString(SourceFilePath), FText::FromString(ParseError)).ToString();
+			return false;
+		}
 
-			if (Definition.Name.IsEmpty())
-			{
-				OutError = FString::Printf(TEXT("%s: This file does not define a top-level Shader block."), *SourceFilePath);
-				return false;
-			}
+		if (Definition.Name.IsEmpty())
+		{
+			OutError = FText::Format(LOCTEXT("MissingTopLevelShaderBlock", "{0}: This file does not define a top-level Shader block."), FText::FromString(SourceFilePath)).ToString();
+			return false;
+		}
 
 			// Same default the generator applies, or the preview would look up an object path that
 			// generation never wrote.
@@ -209,15 +212,15 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			IFileManager::Get().MakeDirectory(*FPaths::GetPath(ImagePath), true);
-			if (!FFileHelper::SaveArrayToFile(TArrayView64<const uint8>(PngData.GetData(), PngData.Num()), *ImagePath))
-			{
-				OutError = FString::Printf(TEXT("Failed to write preview image '%s'."), *ImagePath);
-				return false;
-			}
+		if (!FFileHelper::SaveArrayToFile(TArrayView64<const uint8>(PngData.GetData(), PngData.Num()), *ImagePath))
+		{
+			OutError = FText::Format(LOCTEXT("FailedToWritePreviewImage", "Failed to write preview image '{0}'."), FText::FromString(ImagePath)).ToString();
+			return false;
+		}
 
 			return true;
-		}
 	}
+}
 
 	FDreamShaderPreviewRenderContext::FDreamShaderPreviewRenderContext() = default;
 	FDreamShaderPreviewRenderContext::~FDreamShaderPreviewRenderContext() = default;
@@ -287,7 +290,7 @@ namespace UE::DreamShader::Editor::Private
 		FSceneView* View = ThumbnailScene->CreateView(&ViewFamily, 0, 0, CachedWidth, CachedHeight);
 		if (!View)
 		{
-			OutError = FString::Printf(TEXT("Failed to create preview view for '%s'."), *Material->GetPathName());
+			OutError = FText::Format(LOCTEXT("FailedToCreatePreviewView", "Failed to create preview view for '{0}'."), FText::FromString(Material->GetPathName())).ToString();
 			return false;
 		}
 
@@ -321,7 +324,7 @@ namespace UE::DreamShader::Editor::Private
 		FTextureRenderTargetResource* RenderTargetResource = RenderTarget->GameThread_GetRenderTargetResource();
 		if (!RenderTargetResource || !RenderTargetResource->ReadPixels(OutColors) || OutColors.Num() != CachedWidth * CachedHeight)
 		{
-			OutError = FString::Printf(TEXT("Failed to read preview pixels for '%s'."), *Material->GetPathName());
+			OutError = FText::Format(LOCTEXT("FailedToReadPreviewPixels", "Failed to read preview pixels for '{0}'."), FText::FromString(Material->GetPathName())).ToString();
 			return false;
 		}
 
@@ -349,7 +352,7 @@ namespace UE::DreamShader::Editor::Private
 			OutPngData);
 		if (OutPngData.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("Failed to encode preview thumbnail for '%s'."), *Material->GetPathName());
+			OutError = FText::Format(LOCTEXT("FailedToEncodePreviewThumbnail", "Failed to encode preview thumbnail for '{0}'."), FText::FromString(Material->GetPathName())).ToString();
 			return false;
 		}
 
@@ -540,13 +543,13 @@ namespace UE::DreamShader::Editor::Private
 
 		if (SourceFilePath.IsEmpty() || !IFileManager::Get().FileExists(*SourceFilePath))
 		{
-			OutResult.Message = FString::Printf(TEXT("DreamShader source '%s' does not exist."), *SourceFilePath);
+			OutResult.Message = FText::Format(LOCTEXT("PreviewSourceMissing", "DreamShader source '{0}' does not exist."), FText::FromString(SourceFilePath));
 			return false;
 		}
 
 		if (!UE::DreamShader::IsDreamShaderMaterialFile(SourceFilePath))
 		{
-			OutResult.Message = FString::Printf(TEXT("DreamShader preview only supports .dsm material files: '%s'."), *SourceFilePath);
+			OutResult.Message = FText::Format(LOCTEXT("PreviewSupportsOnlyDsm", "DreamShader preview only supports .dsm material files: '{0}'."), FText::FromString(SourceFilePath));
 			return false;
 		}
 
@@ -554,7 +557,7 @@ namespace UE::DreamShader::Editor::Private
 		FString ResolveError;
 		if (!ResolveGeneratedMaterialPath(SourceFilePath, ObjectPath, ResolveError))
 		{
-			OutResult.Message = ResolveError;
+			OutResult.Message = FText::FromString(ResolveError);
 			return false;
 		}
 		OutResult.AssetPath = ObjectPath;
@@ -574,16 +577,15 @@ namespace UE::DreamShader::Editor::Private
 		OutMaterial = LoadObject<UMaterialInterface>(nullptr, *ObjectPath);
 		if (!OutMaterial)
 		{
-			OutResult.Message = FString::Printf(TEXT("Generated material '%s' could not be loaded."), *ObjectPath);
+			OutResult.Message = FText::Format(LOCTEXT("GeneratedMaterialCouldNotBeLoaded", "Generated material '{0}' could not be loaded."), FText::FromString(ObjectPath));
 			return false;
 		}
 
 		OutResult.bSucceeded = true;
-		OutResult.Message = FString::Printf(TEXT("Compiled preview material for %s."), *ObjectPath);
+		OutResult.Message = FText::Format(LOCTEXT("CompiledPreviewMaterial", "Compiled preview material for {0}."), FText::FromString(ObjectPath));
 		if (!CompileResult.Message.IsEmpty())
 		{
-			OutResult.Message += TEXT(" ");
-			OutResult.Message += CompileResult.Message;
+			OutResult.Message = FText::Format(LOCTEXT("CompiledPreviewMaterialWithDetails", "Compiled preview material for {0}. {1}"), FText::FromString(ObjectPath), CompileResult.Message);
 		}
 		return true;
 	}
@@ -611,13 +613,13 @@ namespace UE::DreamShader::Editor::Private
 		FString ImagePath;
 		if (!SaveMaterialPreviewFrame(Material, OutResult.SourceFilePath, Request.Width, Request.Height, Request.Mesh, Request.OrbitYaw, Request.OrbitPitch, ImagePath, RenderError))
 		{
-			OutResult.Message = RenderError;
+			OutResult.Message = FText::FromString(RenderError);
 			return false;
 		}
 
 		OutResult.bSucceeded = true;
 		OutResult.ImagePath = ImagePath;
-		OutResult.Message = FString::Printf(TEXT("Rendered preview for %s."), *OutResult.AssetPath);
+		OutResult.Message = FText::Format(LOCTEXT("RenderedPreview", "Rendered preview for {0}."), FText::FromString(OutResult.AssetPath));
 		return true;
 	}
 
@@ -634,7 +636,7 @@ namespace UE::DreamShader::Editor::Private
 		RootObject->SetStringField(TEXT("assetPath"), Result.AssetPath);
 		RootObject->SetStringField(TEXT("imagePath"), Result.ImagePath);
 		RootObject->SetStringField(TEXT("mesh"), Result.Mesh);
-		RootObject->SetStringField(TEXT("message"), Result.Message);
+		RootObject->SetStringField(TEXT("message"), ToInvariantWireString(Result.Message));
 		RootObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
 
 		FString OutputText;
@@ -645,4 +647,6 @@ namespace UE::DreamShader::Editor::Private
 			FFileHelper::SaveStringToFile(OutputText, *GetPreviewManifestPath());
 		}
 	}
+
+#undef LOCTEXT_NAMESPACE
 }
