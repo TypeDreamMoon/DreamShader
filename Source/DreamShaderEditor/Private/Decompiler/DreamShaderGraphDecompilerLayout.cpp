@@ -51,7 +51,7 @@ namespace UE::DreamShader::Editor::Private
 		LayoutLines.Reset();
 		for (const FDecompiledGraphLayoutComment& Comment : LayoutComments)
 		{
-			LayoutLines.Add(FString::Printf(
+			LayoutLines.Add(FString::Printf( // I18N-EXEMPT: decompiled .dsm layout source text, not a user-facing message
 				TEXT("\t\tComment(Name=\"%s\", X=%d, Y=%d, W=%d, H=%d, Color=float4(%s, %s, %s, %s));"),
 				*EscapeDreamShaderString(Comment.Name),
 				Comment.X,
@@ -89,7 +89,7 @@ namespace UE::DreamShader::Editor::Private
 				continue;
 			}
 
-			LayoutLines.Add(FString::Printf(
+			LayoutLines.Add(FString::Printf( // I18N-EXEMPT: decompiled .dsm layout source text, not a user-facing message
 				TEXT("\t\tNode(Var=\"%s\", X=%d, Y=%d);"),
 				*EscapeDreamShaderString(Name),
 				Expression->MaterialExpressionEditorX,
@@ -127,7 +127,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 				if (!RegionName.IsEmpty())
 				{
-					Lines.Add(FString::Printf(TEXT("\t\t#Region \"%s\""), *EscapeDreamShaderString(RegionName)));
+					Lines.Add(FString::Printf(TEXT("\t\t#Region \"%s\""), *EscapeDreamShaderString(RegionName))); // I18N-EXEMPT: decompiled .dsm layout source text
 				}
 				ActiveRegion = RegionName;
 			}

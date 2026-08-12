@@ -92,6 +92,8 @@
 #include "UObject/UnrealType.h"
 
 
+#define LOCTEXT_NAMESPACE "DreamShader.Decompiler.Helpers"
+
 namespace UE::DreamShader::Editor::Private
 {
 	// Every caller writes the result inside a "..." literal, and the DSL scanner reads those literals one
@@ -220,7 +222,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Result.IsEmpty() || Result == TEXT("DreamShaderSymbol"))
 		{
-			Result = FString::Printf(TEXT("%s%d"), FallbackPrefix, Index + 1);
+			Result = FString::Printf(TEXT("%s%d"), FallbackPrefix, Index + 1); // I18N-EXEMPT
 		}
 		return Result;
 	}
@@ -233,16 +235,16 @@ namespace UE::DreamShader::Editor::Private
 		TArray<FString> MetadataEntries;
 		if (!Description.TrimStartAndEnd().IsEmpty())
 		{
-			MetadataEntries.Add(FString::Printf(TEXT("Description=\"%s\";"), *EscapeDreamShaderString(Description.TrimStartAndEnd())));
+			MetadataEntries.Add(FString::Printf(TEXT("Description=\"%s\";"), *EscapeDreamShaderString(Description.TrimStartAndEnd()))); // I18N-EXEMPT
 		}
 		if (SortPriority != DefaultSortPriority)
 		{
-			MetadataEntries.Add(FString::Printf(TEXT("SortPriority=%d;"), SortPriority));
+			MetadataEntries.Add(FString::Printf(TEXT("SortPriority=%d;"), SortPriority)); // I18N-EXEMPT
 		}
 
 		return MetadataEntries.IsEmpty()
 			? FString()
-			: FString::Printf(TEXT(" [\n\t\t\t%s\n\t\t]"), *FString::Join(MetadataEntries, TEXT("\n\t\t\t")));
+			: FString::Printf(TEXT(" [\n\t\t\t%s\n\t\t]"), *FString::Join(MetadataEntries, TEXT("\n\t\t\t"))); // I18N-EXEMPT
 	}
 
 	FString MakePreviewValueText(EFunctionInputType InputType, const FVector4f& PreviewValue)
@@ -255,11 +257,11 @@ namespace UE::DreamShader::Editor::Private
 		case FunctionInput_Bool:
 			return PreviewValue.X != 0.0f ? TEXT("true") : TEXT("false");
 		case FunctionInput_Vector2:
-			return FString::Printf(TEXT("float2(%g, %g)"), PreviewValue.X, PreviewValue.Y);
+			return FString::Printf(TEXT("float2(%g, %g)"), PreviewValue.X, PreviewValue.Y); // I18N-EXEMPT
 		case FunctionInput_Vector3:
-			return FString::Printf(TEXT("float3(%g, %g, %g)"), PreviewValue.X, PreviewValue.Y, PreviewValue.Z);
+			return FString::Printf(TEXT("float3(%g, %g, %g)"), PreviewValue.X, PreviewValue.Y, PreviewValue.Z); // I18N-EXEMPT
 		case FunctionInput_Vector4:
-			return FString::Printf(TEXT("float4(%g, %g, %g, %g)"), PreviewValue.X, PreviewValue.Y, PreviewValue.Z, PreviewValue.W);
+			return FString::Printf(TEXT("float4(%g, %g, %g, %g)"), PreviewValue.X, PreviewValue.Y, PreviewValue.Z, PreviewValue.W); // I18N-EXEMPT
 		default:
 			return FString();
 		}
@@ -305,12 +307,12 @@ namespace UE::DreamShader::Editor::Private
 
 	FString FormatDreamShaderVector2(const double X, const double Y)
 	{
-		return FString::Printf(TEXT("float2(%s, %s)"), *FormatDreamShaderFloat(X), *FormatDreamShaderFloat(Y));
+		return FString::Printf(TEXT("float2(%s, %s)"), *FormatDreamShaderFloat(X), *FormatDreamShaderFloat(Y)); // I18N-EXEMPT
 	}
 
 	FString FormatDreamShaderVector3(const double X, const double Y, const double Z)
 	{
-		return FString::Printf(
+		return FString::Printf( // I18N-EXEMPT
 			TEXT("float3(%s, %s, %s)"),
 			*FormatDreamShaderFloat(X),
 			*FormatDreamShaderFloat(Y),
@@ -319,7 +321,7 @@ namespace UE::DreamShader::Editor::Private
 
 	FString FormatDreamShaderVector4(const double X, const double Y, const double Z, const double W)
 	{
-		return FString::Printf(
+		return FString::Printf( // I18N-EXEMPT
 			TEXT("float4(%s, %s, %s, %s)"),
 			*FormatDreamShaderFloat(X),
 			*FormatDreamShaderFloat(Y),
@@ -342,7 +344,7 @@ namespace UE::DreamShader::Editor::Private
 			&& !Trimmed.Contains(TEXT("-"))
 			&& !Trimmed.Contains(TEXT("*"))
 			&& !Trimmed.Contains(TEXT("/"));
-		return bSimple ? Trimmed : FString::Printf(TEXT("(%s)"), *Trimmed);
+		return bSimple ? Trimmed : FString::Printf(TEXT("(%s)"), *Trimmed); // I18N-EXEMPT
 	}
 
 	bool IsSwizzleComponentChar(const TCHAR Character)
@@ -445,7 +447,7 @@ namespace UE::DreamShader::Editor::Private
 			ComposedSwizzle += ExistingSwizzle[ComponentIndex];
 		}
 
-		OutExpressionText = FString::Printf(TEXT("%s.%s"), *WrapExpressionForSuffix(BaseText), *ComposedSwizzle);
+		OutExpressionText = FString::Printf(TEXT("%s.%s"), *WrapExpressionForSuffix(BaseText), *ComposedSwizzle); // I18N-EXEMPT
 		return true;
 	}
 
@@ -491,7 +493,7 @@ namespace UE::DreamShader::Editor::Private
 			return ComposedExpression;
 		}
 
-		return FString::Printf(TEXT("%s.%s"), *WrapExpressionForSuffix(ExpressionText), *NormalizedSwizzle);
+		return FString::Printf(TEXT("%s.%s"), *WrapExpressionForSuffix(ExpressionText), *NormalizedSwizzle); // I18N-EXEMPT
 	}
 
 	FString ApplyInputMask(const FString& ExpressionText, const FExpressionInput& Input)
@@ -522,7 +524,7 @@ namespace UE::DreamShader::Editor::Private
 
 		const auto BuildRootedLiteral = [](const TCHAR* RootName, const FString& RelativePath)
 		{
-			return FString::Printf(TEXT("Path(%s, \"%s\")"), RootName, *EscapeDreamShaderString(RelativePath));
+			return FString::Printf(TEXT("Path(%s, \"%s\")"), RootName, *EscapeDreamShaderString(RelativePath)); // I18N-EXEMPT
 		};
 
 		// Everything below identifies an object by its *package*, which is fine for assets (one
@@ -532,7 +534,7 @@ namespace UE::DreamShader::Editor::Private
 		// name and resolve to nothing on the way back in, so emit the full object path for those.
 		if (PackageName.StartsWith(TEXT("/Script/"), ESearchCase::IgnoreCase))
 		{
-			return FString::Printf(TEXT("Path(\"%s\")"), *EscapeDreamShaderString(Object->GetPathName()));
+			return FString::Printf(TEXT("Path(\"%s\")"), *EscapeDreamShaderString(Object->GetPathName())); // I18N-EXEMPT
 		}
 
 		if (PackageName.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase))
@@ -580,13 +582,13 @@ namespace UE::DreamShader::Editor::Private
 			{
 				RelativePath.RightChopInline(1, DREAMSHADER_ALLOW_SHRINKING_NO);
 			}
-			return FString::Printf(
+			return FString::Printf( // I18N-EXEMPT
 				TEXT("Path(Plugins.%s, \"%s\")"),
 				*BestPluginName,
 				*EscapeDreamShaderString(RelativePath));
 		}
 
-		return FString::Printf(TEXT("Path(\"%s\")"), *EscapeDreamShaderString(PackageName));
+		return FString::Printf(TEXT("Path(\"%s\")"), *EscapeDreamShaderString(PackageName)); // I18N-EXEMPT
 	}
 
 	FString GetDreamShaderTypeForCustomOutputType(const ECustomMaterialOutputType OutputType)
@@ -1307,7 +1309,7 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		Lines.Add(FString::Printf(
+		Lines.Add(FString::Printf( // I18N-EXEMPT
 			TEXT("\t\t%s = %s;"),
 			PropertyName,
 			bValue ? TEXT("true") : TEXT("false")));
@@ -1368,7 +1370,7 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		Lines.Add(FString::Printf(
+		Lines.Add(FString::Printf( // I18N-EXEMPT
 			TEXT("\t\t%s = \"%s\";"),
 			PropertyName,
 			*GetEnumLiteralText(Enum, Value)));
@@ -1457,4 +1459,6 @@ namespace UE::DreamShader::Editor::Private
 
 		return nullptr;
 	}
+#undef LOCTEXT_NAMESPACE
+
 }
