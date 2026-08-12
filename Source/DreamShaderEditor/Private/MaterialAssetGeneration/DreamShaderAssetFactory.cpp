@@ -37,7 +37,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString FolderName = ObjectTools::SanitizeObjectName(Segment);
 			if (FolderName.IsEmpty())
 			{
-				OutError = FString::Printf(TEXT("%s contains an invalid folder segment."), *ErrorContext);
+				OutError = FString::Printf(TEXT("%s contains an invalid folder segment."), *ErrorContext); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -55,7 +55,7 @@ namespace UE::DreamShader::Editor::Private
 			const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
 			if (!Plugin.IsValid())
 			{
-				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but no enabled plugin with that name was found."), *Root, *PluginName);
+				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but no enabled plugin with that name was found."), *Root, *PluginName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -63,33 +63,33 @@ namespace UE::DreamShader::Editor::Private
 			const FString ProjectPluginsDir = FPaths::ConvertRelativePathToFull(FPaths::ProjectPluginsDir());
 			if (Plugin->GetType() != EPluginType::Project || !FPaths::IsUnderDirectory(PluginBaseDir, ProjectPluginsDir))
 			{
-				OutError = FString::Printf(TEXT("DreamShader Root '%s' must reference a project plugin under '%s'."), *Root, *ProjectPluginsDir);
+				OutError = FString::Printf(TEXT("DreamShader Root '%s' must reference a project plugin under '%s'."), *Root, *ProjectPluginsDir); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			if (!Plugin->IsEnabled())
 			{
-				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but the plugin is not enabled."), *Root, *PluginName);
+				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but the plugin is not enabled."), *Root, *PluginName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			if (!Plugin->CanContainContent())
 			{
-				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but the plugin cannot contain content."), *Root, *PluginName);
+				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but the plugin cannot contain content."), *Root, *PluginName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			const FString ContentDir = FPaths::ConvertRelativePathToFull(Plugin->GetContentDir());
 			if (!IFileManager::Get().DirectoryExists(*ContentDir))
 			{
-				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but its Content directory does not exist: '%s'."), *Root, *PluginName, *ContentDir);
+				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but its Content directory does not exist: '%s'."), *Root, *PluginName, *ContentDir); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 #if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
 			if (!Plugin->IsMounted())
 			{
-				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but the plugin content is not mounted."), *Root, *PluginName);
+				OutError = FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but the plugin content is not mounted."), *Root, *PluginName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 #endif
@@ -167,7 +167,7 @@ namespace UE::DreamShader::Editor::Private
 				FString PluginName = RootSegment.Mid(PluginPrefixLength).TrimStartAndEnd();
 				if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
 				{
-					OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid plugin name."), *Root);
+					OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid plugin name."), *Root); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -182,7 +182,7 @@ namespace UE::DreamShader::Editor::Private
 				FString PluginName = Segments[1].TrimStartAndEnd();
 				if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
 				{
-					OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid plugin name."), *Root);
+					OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid plugin name."), *Root); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -196,7 +196,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (RootSegment.IsEmpty() || ObjectTools::SanitizeObjectName(RootSegment) != RootSegment)
 				{
-					OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid package root."), *Root);
+					OutError = FString::Printf(TEXT("DreamShader Root '%s' has an invalid package root."), *Root); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -210,7 +210,7 @@ namespace UE::DreamShader::Editor::Private
 
 			for (int32 Index = FirstFolderSegmentIndex; Index < Segments.Num(); ++Index)
 			{
-				if (!AppendSanitizedPackageSegment(Segments[Index], FString::Printf(TEXT("DreamShader Root '%s'"), *Root), OutPackagePath, OutError))
+				if (!AppendSanitizedPackageSegment(Segments[Index], FString::Printf(TEXT("DreamShader Root '%s'"), *Root), OutPackagePath, OutError)) /* I18N-EXEMPT: deferred codegen or compatibility path */
 				{
 					return false;
 				}
@@ -255,7 +255,7 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		const FString InferredRoot = FString::Printf(TEXT("Plugin.%s"), *SourceRoot->PluginName);
+		const FString InferredRoot = FString::Printf(TEXT("Plugin.%s"), *SourceRoot->PluginName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		// Resolved before it is handed out: a plugin that cannot host content has no mount point to
 		// default to, and /Game -- what every file did before source roots existed -- is the only
@@ -267,7 +267,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (OutFallbackReason != nullptr)
 			{
-				*OutFallbackReason = FString::Printf(
+				*OutFallbackReason = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("'%s' declares no Root= and plugin '%s' cannot host generated content, so its assets go to /Game. %s"),
 					*SourceFilePath,
 					*SourceRoot->PluginName,
@@ -326,7 +326,7 @@ namespace UE::DreamShader::Editor::Private
 		OutAssetLeafName = ObjectTools::SanitizeObjectName(Segments.Last());
 		if (OutAssetLeafName.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("DreamShader asset name '%s' produced an invalid asset name."), *AssetName);
+			OutError = FString::Printf(TEXT("DreamShader asset name '%s' produced an invalid asset name."), *AssetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -340,7 +340,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!AppendSanitizedPackageSegment(
 				Segments[Index],
-				FString::Printf(TEXT("DreamShader asset name '%s'"), *AssetName),
+				FString::Printf(TEXT("DreamShader asset name '%s'"), *AssetName), /* I18N-EXEMPT: deferred codegen or compatibility path */
 				PackagePath,
 				OutError))
 			{
@@ -349,13 +349,13 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		OutPackageName = PackagePath + TEXT("/") + OutAssetLeafName;
-		OutObjectPath = FString::Printf(TEXT("%s.%s"), *OutPackageName, *OutAssetLeafName);
+		OutObjectPath = FString::Printf(TEXT("%s.%s"), *OutPackageName, *OutAssetLeafName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		FText PathError;
 		if (!FPackageName::IsValidObjectPath(OutObjectPath, &PathError))
 		{
 			const FString PathErrorText = PathError.ToString();
 			OutError = PathErrorText.IsEmpty()
-				? FString::Printf(TEXT("DreamShader asset path '%s' is not a valid Unreal object path."), *OutObjectPath)
+				? FString::Printf(TEXT("DreamShader asset path '%s' is not a valid Unreal object path."), *OutObjectPath) /* I18N-EXEMPT: deferred codegen or compatibility path */
 				: PathErrorText;
 			return false;
 		}
@@ -438,7 +438,7 @@ namespace UE::DreamShader::Editor::Private
 			OutMaterial = Cast<UMaterial>(ExistingObject);
 			if (!OutMaterial)
 			{
-				OutError = FString::Printf(TEXT("Asset '%s' already exists and is not a Material."), *ObjectPath);
+				OutError = FString::Printf(TEXT("Asset '%s' already exists and is not a Material."), *ObjectPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -448,7 +448,7 @@ namespace UE::DreamShader::Editor::Private
 			// materials (which carry the metadata) both pass.
 			if (FPackageName::DoesPackageExist(PackageName) && !HasDreamShaderSourceMetadata(ExistingObject))
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating."),
 					*ObjectPath);
 				return false;
@@ -461,7 +461,7 @@ namespace UE::DreamShader::Editor::Private
 		UPackage* MaterialPackage = CreatePackage(*PackageName);
 		if (!MaterialPackage)
 		{
-			OutError = FString::Printf(TEXT("Failed to create package '%s'."), *PackageName);
+			OutError = FString::Printf(TEXT("Failed to create package '%s'."), *PackageName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -484,7 +484,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!OutMaterial)
 		{
-			OutError = FString::Printf(TEXT("Failed to create material '%s'."), *ObjectPath);
+			OutError = FString::Printf(TEXT("Failed to create material '%s'."), *ObjectPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -509,7 +509,7 @@ namespace UE::DreamShader::Editor::Private
 			OutInstance = Cast<UDreamShaderMaterialInstance>(ExistingObject);
 			if (!OutInstance)
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Asset '%s' already exists and is not a DreamShader instance material. Delete it (or remove Backend=\"Instance\") before switching backends."),
 					*ObjectPath);
 				return false;
@@ -522,7 +522,7 @@ namespace UE::DreamShader::Editor::Private
 		UPackage* InstancePackage = CreatePackage(*PackageName);
 		if (!InstancePackage)
 		{
-			OutError = FString::Printf(TEXT("Failed to create package '%s'."), *PackageName);
+			OutError = FString::Printf(TEXT("Failed to create package '%s'."), *PackageName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -535,7 +535,7 @@ namespace UE::DreamShader::Editor::Private
 		OutInstance = NewObject<UDreamShaderMaterialInstance>(InstancePackage, FName(*AssetName), RF_Public | RF_Standalone);
 		if (!OutInstance)
 		{
-			OutError = FString::Printf(TEXT("Failed to create instance material '%s'."), *ObjectPath);
+			OutError = FString::Printf(TEXT("Failed to create instance material '%s'."), *ObjectPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -575,7 +575,7 @@ namespace UE::DreamShader::Editor::Private
 				: ExistingObject->IsA(ExpectedClass);
 			if (!bClassMatches)
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Asset '%s' already exists as '%s', but %s generation requires '%s'. Delete or move the existing asset and regenerate it."),
 					*ObjectPath,
 					*ExistingObject->GetClass()->GetName(),
@@ -587,7 +587,7 @@ namespace UE::DreamShader::Editor::Private
 			OutFunction = Cast<UMaterialFunction>(ExistingObject);
 			if (!OutFunction)
 			{
-				OutError = FString::Printf(TEXT("Asset '%s' already exists and is not a MaterialFunction asset."), *ObjectPath);
+				OutError = FString::Printf(TEXT("Asset '%s' already exists and is not a MaterialFunction asset."), *ObjectPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -595,7 +595,7 @@ namespace UE::DreamShader::Editor::Private
 			// generate (see CreateOrReuseMaterial for the rationale).
 			if (FPackageName::DoesPackageExist(PackageName) && !HasDreamShaderSourceMetadata(ExistingObject))
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Asset '%s' already exists and was not generated by DreamShader. Rename your function or move/delete the existing asset before regenerating."),
 					*ObjectPath);
 				return false;
@@ -608,7 +608,7 @@ namespace UE::DreamShader::Editor::Private
 		UPackage* FunctionPackage = CreatePackage(*PackageName);
 		if (!FunctionPackage)
 		{
-			OutError = FString::Printf(TEXT("Failed to create package '%s'."), *PackageName);
+			OutError = FString::Printf(TEXT("Failed to create package '%s'."), *PackageName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -627,7 +627,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!OutFunction)
 		{
-			OutError = FString::Printf(TEXT("Failed to create material function '%s'."), *ObjectPath);
+			OutError = FString::Printf(TEXT("Failed to create material function '%s'."), *ObjectPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 

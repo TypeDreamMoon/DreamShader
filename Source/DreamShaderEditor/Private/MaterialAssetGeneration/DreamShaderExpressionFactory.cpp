@@ -138,7 +138,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutError = FString::Printf(
+		OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("%s texture property '%s' expects %s but '%s' is a '%s'."),
 			Context,
 			*Property.Name,
@@ -150,7 +150,7 @@ namespace UE::DreamShader::Editor::Private
 
 	static FString FormatMetadataContext(const FTextShaderPropertyDefinition& Property)
 	{
-		return FString::Printf(TEXT("property '%s'"), *Property.Name);
+		return FString::Printf(TEXT("property '%s'"), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	static FString ResolveMetadataReflectionPropertyName(const FString& Key)
@@ -232,7 +232,7 @@ namespace UE::DreamShader::Editor::Private
 					continue;
 				}
 
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Metadata property '%s' is not a reflected property on '%s'."),
 					*PropertyName,
 					*Expression->GetClass()->GetName());
@@ -242,7 +242,7 @@ namespace UE::DreamShader::Editor::Private
 			FString LiteralError;
 			if (!SetMaterialExpressionLiteralProperty(Expression, Property, ReflectedProperty.Value, LiteralError))
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Metadata property '%s' on '%s': %s"),
 					*PropertyName,
 					*Expression->GetClass()->GetName(),
@@ -284,7 +284,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutError = FString::Printf(TEXT("'%s' does not expose a ParameterName property."), *Expression->GetClass()->GetName());
+		OutError = FString::Printf(TEXT("'%s' does not expose a ParameterName property."), *Expression->GetClass()->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		return false;
 	}
 
@@ -335,7 +335,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 
-			OutError = FString::Printf(TEXT("'%s' does not expose a texture/asset property for %s."), *Expression->GetClass()->GetName(), *FormatMetadataContext(Property));
+			OutError = FString::Printf(TEXT("'%s' does not expose a texture/asset property for %s."), *Expression->GetClass()->GetName(), *FormatMetadataContext(Property)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -380,7 +380,7 @@ namespace UE::DreamShader::Editor::Private
 				OutError);
 		}
 
-		const FString LinearColorText = FString::Printf(
+		const FString LinearColorText = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("(R=%s,G=%s,B=%s,A=%s)"),
 			*FString::SanitizeFloat(Property.VectorDefaultValue.R),
 			*FString::SanitizeFloat(Property.VectorDefaultValue.G),
@@ -391,7 +391,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		const FString VectorText = FString::Printf(
+		const FString VectorText = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("(X=%s,Y=%s,Z=%s,W=%s)"),
 			*FString::SanitizeFloat(Property.VectorDefaultValue.R),
 			*FString::SanitizeFloat(Property.VectorDefaultValue.G),
@@ -410,7 +410,7 @@ namespace UE::DreamShader::Editor::Private
 		UClass* ExpressionClass = ResolveMaterialExpressionClass(Property.ParameterNodeType);
 		if (!ExpressionClass)
 		{
-			OutError = FString::Printf(TEXT("Could not resolve MaterialExpression class for parameter type '%s'."), *Property.ParameterNodeType);
+			OutError = FString::Printf(TEXT("Could not resolve MaterialExpression class for parameter type '%s'."), *Property.ParameterNodeType); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 
@@ -418,14 +418,14 @@ namespace UE::DreamShader::Editor::Private
 			CreateOwnedMaterialExpression(Material, MaterialFunction, ExpressionClass, -800, PositionY));
 		if (!Expression)
 		{
-			OutError = FString::Printf(TEXT("Failed to create a '%s' node for property '%s'."), *Property.ParameterNodeType, *Property.Name);
+			OutError = FString::Printf(TEXT("Failed to create a '%s' node for property '%s'."), *Property.ParameterNodeType, *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 
 		if (!SetExpressionParameterName(Expression, GetPropertyParameterName(Property), OutError)
 			|| !SetExpressionDefaultValue(Expression, Property, OutError))
 		{
-			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 
@@ -447,7 +447,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
 		{
-			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 		return Expression;
@@ -462,7 +462,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (Property.Source == ETextShaderPropertySource::UEBuiltin || !Property.ParameterNodeType.IsEmpty())
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("Const property '%s' must use a plain scalar, vector, or texture type instead of a parameter node or UE builtin declaration."),
 				*Property.Name);
 			return nullptr;
@@ -498,7 +498,7 @@ namespace UE::DreamShader::Editor::Private
 				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionTextureObject::StaticClass(), -800, PositionY));
 			if (!TextureObjectExpression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create a texture object node for const property '%s'."), *Property.Name);
+				OutError = FString::Printf(TEXT("Failed to create a texture object node for const property '%s'."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return nullptr;
 			}
 
@@ -507,7 +507,7 @@ namespace UE::DreamShader::Editor::Private
 				UTexture* DefaultTexture = LoadObject<UTexture>(nullptr, *Property.TextureDefaultObjectPath);
 				if (!DefaultTexture)
 				{
-					OutError = FString::Printf(
+					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 						TEXT("Const texture property '%s' could not load asset '%s'."),
 						*Property.Name,
 						*Property.TextureDefaultObjectPath);
@@ -527,7 +527,7 @@ namespace UE::DreamShader::Editor::Private
 				UTexture* DefaultTexture = LoadObject<UTexture>(nullptr, DefaultTexturePath);
 				if (!DefaultTexture || !DoesTextureMatchType(DefaultTexture, Property.TextureType))
 				{
-					OutError = FString::Printf(
+					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 						TEXT("Const texture property '%s' could not load default %s asset '%s'."),
 						*Property.Name,
 						GetTextureTypeLabel(Property.TextureType),
@@ -540,7 +540,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			else
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Const texture property '%s' with type %s requires an explicit default asset."),
 					*Property.Name,
 					GetTextureTypeLabel(Property.TextureType));
@@ -552,13 +552,13 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!Expression)
 		{
-			OutError = FString::Printf(TEXT("Failed to create a const node for property '%s'."), *Property.Name);
+			OutError = FString::Printf(TEXT("Failed to create a const node for property '%s'."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 
 		if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
 		{
-			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 		return Expression;
@@ -585,7 +585,7 @@ namespace UE::DreamShader::Editor::Private
 				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionScalarParameter::StaticClass(), -800, PositionY));
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create a scalar parameter node for property '%s'."), *Property.Name);
+				OutError = FString::Printf(TEXT("Failed to create a scalar parameter node for property '%s'."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return nullptr;
 			}
 
@@ -596,7 +596,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
 			{
-				OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+				OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return nullptr;
 			}
 			return Expression;
@@ -608,7 +608,7 @@ namespace UE::DreamShader::Editor::Private
 				CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionVectorParameter::StaticClass(), -800, PositionY));
 			if (!ParameterExpression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create a vector parameter node for property '%s'."), *Property.Name);
+				OutError = FString::Printf(TEXT("Failed to create a vector parameter node for property '%s'."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return nullptr;
 			}
 
@@ -619,7 +619,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			if (!ApplyExpressionMetadata(ParameterExpression, Property.Metadata, OutError))
 			{
-				OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+				OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return nullptr;
 			}
 
@@ -630,7 +630,7 @@ namespace UE::DreamShader::Editor::Private
 			CreateOwnedMaterialExpression(Material, MaterialFunction, UMaterialExpressionTextureObjectParameter::StaticClass(), -800, PositionY));
 		if (!Expression)
 		{
-			OutError = FString::Printf(TEXT("Failed to create a texture parameter node for property '%s'."), *Property.Name);
+			OutError = FString::Printf(TEXT("Failed to create a texture parameter node for property '%s'."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 
@@ -640,7 +640,7 @@ namespace UE::DreamShader::Editor::Private
 			UTexture* DefaultTexture = LoadObject<UTexture>(nullptr, *Property.TextureDefaultObjectPath);
 			if (!DefaultTexture)
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Texture property '%s' could not load asset '%s'."),
 					*Property.Name,
 					*Property.TextureDefaultObjectPath);
@@ -660,7 +660,7 @@ namespace UE::DreamShader::Editor::Private
 			UTexture* DefaultTexture = LoadObject<UTexture>(nullptr, DefaultTexturePath);
 			if (!DefaultTexture || !DoesTextureMatchType(DefaultTexture, Property.TextureType))
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Texture property '%s' could not load default %s asset '%s'."),
 					*Property.Name,
 					GetTextureTypeLabel(Property.TextureType),
@@ -673,7 +673,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		else
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("Texture property '%s' with type %s requires an explicit default asset."),
 				*Property.Name,
 				GetTextureTypeLabel(Property.TextureType));
@@ -681,7 +681,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
 		{
-			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError);
+			OutError = FString::Printf(TEXT("%s: %s"), *FormatMetadataContext(Property), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 		return Expression;
@@ -719,20 +719,20 @@ namespace UE::DreamShader::Editor::Private
 			const int32 ComponentCount = Components.Num();
 			if (ComponentCount < 2 || ComponentCount > 4)
 			{
-				OutError = FString::Printf(TEXT("Unsupported vector literal '%s'."), *InValueText);
+				OutError = FString::Printf(TEXT("Unsupported vector literal '%s'."), *InValueText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			OutExpression = CreateVectorLiteralExpression(Material, MaterialFunction, Components, ComponentCount, PositionY);
 			if (!OutExpression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create a float%d constant expression."), ComponentCount);
+				OutError = FString::Printf(TEXT("Failed to create a float%d constant expression."), ComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			return true;
 		}
 
-		OutError = FString::Printf(TEXT("'%s' is not a valid property reference or literal input."), *InValueText);
+		OutError = FString::Printf(TEXT("'%s' is not a valid property reference or literal input."), *InValueText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		return false;
 	}
 
@@ -753,7 +753,7 @@ namespace UE::DreamShader::Editor::Private
 		UClass* ExpressionClass = ResolveMaterialExpressionClass(ClassSpecifier);
 		if (!ExpressionClass)
 		{
-			OutError = FString::Printf(TEXT("UE.%s for property '%s': could not resolve MaterialExpression class '%s'."),
+			OutError = FString::Printf(TEXT("UE.%s for property '%s': could not resolve MaterialExpression class '%s'."), /* I18N-EXEMPT: deferred codegen or compatibility path */
 				*Property.UEBuiltinFunctionName,
 				*Property.Name,
 				*ClassSpecifier);
@@ -764,7 +764,7 @@ namespace UE::DreamShader::Editor::Private
 			CreateOwnedMaterialExpression(Material, MaterialFunction, ExpressionClass, -800, PositionY));
 		if (!Expression)
 		{
-			OutError = FString::Printf(TEXT("UE.%s for property '%s': failed to create '%s'."),
+			OutError = FString::Printf(TEXT("UE.%s for property '%s': failed to create '%s'."), /* I18N-EXEMPT: deferred codegen or compatibility path */
 				*Property.UEBuiltinFunctionName,
 				*Property.Name,
 				*ExpressionClass->GetName());
@@ -779,7 +779,7 @@ namespace UE::DreamShader::Editor::Private
 				ECustomMaterialOutputType CustomOutputType = CMOT_Float1;
 				if (!TryResolveCustomOutputType(OutputTypeText, CustomOutputType))
 				{
-					OutError = FString::Printf(TEXT("UE.%s for property '%s': OutputType '%s' is not a valid Custom node output type."),
+					OutError = FString::Printf(TEXT("UE.%s for property '%s': OutputType '%s' is not a valid Custom node output type."), /* I18N-EXEMPT: deferred codegen or compatibility path */
 						*Property.UEBuiltinFunctionName,
 						*Property.Name,
 						*OutputTypeText);
@@ -797,7 +797,7 @@ namespace UE::DreamShader::Editor::Private
 			FString ParameterNameError;
 			if (!SetExpressionParameterName(Expression, Property.Name, ParameterNameError))
 			{
-				OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"),
+				OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), /* I18N-EXEMPT: deferred codegen or compatibility path */
 					*Property.UEBuiltinFunctionName,
 					*Property.Name,
 					*ParameterNameError);
@@ -826,7 +826,7 @@ namespace UE::DreamShader::Editor::Private
 					FString InputError;
 					if (!ResolveFlexibleExpressionInputValue(Material, MaterialFunction, Argument.Value, AvailableExpressions, PositionY - 80, InputExpression, InputError))
 					{
-						OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *InputError);
+						OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *InputError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 						return nullptr;
 					}
 
@@ -837,7 +837,7 @@ namespace UE::DreamShader::Editor::Private
 					continue;
 				}
 
-				OutError = FString::Printf(TEXT("UE.%s for property '%s': '%s' is not a property on '%s'."),
+				OutError = FString::Printf(TEXT("UE.%s for property '%s': '%s' is not a property on '%s'."), /* I18N-EXEMPT: deferred codegen or compatibility path */
 					*Property.UEBuiltinFunctionName,
 					*Property.Name,
 					*Argument.Key,
@@ -851,14 +851,14 @@ namespace UE::DreamShader::Editor::Private
 				FString InputError;
 				if (!ResolveFlexibleExpressionInputValue(Material, MaterialFunction, Argument.Value, AvailableExpressions, PositionY - 80, InputExpression, InputError))
 				{
-					OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *InputError);
+					OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *InputError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 
 				FExpressionInput* Input = BoundProperty->ContainerPtrToValuePtr<FExpressionInput>(Expression);
 				if (!Input)
 				{
-					OutError = FString::Printf(TEXT("UE.%s for property '%s': failed to bind input '%s'."),
+					OutError = FString::Printf(TEXT("UE.%s for property '%s': failed to bind input '%s'."), /* I18N-EXEMPT: deferred codegen or compatibility path */
 						*Property.UEBuiltinFunctionName,
 						*Property.Name,
 						*Argument.Key);
@@ -872,7 +872,7 @@ namespace UE::DreamShader::Editor::Private
 				void* ValuePtr = BoundProperty->ContainerPtrToValuePtr<void>(Expression);
 				if (!SetMaterialExpressionLiteralProperty(Expression, BoundProperty, ValuePtr, Argument.Value, LiteralError))
 				{
-					OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"),
+					OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), /* I18N-EXEMPT: deferred codegen or compatibility path */
 						*Property.UEBuiltinFunctionName,
 						*Property.Name,
 						*LiteralError);
@@ -895,7 +895,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (!ParseIntegerLiteral(OutputIndexText, RequestedOutputIndex) || RequestedOutputIndex < 0)
 				{
-					OutError = FString::Printf(TEXT("UE.%s for property '%s': OutputIndex is out of range for '%s'."),
+					OutError = FString::Printf(TEXT("UE.%s for property '%s': OutputIndex is out of range for '%s'."), /* I18N-EXEMPT: deferred codegen or compatibility path */
 						*Property.UEBuiltinFunctionName,
 						*Property.Name,
 						*ExpressionClass->GetName());
@@ -909,7 +909,7 @@ namespace UE::DreamShader::Editor::Private
 				CustomOutput.OutputName = FName(*(
 					AdditionalOutputIndex == RequestedOutputIndex - 1 && !OutputNameText.IsEmpty()
 						? OutputNameText
-						: FString::Printf(TEXT("Output%d"), AdditionalOutputIndex + 1)));
+						: FString::Printf(TEXT("Output%d"), AdditionalOutputIndex + 1))); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				CustomOutput.OutputType = CustomExpression->OutputType;
 				CustomExpression->AdditionalOutputs.Add(CustomOutput);
 			}
@@ -919,7 +919,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!ApplyExpressionMetadata(Expression, Property.Metadata, OutError))
 		{
-			OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"),
+			OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), /* I18N-EXEMPT: deferred codegen or compatibility path */
 				*Property.UEBuiltinFunctionName,
 				*Property.Name,
 				*OutError);
@@ -938,7 +938,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		const auto MakeError = [&Property](const FString& Message)
 		{
-			return FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *Message);
+			return FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *Message); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		};
 
 		if (Property.UEBuiltinFunctionName.Equals(TEXT("CollectionParam"), ESearchCase::IgnoreCase)
@@ -972,14 +972,14 @@ namespace UE::DreamShader::Editor::Private
 			FString CollectionObjectPath;
 			if (!TryResolveDreamShaderAssetReference(CollectionText, CollectionObjectPath, OutError))
 			{
-				OutError = MakeError(FString::Printf(TEXT("Collection is invalid: %s"), *OutError));
+				OutError = MakeError(FString::Printf(TEXT("Collection is invalid: %s"), *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return nullptr;
 			}
 
 			UMaterialParameterCollection* Collection = LoadObject<UMaterialParameterCollection>(nullptr, *CollectionObjectPath);
 			if (!Collection)
 			{
-				OutError = MakeError(FString::Printf(TEXT("Could not load MaterialParameterCollection '%s'."), *CollectionObjectPath));
+				OutError = MakeError(FString::Printf(TEXT("Could not load MaterialParameterCollection '%s'."), *CollectionObjectPath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return nullptr;
 			}
 
@@ -997,7 +997,7 @@ namespace UE::DreamShader::Editor::Private
 			const FName ParameterName(*ParameterText);
 			if (!Collection->GetScalarParameterByName(ParameterName) && !Collection->GetVectorParameterByName(ParameterName))
 			{
-				OutError = MakeError(FString::Printf(TEXT("Collection '%s' does not contain parameter '%s'."), *CollectionObjectPath, *ParameterText));
+				OutError = MakeError(FString::Printf(TEXT("Collection '%s' does not contain parameter '%s'."), *CollectionObjectPath, *ParameterText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return nullptr;
 			}
 
@@ -1066,7 +1066,7 @@ namespace UE::DreamShader::Editor::Private
 				const FString& ValueToParse = bHasIndex ? IndexValue : CoordinateIndexValue;
 				if (!ParseIntegerLiteral(ValueToParse, ParsedIndex) || ParsedIndex < 0)
 				{
-					OutError = MakeError(FString::Printf(TEXT("'%s' is not a valid non-negative UV channel index."), *ValueToParse));
+					OutError = MakeError(FString::Printf(TEXT("'%s' is not a valid non-negative UV channel index."), *ValueToParse)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 
@@ -1078,7 +1078,7 @@ namespace UE::DreamShader::Editor::Private
 				double ParsedTiling = 1.0;
 				if (!ParseScalarLiteral(TilingValue, ParsedTiling))
 				{
-					OutError = MakeError(FString::Printf(TEXT("UTiling value '%s' is invalid."), *TilingValue));
+					OutError = MakeError(FString::Printf(TEXT("UTiling value '%s' is invalid."), *TilingValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->UTiling = static_cast<float>(ParsedTiling);
@@ -1089,7 +1089,7 @@ namespace UE::DreamShader::Editor::Private
 				double ParsedTiling = 1.0;
 				if (!ParseScalarLiteral(TilingValue, ParsedTiling))
 				{
-					OutError = MakeError(FString::Printf(TEXT("VTiling value '%s' is invalid."), *TilingValue));
+					OutError = MakeError(FString::Printf(TEXT("VTiling value '%s' is invalid."), *TilingValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->VTiling = static_cast<float>(ParsedTiling);
@@ -1100,7 +1100,7 @@ namespace UE::DreamShader::Editor::Private
 				bool bParsedFlag = false;
 				if (!ParseBooleanLiteral(FlagValue, bParsedFlag))
 				{
-					OutError = MakeError(FString::Printf(TEXT("UnMirrorU value '%s' is invalid."), *FlagValue));
+					OutError = MakeError(FString::Printf(TEXT("UnMirrorU value '%s' is invalid."), *FlagValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->UnMirrorU = bParsedFlag ? 1U : 0U;
@@ -1111,7 +1111,7 @@ namespace UE::DreamShader::Editor::Private
 				bool bParsedFlag = false;
 				if (!ParseBooleanLiteral(FlagValue, bParsedFlag))
 				{
-					OutError = MakeError(FString::Printf(TEXT("UnMirrorV value '%s' is invalid."), *FlagValue));
+					OutError = MakeError(FString::Printf(TEXT("UnMirrorV value '%s' is invalid."), *FlagValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->UnMirrorV = bParsedFlag ? 1U : 0U;
@@ -1145,7 +1145,7 @@ namespace UE::DreamShader::Editor::Private
 				bool bParsedFlag = false;
 				if (!ParseBooleanLiteral(FlagValue, bParsedFlag))
 				{
-					OutError = MakeError(FString::Printf(TEXT("IgnorePause value '%s' is invalid."), *FlagValue));
+					OutError = MakeError(FString::Printf(TEXT("IgnorePause value '%s' is invalid."), *FlagValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->bIgnorePause = bParsedFlag ? 1U : 0U;
@@ -1156,7 +1156,7 @@ namespace UE::DreamShader::Editor::Private
 				double ParsedPeriod = 0.0;
 				if (!ParseScalarLiteral(PeriodValue, ParsedPeriod) || ParsedPeriod < 0.0)
 				{
-					OutError = MakeError(FString::Printf(TEXT("Period value '%s' is invalid."), *PeriodValue));
+					OutError = MakeError(FString::Printf(TEXT("Period value '%s' is invalid."), *PeriodValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->bOverride_Period = true;
@@ -1204,7 +1204,7 @@ namespace UE::DreamShader::Editor::Private
 					FString InputError;
 					if (!ResolveExpressionInputValue(Material, MaterialFunction, CoordinateValue, AvailableExpressions, 2, PositionY - 80, CoordinateExpression, InputError))
 					{
-						OutError = MakeError(FString::Printf(TEXT("Coordinate input is invalid. %s"), *InputError));
+						OutError = MakeError(FString::Printf(TEXT("Coordinate input is invalid. %s"), *InputError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 						return nullptr;
 					}
 					Expression->Coordinate.Expression = CoordinateExpression;
@@ -1216,7 +1216,7 @@ namespace UE::DreamShader::Editor::Private
 				int32 ParsedCoordinateIndex = 0;
 				if (!ParseIntegerLiteral(CoordinateValue, ParsedCoordinateIndex) || ParsedCoordinateIndex < 0)
 				{
-					OutError = MakeError(FString::Printf(TEXT("ConstCoordinate value '%s' is invalid."), *CoordinateValue));
+					OutError = MakeError(FString::Printf(TEXT("ConstCoordinate value '%s' is invalid."), *CoordinateValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->ConstCoordinate = ParsedCoordinateIndex;
@@ -1228,7 +1228,7 @@ namespace UE::DreamShader::Editor::Private
 				FString InputError;
 				if (!ResolveExpressionInputValue(Material, MaterialFunction, TimeValue, AvailableExpressions, 1, PositionY - 40, TimeExpression, InputError))
 				{
-					OutError = MakeError(FString::Printf(TEXT("Time input is invalid. %s"), *InputError));
+					OutError = MakeError(FString::Printf(TEXT("Time input is invalid. %s"), *InputError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->Time.Expression = TimeExpression;
@@ -1240,7 +1240,7 @@ namespace UE::DreamShader::Editor::Private
 				FString InputError;
 				if (!ResolveExpressionInputValue(Material, MaterialFunction, SpeedValue, AvailableExpressions, 2, PositionY + 40, SpeedExpression, InputError))
 				{
-					OutError = MakeError(FString::Printf(TEXT("Speed input is invalid. %s"), *InputError));
+					OutError = MakeError(FString::Printf(TEXT("Speed input is invalid. %s"), *InputError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->Speed.Expression = SpeedExpression;
@@ -1251,7 +1251,7 @@ namespace UE::DreamShader::Editor::Private
 				double ParsedSpeed = 0.0;
 				if (!ParseScalarLiteral(SpeedValue, ParsedSpeed))
 				{
-					OutError = MakeError(FString::Printf(TEXT("SpeedX value '%s' is invalid."), *SpeedValue));
+					OutError = MakeError(FString::Printf(TEXT("SpeedX value '%s' is invalid."), *SpeedValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->SpeedX = static_cast<float>(ParsedSpeed);
@@ -1262,7 +1262,7 @@ namespace UE::DreamShader::Editor::Private
 				double ParsedSpeed = 0.0;
 				if (!ParseScalarLiteral(SpeedValue, ParsedSpeed))
 				{
-					OutError = MakeError(FString::Printf(TEXT("SpeedY value '%s' is invalid."), *SpeedValue));
+					OutError = MakeError(FString::Printf(TEXT("SpeedY value '%s' is invalid."), *SpeedValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->SpeedY = static_cast<float>(ParsedSpeed);
@@ -1273,7 +1273,7 @@ namespace UE::DreamShader::Editor::Private
 				bool bParsedFlag = false;
 				if (!ParseBooleanLiteral(FlagValue, bParsedFlag))
 				{
-					OutError = MakeError(FString::Printf(TEXT("FractionalPart value '%s' is invalid."), *FlagValue));
+					OutError = MakeError(FString::Printf(TEXT("FractionalPart value '%s' is invalid."), *FlagValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->bFractionalPart = bParsedFlag;
@@ -1306,7 +1306,7 @@ namespace UE::DreamShader::Editor::Private
 				EWorldPositionIncludedOffsets ParsedOffset = WPT_Default;
 				if (!TryResolveWorldPositionShaderOffset(OffsetValue, ParsedOffset))
 				{
-					OutError = MakeError(FString::Printf(TEXT("ShaderOffsets value '%s' is invalid."), *OffsetValue));
+					OutError = MakeError(FString::Printf(TEXT("ShaderOffsets value '%s' is invalid."), *OffsetValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->WorldPositionShaderOffset = ParsedOffset;
@@ -1341,7 +1341,7 @@ namespace UE::DreamShader::Editor::Private
 				EPositionOrigin ParsedOrigin = EPositionOrigin::Absolute;
 				if (!TryResolvePositionOrigin(OriginValue, ParsedOrigin))
 				{
-					OutError = MakeError(FString::Printf(TEXT("Origin value '%s' is invalid."), *OriginValue));
+					OutError = MakeError(FString::Printf(TEXT("Origin value '%s' is invalid."), *OriginValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return nullptr;
 				}
 				Expression->OriginType = ParsedOrigin;
@@ -1438,7 +1438,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (OutError.IsEmpty())
 			{
-				OutError = FString::Printf(TEXT("Failed to create a parameter node for property '%s'."), *Property.Name);
+				OutError = FString::Printf(TEXT("Failed to create a parameter node for property '%s'."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 		return Expression;

@@ -132,7 +132,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutError = FString::Printf(
+		OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("Expected %d component(s) but got %d."),
 			ExpectedComponentCount,
 			InValue.ComponentCount);

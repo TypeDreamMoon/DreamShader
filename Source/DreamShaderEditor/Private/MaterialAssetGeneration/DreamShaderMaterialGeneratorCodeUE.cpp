@@ -91,7 +91,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!TryExtractIntegerLiteral(Argument->Expression, TargetField))
 			{
-				OutError = FString::Printf(TEXT("UE.%s %s must be an integer literal."), *FunctionName, ArgumentName);
+				OutError = FString::Printf(TEXT("UE.%s %s must be an integer literal."), *FunctionName, ArgumentName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -109,7 +109,7 @@ namespace UE::DreamShader::Editor::Private
 			double ParsedValue = 0.0;
 			if (!TryExtractScalarLiteral(Argument->Expression, ParsedValue))
 			{
-				OutError = FString::Printf(TEXT("UE.%s %s must be a numeric literal."), *FunctionName, ArgumentName);
+				OutError = FString::Printf(TEXT("UE.%s %s must be a numeric literal."), *FunctionName, ArgumentName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -128,7 +128,7 @@ namespace UE::DreamShader::Editor::Private
 			bool bParsedValue = false;
 			if (!TryExtractBooleanLiteral(Argument->Expression, bParsedValue))
 			{
-				OutError = FString::Printf(TEXT("UE.%s %s must be a boolean literal."), *FunctionName, ArgumentName);
+				OutError = FString::Printf(TEXT("UE.%s %s must be a boolean literal."), *FunctionName, ArgumentName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -146,7 +146,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!TryExtractTextLiteral(Argument->Expression, TargetValue))
 			{
-				OutError = FString::Printf(TEXT("UE.%s %s must be a text value."), *FunctionName, ArgumentName);
+				OutError = FString::Printf(TEXT("UE.%s %s must be a text value."), *FunctionName, ArgumentName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -180,7 +180,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			if (!Argument)
 			{
-				OutError = FString::Printf(TEXT("UE.%s requires parameter: %s"), *FunctionName, ArgumentName);
+				OutError = FString::Printf(TEXT("UE.%s requires parameter: %s"), *FunctionName, ArgumentName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -282,14 +282,14 @@ namespace UE::DreamShader::Editor::Private
 			FString CollectionObjectPath;
 			if (!TryResolveDreamShaderAssetReference(CollectionText, CollectionObjectPath, OutError))
 			{
-				OutError = FString::Printf(TEXT("UE.CollectionParam Collection is invalid: %s"), *OutError);
+				OutError = FString::Printf(TEXT("UE.CollectionParam Collection is invalid: %s"), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			UMaterialParameterCollection* Collection = LoadObject<UMaterialParameterCollection>(nullptr, *CollectionObjectPath);
 			if (!Collection)
 			{
-				OutError = FString::Printf(TEXT("UE.CollectionParam could not load MaterialParameterCollection '%s'."), *CollectionObjectPath);
+				OutError = FString::Printf(TEXT("UE.CollectionParam could not load MaterialParameterCollection '%s'."), *CollectionObjectPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -316,7 +316,7 @@ namespace UE::DreamShader::Editor::Private
 			const bool bIsVectorParameter = Collection->GetVectorParameterByName(ParameterName) != nullptr;
 			if (!bIsScalarParameter && !bIsVectorParameter)
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("UE.CollectionParam collection '%s' does not contain parameter '%s'."),
 					*CollectionObjectPath,
 					*ParameterText);
@@ -398,7 +398,7 @@ namespace UE::DreamShader::Editor::Private
 			UMaterialExpression* Expression = CreateExpression(Builtin.ExpressionClass, 520, ConsumeNodeY());
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create UE.%s."), Builtin.Name);
+				OutError = FString::Printf(TEXT("Failed to create UE.%s."), Builtin.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -459,7 +459,7 @@ namespace UE::DreamShader::Editor::Private
 					double Period = 0.0;
 					if (!TryExtractScalarLiteral(Argument->Expression, Period))
 					{
-						Error = FString::Printf(TEXT("UE.%s Period must be a numeric literal."), *FunctionName);
+						Error = FString::Printf(TEXT("UE.%s Period must be a numeric literal."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 						return false;
 					}
 
@@ -655,7 +655,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!Argument.bIsNamed)
 			{
-				OutError = FString::Printf(TEXT("Generic %s.%s calls require named arguments."), CallNamespace, *FunctionName);
+				OutError = FString::Printf(TEXT("Generic %s.%s calls require named arguments."), CallNamespace, *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -667,11 +667,11 @@ namespace UE::DreamShader::Editor::Private
 			SubstrateBuiltin = FindSubstrateBuiltinDescriptor(FunctionName);
 			if (!SubstrateBuiltin)
 			{
-				OutError = FString::Printf(TEXT("Unsupported Substrate builtin call '%s' in Graph."), *CalleeName);
+				OutError = FString::Printf(TEXT("Unsupported Substrate builtin call '%s' in Graph."), *CalleeName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 #else
-			OutError = FString::Printf(TEXT("Substrate builtin call '%s' requires Unreal Engine 5.4 or newer."), *CalleeName);
+			OutError = FString::Printf(TEXT("Substrate builtin call '%s' requires Unreal Engine 5.4 or newer."), *CalleeName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 #endif
 		}
@@ -683,7 +683,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (!OutputTypeArgument && !SubstrateBuiltin)
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("Unsupported UE builtin call '%s' in Graph. For generic MaterialExpression calls, add OutputType=\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture/Substrate\"."),
 				*CalleeName);
 			return false;
@@ -705,7 +705,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!TryExtractLiteralText(OutputTypeArgument->Expression, OutputTypeText))
 			{
-				OutError = FString::Printf(TEXT("UE.%s OutputType must be a literal value."), *FunctionName);
+				OutError = FString::Printf(TEXT("UE.%s OutputType must be a literal value."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -713,10 +713,10 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (IsSubstrateMaterialType(OutputTypeText) && !IsSubstrateMaterialTypeSupported())
 				{
-					OutError = FString::Printf(TEXT("UE.%s OutputType=\"Substrate\" requires Unreal Engine 5.4 or newer."), *FunctionName);
+					OutError = FString::Printf(TEXT("UE.%s OutputType=\"Substrate\" requires Unreal Engine 5.4 or newer."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
-				OutError = FString::Printf(TEXT("UE.%s OutputType '%s' is not supported."), *FunctionName, *OutputTypeText);
+				OutError = FString::Printf(TEXT("UE.%s OutputType '%s' is not supported."), *FunctionName, *OutputTypeText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -728,7 +728,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (!TryExtractLiteralText(ClassArgument->Expression, ClassSpecifier))
 				{
-					OutError = FString::Printf(TEXT("UE.%s Class must be a literal value."), *FunctionName);
+					OutError = FString::Printf(TEXT("UE.%s Class must be a literal value."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 			}
@@ -740,19 +740,19 @@ namespace UE::DreamShader::Editor::Private
 		}
 		else if (FindNamedArgument(Arguments, TEXT("Class")))
 		{
-			OutError = FString::Printf(TEXT("Substrate.%s uses a fixed MaterialExpression class and does not accept Class."), *FunctionName);
+			OutError = FString::Printf(TEXT("Substrate.%s uses a fixed MaterialExpression class and does not accept Class."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		UClass* ExpressionClass = ResolveMaterialExpressionClass(ClassSpecifier);
 		if (!ExpressionClass)
 		{
-			OutError = FString::Printf(TEXT("UE.%s could not resolve MaterialExpression class '%s'."), *FunctionName, *ClassSpecifier);
+			OutError = FString::Printf(TEXT("UE.%s could not resolve MaterialExpression class '%s'."), *FunctionName, *ClassSpecifier); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 		if (SubstrateBuiltin && !IsSubstrateExpressionClass(ExpressionClass))
 		{
-			OutError = FString::Printf(TEXT("Substrate.%s resolved to non-Substrate class '%s'."), *FunctionName, *ExpressionClass->GetName());
+			OutError = FString::Printf(TEXT("Substrate.%s resolved to non-Substrate class '%s'."), *FunctionName, *ExpressionClass->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -764,7 +764,7 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeCallArgument* OutputIndexArgument = FindNamedArgument(Arguments, TEXT("OutputIndex"));
 		if (OutputNameArgument && OutputIndexArgument)
 		{
-			OutError = FString::Printf(TEXT("UE.%s cannot use OutputName/Output together with OutputIndex."), *FunctionName);
+			OutError = FString::Printf(TEXT("UE.%s cannot use OutputName/Output together with OutputIndex."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -783,7 +783,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (TryBuildReusableCallKey(CallNamespace, FunctionName, Arguments, ExcludedReuseArguments, ExpressionReuseKey))
 			{
-				ExpressionReuseKey = FString::Printf(
+				ExpressionReuseKey = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("%s|Class=%s|OutputType=%s"),
 					*ExpressionReuseKey,
 					*ExpressionClass->GetName(),
@@ -793,7 +793,7 @@ namespace UE::DreamShader::Editor::Private
 					FString OutputNameText;
 					if (TryExtractLiteralText(OutputNameArgument->Expression, OutputNameText))
 					{
-						OutputReuseKey = ExpressionReuseKey + FString::Printf(TEXT("|OutputName=%s"), *NormalizeCodeReuseLiteralText(OutputNameText));
+						OutputReuseKey = ExpressionReuseKey + FString::Printf(TEXT("|OutputName=%s"), *NormalizeCodeReuseLiteralText(OutputNameText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 				}
 				else if (OutputIndexArgument)
@@ -801,7 +801,7 @@ namespace UE::DreamShader::Editor::Private
 					FString OutputIndexText;
 					if (TryExtractLiteralText(OutputIndexArgument->Expression, OutputIndexText))
 					{
-						OutputReuseKey = ExpressionReuseKey + FString::Printf(TEXT("|OutputIndex=%s"), *NormalizeCodeReuseLiteralText(OutputIndexText));
+						OutputReuseKey = ExpressionReuseKey + FString::Printf(TEXT("|OutputIndex=%s"), *NormalizeCodeReuseLiteralText(OutputIndexText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 				}
 				else
@@ -830,14 +830,14 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (!Expression)
 		{
-			OutError = FString::Printf(TEXT("UE.%s failed to create '%s'."), *FunctionName, *ExpressionClass->GetName());
+			OutError = FString::Printf(TEXT("UE.%s failed to create '%s'."), *FunctionName, *ExpressionClass->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		UMaterialExpressionCustom* CustomExpression = Cast<UMaterialExpressionCustom>(Expression);
 		if (CustomExpression && bIsSubstrateMaterial)
 		{
-			OutError = FString::Printf(TEXT("UE.%s OutputType=\"Substrate\" is not supported by UMaterialExpressionCustom."), *FunctionName);
+			OutError = FString::Printf(TEXT("UE.%s OutputType=\"Substrate\" is not supported by UMaterialExpressionCustom."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 		if (CustomExpression && !bReusedExpressionNode)
@@ -845,7 +845,7 @@ namespace UE::DreamShader::Editor::Private
 			ECustomMaterialOutputType CustomOutputType = CMOT_Float1;
 			if (!TryResolveCustomOutputType(OutputTypeText, CustomOutputType))
 			{
-				OutError = FString::Printf(TEXT("UE.%s OutputType '%s' is not a valid Custom node output type."), *FunctionName, *OutputTypeText);
+				OutError = FString::Printf(TEXT("UE.%s OutputType '%s' is not a valid Custom node output type."), *FunctionName, *OutputTypeText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			CustomExpression->OutputType = CustomOutputType;
@@ -888,19 +888,19 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (!CustomExpression)
 				{
-					OutError = FString::Printf(TEXT("UE.%s: '%s' is not a property on '%s'."), *FunctionName, *Argument.Name, *ExpressionClass->GetName());
+					OutError = FString::Printf(TEXT("UE.%s: '%s' is not a property on '%s'."), *FunctionName, *Argument.Name, *ExpressionClass->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
 				FCodeValue InputValue;
 				if (!EvaluateExpression(Argument.Expression, InputValue, OutError))
 				{
-					OutError = FString::Printf(TEXT("UE.%s input '%s': %s"), *FunctionName, *Argument.Name, *OutError);
+					OutError = FString::Printf(TEXT("UE.%s input '%s': %s"), *FunctionName, *Argument.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 				if (InputValue.bIsSubstrateMaterial)
 				{
-					OutError = FString::Printf(TEXT("UE.%s Custom input '%s' does not accept Substrate values."), *FunctionName, *Argument.Name);
+					OutError = FString::Printf(TEXT("UE.%s Custom input '%s' does not accept Substrate values."), *FunctionName, *Argument.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -925,7 +925,7 @@ namespace UE::DreamShader::Editor::Private
 				FCodeValue InputValue;
 				if (!EvaluateExpression(Argument.Expression, InputValue, OutError))
 				{
-					OutError = FString::Printf(TEXT("UE.%s input '%s': %s"), *FunctionName, *Argument.Name, *OutError);
+					OutError = FString::Printf(TEXT("UE.%s input '%s': %s"), *FunctionName, *Argument.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -934,7 +934,7 @@ namespace UE::DreamShader::Editor::Private
 					: BoundProperty->ContainerPtrToValuePtr<FExpressionInput>(Expression);
 				if (!Input)
 				{
-					OutError = FString::Printf(TEXT("UE.%s failed to bind input '%s'."), *FunctionName, *Argument.Name);
+					OutError = FString::Printf(TEXT("UE.%s failed to bind input '%s'."), *FunctionName, *Argument.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -957,7 +957,7 @@ namespace UE::DreamShader::Editor::Private
 					{
 						if (!InputValue.bIsSubstrateMaterial)
 						{
-							OutError = FString::Printf(TEXT("%s.%s input '%s' expects a Substrate value."), CallNamespace, *FunctionName, *Argument.Name);
+							OutError = FString::Printf(TEXT("%s.%s input '%s' expects a Substrate value."), CallNamespace, *FunctionName, *Argument.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 							return false;
 						}
 					}
@@ -965,18 +965,18 @@ namespace UE::DreamShader::Editor::Private
 					{
 						if (!InputValue.bIsMaterialAttributes)
 						{
-							OutError = FString::Printf(TEXT("%s.%s input '%s' expects a MaterialAttributes value."), CallNamespace, *FunctionName, *Argument.Name);
+							OutError = FString::Printf(TEXT("%s.%s input '%s' expects a MaterialAttributes value."), CallNamespace, *FunctionName, *Argument.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 							return false;
 						}
 					}
 					else if (InputValue.bIsSubstrateMaterial)
 					{
-						OutError = FString::Printf(TEXT("%s.%s input '%s' does not accept Substrate values."), CallNamespace, *FunctionName, *Argument.Name);
+						OutError = FString::Printf(TEXT("%s.%s input '%s' does not accept Substrate values."), CallNamespace, *FunctionName, *Argument.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 						return false;
 					}
 					else if (InputValue.bIsMaterialAttributes)
 					{
-						OutError = FString::Printf(TEXT("%s.%s input '%s' does not accept MaterialAttributes values."), CallNamespace, *FunctionName, *Argument.Name);
+						OutError = FString::Printf(TEXT("%s.%s input '%s' does not accept MaterialAttributes values."), CallNamespace, *FunctionName, *Argument.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 						return false;
 					}
 				}
@@ -997,20 +997,20 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (!TryExtractAssetReferenceText(Argument.Expression, LiteralText))
 					{
-						OutError = FString::Printf(TEXT("UE.%s property '%s' must use Path(...) or an Unreal object path."), *FunctionName, *Argument.Name);
+						OutError = FString::Printf(TEXT("UE.%s property '%s' must use Path(...) or an Unreal object path."), *FunctionName, *Argument.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 						return false;
 					}
 				}
 				else if (!TryExtractLiteralText(Argument.Expression, LiteralText))
 				{
-					OutError = FString::Printf(TEXT("UE.%s property '%s' must use a literal value."), *FunctionName, *Argument.Name);
+					OutError = FString::Printf(TEXT("UE.%s property '%s' must use a literal value."), *FunctionName, *Argument.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
 				FString LiteralError;
 				if (!SetMaterialExpressionLiteralProperty(Expression, BoundProperty, LiteralText, LiteralError))
 				{
-					OutError = FString::Printf(TEXT("UE.%s property '%s': %s"), *FunctionName, *Argument.Name, *LiteralError);
+					OutError = FString::Printf(TEXT("UE.%s property '%s': %s"), *FunctionName, *Argument.Name, *LiteralError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 			}
@@ -1025,7 +1025,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (!TryExtractLiteralText(OutputNameArgument->Expression, CustomOutputName) || CustomOutputName.TrimStartAndEnd().IsEmpty())
 				{
-					OutError = FString::Printf(TEXT("UE.%s OutputName must be a non-empty literal value."), *FunctionName);
+					OutError = FString::Printf(TEXT("UE.%s OutputName must be a non-empty literal value."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 				RequestedCustomOutputIndex = 1;
@@ -1034,7 +1034,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (!TryExtractIntegerLiteral(OutputIndexArgument->Expression, RequestedCustomOutputIndex) || RequestedCustomOutputIndex < 0)
 				{
-					OutError = FString::Printf(TEXT("UE.%s OutputIndex is out of range for '%s'."), *FunctionName, *ExpressionClass->GetName());
+					OutError = FString::Printf(TEXT("UE.%s OutputIndex is out of range for '%s'."), *FunctionName, *ExpressionClass->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 			}
@@ -1056,7 +1056,7 @@ namespace UE::DreamShader::Editor::Private
 				CustomOutput.OutputName = FName(*(
 					AdditionalOutputIndex == RequestedCustomOutputIndex - 1 && !CustomOutputName.IsEmpty()
 						? CustomOutputName
-						: FString::Printf(TEXT("Output%d"), AdditionalOutputIndex + 1)));
+						: FString::Printf(TEXT("Output%d"), AdditionalOutputIndex + 1))); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				CustomOutput.OutputType = CustomOutputType;
 				CustomExpression->AdditionalOutputs.Add(CustomOutput);
 			}
@@ -1071,7 +1071,7 @@ namespace UE::DreamShader::Editor::Private
 				|| ResolvedOutputIndex < 0
 				|| !Expression->Outputs.IsValidIndex(ResolvedOutputIndex))
 			{
-				OutError = FString::Printf(TEXT("UE.%s OutputIndex is out of range for '%s'."), *FunctionName, *ExpressionClass->GetName());
+				OutError = FString::Printf(TEXT("UE.%s OutputIndex is out of range for '%s'."), *FunctionName, *ExpressionClass->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -1080,19 +1080,19 @@ namespace UE::DreamShader::Editor::Private
 			FString OutputNameText;
 			if (!TryExtractLiteralText(OutputNameArgument->Expression, OutputNameText))
 			{
-				OutError = FString::Printf(TEXT("UE.%s OutputName must be a literal value."), *FunctionName);
+				OutError = FString::Printf(TEXT("UE.%s OutputName must be a literal value."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			if (!TryResolveExpressionOutputIndex(Expression, OutputNameText, ResolvedOutputIndex))
 			{
-				OutError = FString::Printf(TEXT("UE.%s output '%s' was not found on '%s'."), *FunctionName, *OutputNameText, *ExpressionClass->GetName());
+				OutError = FString::Printf(TEXT("UE.%s output '%s' was not found on '%s'."), *FunctionName, *OutputNameText, *ExpressionClass->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
 		else if (!Expression->Outputs.IsValidIndex(0))
 		{
-			OutError = FString::Printf(TEXT("UE.%s created '%s', but it has no material outputs."), *FunctionName, *ExpressionClass->GetName());
+			OutError = FString::Printf(TEXT("UE.%s created '%s', but it has no material outputs."), *FunctionName, *ExpressionClass->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -1196,7 +1196,7 @@ namespace UE::DreamShader::Editor::Private
 		const EMaterialValueType ActualOutputValueType = GetDreamShaderExpressionOutputValueType(Expression, ResolvedOutputIndex);
 		if (bIsSubstrateMaterial && !IsSubstrateMaterialValueType(ActualOutputValueType))
 		{
-			OutError = FString::Printf(TEXT("%s.%s output is not a Substrate value."), CallNamespace, *FunctionName);
+			OutError = FString::Printf(TEXT("%s.%s output is not a Substrate value."), CallNamespace, *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 

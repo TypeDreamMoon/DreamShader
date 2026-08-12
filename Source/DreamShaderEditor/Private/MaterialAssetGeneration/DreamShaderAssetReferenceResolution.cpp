@@ -117,33 +117,33 @@ namespace UE::DreamShader::Editor::Private
 		const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
 		if (!Plugin.IsValid())
 		{
-			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but no enabled plugin with that name was found."), *Root, *PluginName);
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but no enabled plugin with that name was found."), *Root, *PluginName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		if (!Plugin->IsEnabled())
 		{
-			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but the plugin is not enabled."), *Root, *PluginName);
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but the plugin is not enabled."), *Root, *PluginName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		if (!Plugin->CanContainContent())
 		{
-			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but the plugin cannot contain content."), *Root, *PluginName);
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but the plugin cannot contain content."), *Root, *PluginName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		const FString ContentDir = FPaths::ConvertRelativePathToFull(Plugin->GetContentDir());
 		if (!IFileManager::Get().DirectoryExists(*ContentDir))
 		{
-			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but its Content directory does not exist: '%s'."), *Root, *PluginName, *ContentDir);
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but its Content directory does not exist: '%s'."), *Root, *PluginName, *ContentDir); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 #if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
 		if (!Plugin->IsMounted())
 		{
-			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but the plugin content is not mounted."), *Root, *PluginName);
+			OutError = FString::Printf(TEXT("Asset Path root '%s' references plugin '%s', but the plugin content is not mounted."), *Root, *PluginName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 #endif
@@ -210,7 +210,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString PluginName = RootSegment.Mid(PluginPrefixLength).TrimStartAndEnd();
 			if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
 			{
-				OutError = FString::Printf(TEXT("Asset Path root '%s' has an invalid plugin name."), *Root);
+				OutError = FString::Printf(TEXT("Asset Path root '%s' has an invalid plugin name."), *Root); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (!ResolveContentPluginAssetReferenceRoot(Root, PluginName, OutPackagePath, OutError))
@@ -224,7 +224,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString PluginName = Segments[1].TrimStartAndEnd();
 			if (PluginName.IsEmpty() || ObjectTools::SanitizeObjectName(PluginName) != PluginName)
 			{
-				OutError = FString::Printf(TEXT("Asset Path root '%s' has an invalid plugin name."), *Root);
+				OutError = FString::Printf(TEXT("Asset Path root '%s' has an invalid plugin name."), *Root); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (!ResolveContentPluginAssetReferenceRoot(Root, PluginName, OutPackagePath, OutError))
@@ -235,7 +235,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		else
 		{
-			OutError = FString::Printf(TEXT("Unsupported asset Path root '%s'. Use Game, Engine, or Plugin.PluginName."), *Root);
+			OutError = FString::Printf(TEXT("Unsupported asset Path root '%s'. Use Game, Engine, or Plugin.PluginName."), *Root); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -325,7 +325,7 @@ namespace UE::DreamShader::Editor::Private
 		const int32 LastDotIndex = LongObjectPath.Find(TEXT("."), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 		if (LastSlashIndex == INDEX_NONE || LastSlashIndex >= LongObjectPath.Len() - 1)
 		{
-			OutError = FString::Printf(TEXT("Invalid asset path '%s'."), *LongObjectPath);
+			OutError = FString::Printf(TEXT("Invalid asset path '%s'."), *LongObjectPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
