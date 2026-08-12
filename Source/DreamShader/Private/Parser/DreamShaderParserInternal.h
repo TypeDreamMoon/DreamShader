@@ -16,13 +16,13 @@ namespace UE::DreamShader::Private
 		TCHAR Peek(int32 Offset = 0) const;
 		void SkipIgnored();
 		bool TryConsume(TCHAR Expected);
-		bool Expect(TCHAR Expected, FString& OutError);
+		bool Expect(TCHAR Expected, FText& OutError);
 		bool TryConsumeKeyword(const TCHAR* Keyword);
-		bool ParseIdentifier(FString& OutIdentifier, FString& OutError);
-		bool ParseSimpleValue(FString& OutValue, FString& OutError);
-		bool ParseAttributes(TMap<FString, FString>& OutAttributes, FString& OutError);
-		bool ExtractBalancedBlock(FString& OutBlock, FString& OutError);
-		bool ExtractBalancedBlock(FString& OutBlock, int32& OutContentStartIndex, FString& OutError);
+		bool ParseIdentifier(FString& OutIdentifier, FText& OutError);
+		bool ParseSimpleValue(FString& OutValue, FText& OutError);
+		bool ParseAttributes(TMap<FString, FString>& OutAttributes, FText& OutError);
+		bool ExtractBalancedBlock(FString& OutBlock, FText& OutError);
+		bool ExtractBalancedBlock(FString& OutBlock, int32& OutContentStartIndex, FText& OutError);
 	};
 
 	FString RemoveComments(const FString& Input);
@@ -36,7 +36,7 @@ namespace UE::DreamShader::Private
 	bool ParseIntegerLiteral(const FString& InText, int32& OutValue);
 	bool ParseVectorLiteral(const FString& InText, FLinearColor& OutColor);
 	bool ParseBooleanLiteral(const FString& InText, bool& OutValue);
-	bool ParseTextureAssetReference(const FString& InText, FString& OutObjectPath, FString& OutError);
+	bool ParseTextureAssetReference(const FString& InText, FString& OutObjectPath, FText& OutError);
 	bool TryResolveUEBuiltinOutputSignature(
 		const FString& InFunctionName,
 		ETextShaderPropertyType& OutType,
@@ -44,24 +44,24 @@ namespace UE::DreamShader::Private
 	bool ParseUEBuiltinPropertyType(
 		const FString& InTypeToken,
 		FTextShaderPropertyDefinition& OutProperty,
-		FString& OutError);
-	bool ParsePropertyStatements(const FString& BlockContent, TArray<FTextShaderPropertyDefinition>& OutProperties, FString& OutError);
-	bool ParseSettingStatements(const FString& BlockContent, TMap<FString, FString>& OutSettings, FString& OutError);
-	bool ParseTypedDeclarationStatement(const FString& Statement, FTextShaderVariableDeclaration& OutDeclaration, FString& OutError);
+		FText& OutError);
+	bool ParsePropertyStatements(const FString& BlockContent, TArray<FTextShaderPropertyDefinition>& OutProperties, FText& OutError);
+	bool ParseSettingStatements(const FString& BlockContent, TMap<FString, FString>& OutSettings, FText& OutError);
+	bool ParseTypedDeclarationStatement(const FString& Statement, FTextShaderVariableDeclaration& OutDeclaration, FText& OutError);
 	bool ParseOutputStatements(
 		const FString& BlockContent,
 		TArray<FTextShaderVariableDeclaration>& OutOutputDeclarations,
 		TArray<FTextShaderOutputBinding>& OutOutputs,
-		FString& OutError);
-	bool ParseLayoutStatements(const FString& BlockContent, FTextShaderLayout& OutLayout, FString& OutError);
+		FText& OutError);
+	bool ParseLayoutStatements(const FString& BlockContent, FTextShaderLayout& OutLayout, FText& OutError);
 	bool ExtractGraphRegions(
 		const FString& InCode,
 		FString& OutCode,
 		TArray<FTextShaderGraphRegion>& OutRegions,
-		FString& OutError);
-	bool ParseTypedParameterStatements(const FString& BlockContent, TArray<FTextShaderFunctionParameter>& OutParameters, FString& OutError);
-	bool ParseShaderBody(const FString& BodyContent, int32 BodyContentStartIndex, FTextShaderDefinition& OutDefinition, FString& OutError);
-	bool ParseFunctionBody(const FString& BodyContent, FTextShaderFunctionDefinition& OutFunction, FString& OutError);
-	bool ParseMaterialFunctionBody(const FString& BodyContent, int32 BodyContentStartIndex, FTextShaderMaterialFunctionDefinition& OutFunction, FString& OutError);
-	bool ParseVirtualFunctionBody(const FString& BodyContent, FTextShaderVirtualFunctionDefinition& OutFunction, FString& OutError);
+		FText& OutError);
+	bool ParseTypedParameterStatements(const FString& BlockContent, TArray<FTextShaderFunctionParameter>& OutParameters, FText& OutError);
+	bool ParseShaderBody(const FString& BodyContent, int32 BodyContentStartIndex, FTextShaderDefinition& OutDefinition, FText& OutError);
+	bool ParseFunctionBody(const FString& BodyContent, FTextShaderFunctionDefinition& OutFunction, FText& OutError);
+	bool ParseMaterialFunctionBody(const FString& BodyContent, int32 BodyContentStartIndex, FTextShaderMaterialFunctionDefinition& OutFunction, FText& OutError);
+	bool ParseVirtualFunctionBody(const FString& BodyContent, FTextShaderVirtualFunctionDefinition& OutFunction, FText& OutError);
 }
