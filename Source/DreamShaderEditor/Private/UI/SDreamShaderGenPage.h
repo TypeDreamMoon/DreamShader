@@ -30,7 +30,7 @@ namespace UE::DreamShader::Editor::Private
 		FString DisplayName;      // clean filename with extension
 		FString RootName;         // owning plugin source root; empty for the project root
 		FString ObjectPath;       // resolved /Game object path (empty if unresolved / a function)
-		FString StatusDetail;     // tooltip detail (error/parse message, or object path)
+		FText StatusDetail;       // tooltip detail (error/parse message, or object path)
 		EStatus Status = EStatus::NeverCompiled;
 		bool bIsFunction = false; // .dsf or .dsh
 		int32 DependentCount = 0; // for functions/headers: how many materials import this file

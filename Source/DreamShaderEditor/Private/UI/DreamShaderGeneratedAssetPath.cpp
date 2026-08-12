@@ -3,9 +3,12 @@
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
 #include "DreamShaderParser.h"
 #include "DreamShaderTypes.h"
+#include "Diagnostics/DreamShaderTextWireUtils.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
 
 #include "Misc/FileHelper.h"
+
+#define LOCTEXT_NAMESPACE "DreamShaderMaterialBrowser"
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -14,7 +17,7 @@ namespace UE::DreamShader::Editor::Private
 		FString SourceText;
 		if (!FFileHelper::LoadFileToString(SourceText, *SourceFilePath))
 		{
-			OutError = FString::Printf(TEXT("Failed to read DreamShader source '%s'."), *SourceFilePath);
+			OutError = FText::Format(LOCTEXT("AssetPathReadFailed", "Failed to read DreamShader source '{0}'."), FText::FromString(SourceFilePath)).ToString();
 			return false;
 		}
 
@@ -35,16 +38,16 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		FTextShaderDefinition Definition;
-		FString ParseError;
+		FText ParseError;
 		if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
 		{
-			OutError = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *ParseError);
+			OutError = FText::Format(LOCTEXT("AssetPathParseError", "{0}: {1}"), FText::FromString(SourceFilePath), ParseError).ToString();
 			return false;
 		}
 
 		if (Definition.Name.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("%s: this file does not define a top-level Shader block."), *SourceFilePath);
+			OutError = FText::Format(LOCTEXT("AssetPathNoShaderBlock", "{0}: this file does not define a top-level Shader block."), FText::FromString(SourceFilePath)).ToString();
 			return false;
 		}
 
@@ -56,3 +59,5 @@ namespace UE::DreamShader::Editor::Private
 		return ResolveDreamShaderAssetDestination(Definition.Name, Definition.Root, PackageName, OutObjectPath, AssetName, OutError);
 	}
 }
+
+#undef LOCTEXT_NAMESPACE
