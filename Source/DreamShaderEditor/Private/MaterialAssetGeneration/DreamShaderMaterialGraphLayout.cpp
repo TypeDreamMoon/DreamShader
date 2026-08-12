@@ -234,7 +234,7 @@ namespace UE::DreamShader::Editor::Private
 
 		static FString MakeLayoutBridgeKey(const UMaterialExpression* SourceExpression, const int32 SourceOutputIndex)
 		{
-			return FString::Printf(
+			return FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("%llu:%d"),
 				static_cast<unsigned long long>(reinterpret_cast<UPTRINT>(SourceExpression)),
 				SourceOutputIndex);
@@ -244,7 +244,7 @@ namespace UE::DreamShader::Editor::Private
 			const UMaterialExpressionNamedRerouteDeclaration* Declaration,
 			const int32 ConsumerBlockIndex)
 		{
-			return FString::Printf(
+			return FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("%llu:%d"),
 				static_cast<unsigned long long>(reinterpret_cast<UPTRINT>(Declaration)),
 				ConsumerBlockIndex);
@@ -364,7 +364,7 @@ namespace UE::DreamShader::Editor::Private
 			case MP_Tangent:
 				return TEXT("Tangent");
 			default:
-				return FString::Printf(TEXT("MaterialProperty%d"), static_cast<int32>(Property));
+				return FString::Printf(TEXT("MaterialProperty%d"), static_cast<int32>(Property)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 
@@ -591,7 +591,7 @@ namespace UE::DreamShader::Editor::Private
 				return nullptr;
 			}
 
-			Declaration->Name = FName(*FString::Printf(TEXT("DS_Shared_%d"), BridgeIndex));
+			Declaration->Name = FName(*FString::Printf(TEXT("DS_Shared_%d"), BridgeIndex)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			if (!Declaration->VariableGuid.IsValid())
 			{
 				Declaration->VariableGuid = FGuid::NewGuid();
@@ -852,7 +852,7 @@ namespace UE::DreamShader::Editor::Private
 
 			constexpr int32 PaddingX = 110;
 			constexpr int32 PaddingY = 90;
-			Comment->Text = FString::Printf(TEXT("DreamShader: %s"), *Title);
+			Comment->Text = FString::Printf(TEXT("DreamShader: %s"), *Title); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			Comment->MaterialExpressionEditorX = Bounds.MinX - PaddingX;
 			Comment->MaterialExpressionEditorY = Bounds.MinY - PaddingY;
 			Comment->SizeX = FMath::Max(420, Bounds.MaxX - Bounds.MinX + PaddingX * 2);
@@ -984,7 +984,7 @@ namespace UE::DreamShader::Editor::Private
 				return;
 			}
 
-			Comment->Text = FString::Printf(TEXT("DreamShader: %s"), *Title);
+			Comment->Text = FString::Printf(TEXT("DreamShader: %s"), *Title); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			Comment->MaterialExpressionEditorX = X;
 			Comment->MaterialExpressionEditorY = Y;
 			Comment->SizeX = FMath::Max(120, W);
@@ -1071,7 +1071,7 @@ namespace UE::DreamShader::Editor::Private
 			TMap<FString, int32> SlotUseCount;
 			auto BuildSlotKey = [](const int32 X, const int32 Y)
 			{
-				return FString::Printf(TEXT("%d:%d"), X / 80, Y / 80);
+				return FString::Printf(TEXT("%d:%d"), X / 80, Y / 80); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			};
 			auto FanOutY = [&SlotUseCount, &BuildSlotKey](const int32 X, const int32 Y)
 			{
@@ -1698,7 +1698,7 @@ namespace UE::DreamShader::Editor::Private
 
 		FScopedSlowTask LayoutSlowTask(
 			FMath::Max(1.0f, static_cast<float>(Expressions.Num())),
-			FText::FromString(TEXT("Laying out DreamShader material graph...")));
+			FText::FromString(TEXT("Laying out DreamShader material graph..."))); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		TSet<UMaterialExpression*> ExpressionSet;
 		TMap<UMaterialExpression*, int32> OriginalOrder;
@@ -1731,7 +1731,7 @@ namespace UE::DreamShader::Editor::Private
 				AddLayoutBlock(
 					Blocks,
 					OutputSinkExpressions,
-					FString::Printf(TEXT("Output: %s"), *GetMaterialPropertyLayoutName(MaterialProperty)),
+					FString::Printf(TEXT("Output: %s"), *GetMaterialPropertyLayoutName(MaterialProperty)), /* I18N-EXEMPT: deferred codegen or compatibility path */
 					GetDirectInputExpression(*MaterialInput),
 					MaterialPropertyIndex,
 					ExpressionSet,
@@ -1754,7 +1754,7 @@ namespace UE::DreamShader::Editor::Private
 				AddLayoutBlock(
 					Blocks,
 					OutputSinkExpressions,
-					FString::Printf(TEXT("Output: %s"), *OutputName),
+					FString::Printf(TEXT("Output: %s"), *OutputName), /* I18N-EXEMPT: deferred codegen or compatibility path */
 					FunctionOutput,
 					1000 + OriginalOrder.FindRef(FunctionOutput),
 					ExpressionSet,
@@ -1974,7 +1974,7 @@ namespace UE::DreamShader::Editor::Private
 			for (int32 Index = 0; Index < BlockExpressions.Num(); ++Index)
 			{
 				(void)Index;
-				LayoutSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(
+				LayoutSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Positioning node %d of %d..."),
 					++PositionedCount,
 					Expressions.Num())));

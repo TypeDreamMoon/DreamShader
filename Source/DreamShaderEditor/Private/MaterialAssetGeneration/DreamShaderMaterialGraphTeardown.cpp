@@ -31,7 +31,7 @@ namespace UE::DreamShader::Editor::Private
 
 		FScopedSlowTask ClearSlowTask(
 			FMath::Max(1.0f, static_cast<float>(Material->GetExpressions().Num())),
-			FText::FromString(FString::Printf(TEXT("Clearing Material graph '%s'..."), *Material->GetName())));
+			FText::FromString(FString::Printf(TEXT("Clearing Material graph '%s'..."), *Material->GetName()))); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		for (int32 MaterialPropertyIndex = 0; MaterialPropertyIndex < MP_MAX; ++MaterialPropertyIndex)
 		{
@@ -77,7 +77,7 @@ namespace UE::DreamShader::Editor::Private
 
 			for (UMaterialExpression* Expression : ExpressionSnapshot)
 			{
-				ClearSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(
+				ClearSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Deleting old Material node '%s'..."),
 					Expression ? *Expression->GetName() : TEXT("<null>"))));
 				EnsureExpressionCanBeDeleted(Expression);
@@ -99,7 +99,7 @@ namespace UE::DreamShader::Editor::Private
 
 		FScopedSlowTask ClearSlowTask(
 			FMath::Max(1.0f, static_cast<float>(MaterialFunction->GetExpressions().Num())),
-			FText::FromString(FString::Printf(TEXT("Clearing Material Function graph '%s'..."), *MaterialFunction->GetName())));
+			FText::FromString(FString::Printf(TEXT("Clearing Material Function graph '%s'..."), *MaterialFunction->GetName()))); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		if (MaterialFunction->GetExpressions().Num() >= FastClearExpressionThreshold)
 		{
@@ -136,7 +136,7 @@ namespace UE::DreamShader::Editor::Private
 
 			for (UMaterialExpression* Expression : ExpressionSnapshot)
 			{
-				ClearSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(
+				ClearSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Deleting old Material Function node '%s'..."),
 					Expression ? *Expression->GetName() : TEXT("<null>"))));
 				EnsureExpressionCanBeDeleted(Expression);

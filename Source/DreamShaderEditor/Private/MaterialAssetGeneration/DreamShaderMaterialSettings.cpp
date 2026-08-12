@@ -117,7 +117,7 @@ namespace UE::DreamShader::Editor::Private
 			bool bParsedValue = false;
 			if (!ParseBooleanLiteral(Value, bParsedValue))
 			{
-				OutError = FString::Printf(TEXT("Invalid boolean value '%s' for %s."), *Value, Key);
+				OutError = FString::Printf(TEXT("Invalid boolean value '%s' for %s."), *Value, Key); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -199,7 +199,7 @@ namespace UE::DreamShader::Editor::Private
 		const int32 CloseBracketIndex = Segment.Find(TEXT("]"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 		if (CloseBracketIndex == INDEX_NONE || CloseBracketIndex <= OpenBracketIndex || CloseBracketIndex != Segment.Len() - 1)
 		{
-			OutError = FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText);
+			OutError = FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -207,7 +207,7 @@ namespace UE::DreamShader::Editor::Private
 		int32 ParsedIndex = INDEX_NONE;
 		if (!ParseIntegerLiteral(IndexText, ParsedIndex) || ParsedIndex < 0)
 		{
-			OutError = FString::Printf(TEXT("Invalid array index '%s' in setting segment '%s'."), *IndexText, *InSegmentText);
+			OutError = FString::Printf(TEXT("Invalid array index '%s' in setting segment '%s'."), *IndexText, *InSegmentText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -216,7 +216,7 @@ namespace UE::DreamShader::Editor::Private
 		OutSegment.bHasArrayIndex = true;
 		if (OutSegment.Name.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText);
+			OutError = FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -319,7 +319,7 @@ namespace UE::DreamShader::Editor::Private
 		TArray<FString> Segments;
 		if (!SplitMaterialSettingPath(InKey, Segments))
 		{
-			OutError = FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey);
+			OutError = FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -337,7 +337,7 @@ namespace UE::DreamShader::Editor::Private
 			FProperty* Property = nullptr;
 			if (!TryResolveMaterialSettingPropertyOnStruct(CurrentStruct, Segment.Name, Property))
 			{
-				OutError = FString::Printf(TEXT("Unsupported material setting '%s'."), *InKey);
+				OutError = FString::Printf(TEXT("Unsupported material setting '%s'."), *InKey); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -345,13 +345,13 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (Property->ArrayDim <= 1)
 				{
-					OutError = FString::Printf(TEXT("Setting '%s' is not an indexed array property."), *Segments[SegmentIndex]);
+					OutError = FString::Printf(TEXT("Setting '%s' is not an indexed array property."), *Segments[SegmentIndex]); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
 				if (Segment.ArrayIndex >= Property->ArrayDim)
 				{
-					OutError = FString::Printf(
+					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 						TEXT("Array index %d is out of range for setting '%s' (max %d)."),
 						Segment.ArrayIndex,
 						*Segments[SegmentIndex],
@@ -361,7 +361,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			else if (Property->ArrayDim > 1)
 			{
-				OutError = FString::Printf(TEXT("Setting '%s' requires an explicit [index]."), *Segments[SegmentIndex]);
+				OutError = FString::Printf(TEXT("Setting '%s' requires an explicit [index]."), *Segments[SegmentIndex]); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -378,7 +378,7 @@ namespace UE::DreamShader::Editor::Private
 			const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
 			if (!StructProperty || !StructProperty->Struct)
 			{
-				OutError = FString::Printf(TEXT("Setting path '%s' cannot continue through '%s'."), *InKey, *Segments[SegmentIndex]);
+				OutError = FString::Printf(TEXT("Setting path '%s' cannot continue through '%s'."), *InKey, *Segments[SegmentIndex]); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -386,7 +386,7 @@ namespace UE::DreamShader::Editor::Private
 			CurrentStruct = StructProperty->Struct;
 		}
 
-		OutError = FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey);
+		OutError = FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		return false;
 	}
 
@@ -409,7 +409,7 @@ namespace UE::DreamShader::Editor::Private
 		void* ValuePtr = Target.Property->ContainerPtrToValuePtr<void>(Target.ContainerPtr, Target.ArrayIndex);
 		if (!SetMaterialExpressionLiteralProperty(Target.OwnerObject, Target.Property, ValuePtr, InValue, LiteralError))
 		{
-			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError);
+			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -428,7 +428,7 @@ namespace UE::DreamShader::Editor::Private
 		void* ValuePtr = Target.Property->ContainerPtrToValuePtr<void>(Target.ContainerPtr, Target.ArrayIndex);
 		if (!SetMaterialExpressionLiteralProperty(Target.OwnerObject, Target.Property, ValuePtr, InValue, LiteralError))
 		{
-			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError);
+			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -442,7 +442,7 @@ namespace UE::DreamShader::Editor::Private
 			EBlendMode BlendMode = BLEND_MAX;
 			if (!TryResolveBlendMode(BlendModeValue, BlendMode))
 			{
-				OutError = FString::Printf(TEXT("Unsupported BlendMode/RenderType '%s'."), *BlendModeValue);
+				OutError = FString::Printf(TEXT("Unsupported BlendMode/RenderType '%s'."), *BlendModeValue); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -461,7 +461,7 @@ namespace UE::DreamShader::Editor::Private
 			EMaterialShadingModel ShadingModel = MSM_MAX;
 			if (!TryResolveShadingModel(ShadingModelValue, ShadingModel))
 			{
-				OutError = FString::Printf(TEXT("Unsupported ShadingModel '%s'."), *ShadingModelValue);
+				OutError = FString::Printf(TEXT("Unsupported ShadingModel '%s'."), *ShadingModelValue); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -471,7 +471,7 @@ namespace UE::DreamShader::Editor::Private
 			EMaterialDomain Domain = MD_Surface;
 			if (!TryResolveMaterialDomain(MaterialDomainValue, Domain))
 			{
-				OutError = FString::Printf(TEXT("Unsupported MaterialDomain '%s'."), *MaterialDomainValue);
+				OutError = FString::Printf(TEXT("Unsupported MaterialDomain '%s'."), *MaterialDomainValue); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}

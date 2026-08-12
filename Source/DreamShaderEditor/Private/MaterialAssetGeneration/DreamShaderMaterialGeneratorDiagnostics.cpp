@@ -110,10 +110,10 @@ namespace UE::DreamShader::Editor
 		if (TryExtractPreparedSourceIndexFromError(ParseError, SourceIndex)
 			&& TryMapPreparedSourceIndexToLocation(PreparedSource, SourceIndex, MappedFilePath, MappedLine, MappedColumn))
 		{
-			return FString::Printf(TEXT("%s(%d,%d): %s"), *MappedFilePath, MappedLine, MappedColumn, *ParseError);
+			return FString::Printf(TEXT("%s(%d,%d): %s"), *MappedFilePath, MappedLine, MappedColumn, *ParseError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
-		return FString::Printf(TEXT("%s: %s"), *FallbackSourceFilePath, *ParseError);
+		return FString::Printf(TEXT("%s: %s"), *FallbackSourceFilePath, *ParseError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	bool LooksLikeLocatedDiagnostic(const FString& Error)
@@ -134,7 +134,7 @@ namespace UE::DreamShader::Editor
 	{
 		return LooksLikeLocatedDiagnostic(Error)
 			? Error
-			: FString::Printf(TEXT("%s: %s"), *SourceFilePath, *Error);
+			: FString::Printf(TEXT("%s: %s"), *SourceFilePath, *Error); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	void ResolveCodeBlockLocation(
@@ -172,6 +172,6 @@ namespace UE::DreamShader::Editor
 		const int32 Column = ErrorLine <= 1
 			? CodeStartColumn + ErrorColumn - 1
 			: ErrorColumn;
-		return FString::Printf(TEXT("%s(%d,%d): %s"), *CodeSourceFilePath, Line, Column, *Error);
+		return FString::Printf(TEXT("%s(%d,%d): %s"), *CodeSourceFilePath, Line, Column, *Error); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 }

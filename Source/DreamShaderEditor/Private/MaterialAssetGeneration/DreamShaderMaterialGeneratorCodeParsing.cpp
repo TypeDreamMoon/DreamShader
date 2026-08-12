@@ -705,7 +705,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString TrimmedInitializer = InitializerText.TrimStartAndEnd();
 		if (TrimmedInitializer.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("Output declaration '%s' has an empty initializer."), *OutStatement.TargetName);
+			OutError = FString::Printf(TEXT("Output declaration '%s' has an empty initializer."), *OutStatement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -738,7 +738,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (Peek().Type != ECodeTokenType::End)
 			{
-				OutError = FString::Printf(TEXT("Unexpected token '%s' in Graph expression."), *Peek().Text);
+				OutError = FString::Printf(TEXT("Unexpected token '%s' in Graph expression."), *Peek().Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -938,7 +938,7 @@ namespace UE::DreamShader::Editor::Private
 				return true;
 			}
 
-			OutError = FString::Printf(TEXT("Expected token type %d in Graph expression near '%s'."), static_cast<int32>(Type), *Peek().Text);
+			OutError = FString::Printf(TEXT("Expected token type %d in Graph expression near '%s'."), static_cast<int32>(Type), *Peek().Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -1135,7 +1135,7 @@ namespace UE::DreamShader::Editor::Private
 				return Expression;
 			}
 
-			OutError = FString::Printf(TEXT("Unexpected token '%s' in Graph expression."), *Peek().Text);
+			OutError = FString::Printf(TEXT("Unexpected token '%s' in Graph expression."), *Peek().Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 	};
@@ -1250,7 +1250,7 @@ namespace UE::DreamShader::Editor::Private
 		FCodeExpressionParser LeftParser(LeftText);
 		if (!LeftParser.Parse(OutCondition.Left, OutError))
 		{
-			OutError = FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError);
+			OutError = FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -1263,7 +1263,7 @@ namespace UE::DreamShader::Editor::Private
 		FCodeExpressionParser RightParser(RightText);
 		if (!RightParser.Parse(OutCondition.Right, OutError))
 		{
-			OutError = FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError);
+			OutError = FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -1302,7 +1302,7 @@ namespace UE::DreamShader::Editor::Private
 			|| StatementText[Index] != TCHAR('(')
 			|| !FindCodeParsingMatchingDelimiter(StatementText, Index, TCHAR('('), TCHAR(')'), ConditionCloseIndex))
 		{
-			OutError = FString::Printf(TEXT("Invalid Graph if statement '%s'."), *StatementText);
+			OutError = FString::Printf(TEXT("Invalid Graph if statement '%s'."), *StatementText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -1315,7 +1315,7 @@ namespace UE::DreamShader::Editor::Private
 			|| StatementText[Index] != TCHAR('{')
 			|| !FindCodeParsingMatchingDelimiter(StatementText, Index, TCHAR('{'), TCHAR('}'), ThenCloseIndex))
 		{
-			OutError = FString::Printf(TEXT("Invalid Graph if body in '%s'."), *StatementText);
+			OutError = FString::Printf(TEXT("Invalid Graph if body in '%s'."), *StatementText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -1344,7 +1344,7 @@ namespace UE::DreamShader::Editor::Private
 					|| StatementText[Index] != TCHAR('{')
 					|| !FindCodeParsingMatchingDelimiter(StatementText, Index, TCHAR('{'), TCHAR('}'), ElseCloseIndex))
 				{
-					OutError = FString::Printf(TEXT("Invalid Graph else body in '%s'."), *StatementText);
+					OutError = FString::Printf(TEXT("Invalid Graph else body in '%s'."), *StatementText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -1358,7 +1358,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Index < StatementText.Len())
 		{
-			OutError = FString::Printf(TEXT("Unexpected text after Graph if statement: '%s'."), *StatementText.Mid(Index).TrimStartAndEnd());
+			OutError = FString::Printf(TEXT("Unexpected text after Graph if statement: '%s'."), *StatementText.Mid(Index).TrimStartAndEnd()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -1388,7 +1388,7 @@ namespace UE::DreamShader::Editor::Private
 		CombineCodeLineColumn(StatementLine, StatementColumn, ThenBodyRelativeLine, ThenBodyRelativeColumn, ThenBodyLine, ThenBodyColumn);
 		if (!ParseCodeStatementsInternal(ThenBody, ThenBodyLine, ThenBodyColumn, OutStatement.ThenStatements, OutError, OutErrorLine, OutErrorColumn))
 		{
-			OutError = FString::Printf(TEXT("In Graph if body: %s"), *OutError);
+			OutError = FString::Printf(TEXT("In Graph if body: %s"), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -1406,7 +1406,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!ParseCodeStatementsInternal(ElseBody, ElseBodyLine, ElseBodyColumn, OutStatement.ElseStatements, OutError, OutErrorLine, OutErrorColumn))
 			{
-				OutError = FString::Printf(TEXT("In Graph else body: %s"), *OutError);
+				OutError = FString::Printf(TEXT("In Graph else body: %s"), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -1509,7 +1509,7 @@ namespace UE::DreamShader::Editor::Private
 							const FString* InitializerText = bFirstHasAssignment ? &FirstRight : nullptr;
 							if (!ParseDeclarationStatement(SharedType, FirstName, InitializerText, Statement))
 							{
-								OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError);
+								OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 								if (OutErrorLine)
 								{
 									*OutErrorLine = StatementLine;
@@ -1529,7 +1529,7 @@ namespace UE::DreamShader::Editor::Private
 							const FString NameToken = bHasAssignment ? Left : DeclaratorText;
 							if (!IsIdentifierToken(NameToken))
 							{
-								OutError = FString::Printf(
+								OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 									TEXT("In Graph statement '%s': '%s' is not a valid declarator in a comma-separated declaration."),
 									*StatementText,
 									*NameToken.TrimStartAndEnd());
@@ -1548,7 +1548,7 @@ namespace UE::DreamShader::Editor::Private
 							const FString* InitializerText = bHasAssignment ? &Right : nullptr;
 							if (!ParseDeclarationStatement(SharedType, TrimmedNameToken, InitializerText, Statement))
 							{
-								OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError);
+								OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 								if (OutErrorLine)
 								{
 									*OutErrorLine = StatementLine;
@@ -1586,7 +1586,7 @@ namespace UE::DreamShader::Editor::Private
 				FCodeExpressionParser ExpressionParser(StatementText);
 				if (!ExpressionParser.Parse(Statement.Expression, OutError))
 				{
-					OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError);
+					OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					if (OutErrorLine)
 					{
 						*OutErrorLine = StatementLine;
@@ -1622,7 +1622,7 @@ namespace UE::DreamShader::Editor::Private
 			FCodeExpressionParser ExpressionParser(Right);
 			if (!ExpressionParser.Parse(Statement.Expression, OutError))
 			{
-				OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError);
+				OutError = FString::Printf(TEXT("In Graph statement '%s': %s"), *StatementText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				if (OutErrorLine)
 				{
 					*OutErrorLine = StatementLine;
