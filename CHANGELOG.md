@@ -4,6 +4,33 @@
 
 ### Added
 
+- **The editor UI and the diagnostics pipeline speak your language; the wire format does not.**
+  Editor-facing text — the *DreamShader Gen* page, the settings section, slow-task progress, parser
+  and decompiler diagnostics — moved from `FString` literals to `LOCTEXT`/`NSLOCTEXT`, and the
+  diagnostic records that carry it (`FDreamShaderCompileResult::Message`,
+  `FDreamShaderDiagnosticRecord::Message`/`Detail`, `FTextShaderParser::Parse`) are `FText`.
+  Simplified Chinese ships with it: `Content/Localization/DreamShader/zh-Hans/DreamShader.locres`,
+  loaded through the `LocalizationTargets` entry in `DreamShader.uplugin` with an `Editor` loading
+  policy. `FString` overloads are kept alongside every converted signature, so nothing outside the
+  plugin has to move at once. Thanks to [@youli42](https://github.com/youli42) — PR
+  [#24](https://github.com/TypeDreamMoon/DreamShader/pull/24).
+- **`diagnostics.json`, `diagnostics/*.json`, `bridge.db` and the preview WebSocket stay English in
+  every editor culture.** The VSCode and Rider extensions parse those, so a translated editor must
+  not change a byte of them. `FTextInspector::GetSourceString` is only half an answer: it hands back
+  the source string for a plain `LOCTEXT`, but for an `FText::Format` result it returns the
+  *localized* substituted display, so one message site adopting `FText::Format` would have leaked
+  translated text onto the wire. `ToInvariantWireString` (`DreamShaderTextWireUtils.h`) instead
+  replays an `FText`'s historic format data — the source pattern, every argument rendered in the
+  invariant culture, nested formats recursively, number grouping off so `12345` never becomes
+  `12,345` — and every JSON/SQLite/WebSocket write goes through it.
+  `DreamShader.Lang.Diagnostics.TextWireUtils` asserts the output is identical under `en-US` and
+  `zh-Hans`.
+- **`Tools/Localization/localization_lint.ps1`** — checks `LOCTEXT_NAMESPACE` define/undef pairing,
+  rejects it in headers, and flags literals that gather cannot see (`FText::FromString(TEXT(...))`,
+  `FString::Printf(TEXT(...))`) with an `I18N-EXEMPT` escape for text that is deliberately not
+  display text. `-EmitBaseline` writes `Tools/Localization/BASELINE.md`, whose gather count (342)
+  is the regression check.
+
 - **Graph layout runs on in-memory materials.** Interactive compiles are memory-only, and the
   placement pass used to be skipped for them outright — so the graph you saw after a save was not a
   badly laid out graph, it was an *unlaid out* one: the tall single column of construction
@@ -43,6 +70,13 @@
   engine cannot, and neither can any compile-time check, because one of the five is a link error.
 
 ### Changed
+
+- **The *DreamShader Gen* page reads diagnostics from the bridge, not from `diagnostics.json`.** The
+  page used to re-parse the file the bridge had just written in order to colour its rows; it now
+  asks the bridge for the records it already holds. One consequence worth knowing: those records
+  live for the editor session, so the page no longer shows errors left over from a *previous*
+  session before you compile again. Everything produced in the current session — including the
+  startup and auto-compile passes — shows exactly as before.
 
 - **Automatic layout places nodes at their real size.** Every node used to be assumed `320 × 150`
   and spaced on a fixed `420 × 220` grid. Nothing that draws taller than 220 fitted — a
@@ -136,6 +170,18 @@ Follow-up work, not regressions:
   folder you just created, or a plugin mounted mid-session. The **watcher** is still registered once
   at startup, so *Auto Compile On Save* for a root that appeared mid-session starts working on the
   next editor start.
+
+- **The `zh-Hans` locres is a hand-gathered snapshot with no gather config behind it.** There is no
+  `Config/Localization/DreamShader.ini`, so the Localization Dashboard cannot re-gather or recompile
+  the target — a new `LOCTEXT` will simply fall back to English until someone regenerates the
+  `.locres` by hand. `Tools/Localization/BASELINE.md` is what catches the drift in the meantime:
+  its count moving means the translation is behind. Wiring up a gather config, and a CI step that
+  runs it, is the fix.
+- **The preview renderer's error channel is not localized.** `FDreamShaderPreviewRenderContext`
+  reports failures through `FString& OutError`, and those strings reach `preview.json` and the
+  preview WebSocket, which must stay English for the VSCode and Rider extensions. Collapsing an
+  `FText` into that `FString` would localize the wire, so every one of those sites is deliberately
+  an `I18N-EXEMPT` literal. Localizing them means converting the whole error path to `FText` first.
 
 ## 1.5.1 - 2026-08-02
 
