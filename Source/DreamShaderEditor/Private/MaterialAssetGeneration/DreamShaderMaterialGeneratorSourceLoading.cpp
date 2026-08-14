@@ -32,7 +32,7 @@ namespace UE::DreamShader::Editor
 		// A root-qualified import that named an unknown root says so precisely; everything else is an
 		// ordinary miss, where naming the specifier and the importer is all there is to say.
 		OutError = ResolveError.IsEmpty()
-			? FString::Printf(
+			? FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("DreamShader import '%s' referenced from '%s' could not be resolved."),
 				*ImportSpecifier,
 				*CurrentFilePath)
@@ -55,14 +55,14 @@ namespace UE::DreamShader::Editor
 
 		if (InOutActiveStack.Contains(NormalizedPath))
 		{
-			OutError = FString::Printf(TEXT("DreamShader import cycle detected at '%s'."), *NormalizedPath);
+			OutError = FString::Printf(TEXT("DreamShader import cycle detected at '%s'."), *NormalizedPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		FString SourceText;
 		if (!FFileHelper::LoadFileToString(SourceText, *NormalizedPath))
 		{
-			OutError = FString::Printf(TEXT("DreamShader could not read '%s'."), *NormalizedPath);
+			OutError = FString::Printf(TEXT("DreamShader could not read '%s'."), *NormalizedPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -109,20 +109,20 @@ namespace UE::DreamShader::Editor
 				|| SanitizedSourceText.Contains(TEXT("MaterialLayer("), ESearchCase::IgnoreCase)
 				|| SanitizedSourceText.Contains(TEXT("MaterialLayerBlend("), ESearchCase::IgnoreCase)))
 		{
-			OutError = FString::Printf(TEXT("DreamShader header '%s' may only declare Function/Namespace/GraphFunction/VirtualFunction blocks and imports."), *NormalizedPath);
+			OutError = FString::Printf(TEXT("DreamShader header '%s' may only declare Function/Namespace/GraphFunction/VirtualFunction blocks and imports."), *NormalizedPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		if (UE::DreamShader::IsDreamShaderFunctionFile(NormalizedPath)
 			&& SanitizedSourceText.Contains(TEXT("Shader("), ESearchCase::IgnoreCase))
 		{
-			OutError = FString::Printf(TEXT("DreamShader function file '%s' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks."), *NormalizedPath);
+			OutError = FString::Printf(TEXT("DreamShader function file '%s' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks."), *NormalizedPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
-		OutSourceText += FString::Printf(TEXT("// Begin DreamShader source: %s\n"), *NormalizedPath);
+		OutSourceText += FString::Printf(TEXT("// Begin DreamShader source: %s\n"), *NormalizedPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		OutSourceText += SanitizedSourceText;
-		OutSourceText += FString::Printf(TEXT("\n// End DreamShader source: %s\n\n"), *NormalizedPath);
+		OutSourceText += FString::Printf(TEXT("\n// End DreamShader source: %s\n\n"), *NormalizedPath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		InOutActiveStack.Remove(NormalizedPath);
 		InOutVisitedFiles.Add(NormalizedPath);

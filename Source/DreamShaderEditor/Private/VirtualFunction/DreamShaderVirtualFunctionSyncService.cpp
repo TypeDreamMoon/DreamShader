@@ -2,11 +2,14 @@
 
 #include "DreamShaderModule.h"
 #include "DreamShaderParser.h"
+#include "Diagnostics/DreamShaderTextWireUtils.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
 #include "SourceFiles/DreamShaderSourceFileUtils.h"
 
 #include "Materials/MaterialFunction.h"
 #include "Misc/FileHelper.h"
+
+#define LOCTEXT_NAMESPACE "DreamShaderVirtualFunctionSyncService"
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -201,8 +204,8 @@ namespace UE::DreamShader::Editor::Private
 
 		FDreamShaderDiagnosticRecord MakeVirtualFunctionDiagnostic(
 			const FString& SourceFilePath,
-			const FString& Message,
-			const FString& Detail,
+			const FText& Message,
+			const FText& Detail,
 			const FString& AssetPath,
 			int32 Line,
 			int32 Column)
@@ -223,17 +226,19 @@ namespace UE::DreamShader::Editor::Private
 		bool TryParseVirtualFunctionBlock(
 			const FString& BlockText,
 			FTextShaderVirtualFunctionDefinition& OutFunction,
-			FString& OutError)
+			FText& OutError)
 		{
 			FTextShaderDefinition ParsedDefinition;
-			if (!FTextShaderParser::Parse(BlockText, ParsedDefinition, OutError))
+			FText ParseError;
+			if (!FTextShaderParser::Parse(BlockText, ParsedDefinition, ParseError))
 			{
+				OutError = ParseError;
 				return false;
 			}
 
 			if (ParsedDefinition.VirtualFunctions.Num() != 1)
 			{
-				OutError = TEXT("Expected exactly one VirtualFunction block.");
+				OutError = FText::FromString(TEXT("Expected exactly one VirtualFunction block."));
 				return false;
 			}
 
@@ -256,8 +261,10 @@ namespace UE::DreamShader::Editor::Private
 				{
 					OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
 						SourceFilePath,
-						FString::Printf(TEXT("DreamShader could not read VirtualFunction source file '%s'."), *SourceFilePath),
-						FString(),
+						FText::Format(
+							LOCTEXT("ReadSourceFileFailed", "DreamShader could not read VirtualFunction source file '{0}'."),
+							FText::FromString(SourceFilePath)),
+						FText(),
 						FString(),
 						1,
 						1));
@@ -307,8 +314,8 @@ namespace UE::DreamShader::Editor::Private
 					{
 						OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
 							SourceFilePath,
-							TEXT("VirtualFunction attributes are missing a closing ')'."),
-							FString(),
+							LOCTEXT("MissingClosingParenthesis", "VirtualFunction attributes are missing a closing ')'."),
+							FText(),
 							FString(),
 							Line,
 							Column));
@@ -335,8 +342,8 @@ namespace UE::DreamShader::Editor::Private
 					{
 						OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
 							SourceFilePath,
-							TEXT("VirtualFunction body is missing a closing '}'."),
-							FString(),
+							LOCTEXT("MissingClosingBrace", "VirtualFunction body is missing a closing '}'."),
+							FText(),
 							FString(),
 							Line,
 							Column));
@@ -359,14 +366,16 @@ namespace UE::DreamShader::Editor::Private
 				CalculateLineColumnForIndex(SourceText, StartIndex, Line, Column);
 
 				FTextShaderVirtualFunctionDefinition ParsedFunction;
-				FString ParseError;
+				FText ParseError;
 				if (!TryParseVirtualFunctionBlock(BlockText, ParsedFunction, ParseError))
 				{
 					if (OutDiagnostics)
 					{
 						OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
 							SourceFilePath,
-							FString::Printf(TEXT("VirtualFunction declaration is invalid: %s"), *ParseError),
+							FText::Format(
+								LOCTEXT("InvalidDeclaration", "VirtualFunction declaration is invalid: {0}"),
+								ParseError),
 							ParseError,
 							FString(),
 							Line,
@@ -384,8 +393,11 @@ namespace UE::DreamShader::Editor::Private
 					{
 						OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
 							SourceFilePath,
-							FString::Printf(TEXT("VirtualFunction '%s' asset reference is invalid: %s"), *ParsedFunction.Name, *ResolveError),
-							ResolveError,
+							FText::Format(
+								LOCTEXT("InvalidAssetReference", "VirtualFunction '{0}' asset reference is invalid: {1}"),
+								FText::FromString(ParsedFunction.Name),
+								FText::FromString(ResolveError)),
+							FText::FromString(ResolveError),
 							ParsedFunction.Asset,
 							Line,
 							Column));
@@ -478,11 +490,11 @@ namespace UE::DreamShader::Editor::Private
 				{
 					Diagnostics.Add(MakeVirtualFunctionDiagnostic(
 						SourceFile,
-						FString::Printf(
-							TEXT("VirtualFunction '%s' references missing MaterialFunction '%s'."),
-							*Location.FunctionName,
-							*Location.AssetObjectPath),
-						FString(),
+						FText::Format(
+							LOCTEXT("MissingMaterialFunction", "VirtualFunction '{0}' references missing MaterialFunction '{1}'."),
+							FText::FromString(Location.FunctionName),
+							FText::FromString(Location.AssetObjectPath)),
+						FText(),
 						Location.AssetObjectPath,
 						Location.Line,
 						Location.Column));
@@ -495,12 +507,12 @@ namespace UE::DreamShader::Editor::Private
 				{
 					Diagnostics.Add(MakeVirtualFunctionDiagnostic(
 						SourceFile,
-						FString::Printf(
-							TEXT("VirtualFunction '%s' could not be refreshed from MaterialFunction '%s': %s"),
-							*Location.FunctionName,
-							*Location.AssetObjectPath,
-							*Error),
-						Error,
+						FText::Format(
+							LOCTEXT("RefreshFailed", "VirtualFunction '{0}' could not be refreshed from MaterialFunction '{1}': {2}"),
+							FText::FromString(Location.FunctionName),
+							FText::FromString(Location.AssetObjectPath),
+							FText::FromString(Error)),
+						FText::FromString(Error),
 						Location.AssetObjectPath,
 						Location.Line,
 						Location.Column));
@@ -537,8 +549,10 @@ namespace UE::DreamShader::Editor::Private
 				{
 					Diagnostics.Add(MakeVirtualFunctionDiagnostic(
 						SourceFile,
-						FString::Printf(TEXT("DreamShader failed to update VirtualFunction source file '%s'."), *SourceFile),
-						FString(),
+						FText::Format(
+							LOCTEXT("UpdateSourceFileFailed", "DreamShader failed to update VirtualFunction source file '{0}'."),
+							FText::FromString(SourceFile)),
+						FText(),
 						FString(),
 						1,
 						1));
@@ -564,3 +578,5 @@ namespace UE::DreamShader::Editor::Private
 		return Result;
 	}
 }
+
+#undef LOCTEXT_NAMESPACE

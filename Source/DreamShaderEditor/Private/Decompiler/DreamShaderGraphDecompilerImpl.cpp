@@ -5,20 +5,39 @@
 
 #include "DreamShaderGraphDecompilerImpl.h"
 
+#include "Diagnostics/DreamShaderTextWireUtils.h"
+
+#define LOCTEXT_NAMESPACE "DreamShader.Decompiler.Impl"
+
 namespace UE::DreamShader::Editor::Private
 {
+	namespace
+	{
+		void AddUniqueWarning(TArray<FText>& Warnings, const FText& Warning)
+		{
+			const FString WarningString = Warning.ToString();
+			if (!Warnings.ContainsByPredicate([&WarningString](const FText& Existing)
+				{
+					return Existing.ToString() == WarningString;
+				}))
+			{
+				Warnings.Add(Warning);
+			}
+		}
+	}
+
 	bool FDreamShaderGraphDecompiler::DecompileMaterial(UMaterial* Material, const FString& DecompiledName, FString& OutSourceText, FString& OutError)
 	{
 		Reset();
 		if (!Material)
 		{
-			OutError = TEXT("No Material asset was provided.");
+			OutError = ToInvariantWireString(LOCTEXT("NoMaterialAssetProvided", "No Material asset was provided."));
 			return false;
 		}
 
 		FScopedSlowTask DecompileSlowTask(
 			FMath::Max(4.0f, static_cast<float>(Material->GetExpressions().Num()) + 4.0f),
-			FText::FromString(FString::Printf(TEXT("Decompiling Material '%s'..."), *Material->GetName())));
+			FText::Format(LOCTEXT("DecompilingMaterial", "Decompiling Material '{0}'..."), FText::FromString(Material->GetName())));
 		if (!IsRunningCommandlet())
 		{
 			DecompileSlowTask.MakeDialogDelayed(0.25f);
@@ -30,7 +49,7 @@ namespace UE::DreamShader::Editor::Private
 		};
 		CollectLayoutComments(Material);
 
-		DecompileSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Scanning material outputs for '%s'..."), *Material->GetName())));
+		DecompileSlowTask.EnterProgressFrame(1.0f, FText::Format(LOCTEXT("ScanningMaterialOutputs", "Scanning material outputs for '{0}'..."), FText::FromString(Material->GetName())));
 		TArray<FString> OutputDeclarations;
 		TArray<FString> OutputBindings;
 		TArray<FString> OutputAssignments;
@@ -79,8 +98,8 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			ReservedNames.Add(Binding.Name);
-			OutputDeclarations.Add(FString::Printf(TEXT("\t\t%s %s;"), Binding.Type, Binding.Name));
-			OutputBindings.Add(FString::Printf(TEXT("\t\t%s = %s;"), Binding.Target, Binding.Name));
+			OutputDeclarations.Add(FString::Printf(TEXT("\t\t%s %s;"), Binding.Type, Binding.Name)); // I18N-EXEMPT
+			OutputBindings.Add(FString::Printf(TEXT("\t\t%s = %s;"), Binding.Target, Binding.Name)); // I18N-EXEMPT
 			if (Binding.Property == MP_FrontMaterial)
 			{
 				bUsesFrontMaterial = true;
@@ -120,9 +139,9 @@ namespace UE::DreamShader::Editor::Private
 				int32& SeenCount = CustomOutputClassCounts.FindOrAdd(ClassName);
 				if (SeenCount++ > 0)
 				{
-					Warnings.Add(FString::Printf(
-						TEXT("Material has more than one '%s' node; output targets are de-duplicated by class, so only the first was exported."),
-						*ClassName));
+					Warnings.Add(FText::Format(
+						LOCTEXT("DuplicateCustomOutputNode", "Material has more than one '{0}' node; output targets are de-duplicated by class, so only the first was exported."),
+						FText::FromString(ClassName)));
 					continue;
 				}
 
@@ -138,17 +157,17 @@ namespace UE::DreamShader::Editor::Private
 					FString PinName = CustomOutput->GetInputName(PinIndex).ToString();
 					if (PinName.IsEmpty())
 					{
-						PinName = FString::Printf(TEXT("Pin%d"), PinIndex);
+						PinName = FString::Printf(TEXT("Pin%d"), PinIndex); // I18N-EXEMPT
 					}
 
 					const FString VariableName = MakeUniqueName(PinName, TEXT("CustomOutput"));
 					ReservedNames.Add(VariableName);
 
-					OutputDeclarations.Add(FString::Printf(
+					OutputDeclarations.Add(FString::Printf( // I18N-EXEMPT
 						TEXT("\t\t%s %s;"),
 						*GetDreamShaderTypeForMaterialValueType(GetDreamShaderExpressionInputValueType(CustomOutput, PinIndex)),
 						*VariableName));
-					OutputBindings.Add(FString::Printf(
+					OutputBindings.Add(FString::Printf( // I18N-EXEMPT
 						TEXT("\t\tExpression(Class=\"%s\").Pin[%d] = %s;"),
 						*ClassName,
 						PinIndex,
@@ -161,13 +180,13 @@ namespace UE::DreamShader::Editor::Private
 		FinalizeGraphLayoutMetadata();
 
 		TArray<FString> Lines;
-		DecompileSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Formatting DSM source for '%s'..."), *Material->GetName())));
-		Lines.Add(FString::Printf(TEXT("// Decompiled from %s"), *Material->GetPathName()));
+		DecompileSlowTask.EnterProgressFrame(1.0f, FText::Format(LOCTEXT("FormattingDSMSource", "Formatting DSM source for '{0}'..."), FText::FromString(Material->GetName())));
+		Lines.Add(FString::Printf(TEXT("// Decompiled from %s"), *Material->GetPathName())); // I18N-EXEMPT
 		if (!Warnings.IsEmpty())
 		{
-			for (const FString& Warning : Warnings)
+			for (const FText& Warning : Warnings)
 			{
-				Lines.Add(FString::Printf(TEXT("// Warning: %s"), *Warning));
+				Lines.Add(FString::Printf(TEXT("// Warning: %s"), *ToInvariantWireString(Warning))); // I18N-EXEMPT
 			}
 		}
 		if (!VirtualFunctionDefinitions.IsEmpty())
@@ -176,18 +195,18 @@ namespace UE::DreamShader::Editor::Private
 			Lines.Append(VirtualFunctionDefinitions);
 		}
 
-		Lines.Add(FString::Printf(TEXT("Shader(Name=\"%s\")"), *EscapeDreamShaderString(DecompiledName)));
+		Lines.Add(FString::Printf(TEXT("Shader(Name=\"%s\")"), *EscapeDreamShaderString(DecompiledName))); // I18N-EXEMPT
 		Lines.Add(TEXT("{"));
 		AppendSection(Lines, TEXT("Properties"), PropertyDeclarations);
 		Lines.Add(TEXT("\tSettings = {"));
-		Lines.Add(FString::Printf(TEXT("\t\tDomain = \"%s\";"), *GetMaterialDomainText(Material->MaterialDomain)));
+		Lines.Add(FString::Printf(TEXT("\t\tDomain = \"%s\";"), *GetMaterialDomainText(Material->MaterialDomain))); // I18N-EXEMPT
 		// A Substrate material's shading is driven by its FrontMaterial tree, so the UMaterial's
 		// ShadingModel enum stays at its default (usually DefaultLit) and does NOT describe the surface.
 		// Emit "Substrate" whenever we decompiled a Base.FrontMaterial binding, matching the generator's
 		// rule (Base.FrontMaterial requires ShadingModel="Substrate" or none) so the .dsm round-trips.
 		const FString ShadingModelText = bUsesFrontMaterial ? FString(TEXT("Substrate")) : GetShadingModelText(Material);
-		Lines.Add(FString::Printf(TEXT("\t\tShadingModel = \"%s\";"), *ShadingModelText));
-		Lines.Add(FString::Printf(TEXT("\t\tBlendMode = \"%s\";"), *GetBlendModeText(Material->BlendMode)));
+		Lines.Add(FString::Printf(TEXT("\t\tShadingModel = \"%s\";"), *ShadingModelText)); // I18N-EXEMPT
+		Lines.Add(FString::Printf(TEXT("\t\tBlendMode = \"%s\";"), *GetBlendModeText(Material->BlendMode))); // I18N-EXEMPT
 		AppendAdditionalMaterialSettings(Lines, Material);
 		Lines.Add(TEXT("\t}"));
 		Lines.Add(TEXT(""));
@@ -208,13 +227,13 @@ namespace UE::DreamShader::Editor::Private
 		Reset();
 		if (!MaterialFunction)
 		{
-			OutError = TEXT("No MaterialFunction asset was provided.");
+			OutError = ToInvariantWireString(LOCTEXT("NoMaterialFunctionAssetProvided", "No MaterialFunction asset was provided."));
 			return false;
 		}
 
 		FScopedSlowTask DecompileSlowTask(
 			FMath::Max(4.0f, static_cast<float>(MaterialFunction->GetExpressions().Num()) + 4.0f),
-			FText::FromString(FString::Printf(TEXT("Decompiling Material Function '%s'..."), *MaterialFunction->GetName())));
+			FText::Format(LOCTEXT("DecompilingMaterialFunction", "Decompiling Material Function '{0}'..."), FText::FromString(MaterialFunction->GetName())));
 		if (!IsRunningCommandlet())
 		{
 			DecompileSlowTask.MakeDialogDelayed(0.25f);
@@ -226,13 +245,13 @@ namespace UE::DreamShader::Editor::Private
 		};
 		CollectLayoutComments(MaterialFunction);
 
-		DecompileSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Scanning function inputs and outputs for '%s'..."), *MaterialFunction->GetName())));
+		DecompileSlowTask.EnterProgressFrame(1.0f, FText::Format(LOCTEXT("ScanningFunctionInputsOutputs", "Scanning function inputs and outputs for '{0}'..."), FText::FromString(MaterialFunction->GetName())));
 		TArray<FFunctionExpressionInput> Inputs;
 		TArray<FFunctionExpressionOutput> Outputs;
 		MaterialFunction->GetInputsAndOutputs(Inputs, Outputs);
 		if (Outputs.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("MaterialFunction '%s' does not expose any outputs."), *MaterialFunction->GetName());
+			OutError = ToInvariantWireString(FText::Format(LOCTEXT("MaterialFunctionHasNoOutputs", "MaterialFunction '{0}' does not expose any outputs."), FText::FromString(MaterialFunction->GetName())));
 			return false;
 		}
 
@@ -253,7 +272,7 @@ namespace UE::DreamShader::Editor::Private
 				: FString();
 			const FString DefaultSuffix = DefaultText.IsEmpty()
 				? FString()
-				: FString::Printf(TEXT(" = %s"), *DefaultText);
+				: FString::Printf(TEXT(" = %s"), *DefaultText); // I18N-EXEMPT
 			const FString MetadataSuffix = InputExpression
 				? MakeFunctionParameterMetadataSuffix(InputExpression->Description, InputExpression->SortPriority, InputIndex)
 				: FString();
@@ -263,7 +282,7 @@ namespace UE::DreamShader::Editor::Private
 				FunctionInputNames.Add(InputExpression, DeclarationName);
 				RegisterExpressionName(InputExpression, DeclarationName);
 			}
-			InputDeclarations.Add(FString::Printf(
+			InputDeclarations.Add(FString::Printf( // I18N-EXEMPT
 				TEXT("\t\t%s%s %s%s%s;"),
 				bOptional ? TEXT("opt ") : TEXT(""),
 				*GetDreamShaderTypeForFunctionInput(InputType),
@@ -296,7 +315,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString MetadataSuffix = OutputExpression
 				? MakeFunctionParameterMetadataSuffix(OutputExpression->Description, OutputExpression->SortPriority, OutputIndex)
 				: FString();
-			OutputDeclarations.Add(FString::Printf(
+			OutputDeclarations.Add(FString::Printf( // I18N-EXEMPT
 				TEXT("\t\t%s %s%s;"),
 				*GetDreamShaderTypeForFunctionOutput(OutputExpression),
 				*DeclarationName,
@@ -314,13 +333,13 @@ namespace UE::DreamShader::Editor::Private
 		FinalizeGraphLayoutMetadata();
 
 		TArray<FString> Lines;
-		DecompileSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Formatting DSF source for '%s'..."), *MaterialFunction->GetName())));
-		Lines.Add(FString::Printf(TEXT("// Decompiled from %s"), *MaterialFunction->GetPathName()));
+		DecompileSlowTask.EnterProgressFrame(1.0f, FText::Format(LOCTEXT("FormattingDSFSource", "Formatting DSF source for '{0}'..."), FText::FromString(MaterialFunction->GetName())));
+		Lines.Add(FString::Printf(TEXT("// Decompiled from %s"), *MaterialFunction->GetPathName())); // I18N-EXEMPT
 		if (!Warnings.IsEmpty())
 		{
-			for (const FString& Warning : Warnings)
+			for (const FText& Warning : Warnings)
 			{
-				Lines.Add(FString::Printf(TEXT("// Warning: %s"), *Warning));
+				Lines.Add(FString::Printf(TEXT("// Warning: %s"), *Warning.ToString())); // I18N-EXEMPT
 			}
 		}
 		if (!VirtualFunctionDefinitions.IsEmpty())
@@ -339,7 +358,7 @@ namespace UE::DreamShader::Editor::Private
 			BlockName = TEXT("ShaderLayerBlend");
 		}
 
-		Lines.Add(FString::Printf(TEXT("%s(Name=\"%s\")"), BlockName, *EscapeDreamShaderString(DecompiledName)));
+		Lines.Add(FString::Printf(TEXT("%s(Name=\"%s\")"), BlockName, *EscapeDreamShaderString(DecompiledName))); // I18N-EXEMPT
 		Lines.Add(TEXT("{"));
 		AppendSection(Lines, TEXT("Properties"), PropertyDeclarations);
 		AppendSection(Lines, TEXT("Inputs"), InputDeclarations);
@@ -387,7 +406,7 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderGraphDecompiler::AppendSection(TArray<FString>& Lines, const TCHAR* SectionName, const TArray<FString>& LinesA, const TArray<FString>& LinesB)
 	{
-		Lines.Add(FString::Printf(TEXT("\t%s = {"), SectionName));
+		Lines.Add(FString::Printf(TEXT("\t%s = {"), SectionName)); // I18N-EXEMPT
 		if (LinesA.IsEmpty() && LinesB.IsEmpty())
 		{
 			Lines.Add(TEXT("\t}"));
@@ -415,7 +434,7 @@ namespace UE::DreamShader::Editor::Private
 			|| ReservedNames.Contains(Candidate)
 			|| ContainsFunctionInputName(Candidate))
 		{
-			Candidate = FString::Printf(TEXT("%s_%d"), *BaseName, Suffix++);
+			Candidate = FString::Printf(TEXT("%s_%d"), *BaseName, Suffix++); // I18N-EXEMPT
 		}
 
 		TempNames.Add(Candidate);
@@ -456,7 +475,7 @@ namespace UE::DreamShader::Editor::Private
 			|| TempNames.Contains(Candidate)
 			|| ContainsFunctionInputName(Candidate))
 		{
-			Candidate = FString::Printf(TEXT("%s_%d"), *BaseName, Suffix++);
+			Candidate = FString::Printf(TEXT("%s_%d"), *BaseName, Suffix++); // I18N-EXEMPT
 		}
 		return Candidate;
 	}
@@ -465,7 +484,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!ParameterName.IsNone() && !ParameterName.ToString().Equals(DeclarationName, ESearchCase::CaseSensitive))
 		{
-			Entries.Add(FString::Printf(
+			Entries.Add(FString::Printf( // I18N-EXEMPT
 				TEXT("ParameterName=\"%s\";"),
 				*EscapeDreamShaderString(ParameterName.ToString())));
 		}
@@ -490,14 +509,14 @@ namespace UE::DreamShader::Editor::Private
 
 		return Lines.IsEmpty()
 			? FString()
-			: FString::Printf(TEXT(" [\n%s\n\t\t]"), *FString::Join(Lines, TEXT("\n")));
+			: FString::Printf(TEXT(" [\n%s\n\t\t]"), *FString::Join(Lines, TEXT("\n"))); // I18N-EXEMPT
 	}
 
 	void FDreamShaderGraphDecompiler::AddStringMetadata(TArray<FString>& Entries, const TCHAR* Key, const FString& Value)
 	{
 		if (!Value.TrimStartAndEnd().IsEmpty())
 		{
-			Entries.Add(FString::Printf(TEXT("%s=\"%s\";"), Key, *EscapeDreamShaderString(Value.TrimStartAndEnd())));
+			Entries.Add(FString::Printf(TEXT("%s=\"%s\";"), Key, *EscapeDreamShaderString(Value.TrimStartAndEnd()))); // I18N-EXEMPT
 		}
 	}
 
@@ -505,7 +524,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (Value != DefaultValue)
 		{
-			Entries.Add(FString::Printf(TEXT("%s=%d;"), Key, Value));
+			Entries.Add(FString::Printf(TEXT("%s=%d;"), Key, Value)); // I18N-EXEMPT
 		}
 	}
 
@@ -513,7 +532,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (bValue != bDefaultValue)
 		{
-			Entries.Add(FString::Printf(TEXT("%s=%s;"), Key, bValue ? TEXT("true") : TEXT("false")));
+			Entries.Add(FString::Printf(TEXT("%s=%s;"), Key, bValue ? TEXT("true") : TEXT("false"))); // I18N-EXEMPT
 		}
 	}
 
@@ -527,12 +546,12 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderGraphDecompiler::AddEnumMetadataAlways(TArray<FString>& Entries, const TCHAR* Key, const UEnum* Enum, const int64 Value)
 	{
-		Entries.Add(FString::Printf(TEXT("%s=\"%s\";"), Key, *EscapeDreamShaderString(GetEnumLiteralText(Enum, Value))));
+		Entries.Add(FString::Printf(TEXT("%s=\"%s\";"), Key, *EscapeDreamShaderString(GetEnumLiteralText(Enum, Value)))); // I18N-EXEMPT
 	}
 
 	FString FDreamShaderGraphDecompiler::BuildLiteralEnumArgument(const UEnum* Enum, const int64 Value)
 	{
-		return FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(GetEnumLiteralText(Enum, Value)));
+		return FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(GetEnumLiteralText(Enum, Value))); // I18N-EXEMPT
 	}
 
 	void FDreamShaderGraphDecompiler::AddParameterMetadata(TArray<FString>& Entries, const UMaterialExpressionParameter* Parameter)
@@ -573,15 +592,15 @@ namespace UE::DreamShader::Editor::Private
 		// (0, 0) default -- so only an actually-configured range is worth emitting.
 		if (Parameter->SliderMax > Parameter->SliderMin)
 		{
-			Entries.Add(FString::Printf(TEXT("SliderMin=%s;"), *FormatDreamShaderFloat(Parameter->SliderMin)));
-			Entries.Add(FString::Printf(TEXT("SliderMax=%s;"), *FormatDreamShaderFloat(Parameter->SliderMax)));
+			Entries.Add(FString::Printf(TEXT("SliderMin=%s;"), *FormatDreamShaderFloat(Parameter->SliderMin))); // I18N-EXEMPT
+			Entries.Add(FString::Printf(TEXT("SliderMax=%s;"), *FormatDreamShaderFloat(Parameter->SliderMax))); // I18N-EXEMPT
 		}
 
 #if DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE
 		// TSoftObjectPtr: read the path, not the resolved object, so an unloaded enum still round-trips.
 		if (!Parameter->Enumeration.IsNull())
 		{
-			Entries.Add(FString::Printf(
+			Entries.Add(FString::Printf( // I18N-EXEMPT
 				TEXT("Enumeration=%s;"),
 				*MakeDreamShaderObjectPathLiteral(Parameter->Enumeration.LoadSynchronous())));
 		}
@@ -687,7 +706,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		else if (TextureSample->ConstCoordinate != 0)
 		{
-			Arguments.Add({ TEXT("ConstCoordinate"), FString::Printf(TEXT("%d"), TextureSample->ConstCoordinate), false });
+			Arguments.Add({ TEXT("ConstCoordinate"), FString::Printf(TEXT("%d"), TextureSample->ConstCoordinate), false }); // I18N-EXEMPT
 		}
 		if (TextureSample->TextureObject.IsConnected())
 		{
@@ -735,7 +754,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (TextureSample->ConstMipValue != INDEX_NONE)
 		{
-			Arguments.Add({ TEXT("ConstMipValue"), FString::Printf(TEXT("%d"), TextureSample->ConstMipValue), false });
+			Arguments.Add({ TEXT("ConstMipValue"), FString::Printf(TEXT("%d"), TextureSample->ConstMipValue), false }); // I18N-EXEMPT
 		}
 	}
 
@@ -750,7 +769,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			Arguments.Add({
 				TEXT("ParameterName"),
-				FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(TextureParameter->ParameterName.ToString())),
+				FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(TextureParameter->ParameterName.ToString())), // I18N-EXEMPT
 				false
 			});
 		}
@@ -758,19 +777,19 @@ namespace UE::DreamShader::Editor::Private
 		{
 			Arguments.Add({
 				TEXT("Group"),
-				FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(TextureParameter->Group.ToString())),
+				FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(TextureParameter->Group.ToString())), // I18N-EXEMPT
 				false
 			});
 		}
 		if (TextureParameter->SortPriority != 32)
 		{
-			Arguments.Add({ TEXT("SortPriority"), FString::Printf(TEXT("%d"), TextureParameter->SortPriority), false });
+			Arguments.Add({ TEXT("SortPriority"), FString::Printf(TEXT("%d"), TextureParameter->SortPriority), false }); // I18N-EXEMPT
 		}
 		if (!TextureParameter->Desc.IsEmpty())
 		{
 			Arguments.Add({
 				TEXT("Desc"),
-				FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(TextureParameter->Desc)),
+				FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(TextureParameter->Desc)), // I18N-EXEMPT
 				false
 			});
 		}
@@ -866,7 +885,7 @@ namespace UE::DreamShader::Editor::Private
 		TArray<FString> Components;
 		Components.Init(TEXT("0.0"), ComponentCount);
 		return MakeValue(
-			FString::Printf(TEXT("%s(%s)"), *Type, *FString::Join(Components, TEXT(", "))),
+			FString::Printf(TEXT("%s(%s)"), *Type, *FString::Join(Components, TEXT(", "))), // I18N-EXEMPT
 			Type,
 			ComponentCount,
 			true);
@@ -934,7 +953,7 @@ namespace UE::DreamShader::Editor::Private
 		if (BaseText.IsEmpty())
 		{
 			Name = MakeUniqueName(TEXT("Attributes"), TEXT("Attributes"));
-			GraphLines.Add(FString::Printf(TEXT("\t\tMaterialAttributes %s;"), *Name));
+			GraphLines.Add(FString::Printf(TEXT("\t\tMaterialAttributes %s;"), *Name)); // I18N-EXEMPT
 			++NextTempIndex;
 		}
 		else
@@ -960,7 +979,7 @@ namespace UE::DreamShader::Editor::Private
 		// member write that consumes it.
 		const FString ValueText = CompileInput(*Input, TEXT("0.0"));
 		GraphLines.Add(FormatGraphSetStatement(
-			FString::Printf(TEXT("%s.%s"), *VariableName, *MemberName),
+			FString::Printf(TEXT("%s.%s"), *VariableName, *MemberName), // I18N-EXEMPT
 			ValueText));
 	}
 
@@ -990,20 +1009,20 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (ExpressionText.Contains(TEXT("\n")))
 		{
-			return FString::Printf(TEXT("\t\t%s %s =\n%s;"), *Type, *Name, *IndentMultiline(ExpressionText, TEXT("\t\t\t")));
+			return FString::Printf(TEXT("\t\t%s %s =\n%s;"), *Type, *Name, *IndentMultiline(ExpressionText, TEXT("\t\t\t"))); // I18N-EXEMPT
 		}
 
-		return FString::Printf(TEXT("\t\t%s %s = %s;"), *Type, *Name, *ExpressionText);
+		return FString::Printf(TEXT("\t\t%s %s = %s;"), *Type, *Name, *ExpressionText); // I18N-EXEMPT
 	}
 
 	FString FDreamShaderGraphDecompiler::FormatGraphSetStatement(const FString& TargetName, const FString& ExpressionText)
 	{
 		if (ExpressionText.Contains(TEXT("\n")))
 		{
-			return FString::Printf(TEXT("\t\t%s =\n%s;"), *TargetName, *IndentMultiline(ExpressionText, TEXT("\t\t\t")));
+			return FString::Printf(TEXT("\t\t%s =\n%s;"), *TargetName, *IndentMultiline(ExpressionText, TEXT("\t\t\t"))); // I18N-EXEMPT
 		}
 
-		return FString::Printf(TEXT("\t\t%s = %s;"), *TargetName, *ExpressionText);
+		return FString::Printf(TEXT("\t\t%s = %s;"), *TargetName, *ExpressionText); // I18N-EXEMPT
 	}
 
 	FString FDreamShaderGraphDecompiler::IndentMultiline(const FString& Text, const TCHAR* Indent)
@@ -1136,9 +1155,9 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (VisitedReroutes.Contains(Reroute))
 			{
-				Warnings.AddUnique(FString::Printf(
-					TEXT("Detected a recursive reroute dependency while decompiling node '%s'; emitted a default literal to avoid stack overflow."),
-					*Reroute->GetName()));
+					AddUniqueWarning(Warnings, FText::Format(
+						LOCTEXT("RecursiveRerouteDependency", "Detected a recursive reroute dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow."),
+						FText::FromString(Reroute->GetName())));
 				return false;
 			}
 
@@ -1166,9 +1185,9 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!IsValid(NamedRerouteUsage->Declaration))
 			{
-				Warnings.AddUnique(FString::Printf(
-					TEXT("Named reroute usage '%s' has no valid declaration; emitted its default value."),
-					*NamedRerouteUsage->GetName()));
+				AddUniqueWarning(Warnings, FText::Format(
+					LOCTEXT("NamedRerouteUsageMissingDeclaration", "Named reroute usage '{0}' has no valid declaration; emitted its default value."),
+					FText::FromString(NamedRerouteUsage->GetName())));
 				return DefaultValue;
 			}
 
@@ -1218,7 +1237,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		const int32 ComponentCount = FMath::Max(Left.ComponentCount, Right.ComponentCount);
 		return MakeValue(
-			FString::Printf(TEXT("(%s %s %s)"), *Left.Text, *Operator, *Right.Text),
+			FString::Printf(TEXT("(%s %s %s)"), *Left.Text, *Operator, *Right.Text), // I18N-EXEMPT
 			GetDreamShaderTypeForComponentCount(ComponentCount),
 			ComponentCount,
 			false);
@@ -1234,7 +1253,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		return MakeValue(
-			FString::Printf(TEXT("%s(%s)"), *FunctionName, *FString::Join(ArgumentTexts, TEXT(", "))),
+			FString::Printf(TEXT("%s(%s)"), *FunctionName, *FString::Join(ArgumentTexts, TEXT(", "))), // I18N-EXEMPT
 			GetDreamShaderTypeForComponentCount(ComponentCount),
 			ComponentCount,
 			false);
@@ -1267,8 +1286,8 @@ namespace UE::DreamShader::Editor::Private
 	FString FDreamShaderGraphDecompiler::BuildUEExpressionCallWithOutputType( UMaterialExpression* Expression, const int32 OutputIndex, const FString& OutputType, const TArray<FExpressionCallArgument>& Arguments) const
 	{
 		TArray<FString> ArgumentTexts;
-		ArgumentTexts.Add(FString::Printf(TEXT("Class=\"%s\""), *GetMaterialExpressionShortName(Expression ? Expression->GetClass() : nullptr)));
-		ArgumentTexts.Add(FString::Printf(TEXT("OutputType=\"%s\""), *OutputType));
+		ArgumentTexts.Add(FString::Printf(TEXT("Class=\"%s\""), *GetMaterialExpressionShortName(Expression ? Expression->GetClass() : nullptr))); // I18N-EXEMPT
+		ArgumentTexts.Add(FString::Printf(TEXT("OutputType=\"%s\""), *OutputType)); // I18N-EXEMPT
 		// A name-based output selector (Output="...") and OutputIndex are mutually exclusive on a
 		// UE.Expression -- the generator rejects emitting both ("cannot use OutputName/Output together
 		// with OutputIndex"). Custom nodes select their secondary outputs by name, so when an
@@ -1283,21 +1302,21 @@ namespace UE::DreamShader::Editor::Private
 			});
 		if (OutputIndex > 0 && !bHasNamedOutputSelector)
 		{
-			ArgumentTexts.Add(FString::Printf(TEXT("OutputIndex=%d"), OutputIndex));
+			ArgumentTexts.Add(FString::Printf(TEXT("OutputIndex=%d"), OutputIndex)); // I18N-EXEMPT
 		}
 
 		for (const FExpressionCallArgument& Argument : Arguments)
 		{
 			if (!Argument.Value.TrimStartAndEnd().IsEmpty() && !Argument.Value.Equals(TEXT("default"), ESearchCase::CaseSensitive))
 			{
-				ArgumentTexts.Add(FString::Printf(TEXT("%s=%s"), *Argument.Name, *Argument.Value));
+				ArgumentTexts.Add(FString::Printf(TEXT("%s=%s"), *Argument.Name, *Argument.Value)); // I18N-EXEMPT
 			}
 		}
 
 		bool bUseMultiline = ArgumentTexts.Num() > 3;
 		if (!bUseMultiline)
 		{
-			const FString SingleLine = FString::Printf(TEXT("UE.Expression(%s)"), *FString::Join(ArgumentTexts, TEXT(", ")));
+			const FString SingleLine = FString::Printf(TEXT("UE.Expression(%s)"), *FString::Join(ArgumentTexts, TEXT(", "))); // I18N-EXEMPT
 			bUseMultiline = SingleLine.Len() > 120;
 			if (!bUseMultiline)
 			{
@@ -1309,13 +1328,13 @@ namespace UE::DreamShader::Editor::Private
 		Lines.Reserve(ArgumentTexts.Num());
 		for (int32 ArgumentIndex = 0; ArgumentIndex < ArgumentTexts.Num(); ++ArgumentIndex)
 		{
-			Lines.Add(FString::Printf(
+			Lines.Add(FString::Printf( // I18N-EXEMPT
 				TEXT("\t%s%s"),
 				*ArgumentTexts[ArgumentIndex],
 				ArgumentIndex + 1 < ArgumentTexts.Num() ? TEXT(",") : TEXT("")));
 		}
 
-		return FString::Printf(TEXT("UE.Expression(\n%s\n)"), *FString::Join(Lines, TEXT("\n")));
+		return FString::Printf(TEXT("UE.Expression(\n%s\n)"), *FString::Join(Lines, TEXT("\n"))); // I18N-EXEMPT
 	}
 
 	bool FDreamShaderGraphDecompiler::TryCombineAppendSwizzle( const FDecompiledValue& A, const FDecompiledValue& B, FDecompiledValue& OutValue)
@@ -1373,9 +1392,9 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (CompilingExpressionKeys.Contains(Key))
 		{
-			Warnings.AddUnique(FString::Printf(
-				TEXT("Detected a recursive graph dependency while decompiling node '%s'; emitted a default literal to avoid stack overflow."),
-				*Expression->GetName()));
+				AddUniqueWarning(Warnings, FText::Format(
+					LOCTEXT("RecursiveGraphDependency", "Detected a recursive graph dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow."),
+					FText::FromString(Expression->GetName())));
 			return MakeDefaultValueForExpressionOutput(Expression, OutputIndex);
 		}
 
@@ -1406,9 +1425,9 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!IsValid(NamedRerouteUsage->Declaration))
 			{
-				Warnings.AddUnique(FString::Printf(
-					TEXT("Named reroute usage '%s' has no valid declaration; emitted a default literal."),
-					*NamedRerouteUsage->GetName()));
+				AddUniqueWarning(Warnings, FText::Format(
+					LOCTEXT("NamedRerouteUsageInvalidDeclaration", "Named reroute usage '{0}' has no valid declaration; emitted a default literal."),
+					FText::FromString(NamedRerouteUsage->GetName())));
 				return MakeDefaultValueForExpressionOutput(Expression, OutputIndex);
 			}
 
@@ -1467,10 +1486,10 @@ namespace UE::DreamShader::Editor::Private
 			const int32 AttributeIndex = OutputIndex - 1;
 			if (!GetAttributes->AttributeGetTypes.IsValidIndex(AttributeIndex))
 			{
-				Warnings.AddUnique(FString::Printf(
-					TEXT("GetMaterialAttributes node '%s' has no attribute for output %d; emitted a default literal."),
-					*GetAttributes->GetName(),
-					OutputIndex));
+				AddUniqueWarning(Warnings, FText::Format(
+					LOCTEXT("GetMaterialAttributesMissingOutput", "GetMaterialAttributes node '{0}' has no attribute for output {1}; emitted a default literal."),
+					FText::FromString(GetAttributes->GetName()),
+					FText::AsNumber(OutputIndex)));
 				return MakeDefaultValueForExpressionOutput(Expression, OutputIndex);
 			}
 
@@ -1495,7 +1514,7 @@ namespace UE::DreamShader::Editor::Private
 			return CacheExpressionValue(
 				Key,
 				MakeValue(
-					FString::Printf(
+					FString::Printf( // I18N-EXEMPT
 						TEXT("%s.%s"),
 						*BaseName,
 						*FMaterialAttributeDefinitionMap::GetAttributeName(GetAttributes->AttributeGetTypes[AttributeIndex])),
@@ -1511,14 +1530,14 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Arguments.Add({
 					TEXT("ParameterName"),
-					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(CurveAtlas->ParameterName.ToString())),
+					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(CurveAtlas->ParameterName.ToString())), // I18N-EXEMPT
 					false });
 			}
 			if (!CurveAtlas->Group.IsNone())
 			{
 				Arguments.Add({
 					TEXT("Group"),
-					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(CurveAtlas->Group.ToString())),
+					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(CurveAtlas->Group.ToString())), // I18N-EXEMPT
 					false });
 			}
 			if (CurveAtlas->SortPriority != 32)
@@ -1529,7 +1548,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Arguments.Add({
 					TEXT("Desc"),
-					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(CurveAtlas->Desc)),
+					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(CurveAtlas->Desc)), // I18N-EXEMPT
 					false });
 			}
 			Arguments.Add({ TEXT("DefaultValue"), FormatDreamShaderFloat(CurveAtlas->DefaultValue), false });
@@ -1579,7 +1598,7 @@ namespace UE::DreamShader::Editor::Private
 				AddScalarParameterMetadata(MetadataEntries, ScalarParameter);
 				AddPropertyDeclaration(
 					Name,
-					FString::Printf(
+					FString::Printf( // I18N-EXEMPT
 						TEXT("ScalarParameter %s = %s%s;"),
 						*Name,
 						*FormatDreamShaderFloat(ScalarParameter->DefaultValue),
@@ -1615,12 +1634,12 @@ namespace UE::DreamShader::Editor::Private
 				TArray<FString> MetadataEntries;
 				AddParameterNameMetadataIfNeeded(MetadataEntries, Name, ChannelMask->ParameterName);
 				AddParameterMetadata(MetadataEntries, ChannelMask);
-				MetadataEntries.Add(FString::Printf(TEXT("MaskChannel=%s"), MaskName));
+				MetadataEntries.Add(FString::Printf(TEXT("MaskChannel=%s"), MaskName)); // I18N-EXEMPT
 				// Emit the one-hot DefaultValue too, so the mask is correct even if the metadata
 				// write does not run the node's PostEditChange MaskChannel->DefaultValue sync.
 				AddPropertyDeclaration(
 					Name,
-					FString::Printf(
+					FString::Printf( // I18N-EXEMPT
 						TEXT("ChannelMaskParameter %s = %s%s;"),
 						*Name,
 						*FormatDreamShaderColor(ChannelMask->DefaultValue),
@@ -1633,7 +1652,7 @@ namespace UE::DreamShader::Editor::Private
 				const FString InputText = CompileInput(ChannelMask->Input, TEXT("0.0"));
 				const FString Temp = AddTemp(
 					TEXT("float"),
-					FString::Printf(TEXT("%s(Input = %s)"), *Name, *InputText),
+					FString::Printf(TEXT("%s(Input = %s)"), *Name, *InputText), // I18N-EXEMPT
 					Name + TEXT("_Masked"));
 				return CacheExpressionValue(Key, MakeValue(Temp, TEXT("float"), 1, true));
 			}
@@ -1655,7 +1674,7 @@ namespace UE::DreamShader::Editor::Private
 				AddParameterMetadata(MetadataEntries, VectorParameter);
 				AddPropertyDeclaration(
 					Name,
-					FString::Printf(
+					FString::Printf( // I18N-EXEMPT
 						TEXT("VectorParameter %s = %s%s;"),
 						*Name,
 						*FormatDreamShaderColor(VectorParameter->DefaultValue),
@@ -1676,7 +1695,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Name = MakeUniquePropertyName(TextureObjectParameter->ParameterName.ToString(), TEXT("Texture"));
 				const FString DefaultValue = TextureObjectParameter->Texture
-					? FString::Printf(TEXT(" = %s"), *MakeDreamShaderObjectPathLiteral(TextureObjectParameter->Texture))
+					? FString::Printf(TEXT(" = %s"), *MakeDreamShaderObjectPathLiteral(TextureObjectParameter->Texture)) // I18N-EXEMPT
 					: FString();
 				TArray<FString> MetadataEntries;
 				AddParameterNameMetadataIfNeeded(MetadataEntries, Name, TextureObjectParameter->ParameterName);
@@ -1684,7 +1703,7 @@ namespace UE::DreamShader::Editor::Private
 				AddTextureSampleMetadata(MetadataEntries, TextureObjectParameter);
 				AddPropertyDeclaration(
 					Name,
-					FString::Printf(
+					FString::Printf( // I18N-EXEMPT
 						TEXT("TextureObjectParameter %s%s%s;"),
 						*Name,
 						*DefaultValue,
@@ -1737,7 +1756,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Name = MakeUniquePropertyName(TextureParameter->ParameterName.ToString(), TEXT("Texture"));
 				const FString DefaultValue = TextureParameter->Texture
-					? FString::Printf(TEXT(" = %s"), *MakeDreamShaderObjectPathLiteral(TextureParameter->Texture))
+					? FString::Printf(TEXT(" = %s"), *MakeDreamShaderObjectPathLiteral(TextureParameter->Texture)) // I18N-EXEMPT
 					: FString();
 				TArray<FString> MetadataEntries;
 				AddParameterNameMetadataIfNeeded(MetadataEntries, Name, TextureParameter->ParameterName);
@@ -1745,7 +1764,7 @@ namespace UE::DreamShader::Editor::Private
 				AddTextureSampleMetadata(MetadataEntries, TextureParameter);
 				AddPropertyDeclaration(
 					Name,
-					FString::Printf(
+					FString::Printf( // I18N-EXEMPT
 						TEXT("TextureSampleParameter2D %s%s%s;"),
 						*Name,
 						*DefaultValue,
@@ -1872,7 +1891,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Arguments.Add({
 					TEXT("ParameterName"),
-					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(StaticComponentMask->ParameterName.ToString())),
+					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(StaticComponentMask->ParameterName.ToString())), // I18N-EXEMPT
 					false
 				});
 			}
@@ -1923,13 +1942,13 @@ namespace UE::DreamShader::Editor::Private
 
 				const int32 ClampedComponentCountB = FMath::Clamp(B.ComponentCount, 1, 3);
 				const int32 ClampedComponentCountA = FMath::Clamp(4 - ClampedComponentCountB, 1, 3);
-				Warnings.AddUnique(FString::Printf(
-					TEXT("Append node '%s' resolved to %d + %d components, which cannot fit a float4; masked its inputs down to %d + %d. Review the emitted swizzle."),
-					*Expression->GetName(),
-					A.ComponentCount,
-					B.ComponentCount,
-					ClampedComponentCountA,
-					ClampedComponentCountB));
+				AddUniqueWarning(Warnings, FText::Format(
+					LOCTEXT("AppendNodeOverflow", "Append node '{0}' resolved to {1} + {2} components, which cannot fit a float4; masked its inputs down to {3} + {4}. Review the emitted swizzle."),
+					FText::FromString(Expression->GetName()),
+					FText::AsNumber(A.ComponentCount),
+					FText::AsNumber(B.ComponentCount),
+					FText::AsNumber(ClampedComponentCountA),
+					FText::AsNumber(ClampedComponentCountB)));
 
 				A = MaskValueDown(A, ClampedComponentCountA);
 				B = MaskValueDown(B, ClampedComponentCountB);
@@ -2056,7 +2075,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Arguments.Add({
 					TEXT("ParameterName"),
-					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(StaticSwitchParameter->ParameterName.ToString())),
+					FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(StaticSwitchParameter->ParameterName.ToString())), // I18N-EXEMPT
 					false
 				});
 			}
@@ -2086,7 +2105,7 @@ namespace UE::DreamShader::Editor::Private
 			TArray<FExpressionCallArgument> Arguments;
 			if (TextureCoordinate->CoordinateIndex != 0)
 			{
-				Arguments.Add({ TEXT("CoordinateIndex"), FString::Printf(TEXT("%d"), TextureCoordinate->CoordinateIndex), false });
+				Arguments.Add({ TEXT("CoordinateIndex"), FString::Printf(TEXT("%d"), TextureCoordinate->CoordinateIndex), false }); // I18N-EXEMPT
 			}
 			if (!FMath::IsNearlyEqual(TextureCoordinate->UTiling, 1.0f))
 			{
@@ -2122,7 +2141,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			else if (Panner->ConstCoordinate != 0)
 			{
-				Arguments.Add({ TEXT("ConstCoordinate"), FString::Printf(TEXT("%d"), Panner->ConstCoordinate), false });
+				Arguments.Add({ TEXT("ConstCoordinate"), FString::Printf(TEXT("%d"), Panner->ConstCoordinate), false }); // I18N-EXEMPT
 			}
 			if (Panner->Time.IsConnected())
 			{
@@ -2160,7 +2179,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			else if (Rotator->ConstCoordinate != 0)
 			{
-				Arguments.Add({ TEXT("ConstCoordinate"), FString::Printf(TEXT("%d"), Rotator->ConstCoordinate), false });
+				Arguments.Add({ TEXT("ConstCoordinate"), FString::Printf(TEXT("%d"), Rotator->ConstCoordinate), false }); // I18N-EXEMPT
 			}
 			if (Rotator->Time.IsConnected())
 			{
@@ -2273,9 +2292,9 @@ namespace UE::DreamShader::Editor::Private
 				CustomExpression->Description.IsEmpty() ? TEXT("Custom") : CustomExpression->Description);
 		}
 
-		Warnings.AddUnique(FString::Printf(
-			TEXT("Exported '%s' as UE.Expression; review reflected literal properties if the node has editor-only state."),
-			*Expression->GetClass()->GetName()));
+		AddUniqueWarning(Warnings, FText::Format(
+			LOCTEXT("ExportedAsUEExpression", "Exported '{0}' as UE.Expression; review reflected literal properties if the node has editor-only state."),
+			FText::FromString(Expression->GetClass()->GetName())));
 		return CacheTempExpressionValue(
 			Key,
 			MakeExpressionValue(Expression, OutputIndex, BuildGenericExpressionCall(Expression, OutputIndex), false),
@@ -2297,9 +2316,9 @@ namespace UE::DreamShader::Editor::Private
 
 		if (CompilingNamedRerouteDeclarations.Contains(Declaration))
 		{
-			Warnings.AddUnique(FString::Printf(
-				TEXT("Detected a recursive named reroute dependency for '%s'; emitted a default literal to avoid stack overflow."),
-				*Declaration->Name.ToString()));
+			AddUniqueWarning(Warnings, FText::Format(
+				LOCTEXT("RecursiveNamedRerouteDependency", "Detected a recursive named reroute dependency for '{0}'; emitted a default literal to avoid stack overflow."),
+				FText::FromString(Declaration->Name.ToString())));
 			return MakeDefaultValueForExpressionOutput(Declaration, OutputIndex);
 		}
 
@@ -2555,11 +2574,11 @@ namespace UE::DreamShader::Editor::Private
 					|| CastField<FUInt32Property>(Property)
 					|| CastField<FUInt64Property>(Property))
 				{
-					ValueText = FString::Printf(TEXT("%llu"), static_cast<unsigned long long>(NumericProperty->GetUnsignedIntPropertyValue(ValuePtr)));
+					ValueText = FString::Printf(TEXT("%llu"), static_cast<unsigned long long>(NumericProperty->GetUnsignedIntPropertyValue(ValuePtr))); // I18N-EXEMPT
 				}
 				else
 				{
-					ValueText = FString::Printf(TEXT("%lld"), static_cast<long long>(NumericProperty->GetSignedIntPropertyValue(ValuePtr)));
+					ValueText = FString::Printf(TEXT("%lld"), static_cast<long long>(NumericProperty->GetSignedIntPropertyValue(ValuePtr))); // I18N-EXEMPT
 				}
 			}
 		}
@@ -2568,16 +2587,16 @@ namespace UE::DreamShader::Editor::Private
 			const FName NameValue = NameProperty->GetPropertyValue(ValuePtr);
 			if (!NameValue.IsNone())
 			{
-				ValueText = FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(NameValue.ToString()));
+				ValueText = FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(NameValue.ToString())); // I18N-EXEMPT
 			}
 		}
 		else if (const FStrProperty* StringProperty = CastField<FStrProperty>(Property))
 		{
-			ValueText = FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(StringProperty->GetPropertyValue(ValuePtr)));
+			ValueText = FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(StringProperty->GetPropertyValue(ValuePtr))); // I18N-EXEMPT
 		}
 		else if (const FTextProperty* TextProperty = CastField<FTextProperty>(Property))
 		{
-			ValueText = FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(TextProperty->GetPropertyValue(ValuePtr).ToString()));
+			ValueText = FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(TextProperty->GetPropertyValue(ValuePtr).ToString())); // I18N-EXEMPT
 		}
 		else if (const FObjectPropertyBase* ObjectProperty = CastField<FObjectPropertyBase>(Property))
 		{
@@ -2641,7 +2660,7 @@ namespace UE::DreamShader::Editor::Private
 
 				const FName InputName = Expression->GetInputName(InputIndex);
 				const FString ArgumentName = MakeDreamShaderDeclarationName(
-					InputName.IsNone() ? FString::Printf(TEXT("Input%d"), InputIndex) : InputName.ToString(),
+					InputName.IsNone() ? FString::Printf(TEXT("Input%d"), InputIndex) : InputName.ToString(), // I18N-EXEMPT
 					TEXT("Input"),
 					InputIndex);
 				Arguments.Add({ ArgumentName, CompileInput(*Input, TEXT("0.0")), true });
@@ -2656,17 +2675,17 @@ namespace UE::DreamShader::Editor::Private
 	FString FDreamShaderGraphDecompiler::BuildCustomExpressionCall(UMaterialExpressionCustom* CustomExpression, const int32 OutputIndex)
 	{
 		TArray<FExpressionCallArgument> Arguments;
-		Arguments.Add({ TEXT("Code"), FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderCodeString(CustomExpression ? CustomExpression->Code : FString())), false });
+		Arguments.Add({ TEXT("Code"), FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderCodeString(CustomExpression ? CustomExpression->Code : FString())), false }); // I18N-EXEMPT
 		if (CustomExpression && !CustomExpression->Description.IsEmpty())
 		{
-			Arguments.Add({ TEXT("Description"), FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(CustomExpression->Description)), false });
+			Arguments.Add({ TEXT("Description"), FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(CustomExpression->Description)), false }); // I18N-EXEMPT
 		}
 		if (CustomExpression && OutputIndex > 0)
 		{
 			const FString OutputName = GetCustomOutputName(CustomExpression, OutputIndex);
 			if (!OutputName.IsEmpty())
 			{
-				Arguments.Add({ TEXT("Output"), FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(OutputName)), false });
+				Arguments.Add({ TEXT("Output"), FString::Printf(TEXT("\"%s\""), *EscapeDreamShaderString(OutputName)), false }); // I18N-EXEMPT
 			}
 		}
 		if (CustomExpression && CustomExpression->AdditionalOutputs.Num() > 0)
@@ -2681,7 +2700,7 @@ namespace UE::DreamShader::Editor::Private
 			AdditionalOutputTexts.Reserve(CustomExpression->AdditionalOutputs.Num());
 			for (const FCustomOutput& AdditionalOutput : CustomExpression->AdditionalOutputs)
 			{
-				AdditionalOutputTexts.Add(FString::Printf(
+				AdditionalOutputTexts.Add(FString::Printf( // I18N-EXEMPT
 					TEXT("(OutputName=\"%s\",OutputType=%s)"),
 					*AdditionalOutput.OutputName.ToString(),
 					*GetEnumLiteralText(CustomOutputTypeEnum, static_cast<int64>(AdditionalOutput.OutputType))));
@@ -2689,9 +2708,9 @@ namespace UE::DreamShader::Editor::Private
 
 			Arguments.Add({
 				TEXT("AdditionalOutputs"),
-				FString::Printf(
+				FString::Printf( // I18N-EXEMPT
 					TEXT("\"%s\""),
-					*EscapeDreamShaderString(FString::Printf(TEXT("(%s)"), *FString::Join(AdditionalOutputTexts, TEXT(","))))),
+					*EscapeDreamShaderString(FString::Printf(TEXT("(%s)"), *FString::Join(AdditionalOutputTexts, TEXT(","))))), // I18N-EXEMPT
 				false });
 		}
 		if (CustomExpression)
@@ -2722,16 +2741,16 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!FunctionCall || !FunctionCall->MaterialFunction)
 		{
-			Warnings.AddUnique(TEXT("A MaterialFunctionCall had no function asset and was exported as a zero literal."));
+			AddUniqueWarning(Warnings, LOCTEXT("MaterialFunctionCallMissingAsset", "A MaterialFunctionCall had no function asset and was exported as a zero literal."));
 			return TEXT("0.0");
 		}
 
 		UMaterialFunction* MaterialFunction = Cast<UMaterialFunction>(FunctionCall->MaterialFunction);
 		if (!MaterialFunction)
 		{
-			Warnings.AddUnique(FString::Printf(
-				TEXT("MaterialFunctionCall '%s' is not a plain MaterialFunction; it was exported through UE.Expression."),
-				*FunctionCall->MaterialFunction->GetPathName()));
+			AddUniqueWarning(Warnings, FText::Format(
+				LOCTEXT("MaterialFunctionCallNotPlain", "MaterialFunctionCall '{0}' is not a plain MaterialFunction; it was exported through UE.Expression."),
+				FText::FromString(FunctionCall->MaterialFunction->GetPathName())));
 			return BuildGenericExpressionCall(FunctionCall, OutputIndex);
 		}
 
@@ -2752,10 +2771,10 @@ namespace UE::DreamShader::Editor::Private
 
 		if (OutputIndex > 0 || FunctionCall->FunctionOutputs.Num() > 1)
 		{
-			Arguments.Add(FString::Printf(TEXT("OutputIndex=%d"), OutputIndex));
+			Arguments.Add(FString::Printf(TEXT("OutputIndex=%d"), OutputIndex)); // I18N-EXEMPT
 		}
 
-		return FString::Printf(TEXT("%s(%s)"), *FunctionName, *FString::Join(Arguments, TEXT(", ")));
+		return FString::Printf(TEXT("%s(%s)"), *FunctionName, *FString::Join(Arguments, TEXT(", "))); // I18N-EXEMPT
 	}
 
 	FString FDreamShaderGraphDecompiler::EnsureVirtualFunctionDefinition(UMaterialFunction* MaterialFunction)
@@ -2779,10 +2798,10 @@ namespace UE::DreamShader::Editor::Private
 		}
 		else
 		{
-			Warnings.AddUnique(FString::Printf(
-				TEXT("Failed to emit VirtualFunction for '%s': %s"),
-				*MaterialFunction->GetPathName(),
-				*Error));
+			AddUniqueWarning(Warnings, FText::Format(
+				LOCTEXT("EmitVirtualFunctionFailed", "Failed to emit VirtualFunction for '{0}': {1}"),
+				FText::FromString(MaterialFunction->GetPathName()),
+				FText::FromString(Error)));
 		}
 
 		VirtualFunctionNames.Add(MaterialFunction, FunctionName);
@@ -2797,10 +2816,12 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		ProgressVisitedExpressions.Add(Expression);
-		ActiveDecompileSlowTask->EnterProgressFrame(1.0f, FText::FromString(FString::Printf(
-			TEXT("Decompiling node %d: %s"),
-			ProgressVisitedExpressions.Num(),
-			*GetMaterialExpressionShortName(Expression->GetClass()))));
+		ActiveDecompileSlowTask->EnterProgressFrame(1.0f, FText::Format(
+			LOCTEXT("DecompilingNode", "Decompiling node {0}: {1}"),
+			FText::AsNumber(ProgressVisitedExpressions.Num()),
+			FText::FromString(GetMaterialExpressionShortName(Expression->GetClass()))));
 	}
+
+#undef LOCTEXT_NAMESPACE
 
 }

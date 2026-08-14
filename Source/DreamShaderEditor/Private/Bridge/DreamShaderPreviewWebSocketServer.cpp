@@ -1,6 +1,7 @@
 #include "Bridge/DreamShaderPreviewWebSocketServer.h"
 
 #include "DreamShaderModule.h"
+#include "Diagnostics/DreamShaderTextWireUtils.h"
 #include "Preview/DreamShaderPreviewRenderer.h"
 
 #include "Dom/JsonObject.h"
@@ -176,7 +177,7 @@ namespace UE::DreamShader::Editor::Private
 			TSharedRef<FJsonObject> ErrorObject = MakeShared<FJsonObject>();
 			ErrorObject->SetStringField(TEXT("type"), TEXT("previewResult"));
 			ErrorObject->SetStringField(TEXT("status"), TEXT("error"));
-			ErrorObject->SetStringField(TEXT("message"), TEXT("Invalid DreamShader preview request JSON."));
+			ErrorObject->SetStringField(TEXT("message"), ToInvariantWireString(FText::FromString(TEXT("Invalid DreamShader preview request JSON."))));
 			ErrorObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
 			SendJson(Socket, ErrorObject);
 			return;
@@ -240,12 +241,12 @@ namespace UE::DreamShader::Editor::Private
 			if (!bSavedPreview || !FDreamShaderPreviewRenderer::RenderMaterialPreviewFrame(Material, PreviewRequest.Width, PreviewRequest.Height, PreviewRequest.Mesh, PreviewRequest.OrbitYaw, PreviewRequest.OrbitPitch, FirstFramePngData, RenderError))
 			{
 				PreviewResult.bSucceeded = false;
-				PreviewResult.Message = RenderError;
+			PreviewResult.Message = FText::FromString(RenderError);
 			}
 			else
 			{
 				PreviewResult.ImagePath = ImagePath;
-				PreviewResult.Message = FString::Printf(TEXT("Streaming preview for %s."), *PreviewResult.AssetPath);
+				PreviewResult.Message = FText::FromString(FString::Printf(TEXT("Streaming preview for %s."), *PreviewResult.AssetPath));
 			}
 		}
 		const bool bStreamingReady = bPreviewSucceeded && PreviewResult.bSucceeded;
@@ -259,7 +260,7 @@ namespace UE::DreamShader::Editor::Private
 		ResultObject->SetStringField(TEXT("assetPath"), PreviewResult.AssetPath);
 		ResultObject->SetStringField(TEXT("imagePath"), PreviewResult.ImagePath);
 		ResultObject->SetStringField(TEXT("mesh"), PreviewResult.Mesh);
-		ResultObject->SetStringField(TEXT("message"), PreviewResult.Message);
+			ResultObject->SetStringField(TEXT("message"), ToInvariantWireString(PreviewResult.Message));
 		ResultObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
 
 		// As in SendPreviewFrame: metadata message first, image bytes as a following tagged message
@@ -291,12 +292,12 @@ namespace UE::DreamShader::Editor::Private
 			bool bStream = true;
 			RequestObject->TryGetBoolField(TEXT("stream"), bStream);
 			State.bStreaming = bStream && State.FrameIntervalSeconds > 0.0;
-			UE_LOG(LogDreamShader, Display, TEXT("DreamShader preview WebSocket: %s"), *PreviewResult.Message);
+			UE_LOG(LogDreamShader, Display, TEXT("DreamShader preview WebSocket: %s"), *ToInvariantWireString(PreviewResult.Message));
 		}
 		else
 		{
 			PreviewStates.Remove(Socket);
-			UE_LOG(LogDreamShader, Error, TEXT("DreamShader preview WebSocket: %s"), *PreviewResult.Message);
+			UE_LOG(LogDreamShader, Error, TEXT("DreamShader preview WebSocket: %s"), *ToInvariantWireString(PreviewResult.Message));
 		}
 	}
 
@@ -366,7 +367,7 @@ namespace UE::DreamShader::Editor::Private
 					ErrorObject->SetStringField(TEXT("sourceFile"), State.SourceFilePath);
 					ErrorObject->SetStringField(TEXT("assetPath"), State.AssetPath);
 					ErrorObject->SetStringField(TEXT("mesh"), State.Mesh);
-					ErrorObject->SetStringField(TEXT("message"), Error);
+					ErrorObject->SetStringField(TEXT("message"), ToInvariantWireString(FText::FromString(Error)));
 					ErrorObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
 					SendJson(Socket, ErrorObject);
 					State.bStreaming = false;
@@ -414,7 +415,7 @@ namespace UE::DreamShader::Editor::Private
 			ErrorObject->SetStringField(TEXT("sourceFile"), State.SourceFilePath);
 			ErrorObject->SetStringField(TEXT("assetPath"), State.AssetPath);
 			ErrorObject->SetStringField(TEXT("mesh"), State.Mesh);
-			ErrorObject->SetStringField(TEXT("message"), Error);
+			ErrorObject->SetStringField(TEXT("message"), ToInvariantWireString(FText::FromString(Error)));
 			ErrorObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
 			SendJson(Socket, ErrorObject);
 			State.bStreaming = false;

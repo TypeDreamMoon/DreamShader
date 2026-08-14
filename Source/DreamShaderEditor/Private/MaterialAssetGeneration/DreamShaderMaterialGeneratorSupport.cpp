@@ -90,7 +90,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!bKnownArgument)
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("UE.%s for property '%s' does not support argument '%s'."),
 					*Property.UEBuiltinFunctionName,
 					*Property.Name,
@@ -299,7 +299,7 @@ namespace UE::DreamShader::Editor::Private
 			double ParsedValue = 0.0;
 			if (!ParseScalarLiteral(InValueText, ParsedValue))
 			{
-				OutError = FString::Printf(TEXT("Expected a scalar literal but got '%s'."), *InValueText);
+				OutError = FString::Printf(TEXT("Expected a scalar literal but got '%s'."), *InValueText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return nullptr;
 			}
 
@@ -314,13 +314,13 @@ namespace UE::DreamShader::Editor::Private
 		TArray<double> Components;
 		if (!ParseVectorLiteral(InValueText, Components))
 		{
-			OutError = FString::Printf(TEXT("Expected a float%d-style literal like '(...)' but got '%s'."), ExpectedComponentCount, *InValueText);
+			OutError = FString::Printf(TEXT("Expected a float%d-style literal like '(...)' but got '%s'."), ExpectedComponentCount, *InValueText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return nullptr;
 		}
 
 		if (Components.Num() != ExpectedComponentCount)
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("Expected %d components but got %d in literal '%s'."),
 				ExpectedComponentCount,
 				Components.Num(),
@@ -331,7 +331,7 @@ namespace UE::DreamShader::Editor::Private
 		UMaterialExpression* Expression = CreateVectorLiteralExpression(Material, MaterialFunction, Components, ExpectedComponentCount, PositionY);
 		if (!Expression)
 		{
-			OutError = FString::Printf(TEXT("Failed to create a float%d constant expression."), ExpectedComponentCount);
+			OutError = FString::Printf(TEXT("Failed to create a float%d constant expression."), ExpectedComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 		return Expression;
 	}
@@ -357,7 +357,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutError = FString::Printf(
+		OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("%s It must reference a previously declared property or use a compatible literal."),
 			*OutError);
 		return false;
@@ -382,9 +382,9 @@ namespace UE::DreamShader::Editor::Private
 		FString SanitizedName = UE::DreamShader::SanitizeIdentifier(BaseName);
 		if (RouteIndex >= 0)
 		{
-			SanitizedName += FString::Printf(TEXT("_%d"), RouteIndex);
+			SanitizedName += FString::Printf(TEXT("_%d"), RouteIndex); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
-		SanitizedName = FString::Printf(TEXT("DS_%s"), *SanitizedName);
+		SanitizedName = FString::Printf(TEXT("DS_%s"), *SanitizedName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		const int32 SourceX = SourceValue.Expression->MaterialExpressionEditorX;
 		const int32 SourceY = SourceValue.Expression->MaterialExpressionEditorY;

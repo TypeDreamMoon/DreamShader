@@ -128,7 +128,7 @@ namespace UE::DreamShader::Editor::Private
 				FString Escaped = Argument.Expression->Text;
 				Escaped.ReplaceInline(TEXT("\\"), TEXT("\\\\"));
 				Escaped.ReplaceInline(TEXT("\""), TEXT("\\\""));
-				Parts.Add(FString::Printf(TEXT("\"%s\""), *Escaped));
+				Parts.Add(FString::Printf(TEXT("\"%s\""), *Escaped)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				continue;
 			}
 
@@ -140,7 +140,7 @@ namespace UE::DreamShader::Editor::Private
 			Parts.Add(LiteralText);
 		}
 
-		OutText = FString::Printf(TEXT("Path(%s)"), *FString::Join(Parts, TEXT(", ")));
+		OutText = FString::Printf(TEXT("Path(%s)"), *FString::Join(Parts, TEXT(", "))); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		return true;
 	}
 

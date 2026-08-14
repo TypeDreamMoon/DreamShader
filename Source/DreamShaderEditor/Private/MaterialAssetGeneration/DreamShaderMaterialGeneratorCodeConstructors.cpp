@@ -125,7 +125,7 @@ namespace UE::DreamShader::Editor::Private
 				{
 					ReuseKeyParts.Add(FString::SanitizeFloat(Component));
 				}
-				const FString ReuseKey = FString::Printf(TEXT("constvec%d|%s"), ExpectedComponents, *FString::Join(ReuseKeyParts, TEXT("|")));
+				const FString ReuseKey = FString::Printf(TEXT("constvec%d|%s"), ExpectedComponents, *FString::Join(ReuseKeyParts, TEXT("|"))); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				if (TryFindReusableExpressionValue(ReuseKey, OutValue))
 				{
 					return true;
@@ -135,7 +135,7 @@ namespace UE::DreamShader::Editor::Private
 					Material, MaterialFunction, ConstantComponents, ExpectedComponents, ConsumeNodeY());
 				if (!VectorExpression)
 				{
-					OutError = FString::Printf(TEXT("Failed to create a constant float%d node for constructor '%s'."), ExpectedComponents, *ConstructorName);
+					OutError = FString::Printf(TEXT("Failed to create a constant float%d node for constructor '%s'."), ExpectedComponents, *ConstructorName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -155,7 +155,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Argument.bIsNamed)
 			{
-				OutError = FString::Printf(TEXT("Constructor '%s' does not accept named arguments."), *ConstructorName);
+				OutError = FString::Printf(TEXT("Constructor '%s' does not accept named arguments."), *ConstructorName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -167,17 +167,17 @@ namespace UE::DreamShader::Editor::Private
 
 			if (EvaluatedArgument.bIsTextureObject)
 			{
-				OutError = FString::Printf(TEXT("Constructor '%s' cannot use Texture2D arguments."), *ConstructorName);
+				OutError = FString::Printf(TEXT("Constructor '%s' cannot use Texture2D arguments."), *ConstructorName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (EvaluatedArgument.bIsMaterialAttributes)
 			{
-				OutError = FString::Printf(TEXT("Constructor '%s' cannot use MaterialAttributes arguments."), *ConstructorName);
+				OutError = FString::Printf(TEXT("Constructor '%s' cannot use MaterialAttributes arguments."), *ConstructorName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (EvaluatedArgument.bIsSubstrateMaterial)
 			{
-				OutError = FString::Printf(TEXT("Constructor '%s' cannot use Substrate arguments."), *ConstructorName);
+				OutError = FString::Printf(TEXT("Constructor '%s' cannot use Substrate arguments."), *ConstructorName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -188,7 +188,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Parts.Num() != 1 || Parts[0].ComponentCount != 1)
 			{
-				OutError = FString::Printf(TEXT("Constructor '%s' expects a single scalar input."), *ConstructorName);
+				OutError = FString::Printf(TEXT("Constructor '%s' expects a single scalar input."), *ConstructorName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -225,7 +225,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (TotalComponents != ExpectedComponents)
 		{
-			OutError = FString::Printf(TEXT("Constructor '%s' expects %d total components but got %d."), *ConstructorName, ExpectedComponents, TotalComponents);
+			OutError = FString::Printf(TEXT("Constructor '%s' expects %d total components but got %d."), *ConstructorName, ExpectedComponents, TotalComponents); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 

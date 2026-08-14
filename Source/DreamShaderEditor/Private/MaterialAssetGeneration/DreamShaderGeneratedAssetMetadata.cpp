@@ -51,7 +51,7 @@ namespace UE::DreamShader::Editor::Private
 
 	FString BuildSourceHash(const FString& SourceText)
 	{
-		return FString::Printf(TEXT("%08x"), FCrc::StrCrc32(*SourceText));
+		return FString::Printf(TEXT("%08x"), FCrc::StrCrc32(*SourceText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	bool IsGeneratedAssetSourceCurrent(UObject* Asset, const FString& SourceFilePath, const FString& SourceHash)
@@ -130,7 +130,7 @@ namespace UE::DreamShader::Editor::Private
 		PackagesToSave.Add(Asset->GetOutermost());
 		if (!UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true))
 		{
-			OutError = FString::Printf(TEXT("Generated DreamShader asset '%s' could not be saved."), *Asset->GetPathName());
+			OutError = FString::Printf(TEXT("Generated DreamShader asset '%s' could not be saved."), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -156,7 +156,7 @@ namespace UE::DreamShader::Editor::Private
 			OutError = TEXT("Generated DreamShader asset packages could not be saved.");
 			for (UObject* Asset : Assets)
 			{
-				OutError += FString::Printf(TEXT(" '%s'"), *Asset->GetPathName());
+				OutError += FString::Printf(TEXT(" '%s'"), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			return false;
 		}

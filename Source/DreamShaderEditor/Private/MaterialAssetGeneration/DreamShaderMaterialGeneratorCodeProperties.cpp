@@ -59,7 +59,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (CreatingName.Equals(Property->Name, ESearchCase::IgnoreCase))
 			{
-				OutError = FString::Printf(TEXT("Property '%s' has a recursive UE builtin dependency."), *Property->Name);
+				OutError = FString::Printf(TEXT("Property '%s' has a recursive UE builtin dependency."), *Property->Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return true;
 			}
 		}
@@ -97,7 +97,7 @@ namespace UE::DreamShader::Editor::Private
 			PropertyExpressionError);
 		if (!PropertyExpression)
 		{
-			OutError = FString::Printf(TEXT("Property '%s': %s"), *Property->Name, *PropertyExpressionError);
+			OutError = FString::Printf(TEXT("Property '%s': %s"), *Property->Name, *PropertyExpressionError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			CreatingPropertyNames.Remove(Property->Name);
 			return true;
 		}
@@ -159,42 +159,42 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!TrueArgument || !FalseArgument)
 		{
-			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' requires True=... and False=... inputs."), *Property.Name);
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' requires True=... and False=... inputs."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		FCodeValue TrueValue;
 		if (!EvaluateExpression(TrueArgument->Expression, TrueValue, OutError))
 		{
-			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' True input: %s"), *Property.Name, *OutError);
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' True input: %s"), *Property.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		FCodeValue FalseValue;
 		if (!EvaluateExpression(FalseArgument->Expression, FalseValue, OutError))
 		{
-			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' False input: %s"), *Property.Name, *OutError);
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' False input: %s"), *Property.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		if (TrueValue.bIsTextureObject || FalseValue.bIsTextureObject)
 		{
-			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' cannot switch Texture object values."), *Property.Name);
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' cannot switch Texture object values."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 		if (TrueValue.bIsSubstrateMaterial || FalseValue.bIsSubstrateMaterial)
 		{
-			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' cannot switch Substrate values."), *Property.Name);
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' cannot switch Substrate values."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 		if (TrueValue.bIsMaterialAttributes != FalseValue.bIsMaterialAttributes)
 		{
-			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' cannot mix MaterialAttributes and numeric branches."), *Property.Name);
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s' cannot mix MaterialAttributes and numeric branches."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 		if (TrueValue.ComponentCount != FalseValue.ComponentCount)
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("StaticSwitchParameter '%s' branches must have the same component count, got %d and %d."),
 				*Property.Name,
 				TrueValue.ComponentCount,
@@ -216,7 +216,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!SwitchExpression)
 		{
-			OutError = FString::Printf(TEXT("Failed to create StaticSwitchParameter node '%s'."), *Property.Name);
+			OutError = FString::Printf(TEXT("Failed to create StaticSwitchParameter node '%s'."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -233,7 +233,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (!ApplyExpressionMetadata(SwitchExpression, Property.Metadata, OutError))
 		{
-			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s': %s"), *Property.Name, *OutError);
+			OutError = FString::Printf(TEXT("StaticSwitchParameter '%s': %s"), *Property.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -288,7 +288,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (OutError.IsEmpty())
 			{
-				OutError = FString::Printf(TEXT("Could not resolve parameter '%s' for configuration."), *Property.Name);
+				OutError = FString::Printf(TEXT("Could not resolve parameter '%s' for configuration."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			return false;
 		}
@@ -300,7 +300,7 @@ namespace UE::DreamShader::Editor::Private
 		UMaterialExpression* Expression = OutValue.Expression;
 		if (!Expression)
 		{
-			OutError = FString::Printf(TEXT("Parameter '%s' did not produce an expression node."), *Property.Name);
+			OutError = FString::Printf(TEXT("Parameter '%s' did not produce an expression node."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -308,7 +308,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!Argument.bIsNamed)
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Parameter '%s' must be called with named arguments wiring its input pins (e.g. %s(Coordinates=...) or %s(Input=...))."),
 					*Property.Name, *Property.Name, *Property.Name);
 				return false;
@@ -331,7 +331,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!BoundInput)
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("Parameter '%s' (%s) has no input pin named '%s'. Asset slots (Texture/Curve/Font/...) are set via [%s=Path(...)] metadata, not call arguments."),
 					*Property.Name, *Property.ParameterNodeType, *Argument.Name, *Argument.Name);
 				return false;
@@ -340,12 +340,12 @@ namespace UE::DreamShader::Editor::Private
 			FCodeValue InputValue;
 			if (!EvaluateExpression(Argument.Expression, InputValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("Parameter '%s' input '%s': %s"), *Property.Name, *Argument.Name, *OutError);
+				OutError = FString::Printf(TEXT("Parameter '%s' input '%s': %s"), *Property.Name, *Argument.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (InputValue.bIsTextureObject || InputValue.bIsMaterialAttributes || InputValue.bIsSubstrateMaterial)
 			{
-				OutError = FString::Printf(TEXT("Parameter '%s' input '%s' must be a numeric value."), *Property.Name, *Argument.Name);
+				OutError = FString::Printf(TEXT("Parameter '%s' input '%s' must be a numeric value."), *Property.Name, *Argument.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 

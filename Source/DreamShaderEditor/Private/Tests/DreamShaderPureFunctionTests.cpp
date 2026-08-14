@@ -11,8 +11,13 @@
 #include "Commandlet/DreamShaderCommandletRunner.h"
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
 #include "Diagnostics/DreamShaderDiagnosticsStore.h"
+#include "Diagnostics/DreamShaderTextWireUtils.h"
 
+#include "Internationalization/Culture.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/ScopeExit.h"
+
+#define LOCTEXT_NAMESPACE "DreamShaderTests"
 
 // ---------------------------------------------------------------------------------------------
 // Diagnostics
@@ -36,7 +41,7 @@ bool FDreamShaderParseErrorLocationTest::RunTest(const FString& Parameters)
 		TestEqual(TEXT("line"), Location.Line, 17);
 		TestEqual(TEXT("column"), Location.Column, 9);
 		TestTrue(TEXT("file path retained"), Location.FilePath.Contains(TEXT("M_Foo.dsm")));
-		TestEqual(TEXT("message"), Location.Message, FString(TEXT("Unexpected token 'f' in Graph expression.")));
+		TestEqual(TEXT("message"), ToInvariantWireString(Location.Message), FString(TEXT("Unexpected token 'f' in Graph expression.")));
 	}
 
 	// Line/Column are clamped to a minimum of 1.
@@ -82,8 +87,95 @@ bool FDreamShaderBuildGenerateDiagnosticsTest::RunTest(const FString& Parameters
 
 	TestEqual(TEXT("located record line"), Records[0].Line, 12);
 	TestEqual(TEXT("located record column"), Records[0].Column, 5);
-	TestEqual(TEXT("located record message"), Records[0].Message, FString(TEXT("Unsupported swizzle '.q'.")));
+	TestEqual(TEXT("located record message"), ToInvariantWireString(Records[0].Message), FString(TEXT("Unsupported swizzle '.q'.")));
 	TestEqual(TEXT("located record stage"), Records[0].Stage, FString(TEXT("generate")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderTextWireUtilsTest,
+	"DreamShader.Lang.Diagnostics.TextWireUtils",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderTextWireUtilsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+
+	// The diagnostics wire is parsed by VSCode/Rider tooling and must be identical under every
+	// editor culture, so the whole suite runs once per culture; the editor culture is restored
+	// when the test exits.
+	const FString OriginalCulture = FInternationalization::Get().GetCurrentCulture()->GetName();
+	ON_SCOPE_EXIT
+	{
+		FInternationalization::Get().SetCurrentCulture(OriginalCulture);
+	};
+
+	auto AssertWireInvariance = [this](const FString& CultureName)
+	{
+		const bool bSetCulture = FInternationalization::Get().SetCurrentCulture(CultureName);
+		TestTrue(TEXT("culture set"), bSetCulture);
+
+		// Plain LOCTEXT: the source string is the English literal regardless of display culture.
+		TestEqual(
+			TEXT("plain LOCTEXT source"),
+			ToInvariantWireString(LOCTEXT("WireUtils.Plain", "Generation aborted.")),
+			FString(TEXT("Generation aborted.")));
+
+		// FText::FromString dynamic text: the raw input IS the wire string.
+		TestEqual(
+			TEXT("dynamic text source"),
+			ToInvariantWireString(FText::FromString(TEXT("Unexpected token 'f' in Graph expression."))),
+			FString(TEXT("Unexpected token 'f' in Graph expression.")));
+
+		// Ordered FText::Format with a dynamic text argument and an int64: the English LOCTEXT
+		// pattern survives, the dynamic argument is substituted, and the number is rendered with
+		// the invariant culture (no thousands separator) even though the localized display of the
+		// same FText is "12,345" under both en-US and zh-Hans.
+		{
+			const FText Formatted = FText::Format(
+				LOCTEXT("WireUtils.Ordered", "Unsupported swizzle {0} at line {1}."),
+				FText::FromString(TEXT(".q")),
+				(int64)12345);
+			const FString Wire = ToInvariantWireString(Formatted);
+			TestEqual(
+				TEXT("ordered format wire is invariant"),
+				Wire,
+				FString(TEXT("Unsupported swizzle .q at line 12345.")));
+			TestFalse(TEXT("no thousands separator in wire"), Wire.Contains(TEXT("12,345")));
+			// Sanity check that the test is discriminating: the localized display of the same
+			// FText really does use the culture-grouped number.
+			TestTrue(TEXT("localized display groups the number"), Formatted.ToString().Contains(TEXT("12,345")));
+		}
+
+		// Nested format: an FText::Format result used as an argument is recursively rebuilt.
+		{
+			const FText Inner = FText::Format(
+				LOCTEXT("WireUtils.Inner", "inner {0}"),
+				FText::FromString(TEXT("deep")));
+			const FText Outer = FText::Format(
+				LOCTEXT("WireUtils.Outer", "outer [{0}] end"),
+				Inner);
+			TestEqual(
+				TEXT("nested format wire is invariant"),
+				ToInvariantWireString(Outer),
+				FString(TEXT("outer [inner deep] end")));
+		}
+
+		// Float argument keeps the invariant decimal point.
+		{
+			const FText Formatted = FText::Format(
+				LOCTEXT("WireUtils.Float", "value {0}"),
+				3.14);
+			TestEqual(
+				TEXT("float wire is invariant"),
+				ToInvariantWireString(Formatted),
+				FString(TEXT("value 3.14")));
+		}
+	};
+
+	AssertWireInvariance(TEXT("en-US"));
+	AssertWireInvariance(TEXT("zh-Hans"));
+
 	return true;
 }
 
@@ -195,5 +287,7 @@ bool FDreamShaderCommandletArgParsingTest::RunTest(const FString& Parameters)
 
 	return true;
 }
+
+#undef LOCTEXT_NAMESPACE
 
 #endif // WITH_DEV_AUTOMATION_TESTS

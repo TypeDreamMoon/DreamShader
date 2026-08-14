@@ -88,13 +88,13 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderFunctionDefinition* Function = FindFunctionDefinition(FunctionName);
 		if (!Function)
 		{
-			OutError = FString::Printf(TEXT("Unknown Graph function '%s'."), *FunctionName);
+			OutError = FString::Printf(TEXT("Unknown Graph function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		if (Function->Results.Num() != 1)
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("DreamShader Function '%s' has %d outputs and must be called with explicit out variables, for example %s(..., ResultA, ResultB)."),
 				*FunctionName,
 				Function->Results.Num(),
@@ -104,7 +104,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Arguments.Num() != Function->Inputs.Num())
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("DreamShader Function '%s' returns one value and expects %d input argument(s) when used as a value expression, but got %d."),
 				*FunctionName,
 				Function->Inputs.Num(),
@@ -116,7 +116,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Argument.bIsNamed)
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' currently uses positional arguments only."), *FunctionName);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' currently uses positional arguments only."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -125,13 +125,13 @@ namespace UE::DreamShader::Editor::Private
 		if (IsSubstrateMaterialType(Function->Results[0].Type))
 		{
 			OutError = IsSubstrateMaterialTypeSupported()
-				? FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *FunctionName, *Function->Results[0].Name)
-				: FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *FunctionName, *Function->Results[0].Name);
+				? FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *FunctionName, *Function->Results[0].Name) /* I18N-EXEMPT: deferred codegen or compatibility path */
+				: FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *FunctionName, *Function->Results[0].Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 		if (!TryResolveCustomOutputType(Function->Results[0].Type, ResultOutputType))
 		{
-			OutError = FString::Printf(TEXT("DreamShader Function '%s' has unsupported result type '%s'."), *FunctionName, *Function->Results[0].Type);
+			OutError = FString::Printf(TEXT("DreamShader Function '%s' has unsupported result type '%s'."), *FunctionName, *Function->Results[0].Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -146,7 +146,7 @@ namespace UE::DreamShader::Editor::Private
 			FCodeValue InputValue;
 			if (!EvaluateExpression(Arguments[InputIndex].Expression, InputValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s': %s"), *FunctionName, *InputDefinition.Name, *OutError);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s': %s"), *FunctionName, *InputDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -158,22 +158,22 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (IsSubstrateTypeUnsupportedForEngine(InputDefinition.Type))
 				{
-					OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *FunctionName, *InputDefinition.Name);
+					OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *FunctionName, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses unsupported type '%s'."), *FunctionName, *InputDefinition.Name, *InputDefinition.Type);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses unsupported type '%s'."), *FunctionName, *InputDefinition.Name, *InputDefinition.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (bExpectedSubstrate)
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *FunctionName, *InputDefinition.Name);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *FunctionName, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			FCodeValue CoercedValue;
 			if (!CoerceValueToType(InputValue, ExpectedComponentCount, bExpectedTexture, ExpectedTextureType, bExpectedSubstrate, CoercedValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s': %s"), *FunctionName, *InputDefinition.Name, *OutError);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s': %s"), *FunctionName, *InputDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			InputValues.Add(CoercedValue);
@@ -183,7 +183,7 @@ namespace UE::DreamShader::Editor::Private
 			CreateExpression(UMaterialExpressionCustom::StaticClass(), 640, ConsumeNodeY()));
 		if (!CustomExpression)
 		{
-			OutError = FString::Printf(TEXT("Failed to create a Custom node for DreamShader Function '%s'."), *FunctionName);
+			OutError = FString::Printf(TEXT("Failed to create a Custom node for DreamShader Function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -204,7 +204,7 @@ namespace UE::DreamShader::Editor::Private
 			ConnectCodeValueToInput(CustomExpression->Inputs.Last().Input, InputValues[InputIndex]);
 		}
 
-		const FString CustomCode = FString::Printf(
+		const FString CustomCode = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("return %s(%s);"),
 			*BuildGeneratedFunctionSymbolName(*Function),
 			*(Function->bSelfContained
@@ -266,7 +266,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Function.Results.Num() != 1)
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("DreamShader GraphFunction '%s' has %d outputs and must be called with explicit out variables, for example %s(..., ResultA, ResultB)."),
 				*Function.Name,
 				Function.Results.Num(),
@@ -276,7 +276,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Arguments.Num() != Function.Inputs.Num())
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("DreamShader GraphFunction '%s' returns one value and expects %d input argument(s) when used as a value expression, but got %d."),
 				*Function.Name,
 				Function.Inputs.Num(),
@@ -288,7 +288,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Argument.bIsNamed)
 			{
-				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' currently uses positional arguments only."), *Function.Name);
+				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' currently uses positional arguments only."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -296,7 +296,7 @@ namespace UE::DreamShader::Editor::Private
 		FString TempResultName;
 		for (int32 Attempt = 0; Attempt < 1024; ++Attempt)
 		{
-			TempResultName = FString::Printf(
+			TempResultName = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("__ds_%s_value%d"),
 				*UE::DreamShader::SanitizeIdentifier(Function.Name),
 				Values->Num() + Attempt);
@@ -324,7 +324,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' did not produce a value result."), *Function.Name);
+		OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' did not produce a value result."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		return false;
 	}
 
@@ -335,14 +335,14 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (Function.Results.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("DreamShader Function '%s' must declare at least one out result."), *Function.Name);
+			OutError = FString::Printf(TEXT("DreamShader Function '%s' must declare at least one out result."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
 		const int32 ExpectedArgumentCount = Function.Inputs.Num() + Function.Results.Num();
 		if (Arguments.Num() != ExpectedArgumentCount)
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("DreamShader Function '%s' expects %d arguments (%d inputs, %d out targets) but got %d."),
 				*Function.Name,
 				ExpectedArgumentCount,
@@ -356,7 +356,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Argument.bIsNamed)
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' currently uses positional arguments only."), *Function.Name);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' currently uses positional arguments only."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -365,13 +365,13 @@ namespace UE::DreamShader::Editor::Private
 		if (IsSubstrateMaterialType(Function.Results[0].Type))
 		{
 			OutError = IsSubstrateMaterialTypeSupported()
-				? FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *Function.Name, *Function.Results[0].Name)
-				: FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[0].Name);
+				? FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *Function.Name, *Function.Results[0].Name) /* I18N-EXEMPT: deferred codegen or compatibility path */
+				: FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[0].Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 		if (!TryResolveCustomOutputType(Function.Results[0].Type, PrimaryOutputType))
 		{
-			OutError = FString::Printf(TEXT("DreamShader Function '%s' has unsupported result type '%s'."), *Function.Name, *Function.Results[0].Type);
+			OutError = FString::Printf(TEXT("DreamShader Function '%s' has unsupported result type '%s'."), *Function.Name, *Function.Results[0].Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -386,7 +386,7 @@ namespace UE::DreamShader::Editor::Private
 			FCodeValue InputValue;
 			if (!EvaluateExpression(Arguments[InputIndex].Expression, InputValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -398,22 +398,22 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (IsSubstrateTypeUnsupportedForEngine(InputDefinition.Type))
 				{
-					OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *InputDefinition.Name);
+					OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses unsupported type '%s'."), *Function.Name, *InputDefinition.Name, *InputDefinition.Type);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses unsupported type '%s'."), *Function.Name, *InputDefinition.Name, *InputDefinition.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (bExpectedSubstrate)
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *Function.Name, *InputDefinition.Name);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *Function.Name, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			FCodeValue CoercedValue;
 			if (!CoerceValueToType(InputValue, ExpectedComponentCount, bExpectedTexture, ExpectedTextureType, bExpectedSubstrate, CoercedValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			InputValues.Add(CoercedValue);
@@ -427,7 +427,7 @@ namespace UE::DreamShader::Editor::Private
 			const FCodeCallArgument& Argument = Arguments[Function.Inputs.Num() + ResultIndex];
 			if (!Argument.Expression || Argument.Expression->Kind != ECodeExpressionKind::Name)
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("DreamShader Function '%s' out argument %d must be a plain variable name."),
 					*Function.Name,
 					ResultIndex + 1);
@@ -437,13 +437,13 @@ namespace UE::DreamShader::Editor::Private
 			const FString TargetName = Argument.Expression->Text.TrimStartAndEnd();
 			if (TargetName.IsEmpty())
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' has an empty out target name."), *Function.Name);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' has an empty out target name."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			if (SeenTargetNames.Contains(TargetName))
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' cannot write multiple out results into '%s' in the same call."), *Function.Name, *TargetName);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' cannot write multiple out results into '%s' in the same call."), *Function.Name, *TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -455,7 +455,7 @@ namespace UE::DreamShader::Editor::Private
 			CreateExpression(UMaterialExpressionCustom::StaticClass(), 640, ConsumeNodeY()));
 		if (!CustomExpression)
 		{
-			OutError = FString::Printf(TEXT("Failed to create a Custom node for DreamShader Function '%s'."), *Function.Name);
+			OutError = FString::Printf(TEXT("Failed to create a Custom node for DreamShader Function '%s'."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -482,12 +482,12 @@ namespace UE::DreamShader::Editor::Private
 		FString CustomCode;
 		for (int32 ResultIndex = 0; ResultIndex < Function.Results.Num(); ++ResultIndex)
 		{
-			const FString TempName = FString::Printf(
+			const FString TempName = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("__ds_%s_out%d"),
 				*UE::DreamShader::SanitizeIdentifier(Function.Name),
 				ResultIndex);
 			ResultVariableNames.Add(TempName);
-			CustomCode += FString::Printf(
+			CustomCode += FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("%s %s = (%s)0;\n"),
 				*Function.Results[ResultIndex].Type,
 				*TempName,
@@ -502,14 +502,14 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Function.bSelfContained)
 		{
-			CustomCode += FString::Printf(
+			CustomCode += FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("%s(%s);\n"),
 				*BuildGeneratedFunctionSymbolName(Function),
 				*BuildFunctionSourceArgumentList(Function, ResultVariableNames));
 		}
 		else
 		{
-			CustomCode += FString::Printf(
+			CustomCode += FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("%s = %s(%s);\n"),
 				*ResultVariableNames[0],
 				*BuildGeneratedFunctionSymbolName(Function),
@@ -518,13 +518,13 @@ namespace UE::DreamShader::Editor::Private
 
 		for (int32 ResultIndex = 1; ResultIndex < ResultVariableNames.Num(); ++ResultIndex)
 		{
-			CustomCode += FString::Printf(
+			CustomCode += FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("%s = %s;\n"),
 				*ResultTargetNames[ResultIndex],
 				*ResultVariableNames[ResultIndex]);
 		}
 
-		CustomCode += FString::Printf(TEXT("return %s;"), *ResultVariableNames[0]);
+		CustomCode += FString::Printf(TEXT("return %s;"), *ResultVariableNames[0]); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		if (Function.bSelfContained)
 		{
@@ -563,13 +563,13 @@ namespace UE::DreamShader::Editor::Private
 			if (IsSubstrateMaterialType(Function.Results[ResultIndex].Type))
 			{
 				OutError = IsSubstrateMaterialTypeSupported()
-					? FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *Function.Name, *Function.Results[ResultIndex].Name)
-					: FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[ResultIndex].Name);
+					? FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *Function.Name, *Function.Results[ResultIndex].Name) /* I18N-EXEMPT: deferred codegen or compatibility path */
+					: FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[ResultIndex].Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (!TryResolveCustomOutputType(Function.Results[ResultIndex].Type, AdditionalOutputType))
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("DreamShader Function '%s' has unsupported result type '%s'."),
 					*Function.Name,
 					*Function.Results[ResultIndex].Type);
@@ -590,13 +590,13 @@ namespace UE::DreamShader::Editor::Private
 			if (IsSubstrateMaterialType(Function.Results[ResultIndex].Type))
 			{
 				OutError = IsSubstrateMaterialTypeSupported()
-					? FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *Function.Name, *Function.Results[ResultIndex].Name)
-					: FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[ResultIndex].Name);
+					? FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead."), *Function.Name, *Function.Results[ResultIndex].Name) /* I18N-EXEMPT: deferred codegen or compatibility path */
+					: FString::Printf(TEXT("DreamShader Function '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[ResultIndex].Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (!TryResolveCustomOutputType(Function.Results[ResultIndex].Type, ResultOutputType))
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("DreamShader Function '%s' has unsupported result type '%s'."),
 					*Function.Name,
 					*Function.Results[ResultIndex].Type);
@@ -631,7 +631,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Function.Results.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' must declare at least one out result."), *Function.Name);
+			OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' must declare at least one out result."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -643,7 +643,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			TArray<FString> Cycle = ActiveGraphFunctionStack;
 			Cycle.Add(Function.Name);
-			OutError = FString::Printf(TEXT("GraphFunction cycle detected: %s."), *FString::Join(Cycle, TEXT(" -> ")));
+			OutError = FString::Printf(TEXT("GraphFunction cycle detected: %s."), *FString::Join(Cycle, TEXT(" -> "))); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -665,7 +665,7 @@ namespace UE::DreamShader::Editor::Private
 		const int32 ExpectedArgumentCount = Function.Inputs.Num() + Function.Results.Num();
 		if (Arguments.Num() != ExpectedArgumentCount)
 		{
-			OutError = FString::Printf(
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("DreamShader GraphFunction '%s' expects %d arguments (%d inputs, %d out targets) but got %d."),
 				*Function.Name,
 				ExpectedArgumentCount,
@@ -679,7 +679,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Argument.bIsNamed)
 			{
-				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' currently uses positional arguments only."), *Function.Name);
+				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' currently uses positional arguments only."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 		}
@@ -695,7 +695,7 @@ namespace UE::DreamShader::Editor::Private
 				FCodeValue InputValue;
 				if (!EvaluateExpression(Arguments[InputIndex].Expression, InputValue, OutError))
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -707,17 +707,17 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (IsSubstrateTypeUnsupportedForEngine(InputDefinition.Type))
 					{
-						OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *InputDefinition.Name);
+						OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 						return false;
 					}
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses unsupported type '%s'."), *Function.Name, *InputDefinition.Name, *InputDefinition.Type);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses unsupported type '%s'."), *Function.Name, *InputDefinition.Name, *InputDefinition.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
 				FCodeValue CoercedValue;
 				if (!CoerceValueToType(InputValue, ExpectedComponentCount, bExpectedTexture, ExpectedTextureType, bExpectedSubstrate, CoercedValue, OutError))
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -733,7 +733,7 @@ namespace UE::DreamShader::Editor::Private
 				const FCodeCallArgument& Argument = Arguments[Function.Inputs.Num() + ResultIndex];
 				if (!Argument.Expression || Argument.Expression->Kind != ECodeExpressionKind::Name)
 				{
-					OutError = FString::Printf(
+					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 						TEXT("DreamShader GraphFunction '%s' out argument %d must be a plain variable name."),
 						*Function.Name,
 						ResultIndex + 1);
@@ -743,13 +743,13 @@ namespace UE::DreamShader::Editor::Private
 				const FString TargetName = Argument.Expression->Text.TrimStartAndEnd();
 				if (TargetName.IsEmpty())
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' has an empty out target name."), *Function.Name);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' has an empty out target name."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
 				if (SeenTargetNames.Contains(TargetName))
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' cannot write multiple out results into '%s' in the same call."), *Function.Name, *TargetName);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' cannot write multiple out results into '%s' in the same call."), *Function.Name, *TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -778,7 +778,7 @@ namespace UE::DreamShader::Editor::Private
 			FString ParseError;
 			if (!ParseCodeStatements(Function.HLSL, Statements, ParseError))
 			{
-				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' Graph body is invalid: %s"), *Function.Name, *ParseError);
+				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' Graph body is invalid: %s"), *Function.Name, *ParseError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -788,7 +788,7 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (!ExecuteStatement(Statement, OutError))
 					{
-						OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s': %s"), *Function.Name, *FormatStatementError(Statement, OutError));
+						OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s': %s"), *Function.Name, *FormatStatementError(Statement, OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 						return false;
 					}
 				}
@@ -811,7 +811,7 @@ namespace UE::DreamShader::Editor::Private
 				const FCodeValue* ResultValue = LocalValues.Find(ResultDefinition.Name);
 				if (!ResultValue || !ResultValue->Expression)
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' was never assigned."), *Function.Name, *ResultDefinition.Name);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' was never assigned."), *Function.Name, *ResultDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -823,17 +823,17 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (IsSubstrateTypeUnsupportedForEngine(ResultDefinition.Type))
 					{
-						OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *ResultDefinition.Name);
+						OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *ResultDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 						return false;
 					}
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses unsupported type '%s'."), *Function.Name, *ResultDefinition.Name, *ResultDefinition.Type);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses unsupported type '%s'."), *Function.Name, *ResultDefinition.Name, *ResultDefinition.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
 				FCodeValue CoercedResult;
 				if (!CoerceValueToType(*ResultValue, ExpectedComponentCount, bExpectedTexture, ExpectedTextureType, bExpectedSubstrate, CoercedResult, OutError))
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s': %s"), *Function.Name, *ResultDefinition.Name, *OutError);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s': %s"), *Function.Name, *ResultDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -847,13 +847,13 @@ namespace UE::DreamShader::Editor::Private
 		if (IsSubstrateMaterialType(Function.Results[0].Type))
 		{
 			OutError = IsSubstrateMaterialTypeSupported()
-				? FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which is only supported by GraphFunction Graph blocks."), *Function.Name, *Function.Results[0].Name)
-				: FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[0].Name);
+				? FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which is only supported by GraphFunction Graph blocks."), *Function.Name, *Function.Results[0].Name) /* I18N-EXEMPT: deferred codegen or compatibility path */
+				: FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[0].Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 		if (!TryResolveCustomOutputType(Function.Results[0].Type, PrimaryOutputType))
 		{
-			OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' has unsupported result type '%s'."), *Function.Name, *Function.Results[0].Type);
+			OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' has unsupported result type '%s'."), *Function.Name, *Function.Results[0].Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -869,7 +869,7 @@ namespace UE::DreamShader::Editor::Private
 			FCodeValue InputValue;
 			if (!EvaluateExpression(Arguments[InputIndex].Expression, InputValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError);
+				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -881,22 +881,22 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (IsSubstrateTypeUnsupportedForEngine(InputDefinition.Type))
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *InputDefinition.Name);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
-				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses unsupported type '%s'."), *Function.Name, *InputDefinition.Name, *InputDefinition.Type);
+				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses unsupported type '%s'."), *Function.Name, *InputDefinition.Name, *InputDefinition.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (bExpectedSubstrate)
 			{
-				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses Substrate, which is only supported by GraphFunction Graph blocks."), *Function.Name, *InputDefinition.Name);
+				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s' uses Substrate, which is only supported by GraphFunction Graph blocks."), *Function.Name, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			FCodeValue CoercedValue;
 			if (!CoerceValueToType(InputValue, ExpectedComponentCount, bExpectedTexture, ExpectedTextureType, bExpectedSubstrate, CoercedValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError);
+				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' input '%s': %s"), *Function.Name, *InputDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -912,7 +912,7 @@ namespace UE::DreamShader::Editor::Private
 			const FCodeCallArgument& Argument = Arguments[Function.Inputs.Num() + ResultIndex];
 			if (!Argument.Expression || Argument.Expression->Kind != ECodeExpressionKind::Name)
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("DreamShader GraphFunction '%s' out argument %d must be a plain variable name."),
 					*Function.Name,
 					ResultIndex + 1);
@@ -922,13 +922,13 @@ namespace UE::DreamShader::Editor::Private
 			const FString TargetName = Argument.Expression->Text.TrimStartAndEnd();
 			if (TargetName.IsEmpty())
 			{
-				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' has an empty out target name."), *Function.Name);
+				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' has an empty out target name."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
 			if (SeenTargetNames.Contains(TargetName))
 			{
-				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' cannot write multiple out results into '%s' in the same call."), *Function.Name, *TargetName);
+				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' cannot write multiple out results into '%s' in the same call."), *Function.Name, *TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -940,7 +940,7 @@ namespace UE::DreamShader::Editor::Private
 			CreateExpression(UMaterialExpressionCustom::StaticClass(), 640, ConsumeNodeY()));
 		if (!CustomExpression)
 		{
-			OutError = FString::Printf(TEXT("Failed to create a Custom node for DreamShader GraphFunction '%s'."), *Function.Name);
+			OutError = FString::Printf(TEXT("Failed to create a Custom node for DreamShader GraphFunction '%s'."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -978,7 +978,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString OriginalInputName = InputName;
 			for (int32 Attempt = 0; CustomInputNames.Contains(UE::DreamShader::NormalizeSettingKey(InputName)); ++Attempt)
 			{
-				InputName = FString::Printf(TEXT("%s_%d"), *OriginalInputName, Attempt + 1);
+				InputName = FString::Printf(TEXT("%s_%d"), *OriginalInputName, Attempt + 1); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCustomInput Input;
@@ -1129,7 +1129,7 @@ namespace UE::DreamShader::Editor::Private
 				int32 CloseIndex = INDEX_NONE;
 				if (!FindMatchingDelimiter(SourceCode, Cursor, TCHAR('('), TCHAR(')'), CloseIndex))
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' contains an unterminated UE.* call."), *Function.Name);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' contains an unterminated UE.* call."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -1137,25 +1137,25 @@ namespace UE::DreamShader::Editor::Private
 				TSharedPtr<FCodeExpression> Expression;
 				if (!ParseCodeExpression(CallText, Expression, OutError))
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' UE input '%s': %s"), *Function.Name, *CallText, *OutError);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' UE input '%s': %s"), *Function.Name, *CallText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
 				FCodeValue UEValue;
 				if (!EvaluateExpression(Expression, UEValue, OutError))
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' UE input '%s': %s"), *Function.Name, *CallText, *OutError);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' UE input '%s': %s"), *Function.Name, *CallText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
 				if (UEValue.bIsTextureObject || UEValue.bIsMaterialAttributes || UEValue.bIsSubstrateMaterial)
 				{
-					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' UE input '%s' cannot be passed into a Custom node input."), *Function.Name, *CallText);
+					OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' UE input '%s' cannot be passed into a Custom node input."), *Function.Name, *CallText); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
 				const FString InputName = AddCustomInputValue(
-					FString::Printf(TEXT("__ds_%s_UE%d"), *UE::DreamShader::SanitizeIdentifier(Function.Name), AutoInputIndex++),
+					FString::Printf(TEXT("__ds_%s_UE%d"), *UE::DreamShader::SanitizeIdentifier(Function.Name), AutoInputIndex++), /* I18N-EXEMPT: deferred codegen or compatibility path */
 					UEValue);
 				OutRewrittenCode += InputName;
 				Index = CloseIndex;
@@ -1184,7 +1184,7 @@ namespace UE::DreamShader::Editor::Private
 		FString CustomCode;
 		for (const FTextShaderFunctionParameter& ResultDefinition : Function.Results)
 		{
-			CustomCode += FString::Printf(
+			CustomCode += FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("%s %s = (%s)0;\n"),
 				*ResultDefinition.Type,
 				*ResultDefinition.Name,
@@ -1199,13 +1199,13 @@ namespace UE::DreamShader::Editor::Private
 
 		for (int32 ResultIndex = 1; ResultIndex < Function.Results.Num(); ++ResultIndex)
 		{
-			CustomCode += FString::Printf(
+			CustomCode += FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("%s = %s;\n"),
 				*ResultTargetNames[ResultIndex],
 				*Function.Results[ResultIndex].Name);
 		}
 
-		CustomCode += FString::Printf(TEXT("return %s;"), *Function.Results[0].Name);
+		CustomCode += FString::Printf(TEXT("return %s;"), *Function.Results[0].Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		FString PreparedCustomCode;
 		bool bUsesGeneratedInclude = false;
@@ -1233,13 +1233,13 @@ namespace UE::DreamShader::Editor::Private
 			if (IsSubstrateMaterialType(Function.Results[ResultIndex].Type))
 			{
 				OutError = IsSubstrateMaterialTypeSupported()
-					? FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which is only supported by GraphFunction Graph blocks."), *Function.Name, *Function.Results[ResultIndex].Name)
-					: FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[ResultIndex].Name);
+					? FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which is only supported by GraphFunction Graph blocks."), *Function.Name, *Function.Results[ResultIndex].Name) /* I18N-EXEMPT: deferred codegen or compatibility path */
+					: FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[ResultIndex].Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (!TryResolveCustomOutputType(Function.Results[ResultIndex].Type, AdditionalOutputType))
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("DreamShader GraphFunction '%s' has unsupported result type '%s'."),
 					*Function.Name,
 					*Function.Results[ResultIndex].Type);
@@ -1260,13 +1260,13 @@ namespace UE::DreamShader::Editor::Private
 			if (IsSubstrateMaterialType(Function.Results[ResultIndex].Type))
 			{
 				OutError = IsSubstrateMaterialTypeSupported()
-					? FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which is only supported by GraphFunction Graph blocks."), *Function.Name, *Function.Results[ResultIndex].Name)
-					: FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[ResultIndex].Name);
+					? FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which is only supported by GraphFunction Graph blocks."), *Function.Name, *Function.Results[ResultIndex].Name) /* I18N-EXEMPT: deferred codegen or compatibility path */
+					: FString::Printf(TEXT("DreamShader GraphFunction '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Function.Name, *Function.Results[ResultIndex].Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (!TryResolveCustomOutputType(Function.Results[ResultIndex].Type, ResultOutputType))
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("DreamShader GraphFunction '%s' has unsupported result type '%s'."),
 					*Function.Name,
 					*Function.Results[ResultIndex].Type);

@@ -168,7 +168,7 @@ namespace UE::DreamShader::Editor::Private
 		for (int32 Index = 0; Index < Chain.Num(); ++Index)
 		{
 			const FString Indent = FString::ChrN(Index * 4, TEXT(' '));
-			const FText Prefix = FText::FromString(Index == 0 ? FString() : (Indent + TEXT("└ ")));
+			const FText Prefix = FText::FromString(Index == 0 ? FString() : (Indent + INVTEXT("└ ").ToString()));
 			ChainBox->AddSlot().AutoHeight()[ MakeMaterialLink(Chain[Index], Prefix, Chain[Index] == Material) ];
 		}
 
@@ -182,7 +182,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		for (UMaterialInstanceConstant* Child : Children)
 		{
-			ChildrenBox->AddSlot().AutoHeight()[ MakeMaterialLink(Child, FText::FromString(TEXT("└ ")), false) ];
+			ChildrenBox->AddSlot().AutoHeight()[ MakeMaterialLink(Child, INVTEXT("└ "), false) ];
 		}
 
 		return SNew(SScrollBox)

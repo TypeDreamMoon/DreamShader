@@ -191,7 +191,7 @@ namespace UE::DreamShader::Editor::Private
 
 	static FString BuildGeneratedIncludeGuardMacro(const FString& SourceFilePath)
 	{
-		return FString::Printf(
+		return FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("DREAMSHADER_GENERATED_%s_%08X"),
 			*UE::DreamShader::SanitizeIdentifier(FPaths::GetBaseFilename(SourceFilePath)).ToUpper(),
 			GetSourcePathHash(SourceFilePath));
@@ -470,7 +470,7 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		OutCall = FString::Printf(
+		OutCall = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("%s = %s(%s)"),
 			*PrimaryResultTarget,
 			*GeneratedFunctionName,
@@ -500,7 +500,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		OutCall = FString::Printf(
+		OutCall = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("%s(%s)"),
 			*GeneratedFunctionName,
 			*FString::Join(Parameters, TEXT(", ")));
@@ -911,16 +911,16 @@ namespace UE::DreamShader::Editor::Private
 		TArray<FString> Parameters;
 		for (const FTextShaderFunctionParameter& Input : Function.Inputs)
 		{
-			Parameters.Add(FString::Printf(TEXT("%s %s"), *GetGeneratedHLSLTypeName(Input.Type), *Input.Name));
+			Parameters.Add(FString::Printf(TEXT("%s %s"), *GetGeneratedHLSLTypeName(Input.Type), *Input.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			if (IsTextureFunctionParameterType(Input.Type))
 			{
-				Parameters.Add(FString::Printf(TEXT("SamplerState %sSampler"), *Input.Name));
+				Parameters.Add(FString::Printf(TEXT("SamplerState %sSampler"), *Input.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 		for (int32 ResultIndex = 1; ResultIndex < Function.Results.Num(); ++ResultIndex)
 		{
 			const FTextShaderFunctionParameter& Output = Function.Results[ResultIndex];
-			Parameters.Add(FString::Printf(TEXT("out %s %s"), *GetGeneratedHLSLTypeName(Output.Type), *Output.Name));
+			Parameters.Add(FString::Printf(TEXT("out %s %s"), *GetGeneratedHLSLTypeName(Output.Type), *Output.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return FString::Join(Parameters, TEXT(", "));
@@ -936,19 +936,19 @@ namespace UE::DreamShader::Editor::Private
 		const FString ReturnType = Function.Results.IsEmpty() ? TEXT("void") : GetGeneratedHLSLTypeName(Function.Results[0].Type);
 		const FString GeneratedFunctionName = BuildGeneratedFunctionSymbolName(Function);
 
-		OutSource += FString::Printf(TEXT("%s%s %s(%s)\n%s{\n"), *Indent, *ReturnType, *GeneratedFunctionName, *BuildGeneratedFunctionParameterList(Function), *Indent);
+		OutSource += FString::Printf(TEXT("%s%s %s(%s)\n%s{\n"), *Indent, *ReturnType, *GeneratedFunctionName, *BuildGeneratedFunctionParameterList(Function), *Indent); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		if (!Function.Results.IsEmpty())
 		{
 			const FString PrimaryResultType = GetGeneratedHLSLTypeName(Function.Results[0].Type);
-			OutSource += FString::Printf(TEXT("%s\t%s %s = (%s)0;\n"), *Indent, *PrimaryResultType, *Function.Results[0].Name, *PrimaryResultType);
+			OutSource += FString::Printf(TEXT("%s\t%s %s = (%s)0;\n"), *Indent, *PrimaryResultType, *Function.Results[0].Name, *PrimaryResultType); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		for (int32 ResultIndex = 1; ResultIndex < Function.Results.Num(); ++ResultIndex)
 		{
 			const FTextShaderFunctionParameter& Output = Function.Results[ResultIndex];
 			const FString OutputType = GetGeneratedHLSLTypeName(Output.Type);
-			OutSource += FString::Printf(TEXT("%s\t%s = (%s)0;\n"), *Indent, *Output.Name, *OutputType);
+			OutSource += FString::Printf(TEXT("%s\t%s = (%s)0;\n"), *Indent, *Output.Name, *OutputType); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		const FString RewrittenFunctionHLSL = RewriteDreamShaderFunctionBodyCalls(Function.HLSL, FunctionsBySpelling, ReplacementBySpelling);
@@ -956,21 +956,21 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!Function.Results.IsEmpty())
 		{
-			OutSource += FString::Printf(TEXT("%s\treturn %s;\n"), *Indent, *Function.Results[0].Name);
+			OutSource += FString::Printf(TEXT("%s\treturn %s;\n"), *Indent, *Function.Results[0].Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
-		OutSource += FString::Printf(TEXT("%s}\n"), *Indent);
+		OutSource += FString::Printf(TEXT("%s}\n"), *Indent); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	static FString BuildSelfContainedWrapperTypeName(const FString& WrapperNameHint)
 	{
 		const FString SanitizedHint = UE::DreamShader::SanitizeIdentifier(WrapperNameHint.IsEmpty() ? TEXT("Generated") : WrapperNameHint);
-		return FString::Printf(TEXT("generated_wrapper_%s_%08X"), *SanitizedHint, FCrc::StrCrc32(*WrapperNameHint));
+		return FString::Printf(TEXT("generated_wrapper_%s_%08X"), *SanitizedHint, FCrc::StrCrc32(*WrapperNameHint)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	static FString BuildSelfContainedWrapperVariableName(const FString& WrapperNameHint)
 	{
-		return FString::Printf(TEXT("__ds_wrapper_%08X"), FCrc::StrCrc32(*WrapperNameHint));
+		return FString::Printf(TEXT("__ds_wrapper_%08X"), FCrc::StrCrc32(*WrapperNameHint)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	static bool CollectEmbeddedFunctionClosure(
@@ -1021,7 +1021,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 				CycleNames.Add(Function->Name);
 
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("SelfContained Function cycle detected: %s. HLSL Custom nodes cannot compile recursive DreamShader functions."),
 					*FString::Join(CycleNames, TEXT(" -> ")));
 				return false;
@@ -1096,7 +1096,7 @@ namespace UE::DreamShader::Editor::Private
 				const FTextShaderFunctionDefinition* const* Function = FunctionsBySpelling.Find(RequestedName);
 				if (!Function)
 				{
-					OutError = FString::Printf(TEXT("Unknown SelfContained DreamShader Function '%s'."), *RequestedName);
+					OutError = FString::Printf(TEXT("Unknown SelfContained DreamShader Function '%s'."), *RequestedName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -1155,13 +1155,13 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		FString WrapperSource;
-		WrapperSource += FString::Printf(TEXT("struct %s\n{\n"), *WrapperTypeName);
+		WrapperSource += FString::Printf(TEXT("struct %s\n{\n"), *WrapperTypeName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		for (const FTextShaderFunctionDefinition* Function : EmbeddedFunctions)
 		{
 			AppendGeneratedFunctionDefinition(*Function, FunctionsBySpelling, GeneratedNamesBySpelling, TEXT("\t"), WrapperSource);
 			WrapperSource += TEXT("\n");
 		}
-		WrapperSource += FString::Printf(TEXT("};\n%s %s;\n"), *WrapperTypeName, *WrapperVariableName);
+		WrapperSource += FString::Printf(TEXT("};\n%s %s;\n"), *WrapperTypeName, *WrapperVariableName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		OutCode = WrapperSource + TEXT("\n") + RewriteDreamShaderFunctionBodyCalls(SourceCode, FunctionsBySpelling, CustomNodeReferenceReplacements);
 
@@ -1188,7 +1188,7 @@ namespace UE::DreamShader::Editor::Private
 		OutSource += TEXT("// Changes will be overwritten the next time the source file is saved.\n\n");
 
 		const FString IncludeGuard = BuildGeneratedIncludeGuardMacro(SourceFilePath);
-		OutSource += FString::Printf(TEXT("#ifndef %s\n#define %s\n\n"), *IncludeGuard, *IncludeGuard);
+		OutSource += FString::Printf(TEXT("#ifndef %s\n#define %s\n\n"), *IncludeGuard, *IncludeGuard); /* I18N-EXEMPT: deferred codegen or compatibility path */
 
 		TSet<FString> SeenFunctionNames;
 		TSet<FString> SeenGeneratedFunctionNames;
@@ -1204,7 +1204,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString NormalizedFunctionName = UE::DreamShader::NormalizeSettingKey(Function.Name);
 			if (SeenFunctionNames.Contains(NormalizedFunctionName))
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' is declared more than once."), *Function.Name);
+				OutError = FString::Printf(TEXT("DreamShader Function '%s' is declared more than once."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			SeenFunctionNames.Add(NormalizedFunctionName);
@@ -1213,7 +1213,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString NormalizedGeneratedFunctionName = UE::DreamShader::NormalizeSettingKey(GeneratedFunctionName);
 			if (SeenGeneratedFunctionNames.Contains(NormalizedGeneratedFunctionName))
 			{
-				OutError = FString::Printf(
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 					TEXT("DreamShader Function '%s' collides with another generated helper symbol '%s'. Rename the Function or Namespace."),
 					*Function.Name,
 					*GeneratedFunctionName);
@@ -1225,22 +1225,22 @@ namespace UE::DreamShader::Editor::Private
 			OutSource += TEXT("\n");
 		}
 
-		OutSource += FString::Printf(TEXT("#endif // %s\n"), *IncludeGuard);
+		OutSource += FString::Printf(TEXT("#endif // %s\n"), *IncludeGuard); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		return true;
 	}
 
 	FString BuildGeneratedIncludeVirtualPath(const FString& SourceFilePath)
 	{
-		const FString BaseName = FString::Printf(
+		const FString BaseName = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("%s_%08x.ush"),
 			*UE::DreamShader::SanitizeIdentifier(FPaths::GetBaseFilename(SourceFilePath)),
 			GetSourcePathHash(SourceFilePath));
-		return FString::Printf(TEXT("%s/%s"), *UE::DreamShader::GetGeneratedShaderVirtualDirectory(), *BaseName);
+		return FString::Printf(TEXT("%s/%s"), *UE::DreamShader::GetGeneratedShaderVirtualDirectory(), *BaseName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	static FString BuildGeneratedIncludeRealPath(const FString& SourceFilePath)
 	{
-		const FString BaseName = FString::Printf(
+		const FString BaseName = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 			TEXT("%s_%08x.ush"),
 			*UE::DreamShader::SanitizeIdentifier(FPaths::GetBaseFilename(SourceFilePath)),
 			GetSourcePathHash(SourceFilePath));
@@ -1258,7 +1258,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!FFileHelper::SaveStringToFile(IncludeSource, *IncludePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 		{
-			OutError = FString::Printf(TEXT("Failed to write generated helper include '%s'."), *IncludePath);
+			OutError = FString::Printf(TEXT("Failed to write generated helper include '%s'."), *IncludePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 		return true;

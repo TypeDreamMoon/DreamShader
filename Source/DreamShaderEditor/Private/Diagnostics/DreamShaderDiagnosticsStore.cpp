@@ -2,6 +2,8 @@
 
 #include "DreamShaderEditorPersistenceUtils.h"
 #include "DreamShaderModule.h"
+#include "DreamShaderTextWireUtils.h"
+#include "DreamShaderVersionCompat.h"
 
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
@@ -18,13 +20,23 @@ namespace UE::DreamShader::Editor::Private
 {
 	namespace
 	{
+		// The wire format (diagnostics.json / diagnostics/*.json / bridge.db) is parsed by VSCode and
+		// Rider extensions and MUST stay English (culture-invariant) regardless of the editor culture.
+		// ToInvariantWireString returns the source-language string for plain LOCTEXT/FromString text
+		// and re-renders FText::Format results with the invariant culture, so a zh-Hans editor can
+		// never leak localized text into the wire format (see DreamShaderTextWireUtils.h).
+		FString DiagnosticTextToJsonString(const FText& Text)
+		{
+			return ToInvariantWireString(Text);
+		}
+
 		void AddDiagnosticJson(TArray<TSharedPtr<FJsonValue>>& OutDiagnostics, const FDreamShaderDiagnosticRecord& Diagnostic)
 		{
 			TSharedRef<FJsonObject> DiagnosticObject = MakeShared<FJsonObject>();
-			DiagnosticObject->SetStringField(TEXT("message"), Diagnostic.Message);
+			DiagnosticObject->SetStringField(TEXT("message"), DiagnosticTextToJsonString(Diagnostic.Message));
 			if (!Diagnostic.Detail.IsEmpty())
 			{
-				DiagnosticObject->SetStringField(TEXT("detail"), Diagnostic.Detail);
+				DiagnosticObject->SetStringField(TEXT("detail"), DiagnosticTextToJsonString(Diagnostic.Detail));
 			}
 			if (!Diagnostic.Stage.IsEmpty())
 			{
@@ -132,6 +144,12 @@ namespace UE::DreamShader::Editor::Private
 		const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
 		DiagnosticsByFile.Remove(NormalizedPath);
 		RemoveDiagnosticsOwnedBySource(DiagnosticsByFile, NormalizedPath);
+	}
+
+	const TArray<FDreamShaderDiagnosticRecord>* FDreamShaderDiagnosticsStore::FindDiagnostics(const FString& SourceFilePath) const
+	{
+		const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		return DiagnosticsByFile.Find(NormalizedPath);
 	}
 
 	void FDreamShaderDiagnosticsStore::WriteToFile(const FString& OutputFilePath) const
@@ -290,21 +308,24 @@ namespace UE::DreamShader::Editor::Private
 		OutLocation.Line = FMath::Max(1, FCString::Atoi(*LineText));
 		OutLocation.Column = FMath::Max(1, FCString::Atoi(*ColumnText));
 		OutLocation.FilePath = UE::DreamShader::NormalizeSourceFilePath(Line.Left(OpenMarkerIndex));
-		OutLocation.Message = Line.Mid(CloseMarkerIndex + 3).TrimStartAndEnd();
+		// The message is the tail of a dynamic UE compile error line; FText::FromString marks it as
+		// dynamic text (correct for gather) and its source string is the raw English error text.
+		OutLocation.Message = FText::FromString(Line.Mid(CloseMarkerIndex + 3).TrimStartAndEnd());
 		return !OutLocation.FilePath.IsEmpty() && !OutLocation.Message.IsEmpty();
 	}
 
-	TArray<FDreamShaderDiagnosticRecord> FDreamShaderDiagnosticsStore::BuildGenerateErrorDiagnostics(
-		const FString& SourceFilePath,
-		const FString& ErrorMessage)
+		TArray<FDreamShaderDiagnosticRecord> FDreamShaderDiagnosticsStore::BuildGenerateErrorDiagnostics(
+			const FString& SourceFilePath,
+			const FText& ErrorMessage)
 	{
 		TArray<FDreamShaderDiagnosticRecord> Diagnostics;
 
+		const FString ErrorMessageWire = ToInvariantWireString(ErrorMessage);
 		TArray<FString> Lines;
-		ErrorMessage.ParseIntoArrayLines(Lines, false);
+		ErrorMessageWire.ParseIntoArrayLines(Lines, false);
 		if (Lines.IsEmpty())
 		{
-			Lines.Add(ErrorMessage);
+			Lines.Add(ErrorMessageWire);
 		}
 
 		const FString PathPrefix = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath) + TEXT(": ");
@@ -316,7 +337,7 @@ namespace UE::DreamShader::Editor::Private
 				FDreamShaderDiagnosticRecord& Diagnostic = Diagnostics.AddDefaulted_GetRef();
 				Diagnostic.FilePath = Location.FilePath;
 				Diagnostic.Message = Location.Message;
-				Diagnostic.Detail = Line;
+				Diagnostic.Detail = FText::FromString(Line);
 				Diagnostic.Stage = TEXT("generate");
 				Diagnostic.Code = TEXT("generate-error");
 				Diagnostic.Source = TEXT("DreamShader Generate");
@@ -331,8 +352,8 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			FDreamShaderDiagnosticRecord& Diagnostic = Diagnostics.AddDefaulted_GetRef();
-			Diagnostic.Message = Line;
-			Diagnostic.Detail = Line;
+			Diagnostic.Message = FText::FromString(Line);
+			Diagnostic.Detail = FText::FromString(Line);
 			Diagnostic.Stage = TEXT("generate");
 			Diagnostic.Code = TEXT("generate-error");
 			Diagnostic.Source = TEXT("DreamShader Generate");

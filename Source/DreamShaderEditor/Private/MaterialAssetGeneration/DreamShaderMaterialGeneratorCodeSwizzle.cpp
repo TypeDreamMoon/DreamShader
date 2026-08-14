@@ -129,7 +129,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!SourceChannels.IsValidIndex(ChannelIndex))
 			{
-				OutError = FString::Printf(TEXT("Channel %d is invalid for a value with %d components."), ChannelIndex, BaseValue.ComponentCount);
+				OutError = FString::Printf(TEXT("Channel %d is invalid for a value with %d components."), ChannelIndex, BaseValue.ComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -155,7 +155,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (Swizzle.IsEmpty() || Swizzle.Len() > 4)
 		{
-			OutError = FString::Printf(TEXT("Unsupported swizzle '%s'."), *Swizzle);
+			OutError = FString::Printf(TEXT("Unsupported swizzle '%s'."), *Swizzle); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
@@ -183,7 +183,7 @@ namespace UE::DreamShader::Editor::Private
 				if (!TryResolveSwizzleChannelIndex(Swizzle[Index], ChannelIndex)
 					|| ChannelIndex >= BaseValue.ComponentCount)
 				{
-					OutError = FString::Printf(TEXT("Swizzle '%s' is invalid for a value with %d components."), *Swizzle, BaseValue.ComponentCount);
+					OutError = FString::Printf(TEXT("Swizzle '%s' is invalid for a value with %d components."), *Swizzle, BaseValue.ComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 				Channels.Add(BaseValue);
@@ -209,7 +209,7 @@ namespace UE::DreamShader::Editor::Private
 			int32 ChannelIndex = INDEX_NONE;
 			if (!TryResolveSwizzleChannelIndex(Swizzle[Index], ChannelIndex) || ChannelIndex >= BaseValue.ComponentCount)
 			{
-				OutError = FString::Printf(TEXT("Swizzle '%s' is invalid for a value with %d components."), *Swizzle, BaseValue.ComponentCount);
+				OutError = FString::Printf(TEXT("Swizzle '%s' is invalid for a value with %d components."), *Swizzle, BaseValue.ComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 

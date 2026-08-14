@@ -394,7 +394,7 @@ namespace UE::DreamShader::Editor::Private
 		TSet<FString> TempNames;
 		TArray<FString> VirtualFunctionDefinitions;
 		TMap<const UMaterialFunction*, FString> VirtualFunctionNames;
-		TArray<FString> Warnings;
+		TArray<FText> Warnings;
 		int32 NextTempIndex = 0;
 		FScopedSlowTask* ActiveDecompileSlowTask = nullptr;
 		TSet<const UMaterialExpression*> ProgressVisitedExpressions;

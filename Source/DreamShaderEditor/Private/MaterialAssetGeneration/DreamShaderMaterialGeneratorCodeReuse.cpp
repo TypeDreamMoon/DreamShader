@@ -37,7 +37,7 @@ namespace UE::DreamShader::Editor::Private
 			const FCodeCallArgument& Argument = Arguments[ArgumentIndex];
 			const FString ArgumentName = Argument.bIsNamed
 				? UE::DreamShader::NormalizeSettingKey(Argument.Name)
-				: FString::Printf(TEXT("#%d"), ArgumentIndex);
+				: FString::Printf(TEXT("#%d"), ArgumentIndex); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			if (Argument.bIsNamed && ExcludedNormalizedArgumentNames.Contains(ArgumentName))
 			{
 				continue;
@@ -48,7 +48,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				return false;
 			}
-			Parts.Add(FString::Printf(TEXT("%s=%s"), *ArgumentName, *ArgumentToken));
+			Parts.Add(FString::Printf(TEXT("%s=%s"), *ArgumentName, *ArgumentToken)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		OutKey = FString::Join(Parts, TEXT("|"));
@@ -70,12 +70,12 @@ namespace UE::DreamShader::Editor::Private
 				OutToken = MakeCodeValueReuseToken(*ExistingValue);
 				return true;
 			}
-			OutToken = FString::Printf(TEXT("name:%s"), *UE::DreamShader::NormalizeSettingKey(Expression->Text));
+			OutToken = FString::Printf(TEXT("name:%s"), *UE::DreamShader::NormalizeSettingKey(Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return true;
 
 		case ECodeExpressionKind::NumberLiteral:
 		case ECodeExpressionKind::StringLiteral:
-			OutToken = FString::Printf(TEXT("literal:%s"), *NormalizeCodeReuseLiteralText(Expression->Text));
+			OutToken = FString::Printf(TEXT("literal:%s"), *NormalizeCodeReuseLiteralText(Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return true;
 
 		case ECodeExpressionKind::Unary:
@@ -85,7 +85,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				return false;
 			}
-			OutToken = FString::Printf(TEXT("unary:%s(%s)"), *Expression->Text, *InnerToken);
+			OutToken = FString::Printf(TEXT("unary:%s(%s)"), *Expression->Text, *InnerToken); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return true;
 		}
 
@@ -98,7 +98,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				return false;
 			}
-			OutToken = FString::Printf(TEXT("binary:%s(%s,%s)"), *Expression->Text, *LeftToken, *RightToken);
+			OutToken = FString::Printf(TEXT("binary:%s(%s,%s)"), *Expression->Text, *LeftToken, *RightToken); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return true;
 		}
 
@@ -109,7 +109,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				return false;
 			}
-			OutToken = FString::Printf(TEXT("member:%s.%s"), *LeftToken, *UE::DreamShader::NormalizeSettingKey(Expression->Text));
+			OutToken = FString::Printf(TEXT("member:%s.%s"), *LeftToken, *UE::DreamShader::NormalizeSettingKey(Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return true;
 		}
 

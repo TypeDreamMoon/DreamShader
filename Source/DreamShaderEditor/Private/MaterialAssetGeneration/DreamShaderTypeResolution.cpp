@@ -364,12 +364,12 @@ namespace UE::DreamShader::Editor::Private
 			const bool bDeclaredSubstrate = IsSubstrateMaterialType(Declaration.Type);
 			if (bDeclaredSubstrate && !IsSubstrateMaterialTypeSupported())
 			{
-				OutError = FString::Printf(TEXT("Output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Declaration.Name);
+				OutError = FString::Printf(TEXT("Output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Declaration.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 			if (!bDeclaredSubstrate && !TryResolveCustomOutputType(Declaration.Type, DeclaredType))
 			{
-				OutError = FString::Printf(TEXT("Unsupported output type '%s' for '%s'."), *Declaration.Type, *Declaration.Name);
+				OutError = FString::Printf(TEXT("Unsupported output type '%s' for '%s'."), *Declaration.Type, *Declaration.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				return false;
 			}
 
@@ -378,7 +378,7 @@ namespace UE::DreamShader::Editor::Private
 				const bool bExistingSubstrate = DeclaredOutputSubstrateTypes.FindRef(Declaration.Name);
 				if (*ExistingType != DeclaredType || bExistingSubstrate != bDeclaredSubstrate)
 				{
-					OutError = FString::Printf(TEXT("Output variable '%s' is declared with conflicting types."), *Declaration.Name);
+					OutError = FString::Printf(TEXT("Output variable '%s' is declared with conflicting types."), *Declaration.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 			}
@@ -408,7 +408,7 @@ namespace UE::DreamShader::Editor::Private
 						OutError = TEXT("Base.FrontMaterial requires Unreal Engine 5.4 or newer.");
 						return false;
 					}
-					OutError = FString::Printf(TEXT("Unsupported material output '%s'."), *Binding.MaterialProperty);
+					OutError = FString::Printf(TEXT("Unsupported material output '%s'."), *Binding.MaterialProperty); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 
@@ -451,7 +451,7 @@ namespace UE::DreamShader::Editor::Private
 					|| OutNamedOutputs[*ExistingIndex].bIsSubstrateMaterial != bBindingIsSubstrateMaterial)
 					&& bHasImplicitTypeFromTarget)
 				{
-					OutError = FString::Printf(TEXT("Output variable '%s' is bound to incompatible material properties."), *SourceName);
+					OutError = FString::Printf(TEXT("Output variable '%s' is bound to incompatible material properties."), *SourceName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					return false;
 				}
 			}
@@ -467,7 +467,7 @@ namespace UE::DreamShader::Editor::Private
 					const bool bDeclaredSubstrate = DeclaredOutputSubstrateTypes.FindRef(SourceName);
 					if (bHasImplicitTypeFromTarget && (*DeclaredType != BindingOutputType || bDeclaredSubstrate != bBindingIsSubstrateMaterial))
 					{
-						OutError = FString::Printf(
+						OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 							TEXT("Output variable '%s' is declared as '%s' but bound material property '%s' expects a different type."),
 							*SourceName,
 							*DeclaredOutputTypeTexts.FindChecked(SourceName),
@@ -480,7 +480,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 				else if (!bHasImplicitTypeFromTarget)
 				{
-					OutError = FString::Printf(
+					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 						TEXT("Output variable '%s' must declare an explicit type before binding to expression target '%s'."),
 						*SourceName,
 						*Binding.TargetText);

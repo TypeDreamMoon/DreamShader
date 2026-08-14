@@ -1,5 +1,6 @@
 #include "UI/SDreamShaderGenPage.h"
 
+#include "Bridge/DreamShaderEditorBridge.h"
 #include "UI/DreamShaderGeneratedAssetPath.h"
 #include "UI/DreamShaderInstanceFactory.h"
 
@@ -14,14 +15,10 @@
 #include "Workspace/DreamShaderWorkspaceService.h"
 
 #include "AssetThumbnail.h"
-#include "Dom/JsonObject.h"
 #include "Editor.h"
 #include "Framework/Notifications/NotificationManager.h"
-#include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Misc/ScopedSlowTask.h"
-#include "Serialization/JsonReader.h"
-#include "Serialization/JsonSerializer.h"
 #include "Styling/AppStyle.h"
 #include "Styling/SlateTypes.h"
 #include "Subsystems/AssetEditorSubsystem.h"
@@ -70,90 +67,20 @@ namespace UE::DreamShader::Editor::Private
 			switch (Status)
 			{
 			case FDreamShaderSourceItem::EStatus::UpToDate:
-				return { FText::FromString(TEXT("●")), FLinearColor(0.10f, 0.62f, 0.20f), LOCTEXT("StatusUpToDate", "up to date") };
+				return { INVTEXT("●"), FLinearColor(0.10f, 0.62f, 0.20f), LOCTEXT("StatusUpToDate", "up to date") };
 			case FDreamShaderSourceItem::EStatus::Stale:
-				return { FText::FromString(TEXT("●")), FLinearColor(0.90f, 0.62f, 0.12f), LOCTEXT("StatusStale", "stale") };
+				return { INVTEXT("●"), FLinearColor(0.90f, 0.62f, 0.12f), LOCTEXT("StatusStale", "stale") };
 			case FDreamShaderSourceItem::EStatus::NeverCompiled:
-				return { FText::FromString(TEXT("○")), FLinearColor(0.50f, 0.50f, 0.50f), LOCTEXT("StatusNever", "not compiled") };
+				return { INVTEXT("○"), FLinearColor(0.50f, 0.50f, 0.50f), LOCTEXT("StatusNever", "not compiled") };
 			case FDreamShaderSourceItem::EStatus::Error:
-				return { FText::FromString(TEXT("▲")), FLinearColor(0.82f, 0.24f, 0.22f), LOCTEXT("StatusError", "compile error") };
+				return { INVTEXT("▲"), FLinearColor(0.82f, 0.24f, 0.22f), LOCTEXT("StatusError", "compile error") };
 			case FDreamShaderSourceItem::EStatus::Function:
-				return { FText::FromString(TEXT("◆")), FLinearColor(0.30f, 0.52f, 0.82f), LOCTEXT("StatusFunction", "function / header") };
+				return { INVTEXT("◆"), FLinearColor(0.30f, 0.52f, 0.82f), LOCTEXT("StatusFunction", "function / header") };
 			default:
-				return { FText::FromString(TEXT("▲")), FLinearColor(0.82f, 0.24f, 0.22f), LOCTEXT("StatusUnresolved", "unresolved") };
+				return { INVTEXT("▲"), FLinearColor(0.82f, 0.24f, 0.22f), LOCTEXT("StatusUnresolved", "unresolved") };
 			}
 		}
 
-		// Reads the bridge's diagnostics sink (written on every compile) into a source-path -> first-error
-		// message map, so the Gen list can show compile errors from the startup/auto compile without the
-		// user first clicking Compile. Decoupled from the (private) bridge -- just reads its JSON file.
-		void LoadDiagnosticsErrors(TMap<FString, FString>& OutErrorsByPath)
-		{
-			const FString DiagnosticsPath = FPaths::ProjectSavedDir() / TEXT("DreamShader/Bridge/diagnostics.json");
-			FString JsonText;
-			if (!FFileHelper::LoadFileToString(JsonText, *DiagnosticsPath))
-			{
-				return;
-			}
-
-			TSharedPtr<FJsonObject> Root;
-			const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonText);
-			if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
-			{
-				return;
-			}
-
-			const TArray<TSharedPtr<FJsonValue>>* Files = nullptr;
-			if (!Root->TryGetArrayField(TEXT("files"), Files))
-			{
-				return;
-			}
-
-			for (const TSharedPtr<FJsonValue>& FileValue : *Files)
-			{
-				const TSharedPtr<FJsonObject>* FileObject = nullptr;
-				if (!FileValue->TryGetObject(FileObject))
-				{
-					continue;
-				}
-
-				FString Path;
-				const TArray<TSharedPtr<FJsonValue>>* Diagnostics = nullptr;
-				if (!(*FileObject)->TryGetStringField(TEXT("path"), Path) || !(*FileObject)->TryGetArrayField(TEXT("diagnostics"), Diagnostics))
-				{
-					continue;
-				}
-
-				for (const TSharedPtr<FJsonValue>& DiagnosticValue : *Diagnostics)
-				{
-					const TSharedPtr<FJsonObject>* DiagnosticObject = nullptr;
-					if (!DiagnosticValue->TryGetObject(DiagnosticObject))
-					{
-						continue;
-					}
-
-					FString Severity;
-					(*DiagnosticObject)->TryGetStringField(TEXT("severity"), Severity);
-					if (!Severity.IsEmpty() && !Severity.Equals(TEXT("error"), ESearchCase::IgnoreCase))
-					{
-						continue;
-					}
-
-					FString Message;
-					(*DiagnosticObject)->TryGetStringField(TEXT("message"), Message);
-					double Line = 0.0;
-					double Column = 0.0;
-					(*DiagnosticObject)->TryGetNumberField(TEXT("line"), Line);
-					(*DiagnosticObject)->TryGetNumberField(TEXT("column"), Column);
-					const FString Full = Line > 0.0
-						? FString::Printf(TEXT("L%d:%d %s"), static_cast<int32>(Line), static_cast<int32>(Column), *Message)
-						: Message;
-
-					OutErrorsByPath.Add(UE::DreamShader::NormalizeSourceFilePath(Path), Full);
-					break; // first error per file is enough for the list
-				}
-			}
-		}
 	}
 
 	void SDreamShaderGenPage::Construct(const FArguments& InArgs)
@@ -336,18 +263,28 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderGenPage::ApplyDiagnosticsToItems()
 	{
-		TMap<FString, FString> ErrorsByPath;
-		LoadDiagnosticsErrors(ErrorsByPath);
-		if (ErrorsByPath.IsEmpty())
+		FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge();
+		if (!Bridge)
 		{
 			return;
 		}
 		for (const TSharedPtr<FDreamShaderSourceItem>& Item : Items)
 		{
-			if (const FString* Error = ErrorsByPath.Find(Item->SourceFilePath))
+			if (const TArray<FDreamShaderDiagnosticRecord>* Diagnostics = Bridge->GetDiagnosticsForSource(Item->SourceFilePath))
 			{
-				Item->Status = FDreamShaderSourceItem::EStatus::Error;
-				Item->StatusDetail = *Error;
+				if (const FDreamShaderDiagnosticRecord* ErrorRecord = Diagnostics->FindByPredicate(
+					[](const FDreamShaderDiagnosticRecord& Record)
+					{
+						return Record.Severity.Equals(TEXT("error"), ESearchCase::IgnoreCase);
+					}))
+				{
+					Item->Status = FDreamShaderSourceItem::EStatus::Error;
+					Item->StatusDetail = FText::Format(
+						LOCTEXT("DiagnosticLineFmt", "L{0}:{1} {2}"),
+						FText::AsNumber(ErrorRecord->Line),
+						FText::AsNumber(ErrorRecord->Column),
+						ErrorRecord->Message);
+				}
 			}
 		}
 	}
@@ -406,7 +343,7 @@ namespace UE::DreamShader::Editor::Private
 			else
 			{
 				Item->Status = FDreamShaderSourceItem::EStatus::Error;
-				Item->StatusDetail = Message;
+				Item->StatusDetail = FText::FromString(Message);
 				++FailureCount;
 			}
 		}
@@ -429,7 +366,7 @@ namespace UE::DreamShader::Editor::Private
 		if (Item->bIsFunction)
 		{
 			Item->Status = FDreamShaderSourceItem::EStatus::Function;
-			Item->StatusDetail = LOCTEXT("FunctionDetail", "Function library / header. Recompiles the materials that import it.").ToString();
+			Item->StatusDetail = LOCTEXT("FunctionDetail", "Function library / header. Recompiles the materials that import it.");
 			return;
 		}
 
@@ -437,7 +374,7 @@ namespace UE::DreamShader::Editor::Private
 		if (!ResolveGeneratedAssetObjectPath(Item->SourceFilePath, Item->ObjectPath, Error))
 		{
 			Item->Status = FDreamShaderSourceItem::EStatus::Unresolved;
-			Item->StatusDetail = Error;
+			Item->StatusDetail = FText::FromString(Error);
 			return;
 		}
 
@@ -445,7 +382,7 @@ namespace UE::DreamShader::Editor::Private
 		if (!Asset)
 		{
 			Item->Status = FDreamShaderSourceItem::EStatus::NeverCompiled;
-			Item->StatusDetail = FString::Printf(TEXT("No generated asset at %s"), *Item->ObjectPath);
+			Item->StatusDetail = FText::Format(LOCTEXT("GenPageNoGeneratedAsset", "No generated asset at {0}"), FText::FromString(Item->ObjectPath));
 			return;
 		}
 
@@ -454,14 +391,14 @@ namespace UE::DreamShader::Editor::Private
 		if (!UE::DreamShader::Editor::LoadPreparedDreamShaderSource(Item->SourceFilePath, PreparedText, LoadError))
 		{
 			Item->Status = FDreamShaderSourceItem::EStatus::Unresolved;
-			Item->StatusDetail = LoadError;
+			Item->StatusDetail = FText::FromString(LoadError);
 			return;
 		}
 
 		const FString SourceHash = BuildSourceHash(PreparedText);
 		const bool bCurrent = IsGeneratedAssetSourceCurrent(Asset, Item->SourceFilePath, SourceHash);
 		Item->Status = bCurrent ? FDreamShaderSourceItem::EStatus::UpToDate : FDreamShaderSourceItem::EStatus::Stale;
-		Item->StatusDetail = Item->ObjectPath;
+		Item->StatusDetail = FText::FromString(Item->ObjectPath);
 	}
 
 	void SDreamShaderGenPage::OnSelectionChanged(TSharedPtr<FDreamShaderSourceItem> Item, ESelectInfo::Type)
@@ -612,7 +549,7 @@ namespace UE::DreamShader::Editor::Private
 			[
 				SNew(STextBlock)
 				.Visibility(bHasError ? EVisibility::Visible : EVisibility::Collapsed)
-				.Text(FText::FromString(Item->StatusDetail))
+				.Text(Item->StatusDetail)
 				.ColorAndOpacity(FSlateColor(FLinearColor(0.82f, 0.24f, 0.22f)))
 				.AutoWrapText(true)
 			]
@@ -665,7 +602,7 @@ namespace UE::DreamShader::Editor::Private
 					SNew(STextBlock)
 					.Text(Visual.Glyph)
 					.ColorAndOpacity(FSlateColor(Visual.Color))
-					.ToolTipText(FText::FromString(Item->StatusDetail))
+					.ToolTipText(Item->StatusDetail)
 				]
 
 				+ SHorizontalBox::Slot()
@@ -720,7 +657,7 @@ namespace UE::DreamShader::Editor::Private
 			// to a bare "not compiled".
 			UE_LOG(LogDreamShader, Error, TEXT("Material Content Browser compile failed: %s"), *Message);
 			Item->Status = FDreamShaderSourceItem::EStatus::Error;
-			Item->StatusDetail = Message;
+			Item->StatusDetail = FText::FromString(Message);
 		}
 
 		if (ListView.IsValid())

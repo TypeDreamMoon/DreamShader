@@ -40,8 +40,8 @@ public:
 	virtual FName GetSectionName() const override { return TEXT("DreamShader"); }
 
 #if WITH_EDITOR
-	virtual FText GetSectionText() const override { return FText::FromString(TEXT("Dream Shader")); }
-	virtual FText GetSectionDescription() const override { return FText::FromString(TEXT("Dream Shader Settings")); }
+	virtual FText GetSectionText() const override { return NSLOCTEXT("DreamShaderEditor.Settings", "SectionText", "Dream Shader"); }
+	virtual FText GetSectionDescription() const override { return NSLOCTEXT("DreamShaderEditor.Settings", "SectionDescription", "Dream Shader Settings"); }
 #endif
 
 	bool TryResolveShadingModel(const FString& InName, EMaterialShadingModel& OutShadingModel) const;
