@@ -4,6 +4,18 @@
 
 ### Added
 
+- **Parse failures now carry a `DSHnnnn` code, so the message text stops being the contract.**
+  Until now the only thing identifying a DreamShader failure was its English wording — which is why
+  the generator's message sites carry `I18N-EXEMPT` markers: translate the text and you break the
+  tests, the corpus expectations and the diagnose skill that match on it. All 120 parser raise sites
+  now name a code instead (`DSH1xxx` path resolution, `DSH2xxx` lexer and syntax, `DSH3xxx` sections
+  and declarations, `DSH7xxx` properties, parameters and settings), carried on
+  `FDreamShaderTextError` alongside the `FText`. `FTextShaderParser::Parse` gains a coded overload
+  and keeps the `FText`/`FString` ones, so callers migrate when they have a use for the code.
+  `Docs/diagnostics/` gains a page per range, generated from the raise sites by
+  `.skill/gen-diagnostics.ps1` with the Cause/Fix prose written by hand and preserved across
+  regenerations; `-Check` gates it. Nothing on the wire changed —
+  `FDreamShaderDiagnosticRecord::Code` and the `"code"` field in `diagnostics.json` already existed.
 - **The editor UI and the diagnostics pipeline speak your language; the wire format does not.**
   Editor-facing text — the *DreamShader Gen* page, the settings section, slow-task progress, parser
   and decompiler diagnostics — moved from `FString` literals to `LOCTEXT`/`NSLOCTEXT`, and the
@@ -177,6 +189,13 @@ Follow-up work, not regressions:
   `.locres` by hand. `Tools/Localization/BASELINE.md` is what catches the drift in the meantime:
   its count moving means the translation is behind. Wiring up a gather config, and a CI step that
   runs it, is the fix.
+- **Only the parser raises `DSHnnnn` codes so far; the generator does not.** `Docs/diagnostics/`
+  covers 112 codes, but `Docs/diagnostics/index.md` remains the authoritative catalogue of all 659
+  messages until the generator's ~561 sites are tagged too — they still report through
+  `FString& OutError` with no code, and reach the store as the generic `generate-error`. The recipe
+  is settled and mechanical (tag by message key, `FailWith` as a statement, `WrapError` to keep the
+  inner code), but it is roughly four times the volume of the parser and touches 229 signatures.
+  `README.md` marks the untagged ranges rather than linking to pages that do not exist yet.
 - **The preview renderer's error channel is not localized.** `FDreamShaderPreviewRenderContext`
   reports failures through `FString& OutError`, and those strings reach `preview.json` and the
   preview WebSocket, which must stay English for the VSCode and Rider extensions. Collapsing an
