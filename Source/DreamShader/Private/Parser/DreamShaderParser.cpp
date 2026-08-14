@@ -15,14 +15,14 @@ namespace UE::DreamShader
 			const TCHAR OpenChar,
 			const TCHAR CloseChar,
 			FString& OutContent,
-			FText& OutError)
+			FDreamShaderTextError& OutError)
 		{
 			Scanner.SkipIgnored();
 			if (Scanner.Peek() != OpenChar)
 			{
-				OutError = FText::Format(LOCTEXT("ExpectedCNearIndexD", "Expected '{0}' near index {1}."),
+				FailWith(OutError, TEXT("DSH2001"), FText::Format(LOCTEXT("ExpectedCNearIndexD", "Expected '{0}' near index {1}."),
 					FText::FromString(FString::ChrN(1, OpenChar)),
-					FText::AsNumber(Scanner.Index));
+					FText::AsNumber(Scanner.Index)));
 				return false;
 			}
 
@@ -105,8 +105,8 @@ namespace UE::DreamShader
 				}
 			}
 
-			OutError = FText::Format(LOCTEXT("UnterminatedCBlock", "Unterminated '{0}' block."),
-					FText::FromString(FString::ChrN(1, OpenChar)));
+			FailWith(OutError, TEXT("DSH2008"), FText::Format(LOCTEXT("UnterminatedCBlock", "Unterminated '{0}' block."),
+					FText::FromString(FString::ChrN(1, OpenChar))));
 			return false;
 		}
 
@@ -310,7 +310,7 @@ namespace UE::DreamShader
 		// Rewrite each top-level `return <expr>;` in a function body into `__return = <expr>;` so a
 		// function declared with a return type lowers onto the synthetic __return out-parameter. Mirrors
 		// EnsureTopLevelReturn's comment/string/char/brace-aware scan; errors on a bare `return;`.
-		static bool LowerReturnToOutAssign(const FString& InHLSL, FString& OutLoweredHLSL, FText& OutError)
+		static bool LowerReturnToOutAssign(const FString& InHLSL, FString& OutLoweredHLSL, FDreamShaderTextError& OutError)
 		{
 			const FString Sanitized = InHLSL.Replace(TEXT("\r\n"), TEXT("\n"));
 			auto IsIdentifierPart = [](const TCHAR Character)
@@ -372,7 +372,7 @@ namespace UE::DreamShader
 						while (Sanitized.IsValidIndex(Probe) && FChar::IsWhitespace(Sanitized[Probe])) { ++Probe; }
 						if (Sanitized.IsValidIndex(Probe) && Sanitized[Probe] == TCHAR(';'))
 						{
-							OutError = LOCTEXT("AFunctionWithAReturnType", "A function with a return type cannot use a bare 'return;'. Return a value, e.g. 'return expr;'.");
+							FailWith(OutError, TEXT("DSH3012"), LOCTEXT("AFunctionWithAReturnType", "A function with a return type cannot use a bare 'return;'. Return a value, e.g. 'return expr;'."));
 							return false;
 						}
 						Result.Append(TEXT("__return ="));
@@ -395,7 +395,7 @@ namespace UE::DreamShader
 			const bool bHasReturnType,
 			const FString& ReturnTypeToken,
 			FTextShaderFunctionDefinition& OutFunction,
-			FText& OutError)
+			FDreamShaderTextError& OutError)
 		{
 			OutFunction.Inputs.Reset();
 			OutFunction.Results.Reset();
@@ -407,9 +407,9 @@ namespace UE::DreamShader
 				ReturnParameter.Name = TEXT("__return");
 				if (ReturnParameter.Type.IsEmpty())
 				{
-					OutError = FText::Format(LOCTEXT("FunctionSHasAnInvalidReturn", "Function '{0}' has an invalid return type '{1}'."),
+					FailWith(OutError, TEXT("DSH3006"), FText::Format(LOCTEXT("FunctionSHasAnInvalidReturn", "Function '{0}' has an invalid return type '{1}'."),
 					FText::FromString(FunctionName),
-					FText::FromString(ReturnTypeToken));
+					FText::FromString(ReturnTypeToken)));
 					return false;
 				}
 				OutFunction.Results.Add(ReturnParameter);
@@ -427,9 +427,9 @@ namespace UE::DreamShader
 				Parameter.ParseIntoArrayWS(Parts);
 				if (Parts.Num() < 2 || Parts.Num() > 3)
 				{
-					OutError = FText::Format(LOCTEXT("FunctionSHasAnInvalidParameter", "Function '{0}' has an invalid parameter declaration '{1}'."),
+					FailWith(OutError, TEXT("DSH3007"), FText::Format(LOCTEXT("FunctionSHasAnInvalidParameter", "Function '{0}' has an invalid parameter declaration '{1}'."),
 					FText::FromString(FunctionName),
-					FText::FromString(Parameter));
+					FText::FromString(Parameter)));
 					return false;
 				}
 
@@ -455,25 +455,25 @@ namespace UE::DreamShader
 
 				if (!Qualifier.Equals(TEXT("in")) && !Qualifier.Equals(TEXT("out")))
 				{
-					OutError = FText::Format(LOCTEXT("FunctionSParameterSUsesUnsupported", "Function '{0}' parameter '{1}' uses unsupported qualifier '{2}'. Supported qualifiers are in and out."),
+					FailWith(OutError, TEXT("DSH3008"), FText::Format(LOCTEXT("FunctionSParameterSUsesUnsupported", "Function '{0}' parameter '{1}' uses unsupported qualifier '{2}'. Supported qualifiers are in and out."),
 					FText::FromString(FunctionName),
 					FText::FromString(Parameter),
-					FText::FromString(Qualifier));
+					FText::FromString(Qualifier)));
 					return false;
 				}
 
 				if (TypeToken.IsEmpty() || NameToken.IsEmpty())
 				{
-					OutError = FText::Format(LOCTEXT("FunctionSHasAnInvalidParameter2", "Function '{0}' has an invalid parameter declaration '{1}'."),
+					FailWith(OutError, TEXT("DSH3007"), FText::Format(LOCTEXT("FunctionSHasAnInvalidParameter2", "Function '{0}' has an invalid parameter declaration '{1}'."),
 					FText::FromString(FunctionName),
-					FText::FromString(Parameter));
+					FText::FromString(Parameter)));
 					return false;
 				}
 
 				if (NameToken.Equals(TEXT("__return"), ESearchCase::IgnoreCase))
 				{
-					OutError = FText::Format(LOCTEXT("FunctionSParameterNameReturnIs", "Function '{0}' parameter name '__return' is reserved for return-type lowering."),
-					FText::FromString(FunctionName));
+					FailWith(OutError, TEXT("DSH3009"), FText::Format(LOCTEXT("FunctionSParameterNameReturnIs", "Function '{0}' parameter name '__return' is reserved for return-type lowering."),
+					FText::FromString(FunctionName)));
 					return false;
 				}
 
@@ -492,15 +492,15 @@ namespace UE::DreamShader
 
 			if (bHasReturnType && OutFunction.Results.Num() > 1)
 			{
-				OutError = FText::Format(LOCTEXT("FunctionSHasAReturnType", "Function '{0}' has a return type and cannot also declare out parameters. Use out parameters without a return type for multiple outputs."),
-					FText::FromString(FunctionName));
+				FailWith(OutError, TEXT("DSH3010"), FText::Format(LOCTEXT("FunctionSHasAReturnType", "Function '{0}' has a return type and cannot also declare out parameters. Use out parameters without a return type for multiple outputs."),
+					FText::FromString(FunctionName)));
 				return false;
 			}
 
 			if (OutFunction.Results.IsEmpty())
 			{
-				OutError = FText::Format(LOCTEXT("FunctionSMustDeclareAtLeast", "Function '{0}' must declare at least one out parameter."),
-					FText::FromString(FunctionName));
+				FailWith(OutError, TEXT("DSH3011"), FText::Format(LOCTEXT("FunctionSMustDeclareAtLeast", "Function '{0}' must declare at least one out parameter."),
+					FText::FromString(FunctionName)));
 				return false;
 			}
 
@@ -512,16 +512,16 @@ namespace UE::DreamShader
 			const FString& NamespaceName,
 			FTextShaderDefinition& OutDefinition,
 			const bool bGraphFunction,
-			FText& OutError)
+			FDreamShaderTextError& OutError)
 		{
 			FTextShaderFunctionDefinition Function;
 
 			FString FunctionName;
 			if (!Scanner.ParseIdentifier(FunctionName, OutError))
 			{
-				OutError = bGraphFunction
+				FailWith(OutError, TEXT("DSH3001"), bGraphFunction
 					? LOCTEXT("GraphFunctionMissingName", "GraphFunction declaration is missing a valid function name.")
-					: LOCTEXT("FunctionMissingName", "Function declaration is missing a valid function name.");
+					: LOCTEXT("FunctionMissingName", "Function declaration is missing a valid function name."));
 				return false;
 			}
 
@@ -533,7 +533,7 @@ namespace UE::DreamShader
 				Function.bSelfContained = true;
 				if (!Scanner.ParseIdentifier(FunctionName, OutError))
 				{
-					OutError = LOCTEXT("FunctionMissingNameAfterSelfContained", "Function declaration is missing a valid function name after SelfContained.");
+					FailWith(OutError, TEXT("DSH3002"), LOCTEXT("FunctionMissingNameAfterSelfContained", "Function declaration is missing a valid function name after SelfContained."));
 					return false;
 				}
 			}
@@ -551,9 +551,9 @@ namespace UE::DreamShader
 				bHasReturnType = true;
 				if (!Scanner.ParseIdentifier(FunctionName, OutError))
 				{
-					OutError = FText::Format(LOCTEXT("SDeclarationIsMissingAFunction", "{0} declaration is missing a function name after the return type '{1}'."),
+					FailWith(OutError, TEXT("DSH3003"), FText::Format(LOCTEXT("SDeclarationIsMissingAFunction", "{0} declaration is missing a function name after the return type '{1}'."),
 					FText::FromString(bGraphFunction ? TEXT("GraphFunction") : TEXT("Function")),
-					FText::FromString(ReturnTypeToken));
+					FText::FromString(ReturnTypeToken)));
 					return false;
 				}
 			}
@@ -565,20 +565,20 @@ namespace UE::DreamShader
 			FString ParameterBlock;
 			if (!ExtractBalancedDelimited(Scanner, TCHAR('('), TCHAR(')'), ParameterBlock, OutError))
 			{
-				OutError = FText::Format(LOCTEXT("SSIsMissingAValid", "{0} '{1}' is missing a valid parameter list. {2}"),
+				FailWith(OutError, TEXT("DSH3004"), FText::Format(LOCTEXT("SSIsMissingAValid", "{0} '{1}' is missing a valid parameter list. {2}"),
 					FText::FromString(bGraphFunction ? TEXT("GraphFunction") : TEXT("Function")),
 					FText::FromString(QualifiedFunctionName),
-					OutError);
+					OutError.Message));
 				return false;
 			}
 
 			FString FunctionBody;
 			if (!ExtractBalancedDelimited(Scanner, TCHAR('{'), TCHAR('}'), FunctionBody, OutError))
 			{
-				OutError = FText::Format(LOCTEXT("SSIsMissingAValid2", "{0} '{1}' is missing a valid body block. {2}"),
+				FailWith(OutError, TEXT("DSH3005"), FText::Format(LOCTEXT("SSIsMissingAValid2", "{0} '{1}' is missing a valid body block. {2}"),
 					FText::FromString(bGraphFunction ? TEXT("GraphFunction") : TEXT("Function")),
 					FText::FromString(QualifiedFunctionName),
-					OutError);
+					OutError.Message));
 				return false;
 			}
 
@@ -612,7 +612,7 @@ namespace UE::DreamShader
 		static bool ParseNamespaceBlock(
 			FScanner& Scanner,
 			FTextShaderDefinition& OutDefinition,
-			FText& OutError)
+			FDreamShaderTextError& OutError)
 		{
 			TMap<FString, FString> Attributes;
 			if (!Scanner.ParseAttributes(Attributes, OutError))
@@ -627,14 +627,14 @@ namespace UE::DreamShader
 			}
 			else
 			{
-				OutError = LOCTEXT("NamespaceNameRequired", "Namespace(Name=\"...\") is required.");
+				FailWith(OutError, TEXT("DSH3020"), LOCTEXT("NamespaceNameRequired", "Namespace(Name=\"...\") is required."));
 				return false;
 			}
 
 			NamespaceName.TrimStartAndEndInline();
 			if (NamespaceName.IsEmpty())
 			{
-				OutError = LOCTEXT("NamespaceNameEmpty", "Namespace name cannot be empty.");
+				FailWith(OutError, TEXT("DSH3021"), LOCTEXT("NamespaceNameEmpty", "Namespace name cannot be empty."));
 				return false;
 			}
 
@@ -643,8 +643,8 @@ namespace UE::DreamShader
 				const TCHAR Char = NamespaceName[Index];
 				if ((Index == 0 && !IsIdentifierStart(Char)) || (Index > 0 && !IsIdentifierPart(Char)))
 				{
-					OutError = FText::Format(LOCTEXT("NamespaceNameSIsNotA", "Namespace name '{0}' is not a valid identifier."),
-					FText::FromString(NamespaceName));
+					FailWith(OutError, TEXT("DSH3022"), FText::Format(LOCTEXT("NamespaceNameSIsNotA", "Namespace name '{0}' is not a valid identifier."),
+					FText::FromString(NamespaceName)));
 					return false;
 				}
 			}
@@ -682,22 +682,20 @@ namespace UE::DreamShader
 					continue;
 				}
 
-				OutError = FText::Format(LOCTEXT("NamespaceSMayOnlyContainFunction", "Namespace '{0}' may only contain Function or GraphFunction blocks."),
-					FText::FromString(NamespaceName));
+				FailWith(OutError, TEXT("DSH3023"), FText::Format(LOCTEXT("NamespaceSMayOnlyContainFunction", "Namespace '{0}' may only contain Function or GraphFunction blocks."),
+					FText::FromString(NamespaceName)));
 				return false;
 			}
 		}
 	}
 
-	bool FTextShaderParser::Parse(const FString& SourceText, FTextShaderDefinition& OutDefinition, FText& OutError)
+	bool FTextShaderParser::Parse(const FString& SourceText, FTextShaderDefinition& OutDefinition, FDreamShaderTextError& OutError)
 	{
 		OutDefinition = FTextShaderDefinition();
-		FText ErrorText;
-		auto Fail = [&OutError](const FText& Error) -> bool
-		{
-			OutError = Error;
-			return false;
-		};
+		FDreamShaderTextError ErrorText;
+		// The old `Fail(FText)` lambda is gone: every site that used it now calls FailWith directly
+		// so it can name its own DSHnnnn code. PropagateFail stays -- it forwards a nested failure
+		// whole, code included, which is exactly the behaviour a wrap must have.
 		auto PropagateFail = [&OutError, &ErrorText]() -> bool
 		{
 			OutError = ErrorText;
@@ -719,7 +717,7 @@ namespace UE::DreamShader
 			{
 				if (bFoundShader)
 				{
-					return Fail(LOCTEXT("OnlyOneTopLevelShaderBlock", "Only one top-level Shader block is currently supported."));
+					return FailWith(OutError, TEXT("DSH3030"), LOCTEXT("OnlyOneTopLevelShaderBlock", "Only one top-level Shader block is currently supported."));
 				}
 
 				TMap<FString, FString> Attributes;
@@ -734,7 +732,7 @@ namespace UE::DreamShader
 				}
 				else
 				{
-				return Fail(LOCTEXT("ShaderNameRequired", "Shader(Name=\"...\") is required."));
+				return FailWith(OutError, TEXT("DSH3031"), LOCTEXT("ShaderNameRequired", "Shader(Name=\"...\") is required."));
 				}
 				if (const FString* Root = Attributes.Find(TEXT("Root")))
 				{
@@ -791,12 +789,12 @@ namespace UE::DreamShader
 				}
 				else
 				{
-					return Fail(LOCTEXT("VirtualFunctionNameRequired", "VirtualFunction(Name=\"...\") is required."));
+					return FailWith(OutError, TEXT("DSH3040"), LOCTEXT("VirtualFunctionNameRequired", "VirtualFunction(Name=\"...\") is required."));
 				}
 				Function.Name.TrimStartAndEndInline();
 				if (Function.Name.IsEmpty())
 				{
-					return Fail(LOCTEXT("VirtualFunctionNameCannotBeEmpty", "VirtualFunction name cannot be empty."));
+					return FailWith(OutError, TEXT("DSH3041"), LOCTEXT("VirtualFunctionNameCannotBeEmpty", "VirtualFunction name cannot be empty."));
 				}
 				if (const FString* Asset = Attributes.Find(TEXT("Asset")))
 				{
@@ -824,13 +822,13 @@ namespace UE::DreamShader
 				Function.Asset.TrimStartAndEndInline();
 				if (Function.Asset.IsEmpty())
 				{
-					return Fail(FText::Format(
+					return FailWith(OutError, TEXT("DSH3042"), FText::Format(
 						LOCTEXT("VirtualFunctionMustProvideOptionsAsset", "VirtualFunction '{0}' must provide Options = {{ Asset = Path(...); }}."),
 						FText::FromString(Function.Name)));
 				}
 				if (Function.Outputs.IsEmpty())
 				{
-					return Fail(FText::Format(
+					return FailWith(OutError, TEXT("DSH3043"), FText::Format(
 						LOCTEXT("VirtualFunctionMustDeclareAtLeastOneOutput", "VirtualFunction '{0}' must declare at least one output."),
 						FText::FromString(Function.Name)));
 				}
@@ -870,7 +868,7 @@ namespace UE::DreamShader
 
 				if (MaterialFunctionBlockName.IsEmpty())
 				{
-				return Fail(FText::Format(
+				return FailWith(OutError, TEXT("DSH2009"), FText::Format(
 					LOCTEXT("UnexpectedTokenNearIndex", "Unexpected token near index {0}."),
 					FText::AsNumber(Scanner.Index)));
 				}
@@ -889,7 +887,7 @@ namespace UE::DreamShader
 				}
 				else
 				{
-					return Fail(FText::Format(
+					return FailWith(OutError, TEXT("DSH3050"), FText::Format(
 						LOCTEXT("MaterialFunctionNameRequired", "{0}(Name=\"...\") is required."),
 						FText::FromString(MaterialFunctionBlockName)));
 				}
@@ -916,7 +914,7 @@ namespace UE::DreamShader
 
 		if (!bFoundShader && OutDefinition.Functions.IsEmpty() && OutDefinition.GraphFunctions.IsEmpty() && OutDefinition.MaterialFunctions.IsEmpty() && OutDefinition.VirtualFunctions.IsEmpty())
 		{
-			return Fail(LOCTEXT("ATopLevelShaderFunctionGraphFunction", "A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found."));
+			return FailWith(OutError, TEXT("DSH2010"), LOCTEXT("ATopLevelShaderFunctionGraphFunction", "A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found."));
 		}
 
 		bool bHasInitializedOutput = false;
@@ -931,7 +929,7 @@ namespace UE::DreamShader
 
 		if (bFoundShader && OutDefinition.Code.IsEmpty() && !bHasInitializedOutput)
 		{
-			return Fail(LOCTEXT("ShaderMustProvideAGraphBlock", "Shader must provide a Graph block."));
+			return FailWith(OutError, TEXT("DSH3032"), LOCTEXT("ShaderMustProvideAGraphBlock", "Shader must provide a Graph block."));
 		}
 
 		if (bFoundShader && OutDefinition.Outputs.IsEmpty())

@@ -185,7 +185,7 @@ namespace UE::DreamShader::Private
 			|| IsParameterNodeType(InTypeToken, TEXT("SparseVolumeTextureObjectParameter"));
 	}
 
-	static bool ParseTrailingMetadata(FString& InOutStatement, FTextShaderMetadata& OutMetadata, FText& OutError)
+	static bool ParseTrailingMetadata(FString& InOutStatement, FTextShaderMetadata& OutMetadata, FDreamShaderTextError& OutError)
 	{
 		FString Statement = InOutStatement.TrimStartAndEnd();
 		if (!Statement.EndsWith(TEXT("]")))
@@ -255,7 +255,7 @@ namespace UE::DreamShader::Private
 		FString Prefix = Statement.Left(MetadataStart).TrimStartAndEnd();
 		if (Prefix.IsEmpty())
 		{
-			OutError = LOCTEXT("MetadataMustFollowADeclaration", "Metadata must follow a declaration.");
+			FailWith(OutError, TEXT("DSH7001"), LOCTEXT("MetadataMustFollowADeclaration", "Metadata must follow a declaration."));
 			return false;
 		}
 
@@ -358,8 +358,8 @@ namespace UE::DreamShader::Private
 					|| !ParseScalarLiteral(Bounds[0].TrimStartAndEnd(), SliderMinValue)
 					|| !ParseScalarLiteral(Bounds[1].TrimStartAndEnd(), SliderMaxValue))
 				{
-					OutError = FText::Format(LOCTEXT("MetadataSliderMinMaxRequiresExactly", "Metadata 'Slider(min, max)' requires exactly two numeric bounds: '{0}'."),
-					FText::FromString(TrimmedEntry));
+					FailWith(OutError, TEXT("DSH7002"), FText::Format(LOCTEXT("MetadataSliderMinMaxRequiresExactly", "Metadata 'Slider(min, max)' requires exactly two numeric bounds: '{0}'."),
+					FText::FromString(TrimmedEntry)));
 					return false;
 				}
 
@@ -367,8 +367,8 @@ namespace UE::DreamShader::Private
 				const FString SliderMaxKey = NormalizeSettingKey(TEXT("SliderMax"));
 				if (OutMetadata.ReflectedProperties.Contains(SliderMinKey) || OutMetadata.ReflectedProperties.Contains(SliderMaxKey))
 				{
-					OutError = FText::Format(LOCTEXT("MetadataSliderMinSliderMaxIsDeclaredMore", "Metadata SliderMin/SliderMax is declared more than once (entry '{0}')."),
-					FText::FromString(TrimmedEntry));
+					FailWith(OutError, TEXT("DSH7003"), FText::Format(LOCTEXT("MetadataSliderMinSliderMaxIsDeclaredMore", "Metadata SliderMin/SliderMax is declared more than once (entry '{0}')."),
+					FText::FromString(TrimmedEntry)));
 					return false;
 				}
 				OutMetadata.ReflectedProperties.Add(SliderMinKey, FString::SanitizeFloat(SliderMinValue));
@@ -380,8 +380,8 @@ namespace UE::DreamShader::Private
 			FString Value;
 			if (!SplitTopLevelAssignment(Entry, Key, Value))
 			{
-				OutError = FText::Format(LOCTEXT("MetadataEntrySMustUseKey", "Metadata entry '{0}' must use Key=Value syntax."),
-					FText::FromString(Entry));
+				FailWith(OutError, TEXT("DSH7004"), FText::Format(LOCTEXT("MetadataEntrySMustUseKey", "Metadata entry '{0}' must use Key=Value syntax."),
+					FText::FromString(Entry)));
 				return false;
 			}
 
@@ -390,15 +390,15 @@ namespace UE::DreamShader::Private
 			Value = Unquote(Value).TrimStartAndEnd();
 			if (Key.IsEmpty())
 			{
-				OutError = FText::Format(LOCTEXT("InvalidMetadataEntryS", "Invalid metadata entry '{0}'."),
-					FText::FromString(Entry));
+				FailWith(OutError, TEXT("DSH7005"), FText::Format(LOCTEXT("InvalidMetadataEntryS", "Invalid metadata entry '{0}'."),
+					FText::FromString(Entry)));
 				return false;
 			}
 
 			if (OutMetadata.ReflectedProperties.Contains(Key))
 			{
-				OutError = FText::Format(LOCTEXT("MetadataKeySIsDeclaredMore", "Metadata key '{0}' is declared more than once."),
-					FText::FromString(OriginalKey));
+				FailWith(OutError, TEXT("DSH7006"), FText::Format(LOCTEXT("MetadataKeySIsDeclaredMore", "Metadata key '{0}' is declared more than once."),
+					FText::FromString(OriginalKey)));
 				return false;
 			}
 			OutMetadata.ReflectedProperties.Add(Key, Value);
@@ -416,8 +416,8 @@ namespace UE::DreamShader::Private
 				int32 SortPriority = 32;
 				if (!ParseIntegerLiteral(Value, SortPriority))
 				{
-					OutError = FText::Format(LOCTEXT("MetadataSortPriorityValueSIsNot", "Metadata SortPriority value '{0}' is not an integer."),
-					FText::FromString(Value));
+					FailWith(OutError, TEXT("DSH7007"), FText::Format(LOCTEXT("MetadataSortPriorityValueSIsNot", "Metadata SortPriority value '{0}' is not an integer."),
+					FText::FromString(Value)));
 					return false;
 				}
 				OutMetadata.bHasSortPriority = true;
@@ -477,7 +477,7 @@ namespace UE::DreamShader::Private
 	bool ParseUEBuiltinPropertyType(
 		const FString& InTypeToken,
 		FTextShaderPropertyDefinition& OutProperty,
-		FText& OutError)
+		FDreamShaderTextError& OutError)
 	{
 		FString CallSpec = InTypeToken.TrimStartAndEnd();
 		if (!CallSpec.StartsWith(TEXT("UE."), ESearchCase::IgnoreCase))
@@ -489,7 +489,7 @@ namespace UE::DreamShader::Private
 		CallSpec.TrimStartAndEndInline();
 		if (CallSpec.IsEmpty())
 		{
-			OutError = LOCTEXT("UEBuiltinPropertyDeclarationsMustSpecify", "UE builtin property declarations must specify a function name, for example UE.TexCoord UV.");
+			FailWith(OutError, TEXT("DSH7010"), LOCTEXT("UEBuiltinPropertyDeclarationsMustSpecify", "UE builtin property declarations must specify a function name, for example UE.TexCoord UV."));
 			return false;
 		}
 
@@ -501,15 +501,15 @@ namespace UE::DreamShader::Private
 			const int32 CloseParenIndex = CallSpec.Find(TEXT(")"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 			if (CloseParenIndex == INDEX_NONE || CloseParenIndex < OpenParenIndex)
 			{
-				OutError = FText::Format(LOCTEXT("InvalidUEBuiltinDeclarationS", "Invalid UE builtin declaration '{0}'."),
-					FText::FromString(InTypeToken));
+				FailWith(OutError, TEXT("DSH7011"), FText::Format(LOCTEXT("InvalidUEBuiltinDeclarationS", "Invalid UE builtin declaration '{0}'."),
+					FText::FromString(InTypeToken)));
 				return false;
 			}
 
 			if (!CallSpec.Mid(CloseParenIndex + 1).TrimStartAndEnd().IsEmpty())
 			{
-				OutError = FText::Format(LOCTEXT("UnexpectedCharactersAfterUEBuiltinArgument", "Unexpected characters after UE builtin argument list in '{0}'."),
-					FText::FromString(InTypeToken));
+				FailWith(OutError, TEXT("DSH7012"), FText::Format(LOCTEXT("UnexpectedCharactersAfterUEBuiltinArgument", "Unexpected characters after UE builtin argument list in '{0}'."),
+					FText::FromString(InTypeToken)));
 				return false;
 			}
 
@@ -519,8 +519,8 @@ namespace UE::DreamShader::Private
 
 		if (FunctionName.IsEmpty())
 		{
-			OutError = FText::Format(LOCTEXT("InvalidUEBuiltinDeclarationS2", "Invalid UE builtin declaration '{0}'."),
-					FText::FromString(InTypeToken));
+			FailWith(OutError, TEXT("DSH7011"), FText::Format(LOCTEXT("InvalidUEBuiltinDeclarationS2", "Invalid UE builtin declaration '{0}'."),
+					FText::FromString(InTypeToken)));
 			return false;
 		}
 
@@ -534,9 +534,9 @@ namespace UE::DreamShader::Private
 			FString ArgumentValue;
 			if (!SplitTopLevelAssignment(ArgumentStatement, ArgumentName, ArgumentValue))
 			{
-				OutError = FText::Format(LOCTEXT("UEBuiltinArgumentSMustUse", "UE builtin argument '{0}' must use named syntax like Key=Value in '{1}'."),
+				FailWith(OutError, TEXT("DSH7013"), FText::Format(LOCTEXT("UEBuiltinArgumentSMustUse", "UE builtin argument '{0}' must use named syntax like Key=Value in '{1}'."),
 					FText::FromString(ArgumentStatement),
-					FText::FromString(InTypeToken));
+					FText::FromString(InTypeToken)));
 				return false;
 			}
 
@@ -544,17 +544,17 @@ namespace UE::DreamShader::Private
 			ArgumentValue = Unquote(ArgumentValue).TrimStartAndEnd();
 			if (ArgumentName.IsEmpty() || ArgumentValue.IsEmpty())
 			{
-				OutError = FText::Format(LOCTEXT("InvalidUEBuiltinArgumentSIn", "Invalid UE builtin argument '{0}' in '{1}'."),
+				FailWith(OutError, TEXT("DSH7014"), FText::Format(LOCTEXT("InvalidUEBuiltinArgumentSIn", "Invalid UE builtin argument '{0}' in '{1}'."),
 					FText::FromString(ArgumentStatement),
-					FText::FromString(InTypeToken));
+					FText::FromString(InTypeToken)));
 				return false;
 			}
 
 			if (OutProperty.UEBuiltinArguments.Contains(ArgumentName))
 			{
-				OutError = FText::Format(LOCTEXT("UEBuiltinArgumentSIsDeclared", "UE builtin argument '{0}' is declared more than once in '{1}'."),
+				FailWith(OutError, TEXT("DSH7015"), FText::Format(LOCTEXT("UEBuiltinArgumentSIsDeclared", "UE builtin argument '{0}' is declared more than once in '{1}'."),
 					FText::FromString(ArgumentName),
-					FText::FromString(InTypeToken));
+					FText::FromString(InTypeToken)));
 				return false;
 			}
 
@@ -579,14 +579,14 @@ namespace UE::DreamShader::Private
 			return true;
 		}
 
-		OutError = FText::Format(LOCTEXT("UnsupportedUEBuiltinFunctionSUse", "Unsupported UE builtin function '{0}'. Use OutputType=\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\" for generic MaterialExpression calls."),
-					FText::FromString(FunctionName));
+		FailWith(OutError, TEXT("DSH7016"), FText::Format(LOCTEXT("UnsupportedUEBuiltinFunctionSUse", "Unsupported UE builtin function '{0}'. Use OutputType=\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\" for generic MaterialExpression calls."),
+					FText::FromString(FunctionName)));
 		return false;
 	}
 
 	// Parse a single property declaration statement (no trailing ';') into Property. Hoisted out of
 	// ParsePropertyStatements so the flat path and the Group(...) scope walker share identical parsing.
-	bool ParseSinglePropertyStatement(const FString& Statement, FTextShaderPropertyDefinition& Property, FText& OutError)
+	bool ParseSinglePropertyStatement(const FString& Statement, FTextShaderPropertyDefinition& Property, FDreamShaderTextError& OutError)
 	{
 		{
 			FString Trimmed = Statement.TrimStartAndEnd();
@@ -607,8 +607,8 @@ namespace UE::DreamShader::Private
 			FString NameToken;
 			if (!SplitDeclarationTypeAndName(Left, TypeToken, NameToken))
 			{
-				OutError = FText::Format(LOCTEXT("InvalidPropertyDeclarationS", "Invalid property declaration '{0}'."),
-					FText::FromString(Statement));
+				FailWith(OutError, TEXT("DSH7020"), FText::Format(LOCTEXT("InvalidPropertyDeclarationS", "Invalid property declaration '{0}'."),
+					FText::FromString(Statement)));
 				return false;
 			}
 
@@ -616,8 +616,8 @@ namespace UE::DreamShader::Private
 			NameToken.TrimStartAndEndInline();
 			if (NameToken.IsEmpty())
 			{
-				OutError = FText::Format(LOCTEXT("MissingPropertyNameInDeclarationS", "Missing property name in declaration '{0}'."),
-					FText::FromString(Statement));
+				FailWith(OutError, TEXT("DSH7021"), FText::Format(LOCTEXT("MissingPropertyNameInDeclarationS", "Missing property name in declaration '{0}'."),
+					FText::FromString(Statement)));
 				return false;
 			}
 
@@ -630,8 +630,8 @@ namespace UE::DreamShader::Private
 				TypeToken.TrimStartAndEndInline();
 				if (TypeToken.IsEmpty())
 				{
-					OutError = FText::Format(LOCTEXT("MissingPropertyTypeAfterConstIn", "Missing property type after const in declaration '{0}'."),
-					FText::FromString(Statement));
+					FailWith(OutError, TEXT("DSH7022"), FText::Format(LOCTEXT("MissingPropertyTypeAfterConstIn", "Missing property type after const in declaration '{0}'."),
+					FText::FromString(Statement)));
 					return false;
 				}
 			}
@@ -653,18 +653,18 @@ namespace UE::DreamShader::Private
 							bool bDefaultValue = false;
 							if (!ParseBooleanLiteral(Right, bDefaultValue))
 							{
-								OutError = FText::Format(LOCTEXT("InvalidBooleanDefaultValueSFor", "Invalid boolean default value '{0}' for property '{1}'."),
+								FailWith(OutError, TEXT("DSH7023"), FText::Format(LOCTEXT("InvalidBooleanDefaultValueSFor", "Invalid boolean default value '{0}' for property '{1}'."),
 					FText::FromString(Right),
-					FText::FromString(Property.Name));
+					FText::FromString(Property.Name)));
 								return false;
 							}
 							Property.ScalarDefaultValue = bDefaultValue ? 1.0 : 0.0;
 						}
 						else if (!ParseScalarLiteral(Right, Property.ScalarDefaultValue))
 						{
-							OutError = FText::Format(LOCTEXT("InvalidScalarDefaultValueSFor", "Invalid scalar default value '{0}' for property '{1}'."),
+							FailWith(OutError, TEXT("DSH7024"), FText::Format(LOCTEXT("InvalidScalarDefaultValueSFor", "Invalid scalar default value '{0}' for property '{1}'."),
 					FText::FromString(Right),
-					FText::FromString(Property.Name));
+					FText::FromString(Property.Name)));
 							return false;
 						}
 					}
@@ -683,9 +683,9 @@ namespace UE::DreamShader::Private
 						: (IsParameterNodeType(TypeToken, TEXT("CurveAtlasRowParameter")) ? 3 : 4);
 					if (Property.bHasDefaultValue && !ParseVectorLiteral(Right, Property.VectorDefaultValue))
 					{
-						OutError = FText::Format(LOCTEXT("InvalidVectorDefaultValueSFor", "Invalid vector default value '{0}' for property '{1}'."),
+						FailWith(OutError, TEXT("DSH7025"), FText::Format(LOCTEXT("InvalidVectorDefaultValueSFor", "Invalid vector default value '{0}' for property '{1}'."),
 					FText::FromString(Right),
-					FText::FromString(Property.Name));
+					FText::FromString(Property.Name)));
 						return false;
 					}
 				}
@@ -697,10 +697,10 @@ namespace UE::DreamShader::Private
 					Property.ComponentCount = 0;
 					if (Property.bHasDefaultValue && !ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError))
 					{
-						OutError = FText::Format(LOCTEXT("InvalidTextureDefaultValueSFor", "Invalid texture default value '{0}' for property '{1}'. {2}"),
+						FailWith(OutError, TEXT("DSH7026"), FText::Format(LOCTEXT("InvalidTextureDefaultValueSFor", "Invalid texture default value '{0}' for property '{1}'. {2}"),
 					FText::FromString(Right),
 					FText::FromString(Property.Name),
-					OutError);
+					OutError.Message));
 						return false;
 					}
 				}
@@ -723,18 +723,18 @@ namespace UE::DreamShader::Private
 					}
 					if (Property.bHasDefaultValue && !ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError))
 					{
-						OutError = FText::Format(LOCTEXT("InvalidTextureSampleDefaultValueS", "Invalid texture sample default value '{0}' for property '{1}'. {2}"),
+						FailWith(OutError, TEXT("DSH7027"), FText::Format(LOCTEXT("InvalidTextureSampleDefaultValueS", "Invalid texture sample default value '{0}' for property '{1}'. {2}"),
 					FText::FromString(Right),
 					FText::FromString(Property.Name),
-					OutError);
+					OutError.Message));
 						return false;
 					}
 				}
 				else
 				{
-					OutError = FText::Format(LOCTEXT("ParameterNodeTypeSIsRecognized", "Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\"float4\\\", ...) for reflected node creation."),
+					FailWith(OutError, TEXT("DSH7028"), FText::Format(LOCTEXT("ParameterNodeTypeSIsRecognized", "Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\"float4\\\", ...) for reflected node creation."),
 					FText::FromString(TypeToken),
-					FText::FromString(TypeToken));
+					FText::FromString(TypeToken)));
 					return false;
 				}
 			}
@@ -747,9 +747,9 @@ namespace UE::DreamShader::Private
 
 				if (Property.bHasDefaultValue)
 				{
-					OutError = FText::Format(LOCTEXT("UEBuiltinPropertySDoesNot", "UE builtin property '{0}' does not support inline defaults. Put arguments inside UE.{1}(...)."),
+					FailWith(OutError, TEXT("DSH7029"), FText::Format(LOCTEXT("UEBuiltinPropertySDoesNot", "UE builtin property '{0}' does not support inline defaults. Put arguments inside UE.{1}(...)."),
 					FText::FromString(Property.Name),
-					FText::FromString(Property.UEBuiltinFunctionName));
+					FText::FromString(Property.UEBuiltinFunctionName)));
 					return false;
 				}
 			}
@@ -765,9 +765,9 @@ namespace UE::DreamShader::Private
 				Property.ComponentCount = 1;
 				if (Property.bHasDefaultValue && !ParseScalarLiteral(Right, Property.ScalarDefaultValue))
 				{
-					OutError = FText::Format(LOCTEXT("InvalidScalarDefaultValueSFor2", "Invalid scalar default value '{0}' for property '{1}'."),
+					FailWith(OutError, TEXT("DSH7024"), FText::Format(LOCTEXT("InvalidScalarDefaultValueSFor2", "Invalid scalar default value '{0}' for property '{1}'."),
 					FText::FromString(Right),
-					FText::FromString(Property.Name));
+					FText::FromString(Property.Name)));
 					return false;
 				}
 			}
@@ -815,9 +815,9 @@ namespace UE::DreamShader::Private
 
 				if (Property.bHasDefaultValue && !ParseVectorLiteral(Right, Property.VectorDefaultValue))
 				{
-					OutError = FText::Format(LOCTEXT("InvalidVectorDefaultValueSFor2", "Invalid vector default value '{0}' for property '{1}'."),
+					FailWith(OutError, TEXT("DSH7025"), FText::Format(LOCTEXT("InvalidVectorDefaultValueSFor2", "Invalid vector default value '{0}' for property '{1}'."),
 					FText::FromString(Right),
-					FText::FromString(Property.Name));
+					FText::FromString(Property.Name)));
 					return false;
 				}
 			}
@@ -851,18 +851,18 @@ namespace UE::DreamShader::Private
 				{
 					if (!ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError))
 					{
-						OutError = FText::Format(LOCTEXT("InvalidTextureDefaultValueSFor2", "Invalid texture default value '{0}' for property '{1}'. {2}"),
+						FailWith(OutError, TEXT("DSH7026"), FText::Format(LOCTEXT("InvalidTextureDefaultValueSFor2", "Invalid texture default value '{0}' for property '{1}'. {2}"),
 					FText::FromString(Right),
 					FText::FromString(Property.Name),
-					OutError);
+					OutError.Message));
 						return false;
 					}
 				}
 			}
 			else
 			{
-				OutError = FText::Format(LOCTEXT("UnsupportedPropertyTypeS", "Unsupported property type '{0}'."),
-					FText::FromString(TypeToken));
+				FailWith(OutError, TEXT("DSH7030"), FText::Format(LOCTEXT("UnsupportedPropertyTypeS", "Unsupported property type '{0}'."),
+					FText::FromString(TypeToken)));
 				return false;
 			}
 
@@ -924,7 +924,7 @@ namespace UE::DreamShader::Private
 		const FString& InheritedGroup,
 		int32& InOutNextAutoSort,
 		TArray<FTextShaderPropertyDefinition>& OutProperties,
-		FText& OutError)
+		FDreamShaderTextError& OutError)
 	{
 		auto FlushStatement = [&](FString& Buffer) -> bool
 		{
@@ -1024,14 +1024,14 @@ namespace UE::DreamShader::Private
 					FString GroupName;
 					if (!TryMatchGroupHead(Buffer, GroupName))
 					{
-					OutError = FText::Format(
+					FailWith(OutError, TEXT("DSH3130"), FText::Format(
 						LOCTEXT("UnexpectedInPropertiesNearSOnly", "Unexpected '{{' in Properties near '{0}'. Only Group(\"Name\") {{ ... }} may open a brace here."),
-						FText::FromString(Buffer.TrimStartAndEnd()));
+						FText::FromString(Buffer.TrimStartAndEnd())));
 						return false;
 					}
 					if (GroupName.IsEmpty())
 					{
-						OutError = LOCTEXT("GroupRequiresANonEmptyName", "Group(...) requires a non-empty name.");
+						FailWith(OutError, TEXT("DSH3131"), LOCTEXT("GroupRequiresANonEmptyName", "Group(...) requires a non-empty name."));
 						return false;
 					}
 
@@ -1082,9 +1082,9 @@ namespace UE::DreamShader::Private
 
 					if (InnerStart == INDEX_NONE || InnerEnd == INDEX_NONE)
 					{
-						OutError = FText::Format(
+						FailWith(OutError, TEXT("DSH3132"), FText::Format(
 							LOCTEXT("UnterminatedGroupBlock", "Unterminated Group(\"{0}\") {{ ... }} block."),
-							FText::FromString(GroupName));
+							FText::FromString(GroupName)));
 						return false;
 					}
 
@@ -1120,13 +1120,13 @@ namespace UE::DreamShader::Private
 		return FlushStatement(Buffer);
 	}
 
-	bool ParsePropertyStatements(const FString& BlockContent, TArray<FTextShaderPropertyDefinition>& OutProperties, FText& OutError)
+	bool ParsePropertyStatements(const FString& BlockContent, TArray<FTextShaderPropertyDefinition>& OutProperties, FDreamShaderTextError& OutError)
 	{
 		int32 NextAutoSort = 0;
 		return ParsePropertyBlock(RemoveComments(BlockContent), FString(), NextAutoSort, OutProperties, OutError);
 	}
 
-	bool ParseSettingStatements(const FString& BlockContent, TMap<FString, FString>& OutSettings, FText& OutError)
+	bool ParseSettingStatements(const FString& BlockContent, TMap<FString, FString>& OutSettings, FDreamShaderTextError& OutError)
 	{
 		const TArray<FString> Statements = SplitStatements(RemoveComments(BlockContent));
 		for (const FString& Statement : Statements)
@@ -1138,8 +1138,8 @@ namespace UE::DreamShader::Private
 			// assignment, not the first inner '='.
 			if (!SplitTopLevelAssignment(Statement, Key, Value))
 			{
-				OutError = FText::Format(LOCTEXT("InvalidSettingDeclarationS", "Invalid setting declaration '{0}'."),
-					FText::FromString(Statement));
+				FailWith(OutError, TEXT("DSH7040"), FText::Format(LOCTEXT("InvalidSettingDeclarationS", "Invalid setting declaration '{0}'."),
+					FText::FromString(Statement)));
 				return false;
 			}
 
@@ -1147,8 +1147,8 @@ namespace UE::DreamShader::Private
 			Value = Unquote(Value);
 			if (Key.IsEmpty())
 			{
-				OutError = FText::Format(LOCTEXT("InvalidEmptySettingKeyInS", "Invalid empty setting key in '{0}'."),
-					FText::FromString(Statement));
+				FailWith(OutError, TEXT("DSH7041"), FText::Format(LOCTEXT("InvalidEmptySettingKeyInS", "Invalid empty setting key in '{0}'."),
+					FText::FromString(Statement)));
 				return false;
 			}
 
@@ -1158,14 +1158,14 @@ namespace UE::DreamShader::Private
 		return true;
 	}
 
-	bool ParseTypedDeclarationStatement(const FString& Statement, FTextShaderVariableDeclaration& OutDeclaration, FText& OutError)
+	bool ParseTypedDeclarationStatement(const FString& Statement, FTextShaderVariableDeclaration& OutDeclaration, FDreamShaderTextError& OutError)
 	{
 		const FString Trimmed = Statement.TrimStartAndEnd();
 		const int32 LastSpaceIndex = Trimmed.Find(TEXT(" "), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 		if (LastSpaceIndex == INDEX_NONE)
 		{
-			OutError = FText::Format(LOCTEXT("InvalidTypedDeclarationS", "Invalid typed declaration '{0}'."),
-					FText::FromString(Statement));
+			FailWith(OutError, TEXT("DSH3070"), FText::Format(LOCTEXT("InvalidTypedDeclarationS", "Invalid typed declaration '{0}'."),
+					FText::FromString(Statement)));
 			return false;
 		}
 
@@ -1174,8 +1174,8 @@ namespace UE::DreamShader::Private
 
 		if (OutDeclaration.Type.IsEmpty() || !IsIdentifierToken(OutDeclaration.Name))
 		{
-			OutError = FText::Format(LOCTEXT("InvalidTypedDeclarationS2", "Invalid typed declaration '{0}'."),
-					FText::FromString(Statement));
+			FailWith(OutError, TEXT("DSH3070"), FText::Format(LOCTEXT("InvalidTypedDeclarationS2", "Invalid typed declaration '{0}'."),
+					FText::FromString(Statement)));
 			return false;
 		}
 
@@ -1186,14 +1186,14 @@ namespace UE::DreamShader::Private
 		const FString& BlockContent,
 		TArray<FTextShaderVariableDeclaration>& OutOutputDeclarations,
 		TArray<FTextShaderOutputBinding>& OutOutputs,
-		FText& OutError)
+		FDreamShaderTextError& OutError)
 	{
 		const auto ParseOutputTarget = [&OutError](const FString& InTargetText, FTextShaderOutputBinding& OutBinding) -> bool
 		{
 			OutBinding.TargetText = InTargetText.TrimStartAndEnd();
 			if (OutBinding.TargetText.IsEmpty())
 			{
-				OutError = LOCTEXT("OutputBindingTargetCannotBeEmpty", "Output binding target cannot be empty.");
+				FailWith(OutError, TEXT("DSH3080"), LOCTEXT("OutputBindingTargetCannotBeEmpty", "Output binding target cannot be empty."));
 				return false;
 			}
 
@@ -1206,8 +1206,8 @@ namespace UE::DreamShader::Private
 				OutBinding.MaterialProperty = TargetText;
 				if (OutBinding.MaterialProperty.IsEmpty())
 				{
-					OutError = FText::Format(LOCTEXT("OutputBindingTargetSIsEmpty", "Output binding target '{0}' is empty."),
-					FText::FromString(InTargetText));
+					FailWith(OutError, TEXT("DSH3081"), FText::Format(LOCTEXT("OutputBindingTargetSIsEmpty", "Output binding target '{0}' is empty."),
+					FText::FromString(InTargetText)));
 					return false;
 				}
 				return true;
@@ -1215,8 +1215,8 @@ namespace UE::DreamShader::Private
 
 			if (!TargetText.StartsWith(TEXT("Expression"), ESearchCase::IgnoreCase))
 			{
-				OutError = FText::Format(LOCTEXT("OutputBindingTargetSMustStart", "Output binding target '{0}' must start with Base. for material outputs or Expression(...) for output nodes."),
-					FText::FromString(InTargetText));
+				FailWith(OutError, TEXT("DSH3082"), FText::Format(LOCTEXT("OutputBindingTargetSMustStart", "Output binding target '{0}' must start with Base. for material outputs or Expression(...) for output nodes."),
+					FText::FromString(InTargetText)));
 				return false;
 			}
 
@@ -1224,16 +1224,16 @@ namespace UE::DreamShader::Private
 			const int32 CloseParenIndex = TargetText.Find(TEXT(")"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 			if (OpenParenIndex == INDEX_NONE || CloseParenIndex == INDEX_NONE || CloseParenIndex <= OpenParenIndex)
 			{
-				OutError = FText::Format(LOCTEXT("InvalidOutputExpressionTargetS", "Invalid output expression target '{0}'."),
-					FText::FromString(InTargetText));
+				FailWith(OutError, TEXT("DSH3083"), FText::Format(LOCTEXT("InvalidOutputExpressionTargetS", "Invalid output expression target '{0}'."),
+					FText::FromString(InTargetText)));
 				return false;
 			}
 
 			const FString ExpressionKeyword = TargetText.Left(OpenParenIndex).TrimStartAndEnd();
 			if (!ExpressionKeyword.Equals(TEXT("Expression"), ESearchCase::IgnoreCase))
 			{
-				OutError = FText::Format(LOCTEXT("UnsupportedOutputTargetS", "Unsupported output target '{0}'."),
-					FText::FromString(InTargetText));
+				FailWith(OutError, TEXT("DSH3084"), FText::Format(LOCTEXT("UnsupportedOutputTargetS", "Unsupported output target '{0}'."),
+					FText::FromString(InTargetText)));
 				return false;
 			}
 
@@ -1241,24 +1241,24 @@ namespace UE::DreamShader::Private
 			const FString Suffix = TargetText.Mid(CloseParenIndex + 1).TrimStartAndEnd();
 			if (!Suffix.StartsWith(TEXT("."), ESearchCase::CaseSensitive))
 			{
-				OutError = FText::Format(LOCTEXT("ExpressionOutputTargetSMustSelect", "Expression output target '{0}' must select a pin with .Pin[index]."),
-					FText::FromString(InTargetText));
+				FailWith(OutError, TEXT("DSH3085"), FText::Format(LOCTEXT("ExpressionOutputTargetSMustSelect", "Expression output target '{0}' must select a pin with .Pin[index]."),
+					FText::FromString(InTargetText)));
 				return false;
 			}
 
 			FString PinSpecifier = Suffix.Mid(1).TrimStartAndEnd();
 			if (!PinSpecifier.StartsWith(TEXT("Pin["), ESearchCase::IgnoreCase) || !PinSpecifier.EndsWith(TEXT("]")))
 			{
-				OutError = FText::Format(LOCTEXT("ExpressionOutputTargetSMustUse", "Expression output target '{0}' must use .Pin[index] syntax."),
-					FText::FromString(InTargetText));
+				FailWith(OutError, TEXT("DSH3086"), FText::Format(LOCTEXT("ExpressionOutputTargetSMustUse", "Expression output target '{0}' must use .Pin[index] syntax."),
+					FText::FromString(InTargetText)));
 				return false;
 			}
 
 			const FString PinIndexText = PinSpecifier.Mid(4, PinSpecifier.Len() - 5).TrimStartAndEnd();
 			if (!ParseIntegerLiteral(PinIndexText, OutBinding.ExpressionPinIndex) || OutBinding.ExpressionPinIndex < 0)
 			{
-				OutError = FText::Format(LOCTEXT("ExpressionOutputTargetSHasAn", "Expression output target '{0}' has an invalid pin index."),
-					FText::FromString(InTargetText));
+				FailWith(OutError, TEXT("DSH3087"), FText::Format(LOCTEXT("ExpressionOutputTargetSHasAn", "Expression output target '{0}' has an invalid pin index."),
+					FText::FromString(InTargetText)));
 				return false;
 			}
 
@@ -1270,8 +1270,8 @@ namespace UE::DreamShader::Private
 				FString ArgumentValue;
 				if (!SplitTopLevelAssignment(ArgumentStatement, ArgumentName, ArgumentValue))
 				{
-					OutError = FText::Format(LOCTEXT("ExpressionOutputTargetArgumentSMust", "Expression output target argument '{0}' must use Key=Value syntax."),
-					FText::FromString(ArgumentStatement));
+					FailWith(OutError, TEXT("DSH3088"), FText::Format(LOCTEXT("ExpressionOutputTargetArgumentSMust", "Expression output target argument '{0}' must use Key=Value syntax."),
+					FText::FromString(ArgumentStatement)));
 					return false;
 				}
 
@@ -1279,15 +1279,15 @@ namespace UE::DreamShader::Private
 				ArgumentValue = Unquote(ArgumentValue).TrimStartAndEnd();
 				if (ArgumentName.IsEmpty() || ArgumentValue.IsEmpty())
 				{
-					OutError = FText::Format(LOCTEXT("InvalidExpressionOutputTargetArgumentS", "Invalid expression output target argument '{0}'."),
-					FText::FromString(ArgumentStatement));
+					FailWith(OutError, TEXT("DSH3089"), FText::Format(LOCTEXT("InvalidExpressionOutputTargetArgumentS", "Invalid expression output target argument '{0}'."),
+					FText::FromString(ArgumentStatement)));
 					return false;
 				}
 
 				if (OutBinding.ExpressionArguments.Contains(ArgumentName))
 				{
-					OutError = FText::Format(LOCTEXT("ExpressionOutputTargetArgumentSIs", "Expression output target argument '{0}' is declared more than once."),
-					FText::FromString(ArgumentName));
+					FailWith(OutError, TEXT("DSH3090"), FText::Format(LOCTEXT("ExpressionOutputTargetArgumentSIs", "Expression output target argument '{0}' is declared more than once."),
+					FText::FromString(ArgumentName)));
 					return false;
 				}
 
@@ -1301,8 +1301,8 @@ namespace UE::DreamShader::Private
 
 			if (OutBinding.ExpressionClass.IsEmpty())
 			{
-				OutError = FText::Format(LOCTEXT("ExpressionOutputTargetSMustSpecify", "Expression output target '{0}' must specify Class=\\\"...\\\"."),
-					FText::FromString(InTargetText));
+				FailWith(OutError, TEXT("DSH3091"), FText::Format(LOCTEXT("ExpressionOutputTargetSMustSpecify", "Expression output target '{0}' must specify Class=\\\"...\\\"."),
+					FText::FromString(InTargetText)));
 				return false;
 			}
 
@@ -1330,8 +1330,8 @@ namespace UE::DreamShader::Private
 					Declaration.DefaultValueText = RightSide.TrimStartAndEnd();
 					if (Declaration.DefaultValueText.IsEmpty())
 					{
-						OutError = FText::Format(LOCTEXT("InvalidOutputDeclarationInitializerS", "Invalid output declaration initializer '{0}'."),
-					FText::FromString(Statement));
+						FailWith(OutError, TEXT("DSH3092"), FText::Format(LOCTEXT("InvalidOutputDeclarationInitializerS", "Invalid output declaration initializer '{0}'."),
+					FText::FromString(Statement)));
 						return false;
 					}
 
@@ -1342,8 +1342,8 @@ namespace UE::DreamShader::Private
 				Binding.SourceText = RightSide.TrimStartAndEnd();
 				if (Binding.SourceText.IsEmpty())
 				{
-					OutError = FText::Format(LOCTEXT("InvalidOutputBindingS", "Invalid output binding '{0}'."),
-					FText::FromString(Statement));
+					FailWith(OutError, TEXT("DSH3093"), FText::Format(LOCTEXT("InvalidOutputBindingS", "Invalid output binding '{0}'."),
+					FText::FromString(Statement)));
 					return false;
 				}
 				if (!ParseOutputTarget(LeftSide, Binding))
@@ -1372,30 +1372,30 @@ namespace UE::DreamShader::Private
 		const FString& Statement,
 		FString& OutCallName,
 		TMap<FString, FString>& OutArguments,
-		FText& OutError)
+		FDreamShaderTextError& OutError)
 	{
 		const FString Trimmed = Statement.TrimStartAndEnd();
 		const int32 OpenParenIndex = Trimmed.Find(TEXT("("));
 		const int32 CloseParenIndex = Trimmed.Find(TEXT(")"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 		if (OpenParenIndex == INDEX_NONE || CloseParenIndex == INDEX_NONE || CloseParenIndex <= OpenParenIndex)
 		{
-			OutError = FText::Format(LOCTEXT("InvalidLayoutStatementS", "Invalid Layout statement '{0}'."),
-					FText::FromString(Statement));
+			FailWith(OutError, TEXT("DSH3100"), FText::Format(LOCTEXT("InvalidLayoutStatementS", "Invalid Layout statement '{0}'."),
+					FText::FromString(Statement)));
 			return false;
 		}
 
 		if (!Trimmed.Mid(CloseParenIndex + 1).TrimStartAndEnd().IsEmpty())
 		{
-			OutError = FText::Format(LOCTEXT("UnexpectedTextAfterLayoutStatementS", "Unexpected text after Layout statement '{0}'."),
-					FText::FromString(Statement));
+			FailWith(OutError, TEXT("DSH3101"), FText::Format(LOCTEXT("UnexpectedTextAfterLayoutStatementS", "Unexpected text after Layout statement '{0}'."),
+					FText::FromString(Statement)));
 			return false;
 		}
 
 		OutCallName = Trimmed.Left(OpenParenIndex).TrimStartAndEnd();
 		if (!IsIdentifierToken(OutCallName))
 		{
-			OutError = FText::Format(LOCTEXT("InvalidLayoutStatementNameInS", "Invalid Layout statement name in '{0}'."),
-					FText::FromString(Statement));
+			FailWith(OutError, TEXT("DSH3102"), FText::Format(LOCTEXT("InvalidLayoutStatementNameInS", "Invalid Layout statement name in '{0}'."),
+					FText::FromString(Statement)));
 			return false;
 		}
 
@@ -1407,8 +1407,8 @@ namespace UE::DreamShader::Private
 			FString ArgumentValue;
 			if (!SplitTopLevelAssignment(ArgumentStatement, ArgumentName, ArgumentValue))
 			{
-				OutError = FText::Format(LOCTEXT("LayoutArgumentSMustUseKey", "Layout argument '{0}' must use Key=Value syntax."),
-					FText::FromString(ArgumentStatement));
+				FailWith(OutError, TEXT("DSH3103"), FText::Format(LOCTEXT("LayoutArgumentSMustUseKey", "Layout argument '{0}' must use Key=Value syntax."),
+					FText::FromString(ArgumentStatement)));
 				return false;
 			}
 
@@ -1416,15 +1416,15 @@ namespace UE::DreamShader::Private
 			ArgumentValue = Unquote(ArgumentValue).TrimStartAndEnd();
 			if (ArgumentName.IsEmpty() || ArgumentValue.IsEmpty())
 			{
-				OutError = FText::Format(LOCTEXT("InvalidLayoutArgumentS", "Invalid Layout argument '{0}'."),
-					FText::FromString(ArgumentStatement));
+				FailWith(OutError, TEXT("DSH3104"), FText::Format(LOCTEXT("InvalidLayoutArgumentS", "Invalid Layout argument '{0}'."),
+					FText::FromString(ArgumentStatement)));
 				return false;
 			}
 
 			if (OutArguments.Contains(ArgumentName))
 			{
-				OutError = FText::Format(LOCTEXT("LayoutArgumentSIsDeclaredMore", "Layout argument '{0}' is declared more than once."),
-					FText::FromString(ArgumentName));
+				FailWith(OutError, TEXT("DSH3105"), FText::Format(LOCTEXT("LayoutArgumentSIsDeclaredMore", "Layout argument '{0}' is declared more than once."),
+					FText::FromString(ArgumentName)));
 				return false;
 			}
 
@@ -1438,13 +1438,13 @@ namespace UE::DreamShader::Private
 		const TMap<FString, FString>& Arguments,
 		const TCHAR* Name,
 		FString& OutValue,
-		FText& OutError)
+		FDreamShaderTextError& OutError)
 	{
 		const FString* Value = Arguments.Find(NormalizeSettingKey(Name));
 		if (!Value || Value->TrimStartAndEnd().IsEmpty())
 		{
-			OutError = FText::Format(LOCTEXT("LayoutArgumentSIsRequired", "Layout argument '{0}' is required."),
-					FText::FromString(Name));
+			FailWith(OutError, TEXT("DSH3106"), FText::Format(LOCTEXT("LayoutArgumentSIsRequired", "Layout argument '{0}' is required."),
+					FText::FromString(Name)));
 			return false;
 		}
 
@@ -1456,20 +1456,20 @@ namespace UE::DreamShader::Private
 		const TMap<FString, FString>& Arguments,
 		const TCHAR* Name,
 		int32& OutValue,
-		FText& OutError)
+		FDreamShaderTextError& OutError)
 	{
 		const FString* Value = Arguments.Find(NormalizeSettingKey(Name));
 		if (!Value || !ParseIntegerLiteral(*Value, OutValue))
 		{
-			OutError = FText::Format(LOCTEXT("LayoutArgumentSMustBeAn", "Layout argument '{0}' must be an integer."),
-					FText::FromString(Name));
+			FailWith(OutError, TEXT("DSH3107"), FText::Format(LOCTEXT("LayoutArgumentSMustBeAn", "Layout argument '{0}' must be an integer."),
+					FText::FromString(Name)));
 			return false;
 		}
 
 		return true;
 	}
 
-	bool ParseLayoutStatements(const FString& BlockContent, FTextShaderLayout& OutLayout, FText& OutError)
+	bool ParseLayoutStatements(const FString& BlockContent, FTextShaderLayout& OutLayout, FDreamShaderTextError& OutError)
 	{
 		OutLayout = FTextShaderLayout{};
 		const TArray<FString> Statements = SplitStatements(RemoveComments(BlockContent));
@@ -1495,9 +1495,9 @@ namespace UE::DreamShader::Private
 					|| !TryGetRequiredLayoutIntArgument(Arguments, TEXT("X"), Node.X, OutError)
 					|| !TryGetRequiredLayoutIntArgument(Arguments, TEXT("Y"), Node.Y, OutError))
 				{
-					OutError = FText::Format(LOCTEXT("InvalidLayoutNodeStatementSS", "Invalid Layout Node statement '{0}'. {1}"),
+					FailWith(OutError, TEXT("DSH3108"), FText::Format(LOCTEXT("InvalidLayoutNodeStatementSS", "Invalid Layout Node statement '{0}'. {1}"),
 					FText::FromString(Trimmed),
-					OutError);
+					OutError.Message));
 					return false;
 				}
 
@@ -1514,9 +1514,9 @@ namespace UE::DreamShader::Private
 					|| !TryGetRequiredLayoutIntArgument(Arguments, TEXT("W"), Comment.W, OutError)
 					|| !TryGetRequiredLayoutIntArgument(Arguments, TEXT("H"), Comment.H, OutError))
 				{
-					OutError = FText::Format(LOCTEXT("InvalidLayoutCommentStatementSS", "Invalid Layout Comment statement '{0}'. {1}"),
+					FailWith(OutError, TEXT("DSH3109"), FText::Format(LOCTEXT("InvalidLayoutCommentStatementSS", "Invalid Layout Comment statement '{0}'. {1}"),
 					FText::FromString(Trimmed),
-					OutError);
+					OutError.Message));
 					return false;
 				}
 
@@ -1524,8 +1524,8 @@ namespace UE::DreamShader::Private
 				{
 					if (!ParseVectorLiteral(*ColorText, Comment.Color))
 					{
-						OutError = FText::Format(LOCTEXT("LayoutCommentColorMustBeA", "Layout Comment Color must be a float4 literal in '{0}'."),
-					FText::FromString(Trimmed));
+						FailWith(OutError, TEXT("DSH3110"), FText::Format(LOCTEXT("LayoutCommentColorMustBeA", "Layout Comment Color must be a float4 literal in '{0}'."),
+					FText::FromString(Trimmed)));
 						return false;
 					}
 				}
@@ -1534,8 +1534,8 @@ namespace UE::DreamShader::Private
 				continue;
 			}
 
-			OutError = FText::Format(LOCTEXT("UnknownLayoutStatementS", "Unknown Layout statement '{0}'."),
-					FText::FromString(CallName));
+			FailWith(OutError, TEXT("DSH3111"), FText::Format(LOCTEXT("UnknownLayoutStatementS", "Unknown Layout statement '{0}'."),
+					FText::FromString(CallName)));
 			return false;
 		}
 
@@ -1561,7 +1561,7 @@ namespace UE::DreamShader::Private
 		const FString& InCode,
 		FString& OutCode,
 		TArray<FTextShaderGraphRegion>& OutRegions,
-		FText& OutError)
+		FDreamShaderTextError& OutError)
 	{
 		OutCode.Reset();
 		OutRegions.Reset();
@@ -1590,8 +1590,8 @@ namespace UE::DreamShader::Private
 				const FString Name = ParseRegionDirectiveName(Trimmed, TEXT("#Region"));
 				if (Name.IsEmpty())
 				{
-					OutError = FText::Format(LOCTEXT("GraphRegionOnLineDMust", "Graph #Region on line {0} must include a name."),
-					FText::AsNumber(LineNumber));
+					FailWith(OutError, TEXT("DSH3120"), FText::Format(LOCTEXT("GraphRegionOnLineDMust", "Graph #Region on line {0} must include a name."),
+					FText::AsNumber(LineNumber)));
 					return false;
 				}
 
@@ -1602,8 +1602,8 @@ namespace UE::DreamShader::Private
 			{
 				if (OpenRegions.IsEmpty())
 				{
-					OutError = FText::Format(LOCTEXT("GraphEndRegionOnLineDHas", "Graph #EndRegion on line {0} has no matching #Region."),
-					FText::AsNumber(LineNumber));
+					FailWith(OutError, TEXT("DSH3121"), FText::Format(LOCTEXT("GraphEndRegionOnLineDHas", "Graph #EndRegion on line {0} has no matching #Region."),
+					FText::AsNumber(LineNumber)));
 					return false;
 				}
 
@@ -1627,15 +1627,15 @@ namespace UE::DreamShader::Private
 
 		if (!OpenRegions.IsEmpty())
 		{
-			OutError = FText::Format(LOCTEXT("GraphRegionSIsMissingEndRegion", "Graph #Region '{0}' is missing #EndRegion."),
-					FText::FromString(OpenRegions.Last().Name));
+			FailWith(OutError, TEXT("DSH3122"), FText::Format(LOCTEXT("GraphRegionSIsMissingEndRegion", "Graph #Region '{0}' is missing #EndRegion."),
+					FText::FromString(OpenRegions.Last().Name)));
 			return false;
 		}
 
 		return true;
 	}
 
-	bool ParseTypedParameterStatements(const FString& BlockContent, TArray<FTextShaderFunctionParameter>& OutParameters, FText& OutError)
+	bool ParseTypedParameterStatements(const FString& BlockContent, TArray<FTextShaderFunctionParameter>& OutParameters, FDreamShaderTextError& OutError)
 	{
 		const TArray<FString> Statements = SplitStatements(RemoveComments(BlockContent));
 		for (const FString& Statement : Statements)
@@ -1661,8 +1661,8 @@ namespace UE::DreamShader::Private
 			const bool bHasDefaultValue = SplitTopLevelAssignment(Trimmed, Left, Right);
 			if (Left.TrimStartAndEnd().IsEmpty())
 			{
-				OutError = FText::Format(LOCTEXT("InvalidTypedDeclarationS3", "Invalid typed declaration '{0}'."),
-					FText::FromString(Statement));
+				FailWith(OutError, TEXT("DSH3070"), FText::Format(LOCTEXT("InvalidTypedDeclarationS3", "Invalid typed declaration '{0}'."),
+					FText::FromString(Statement)));
 				return false;
 			}
 
@@ -1722,7 +1722,7 @@ namespace UE::DreamShader::Private
 		}
 	}
 
-	bool ParseShaderBody(const FString& BodyContent, const int32 BodyContentStartIndex, FTextShaderDefinition& OutDefinition, FText& OutError)
+	bool ParseShaderBody(const FString& BodyContent, const int32 BodyContentStartIndex, FTextShaderDefinition& OutDefinition, FDreamShaderTextError& OutError)
 	{
 		FScanner Scanner(BodyContent);
 		while (true)
@@ -1773,7 +1773,7 @@ namespace UE::DreamShader::Private
 			}
 			else if (SectionName.Equals(TEXT("Graph"), ESearchCase::IgnoreCase))
 			{
-				FText RegionError;
+				FDreamShaderTextError RegionError;
 				FString CodeWithRegionDirectivesRemoved;
 				if (!ExtractGraphRegions(SectionBody, CodeWithRegionDirectivesRemoved, OutDefinition.GraphRegions, RegionError))
 				{
@@ -1797,13 +1797,13 @@ namespace UE::DreamShader::Private
 			}
 			else if (SectionName.Equals(TEXT("Code"), ESearchCase::IgnoreCase))
 			{
-				OutError = LOCTEXT("ShaderGraphCodeDeprecated", "Shader graph sections now use Graph = { ... }. Function Code = { ... } is still supported.");
+				FailWith(OutError, TEXT("DSH3065"), LOCTEXT("ShaderGraphCodeDeprecated", "Shader graph sections now use Graph = { ... }. Function Code = { ... } is still supported."));
 				return false;
 			}
 			else
 			{
-				OutError = FText::Format(LOCTEXT("UnknownShaderSectionS", "Unknown shader section '{0}'."),
-					FText::FromString(SectionName));
+				FailWith(OutError, TEXT("DSH3060"), FText::Format(LOCTEXT("UnknownShaderSectionS", "Unknown shader section '{0}'."),
+					FText::FromString(SectionName)));
 				return false;
 			}
 
@@ -1811,7 +1811,7 @@ namespace UE::DreamShader::Private
 		}
 	}
 
-	bool ParseFunctionBody(const FString& BodyContent, FTextShaderFunctionDefinition& OutFunction, FText& OutError)
+	bool ParseFunctionBody(const FString& BodyContent, FTextShaderFunctionDefinition& OutFunction, FDreamShaderTextError& OutError)
 	{
 		FScanner Scanner(BodyContent);
 		while (true)
@@ -1861,8 +1861,8 @@ namespace UE::DreamShader::Private
 			}
 			else
 			{
-				OutError = FText::Format(LOCTEXT("UnknownShaderFunctionSectionS", "Unknown shader function section '{0}'."),
-					FText::FromString(SectionName));
+				FailWith(OutError, TEXT("DSH3061"), FText::Format(LOCTEXT("UnknownShaderFunctionSectionS", "Unknown shader function section '{0}'."),
+					FText::FromString(SectionName)));
 				return false;
 			}
 
@@ -1870,7 +1870,7 @@ namespace UE::DreamShader::Private
 		}
 	}
 
-	bool ParseMaterialFunctionBody(const FString& BodyContent, const int32 BodyContentStartIndex, FTextShaderMaterialFunctionDefinition& OutFunction, FText& OutError)
+	bool ParseMaterialFunctionBody(const FString& BodyContent, const int32 BodyContentStartIndex, FTextShaderMaterialFunctionDefinition& OutFunction, FDreamShaderTextError& OutError)
 	{
 		FScanner Scanner(BodyContent);
 		while (true)
@@ -1929,7 +1929,7 @@ namespace UE::DreamShader::Private
 			}
 			else if (SectionName.Equals(TEXT("Graph"), ESearchCase::IgnoreCase))
 			{
-				FText RegionError;
+				FDreamShaderTextError RegionError;
 				FString CodeWithRegionDirectivesRemoved;
 				if (!ExtractGraphRegions(SectionBody, CodeWithRegionDirectivesRemoved, OutFunction.GraphRegions, RegionError))
 				{
@@ -1953,13 +1953,13 @@ namespace UE::DreamShader::Private
 			}
 			else if (SectionName.Equals(TEXT("Code"), ESearchCase::IgnoreCase))
 			{
-				OutError = LOCTEXT("MaterialFunctionGraphCodeDeprecated", "ShaderFunction, ShaderLayer, and ShaderLayerBlend graph sections now use Graph = { ... }. Function Code = { ... } is still supported.");
+				FailWith(OutError, TEXT("DSH3066"), LOCTEXT("MaterialFunctionGraphCodeDeprecated", "ShaderFunction, ShaderLayer, and ShaderLayerBlend graph sections now use Graph = { ... }. Function Code = { ... } is still supported."));
 				return false;
 			}
 			else
 			{
-				OutError = FText::Format(LOCTEXT("UnknownMaterialFunctionSectionS", "Unknown material function section '{0}'."),
-					FText::FromString(SectionName));
+				FailWith(OutError, TEXT("DSH3062"), FText::Format(LOCTEXT("UnknownMaterialFunctionSectionS", "Unknown material function section '{0}'."),
+					FText::FromString(SectionName)));
 				return false;
 			}
 
@@ -1967,7 +1967,7 @@ namespace UE::DreamShader::Private
 		}
 	}
 
-	bool ParseVirtualFunctionBody(const FString& BodyContent, FTextShaderVirtualFunctionDefinition& OutFunction, FText& OutError)
+	bool ParseVirtualFunctionBody(const FString& BodyContent, FTextShaderVirtualFunctionDefinition& OutFunction, FDreamShaderTextError& OutError)
 	{
 		FScanner Scanner(BodyContent);
 		while (true)
@@ -2021,13 +2021,13 @@ namespace UE::DreamShader::Private
 			else if (SectionName.Equals(TEXT("Graph"), ESearchCase::IgnoreCase)
 				|| SectionName.Equals(TEXT("Code"), ESearchCase::IgnoreCase))
 			{
-				OutError = LOCTEXT("VirtualFunctionNoGraphOrCode", "VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections.");
+				FailWith(OutError, TEXT("DSH3064"), LOCTEXT("VirtualFunctionNoGraphOrCode", "VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections."));
 				return false;
 			}
 			else
 			{
-				OutError = FText::Format(LOCTEXT("UnknownVirtualFunctionSectionS", "Unknown VirtualFunction section '{0}'."),
-					FText::FromString(SectionName));
+				FailWith(OutError, TEXT("DSH3063"), FText::Format(LOCTEXT("UnknownVirtualFunctionSectionS", "Unknown VirtualFunction section '{0}'."),
+					FText::FromString(SectionName)));
 				return false;
 			}
 

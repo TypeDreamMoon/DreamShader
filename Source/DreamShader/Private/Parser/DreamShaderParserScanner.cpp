@@ -73,14 +73,14 @@ namespace UE::DreamShader::Private
 		return false;
 	}
 
-	bool FScanner::Expect(const TCHAR Expected, FText& OutError)
+	bool FScanner::Expect(const TCHAR Expected, FDreamShaderTextError& OutError)
 	{
 		SkipIgnored();
 		if (!TryConsume(Expected))
 		{
-			OutError = FText::Format(LOCTEXT("ExpectedCNearIndexD", "Expected '{0}' near index {1}."),
+			FailWith(OutError, TEXT("DSH2001"), FText::Format(LOCTEXT("ExpectedCNearIndexD", "Expected '{0}' near index {1}."),
 					FText::FromString(FString::ChrN(1, Expected)),
-					FText::AsNumber(Index));
+					FText::AsNumber(Index)));
 			return false;
 		}
 		return true;
@@ -104,13 +104,13 @@ namespace UE::DreamShader::Private
 		return false;
 	}
 
-	bool FScanner::ParseIdentifier(FString& OutIdentifier, FText& OutError)
+	bool FScanner::ParseIdentifier(FString& OutIdentifier, FDreamShaderTextError& OutError)
 	{
 		SkipIgnored();
 		if (!(FChar::IsAlpha(Peek()) || Peek() == TCHAR('_')))
 		{
-			OutError = FText::Format(LOCTEXT("ExpectedIdentifierNearIndexD", "Expected identifier near index {0}."),
-					FText::AsNumber(Index));
+			FailWith(OutError, TEXT("DSH2002"), FText::Format(LOCTEXT("ExpectedIdentifierNearIndexD", "Expected identifier near index {0}."),
+					FText::AsNumber(Index)));
 			return false;
 		}
 
@@ -125,7 +125,7 @@ namespace UE::DreamShader::Private
 		return true;
 	}
 
-	bool FScanner::ParseSimpleValue(FString& OutValue, FText& OutError)
+	bool FScanner::ParseSimpleValue(FString& OutValue, FDreamShaderTextError& OutError)
 	{
 		SkipIgnored();
 
@@ -143,7 +143,7 @@ namespace UE::DreamShader::Private
 
 			if (IsAtEnd())
 			{
-				OutError = LOCTEXT("UnterminatedStringLiteral", "Unterminated string literal.");
+				FailWith(OutError, TEXT("DSH2003"), LOCTEXT("UnterminatedStringLiteral", "Unterminated string literal."));
 				return false;
 			}
 
@@ -166,15 +166,15 @@ namespace UE::DreamShader::Private
 		OutValue = Source.Mid(Start, Index - Start).TrimStartAndEnd();
 		if (OutValue.IsEmpty())
 		{
-			OutError = FText::Format(LOCTEXT("ExpectedValueNearIndexD", "Expected value near index {0}."),
-					FText::AsNumber(Index));
+			FailWith(OutError, TEXT("DSH2004"), FText::Format(LOCTEXT("ExpectedValueNearIndexD", "Expected value near index {0}."),
+					FText::AsNumber(Index)));
 			return false;
 		}
 
 		return true;
 	}
 
-	bool FScanner::ParseAttributes(TMap<FString, FString>& OutAttributes, FText& OutError)
+	bool FScanner::ParseAttributes(TMap<FString, FString>& OutAttributes, FDreamShaderTextError& OutError)
 	{
 		if (!Expect(TCHAR('('), OutError))
 		{
@@ -219,25 +219,25 @@ namespace UE::DreamShader::Private
 				return true;
 			}
 
-			OutError = FText::Format(LOCTEXT("ExpectedOrNearIndexD", "Expected ',' or ')' near index {0}."),
-					FText::AsNumber(Index));
+			FailWith(OutError, TEXT("DSH2005"), FText::Format(LOCTEXT("ExpectedOrNearIndexD", "Expected ',' or ')' near index {0}."),
+					FText::AsNumber(Index)));
 			return false;
 		}
 	}
 
-	bool FScanner::ExtractBalancedBlock(FString& OutBlock, FText& OutError)
+	bool FScanner::ExtractBalancedBlock(FString& OutBlock, FDreamShaderTextError& OutError)
 	{
 		int32 ContentStartIndex = INDEX_NONE;
 		return ExtractBalancedBlock(OutBlock, ContentStartIndex, OutError);
 	}
 
-	bool FScanner::ExtractBalancedBlock(FString& OutBlock, int32& OutContentStartIndex, FText& OutError)
+	bool FScanner::ExtractBalancedBlock(FString& OutBlock, int32& OutContentStartIndex, FDreamShaderTextError& OutError)
 	{
 		SkipIgnored();
 		if (Peek() != TCHAR('{'))
 		{
-			OutError = FText::Format(LOCTEXT("ExpectedCurlyNearIndex", "Expected '{{' near index {0}."),
-					FText::AsNumber(Index));
+			FailWith(OutError, TEXT("DSH2006"), FText::Format(LOCTEXT("ExpectedCurlyNearIndex", "Expected '{{' near index {0}."),
+					FText::AsNumber(Index)));
 			return false;
 		}
 
@@ -321,7 +321,7 @@ namespace UE::DreamShader::Private
 			}
 		}
 
-		OutError = LOCTEXT("UnterminatedBlock", "Unterminated block.");
+		FailWith(OutError, TEXT("DSH2007"), LOCTEXT("UnterminatedBlock", "Unterminated block."));
 		return false;
 	}
 
@@ -881,35 +881,35 @@ namespace UE::DreamShader::Private
 		return true;
 	}
 
-	bool ResolveTexturePluginRootPackagePath(const FString& Root, const FString& PluginName, FString& OutPackagePath, FText& OutError)
+	bool ResolveTexturePluginRootPackagePath(const FString& Root, const FString& PluginName, FString& OutPackagePath, FDreamShaderTextError& OutError)
 	{
 		if (!IsValidPluginPathSegment(PluginName))
 		{
-			OutError = FText::Format(LOCTEXT("TexturePathRootSHasAn", "Texture Path root '{0}' has an invalid plugin name."),
-					FText::FromString(Root));
+			FailWith(OutError, TEXT("DSH1010"), FText::Format(LOCTEXT("TexturePathRootSHasAn", "Texture Path root '{0}' has an invalid plugin name."),
+					FText::FromString(Root)));
 			return false;
 		}
 
 		const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
 		if (!Plugin.IsValid())
 		{
-			OutError = FText::Format(LOCTEXT("TexturePathRootSReferencesPlugin", "Texture Path root '{0}' references plugin '{1}', but no enabled plugin with that name was found."),
+			FailWith(OutError, TEXT("DSH1011"), FText::Format(LOCTEXT("TexturePathRootSReferencesPlugin", "Texture Path root '{0}' references plugin '{1}', but no enabled plugin with that name was found."),
 					FText::FromString(Root),
-					FText::FromString(PluginName));
+					FText::FromString(PluginName)));
 			return false;
 		}
 		if (!Plugin->IsEnabled())
 		{
-			OutError = FText::Format(LOCTEXT("TexturePathRootSReferencesPlugin2", "Texture Path root '{0}' references plugin '{1}', but the plugin is not enabled."),
+			FailWith(OutError, TEXT("DSH1012"), FText::Format(LOCTEXT("TexturePathRootSReferencesPlugin2", "Texture Path root '{0}' references plugin '{1}', but the plugin is not enabled."),
 					FText::FromString(Root),
-					FText::FromString(PluginName));
+					FText::FromString(PluginName)));
 			return false;
 		}
 		if (!Plugin->CanContainContent())
 		{
-			OutError = FText::Format(LOCTEXT("TexturePathRootSReferencesPlugin3", "Texture Path root '{0}' references plugin '{1}', but the plugin cannot contain content."),
+			FailWith(OutError, TEXT("DSH1013"), FText::Format(LOCTEXT("TexturePathRootSReferencesPlugin3", "Texture Path root '{0}' references plugin '{1}', but the plugin cannot contain content."),
 					FText::FromString(Root),
-					FText::FromString(PluginName));
+					FText::FromString(PluginName)));
 			return false;
 		}
 
@@ -933,7 +933,7 @@ namespace UE::DreamShader::Private
 		return true;
 	}
 
-	bool ResolveTexturePathRootPackagePath(const FString& Root, FString& OutPackagePath, FText& OutError)
+	bool ResolveTexturePathRootPackagePath(const FString& Root, FString& OutPackagePath, FDreamShaderTextError& OutError)
 	{
 		FString Normalized = Unquote(Root.TrimStartAndEnd());
 		Normalized.ReplaceInline(TEXT("\\"), TEXT("/"));
@@ -950,7 +950,7 @@ namespace UE::DreamShader::Private
 		Normalized.ParseIntoArray(Segments, TEXT("/"), true);
 		if (Segments.IsEmpty())
 		{
-			OutError = LOCTEXT("RelativeTexturePathReferencesRequireA", "Relative texture Path(...) references require a root such as Game, Engine, or Plugin.PluginName.");
+			FailWith(OutError, TEXT("DSH1014"), LOCTEXT("RelativeTexturePathReferencesRequireA", "Relative texture Path(...) references require a root such as Game, Engine, or Plugin.PluginName."));
 			return false;
 		}
 
@@ -986,8 +986,8 @@ namespace UE::DreamShader::Private
 		}
 		else
 		{
-			OutError = FText::Format(LOCTEXT("UnsupportedTexturePathRootSUse", "Unsupported texture Path root '{0}'. Use Game, Engine, or Plugin.PluginName."),
-					FText::FromString(Root));
+			FailWith(OutError, TEXT("DSH1015"), FText::Format(LOCTEXT("UnsupportedTexturePathRootSUse", "Unsupported texture Path root '{0}'. Use Game, Engine, or Plugin.PluginName."),
+					FText::FromString(Root)));
 			return false;
 		}
 
@@ -1000,7 +1000,7 @@ namespace UE::DreamShader::Private
 		return true;
 	}
 
-	bool ParseTextureAssetReference(const FString& InText, FString& OutObjectPath, FText& OutError)
+	bool ParseTextureAssetReference(const FString& InText, FString& OutObjectPath, FDreamShaderTextError& OutError)
 	{
 		const FString Trimmed = InText.TrimStartAndEnd();
 
@@ -1020,7 +1020,7 @@ namespace UE::DreamShader::Private
 			FString FunctionName;
 			if (!Scanner.ParseIdentifier(FunctionName, OutError) || !FunctionName.Equals(TEXT("Path"), ESearchCase::IgnoreCase))
 			{
-				OutError = LOCTEXT("TextureDefaultsMustUsePath", "Texture defaults must use Path(Game|Engine|Plugin.PluginName, \"/Folder/Asset\"), Path(\"/Game/Folder/Asset\"), or a bare \"/Game/Folder/Asset\".");
+				FailWith(OutError, TEXT("DSH1016"), LOCTEXT("TextureDefaultsMustUsePath", "Texture defaults must use Path(Game|Engine|Plugin.PluginName, \"/Folder/Asset\"), Path(\"/Game/Folder/Asset\"), or a bare \"/Game/Folder/Asset\"."));
 				return false;
 			}
 
@@ -1057,7 +1057,7 @@ namespace UE::DreamShader::Private
 			Scanner.SkipIgnored();
 			if (!Scanner.IsAtEnd())
 			{
-				OutError = LOCTEXT("UnexpectedTrailingTokensAfterTexturePath", "Unexpected trailing tokens after texture Path(...) reference.");
+				FailWith(OutError, TEXT("DSH1017"), LOCTEXT("UnexpectedTrailingTokensAfterTexturePath", "Unexpected trailing tokens after texture Path(...) reference."));
 				return false;
 			}
 		}
@@ -1066,7 +1066,7 @@ namespace UE::DreamShader::Private
 		AssetPath.ReplaceInline(TEXT("\\"), TEXT("/"));
 		if (AssetPath.IsEmpty())
 		{
-			OutError = LOCTEXT("TexturePathRequiresANonEmpty", "Texture Path(...) requires a non-empty asset path.");
+			FailWith(OutError, TEXT("DSH1018"), LOCTEXT("TexturePathRequiresANonEmpty", "Texture Path(...) requires a non-empty asset path."));
 			return false;
 		}
 
@@ -1095,8 +1095,8 @@ namespace UE::DreamShader::Private
 		const int32 LastDotIndex = LongObjectPath.Find(TEXT("."), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 		if (LastSlashIndex == INDEX_NONE || LastSlashIndex >= LongObjectPath.Len() - 1)
 		{
-			OutError = FText::Format(LOCTEXT("InvalidTextureAssetPathS", "Invalid texture asset path '{0}'."),
-					FText::FromString(LongObjectPath));
+			FailWith(OutError, TEXT("DSH1019"), FText::Format(LOCTEXT("InvalidTextureAssetPathS", "Invalid texture asset path '{0}'."),
+					FText::FromString(LongObjectPath)));
 			return false;
 		}
 
@@ -1106,11 +1106,12 @@ namespace UE::DreamShader::Private
 			LongObjectPath += TEXT(".") + AssetName;
 		}
 
+		// Stays an FText: this is FPackageName's own out-param, not a DreamShader diagnostic. The
+		// engine's wording is the detail; DSH1020 is what identifies the failure.
 		FText PathError;
 		if (!FPackageName::IsValidObjectPath(LongObjectPath, &PathError))
 		{
-			OutError = PathError;
-			return false;
+			return FailWith(OutError, TEXT("DSH1020"), PathError);
 		}
 
 		OutObjectPath = LongObjectPath;
