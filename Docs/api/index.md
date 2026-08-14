@@ -168,7 +168,7 @@ three public headers, which use only `FString`.
 | [`DreamShaderParser.h`](parser.md) | `FTextShaderParser::Parse` — contract, diagnostics, thread requirements |
 | [`DreamShaderSettings.h`](settings.md) | `UDreamShaderSettings`, `EDreamShaderDefaultBackend`, and the alias catalogues |
 | [`DreamShaderMaterialInstance.h`](material-instance.md) | `UDreamShaderMaterialInstance` and its two overrides |
-| [`DreamShaderVersionCompat.h`](version-compat.md) | The six macros and every version-gated behaviour they select |
+| [`DreamShaderVersionCompat.h`](version-compat.md) | The compat macros and every version-gated behaviour they select |
 | [`DreamShaderCompiler`](compiler-module.md) | The compile interface, request/result structs, service, and module |
 
 ## Notes

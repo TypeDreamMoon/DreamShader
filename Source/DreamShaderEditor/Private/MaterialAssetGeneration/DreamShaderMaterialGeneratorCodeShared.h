@@ -344,6 +344,22 @@ namespace UE::DreamShader::Editor::Private
 #endif
 	}
 
+	// Whether the material editor draws a preview thumbnail on this node, which is worth a node's
+	// height in the layout pass. UE 5.7 exposes it as ShouldShowPreview(); earlier engines have the
+	// two flags it is composed from and nothing that reads them.
+	inline bool DoesDreamShaderExpressionShowPreview(const UMaterialExpression* Expression)
+	{
+		if (!Expression)
+		{
+			return false;
+		}
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 7)
+		return Expression->ShouldShowPreview();
+#else
+		return !Expression->bHidePreviewWindow && !Expression->bCollapsed;
+#endif
+	}
+
 	inline bool ConnectDreamShaderSetMaterialAttributeInput(
 		UMaterialExpressionSetMaterialAttributes* Expression,
 		const EMaterialProperty Attribute,
@@ -467,6 +483,24 @@ namespace UE::DreamShader::Editor::Private
 	{
 		return Expression && Expression->GetClass()->GetName().Equals(TEXT("MaterialExpressionRotator"), ESearchCase::IgnoreCase);
 	}
+
+	// StaticClass() for an engine material-expression class that carries no export macro, e.g.
+	// UMaterialExpressionSceneDepth: UCLASS() with neither MinimalAPI nor ENGINE_API.
+	//
+	// From UE 5.6, UHT emits DECLARE_CLASS2 with an exported Z_Construct_<Class>_NoRegister, so
+	// StaticClass() resolves from a plugin regardless. UE 5.5 and earlier emit
+	// DECLARE_CLASS(..., NO_API): GetPrivateStaticClass never leaves Engine.dll and naming
+	// StaticClass() is an unresolved external -- a *link* error, so it compiles clean on every
+	// engine and only shows up in a full BuildPlugin. There the class is resolved by script path.
+	//
+	// Takes the class name without the leading U. Null below 5.6 if the class is not loaded, so
+	// call sites must guard, the same way ObjectPositionWS and ScreenPosition already do.
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+#define DREAMSHADER_ENGINE_EXPRESSION_CLASS(ExpressionName) U##ExpressionName::StaticClass()
+#else
+#define DREAMSHADER_ENGINE_EXPRESSION_CLASS(ExpressionName) \
+	FindObject<UClass>(nullptr, TEXT("/Script/Engine.") TEXT(#ExpressionName))
+#endif
 
 	inline bool TryResolveKnownExpressionOutputComponentCount(
 		const UMaterialExpression* Expression,

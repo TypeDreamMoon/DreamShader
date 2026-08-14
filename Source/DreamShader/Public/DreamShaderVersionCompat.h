@@ -59,3 +59,13 @@
 // MCT_Substrate and checkf(false)s on its default branch. 5.8 added the missing case, so this is a
 // 5.7-and-earlier engine defect, not something the caller can validate around.
 #define DREAMSHADER_MATERIAL_AGGREGATE_HANDLES_SUBSTRATE DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
+
+// UMaterialExpressionScalarParameter gained ControlType, Enumeration and EnumerationIndex -- and the
+// EMaterialScalarParameterControlType enum they are typed on -- in UE 5.7. Before that a scalar
+// parameter is a value plus slider bounds and there is no enumerated-control surface to round trip.
+#define DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE DREAMSHADER_UE_VERSION_AT_LEAST(5, 7)
+
+// UE 5.7 moved the material-parameter types (FMaterialParameterInfo and friends) into
+// Materials/MaterialParameters.h and deprecated the MaterialTypes.h that used to declare them.
+// Including the wrong one is a hard error going back and a deprecation warning going forward.
+#define DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER DREAMSHADER_UE_VERSION_AT_LEAST(5, 7)

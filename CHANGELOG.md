@@ -36,6 +36,12 @@
 - The *DreamShader Gen* page labels a plugin-root file with its root name in the row subtitle, and
   the search box matches root names — typing a plugin's name filters to everything it ships.
 
+- **`.skill/build-plugin.ps1`** — `RunUAT BuildPlugin` across a list of engine roots, one `PASS` /
+  `FAIL` line each, exit code = the number that failed. Every engine builds into its own `-Package`
+  directory, so the runs share no state and the plugin's `Binaries/` and `Intermediate/` are left
+  alone. This is what caught the five ungated newer-engine APIs below; an editor build against one
+  engine cannot, and neither can any compile-time check, because one of the five is a link error.
+
 ### Changed
 
 - **Automatic layout places nodes at their real size.** Every node used to be assumed `320 × 150`
@@ -75,6 +81,25 @@
   than handing the same file to two owners.
 
 ### Fixed
+
+- **The plugin builds again on UE 5.5 and 5.6.** Five UE 5.7 APIs had been used without a gate, so
+  the plugin compiled only on the engine it was written against. All five now route through
+  `DreamShaderVersionCompat.h` like everything else version-dependent:
+  - `Materials/MaterialParameters.h` is 5.7 and later; `MaterialTypes.h` declares
+    `FMaterialParameterInfo` before it, and is a deprecation stub after.
+  - `UMaterialExpression::ShouldShowPreview()` is 5.7; the layout pass falls back to
+    `!bHidePreviewWindow && !bCollapsed`, which is what 5.7 composed it from — same answer, no
+    behaviour change.
+  - `UMaterialExpressionScalarParameter::ControlType` / `Enumeration` / `EnumerationIndex` are 5.7.
+    The decompiler exports them only there; below 5.7 there is no such property to read or write.
+  - `UMaterialExpressionCustomOutput::GetInputValueType` is 5.6, and the decompiler was calling it
+    directly instead of through the shim the generator already had for exactly this.
+  - Six engine expression classes — `SceneDepth`, `SceneColor`, `ObjectRadius`, `ObjectBounds`,
+    `PerInstanceRandom`, `PerInstanceFadeAmount` — are `UCLASS()` with no export macro, and before
+    5.6 their `StaticClass()` does not resolve from a plugin at all. This one is a `LNK2019`, not a
+    compile error: it passes every compile-time check and only a full `RunUAT BuildPlugin` sees it.
+    Below 5.6 the class is looked up by script path instead, so the `UE.*` builtins behave the same;
+    they are dropped from the builtin table only if that lookup fails.
 
 - `DreamShaderMaterialGenerator.cpp` did not include `UObject/Package.h` despite calling
   `GetPackage()->SetDirtyFlag()`, `HasAnyPackageFlags()` and deducing `FindObject`/`NewObject`

@@ -24,7 +24,13 @@
 #include "ShaderCompiler.h"
 #include "MaterialShared.h"
 #include "Materials/Material.h"
+// FMaterialParameterInfo: Materials/MaterialParameters.h from UE 5.7, MaterialTypes.h before it.
+// MaterialTypes.h still exists on 5.7 but is a deprecation stub, so neither spelling covers both.
+#if DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER
 #include "Materials/MaterialParameters.h"
+#else
+#include "MaterialTypes.h"
+#endif
 #include "Materials/MaterialFunction.h"
 #include "Materials/MaterialExpressionTextureSampleParameter2D.h"
 #include "MaterialEditingLibrary.h"

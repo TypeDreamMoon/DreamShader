@@ -146,7 +146,7 @@ namespace UE::DreamShader::Editor::Private
 
 					OutputDeclarations.Add(FString::Printf(
 						TEXT("\t\t%s %s;"),
-						*GetDreamShaderTypeForMaterialValueType(CustomOutput->GetInputValueType(PinIndex)),
+						*GetDreamShaderTypeForMaterialValueType(GetDreamShaderExpressionInputValueType(CustomOutput, PinIndex)),
 						*VariableName));
 					OutputBindings.Add(FString::Printf(
 						TEXT("\t\tExpression(Class=\"%s\").Pin[%d] = %s;"),
@@ -557,12 +557,17 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
+		// ControlType / Enumeration / EnumerationIndex are the UE 5.7 enumerated-control surface. On an
+		// older engine the properties do not exist, so there is nothing to read and nothing to emit --
+		// a source carrying them still parses, it just has no property to write them to.
+#if DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE
 		AddEnumMetadata(
 			Entries,
 			TEXT("ControlType"),
 			StaticEnum<EMaterialScalarParameterControlType>(),
 			static_cast<int64>(Parameter->ControlType),
 			static_cast<int64>(EMaterialScalarParameterControlType::Numeric));
+#endif
 
 		// The engine treats the slider bounds as disabled when SliderMax <= SliderMin, which is also the
 		// (0, 0) default -- so only an actually-configured range is worth emitting.
@@ -572,6 +577,7 @@ namespace UE::DreamShader::Editor::Private
 			Entries.Add(FString::Printf(TEXT("SliderMax=%s;"), *FormatDreamShaderFloat(Parameter->SliderMax)));
 		}
 
+#if DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE
 		// TSoftObjectPtr: read the path, not the resolved object, so an unloaded enum still round-trips.
 		if (!Parameter->Enumeration.IsNull())
 		{
@@ -581,6 +587,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		AddIntMetadata(Entries, TEXT("EnumerationIndex"), static_cast<int32>(Parameter->EnumerationIndex), 0);
+#endif
 		AddBoolMetadata(Entries, TEXT("UseCustomPrimitiveData"), Parameter->bUseCustomPrimitiveData, false);
 		if (Parameter->bUseCustomPrimitiveData)
 		{

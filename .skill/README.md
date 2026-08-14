@@ -6,6 +6,10 @@ Five skills that let an agent author, migrate and verify DreamShaderLang sources
 Unreal editor, and the driver they all call. The driver is the deliverable; each `SKILL.md` is its
 man page for one task.
 
+[`build-plugin.ps1`](build-plugin.ps1) sits alongside them and answers a different question — not
+"does this source compile" but "does the *plugin* still build on every engine it claims to support".
+It is not a skill and `sync-skills.ps1` does not publish it.
+
 | | |
 | :-- | :-- |
 | Source of truth | `Plugins/DreamShader/.skill/` — edit here |
@@ -131,6 +135,7 @@ comparison accounts for it, so editing a published copy shows up as drift.
 .skill/
 ├─ README.md                        this page
 ├─ dsc.ps1                          the driver — wraps -run=DreamShader
+├─ build-plugin.ps1                 RunUAT BuildPlugin across a list of engines
 ├─ sync-skills.ps1                  publishes into .claude/skills, rewriting paths
 ├─ reference/
 │  └─ dreamshaderlang.md            the grammar subset an author needs
@@ -154,6 +159,7 @@ comparison accounts for it, so editing a published copy shows up as drift.
 
 ## See also
 
+- [`Docs/contributing/index.md`](../Docs/contributing/index.md#the-engine-matrix) — `build-plugin.ps1`, and why 5.3 / 5.4 fail on a recent MSVC
 - [`Docs/index.md`](../Docs/index.md) — the plugin's own reference manual
 - [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md) — the full flag surface behind the driver
 - [`Docs/diagnostics/index.md`](../Docs/diagnostics/index.md) — every message, by stage

@@ -2,8 +2,8 @@
 
 > [DreamShader](../index.md) » [C++ API](index.md) » **DreamShaderVersionCompat.h**
 
-Six preprocessor macros that gate every engine-version-dependent behaviour in the plugin. This page
-is the source of truth for every *(since UE 5.x)* marker in the manual.
+Twelve preprocessor macros that gate every engine-version-dependent behaviour in the plugin. This
+page is the source of truth for every *(since UE 5.x)* marker in the manual.
 
 Defined in header `DreamShaderVersionCompat.h`.
 
@@ -11,11 +11,14 @@ Defined in header `DreamShaderVersionCompat.h`.
 | :-- | :-- |
 | Module | `DreamShader` (Runtime), included by all three modules |
 | Include | `#include "DreamShaderVersionCompat.h"` |
-| Contents | 6 macros. **No types, no functions, no namespace.** |
+| Contents | 12 macros. **No types, no functions, no namespace.** |
 | Only dependency | `Runtime/Launch/Resources/Version.h` |
 | Verified engines | UE `5.3` – `5.8` (Win64) |
 
 ## Synopsis
+
+The version arithmetic every other macro is built on. The feature gates that use it are in
+[Macros](#macros) below.
 
 ```cpp
 #include "Runtime/Launch/Resources/Version.h"
@@ -54,14 +57,20 @@ Defined in header `DreamShaderVersionCompat.h`.
 | `DREAMSHADER_UE_MINOR` | `ENGINE_MINOR_VERSION` | **yes** — `#ifndef` guarded | The minor version. |
 | `DREAMSHADER_UE_PATCH` | `ENGINE_PATCH_VERSION` | **yes** — `#ifndef` guarded | Declared for completeness. **Never referenced anywhere in the plugin.** |
 | `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` | `(MAJOR > 5 \|\| (MAJOR == 5 && MINOR >= 4))` — i.e. **UE ≥ 5.4** | **yes** — `#ifndef` guarded | The single Substrate feature gate. |
+| `DREAMSHADER_WITH_MOON_ENGINE` | `1` when the engine's `SceneTypes.h` declares `MP_MoonEncodedAttribute0`, `0` otherwise | **yes** — `#ifndef` guarded, and `DreamShader.Build.cs` sets it as a `PublicDefinition` from that probe | Moon Engine's extra material attributes. Not a version test: the probe reads the enumerator the guarded code needs, so it works for any fork that carries it. |
 | `DREAMSHADER_UE_VERSION_AT_LEAST(Major, Minor)` | `(MAJOR > Major \|\| (MAJOR == Major && MINOR >= Minor))` | no — unconditional `#define` | The general "at least this engine" test. |
 | `DREAMSHADER_ALLOW_SHRINKING_NO` | `EAllowShrinking::No` on UE ≥ 5.4, `false` below | no — selected by `#if` | Portability shim, described below. |
+| `DREAMSHADER_POST_ENGINE_INIT_DELEGATE()` | `FCoreDelegates::GetOnPostEngineInit()` on UE ≥ 5.8, the `OnPostEngineInit` data member below | no — selected by `#if` | 5.8 added the accessor and deprecated the member, so naming either one directly breaks the other engine. |
+| `DREAMSHADER_THUMBNAIL_PRIM_SHADERBALL` | `TPT_ShaderBall` on UE ≥ 5.8, `TPT_Sphere` below | no — selected by `#if` | `EThumbnailPrimType` stops at `TPT_Cylinder` before 5.8; the preview falls back to the sphere. |
+| `DREAMSHADER_MATERIAL_AGGREGATE_HANDLES_SUBSTRATE` | **UE ≥ 5.8** | no — unconditional `#define` | Whether `MaterialValueTypeToMaterialAggregateAttributeType` has a case for `MCT_Substrate`. Below 5.8 it `checkf(false)`s, so the manifest exporter must not make the call for `UMaterialExpressionAggregate` at all. |
+| `DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE` | **UE ≥ 5.7** | no — unconditional `#define` | Whether `UMaterialExpressionScalarParameter` has `ControlType`, `Enumeration` and `EnumerationIndex`. |
+| `DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER` | **UE ≥ 5.7** | no — unconditional `#define` | Which header declares `FMaterialParameterInfo`: `Materials/MaterialParameters.h` from 5.7, `MaterialTypes.h` before it. |
 
-The first four are guarded with `#ifndef`, so a build target may pre-define them — for example to
-compile the Substrate paths out on a 5.4+ engine by defining
-`DREAMSHADER_WITH_SUBSTRATE_BUILTINS=0`, or to force a version branch when testing. The plugin
-itself defines none of them in any `Build.cs`; neither `PublicDefinitions` nor `PrivateDefinitions`
-is set by any of the three modules.
+The five `#ifndef`-guarded ones may be pre-defined by a build target — for example to compile the
+Substrate paths out on a 5.4+ engine by defining `DREAMSHADER_WITH_SUBSTRATE_BUILTINS=0`, or to force
+a version branch when testing. `DreamShader.Build.cs` uses that to set
+`DREAMSHADER_WITH_MOON_ENGINE`, and is the only `PublicDefinitions` entry in the plugin; no module
+sets `PrivateDefinitions` at all.
 
 > [!NOTE]
 > `DREAMSHADER_ALLOW_SHRINKING_NO` carries **no behavioural difference**. It exists solely because
@@ -132,6 +141,16 @@ threshold is the same 5.4.
 | `UE.TransformPosition` argument `FirstPersonInterpolationAlpha` | honoured | error: `UE.TransformPosition FirstPersonInterpolationAlpha requires Unreal Engine 5.6 or newer.` |
 | Transform bases `firstperson` / `firstpersontranslatedworld` | resolve to `TRANSFORMPOSSOURCE_FirstPersonTranslatedWorld` | unsupported |
 | Decompiler `TextureSample` export | `GatherMode` is round-tripped | omitted |
+| Unexported engine expression classes — `SceneDepth`, `SceneColor`, `ObjectRadius`, `ObjectBounds`, `PerInstanceRandom`, `PerInstanceFadeAmount` | `StaticClass()` directly, via `DREAMSHADER_ENGINE_EXPRESSION_CLASS` | `FindObject<UClass>(nullptr, "/Script/Engine.MaterialExpression<Name>")`. The `UE.*` builtins behave the same either way; they are only dropped from the table if the lookup fails |
+
+> [!NOTE]
+> That last row is a **link**-time gate, not a compile-time one. UE 5.6 changed UHT to emit
+> `DECLARE_CLASS2` with an exported `Z_Construct_<Class>_NoRegister`, so `StaticClass()` resolves
+> from a plugin even for a `UCLASS()` that carries neither `MinimalAPI` nor `ENGINE_API`. UE 5.5 and
+> earlier emit `DECLARE_CLASS(..., NO_API)`: `GetPrivateStaticClass` never leaves `Engine.dll`, and
+> naming `StaticClass()` compiles on every engine and then fails with `LNK2019`. Only a full
+> [`RunUAT BuildPlugin`](../contributing/index.md#synopsis) sees it — an editor build against one
+> engine never will.
 
 ### UE ≥ 5.7
 
@@ -141,6 +160,9 @@ threshold is the same 5.4.
 | Material-parameter-collection expressions | a fresh `ExpressionGUID` is assigned when the existing one is invalid | skipped |
 | `UE.CollectionParam` / `UE.CollectionParameter` | `Group` and `SortPriority` metadata are honoured | ignored |
 | Layer-blend function inputs | `UMaterialExpressionFunctionInput::BlendInputRelevance` is computed | not set |
+| Node preview height in the layout pass | `Expression->ShouldShowPreview()` | `!bHidePreviewWindow && !bCollapsed`, the two flags 5.7 composed it from |
+| Decompiler scalar-parameter metadata | `ControlType`, `Enumeration` and `EnumerationIndex` are exported | not exported — the properties do not exist. A source that carries them still parses; there is nothing to write them to |
+| `FMaterialParameterInfo` include | `Materials/MaterialParameters.h` | `MaterialTypes.h`, which 5.7 keeps only as a deprecation stub |
 
 ## "Since UE 5.x" summary
 
@@ -148,8 +170,8 @@ threshold is the same 5.4.
 | :-- | :-- |
 | **5.4** | Substrate — `Substrate.*` builtins, `ShadingModel="Substrate"`, `Base.FrontMaterial`, `MSM_Strata` aliases · collapsed Custom-node code (`ShowCode`) · `bHasPixelAnimation` reset and export · `EAllowShrinking` |
 | **5.5** | `periodicworld` transform basis · `UE.TransformPosition(PeriodicWorldTileSize=…)` · `ObjectPositionWS` resolved directly · `CountInputs` |
-| **5.6** | `firstperson` / `firstpersontranslatedworld` transform bases · `UE.TransformPosition(FirstPersonInterpolationAlpha=…)` · plugin-mount validation for `Root=` and `Path(...)` · `TextureSample.GatherMode` round-trip · `FMetaData&`, `GetInputValueType`, `RebuildOutputs`, `ScreenPosition` resolved directly |
-| **5.7** | `Group` / `SortPriority` on collection parameters · `BlendInputRelevance` on layer-blend inputs · MPC `ExpressionGUID` repair · per-platform × per-quality material-resource diagnostics |
+| **5.6** | `firstperson` / `firstpersontranslatedworld` transform bases · `UE.TransformPosition(FirstPersonInterpolationAlpha=…)` · plugin-mount validation for `Root=` and `Path(...)` · `TextureSample.GatherMode` round-trip · `FMetaData&`, `GetInputValueType`, `RebuildOutputs`, `ScreenPosition` resolved directly · six unexported expression classes resolved by `StaticClass()` rather than by path (no behaviour difference) |
+| **5.7** | `Group` / `SortPriority` on collection parameters · `BlendInputRelevance` on layer-blend inputs · MPC `ExpressionGUID` repair · per-platform × per-quality material-resource diagnostics · scalar-parameter `ControlType` / `Enumeration` / `EnumerationIndex` round-trip · node preview height from `ShouldShowPreview()` |
 
 Everything not listed above works identically on every engine from 5.3 to 5.8.
 

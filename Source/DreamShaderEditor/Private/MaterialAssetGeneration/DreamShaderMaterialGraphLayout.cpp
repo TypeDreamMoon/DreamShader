@@ -268,7 +268,7 @@ namespace UE::DreamShader::Editor::Private
 			Size.Height = TitleRowHeight
 				+ FMath::Max(0, Captions.Num() - 1) * ExtraCaptionRowHeight
 				+ FMath::Max(InputCount, Outputs.Num()) * PinRowHeight
-				+ (Expression->ShouldShowPreview() ? PreviewHeight : 0)
+				+ (DoesDreamShaderExpressionShowPreview(Expression) ? PreviewHeight : 0)
 				+ BodyPaddingY;
 			return Size;
 		}

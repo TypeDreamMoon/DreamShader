@@ -28,6 +28,9 @@ Validate the plugin standalone, without building a full project target:
 `<PluginDir>` is the directory holding `DreamShader.uplugin`. `-Package` must point at a directory
 that does not overlap the source tree — UAT stages a clean copy there.
 
+One engine proves nothing about the others, so run the whole matrix with
+[`.skill/build-plugin.ps1`](#the-engine-matrix).
+
 ## Repository layout
 
 | Path | Contents | In the [release archive](release.md#archive-contents) |
@@ -153,11 +156,39 @@ Everything is under `Private/`; nothing is exported.
 | :-- | :-- |
 | Iterate on the plugin inside a project | Build the host project's editor target normally. The plugin is `EnabledByDefault`. |
 | Validate the plugin standalone, exactly as the consumer sees it | `RunUAT BuildPlugin`, as in the [Synopsis](#synopsis). |
+| Prove an engine-version gate on every supported engine | [`.skill/build-plugin.ps1`](#the-engine-matrix). |
 | Reproduce the release archive | Stage the seven shipped items by hand, or push a tag and let the [release workflow](release.md) do it. |
 
 `BuildPlugin` compiles all three modules against the target engine and fails on the first UBT or UHT
 error. It is the check that matters when adding an engine-version gate, because the project build
-only ever exercises one engine version.
+only ever exercises one engine version. It is also the only check that sees a **link** error: an
+engine class that compiles everywhere and only resolves from UE 5.6 on is invisible to every
+compile-time gate. See the note under
+[UE ≥ 5.6](../api/version-compat.md#ue--56) on version compatibility.
+
+### The engine matrix
+
+`.skill/build-plugin.ps1` runs `BuildPlugin` once per engine root, each into its own `-Package`
+directory, and prints one `PASS` / `FAIL` line per engine plus the compiler diagnostics of the ones
+that failed. The plugin's own `Binaries/` and `Intermediate/` are never touched. Its exit code is
+the number of engines that failed, so `0` means the matrix is green.
+
+```powershell
+./.skill/build-plugin.ps1 -Engine C:\UE\UE_5.5, C:\UE\UE_5.6, C:\UE\UE_5.7
+```
+
+| Switch | Effect |
+| :-- | :-- |
+| `-Engine` | Engine roots. An array, or one comma-separated string |
+| `-Plugin` | The `.uplugin`. Defaults to the one at or above the script |
+| `-Package` | Staging root. Defaults to `%TEMP%\DreamShaderBuildPlugin`; must be outside the plugin tree |
+| `-TargetPlatforms` | UAT syntax, `+`-separated. Defaults to `Win64` |
+| `-StopOnFailure` | Stop at the first failing engine instead of finishing the matrix |
+| `-KeepOutput` | Keep the staged plugin. Without it only the log survives — a green build is a few hundred MB per engine |
+| `-Raw` | Echo the whole UAT log instead of diagnostics and step lines |
+| `-NoRocket` | Drop `-Rocket` |
+
+The full UAT log of every engine is kept under `<Package>\Logs\<Engine>.log`, pass or fail.
 
 ## Engine versions
 
@@ -167,16 +198,24 @@ only ever exercises one engine version.
 | `5.7` | Verified with `RunUAT BuildPlugin` |
 | `5.6` | Verified with `RunUAT BuildPlugin` |
 | `5.5` | Verified with `RunUAT BuildPlugin` |
-| `5.4` | Verified with `RunUAT BuildPlugin` |
-| `5.3` | Verified with `RunUAT BuildPlugin` |
+| `5.4` | Source-compatible; see the toolchain warning below |
+| `5.3` | Source-compatible; see the toolchain warning below |
 
 > [!WARNING]
-> On Windows, Unreal Engine `5.3` and `5.4` may require the MSVC `14.38` toolchain. Newer compiler
-> toolchains can fail while compiling **older engine headers**, before any plugin code is reached —
-> the failure is not in `Source/DreamShader*`. Install `14.38` through the Visual Studio Installer
-> and select it in `BuildConfiguration.xml` before concluding the plugin is broken on those engines.
+> **Unreal Engine `5.3` and `5.4` do not build under a recent MSVC toolchain, whatever plugin you
+> point at them.** `ConcurrentLinearAllocator.h` writes `#elif __has_feature(address_sanitizer)`
+> without a `defined()` guard, inside `#if PLATFORM_HAS_ASAN_INCLUDE` — which is
+> `__has_include(<sanitizer/asan_interface.h>)`, true for every toolchain that ships the ASan
+> headers. MSVC has no `__has_feature`, so the line raises `C4668`, and UBT compiles engine code
+> with `/we4668`. UE 5.5 fixed the header by splitting the test.
+>
+> The failure is in **engine** code, before any plugin source is reached, and `Source/DreamShader*`
+> is named nowhere in it. Epic's own `ExampleDeviceProfileSelector` fails identically on the same
+> engine, which is the cheapest way to confirm the cause on a given machine. Note that installing
+> MSVC `14.38` does **not** by itself help — it ships `sanitizer/asan_interface.h` too. It takes a
+> toolchain without those headers, or a one-line patch to the engine header.
 
-Every engine-version test in the plugin goes through the six macros in `DreamShaderVersionCompat.h`;
+Every engine-version test in the plugin goes through the macros in `DreamShaderVersionCompat.h`;
 there are no raw `ENGINE_MAJOR_VERSION` or `UE_VERSION_NEWER_THAN` uses anywhere in `Source/`. When
 you add version-dependent code, add it there and use `DREAMSHADER_UE_VERSION_AT_LEAST(Major, Minor)`
 or `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`. The complete list of currently gated behaviour is on
@@ -238,7 +277,7 @@ The same three module names appear in a normal project build under
 - [Release](release.md) — tag conventions, the release workflow, and what the archive contains
 - [C++ API](../api/index.md) — the exported headers, class by class
 - [Compiler module](../api/compiler-module.md) — `IDreamShaderCompiler`, the supported extension point
-- [Version compatibility](../api/version-compat.md) — the six macros and every gated behaviour
+- [Version compatibility](../api/version-compat.md) — the compat macros and every gated behaviour
 - [Commandlet](../tools/commandlet.md) — `-run=DreamShader`, the headless entry point
 - [Editor bridge](../tools/bridge.md) — request files, `bridge.db`, the preview WebSocket
 - [Generation pipeline](../generation/index.md) — what the generator does, end to end
