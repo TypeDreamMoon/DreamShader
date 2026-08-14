@@ -4,6 +4,15 @@
 
 ### Added
 
+- **Graph layout runs on in-memory materials.** Interactive compiles are memory-only, and the
+  placement pass used to be skipped for them outright — so the graph you saw after a save was not a
+  badly laid out graph, it was an *unlaid out* one: the tall single column of construction
+  coordinates, wires strung across it. Layout now runs there too, so a save shows what the
+  generated asset will look like. *Project Settings ▸ DreamPlugin ▸ Dream Shader ▸ Compiler ▸ **Lay
+  Out In-Memory Graphs*** (`bLayoutInMemoryGraphs`, default on) turns it back off. The in-memory
+  path runs the pass quiet — one slow-task frame per block rather than a formatted progress string
+  per node, which at these sizes costs more than the placement.
+
 - **Plugin source roots.** Every enabled plugin that ships a `DShader` folder now contributes its
   own source root, so a plugin can carry the `.dsm`/`.dsf`/`.dsh` files that build its materials
   instead of parking them in the project's tree. `Root="Plugin.<Name>"` has been able to *write*
@@ -29,6 +38,27 @@
 
 ### Changed
 
+- **Automatic layout places nodes at their real size.** Every node used to be assumed `320 × 150`
+  and spaced on a fixed `420 × 220` grid. Nothing that draws taller than 220 fitted — a
+  `TextureSample`'s preview thumbnail alone is 106, a `Custom` node grows a row per pin — so those
+  nodes overlapped their neighbours and pushed out through the comment box that was meant to
+  contain them. Sizes are now estimated from what the node widget actually assembles (title bar,
+  one row per pin, the expression preview when `ShouldShowPreview()`), and columns, rows, comment
+  boxes and the output-usage column are all measured against that. Nodes are right-aligned within
+  their column so a column's outputs line up.
+- **Long edges get lanes, and chains come out straight.** An edge spanning several ranks now
+  reserves a dummy slot in each column it crosses. Crossing reduction only ever compares neighbours
+  one rank apart, so without lanes it could not see those edges at all — which is what let a graph
+  read as a ball of wire even though each column, taken on its own, was tidy. Placement then runs
+  four straightening passes, each pulling a node toward its neighbours' average centre and
+  repairing the column with an isotonic regression: the closest set of centres that still keeps the
+  column's order and its gaps. A chain lands on one horizontal line instead of a staircase.
+- **Blocks pack into columns instead of one stack.** A material with several connected outputs used
+  to become a ribbon tens of thousands of units tall, legible only fully zoomed out. Blocks are now
+  laid out around their own origins and packed into columns against a height budget of
+  `max(2400, sqrt(totalArea / 1.6))`, which keeps the finished graph roughly landscape whatever the
+  block count. Too few blocks to fill a column reproduces the old top-to-bottom stack. Comment
+  boxes are created after packing, so a box can no longer be left behind by the nodes it wraps.
 - **Imports never cross roots.** A file resolves its imports against its own root and that root's
   `Packages` folder only. Two plugins shipping the same relative path can no longer shadow one
   another, and disabling a plugin cannot silently change what another root's import means. Files

@@ -86,6 +86,11 @@ public:
 			ToolTip="Applies to the ThinCustom/Instance backend only -- it is the only one that can hide itself, via UDreamShaderMaterialInstance::IsAsset. When enabled, those memory-only materials appear in the Content Browser like unsaved assets. Disabled by default: the source files are the intended authoring surface, and hiding the materials also prevents accidental Save actions from materializing them to disk. Graph-backend materials are plain UMaterials with no way to opt out of asset enumeration, so they are always visible and this setting does not affect them."))
 	bool bShowInMemoryMaterialsInContentBrowser = false;
 
+	UPROPERTY(Config, EditAnywhere, Category="Compiler",
+		meta=(DisplayName="Lay Out In-Memory Graphs",
+			ToolTip="Whether the graph placement pass -- node positions and comment boxes -- also runs for the memory-only materials an interactive compile produces. Off, those graphs keep the fixed coordinates the construction pass assigned, which is a single tall column of nodes: readable only once the material is materialized or cooked. On (the default), what you see after a save matches what the generated asset will look like. Costs one placement pass per compile; graphs at or above the large-graph threshold skip it either way."))
+	bool bLayoutInMemoryGraphs = true;
+
 	UPROPERTY(Config, EditAnywhere, Category="Compiler")
 	bool bAutoCompileOnSave = true;
 

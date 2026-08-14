@@ -193,6 +193,105 @@ namespace UE::DreamShader::Editor::Private
 
 	namespace
 	{
+		// Slate-unit footprint of one material graph node. There is no widget to measure at generation
+		// time -- the commandlet has no editor UI at all, and even in the editor the node widgets for a
+		// just-built graph do not exist yet -- so the size is derived from what SGraphNodeMaterialBase
+		// actually assembles: a title bar, one row per pin, and the 106-unit expression preview it adds
+		// whenever UMaterialExpression::ShouldShowPreview() is true. The estimate deliberately errs high;
+		// over-estimating only loosens the graph, under-estimating overlaps nodes.
+		// FLayoutNodeSize itself lives in DreamShaderMaterialGeneratorPrivate.h, so a test can measure
+		// placed nodes by exactly the rule the placement used.
+		namespace LayoutMetrics
+		{
+			constexpr int32 TitleRowHeight = 46;
+			constexpr int32 ExtraCaptionRowHeight = 20;
+			constexpr int32 PinRowHeight = 28;
+			// SGraphNodeMaterialBase::CreatePreviewWidget: a 106-unit box inside a 5-unit-padded border.
+			constexpr int32 PreviewHeight = 106 + 5 * 2 + 8;
+			constexpr int32 BodyPaddingY = 22;
+			constexpr int32 TitleCharWidth = 10;
+			constexpr int32 PinCharWidth = 8;
+			constexpr int32 TitlePaddingX = 48;
+			constexpr int32 PinPaddingX = 56;
+			constexpr int32 MinNodeWidth = 140;
+			constexpr int32 MaxNodeWidth = 520;
+			// The material result node is a fixed, unusually tall node we never build ourselves.
+			constexpr int32 RootNodeWidth = 320;
+			constexpr int32 RootNodeHeight = 420;
+			// Fallback footprint for a null expression, so a caller measuring a stale pointer still gets
+			// a plausible rect rather than a zero-area one that overlaps nothing.
+			constexpr int32 DefaultNodeWidth = 320;
+			constexpr int32 DefaultNodeHeight = 150;
+		}
+
+		static FLayoutNodeSize EstimateExpressionNodeSize(UMaterialExpression* Expression)
+		{
+			using namespace LayoutMetrics;
+
+			FLayoutNodeSize Size;
+			if (!Expression)
+			{
+				Size.Width = DefaultNodeWidth;
+				Size.Height = DefaultNodeHeight;
+				return Size;
+			}
+
+			TArray<FString> Captions;
+			Expression->GetCaption(Captions);
+			int32 LongestCaption = 0;
+			for (const FString& Caption : Captions)
+			{
+				LongestCaption = FMath::Max(LongestCaption, Caption.Len());
+			}
+
+			const int32 InputCount = GetDreamShaderExpressionInputCount(Expression);
+			int32 LongestInputName = 0;
+			for (int32 InputIndex = 0; InputIndex < InputCount; ++InputIndex)
+			{
+				LongestInputName = FMath::Max(LongestInputName, Expression->GetInputName(InputIndex).ToString().Len());
+			}
+
+			const TArray<FExpressionOutput>& Outputs = Expression->GetOutputs();
+			int32 LongestOutputName = 0;
+			if (Expression->bShowOutputNameOnPin)
+			{
+				for (const FExpressionOutput& Output : Outputs)
+				{
+					LongestOutputName = FMath::Max(LongestOutputName, Output.OutputName.ToString().Len());
+				}
+			}
+
+			const int32 TitleWidth = TitlePaddingX + LongestCaption * TitleCharWidth;
+			const int32 PinsWidth = PinPaddingX + (LongestInputName + LongestOutputName) * PinCharWidth;
+			Size.Width = FMath::Clamp(FMath::Max(TitleWidth, PinsWidth), MinNodeWidth, MaxNodeWidth);
+
+			Size.Height = TitleRowHeight
+				+ FMath::Max(0, Captions.Num() - 1) * ExtraCaptionRowHeight
+				+ FMath::Max(InputCount, Outputs.Num()) * PinRowHeight
+				+ (Expression->ShouldShowPreview() ? PreviewHeight : 0)
+				+ BodyPaddingY;
+			return Size;
+		}
+
+		// GetCaption()/GetOutputs() are virtual and called several times per node across ranking,
+		// ordering and placement, so measurements are memoised for the duration of one layout pass.
+		class FLayoutNodeSizeCache
+		{
+		public:
+			const FLayoutNodeSize& Get(UMaterialExpression* Expression)
+			{
+				if (const FLayoutNodeSize* Existing = SizeByExpression.Find(Expression))
+				{
+					return *Existing;
+				}
+
+				return SizeByExpression.Add(Expression, EstimateExpressionNodeSize(Expression));
+			}
+
+		private:
+			TMap<UMaterialExpression*, FLayoutNodeSize> SizeByExpression;
+		};
+
 		struct FLayoutBounds
 		{
 			int32 MinX = MAX_int32;
@@ -205,14 +304,30 @@ namespace UE::DreamShader::Editor::Private
 				return MinX <= MaxX && MinY <= MaxY;
 			}
 
-			void IncludeNode(const int32 PositionX, const int32 PositionY)
+			int32 Width() const { return IsValid() ? MaxX - MinX : 0; }
+			int32 Height() const { return IsValid() ? MaxY - MinY : 0; }
+
+			void IncludeRect(const int32 PositionX, const int32 PositionY, const int32 SizeX, const int32 SizeY)
 			{
-				constexpr int32 NodeWidth = 320;
-				constexpr int32 NodeHeight = 150;
 				MinX = FMath::Min(MinX, PositionX);
 				MinY = FMath::Min(MinY, PositionY);
-				MaxX = FMath::Max(MaxX, PositionX + NodeWidth);
-				MaxY = FMath::Max(MaxY, PositionY + NodeHeight);
+				MaxX = FMath::Max(MaxX, PositionX + SizeX);
+				MaxY = FMath::Max(MaxY, PositionY + SizeY);
+			}
+
+			void IncludeExpression(UMaterialExpression* Expression, FLayoutNodeSizeCache& SizeCache)
+			{
+				if (!Expression)
+				{
+					return;
+				}
+
+				const FLayoutNodeSize& Size = SizeCache.Get(Expression);
+				IncludeRect(
+					Expression->MaterialExpressionEditorX,
+					Expression->MaterialExpressionEditorY,
+					Size.Width,
+					Size.Height);
 			}
 		};
 
@@ -799,7 +914,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		static void PositionMaterialRootNearConnectedOutputs(UMaterial* Material)
+		static void PositionMaterialRootNearConnectedOutputs(UMaterial* Material, FLayoutNodeSizeCache& SizeCache)
 		{
 			if (!Material)
 			{
@@ -816,12 +931,7 @@ namespace UE::DreamShader::Editor::Private
 					continue;
 				}
 
-				if (UMaterialExpression* OutputExpression = GetDirectInputExpression(*MaterialInput))
-				{
-					OutputBounds.IncludeNode(
-						OutputExpression->MaterialExpressionEditorX,
-						OutputExpression->MaterialExpressionEditorY);
-				}
+				OutputBounds.IncludeExpression(GetDirectInputExpression(*MaterialInput), SizeCache);
 			}
 
 			if (OutputBounds.IsValid())
@@ -897,7 +1007,11 @@ namespace UE::DreamShader::Editor::Private
 		// right of the graph body, place the material root just past them, and wrap usages + root in one
 		// "Material Output" comment box. The usages are removed from their layout blocks beforehand, so
 		// the per-property computation boxes stay tight and never overlap this one.
-		static void GroupOutputBridgeUsages(UMaterial* Material, UMaterialFunction* MaterialFunction, const TArray<UMaterialExpression*>& Expressions)
+		static void GroupOutputBridgeUsages(
+			UMaterial* Material,
+			UMaterialFunction* MaterialFunction,
+			const TArray<UMaterialExpression*>& Expressions,
+			FLayoutNodeSizeCache& SizeCache)
 		{
 			if (!Material)
 			{
@@ -924,7 +1038,7 @@ namespace UE::DreamShader::Editor::Private
 				{
 					continue;
 				}
-				BodyBounds.IncludeNode(Expression->MaterialExpressionEditorX, Expression->MaterialExpressionEditorY);
+				BodyBounds.IncludeExpression(Expression, SizeCache);
 			}
 			if (!BodyBounds.IsValid())
 			{
@@ -933,7 +1047,19 @@ namespace UE::DreamShader::Editor::Private
 
 			constexpr int32 GapBodyToUsages = 420;
 			constexpr int32 GapUsagesToRoot = 360;
-			constexpr int32 UsageSpacingY = 130;
+			constexpr int32 MinUsageSpacingY = 130;
+
+			// Space the usage column by the tallest usage node rather than a flat 130, so a reroute that
+			// draws taller than expected cannot overlap the one below it.
+			int32 UsageSpacingY = MinUsageSpacingY;
+			int32 WidestUsage = 0;
+			for (UMaterialExpressionNamedRerouteUsage* Usage : OutputUsages)
+			{
+				const FLayoutNodeSize& Size = SizeCache.Get(Usage);
+				UsageSpacingY = FMath::Max(UsageSpacingY, Size.Height + 40);
+				WidestUsage = FMath::Max(WidestUsage, Size.Width);
+			}
+
 			const int32 UsageX = BodyBounds.MaxX + GapBodyToUsages;
 			const int32 CentreY = (BodyBounds.MinY + BodyBounds.MaxY) / 2;
 			const int32 ColumnTopY = CentreY - ((OutputUsages.Num() - 1) * UsageSpacingY) / 2;
@@ -944,11 +1070,11 @@ namespace UE::DreamShader::Editor::Private
 				const int32 PositionY = ColumnTopY + Index * UsageSpacingY;
 				OutputUsages[Index]->MaterialExpressionEditorX = UsageX;
 				OutputUsages[Index]->MaterialExpressionEditorY = PositionY;
-				GroupBounds.IncludeNode(UsageX, PositionY);
+				GroupBounds.IncludeExpression(OutputUsages[Index], SizeCache);
 			}
 
-			const int32 RootX = UsageX + GapUsagesToRoot;
-			const int32 RootY = CentreY - 240;
+			const int32 RootX = UsageX + WidestUsage + GapUsagesToRoot;
+			const int32 RootY = CentreY - LayoutMetrics::RootNodeHeight / 2;
 			Material->EditorX = RootX;
 			Material->EditorY = RootY;
 			if (Material->MaterialGraph && Material->MaterialGraph->RootNode)
@@ -956,8 +1082,7 @@ namespace UE::DreamShader::Editor::Private
 				Material->MaterialGraph->RootNode->NodePosX = RootX;
 				Material->MaterialGraph->RootNode->NodePosY = RootY;
 			}
-			GroupBounds.IncludeNode(RootX, RootY);
-			GroupBounds.IncludeNode(RootX + 320, RootY + 320);
+			GroupBounds.IncludeRect(RootX, RootY, LayoutMetrics::RootNodeWidth, LayoutMetrics::RootNodeHeight);
 
 			CreateDreamShaderLayoutComment(Material, MaterialFunction, TEXT("Material Output"), GroupBounds);
 		}
@@ -1052,6 +1177,7 @@ namespace UE::DreamShader::Editor::Private
 			const TArray<UMaterialExpression*>& Expressions,
 			const TMap<UMaterialExpression*, TArray<UMaterialExpression*>>& Dependencies,
 			const TMap<UMaterialExpression*, TArray<UMaterialExpression*>>& Consumers,
+			FLayoutNodeSizeCache& SizeCache,
 			TSet<UMaterialExpression*>& InOutPositionedExpressions)
 		{
 			TSet<UMaterialExpression*> PendingExpressions;
@@ -1073,7 +1199,9 @@ namespace UE::DreamShader::Editor::Private
 			{
 				return FString::Printf(TEXT("%d:%d"), X / 80, Y / 80);
 			};
-			auto FanOutY = [&SlotUseCount, &BuildSlotKey](const int32 X, const int32 Y)
+			// StepSize is the occupant's own height plus a gutter, so two nodes landing in the same slot
+			// are separated by enough room for the taller of them rather than a flat 120.
+			auto FanOutY = [&SlotUseCount, &BuildSlotKey](const int32 X, const int32 Y, const int32 StepSize)
 			{
 				const FString SlotKey = BuildSlotKey(X, Y);
 				const int32 SlotIndex = SlotUseCount.FindOrAdd(SlotKey)++;
@@ -1082,7 +1210,7 @@ namespace UE::DreamShader::Editor::Private
 					return Y;
 				}
 
-				const int32 Step = ((SlotIndex + 1) / 2) * 120;
+				const int32 Step = ((SlotIndex + 1) / 2) * StepSize;
 				return Y + ((SlotIndex % 2) == 0 ? -Step : Step);
 			};
 			auto AveragePosition = [&InOutPositionedExpressions](
@@ -1145,6 +1273,7 @@ namespace UE::DreamShader::Editor::Private
 						continue;
 					}
 
+					const FLayoutNodeSize& Size = SizeCache.Get(Expression);
 					int32 PositionX = Expression->MaterialExpressionEditorX;
 					int32 PositionY = Expression->MaterialExpressionEditorY;
 					if (bHasDependencyAnchor && bHasConsumerAnchor)
@@ -1154,7 +1283,7 @@ namespace UE::DreamShader::Editor::Private
 					}
 					else if (bHasConsumerAnchor)
 					{
-						PositionX = ConsumerX - 360;
+						PositionX = ConsumerX - (Size.Width + 140);
 						PositionY = ConsumerY;
 					}
 					else
@@ -1163,7 +1292,7 @@ namespace UE::DreamShader::Editor::Private
 						PositionY = DependencyY;
 					}
 
-					SetGeneratedExpressionPosition(Expression, PositionX, FanOutY(PositionX, PositionY));
+					SetGeneratedExpressionPosition(Expression, PositionX, FanOutY(PositionX, PositionY, Size.Height + 40));
 					InOutPositionedExpressions.Add(Expression);
 					PendingExpressions.Remove(Expression);
 					bChanged = true;
@@ -1178,10 +1307,7 @@ namespace UE::DreamShader::Editor::Private
 			FLayoutBounds PositionedBounds;
 			for (UMaterialExpression* Expression : InOutPositionedExpressions)
 			{
-				if (Expression)
-				{
-					PositionedBounds.IncludeNode(Expression->MaterialExpressionEditorX, Expression->MaterialExpressionEditorY);
-				}
+				PositionedBounds.IncludeExpression(Expression, SizeCache);
 			}
 
 			const int32 FallbackX = PositionedBounds.IsValid() ? PositionedBounds.MinX - 480 : -1200;
@@ -1194,7 +1320,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 
 				SetGeneratedExpressionPosition(Expression, FallbackX, FallbackY);
-				FallbackY += 180;
+				FallbackY += SizeCache.Get(Expression).Height + 40;
 				InOutPositionedExpressions.Add(Expression);
 			}
 		}
@@ -1425,11 +1551,106 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
+		// One entry in one column of a block: either a real node, or a lane reserved for an edge that
+		// spans more than one rank. Lanes are Sugiyama dummy vertices. Without them the crossing
+		// reduction below is blind to long edges -- it only ever compares neighbours one rank apart --
+		// which is what let a generated graph read as a ball of wire even though each layer was, taken
+		// on its own, perfectly tidy.
+		struct FLayoutSlot
+		{
+			UMaterialExpression* Expression = nullptr;
+			int32 Rank = 0;
+			int32 Width = 0;
+			int32 Height = 0;
+			int32 CenterY = 0;
+			int32 TieBreak = 0;
+			float SortKey = 0.0f;
+		};
+
+		namespace BlockMetrics
+		{
+			// Gap between two stacked nodes in the same column.
+			constexpr int32 RowGutter = 60;
+			// Gap between two columns; this is the corridor the wires are drawn through.
+			constexpr int32 ColumnGutter = 150;
+			// Vertical room reserved for one long edge passing through a column.
+			constexpr int32 LaneHeight = 34;
+			// X of the left edge of the widest rank-0 node, i.e. where a block's output column starts.
+			constexpr int32 OutputColumnX = 900;
+			constexpr int32 CrossingReductionPasses = 6;
+			constexpr int32 StraighteningPasses = 4;
+		}
+
+		// Least-squares repair of one column: given where each slot *wants* to sit, return the closest
+		// set of centres that still keeps the column's order and never lets two slots touch. This is an
+		// isotonic regression (pool adjacent violators) over the gap-corrected centres, which is what
+		// turns a chain of nodes into a straight horizontal line instead of a staircase.
+		static void StraightenColumnCenters(
+			const TArray<int32>& Heights,
+			const TArray<double>& DesiredCenters,
+			TArray<int32>& OutCenters)
+		{
+			const int32 Count = Heights.Num();
+			OutCenters.Reset();
+			OutCenters.SetNumZeroed(Count);
+			if (Count == 0)
+			{
+				return;
+			}
+
+			// Offsets[i] is the minimum distance from slot 0's centre to slot i's centre. Subtracting it
+			// turns "centres must be far enough apart" into the plain "must be non-decreasing" that
+			// pool-adjacent-violators solves.
+			TArray<double> Offsets;
+			Offsets.SetNumZeroed(Count);
+			for (int32 Index = 1; Index < Count; ++Index)
+			{
+				Offsets[Index] = Offsets[Index - 1]
+					+ (Heights[Index - 1] + Heights[Index]) * 0.5
+					+ BlockMetrics::RowGutter;
+			}
+
+			struct FPool
+			{
+				double Sum = 0.0;
+				int32 Count = 0;
+				double Value = 0.0;
+			};
+
+			TArray<FPool> Pools;
+			Pools.Reserve(Count);
+			for (int32 Index = 0; Index < Count; ++Index)
+			{
+				FPool Pool;
+				Pool.Sum = DesiredCenters[Index] - Offsets[Index];
+				Pool.Count = 1;
+				Pool.Value = Pool.Sum;
+				while (!Pools.IsEmpty() && Pools.Last().Value > Pool.Value)
+				{
+					const FPool Previous = Pools.Last();
+					Pools.RemoveAt(Pools.Num() - 1);
+					Pool.Sum += Previous.Sum;
+					Pool.Count += Previous.Count;
+					Pool.Value = Pool.Sum / Pool.Count;
+				}
+				Pools.Add(Pool);
+			}
+
+			int32 Written = 0;
+			for (const FPool& Pool : Pools)
+			{
+				for (int32 Index = 0; Index < Pool.Count; ++Index, ++Written)
+				{
+					OutCenters[Written] = FMath::RoundToInt32(Pool.Value + Offsets[Written]);
+				}
+			}
+		}
+
 		static FLayoutBounds LayoutExpressionBlock(
 			const TArray<UMaterialExpression*>& BlockExpressions,
 			const TMap<UMaterialExpression*, TArray<UMaterialExpression*>>& GlobalDependencies,
 			const TMap<UMaterialExpression*, int32>& OriginalOrder,
-			const int32 BlockTopY)
+			FLayoutNodeSizeCache& SizeCache)
 		{
 			FLayoutBounds Bounds;
 			if (BlockExpressions.IsEmpty())
@@ -1505,134 +1726,356 @@ namespace UE::DreamShader::Editor::Private
 				MaxRank = FMath::Max(MaxRank, ResolveRank(Expression));
 			}
 
-			TMap<int32, TArray<UMaterialExpression*>> Layers;
-			for (UMaterialExpression* Expression : BlockExpressions)
-			{
-				Layers.FindOrAdd(RankByExpression.FindRef(Expression)).Add(Expression);
-			}
+			// --- Build the slot graph: one slot per node, plus a lane per rank a long edge crosses. ---
+			TArray<FLayoutSlot> Slots;
+			TArray<TArray<int32>> SlotDependencies;
+			TArray<TArray<int32>> SlotConsumers;
+			TArray<TArray<int32>> Columns;
+			Columns.SetNum(MaxRank + 1);
+			Slots.Reserve(BlockExpressions.Num() * 2);
 
-			for (TPair<int32, TArray<UMaterialExpression*>>& LayerPair : Layers)
-			{
-				LayerPair.Value.StableSort([&OriginalOrder](UMaterialExpression& Left, UMaterialExpression& Right)
-				{
-					if (Left.MaterialExpressionEditorY != Right.MaterialExpressionEditorY)
-					{
-						return Left.MaterialExpressionEditorY < Right.MaterialExpressionEditorY;
-					}
-					return OriginalOrder.FindRef(&Left) < OriginalOrder.FindRef(&Right);
-				});
-			}
-
-			TMap<UMaterialExpression*, int32> OrderInLayer;
-			auto RefreshOrder = [&]()
-			{
-				OrderInLayer.Reset();
-				for (const TPair<int32, TArray<UMaterialExpression*>>& LayerPair : Layers)
-				{
-					const TArray<UMaterialExpression*>& Layer = LayerPair.Value;
-					for (int32 Index = 0; Index < Layer.Num(); ++Index)
-					{
-						OrderInLayer.Add(Layer[Index], Index);
-					}
-				}
-			};
-
-			auto AverageNeighborOrder = [&OrderInLayer, &OriginalOrder](
+			auto AddSlot = [&Slots, &SlotDependencies, &SlotConsumers, &Columns, &SizeCache](
 				UMaterialExpression* Expression,
-				const TArray<UMaterialExpression*>* Neighbors) -> float
+				const int32 Rank,
+				const int32 TieBreak) -> int32
 			{
-				if (!Expression || !Neighbors || Neighbors->IsEmpty())
+				const int32 SlotIndex = Slots.Num();
+				FLayoutSlot& Slot = Slots.AddDefaulted_GetRef();
+				Slot.Expression = Expression;
+				Slot.Rank = Rank;
+				Slot.TieBreak = TieBreak;
+				if (Expression)
 				{
-					return static_cast<float>(OriginalOrder.FindRef(Expression));
+					const FLayoutNodeSize& Size = SizeCache.Get(Expression);
+					Slot.Width = Size.Width;
+					Slot.Height = Size.Height;
+				}
+				else
+				{
+					Slot.Height = BlockMetrics::LaneHeight;
 				}
 
-				float Sum = 0.0f;
-				int32 Count = 0;
-				for (UMaterialExpression* Neighbor : *Neighbors)
-				{
-					if (const int32* NeighborOrder = OrderInLayer.Find(Neighbor))
-					{
-						Sum += static_cast<float>(*NeighborOrder);
-						++Count;
-					}
-				}
-
-				return Count > 0
-					? Sum / static_cast<float>(Count)
-					: static_cast<float>(OriginalOrder.FindRef(Expression));
+				SlotDependencies.AddDefaulted();
+				SlotConsumers.AddDefaulted();
+				Columns[Rank].Add(SlotIndex);
+				return SlotIndex;
 			};
 
-			RefreshOrder();
-			for (int32 Iteration = 0; Iteration < 4; ++Iteration)
+			// Creation order is the deterministic seed the crossing reduction starts from and the
+			// tie-break it falls back on, so walk the block in it rather than in set order.
+			TArray<UMaterialExpression*> OrderedBlockExpressions = BlockExpressions;
+			OrderedBlockExpressions.StableSort([&OriginalOrder](UMaterialExpression& Left, UMaterialExpression& Right)
 			{
-				for (int32 Rank = MaxRank - 1; Rank >= 0; --Rank)
-				{
-					if (TArray<UMaterialExpression*>* Layer = Layers.Find(Rank))
-					{
-						Layer->StableSort([&](UMaterialExpression& Left, UMaterialExpression& Right)
-						{
-							const float LeftOrder = AverageNeighborOrder(&Left, Consumers.Find(&Left));
-							const float RightOrder = AverageNeighborOrder(&Right, Consumers.Find(&Right));
-							return LeftOrder == RightOrder
-								? OriginalOrder.FindRef(&Left) < OriginalOrder.FindRef(&Right)
-								: LeftOrder < RightOrder;
-						});
-					}
-				}
-				RefreshOrder();
+				return OriginalOrder.FindRef(&Left) < OriginalOrder.FindRef(&Right);
+			});
 
-				for (int32 Rank = 1; Rank <= MaxRank; ++Rank)
-				{
-					if (TArray<UMaterialExpression*>* Layer = Layers.Find(Rank))
-					{
-						Layer->StableSort([&](UMaterialExpression& Left, UMaterialExpression& Right)
-						{
-							const float LeftOrder = AverageNeighborOrder(&Left, Dependencies.Find(&Left));
-							const float RightOrder = AverageNeighborOrder(&Right, Dependencies.Find(&Right));
-							return LeftOrder == RightOrder
-								? OriginalOrder.FindRef(&Left) < OriginalOrder.FindRef(&Right)
-								: LeftOrder < RightOrder;
-						});
-					}
-				}
-				RefreshOrder();
-			}
-
-			int32 MaxLayerSize = 1;
-			for (const TPair<int32, TArray<UMaterialExpression*>>& LayerPair : Layers)
+			TMap<UMaterialExpression*, int32> SlotByExpression;
+			SlotByExpression.Reserve(OrderedBlockExpressions.Num());
+			for (UMaterialExpression* Expression : OrderedBlockExpressions)
 			{
-				MaxLayerSize = FMath::Max(MaxLayerSize, LayerPair.Value.Num());
-			}
-
-			constexpr int32 OutputX = 900;
-			constexpr int32 ColumnSpacing = 420;
-			constexpr int32 RowSpacing = 220;
-			const int32 CenterY = BlockTopY + ((MaxLayerSize - 1) * RowSpacing) / 2;
-			for (int32 Rank = 0; Rank <= MaxRank; ++Rank)
-			{
-				TArray<UMaterialExpression*>* Layer = Layers.Find(Rank);
-				if (!Layer || Layer->IsEmpty())
+				if (!Expression)
 				{
 					continue;
 				}
 
-				const int32 PositionX = OutputX - Rank * ColumnSpacing;
-				const int32 StartY = CenterY - ((Layer->Num() - 1) * RowSpacing) / 2;
-				for (int32 Index = 0; Index < Layer->Num(); ++Index)
+				SlotByExpression.Add(
+					Expression,
+					AddSlot(Expression, RankByExpression.FindRef(Expression), OriginalOrder.FindRef(Expression)));
+			}
+
+			for (UMaterialExpression* Expression : OrderedBlockExpressions)
+			{
+				const int32* ConsumerSlot = SlotByExpression.Find(Expression);
+				const TArray<UMaterialExpression*>* ExpressionDependencies = Dependencies.Find(Expression);
+				if (!ConsumerSlot || !ExpressionDependencies)
 				{
-					const int32 PositionY = StartY + Index * RowSpacing;
-					SetGeneratedExpressionPosition((*Layer)[Index], PositionX, PositionY);
-					Bounds.IncludeNode(PositionX, PositionY);
+					continue;
 				}
+
+				const int32 ConsumerRank = Slots[*ConsumerSlot].Rank;
+				for (UMaterialExpression* Dependency : *ExpressionDependencies)
+				{
+					const int32* SourceSlot = SlotByExpression.Find(Dependency);
+					if (!SourceSlot)
+					{
+						continue;
+					}
+
+					// A cycle resolves every member to rank 0, so the ranks can compare equal here.
+					// Chain those directly; there is no intermediate column to lane through.
+					const int32 SourceRank = Slots[*SourceSlot].Rank;
+					const int32 TieBreak = Slots[*ConsumerSlot].TieBreak;
+					int32 PreviousSlot = *ConsumerSlot;
+					for (int32 LaneRank = ConsumerRank + 1; LaneRank < SourceRank; ++LaneRank)
+					{
+						const int32 LaneSlot = AddSlot(nullptr, LaneRank, TieBreak);
+						SlotDependencies[PreviousSlot].Add(LaneSlot);
+						SlotConsumers[LaneSlot].Add(PreviousSlot);
+						PreviousSlot = LaneSlot;
+					}
+
+					SlotDependencies[PreviousSlot].Add(*SourceSlot);
+					SlotConsumers[*SourceSlot].Add(PreviousSlot);
+				}
+			}
+
+			// --- Crossing reduction: alternate barycentre sweeps toward the outputs and back. ---
+			TArray<int32> PositionInColumn;
+			PositionInColumn.SetNumZeroed(Slots.Num());
+			auto RefreshPositions = [&Columns, &PositionInColumn]()
+			{
+				for (const TArray<int32>& Column : Columns)
+				{
+					for (int32 Index = 0; Index < Column.Num(); ++Index)
+					{
+						PositionInColumn[Column[Index]] = Index;
+					}
+				}
+			};
+
+			// Keys are computed for the whole column before it is sorted: recomputing a barycentre
+			// inside the comparator would make the ordering depend on how the sort happens to pair
+			// elements up.
+			auto SortColumnByNeighbours = [&Slots, &PositionInColumn](
+				TArray<int32>& Column,
+				const TArray<TArray<int32>>& Adjacency)
+			{
+				for (const int32 SlotIndex : Column)
+				{
+					const TArray<int32>& Neighbours = Adjacency[SlotIndex];
+					if (Neighbours.IsEmpty())
+					{
+						Slots[SlotIndex].SortKey = static_cast<float>(PositionInColumn[SlotIndex]);
+						continue;
+					}
+
+					float Sum = 0.0f;
+					for (const int32 Neighbour : Neighbours)
+					{
+						Sum += static_cast<float>(PositionInColumn[Neighbour]);
+					}
+					Slots[SlotIndex].SortKey = Sum / static_cast<float>(Neighbours.Num());
+				}
+
+				Column.StableSort([&Slots](const int32 Left, const int32 Right)
+				{
+					return Slots[Left].SortKey == Slots[Right].SortKey
+						? Slots[Left].TieBreak < Slots[Right].TieBreak
+						: Slots[Left].SortKey < Slots[Right].SortKey;
+				});
+			};
+
+			RefreshPositions();
+			for (int32 Pass = 0; Pass < BlockMetrics::CrossingReductionPasses; ++Pass)
+			{
+				// Toward the outputs: order column r by where its consumers, in column r - 1, sit.
+				for (int32 Rank = 1; Rank <= MaxRank; ++Rank)
+				{
+					SortColumnByNeighbours(Columns[Rank], SlotConsumers);
+				}
+				RefreshPositions();
+
+				// Back toward the inputs: order column r by where its dependencies, in column r + 1, sit.
+				for (int32 Rank = MaxRank - 1; Rank >= 0; --Rank)
+				{
+					SortColumnByNeighbours(Columns[Rank], SlotDependencies);
+				}
+				RefreshPositions();
+			}
+
+			// --- Vertical placement: stack each column by real heights, then straighten the chains. ---
+			for (const TArray<int32>& Column : Columns)
+			{
+				int32 ColumnHeight = -BlockMetrics::RowGutter;
+				for (const int32 SlotIndex : Column)
+				{
+					ColumnHeight += Slots[SlotIndex].Height + BlockMetrics::RowGutter;
+				}
+
+				int32 Cursor = -ColumnHeight / 2;
+				for (const int32 SlotIndex : Column)
+				{
+					Slots[SlotIndex].CenterY = Cursor + Slots[SlotIndex].Height / 2;
+					Cursor += Slots[SlotIndex].Height + BlockMetrics::RowGutter;
+				}
+			}
+
+			TArray<int32> ColumnHeights;
+			TArray<double> DesiredCenters;
+			TArray<int32> StraightenedCenters;
+			for (int32 Pass = 0; Pass < BlockMetrics::StraighteningPasses; ++Pass)
+			{
+				// Sweep away from the column that was pinned last, so each column is pulled toward
+				// neighbours whose centres are already settled.
+				const bool bTowardInputs = (Pass % 2) == 0;
+				for (int32 Step = 0; Step <= MaxRank; ++Step)
+				{
+					const int32 Rank = bTowardInputs ? Step : MaxRank - Step;
+					const TArray<int32>& Column = Columns[Rank];
+					if (Column.IsEmpty())
+					{
+						continue;
+					}
+
+					const TArray<TArray<int32>>& Adjacency = bTowardInputs ? SlotConsumers : SlotDependencies;
+					ColumnHeights.Reset(Column.Num());
+					DesiredCenters.Reset(Column.Num());
+					for (const int32 SlotIndex : Column)
+					{
+						ColumnHeights.Add(Slots[SlotIndex].Height);
+
+						const TArray<int32>& Neighbours = Adjacency[SlotIndex];
+						if (Neighbours.IsEmpty())
+						{
+							DesiredCenters.Add(static_cast<double>(Slots[SlotIndex].CenterY));
+							continue;
+						}
+
+						double Sum = 0.0;
+						for (const int32 Neighbour : Neighbours)
+						{
+							Sum += static_cast<double>(Slots[Neighbour].CenterY);
+						}
+						DesiredCenters.Add(Sum / static_cast<double>(Neighbours.Num()));
+					}
+
+					StraightenColumnCenters(ColumnHeights, DesiredCenters, StraightenedCenters);
+					for (int32 Index = 0; Index < Column.Num(); ++Index)
+					{
+						Slots[Column[Index]].CenterY = StraightenedCenters[Index];
+					}
+				}
+			}
+
+			// --- Horizontal placement: columns are as wide as their widest node, right-aligned so the
+			// outputs of a column line up and the wires into the next one stay short. ---
+			TArray<int32> ColumnWidths;
+			ColumnWidths.SetNumZeroed(MaxRank + 1);
+			for (const FLayoutSlot& Slot : Slots)
+			{
+				ColumnWidths[Slot.Rank] = FMath::Max(ColumnWidths[Slot.Rank], Slot.Width);
+			}
+
+			TArray<int32> ColumnRightX;
+			ColumnRightX.SetNumZeroed(MaxRank + 1);
+			ColumnRightX[0] = BlockMetrics::OutputColumnX + ColumnWidths[0];
+			for (int32 Rank = 1; Rank <= MaxRank; ++Rank)
+			{
+				ColumnRightX[Rank] = ColumnRightX[Rank - 1] - ColumnWidths[Rank - 1] - BlockMetrics::ColumnGutter;
+			}
+
+			for (const FLayoutSlot& Slot : Slots)
+			{
+				if (!Slot.Expression)
+				{
+					continue;
+				}
+
+				const int32 PositionX = ColumnRightX[Slot.Rank] - Slot.Width;
+				const int32 PositionY = Slot.CenterY - Slot.Height / 2;
+				SetGeneratedExpressionPosition(Slot.Expression, PositionX, PositionY);
+				Bounds.IncludeRect(PositionX, PositionY, Slot.Width, Slot.Height);
 			}
 
 			return Bounds;
 		}
+
+		struct FPlacedLayoutBlock
+		{
+			FString Title;
+			TArray<UMaterialExpression*> Expressions;
+			FLayoutBounds Bounds;
+		};
+
+		static void TranslatePlacedBlock(FPlacedLayoutBlock& Block, const int32 OffsetX, const int32 OffsetY)
+		{
+			if ((OffsetX == 0 && OffsetY == 0) || !Block.Bounds.IsValid())
+			{
+				return;
+			}
+
+			for (UMaterialExpression* Expression : Block.Expressions)
+			{
+				if (!Expression)
+				{
+					continue;
+				}
+
+				SetGeneratedExpressionPosition(
+					Expression,
+					Expression->MaterialExpressionEditorX + OffsetX,
+					Expression->MaterialExpressionEditorY + OffsetY);
+			}
+
+			Block.Bounds.MinX += OffsetX;
+			Block.Bounds.MaxX += OffsetX;
+			Block.Bounds.MinY += OffsetY;
+			Block.Bounds.MaxY += OffsetY;
+		}
+
+		// Blocks used to stack in a single column, which turned a material with several connected
+		// outputs into a ribbon tens of thousands of units tall -- readable only fully zoomed out. Pack
+		// them into columns instead, filling each to a height budget derived from the total block area
+		// so the finished graph comes out roughly landscape whatever the block count.
+		static void PackLayoutBlocks(TArray<FPlacedLayoutBlock>& Blocks)
+		{
+			constexpr int32 BlockGapX = 520;
+			constexpr int32 BlockGapY = 420;
+			constexpr int32 FirstBlockTopY = -620;
+			constexpr int32 MinColumnHeight = 2400;
+			// Width-to-height the packed graph aims for: a shape that suits a wide editor viewport.
+			constexpr double TargetAspect = 1.6;
+
+			double TotalArea = 0.0;
+			for (const FPlacedLayoutBlock& Block : Blocks)
+			{
+				if (Block.Bounds.IsValid())
+				{
+					TotalArea += static_cast<double>(Block.Bounds.Width()) * static_cast<double>(Block.Bounds.Height());
+				}
+			}
+
+			const int32 ColumnHeightBudget = FMath::Max(
+				MinColumnHeight,
+				FMath::RoundToInt32(FMath::Sqrt(TotalArea / TargetAspect)));
+
+			int32 ColumnLeftX = 0;
+			int32 ColumnWidth = 0;
+			int32 CursorY = FirstBlockTopY;
+			bool bColumnIsEmpty = true;
+			for (FPlacedLayoutBlock& Block : Blocks)
+			{
+				if (!Block.Bounds.IsValid())
+				{
+					continue;
+				}
+
+				// A block taller than the whole budget still gets a column of its own rather than being
+				// split, so bColumnIsEmpty rather than the height alone decides when to wrap.
+				if (!bColumnIsEmpty && (CursorY - FirstBlockTopY) + Block.Bounds.Height() > ColumnHeightBudget)
+				{
+					ColumnLeftX += ColumnWidth + BlockGapX;
+					ColumnWidth = 0;
+					CursorY = FirstBlockTopY;
+					bColumnIsEmpty = true;
+				}
+
+				TranslatePlacedBlock(Block, ColumnLeftX - Block.Bounds.MinX, CursorY - Block.Bounds.MinY);
+				ColumnWidth = FMath::Max(ColumnWidth, Block.Bounds.Width());
+				CursorY = Block.Bounds.MaxY + BlockGapY;
+				bColumnIsEmpty = false;
+			}
+		}
+	}
+
+	FLayoutNodeSize EstimateMaterialNodeSize(UMaterialExpression* Expression)
+	{
+		return EstimateExpressionNodeSize(Expression);
 	}
 
 	void LayoutGeneratedExpressions(UMaterial* Material, UMaterialFunction* MaterialFunction)
 	{
-		LayoutGeneratedExpressions(Material, MaterialFunction, nullptr, nullptr, nullptr);
+		LayoutGeneratedExpressions(Material, MaterialFunction, nullptr, nullptr, nullptr, false);
 	}
 
 	void LayoutGeneratedExpressions(
@@ -1640,8 +2083,10 @@ namespace UE::DreamShader::Editor::Private
 		UMaterialFunction* MaterialFunction,
 		const FTextShaderLayout* Layout,
 		const TMap<FString, UMaterialExpression*>* ExpressionsByVariable,
-		const TMap<FString, FString>* RegionByVariable)
+		const TMap<FString, FString>* RegionByVariable,
+		const bool bQuiet)
 	{
+		FLayoutNodeSizeCache SizeCache;
 		TArray<UMaterialExpression*> Expressions;
 		CollectMaterialExpressions(Material, MaterialFunction, Expressions);
 		TSet<UMaterialExpression*> ExplicitlyPositionedExpressions;
@@ -1663,7 +2108,12 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!ExplicitlyPositionedExpressions.IsEmpty() && ExplicitlyPositionedExpressions.Num() < Expressions.Num())
 			{
-				PositionUnmatchedExplicitLayoutExpressions(Expressions, Dependencies, Consumers, ExplicitlyPositionedExpressions);
+				PositionUnmatchedExplicitLayoutExpressions(
+					Expressions,
+					Dependencies,
+					Consumers,
+					SizeCache,
+					ExplicitlyPositionedExpressions);
 			}
 
 			InsertExplicitLayoutReroutes(
@@ -1676,8 +2126,8 @@ namespace UE::DreamShader::Editor::Private
 				ExpressionSet,
 				Dependencies,
 				Consumers);
-			PositionMaterialRootNearConnectedOutputs(Material);
-			GroupOutputBridgeUsages(Material, MaterialFunction, Expressions);
+			PositionMaterialRootNearConnectedOutputs(Material, SizeCache);
+			GroupOutputBridgeUsages(Material, MaterialFunction, Expressions, SizeCache);
 			return;
 		}
 
@@ -1940,10 +2390,6 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		int32 PositionedCount = 0;
-		int32 NextBlockTopY = -620;
-		constexpr int32 BlockSpacing = 420;
-		TArray<FLayoutBounds> BlockBounds;
-		BlockBounds.Reserve(LayoutBlocks.Num());
 
 		// The positioning loop below calls EnterProgressFrame(1.0f) once per node in every
 		// LayoutBlock. Inserted cross-block reroute nodes mean that count can exceed the
@@ -1957,39 +2403,64 @@ namespace UE::DreamShader::Editor::Private
 		LayoutSlowTask.TotalAmountOfWork = FMath::Max(1.0f, static_cast<float>(NodesToPosition));
 		LayoutSlowTask.CompletedWork = 0.0f;
 
+		// Each block is laid out around its own origin first. Only once every block's true extent is
+		// known can they be packed, and only after packing can the comment boxes be drawn -- a box
+		// placed before the move would be left behind by the nodes it is supposed to contain.
+		TArray<FPlacedLayoutBlock> PlacedBlocks;
+		PlacedBlocks.Reserve(LayoutBlocks.Num());
 		for (const FGeneratedLayoutBlock& Block : LayoutBlocks)
 		{
-			TArray<UMaterialExpression*> BlockExpressions;
-			BlockExpressions.Reserve(Block.ExpressionSet.Num());
+			FPlacedLayoutBlock& PlacedBlock = PlacedBlocks.AddDefaulted_GetRef();
+			PlacedBlock.Title = Block.Title;
+			PlacedBlock.Expressions.Reserve(Block.ExpressionSet.Num());
 			for (UMaterialExpression* Expression : Block.ExpressionSet)
 			{
-				BlockExpressions.Add(Expression);
+				PlacedBlock.Expressions.Add(Expression);
 			}
 
-			BlockExpressions.StableSort([&OriginalOrder](UMaterialExpression& Left, UMaterialExpression& Right)
+			PlacedBlock.Expressions.StableSort([&OriginalOrder](UMaterialExpression& Left, UMaterialExpression& Right)
 			{
 				return OriginalOrder.FindRef(&Left) < OriginalOrder.FindRef(&Right);
 			});
 
-			for (int32 Index = 0; Index < BlockExpressions.Num(); ++Index)
+			if (bQuiet)
 			{
-				(void)Index;
-				LayoutSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(
-					TEXT("Positioning node %d of %d..."),
-					++PositionedCount,
-					Expressions.Num())));
+				// The in-memory path runs this on every save. Report the block in one frame rather
+				// than formatting a status string per node, which is the bulk of the cost at this size.
+				PositionedCount += PlacedBlock.Expressions.Num();
+				LayoutSlowTask.EnterProgressFrame(static_cast<float>(PlacedBlock.Expressions.Num()));
+			}
+			else
+			{
+				for (int32 Index = 0; Index < PlacedBlock.Expressions.Num(); ++Index)
+				{
+					(void)Index;
+					LayoutSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(
+						TEXT("Positioning node %d of %d..."),
+						++PositionedCount,
+						Expressions.Num())));
+				}
 			}
 
-			FLayoutBounds Bounds = LayoutExpressionBlock(BlockExpressions, Dependencies, OriginalOrder, NextBlockTopY);
-			CreateDreamShaderLayoutComment(Material, MaterialFunction, Block.Title, Bounds);
-			if (Bounds.IsValid())
+			PlacedBlock.Bounds = LayoutExpressionBlock(PlacedBlock.Expressions, Dependencies, OriginalOrder, SizeCache);
+		}
+
+		PackLayoutBlocks(PlacedBlocks);
+
+		TArray<FLayoutBounds> BlockBounds;
+		BlockBounds.Reserve(PlacedBlocks.Num());
+		for (const FPlacedLayoutBlock& PlacedBlock : PlacedBlocks)
+		{
+			if (!PlacedBlock.Bounds.IsValid())
 			{
-				BlockBounds.Add(Bounds);
+				continue;
 			}
-			NextBlockTopY = Bounds.IsValid() ? Bounds.MaxY + BlockSpacing : NextBlockTopY + BlockSpacing;
+
+			CreateDreamShaderLayoutComment(Material, MaterialFunction, PlacedBlock.Title, PlacedBlock.Bounds);
+			BlockBounds.Add(PlacedBlock.Bounds);
 		}
 
 		PositionMaterialRootNearOutputs(Material, BlockBounds);
-		GroupOutputBridgeUsages(Material, MaterialFunction, Expressions);
+		GroupOutputBridgeUsages(Material, MaterialFunction, Expressions, SizeCache);
 	}
 }

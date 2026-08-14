@@ -25,6 +25,13 @@ struct FScopedSlowTask;
 
 namespace UE::DreamShader::Editor::Private
 {
+	// Estimated Slate-unit footprint of one material graph node. See EstimateMaterialNodeSize.
+	struct FLayoutNodeSize
+	{
+		int32 Width = 0;
+		int32 Height = 0;
+	};
+
 	struct FResolvedMaterialProperty
 	{
 		EMaterialProperty Property = MP_EmissiveColor;
@@ -271,13 +278,22 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeValue& SourceValue,
 		const FString& RouteName,
 		int32 RouteIndex);
+	// The footprint the layout pass places a node by. There is no widget to measure at generation
+	// time, so this is derived from what SGraphNodeMaterialBase assembles -- title bar, one row per
+	// pin, and the expression preview when ShouldShowPreview(). Errs high on purpose: over-estimating
+	// only loosens the graph, under-estimating overlaps nodes. Exposed so a layout test can assert
+	// against the same measure the placement used.
+	FLayoutNodeSize EstimateMaterialNodeSize(UMaterialExpression* Expression);
 	void LayoutGeneratedExpressions(UMaterial* Material, UMaterialFunction* MaterialFunction);
+	// bQuiet drops the per-node slow-task frames. The in-memory path lays out on every save, where
+	// formatting one progress string per node costs more than the placement itself.
 	void LayoutGeneratedExpressions(
 		UMaterial* Material,
 		UMaterialFunction* MaterialFunction,
 		const FTextShaderLayout* Layout,
 		const TMap<FString, UMaterialExpression*>* ExpressionsByVariable,
-		const TMap<FString, FString>* RegionByVariable);
+		const TMap<FString, FString>* RegionByVariable,
+		bool bQuiet);
 	void ResetMaterialToDefaults(UMaterial* Material);
 	bool ValidateSettings(const FTextShaderDefinition& Definition, FString& OutError);
 	bool ApplySettings(UMaterial* Material, const FTextShaderDefinition& Definition, FString& OutError);

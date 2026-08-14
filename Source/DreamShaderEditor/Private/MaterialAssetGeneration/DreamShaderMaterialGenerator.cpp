@@ -1798,6 +1798,7 @@ namespace UE::DreamShader::Editor
 				OutputPositionY += 180;
 			}
 
+			const bool bLayoutThisFunction = !bTransient || GetDefault<UDreamShaderSettings>()->bLayoutInMemoryGraphs;
 			if (bTransient)
 			{
 				FunctionSlowTask.EnterProgressFrame(1.0f);
@@ -1805,12 +1806,17 @@ namespace UE::DreamShader::Editor
 			else
 			{
 				FunctionSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Laying out '%s'..."), *FunctionDefinition.Name)));
+			}
+
+			if (bLayoutThisFunction)
+			{
 				Private::LayoutGeneratedExpressions(
 					nullptr,
 					MaterialFunction,
 					&FunctionDefinition.Layout,
 					GeneratedExpressionsByVariable.IsEmpty() ? nullptr : &GeneratedExpressionsByVariable,
-					RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable);
+					RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
+					bTransient);
 			}
 			FunctionSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Updating '%s'..."), *FunctionDefinition.Name)));
 			UMaterialEditingLibrary::UpdateMaterialFunction(MaterialFunction, nullptr);
@@ -2529,6 +2535,7 @@ namespace UE::DreamShader::Editor
 			}
 		}
 
+		const bool bLayoutThisMaterial = !bTransient || GetDefault<UDreamShaderSettings>()->bLayoutInMemoryGraphs;
 		if (bTransient)
 		{
 			MaterialSlowTask.EnterProgressFrame(1.0f);
@@ -2536,12 +2543,17 @@ namespace UE::DreamShader::Editor
 		else
 		{
 			MaterialSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Laying out material graph '%s'..."), *Material->GetName())));
+		}
+
+		if (bLayoutThisMaterial)
+		{
 			Private::LayoutGeneratedExpressions(
 				Material,
 				nullptr,
 				&Definition.Layout,
 				GeneratedExpressionsByVariable.IsEmpty() ? nullptr : &GeneratedExpressionsByVariable,
-				RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable);
+				RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
+				bTransient);
 		}
 		MaterialSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Compiling material '%s'..."), *Material->GetName())));
 		UMaterialEditingLibrary::RecompileMaterial(Material);
