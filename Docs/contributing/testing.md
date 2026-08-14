@@ -57,6 +57,7 @@ the fixture count and **no C++ changes when a fixture is added**.
 | `DreamShader.Gen.Graph.*` | Node-shape assertions on the generated graph | slow; editor |
 | `DreamShader.Gen.Parameters.*` | Parameter-node creation and pin wiring | slow; editor |
 | `DreamShader.Gen.Wiring.*` | Condition wiring in the generated graph | slow; editor |
+| `DreamShader.Gen.Layout.*` | Geometry of the placed graph | slow; editor |
 | `DreamShader.Roundtrip.*` | Decompile → regenerate fidelity | slow; editor; two of them also need a real RHI |
 | `DreamShader.Render.*` | Pixel parity | needs a real RHI |
 
@@ -155,6 +156,7 @@ generates from it, asserts against the generated asset, and deletes both on the 
 | `DreamShader.Gen.Parameters.NodeCreation` | CUSTOM_SIMPLE, quiet base | Declares parameters with and without inline defaults and asserts the matching `UMaterialExpression*Parameter` nodes are created |
 | `DreamShader.Gen.Parameters.OtherNodeCreation` | CUSTOM_SIMPLE, quiet base | Same axis for the parameter types beyond Scalar / Vector / Dynamic. Texture-object and asset-required types are out of scope |
 | `DreamShader.Gen.Parameters.InputWiring` | CUSTOM_SIMPLE, quiet base | The `Param(InputPin = expr)` call form; asserts the named pins end up connected |
+| `DreamShader.Gen.Layout.NoOverlap` | CUSTOM_SIMPLE, quiet base | Generates a four-output material and asserts no two placed nodes overlap and no node hangs out of its comment box, measuring each node with the same `EstimateMaterialNodeSize` the placement used. The fixture needs balanced trees (rank is distance to the sink, so a chain leaves one node per column with nothing to collide) and a pair of eight-argument `Function` call sites — ordinary math nodes default to `bCollapsed`, draw no preview and stand ~124 tall, which clears any plausible fixed row pitch; the `Custom` node a call site generates is ~416 |
 | `DreamShader.Compiler.Generate.InstanceAlias` | SIMPLE | — |
 | `DreamShader.Compiler.Generate.ThinCustomBackend` | SIMPLE | — |
 | `DreamShader.Render.ThinCustomVsGraphParity` | CUSTOM_SIMPLE, quiet base | **Needs a real RHI.** See [Render parity](#render-parity) |

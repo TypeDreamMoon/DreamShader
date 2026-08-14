@@ -59,6 +59,9 @@
   `max(2400, sqrt(totalArea / 1.6))`, which keeps the finished graph roughly landscape whatever the
   block count. Too few blocks to fill a column reproduces the old top-to-bottom stack. Comment
   boxes are created after packing, so a box can no longer be left behind by the nodes it wraps.
+- `DreamShader.Gen.Layout.NoOverlap` covers the three above: it generates a four-output material and
+  asserts no two placed nodes overlap and no node hangs out of its comment box, measuring each node
+  with the same estimate the placement used.
 - **Imports never cross roots.** A file resolves its imports against its own root and that root's
   `Packages` folder only. Two plugins shipping the same relative path can no longer shadow one
   another, and disabling a plugin cannot silently change what another root's import means. Files

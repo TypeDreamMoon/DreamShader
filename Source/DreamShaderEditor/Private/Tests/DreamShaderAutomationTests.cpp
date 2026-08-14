@@ -8,6 +8,9 @@
 #include "DreamShaderTypes.h"
 #include "DreamShaderVersionCompat.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+// EstimateMaterialNodeSize / FLayoutNodeSize, so the layout test measures placed nodes by the same
+// rule the placement pass used.
+#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
 #include "Preview/DreamShaderPreviewRenderer.h"
 
 #include "AssetCompilingManager.h"
@@ -3047,6 +3050,216 @@ bool FDreamShaderSourceRootImportIsolationTest::RunTest(const FString& Parameter
 	}
 	UE::DreamShader::RefreshSourceShaderRoots();
 
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderGraphLayoutNoOverlapTest,
+	FDreamShaderQuietAutomationTestBase,
+	"DreamShader.Gen.Layout.NoOverlap",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderGraphLayoutNoOverlapTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	// Layout places a UMaterial graph, so pin the Graph backend rather than letting this route to a
+	// hidden ThinCustom base that the object path would not resolve to.
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_Layout"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	// Four connected outputs, so the pass builds several blocks; one subexpression every output
+	// shares, so blocks bridge through DS_Shared_* reroutes; and edges spanning more than one rank.
+	//
+	// Two things make the overlap assertion mean anything. Balanced trees, because rank is distance
+	// to the sink and a plain chain would put exactly one node in every column, with nothing ever
+	// stacked to collide. And the pair of Blend8 call sites, because ordinary math nodes are short:
+	// UMaterialExpression defaults bCollapsed to true, so an Add draws no preview and stands about
+	// 124 tall, which any plausible fixed row pitch clears. A Function call site becomes a
+	// UMaterialExpressionCustom with one pin per argument -- eight of them here, about 292 tall --
+	// and the two sit at the same rank, which is the shape that actually collided.
+	const FString Source = FString::Printf(TEXT(R"(
+Function float Blend8(in float a, in float b, in float c, in float d, in float e, in float f, in float g, in float h)
+{
+    return a * 0.2 + b * 0.15 + c * 0.15 + d * 0.1 + e * 0.1 + f * 0.1 + g * 0.1 + h * 0.1;
+}
+
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Properties = {
+        ScalarParameter A = 0.25;
+        ScalarParameter B = 0.5;
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0);
+    }
+
+    Settings = {
+        Domain = "Surface";
+        ShadingModel = "DefaultLit";
+    }
+
+    Outputs = {
+        float3 BaseColor;
+        float  Metallic;
+        float  Roughness;
+        float3 Emissive;
+        Base.BaseColor     = BaseColor;
+        Base.Metallic      = Metallic;
+        Base.Roughness     = Roughness;
+        Base.EmissiveColor = Emissive;
+    }
+
+    Graph = {
+        float2 uv = UE.TexCoord(Index=0);
+        float Common = A * B + uv.x;
+
+        float t0 = Common * 0.5 + A;
+        float t1 = Common * 1.5 + B;
+        float t2 = Common * 2.5 + A;
+        float t3 = Common * 3.5 + B;
+        float u0 = t0 + t1;
+        float u1 = t2 + t3;
+        float v0 = u0 + u1;
+
+        float p = Blend8(A, B, uv.x, uv.y, v0, A + B, A * 2.0, B * 2.0);
+        float q = Blend8(B, A, uv.y, uv.x, v0, A - B, A * 3.0, B * 3.0);
+        float r = p + q;
+
+        BaseColor = Tint.rgb * r;
+        Metallic  = u0 * 0.5;
+        Roughness = u1 * 0.25;
+        Emissive  = Tint.rgb * p;
+    }
+}
+)"), *AssetName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+		FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
+		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated material loads"), Material))
+	{
+		return false;
+	}
+
+	struct FPlacedNode
+	{
+		UMaterialExpression* Expression = nullptr;
+		int32 MinX = 0;
+		int32 MinY = 0;
+		int32 MaxX = 0;
+		int32 MaxY = 0;
+	};
+
+	TArray<FPlacedNode> PlacedNodes;
+	for (auto&& ExpressionPtr : Material->GetExpressions())
+	{
+		UMaterialExpression* Expression = ExpressionPtr;
+		if (!Expression)
+		{
+			continue;
+		}
+
+		// Measured by exactly the rule the placement used, so the assertion below is about where the
+		// nodes were put rather than about the estimate itself.
+		const FLayoutNodeSize Size = EstimateMaterialNodeSize(Expression);
+		FPlacedNode& Placed = PlacedNodes.AddDefaulted_GetRef();
+		Placed.Expression = Expression;
+		Placed.MinX = Expression->MaterialExpressionEditorX;
+		Placed.MinY = Expression->MaterialExpressionEditorY;
+		Placed.MaxX = Placed.MinX + Size.Width;
+		Placed.MaxY = Placed.MinY + Size.Height;
+	}
+
+	if (!TestTrue(TEXT("Generated graph has enough nodes to exercise layout."), PlacedNodes.Num() >= 8))
+	{
+		return false;
+	}
+
+	// The regression this guards: spacing used to be a fixed 220 rows / 420 columns against an assumed
+	// 320 x 150 footprint. A node carrying an expression preview is already ~248 tall on its own, so
+	// column neighbours overlapped each other.
+	int32 OverlapCount = 0;
+	FString FirstOverlap;
+	for (int32 Left = 0; Left < PlacedNodes.Num(); ++Left)
+	{
+		for (int32 Right = Left + 1; Right < PlacedNodes.Num(); ++Right)
+		{
+			const FPlacedNode& First = PlacedNodes[Left];
+			const FPlacedNode& Second = PlacedNodes[Right];
+			const bool bOverlaps = First.MinX < Second.MaxX && Second.MinX < First.MaxX
+				&& First.MinY < Second.MaxY && Second.MinY < First.MaxY;
+			if (!bOverlaps)
+			{
+				continue;
+			}
+
+			++OverlapCount;
+			if (FirstOverlap.IsEmpty())
+			{
+				FirstOverlap = FString::Printf(
+					TEXT("%s (%d,%d)-(%d,%d) vs %s (%d,%d)-(%d,%d)"),
+					*First.Expression->GetName(), First.MinX, First.MinY, First.MaxX, First.MaxY,
+					*Second.Expression->GetName(), Second.MinX, Second.MinY, Second.MaxX, Second.MaxY);
+			}
+		}
+	}
+
+	TestEqual(
+		*FString::Printf(TEXT("No two laid-out nodes overlap (first: %s)"), *FirstOverlap),
+		OverlapCount,
+		0);
+
+	// Generated boxes carry bGroupMode, so a node poking out of the box it sits in is a node the box
+	// will leave behind when it is dragged.
+	int32 CommentCount = 0;
+	int32 EscapingNodeCount = 0;
+	for (auto&& CommentPtr : Material->GetEditorComments())
+	{
+		UMaterialExpressionComment* Comment = CommentPtr;
+		if (!Comment || !Comment->Text.StartsWith(TEXT("DreamShader: ")))
+		{
+			continue;
+		}
+
+		++CommentCount;
+		const int32 BoxMinX = Comment->MaterialExpressionEditorX;
+		const int32 BoxMinY = Comment->MaterialExpressionEditorY;
+		const int32 BoxMaxX = BoxMinX + Comment->SizeX;
+		const int32 BoxMaxY = BoxMinY + Comment->SizeY;
+		for (const FPlacedNode& Node : PlacedNodes)
+		{
+			const bool bIntersects = Node.MinX < BoxMaxX && BoxMinX < Node.MaxX
+				&& Node.MinY < BoxMaxY && BoxMinY < Node.MaxY;
+			const bool bContained = Node.MinX >= BoxMinX && Node.MaxX <= BoxMaxX
+				&& Node.MinY >= BoxMinY && Node.MaxY <= BoxMaxY;
+			if (bIntersects && !bContained)
+			{
+				++EscapingNodeCount;
+			}
+		}
+	}
+
+	TestTrue(TEXT("Layout produced at least one DreamShader comment box."), CommentCount > 0);
+	TestEqual(TEXT("No node hangs out of the comment box it sits in."), EscapingNodeCount, 0);
 	return true;
 }
 
