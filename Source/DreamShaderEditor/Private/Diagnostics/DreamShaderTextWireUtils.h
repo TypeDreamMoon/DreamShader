@@ -23,13 +23,12 @@
 
 #include "CoreMinimal.h"
 
-#include "DreamShaderVersionCompat.h"
 #include "Internationalization/Internationalization.h"
-#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
+// FTextInspector, FHistoricTextFormatData, FTextFormat and FFormatArgumentValue all live in
+// Text.h, in every engine this plugin supports -- there is no Internationalization/TextInspector.h
+// to gate on, and FTextInspector::GetSourceString has had one signature (returning const FString*)
+// since well before 5.5. Verified against the 5.5, 5.6 and 5.8 headers.
 #include "Internationalization/Text.h"
-#else
-#include "Internationalization/TextInspector.h"
-#endif
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -47,12 +46,7 @@ namespace UE::DreamShader::Editor::Private
 		// the source string IS the invariant English text.
 		if (FormatData.IsEmpty())
 		{
-			const FString* SourceString = nullptr;
-#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
-			SourceString = FTextInspector::GetSourceString(Text);
-#else
-			FTextInspector::GetSourceString(Text, SourceString);
-#endif
+			const FString* SourceString = FTextInspector::GetSourceString(Text);
 			return SourceString != nullptr ? *SourceString : Text.ToString();
 		}
 

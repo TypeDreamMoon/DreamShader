@@ -36,11 +36,11 @@ namespace UE::DreamShader::Compiler
         bool bTransient = false;
     };
 
-	struct DREAMSHADERCOMPILER_API FDreamShaderCompileResult
-	{
-		bool bSucceeded = false;
-		FText Message;
-	};
+    struct DREAMSHADERCOMPILER_API FDreamShaderCompileResult
+    {
+        bool bSucceeded = false;
+        FText Message;
+    };
 
     class DREAMSHADERCOMPILER_API IDreamShaderCompiler
     {

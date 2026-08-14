@@ -314,9 +314,9 @@ namespace UE::DreamShader::Editor::Private
 		return !OutLocation.FilePath.IsEmpty() && !OutLocation.Message.IsEmpty();
 	}
 
-		TArray<FDreamShaderDiagnosticRecord> FDreamShaderDiagnosticsStore::BuildGenerateErrorDiagnostics(
-			const FString& SourceFilePath,
-			const FText& ErrorMessage)
+	TArray<FDreamShaderDiagnosticRecord> FDreamShaderDiagnosticsStore::BuildGenerateErrorDiagnostics(
+		const FString& SourceFilePath,
+		const FText& ErrorMessage)
 	{
 		TArray<FDreamShaderDiagnosticRecord> Diagnostics;
 

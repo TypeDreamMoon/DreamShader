@@ -278,11 +278,16 @@ namespace UE::DreamShader::Editor::Private
 						return Record.Severity.Equals(TEXT("error"), ESearchCase::IgnoreCase);
 					}))
 				{
+					// Line/column are identifiers, not quantities: grouping has to be off or a file
+					// past a thousand lines reads as "L1,234:1".
+					FNumberFormattingOptions LineNumberOptions;
+					LineNumberOptions.UseGrouping = false;
+
 					Item->Status = FDreamShaderSourceItem::EStatus::Error;
 					Item->StatusDetail = FText::Format(
 						LOCTEXT("DiagnosticLineFmt", "L{0}:{1} {2}"),
-						FText::AsNumber(ErrorRecord->Line),
-						FText::AsNumber(ErrorRecord->Column),
+						FText::AsNumber(ErrorRecord->Line, &LineNumberOptions),
+						FText::AsNumber(ErrorRecord->Column, &LineNumberOptions),
 						ErrorRecord->Message);
 				}
 			}

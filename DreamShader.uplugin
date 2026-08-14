@@ -32,6 +32,12 @@
 			"LoadingPhase": "Default"
 		}
 	],
+	"LocalizationTargets": [
+		{
+			"Name": "DreamShader",
+			"LoadingPolicy": "Editor"
+		}
+	],
 	"Plugins": [
 		{
 			"Name": "WebSocketNetworking",

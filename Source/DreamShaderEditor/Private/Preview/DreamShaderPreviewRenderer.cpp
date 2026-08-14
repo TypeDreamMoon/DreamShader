@@ -35,6 +35,24 @@
 
 #define LOCTEXT_NAMESPACE "DreamShader.Preview"
 
+// A NOTE ON THE `FString& OutError` PARAMETERS BELOW.
+//
+// FDreamShaderPreviewResult::Message is an FText and the wire serializes it through
+// ToInvariantWireString, so a message that stays an FText all the way to the wire comes out English
+// under any editor culture. An `FString& OutError` does NOT: the FText has to be collapsed with
+// ToString() to fill it, and ToString() is the LOCALIZED display. Wrapping the result back up with
+// FText::FromString at the call site cannot undo that -- the invariant rebuild has nothing left to
+// rebuild from, and a zh-Hans editor would put Chinese into preview.json and the preview WebSocket,
+// which the VSCode and Rider extensions parse.
+//
+// The render context's whole error channel (EnsureResources / RenderCurrentFrame / RenderFrame /
+// KickoffFrame / TryConsumeReadyFrame / FDreamShaderPreviewReadbackData::Error) is FString-typed, so
+// every site filling one of those is marked I18N-EXEMPT and stays a literal. Sites that assign
+// straight to FDreamShaderPreviewResult::Message are FText and are localized normally.
+//
+// Localizing this channel properly means converting that whole error path to FText -- worth doing,
+// but it is not a one-line change.
+
 namespace UE::DreamShader::Editor::Private
 {
 	namespace
@@ -55,11 +73,11 @@ namespace UE::DreamShader::Editor::Private
 		bool ResolveGeneratedMaterialPath(const FString& SourceFilePath, FString& OutObjectPath, FString& OutError)
 		{
 			FString SourceText;
-		if (!FFileHelper::LoadFileToString(SourceText, *SourceFilePath))
-		{
-			OutError = FText::Format(LOCTEXT("FailedToReadDreamShaderSource", "Failed to read DreamShader source '{0}'."), FText::FromString(SourceFilePath)).ToString();
-			return false;
-		}
+			if (!FFileHelper::LoadFileToString(SourceText, *SourceFilePath))
+			{
+				OutError = FString::Printf(TEXT("Failed to read DreamShader source '%s'."), *SourceFilePath); // I18N-EXEMPT: reaches the wire, see the note above
+				return false;
+			}
 
 			TArray<FString> Lines;
 			SourceText.ParseIntoArrayLines(Lines, false);
@@ -77,17 +95,17 @@ namespace UE::DreamShader::Editor::Private
 
 			FTextShaderDefinition Definition;
 			FString ParseError;
-		if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
-		{
-			OutError = FText::Format(LOCTEXT("DreamShaderSourceParseFailed", "{0}: {1}"), FText::FromString(SourceFilePath), FText::FromString(ParseError)).ToString();
-			return false;
-		}
+			if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
+			{
+				OutError = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *ParseError); // I18N-EXEMPT: reaches the wire, see the note above
+				return false;
+			}
 
-		if (Definition.Name.IsEmpty())
-		{
-			OutError = FText::Format(LOCTEXT("MissingTopLevelShaderBlock", "{0}: This file does not define a top-level Shader block."), FText::FromString(SourceFilePath)).ToString();
-			return false;
-		}
+			if (Definition.Name.IsEmpty())
+			{
+				OutError = FString::Printf(TEXT("%s: This file does not define a top-level Shader block."), *SourceFilePath); // I18N-EXEMPT: reaches the wire, see the note above
+				return false;
+			}
 
 			// Same default the generator applies, or the preview would look up an object path that
 			// generation never wrote.
@@ -212,15 +230,15 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			IFileManager::Get().MakeDirectory(*FPaths::GetPath(ImagePath), true);
-		if (!FFileHelper::SaveArrayToFile(TArrayView64<const uint8>(PngData.GetData(), PngData.Num()), *ImagePath))
-		{
-			OutError = FText::Format(LOCTEXT("FailedToWritePreviewImage", "Failed to write preview image '{0}'."), FText::FromString(ImagePath)).ToString();
-			return false;
-		}
+			if (!FFileHelper::SaveArrayToFile(TArrayView64<const uint8>(PngData.GetData(), PngData.Num()), *ImagePath))
+			{
+				OutError = FString::Printf(TEXT("Failed to write preview image '%s'."), *ImagePath); // I18N-EXEMPT: reaches the wire, see the note above
+				return false;
+			}
 
 			return true;
+		}
 	}
-}
 
 	FDreamShaderPreviewRenderContext::FDreamShaderPreviewRenderContext() = default;
 	FDreamShaderPreviewRenderContext::~FDreamShaderPreviewRenderContext() = default;
@@ -290,7 +308,7 @@ namespace UE::DreamShader::Editor::Private
 		FSceneView* View = ThumbnailScene->CreateView(&ViewFamily, 0, 0, CachedWidth, CachedHeight);
 		if (!View)
 		{
-			OutError = FText::Format(LOCTEXT("FailedToCreatePreviewView", "Failed to create preview view for '{0}'."), FText::FromString(Material->GetPathName())).ToString();
+			OutError = FString::Printf(TEXT("Failed to create preview view for '%s'."), *Material->GetPathName()); // I18N-EXEMPT: reaches the wire, see the note above
 			return false;
 		}
 
@@ -324,7 +342,7 @@ namespace UE::DreamShader::Editor::Private
 		FTextureRenderTargetResource* RenderTargetResource = RenderTarget->GameThread_GetRenderTargetResource();
 		if (!RenderTargetResource || !RenderTargetResource->ReadPixels(OutColors) || OutColors.Num() != CachedWidth * CachedHeight)
 		{
-			OutError = FText::Format(LOCTEXT("FailedToReadPreviewPixels", "Failed to read preview pixels for '{0}'."), FText::FromString(Material->GetPathName())).ToString();
+			OutError = FString::Printf(TEXT("Failed to read preview pixels for '%s'."), *Material->GetPathName()); // I18N-EXEMPT: reaches the wire, see the note above
 			return false;
 		}
 
@@ -352,7 +370,7 @@ namespace UE::DreamShader::Editor::Private
 			OutPngData);
 		if (OutPngData.IsEmpty())
 		{
-			OutError = FText::Format(LOCTEXT("FailedToEncodePreviewThumbnail", "Failed to encode preview thumbnail for '{0}'."), FText::FromString(Material->GetPathName())).ToString();
+			OutError = FString::Printf(TEXT("Failed to encode preview thumbnail for '%s'."), *Material->GetPathName()); // I18N-EXEMPT: reaches the wire, see the note above
 			return false;
 		}
 
@@ -647,6 +665,6 @@ namespace UE::DreamShader::Editor::Private
 			FFileHelper::SaveStringToFile(OutputText, *GetPreviewManifestPath());
 		}
 	}
+}
 
 #undef LOCTEXT_NAMESPACE
-}

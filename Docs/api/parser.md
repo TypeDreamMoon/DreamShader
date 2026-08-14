@@ -22,13 +22,13 @@ Defined in header `DreamShaderParser.h`.
 
 namespace UE::DreamShader
 {
-	class DREAMSHADER_API FTextShaderParser
-	{
-	public:
-		static bool Parse(const FString& SourceText,
-		                  FTextShaderDefinition& OutDefinition,
-		                  FText& OutError);
-	};
+    class DREAMSHADER_API FTextShaderParser
+    {
+    public:
+        static bool Parse(const FString& SourceText,
+                          FTextShaderDefinition& OutDefinition,
+                          FText& OutError);
+    };
 }
 ```
 
@@ -39,7 +39,13 @@ a class shape; there is never a reason to instantiate it.
 
 ```cpp
 static bool Parse(const FString& SourceText, FTextShaderDefinition& OutDefinition, FText& OutError);
+static bool Parse(const FString& SourceText, FTextShaderDefinition& OutDefinition, FString& OutError);
 ```
+
+The `FString` overload is a compatibility shim: it calls the `FText` one and collapses the result
+with `ToString()`. That is the **localized** display, so a caller that writes `OutError` to the
+diagnostics wire must take the `FText` overload and serialize it through `ToInvariantWireString()`
+instead. See [Contributing ▸ Localization](../contributing/index.md#localization).
 
 | Parameter | Direction | Contract |
 | :-- | :-- | :-- |

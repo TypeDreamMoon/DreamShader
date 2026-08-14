@@ -177,7 +177,7 @@ namespace UE::DreamShader::Editor::Private
 			TSharedRef<FJsonObject> ErrorObject = MakeShared<FJsonObject>();
 			ErrorObject->SetStringField(TEXT("type"), TEXT("previewResult"));
 			ErrorObject->SetStringField(TEXT("status"), TEXT("error"));
-			ErrorObject->SetStringField(TEXT("message"), ToInvariantWireString(FText::FromString(TEXT("Invalid DreamShader preview request JSON."))));
+			ErrorObject->SetStringField(TEXT("message"), TEXT("Invalid DreamShader preview request JSON.")); // I18N-EXEMPT: wire literal
 			ErrorObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
 			SendJson(Socket, ErrorObject);
 			return;
@@ -241,7 +241,7 @@ namespace UE::DreamShader::Editor::Private
 			if (!bSavedPreview || !FDreamShaderPreviewRenderer::RenderMaterialPreviewFrame(Material, PreviewRequest.Width, PreviewRequest.Height, PreviewRequest.Mesh, PreviewRequest.OrbitYaw, PreviewRequest.OrbitPitch, FirstFramePngData, RenderError))
 			{
 				PreviewResult.bSucceeded = false;
-			PreviewResult.Message = FText::FromString(RenderError);
+				PreviewResult.Message = FText::FromString(RenderError);
 			}
 			else
 			{
@@ -260,7 +260,7 @@ namespace UE::DreamShader::Editor::Private
 		ResultObject->SetStringField(TEXT("assetPath"), PreviewResult.AssetPath);
 		ResultObject->SetStringField(TEXT("imagePath"), PreviewResult.ImagePath);
 		ResultObject->SetStringField(TEXT("mesh"), PreviewResult.Mesh);
-			ResultObject->SetStringField(TEXT("message"), ToInvariantWireString(PreviewResult.Message));
+		ResultObject->SetStringField(TEXT("message"), ToInvariantWireString(PreviewResult.Message));
 		ResultObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
 
 		// As in SendPreviewFrame: metadata message first, image bytes as a following tagged message
@@ -367,7 +367,7 @@ namespace UE::DreamShader::Editor::Private
 					ErrorObject->SetStringField(TEXT("sourceFile"), State.SourceFilePath);
 					ErrorObject->SetStringField(TEXT("assetPath"), State.AssetPath);
 					ErrorObject->SetStringField(TEXT("mesh"), State.Mesh);
-					ErrorObject->SetStringField(TEXT("message"), ToInvariantWireString(FText::FromString(Error)));
+					ErrorObject->SetStringField(TEXT("message"), Error); // already invariant: the render context's error channel is FString
 					ErrorObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
 					SendJson(Socket, ErrorObject);
 					State.bStreaming = false;
@@ -415,7 +415,7 @@ namespace UE::DreamShader::Editor::Private
 			ErrorObject->SetStringField(TEXT("sourceFile"), State.SourceFilePath);
 			ErrorObject->SetStringField(TEXT("assetPath"), State.AssetPath);
 			ErrorObject->SetStringField(TEXT("mesh"), State.Mesh);
-			ErrorObject->SetStringField(TEXT("message"), ToInvariantWireString(FText::FromString(Error)));
+			ErrorObject->SetStringField(TEXT("message"), Error); // already invariant: the render context's error channel is FString
 			ErrorObject->SetStringField(TEXT("updatedAtUtc"), FDateTime::UtcNow().ToIso8601());
 			SendJson(Socket, ErrorObject);
 			State.bStreaming = false;

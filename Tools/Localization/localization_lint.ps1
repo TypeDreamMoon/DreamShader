@@ -241,10 +241,11 @@ function Get-FileAnalysis {
         }
     }
 
-    if (-not $lintable) {
-        return [pscustomobject]$analysis
-    }
-
+    # The LOCTEXT/NSLOCTEXT inventory runs for EVERY file, not just the linted ones. The engine's
+    # GatherText commandlet scans the whole module -- it knows nothing about this script's Scope /
+    # Deferred / Allowlisted / Excluded split -- so an inventory that skipped the unlinted files
+    # would report a gather count no real gather ever produces, and the baseline comparison would
+    # be checking a number against itself. The R1/R2 literal rules below stay scoped.
     $lineIndex = 0
     foreach ($line in ($text -split "`r?`n")) {
         $lineIndex++
@@ -259,7 +260,7 @@ function Get-FileAnalysis {
             }
         }
         if ($line -match 'LOCTEXT\(\s*"(?<key>(?:\\.|[^"\\])*)"\s*,\s*"(?<text>(?:\\.|[^"\\])*)"\s*\)') {
-            if ([string]::IsNullOrWhiteSpace($analysis.namespaceDefine)) {
+            if ($lintable -and [string]::IsNullOrWhiteSpace($analysis.namespaceDefine)) {
                 $analysis.r4R5R6Violations += New-Violation -Rule 'R5' -Severity 'error' -File $File.FullName -Line $lineIndex -Message 'LOCTEXT found without an active LOCTEXT_NAMESPACE define.'
             }
             $analysis.loctextCount++
@@ -271,6 +272,10 @@ function Get-FileAnalysis {
                 line = $lineIndex
             }
         }
+    }
+
+    if (-not $lintable) {
+        return [pscustomobject]$analysis
     }
 
     $fromTextPatterns = @(
@@ -359,6 +364,14 @@ function New-BaselineMarkdown {
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine('This inventory covers compile-time LOCTEXT/NSLOCTEXT entries that the Localization Dashboard gather step can see.')
     [void]$sb.AppendLine('')
+    [void]$sb.AppendLine('It spans EVERY source file, not just the ones this script lints. GatherText scans the whole')
+    [void]$sb.AppendLine('module and knows nothing about the Scope / Deferred / Allowlisted / Excluded split, so an')
+    [void]$sb.AppendLine('inventory narrower than the module would report a count no real gather ever produces. That')
+    [void]$sb.AppendLine('includes the automation tests: their LOCTEXT entries (namespace `DreamShaderTests`) are')
+    [void]$sb.AppendLine('gathered like any other, so they are listed here rather than quietly dropped.')
+    [void]$sb.AppendLine('')
+    [void]$sb.AppendLine('`-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.')
+    [void]$sb.AppendLine('')
     [void]$sb.AppendLine('## Expected gather count')
     [void]$sb.AppendLine("$ExpectedCount")
     [void]$sb.AppendLine('')
@@ -425,9 +438,10 @@ $deferredFiles = @($analyses | Where-Object { $_.category -eq 'Deferred' })
 $excludedFiles = @($analyses | Where-Object { $_.category -eq 'Excluded' })
 $allowlistedFiles = @($analyses | Where-Object { $_.category -eq 'Allowlisted' })
 
+# Every file contributes to the inventory -- see the note in Get-FileAnalysis. The gather count
+# must match what the engine's GatherText would find, which is the whole module.
 $inventoryEntries = @()
 foreach ($a in $analyses) {
-    if (-not $a.enabledForLint) { continue }
     $inventoryEntries += @($a.inventoryEntries)
 }
 

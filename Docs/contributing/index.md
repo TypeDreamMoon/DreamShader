@@ -42,8 +42,10 @@ One engine proves nothing about the others, so run the whole matrix with
 | `README.md` | English readme | yes |
 | `CHANGELOG.md` | Version history; the release workflow reads its `## <VersionName>` section | yes |
 | `LICENSE` | MIT | yes |
+| `Content/Localization/DreamShader/` | `.locmeta` plus one `.locres` per culture; loaded through the `LocalizationTargets` entry in the descriptor | yes |
 | `Shaders/` | `DreamShaderBuiltins.ush`, mounted at `/Plugin/DreamShader` | **no** |
 | `Tests/Corpus/` | Data-driven fixtures and `.expected.json` goldens | **no** |
+| `Tools/Localization/` | `localization_lint.ps1` and the gather baseline it emits | **no** |
 | `Config/` | `FilterPlugin.ini` — the stock commented template; it declares no extra packaged files | **no** |
 | `Images/` | Readme artwork | **no** |
 | `README.zh-CN.md` | Chinese readme | **no** |
@@ -220,6 +222,42 @@ there are no raw `ENGINE_MAJOR_VERSION` or `UE_VERSION_NEWER_THAN` uses anywhere
 you add version-dependent code, add it there and use `DREAMSHADER_UE_VERSION_AT_LEAST(Major, Minor)`
 or `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`. The complete list of currently gated behaviour is on
 [Version compatibility](../api/version-compat.md).
+
+## Localization
+
+Editor-facing text is `LOCTEXT`/`NSLOCTEXT`. The wire format is not: `diagnostics.json`,
+`diagnostics/*.json`, `bridge.db`, `preview.json` and the preview WebSocket are parsed by the VSCode
+and Rider extensions and must read the same in every editor culture.
+
+The rule that keeps both true:
+
+- **Text that reaches the wire stays an `FText` all the way there**, and the write goes through
+  `ToInvariantWireString()` (`Diagnostics/DreamShaderTextWireUtils.h`). That function replays the
+  `FText`'s historic format data — pattern, arguments, nested formats — in the invariant culture.
+  `FTextInspector::GetSourceString` alone is not enough: for an `FText::Format` result it returns the
+  *localized* substituted display.
+- **Never collapse such an `FText` with `ToString()` on the way.** `ToString()` is the localized
+  display, and re-wrapping the result in `FText::FromString` cannot recover the English. An API whose
+  error channel is `FString`-typed — `FDreamShaderPreviewRenderContext`, the generator entry points —
+  therefore keeps literal `FString::Printf` messages, marked `I18N-EXEMPT`.
+- Text that only ever reaches Slate has no such constraint; localize it normally.
+
+```bash
+pwsh -File Tools/Localization/localization_lint.ps1
+```
+
+Checks `LOCTEXT_NAMESPACE` define/undef pairing, rejects the define in headers, and flags literals
+gather cannot see (`FText::FromString(TEXT(...))`, `FString::Printf(TEXT(...))`). A deliberate
+non-display literal is exempted with an `I18N-EXEMPT` comment **on the same line as the call** — the
+check reads one line, not a span. `-IncludeDeferred` widens which files those literal rules run on.
+
+`-EmitBaseline` regenerates `Tools/Localization/BASELINE.md`, whose gather count is the regression
+check; it covers every source file, because `GatherText` does. A count that moves without a matching
+`.locres` update means the translations are behind.
+
+There is no `Config/Localization/DreamShader.ini` yet, so the Dashboard cannot re-gather the target
+and the checked-in `zh-Hans` `.locres` is a hand-made snapshot. New `LOCTEXT` falls back to English
+until it is regenerated.
 
 ## Notes
 
