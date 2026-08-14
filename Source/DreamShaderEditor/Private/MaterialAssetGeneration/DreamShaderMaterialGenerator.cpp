@@ -32,6 +32,11 @@
 #include "Materials/MaterialFunctionMaterialLayerBlend.h"
 #include "Materials/MaterialInstanceBasePropertyOverrides.h"
 #include "MaterialSceneTextureId.h"
+// UPackage, for the GetPackage()->SetDirtyFlag / HasAnyPackageFlags calls and for the
+// GetTransientPackage() outer that FindObject/NewObject deduce against. Unity builds happened to
+// pull it in through a neighbouring TU; a non-unity compile of this file -- which is what UBT's
+// adaptive non-unity does to whatever you are currently editing -- failed with C2027.
+#include "UObject/Package.h"
 #include "UObject/UnrealType.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"

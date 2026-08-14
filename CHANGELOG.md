@@ -43,6 +43,11 @@
 
 ### Fixed
 
+- `DreamShaderMaterialGenerator.cpp` did not include `UObject/Package.h` despite calling
+  `GetPackage()->SetDirtyFlag()`, `HasAnyPackageFlags()` and deducing `FindObject`/`NewObject`
+  against a `GetTransientPackage()` outer. Same shape as the `Engine/EngineTypes.h` omission below:
+  unity builds pulled `UPackage` in through a neighbouring translation unit, so it only failed —
+  with `error C2027` — under the adaptive non-unity compile UBT gives whatever file you are editing.
 - `DreamShaderMaterialGeneratorPrivate.h` did not include `Engine/EngineTypes.h` despite declaring
   functions that take `EBlendMode` and `EMaterialShadingModel`. Unity builds pulled the enums in
   through a neighbouring translation unit; any non-unity compile of a file including it — which is
