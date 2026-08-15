@@ -104,10 +104,18 @@ bool FDreamShaderTextWireUtilsTest::RunTest(const FString& Parameters)
 	// The diagnostics wire is parsed by VSCode/Rider tooling and must be identical under every
 	// editor culture, so the whole suite runs once per culture; the editor culture is restored
 	// when the test exits.
-	const FString OriginalCulture = FInternationalization::Get().GetCurrentCulture()->GetName();
+	//
+	// Restoring through SetCurrentCulture(GetCurrentCulture()->GetName()) did not actually restore:
+	// the culture is three settings (language, locale, asset group) and reading one name back cannot
+	// reconstruct them, so the switch to zh-Hans below leaked into every later test in the same run.
+	// It only ever surfaced as one failure -- Parse.Lexical.L_UnterminatedBlock, the next test whose
+	// expected English text happens to have a zh-Hans translation -- which reads like a lexer bug and
+	// is not one. BackupCultureState/RestoreCultureState is the engine's own answer for this.
+	FInternationalization::FCultureStateSnapshot CultureSnapshot;
+	FInternationalization::Get().BackupCultureState(CultureSnapshot);
 	ON_SCOPE_EXIT
 	{
-		FInternationalization::Get().SetCurrentCulture(OriginalCulture);
+		FInternationalization::Get().RestoreCultureState(CultureSnapshot);
 	};
 
 	auto AssertWireInvariance = [this](const FString& CultureName)
