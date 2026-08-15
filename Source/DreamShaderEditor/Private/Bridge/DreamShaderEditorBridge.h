@@ -26,9 +26,44 @@ namespace UE::DreamShader::Editor::Private
 	private:
 		static FString GetBridgeDirectory();
 		static FString GetRequestDirectory();
+		static FString GetResponseDirectory();
+		static FString GetStatusFilePath();
 		static FString GetDiagnosticsFilePath();
 		static FString GetDiagnosticsDirectory();
 		static FString GetSourceFileMetadata(UObject* Asset);
+
+		/**
+		 * Publishes the heartbeat.
+		 *
+		 * A client cannot otherwise tell a running editor from a closed one, and inferring it
+		 * from `bridge.db` -- which is what external tooling had to do before this -- is a
+		 * guess that a hard crash gets wrong in the expensive direction.
+		 */
+		void PublishStatus();
+
+		/** Answers one request. A request that carried no id gets no response and wants none. */
+		void RespondTo(
+			const FString& RequestId,
+			bool bOk,
+			const FString& Message,
+			const TArray<FDreamShaderDiagnosticRecord>* Diagnostics = nullptr,
+			double DurationMs = 0.0,
+			const FString& FallbackFilePath = FString());
+
+		/** One request parked until the compile it asked for finishes. */
+		struct FPendingResponse
+		{
+			FString RequestId;
+			/** `FPlatformTime::Seconds()` when the request was accepted, not when it ran. The
+			 *  wait for the debounce window is part of what the caller experiences. */
+			double AcceptedAtSeconds = 0.0;
+		};
+
+		/** True for a request written while nobody was listening. See the definition. */
+		bool IsAbandoned(const FString& RequestPath) const;
+
+		/** Completes every request that was waiting on this source file. */
+		void ResolvePendingResponses(const FString& SourceFilePath, bool bOk, const FString& Message);
 
 		void QueueFullScan();
 		void HandlePostEngineInit();
@@ -77,6 +112,23 @@ namespace UE::DreamShader::Editor::Private
 
 	private:
 		TMap<FString, double> PendingFiles;
+		/**
+		 * Requests waiting on a compile, keyed by the normalized source path.
+		 *
+		 * A `recompile` does not finish inside the request poll: the file goes into the
+		 * debounce queue and is compiled some ticks later. Answering at dispatch time would
+		 * mean reporting success before anything had been attempted, so the id is parked here
+		 * and the answer is sent when the compile it asked for actually completes.
+		 *
+		 * An array because two clients can ask for the same file, and both deserve an answer.
+		 */
+		TMap<FString, TArray<FPendingResponse>> PendingResponsesBySource;
+		/** When this bridge started listening. Anything written before it had no listener. */
+		FDateTime ListeningSince = FDateTime::MinValue();
+		double LastHeartbeatSeconds = 0.0;
+		bool bBusy = false;
+		FString BusyAction;
+		FString LastResult;
 		FDreamShaderDiagnosticsStore DiagnosticsStore;
 		TUniquePtr<FDreamShaderPreviewWebSocketServer> PreviewWebSocketServer;
 		TMap<FString, TSet<FString>> HeaderDependentsByFile;

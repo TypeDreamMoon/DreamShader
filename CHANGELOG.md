@@ -4,6 +4,31 @@
 
 ### Added
 
+- **The editor bridge answers now, and says whether it is alive.** It had an inbound half and
+  nothing else: a request produced no reply, no error file and no log line — a malformed one simply
+  vanished — and a client's only way to guess whether an editor was running at all was to look for
+  `bridge.db` and hope. The bridge now publishes `Bridge/status.json` (protocol, pid, project,
+  plugin version, `busy` / `busyAction`, `lastResult`, heartbeat), rewritten every 2 s and **deleted
+  on shutdown** so a missing file means "not running" definitively rather than "timed out", and
+  answers any request carrying a `requestId` in `Bridge/Responses/<requestId>.json` with `ok`,
+  `durationMs`, `message` and this compile's diagnostics. `recompile` with `scope: "file"` is
+  answered **when the compile finishes**, not at dispatch, since the file goes through the debounce
+  queue — including the case where the source vanished before the window elapsed. `scope: "all"`
+  answers immediately as *queued*, because the batch drains across ticks and the outcome is not
+  knowable yet. A `ping` action was added. Bad scopes, missing `sourceFile` and unknown actions are
+  now error responses instead of silent no-ops.
+
+  Three deliberate compatibility choices, all of which keep the shipped VSCode extension working
+  unchanged: a **missing** `protocol` field is read as the current version rather than a mismatch
+  (every request the extension sends omits it); a request with **no** `requestId` gets no response,
+  as before; and an unreadable request file is now **left for the next poll** instead of deleted,
+  because the extension writes requests in place rather than renaming them in, so a half-written
+  file is a real state and deleting it threw the request away.
+
+  Two behaviours borrowed from DreamFX's bridge, which had them right: requests are deleted
+  **before** dispatch so one that crashes the editor cannot be replayed on every start, and requests
+  written while nobody was listening are discarded rather than served late.
+
 - **Parse failures now carry a `DSHnnnn` code, so the message text stops being the contract.**
   Until now the only thing identifying a DreamShader failure was its English wording — which is why
   the generator's message sites carry `I18N-EXEMPT` markers: translate the text and you break the

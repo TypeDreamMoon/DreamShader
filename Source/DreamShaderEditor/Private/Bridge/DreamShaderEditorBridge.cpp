@@ -43,10 +43,14 @@
 #include "Materials/MaterialFunctionMaterialLayerBlend.h"
 #include "MaterialEditorContext.h"
 #include "MaterialShared.h"
+#include "Interfaces/IPluginManager.h"
+#include "Misc/App.h"
+#include "Misc/DateTime.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
 #include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 #include "ShaderCore.h"
 #include "RHIStrings.h"
 #include "Styling/AppStyle.h"
@@ -103,6 +107,88 @@ namespace UE::DreamShader::Editor::Private
 			return InError.TrimStartAndEnd();
 		}
 
+		/**
+		 * Bumped only when a change would make an older client misread a newer editor.
+		 *
+		 * Deliberately mirrors DreamFX's numbering rather than starting its own count: the
+		 * two bridges now speak the same shape, and a shared client that had to remember two
+		 * unrelated version lines for one contract would be a worse contract.
+		 */
+		constexpr int32 BridgeProtocolVersion = 1;
+
+		/** How often the heartbeat is rewritten while idle. Matches DreamFX. */
+		constexpr double HeartbeatSeconds = 2.0;
+
+		/**
+		 * Writes a file the way a reader that is polling for it needs it written.
+		 *
+		 * The client watches for `Responses/<id>.json` to exist and then reads it. A plain
+		 * write makes the file exist while it is still half a file, so the client sees
+		 * truncated JSON -- rarely, and only under load, which is the worst way for a bug to
+		 * behave. Writing beside the target and renaming makes appearing and being complete
+		 * the same event.
+		 */
+		bool WriteFileAtomically(const FString& Path, const FString& Text)
+		{
+			const FString Temporary = Path + TEXT(".tmp");
+			if (!FFileHelper::SaveStringToFile(Text, *Temporary, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+			{
+				return false;
+			}
+			// Move rather than Copy: a rename within one volume is atomic, a copy is not.
+			if (!IFileManager::Get().Move(*Path, *Temporary, /*bReplace=*/true))
+			{
+				IFileManager::Get().Delete(*Temporary);
+				return false;
+			}
+			return true;
+		}
+
+		void WriteDiagnosticsArray(
+			const TSharedRef<TJsonWriter<>>& Writer,
+			const TArray<FDreamShaderDiagnosticRecord>* Diagnostics,
+			const FString& FallbackFilePath)
+		{
+			Writer->WriteArrayStart(TEXT("diagnostics"));
+			if (Diagnostics != nullptr)
+			{
+				for (const FDreamShaderDiagnosticRecord& Record : *Diagnostics)
+				{
+					Writer->WriteObjectStart();
+					// Each diagnostic keeps its own file: a .dsm that pulls in a broken .dsh
+					// fails at the .dsh's position, and attributing it to the .dsm would send
+					// the author to the wrong file.
+					//
+					// `FilePath` is often empty, because the store keys records by source and
+					// only fills this in when a diagnostic belongs to a *different* file than
+					// the one being compiled. Writing that empty string through would hand the
+					// client a location it cannot open, so the compiled file stands in.
+					Writer->WriteValue(TEXT("file"),
+						Record.FilePath.IsEmpty() ? FallbackFilePath : Record.FilePath);
+					Writer->WriteValue(TEXT("line"), FMath::Max(1, Record.Line));
+					Writer->WriteValue(TEXT("column"), FMath::Max(1, Record.Column));
+					Writer->WriteValue(TEXT("severity"), Record.Severity);
+					if (!Record.Code.IsEmpty())
+					{
+						Writer->WriteValue(TEXT("code"), Record.Code);
+					}
+					if (!Record.Stage.IsEmpty())
+					{
+						Writer->WriteValue(TEXT("stage"), Record.Stage);
+					}
+					if (!Record.AssetPath.IsEmpty())
+					{
+						Writer->WriteValue(TEXT("assetPath"), Record.AssetPath);
+					}
+					// The wire, not a UI: an invariant string, never the localised display
+					// text, or a client on a non-English editor gets messages it cannot match.
+					Writer->WriteValue(TEXT("message"), ToInvariantWireString(Record.Message));
+					Writer->WriteObjectEnd();
+				}
+			}
+			Writer->WriteArrayEnd();
+		}
+
 	}
 
 
@@ -114,6 +200,16 @@ namespace UE::DreamShader::Editor::Private
 	FString FDreamShaderEditorBridge::GetRequestDirectory()
 	{
 		return FPaths::Combine(GetBridgeDirectory(), TEXT("Requests"));
+	}
+
+	FString FDreamShaderEditorBridge::GetResponseDirectory()
+	{
+		return FPaths::Combine(GetBridgeDirectory(), TEXT("Responses"));
+	}
+
+	FString FDreamShaderEditorBridge::GetStatusFilePath()
+	{
+		return FPaths::Combine(GetBridgeDirectory(), TEXT("status.json"));
 	}
 
 	FString FDreamShaderEditorBridge::GetDiagnosticsFilePath()
@@ -148,12 +244,143 @@ namespace UE::DreamShader::Editor::Private
 		return FString();
 	}
 
+	void FDreamShaderEditorBridge::PublishStatus()
+	{
+		FString Text;
+		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Text);
+		Writer->WriteObjectStart();
+		Writer->WriteValue(TEXT("protocol"), BridgeProtocolVersion);
+		Writer->WriteValue(TEXT("pid"), static_cast<int32>(FPlatformProcess::GetCurrentProcessId()));
+		Writer->WriteValue(TEXT("project"), FApp::GetProjectName());
+		Writer->WriteValue(TEXT("projectDir"), FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()));
+		Writer->WriteValue(TEXT("engineDir"), FPaths::ConvertRelativePathToFull(FPaths::EngineDir()));
+
+		const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("DreamShader"));
+		Writer->WriteValue(TEXT("pluginVersion"),
+			Plugin.IsValid() ? Plugin->GetDescriptor().VersionName : TEXT("unknown"));
+
+		// A compile blocks the game thread, so the heartbeat stops while one runs. Saying
+		// *what* is running lets a client tell "busy for 40 seconds" from "died 40 seconds
+		// ago" -- without it the only safe reading of a stale heartbeat is "dead", and every
+		// real compile would look like a crash.
+		Writer->WriteValue(TEXT("busy"), bBusy);
+		if (bBusy)
+		{
+			Writer->WriteValue(TEXT("busyAction"), BusyAction);
+		}
+		if (!LastResult.IsEmpty())
+		{
+			Writer->WriteValue(TEXT("lastResult"), LastResult);
+		}
+		Writer->WriteValue(TEXT("heartbeatUtc"), FDateTime::UtcNow().ToIso8601());
+		Writer->WriteObjectEnd();
+		Writer->Close();
+
+		WriteFileAtomically(GetStatusFilePath(), Text);
+		LastHeartbeatSeconds = FPlatformTime::Seconds();
+	}
+
+	void FDreamShaderEditorBridge::RespondTo(
+		const FString& RequestId,
+		bool bOk,
+		const FString& Message,
+		const TArray<FDreamShaderDiagnosticRecord>* Diagnostics,
+		double DurationMs,
+		const FString& FallbackFilePath)
+	{
+		// No id means a client that is not listening for an answer -- every request the
+		// shipped VSCode extension sends is of that shape. Writing a response anyway would
+		// litter the directory with files nobody ever deletes.
+		if (RequestId.IsEmpty())
+		{
+			return;
+		}
+
+		FString Text;
+		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Text);
+		Writer->WriteObjectStart();
+		Writer->WriteValue(TEXT("protocol"), BridgeProtocolVersion);
+		Writer->WriteValue(TEXT("requestId"), RequestId);
+		Writer->WriteValue(TEXT("ok"), bOk);
+		Writer->WriteValue(TEXT("durationMs"), static_cast<int32>(DurationMs));
+		Writer->WriteValue(TEXT("message"), Message);
+		WriteDiagnosticsArray(Writer, Diagnostics, FallbackFilePath);
+		Writer->WriteObjectEnd();
+		Writer->Close();
+
+		WriteFileAtomically(FPaths::Combine(GetResponseDirectory(), RequestId + TEXT(".json")), Text);
+	}
+
+	bool FDreamShaderEditorBridge::IsAbandoned(const FString& RequestPath) const
+	{
+		// A request waits on disk when the editor is closed -- that is the point of using
+		// files. What must not happen is executing it later: by then the client has long
+		// since timed out, fallen back to the CLI and moved on, so the work is nobody's, and
+		// a `recompile` served at startup is a compile pass no one asked for.
+		//
+		// The cutoff is this bridge's own start time rather than an age limit, because age is
+		// the wrong question: a request queued behind a five-minute compile is old and still
+		// wanted. "Was anyone listening when it was written" is the actual condition.
+		const FDateTime Written = IFileManager::Get().GetTimeStamp(*RequestPath);
+		return Written != FDateTime::MinValue() && Written < ListeningSince;
+	}
+
+	void FDreamShaderEditorBridge::ResolvePendingResponses(
+		const FString& SourceFilePath,
+		bool bOk,
+		const FString& Message)
+	{
+		const FString Key = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		TArray<FPendingResponse> Waiting;
+		if (!PendingResponsesBySource.RemoveAndCopyValue(Key, Waiting))
+		{
+			return;
+		}
+
+		const double Now = FPlatformTime::Seconds();
+		const TArray<FDreamShaderDiagnosticRecord>* Diagnostics = DiagnosticsStore.FindDiagnostics(Key);
+		for (const FPendingResponse& Pending : Waiting)
+		{
+			// Measured from acceptance, not from the start of the compile: the debounce wait
+			// is time the caller spent waiting, and reporting only the compile would say
+			// "0 ms" for a request that took half a second to come back.
+			RespondTo(Pending.RequestId, bOk, Message, Diagnostics,
+				(Now - Pending.AcceptedAtSeconds) * 1000.0, Key);
+		}
+
+		LastResult = FString::Printf(TEXT("%s (%s)"), bOk ? TEXT("ok") : TEXT("failed"), *Message);
+		PublishStatus();
+	}
+
 	void FDreamShaderEditorBridge::Startup()
 	{
 		bIsShuttingDown = false;
 
 		IFileManager::Get().MakeDirectory(*GetBridgeDirectory(), true);
 		IFileManager::Get().MakeDirectory(*GetRequestDirectory(), true);
+		IFileManager::Get().MakeDirectory(*GetResponseDirectory(), true);
+
+		// Responses left by a previous session are answers nobody is waiting for any more,
+		// and a client that reconnects and finds one would act on a stale result.
+		{
+			IFileManager& Files = IFileManager::Get();
+			TArray<FString> Stale;
+			Files.FindFiles(Stale, *FPaths::Combine(GetResponseDirectory(), TEXT("*.json")), true, false);
+			for (const FString& Name : Stale)
+			{
+				Files.Delete(*FPaths::Combine(GetResponseDirectory(), Name));
+			}
+		}
+
+		bBusy = false;
+		BusyAction.Reset();
+		LastResult.Reset();
+		PendingResponsesBySource.Reset();
+		// Stamped before the first poll, so anything already in the queue is recognised as
+		// having been written to a room with nobody in it.
+		ListeningSince = FDateTime::UtcNow();
+		PublishStatus();
+
 		IFileManager::Get().MakeDirectory(*FDreamShaderPreviewRenderer::GetPreviewDirectory(), true);
 		FDreamShaderWorkspaceService::ResetBridgeDatabase();
 
@@ -224,6 +451,12 @@ namespace UE::DreamShader::Editor::Private
 	{
 		bIsShuttingDown = true;
 		FDreamShaderWorkspaceService::ResetBridgeDatabase();
+
+		// The heartbeat is how a client tells a running editor from a closed one, and a file
+		// that simply stops being updated is indistinguishable from one whose editor hung.
+		// Deleting it says "gone" in a way a timeout cannot: the client falls back to the CLI
+		// immediately instead of waiting out its liveness window first.
+		IFileManager::Get().Delete(*GetStatusFilePath());
 
 		if (TickerHandle.IsValid())
 		{
@@ -528,6 +761,13 @@ namespace UE::DreamShader::Editor::Private
 
 		ProcessRequestFiles();
 		ProcessReadyFiles();
+
+		// Only when nothing happened. A request or a compile republishes the status itself,
+		// with the busy flag set, and re-stamping it here would just cost an extra write.
+		if (FPlatformTime::Seconds() - LastHeartbeatSeconds > HeartbeatSeconds)
+		{
+			PublishStatus();
+		}
 		return true;
 	}
 
@@ -551,74 +791,172 @@ namespace UE::DreamShader::Editor::Private
 	{
 		TArray<FString> RequestFiles;
 		IFileManager::Get().FindFiles(RequestFiles, *FPaths::Combine(GetRequestDirectory(), TEXT("*.json")), true, false);
+		if (RequestFiles.Num() == 0)
+		{
+			return;
+		}
+
+		// Oldest first, so a client that fired two requests gets them in the order it sent
+		// them. Names carry a timestamp precisely so this is a sort and not a guess.
+		RequestFiles.Sort();
 
 		for (const FString& RequestFileName : RequestFiles)
 		{
 			const FString RequestPath = FPaths::Combine(GetRequestDirectory(), RequestFileName);
 
+			if (IsAbandoned(RequestPath))
+			{
+				IFileManager::Get().Delete(*RequestPath);
+				UE_LOG(LogDreamShader, Display,
+					TEXT("DreamShader bridge discarded '%s' -- written before this editor started listening, so whoever sent it has already given up."),
+					*RequestFileName);
+				continue;
+			}
+
 			FString RequestText;
 			if (!FFileHelper::LoadFileToString(RequestText, *RequestPath))
 			{
-				IFileManager::Get().Delete(*RequestPath);
+				// Most likely still being written -- the shipped VSCode extension writes
+				// these in place rather than renaming them in, so a half-written file is a
+				// real state here. Left alone; the next poll picks it up. Deleting it, which
+				// is what this used to do, threw the request away instead.
 				continue;
 			}
 
 			TSharedPtr<FJsonObject> RequestObject;
 			const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(RequestText);
-			if (FJsonSerializer::Deserialize(Reader, RequestObject) && RequestObject.IsValid())
-			{
-				FString Action;
-				FString Scope;
-				RequestObject->TryGetStringField(TEXT("action"), Action);
-				RequestObject->TryGetStringField(TEXT("scope"), Scope);
-				if (Action.Equals(TEXT("recompile"), ESearchCase::IgnoreCase))
-				{
-					if (Scope.Equals(TEXT("all"), ESearchCase::IgnoreCase))
-					{
-						RequestRecompileAll();
-					}
-					else if (Scope.Equals(TEXT("file"), ESearchCase::IgnoreCase))
-					{
-						FString SourceFilePath;
-						if (RequestObject->TryGetStringField(TEXT("sourceFile"), SourceFilePath) && !SourceFilePath.IsEmpty())
-						{
-							QueueSourceFile(SourceFilePath);
-						}
-					}
-				}
-				else if (Action.Equals(TEXT("cleanGeneratedShaders"), ESearchCase::IgnoreCase))
-				{
-					RequestCleanGeneratedShaders();
-				}
-				else if (Action.Equals(TEXT("previewMaterial"), ESearchCase::IgnoreCase))
-				{
-					FDreamShaderPreviewRequest PreviewRequest;
-					RequestObject->TryGetStringField(TEXT("sourceFile"), PreviewRequest.SourceFilePath);
-					RequestObject->TryGetStringField(TEXT("mesh"), PreviewRequest.Mesh);
-					double Width = PreviewRequest.Width;
-					double Height = PreviewRequest.Height;
-					RequestObject->TryGetNumberField(TEXT("width"), Width);
-					RequestObject->TryGetNumberField(TEXT("height"), Height);
-					PreviewRequest.Width = FMath::Clamp(FMath::RoundToInt(Width), 64, 2048);
-					PreviewRequest.Height = FMath::Clamp(FMath::RoundToInt(Height), 64, 2048);
+			const bool bParsed = FJsonSerializer::Deserialize(Reader, RequestObject) && RequestObject.IsValid();
 
-					FDreamShaderPreviewResult PreviewResult;
-					const bool bPreviewSucceeded = FDreamShaderPreviewRenderer::RenderMaterialPreview(PreviewRequest, PreviewResult);
-					FString RequestId;
-					RequestObject->TryGetStringField(TEXT("requestId"), RequestId);
-					FDreamShaderPreviewRenderer::WritePreviewResult(PreviewResult, bPreviewSucceeded ? TEXT("ready") : TEXT("error"), RequestId);
-					if (bPreviewSucceeded)
+			FString RequestId;
+			if (bParsed)
+			{
+				RequestObject->TryGetStringField(TEXT("requestId"), RequestId);
+			}
+
+			// Deleted before it is served, never after. A request that crashes the editor
+			// would otherwise be replayed on every start.
+			IFileManager::Get().Delete(*RequestPath);
+
+			const double StartedAt = FPlatformTime::Seconds();
+
+			if (!bParsed)
+			{
+				RespondTo(RequestId, false, TEXT("The request is not valid JSON."));
+				continue;
+			}
+
+			// A missing `protocol` is a client that predates versioning, not a mismatch.
+			// Every request the shipped VSCode extension sends is of that shape, and
+			// rejecting them would break it on every machine that has it installed. Only a
+			// field that is present *and* different is a real disagreement.
+			int32 Protocol = BridgeProtocolVersion;
+			RequestObject->TryGetNumberField(TEXT("protocol"), Protocol);
+			if (Protocol != BridgeProtocolVersion)
+			{
+				RespondTo(RequestId, false, FString::Printf(
+					TEXT("Protocol %d is not understood; this editor speaks %d. Update the DreamShaderLang extension or the plugin so the two match."),
+					Protocol, BridgeProtocolVersion));
+				continue;
+			}
+
+			FString Action;
+			FString Scope;
+			RequestObject->TryGetStringField(TEXT("action"), Action);
+			RequestObject->TryGetStringField(TEXT("scope"), Scope);
+
+			bBusy = true;
+			BusyAction = Action;
+			PublishStatus();
+
+			if (Action.Equals(TEXT("ping"), ESearchCase::IgnoreCase))
+			{
+				RespondTo(RequestId, true, TEXT("alive"), nullptr,
+					(FPlatformTime::Seconds() - StartedAt) * 1000.0);
+			}
+			else if (Action.Equals(TEXT("recompile"), ESearchCase::IgnoreCase))
+			{
+				if (Scope.Equals(TEXT("all"), ESearchCase::IgnoreCase))
+				{
+					RequestRecompileAll();
+					// Through the debounce queue, which drains across ticks, so the result is
+					// not knowable yet. Saying so beats blocking the caller for minutes or
+					// inventing an answer.
+					RespondTo(RequestId, true,
+						TEXT("Queued a full rescan; the editor reports the result when the batch drains."),
+						nullptr, (FPlatformTime::Seconds() - StartedAt) * 1000.0);
+				}
+				else if (Scope.Equals(TEXT("file"), ESearchCase::IgnoreCase))
+				{
+					FString SourceFilePath;
+					if (RequestObject->TryGetStringField(TEXT("sourceFile"), SourceFilePath) && !SourceFilePath.IsEmpty())
 					{
-						UE_LOG(LogDreamShader, Display, TEXT("DreamShader preview: %s"), *PreviewResult.Message.ToString());
+						QueueSourceFile(SourceFilePath);
+						// Parked, not answered: the compile happens a few ticks later, after
+						// the debounce window. Answering now would report success before
+						// anything had been attempted.
+						if (!RequestId.IsEmpty())
+						{
+							PendingResponsesBySource
+								.FindOrAdd(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath))
+								.Add(FPendingResponse{ RequestId, StartedAt });
+						}
 					}
 					else
 					{
-						UE_LOG(LogDreamShader, Error, TEXT("DreamShader preview: %s"), *PreviewResult.Message.ToString());
+						RespondTo(RequestId, false,
+							TEXT("recompile with scope 'file' needs a non-empty 'sourceFile'."));
 					}
 				}
+				else
+				{
+					RespondTo(RequestId, false, FString::Printf(
+						TEXT("recompile needs scope 'all' or 'file'; got '%s'."), *Scope));
+				}
+			}
+			else if (Action.Equals(TEXT("cleanGeneratedShaders"), ESearchCase::IgnoreCase))
+			{
+				RequestCleanGeneratedShaders();
+				RespondTo(RequestId, true, TEXT("Cleaned generated shaders and queued a rescan."),
+					nullptr, (FPlatformTime::Seconds() - StartedAt) * 1000.0);
+			}
+			else if (Action.Equals(TEXT("previewMaterial"), ESearchCase::IgnoreCase))
+			{
+				FDreamShaderPreviewRequest PreviewRequest;
+				RequestObject->TryGetStringField(TEXT("sourceFile"), PreviewRequest.SourceFilePath);
+				RequestObject->TryGetStringField(TEXT("mesh"), PreviewRequest.Mesh);
+				double Width = PreviewRequest.Width;
+				double Height = PreviewRequest.Height;
+				RequestObject->TryGetNumberField(TEXT("width"), Width);
+				RequestObject->TryGetNumberField(TEXT("height"), Height);
+				PreviewRequest.Width = FMath::Clamp(FMath::RoundToInt(Width), 64, 2048);
+				PreviewRequest.Height = FMath::Clamp(FMath::RoundToInt(Height), 64, 2048);
+
+				FDreamShaderPreviewResult PreviewResult;
+				const bool bPreviewSucceeded = FDreamShaderPreviewRenderer::RenderMaterialPreview(PreviewRequest, PreviewResult);
+				FDreamShaderPreviewRenderer::WritePreviewResult(PreviewResult, bPreviewSucceeded ? TEXT("ready") : TEXT("error"), RequestId);
+				if (bPreviewSucceeded)
+				{
+					UE_LOG(LogDreamShader, Display, TEXT("DreamShader preview: %s"), *PreviewResult.Message.ToString());
+				}
+				else
+				{
+					UE_LOG(LogDreamShader, Error, TEXT("DreamShader preview: %s"), *PreviewResult.Message.ToString());
+				}
+				RespondTo(RequestId, bPreviewSucceeded, ToInvariantWireString(PreviewResult.Message),
+					nullptr, (FPlatformTime::Seconds() - StartedAt) * 1000.0);
+			}
+			else
+			{
+				// Never silent. A client that asked for something this build does not have
+				// needs to be told so, not left waiting for a response that is never coming.
+				RespondTo(RequestId, false, FString::Printf(
+					TEXT("Unknown action '%s'. This build understands: ping, recompile, cleanGeneratedShaders, previewMaterial."),
+					*Action));
 			}
 
-			IFileManager::Get().Delete(*RequestPath);
+			bBusy = false;
+			BusyAction.Reset();
+			PublishStatus();
 		}
 	}
 
@@ -636,6 +974,21 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
+		// The compile below is where the time actually goes, and it blocks the game thread --
+		// which stops the heartbeat. A client reading a stopped heartbeat with `busy` unset
+		// can only conclude the editor hung, so a big material would make a healthy editor
+		// look dead and get itself refused. Marking the whole drain busy is what makes the
+		// stopped heartbeat legible as work. Wrapping only the request dispatch, as an earlier
+		// revision of this did, leaves exactly the long operations uncovered.
+		if (!ReadyFiles.IsEmpty())
+		{
+			bBusy = true;
+			BusyAction = ReadyFiles.Num() == 1
+				? FString::Printf(TEXT("compile %s"), *FPaths::GetCleanFilename(ReadyFiles[0]))
+				: FString::Printf(TEXT("compile %d file(s)"), ReadyFiles.Num());
+			PublishStatus();
+		}
+
 		for (const FString& ReadyFile : ReadyFiles)
 		{
 			PendingFiles.Remove(ReadyFile);
@@ -643,6 +996,22 @@ namespace UE::DreamShader::Editor::Private
 			{
 				ProcessSourceFile(ReadyFile);
 			}
+			else
+			{
+				// The source went away inside the debounce window -- renamed, or deleted. No
+				// compile will run, so anyone waiting on one has to be told now; otherwise
+				// the request sits until the client's timeout, waiting for an answer this
+				// bridge has already decided never to produce.
+				ResolvePendingResponses(ReadyFile, false,
+					TEXT("The source file no longer exists; nothing was compiled."));
+			}
+		}
+
+		if (!ReadyFiles.IsEmpty())
+		{
+			bBusy = false;
+			BusyAction.Reset();
+			PublishStatus();
 		}
 	}
 
@@ -655,6 +1024,7 @@ namespace UE::DreamShader::Editor::Private
 			ClearDiagnosticsForSourceAndDependencies(SourceFilePath);
 			UpdateDiagnosticsFile();
 			UE_LOG(LogDreamShader, Display, TEXT("%s"), *ToInvariantWireString(Result.Message));
+			ResolvePendingResponses(SourceFilePath, true, ToInvariantWireString(Result.Message));
 			return;
 		}
 
@@ -664,6 +1034,9 @@ namespace UE::DreamShader::Editor::Private
 		SetDiagnostics(SourceFilePath, MoveTemp(Diagnostics));
 		UpdateDiagnosticsFile();
 		UE_LOG(LogDreamShader, Error, TEXT("%s"), *ToInvariantWireString(Result.Message));
+		// After SetDiagnostics, so the response carries this compile's findings rather than
+		// whatever the store held before it ran.
+		ResolvePendingResponses(SourceFilePath, false, ToInvariantWireString(Result.Message));
 	}
 
 	void FDreamShaderEditorBridge::OnMaterialCompilationFinished(UMaterialInterface* MaterialInterface)

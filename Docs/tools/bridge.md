@@ -10,8 +10,10 @@ under `Saved/DreamShader/Bridge/`.
 | :-- | :-- |
 | Kind | editor service — `FDreamShaderEditorBridge`, owned by the `DreamShaderEditor` module |
 | Root | `<Project>/Saved/DreamShader/Bridge/` |
-| Transport A | request files — `Bridge/Requests/*.json`, polled every `0.1 s`, deleted on read |
+| Transport A | request files — `Bridge/Requests/*.json`, polled every `0.1 s`, deleted before dispatch, answered in `Bridge/Responses/<requestId>.json` |
 | Transport B | WebSocket — `ws://127.0.0.1:17864`, loopback only |
+| Liveness | `Bridge/status.json`, rewritten every `2 s` while idle, **deleted on shutdown** |
+| Protocol | `1` — sent as `protocol` on a request, echoed on every response and on the status file |
 | Module dependencies | `WebSocketNetworking`, `SQLiteCore` |
 | Disabled by | `-NoDreamShaderEditorBridge`; never starts in a commandlet |
 
@@ -20,6 +22,8 @@ under `Saved/DreamShader/Bridge/`.
 ```text
 <Project>/Saved/DreamShader/Bridge/
 ├─ Requests/                   inbound  *.json, consumed and deleted
+├─ Responses/                  outbound <requestId>.json, one per request that carried an id
+├─ status.json                 outbound liveness heartbeat; absent means "not running"
 ├─ diagnostics.json            outbound aggregated diagnostics
 ├─ diagnostics/                outbound sharded diagnostics
 │  ├─ index.json
@@ -39,7 +43,8 @@ Startup, in order. `Bridge`, `Bridge/Requests` and `Bridge/Preview` are created 
 
 | Step | Action |
 | :-- | :-- |
-| 1 | Create `Bridge/`, `Bridge/Requests/`, `Bridge/Preview/` |
+| 1 | Create `Bridge/`, `Bridge/Requests/`, `Bridge/Responses/`, `Bridge/Preview/` |
+| 1a | Delete every stale `Responses/*.json`, stamp the listening-since time, publish `status.json` |
 | 2 | Delete `bridge.db`, `bridge.db-wal`, `bridge.db-shm` and the whole `diagnostics/` directory |
 | 3 | Export `material-expressions.json`, `settings.json`, `substrate-builtins.json` (and their SQLite tables) |
 | 4 | Scan and refresh `VirtualFunction` declarations |
@@ -56,9 +61,9 @@ Startup, in order. `Bridge`, `Bridge/Requests` and `Bridge/Preview` are created 
 Ticker B is registered separately, at a zero-second interval, because sharing ticker A would cap
 every preview stream at 10 FPS regardless of the client's requested frame rate.
 
-Shutdown removes every handle, shuts the WebSocket server down, clears the pending-file map and the
-diagnostics store, deletes the bridge database again, and unregisters the tool menus unless the
-engine is already exiting.
+Shutdown **deletes `status.json` first**, then removes every handle, shuts the WebSocket server
+down, clears the pending-file map and the diagnostics store, deletes the bridge database again, and
+unregisters the tool menus unless the engine is already exiting.
 
 ## Request files
 
@@ -71,29 +76,102 @@ engine is already exiting.
 
 The filename is irrelevant; only the JSON contents matter. Use a unique name per request.
 
+A request is deleted **before** it is dispatched, not after, so a request that crashes the editor
+cannot be replayed on every subsequent start. The one exception is a file that cannot be read at
+all: that is almost always one still being written, so it is left alone for the next poll rather
+than thrown away.
+
+Because the poller may still open a file mid-write, write the JSON to a temporary name elsewhere
+and **rename** it into `Requests/` so it appears atomically.
+
+> [!NOTE]
+> A request carrying a non-empty `requestId` is answered in `Responses/<requestId>.json` — including
+> the failures: unparseable JSON, a protocol mismatch, an unrecognized `action`, and a `recompile`
+> whose source file vanished before the debounce window elapsed. A request **without** an id gets no
+> response, which is what every request the shipped VSCode extension sends looks like, and is why
+> that extension keeps working unchanged.
+
 > [!WARNING]
-> A request file is deleted unconditionally — after a successful dispatch, after a read failure,
-> after a JSON parse failure, and after an unrecognized `action`. There is no reply file, no error
-> file and no log line for a malformed request: it simply vanishes. Because the poller may open a
-> file that is still being written, write the JSON to a temporary name elsewhere and **rename** it
-> into `Requests/` so it appears atomically.
+> Requests written while no editor was listening are **discarded**, not queued. The cutoff is the
+> bridge's own start time, so a request that was waiting on disk when an editor starts is deleted
+> with a log line rather than served — by then whoever sent it has long since timed out, and serving
+> it would mean a compile pass nobody asked for. Check `status.json` before writing a request.
 
 ### Actions
 
 `action` and `scope` are both matched case-insensitively.
 
-| `action` | Required fields | Effect |
-| :-- | :-- | :-- |
-| `recompile` | `scope: "all"` | Rebuild the dependency graph and queue every project `.dsm` / `.dsf` for compilation |
-| `recompile` | `scope: "file"`, `sourceFile` | Queue one file into the debounce queue |
-| `cleanGeneratedShaders` | — | Delete the generated `*.ush` includes, then queue a full rescan |
-| `previewMaterial` | `sourceFile` | Render one preview synchronously and write `preview.json` |
+| `action` | Required fields | Effect | Answered |
+| :-- | :-- | :-- | :-- |
+| `ping` | — | Nothing. Confirms the bridge is serving | immediately |
+| `recompile` | `scope: "all"` | Rebuild the dependency graph and queue every project `.dsm` / `.dsf` for compilation | immediately, as **queued** — see below |
+| `recompile` | `scope: "file"`, `sourceFile` | Queue one file into the debounce queue | **when that compile finishes** |
+| `cleanGeneratedShaders` | — | Delete the generated `*.ush` includes, then queue a full rescan | immediately |
+| `previewMaterial` | `sourceFile` | Render one preview synchronously and write `preview.json` | immediately, with the render result |
+
+> [!IMPORTANT]
+> `recompile` with `scope: "file"` is the only action whose response is **deferred**. The file goes
+> into the debounce queue and is compiled some ticks later, so answering at dispatch time would
+> report success before anything had been attempted. The id is parked and answered from the compile
+> itself, carrying that compile's diagnostics. Two clients asking for the same file both get an
+> answer.
+>
+> `scope: "all"` is the opposite and says so: it answers immediately with *queued*, because the batch
+> drains across ticks and the outcome is not knowable yet. Do not read that as a result.
 
 > [!NOTE]
-> `recompile` with any other `scope`, or with no `scope`, is a silent no-op. `recompile` with
-> `scope: "file"` and an empty or missing `sourceFile` is a silent no-op. An unrecognized `action` is
-> a silent no-op. In every case the file is still deleted. There are exactly four action names; there
-> is no command to save assets, delete assets, or query object state over this transport.
+> A bad `scope`, a missing `sourceFile`, or an unrecognized `action` is now an **error response**
+> rather than a silent no-op — provided the request carried a `requestId`. Without one the behaviour
+> is unchanged: the file is deleted and nothing is said.
+
+### Protocol
+
+A request may carry `protocol`. A **missing** field is read as this version, not as a mismatch —
+every request the shipped VSCode extension sends omits it, and rejecting those would break it on
+every machine that has it installed. A field that is present *and* different is refused:
+
+```text
+Protocol 3 is not understood; this editor speaks 1. Update the DreamShaderLang extension or the
+plugin so the two match.
+```
+
+### `Responses/<requestId>.json`
+
+Written atomically — beside the target, then renamed — so appearing and being complete are the same
+event. Stale responses from a previous session are deleted at startup: an answer nobody is waiting
+for any more is worse than none, because a client that reconnects would act on it.
+
+| Field | Type | Notes |
+| :-- | :-- | :-- |
+| `protocol` | number | always `1` |
+| `requestId` | string | echoes the request |
+| `ok` | bool | |
+| `durationMs` | number | |
+| `message` | string | invariant, never the localised display text |
+| `diagnostics` | array | `file`, `line`, `column`, `severity`, and `code` / `stage` / `assetPath` when non-empty |
+
+Each diagnostic keeps its own file: a `.dsm` that pulls in a broken `.dsh` fails at the `.dsh`'s
+position, and attributing it to the `.dsm` would send the author to the wrong file.
+
+### `status.json`
+
+The heartbeat, rewritten every `2 s` while idle and **deleted on shutdown** — so a missing file
+means "not running", definitively, and a client can fall back immediately instead of waiting out a
+liveness window.
+
+| Field | Type | Notes |
+| :-- | :-- | :-- |
+| `protocol`, `pid`, `project`, `projectDir`, `engineDir`, `pluginVersion` | | identity |
+| `busy` | bool | true while a request is being served |
+| `busyAction` | string | present only when busy |
+| `lastResult` | string | present once something has completed |
+| `heartbeatUtc` | string | ISO-8601 UTC |
+
+> [!WARNING]
+> Read `busy` **before** judging the heartbeat's age. A compile blocks the game thread, so the
+> heartbeat stops while one runs — a client that only looks at the timestamp reads every real
+> compile as a crash. The remaining ambiguity is a hard crash, which leaves the file behind; the
+> recorded `pid` is what closes it.
 
 ### `recompile`
 
@@ -338,6 +416,8 @@ Everything the bridge writes, and who reads it.
 | Path | Direction | Read back by the plugin? |
 | :-- | :-- | :-- |
 | `Requests/*.json` | inbound | consumed and deleted |
+| `Responses/<requestId>.json` | outbound | no — the client deletes its own |
+| `status.json` | outbound | no |
 | `diagnostics.json` | outbound | yes — the Material Content Browser's Gen page reads it directly |
 | `diagnostics/index.json`, `diagnostics/<md5>.json` | outbound | no |
 | `bridge.db` | outbound | **no** |
