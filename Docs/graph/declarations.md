@@ -39,7 +39,7 @@ not. Both halves must be non-empty.
 | `float4` `half4` `vec4` `int4` `uint4` `bool4` `ivec4` `uvec4` `bvec4` | 4 | |
 | `MaterialAttributes` | 0 | see [MaterialAttributes](material-attributes.md) |
 | `Substrate` | 0 | **UE 5.4+**; requires an initializer |
-| `StaticBool` `StaticBoolParameter` | 1 | *(unreleased)* |
+| `StaticBool` `StaticBoolParameter` | 1 | *(since 1.6.0)* |
 | `Texture2D` `SamplerState` | 0 | texture object of dimension `Texture2D`; requires an initializer |
 | `TextureCube` | 0 | requires an initializer |
 | `Texture2DArray` | 0 | requires an initializer |

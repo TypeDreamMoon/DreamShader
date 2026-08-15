@@ -158,7 +158,7 @@ substring test, in this order:
 
 The three texture-object tokens (12–14) deliberately declare **no** dimension: the effective dimension
 is taken from the assigned default asset at generation time. That is what lets
-`TextureObjectParameter` accept a cube, an array or a volume texture *(unreleased)*.
+`TextureObjectParameter` accept a cube, an array or a volume texture *(since 1.6.0)*.
 
 ### Dimension validation asymmetry
 

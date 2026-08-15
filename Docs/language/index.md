@@ -11,7 +11,7 @@ node graph inside them.
 | Declared in | `.dsm`, `.dsf`, `.dsh` |
 | Kind | language |
 | Generates | `UMaterial`, `UMaterialFunction`, `UMaterialFunctionMaterialLayer`, `UMaterialFunctionMaterialLayerBlend` |
-| Version | `1.5.1` |
+| Version | `1.6.0` |
 | Engines | Unreal Engine `5.3` – `5.8`; the accepted grammar is identical on every supported engine version |
 
 ## Synopsis

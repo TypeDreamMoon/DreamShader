@@ -24,7 +24,7 @@ import '<specifier>' [;] [// <comment>]
 ```
 
 A bare `<path>` resolves inside the importing file's own source root. The `<root-qualifier>` prefix
-*(since Unreleased)* is what lets an import reach a different root — see [Roots](#roots).
+*(since 1.6.0)* is what lets an import reach a different root — see [Roots](#roots).
 
 The directive must be the first thing on its line — leading whitespace is allowed, anything else is
 not. After the closing quote only an optional `;` *(since 1.2.2)* and an optional `//` comment may

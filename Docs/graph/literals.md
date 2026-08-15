@@ -124,7 +124,7 @@ float x = "0.5";   // String literals can only be used in named UE builtin argum
 
 ## Boolean literals
 
-`true` and `false` *(unreleased)* are lexed as ordinary identifiers and resolved late, after Graph
+`true` and `false` *(since 1.6.0)* are lexed as ordinary identifiers and resolved late, after Graph
 variables and after declared properties.
 
 | | |

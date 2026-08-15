@@ -49,7 +49,7 @@ Every token is matched **case-insensitively**. A token that matches none of the 
 | A four-component parameter that must always read as RGBA | `VectorParameter` | Fixed at 4 components regardless of how it is used |
 | A texture the shader samples itself | `Texture2D` / `TextureCube` / `Texture2DArray` / `Texture3D` / `VolumeTexture` | Produces a texture *object* parameter, dimension-checked against the asset |
 | A texture with a sampler node and configurable sampling | `TextureSampleParameter2D` and friends | Owns `Coordinates` and mip pins; accepts `SamplerType` / `MipValueMode` metadata |
-| A texture object with no fixed dimension | `TextureObjectParameter` | Takes its dimension from the assigned default asset *(unreleased)* |
+| A texture object with no fixed dimension | `TextureObjectParameter` | Takes its dimension from the assigned default asset *(since 1.6.0)* |
 | A compile-time branch | `StaticSwitchParameter` | Must be used in the call form `N(True = …, False = …)` |
 | A compile-time boolean with no branch | `StaticBoolParameter` | Value only |
 | A baked value the artist must not change | `const <compact-token>` | Emits `Constant` / `Constant2Vector` / `Constant3Vector` / `Constant4Vector` / `TextureObject` — no parameter, no instance override |

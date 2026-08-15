@@ -37,20 +37,20 @@ in [Conversions](../graph/conversions.md#authoritative-component-counts).
 | Spelling | Arity | Lowers to | Input pins wired, in order | Return width | Authoritative |
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | `abs` | 1 | `UMaterialExpressionAbs` | `Input` | width of the argument | inherited from the argument |
-| `acos` *(unreleased)* | 1 | `UMaterialExpressionArccosine` | `Input` | width of the argument | inherited from the argument |
-| `asin` *(unreleased)* | 1 | `UMaterialExpressionArcsine` | `Input` | width of the argument | inherited from the argument |
-| `atan` *(unreleased)* | 1 | `UMaterialExpressionArctangent` | `Input` | width of the argument | inherited from the argument |
-| `atan2` *(unreleased)* | 2 | `UMaterialExpressionArctangent2` | `Y` ← argument 1, `X` ← argument 2 | `max` of both arguments | set when either argument had it |
+| `acos` *(since 1.6.0)* | 1 | `UMaterialExpressionArccosine` | `Input` | width of the argument | inherited from the argument |
+| `asin` *(since 1.6.0)* | 1 | `UMaterialExpressionArcsine` | `Input` | width of the argument | inherited from the argument |
+| `atan` *(since 1.6.0)* | 1 | `UMaterialExpressionArctangent` | `Input` | width of the argument | inherited from the argument |
+| `atan2` *(since 1.6.0)* | 2 | `UMaterialExpressionArctangent2` | `Y` ← argument 1, `X` ← argument 2 | `max` of both arguments | set when either argument had it |
 | `ceil` | 1 | `UMaterialExpressionCeil` | `Input` | width of the argument | inherited from the argument |
 | `clamp` | 3 | `UMaterialExpressionClamp` | `Input`, `Min`, `Max` | width of argument 1 | from argument 1 |
 | `cos` | 1 | `UMaterialExpressionCosine` | `Input` | width of the argument | inherited from the argument |
-| `cross` *(unreleased)* | 2 | `UMaterialExpressionCrossProduct` | `A`, `B` | **always 3** | always set |
+| `cross` *(since 1.6.0)* | 2 | `UMaterialExpressionCrossProduct` | `A`, `B` | **always 3** | always set |
 | `dot` | 2 | `UMaterialExpressionDotProduct` | `A`, `B` | **always 1** | always set |
 | `floor` | 1 | `UMaterialExpressionFloor` | `Input` | width of the argument | inherited from the argument |
 | `fmod` *(since 1.5.0)* | 2 | `UMaterialExpressionFmod` | `A` ← dividend, `B` ← divisor | width of argument 1 | from argument 1 |
 | `frac` | 1 | `UMaterialExpressionFrac` | `Input` | width of the argument | inherited from the argument |
 | `fract` *(since 1.5.0)* | 1 | `UMaterialExpressionFrac` | `Input` | width of the argument | inherited from the argument |
-| `length` *(unreleased)* | 1 | `UMaterialExpressionLength` | `Input` | **always 1** | always set |
+| `length` *(since 1.6.0)* | 1 | `UMaterialExpressionLength` | `Input` | **always 1** | always set |
 | `lerp` | 3 | `UMaterialExpressionLinearInterpolate` | `A`, `B`, `Alpha` | `max` of arguments 1 and 2 | set when either of arguments 1, 2 had it |
 | `max` | 2 | `UMaterialExpressionMax` | `A`, `B` | `max` of both arguments | set when either argument had it |
 | `min` | 2 | `UMaterialExpressionMin` | `A`, `B` | `max` of both arguments | set when either argument had it |
@@ -58,13 +58,13 @@ in [Conversions](../graph/conversions.md#authoritative-component-counts).
 | `mod` *(since 1.5.0)* | 2 | `UMaterialExpressionFmod` | `A` ← dividend, `B` ← divisor | width of argument 1 | from argument 1 |
 | `normalize` | 1 | `UMaterialExpressionNormalize` | **`VectorInput`** | width of the argument | inherited from the argument |
 | `pow` | 2 | `UMaterialExpressionPower` | `Base`, `Exponent` | width of argument 1 | from argument 1 |
-| `reflect` *(unreleased)* | 2 | **a 4-node subgraph** — see [below](#reflect-refract) | — | `max` of both arguments | set when either argument had it |
-| `refract` *(unreleased)* | 3 | **a 14-node subgraph** — see [below](#reflect-refract) | — | `max` of arguments 1 and 2 | set when either of arguments 1, 2 had it |
+| `reflect` *(since 1.6.0)* | 2 | **a 4-node subgraph** — see [below](#reflect-refract) | — | `max` of both arguments | set when either argument had it |
+| `refract` *(since 1.6.0)* | 3 | **a 14-node subgraph** — see [below](#reflect-refract) | — | `max` of arguments 1 and 2 | set when either of arguments 1, 2 had it |
 | `saturate` | 1 | `UMaterialExpressionSaturate` | `Input` | width of the argument | inherited from the argument |
 | `sin` | 1 | `UMaterialExpressionSine` | `Input` | width of the argument | inherited from the argument |
-| `smoothstep` *(unreleased)* | 3 | `UMaterialExpressionSmoothStep` | `Min`, `Max`, `Value` | `max` of all three arguments | set when any argument had it |
+| `smoothstep` *(since 1.6.0)* | 3 | `UMaterialExpressionSmoothStep` | `Min`, `Max`, `Value` | `max` of all three arguments | set when any argument had it |
 | `sqrt` | 1 | `UMaterialExpressionSquareRoot` | `Input` | width of the argument | inherited from the argument |
-| `step` *(unreleased)* | 2 | `UMaterialExpressionStep` | `Y` ← argument 1 (edge), `X` ← argument 2 (value) | `max` of both arguments | set when either argument had it |
+| `step` *(since 1.6.0)* | 2 | `UMaterialExpressionStep` | `Y` ← argument 1 (edge), `X` ← argument 2 (value) | `max` of both arguments | set when either argument had it |
 
 Alias pairs — the two spellings in each pair are interchangeable and produce identical nodes:
 `lerp` / `mix`, `frac` / `fract`, `fmod` / `mod`.

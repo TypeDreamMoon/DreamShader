@@ -9,7 +9,7 @@ object path, and a file on disk.
 | :-- | :-- |
 | Applies to | `Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend` — one resolver, identical for all four |
 | Kind | header attributes |
-| Since | `Root="Plugin.X"` — `1.2.0`; the plugin-source-root default — *Unreleased* |
+| Since | `Root="Plugin.X"` — `1.2.0`; the plugin-source-root default — `1.6.0` |
 
 ## Synopsis
 

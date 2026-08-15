@@ -7,7 +7,7 @@ output and can always be regenerated.
 
 | | |
 | :-- | :-- |
-| Version | `1.5.1` |
+| Version | `1.6.0` |
 | Engines | Unreal Engine `5.3` – `5.8` (Win64 verified) |
 | Modules | `DreamShader` (Runtime), `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
 | Source extensions | `.dsm` material · `.dsf` function · `.dsh` header |

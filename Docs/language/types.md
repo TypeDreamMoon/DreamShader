@@ -121,7 +121,7 @@ The six declaration positions do **not** share one type set. Each row is a colum
 7. `Substrate` resolves as a `Function` / `GraphFunction` parameter or result type and is then
    rejected with a dedicated message. The two forms word it differently — see
    [Diagnostics](#diagnostics).
-8. *(unreleased)* — `StaticBool` resolving as a one-component type at call sites, and the
+8. *(since 1.6.0)* — `StaticBool` resolving as a one-component type at call sites, and the
    `true` / `false` literals that feed it, are post-1.5.0 behaviour.
 9. In `Properties`, `StaticBoolParameter` is a **parameter-node token**, not a type token: it
    generates a `UMaterialExpressionStaticBoolParameter` and accepts only `true` / `false` as its

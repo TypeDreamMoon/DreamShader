@@ -123,7 +123,7 @@ Resolved at generation. All tokens are matched case-insensitively; the scalar/ve
 | `float2` `half2` `vec2` `int2` `uint2` `bool2` `ivec2` `uvec2` `bvec2` | `FunctionInput_Vector2` | 2 |
 | `float3` `half3` `vec3` `int3` `uint3` `bool3` `ivec3` `uvec3` `bvec3` | `FunctionInput_Vector3` | 3 |
 | `float4` `half4` `vec4` `int4` `uint4` `bool4` `ivec4` `uvec4` `bvec4` | `FunctionInput_Vector4` | 4 |
-| `StaticBool` `StaticBoolParameter` | `FunctionInput_StaticBool` | 1 *(unreleased — previously not a one-component type at call sites)* |
+| `StaticBool` `StaticBoolParameter` | `FunctionInput_StaticBool` | 1 *(since 1.6.0 — previously not a one-component type at call sites)* |
 | `MaterialAttributes` | `FunctionInput_MaterialAttributes` | — |
 | `Substrate` | `FunctionInput_Substrate` | — *(requires UE 5.4)* |
 | `Texture2D` `SamplerState` | `FunctionInput_Texture2D` | — |
@@ -179,7 +179,7 @@ Input '{Name}' default expression '{Expression}' does not match declared type '{
 ```
 
 > [!NOTE]
-> *(unreleased)* `true` and `false` are graph literals that materialize as `StaticBool` nodes, so
+> *(since 1.6.0)* `true` and `false` are graph literals that materialize as `StaticBool` nodes, so
 > `opt StaticBool Flag = false;` generates the Preview-pin node Unreal requires — the engine ignores
 > `PreviewValue` for static-bool inputs.
 

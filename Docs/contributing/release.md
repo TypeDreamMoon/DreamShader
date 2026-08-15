@@ -53,9 +53,9 @@ first, commit, then tag.
 | 6 | On a tag push, the pushed tag must equal the derived tag. On a manual run, a non-empty `version` input must equal the slug. |
 | 7 | Export `DREAMSHADER_VERSION`, `DREAMSHADER_BASE`, `DREAMSHADER_SLUG`, `DREAMSHADER_TAG` and `DREAMSHADER_PRERELEASE` for the later steps. |
 
-For the current descriptor — `VersionName` `1.5.1`, `IsBetaVersion` `false`, `Version` `151` —
-this yields base `1.5.1`, slug `1.5.1`, tag `v1.5.1`, pre-release `false`, and the archive
-`DreamShader-1.5.1.zip`.
+For the current descriptor — `VersionName` `1.6.0`, `IsBetaVersion` `false`, `Version` `160` —
+this yields base `1.6.0`, slug `1.6.0`, tag `v1.6.0`, pre-release `false`, and the archive
+`DreamShader-1.6.0.zip`.
 
 > [!NOTE]
 > `Version` (the integer, `150`) is never read by the workflow. It is the descriptor's own numeric
@@ -133,7 +133,7 @@ Changelog extraction details:
 
 - The section is found by matching `^##\s+<VersionName>\b`, so the changelog heading must *begin*
   with the `VersionName` exactly as written, decorations and all. Trailing text is fine, which is why
-  `## 1.5.1 - 2026-08-02` matches the current `VersionName` `1.5.1`. The failure runs the other way:
+  `## 1.6.0 - 2026-08-15` matches the current `VersionName` `1.6.0`. The failure runs the other way:
   a decorated name such as `1.5.0 - Beta` is **not** matched by a bare `## 1.5.0` heading.
 - It ends at the next `##` heading.
 - Leading blockquote lines are stripped, so the changelog's own beta note does not duplicate the
@@ -152,7 +152,7 @@ Changelog extraction details:
 | Beta, or the dispatch input `prerelease` is `true` | `--prerelease` on create, or a second `gh release edit --prerelease` on update |
 
 The release title is `DreamShader <VersionName>` — the name verbatim, decorations and all, for
-example `DreamShader 1.5.1`. Assets are the plugin zip followed by every file downloaded from the
+example `DreamShader 1.6.0`. Assets are the plugin zip followed by every file downloaded from the
 VSCode extension's latest release, sorted by name.
 
 ## Diagnostics

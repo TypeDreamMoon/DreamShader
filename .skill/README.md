@@ -16,7 +16,7 @@ It is not a skill and `sync-skills.ps1` does not publish it.
 | Published to | `<project>/.claude/skills/` by [`sync-skills.ps1`](sync-skills.ps1); that is where Claude Code finds them |
 | Driver | [`dsc.ps1`](dsc.ps1) — wraps `UnrealEditor-Cmd.exe … -run=DreamShader` |
 | Engines | Unreal Engine `5.3` – `5.8`, Win64. Verified against a **5.8 source build** |
-| Plugin | DreamShader `1.5.1`, compiled — `Binaries/Win64/UnrealEditor-DreamShaderEditor.dll` must exist |
+| Plugin | DreamShader `1.6.0`, compiled — `Binaries/Win64/UnrealEditor-DreamShaderEditor.dll` must exist |
 | Shell | PowerShell 7 (`pwsh`) |
 
 ## Skills
