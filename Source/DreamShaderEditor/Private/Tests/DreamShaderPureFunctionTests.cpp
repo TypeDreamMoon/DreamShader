@@ -105,12 +105,14 @@ bool FDreamShaderTextWireUtilsTest::RunTest(const FString& Parameters)
 	// editor culture, so the whole suite runs once per culture; the editor culture is restored
 	// when the test exits.
 	//
-	// Restoring through SetCurrentCulture(GetCurrentCulture()->GetName()) did not actually restore:
-	// the culture is three settings (language, locale, asset group) and reading one name back cannot
-	// reconstruct them, so the switch to zh-Hans below leaked into every later test in the same run.
-	// It only ever surfaced as one failure -- Parse.Lexical.L_UnterminatedBlock, the next test whose
-	// expected English text happens to have a zh-Hans translation -- which reads like a lexer bug and
-	// is not one. BackupCultureState/RestoreCultureState is the engine's own answer for this.
+	// Snapshot/restore rather than SetCurrentCulture(GetCurrentCulture()->GetName()): a culture is
+	// three settings -- language, locale and asset group -- and reading one name back cannot
+	// reconstruct them. This is the engine's own API for the job.
+	//
+	// It does NOT fix Parse.Lexical.L_UnterminatedBlock, which fails on any editor whose culture is
+	// not English because the corpus asserts the English message text and the zh-Hans locres
+	// translates that particular string. That failure reproduces with this test excluded entirely,
+	// so do not read the two as related.
 	FInternationalization::FCultureStateSnapshot CultureSnapshot;
 	FInternationalization::Get().BackupCultureState(CultureSnapshot);
 	ON_SCOPE_EXIT
