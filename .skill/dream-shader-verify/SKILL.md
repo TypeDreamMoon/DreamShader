@@ -10,6 +10,25 @@ and one exit code. This is the harness the other DreamShader skills call.
 
 Paths below are relative to the plugin root, `Plugins/DreamShader/`.
 
+## Prefer the `dream` MCP server when it is connected
+
+If the `dream` MCP server is available, call `dream_build` instead of the script below,
+`dream_diagnostics` to read the editor's standing findings, and `dream_preview` to actually **look
+at** the material.
+
+Through a running editor it uses the bridge, which this script never does: a compile comes back in
+a few hundred milliseconds instead of roughly 24 s of engine boot, with a real per-request result
+and the file/line diagnostics attached. It also sidesteps the whole problem this page describes
+below — the editor generates **in memory**, so no `.uasset` is written and nothing shadows anything.
+When no editor is running it runs this same script, `-CleanNew` and all.
+
+`dream_preview` is the one thing neither path can otherwise give you: it renders the material and
+hands the image back, so a wrong-looking result is visible rather than inferred. There is no
+headless equivalent — the commandlet runs `-nullrhi`.
+
+Fall back to the script when the server is not connected, and for `decompile` and `optimize`, which
+it deliberately does not wrap.
+
 ## Run it
 
 ```bash
