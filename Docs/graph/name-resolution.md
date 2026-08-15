@@ -54,7 +54,7 @@ consulted.
 | 2 | `UE.SceneTexture` | insensitive | Desugars to `UE.Expression(Class="SceneTexture", …)` |
 | 3 | Any name beginning with `UE.` | insensitive | The [`UE.*` builtin catalogue](../builtins/ue.md) |
 | 4 | Any name beginning with `Substrate.` | insensitive | The [`Substrate.*` catalogue](../builtins/substrate.md), UE 5.4+ |
-| 5 | Math builtin | insensitive | The 19 spellings in [Math builtins](../builtins/math.md) |
+| 5 | Math builtin | insensitive | The 29 spellings in [Math builtins](../builtins/math.md) |
 | 6 | `SampleTexture2D` | **sensitive** | Desugars to `UE.Expression(Class="TextureSample", …)` |
 | 7 | A declared property whose node type is `StaticSwitchParameter` | insensitive | [Static-switch call form](calls.md#staticswitchparameter) |
 | 8 | A declared property whose node type owns input pins | insensitive | [Pin call form](calls.md#input-pin-wiring) |
@@ -222,7 +222,7 @@ UseTint               -> step 4  (bare read) ERROR: Unknown Graph identifier 'Us
 - [Expressions](expressions.md) — where identifiers and callees appear in the grammar
 - [Declarations](declarations.md) — how a Graph variable enters the value map
 - [Constructors](constructors.md) — the 34 reserved constructor spellings
-- [Math builtins](../builtins/math.md) — the 19 reserved builtin spellings
+- [Math builtins](../builtins/math.md) — the 29 reserved builtin spellings
 - [UE builtins](../builtins/ue.md) — the `UE.*` surface claimed by prefix
 - [Substrate builtins](../builtins/substrate.md) — the `Substrate.*` surface
 - [Parameters in Graph](../parameters/graph-usage.md) — reading parameters and the pin call form

@@ -218,7 +218,7 @@ pwsh -File Plugins/DreamShader/.skill/sync-skills.ps1
 > `SKILL.md` is plain Markdown, so any agent — or any human — can read the instructions and run the
 > same commands. [`.skill/reference/dreamshaderlang.md`](.skill/reference/dreamshaderlang.md)
 > condenses the grammar an author actually needs, including the traps that only surface at compile
-> time: the 19 reserved math builtins that shadow user code silently, the whole-identifier GLSL
+> time: the 29 reserved math builtins that shadow user code silently, the whole-identifier GLSL
 > rewrite inside `Function` bodies, and the absent matrix types.
 
 ## Compatibility

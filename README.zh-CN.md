@@ -204,7 +204,7 @@ pwsh -File Plugins/DreamShader/.skill/sync-skills.ps1
 > 只有「自动加载」这一步是 Claude Code 专有的。驱动就是一个普通的 PowerShell 脚本，每个 `SKILL.md`
 > 也只是普通 Markdown——任何 agent，或者人，都可以照着读、照着跑。
 > [`.skill/reference/dreamshaderlang.md`](.skill/reference/dreamshaderlang.md) 把写材质真正要用的语法
-> 浓缩成一页，包括那些只在编译期才暴露的坑：19 个会静默遮蔽用户代码的保留数学 builtin、`Function`
+> 浓缩成一页，包括那些只在编译期才暴露的坑：29 个会静默遮蔽用户代码的保留数学 builtin、`Function`
 > 函数体内按整词生效的 GLSL 标识符改写，以及根本不存在的矩阵类型。
 
 ## 版本兼容

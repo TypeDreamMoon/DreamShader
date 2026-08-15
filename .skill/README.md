@@ -30,7 +30,7 @@ It is not a skill and `sync-skills.ps1` does not publish it.
 | [`dream-shader-diagnose`](dream-shader-diagnose/SKILL.md) | `<message>` | routes a diagnostic to its pipeline stage, explains it, fixes it |
 
 [`reference/dreamshaderlang.md`](reference/dreamshaderlang.md) holds the grammar subset an author
-actually needs — file kinds, the `Shader` block, types, the 19 math builtins, the reserved-name and
+actually needs — file kinds, the `Shader` block, types, the 29 math builtins, the reserved-name and
 identifier-rewrite traps. `create` and `optimize` both read it before writing a line.
 
 ### Routes

@@ -4,6 +4,42 @@
 
 ### Added
 
+- **Ten more math builtins in `Graph`: `step` `smoothstep` `length` `cross` `asin` `acos` `atan`
+  `atan2` `reflect` `refract`.** Every one of them had a node — or, for `reflect` and `refract`, a
+  four-line definition — and none of them had a spelling, so the only way to write
+  `step(0.5, x)` was `UE.Expression(Class="Step", OutputType="float1", Y=0.5, X=x)`, and the failure
+  when you wrote it the HLSL way was `Unknown Graph function 'step'` wrapped inside whichever call
+  the argument belonged to. The builtin surface goes from 19 spellings to 29.
+
+  Three of the new names do not wire to a pin called `Input`, which is the whole reason the mapping
+  is worth stating: `Step` and `Arctangent2` name their pins `Y` and `X`, and `SmoothStep` names them
+  `Min`/`Max`/`Value`. Argument order stays HLSL's in every case, so `step(edge, x)` wires argument 1
+  to `Y` and argument 2 to `X` and still means `x >= edge`. `length` and `cross` join `dot` as the
+  builtins with a fixed return width — 1 and 3 components, authoritative — matching what those same
+  classes already reported when reached through `UE.Expression`.
+
+  `reflect` and `refract` are the first builtins that are not one node. Unreal has no expression for
+  either, so they are lowered to the arithmetic HLSL defines them as: four nodes for
+  `i - 2 * dot(i, n) * n`, and fourteen for refraction including the `If` that returns zero under
+  total internal reflection. Both are exact and both are expensive; where the surrounding code is
+  already HLSL, a `Function` body still does it in one node.
+
+  **This widens a reserved namespace.** These ten names now shadow user code silently, the same way
+  the original nineteen do — a `Function`, property or `ShaderFunction` named `length`, `step` or
+  `cross` becomes unreachable from a `Graph` block with no diagnostic. Existing sources that declare
+  one need renaming.
+
+  Not added, and not addable: matrices. The Unreal material graph has no matrix value type at all,
+  so `mul(M, v)` has no `Graph` spelling regardless of what the DSL does —
+  `UE.Expression(Class="Transform"/"TransformPosition", …)` covers space conversions and a `Function`
+  HLSL body covers the rest. Still absent but reachable through `UE.Expression`, each having a node:
+  exponential, logarithmic, `tan`, `sign`, `round`, `trunc` and `distance`.
+
+  The decompiler is unchanged, so the new nodes export as generic `UE.Expression(Class="…", …)` calls
+  rather than round-tripping to the builtin spelling — the same asymmetry `Fmod` already has.
+  `reflect` and `refract` cannot round-trip at all, since they leave behind ordinary arithmetic nodes
+  with nothing marking their origin.
+
 - **The editor bridge answers now, and says whether it is alive.** It had an inbound half and
   nothing else: a request produced no reply, no error file and no log line — a malformed one simply
   vanished — and a client's only way to guess whether an editor was running at all was to look for

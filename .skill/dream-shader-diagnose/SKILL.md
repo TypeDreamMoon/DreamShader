@@ -54,7 +54,7 @@ section exists precisely for this. The recurring causes:
 
 | Symptom | Cause |
 | :-- | :-- |
-| a `Function` / property is never called, and nothing is reported | its name collides with one of the **19 reserved math builtins** (`lerp` `dot` `pow` `min` `max` `clamp` `abs` `saturate` `sin` `cos` `floor` `ceil` `frac` `fract` `sqrt` `normalize` `fmod` `mod` `mix`) or a constructor name. The builtin wins at the call site, silently |
+| a `Function` / property is never called, and nothing is reported | its name collides with one of the **29 reserved math builtins** (`lerp` `dot` `pow` `min` `max` `clamp` `abs` `saturate` `sin` `cos` `floor` `ceil` `frac` `fract` `sqrt` `normalize` `fmod` `mod` `mix` `step` `smoothstep` `length` `cross` `asin` `acos` `atan` `atan2` `reflect` `refract`) or a constructor name. The builtin wins at the call site, silently |
 | a helper inside a `Function` body behaves as a different function | the body identifier rewrite renamed it — `Mix`→`lerp`, `Mod`→`fmod`, `Fract`→`frac`, `Vec3`→`float3`, `Mat4`→`float4x4`, whole-identifier and case-insensitive |
 | a shader compile error from Unreal that names no DreamShader line | math builtins do **not** check component counts. `dot(float3Value, floatValue)` passes DreamShader and fails inside Unreal's translator |
 | a `UE.Expression` node comes back at its class default | struct-, array-, map- and set-valued properties are dropped with no per-property warning |

@@ -112,15 +112,20 @@ dsc: OK (exit 0)
 
 ## Gotchas
 
-- **The 19 math builtins are reserved and shadow user code silently.** A `Function`, property or
-  `ShaderFunction` named `lerp`, `dot`, `pow`, `min`, `max`, `clamp`, `abs`… is unreachable from a
-  `Graph` block and there is **no diagnostic**. The declaration still compiles and still generates
-  its asset; only the call site is redirected to the builtin.
+- **The 29 math builtins are reserved and shadow user code silently.** A `Function`, property or
+  `ShaderFunction` named `lerp`, `dot`, `pow`, `min`, `max`, `clamp`, `abs`, `step`, `length`,
+  `cross`… is unreachable from a `Graph` block and there is **no diagnostic**. The declaration still
+  compiles and still generates its asset; only the call site is redirected to the builtin.
 - **Inside a `Function` / `GraphFunction` body, `mix` `mod` `fract` `vec3` `mat4` and friends are
   rewritten as whole identifiers, case-insensitively.** A local named `Mix` silently becomes `lerp`.
   `Graph` blocks are not rewritten.
 - **No matrix types.** `mat3` parses in a `Function` signature — the normalizer rewrites it to
-  `float3x3` before validation — and then fails at the first call site.
+  `float3x3` before validation — and then fails at the first call site. A `Graph` block has no matrix
+  value at all, because the Unreal material graph has none; matrix math belongs in a `Function` HLSL
+  body.
+- **`reflect` and `refract` are builtins but not nodes.** They expand to a 4-node and a 14-node
+  subgraph. Correct, but if the surrounding code is already HLSL, write them in a `Function` body
+  and let the intrinsic do it in one node.
 - **Component counts are not checked for math builtins.** `dot(float3Value, floatValue)` passes
   DreamShader and fails later inside Unreal's shader compiler, with a message that does not name
   your source line.

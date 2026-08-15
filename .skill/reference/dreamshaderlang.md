@@ -174,19 +174,28 @@ Graph = {
 }
 ```
 
-### Math builtins — exactly 19 spellings, called bare
+### Math builtins — exactly 29 spellings, called bare
 
 ```
-abs ceil cos floor frac fract normalize saturate sin sqrt      (1 argument)
-dot fmod max min mod pow                                       (2 arguments)
-clamp lerp mix                                                 (3 arguments)
+abs acos asin atan ceil cos floor frac fract length            (1 argument)
+normalize saturate sin sqrt
+atan2 cross dot fmod max min mod pow reflect step              (2 arguments)
+clamp lerp mix refract smoothstep                              (3 arguments)
 ```
 
 Aliases: `lerp`≡`mix`, `frac`≡`fract`, `fmod`≡`mod`. Arity is exact; every argument is positional
 — a named argument is reported as an *arity* error. Component counts are **not** checked, so
 `dot(float3Value, floatValue)` passes DreamShader and fails later in Unreal's shader compile.
 
-> **These 19 names are reserved and shadow user code silently.** A `Function` or property named
+`step(edge, x)` and `smoothstep(min, max, x)` take HLSL argument order. `length` always returns 1
+component and `cross` always 3. `reflect` and `refract` have no node behind them and expand to a
+4-node and a 14-node subgraph respectively — cheap to write, expensive in the graph.
+
+There is still no matrix builtin, and there cannot be one: the material graph has no matrix value
+type. `UE.Expression(Class="Transform"/"TransformPosition", …)` covers space conversions; real
+matrix math belongs in a `Function` HLSL body.
+
+> **These 29 names are reserved and shadow user code silently.** A `Function` or property named
 > `lerp`, `dot`, `pow`… is unreachable from a `Graph` block, with no diagnostic. Rename it.
 
 A misspelling is not a math error — `saturte(x)` reports `Unknown Graph function 'saturte'.`
