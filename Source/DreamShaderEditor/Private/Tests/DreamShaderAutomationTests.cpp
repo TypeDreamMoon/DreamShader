@@ -45,6 +45,17 @@
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionDynamicParameter.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
+// The math builtins added after the original nineteen, asserted on by MathBuiltinNodesExtended.
+#include "Materials/MaterialExpressionArccosine.h"
+#include "Materials/MaterialExpressionArcsine.h"
+#include "Materials/MaterialExpressionArctangent.h"
+#include "Materials/MaterialExpressionArctangent2.h"
+#include "Materials/MaterialExpressionCrossProduct.h"
+#include "Materials/MaterialExpressionDotProduct.h"
+#include "Materials/MaterialExpressionLength.h"
+#include "Materials/MaterialExpressionSmoothStep.h"
+#include "Materials/MaterialExpressionSquareRoot.h"
+#include "Materials/MaterialExpressionStep.h"
 #include "Decompiler/DreamShaderGraphDecompiler.h"
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Misc/AutomationTest.h"
@@ -1368,6 +1379,142 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	}
 
 	TestTrue(TEXT("'sin' generates a Sine node"), CountMaterialExpressionsOfClass<UMaterialExpressionSine>(Material) >= 1);
+	return true;
+}
+
+// The builtins added after the original nineteen. Two things are worth pinning that the older test
+// above does not reach: the four names whose pins are NOT called "Input" (step and atan2 are Y/X,
+// cross is A/B, smoothstep is Min/Max/Value), because a wrong pin name fails at generation with a
+// "could not bind input" diagnostic rather than at parse; and reflect/refract, which are the only
+// builtins with no node of their own and instead leave a subgraph of arithmetic nodes behind.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderMathBuiltinExtendedNodeTest,
+	FDreamShaderQuietAutomationTestBase,
+	"DreamShader.Gen.Graph.MathBuiltinNodesExtended",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderMathBuiltinExtendedNodeTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_MathExt"));
+	const FString Source = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Properties = {
+        float Phase = 0.5;
+        vec3  Dir   = vec3(1.0, 0.0, 0.0);
+        vec3  Nrm   = vec3(0.0, 1.0, 0.0);
+    }
+
+    Settings = { Domain = "UI"; ShadingModel = "Unlit"; }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        float Gate   = step(0.25, Phase);
+        float Ramp   = smoothstep(0.0, 1.0, Phase);
+        float Len    = length(Dir);
+        vec3  Side   = cross(Dir, Nrm);
+        float Ang    = atan2(Phase, Len);
+        float Curved = asin(Ramp) + acos(Ramp) + atan(Ang);
+        vec3  Bounce = reflect(Dir, Nrm);
+        vec3  Bent   = refract(Dir, Nrm, 0.66);
+        Color = (Side + Bounce + Bent) * (Gate + Curved);
+    }
+}
+)"), *AssetName);
+
+	UMaterial* Material = nullptr;
+	if (!GenerateAndLoadMaterial(*this, Artifacts, AssetName, Source, Material))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("'step' generates a Step node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionStep>(Material) >= 1);
+	TestTrue(TEXT("'smoothstep' generates a SmoothStep node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionSmoothStep>(Material) >= 1);
+	TestTrue(TEXT("'length' generates a Length node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionLength>(Material) >= 1);
+	TestTrue(TEXT("'cross' generates a CrossProduct node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionCrossProduct>(Material) >= 1);
+	TestTrue(TEXT("'asin' generates an Arcsine node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionArcsine>(Material) >= 1);
+	TestTrue(TEXT("'acos' generates an Arccosine node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionArccosine>(Material) >= 1);
+	TestTrue(TEXT("'atan' generates an Arctangent node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionArctangent>(Material) >= 1);
+	TestTrue(TEXT("'atan2' generates an Arctangent2 node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionArctangent2>(Material) >= 1);
+
+	// reflect and refract have no node of their own. refract is the only builtin that reaches for an
+	// If node, so its presence is what distinguishes the refract lowering from the reflect one.
+	TestTrue(TEXT("'refract' lowers to a subgraph containing an If node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionIf>(Material) >= 1);
+	TestTrue(TEXT("'refract' lowers to a subgraph containing a SquareRoot node"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionSquareRoot>(Material) >= 1);
+	// reflect wires one DotProduct, refract another; neither call shares operands with the other, so
+	// the reuse cache cannot collapse them.
+	TestTrue(TEXT("'reflect' and 'refract' each wire their own DotProduct"),
+		CountMaterialExpressionsOfClass<UMaterialExpressionDotProduct>(Material) >= 2);
+
+	return true;
+}
+
+// Arity is checked before anything else, so a wrong count on one of the new builtins has to report
+// the builtin's own message rather than falling through to "Unknown Graph function".
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderMathBuiltinExtendedArityTest,
+	FDreamShaderQuietAutomationTestBase,
+	"DreamShader.Gen.Graph.MathBuiltinNodesExtendedArity",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderMathBuiltinExtendedArityTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_MathExtArity"));
+	const FString Source = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Properties = { float Phase = 0.5; }
+
+    Settings = { Domain = "UI"; ShadingModel = "Unlit"; }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        float Gate = step(Phase);
+        Color = vec3(Gate, Gate, Gate);
+    }
+}
+)"), *AssetName);
+
+	FScopedDreamShaderGraphBackendPin GraphPin;
+	Artifacts.AddObjectPath(MakeAutomationObjectPath(AssetName));
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	TestFalse(TEXT("A one-argument 'step' does not generate."),
+		UE::DreamShader::Editor::FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true));
+	TestTrue(
+		FString::Printf(TEXT("The failure names step's arity, not an unknown function. Got: %s"), *Message),
+		Message.Contains(TEXT("Math function 'step' expects exactly 2 arguments.")));
 	return true;
 }
 
