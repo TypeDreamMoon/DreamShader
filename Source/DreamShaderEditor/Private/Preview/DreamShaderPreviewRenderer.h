@@ -36,6 +36,11 @@ namespace UE::DreamShader::Editor::Private
 		// today's default framing.
 		float OrbitYaw = -157.5f;
 		float OrbitPitch = -11.25f;
+		// false = regenerate only when the source hash changed since the last generation (the same
+		// skip the bridge's auto-compile applies), which is what a mesh/camera re-request or a save
+		// the bridge already picked up wants; true = the explicit Refresh button / the one-shot
+		// request-file path, which always rebuild.
+		bool bForceRecompile = true;
 	};
 
 	struct FDreamShaderPreviewResult
@@ -96,9 +101,21 @@ namespace UE::DreamShader::Editor::Private
 		// while IsReadbackInFlight() is true.
 		bool TryConsumeReadyFrame(TArray64<uint8>& OutPngData, FString& OutError);
 
+		// The raw twin of TryConsumeReadyFrame(): same polling contract, but hands back the pixels as
+		// tightly packed RGBA8 (alpha forced to 255) instead of a PNG. This is the streaming wire
+		// format -- a browser canvas takes it as-is (putImageData), and skipping the PNG encode is
+		// most of what makes 30-60 FPS streaming possible; PNGCompressImageArray on a 512x512 frame
+		// costs tens of milliseconds of game-thread time per frame. The render target is BGRA, so
+		// this is one swizzle pass over the frame, no more than the alpha pass the PNG path already
+		// paid. `OutWidth`/`OutHeight` are the frame's actual dimensions.
+		bool TryConsumeReadyFramePixels(TArray<uint8>& OutRGBA, int32& OutWidth, int32& OutHeight, FString& OutError);
+
 		bool IsReadbackInFlight() const { return bReadbackInFlight; }
 
 	private:
+		// Shared readback pump behind both TryConsume* entry points: polls the GPU copy, then moves
+		// the staged BGRA pixels to the game thread. Returns true exactly once per kicked-off frame.
+		bool TryConsumeReadyFrameColors(FDreamShaderPreviewReadbackData& OutData, FString& OutError);
 		bool EnsureResources(int32 Width, int32 Height, FString& OutError);
 		// Shared setup used by both RenderFrame() and KickoffFrame(): assigns the material,
 		// submits the scene render to the render thread, and returns once the *game thread* side

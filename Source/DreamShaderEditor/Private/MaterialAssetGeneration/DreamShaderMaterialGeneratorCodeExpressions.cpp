@@ -94,6 +94,14 @@ namespace UE::DreamShader::Editor::Private
 		return ContextPrefix + Error;
 	}
 
+	void FCodeGraphBuilder::ResolveStatementSourceLocation(const FCodeStatement& Statement, int32& OutLine, int32& OutColumn) const
+	{
+		OutLine = CodeStartLine + FMath::Max(1, Statement.SourceLine) - 1;
+		OutColumn = Statement.SourceLine <= 1
+			? CodeStartColumn + FMath::Max(1, Statement.SourceColumn) - 1
+			: FMath::Max(1, Statement.SourceColumn);
+	}
+
 	FString FCodeGraphBuilder::FormatStatementError(const FCodeStatement& Statement, const FString& Error) const
 	{
 		if (!Statement.bHasSourceLocation || LooksLikeLocatedDiagnostic(Error))
@@ -101,11 +109,80 @@ namespace UE::DreamShader::Editor::Private
 			return Error;
 		}
 
-		const int32 Line = CodeStartLine + FMath::Max(1, Statement.SourceLine) - 1;
-		const int32 Column = Statement.SourceLine <= 1
-			? CodeStartColumn + FMath::Max(1, Statement.SourceColumn) - 1
-			: FMath::Max(1, Statement.SourceColumn);
+		int32 Line = 1;
+		int32 Column = 1;
+		ResolveStatementSourceLocation(Statement, Line, Column);
 		return FString::Printf(TEXT("%s(%d,%d): %s"), *CodeSourceFilePath, Line, Column, *Error); /* I18N-EXEMPT: deferred codegen or compatibility path */
+	}
+
+	static bool AreCodeValuesEquivalent(const FCodeValue& Left, const FCodeValue& Right);
+
+	void FCodeGraphBuilder::RecordProbesForStatement(const FCodeStatement& Statement, const TMap<FString, FCodeValue>& ValuesBefore)
+	{
+		// Synthesized statements (initialized Outputs declarations lowered ahead of the body) have no
+		// location, so there is no line a breakpoint could sit on.
+		if (!Statement.bHasSourceLocation || !Values)
+		{
+			return;
+		}
+
+		int32 Line = 1;
+		int32 Column = 1;
+		ResolveStatementSourceLocation(Statement, Line, Column);
+
+		for (const TPair<FString, FCodeValue>& Pair : *Values)
+		{
+			const FCodeValue* Before = ValuesBefore.Find(Pair.Key);
+			if (Before && AreCodeValuesEquivalent(*Before, Pair.Value))
+			{
+				continue;
+			}
+			// A parameter that this statement merely READ gets lazily materialized into the value map
+			// (TryCreatePropertyValue). That is not a binding the statement made -- see the same
+			// exclusion in ExecuteIfStatement -- so it is not a probe either.
+			if (FindPropertyDefinition(Pair.Key))
+			{
+				continue;
+			}
+			if (!Pair.Value.Expression)
+			{
+				continue;
+			}
+
+			FDreamShaderGraphProbe& Probe = Probes.AddDefaulted_GetRef();
+			Probe.Line = Line;
+			Probe.Column = Column;
+			Probe.Name = Pair.Key;
+			Probe.Expression = Pair.Value.Expression;
+			Probe.OutputIndex = Pair.Value.OutputIndex;
+			Probe.ComponentCount = Pair.Value.ComponentCount;
+			Probe.bHasInputMask = Pair.Value.bHasInputMask;
+			Probe.bInputMaskR = Pair.Value.InputMaskR;
+			Probe.bInputMaskG = Pair.Value.InputMaskG;
+			Probe.bInputMaskB = Pair.Value.InputMaskB;
+			Probe.bInputMaskA = Pair.Value.InputMaskA;
+			Probe.bIsTextureObject = Pair.Value.bIsTextureObject;
+			Probe.bIsMaterialAttributes = Pair.Value.bIsMaterialAttributes;
+			Probe.bIsSubstrateMaterial = Pair.Value.bIsSubstrateMaterial;
+			// `Attrs.BaseColor = X;` rebinds `Attrs`, so a member write targets its base name.
+			FString MemberBaseName;
+			FString MemberName;
+			const FString TargetBaseName = TrySplitMemberTarget(Statement.TargetName, MemberBaseName, MemberName) ? MemberBaseName : Statement.TargetName;
+			Probe.bIsStatementTarget = !TargetBaseName.IsEmpty() && TargetBaseName == Pair.Key;
+		}
+	}
+
+	bool FCodeGraphBuilder::ExecuteStatement(const FCodeStatement& Statement, FString& OutError)
+	{
+		// The snapshot is one map copy per statement. Values are small descriptors and Graph blocks
+		// are hundreds of statements at most, so this stays far below the node creation it brackets.
+		const TMap<FString, FCodeValue> ValuesBefore = Values ? *Values : TMap<FString, FCodeValue>();
+		if (!ExecuteStatementInternal(Statement, OutError))
+		{
+			return false;
+		}
+		RecordProbesForStatement(Statement, ValuesBefore);
+		return true;
 	}
 
 	void FCodeGraphBuilder::RegisterGeneratedVariable(const FCodeStatement& Statement, const FCodeValue& Value)
@@ -122,7 +199,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	bool FCodeGraphBuilder::ExecuteStatement(const FCodeStatement& Statement, FString& OutError)
+	bool FCodeGraphBuilder::ExecuteStatementInternal(const FCodeStatement& Statement, FString& OutError)
 	{
 		if (Statement.bIsIfStatement)
 		{

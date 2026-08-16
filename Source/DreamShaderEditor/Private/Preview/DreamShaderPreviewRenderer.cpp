@@ -435,6 +435,61 @@ namespace UE::DreamShader::Editor::Private
 
 	bool FDreamShaderPreviewRenderContext::TryConsumeReadyFrame(TArray64<uint8>& OutPngData, FString& OutError)
 	{
+		FDreamShaderPreviewReadbackData Data;
+		if (!TryConsumeReadyFrameColors(Data, OutError))
+		{
+			return false;
+		}
+
+		for (FColor& Color : Data.Colors)
+		{
+			Color.A = 255;
+		}
+
+		OutPngData.Reset();
+		FImageUtils::PNGCompressImageArray(
+			Data.Width,
+			Data.Height,
+			TArrayView64<const FColor>(Data.Colors.GetData(), Data.Colors.Num()),
+			OutPngData);
+		if (OutPngData.IsEmpty())
+		{
+			OutError = TEXT("Failed to encode preview thumbnail.");
+			return false;
+		}
+
+		return true;
+	}
+
+	bool FDreamShaderPreviewRenderContext::TryConsumeReadyFramePixels(TArray<uint8>& OutRGBA, int32& OutWidth, int32& OutHeight, FString& OutError)
+	{
+		FDreamShaderPreviewReadbackData Data;
+		if (!TryConsumeReadyFrameColors(Data, OutError))
+		{
+			return false;
+		}
+
+		OutWidth = Data.Width;
+		OutHeight = Data.Height;
+		const int32 PixelCount = Data.Colors.Num();
+		OutRGBA.SetNumUninitialized(PixelCount * 4);
+		uint8* Dst = OutRGBA.GetData();
+		const FColor* Src = Data.Colors.GetData();
+		for (int32 PixelIndex = 0; PixelIndex < PixelCount; ++PixelIndex)
+		{
+			// FColor is B,G,R,A in memory (it mirrors the BGRA render target); the wire is RGBA.
+			const FColor& Color = Src[PixelIndex];
+			Dst[0] = Color.R;
+			Dst[1] = Color.G;
+			Dst[2] = Color.B;
+			Dst[3] = 255;
+			Dst += 4;
+		}
+		return true;
+	}
+
+	bool FDreamShaderPreviewRenderContext::TryConsumeReadyFrameColors(FDreamShaderPreviewReadbackData& OutData, FString& OutError)
+	{
 		if (!bReadbackInFlight || !PendingReadback.IsValid())
 		{
 			return false;
@@ -509,32 +564,15 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		FDreamShaderPreviewReadbackData Data = PendingFuture->Get();
+		OutData = PendingFuture->Get();
 		bReadbackInFlight = false;
 		bCopyEnqueued = false;
 		PendingPromise.Reset();
 		PendingFuture.Reset();
 
-		if (!Data.bSucceeded)
+		if (!OutData.bSucceeded)
 		{
-			OutError = Data.Error.IsEmpty() ? TEXT("Preview readback failed.") : Data.Error;
-			return false;
-		}
-
-		for (FColor& Color : Data.Colors)
-		{
-			Color.A = 255;
-		}
-
-		OutPngData.Reset();
-		FImageUtils::PNGCompressImageArray(
-			Data.Width,
-			Data.Height,
-			TArrayView64<const FColor>(Data.Colors.GetData(), Data.Colors.Num()),
-			OutPngData);
-		if (OutPngData.IsEmpty())
-		{
-			OutError = TEXT("Failed to encode preview thumbnail.");
+			OutError = OutData.Error.IsEmpty() ? TEXT("Preview readback failed.") : OutData.Error;
 			return false;
 		}
 
@@ -582,7 +620,7 @@ namespace UE::DreamShader::Editor::Private
 
 		UE::DreamShader::Compiler::FDreamShaderCompileService CompileService(UE::DreamShader::Editor::GetEditorCompileAdapter());
 		// Editor materials are always memory-only, so a preview compile is transient (never persists).
-		const UE::DreamShader::Compiler::FDreamShaderCompileResult CompileResult = CompileService.CompileMaterial(SourceFilePath, true, /*bTransient*/ true);
+		const UE::DreamShader::Compiler::FDreamShaderCompileResult CompileResult = CompileService.CompileMaterial(SourceFilePath, Request.bForceRecompile, /*bTransient*/ true);
 		if (!CompileResult.bSucceeded)
 		{
 			OutResult.Message = CompileResult.Message;

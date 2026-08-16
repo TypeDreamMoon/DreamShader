@@ -13,6 +13,10 @@
 #include "Materials/MaterialExpressionWorldPosition.h"
 #include "SceneTypes.h"
 
+// FDreamShaderGraphProbe: the per-statement value records the graph builder hands to the preview's
+// breakpoint machinery (see FCodeGraphBuilder::TakeProbes).
+#include "Preview/DreamShaderGraphDebugInfo.h"
+
 class UMaterial;
 class UMaterialFunction;
 class UMaterialExpression;
@@ -392,6 +396,9 @@ namespace UE::DreamShader::Editor::Private
 		bool EvaluateOutputExpression(const FString& ExpressionText, FCodeValue& OutValue, FString& OutError);
 		const TMap<FString, UMaterialExpression*>& GetGeneratedExpressionsByVariable() const { return GeneratedExpressionsByVariable; }
 		const TMap<FString, FString>& GetRegionByVariable() const { return RegionByVariable; }
+		// Every (line, name) -> value binding the build produced, in execution order, with lines
+		// already offset into the source file. Moves the array out; the builder keeps nothing.
+		TArray<FDreamShaderGraphProbe> TakeProbes() { return MoveTemp(Probes); }
 
 	private:
 		UMaterial* Material = nullptr;
@@ -407,6 +414,7 @@ namespace UE::DreamShader::Editor::Private
 		TMap<FString, UMaterialExpression*> GeneratedPropertyExpressions;
 		TMap<FString, UMaterialExpression*> GeneratedExpressionsByVariable;
 		TMap<FString, FString> RegionByVariable;
+		TArray<FDreamShaderGraphProbe> Probes;
 		TMap<FString, FCodeValue> ReusableExpressionValues;
 		TSet<FString> CreatingPropertyNames;
 		int32 NextPropertyNodeY = -620;
@@ -442,7 +450,14 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeCallArgument* FindNamedArgument(const TArray<FCodeCallArgument>& Arguments, const TCHAR* Name) const;
 		const FCodeCallArgument* FindPositionalArgument(const TArray<FCodeCallArgument>& Arguments, int32 PositionIndex) const;
 		bool ExecuteExpressionStatement(const TSharedPtr<FCodeExpression>& Expression, FString& OutError);
+		// Runs ExecuteStatementInternal and records a probe for every name whose value the statement
+		// changed (see RecordProbesForStatement). Nested statements (if bodies) go through here too.
 		bool ExecuteStatement(const FCodeStatement& Statement, FString& OutError);
+		bool ExecuteStatementInternal(const FCodeStatement& Statement, FString& OutError);
+		void RecordProbesForStatement(const FCodeStatement& Statement, const TMap<FString, FCodeValue>& ValuesBefore);
+		// Statement (line, column) mapped into the source file -- the same arithmetic
+		// FormatStatementError uses for diagnostics, so a probe and an error on one statement agree.
+		void ResolveStatementSourceLocation(const FCodeStatement& Statement, int32& OutLine, int32& OutColumn) const;
 		FString FormatStatementError(const FCodeStatement& Statement, const FString& Error) const;
 		bool ExecuteIfStatement(const FCodeStatement& Statement, FString& OutError);
 		bool CreateConditionalValue(

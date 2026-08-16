@@ -2151,6 +2151,10 @@ namespace UE::DreamShader::Editor
 	{
 		Material->Modify();
 		MaterialSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Clearing old material graph '%s'..."), *Material->GetName()))); /* I18N-EXEMPT: deferred codegen or compatibility path */
+		// A live probe preview shares this material's expression collection (the Material Editor's
+		// own "Start Previewing Node" arrangement); it must drop that share before the nodes below
+		// are marked garbage.
+		Private::FDreamShaderGraphDebugRegistry::Get().NotifyGraphMaterialAboutToReset(Material);
 		Private::ClearMaterialExpressions(Material);
 		Private::ResetMaterialToDefaults(Material);
 
@@ -2179,6 +2183,7 @@ namespace UE::DreamShader::Editor
 		TMap<FString, Private::FCodeValue> GeneratedCodeValues;
 		TMap<FString, UMaterialExpression*> GeneratedExpressionsByVariable;
 		TMap<FString, FString> RegionByVariable;
+		TArray<Private::FDreamShaderGraphProbe> GraphProbes;
 		int32 OutputTargetPositionY = 200;
 		TSet<FString> SeenPropertyNames;
 		for (const FTextShaderPropertyDefinition& Property : Definition.Properties)
@@ -2302,6 +2307,7 @@ namespace UE::DreamShader::Editor
 			}
 			GeneratedExpressionsByVariable = CodeGraphBuilder.GetGeneratedExpressionsByVariable();
 			RegionByVariable = CodeGraphBuilder.GetRegionByVariable();
+			GraphProbes = CodeGraphBuilder.TakeProbes();
 
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
@@ -2634,6 +2640,10 @@ namespace UE::DreamShader::Editor
 				RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
 				bTransient);
 		}
+
+		// The finished graph is now addressable by (line, name). Publish before the recompile so a
+		// probe preview that re-wires on publish gets its own compile queued alongside this one.
+		Private::FDreamShaderGraphDebugRegistry::Get().Publish(SourceFilePath, Material, MoveTemp(GraphProbes));
 
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
