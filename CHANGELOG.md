@@ -1,5 +1,31 @@
 # DreamShader ChangeLog
 
+## 1.7.1 - 2026-08-16
+
+### Fixed
+
+- **Closing the editor crashed after using a Graph breakpoint.** An access violation reading
+  `0x3b0` in `UMaterial::GetExpressionInputDescription`, from the probe preview's own destructor,
+  reached through `FDreamShaderPreviewWebSocketServer::Shutdown` while modules were unloading.
+
+  Modules unload from inside the exit path: `EngineExit()` raises the exit request, `FEngineLoop::Exit()`
+  runs the purge, and only then calls `UnloadModulesAtShutdown()`. So a module tearing down its own
+  state at that point is doing it *after* the objects it points at are gone. `TStrongObjectPtr` keeps
+  the preview material out of the garbage collector's reachable-set sweep, but it does not exempt it
+  from the exit purge — the pointer stayed non-null while the object behind it did not, which is why
+  the existing null checks passed and the dereference still faulted.
+
+  What it faulted on is worth naming, because nothing about the call site suggests it:
+  `UMaterial::GetExpressionInputDescription` and `GetExpressionCollection` both dereference
+  `GetEditorOnlyData()` without checking it, so reaching for a material's inputs or expressions after
+  the purge is an unconditional null-plus-offset read rather than a recoverable failure.
+
+  The teardown is now skipped once the engine is exiting. Skipping is correct and not merely safe:
+  releasing the shared expression collection exists so the preview material cannot touch the graph
+  material's nodes *later*, and at exit there is no later — both are being destroyed anyway. The
+  ordinary path, where a client disconnects while the editor keeps running, is unchanged and still
+  releases everything.
+
 ## 1.7.0 - 2026-08-16
 
 ### Added

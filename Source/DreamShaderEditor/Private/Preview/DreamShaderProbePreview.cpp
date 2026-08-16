@@ -16,6 +16,31 @@
 
 namespace UE::DreamShader::Editor::Private
 {
+	namespace
+	{
+		// True once the UObject graph is being torn down for good.
+		//
+		// Modules unload from inside the exit path -- EngineExit() sets the exit request, then
+		// FEngineLoop::Exit() runs the purge and only afterwards calls UnloadModulesAtShutdown() --
+		// so anything a module destroys at that point is destroying its own state AFTER the objects
+		// it points at are gone. A TStrongObjectPtr keeps a material off the GC's reachable-set
+		// sweep, but it does not exempt it from the exit purge: the pointer stays non-null while the
+		// object behind it does not.
+		//
+		// That matters here because UMaterial's editor-only accessors dereference
+		// GetEditorOnlyData() without checking it -- both GetExpressionInputDescription (via
+		// GetExpressionInputForProperty) and GetExpressionCollection -- so reaching for either at
+		// exit is a null-plus-offset read, not a recoverable failure.
+		//
+		// Skipping the work is correct, not just safe. Releasing the shared collection exists so the
+		// preview material cannot touch the graph material's nodes LATER; at exit there is no later,
+		// and both materials are being destroyed regardless.
+		bool IsUObjectTeardownInProgress()
+		{
+			return IsEngineExitRequested() || GExitPurge;
+		}
+	}
+
 	FDreamShaderProbePreview::FDreamShaderProbePreview()
 	{
 		FDreamShaderGraphDebugRegistry& Registry = FDreamShaderGraphDebugRegistry::Get();
@@ -31,11 +56,15 @@ namespace UE::DreamShader::Editor::Private
 
 		// Same teardown as ClearProbe(): the shared collection must not outlive this object inside
 		// the preview material, and the material itself must not go away under a frame that is
-		// still being rendered with it.
-		ReleaseSharedExpressions();
-		if (PreviewMaterial.IsValid())
+		// still being rendered with it. Both are meaningless once the engine is tearing down -- and
+		// flushing rendering commands then is its own hazard, since the RHI is on its way out too.
+		if (!IsUObjectTeardownInProgress())
 		{
-			FlushRenderingCommands();
+			ReleaseSharedExpressions();
+			if (PreviewMaterial.IsValid())
+			{
+				FlushRenderingCommands();
+			}
 		}
 		PreviewMaterial.Reset();
 	}
@@ -199,6 +228,12 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderProbePreview::ResetPreviewMaterialInputs()
 	{
+		// The choke point for GetExpressionInputForProperty, which crashes outright once the
+		// UObject graph is gone -- see IsUObjectTeardownInProgress.
+		if (IsUObjectTeardownInProgress())
+		{
+			return;
+		}
 		UPreviewMaterial* Preview = PreviewMaterial.Get();
 		if (!Preview)
 		{
@@ -319,6 +354,12 @@ namespace UE::DreamShader::Editor::Private
 	void FDreamShaderProbePreview::ReleaseSharedExpressions()
 	{
 		SharedGraphMaterial.Reset();
+		// GetExpressionCollection() is GetEditorOnlyData()->ExpressionCollection, so it is the same
+		// unchecked dereference ResetPreviewMaterialInputs() guards against.
+		if (IsUObjectTeardownInProgress())
+		{
+			return;
+		}
 		if (UPreviewMaterial* Preview = PreviewMaterial.Get())
 		{
 			ResetPreviewMaterialInputs();
