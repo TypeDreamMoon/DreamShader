@@ -9,12 +9,40 @@ once or as a stream of frames.
 | :-- | :-- |
 | Implemented in | the `DreamShaderEditor` module |
 | Accepts | `.dsm` only |
-| Produces | PNG files under `<Project>/Saved/DreamShader/Bridge/Preview/`, plus a `preview.json` manifest |
+| Produces | streamed frames over the WebSocket; PNG files under `<Project>/Saved/DreamShader/Bridge/Preview/` plus a `preview.json` manifest on the file/`png` paths |
 | Transports | bridge request files (one-shot) · WebSocket on `127.0.0.1:17864` (one-shot or streaming) |
-| Streaming since | `1.5.0` |
+| Streaming since | `1.5.0`; raw RGBA8 frames and Graph breakpoints since `1.7.0` |
 
 Rendering runs on the game thread's ticker. The streaming path exists precisely so that it does not
 stall that thread.
+
+> [!NOTE]
+> Since `1.7.0` the streaming path defaults to **raw RGBA8 frames** (`encoding: "raw"`): the editor
+> reads the render target back and sends the pixels as-is, with no PNG encode, and the client paints
+> them straight onto a canvas. This is what makes smooth 30–60 FPS streaming affordable. The old
+> JSON-metadata-plus-PNG path is still available as `encoding: "png"` for older clients. A session
+> also **dedupes** identical frames and **backs off** to a low idle rate once the picture is static,
+> so a settled preview is nearly free. See [Bridge » Framing](bridge.md#framing) for the wire format.
+
+## Breakpoints (probe preview)
+
+*Since `1.7.0`.* A breakpoint set on a `Graph` line (F9 in the DreamShaderLang VS Code extension)
+previews the **value bound at that line** on the mesh, instead of the finished material — the text
+analogue of the Material Editor's right-click **Start Previewing Node**.
+
+| Aspect | Behaviour |
+| :-- | :-- |
+| Selection | one probe at a time — the topmost enabled breakpoint in the active `.dsm` |
+| Line snapping | a breakpoint on a blank/comment line snaps forward to the next line that binds a value |
+| What is shown | the bound value routed into an unlit Emissive preview (or MaterialAttributes / Substrate when the value is one of those); a texture object is sampled with default coordinates |
+| Set before compile | remembered as *pending* and attaches on the next generation |
+| After a recompile | re-resolved automatically; the line may move, and the client is told the new line |
+
+The mechanism reuses the engine's own preview material machinery: a transient `UPreviewMaterial`
+that shares the generated material's expression collection and has the probed node wired into it,
+recompiled through `FMaterialUpdateContext`. `UPreviewMaterial`'s restricted `ShouldCache` keeps that
+recompile to a handful of shaders. The protocol side is `setProbe` / `clearProbe` / `probeState` —
+see [Bridge » Message types](bridge.md#message-types).
 
 ## The two paths
 
@@ -24,7 +52,7 @@ stall that thread.
 | Readback | synchronous — flushes rendering commands, then blocks on `ReadPixels` | asynchronous — enqueues a GPU readback and polls it on a later tick |
 | Waits for shader compilation | yes — finishes asset compilation, then all shader compilation, then flushes rendering commands | no |
 | Camera control | request-file path: **no** — orbit fields are not read. WebSocket path: yes | yes, through `previewControl` |
-| Result | one PNG plus `preview.json` | `preview.json`, then one tagged binary PNG per frame over the socket |
+| Result | one PNG plus `preview.json` | one raw RGBA8 frame per tick over the socket (`encoding: "raw"`), or the legacy `preview.json` + tagged PNG pair (`encoding: "png"`) |
 | Tick rate | the 0.1 s bridge ticker | every frame |
 
 > [!NOTE]
@@ -100,6 +128,14 @@ drag-to-orbit viewport write. One is created lazily if the material has none.
 | Separate translucency | follows the thumbnail scene's own rule for the material |
 | Alpha | forced to 255 before the PNG is encoded — previews are always opaque |
 | UI-domain materials | forced onto a plane regardless of the requested mesh |
+| Projection aspect | **always 1:1**, never derived from the requested size |
+
+> [!WARNING]
+> **Request a square `width`/`height`.** The preview renders through `FThumbnailPreviewScene`, whose
+> projection matrix is built as `FReversedZPerspectiveMatrix(halfFov, 1, 1, near)` — the aspect ratio
+> is hardcoded and is *not* taken from the view rect. A non-square render target therefore does not
+> show more of the scene; it stretches the sphere into an ellipse. There is no diagnostic. Ask for a
+> square frame and letterbox it on the client side if the surface it fills is not square.
 
 The scene's material interface is deliberately **not** cleared after a frame is submitted; clearing
 it would race with render commands still in flight.
@@ -140,20 +176,24 @@ CRC printed as eight lowercase hex digits. A source whose stem sanitizes to noth
 | Port | `17864` |
 | Bind address | `127.0.0.1` only |
 | Connection filter | the client IP must be `127.0.0.1` or `localhost`; anything else is refused |
-| Frame format | a 4-byte length, a 1-byte type tag, then the payload. Tag `1` = JSON, tag `2` = binary |
+| Frame format | a 4-byte length, a 1-byte type tag, then the payload. Tag `1` = JSON, tag `2` = PNG, tag `3` = raw RGBA8 frame |
 
 Every message leaves as a raw WebSocket *binary* frame, so the opcode cannot distinguish JSON from
-image bytes — hence the explicit type tag.
+image bytes — hence the explicit type tag. The full framing, the tag-`3` raw-frame header, and the
+frame-flag bits are documented in [Bridge » Framing](bridge.md#framing).
 
 | Message | Direction | Purpose |
 | :-- | :-- | :-- |
-| `previewMaterial` | in | compile and render a source file. Also accepted as `action: "previewMaterial"`, compared case-insensitively |
-| `previewControl` | in | change streaming state, frame rate or camera angles for the active session |
+| `previewMaterial` | in | compile and render a source file. Also accepted as `action: "previewMaterial"`, compared case-insensitively. `encoding` selects `raw` or `png`; `force` controls regeneration |
+| `previewControl` | in | change streaming state, frame rate, camera angles, viewport size or mesh for the active session |
+| `setProbe` / `clearProbe` | in | attach or detach a breakpoint-style probe (see [Breakpoints](#breakpoints-probe-preview)) |
 | `previewResult` | out | `status` `ready` or `error`, plus the result fields listed above |
-| `previewFrame` | out | frame header: `type`, `requestId`, `sourceFile`, `assetPath`, `mesh`, `frameIndex`, `updatedAtUtc` — immediately followed by the PNG as a tagged binary message |
+| `previewFrame` | out | *(png encoding only)* frame metadata, immediately followed by the PNG as a tagged binary message |
+| `probeState` | out | whether the probe is `attached`, `pending`, or `cleared` |
 
-`previewControl` reads `requestId`, `stream`, `frameRate`, `orbitYaw`, `orbitPitch` and
-`ackFrameIndex`. A `requestId` that does not match the active session is ignored.
+`previewControl` reads `requestId`, `stream`, `frameRate`, `orbitYaw`, `orbitPitch`, `width`,
+`height`, `mesh` and `ackFrameIndex`; every field except `requestId`/`ackFrameIndex` keeps its
+current value when omitted. A `requestId` that does not match the active session is ignored.
 
 ### Frame pacing
 

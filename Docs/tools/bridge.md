@@ -259,15 +259,53 @@ whose payload is:
 | Field | Width | Value |
 | :-- | :-- | :-- |
 | length | 4 bytes, unsigned, little-endian | `1 + payload byte count` — the tag byte is included |
-| tag | 1 byte | `1` = UTF-8 JSON, `2` = raw PNG bytes |
-| payload | *length − 1* bytes | the JSON text or the image |
+| tag | 1 byte | `1` = UTF-8 JSON, `2` = raw PNG bytes, `3` = raw frame (header + RGBA8) |
+| payload | *length − 1* bytes | the JSON text, the image, or the raw-frame header+pixels |
 
 The tag exists because the transport always writes binary frames, so the WebSocket opcode cannot
 distinguish a JSON message from an image. Images are sent as raw bytes — there is no Base64 anywhere
 in this protocol.
 
-**Correlation rule:** a JSON message is always sent first and the matching binary message immediately
-after, on the same connection. A client pairs them by arrival order.
+A session chooses its frame encoding with the `encoding` field of `previewMaterial`:
+
+| `encoding` | Frame delivery | Since |
+| :-- | :-- | :-- |
+| `"raw"` | one self-describing tag-`3` message per frame (header + RGBA8), no JSON metadata | `1.7.0` |
+| `"png"` *(default when absent)* | a tag-`1` `previewFrame` JSON message immediately followed by a tag-`2` PNG | `1.5.0` |
+
+`raw` is the efficient path a browser/webview client wants — the pixels go straight onto a canvas
+with `putImageData`, with no PNG encode on the editor side and no decode on the client side. `png`
+is kept for clients that predate `raw`.
+
+**Correlation rule (png only):** the JSON `previewFrame` is always sent first and the matching PNG
+binary message immediately after, on the same connection. A client pairs them by arrival order. A
+`raw` frame is a single message and needs no pairing.
+
+#### Raw frame header (tag `3`)
+
+The tag-`3` payload is a 24-byte little-endian header followed by `width × height × 4` bytes of
+RGBA8 pixels (alpha is always `255`).
+
+| Offset | Field | Type | Notes |
+| :-- | :-- | :-- | :-- |
+| 0 | `version` | u8 | `1` |
+| 1 | `format` | u8 | `1` = RGBA8 |
+| 2 | `width` | u16 | pixels |
+| 4 | `height` | u16 | pixels |
+| 6 | `flags` | u16 | frame-flag bits, see below |
+| 8 | `frameIndex` | u32 | monotonic, starts at `0`; echo it back in `ackFrameIndex` |
+| 12 | `orbitYaw` | f32 | the yaw the frame was rendered at |
+| 16 | `orbitPitch` | f32 | the pitch the frame was rendered at |
+| 20 | `probeLine` | u32 | the source line the active probe resolved to, or `0` |
+
+Frame-flag bits:
+
+| Bit | Name | Meaning |
+| :-- | :-- | :-- |
+| `1 << 0` | Compiling | the shader map is still building; the pixels are the fallback material |
+| `1 << 1` | ProbeActive | a breakpoint is attached and the frame shows that value, not the material |
+| `1 << 2` | ProbePending | a breakpoint was requested but could not attach yet |
+| `1 << 3` | Keyframe | the frame was sent because something changed, not because the clock ticked |
 
 **Inbound** messages are plain UTF-8 JSON with no length prefix and no tag byte.
 
@@ -277,12 +315,15 @@ after, on the same connection. A client pairs them by arrival order.
 | :-- | :-- | :-- |
 | client → editor | `previewMaterial` | Start a preview session for a `.dsm` |
 | client → editor | `previewControl` | Adjust an existing session |
+| client → editor | `setProbe` | Attach a breakpoint-style probe to a Graph line |
+| client → editor | `clearProbe` | Detach the active probe |
 | editor → client | `previewResult` | Session start result, or a mid-stream error |
-| editor → client | `previewFrame` | Metadata for the PNG that follows |
+| editor → client | `previewFrame` | Metadata for the PNG that follows *(png encoding only)* |
+| editor → client | `probeState` | Whether the probe is attached, pending, or cleared |
 
 Dispatch reads both `type` and `action`, case-insensitively: a message is treated as
-`previewMaterial` when **either** field equals `previewMaterial`; it is treated as `previewControl`
-only when `type` equals `previewControl`. Anything else is silently ignored.
+`previewMaterial` when **either** field equals `previewMaterial`. `previewControl`, `setProbe` and
+`clearProbe` are matched on `type` only. Anything else is silently ignored.
 
 Unparsable JSON gets an immediate reply:
 
@@ -304,11 +345,14 @@ Unparsable JSON gets an immediate reply:
 | `requestId` | string | *(absent)* | echoed on every message of this session |
 | `frameRate` | number, FPS | `2.0` | `<= 0` disables streaming; otherwise clamped to `[0.25, 60.0]` and inverted into a frame interval |
 | `stream` | bool | `true` | streaming additionally requires a positive frame interval |
+| `encoding` | string | `"png"` | `"raw"` for tag-`3` RGBA8 frames; `"png"` for the legacy JSON+PNG pair |
+| `force` | bool | `false` | `true` regenerates the material even when the source hash is unchanged (the explicit **Refresh** action); `false` reuses the last generation, so a re-request for a camera/mesh change or a save the bridge already picked up costs no regeneration |
 
-On success the editor resolves and compiles the material transiently, saves a PNG under
-`Bridge/Preview/`, renders the first frame, writes `preview.json`, sends a `previewResult`, sends the
-first frame's PNG bytes, and installs a per-connection session. On failure the connection's session
-is removed.
+On success the editor resolves and compiles the material transiently, sends a `previewResult`, sends
+a `probeState`, and installs a per-connection session that streams frames from the next tick. The
+`png` encoding additionally saves a first-frame PNG under `Bridge/Preview/`, writes `preview.json`,
+and sends that PNG immediately; the `raw` encoding streams its first frame from the tick loop like
+every other one. On failure the connection's session is removed.
 
 ### `previewControl` — client → editor
 
@@ -319,16 +363,54 @@ session's `requestId` are non-empty they must match, otherwise the message is ig
 | :-- | :-- | :-- | :-- |
 | `requestId` | string | no guard applied | session guard |
 | `stream` | bool | keeps the current value | enable or disable streaming |
-| `frameRate` | number | **resets to `2.0`** | new frame interval; `<= 0` stops streaming, otherwise clamped to `[0.25, 60.0]` |
+| `frameRate` | number | keeps the current rate | new frame interval; `<= 0` stops streaming, otherwise clamped to `[0.25, 60.0]` |
 | `orbitYaw` | number | keeps the current angle | drag-to-rotate |
 | `orbitPitch` | number | keeps the current angle | drag-to-rotate |
+| `width` / `height` | number | keeps the current size | resize the render target; clamped to `[64, 2048]` |
+| `mesh` | string | keeps the current mesh | change the preview primitive |
 | `ackFrameIndex` | number | no ack | acknowledges a delivered frame and releases the flow-control gate |
 
-> [!WARNING]
-> `frameRate` does **not** mean "keep the current rate" when omitted — the reader initializes it to
-> `2.0` before looking for the field, so a `previewControl` sent purely to acknowledge a frame or to
-> nudge the camera silently resets the session to 2 FPS. Orbit angles behave the opposite way and are
-> preserved. Send the current `frameRate` on every `previewControl` message.
+> [!NOTE]
+> Every field except `requestId`/`ackFrameIndex` keeps its current value when omitted *(since
+> `1.7.0`)*, so a bare frame acknowledgement or camera nudge no longer resets the rate. A missing
+> `ackFrameIndex` on a streaming session is still treated as "the client is alive", releasing the
+> flow-control gate.
+
+### `setProbe` — client → editor
+
+Attaches a probe (the text-source analogue of the Material Editor's **Start Previewing Node**): the
+value bound at a Graph line replaces the material on the preview mesh. Ignored when the connection
+has no session.
+
+| Field | Type | Default | Effect |
+| :-- | :-- | :-- | :-- |
+| `type` | string | — | must equal `setProbe` |
+| `line` | number | `0` | 1-based line in the session's source file; the nearest binding at or after it is chosen |
+| `name` | string | `""` | disambiguates when several bindings share the line |
+
+The reply is a `probeState`. A probe set before the source has ever generated is remembered and
+attaches on the next generation rather than failing.
+
+### `clearProbe` — client → editor
+
+Detaches the active probe; the mesh returns to the whole material. Replies with a `probeState` whose
+`status` is `cleared`.
+
+### `probeState` — editor → client
+
+Sent after any `setProbe`/`clearProbe`, after a `previewMaterial` re-resolves the probe, and whenever
+a regeneration moves or drops it.
+
+| Field | Type | Notes |
+| :-- | :-- | :-- |
+| `type` | string | always `probeState` |
+| `requestId` | string | omitted when empty |
+| `sourceFile` | string | normalized absolute source path |
+| `status` | string | `attached`, `pending`, or `cleared` |
+| `line` / `column` | number | present when `attached`; the line the probe resolved to |
+| `name` | string | present when `attached`; the bound variable |
+| `componentCount` | number | present when `attached`; the value's channel count |
+| `message` | string | present when `pending`; why it has not attached yet |
 
 ### `previewResult` — editor → client
 
@@ -349,7 +431,8 @@ delivering frames until a new `previewMaterial` or a `previewControl` re-enables
 
 ### `previewFrame` — editor → client
 
-Always followed immediately by a tag-`2` binary message carrying the PNG.
+Only sent for the `png` encoding, always followed immediately by a tag-`2` binary message carrying
+the PNG. A `raw`-encoding session sends the tag-`3` frame instead and never sends `previewFrame`.
 
 | Field | Type | Notes |
 | :-- | :-- | :-- |
@@ -359,6 +442,7 @@ Always followed immediately by a tag-`2` binary message carrying the PNG.
 | `assetPath` | string | resolved object path |
 | `mesh` | string | resolved mesh name |
 | `frameIndex` | number | monotonically increasing, starting at `0` |
+| `flags` | number | frame-flag bits (same set as the raw-frame header) |
 | `updatedAtUtc` | string | ISO-8601 UTC |
 
 ### Streaming state machine
@@ -380,15 +464,26 @@ Each tick:
 
 1. Do nothing when not streaming, when the material is invalid, when there is no render context, or
    when the frame interval is not positive.
-2. If a GPU readback is in flight, poll it without blocking. Ready → send `previewFrame` plus the PNG
-   and raise the in-flight gate. Error → send an error `previewResult` and stop streaming. Neither →
-   return and retry next tick.
+2. If a GPU readback is in flight, poll it without blocking. Ready → deliver the frame (a tag-`3`
+   raw frame, or a `previewFrame`+PNG pair) and raise the in-flight gate. Error → send an error
+   `previewResult` and stop streaming. Neither → return and retry next tick.
 3. Otherwise start a new frame only when the previous frame has been acknowledged **and** the frame
    interval has elapsed.
 4. A failure to start a frame sends an error `previewResult` and stops streaming.
 
-Effective frame rate is bounded by the 60 FPS clamp, by the client's acknowledgements, and by the
-editor's real tick rate.
+Two efficiency behaviours sit on top of the loop *(since `1.7.0`)*:
+
+- **Dedupe.** A frame whose pixels are identical to the last one sent is dropped, so a static
+  material costs no bandwidth once it has settled.
+- **Idle back-off.** After a few identical frames the render clock relaxes to ~2 FPS until something
+  changes (an edit's recompile, a camera/mesh change, a probe change). A frame rendered while the
+  shader map is still compiling never backs off — the compile landing is the change being waited
+  for. Any change re-arms the full rate and forces the next frame through the dedupe as a keyframe.
+
+A frame whose acknowledgement never arrives (a hidden tab, a lost message) is not waited on forever;
+after a two-second timeout the next frame is started regardless. Effective frame rate is bounded by
+the 60 FPS clamp, by the client's acknowledgements, by the idle back-off, and by the editor's real
+tick rate.
 
 ### Meshes
 

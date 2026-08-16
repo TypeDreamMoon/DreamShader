@@ -1,5 +1,44 @@
 # DreamShader ChangeLog
 
+## 1.7.0 - 2026-08-16
+
+### Added
+
+- **Graph breakpoints in the live preview — "Start Previewing Node" for a text source.** Set a
+  breakpoint on a `Graph` line and the preview mesh shows the value bound at that line instead of the
+  finished material. This is the same idea as right-clicking a node in the Material Editor and
+  choosing *Start Previewing Node*, except the "node" is a line of DreamShaderLang. It reuses the
+  engine's own machinery to get there: the generator now publishes a per-source **debug table**
+  mapping every `(line, name)` binding to the exact `UMaterialExpression` / output / channel-mask it
+  produced, and a transient `UPreviewMaterial` — sharing the generated material's expression
+  collection, with the probed node wired into its emissive (or `MaterialAttributes` / `FrontMaterial`
+  for those value kinds, and a default-coordinate sample for a texture object) — is recompiled through
+  `FMaterialUpdateContext`. `UPreviewMaterial::ShouldCache` keeps that recompile to a handful of
+  shaders, exactly as the node-thumbnail path does.
+
+  A breakpoint on a blank or comment line snaps forward to the next line that binds a value; a
+  breakpoint set before the source has ever generated is remembered and attaches on the next compile;
+  after a recompile the probe re-resolves automatically and the client is told the line it landed on.
+  Wire protocol: `setProbe` / `clearProbe` / `probeState` — see [Docs/tools/preview.md](Docs/tools/preview.md).
+
+### Changed
+
+- **The streaming preview now sends raw RGBA8 frames instead of a PNG per frame.** A new
+  `encoding: "raw"` session reads the render target back and streams the pixels as one self-describing
+  binary frame (a 24-byte header — size, flags, camera, resolved probe line — then the pixels), with
+  no PNG encode on the editor side. A browser/webview client paints them straight onto a canvas. This
+  is most of what a smooth 30–60 FPS stream costs; PNG-encoding a 512² frame per tick was tens of
+  milliseconds of game-thread time. The legacy `encoding: "png"` path (JSON `previewFrame` + tagged
+  PNG) is unchanged for older clients.
+
+- **Streaming got cheaper when nothing is moving.** Identical frames are dropped, and after a few in a
+  row the render clock backs off to a low idle rate until an edit, a camera/mesh change, or a probe
+  change re-arms it (a frame rendered while shaders are still compiling never backs off). A
+  `previewControl` that omits a field — including `frameRate` — now keeps the current value rather than
+  resetting to 2 FPS, and it can now carry `width` / `height` / `mesh` so the client can drive the
+  render size and shape without a full re-request. A `force` flag on `previewMaterial` distinguishes an
+  explicit refresh (regenerate) from a camera/mesh re-request (reuse the last generation).
+
 ## 1.6.0 - 2026-08-15
 
 ### Added
