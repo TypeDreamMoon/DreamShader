@@ -12,6 +12,7 @@
 #include "CanvasTypes.h"
 #include "Dom/JsonObject.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "Engine/World.h"
 #include "EngineModule.h"
 #include "HAL/FileManager.h"
 #include "ImageUtils.h"
@@ -293,6 +294,23 @@ namespace UE::DreamShader::Editor::Private
 		ApplyPreviewMeshSelection(Material, Mesh);
 		ApplyPreviewCameraOrbit(Material, OrbitYaw, OrbitPitch);
 		ThumbnailScene->SetMaterialInterface(Material);
+
+		// Assigning a material to the preview component only marks its render state dirty. The
+		// scene proxy that actually carries the material is rebuilt during the world's
+		// end-of-frame updates, which normally arrive on the next engine tick -- so rendering
+		// here without forcing them draws the *previous* proxy. On a context's first use there
+		// is no previous material, and what gets drawn is the engine's default: a grey
+		// WorldGridMaterial sphere.
+		//
+		// Streaming hides this, because its later frames land on subsequent ticks and pick the
+		// proxy up. A one-shot render never gets a second tick, so it could only ever return
+		// the wrong frame. Measured 2026-08-16 on `EmissiveColor = float3(1,0,0)`: grey through
+		// the first render of a context, red from the next one on.
+		if (UWorld* PreviewWorld = ThumbnailScene->GetWorld())
+		{
+			PreviewWorld->SendAllEndOfFrameUpdates();
+		}
+
 		FCanvas Canvas(RenderTargetResource, nullptr, FGameTime::GetTimeSinceAppStart(), GMaxRHIFeatureLevel);
 		Canvas.Clear(RenderTarget->ClearColor);
 
