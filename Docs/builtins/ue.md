@@ -548,6 +548,13 @@ parameter is looked up by name in it.
 | scalar | `float1` |
 | neither | error |
 
+The same width applies to the [declaration form](#properties-declaration-form) — `UE.CollectionParam(…)
+Name;` inside `Properties` *(since 1.7.2)*. The parser cannot open the collection, so it records the
+property as a scalar; the width is corrected from the loaded collection when the node is generated,
+unless the declaration pins one with `OutputType=` / `ResultType=`. Before 1.7.2 the declaration form
+stayed 1-wide, and passing it where a `float4` was expected splatted it through three `AppendVector`
+nodes into a material that failed to compile with `Can't append float4 to float4`.
+
 > [!NOTE]
 > Unlike every builtin in the [catalogue](#catalogue), this one's output width is **not** marked
 > authoritative — and neither is [`UE.StaticSwitchParameter`](#uestaticswitchparameter)'s. Neither can

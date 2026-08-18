@@ -122,6 +122,34 @@ namespace UE::DreamShader::Editor::Private
 		OutValue.ComponentCount = Property->Type == ETextShaderPropertyType::Texture2D
 			? 0
 			: Property->ComponentCount;
+
+		// A `UE.CollectionParam(...) Name;` declaration is parsed as a scalar because the parser cannot
+		// open the collection. Now that the node exists the collection is loaded, so read the real
+		// width from it: a vector parameter is float4, a scalar float1. An explicit OutputType= on the
+		// declaration still wins, so a source can view a vector as fewer channels on purpose.
+		if (const UMaterialExpressionCollectionParameter* CollectionExpression = Cast<UMaterialExpressionCollectionParameter>(PropertyExpression))
+		{
+			bool bHasExplicitWidth = false;
+			for (const TPair<FString, FString>& Argument : Property->UEBuiltinArguments)
+			{
+				if (Argument.Key.Equals(TEXT("OutputType"), ESearchCase::IgnoreCase) || Argument.Key.Equals(TEXT("ResultType"), ESearchCase::IgnoreCase))
+				{
+					bHasExplicitWidth = true;
+					break;
+				}
+			}
+			if (!bHasExplicitWidth && CollectionExpression->Collection)
+			{
+				if (CollectionExpression->Collection->GetVectorParameterByName(CollectionExpression->ParameterName))
+				{
+					OutValue.ComponentCount = 4;
+				}
+				else if (CollectionExpression->Collection->GetScalarParameterByName(CollectionExpression->ParameterName))
+				{
+					OutValue.ComponentCount = 1;
+				}
+			}
+		}
 		OutValue.bIsTextureObject = Property->Type == ETextShaderPropertyType::Texture2D;
 		OutValue.TextureType = ResolveEffectiveTextureType(*Property);
 		OutValue.bIsMaterialAttributes = false;

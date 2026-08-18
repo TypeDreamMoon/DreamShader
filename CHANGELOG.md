@@ -4,6 +4,14 @@
 
 ### Fixed
 
+- **`UE.CollectionParam(...) Name;` in `Properties` is as wide as the collection parameter.** The
+  parser records the declaration form as a scalar (it cannot open the collection), and the generator
+  used that width as-is, so a vector MPC parameter passed to a `float4` input was widened by rule 9 —
+  three `AppendVector` splats — and the material failed to compile with `Can't append float4 to
+  float4`. The generator now reads the width from the loaded collection when it creates the node
+  (vector → 4, scalar → 1); an explicit `OutputType=` on the declaration still wins. Found while
+  feeding DreamWind's five MPC vectors into a `Function`.
+
 - **A render target is accepted where a texture of its dimension is expected.** `const VolumeTexture
   V = Path(Plugin.DreamWind, "RT_DreamWindVolume");` failed with `Const texture property 'V' expects
   VolumeTexture but '...' is a 'TextureRenderTargetVolume'`, because the dimension check compared
