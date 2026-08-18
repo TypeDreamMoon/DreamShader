@@ -4,6 +4,20 @@
 
 ### Fixed
 
+- **Cook-generated assets are registered with the AssetRegistry, so they reach the package.** The
+  cook hook wrote every source file out as a persistent `.uasset` and then relied on the engine
+  finding it, but a cook request is resolved through `IAssetRegistry::DoesPackageExistOnDisk`, which
+  consults only the registry's in-memory state and has no filesystem fallback. Generation runs on
+  post-engine-init, i.e. after the registry enumerated the content directories, so a freshly written
+  package was invisible to that lookup: `DirectoriesToAlwaysCook` scanned the file off disk and then
+  the request was dropped again, with no error anywhere — the material simply was not in the pak, and
+  `LoadObject` failed at runtime in a Shipping build. `GenerateAllAssetsForCook` now records what its
+  saves actually wrote (`UPackage::PackageSavedWithContextEvent`) and hands the filenames to
+  `IAssetRegistry::ScanModifiedAssetFiles` before the commandlet's `Main` collects the initial
+  requests, logging `DreamShader cook: registered {Count} generated package(s) with the
+  AssetRegistry.` Reported in [#26](https://github.com/TypeDreamMoon/DreamShader/issues/26) against a
+  `Domain="UI"` material; nothing about the fix is domain-specific.
+
 - **`UE.CollectionParam(...) Name;` in `Properties` is as wide as the collection parameter.** The
   parser records the declaration form as a scalar (it cannot open the collection), and the generator
   used that width as-is, so a vector MPC parameter passed to a `float4` input was widened by rule 9 —

@@ -169,6 +169,7 @@ non-empty `DreamShader.SourceFile`.
 | Who generates | **the cook director only** — a process launched with `-cookworker` skips generation and loads what the director saved |
 | When | on post-engine-init, after engine subsystems exist but before the commandlet's `Main` |
 | What | every project DreamShader source file except `.dsh`, generated forced and persisted |
+| Registry | every package the generation actually wrote is handed to `IAssetRegistry::ScanModifiedAssetFiles` before the commandlet's `Main` |
 | On failure | **the cook aborts** |
 
 Cook log lines:
@@ -177,6 +178,7 @@ Cook log lines:
 DreamShader cook: generating {Count} source file(s) as persistent assets...
   [Cook] {Message}
   [Cook] Failed: {Message}
+DreamShader cook: registered {Count} generated package(s) with the AssetRegistry.
 DreamShader cook asset generation complete.
 ```
 
@@ -189,6 +191,16 @@ DreamShader cook asset generation complete.
 Generation runs on post-engine-init rather than at module startup because the material editing
 library it depends on needs editor subsystems that do not exist during module load. Restricting it
 to the director avoids every worker racing to save the same packages.
+
+Writing the `.uasset` is not by itself enough to get it into the package. A cook request is resolved
+through `IAssetRegistry::DoesPackageExistOnDisk`, which reads only the registry's in-memory state and
+has no filesystem fallback, and post-engine-init is *after* the registry enumerated the content
+directories — so a freshly generated package is invisible to that lookup, and even an explicit
+`DirectoriesToAlwaysCook` entry covering its folder drops it without an error. The generation
+therefore records what its saves wrote (via `UPackage::PackageSavedWithContextEvent`) and rescans
+those files into the registry, which happens before the commandlet's `Main` collects the initial cook
+requests. Assets that reach the cook some other way — a hard `UPROPERTY` reference from a class whose
+CDO is loaded at startup, for instance — were never affected by this.
 
 ## Notes
 
