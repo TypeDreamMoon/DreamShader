@@ -235,6 +235,18 @@ produces a "not a property" error.
   `Output variable '{Name}' must declare an explicit type before binding to expression target '{Target}'.`
 - Created output-target nodes are placed at graph X `1200`, Y starting `200`, stepping `+220`.
 
+Pin order for the custom outputs this form is most often used for:
+
+| `Class` | `Pin[i]`, in order |
+| :-- | :-- |
+| `ThinTranslucentMaterialOutput` | `0` TransmittanceColor, `1` SurfaceCoverage |
+| `ClearCoatNormalCustomOutput` | `0` Input |
+| `RuntimeVirtualTextureOutput` | `0` BaseColor, `1` Specular, `2` Roughness, `3` Normal, `4` WorldHeight, `5` Opacity, `6` Mask, `7` Displacement, `8` Mask4 |
+
+Any other `UMaterialExpressionCustomOutput` subclass works the same way; its pin order is the order
+the engine declares the inputs in, which the material editor shows top to bottom on the node. A
+worked `RuntimeVirtualTextureOutput` file is [example 15](../examples/index.md#15-runtime-virtual-texture-sampling-and-writing).
+
 ```c
 Outputs = {
     float3 Transmittance;
