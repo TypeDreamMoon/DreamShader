@@ -232,6 +232,12 @@ GraphFunction BuildFoil(in float2 uv, in float strength, out float4 result)
 }
 ```
 
+> **`#include` goes first.** A `Function` body may start with `#include "/Plugin/X/Y.ush"` lines
+> (only whitespace/comments before them): they are hoisted out to file scope of the generated
+> helper (or onto the Custom node for `SelfContained` / `GraphFunction`), so headers that define
+> functions work. An `#include` after the first statement is left inside the function and only
+> works for macro-only headers.
+
 > **GLSL identifier rewrite trap.** Inside a `Function` / `GraphFunction` **body**, the whole
 > identifiers `mix` `fract` `mod` `vec2..4` `ivec*` `uvec*` `bvec*` `mat2..4` are rewritten
 > case-insensitively. A local named `Mix`, `Mod` or `Fract` is silently renamed to `lerp`, `fmod`,

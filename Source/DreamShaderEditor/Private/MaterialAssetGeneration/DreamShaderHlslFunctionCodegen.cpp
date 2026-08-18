@@ -1066,10 +1066,12 @@ namespace UE::DreamShader::Editor::Private
 		const FString& WrapperNameHint,
 		FString& OutCode,
 		bool& bOutUsesGeneratedInclude,
+		TArray<FString>& OutEmbeddedIncludePaths,
 		FString& OutError)
 	{
 		OutCode = SourceCode;
 		bOutUsesGeneratedInclude = false;
+		OutEmbeddedIncludePaths.Reset();
 		OutError.Reset();
 
 		if (Definition.Functions.IsEmpty())
@@ -1154,6 +1156,15 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
+		// The embedded bodies do not see the generated include, so their hoisted includes ride on the node.
+		for (const FTextShaderFunctionDefinition* Function : EmbeddedFunctions)
+		{
+			for (const FString& IncludePath : Function->IncludePaths)
+			{
+				OutEmbeddedIncludePaths.AddUnique(IncludePath);
+			}
+		}
+
 		FString WrapperSource;
 		WrapperSource += FString::Printf(TEXT("struct %s\n{\n"), *WrapperTypeName); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		for (const FTextShaderFunctionDefinition* Function : EmbeddedFunctions)
@@ -1189,6 +1200,26 @@ namespace UE::DreamShader::Editor::Private
 
 		const FString IncludeGuard = BuildGeneratedIncludeGuardMacro(SourceFilePath);
 		OutSource += FString::Printf(TEXT("#ifndef %s\n#define %s\n\n"), *IncludeGuard, *IncludeGuard); /* I18N-EXEMPT: deferred codegen or compatibility path */
+
+		// `#include`s written at the top of Function bodies land here, at file scope, in first-seen order.
+		{
+			TArray<FString> HoistedIncludes;
+			for (const FTextShaderFunctionDefinition& Function : Definition.Functions)
+			{
+				for (const FString& IncludePath : Function.IncludePaths)
+				{
+					HoistedIncludes.AddUnique(IncludePath);
+				}
+			}
+			for (const FString& IncludePath : HoistedIncludes)
+			{
+				OutSource += FString::Printf(TEXT("#include \"%s\"\n"), *IncludePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			}
+			if (!HoistedIncludes.IsEmpty())
+			{
+				OutSource += TEXT("\n");
+			}
+		}
 
 		TSet<FString> SeenFunctionNames;
 		TSet<FString> SeenGeneratedFunctionNames;

@@ -218,6 +218,7 @@ namespace UE::DreamShader::Editor::Private
 
 			FString PreparedCustomCode;
 			bool bUsesGeneratedInclude = false;
+			TArray<FString> EmbeddedIncludePaths;
 			if (!PrepareCustomNodeCode(
 				Definition,
 				CustomCode,
@@ -225,12 +226,17 @@ namespace UE::DreamShader::Editor::Private
 				Function->Name,
 				PreparedCustomCode,
 				bUsesGeneratedInclude,
+				EmbeddedIncludePaths,
 				OutError))
 			{
 				return false;
 			}
 
 			CustomExpression->Code = PreparedCustomCode;
+			for (const FString& IncludePath : EmbeddedIncludePaths)
+			{
+				CustomExpression->IncludeFilePaths.AddUnique(IncludePath);
+			}
 			if (bUsesGeneratedInclude)
 			{
 				CustomExpression->IncludeFilePaths.Add(IncludeVirtualPath);
@@ -533,6 +539,7 @@ namespace UE::DreamShader::Editor::Private
 
 			FString PreparedCustomCode;
 			bool bUsesGeneratedInclude = false;
+			TArray<FString> EmbeddedIncludePaths;
 			if (!PrepareCustomNodeCode(
 				Definition,
 				CustomCode,
@@ -540,12 +547,17 @@ namespace UE::DreamShader::Editor::Private
 				Function.Name,
 				PreparedCustomCode,
 				bUsesGeneratedInclude,
+				EmbeddedIncludePaths,
 				OutError))
 			{
 				return false;
 			}
 
 			CustomExpression->Code = PreparedCustomCode;
+			for (const FString& IncludePath : EmbeddedIncludePaths)
+			{
+				CustomExpression->IncludeFilePaths.AddUnique(IncludePath);
+			}
 			if (bUsesGeneratedInclude)
 			{
 				CustomExpression->IncludeFilePaths.Add(IncludeVirtualPath);
@@ -1209,6 +1221,7 @@ namespace UE::DreamShader::Editor::Private
 
 		FString PreparedCustomCode;
 		bool bUsesGeneratedInclude = false;
+		TArray<FString> EmbeddedIncludePaths;
 		if (!PrepareCustomNodeCode(
 			Definition,
 			CustomCode,
@@ -1216,12 +1229,22 @@ namespace UE::DreamShader::Editor::Private
 			Function.Name,
 			PreparedCustomCode,
 			bUsesGeneratedInclude,
+			EmbeddedIncludePaths,
 			OutError))
 		{
 			return false;
 		}
 
 		CustomExpression->Code = PreparedCustomCode;
+		// A GraphFunction body is inlined into this node, so its own hoisted includes go on the node too.
+		for (const FString& IncludePath : Function.IncludePaths)
+		{
+			CustomExpression->IncludeFilePaths.AddUnique(IncludePath);
+		}
+		for (const FString& IncludePath : EmbeddedIncludePaths)
+		{
+			CustomExpression->IncludeFilePaths.AddUnique(IncludePath);
+		}
 		if (bUsesGeneratedInclude)
 		{
 			CustomExpression->IncludeFilePaths.Add(IncludeVirtualPath);

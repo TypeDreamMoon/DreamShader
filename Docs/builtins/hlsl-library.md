@@ -100,13 +100,14 @@ these macros. No such rewrite is performed today. `SampleTexture2D` is still a r
 
 ## Notes
 
-> [!WARNING]
-> **An `#include` in a `Function` body lands inside a function.** A `Function` block's HLSL is
-> emitted verbatim between the braces of the generated `DreamShaderFn_*` definition, so the
-> `#include` — and therefore the header's contents — is inserted at that point. The 22 macros are
-> unaffected: a `#define` is legal anywhere. The three function definitions (`DS_TexCoord`,
-> `DS_VertexColor`, `DS_Panner`) are not legal inside another function body. Restrict a hand-written
-> include to bodies where only the macro half is used, or copy the wanted function's body inline.
+> [!NOTE]
+> **Put the `#include` first.** An `#include` written at the top of a `Function` body (only
+> whitespace and comments before it) is hoisted out of the function to file scope — see
+> [Function ▸ Includes](../language/function.md#includes) — so the header's function definitions
+> compile normally. An `#include` that comes *after* a statement is left where it is and lands
+> inside the generated `DreamShaderFn_*` definition; there the 22 macros still work (a `#define` is
+> legal anywhere) but the three function definitions (`DS_TexCoord`, `DS_VertexColor`, `DS_Panner`)
+> are not legal inside another function body.
 
 > [!WARNING]
 > **`DS_TexCoord` and `DS_VertexColor` depend on translator side effects that nothing arranges any

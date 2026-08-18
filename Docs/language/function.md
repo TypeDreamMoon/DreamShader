@@ -205,6 +205,35 @@ happen:
 > [Namespace](namespace.md#calling-a-namespaced-function) for the observed symptom and the
 > workaround. Namespace-qualified calls from a `Graph` block are unaffected.
 
+## Includes
+
+`#include` directives written at the **top** of the body — only whitespace and comments may come
+before them — are not part of the function. They are stripped from the body and *hoisted*:
+
+| Call site | Where the include ends up |
+| :-- | :-- |
+| a plain `Function` call | at file scope of the [generated include](../generation/generated-hlsl.md), ahead of every `DreamShaderFn_*` definition, once per unit |
+| a `SelfContained` / `Inline` embed, or a [`GraphFunction`](graph-function.md) body | on the Custom node's **Include File Paths**, ahead of the generated include |
+
+```c
+Function float3 SampleWind(in float3 WorldPos)
+{
+    #include "/Plugin/DreamWind/Shared/DreamWindShared.h"   // hoisted
+    FDreamWindSample S = DW_SampleAnalytic(DW_UnpackParams(P0, P1, P2), WorldPos);
+    return S.Velocity;
+}
+```
+
+Both `#include "…"` and `#include <…>` are accepted; the path is stored as written, quotes removed,
+and must be a virtual shader path the engine can resolve (`/Engine/…`, `/Plugin/<Name>/…`). Duplicates
+across the functions of one unit collapse to one directive. Comments before the directives stay in
+the body.
+
+The scan stops at the first token that is not a leading `#include`: a directive that follows a
+statement is **not** hoisted and keeps the old behaviour — it lands inside the generated function,
+which only works for headers made of macros. See
+[DreamShaderBuiltins.ush](../builtins/hlsl-library.md#notes).
+
 ## Generated HLSL
 
 Each `Function` is emitted into the generated include as:

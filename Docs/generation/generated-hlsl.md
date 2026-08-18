@@ -63,6 +63,9 @@ directory. A source outside the project falls back to its absolute path.
 #ifndef DREAMSHADER_GENERATED_<BASENAME>_<HASH>
 #define DREAMSHADER_GENERATED_<BASENAME>_<HASH>
 
+#include "<hoisted include 0>"          // leading #include lines of Function bodies, first-seen order
+#include "<hoisted include 1>"
+
 <definition of Function 0>
 
 <definition of Function 1>
@@ -73,6 +76,11 @@ directory. A source outside the project falls back to its absolute path.
 
 `<BASENAME>` is the sanitized base name upper-cased. `<HASH>` is the same path hash as the file name
 but in **uppercase** hex — the file name uses lowercase, the guard uppercase.
+
+The `#include` lines are the directives written at the top of `Function` bodies, hoisted out of them
+(see [Function ▸ Includes](../language/function.md#includes)); a unit whose functions declare none
+emits no such line. When a function is *embedded* into a Custom node instead of being reached through
+this file, its hoisted includes are added to that node's `IncludeFilePaths` ahead of everything else.
 
 Functions are emitted in declaration order across the whole import closure. `GraphFunction` blocks
 are never emitted: they become Custom nodes with hoisted inputs instead. See

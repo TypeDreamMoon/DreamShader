@@ -1638,6 +1638,7 @@ namespace UE::DreamShader::Editor
 
 				FString PreparedCustomCode;
 				bool bUsesGeneratedInclude = false;
+				TArray<FString> EmbeddedIncludePaths;
 				if (!Private::PrepareCustomNodeCode(
 					RootDefinition,
 					FunctionDefinition.HLSL,
@@ -1645,6 +1646,7 @@ namespace UE::DreamShader::Editor
 					FunctionDefinition.Name,
 					PreparedCustomCode,
 					bUsesGeneratedInclude,
+					EmbeddedIncludePaths,
 					OutError))
 				{
 					OutError = FString::Printf(TEXT("%s '%s': %s"), BlockKind, *FunctionDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -1652,6 +1654,10 @@ namespace UE::DreamShader::Editor
 				}
 				CustomExpression->Code = Private::EnsureTopLevelReturn(PreparedCustomCode);
 
+				for (const FString& IncludePath : EmbeddedIncludePaths)
+				{
+					CustomExpression->IncludeFilePaths.AddUnique(IncludePath);
+				}
 				if (bUsesGeneratedInclude)
 				{
 					CustomExpression->IncludeFilePaths.Add(Private::BuildGeneratedIncludeVirtualPath(SourceFilePath));
@@ -2475,6 +2481,7 @@ namespace UE::DreamShader::Editor
 
 			FString PreparedCustomCode;
 			bool bUsesGeneratedInclude = false;
+			TArray<FString> EmbeddedIncludePaths;
 			if (!Private::PrepareCustomNodeCode(
 				Definition,
 				Definition.HLSL,
@@ -2482,6 +2489,7 @@ namespace UE::DreamShader::Editor
 				Definition.Name,
 				PreparedCustomCode,
 				bUsesGeneratedInclude,
+				EmbeddedIncludePaths,
 				OutMessage))
 			{
 				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *OutMessage); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -2489,6 +2497,10 @@ namespace UE::DreamShader::Editor
 			}
 			CustomExpression->Code = Private::EnsureTopLevelReturn(PreparedCustomCode);
 
+			for (const FString& IncludePath : EmbeddedIncludePaths)
+			{
+				CustomExpression->IncludeFilePaths.AddUnique(IncludePath);
+			}
 			if (bUsesGeneratedInclude)
 			{
 				CustomExpression->IncludeFilePaths.Add(Private::BuildGeneratedIncludeVirtualPath(SourceFilePath));

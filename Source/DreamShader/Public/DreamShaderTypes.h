@@ -132,6 +132,13 @@ namespace UE::DreamShader
 		TArray<FTextShaderFunctionParameter> Inputs;
 		TArray<FTextShaderFunctionParameter> Results;
 		FString HLSL;
+		/**
+		 * `#include` directives written at the very top of the body (only whitespace and comments
+		 * before them). They are stripped from HLSL and hoisted: to the top of the generated .ush for
+		 * a plain Function, and onto the Custom node's include list when the body is embedded
+		 * (SelfContained / GraphFunction). Virtual shader paths, as written, quotes removed.
+		 */
+		TArray<FString> IncludePaths;
 	};
 
 	enum class ETextShaderMaterialFunctionKind : uint8

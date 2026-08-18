@@ -3418,4 +3418,182 @@ Shader(Name="DreamShaderTests/Automation/%s")
 }
 
 
+// ---------------------------------------------------------------------------------------------
+// Function `#include` hoisting: leading directives leave the body and reach file scope
+// ---------------------------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderParserFunctionIncludeHoistTest,
+	"DreamShader.Compiler.Parser.FunctionIncludeHoist",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderParserFunctionIncludeHoistTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader;
+
+	const FString Source = TEXT(R"(
+// leading includes, comments between them, one in angle brackets
+Function float3 WithIncludes(in float3 c)
+{
+    // header comment stays in the body
+    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
+    /* block */ #include <Engine/Private/Common.ush>
+    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
+    return c * 2.0;
+}
+
+// an include after the first statement is not hoisted (old behaviour, lands inside the function)
+Function float3 LateInclude(in float3 c)
+{
+    float k = 1.0;
+    #include "/Plugin/Late/Late.ush"
+    return c * k;
+}
+
+Function SelfContained float3 Embedded(in float3 c)
+{
+    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
+    return c;
+}
+)");
+
+	FTextShaderDefinition Definition;
+	FString ParseError;
+	const bool bParsed = FTextShaderParser::Parse(Source, Definition, ParseError);
+	if (!TestTrue(FString::Printf(TEXT("Parser succeeds: %s"), *ParseError), bParsed))
+	{
+		return false;
+	}
+	if (!TestEqual(TEXT("Three functions"), Definition.Functions.Num(), 3))
+	{
+		return false;
+	}
+
+	const FTextShaderFunctionDefinition& WithIncludes = Definition.Functions[0];
+	TestEqual(TEXT("Two distinct leading includes hoisted (duplicate collapsed)"), WithIncludes.IncludePaths.Num(), 2);
+	if (WithIncludes.IncludePaths.Num() == 2)
+	{
+		TestEqual(TEXT("first include path, quotes stripped"), WithIncludes.IncludePaths[0], FString(TEXT("/Plugin/DreamShader/DreamShaderBuiltins.ush")));
+		TestEqual(TEXT("second include path, angle brackets stripped"), WithIncludes.IncludePaths[1], FString(TEXT("Engine/Private/Common.ush")));
+	}
+	TestFalse(TEXT("Hoisted directives are removed from the body"), WithIncludes.HLSL.Contains(TEXT("#include")));
+	TestTrue(TEXT("Comment before the directives is kept"), WithIncludes.HLSL.Contains(TEXT("header comment stays")));
+	TestTrue(TEXT("Statements are kept"), WithIncludes.HLSL.Contains(TEXT("c * 2.0")));
+
+	const FTextShaderFunctionDefinition& Late = Definition.Functions[1];
+	TestEqual(TEXT("A non-leading include is not hoisted"), Late.IncludePaths.Num(), 0);
+	TestTrue(TEXT("...and stays in the body"), Late.HLSL.Contains(TEXT("#include \"/Plugin/Late/Late.ush\"")));
+
+	const FTextShaderFunctionDefinition& Embedded = Definition.Functions[2];
+	TestTrue(TEXT("SelfContained parsed"), Embedded.bSelfContained);
+	TestEqual(TEXT("SelfContained function hoists too"), Embedded.IncludePaths.Num(), 1);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderGenerateFunctionIncludeHoistTest,
+	"DreamShader.Compiler.Generate.FunctionIncludeHoist",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderGenerateFunctionIncludeHoistTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_AutoIncludeHoist"));
+	const FString ObjectPath = MakeAutomationObjectPath(FunctionName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	const FString Source = FString::Printf(TEXT(R"(
+Function float3 HoistPlain(in float3 c)
+{
+    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
+    return c * 2.0;
+}
+
+Function SelfContained float3 HoistEmbedded(in float3 c)
+{
+    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
+    return c * 3.0;
+}
+
+ShaderFunction(Name="DreamShaderTests/Automation/%s")
+{
+    Inputs  = { vec3 InColor; }
+    Outputs = { vec3 OutPlain; vec3 OutEmbedded; }
+    Graph = {
+        OutPlain = HoistPlain(InColor);
+        OutEmbedded = HoistEmbedded(InColor);
+    }
+}
+)"), *FunctionName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, FunctionName + TEXT(".dsf"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	const bool bGenerated = FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, true);
+	if (!TestTrue(FString::Printf(TEXT("Generation succeeds: %s"), *Message), bGenerated))
+	{
+		return false;
+	}
+
+	UMaterialFunction* GeneratedFunction = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated material function loads"), GeneratedFunction))
+	{
+		return false;
+	}
+
+	const FString HoistedPath = TEXT("/Plugin/DreamShader/DreamShaderBuiltins.ush");
+	const FString GeneratedIncludeVirtualPath = UE::DreamShader::Editor::Private::BuildGeneratedIncludeVirtualPath(SourceFilePath);
+
+	// The generated .ush carries the include at file scope, ahead of the first function.
+	const FString GeneratedIncludeRealPath = FPaths::Combine(UE::DreamShader::GetGeneratedShaderDirectory(), FPaths::GetCleanFilename(GeneratedIncludeVirtualPath));
+	FString GeneratedInclude;
+	if (TestTrue(TEXT("Generated include exists"), FFileHelper::LoadFileToString(GeneratedInclude, *GeneratedIncludeRealPath)))
+	{
+		const FString Directive = FString::Printf(TEXT("#include \"%s\""), *HoistedPath);
+		const int32 IncludeIndex = GeneratedInclude.Find(Directive);
+		const int32 FirstFunctionIndex = GeneratedInclude.Find(TEXT("DreamShaderFn_"));
+		TestTrue(TEXT("Hoisted include is emitted once at file scope"), IncludeIndex != INDEX_NONE && GeneratedInclude.Find(Directive, ESearchCase::CaseSensitive, ESearchDir::FromStart, IncludeIndex + 1) == INDEX_NONE);
+		TestTrue(TEXT("...before the first function definition"), IncludeIndex != INDEX_NONE && FirstFunctionIndex != INDEX_NONE && IncludeIndex < FirstFunctionIndex);
+	}
+
+	int32 PlainNodes = 0;
+	int32 EmbeddedNodes = 0;
+	for (auto&& ExpressionPtr : GeneratedFunction->GetExpressions())
+	{
+		UMaterialExpressionCustom* Custom = Cast<UMaterialExpressionCustom>(ExpressionPtr);
+		if (!Custom)
+		{
+			continue;
+		}
+		TestFalse(FString::Printf(TEXT("No node embeds a raw #include (%s)"), *Custom->Description), Custom->Code.Contains(TEXT("#include")));
+		if (Custom->Description == TEXT("HoistPlain"))
+		{
+			++PlainNodes;
+			TestTrue(TEXT("Plain call attaches the generated include"), Custom->IncludeFilePaths.Contains(GeneratedIncludeVirtualPath));
+		}
+		else if (Custom->Description == TEXT("HoistEmbedded"))
+		{
+			++EmbeddedNodes;
+			TestTrue(TEXT("Embedded call attaches the hoisted include itself"), Custom->IncludeFilePaths.Contains(HoistedPath));
+			const int32 HoistedIndex = Custom->IncludeFilePaths.IndexOfByKey(HoistedPath);
+			const int32 GeneratedIndex = Custom->IncludeFilePaths.IndexOfByKey(GeneratedIncludeVirtualPath);
+			TestTrue(TEXT("Hoisted include precedes the generated include when both are present"), GeneratedIndex == INDEX_NONE || HoistedIndex < GeneratedIndex);
+		}
+	}
+	TestEqual(TEXT("One Custom node for the plain call"), PlainNodes, 1);
+	TestEqual(TEXT("One Custom node for the embedded call"), EmbeddedNodes, 1);
+	return true;
+}
+
+
 #endif // WITH_DEV_AUTOMATION_TESTS

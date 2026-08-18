@@ -1,5 +1,23 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Added
+
+- **`#include` at the top of a `Function` body is hoisted to file scope.** A `Function` block's
+  HLSL used to be emitted verbatim between the braces of the generated `DreamShaderFn_*` definition,
+  which made any `#include` land *inside* a function — fine for macro-only headers, a compile error
+  for anything that defines a function. Leading `#include "…"` / `#include <…>` directives (only
+  whitespace and comments before them) are now stripped from the body and emitted once, in first-seen
+  order, right after the guard of the generated `.ush`; a `SelfContained` embed or a `GraphFunction`
+  body puts them on the Custom node's `IncludeFilePaths` instead, ahead of the generated include.
+  A directive after the first statement keeps the old behaviour. This is what lets a header shared
+  between C++ and HLSL — DreamWind's `/Plugin/DreamWind/Shared/DreamWindShared.h` — be consumed from
+  a `.dsf` without copying its functions into DreamShaderLang.
+  `FTextShaderFunctionDefinition::IncludePaths` carries the paths; `PrepareCustomNodeCode` gained an
+  `OutEmbeddedIncludePaths` parameter. Covered by `DreamShader.Compiler.Parser.FunctionIncludeHoist`
+  and `DreamShader.Compiler.Generate.FunctionIncludeHoist`.
+
 ## 1.7.1 - 2026-08-16
 
 ### Fixed

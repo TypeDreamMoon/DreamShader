@@ -256,6 +256,9 @@ namespace UE::DreamShader::Editor::Private
 		FString& OutError);
 	bool TryResolvePositionOrigin(const FString& InValue, EPositionOrigin& OutValue);
 	FString EnsureTopLevelReturn(const FString& InHLSL);
+	// OutEmbeddedIncludePaths receives the hoisted `#include` paths of every Function embedded into the
+	// node (SelfContained closure); the caller must put them on the Custom node ahead of any other
+	// include, because the embedded bodies reference their symbols.
 	bool PrepareCustomNodeCode(
 		const FTextShaderDefinition& Definition,
 		const FString& SourceCode,
@@ -263,6 +266,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& WrapperNameHint,
 		FString& OutCode,
 		bool& bOutUsesGeneratedInclude,
+		TArray<FString>& OutEmbeddedIncludePaths,
 		FString& OutError);
 	// Rewrite imported-Function call sites in HLSL text to match the generated-include signatures the
 	// instance backend references (single-out function -> return value, so an out-param call

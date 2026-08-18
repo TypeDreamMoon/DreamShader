@@ -145,6 +145,120 @@ namespace UE::DreamShader
 			return FChar::IsAlnum(Char) || Char == TCHAR('_');
 		}
 
+		/**
+		 * Pulls `#include "..."` / `#include <...>` directives off the top of a Function body: only
+		 * whitespace and comments may precede them, and the first non-directive token ends the scan.
+		 * The directives are removed from the body (comments before them are kept) so codegen can
+		 * hoist them to file scope, where an include belongs. Anything after the first statement is
+		 * left alone and behaves as before (it lands inside the generated function).
+		 */
+		static void ExtractLeadingIncludeDirectives(FString& InOutBody, TArray<FString>& OutIncludePaths)
+		{
+			const FString Source = InOutBody;
+			const int32 Len = Source.Len();
+			int32 Index = 0;
+			int32 KeepFrom = 0;          // start of the text that stays in the body
+			FString Kept;                // comments/whitespace seen before a directive, preserved
+
+			auto SkipSpaceAndComments = [&](int32& Pos)
+			{
+				while (Pos < Len)
+				{
+					const TCHAR Char = Source[Pos];
+					if (FChar::IsWhitespace(Char))
+					{
+						++Pos;
+						continue;
+					}
+					if (Char == TCHAR('/') && Pos + 1 < Len && Source[Pos + 1] == TCHAR('/'))
+					{
+						while (Pos < Len && Source[Pos] != TCHAR('\n'))
+						{
+							++Pos;
+						}
+						continue;
+					}
+					if (Char == TCHAR('/') && Pos + 1 < Len && Source[Pos + 1] == TCHAR('*'))
+					{
+						const int32 End = Source.Find(TEXT("*/"), ESearchCase::CaseSensitive, ESearchDir::FromStart, Pos + 2);
+						Pos = End == INDEX_NONE ? Len : End + 2;
+						continue;
+					}
+					break;
+				}
+			};
+
+			while (true)
+			{
+				int32 Pos = Index;
+				SkipSpaceAndComments(Pos);
+				if (Pos >= Len || Source[Pos] != TCHAR('#'))
+				{
+					break;
+				}
+				const int32 DirectiveStart = Pos;
+				++Pos;
+				while (Pos < Len && FChar::IsWhitespace(Source[Pos]) && Source[Pos] != TCHAR('\n'))
+				{
+					++Pos;
+				}
+				if (Pos + 7 > Len || FCString::Strncmp(&Source[Pos], TEXT("include"), 7) != 0)
+				{
+					break;
+				}
+				Pos += 7;
+				while (Pos < Len && FChar::IsWhitespace(Source[Pos]) && Source[Pos] != TCHAR('\n'))
+				{
+					++Pos;
+				}
+				if (Pos >= Len)
+				{
+					break;
+				}
+				const TCHAR Open = Source[Pos];
+				const TCHAR Close = Open == TCHAR('"') ? TCHAR('"') : (Open == TCHAR('<') ? TCHAR('>') : TCHAR(0));
+				if (Close == 0)
+				{
+					break;
+				}
+				const int32 PathStart = Pos + 1;
+				int32 PathEnd = PathStart;
+				while (PathEnd < Len && Source[PathEnd] != Close && Source[PathEnd] != TCHAR('\n'))
+				{
+					++PathEnd;
+				}
+				if (PathEnd >= Len || Source[PathEnd] != Close)
+				{
+					break;
+				}
+				const FString Path = Source.Mid(PathStart, PathEnd - PathStart).TrimStartAndEnd();
+				if (Path.IsEmpty())
+				{
+					break;
+				}
+				OutIncludePaths.AddUnique(Path);
+
+				// keep what preceded the directive (comments), drop the directive through end of line
+				Kept += Source.Mid(KeepFrom, DirectiveStart - KeepFrom);
+				int32 LineEnd = PathEnd + 1;
+				while (LineEnd < Len && Source[LineEnd] != TCHAR('\n'))
+				{
+					++LineEnd;
+				}
+				if (LineEnd < Len)
+				{
+					++LineEnd; // swallow the newline
+				}
+				Index = LineEnd;
+				KeepFrom = LineEnd;
+			}
+
+			if (!OutIncludePaths.IsEmpty())
+			{
+				InOutBody = Kept + Source.Mid(KeepFrom);
+			}
+		}
+
 		static FString NormalizeShaderLanguageText(const FString& InCode)
 		{
 			static const TMap<FString, FString> IdentifierMap = {
@@ -588,6 +702,7 @@ namespace UE::DreamShader
 				return false;
 			}
 
+			ExtractLeadingIncludeDirectives(FunctionBody, Function.IncludePaths);
 			Function.HLSL = NormalizeShaderLanguageText(FunctionBody.TrimStartAndEnd());
 			if (bHasReturnType)
 			{
