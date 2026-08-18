@@ -170,8 +170,13 @@ wrapped as `Invalid texture default value '{Text}' for property '{Name}'. {Inner
 ### Dimension validation
 
 The assigned asset is checked against the declared dimension, because all five compact tokens set an
-explicit dimension. `Texture2D` here means "not a cube, not a 2D array, not a volume". A mismatch is
-reported as
+explicit dimension. The check reads the asset's *material type* (`UTexture::GetMaterialType()`, the
+same dimension the material compiler sees on a texture-object pin), not its class, so a render target
+of the right dimension passes: `UTextureRenderTargetVolume` for `VolumeTexture` / `Texture3D`,
+`UTextureRenderTarget2D` for `Texture2D`, `UTextureRenderTargetCube` for `TextureCube`,
+`UTextureRenderTarget2DArray` for `Texture2DArray` *(since 1.7.2 — earlier versions accepted only the
+`UVolumeTexture` / `UTextureCube` / `UTexture2DArray` classes)*. `Texture2D` here means "not a cube,
+not a cube array, not a 2D array, not a volume". A mismatch is reported as
 
 ```text
 {Context} texture property '{Name}' expects {ExpectedType} but '{Path}' is a '{ActualClass}'.

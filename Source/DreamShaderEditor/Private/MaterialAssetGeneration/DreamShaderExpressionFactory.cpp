@@ -59,6 +59,7 @@
 #include "Engine/Texture2DArray.h"
 #include "Engine/TextureCube.h"
 #include "Engine/VolumeTexture.h"
+#include "MaterialValueType.h"
 #include "Misc/Crc.h"
 #include "Misc/FileHelper.h"
 #include "Misc/OutputDeviceNull.h"
@@ -110,19 +111,22 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
+		// Judge by the dimension the material compiler itself sees, not by the asset class, so a
+		// render target (UTextureRenderTargetVolume, UTextureRenderTarget2D, ...) or any other
+		// UTexture subclass of the right dimension is accepted exactly where a TextureObject pin
+		// would accept it.
+		const EMaterialValueType MaterialType = Texture->GetMaterialType();
 		switch (TextureType)
 		{
 		case ETextShaderTextureType::TextureCube:
-			return Cast<UTextureCube>(Texture) != nullptr;
+			return (MaterialType & MCT_TextureCube) != 0;
 		case ETextShaderTextureType::Texture2DArray:
-			return Cast<UTexture2DArray>(Texture) != nullptr;
+			return (MaterialType & MCT_Texture2DArray) != 0;
 		case ETextShaderTextureType::VolumeTexture:
-			return Cast<UVolumeTexture>(Texture) != nullptr;
+			return (MaterialType & MCT_VolumeTexture) != 0;
 		case ETextShaderTextureType::Texture2D:
 		default:
-			return !Cast<UTextureCube>(Texture)
-				&& !Cast<UTexture2DArray>(Texture)
-				&& !Cast<UVolumeTexture>(Texture);
+			return (MaterialType & (MCT_TextureCube | MCT_TextureCubeArray | MCT_Texture2DArray | MCT_VolumeTexture)) == 0;
 		}
 	}
 

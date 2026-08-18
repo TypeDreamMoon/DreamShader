@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Fixed
+
+- **A render target is accepted where a texture of its dimension is expected.** `const VolumeTexture
+  V = Path(Plugin.DreamWind, "RT_DreamWindVolume");` failed with `Const texture property 'V' expects
+  VolumeTexture but '...' is a 'TextureRenderTargetVolume'`, because the dimension check compared
+  asset classes (`UVolumeTexture`, `UTextureCube`, `UTexture2DArray`) instead of dimensions. It now
+  reads `UTexture::GetMaterialType()` — the same answer the material compiler gives on a
+  texture-object pin — so `UTextureRenderTargetVolume`, `UTextureRenderTarget2D`,
+  `UTextureRenderTargetCube` and `UTextureRenderTarget2DArray` pass for their dimension, and anything
+  else a texture-object pin would take (e.g. `UTexture2DDynamic`) does too. Compact texture tokens
+  and `TextureObjectParameter`, `const` or not.
+
 ### Added
 
 - **`#include` at the top of a `Function` body is hoisted to file scope.** A `Function` block's
