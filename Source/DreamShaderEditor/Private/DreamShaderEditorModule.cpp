@@ -3,13 +3,17 @@
 #include "SourceFiles/DreamShaderSourceFileUtils.h"
 #include "UI/DreamShaderMaterialBrowser.h"
 
+#include "AssetRegistry/IAssetRegistry.h"
 #include "CoreGlobals.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
 #include "Misc/CommandLine.h"
 #include "Misc/CoreDelegates.h"
+#include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
 #include "Templates/SharedPointer.h"
+#include "UObject/ObjectSaveContext.h"
+#include "UObject/Package.h"
 
 namespace
 {
@@ -107,6 +111,24 @@ private:
 
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader cook: generating %d source file(s) as persistent assets..."), SourceFiles.Num());
 
+		// Writing the .uasset is not enough for the cooker to find it. A cook request is resolved
+		// through IAssetRegistry::DoesPackageExistOnDisk, which consults only the registry's in-memory
+		// State and has no filesystem fallback -- so a package the registry never scanned is dropped
+		// from the request list even though the file is right there on disk, and
+		// DirectoriesToAlwaysCook silently skips it. Generation runs on post-engine-init, which is
+		// after the registry enumerated the content directories, so every asset saved below lands in
+		// exactly that blind spot. Record what the saves actually wrote and hand the filenames back to
+		// the registry here, while there is still time: this runs before the commandlet's Main, and
+		// therefore before the cooker collects its initial requests.
+		TArray<FString> SavedPackageFilenames;
+		const FDelegateHandle PackageSavedHandle = UPackage::PackageSavedWithContextEvent.AddLambda(
+			[&SavedPackageFilenames](const FString& PackageFilename, UPackage*, FObjectPostSaveContext)
+			{
+				// ScanModifiedAssetFiles runs every entry through FilenameToLongPackageName, which
+				// wants a path under a mounted root; SavePackage reports the engine-relative one.
+				SavedPackageFilenames.AddUnique(FPaths::ConvertRelativePathToFull(PackageFilename));
+			});
+
 		int32 FailureCount = 0;
 		for (const FString& SourceFile : SourceFiles)
 		{
@@ -127,6 +149,16 @@ private:
 				UE_LOG(LogDreamShader, Error, TEXT("  [Cook] Failed: %s"), *Message);
 				++FailureCount;
 			}
+		}
+
+		UPackage::PackageSavedWithContextEvent.Remove(PackageSavedHandle);
+
+		if (!SavedPackageFilenames.IsEmpty())
+		{
+			IAssetRegistry::GetChecked().ScanModifiedAssetFiles(SavedPackageFilenames);
+			UE_LOG(LogDreamShader, Display,
+				TEXT("DreamShader cook: registered %d generated package(s) with the AssetRegistry."),
+				SavedPackageFilenames.Num());
 		}
 
 		if (FailureCount > 0)

@@ -530,7 +530,7 @@ namespace UE::DreamShader::Editor::Private
 		// Everything below identifies an object by its *package*, which is fine for assets (one
 		// primary object per package) but wrong for native /Script/ packages, where one package holds
 		// every UClass/UENUM in a module. A scalar parameter whose Enumeration points at a C++ enum
-		// (e.g. /Script/Engine.EMoonToonShadingFeature) would otherwise decompile to the bare module
+		// (e.g. /Script/Engine.EMaterialSamplerType) would otherwise decompile to the bare module
 		// name and resolve to nothing on the way back in, so emit the full object path for those.
 		if (PackageName.StartsWith(TEXT("/Script/"), ESearchCase::IgnoreCase))
 		{

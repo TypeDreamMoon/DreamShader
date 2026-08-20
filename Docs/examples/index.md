@@ -2,7 +2,7 @@
 
 > [DreamShader](../index.md) » **Examples**
 
-Fourteen complete, self-contained DreamShaderLang sources, ordered from the smallest possible
+Fifteen complete, self-contained DreamShaderLang sources, ordered from the smallest possible
 material to the constructs that need a `.dsh` header, a `.dsf` function file, or a specific engine
 version.
 
@@ -41,6 +41,7 @@ substituted**; a bare `…` stands for a value the message fills in at runtime, 
 | [12](#12-graphfunction-hoisting-a-ue-call-into-a-custom-node) | `GraphFunction` hoisting | [`GraphFunction`](../language/graph-function.md) |
 | [13](#13-settings-domain-shading-model-blend-mode-backend) | `Settings` and `Backend` | [Shader settings](../settings/material.md), [Backend](../settings/backend.md) |
 | [14](#14-layout-placement-and-region) | `Layout` and `#Region` | [`Layout`](../language/layout.md) |
+| [15](#15-runtime-virtual-texture-sampling-and-writing) | Runtime Virtual Texture | [`UE.Expression`](../builtins/ue-expression.md), [output bindings](../language/output-bindings.md) |
 
 ---
 
@@ -958,6 +959,97 @@ Shader(Name="Materials/M_Laid")
 
 *See also:* [`Layout`](../language/layout.md) · [Graph layout](../generation/graph-layout.md) ·
 [Regeneration](../generation/regeneration.md) · [Decompiler](../tools/decompiler.md)
+
+---
+
+## 15. Runtime Virtual Texture: sampling and writing
+
+The RVT nodes have no dedicated builtin family and need none. The sample, replace and feature-switch
+nodes are ordinary expressions reached through [`UE.<ClassName>`](../builtins/ue-expression.md);
+`RuntimeVirtualTextureOutput` is a *custom output* with no output pin at all, so it is never the
+right-hand side of a `Graph` assignment — it is bound in `Outputs` through
+[`Expression( … ).Pin[i]`](../language/output-bindings.md#the-expression--pini-target).
+
+```c
+// DShader/Materials/M_RVTSurface.dsm
+Shader(Name="Materials/M_RVTSurface", Root="Game")
+{
+    Properties = {
+        vec3 Fallback = vec3(0.5, 0.5, 0.5);
+    }
+
+    Settings = {
+        Backend      = "Graph";
+        Domain       = "Surface";
+        ShadingModel = "DefaultLit";
+        BlendMode    = "Opaque";
+    }
+
+    Outputs = {
+        float3 SurfaceColor;
+        float3 RVTBaseColor;
+        float  RVTRoughness;
+
+        Base.BaseColor = SurfaceColor;
+
+        // Both statements reuse one RuntimeVirtualTextureOutput node.
+        Expression(Class="RuntimeVirtualTextureOutput").Pin[0] = RVTBaseColor;
+        Expression(Class="RuntimeVirtualTextureOutput").Pin[2] = RVTRoughness;
+    }
+
+    Graph = {
+        float3 Sampled = UE.RuntimeVirtualTextureSample(
+            OutputType     = "float3",
+            Output         = "BaseColor",
+            MaterialType   = "BaseColor_Normal_Roughness",
+            VirtualTexture = Path(Game, "RVT/RVT_Terrain"));
+
+        // Where the virtual texture has no page, fall back to the parameter ...
+        float3 Blended = UE.RuntimeVirtualTextureReplace(
+            OutputType = "float3", Default = Fallback, VirtualTextureOutput = Sampled);
+
+        // ... and where virtual texturing is off entirely, fall back to it again.
+        SurfaceColor = UE.VirtualTextureFeatureSwitch(
+            OutputType = "float3", Yes = Blended, No = Fallback);
+
+        RVTBaseColor = SurfaceColor;
+        RVTRoughness = 0.5;
+    }
+}
+```
+
+> [!NOTE]
+> This example references `/Game/RVT/RVT_Terrain`, a project `URuntimeVirtualTexture` asset.
+> Substitute one that exists in your project. Omitting `VirtualTexture` altogether still generates
+> and compiles — the sample node simply reads nothing.
+
+| Node | `Class` specifier | Written as |
+| :-- | :-- | :-- |
+| Runtime Virtual Texture Sample | `RuntimeVirtualTextureSample` | `UE.…` in `Graph` |
+| Runtime Virtual Texture Sample Parameter | `RuntimeVirtualTextureSampleParameter` | a [parameter declaration](../parameters/parameter-nodes.md) in `Properties` |
+| Runtime Virtual Texture Replace | `RuntimeVirtualTextureReplace` | `UE.…` in `Graph` |
+| Virtual Texture Feature Switch | `VirtualTextureFeatureSwitch` | `UE.…` in `Graph` |
+| Runtime Virtual Texture Output | `RuntimeVirtualTextureOutput` | `Expression( … ).Pin[i]` in `Outputs` |
+
+- `RuntimeVirtualTextureSample` carries eight outputs. Select one by name with `Output="BaseColor"`
+  or by position with `OutputIndex=`: `0` BaseColor, `1` Specular, `2` Roughness, `3` Normal,
+  `4` WorldHeight, `5` Mask, `6` Displacement, `7` Mask4. Omitting both takes output `0`.
+- `RuntimeVirtualTextureOutput` input pins, in `Pin[i]` order: `0` BaseColor, `1` Specular,
+  `2` Roughness, `3` Normal, `4` WorldHeight, `5` Opacity, `6` Mask, `7` Displacement, `8` Mask4.
+- `VirtualTexture` is an ordinary reflected `UObject` property, so it accepts every
+  [`Path(...)`](../parameters/path.md) form — `Path(Game, …)`, `Path(Plugin.<Name>, …)`, or a bare
+  quoted object path. `MaterialType` and the node's other enum and bool properties are written by the
+  same reflection pass, with the usual [enum spelling](../settings/material-enums.md) rules.
+- A material that *writes* to RVT keeps `Domain = "Surface"` and adds the output node, exactly as
+  above. The separate `Domain = "RuntimeVirtualTexture"` spelling maps to `MD_RuntimeVirtualTexture`,
+  which the engine marks **deprecated and hidden**; DreamShader still accepts it so existing assets
+  keep decompiling, but new materials should not use it.
+- `Backend = "Graph"` is pinned here so the result is a plain `UMaterial` whose nodes you can open
+  and compare against the source. The nodes themselves do not depend on the backend.
+
+*See also:* [`UE.Expression`](../builtins/ue-expression.md) ·
+[Output bindings](../language/output-bindings.md) · [`Path(...)`](../parameters/path.md) ·
+[Material enums](../settings/material-enums.md)
 
 ---
 
