@@ -1417,6 +1417,7 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("bUsedWithHairStrands"),
 			TEXT("bUsedWithWater"),
 			TEXT("bUsedWithVirtualHeightfieldMesh"),
+			TEXT("bUsedWithVolumetricCloud"),
 			TEXT("bCastRayTracedShadows"),
 			TEXT("bWriteOnlyAlpha"),
 			TEXT("BlendableOutputAlpha"),
