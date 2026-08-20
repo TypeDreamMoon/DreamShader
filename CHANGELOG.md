@@ -4,6 +4,122 @@
 
 ### Fixed
 
+- **The regeneration skip key covers everything that decides what a source compiles into.** It hashed
+  the prepared source text and nothing else, so anything *else* that changes the output left every
+  already generated asset looking current: switching the **Default Compiler Backend** — which decides
+  whether a `Shader` block becomes a `UMaterial` or a thin instance — retargeting a shading-model,
+  blend-mode or domain mapping, or upgrading the plugin or the engine. The backend case was papered
+  over with a forced full sweep bolted onto that one setting; the others were not covered at all.
+
+  `DreamShader.SourceHash` is now a build key: prepared source text, default backend, the three
+  mapping tables, the plugin version plus a hand-bumped format tag, and the engine version. The forced
+  sweep is gone — each affected asset fails the skip check on its own, and one the setting does not
+  affect is still skipped instead of being needlessly rebuilt. Imports need nothing extra, since the
+  hashed text already has them inlined. Changing the key's composition invalidates every existing
+  stamp: one rebuild per asset, once, which is the intended effect. Covered by
+  `DreamShader.Compiler.BuildKey.CoversCompileContext`.
+
+- **A batch of source files compiles in dependency order.** A `.dsm` that calls a `ShaderFunction`
+  binds its call node against the live `UMaterialFunction` asset — `SetMaterialFunction` reads the pins
+  off the object, not off the source — so compiling the caller before the callee bound it against the
+  *previous* version of that function's interface. Renaming a function input and saving both files was
+  enough to hit it, and which one won depended on the iteration order of a `TMap`. Both drain points
+  (the watcher's pending-file batch and the whole-project sweep) now topologically sort by the import
+  graph; only edges inside the batch are honoured, and a cycle is left for the import loader to reject
+  with its own diagnostic. Covered by `DreamShader.Compiler.Order.*`.
+
+- **One editor owns the bridge for a project.** The bridge directory is per-project — one `Requests`
+  folder, one `status.json`, one heartbeat — so two editors open on the same project both polled the
+  same queue (whichever got there first consumed the file, the other read a half-deleted one) and both
+  overwrote `status.json` with their own pid, leaving a client unable to tell which editor was about
+  to answer it. Ownership is now a lock file, `Bridge/owner.lock`, carrying the owning pid and a
+  heartbeat: an owner is believed while its process is alive **and** its heartbeat is under 30s old
+  (the pid test alone hands the bridge over whenever the owner is mid-compile, since a compile blocks
+  the game thread; the heartbeat test alone leaves it unowned after a hard crash). It is released on
+  shutdown so the next editor takes over on its next heartbeat.
+
+  A non-owning editor still compiles its own in-memory materials, but does not consume requests, write
+  `status.json`, or **write generated assets to disk**. That last part is a direct consequence of
+  storage deciding how a rebuild persists: without it, two editors would both `SavePackage` the same
+  file, and a save that loses that race is not a merge — it is a corrupted package or a dead editor.
+  The commandlet is unaffected; it has no bridge and writing these assets is its whole job. The
+  deferral is covered by `DreamShader.Compiler.Persistence.NonWriteOwnerLeavesDiskAssetAlone`; the
+  lock itself needs two processes and is not automated.
+
+- **A rebuild is refused while the asset is open in an asset editor.** An asset editor does not edit
+  the asset: `FMaterialEditor` duplicates it into a transient `UPreviewMaterial` and copies that
+  duplicate back over the original on Apply or Save, and the material instance editor writes back
+  through a `UMaterialEditorInstanceConstant` wrapper. An editor left open across a rebuild was
+  therefore holding a *pre-rebuild* copy, and the next Apply silently reverted everything the rebuild
+  had done — surfacing later as a divergence report on the compile after that, a long way from the
+  cause. Compiles now stop with `Asset '{ObjectPath}' is open in an asset editor, so it was NOT
+  rebuilt. …`, and say to close it.
+
+  Refusing is the only safe answer available: whether the editor's copy has unapplied edits in it is
+  `FMaterialEditor::bMaterialDirty`, which is private to the MaterialEditor module, so "close it if
+  it is clean" is not a question the plugin can ask — and closing it blindly would pop the engine's
+  save prompt in the middle of a compile-on-save, or hang a headless build.
+
+  **Revert to Source** and **Adopt Into Source** are the exception: they close the editor themselves,
+  act, and reopen it, because both are offered on that editor's own toolbar and a permanently dead
+  menu item there would be a bug rather than a guard. For Adopt the close must come first and the
+  engine's save prompt is load-bearing rather than noise — unapplied editor changes are not part of
+  "this asset's current contents" until it is answered. Cancelling it cancels the action. Covered by
+  `DreamShader.Compiler.OpenEditor.*`.
+
+- **An asset that exists on disk is rebuilt on disk, not in memory over the top of its own file.**
+  The editor asks for a memory-only compile every time, and when that landed on a package which
+  already existed, generation loaded the saved asset, rebuilt it in place, and then cleared the dirty
+  flag. The result was an object that matched neither the file on disk nor anything that would ever
+  be written, and that reported itself clean: a Save All could persist a state nobody chose, and the
+  version visible in the editor disappeared on restart. The only signal was one log warning.
+
+  Storage now decides how a rebuild persists, not the compile that asked for it
+  (`IsGeneratedAssetPersisted`): an asset with a file behind it takes the persisted path — stamped,
+  saved, dirty flag never faked — and one without stays memory-only. There is exactly one answer to
+  "what is this asset" again. Covered by `DreamShader.Compiler.Persistence.*`.
+
+  The startup sweep stopped forcing as part of this, and had to. Forcing was free while every
+  in-memory asset regenerated regardless of its source hash; it stopped being free the moment a
+  disk-backed asset started being *saved*, because every editor launch would then rewrite every
+  persisted generated asset — disk churn, source-control noise and a slow startup, for rebuilds the
+  source hash had already ruled out. Changing the **Default Compiler Backend** still forces, because
+  the hash covers the source text and cannot see that setting.
+
+- **A failed rebuild no longer empties the asset.** Regeneration cleared the graph and then built
+  into the emptied asset, so any failure after the teardown left it empty — and the failures that can
+  still happen at that point are ordinary ones, because a `Graph` block is compiled one statement at
+  a time by the graph builder, long after the clear. An emptied material was bad; an emptied material
+  *function* was much worse, since its call sites read their pins from the live asset, so one bad
+  `.dsf` took every material that called it down with it. There was no undo either: generated assets
+  are deliberately not `RF_Transactional`, because undo/redo desynchronizes the shader map.
+
+  Teardown now *detaches* the old graph instead of destroying it (`FDreamShaderGraphRollback`), and
+  destroys it only once the rebuild has fully succeeded. A failure restores the asset from a
+  serialized snapshot taken before the teardown — render state, material-function usage, node graph,
+  connections and `FunctionInput`/`FunctionOutput` pin GUIDs all come back, so existing call sites
+  stay wired. Two details make it work: the snapshot is taken with delta serialization **off** (a
+  property equal to the class default is otherwise skipped, and the restore would leave whatever the
+  failed build had set it to), and it covers the asset's **editor-only data object** as well as the
+  asset — since UE 5.1 the expression collection and the material property inputs live on a separate
+  `UMaterialEditorOnlyData` / `UMaterialFunctionEditorOnlyData` UObject, so snapshotting the material
+  alone captures nothing but a pointer to it. Covered by `DreamShader.Compiler.Atomic.*`.
+
+  Two things fall out of it. The teardown's two deletion strategies collapsed into one: the
+  node-by-node path existed to break inbound links, which is `O(n^2)` across a graph and pointless
+  when the graph leaves as a unit, so the former 1200-expression threshold is gone and every rebuild
+  takes the fast path. And `DependentFunctionExpressionCandidates` — the second, serialized node list
+  whose stale entries used to arm a null-deref crash for the rest of the session after a failed
+  function compile — is now reset at commit rather than at teardown, because a failed compile no
+  longer empties the function at all.
+
+- **The ThinCustom instance path runs the ownership guard.** It checked only the class of whatever
+  sat at the target path, not its provenance, so generating onto a hand-authored
+  `UDreamShaderMaterialInstance` adopted it and then cleared its parameter overrides. Since
+  ThinCustom is the default backend this was the widest of the three creation paths and the only one
+  without the check; it now refuses with the same message the material and function paths use. The
+  gap was documented as a known warning in `Docs/generation/regeneration.md`, which is updated.
+
 - **Cook-generated assets are registered with the AssetRegistry, so they reach the package.** The
   cook hook wrote every source file out as a persistent `.uasset` and then relied on the engine
   finding it, but a cook request is resolved through `IAssetRegistry::DoesPackageExistOnDisk`, which
@@ -37,6 +153,29 @@
   and `TextureObjectParameter`, `const` or not.
 
 ### Added
+
+- **A hand-edited generated asset is no longer rebuilt over.** Regeneration used to tear the graph
+  down unconditionally, so editing a generated material and then touching its `.dsm` destroyed the
+  edit with no diagnostic and no undo — regeneration is deliberately not transactional. Every
+  successful generation now stamps `DreamShader.OutputDigest`, a fingerprint of what the asset
+  actually holds, and the next rebuild compares it against the asset *before* anything is cleared. A
+  mismatch fails the compile with a message naming three actions, all on the asset's right-click
+  menu under **DreamShader**: **Revert to Source** (discard the edits and rebuild), **Adopt Into
+  Source** (rewrite the `.dsm`/`.dsf` from the asset, backing the old one up to `<source>.bak`), and
+  **Detach From DreamShader** (keep the asset, stop managing it). The digest covers exactly what a
+  rebuild would destroy — nodes, connections, node properties, the reset-property set, a function's
+  asset-level fields, and a ThinCustom instance's parameter overrides — and deliberately excludes
+  what one would not: node positions, user comment boxes, pin GUIDs, and properties outside the reset
+  list. See `Docs/generation/divergence.md`. Seven tests under
+  `DreamShader.Compiler.Divergence.*`.
+
+  Two details worth knowing. `-Force` does **not** override a divergence: `bForce` answers "is the
+  source hash stale", and the editor asserts it for every file in its own startup sweep, so honouring
+  it would have left the gate dead in the mode the editor spends all its time in — only the Revert
+  action overrides one. And the source *path* (not the hash) is now stamped on memory-only assets
+  too, because without it an in-memory asset classifies as foreign and the gate never fires; stamping
+  the path alone cannot switch the source-hash skip on, which needs a matching hash as well.
+
 
 - **`#include` at the top of a `Function` body is hoisted to file scope.** A `Function` block's
   HLSL used to be emitted verbatim between the braces of the generated `DreamShaderFn_*` definition,

@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-342
+366
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -207,6 +207,14 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.VirtualFunction | VirtualFunctionNameCannotBeEmpty | VirtualFunction name cannot be empty. |
 | DreamShaderEditor.Settings | SectionDescription | Dream Shader Settings |
 | DreamShaderEditor.Settings | SectionText | Dream Shader |
+| DreamShaderEditorBridge | DreamShaderAdoptBackupFailed | Could not back up '{0}' to '{1}'; nothing was written. |
+| DreamShaderEditorBridge | DreamShaderAdoptConfirm | Rewrite '{0}' from the current contents of '{1}'?\n\nThe existing source is copied to '{2}' first. The rewritten file is the decompiler's own form, so hand-written comments, imports and formatting in it are replaced. |
+| DreamShaderEditorBridge | DreamShaderAdoptInstanceNoBase | '{0}' has no base material to decompile. |
+| DreamShaderEditorBridge | DreamShaderAdoptInstanceOverrides | '{0}' has parameter overrides set on the generated instance, and those cannot be written back into '{1}' -- adopting would drop them. Move the values into the source as Properties defaults (or override them on a child material instance instead), then Revert. |
+| DreamShaderEditorBridge | DreamShaderAdoptLabel | Adopt Into Source |
+| DreamShaderEditorBridge | DreamShaderAdoptMultiAsset | '{0}' declares {1} assets, so adopting one of them would overwrite the others. Use DreamShader > Export DSM and merge the result by hand. |
+| DreamShaderEditorBridge | DreamShaderAdoptResult | Adopted '{0}' into '{1}' (backup: '{2}'). {3} |
+| DreamShaderEditorBridge | DreamShaderAdoptTooltip | Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it. |
 | DreamShaderEditorBridge | DreamShaderCleanGeneratedShadersLabel | Clean Generated Shaders |
 | DreamShaderEditorBridge | DreamShaderCleanGeneratedShadersTooltip | Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile. |
 | DreamShaderEditorBridge | DreamShaderCleanPersistedGeneratedAssetsLabel | Clean Persisted Generated Assets |
@@ -226,6 +234,12 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderCreateVirtualFunctionNoAsset | DreamShader could not find the selected Material Function. |
 | DreamShaderEditorBridge | DreamShaderCreateVirtualFunctionTooltip | Create a .dsh file containing the VirtualFunction declaration. |
 | DreamShaderEditorBridge | DreamShaderDecompileActionsSection | Decompiler |
+| DreamShaderEditorBridge | DreamShaderDetachConfirm | Stop managing '{0}'?\n\nIt keeps its current contents and becomes an ordinary asset. DreamShader will never rebuild it again, and compiling '{1}' afterwards fails with an ownership error until you move or rename one of them. |
+| DreamShaderEditorBridge | DreamShaderDetachLabel | Detach From DreamShader |
+| DreamShaderEditorBridge | DreamShaderDetachNoAsset | DreamShader could not find the selected asset. |
+| DreamShaderEditorBridge | DreamShaderDetachNotGenerated | '{0}' is not a DreamShader-generated asset. |
+| DreamShaderEditorBridge | DreamShaderDetachResult | '{0}' is no longer managed by DreamShader. Save it to keep the change. |
+| DreamShaderEditorBridge | DreamShaderDetachTooltip | Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset. |
 | DreamShaderEditorBridge | DreamShaderExportFunctionDSFLabel | Export DSF |
 | DreamShaderEditorBridge | DreamShaderExportFunctionDSFTooltip | Export this Material Function graph to a DreamShader .dsf source file. |
 | DreamShaderEditorBridge | DreamShaderExportFunctionNoAsset | DreamShader could not find the selected Material Function. |
@@ -233,15 +247,19 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderExportMaterialDSMTooltip | Export this Material graph to a DreamShader .dsm source file. |
 | DreamShaderEditorBridge | DreamShaderExportMaterialNoAsset | DreamShader could not find the selected Material. |
 | DreamShaderEditorBridge | DreamShaderFunctionDecompileActionsSection | Decompiler |
+| DreamShaderEditorBridge | DreamShaderFunctionProvenanceActionsSection | Generated Asset |
 | DreamShaderEditorBridge | DreamShaderInMemoryMaterialsHidden | Hidden {0} in-memory material(s) from the Content Browser and asset pickers. |
 | DreamShaderEditorBridge | DreamShaderInMemoryMaterialsShown | Showing {0} in-memory material(s) in the Content Browser and asset pickers. |
 | DreamShaderEditorBridge | DreamShaderInMemoryModeShadowed | {0} previously generated asset(s) are still saved on disk and shadow the in-memory materials. Run Tools > DreamShader > Clean Persisted Generated Assets to remove them. |
+| DreamShaderEditorBridge | DreamShaderInstanceProvenanceActionsSection | Generated Asset |
 | DreamShaderEditorBridge | DreamShaderMaterialActionsLabel | DreamShader |
 | DreamShaderEditorBridge | DreamShaderMaterialActionsTooltip | DreamShader actions for this Material. |
 | DreamShaderEditorBridge | DreamShaderMaterialFunctionActionsLabel | DreamShader |
 | DreamShaderEditorBridge | DreamShaderMaterialFunctionActionsTooltip | DreamShader actions for this Material Function. |
 | DreamShaderEditorBridge | DreamShaderMaterialFunctionToolbarMenuLabel | DreamShader |
 | DreamShaderEditorBridge | DreamShaderMaterialFunctionToolbarMenuTooltip | DreamShader actions for this Material Function. |
+| DreamShaderEditorBridge | DreamShaderMaterialInstanceActionsLabel | DreamShader |
+| DreamShaderEditorBridge | DreamShaderMaterialInstanceActionsTooltip | DreamShader actions for this generated material. |
 | DreamShaderEditorBridge | DreamShaderMaterialToolbarMenuLabel | DreamShader |
 | DreamShaderEditorBridge | DreamShaderMaterialToolbarMenuTooltip | DreamShader actions for this Material. |
 | DreamShaderEditorBridge | DreamShaderOpenVirtualFunctionLabel | OpenVirtualFunction |
@@ -251,10 +269,16 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderOpenWorkspaceToolbarLabel | Open Dream Shader Workspace (VSCode) |
 | DreamShaderEditorBridge | DreamShaderOpenWorkspaceToolbarTooltip | Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable. |
 | DreamShaderEditorBridge | DreamShaderOpenWorkspaceTooltip | Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable. |
+| DreamShaderEditorBridge | DreamShaderProvenanceActionsSection | Generated Asset |
+| DreamShaderEditorBridge | DreamShaderProvenanceNoAsset | DreamShader could not find the selected asset. |
 | DreamShaderEditorBridge | DreamShaderRecompileLabel | Recompile DSM |
 | DreamShaderEditorBridge | DreamShaderRecompileToolbarLabel | DSM |
 | DreamShaderEditorBridge | DreamShaderRecompileToolbarTooltip | Recompile all DreamShader .dsm and .dsf source files. |
 | DreamShaderEditorBridge | DreamShaderRecompileTooltip | Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. |
+| DreamShaderEditorBridge | DreamShaderRevertConfirm | Rebuild '{0}' from '{1}'?\n\nEvery hand edit in the asset is discarded. The source file is not modified. |
+| DreamShaderEditorBridge | DreamShaderRevertDivergedLabel | Revert to Source (discards your edits) |
+| DreamShaderEditorBridge | DreamShaderRevertLabel | Revert to Source |
+| DreamShaderEditorBridge | DreamShaderRevertTooltip | Rebuild this asset from the DreamShader source it was generated from, discarding every hand edit in it. The source file is not modified. |
 | DreamShaderEditorBridge | DreamShaderToggleShowInMemoryMaterialsLabel | Show In-Memory Materials |
 | DreamShaderEditorBridge | DreamShaderToggleShowInMemoryMaterialsTooltip | Show memory-only ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials and are always visible, so this toggle does not affect them. While shown, an explicit Save on one would persist it to disk (the shadow warning and Clean command cover recovery). |
 | DreamShaderEditorBridge | DreamShaderVirtualFunctionActionsSection | VirtualFunction |
@@ -360,7 +384,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderVirtualFunctionSyncService | UpdateSourceFileFailed | DreamShader failed to update VirtualFunction source file '{0}'. |
 
 ## Deferred diagnostics inventory
-Deferred files: 45
+Deferred files: 48
 Runtime FText::FromString/FText::FromName / FString::Printf literal call sites in deferred diagnostics: 0
 Use -IncludeDeferred to lint MaterialAssetGeneration/ and Decompiler/ in the next phase.
 

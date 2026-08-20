@@ -63,9 +63,12 @@ makes `IsAsset()` false, the base is invisible in both modes.
 
 ## Why nothing appears in the Content Browser
 
-Interactive compiles are memory-only by design: the `.dsm` file is the authoring surface, and a
-generated `.uasset` on disk would shadow it. Every trigger except cook, the commandlet, and an
-explicit *Materialize* generates in memory. See [Generation](index.md#what-triggers-a-compile).
+Interactive compiles ask for memory-only by design: the `.dsm` file is the authoring surface, and a
+generated `.uasset` on disk is a second copy of something the source already says. Every trigger
+except cook, the commandlet, and an explicit *Materialize* asks for memory — and gets it, unless the
+asset already exists on disk, in which case it is maintained there instead. See
+[Generation](index.md#what-triggers-a-compile) and
+[When the asset already exists on disk](#when-the-asset-already-exists-on-disk).
 
 While a material is memory-only:
 
@@ -95,9 +98,9 @@ Hidden {Count} in-memory material(s) from the Content Browser and asset pickers.
 
 > [!WARNING]
 > While the toggle is on, a memory-only material is a normal-looking tile, and an explicit **Save**
-> on it writes a real `.uasset` to disk. That saved asset then shadows in-memory regeneration for
-> that path — see [Shadowed by a saved asset](#shadowed-by-a-saved-asset). Use *Materialize* rather
-> than *Save* when you actually want the file.
+> on it writes a real `.uasset` to disk. From then on that path is maintained on disk — see
+> [When the asset already exists on disk](#when-the-asset-already-exists-on-disk). Use *Materialize*
+> rather than *Save* when you actually want the file.
 
 ## Materializing to disk
 
@@ -132,17 +135,35 @@ with the flag still on would be skipped as empty. If the save fails the flag is 
 first-time persist the asset registry is notified directly, so the Content Browser updates without a
 rescan.
 
-## Shadowed by a saved asset
+## When the asset already exists on disk
 
-If a memory-only compile targets a package path that already exists on disk, generation still
-succeeds but logs a warning:
+**Storage decides how a rebuild persists, not the compile that asked for it.** A memory-only compile
+that lands on a package which already exists on disk rebuilds the asset *and saves it*, rather than
+rebuilding it in memory over the top of its own file. Generation succeeds and logs:
 
 ```text
-In-memory material mode: '{PackageName}' already exists as a saved asset, which shadows in-memory
-regeneration. Delete the saved asset to make it fully in-memory.
+'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run
+Tools > DreamShader > Clean Persisted Generated Assets to make it memory-only.
 ```
 
-Two tools address this:
+| | |
+| :-- | :-- |
+| Applies to | every trigger, since every interactive compile asks for memory-only |
+| Since | `1.8.0` — before it, such a compile rebuilt the asset in memory and then cleared the dirty flag |
+
+> [!NOTE]
+> What that older behaviour produced was an object matching neither the file on disk nor anything
+> that would ever be written, and reporting itself clean — so a Save All could persist a state nobody
+> chose, and the version you saw in the editor vanished on restart. There is now exactly one answer
+> to "what is this asset": whatever the last compile produced, wherever the asset lives.
+
+A consequence worth knowing: **the startup sweep no longer forces**. Forcing was free while every
+in-memory asset regenerated regardless of its source hash; it stopped being free once a disk-backed
+asset started being saved, because every launch would then rewrite every persisted generated asset.
+Startup now respects the [source-hash skip](caching.md), so an up-to-date saved asset is left alone.
+Changing the **Default Compiler Backend** still forces, because the hash cannot see that setting.
+
+Two tools address the persisted assets themselves:
 
 | Command | Effect |
 | :-- | :-- |
@@ -156,6 +177,9 @@ any saved generated assets remain:
 {Count} previously generated asset(s) are still saved on disk and shadow the in-memory materials.
 Run Tools > DreamShader > Clean Persisted Generated Assets to remove them.
 ```
+
+(Those assets are not *shadowing* anything any more — they are simply still on disk, and are rebuilt
+there. The notification points at the cleaner for anyone who wants the memory-only end state.)
 
 The cleaner scans `/Game` recursively for `UMaterial`, `UMaterialFunction` and
 `UDreamShaderMaterialInstance` assets whose package exists on disk and whose metadata carries a

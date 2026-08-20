@@ -34,14 +34,50 @@ with each import line blanked out and each included file bracketed by
 | move the project to another directory | nothing — the stored path is project-relative |
 | rename the source file | the stored path no longer matches, so nothing is skipped |
 | reformat whitespace or edit a comment | the hash — the text is compared byte for byte, not semantically |
+| change **Default Compiler Backend** | **every** source *(since 1.8.0)* |
+| change a shading-model / blend-mode / domain **mapping** | **every** source *(since 1.8.0)* |
+| upgrade the plugin, or the engine | **every** source *(since 1.8.0)* |
+
+### It is a build key, not just a source hash
+
+The stamp fingerprints the source **in the context that compiles it** *(since 1.8.0)*. Anything
+that changes what a given source produces is folded in, because leaving it out makes the skip
+check answer "still current" about an asset that is not:
+
+| Input | Why it is in the key |
+| :-- | :-- |
+| the prepared source text | the compile's actual input, imports already inlined — which is why a changed `.dsh` or a called `.dsf` needs nothing else here |
+| [Default Compiler Backend](../settings/project.md) | decides whether a `Shader` block becomes a `UMaterial` or a thin instance |
+| the mapping tables | decide what a `Settings` key resolves to |
+| plugin version, plus a hand-bumped format tag | upgrading the generator invalidates what the old one wrote |
+| engine version | what is generable moves with it (Substrate, for one) |
+
+> [!NOTE]
+> Before this, the key hashed the source text alone, so changing the backend left every already
+> generated asset looking current — which is why that one setting had its own forced rebuild
+> sweep bolted on. The sweep no longer forces: each affected asset now fails the skip check on
+> its own, and — just as importantly — one the setting does *not* affect is still skipped instead
+> of being needlessly rebuilt.
+>
+> Changing the composition of the key invalidates every existing stamp. That costs one rebuild
+> per asset, once, and is the intended effect.
 
 > [!NOTE]
 > Editing a `.dsh` invalidates every dependent `.dsm` and `.dsf`, but a header never generates
 > anything by itself — saving it fails with `DreamShader header '{File}' does not generate assets
 > directly. Recompile dependent .dsm or .dsf files instead.` The dependents are only rebuilt when
 > they are themselves compiled: on their own save, or through *Generate all in-memory materials*
-> (editor startup and every change to the **Default Compiler Backend** setting), the Material
+> (editor startup and every change to a setting the build key covers), the Material
 > Content Browser's Compile button, the [commandlet](../tools/commandlet.md), or a cook.
+
+When a batch contains both a function and something that calls it, the batch is **ordered so
+that dependencies compile first** *(since 1.8.0)*. This is not a nicety: a `.dsm` that calls a
+`ShaderFunction` binds its call node against the live `UMaterialFunction` asset —
+`SetMaterialFunction` reads the pins off the object, not off the source — so compiling the caller
+first binds it against the *previous* version of that function's interface. Rename a function
+input and save both files, and which one won used to depend on the iteration order of the pending
+file map. A cycle is left for the import loader to reject with `DreamShader import cycle detected
+at '{File}'.`
 
 ## Where the metadata lives
 
@@ -182,6 +218,7 @@ DreamShader.SourceHash   9f2c41ab
 - [Generation](index.md) — where the hash is computed in the pipeline
 - [import](../language/import.md) — how the prepared text is assembled
 - [Regeneration](regeneration.md) — the ownership guard built on `DreamShader.SourceFile`
+- [Divergence](divergence.md) — the OTHER fingerprint: what the asset holds, not what the source said
 - [In-memory materials](in-memory.md) — which assets are stamped in which mode
 - [`UDreamShaderMaterialInstance`](../api/material-instance.md) — `SourceFilePath` and `SourceHash`
 - [Generated HLSL](generated-hlsl.md) — the include's separate, path-based hash
