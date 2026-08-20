@@ -247,27 +247,29 @@ function Get-FileAnalysis {
     # would report a gather count no real gather ever produces, and the baseline comparison would
     # be checking a number against itself. The R1/R2 literal rules below stay scoped.
     $lineIndex = 0
+    $nsLocPattern = 'NSLOCTEXT\(\s*"(?<ns>(?:\\.|[^"\\])*)"\s*,\s*"(?<key>(?:\\.|[^"\\])*)"\s*,\s*"(?<text>(?:\\.|[^"\\])*)"\s*\)'
+    $locPattern = 'LOCTEXT\(\s*"(?<key>(?:\\.|[^"\\])*)"\s*,\s*"(?<text>(?:\\.|[^"\\])*)"\s*\)'
     foreach ($line in ($text -split "`r?`n")) {
         $lineIndex++
-        if ($line -match 'NSLOCTEXT\(\s*"(?<ns>(?:\\.|[^"\\])*)"\s*,\s*"(?<key>(?:\\.|[^"\\])*)"\s*,\s*"(?<text>(?:\\.|[^"\\])*)"\s*\)') {
+        foreach ($m in [regex]::Matches($line, $nsLocPattern)) {
             $analysis.loctextCount++
             $analysis.inventoryEntries += [pscustomobject]@{
-                namespace = Convert-CStringLiteral $Matches['ns']
-                key = Convert-CStringLiteral $Matches['key']
-                text = Convert-CStringLiteral $Matches['text']
+                namespace = Convert-CStringLiteral $m.Groups['ns'].Value
+                key = Convert-CStringLiteral $m.Groups['key'].Value
+                text = Convert-CStringLiteral $m.Groups['text'].Value
                 file = $File.FullName
                 line = $lineIndex
             }
         }
-        if ($line -match 'LOCTEXT\(\s*"(?<key>(?:\\.|[^"\\])*)"\s*,\s*"(?<text>(?:\\.|[^"\\])*)"\s*\)') {
+        foreach ($m in [regex]::Matches($line, $locPattern)) {
             if ($lintable -and [string]::IsNullOrWhiteSpace($analysis.namespaceDefine)) {
                 $analysis.r4R5R6Violations += New-Violation -Rule 'R5' -Severity 'error' -File $File.FullName -Line $lineIndex -Message 'LOCTEXT found without an active LOCTEXT_NAMESPACE define.'
             }
             $analysis.loctextCount++
             $analysis.inventoryEntries += [pscustomobject]@{
                 namespace = $analysis.namespaceDefine
-                key = Convert-CStringLiteral $Matches['key']
-                text = Convert-CStringLiteral $Matches['text']
+                key = Convert-CStringLiteral $m.Groups['key'].Value
+                text = Convert-CStringLiteral $m.Groups['text'].Value
                 file = $File.FullName
                 line = $lineIndex
             }
