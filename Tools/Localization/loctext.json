@@ -1,0 +1,2466 @@
+[
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "AppendNodeOverflow",
+  "src": "Append node '{0}' resolved to {1} + {2} components, which cannot fit a float4; masked its inputs down to {3} + {4}. Review the emitted swizzle.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 1946
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "DecompilingMaterial",
+  "src": "Decompiling Material '{0}'...",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 40
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "DecompilingMaterialFunction",
+  "src": "Decompiling Material Function '{0}'...",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 236
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "DecompilingNode",
+  "src": "Decompiling node {0}: {1}",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 2820
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "DuplicateCustomOutputNode",
+  "src": "Material has more than one '{0}' node; output targets are de-duplicated by class, so only the first was exported.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 143
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "EmitVirtualFunctionFailed",
+  "src": "Failed to emit VirtualFunction for '{0}': {1}",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 2802
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "ExportedAsUEExpression",
+  "src": "Exported '{0}' as UE.Expression; review reflected literal properties if the node has editor-only state.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 2296
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "FormattingDSFSource",
+  "src": "Formatting DSF source for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 336
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "FormattingDSMSource",
+  "src": "Formatting DSM source for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 183
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "GetMaterialAttributesMissingOutput",
+  "src": "GetMaterialAttributes node '{0}' has no attribute for output {1}; emitted a default literal.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 1490
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "MaterialFunctionCallMissingAsset",
+  "src": "A MaterialFunctionCall had no function asset and was exported as a zero literal.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 2744
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "MaterialFunctionCallNotPlain",
+  "src": "MaterialFunctionCall '{0}' is not a plain MaterialFunction; it was exported through UE.Expression.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 2752
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "MaterialFunctionHasNoOutputs",
+  "src": "MaterialFunction '{0}' does not expose any outputs.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 254
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "NamedRerouteUsageInvalidDeclaration",
+  "src": "Named reroute usage '{0}' has no valid declaration; emitted a default literal.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 1429
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "NamedRerouteUsageMissingDeclaration",
+  "src": "Named reroute usage '{0}' has no valid declaration; emitted its default value.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 1189
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "NoMaterialAssetProvided",
+  "src": "No Material asset was provided.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 34
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "NoMaterialFunctionAssetProvided",
+  "src": "No MaterialFunction asset was provided.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 230
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "RecursiveGraphDependency",
+  "src": "Detected a recursive graph dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 1396
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "RecursiveNamedRerouteDependency",
+  "src": "Detected a recursive named reroute dependency for '{0}'; emitted a default literal to avoid stack overflow.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 2320
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "RecursiveRerouteDependency",
+  "src": "Detected a recursive reroute dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 1159
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "ScanningFunctionInputsOutputs",
+  "src": "Scanning function inputs and outputs for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 248
+ },
+ {
+  "ns": "DreamShader.Decompiler.Impl",
+  "key": "ScanningMaterialOutputs",
+  "src": "Scanning material outputs for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
+  "line": 52
+ },
+ {
+  "ns": "DreamShader.Decompiler.Service",
+  "key": "DecompileDidNotProduceSourceText",
+  "src": "Decompile did not produce source text.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderDecompileService.cpp",
+  "line": 190
+ },
+ {
+  "ns": "DreamShader.Decompiler.Service",
+  "key": "FailedToCreateOutputDirectory",
+  "src": "DreamShader failed to create output directory '{0}'.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderDecompileService.cpp",
+  "line": 202
+ },
+ {
+  "ns": "DreamShader.Decompiler.Service",
+  "key": "FailedToResolveOutputFilePath",
+  "src": "DreamShader failed to resolve an output file path.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderDecompileService.cpp",
+  "line": 195
+ },
+ {
+  "ns": "DreamShader.Decompiler.Service",
+  "key": "FailedToWriteDecompiledSource",
+  "src": "DreamShader failed to write decompiled source '{0}'.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderDecompileService.cpp",
+  "line": 208
+ },
+ {
+  "ns": "DreamShader.Decompiler.Service",
+  "key": "NoAssetProvided",
+  "src": "No asset was provided.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderDecompileService.cpp",
+  "line": 220
+ },
+ {
+  "ns": "DreamShader.Decompiler.Service",
+  "key": "UnsupportedAssetType",
+  "src": "DreamShader decompile supports Material and MaterialFunction assets only: {0}",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderDecompileService.cpp",
+  "line": 254
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "BuildingMaterialGraph",
+  "src": "Building material graph for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2805
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ClearingOldFunctionGraph",
+  "src": "Clearing old function graph '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1333
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "CompilingDreamShaderSource",
+  "src": "Compiling DreamShader source '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1905
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "CompilingMaterial",
+  "src": "Compiling material '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2663
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ConnectingFunctionOutputs",
+  "src": "Connecting outputs for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1763
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ConnectingMaterialOutputs",
+  "src": "Connecting material outputs for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2321
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "CreatingFunctionGraphNodes",
+  "src": "Creating Graph nodes for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1595
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "CreatingInputsForFunction",
+  "src": "Creating inputs for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1429
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "CreatingMaterialCustomNode",
+  "src": "Creating Custom node for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2463
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "CreatingMaterialGraphNodes",
+  "src": "Creating Graph nodes for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2307
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "FinishingDreamShaderCompile",
+  "src": "Finishing DreamShader compile...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2014
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "GeneratingDreamShaderFunction",
+  "src": "Generating DreamShader function '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1279
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "GeneratingDreamShaderFunctionAssets",
+  "src": "Generating {0} DreamShader function asset{1}...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1977
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "GeneratingDreamShaderMaterial",
+  "src": "Generating DreamShader material '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2003
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "GeneratingDreamShaderMaterialFromSource",
+  "src": "Generating DreamShader material from '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2887
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "GeneratingThinCustomMaterial",
+  "src": "Generating thin-custom material for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 3012
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "LayingOutFunction",
+  "src": "Laying out '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1846
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "LayingOutMaterialGraph",
+  "src": "Laying out material graph '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2641
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ParsingDreamShaderSource",
+  "src": "Parsing DreamShader source '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1936
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ParsingFunctionGraphBlock",
+  "src": "Parsing Graph block for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1557
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ParsingMaterialGraphBlock",
+  "src": "Parsing Graph block for '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2263
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ParsingMaterialSource",
+  "src": "Parsing material source '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2918
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "PreparingDreamShaderGeneratedAssets",
+  "src": "Preparing DreamShader generated assets...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1960
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "PreparingMaterialAsset",
+  "src": "Preparing material asset '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 3026
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ReadingDreamShaderSource",
+  "src": "Reading DreamShader source '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1915
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ReadingMaterialSource",
+  "src": "Reading material source '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 2897
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "SavingFunction",
+  "src": "Saving '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1884
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "SavingMaterial",
+  "src": "Saving material '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 3063
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "UpdatingFunction",
+  "src": "Updating '{0}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1864
+ },
+ {
+  "ns": "DreamShader.Generator",
+  "key": "ValidatingDreamShaderFunction",
+  "src": "Validating {0} '{1}'...",
+  "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
+  "line": 1290
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "AFunctionWithAReturnType",
+  "src": "A function with a return type cannot use a bare 'return;'. Return a value, e.g. 'return expr;'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 489
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "ATopLevelShaderFunctionGraphFunction",
+  "src": "A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 1032
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "ExpectedCNearIndexD",
+  "src": "Expected '{0}' near index {1}.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 23
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "FunctionMissingName",
+  "src": "Function declaration is missing a valid function name.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 638
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "FunctionMissingNameAfterSelfContained",
+  "src": "Function declaration is missing a valid function name after SelfContained.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 650
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "FunctionSHasAnInvalidParameter",
+  "src": "Function '{0}' has an invalid parameter declaration '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 544
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "FunctionSHasAnInvalidParameter2",
+  "src": "Function '{0}' has an invalid parameter declaration '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 581
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "FunctionSHasAnInvalidReturn",
+  "src": "Function '{0}' has an invalid return type '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 524
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "FunctionSHasAReturnType",
+  "src": "Function '{0}' has a return type and cannot also declare out parameters. Use out parameters without a return type for multiple outputs.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 609
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "FunctionSMustDeclareAtLeast",
+  "src": "Function '{0}' must declare at least one out parameter.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 616
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "FunctionSParameterNameReturnIs",
+  "src": "Function '{0}' parameter name '__return' is reserved for return-type lowering.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 589
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "FunctionSParameterSUsesUnsupported",
+  "src": "Function '{0}' parameter '{1}' uses unsupported qualifier '{2}'. Supported qualifiers are in and out.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 572
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "GraphFunctionMissingName",
+  "src": "GraphFunction declaration is missing a valid function name.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 637
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "MaterialFunctionNameRequired",
+  "src": "{0}(Name=\"...\") is required.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 1006
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "NamespaceNameEmpty",
+  "src": "Namespace name cannot be empty.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 752
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "NamespaceNameRequired",
+  "src": "Namespace(Name=\"...\") is required.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 745
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "NamespaceNameSIsNotA",
+  "src": "Namespace name '{0}' is not a valid identifier.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 761
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "NamespaceSMayOnlyContainFunction",
+  "src": "Namespace '{0}' may only contain Function or GraphFunction blocks.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 800
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "OnlyOneTopLevelShaderBlock",
+  "src": "Only one top-level Shader block is currently supported.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 835
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "SDeclarationIsMissingAFunction",
+  "src": "{0} declaration is missing a function name after the return type '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 668
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "ShaderMustProvideAGraphBlock",
+  "src": "Shader must provide a Graph block.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 1047
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "ShaderNameRequired",
+  "src": "Shader(Name=\"...\") is required.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 850
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "SSIsMissingAValid",
+  "src": "{0} '{1}' is missing a valid parameter list. {2}",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 682
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "SSIsMissingAValid2",
+  "src": "{0} '{1}' is missing a valid body block. {2}",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 692
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "UnexpectedTokenNearIndex",
+  "src": "Unexpected token near index {0}.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 987
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "UnterminatedCBlock",
+  "src": "Unterminated '{0}' block.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 108
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "VirtualFunctionMustDeclareAtLeastOneOutput",
+  "src": "VirtualFunction '{0}' must declare at least one output.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 947
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "VirtualFunctionMustProvideOptionsAsset",
+  "src": "VirtualFunction '{0}' must provide Options = {{ Asset = Path(...); }}.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 941
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "VirtualFunctionNameCannotBeEmpty",
+  "src": "VirtualFunction name cannot be empty.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 912
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "VirtualFunctionNameRequired",
+  "src": "VirtualFunction(Name=\"...\") is required.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 907
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "ExpectedCNearIndexD",
+  "src": "Expected '{0}' near index {1}.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 81
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "ExpectedCurlyNearIndex",
+  "src": "Expected '{{' near index {0}.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 239
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "ExpectedIdentifierNearIndexD",
+  "src": "Expected identifier near index {0}.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 112
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "ExpectedOrNearIndexD",
+  "src": "Expected ',' or ')' near index {0}.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 222
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "ExpectedValueNearIndexD",
+  "src": "Expected value near index {0}.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 169
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "InvalidTextureAssetPathS",
+  "src": "Invalid texture asset path '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 1098
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "RelativeTexturePathReferencesRequireA",
+  "src": "Relative texture Path(...) references require a root such as Game, Engine, or Plugin.PluginName.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 953
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "TextureDefaultsMustUsePath",
+  "src": "Texture defaults must use Path(Game|Engine|Plugin.PluginName, \"/Folder/Asset\"), Path(\"/Game/Folder/Asset\"), or a bare \"/Game/Folder/Asset\".",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 1023
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "TexturePathRequiresANonEmpty",
+  "src": "Texture Path(...) requires a non-empty asset path.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 1069
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "TexturePathRootSHasAn",
+  "src": "Texture Path root '{0}' has an invalid plugin name.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 888
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "TexturePathRootSReferencesPlugin",
+  "src": "Texture Path root '{0}' references plugin '{1}', but no enabled plugin with that name was found.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 896
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "TexturePathRootSReferencesPlugin2",
+  "src": "Texture Path root '{0}' references plugin '{1}', but the plugin is not enabled.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 903
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "TexturePathRootSReferencesPlugin3",
+  "src": "Texture Path root '{0}' references plugin '{1}', but the plugin cannot contain content.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 910
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "UnexpectedTrailingTokensAfterTexturePath",
+  "src": "Unexpected trailing tokens after texture Path(...) reference.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 1060
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "UnsupportedTexturePathRootSUse",
+  "src": "Unsupported texture Path root '{0}'. Use Game, Engine, or Plugin.PluginName.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 989
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "UnterminatedBlock",
+  "src": "Unterminated block.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 324
+ },
+ {
+  "ns": "DreamShader.Parser.Scanner",
+  "key": "UnterminatedStringLiteral",
+  "src": "Unterminated string literal.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
+  "line": 146
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "ExpressionOutputTargetArgumentSIs",
+  "src": "Expression output target argument '{0}' is declared more than once.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1289
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "ExpressionOutputTargetArgumentSMust",
+  "src": "Expression output target argument '{0}' must use Key=Value syntax.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1273
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "ExpressionOutputTargetSHasAn",
+  "src": "Expression output target '{0}' has an invalid pin index.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1260
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "ExpressionOutputTargetSMustSelect",
+  "src": "Expression output target '{0}' must select a pin with .Pin[index].",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1244
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "ExpressionOutputTargetSMustSpecify",
+  "src": "Expression output target '{0}' must specify Class=\\\"...\\\".",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1304
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "ExpressionOutputTargetSMustUse",
+  "src": "Expression output target '{0}' must use .Pin[index] syntax.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1252
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "GraphEndRegionOnLineDHas",
+  "src": "Graph #EndRegion on line {0} has no matching #Region.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1605
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "GraphRegionOnLineDMust",
+  "src": "Graph #Region on line {0} must include a name.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1593
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "GraphRegionSIsMissingEndRegion",
+  "src": "Graph #Region '{0}' is missing #EndRegion.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1630
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "GroupRequiresANonEmptyName",
+  "src": "Group(...) requires a non-empty name.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1034
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidBooleanDefaultValueSFor",
+  "src": "Invalid boolean default value '{0}' for property '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 656
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidEmptySettingKeyInS",
+  "src": "Invalid empty setting key in '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1150
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidExpressionOutputTargetArgumentS",
+  "src": "Invalid expression output target argument '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1282
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidLayoutArgumentS",
+  "src": "Invalid Layout argument '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1419
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidLayoutCommentStatementSS",
+  "src": "Invalid Layout Comment statement '{0}'. {1}",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1517
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidLayoutNodeStatementSS",
+  "src": "Invalid Layout Node statement '{0}'. {1}",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1498
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidLayoutStatementNameInS",
+  "src": "Invalid Layout statement name in '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1397
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidLayoutStatementS",
+  "src": "Invalid Layout statement '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1382
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidMetadataEntryS",
+  "src": "Invalid metadata entry '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 393
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidOutputBindingS",
+  "src": "Invalid output binding '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1345
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidOutputDeclarationInitializerS",
+  "src": "Invalid output declaration initializer '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1333
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidOutputExpressionTargetS",
+  "src": "Invalid output expression target '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1227
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidPropertyDeclarationS",
+  "src": "Invalid property declaration '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 610
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidScalarDefaultValueSFor",
+  "src": "Invalid scalar default value '{0}' for property '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 665
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidScalarDefaultValueSFor2",
+  "src": "Invalid scalar default value '{0}' for property '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 768
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidSettingDeclarationS",
+  "src": "Invalid setting declaration '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1141
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidTextureDefaultValueSFor",
+  "src": "Invalid texture default value '{0}' for property '{1}'. {2}",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 700
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidTextureDefaultValueSFor2",
+  "src": "Invalid texture default value '{0}' for property '{1}'. {2}",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 854
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidTextureSampleDefaultValueS",
+  "src": "Invalid texture sample default value '{0}' for property '{1}'. {2}",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 726
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidTypedDeclarationS",
+  "src": "Invalid typed declaration '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1167
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidTypedDeclarationS2",
+  "src": "Invalid typed declaration '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1177
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidTypedDeclarationS3",
+  "src": "Invalid typed declaration '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1664
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidUEBuiltinArgumentSIn",
+  "src": "Invalid UE builtin argument '{0}' in '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 547
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidUEBuiltinDeclarationS",
+  "src": "Invalid UE builtin declaration '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 504
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidUEBuiltinDeclarationS2",
+  "src": "Invalid UE builtin declaration '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 522
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidVectorDefaultValueSFor",
+  "src": "Invalid vector default value '{0}' for property '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 686
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "InvalidVectorDefaultValueSFor2",
+  "src": "Invalid vector default value '{0}' for property '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 818
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "LayoutArgumentSIsDeclaredMore",
+  "src": "Layout argument '{0}' is declared more than once.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1426
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "LayoutArgumentSIsRequired",
+  "src": "Layout argument '{0}' is required.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1446
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "LayoutArgumentSMustBeAn",
+  "src": "Layout argument '{0}' must be an integer.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1464
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "LayoutArgumentSMustUseKey",
+  "src": "Layout argument '{0}' must use Key=Value syntax.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1410
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "LayoutCommentColorMustBeA",
+  "src": "Layout Comment Color must be a float4 literal in '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1527
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "MaterialFunctionGraphCodeDeprecated",
+  "src": "ShaderFunction, ShaderLayer, and ShaderLayerBlend graph sections now use Graph = { ... }. Function Code = { ... } is still supported.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1956
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "MetadataEntrySMustUseKey",
+  "src": "Metadata entry '{0}' must use Key=Value syntax.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 383
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "MetadataKeySIsDeclaredMore",
+  "src": "Metadata key '{0}' is declared more than once.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 400
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "MetadataMustFollowADeclaration",
+  "src": "Metadata must follow a declaration.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 258
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "MetadataSliderMinMaxRequiresExactly",
+  "src": "Metadata 'Slider(min, max)' requires exactly two numeric bounds: '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 361
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "MetadataSliderMinSliderMaxIsDeclaredMore",
+  "src": "Metadata SliderMin/SliderMax is declared more than once (entry '{0}').",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 370
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "MetadataSortPriorityValueSIsNot",
+  "src": "Metadata SortPriority value '{0}' is not an integer.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 419
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "MissingPropertyNameInDeclarationS",
+  "src": "Missing property name in declaration '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 619
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "MissingPropertyTypeAfterConstIn",
+  "src": "Missing property type after const in declaration '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 633
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "OutputBindingTargetCannotBeEmpty",
+  "src": "Output binding target cannot be empty.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1196
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "OutputBindingTargetSIsEmpty",
+  "src": "Output binding target '{0}' is empty.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1209
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "OutputBindingTargetSMustStart",
+  "src": "Output binding target '{0}' must start with Base. for material outputs or Expression(...) for output nodes.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1218
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "ParameterNodeTypeSIsRecognized",
+  "src": "Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\"float4\\\", ...) for reflected node creation.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 735
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "ShaderGraphCodeDeprecated",
+  "src": "Shader graph sections now use Graph = { ... }. Function Code = { ... } is still supported.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1800
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UEBuiltinArgumentSIsDeclared",
+  "src": "UE builtin argument '{0}' is declared more than once in '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 555
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UEBuiltinArgumentSMustUse",
+  "src": "UE builtin argument '{0}' must use named syntax like Key=Value in '{1}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 537
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UEBuiltinPropertyDeclarationsMustSpecify",
+  "src": "UE builtin property declarations must specify a function name, for example UE.TexCoord UV.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 492
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UEBuiltinPropertySDoesNot",
+  "src": "UE builtin property '{0}' does not support inline defaults. Put arguments inside UE.{1}(...).",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 750
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnexpectedCharactersAfterUEBuiltinArgument",
+  "src": "Unexpected characters after UE builtin argument list in '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 511
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnexpectedInPropertiesNearSOnly",
+  "src": "Unexpected '{{' in Properties near '{0}'. Only Group(\"Name\") {{ ... }} may open a brace here.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1028
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnexpectedTextAfterLayoutStatementS",
+  "src": "Unexpected text after Layout statement '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1389
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnknownLayoutStatementS",
+  "src": "Unknown Layout statement '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1537
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnknownMaterialFunctionSectionS",
+  "src": "Unknown material function section '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1961
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnknownShaderFunctionSectionS",
+  "src": "Unknown shader function section '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1864
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnknownShaderSectionS",
+  "src": "Unknown shader section '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1805
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnknownVirtualFunctionSectionS",
+  "src": "Unknown VirtualFunction section '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 2029
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnsupportedOutputTargetS",
+  "src": "Unsupported output target '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1235
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnsupportedPropertyTypeS",
+  "src": "Unsupported property type '{0}'.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 864
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnsupportedUEBuiltinFunctionSUse",
+  "src": "Unsupported UE builtin function '{0}'. Use OutputType=\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\" for generic MaterialExpression calls.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 582
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "UnterminatedGroupBlock",
+  "src": "Unterminated Group(\"{0}\") {{ ... }} block.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 1086
+ },
+ {
+  "ns": "DreamShader.Parser.Sections",
+  "key": "VirtualFunctionNoGraphOrCode",
+  "src": "VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
+  "line": 2024
+ },
+ {
+  "ns": "DreamShader.Preview",
+  "key": "CompiledPreviewMaterial",
+  "src": "Compiled preview material for {0}.",
+  "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
+  "line": 659
+ },
+ {
+  "ns": "DreamShader.Preview",
+  "key": "CompiledPreviewMaterialWithDetails",
+  "src": "Compiled preview material for {0}. {1}",
+  "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
+  "line": 662
+ },
+ {
+  "ns": "DreamShader.Preview",
+  "key": "GeneratedMaterialCouldNotBeLoaded",
+  "src": "Generated material '{0}' could not be loaded.",
+  "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
+  "line": 654
+ },
+ {
+  "ns": "DreamShader.Preview",
+  "key": "PreviewSourceMissing",
+  "src": "DreamShader source '{0}' does not exist.",
+  "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
+  "line": 620
+ },
+ {
+  "ns": "DreamShader.Preview",
+  "key": "PreviewSupportsOnlyDsm",
+  "src": "DreamShader preview only supports .dsm material files: '{0}'.",
+  "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
+  "line": 626
+ },
+ {
+  "ns": "DreamShader.Preview",
+  "key": "RenderedPreview",
+  "src": "Rendered preview for {0}.",
+  "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
+  "line": 696
+ },
+ {
+  "ns": "DreamShader.VirtualFunction",
+  "key": "InvalidMaterialFunctionPackagePath",
+  "src": "MaterialFunction '{0}' does not have a valid package path.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionService.cpp",
+  "line": 201
+ },
+ {
+  "ns": "DreamShader.VirtualFunction",
+  "key": "MaterialFunctionHasNoOutputs",
+  "src": "MaterialFunction '{0}' does not expose any outputs.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionService.cpp",
+  "line": 295
+ },
+ {
+  "ns": "DreamShader.VirtualFunction",
+  "key": "NoMaterialFunctionAssetProvided",
+  "src": "No MaterialFunction asset was provided.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionService.cpp",
+  "line": 191
+ },
+ {
+  "ns": "DreamShader.VirtualFunction",
+  "key": "VirtualFunctionHasNoOutputs",
+  "src": "VirtualFunction '{0}' does not expose any outputs.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionService.cpp",
+  "line": 399
+ },
+ {
+  "ns": "DreamShader.VirtualFunction",
+  "key": "VirtualFunctionNameCannotBeEmpty",
+  "src": "VirtualFunction name cannot be empty.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionService.cpp",
+  "line": 392
+ },
+ {
+  "ns": "DreamShaderEditor.Settings",
+  "key": "SectionDescription",
+  "src": "Dream Shader Settings",
+  "file": "DreamShader\\Public\\DreamShaderSettings.h",
+  "line": 44
+ },
+ {
+  "ns": "DreamShaderEditor.Settings",
+  "key": "SectionText",
+  "src": "Dream Shader",
+  "file": "DreamShader\\Public\\DreamShaderSettings.h",
+  "line": 43
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCleanGeneratedShadersLabel",
+  "src": "Clean Generated Shaders",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1187
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCleanGeneratedShadersTooltip",
+  "src": "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1188
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCleanPersistedGeneratedAssetsLabel",
+  "src": "Clean Persisted Generated Assets",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1193
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCleanPersistedGeneratedAssetsTooltip",
+  "src": "Delete DreamShader-generated material assets that are saved on disk (they shadow in-memory material mode). Shows a confirmation with the full list; source files are untouched and regenerate in memory.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1194
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCleanPersistedNoneFound",
+  "src": "No persisted DreamShader-generated assets found.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1598
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCleanPersistedResult",
+  "src": "Deleted {0} of {1} persisted generated asset(s).",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1616
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCopyVirtualFunctionCallLabel",
+  "src": "CopyVirtualFunctionCall",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1475
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCopyVirtualFunctionCallNoAsset",
+  "src": "DreamShader could not find the selected Material Function.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1976
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCopyVirtualFunctionCallTooltip",
+  "src": "Copy a DreamShader Graph call example for this VirtualFunction.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1476
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCopyVirtualFunctionLabel",
+  "src": "CopyVirtualFunction",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1457
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCopyVirtualFunctionNoAsset",
+  "src": "DreamShader could not find the selected Material Function.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1783
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCopyVirtualFunctionReferenceLabel",
+  "src": "Copy Virtual Function Reference",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1445
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCopyVirtualFunctionReferenceNoAsset",
+  "src": "DreamShader could not find the selected Material Function.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1920
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCopyVirtualFunctionReferenceTooltip",
+  "src": "Copy a DreamShader Graph call that references this existing VirtualFunction.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1446
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCopyVirtualFunctionTooltip",
+  "src": "Copy a complete DreamShader VirtualFunction declaration for this Material Function.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1458
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCreateVirtualFunctionLabel",
+  "src": "CreateVirtualFunction",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1466
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCreateVirtualFunctionNoAsset",
+  "src": "DreamShader could not find the selected Material Function.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1812
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderCreateVirtualFunctionTooltip",
+  "src": "Create a .dsh file containing the VirtualFunction declaration.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1467
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderDecompileActionsSection",
+  "src": "Decompiler",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1396
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderExportFunctionDSFLabel",
+  "src": "Export DSF",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1420
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderExportFunctionDSFTooltip",
+  "src": "Export this Material Function graph to a DreamShader .dsf source file.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1421
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderExportFunctionNoAsset",
+  "src": "DreamShader could not find the selected Material Function.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1733
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderExportMaterialDSMLabel",
+  "src": "Export DSM",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1399
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderExportMaterialDSMTooltip",
+  "src": "Export this Material graph to a DreamShader .dsm source file.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1400
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderExportMaterialNoAsset",
+  "src": "DreamShader could not find the selected Material.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1683
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderFunctionDecompileActionsSection",
+  "src": "Decompiler",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1417
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderInMemoryMaterialsHidden",
+  "src": "Hidden {0} in-memory material(s) from the Content Browser and asset pickers.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1582
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderInMemoryMaterialsShown",
+  "src": "Showing {0} in-memory material(s) in the Content Browser and asset pickers.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1581
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderInMemoryModeShadowed",
+  "src": "{0} previously generated asset(s) are still saved on disk and shadow the in-memory materials. Run Tools > DreamShader > Clean Persisted Generated Assets to remove them.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 567
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialActionsLabel",
+  "src": "DreamShader",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1290
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialActionsTooltip",
+  "src": "DreamShader actions for this Material.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1291
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialFunctionActionsLabel",
+  "src": "DreamShader",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1316
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialFunctionActionsTooltip",
+  "src": "DreamShader actions for this Material Function.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1317
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialFunctionToolbarMenuLabel",
+  "src": "DreamShader",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1382
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialFunctionToolbarMenuTooltip",
+  "src": "DreamShader actions for this Material Function.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1383
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialToolbarMenuLabel",
+  "src": "DreamShader",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1364
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialToolbarMenuTooltip",
+  "src": "DreamShader actions for this Material.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1365
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderOpenVirtualFunctionLabel",
+  "src": "OpenVirtualFunction",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1436
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderOpenVirtualFunctionNoAsset",
+  "src": "DreamShader could not find the selected Material Function.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1876
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderOpenVirtualFunctionTooltip",
+  "src": "Open the existing DreamShader VirtualFunction definition in VSCode.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1437
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderOpenWorkspaceLabel",
+  "src": "Open Dream Shader Workspace (VSCode)",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1212
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderOpenWorkspaceToolbarLabel",
+  "src": "Open Dream Shader Workspace (VSCode)",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1230
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderOpenWorkspaceToolbarTooltip",
+  "src": "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1231
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderOpenWorkspaceTooltip",
+  "src": "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1213
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderRecompileLabel",
+  "src": "Recompile DSM",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1181
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderRecompileToolbarLabel",
+  "src": "DSM",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1224
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderRecompileToolbarTooltip",
+  "src": "Recompile all DreamShader .dsm and .dsf source files.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1225
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderRecompileTooltip",
+  "src": "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1182
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderToggleShowInMemoryMaterialsLabel",
+  "src": "Show In-Memory Materials",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1199
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderToggleShowInMemoryMaterialsTooltip",
+  "src": "Show memory-only ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials and are always visible, so this toggle does not affect them. While shown, an explicit Save on one would persist it to disk (the shadow warning and Clean command cover recovery).",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1200
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderVirtualFunctionActionsSection",
+  "src": "VirtualFunction",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1430
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "MaterialCompileErrorHeader",
+  "src": "[{0} / {1}] {2}",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1125
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AssetPathNoShaderBlock",
+  "src": "{0}: this file does not define a top-level Shader block.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderGeneratedAssetPath.cpp",
+  "line": 50
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AssetPathParseError",
+  "src": "{0}: {1}",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderGeneratedAssetPath.cpp",
+  "line": 44
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AssetPathReadFailed",
+  "src": "Failed to read DreamShader source '{0}'.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderGeneratedAssetPath.cpp",
+  "line": 20
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "BadName",
+  "src": "Provide a name and a destination folder.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 127
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Base",
+  "src": "Base",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 270
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "BaseNone",
+  "src": "-",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 270
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Blend",
+  "src": "Blend mode",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 272
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Browse",
+  "src": "Browse...",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 278
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "BrowseTip",
+  "src": "Pick the destination folder.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 279
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Cancel",
+  "src": "Cancel",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 323
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CBCreateInstance",
+  "src": "Create DreamShader instance",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 58
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CBCreateInstanceTip",
+  "src": "Create a material instance that shares this material's compiled shader map.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 59
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ChainRowFmt",
+  "src": "{0}{1}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 162
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ChildrenHeader",
+  "src": "Child instances ({0})",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 287
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileAll",
+  "src": "Compile all",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 129
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileAllTip",
+  "src": "Force-recompile every .dsm/.dsf source (in memory).",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 130
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompiledAll",
+  "src": "Compiled {0} source(s), {1} failed",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 357
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileFail",
+  "src": "Failed to compile {0}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 651
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileOk",
+  "src": "Compiled {0}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 651
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompilingAll",
+  "src": "Compiling all DreamShader sources...",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 336
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Create",
+  "src": "Create",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 333
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CreateInstance",
+  "src": "Create instance",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
+  "line": 118
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CreateInstanceBtn",
+  "src": "Create instance",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 220
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CreateInstanceTip",
+  "src": "Create a material instance of the selected material (shares its compiled shader map).",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
+  "line": 119
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CreateInstanceTitle",
+  "src": "Create material instance",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 219
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DiagnosticLineFmt",
+  "src": "L{0}:{1} {2}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 288
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Domain",
+  "src": "Domain",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 271
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "EmptyProject",
+  "src": "No materials found under /Game.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
+  "line": 98
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ErrorsOnly",
+  "src": "Errors only",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 152
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "FactoryAssetExists",
+  "src": "An asset already exists at {0}.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 141
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "FactoryCreatePackageFailed",
+  "src": "Failed to create package {0}.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 148
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "FactoryMaterializeFailed",
+  "src": "Failed to materialize the material to disk: {0}",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 77
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "FactoryReloadFailed",
+  "src": "Materialized the material but could not reload it at {0}.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 84
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "FunctionDetail",
+  "src": "Function library / header. Recompiles the materials that import it.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 374
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "FunctionUsedBy",
+  "src": "function · used by {0} material(s)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 587
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "GenPage",
+  "src": "Dream Shader Gen",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 169
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "GenPageNoGeneratedAsset",
+  "src": "No generated asset at {0}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 390
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "HideFunctions",
+  "src": "Hide functions",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 165
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Inheritance",
+  "src": "Inheritance",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 279
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "InMemory",
+  "src": "memory-only (not saved)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 273
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "InstanceCreated",
+  "src": "Created {0}",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 348
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "InstanceNeedsCompile",
+  "src": "Compile {0} first.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 713
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "MaterializeBtn",
+  "src": "Materialize",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 243
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Materialized",
+  "src": "Materialized {0} to disk",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 257
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "MaterializeNoSource",
+  "src": "This material is memory-only and has no DreamShader source file to materialize from.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 69
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "MaterializeTip",
+  "src": "Write this memory-only material (and its base) to disk.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 244
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NameLabel",
+  "src": "Name",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 255
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewObjectFailed",
+  "src": "Failed to create the material instance object.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 156
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NoChildren",
+  "src": "No loaded child instances.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 180
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NoneSelected",
+  "src": "Select a material, then create an instance.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
+  "line": 134
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NoParent",
+  "src": "No parent material was provided.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 122
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NoSelection",
+  "src": "Select a material to see its inheritance and settings.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 109
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OnDisk",
+  "src": "on disk",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 273
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenAfter",
+  "src": "Open the instance after creating",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 301
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenBtn",
+  "src": "Open",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 230
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenTabLabel",
+  "src": "Material Content Browser",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 97
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenTabTooltip",
+  "src": "Open the DreamShader Material Content Browser.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 98
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ParentGone",
+  "src": "The parent material is no longer available.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 339
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ParentLabel",
+  "src": "Parent",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 244
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PathLabel",
+  "src": "Folder",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 266
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PComp",
+  "src": "Compile",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 473
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PCompTip",
+  "src": "Force-recompile this source (in memory).",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 473
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PickFolderTitle",
+  "src": "Choose a destination folder",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 283
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PInst",
+  "src": "Create instance",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 476
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PInstTip",
+  "src": "Create a material instance of this material.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 476
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PMat",
+  "src": "Materialize",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 484
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PMatTip",
+  "src": "Write this memory-only material (and its base) to disk.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 484
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "POpenMat",
+  "src": "Open material",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 480
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "POpenMatTip",
+  "src": "Open the generated material asset.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 480
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "POpenSrc",
+  "src": "Open source",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 509
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "POpenSrcTip",
+  "src": "Open the .dsm/.dsf in your preferred editor.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 509
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PreviewFunction",
+  "src": "function library",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 457
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PreviewNoMaterial",
+  "src": "not compiled yet",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 457
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PreviewNone",
+  "src": "Select a source file to preview its material.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 430
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PreviewUsedBy",
+  "src": "used by {0} material(s)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 549
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProjectPage",
+  "src": "Project",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 163
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Refresh",
+  "src": "Refresh",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 118
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "RefreshTip",
+  "src": "Rescan the source directory and recompute status.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 119
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SearchHint",
+  "src": "Search sources",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 139
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SelectedFmt",
+  "src": "Selected: {0}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
+  "line": 133
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SelectFirst",
+  "src": "Select a material to create an instance of.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 200
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ShowInMemory",
+  "src": "Show in-memory materials",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
+  "line": 147
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ShowInMemoryTip",
+  "src": "Show DreamShader's memory-only materials here and in the Content Browser (global setting).",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
+  "line": 145
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SourceCount",
+  "src": "{0} / {1}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 178
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SourceNone",
+  "src": "-",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 120
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SourceRow",
+  "src": "Source",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 274
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusError",
+  "src": "compile error",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 76
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusFunction",
+  "src": "function / header",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 78
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusNever",
+  "src": "not compiled",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 74
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusStale",
+  "src": "stale",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 72
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusUnresolved",
+  "src": "unresolved",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 80
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusUpToDate",
+  "src": "up to date",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 70
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Storage",
+  "src": "Storage",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
+  "line": 273
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SubLabelWithRoot",
+  "src": "{0} · {1}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
+  "line": 592
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "TabTitle",
+  "src": "Material Content Browser",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 84
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "TabTooltip",
+  "src": "Browse, manage, and create instances of project and DreamShader-generated materials.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 85
+ },
+ {
+  "ns": "DreamShaderTests",
+  "key": "WireUtils.Float",
+  "src": "value {0}",
+  "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
+  "line": 177
+ },
+ {
+  "ns": "DreamShaderTests",
+  "key": "WireUtils.Inner",
+  "src": "inner {0}",
+  "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
+  "line": 163
+ },
+ {
+  "ns": "DreamShaderTests",
+  "key": "WireUtils.Ordered",
+  "src": "Unsupported swizzle {0} at line {1}.",
+  "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
+  "line": 146
+ },
+ {
+  "ns": "DreamShaderTests",
+  "key": "WireUtils.Outer",
+  "src": "outer [{0}] end",
+  "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
+  "line": 166
+ },
+ {
+  "ns": "DreamShaderTests",
+  "key": "WireUtils.Plain",
+  "src": "Generation aborted.",
+  "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
+  "line": 131
+ },
+ {
+  "ns": "DreamShaderVirtualFunctionSyncService",
+  "key": "InvalidAssetReference",
+  "src": "VirtualFunction '{0}' asset reference is invalid: {1}",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
+  "line": 397
+ },
+ {
+  "ns": "DreamShaderVirtualFunctionSyncService",
+  "key": "InvalidDeclaration",
+  "src": "VirtualFunction declaration is invalid: {0}",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
+  "line": 377
+ },
+ {
+  "ns": "DreamShaderVirtualFunctionSyncService",
+  "key": "MissingClosingBrace",
+  "src": "VirtualFunction body is missing a closing '}'.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
+  "line": 345
+ },
+ {
+  "ns": "DreamShaderVirtualFunctionSyncService",
+  "key": "MissingClosingParenthesis",
+  "src": "VirtualFunction attributes are missing a closing ')'.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
+  "line": 317
+ },
+ {
+  "ns": "DreamShaderVirtualFunctionSyncService",
+  "key": "MissingMaterialFunction",
+  "src": "VirtualFunction '{0}' references missing MaterialFunction '{1}'.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
+  "line": 494
+ },
+ {
+  "ns": "DreamShaderVirtualFunctionSyncService",
+  "key": "ReadSourceFileFailed",
+  "src": "DreamShader could not read VirtualFunction source file '{0}'.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
+  "line": 265
+ },
+ {
+  "ns": "DreamShaderVirtualFunctionSyncService",
+  "key": "RefreshFailed",
+  "src": "VirtualFunction '{0}' could not be refreshed from MaterialFunction '{1}': {2}",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
+  "line": 511
+ },
+ {
+  "ns": "DreamShaderVirtualFunctionSyncService",
+  "key": "UpdateSourceFileFailed",
+  "src": "DreamShader failed to update VirtualFunction source file '{0}'.",
+  "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
+  "line": 553
+ }
+]
