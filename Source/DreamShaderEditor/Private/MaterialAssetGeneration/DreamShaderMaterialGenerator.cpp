@@ -1,6 +1,7 @@
 #include "DreamShaderMaterialGenerator.h"
 
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
+#include "DreamShaderGraphRollback.h"
 #include "DreamShaderMaterialGeneratorCodeShared.h"
 #include "DreamShaderMaterialGeneratorDiagnostics.h"
 #include "DreamShaderMaterialGeneratorPrivate.h"
@@ -1313,6 +1314,17 @@ namespace UE::DreamShader::Editor
 				return false;
 			}
 
+			// Storage decides from here, not the request. See IsGeneratedAssetPersisted.
+			const bool bEffectiveTransient = bTransient && !Private::IsGeneratedAssetPersisted(MaterialFunction);
+
+			FString DeferMessage;
+			if (Private::ShouldDeferPersistedAssetToWriteOwner(MaterialFunction, !bEffectiveTransient, DeferMessage))
+			{
+				OutGeneratedAssetPath = MaterialFunction->GetPathName();
+				UE_LOG(LogDreamShader, Display, TEXT("%s"), *DeferMessage);
+				return true;
+			}
+
 			const EMaterialFunctionUsage ExpectedUsage = GetUnrealMaterialFunctionUsage(FunctionDefinition.Kind);
 			if (!bForce
 				&& Private::IsGeneratedAssetSourceCurrent(MaterialFunction, SourceFilePath, SourceHash)
@@ -1322,17 +1334,47 @@ namespace UE::DreamShader::Editor
 				return true;
 			}
 
+			// Before Modify()/SetMaterialFunctionUsage, which are already edits to the asset: a function
+			// that fails this gate must come out of the compile completely untouched, because its call
+			// sites read its pins from the live asset and a half-updated function breaks all of them.
+			FString FunctionEditorOpenError;
+			if (!Private::CheckGeneratedAssetNotOpenInEditor(MaterialFunction, FunctionEditorOpenError))
+			{
+				OutError = FunctionEditorOpenError;
+				return false;
+			}
+
+			FString FunctionDivergenceError;
+			if (!Private::CheckGeneratedAssetNotDiverged(MaterialFunction, FunctionDivergenceError))
+			{
+				OutError = FunctionDivergenceError;
+				return false;
+			}
+
 			MaterialFunction->Modify();
-			MaterialFunction->SetMaterialFunctionUsage(ExpectedUsage);
+
+			// Ahead of the snapshot, and it must stay there: this destroys the generated comment
+			// boxes, so a snapshot taken first would capture pointers to comments already garbage.
+			Private::ClearDreamShaderGeneratedComments(nullptr, MaterialFunction);
+
+			// Also ahead of the snapshot, but for the opposite reason: this reads the pin GUIDs off the
+			// live FunctionInput/FunctionOutput nodes, and the rollback detaches those nodes. Caching
+			// after arming it would find an empty graph and lose every call site's wiring.
 			TMap<FName, FGuid> ExistingInputIdsByName;
 			TMap<FName, FGuid> ExistingOutputIdsByName;
 			CacheMaterialFunctionInterfaceIds(MaterialFunction, ExistingInputIdsByName, ExistingOutputIdsByName);
+
 		FunctionSlowTask.EnterProgressFrame(
 			1.0f,
 			FText::Format(
 				LOCTEXT("ClearingOldFunctionGraph", "Clearing old function graph '{0}'..."),
 				FText::FromString(MaterialFunction->GetName())));
-			Private::ClearMaterialFunctionExpressions(MaterialFunction);
+			// Everything from here until Commit() is reversible -- including the usage below, which is
+			// why the snapshot is taken before it rather than where the old teardown sat. A function
+			// that fails to rebuild is the dangerous case: its call sites read their pins from the live
+			// asset, so an emptied one used to take every material that called it down with it.
+			Private::FDreamShaderGraphRollback Rollback(MaterialFunction);
+			MaterialFunction->SetMaterialFunctionUsage(ExpectedUsage);
 
 			if (const FString* Description = FunctionDefinition.Settings.Find(UE::DreamShader::NormalizeSettingKey(TEXT("Description"))))
 			{
@@ -1833,8 +1875,8 @@ namespace UE::DreamShader::Editor
 				OutputPositionY += 180;
 			}
 
-			const bool bLayoutThisFunction = !bTransient || GetDefault<UDreamShaderSettings>()->bLayoutInMemoryGraphs;
-			if (bTransient)
+			const bool bLayoutThisFunction = !bEffectiveTransient || GetDefault<UDreamShaderSettings>()->bLayoutInMemoryGraphs;
+			if (bEffectiveTransient)
 			{
 				FunctionSlowTask.EnterProgressFrame(1.0f);
 			}
@@ -1855,8 +1897,14 @@ namespace UE::DreamShader::Editor
 					&FunctionDefinition.Layout,
 					GeneratedExpressionsByVariable.IsEmpty() ? nullptr : &GeneratedExpressionsByVariable,
 					RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
-					bTransient);
+					bEffectiveTransient);
 			}
+
+			// The graph is complete and nothing below can fail. Before UpdateMaterialFunction, because
+			// that reaches ForceRecompileForRendering, which is one of the two places that REBUILD
+			// DependentFunctionExpressionCandidates -- and Commit() resets it. The other order would
+			// throw away the list the recompile had just populated.
+			Rollback.Commit();
 
 			FunctionSlowTask.EnterProgressFrame(
 				1.0f,
@@ -1866,7 +1914,17 @@ namespace UE::DreamShader::Editor
 			UMaterialEditingLibrary::UpdateMaterialFunction(MaterialFunction, nullptr);
 			MaterialFunction->PostEditChange();
 
-			if (bTransient)
+			// Ahead of the transient dirty-flag reset below: stamping metadata dirties the package. The
+			// source path (not the hash) is stamped in memory as well, so a memory-only function is
+			// recognized as ours and the divergence gate applies to it. See the material path for why
+			// this cannot switch the hash skip on.
+			if (bEffectiveTransient)
+			{
+				Private::ApplySourceMetadata(MaterialFunction, SourceFilePath);
+			}
+			Private::ApplyOutputDigestMetadata(MaterialFunction);
+
+			if (bEffectiveTransient)
 			{
 				FunctionSlowTask.EnterProgressFrame(1.0f);
 				// Modify()/PostEditChange dirtied the in-memory package; clear it so no save-all or
@@ -2161,7 +2219,12 @@ namespace UE::DreamShader::Editor
 		// own "Start Previewing Node" arrangement); it must drop that share before the nodes below
 		// are marked garbage.
 		Private::FDreamShaderGraphDebugRegistry::Get().NotifyGraphMaterialAboutToReset(Material);
-		Private::ClearMaterialExpressions(Material);
+		// Ahead of the snapshot, and it must stay there: this destroys the generated comment boxes, so
+		// a snapshot taken first would capture pointers to comments that are already garbage.
+		Private::ClearDreamShaderGeneratedComments(Material, nullptr);
+		// Everything from here until Commit() is reversible. Every `return false` below rolls the
+		// material back to what it held on the line above, instead of leaving it emptied.
+		Private::FDreamShaderGraphRollback Rollback(Material);
 		Private::ResetMaterialToDefaults(Material);
 
 		FString SettingsError;
@@ -2653,6 +2716,12 @@ namespace UE::DreamShader::Editor
 				bTransient);
 		}
 
+		// The graph is complete and nothing below can fail, so the old one is finally expendable.
+		// Before the recompile, not after: the recompile is what publishes the new graph to the
+		// renderer, and holding a detached copy of the old one across it would keep every node of it
+		// alive through the compile for no reason.
+		Rollback.Commit();
+
 		// The finished graph is now addressable by (line, name). Publish before the recompile so a
 		// probe preview that re-wires on publish gets its own compile queued alongside this one.
 		Private::FDreamShaderGraphDebugRegistry::Get().Publish(SourceFilePath, Material, MoveTemp(GraphProbes));
@@ -2777,16 +2846,45 @@ namespace UE::DreamShader::Editor
 			return false;
 		}
 
+		// Storage decides from here, not the request (see IsGeneratedAssetPersisted). Asking the
+		// instance answers for the pair: the base is a subobject of it, so they share one package and
+		// one file.
+		const bool bEffectiveTransient = bTransient && !Private::IsGeneratedAssetPersisted(Instance);
+
+		if (Private::ShouldDeferPersistedAssetToWriteOwner(Instance, !bEffectiveTransient, OutMessage))
+		{
+			return true;
+		}
+
 		if (!bForce && Private::IsGeneratedAssetSourceCurrent(Instance, SourceFilePath, SourceHash))
 		{
 			OutMessage = FString::Printf(TEXT("Skipped %s from %s; source hash is unchanged."), *Instance->GetPathName(), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return true;
 		}
 
+		// The ThinCustom pair has two ways to lose work -- ClearParameterValuesEditorOnly wipes every
+		// override on the instance, and the base's graph is torn down below -- and the instance's
+		// digest covers both, so one gate here guards the pair. A hand-authored instance that never
+		// carried a stamp is a different case, and CreateOrReuseInstanceMaterial's ownership guard
+		// (added alongside this) is what turns it away.
+		FString EditorOpenError;
+		if (!Private::CheckGeneratedAssetNotOpenInEditor(Instance, EditorOpenError))
+		{
+			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *EditorOpenError); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			return false;
+		}
+
+		FString DivergenceError;
+		if (!Private::CheckGeneratedAssetNotDiverged(Instance, DivergenceError))
+		{
+			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *DivergenceError); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			return false;
+		}
+
 		// After the skip check on purpose: a hash-skip must not create (or ownership-check) a base.
 		UMaterial* BaseMaterial = nullptr;
 		FString BaseError;
-		if (!EnsureThinCustomBaseMaterial(Definition, bTransient, Instance, BaseMaterial, BaseError) || !BaseMaterial)
+		if (!EnsureThinCustomBaseMaterial(Definition, bEffectiveTransient, Instance, BaseMaterial, BaseError) || !BaseMaterial)
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *BaseError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
@@ -2807,7 +2905,7 @@ namespace UE::DreamShader::Editor
 			if (!PopulateMaterialGraphFromDefinition(
 					BaseMaterial, Definition, SourceFilePath, SourceText, NamedOutputs,
 					bUsesReturn, ReturnOutputType, bReturnIsSubstrateMaterial, bUsesFrontMaterial,
-					bTransient, GraphBuildTask, OutMessage))
+					bEffectiveTransient, GraphBuildTask, OutMessage))
 			{
 				return false;
 			}
@@ -2823,8 +2921,12 @@ namespace UE::DreamShader::Editor
 		Instance->UpdateStaticPermutation();
 		Instance->PostEditChange();
 		Private::ApplySourceMetadata(Instance, SourceFilePath, SourceHash);
+		// After UpdateStaticPermutation and PostEditChange: those settle the instance's static
+		// parameter set, which the digest reads, so stamping ahead of them would fingerprint a state
+		// the asset is not left in.
+		Private::ApplyOutputDigestMetadata(Instance);
 
-		if (bTransient)
+		if (bEffectiveTransient)
 		{
 			// The editor-only setters and PostEditChange dirtied the in-memory package; clear it so no
 			// save-all or exit prompt can silently persist a virtual instance material.
@@ -3031,21 +3133,67 @@ namespace UE::DreamShader::Editor
 			return false;
 		}
 
+		// From here on the asset's storage decides, not the request: an in-memory compile that landed on
+		// an asset with a file behind it is a persisted compile. See IsGeneratedAssetPersisted.
+		const bool bPersistThisMaterial = bTransient && Private::IsGeneratedAssetPersisted(Material);
+		const bool bEffectiveTransient = bTransient && !bPersistThisMaterial;
+
+		// Only one process per project writes these files. A second editor keeps its own in-memory
+		// materials current and leaves the shared one to whoever owns the bridge.
+		if (Private::ShouldDeferPersistedAssetToWriteOwner(Material, !bEffectiveTransient, OutMessage))
+		{
+			return true;
+		}
+
 		if (!bForce && Private::IsGeneratedAssetSourceCurrent(Material, SourceFilePath, SourceHash))
 		{
 			OutMessage = FString::Printf(TEXT("Skipped %s from %s; source hash is unchanged."), *Material->GetPathName(), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return true;
 		}
 
+		// Before the graph is touched: a rebuild is a destructive act on a hand-edited asset, and the
+		// only moment it can still be refused is while the old graph is still there.
+		//
+		// The open-editor check comes first because it is the plainer obstacle -- close the window --
+		// and because an editor that is open may still be about to change the divergence answer.
+		FString EditorOpenError;
+		if (!Private::CheckGeneratedAssetNotOpenInEditor(Material, EditorOpenError))
+		{
+			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *EditorOpenError); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			return false;
+		}
+
+		FString DivergenceError;
+		if (!Private::CheckGeneratedAssetNotDiverged(Material, DivergenceError))
+		{
+			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *DivergenceError); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			return false;
+		}
+
 		if (!PopulateMaterialGraphFromDefinition(
 				Material, Definition, SourceFilePath, SourceText, NamedOutputs,
 				bUsesReturn, ReturnOutputType, bReturnIsSubstrateMaterial, bUsesFrontMaterial,
-				bTransient, MaterialSlowTask, OutMessage))
+				bEffectiveTransient, MaterialSlowTask, OutMessage))
 		{
 			return false;
 		}
 
-		if (bTransient)
+		// Stamped for both modes, and ahead of the transient dirty-flag reset below because writing
+		// package metadata dirties the package. An in-memory material is regenerated from scratch every
+		// session, so its stamp only has to survive until the next compile in THIS one -- which is
+		// exactly the window in which a hand edit to it can be destroyed.
+		//
+		// The source PATH is stamped in memory too (the hash deliberately is not). Without it the asset
+		// classifies as Foreign and the divergence gate never fires -- which would have left the gate
+		// dead in the editor's own default mode, where every material is memory-only. Stamping the path
+		// alone cannot switch the hash skip on, because that test needs a matching hash as well.
+		if (bEffectiveTransient)
+		{
+			Private::ApplySourceMetadata(Material, SourceFilePath);
+		}
+		Private::ApplyOutputDigestMetadata(Material);
+
+		if (bEffectiveTransient)
 		{
 			MaterialSlowTask.EnterProgressFrame(1.0f);
 			// Modify()/PostEditChange dirtied the in-memory package; clear it so no save-all or
@@ -3070,7 +3218,11 @@ namespace UE::DreamShader::Editor
 			}
 		}
 
-		OutMessage = FString::Printf(TEXT("Generated %s from %s.%s"), *Material->GetPathName(), *SourceFilePath, bTransient ? TEXT(" (virtual)") : TEXT("")); /* I18N-EXEMPT: deferred codegen or compatibility path */
+		OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+			TEXT("Generated %s from %s.%s"),
+			*Material->GetPathName(),
+			*SourceFilePath,
+			bEffectiveTransient ? TEXT(" (virtual)") : (bPersistThisMaterial ? TEXT(" (saved; the asset exists on disk)") : TEXT("")));
 		return true;
 	}
 }

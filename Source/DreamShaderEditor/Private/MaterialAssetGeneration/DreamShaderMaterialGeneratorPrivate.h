@@ -3,6 +3,9 @@
 #include "CoreMinimal.h"
 #include "DreamShaderTypes.h"
 
+// EDreamShaderDigestState, returned by the provenance helpers declared below.
+#include "DreamShaderGeneratedAssetDigest.h"
+
 // EBlendMode / EMaterialShadingModel, used by the resolver declarations below. Unity builds happened
 // to pull these in through a neighbouring TU; a non-unity compile of this header does not.
 #include "Engine/EngineTypes.h"
@@ -276,8 +279,9 @@ namespace UE::DreamShader::Editor::Private
 	FString BuildGeneratedFunctionSymbolName(const FTextShaderFunctionDefinition& Function);
 	FString BuildGeneratedIncludeVirtualPath(const FString& SourceFilePath);
 	bool WriteGeneratedInclude(const FString& SourceFilePath, const FTextShaderDefinition& Definition, FString& OutError);
-	void ClearMaterialExpressions(UMaterial* Material);
-	void ClearMaterialFunctionExpressions(UMaterialFunction* MaterialFunction);
+	// Tearing a graph down is FDreamShaderGraphRollback's job now (DreamShaderGraphRollback.h): it
+	// detaches the old nodes instead of destroying them, so a build that fails partway can put them
+	// back. The two former ClearMaterial*Expressions helpers were its non-reversible ancestors.
 	void EnsureExpressionCanBeDeleted(UMaterialExpression* Expression);
 	void ClearDreamShaderGeneratedComments(UMaterial* Material, UMaterialFunction* MaterialFunction);
 	FCodeValue CreateOutputRerouteValue(
@@ -370,6 +374,83 @@ namespace UE::DreamShader::Editor::Private
 	bool HasDreamShaderSourceMetadata(UObject* Asset);
 	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath);
 	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath, const FString& SourceHash);
+	/**
+	 * The second rebuild precondition, alongside CheckGeneratedAssetNotDiverged.
+	 *
+	 * An open asset editor does not edit the asset: FMaterialEditor duplicates it into a transient
+	 * UPreviewMaterial and copies that duplicate back on Apply or Save (UpdateOriginalMaterial), and
+	 * the material instance editor writes back through a UMaterialEditorInstanceConstant wrapper. So
+	 * an editor that was open across a rebuild holds a pre-rebuild copy, and the next Apply silently
+	 * reverts everything the rebuild did. Refusing is the only safe answer available: whether that
+	 * copy has unsaved edits in it is FMaterialEditor::bMaterialDirty, which is private to the
+	 * MaterialEditor module -- so "close it if it is clean" is not a question this plugin can ask, and
+	 * closing it blindly would pop a save prompt in the middle of a compile-on-save.
+	 */
+	bool IsGeneratedAssetOpenInEditor(UObject* Asset);
+	bool CheckGeneratedAssetNotOpenInEditor(UObject* Asset, FString& OutError);
+
+	/**
+	 * Whether this process is allowed to write generated assets to disk.
+	 *
+	 * Only one process per project may, and the bridge's ownership lock is what decides which. Two
+	 * editors open on the same project would otherwise both rebuild and both SavePackage the same file
+	 * -- and a save that loses that race is not a merge, it is a corrupted package or a dead editor.
+	 * True by default, because a commandlet has no bridge, no second process, and exactly one job.
+	 */
+	void SetMayWriteGeneratedAssetsToDisk(bool bMayWrite);
+	bool MayWriteGeneratedAssetsToDisk();
+	/**
+	 * True when a compile that would land on disk has to leave the asset alone because another process
+	 * owns writing it. Reported as a skip rather than a failure: a second editor is a legitimate way to
+	 * work, its own in-memory materials still compile, and only the shared file is off limits.
+	 */
+	bool ShouldDeferPersistedAssetToWriteOwner(UObject* Asset, bool bWouldPersist, FString& OutMessage);
+
+	// Whether the asset has a file behind it. The generation paths ask this right after creating or
+	// reusing their target and downgrade an in-memory request to a persisted one when it answers yes:
+	// where the asset lives decides how it is rebuilt, so there is never an in-memory copy of an
+	// on-disk asset disagreeing with the file underneath it.
+	bool IsGeneratedAssetPersisted(UObject* Asset);
+	// The project-relative source path stamped at generation time -- the asset's answer to "which file
+	// am I built from", which the Adopt action needs in order to know what to rewrite.
+	FString GetGeneratedAssetSourceFile(UObject* Asset);
+	// The stamped source hash. Only a persisted build writes one -- an in-memory build stamps the path
+	// alone, deliberately, so the skip check stays off -- which makes this the plainest reading of
+	// which of the two paths a compile actually took.
+	FString GetGeneratedAssetSourceHash(UObject* Asset);
+	// Content fingerprint bookkeeping. See DreamShaderGeneratedAssetDigest.h: the source hash says
+	// whether the SOURCE moved, these say whether the ASSET did.
+	FString GetOutputDigestMetadata(UObject* Asset);
+	void ApplyOutputDigestMetadata(UObject* Asset);
+	EDreamShaderDigestState ClassifyGeneratedAsset(UObject* Asset);
+	// Detach: drops every DreamShader stamp, which makes the asset Foreign and takes it out of the
+	// generator's hands for good (the ownership guard refuses to touch it afterwards).
+	void ClearDreamShaderMetadata(UObject* Asset);
+	// The divergence gate. Returns false -- with a message naming the three ways out -- when the asset
+	// no longer holds what DreamShader last generated into it. Must be called BEFORE anything clears
+	// the graph; that ordering is the whole point.
+	//
+	// Note what it does NOT take: a force flag. See FScopedDreamShaderRevertDiverged.
+	bool CheckGeneratedAssetNotDiverged(UObject* Asset, FString& OutError);
+
+	/**
+	 * The one thing that lets a compile overwrite a hand-edited asset. Held by the Revert action for
+	 * the duration of the rebuild it asked for, and by nothing else.
+	 *
+	 * Kept separate from bForce on purpose. bForce answers "is the source hash stale", which the
+	 * editor's startup sweep asserts unconditionally for every file it regenerates in memory; if the
+	 * gate honoured it, every restart would quietly rebuild over saved hand edits -- the exact failure
+	 * the gate exists to stop, in the mode the editor spends all its time in.
+	 */
+	struct FScopedDreamShaderRevertDiverged
+	{
+		FScopedDreamShaderRevertDiverged();
+		~FScopedDreamShaderRevertDiverged();
+
+		FScopedDreamShaderRevertDiverged(const FScopedDreamShaderRevertDiverged&) = delete;
+		FScopedDreamShaderRevertDiverged& operator=(const FScopedDreamShaderRevertDiverged&) = delete;
+	};
+	bool IsRevertingDivergedAssets();
 	bool SaveAssetPackage(UObject* Asset, FString& OutError);
 	bool SaveAssetPackages(const TArray<UObject*>& Assets, FString& OutError);
 	UClass* ResolveMaterialExpressionClass(const FString& ClassSpecifier);

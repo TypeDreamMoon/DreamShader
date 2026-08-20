@@ -6,6 +6,8 @@
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetViewUtils.h"
+#include "Editor.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "Factories/MaterialFactoryNew.h"
 #include "Interfaces/IPluginManager.h"
 #include "Materials/Material.h"
@@ -363,15 +365,87 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	// In in-memory material mode a stale saved asset at the target path wins over in-memory
-	// regeneration (the reuse path below loads and mutates it, unsaved). Surface that loudly so
-	// users understand why an "in-memory" material still shows up as an on-disk asset.
-	static void WarnIfInMemoryModeShadowedByDiskAsset(const bool bTransient, const FString& PackageName, const FString& ObjectPath)
+	namespace
+	{
+		// Defaults to true, which is what a commandlet needs: it has no bridge, no lock file and no
+		// second process to negotiate with, and it exists precisely to write these assets.
+		bool bMayWriteGeneratedAssetsToDisk = true;
+	}
+
+	void SetMayWriteGeneratedAssetsToDisk(const bool bMayWrite)
+	{
+		bMayWriteGeneratedAssetsToDisk = bMayWrite;
+	}
+
+	bool MayWriteGeneratedAssetsToDisk()
+	{
+		return bMayWriteGeneratedAssetsToDisk;
+	}
+
+	bool ShouldDeferPersistedAssetToWriteOwner(UObject* Asset, const bool bWouldPersist, FString& OutMessage)
+	{
+		if (!bWouldPersist || MayWriteGeneratedAssetsToDisk())
+		{
+			return false;
+		}
+
+		OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+			TEXT("Skipped %s; another editor owns this project's DreamShader bridge, and only that one writes generated assets to disk."),
+			*Asset->GetPathName());
+		return true;
+	}
+
+	bool IsGeneratedAssetOpenInEditor(UObject* Asset)
+	{
+		if (!Asset || !GEditor)
+		{
+			return false;
+		}
+
+		UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
+		// bFocusIfOpen=false: this is a question, and answering it must not yank a window to the front.
+		return AssetEditorSubsystem && AssetEditorSubsystem->FindEditorForAsset(Asset, /*bFocusIfOpen*/ false) != nullptr;
+	}
+
+	bool CheckGeneratedAssetNotOpenInEditor(UObject* Asset, FString& OutError)
+	{
+		if (!IsGeneratedAssetOpenInEditor(Asset))
+		{
+			return true;
+		}
+
+		OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+			TEXT("Asset '%s' is open in an asset editor, so it was NOT rebuilt. An open editor works on its own copy of the asset and writes that copy back when you press Apply or Save, ")
+			TEXT("which would silently undo this rebuild. Close the editor and compile again."),
+			*Asset->GetPathName());
+		return false;
+	}
+
+	// Whether this asset has a file behind it.
+	//
+	// This is the question that decides how a rebuild persists, and it is asked of the ASSET rather
+	// than of the caller on purpose. The editor compiles everything in memory, so an asset that is on
+	// disk would otherwise be rebuilt in memory over the top of its own file -- an object matching
+	// neither the disk nor anything that would ever be written, reporting itself clean because the
+	// transient path clears the dirty flag. Two sources of truth, one of them lying. Letting storage
+	// decide leaves exactly one: what a compile produces is what the asset is, wherever it lives.
+	bool IsGeneratedAssetPersisted(UObject* Asset)
+	{
+		const UPackage* Package = Asset ? Asset->GetOutermost() : nullptr;
+		return Package && FPackageName::DoesPackageExist(Package->GetName());
+	}
+
+	// An in-memory compile that lands on an asset which already exists on disk used to load it, rebuild
+	// it in place, and then clear the dirty flag -- leaving an object that was neither what the disk
+	// held nor anything that would ever be saved, and that reported itself clean. Now the asset's own
+	// storage decides: on disk means it is maintained on disk. This log records the promotion, since
+	// the request asked for memory-only and did not get it.
+	static void NoteInMemoryRequestPromotedToDisk(const bool bTransient, const FString& PackageName, const FString& ObjectPath)
 	{
 		if (bTransient && FPackageName::DoesPackageExist(PackageName))
 		{
-			UE_LOG(LogDreamShader, Warning,
-				TEXT("In-memory material mode: '%s' already exists as a saved asset, which shadows in-memory regeneration. Delete the saved asset to make it fully in-memory."),
+			UE_LOG(LogDreamShader, Display,
+				TEXT("'%s' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Clean Persisted Generated Assets to make it memory-only."),
 				*ObjectPath);
 		}
 	}
@@ -454,7 +528,7 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			WarnIfInMemoryModeShadowedByDiskAsset(bTransient, PackageName, ObjectPath);
+			NoteInMemoryRequestPromotedToDisk(bTransient, PackageName, ObjectPath);
 			return true;
 		}
 
@@ -515,7 +589,20 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			WarnIfInMemoryModeShadowedByDiskAsset(bTransient, PackageName, ObjectPath);
+			// Ownership guard, same rule as the material and function paths. This path used to check
+			// only the class, which made a hand-authored UDreamShaderMaterialInstance at the target
+			// path fair game: generation would adopt it and then clear its parameter overrides. Since
+			// the ThinCustom backend is the project default, that was the widest of the three paths and
+			// the only one without the check.
+			if (FPackageName::DoesPackageExist(PackageName) && !HasDreamShaderSourceMetadata(ExistingObject))
+			{
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+					TEXT("Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating."),
+					*ObjectPath);
+				return false;
+			}
+
+			NoteInMemoryRequestPromotedToDisk(bTransient, PackageName, ObjectPath);
 			return true;
 		}
 
@@ -601,7 +688,7 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			WarnIfInMemoryModeShadowedByDiskAsset(bTransient, PackageName, ObjectPath);
+			NoteInMemoryRequestPromotedToDisk(bTransient, PackageName, ObjectPath);
 			return true;
 		}
 

@@ -12,6 +12,11 @@ class UMaterial;
 class UMaterialFunction;
 class UToolMenu;
 struct FFileChangeData;
+// At global scope on purpose: the member declaration below used to spell it inline as
+// `struct FPropertyChangedEvent&`, which inside a namespace declares a NEW type in that namespace.
+// Unity builds hid it (a neighbour had already pulled in the real one); a non-unity compile of this
+// file alone -- which is what an adaptive build does to whichever files you are editing -- did not.
+struct FPropertyChangedEvent;
 struct FToolMenuSection;
 
 namespace UE::DreamShader::Editor::Private
@@ -30,6 +35,17 @@ namespace UE::DreamShader::Editor::Private
 		static FString GetStatusFilePath();
 		static FString GetDiagnosticsFilePath();
 		static FString GetDiagnosticsDirectory();
+		static FString GetOwnerLockFilePath();
+
+		/**
+		 * Bridge ownership: which editor process serves this project's request queue.
+		 *
+		 * The bridge directory is per-project, so two editors open on the same project were both
+		 * consuming the same Requests folder and both overwriting status.json. See the definitions.
+		 */
+		bool TryAcquireBridgeOwnership();
+		void RefreshBridgeOwnershipLock();
+		void ReleaseBridgeOwnership();
 		static FString GetSourceFileMetadata(UObject* Asset);
 
 		/**
@@ -68,6 +84,7 @@ namespace UE::DreamShader::Editor::Private
 		void QueueFullScan();
 		void HandlePostEngineInit();
 		void HandleSettingsPropertyChanged(UObject* Object, struct FPropertyChangedEvent& Event);
+		/** Materialize every source file in memory. Never forces -- see the definition for why. */
 		void GenerateAllInMemoryMaterials();
 		void QueueSourceFile(const FString& SourceFilePath);
 		void QueueDependentSourcesForImport(const FString& ImportFilePath);
@@ -97,6 +114,31 @@ namespace UE::DreamShader::Editor::Private
 		void OpenDreamShaderWorkspace();
 		void ExportMaterialToDreamShaderFile(TWeakObjectPtr<UMaterial> Material);
 		void ExportMaterialFunctionToDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
+
+		/**
+		 * The three answers to a divergence report -- a generated asset that no longer matches what
+		 * DreamShader last wrote into it. Each one decides which copy is the truth: Revert says the
+		 * source is and rebuilds over the asset, Adopt says the asset is and rewrites the source from
+		 * it, Detach says neither and takes the asset out of DreamShader's hands for good. All three
+		 * take UObject because they are offered on materials, material functions and the ThinCustom
+		 * instance alike.
+		 */
+		void RevertGeneratedAssetToSource(TWeakObjectPtr<UObject> Asset);
+		void AdoptGeneratedAssetIntoSource(TWeakObjectPtr<UObject> Asset);
+		void DetachGeneratedAssetFromDreamShader(TWeakObjectPtr<UObject> Asset);
+		/** Adds whichever of the three apply to this asset. Shared by every asset-type submenu. */
+		void PopulateProvenanceActions(FToolMenuSection& InSection, TWeakObjectPtr<UObject> Asset);
+		void PopulateMaterialInstanceAssetMenu(FToolMenuSection& InSection);
+		void PopulateMaterialInstanceDreamShaderMenu(UToolMenu* InMenu, TWeakObjectPtr<UObject> Instance);
+		/** Absolute, normalized path of the source an asset was generated from. */
+		static bool TryResolveGeneratedAssetSourceFile(UObject* Asset, FString& OutSourceFilePath, FString& OutError);
+		/**
+		 * Close any asset editor on this asset before acting on it, and reopen it afterwards. Used only
+		 * by the provenance actions -- a compile refuses instead, because it must never pop a dialog or
+		 * close a window on its own. See the definitions.
+		 */
+		static bool TryCloseAssetEditorsFor(UObject* Asset, bool& bOutWasOpen, FString& OutError);
+		static void ReopenAssetEditorFor(UObject* Asset, bool bWasOpen);
 		void CopyVirtualFunctionDefinition(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CreateVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void OpenVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
@@ -141,6 +183,8 @@ namespace UE::DreamShader::Editor::Private
 		FDelegateHandle PostEngineInitHandle;
 		FDelegateHandle SettingsChangedHandle;
 		bool bIsShuttingDown = false;
+		/** True while this process holds owner.lock. Starts false: ownership is taken, not assumed. */
+		bool bIsBridgeOwner = false;
 		bool bMenusRegistered = false;
 	};
 

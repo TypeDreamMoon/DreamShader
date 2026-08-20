@@ -14,6 +14,9 @@
 #include "Preview/DreamShaderPreviewRenderer.h"
 
 #include "AssetCompilingManager.h"
+#include "Misc/ScopeExit.h"
+#include "Editor.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "Engine/Texture.h"
 #include "HAL/FileManager.h"
 #include "ImageUtils.h"
@@ -42,6 +45,7 @@
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionVectorParameter.h"
 #include "Materials/MaterialExpressionComment.h"
+#include "Materials/MaterialExpressionConstant.h"
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionDynamicParameter.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
@@ -3592,6 +3596,1365 @@ ShaderFunction(Name="DreamShaderTests/Automation/%s")
 	}
 	TestEqual(TEXT("One Custom node for the plain call"), PlainNodes, 1);
 	TestEqual(TEXT("One Custom node for the embedded call"), EmbeddedNodes, 1);
+	return true;
+}
+
+
+// ---------------------------------------------------------------------------------------------
+// Divergence detection: the output digest, and the gate that refuses to rebuild over a hand edit.
+//
+// Two failure directions matter, and they are not symmetric. A MISSED edit destroys somebody's
+// work silently, which is the bug this whole mechanism exists to fix. A FALSE report refuses a
+// rebuild that was perfectly safe, which is merely annoying -- but it would be annoying on every
+// asset in the project at once, so the "this is not an edit" cases below are load-bearing too.
+// ---------------------------------------------------------------------------------------------
+
+namespace UE::DreamShader::Editor::Private::Tests
+{
+	/** A minimal Graph-backend material whose tint is a caller-chosen literal, so the source hash
+	 *  can be moved (which is what makes a rebuild attempt reach the divergence gate at all --
+	 *  an unchanged source is skipped long before it). */
+	FString MakeDivergenceMaterialSource(const FString& AssetName, const TCHAR* TintExpression)
+	{
+		return FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Properties = {
+        vec3 Tint = %s;
+    }
+
+    Settings = {
+        Backend = "Graph";
+        Domain = "UI";
+        ShadingModel = "Unlit";
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = Tint;
+    }
+}
+)"), *AssetName, TintExpression);
+	}
+
+	FString MakeDivergenceFunctionSource(const FString& AssetName, const TCHAR* ScaleExpression)
+	{
+		return FString::Printf(TEXT(R"(
+ShaderFunction(Name="DreamShaderTests/Automation/%s")
+{
+    Inputs = {
+        vec3 InColor;
+    }
+
+    Outputs = {
+        vec3 OutColor;
+    }
+
+    Graph = {
+        OutColor = (InColor * %s);
+    }
+}
+)"), *AssetName, ScaleExpression);
+	}
+
+	/** Report the first line on which two digest texts differ. A bare hash comparison can only say
+	 *  "these are not equal", which is useless for the one question that matters when this fails:
+	 *  WHICH field is carrying per-generation identity into a fingerprint that must be stable. */
+	void ReportFirstDigestDifference(FAutomationTestBase& Test, const FString& Left, const FString& Right)
+	{
+		TArray<FString> LeftLines;
+		TArray<FString> RightLines;
+		Left.ParseIntoArrayLines(LeftLines, /*bCullEmpty*/ false);
+		Right.ParseIntoArrayLines(RightLines, /*bCullEmpty*/ false);
+
+		const int32 SharedLineCount = FMath::Min(LeftLines.Num(), RightLines.Num());
+		for (int32 LineIndex = 0; LineIndex < SharedLineCount; ++LineIndex)
+		{
+			if (!LeftLines[LineIndex].Equals(RightLines[LineIndex], ESearchCase::CaseSensitive))
+			{
+				Test.AddError(FString::Printf(
+					TEXT("Digest line %d differs:\n  before: %s\n  after : %s"),
+					LineIndex,
+					*LeftLines[LineIndex],
+					*RightLines[LineIndex]));
+				return;
+			}
+		}
+
+		if (LeftLines.Num() != RightLines.Num())
+		{
+			Test.AddError(FString::Printf(
+				TEXT("Digest line count differs: %d before, %d after. First extra line: %s"),
+				LeftLines.Num(),
+				RightLines.Num(),
+				LeftLines.Num() > RightLines.Num() ? *LeftLines[SharedLineCount] : *RightLines[SharedLineCount]));
+		}
+	}
+
+	/** Generate a Graph-backend material and hand back the loaded asset, or null on failure. */
+	UMaterial* GenerateDivergenceTestMaterial(
+		FAutomationTestBase& Test,
+		FScopedDreamShaderAutomationArtifacts& Artifacts,
+		const FString& AssetName,
+		const FString& ObjectPath,
+		const TCHAR* TintExpression,
+		FString& OutSourceFilePath)
+	{
+		if (!WriteAutomationSourceFile(Test, AssetName + TEXT(".dsm"), MakeDivergenceMaterialSource(AssetName, TintExpression), OutSourceFilePath))
+		{
+			return nullptr;
+		}
+		Artifacts.AddSourceFile(OutSourceFilePath);
+
+		FString Message;
+		if (!Test.TestTrue(
+				FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
+				FMaterialGenerator::GenerateMaterialFromFile(OutSourceFilePath, Message, /*bForce*/ true)))
+		{
+			return nullptr;
+		}
+
+		UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+		Test.TestNotNull(FString::Printf(TEXT("Generated material loads from '%s'."), *ObjectPath), Material);
+		return Material;
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDivergenceCleanRebuildTest,
+	"DreamShader.Compiler.Divergence.CleanRebuildStaysGenerated",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The false-positive guard. If a freshly generated asset did not classify as Generated -- or stopped
+// doing so after an identical rebuild -- every compile in the project would start reporting a hand
+// edit that never happened.
+bool FDreamShaderDivergenceCleanRebuildTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoDivergeClean"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	UMaterial* Material = GenerateDivergenceTestMaterial(
+		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	if (!Material)
+	{
+		return false;
+	}
+
+	TestEqual(
+		TEXT("A freshly generated material classifies as Generated"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+
+	const FString FirstDigest = BuildOutputDigest(Material);
+	const FString FirstDigestText = BuildOutputDigestText(Material);
+	TestFalse(TEXT("The digest is non-empty for a material"), FirstDigest.IsEmpty());
+
+	FString Message;
+	if (!TestTrue(
+			FString::Printf(TEXT("Identical rebuild succeeds: %s"), *Message),
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true)))
+	{
+		return false;
+	}
+
+	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Material still loads after the rebuild"), Material))
+	{
+		return false;
+	}
+
+	const FString SecondDigest = BuildOutputDigest(Material);
+	if (!TestEqual(TEXT("An identical rebuild reproduces the same digest"), SecondDigest, FirstDigest))
+	{
+		ReportFirstDigestDifference(*this, FirstDigestText, BuildOutputDigestText(Material));
+	}
+	TestEqual(
+		TEXT("The rebuilt material still classifies as Generated"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDivergenceIgnoresCosmeticEditsTest,
+	"DreamShader.Compiler.Divergence.CosmeticEditsAreNotDivergence",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Node positions are reassigned by the layout pass on every rebuild, and a comment box without the
+// DreamShader prefix is documented as surviving one. Neither is something a rebuild can destroy, so
+// neither may block one.
+bool FDreamShaderDivergenceIgnoresCosmeticEditsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoDivergeCosmetic"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	UMaterial* Material = GenerateDivergenceTestMaterial(
+		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	if (!Material)
+	{
+		return false;
+	}
+
+	if (!TestTrue(TEXT("The generated material has at least one node to move"), Material->GetExpressions().Num() > 0))
+	{
+		return false;
+	}
+
+	for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+	{
+		if (Expression)
+		{
+			Expression->MaterialExpressionEditorX += 137;
+			Expression->MaterialExpressionEditorY -= 42;
+		}
+	}
+
+	TestEqual(
+		TEXT("Dragging every node leaves the material Generated"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+
+	UMaterialExpressionComment* Comment = NewObject<UMaterialExpressionComment>(Material, NAME_None, RF_Transactional);
+	Comment->Text = TEXT("Reviewed by hand");
+	Material->GetExpressionCollection().AddComment(Comment);
+
+	TestEqual(
+		TEXT("A user comment box leaves the material Generated"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDivergenceDetectsHandEditsTest,
+	"DreamShader.Compiler.Divergence.HandEditsAreDetected",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The three shapes of edit a rebuild would destroy: a render-state property it resets, a graph
+// connection it rewires, and a node it deletes.
+bool FDreamShaderDivergenceDetectsHandEditsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoDivergeEdit"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	UMaterial* Material = GenerateDivergenceTestMaterial(
+		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	if (!Material)
+	{
+		return false;
+	}
+
+	// A property from the reset list.
+	Material->TwoSided = true;
+	TestEqual(
+		TEXT("Ticking Two Sided by hand reads as divergence"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Diverged));
+	Material->TwoSided = false;
+	TestEqual(
+		TEXT("Putting Two Sided back makes the material Generated again"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+
+	// A node added by hand.
+	UMaterialExpressionConstant* AddedConstant =
+		Cast<UMaterialExpressionConstant>(UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionConstant::StaticClass()));
+	if (!TestNotNull(TEXT("A constant node can be added by hand"), AddedConstant))
+	{
+		return false;
+	}
+	AddedConstant->R = 0.75f;
+	TestEqual(
+		TEXT("Adding a node by hand reads as divergence"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Diverged));
+
+	// A property change on a node the generator made.
+	UMaterialEditingLibrary::DeleteMaterialExpression(Material, AddedConstant);
+	TestEqual(
+		TEXT("Deleting the added node makes the material Generated again"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+
+	for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+	{
+		if (UMaterialExpressionVectorParameter* Parameter = Cast<UMaterialExpressionVectorParameter>(Expression))
+		{
+			Parameter->DefaultValue = FLinearColor(0.0f, 1.0f, 0.0f, 1.0f);
+			break;
+		}
+	}
+	TestEqual(
+		TEXT("Retuning a generated parameter's default reads as divergence"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Diverged));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDivergenceBlocksRebuildTest,
+	"DreamShader.Compiler.Divergence.DivergedAssetIsNotRebuilt",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The whole point: a source edit that would previously have cleared the graph now comes out as a
+// refusal, with the asset byte-for-byte as the user left it. Force still gets through, because that
+// is what the Revert action is.
+bool FDreamShaderDivergenceBlocksRebuildTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoDivergeBlock"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	UMaterial* Material = GenerateDivergenceTestMaterial(
+		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	if (!Material)
+	{
+		return false;
+	}
+
+	UMaterialExpressionConstant* AddedConstant =
+		Cast<UMaterialExpressionConstant>(UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionConstant::StaticClass()));
+	if (!TestNotNull(TEXT("A constant node can be added by hand"), AddedConstant))
+	{
+		return false;
+	}
+	AddedConstant->R = 0.75f;
+	const int32 EditedExpressionCount = Material->GetExpressions().Num();
+
+	// Move the source too. Without this the compile is skipped by the source hash and never reaches
+	// the gate -- which is correct behaviour, and also why this test would silently prove nothing.
+	if (!WriteAutomationSourceFile(
+			*this,
+			AssetName + TEXT(".dsm"),
+			MakeDivergenceMaterialSource(AssetName, TEXT("vec3(0.1, 0.9, 0.4)")),
+			SourceFilePath))
+	{
+		return false;
+	}
+
+	FString Message;
+	const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ false);
+	TestFalse(TEXT("A changed source does NOT rebuild over a hand-edited asset"), bRebuilt);
+	TestTrue(
+		FString::Printf(TEXT("The refusal explains itself: %s"), *Message),
+		Message.Contains(TEXT("edited by hand")));
+	TestTrue(
+		FString::Printf(TEXT("The refusal names the three ways out: %s"), *Message),
+		Message.Contains(TEXT("Revert to Source"))
+			&& Message.Contains(TEXT("Adopt Into Source"))
+			&& Message.Contains(TEXT("Detach From DreamShader")));
+
+	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("The refused material still exists"), Material))
+	{
+		return false;
+	}
+	TestEqual(
+		TEXT("The refused rebuild left the graph untouched"),
+		Material->GetExpressions().Num(),
+		EditedExpressionCount);
+	TestEqual(
+		TEXT("The refused material is still Diverged"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Diverged));
+
+	// A forced compile is NOT enough on its own -- bForce answers a question about the source hash,
+	// and the editor's startup sweep asserts it for every file it touches.
+	TestFalse(
+		TEXT("Even a forced rebuild does not overwrite a hand-edited asset"),
+		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true));
+
+	// Revert: what the user's confirmation of the Revert dialog reaches the generator as.
+	{
+		FScopedDreamShaderRevertDiverged RevertScope;
+		if (!TestTrue(
+				FString::Printf(TEXT("A revert-scoped rebuild goes through: %s"), *Message),
+				FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true)))
+		{
+			return false;
+		}
+	}
+
+	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("The reverted material loads"), Material))
+	{
+		return false;
+	}
+	TestEqual(
+		TEXT("The reverted material classifies as Generated again"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDivergenceDetachTest,
+	"DreamShader.Compiler.Divergence.DetachHandsTheAssetOver",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderDivergenceDetachTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoDivergeDetach"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	UMaterial* Material = GenerateDivergenceTestMaterial(
+		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	if (!Material)
+	{
+		return false;
+	}
+
+	ClearDreamShaderMetadata(Material);
+	TestEqual(
+		TEXT("A detached asset classifies as Foreign"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Foreign));
+
+	// The ownership guard takes over from here: even a forced rebuild has to leave it alone, because
+	// after a detach the asset is indistinguishable from one somebody authored by hand.
+	FString Message;
+	const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true);
+	TestFalse(TEXT("A forced rebuild does not reclaim a detached asset"), bRebuilt);
+	TestTrue(
+		FString::Printf(TEXT("The refusal is the ownership guard's: %s"), *Message),
+		Message.Contains(TEXT("was not generated by DreamShader")));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDivergenceFunctionTest,
+	"DreamShader.Compiler.Divergence.FunctionHandEditIsDetected",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Functions are the case with teeth: an emptied one takes every call site down with it, so the gate
+// has to fire before SetMaterialFunctionUsage, not merely before the graph teardown.
+bool FDreamShaderDivergenceFunctionTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_AutoDiverge"));
+	const FString ObjectPath = MakeAutomationObjectPath(FunctionName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(
+			*this,
+			FunctionName + TEXT(".dsf"),
+			MakeDivergenceFunctionSource(FunctionName, TEXT("0.5")),
+			SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+			FString::Printf(TEXT("Function generation succeeds: %s"), *Message),
+			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true)))
+	{
+		return false;
+	}
+
+	UMaterialFunction* Function = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated function loads"), Function))
+	{
+		return false;
+	}
+
+	TestEqual(
+		TEXT("A freshly generated function classifies as Generated"),
+		static_cast<int32>(ClassifyGeneratedAsset(Function)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+
+	// An asset-level field the rebuild reapplies from the source block's settings.
+	Function->Description = TEXT("Edited by hand");
+	TestEqual(
+		TEXT("Editing the description reads as divergence"),
+		static_cast<int32>(ClassifyGeneratedAsset(Function)),
+		static_cast<int32>(EDreamShaderDigestState::Diverged));
+
+	const int32 EditedExpressionCount = Function->GetExpressions().Num();
+	if (!WriteAutomationSourceFile(
+			*this,
+			FunctionName + TEXT(".dsf"),
+			MakeDivergenceFunctionSource(FunctionName, TEXT("0.25")),
+			SourceFilePath))
+	{
+		return false;
+	}
+
+	const bool bRebuilt = FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false);
+	TestFalse(TEXT("A changed source does NOT rebuild over a hand-edited function"), bRebuilt);
+	TestTrue(
+		FString::Printf(TEXT("The refusal explains itself: %s"), *Message),
+		Message.Contains(TEXT("edited by hand")));
+
+	Function = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("The refused function still exists"), Function))
+	{
+		return false;
+	}
+	TestEqual(
+		TEXT("The refused rebuild left the function's graph untouched"),
+		Function->GetExpressions().Num(),
+		EditedExpressionCount);
+	TestEqual(
+		TEXT("The refused rebuild left the hand-edited description in place"),
+		Function->Description,
+		FString(TEXT("Edited by hand")));
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Atomic regeneration: a build that fails partway leaves the asset exactly as it was.
+//
+// The failure has to happen AFTER the teardown or these tests prove nothing, so they use an
+// undefined identifier in the `Graph` body: the whole-file parse, the Settings validation and the
+// Outputs validation are all gates that run BEFORE the asset is touched, but Graph statements are
+// compiled one at a time by the graph builder, which runs after the old graph is gone.
+// ---------------------------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderAtomicRebuildMaterialTest,
+	"DreamShader.Compiler.Atomic.FailedMaterialRebuildRestoresGraph",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderAtomicRebuildMaterialTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoAtomic"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	UMaterial* Material = GenerateDivergenceTestMaterial(
+		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	if (!Material)
+	{
+		return false;
+	}
+
+	const int32 GoodExpressionCount = Material->GetExpressions().Num();
+	const FString GoodDigest = BuildOutputDigest(Material);
+	const FString GoodDigestText = BuildOutputDigestText(Material);
+	if (!TestTrue(TEXT("The good build produced a non-empty graph"), GoodExpressionCount > 0))
+	{
+		return false;
+	}
+	// The source declares Domain="UI"; the reset pass restores MD_Surface before Settings is
+	// reapplied, so this is state a failed build passes through and has to come back from.
+	TestEqual(TEXT("The good build applied Domain=UI"), static_cast<int32>(Material->MaterialDomain.GetValue()), static_cast<int32>(MD_UI));
+
+	// Parses as a file, fails as a graph.
+	const FString BrokenSource = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Properties = {
+        vec3 Tint = vec3(1.0, 0.2, 0.2);
+    }
+
+    Settings = {
+        Backend = "Graph";
+        Domain = "UI";
+        ShadingModel = "Unlit";
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = ThisIdentifierIsNotDefinedAnywhere;
+    }
+}
+)"), *AssetName);
+
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), BrokenSource, SourceFilePath))
+	{
+		return false;
+	}
+
+	FString Message;
+	const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true);
+	if (!TestFalse(FString::Printf(TEXT("A broken Graph body fails the build: %s"), *Message), bRebuilt))
+	{
+		return false;
+	}
+
+	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("The material survives a failed rebuild"), Material))
+	{
+		return false;
+	}
+
+	TestEqual(TEXT("The failed rebuild left every node in place"), Material->GetExpressions().Num(), GoodExpressionCount);
+	TestEqual(TEXT("The failed rebuild restored the material's settings"), static_cast<int32>(Material->MaterialDomain.GetValue()), static_cast<int32>(MD_UI));
+
+	// The strongest statement available: not "roughly the same shape" but "the same asset".
+	if (!TestEqual(TEXT("The failed rebuild restored the asset byte-for-byte, by digest"), BuildOutputDigest(Material), GoodDigest))
+	{
+		ReportFirstDigestDifference(*this, GoodDigestText, BuildOutputDigestText(Material));
+	}
+	TestEqual(
+		TEXT("The restored material still classifies as Generated"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderAtomicRebuildFunctionTest,
+	"DreamShader.Compiler.Atomic.FailedFunctionRebuildRestoresGraph",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The case with teeth. A function emptied by a failed build takes its call sites with it, because
+// they read their pins from the live asset — and the pin GUIDs are what keeps those call sites wired.
+bool FDreamShaderAtomicRebuildFunctionTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_AutoAtomic"));
+	const FString ObjectPath = MakeAutomationObjectPath(FunctionName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(
+			*this,
+			FunctionName + TEXT(".dsf"),
+			MakeDivergenceFunctionSource(FunctionName, TEXT("0.5")),
+			SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+			FString::Printf(TEXT("Function generation succeeds: %s"), *Message),
+			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true)))
+	{
+		return false;
+	}
+
+	UMaterialFunction* Function = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated function loads"), Function))
+	{
+		return false;
+	}
+
+	const int32 GoodExpressionCount = Function->GetExpressions().Num();
+	const FString GoodDigest = BuildOutputDigest(Function);
+	const FString GoodDigestText = BuildOutputDigestText(Function);
+	const int32 GoodUsage = static_cast<int32>(Function->GetMaterialFunctionUsage());
+
+	// The pin identity that keeps existing MaterialFunctionCall nodes wired.
+	TMap<FName, FGuid> GoodInputIds;
+	for (const TObjectPtr<UMaterialExpression>& Expression : Function->GetExpressions())
+	{
+		if (UMaterialExpressionFunctionInput* Input = Cast<UMaterialExpressionFunctionInput>(Expression))
+		{
+			GoodInputIds.Add(Input->InputName, Input->Id);
+		}
+	}
+	if (!TestTrue(TEXT("The good build produced at least one function input pin"), GoodInputIds.Num() > 0))
+	{
+		return false;
+	}
+
+	const FString BrokenSource = FString::Printf(TEXT(R"(
+ShaderFunction(Name="DreamShaderTests/Automation/%s")
+{
+    Inputs = {
+        vec3 InColor;
+    }
+
+    Outputs = {
+        vec3 OutColor;
+    }
+
+    Graph = {
+        OutColor = (InColor * ThisIdentifierIsNotDefinedAnywhere);
+    }
+}
+)"), *FunctionName);
+
+	if (!WriteAutomationSourceFile(*this, FunctionName + TEXT(".dsf"), BrokenSource, SourceFilePath))
+	{
+		return false;
+	}
+
+	const bool bRebuilt = FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true);
+	if (!TestFalse(FString::Printf(TEXT("A broken Graph body fails the function build: %s"), *Message), bRebuilt))
+	{
+		return false;
+	}
+
+	Function = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("The function survives a failed rebuild"), Function))
+	{
+		return false;
+	}
+
+	TestEqual(TEXT("The failed rebuild left every node in place"), Function->GetExpressions().Num(), GoodExpressionCount);
+	TestEqual(TEXT("The failed rebuild restored the function usage"), static_cast<int32>(Function->GetMaterialFunctionUsage()), GoodUsage);
+	if (!TestEqual(TEXT("The failed rebuild restored the asset byte-for-byte, by digest"), BuildOutputDigest(Function), GoodDigest))
+	{
+		ReportFirstDigestDifference(*this, GoodDigestText, BuildOutputDigestText(Function));
+	}
+
+	int32 MatchedPins = 0;
+	for (const TObjectPtr<UMaterialExpression>& Expression : Function->GetExpressions())
+	{
+		if (UMaterialExpressionFunctionInput* Input = Cast<UMaterialExpressionFunctionInput>(Expression))
+		{
+			if (const FGuid* GoodId = GoodInputIds.Find(Input->InputName))
+			{
+				TestEqual(
+					FString::Printf(TEXT("Pin '%s' keeps its GUID, so call sites stay wired"), *Input->InputName.ToString()),
+					Input->Id,
+					*GoodId);
+				++MatchedPins;
+			}
+		}
+	}
+	TestEqual(TEXT("Every input pin came back"), MatchedPins, GoodInputIds.Num());
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// The build key: what the regeneration skip actually compares.
+//
+// It fingerprints the source IN THE CONTEXT THAT COMPILES IT. Everything folded in is an input that
+// changes what a given source produces, and a missing one makes the skip check answer "still
+// current" about an asset that is not.
+// ---------------------------------------------------------------------------------------------
+
+namespace UE::DreamShader::Editor::Private::Tests
+{
+	/** Flips DefaultBackend to something it is definitely not, and puts it back. Deliberately not
+	 *  FScopedDreamShaderGraphBackendPin: that pins to Graph, so on a project already set to Graph it
+	 *  would change nothing and the test would pass without testing anything. */
+	struct FScopedDreamShaderBackendFlip
+	{
+		EDreamShaderDefaultBackend SavedBackend;
+
+		FScopedDreamShaderBackendFlip()
+			: SavedBackend(GetMutableDefault<UDreamShaderSettings>()->DefaultBackend)
+		{
+			GetMutableDefault<UDreamShaderSettings>()->DefaultBackend =
+				SavedBackend == EDreamShaderDefaultBackend::Graph
+					? EDreamShaderDefaultBackend::ThinCustom
+					: EDreamShaderDefaultBackend::Graph;
+		}
+
+		~FScopedDreamShaderBackendFlip()
+		{
+			GetMutableDefault<UDreamShaderSettings>()->DefaultBackend = SavedBackend;
+		}
+	};
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderBuildKeyCoversContextTest,
+	"DreamShader.Compiler.BuildKey.CoversCompileContext",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderBuildKeyCoversContextTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	const FString SourceText = TEXT("Shader(Name=\"Docs/M_BuildKey\") { Graph = { } }");
+
+	const FString BaselineKey = BuildSourceHash(SourceText);
+	TestFalse(TEXT("The key is non-empty"), BaselineKey.IsEmpty());
+	TestEqual(TEXT("The key is stable for an unchanged context"), BuildSourceHash(SourceText), BaselineKey);
+
+	// Different text, same context.
+	TestNotEqual(
+		TEXT("Editing the source changes the key"),
+		BuildSourceHash(SourceText + TEXT(" // edited")),
+		BaselineKey);
+
+	// Same text, different backend. This is the case that used to need its own forced rebuild sweep
+	// bolted on, precisely because the key could not see it.
+	{
+		FScopedDreamShaderBackendFlip BackendFlip;
+		TestNotEqual(
+			TEXT("Changing the default backend changes the key"),
+			BuildSourceHash(SourceText),
+			BaselineKey);
+	}
+	TestEqual(TEXT("Putting the backend back restores the key"), BuildSourceHash(SourceText), BaselineKey);
+
+	// Same text, different mapping table.
+	{
+		UDreamShaderSettings* Settings = GetMutableDefault<UDreamShaderSettings>();
+		const TMap<FString, TEnumAsByte<EMaterialShadingModel>> SavedMappings = Settings->ShadingModelMappings;
+		ON_SCOPE_EXIT { Settings->ShadingModelMappings = SavedMappings; };
+
+		Settings->ShadingModelMappings.Add(TEXT("DreamShaderAutomationMapping"), MSM_Unlit);
+		TestNotEqual(
+			TEXT("Adding a shading-model mapping changes the key"),
+			BuildSourceHash(SourceText),
+			BaselineKey);
+	}
+	TestEqual(
+		TEXT("Removing the mapping again restores the key, so the key does not depend on map order"),
+		BuildSourceHash(SourceText),
+		BaselineKey);
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Compile order: a batch is sorted so that dependencies compile first.
+//
+// A .dsm that calls a ShaderFunction binds its call node against the LIVE UMaterialFunction asset,
+// so compiling the caller first binds it against the previous version of that function's interface.
+// ---------------------------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDependencyOrderTest,
+	"DreamShader.Compiler.Order.DependenciesCompileFirst",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderDependencyOrderTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString Prefix = MakeUniqueTestAssetName(TEXT("Order"));
+
+	// A shared header, a function file that imports it, and a material that imports the function:
+	// the shape a real project has, and the one whose order matters.
+	const FString HeaderName = Prefix + TEXT("_Shared.dsh");
+	const FString FunctionName = Prefix + TEXT("_Fn.dsf");
+	const FString MaterialName = Prefix + TEXT("_Mat.dsm");
+
+	FString HeaderPath;
+	FString FunctionPath;
+	FString MaterialPath;
+	if (!WriteAutomationSourceFile(*this, HeaderName, TEXT("// shared declarations\n"), HeaderPath)
+		|| !WriteAutomationSourceFile(*this, FunctionName, FString::Printf(TEXT("import \"%s\";\n"), *HeaderName), FunctionPath)
+		|| !WriteAutomationSourceFile(*this, MaterialName, FString::Printf(TEXT("import \"%s\";\n"), *FunctionName), MaterialPath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(HeaderPath);
+	Artifacts.AddSourceFile(FunctionPath);
+	Artifacts.AddSourceFile(MaterialPath);
+
+	// Handed in exactly backwards, so passing cannot be an accident of the input order.
+	TArray<FString> Batch = { MaterialPath, FunctionPath, HeaderPath };
+	FDreamShaderDependencyGraphService::SortByDependencyOrder(Batch);
+
+	if (!TestEqual(TEXT("Sorting keeps every file"), Batch.Num(), 3))
+	{
+		return false;
+	}
+
+	const int32 HeaderIndex = Batch.IndexOfByKey(UE::DreamShader::NormalizeSourceFilePath(HeaderPath));
+	const int32 FunctionIndex = Batch.IndexOfByKey(UE::DreamShader::NormalizeSourceFilePath(FunctionPath));
+	const int32 MaterialIndex = Batch.IndexOfByKey(UE::DreamShader::NormalizeSourceFilePath(MaterialPath));
+
+	TestTrue(TEXT("Every file is still in the batch"), HeaderIndex != INDEX_NONE && FunctionIndex != INDEX_NONE && MaterialIndex != INDEX_NONE);
+	TestTrue(TEXT("The header compiles before the function that imports it"), HeaderIndex < FunctionIndex);
+	TestTrue(TEXT("The function compiles before the material that imports it"), FunctionIndex < MaterialIndex);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDependencyOrderCycleTest,
+	"DreamShader.Compiler.Order.CycleDoesNotHangOrDropFiles",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// An import cycle is the import loader's to reject, with its own diagnostic. The sorter's only job is
+// to not hang on one and to not quietly lose a file on the way.
+bool FDreamShaderDependencyOrderCycleTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString Prefix = MakeUniqueTestAssetName(TEXT("Cycle"));
+	const FString FirstName = Prefix + TEXT("_A.dsh");
+	const FString SecondName = Prefix + TEXT("_B.dsh");
+
+	FString FirstPath;
+	FString SecondPath;
+	if (!WriteAutomationSourceFile(*this, FirstName, FString::Printf(TEXT("import \"%s\";\n"), *SecondName), FirstPath)
+		|| !WriteAutomationSourceFile(*this, SecondName, FString::Printf(TEXT("import \"%s\";\n"), *FirstName), SecondPath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(FirstPath);
+	Artifacts.AddSourceFile(SecondPath);
+
+	TArray<FString> Batch = { FirstPath, SecondPath };
+	FDreamShaderDependencyGraphService::SortByDependencyOrder(Batch);
+
+	TestEqual(TEXT("A cycle keeps every file"), Batch.Num(), 2);
+	TestTrue(
+		TEXT("Both files survive the sort"),
+		Batch.Contains(UE::DreamShader::NormalizeSourceFilePath(FirstPath))
+			&& Batch.Contains(UE::DreamShader::NormalizeSourceFilePath(SecondPath)));
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Only one process per project writes generated assets to disk.
+//
+// The bridge's ownership lock decides which. What is testable in one process is the consequence:
+// a compile that would land on disk leaves the asset alone when this process is not the write owner.
+// ---------------------------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderWriteOwnerDeferralTest,
+	"DreamShader.Compiler.Persistence.NonWriteOwnerLeavesDiskAssetAlone",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderWriteOwnerDeferralTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoWriteOwner"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	UMaterial* Material = GenerateDivergenceTestMaterial(
+		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	if (!Material)
+	{
+		return false;
+	}
+
+	const FString StampedHashBefore = GetGeneratedAssetSourceHash(Material);
+	const FString DigestBefore = BuildOutputDigest(Material);
+
+	if (!WriteAutomationSourceFile(
+			*this,
+			AssetName + TEXT(".dsm"),
+			MakeDivergenceMaterialSource(AssetName, TEXT("vec3(0.1, 0.9, 0.4)")),
+			SourceFilePath))
+	{
+		return false;
+	}
+
+	FString Message;
+	{
+		// Stand in for "another editor holds Bridge/owner.lock".
+		TestTrue(TEXT("A process is the write owner by default"), MayWriteGeneratedAssetsToDisk());
+		SetMayWriteGeneratedAssetsToDisk(false);
+		ON_SCOPE_EXIT { SetMayWriteGeneratedAssetsToDisk(true); };
+
+		// Reported as a skip, not a failure: a second editor is a legitimate way to work, and only the
+		// shared file is off limits to it.
+		TestTrue(
+			FString::Printf(TEXT("The compile is skipped rather than failed: %s"), *Message),
+			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bTransient*/ true));
+		TestTrue(
+			FString::Printf(TEXT("The skip says who owns writing: %s"), *Message),
+			Message.Contains(TEXT("owns this project's DreamShader bridge")));
+	}
+
+	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("The asset is still there"), Material))
+	{
+		return false;
+	}
+	TestEqual(TEXT("The asset was not rebuilt"), BuildOutputDigest(Material), DigestBefore);
+	TestEqual(TEXT("The asset was not re-stamped"), GetGeneratedAssetSourceHash(Material), StampedHashBefore);
+	TestFalse(TEXT("The package was not even dirtied"), Material->GetOutermost()->IsDirty());
+
+	// And the owner still writes it, so the deferral is about ownership and nothing else.
+	TestTrue(
+		FString::Printf(TEXT("The write owner rebuilds the same source: %s"), *Message),
+		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bTransient*/ true));
+	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (TestNotNull(TEXT("The rebuilt asset loads"), Material))
+	{
+		TestNotEqual(TEXT("The write owner's rebuild took"), BuildOutputDigest(Material), DigestBefore);
+	}
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// An open asset editor blocks a rebuild.
+//
+// FMaterialEditor does not edit the asset: it duplicates it into a transient UPreviewMaterial and
+// copies that duplicate back on Apply or Save. So an editor that was open across a rebuild holds a
+// pre-rebuild copy, and the next Apply silently reverts everything the rebuild did.
+// ---------------------------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderOpenEditorBlocksRebuildTest,
+	"DreamShader.Compiler.OpenEditor.OpenAssetEditorBlocksRebuild",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderOpenEditorBlocksRebuildTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoOpenEditor"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	UMaterial* Material = GenerateDivergenceTestMaterial(
+		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	if (!Material)
+	{
+		return false;
+	}
+
+	TestFalse(TEXT("Nothing is open on a freshly generated asset"), IsGeneratedAssetOpenInEditor(Material));
+
+	UAssetEditorSubsystem* AssetEditorSubsystem = GEditor ? GEditor->GetEditorSubsystem<UAssetEditorSubsystem>() : nullptr;
+	if (!AssetEditorSubsystem)
+	{
+		AddWarning(TEXT("No AssetEditorSubsystem in this environment; the open-editor gate was not exercised."));
+		return true;
+	}
+
+	AssetEditorSubsystem->OpenEditorForAsset(Material);
+	if (!IsGeneratedAssetOpenInEditor(Material))
+	{
+		// Opening a material editor needs more of the editor than a headless automation run always
+		// has. Skipping loudly beats a test that fails for reasons unrelated to the gate.
+		AddWarning(TEXT("A material editor could not be opened in this environment; the open-editor gate was not exercised."));
+		return true;
+	}
+
+	// Move the source, so the compile is not skipped by the source hash before it reaches the gate.
+	if (!WriteAutomationSourceFile(
+			*this,
+			AssetName + TEXT(".dsm"),
+			MakeDivergenceMaterialSource(AssetName, TEXT("vec3(0.1, 0.9, 0.4)")),
+			SourceFilePath))
+	{
+		AssetEditorSubsystem->CloseAllEditorsForAsset(Material);
+		return false;
+	}
+
+	FString Message;
+	const bool bRebuiltWhileOpen = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true);
+	TestFalse(TEXT("A rebuild is refused while an asset editor is open"), bRebuiltWhileOpen);
+	TestTrue(
+		FString::Printf(TEXT("The refusal says why: %s"), *Message),
+		Message.Contains(TEXT("open in an asset editor")));
+
+	AssetEditorSubsystem->CloseAllEditorsForAsset(Material);
+	TestFalse(TEXT("The editor closed"), IsGeneratedAssetOpenInEditor(Material));
+
+	// And the same compile goes through once it is closed — the gate is the only thing that stopped it.
+	TestTrue(
+		FString::Printf(TEXT("The rebuild succeeds once the editor is closed: %s"), *Message),
+		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true));
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Storage decides the mode: an asset that exists on disk is rebuilt on disk, even when the compile
+// asked for memory-only. The editor asks for memory-only on EVERY compile, so before this an asset
+// with a file behind it was rebuilt in place, in memory, and then had its dirty flag cleared —
+// leaving an object that matched neither the file nor anything that would ever be written, and that
+// reported itself clean.
+// ---------------------------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderPersistedAssetRebuiltOnDiskTest,
+	"DreamShader.Compiler.Persistence.DiskBackedAssetIsRebuiltOnDisk",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderPersistedAssetRebuiltOnDiskTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoPersisted"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	// A persisted build, i.e. what the commandlet or a Materialize action produces.
+	FString SourceFilePath;
+	UMaterial* Material = GenerateDivergenceTestMaterial(
+		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	if (!Material)
+	{
+		return false;
+	}
+
+	const FString PackageName = Material->GetOutermost()->GetName();
+	if (!TestTrue(TEXT("The persisted build put a file on disk"), FPackageName::DoesPackageExist(PackageName)))
+	{
+		return false;
+	}
+
+	const FString StampedHashBefore = GetGeneratedAssetSourceHash(Material);
+	const FString DigestBefore = BuildOutputDigest(Material);
+	TestFalse(TEXT("A persisted build stamps a source hash"), StampedHashBefore.IsEmpty());
+
+	if (!WriteAutomationSourceFile(
+			*this,
+			AssetName + TEXT(".dsm"),
+			MakeDivergenceMaterialSource(AssetName, TEXT("vec3(0.1, 0.9, 0.4)")),
+			SourceFilePath))
+	{
+		return false;
+	}
+
+	// The editor's own call shape: in-memory, unforced.
+	FString Message;
+	if (!TestTrue(
+			FString::Printf(TEXT("An in-memory compile of a disk-backed asset succeeds: %s"), *Message),
+			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bTransient*/ true)))
+	{
+		return false;
+	}
+
+	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("The material still loads"), Material))
+	{
+		return false;
+	}
+
+	TestNotEqual(TEXT("The rebuild actually took: the graph changed"), BuildOutputDigest(Material), DigestBefore);
+
+	// The discriminator. Only the persisted path stamps a source hash; the in-memory path stamps the
+	// path alone, on purpose, so that the skip check stays off. A hash that moved therefore means the
+	// compile went down the persisted path, which is the whole point of the change.
+	const FString StampedHashAfter = GetGeneratedAssetSourceHash(Material);
+	TestFalse(TEXT("The rebuild left a source hash stamped"), StampedHashAfter.IsEmpty());
+	TestNotEqual(TEXT("The rebuild re-stamped the source hash, so it took the persisted path"), StampedHashAfter, StampedHashBefore);
+
+	// And the honesty check: nothing pending, because it was saved rather than dirty-flag-cleared.
+	TestFalse(TEXT("The package is not left dirty"), Material->GetOutermost()->IsDirty());
+	TestTrue(TEXT("The asset still exists on disk"), FPackageName::DoesPackageExist(PackageName));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderMemoryOnlyAssetStaysInMemoryTest,
+	"DreamShader.Compiler.Persistence.MemoryOnlyAssetStaysInMemory",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The other half of the same rule: an asset with no file behind it must not acquire one.
+bool FDreamShaderMemoryOnlyAssetStaysInMemoryTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoMemoryOnly"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(
+			*this,
+			AssetName + TEXT(".dsm"),
+			MakeDivergenceMaterialSource(AssetName, TEXT("vec3(1.0, 0.2, 0.2)")),
+			SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+			FString::Printf(TEXT("In-memory generation succeeds: %s"), *Message),
+			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bTransient*/ true)))
+	{
+		return false;
+	}
+
+	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("The memory-only material exists"), Material))
+	{
+		return false;
+	}
+
+	TestFalse(TEXT("No file was written for a memory-only material"), FPackageName::DoesPackageExist(Material->GetOutermost()->GetName()));
+	TestTrue(TEXT("A memory-only build stamps no source hash, so it always regenerates"), GetGeneratedAssetSourceHash(Material).IsEmpty());
+	TestFalse(TEXT("A memory-only material is not left dirty"), Material->GetOutermost()->IsDirty());
+	TestEqual(
+		TEXT("A memory-only material is still recognized as ours, so the divergence gate applies"),
+		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDivergenceInstanceOverrideTest,
+	"DreamShader.Compiler.Divergence.InstanceOverrideIsDetected",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The documented data-loss case on the default backend: a parameter tuned on a generated instance is
+// wiped by ClearParameterValuesEditorOnly on the next rebuild, with no diagnostic. It is a hand edit
+// like any other, so the digest has to see it.
+bool FDreamShaderDivergenceInstanceOverrideTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoDivergeInstance"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	const FString Source = FString::Printf(TEXT(R"(Shader(Name="DreamShaderTests/Automation/%s", Root="Game")
+{
+    Properties = {
+        ScalarParameter Boost = 0.5;
+    }
+
+    Settings = {
+        Backend = "ThinCustom";
+        ShadingModel = "Unlit";
+        BlendMode = "Opaque";
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = vec3(Boost, Boost, Boost);
+    }
+}
+)"), *AssetName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+			FString::Printf(TEXT("ThinCustom generation succeeds: %s"), *Message),
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true)))
+	{
+		return false;
+	}
+
+	UDreamShaderMaterialInstance* Instance = LoadObject<UDreamShaderMaterialInstance>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated ThinCustom instance loads"), Instance))
+	{
+		return false;
+	}
+
+	TestEqual(
+		TEXT("A freshly generated instance classifies as Generated"),
+		static_cast<int32>(ClassifyGeneratedAsset(Instance)),
+		static_cast<int32>(EDreamShaderDigestState::Generated));
+
+	UMaterialEditingLibrary::SetMaterialInstanceScalarParameterValue(Instance, TEXT("Boost"), 0.9f);
+	TestEqual(
+		TEXT("Tuning a parameter on the generated instance reads as divergence"),
+		static_cast<int32>(ClassifyGeneratedAsset(Instance)),
+		static_cast<int32>(EDreamShaderDigestState::Diverged));
 	return true;
 }
 
