@@ -537,7 +537,18 @@ namespace UE::DreamShader::Editor::Private
 		// it with an explicit bUsedWithVolumetricCloud, and decompile derives the same default
 		// through GetDefaultUsedWithVolumetricCloud so the two directions agree on what may be
 		// left out of the Settings block.
+		//
+		// Which spelling is the portable one flips at 5.8, in both directions at once: before it,
+		// SetUsageByFlag is private on UMaterial and the bUsedWith* fields are plain public
+		// UPROPERTYs; from 5.8 the accessor is public and ENGINE_API while every bUsedWith* field
+		// is UE_DEPRECATED in its favour. So each branch below is the only one that compiles
+		// warning-free on its own engines -- caught by the BuildPlugin matrix, since a build
+		// against 5.8 alone sees nothing wrong with either.
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
 		Material->SetUsageByFlag(MATUSAGE_VolumetricCloud, GetDefaultUsedWithVolumetricCloud(Material->MaterialDomain));
+#else
+		Material->bUsedWithVolumetricCloud = GetDefaultUsedWithVolumetricCloud(Material->MaterialDomain);
+#endif
 
 		for (const TPair<FString, FString>& Setting : Definition.Settings)
 		{

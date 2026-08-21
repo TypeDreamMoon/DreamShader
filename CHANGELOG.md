@@ -11,10 +11,14 @@
   from the domain, so a Volume-domain material gets it without the source having to say so, and an
   explicit `bUsedWithVolumetricCloud = "false";` still wins — a Volume material that only feeds
   volumetric fog can decline the cloud shader permutations. Two things had to follow from that.
-  First, the flag is written through `UMaterial::SetUsageByFlag(MATUSAGE_VolumetricCloud, ...)`
-  rather than by assigning the member: UE 5.8 deprecates every `bUsedWith*` field in favour of the
-  accessors, so the direct write compiled with a C4996 that would become a hard error the release
-  Epic removes them in. Second, the assignment moved out of the `Domain` branch and reads the domain
+  First, on UE 5.8 the flag is written through
+  `UMaterial::SetUsageByFlag(MATUSAGE_VolumetricCloud, ...)` rather than by assigning the member:
+  5.8 deprecates every `bUsedWith*` field in favour of the accessors, so the direct write compiled
+  with a C4996 that would become a hard error the release Epic removes them in. Which spelling is
+  the portable one flips at exactly that version, in both directions at once — before 5.8
+  `SetUsageByFlag` is *private* on `UMaterial` and the fields are plain public `UPROPERTY`s — so the
+  write is gated on `DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)` and each branch is the only one that
+  compiles warning-free on its own engines. Second, the assignment moved out of the `Domain` branch and reads the domain
   back off the material, because `ResetMaterialToDefaults` does not clear usage flags: a material
   regenerated from `Volume` to some other domain used to keep a stale flag, and a source that omits
   `Domain` keeps the domain it already has. Reported in
