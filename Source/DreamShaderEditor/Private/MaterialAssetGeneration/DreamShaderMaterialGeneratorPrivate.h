@@ -581,6 +581,15 @@ namespace UE::DreamShader::Editor::Private
 			int32 ChannelIndex,
 			FCodeValue& OutValue,
 			FString& OutError);
+		// Selects ChannelMask (R=0x1, G=0x2, B=0x4, A=0x8) out of BaseValue, choosing a representation the
+		// material graph editor can round-trip: an inline input mask when that is stable, otherwise a
+		// matching masked output, otherwise a real ComponentMask node.
+		bool ApplyChannelMaskToValue(
+			const FCodeValue& BaseValue,
+			int32 ChannelMask,
+			int32 ComponentCount,
+			FCodeValue& OutValue,
+			FString& OutError);
 		bool AppendValues(const TArray<FCodeValue>& Parts, FCodeValue& OutValue, FString& OutError);
 		bool CreateSwizzleExpression(
 			const FCodeValue& BaseValue,

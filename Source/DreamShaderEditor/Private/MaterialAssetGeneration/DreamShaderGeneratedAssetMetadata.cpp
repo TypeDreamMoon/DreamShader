@@ -104,7 +104,10 @@ namespace UE::DreamShader::Editor::Private
 		// Bump when a change to the generator makes previously generated assets wrong for their source.
 		// A released plugin gets that for free from its version; this is what covers the window between
 		// releases, where the version has not moved but the output has.
-		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK1");
+		// DSK2: component masks are now emitted in a form the material graph editor can round-trip
+		// (see FCodeGraphBuilder::ApplyChannelMaskToValue). Assets stamped DSK1 can carry an inline mask
+		// that the editor rewrites into a different output on the first Apply.
+		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK2");
 
 		FString GetDreamShaderPluginVersion()
 		{

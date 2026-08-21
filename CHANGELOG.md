@@ -4,6 +4,29 @@
 
 ### Fixed
 
+- **A swizzle survives the material editor.** A component selection like `CustomStencil.r` was written
+  as an inline mask on the connection (`OutputIndex=0` plus `Mask/MaskR`), which the HLSL translator
+  honours but the material graph editor cannot draw: pins correspond to an expression's `Outputs`
+  entries, and no pin means "output 0, red channel only". `UMaterialGraph::GetValidOutputIndex`
+  distrusts `OutputIndex 0` whenever a mask is present — that combination used to mean a pre-`OutputIndex`
+  legacy connection — looks for a pin whose mask matches, finds none, and falls back to the node's
+  **last** output. The wire is then drawn from that pin, and the first Apply/Save writes it back through
+  `UMaterialExpression::ConnectExpression`, which also replaces the mask with the pin's own. On a
+  `SceneTexture` node (`Color / Size / InvSize`) that turned `CustomStencil.r` into `InvSize`, silently,
+  with no error anywhere: the stencil comparison then failed for every pixel and the effect the function
+  gated simply stopped appearing. Any generated asset touched through the material editor was exposed,
+  and duplicating one first did not help — the copy is corrupted the same way on its first save.
+
+  Component selections are now emitted in a form the graph can round-trip. An inline mask is kept only
+  where the editor resolves it back to the pin it already names; where the expression publishes the same
+  value through several masked outputs (`TextureSample`'s `RGB/R/G/B/A/RGBA`, `VertexColor`, …) the
+  matching output is named directly; otherwise a real `ComponentMask` node is emitted. Mixed output sets
+  like `SceneTexture`'s are never retargeted, because there the outputs are different values rather than
+  views of one. `ConnectCodeValueToInput` now `ensure`s the invariant, so a future masking shortcut says
+  so instead of shipping a graph that decays on contact. Covered by
+  `DreamShader.Compiler.Generate.GraphStableComponentMasks`. The build key tag moves to `DSK2`, so every
+  generated asset is rebuilt once into the new form.
+
 - **The regeneration skip key covers everything that decides what a source compiles into.** It hashed
   the prepared source text and nothing else, so anything *else* that changes the output left every
   already generated asset looking current: switching the **Default Compiler Backend** — which decides

@@ -93,6 +93,121 @@ namespace UE::DreamShader::Editor::Private
 		return Text;
 	}
 
+	// Mirror of UMaterialGraph::GetValidOutputIndex (Engine/Source/Editor/UnrealEd/Private/MaterialGraph.cpp).
+	// The material editor rebuilds every wire through that function when it opens a graph, so a connection
+	// whose stored OutputIndex disagrees with the result is silently re-pointed at another pin -- and the
+	// next Apply/Save writes that pin back through UMaterialExpression::ConnectExpression, which replaces
+	// the inline component mask with the pin's own mask. Generated assets must only carry inline masks this
+	// function leaves alone; see IsInlineInputMaskGraphStable.
+	inline int32 ResolveGraphEditorOutputIndex(
+		const UMaterialExpression* Expression,
+		const int32 OutputIndex,
+		const int32 Mask,
+		const int32 MaskR,
+		const int32 MaskG,
+		const int32 MaskB,
+		const int32 MaskA)
+	{
+		if (!Expression || Expression->Outputs.Num() == 0)
+		{
+			return 0;
+		}
+
+		// The engine distrusts OutputIndex 0 whenever the input carries a mask, because that combination
+		// used to mean "pre-OutputIndex legacy connection".
+		const bool bOutputIndexIsValid = Expression->Outputs.IsValidIndex(OutputIndex)
+			&& (OutputIndex != 0 || Mask == 0);
+
+		int32 ResolvedIndex = 0;
+		for (; ResolvedIndex < Expression->Outputs.Num(); ++ResolvedIndex)
+		{
+			const FExpressionOutput& Output = Expression->Outputs[ResolvedIndex];
+			if ((bOutputIndexIsValid && ResolvedIndex == OutputIndex)
+				|| (!bOutputIndexIsValid
+					&& Output.Mask == Mask
+					&& Output.MaskR == MaskR
+					&& Output.MaskG == MaskG
+					&& Output.MaskB == MaskB
+					&& Output.MaskA == MaskA))
+			{
+				break;
+			}
+		}
+
+		if (ResolvedIndex >= Expression->Outputs.Num())
+		{
+			// The engine falls back to the last output when nothing matches -- this is the step that turns
+			// "SceneTexture Color.r" into "SceneTexture InvSize".
+			ResolvedIndex = Expression->Outputs.Num() - 1;
+		}
+
+		return ResolvedIndex;
+	}
+
+	// True when a connection carrying ChannelMask survives a material-editor round trip untouched: the graph
+	// re-points it at the pin it already names, so LinkMaterialExpressionsFromGraph's IsExpressionConnected
+	// check short-circuits and the mask is never rewritten.
+	inline bool IsInlineInputMaskGraphStable(
+		const UMaterialExpression* Expression,
+		const int32 OutputIndex,
+		const int32 ChannelMask)
+	{
+		if (ChannelMask == 0)
+		{
+			return true;
+		}
+
+		return ResolveGraphEditorOutputIndex(
+			Expression,
+			OutputIndex,
+			1,
+			(ChannelMask & 0x1) != 0 ? 1 : 0,
+			(ChannelMask & 0x2) != 0 ? 1 : 0,
+			(ChannelMask & 0x4) != 0 ? 1 : 0,
+			(ChannelMask & 0x8) != 0 ? 1 : 0) == OutputIndex;
+	}
+
+	// Some expressions publish one value through several masked outputs (TextureSample's RGB/R/G/B/A/RGBA,
+	// VertexColor, ...). When *every* output is masked they are component views of the same value, so a
+	// swizzle can name the matching output instead of relying on an inline mask -- graph-stable, and the pin
+	// the editor draws then tells the truth. Mixed sets (SceneTexture's Color/Size/InvSize) are genuinely
+	// different values and must never be retargeted this way.
+	inline bool TryRetargetChannelMaskToOutput(
+		const UMaterialExpression* Expression,
+		const int32 ChannelMask,
+		int32& OutOutputIndex)
+	{
+		if (!Expression || Expression->Outputs.Num() < 2 || ChannelMask == 0)
+		{
+			return false;
+		}
+
+		for (const FExpressionOutput& Output : Expression->Outputs)
+		{
+			if (Output.Mask == 0)
+			{
+				return false;
+			}
+		}
+
+		for (int32 Index = 0; Index < Expression->Outputs.Num(); ++Index)
+		{
+			const FExpressionOutput& Output = Expression->Outputs[Index];
+			const int32 OutputChannelMask =
+				(Output.MaskR != 0 ? 0x1 : 0)
+				| (Output.MaskG != 0 ? 0x2 : 0)
+				| (Output.MaskB != 0 ? 0x4 : 0)
+				| (Output.MaskA != 0 ? 0x8 : 0);
+			if (OutputChannelMask == ChannelMask)
+			{
+				OutOutputIndex = Index;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	inline void ConnectCodeValueToInput(FExpressionInput& Input, const FCodeValue& Value)
 	{
 		if (Value.Expression)
@@ -110,6 +225,22 @@ namespace UE::DreamShader::Editor::Private
 				Input.MaskG = Value.InputMaskG ? 1 : 0;
 				Input.MaskB = Value.InputMaskB ? 1 : 0;
 				Input.MaskA = Value.InputMaskA ? 1 : 0;
+
+				// Every inline mask must name a pin the material graph editor resolves back to the same
+				// output; otherwise the first Apply/Save silently re-points the wire and drops the mask.
+				// FCodeGraphBuilder::ApplyChannelMaskToValue is what guarantees this -- if this ever fires,
+				// some other path grew its own masking shortcut.
+				ensureMsgf(
+					IsInlineInputMaskGraphStable(
+						Value.Expression,
+						Value.OutputIndex,
+						(Value.InputMaskR ? 0x1 : 0)
+							| (Value.InputMaskG ? 0x2 : 0)
+							| (Value.InputMaskB ? 0x4 : 0)
+							| (Value.InputMaskA ? 0x8 : 0)),
+					TEXT("DreamShader emitted a component mask on '%s' output %d that the material graph editor cannot round-trip."),
+					*Value.Expression->GetClass()->GetName(),
+					Value.OutputIndex);
 			}
 		}
 	}

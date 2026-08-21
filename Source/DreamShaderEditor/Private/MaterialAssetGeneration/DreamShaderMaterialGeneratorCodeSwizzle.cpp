@@ -100,6 +100,81 @@ namespace UE::DreamShader::Editor::Private
 		return OutComponentCount > 0;
 	}
 
+	bool FCodeGraphBuilder::ApplyChannelMaskToValue(
+		const FCodeValue& BaseValue,
+		const int32 ChannelMask,
+		const int32 ComponentCount,
+		FCodeValue& OutValue,
+		FString& OutError)
+	{
+		OutValue = BaseValue;
+		ClearCodeValueInputMask(OutValue);
+		if (!ApplyCodeValueInputMask(OutValue, ChannelMask, ComponentCount))
+		{
+			OutError = TEXT("Failed to compose swizzle channel mask.");
+			return false;
+		}
+		OutValue.bHasAuthoritativeComponentCount = BaseValue.bHasAuthoritativeComponentCount;
+
+		// ChannelMask is absolute against BaseValue.Expression's output -- the callers below resolve it
+		// through any mask BaseValue already carries -- so all three representations below select the same
+		// channels; they only differ in what the material graph editor can round-trip.
+		if (IsInlineInputMaskGraphStable(OutValue.Expression, OutValue.OutputIndex, ChannelMask))
+		{
+			return true;
+		}
+
+		int32 RetargetOutputIndex = INDEX_NONE;
+		if (TryRetargetChannelMaskToOutput(OutValue.Expression, ChannelMask, RetargetOutputIndex))
+		{
+			// Name the masked output directly. The inline mask stays, matching that pin exactly, which is
+			// what UMaterialExpression::ConnectExpression would write anyway.
+			OutValue.OutputIndex = RetargetOutputIndex;
+			return true;
+		}
+
+		// No pin can express this selection, so an inline mask here would be rewritten on the next Apply
+		// (a partial mask on SceneTexture's Color, for instance, resolves to InvSize). Emit a real node.
+		FCodeValue SourceValue = BaseValue;
+		ClearCodeValueInputMask(SourceValue);
+
+		const FString ReuseKey = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+			TEXT("componentmask|%s|%d"),
+			*MakeCodeValueReuseToken(SourceValue),
+			ChannelMask);
+		if (TryFindReusableExpressionValue(ReuseKey, OutValue))
+		{
+			return true;
+		}
+
+		auto* MaskExpression = Cast<UMaterialExpressionComponentMask>(
+			CreateExpression(UMaterialExpressionComponentMask::StaticClass(), 240, ConsumeNodeY()));
+		if (!MaskExpression)
+		{
+			OutError = TEXT("Failed to create a ComponentMask node.");
+			return false;
+		}
+
+		MaskExpression->R = (ChannelMask & 0x1) != 0 ? 1 : 0;
+		MaskExpression->G = (ChannelMask & 0x2) != 0 ? 1 : 0;
+		MaskExpression->B = (ChannelMask & 0x4) != 0 ? 1 : 0;
+		MaskExpression->A = (ChannelMask & 0x8) != 0 ? 1 : 0;
+		ConnectCodeValueToInput(MaskExpression->Input, SourceValue);
+
+		OutValue = BaseValue;
+		ClearCodeValueInputMask(OutValue);
+		OutValue.Expression = MaskExpression;
+		OutValue.OutputIndex = 0;
+		OutValue.ComponentCount = ComponentCount;
+		OutValue.bIsTextureObject = false;
+		OutValue.bIsMaterialAttributes = false;
+		OutValue.bIsSubstrateMaterial = false;
+		OutValue.bHasAuthoritativeComponentCount = true;
+
+		AddReusableExpressionValue(ReuseKey, OutValue);
+		return true;
+	}
+
 	bool FCodeGraphBuilder::CreateSingleChannelMask(
 		const FCodeValue& BaseValue,
 		const int32 ChannelIndex,
@@ -136,15 +211,7 @@ namespace UE::DreamShader::Editor::Private
 			SourceChannelIndex = SourceChannels[ChannelIndex];
 		}
 
-		OutValue = BaseValue;
-		ClearCodeValueInputMask(OutValue);
-		if (!ApplyCodeValueInputMask(OutValue, 1 << SourceChannelIndex, 1))
-		{
-			OutError = TEXT("Failed to compose swizzle channel mask.");
-			return false;
-		}
-		OutValue.bHasAuthoritativeComponentCount = BaseValue.bHasAuthoritativeComponentCount;
-		return true;
+		return ApplyChannelMaskToValue(BaseValue, 1 << SourceChannelIndex, 1, OutValue, OutError);
 	}
 
 	bool FCodeGraphBuilder::CreateSwizzleExpression(
@@ -164,10 +231,9 @@ namespace UE::DreamShader::Editor::Private
 		if (BaseValue.Expression
 			&& TryBuildOrderedSwizzleMask(BaseValue, Swizzle, DirectChannelMask, DirectComponentCount))
 		{
-			OutValue = BaseValue;
-			if (ApplyCodeValueInputMask(OutValue, DirectChannelMask, DirectComponentCount))
+			FString DirectError;
+			if (ApplyChannelMaskToValue(BaseValue, DirectChannelMask, DirectComponentCount, OutValue, DirectError))
 			{
-				OutValue.bHasAuthoritativeComponentCount = BaseValue.bHasAuthoritativeComponentCount;
 				return true;
 			}
 		}

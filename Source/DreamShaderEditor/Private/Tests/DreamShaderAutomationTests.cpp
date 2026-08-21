@@ -11,6 +11,9 @@
 // EstimateMaterialNodeSize / FLayoutNodeSize, so the layout test measures placed nodes by the same
 // rule the placement pass used.
 #include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+// IsInlineInputMaskGraphStable, so GraphStableComponentMasks can assert the generated wiring against the
+// same rule the material graph editor applies when it rebuilds a graph.
+#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeShared.h"
 #include "Preview/DreamShaderPreviewRenderer.h"
 
 #include "AssetCompilingManager.h"
@@ -324,6 +327,133 @@ bool FDreamShaderGenerateMinimalMaterialTest::RunTest(const FString& Parameters)
 
 	UMaterial* GeneratedMaterial = LoadObject<UMaterial>(nullptr, *ObjectPath);
 	TestNotNull(FString::Printf(TEXT("Generated material loads from '%s'."), *ObjectPath), GeneratedMaterial);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderGraphStableComponentMasksTest,
+	"DreamShader.Compiler.Generate.GraphStableComponentMasks",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A swizzle taken off a multi-output node must not be written as an inline FExpressionInput mask: the
+// material graph editor resolves such a connection through UMaterialGraph::GetValidOutputIndex, which
+// distrusts OutputIndex 0 whenever a mask is present, finds no pin carrying that mask, and falls back to
+// the node's LAST output -- so ScreenPosition.ViewportUV.x silently became PixelPosition, and the next
+// Apply/Save wrote that back. ScreenPosition stands in for SceneTexture (the case this was found on)
+// because it has the same shape without a material-domain restriction.
+bool FDreamShaderGraphStableComponentMasksTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoMaskStable"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	const FString Source = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Settings = {
+        Domain = "UI";
+        ShadingModel = "Unlit";
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        float2 Screen = UE.Expression(Class="ScreenPosition", OutputType="float2");
+        float U = Screen.x;
+        Color = vec3(U, U, U);
+    }
+}
+)"), *AssetName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+			FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	// Deliberately not naming ObjectPath in the message: AddExpectedNewAssetProbeWarnings suppresses every
+	// log line that contains it, which would swallow this failure too.
+	UObject* GeneratedObject = LoadObject<UObject>(nullptr, *ObjectPath);
+	UMaterial* Material = Cast<UMaterial>(GeneratedObject);
+	if (!TestNotNull(
+			FString::Printf(
+				TEXT("The generated asset is a UMaterial (actual: %s)"),
+				GeneratedObject ? *GeneratedObject->GetClass()->GetName() : TEXT("<null>")),
+			Material))
+	{
+		return false;
+	}
+
+	int32 MaskedInputCount = 0;
+	int32 UnstableInputCount = 0;
+	bool bHasComponentMaskNode = false;
+	for (UMaterialExpression* Expression : Material->GetExpressions())
+	{
+		if (!Expression)
+		{
+			continue;
+		}
+
+		bHasComponentMaskNode |= Expression->IsA<UMaterialExpressionComponentMask>();
+
+		for (FExpressionInputIterator It{ Expression }; It; ++It)
+		{
+			const FExpressionInput* Input = It.Input;
+			if (!Input || !Input->Expression || Input->Mask == 0)
+			{
+				continue;
+			}
+
+			++MaskedInputCount;
+			const int32 ChannelMask =
+				(Input->MaskR != 0 ? 0x1 : 0)
+				| (Input->MaskG != 0 ? 0x2 : 0)
+				| (Input->MaskB != 0 ? 0x4 : 0)
+				| (Input->MaskA != 0 ? 0x8 : 0);
+			if (!IsInlineInputMaskGraphStable(Input->Expression, Input->OutputIndex, ChannelMask))
+			{
+				++UnstableInputCount;
+				AddError(FString::Printf(
+					TEXT("'%s' takes a mask off '%s' output %d that the graph editor re-points at output %d."),
+					*Expression->GetName(),
+					*Input->Expression->GetName(),
+					Input->OutputIndex,
+					ResolveGraphEditorOutputIndex(
+						Input->Expression,
+						Input->OutputIndex,
+						Input->Mask,
+						Input->MaskR,
+						Input->MaskG,
+						Input->MaskB,
+						Input->MaskA)));
+			}
+		}
+	}
+
+	TestEqual(TEXT("No generated connection carries a mask the graph editor would rewrite"), UnstableInputCount, 0);
+	TestTrue(
+		FString::Printf(TEXT("The swizzle is materialized as a ComponentMask node (masked inputs seen: %d)"), MaskedInputCount),
+		bHasComponentMaskNode);
 	return true;
 }
 
