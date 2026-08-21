@@ -1286,7 +1286,8 @@ namespace UE::DreamShader::Editor::Private
 	void AppendBoolMaterialSettingIfDifferent(
 		TArray<FString>& Lines,
 		const UMaterial* Material,
-		const TCHAR* PropertyName)
+		const TCHAR* PropertyName,
+		const TOptional<bool> DefaultValueOverride)
 	{
 		if (!Material || !PropertyName)
 		{
@@ -1301,9 +1302,11 @@ namespace UE::DreamShader::Editor::Private
 
 		const UMaterial* DefaultMaterial = GetDefault<UMaterial>();
 		const bool bValue = BoolProperty->GetPropertyValue_InContainer(Material);
-		const bool bDefaultValue = DefaultMaterial
-			? BoolProperty->GetPropertyValue_InContainer(DefaultMaterial)
-			: false;
+		const bool bDefaultValue = DefaultValueOverride.IsSet()
+			? DefaultValueOverride.GetValue()
+			: (DefaultMaterial
+				? BoolProperty->GetPropertyValue_InContainer(DefaultMaterial)
+				: false);
 		if (bValue == bDefaultValue)
 		{
 			return;
@@ -1378,6 +1381,13 @@ namespace UE::DreamShader::Editor::Private
 
 	void AppendAdditionalMaterialSettings(TArray<FString>& Lines, const UMaterial* Material)
 	{
+		// AppendBoolMaterialSettingIfDifferent tolerates a null material on its own, but the
+		// volumetric cloud default below reads the domain off it before the call.
+		if (!Material)
+		{
+			return;
+		}
+
 		const TCHAR* BoolSettingNames[] =
 		{
 			TEXT("TwoSided"),
@@ -1417,7 +1427,6 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("bUsedWithHairStrands"),
 			TEXT("bUsedWithWater"),
 			TEXT("bUsedWithVirtualHeightfieldMesh"),
-			TEXT("bUsedWithVolumetricCloud"),
 			TEXT("bCastRayTracedShadows"),
 			TEXT("bWriteOnlyAlpha"),
 			TEXT("BlendableOutputAlpha"),
@@ -1428,6 +1437,16 @@ namespace UE::DreamShader::Editor::Private
 		{
 			AppendBoolMaterialSettingIfDifferent(Lines, Material, BoolSettingName);
 		}
+
+		// Not compared against the CDO: ApplySettings derives this flag from the material domain,
+		// so on a Volume-domain material the value that needs no Settings line is true, not false.
+		// Against the CDO, a Volume material with the flag off would write no line at all and
+		// regenerating that source would turn the flag back on.
+		AppendBoolMaterialSettingIfDifferent(
+			Lines,
+			Material,
+			TEXT("bUsedWithVolumetricCloud"),
+			GetDefaultUsedWithVolumetricCloud(Material->MaterialDomain.GetValue()));
 
 		const TCHAR* EnumSettingNames[] =
 		{

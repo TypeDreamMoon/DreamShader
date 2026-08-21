@@ -6,6 +6,10 @@
 // EBlendMode / EMaterialShadingModel, used by the resolver declarations below. Unity builds happened
 // to pull these in through a neighbouring TU; a non-unity compile of this header does not.
 #include "Engine/EngineTypes.h"
+
+// EMaterialDomain, used by GetDefaultUsedWithVolumetricCloud below. It lives here rather than in
+// SceneTypes.h, and nothing else this header includes pulls it in on a non-unity compile.
+#include "MaterialDomain.h"
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionObjectPositionWS.h"
 #include "Materials/MaterialExpressionTransform.h"
@@ -303,6 +307,12 @@ namespace UE::DreamShader::Editor::Private
 		const TMap<FString, FString>* RegionByVariable,
 		bool bQuiet);
 	void ResetMaterialToDefaults(UMaterial* Material);
+	/**
+	 * The value ApplySettings gives bUsedWithVolumetricCloud when the source's Settings block does
+	 * not name it. Decompile calls this too, so that the value a generated material would get
+	 * anyway is the one it may leave out of the Settings block it writes.
+	 */
+	bool GetDefaultUsedWithVolumetricCloud(const EMaterialDomain Domain);
 	bool ValidateSettings(const FTextShaderDefinition& Definition, FString& OutError);
 	bool ApplySettings(UMaterial* Material, const FTextShaderDefinition& Definition, FString& OutError);
 	UMaterialExpression* CreatePropertyExpression(

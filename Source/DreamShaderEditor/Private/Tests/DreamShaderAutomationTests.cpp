@@ -209,6 +209,40 @@ Shader(Name="DreamShaderTests/Automation/%s")
 )"), *AssetName);
 	}
 
+	// A Volume-domain material, the shape whose bUsedWithVolumetricCloud the domain supplies. Volume
+	// materials have to be additive -- the engine rejects any other blend mode -- and the flag is
+	// deliberately absent unless a caller asks for it, because the point of the test is that a source
+	// never has to name it.
+	FString MakeVolumeMaterialSource(const FString& AssetName, const TCHAR* UsedWithVolumetricCloud = nullptr)
+	{
+		const FString CloudSetting = UsedWithVolumetricCloud
+			? FString::Printf(TEXT("\n        bUsedWithVolumetricCloud = \"%s\";"), UsedWithVolumetricCloud)
+			: FString();
+
+		return FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Properties = {
+        vec3 Tint = vec3(0.4, 0.6, 1.0);
+    }
+
+    Settings = {
+        Domain = "Volume";
+        BlendMode = "Additive";%s
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = Tint;
+    }
+}
+)"), *AssetName, *CloudSetting);
+	}
+
 	FString MakeSharedHeaderSource()
 	{
 		return TEXT(R"(
@@ -785,6 +819,159 @@ bool FDreamShaderRoundTripSubstrateMaterialTest::RunTest(const FString& Paramete
 	TestTrue(
 		FString::Printf(TEXT("Decompiled Substrate source re-generates: %s"), *ReMessage),
 		FMaterialGenerator::GenerateMaterialFromFile(ReSourceFilePath, ReMessage, true));
+
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderVolumeDomainVolumetricCloudUsageTest,
+	FDreamShaderQuietAutomationTestBase,
+	"DreamShader.Roundtrip.VolumeDomainVolumetricCloudUsage",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Domain="Volume" supplies bUsedWithVolumetricCloud, so no source has to write it by hand. That makes
+// the flag's default domain-derived rather than the UMaterial class default, and decompile has to
+// agree about which value may be left out: it used to compare against the CDO, so a Volume material
+// with the flag OFF decompiled to a source that said nothing about it, and regenerating that source
+// switched the flag back on.
+bool FDreamShaderVolumeDomainVolumetricCloudUsageTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	// The default ThinCustom backend hands back a memory-only UDreamShaderMaterialInstance over a
+	// hidden base; this test reads a UMaterial's usage flag and decompiles it, so it wants the
+	// visible node graph.
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+
+	// A source that never mentions the flag: the domain has to supply it.
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_VolumeCloud"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), MakeVolumeMaterialSource(AssetName), SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+		FString::Printf(TEXT("Volume material generation succeeds: %s"), *Message),
+		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated Volume material loads"), Material))
+	{
+		return false;
+	}
+	TestTrue(
+		TEXT("Domain=\"Volume\" turns bUsedWithVolumetricCloud on without the source asking."),
+		Material->GetUsageByFlag(MATUSAGE_VolumetricCloud));
+
+	// On a Volume material, true is the value the domain would have given anyway, so decompile has
+	// nothing to say about it.
+	const FString ReAssetName = MakeUniqueTestAssetName(TEXT("M_VolumeCloudRoundTrip"));
+	FString DecompiledSource;
+	FString DecompileError;
+	if (!TestTrue(
+		FString::Printf(TEXT("Volume decompile succeeds: %s"), *DecompileError),
+		GetGraphDecompiler().DecompileMaterial(Material, FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *ReAssetName), DecompiledSource, DecompileError)))
+	{
+		return false;
+	}
+	TestTrue(TEXT("Decompiled Volume material keeps Domain=\"Volume\"."), DecompiledSource.Contains(TEXT("Domain = \"Volume\"")));
+	TestFalse(
+		TEXT("Decompile omits bUsedWithVolumetricCloud when it matches the domain's default."),
+		DecompiledSource.Contains(TEXT("bUsedWithVolumetricCloud")));
+
+	// The other direction: a fog-only Volume material turns the flag back off explicitly, and that
+	// has to survive decompile -- against the CDO it would have been mistaken for the default and
+	// dropped, and regenerating would have switched the flag on again.
+	const FString FogAssetName = MakeUniqueTestAssetName(TEXT("M_VolumeFog"));
+	const FString FogObjectPath = MakeAutomationObjectPath(FogAssetName);
+	Artifacts.AddObjectPath(FogObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, FogObjectPath);
+
+	FString FogSourceFilePath;
+	if (!WriteAutomationSourceFile(
+		*this,
+		FogAssetName + TEXT(".dsm"),
+		MakeVolumeMaterialSource(FogAssetName, TEXT("false")),
+		FogSourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(FogSourceFilePath);
+
+	FString FogMessage;
+	if (!TestTrue(
+		FString::Printf(TEXT("Fog-only Volume material generation succeeds: %s"), *FogMessage),
+		FMaterialGenerator::GenerateMaterialFromFile(FogSourceFilePath, FogMessage, true)))
+	{
+		return false;
+	}
+
+	UMaterial* FogMaterial = LoadObject<UMaterial>(nullptr, *FogObjectPath);
+	if (!TestNotNull(TEXT("Generated fog-only Volume material loads"), FogMaterial))
+	{
+		return false;
+	}
+	TestFalse(
+		TEXT("An explicit bUsedWithVolumetricCloud=\"false\" overrides the domain's default."),
+		FogMaterial->GetUsageByFlag(MATUSAGE_VolumetricCloud));
+
+	const FString FogReAssetName = MakeUniqueTestAssetName(TEXT("M_VolumeFogRoundTrip"));
+	const FString FogReObjectPath = MakeAutomationObjectPath(FogReAssetName);
+	Artifacts.AddObjectPath(FogReObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, FogReObjectPath);
+
+	FString FogDecompiledSource;
+	FString FogDecompileError;
+	if (!TestTrue(
+		FString::Printf(TEXT("Fog-only Volume decompile succeeds: %s"), *FogDecompileError),
+		GetGraphDecompiler().DecompileMaterial(FogMaterial, FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *FogReAssetName), FogDecompiledSource, FogDecompileError)))
+	{
+		return false;
+	}
+	TestTrue(
+		TEXT("Decompile writes bUsedWithVolumetricCloud = false for a fog-only Volume material."),
+		FogDecompiledSource.Contains(TEXT("bUsedWithVolumetricCloud = false;")));
+
+	// The round trip that used to lose the flag: regenerate from the decompiled source and read it back.
+	FString FogReSourceFilePath;
+	if (!WriteAutomationSourceFile(*this, FogReAssetName + TEXT(".dsm"), FogDecompiledSource, FogReSourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(FogReSourceFilePath);
+
+	FString FogReMessage;
+	if (!TestTrue(
+		FString::Printf(TEXT("Decompiled fog-only Volume source re-generates: %s"), *FogReMessage),
+		FMaterialGenerator::GenerateMaterialFromFile(FogReSourceFilePath, FogReMessage, true)))
+	{
+		return false;
+	}
+
+	UMaterial* FogReMaterial = LoadObject<UMaterial>(nullptr, *FogReObjectPath);
+	if (!TestNotNull(TEXT("Re-generated fog-only Volume material loads"), FogReMaterial))
+	{
+		return false;
+	}
+	TestFalse(
+		TEXT("bUsedWithVolumetricCloud survives a UMaterial -> .dsm -> UMaterial round trip."),
+		FogReMaterial->GetUsageByFlag(MATUSAGE_VolumetricCloud));
 
 	return true;
 }

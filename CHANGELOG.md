@@ -4,6 +4,39 @@
 
 ### Fixed
 
+- **A `Domain="Volume"` material carries `bUsedWithVolumetricCloud`, and decompiling one no longer
+  turns the flag back on.** Assigning a generated volume material to a Volumetric Cloud component
+  warned that the material was not flagged for it, and the only cure was ticking the box by hand in
+  the material editor, which the next generation overwrote. `ApplySettings` now derives the flag
+  from the domain, so a Volume-domain material gets it without the source having to say so, and an
+  explicit `bUsedWithVolumetricCloud = "false";` still wins — a Volume material that only feeds
+  volumetric fog can decline the cloud shader permutations. Two things had to follow from that.
+  First, the flag is written through `UMaterial::SetUsageByFlag(MATUSAGE_VolumetricCloud, ...)`
+  rather than by assigning the member: UE 5.8 deprecates every `bUsedWith*` field in favour of the
+  accessors, so the direct write compiled with a C4996 that would become a hard error the release
+  Epic removes them in. Second, the assignment moved out of the `Domain` branch and reads the domain
+  back off the material, because `ResetMaterialToDefaults` does not clear usage flags: a material
+  regenerated from `Volume` to some other domain used to keep a stale flag, and a source that omits
+  `Domain` keeps the domain it already has. Reported in
+  [#27](https://github.com/TypeDreamMoon/DreamShader/pull/27).
+
+- **Decompile no longer drops `bUsedWithVolumetricCloud = "false"` from a Volume-domain material.**
+  `AppendBoolMaterialSettingIfDifferent` decides whether a setting is worth writing by comparing it
+  against the `UMaterial` class default, and for this one flag that baseline is now wrong: the
+  generator derives it from the domain, so on a Volume material the value that needs no line is
+  `true`, not `false`. A fog-only Volume material therefore decompiled to a source with no mention
+  of the flag, and regenerating that source switched it on — `UMaterial` → `.dsm` → `UMaterial` was
+  not an identity. Both directions now go through `GetDefaultUsedWithVolumetricCloud`, the single
+  place that says what the domain implies, and the helper takes an explicit baseline for settings
+  whose default is derived rather than constant.
+
+- **`DreamShaderGraphDecompilerHelpers.h` compiles on its own.** It declares
+  `GetMaterialDomainText(EMaterialDomain)` and `GetBlendModeText(EBlendMode)` without including
+  either enum's header; a unity build only ever had them through a neighbouring translation unit, so
+  the gap stayed invisible until a non-unity compile of that one file (`-SingleFile`) failed with
+  four syntax errors per declaration. It now includes `MaterialDomain.h` and `Engine/EngineTypes.h`,
+  as `DreamShaderMaterialGeneratorPrivate.h` already did for the same reason.
+
 - **Cook-generated assets are registered with the AssetRegistry, so they reach the package.** The
   cook hook wrote every source file out as a persistent `.uasset` and then relied on the engine
   finding it, but a cook request is resolved through `IAssetRegistry::DoesPackageExistOnDisk`, which
