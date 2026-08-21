@@ -45,8 +45,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!InValue.bIsMaterialAttributes)
 			{
-				OutError = TEXT("Expected a MaterialAttributes value.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4085"), TEXT("Expected a MaterialAttributes value."));
 			}
 
 			OutValue = InValue;
@@ -57,8 +56,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!InValue.bIsSubstrateMaterial)
 			{
-				OutError = TEXT("Expected a Substrate value.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4086"), TEXT("Expected a Substrate value."));
 			}
 
 			OutValue = InValue;
@@ -69,14 +67,12 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!InValue.bIsTextureObject)
 			{
-				OutError = TEXT("Expected a texture object value.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4087"), TEXT("Expected a texture object value."));
 			}
 
 			if (InValue.TextureType != ExpectedTextureType)
 			{
-				OutError = TEXT("Expected a texture object value with a matching texture type.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4088"), TEXT("Expected a texture object value with a matching texture type."));
 			}
 
 			OutValue = InValue;
@@ -85,20 +81,17 @@ namespace UE::DreamShader::Editor::Private
 
 		if (InValue.bIsMaterialAttributes)
 		{
-			OutError = TEXT("MaterialAttributes values cannot be assigned to numeric outputs.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4089"), TEXT("MaterialAttributes values cannot be assigned to numeric outputs."));
 		}
 
 		if (InValue.bIsSubstrateMaterial)
 		{
-			OutError = TEXT("Substrate values cannot be assigned to numeric outputs.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4090"), TEXT("Substrate values cannot be assigned to numeric outputs."));
 		}
 
 		if (InValue.bIsTextureObject)
 		{
-			OutError = TEXT("Texture objects cannot be assigned to numeric outputs.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4091"), TEXT("Texture objects cannot be assigned to numeric outputs."));
 		}
 
 		if (InValue.ComponentCount == ExpectedComponentCount)
@@ -132,10 +125,6 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-			TEXT("Expected %d component(s) but got %d."),
-			ExpectedComponentCount,
-			InValue.ComponentCount);
-		return false;
+		return FailWith(OutError, TEXT("DSH4092"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Expected %d component(s) but got %d."), ExpectedComponentCount, InValue.ComponentCount));
 	}
 }

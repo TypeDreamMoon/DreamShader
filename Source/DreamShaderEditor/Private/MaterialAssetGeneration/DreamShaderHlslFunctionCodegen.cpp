@@ -1021,10 +1021,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 				CycleNames.Add(Function->Name);
 
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("SelfContained Function cycle detected: %s. HLSL Custom nodes cannot compile recursive DreamShader functions."),
-					*FString::Join(CycleNames, TEXT(" -> ")));
-				return false;
+				return FailWith(OutError, TEXT("DSH6086"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("SelfContained Function cycle detected: %s. HLSL Custom nodes cannot compile recursive DreamShader functions."), *FString::Join(CycleNames, TEXT(" -> "))));
 			}
 
 			VisitStates.Add(Function, EVisitState::Visiting);
@@ -1098,8 +1095,7 @@ namespace UE::DreamShader::Editor::Private
 				const FTextShaderFunctionDefinition* const* Function = FunctionsBySpelling.Find(RequestedName);
 				if (!Function)
 				{
-					OutError = FString::Printf(TEXT("Unknown SelfContained DreamShader Function '%s'."), *RequestedName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH6087"), FString::Printf(TEXT("Unknown SelfContained DreamShader Function '%s'."), *RequestedName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				if (!SeenRoots.Contains(*Function))
@@ -1235,8 +1231,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString NormalizedFunctionName = UE::DreamShader::NormalizeSettingKey(Function.Name);
 			if (SeenFunctionNames.Contains(NormalizedFunctionName))
 			{
-				OutError = FString::Printf(TEXT("DreamShader Function '%s' is declared more than once."), *Function.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH6088"), FString::Printf(TEXT("DreamShader Function '%s' is declared more than once."), *Function.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			SeenFunctionNames.Add(NormalizedFunctionName);
 
@@ -1244,11 +1239,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString NormalizedGeneratedFunctionName = UE::DreamShader::NormalizeSettingKey(GeneratedFunctionName);
 			if (SeenGeneratedFunctionNames.Contains(NormalizedGeneratedFunctionName))
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("DreamShader Function '%s' collides with another generated helper symbol '%s'. Rename the Function or Namespace."),
-					*Function.Name,
-					*GeneratedFunctionName);
-				return false;
+				return FailWith(OutError, TEXT("DSH6089"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("DreamShader Function '%s' collides with another generated helper symbol '%s'. Rename the Function or Namespace."), *Function.Name, *GeneratedFunctionName));
 			}
 			SeenGeneratedFunctionNames.Add(NormalizedGeneratedFunctionName);
 
@@ -1289,8 +1280,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!FFileHelper::SaveStringToFile(IncludeSource, *IncludePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 		{
-			OutError = FString::Printf(TEXT("Failed to write generated helper include '%s'."), *IncludePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH6090"), FString::Printf(TEXT("Failed to write generated helper include '%s'."), *IncludePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 		return true;
 	}

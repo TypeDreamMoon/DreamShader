@@ -117,8 +117,7 @@ namespace UE::DreamShader::Editor::Private
 			bool bParsedValue = false;
 			if (!ParseBooleanLiteral(Value, bParsedValue))
 			{
-				OutError = FString::Printf(TEXT("Invalid boolean value '%s' for %s."), *Value, Key); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7111"), FString::Printf(TEXT("Invalid boolean value '%s' for %s."), *Value, Key)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 
@@ -185,8 +184,7 @@ namespace UE::DreamShader::Editor::Private
 		FString Segment = InSegmentText.TrimStartAndEnd();
 		if (Segment.IsEmpty())
 		{
-			OutError = TEXT("Setting path segment cannot be empty.");
-			return false;
+			return FailWith(OutError, TEXT("DSH7112"), TEXT("Setting path segment cannot be empty."));
 		}
 
 		const int32 OpenBracketIndex = Segment.Find(TEXT("["));
@@ -199,16 +197,14 @@ namespace UE::DreamShader::Editor::Private
 		const int32 CloseBracketIndex = Segment.Find(TEXT("]"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 		if (CloseBracketIndex == INDEX_NONE || CloseBracketIndex <= OpenBracketIndex || CloseBracketIndex != Segment.Len() - 1)
 		{
-			OutError = FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH7113"), FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		const FString IndexText = Segment.Mid(OpenBracketIndex + 1, CloseBracketIndex - OpenBracketIndex - 1).TrimStartAndEnd();
 		int32 ParsedIndex = INDEX_NONE;
 		if (!ParseIntegerLiteral(IndexText, ParsedIndex) || ParsedIndex < 0)
 		{
-			OutError = FString::Printf(TEXT("Invalid array index '%s' in setting segment '%s'."), *IndexText, *InSegmentText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH7114"), FString::Printf(TEXT("Invalid array index '%s' in setting segment '%s'."), *IndexText, *InSegmentText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		OutSegment.Name = Segment.Left(OpenBracketIndex).TrimStartAndEnd();
@@ -216,8 +212,7 @@ namespace UE::DreamShader::Editor::Private
 		OutSegment.bHasArrayIndex = true;
 		if (OutSegment.Name.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH7115"), FString::Printf(TEXT("Invalid array setting segment '%s'."), *InSegmentText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;
@@ -312,15 +307,13 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!RootObject)
 		{
-			OutError = TEXT("Invalid material setting target.");
-			return false;
+			return FailWith(OutError, TEXT("DSH7116"), TEXT("Invalid material setting target."));
 		}
 
 		TArray<FString> Segments;
 		if (!SplitMaterialSettingPath(InKey, Segments))
 		{
-			OutError = FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH7117"), FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		void* CurrentContainer = RootObject;
@@ -337,32 +330,24 @@ namespace UE::DreamShader::Editor::Private
 			FProperty* Property = nullptr;
 			if (!TryResolveMaterialSettingPropertyOnStruct(CurrentStruct, Segment.Name, Property))
 			{
-				OutError = FString::Printf(TEXT("Unsupported material setting '%s'."), *InKey); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7118"), FString::Printf(TEXT("Unsupported material setting '%s'."), *InKey)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (Segment.bHasArrayIndex)
 			{
 				if (Property->ArrayDim <= 1)
 				{
-					OutError = FString::Printf(TEXT("Setting '%s' is not an indexed array property."), *Segments[SegmentIndex]); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH7119"), FString::Printf(TEXT("Setting '%s' is not an indexed array property."), *Segments[SegmentIndex])); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				if (Segment.ArrayIndex >= Property->ArrayDim)
 				{
-					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("Array index %d is out of range for setting '%s' (max %d)."),
-						Segment.ArrayIndex,
-						*Segments[SegmentIndex],
-						Property->ArrayDim - 1);
-					return false;
+					return FailWith(OutError, TEXT("DSH7120"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Array index %d is out of range for setting '%s' (max %d)."), Segment.ArrayIndex, *Segments[SegmentIndex], Property->ArrayDim - 1));
 				}
 			}
 			else if (Property->ArrayDim > 1)
 			{
-				OutError = FString::Printf(TEXT("Setting '%s' requires an explicit [index]."), *Segments[SegmentIndex]); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7121"), FString::Printf(TEXT("Setting '%s' requires an explicit [index]."), *Segments[SegmentIndex])); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			const int32 ArrayIndex = Segment.bHasArrayIndex ? Segment.ArrayIndex : 0;
@@ -378,16 +363,14 @@ namespace UE::DreamShader::Editor::Private
 			const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
 			if (!StructProperty || !StructProperty->Struct)
 			{
-				OutError = FString::Printf(TEXT("Setting path '%s' cannot continue through '%s'."), *InKey, *Segments[SegmentIndex]); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7122"), FString::Printf(TEXT("Setting path '%s' cannot continue through '%s'."), *InKey, *Segments[SegmentIndex])); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			CurrentContainer = StructProperty->ContainerPtrToValuePtr<void>(CurrentContainer, ArrayIndex);
 			CurrentStruct = StructProperty->Struct;
 		}
 
-		OutError = FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey); /* I18N-EXEMPT: deferred codegen or compatibility path */
-		return false;
+		return FailWith(OutError, TEXT("DSH7123"), FString::Printf(TEXT("Invalid material setting path '%s'."), *InKey)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	static bool ValidateGenericMaterialSetting(const FString& InKey, const FString& InValue, FDreamShaderError& OutError)
@@ -395,8 +378,7 @@ namespace UE::DreamShader::Editor::Private
 		UMaterial* ProbeMaterial = NewObject<UMaterial>(GetTransientPackage(), NAME_None, RF_Transient);
 		if (!ProbeMaterial)
 		{
-			OutError = TEXT("Failed to create a transient material for Settings validation.");
-			return false;
+			return FailWith(OutError, TEXT("DSH7124"), TEXT("Failed to create a transient material for Settings validation."));
 		}
 
 		FResolvedMaterialSettingTarget Target;
@@ -409,8 +391,7 @@ namespace UE::DreamShader::Editor::Private
 		void* ValuePtr = Target.Property->ContainerPtrToValuePtr<void>(Target.ContainerPtr, Target.ArrayIndex);
 		if (!SetMaterialExpressionLiteralProperty(Target.OwnerObject, Target.Property, ValuePtr, InValue, LiteralError))
 		{
-			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH7125"), FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;
@@ -428,8 +409,7 @@ namespace UE::DreamShader::Editor::Private
 		void* ValuePtr = Target.Property->ContainerPtrToValuePtr<void>(Target.ContainerPtr, Target.ArrayIndex);
 		if (!SetMaterialExpressionLiteralProperty(Target.OwnerObject, Target.Property, ValuePtr, InValue, LiteralError))
 		{
-			OutError = FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH7126"), FString::Printf(TEXT("Invalid value '%s' for setting '%s'. %s"), *InValue, *InKey, *LiteralError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;
@@ -447,8 +427,7 @@ namespace UE::DreamShader::Editor::Private
 			EBlendMode BlendMode = BLEND_MAX;
 			if (!TryResolveBlendMode(BlendModeValue, BlendMode))
 			{
-				OutError = FString::Printf(TEXT("Unsupported BlendMode/RenderType '%s'."), *BlendModeValue); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7127"), FString::Printf(TEXT("Unsupported BlendMode/RenderType '%s'."), *BlendModeValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 
@@ -459,15 +438,13 @@ namespace UE::DreamShader::Editor::Private
 			if (TrimmedShadingModelValue.Equals(TEXT("Substrate"), ESearchCase::IgnoreCase)
 				|| TrimmedShadingModelValue.Equals(TEXT("Strata"), ESearchCase::IgnoreCase))
 			{
-				OutError = TEXT("ShadingModel=\"Substrate\" requires Unreal Engine 5.4 or newer.");
-				return false;
+				return FailWith(OutError, TEXT("DSH7128"), TEXT("ShadingModel=\"Substrate\" requires Unreal Engine 5.4 or newer."));
 			}
 #endif
 			EMaterialShadingModel ShadingModel = MSM_MAX;
 			if (!TryResolveShadingModel(ShadingModelValue, ShadingModel))
 			{
-				OutError = FString::Printf(TEXT("Unsupported ShadingModel '%s'."), *ShadingModelValue); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7129"), FString::Printf(TEXT("Unsupported ShadingModel '%s'."), *ShadingModelValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 
@@ -476,8 +453,7 @@ namespace UE::DreamShader::Editor::Private
 			EMaterialDomain Domain = MD_Surface;
 			if (!TryResolveMaterialDomain(MaterialDomainValue, Domain))
 			{
-				OutError = FString::Printf(TEXT("Unsupported MaterialDomain '%s'."), *MaterialDomainValue); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7130"), FString::Printf(TEXT("Unsupported MaterialDomain '%s'."), *MaterialDomainValue)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 

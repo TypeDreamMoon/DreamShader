@@ -543,3 +543,975 @@ Invalid empty setting key in '{0}'.
 
 **See** [Settings](../settings/index.md)
 
+## DSH7101
+
+<!-- generated:begin DSH7101 -->
+**Severity** error
+
+**Message**
+
+```
+StaticSwitchParameter '%s' requires True=... and False=... inputs.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:190`
+<!-- generated:end DSH7101 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7102
+
+<!-- generated:begin DSH7102 -->
+**Severity** error
+
+**Message**
+
+```
+StaticSwitchParameter '%s' cannot switch Texture object values.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:207`
+<!-- generated:end DSH7102 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7103
+
+<!-- generated:begin DSH7103 -->
+**Severity** error
+
+**Message**
+
+```
+StaticSwitchParameter '%s' cannot switch Substrate values.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:211`
+<!-- generated:end DSH7103 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7104
+
+<!-- generated:begin DSH7104 -->
+**Severity** error
+
+**Message**
+
+```
+StaticSwitchParameter '%s' cannot mix MaterialAttributes and numeric branches.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:215`
+<!-- generated:end DSH7104 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7105
+
+<!-- generated:begin DSH7105 -->
+**Severity** error
+
+**Message**
+
+```
+StaticSwitchParameter '%s' branches must have the same component count, got %d and %d.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:219`
+<!-- generated:end DSH7105 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7106
+
+<!-- generated:begin DSH7106 -->
+**Severity** error
+
+**Message**
+
+```
+Failed to create StaticSwitchParameter node '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:236`
+<!-- generated:end DSH7106 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7107
+
+<!-- generated:begin DSH7107 -->
+**Severity** error
+
+**Message**
+
+```
+Parameter '%s' did not produce an expression node.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:318`
+<!-- generated:end DSH7107 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7108
+
+<!-- generated:begin DSH7108 -->
+**Severity** error
+
+**Message**
+
+```
+Parameter '%s' must be called with named arguments wiring its input pins (e.g. %s(Coordinates=...) or %s(Input=...)).
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:325`
+<!-- generated:end DSH7108 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7109
+
+<!-- generated:begin DSH7109 -->
+**Severity** error
+
+**Message**
+
+```
+Parameter '%s' (%s) has no input pin named '%s'. Asset slots (Texture/Curve/Font/...) are set via [%s=Path(...)] metadata, not call arguments.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:345`
+<!-- generated:end DSH7109 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7110
+
+<!-- generated:begin DSH7110 -->
+**Severity** error
+
+**Message**
+
+```
+Parameter '%s' input '%s' must be a numeric value.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:355`
+<!-- generated:end DSH7110 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7111
+
+<!-- generated:begin DSH7111 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid boolean value '%s' for %s.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:120`
+<!-- generated:end DSH7111 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7112
+
+<!-- generated:begin DSH7112 -->
+**Severity** error
+
+**Message**
+
+```
+Setting path segment cannot be empty.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:187`
+<!-- generated:end DSH7112 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7113
+
+<!-- generated:begin DSH7113 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid array setting segment '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:200`
+<!-- generated:end DSH7113 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7114
+
+<!-- generated:begin DSH7114 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid array index '%s' in setting segment '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:207`
+<!-- generated:end DSH7114 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7115
+
+<!-- generated:begin DSH7115 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid array setting segment '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:215`
+<!-- generated:end DSH7115 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7116
+
+<!-- generated:begin DSH7116 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid material setting target.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:310`
+<!-- generated:end DSH7116 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7117
+
+<!-- generated:begin DSH7117 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid material setting path '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:316`
+<!-- generated:end DSH7117 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7118
+
+<!-- generated:begin DSH7118 -->
+**Severity** error
+
+**Message**
+
+```
+Unsupported material setting '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:333`
+<!-- generated:end DSH7118 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7119
+
+<!-- generated:begin DSH7119 -->
+**Severity** error
+
+**Message**
+
+```
+Setting '%s' is not an indexed array property.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:340`
+<!-- generated:end DSH7119 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7120
+
+<!-- generated:begin DSH7120 -->
+**Severity** error
+
+**Message**
+
+```
+Array index %d is out of range for setting '%s' (max %d).
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:345`
+<!-- generated:end DSH7120 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7121
+
+<!-- generated:begin DSH7121 -->
+**Severity** error
+
+**Message**
+
+```
+Setting '%s' requires an explicit [index].
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:350`
+<!-- generated:end DSH7121 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7122
+
+<!-- generated:begin DSH7122 -->
+**Severity** error
+
+**Message**
+
+```
+Setting path '%s' cannot continue through '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:366`
+<!-- generated:end DSH7122 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7123
+
+<!-- generated:begin DSH7123 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid material setting path '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:373`
+<!-- generated:end DSH7123 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7124
+
+<!-- generated:begin DSH7124 -->
+**Severity** error
+
+**Message**
+
+```
+Failed to create a transient material for Settings validation.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:381`
+<!-- generated:end DSH7124 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7125
+
+<!-- generated:begin DSH7125 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid value '%s' for setting '%s'. %s
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:394`
+<!-- generated:end DSH7125 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7126
+
+<!-- generated:begin DSH7126 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid value '%s' for setting '%s'. %s
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:412`
+<!-- generated:end DSH7126 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7127
+
+<!-- generated:begin DSH7127 -->
+**Severity** error
+
+**Message**
+
+```
+Unsupported BlendMode/RenderType '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:430`
+<!-- generated:end DSH7127 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7128
+
+<!-- generated:begin DSH7128 -->
+**Severity** error
+
+**Message**
+
+```
+ShadingModel=\"Substrate\" requires Unreal Engine 5.4 or newer.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:441`
+<!-- generated:end DSH7128 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7129
+
+<!-- generated:begin DSH7129 -->
+**Severity** error
+
+**Message**
+
+```
+Unsupported ShadingModel '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:447`
+<!-- generated:end DSH7129 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7130
+
+<!-- generated:begin DSH7130 -->
+**Severity** error
+
+**Message**
+
+```
+Unsupported MaterialDomain '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:456`
+<!-- generated:end DSH7130 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7131
+
+<!-- generated:begin DSH7131 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid reflected property target.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:75`
+<!-- generated:end DSH7131 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7132
+
+<!-- generated:begin DSH7132 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' is not a valid boolean value for '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:97`
+<!-- generated:end DSH7132 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7133
+
+<!-- generated:begin DSH7133 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' is not a valid integer value for '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:108`
+<!-- generated:end DSH7133 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7134
+
+<!-- generated:begin DSH7134 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' is not a valid unsigned integer value for '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:119`
+<!-- generated:end DSH7134 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7135
+
+<!-- generated:begin DSH7135 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' is not a valid numeric value for '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:130`
+<!-- generated:end DSH7135 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7136
+
+<!-- generated:begin DSH7136 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' is not a valid numeric value for '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:141`
+<!-- generated:end DSH7136 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7137
+
+<!-- generated:begin DSH7137 -->
+**Severity** error
+
+**Message**
+
+```
+Object property '%s' expects Path(...) or an absolute Unreal object path.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:163`
+<!-- generated:end DSH7137 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7138
+
+<!-- generated:begin DSH7138 -->
+**Severity** error
+
+**Message**
+
+```
+Failed to load asset '%s' for '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:178`
+<!-- generated:end DSH7138 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7139
+
+<!-- generated:begin DSH7139 -->
+**Severity** error
+
+**Message**
+
+```
+Asset '%s' is not compatible with '%s'. Expected '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:183`
+<!-- generated:end DSH7139 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7140
+
+<!-- generated:begin DSH7140 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' is not a valid enum value for '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:197`
+<!-- generated:end DSH7140 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7141
+
+<!-- generated:begin DSH7141 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' is not a valid enum value for '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:212`
+<!-- generated:end DSH7141 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7142
+
+<!-- generated:begin DSH7142 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' is not a valid byte value for '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:222`
+<!-- generated:end DSH7142 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7143
+
+<!-- generated:begin DSH7143 -->
+**Severity** error
+
+**Message**
+
+```
+Property '%s' on '%s' is not a supported literal type yet.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:236`
+<!-- generated:end DSH7143 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7144
+
+<!-- generated:begin DSH7144 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid reflected property target.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:243`
+<!-- generated:end DSH7144 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7145
+
+<!-- generated:begin DSH7145 -->
+**Severity** error
+
+**Message**
+
+```
+%s texture property '%s' expects %s but '%s' is a '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:145`
+<!-- generated:end DSH7145 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7146
+
+<!-- generated:begin DSH7146 -->
+**Severity** error
+
+**Message**
+
+```
+Metadata property '%s' is not a reflected property on '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:232`
+<!-- generated:end DSH7146 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7147
+
+<!-- generated:begin DSH7147 -->
+**Severity** error
+
+**Message**
+
+```
+Metadata property '%s' on '%s': %s
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:238`
+<!-- generated:end DSH7147 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7148
+
+<!-- generated:begin DSH7148 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid parameter expression.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:249`
+<!-- generated:end DSH7148 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7149
+
+<!-- generated:begin DSH7149 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' does not expose a ParameterName property.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:274`
+<!-- generated:end DSH7149 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7150
+
+<!-- generated:begin DSH7150 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' does not expose a texture/asset property for %s.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:324`
+<!-- generated:end DSH7150 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7151
+
+<!-- generated:begin DSH7151 -->
+**Severity** error
+
+**Message**
+
+```
+Failed to create a scalar constant expression.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:695`
+<!-- generated:end DSH7151 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7152
+
+<!-- generated:begin DSH7152 -->
+**Severity** error
+
+**Message**
+
+```
+Unsupported vector literal '%s'.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:706`
+<!-- generated:end DSH7152 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7153
+
+<!-- generated:begin DSH7153 -->
+**Severity** error
+
+**Message**
+
+```
+Failed to create a float%d constant expression.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:712`
+<!-- generated:end DSH7153 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH7154
+
+<!-- generated:begin DSH7154 -->
+**Severity** error
+
+**Message**
+
+```
+'%s' is not a valid property reference or literal input.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderExpressionFactory.cpp:717`
+<!-- generated:end DSH7154 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+

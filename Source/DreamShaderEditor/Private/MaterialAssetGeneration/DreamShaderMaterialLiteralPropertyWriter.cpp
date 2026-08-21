@@ -72,8 +72,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!Target || !Property || !ValuePtr)
 		{
-			OutError = TEXT("Invalid reflected property target.");
-			return false;
+			return FailWith(OutError, TEXT("DSH7131"), TEXT("Invalid reflected property target."));
 		}
 
 		const FString TrimmedValue = ValueText.TrimStartAndEnd();
@@ -95,8 +94,7 @@ namespace UE::DreamShader::Editor::Private
 			bool bValue = false;
 			if (!ParseBooleanLiteral(TrimmedValue, bValue))
 			{
-				OutError = FString::Printf(TEXT("'%s' is not a valid boolean value for '%s'."), *TrimmedValue, *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7132"), FString::Printf(TEXT("'%s' is not a valid boolean value for '%s'."), *TrimmedValue, *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			BoolProperty->SetPropertyValue(ValuePtr, bValue);
 			return true;
@@ -107,8 +105,7 @@ namespace UE::DreamShader::Editor::Private
 			int32 ParsedValue = 0;
 			if (!ParseIntegerLiteral(TrimmedValue, ParsedValue))
 			{
-				OutError = FString::Printf(TEXT("'%s' is not a valid integer value for '%s'."), *TrimmedValue, *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7133"), FString::Printf(TEXT("'%s' is not a valid integer value for '%s'."), *TrimmedValue, *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			IntProperty->SetPropertyValue(ValuePtr, ParsedValue);
 			return true;
@@ -119,8 +116,7 @@ namespace UE::DreamShader::Editor::Private
 			uint32 ParsedValue = 0;
 			if (!ParseUnsignedInteger32Literal(TrimmedValue, ParsedValue))
 			{
-				OutError = FString::Printf(TEXT("'%s' is not a valid unsigned integer value for '%s'."), *TrimmedValue, *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7134"), FString::Printf(TEXT("'%s' is not a valid unsigned integer value for '%s'."), *TrimmedValue, *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			UIntProperty->SetPropertyValue(ValuePtr, ParsedValue);
 			return true;
@@ -131,8 +127,7 @@ namespace UE::DreamShader::Editor::Private
 			double ParsedValue = 0.0;
 			if (!ParseScalarLiteral(TrimmedValue, ParsedValue))
 			{
-				OutError = FString::Printf(TEXT("'%s' is not a valid numeric value for '%s'."), *TrimmedValue, *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7135"), FString::Printf(TEXT("'%s' is not a valid numeric value for '%s'."), *TrimmedValue, *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			FloatProperty->SetPropertyValue(ValuePtr, static_cast<float>(ParsedValue));
 			return true;
@@ -143,8 +138,7 @@ namespace UE::DreamShader::Editor::Private
 			double ParsedValue = 0.0;
 			if (!ParseScalarLiteral(TrimmedValue, ParsedValue))
 			{
-				OutError = FString::Printf(TEXT("'%s' is not a valid numeric value for '%s'."), *TrimmedValue, *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7136"), FString::Printf(TEXT("'%s' is not a valid numeric value for '%s'."), *TrimmedValue, *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			DoubleProperty->SetPropertyValue(ValuePtr, ParsedValue);
 			return true;
@@ -166,8 +160,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!bHasParsedAssetReference)
 			{
-				OutError = FString::Printf(TEXT("Object property '%s' expects Path(...) or an absolute Unreal object path."), *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7137"), FString::Printf(TEXT("Object property '%s' expects Path(...) or an absolute Unreal object path."), *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			UObject* LoadedObject = StaticLoadObject(ObjectProperty->PropertyClass, nullptr, *AssetObjectPath);
@@ -182,18 +175,12 @@ namespace UE::DreamShader::Editor::Private
 					return true;
 				}
 
-				OutError = FString::Printf(TEXT("Failed to load asset '%s' for '%s'."), *AssetObjectPath, *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7138"), FString::Printf(TEXT("Failed to load asset '%s' for '%s'."), *AssetObjectPath, *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (!LoadedObject->IsA(ObjectProperty->PropertyClass))
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Asset '%s' is not compatible with '%s'. Expected '%s'."),
-					*AssetObjectPath,
-					*Property->GetName(),
-					*ObjectProperty->PropertyClass->GetName());
-				return false;
+				return FailWith(OutError, TEXT("DSH7139"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Asset '%s' is not compatible with '%s'. Expected '%s'."), *AssetObjectPath, *Property->GetName(), *ObjectProperty->PropertyClass->GetName()));
 			}
 
 			ObjectProperty->SetObjectPropertyValue(ValuePtr, LoadedObject);
@@ -207,8 +194,7 @@ namespace UE::DreamShader::Editor::Private
 				int64 EnumValue = INDEX_NONE;
 				if (!TryResolveEnumLiteral(Enum, TrimmedValue, EnumValue))
 				{
-					OutError = FString::Printf(TEXT("'%s' is not a valid enum value for '%s'."), *TrimmedValue, *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH7140"), FString::Printf(TEXT("'%s' is not a valid enum value for '%s'."), *TrimmedValue, *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				EnumProperty->GetUnderlyingProperty()->SetIntPropertyValue(ValuePtr, EnumValue);
@@ -223,8 +209,7 @@ namespace UE::DreamShader::Editor::Private
 				int64 EnumValue = INDEX_NONE;
 				if (!TryResolveEnumLiteral(Enum, TrimmedValue, EnumValue))
 				{
-					OutError = FString::Printf(TEXT("'%s' is not a valid enum value for '%s'."), *TrimmedValue, *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH7141"), FString::Printf(TEXT("'%s' is not a valid enum value for '%s'."), *TrimmedValue, *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				ByteProperty->SetPropertyValue(ValuePtr, static_cast<uint8>(EnumValue));
@@ -234,8 +219,7 @@ namespace UE::DreamShader::Editor::Private
 			int32 ParsedValue = 0;
 			if (!ParseIntegerLiteral(TrimmedValue, ParsedValue) || ParsedValue < 0 || ParsedValue > MAX_uint8)
 			{
-				OutError = FString::Printf(TEXT("'%s' is not a valid byte value for '%s'."), *TrimmedValue, *Property->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7142"), FString::Printf(TEXT("'%s' is not a valid byte value for '%s'."), *TrimmedValue, *Property->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			ByteProperty->SetPropertyValue(ValuePtr, static_cast<uint8>(ParsedValue));
@@ -249,16 +233,14 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutError = FString::Printf(TEXT("Property '%s' on '%s' is not a supported literal type yet."), *Property->GetName(), *Target->GetClass()->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-		return false;
+		return FailWith(OutError, TEXT("DSH7143"), FString::Printf(TEXT("Property '%s' on '%s' is not a supported literal type yet."), *Property->GetName(), *Target->GetClass()->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, const FString& ValueText, FDreamShaderError& OutError)
 	{
 		if (!Target || !Property)
 		{
-			OutError = TEXT("Invalid reflected property target.");
-			return false;
+			return FailWith(OutError, TEXT("DSH7144"), TEXT("Invalid reflected property target."));
 		}
 
 		void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Target);

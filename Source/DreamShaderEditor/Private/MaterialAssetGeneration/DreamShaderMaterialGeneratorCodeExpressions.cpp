@@ -208,8 +208,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!Statement.Expression && !Statement.bIsDeclaration && !Statement.bUsesBraceInitializer)
 		{
-			OutError = TEXT("Encountered an invalid empty Graph statement.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4001"), TEXT("Encountered an invalid empty Graph statement."));
 		}
 
 		if (Statement.bIsExpressionStatement)
@@ -219,8 +218,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Statement.TargetName.IsEmpty())
 		{
-			OutError = TEXT("Encountered a Graph assignment without a target variable.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4002"), TEXT("Encountered a Graph assignment without a target variable."));
 		}
 
 		if (!Statement.bIsDeclaration)
@@ -236,22 +234,19 @@ namespace UE::DreamShader::Editor::Private
 					if (!ResolveTargetTypeForAssignment(Statement, TargetTypeName, OutError)
 						|| !EvaluateBraceInitializer(TargetTypeName, Statement.InitializerText, EvaluatedMemberValue, OutError))
 					{
-						OutError = FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return WrapError(OutError, FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 				}
 				else if (Statement.Expression)
 				{
 					if (!EvaluateExpression(Statement.Expression, EvaluatedMemberValue, OutError))
 					{
-						OutError = FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return WrapError(OutError, FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 				}
 				else
 				{
-					OutError = FString::Printf(TEXT("MaterialAttributes member assignment '%s' requires a value."), *Statement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH4003"), FString::Printf(TEXT("MaterialAttributes member assignment '%s' requires a value."), *Statement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				// `Base` is the material's outputs, not a variable holding a value, so it is routed to
@@ -260,8 +255,7 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (!AssignMaterialOutputSink(Statement.TargetName, EvaluatedMemberValue, OutError))
 					{
-						OutError = FString::Printf(TEXT("Failed to assign material output '%s'. %s"), *Statement.TargetName, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return WrapError(OutError, FString::Printf(TEXT("Failed to assign material output '%s'. %s"), *Statement.TargetName, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 
 					return true;
@@ -269,8 +263,7 @@ namespace UE::DreamShader::Editor::Private
 
 				if (!AssignMaterialAttributesMember(Statement.TargetName, EvaluatedMemberValue, OutError))
 				{
-					OutError = FString::Printf(TEXT("Failed to assign Graph member '%s'. %s"), *Statement.TargetName, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return WrapError(OutError, FString::Printf(TEXT("Failed to assign Graph member '%s'. %s"), *Statement.TargetName, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				return true;
@@ -283,16 +276,12 @@ namespace UE::DreamShader::Editor::Private
 		// outputs to write and keeps Base available as an ordinary name.
 		if (IsMaterialOutputSinkTarget(Statement.TargetName))
 		{
-			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-				TEXT("'%s' is reserved for the material's outputs and cannot be used as a Graph variable name. Rename the variable."),
-				*Statement.TargetName);
-			return false;
+			return FailWith(OutError, TEXT("DSH4004"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("'%s' is reserved for the material's outputs and cannot be used as a Graph variable name. Rename the variable."), *Statement.TargetName));
 		}
 
 		if (Statement.bIsDeclaration && FindValue(Statement.TargetName))
 		{
-			OutError = FString::Printf(TEXT("Graph variable '%s' is declared more than once."), *Statement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4005"), FString::Printf(TEXT("Graph variable '%s' is declared more than once."), *Statement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FCodeValue EvaluatedValue;
@@ -302,24 +291,21 @@ namespace UE::DreamShader::Editor::Private
 			if (!ResolveTargetTypeForAssignment(Statement, TargetTypeName, OutError)
 				|| !EvaluateBraceInitializer(TargetTypeName, Statement.InitializerText, EvaluatedValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return WrapError(OutError, FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 		else if (Statement.Expression)
 		{
 			if (!EvaluateExpression(Statement.Expression, EvaluatedValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return WrapError(OutError, FString::Printf(TEXT("Failed to evaluate Graph assignment for '%s'. %s"), *Statement.TargetName, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 		else if (Statement.bIsDeclaration)
 		{
 			if (!CreateDefaultValue(Statement.DeclaredType, EvaluatedValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("Failed to declare Graph variable '%s'. %s"), *Statement.TargetName, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return WrapError(OutError, FString::Printf(TEXT("Failed to declare Graph variable '%s'. %s"), *Statement.TargetName, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 
@@ -333,11 +319,9 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (IsSubstrateMaterialType(Statement.DeclaredType) && !IsSubstrateMaterialTypeSupported())
 				{
-					OutError = FString::Printf(TEXT("Graph variable '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Statement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH4006"), FString::Printf(TEXT("Graph variable '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Statement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
-				OutError = FString::Printf(TEXT("Unsupported Graph variable type '%s' for '%s'."), *Statement.DeclaredType, *Statement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4007"), FString::Printf(TEXT("Unsupported Graph variable type '%s' for '%s'."), *Statement.DeclaredType, *Statement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (EvaluatedValue.bHasAuthoritativeComponentCount
@@ -357,12 +341,7 @@ namespace UE::DreamShader::Editor::Private
 			FCodeValue CoercedValue;
 			if (!CoerceValueToType(EvaluatedValue, ExpectedComponentCount, bExpectedTexture, ExpectedTextureType, bExpectedSubstrate, CoercedValue, OutError))
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Graph variable '%s' is declared as '%s' but assigned an incompatible value. %s"),
-					*Statement.TargetName,
-					*Statement.DeclaredType,
-					*OutError);
-				return false;
+				return WrapError(OutError, FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Graph variable '%s' is declared as '%s' but assigned an incompatible value. %s"), *Statement.TargetName, *Statement.DeclaredType, *OutError));
 			}
 
 			EvaluatedValue = CoercedValue;
@@ -372,11 +351,7 @@ namespace UE::DreamShader::Editor::Private
 			FCodeValue CoercedValue;
 			if (!CoerceValueToType(EvaluatedValue, ExistingValue->ComponentCount, ExistingValue->bIsTextureObject, ExistingValue->TextureType, ExistingValue->bIsSubstrateMaterial, CoercedValue, OutError))
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Graph variable '%s' was previously assigned an incompatible value. %s"),
-					*Statement.TargetName,
-					*OutError);
-				return false;
+				return WrapError(OutError, FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Graph variable '%s' was previously assigned an incompatible value. %s"), *Statement.TargetName, *OutError));
 			}
 
 			EvaluatedValue = CoercedValue;
@@ -393,11 +368,7 @@ namespace UE::DreamShader::Editor::Private
 				(void)TryResolveOutputVariableComponentCount(Definition, Statement.TargetName, OutputComponentCount, bOutputIsTexture, OutputTextureType, bOutputIsSubstrate);
 				if (!CoerceValueToType(EvaluatedValue, OutputComponentCount, bOutputIsTexture, OutputTextureType, bOutputIsSubstrate, CoercedValue, OutError))
 				{
-					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("Graph output variable '%s' was assigned an incompatible value. %s"),
-						*Statement.TargetName,
-						*OutError);
-					return false;
+					return WrapError(OutError, FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Graph output variable '%s' was assigned an incompatible value. %s"), *Statement.TargetName, *OutError));
 				}
 
 				EvaluatedValue = CoercedValue;
@@ -471,8 +442,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!Values)
 		{
-			OutError = TEXT("Graph builder is not initialized.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4008"), TEXT("Graph builder is not initialized."));
 		}
 
 		TMap<FString, FCodeValue>* OuterValues = Values;
@@ -526,8 +496,7 @@ namespace UE::DreamShader::Editor::Private
 			const FCodeValue* ElseValue = ElseValues.Find(Name);
 			if (!ThenValue || !ElseValue)
 			{
-				OutError = FString::Printf(TEXT("Graph if statement could not resolve both branch values for '%s'."), *Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4009"), FString::Printf(TEXT("Graph if statement could not resolve both branch values for '%s'."), *Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			int32 ExpectedComponentCount = ThenValue->ComponentCount;
@@ -560,20 +529,17 @@ namespace UE::DreamShader::Editor::Private
 					|| ThenValue->bIsMaterialAttributes != ElseValue->bIsMaterialAttributes
 					|| ThenValue->TextureType != ElseValue->TextureType)
 				{
-					OutError = FString::Printf(TEXT("Graph if branches assign variable '%s' with inconsistent types"), *Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH4010"), FString::Printf(TEXT("Graph if branches assign variable '%s' with inconsistent types"), *Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 
 			if (bExpectedTexture)
 			{
-				OutError = FString::Printf(TEXT("Graph if statement cannot select texture value '%s'."), *Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4011"), FString::Printf(TEXT("Graph if statement cannot select texture value '%s'."), *Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			if (bExpectedSubstrate)
 			{
-				OutError = FString::Printf(TEXT("Graph if statement cannot select Substrate value '%s'."), *Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4012"), FString::Printf(TEXT("Graph if statement cannot select Substrate value '%s'."), *Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue CoercedThenValue;
@@ -581,15 +547,13 @@ namespace UE::DreamShader::Editor::Private
 			if (!CoerceValueToType(*ThenValue, ExpectedComponentCount, bExpectedTexture, ExpectedTextureType, bExpectedSubstrate, CoercedThenValue, OutError)
 				|| !CoerceValueToType(*ElseValue, ExpectedComponentCount, bExpectedTexture, ExpectedTextureType, bExpectedSubstrate, CoercedElseValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("Graph if branches assign incompatible values to '%s'. %s"), *Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return WrapError(OutError, FString::Printf(TEXT("Graph if branches assign incompatible values to '%s'. %s"), *Name, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue ConditionalValue;
 			if (!CreateConditionalValue(Statement.Condition, CoercedThenValue, CoercedElseValue, ConditionalValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("Graph if statement failed to merge '%s'. %s"), *Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return WrapError(OutError, FString::Printf(TEXT("Graph if statement failed to merge '%s'. %s"), *Name, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			(*Values).Add(Name, ConditionalValue);
@@ -607,31 +571,26 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (TrueValue.bIsTextureObject || FalseValue.bIsTextureObject)
 		{
-			OutError = TEXT("Texture values cannot be selected by Graph if statements.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4013"), TEXT("Texture values cannot be selected by Graph if statements."));
 		}
 		if (TrueValue.bIsSubstrateMaterial || FalseValue.bIsSubstrateMaterial)
 		{
-			OutError = TEXT("Substrate values cannot be selected by Graph if statements.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4014"), TEXT("Substrate values cannot be selected by Graph if statements."));
 		}
 		if (TrueValue.bIsMaterialAttributes != FalseValue.bIsMaterialAttributes)
 		{
-			OutError = TEXT("Graph if branches cannot mix MaterialAttributes and numeric values.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4015"), TEXT("Graph if branches cannot mix MaterialAttributes and numeric values."));
 		}
 
 		FCodeValue LeftValue;
 		if (!EvaluateExpression(Condition.Left, LeftValue, OutError))
 		{
-			OutError = FString::Printf(TEXT("Failed to evaluate Graph if condition. %s"), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return WrapError(OutError, FString::Printf(TEXT("Failed to evaluate Graph if condition. %s"), *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (LeftValue.bIsTextureObject || LeftValue.bIsMaterialAttributes || LeftValue.bIsSubstrateMaterial || LeftValue.ComponentCount != 1)
 		{
-			OutError = TEXT("Graph if condition left side must evaluate to a scalar value.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4016"), TEXT("Graph if condition left side must evaluate to a scalar value."));
 		}
 
 		FCodeValue RightValue;
@@ -640,8 +599,7 @@ namespace UE::DreamShader::Editor::Private
 			RightValue.Expression = CreateScalarLiteralNode(0.0, ConsumeNodeY());
 			if (!RightValue.Expression)
 			{
-				OutError = TEXT("Failed to create a zero literal for Graph if condition.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4017"), TEXT("Failed to create a zero literal for Graph if condition."));
 			}
 			RightValue.ComponentCount = 1;
 		}
@@ -649,23 +607,20 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!EvaluateExpression(Condition.Right, RightValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("Failed to evaluate Graph if condition. %s"), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return WrapError(OutError, FString::Printf(TEXT("Failed to evaluate Graph if condition. %s"), *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 
 		if (RightValue.bIsTextureObject || RightValue.bIsMaterialAttributes || RightValue.bIsSubstrateMaterial || RightValue.ComponentCount != 1)
 		{
-			OutError = TEXT("Graph if condition right side must evaluate to a scalar value.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4018"), TEXT("Graph if condition right side must evaluate to a scalar value."));
 		}
 
 		auto* IfExpression = Cast<UMaterialExpressionIf>(
 			CreateExpression(UMaterialExpressionIf::StaticClass(), 520, ConsumeNodeY()));
 		if (!IfExpression)
 		{
-			OutError = TEXT("Failed to create a Material If node.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4019"), TEXT("Failed to create a Material If node."));
 		}
 
 		ConnectCodeValueToInput(IfExpression->A, LeftValue);
@@ -706,8 +661,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		else
 		{
-			OutError = FString::Printf(TEXT("Unsupported Graph if comparison operator '%s'."), *Condition.Operator); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4020"), FString::Printf(TEXT("Unsupported Graph if comparison operator '%s'."), *Condition.Operator)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		OutValue.Expression = IfExpression;
@@ -724,14 +678,12 @@ namespace UE::DreamShader::Editor::Private
 		TSharedPtr<FCodeExpression> ParsedExpression;
 		if (!ParseCodeExpression(ExpressionText, ParsedExpression, OutError))
 		{
-			OutError = FString::Printf(TEXT("In output expression '%s': %s"), *ExpressionText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return WrapError(OutError, FString::Printf(TEXT("In output expression '%s': %s"), *ExpressionText, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (!EvaluateExpression(ParsedExpression, OutValue, OutError))
 		{
-			OutError = FString::Printf(TEXT("In output expression '%s': %s"), *ExpressionText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return WrapError(OutError, FString::Printf(TEXT("In output expression '%s': %s"), *ExpressionText, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;
@@ -839,8 +791,7 @@ namespace UE::DreamShader::Editor::Private
 			CreateExpression(UMaterialExpressionMakeMaterialAttributes::StaticClass(), -160, ConsumeNodeY()));
 		if (!Expression)
 		{
-			OutError = TEXT("Failed to create a MakeMaterialAttributes node.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4021"), TEXT("Failed to create a MakeMaterialAttributes node."));
 		}
 
 		OutValue = FCodeValue{};
@@ -864,8 +815,7 @@ namespace UE::DreamShader::Editor::Private
 				OutError = MakeSubstrateRequiresUE54Error();
 				return false;
 			}
-			OutError = FString::Printf(TEXT("Unsupported Graph variable type '%s'."), *DeclaredType); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4022"), FString::Printf(TEXT("Unsupported Graph variable type '%s'."), *DeclaredType)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (IsMaterialAttributesComponentType(ComponentCount, bIsTexture, bIsSubstrate))
@@ -875,22 +825,19 @@ namespace UE::DreamShader::Editor::Private
 
 		if (bIsSubstrate)
 		{
-			OutError = FString::Printf(TEXT("Graph variable type '%s' requires an explicit initializer."), *DeclaredType); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4023"), FString::Printf(TEXT("Graph variable type '%s' requires an explicit initializer."), *DeclaredType)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (bIsTexture)
 		{
-			OutError = FString::Printf(TEXT("Graph variable type '%s' requires an explicit initializer."), *DeclaredType); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4024"), FString::Printf(TEXT("Graph variable type '%s' requires an explicit initializer."), *DeclaredType)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FCodeValue ZeroScalar;
 		ZeroScalar.Expression = CreateScalarLiteralNode(0.0, ConsumeNodeY());
 		if (!ZeroScalar.Expression)
 		{
-			OutError = TEXT("Failed to create a default literal node.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4025"), TEXT("Failed to create a default literal node."));
 		}
 		ZeroScalar.ComponentCount = 1;
 
@@ -925,8 +872,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString Trimmed = InitializerText.TrimStartAndEnd();
 		if (!Trimmed.StartsWith(TEXT("{")) || !Trimmed.EndsWith(TEXT("}")))
 		{
-			OutError = FString::Printf(TEXT("Initializer '%s' is not a valid brace initializer."), *InitializerText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4026"), FString::Printf(TEXT("Initializer '%s' is not a valid brace initializer."), *InitializerText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		const FString InnerText = Trimmed.Mid(1, Trimmed.Len() - 2).TrimStartAndEnd();
@@ -939,8 +885,7 @@ namespace UE::DreamShader::Editor::Private
 		TSharedPtr<FCodeExpression> ParsedExpression;
 		if (!ParseCodeExpression(ConstructorExpression, ParsedExpression, OutError))
 		{
-			OutError = FString::Printf(TEXT("Invalid brace initializer for type '%s'. %s"), *ConstructorType, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return WrapError(OutError, FString::Printf(TEXT("Invalid brace initializer for type '%s'. %s"), *ConstructorType, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return EvaluateExpression(ParsedExpression, OutValue, OutError);
@@ -969,13 +914,11 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (ExistingValue->bIsTextureObject)
 			{
-				OutError = FString::Printf(TEXT("Brace initializer assignment is not supported for texture variable '%s'."), *Statement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4027"), FString::Printf(TEXT("Brace initializer assignment is not supported for texture variable '%s'."), *Statement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			if (ExistingValue->bIsSubstrateMaterial)
 			{
-				OutError = FString::Printf(TEXT("Brace initializer assignment is not supported for Substrate variable '%s'."), *Statement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4028"), FString::Printf(TEXT("Brace initializer assignment is not supported for Substrate variable '%s'."), *Statement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (ResolveTypeNameForComponentCount(ExistingValue->ComponentCount, OutTypeName))
@@ -992,13 +935,11 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (bOutputIsTexture)
 			{
-				OutError = FString::Printf(TEXT("Brace initializer assignment is not supported for texture output '%s'."), *Statement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4029"), FString::Printf(TEXT("Brace initializer assignment is not supported for texture output '%s'."), *Statement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			if (bOutputIsSubstrate)
 			{
-				OutError = FString::Printf(TEXT("Brace initializer assignment is not supported for Substrate output '%s'."), *Statement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4030"), FString::Printf(TEXT("Brace initializer assignment is not supported for Substrate output '%s'."), *Statement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (ResolveTypeNameForComponentCount(OutputComponentCount, OutTypeName))
@@ -1007,8 +948,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		OutError = FString::Printf(TEXT("Brace initializer assignment for '%s' requires a declared scalar or vector target type."), *Statement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-		return false;
+		return FailWith(OutError, TEXT("DSH4031"), FString::Printf(TEXT("Brace initializer assignment for '%s' requires a declared scalar or vector target type."), *Statement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	bool FCodeGraphBuilder::ResolveMaterialAttributesMemberType(
@@ -1021,16 +961,14 @@ namespace UE::DreamShader::Editor::Private
 		if (!ResolveMaterialProperty(MemberName, ResolvedProperty)
 			|| ResolvedProperty.Property == MP_MaterialAttributes)
 		{
-			OutError = FString::Printf(TEXT("Unsupported MaterialAttributes member '%s'."), *MemberName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4032"), FString::Printf(TEXT("Unsupported MaterialAttributes member '%s'."), *MemberName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, OutComponentCount)
 			|| OutComponentCount <= 0
 			|| !ResolveTypeNameForComponentCount(OutComponentCount, OutTypeName))
 		{
-			OutError = FString::Printf(TEXT("MaterialAttributes member '%s' does not have a numeric scalar/vector type."), *MemberName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4033"), FString::Printf(TEXT("MaterialAttributes member '%s' does not have a numeric scalar/vector type."), *MemberName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;
@@ -1042,28 +980,24 @@ namespace UE::DreamShader::Editor::Private
 		FString MemberName;
 		if (!TrySplitMemberTarget(TargetName, BaseName, MemberName))
 		{
-			OutError = FString::Printf(TEXT("Invalid MaterialAttributes member assignment target '%s'."), *TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4034"), FString::Printf(TEXT("Invalid MaterialAttributes member assignment target '%s'."), *TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FCodeValue* BaseValue = FindValue(BaseName);
 		if (!BaseValue)
 		{
-			OutError = FString::Printf(TEXT("Unknown MaterialAttributes variable '%s'."), *BaseName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4035"), FString::Printf(TEXT("Unknown MaterialAttributes variable '%s'."), *BaseName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 		if (!BaseValue->bIsMaterialAttributes)
 		{
-			OutError = FString::Printf(TEXT("Graph variable '%s' is not a MaterialAttributes value."), *BaseName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4036"), FString::Printf(TEXT("Graph variable '%s' is not a MaterialAttributes value."), *BaseName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FResolvedMaterialProperty ResolvedProperty;
 		if (!ResolveMaterialProperty(MemberName, ResolvedProperty)
 			|| ResolvedProperty.Property == MP_MaterialAttributes)
 		{
-			OutError = FString::Printf(TEXT("Unsupported MaterialAttributes member '%s'."), *MemberName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4037"), FString::Printf(TEXT("Unsupported MaterialAttributes member '%s'."), *MemberName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		// ShadingModel is the one writable attribute that is not a float vector: its pin carries
@@ -1077,46 +1011,34 @@ namespace UE::DreamShader::Editor::Private
 			int32 ExpectedComponentCount = 0;
 			if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, ExpectedComponentCount) || ExpectedComponentCount <= 0)
 			{
-				OutError = FString::Printf(TEXT("MaterialAttributes member '%s' cannot be assigned from Graph code."), *MemberName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4038"), FString::Printf(TEXT("MaterialAttributes member '%s' cannot be assigned from Graph code."), *MemberName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (!CoerceValueToType(InValue, ExpectedComponentCount, false, CoercedValue, OutError))
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("MaterialAttributes member '%s' expects %d component(s). %s"),
-					*MemberName,
-					ExpectedComponentCount,
-					*OutError);
-				return false;
+				return WrapError(OutError, FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("MaterialAttributes member '%s' expects %d component(s). %s"), *MemberName, ExpectedComponentCount, *OutError));
 			}
 		}
 		else if (!InValue.Expression || InValue.bIsMaterialAttributes || InValue.bIsTextureObject || InValue.bIsSubstrateMaterial)
 		{
-			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-				TEXT("MaterialAttributes member '%s' must be assigned a ShadingModel node, for example UE.Expression(Class=\"ShadingModel\", ShadingModel=\"MSM_DefaultLit\")."),
-				*MemberName);
-			return false;
+			return FailWith(OutError, TEXT("DSH4039"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("MaterialAttributes member '%s' must be assigned a ShadingModel node, for example UE.Expression(Class=\"ShadingModel\", ShadingModel=\"MSM_DefaultLit\")."), *MemberName));
 		}
 
 		UMaterialExpressionSetMaterialAttributes* SetAttributes = Cast<UMaterialExpressionSetMaterialAttributes>(
 			CreateExpression(UMaterialExpressionSetMaterialAttributes::StaticClass(), 240, ConsumeNodeY()));
 		if (!SetAttributes)
 		{
-			OutError = TEXT("Failed to create a SetMaterialAttributes node.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4040"), TEXT("Failed to create a SetMaterialAttributes node."));
 		}
 
 		if (!ConnectDreamShaderSetMaterialAttributeInput(SetAttributes, MP_MaterialAttributes, BaseValue->Expression, BaseValue->OutputIndex))
 		{
-			OutError = FString::Printf(TEXT("Failed to connect '%s' as the SetMaterialAttributes base value."), *BaseName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4041"), FString::Printf(TEXT("Failed to connect '%s' as the SetMaterialAttributes base value."), *BaseName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (!ConnectDreamShaderSetMaterialAttributeInput(SetAttributes, ResolvedProperty.Property, CoercedValue.Expression, CoercedValue.OutputIndex))
 		{
-			OutError = FString::Printf(TEXT("Failed to connect MaterialAttributes member '%s'."), *MemberName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4042"), FString::Printf(TEXT("Failed to connect MaterialAttributes member '%s'."), *MemberName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		BaseValue->Expression = SetAttributes;
@@ -1134,18 +1056,13 @@ namespace UE::DreamShader::Editor::Private
 		FString MemberName;
 		if (!TrySplitMemberTarget(TargetName, BaseName, MemberName) || !IsMaterialOutputSinkTarget(BaseName))
 		{
-			OutError = FString::Printf(TEXT("Invalid material output assignment target '%s'."), *TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4043"), FString::Printf(TEXT("Invalid material output assignment target '%s'."), *TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FResolvedMaterialProperty ResolvedProperty;
 		if (!ResolveMaterialProperty(MemberName, ResolvedProperty))
 		{
-			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-				TEXT("Unsupported material output '%s.%s'."),
-				GetMaterialOutputSinkName(),
-				*MemberName);
-			return false;
+			return FailWith(OutError, TEXT("DSH4044"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Unsupported material output '%s.%s'."), GetMaterialOutputSinkName(), *MemberName));
 		}
 
 		// A Substrate surface, a whole MaterialAttributes value and a ShadingModel node are not float
@@ -1161,10 +1078,7 @@ namespace UE::DreamShader::Editor::Private
 			int32 ExpectedComponentCount = 0;
 			if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, ExpectedComponentCount) || ExpectedComponentCount <= 0)
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Material output '%s' cannot be assigned from Graph code."),
-					*MemberName);
-				return false;
+				return FailWith(OutError, TEXT("DSH4045"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Material output '%s' cannot be assigned from Graph code."), *MemberName));
 			}
 
 			// CoerceValueToType narrows as willingly as it widens, and narrowing into a material output
@@ -1178,23 +1092,13 @@ namespace UE::DreamShader::Editor::Private
 				&& !InValue.bIsSubstrateMaterial
 				&& InValue.ComponentCount > ExpectedComponentCount)
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Material output '%s' expects %d component(s), but the value has %d. Select the channels you mean, for example '.r'."),
-					*MemberName,
-					ExpectedComponentCount,
-					InValue.ComponentCount);
-				return false;
+				return FailWith(OutError, TEXT("DSH4046"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Material output '%s' expects %d component(s), but the value has %d. Select the channels you mean, for example '.r'."), *MemberName, ExpectedComponentCount, InValue.ComponentCount));
 			}
 
 			FCodeValue CoercedValue;
 			if (!CoerceValueToType(InValue, ExpectedComponentCount, false, CoercedValue, OutError))
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Material output '%s' expects %d component(s). %s"),
-					*MemberName,
-					ExpectedComponentCount,
-					*OutError);
-				return false;
+				return WrapError(OutError, FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Material output '%s' expects %d component(s). %s"), *MemberName, ExpectedComponentCount, *OutError));
 			}
 
 			StoredValue = CoercedValue;
@@ -1255,15 +1159,13 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!Expression || Expression->Kind != ECodeExpressionKind::Call)
 		{
-			OutError = TEXT("Graph expression statements currently support only Function calls with explicit out arguments.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4047"), TEXT("Graph expression statements currently support only Function calls with explicit out arguments."));
 		}
 
 		FString CalleeName;
 		if (!TryFlattenQualifiedName(Expression->Left, CalleeName))
 		{
-			OutError = TEXT("Graph expression statements must call a named Function.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4048"), TEXT("Graph expression statements must call a named Function."));
 		}
 
 		const FTextShaderFunctionDefinition* Function = FindFunctionDefinition(CalleeName);
@@ -1277,15 +1179,11 @@ namespace UE::DreamShader::Editor::Private
 		MatchCount += VirtualFunction ? 1 : 0;
 		if (MatchCount == 0)
 		{
-			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-				TEXT("Graph expression statement '%s' is unsupported. Only DreamShader Function, GraphFunction, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction calls may use statement syntax."),
-				*CalleeName);
-			return false;
+			return FailWith(OutError, TEXT("DSH4049"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Graph expression statement '%s' is unsupported. Only DreamShader Function, GraphFunction, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction calls may use statement syntax."), *CalleeName));
 		}
 		if (MatchCount > 1)
 		{
-			OutError = FString::Printf(TEXT("Graph expression statement '%s' is ambiguous because multiple callable definitions exist."), *CalleeName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4050"), FString::Printf(TEXT("Graph expression statement '%s' is ambiguous because multiple callable definitions exist."), *CalleeName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (Function)
@@ -1308,8 +1206,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!Expression)
 		{
-			OutError = TEXT("Empty Graph expression.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4051"), TEXT("Empty Graph expression."));
 		}
 
 		switch (Expression->Kind)
@@ -1322,10 +1219,7 @@ namespace UE::DreamShader::Editor::Private
 			// member access evaluates its left side through this case.
 			if (IsMaterialOutputSinkTarget(Expression->Text))
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("'%s' is the material's outputs and can only be written, not read. Read the value you assigned to it instead."),
-					*Expression->Text);
-				return false;
+				return FailWith(OutError, TEXT("DSH4052"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("'%s' is the material's outputs and can only be written, not read. Read the value you assigned to it instead."), *Expression->Text));
 			}
 
 			if (FCodeValue* ExistingValue = FindValue(Expression->Text))
@@ -1352,14 +1246,12 @@ namespace UE::DreamShader::Editor::Private
 				OutValue.ComponentCount = 1;
 				if (!OutValue.Expression)
 				{
-					OutError = FString::Printf(TEXT("Failed to create a StaticBool node for literal '%s'."), *Expression->Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH4053"), FString::Printf(TEXT("Failed to create a StaticBool node for literal '%s'."), *Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 				return true;
 			}
 
-			OutError = FString::Printf(TEXT("Unknown Graph identifier '%s'."), *Expression->Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4054"), FString::Printf(TEXT("Unknown Graph identifier '%s'."), *Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		case ECodeExpressionKind::NumberLiteral:
@@ -1367,8 +1259,7 @@ namespace UE::DreamShader::Editor::Private
 			double ParsedValue = 0.0;
 			if (!ParseScalarLiteral(Expression->Text, ParsedValue))
 			{
-				OutError = FString::Printf(TEXT("Invalid numeric literal '%s'."), *Expression->Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4055"), FString::Printf(TEXT("Invalid numeric literal '%s'."), *Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			OutValue.Expression = CreateScalarLiteralNode(ParsedValue, ConsumeNodeY());
@@ -1377,8 +1268,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		case ECodeExpressionKind::StringLiteral:
-			OutError = TEXT("String literals can only be used in named UE builtin arguments.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4056"), TEXT("String literals can only be used in named UE builtin arguments."));
 
 		case ECodeExpressionKind::Unary:
 			return EvaluateUnary(Expression, OutValue, OutError);
@@ -1393,8 +1283,7 @@ namespace UE::DreamShader::Editor::Private
 			return EvaluateCall(Expression, OutValue, OutError);
 
 		default:
-			OutError = TEXT("Unsupported Graph expression kind.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4057"), TEXT("Unsupported Graph expression kind."));
 		}
 	}
 
@@ -1420,8 +1309,7 @@ namespace UE::DreamShader::Editor::Private
 			return CreateBinaryOperatorNode(TEXT("*"), Operand, MinusOne, OutValue, OutError);
 		}
 
-		OutError = FString::Printf(TEXT("Unsupported unary operator '%s'."), *Expression->Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
-		return false;
+		return FailWith(OutError, TEXT("DSH4058"), FString::Printf(TEXT("Unsupported unary operator '%s'."), *Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	bool FCodeGraphBuilder::EvaluateBinary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError)
@@ -1449,18 +1337,15 @@ namespace UE::DreamShader::Editor::Private
 
 		if (LeftOperand.bIsTextureObject || RightOperand.bIsTextureObject)
 		{
-			OutError = TEXT("Arithmetic operators cannot be applied to texture values.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4059"), TEXT("Arithmetic operators cannot be applied to texture values."));
 		}
 		if (LeftOperand.bIsMaterialAttributes || RightOperand.bIsMaterialAttributes)
 		{
-			OutError = TEXT("Arithmetic operators cannot be applied to MaterialAttributes values.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4060"), TEXT("Arithmetic operators cannot be applied to MaterialAttributes values."));
 		}
 		if (LeftOperand.bIsSubstrateMaterial || RightOperand.bIsSubstrateMaterial)
 		{
-			OutError = TEXT("Arithmetic operators cannot be applied to Substrate values.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4061"), TEXT("Arithmetic operators cannot be applied to Substrate values."));
 		}
 
 		if (!IsScalarVectorCompatible(LeftOperand, RightOperand))
@@ -1495,12 +1380,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!IsScalarVectorCompatible(LeftOperand, RightOperand))
 		{
-			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-				TEXT("Operator '%s' requires matching vector sizes or a scalar/vector pair, got %d and %d component(s)."),
-				*Operator,
-				LeftOperand.ComponentCount,
-				RightOperand.ComponentCount);
-			return false;
+			return FailWith(OutError, TEXT("DSH4062"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Operator '%s' requires matching vector sizes or a scalar/vector pair, got %d and %d component(s)."), *Operator, LeftOperand.ComponentCount, RightOperand.ComponentCount));
 		}
 
 		FString ReuseKey = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -1553,8 +1433,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (LeftOperand.bIsIntegerType && RightOperand.bIsIntegerType)
 			{
-				OutError = TEXT("Integer division is not supported by the material graph; use float() or floor(a/b).");
-				return false;
+				return FailWith(OutError, TEXT("DSH4063"), TEXT("Integer division is not supported by the material graph; use float() or floor(a/b)."));
 			}
 			auto* DivideExpression = Cast<UMaterialExpressionDivide>(
 				CreateExpression(UMaterialExpressionDivide::StaticClass(), 160, PositionY));
@@ -1568,8 +1447,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!Expression)
 		{
-			OutError = FString::Printf(TEXT("Unsupported or failed binary operator '%s'."), *Operator); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4064"), FString::Printf(TEXT("Unsupported or failed binary operator '%s'."), *Operator)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		OutValue.Expression = Expression;
@@ -1595,23 +1473,20 @@ namespace UE::DreamShader::Editor::Private
 			if (!ResolveMaterialProperty(Expression->Text, ResolvedProperty)
 				|| ResolvedProperty.Property == MP_MaterialAttributes)
 			{
-				OutError = FString::Printf(TEXT("Unsupported MaterialAttributes member '%s'."), *Expression->Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4065"), FString::Printf(TEXT("Unsupported MaterialAttributes member '%s'."), *Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			int32 OutputComponents = 0;
 			if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, OutputComponents) || OutputComponents <= 0)
 			{
-				OutError = FString::Printf(TEXT("MaterialAttributes member '%s' cannot be read as a numeric value."), *Expression->Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4066"), FString::Printf(TEXT("MaterialAttributes member '%s' cannot be read as a numeric value."), *Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			auto* BreakAttributes = Cast<UMaterialExpressionBreakMaterialAttributes>(
 				CreateExpression(UMaterialExpressionBreakMaterialAttributes::StaticClass(), 360, ConsumeNodeY()));
 			if (!BreakAttributes)
 			{
-				OutError = TEXT("Failed to create a BreakMaterialAttributes node.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4067"), TEXT("Failed to create a BreakMaterialAttributes node."));
 			}
 
 			ConnectCodeValueToInput(BreakAttributes->MaterialAttributes, BaseValue);
@@ -1638,8 +1513,7 @@ namespace UE::DreamShader::Editor::Private
 				if (!TryResolveMaterialAttributesBreakOutputIndex(ResolvedProperty.Property, OutputIndex)
 					|| !BreakAttributes->Outputs.IsValidIndex(OutputIndex))
 				{
-					OutError = FString::Printf(TEXT("BreakMaterialAttributes does not expose member '%s'."), *Expression->Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH4068"), FString::Printf(TEXT("BreakMaterialAttributes does not expose member '%s'."), *Expression->Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 
@@ -1653,13 +1527,11 @@ namespace UE::DreamShader::Editor::Private
 
 		if (BaseValue.bIsTextureObject)
 		{
-			OutError = TEXT("Texture values do not support swizzle/member access in Code.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4069"), TEXT("Texture values do not support swizzle/member access in Code."));
 		}
 		if (BaseValue.bIsSubstrateMaterial)
 		{
-			OutError = TEXT("Substrate values do not support swizzle/member access in Graph.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4070"), TEXT("Substrate values do not support swizzle/member access in Graph."));
 		}
 
 		return CreateSwizzleExpression(BaseValue, Expression->Text, OutValue, OutError);
@@ -1669,8 +1541,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (Parts.IsEmpty())
 		{
-			OutError = TEXT("Cannot build an empty vector.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4071"), TEXT("Cannot build an empty vector."));
 		}
 
 		if (Parts.Num() == 1)
@@ -1684,16 +1555,14 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Part.bIsTextureObject || Part.bIsMaterialAttributes || Part.bIsSubstrateMaterial)
 			{
-				OutError = TEXT("AppendVector inputs must be numeric scalar/vector values.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4072"), TEXT("AppendVector inputs must be numeric scalar/vector values."));
 			}
 			TotalComponentCount += Part.ComponentCount;
 		}
 
 		if (TotalComponentCount > 4)
 		{
-			OutError = FString::Printf(TEXT("AppendVector cannot build %d components; Unreal material vectors support at most 4."), TotalComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4073"), FString::Printf(TEXT("AppendVector cannot build %d components; Unreal material vectors support at most 4."), TotalComponentCount)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		TArray<FString> ReuseTokens;
@@ -1715,8 +1584,7 @@ namespace UE::DreamShader::Editor::Private
 				CreateExpression(UMaterialExpressionAppendVector::StaticClass(), 360, ConsumeNodeY()));
 			if (!AppendExpression)
 			{
-				OutError = TEXT("Failed to create an AppendVector node.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4074"), TEXT("Failed to create an AppendVector node."));
 			}
 
 			ConnectCodeValueToInput(AppendExpression->A, Current);
@@ -1741,8 +1609,7 @@ namespace UE::DreamShader::Editor::Private
 		FString CalleeName;
 		if (!TryFlattenQualifiedName(Expression->Left, CalleeName))
 		{
-			OutError = TEXT("Graph calls must target a named function.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4075"), TEXT("Graph calls must target a named function."));
 		}
 
 		if (IsVectorConstructorName(CalleeName))
@@ -1774,8 +1641,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			if (!IdArgument || Expression->Arguments.Num() != 1)
 			{
-				OutError = TEXT("UE.SceneTexture expects exactly Id=\"...\" (e.g. Id=\"PostProcessInput0\").");
-				return false;
+				return FailWith(OutError, TEXT("DSH4076"), TEXT("UE.SceneTexture expects exactly Id=\"...\" (e.g. Id=\"PostProcessInput0\")."));
 			}
 
 			const auto MakeStringLiteral = [](const TCHAR* Text)
@@ -1833,8 +1699,7 @@ namespace UE::DreamShader::Editor::Private
 				|| Expression->Arguments[0].bIsNamed
 				|| Expression->Arguments[1].bIsNamed)
 			{
-				OutError = TEXT("SampleTexture2D expects exactly two positional arguments: (textureObject, uv).");
-				return false;
+				return FailWith(OutError, TEXT("DSH4077"), TEXT("SampleTexture2D expects exactly two positional arguments: (textureObject, uv)."));
 			}
 
 			const auto MakeStringLiteral = [](const TCHAR* Text)
@@ -1899,11 +1764,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (MatchedKinds.Num() > 1)
 		{
-			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-				TEXT("Graph call '%s' is ambiguous because multiple definitions use that name: %s."),
-				*CalleeName,
-				*FString::Join(MatchedKinds, TEXT(", ")));
-			return false;
+			return FailWith(OutError, TEXT("DSH4078"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Graph call '%s' is ambiguous because multiple definitions use that name: %s."), *CalleeName, *FString::Join(MatchedKinds, TEXT(", "))));
 		}
 
 		if (MaterialFunctionDefinition)

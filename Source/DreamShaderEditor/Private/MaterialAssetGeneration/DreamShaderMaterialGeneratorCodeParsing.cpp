@@ -243,38 +243,33 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!MatchesKeywordAt(Text, IfIndex, TEXT("if")))
 		{
-			OutError = TEXT("Expected 'if'.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4100"), TEXT("Expected 'if'."));
 		}
 
 		int32 Index = IfIndex + 2;
 		SkipCodeParsingWhitespace(Text, Index);
 		if (!Text.IsValidIndex(Index) || Text[Index] != TCHAR('('))
 		{
-			OutError = TEXT("Graph if statement is missing a condition block.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4101"), TEXT("Graph if statement is missing a condition block."));
 		}
 
 		int32 ConditionCloseIndex = INDEX_NONE;
 		if (!FindCodeParsingMatchingDelimiter(Text, Index, TCHAR('('), TCHAR(')'), ConditionCloseIndex))
 		{
-			OutError = TEXT("Graph if statement has an unterminated condition block.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4102"), TEXT("Graph if statement has an unterminated condition block."));
 		}
 
 		Index = ConditionCloseIndex + 1;
 		SkipCodeParsingWhitespace(Text, Index);
 		if (!Text.IsValidIndex(Index) || Text[Index] != TCHAR('{'))
 		{
-			OutError = TEXT("Graph if statement is missing a '{ ... }' body.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4103"), TEXT("Graph if statement is missing a '{ ... }' body."));
 		}
 
 		int32 ThenCloseIndex = INDEX_NONE;
 		if (!FindCodeParsingMatchingDelimiter(Text, Index, TCHAR('{'), TCHAR('}'), ThenCloseIndex))
 		{
-			OutError = TEXT("Graph if statement has an unterminated body block.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4104"), TEXT("Graph if statement has an unterminated body block."));
 		}
 
 		Index = ThenCloseIndex + 1;
@@ -290,15 +285,13 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!Text.IsValidIndex(Index) || Text[Index] != TCHAR('{'))
 			{
-				OutError = TEXT("Graph else statement is missing a '{ ... }' body.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4105"), TEXT("Graph else statement is missing a '{ ... }' body."));
 			}
 
 			int32 ElseCloseIndex = INDEX_NONE;
 			if (!FindCodeParsingMatchingDelimiter(Text, Index, TCHAR('{'), TCHAR('}'), ElseCloseIndex))
 			{
-				OutError = TEXT("Graph else statement has an unterminated body block.");
-				return false;
+				return FailWith(OutError, TEXT("DSH4106"), TEXT("Graph else statement has an unterminated body block."));
 			}
 
 			OutEndIndex = ElseCloseIndex + 1;
@@ -698,15 +691,13 @@ namespace UE::DreamShader::Editor::Private
 
 		if (OutStatement.DeclaredType.IsEmpty() || OutStatement.TargetName.IsEmpty())
 		{
-			OutError = TEXT("Output declaration initializer requires a type and name.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4107"), TEXT("Output declaration initializer requires a type and name."));
 		}
 
 		const FString TrimmedInitializer = InitializerText.TrimStartAndEnd();
 		if (TrimmedInitializer.IsEmpty())
 		{
-			OutError = FString::Printf(TEXT("Output declaration '%s' has an empty initializer."), *OutStatement.TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4108"), FString::Printf(TEXT("Output declaration '%s' has an empty initializer."), *OutStatement.TargetName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		OutStatement.InitializerText = TrimmedInitializer;
@@ -738,8 +729,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (Peek().Type != ECodeTokenType::End)
 			{
-				OutError = FString::Printf(TEXT("Unexpected token '%s' in Graph expression."), *Peek().Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4109"), FString::Printf(TEXT("Unexpected token '%s' in Graph expression."), *Peek().Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			return true;
@@ -938,8 +928,7 @@ namespace UE::DreamShader::Editor::Private
 				return true;
 			}
 
-			OutError = FString::Printf(TEXT("Expected token type %d in Graph expression near '%s'."), static_cast<int32>(Type), *Peek().Text); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4110"), FString::Printf(TEXT("Expected token type %d in Graph expression near '%s'."), static_cast<int32>(Type), *Peek().Text)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		TSharedPtr<FCodeExpression> ParseAdditive(FDreamShaderError& OutError)
@@ -1243,15 +1232,13 @@ namespace UE::DreamShader::Editor::Private
 
 		if (LeftText.IsEmpty())
 		{
-			OutError = TEXT("Graph if condition is empty.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4111"), TEXT("Graph if condition is empty."));
 		}
 
 		FCodeExpressionParser LeftParser(LeftText);
 		if (!LeftParser.Parse(OutCondition.Left, OutError))
 		{
-			OutError = FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return WrapError(OutError, FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		OutCondition.Operator = OperatorText;
@@ -1263,8 +1250,7 @@ namespace UE::DreamShader::Editor::Private
 		FCodeExpressionParser RightParser(RightText);
 		if (!RightParser.Parse(OutCondition.Right, OutError))
 		{
-			OutError = FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return WrapError(OutError, FString::Printf(TEXT("In Graph if condition '%s': %s"), *ConditionText, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;
@@ -1302,8 +1288,7 @@ namespace UE::DreamShader::Editor::Private
 			|| StatementText[Index] != TCHAR('(')
 			|| !FindCodeParsingMatchingDelimiter(StatementText, Index, TCHAR('('), TCHAR(')'), ConditionCloseIndex))
 		{
-			OutError = FString::Printf(TEXT("Invalid Graph if statement '%s'."), *StatementText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4112"), FString::Printf(TEXT("Invalid Graph if statement '%s'."), *StatementText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		const FString ConditionText = StatementText.Mid(Index + 1, ConditionCloseIndex - Index - 1).TrimStartAndEnd();
@@ -1315,8 +1300,7 @@ namespace UE::DreamShader::Editor::Private
 			|| StatementText[Index] != TCHAR('{')
 			|| !FindCodeParsingMatchingDelimiter(StatementText, Index, TCHAR('{'), TCHAR('}'), ThenCloseIndex))
 		{
-			OutError = FString::Printf(TEXT("Invalid Graph if body in '%s'."), *StatementText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4113"), FString::Printf(TEXT("Invalid Graph if body in '%s'."), *StatementText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		const int32 ThenBodyStartIndex = Index + 1;
@@ -1344,8 +1328,7 @@ namespace UE::DreamShader::Editor::Private
 					|| StatementText[Index] != TCHAR('{')
 					|| !FindCodeParsingMatchingDelimiter(StatementText, Index, TCHAR('{'), TCHAR('}'), ElseCloseIndex))
 				{
-					OutError = FString::Printf(TEXT("Invalid Graph else body in '%s'."), *StatementText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH4114"), FString::Printf(TEXT("Invalid Graph else body in '%s'."), *StatementText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				ElseBodyStartIndex = Index + 1;
@@ -1358,8 +1341,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Index < StatementText.Len())
 		{
-			OutError = FString::Printf(TEXT("Unexpected text after Graph if statement: '%s'."), *StatementText.Mid(Index).TrimStartAndEnd()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4115"), FString::Printf(TEXT("Unexpected text after Graph if statement: '%s'."), *StatementText.Mid(Index).TrimStartAndEnd())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		OutStatement = FCodeStatement{};
@@ -1388,8 +1370,7 @@ namespace UE::DreamShader::Editor::Private
 		CombineCodeLineColumn(StatementLine, StatementColumn, ThenBodyRelativeLine, ThenBodyRelativeColumn, ThenBodyLine, ThenBodyColumn);
 		if (!ParseCodeStatementsInternal(ThenBody, ThenBodyLine, ThenBodyColumn, OutStatement.ThenStatements, OutError, OutErrorLine, OutErrorColumn))
 		{
-			OutError = FString::Printf(TEXT("In Graph if body: %s"), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return WrapError(OutError, FString::Printf(TEXT("In Graph if body: %s"), *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (!ElseBody.IsEmpty())
@@ -1406,8 +1387,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!ParseCodeStatementsInternal(ElseBody, ElseBodyLine, ElseBodyColumn, OutStatement.ElseStatements, OutError, OutErrorLine, OutErrorColumn))
 			{
-				OutError = FString::Printf(TEXT("In Graph else body: %s"), *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return WrapError(OutError, FString::Printf(TEXT("In Graph else body: %s"), *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 

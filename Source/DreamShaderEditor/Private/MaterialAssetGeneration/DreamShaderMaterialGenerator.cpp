@@ -303,12 +303,7 @@ namespace UE::DreamShader::Editor
 				|| PreviewExpressionValue.bIsSubstrateMaterial != bIsSubstrateMaterial
 				|| PreviewExpressionValue.ComponentCount != ComponentCount)
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Input '%s' default expression '%s' does not match declared type '%s'."),
-					*InputDefinition.Name,
-					*InputDefinition.DefaultValueText,
-					*InputDefinition.Type);
-				return false;
+				return FailWith(OutError, TEXT("DSH8001"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Input '%s' default expression '%s' does not match declared type '%s'."), *InputDefinition.Name, *InputDefinition.DefaultValueText, *InputDefinition.Type));
 			}
 
 			Private::ConnectCodeValueToInput(InputExpression->Preview, PreviewExpressionValue);
@@ -339,8 +334,7 @@ namespace UE::DreamShader::Editor
 					false));
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create a MakeMaterialAttributes node for '%s'."), *ValueName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8002"), FString::Printf(TEXT("Failed to create a MakeMaterialAttributes node for '%s'."), *ValueName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			Private::FCodeValue Value;
@@ -391,8 +385,7 @@ namespace UE::DreamShader::Editor
 			{
 				if (CreatingName.Equals(Property.Name, ESearchCase::IgnoreCase))
 				{
-					OutError = FString::Printf(TEXT("Property '%s' has a recursive UE builtin dependency."), *Property.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8003"), FString::Printf(TEXT("Property '%s' has a recursive UE builtin dependency."), *Property.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 
@@ -789,8 +782,7 @@ namespace UE::DreamShader::Editor
 				Parameter.ParseIntoArrayWS(Parts);
 				if (Parts.Num() < 2 || Parts.Num() > 3)
 				{
-					OutError = FString::Printf(TEXT("Function '%s' has an invalid parameter declaration '%s'."), *FunctionName, *Parameter); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8004"), FString::Printf(TEXT("Function '%s' has an invalid parameter declaration '%s'."), *FunctionName, *Parameter)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				FString Qualifier = TEXT("in");
@@ -815,18 +807,12 @@ namespace UE::DreamShader::Editor
 
 				if (!Qualifier.Equals(TEXT("in")) && !Qualifier.Equals(TEXT("out")))
 				{
-					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("Function '%s' parameter '%s' uses unsupported qualifier '%s'. Supported qualifiers are in and out."),
-						*FunctionName,
-						*Parameter,
-						*Qualifier);
-					return false;
+					return FailWith(OutError, TEXT("DSH8005"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Function '%s' parameter '%s' uses unsupported qualifier '%s'. Supported qualifiers are in and out."), *FunctionName, *Parameter, *Qualifier));
 				}
 
 				if (TypeToken.IsEmpty() || NameToken.IsEmpty())
 				{
-					OutError = FString::Printf(TEXT("Function '%s' has an invalid parameter declaration '%s'."), *FunctionName, *Parameter); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8006"), FString::Printf(TEXT("Function '%s' has an invalid parameter declaration '%s'."), *FunctionName, *Parameter)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				const FString Statement = FString::Printf(TEXT("        %s %s;\n"), *TypeToken, *NameToken); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -843,8 +829,7 @@ namespace UE::DreamShader::Editor
 
 			if (ResultCount == 0)
 			{
-				OutError = FString::Printf(TEXT("Function '%s' must declare at least one out parameter."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8007"), FString::Printf(TEXT("Function '%s' must declare at least one out parameter."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			return true;
@@ -977,16 +962,14 @@ namespace UE::DreamShader::Editor
 			UClass* ExpressionClass = Private::ResolveMaterialExpressionClass(Binding.ExpressionClass);
 			if (!ExpressionClass)
 			{
-				OutError = FString::Printf(TEXT("Output target '%s' could not resolve MaterialExpression class '%s'."), *Binding.TargetText, *Binding.ExpressionClass); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8008"), FString::Printf(TEXT("Output target '%s' could not resolve MaterialExpression class '%s'."), *Binding.TargetText, *Binding.ExpressionClass)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			OutExpression = Cast<UMaterialExpression>(
 				UMaterialEditingLibrary::CreateMaterialExpression(Material, ExpressionClass, 1200, InOutPositionY));
 			if (!OutExpression)
 			{
-				OutError = FString::Printf(TEXT("Output target '%s' failed to create '%s'."), *Binding.TargetText, *ExpressionClass->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8009"), FString::Printf(TEXT("Output target '%s' failed to create '%s'."), *Binding.TargetText, *ExpressionClass->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			InOutPositionY += 220;
 
@@ -1000,21 +983,18 @@ namespace UE::DreamShader::Editor
 				FProperty* BoundProperty = Private::FindMaterialExpressionArgumentProperty(ExpressionClass, Argument.Key);
 				if (!BoundProperty)
 				{
-					OutError = FString::Printf(TEXT("Output target '%s': '%s' is not a property on '%s'."), *Binding.TargetText, *Argument.Key, *ExpressionClass->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8010"), FString::Printf(TEXT("Output target '%s': '%s' is not a property on '%s'."), *Binding.TargetText, *Argument.Key, *ExpressionClass->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				if (Private::IsMaterialExpressionInputProperty(BoundProperty))
 				{
-					OutError = FString::Printf(TEXT("Output target '%s': inline input property '%s' is not supported yet. Bind through .Pin[index] instead."), *Binding.TargetText, *Argument.Key); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8011"), FString::Printf(TEXT("Output target '%s': inline input property '%s' is not supported yet. Bind through .Pin[index] instead."), *Binding.TargetText, *Argument.Key)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				FDreamShaderError LiteralError;
 				if (!Private::SetMaterialExpressionLiteralProperty(OutExpression, BoundProperty, Argument.Value, LiteralError))
 				{
-					OutError = FString::Printf(TEXT("Output target '%s': %s"), *Binding.TargetText, *LiteralError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8012"), FString::Printf(TEXT("Output target '%s': %s"), *Binding.TargetText, *LiteralError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 
@@ -1033,22 +1013,19 @@ namespace UE::DreamShader::Editor
 		{
 			if (!SourceExpression || !TargetExpression)
 			{
-				OutError = TEXT("Invalid output source or target expression.");
-				return false;
+				return FailWith(OutError, TEXT("DSH8013"), TEXT("Invalid output source or target expression."));
 			}
 
 			const FString PinKey = BuildOutputTargetCacheKey(Binding) + FString::Printf(TEXT("#%d"), Binding.ExpressionPinIndex); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			if (BoundPins.Contains(PinKey))
 			{
-				OutError = FString::Printf(TEXT("Output target pin '%s' is bound more than once."), *Binding.TargetText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8014"), FString::Printf(TEXT("Output target pin '%s' is bound more than once."), *Binding.TargetText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FExpressionInput* TargetInput = TargetExpression->GetInput(Binding.ExpressionPinIndex);
 			if (!TargetInput)
 			{
-				OutError = FString::Printf(TEXT("Output target '%s' does not have Pin[%d]."), *Binding.TargetText, Binding.ExpressionPinIndex); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8015"), FString::Printf(TEXT("Output target '%s' does not have Pin[%d]."), *Binding.TargetText, Binding.ExpressionPinIndex)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			Private::FCodeValue SourceValue;
@@ -1134,8 +1111,7 @@ namespace UE::DreamShader::Editor
 
 			if (FunctionDefinition.Outputs.Num() != 1 || !Private::IsMaterialAttributesType(FunctionDefinition.Outputs[0].Type))
 			{
-				OutError = FString::Printf(TEXT("%s '%s' must declare exactly one MaterialAttributes output."), BlockKind, *FunctionDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8016"), FString::Printf(TEXT("%s '%s' must declare exactly one MaterialAttributes output."), BlockKind, *FunctionDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			int32 MaterialAttributesInputCount = 0;
@@ -1151,8 +1127,7 @@ namespace UE::DreamShader::Editor
 				&& (FunctionDefinition.Inputs.Num() > DreamShaderAcceptableLayerMaterialAttributesInputs
 					|| MaterialAttributesInputCount != FunctionDefinition.Inputs.Num()))
 			{
-				OutError = FString::Printf(TEXT("ShaderLayer '%s' must declare at most one input, and it must be MaterialAttributes. Use Properties for layer controls."), *FunctionDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8017"), FString::Printf(TEXT("ShaderLayer '%s' must declare at most one input, and it must be MaterialAttributes. Use Properties for layer controls."), *FunctionDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (FunctionDefinition.Kind == ETextShaderMaterialFunctionKind::MaterialLayerBlend)
@@ -1160,8 +1135,7 @@ namespace UE::DreamShader::Editor
 				if (FunctionDefinition.Inputs.Num() != DreamShaderAcceptableBlendMaterialAttributesInputs
 					|| MaterialAttributesInputCount != DreamShaderAcceptableBlendMaterialAttributesInputs)
 				{
-					OutError = FString::Printf(TEXT("ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. Use Properties for blend controls."), *FunctionDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8018"), FString::Printf(TEXT("ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. Use Properties for blend controls."), *FunctionDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 
@@ -1253,8 +1227,7 @@ namespace UE::DreamShader::Editor
 					Statement,
 					OutError))
 				{
-					OutError = FString::Printf(TEXT("Output '%s': %s"), *OutputDeclaration.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return WrapError(OutError, FString::Printf(TEXT("Output '%s': %s"), *OutputDeclaration.Name, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				InOutStatements.Add(Statement);
@@ -1293,8 +1266,7 @@ namespace UE::DreamShader::Editor
 				FText::FromString(FunctionDefinition.Name)));
 			if (FunctionDefinition.Outputs.IsEmpty())
 			{
-				OutError = FString::Printf(TEXT("%s '%s' must declare at least one output."), BlockKind, *FunctionDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8019"), FString::Printf(TEXT("%s '%s' must declare at least one output."), BlockKind, *FunctionDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (!ValidateMaterialLayerFunctionDefinition(FunctionDefinition, OutError))
@@ -1304,8 +1276,7 @@ namespace UE::DreamShader::Editor
 
 			if (FunctionDefinition.Code.IsEmpty())
 			{
-				OutError = FString::Printf(TEXT("%s '%s' must provide a Graph block."), BlockKind, *FunctionDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8020"), FString::Printf(TEXT("%s '%s' must provide a Graph block."), BlockKind, *FunctionDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			UMaterialFunction* MaterialFunction = nullptr;
@@ -1399,8 +1370,7 @@ namespace UE::DreamShader::Editor
 				bool bExposeToLibrary = false;
 				if (!Private::ParseBooleanLiteral(*ExposeToLibraryText, bExposeToLibrary))
 				{
-					OutError = FString::Printf(TEXT("%s '%s': ExposeToLibrary must be true or false."), BlockKind, *FunctionDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8021"), FString::Printf(TEXT("%s '%s': ExposeToLibrary must be true or false."), BlockKind, *FunctionDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 				MaterialFunction->bExposeToLibrary = bExposeToLibrary ? 1U : 0U;
 			}
@@ -1451,12 +1421,7 @@ namespace UE::DreamShader::Editor
 
 				if (bNameConflict)
 				{
-					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("%s '%s' property '%s' conflicts with another property or input name."),
-						BlockKind,
-						*FunctionDefinition.Name,
-						*Property.Name);
-					return false;
+					return FailWith(OutError, TEXT("DSH8022"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s '%s' property '%s' conflicts with another property or input name."), BlockKind, *FunctionDefinition.Name, *Property.Name));
 				}
 
 				SeenPropertyNames.Add(Property.Name);
@@ -1488,11 +1453,9 @@ namespace UE::DreamShader::Editor
 				{
 					if (Private::IsSubstrateMaterialType(InputDefinition.Type))
 					{
-						OutError = FString::Printf(TEXT("%s '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return FailWith(OutError, TEXT("DSH8023"), FString::Printf(TEXT("%s '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
-					OutError = FString::Printf(TEXT("%s '%s' input '%s' uses unsupported type '%s'."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name, *InputDefinition.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8024"), FString::Printf(TEXT("%s '%s' input '%s' uses unsupported type '%s'."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name, *InputDefinition.Type)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 				if (bIsTextureObject)
 				{
@@ -1503,8 +1466,7 @@ namespace UE::DreamShader::Editor
 					UMaterialEditingLibrary::CreateMaterialExpressionInFunction(MaterialFunction, UMaterialExpressionFunctionInput::StaticClass(), -800, InputPositionY));
 				if (!InputExpression)
 				{
-					OutError = FString::Printf(TEXT("%s '%s' failed to create input '%s'."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8025"), FString::Printf(TEXT("%s '%s' failed to create input '%s'."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				InputExpression->InputName = FName(*InputDefinition.Name);
@@ -1544,8 +1506,7 @@ namespace UE::DreamShader::Editor
 				const Private::FCodeValue* InputValue = GeneratedValues.Find(InputDefinition.Name);
 				if (!InputExpressionPtr || !*InputExpressionPtr || !InputValue)
 				{
-					OutError = FString::Printf(TEXT("%s '%s' failed to resolve generated input '%s'."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8026"), FString::Printf(TEXT("%s '%s' failed to resolve generated input '%s'."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				FDreamShaderError PreviewError;
@@ -1562,8 +1523,7 @@ namespace UE::DreamShader::Editor
 					GeneratedValues,
 					PreviewError))
 				{
-					OutError = FString::Printf(TEXT("%s '%s' input '%s': %s"), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name, *PreviewError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8027"), FString::Printf(TEXT("%s '%s' input '%s': %s"), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name, *PreviewError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 
@@ -1581,8 +1541,7 @@ namespace UE::DreamShader::Editor
 						MaterialAttributesSeedPositionY,
 						SeedError))
 					{
-						OutError = FString::Printf(TEXT("%s '%s' output '%s': %s"), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name, *SeedError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return FailWith(OutError, TEXT("DSH8028"), FString::Printf(TEXT("%s '%s' output '%s': %s"), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name, *SeedError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 				}
 				else if (Private::IsSubstrateMaterialType(OutputDefinition.Type) && !OutputDefinition.bHasDefaultValue)
@@ -1657,16 +1616,14 @@ namespace UE::DreamShader::Editor
 				}
 				if (!Private::TryResolveCustomOutputType(PrimaryOutput.Type, OutputType))
 				{
-					OutError = FString::Printf(TEXT("%s '%s' output '%s' uses unsupported type '%s'."), BlockKind, *FunctionDefinition.Name, *PrimaryOutput.Name, *PrimaryOutput.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8029"), FString::Printf(TEXT("%s '%s' output '%s' uses unsupported type '%s'."), BlockKind, *FunctionDefinition.Name, *PrimaryOutput.Name, *PrimaryOutput.Type)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				auto* CustomExpression = Cast<UMaterialExpressionCustom>(
 					UMaterialEditingLibrary::CreateMaterialExpressionInFunction(MaterialFunction, UMaterialExpressionCustom::StaticClass(), 120, 0));
 				if (!CustomExpression)
 				{
-					OutError = FString::Printf(TEXT("%s '%s' failed to create the function Custom node."), BlockKind, *FunctionDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8030"), FString::Printf(TEXT("%s '%s' failed to create the function Custom node."), BlockKind, *FunctionDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				CustomExpression->Description = FunctionDefinition.Name;
@@ -1691,8 +1648,7 @@ namespace UE::DreamShader::Editor
 					EmbeddedIncludePaths,
 					OutError))
 				{
-					OutError = FString::Printf(TEXT("%s '%s': %s"), BlockKind, *FunctionDefinition.Name, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return WrapError(OutError, FString::Printf(TEXT("%s '%s': %s"), BlockKind, *FunctionDefinition.Name, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 				CustomExpression->Code = Private::EnsureTopLevelReturn(PreparedCustomCode);
 
@@ -1713,8 +1669,7 @@ namespace UE::DreamShader::Editor
 					const Private::FCodeValue* InputValue = GeneratedValues.Find(InputDefinition.Name);
 					if (!InputValue || !InputValue->Expression)
 					{
-						OutError = FString::Printf(TEXT("%s '%s' failed to resolve generated input '%s'."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return FailWith(OutError, TEXT("DSH8031"), FString::Printf(TEXT("%s '%s' failed to resolve generated input '%s'."), BlockKind, *FunctionDefinition.Name, *InputDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 
 					FCustomInput Input;
@@ -1743,8 +1698,7 @@ namespace UE::DreamShader::Editor
 						PropertyExpression,
 						PropertyExpressionError))
 					{
-						OutError = FString::Printf(TEXT("%s '%s' property '%s': %s"), BlockKind, *FunctionDefinition.Name, *Property.Name, *PropertyExpressionError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return FailWith(OutError, TEXT("DSH8032"), FString::Printf(TEXT("%s '%s' property '%s': %s"), BlockKind, *FunctionDefinition.Name, *Property.Name, *PropertyExpressionError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 
 					FCustomInput Input;
@@ -1766,8 +1720,7 @@ namespace UE::DreamShader::Editor
 					}
 					if (!Private::TryResolveCustomOutputType(OutputDefinition.Type, AdditionalOutputType))
 					{
-						OutError = FString::Printf(TEXT("%s '%s' output '%s' uses unsupported type '%s'."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name, *OutputDefinition.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return FailWith(OutError, TEXT("DSH8033"), FString::Printf(TEXT("%s '%s' output '%s' uses unsupported type '%s'."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name, *OutputDefinition.Type)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 
 					FCustomOutput Output;
@@ -1810,8 +1763,7 @@ namespace UE::DreamShader::Editor
 				const Private::FCodeValue* OutputValue = GeneratedValues.Find(OutputDefinition.Name);
 				if (!OutputValue || !OutputValue->Expression)
 				{
-					OutError = FString::Printf(TEXT("%s '%s' output '%s' was never assigned an expression."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8034"), FString::Printf(TEXT("%s '%s' output '%s' was never assigned an expression."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				int32 ExpectedComponentCount = 0;
@@ -1827,11 +1779,9 @@ namespace UE::DreamShader::Editor
 				{
 					if (Private::IsSubstrateMaterialType(OutputDefinition.Type) && !Private::IsSubstrateMaterialTypeSupported())
 					{
-						OutError = FString::Printf(TEXT("%s '%s' output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return FailWith(OutError, TEXT("DSH8035"), FString::Printf(TEXT("%s '%s' output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
-					OutError = FString::Printf(TEXT("%s '%s' output '%s' uses unsupported type '%s'."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name, *OutputDefinition.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8036"), FString::Printf(TEXT("%s '%s' output '%s' uses unsupported type '%s'."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name, *OutputDefinition.Type)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				ETextShaderTextureType ExpectedTextureType = ETextShaderTextureType::Texture2D;
@@ -1846,16 +1796,14 @@ namespace UE::DreamShader::Editor
 					|| ((ExpectedComponentCount == 0 && !bExpectedTexture && !bExpectedSubstrate) != OutputValue->bIsMaterialAttributes)
 					|| (!bExpectedTexture && ExpectedComponentCount != OutputValue->ComponentCount))
 				{
-					OutError = FString::Printf(TEXT("%s '%s' output '%s' does not match its declared type '%s'."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name, *OutputDefinition.Type); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8037"), FString::Printf(TEXT("%s '%s' output '%s' does not match its declared type '%s'."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name, *OutputDefinition.Type)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				auto* OutputExpression = Cast<UMaterialExpressionFunctionOutput>(
 					UMaterialEditingLibrary::CreateMaterialExpressionInFunction(MaterialFunction, UMaterialExpressionFunctionOutput::StaticClass(), 900, OutputPositionY));
 				if (!OutputExpression)
 				{
-					OutError = FString::Printf(TEXT("%s '%s' failed to create output '%s'."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8038"), FString::Printf(TEXT("%s '%s' failed to create output '%s'."), BlockKind, *FunctionDefinition.Name, *OutputDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				OutputExpression->OutputName = FName(*OutputDefinition.Name);
@@ -1982,8 +1930,7 @@ namespace UE::DreamShader::Editor
 				FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
 		if (UE::DreamShader::IsDreamShaderHeaderFile(SourceFilePath))
 		{
-			OutMessage = FString::Printf(TEXT("DreamShader header '%s' does not generate assets directly. Recompile dependent .dsm or .dsf files instead."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8039"), FString::Printf(TEXT("DreamShader header '%s' does not generate assets directly. Recompile dependent .dsm or .dsf files instead."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FString SourceText;
@@ -2018,8 +1965,7 @@ namespace UE::DreamShader::Editor
 
 		if (UE::DreamShader::IsDreamShaderFunctionFile(SourceFilePath) && !Definition.Name.IsEmpty())
 		{
-			OutMessage = FString::Printf(TEXT("%s: .dsf files cannot define top-level Shader blocks."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8040"), FString::Printf(TEXT("%s: .dsf files cannot define top-level Shader blocks."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		bool bGeneratedHelperInclude = false;
@@ -2029,8 +1975,7 @@ namespace UE::DreamShader::Editor
 			FDreamShaderError IncludeWriteError;
 			if (!Private::WriteGeneratedInclude(SourceFilePath, Definition, IncludeWriteError))
 			{
-				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *IncludeWriteError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8041"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *IncludeWriteError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			bGeneratedHelperInclude = true;
@@ -2101,8 +2046,7 @@ namespace UE::DreamShader::Editor
 				return true;
 			}
 
-			OutMessage = FString::Printf(TEXT("DreamShader file '%s' did not contain any material, ShaderFunction, ShaderLayer, or ShaderLayerBlend assets to generate."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8042"), FString::Printf(TEXT("DreamShader file '%s' did not contain any material, ShaderFunction, ShaderLayer, or ShaderLayerBlend assets to generate."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FString CompletionMessage = FString::Join(GeneratedAssetMessages, TEXT("\n"));
@@ -2175,8 +2119,7 @@ namespace UE::DreamShader::Editor
 				return true;
 			}
 
-			OutError = FString::Printf(TEXT("Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom."), *Value); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH8043"), FString::Printf(TEXT("Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom."), *Value)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		// The single committed parent material every instance material derives from. Created on first
@@ -2239,8 +2182,7 @@ namespace UE::DreamShader::Editor
 		FDreamShaderError SettingsError;
 		if (!Private::ApplySettings(Material, Definition, SettingsError))
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *SettingsError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8044"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *SettingsError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 		if (bUsesFrontMaterial)
 		{
@@ -2249,8 +2191,7 @@ namespace UE::DreamShader::Editor
 				&& !ShadingModelValue.TrimStartAndEnd().Equals(TEXT("Substrate"), ESearchCase::IgnoreCase)
 				&& !ShadingModelValue.TrimStartAndEnd().Equals(TEXT("Strata"), ESearchCase::IgnoreCase))
 			{
-				OutMessage = FString::Printf(TEXT("%s: Base.FrontMaterial requires ShadingModel=\"Substrate\" or no explicit ShadingModel setting."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8045"), FString::Printf(TEXT("%s: Base.FrontMaterial requires ShadingModel=\"Substrate\" or no explicit ShadingModel setting."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			Material->SetShadingModel(MSM_Strata);
@@ -2278,11 +2219,7 @@ namespace UE::DreamShader::Editor
 
 			if (bNameConflict)
 			{
-				OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("%s: Property '%s' is declared more than once. Property names must be unique."),
-					*SourceFilePath,
-					*Property.Name);
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8046"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Property '%s' is declared more than once. Property names must be unique."), *SourceFilePath, *Property.Name));
 			}
 
 			SeenPropertyNames.Add(Property.Name);
@@ -2302,8 +2239,7 @@ namespace UE::DreamShader::Editor
 					MaterialAttributesSeedPositionY,
 					SeedError))
 				{
-					OutMessage = FString::Printf(TEXT("%s: Output '%s': %s"), *SourceFilePath, *OutputDeclaration.Name, *SeedError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutMessage, TEXT("DSH8047"), FString::Printf(TEXT("%s: Output '%s': %s"), *SourceFilePath, *OutputDeclaration.Name, *SeedError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 		}
@@ -2323,8 +2259,7 @@ namespace UE::DreamShader::Editor
 		{
 			if (bUsesReturn)
 			{
-				OutMessage = FString::Printf(TEXT("%s: Graph blocks do not support binding Outputs to the reserved name 'return'."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8048"), FString::Printf(TEXT("%s: Graph blocks do not support binding Outputs to the reserved name 'return'."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			TArray<Private::FCodeStatement> CodeStatements;
@@ -2336,8 +2271,7 @@ namespace UE::DreamShader::Editor
 				FText::FromString(Definition.Name)));
 			if (!AppendInitializedOutputStatements(Definition.OutputDeclarations, CodeStatements, CodeParseError))
 			{
-				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *CodeParseError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8049"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *CodeParseError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FString CodeSourceFilePath;
@@ -2403,11 +2337,7 @@ namespace UE::DreamShader::Editor
 						&& Private::ResolveMaterialProperty(Binding.MaterialProperty, BoundProperty)
 						&& BoundProperty.Property == SinkWrite.Property)
 					{
-						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("%s: Material output '%s' is written from the Graph block and bound in the Outputs block. Keep one of them."),
-							*SourceFilePath,
-							*SinkWrite.MemberName);
-						return false;
+						return FailWith(OutMessage, TEXT("DSH8050"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Material output '%s' is written from the Graph block and bound in the Outputs block. Keep one of them."), *SourceFilePath, *SinkWrite.MemberName));
 					}
 				}
 			}
@@ -2425,32 +2355,20 @@ namespace UE::DreamShader::Editor
 				{
 					if (!OutputValue.bIsSubstrateMaterial)
 					{
-						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("%s: Material output '%s' expects a Substrate value."),
-							*SourceFilePath,
-							*PropertyName);
-						return false;
+						return FailWith(OutMessage, TEXT("DSH8051"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Material output '%s' expects a Substrate value."), *SourceFilePath, *PropertyName));
 					}
 				}
 				else if (ResolvedProperty.OutputType == CMOT_MaterialAttributes)
 				{
 					if (!OutputValue.bIsMaterialAttributes)
 					{
-						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("%s: Material output '%s' expects a MaterialAttributes value."),
-							*SourceFilePath,
-							*PropertyName);
-						return false;
+						return FailWith(OutMessage, TEXT("DSH8052"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Material output '%s' expects a MaterialAttributes value."), *SourceFilePath, *PropertyName));
 					}
 					Material->bUseMaterialAttributes = true;
 				}
 				else if (OutputValue.bIsSubstrateMaterial)
 				{
-					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("%s: Material output '%s' expects a numeric value, but got Substrate."),
-						*SourceFilePath,
-						*PropertyName);
-					return false;
+					return FailWith(OutMessage, TEXT("DSH8053"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Material output '%s' expects a numeric value, but got Substrate."), *SourceFilePath, *PropertyName));
 				}
 				else if (OutputValue.bIsMaterialAttributes || OutputValue.bIsTextureObject)
 				{
@@ -2473,24 +2391,14 @@ namespace UE::DreamShader::Editor
 						&& ExpectedComponentCount > 0
 						&& OutputValue.ComponentCount > ExpectedComponentCount)
 					{
-						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("%s: Material output '%s' expects %d component(s), but the value has %d."),
-							*SourceFilePath,
-							*PropertyName,
-							ExpectedComponentCount,
-							OutputValue.ComponentCount);
-						return false;
+						return FailWith(OutMessage, TEXT("DSH8054"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Material output '%s' expects %d component(s), but the value has %d."), *SourceFilePath, *PropertyName, ExpectedComponentCount, OutputValue.ComponentCount));
 					}
 				}
 
 				FExpressionInput* MaterialInput = Material->GetExpressionInputForProperty(ResolvedProperty.Property);
 				if (!MaterialInput)
 				{
-					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("%s: Failed to find material property '%s' while connecting a Graph output."),
-						*SourceFilePath,
-						*PropertyName);
-					return false;
+					return FailWith(OutMessage, TEXT("DSH8055"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Failed to find material property '%s' while connecting a Graph output."), *SourceFilePath, *PropertyName));
 				}
 
 				const Private::FCodeValue RoutedOutputValue = Private::CreateOutputRerouteValue(
@@ -2515,11 +2423,7 @@ namespace UE::DreamShader::Editor
 				if (!CodeGraphBuilder.EvaluateOutputExpression(Binding.SourceText, OutputValue, OutputExpressionError)
 					|| !OutputValue.Expression)
 				{
-					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("%s: %s"),
-						*SourceFilePath,
-						*OutputExpressionError);
-					return false;
+					return FailWith(OutMessage, TEXT("DSH8056"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: %s"), *SourceFilePath, *OutputExpressionError));
 				}
 
 				int32 DeclaredComponents = 0;
@@ -2535,11 +2439,7 @@ namespace UE::DreamShader::Editor
 						|| bDeclaredMaterialAttributes != OutputValue.bIsMaterialAttributes
 						|| DeclaredComponents != OutputValue.ComponentCount)
 					{
-						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("%s: Graph output '%s' does not match its declared type."),
-							*SourceFilePath,
-							*Binding.SourceText);
-						return false;
+						return FailWith(OutMessage, TEXT("DSH8057"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Graph output '%s' does not match its declared type."), *SourceFilePath, *Binding.SourceText));
 					}
 				}
 
@@ -2572,8 +2472,7 @@ namespace UE::DreamShader::Editor
 							BoundOutputTargetPins,
 							TargetError))
 					{
-						OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *TargetError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return FailWith(OutMessage, TEXT("DSH8058"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *TargetError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 				}
 			}
@@ -2586,11 +2485,7 @@ namespace UE::DreamShader::Editor
 				verify(Private::ResolveMaterialProperty(SinkWrite.MemberName, ResolvedProperty));
 				if (!SinkWrite.Value.Expression)
 				{
-					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("%s: Material output '%s' was assigned a value that produced no expression."),
-						*SourceFilePath,
-						*SinkWrite.MemberName);
-					return false;
+					return FailWith(OutMessage, TEXT("DSH8059"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Material output '%s' was assigned a value that produced no expression."), *SourceFilePath, *SinkWrite.MemberName));
 				}
 
 				if (!ConnectMaterialPropertyOutput(SinkWrite.MemberName, ResolvedProperty, SinkWrite.Value))
@@ -2601,30 +2496,20 @@ namespace UE::DreamShader::Editor
 
 			if (Definition.Outputs.IsEmpty() && MaterialOutputSinkWrites.IsEmpty())
 			{
-				OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("%s: This material drives no outputs. Its Graph block computes values but never assigns one to 'Base.<Attribute>', and there is no Outputs block."),
-					*SourceFilePath);
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8060"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: This material drives no outputs. Its Graph block computes values but never assigns one to 'Base.<Attribute>', and there is no Outputs block."), *SourceFilePath));
 			}
 		}
 		else
 		{
 			if (bReturnIsSubstrateMaterial)
 			{
-				OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("%s: Base.FrontMaterial expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes."),
-					*SourceFilePath);
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8061"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Base.FrontMaterial expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes."), *SourceFilePath));
 			}
 			for (const Private::FResolvedNamedOutput& OutputDefinition : NamedOutputs)
 			{
 				if (OutputDefinition.bIsSubstrateMaterial)
 				{
-					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("%s: Output '%s' is declared as Substrate and cannot be generated by a material Custom node. Use a Graph block and Substrate.* nodes."),
-						*SourceFilePath,
-						*OutputDefinition.Name);
-					return false;
+					return FailWith(OutMessage, TEXT("DSH8062"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Output '%s' is declared as Substrate and cannot be generated by a material Custom node. Use a Graph block and Substrate.* nodes."), *SourceFilePath, *OutputDefinition.Name));
 				}
 			}
 
@@ -2637,8 +2522,7 @@ namespace UE::DreamShader::Editor
 				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionCustom::StaticClass(), 120, 0));
 			if (!CustomExpression)
 			{
-				OutMessage = FString::Printf(TEXT("%s: Failed to create the material Custom node."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8063"), FString::Printf(TEXT("%s: Failed to create the material Custom node."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			CustomExpression->Description = Definition.Name;
@@ -2663,8 +2547,7 @@ namespace UE::DreamShader::Editor
 				EmbeddedIncludePaths,
 				OutMessage))
 			{
-				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *OutMessage); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return WrapError(OutMessage, FString::Printf(TEXT("%s: %s"), *SourceFilePath, *OutMessage)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			CustomExpression->Code = Private::EnsureTopLevelReturn(PreparedCustomCode);
 
@@ -2700,8 +2583,7 @@ namespace UE::DreamShader::Editor
 					PropertyExpression,
 					PropertyExpressionError))
 				{
-					OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *PropertyExpressionError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutMessage, TEXT("DSH8064"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *PropertyExpressionError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				FCustomInput Input;
@@ -2726,11 +2608,7 @@ namespace UE::DreamShader::Editor
 				if (!Binding.SourceText.Equals(TEXT("return"), ESearchCase::IgnoreCase)
 					&& !TryResolveExpressionOutputIndexByName(CustomExpression, Binding.SourceText, SourceOutputIndex))
 				{
-					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("%s: Failed to resolve Custom output '%s'."),
-						*SourceFilePath,
-						*Binding.SourceText);
-					return false;
+					return FailWith(OutMessage, TEXT("DSH8065"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Failed to resolve Custom output '%s'."), *SourceFilePath, *Binding.SourceText));
 				}
 
 				if (Binding.TargetKind == FTextShaderOutputBinding::ETargetKind::MaterialProperty)
@@ -2739,11 +2617,7 @@ namespace UE::DreamShader::Editor
 					verify(Private::ResolveMaterialProperty(Binding.MaterialProperty, ResolvedProperty));
 					if (ResolvedProperty.bIsSubstrateMaterial)
 					{
-						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("%s: Material output '%s' expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes."),
-							*SourceFilePath,
-							*Binding.MaterialProperty);
-						return false;
+						return FailWith(OutMessage, TEXT("DSH8066"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Material output '%s' expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes."), *SourceFilePath, *Binding.MaterialProperty));
 					}
 					if (ResolvedProperty.OutputType == CMOT_MaterialAttributes)
 					{
@@ -2753,12 +2627,7 @@ namespace UE::DreamShader::Editor
 					FExpressionInput* MaterialInput = Material->GetExpressionInputForProperty(ResolvedProperty.Property);
 					if (!MaterialInput)
 					{
-						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("%s: Failed to find material property '%s' while connecting '%s'."),
-							*SourceFilePath,
-							*Binding.MaterialProperty,
-							*Binding.SourceText);
-						return false;
+						return FailWith(OutMessage, TEXT("DSH8067"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: Failed to find material property '%s' while connecting '%s'."), *SourceFilePath, *Binding.MaterialProperty, *Binding.SourceText));
 					}
 
 					Private::FCodeValue OutputValue;
@@ -2792,8 +2661,7 @@ namespace UE::DreamShader::Editor
 							BoundOutputTargetPins,
 							TargetError))
 					{
-						OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *TargetError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-						return false;
+						return FailWith(OutMessage, TEXT("DSH8068"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *TargetError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 					}
 				}
 			}
@@ -2882,8 +2750,7 @@ namespace UE::DreamShader::Editor
 			}
 			if (!OutBase)
 			{
-				OutError = FString::Printf(TEXT("Failed to create ThinCustom base material for '%s'."), *Definition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8069"), FString::Printf(TEXT("Failed to create ThinCustom base material for '%s'."), *Definition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			return true;
 		}
@@ -2891,8 +2758,7 @@ namespace UE::DreamShader::Editor
 		// Persist: the base is a hidden subobject of the instance -- one asset, one package on disk.
 		if (!Instance)
 		{
-			OutError = FString::Printf(TEXT("Cannot create a persisted ThinCustom base without an instance for '%s'."), *Definition.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH8070"), FString::Printf(TEXT("Cannot create a persisted ThinCustom base without an instance for '%s'."), *Definition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		const FName BaseName(*FString::Printf(TEXT("MB_DreamThinBase_%s"), *Instance->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -2920,8 +2786,7 @@ namespace UE::DreamShader::Editor
 		}
 		if (!OutBase)
 		{
-			OutError = FString::Printf(TEXT("Failed to create ThinCustom base material for instance '%s'."), *Instance->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH8071"), FString::Printf(TEXT("Failed to create ThinCustom base material for instance '%s'."), *Instance->GetPathName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 		return true;
 	}
@@ -2950,8 +2815,7 @@ namespace UE::DreamShader::Editor
 		FDreamShaderError InstanceError;
 		if (!Private::CreateOrReuseInstanceMaterial(Definition, Instance, InstanceError, bTransient) || !Instance)
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *InstanceError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8072"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *InstanceError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		// Storage decides from here, not the request (see IsGeneratedAssetPersisted). Asking the
@@ -2978,15 +2842,13 @@ namespace UE::DreamShader::Editor
 		FDreamShaderError EditorOpenError;
 		if (!Private::CheckGeneratedAssetNotOpenInEditor(Instance, EditorOpenError))
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *EditorOpenError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8073"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *EditorOpenError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FDreamShaderError DivergenceError;
 		if (!Private::CheckGeneratedAssetNotDiverged(Instance, DivergenceError))
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *DivergenceError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8074"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *DivergenceError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		// After the skip check on purpose: a hash-skip must not create (or ownership-check) a base.
@@ -2994,8 +2856,7 @@ namespace UE::DreamShader::Editor
 		FDreamShaderError BaseError;
 		if (!EnsureThinCustomBaseMaterial(Definition, bEffectiveTransient, Instance, BaseMaterial, BaseError) || !BaseMaterial)
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *BaseError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8075"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *BaseError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		// Build the whole-surface Custom graph onto the base. bTransient is threaded through: the
@@ -3070,8 +2931,7 @@ namespace UE::DreamShader::Editor
 				{
 					InstancePackage->SetPackageFlags(PKG_NewlyCreated);
 				}
-				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *SaveError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8076"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *SaveError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			// A newly persisted instance was memory-only at creation, so its create-time AssetCreated
@@ -3116,8 +2976,7 @@ namespace UE::DreamShader::Editor
 				FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
 		if (UE::DreamShader::IsDreamShaderHeaderFile(SourceFilePath) || UE::DreamShader::IsDreamShaderFunctionFile(SourceFilePath))
 		{
-			OutMessage = FString::Printf(TEXT("DreamShader source '%s' cannot generate a material asset directly."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8077"), FString::Printf(TEXT("DreamShader source '%s' cannot generate a material asset directly."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FString SourceText;
@@ -3152,8 +3011,7 @@ namespace UE::DreamShader::Editor
 
 		if (Definition.Name.IsEmpty())
 		{
-			OutMessage = FString::Printf(TEXT("%s: This file does not define a top-level Shader block."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8078"), FString::Printf(TEXT("%s: This file does not define a top-level Shader block."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		// The Outputs block stopped being the only way to drive a material property -- a Graph block
@@ -3162,10 +3020,7 @@ namespace UE::DreamShader::Editor
 		// where the answer is known rather than guessed from the source text.
 		if (Definition.Outputs.IsEmpty() && Definition.Code.IsEmpty())
 		{
-			OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-				TEXT("%s: This material drives no outputs. Add an Outputs block, or write them from Graph as 'Base.BaseColor = ...'."),
-				*SourceFilePath);
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8079"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s: This material drives no outputs. Add an Outputs block, or write them from Graph as 'Base.BaseColor = ...'."), *SourceFilePath));
 		}
 
 		TArray<Private::FResolvedNamedOutput> NamedOutputs;
@@ -3176,8 +3031,7 @@ namespace UE::DreamShader::Editor
 		if (!Private::ValidateSettings(Definition, ValidationError)
 			|| !Private::ValidateOutputs(Definition, NamedOutputs, bUsesReturn, ReturnOutputType, bReturnIsSubstrateMaterial, ValidationError))
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *ValidationError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8080"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *ValidationError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		bool bUsesFrontMaterial = false;
@@ -3200,8 +3054,7 @@ namespace UE::DreamShader::Editor
 		}
 		if (bUsesFrontMaterial && bUsesMaterialAttributesOutput)
 		{
-			OutMessage = FString::Printf(TEXT("%s: Base.FrontMaterial and Base.MaterialAttributes cannot be used by the same Shader."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8081"), FString::Printf(TEXT("%s: Base.FrontMaterial and Base.MaterialAttributes cannot be used by the same Shader."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		// Both backends consume the imported-functions include, so it is written before the
@@ -3211,8 +3064,7 @@ namespace UE::DreamShader::Editor
 			FDreamShaderError IncludeWriteError;
 			if (!Private::WriteGeneratedInclude(SourceFilePath, Definition, IncludeWriteError))
 			{
-				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *IncludeWriteError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8082"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *IncludeWriteError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 
@@ -3221,8 +3073,7 @@ namespace UE::DreamShader::Editor
 		FDreamShaderError BackendError;
 		if (!Private::ResolveRequestedBackend(Definition, RequestedBackend, bExplicitBackend, BackendError))
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *BackendError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8083"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *BackendError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (RequestedBackend == Private::EResolvedBackend::ThinCustom)
@@ -3251,8 +3102,7 @@ namespace UE::DreamShader::Editor
 				FText::FromString(Definition.Name)));
 		if (!Private::CreateOrReuseMaterial(Definition, Material, MaterialError, bTransient) || !Material)
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *MaterialError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8084"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *MaterialError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		// From here on the asset's storage decides, not the request: an in-memory compile that landed on
@@ -3281,15 +3131,13 @@ namespace UE::DreamShader::Editor
 		FDreamShaderError EditorOpenError;
 		if (!Private::CheckGeneratedAssetNotOpenInEditor(Material, EditorOpenError))
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *EditorOpenError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8085"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *EditorOpenError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FDreamShaderError DivergenceError;
 		if (!Private::CheckGeneratedAssetNotDiverged(Material, DivergenceError))
 		{
-			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *DivergenceError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutMessage, TEXT("DSH8086"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *DivergenceError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		if (!PopulateMaterialGraphFromDefinition(
@@ -3335,8 +3183,7 @@ namespace UE::DreamShader::Editor
 			FDreamShaderError SaveError;
 			if (!Private::SaveAssetPackage(Material, SaveError))
 			{
-				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *SaveError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutMessage, TEXT("DSH8087"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *SaveError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 		}
 

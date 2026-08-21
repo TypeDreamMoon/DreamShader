@@ -313,15 +313,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const FString SourceFile = GetGeneratedAssetSourceFile(Asset);
-		OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-			TEXT("Asset '%s' has been edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). ")
-			TEXT("Right-click the asset > DreamShader and choose one: 'Revert to Source' discards the edits and rebuilds, ")
-			TEXT("'Adopt Into Source' rewrites '%s' from the edited asset, ")
-			TEXT("'Detach From DreamShader' hands the asset over to you and stops managing it."),
-			*Asset->GetPathName(),
-			*SourceFile,
-			*SourceFile);
-		return false;
+		return FailWith(OutError, TEXT("DSH8115"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Asset '%s' has been edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). ") TEXT("Right-click the asset > DreamShader and choose one: 'Revert to Source' discards the edits and rebuilds, ") TEXT("'Adopt Into Source' rewrites '%s' from the edited asset, ") TEXT("'Detach From DreamShader' hands the asset over to you and stops managing it."), *Asset->GetPathName(), *SourceFile, *SourceFile));
 	}
 
 	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath)
@@ -371,8 +363,7 @@ namespace UE::DreamShader::Editor::Private
 		PackagesToSave.Add(Asset->GetOutermost());
 		if (!UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true))
 		{
-			OutError = FString::Printf(TEXT("Generated DreamShader asset '%s' could not be saved."), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH8116"), FString::Printf(TEXT("Generated DreamShader asset '%s' could not be saved."), *Asset->GetPathName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;
@@ -399,8 +390,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				FailedAssetList += FString::Printf(TEXT(" '%s'"), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
-			OutError = FString::Printf(TEXT("Generated DreamShader asset packages could not be saved.%s"), *FailedAssetList); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH8117"), FString::Printf(TEXT("Generated DreamShader asset packages could not be saved.%s"), *FailedAssetList)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;

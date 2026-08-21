@@ -142,14 +142,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-			TEXT("%s texture property '%s' expects %s but '%s' is a '%s'."),
-			Context,
-			*Property.Name,
-			GetTextureTypeLabel(ExpectedTextureType),
-			Property.TextureDefaultObjectPath.IsEmpty() ? TEXT("<default>") : *Property.TextureDefaultObjectPath,
-			Texture ? *Texture->GetClass()->GetName() : TEXT("None"));
-		return false;
+		return FailWith(OutError, TEXT("DSH7145"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("%s texture property '%s' expects %s but '%s' is a '%s'."), Context, *Property.Name, GetTextureTypeLabel(ExpectedTextureType), Property.TextureDefaultObjectPath.IsEmpty() ? TEXT("<default>") : *Property.TextureDefaultObjectPath, Texture ? *Texture->GetClass()->GetName() : TEXT("None")));
 	}
 
 	static FString FormatMetadataContext(const FTextShaderPropertyDefinition& Property)
@@ -236,22 +229,13 @@ namespace UE::DreamShader::Editor::Private
 					continue;
 				}
 
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Metadata property '%s' is not a reflected property on '%s'."),
-					*PropertyName,
-					*Expression->GetClass()->GetName());
-				return false;
+				return FailWith(OutError, TEXT("DSH7146"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Metadata property '%s' is not a reflected property on '%s'."), *PropertyName, *Expression->GetClass()->GetName()));
 			}
 
 			FDreamShaderError LiteralError;
 			if (!SetMaterialExpressionLiteralProperty(Expression, Property, ReflectedProperty.Value, LiteralError))
 			{
-				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Metadata property '%s' on '%s': %s"),
-					*PropertyName,
-					*Expression->GetClass()->GetName(),
-					*LiteralError);
-				return false;
+				return FailWith(OutError, TEXT("DSH7147"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Metadata property '%s' on '%s': %s"), *PropertyName, *Expression->GetClass()->GetName(), *LiteralError));
 			}
 		}
 
@@ -262,8 +246,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!Expression)
 		{
-			OutError = TEXT("Invalid parameter expression.");
-			return false;
+			return FailWith(OutError, TEXT("DSH7148"), TEXT("Invalid parameter expression."));
 		}
 
 		if (FProperty* ParameterNameProperty = FindMaterialExpressionArgumentProperty(Expression->GetClass(), TEXT("ParameterName")))
@@ -288,8 +271,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		OutError = FString::Printf(TEXT("'%s' does not expose a ParameterName property."), *Expression->GetClass()->GetName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-		return false;
+		return FailWith(OutError, TEXT("DSH7149"), FString::Printf(TEXT("'%s' does not expose a ParameterName property."), *Expression->GetClass()->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	static FString GetPropertyParameterName(const FTextShaderPropertyDefinition& Property)
@@ -339,8 +321,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 
-			OutError = FString::Printf(TEXT("'%s' does not expose a texture/asset property for %s."), *Expression->GetClass()->GetName(), *FormatMetadataContext(Property)); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH7150"), FString::Printf(TEXT("'%s' does not expose a texture/asset property for %s."), *Expression->GetClass()->GetName(), *FormatMetadataContext(Property))); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		FProperty* DefaultValueProperty = FindMaterialExpressionArgumentProperty(Expression->GetClass(), TEXT("DefaultValue"));
@@ -711,8 +692,7 @@ namespace UE::DreamShader::Editor::Private
 			OutExpression = CreateScalarLiteralExpressionEx(Material, MaterialFunction, ScalarValue, PositionY);
 			if (!OutExpression)
 			{
-				OutError = TEXT("Failed to create a scalar constant expression.");
-				return false;
+				return FailWith(OutError, TEXT("DSH7151"), TEXT("Failed to create a scalar constant expression."));
 			}
 			return true;
 		}
@@ -723,21 +703,18 @@ namespace UE::DreamShader::Editor::Private
 			const int32 ComponentCount = Components.Num();
 			if (ComponentCount < 2 || ComponentCount > 4)
 			{
-				OutError = FString::Printf(TEXT("Unsupported vector literal '%s'."), *InValueText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7152"), FString::Printf(TEXT("Unsupported vector literal '%s'."), *InValueText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			OutExpression = CreateVectorLiteralExpression(Material, MaterialFunction, Components, ComponentCount, PositionY);
 			if (!OutExpression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create a float%d constant expression."), ComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH7153"), FString::Printf(TEXT("Failed to create a float%d constant expression."), ComponentCount)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			return true;
 		}
 
-		OutError = FString::Printf(TEXT("'%s' is not a valid property reference or literal input."), *InValueText); /* I18N-EXEMPT: deferred codegen or compatibility path */
-		return false;
+		return FailWith(OutError, TEXT("DSH7154"), FString::Printf(TEXT("'%s' is not a valid property reference or literal input."), *InValueText)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 	}
 
 	static UMaterialExpression* CreateGenericUEExpression(
