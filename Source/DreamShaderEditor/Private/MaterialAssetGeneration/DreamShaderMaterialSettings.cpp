@@ -435,6 +435,11 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
+	bool GetDefaultUsedWithVolumetricCloud(const EMaterialDomain Domain)
+	{
+		return Domain == MD_Volume;
+	}
+
 	bool ValidateSettings(const FTextShaderDefinition& Definition, FString& OutError)
 	{
 		if (FString BlendModeValue; TryGetSettingValue(Definition, TEXT("BlendMode"), TEXT("RenderType"), BlendModeValue))
@@ -520,16 +525,19 @@ namespace UE::DreamShader::Editor::Private
 			EMaterialDomain Domain = MD_Surface;
 			verify(TryResolveMaterialDomain(MaterialDomainValue, Domain));
 			Material->MaterialDomain = Domain;
-
-			// A Volume-domain material is a volumetric material; it must be flagged so the
-			// volumetric cloud renderer accepts it. Set it automatically so authors never
-			// need to write bUsedWithVolumetricCloud by hand (and decompiled sources that
-			// predate the decompiler whitelist entry regenerate correctly).
-			if (Domain == MD_Volume)
-			{
-				Material->bUsedWithVolumetricCloud = true;
-			}
 		}
+
+		// The domain decides this flag's default, so authors never have to write it by hand: a
+		// Volume-domain material is a volumetric material, and the volumetric cloud renderer
+		// refuses one that is not flagged for it. Assign unconditionally rather than only inside
+		// the branch above -- ResetMaterialToDefaults does not clear usage flags, so a material
+		// regenerated from Volume to some other domain would otherwise keep a stale flag -- and
+		// read the domain back off the material, because a source that omits Domain keeps the
+		// domain it already has. The generic Settings loop runs after this and can still override
+		// it with an explicit bUsedWithVolumetricCloud, and decompile derives the same default
+		// through GetDefaultUsedWithVolumetricCloud so the two directions agree on what may be
+		// left out of the Settings block.
+		Material->SetUsageByFlag(MATUSAGE_VolumetricCloud, GetDefaultUsedWithVolumetricCloud(Material->MaterialDomain));
 
 		for (const TPair<FString, FString>& Setting : Definition.Settings)
 		{

@@ -255,8 +255,15 @@ A generated material is reset immediately before `Settings` is applied. An omitt
 | `MaterialDecalResponse` | `MDR_ColorNormalRoughness` |
 | `bHasPixelAnimation` | `false` *(since UE 5.4)* |
 | `NumCustomizedUVs` | `0` |
+| `bUsedWithVolumetricCloud` | `true` when `Domain="Volume"`, otherwise `false` |
 
 Every other `UMaterial` property keeps whatever a freshly constructed material has.
+
+`bUsedWithVolumetricCloud` is the one entry above that is not a constant: the domain decides it. A
+`Volume`-domain material is a volumetric material, and the volumetric cloud renderer refuses one
+that is not flagged for it — so you never have to write the flag by hand. Write it explicitly to
+override the domain's choice; a `Volume` material that only ever feeds volumetric fog can turn the
+flag back off with `bUsedWithVolumetricCloud = "false";` and save the cloud shader permutations.
 
 ## The round-trip set
 
@@ -265,7 +272,7 @@ unconditionally, plus each of the following when it differs from the `UMaterial`
 is the set guaranteed to survive a `UMaterial` → `.dsm` → `UMaterial` round trip; it is a subset of
 what `Settings` accepts, not a limit on it.
 
-**Booleans (39, in emit order)**
+**Booleans (40, in emit order)**
 
 ```text
 TwoSided                    Wireframe                     DitheredLODTransition
@@ -281,10 +288,15 @@ bUsedWithGeometryCache      bUsedWithStaticLighting       bUsedWithSplineMeshes
 bUsedWithInstancedStaticMeshes                            bUsedWithGeometryCollections
 bUsedWithHairStrands        bUsedWithWater                bUsedWithVirtualHeightfieldMesh
 bCastRayTracedShadows       bWriteOnlyAlpha               BlendableOutputAlpha
-bAlwaysEvaluateWorldPositionOffset
+bAlwaysEvaluateWorldPositionOffset                        bUsedWithVolumetricCloud
 ```
 
 `bHasPixelAnimation` is emitted only on UE 5.4 and newer.
+
+`bUsedWithVolumetricCloud` is the one boolean not compared against the `UMaterial` class default: it
+is compared against the value the domain would give it (see the table above). On a `Volume`-domain
+material the value that needs no line is `true`, so it is the `false` that gets written out — which
+is what keeps a fog-only `Volume` material from coming back with the flag on.
 
 **Enums (1)** — `MaterialDecalResponse`.
 

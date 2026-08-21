@@ -8,6 +8,12 @@
 
 #include "CoreMinimal.h"
 #include "SceneTypes.h"
+
+// EMaterialDomain / EBlendMode, used by the Settings-text declarations below. Neither lives in
+// SceneTypes.h, and a unity build only happened to have them already through a neighbouring TU: a
+// non-unity compile of this header (a -SingleFile build, say) does not.
+#include "Engine/EngineTypes.h"
+#include "MaterialDomain.h"
 #include "MaterialValueType.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
 #include "Materials/MaterialExpressionCustom.h"
@@ -69,10 +75,17 @@ namespace UE::DreamShader::Editor::Private
 	FString GetMaterialDomainText(const EMaterialDomain Domain);
 	FString GetBlendModeText(const EBlendMode BlendMode);
 	FString GetShadingModelText(const UMaterial* Material);
+	/**
+	 * Writes a bool Settings line only when the material would not get this value anyway. The
+	 * baseline is the UMaterial CDO unless DefaultValueOverride names a different one, which is
+	 * what a setting the generator derives from another setting needs (see
+	 * GetDefaultUsedWithVolumetricCloud).
+	 */
 	void AppendBoolMaterialSettingIfDifferent(
 		TArray<FString>& Lines,
 		const UMaterial* Material,
-		const TCHAR* PropertyName);
+		const TCHAR* PropertyName,
+		const TOptional<bool> DefaultValueOverride = TOptional<bool>());
 	void AppendEnumMaterialSettingIfDifferent(
 		TArray<FString>& Lines,
 		const UMaterial* Material,
