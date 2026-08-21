@@ -47,7 +47,7 @@ entry point) runs steps 1–7 and 10 and skips 9.
 | 7 | Resolve the backend | `Unsupported Backend '{Value}'. Supported values: Graph, Instance, ThinCustom.` |
 | 8 | Create or reuse the target asset | see [Asset paths](asset-paths.md#diagnostics) |
 | 9 | Source-hash short circuit | *(skips the rest)* |
-| 10 | Build the graph, apply settings, lay out, recompile | see [Regeneration](regeneration.md) |
+| 10 | Build the graph, apply settings, lay out, recompile — atomically | see [Regeneration](regeneration.md) and [Divergence](divergence.md) |
 | 11 | Persist, or clear the dirty flag in memory-only mode | `Generated DreamShader asset '{Path}' could not be saved.` |
 
 ### Inside the graph build
@@ -134,6 +134,7 @@ flashes one, and are suppressed entirely under `IsRunningCommandlet()`.
 | [Caching](caching.md) | the source hash, the metadata keys, when regeneration is skipped |
 | [Graph layout](graph-layout.md) | how generated nodes are positioned, and when layout is skipped |
 | [Regeneration](regeneration.md) | what a rebuild destroys and what survives |
+| [Divergence](divergence.md) | the output digest, and what happens when an asset was edited by hand |
 | [Generated HLSL](generated-hlsl.md) | the `/DreamShaderGenerated/*.ush` helper include |
 
 ## Notes

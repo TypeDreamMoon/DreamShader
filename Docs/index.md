@@ -125,6 +125,7 @@ The statement and expression language inside `Graph = { ... }`, which materialis
 | [Caching](generation/caching.md) | Source hashing and skipped rebuilds |
 | [Graph layout](generation/graph-layout.md) | Automatic placement and its limits |
 | [Regeneration](generation/regeneration.md) | What survives a rebuild and what does not |
+| [Divergence](generation/divergence.md) | Hand-edited assets: detection, and the three ways out |
 | [Generated HLSL](generation/generated-hlsl.md) | The emitted `.ush` include |
 
 ---

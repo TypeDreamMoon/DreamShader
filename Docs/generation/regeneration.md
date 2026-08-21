@@ -13,7 +13,14 @@ What happens to an already-generated asset when its source file is compiled agai
 ## Summary
 
 **A generated asset is source-derived output, not a document.** Regeneration rebuilds it from the
-`.dsm` or `.dsf`. Every hand edit inside it is destroyed, with exactly one exception.
+`.dsm` or `.dsf`, and everything the table below marks as not surviving is destroyed by that rebuild.
+
+> [!IMPORTANT]
+> A rebuild that *would* destroy a hand edit does not happen. Since `1.8.0` an asset is fingerprinted
+> at the end of every successful generation, and a rebuild that finds the fingerprint no longer
+> matching stops and asks you to choose — see [Divergence](divergence.md). The table below therefore
+> describes what a rebuild does to an asset that is **still untouched**, and what the **Revert to
+> Source** action does to one that is not.
 
 | Edit | Survives regeneration |
 | :-- | :-- |
@@ -29,6 +36,9 @@ What happens to an already-generated asset when its source file is compiled agai
 
 ## Sequence
 
+0. **Refuse if the asset is open in an asset editor**, then **refuse if it has diverged** — both
+   before anything below runs, and before any of it is reversible. See
+   [Open in an asset editor](#open-in-an-asset-editor) and [Divergence](divergence.md).
 1. `Modify()` the target object.
 2. **Clear the generated comments** — every `UMaterialExpressionComment` whose text starts with the
    literal `DreamShader: `.
@@ -48,10 +58,24 @@ material editing library, in up to 64 outer passes, reporting
 un-rooted and marked as garbage in one pass. The material path also resets the material's editor
 parameter cache; the material-function path does not.
 
-The whole-file parse, the `Settings` validation and the `Outputs` validation all run **before** the
-target asset is created or cleared, so a source file that fails any of them leaves the previously
-generated asset intact. A syntax error *inside* a `Graph` block is not one of those gates: the
-statement parser runs after step 4, so such a failure leaves the asset emptied.
+**A rebuild is atomic.** Steps 1-9 either all take effect or none of them do: the old graph is
+detached rather than destroyed, and a failure at any point puts it back — nodes, connections, render
+state, material-function usage and pin GUIDs alike — before the compile returns. The asset a failed
+compile leaves behind is the asset it started with.
+
+That matters because not every failure is caught up front. The whole-file parse, the `Settings`
+validation and the `Outputs` validation are gates that run **before** the asset is touched at all,
+but a `Graph` block is compiled one statement at a time by the graph builder, which runs at step 7 —
+after the teardown. Until `1.8.0` such a failure left the asset **emptied**, which was bad for a
+material and much worse for a material function, whose call sites read their pins from the live
+asset: one bad `.dsf` took every material that called it down with it, with no undo (generated assets
+are deliberately not `RF_Transactional`).
+
+> [!NOTE]
+> The one thing a rollback does not restore is the `DreamShader: ` comment boxes, which are deleted
+> at step 2 — before the snapshot, necessarily, since a snapshot taken first would capture references
+> to comments that are already gone. They are regenerated decoration, and the next successful compile
+> recreates them. Comments you wrote are never prefixed and are never deleted in the first place.
 
 ## What survives
 
@@ -89,9 +113,12 @@ name's GUID has nothing to restore onto.
 > [!WARNING]
 > Under the **ThinCustom** backend, regeneration calls `ClearParameterValuesEditorOnly()` on the
 > emitted `UDreamShaderMaterialInstance`. **Every parameter override set by hand on a generated
-> instance is wiped on every regeneration** — scalar, vector, texture, static switch, and static
-> component-mask alike. No diagnostic is emitted; the values are simply gone the next time the source
-> is compiled.
+> instance is wiped by a regeneration** — scalar, vector, texture, static switch, and static
+> component-mask alike.
+>
+> Since `1.8.0` this no longer happens silently: an override is a hand edit like any other, so the
+> instance reads as [diverged](divergence.md) and the rebuild is refused until you pick Revert, Adopt
+> or Detach. The advice below is still the better habit, because it never reaches that point.
 >
 > **Workaround:** never tune a generated instance directly. Either
 >
@@ -105,6 +132,44 @@ name's GUID has nothing to restore onto.
 > `<parent directory>/<Instance Subfolder>` — see
 > [In-memory materials](in-memory.md#materializing-to-disk).
 
+## Open in an asset editor
+
+A rebuild is refused outright while the asset is open in an asset editor:
+
+```text
+Asset '{ObjectPath}' is open in an asset editor, so it was NOT rebuilt. An open editor works on its
+own copy of the asset and writes that copy back when you press Apply or Save, which would silently
+undo this rebuild. Close the editor and compile again.
+```
+
+| | |
+| :-- | :-- |
+| Fires when | `UAssetEditorSubsystem::FindEditorForAsset` reports an editor open on the target |
+| Applies to | materials, material functions, layers, layer blends and generated ThinCustom instances |
+| Since | `1.8.0` |
+
+The reason is that **an asset editor does not edit the asset.** `FMaterialEditor` duplicates it into
+a transient `UPreviewMaterial` and copies that duplicate back over the original on Apply or Save
+(`UpdateOriginalMaterial`); the material instance editor writes back through a
+`UMaterialEditorInstanceConstant` wrapper. An editor that stayed open across a rebuild is therefore
+holding a *pre-rebuild* copy of the asset, and the next Apply reverts everything the rebuild did —
+which then shows up as a [divergence](divergence.md) on the compile after that, a long way from the
+cause.
+
+> [!NOTE]
+> Refusing is the only safe answer available here. Whether that copy has unapplied edits in it is
+> `FMaterialEditor::bMaterialDirty`, which is private to the MaterialEditor module — so "close it if
+> it is clean, refuse if it is not" is not a question this plugin can ask. Closing it blindly is
+> worse: the engine's save prompt would appear in the middle of a compile-on-save, and would hang a
+> headless build.
+
+**The provenance actions are the exception.** *Revert to Source* and *Adopt Into Source* close the
+editor themselves, do the work, and reopen it — because you just clicked them, quite possibly from
+that editor's own toolbar, and a menu item that is permanently dead where it is most useful is not a
+guard, it is a bug. The engine's save prompt may appear as part of that close; for Adopt it is
+load-bearing rather than noise, since unapplied editor changes are not part of "this asset's current
+contents" until the prompt is answered. Cancelling it cancels the whole action.
+
 ## Ownership guard
 
 DreamShader refuses to overwrite an asset it did not generate.
@@ -112,7 +177,7 @@ DreamShader refuses to overwrite an asset it did not generate.
 | | |
 | :-- | :-- |
 | Fires when | the target package exists **on disk** and the existing object carries **no** `DreamShader.SourceFile` metadata |
-| Applies to | `Shader` under the `Graph` backend, and `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` |
+| Applies to | every backend and every block kind *(the ThinCustom instance path since `1.8.0`)* |
 | Result | generation fails; the existing asset is untouched |
 
 | Message | Raised for |
@@ -122,19 +187,23 @@ DreamShader refuses to overwrite an asset it did not generate.
 
 ### Where the guard does not apply
 
-> [!WARNING]
-> There is **no ownership guard on the ThinCustom instance path**. Generating a `Shader` under the
-> default backend onto a path that holds a hand-authored `UDreamShaderMaterialInstance` checks only
-> the class, not the provenance metadata — and then rebuilds it, clearing its parameter overrides.
-> A hand-authored asset of any *other* class at that path is still rejected, with
-> `Asset '{ObjectPath}' already exists and is not a DreamShader instance material. Delete it (or
-> remove Backend="Instance") before switching backends.`
->
-> **Workaround:** do not hand-author `UDreamShaderMaterialInstance` assets. Create child instances as
-> plain `UMaterialInstanceConstant`, which the guard's class check rejects outright.
+The guard is inert for packages that are not on disk: a memory-only asset has no saved package to
+protect, so the check does not run. That gap is covered from the other side —
+[divergence](divergence.md) applies in memory too, because the source path is stamped there as well.
 
-The guard is also inert for packages that are not on disk: a memory-only asset has no saved package
-to protect, so the check does not run.
+A wrong-class asset at the target path is refused by a class check instead, before the ownership
+question is asked at all:
+
+```text
+Asset '{ObjectPath}' already exists and is not a DreamShader instance material. Delete it (or remove
+Backend="Instance") before switching backends.
+```
+
+> [!NOTE]
+> Before `1.8.0` the ThinCustom instance path checked only that class, not provenance — so generating
+> onto a path holding a hand-authored `UDreamShaderMaterialInstance` adopted and rebuilt it, clearing
+> its parameter overrides. Since the default backend is ThinCustom, that was the widest of the three
+> paths and the only one without the check. It now runs the same guard as the others.
 
 ## Reset properties
 
@@ -186,9 +255,12 @@ The material-function usage is also re-stamped from the block kind on every rege
 ## Notes
 
 - **Regeneration is not undoable.** Generated material instances are deliberately not
-  `RF_Transactional`, because undo/redo desynchronizes the shader map.
+  `RF_Transactional`, because undo/redo desynchronizes the shader map. This is why the
+  [divergence](divergence.md) gate is a *pre*-check: once the graph is cleared there is nothing to
+  come back to.
 - The safest mental model: treat the `.dsm` / `.dsf` as the asset. Anything you want to persist
-  belongs in the source.
+  belongs in the source — or, if you edited the asset instead, use **Adopt Into Source** to make the
+  source say what the asset says.
 - A regeneration that is skipped by the source hash does none of this — the asset is not touched at
   all. See [Caching](caching.md#when-regeneration-is-skipped).
 - Deleting the generated asset and recompiling is always equivalent to a forced regeneration, except
@@ -210,7 +282,9 @@ Runtime substitutions are rendered as `{Placeholder}`.
 | `Asset '{ObjectPath}' already exists as '{ActualClass}', but {Kind} generation requires '{ExpectedClass}'. Delete or move the existing asset and regenerate it.` | function kind, wrong material-function subclass |
 | `Generated DreamShader asset '{Path}' could not be saved.` | the package save failed after a successful rebuild |
 | `Generated DreamShader asset packages could not be saved.` | the paired instance + base save failed |
-| `In-memory material mode: '{PackageName}' already exists as a saved asset, which shadows in-memory regeneration. Delete the saved asset to make it fully in-memory.` | log warning; a saved asset shadows a memory-only rebuild |
+| `'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Clean Persisted Generated Assets to make it memory-only.` | log; a memory-only compile landed on an asset with a file behind it, so it took the persisted path — see [In-memory materials](in-memory.md#when-the-asset-already-exists-on-disk) |
+| `Asset '{ObjectPath}' has been edited by hand since DreamShader generated it from '{SourceFile}', so it was NOT rebuilt (rebuilding would destroy those edits). ...` | the [divergence](divergence.md) gate |
+| `Asset '{ObjectPath}' is open in an asset editor, so it was NOT rebuilt. ...` | the [open-editor gate](#open-in-an-asset-editor) |
 
 ## Example
 
@@ -244,12 +318,13 @@ Color node dragged to (900, 400)                 back to (-400, 0), pinned by La
 ## See also
 
 - [Caching](caching.md) — when regeneration is skipped, and the provenance metadata the guard uses
-- [In-memory materials](in-memory.md) — child instances, materializing, cleaning shadowing assets
+- [In-memory materials](in-memory.md) — child instances, materializing, and when storage decides the mode
 - [Graph layout](graph-layout.md) — why node positions move, and how `Layout` pins them
 - [Layout](../language/layout.md) — the `Comment(Name=…)` directive that names generated boxes
 - [Shader settings](../settings/material.md) — every key that survives the property reset
 - [Function settings](../settings/function.md) — the material-function fields reapplied each rebuild
 - [ShaderFunction](../language/shader-function.md) — pin identity and why renaming an input breaks callers
+- [Divergence](divergence.md) — what happens when the asset no longer matches what was generated
 - [Decompiler](../tools/decompiler.md) — capturing hand edits back into source
 - [Asset paths](asset-paths.md) — the class-match rules behind the guard's sibling errors
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

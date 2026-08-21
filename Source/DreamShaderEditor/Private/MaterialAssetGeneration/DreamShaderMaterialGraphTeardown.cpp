@@ -1,165 +1,252 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// DreamShader-generated material/function graph teardown: removes previously generated expressions
-// and comments before regeneration. Extracted from DreamShaderMaterialGeneratorSupport.cpp; the two
-// teardown helpers it calls (EnsureExpressionCanBeDeleted, ClearDreamShaderGeneratedComments) are
-// now header-declared (their definitions stay in Support.cpp).
+// DreamShader-generated material/function graph teardown. This file used to hold two "clear the
+// graph" helpers that destroyed the old nodes on the spot; it now holds FDreamShaderGraphRollback,
+// which detaches them instead and destroys them only once the rebuild has succeeded. See
+// DreamShaderGraphRollback.h for why.
+//
+// The old teardown had two deletion strategies -- node-by-node through the material editing library
+// below a threshold, a single mark-as-garbage sweep above it -- because
+// UMaterialEditingLibrary::DeleteMaterialExpression breaks inbound links by scanning every other
+// expression, which is O(n^2) across a whole graph. Detaching the graph as a unit makes that scan
+// pointless (nothing that stays behind can still point into what left), so there is now one path,
+// and it is the fast one.
 
-#include "DreamShaderMaterialGeneratorCodeShared.h"
+#include "DreamShaderGraphRollback.h"
 
-#include "MaterialEditingLibrary.h"
+#include "DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderModule.h"
+
 #include "Materials/Material.h"
 #include "Materials/MaterialExpression.h"
 #include "Materials/MaterialFunction.h"
-#include "Misc/ScopedSlowTask.h"
+#include "SceneTypes.h"
+#include "Serialization/ObjectReader.h"
+#include "Serialization/ObjectWriter.h"
 
 namespace UE::DreamShader::Editor::Private
 {
 	namespace
 	{
-		constexpr int32 FastClearExpressionThreshold = 1200;
+		FMaterialExpressionCollection* GetExpressionCollection(UMaterial* Material, UMaterialFunction* MaterialFunction)
+		{
+			if (Material)
+			{
+				return &Material->GetExpressionCollection();
+			}
+			if (MaterialFunction)
+			{
+				return &MaterialFunction->GetExpressionCollection();
+			}
+			return nullptr;
+		}
+
+		// The object the graph actually lives on. See FDreamShaderGraphRollback::EditorOnlySnapshot.
+		UObject* GetEditorOnlyData(UMaterial* Material, UMaterialFunction* MaterialFunction)
+		{
+			if (Material)
+			{
+				return Material->GetEditorOnlyData();
+			}
+			if (MaterialFunction)
+			{
+				return MaterialFunction->GetEditorOnlyData();
+			}
+			return nullptr;
+		}
 	}
 
-	void ClearMaterialExpressions(UMaterial* Material)
+	FDreamShaderGraphRollback::FDreamShaderGraphRollback(UMaterial* InMaterial)
+		: Material(InMaterial)
 	{
-		if (!Material)
+		DetachGraph();
+	}
+
+	FDreamShaderGraphRollback::FDreamShaderGraphRollback(UMaterialFunction* InMaterialFunction)
+		: MaterialFunction(InMaterialFunction)
+	{
+		DetachGraph();
+	}
+
+	FDreamShaderGraphRollback::~FDreamShaderGraphRollback()
+	{
+		if (bCommitted)
 		{
 			return;
 		}
 
-		ClearDreamShaderGeneratedComments(Material, nullptr);
-
-		FScopedSlowTask ClearSlowTask(
-			FMath::Max(1.0f, static_cast<float>(Material->GetExpressions().Num())),
-			FText::FromString(FString::Printf(TEXT("Clearing Material graph '%s'..."), *Material->GetName()))); /* I18N-EXEMPT: deferred codegen or compatibility path */
-
-		for (int32 MaterialPropertyIndex = 0; MaterialPropertyIndex < MP_MAX; ++MaterialPropertyIndex)
+		if (bArmed)
 		{
-			if (FExpressionInput* ExpressionInput = Material->GetExpressionInputForProperty(static_cast<EMaterialProperty>(MaterialPropertyIndex)))
+			RestoreGraph();
+			return;
+		}
+
+		// Never armed: there is nothing to put back, but the detached graph (if any) still has to be
+		// released rather than leaked into the root set.
+		DestroyDetachedExpressions();
+	}
+
+	void FDreamShaderGraphRollback::DetachGraph()
+	{
+		UObject* Asset = Material ? static_cast<UObject*>(Material) : static_cast<UObject*>(MaterialFunction);
+		FMaterialExpressionCollection* Collection = GetExpressionCollection(Material, MaterialFunction);
+		if (!Asset || !Collection)
+		{
+			return;
+		}
+
+		// Delta OFF. With it on, a property equal to the class default is skipped, and restoring would
+		// then leave whatever the failed build had set it to -- so a material whose source turned
+		// TwoSided on would come back two-sided.
+		FObjectWriter(Asset, Snapshot, /*bIgnoreClassRef*/ false, /*bIgnoreArchetypeRef*/ false, /*bDoDelta*/ false);
+
+		// Both halves, or neither: the render state is on the asset and the graph is on its editor-only
+		// data, so a rollback holding one without the other would restore a coherent-looking asset that
+		// is missing half of what it had.
+		EditorOnlyData = GetEditorOnlyData(Material, MaterialFunction);
+		if (EditorOnlyData)
+		{
+			FObjectWriter(EditorOnlyData, EditorOnlySnapshot, /*bIgnoreClassRef*/ false, /*bIgnoreArchetypeRef*/ false, /*bDoDelta*/ false);
+		}
+
+		bArmed = Snapshot.Num() > 0 && EditorOnlyData != nullptr && EditorOnlySnapshot.Num() > 0;
+		if (!bArmed)
+		{
+			UE_LOG(
+				LogDreamShader,
+				Warning,
+				TEXT("DreamShader could not snapshot '%s' before rebuilding it; a failed rebuild will not be rolled back."),
+				*Asset->GetPathName());
+		}
+
+		DetachedExpressions.Reserve(Collection->Expressions.Num());
+		for (const TObjectPtr<UMaterialExpression>& Expression : Collection->Expressions)
+		{
+			if (Expression)
 			{
-				ExpressionInput->Expression = nullptr;
+				DetachedExpressions.Emplace(Expression.Get());
 			}
 		}
 
-		if (Material->GetExpressions().Num() >= FastClearExpressionThreshold)
+		if (Material)
 		{
-			for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+			for (int32 MaterialPropertyIndex = 0; MaterialPropertyIndex < MP_MAX; ++MaterialPropertyIndex)
 			{
-				EnsureExpressionCanBeDeleted(Expression.Get());
-				if (Expression)
+				if (FExpressionInput* ExpressionInput = Material->GetExpressionInputForProperty(static_cast<EMaterialProperty>(MaterialPropertyIndex)))
 				{
-					Expression->MarkAsGarbage();
+					ExpressionInput->Expression = nullptr;
 				}
 			}
 
+			// The engine's own per-node deletion maintains this cache one entry at a time
+			// (RemoveExpressionParameter); emptying the graph in one go means emptying it in one go.
 			Material->EditorParameters.Reset();
-			Material->GetExpressionCollection().Empty();
-			return;
 		}
 
-		int32 SafetyCounter = 0;
-		while (!Material->GetExpressions().IsEmpty() && SafetyCounter < 64)
-		{
-			TArray<UMaterialExpression*> ExpressionSnapshot;
-			ExpressionSnapshot.Reserve(Material->GetExpressions().Num());
-			for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
-			{
-				if (Expression)
-				{
-					ExpressionSnapshot.Add(Expression.Get());
-				}
-			}
-
-			if (ExpressionSnapshot.IsEmpty())
-			{
-				break;
-			}
-
-			for (UMaterialExpression* Expression : ExpressionSnapshot)
-			{
-				ClearSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("Deleting old Material node '%s'..."),
-					Expression ? *Expression->GetName() : TEXT("<null>"))));
-				EnsureExpressionCanBeDeleted(Expression);
-				UMaterialEditingLibrary::DeleteMaterialExpression(Material, Expression);
-			}
-
-			++SafetyCounter;
-		}
+		Collection->Expressions.Empty();
+		Collection->ExpressionExecBegin = nullptr;
+		Collection->ExpressionExecEnd = nullptr;
 	}
 
-	void ClearMaterialFunctionExpressions(UMaterialFunction* MaterialFunction)
+	void FDreamShaderGraphRollback::RestoreGraph()
 	{
-		if (!MaterialFunction)
+		UObject* Asset = Material ? static_cast<UObject*>(Material) : static_cast<UObject*>(MaterialFunction);
+		FMaterialExpressionCollection* Collection = GetExpressionCollection(Material, MaterialFunction);
+		if (!Asset || !Collection)
 		{
 			return;
 		}
 
-		ClearDreamShaderGeneratedComments(nullptr, MaterialFunction);
-
-		FScopedSlowTask ClearSlowTask(
-			FMath::Max(1.0f, static_cast<float>(MaterialFunction->GetExpressions().Num())),
-			FText::FromString(FString::Printf(TEXT("Clearing Material Function graph '%s'..."), *MaterialFunction->GetName()))); /* I18N-EXEMPT: deferred codegen or compatibility path */
-
-		if (MaterialFunction->GetExpressions().Num() >= FastClearExpressionThreshold)
+		// What the failed attempt managed to build, captured before the restore overwrites the
+		// collection with the old contents and drops the only reference to it.
+		TArray<UMaterialExpression*> Abandoned;
+		Abandoned.Reserve(Collection->Expressions.Num());
+		for (const TObjectPtr<UMaterialExpression>& Expression : Collection->Expressions)
 		{
-			for (const TObjectPtr<UMaterialExpression>& Expression : MaterialFunction->GetExpressions())
+			if (Expression)
 			{
-				EnsureExpressionCanBeDeleted(Expression.Get());
-				if (Expression)
-				{
-					Expression->MarkAsGarbage();
-				}
-			}
-
-			MaterialFunction->GetExpressionCollection().Empty();
-		}
-		else
-		{
-			int32 SafetyCounter = 0;
-			while (!MaterialFunction->GetExpressions().IsEmpty() && SafetyCounter < 64)
-			{
-				TArray<UMaterialExpression*> ExpressionSnapshot;
-				ExpressionSnapshot.Reserve(MaterialFunction->GetExpressions().Num());
-				for (const TObjectPtr<UMaterialExpression>& Expression : MaterialFunction->GetExpressions())
-				{
-					if (Expression)
-					{
-						ExpressionSnapshot.Add(Expression.Get());
-					}
-				}
-
-				if (ExpressionSnapshot.IsEmpty())
-				{
-					break;
-				}
-
-				for (UMaterialExpression* Expression : ExpressionSnapshot)
-				{
-					ClearSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("Deleting old Material Function node '%s'..."),
-						Expression ? *Expression->GetName() : TEXT("<null>"))));
-					EnsureExpressionCanBeDeleted(Expression);
-					UMaterialEditingLibrary::DeleteMaterialExpressionInFunction(MaterialFunction, Expression);
-				}
-
-				++SafetyCounter;
+				Abandoned.Add(Expression.Get());
 			}
 		}
 
-		// A UMaterialFunction keeps a SECOND, serialized list of its function-call nodes that the
-		// expression collection knows nothing about, and `UMaterialFunction::IterateDependentFunctions`
-		// walks it with no null check (MaterialExpressions.cpp:14406). Emptying the graph without
-		// resetting it leaves raw pointers to the nodes marked garbage above; GC nulls the entries, and
-		// the next `ForceRecompileForRendering` -- which iterates every loaded UMaterialInterface, so
-		// any later compile of any file reaches it -- dereferences null.
-		//
-		// The engine refreshes this list from exactly two places, PostLoad and
-		// ForceRecompileForRendering, so the window stays open for as long as the function is cleared
-		// but not rebuilt: a generation that FAILS after this point (a bad .dsf leaves the function
-		// empty) arms the crash for the rest of the session. Resetting here makes a half-cleared
-		// function merely empty instead of lethal.
-		MaterialFunction->DependentFunctionExpressionCandidates.Reset();
+		FObjectReader(Asset, Snapshot);
+		if (EditorOnlyData)
+		{
+			FObjectReader(EditorOnlyData, EditorOnlySnapshot);
+		}
+
+		// Whatever came back is referenced by the asset again, so the strong handles can go. Dropping
+		// them BEFORE the sweep below also keeps the set membership test honest: the two lists are
+		// disjoint (a build only ever creates new nodes), and the test is belt and braces.
+		TSet<UMaterialExpression*> Restored;
+		Restored.Reserve(DetachedExpressions.Num());
+		for (const TStrongObjectPtr<UMaterialExpression>& Expression : DetachedExpressions)
+		{
+			Restored.Add(Expression.Get());
+		}
+		DetachedExpressions.Empty();
+
+		for (UMaterialExpression* Expression : Abandoned)
+		{
+			if (Expression && !Restored.Contains(Expression))
+			{
+				EnsureExpressionCanBeDeleted(Expression);
+				Expression->MarkAsGarbage();
+			}
+		}
+
+		// No recompile here on purpose. The asset now holds exactly the graph and the render state its
+		// existing shader map was built from, and nothing between the detach and a failure recompiles
+		// anything -- so asking for one would only pay for a rebuild of the map it already has.
+		UE_LOG(
+			LogDreamShader,
+			Verbose,
+			TEXT("DreamShader restored '%s' after a failed generation: %d node(s) back, %d abandoned."),
+			*Asset->GetPathName(),
+			Restored.Num(),
+			Abandoned.Num());
 	}
 
+	void FDreamShaderGraphRollback::DestroyDetachedExpressions()
+	{
+		for (const TStrongObjectPtr<UMaterialExpression>& Expression : DetachedExpressions)
+		{
+			if (UMaterialExpression* DetachedExpression = Expression.Get())
+			{
+				EnsureExpressionCanBeDeleted(DetachedExpression);
+				DetachedExpression->MarkAsGarbage();
+			}
+		}
+		DetachedExpressions.Empty();
+	}
+
+	void FDreamShaderGraphRollback::Commit()
+	{
+		if (bCommitted)
+		{
+			return;
+		}
+
+		bCommitted = true;
+		DestroyDetachedExpressions();
+		Snapshot.Empty();
+		EditorOnlySnapshot.Empty();
+
+		if (MaterialFunction)
+		{
+			// A UMaterialFunction keeps a SECOND, serialized list of its function-call nodes that the
+			// expression collection knows nothing about, and `UMaterialFunction::IterateDependentFunctions`
+			// walks it with no null check (MaterialExpressions.cpp:14406). The nodes it points at were
+			// just marked as garbage, so GC would null the entries and the next
+			// `ForceRecompileForRendering` -- which iterates every loaded UMaterialInterface, so any
+			// later compile of any file reaches it -- would dereference null.
+			//
+			// This is why it lives at COMMIT and not at teardown: the engine refreshes the list from
+			// exactly two places, PostLoad and ForceRecompileForRendering, so resetting it early used to
+			// be the only thing standing between a failed compile and a crash for the rest of the
+			// session. A failed compile no longer empties the function at all, so that window is closed
+			// from the other side; this reset is now simply bookkeeping for a rebuild that succeeded.
+			MaterialFunction->DependentFunctionExpressionCandidates.Reset();
+		}
+	}
 }

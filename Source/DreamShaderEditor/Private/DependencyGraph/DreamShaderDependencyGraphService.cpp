@@ -359,6 +359,79 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
+	void FDreamShaderDependencyGraphService::SortByDependencyOrder(TArray<FString>& InOutSourceFiles)
+	{
+		if (InOutSourceFiles.Num() < 2)
+		{
+			return;
+		}
+
+		// Only edges WITHIN the batch matter. A dependency that is not itself being compiled is already
+		// whatever it is going to be, and waiting for it would mean waiting forever.
+		TSet<FString> Batch;
+		Batch.Reserve(InOutSourceFiles.Num());
+		for (FString& SourceFile : InOutSourceFiles)
+		{
+			SourceFile = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
+			Batch.Add(SourceFile);
+		}
+
+		TMap<FString, TArray<FString>> DependenciesInBatch;
+		DependenciesInBatch.Reserve(InOutSourceFiles.Num());
+		for (const FString& SourceFile : InOutSourceFiles)
+		{
+			TSet<FString> Dependencies;
+			TSet<FString> VisitedFiles;
+			CollectHeaderDependenciesRecursive(SourceFile, Dependencies, VisitedFiles);
+
+			TArray<FString>& Edges = DependenciesInBatch.Add(SourceFile);
+			for (const FString& Dependency : Dependencies)
+			{
+				if (Dependency != SourceFile && Batch.Contains(Dependency))
+				{
+					Edges.Add(Dependency);
+				}
+			}
+		}
+
+		// Depth-first post-order: a file is emitted only once everything it imports has been. Files in a
+		// cycle come out in the order the walk reached them -- the import loader rejects the cycle with
+		// its own diagnostic anyway, and inventing an order for it here would only hide that.
+		TArray<FString> Ordered;
+		Ordered.Reserve(InOutSourceFiles.Num());
+		TSet<FString> Emitted;
+		TSet<FString> InProgress;
+
+		TFunction<void(const FString&)> Visit = [&](const FString& SourceFile)
+		{
+			if (Emitted.Contains(SourceFile) || InProgress.Contains(SourceFile))
+			{
+				return;
+			}
+			InProgress.Add(SourceFile);
+
+			if (const TArray<FString>* Edges = DependenciesInBatch.Find(SourceFile))
+			{
+				for (const FString& Dependency : *Edges)
+				{
+					Visit(Dependency);
+				}
+			}
+
+			InProgress.Remove(SourceFile);
+			Emitted.Add(SourceFile);
+			Ordered.Add(SourceFile);
+		};
+
+		// Seeded from the incoming order, so two files with no dependency between them keep it.
+		for (const FString& SourceFile : InOutSourceFiles)
+		{
+			Visit(SourceFile);
+		}
+
+		InOutSourceFiles = MoveTemp(Ordered);
+	}
+
 	TSet<FString> FDreamShaderDependencyGraphService::RebuildAndCollectDependentsForImport(
 		const FString& ImportFilePath,
 		TMap<FString, TSet<FString>>& InOutHeaderDependentsByFile)

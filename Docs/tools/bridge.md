@@ -65,6 +65,42 @@ Shutdown **deletes `status.json` first**, then removes every handle, shuts the W
 down, clears the pending-file map and the diagnostics store, deletes the bridge database again, and
 unregisters the tool menus unless the engine is already exiting.
 
+## One editor owns the bridge
+
+The bridge directory is per **project**, not per process: one `Requests` folder, one
+`status.json`, one heartbeat. Two editors open on the same project therefore both polled the same
+queue — whichever got there first consumed the file, the other read a half-deleted one, and both
+overwrote `status.json` with their own pid, so a client could not tell which editor was about to
+answer it.
+
+Since `1.8.0` exactly one process serves the bridge, and says so in a lock file:
+
+| | |
+| :-- | :-- |
+| File | `<Project>/Saved/DreamShader/Bridge/owner.lock` |
+| Contents | `pid` and an ISO-8601 `heartbeat`, refreshed on the ordinary heartbeat |
+| Believed while | the owning process is still running **and** its heartbeat is under 30s old |
+| Released | on editor shutdown, so the next editor takes over on its next heartbeat rather than after the stale window |
+
+Both conditions are needed. The pid test alone would hand the bridge to a second editor every time
+the first was mid-compile, since a compile blocks the game thread and stops the heartbeat; the
+heartbeat test alone would leave the bridge unowned for a stale window after a hard crash.
+
+A non-owning editor still compiles its own in-memory materials — those are per-process and nobody
+else's business — but it does not consume requests, does not write `status.json`, and **does not
+write generated assets to disk**. That last one matters because
+[storage decides how a rebuild persists](../generation/in-memory.md#when-the-asset-already-exists-on-disk):
+without it, two editors would both `SavePackage` the same file, and a save that loses that race is
+not a merge — it is a corrupted package or a dead editor. Such a compile reports:
+
+```text
+Skipped {AssetPath}; another editor owns this project's DreamShader bridge, and only that one
+writes generated assets to disk.
+```
+
+The commandlet is unaffected: it has no bridge, no lock file and no second process to negotiate
+with, and writing these assets is its entire job.
+
 ## Request files
 
 | | |
@@ -513,6 +549,7 @@ Everything the bridge writes, and who reads it.
 | `Requests/*.json` | inbound | consumed and deleted |
 | `Responses/<requestId>.json` | outbound | no — the client deletes its own |
 | `status.json` | outbound | no |
+| `owner.lock` | internal | yes — every editor reads it to find out whether it is the one serving this project |
 | `diagnostics.json` | outbound | yes — the Material Content Browser's Gen page reads it directly |
 | `diagnostics/index.json`, `diagnostics/<md5>.json` | outbound | no |
 | `bridge.db` | outbound | **no** |
