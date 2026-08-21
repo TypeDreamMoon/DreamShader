@@ -134,7 +134,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderPropertyDefinition& Property,
 		const UTexture* Texture,
 		const TCHAR* Context,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const ETextShaderTextureType ExpectedTextureType = ResolveEffectiveTextureType(Property);
 		if (DoesTextureMatchType(Texture, ExpectedTextureType))
@@ -176,7 +176,7 @@ namespace UE::DreamShader::Editor::Private
 		return Key;
 	}
 
-	bool ApplyExpressionMetadata(UMaterialExpression* Expression, const FTextShaderMetadata& Metadata, FString& OutError)
+	bool ApplyExpressionMetadata(UMaterialExpression* Expression, const FTextShaderMetadata& Metadata, FDreamShaderError& OutError)
 	{
 		if (!Expression)
 		{
@@ -243,7 +243,7 @@ namespace UE::DreamShader::Editor::Private
 				return false;
 			}
 
-			FString LiteralError;
+			FDreamShaderError LiteralError;
 			if (!SetMaterialExpressionLiteralProperty(Expression, Property, ReflectedProperty.Value, LiteralError))
 			{
 				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -258,7 +258,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	static bool SetExpressionParameterName(UMaterialExpression* Expression, const FString& ParameterName, FString& OutError)
+	static bool SetExpressionParameterName(UMaterialExpression* Expression, const FString& ParameterName, FDreamShaderError& OutError)
 	{
 		if (!Expression)
 		{
@@ -306,7 +306,7 @@ namespace UE::DreamShader::Editor::Private
 		return Property.Name;
 	}
 
-	static bool SetExpressionDefaultValue(UMaterialExpression* Expression, const FTextShaderPropertyDefinition& Property, FString& OutError)
+	static bool SetExpressionDefaultValue(UMaterialExpression* Expression, const FTextShaderPropertyDefinition& Property, FDreamShaderError& OutError)
 	{
 		if (!Expression || !Property.bHasDefaultValue)
 		{
@@ -409,7 +409,7 @@ namespace UE::DreamShader::Editor::Private
 		UMaterialFunction* MaterialFunction,
 		const FTextShaderPropertyDefinition& Property,
 		const int32 PositionY,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		UClass* ExpressionClass = ResolveMaterialExpressionClass(Property.ParameterNodeType);
 		if (!ExpressionClass)
@@ -462,7 +462,7 @@ namespace UE::DreamShader::Editor::Private
 		UMaterialFunction* MaterialFunction,
 		const FTextShaderPropertyDefinition& Property,
 		const int32 PositionY,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (Property.Source == ETextShaderPropertySource::UEBuiltin || !Property.ParameterNodeType.IsEmpty())
 		{
@@ -573,7 +573,7 @@ namespace UE::DreamShader::Editor::Private
 		UMaterialFunction* MaterialFunction,
 		const FTextShaderPropertyDefinition& Property,
 		int32 PositionY,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (!Property.ParameterNodeType.IsEmpty()
 			&& !Property.ParameterNodeType.Equals(TEXT("ScalarParameter"), ESearchCase::IgnoreCase)
@@ -698,7 +698,7 @@ namespace UE::DreamShader::Editor::Private
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		const int32 PositionY,
 		UMaterialExpression*& OutExpression,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (TryResolvePropertyReference(InValueText, AvailableExpressions, OutExpression))
 		{
@@ -746,7 +746,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderPropertyDefinition& Property,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		const int32 PositionY,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		FString ClassSpecifier = Property.UEBuiltinFunctionName;
 		if (FString ExplicitClass; TryGetUEBuiltinArgument(Property, TEXT("Class"), ExplicitClass))
@@ -798,7 +798,7 @@ namespace UE::DreamShader::Editor::Private
 		if (!Property.UEBuiltinArguments.Contains(UE::DreamShader::NormalizeSettingKey(TEXT("ParameterName")))
 			&& FindMaterialExpressionArgumentProperty(ExpressionClass, TEXT("ParameterName")))
 		{
-			FString ParameterNameError;
+			FDreamShaderError ParameterNameError;
 			if (!SetExpressionParameterName(Expression, Property.Name, ParameterNameError))
 			{
 				OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -827,7 +827,7 @@ namespace UE::DreamShader::Editor::Private
 				if (UMaterialExpressionCustom* CustomExpression = Cast<UMaterialExpressionCustom>(Expression))
 				{
 					UMaterialExpression* InputExpression = nullptr;
-					FString InputError;
+					FDreamShaderError InputError;
 					if (!ResolveFlexibleExpressionInputValue(Material, MaterialFunction, Argument.Value, AvailableExpressions, PositionY - 80, InputExpression, InputError))
 					{
 						OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *InputError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -852,7 +852,7 @@ namespace UE::DreamShader::Editor::Private
 			if (IsMaterialExpressionInputProperty(BoundProperty))
 			{
 				UMaterialExpression* InputExpression = nullptr;
-				FString InputError;
+				FDreamShaderError InputError;
 				if (!ResolveFlexibleExpressionInputValue(Material, MaterialFunction, Argument.Value, AvailableExpressions, PositionY - 80, InputExpression, InputError))
 				{
 					OutError = FString::Printf(TEXT("UE.%s for property '%s': %s"), *Property.UEBuiltinFunctionName, *Property.Name, *InputError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -872,7 +872,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			else
 			{
-				FString LiteralError;
+				FDreamShaderError LiteralError;
 				void* ValuePtr = BoundProperty->ContainerPtrToValuePtr<void>(Expression);
 				if (!SetMaterialExpressionLiteralProperty(Expression, BoundProperty, ValuePtr, Argument.Value, LiteralError))
 				{
@@ -938,7 +938,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderPropertyDefinition& Property,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		const int32 PositionY,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const auto MakeError = [&Property](const FString& Message)
 		{
@@ -1205,7 +1205,7 @@ namespace UE::DreamShader::Editor::Private
 				else
 				{
 					UMaterialExpression* CoordinateExpression = nullptr;
-					FString InputError;
+					FDreamShaderError InputError;
 					if (!ResolveExpressionInputValue(Material, MaterialFunction, CoordinateValue, AvailableExpressions, 2, PositionY - 80, CoordinateExpression, InputError))
 					{
 						OutError = MakeError(FString::Printf(TEXT("Coordinate input is invalid. %s"), *InputError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -1229,7 +1229,7 @@ namespace UE::DreamShader::Editor::Private
 			if (FString TimeValue; TryGetUEBuiltinArgument(Property, TEXT("Time"), TimeValue))
 			{
 				UMaterialExpression* TimeExpression = nullptr;
-				FString InputError;
+				FDreamShaderError InputError;
 				if (!ResolveExpressionInputValue(Material, MaterialFunction, TimeValue, AvailableExpressions, 1, PositionY - 40, TimeExpression, InputError))
 				{
 					OutError = MakeError(FString::Printf(TEXT("Time input is invalid. %s"), *InputError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -1241,7 +1241,7 @@ namespace UE::DreamShader::Editor::Private
 			if (FString SpeedValue; TryGetUEBuiltinArgument(Property, TEXT("Speed"), SpeedValue))
 			{
 				UMaterialExpression* SpeedExpression = nullptr;
-				FString InputError;
+				FDreamShaderError InputError;
 				if (!ResolveExpressionInputValue(Material, MaterialFunction, SpeedValue, AvailableExpressions, 2, PositionY + 40, SpeedExpression, InputError))
 				{
 					OutError = MakeError(FString::Printf(TEXT("Speed input is invalid. %s"), *InputError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -1425,7 +1425,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderPropertyDefinition& Property,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		const int32 PositionY,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (Property.bConst)
 		{
@@ -1453,7 +1453,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderPropertyDefinition& Property,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		const int32 PositionY,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		return CreatePropertyExpression(Material, nullptr, Property, AvailableExpressions, PositionY, OutError);
 	}

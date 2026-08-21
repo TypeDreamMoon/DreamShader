@@ -315,7 +315,7 @@ namespace UE::DreamShader::Editor::Private
 		bool& bOutUsesReturn,
 		ECustomMaterialOutputType& OutReturnType,
 		bool& bOutReturnIsSubstrateMaterial,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const auto IsSimpleOutputReference = [](const FString& InText) -> bool
 		{

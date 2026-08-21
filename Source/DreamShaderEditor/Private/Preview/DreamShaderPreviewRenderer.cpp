@@ -1,4 +1,5 @@
 #include "Preview/DreamShaderPreviewRenderer.h"
+#include "DreamShaderDiagnostic.h"
 
 #include "DreamShaderCompileService.h"
 #include "DreamShaderModule.h"
@@ -114,7 +115,11 @@ namespace UE::DreamShader::Editor::Private
 
 			FString PackageName;
 			FString AssetName;
-			return ResolveDreamShaderAssetDestination(Definition.Name, Definition.Root, PackageName, OutObjectPath, AssetName, OutError);
+			FDreamShaderError DestinationError;
+			const bool bResolvedDestination = ResolveDreamShaderAssetDestination(
+				Definition.Name, Definition.Root, PackageName, OutObjectPath, AssetName, DestinationError);
+			OutError = DestinationError.Message;
+			return bResolvedDestination;
 		}
 
 		// Maps the VSCode extension's mesh selector value to the same primitive-shape enum the

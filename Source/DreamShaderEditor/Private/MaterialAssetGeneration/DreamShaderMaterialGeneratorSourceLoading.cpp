@@ -17,7 +17,7 @@ namespace UE::DreamShader::Editor
 		const FString& CurrentFilePath,
 		const FString& ImportSpecifier,
 		FString& OutResolvedPath,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		FString ResolveError;
 		if (Private::FDreamShaderDependencyGraphService::ResolveImportPath(
@@ -31,12 +31,17 @@ namespace UE::DreamShader::Editor
 
 		// A root-qualified import that named an unknown root says so precisely; everything else is an
 		// ordinary miss, where naming the specifier and the importer is all there is to say.
-		OutError = ResolveError.IsEmpty()
-			? FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+		if (ResolveError.IsEmpty())
+		{
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
 				TEXT("DreamShader import '%s' referenced from '%s' could not be resolved."),
 				*ImportSpecifier,
-				*CurrentFilePath)
-			: ResolveError;
+				*CurrentFilePath);
+		}
+		else
+		{
+			OutError = ResolveError;
+		}
 		return false;
 	}
 
@@ -45,7 +50,7 @@ namespace UE::DreamShader::Editor
 		TSet<FString>& InOutVisitedFiles,
 		TSet<FString>& InOutActiveStack,
 		FString& OutSourceText,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
 		if (InOutVisitedFiles.Contains(NormalizedPath))
@@ -129,7 +134,7 @@ namespace UE::DreamShader::Editor
 		return true;
 	}
 
-	bool LoadPreparedDreamShaderSource(const FString& SourceFilePath, FString& OutSourceText, FString& OutError)
+	bool LoadPreparedDreamShaderSource(const FString& SourceFilePath, FString& OutSourceText, FDreamShaderError& OutError)
 	{
 		OutSourceText.Reset();
 		TSet<FString> VisitedFiles;

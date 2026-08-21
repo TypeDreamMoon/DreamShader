@@ -254,7 +254,7 @@ namespace UE::DreamShader::Editor
 			const ETextShaderTextureType TextureType,
 			const TArray<FTextShaderPropertyDefinition>* LocalProperties,
 			TMap<FString, Private::FCodeValue>& GeneratedValues,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			if (!InputExpression || (!InputDefinition.bOptional && !InputDefinition.bHasDefaultValue))
 			{
@@ -284,7 +284,7 @@ namespace UE::DreamShader::Editor
 				Private::BuildGeneratedIncludeVirtualPath(SourceFilePath),
 				LocalProperties);
 			TArray<Private::FCodeStatement> EmptyStatements;
-			FString BuildError;
+			FDreamShaderError BuildError;
 			if (!PreviewGraphBuilder.Build(EmptyStatements, GeneratedValues, BuildError))
 			{
 				OutError = BuildError;
@@ -321,7 +321,7 @@ namespace UE::DreamShader::Editor
 			const FString& ValueName,
 			TMap<FString, Private::FCodeValue>& InOutGeneratedValues,
 			int32& InOutPositionY,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			if (ValueName.IsEmpty() || InOutGeneratedValues.Contains(ValueName))
 			{
@@ -379,7 +379,7 @@ namespace UE::DreamShader::Editor
 			TSet<FString>& InOutCreatingPropertyNames,
 			int32& InOutPositionY,
 			UMaterialExpression*& OutExpression,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			if (UMaterialExpression* const* ExistingExpression = InOutGeneratedPropertyExpressions.Find(Property.Name))
 			{
@@ -425,7 +425,7 @@ namespace UE::DreamShader::Editor
 				}
 			}
 
-			FString PropertyExpressionError;
+			FDreamShaderError PropertyExpressionError;
 			OutExpression = Private::CreatePropertyExpression(
 				Material,
 				MaterialFunction,
@@ -771,7 +771,7 @@ namespace UE::DreamShader::Editor
 			const FString& ParameterBlock,
 			FString& OutInputsBlock,
 			FString& OutResultsBlock,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			OutInputsBlock.Reset();
 			OutResultsBlock.Reset();
@@ -850,7 +850,7 @@ namespace UE::DreamShader::Editor
 			return true;
 		}
 
-		static bool TransformModernFunctionSyntax(const FString& InSourceText, FString& OutSourceText, FString& OutError)
+		static bool TransformModernFunctionSyntax(const FString& InSourceText, FString& OutSourceText, FDreamShaderError& OutError)
 		{
 			OutError.Reset();
 			OutSourceText = InSourceText;
@@ -965,7 +965,7 @@ namespace UE::DreamShader::Editor
 			TMap<FString, UMaterialExpression*>& InOutExpressions,
 			int32& InOutPositionY,
 			UMaterialExpression*& OutExpression,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			const FString CacheKey = BuildOutputTargetCacheKey(Binding);
 			if (UMaterialExpression* const* ExistingExpression = InOutExpressions.Find(CacheKey))
@@ -1010,7 +1010,7 @@ namespace UE::DreamShader::Editor
 					return false;
 				}
 
-				FString LiteralError;
+				FDreamShaderError LiteralError;
 				if (!Private::SetMaterialExpressionLiteralProperty(OutExpression, BoundProperty, Argument.Value, LiteralError))
 				{
 					OutError = FString::Printf(TEXT("Output target '%s': %s"), *Binding.TargetText, *LiteralError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -1029,7 +1029,7 @@ namespace UE::DreamShader::Editor
 			const FTextShaderOutputBinding& Binding,
 			UMaterialExpression* TargetExpression,
 			TSet<FString>& BoundPins,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			if (!SourceExpression || !TargetExpression)
 			{
@@ -1124,7 +1124,7 @@ namespace UE::DreamShader::Editor
 		}
 #endif
 
-		bool ValidateMaterialLayerFunctionDefinition(const FTextShaderMaterialFunctionDefinition& FunctionDefinition, FString& OutError)
+		bool ValidateMaterialLayerFunctionDefinition(const FTextShaderMaterialFunctionDefinition& FunctionDefinition, FDreamShaderError& OutError)
 		{
 			const TCHAR* BlockKind = GetMaterialFunctionBlockKindText(FunctionDefinition.Kind);
 			if (FunctionDefinition.Kind == ETextShaderMaterialFunctionKind::ShaderFunction)
@@ -1236,7 +1236,7 @@ namespace UE::DreamShader::Editor
 		bool AppendInitializedOutputStatements(
 			const TArray<FTextShaderVariableDeclaration>& OutputDeclarations,
 			TArray<Private::FCodeStatement>& InOutStatements,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			for (const FTextShaderVariableDeclaration& OutputDeclaration : OutputDeclarations)
 			{
@@ -1272,7 +1272,7 @@ namespace UE::DreamShader::Editor
 			const bool bForce,
 			const bool bTransient,
 			FString& OutGeneratedAssetPath,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 		FScopedSlowTask FunctionSlowTask(
 			10.0f,
@@ -1317,7 +1317,7 @@ namespace UE::DreamShader::Editor
 			// Storage decides from here, not the request. See IsGeneratedAssetPersisted.
 			const bool bEffectiveTransient = bTransient && !Private::IsGeneratedAssetPersisted(MaterialFunction);
 
-			FString DeferMessage;
+			FDreamShaderError DeferMessage;
 			if (Private::ShouldDeferPersistedAssetToWriteOwner(MaterialFunction, !bEffectiveTransient, DeferMessage))
 			{
 				OutGeneratedAssetPath = MaterialFunction->GetPathName();
@@ -1337,14 +1337,14 @@ namespace UE::DreamShader::Editor
 			// Before Modify()/SetMaterialFunctionUsage, which are already edits to the asset: a function
 			// that fails this gate must come out of the compile completely untouched, because its call
 			// sites read its pins from the live asset and a half-updated function breaks all of them.
-			FString FunctionEditorOpenError;
+			FDreamShaderError FunctionEditorOpenError;
 			if (!Private::CheckGeneratedAssetNotOpenInEditor(MaterialFunction, FunctionEditorOpenError))
 			{
 				OutError = FunctionEditorOpenError;
 				return false;
 			}
 
-			FString FunctionDivergenceError;
+			FDreamShaderError FunctionDivergenceError;
 			if (!Private::CheckGeneratedAssetNotDiverged(MaterialFunction, FunctionDivergenceError))
 			{
 				OutError = FunctionDivergenceError;
@@ -1548,7 +1548,7 @@ namespace UE::DreamShader::Editor
 					return false;
 				}
 
-				FString PreviewError;
+				FDreamShaderError PreviewError;
 				if (!ApplyFunctionInputPreviewDefault(
 					MaterialFunction,
 					SourceFilePath,
@@ -1572,7 +1572,7 @@ namespace UE::DreamShader::Editor
 			{
 				if (Private::IsMaterialAttributesType(OutputDefinition.Type))
 				{
-					FString SeedError;
+					FDreamShaderError SeedError;
 					if (!SeedMaterialAttributesGraphValue(
 						nullptr,
 						MaterialFunction,
@@ -1603,7 +1603,7 @@ namespace UE::DreamShader::Editor
 				int32 CodeStartColumn = 1;
 				ResolveCodeBlockLocation(SourceFilePath, PreparedSource, FunctionDefinition.CodeStartIndex, CodeSourceFilePath, CodeStartLine, CodeStartColumn);
 				TArray<Private::FCodeStatement> CodeStatements;
-				FString CodeParseError;
+				FDreamShaderError CodeParseError;
 				int32 CodeParseErrorLine = 0;
 				int32 CodeParseErrorColumn = 0;
 				if (!Private::ParseCodeStatements(FunctionDefinition.Code, CodeStatements, CodeParseError, &CodeParseErrorLine, &CodeParseErrorColumn))
@@ -1630,7 +1630,7 @@ namespace UE::DreamShader::Editor
 					CodeSourceFilePath,
 					CodeStartLine,
 					CodeStartColumn);
-				FString CodeBuildError;
+				FDreamShaderError CodeBuildError;
 		FunctionSlowTask.EnterProgressFrame(
 			2.0f,
 			FText::Format(
@@ -1730,7 +1730,7 @@ namespace UE::DreamShader::Editor
 						continue;
 					}
 
-					FString PropertyExpressionError;
+					FDreamShaderError PropertyExpressionError;
 					UMaterialExpression* PropertyExpression = nullptr;
 					if (!CreateReferencedPropertyExpression(
 						nullptr,
@@ -1941,7 +1941,7 @@ namespace UE::DreamShader::Editor
 			FText::Format(
 				LOCTEXT("SavingFunction", "Saving '{0}'..."),
 				FText::FromString(FunctionDefinition.Name)));
-				FString SaveError;
+				FDreamShaderError SaveError;
 				if (!Private::SaveAssetPackage(MaterialFunction, SaveError))
 				{
 					OutError = SaveError;
@@ -1955,6 +1955,14 @@ namespace UE::DreamShader::Editor
 	}
 
 	bool FMaterialGenerator::GenerateAssetsFromFile(const FString& InSourceFilePath, FString& OutMessage, const bool bForce, const bool bTransient)
+	{
+		FDreamShaderError Error;
+		const bool bResult = GenerateAssetsFromFile(InSourceFilePath, Error, bForce, bTransient);
+		OutMessage = Error.Message;
+		return bResult;
+	}
+
+	bool FMaterialGenerator::GenerateAssetsFromFile(const FString& InSourceFilePath, FDreamShaderError& OutMessage, const bool bForce, const bool bTransient)
 	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
 		FScopedSlowTask SourceSlowTask(
@@ -1979,7 +1987,7 @@ namespace UE::DreamShader::Editor
 		}
 
 		FString SourceText;
-		FString PreparedSourceError;
+		FDreamShaderError PreparedSourceError;
 		if (!LoadPreparedDreamShaderSource(SourceFilePath, SourceText, PreparedSourceError))
 		{
 			OutMessage = PreparedSourceError;
@@ -2018,7 +2026,7 @@ namespace UE::DreamShader::Editor
 		SourceSlowTask.EnterProgressFrame(1.0f, LOCTEXT("PreparingDreamShaderGeneratedAssets", "Preparing DreamShader generated assets..."));
 		if (!Definition.Functions.IsEmpty())
 		{
-			FString IncludeWriteError;
+			FDreamShaderError IncludeWriteError;
 			if (!Private::WriteGeneratedInclude(SourceFilePath, Definition, IncludeWriteError))
 			{
 				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *IncludeWriteError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -2038,7 +2046,7 @@ namespace UE::DreamShader::Editor
 		for (const FTextShaderMaterialFunctionDefinition& FunctionDefinition : Definition.MaterialFunctions)
 		{
 			FString GeneratedAssetPath;
-			FString FunctionError;
+			FDreamShaderError FunctionError;
 			if (!GenerateMaterialFunctionAsset(SourceFilePath, SourceText, SourceHash, Definition, FunctionDefinition, bForce, bTransient, GeneratedAssetPath, FunctionError))
 			{
 				OutMessage = FormatGenerateError(SourceFilePath, FunctionError);
@@ -2054,7 +2062,7 @@ namespace UE::DreamShader::Editor
 
 		if (!Definition.Name.IsEmpty())
 		{
-			FString MaterialMessage;
+			FDreamShaderError MaterialMessage;
 		SourceSlowTask.EnterProgressFrame(
 			1.0f,
 			FText::Format(
@@ -2097,12 +2105,13 @@ namespace UE::DreamShader::Editor
 			return false;
 		}
 
-		OutMessage = FString::Join(GeneratedAssetMessages, TEXT("\n"));
+		FString CompletionMessage = FString::Join(GeneratedAssetMessages, TEXT("\n"));
 		if (!Definition.Warnings.IsEmpty())
 		{
-			OutMessage += TEXT("\nWarnings:\n");
-			OutMessage += FString::Join(Definition.Warnings, TEXT("\n"));
+			CompletionMessage += TEXT("\nWarnings:\n");
+			CompletionMessage += FString::Join(Definition.Warnings, TEXT("\n"));
 		}
+		OutMessage = CompletionMessage;
 		return true;
 	}
 
@@ -2130,7 +2139,7 @@ namespace UE::DreamShader::Editor
 		// bit-identical SM6 rendering, so existing Instance sources keep generating unchanged -- they
 		// just get the real-graph hidden base + thin instance instead of the graphless host + injected
 		// resource. The legacy Instance generator is no longer reachable and is deleted in Stage 7.
-		static bool ResolveRequestedBackend(const FTextShaderDefinition& Definition, EResolvedBackend& OutBackend, bool& bOutExplicit, FString& OutError)
+		static bool ResolveRequestedBackend(const FTextShaderDefinition& Definition, EResolvedBackend& OutBackend, bool& bOutExplicit, FDreamShaderError& OutError)
 		{
 			OutBackend = EResolvedBackend::Graph;
 			bOutExplicit = false;
@@ -2184,7 +2193,7 @@ namespace UE::DreamShader::Editor
 			{
 				Host->bEnableNewHLSLGenerator = true;
 				Host->MarkPackageDirty();
-				FString SaveError;
+				FDreamShaderError SaveError;
 				if (!SaveAssetPackage(Host, SaveError))
 				{
 					UE_LOG(LogDreamShader, Warning,
@@ -2211,7 +2220,7 @@ namespace UE::DreamShader::Editor
 		bool bUsesFrontMaterial,
 		bool bTransient,
 		FScopedSlowTask& MaterialSlowTask,
-		FString& OutMessage)
+		FDreamShaderError& OutMessage)
 	{
 		Material->Modify();
 		MaterialSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Clearing old material graph '%s'..."), *Material->GetName()))); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -2227,7 +2236,7 @@ namespace UE::DreamShader::Editor
 		Private::FDreamShaderGraphRollback Rollback(Material);
 		Private::ResetMaterialToDefaults(Material);
 
-		FString SettingsError;
+		FDreamShaderError SettingsError;
 		if (!Private::ApplySettings(Material, Definition, SettingsError))
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *SettingsError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -2284,7 +2293,7 @@ namespace UE::DreamShader::Editor
 		{
 			if (!OutputDeclaration.bHasDefaultValue && Private::IsMaterialAttributesType(OutputDeclaration.Type))
 			{
-				FString SeedError;
+				FDreamShaderError SeedError;
 				if (!SeedMaterialAttributesGraphValue(
 					Material,
 					nullptr,
@@ -2319,7 +2328,7 @@ namespace UE::DreamShader::Editor
 			}
 
 			TArray<Private::FCodeStatement> CodeStatements;
-			FString CodeParseError;
+			FDreamShaderError CodeParseError;
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
 			FText::Format(
@@ -2363,7 +2372,7 @@ namespace UE::DreamShader::Editor
 				CodeSourceFilePath,
 				CodeStartLine,
 				CodeStartColumn);
-			FString CodeBuildError;
+			FDreamShaderError CodeBuildError;
 		MaterialSlowTask.EnterProgressFrame(
 			2.0f,
 			FText::Format(
@@ -2502,7 +2511,7 @@ namespace UE::DreamShader::Editor
 			for (const FTextShaderOutputBinding& Binding : Definition.Outputs)
 			{
 				Private::FCodeValue OutputValue;
-				FString OutputExpressionError;
+				FDreamShaderError OutputExpressionError;
 				if (!CodeGraphBuilder.EvaluateOutputExpression(Binding.SourceText, OutputValue, OutputExpressionError)
 					|| !OutputValue.Expression)
 				{
@@ -2546,7 +2555,7 @@ namespace UE::DreamShader::Editor
 				else
 				{
 					UMaterialExpression* TargetExpression = nullptr;
-					FString TargetError;
+					FDreamShaderError TargetError;
 					if (!CreateOrReuseOutputTargetExpression(
 						Material,
 						Binding,
@@ -2678,7 +2687,7 @@ namespace UE::DreamShader::Editor
 					continue;
 				}
 
-				FString PropertyExpressionError;
+				FDreamShaderError PropertyExpressionError;
 				UMaterialExpression* PropertyExpression = nullptr;
 				if (!CreateReferencedPropertyExpression(
 					Material,
@@ -2766,7 +2775,7 @@ namespace UE::DreamShader::Editor
 				else
 				{
 					UMaterialExpression* TargetExpression = nullptr;
-					FString TargetError;
+					FDreamShaderError TargetError;
 					if (!CreateOrReuseOutputTargetExpression(
 						Material,
 						Binding,
@@ -2854,7 +2863,7 @@ namespace UE::DreamShader::Editor
 		const bool bTransient,
 		UDreamShaderMaterialInstance* Instance,
 		UMaterial*& OutBase,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (bTransient)
 		{
@@ -2933,12 +2942,12 @@ namespace UE::DreamShader::Editor
 		ECustomMaterialOutputType ReturnOutputType,
 		bool bReturnIsSubstrateMaterial,
 		bool bUsesFrontMaterial,
-		FString& OutMessage,
+		FDreamShaderError& OutMessage,
 		const bool bForce,
 		const bool bTransient)
 	{
 		UDreamShaderMaterialInstance* Instance = nullptr;
-		FString InstanceError;
+		FDreamShaderError InstanceError;
 		if (!Private::CreateOrReuseInstanceMaterial(Definition, Instance, InstanceError, bTransient) || !Instance)
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *InstanceError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -2966,14 +2975,14 @@ namespace UE::DreamShader::Editor
 		// digest covers both, so one gate here guards the pair. A hand-authored instance that never
 		// carried a stamp is a different case, and CreateOrReuseInstanceMaterial's ownership guard
 		// (added alongside this) is what turns it away.
-		FString EditorOpenError;
+		FDreamShaderError EditorOpenError;
 		if (!Private::CheckGeneratedAssetNotOpenInEditor(Instance, EditorOpenError))
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *EditorOpenError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
-		FString DivergenceError;
+		FDreamShaderError DivergenceError;
 		if (!Private::CheckGeneratedAssetNotDiverged(Instance, DivergenceError))
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *DivergenceError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -2982,7 +2991,7 @@ namespace UE::DreamShader::Editor
 
 		// After the skip check on purpose: a hash-skip must not create (or ownership-check) a base.
 		UMaterial* BaseMaterial = nullptr;
-		FString BaseError;
+		FDreamShaderError BaseError;
 		if (!EnsureThinCustomBaseMaterial(Definition, bEffectiveTransient, Instance, BaseMaterial, BaseError) || !BaseMaterial)
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *BaseError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -3054,7 +3063,7 @@ namespace UE::DreamShader::Editor
 			const bool bWasNewlyCreated = InstancePackage->HasAnyPackageFlags(PKG_NewlyCreated);
 			InstancePackage->ClearPackageFlags(PKG_NewlyCreated);
 
-			FString SaveError;
+			FDreamShaderError SaveError;
 			if (!Private::SaveAssetPackages({ Instance }, SaveError))
 			{
 				if (bWasNewlyCreated)
@@ -3081,6 +3090,14 @@ namespace UE::DreamShader::Editor
 
 	bool FMaterialGenerator::GenerateMaterialFromFile(const FString& InSourceFilePath, FString& OutMessage, const bool bForce, const bool bTransient)
 	{
+		FDreamShaderError Error;
+		const bool bResult = GenerateMaterialFromFile(InSourceFilePath, Error, bForce, bTransient);
+		OutMessage = Error.Message;
+		return bResult;
+	}
+
+	bool FMaterialGenerator::GenerateMaterialFromFile(const FString& InSourceFilePath, FDreamShaderError& OutMessage, const bool bForce, const bool bTransient)
+	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
 		FScopedSlowTask MaterialSlowTask(
 			11.0f,
@@ -3104,7 +3121,7 @@ namespace UE::DreamShader::Editor
 		}
 
 		FString SourceText;
-		FString PreparedSourceError;
+		FDreamShaderError PreparedSourceError;
 		if (!LoadPreparedDreamShaderSource(SourceFilePath, SourceText, PreparedSourceError))
 		{
 			OutMessage = PreparedSourceError;
@@ -3155,7 +3172,7 @@ namespace UE::DreamShader::Editor
 		bool bUsesReturn = false;
 		ECustomMaterialOutputType ReturnOutputType = CMOT_Float1;
 		bool bReturnIsSubstrateMaterial = false;
-		FString ValidationError;
+		FDreamShaderError ValidationError;
 		if (!Private::ValidateSettings(Definition, ValidationError)
 			|| !Private::ValidateOutputs(Definition, NamedOutputs, bUsesReturn, ReturnOutputType, bReturnIsSubstrateMaterial, ValidationError))
 		{
@@ -3191,7 +3208,7 @@ namespace UE::DreamShader::Editor
 		// backend split.
 		if (!Definition.Functions.IsEmpty())
 		{
-			FString IncludeWriteError;
+			FDreamShaderError IncludeWriteError;
 			if (!Private::WriteGeneratedInclude(SourceFilePath, Definition, IncludeWriteError))
 			{
 				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *IncludeWriteError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -3201,7 +3218,7 @@ namespace UE::DreamShader::Editor
 
 		Private::EResolvedBackend RequestedBackend = Private::EResolvedBackend::Graph;
 		bool bExplicitBackend = false;
-		FString BackendError;
+		FDreamShaderError BackendError;
 		if (!Private::ResolveRequestedBackend(Definition, RequestedBackend, bExplicitBackend, BackendError))
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *BackendError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -3226,7 +3243,7 @@ namespace UE::DreamShader::Editor
 
 
 		UMaterial* Material = nullptr;
-		FString MaterialError;
+		FDreamShaderError MaterialError;
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
 			FText::Format(
@@ -3261,14 +3278,14 @@ namespace UE::DreamShader::Editor
 		//
 		// The open-editor check comes first because it is the plainer obstacle -- close the window --
 		// and because an editor that is open may still be about to change the divergence answer.
-		FString EditorOpenError;
+		FDreamShaderError EditorOpenError;
 		if (!Private::CheckGeneratedAssetNotOpenInEditor(Material, EditorOpenError))
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *EditorOpenError); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 
-		FString DivergenceError;
+		FDreamShaderError DivergenceError;
 		if (!Private::CheckGeneratedAssetNotDiverged(Material, DivergenceError))
 		{
 			OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *DivergenceError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -3315,7 +3332,7 @@ namespace UE::DreamShader::Editor
 			FText::Format(
 				LOCTEXT("SavingMaterial", "Saving material '{0}'..."),
 				FText::FromString(Material->GetName())));
-			FString SaveError;
+			FDreamShaderError SaveError;
 			if (!Private::SaveAssetPackage(Material, SaveError))
 			{
 				OutMessage = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *SaveError); /* I18N-EXEMPT: deferred codegen or compatibility path */

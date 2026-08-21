@@ -37,7 +37,7 @@ namespace UE::DreamShader::Editor::Private
 		return nullptr;
 	}
 
-	bool FCodeGraphBuilder::TryCreatePropertyValue(const FString& Name, FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::TryCreatePropertyValue(const FString& Name, FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		if (!Values)
 		{
@@ -77,7 +77,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 
 				FCodeValue IgnoredDependencyValue;
-				FString DependencyError;
+				FDreamShaderError DependencyError;
 				if (TryCreatePropertyValue(DependencyName, IgnoredDependencyValue, DependencyError) && !DependencyError.IsEmpty())
 				{
 					OutError = DependencyError;
@@ -87,7 +87,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		FString PropertyExpressionError;
+		FDreamShaderError PropertyExpressionError;
 		UMaterialExpression* PropertyExpression = CreatePropertyExpression(
 			Material,
 			MaterialFunction,
@@ -163,7 +163,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderPropertyDefinition& Property,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const FCodeCallArgument* TrueArgument = FindNamedArgument(Arguments, TEXT("True"));
 		if (!TrueArgument)
@@ -306,7 +306,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderPropertyDefinition& Property,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		// Materialise the parameter node (and its base output) exactly as a bare reference does, then
 		// wire each named argument onto the matching input pin. The node is cached by name, so a later

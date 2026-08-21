@@ -305,7 +305,7 @@ namespace UE::DreamShader::Editor::Private
 		return GRevertDivergedAssetsDepth > 0;
 	}
 
-	bool CheckGeneratedAssetNotDiverged(UObject* Asset, FString& OutError)
+	bool CheckGeneratedAssetNotDiverged(UObject* Asset, FDreamShaderError& OutError)
 	{
 		if (IsRevertingDivergedAssets() || ClassifyGeneratedAsset(Asset) != EDreamShaderDigestState::Diverged)
 		{
@@ -363,7 +363,7 @@ namespace UE::DreamShader::Editor::Private
 #endif
 	}
 
-	bool SaveAssetPackage(UObject* Asset, FString& OutError)
+	bool SaveAssetPackage(UObject* Asset, FDreamShaderError& OutError)
 	{
 		check(Asset);
 
@@ -378,7 +378,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool SaveAssetPackages(const TArray<UObject*>& Assets, FString& OutError)
+	bool SaveAssetPackages(const TArray<UObject*>& Assets, FDreamShaderError& OutError)
 	{
 		// One SavePackages call for a dependent asset PAIR (e.g. a ThinCustom base material and the
 		// instance parented to it): SavePackages saves exactly the packages passed in -- it does NOT
@@ -394,11 +394,12 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true))
 		{
-			OutError = TEXT("Generated DreamShader asset packages could not be saved.");
+			FString FailedAssetList;
 			for (UObject* Asset : Assets)
 			{
-				OutError += FString::Printf(TEXT(" '%s'"), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
+				FailedAssetList += FString::Printf(TEXT(" '%s'"), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
+			OutError = FString::Printf(TEXT("Generated DreamShader asset packages could not be saved.%s"), *FailedAssetList); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return false;
 		}
 

@@ -1,4 +1,5 @@
 #include "DreamShaderVirtualFunctionSyncService.h"
+#include "DreamShaderDiagnostic.h"
 
 #include "DreamShaderModule.h"
 #include "DreamShaderParser.h"
@@ -386,7 +387,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 
 				FString ObjectPath;
-				FString ResolveError;
+				FDreamShaderError ResolveError;
 				if (!TryResolveDreamShaderAssetReference(ParsedFunction.Asset, ObjectPath, ResolveError))
 				{
 					if (OutDiagnostics)

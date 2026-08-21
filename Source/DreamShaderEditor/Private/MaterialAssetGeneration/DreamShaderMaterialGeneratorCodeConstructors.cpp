@@ -88,7 +88,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& ConstructorName,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const int32 ExpectedComponents = GetConstructorComponentCount(ConstructorName);
 

@@ -30,7 +30,7 @@ namespace UE::DreamShader::Editor::Private
 	bool FCodeGraphBuilder::Build(
 		const TArray<FCodeStatement>& Statements,
 		TMap<FString, FCodeValue>& InOutValues,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		Values = &InOutValues;
 
@@ -172,7 +172,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	bool FCodeGraphBuilder::ExecuteStatement(const FCodeStatement& Statement, FString& OutError)
+	bool FCodeGraphBuilder::ExecuteStatement(const FCodeStatement& Statement, FDreamShaderError& OutError)
 	{
 		// The snapshot is one map copy per statement. Values are small descriptors and Graph blocks
 		// are hundreds of statements at most, so this stays far below the node creation it brackets.
@@ -199,7 +199,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	bool FCodeGraphBuilder::ExecuteStatementInternal(const FCodeStatement& Statement, FString& OutError)
+	bool FCodeGraphBuilder::ExecuteStatementInternal(const FCodeStatement& Statement, FDreamShaderError& OutError)
 	{
 		if (Statement.bIsIfStatement)
 		{
@@ -467,7 +467,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	bool FCodeGraphBuilder::ExecuteIfStatement(const FCodeStatement& Statement, FString& OutError)
+	bool FCodeGraphBuilder::ExecuteIfStatement(const FCodeStatement& Statement, FDreamShaderError& OutError)
 	{
 		if (!Values)
 		{
@@ -603,7 +603,7 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeValue& TrueValue,
 		const FCodeValue& FalseValue,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (TrueValue.bIsTextureObject || FalseValue.bIsTextureObject)
 		{
@@ -719,7 +719,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool FCodeGraphBuilder::EvaluateOutputExpression(const FString& ExpressionText, FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::EvaluateOutputExpression(const FString& ExpressionText, FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		TSharedPtr<FCodeExpression> ParsedExpression;
 		if (!ParseCodeExpression(ExpressionText, ParsedExpression, OutError))
@@ -833,7 +833,7 @@ namespace UE::DreamShader::Editor::Private
 		return Expression;
 	}
 
-	bool FCodeGraphBuilder::CreateMaterialAttributesValue(FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::CreateMaterialAttributesValue(FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		auto* Expression = Cast<UMaterialExpressionMakeMaterialAttributes>(
 			CreateExpression(UMaterialExpressionMakeMaterialAttributes::StaticClass(), -160, ConsumeNodeY()));
@@ -852,7 +852,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool FCodeGraphBuilder::CreateDefaultValue(const FString& DeclaredType, FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::CreateDefaultValue(const FString& DeclaredType, FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		int32 ComponentCount = 1;
 		bool bIsTexture = false;
@@ -920,7 +920,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& ConstructorType,
 		const FString& InitializerText,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const FString Trimmed = InitializerText.TrimStartAndEnd();
 		if (!Trimmed.StartsWith(TEXT("{")) || !Trimmed.EndsWith(TEXT("}")))
@@ -949,7 +949,7 @@ namespace UE::DreamShader::Editor::Private
 	bool FCodeGraphBuilder::ResolveTargetTypeForAssignment(
 		const FCodeStatement& Statement,
 		FString& OutTypeName,
-		FString& OutError) const
+		FDreamShaderError& OutError) const
 	{
 		if (Statement.bIsDeclaration)
 		{
@@ -1015,7 +1015,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& MemberName,
 		int32& OutComponentCount,
 		FString& OutTypeName,
-		FString& OutError) const
+		FDreamShaderError& OutError) const
 	{
 		FResolvedMaterialProperty ResolvedProperty;
 		if (!ResolveMaterialProperty(MemberName, ResolvedProperty)
@@ -1036,7 +1036,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool FCodeGraphBuilder::AssignMaterialAttributesMember(const FString& TargetName, const FCodeValue& InValue, FString& OutError)
+	bool FCodeGraphBuilder::AssignMaterialAttributesMember(const FString& TargetName, const FCodeValue& InValue, FDreamShaderError& OutError)
 	{
 		FString BaseName;
 		FString MemberName;
@@ -1128,7 +1128,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool FCodeGraphBuilder::AssignMaterialOutputSink(const FString& TargetName, const FCodeValue& InValue, FString& OutError)
+	bool FCodeGraphBuilder::AssignMaterialOutputSink(const FString& TargetName, const FCodeValue& InValue, FDreamShaderError& OutError)
 	{
 		FString BaseName;
 		FString MemberName;
@@ -1251,7 +1251,7 @@ namespace UE::DreamShader::Editor::Private
 		return nullptr;
 	}
 
-	bool FCodeGraphBuilder::ExecuteExpressionStatement(const TSharedPtr<FCodeExpression>& Expression, FString& OutError)
+	bool FCodeGraphBuilder::ExecuteExpressionStatement(const TSharedPtr<FCodeExpression>& Expression, FDreamShaderError& OutError)
 	{
 		if (!Expression || Expression->Kind != ECodeExpressionKind::Call)
 		{
@@ -1304,7 +1304,7 @@ namespace UE::DreamShader::Editor::Private
 		return ExecuteVirtualFunctionCall(*VirtualFunction, Expression->Arguments, OutError);
 	}
 
-	bool FCodeGraphBuilder::EvaluateExpression(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::EvaluateExpression(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		if (!Expression)
 		{
@@ -1398,7 +1398,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	bool FCodeGraphBuilder::EvaluateUnary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::EvaluateUnary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		FCodeValue Operand;
 		if (!EvaluateExpression(Expression->Left, Operand, OutError))
@@ -1424,7 +1424,7 @@ namespace UE::DreamShader::Editor::Private
 		return false;
 	}
 
-	bool FCodeGraphBuilder::EvaluateBinary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::EvaluateBinary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		FCodeValue LeftValue;
 		FCodeValue RightValue;
@@ -1442,7 +1442,7 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeValue& LeftValue,
 		const FCodeValue& RightValue,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		FCodeValue LeftOperand = LeftValue;
 		FCodeValue RightOperand = RightValue;
@@ -1479,7 +1479,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 
 				FCodeValue CoercedValue;
-				FString CoerceError;
+				FDreamShaderError CoerceError;
 				if (!CoerceValueToType(OtherValue, AuthoritativeValue.ComponentCount, false, CoercedValue, CoerceError))
 				{
 					return false;
@@ -1581,7 +1581,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool FCodeGraphBuilder::EvaluateMemberAccess(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::EvaluateMemberAccess(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		FCodeValue BaseValue;
 		if (!EvaluateExpression(Expression->Left, BaseValue, OutError))
@@ -1665,7 +1665,7 @@ namespace UE::DreamShader::Editor::Private
 		return CreateSwizzleExpression(BaseValue, Expression->Text, OutValue, OutError);
 	}
 
-	bool FCodeGraphBuilder::AppendValues(const TArray<FCodeValue>& Parts, FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::AppendValues(const TArray<FCodeValue>& Parts, FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		if (Parts.IsEmpty())
 		{
@@ -1736,7 +1736,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool FCodeGraphBuilder::EvaluateCall(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError)
+	bool FCodeGraphBuilder::EvaluateCall(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError)
 	{
 		FString CalleeName;
 		if (!TryFlattenQualifiedName(Expression->Left, CalleeName))
@@ -1811,7 +1811,7 @@ namespace UE::DreamShader::Editor::Private
 			return EvaluateUEBuiltinCall(CalleeName, Expression->Arguments, OutValue, OutError);
 		}
 
-		FString MathBuiltinError;
+		FDreamShaderError MathBuiltinError;
 		if (EvaluateMathBuiltinCall(CalleeName, Expression->Arguments, OutValue, MathBuiltinError))
 		{
 			return true;

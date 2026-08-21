@@ -20,7 +20,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& FunctionName,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const auto ValidatePositionalArguments = [&]()
 		{

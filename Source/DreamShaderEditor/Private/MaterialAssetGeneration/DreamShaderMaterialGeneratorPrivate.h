@@ -3,6 +3,10 @@
 #include "CoreMinimal.h"
 #include "DreamShaderTypes.h"
 
+// FDreamShaderError: every generator failure below carries a DSHnnnn code alongside its
+// message, so a wrap as the stack unwinds keeps the code the innermost raise set.
+#include "DreamShaderDiagnostic.h"
+
 // EDreamShaderDigestState, returned by the provenance helpers declared below.
 #include "DreamShaderGeneratedAssetDigest.h"
 
@@ -180,11 +184,11 @@ namespace UE::DreamShader::Editor::Private
 	FString BuildFunctionSourceArgumentList(const FTextShaderFunctionDefinition& Function, const TArray<FString>& ResultVariableNames);
 	bool IsSubstrateTypeUnsupportedForEngine(const FString& TypeName);
 
-	bool ParseCodeExpression(const FString& InExpression, TSharedPtr<FCodeExpression>& OutExpression, FString& OutError);
+	bool ParseCodeExpression(const FString& InExpression, TSharedPtr<FCodeExpression>& OutExpression, FDreamShaderError& OutError);
 	bool ParseCodeStatements(
 		const FString& InCode,
 		TArray<FCodeStatement>& OutStatements,
-		FString& OutError,
+		FDreamShaderError& OutError,
 		int32* OutErrorLine = nullptr,
 		int32* OutErrorColumn = nullptr);
 	bool MakeCodeDeclarationStatement(
@@ -192,7 +196,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& TargetName,
 		const FString& InitializerText,
 		FCodeStatement& OutStatement,
-		FString& OutError);
+		FDreamShaderError& OutError);
 
 	bool ResolveMaterialProperty(const FString& InName, FResolvedMaterialProperty& OutProperty);
 	bool TryResolveCustomOutputType(const FString& InTypeName, ECustomMaterialOutputType& OutOutputType);
@@ -210,7 +214,7 @@ namespace UE::DreamShader::Editor::Private
 		FString& OutPackageName,
 		FString& OutObjectPath,
 		FString& OutAssetLeafName,
-		FString& OutError);
+		FDreamShaderError& OutError);
 	/**
 	 * Fills in the `Root` of every block in `Definition` that declared none, when the source file
 	 * lives under a plugin source root: the asset then defaults to the plugin that ships the source
@@ -228,7 +232,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& SourceFilePath,
 		FTextShaderDefinition& Definition,
 		FString* OutFallbackReason = nullptr);
-	bool TryResolveDreamShaderAssetReference(const FString& InText, FString& OutObjectPath, FString& OutError);
+	bool TryResolveDreamShaderAssetReference(const FString& InText, FString& OutObjectPath, FDreamShaderError& OutError);
 	UMaterialExpression* CreateScalarLiteralExpression(UMaterial* Material, double Value, int32 PositionY);
 	// Thin wrapper over UMaterialEditingLibrary::CreateMaterialExpressionEx, shared by literal
 	// creation, the expression factory, and graph layout (reroute/comment nodes). Exposed (was a
@@ -264,13 +268,13 @@ namespace UE::DreamShader::Editor::Private
 		int32 ExpectedComponentCount,
 		int32 PositionY,
 		UMaterialExpression*& OutExpression,
-		FString& OutError);
+		FDreamShaderError& OutError);
 	// UE builtin argument parsing, shared by the expression factory (own TU) and staying code.
 	bool TryGetUEBuiltinArgument(const FTextShaderPropertyDefinition& Property, const TCHAR* Key, FString& OutValue);
 	bool ValidateUEBuiltinArgumentNames(
 		const FTextShaderPropertyDefinition& Property,
 		TConstArrayView<const TCHAR*> AllowedArgumentNames,
-		FString& OutError);
+		FDreamShaderError& OutError);
 	bool TryResolvePositionOrigin(const FString& InValue, EPositionOrigin& OutValue);
 	FString EnsureTopLevelReturn(const FString& InHLSL);
 	// OutEmbeddedIncludePaths receives the hoisted `#include` paths of every Function embedded into the
@@ -284,7 +288,7 @@ namespace UE::DreamShader::Editor::Private
 		FString& OutCode,
 		bool& bOutUsesGeneratedInclude,
 		TArray<FString>& OutEmbeddedIncludePaths,
-		FString& OutError);
+		FDreamShaderError& OutError);
 	// Rewrite imported-Function call sites in HLSL text to match the generated-include signatures the
 	// instance backend references (single-out function -> return value, so an out-param call
 	// `Fn(a, b)` becomes `b = Fn(a)`, and the DSL name resolves to the DreamShaderFn_* symbol). The
@@ -292,7 +296,7 @@ namespace UE::DreamShader::Editor::Private
 	bool IsTextureFunctionParameterType(const FString& InTypeName);
 	FString BuildGeneratedFunctionSymbolName(const FTextShaderFunctionDefinition& Function);
 	FString BuildGeneratedIncludeVirtualPath(const FString& SourceFilePath);
-	bool WriteGeneratedInclude(const FString& SourceFilePath, const FTextShaderDefinition& Definition, FString& OutError);
+	bool WriteGeneratedInclude(const FString& SourceFilePath, const FTextShaderDefinition& Definition, FDreamShaderError& OutError);
 	// Tearing a graph down is FDreamShaderGraphRollback's job now (DreamShaderGraphRollback.h): it
 	// detaches the old nodes instead of destroying them, so a build that fails partway can put them
 	// back. The two former ClearMaterial*Expressions helpers were its non-reversible ancestors.
@@ -327,21 +331,21 @@ namespace UE::DreamShader::Editor::Private
 	 * anyway is the one it may leave out of the Settings block it writes.
 	 */
 	bool GetDefaultUsedWithVolumetricCloud(const EMaterialDomain Domain);
-	bool ValidateSettings(const FTextShaderDefinition& Definition, FString& OutError);
-	bool ApplySettings(UMaterial* Material, const FTextShaderDefinition& Definition, FString& OutError);
+	bool ValidateSettings(const FTextShaderDefinition& Definition, FDreamShaderError& OutError);
+	bool ApplySettings(UMaterial* Material, const FTextShaderDefinition& Definition, FDreamShaderError& OutError);
 	UMaterialExpression* CreatePropertyExpression(
 		UMaterial* Material,
 		const FTextShaderPropertyDefinition& Property,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		int32 PositionY,
-		FString& OutError);
+		FDreamShaderError& OutError);
 	UMaterialExpression* CreatePropertyExpression(
 		UMaterial* Material,
 		UMaterialFunction* MaterialFunction,
 		const FTextShaderPropertyDefinition& Property,
 		const TMap<FString, UMaterialExpression*>& AvailableExpressions,
 		int32 PositionY,
-		FString& OutError);
+		FDreamShaderError& OutError);
 	bool TryGetComponentCountForOutputType(ECustomMaterialOutputType OutputType, int32& OutComponentCount);
 	// Declared texture dimension, or the dimension of the default asset when the type token does not
 	// name one (TextureObjectParameter and friends hold any dimension in a single node class).
@@ -371,9 +375,9 @@ namespace UE::DreamShader::Editor::Private
 		bool& bOutIsTexture,
 		ETextShaderTextureType& OutTextureType,
 		bool& bOutIsSubstrateMaterial);
-	bool CreateOrReuseMaterial(const FTextShaderDefinition& Definition, UMaterial*& OutMaterial, FString& OutError, bool bTransient = false);
-	bool CreateOrReuseMaterialFunction(const FTextShaderMaterialFunctionDefinition& Definition, UMaterialFunction*& OutFunction, FString& OutError, bool bTransient = false);
-	bool CreateOrReuseInstanceMaterial(const FTextShaderDefinition& Definition, ::UDreamShaderMaterialInstance*& OutInstance, FString& OutError, bool bTransient = false);
+	bool CreateOrReuseMaterial(const FTextShaderDefinition& Definition, UMaterial*& OutMaterial, FDreamShaderError& OutError, bool bTransient = false);
+	bool CreateOrReuseMaterialFunction(const FTextShaderMaterialFunctionDefinition& Definition, UMaterialFunction*& OutFunction, FDreamShaderError& OutError, bool bTransient = false);
+	bool CreateOrReuseInstanceMaterial(const FTextShaderDefinition& Definition, ::UDreamShaderMaterialInstance*& OutInstance, FDreamShaderError& OutError, bool bTransient = false);
 	bool TryResolveBlendModeSetting(const FString& InValue, EBlendMode& OutBlendMode);
 	bool TryResolveShadingModelSetting(const FString& InValue, EMaterialShadingModel& OutShadingModel);
 	bool TryResolveMaterialFunctionParameterType(
@@ -388,7 +392,7 @@ namespace UE::DreamShader::Editor::Private
 		bool& bOutUsesReturn,
 		ECustomMaterialOutputType& OutReturnType,
 		bool& bOutReturnIsSubstrateMaterial,
-		FString& OutError);
+		FDreamShaderError& OutError);
 	FString BuildSourceHash(const FString& SourceText);
 	bool IsGeneratedAssetSourceCurrent(UObject* Asset, const FString& SourceFilePath, const FString& SourceHash);
 	bool HasDreamShaderSourceMetadata(UObject* Asset);
@@ -407,7 +411,7 @@ namespace UE::DreamShader::Editor::Private
 	 * closing it blindly would pop a save prompt in the middle of a compile-on-save.
 	 */
 	bool IsGeneratedAssetOpenInEditor(UObject* Asset);
-	bool CheckGeneratedAssetNotOpenInEditor(UObject* Asset, FString& OutError);
+	bool CheckGeneratedAssetNotOpenInEditor(UObject* Asset, FDreamShaderError& OutError);
 
 	/**
 	 * Whether this process is allowed to write generated assets to disk.
@@ -424,7 +428,7 @@ namespace UE::DreamShader::Editor::Private
 	 * owns writing it. Reported as a skip rather than a failure: a second editor is a legitimate way to
 	 * work, its own in-memory materials still compile, and only the shared file is off limits.
 	 */
-	bool ShouldDeferPersistedAssetToWriteOwner(UObject* Asset, bool bWouldPersist, FString& OutMessage);
+	bool ShouldDeferPersistedAssetToWriteOwner(UObject* Asset, bool bWouldPersist, FDreamShaderError& OutMessage);
 
 	// Whether the asset has a file behind it. The generation paths ask this right after creating or
 	// reusing their target and downgrade an in-memory request to a persisted one when it answers yes:
@@ -451,7 +455,7 @@ namespace UE::DreamShader::Editor::Private
 	// the graph; that ordering is the whole point.
 	//
 	// Note what it does NOT take: a force flag. See FScopedDreamShaderRevertDiverged.
-	bool CheckGeneratedAssetNotDiverged(UObject* Asset, FString& OutError);
+	bool CheckGeneratedAssetNotDiverged(UObject* Asset, FDreamShaderError& OutError);
 
 	/**
 	 * The one thing that lets a compile overwrite a hand-edited asset. Held by the Revert action for
@@ -471,14 +475,14 @@ namespace UE::DreamShader::Editor::Private
 		FScopedDreamShaderRevertDiverged& operator=(const FScopedDreamShaderRevertDiverged&) = delete;
 	};
 	bool IsRevertingDivergedAssets();
-	bool SaveAssetPackage(UObject* Asset, FString& OutError);
-	bool SaveAssetPackages(const TArray<UObject*>& Assets, FString& OutError);
+	bool SaveAssetPackage(UObject* Asset, FDreamShaderError& OutError);
+	bool SaveAssetPackages(const TArray<UObject*>& Assets, FDreamShaderError& OutError);
 	UClass* ResolveMaterialExpressionClass(const FString& ClassSpecifier);
 	FProperty* FindMaterialExpressionArgumentProperty(UClass* ExpressionClass, const FString& ArgumentName);
 	bool IsMaterialExpressionInputProperty(const FProperty* Property);
-	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, const FString& ValueText, FString& OutError);
-	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, void* ValuePtr, const FString& ValueText, FString& OutError);
-	bool ApplyExpressionMetadata(UMaterialExpression* Expression, const FTextShaderMetadata& Metadata, FString& OutError);
+	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, const FString& ValueText, FDreamShaderError& OutError);
+	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, void* ValuePtr, const FString& ValueText, FDreamShaderError& OutError);
+	bool ApplyExpressionMetadata(UMaterialExpression* Expression, const FTextShaderMetadata& Metadata, FDreamShaderError& OutError);
 
 	class FCodeGraphBuilder
 	{
@@ -497,8 +501,8 @@ namespace UE::DreamShader::Editor::Private
 		bool Build(
 			const TArray<FCodeStatement>& Statements,
 			TMap<FString, FCodeValue>& InOutValues,
-			FString& OutError);
-		bool EvaluateOutputExpression(const FString& ExpressionText, FCodeValue& OutValue, FString& OutError);
+			FDreamShaderError& OutError);
+		bool EvaluateOutputExpression(const FString& ExpressionText, FCodeValue& OutValue, FDreamShaderError& OutError);
 
 		// `Base` is the material's own output surface, written from Graph as `Base.BaseColor = ...`.
 		// It is a sink, not a variable: it holds no value, cannot be read, and only a Shader has one
@@ -546,20 +550,20 @@ namespace UE::DreamShader::Editor::Private
 
 		FCodeValue* FindValue(const FString& Name) const;
 		void RegisterGeneratedVariable(const FCodeStatement& Statement, const FCodeValue& Value);
-		bool TryCreatePropertyValue(const FString& Name, FCodeValue& OutValue, FString& OutError);
+		bool TryCreatePropertyValue(const FString& Name, FCodeValue& OutValue, FDreamShaderError& OutError);
 		int32 ConsumeNodeY();
 		UMaterialExpression* CreateExpression(TSubclassOf<UMaterialExpression> ExpressionClass, int32 PositionX, int32 PositionY) const;
 		UMaterialExpression* CreateScalarLiteralNode(double Value, int32 PositionY);
 		UMaterialExpression* CreateStaticBoolLiteralNode(bool bValue, int32 PositionY);
-		bool CreateMaterialAttributesValue(FCodeValue& OutValue, FString& OutError);
-		bool CreateDefaultValue(const FString& DeclaredType, FCodeValue& OutValue, FString& OutError);
-		bool CoerceValueToType(const FCodeValue& InValue, int32 ExpectedComponentCount, bool bExpectedTexture, FCodeValue& OutValue, FString& OutError);
-		bool CoerceValueToType(const FCodeValue& InValue, int32 ExpectedComponentCount, bool bExpectedTexture, ETextShaderTextureType ExpectedTextureType, FCodeValue& OutValue, FString& OutError);
-		bool CoerceValueToType(const FCodeValue& InValue, int32 ExpectedComponentCount, bool bExpectedTexture, ETextShaderTextureType ExpectedTextureType, bool bExpectedSubstrateMaterial, FCodeValue& OutValue, FString& OutError);
-		bool EvaluateBraceInitializer(const FString& ConstructorType, const FString& InitializerText, FCodeValue& OutValue, FString& OutError);
-		bool ResolveTargetTypeForAssignment(const FCodeStatement& Statement, FString& OutTypeName, FString& OutError) const;
-		bool ResolveMaterialAttributesMemberType(const FString& MemberName, int32& OutComponentCount, FString& OutTypeName, FString& OutError) const;
-		bool AssignMaterialAttributesMember(const FString& TargetName, const FCodeValue& InValue, FString& OutError);
+		bool CreateMaterialAttributesValue(FCodeValue& OutValue, FDreamShaderError& OutError);
+		bool CreateDefaultValue(const FString& DeclaredType, FCodeValue& OutValue, FDreamShaderError& OutError);
+		bool CoerceValueToType(const FCodeValue& InValue, int32 ExpectedComponentCount, bool bExpectedTexture, FCodeValue& OutValue, FDreamShaderError& OutError);
+		bool CoerceValueToType(const FCodeValue& InValue, int32 ExpectedComponentCount, bool bExpectedTexture, ETextShaderTextureType ExpectedTextureType, FCodeValue& OutValue, FDreamShaderError& OutError);
+		bool CoerceValueToType(const FCodeValue& InValue, int32 ExpectedComponentCount, bool bExpectedTexture, ETextShaderTextureType ExpectedTextureType, bool bExpectedSubstrateMaterial, FCodeValue& OutValue, FDreamShaderError& OutError);
+		bool EvaluateBraceInitializer(const FString& ConstructorType, const FString& InitializerText, FCodeValue& OutValue, FDreamShaderError& OutError);
+		bool ResolveTargetTypeForAssignment(const FCodeStatement& Statement, FString& OutTypeName, FDreamShaderError& OutError) const;
+		bool ResolveMaterialAttributesMemberType(const FString& MemberName, int32& OutComponentCount, FString& OutTypeName, FDreamShaderError& OutError) const;
+		bool AssignMaterialAttributesMember(const FString& TargetName, const FCodeValue& InValue, FDreamShaderError& OutError);
 
 		static bool TryFlattenQualifiedName(const TSharedPtr<FCodeExpression>& Expression, FString& OutName);
 		bool TryExtractTextLiteral(const TSharedPtr<FCodeExpression>& Expression, FString& OutText) const;
@@ -571,33 +575,33 @@ namespace UE::DreamShader::Editor::Private
 		static bool IsDefaultArgument(const TSharedPtr<FCodeExpression>& Expression);
 		const FCodeCallArgument* FindNamedArgument(const TArray<FCodeCallArgument>& Arguments, const TCHAR* Name) const;
 		const FCodeCallArgument* FindPositionalArgument(const TArray<FCodeCallArgument>& Arguments, int32 PositionIndex) const;
-		bool ExecuteExpressionStatement(const TSharedPtr<FCodeExpression>& Expression, FString& OutError);
+		bool ExecuteExpressionStatement(const TSharedPtr<FCodeExpression>& Expression, FDreamShaderError& OutError);
 		// Runs ExecuteStatementInternal and records a probe for every name whose value the statement
 		// changed (see RecordProbesForStatement). Nested statements (if bodies) go through here too.
-		bool ExecuteStatement(const FCodeStatement& Statement, FString& OutError);
-		bool ExecuteStatementInternal(const FCodeStatement& Statement, FString& OutError);
+		bool ExecuteStatement(const FCodeStatement& Statement, FDreamShaderError& OutError);
+		bool ExecuteStatementInternal(const FCodeStatement& Statement, FDreamShaderError& OutError);
 		void RecordProbesForStatement(const FCodeStatement& Statement, const TMap<FString, FCodeValue>& ValuesBefore);
 		// Statement (line, column) mapped into the source file -- the same arithmetic
 		// FormatStatementError uses for diagnostics, so a probe and an error on one statement agree.
 		void ResolveStatementSourceLocation(const FCodeStatement& Statement, int32& OutLine, int32& OutColumn) const;
 		FString FormatStatementError(const FCodeStatement& Statement, const FString& Error) const;
-		bool ExecuteIfStatement(const FCodeStatement& Statement, FString& OutError);
+		bool ExecuteIfStatement(const FCodeStatement& Statement, FDreamShaderError& OutError);
 		bool CreateConditionalValue(
 			const FCodeCondition& Condition,
 			const FCodeValue& TrueValue,
 			const FCodeValue& FalseValue,
 			FCodeValue& OutValue,
-			FString& OutError);
-		bool EvaluateExpression(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError);
-		bool EvaluateUnary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError);
-		bool EvaluateBinary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError);
+			FDreamShaderError& OutError);
+		bool EvaluateExpression(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError);
+		bool EvaluateUnary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError);
+		bool EvaluateBinary(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError);
 		bool CreateBinaryOperatorNode(
 			const FString& Operator,
 			const FCodeValue& LeftValue,
 			const FCodeValue& RightValue,
 			FCodeValue& OutValue,
-			FString& OutError);
-		bool EvaluateMathBuiltinCall(const FString& FunctionName, const TArray<FCodeCallArgument>& Arguments, FCodeValue& OutValue, FString& OutError);
+			FDreamShaderError& OutError);
+		bool EvaluateMathBuiltinCall(const FString& FunctionName, const TArray<FCodeCallArgument>& Arguments, FCodeValue& OutValue, FDreamShaderError& OutError);
 		bool TryBuildReusableCallKey(
 			const FString& CallKind,
 			const FString& FunctionName,
@@ -612,12 +616,12 @@ namespace UE::DreamShader::Editor::Private
 		bool BuildReusableExpressionToken(const TSharedPtr<FCodeExpression>& Expression, FString& OutToken) const;
 		bool TryFindReusableExpressionValue(const FString& Key, FCodeValue& OutValue) const;
 		void AddReusableExpressionValue(const FString& Key, const FCodeValue& Value);
-		bool EvaluateMemberAccess(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError);
+		bool EvaluateMemberAccess(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError);
 		bool CreateSingleChannelMask(
 			const FCodeValue& BaseValue,
 			int32 ChannelIndex,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		// Selects ChannelMask (R=0x1, G=0x2, B=0x4, A=0x8) out of BaseValue, choosing a representation the
 		// material graph editor can round-trip: an inline input mask when that is stable, otherwise a
 		// matching masked output, otherwise a real ComponentMask node.
@@ -626,15 +630,15 @@ namespace UE::DreamShader::Editor::Private
 			int32 ChannelMask,
 			int32 ComponentCount,
 			FCodeValue& OutValue,
-			FString& OutError);
-		bool AppendValues(const TArray<FCodeValue>& Parts, FCodeValue& OutValue, FString& OutError);
-		bool AssignMaterialOutputSink(const FString& TargetName, const FCodeValue& InValue, FString& OutError);
+			FDreamShaderError& OutError);
+		bool AppendValues(const TArray<FCodeValue>& Parts, FCodeValue& OutValue, FDreamShaderError& OutError);
+		bool AssignMaterialOutputSink(const FString& TargetName, const FCodeValue& InValue, FDreamShaderError& OutError);
 		bool CreateSwizzleExpression(
 			const FCodeValue& BaseValue,
 			const FString& Swizzle,
 			FCodeValue& OutValue,
-			FString& OutError);
-		bool EvaluateCall(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FString& OutError);
+			FDreamShaderError& OutError);
+		bool EvaluateCall(const TSharedPtr<FCodeExpression>& Expression, FCodeValue& OutValue, FDreamShaderError& OutError);
 		static bool IsVectorConstructorName(const FString& InName);
 		static bool IsIntegerConstructorName(const FString& InName);
 		static int32 GetConstructorComponentCount(const FString& InName);
@@ -642,13 +646,13 @@ namespace UE::DreamShader::Editor::Private
 			const FString& ConstructorName,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		const FTextShaderPropertyDefinition* FindPropertyDefinition(const FString& PropertyName) const;
 		bool EvaluateStaticSwitchParameterCall(
 			const FTextShaderPropertyDefinition& Property,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		// A declared parameter that owns input pins (channel/component mask, texture samples) can be
 		// called with named arguments to wire those pins, e.g. Msk(Input=Col) or TexCube(Coordinates=Dir).
 		// Asset slots (Texture/Curve/Font/...) are set via [Prop=Path(...)] metadata, not here.
@@ -657,7 +661,7 @@ namespace UE::DreamShader::Editor::Private
 			const FTextShaderPropertyDefinition& Property,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		const FTextShaderFunctionDefinition* FindFunctionDefinition(const FString& FunctionName) const;
 		const FTextShaderFunctionDefinition* FindGraphFunctionDefinition(const FString& FunctionName) const;
 		const FTextShaderMaterialFunctionDefinition* FindMaterialFunctionDefinition(const FString& FunctionName) const;
@@ -666,38 +670,38 @@ namespace UE::DreamShader::Editor::Private
 			const FString& FunctionName,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool EvaluateGraphFunctionCall(
 			const FTextShaderFunctionDefinition& Function,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool ExecuteCustomFunctionCall(
 			const FTextShaderFunctionDefinition& Function,
 			const TArray<FCodeCallArgument>& Arguments,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool ExecuteGraphFunctionCall(
 			const FTextShaderFunctionDefinition& Function,
 			const TArray<FCodeCallArgument>& Arguments,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool EvaluateMaterialFunctionCall(
 			const FTextShaderMaterialFunctionDefinition& Function,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool ExecuteMaterialFunctionCall(
 			const FTextShaderMaterialFunctionDefinition& Function,
 			const TArray<FCodeCallArgument>& Arguments,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool EvaluateVirtualFunctionCall(
 			const FTextShaderVirtualFunctionDefinition& Function,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool ExecuteVirtualFunctionCall(
 			const FTextShaderVirtualFunctionDefinition& Function,
 			const TArray<FCodeCallArgument>& Arguments,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool ExecuteMaterialFunctionCallAsset(
 			const FString& CallKind,
 			const FString& FunctionName,
@@ -705,7 +709,7 @@ namespace UE::DreamShader::Editor::Private
 			const TArray<FTextShaderFunctionParameter>& Inputs,
 			const TArray<FTextShaderFunctionParameter>& Outputs,
 			const TArray<FCodeCallArgument>& Arguments,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool CreateAndConnectMaterialFunctionCallAsset(
 			const FString& CallKind,
 			const FString& FunctionName,
@@ -714,7 +718,7 @@ namespace UE::DreamShader::Editor::Private
 			const TArray<FTextShaderFunctionParameter>& Outputs,
 			const TArray<FCodeCallArgument>& InputArguments,
 			UMaterialExpressionMaterialFunctionCall*& OutFunctionCall,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		bool EvaluateMaterialFunctionCallAsset(
 			const FString& CallKind,
 			const FString& FunctionName,
@@ -723,7 +727,7 @@ namespace UE::DreamShader::Editor::Private
 			const TArray<FTextShaderFunctionParameter>& Outputs,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 		static FString BuildFunctionArgumentList(const FTextShaderFunctionDefinition& Function, const TArray<FString>& ResultVariableNames);
 		bool TryResolveVectorTransformBasis(const FString& InText, EMaterialVectorCoordTransformSource& OutSource) const;
 		bool TryResolveVectorTransformTarget(const FString& InText, EMaterialVectorCoordTransform& OutTarget) const;
@@ -732,6 +736,6 @@ namespace UE::DreamShader::Editor::Private
 			const FString& CalleeName,
 			const TArray<FCodeCallArgument>& Arguments,
 			FCodeValue& OutValue,
-			FString& OutError);
+			FDreamShaderError& OutError);
 	};
 }

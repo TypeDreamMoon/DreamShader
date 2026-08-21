@@ -1,4 +1,5 @@
 #include "UI/SDreamShaderGenPage.h"
+#include "DreamShaderDiagnostic.h"
 
 #include "Bridge/DreamShaderEditorBridge.h"
 #include "UI/DreamShaderGeneratedAssetPath.h"
@@ -392,7 +393,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		FString PreparedText;
-		FString LoadError;
+		FDreamShaderError LoadError;
 		if (!UE::DreamShader::Editor::LoadPreparedDreamShaderSource(Item->SourceFilePath, PreparedText, LoadError))
 		{
 			Item->Status = FDreamShaderSourceItem::EStatus::Unresolved;

@@ -105,7 +105,7 @@ namespace UE::DreamShader::Editor::Private
 		const int32 ChannelMask,
 		const int32 ComponentCount,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		OutValue = BaseValue;
 		ClearCodeValueInputMask(OutValue);
@@ -179,7 +179,7 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeValue& BaseValue,
 		const int32 ChannelIndex,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		int32 SourceChannelIndex = ChannelIndex;
 		if (BaseValue.bHasInputMask)
@@ -218,7 +218,7 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeValue& BaseValue,
 		const FString& Swizzle,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (Swizzle.IsEmpty() || Swizzle.Len() > 4)
 		{
@@ -231,7 +231,7 @@ namespace UE::DreamShader::Editor::Private
 		if (BaseValue.Expression
 			&& TryBuildOrderedSwizzleMask(BaseValue, Swizzle, DirectChannelMask, DirectComponentCount))
 		{
-			FString DirectError;
+			FDreamShaderError DirectError;
 			if (ApplyChannelMaskToValue(BaseValue, DirectChannelMask, DirectComponentCount, OutValue, DirectError))
 			{
 				return true;

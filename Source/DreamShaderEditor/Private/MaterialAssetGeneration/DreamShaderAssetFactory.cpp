@@ -28,7 +28,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString& RawSegment,
 			const FString& ErrorContext,
 			FString& InOutPackagePath,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			FString Segment = RawSegment.TrimStartAndEnd();
 			if (Segment.IsEmpty())
@@ -52,7 +52,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString& Root,
 			const FString& PluginName,
 			FString& OutPackagePath,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
 			if (!Plugin.IsValid())
@@ -120,7 +120,7 @@ namespace UE::DreamShader::Editor::Private
 		bool ResolveDreamShaderRootPackagePath(
 			const FString& Root,
 			FString& OutPackagePath,
-			FString& OutError)
+			FDreamShaderError& OutError)
 		{
 			FString Normalized = Root;
 			Normalized.TrimStartAndEndInline();
@@ -264,7 +264,7 @@ namespace UE::DreamShader::Editor::Private
 		// answer left. Silently emitting an unresolvable Root would turn a missing attribute into a
 		// compile error the author never wrote.
 		FString ResolvedPackagePath;
-		FString ResolveError;
+		FDreamShaderError ResolveError;
 		if (!ResolveProjectContentPluginPackageRoot(InferredRoot, SourceRoot->PluginName, ResolvedPackagePath, ResolveError))
 		{
 			if (OutFallbackReason != nullptr)
@@ -297,7 +297,7 @@ namespace UE::DreamShader::Editor::Private
 		FString& OutPackageName,
 		FString& OutObjectPath,
 		FString& OutAssetLeafName,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		FString Normalized = AssetName;
 		Normalized.TrimStartAndEndInline();
@@ -382,7 +382,7 @@ namespace UE::DreamShader::Editor::Private
 		return bMayWriteGeneratedAssetsToDisk;
 	}
 
-	bool ShouldDeferPersistedAssetToWriteOwner(UObject* Asset, const bool bWouldPersist, FString& OutMessage)
+	bool ShouldDeferPersistedAssetToWriteOwner(UObject* Asset, const bool bWouldPersist, FDreamShaderError& OutMessage)
 	{
 		if (!bWouldPersist || MayWriteGeneratedAssetsToDisk())
 		{
@@ -407,7 +407,7 @@ namespace UE::DreamShader::Editor::Private
 		return AssetEditorSubsystem && AssetEditorSubsystem->FindEditorForAsset(Asset, /*bFocusIfOpen*/ false) != nullptr;
 	}
 
-	bool CheckGeneratedAssetNotOpenInEditor(UObject* Asset, FString& OutError)
+	bool CheckGeneratedAssetNotOpenInEditor(UObject* Asset, FDreamShaderError& OutError)
 	{
 		if (!IsGeneratedAssetOpenInEditor(Asset))
 		{
@@ -497,7 +497,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	bool CreateOrReuseMaterial(const FTextShaderDefinition& Definition, UMaterial*& OutMaterial, FString& OutError, const bool bTransient)
+	bool CreateOrReuseMaterial(const FTextShaderDefinition& Definition, UMaterial*& OutMaterial, FDreamShaderError& OutError, const bool bTransient)
 	{
 		FString PackageName;
 		FString ObjectPath;
@@ -568,7 +568,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool CreateOrReuseInstanceMaterial(const FTextShaderDefinition& Definition, UDreamShaderMaterialInstance*& OutInstance, FString& OutError, const bool bTransient)
+	bool CreateOrReuseInstanceMaterial(const FTextShaderDefinition& Definition, UDreamShaderMaterialInstance*& OutInstance, FDreamShaderError& OutError, const bool bTransient)
 	{
 		FString PackageName;
 		FString ObjectPath;
@@ -634,7 +634,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool CreateOrReuseMaterialFunction(const FTextShaderMaterialFunctionDefinition& Definition, UMaterialFunction*& OutFunction, FString& OutError, const bool bTransient)
+	bool CreateOrReuseMaterialFunction(const FTextShaderMaterialFunctionDefinition& Definition, UMaterialFunction*& OutFunction, FDreamShaderError& OutError, const bool bTransient)
 	{
 		FString PackageName;
 		FString ObjectPath;

@@ -75,7 +75,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& CalleeName,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const bool bIsSubstrateBuiltinCall = CalleeName.StartsWith(TEXT("Substrate."), ESearchCase::IgnoreCase);
 		const FString FunctionName = bIsSubstrateBuiltinCall ? CalleeName.Mid(10) : CalleeName.Mid(3);
@@ -390,7 +390,7 @@ namespace UE::DreamShader::Editor::Private
 			const TCHAR* Name = TEXT("");
 			TSubclassOf<UMaterialExpression> ExpressionClass;
 			int32 OutputComponents = 1;
-			TFunction<bool(UMaterialExpression*, FString&)> Configure;
+			TFunction<bool(UMaterialExpression*, FDreamShaderError&)> Configure;
 		};
 
 		auto TryEvaluateRegisteredBuiltin = [&](const FUEBuiltinDescriptor& Builtin) -> bool
@@ -436,7 +436,7 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("TexCoord"),
 			UMaterialExpressionTextureCoordinate::StaticClass(),
 			2,
-			[&](UMaterialExpression* RawExpression, FString&) -> bool
+			[&](UMaterialExpression* RawExpression, FDreamShaderError&) -> bool
 			{
 				auto* Expression = CastChecked<UMaterialExpressionTextureCoordinate>(RawExpression);
 				return HandleIntegerLiteralArgument(TEXT("Index"), Expression->CoordinateIndex)
@@ -451,7 +451,7 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("Time"),
 			UMaterialExpressionTime::StaticClass(),
 			1,
-			[&](UMaterialExpression* RawExpression, FString& Error) -> bool
+			[&](UMaterialExpression* RawExpression, FDreamShaderError& Error) -> bool
 			{
 				auto* Expression = CastChecked<UMaterialExpressionTime>(RawExpression);
 				if (const FCodeCallArgument* Argument = FindNamedArgument(Arguments, TEXT("Period")))
@@ -475,7 +475,7 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("Panner"),
 			UMaterialExpressionPanner::StaticClass(),
 			2,
-			[&](UMaterialExpression* RawExpression, FString&) -> bool
+			[&](UMaterialExpression* RawExpression, FDreamShaderError&) -> bool
 			{
 				auto* Expression = CastChecked<UMaterialExpressionPanner>(RawExpression);
 				return HandleOptionalInputArgument(TEXT("Coordinate"), Expression->Coordinate)
@@ -526,7 +526,7 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("TranslatedWorldPosition"),
 			UMaterialExpressionWorldPosition::StaticClass(),
 			3,
-			[&](UMaterialExpression* RawExpression, FString&) -> bool
+			[&](UMaterialExpression* RawExpression, FDreamShaderError&) -> bool
 			{
 				CastChecked<UMaterialExpressionWorldPosition>(RawExpression)->WorldPositionShaderOffset = WPT_CameraRelative;
 				return true;
@@ -570,7 +570,7 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("TransformVector"),
 			UMaterialExpressionTransform::StaticClass(),
 			3,
-			[&](UMaterialExpression* RawExpression, FString& Error) -> bool
+			[&](UMaterialExpression* RawExpression, FDreamShaderError& Error) -> bool
 			{
 				auto* Expression = CastChecked<UMaterialExpressionTransform>(RawExpression);
 				if (!HandleRequiredInputArgument(TEXT("Input"), 0, Expression->Input))
@@ -609,7 +609,7 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("TransformPosition"),
 			UMaterialExpressionTransformPosition::StaticClass(),
 			3,
-			[&](UMaterialExpression* RawExpression, FString& Error) -> bool
+			[&](UMaterialExpression* RawExpression, FDreamShaderError& Error) -> bool
 			{
 				auto* Expression = CastChecked<UMaterialExpressionTransformPosition>(RawExpression);
 				if (!HandleRequiredInputArgument(TEXT("Input"), 0, Expression->Input))
@@ -1028,7 +1028,7 @@ namespace UE::DreamShader::Editor::Private
 					return false;
 				}
 
-				FString LiteralError;
+				FDreamShaderError LiteralError;
 				if (!SetMaterialExpressionLiteralProperty(Expression, BoundProperty, LiteralText, LiteralError))
 				{
 					OutError = FString::Printf(TEXT("UE.%s property '%s': %s"), *FunctionName, *Argument.Name, *LiteralError); /* I18N-EXEMPT: deferred codegen or compatibility path */

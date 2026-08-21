@@ -10,5 +10,5 @@
 
 namespace UE::DreamShader::Editor
 {
-	bool LoadPreparedDreamShaderSource(const FString& SourceFilePath, FString& OutSourceText, FString& OutError);
+	bool LoadPreparedDreamShaderSource(const FString& SourceFilePath, FString& OutSourceText, FDreamShaderError& OutError);
 }

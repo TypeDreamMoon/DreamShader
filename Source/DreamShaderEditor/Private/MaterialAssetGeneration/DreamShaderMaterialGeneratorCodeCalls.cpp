@@ -83,7 +83,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& FunctionName,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const FTextShaderFunctionDefinition* Function = FindFunctionDefinition(FunctionName);
 		if (!Function)
@@ -262,7 +262,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderFunctionDefinition& Function,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (!Values)
 		{
@@ -337,7 +337,7 @@ namespace UE::DreamShader::Editor::Private
 	bool FCodeGraphBuilder::ExecuteCustomFunctionCall(
 		const FTextShaderFunctionDefinition& Function,
 		const TArray<FCodeCallArgument>& Arguments,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (Function.Results.IsEmpty())
 		{
@@ -633,7 +633,7 @@ namespace UE::DreamShader::Editor::Private
 	bool FCodeGraphBuilder::ExecuteGraphFunctionCall(
 		const FTextShaderFunctionDefinition& Function,
 		const TArray<FCodeCallArgument>& Arguments,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (!Values)
 		{
@@ -787,7 +787,7 @@ namespace UE::DreamShader::Editor::Private
 			};
 
 			TArray<FCodeStatement> Statements;
-			FString ParseError;
+			FDreamShaderError ParseError;
 			if (!ParseCodeStatements(Function.HLSL, Statements, ParseError))
 			{
 				OutError = FString::Printf(TEXT("DreamShader GraphFunction '%s' Graph body is invalid: %s"), *Function.Name, *ParseError); /* I18N-EXEMPT: deferred codegen or compatibility path */

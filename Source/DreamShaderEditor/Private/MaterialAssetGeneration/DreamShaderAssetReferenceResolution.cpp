@@ -112,7 +112,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& Root,
 		const FString& PluginName,
 		FString& OutPackagePath,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
 		if (!Plugin.IsValid())
@@ -171,7 +171,7 @@ namespace UE::DreamShader::Editor::Private
 	static bool ResolveAssetReferenceRootPackagePath(
 		const FString& Root,
 		FString& OutPackagePath,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		FString Normalized = Root;
 		Normalized.TrimStartAndEndInline();
@@ -248,7 +248,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool TryResolveDreamShaderAssetReference(const FString& InText, FString& OutObjectPath, FString& OutError)
+	bool TryResolveDreamShaderAssetReference(const FString& InText, FString& OutObjectPath, FDreamShaderError& OutError)
 	{
 		OutObjectPath.Reset();
 

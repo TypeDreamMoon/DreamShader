@@ -15,7 +15,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderMaterialFunctionDefinition& Function,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		FString PackageName;
 		FString ObjectPath;
@@ -40,7 +40,7 @@ namespace UE::DreamShader::Editor::Private
 		const FTextShaderVirtualFunctionDefinition& Function,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		FString ObjectPath;
 		if (!TryResolveDreamShaderAssetReference(Function.Asset, ObjectPath, OutError))
@@ -63,7 +63,7 @@ namespace UE::DreamShader::Editor::Private
 	bool FCodeGraphBuilder::ExecuteMaterialFunctionCall(
 		const FTextShaderMaterialFunctionDefinition& Function,
 		const TArray<FCodeCallArgument>& Arguments,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		FString PackageName;
 		FString ObjectPath;
@@ -86,7 +86,7 @@ namespace UE::DreamShader::Editor::Private
 	bool FCodeGraphBuilder::ExecuteVirtualFunctionCall(
 		const FTextShaderVirtualFunctionDefinition& Function,
 		const TArray<FCodeCallArgument>& Arguments,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		FString ObjectPath;
 		if (!TryResolveDreamShaderAssetReference(Function.Asset, ObjectPath, OutError))
@@ -113,7 +113,7 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FTextShaderFunctionParameter>& Outputs,
 		const TArray<FCodeCallArgument>& InputArguments,
 		UMaterialExpressionMaterialFunctionCall*& OutFunctionCall,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		OutFunctionCall = nullptr;
 		if (Outputs.IsEmpty())
@@ -296,7 +296,7 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FTextShaderFunctionParameter>& Inputs,
 		const TArray<FTextShaderFunctionParameter>& Outputs,
 		const TArray<FCodeCallArgument>& Arguments,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (!Values)
 		{
@@ -473,7 +473,7 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FTextShaderFunctionParameter>& Outputs,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		auto TryInlineBreakOutFunction = [&]() -> bool
 		{

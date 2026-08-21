@@ -68,7 +68,7 @@
 
 namespace UE::DreamShader::Editor::Private
 {
-	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, void* ValuePtr, const FString& ValueText, FString& OutError)
+	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, void* ValuePtr, const FString& ValueText, FDreamShaderError& OutError)
 	{
 		if (!Target || !Property || !ValuePtr)
 		{
@@ -253,7 +253,7 @@ namespace UE::DreamShader::Editor::Private
 		return false;
 	}
 
-	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, const FString& ValueText, FString& OutError)
+	bool SetMaterialExpressionLiteralProperty(UObject* Target, FProperty* Property, const FString& ValueText, FDreamShaderError& OutError)
 	{
 		if (!Target || !Property)
 		{

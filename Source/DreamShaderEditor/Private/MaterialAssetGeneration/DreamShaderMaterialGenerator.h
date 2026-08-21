@@ -2,6 +2,11 @@
 
 #include "CoreMinimal.h"
 
+// FDreamShaderError: the code-carrying overloads below. The FString ones stay so callers that
+// only want the text -- notifications, tests -- are unchanged; the diagnostics store takes the
+// other pair, so a DSHnnnn code survives the trip out of the generator.
+#include "DreamShaderDiagnostic.h"
+
 namespace UE::DreamShader::Editor
 {
 	class FMaterialGenerator
@@ -23,5 +28,7 @@ namespace UE::DreamShader::Editor
 		}
 		static bool GenerateAssetsFromFile(const FString& SourceFilePath, FString& OutMessage, bool bForce = false, bool bTransient = false);
 		static bool GenerateMaterialFromFile(const FString& SourceFilePath, FString& OutMessage, bool bForce = false, bool bTransient = false);
+		static bool GenerateAssetsFromFile(const FString& SourceFilePath, FDreamShaderError& OutError, bool bForce = false, bool bTransient = false);
+		static bool GenerateMaterialFromFile(const FString& SourceFilePath, FDreamShaderError& OutError, bool bForce = false, bool bTransient = false);
 	};
 }

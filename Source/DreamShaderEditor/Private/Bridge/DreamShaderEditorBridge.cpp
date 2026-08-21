@@ -1,4 +1,5 @@
 #include "DreamShaderEditorBridge.h"
+#include "DreamShaderDiagnostic.h"
 
 #include "Bridge/DreamShaderPreviewWebSocketServer.h"
 #include "DreamShaderCompileService.h"
@@ -2152,7 +2153,7 @@ namespace UE::DreamShader::Editor::Private
 		// .dsf) would lose everything the decompiled text does not reproduce, and the decompiler emits
 		// one block, not a translation unit.
 		FString PreparedSource;
-		FString LoadError;
+		FDreamShaderError LoadError;
 		if (!UE::DreamShader::Editor::LoadPreparedDreamShaderSource(SourceFilePath, PreparedSource, LoadError))
 		{
 			ShowDreamShaderNotification(FText::FromString(LoadError), SNotificationItem::CS_Fail);

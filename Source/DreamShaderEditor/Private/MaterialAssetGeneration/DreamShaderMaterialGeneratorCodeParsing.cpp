@@ -239,7 +239,7 @@ namespace UE::DreamShader::Editor::Private
 		return false;
 	}
 
-	static bool FindIfStatementEnd(const FString& Text, const int32 IfIndex, int32& OutEndIndex, FString& OutError)
+	static bool FindIfStatementEnd(const FString& Text, const int32 IfIndex, int32& OutEndIndex, FDreamShaderError& OutError)
 	{
 		if (!MatchesKeywordAt(Text, IfIndex, TEXT("if")))
 		{
@@ -398,7 +398,7 @@ namespace UE::DreamShader::Editor::Private
 		return Output;
 	}
 
-	static bool SplitStatementsWithLocations(const FString& InCode, TArray<FCodeStatementText>& OutStatements, FString& OutError)
+	static bool SplitStatementsWithLocations(const FString& InCode, TArray<FCodeStatementText>& OutStatements, FDreamShaderError& OutError)
 	{
 		OutStatements.Reset();
 		const FString BlockContent = RemoveCommentsPreservingLayout(InCode);
@@ -689,7 +689,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& TargetName,
 		const FString& InitializerText,
 		FCodeStatement& OutStatement,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		OutStatement = FCodeStatement{};
 		OutStatement.bIsDeclaration = true;
@@ -728,7 +728,7 @@ namespace UE::DreamShader::Editor::Private
 			Tokenize();
 		}
 
-		bool Parse(TSharedPtr<FCodeExpression>& OutExpression, FString& OutError)
+		bool Parse(TSharedPtr<FCodeExpression>& OutExpression, FDreamShaderError& OutError)
 		{
 			OutExpression = ParseAdditive(OutError);
 			if (!OutExpression)
@@ -931,7 +931,7 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		bool Expect(const ECodeTokenType Type, FString& OutError)
+		bool Expect(const ECodeTokenType Type, FDreamShaderError& OutError)
 		{
 			if (Match(Type))
 			{
@@ -942,7 +942,7 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		TSharedPtr<FCodeExpression> ParseAdditive(FString& OutError)
+		TSharedPtr<FCodeExpression> ParseAdditive(FDreamShaderError& OutError)
 		{
 			TSharedPtr<FCodeExpression> Left = ParseMultiplicative(OutError);
 			while (Left && (Peek().Type == ECodeTokenType::Plus || Peek().Type == ECodeTokenType::Minus))
@@ -967,7 +967,7 @@ namespace UE::DreamShader::Editor::Private
 			return Left;
 		}
 
-		TSharedPtr<FCodeExpression> ParseMultiplicative(FString& OutError)
+		TSharedPtr<FCodeExpression> ParseMultiplicative(FDreamShaderError& OutError)
 		{
 			TSharedPtr<FCodeExpression> Left = ParseUnary(OutError);
 			while (Left && (Peek().Type == ECodeTokenType::Star || Peek().Type == ECodeTokenType::Slash))
@@ -992,7 +992,7 @@ namespace UE::DreamShader::Editor::Private
 			return Left;
 		}
 
-		TSharedPtr<FCodeExpression> ParseUnary(FString& OutError)
+		TSharedPtr<FCodeExpression> ParseUnary(FDreamShaderError& OutError)
 		{
 			if (Peek().Type == ECodeTokenType::Plus || Peek().Type == ECodeTokenType::Minus)
 			{
@@ -1014,7 +1014,7 @@ namespace UE::DreamShader::Editor::Private
 			return ParsePostfix(OutError);
 		}
 
-		TSharedPtr<FCodeExpression> ParsePostfix(FString& OutError)
+		TSharedPtr<FCodeExpression> ParsePostfix(FDreamShaderError& OutError)
 		{
 			TSharedPtr<FCodeExpression> Expression = ParsePrimary(OutError);
 			if (!Expression)
@@ -1090,7 +1090,7 @@ namespace UE::DreamShader::Editor::Private
 			return Expression;
 		}
 
-		TSharedPtr<FCodeExpression> ParsePrimary(FString& OutError)
+		TSharedPtr<FCodeExpression> ParsePrimary(FDreamShaderError& OutError)
 		{
 			if (Peek().Type == ECodeTokenType::Identifier)
 			{
@@ -1230,7 +1230,7 @@ namespace UE::DreamShader::Editor::Private
 		return false;
 	}
 
-	static bool ParseCodeCondition(const FString& ConditionText, FCodeCondition& OutCondition, FString& OutError)
+	static bool ParseCodeCondition(const FString& ConditionText, FCodeCondition& OutCondition, FDreamShaderError& OutError)
 	{
 		FString LeftText;
 		FString OperatorText;
@@ -1275,7 +1275,7 @@ namespace UE::DreamShader::Editor::Private
 		int32 BaseLine,
 		int32 BaseColumn,
 		TArray<FCodeStatement>& OutStatements,
-		FString& OutError,
+		FDreamShaderError& OutError,
 		int32* OutErrorLine,
 		int32* OutErrorColumn);
 
@@ -1284,7 +1284,7 @@ namespace UE::DreamShader::Editor::Private
 		int32 StatementLine,
 		int32 StatementColumn,
 		FCodeStatement& OutStatement,
-		FString& OutError,
+		FDreamShaderError& OutError,
 		int32* OutErrorLine,
 		int32* OutErrorColumn)
 	{
@@ -1426,7 +1426,7 @@ namespace UE::DreamShader::Editor::Private
 		const int32 BaseLine,
 		const int32 BaseColumn,
 		TArray<FCodeStatement>& OutStatements,
-		FString& OutError,
+		FDreamShaderError& OutError,
 		int32* OutErrorLine,
 		int32* OutErrorColumn)
 	{
@@ -1644,14 +1644,14 @@ namespace UE::DreamShader::Editor::Private
 	bool ParseCodeStatements(
 		const FString& InCode,
 		TArray<FCodeStatement>& OutStatements,
-		FString& OutError,
+		FDreamShaderError& OutError,
 		int32* OutErrorLine,
 		int32* OutErrorColumn)
 	{
 		return ParseCodeStatementsInternal(InCode, 1, 1, OutStatements, OutError, OutErrorLine, OutErrorColumn);
 	}
 
-	bool ParseCodeExpression(const FString& InExpression, TSharedPtr<FCodeExpression>& OutExpression, FString& OutError)
+	bool ParseCodeExpression(const FString& InExpression, TSharedPtr<FCodeExpression>& OutExpression, FDreamShaderError& OutError)
 	{
 		FCodeExpressionParser Parser(InExpression);
 		return Parser.Parse(OutExpression, OutError);

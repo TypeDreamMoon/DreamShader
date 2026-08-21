@@ -16,7 +16,7 @@ namespace UE::DreamShader::Editor::Private
 		const int32 ExpectedComponentCount,
 		const bool bExpectedTexture,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		return CoerceValueToType(InValue, ExpectedComponentCount, bExpectedTexture, ETextShaderTextureType::Texture2D, OutValue, OutError);
 	}
@@ -27,7 +27,7 @@ namespace UE::DreamShader::Editor::Private
 		const bool bExpectedTexture,
 		const ETextShaderTextureType ExpectedTextureType,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		return CoerceValueToType(InValue, ExpectedComponentCount, bExpectedTexture, ExpectedTextureType, false, OutValue, OutError);
 	}
@@ -39,7 +39,7 @@ namespace UE::DreamShader::Editor::Private
 		const ETextShaderTextureType ExpectedTextureType,
 		const bool bExpectedSubstrateMaterial,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (IsMaterialAttributesComponentType(ExpectedComponentCount, bExpectedTexture, bExpectedSubstrateMaterial))
 		{

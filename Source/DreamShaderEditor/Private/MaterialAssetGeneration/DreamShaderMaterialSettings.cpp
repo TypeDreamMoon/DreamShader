@@ -110,7 +110,7 @@ namespace UE::DreamShader::Editor::Private
 		return Definition.TryGetSetting(KeyA, OutValue) || Definition.TryGetSetting(KeyB, OutValue);
 	}
 
-	static bool ValidateBooleanSetting(const FTextShaderDefinition& Definition, const TCHAR* Key, FString& OutError)
+	static bool ValidateBooleanSetting(const FTextShaderDefinition& Definition, const TCHAR* Key, FDreamShaderError& OutError)
 	{
 		if (FString Value; TryGetSettingValue(Definition, Key, Value))
 		{
@@ -179,7 +179,7 @@ namespace UE::DreamShader::Editor::Private
 		return !OutSegments.IsEmpty();
 	}
 
-	static bool ParseMaterialSettingSegment(const FString& InSegmentText, FParsedMaterialSettingSegment& OutSegment, FString& OutError)
+	static bool ParseMaterialSettingSegment(const FString& InSegmentText, FParsedMaterialSettingSegment& OutSegment, FDreamShaderError& OutError)
 	{
 		OutSegment = {};
 		FString Segment = InSegmentText.TrimStartAndEnd();
@@ -308,7 +308,7 @@ namespace UE::DreamShader::Editor::Private
 		return false;
 	}
 
-	static bool ResolveMaterialSettingTarget(UObject* RootObject, const FString& InKey, FResolvedMaterialSettingTarget& OutTarget, FString& OutError)
+	static bool ResolveMaterialSettingTarget(UObject* RootObject, const FString& InKey, FResolvedMaterialSettingTarget& OutTarget, FDreamShaderError& OutError)
 	{
 		if (!RootObject)
 		{
@@ -390,7 +390,7 @@ namespace UE::DreamShader::Editor::Private
 		return false;
 	}
 
-	static bool ValidateGenericMaterialSetting(const FString& InKey, const FString& InValue, FString& OutError)
+	static bool ValidateGenericMaterialSetting(const FString& InKey, const FString& InValue, FDreamShaderError& OutError)
 	{
 		UMaterial* ProbeMaterial = NewObject<UMaterial>(GetTransientPackage(), NAME_None, RF_Transient);
 		if (!ProbeMaterial)
@@ -405,7 +405,7 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		FString LiteralError;
+		FDreamShaderError LiteralError;
 		void* ValuePtr = Target.Property->ContainerPtrToValuePtr<void>(Target.ContainerPtr, Target.ArrayIndex);
 		if (!SetMaterialExpressionLiteralProperty(Target.OwnerObject, Target.Property, ValuePtr, InValue, LiteralError))
 		{
@@ -416,7 +416,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	static bool ApplyGenericMaterialSetting(UMaterial* Material, const FString& InKey, const FString& InValue, FString& OutError)
+	static bool ApplyGenericMaterialSetting(UMaterial* Material, const FString& InKey, const FString& InValue, FDreamShaderError& OutError)
 	{
 		FResolvedMaterialSettingTarget Target;
 		if (!ResolveMaterialSettingTarget(Material, InKey, Target, OutError))
@@ -424,7 +424,7 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		FString LiteralError;
+		FDreamShaderError LiteralError;
 		void* ValuePtr = Target.Property->ContainerPtrToValuePtr<void>(Target.ContainerPtr, Target.ArrayIndex);
 		if (!SetMaterialExpressionLiteralProperty(Target.OwnerObject, Target.Property, ValuePtr, InValue, LiteralError))
 		{
@@ -440,7 +440,7 @@ namespace UE::DreamShader::Editor::Private
 		return Domain == MD_Volume;
 	}
 
-	bool ValidateSettings(const FTextShaderDefinition& Definition, FString& OutError)
+	bool ValidateSettings(const FTextShaderDefinition& Definition, FDreamShaderError& OutError)
 	{
 		if (FString BlendModeValue; TryGetSettingValue(Definition, TEXT("BlendMode"), TEXT("RenderType"), BlendModeValue))
 		{
@@ -497,7 +497,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool ApplySettings(UMaterial* Material, const FTextShaderDefinition& Definition, FString& OutError)
+	bool ApplySettings(UMaterial* Material, const FTextShaderDefinition& Definition, FDreamShaderError& OutError)
 	{
 		check(Material);
 

@@ -74,7 +74,7 @@ namespace UE::DreamShader::Editor::Private
 	bool ValidateUEBuiltinArgumentNames(
 		const FTextShaderPropertyDefinition& Property,
 		TConstArrayView<const TCHAR*> AllowedArgumentNames,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		for (const TPair<FString, FString>& Argument : Property.UEBuiltinArguments)
 		{
@@ -292,7 +292,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& InValueText,
 		const int32 ExpectedComponentCount,
 		const int32 PositionY,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (ExpectedComponentCount == 1)
 		{
@@ -344,7 +344,7 @@ namespace UE::DreamShader::Editor::Private
 		const int32 ExpectedComponentCount,
 		const int32 PositionY,
 		UMaterialExpression*& OutExpression,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (TryResolvePropertyReference(InValueText, AvailableExpressions, OutExpression))
 		{
