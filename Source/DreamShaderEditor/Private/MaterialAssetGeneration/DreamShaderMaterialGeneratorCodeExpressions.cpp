@@ -254,6 +254,19 @@ namespace UE::DreamShader::Editor::Private
 					return false;
 				}
 
+				// `Base` is the material's outputs, not a variable holding a value, so it is routed to
+				// the sink instead of the SetMaterialAttributes chain every other member target builds.
+				if (IsMaterialOutputSinkTarget(MemberBaseName))
+				{
+					if (!AssignMaterialOutputSink(Statement.TargetName, EvaluatedMemberValue, OutError))
+					{
+						OutError = FString::Printf(TEXT("Failed to assign material output '%s'. %s"), *Statement.TargetName, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
+						return false;
+					}
+
+					return true;
+				}
+
 				if (!AssignMaterialAttributesMember(Statement.TargetName, EvaluatedMemberValue, OutError))
 				{
 					OutError = FString::Printf(TEXT("Failed to assign Graph member '%s'. %s"), *Statement.TargetName, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -262,6 +275,18 @@ namespace UE::DreamShader::Editor::Private
 
 				return true;
 			}
+		}
+
+		// Reserved, and only inside a Shader: `Base.BaseColor = ...` writes the material's output, so a
+		// variable of the same name would make one identifier mean two things in one Graph block --
+		// read a local on the right of '=', write an output on the left. A material function has no
+		// outputs to write and keeps Base available as an ordinary name.
+		if (IsMaterialOutputSinkTarget(Statement.TargetName))
+		{
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+				TEXT("'%s' is reserved for the material's outputs and cannot be used as a Graph variable name. Rename the variable."),
+				*Statement.TargetName);
+			return false;
 		}
 
 		if (Statement.bIsDeclaration && FindValue(Statement.TargetName))
@@ -1103,6 +1128,97 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
+	bool FCodeGraphBuilder::AssignMaterialOutputSink(const FString& TargetName, const FCodeValue& InValue, FString& OutError)
+	{
+		FString BaseName;
+		FString MemberName;
+		if (!TrySplitMemberTarget(TargetName, BaseName, MemberName) || !IsMaterialOutputSinkTarget(BaseName))
+		{
+			OutError = FString::Printf(TEXT("Invalid material output assignment target '%s'."), *TargetName); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			return false;
+		}
+
+		FResolvedMaterialProperty ResolvedProperty;
+		if (!ResolveMaterialProperty(MemberName, ResolvedProperty))
+		{
+			OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+				TEXT("Unsupported material output '%s.%s'."),
+				GetMaterialOutputSinkName(),
+				*MemberName);
+			return false;
+		}
+
+		// A Substrate surface, a whole MaterialAttributes value and a ShadingModel node are not float
+		// vectors, so the widening below would be wrong for them. What each of those inputs actually
+		// accepts is checked where the value meets the material property, which is the one place that
+		// knows -- and which the Outputs block's own bindings already go through.
+		FCodeValue StoredValue = InValue;
+		const bool bIsWholeSurfaceProperty = ResolvedProperty.bIsSubstrateMaterial
+			|| ResolvedProperty.Property == MP_MaterialAttributes
+			|| ResolvedProperty.Property == MP_ShadingModel;
+		if (!bIsWholeSurfaceProperty)
+		{
+			int32 ExpectedComponentCount = 0;
+			if (!TryGetComponentCountForOutputType(ResolvedProperty.OutputType, ExpectedComponentCount) || ExpectedComponentCount <= 0)
+			{
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+					TEXT("Material output '%s' cannot be assigned from Graph code."),
+					*MemberName);
+				return false;
+			}
+
+			// CoerceValueToType narrows as willingly as it widens, and narrowing into a material output
+			// is the shape of bug that does not announce itself: `Base.OpacityMask = SomeColour` would
+			// quietly become that colour's red channel and render. Widening stays -- assigning a scalar
+			// to BaseColor splats, which is what the author meant -- so only the too-wide direction is
+			// refused, and only when the count is known rather than inferred from a placeholder.
+			if (InValue.bHasAuthoritativeComponentCount
+				&& !InValue.bIsTextureObject
+				&& !InValue.bIsMaterialAttributes
+				&& !InValue.bIsSubstrateMaterial
+				&& InValue.ComponentCount > ExpectedComponentCount)
+			{
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+					TEXT("Material output '%s' expects %d component(s), but the value has %d. Select the channels you mean, for example '.r'."),
+					*MemberName,
+					ExpectedComponentCount,
+					InValue.ComponentCount);
+				return false;
+			}
+
+			FCodeValue CoercedValue;
+			if (!CoerceValueToType(InValue, ExpectedComponentCount, false, CoercedValue, OutError))
+			{
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+					TEXT("Material output '%s' expects %d component(s). %s"),
+					*MemberName,
+					ExpectedComponentCount,
+					*OutError);
+				return false;
+			}
+
+			StoredValue = CoercedValue;
+		}
+
+		// Last write wins, exactly like assigning a Graph variable twice. Keyed on the property, so
+		// two spellings of one attribute are one write rather than a silent pair of them.
+		for (FMaterialOutputSinkWrite& ExistingWrite : MaterialOutputSinkWrites)
+		{
+			if (ExistingWrite.Property == ResolvedProperty.Property)
+			{
+				ExistingWrite.MemberName = MemberName;
+				ExistingWrite.Value = StoredValue;
+				return true;
+			}
+		}
+
+		FMaterialOutputSinkWrite& NewWrite = MaterialOutputSinkWrites.AddDefaulted_GetRef();
+		NewWrite.MemberName = MemberName;
+		NewWrite.Property = ResolvedProperty.Property;
+		NewWrite.Value = StoredValue;
+		return true;
+	}
+
 	const FCodeCallArgument* FCodeGraphBuilder::FindNamedArgument(const TArray<FCodeCallArgument>& Arguments, const TCHAR* Name) const
 	{
 		const FString Normalized = UE::DreamShader::NormalizeSettingKey(Name);
@@ -1200,6 +1316,18 @@ namespace UE::DreamShader::Editor::Private
 		{
 		case ECodeExpressionKind::Name:
 		{
+			// Write-only. `Base` names the material's output pins, and an output pin holds nothing to
+			// read back -- the value that reaches one came from somewhere in this Graph, so read that
+			// instead. Catching it here also covers `Base.BaseColor` on the right of '=', because a
+			// member access evaluates its left side through this case.
+			if (IsMaterialOutputSinkTarget(Expression->Text))
+			{
+				OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+					TEXT("'%s' is the material's outputs and can only be written, not read. Read the value you assigned to it instead."),
+					*Expression->Text);
+				return false;
+			}
+
 			if (FCodeValue* ExistingValue = FindValue(Expression->Text))
 			{
 				OutValue = *ExistingValue;

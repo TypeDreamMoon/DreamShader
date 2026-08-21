@@ -2378,6 +2378,122 @@ namespace UE::DreamShader::Editor
 			RegionByVariable = CodeGraphBuilder.GetRegionByVariable();
 			GraphProbes = CodeGraphBuilder.TakeProbes();
 
+			// A material's outputs are written from two places -- the Outputs block's declarative
+			// bindings and the Graph block's `Base.<Attribute> = ...` statements -- and both end up
+			// here as (property, value). Everything past this point treats them the same; the only
+			// thing that cares which is which is the duplicate check, because one property driven from
+			// both places has no defensible winner (the block is order-free, the statement is not).
+			const TArray<Private::FMaterialOutputSinkWrite>& MaterialOutputSinkWrites =
+				CodeGraphBuilder.GetMaterialOutputSinkWrites();
+			for (const Private::FMaterialOutputSinkWrite& SinkWrite : MaterialOutputSinkWrites)
+			{
+				for (const FTextShaderOutputBinding& Binding : Definition.Outputs)
+				{
+					Private::FResolvedMaterialProperty BoundProperty;
+					if (Binding.TargetKind == FTextShaderOutputBinding::ETargetKind::MaterialProperty
+						&& Private::ResolveMaterialProperty(Binding.MaterialProperty, BoundProperty)
+						&& BoundProperty.Property == SinkWrite.Property)
+					{
+						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+							TEXT("%s: Material output '%s' is written from the Graph block and bound in the Outputs block. Keep one of them."),
+							*SourceFilePath,
+							*SinkWrite.MemberName);
+						return false;
+					}
+				}
+			}
+
+			// Shared by both, so a value that would not fit its property is refused the same way
+			// wherever it was written -- and refused here rather than surviving into HLSL translation,
+			// where the same mistake reads as an error about generated code nobody wrote.
+			const auto ConnectMaterialPropertyOutput =
+				[&Material, &SourceFilePath, &OutMessage](
+					const FString& PropertyName,
+					const Private::FResolvedMaterialProperty& ResolvedProperty,
+					const Private::FCodeValue& OutputValue) -> bool
+			{
+				if (ResolvedProperty.bIsSubstrateMaterial)
+				{
+					if (!OutputValue.bIsSubstrateMaterial)
+					{
+						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+							TEXT("%s: Material output '%s' expects a Substrate value."),
+							*SourceFilePath,
+							*PropertyName);
+						return false;
+					}
+				}
+				else if (ResolvedProperty.OutputType == CMOT_MaterialAttributes)
+				{
+					if (!OutputValue.bIsMaterialAttributes)
+					{
+						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+							TEXT("%s: Material output '%s' expects a MaterialAttributes value."),
+							*SourceFilePath,
+							*PropertyName);
+						return false;
+					}
+					Material->bUseMaterialAttributes = true;
+				}
+				else if (OutputValue.bIsSubstrateMaterial)
+				{
+					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+						TEXT("%s: Material output '%s' expects a numeric value, but got Substrate."),
+						*SourceFilePath,
+						*PropertyName);
+					return false;
+				}
+				else if (OutputValue.bIsMaterialAttributes || OutputValue.bIsTextureObject)
+				{
+					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+						TEXT("%s: Material output '%s' expects a numeric value, but got %s."),
+						*SourceFilePath,
+						*PropertyName,
+						OutputValue.bIsTextureObject ? TEXT("a texture object") : TEXT("MaterialAttributes")); /* I18N-EXEMPT */
+					return false;
+				}
+				else
+				{
+					// Checks the value that was actually built, not a type someone declared for it, so
+					// it holds for an Outputs binding and a Graph write alike -- neither has to have
+					// been declared. Only an authoritative count is judged: an inferred one can be a
+					// placeholder that the translator widens correctly on its own.
+					int32 ExpectedComponentCount = 0;
+					if (OutputValue.bHasAuthoritativeComponentCount
+						&& Private::TryGetComponentCountForOutputType(ResolvedProperty.OutputType, ExpectedComponentCount)
+						&& ExpectedComponentCount > 0
+						&& OutputValue.ComponentCount > ExpectedComponentCount)
+					{
+						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+							TEXT("%s: Material output '%s' expects %d component(s), but the value has %d."),
+							*SourceFilePath,
+							*PropertyName,
+							ExpectedComponentCount,
+							OutputValue.ComponentCount);
+						return false;
+					}
+				}
+
+				FExpressionInput* MaterialInput = Material->GetExpressionInputForProperty(ResolvedProperty.Property);
+				if (!MaterialInput)
+				{
+					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+						TEXT("%s: Failed to find material property '%s' while connecting a Graph output."),
+						*SourceFilePath,
+						*PropertyName);
+					return false;
+				}
+
+				const Private::FCodeValue RoutedOutputValue = Private::CreateOutputRerouteValue(
+					Material,
+					nullptr,
+					OutputValue,
+					PropertyName,
+					static_cast<int32>(ResolvedProperty.Property));
+				Private::ConnectCodeValueToInput(*MaterialInput, RoutedOutputValue);
+				return true;
+			};
+
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
 			FText::Format(
@@ -2422,56 +2538,10 @@ namespace UE::DreamShader::Editor
 				{
 					Private::FResolvedMaterialProperty ResolvedProperty;
 					verify(Private::ResolveMaterialProperty(Binding.MaterialProperty, ResolvedProperty));
-					if (ResolvedProperty.bIsSubstrateMaterial)
+					if (!ConnectMaterialPropertyOutput(Binding.MaterialProperty, ResolvedProperty, OutputValue))
 					{
-						if (!OutputValue.bIsSubstrateMaterial)
-						{
-							OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-								TEXT("%s: Material output '%s' expects a Substrate value."),
-								*SourceFilePath,
-								*Binding.MaterialProperty);
-							return false;
-						}
-					}
-					else if (ResolvedProperty.OutputType == CMOT_MaterialAttributes)
-					{
-						if (!OutputValue.bIsMaterialAttributes)
-						{
-							OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-								TEXT("%s: Material output '%s' expects a MaterialAttributes value."),
-								*SourceFilePath,
-								*Binding.MaterialProperty);
-							return false;
-						}
-						Material->bUseMaterialAttributes = true;
-					}
-					else if (OutputValue.bIsSubstrateMaterial)
-					{
-						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("%s: Material output '%s' expects a numeric value, but got Substrate."),
-							*SourceFilePath,
-							*Binding.MaterialProperty);
 						return false;
 					}
-
-					FExpressionInput* MaterialInput = Material->GetExpressionInputForProperty(ResolvedProperty.Property);
-					if (!MaterialInput)
-					{
-						OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("%s: Failed to find material property '%s' while connecting Graph output '%s'."),
-							*SourceFilePath,
-							*Binding.MaterialProperty,
-							*Binding.SourceText);
-						return false;
-					}
-
-					const Private::FCodeValue RoutedOutputValue = Private::CreateOutputRerouteValue(
-						Material,
-						nullptr,
-						OutputValue,
-						Binding.MaterialProperty,
-						static_cast<int32>(ResolvedProperty.Property));
-					Private::ConnectCodeValueToInput(*MaterialInput, RoutedOutputValue);
 				}
 				else
 				{
@@ -2497,6 +2567,35 @@ namespace UE::DreamShader::Editor
 						return false;
 					}
 				}
+			}
+
+			// The Graph block's own writes. Their values were built while the statement ran, so unlike
+			// a binding there is nothing left to evaluate -- only to connect.
+			for (const Private::FMaterialOutputSinkWrite& SinkWrite : MaterialOutputSinkWrites)
+			{
+				Private::FResolvedMaterialProperty ResolvedProperty;
+				verify(Private::ResolveMaterialProperty(SinkWrite.MemberName, ResolvedProperty));
+				if (!SinkWrite.Value.Expression)
+				{
+					OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+						TEXT("%s: Material output '%s' was assigned a value that produced no expression."),
+						*SourceFilePath,
+						*SinkWrite.MemberName);
+					return false;
+				}
+
+				if (!ConnectMaterialPropertyOutput(SinkWrite.MemberName, ResolvedProperty, SinkWrite.Value))
+				{
+					return false;
+				}
+			}
+
+			if (Definition.Outputs.IsEmpty() && MaterialOutputSinkWrites.IsEmpty())
+			{
+				OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+					TEXT("%s: This material drives no outputs. Its Graph block computes values but never assigns one to 'Base.<Attribute>', and there is no Outputs block."),
+					*SourceFilePath);
+				return false;
 			}
 		}
 		else
@@ -3040,9 +3139,15 @@ namespace UE::DreamShader::Editor
 			return false;
 		}
 
-		if (Definition.Outputs.IsEmpty())
+		// The Outputs block stopped being the only way to drive a material property -- a Graph block
+		// writes them as `Base.<Attribute> = ...` -- so it is required only when there is no Graph
+		// block to have written one. A Graph that turns out to write nothing is caught after it runs,
+		// where the answer is known rather than guessed from the source text.
+		if (Definition.Outputs.IsEmpty() && Definition.Code.IsEmpty())
 		{
-			OutMessage = FString::Printf(TEXT("%s: Outputs block is required."), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			OutMessage = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+				TEXT("%s: This material drives no outputs. Add an Outputs block, or write them from Graph as 'Base.BaseColor = ...'."),
+				*SourceFilePath);
 			return false;
 		}
 

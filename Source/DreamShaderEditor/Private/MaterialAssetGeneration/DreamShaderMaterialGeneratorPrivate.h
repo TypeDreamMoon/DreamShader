@@ -154,6 +154,16 @@ namespace UE::DreamShader::Editor::Private
 		bool bIsIntegerType = false;
 	};
 
+	// One `Base.<Attribute> = value` write from a Shader's Graph block. MemberName is kept as the
+	// author spelled it so diagnostics quote their text back; Property is the identity two spellings
+	// of the same attribute collapse to, and what a duplicate against the Outputs block is caught on.
+	struct FMaterialOutputSinkWrite
+	{
+		FString MemberName;
+		EMaterialProperty Property = MP_EmissiveColor;
+		FCodeValue Value;
+	};
+
 	// Stable identity token for an FCodeValue, used to dedupe/reuse generated expression nodes.
 	// Exposed (was a file-local static in CodeExpressions.cpp) so EvaluateMathBuiltinCall could move
 	// to its own TU while other FCodeGraphBuilder members keep calling it.
@@ -489,6 +499,22 @@ namespace UE::DreamShader::Editor::Private
 			TMap<FString, FCodeValue>& InOutValues,
 			FString& OutError);
 		bool EvaluateOutputExpression(const FString& ExpressionText, FCodeValue& OutValue, FString& OutError);
+
+		// `Base` is the material's own output surface, written from Graph as `Base.BaseColor = ...`.
+		// It is a sink, not a variable: it holds no value, cannot be read, and only a Shader has one
+		// -- a material function's Graph writes its declared outputs instead. The writes are kept in
+		// execution order so the last one to a property wins, matching every other Graph assignment;
+		// the Outputs block's bindings stay declarative and are merged with these afterwards.
+		static const TCHAR* GetMaterialOutputSinkName() { return TEXT("Base"); }
+		bool AllowsMaterialOutputSink() const { return Material != nullptr; }
+		bool IsMaterialOutputSinkTarget(const FString& BaseName) const
+		{
+			return AllowsMaterialOutputSink()
+				&& BaseName.Equals(GetMaterialOutputSinkName(), ESearchCase::IgnoreCase);
+		}
+		// The accumulated writes, in first-write order, for the generator to connect.
+		const TArray<FMaterialOutputSinkWrite>& GetMaterialOutputSinkWrites() const { return MaterialOutputSinkWrites; }
+
 		const TMap<FString, UMaterialExpression*>& GetGeneratedExpressionsByVariable() const { return GeneratedExpressionsByVariable; }
 		const TMap<FString, FString>& GetRegionByVariable() const { return RegionByVariable; }
 		// Every (line, name) -> value binding the build produced, in execution order, with lines
@@ -510,6 +536,7 @@ namespace UE::DreamShader::Editor::Private
 		TMap<FString, UMaterialExpression*> GeneratedExpressionsByVariable;
 		TMap<FString, FString> RegionByVariable;
 		TArray<FDreamShaderGraphProbe> Probes;
+		TArray<FMaterialOutputSinkWrite> MaterialOutputSinkWrites;
 		TMap<FString, FCodeValue> ReusableExpressionValues;
 		TSet<FString> CreatingPropertyNames;
 		int32 NextPropertyNodeY = -620;
@@ -601,6 +628,7 @@ namespace UE::DreamShader::Editor::Private
 			FCodeValue& OutValue,
 			FString& OutError);
 		bool AppendValues(const TArray<FCodeValue>& Parts, FCodeValue& OutValue, FString& OutError);
+		bool AssignMaterialOutputSink(const FString& TargetName, const FCodeValue& InValue, FString& OutError);
 		bool CreateSwizzleExpression(
 			const FCodeValue& BaseValue,
 			const FString& Swizzle,

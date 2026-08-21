@@ -52,6 +52,9 @@
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionDynamicParameter.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
+// CreateOutputRerouteValue puts a named reroute between a value and the material property it drives,
+// so GraphWritesMaterialOutputs has to walk through one to see which value actually won.
+#include "Materials/MaterialExpressionNamedReroute.h"
 // The math builtins added after the original nineteen, asserted on by MathBuiltinNodesExtended.
 #include "Materials/MaterialExpressionArccosine.h"
 #include "Materials/MaterialExpressionArcsine.h"
@@ -488,6 +491,212 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	TestTrue(
 		FString::Printf(TEXT("The swizzle is materialized as a ComponentMask node (masked inputs seen: %d)"), MaskedInputCount),
 		bHasComponentMaskNode);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderGraphWritesMaterialOutputsTest,
+	"DreamShader.Compiler.Generate.GraphWritesMaterialOutputs",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A Shader may drive its material properties straight from Graph, with no Outputs block at all. The
+// two things worth pinning are that the block really is optional, and that a repeated write behaves
+// like every other Graph assignment -- the last one wins -- because that is what separates a Graph
+// statement from an Outputs binding, which is order-free.
+bool FDreamShaderGraphWritesMaterialOutputsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoOutputSink"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	const FString Source = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Properties = {
+        VectorParameter Tint;
+    }
+
+    Settings = {
+        Domain = "UI";
+        ShadingModel = "Unlit";
+    }
+
+    Graph = {
+        Base.EmissiveColor = vec3(1.0, 0.0, 0.0);
+        Base.EmissiveColor = Tint.rgb;
+    }
+}
+)"), *AssetName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+			FString::Printf(TEXT("A material with no Outputs block generates: %s"), *Message),
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	UObject* GeneratedObject = LoadObject<UObject>(nullptr, *ObjectPath);
+	UMaterial* Material = Cast<UMaterial>(GeneratedObject);
+	if (!TestNotNull(
+			FString::Printf(
+				TEXT("The generated asset is a UMaterial (actual: %s)"),
+				GeneratedObject ? *GeneratedObject->GetClass()->GetName() : TEXT("<null>")),
+			Material))
+	{
+		return false;
+	}
+
+	FExpressionInput* EmissiveInput = Material->GetExpressionInputForProperty(MP_EmissiveColor);
+	if (!TestNotNull(TEXT("EmissiveColor has an input"), EmissiveInput)
+		|| !TestNotNull(TEXT("Graph drove EmissiveColor without an Outputs block"), EmissiveInput->Expression))
+	{
+		return false;
+	}
+
+	// Walking the reroute the generator inserts between a value and a material property: the test is
+	// about which value won, not about how it is routed there.
+	UMaterialExpression* DrivingExpression = EmissiveInput->Expression;
+	for (int32 HopIndex = 0; HopIndex < 8 && DrivingExpression; ++HopIndex)
+	{
+		UMaterialExpressionNamedRerouteUsage* Usage = Cast<UMaterialExpressionNamedRerouteUsage>(DrivingExpression);
+		if (!Usage || !Usage->Declaration)
+		{
+			break;
+		}
+		DrivingExpression = Usage->Declaration->Input.Expression;
+	}
+
+	TestTrue(
+		FString::Printf(
+			TEXT("The second write to Base.EmissiveColor is the one connected (found: %s)"),
+			DrivingExpression ? *DrivingExpression->GetClass()->GetName() : TEXT("<null>")),
+		DrivingExpression && DrivingExpression->IsA<UMaterialExpressionVectorParameter>());
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderGraphMaterialOutputSinkRejectionsTest,
+	"DreamShader.Compiler.Generate.GraphMaterialOutputSinkRejections",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The four ways `Base` can be used wrongly, each of which has to fail with its own message rather
+// than as a confusing symptom further down: driving one property from both places, shadowing the
+// name, reading it, and assigning a value too wide for the property.
+bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+
+	struct FRejectionCase
+	{
+		const TCHAR* Label;
+		const TCHAR* NameSuffix;
+		const TCHAR* Body;
+		const TCHAR* ExpectedFragment;
+	};
+
+	const FRejectionCase Cases[] =
+	{
+		{
+			TEXT("a property driven from both the Outputs block and Graph"),
+			TEXT("Conflict"),
+			TEXT(R"(
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = vec3(1.0, 0.0, 0.0);
+        Base.EmissiveColor = vec3(0.0, 1.0, 0.0);
+    }
+)"),
+			TEXT("is written from the Graph block and bound in the Outputs block"),
+		},
+		{
+			TEXT("a Graph variable named Base"),
+			TEXT("Shadow"),
+			TEXT(R"(
+    Graph = {
+        float3 Base = vec3(1.0, 0.0, 0.0);
+        Base.EmissiveColor = Base;
+    }
+)"),
+			TEXT("is reserved for the material's outputs"),
+		},
+		{
+			TEXT("reading a material output back"),
+			TEXT("Read"),
+			TEXT(R"(
+    Graph = {
+        Base.EmissiveColor = vec3(1.0, 0.0, 0.0);
+        float3 Echo = Base.EmissiveColor;
+        Base.OpacityMask = Echo.r;
+    }
+)"),
+			TEXT("can only be written, not read"),
+		},
+		{
+			TEXT("a value wider than the property it is assigned to"),
+			TEXT("TooWide"),
+			TEXT(R"(
+    Graph = {
+        Base.EmissiveColor = vec3(1.0, 0.0, 0.0);
+        Base.OpacityMask = vec3(1.0, 0.0, 0.0);
+    }
+)"),
+			TEXT("expects 1 component(s)"),
+		},
+	};
+
+	for (const FRejectionCase& Case : Cases)
+	{
+		const FString CaseAssetPrefix = FString(TEXT("M_AutoSinkBad")) + Case.NameSuffix;
+		const FString AssetName = MakeUniqueTestAssetName(*CaseAssetPrefix);
+		const FString Source = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Settings = {
+        Domain = "UI";
+        ShadingModel = "Unlit";
+    }
+%s}
+)"), *AssetName, Case.Body);
+
+		FString SourceFilePath;
+		if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+		{
+			return false;
+		}
+		Artifacts.AddSourceFile(SourceFilePath);
+
+		FString Message;
+		TestFalse(
+			FString::Printf(TEXT("Generation refuses %s."), Case.Label),
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true));
+		TestTrue(
+			FString::Printf(TEXT("The failure for %s names the cause. Got: %s"), Case.Label, *Message),
+			Message.Contains(Case.ExpectedFragment));
+	}
+
 	return true;
 }
 
