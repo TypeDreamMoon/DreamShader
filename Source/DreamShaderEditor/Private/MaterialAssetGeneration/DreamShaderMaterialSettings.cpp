@@ -520,6 +520,15 @@ namespace UE::DreamShader::Editor::Private
 			EMaterialDomain Domain = MD_Surface;
 			verify(TryResolveMaterialDomain(MaterialDomainValue, Domain));
 			Material->MaterialDomain = Domain;
+
+			// A Volume-domain material is a volumetric material; it must be flagged so the
+			// volumetric cloud renderer accepts it. Set it automatically so authors never
+			// need to write bUsedWithVolumetricCloud by hand (and decompiled sources that
+			// predate the decompiler whitelist entry regenerate correctly).
+			if (Domain == MD_Volume)
+			{
+				Material->bUsedWithVolumetricCloud = true;
+			}
 		}
 
 		for (const TPair<FString, FString>& Setting : Definition.Settings)

@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-342
+352
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -264,6 +264,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | AssetPathReadFailed | Failed to read DreamShader source '{0}'. |
 | DreamShaderMaterialBrowser | BadName | Provide a name and a destination folder. |
 | DreamShaderMaterialBrowser | Base | Base |
+| DreamShaderMaterialBrowser | BaseNone | - |
 | DreamShaderMaterialBrowser | Blend | Blend mode |
 | DreamShaderMaterialBrowser | Browse | Browse... |
 | DreamShaderMaterialBrowser | BrowseTip | Pick the destination folder. |
@@ -275,6 +276,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | CompileAll | Compile all |
 | DreamShaderMaterialBrowser | CompileAllTip | Force-recompile every .dsm/.dsf source (in memory). |
 | DreamShaderMaterialBrowser | CompiledAll | Compiled {0} source(s), {1} failed |
+| DreamShaderMaterialBrowser | CompileFail | Failed to compile {0} |
 | DreamShaderMaterialBrowser | CompileOk | Compiled {0} |
 | DreamShaderMaterialBrowser | CompilingAll | Compiling all DreamShader sources... |
 | DreamShaderMaterialBrowser | Create | Create |
@@ -296,6 +298,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | GenPageNoGeneratedAsset | No generated asset at {0} |
 | DreamShaderMaterialBrowser | HideFunctions | Hide functions |
 | DreamShaderMaterialBrowser | Inheritance | Inheritance |
+| DreamShaderMaterialBrowser | InMemory | memory-only (not saved) |
 | DreamShaderMaterialBrowser | InstanceCreated | Created {0} |
 | DreamShaderMaterialBrowser | InstanceNeedsCompile | Compile {0} first. |
 | DreamShaderMaterialBrowser | MaterializeBtn | Materialize |
@@ -308,6 +311,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | NoneSelected | Select a material, then create an instance. |
 | DreamShaderMaterialBrowser | NoParent | No parent material was provided. |
 | DreamShaderMaterialBrowser | NoSelection | Select a material to see its inheritance and settings. |
+| DreamShaderMaterialBrowser | OnDisk | on disk |
 | DreamShaderMaterialBrowser | OpenAfter | Open the instance after creating |
 | DreamShaderMaterialBrowser | OpenBtn | Open |
 | DreamShaderMaterialBrowser | OpenTabLabel | Material Content Browser |
@@ -316,12 +320,18 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | ParentLabel | Parent |
 | DreamShaderMaterialBrowser | PathLabel | Folder |
 | DreamShaderMaterialBrowser | PComp | Compile |
+| DreamShaderMaterialBrowser | PCompTip | Force-recompile this source (in memory). |
 | DreamShaderMaterialBrowser | PickFolderTitle | Choose a destination folder |
 | DreamShaderMaterialBrowser | PInst | Create instance |
+| DreamShaderMaterialBrowser | PInstTip | Create a material instance of this material. |
 | DreamShaderMaterialBrowser | PMat | Materialize |
+| DreamShaderMaterialBrowser | PMatTip | Write this memory-only material (and its base) to disk. |
 | DreamShaderMaterialBrowser | POpenMat | Open material |
+| DreamShaderMaterialBrowser | POpenMatTip | Open the generated material asset. |
 | DreamShaderMaterialBrowser | POpenSrc | Open source |
+| DreamShaderMaterialBrowser | POpenSrcTip | Open the .dsm/.dsf in your preferred editor. |
 | DreamShaderMaterialBrowser | PreviewFunction | function library |
+| DreamShaderMaterialBrowser | PreviewNoMaterial | not compiled yet |
 | DreamShaderMaterialBrowser | PreviewNone | Select a source file to preview its material. |
 | DreamShaderMaterialBrowser | PreviewUsedBy | used by {0} material(s) |
 | DreamShaderMaterialBrowser | ProjectPage | Project |
