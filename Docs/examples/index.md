@@ -8,7 +8,7 @@ version.
 
 | | |
 | :-- | :-- |
-| Applies to | DreamShaderLang `1.6.0` |
+| Applies to | DreamShaderLang `1.8.0` |
 | Engines | UE `5.3` – `5.8`; anything version-gated is marked inline |
 | Assumed source root | `<Project>/DShader` — the `SourceDirectory` [project setting](../settings/project.md) |
 | Generated output | in memory by default; see [In-memory materials](../generation/in-memory.md) |

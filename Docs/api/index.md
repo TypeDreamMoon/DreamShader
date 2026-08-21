@@ -12,7 +12,7 @@ can implement.
 | Export macros | `DREAMSHADER_API`, `DREAMSHADERCOMPILER_API` |
 | Reflected types in public headers | 2 `UCLASS`, 1 `UENUM` |
 | Delegates | none — the plugin declares no `DECLARE_DELEGATE*`, `DECLARE_EVENT*` or `DECLARE_DYNAMIC*` |
-| Plugin version | `1.6.0` (`"Version": 160`) |
+| Plugin version | `1.8.0` (`"Version": 180`) |
 
 ## Modules
 

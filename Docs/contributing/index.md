@@ -9,7 +9,7 @@ lives.
 | :-- | :-- |
 | Repository | <https://github.com/TypeDreamMoon/DreamShader> |
 | Kind | contributor reference |
-| Plugin version | `1.6.0` — descriptor `Version` `160`, `IsBetaVersion` `false` |
+| Plugin version | `1.8.0` — descriptor `Version` `180`, `IsBetaVersion` `false` |
 | Engines | Unreal Engine `5.3` – `5.8`, Win64 verified |
 | License | MIT |
 

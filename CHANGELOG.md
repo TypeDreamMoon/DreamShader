@@ -1,6 +1,6 @@
 # DreamShader ChangeLog
 
-## Unreleased
+## 1.8.0 - 2026-08-21
 
 ### Fixed
 
@@ -18,10 +18,10 @@
   the portable one flips at exactly that version, in both directions at once — before 5.8
   `SetUsageByFlag` is *private* on `UMaterial` and the fields are plain public `UPROPERTY`s — so the
   write is gated on `DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)` and each branch is the only one that
-  compiles warning-free on its own engines. Second, the assignment moved out of the `Domain` branch and reads the domain
-  back off the material, because `ResetMaterialToDefaults` does not clear usage flags: a material
-  regenerated from `Volume` to some other domain used to keep a stale flag, and a source that omits
-  `Domain` keeps the domain it already has. Reported in
+  compiles warning-free on its own engines. Second, the assignment moved out of the `Domain`
+  branch and reads the domain back off the material, because `ResetMaterialToDefaults` does not
+  clear usage flags: a material regenerated from `Volume` to some other domain used to keep a stale
+  flag, and a source that omits `Domain` keeps the domain it already has. Reported in
   [#27](https://github.com/TypeDreamMoon/DreamShader/pull/27).
 
 - **Decompile no longer drops `bUsedWithVolumetricCloud = "false"` from a Volume-domain material.**
