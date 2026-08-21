@@ -224,7 +224,7 @@ jobs:
           $Notes.Add("")
           $Notes.Add("### :link: Links")
           $Notes.Add("")
-          $Notes.Add("- Documentation: https://lang.64hz.cn/")
+          $Notes.Add("- Documentation: https://shader.toolchain.64hz.cn/")
           $Notes.Add("- Full changelog: [CHANGELOG.md](https://github.com/TypeDreamMoon/DreamShader/blob/$Tag/CHANGELOG.md)")
           $Notes.Add("- VSCode extension: https://github.com/TypeDreamMoon/dreamshader-language-support")
 

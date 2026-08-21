@@ -136,7 +136,7 @@ Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某�
 
 ## 文档
 
-完整参考在 [`Docs/`](Docs/index.md)，并发布在 **<https://lang.64hz.cn/docs>**（中英双语）。
+完整参考在 [`Docs/`](Docs/index.md)，并发布在 **<https://shader.toolchain.64hz.cn/docs>**（中英双语）。
 
 | | |
 | :-- | :-- |
@@ -243,7 +243,7 @@ Windows 上 UE `5.3` 和 `5.4` 可能需要 MSVC `14.38` 工具链——更新�
 | 模块 | `DreamShader`、`DreamShaderCompiler`（Runtime），`DreamShaderEditor`（Editor） |
 | 作者 | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |
-| 文档 | <https://lang.64hz.cn/> |
+| 文档 | <https://shader.toolchain.64hz.cn/> |
 | 主页 | <https://dev.64hz.cn> |
 | 许可证 | [MIT](LICENSE) |
 | 版权 | Copyright (c) 2026 TypeDreamMoon. All rights reserved. |

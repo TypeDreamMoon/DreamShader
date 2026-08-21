@@ -163,4 +163,4 @@ comparison accounts for it, so editing a published copy shows up as drift.
 - [`Docs/index.md`](../Docs/index.md) — the plugin's own reference manual
 - [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md) — the full flag surface behind the driver
 - [`Docs/diagnostics/index.md`](../Docs/diagnostics/index.md) — every message, by stage
-- <https://lang.64hz.cn/docs> — the same reference, published, zh + en
+- <https://shader.toolchain.64hz.cn/docs> — the same reference, published, zh + en

@@ -146,7 +146,7 @@ signatures and output bindings.
 ## Documentation
 
 The full reference lives in [`Docs/`](Docs/index.md), and is published at
-**<https://lang.64hz.cn/docs>** in Chinese and English.
+**<https://shader.toolchain.64hz.cn/docs>** in Chinese and English.
 
 | | |
 | :-- | :-- |
@@ -258,7 +258,7 @@ while compiling older engine headers, before plugin code is reached.
 | Modules | `DreamShader`, `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |
-| Docs | <https://lang.64hz.cn/> |
+| Docs | <https://shader.toolchain.64hz.cn/> |
 | Web | <https://dev.64hz.cn> |
 | License | [MIT](LICENSE) |
 | Copyright | Copyright (c) 2026 TypeDreamMoon. All rights reserved. |

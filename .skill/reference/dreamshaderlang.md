@@ -4,7 +4,7 @@ Condensed from `Plugins/DreamShader/Docs/`. Every claim here is either quoted fr
 was observed in a real commandlet run. When this page and `Docs/` disagree, `Docs/` wins — it is
 generated against the source, this is a working summary.
 
-Full reference: [`Docs/index.md`](../../Docs/index.md) · online at <https://lang.64hz.cn/docs>
+Full reference: [`Docs/index.md`](../../Docs/index.md) · online at <https://shader.toolchain.64hz.cn/docs>
 
 ---
 

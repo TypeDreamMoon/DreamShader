@@ -127,7 +127,7 @@ The body is assembled in this order.
 | Compatibility line | The literal string `Compatible with Unreal Engine 5.3 - 5.8 (Win64).` |
 | What's changed | The `## <VersionName>` section of `CHANGELOG.md`, verbatim |
 | Assets | A two-row table: the plugin zip, and `*.vsix` for the VSCode extension |
-| Links | Documentation `https://lang.64hz.cn/`, the changelog at the release tag, and the VSCode extension repository |
+| Links | Documentation `https://shader.toolchain.64hz.cn/`, the changelog at the release tag, and the VSCode extension repository |
 
 Changelog extraction details:
 
@@ -186,7 +186,7 @@ well.
 - The VSCode extension is released from its own repository. The workflow always pulls that
   repository's **latest** release, so a plugin release published while the extension is mid-release
   will carry the previous `.vsix`.
-- `DocsURL` in the descriptor points at <https://lang.64hz.cn/>, which is built from `Docs/`. The
+- `DocsURL` in the descriptor points at <https://shader.toolchain.64hz.cn/>, which is built from `Docs/`. The
   `Docs/` tree is shipped in the archive, so the manual is also available offline next to the plugin.
 
 ## Example
