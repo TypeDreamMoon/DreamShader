@@ -276,7 +276,7 @@ until it is regenerated.
   `_` and `-`), and `NormalizeSourceFilePath` (absolute path with `/` separators). `SanitizeIdentifier`
   is an identifier sanitizer, not a key normalizer.
 - The generated documentation site is built from `Docs/`; `DocsURL` in the descriptor points at
-  <https://lang.64hz.cn/>.
+  <https://shader.toolchain.64hz.cn/>.
 
 ## Example
 

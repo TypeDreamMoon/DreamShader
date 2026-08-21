@@ -178,7 +178,7 @@ The statement and expression language inside `Graph = { ... }`, which materialis
 | :-- | :-- |
 | Repository | <https://github.com/TypeDreamMoon/DreamShader> |
 | Issues | <https://github.com/TypeDreamMoon/DreamShader/issues> |
-| Documentation site | <https://lang.64hz.cn/> |
+| Documentation site | <https://shader.toolchain.64hz.cn/> |
 | VSCode extension | <https://github.com/TypeDreamMoon/dreamshader-language-support> |
 | Rider plugin | <https://github.com/tsdaer/dreamshader-language-support> |
 | Changelog | [../CHANGELOG.md](../CHANGELOG.md) |
