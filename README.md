@@ -169,7 +169,7 @@ The full reference lives in [`Docs/`](Docs/index.md), and is published at
 
 | | |
 | :-- | :-- |
-| **[Material Content Browser](Docs/tools/material-browser.md)** | *Tools ▸ DreamShader*. The **Project** page browses every material under `/Game` with its full inheritance chain and one-click instance creation; the **Dream Shader Gen** page lists your sources with a live preview, compile-all and error surfacing |
+| **[Material Content Browser](Docs/tools/material-browser.md)** | *Tools ▸ DreamShader*. Your sources and the project's materials in one tab: per-file compile status, every diagnostic with a jump to the line, hand-edit detection with Revert / Adopt / Detach, imports and dependents, the inheritance chain, a live orbiting preview, instance creation, and templates for new files. Follows the watcher, so it is never stale |
 | **[Decompiler](Docs/tools/decompiler.md)** | right-click a `Material` or `Material Function` ▸ *DreamShader ▸ Export DSM/DSF*. A migration starting point — common nodes become graph text, the rest falls back to `UE.Expression(…)` so the structure stays regeneratable |
 | **[Packages](Docs/tools/packages.md)** | reusable `.dsh` libraries under `DShader/Packages/@scope/name/`, imported as `import "@typedreammoon/dream-noise/Library/Noise.dsh";` |
 | **[Workspace](Docs/tools/workspace.md)** | the generated `DShader/DreamShader.code-workspace`, opened in VSCode from the editor toolbar |

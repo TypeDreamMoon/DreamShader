@@ -20,7 +20,7 @@ module is editor-only, and the runtime `DreamShader` module carries no UI.
 | Page | Covers |
 | :-- | :-- |
 | [Editor integration](editor-integration.md) | every menu entry, toolbar button, context-menu action and tab spawner, with labels, tooltips, icons and effects |
-| [Material Content Browser](material-browser.md) | the docked browser tab: the Project page, the Dream Shader Gen page, the instance factory and *Materialize* |
+| [Material Content Browser](material-browser.md) | the docked browser tab: sources and assets side by side with status, diagnostics, provenance, dependencies and inheritance; live preview; the instance factory and *Materialize* |
 | [Preview](preview.md) | the thumbnail renderer, the streaming WebSocket preview, the mesh set and the limits |
 | [Decompiler](decompiler.md) | exporting an existing `UMaterial` / `UMaterialFunction` back to `.dsm` / `.dsf` |
 | [VirtualFunction tools](virtual-function-tools.md) | the conditional VirtualFunction context menu and the startup sync service |

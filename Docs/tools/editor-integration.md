@@ -70,6 +70,7 @@ All entries are added into the stock `GetAssetActions` section of the per-class 
 | `UMaterialFunctionMaterialLayerBlend` | `DreamShader.MaterialLayerBlendAssetActions` | the same Material Function submenu |
 | `UMaterialInstanceConstant` | `DreamShader.InstanceCreateActions` | flat entry **Create DreamShader instance** |
 | `UDreamShaderMaterialInstance` | `DreamShader.InstanceCreateActions` | flat entry **Create DreamShader instance** |
+| `UMaterial` · `UMaterialInstanceConstant` · `UDreamShaderMaterialInstance` | `DreamShader.ShowInBrowserActions` | flat entry **Show in Material Content Browser** |
 
 Menu names in Unreal are keyed on the exact class, so the instance entry is registered twice — once
 for the stock class and once for the DreamShader subclass.
@@ -77,6 +78,7 @@ for the stock class and once for the DreamShader subclass.
 | Entry | Label | Tooltip | Icon | Effect |
 | :-- | :-- | :-- | :-- | :-- |
 | `DreamShader.CreateInstance` | **Create DreamShader instance** *(since 1.5.0)* | "Create a material instance that shares this material's compiled shader map." | `ClassIcon.MaterialInstanceConstant` | Opens the [Create material instance](material-browser.md#create-material-instance) dialog. Requires the selection to cast to `UMaterialInterface` |
+| `DreamShader.ShowInMaterialBrowser` | **Show in Material Content Browser** | "Open the DreamShader Material Content Browser on this asset: its source, compile status, provenance and inheritance." | `ClassIcon.Material` | Opens (or fronts) the [Material Content Browser](material-browser.md) in Assets mode, scoped to the asset's mount point, with the asset selected |
 
 ### Material submenu
 
