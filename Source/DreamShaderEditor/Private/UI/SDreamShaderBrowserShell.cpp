@@ -24,6 +24,8 @@
 #include "HAL/PlatformApplicationMisc.h"
 #include "IContentBrowserSingleton.h"
 #include "ISettingsModule.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialFunction.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/PackageName.h"
 #include "Modules/ModuleManager.h"
@@ -515,6 +517,12 @@ namespace UE::DreamShader::Editor::Private
 			Menu.AddMenuEntry(Commands.DetachFromDreamShader);
 			Menu.EndSection();
 		}
+		else if (HasSelectionForeignMaterial())
+		{
+			Menu.BeginSection(TEXT("Decompile"), LOCTEXT("MenuSectionDecompile", "Decompiler"));
+			Menu.AddMenuEntry(Commands.ExportSource);
+			Menu.EndSection();
+		}
 
 		Menu.BeginSection(TEXT("Copy"), LOCTEXT("MenuSectionCopy", "Copy"));
 		Menu.AddMenuEntry(Commands.CopySourcePath);
@@ -789,6 +797,13 @@ namespace UE::DreamShader::Editor::Private
 		CommandList->MapAction(Commands.DetachFromDreamShader,
 			FExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::ExecuteDetach),
 			FCanExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::HasSelectionGenerated));
+		CommandList->MapAction(Commands.ExportSource,
+			FExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::ExecuteExportSource),
+			FCanExecuteAction::CreateLambda([this]()
+			{
+				UObject* Asset = FirstSelectedAssetObject();
+				return HasSelectionForeignMaterial() && GetDreamShaderEditorBridge() && (Cast<UMaterial>(Asset) || Cast<UMaterialFunction>(Asset));
+			}));
 		CommandList->MapAction(Commands.FocusSearch,
 			FExecuteAction::CreateLambda([this]()
 			{
@@ -927,6 +942,24 @@ namespace UE::DreamShader::Editor::Private
 		{
 			DetachGeneratedAssetFromDreamShader(Asset);
 			Model->RefreshStatuses();
+		}
+	}
+
+	void SDreamShaderBrowserShell::ExecuteExportSource()
+	{
+		FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge();
+		UObject* Asset = FirstSelectedAssetObject();
+		if (!Bridge || !Asset)
+		{
+			return;
+		}
+		if (UMaterial* Material = Cast<UMaterial>(Asset))
+		{
+			Bridge->ExportMaterialToDreamShaderFile(Material);
+		}
+		else if (UMaterialFunction* Function = Cast<UMaterialFunction>(Asset))
+		{
+			Bridge->ExportMaterialFunctionToDreamShaderFile(Function);
 		}
 	}
 

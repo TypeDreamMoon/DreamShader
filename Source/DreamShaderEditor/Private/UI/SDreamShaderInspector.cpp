@@ -2,12 +2,19 @@
 
 #include "UI/SDreamShaderInspector.h"
 
+#include "Bridge/DreamShaderEditorBridge.h"
+#include "Provenance/DreamShaderProvenanceActions.h"
 #include "UI/DreamShaderBrowserActions.h"
 #include "UI/DreamShaderBrowserStyle.h"
 #include "UI/Model/DreamShaderBrowserModel.h"
+#include "Workspace/DreamShaderWorkspaceService.h"
 
+#include "AssetRegistry/IAssetRegistry.h"
 #include "AssetThumbnail.h"
 #include "DreamShaderMaterialInstance.h"
+#include "Materials/MaterialFunction.h"
+#include "Misc/PackageName.h"
+#include "Misc/Paths.h"
 #include "MaterialDomain.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstance.h"
@@ -149,7 +156,8 @@ namespace UE::DreamShader::Editor::Private
 		Body->AddSlot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 12.0f)[ BuildActions(Material) ];
 		Body->AddSlot().AutoHeight()[ BuildInfoRows(Material) ];
 		Body->AddSlot().AutoHeight()[ BuildDiagnostics() ];
-		Body->AddSlot().AutoHeight()[ BuildDependents() ];
+		Body->AddSlot().AutoHeight()[ BuildProvenance() ];
+		Body->AddSlot().AutoHeight()[ BuildDependencies() ];
 		if (Material)
 		{
 			Body->AddSlot().AutoHeight()[ BuildInheritance(Material) ];
@@ -217,6 +225,17 @@ namespace UE::DreamShader::Editor::Private
 				.Text(GetBrowserStorageLabel(Entry->Asset->Storage))
 				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 			];
+			if (Entry->Asset->bOpenInEditor)
+			{
+				Title->AddSlot().AutoHeight().Padding(0.0f, 2.0f, 0.0f, 0.0f)
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("OpenInEditorBadge", "open in an asset editor — a rebuild will refuse until it is closed"))
+					.ColorAndOpacity(FSlateColor(FLinearColor(0.90f, 0.62f, 0.12f)))
+					.TextStyle(FAppStyle::Get(), "SmallText")
+					.AutoWrapText(true)
+				];
+			}
 		}
 
 		return SNew(SHorizontalBox)
@@ -359,32 +378,225 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return SNullWidget::NullWidget;
 		}
+		const FBrowserSourceInfo& Source = *Entry->Source;
+		const TSharedPtr<FBrowserEntry> EntryRef = Entry;
 
 		TSharedRef<SVerticalBox> Box = SNew(SVerticalBox);
-		Box->AddSlot().AutoHeight().Padding(0.0f, 10.0f, 0.0f, 2.0f)
+		Box->AddSlot().AutoHeight().Padding(0.0f, 14.0f, 0.0f, 4.0f)
 		[
-			SNew(STextBlock)
-			.Text(Entry->Source->StatusDetail)
-			.ColorAndOpacity(FSlateColor(BrowserErrorColor))
-			.AutoWrapText(true)
+			MakeSectionHeader(FText::Format(LOCTEXT("DiagnosticsHeader", "Diagnostics ({0})"), FText::AsNumber(FMath::Max(1, Source.Diagnostics.Num()))))
 		];
+
+		if (Source.Diagnostics.Num() == 0)
+		{
+			// A failure this browser pinned itself (no bridge record): the message, and nothing to jump to.
+			Box->AddSlot().AutoHeight()
+			[
+				SNew(STextBlock).Text(Source.StatusDetail).ColorAndOpacity(FSlateColor(BrowserErrorColor)).AutoWrapText(true)
+			];
+			return Box;
+		}
+
+		// Line/column are identifiers, not quantities: no digit grouping.
+		FNumberFormattingOptions LineNumberOptions;
+		LineNumberOptions.UseGrouping = false;
+
+		for (const FDreamShaderDiagnosticRecord& Record : Source.Diagnostics)
+		{
+			const int32 Line = FMath::Max(1, Record.Line);
+			const int32 Column = FMath::Max(1, Record.Column);
+			const FText Location = Record.Code.IsEmpty()
+				? FText::Format(LOCTEXT("DiagLocationFmt", "L{0}:{1}"), FText::AsNumber(Line, &LineNumberOptions), FText::AsNumber(Column, &LineNumberOptions))
+				: FText::Format(LOCTEXT("DiagLocationCodeFmt", "[{2}] L{0}:{1}"), FText::AsNumber(Line, &LineNumberOptions), FText::AsNumber(Column, &LineNumberOptions), FText::FromString(Record.Code));
+			const bool bIsError = Record.Severity.Equals(TEXT("error"), ESearchCase::IgnoreCase);
+			// A diagnostic can point into an imported header rather than the file itself.
+			const FString TargetFile = Record.FilePath.IsEmpty() ? Source.FilePath : Record.FilePath;
+
+			Box->AddSlot().AutoHeight()
+			[
+				SNew(SButton)
+				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+				.ContentPadding(FMargin(0.0f, 2.0f))
+				.HAlign(HAlign_Left)
+				.ToolTipText(FText::Format(LOCTEXT("DiagJumpTip", "Open {0} at this line in your editor."), FText::FromString(FPaths::GetCleanFilename(TargetFile))))
+				.OnClicked_Lambda([TargetFile, Line, Column]()
+				{
+					FDreamShaderEditorLaunchUtils::LaunchTextFileInPreferredEditor(TargetFile, Line, Column);
+					return FReply::Handled();
+				})
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Top).Padding(0.0f, 0.0f, 6.0f, 0.0f)
+					[
+						SNew(STextBlock).Text(Location).ColorAndOpacity(FSlateColor(BrowserLinkColor)).TextStyle(FAppStyle::Get(), "SmallText")
+					]
+					+ SHorizontalBox::Slot().FillWidth(1.0f)
+					[
+						SNew(STextBlock)
+						.Text(Record.Message)
+						.ColorAndOpacity(bIsError ? FSlateColor(BrowserErrorColor) : FSlateColor::UseForeground())
+						.AutoWrapText(true)
+					]
+				]
+			];
+		}
 		return Box;
 	}
 
-	TSharedRef<SWidget> SDreamShaderInspector::BuildDependents()
+	TSharedRef<SWidget> SDreamShaderInspector::BuildProvenance()
 	{
-		if (!Entry->IsLibrary())
+		if (!Entry->Asset.IsSet())
+		{
+			return SNullWidget::NullWidget;
+		}
+		const FBrowserAssetInfo& Asset = *Entry->Asset;
+		const FString ObjectPath = Asset.ObjectPath;
+		const bool bWritableSource = !Entry->Source.IsSet() || Entry->Source->bWritableRoot;
+		const bool bDiverged = Asset.Provenance == EDreamShaderDigestState::Diverged;
+
+		FText Explanation;
+		switch (Asset.Provenance)
+		{
+		case EDreamShaderDigestState::Generated:
+			Explanation = LOCTEXT("ProvenanceExplainGenerated", "The asset holds exactly what DreamShader last generated into it. A source change rebuilds it freely.");
+			break;
+		case EDreamShaderDigestState::Diverged:
+			Explanation = LOCTEXT("ProvenanceExplainDiverged", "The asset was edited by hand since it was generated, so a rebuild is refused to protect those edits. Decide which copy is the truth.");
+			break;
+		case EDreamShaderDigestState::Unstamped:
+			Explanation = LOCTEXT("ProvenanceExplainUnstamped", "Generated by DreamShader, but carrying no digest this version can compare. The next rebuild restamps it.");
+			break;
+		default:
+			Explanation = LOCTEXT("ProvenanceExplainForeign", "Not generated by DreamShader. Export it to a source file to bring it under DreamShader's management.");
+			break;
+		}
+
+		const auto FindAsset = [ObjectPath]() -> UObject* { return FindObject<UObject>(nullptr, *ObjectPath); };
+		TSharedRef<SWrapBox> Buttons = SNew(SWrapBox).UseAllottedSize(true).InnerSlotPadding(FVector2D(4.0f, 4.0f));
+		if (Asset.Provenance == EDreamShaderDigestState::Foreign)
+		{
+			UObject* Object = FindAsset();
+			if (UMaterial* Material = Cast<UMaterial>(Object))
+			{
+				const TWeakObjectPtr<UMaterial> WeakMaterial(Material);
+				Buttons->AddSlot()[ MakeActionButton(
+					LOCTEXT("ExportDsmBtn", "Export DSM"),
+					LOCTEXT("ExportDsmTip", "Decompile this material into a .dsm source file under the project's DShader root."),
+					[WeakMaterial]()
+					{
+						if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge()) { Bridge->ExportMaterialToDreamShaderFile(WeakMaterial); }
+					}) ];
+			}
+			else if (UMaterialFunction* Function = Cast<UMaterialFunction>(Object))
+			{
+				const TWeakObjectPtr<UMaterialFunction> WeakFunction(Function);
+				Buttons->AddSlot()[ MakeActionButton(
+					LOCTEXT("ExportDsfBtn", "Export DSF"),
+					LOCTEXT("ExportDsfTip", "Decompile this material function into a .dsf source file under the project's DShader root."),
+					[WeakFunction]()
+					{
+						if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge()) { Bridge->ExportMaterialFunctionToDreamShaderFile(WeakFunction); }
+					}) ];
+			}
+		}
+		else
+		{
+			Buttons->AddSlot()[ MakeActionButton(
+				bDiverged ? LOCTEXT("RevertDivergedBtn", "Revert to Source (discards edits)") : LOCTEXT("RevertBtn", "Revert to Source"),
+				LOCTEXT("RevertTip", "Rebuild this asset from its DreamShader source, discarding every hand edit in it. The source file is not modified."),
+				[FindAsset]() { if (UObject* Object = FindAsset()) { RevertGeneratedAssetToSource(Object); } },
+				/*bPrimary*/ bDiverged) ];
+			TSharedRef<SWidget> AdoptButton = MakeActionButton(
+				LOCTEXT("AdoptBtn", "Adopt Into Source"),
+				bWritableSource
+					? LOCTEXT("AdoptTip", "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it.")
+					: LOCTEXT("AdoptReadOnlyTip", "This asset's source ships with a plugin and is read-only; adopt is not available."),
+				[FindAsset]() { if (UObject* Object = FindAsset()) { AdoptGeneratedAssetIntoSource(Object); } });
+			AdoptButton->SetEnabled(bWritableSource);
+			Buttons->AddSlot()[ AdoptButton ];
+			const TWeakPtr<FDreamShaderBrowserModel> WeakModel = Model;
+			Buttons->AddSlot()[ MakeActionButton(
+				LOCTEXT("DetachBtn", "Detach"),
+				LOCTEXT("DetachTip", "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it."),
+				[FindAsset, WeakModel]()
+				{
+					if (UObject* Object = FindAsset())
+					{
+						DetachGeneratedAssetFromDreamShader(Object);
+						if (TSharedPtr<FDreamShaderBrowserModel> M = WeakModel.Pin()) { M->RefreshStatuses(); }
+					}
+				}) ];
+		}
+
+		return SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight().Padding(0.0f, 14.0f, 0.0f, 4.0f)[ MakeSectionHeader(LOCTEXT("ProvenanceHeader", "Provenance")) ]
+			+ SVerticalBox::Slot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 2.0f)
+			[
+				SNew(STextBlock)
+				.Text(GetBrowserProvenanceLabel(Asset.Provenance))
+				.ColorAndOpacity(bDiverged ? FSlateColor(FLinearColor(0.85f, 0.45f, 0.15f)) : FSlateColor::UseForeground())
+			]
+			+ SVerticalBox::Slot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 6.0f)
+			[
+				SNew(STextBlock).Text(Explanation).ColorAndOpacity(FSlateColor::UseSubduedForeground()).AutoWrapText(true)
+			]
+			+ SVerticalBox::Slot().AutoHeight()[ Buttons ];
+	}
+
+	TSharedRef<SWidget> SDreamShaderInspector::MakeSourceLink(const FString& SourceFilePath)
+	{
+		return SNew(SButton)
+			.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+			.ContentPadding(FMargin(0.0f, 1.0f))
+			.HAlign(HAlign_Left)
+			.ToolTipText(FText::FromString(SourceFilePath))
+			.OnClicked_Lambda([this, SourceFilePath]()
+			{
+				OnNavigateToSource.ExecuteIfBound(SourceFilePath);
+				return FReply::Handled();
+			})
+			[
+				SNew(STextBlock)
+				.Text(FText::Format(INVTEXT("└ {0}"), FText::FromString(FPaths::GetCleanFilename(SourceFilePath))))
+				.ColorAndOpacity(FSlateColor(BrowserLinkColor))
+			];
+	}
+
+	TSharedRef<SWidget> SDreamShaderInspector::BuildDependencies()
+	{
+		if (!Entry->Source.IsSet())
+		{
+			return SNullWidget::NullWidget;
+		}
+		const FBrowserSourceInfo& Source = *Entry->Source;
+		if (Source.Imports.Num() == 0 && Source.Dependents.Num() == 0)
 		{
 			return SNullWidget::NullWidget;
 		}
 
 		TSharedRef<SVerticalBox> Box = SNew(SVerticalBox);
-		Box->AddSlot().AutoHeight().Padding(0.0f, 10.0f, 0.0f, 0.0f)
-		[
-			SNew(STextBlock)
-			.Text(FText::Format(LOCTEXT("PreviewUsedBy", "used by {0} material(s)"), FText::AsNumber(Entry->Source->Dependents.Num())))
-			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-		];
+		if (Source.Imports.Num() > 0)
+		{
+			Box->AddSlot().AutoHeight().Padding(0.0f, 14.0f, 0.0f, 4.0f)
+			[
+				MakeSectionHeader(FText::Format(LOCTEXT("ImportsHeader", "Imports ({0})"), FText::AsNumber(Source.Imports.Num())))
+			];
+			for (const FString& Import : Source.Imports)
+			{
+				Box->AddSlot().AutoHeight()[ MakeSourceLink(Import) ];
+			}
+		}
+		if (Source.Dependents.Num() > 0)
+		{
+			Box->AddSlot().AutoHeight().Padding(0.0f, 14.0f, 0.0f, 4.0f)
+			[
+				MakeSectionHeader(FText::Format(LOCTEXT("DependentsHeader", "Used by ({0})"), FText::AsNumber(Source.Dependents.Num())))
+			];
+			for (const FString& Dependent : Source.Dependents)
+			{
+				Box->AddSlot().AutoHeight()[ MakeSourceLink(Dependent) ];
+			}
+		}
 		return Box;
 	}
 
@@ -442,13 +654,35 @@ namespace UE::DreamShader::Editor::Private
 			Cursor = AsInstance ? AsInstance->Parent : nullptr;
 		}
 
-		// Direct children among loaded instances.
+		// Direct children: every loaded instance whose parent this is, plus -- from the asset registry
+		// -- every saved instance that references this package, which the loaded set misses when
+		// the project has not loaded them this session. A material instance's only material reference
+		// is its parent, so a referencing instance is a child.
 		TArray<UMaterialInstanceConstant*> Children;
 		for (TObjectIterator<UMaterialInstanceConstant> It; It; ++It)
 		{
 			if (It->Parent == Material)
 			{
 				Children.Add(*It);
+			}
+		}
+		TArray<FAssetData> UnloadedChildren;
+		if (IAssetRegistry* AssetRegistry = IAssetRegistry::Get())
+		{
+			TArray<FName> Referencers;
+			AssetRegistry->GetReferencers(Material->GetPackage()->GetFName(), Referencers);
+			for (const FName& Referencer : Referencers)
+			{
+				TArray<FAssetData> PackageAssets;
+				AssetRegistry->GetAssetsByPackageName(Referencer, PackageAssets);
+				for (const FAssetData& AssetData : PackageAssets)
+				{
+					const UClass* AssetClass = AssetData.GetClass();
+					if (AssetClass && AssetClass->IsChildOf(UMaterialInstanceConstant::StaticClass()) && !AssetData.IsAssetLoaded())
+					{
+						UnloadedChildren.Add(AssetData);
+					}
+				}
 			}
 		}
 
@@ -461,16 +695,38 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		TSharedRef<SVerticalBox> ChildrenBox = SNew(SVerticalBox);
-		if (Children.Num() == 0)
+		if (Children.Num() == 0 && UnloadedChildren.Num() == 0)
 		{
 			ChildrenBox->AddSlot().AutoHeight()
 			[
-				SNew(STextBlock).Text(LOCTEXT("NoChildren", "No loaded child instances.")).ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				SNew(STextBlock).Text(LOCTEXT("NoChildrenAnywhere", "No child instances.")).ColorAndOpacity(FSlateColor::UseSubduedForeground())
 			];
 		}
 		for (UMaterialInstanceConstant* Child : Children)
 		{
 			ChildrenBox->AddSlot().AutoHeight()[ MakeMaterialLink(Child, INVTEXT("└ "), false) ];
+		}
+		for (const FAssetData& ChildData : UnloadedChildren)
+		{
+			// Clicking loads it, and the panel re-targets to the now-loaded object.
+			const FString ChildPath = ChildData.GetObjectPathString();
+			ChildrenBox->AddSlot().AutoHeight()
+			[
+				SNew(SButton)
+				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+				.HAlign(HAlign_Left)
+				.ToolTipText(FText::Format(LOCTEXT("UnloadedChildTip", "{0} (not loaded — click to load)"), FText::FromString(ChildPath)))
+				.OnClicked_Lambda([this, ChildPath]()
+				{
+					if (UMaterialInterface* Loaded = LoadObject<UMaterialInterface>(nullptr, *ChildPath)) { SetMaterial(Loaded); }
+					return FReply::Handled();
+				})
+				[
+					SNew(STextBlock)
+					.Text(FText::Format(LOCTEXT("UnloadedChildFmt", "└ {0} (not loaded)"), FText::FromName(ChildData.AssetName)))
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				]
+			];
 		}
 
 		return SNew(SVerticalBox)
@@ -478,7 +734,7 @@ namespace UE::DreamShader::Editor::Private
 			+ SVerticalBox::Slot().AutoHeight()[ ChainBox ]
 			+ SVerticalBox::Slot().AutoHeight().Padding(0.0f, 14.0f, 0.0f, 4.0f)
 			[
-				MakeSectionHeader(FText::Format(LOCTEXT("ChildrenHeader", "Child instances ({0})"), FText::AsNumber(Children.Num())))
+				MakeSectionHeader(FText::Format(LOCTEXT("ChildrenHeader", "Child instances ({0})"), FText::AsNumber(Children.Num() + UnloadedChildren.Num())))
 			]
 			+ SVerticalBox::Slot().AutoHeight()[ ChildrenBox ];
 	}

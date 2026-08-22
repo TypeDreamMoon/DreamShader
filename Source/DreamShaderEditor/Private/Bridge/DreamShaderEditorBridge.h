@@ -50,6 +50,9 @@ namespace UE::DreamShader::Editor::Private
 		/** Flips the global in-memory-materials visibility setting and re-announces every such
 		 *  instance to the asset registry. Toasts the new count. */
 		void ToggleShowInMemoryMaterialsInContentBrowser();
+		/** Decompile a hand-authored asset into a new .dsm / .dsf under the project root. Toasts. */
+		void ExportMaterialToDreamShaderFile(TWeakObjectPtr<UMaterial> Material);
+		void ExportMaterialFunctionToDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 
 		bool IsBusy() const { return bBusy; }
 		const FString& GetBusyAction() const { return BusyAction; }
@@ -138,9 +141,6 @@ namespace UE::DreamShader::Editor::Private
 		void RequestCleanGeneratedShaders();
 		void RequestCleanPersistedGeneratedAssets();
 		int32 CollectPersistedGeneratedAssets(TArray<UObject*>& OutAssets);
-		void ExportMaterialToDreamShaderFile(TWeakObjectPtr<UMaterial> Material);
-		void ExportMaterialFunctionToDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
-
 		/**
 		 * Adds whichever of the three provenance answers (Revert / Adopt / Detach, see
 		 * Provenance/DreamShaderProvenanceActions.h) apply to this asset. Shared by every asset-type

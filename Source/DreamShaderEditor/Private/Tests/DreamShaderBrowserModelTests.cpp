@@ -299,6 +299,10 @@ bool FDreamShaderBrowserModelLibraryTest::RunTest(const FString& Parameters)
 	{
 		TestFalse(TEXT("A .dsm is not a library"), Material->IsLibrary());
 		TestEqual(TEXT("A material lists no dependents"), Material->Source->Dependents.Num(), 0);
+		TestTrue(
+			FString::Printf(TEXT("The material lists the header among its imports (%d listed)"), Material->Source->Imports.Num()),
+			Material->Source->Imports.Contains(HeaderPath));
+		TestEqual(TEXT("A header imports nothing"), Header->Source->Imports.Num(), 0);
 	}
 	return true;
 }

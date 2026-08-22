@@ -61,6 +61,8 @@ namespace UE::DreamShader::Editor::Private
 		TArray<FDreamShaderDiagnosticRecord> Diagnostics;
 		// For libraries: the materials that import this file (absolute source paths).
 		TArray<FString> Dependents;
+		// For materials: the headers and functions this file imports, transitively (absolute paths).
+		TArray<FString> Imports;
 
 		bool IsLibrary() const { return Kind != EBrowserSourceKind::Material; }
 	};
@@ -71,6 +73,9 @@ namespace UE::DreamShader::Editor::Private
 		FString ObjectPath;
 		EBrowserStorage Storage = EBrowserStorage::OnDisk;
 		EDreamShaderDigestState Provenance = EDreamShaderDigestState::Foreign;
+		// Open in an asset editor: a rebuild refuses while it is, because the editor holds a
+		// pre-rebuild copy that its next Apply would write back.
+		bool bOpenInEditor = false;
 	};
 
 	struct FBrowserEntry

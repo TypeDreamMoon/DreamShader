@@ -358,6 +358,16 @@ namespace UE::DreamShader::Editor::Private
 		DependentsByFile.Reset();
 		FDreamShaderDependencyGraphService::RebuildMaterialDependencyGraph(DependentsByFile);
 
+		// The graph is keyed by the imported file; the importer's side is its inversion.
+		TMap<FString, TArray<FString>> ImportsByFile;
+		for (const TPair<FString, TSet<FString>>& Pair : DependentsByFile)
+		{
+			for (const FString& Dependent : Pair.Value)
+			{
+				ImportsByFile.FindOrAdd(Dependent).Add(Pair.Key);
+			}
+		}
+
 		for (const FString& SourceFile : SourceFiles)
 		{
 			TSharedPtr<FBrowserEntry> Entry = MakeShared<FBrowserEntry>();
@@ -385,13 +395,15 @@ namespace UE::DreamShader::Editor::Private
 				Source.Kind = EBrowserSourceKind::Material;
 			}
 
-			if (Source.IsLibrary())
+			if (const TSet<FString>* Dependents = DependentsByFile.Find(Source.FilePath))
 			{
-				if (const TSet<FString>* Dependents = DependentsByFile.Find(Source.FilePath))
-				{
-					Source.Dependents = Dependents->Array();
-					Source.Dependents.Sort();
-				}
+				Source.Dependents = Dependents->Array();
+				Source.Dependents.Sort();
+			}
+			if (const TArray<FString>* Imports = ImportsByFile.Find(Source.FilePath))
+			{
+				Source.Imports = *Imports;
+				Source.Imports.Sort();
 			}
 
 			Entry->Key = Source.FilePath;
@@ -505,6 +517,7 @@ namespace UE::DreamShader::Editor::Private
 			? EBrowserStorage::InMemory
 			: EBrowserStorage::OnDisk;
 		OutInfo.Provenance = ClassifyGeneratedAsset(Asset);
+		OutInfo.bOpenInEditor = IsGeneratedAssetOpenInEditor(Asset);
 	}
 
 	void FDreamShaderBrowserModel::ComputeSourceStatus(FBrowserSourceInfo& Source) const

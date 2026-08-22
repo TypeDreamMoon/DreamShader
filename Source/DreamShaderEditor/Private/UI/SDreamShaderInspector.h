@@ -55,8 +55,10 @@ namespace UE::DreamShader::Editor::Private
 		TSharedRef<SWidget> BuildActions(UMaterialInterface* Material);
 		TSharedRef<SWidget> BuildInfoRows(UMaterialInterface* Material);
 		TSharedRef<SWidget> BuildDiagnostics();
-		TSharedRef<SWidget> BuildDependents();
+		TSharedRef<SWidget> BuildProvenance();
+		TSharedRef<SWidget> BuildDependencies();
 		TSharedRef<SWidget> BuildInheritance(UMaterialInterface* Material);
+		TSharedRef<SWidget> MakeSourceLink(const FString& SourceFilePath);
 		TSharedRef<SWidget> MakeMaterialLink(UMaterialInterface* Target, const FText& Prefix, bool bIsSelf);
 		TSharedRef<SWidget> MakeLinkRow(const FText& Label, const FText& Value, const FText& Tooltip, TFunction<void()> OnClicked);
 	};

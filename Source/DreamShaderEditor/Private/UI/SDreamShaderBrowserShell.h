@@ -89,6 +89,7 @@ namespace UE::DreamShader::Editor::Private
 		void ExecuteRevert();
 		void ExecuteAdopt();
 		void ExecuteDetach();
+		void ExecuteExportSource();
 		void ExecuteToggleTileView();
 	};
 }
