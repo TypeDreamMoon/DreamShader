@@ -1,4 +1,4 @@
-#include "Commandlet/DreamShaderCommandletRunner.h"
+﻿#include "Commandlet/DreamShaderCommandletRunner.h"
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
@@ -5481,6 +5481,133 @@ bool FDreamShaderDivergenceInstanceOverrideTest::RunTest(const FString& Paramete
 		TEXT("Tuning a parameter on the generated instance reads as divergence"),
 		static_cast<int32>(ClassifyGeneratedAsset(Instance)),
 		static_cast<int32>(EDreamShaderDigestState::Diverged));
+	return true;
+}
+
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderFunctionInputOrderIsDeterministicTest,
+	"DreamShader.Compiler.Function.InputOrderSurvivesTiedSortPriority",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Pin order is load-bearing and SortPriority alone does not carry it.
+//
+// UMaterialFunction::GetInputsAndOutputs sorts with TArray::Sort -- introsort, not stable -- so two
+// inputs that share a SortPriority come out in an order decided by the pre-sort arrangement.
+// UMaterialExpressionMaterialFunctionCall binds by that order whenever the stored input GUIDs do not
+// match, which is exactly what a rebuild produces, so a tie silently rewires every caller. The
+// damage lands in the calling material: a float that arrives on a StaticBool pin is reported as
+// "Cannot cast from static bool to float", naming the function but never the pin, and the function
+// itself compiles clean.
+//
+// So the generator has to leave no ties. This declares two inputs at the same authored priority and
+// requires that the source's order is what survives.
+bool FDreamShaderFunctionInputOrderIsDeterministicTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_InputOrder"));
+	const FString ObjectPath = MakeAutomationObjectPath(FunctionName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	// Second and third share a priority; First is pulled ahead by a lower one, so the test covers
+	// both that authored priorities still win and that a tie falls back to declaration order.
+	const FString Source = FString::Printf(TEXT(R"(
+ShaderFunction(Name="DreamShaderTests/Automation/%s")
+{
+    Inputs = {
+        float First [
+            SortPriority=-1;
+        ];
+        opt StaticBool Second = false [
+            SortPriority=0;
+        ];
+        opt float Third = 0.5 [
+            SortPriority=0;
+        ];
+    }
+
+    Outputs = {
+        float Result;
+    }
+
+    Graph = {
+        Result = UE.Expression(Class="StaticSwitch", OutputType="float", True=Third, False=First, Value=Second);
+    }
+}
+)"), *FunctionName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, FunctionName + TEXT(".dsf"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+		FString::Printf(TEXT("Function generation succeeds: %s"), *Message),
+		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	UMaterialFunction* GeneratedFunction = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated function loads"), GeneratedFunction))
+	{
+		return false;
+	}
+
+	TArray<TPair<int32, FString>> InputsByPriority;
+	for (auto&& ExpressionPtr : GeneratedFunction->GetExpressions())
+	{
+		if (const UMaterialExpressionFunctionInput* FunctionInput = Cast<UMaterialExpressionFunctionInput>(ExpressionPtr))
+		{
+			InputsByPriority.Emplace(FunctionInput->SortPriority, FunctionInput->InputName.ToString());
+		}
+	}
+
+	if (!TestEqual(TEXT("All three inputs were generated"), InputsByPriority.Num(), 3))
+	{
+		return false;
+	}
+
+	// No two may share a priority, or the engine's unstable sort decides the order instead.
+	TSet<int32> SeenPriorities;
+	for (const TPair<int32, FString>& Input : InputsByPriority)
+	{
+		TestFalse(
+			FString::Printf(TEXT("Input '%s' has a SortPriority no other input shares"), *Input.Value),
+			SeenPriorities.Contains(Input.Key));
+		SeenPriorities.Add(Input.Key);
+	}
+
+	InputsByPriority.Sort([](const TPair<int32, FString>& Left, const TPair<int32, FString>& Right)
+	{
+		return Left.Key < Right.Key;
+	});
+
+	TArray<FString> ActualOrder;
+	for (const TPair<int32, FString>& Input : InputsByPriority)
+	{
+		ActualOrder.Add(Input.Value);
+	}
+
+	const TArray<FString> ExpectedOrder = { TEXT("First"), TEXT("Second"), TEXT("Third") };
+	TestEqual(
+		FString::Printf(TEXT("Pin order follows the source, got [%s]"), *FString::Join(ActualOrder, TEXT(", "))),
+		ActualOrder,
+		ExpectedOrder);
+
 	return true;
 }
 

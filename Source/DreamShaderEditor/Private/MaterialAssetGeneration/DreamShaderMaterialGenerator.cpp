@@ -1,4 +1,4 @@
-#include "DreamShaderMaterialGenerator.h"
+﻿#include "DreamShaderMaterialGenerator.h"
 
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
 #include "DreamShaderGraphRollback.h"
@@ -1173,6 +1173,56 @@ namespace UE::DreamShader::Editor
 			}
 		}
 
+		/**
+		 * Dense, tie-free SortPriority values that keep the source's declaration order.
+		 *
+		 * UMaterialFunction::GetInputsAndOutputs sorts with TArray::Sort, which is introsort and not
+		 * stable, so two parameters that share a SortPriority come out in an order decided by the
+		 * pre-sort arrangement rather than by anything the author wrote. That order is load-bearing:
+		 * UMaterialExpressionMaterialFunctionCall falls back to it whenever the stored input GUIDs do
+		 * not match, so a tie lets a rebuild from unchanged source silently rewire every caller. The
+		 * symptom surfaces in the calling material, not here -- a float that lands on a StaticBool pin
+		 * is reported as "Cannot cast from static bool to float", naming the function but not the pin.
+		 *
+		 * Ranking (authored priority, declaration index) into 0..N-1 preserves the authored ordering,
+		 * makes the source the tiebreak, and leaves no two values equal for the engine to reorder. The
+		 * numbers themselves carry no meaning beyond that ordering, so densifying them costs nothing.
+		 */
+		void AssignDeterministicSortPriorities(
+			const TArray<FTextShaderFunctionParameter>& Parameters,
+			TArray<int32>& OutSortPriorities)
+		{
+			OutSortPriorities.SetNumZeroed(Parameters.Num());
+
+			TArray<int32> DeclarationOrder;
+			DeclarationOrder.Reserve(Parameters.Num());
+			for (int32 Index = 0; Index < Parameters.Num(); ++Index)
+			{
+				DeclarationOrder.Add(Index);
+			}
+
+			// An unauthored priority ranks by declaration index, which is what the previous code used
+			// directly; authored ones keep their relative order among themselves and against those.
+			auto EffectivePriority = [&Parameters](int32 Index)
+			{
+				return Parameters[Index].Metadata.bHasSortPriority
+					? Parameters[Index].Metadata.SortPriority
+					: Index;
+			};
+
+			// StableSort, so equal priorities fall back to declaration order rather than to whatever
+			// an unstable sort happens to produce -- the whole point of this pass.
+			DeclarationOrder.StableSort([&EffectivePriority](int32 Left, int32 Right)
+			{
+				return EffectivePriority(Left) < EffectivePriority(Right);
+			});
+
+			for (int32 Rank = 0; Rank < DeclarationOrder.Num(); ++Rank)
+			{
+				OutSortPriorities[DeclarationOrder[Rank]] = Rank;
+			}
+		}
+
 		void RestoreOrGenerateFunctionInputId(
 			UMaterialExpressionFunctionInput* InputExpression,
 			const TMap<FName, FGuid>& InputIdsByName)
@@ -1428,6 +1478,8 @@ namespace UE::DreamShader::Editor
 			}
 
 			TMap<FString, UMaterialExpressionFunctionInput*> GeneratedInputExpressions;
+			TArray<int32> InputSortPriorities;
+			AssignDeterministicSortPriorities(FunctionDefinition.Inputs, InputSortPriorities);
 			int32 InputPositionY = -260;
 			int32 MaterialAttributesInputIndex = 0;
 		FunctionSlowTask.EnterProgressFrame(
@@ -1478,9 +1530,7 @@ namespace UE::DreamShader::Editor
 					MaterialAttributesInputIndex);
 #endif
 				InputExpression->Description = InputDefinition.Metadata.Description;
-				InputExpression->SortPriority = InputDefinition.Metadata.bHasSortPriority
-					? InputDefinition.Metadata.SortPriority
-					: InputIndex;
+				InputExpression->SortPriority = InputSortPriorities[InputIndex];
 				RestoreOrGenerateFunctionInputId(InputExpression, ExistingInputIdsByName);
 				if (Private::IsMaterialAttributesType(InputDefinition.Type))
 				{
@@ -1757,6 +1807,8 @@ namespace UE::DreamShader::Editor
 			FText::Format(
 				LOCTEXT("ConnectingFunctionOutputs", "Connecting outputs for '{0}'..."),
 				FText::FromString(FunctionDefinition.Name)));
+			TArray<int32> OutputSortPriorities;
+			AssignDeterministicSortPriorities(FunctionDefinition.Outputs, OutputSortPriorities);
 			for (int32 OutputIndex = 0; OutputIndex < FunctionDefinition.Outputs.Num(); ++OutputIndex)
 			{
 				const FTextShaderFunctionParameter& OutputDefinition = FunctionDefinition.Outputs[OutputIndex];
@@ -1808,9 +1860,7 @@ namespace UE::DreamShader::Editor
 
 				OutputExpression->OutputName = FName(*OutputDefinition.Name);
 				OutputExpression->Description = OutputDefinition.Metadata.Description;
-				OutputExpression->SortPriority = OutputDefinition.Metadata.bHasSortPriority
-					? OutputDefinition.Metadata.SortPriority
-					: OutputIndex;
+				OutputExpression->SortPriority = OutputSortPriorities[OutputIndex];
 				RestoreOrGenerateFunctionOutputId(OutputExpression, ExistingOutputIdsByName);
 				const Private::FCodeValue RoutedOutputValue = Private::CreateOutputRerouteValue(
 					nullptr,
