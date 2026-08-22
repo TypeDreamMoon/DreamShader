@@ -45,6 +45,12 @@ namespace UE::DreamShader::Editor::Private
 		/** An existing source file's contents changed on disk (before any compile it may trigger). */
 		FOnSourceFileModified& OnSourceFileModified() { return SourceFileModifiedEvent; }
 
+		/** Writes the VSCode workspace (and the manifests it needs) and opens it. */
+		void OpenDreamShaderWorkspace();
+		/** Flips the global in-memory-materials visibility setting and re-announces every such
+		 *  instance to the asset registry. Toasts the new count. */
+		void ToggleShowInMemoryMaterialsInContentBrowser();
+
 		bool IsBusy() const { return bBusy; }
 		const FString& GetBusyAction() const { return BusyAction; }
 		const FString& GetLastResult() const { return LastResult; }
@@ -132,8 +138,6 @@ namespace UE::DreamShader::Editor::Private
 		void RequestCleanGeneratedShaders();
 		void RequestCleanPersistedGeneratedAssets();
 		int32 CollectPersistedGeneratedAssets(TArray<UObject*>& OutAssets);
-		void ToggleShowInMemoryMaterialsInContentBrowser();
-		void OpenDreamShaderWorkspace();
 		void ExportMaterialToDreamShaderFile(TWeakObjectPtr<UMaterial> Material);
 		void ExportMaterialFunctionToDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 

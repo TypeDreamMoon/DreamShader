@@ -76,28 +76,59 @@ namespace UE::DreamShader::Editor::Private
 	// ---------------------------------------------------------------------------------------------
 	// FBrowserFilter
 
+	bool FBrowserFilter::MatchesStatus(const FBrowserEntry& Entry) const
+	{
+		if (!HasStatusFilter())
+		{
+			return true;
+		}
+		const EBrowserSourceStatus Status = Entry.Source.IsSet() ? Entry.Source->Status : EBrowserSourceStatus::NotCompiled;
+		if (bErrorsOnly && Entry.Source.IsSet()
+			&& (Status == EBrowserSourceStatus::Error || Status == EBrowserSourceStatus::Unresolved))
+		{
+			return true;
+		}
+		if (bStaleOnly && Status == EBrowserSourceStatus::Stale)
+		{
+			return true;
+		}
+		if (bDivergedOnly && Entry.Asset.IsSet() && Entry.Asset->Provenance == EDreamShaderDigestState::Diverged)
+		{
+			return true;
+		}
+		if (bInMemoryOnly && Entry.Asset.IsSet() && Entry.Asset->Storage == EBrowserStorage::InMemory)
+		{
+			return true;
+		}
+		return false;
+	}
+
 	bool FBrowserFilter::Matches(const FBrowserEntry& Entry) const
 	{
 		if (bHideLibraries && Entry.IsLibrary())
 		{
 			return false;
 		}
-		if (bErrorsOnly)
+		if (!SourceDirectoryScope.IsEmpty()
+			&& !(Entry.Source.IsSet() && UE::DreamShader::IsPathUnderSourceDirectory(Entry.Source->FilePath, SourceDirectoryScope)))
 		{
-			const bool bHasError = Entry.Source.IsSet()
-				&& (Entry.Source->Status == EBrowserSourceStatus::Error
-					|| Entry.Source->Status == EBrowserSourceStatus::Unresolved);
-			if (!bHasError)
-			{
-				return false;
-			}
+			return false;
+		}
+		if (!MatchesStatus(Entry))
+		{
+			return false;
 		}
 		if (!SearchText.IsEmpty())
 		{
-			const bool bNameMatches = Entry.GetDisplayName().Contains(SearchText, ESearchCase::IgnoreCase);
-			const bool bRootMatches = Entry.Source.IsSet()
-				&& Entry.Source->RootDisplayName.Contains(SearchText, ESearchCase::IgnoreCase);
-			if (!bNameMatches && !bRootMatches)
+			const auto Has = [this](const FString& Text) { return Text.Contains(SearchText, ESearchCase::IgnoreCase); };
+			bool bMatches = Has(Entry.GetDisplayName()) || Has(Entry.GetObjectPath());
+			if (!bMatches && Entry.Source.IsSet())
+			{
+				bMatches = Has(Entry.Source->RootDisplayName)
+					|| Has(Entry.Source->FilePath)
+					|| Has(Entry.Source->StatusDetail.ToString());
+			}
+			if (!bMatches)
 			{
 				return false;
 			}

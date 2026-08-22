@@ -15,15 +15,25 @@ class UObject;
 
 namespace UE::DreamShader::Editor::Private
 {
-	// What the source list shows. Search matches the display name and the root name -- a plugin's
-	// name is a usable filter for everything it ships.
+	// What the list shows. Search matches the display name, the root name (a plugin's name is a
+	// usable filter for everything it ships), the source and asset paths, and the status detail (so
+	// an error message is searchable). The status toggles are OR-ed together: ticking two of them
+	// shows entries matching either.
 	struct FBrowserFilter
 	{
 		FString SearchText;
 		bool bErrorsOnly = false;
+		bool bStaleOnly = false;
+		bool bDivergedOnly = false;
+		bool bInMemoryOnly = false;
 		bool bHideLibraries = false;
+		// Absolute, normalized source directory; only entries under it pass. Empty = everywhere.
+		FString SourceDirectoryScope;
 
+		bool HasStatusFilter() const { return bErrorsOnly || bStaleOnly || bDivergedOnly || bInMemoryOnly; }
 		bool Matches(const FBrowserEntry& Entry) const;
+		// The status toggles alone, for a view that does its own search and scoping (the asset picker).
+		bool MatchesStatus(const FBrowserEntry& Entry) const;
 	};
 
 	class FDreamShaderBrowserModel : public TSharedFromThis<FDreamShaderBrowserModel>

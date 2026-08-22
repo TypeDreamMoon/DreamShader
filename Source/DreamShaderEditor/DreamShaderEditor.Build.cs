@@ -36,6 +36,7 @@ public class DreamShaderEditor : ModuleRules
 				"RHI",
 				"RenderCore",
 				"Renderer",
+				"Settings",
 				"Slate",
 				"SlateCore",
 				"SQLiteCore",

@@ -76,6 +76,8 @@ namespace UE::DreamShader::Editor::Private
 	void SDreamShaderInspector::Construct(const FArguments& InArgs)
 	{
 		Model = InArgs._Model;
+		OnNavigateToSource = InArgs._OnNavigateToSource;
+		OnNavigateToAsset = InArgs._OnNavigateToAsset;
 		if (Model.IsValid())
 		{
 			ModelChangedHandle = Model->OnChanged.AddSP(this, &SDreamShaderInspector::Rebuild);
@@ -314,7 +316,12 @@ namespace UE::DreamShader::Editor::Private
 				? LOCTEXT("RootProject", "Project")
 				: FText::FromString(Entry->Source->RootDisplayName);
 			Rows->AddSlot().AutoHeight()[ MakeInfoRow(LOCTEXT("RootRow", "Root"), RootText) ];
-			Rows->AddSlot().AutoHeight()[ MakeInfoRow(SourceLabel, FText::FromString(Entry->Source->FilePath)) ];
+			const FString SourcePath = Entry->Source->FilePath;
+			Rows->AddSlot().AutoHeight()[ MakeLinkRow(
+				SourceLabel,
+				FText::FromString(SourcePath),
+				LOCTEXT("SourceLinkTip", "Show this file in the Sources list."),
+				[this, SourcePath]() { OnNavigateToSource.ExecuteIfBound(SourcePath); }) ];
 		}
 		else if (UDreamShaderMaterialInstance* DreamInstance = Cast<UDreamShaderMaterialInstance>(Material))
 		{
@@ -326,7 +333,12 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Entry->Asset.IsSet())
 		{
-			Rows->AddSlot().AutoHeight()[ MakeInfoRow(AssetLabel, FText::FromString(Entry->Asset->ObjectPath)) ];
+			const FString ObjectPath = Entry->Asset->ObjectPath;
+			Rows->AddSlot().AutoHeight()[ MakeLinkRow(
+				AssetLabel,
+				FText::FromString(ObjectPath),
+				LOCTEXT("AssetLinkTip", "Show this asset in the Content list."),
+				[this, ObjectPath]() { OnNavigateToAsset.ExecuteIfBound(ObjectPath); }) ];
 			Rows->AddSlot().AutoHeight()[ MakeInfoRow(LOCTEXT("Storage", "Storage"), GetBrowserStorageLabel(Entry->Asset->Storage)) ];
 			Rows->AddSlot().AutoHeight()[ MakeInfoRow(
 				LOCTEXT("ProvenanceRow", "Provenance"),
@@ -374,6 +386,30 @@ namespace UE::DreamShader::Editor::Private
 			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 		];
 		return Box;
+	}
+
+	TSharedRef<SWidget> SDreamShaderInspector::MakeLinkRow(const FText& Label, const FText& Value, const FText& Tooltip, TFunction<void()> OnClicked)
+	{
+		return SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().AutoWidth().Padding(0.0f, 2.0f)
+			[
+				SNew(SBox).WidthOverride(90.0f)
+				[
+					SNew(STextBlock).Text(Label).ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				]
+			]
+			+ SHorizontalBox::Slot().FillWidth(1.0f).Padding(6.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SNew(SButton)
+				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+				.ContentPadding(FMargin(0.0f, 2.0f))
+				.HAlign(HAlign_Left)
+				.ToolTipText(Tooltip)
+				.OnClicked_Lambda([OnClicked]() { OnClicked(); return FReply::Handled(); })
+				[
+					SNew(STextBlock).Text(Value).ColorAndOpacity(FSlateColor(BrowserLinkColor)).AutoWrapText(true)
+				]
+			];
 	}
 
 	TSharedRef<SWidget> SDreamShaderInspector::MakeMaterialLink(UMaterialInterface* Target, const FText& Prefix, bool bIsSelf)
