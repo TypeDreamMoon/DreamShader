@@ -58,6 +58,7 @@ namespace UE::DreamShader::Editor::Private
 		TSharedRef<SWidget> BuildToolbar();
 		TSharedRef<SWidget> BuildStatusBar();
 		TSharedRef<SWidget> MakeCompileMenu();
+		TSharedRef<SWidget> MakeNewMenu();
 		TSharedRef<SWidget> MakeViewMenu();
 		TSharedPtr<SWidget> MakeContextMenu(const TArray<TSharedPtr<FBrowserEntry>>& Entries);
 

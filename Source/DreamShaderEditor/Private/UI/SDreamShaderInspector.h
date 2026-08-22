@@ -8,10 +8,12 @@
 class FAssetThumbnail;
 class SBorder;
 class UMaterialInterface;
+template <typename OptionType> class SComboBox;
 
 namespace UE::DreamShader::Editor::Private
 {
 	class FDreamShaderBrowserModel;
+	class SDreamShaderLivePreview;
 	struct FBrowserEntry;
 
 	DECLARE_DELEGATE_OneParam(FOnBrowserNavigateToSource, const FString& /*SourceFilePath*/);
@@ -49,9 +51,17 @@ namespace UE::DreamShader::Editor::Private
 		TSharedPtr<FAssetThumbnail> Thumbnail;
 		FDelegateHandle ModelChangedHandle;
 
+		// Built once and re-slotted on every rebuild: it owns a render target and a thumbnail scene,
+		// which are not worth recreating every time the selection moves.
+		TSharedPtr<SDreamShaderLivePreview> LivePreview;
+		TArray<TSharedPtr<FString>> MeshOptions;
+		TSharedPtr<SComboBox<TSharedPtr<FString>>> MeshPicker;
+		FString PreviewedObjectPath;
+
 		void Rebuild();
 		TSharedRef<SWidget> BuildContent();
 		TSharedRef<SWidget> BuildHeader(UMaterialInterface* Material);
+		TSharedRef<SWidget> BuildPreview(UMaterialInterface* Material);
 		TSharedRef<SWidget> BuildActions(UMaterialInterface* Material);
 		TSharedRef<SWidget> BuildInfoRows(UMaterialInterface* Material);
 		TSharedRef<SWidget> BuildDiagnostics();

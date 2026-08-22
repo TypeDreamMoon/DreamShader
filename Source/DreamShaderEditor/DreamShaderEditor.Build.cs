@@ -25,6 +25,7 @@ public class DreamShaderEditor : ModuleRules
 				"ContentBrowser",
 				"Core",
 				"CoreUObject",
+				"DesktopPlatform",
 				"DirectoryWatcher",
 				"DreamShader",
 				"DreamShaderCompiler",

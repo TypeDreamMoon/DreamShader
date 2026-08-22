@@ -8,6 +8,7 @@
 #include "Provenance/DreamShaderProvenanceActions.h"
 #include "UI/DreamShaderBrowserActions.h"
 #include "UI/DreamShaderBrowserCommands.h"
+#include "UI/DreamShaderBrowserNewSource.h"
 #include "UI/DreamShaderBrowserStyle.h"
 #include "UI/DreamShaderBrowserUserSettings.h"
 #include "UI/Model/DreamShaderBrowserModel.h"
@@ -253,6 +254,26 @@ namespace UE::DreamShader::Editor::Private
 					]
 				]
 
+				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(4.0f, 0.0f, 0.0f, 0.0f)
+				[
+					SNew(SComboButton)
+					.ComboButtonStyle(FAppStyle::Get(), "SimpleComboButton")
+					.ToolTipText(LOCTEXT("NewMenuTip", "Create a new source file from a template, in the selected folder."))
+					.OnGetMenuContent(this, &SDreamShaderBrowserShell::MakeNewMenu)
+					.ButtonContent()
+					[
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.0f, 0.0f, 4.0f, 0.0f)
+						[
+							SNew(SImage).Image(FAppStyle::Get().GetBrush("Icons.Plus")).ColorAndOpacity(FSlateColor::UseForeground())
+						]
+						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+						[
+							SNew(STextBlock).Text(LOCTEXT("NewMenu", "New"))
+						]
+					]
+				]
+
 				+ SHorizontalBox::Slot().FillWidth(1.0f).VAlign(VAlign_Center).Padding(12.0f, 0.0f)
 				[
 					SAssignNew(SearchBox, SSearchBox)
@@ -328,6 +349,35 @@ namespace UE::DreamShader::Editor::Private
 		Menu.AddMenuEntry(Commands.CompileSelected);
 		Menu.AddMenuEntry(Commands.CompileStale);
 		Menu.AddMenuEntry(Commands.CompileAll);
+		return Menu.MakeWidget();
+	}
+
+	TSharedRef<SWidget> SDreamShaderBrowserShell::MakeNewMenu()
+	{
+		FMenuBuilder Menu(true, nullptr);
+		const auto AddKind = [this, &Menu](EBrowserSourceKind Kind, const FText& Label, const FText& Tip)
+		{
+			Menu.AddMenuEntry(Label, Tip, FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([this, Kind]()
+			{
+				// Into the folder the navigation tree points at when it is a source folder; the
+				// dialog falls back to the project root otherwise.
+				const FString Directory = SharedState->Scope.Mode == EDreamShaderBrowserViewMode::Sources ? SharedState->Scope.SourceDirectory : FString();
+				const TWeakPtr<SDreamShaderBrowserShell> WeakThis = SharedThis(this);
+				OpenNewSourceDialog(Kind, Directory, [WeakThis](const FString& CreatedPath)
+				{
+					if (TSharedPtr<SDreamShaderBrowserShell> This = WeakThis.Pin())
+					{
+						// The watcher will rescan on its own a debounce later; do it now so the file
+						// can be selected immediately.
+						This->Model->RefreshAll();
+						This->ShowSource(CreatedPath);
+					}
+				});
+			})));
+		};
+		AddKind(EBrowserSourceKind::Material, LOCTEXT("NewMaterial", "Material (.dsm)"), LOCTEXT("NewMaterialTip", "A Shader block with a base colour and roughness, ready to compile."));
+		AddKind(EBrowserSourceKind::Function, LOCTEXT("NewFunction", "Material function (.dsf)"), LOCTEXT("NewFunctionTip", "A ShaderFunction block with one input, one optional input and one output."));
+		AddKind(EBrowserSourceKind::Header, LOCTEXT("NewHeader", "Header (.dsh)"), LOCTEXT("NewHeaderTip", "A header with one Function, for materials to import."));
 		return Menu.MakeWidget();
 	}
 
@@ -888,9 +938,13 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderBrowserShell::ExecuteMaterialize()
 	{
-		if (const TSharedPtr<FBrowserEntry> Entry = FirstSelected())
+		// Every memory-only entry in the selection; the others are already on disk.
+		for (const TSharedPtr<FBrowserEntry>& Entry : TArray<TSharedPtr<FBrowserEntry>>(Selection))
 		{
-			FDreamShaderBrowserActions::Materialize(*Model, Entry);
+			if (Entry.IsValid() && Entry->Asset.IsSet() && Entry->Asset->Storage == EBrowserStorage::InMemory)
+			{
+				FDreamShaderBrowserActions::Materialize(*Model, Entry);
+			}
 		}
 	}
 
@@ -922,9 +976,17 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderBrowserShell::ExecuteRevert()
 	{
-		if (UObject* Asset = FirstSelectedAssetObject())
+		// Each one confirms on its own: a revert discards work, and a batch must not hide that.
+		for (const TSharedPtr<FBrowserEntry>& Entry : TArray<TSharedPtr<FBrowserEntry>>(Selection))
 		{
-			RevertGeneratedAssetToSource(Asset);
+			if (!Entry.IsValid() || !Entry->Asset.IsSet() || Entry->Asset->Provenance == EDreamShaderDigestState::Foreign)
+			{
+				continue;
+			}
+			if (UObject* Asset = FindObject<UObject>(nullptr, *Entry->Asset->ObjectPath))
+			{
+				RevertGeneratedAssetToSource(Asset);
+			}
 		}
 	}
 

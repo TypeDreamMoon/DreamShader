@@ -6,7 +6,9 @@
 #include "Provenance/DreamShaderProvenanceActions.h"
 #include "UI/DreamShaderBrowserActions.h"
 #include "UI/DreamShaderBrowserStyle.h"
+#include "UI/DreamShaderBrowserUserSettings.h"
 #include "UI/Model/DreamShaderBrowserModel.h"
+#include "UI/SDreamShaderLivePreview.h"
 #include "Workspace/DreamShaderWorkspaceService.h"
 
 #include "AssetRegistry/IAssetRegistry.h"
@@ -26,6 +28,7 @@
 #include "ThumbnailRendering/ThumbnailManager.h"
 #include "UObject/UObjectIterator.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SComboBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -90,6 +93,44 @@ namespace UE::DreamShader::Editor::Private
 			ModelChangedHandle = Model->OnChanged.AddSP(this, &SDreamShaderInspector::Rebuild);
 		}
 
+		for (const TCHAR* MeshName : { TEXT("sphere"), TEXT("plane"), TEXT("cube"), TEXT("cylinder"), TEXT("shaderball") })
+		{
+			MeshOptions.Add(MakeShared<FString>(MeshName));
+		}
+		TSharedPtr<FString> InitialMesh = MeshOptions[0];
+		for (const TSharedPtr<FString>& Option : MeshOptions)
+		{
+			if (*Option == UDreamShaderBrowserUserSettings::Get()->PreviewMesh)
+			{
+				InitialMesh = Option;
+			}
+		}
+
+		LivePreview = SNew(SDreamShaderLivePreview).Size(256);
+		LivePreview->SetMesh(*InitialMesh);
+
+		MeshPicker = SNew(SComboBox<TSharedPtr<FString>>)
+			.OptionsSource(&MeshOptions)
+			.InitiallySelectedItem(InitialMesh)
+			.ToolTipText(LOCTEXT("PreviewMeshTip", "The shape the preview renders the material on."))
+			.OnGenerateWidget_Lambda([](TSharedPtr<FString> Option) { return SNew(STextBlock).Text(FText::FromString(*Option)); })
+			.OnSelectionChanged_Lambda([this](TSharedPtr<FString> Option, ESelectInfo::Type)
+			{
+				if (Option.IsValid())
+				{
+					UDreamShaderBrowserUserSettings::Get()->PreviewMesh = *Option;
+					UDreamShaderBrowserUserSettings::Get()->Save();
+					LivePreview->SetMesh(*Option);
+				}
+			})
+			[
+				SNew(STextBlock).Text_Lambda([this]()
+				{
+					const TSharedPtr<FString> Selected = MeshPicker.IsValid() ? MeshPicker->GetSelectedItem() : nullptr;
+					return Selected.IsValid() ? FText::FromString(*Selected) : FText::GetEmpty();
+				})
+			];
+
 		ChildSlot
 		[
 			SAssignNew(ContentContainer, SBorder)
@@ -132,6 +173,8 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (ContentContainer.IsValid())
 		{
+			// Release the persistent preview widget from the old tree before the new one claims it.
+			ContentContainer->SetContent(SNullWidget::NullWidget);
 			ContentContainer->SetContent(BuildContent());
 		}
 	}
@@ -141,6 +184,7 @@ namespace UE::DreamShader::Editor::Private
 		if (!Entry.IsValid())
 		{
 			Thumbnail.Reset();
+			PreviewedObjectPath.Reset();
 			return SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center)
 			[
 				SNew(STextBlock)
@@ -152,6 +196,10 @@ namespace UE::DreamShader::Editor::Private
 		UMaterialInterface* Material = Entry->ResolveMaterial();
 
 		TSharedRef<SVerticalBox> Body = SNew(SVerticalBox);
+		if (Material)
+		{
+			Body->AddSlot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 8.0f)[ BuildPreview(Material) ];
+		}
 		Body->AddSlot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 8.0f)[ BuildHeader(Material) ];
 		Body->AddSlot().AutoHeight().Padding(0.0f, 0.0f, 0.0f, 12.0f)[ BuildActions(Material) ];
 		Body->AddSlot().AutoHeight()[ BuildInfoRows(Material) ];
@@ -168,16 +216,12 @@ namespace UE::DreamShader::Editor::Private
 
 	TSharedRef<SWidget> SDreamShaderInspector::BuildHeader(UMaterialInterface* Material)
 	{
-		// Thumbnail, or a placeholder tile when there is no compiled material to render.
+		// A placeholder tile when there is no compiled material to render; with one, the live preview
+		// above stands in for the thumbnail.
+		Thumbnail.Reset();
 		TSharedRef<SWidget> ThumbWidget = SNullWidget::NullWidget;
-		if (Material)
+		if (!Material)
 		{
-			Thumbnail = MakeShared<FAssetThumbnail>(Material, 96, 96, UThumbnailManager::Get().GetSharedThumbnailPool());
-			ThumbWidget = Thumbnail->MakeThumbnailWidget();
-		}
-		else
-		{
-			Thumbnail.Reset();
 			ThumbWidget = SNew(SBorder)
 				.BorderImage(FAppStyle::Get().GetBrush("Brushes.Header"))
 				.HAlign(HAlign_Center)
@@ -238,14 +282,58 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		return SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot().AutoWidth().Padding(0.0f, 0.0f, 10.0f, 0.0f)
+		TSharedRef<SHorizontalBox> Header = SNew(SHorizontalBox);
+		if (!Material)
+		{
+			Header->AddSlot().AutoWidth().Padding(0.0f, 0.0f, 10.0f, 0.0f)
 			[
 				SNew(SBox).WidthOverride(96.0f).HeightOverride(96.0f)[ ThumbWidget ]
-			]
-			+ SHorizontalBox::Slot().FillWidth(1.0f).VAlign(VAlign_Center)
+			];
+		}
+		Header->AddSlot().FillWidth(1.0f).VAlign(VAlign_Center)[ Title ];
+		return Header;
+	}
+
+	TSharedRef<SWidget> SDreamShaderInspector::BuildPreview(UMaterialInterface* Material)
+	{
+		// Only re-render when the material changed or the model moved under it; re-slotting alone
+		// keeps the last frame.
+		const FString ObjectPath = Material->GetPathName();
+		if (PreviewedObjectPath != ObjectPath)
+		{
+			PreviewedObjectPath = ObjectPath;
+			LivePreview->SetMaterial(Material);
+		}
+		else
+		{
+			LivePreview->Refresh();
+		}
+
+		return SNew(SVerticalBox)
+			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center)
 			[
-				Title
+				SNew(SBorder)
+				.BorderImage(FAppStyle::Get().GetBrush("Brushes.Recessed"))
+				.Padding(FMargin(0.0f))
+				[
+					SNew(SBox).WidthOverride(224.0f).HeightOverride(224.0f)[ LivePreview.ToSharedRef() ]
+				]
+			]
+			+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0.0f, 4.0f, 0.0f, 0.0f)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.0f, 0.0f, 6.0f, 0.0f)
+				[
+					SNew(STextBlock).Text(LOCTEXT("PreviewMeshLabel", "Mesh")).ColorAndOpacity(FSlateColor::UseSubduedForeground()).TextStyle(FAppStyle::Get(), "SmallText")
+				]
+				+ SHorizontalBox::Slot().AutoWidth()
+				[
+					MeshPicker.ToSharedRef()
+				]
+				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(8.0f, 0.0f, 0.0f, 0.0f)
+				[
+					SNew(STextBlock).Text(LOCTEXT("PreviewDragHint", "drag to orbit")).ColorAndOpacity(FSlateColor::UseSubduedForeground()).TextStyle(FAppStyle::Get(), "SmallText")
+				]
 			];
 	}
 

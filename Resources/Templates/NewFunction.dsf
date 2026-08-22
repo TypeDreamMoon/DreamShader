@@ -1,0 +1,16 @@
+// {FILENAME} -- a DreamShader material function. Compiles to {ASSETPATH}.
+ShaderFunction(Name="{NAME}")
+{
+    Inputs = {
+        vec3 InColor;
+        opt float Strength = 1.0;
+    }
+
+    Outputs = {
+        vec3 OutColor;
+    }
+
+    Graph = {
+        OutColor = InColor * Strength;
+    }
+}
