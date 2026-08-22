@@ -56,6 +56,15 @@ namespace UE::DreamShader::Editor::Private
 			return Plugin.IsValid() ? FPaths::Combine(Plugin->GetBaseDir(), TEXT("Resources"), TEXT("Templates")) : FString();
 		}
 
+		// Under a root the editor may write into. IsWritableSourceFilePath is deliberately true for a
+		// path outside every root (an ad-hoc source is allowed to exist anywhere); a NEW file is not
+		// ad-hoc, it must land where the scan and the watcher will find it.
+		bool IsUnderWritableRoot(const FString& NormalizedDirectory)
+		{
+			const UE::DreamShader::FDreamShaderSourceRoot* Root = UE::DreamShader::FindSourceRootForFile(NormalizedDirectory / TEXT("x.dsm"));
+			return Root != nullptr && Root->bWritable;
+		}
+
 		bool IsValidStem(const FString& Stem)
 		{
 			if (Stem.IsEmpty() || !(FChar::IsAlpha(Stem[0]) || Stem[0] == TCHAR('_')))
@@ -111,7 +120,7 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 		const FString Directory = UE::DreamShader::NormalizeSourceFilePath(Request.Directory);
-		if (Directory.IsEmpty() || !UE::DreamShader::IsWritableSourceFilePath(Directory / TEXT("x.dsm")))
+		if (Directory.IsEmpty() || !IsUnderWritableRoot(Directory))
 		{
 			OutError = LOCTEXT("NewSourceReadOnly", "Choose a folder under the project's DShader root. A plugin's sources are read-only.").ToString();
 			return false;
@@ -143,7 +152,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		// Default into the project root when the caller's directory is not writable (a plugin's).
 		FString StartDirectory = UE::DreamShader::NormalizeSourceFilePath(DefaultDirectory);
-		if (StartDirectory.IsEmpty() || !UE::DreamShader::IsWritableSourceFilePath(StartDirectory / TEXT("x.dsm")))
+		if (StartDirectory.IsEmpty() || !IsUnderWritableRoot(StartDirectory))
 		{
 			StartDirectory = UE::DreamShader::NormalizeSourceFilePath(UE::DreamShader::GetSourceShaderDirectory());
 		}
