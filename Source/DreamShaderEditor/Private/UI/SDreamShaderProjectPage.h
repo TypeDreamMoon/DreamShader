@@ -7,20 +7,25 @@
 
 namespace UE::DreamShader::Editor::Private
 {
+	class FDreamShaderBrowserModel;
+	class SDreamShaderInspector;
+
 	// Project tab: a browsable, filterable grid of every material / material instance under /Game, with
-	// thumbnails, backed by the engine content-browser asset picker, plus a "create instance" action on
-	// the selected material. The inheritance detail panel is layered on in a later milestone.
+	// thumbnails, backed by the engine content-browser asset picker, over the shared inspector (which
+	// joins a picked asset back to the DreamShader source it was generated from, when there is one).
 	class SDreamShaderProjectPage : public SCompoundWidget
 	{
 	public:
 		SLATE_BEGIN_ARGS(SDreamShaderProjectPage) {}
+			SLATE_ARGUMENT(TSharedPtr<FDreamShaderBrowserModel>, Model)
 		SLATE_END_ARGS()
 
 		void Construct(const FArguments& InArgs);
 
 	private:
+		TSharedPtr<FDreamShaderBrowserModel> Model;
 		FAssetData SelectedAsset;
-		TSharedPtr<class SDreamShaderMaterialDetails> DetailsPanel;
+		TSharedPtr<SDreamShaderInspector> Inspector;
 
 		void OnAssetSelected(const FAssetData& AssetData);
 		FReply OnCreateInstanceClicked();

@@ -1,7 +1,8 @@
 #include "UI/SDreamShaderProjectPage.h"
 
 #include "UI/DreamShaderInstanceFactory.h"
-#include "UI/SDreamShaderMaterialDetails.h"
+#include "UI/Model/DreamShaderBrowserModel.h"
+#include "UI/SDreamShaderInspector.h"
 
 #include "AssetRegistry/AssetData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -78,6 +79,9 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderProjectPage::Construct(const FArguments& InArgs)
 	{
+		Model = InArgs._Model;
+		check(Model.IsValid());
+
 		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
 
 		FAssetPickerConfig PickerConfig;
@@ -165,7 +169,8 @@ namespace UE::DreamShader::Editor::Private
 				+ SSplitter::Slot()
 				.Value(0.38f)
 				[
-					SAssignNew(DetailsPanel, SDreamShaderMaterialDetails)
+					SAssignNew(Inspector, SDreamShaderInspector)
+					.Model(Model)
 				]
 			]
 		];
@@ -174,9 +179,9 @@ namespace UE::DreamShader::Editor::Private
 	void SDreamShaderProjectPage::OnAssetSelected(const FAssetData& AssetData)
 	{
 		SelectedAsset = AssetData;
-		if (DetailsPanel.IsValid())
+		if (Inspector.IsValid())
 		{
-			DetailsPanel->SetMaterial(Cast<UMaterialInterface>(AssetData.GetAsset()));
+			Inspector->SetMaterial(Cast<UMaterialInterface>(AssetData.GetAsset()));
 		}
 	}
 

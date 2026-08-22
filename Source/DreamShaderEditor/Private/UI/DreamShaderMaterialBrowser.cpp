@@ -1,6 +1,7 @@
 #include "UI/DreamShaderMaterialBrowser.h"
 
 #include "UI/DreamShaderInstanceFactory.h"
+#include "UI/Model/DreamShaderBrowserModel.h"
 #include "UI/SDreamShaderGenPage.h"
 #include "UI/SDreamShaderProjectPage.h"
 
@@ -130,6 +131,8 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderMaterialBrowser::Construct(const FArguments& InArgs)
 	{
+		Model = MakeShared<FDreamShaderBrowserModel>();
+
 		const auto MakePageToggle = [this](int32 PageIndex, const FText& Label) -> TSharedRef<SWidget>
 		{
 			return SNew(SCheckBox)
@@ -180,14 +183,19 @@ namespace UE::DreamShader::Editor::Private
 				+ SWidgetSwitcher::Slot()
 				[
 					SNew(SDreamShaderProjectPage)
+					.Model(Model)
 				]
 
 				+ SWidgetSwitcher::Slot()
 				[
 					SNew(SDreamShaderGenPage)
+					.Model(Model)
 				]
 			]
 		];
+
+		// After both pages exist, so each gets the first OnChanged.
+		Model->RefreshAll();
 	}
 
 	void SDreamShaderMaterialBrowser::SetActivePage(int32 PageIndex)

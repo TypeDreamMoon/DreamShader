@@ -7,6 +7,8 @@ class SWidgetSwitcher;
 
 namespace UE::DreamShader::Editor::Private
 {
+	class FDreamShaderBrowserModel;
+
 	// Registers (and tears down) the "Material Content Browser" nomad tab and its Tools-menu entry. Called
 	// once from the editor module's Startup/Shutdown. This is the first editor tab the plugin owns.
 	class FDreamShaderMaterialBrowser
@@ -19,6 +21,7 @@ namespace UE::DreamShader::Editor::Private
 	};
 
 	// The tab's root widget: a two-page switcher ("Project" and "Dream Shader Gen") over a shared toolbar.
+	// Owns the browser model both pages are views over.
 	class SDreamShaderMaterialBrowser : public SCompoundWidget
 	{
 	public:
@@ -28,6 +31,7 @@ namespace UE::DreamShader::Editor::Private
 		void Construct(const FArguments& InArgs);
 
 	private:
+		TSharedPtr<FDreamShaderBrowserModel> Model;
 		TSharedPtr<SWidgetSwitcher> PageSwitcher;
 		int32 ActivePageIndex = 0;
 

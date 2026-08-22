@@ -142,8 +142,8 @@ subdued sub-label. For `.dsf` and `.dsh` items the sub-label is `function · use
 | 1 | Enumerate `.dsm`, `.dsh` and `.dsf` under the source directory, excluding `DShader/Packages`, and sort |
 | 2 | Rebuild the material dependency graph to fill each header's and function's dependent count |
 | 3 | Recompute every item's status |
-| 4 | Clear the selection — the list is rebuilt, so the previously selected item no longer exists |
-| 5 | Overlay errors read from `diagnostics.json` |
+| 4 | Overlay errors from the bridge's diagnostics store |
+| 5 | Re-select the previously selected file by path, if it still exists — the list is rebuilt, so the entry objects are new |
 | 6 | Re-apply the search and filter check boxes |
 | 7 | Rebuild the preview pane |
 
@@ -168,21 +168,22 @@ block and would confuse block detection — and then resolves the asset destinat
 
 ### Error overlay
 
-Errors shown on this page are read straight out of
-`<Project>/Saved/DreamShader/Bridge/diagnostics.json`, not from the bridge's in-memory store. The
-page is deliberately decoupled from the bridge internals.
+Errors shown on this page come from the editor bridge's **in-memory diagnostics store** — the same
+records the bridge writes to `<Project>/Saved/DreamShader/Bridge/diagnostics.json` for external
+tools, read directly rather than through the file. With the bridge disabled
+(`-NoDreamShaderEditorBridge`) there is no overlay.
 
 | Rule | Detail |
 | :-- | :-- |
-| Accepted severities | an empty `severity`, or `error` compared case-insensitively |
-| Formatting | `L{Line}:{Column} {Message}` when the line is greater than zero, otherwise just the message |
-| Per file | **only the first accepted diagnostic is kept** |
+| Accepted severities | `error`, compared case-insensitively |
+| Formatting | `L{Line}:{Column} {Message}` |
+| Per file | every record is kept on the item; **the first error decides the status and the detail text** |
 | Effect | any matching item's status is overwritten to `compile error` |
 
 > [!NOTE]
-> A file with five errors shows one. Open the source in the editor extension, or read the Output Log,
-> for the full list. The plugin emits exactly one severity — `error` — so no warning or hint ever
-> reaches this list.
+> A file with five errors shows one in the list. Open the source in the editor extension, or read the
+> Output Log, for the full list. The plugin emits exactly one severity — `error` — so no warning or
+> hint ever reaches this list.
 
 ### Compile actions
 
