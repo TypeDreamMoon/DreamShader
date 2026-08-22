@@ -52,6 +52,7 @@ namespace UE::DreamShader::Editor::Private
 		TArray<TSharedPtr<FBrowserNavNode>> RootNodes;
 		TSharedPtr<STreeView<TSharedPtr<FBrowserNavNode>>> TreeView;
 		bool bSuppressSelectionEvents = false;
+		bool bBuiltOnce = false;
 
 		void RebuildTree();
 		TSharedPtr<FBrowserNavNode> BuildSourcesTree() const;

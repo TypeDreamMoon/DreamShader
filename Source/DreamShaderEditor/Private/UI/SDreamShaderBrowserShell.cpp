@@ -107,7 +107,10 @@ namespace UE::DreamShader::Editor::Private
 		// Restore the last session's layout and filters before the panes read them.
 		const UDreamShaderBrowserUserSettings* Settings = UDreamShaderBrowserUserSettings::Get();
 		SharedState->Scope = FBrowserScope::FromKey(Settings->NavigationScope);
-		SharedState->Scope.Mode = Settings->ViewMode;
+		if (Settings->NavigationScope.IsEmpty())
+		{
+			SharedState->Scope.Mode = Settings->ViewMode;
+		}
 		SharedState->Filter.bErrorsOnly = Settings->bErrorsOnly;
 		SharedState->Filter.bStaleOnly = Settings->bStaleOnly;
 		SharedState->Filter.bDivergedOnly = Settings->bDivergedOnly;
@@ -633,8 +636,15 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderBrowserShell::OnSelectionChanged(const TArray<TSharedPtr<FBrowserEntry>>& Entries)
 	{
+		// The lists re-announce their selection on every filter change (a keystroke in the search
+		// box); only a real change should rebuild the inspector and re-render its preview. The
+		// inspector follows model changes on its own.
+		const bool bSameSelection = Entries.Num() == Selection.Num()
+			&& Entries.Num() > 0
+			&& Entries[0].IsValid() && Selection[0].IsValid()
+			&& Entries[0] == Selection[0];
 		Selection = Entries;
-		if (Inspector.IsValid())
+		if (Inspector.IsValid() && !bSameSelection)
 		{
 			Inspector->SetEntry(Entries.Num() > 0 ? Entries[0] : nullptr);
 		}

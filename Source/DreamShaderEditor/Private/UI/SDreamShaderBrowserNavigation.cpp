@@ -172,6 +172,20 @@ namespace UE::DreamShader::Editor::Private
 	{
 		const FBrowserScope CurrentScope = SharedState->Scope;
 
+		// The model changes on every compile, and every rebuild makes new node objects, so the tree
+		// view's expansion (keyed by object) would collapse under the user each time. Carry it across
+		// by scope key; the first build expands the headers and the roots.
+		TSet<FString> ExpandedKeys;
+		if (TreeView.IsValid() && bBuiltOnce)
+		{
+			TSet<TSharedPtr<FBrowserNavNode>> Expanded;
+			TreeView->GetExpandedItems(Expanded);
+			for (const TSharedPtr<FBrowserNavNode>& Node : Expanded)
+			{
+				ExpandedKeys.Add(Node->Scope.ToKey() + (Node->Kind == FBrowserNavNode::EKind::SourcesHeader || Node->Kind == FBrowserNavNode::EKind::ContentHeader ? TEXT("#header") : TEXT("")));
+			}
+		}
+
 		RootNodes.Reset();
 		RootNodes.Add(BuildSourcesTree());
 		RootNodes.Add(BuildContentTree());
@@ -179,14 +193,34 @@ namespace UE::DreamShader::Editor::Private
 		if (TreeView.IsValid())
 		{
 			TreeView->RequestTreeRefresh();
-			for (const TSharedPtr<FBrowserNavNode>& Root : RootNodes)
+			if (!bBuiltOnce)
 			{
-				TreeView->SetItemExpansion(Root, true);
-				for (const TSharedPtr<FBrowserNavNode>& Child : Root->Children)
+				for (const TSharedPtr<FBrowserNavNode>& Root : RootNodes)
 				{
-					TreeView->SetItemExpansion(Child, true);
+					TreeView->SetItemExpansion(Root, true);
+					for (const TSharedPtr<FBrowserNavNode>& Child : Root->Children)
+					{
+						TreeView->SetItemExpansion(Child, true);
+					}
 				}
 			}
+			else
+			{
+				for (const FString& Key : ExpandedKeys)
+				{
+					const bool bHeader = Key.EndsWith(TEXT("#header"));
+					const FBrowserScope Scope = FBrowserScope::FromKey(bHeader ? Key.LeftChop(7) : Key);
+					TArray<TSharedPtr<FBrowserNavNode>> Ancestors;
+					TSharedPtr<FBrowserNavNode> Node = bHeader
+						? RootNodes[Scope.Mode == EDreamShaderBrowserViewMode::Sources ? 0 : 1]
+						: FindNodeForScope(RootNodes, Scope, Ancestors);
+					if (Node.IsValid())
+					{
+						TreeView->SetItemExpansion(Node, true);
+					}
+				}
+			}
+			bBuiltOnce = true;
 		}
 		SelectScope(CurrentScope);
 	}
