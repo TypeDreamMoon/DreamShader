@@ -196,6 +196,7 @@ namespace UE::DreamShader::Editor::Private
 
 		// After both pages exist, so each gets the first OnChanged.
 		Model->RefreshAll();
+		Model->BindToEditorEvents();
 	}
 
 	void SDreamShaderMaterialBrowser::SetActivePage(int32 PageIndex)

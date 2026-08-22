@@ -2,6 +2,7 @@
 
 #include "UI/DreamShaderBrowserActions.h"
 
+#include "Bridge/DreamShaderEditorBridge.h"
 #include "DreamShaderModule.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
 #include "UI/DreamShaderInstanceFactory.h"
@@ -19,6 +20,22 @@
 
 namespace UE::DreamShader::Editor::Private
 {
+	namespace
+	{
+		// Through the bridge when there is one, so the result lands in the diagnostics store (and from
+		// there in diagnostics.json and the VSCode extension) and a previous error on the file is
+		// cleared on success. A direct generator call does neither. Forced and in memory, like the
+		// buttons always were.
+		bool CompileSource(const FString& SourceFilePath, FString& OutMessage)
+		{
+			if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
+			{
+				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, /*bInMemory*/ true, OutMessage);
+			}
+			return UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, OutMessage, /*bForce*/ true, /*bTransient*/ true);
+		}
+	}
+
 	void FDreamShaderBrowserActions::Notify(const FText& Message, bool bSuccess)
 	{
 		FNotificationInfo Info(Message);
@@ -39,8 +56,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		FString Message;
-		const bool bSuccess = UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(
-			Entry->Source->FilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+		const bool bSuccess = CompileSource(Entry->Source->FilePath, Message);
 
 		Notify(
 			FText::Format(
@@ -77,7 +93,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			SlowTask.EnterProgressFrame(1.0f, FText::FromString(Entry->Source->DisplayName));
 			FString Message;
-			if (UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Entry->Source->FilePath, Message, /*bForce*/ true, /*bTransient*/ true))
+			if (CompileSource(Entry->Source->FilePath, Message))
 			{
 				Model.RefreshEntry(Entry);
 			}
@@ -122,7 +138,7 @@ namespace UE::DreamShader::Editor::Private
 		if (!Material && Entry->Source.IsSet())
 		{
 			FString Message;
-			if (UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Entry->Source->FilePath, Message, /*bForce*/ true, /*bTransient*/ true))
+			if (CompileSource(Entry->Source->FilePath, Message))
 			{
 				Model.RefreshEntry(Entry);
 				Material = Entry->ResolveMaterial();

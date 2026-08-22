@@ -1960,7 +1960,59 @@ namespace UE::DreamShader::Editor
 		return bResult;
 	}
 
+	namespace
+	{
+		FOnDreamShaderSourceGenerated GOnDreamShaderSourceGenerated;
+
+		// Fires OnDreamShaderSourceGenerated for the outermost generation only: GenerateAssetsFromFile
+		// calls GenerateMaterialFromFile for the material half, and one source is one notice.
+		struct FScopedGenerationNotice
+		{
+			static int32 Depth;
+			const FString SourceFilePath;
+			bool bSucceeded = false;
+
+			explicit FScopedGenerationNotice(const FString& InSourceFilePath)
+				: SourceFilePath(UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath))
+			{
+				++Depth;
+			}
+
+			bool Report(bool bResult)
+			{
+				bSucceeded = bResult;
+				return bResult;
+			}
+
+			~FScopedGenerationNotice()
+			{
+				if (--Depth == 0)
+				{
+					GOnDreamShaderSourceGenerated.Broadcast(SourceFilePath, bSucceeded);
+				}
+			}
+		};
+		int32 FScopedGenerationNotice::Depth = 0;
+	}
+
+	FOnDreamShaderSourceGenerated& OnDreamShaderSourceGenerated()
+	{
+		return GOnDreamShaderSourceGenerated;
+	}
+
 	bool FMaterialGenerator::GenerateAssetsFromFile(const FString& InSourceFilePath, FDreamShaderError& OutMessage, const bool bForce, const bool bTransient)
+	{
+		FScopedGenerationNotice Notice(InSourceFilePath);
+		return Notice.Report(GenerateAssetsFromFileInternal(InSourceFilePath, OutMessage, bForce, bTransient));
+	}
+
+	bool FMaterialGenerator::GenerateMaterialFromFile(const FString& InSourceFilePath, FDreamShaderError& OutMessage, const bool bForce, const bool bTransient)
+	{
+		FScopedGenerationNotice Notice(InSourceFilePath);
+		return Notice.Report(GenerateMaterialFromFileInternal(InSourceFilePath, OutMessage, bForce, bTransient));
+	}
+
+	bool FMaterialGenerator::GenerateAssetsFromFileInternal(const FString& InSourceFilePath, FDreamShaderError& OutMessage, const bool bForce, const bool bTransient)
 	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
 		FScopedSlowTask SourceSlowTask(
@@ -3006,7 +3058,7 @@ namespace UE::DreamShader::Editor
 		return bResult;
 	}
 
-	bool FMaterialGenerator::GenerateMaterialFromFile(const FString& InSourceFilePath, FDreamShaderError& OutMessage, const bool bForce, const bool bTransient)
+	bool FMaterialGenerator::GenerateMaterialFromFileInternal(const FString& InSourceFilePath, FDreamShaderError& OutMessage, const bool bForce, const bool bTransient)
 	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
 		FScopedSlowTask MaterialSlowTask(

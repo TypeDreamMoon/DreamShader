@@ -6,12 +6,15 @@
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
 #include "DreamShaderDiagnostic.h"
 #include "DreamShaderModule.h"
+#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.h"
 #include "SourceFiles/DreamShaderSourceFileUtils.h"
 #include "UI/DreamShaderGeneratedAssetPath.h"
 
+#include "AssetRegistry/IAssetRegistry.h"
 #include "HAL/FileManager.h"
+#include "Materials/MaterialFunctionInterface.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/Paths.h"
 #include "UObject/Package.h"
@@ -124,6 +127,190 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
+	FDreamShaderBrowserModel::~FDreamShaderBrowserModel()
+	{
+		UnbindFromEditorEvents();
+	}
+
+	void FDreamShaderBrowserModel::BindToEditorEvents()
+	{
+		if (bBoundToEditorEvents)
+		{
+			return;
+		}
+		bBoundToEditorEvents = true;
+
+		// Every compile route ends in the generator, so this one signal covers the watcher, the
+		// browser's own buttons, the provenance actions and anything external driving the bridge.
+		SourceGeneratedHandle = UE::DreamShader::Editor::OnDreamShaderSourceGenerated().AddSP(
+			this, &FDreamShaderBrowserModel::OnSourceGenerated);
+
+		if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
+		{
+			DiagnosticsChangedHandle = Bridge->OnDiagnosticsChanged().AddSP(this, &FDreamShaderBrowserModel::OnDiagnosticsChanged);
+			SourceTreeChangedHandle = Bridge->OnSourceTreeChanged().AddSP(this, &FDreamShaderBrowserModel::OnSourceTreeChanged);
+			SourceFileModifiedHandle = Bridge->OnSourceFileModified().AddSP(this, &FDreamShaderBrowserModel::MarkSourceDirty);
+		}
+
+		if (IAssetRegistry* AssetRegistry = IAssetRegistry::Get())
+		{
+			AssetsAddedHandle = AssetRegistry->OnAssetsAdded().AddSP(this, &FDreamShaderBrowserModel::OnAssetsAddedOrRemoved);
+			AssetsRemovedHandle = AssetRegistry->OnAssetsRemoved().AddSP(this, &FDreamShaderBrowserModel::OnAssetsAddedOrRemoved);
+			AssetRenamedHandle = AssetRegistry->OnAssetRenamed().AddSP(this, &FDreamShaderBrowserModel::OnAssetRenamed);
+		}
+	}
+
+	void FDreamShaderBrowserModel::UnbindFromEditorEvents()
+	{
+		if (FlushTickerHandle.IsValid())
+		{
+			FTSTicker::GetCoreTicker().RemoveTicker(FlushTickerHandle);
+			FlushTickerHandle.Reset();
+		}
+		if (!bBoundToEditorEvents)
+		{
+			return;
+		}
+		bBoundToEditorEvents = false;
+
+		UE::DreamShader::Editor::OnDreamShaderSourceGenerated().Remove(SourceGeneratedHandle);
+		if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
+		{
+			Bridge->OnDiagnosticsChanged().Remove(DiagnosticsChangedHandle);
+			Bridge->OnSourceTreeChanged().Remove(SourceTreeChangedHandle);
+			Bridge->OnSourceFileModified().Remove(SourceFileModifiedHandle);
+		}
+		if (IAssetRegistry* AssetRegistry = IAssetRegistry::Get())
+		{
+			AssetRegistry->OnAssetsAdded().Remove(AssetsAddedHandle);
+			AssetRegistry->OnAssetsRemoved().Remove(AssetsRemovedHandle);
+			AssetRegistry->OnAssetRenamed().Remove(AssetRenamedHandle);
+		}
+	}
+
+	void FDreamShaderBrowserModel::OnSourceGenerated(const FString& SourceFilePath, bool /*bSucceeded*/)
+	{
+		// A file the scan has never seen is a new file: only a rescan can list it.
+		if (EntriesBySourcePath.Contains(SourceFilePath))
+		{
+			MarkSourceDirty(SourceFilePath);
+		}
+		else if (IFileManager::Get().FileExists(*SourceFilePath))
+		{
+			bRescanPending = true;
+			ScheduleFlush();
+		}
+	}
+
+	void FDreamShaderBrowserModel::OnDiagnosticsChanged()
+	{
+		bDiagnosticsPending = true;
+		ScheduleFlush();
+	}
+
+	void FDreamShaderBrowserModel::OnSourceTreeChanged()
+	{
+		bRescanPending = true;
+		ScheduleFlush();
+	}
+
+	void FDreamShaderBrowserModel::OnAssetsAddedOrRemoved(TConstArrayView<FAssetData> Assets)
+	{
+		for (const FAssetData& AssetData : Assets)
+		{
+			MarkAssetDirty(AssetData);
+		}
+	}
+
+	void FDreamShaderBrowserModel::OnAssetRenamed(const FAssetData& AssetData, const FString& OldObjectPath)
+	{
+		MarkAssetDirty(AssetData);
+		if (TSharedPtr<FBrowserEntry> Entry = FindByObjectPath(OldObjectPath))
+		{
+			MarkSourceDirty(Entry->Key);
+		}
+	}
+
+	void FDreamShaderBrowserModel::MarkSourceDirty(const FString& SourceFilePath)
+	{
+		DirtySourcePaths.Add(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath));
+		ScheduleFlush();
+	}
+
+	void FDreamShaderBrowserModel::MarkAssetDirty(const FAssetData& AssetData)
+	{
+		// The registry announces every asset in the project; only materials and functions can be ours,
+		// and only one the scan resolved to matters.
+		const UClass* AssetClass = AssetData.GetClass();
+		if (!AssetClass
+			|| !(AssetClass->IsChildOf(UMaterialInterface::StaticClass()) || AssetClass->IsChildOf(UMaterialFunctionInterface::StaticClass())))
+		{
+			return;
+		}
+		if (TSharedPtr<FBrowserEntry> Entry = FindByObjectPath(AssetData.GetObjectPathString()))
+		{
+			MarkSourceDirty(Entry->Key);
+		}
+	}
+
+	void FDreamShaderBrowserModel::ScheduleFlush()
+	{
+		if (FlushTickerHandle.IsValid())
+		{
+			return;
+		}
+		// One flush per burst: a save that recompiles a header and its twelve dependents raises a
+		// dozen generation notices and a diagnostics commit, and the pages should rebuild once.
+		FlushTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+			FTickerDelegate::CreateSP(this, &FDreamShaderBrowserModel::Flush), 0.2f);
+	}
+
+	bool FDreamShaderBrowserModel::Flush(float /*DeltaTime*/)
+	{
+		FlushTickerHandle.Reset();
+
+		if (bRescanPending)
+		{
+			bRescanPending = false;
+			bDiagnosticsPending = false;
+			DirtySourcePaths.Reset();
+			RefreshAll();
+			return false;
+		}
+
+		bool bAnyChange = false;
+		for (const FString& SourcePath : DirtySourcePaths)
+		{
+			if (const TSharedPtr<FBrowserEntry>* Entry = EntriesBySourcePath.Find(SourcePath))
+			{
+				RefreshEntryInPlace(**Entry);
+				bAnyChange = true;
+			}
+		}
+		DirtySourcePaths.Reset();
+
+		if (bDiagnosticsPending)
+		{
+			bDiagnosticsPending = false;
+			for (const TSharedPtr<FBrowserEntry>& Entry : Entries)
+			{
+				if (Entry->Source.IsSet())
+				{
+					// The error overlay sits on top of the computed status, so recompute first or a
+					// cleared error would leave the stale "compile error" behind.
+					RefreshEntryInPlace(*Entry);
+				}
+			}
+			bAnyChange = true;
+		}
+
+		if (bAnyChange)
+		{
+			OnChanged.Broadcast();
+		}
+		return false; // one-shot
+	}
+
 	void FDreamShaderBrowserModel::RefreshAll()
 	{
 		// Creating <Plugin>/DShader is the first thing anyone does with plugin sources, and the root
@@ -188,16 +375,34 @@ namespace UE::DreamShader::Editor::Private
 		OnChanged.Broadcast();
 	}
 
+	void FDreamShaderBrowserModel::RefreshStatuses()
+	{
+		for (const TSharedPtr<FBrowserEntry>& Entry : Entries)
+		{
+			RefreshEntryInPlace(*Entry);
+		}
+		OnChanged.Broadcast();
+	}
+
 	void FDreamShaderBrowserModel::RefreshEntry(const TSharedPtr<FBrowserEntry>& Entry)
 	{
 		if (!Entry.IsValid() || !Entry->Source.IsSet())
 		{
 			return;
 		}
-		ComputeSourceStatus(*Entry->Source);
-		OverlayDiagnostics(*Entry->Source);
-		AttachAssetHalf(*Entry);
+		RefreshEntryInPlace(*Entry);
 		OnChanged.Broadcast();
+	}
+
+	void FDreamShaderBrowserModel::RefreshEntryInPlace(FBrowserEntry& Entry)
+	{
+		if (!Entry.Source.IsSet())
+		{
+			return;
+		}
+		ComputeSourceStatus(*Entry.Source);
+		OverlayDiagnostics(*Entry.Source);
+		AttachAssetHalf(Entry);
 	}
 
 	void FDreamShaderBrowserModel::MarkCompileFailed(const TSharedPtr<FBrowserEntry>& Entry, const FString& Message)

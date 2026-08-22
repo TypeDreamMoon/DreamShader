@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "Containers/Ticker.h"
 #include "CoreMinimal.h"
 #include "UI/Model/DreamShaderBrowserEntry.h"
 
@@ -28,9 +29,22 @@ namespace UE::DreamShader::Editor::Private
 	class FDreamShaderBrowserModel : public TSharedFromThis<FDreamShaderBrowserModel>
 	{
 	public:
+		~FDreamShaderBrowserModel();
+
+		// Follow the editor without a manual Refresh: a generation finishing (any route), the bridge's
+		// diagnostics commit, the source watcher, and the asset registry all mark what they touched
+		// and the model catches up on the next tick, once, however many of them fired. Only the shell
+		// calls this; tests drive the model directly. Unbound on destruction.
+		void BindToEditorEvents();
+		void UnbindFromEditorEvents();
+
 		// Rescan the source roots, rebuild the dependency graph, recompute every status, overlay the
 		// bridge's diagnostics. Broadcasts OnChanged.
 		void RefreshAll();
+
+		// Recompute every entry's status and diagnostics without rescanning the tree. Broadcasts
+		// OnChanged.
+		void RefreshStatuses();
 
 		// Recompute one entry's source status (after a compile) and re-overlay its diagnostics.
 		// Broadcasts OnChanged.
@@ -59,8 +73,34 @@ namespace UE::DreamShader::Editor::Private
 		TMap<FString, TSharedPtr<FBrowserEntry>> EntriesBySourcePath;
 		TMap<FString, TSet<FString>> DependentsByFile;
 
+		// Pending editor-driven work, coalesced into one Flush per tick.
+		TSet<FString> DirtySourcePaths;
+		bool bRescanPending = false;
+		bool bDiagnosticsPending = false;
+		FTSTicker::FDelegateHandle FlushTickerHandle;
+
+		bool bBoundToEditorEvents = false;
+		FDelegateHandle SourceGeneratedHandle;
+		FDelegateHandle DiagnosticsChangedHandle;
+		FDelegateHandle SourceTreeChangedHandle;
+		FDelegateHandle SourceFileModifiedHandle;
+		FDelegateHandle AssetsAddedHandle;
+		FDelegateHandle AssetsRemovedHandle;
+		FDelegateHandle AssetRenamedHandle;
+
 		void ComputeSourceStatus(FBrowserSourceInfo& Source) const;
 		void AttachAssetHalf(FBrowserEntry& Entry) const;
 		void OverlayDiagnostics(FBrowserSourceInfo& Source) const;
+		void RefreshEntryInPlace(FBrowserEntry& Entry);
+
+		void OnSourceGenerated(const FString& SourceFilePath, bool bSucceeded);
+		void OnDiagnosticsChanged();
+		void OnSourceTreeChanged();
+		void OnAssetsAddedOrRemoved(TConstArrayView<FAssetData> Assets);
+		void OnAssetRenamed(const FAssetData& AssetData, const FString& OldObjectPath);
+		void MarkSourceDirty(const FString& SourceFilePath);
+		void MarkAssetDirty(const FAssetData& AssetData);
+		void ScheduleFlush();
+		bool Flush(float DeltaTime);
 	};
 }

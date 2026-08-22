@@ -28,6 +28,28 @@ namespace UE::DreamShader::Editor::Private
 		void Shutdown();
 		const TArray<FDreamShaderDiagnosticRecord>* GetDiagnosticsForSource(const FString& SourceFilePath) const { return DiagnosticsStore.FindDiagnostics(SourceFilePath); }
 
+		/**
+		 * One compile through the bridge, synchronously. The diagnostics store, diagnostics.json, any
+		 * request parked on this file, and OnDiagnosticsChanged all follow from it -- which a direct
+		 * FMaterialGenerator call bypasses, leaving the VSCode extension and the Material Content
+		 * Browser looking at the previous result. The watcher's own compiles go through here too.
+		 */
+		bool CompileSourceFile(const FString& SourceFilePath, bool bForce, bool bInMemory, FString& OutMessage);
+
+		/** After the diagnostics store was committed (written out) following one or more compiles. */
+		FSimpleMulticastDelegate& OnDiagnosticsChanged() { return DiagnosticsChangedEvent; }
+		/** A source file appeared, disappeared, or the watcher asked for a rescan. Fires even when
+		 *  auto-compile-on-save is off: the set of files changed regardless of whether they compile. */
+		FSimpleMulticastDelegate& OnSourceTreeChanged() { return SourceTreeChangedEvent; }
+		DECLARE_MULTICAST_DELEGATE_OneParam(FOnSourceFileModified, const FString& /*NormalizedPath*/);
+		/** An existing source file's contents changed on disk (before any compile it may trigger). */
+		FOnSourceFileModified& OnSourceFileModified() { return SourceFileModifiedEvent; }
+
+		bool IsBusy() const { return bBusy; }
+		const FString& GetBusyAction() const { return BusyAction; }
+		const FString& GetLastResult() const { return LastResult; }
+		bool IsBridgeOwner() const { return bIsBridgeOwner; }
+
 	private:
 		static FString GetBridgeDirectory();
 		static FString GetRequestDirectory();
@@ -116,29 +138,13 @@ namespace UE::DreamShader::Editor::Private
 		void ExportMaterialFunctionToDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 
 		/**
-		 * The three answers to a divergence report -- a generated asset that no longer matches what
-		 * DreamShader last wrote into it. Each one decides which copy is the truth: Revert says the
-		 * source is and rebuilds over the asset, Adopt says the asset is and rewrites the source from
-		 * it, Detach says neither and takes the asset out of DreamShader's hands for good. All three
-		 * take UObject because they are offered on materials, material functions and the ThinCustom
-		 * instance alike.
+		 * Adds whichever of the three provenance answers (Revert / Adopt / Detach, see
+		 * Provenance/DreamShaderProvenanceActions.h) apply to this asset. Shared by every asset-type
+		 * submenu.
 		 */
-		void RevertGeneratedAssetToSource(TWeakObjectPtr<UObject> Asset);
-		void AdoptGeneratedAssetIntoSource(TWeakObjectPtr<UObject> Asset);
-		void DetachGeneratedAssetFromDreamShader(TWeakObjectPtr<UObject> Asset);
-		/** Adds whichever of the three apply to this asset. Shared by every asset-type submenu. */
 		void PopulateProvenanceActions(FToolMenuSection& InSection, TWeakObjectPtr<UObject> Asset);
 		void PopulateMaterialInstanceAssetMenu(FToolMenuSection& InSection);
 		void PopulateMaterialInstanceDreamShaderMenu(UToolMenu* InMenu, TWeakObjectPtr<UObject> Instance);
-		/** Absolute, normalized path of the source an asset was generated from. */
-		static bool TryResolveGeneratedAssetSourceFile(UObject* Asset, FString& OutSourceFilePath, FString& OutError);
-		/**
-		 * Close any asset editor on this asset before acting on it, and reopen it afterwards. Used only
-		 * by the provenance actions -- a compile refuses instead, because it must never pop a dialog or
-		 * close a window on its own. See the definitions.
-		 */
-		static bool TryCloseAssetEditorsFor(UObject* Asset, bool& bOutWasOpen, FString& OutError);
-		static void ReopenAssetEditorFor(UObject* Asset, bool bWasOpen);
 		void CopyVirtualFunctionDefinition(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CreateVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void OpenVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
@@ -150,7 +156,7 @@ namespace UE::DreamShader::Editor::Private
 		void SetDiagnostics(const FString& SourceFilePath, TArray<FDreamShaderDiagnosticRecord>&& Diagnostics);
 		void ClearDiagnostics(const FString& SourceFilePath);
 		void ClearDiagnosticsForSourceAndDependencies(const FString& SourceFilePath);
-		void UpdateDiagnosticsFile() const;
+		void UpdateDiagnosticsFile();
 
 	private:
 		TMap<FString, double> PendingFiles;
@@ -186,6 +192,9 @@ namespace UE::DreamShader::Editor::Private
 		/** True while this process holds owner.lock. Starts false: ownership is taken, not assumed. */
 		bool bIsBridgeOwner = false;
 		bool bMenusRegistered = false;
+		FSimpleMulticastDelegate DiagnosticsChangedEvent;
+		FSimpleMulticastDelegate SourceTreeChangedEvent;
+		FOnSourceFileModified SourceFileModifiedEvent;
 	};
 
 	FDreamShaderEditorBridge* GetDreamShaderEditorBridge();
