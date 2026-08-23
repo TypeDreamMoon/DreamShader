@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-474
+480
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -361,6 +361,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | NameLabel | Name |
 | DreamShaderMaterialBrowser | NavContent | Content |
 | DreamShaderMaterialBrowser | NavSources | Sources |
+| DreamShaderMaterialBrowser | NavUnmanaged | Not managed by DreamShader |
 | DreamShaderMaterialBrowser | NewFunction | Material function (.dsf) |
 | DreamShaderMaterialBrowser | NewFunctionTip | A ShaderFunction block with one input, one optional input and one output. |
 | DreamShaderMaterialBrowser | NewFunctionTitle | New material function (.dsf) |
@@ -429,6 +430,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | QFErrorsTip | Sources whose last compile failed, or that could not be read. |
 | DreamShaderMaterialBrowser | QFHideLibraries | Hide functions |
 | DreamShaderMaterialBrowser | QFHideLibrariesTip | Drop every .dsf and .dsh from the list. |
+| DreamShaderMaterialBrowser | QFHideUnmanaged | Hide unmanaged |
+| DreamShaderMaterialBrowser | QFHideUnmanagedTip | Drop the materials DreamShader does not manage from the list. |
 | DreamShaderMaterialBrowser | QFInMemory | In memory |
 | DreamShaderMaterialBrowser | QFInMemoryTip | Materials that exist only in memory and have not been written to disk. |
 | DreamShaderMaterialBrowser | QFStale | Stale |
@@ -464,6 +467,9 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | StatusStale | stale |
 | DreamShaderMaterialBrowser | StatusStaleCount | stale |
 | DreamShaderMaterialBrowser | StatusTotal | {0} sources |
+| DreamShaderMaterialBrowser | StatusUnmanaged | not managed by DreamShader |
+| DreamShaderMaterialBrowser | StatusUnmanagedCount | not managed |
+| DreamShaderMaterialBrowser | StatusUnmanagedInstance | material instance · not managed by DreamShader |
 | DreamShaderMaterialBrowser | StatusUnresolved | unresolved |
 | DreamShaderMaterialBrowser | StatusUpToDate | up to date |
 | DreamShaderMaterialBrowser | Storage | Storage |
