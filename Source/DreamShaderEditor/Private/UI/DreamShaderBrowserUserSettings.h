@@ -63,6 +63,9 @@ public:
 	bool bHideLibraries = false;
 
 	UPROPERTY(Config)
+	bool bHideUnmanaged = false;
+
+	UPROPERTY(Config)
 	bool bTileView = false;
 
 	UPROPERTY(Config)

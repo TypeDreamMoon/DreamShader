@@ -54,7 +54,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!Entry.Source.IsSet())
 			{
-				return FText::GetEmpty();
+				return Entry.Asset.IsSet() ? FText::FromString(Entry.Asset->MountPoint) : FText::GetEmpty();
 			}
 			return Entry.Source->RootDisplayName.IsEmpty() ? LOCTEXT("RootProject", "Project") : FText::FromString(Entry.Source->RootDisplayName);
 		}
@@ -63,7 +63,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!Entry.Source.IsSet())
 			{
-				return FText::GetEmpty();
+				return GetBrowserEntryVisual(Entry).Label;
 			}
 			if (Entry.Source->IsLibrary())
 			{
@@ -98,25 +98,26 @@ namespace UE::DreamShader::Editor::Private
 
 			virtual TSharedRef<SWidget> GenerateWidgetForColumn(const FName& ColumnId) override
 			{
-				if (!Entry.IsValid() || !Entry->Source.IsSet())
+				if (!Entry.IsValid())
 				{
 					return SNullWidget::NullWidget;
 				}
-				const FBrowserSourceInfo& Source = *Entry->Source;
-				const FBrowserStatusVisual Visual = GetBrowserStatusVisual(Source.Status);
+				const FBrowserStatusVisual Visual = GetBrowserEntryVisual(*Entry);
+				const FText Detail = Entry->Source.IsSet() ? Entry->Source->StatusDetail : Visual.Label;
+				const FText NameTip = Entry->Source.IsSet() ? FText::FromString(Entry->Source->FilePath) : FText::FromString(Entry->GetObjectPath());
 
 				if (ColumnId == ColumnStatus)
 				{
 					return SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center)
 					[
-						SNew(STextBlock).Text(Visual.Glyph).ColorAndOpacity(FSlateColor(Visual.Color)).ToolTipText(Source.StatusDetail)
+						SNew(STextBlock).Text(Visual.Glyph).ColorAndOpacity(FSlateColor(Visual.Color)).ToolTipText(Detail)
 					];
 				}
 				if (ColumnId == ColumnName)
 				{
 					return SNew(SBox).VAlign(VAlign_Center).Padding(4.0f, 0.0f)
 					[
-						SNew(STextBlock).Text(FText::FromString(Source.DisplayName)).ToolTipText(FText::FromString(Source.FilePath))
+						SNew(STextBlock).Text(FText::FromString(Entry->GetDisplayName())).ToolTipText(NameTip)
 					];
 				}
 				if (ColumnId == ColumnRoot)
@@ -130,7 +131,7 @@ namespace UE::DreamShader::Editor::Private
 				{
 					return SNew(SBox).VAlign(VAlign_Center).Padding(4.0f, 0.0f)
 					[
-						SNew(STextBlock).Text(StateLabel(*Entry)).ColorAndOpacity(FSlateColor::UseSubduedForeground()).ToolTipText(Source.StatusDetail)
+						SNew(STextBlock).Text(StateLabel(*Entry)).ColorAndOpacity(FSlateColor::UseSubduedForeground()).ToolTipText(Detail)
 					];
 				}
 				if (ColumnId == ColumnAsset)
@@ -342,10 +343,12 @@ namespace UE::DreamShader::Editor::Private
 			switch (Column)
 			{
 			case EDreamShaderBrowserSortColumn::Status:
-				Order = static_cast<int32>(A->Source->Status) - static_cast<int32>(B->Source->Status);
+				// Unmanaged assets sort after every source status.
+				Order = (A->Source.IsSet() ? static_cast<int32>(A->Source->Status) : 100)
+					- (B->Source.IsSet() ? static_cast<int32>(B->Source->Status) : 100);
 				break;
 			case EDreamShaderBrowserSortColumn::Root:
-				Order = A->Source->RootDisplayName.Compare(B->Source->RootDisplayName, ESearchCase::IgnoreCase);
+				Order = RootLabel(*A).ToString().Compare(RootLabel(*B).ToString(), ESearchCase::IgnoreCase);
 				break;
 			case EDreamShaderBrowserSortColumn::Asset:
 				Order = A->GetObjectPath().Compare(B->GetObjectPath(), ESearchCase::IgnoreCase);
@@ -368,13 +371,14 @@ namespace UE::DreamShader::Editor::Private
 
 	TSharedRef<ITableRow> SDreamShaderSourcesView::OnGenerateTile(TSharedPtr<FBrowserEntry> Item, const TSharedRef<STableViewBase>& OwnerTable)
 	{
-		const FBrowserStatusVisual Visual = GetBrowserStatusVisual(Item->Source.IsSet() ? Item->Source->Status : EBrowserSourceStatus::NotCompiled);
+		const FBrowserStatusVisual Visual = GetBrowserEntryVisual(*Item);
 
 		TSharedRef<SWidget> ThumbWidget = SNullWidget::NullWidget;
-		if (UMaterialInterface* Material = Item->ResolveMaterial())
+		if (Item->Asset.IsSet() && Item->Asset->AssetData.IsValid())
 		{
-			// Held by the thumbnail widget itself; the shared pool renders it on demand.
-			TSharedRef<FAssetThumbnail> Thumbnail = MakeShared<FAssetThumbnail>(Material, 96, 96, UThumbnailManager::Get().GetSharedThumbnailPool());
+			// From the registry data, so a grid of a thousand unmanaged materials loads none of them;
+			// the shared pool renders (and caches) the thumbnail on demand.
+			TSharedRef<FAssetThumbnail> Thumbnail = MakeShared<FAssetThumbnail>(Item->Asset->AssetData, 96, 96, UThumbnailManager::Get().GetSharedThumbnailPool());
 			ThumbWidget = Thumbnail->MakeThumbnailWidget();
 		}
 		else
@@ -391,7 +395,7 @@ namespace UE::DreamShader::Editor::Private
 		return SNew(STableRow<TSharedPtr<FBrowserEntry>>, OwnerTable)
 			.Style(FAppStyle::Get(), "ContentBrowser.AssetListView.TileTableRow")
 			.Padding(FMargin(4.0f))
-			.ToolTipText(Item->Source.IsSet() ? Item->Source->StatusDetail : FText::GetEmpty())
+			.ToolTipText(Item->Source.IsSet() ? Item->Source->StatusDetail : FText::FromString(Item->GetObjectPath()))
 			[
 				SNew(SVerticalBox)
 				+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center)

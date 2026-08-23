@@ -9,9 +9,12 @@
 
 #include "UI/Model/DreamShaderBrowserModel.h"
 
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "DreamShaderModule.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/AutomationTest.h"
+#include "UObject/Package.h"
 #include "UObject/UObjectGlobals.h"
 
 namespace UE::DreamShader::Editor::Private::Tests
@@ -19,6 +22,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	// Fixture helpers shared with DreamShaderAutomationTests.cpp (defined there, external linkage).
 	FString MakeUniqueTestAssetName(const TCHAR* Prefix);
 	FString MakeAutomationObjectPath(const FString& AssetName);
+	FString GetAutomationSourceDirectory();
 	bool WriteAutomationSourceFile(FAutomationTestBase& Test, const FString& FileName, const FString& SourceText, FString& OutSourceFilePath);
 	void AddExpectedNewAssetProbeWarnings(FAutomationTestBase& Test, const FString& ObjectPath);
 	void AddExpectedAutomationCleanupWarnings(FAutomationTestBase& Test);
@@ -150,8 +154,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 // The states a .dsm moves through as the browser sees them: never compiled -> compiled in memory
-// (which is NOT stale: a memory-only build stamps no hash) -> persisted and current -> stale once
-// the source moves. Also the join from the generated asset back to its scanned source entry.
+// (current, because a memory-only build stamps its hash like a saved one) -> persisted and current
+// -> stale once the source moves. Also the join from the generated asset back to its scanned source.
 bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor;
@@ -189,7 +193,7 @@ bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("No asset half before a compile"), Entry->Asset.IsSet());
 	TestEqual(TEXT("A .dsm is a material, not a library"), static_cast<int32>(Entry->Source->Kind), static_cast<int32>(EBrowserSourceKind::Material));
 
-	// 1. Memory-only compile: the path is stamped, the hash deliberately is not.
+	// 1. Memory-only compile: path and hash are stamped like a saved build's, so it reads current.
 	FString Message;
 	if (!TestTrue(FString::Printf(TEXT("In-memory generation succeeds: %s"), *Message),
 			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true)))
@@ -197,7 +201,7 @@ bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 		return false;
 	}
 	Model.RefreshEntry(Entry);
-	ExpectStatus(*this, TEXT("After an in-memory compile"), Entry, EBrowserSourceStatus::InMemoryUntracked);
+	ExpectStatus(*this, TEXT("After an in-memory compile"), Entry, EBrowserSourceStatus::UpToDate);
 	if (TestTrue(TEXT("The asset half is attached after a compile"), Entry->Asset.IsSet()))
 	{
 		TestEqual(TEXT("A memory-only build reads as in-memory storage"), static_cast<int32>(Entry->Asset->Storage), static_cast<int32>(EBrowserStorage::InMemory));
@@ -304,6 +308,69 @@ bool FDreamShaderBrowserModelLibraryTest::RunTest(const FString& Parameters)
 			Material->Source->Imports.Contains(HeaderPath));
 		TestEqual(TEXT("A header imports nothing"), Header->Source->Imports.Num(), 0);
 	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderBrowserModelUnmanagedTest,
+	"DreamShader.Browser.Model.UnmanagedMaterialsAreListed",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A material DreamShader never generated is still a material in the project: it gets a row of its
+// own, without a source half, so the browser covers everything -- and only where it belongs.
+bool FDreamShaderBrowserModelUnmanagedTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedBrowserArtifacts Artifacts;
+	AddExpectedAutomationCleanupWarnings(*this);
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoPlain"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	const FString PackageName = FPackageName::ObjectPathToPackageName(ObjectPath);
+	Artifacts.ObjectPaths.Add(ObjectPath);
+
+	// A hand-made material: a package, an object, and the registry told about it -- nothing saved.
+	UPackage* Package = CreatePackage(*PackageName);
+	UMaterial* Plain = NewObject<UMaterial>(Package, *AssetName, RF_Public | RF_Standalone);
+	if (!TestNotNull(TEXT("The plain material is created"), Plain))
+	{
+		return false;
+	}
+	FAssetRegistryModule::AssetCreated(Plain);
+
+	FDreamShaderBrowserModel Model;
+	Model.RefreshAll();
+
+	TSharedPtr<FBrowserEntry> Entry = Model.FindByObjectPath(ObjectPath);
+	if (!TestTrue(TEXT("The scan lists the plain material"), Entry.IsValid()))
+	{
+		return false;
+	}
+	TestTrue(TEXT("It is unmanaged: an asset half and no source half"), Entry->IsUnmanaged());
+	TestEqual(TEXT("Its key is its object path"), Entry->Key, ObjectPath);
+	TestEqual(TEXT("Its provenance is Foreign"), static_cast<int32>(Entry->Asset->Provenance), static_cast<int32>(EDreamShaderDigestState::Foreign));
+	TestEqual(TEXT("A never-saved material reads as in-memory"), static_cast<int32>(Entry->Asset->Storage), static_cast<int32>(EBrowserStorage::InMemory));
+	TestFalse(TEXT("A loaded asset is described from the object, not the registry"), Entry->Asset->bFromRegistryOnly);
+	TestEqual(TEXT("The mount point is /Game"), Entry->Asset->MountPoint, FString(TEXT("/Game")));
+	TestTrue(TEXT("The unmanaged count includes it"), Model.GetUnmanagedCount() >= 1);
+	TestEqual(TEXT("The display name is the asset name"), Entry->GetDisplayName(), AssetName);
+
+	FBrowserFilter Filter;
+	TestTrue(TEXT("The everything scope lists it"), Filter.Matches(*Entry));
+	Filter.SourceDirectoryScope = FBrowserFilter::UnmanagedScope();
+	TestTrue(TEXT("The unmanaged scope lists it"), Filter.Matches(*Entry));
+	Filter.SourceDirectoryScope = UE::DreamShader::NormalizeSourceFilePath(GetAutomationSourceDirectory());
+	TestFalse(TEXT("A source folder scope does not list it"), Filter.Matches(*Entry));
+	Filter = FBrowserFilter();
+	Filter.bHideUnmanaged = true;
+	TestFalse(TEXT("Hide unmanaged drops it"), Filter.Matches(*Entry));
+	Filter = FBrowserFilter();
+	Filter.bInMemoryOnly = true;
+	TestTrue(TEXT("The in-memory filter keeps a never-saved plain material"), Filter.Matches(*Entry));
+	Filter = FBrowserFilter();
+	Filter.bErrorsOnly = true;
+	TestFalse(TEXT("The errors filter drops it: it has no compile to fail"), Filter.Matches(*Entry));
 	return true;
 }
 

@@ -43,6 +43,20 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
+	// The glyph for a whole entry: its source status when it has a source, else "not managed".
+	inline FBrowserStatusVisual GetBrowserEntryVisual(const FBrowserEntry& Entry)
+	{
+		if (Entry.Source.IsSet())
+		{
+			return GetBrowserStatusVisual(Entry.Source->Status);
+		}
+		const bool bInstance = Entry.Asset.IsSet() && Entry.Asset->bIsInstance;
+		return { INVTEXT("◇"), FLinearColor(0.55f, 0.55f, 0.55f),
+			bInstance
+				? NSLOCTEXT("DreamShaderMaterialBrowser", "StatusUnmanagedInstance", "material instance · not managed by DreamShader")
+				: NSLOCTEXT("DreamShaderMaterialBrowser", "StatusUnmanaged", "not managed by DreamShader") };
+	}
+
 	inline FText GetBrowserProvenanceLabel(EDreamShaderDigestState State)
 	{
 		switch (State)

@@ -232,13 +232,14 @@ CDO is loaded at startup, for instance — were never affected by this.
   distinguishes an in-memory material from a persisted one.
 - Memory-only materials keep whatever node positions the construction pass produced — automatic
   layout is skipped in memory-only mode. See [Graph layout](graph-layout.md#when-layout-runs).
-- Provenance metadata is stamped on a ThinCustom instance in **both** modes, and additionally on the
-  base in persist mode. `Graph`-backend materials and material functions are stamped only when
-  persisted. See [Caching](caching.md#where-the-metadata-lives).
+- Provenance metadata — source path **and** hash — is stamped on every generated asset in **both**
+  modes; the hidden ThinCustom base additionally in persist mode. See
+  [Caching](caching.md#where-the-metadata-lives).
 - A generated instance is deliberately **not** `RF_Transactional`: material instances do not support
   undo/redo without desynchronizing the shader map.
-- Nothing here changes the source-hash short circuit; a memory-only compile still skips work when the
-  hash is unchanged.
+- Nothing here changes the source-hash short circuit; a memory-only compile skips work when the
+  hash is unchanged, whichever backend produced the asset. *Recompile DSM* and *Clean Generated
+  Shaders* force past it, so a cleaned shader directory is always refilled.
 
 ## Example
 

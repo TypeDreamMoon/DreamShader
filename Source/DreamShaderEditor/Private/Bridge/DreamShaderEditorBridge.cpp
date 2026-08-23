@@ -649,10 +649,11 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		PendingFiles.Reset();
+		ForcedPendingFiles.Reset();
 		DiagnosticsStore.Reset();
 	}
 
-	void FDreamShaderEditorBridge::QueueFullScan()
+	void FDreamShaderEditorBridge::QueueFullScan(const bool bForce)
 	{
 		TArray<FString> SourceFiles;
 		FDreamShaderSourceFileUtils::FindProjectMaterialSourceFiles(SourceFiles);
@@ -661,7 +662,12 @@ namespace UE::DreamShader::Editor::Private
 		const double Now = FPlatformTime::Seconds();
 		for (FString& SourceFile : SourceFiles)
 		{
-			PendingFiles.Add(UE::DreamShader::NormalizeSourceFilePath(SourceFile), Now);
+			const FString Normalized = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
+			PendingFiles.Add(Normalized, Now);
+			if (bForce)
+			{
+				ForcedPendingFiles.Add(Normalized);
+			}
 		}
 	}
 
@@ -786,9 +792,14 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	void FDreamShaderEditorBridge::QueueSourceFile(const FString& SourceFilePath)
+	void FDreamShaderEditorBridge::QueueSourceFile(const FString& SourceFilePath, const bool bForce)
 	{
-		PendingFiles.Add(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath), FPlatformTime::Seconds());
+		const FString Normalized = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		PendingFiles.Add(Normalized, FPlatformTime::Seconds());
+		if (bForce)
+		{
+			ForcedPendingFiles.Add(Normalized);
+		}
 	}
 
 	void FDreamShaderEditorBridge::QueueDependentSourcesForImport(const FString& ImportFilePath)
@@ -905,6 +916,7 @@ namespace UE::DreamShader::Editor::Private
 						if (UE::DreamShader::IsDreamShaderFunctionFile(FileChange.Filename))
 						{
 							Bridge->PendingFiles.Remove(SourceFile);
+							Bridge->ForcedPendingFiles.Remove(SourceFile);
 							Bridge->ClearDiagnosticsForSourceAndDependencies(SourceFile);
 							Bridge->UpdateDiagnosticsFile();
 						}
@@ -916,6 +928,7 @@ namespace UE::DreamShader::Editor::Private
 					else
 					{
 						Bridge->PendingFiles.Remove(SourceFile);
+						Bridge->ForcedPendingFiles.Remove(SourceFile);
 						Bridge->ClearDiagnosticsForSourceAndDependencies(SourceFile);
 						Bridge->RebuildDependencyGraph();
 						Bridge->UpdateDiagnosticsFile();
@@ -1077,7 +1090,8 @@ namespace UE::DreamShader::Editor::Private
 					FString SourceFilePath;
 					if (RequestObject->TryGetStringField(TEXT("sourceFile"), SourceFilePath) && !SourceFilePath.IsEmpty())
 					{
-						QueueSourceFile(SourceFilePath);
+						// An explicit request means "rebuild": the hash skip is for saves the watcher sees.
+						QueueSourceFile(SourceFilePath, /*bForce*/ true);
 						// Parked, not answered: the compile happens a few ticks later, after
 						// the debounce window. Answering now would report success before
 						// anything had been attempted.
@@ -1209,8 +1223,9 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::ProcessSourceFile(const FString& SourceFilePath)
 	{
+		const bool bForce = ForcedPendingFiles.Remove(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath)) > 0;
 		FString Message;
-		CompileSourceFile(SourceFilePath, /*bForce*/ false, /*bInMemory*/ true, Message);
+		CompileSourceFile(SourceFilePath, bForce, /*bInMemory*/ true, Message);
 	}
 
 	bool FDreamShaderEditorBridge::CompileSourceFile(const FString& InSourceFilePath, const bool bForce, const bool bInMemory, FString& OutMessage)
@@ -1790,7 +1805,7 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		QueueFullScan();
+		QueueFullScan(/*bForce*/ true);
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader queued a full .dsm/.dsf recompile scan."));
 	}
 
@@ -1802,7 +1817,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		CleanGeneratedShaderDirectory();
-		QueueFullScan();
+		QueueFullScan(/*bForce*/ true);
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader cleaned generated shader includes and queued a full .dsm/.dsf recompile scan."));
 	}
 

@@ -27,8 +27,11 @@ namespace UE::DreamShader::Editor::Private
 		bool bDivergedOnly = false;
 		bool bInMemoryOnly = false;
 		bool bHideLibraries = false;
-		// Absolute, normalized source directory; only entries under it pass. Empty = everywhere.
+		bool bHideUnmanaged = false;
+		// Absolute, normalized source directory; only sources under it pass. Empty = everything,
+		// unmanaged assets included. UnmanagedScope = only the unmanaged assets.
 		FString SourceDirectoryScope;
+		static const TCHAR* UnmanagedScope() { return TEXT("#unmanaged"); }
 
 		bool HasStatusFilter() const { return bErrorsOnly || bStaleOnly || bDivergedOnly || bInMemoryOnly; }
 		bool Matches(const FBrowserEntry& Entry) const;
@@ -75,13 +78,26 @@ namespace UE::DreamShader::Editor::Private
 
 		// Fills the asset half from a live object: storage, provenance, registry data.
 		static void DescribeAsset(UObject* Asset, FBrowserAssetInfo& OutInfo);
+		// Fills the asset half from the registry alone (no load): storage from the package flags,
+		// provenance provisional. Used for the unmanaged materials, which may number in the thousands.
+		static void DescribeAssetFromRegistry(const FAssetData& AssetData, FBrowserAssetInfo& OutInfo);
+
+		// The content roots the browser covers: /Game and the mount point of every plugin that ships
+		// DreamShader sources (where its generated assets land).
+		static TArray<FString> GetContentRoots();
+		int32 GetUnmanagedCount() const { return UnmanagedCount; }
 
 		FSimpleMulticastDelegate OnChanged;
 
 	private:
 		TArray<TSharedPtr<FBrowserEntry>> Entries;
 		TMap<FString, TSharedPtr<FBrowserEntry>> EntriesBySourcePath;
+		TMap<FString, TSharedPtr<FBrowserEntry>> EntriesByObjectPath; // lower-cased keys
 		TMap<FString, TSet<FString>> DependentsByFile;
+		int32 UnmanagedCount = 0;
+
+		void ScanUnmanagedAssets();
+		void IndexEntry(const TSharedPtr<FBrowserEntry>& Entry);
 
 		// Pending editor-driven work, coalesced into one Flush per tick.
 		TSet<FString> DirtySourcePaths;

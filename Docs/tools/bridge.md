@@ -140,8 +140,8 @@ and **rename** it into `Requests/` so it appears atomically.
 | `action` | Required fields | Effect | Answered |
 | :-- | :-- | :-- | :-- |
 | `ping` | — | Nothing. Confirms the bridge is serving | immediately |
-| `recompile` | `scope: "all"` | Rebuild the dependency graph and queue every project `.dsm` / `.dsf` for compilation | immediately, as **queued** — see below |
-| `recompile` | `scope: "file"`, `sourceFile` | Queue one file into the debounce queue | **when that compile finishes** |
+| `recompile` | `scope: "all"` | Rebuild the dependency graph and queue every project `.dsm` / `.dsf` for compilation, **forced** past the source-hash skip | immediately, as **queued** — see below |
+| `recompile` | `scope: "file"`, `sourceFile` | Queue one file into the debounce queue, **forced** past the source-hash skip | **when that compile finishes** |
 | `cleanGeneratedShaders` | — | Delete the generated `*.ush` includes, then queue a full rescan | immediately |
 | `previewMaterial` | `sourceFile` | Render one preview synchronously and write `preview.json` | immediately, with the render result |
 

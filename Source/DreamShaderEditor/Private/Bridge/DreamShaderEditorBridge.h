@@ -112,12 +112,19 @@ namespace UE::DreamShader::Editor::Private
 		/** Completes every request that was waiting on this source file. */
 		void ResolvePendingResponses(const FString& SourceFilePath, bool bOk, const FString& Message);
 
-		void QueueFullScan();
+		/**
+		 * Queue every project source. Forced when the caller MEANS a rebuild -- Recompile DSM, Clean
+		 * Generated Shaders, an explicit recompile request -- because an in-memory asset now carries a
+		 * source hash like a saved one, and the non-forced path would skip every unchanged source,
+		 * leaving a cleaned shader directory empty. The watcher's compile-on-save stays unforced: the
+		 * hash is the whole point there.
+		 */
+		void QueueFullScan(bool bForce = false);
 		void HandlePostEngineInit();
 		void HandleSettingsPropertyChanged(UObject* Object, struct FPropertyChangedEvent& Event);
 		/** Materialize every source file in memory. Never forces -- see the definition for why. */
 		void GenerateAllInMemoryMaterials();
-		void QueueSourceFile(const FString& SourceFilePath);
+		void QueueSourceFile(const FString& SourceFilePath, bool bForce = false);
 		void QueueDependentSourcesForImport(const FString& ImportFilePath);
 		void OnDirectoryChanged(const TArray<FFileChangeData>& FileChanges);
 		bool Tick(float DeltaSeconds);
@@ -164,6 +171,8 @@ namespace UE::DreamShader::Editor::Private
 
 	private:
 		TMap<FString, double> PendingFiles;
+		/** The subset of PendingFiles queued with force; consumed when the file is compiled. */
+		TSet<FString> ForcedPendingFiles;
 		/**
 		 * Requests waiting on a compile, keyed by the normalized source path.
 		 *

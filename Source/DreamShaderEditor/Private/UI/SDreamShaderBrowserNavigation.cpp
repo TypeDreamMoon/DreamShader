@@ -137,6 +137,7 @@ namespace UE::DreamShader::Editor::Private
 					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFDiverged", "Edited by hand"), LOCTEXT("QFDivergedTip", "Generated assets that no longer match what DreamShader last wrote into them."), &FBrowserFilter::bDivergedOnly) ]
 					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFInMemory", "In memory"), LOCTEXT("QFInMemoryTip", "Materials that exist only in memory and have not been written to disk."), &FBrowserFilter::bInMemoryOnly) ]
 					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFHideLibraries", "Hide functions"), LOCTEXT("QFHideLibrariesTip", "Drop every .dsf and .dsh from the list."), &FBrowserFilter::bHideLibraries) ]
+					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFHideUnmanaged", "Hide unmanaged"), LOCTEXT("QFHideUnmanagedTip", "Drop the materials DreamShader does not manage from the list."), &FBrowserFilter::bHideUnmanaged) ]
 				]
 			]
 		];
@@ -267,6 +268,17 @@ namespace UE::DreamShader::Editor::Private
 
 		SortChildrenRecursive(Header);
 		CountSourcesRecursive(Header);
+
+		// After the roots, unsorted on purpose: the materials DreamShader does not manage, in one place.
+		TSharedPtr<FBrowserNavNode> Unmanaged = MakeShared<FBrowserNavNode>();
+		Unmanaged->Kind = FBrowserNavNode::EKind::SourceFolder;
+		Unmanaged->DisplayName = LOCTEXT("NavUnmanaged", "Not managed by DreamShader").ToString();
+		Unmanaged->Scope.Mode = EDreamShaderBrowserViewMode::Sources;
+		Unmanaged->Scope.SourceDirectory = FBrowserFilter::UnmanagedScope();
+		Unmanaged->bChildrenPopulated = true;
+		Unmanaged->SourceCount = Model->GetUnmanagedCount();
+		Header->Children.Add(Unmanaged);
+		Header->SourceCount += Unmanaged->SourceCount;
 		return Header;
 	}
 
@@ -282,21 +294,7 @@ namespace UE::DreamShader::Editor::Private
 		// /Game, then the content root of every plugin that ships DreamShader sources -- that is where
 		// its generated assets land. Other plugins' content is reachable through the main Content
 		// Browser; listing every mounted root here would bury the ones that matter.
-		TArray<FString> ContentRoots;
-		ContentRoots.Add(TEXT("/Game"));
-		for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
-		{
-			if (!Root.bIsProjectRoot && !Root.PluginName.IsEmpty())
-			{
-				const FString MountPoint = FString::Printf(TEXT("/%s"), *Root.PluginName); // I18N-EXEMPT: mount point, not display text
-				if (FPackageName::MountPointExists(MountPoint + TEXT("/")))
-				{
-					ContentRoots.AddUnique(MountPoint);
-				}
-			}
-		}
-
-		for (const FString& ContentRoot : ContentRoots)
+		for (const FString& ContentRoot : FDreamShaderBrowserModel::GetContentRoots())
 		{
 			TSharedPtr<FBrowserNavNode> RootNode = MakeShared<FBrowserNavNode>();
 			RootNode->Kind = FBrowserNavNode::EKind::ContentRoot;

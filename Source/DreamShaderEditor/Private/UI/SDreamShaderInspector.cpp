@@ -166,7 +166,14 @@ namespace UE::DreamShader::Editor::Private
 		// moves -- a compile or materialize may have changed its storage, provenance or joined source.
 		if (Entry.IsValid() && Model.IsValid() && Model->FindBySourcePath(Entry->Key) != Entry && Entry->Asset.IsSet())
 		{
-			if (UObject* LiveAsset = FindObject<UObject>(nullptr, *Entry->Asset->ObjectPath))
+			// The selection is the one asset worth loading: an unmanaged row is described from the
+			// registry until now, and the preview needs the object anyway.
+			UObject* LiveAsset = FindObject<UObject>(nullptr, *Entry->Asset->ObjectPath);
+			if (!LiveAsset && Entry->Asset->bFromRegistryOnly)
+			{
+				LiveAsset = LoadObject<UObject>(nullptr, *Entry->Asset->ObjectPath);
+			}
+			if (LiveAsset)
 			{
 				Entry = Model->MakeEntryForAsset(LiveAsset);
 			}
@@ -261,6 +268,22 @@ namespace UE::DreamShader::Editor::Private
 			];
 		}
 
+		if (Entry->IsUnmanaged())
+		{
+			const FBrowserStatusVisual Visual = GetBrowserEntryVisual(*Entry);
+			Title->AddSlot().AutoHeight().Padding(0.0f, 4.0f, 0.0f, 0.0f)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot().AutoWidth().Padding(0.0f, 0.0f, 6.0f, 0.0f)
+				[
+					SNew(STextBlock).Text(Visual.Glyph).ColorAndOpacity(FSlateColor(Visual.Color))
+				]
+				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+				[
+					SNew(STextBlock).Text(Visual.Label).ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				]
+			];
+		}
 		if (Entry->Asset.IsSet())
 		{
 			Title->AddSlot().AutoHeight().Padding(0.0f, 2.0f, 0.0f, 0.0f)

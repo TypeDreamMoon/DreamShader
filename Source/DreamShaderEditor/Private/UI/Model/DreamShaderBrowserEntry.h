@@ -71,11 +71,16 @@ namespace UE::DreamShader::Editor::Private
 	{
 		FAssetData AssetData;
 		FString ObjectPath;
+		FString MountPoint; // "/Game", "/PluginName"
 		EBrowserStorage Storage = EBrowserStorage::OnDisk;
 		EDreamShaderDigestState Provenance = EDreamShaderDigestState::Foreign;
 		// Open in an asset editor: a rebuild refuses while it is, because the editor holds a
 		// pre-rebuild copy that its next Apply would write back.
 		bool bOpenInEditor = false;
+		bool bIsInstance = false;
+		// Described from the asset registry alone, without loading the asset: storage is exact, the
+		// provenance is provisional (Foreign until the object is loaded and its stamps can be read).
+		bool bFromRegistryOnly = false;
 	};
 
 	struct FBrowserEntry
@@ -87,6 +92,9 @@ namespace UE::DreamShader::Editor::Private
 
 		FString GetDisplayName() const;
 		bool IsLibrary() const { return Source.IsSet() && Source->IsLibrary(); }
+		// A material in the project that no scanned source generates: hand-authored, or an orphan whose
+		// source is gone. Listed so the browser covers every material, not only DreamShader's.
+		bool IsUnmanaged() const { return !Source.IsSet() && Asset.IsSet(); }
 		FString GetObjectPath() const;
 		// Loads (or finds) the material this entry stands for. Null for libraries and for sources
 		// that have not been compiled.

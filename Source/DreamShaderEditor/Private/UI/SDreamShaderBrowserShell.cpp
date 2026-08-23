@@ -116,6 +116,7 @@ namespace UE::DreamShader::Editor::Private
 		SharedState->Filter.bDivergedOnly = Settings->bDivergedOnly;
 		SharedState->Filter.bInMemoryOnly = Settings->bInMemoryOnly;
 		SharedState->Filter.bHideLibraries = Settings->bHideLibraries;
+		SharedState->Filter.bHideUnmanaged = Settings->bHideUnmanaged;
 		SharedState->Filter.SourceDirectoryScope = SharedState->Scope.Mode == EDreamShaderBrowserViewMode::Sources ? SharedState->Scope.SourceDirectory : FString();
 
 		BindCommands();
@@ -506,6 +507,18 @@ namespace UE::DreamShader::Editor::Private
 				[
 					MakeStatusCount(LOCTEXT("StatusInMemoryCount", "in memory"), TAttribute<int32>::CreateLambda([this]() { return CountInMemory; }), FLinearColor(0.50f, 0.50f, 0.50f), [ToggleOnly]() { ToggleOnly(&FBrowserFilter::bInMemoryOnly); })
 				]
+				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+				[
+					MakeStatusCount(LOCTEXT("StatusUnmanagedCount", "not managed"), TAttribute<int32>::CreateLambda([this]() { return CountUnmanaged; }), FLinearColor(0.55f, 0.55f, 0.55f), [this]()
+					{
+						// Jump to the unmanaged node rather than toggle a filter: that is where they all are.
+						FBrowserScope Scope;
+						Scope.Mode = EDreamShaderBrowserViewMode::Sources;
+						Scope.SourceDirectory = FBrowserFilter::UnmanagedScope();
+						SharedState->SetScope(Scope);
+						if (Navigation.IsValid()) { Navigation->SelectScope(Scope); }
+					})
+				]
 
 				+ SHorizontalBox::Slot().FillWidth(1.0f)
 				[
@@ -590,9 +603,16 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderBrowserShell::OnModelChanged()
 	{
-		CountTotal = CountOk = CountStale = CountErrors = CountDiverged = CountInMemory = 0;
+		CountTotal = CountOk = CountStale = CountErrors = CountDiverged = CountInMemory = CountUnmanaged = 0;
 		for (const TSharedPtr<FBrowserEntry>& Entry : Model->GetEntries())
 		{
+			if (Entry->IsUnmanaged())
+			{
+				++CountUnmanaged;
+				if (Entry->Asset->Provenance == EDreamShaderDigestState::Diverged) { ++CountDiverged; }
+				if (Entry->Asset->Storage == EBrowserStorage::InMemory) { ++CountInMemory; }
+				continue;
+			}
 			++CountTotal;
 			if (Entry->Source.IsSet())
 			{
@@ -647,6 +667,14 @@ namespace UE::DreamShader::Editor::Private
 		if (Inspector.IsValid() && !bSameSelection)
 		{
 			Inspector->SetEntry(Entries.Num() > 0 ? Entries[0] : nullptr);
+			// Inspecting loads an unmanaged asset; fold what the object says (its real provenance)
+			// back into the row, so the list and the menus agree with the panel.
+			const TSharedPtr<FBrowserEntry> Row = FirstSelected();
+			if (Row.IsValid() && Row->IsUnmanaged() && Row->Asset->bFromRegistryOnly
+				&& FindObject<UObject>(nullptr, *Row->Asset->ObjectPath))
+			{
+				Model->RefreshEntry(Row);
+			}
 		}
 		if (Entries.Num() > 0)
 		{
@@ -681,6 +709,7 @@ namespace UE::DreamShader::Editor::Private
 		Settings->bDivergedOnly = SharedState->Filter.bDivergedOnly;
 		Settings->bInMemoryOnly = SharedState->Filter.bInMemoryOnly;
 		Settings->bHideLibraries = SharedState->Filter.bHideLibraries;
+		Settings->bHideUnmanaged = SharedState->Filter.bHideUnmanaged;
 		Settings->bTileView = SourcesView.IsValid() && SourcesView->IsTileView();
 		// Splitter fractions: read back off the children's allotted widths.
 		if (Navigation.IsValid() && Inspector.IsValid())

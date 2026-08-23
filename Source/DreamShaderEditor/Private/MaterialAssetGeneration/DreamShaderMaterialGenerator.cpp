@@ -1912,13 +1912,11 @@ namespace UE::DreamShader::Editor
 			UMaterialEditingLibrary::UpdateMaterialFunction(MaterialFunction, nullptr);
 			MaterialFunction->PostEditChange();
 
-			// Ahead of the transient dirty-flag reset below: stamping metadata dirties the package. The
-			// source path (not the hash) is stamped in memory as well, so a memory-only function is
-			// recognized as ours and the divergence gate applies to it. See the material path for why
-			// this cannot switch the hash skip on.
+			// Ahead of the transient dirty-flag reset below: stamping metadata dirties the package. Path
+			// and hash both, in memory as on disk -- see the material path for what the hash buys here.
 			if (bEffectiveTransient)
 			{
-				Private::ApplySourceMetadata(MaterialFunction, SourceFilePath);
+				Private::ApplySourceMetadata(MaterialFunction, SourceFilePath, SourceHash);
 			}
 			Private::ApplyOutputDigestMetadata(MaterialFunction);
 
@@ -3255,13 +3253,16 @@ namespace UE::DreamShader::Editor
 		// session, so its stamp only has to survive until the next compile in THIS one -- which is
 		// exactly the window in which a hand edit to it can be destroyed.
 		//
-		// The source PATH is stamped in memory too (the hash deliberately is not). Without it the asset
-		// classifies as Foreign and the divergence gate never fires -- which would have left the gate
-		// dead in the editor's own default mode, where every material is memory-only. Stamping the path
-		// alone cannot switch the hash skip on, because that test needs a matching hash as well.
+		// Path and hash both, in memory as on disk. The path is what makes the asset classify as ours
+		// (without it the divergence gate is dead in the editor's default, memory-only mode); the hash
+		// is what lets the skip check and the browser answer "is this asset current" truthfully -- a
+		// memory-only material used to carry no hash and so read as stale forever. The skip this
+		// switches on is the same one the thin-instance backend has always had: an unchanged source
+		// is not rebuilt on save. Anything that MEANS "rebuild regardless" -- Recompile DSM, Clean
+		// Generated Shaders, an explicit recompile request -- goes through the bridge's forced queue.
 		if (bEffectiveTransient)
 		{
-			Private::ApplySourceMetadata(Material, SourceFilePath);
+			Private::ApplySourceMetadata(Material, SourceFilePath, SourceHash);
 		}
 		Private::ApplyOutputDigestMetadata(Material);
 

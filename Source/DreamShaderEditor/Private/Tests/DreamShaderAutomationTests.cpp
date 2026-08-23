@@ -5338,12 +5338,12 @@ bool FDreamShaderPersistedAssetRebuiltOnDiskTest::RunTest(const FString& Paramet
 
 	TestNotEqual(TEXT("The rebuild actually took: the graph changed"), BuildOutputDigest(Material), DigestBefore);
 
-	// The discriminator. Only the persisted path stamps a source hash; the in-memory path stamps the
-	// path alone, on purpose, so that the skip check stays off. A hash that moved therefore means the
-	// compile went down the persisted path, which is the whole point of the change.
+	// Both paths stamp a hash now, so the hash moving only says the rebuild happened; the
+	// discriminator for WHICH path is below -- a persisted rebuild saves (package clean, file present)
+	// where an in-memory one clears the dirty flag and writes nothing.
 	const FString StampedHashAfter = GetGeneratedAssetSourceHash(Material);
 	TestFalse(TEXT("The rebuild left a source hash stamped"), StampedHashAfter.IsEmpty());
-	TestNotEqual(TEXT("The rebuild re-stamped the source hash, so it took the persisted path"), StampedHashAfter, StampedHashBefore);
+	TestNotEqual(TEXT("The rebuild re-stamped the source hash"), StampedHashAfter, StampedHashBefore);
 
 	// And the honesty check: nothing pending, because it was saved rather than dirty-flag-cleared.
 	TestFalse(TEXT("The package is not left dirty"), Material->GetOutermost()->IsDirty());
@@ -5397,7 +5397,10 @@ bool FDreamShaderMemoryOnlyAssetStaysInMemoryTest::RunTest(const FString& Parame
 	}
 
 	TestFalse(TEXT("No file was written for a memory-only material"), FPackageName::DoesPackageExist(Material->GetOutermost()->GetName()));
-	TestTrue(TEXT("A memory-only build stamps no source hash, so it always regenerates"), GetGeneratedAssetSourceHash(Material).IsEmpty());
+	// A memory-only build stamps its hash like a saved one: an unchanged source is skipped on save,
+	// and the explicit rebuild routes (Recompile DSM, Clean Generated Shaders, a recompile request)
+	// force past it. The browser reads the same stamp to say whether the asset is current.
+	TestFalse(TEXT("A memory-only build stamps a source hash"), GetGeneratedAssetSourceHash(Material).IsEmpty());
 	TestFalse(TEXT("A memory-only material is not left dirty"), Material->GetOutermost()->IsDirty());
 	TestEqual(
 		TEXT("A memory-only material is still recognized as ours, so the divergence gate applies"),

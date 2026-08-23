@@ -14,8 +14,12 @@
 
 #include "AssetRegistry/IAssetRegistry.h"
 #include "HAL/FileManager.h"
+#include "Materials/Material.h"
 #include "Materials/MaterialFunctionInterface.h"
+#include "Materials/MaterialInstance.h"
+#include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInterface.h"
+#include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "UObject/Package.h"
 #include "UObject/UObjectGlobals.h"
@@ -109,7 +113,20 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return false;
 		}
-		if (!SourceDirectoryScope.IsEmpty()
+		const bool bUnmanagedScope = SourceDirectoryScope == UnmanagedScope();
+		if (Entry.IsUnmanaged())
+		{
+			// Listed under "everything" and under the unmanaged node; never under a source folder.
+			if (bHideUnmanaged || (!SourceDirectoryScope.IsEmpty() && !bUnmanagedScope))
+			{
+				return false;
+			}
+		}
+		else if (bUnmanagedScope)
+		{
+			return false;
+		}
+		else if (!SourceDirectoryScope.IsEmpty()
 			&& !(Entry.Source.IsSet() && UE::DreamShader::IsPathUnderSourceDirectory(Entry.Source->FilePath, SourceDirectoryScope)))
 		{
 			return false;
@@ -280,8 +297,15 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (TSharedPtr<FBrowserEntry> Entry = FindByObjectPath(AssetData.GetObjectPathString()))
 		{
-			MarkSourceDirty(Entry->Key);
+			if (Entry->Source.IsSet())
+			{
+				MarkSourceDirty(Entry->Key);
+				return;
+			}
 		}
+		// An unmanaged material appeared or went away: only a rescan adds or drops its row.
+		bRescanPending = true;
+		ScheduleFlush();
 	}
 
 	void FDreamShaderBrowserModel::ScheduleFlush()
@@ -350,6 +374,8 @@ namespace UE::DreamShader::Editor::Private
 
 		Entries.Reset();
 		EntriesBySourcePath.Reset();
+		EntriesByObjectPath.Reset();
+		UnmanagedCount = 0;
 
 		TArray<FString> SourceFiles;
 		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles);
@@ -413,9 +439,111 @@ namespace UE::DreamShader::Editor::Private
 
 			Entries.Add(Entry);
 			EntriesBySourcePath.Add(Source.FilePath, Entry);
+			IndexEntry(Entry);
 		}
 
+		ScanUnmanagedAssets();
 		OnChanged.Broadcast();
+	}
+
+	void FDreamShaderBrowserModel::IndexEntry(const TSharedPtr<FBrowserEntry>& Entry)
+	{
+		const FString ObjectPath = Entry->GetObjectPath();
+		if (!ObjectPath.IsEmpty())
+		{
+			EntriesByObjectPath.Add(ObjectPath.ToLower(), Entry);
+		}
+	}
+
+	TArray<FString> FDreamShaderBrowserModel::GetContentRoots()
+	{
+		TArray<FString> ContentRoots;
+		ContentRoots.Add(TEXT("/Game"));
+		for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
+		{
+			if (!Root.bIsProjectRoot && !Root.PluginName.IsEmpty())
+			{
+				const FString MountPoint = TEXT("/") + Root.PluginName;
+				if (FPackageName::MountPointExists(MountPoint + TEXT("/")))
+				{
+					ContentRoots.AddUnique(MountPoint);
+				}
+			}
+		}
+		return ContentRoots;
+	}
+
+	void FDreamShaderBrowserModel::DescribeAssetFromRegistry(const FAssetData& AssetData, FBrowserAssetInfo& OutInfo)
+	{
+		OutInfo = FBrowserAssetInfo();
+		OutInfo.AssetData = AssetData;
+		OutInfo.ObjectPath = AssetData.GetObjectPathString();
+		OutInfo.Storage = (AssetData.PackageFlags & PKG_NewlyCreated) != 0 ? EBrowserStorage::InMemory : EBrowserStorage::OnDisk;
+		OutInfo.Provenance = EDreamShaderDigestState::Foreign;
+		OutInfo.bFromRegistryOnly = true;
+		const UClass* AssetClass = AssetData.GetClass();
+		OutInfo.bIsInstance = AssetClass && AssetClass->IsChildOf(UMaterialInstance::StaticClass());
+		FString Remainder;
+		FString Mount;
+		if (OutInfo.ObjectPath.Mid(1).Split(TEXT("/"), &Mount, &Remainder))
+		{
+			OutInfo.MountPoint = TEXT("/") + Mount;
+		}
+	}
+
+	void FDreamShaderBrowserModel::ScanUnmanagedAssets()
+	{
+		// Every material and instance under the content roots that no scanned source resolves to.
+		// Answered from the registry alone: a project can hold thousands of materials, and listing
+		// them must not load them. A loaded one is described fully, which costs nothing extra.
+		IAssetRegistry* AssetRegistry = IAssetRegistry::Get();
+		if (!AssetRegistry)
+		{
+			return;
+		}
+		FARFilter Filter;
+		Filter.ClassPaths.Add(UMaterial::StaticClass()->GetClassPathName());
+		Filter.ClassPaths.Add(UMaterialInstanceConstant::StaticClass()->GetClassPathName());
+		Filter.bRecursiveClasses = true;
+		for (const FString& ContentRoot : GetContentRoots())
+		{
+			Filter.PackagePaths.Add(*ContentRoot);
+		}
+		Filter.bRecursivePaths = true;
+
+		TArray<FAssetData> Assets;
+		AssetRegistry->GetAssets(Filter, Assets);
+		Assets.Sort([](const FAssetData& A, const FAssetData& B) { return A.GetObjectPathString() < B.GetObjectPathString(); });
+
+		for (const FAssetData& AssetData : Assets)
+		{
+			const FString ObjectPath = AssetData.GetObjectPathString();
+			if (EntriesByObjectPath.Contains(ObjectPath.ToLower()))
+			{
+				continue; // a scanned source's asset
+			}
+			// The thin backend's hidden base is an export of its instance's package, never an asset
+			// in its own right; the registry can still list it when the package was saved.
+			if (AssetData.AssetName.ToString().StartsWith(TEXT("MB_DreamThinBase"), ESearchCase::IgnoreCase))
+			{
+				continue;
+			}
+
+			TSharedPtr<FBrowserEntry> Entry = MakeShared<FBrowserEntry>();
+			Entry->Key = ObjectPath;
+			FBrowserAssetInfo& Info = Entry->Asset.Emplace();
+			if (UObject* Loaded = AssetData.IsAssetLoaded() ? AssetData.GetAsset() : nullptr)
+			{
+				DescribeAsset(Loaded, Info);
+			}
+			else
+			{
+				DescribeAssetFromRegistry(AssetData, Info);
+			}
+			Entries.Add(Entry);
+			IndexEntry(Entry);
+			++UnmanagedCount;
+		}
 	}
 
 	void FDreamShaderBrowserModel::RefreshStatuses()
@@ -429,7 +557,7 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderBrowserModel::RefreshEntry(const TSharedPtr<FBrowserEntry>& Entry)
 	{
-		if (!Entry.IsValid() || !Entry->Source.IsSet())
+		if (!Entry.IsValid())
 		{
 			return;
 		}
@@ -441,6 +569,15 @@ namespace UE::DreamShader::Editor::Private
 	{
 		if (!Entry.Source.IsSet())
 		{
+			// An unmanaged asset: re-describe from the object once it is loaded, else leave the
+			// registry description alone.
+			if (Entry.Asset.IsSet())
+			{
+				if (UObject* Loaded = FindObject<UObject>(nullptr, *Entry.Asset->ObjectPath))
+				{
+					DescribeAsset(Loaded, *Entry.Asset);
+				}
+			}
 			return;
 		}
 		ComputeSourceStatus(*Entry.Source);
@@ -467,14 +604,8 @@ namespace UE::DreamShader::Editor::Private
 
 	TSharedPtr<FBrowserEntry> FDreamShaderBrowserModel::FindByObjectPath(const FString& ObjectPath) const
 	{
-		for (const TSharedPtr<FBrowserEntry>& Entry : Entries)
-		{
-			if (Entry->GetObjectPath().Equals(ObjectPath, ESearchCase::IgnoreCase))
-			{
-				return Entry;
-			}
-		}
-		return nullptr;
+		const TSharedPtr<FBrowserEntry>* Found = EntriesByObjectPath.Find(ObjectPath.ToLower());
+		return Found ? *Found : nullptr;
 	}
 
 	TSharedPtr<FBrowserEntry> FDreamShaderBrowserModel::MakeEntryForAsset(UObject* Asset) const
@@ -518,6 +649,13 @@ namespace UE::DreamShader::Editor::Private
 			: EBrowserStorage::OnDisk;
 		OutInfo.Provenance = ClassifyGeneratedAsset(Asset);
 		OutInfo.bOpenInEditor = IsGeneratedAssetOpenInEditor(Asset);
+		OutInfo.bIsInstance = Asset->IsA<UMaterialInstance>();
+		FString Remainder;
+		FString Mount;
+		if (OutInfo.ObjectPath.Mid(1).Split(TEXT("/"), &Mount, &Remainder))
+		{
+			OutInfo.MountPoint = TEXT("/") + Mount;
+		}
 	}
 
 	void FDreamShaderBrowserModel::ComputeSourceStatus(FBrowserSourceInfo& Source) const
@@ -567,10 +705,8 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		// A memory-only build stamps the source path but -- deliberately -- not the hash, so the
-		// regeneration skip can never fire on it. Without a hash there is nothing to compare, and
-		// reporting that as "stale" would have every Graph-backend material in the editor's default
-		// mode wearing an amber dot forever.
+		// A memory-only asset with no hash: a build stamped before memory-only builds carried one.
+		// Nothing to compare, so "stale" would be a guess; say what is known.
 		if (!IsGeneratedAssetPersisted(Asset) && GetGeneratedAssetSourceHash(Asset).IsEmpty())
 		{
 			Source.Status = EBrowserSourceStatus::InMemoryUntracked;

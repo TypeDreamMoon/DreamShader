@@ -53,7 +53,7 @@ namespace UE::DreamShader::Editor::Private
 		TSharedPtr<SSearchBox> SearchBox;
 
 		TArray<TSharedPtr<FBrowserEntry>> Selection;
-		int32 CountTotal = 0, CountOk = 0, CountStale = 0, CountErrors = 0, CountDiverged = 0, CountInMemory = 0;
+		int32 CountTotal = 0, CountOk = 0, CountStale = 0, CountErrors = 0, CountDiverged = 0, CountInMemory = 0, CountUnmanaged = 0;
 
 		TSharedRef<SWidget> BuildToolbar();
 		TSharedRef<SWidget> BuildStatusBar();
