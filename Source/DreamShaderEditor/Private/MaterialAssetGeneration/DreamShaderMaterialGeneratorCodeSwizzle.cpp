@@ -105,14 +105,13 @@ namespace UE::DreamShader::Editor::Private
 		const int32 ChannelMask,
 		const int32 ComponentCount,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		OutValue = BaseValue;
 		ClearCodeValueInputMask(OutValue);
 		if (!ApplyCodeValueInputMask(OutValue, ChannelMask, ComponentCount))
 		{
-			OutError = TEXT("Failed to compose swizzle channel mask.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4079"), TEXT("Failed to compose swizzle channel mask."));
 		}
 		OutValue.bHasAuthoritativeComponentCount = BaseValue.bHasAuthoritativeComponentCount;
 
@@ -151,8 +150,7 @@ namespace UE::DreamShader::Editor::Private
 			CreateExpression(UMaterialExpressionComponentMask::StaticClass(), 240, ConsumeNodeY()));
 		if (!MaskExpression)
 		{
-			OutError = TEXT("Failed to create a ComponentMask node.");
-			return false;
+			return FailWith(OutError, TEXT("DSH4080"), TEXT("Failed to create a ComponentMask node."));
 		}
 
 		MaskExpression->R = (ChannelMask & 0x1) != 0 ? 1 : 0;
@@ -179,7 +177,7 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeValue& BaseValue,
 		const int32 ChannelIndex,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		int32 SourceChannelIndex = ChannelIndex;
 		if (BaseValue.bHasInputMask)
@@ -204,8 +202,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (!SourceChannels.IsValidIndex(ChannelIndex))
 			{
-				OutError = FString::Printf(TEXT("Channel %d is invalid for a value with %d components."), ChannelIndex, BaseValue.ComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4081"), FString::Printf(TEXT("Channel %d is invalid for a value with %d components."), ChannelIndex, BaseValue.ComponentCount)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			SourceChannelIndex = SourceChannels[ChannelIndex];
@@ -218,12 +215,11 @@ namespace UE::DreamShader::Editor::Private
 		const FCodeValue& BaseValue,
 		const FString& Swizzle,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		if (Swizzle.IsEmpty() || Swizzle.Len() > 4)
 		{
-			OutError = FString::Printf(TEXT("Unsupported swizzle '%s'."), *Swizzle); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH4082"), FString::Printf(TEXT("Unsupported swizzle '%s'."), *Swizzle)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		int32 DirectChannelMask = 0;
@@ -231,7 +227,7 @@ namespace UE::DreamShader::Editor::Private
 		if (BaseValue.Expression
 			&& TryBuildOrderedSwizzleMask(BaseValue, Swizzle, DirectChannelMask, DirectComponentCount))
 		{
-			FString DirectError;
+			FDreamShaderError DirectError;
 			if (ApplyChannelMaskToValue(BaseValue, DirectChannelMask, DirectComponentCount, OutValue, DirectError))
 			{
 				return true;
@@ -249,8 +245,7 @@ namespace UE::DreamShader::Editor::Private
 				if (!TryResolveSwizzleChannelIndex(Swizzle[Index], ChannelIndex)
 					|| ChannelIndex >= BaseValue.ComponentCount)
 				{
-					OutError = FString::Printf(TEXT("Swizzle '%s' is invalid for a value with %d components."), *Swizzle, BaseValue.ComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH4083"), FString::Printf(TEXT("Swizzle '%s' is invalid for a value with %d components."), *Swizzle, BaseValue.ComponentCount)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 				Channels.Add(BaseValue);
 			}
@@ -275,8 +270,7 @@ namespace UE::DreamShader::Editor::Private
 			int32 ChannelIndex = INDEX_NONE;
 			if (!TryResolveSwizzleChannelIndex(Swizzle[Index], ChannelIndex) || ChannelIndex >= BaseValue.ComponentCount)
 			{
-				OutError = FString::Printf(TEXT("Swizzle '%s' is invalid for a value with %d components."), *Swizzle, BaseValue.ComponentCount); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH4084"), FString::Printf(TEXT("Swizzle '%s' is invalid for a value with %d components."), *Swizzle, BaseValue.ComponentCount)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue ChannelValue;

@@ -14,7 +14,7 @@
 GraphFunction declaration is missing a valid function name.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:522`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:636`
 <!-- generated:end DSH3001 -->
 
 **Cause.** the token after `GraphFunction` is not an identifier
@@ -34,7 +34,7 @@ GraphFunction declaration is missing a valid function name.
 Function declaration is missing a valid function name after SelfContained.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:536`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:650`
 <!-- generated:end DSH3002 -->
 
 **Cause.** `Function SelfContained(` or `Function Inline(`
@@ -54,7 +54,7 @@ Function declaration is missing a valid function name after SelfContained.
 {0} declaration is missing a function name after the return type '{1}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:554`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:668`
 <!-- generated:end DSH3003 -->
 
 **Cause.** a return type was read but no name followed
@@ -74,7 +74,7 @@ Function declaration is missing a valid function name after SelfContained.
 {0} '{1}' is missing a valid parameter list. {2}
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:568`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:682`
 <!-- generated:end DSH3004 -->
 
 **Cause.** the `( … )` parameter list could not be extracted
@@ -94,7 +94,7 @@ Function declaration is missing a valid function name after SelfContained.
 {0} '{1}' is missing a valid body block. {2}
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:578`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:692`
 <!-- generated:end DSH3005 -->
 
 **Cause.** the `{ … }` body of a `Function` / `GraphFunction` could not be extracted
@@ -114,7 +114,7 @@ Function declaration is missing a valid function name after SelfContained.
 Function '{0}' has an invalid return type '{1}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:410`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:524`
 <!-- generated:end DSH3006 -->
 
 **Cause.** the return-type token normalized to the empty string
@@ -134,7 +134,7 @@ Function '{0}' has an invalid return type '{1}'.
 Function '{0}' has an invalid parameter declaration '{1}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:430`, `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:467`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:544`, `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:581`
 <!-- generated:end DSH3007 -->
 
 **Cause.** the parameter did not split into 2 or 3 whitespace-separated tokens, or its type or name was empty
@@ -154,7 +154,7 @@ Function '{0}' has an invalid parameter declaration '{1}'.
 Function '{0}' parameter '{1}' uses unsupported qualifier '{2}'. Supported qualifiers are in and out.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:458`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:572`
 <!-- generated:end DSH3008 -->
 
 **Cause.** a qualifier other than `in` / `out` — `inout` included
@@ -174,7 +174,7 @@ Function '{0}' parameter '{1}' uses unsupported qualifier '{2}'. Supported quali
 Function '{0}' parameter name '__return' is reserved for return-type lowering.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:475`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:589`
 <!-- generated:end DSH3009 -->
 
 **Cause.** a user parameter named `__return` (matched ignoring case)
@@ -194,7 +194,7 @@ Function '{0}' parameter name '__return' is reserved for return-type lowering.
 Function '{0}' has a return type and cannot also declare out parameters. Use out parameters without a return type for multiple outputs.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:495`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:609`
 <!-- generated:end DSH3010 -->
 
 **Cause.** a return-typed `Function` also declared `out`
@@ -214,7 +214,7 @@ Function '{0}' has a return type and cannot also declare out parameters. Use out
 Function '{0}' must declare at least one out parameter.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:502`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:616`
 <!-- generated:end DSH3011 -->
 
 **Cause.** no `out` parameter and no return type
@@ -234,7 +234,7 @@ Function '{0}' must declare at least one out parameter.
 A function with a return type cannot use a bare 'return;'. Return a value, e.g. 'return expr;'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:375`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:489`
 <!-- generated:end DSH3012 -->
 
 **Cause.** a top-level `return;` inside a `Function` that declares a return type
@@ -254,7 +254,7 @@ A function with a return type cannot use a bare 'return;'. Return a value, e.g. 
 Namespace(Name=\"...\") is required.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:630`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:745`
 <!-- generated:end DSH3020 -->
 
 **Cause.** the header has no `Name` attribute
@@ -274,7 +274,7 @@ Namespace(Name=\"...\") is required.
 Namespace name cannot be empty.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:637`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:752`
 <!-- generated:end DSH3021 -->
 
 **Cause.** `Namespace(Name="")`
@@ -294,7 +294,7 @@ Namespace name cannot be empty.
 Namespace name '{0}' is not a valid identifier.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:646`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:761`
 <!-- generated:end DSH3022 -->
 
 **Cause.** the name contains an illegal character
@@ -314,7 +314,7 @@ Namespace name '{0}' is not a valid identifier.
 Namespace '{0}' may only contain Function or GraphFunction blocks.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:685`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:800`
 <!-- generated:end DSH3023 -->
 
 **Cause.** any other token in a `Namespace` body, including a nested `Namespace`
@@ -334,7 +334,7 @@ Namespace '{0}' may only contain Function or GraphFunction blocks.
 Only one top-level Shader block is currently supported.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:720`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:835`
 <!-- generated:end DSH3030 -->
 
 **Cause.** a second `Shader` keyword in the parse unit — enforced across the whole transitive import closure, not per file
@@ -354,7 +354,7 @@ Only one top-level Shader block is currently supported.
 Shader(Name=\"...\") is required.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:735`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:850`
 <!-- generated:end DSH3031 -->
 
 **Cause.** the `Shader` header has no `Name` attribute
@@ -374,7 +374,7 @@ Shader(Name=\"...\") is required.
 Shader must provide a Graph block.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:932`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:1047`
 <!-- generated:end DSH3032 -->
 
 **Cause.** a `Shader` with an empty `Code` and no initialized output declaration
@@ -394,7 +394,7 @@ Shader must provide a Graph block.
 VirtualFunction(Name=\"...\") is required.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:792`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:907`
 <!-- generated:end DSH3040 -->
 
 **Cause.** the header has no `Name` attribute
@@ -414,7 +414,7 @@ VirtualFunction(Name=\"...\") is required.
 VirtualFunction name cannot be empty.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:797`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:912`
 <!-- generated:end DSH3041 -->
 
 **Cause.** `VirtualFunction(Name="")`
@@ -434,7 +434,7 @@ VirtualFunction name cannot be empty.
 VirtualFunction '{0}' must provide Options = {{ Asset = Path(...); }}.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:825`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:940`
 <!-- generated:end DSH3042 -->
 
 **Cause.** neither the header `Asset=` attribute nor `Options.Asset` supplied a non-empty asset
@@ -454,7 +454,7 @@ VirtualFunction '{0}' must provide Options = {{ Asset = Path(...); }}.
 VirtualFunction '{0}' must declare at least one output.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:831`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:946`
 <!-- generated:end DSH3043 -->
 
 **Cause.** the block declared no `Outputs` / `Results` entry
@@ -474,7 +474,7 @@ VirtualFunction '{0}' must declare at least one output.
 {0}(Name=\"...\") is required.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:890`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:1005`
 <!-- generated:end DSH3050 -->
 
 **Cause.** a `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` / `MaterialLayer` / `MaterialLayerBlend` header has no `Name`; `{Block}` echoes the spelling actually typed

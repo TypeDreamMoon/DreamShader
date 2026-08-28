@@ -174,7 +174,7 @@ Unterminated '{0}' block.
 Unexpected token near index {0}.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:871`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:986`
 <!-- generated:end DSH2009 -->
 
 **Cause.** no top-level keyword matched at this position; an `import` line handed straight to the parser also lands here
@@ -194,7 +194,7 @@ Unexpected token near index {0}.
 A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:917`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:1032`
 <!-- generated:end DSH2010 -->
 
 **Cause.** the parse unit declared no recognized top-level block; an empty `Namespace` body also lands here

@@ -200,210 +200,210 @@
   "key": "BuildingMaterialGraph",
   "src": "Building material graph for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2805
+  "line": 2972
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ClearingOldFunctionGraph",
   "src": "Clearing old function graph '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1333
+  "line": 1391
  },
  {
   "ns": "DreamShader.Generator",
   "key": "CompilingDreamShaderSource",
   "src": "Compiling DreamShader source '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1905
+  "line": 2019
  },
  {
   "ns": "DreamShader.Generator",
   "key": "CompilingMaterial",
   "src": "Compiling material '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2663
+  "line": 2808
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ConnectingFunctionOutputs",
   "src": "Connecting outputs for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1763
+  "line": 1808
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ConnectingMaterialOutputs",
   "src": "Connecting material outputs for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2321
+  "line": 2517
  },
  {
   "ns": "DreamShader.Generator",
   "key": "CreatingFunctionGraphNodes",
   "src": "Creating Graph nodes for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1595
+  "line": 1646
  },
  {
   "ns": "DreamShader.Generator",
   "key": "CreatingInputsForFunction",
   "src": "Creating inputs for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1429
+  "line": 1488
  },
  {
   "ns": "DreamShader.Generator",
   "key": "CreatingMaterialCustomNode",
   "src": "Creating Custom node for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2463
+  "line": 2619
  },
  {
   "ns": "DreamShader.Generator",
   "key": "CreatingMaterialGraphNodes",
   "src": "Creating Graph nodes for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2307
+  "line": 2413
  },
  {
   "ns": "DreamShader.Generator",
   "key": "FinishingDreamShaderCompile",
   "src": "Finishing DreamShader compile...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2014
+  "line": 2125
  },
  {
   "ns": "DreamShader.Generator",
   "key": "GeneratingDreamShaderFunction",
   "src": "Generating DreamShader function '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1279
+  "line": 1303
  },
  {
   "ns": "DreamShader.Generator",
   "key": "GeneratingDreamShaderFunctionAssets",
   "src": "Generating {0} DreamShader function asset{1}...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1977
+  "line": 2088
  },
  {
   "ns": "DreamShader.Generator",
   "key": "GeneratingDreamShaderMaterial",
   "src": "Generating DreamShader material '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2003
+  "line": 2114
  },
  {
   "ns": "DreamShader.Generator",
   "key": "GeneratingDreamShaderMaterialFromSource",
   "src": "Generating DreamShader material from '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2887
+  "line": 3065
  },
  {
   "ns": "DreamShader.Generator",
   "key": "GeneratingThinCustomMaterial",
   "src": "Generating thin-custom material for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 3012
+  "line": 3187
  },
  {
   "ns": "DreamShader.Generator",
   "key": "LayingOutFunction",
   "src": "Laying out '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1846
+  "line": 1886
  },
  {
   "ns": "DreamShader.Generator",
   "key": "LayingOutMaterialGraph",
   "src": "Laying out material graph '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2641
+  "line": 2780
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ParsingDreamShaderSource",
   "src": "Parsing DreamShader source '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1936
+  "line": 2049
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ParsingFunctionGraphBlock",
   "src": "Parsing Graph block for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1557
+  "line": 1608
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ParsingMaterialGraphBlock",
   "src": "Parsing Graph block for '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2263
+  "line": 2370
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ParsingMaterialSource",
   "src": "Parsing material source '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2918
+  "line": 3095
  },
  {
   "ns": "DreamShader.Generator",
   "key": "PreparingDreamShaderGeneratedAssets",
   "src": "Preparing DreamShader generated assets...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1960
+  "line": 2072
  },
  {
   "ns": "DreamShader.Generator",
   "key": "PreparingMaterialAsset",
   "src": "Preparing material asset '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 3026
+  "line": 3201
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ReadingDreamShaderSource",
   "src": "Reading DreamShader source '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1915
+  "line": 2029
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ReadingMaterialSource",
   "src": "Reading material source '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 2897
+  "line": 3075
  },
  {
   "ns": "DreamShader.Generator",
   "key": "SavingFunction",
   "src": "Saving '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1884
+  "line": 1938
  },
  {
   "ns": "DreamShader.Generator",
   "key": "SavingMaterial",
   "src": "Saving material '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 3063
+  "line": 3284
  },
  {
   "ns": "DreamShader.Generator",
   "key": "UpdatingFunction",
   "src": "Updating '{0}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1864
+  "line": 1910
  },
  {
   "ns": "DreamShader.Generator",
   "key": "ValidatingDreamShaderFunction",
   "src": "Validating {0} '{1}'...",
   "file": "DreamShaderEditor\\Private\\MaterialAssetGeneration\\DreamShaderMaterialGenerator.cpp",
-  "line": 1290
+  "line": 1314
  },
  {
   "ns": "DreamShader.Parser",
@@ -442,6 +442,13 @@
  },
  {
   "ns": "DreamShader.Parser",
+  "key": "FunctionSHasAReturnType",
+  "src": "Function '{0}' has a return type and cannot also declare out parameters. Use out parameters without a return type for multiple outputs.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 609
+ },
+ {
+  "ns": "DreamShader.Parser",
   "key": "FunctionSHasAnInvalidParameter",
   "src": "Function '{0}' has an invalid parameter declaration '{1}'.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
@@ -460,13 +467,6 @@
   "src": "Function '{0}' has an invalid return type '{1}'.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
   "line": 524
- },
- {
-  "ns": "DreamShader.Parser",
-  "key": "FunctionSHasAReturnType",
-  "src": "Function '{0}' has a return type and cannot also declare out parameters. Use out parameters without a return type for multiple outputs.",
-  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
-  "line": 609
  },
  {
   "ns": "DreamShader.Parser",
@@ -499,7 +499,7 @@
  {
   "ns": "DreamShader.Parser",
   "key": "MaterialFunctionNameRequired",
-  "src": "{0}(Name=\"...\") is required.",
+  "src": "{0}(Name=\\\"...\\\") is required.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
   "line": 1006
  },
@@ -513,7 +513,7 @@
  {
   "ns": "DreamShader.Parser",
   "key": "NamespaceNameRequired",
-  "src": "Namespace(Name=\"...\") is required.",
+  "src": "Namespace(Name=\\\"...\\\") is required.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
   "line": 745
  },
@@ -547,20 +547,6 @@
  },
  {
   "ns": "DreamShader.Parser",
-  "key": "ShaderMustProvideAGraphBlock",
-  "src": "Shader must provide a Graph block.",
-  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
-  "line": 1047
- },
- {
-  "ns": "DreamShader.Parser",
-  "key": "ShaderNameRequired",
-  "src": "Shader(Name=\"...\") is required.",
-  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
-  "line": 850
- },
- {
-  "ns": "DreamShader.Parser",
   "key": "SSIsMissingAValid",
   "src": "{0} '{1}' is missing a valid parameter list. {2}",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
@@ -572,6 +558,20 @@
   "src": "{0} '{1}' is missing a valid body block. {2}",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
   "line": 692
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "ShaderMustProvideAGraphBlock",
+  "src": "Shader must provide a Graph block.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 1047
+ },
+ {
+  "ns": "DreamShader.Parser",
+  "key": "ShaderNameRequired",
+  "src": "Shader(Name=\\\"...\\\") is required.",
+  "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
+  "line": 850
  },
  {
   "ns": "DreamShader.Parser",
@@ -611,7 +611,7 @@
  {
   "ns": "DreamShader.Parser",
   "key": "VirtualFunctionNameRequired",
-  "src": "VirtualFunction(Name=\"...\") is required.",
+  "src": "VirtualFunction(Name=\\\"...\\\") is required.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
   "line": 907
  },
@@ -667,7 +667,7 @@
  {
   "ns": "DreamShader.Parser.Scanner",
   "key": "TextureDefaultsMustUsePath",
-  "src": "Texture defaults must use Path(Game|Engine|Plugin.PluginName, \"/Folder/Asset\"), Path(\"/Game/Folder/Asset\"), or a bare \"/Game/Folder/Asset\".",
+  "src": "Texture defaults must use Path(Game|Engine|Plugin.PluginName, \\\"/Folder/Asset\\\"), Path(\\\"/Game/Folder/Asset\\\"), or a bare \\\"/Game/Folder/Asset\\\".",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
   "line": 1023
  },
@@ -765,7 +765,7 @@
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "ExpressionOutputTargetSMustSpecify",
-  "src": "Expression output target '{0}' must specify Class=\\\"...\\\".",
+  "src": "Expression output target '{0}' must specify Class=\\\\\\\"...\\\\\\\".",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 1304
  },
@@ -1115,7 +1115,7 @@
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "ParameterNodeTypeSIsRecognized",
-  "src": "Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\"float4\\\", ...) for reflected node creation.",
+  "src": "Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\\\\\"float4\\\\\\\", ...) for reflected node creation.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 735
  },
@@ -1164,7 +1164,7 @@
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "UnexpectedInPropertiesNearSOnly",
-  "src": "Unexpected '{{' in Properties near '{0}'. Only Group(\"Name\") {{ ... }} may open a brace here.",
+  "src": "Unexpected '{{' in Properties near '{0}'. Only Group(\\\"Name\\\") {{ ... }} may open a brace here.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 1028
  },
@@ -1227,14 +1227,14 @@
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "UnsupportedUEBuiltinFunctionSUse",
-  "src": "Unsupported UE builtin function '{0}'. Use OutputType=\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\" for generic MaterialExpression calls.",
+  "src": "Unsupported UE builtin function '{0}'. Use OutputType=\\\\\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\\\\\" for generic MaterialExpression calls.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 582
  },
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "UnterminatedGroupBlock",
-  "src": "Unterminated Group(\"{0}\") {{ ... }} block.",
+  "src": "Unterminated Group(\\\"{0}\\\") {{ ... }} block.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 1086
  },
@@ -1250,42 +1250,42 @@
   "key": "CompiledPreviewMaterial",
   "src": "Compiled preview material for {0}.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 659
+  "line": 664
  },
  {
   "ns": "DreamShader.Preview",
   "key": "CompiledPreviewMaterialWithDetails",
   "src": "Compiled preview material for {0}. {1}",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 662
+  "line": 667
  },
  {
   "ns": "DreamShader.Preview",
   "key": "GeneratedMaterialCouldNotBeLoaded",
   "src": "Generated material '{0}' could not be loaded.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 654
+  "line": 659
  },
  {
   "ns": "DreamShader.Preview",
   "key": "PreviewSourceMissing",
   "src": "DreamShader source '{0}' does not exist.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 620
+  "line": 625
  },
  {
   "ns": "DreamShader.Preview",
   "key": "PreviewSupportsOnlyDsm",
   "src": "DreamShader preview only supports .dsm material files: '{0}'.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 626
+  "line": 631
  },
  {
   "ns": "DreamShader.Preview",
   "key": "RenderedPreview",
   "src": "Rendered preview for {0}.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 696
+  "line": 701
  },
  {
   "ns": "DreamShader.VirtualFunction",
@@ -1338,1039 +1338,2173 @@
  },
  {
   "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderAdoptBackupFailed",
+  "src": "Could not back up '{0}' to '{1}'; nothing was written.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 370
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderAdoptConfirm",
+  "src": "Rewrite '{0}' from the current contents of '{1}'?\\n\\nThe existing source is copied to '{2}' first. The rewritten file is the decompiler's own form, so hand-written comments, imports and formatting in it are replaced.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 301
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderAdoptInstanceNoBase",
+  "src": "'{0}' has no base material to decompile.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 344
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderAdoptInstanceOverrides",
+  "src": "'{0}' has parameter overrides set on the generated instance, and those cannot be written back into '{1}' -- adopting would drop them. Move the values into the source as Properties defaults (or override them on a child material instance instead), then Revert.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 332
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderAdoptLabel",
+  "src": "Adopt Into Source",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1677
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderAdoptMultiAsset",
+  "src": "'{0}' declares {1} assets, so adopting one of them would overwrite the others. Use DreamShader > Export DSM and merge the result by hand.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 290
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderAdoptResult",
+  "src": "Adopted '{0}' into '{1}' (backup: '{2}'). {3}",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 401
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderAdoptTooltip",
+  "src": "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1678
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCleanGeneratedShadersLabel",
   "src": "Clean Generated Shaders",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1187
+  "line": 1403
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCleanGeneratedShadersTooltip",
   "src": "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1188
+  "line": 1404
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCleanPersistedGeneratedAssetsLabel",
   "src": "Clean Persisted Generated Assets",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1193
+  "line": 1409
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCleanPersistedGeneratedAssetsTooltip",
   "src": "Delete DreamShader-generated material assets that are saved on disk (they shadow in-memory material mode). Shows a confirmation with the full list; source files are untouched and regenerate in memory.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1194
+  "line": 1410
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCleanPersistedNoneFound",
   "src": "No persisted DreamShader-generated assets found.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1598
+  "line": 1915
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCleanPersistedResult",
   "src": "Deleted {0} of {1} persisted generated asset(s).",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1616
+  "line": 1933
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionCallLabel",
   "src": "CopyVirtualFunctionCall",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1475
+  "line": 1792
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionCallNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1976
+  "line": 2293
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionCallTooltip",
   "src": "Copy a DreamShader Graph call example for this VirtualFunction.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1476
+  "line": 1793
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionLabel",
   "src": "CopyVirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1457
+  "line": 1774
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1783
+  "line": 2100
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionReferenceLabel",
   "src": "Copy Virtual Function Reference",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1445
+  "line": 1762
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionReferenceNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1920
+  "line": 2237
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionReferenceTooltip",
   "src": "Copy a DreamShader Graph call that references this existing VirtualFunction.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1446
+  "line": 1763
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionTooltip",
   "src": "Copy a complete DreamShader VirtualFunction declaration for this Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1458
+  "line": 1775
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionLabel",
   "src": "CreateVirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1466
+  "line": 1783
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1812
+  "line": 2129
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionTooltip",
   "src": "Create a .dsh file containing the VirtualFunction declaration.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1467
+  "line": 1784
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDecompileActionsSection",
   "src": "Decompiler",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1396
+  "line": 1706
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderDetachConfirm",
+  "src": "Stop managing '{0}'?\\n\\nIt keeps its current contents and becomes an ordinary asset. DreamShader will never rebuild it again, and compiling '{1}' afterwards fails with an ownership error until you move or rename one of them.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 442
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderDetachLabel",
+  "src": "Detach From DreamShader",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1684
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderDetachNoAsset",
+  "src": "DreamShader could not find the selected asset.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 423
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderDetachNotGenerated",
+  "src": "'{0}' is not a DreamShader-generated asset.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 432
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderDetachResult",
+  "src": "'{0}' is no longer managed by DreamShader. Save it to keep the change.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 454
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderDetachTooltip",
+  "src": "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1685
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionDSFLabel",
   "src": "Export DSF",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1420
+  "line": 1737
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionDSFTooltip",
   "src": "Export this Material Function graph to a DreamShader .dsf source file.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1421
+  "line": 1738
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1733
+  "line": 2050
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialDSMLabel",
   "src": "Export DSM",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1399
+  "line": 1709
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialDSMTooltip",
   "src": "Export this Material graph to a DreamShader .dsm source file.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1400
+  "line": 1710
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialNoAsset",
   "src": "DreamShader could not find the selected Material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1683
+  "line": 2000
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderFunctionDecompileActionsSection",
   "src": "Decompiler",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1417
+  "line": 1734
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderFunctionProvenanceActionsSection",
+  "src": "Generated Asset",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1728
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderInMemoryMaterialsHidden",
   "src": "Hidden {0} in-memory material(s) from the Content Browser and asset pickers.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1582
+  "line": 1899
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderInMemoryMaterialsShown",
   "src": "Showing {0} in-memory material(s) in the Content Browser and asset pickers.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1581
+  "line": 1898
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderInMemoryModeShadowed",
   "src": "{0} previously generated asset(s) are still saved on disk and shadow the in-memory materials. Run Tools > DreamShader > Clean Persisted Generated Assets to remove them.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 567
+  "line": 714
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderInstanceProvenanceActionsSection",
+  "src": "Generated Asset",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1588
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1290
+  "line": 1517
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialActionsTooltip",
   "src": "DreamShader actions for this Material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1291
+  "line": 1518
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1316
+  "line": 1543
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionActionsTooltip",
   "src": "DreamShader actions for this Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1317
+  "line": 1544
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionToolbarMenuLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1382
+  "line": 1648
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionToolbarMenuTooltip",
   "src": "DreamShader actions for this Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1383
+  "line": 1649
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialInstanceActionsLabel",
+  "src": "DreamShader",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1569
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderMaterialInstanceActionsTooltip",
+  "src": "DreamShader actions for this generated material.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1570
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialToolbarMenuLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1364
+  "line": 1630
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialToolbarMenuTooltip",
   "src": "DreamShader actions for this Material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1365
+  "line": 1631
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenVirtualFunctionLabel",
   "src": "OpenVirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1436
+  "line": 1753
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenVirtualFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1876
+  "line": 2193
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenVirtualFunctionTooltip",
   "src": "Open the existing DreamShader VirtualFunction definition in VSCode.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1437
+  "line": 1754
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceLabel",
   "src": "Open Dream Shader Workspace (VSCode)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1212
+  "line": 1428
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceToolbarLabel",
   "src": "Open Dream Shader Workspace (VSCode)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1230
+  "line": 1446
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceToolbarTooltip",
   "src": "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1231
+  "line": 1447
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceTooltip",
   "src": "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1213
+  "line": 1429
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderProvenanceActionsSection",
+  "src": "Generated Asset",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1700
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderProvenanceNoAsset",
+  "src": "DreamShader could not find the selected asset.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 158
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileLabel",
   "src": "Recompile DSM",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1181
+  "line": 1397
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileToolbarLabel",
   "src": "DSM",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1224
+  "line": 1440
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileToolbarTooltip",
   "src": "Recompile all DreamShader .dsm and .dsf source files.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1225
+  "line": 1441
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileTooltip",
   "src": "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1182
+  "line": 1398
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderRevertConfirm",
+  "src": "Rebuild '{0}' from '{1}'?\\n\\nEvery hand edit in the asset is discarded. The source file is not modified.",
+  "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
+  "line": 207
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderRevertDivergedLabel",
+  "src": "Revert to Source (discards your edits)",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1669
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderRevertLabel",
+  "src": "Revert to Source",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1670
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderRevertTooltip",
+  "src": "Rebuild this asset from the DreamShader source it was generated from, discarding every hand edit in it. The source file is not modified.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 1671
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderToggleShowInMemoryMaterialsLabel",
   "src": "Show In-Memory Materials",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1199
+  "line": 1415
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderToggleShowInMemoryMaterialsTooltip",
   "src": "Show memory-only ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials and are always visible, so this toggle does not affect them. While shown, an explicit Save on one would persist it to disk (the shadow warning and Clean command cover recovery).",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1200
+  "line": 1416
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionActionsSection",
   "src": "VirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1430
+  "line": 1747
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "MaterialCompileErrorHeader",
   "src": "[{0} / {1}] {2}",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1125
+  "line": 1341
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AdoptBtn",
+  "src": "Adopt Into Source",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 621
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AdoptIntoSource",
+  "src": "Adopt Into Source",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AdoptIntoSource_ToolTip",
+  "src": "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AdoptReadOnlyTip",
+  "src": "This asset's source ships with a plugin and is read-only; adopt is not available.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 624
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AdoptTip",
+  "src": "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 623
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AssetLinkTip",
+  "src": "Show this asset in the Content list.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 470
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "AssetPathNoShaderBlock",
   "src": "{0}: this file does not define a top-level Shader block.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderGeneratedAssetPath.cpp",
-  "line": 50
+  "line": 51
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "AssetPathParseError",
   "src": "{0}: {1}",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderGeneratedAssetPath.cpp",
-  "line": 44
+  "line": 45
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "AssetPathReadFailed",
   "src": "Failed to read DreamShader source '{0}'.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderGeneratedAssetPath.cpp",
-  "line": 20
+  "line": 21
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "AssetRow",
+  "src": "Asset",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 434
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "BadName",
   "src": "Provide a name and a destination folder.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 127
+  "line": 128
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "Base",
   "src": "Base",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 270
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 438
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "BaseNone",
   "src": "-",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 270
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 438
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "Blend",
   "src": "Blend mode",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 272
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 440
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "BridgeBusy",
+  "src": "bridge: {0}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 547
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "BridgeIdleGuest",
+  "src": "bridge: idle (another editor owns writes)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 549
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "BridgeIdleOwner",
+  "src": "bridge: idle",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 549
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "BridgeOff",
+  "src": "bridge: off",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 543
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "Browse",
   "src": "Browse...",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 278
+  "line": 279
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "BrowseTip",
   "src": "Pick the destination folder.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 279
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "Cancel",
-  "src": "Cancel",
-  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 323
+  "line": 280
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "CBCreateInstance",
   "src": "Create DreamShader instance",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
-  "line": 58
+  "line": 84
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "CBCreateInstanceTip",
   "src": "Create a material instance that shares this material's compiled shader map.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
-  "line": 59
+  "line": 85
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CBShowInBrowser",
+  "src": "Show in Material Content Browser",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 60
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CBShowInBrowserTip",
+  "src": "Open the DreamShader Material Content Browser on this asset: its source, compile status, provenance and inheritance.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
+  "line": 61
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Cancel",
+  "src": "Cancel",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
+  "line": 324
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "ChainRowFmt",
   "src": "{0}{1}",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 162
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 752
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "ChildrenHeader",
   "src": "Child instances ({0})",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 287
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 848
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ColumnAsset",
+  "src": "Asset",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderSourcesView.cpp",
+  "line": 187
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ColumnName",
+  "src": "Name",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderSourcesView.cpp",
+  "line": 172
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ColumnRoot",
+  "src": "Root",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderSourcesView.cpp",
+  "line": 177
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ColumnState",
+  "src": "Status",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderSourcesView.cpp",
+  "line": 182
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CommandContext",
+  "src": "Material Content Browser",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 14
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "CompileAll",
   "src": "Compile all",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 129
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "CompileAllTip",
+  "key": "CompileAll_ToolTip",
   "src": "Force-recompile every .dsm/.dsf source (in memory).",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 130
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "CompiledAll",
-  "src": "Compiled {0} source(s), {1} failed",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 357
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "CompileFail",
   "src": "Failed to compile {0}",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 651
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserActions.cpp",
+  "line": 63
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileMenu",
+  "src": "Compile",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 256
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileMenuTip",
+  "src": "Compile the selection, every stale source, or everything.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 245
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "CompileOk",
   "src": "Compiled {0}",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 651
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserActions.cpp",
+  "line": 63
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileSelected",
+  "src": "Compile",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileSelected_ToolTip",
+  "src": "Force-recompile the selected sources (in memory).",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileStale",
+  "src": "Compile stale",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompileStale_ToolTip",
+  "src": "Recompile every source whose generated asset is stale or missing.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CompiledAll",
+  "src": "Compiled {0} source(s), {1} failed",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserActions.cpp",
+  "line": 108
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "CompilingAll",
   "src": "Compiling all DreamShader sources...",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 336
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserActions.cpp",
+  "line": 88
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CopyAssetPath",
+  "src": "Copy asset path",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CopyAssetPath_ToolTip",
+  "src": "Copy the generated asset's object path to the clipboard.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CopySourcePath",
+  "src": "Copy source path",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CopySourcePath_ToolTip",
+  "src": "Copy the absolute source file path to the clipboard.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "Create",
   "src": "Create",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 333
+  "line": 334
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "CreateInstance",
   "src": "Create instance",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
-  "line": 118
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "CreateInstanceBtn",
   "src": "Create instance",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 220
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "CreateInstanceTip",
-  "src": "Create a material instance of the selected material (shares its compiled shader map).",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
-  "line": 119
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 374
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "CreateInstanceTitle",
   "src": "Create material instance",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 219
+  "line": 220
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "CreateInstance_ToolTip",
+  "src": "Create a material instance that shares this material's compiled shader map.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DependentsHeader",
+  "src": "Used by ({0})",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 704
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DetachBtn",
+  "src": "Detach",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 630
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DetachFromDreamShader",
+  "src": "Detach From DreamShader",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DetachFromDreamShader_ToolTip",
+  "src": "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DetachTip",
+  "src": "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 631
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DiagJumpTip",
+  "src": "Open {0} at this line in your editor.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 532
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DiagLocationCodeFmt",
+  "src": "[{2}] L{0}:{1}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 521
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DiagLocationFmt",
+  "src": "L{0}:{1}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 520
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "DiagnosticLineFmt",
   "src": "L{0}:{1} {2}",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 288
+  "file": "DreamShaderEditor\\Private\\UI\\Model\\DreamShaderBrowserModel.cpp",
+  "line": 765
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "DiagnosticsHeader",
+  "src": "Diagnostics ({0})",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 498
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "Domain",
   "src": "Domain",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 271
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 439
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "EmptyProject",
-  "src": "No materials found under /Game.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
-  "line": 98
+  "key": "EmptyContentScope",
+  "src": "No materials here.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderAssetsView.cpp",
+  "line": 61
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "ErrorsOnly",
-  "src": "Errors only",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 152
+  "key": "ExportDsfBtn",
+  "src": "Export DSF",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 605
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ExportDsfTip",
+  "src": "Decompile this material function into a .dsf source file under the project's DShader root.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 606
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ExportDsmBtn",
+  "src": "Export DSM",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 594
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ExportDsmTip",
+  "src": "Decompile this material into a .dsm source file under the project's DShader root.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 595
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ExportSource",
+  "src": "Export DSM / DSF",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ExportSource_ToolTip",
+  "src": "Decompile this hand-authored asset into a DreamShader source file.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "FactoryAssetExists",
   "src": "An asset already exists at {0}.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 141
+  "line": 142
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "FactoryCreatePackageFailed",
   "src": "Failed to create package {0}.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 148
+  "line": 149
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "FactoryMaterializeFailed",
   "src": "Failed to materialize the material to disk: {0}",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 77
+  "line": 78
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "FactoryReloadFailed",
   "src": "Materialized the material but could not reload it at {0}.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 84
+  "line": 85
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "FocusSearch",
+  "src": "Search",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "FocusSearch_ToolTip",
+  "src": "Focus the search box.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "FunctionDetail",
   "src": "Function library / header. Recompiles the materials that import it.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 374
+  "file": "DreamShaderEditor\\Private\\UI\\Model\\DreamShaderBrowserModel.cpp",
+  "line": 668
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "FunctionUsedBy",
   "src": "function · used by {0} material(s)",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 587
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "GenPage",
-  "src": "Dream Shader Gen",
-  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
-  "line": 169
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderSourcesView.cpp",
+  "line": 70
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "GenPageNoGeneratedAsset",
   "src": "No generated asset at {0}",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 390
+  "file": "DreamShaderEditor\\Private\\UI\\Model\\DreamShaderBrowserModel.cpp",
+  "line": 686
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "HideFunctions",
-  "src": "Hide functions",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 165
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "Inheritance",
-  "src": "Inheritance",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 279
+  "key": "ImportsHeader",
+  "src": "Imports ({0})",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 693
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "InMemory",
   "src": "memory-only (not saved)",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 273
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 78
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Inheritance",
+  "src": "Inheritance",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 844
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "InspectorEmpty",
+  "src": "Select a source file or a material to inspect it.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 198
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "InstanceCreated",
   "src": "Created {0}",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 348
+  "line": 349
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "InstanceNeedsCompile",
   "src": "Compile {0} first.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 713
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserActions.cpp",
+  "line": 154
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Materialize",
+  "src": "Materialize",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "MaterializeBtn",
   "src": "Materialize",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 243
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "Materialized",
-  "src": "Materialized {0} to disk",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 257
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 402
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "MaterializeNoSource",
   "src": "This material is memory-only and has no DreamShader source file to materialize from.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 69
+  "line": 70
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "MaterializeTip",
   "src": "Write this memory-only material (and its base) to disk.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 244
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 403
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Materialize_ToolTip",
+  "src": "Write this memory-only material (and its base) to disk.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "Materialized",
+  "src": "Materialized {0} to disk",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserActions.cpp",
+  "line": 176
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "MenuSectionBuild",
+  "src": "Build",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 572
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "MenuSectionCopy",
+  "src": "Copy",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 593
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "MenuSectionDecompile",
+  "src": "Decompiler",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 588
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "MenuSectionOpen",
+  "src": "Open",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 566
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "MenuSectionProvenance",
+  "src": "Generated asset",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 580
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "NameLabel",
   "src": "Name",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 255
+  "line": 256
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NavContent",
+  "src": "Content",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 289
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NavSources",
+  "src": "Sources",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 233
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NavUnmanaged",
+  "src": "Not managed by DreamShader",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 275
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewFunction",
+  "src": "Material function (.dsf)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 383
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewFunctionTip",
+  "src": "A ShaderFunction block with one input, one optional input and one output.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 383
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewFunctionTitle",
+  "src": "New material function (.dsf)",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 165
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewHeader",
+  "src": "Header (.dsh)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 384
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewHeaderTip",
+  "src": "A header with one Function, for materials to import.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 384
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewHeaderTitle",
+  "src": "New header (.dsh)",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 169
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewMaterial",
+  "src": "Material (.dsm)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 382
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewMaterialTip",
+  "src": "A Shader block with a base colour and roughness, ready to compile.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 382
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewMaterialTitle",
+  "src": "New material (.dsm)",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 173
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewMenu",
+  "src": "New",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 276
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewMenuTip",
+  "src": "Create a new source file from a template, in the selected folder.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 265
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "NewObjectFailed",
   "src": "Failed to create the material instance object.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 156
+  "line": 157
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "NoChildren",
-  "src": "No loaded child instances.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 180
+  "key": "NewSourceBadName",
+  "src": "The name must be an identifier: letters, digits and underscores, not starting with a digit.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 119
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "NoneSelected",
-  "src": "Select a material, then create an instance.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
-  "line": 134
+  "key": "NewSourceBrowse",
+  "src": "Browse...",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 230
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourceCancel",
+  "src": "Cancel",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 269
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourceCreate",
+  "src": "Create",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 276
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourceCreated",
+  "src": "Created {0}",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 287
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourceExists",
+  "src": "'{0}' already exists.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 132
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourceFolderLabel",
+  "src": "Folder",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 218
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourceHint",
+  "src": "The file is written from the plugin's template and compiled by the watcher on save.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 253
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourceNameLabel",
+  "src": "Name",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 206
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourcePickFolder",
+  "src": "Choose a source folder",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 237
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourceReadOnly",
+  "src": "Choose a folder under the project's DShader root. A plugin's sources are read-only.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 125
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NewSourceWriteFailed",
+  "src": "Could not write '{0}'.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 144
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "NoChildrenAnywhere",
+  "src": "No child instances.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 813
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "NoParent",
   "src": "No parent material was provided.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 122
+  "line": 123
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "NoSelection",
-  "src": "Select a material to see its inheritance and settings.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 109
+  "key": "NothingStale",
+  "src": "Nothing is stale.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 937
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "OnDisk",
   "src": "on disk",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 273
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 79
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "OpenAfter",
   "src": "Open the instance after creating",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 301
+  "line": 302
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "OpenBtn",
   "src": "Open",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 230
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 395
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenInEditorBadge",
+  "src": "open in an asset editor — a rebuild will refuse until it is closed",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 300
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenMaterial",
+  "src": "Open material",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenMaterial_ToolTip",
+  "src": "Open the generated material in its asset editor.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenSettingsTip",
+  "src": "Open the DreamShader project settings.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 332
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenSource",
+  "src": "Open source",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenSource_ToolTip",
+  "src": "Open the .dsm/.dsf/.dsh in your preferred text editor, at the first error when there is one.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "OpenTabLabel",
   "src": "Material Content Browser",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
-  "line": 97
+  "line": 150
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "OpenTabTooltip",
   "src": "Open the DreamShader Material Content Browser.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
-  "line": 98
+  "line": 151
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "OpenWorkspaceTip",
+  "src": "Open the DreamShader source workspace in VSCode.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 316
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PComp",
+  "src": "Compile",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 385
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PCompTip",
+  "src": "Force-recompile this source (in memory).",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 386
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PInstTip",
+  "src": "Create a material instance of this material.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 375
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "POpenMatTip",
+  "src": "Open the generated material asset.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 396
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "POpenSrc",
+  "src": "Open source",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 422
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "POpenSrcTip",
+  "src": "Open the .dsm/.dsf in your preferred editor.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 423
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "ParentGone",
   "src": "The parent material is no longer available.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 339
+  "line": 340
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "ParentLabel",
   "src": "Parent",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 244
+  "line": 245
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "PathLabel",
   "src": "Folder",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 266
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "PComp",
-  "src": "Compile",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 473
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "PCompTip",
-  "src": "Force-recompile this source (in memory).",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 473
+  "line": 267
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "PickFolderTitle",
   "src": "Choose a destination folder",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 283
+  "line": 284
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "PInst",
-  "src": "Create instance",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 476
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "PInstTip",
-  "src": "Create a material instance of this material.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 476
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "PMat",
-  "src": "Materialize",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 484
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "PMatTip",
-  "src": "Write this memory-only material (and its base) to disk.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 484
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "POpenMat",
-  "src": "Open material",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 480
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "POpenMatTip",
-  "src": "Open the generated material asset.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 480
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "POpenSrc",
-  "src": "Open source",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 509
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "POpenSrcTip",
-  "src": "Open the .dsm/.dsf in your preferred editor.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 509
+  "key": "PreviewDragHint",
+  "src": "drag to orbit",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 358
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "PreviewFunction",
   "src": "function library",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 457
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 238
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PreviewMeshLabel",
+  "src": "Mesh",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 350
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "PreviewMeshTip",
+  "src": "The shape the preview renders the material on.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 115
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "PreviewNoMaterial",
   "src": "not compiled yet",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 457
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 238
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "PreviewNone",
-  "src": "Select a source file to preview its material.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 430
+  "key": "PreviewRendering",
+  "src": "rendering…",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderLivePreview.cpp",
+  "line": 52
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "PreviewUsedBy",
-  "src": "used by {0} material(s)",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 549
+  "key": "ProvenanceDiverged",
+  "src": "edited by hand since the last build",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 67
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "ProjectPage",
-  "src": "Project",
-  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
-  "line": 163
+  "key": "ProvenanceExplainDiverged",
+  "src": "The asset was edited by hand since it was generated, so a rebuild is refused to protect those edits. Decide which copy is the truth.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 575
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProvenanceExplainForeign",
+  "src": "Not generated by DreamShader. Export it to a source file to bring it under DreamShader's management.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 581
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProvenanceExplainGenerated",
+  "src": "The asset holds exactly what DreamShader last generated into it. A source change rebuilds it freely.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 572
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProvenanceExplainUnstamped",
+  "src": "Generated by DreamShader, but carrying no digest this version can compare. The next rebuild restamps it.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 578
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProvenanceForeign",
+  "src": "not generated by DreamShader",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 71
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProvenanceGenerated",
+  "src": "generated (matches the last build)",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 65
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProvenanceHeader",
+  "src": "Provenance",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 643
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProvenanceRow",
+  "src": "Provenance",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 474
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProvenanceTip",
+  "src": "Whether the asset still holds what DreamShader last generated into it. A hand-edited asset refuses to rebuild until you choose Revert, Adopt or Detach from its Content Browser context menu.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 476
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ProvenanceUnstamped",
+  "src": "generated (no comparable digest)",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 69
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFDiverged",
+  "src": "Edited by hand",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 137
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFDivergedTip",
+  "src": "Generated assets that no longer match what DreamShader last wrote into them.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 137
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFErrors",
+  "src": "Errors",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 135
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFErrorsTip",
+  "src": "Sources whose last compile failed, or that could not be read.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 135
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFHideLibraries",
+  "src": "Hide functions",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 139
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFHideLibrariesTip",
+  "src": "Drop every .dsf and .dsh from the list.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 139
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFHideUnmanaged",
+  "src": "Hide unmanaged",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 140
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFHideUnmanagedTip",
+  "src": "Drop the materials DreamShader does not manage from the list.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 140
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFInMemory",
+  "src": "In memory",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 138
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFInMemoryTip",
+  "src": "Materials that exist only in memory and have not been written to disk.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 138
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFStale",
+  "src": "Stale",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 136
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QFStaleTip",
+  "src": "Sources that changed since their asset was last generated.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 136
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "QuickFilters",
+  "src": "Quick filters",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserNavigation.cpp",
+  "line": 131
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "Refresh",
   "src": "Refresh",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 118
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "RefreshTip",
-  "src": "Rescan the source directory and recompute status.",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 119
+  "key": "Refresh_ToolTip",
+  "src": "Rescan the source roots and recompute every status.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "SearchHint",
-  "src": "Search sources",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 139
+  "key": "RevealInContentBrowser",
+  "src": "Reveal in Content Browser",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "SelectedFmt",
-  "src": "Selected: {0}",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
-  "line": 133
+  "key": "RevealInContentBrowser_ToolTip",
+  "src": "Select the generated asset in the main Content Browser.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "RevertBtn",
+  "src": "Revert to Source",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 616
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "RevertDivergedBtn",
+  "src": "Revert to Source (discards edits)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 616
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "RevertTip",
+  "src": "Rebuild this asset from its DreamShader source, discarding every hand edit in it. The source file is not modified.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 617
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "RevertToSource",
+  "src": "Revert to Source",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "RevertToSource_ToolTip",
+  "src": "Rebuild this asset from its DreamShader source, discarding every hand edit in it. The source file is not modified.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "RootProject",
+  "src": "Project",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 446
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "RootRow",
+  "src": "Root",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 448
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SearchHintV2",
+  "src": "Search name, path, root, asset, error…",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 284
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "SelectFirst",
   "src": "Select a material to create an instance of.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderInstanceFactory.cpp",
-  "line": 200
+  "line": 201
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "ShowInMemory",
   "src": "Show in-memory materials",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
-  "line": 147
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 441
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "ShowInMemoryTip",
-  "src": "Show DreamShader's memory-only materials here and in the Content Browser (global setting).",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderProjectPage.cpp",
-  "line": 145
+  "src": "Show DreamShader's memory-only materials here and in the Content Browser (global project setting).",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 442
  },
  {
   "ns": "DreamShaderMaterialBrowser",
-  "key": "SourceCount",
-  "src": "{0} / {1}",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 178
+  "key": "SortAscending",
+  "src": "Ascending",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 422
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SortAsset",
+  "src": "Asset path",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 420
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SortName",
+  "src": "Name",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 417
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SortRoot",
+  "src": "Root",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 419
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SortStatus",
+  "src": "Status",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 418
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "SourceLinkTip",
+  "src": "Show this file in the Sources list.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 453
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "SourceNone",
   "src": "-",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 120
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 461
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "SourceRow",
   "src": "Source",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 274
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 433
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusCountFmt",
+  "src": "{0} {1}",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 93
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusCountTip",
+  "src": "Click to filter the list to these.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 81
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusDivergedCount",
+  "src": "edited by hand",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 504
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "StatusError",
   "src": "compile error",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 76
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 38
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusErrorCount",
+  "src": "errors",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 500
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "StatusFunction",
   "src": "function / header",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 78
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 40
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusInMemoryCount",
+  "src": "in memory",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 508
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusInMemoryUntracked",
+  "src": "compiled in memory",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 34
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "StatusNever",
   "src": "not compiled",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 74
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 36
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusOk",
+  "src": "ok",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 492
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "StatusStale",
   "src": "stale",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 72
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 32
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusStaleCount",
+  "src": "stale",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 496
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusTotal",
+  "src": "{0} sources",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 488
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusUnmanaged",
+  "src": "not managed by DreamShader",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 57
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusUnmanagedCount",
+  "src": "not managed",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 512
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "StatusUnmanagedInstance",
+  "src": "material instance · not managed by DreamShader",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 56
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "StatusUnresolved",
   "src": "unresolved",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 80
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 42
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "StatusUpToDate",
   "src": "up to date",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 70
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserStyle.h",
+  "line": 30
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "Storage",
   "src": "Storage",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderMaterialDetails.cpp",
-  "line": 273
- },
- {
-  "ns": "DreamShaderMaterialBrowser",
-  "key": "SubLabelWithRoot",
-  "src": "{0} · {1}",
-  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderGenPage.cpp",
-  "line": 592
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 472
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "TabTitle",
   "src": "Material Content Browser",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
-  "line": 84
+  "line": 137
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "TabTooltip",
   "src": "Browse, manage, and create instances of project and DreamShader-generated materials.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderMaterialBrowser.cpp",
-  "line": 85
+  "line": 138
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "TemplateMissing",
+  "src": "The template '{0}' is missing from the plugin.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserNewSource.cpp",
+  "line": 102
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ToggleTileView",
+  "src": "Tiles",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ToggleTileView_ToolTip",
+  "src": "Show the sources as thumbnail tiles instead of a list.",
+  "file": "DreamShaderEditor\\Private\\UI\\DreamShaderBrowserCommands.cpp",
+  "line": 0
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "UnloadedChildFmt",
+  "src": "└ {0} (not loaded)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 837
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "UnloadedChildTip",
+  "src": "{0} (not loaded — click to load)",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderInspector.cpp",
+  "line": 829
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ViewMenu",
+  "src": "View",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 307
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ViewMenuTip",
+  "src": "List or tiles, sorting, and what the Content Browser shows.",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 296
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ViewSectionGlobal",
+  "src": "Content Browser",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 439
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ViewSectionLayout",
+  "src": "Sources list",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 393
+ },
+ {
+  "ns": "DreamShaderMaterialBrowser",
+  "key": "ViewSectionSort",
+  "src": "Sort by",
+  "file": "DreamShaderEditor\\Private\\UI\\SDreamShaderBrowserShell.cpp",
+  "line": 397
  },
  {
   "ns": "DreamShaderTests",
@@ -2412,55 +3546,55 @@
   "key": "InvalidAssetReference",
   "src": "VirtualFunction '{0}' asset reference is invalid: {1}",
   "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
-  "line": 397
+  "line": 398
  },
  {
   "ns": "DreamShaderVirtualFunctionSyncService",
   "key": "InvalidDeclaration",
   "src": "VirtualFunction declaration is invalid: {0}",
   "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
-  "line": 377
+  "line": 378
  },
  {
   "ns": "DreamShaderVirtualFunctionSyncService",
   "key": "MissingClosingBrace",
   "src": "VirtualFunction body is missing a closing '}'.",
   "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
-  "line": 345
+  "line": 346
  },
  {
   "ns": "DreamShaderVirtualFunctionSyncService",
   "key": "MissingClosingParenthesis",
   "src": "VirtualFunction attributes are missing a closing ')'.",
   "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
-  "line": 317
+  "line": 318
  },
  {
   "ns": "DreamShaderVirtualFunctionSyncService",
   "key": "MissingMaterialFunction",
   "src": "VirtualFunction '{0}' references missing MaterialFunction '{1}'.",
   "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
-  "line": 494
+  "line": 495
  },
  {
   "ns": "DreamShaderVirtualFunctionSyncService",
   "key": "ReadSourceFileFailed",
   "src": "DreamShader could not read VirtualFunction source file '{0}'.",
   "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
-  "line": 265
+  "line": 266
  },
  {
   "ns": "DreamShaderVirtualFunctionSyncService",
   "key": "RefreshFailed",
   "src": "VirtualFunction '{0}' could not be refreshed from MaterialFunction '{1}': {2}",
   "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
-  "line": 511
+  "line": 512
  },
  {
   "ns": "DreamShaderVirtualFunctionSyncService",
   "key": "UpdateSourceFileFailed",
   "src": "DreamShader failed to update VirtualFunction source file '{0}'.",
   "file": "DreamShaderEditor\\Private\\VirtualFunction\\DreamShaderVirtualFunctionSyncService.cpp",
-  "line": 553
+  "line": 554
  }
 ]

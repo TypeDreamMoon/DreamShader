@@ -1,4 +1,5 @@
 #include "UI/DreamShaderInstanceFactory.h"
+#include "DreamShaderDiagnostic.h"
 
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderSettings.h"
@@ -163,7 +164,7 @@ namespace UE::DreamShader::Editor::Private
 		FAssetRegistryModule::AssetCreated(Instance);
 		Instance->MarkPackageDirty();
 
-		FString SaveError;
+		FDreamShaderError SaveError;
 		if (!SaveAssetPackage(Instance, SaveError))
 		{
 			// Roll back the half-created asset. Left as-is it would be a dirty, AssetRegistry-registered,

@@ -1,4 +1,4 @@
-#include "Commandlet/DreamShaderCommandletRunner.h"
+﻿#include "Commandlet/DreamShaderCommandletRunner.h"
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
@@ -52,6 +52,9 @@
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionDynamicParameter.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
+// CreateOutputRerouteValue puts a named reroute between a value and the material property it drives,
+// so GraphWritesMaterialOutputs has to walk through one to see which value actually won.
+#include "Materials/MaterialExpressionNamedReroute.h"
 // The math builtins added after the original nineteen, asserted on by MathBuiltinNodesExtended.
 #include "Materials/MaterialExpressionArccosine.h"
 #include "Materials/MaterialExpressionArcsine.h"
@@ -488,6 +491,212 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	TestTrue(
 		FString::Printf(TEXT("The swizzle is materialized as a ComponentMask node (masked inputs seen: %d)"), MaskedInputCount),
 		bHasComponentMaskNode);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderGraphWritesMaterialOutputsTest,
+	"DreamShader.Compiler.Generate.GraphWritesMaterialOutputs",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A Shader may drive its material properties straight from Graph, with no Outputs block at all. The
+// two things worth pinning are that the block really is optional, and that a repeated write behaves
+// like every other Graph assignment -- the last one wins -- because that is what separates a Graph
+// statement from an Outputs binding, which is order-free.
+bool FDreamShaderGraphWritesMaterialOutputsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoOutputSink"));
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	const FString Source = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Properties = {
+        VectorParameter Tint;
+    }
+
+    Settings = {
+        Domain = "UI";
+        ShadingModel = "Unlit";
+    }
+
+    Graph = {
+        Base.EmissiveColor = vec3(1.0, 0.0, 0.0);
+        Base.EmissiveColor = Tint.rgb;
+    }
+}
+)"), *AssetName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+			FString::Printf(TEXT("A material with no Outputs block generates: %s"), *Message),
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	UObject* GeneratedObject = LoadObject<UObject>(nullptr, *ObjectPath);
+	UMaterial* Material = Cast<UMaterial>(GeneratedObject);
+	if (!TestNotNull(
+			FString::Printf(
+				TEXT("The generated asset is a UMaterial (actual: %s)"),
+				GeneratedObject ? *GeneratedObject->GetClass()->GetName() : TEXT("<null>")),
+			Material))
+	{
+		return false;
+	}
+
+	FExpressionInput* EmissiveInput = Material->GetExpressionInputForProperty(MP_EmissiveColor);
+	if (!TestNotNull(TEXT("EmissiveColor has an input"), EmissiveInput)
+		|| !TestNotNull(TEXT("Graph drove EmissiveColor without an Outputs block"), EmissiveInput->Expression))
+	{
+		return false;
+	}
+
+	// Walking the reroute the generator inserts between a value and a material property: the test is
+	// about which value won, not about how it is routed there.
+	UMaterialExpression* DrivingExpression = EmissiveInput->Expression;
+	for (int32 HopIndex = 0; HopIndex < 8 && DrivingExpression; ++HopIndex)
+	{
+		UMaterialExpressionNamedRerouteUsage* Usage = Cast<UMaterialExpressionNamedRerouteUsage>(DrivingExpression);
+		if (!Usage || !Usage->Declaration)
+		{
+			break;
+		}
+		DrivingExpression = Usage->Declaration->Input.Expression;
+	}
+
+	TestTrue(
+		FString::Printf(
+			TEXT("The second write to Base.EmissiveColor is the one connected (found: %s)"),
+			DrivingExpression ? *DrivingExpression->GetClass()->GetName() : TEXT("<null>")),
+		DrivingExpression && DrivingExpression->IsA<UMaterialExpressionVectorParameter>());
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderGraphMaterialOutputSinkRejectionsTest,
+	"DreamShader.Compiler.Generate.GraphMaterialOutputSinkRejections",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The four ways `Base` can be used wrongly, each of which has to fail with its own message rather
+// than as a confusing symptom further down: driving one property from both places, shadowing the
+// name, reading it, and assigning a value too wide for the property.
+bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+
+	struct FRejectionCase
+	{
+		const TCHAR* Label;
+		const TCHAR* NameSuffix;
+		const TCHAR* Body;
+		const TCHAR* ExpectedFragment;
+	};
+
+	const FRejectionCase Cases[] =
+	{
+		{
+			TEXT("a property driven from both the Outputs block and Graph"),
+			TEXT("Conflict"),
+			TEXT(R"(
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = vec3(1.0, 0.0, 0.0);
+        Base.EmissiveColor = vec3(0.0, 1.0, 0.0);
+    }
+)"),
+			TEXT("is written from the Graph block and bound in the Outputs block"),
+		},
+		{
+			TEXT("a Graph variable named Base"),
+			TEXT("Shadow"),
+			TEXT(R"(
+    Graph = {
+        float3 Base = vec3(1.0, 0.0, 0.0);
+        Base.EmissiveColor = Base;
+    }
+)"),
+			TEXT("is reserved for the material's outputs"),
+		},
+		{
+			TEXT("reading a material output back"),
+			TEXT("Read"),
+			TEXT(R"(
+    Graph = {
+        Base.EmissiveColor = vec3(1.0, 0.0, 0.0);
+        float3 Echo = Base.EmissiveColor;
+        Base.OpacityMask = Echo.r;
+    }
+)"),
+			TEXT("can only be written, not read"),
+		},
+		{
+			TEXT("a value wider than the property it is assigned to"),
+			TEXT("TooWide"),
+			TEXT(R"(
+    Graph = {
+        Base.EmissiveColor = vec3(1.0, 0.0, 0.0);
+        Base.OpacityMask = vec3(1.0, 0.0, 0.0);
+    }
+)"),
+			TEXT("expects 1 component(s)"),
+		},
+	};
+
+	for (const FRejectionCase& Case : Cases)
+	{
+		const FString CaseAssetPrefix = FString(TEXT("M_AutoSinkBad")) + Case.NameSuffix;
+		const FString AssetName = MakeUniqueTestAssetName(*CaseAssetPrefix);
+		const FString Source = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Settings = {
+        Domain = "UI";
+        ShadingModel = "Unlit";
+    }
+%s}
+)"), *AssetName, Case.Body);
+
+		FString SourceFilePath;
+		if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+		{
+			return false;
+		}
+		Artifacts.AddSourceFile(SourceFilePath);
+
+		FString Message;
+		TestFalse(
+			FString::Printf(TEXT("Generation refuses %s."), Case.Label),
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true));
+		TestTrue(
+			FString::Printf(TEXT("The failure for %s names the cause. Got: %s"), Case.Label, *Message),
+			Message.Contains(Case.ExpectedFragment));
+	}
+
 	return true;
 }
 
@@ -5129,12 +5338,12 @@ bool FDreamShaderPersistedAssetRebuiltOnDiskTest::RunTest(const FString& Paramet
 
 	TestNotEqual(TEXT("The rebuild actually took: the graph changed"), BuildOutputDigest(Material), DigestBefore);
 
-	// The discriminator. Only the persisted path stamps a source hash; the in-memory path stamps the
-	// path alone, on purpose, so that the skip check stays off. A hash that moved therefore means the
-	// compile went down the persisted path, which is the whole point of the change.
+	// Both paths stamp a hash now, so the hash moving only says the rebuild happened; the
+	// discriminator for WHICH path is below -- a persisted rebuild saves (package clean, file present)
+	// where an in-memory one clears the dirty flag and writes nothing.
 	const FString StampedHashAfter = GetGeneratedAssetSourceHash(Material);
 	TestFalse(TEXT("The rebuild left a source hash stamped"), StampedHashAfter.IsEmpty());
-	TestNotEqual(TEXT("The rebuild re-stamped the source hash, so it took the persisted path"), StampedHashAfter, StampedHashBefore);
+	TestNotEqual(TEXT("The rebuild re-stamped the source hash"), StampedHashAfter, StampedHashBefore);
 
 	// And the honesty check: nothing pending, because it was saved rather than dirty-flag-cleared.
 	TestFalse(TEXT("The package is not left dirty"), Material->GetOutermost()->IsDirty());
@@ -5188,7 +5397,10 @@ bool FDreamShaderMemoryOnlyAssetStaysInMemoryTest::RunTest(const FString& Parame
 	}
 
 	TestFalse(TEXT("No file was written for a memory-only material"), FPackageName::DoesPackageExist(Material->GetOutermost()->GetName()));
-	TestTrue(TEXT("A memory-only build stamps no source hash, so it always regenerates"), GetGeneratedAssetSourceHash(Material).IsEmpty());
+	// A memory-only build stamps its hash like a saved one: an unchanged source is skipped on save,
+	// and the explicit rebuild routes (Recompile DSM, Clean Generated Shaders, a recompile request)
+	// force past it. The browser reads the same stamp to say whether the asset is current.
+	TestFalse(TEXT("A memory-only build stamps a source hash"), GetGeneratedAssetSourceHash(Material).IsEmpty());
 	TestFalse(TEXT("A memory-only material is not left dirty"), Material->GetOutermost()->IsDirty());
 	TestEqual(
 		TEXT("A memory-only material is still recognized as ours, so the divergence gate applies"),
@@ -5272,6 +5484,133 @@ bool FDreamShaderDivergenceInstanceOverrideTest::RunTest(const FString& Paramete
 		TEXT("Tuning a parameter on the generated instance reads as divergence"),
 		static_cast<int32>(ClassifyGeneratedAsset(Instance)),
 		static_cast<int32>(EDreamShaderDigestState::Diverged));
+	return true;
+}
+
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderFunctionInputOrderIsDeterministicTest,
+	"DreamShader.Compiler.Function.InputOrderSurvivesTiedSortPriority",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Pin order is load-bearing and SortPriority alone does not carry it.
+//
+// UMaterialFunction::GetInputsAndOutputs sorts with TArray::Sort -- introsort, not stable -- so two
+// inputs that share a SortPriority come out in an order decided by the pre-sort arrangement.
+// UMaterialExpressionMaterialFunctionCall binds by that order whenever the stored input GUIDs do not
+// match, which is exactly what a rebuild produces, so a tie silently rewires every caller. The
+// damage lands in the calling material: a float that arrives on a StaticBool pin is reported as
+// "Cannot cast from static bool to float", naming the function but never the pin, and the function
+// itself compiles clean.
+//
+// So the generator has to leave no ties. This declares two inputs at the same authored priority and
+// requires that the source's order is what survives.
+bool FDreamShaderFunctionInputOrderIsDeterministicTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Editor;
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	FScopedDreamShaderAutomationArtifacts Artifacts;
+	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_InputOrder"));
+	const FString ObjectPath = MakeAutomationObjectPath(FunctionName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
+
+	// Second and third share a priority; First is pulled ahead by a lower one, so the test covers
+	// both that authored priorities still win and that a tie falls back to declaration order.
+	const FString Source = FString::Printf(TEXT(R"(
+ShaderFunction(Name="DreamShaderTests/Automation/%s")
+{
+    Inputs = {
+        float First [
+            SortPriority=-1;
+        ];
+        opt StaticBool Second = false [
+            SortPriority=0;
+        ];
+        opt float Third = 0.5 [
+            SortPriority=0;
+        ];
+    }
+
+    Outputs = {
+        float Result;
+    }
+
+    Graph = {
+        Result = UE.Expression(Class="StaticSwitch", OutputType="float", True=Third, False=First, Value=Second);
+    }
+}
+)"), *FunctionName);
+
+	FString SourceFilePath;
+	if (!WriteAutomationSourceFile(*this, FunctionName + TEXT(".dsf"), Source, SourceFilePath))
+	{
+		return false;
+	}
+	Artifacts.AddSourceFile(SourceFilePath);
+
+	FString Message;
+	if (!TestTrue(
+		FString::Printf(TEXT("Function generation succeeds: %s"), *Message),
+		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, true)))
+	{
+		return false;
+	}
+
+	UMaterialFunction* GeneratedFunction = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("Generated function loads"), GeneratedFunction))
+	{
+		return false;
+	}
+
+	TArray<TPair<int32, FString>> InputsByPriority;
+	for (auto&& ExpressionPtr : GeneratedFunction->GetExpressions())
+	{
+		if (const UMaterialExpressionFunctionInput* FunctionInput = Cast<UMaterialExpressionFunctionInput>(ExpressionPtr))
+		{
+			InputsByPriority.Emplace(FunctionInput->SortPriority, FunctionInput->InputName.ToString());
+		}
+	}
+
+	if (!TestEqual(TEXT("All three inputs were generated"), InputsByPriority.Num(), 3))
+	{
+		return false;
+	}
+
+	// No two may share a priority, or the engine's unstable sort decides the order instead.
+	TSet<int32> SeenPriorities;
+	for (const TPair<int32, FString>& Input : InputsByPriority)
+	{
+		TestFalse(
+			FString::Printf(TEXT("Input '%s' has a SortPriority no other input shares"), *Input.Value),
+			SeenPriorities.Contains(Input.Key));
+		SeenPriorities.Add(Input.Key);
+	}
+
+	InputsByPriority.Sort([](const TPair<int32, FString>& Left, const TPair<int32, FString>& Right)
+	{
+		return Left.Key < Right.Key;
+	});
+
+	TArray<FString> ActualOrder;
+	for (const TPair<int32, FString>& Input : InputsByPriority)
+	{
+		ActualOrder.Add(Input.Value);
+	}
+
+	const TArray<FString> ExpectedOrder = { TEXT("First"), TEXT("Second"), TEXT("Third") };
+	TestEqual(
+		FString::Printf(TEXT("Pin order follows the source, got [%s]"), *FString::Join(ActualOrder, TEXT(", "))),
+		ActualOrder,
+		ExpectedOrder);
+
 	return true;
 }
 

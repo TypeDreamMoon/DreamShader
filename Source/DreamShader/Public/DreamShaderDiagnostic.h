@@ -136,11 +136,17 @@ namespace UE::DreamShader
 		return false;
 	}
 
-	template <typename... TArgs>
-	bool FailWith(FDreamShaderError& OutError, const TCHAR* Code, const TCHAR* Format, TArgs... Args)
+	/**
+	 * Formatting stays at the call site -- `FailWith(E, TEXT("DSH4001"), FString::Printf(TEXT("%s"), X))`
+	 * -- rather than being forwarded through here as a format string plus arguments. FString::Printf
+	 * takes a *checked* format string that has to be a literal the compiler can still see, so a
+	 * variadic wrapper cannot pass one along: the format would arrive as a runtime `const TCHAR*` and
+	 * fail to convert. Taking the finished message also means a caller may build it any way it likes.
+	 */
+	inline bool FailWith(FDreamShaderError& OutError, const TCHAR* Code, const FString& Message)
 	{
 		OutError.Code = Code;
-		OutError.Message = FString::Printf(Format, Args...);
+		OutError.Message = Message;
 		return false;
 	}
 
@@ -159,13 +165,13 @@ namespace UE::DreamShader
 	 * and every Graph error in the plugin would share one useless code. The innermost raise knows
 	 * what actually went wrong, so its code is the one that survives.
 	 *
-	 * Read the inner message *before* calling: `WrapError(E, TEXT("In X: %s"), *E)` is well-defined
-	 * because the argument is evaluated first.
+	 * Read the inner message *before* calling: `WrapError(E, FString::Printf(TEXT("In X: %s"), *E))`
+	 * is well-defined because the argument is evaluated first. Formatting stays at the call site for
+	 * the same reason it does in FailWith above.
 	 */
-	template <typename... TArgs>
-	bool WrapError(FDreamShaderError& OutError, const TCHAR* Format, TArgs... Args)
+	inline bool WrapError(FDreamShaderError& OutError, const FString& Message)
 	{
-		OutError.Message = FString::Printf(Format, Args...);
+		OutError.Message = Message;
 		return false;
 	}
 

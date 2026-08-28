@@ -315,7 +315,7 @@ namespace UE::DreamShader::Editor::Private
 		bool& bOutUsesReturn,
 		ECustomMaterialOutputType& OutReturnType,
 		bool& bOutReturnIsSubstrateMaterial,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const auto IsSimpleOutputReference = [](const FString& InText) -> bool
 		{
@@ -356,21 +356,18 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Declaration.Name.Equals(TEXT("return"), ESearchCase::IgnoreCase))
 			{
-				OutError = TEXT("Outputs declarations cannot use the reserved name 'return'.");
-				return false;
+				return FailWith(OutError, TEXT("DSH8138"), TEXT("Outputs declarations cannot use the reserved name 'return'."));
 			}
 
 			ECustomMaterialOutputType DeclaredType = CMOT_Float1;
 			const bool bDeclaredSubstrate = IsSubstrateMaterialType(Declaration.Type);
 			if (bDeclaredSubstrate && !IsSubstrateMaterialTypeSupported())
 			{
-				OutError = FString::Printf(TEXT("Output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Declaration.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8139"), FString::Printf(TEXT("Output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer."), *Declaration.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			if (!bDeclaredSubstrate && !TryResolveCustomOutputType(Declaration.Type, DeclaredType))
 			{
-				OutError = FString::Printf(TEXT("Unsupported output type '%s' for '%s'."), *Declaration.Type, *Declaration.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH8140"), FString::Printf(TEXT("Unsupported output type '%s' for '%s'."), *Declaration.Type, *Declaration.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (const ECustomMaterialOutputType* ExistingType = DeclaredOutputTypes.Find(Declaration.Name))
@@ -378,8 +375,7 @@ namespace UE::DreamShader::Editor::Private
 				const bool bExistingSubstrate = DeclaredOutputSubstrateTypes.FindRef(Declaration.Name);
 				if (*ExistingType != DeclaredType || bExistingSubstrate != bDeclaredSubstrate)
 				{
-					OutError = FString::Printf(TEXT("Output variable '%s' is declared with conflicting types."), *Declaration.Name); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8141"), FString::Printf(TEXT("Output variable '%s' is declared with conflicting types."), *Declaration.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 			else
@@ -405,11 +401,9 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (Binding.MaterialProperty.TrimStartAndEnd().Equals(TEXT("FrontMaterial"), ESearchCase::IgnoreCase))
 					{
-						OutError = TEXT("Base.FrontMaterial requires Unreal Engine 5.4 or newer.");
-						return false;
+						return FailWith(OutError, TEXT("DSH8142"), TEXT("Base.FrontMaterial requires Unreal Engine 5.4 or newer."));
 					}
-					OutError = FString::Printf(TEXT("Unsupported material output '%s'."), *Binding.MaterialProperty); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8143"), FString::Printf(TEXT("Unsupported material output '%s'."), *Binding.MaterialProperty)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 
 				BindingOutputType = ResolvedProperty.OutputType;
@@ -421,8 +415,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (Binding.TargetKind != FTextShaderOutputBinding::ETargetKind::MaterialProperty)
 				{
-					OutError = TEXT("The reserved output name 'return' can only bind to Base material properties.");
-					return false;
+					return FailWith(OutError, TEXT("DSH8144"), TEXT("The reserved output name 'return' can only bind to Base material properties."));
 				}
 
 				if (!bOutUsesReturn)
@@ -433,8 +426,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 				else if (OutReturnType != BindingOutputType || bOutReturnIsSubstrateMaterial != bBindingIsSubstrateMaterial)
 				{
-					OutError = TEXT("The return value is bound to material properties with incompatible types.");
-					return false;
+					return FailWith(OutError, TEXT("DSH8145"), TEXT("The return value is bound to material properties with incompatible types."));
 				}
 
 				continue;
@@ -451,8 +443,7 @@ namespace UE::DreamShader::Editor::Private
 					|| OutNamedOutputs[*ExistingIndex].bIsSubstrateMaterial != bBindingIsSubstrateMaterial)
 					&& bHasImplicitTypeFromTarget)
 				{
-					OutError = FString::Printf(TEXT("Output variable '%s' is bound to incompatible material properties."), *SourceName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH8146"), FString::Printf(TEXT("Output variable '%s' is bound to incompatible material properties."), *SourceName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 			else
@@ -467,12 +458,7 @@ namespace UE::DreamShader::Editor::Private
 					const bool bDeclaredSubstrate = DeclaredOutputSubstrateTypes.FindRef(SourceName);
 					if (bHasImplicitTypeFromTarget && (*DeclaredType != BindingOutputType || bDeclaredSubstrate != bBindingIsSubstrateMaterial))
 					{
-						OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-							TEXT("Output variable '%s' is declared as '%s' but bound material property '%s' expects a different type."),
-							*SourceName,
-							*DeclaredOutputTypeTexts.FindChecked(SourceName),
-							*Binding.MaterialProperty);
-						return false;
+						return FailWith(OutError, TEXT("DSH8147"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Output variable '%s' is declared as '%s' but bound material property '%s' expects a different type."), *SourceName, *DeclaredOutputTypeTexts.FindChecked(SourceName), *Binding.MaterialProperty));
 					}
 
 					Output.OutputType = *DeclaredType;
@@ -480,11 +466,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 				else if (!bHasImplicitTypeFromTarget)
 				{
-					OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("Output variable '%s' must declare an explicit type before binding to expression target '%s'."),
-						*SourceName,
-						*Binding.TargetText);
-					return false;
+					return FailWith(OutError, TEXT("DSH8148"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Output variable '%s' must declare an explicit type before binding to expression target '%s'."), *SourceName, *Binding.TargetText));
 				}
 
 				OutputOrder.Add(SourceName, OutNamedOutputs.Num() - 1);

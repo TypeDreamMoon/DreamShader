@@ -1,22 +1,18 @@
 #include "UI/DreamShaderMaterialBrowser.h"
 
 #include "UI/DreamShaderInstanceFactory.h"
-#include "UI/SDreamShaderGenPage.h"
-#include "UI/SDreamShaderProjectPage.h"
+#include "UI/SDreamShaderBrowserShell.h"
 
 #include "ContentBrowserMenuContexts.h"
 #include "DreamShaderMaterialInstance.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Framework/Docking/TabManager.h"
+#include "Materials/Material.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInterface.h"
 #include "Styling/AppStyle.h"
 #include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
-#include "Widgets/Input/SCheckBox.h"
-#include "Widgets/Layout/SBorder.h"
-#include "Widgets/Layout/SWidgetSwitcher.h"
-#include "Widgets/SBoxPanel.h"
-#include "Widgets/Text/STextBlock.h"
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
 
@@ -31,13 +27,43 @@ namespace UE::DreamShader::Editor::Private
 		const FName GDreamShaderBrowserMenuOwner(TEXT("DreamShaderMaterialBrowser"));
 		FDelegateHandle GMenuStartupHandle;
 
+		TWeakPtr<SDreamShaderBrowserShell> GActiveShell;
+
 		TSharedRef<SDockTab> SpawnMaterialBrowserTab(const FSpawnTabArgs& Args)
 		{
+			TSharedRef<SDreamShaderBrowserShell> Shell = SNew(SDreamShaderBrowserShell);
+			GActiveShell = Shell;
 			return SNew(SDockTab)
 				.TabRole(ETabRole::NomadTab)
 				[
-					SNew(SDreamShaderMaterialBrowser)
+					Shell
 				];
+		}
+
+		TSharedPtr<SDreamShaderBrowserShell> InvokeShell()
+		{
+			FGlobalTabmanager::Get()->TryInvokeTab(FDreamShaderMaterialBrowser::TabId);
+			return GActiveShell.Pin();
+		}
+
+		// Content Browser right-click on a material -> "Show in Material Content Browser".
+		void PopulateShowInBrowserMenu(FToolMenuSection& InSection)
+		{
+			const UContentBrowserAssetContextMenuContext* Context = UContentBrowserAssetContextMenuContext::FindContextWithAssets(InSection);
+			if (!Context || Context->SelectedAssets.Num() != 1)
+			{
+				return;
+			}
+			const FString ObjectPath = Context->SelectedAssets[0].GetObjectPathString();
+			InSection.AddMenuEntry(
+				"DreamShader.ShowInMaterialBrowser",
+				LOCTEXT("CBShowInBrowser", "Show in Material Content Browser"),
+				LOCTEXT("CBShowInBrowserTip", "Open the DreamShader Material Content Browser on this asset: its source, compile status, provenance and inheritance."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), "ClassIcon.Material"),
+				FUIAction(FExecuteAction::CreateLambda([ObjectPath]()
+				{
+					FDreamShaderMaterialBrowser::OpenAndShowAsset(ObjectPath);
+				})));
 		}
 
 		// Content Browser right-click on a material instance -> "Create DreamShader instance".
@@ -74,6 +100,33 @@ namespace UE::DreamShader::Editor::Private
 					FNewToolMenuSectionDelegate::CreateStatic(&PopulateInstanceCreateMenu));
 			}
 		}
+
+		void ExtendShowInBrowserContextMenu(UClass* AssetClass)
+		{
+			if (UToolMenu* Menu = UE::ContentBrowser::ExtendToolMenu_AssetContextMenu(AssetClass))
+			{
+				FToolMenuSection& Section = Menu->FindOrAddSection(TEXT("GetAssetActions"));
+				Section.AddDynamicEntry(
+					TEXT("DreamShader.ShowInBrowserActions"),
+					FNewToolMenuSectionDelegate::CreateStatic(&PopulateShowInBrowserMenu));
+			}
+		}
+	}
+
+	void FDreamShaderMaterialBrowser::OpenAndShowSource(const FString& SourceFilePath)
+	{
+		if (TSharedPtr<SDreamShaderBrowserShell> Shell = InvokeShell())
+		{
+			Shell->ShowSource(SourceFilePath);
+		}
+	}
+
+	void FDreamShaderMaterialBrowser::OpenAndShowAsset(const FString& ObjectPath)
+	{
+		if (TSharedPtr<SDreamShaderBrowserShell> Shell = InvokeShell())
+		{
+			Shell->ShowAsset(ObjectPath);
+		}
 	}
 
 	void FDreamShaderMaterialBrowser::Register()
@@ -107,6 +160,9 @@ namespace UE::DreamShader::Editor::Private
 			// so extend both the stock instance class and the DreamShader subclass.
 			ExtendInstanceContextMenu(UMaterialInstanceConstant::StaticClass());
 			ExtendInstanceContextMenu(UDreamShaderMaterialInstance::StaticClass());
+			ExtendShowInBrowserContextMenu(UMaterial::StaticClass());
+			ExtendShowInBrowserContextMenu(UMaterialInstanceConstant::StaticClass());
+			ExtendShowInBrowserContextMenu(UDreamShaderMaterialInstance::StaticClass());
 		}));
 	}
 
@@ -125,91 +181,6 @@ namespace UE::DreamShader::Editor::Private
 		if (UObjectInitialized())
 		{
 			UToolMenus::UnregisterOwner(GDreamShaderBrowserMenuOwner);
-		}
-	}
-
-	void SDreamShaderMaterialBrowser::Construct(const FArguments& InArgs)
-	{
-		const auto MakePageToggle = [this](int32 PageIndex, const FText& Label) -> TSharedRef<SWidget>
-		{
-			return SNew(SCheckBox)
-				.Style(FAppStyle::Get(), "DetailsView.SectionButton")
-				.Padding(FMargin(14.0f, 4.0f))
-				.IsChecked(this, &SDreamShaderMaterialBrowser::GetPageCheckState, PageIndex)
-				.OnCheckStateChanged(this, &SDreamShaderMaterialBrowser::OnPageCheckStateChanged, PageIndex)
-				[
-					SNew(STextBlock)
-					.Text(Label)
-				];
-		};
-
-		ChildSlot
-		[
-			SNew(SVerticalBox)
-
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(SBorder)
-				.BorderImage(FAppStyle::Get().GetBrush("Brushes.Panel"))
-				.Padding(FMargin(8.0f, 6.0f))
-				[
-					SNew(SHorizontalBox)
-
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					.Padding(0.0f, 0.0f, 4.0f, 0.0f)
-					[
-						MakePageToggle(0, LOCTEXT("ProjectPage", "Project"))
-					]
-
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						MakePageToggle(1, LOCTEXT("GenPage", "Dream Shader Gen"))
-					]
-				]
-			]
-
-			+ SVerticalBox::Slot()
-			.FillHeight(1.0f)
-			[
-				SAssignNew(PageSwitcher, SWidgetSwitcher)
-				.WidgetIndex(ActivePageIndex)
-
-				+ SWidgetSwitcher::Slot()
-				[
-					SNew(SDreamShaderProjectPage)
-				]
-
-				+ SWidgetSwitcher::Slot()
-				[
-					SNew(SDreamShaderGenPage)
-				]
-			]
-		];
-	}
-
-	void SDreamShaderMaterialBrowser::SetActivePage(int32 PageIndex)
-	{
-		ActivePageIndex = PageIndex;
-		if (PageSwitcher.IsValid())
-		{
-			PageSwitcher->SetActiveWidgetIndex(PageIndex);
-		}
-	}
-
-	ECheckBoxState SDreamShaderMaterialBrowser::GetPageCheckState(int32 PageIndex) const
-	{
-		return ActivePageIndex == PageIndex ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-	}
-
-	void SDreamShaderMaterialBrowser::OnPageCheckStateChanged(ECheckBoxState NewState, int32 PageIndex)
-	{
-		// Radio behavior: only respond to a fresh selection; re-clicking the active page is a no-op.
-		if (NewState == ECheckBoxState::Checked)
-		{
-			SetActivePage(PageIndex);
 		}
 	}
 }

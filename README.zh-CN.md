@@ -159,7 +159,7 @@ Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某�
 
 | | |
 | :-- | :-- |
-| **[Material Content Browser](Docs/tools/material-browser.md)** | *Tools ▸ DreamShader*。**Project** 页浏览 `/Game` 下所有材质及其完整继承链，一键创建实例；**Dream Shader Gen** 页列出源文件、实时预览、全量编译并暴露错误 |
+| **[Material Content Browser](Docs/tools/material-browser.md)** | *Tools ▸ DreamShader*。源文件和工程材质在同一个页签里：逐文件编译状态、每条诊断都能跳到行、手改检测配 Revert / Adopt / Detach、导入与被引用关系、继承链、可拖拽的实时预览、一键建实例、新建文件模板。跟着监视器走，永远不过期 |
 | **[反编译器](Docs/tools/decompiler.md)** | 右键 `Material` / `Material Function` ▸ *DreamShader ▸ Export DSM/DSF*。定位是迁移起点——常见节点转成 graph 文本，其余回退到 `UE.Expression(…)`，保证结构仍可重新生成 |
 | **[Package](Docs/tools/packages.md)** | 安装在 `DShader/Packages/@scope/name/` 下的可复用 `.dsh` 库，用 `import "@typedreammoon/dream-noise/Library/Noise.dsh";` 引入 |
 | **[Workspace](Docs/tools/workspace.md)** | 生成的 `DShader/DreamShader.code-workspace`，可从编辑器工具栏用 VSCode 打开 |

@@ -1,38 +1,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Widgets/SCompoundWidget.h"
-
-class SWidgetSwitcher;
 
 namespace UE::DreamShader::Editor::Private
 {
 	// Registers (and tears down) the "Material Content Browser" nomad tab and its Tools-menu entry. Called
-	// once from the editor module's Startup/Shutdown. This is the first editor tab the plugin owns.
+	// once from the editor module's Startup/Shutdown. The tab's content is SDreamShaderBrowserShell.
 	class FDreamShaderMaterialBrowser
 	{
 	public:
 		static void Register();
 		static void Unregister();
 
+		// Opens (or fronts) the tab and shows the given source file or asset in it.
+		static void OpenAndShowSource(const FString& SourceFilePath);
+		static void OpenAndShowAsset(const FString& ObjectPath);
+
 		static const FName TabId;
-	};
-
-	// The tab's root widget: a two-page switcher ("Project" and "Dream Shader Gen") over a shared toolbar.
-	class SDreamShaderMaterialBrowser : public SCompoundWidget
-	{
-	public:
-		SLATE_BEGIN_ARGS(SDreamShaderMaterialBrowser) {}
-		SLATE_END_ARGS()
-
-		void Construct(const FArguments& InArgs);
-
-	private:
-		TSharedPtr<SWidgetSwitcher> PageSwitcher;
-		int32 ActivePageIndex = 0;
-
-		void SetActivePage(int32 PageIndex);
-		ECheckBoxState GetPageCheckState(int32 PageIndex) const;
-		void OnPageCheckStateChanged(ECheckBoxState NewState, int32 PageIndex);
 	};
 }

@@ -305,7 +305,7 @@ namespace UE::DreamShader::Editor::Private
 		return GRevertDivergedAssetsDepth > 0;
 	}
 
-	bool CheckGeneratedAssetNotDiverged(UObject* Asset, FString& OutError)
+	bool CheckGeneratedAssetNotDiverged(UObject* Asset, FDreamShaderError& OutError)
 	{
 		if (IsRevertingDivergedAssets() || ClassifyGeneratedAsset(Asset) != EDreamShaderDigestState::Diverged)
 		{
@@ -313,15 +313,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const FString SourceFile = GetGeneratedAssetSourceFile(Asset);
-		OutError = FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-			TEXT("Asset '%s' has been edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). ")
-			TEXT("Right-click the asset > DreamShader and choose one: 'Revert to Source' discards the edits and rebuilds, ")
-			TEXT("'Adopt Into Source' rewrites '%s' from the edited asset, ")
-			TEXT("'Detach From DreamShader' hands the asset over to you and stops managing it."),
-			*Asset->GetPathName(),
-			*SourceFile,
-			*SourceFile);
-		return false;
+		return FailWith(OutError, TEXT("DSH8115"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Asset '%s' has been edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). ") TEXT("Right-click the asset > DreamShader and choose one: 'Revert to Source' discards the edits and rebuilds, ") TEXT("'Adopt Into Source' rewrites '%s' from the edited asset, ") TEXT("'Detach From DreamShader' hands the asset over to you and stops managing it."), *Asset->GetPathName(), *SourceFile, *SourceFile));
 	}
 
 	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath)
@@ -363,7 +355,7 @@ namespace UE::DreamShader::Editor::Private
 #endif
 	}
 
-	bool SaveAssetPackage(UObject* Asset, FString& OutError)
+	bool SaveAssetPackage(UObject* Asset, FDreamShaderError& OutError)
 	{
 		check(Asset);
 
@@ -371,14 +363,13 @@ namespace UE::DreamShader::Editor::Private
 		PackagesToSave.Add(Asset->GetOutermost());
 		if (!UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true))
 		{
-			OutError = FString::Printf(TEXT("Generated DreamShader asset '%s' could not be saved."), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
-			return false;
+			return FailWith(OutError, TEXT("DSH8116"), FString::Printf(TEXT("Generated DreamShader asset '%s' could not be saved."), *Asset->GetPathName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;
 	}
 
-	bool SaveAssetPackages(const TArray<UObject*>& Assets, FString& OutError)
+	bool SaveAssetPackages(const TArray<UObject*>& Assets, FDreamShaderError& OutError)
 	{
 		// One SavePackages call for a dependent asset PAIR (e.g. a ThinCustom base material and the
 		// instance parented to it): SavePackages saves exactly the packages passed in -- it does NOT
@@ -394,12 +385,12 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true))
 		{
-			OutError = TEXT("Generated DreamShader asset packages could not be saved.");
+			FString FailedAssetList;
 			for (UObject* Asset : Assets)
 			{
-				OutError += FString::Printf(TEXT(" '%s'"), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
+				FailedAssetList += FString::Printf(TEXT(" '%s'"), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
-			return false;
+			return FailWith(OutError, TEXT("DSH8117"), FString::Printf(TEXT("Generated DreamShader asset packages could not be saved.%s"), *FailedAssetList)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
 		return true;

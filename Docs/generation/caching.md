@@ -97,8 +97,15 @@ Which assets get stamped, and when:
 | :-- | :-- |
 | `UDreamShaderMaterialInstance` (ThinCustom) | **always** — memory-only and persisted alike |
 | the hidden `MB_DreamThinBase_*` base | persist mode only |
-| `UMaterial` (Graph backend) | persist mode only |
-| `UMaterialFunction` / layer / layer blend | persist mode only |
+| `UMaterial` (Graph backend) | **always** *(since the release after 1.8.0; before it, persist mode only)* |
+| `UMaterialFunction` / layer / layer blend | **always** *(same)* |
+
+> [!NOTE]
+> Until 1.8.0 a memory-only Graph material or function was stamped with the source **path** only,
+> so that the skip could never fire on it. The cost was that nothing could say whether such an asset
+> was current — the Material Content Browser reported every one as stale forever. Every generated
+> asset now carries its hash in both modes, and the entry points that *mean* "rebuild regardless"
+> force past the skip instead (see below).
 
 A ThinCustom instance additionally carries the source path and the hash as read-only `UPROPERTY`s —
 `SourceFilePath` and `SourceHash`, category `DreamShader` — so they are visible in the details panel
@@ -143,7 +150,10 @@ material, no ownership check, no graph teardown.
 | Path | Force |
 | :-- | :-- |
 | Auto-compile on save | **no** — the hash short circuit is active |
-| *Generate all in-memory materials* (startup, backend-setting change) | yes |
+| *Generate all in-memory materials* (startup) | **no** — see [In-memory materials](in-memory.md#where-the-asset-lives-decides) |
+| *Generate all in-memory materials* (backend-setting change) | yes |
+| *Tools ▸ DreamShader ▸ Recompile DSM*, *Clean Generated Shaders* | yes — queued through the bridge as forced |
+| Bridge `recompile` request (`scope: "file"` / `"all"`) | yes — an explicit request means "rebuild" |
 | Material Content Browser Compile / thumbnail refresh | yes |
 | Live preview render | yes |
 | *Materialize*, and child-instance creation | yes |

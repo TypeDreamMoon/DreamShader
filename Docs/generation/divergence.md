@@ -137,8 +137,7 @@ detach only edits it in memory.
 
 ## Notes
 
-- The digest is stamped for memory-only assets too, along with the source **path** (but not the
-  source hash, which would switch the [skip](caching.md#when-regeneration-is-skipped) on). Without
+- The digest is stamped for memory-only assets too, along with the source path and hash. Without
   the path the asset reads as `Foreign` and the gate never fires — which would have left it dead in
   the editor's default in-memory mode.
 - A digest is only ever compared against one carrying the same schema tag. Changing the tag is the

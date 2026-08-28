@@ -20,7 +20,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& FunctionName,
 		const TArray<FCodeCallArgument>& Arguments,
 		FCodeValue& OutValue,
-		FString& OutError)
+		FDreamShaderError& OutError)
 	{
 		const auto ValidatePositionalArguments = [&]()
 		{
@@ -28,8 +28,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (Argument.bIsNamed)
 				{
-					OutError = FString::Printf(TEXT("Math function '%s' only accepts positional arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-					return false;
+					return FailWith(OutError, TEXT("DSH5001"), FString::Printf(TEXT("Math function '%s' only accepts positional arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 				}
 			}
 			return true;
@@ -39,18 +38,15 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!Arguments.IsValidIndex(ArgumentIndex))
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' is missing argument %d."), *FunctionName, ArgumentIndex + 1); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5002"), FString::Printf(TEXT("Math function '%s' is missing argument %d."), *FunctionName, ArgumentIndex + 1)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			if (!EvaluateExpression(Arguments[ArgumentIndex].Expression, OutArgumentValue, OutError))
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' argument %d: %s"), *FunctionName, ArgumentIndex + 1, *OutError); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return WrapError(OutError, FString::Printf(TEXT("Math function '%s' argument %d: %s"), *FunctionName, ArgumentIndex + 1, *OutError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			if (OutArgumentValue.bIsTextureObject || OutArgumentValue.bIsMaterialAttributes || OutArgumentValue.bIsSubstrateMaterial)
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' only accepts numeric scalar/vector arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5003"), FString::Printf(TEXT("Math function '%s' only accepts numeric scalar/vector arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			return true;
 		};
@@ -65,15 +61,13 @@ namespace UE::DreamShader::Editor::Private
 			FProperty* InputProperty = FindMaterialExpressionArgumentProperty(Expression->GetClass(), InputName);
 			if (!InputProperty || !IsMaterialExpressionInputProperty(InputProperty))
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' could not bind input '%s'."), *FunctionName, InputName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5004"), FString::Printf(TEXT("Math function '%s' could not bind input '%s'."), *FunctionName, InputName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FExpressionInput* Input = InputProperty->ContainerPtrToValuePtr<FExpressionInput>(Expression);
 			if (!Input)
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' failed to access input '%s'."), *FunctionName, InputName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5005"), FString::Printf(TEXT("Math function '%s' failed to access input '%s'."), *FunctionName, InputName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			ConnectCodeValueToInput(*Input, InputValue);
@@ -87,8 +81,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 1 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 1 argument."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5006"), FString::Printf(TEXT("Math function '%s' expects exactly 1 argument."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue InputValue;
@@ -111,8 +104,7 @@ namespace UE::DreamShader::Editor::Private
 			UMaterialExpression* Expression = CreateExpression(ExpressionClass, 360, ConsumeNodeY());
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5007"), FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (!BindNamedInput(Expression, InputName, InputValue))
@@ -140,8 +132,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 2 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5008"), FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue FirstValue;
@@ -166,8 +157,7 @@ namespace UE::DreamShader::Editor::Private
 			UMaterialExpression* Expression = CreateExpression(ExpressionClass, 360, ConsumeNodeY());
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5009"), FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (!BindNamedInput(Expression, FirstInputName, FirstValue)
@@ -198,8 +188,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 3 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 3 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5010"), FString::Printf(TEXT("Math function '%s' expects exactly 3 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue FirstValue;
@@ -227,8 +216,7 @@ namespace UE::DreamShader::Editor::Private
 			UMaterialExpression* Expression = CreateExpression(ExpressionClass, 360, ConsumeNodeY());
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5011"), FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (!BindNamedInput(Expression, FirstInputName, FirstValue)
@@ -269,8 +257,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 3 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 3 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5012"), FString::Printf(TEXT("Math function '%s' expects exactly 3 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue A;
@@ -295,8 +282,7 @@ namespace UE::DreamShader::Editor::Private
 				CreateExpression(UMaterialExpressionLinearInterpolate::StaticClass(), 360, ConsumeNodeY()));
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5013"), FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			ConnectCodeValueToInput(Expression->A, A);
@@ -314,8 +300,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 2 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5014"), FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue A;
@@ -338,8 +323,7 @@ namespace UE::DreamShader::Editor::Private
 				CreateExpression(UMaterialExpressionDotProduct::StaticClass(), 360, ConsumeNodeY()));
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5015"), FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			ConnectCodeValueToInput(Expression->A, A);
@@ -355,8 +339,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 2 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5016"), FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue Base;
@@ -379,8 +362,7 @@ namespace UE::DreamShader::Editor::Private
 				CreateExpression(UMaterialExpressionPower::StaticClass(), 360, ConsumeNodeY()));
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5017"), FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			ConnectCodeValueToInput(Expression->Base, Base);
@@ -397,8 +379,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 2 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5018"), FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue A;
@@ -423,8 +404,7 @@ namespace UE::DreamShader::Editor::Private
 				: CreateExpression(UMaterialExpressionMax::StaticClass(), 360, ConsumeNodeY());
 			if (!RawExpression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5019"), FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			if (auto* MinExpression = Cast<UMaterialExpressionMin>(RawExpression))
@@ -450,8 +430,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 3 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 3 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5020"), FString::Printf(TEXT("Math function '%s' expects exactly 3 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue Input;
@@ -476,8 +455,7 @@ namespace UE::DreamShader::Editor::Private
 				CreateExpression(UMaterialExpressionClamp::StaticClass(), 360, ConsumeNodeY()));
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5021"), FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			ConnectCodeValueToInput(Expression->Input, Input);
@@ -536,8 +514,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 2 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5022"), FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue Dividend;
@@ -560,8 +537,7 @@ namespace UE::DreamShader::Editor::Private
 				CreateExpression(UMaterialExpressionFmod::StaticClass(), 360, ConsumeNodeY()));
 			if (!Expression)
 			{
-				OutError = FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5023"), FString::Printf(TEXT("Failed to create math function '%s'."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			ConnectCodeValueToInput(Expression->A, Dividend);
@@ -625,8 +601,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 2 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5024"), FString::Printf(TEXT("Math function '%s' expects exactly 2 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue Incident;
@@ -691,8 +666,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (Arguments.Num() != 3 || !ValidatePositionalArguments())
 			{
-				OutError = FString::Printf(TEXT("Math function '%s' expects exactly 3 arguments."), *FunctionName); /* I18N-EXEMPT: deferred codegen or compatibility path */
-				return false;
+				return FailWith(OutError, TEXT("DSH5025"), FString::Printf(TEXT("Math function '%s' expects exactly 3 arguments."), *FunctionName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
 			FCodeValue Incident;

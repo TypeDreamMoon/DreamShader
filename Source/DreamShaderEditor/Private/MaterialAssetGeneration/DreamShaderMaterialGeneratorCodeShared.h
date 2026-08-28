@@ -1,6 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #include "DreamShaderMaterialGeneratorPrivate.h"
+#include "Engine/Texture2DArray.h"
+#include "Engine/VolumeTexture.h"
+#include "Materials/MaterialExpressionTextureBase.h"
+#include "Materials/MaterialExpressionTextureProperty.h"
+#include "SparseVolumeTexture/SparseVolumeTexture.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
 
@@ -457,11 +462,52 @@ namespace UE::DreamShader::Editor::Private
 #endif
 	}
 
+	/**
+	 * Width of a TextureProperty node's output, which the engine does not reflect.
+	 *
+	 * UMaterialExpressionTextureProperty never overrides GetOutputValueType, so the base class answers
+	 * with the scalar default and every Texture Size / Texel Size read looks like a float. The real
+	 * width is decided at translate time by GetTexturePropertyValueType: float3 for a texture that has
+	 * a third axis -- 2D array, volume, sparse volume -- and float2 for everything else. Decompiling it
+	 * as a scalar produces source that widens the value by hand, which then appends two float3s and
+	 * fails to compile. Same rule as the engine, applied where the engine forgot to publish it.
+	 */
+	inline bool TryGetTexturePropertyOutputValueType(UMaterialExpression* Expression, EMaterialValueType& OutValueType)
+	{
+		const UMaterialExpressionTextureProperty* TextureProperty = Cast<UMaterialExpressionTextureProperty>(Expression);
+		if (!TextureProperty)
+		{
+			return false;
+		}
+
+		// The width follows the texture wired into TextureObject, so an unconnected pin has no answer
+		// to give -- leave it to the caller rather than guessing float2 and being wrong on an array.
+		const FExpressionInput TracedTextureInput = TextureProperty->TextureObject.GetTracedInput();
+		const UMaterialExpressionTextureBase* TextureExpression =
+			Cast<UMaterialExpressionTextureBase>(TracedTextureInput.Expression);
+		const UTexture* Texture = TextureExpression ? ToRawPtr(TextureExpression->Texture) : nullptr;
+		if (!Texture)
+		{
+			return false;
+		}
+
+		OutValueType = (Texture->IsA<UTexture2DArray>() || Texture->IsA<UVolumeTexture>() || Texture->IsA<USparseVolumeTexture>())
+			? MCT_Float3
+			: MCT_Float2;
+		return true;
+	}
+
 	inline EMaterialValueType GetDreamShaderExpressionOutputValueType(UMaterialExpression* Expression, const int32 OutputIndex)
 	{
 		if (!Expression)
 		{
 			return MCT_Unknown;
+		}
+
+		EMaterialValueType TexturePropertyValueType = MCT_Unknown;
+		if (TryGetTexturePropertyOutputValueType(Expression, TexturePropertyValueType))
+		{
+			return TexturePropertyValueType;
 		}
 #if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
 		return Expression->GetOutputValueType(OutputIndex);

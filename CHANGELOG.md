@@ -214,6 +214,31 @@
 
 ### Added
 
+- **A Shader's Graph block can drive material properties directly, and the Outputs block became
+  optional.** Writing `Base.BaseColor = ...` inside `Graph` does what the same line did inside
+  `Outputs`, so a material that only routes the standard attributes no longer restates every one of
+  them twice — once as a typed declaration, once as a binding of a variable to the attribute of the
+  same name. `Outputs` is unchanged and still required for what only it can express: renaming a
+  value on its way out, and `Expression(Class="...").Pin[N]` custom-output targets, which have no
+  declared type to infer and must keep their declaration. Four things are refused rather than
+  resolved: one property driven from both places (the block is order-free, the statement is not, so
+  neither is the obvious winner), a Graph variable named `Base` (one identifier would mean a local
+  on the right of `=` and an output on the left), reading `Base.X` back, and a material that ends up
+  driving nothing at all. Repeating a write is allowed and the last one wins, like any other Graph
+  assignment.
+
+  `Base` is now reserved inside a Shader's Graph, which is a source-breaking change for a material
+  that used it as a variable name; a material function is unaffected and keeps the name available.
+
+- **A value that does not fit the material property it drives is refused where it is written.** The
+  existing check compared the *declared* type of an output against its property, so it only ran for
+  a binding whose source was a declared variable — an expression-valued binding, and now a Graph
+  write, had nothing to check. The component count of the value that was actually built is now
+  compared against the property instead, which covers every route to a material input and is a
+  stronger question than what someone declared. Widening still happens (a scalar assigned to
+  `BaseColor` splats); only a value too wide for its property is an error, and only when its
+  component count is known rather than inferred.
+
 - **A hand-edited generated asset is no longer rebuilt over.** Regeneration used to tear the graph
   down unconditionally, so editing a generated material and then touching its `.dsm` destroyed the
   edit with no diagnostic and no undo — regeneration is deliberately not transactional. Every

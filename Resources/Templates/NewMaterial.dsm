@@ -1,0 +1,25 @@
+// {FILENAME} -- a DreamShader material. Compiles to {ASSETPATH}.
+Shader(Name="{NAME}")
+{
+    Properties = {
+        vec3 BaseColor = vec3(0.8, 0.8, 0.8);
+        float Roughness = 0.5;
+    }
+
+    Settings = {
+        Domain = "Surface";
+        ShadingModel = "DefaultLit";
+    }
+
+    Outputs = {
+        vec3 Color;
+        float Rough;
+        Base.BaseColor = Color;
+        Base.Roughness = Rough;
+    }
+
+    Graph = {
+        Color = BaseColor;
+        Rough = Roughness;
+    }
+}

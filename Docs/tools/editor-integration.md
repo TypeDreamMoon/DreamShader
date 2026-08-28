@@ -20,8 +20,8 @@ editor is shutting down.
 
 | Entry name | Label | Tooltip | Icon | Effect | Reference |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| `DreamShader.RecompileAll` | **Recompile DSM** | "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics." | `Icons.Refresh` | Rebuilds the dependency graph and queues every project `.dsm` and `.dsf` for compilation | [below](#recompile-dsm) |
-| `DreamShader.CleanGeneratedShaders` | **Clean Generated Shaders** | "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile." | `Icons.Delete` | Deletes every `*.ush` under the generated-shader directory, then queues a full scan | [below](#clean-generated-shaders) |
+| `DreamShader.RecompileAll` | **Recompile DSM** | "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics." | `Icons.Refresh` | Rebuilds the dependency graph and queues every project `.dsm` and `.dsf` for compilation, **forced** past the source-hash skip | [below](#recompile-dsm) |
+| `DreamShader.CleanGeneratedShaders` | **Clean Generated Shaders** | "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile." | `Icons.Delete` | Deletes every `*.ush` under the generated-shader directory, then queues a full **forced** scan so every file is regenerated | [below](#clean-generated-shaders) |
 | `DreamShader.CleanPersistedGeneratedAssets` | **Clean Persisted Generated Assets** | "Delete DreamShader-generated material assets that are saved on disk (they shadow in-memory material mode). Shows a confirmation with the full list; source files are untouched and regenerate in memory." | `Icons.Delete` | Deletes on-disk assets carrying DreamShader provenance metadata, through the standard editor delete flow | [below](#clean-persisted-generated-assets) |
 | `DreamShader.ToggleShowInMemoryMaterials` | **Show In-Memory Materials** | "Show memory-only DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. While shown, an explicit Save on one would persist it to disk (the shadow warning and Clean command cover recovery)." | *(none)* | Toggle button. Flips `bShowInMemoryMaterialsInContentBrowser` and writes it to `DefaultEngine.ini` | [below](#show-in-memory-materials) |
 | `DreamShader.OpenWorkspace` | **Open Dream Shader Workspace (VSCode)** *(since 1.2.1)* | "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable." | `Icons.OpenInExternalEditor` | Re-exports the three bridge manifests, rewrites `DShader/DreamShader.code-workspace`, then launches it | [Workspace](workspace.md) |
@@ -70,6 +70,7 @@ All entries are added into the stock `GetAssetActions` section of the per-class 
 | `UMaterialFunctionMaterialLayerBlend` | `DreamShader.MaterialLayerBlendAssetActions` | the same Material Function submenu |
 | `UMaterialInstanceConstant` | `DreamShader.InstanceCreateActions` | flat entry **Create DreamShader instance** |
 | `UDreamShaderMaterialInstance` | `DreamShader.InstanceCreateActions` | flat entry **Create DreamShader instance** |
+| `UMaterial` · `UMaterialInstanceConstant` · `UDreamShaderMaterialInstance` | `DreamShader.ShowInBrowserActions` | flat entry **Show in Material Content Browser** |
 
 Menu names in Unreal are keyed on the exact class, so the instance entry is registered twice — once
 for the stock class and once for the DreamShader subclass.
@@ -77,6 +78,7 @@ for the stock class and once for the DreamShader subclass.
 | Entry | Label | Tooltip | Icon | Effect |
 | :-- | :-- | :-- | :-- | :-- |
 | `DreamShader.CreateInstance` | **Create DreamShader instance** *(since 1.5.0)* | "Create a material instance that shares this material's compiled shader map." | `ClassIcon.MaterialInstanceConstant` | Opens the [Create material instance](material-browser.md#create-material-instance) dialog. Requires the selection to cast to `UMaterialInterface` |
+| `DreamShader.ShowInMaterialBrowser` | **Show in Material Content Browser** | "Open the DreamShader Material Content Browser on this asset: its source, compile status, provenance and inheritance." | `ClassIcon.Material` | Opens (or fronts) the [Material Content Browser](material-browser.md) in Assets mode, scoped to the asset's mount point, with the asset selected |
 
 ### Material submenu
 
