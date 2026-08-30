@@ -1422,7 +1422,8 @@ namespace UE::DreamShader::Editor::Private
 				LOCTEXT("DreamToolsComboLabel", "Dream"),
 				LOCTEXT("DreamToolsComboTooltip",
 					"Open a Dream-family source workspace (DreamShader / DreamFX / DreamUI) in VSCode; Notepad stands in when VSCode is unavailable."),
-				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor"))));
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor")),
+				/*bInSimpleComboBox*/ true));
 		}
 	}
 
