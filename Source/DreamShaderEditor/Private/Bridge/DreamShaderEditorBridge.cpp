@@ -1378,6 +1378,54 @@ namespace UE::DreamShader::Editor::Private
 		UpdateDiagnosticsFile();
 	}
 
+	namespace
+	{
+		/**
+		 * The Dream-family combo button, shared with DreamFX and DreamGUI. Each of the three
+		 * plugins keeps its own copy of this function (shapes shared, packages not): every one
+		 * tries to add the combo, a FindEntry check makes that idempotent, and the entry belongs
+		 * to the owner name "DreamToolsShared" which no module ever unregisters -- otherwise
+		 * unloading whichever plugin won the race would take the other plugins' door with it.
+		 * The combo opens the shared menu "DreamTools.OpenInVSCode"; each plugin adds its own
+		 * section there under its own owner.
+		 */
+		void EnsureDreamToolsCombo()
+		{
+			UToolMenus* ToolMenus = UToolMenus::Get();
+			const FName SharedMenuName(TEXT("DreamTools.OpenInVSCode"));
+
+			if (!ToolMenus->IsMenuRegistered(SharedMenuName))
+			{
+				FToolMenuOwnerScoped SharedOwner(TEXT("DreamToolsShared"));
+				ToolMenus->RegisterMenu(SharedMenuName);
+			}
+
+			UToolMenu* Toolbar = ToolMenus->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar.AssetsToolBar"));
+			if (Toolbar == nullptr)
+			{
+				return;
+			}
+			FToolMenuSection& Section = Toolbar->FindOrAddSection(TEXT("DreamTools"));
+			if (Section.FindEntry(TEXT("DreamTools.OpenWorkspaceCombo")) != nullptr)
+			{
+				return;
+			}
+
+			FToolMenuOwnerScoped SharedOwner(TEXT("DreamToolsShared"));
+			Section.AddEntry(FToolMenuEntry::InitComboButton(
+				TEXT("DreamTools.OpenWorkspaceCombo"),
+				FUIAction(),
+				FNewToolMenuChoice(FOnGetContent::CreateLambda([]
+				{
+					return UToolMenus::Get()->GenerateWidget(TEXT("DreamTools.OpenInVSCode"), FToolMenuContext());
+				})),
+				LOCTEXT("DreamToolsComboLabel", "Dream"),
+				LOCTEXT("DreamToolsComboTooltip",
+					"Open a Dream-family source workspace (DreamShader / DreamFX / DreamUI) in VSCode; Notepad stands in when VSCode is unavailable."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor"))));
+		}
+	}
+
 	void FDreamShaderEditorBridge::RegisterMenus()
 	{
 		if (bIsShuttingDown || bMenusRegistered || IsEngineExitRequested() || GExitPurge)
@@ -1440,12 +1488,20 @@ namespace UE::DreamShader::Editor::Private
 				LOCTEXT("DreamShaderRecompileToolbarLabel", "DSM"),
 				LOCTEXT("DreamShaderRecompileToolbarTooltip", "Recompile all DreamShader .dsm and .dsf source files."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Refresh"))));
-			Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-				TEXT("DreamShader.OpenWorkspaceToolbar"),
-				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::OpenDreamShaderWorkspace)),
-				LOCTEXT("DreamShaderOpenWorkspaceToolbarLabel", "Open Dream Shader Workspace (VSCode)"),
+		}
+
+		// The open-in-VSCode door moved into the Dream-family combo: three plugins, one button.
+		EnsureDreamToolsCombo();
+		if (UToolMenu* SharedMenu = UToolMenus::Get()->ExtendMenu(TEXT("DreamTools.OpenInVSCode")))
+		{
+			FToolMenuSection& SharedSection = SharedMenu->FindOrAddSection(TEXT("DreamShader"),
+				LOCTEXT("DreamShaderSharedSectionLabel", "DreamShader"));
+			SharedSection.AddMenuEntry(
+				TEXT("DreamShader.OpenWorkspaceShared"),
+				LOCTEXT("DreamShaderOpenWorkspaceSharedLabel", "DreamShader Workspace"),
 				LOCTEXT("DreamShaderOpenWorkspaceToolbarTooltip", "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable."),
-				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor"))));
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor")),
+				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::OpenDreamShaderWorkspace)));
 		}
 
 		if (UToolMenu* MaterialFunctionAssetMenu = UE::ContentBrowser::ExtendToolMenu_AssetContextMenu(UMaterialFunction::StaticClass()))
