@@ -1392,7 +1392,7 @@ namespace UE::DreamShader::Editor::Private
 		void EnsureDreamToolsCombo()
 		{
 			UToolMenus* ToolMenus = UToolMenus::Get();
-			const FName SharedMenuName(TEXT("DreamTools.OpenInVSCode"));
+			const FName SharedMenuName(TEXT("DreamTools.Actions"));
 
 			if (!ToolMenus->IsMenuRegistered(SharedMenuName))
 			{
@@ -1417,13 +1417,25 @@ namespace UE::DreamShader::Editor::Private
 				FUIAction(),
 				FNewToolMenuChoice(FOnGetContent::CreateLambda([]
 				{
-					return UToolMenus::Get()->GenerateWidget(TEXT("DreamTools.OpenInVSCode"), FToolMenuContext());
+					return UToolMenus::Get()->GenerateWidget(TEXT("DreamTools.Actions"), FToolMenuContext());
 				})),
 				LOCTEXT("DreamToolsComboLabel", "Dream"),
 				LOCTEXT("DreamToolsComboTooltip",
-					"Open a Dream-family source workspace (DreamShader / DreamFX / DreamUI) in VSCode; Notepad stands in when VSCode is unavailable."),
-				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor")),
-				/*bInSimpleComboBox*/ true));
+					"Dream-family language tools: open a source workspace in VSCode, or rebuild a whole source tree (DreamShader / DreamFX / DreamUI)."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor"))));
+		}
+
+		/**
+		 * A whole-tree recompile behind a confirmation: it sits one menu row under the workspace
+		 * openers, and a mis-click costs minutes. Every rebuild entry in the Dream menu asks first.
+		 */
+		bool ConfirmRecompileAllDreamShader()
+		{
+			return FMessageDialog::Open(EAppMsgType::YesNo,
+				LOCTEXT("RecompileAllConfirm",
+					"Recompile every DreamShader .dsm and .dsf source file?\n\n"
+					"This rebuilds all generated materials and can take a while on a large tree."))
+				== EAppReturnType::Yes;
 		}
 	}
 
@@ -1444,9 +1456,15 @@ namespace UE::DreamShader::Editor::Private
 			Section.AddMenuEntry(
 				TEXT("DreamShader.RecompileAll"),
 				LOCTEXT("DreamShaderRecompileLabel", "Recompile DSM"),
-				LOCTEXT("DreamShaderRecompileTooltip", "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics."),
+				LOCTEXT("DreamShaderRecompileTooltip", "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Refresh")),
-				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestRecompileAll)));
+				FUIAction(FExecuteAction::CreateSPLambda(AsShared(), [this]
+				{
+					if (ConfirmRecompileAllDreamShader())
+					{
+						RequestRecompileAll();
+					}
+				})));
 			Section.AddMenuEntry(
 				TEXT("DreamShader.CleanGeneratedShaders"),
 				LOCTEXT("DreamShaderCleanGeneratedShadersLabel", "Clean Generated Shaders"),
@@ -1480,20 +1498,10 @@ namespace UE::DreamShader::Editor::Private
 				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::OpenDreamShaderWorkspace)));
 		}
 
-		if (UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.LevelEditorToolBar.AssetsToolBar")))
-		{
-			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection(TEXT("DreamShader"));
-			Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-				TEXT("DreamShader.RecompileAllToolbar"),
-				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestRecompileAll)),
-				LOCTEXT("DreamShaderRecompileToolbarLabel", "DSM"),
-				LOCTEXT("DreamShaderRecompileToolbarTooltip", "Recompile all DreamShader .dsm and .dsf source files."),
-				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Refresh"))));
-		}
-
-		// The open-in-VSCode door moved into the Dream-family combo: three plugins, one button.
+		// Both toolbar buttons moved into the Dream-family combo: three plugins, one button, and
+		// the whole-tree recompile now asks before it runs.
 		EnsureDreamToolsCombo();
-		if (UToolMenu* SharedMenu = UToolMenus::Get()->ExtendMenu(TEXT("DreamTools.OpenInVSCode")))
+		if (UToolMenu* SharedMenu = UToolMenus::Get()->ExtendMenu(TEXT("DreamTools.Actions")))
 		{
 			FToolMenuSection& SharedSection = SharedMenu->FindOrAddSection(TEXT("DreamShader"),
 				LOCTEXT("DreamShaderSharedSectionLabel", "DreamShader"));
@@ -1503,6 +1511,18 @@ namespace UE::DreamShader::Editor::Private
 				LOCTEXT("DreamShaderOpenWorkspaceToolbarTooltip", "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.OpenInExternalEditor")),
 				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::OpenDreamShaderWorkspace)));
+			SharedSection.AddMenuEntry(
+				TEXT("DreamShader.RecompileAllShared"),
+				LOCTEXT("DreamShaderRecompileSharedLabel", "Recompile DSM"),
+				LOCTEXT("DreamShaderRecompileSharedTooltip", "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Refresh")),
+				FUIAction(FExecuteAction::CreateSPLambda(AsShared(), [this]
+				{
+					if (ConfirmRecompileAllDreamShader())
+					{
+						RequestRecompileAll();
+					}
+				})));
 		}
 
 		if (UToolMenu* MaterialFunctionAssetMenu = UE::ContentBrowser::ExtendToolMenu_AssetContextMenu(UMaterialFunction::StaticClass()))
