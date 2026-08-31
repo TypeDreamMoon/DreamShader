@@ -7,6 +7,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DreamShaderDiagnostic.h"
 
 namespace UE::DreamShader::Editor
 {

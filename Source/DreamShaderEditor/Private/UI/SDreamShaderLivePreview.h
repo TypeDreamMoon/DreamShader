@@ -6,13 +6,13 @@
 #include "Styling/SlateBrush.h"
 #include "UObject/StrongObjectPtr.h"
 #include "Widgets/SCompoundWidget.h"
+#include "Preview/DreamShaderPreviewRenderer.h"
 
 class UMaterialInterface;
 class UTexture2D;
 
 namespace UE::DreamShader::Editor::Private
 {
-	class FDreamShaderPreviewRenderContext;
 
 	// A real render of a material -- the plugin's own preview renderer, the same one the VSCode
 	// extension streams from -- instead of the asset thumbnail cache. Renders asynchronously (kick
