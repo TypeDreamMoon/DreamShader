@@ -4,9 +4,11 @@
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Compile/DreamShaderEditorCompileAdapter.h"
 #include "Diagnostics/DreamShaderTextWireUtils.h"
+#include "DreamShaderDefineTable.h"
 #include "DreamShaderModule.h"
 #include "SourceFiles/DreamShaderSourceFileUtils.h"
 
+#include "Commandlets/Commandlet.h"
 #include "HAL/FileManager.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
@@ -17,10 +19,12 @@ namespace UE::DreamShader::Editor::Private
 	{
 		return TEXT(
 			"Usage:\n"
-			"  -run=DreamShader compile -Source=\"C:/Project/DShader/File.dsm\" [-Force]\n"
-			"  -run=DreamShader compile -All [-Force]\n"
+			"  -run=DreamShader compile -Source=\"C:/Project/DShader/File.dsm\" [-Force] [-Define=NAME=VALUE ...]\n"
+			"  -run=DreamShader compile -All [-Force] [-Define=NAME=VALUE ...]\n"
 			"  -run=DreamShader decompile -Asset=\"/Game/Path/Asset.Asset\" [-Out=\"C:/Project/DShader/Decompiled/File.dsm\"]\n"
-			"Supported asset types: Material -> .dsm, MaterialFunction -> .dsf.");
+			"Supported asset types: Material -> .dsm, MaterialFunction -> .dsf.\n"
+			"-Define (short form -D) may be repeated; -Define=NAME with no value is a bare marker that\n"
+			"defined(NAME) sees. Names starting with DS_ are reserved for the built-in constants.");
 	}
 
 	FString NormalizeCommandletValue(FString Value)
@@ -95,6 +99,135 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		return false;
+	}
+
+	int32 ApplyDreamShaderCommandletDefines(const FString& CommandLine)
+	{
+		// The command line is re-tokenized here, with the THREE-argument ParseCommandLine, instead of
+		// reading the Switches array Main already has. That is the whole reason this function takes a
+		// string.
+		//
+		// UCommandlet's four-argument overload does not COPY an assignment-shaped switch into its
+		// Params map, it MOVES it: `Params.Add(Switch.Left(i), ...)` is immediately followed by
+		// `Switches.RemoveAt(SwitchIdx)`. Two consequences, both fatal to repeating a flag:
+		//   * every `-Define=...` is gone from Switches by the time Main sees it, so scanning that
+		//     array finds nothing at all; and
+		//   * Params is a TMap keyed on the SWITCH name, so `-Define=A=1 -Define=B=2` collapses to a
+		//     single entry under "Define" -- one define survives out of any number passed, silently.
+		// The three-argument overload does none of that folding, so the array it fills keeps every
+		// occurrence, in the order they were written.
+		//
+		// The cost is one extra pass over a string that is already in memory, which is nothing next to
+		// dropping every define but one and never saying so.
+		TArray<FString> RawTokens;
+		TArray<FString> RawSwitches;
+		UCommandlet::ParseCommandLine(*CommandLine, RawTokens, RawSwitches);
+
+		UE::DreamShader::FDreamShaderDefineValueMap Defines;
+		for (const FString& Switch : RawSwitches)
+		{
+			FString SwitchName;
+			FString Payload;
+			if (!TrySplitCommandletAssignment(Switch, SwitchName, Payload))
+			{
+				// A bare flag such as -Force or -All. It cannot carry a define, and a bare `-Define`
+				// with nothing after it names nothing, so there is nothing to warn about either.
+				continue;
+			}
+
+			if (!SwitchName.Equals(TEXT("Define"), ESearchCase::IgnoreCase)
+				&& !SwitchName.Equals(TEXT("D"), ESearchCase::IgnoreCase))
+			{
+				continue;
+			}
+
+			// The payload is `NAME=VALUE`, or a bare `NAME` whose value is empty. Empty is not the same
+			// as absent: defined(NAME) is true for a bare marker and arithmetic reads it as 1, which is
+			// the entire point of allowing the short form.
+			//
+			// Split by hand rather than through TrySplitCommandletAssignment. That helper normalizes a
+			// SWITCH name -- it strips leading dashes -- so it would quietly turn a mistyped
+			// `-D=-FOO=1` into a perfectly valid `FOO`. Define names are also CASE-SENSITIVE
+			// (FDreamShaderDefineTable keys on FString precisely so `Foo` and `FOO` stay distinct), so
+			// nothing on this path may fold case either.
+			FString Name = Payload;
+			FString Value;
+			int32 AssignmentIndex = INDEX_NONE;
+			if (Payload.FindChar(TEXT('='), AssignmentIndex))
+			{
+				Name = Payload.Left(AssignmentIndex);
+				Value = NormalizeCommandletValue(Payload.Mid(AssignmentIndex + 1));
+			}
+			Name.TrimStartAndEndInline();
+
+			if (!UE::DreamShader::IsValidDreamShaderDefineName(Name))
+			{
+				UE_LOG(
+					LogDreamShader,
+					Warning,
+					TEXT("DreamShader ignored -%s: '%s' is not a valid define name (it must match [A-Za-z_][A-Za-z0-9_]*)."),
+					*Switch,
+					*Name);
+				continue;
+			}
+
+			// Checked here as well as in ResolveDreamShaderDefines, which drops reserved names on its
+			// own. This is not redundancy for its own sake: the resolve path has no command line to
+			// quote back and runs once per compile, so the same typo would either be invisible or
+			// repeated for every file of a -All run. Refusing at the point of entry says it once, with
+			// the text the user actually typed.
+			if (UE::DreamShader::IsReservedDreamShaderDefineName(Name))
+			{
+				UE_LOG(
+					LogDreamShader,
+					Warning,
+					TEXT("DreamShader ignored -%s: the DS_ prefix is reserved for the built-in constants, which describe the compiling process itself and cannot be overridden."),
+					*Switch);
+				continue;
+			}
+
+			// Last occurrence wins, matching how a shell reads a repeated flag and how a C compiler
+			// treats a repeated -D.
+			Defines.Add(MoveTemp(Name), MoveTemp(Value));
+		}
+
+		if (Defines.IsEmpty())
+		{
+			// Deliberately not calling with an empty map. In a fresh commandlet process the two are
+			// equivalent in effect, but the setter bumps the define revision, and a bump that nothing
+			// changed is a lie told to every cache that watches it.
+			return 0;
+		}
+
+		// Logged from a sorted key array rather than by iterating the map, because TMap iteration order
+		// is not stable and an unsorted line would shuffle between otherwise identical runs, which
+		// makes two build logs impossible to diff.
+		//
+		// Sorted case-sensitively for the same reason FDreamShaderDefineTable::GetSortedNames is:
+		// TArray::Sort's default predicate is FString::operator<, which compares with Stricmp, so two
+		// names differing only in case have no defined relative order under it -- and case is exactly
+		// what this feature promises to preserve.
+		TArray<FString> Names;
+		Defines.GenerateKeyArray(Names);
+		Names.Sort([](const FString& Left, const FString& Right)
+		{
+			return Left.Compare(Right, ESearchCase::CaseSensitive) < 0;
+		});
+
+		FString Summary;
+		for (const FString& Name : Names)
+		{
+			const FString& Value = Defines.FindChecked(Name);
+			if (!Summary.IsEmpty())
+			{
+				Summary += TEXT(", ");
+			}
+			Summary += Value.IsEmpty() ? Name : FString::Printf(TEXT("%s=%s"), *Name, *Value);
+		}
+
+		UE::DreamShader::SetDreamShaderCommandLineDefines(Defines);
+		UE_LOG(LogDreamShader, Display, TEXT("DreamShader command-line defines: %s"), *Summary);
+		return Defines.Num();
 	}
 
 	namespace

@@ -5,7 +5,9 @@
 .DESCRIPTION
     Wraps `UnrealEditor-Cmd.exe <project> -run=DreamShader …` so an agent can compile
     and decompile DreamShaderLang sources without opening the editor, and gets back a
-    clean verdict instead of 200 lines of engine boot spam.
+    clean verdict instead of 200 lines of engine boot spam. `-Define` feeds the
+    conditional-compilation preprocessor, so one source can be built for either side of
+    an `#if` without editing anything.
 
     On top of the raw commandlet it adds:
       * engine resolution from the .uproject's EngineAssociation (no hard-coded path),
@@ -22,6 +24,9 @@
 
 .EXAMPLE
     ./dsc.ps1 compile -All
+
+.EXAMPLE
+    ./dsc.ps1 compile -All -Define MOONTOON_LEGACY_TOON=0, SHIP_BUILD -Force
 
 .EXAMPLE
     ./dsc.ps1 decompile /Game/Materials/M_Steel -Out I:/Work/M_Steel.dsm
@@ -47,6 +52,25 @@ param(
 
     # Bypass the source-hash skip. Without it an unchanged source logs "Skipped …".
     [switch]$Force,
+
+    # Preprocessor defines for `#if` / `#elif`, as NAME=VALUE or a bare NAME marker
+    # (`defined(NAME)` is true for a marker; arithmetic reads it as 1). Repeatable:
+    # PowerShell collects a comma-separated list, so pass
+    #   -Define SUBSTRATE_PATH=1, MOONTOON_LEGACY_TOON=0, SHIP_BUILD
+    # and each item becomes its own `-Define=` on the commandlet line. Passing them as
+    # separate arguments to ONE switch is what the commandlet needs: it re-tokenizes the
+    # raw command line specifically so repeated `-Define=` survive.
+    #
+    # These outrank the project settings table and any C++ registration, but never the
+    # read-only DS_ built-ins — a DS_ name here is dropped with a warning rather than
+    # applied, because those describe the compiling process and lying about them produces
+    # a graph the engine cannot compile at all.
+    #
+    # Quoting follows the rest of this script: the item is interpolated into a single
+    # argument and PowerShell quotes it if it contains spaces, which is exactly what
+    # `-Source=` already relies on for paths. A value with an `=` in it survives too — the
+    # commandlet splits the payload on the FIRST `=` only.
+    [string[]]$Define,
 
     # decompile only: write here instead of <SourceDirectory>/Decompiled/….
     [string]$Out,
@@ -175,6 +199,15 @@ switch ($Command) {
         $commandletArgs += "-Asset=$Target"
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
     }
+}
+
+# One `-Define=` per item, never one joined switch: the commandlet installs the whole set at
+# once and repeated switches are how it receives more than one. Emitted outside the switch
+# above so it is not the compile branch's private feature — the commandlet reads them before
+# it dispatches, so any command that grows a source-reading path gets them for free.
+foreach ($item in $Define) {
+    if (-not $item) { continue }
+    $commandletArgs += "-Define=$item"
 }
 
 # -nullrhi keeps the run off the GPU. Drop it only when something needs real shader

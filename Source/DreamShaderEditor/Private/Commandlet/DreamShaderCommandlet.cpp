@@ -20,6 +20,16 @@ int32 UDreamShaderCommandlet::Main(const FString& Params)
 	TMap<FString, FString> ParamValues;
 	ParseCommandLine(*Params, Tokens, Switches, ParamValues);
 
+	// Ahead of the dispatch below, because every branch of it can compile and the define table is
+	// resolved once at the top of each compile. A define installed afterwards is a define that
+	// changed nothing -- and it would change nothing silently, since the run still succeeds.
+	//
+	// Handed the whole command-line string rather than the triple parsed just above: that four-
+	// argument parse folds `-Define=A=1 -Define=B=2` into one TMap entry and deletes both switches
+	// from the array. ApplyDreamShaderCommandletDefines re-tokenizes to get all of them back; its
+	// definition carries the detail.
+	UE::DreamShader::Editor::Private::ApplyDreamShaderCommandletDefines(Params);
+
 	FString Command;
 	if (!Tokens.IsEmpty())
 	{
