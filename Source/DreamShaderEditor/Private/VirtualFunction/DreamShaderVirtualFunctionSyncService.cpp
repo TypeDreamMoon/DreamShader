@@ -3,6 +3,9 @@
 
 #include "DreamShaderModule.h"
 #include "DreamShaderParser.h"
+// DreamShaderSourceHasPreprocessorDirectives, for the refusal gate on the rewriting scan below.
+// Deliberately NOT PreprocessDreamShaderSource -- see the comment on EVirtualFunctionScanIntent.
+#include "DreamShaderPreprocessor.h"
 #include "Diagnostics/DreamShaderTextWireUtils.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
 #include "SourceFiles/DreamShaderSourceFileUtils.h"
@@ -247,8 +250,39 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
+		/**
+		 * What the caller is going to do with the locations this scan returns.
+		 *
+		 * The two answers need different behaviour around conditional compilation, and the difference
+		 * is not a preference -- one of them can destroy a file.
+		 *
+		 * Navigation (ReadOnly) scans the RAW text and therefore sees every branch, taken or not. That
+		 * is right for the same reason the dependency graph service scans raw text: a declaration in a
+		 * branch that this build cut is still a declaration that physically exists at that line, and
+		 * "jump to it" has a correct answer. Nothing is written, so a superset costs nothing.
+		 *
+		 * Sync (RewriteInPlace) cannot use that answer, and it also cannot fix it by preprocessing.
+		 * Every offset in this scan is a BYTE index into the raw text, and the write-back splices
+		 * replacement text at those byte offsets and saves the whole string. Preprocessed text is line
+		 * for line with the raw text but NOT byte for byte -- a cut line becomes an empty line, which
+		 * is shorter -- so offsets taken from it address the wrong bytes of the file. And if the
+		 * preprocessed string were carried through to the save, as it would be if this scan simply
+		 * preprocessed on the way in, every inactive branch in the file would be written back to disk
+		 * as blank lines. Permanently, on an unattended startup sweep, with the sync reporting success.
+		 *
+		 * That is the same accident, and the same verdict, as Adopt: the post-cut text cannot spell the
+		 * branches it discarded, so a tool that writes post-cut text back over a source deletes them.
+		 * Adopt refuses (DSH8149); this refuses (DSH9001).
+		 */
+		enum class EVirtualFunctionScanIntent : uint8
+		{
+			ReadOnly,
+			RewriteInPlace,
+		};
+
 		void CollectDefinitionLocationsFromFile(
 			const FString& SourceFilePath,
+			EVirtualFunctionScanIntent Intent,
 			TArray<FDreamShaderVirtualFunctionDefinitionLocation>& OutLocations,
 			FString* OutSourceText = nullptr,
 			TArray<FDreamShaderDiagnosticRecord>* OutDiagnostics = nullptr)
@@ -270,6 +304,69 @@ namespace UE::DreamShader::Editor::Private
 						1,
 						1));
 				}
+				return;
+			}
+
+			// The refusal gate. See EVirtualFunctionScanIntent for why a rewriting scan cannot service a
+			// file with directives, and why preprocessing is not the fix.
+			//
+			// Narrowed to files that actually mention the keyword, and that narrowing is the whole
+			// difference between a gate and a nuisance: this sweep runs unattended over every writable
+			// source at bridge startup, so an unfiltered check would file an error against every
+			// conditional material in the project -- none of which sync was ever going to touch. The
+			// substring test cannot produce a false negative, because the scanner below finds the
+			// keyword with IsKeywordAt, which is this same match plus identifier-boundary checks; the
+			// worst it can do is report a refusal for a file whose only `VirtualFunction` is inside a
+			// comment, and a spurious refusal costs a log line, not a file.
+			//
+			// The cheap directive scanner rather than a real preprocessor run, for the reason the Adopt
+			// gate gives: it still answers for a source whose conditions would FAIL to evaluate, and a
+			// half-written `#if` is exactly the state a file is in while someone is editing it -- which,
+			// on a sweep triggered by the editor rather than by the user, is most of the time.
+			if (Intent == EVirtualFunctionScanIntent::RewriteInPlace
+				&& SourceText.Contains(TEXT("VirtualFunction"), ESearchCase::CaseSensitive)
+				&& UE::DreamShader::DreamShaderSourceHasPreprocessorDirectives(SourceText))
+			{
+				if (OutDiagnostics)
+				{
+					// Raised through FailWith even though this subsystem carries its own wire code:
+					// .skill/gen-diagnostics.ps1 discovers every DSHnnnn by scanning for exactly this
+					// shape, so a code raised any other way would exist in the source and nowhere in
+					// the docs. The record below keeps `virtual-function-sync` in its Code field --
+					// that spelling is published in Docs/tools/bridge.md as the wire contract for this
+					// stage -- so DSH9001 rides in the message text, the way DSH8149 does.
+					FDreamShaderTextError ConditionalError;
+					UE::DreamShader::FailWith(
+						ConditionalError,
+						TEXT("DSH9001"),
+						FText::Format(
+							LOCTEXT("ConditionalSourceNotSynced", "DSH9001: '{0}' uses conditional compilation, and VirtualFunction sync rewrites a source in place at byte offsets taken from the file as written -- it cannot tell which of your branches a definition belongs to, and refuses rather than risk writing one branch over the others. Refresh these definitions by moving them into a source without directives, or edit them by hand."),
+							FText::FromString(SourceFilePath)));
+
+					OutDiagnostics->Add(MakeVirtualFunctionDiagnostic(
+						SourceFilePath,
+						ConditionalError.Message,
+						FText(),
+						FString(),
+						1,
+						1));
+
+					// Spelled out again rather than logging the message, so the log line stays English
+					// under a localized editor and carries the code as its own field. A diagnostic that
+					// appears in an extension's problems panel is not a record of an unattended startup
+					// sweep declining to touch a file; this is.
+					UE_LOG(
+						LogDreamShader,
+						Warning,
+						TEXT("DreamShader VirtualFunction sync skipped (%s): '%s' contains preprocessor directives."),
+						*ConditionalError.Code,
+						*SourceFilePath);
+				}
+
+				// No locations, so the caller builds no replacements and the file is never opened for
+				// writing. Returning before OutSourceText is filled is deliberate belt-and-braces: a
+				// future caller that reaches for the text without checking the location count finds
+				// nothing to splice into rather than a file it is not allowed to rewrite.
 				return;
 			}
 
@@ -438,8 +535,12 @@ namespace UE::DreamShader::Editor::Private
 		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles);
 		for (const FString& SourceFile : SourceFiles)
 		{
+			// ReadOnly: this answers "where is it written", for the context menu, the open-in-editor
+			// action and the copy-call-text action. Scanning the raw text means a definition that only
+			// exists in a branch this build cut is still findable -- which is the right answer, because
+			// the user is asking about the file, not about what compiled out of it.
 			TArray<FDreamShaderVirtualFunctionDefinitionLocation> Locations;
-			CollectDefinitionLocationsFromFile(SourceFile, Locations);
+			CollectDefinitionLocationsFromFile(SourceFile, EVirtualFunctionScanIntent::ReadOnly, Locations);
 			for (const FDreamShaderVirtualFunctionDefinitionLocation& Location : Locations)
 			{
 				if (Location.AssetObjectPath.Equals(TargetObjectPath, ESearchCase::IgnoreCase))
@@ -479,7 +580,12 @@ namespace UE::DreamShader::Editor::Private
 			FString SourceText;
 			TArray<FDreamShaderVirtualFunctionDefinitionLocation> Locations;
 			TArray<FDreamShaderDiagnosticRecord> Diagnostics;
-			CollectDefinitionLocationsFromFile(SourceFile, Locations, &SourceText, &Diagnostics);
+			CollectDefinitionLocationsFromFile(
+				SourceFile,
+				EVirtualFunctionScanIntent::RewriteInPlace,
+				Locations,
+				&SourceText,
+				&Diagnostics);
 
 			TArray<FVirtualFunctionReplacement> Replacements;
 			for (const FDreamShaderVirtualFunctionDefinitionLocation& Location : Locations)

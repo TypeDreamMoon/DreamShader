@@ -18,6 +18,7 @@
 #include "DreamShaderDiagnostic.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderParser.h"
+#include "DreamShaderPreprocessor.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.h"
 
@@ -26,6 +27,7 @@
 #include "HAL/FileManager.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstance.h"
+#include "Misc/FileHelper.h"
 #include "Misc/MessageDialog.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
@@ -257,6 +259,66 @@ namespace UE::DreamShader::Editor::Private
 		if (!TryResolveGeneratedAssetSourceFile(AssetObject, SourceFilePath, Error))
 		{
 			ShowDreamShaderNotification(FText::FromString(Error), SNotificationItem::CS_Fail);
+			return;
+		}
+
+		// Conditional compilation and Adopt are mutually exclusive, and this is where that is decided.
+		//
+		// Adopt's entire mechanism is "decompile the asset, write the result over the source". A
+		// generated asset only ever holds the POST-CUT graph -- the one branch that was taken for the
+		// define set that built it -- so the text written back can describe that branch and has no way
+		// to spell the others. The `#if`, the `#else` and everything inside them would be gone, from a
+		// file the user asked to have UPDATED rather than rewritten, with no failure anywhere to say so.
+		//
+		// Read straight off disk, and that is the load-bearing detail. LoadPreparedDreamShaderSource
+		// below hands back the PREPARED text, which is post-preprocessor by construction: its directive
+		// lines have already been blanked out, so asking the prepared text this question always gets
+		// "no" and the gate would never fire. Reading the file again costs one I/O on a path the user
+		// just clicked a menu item on.
+		//
+		// The cheap scanner is used rather than a real preprocessor run for a second reason: it still
+		// answers for a source whose conditions would FAIL to evaluate, and a half-written `#if` is
+		// exactly the state a user is most likely to be in when they reach for Adopt.
+		FString RawSourceText;
+		if (!FFileHelper::LoadFileToString(RawSourceText, *SourceFilePath))
+		{
+			ShowDreamShaderNotification(
+				FText::Format(
+					LOCTEXT("DreamShaderAdoptSourceUnreadable", "Could not read '{0}'."),
+					FText::FromString(SourceFilePath)),
+				SNotificationItem::CS_Fail);
+			return;
+		}
+
+		if (UE::DreamShader::DreamShaderSourceHasPreprocessorDirectives(RawSourceText))
+		{
+			// Raised through FailWith even though nothing here propagates an error struct:
+			// .skill/gen-diagnostics.ps1 discovers every DSHnnnn by scanning for exactly this shape, so
+			// a code raised any other way would exist in the source and nowhere in the docs. The FText
+			// carrier is the one that takes LOCTEXT, which keeps this message in the localization
+			// gather like the two refusals below it.
+			FDreamShaderTextError ConditionalError;
+			FailWith(
+				ConditionalError,
+				TEXT("DSH8149"),
+				FText::Format(
+					LOCTEXT("DreamShaderAdoptConditionalSource", "DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch that was taken -- adopting it would write that one branch back over the file and delete the rest. Move the change into the matching branch of the source by hand, or use DreamShader > Detach first if this asset should stop being generated from it."),
+					FText::FromString(SourceFilePath),
+					FText::FromString(AssetObject->GetPathName())));
+
+			ShowDreamShaderNotification(ConditionalError.Message, SNotificationItem::CS_Fail);
+
+			// Spelled out again rather than logging ConditionalError.Message, so the log line stays
+			// English under a localized editor and carries the code as its own field -- which is how
+			// every other consumer of a DSHnnnn (the diagnostics store, diagnostics.json, the
+			// extensions) reads one. A four-second toast is not a record; this is.
+			UE_LOG(
+				LogDreamShader,
+				Warning,
+				TEXT("DreamShader adopt refused (%s): '%s' contains preprocessor directives, and '%s' holds only the branch they selected."),
+				*ConditionalError.Code,
+				*SourceFilePath,
+				*AssetObject->GetPathName());
 			return;
 		}
 

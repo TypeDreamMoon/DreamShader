@@ -4,6 +4,10 @@
 #include "DreamShaderCompileService.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderParser.h"
+// PreprocessDreamShaderSource / ResolveDreamShaderDefines: the preview must resolve its material
+// under the same define set generation used, or it renders a different asset. See
+// ResolveGeneratedMaterialPath.
+#include "DreamShaderPreprocessor.h"
 #include "DreamShaderSettings.h"
 #include "Compile/DreamShaderEditorCompileAdapter.h"
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
@@ -79,6 +83,41 @@ namespace UE::DreamShader::Editor::Private
 			{
 				OutError = FString::Printf(TEXT("Failed to read DreamShader source '%s'."), *SourceFilePath); // I18N-EXEMPT: reaches the wire, see the note above
 				return false;
+			}
+
+			// Conditional compilation runs HERE, in the same order the generator uses: read, preprocess,
+			// then look at imports. `#if` may wrap an `Import` line, so the directives have to be
+			// resolved before the loop below goes looking for imports to drop.
+			//
+			// Preview is a strict consumer of generation's answer -- it looks up the object path this
+			// resolves and renders whatever material is already there -- so resolving under a different
+			// define set than the generator used is worse than failing. `Shader(Name=..., Root=...)` is
+			// itself something a branch can select, so a mismatched cut points the preview at a
+			// different asset (or at nothing) and reports success either way, which is a screenshot of
+			// the wrong material sent to the VSCode and Rider extensions with no error to explain it.
+			{
+				FDreamShaderPreprocessResult PreprocessResult;
+				FDreamShaderTextError PreprocessError;
+				if (!UE::DreamShader::PreprocessDreamShaderSource(
+					SourceText,
+					SourceFilePath,
+					UE::DreamShader::ResolveDreamShaderDefines(),
+					PreprocessResult,
+					PreprocessError))
+				{
+					// ToInvariantWireString, not ToString(): this OutError reaches preview.json and the
+					// preview WebSocket, and ToString() is the LOCALIZED display, so a zh-Hans editor
+					// would put Chinese where the extensions expect English. See the note at the top of
+					// this file -- this is the one error site here whose message starts life as an
+					// FText, which is exactly the case ToInvariantWireString exists for.
+					//
+					// The DSH103x message already reads "<path>(<line>): ...", so it is not prefixed
+					// with the path the way the parse failure below is.
+					OutError = ToInvariantWireString(PreprocessError.Message);
+					return false;
+				}
+
+				SourceText = MoveTemp(PreprocessResult.Text);
 			}
 
 			TArray<FString> Lines;

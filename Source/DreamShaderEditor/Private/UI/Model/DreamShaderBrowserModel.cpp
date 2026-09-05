@@ -687,9 +687,24 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
+		// The five-parameter load, not the convenience overload: the hash below is compared against
+		// the one the generator stamped into the asset, so it has to be computed from EXACTLY the same
+		// inputs. The generator folds in the defines the preprocessor read; handing BuildSourceHash an
+		// empty map here would not be "no defines available", it would be a positive claim that this
+		// source reads none -- a different key for the same source, and every conditional material in
+		// the browser would read Stale forever, with a rebuild that never makes it up to date.
 		FString PreparedText;
+		UE::DreamShader::FDreamShaderDefineValueMap TouchedDefines;
+		// Not the browser's business: whether a source uses conditionals changes nothing about whether
+		// its asset is current. It gates Adopt, over in the provenance actions.
+		bool bDiscardedAnySourceHadDirectives = false;
 		FDreamShaderError LoadError;
-		if (!UE::DreamShader::Editor::LoadPreparedDreamShaderSource(Source.FilePath, PreparedText, LoadError))
+		if (!UE::DreamShader::Editor::LoadPreparedDreamShaderSource(
+			Source.FilePath,
+			PreparedText,
+			TouchedDefines,
+			bDiscardedAnySourceHadDirectives,
+			LoadError))
 		{
 			Source.Status = EBrowserSourceStatus::Unresolved;
 			Source.StatusDetail = FText::FromString(LoadError);
@@ -698,7 +713,7 @@ namespace UE::DreamShader::Editor::Private
 
 		Source.StatusDetail = FText::FromString(Source.ResolvedObjectPath);
 
-		const FString SourceHash = BuildSourceHash(PreparedText);
+		const FString SourceHash = BuildSourceHash(PreparedText, TouchedDefines);
 		if (IsGeneratedAssetSourceCurrent(Asset, Source.FilePath, SourceHash))
 		{
 			Source.Status = EBrowserSourceStatus::UpToDate;
