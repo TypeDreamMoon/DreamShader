@@ -42,6 +42,15 @@ public:
 #if WITH_EDITOR
 	virtual FText GetSectionText() const override { return NSLOCTEXT("DreamShaderEditor.Settings", "SectionText", "Dream Shader"); }
 	virtual FText GetSectionDescription() const override { return NSLOCTEXT("DreamShaderEditor.Settings", "SectionDescription", "Dream Shader Settings"); }
+
+	/**
+	 * Bumps the preprocessor define revision when PreprocessorDefines is edited.
+	 *
+	 * The define table is read live from this object at resolve time, so the edited values are
+	 * already in effect the moment this runs -- what is NOT in effect is the invalidation of
+	 * everything built from the previous set, and the revision is how that is signalled.
+	 */
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
 	bool TryResolveShadingModel(const FString& InName, EMaterialShadingModel& OutShadingModel) const;
@@ -90,6 +99,14 @@ public:
 		meta=(DisplayName="Lay Out In-Memory Graphs",
 			ToolTip="Whether the graph placement pass -- node positions and comment boxes -- also runs for the memory-only materials an interactive compile produces. Off, those graphs keep the fixed coordinates the construction pass assigned, which is a single tall column of nodes: readable only once the material is materialized or cooked. On (the default), what you see after a save matches what the generated asset will look like. Costs one placement pass per compile; graphs at or above the large-graph threshold skip it either way."))
 	bool bLayoutInMemoryGraphs = true;
+
+	// The project-wide tier of the preprocessor define table. Two other tiers outrank it -- C++
+	// registration (RegisterDreamShaderDefine / a define provider) and the compiler's own -Define=
+	// switch -- and the builtin DS_ facts outrank all three; see DreamShaderDefineTable.h.
+	UPROPERTY(Config, EditAnywhere, Category="Compiler",
+		meta=(DisplayName="Preprocessor Defines",
+			ToolTip="Preprocessor defines every .dsm/.dsf/.dsh source compiles with -- what its #if / #elif conditions read. The name answers defined(); a value that parses as an integer compares as a number, anything else as a string; an empty value still counts as defined; a name absent from this table evaluates to 0, as in C. Conditions are evaluated at GENERATION time and the losing branch is cut before the parser sees it, so a condition can select a Domain, a ShadingModel or a whole Outputs block -- none of which a StaticSwitch can reach, because they describe what the material IS rather than what it computes. Editing this table rebuilds only the generated assets whose sources actually read a name that changed. Names are case-sensitive and must match [A-Za-z_][A-Za-z0-9_]*. The DS_ prefix is reserved for the read-only builtins; an entry using it is dropped with a log warning rather than failing the compile, since a settings mistake has no source line to report against."))
+	TMap<FString, FString> PreprocessorDefines;
 
 	UPROPERTY(Config, EditAnywhere, Category="Compiler")
 	bool bAutoCompileOnSave = true;

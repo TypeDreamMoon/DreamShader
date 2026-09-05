@@ -1,7 +1,10 @@
 #include "DreamShaderSettings.h"
 
+#include "DreamShaderDefineTable.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
+
+#include "UObject/UnrealType.h"
 
 namespace UE::DreamShader::Private
 {
@@ -84,6 +87,32 @@ UDreamShaderSettings::UDreamShaderSettings()
 	SourceDirectory.Path = TEXT("DShader");
 	GeneratedShaderDirectory.Path = TEXT("Intermediate/DreamShader/GeneratedShaders");
 }
+
+#if WITH_EDITOR
+void UDreamShaderSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	// Both names are checked, not just GetPropertyName(). Editing an entry of a TMap reports the
+	// INNER property that changed: the value property happens to be generated with the map's own
+	// name, but the key property is `<Name>_Key`, so renaming a define would slip straight past a
+	// test that only looked at GetPropertyName(). GetMemberPropertyName() is the map itself in both
+	// cases, which is what actually answers the question being asked here.
+	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
+	const FName MemberPropertyName = PropertyChangedEvent.GetMemberPropertyName();
+	const FName DefinesPropertyName = GET_MEMBER_NAME_CHECKED(UDreamShaderSettings, PreprocessorDefines);
+
+	if (PropertyName == DefinesPropertyName || MemberPropertyName == DefinesPropertyName)
+	{
+		// Deliberately BEFORE Super. UObject::PostEditChangeProperty broadcasts
+		// FCoreUObjectDelegates::OnObjectPropertyChanged as its very first statement, and the editor
+		// bridge regenerates every source file from that broadcast -- so bumping afterwards would
+		// mean that regeneration ran while every define-keyed cache still believed itself current,
+		// and the edit would appear to have done nothing until something else invalidated them.
+		UE::DreamShader::NotifyDreamShaderDefineSettingsChanged();
+	}
+
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+}
+#endif
 
 FString UDreamShaderSettings::NormalizeMappingKey(const FString& InName)
 {
