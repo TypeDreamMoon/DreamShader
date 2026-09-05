@@ -2,6 +2,8 @@
 
 #include "DreamShaderGeneratedAssetDigest.h"
 #include "DreamShaderModule.h"
+// BuildDreamShaderDefineKeyFragment: the sorted fold of the touched-define set into the build key.
+#include "DreamShaderPreprocessor.h"
 #include "DreamShaderSettings.h"
 
 #include "Interfaces/IPluginManager.h"
@@ -107,7 +109,10 @@ namespace UE::DreamShader::Editor::Private
 		// DSK2: component masks are now emitted in a form the material graph editor can round-trip
 		// (see FCodeGraphBuilder::ApplyChannelMaskToValue). Assets stamped DSK1 can carry an inline mask
 		// that the editor rewrites into a different output on the first Apply.
-		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK2");
+		// DSK3: the key now folds in the preprocessor defines the source read. A DSK2 stamp was computed
+		// from post-cut text with no record of WHY it was cut, so an asset generated before this could
+		// not be told apart from the same asset generated under a different define set.
+		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK3");
 
 		FString GetDreamShaderPluginVersion()
 		{
@@ -161,11 +166,28 @@ namespace UE::DreamShader::Editor::Private
 	//   - the mapping tables, which decide what a Settings key resolves to;
 	//   - the plugin version and a hand-bumped format tag, so upgrading the generator invalidates what
 	//     the old generator wrote;
-	//   - the engine version, because what is generable moves with it (Substrate, for one).
+	//   - the engine version, because what is generable moves with it (Substrate, for one);
+	//   - the preprocessor defines the source read, which is the one input the text CANNOT carry.
+	//
+	// That last one needs its own paragraph, because it is the only entry here that is invisible in
+	// the hashed text. SourceText arrives post-cut: the branches a `#if` discarded are already gone,
+	// so flipping a define changes the text and would be caught -- but flipping it BACK produces text
+	// identical to what some earlier stamp hashed, and the asset on disk was generated under whichever
+	// define set was live at the time. Without the defines in the key, "the text is the same" is not
+	// the same claim as "the asset is current", and the difference is a silently stale asset.
+	//
+	// Only the defines the preprocessor actually READ are folded in, not the whole table, and that is
+	// exact rather than approximate. Preprocessing is deterministic and reads a define only to
+	// evaluate a condition; the position of the k-th condition depends only on the results of the k-1
+	// before it. So if every value in the touched set is unchanged, the evaluated conditions and their
+	// results are unchanged, and the output text is byte-identical. A define named only inside a dead
+	// branch is correctly absent: it cannot affect the output until the condition that killed the
+	// branch changes, and THAT condition's defines are in the set. A name read while undefined is in
+	// the set too, under a sentinel value -- otherwise defining it later would not move the hash.
 	//
 	// Changing the composition invalidates every existing stamp, which costs one rebuild per asset and
 	// is exactly the intended effect.
-	FString BuildSourceHash(const FString& SourceText)
+	FString BuildSourceHash(const FString& SourceText, const UE::DreamShader::FDreamShaderDefineValueMap& TouchedDefines)
 	{
 		FString BuildKey = FString::Printf( // I18N-EXEMPT: build key material, never displayed
 			TEXT("%s|Plugin=%s|Engine=%d.%d|"),
@@ -174,6 +196,12 @@ namespace UE::DreamShader::Editor::Private
 			DREAMSHADER_UE_MAJOR,
 			DREAMSHADER_UE_MINOR);
 		AppendSettingsToBuildKey(BuildKey);
+		// Sorted by the fragment builder, for the same reason AppendSettingsToBuildKey sorts: TMap
+		// iteration order is not stable, and an unsorted fold would hash the same inputs differently
+		// from one run to the next -- which reads as "every asset is stale, every time".
+		BuildKey += FString::Printf( // I18N-EXEMPT: build key material, never displayed
+			TEXT("Defines=%s|"),
+			*UE::DreamShader::BuildDreamShaderDefineKeyFragment(TouchedDefines));
 		// A separator the source text cannot supply on its own, so no source can spell a prefix that
 		// collides with a different context's.
 		BuildKey += TEXT("\n--\n");

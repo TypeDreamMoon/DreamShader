@@ -5,6 +5,7 @@
 
 // FDreamShaderError: every generator failure below carries a DSHnnnn code alongside its
 // message, so a wrap as the stack unwinds keeps the code the innermost raise set.
+#include "DreamShaderDefineTable.h"
 #include "DreamShaderDiagnostic.h"
 
 // EDreamShaderDigestState, returned by the provenance helpers declared below.
@@ -393,7 +394,17 @@ namespace UE::DreamShader::Editor::Private
 		ECustomMaterialOutputType& OutReturnType,
 		bool& bOutReturnIsSubstrateMaterial,
 		FDreamShaderError& OutError);
-	FString BuildSourceHash(const FString& SourceText);
+	/**
+	 * The regeneration stamp: hashes the prepared source together with everything else that decides
+	 * what that source compiles into.
+	 *
+	 * TouchedDefines is not optional and has no default. It comes from the five-parameter
+	 * LoadPreparedDreamShaderSource, and passing an empty map is not "I have nothing to add" -- it is
+	 * a positive claim that the source read no preprocessor defines, which for a conditional source
+	 * pins its hash to a value that never moves when its defines do. That is a silently stale asset,
+	 * so the argument is required and every caller has to have gone and got it.
+	 */
+	FString BuildSourceHash(const FString& SourceText, const UE::DreamShader::FDreamShaderDefineValueMap& TouchedDefines);
 	bool IsGeneratedAssetSourceCurrent(UObject* Asset, const FString& SourceFilePath, const FString& SourceHash);
 	bool HasDreamShaderSourceMetadata(UObject* Asset);
 	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath);

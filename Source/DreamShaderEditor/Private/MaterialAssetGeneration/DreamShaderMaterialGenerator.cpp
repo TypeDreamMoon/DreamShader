@@ -2034,8 +2034,20 @@ namespace UE::DreamShader::Editor
 		}
 
 		FString SourceText;
+		// The defines this source (and everything it imports) actually read, for the build key below.
+		// It has to travel with the text: SourceText arrives with its false branches already cut, so
+		// nothing in it records which define set did the cutting.
+		UE::DreamShader::FDreamShaderDefineValueMap TouchedDefines;
+		// Whether any file in the inlined set carried a preprocessor directive. Read by the Adopt gate,
+		// which cannot write a conditional source back from an asset that only holds the cut result.
+		bool bSourceHadPreprocessorDirectives = false;
 		FDreamShaderError PreparedSourceError;
-		if (!LoadPreparedDreamShaderSource(SourceFilePath, SourceText, PreparedSourceError))
+		if (!LoadPreparedDreamShaderSource(
+			SourceFilePath,
+			SourceText,
+			TouchedDefines,
+			bSourceHadPreprocessorDirectives,
+			PreparedSourceError))
 		{
 			OutMessage = PreparedSourceError;
 			return false;
@@ -2061,7 +2073,7 @@ namespace UE::DreamShader::Editor
 			UE_LOG(LogDreamShader, Warning, TEXT("%s"), *RootFallbackReason);
 		}
 
-		const FString SourceHash = Private::BuildSourceHash(SourceText);
+		const FString SourceHash = Private::BuildSourceHash(SourceText, TouchedDefines);
 
 		if (UE::DreamShader::IsDreamShaderFunctionFile(SourceFilePath) && !Definition.Name.IsEmpty())
 		{
@@ -3080,8 +3092,20 @@ namespace UE::DreamShader::Editor
 		}
 
 		FString SourceText;
+		// The defines this source (and everything it imports) actually read, for the build key below.
+		// It has to travel with the text: SourceText arrives with its false branches already cut, so
+		// nothing in it records which define set did the cutting.
+		UE::DreamShader::FDreamShaderDefineValueMap TouchedDefines;
+		// Whether any file in the inlined set carried a preprocessor directive. Read by the Adopt gate,
+		// which cannot write a conditional source back from an asset that only holds the cut result.
+		bool bSourceHadPreprocessorDirectives = false;
 		FDreamShaderError PreparedSourceError;
-		if (!LoadPreparedDreamShaderSource(SourceFilePath, SourceText, PreparedSourceError))
+		if (!LoadPreparedDreamShaderSource(
+			SourceFilePath,
+			SourceText,
+			TouchedDefines,
+			bSourceHadPreprocessorDirectives,
+			PreparedSourceError))
 		{
 			OutMessage = PreparedSourceError;
 			return false;
@@ -3107,7 +3131,7 @@ namespace UE::DreamShader::Editor
 			UE_LOG(LogDreamShader, Warning, TEXT("%s"), *RootFallbackReason);
 		}
 
-		const FString SourceHash = Private::BuildSourceHash(SourceText);
+		const FString SourceHash = Private::BuildSourceHash(SourceText, TouchedDefines);
 
 		if (Definition.Name.IsEmpty())
 		{

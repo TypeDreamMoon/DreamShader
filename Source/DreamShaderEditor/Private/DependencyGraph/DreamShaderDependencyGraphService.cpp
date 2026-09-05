@@ -130,6 +130,24 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
+	// Recognises an `import "..."` line. Deliberately blind to `#if`.
+	//
+	// This scan runs over the RAW file. It never goes through the preprocessor, and the callers below
+	// never hand it preprocessed text, so an `import` inside a branch that generation would cut is
+	// still reported as a dependency. The dependency set is therefore the UNION over all `#if`
+	// branches: editing a .dsh that only a dead branch imports still marks its dependents dirty and
+	// still triggers a rebuild.
+	//
+	// That is the intended asymmetry, not an oversight. The two directions of being wrong are not
+	// comparable: rebuilding an asset that did not need it costs seconds, while failing to rebuild one
+	// that did leaves a generated asset that no longer matches its source and no signal that it does
+	// not -- the kind of divergence that is found much later, by hand. So the graph is deliberately
+	// over-inclusive and generation is exact, and the two are allowed to disagree.
+	//
+	// This is also why the two paths must stay separate. Routing this scan through the prepare stage
+	// to "share one code path" with LoadPreparedDreamShaderSourceRecursive would make the dependency
+	// set follow the live define values, and every source reachable only from a currently-false branch
+	// would silently drop out of the graph -- a missed rebuild with nothing at all to notice it by.
 	bool FDreamShaderDependencyGraphService::TryExtractImportPathFromLine(const FString& Line, FString& OutPath)
 	{
 		FString TrimmedLine = Line.TrimStartAndEnd();
@@ -316,6 +334,11 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		TArray<FString> Lines;
+		// Raw file text, straight from disk, with no preprocessing between the read and this scan --
+		// intentionally, and load-bearingly so. Preprocessing here would resolve `#if` against the
+		// current define set and quietly shrink the dependency graph to whatever is live right now;
+		// a header imported only from a false branch would stop being a dependency, and editing it
+		// would stop rebuilding anything. See TryExtractImportPathFromLine for the full reasoning.
 		SourceText.ParseIntoArrayLines(Lines, false);
 		for (const FString& Line : Lines)
 		{
