@@ -2,23 +2,23 @@
 
 > [DreamShader](../index.md) » **C++ API**
 
-The plugin's public C++ surface: three modules, nine public headers, and one interface a third party
-can implement.
+The plugin's public C++ surface: three modules, eleven public headers, and one interface a third
+party can implement.
 
 | | |
 | :-- | :-- |
 | Modules | `DreamShader` (Runtime) · `DreamShaderCompiler` (Runtime) · `DreamShaderEditor` (Editor) |
-| Public headers | 6 + 3 + 0 |
+| Public headers | 8 + 3 + 0 |
 | Export macros | `DREAMSHADER_API`, `DREAMSHADERCOMPILER_API` |
 | Reflected types in public headers | 2 `UCLASS`, 1 `UENUM` |
-| Delegates | none — the plugin declares no `DECLARE_DELEGATE*`, `DECLARE_EVENT*` or `DECLARE_DYNAMIC*` |
-| Plugin version | `1.8.0` (`"Version": 180`) |
+| Delegates | one — `FDreamShaderDefineProviderDelegate`, a `DECLARE_DELEGATE_OneParam` in `DreamShaderDefineTable.h` *(since 1.9.0)*. No `DECLARE_EVENT*` and no `DECLARE_DYNAMIC*` |
+| Plugin version | `1.9.0` (`"Version": 190`) |
 
 ## Modules
 
 | Module | Type | Loading phase | Public headers | Export macro | Purpose |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| `DreamShader` | `Runtime` | `Default` | 6 | `DREAMSHADER_API` | Log category, canonical path helpers, the parsed-source data model, the parser, the project settings object, the generated instance class, and the engine-version macros. |
+| `DreamShader` | `Runtime` | `Default` | 8 | `DREAMSHADER_API` | Log category, canonical path helpers, the parsed-source data model, the parser, the preprocessor and its define table, the project settings object, the generated instance class, and the engine-version macros. |
 | `DreamShaderCompiler` | `Runtime` | `Default` | 3 | `DREAMSHADERCOMPILER_API` | A pure abstraction layer: the compile request/result structs, the `IDreamShaderCompiler` interface, and a thin service wrapper. Contains no material-generation code. |
 | `DreamShaderEditor` | `Editor` | `Default` | **0** | *(none used)* | Everything that actually builds assets: the generator, the decompiler, the bridge, the preview, the Material Content Browser, the commandlet, the workspace exporter. |
 
@@ -32,6 +32,8 @@ All three are declared in `DreamShader.uplugin` and load at the `Default` phase.
 | `DreamShaderModule.h` | `DreamShader` | `#include "DreamShaderModule.h"` | `LogDreamShader`, `FDreamShaderModule`, ten exported free functions (paths, identifier sanitizing, file classification). |
 | `DreamShaderTypes.h` | `DreamShader` | `#include "DreamShaderTypes.h"` | The parsed-AST data model: 13 structs, 5 enums, `LexToString`, `NormalizeSettingKey`. |
 | `DreamShaderParser.h` | `DreamShader` | `#include "DreamShaderParser.h"` | `FTextShaderParser::Parse` — the one entry point into the DreamShaderLang front end; `OutError` is `FText`. |
+| `DreamShaderDefineTable.h` *(since 1.9.0)* | `DreamShader` | `#include "DreamShaderDefineTable.h"` | The [preprocessor](../language/preprocessor.md) define table: `EDreamShaderDefineSource`, `FDreamShaderDefineEntry`, the case-sensitive `FDreamShaderDefineMap` / `FDreamShaderDefineValueMap` aliases, `FDreamShaderDefineTable`, the registration and provider API, and `FDreamShaderDefineProviderDelegate`. |
+| `DreamShaderPreprocessor.h` *(since 1.9.0)* | `DreamShader` | `#include "DreamShaderPreprocessor.h"` | `PreprocessDreamShaderSource`, `FDreamShaderPreprocessResult`, `DreamShaderSourceHasPreprocessorDirectives`, `BuildDreamShaderDefineKeyFragment`. |
 | `DreamShaderSettings.h` | `DreamShader` | `#include "DreamShaderSettings.h"` | `EDreamShaderDefaultBackend`, `UDreamShaderSettings`, the enum-alias resolvers. |
 | `DreamShaderMaterialInstance.h` | `DreamShader` | `#include "DreamShaderMaterialInstance.h"` | `UDreamShaderMaterialInstance` — the asset the ThinCustom backend produces. |
 | `DreamShaderVersionCompat.h` | `DreamShader` | `#include "DreamShaderVersionCompat.h"` | Six engine-version macros. No types, no functions. |
@@ -39,8 +41,9 @@ All three are declared in `DreamShader.uplugin` and load at the `Default` phase.
 | `DreamShaderCompileService.h` | `DreamShaderCompiler` | `#include "DreamShaderCompileService.h"` | `FDreamShaderCompileService` — argument-packing wrapper over an `IDreamShaderCompiler&`. |
 | `DreamShaderCompilerModule.h` | `DreamShaderCompiler` | `#include "DreamShaderCompilerModule.h"` | `FDreamShaderCompilerModule`. Both lifecycle methods are empty. |
 
-Namespaces: everything in `DreamShaderModule.h`, `DreamShaderTypes.h` and `DreamShaderParser.h` lives
-in `UE::DreamShader`. `DreamShaderCompilerInterfaces.h` and `DreamShaderCompileService.h` live in
+Namespaces: everything in `DreamShaderModule.h`, `DreamShaderTypes.h`, `DreamShaderParser.h`,
+`DreamShaderDefineTable.h` and `DreamShaderPreprocessor.h` lives in `UE::DreamShader`.
+`DreamShaderCompilerInterfaces.h` and `DreamShaderCompileService.h` live in
 `UE::DreamShader::Compiler`. `FDreamShaderModule`, `FDreamShaderCompilerModule`,
 `UDreamShaderSettings`, `UDreamShaderMaterialInstance` and `EDreamShaderDefaultBackend` are at global
 scope.
@@ -170,6 +173,7 @@ three public headers, which use only `FString`.
 | [`DreamShaderMaterialInstance.h`](material-instance.md) | `UDreamShaderMaterialInstance` and its two overrides |
 | [`DreamShaderVersionCompat.h`](version-compat.md) | The compat macros and every version-gated behaviour they select |
 | [`DreamShaderCompiler`](compiler-module.md) | The compile interface, request/result structs, service, and module |
+| `DreamShaderDefineTable.h` · `DreamShaderPreprocessor.h` | No page of their own yet; the whole surface is documented from the language side, on [Preprocessor](../language/preprocessor.md) |
 
 ## Notes
 

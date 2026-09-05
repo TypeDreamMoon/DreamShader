@@ -100,7 +100,7 @@ it. Sections may appear in any order and may repeat.
 
 ## Contextual keywords
 
-Recognized only in the position listed, always case-insensitively.
+Recognized only in the position listed, and case-insensitively except where the row says otherwise.
 
 | Keyword | Position | Meaning | Reference |
 | :-- | :-- | :-- | :-- |
@@ -114,6 +114,10 @@ Recognized only in the position listed, always case-insensitively.
 | `Node( … )` | statement inside `Layout` | pins a variable's node position | [Layout](layout.md) |
 | `Comment( … )` | statement inside `Layout` | places a comment box | [Layout](layout.md) |
 | `#Region` / `#EndRegion` | own line inside a `Graph` body | names a region of the graph; nests | [Layout](layout.md) |
+| `#if` / `#elif` / `#else` / `#endif` *(since 1.9.0)* | own line, anywhere except a `Function` / `GraphFunction` HLSL body | cuts the untaken branch out of the text before parsing; **lowercase only** | [Preprocessor](preprocessor.md) |
+| `#ifdef` / `#ifndef` *(since 1.9.0)* | own line, same positions | sugar for `#if defined(NAME)` and `#if !defined(NAME)` | [Preprocessor](preprocessor.md) |
+| `#define` / `#undef` *(since 1.9.0)* | own line, same positions | defines or removes a name, **for that file only**; a `#define` value runs to end of line and is plain text | [Preprocessor](preprocessor.md#define-is-file-local) |
+| `defined` *(since 1.9.0)* | inside a `#if` / `#elif` expression | `1` when the name is defined, `0` otherwise; `defined(X)` and `defined X` both work | [Preprocessor](preprocessor.md#values) |
 | `UE.` | type position in `Properties`, call position in `Graph` | builtin material-node namespace | [`UE.*` catalogue](../builtins/ue.md) |
 | `true` / `false` | default values | boolean literal; converts to `1.0` / `0.0` where a scalar is expected | [Types](types.md) |
 | `default` *(since 1.2.3)* | call argument in `Graph` | use the parameter's declared default | [Calls](../graph/calls.md) |
@@ -124,6 +128,7 @@ Recognized only in the position listed, always case-insensitively.
 | :-- | :-- | :-- |
 | `__return` | `Function` / `GraphFunction` parameter names | reserved for return-type lowering; a declared return type becomes an `out` parameter with this name. Using it fails with `Function '{Name}' parameter name '__return' is reserved for return-type lowering.` |
 | `return` | `Shader` `Outputs` declarations | may not be used as an output-variable name, and as a binding source it may only feed `Base.*` targets |
+| `DS_…` *(since 1.9.0)* | preprocessor define names | the whole `DS_` **prefix** is DreamShader's. `#define` or `#undef` of such a name fails with `DSH1039`; the other define tiers drop it with a warning. See [Preprocessor](preprocessor.md#the-builtin-ds_-constants) |
 
 `return` inside a `Function` body is a statement, not a reserved name: a top-level `return <expr>;`
 is rewritten to an assignment to `__return`. A bare `return;` in a function that declares a return
@@ -237,5 +242,5 @@ Shader(Name="Materials/M_Keywords")
   [GraphFunction](graph-function.md) · [Namespace](namespace.md) — the block pages
 - [Properties](properties.md) · [Inputs / Outputs](inputs-outputs.md) ·
   [Output bindings](output-bindings.md) · [Options](options.md) · [Layout](layout.md) — the section pages
-- [`import`](import.md) — the one directive that is not part of the grammar
+- [`import`](import.md) · [Preprocessor](preprocessor.md) — the directives that are not part of the grammar
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

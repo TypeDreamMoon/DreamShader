@@ -212,6 +212,7 @@ in the project, rebuilds it from the live asset, and writes the file back when t
 | Aspect | Behaviour |
 | :-- | :-- |
 | Scanned files | every `.dsm`, `.dsh` and `.dsf` under the source directory, excluding `DShader/Packages` |
+| Refused files | any source containing [preprocessor directives](../language/preprocessor.md) — `DSH9001` *(since 1.9.0)* |
 | Keyword matching | the bare word `VirtualFunction`, matched **case-sensitively**, with identifier-boundary checks |
 | Skipped regions | quoted strings with `\` escapes, `//` line comments and `/* */` block comments |
 | Block extraction | a balanced `( … )` followed by a balanced `{ … }`; an optional trailing `;` is absorbed into the block's range |
@@ -222,6 +223,32 @@ in the project, rebuilds it from the live asset, and writes the file back when t
 
 Because the scanner is a hand-rolled lexer rather than the full parser, it finds declarations
 anywhere a file may legally hold one — including inside a `.dsm` alongside a `Shader` block.
+
+### Conditional sources are refused *(since 1.9.0)*
+
+A source containing any [preprocessor directive](../language/preprocessor.md) is not synced. It is
+reported once, as `DSH9001`, and left exactly as written.
+
+The reason is the write-back, not the read. Sync records `StartIndex` / `EndIndex` as **byte**
+offsets and splices the rebuilt declaration over that range. The preprocessor guarantees line-count
+conservation — which buys **line** alignment and nothing more, because a cut line is replaced by a
+*shorter* empty one. Every byte offset past the first cut therefore points at the wrong place, and
+there is no offset map in the contract to correct with. Were a preprocessed string to reach
+`SaveStringToFile`, every dead branch in the file would be flattened permanently.
+
+This is the same accident as [Adopt](../generation/divergence.md#adopt-into-source), and worse in one
+respect: Adopt is a menu item a person chooses, while this service runs **unattended at bridge
+startup** across every writable source in the project.
+
+> [!NOTE]
+> The gate is reached only after a `VirtualFunction` substring test, so a conditional material that
+> holds no declaration — which sync would never have rewritten anyway — does not report an error at
+> every editor start.
+>
+> The **read-only** users of the same scanner are unaffected and keep scanning the raw text: the
+> [context menu](#context-menu), *Open Virtual Function*, and the copied [call example](#the-call-example)
+> all see the union over every branch. That matches the rule the dependency graph follows, and it is
+> safe for the same reason — reading every branch over-reports, and over-reporting is harmless.
 
 ### Sync diagnostics
 
@@ -242,6 +269,17 @@ They reach `diagnostics.json`, the sharded `diagnostics/` directory and `bridge.
 
 `Expected exactly one VirtualFunction block.` is the parser error text carried by the fourth row when
 a block contains zero or several declarations.
+
+The [conditional-source refusal](#conditional-sources-are-refused-since-190) obeys the paragraph
+above like every other row: its record still carries stage `virtualFunctionSync`, code
+`virtual-function-sync` and severity `error`. Its `DSH9001` travels in the **message text**, exactly
+as `DSH8149` does on the Adopt gate — the wire contract is unchanged.
+
+It is nonetheless raised through the same `FailWith` helper the coded diagnostics use, and that is a
+deliberate trade rather than an inconsistency: [`gen-diagnostics.ps1`](../diagnostics/README.md)
+discovers codes by scanning for exactly that call shape, so a refusal written any other way would
+exist in the source and not in this manual. `DSH9001` is the first entry in the `DSH9xxx` tools
+range, which was empty before it.
 
 ### Reporting
 
@@ -317,6 +355,8 @@ Shader(Name="Materials/M_Rock")
 - [Inputs / Outputs / Results](../language/inputs-outputs.md) — `opt`, defaults and metadata in a declaration
 - [Path](../parameters/path.md) — the `Path(Root, "…")` literal the `Asset` key uses
 - [Import](../language/import.md) — how a material picks up the generated `.dsh`
+- [Preprocessor](../language/preprocessor.md) — why a conditional source is refused with `DSH9001`
+- [Divergence](../generation/divergence.md) — Adopt, the other source writer, refused on the same grounds
 - [Decompiler](decompiler.md) — the same declaration builder, used for every called function
 - [Bridge](bridge.md) — where the sync diagnostics are published
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

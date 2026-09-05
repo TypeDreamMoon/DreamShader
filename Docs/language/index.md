@@ -39,7 +39,7 @@ separator between them.
 
 ## Two grammars
 
-DreamShaderLang is not parsed by one machine. Three independent stages process a source file, and
+DreamShaderLang is not parsed by one machine. Four independent stages process a source file, and
 each has its own rules. **Do not infer the rules of one from another.**
 
 | | Declaration grammar | `Graph` expression grammar |
@@ -55,12 +55,16 @@ each has its own rules. **Do not infer the rules of one from another.**
 | Punctuation accepted | `{ } ( ) [ ] ; = , .` and `::` | `( ) , . + - * / =` and `::` only — every other character ends the expression |
 | Error positions | messages ending in `near index <N>` carry a position | positions are line/column inside the `Graph` body, then offset onto the file |
 
-`import` belongs to **neither** grammar. It is stripped line by line by the editor source loader
-before the declaration parser is called, so it is not a keyword the parser knows. See
-[`import`](import.md).
+`import` and the `#if` family belong to **neither** grammar. Both are handled line by line before the
+declaration parser is called, so neither is a keyword the parser knows. See [`import`](import.md) and
+[Preprocessor](preprocessor.md).
 
 ```text
 <file>.dsm
+  │
+  ├─ preprocessor           evaluate `#if` / `#ifdef` / `#elif` / `#else` / `#endif` against the
+  │                         define table; cut untaken branches, preserving the line count;
+  │                         `Function` bodies pass through untouched
   │
   ├─ editor source loader   strip `import` lines, inline targets depth-first,
   │                         enforce the .dsh / .dsf content rules
@@ -71,6 +75,9 @@ before the declaration parser is called, so it is not a keyword the parser knows
   └─ material generator     Graph expression grammar  ->  material nodes  ->  asset
 ```
 
+The preprocessor runs **first**, per file, which is what lets an `#if` decide whether an `import` is
+taken at all — and why a `#define` is local to the file that writes it.
+
 ## Declaration language
 
 | | |
@@ -79,6 +86,7 @@ before the declaration parser is called, so it is not a keyword the parser knows
 | [Lexical elements](lexical.md) | Comments, identifiers, case sensitivity, literals, statement splitting |
 | [Keyword index](keywords.md) | Every reserved word, alias and identifier rewrite |
 | [`import`](import.md) | Search roots, packages, cycles, line mapping |
+| [Preprocessor](preprocessor.md) | The eight `#if` / `#define` directives and the define table *(since 1.9.0)* |
 | [Types](types.md) | Type-token catalogue and per-context validity |
 
 **Top-level blocks**
@@ -132,8 +140,12 @@ The statement and expression language inside `Graph = { … }`.
   tolerant numeric conversion that stops at the `f`; `1.0f` inside a `Graph` block is a genuine
   suffixed literal whose suffix is a lexical element. Both work; the reasons differ, and so do the
   edge cases. See [Numeric literals](lexical.md#numeric-literals).
-- **There is no preprocessor at the declaration level.** `#Region` / `#EndRegion` are recognized only
-  inside `Graph` bodies; a `#` anywhere else is not a directive. See [Layout](layout.md).
+- **The preprocessor is not part of either grammar.** Eight lowercase directives — `#if`, `#ifdef`,
+  `#ifndef`, `#elif`, `#else`, `#endif`, `#define`, `#undef` — are evaluated over the raw text before
+  parsing and never reach either machine *(since 1.9.0)*. Outside those eight, a `#` line is passed
+  through only where it has a claimant: anywhere inside a `Function` body (that is HLSL, `#include`
+  included), and `#Region` / `#EndRegion` in any case. Anything else is `DSH1035`, mis-cased
+  directives such as `#IF` among them. See [Preprocessor](preprocessor.md) and [Layout](layout.md).
 - **Top-level block keywords are the only case-sensitive tokens in the declaration grammar.** Section
   names, type tokens, attribute keys, settings keys and every other keyword-like token are matched
   case-insensitively. See [Case sensitivity](lexical.md#case-sensitivity).
@@ -175,6 +187,7 @@ Shader(Name="Materials/M_Comments")
 - [Lexical elements](lexical.md) — tokens, case rules, literals, splitting
 - [Keyword index](keywords.md) — every reserved word with the page that documents it
 - [`import`](import.md) — how a translation unit is assembled from several files
+- [Preprocessor](preprocessor.md) — cutting the declaration layer with `#if`, and the define table
 - [Graph](../graph/index.md) — the expression grammar
 - [Diagnostics index](../diagnostics/index.md) — every message, by pipeline stage
 - [Generation](../generation/index.md) — what the definition tree is turned into

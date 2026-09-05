@@ -30,6 +30,7 @@ The declaration grammar: source files, blocks, and sections.
 | [Lexical elements](language/lexical.md) | Comments, identifiers, case sensitivity, literals, suffixes |
 | [Keyword index](language/keywords.md) | Every reserved word and alias, with links |
 | [`import`](language/import.md) | Including headers, functions, and packages |
+| [Preprocessor](language/preprocessor.md) | `#if` and the define table — conditional compilation |
 | [Types](language/types.md) | Type tokens, GLSL aliases, per-context validity |
 
 **Top-level blocks**

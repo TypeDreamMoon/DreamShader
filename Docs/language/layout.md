@@ -169,6 +169,12 @@ layout path each region becomes one comment box; on the explicit path region nam
 block boundaries used to decide where cross-block reroutes are inserted.
 
 > [!NOTE]
+> The [preprocessor](preprocessor.md) sees every `#` line before the parser does *(since 1.9.0)*, and
+> it names `region` / `endregion` explicitly as lines to pass through — in any case, exactly as
+> matched here. So `#Region`, `#region` and `#REGION` all still reach the generator unchanged, and
+> region directives are unaffected by conditional compilation.
+
+> [!NOTE]
 > `#Region` names and `Layout` `Comment` names are independent. Declaring a `Comment` whose rectangle
 > happens to contain a region's nodes does not merge the two — containment is what assigns a node to a
 > comment block on the explicit path.
@@ -275,6 +281,7 @@ Nothing is written to disk unless the material is persisted — see the transien
 - [Shader](shader.md) — the block whose graph `Layout` positions
 - [ShaderFunction](shader-function.md) — material-function blocks also accept `Layout`
 - [Graph](../graph/index.md) — where `#Region` directives are written
+- [Preprocessor](preprocessor.md) — the other `#` syntax, and how the two are told apart
 - [Declarations](../graph/declarations.md) — which statements register a nameable variable
 - [Properties](properties.md) — property names are also valid `Node` `Var` targets
 - [Output bindings](output-bindings.md) — the reroute pairs created for each binding

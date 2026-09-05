@@ -29,8 +29,8 @@ Whitespace and comments may appear between any two tokens and are otherwise insi
 Any character for which the engine's whitespace predicate is true separates tokens: space, tab,
 carriage return, line feed and the other Unicode whitespace characters. Newlines carry no syntactic
 weight in the declaration grammar; they matter only to line-oriented processing —
-[`import`](import.md) directives, `#Region` directives inside a `Graph` body
-([Layout](layout.md)), and diagnostic line numbers.
+[`import`](import.md) directives, [preprocessor](preprocessor.md) directives, `#Region` directives
+inside a `Graph` body ([Layout](layout.md)), and diagnostic line numbers.
 
 > [!WARNING]
 > Two statement forms split on a **literal space character** rather than on whitespace, so a tab
@@ -57,8 +57,10 @@ weight in the declaration grammar; they matter only to line-oriented processing 
   preserves the line feed that terminates a line comment, so line numbers survive.
 - **`Graph` bodies are not comment-stripped by the declaration parser.** Comments inside a `Graph`
   block are stored verbatim with the body and are handled later by the expression tokenizer.
-- There is no `#` preprocessor at the declaration level. `#Region` / `#EndRegion` are recognized
-  only inside `Graph` bodies.
+- **Comments do not hide a directive.** `import` and the `#if` family are found by a line scan that
+  runs before any comment is understood, so a directive inside `/* … */` is still a directive. A
+  line whose first non-whitespace characters are `//` never is. See [`import`](import.md#recognition)
+  and [Preprocessor](preprocessor.md#recognition).
 
 ## Identifiers
 
@@ -83,8 +85,9 @@ is empty or entirely underscores becomes `DreamShaderSymbol`. This is why `Commo
 
 ## Case sensitivity
 
-**Top-level block keywords are the only case-sensitive tokens.** Everything else keyword-like is
-matched ignoring case.
+**Within the declaration grammar, top-level block keywords are the only case-sensitive tokens.**
+Everything else keyword-like there is matched ignoring case. The [preprocessor](preprocessor.md),
+which runs before that grammar and is not part of it, is case-sensitive throughout.
 
 | Construct | Case-sensitive | Reference |
 | :-- | :-- | :-- |
@@ -107,6 +110,9 @@ matched ignoring case.
 | `#Region` / `#EndRegion` | no | [Layout](layout.md) |
 | `Node(` / `Comment(` layout calls | no | [Layout](layout.md) |
 | `import` | no | [`import`](import.md) |
+| `#if` / `#ifdef` / `#ifndef` / `#elif` / `#else` / `#endif` / `#define` / `#undef` | **yes — lowercase only**; `#IF` is `DSH1035`, not a silent no-op | [Preprocessor](preprocessor.md#what-is-not-a-directive) |
+| define **names**, and the reserved `DS_` prefix test | **yes** — `Foo` and `FOO` are two defines, and `ds_foo` is not reserved | [Preprocessor](preprocessor.md#where-defines-come-from) |
+| string comparison inside a `#if` | **yes** — `DS_PLATFORM == "windows"` is false on Windows | [Preprocessor](preprocessor.md#values) |
 | `default` call-argument sentinel | no | [Calls](../graph/calls.md) |
 | `.dsm` / `.dsf` / `.dsh` extensions | no | [Source files](source-files.md) |
 
@@ -316,7 +322,8 @@ Shader(Name="DreamShaderTests/Corpus/M_Comments")
 
 - [Keyword index](keywords.md) — every reserved word, with its case rule
 - [Source files](source-files.md) — the file kinds these tokens live in
-- [`import`](import.md) — the one line-oriented directive, and source-line mapping
+- [`import`](import.md) — a line-oriented directive, and source-line mapping
+- [Preprocessor](preprocessor.md) — the other line-oriented directives, and the one case-sensitive keyword set
 - [Types](types.md) — the full type-token catalogue and the GLSL aliases
 - [Properties](properties.md) — the section with the brace-aware statement walker
 - [Inputs / Outputs / Results](inputs-outputs.md) — the sections with the literal-space rule

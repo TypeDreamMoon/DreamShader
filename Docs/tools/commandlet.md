@@ -21,6 +21,7 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 <command> ::= { compile | generate | decompile | export }
 
 -run=DreamShader { compile | generate } { -Source=<path> | -File=<path> | -All } [-Force]
+                                        [-Define=<NAME>[=<value>]]…
 -run=DreamShader { decompile | export } -Asset=<object-path> [{ -Out | -Output }=<path>]
 ```
 
@@ -56,6 +57,7 @@ exits `1`.
 | **`-Source=<path>`** | `-File=<path>` | string | one of `-Source` / `-File` / `-All` | — | Compile exactly one source file |
 | **`-All`** | — | flag | one of `-Source` / `-File` / `-All` | off | Compile every project DreamShader source |
 | `-Force` | — | flag | no | off | Bypass the source-hash skip and regenerate unconditionally |
+| `-Define=<NAME>[=<value>]` *(since 1.9.0)* | `-D=<NAME>[=<value>]` | string, repeatable | no | — | Contribute one [preprocessor define](../language/preprocessor.md) to this run |
 
 Precedence: `-Source` is looked up first, then `-File`; `-All` is consulted only when neither yielded
 a value. `-Source` and `-All` together silently compiles only the one file. With none of the three,
@@ -88,6 +90,43 @@ directory second.
 Step 4 is a guarantee, not an accident: function assets referenced by a material must exist before
 that material is generated, and the two-rank sort provides that within a single run. Step 2 has a
 sharp edge for `.dsf` files that live in packages; see [Packages](packages.md#source-file-enumeration).
+
+### `-Define` *(since 1.9.0)*
+
+Each occurrence contributes one entry to the [define table](../language/preprocessor.md#where-defines-come-from)
+this run compiles against. The option is repeatable — later occurrences add names rather than
+replacing the set.
+
+| Written as | Defines |
+| :-- | :-- |
+| `-Define=FOO=1` | `FOO` to `1` |
+| `-Define=PROFILE=cinematic` | `PROFILE` to the string `cinematic` |
+| `-Define="NOTE=two words"` | `NOTE` to `two words` — quote the whole argument, not just the value |
+| `-Define=CI_BUILD` | `CI_BUILD` to an **empty** value: a bare marker, for which `defined(CI_BUILD)` is `1` and `#if CI_BUILD` is true |
+| `-D=FOO=1` | the same as `-Define=FOO=1` — `-D` is the short spelling |
+
+The name is everything up to the **first** `=` in the option's value, so a value may itself contain
+`=`. Names are case-sensitive.
+
+> [!WARNING]
+> `-Define` is one of the few options that must be read off the **raw** command line rather than
+> through the commandlet's usual parameter map, and the reason is a trap in the engine rather than a
+> preference. `UCommandlet::ParseCommandLine`'s four-argument overload does not put `-Foo=Bar` into
+> both lists: it *removes* it from `Switches` and moves it into `Params`. So scanning `Switches`
+> finds no `-Define` at all, and `Params` is keyed by option name, which collapses
+> `-Define=A=1 -Define=B=2` into a single entry. Either route silently drops every define but one.
+
+The command line is the highest-precedence define tier, so it overrides *Preprocessor Defines* in the
+project settings and anything a module registered in C++ — with one exception: a name beginning with
+`DS_` is reserved for the builtins and is dropped with a warning, because a run that lies about the
+engine version or about Substrate does not produce a different material, it produces a graph the
+engine cannot compile at all.
+
+> [!NOTE]
+> Defines are part of the [build key](../generation/caching.md#it-is-a-build-key-not-just-a-source-hash),
+> so a run with a different `-Define` set rebuilds the sources that read a changed name **without**
+> `-Force`, and still skips the ones that do not read it. That is what makes a per-configuration CI
+> sweep affordable: one run per define set, each rebuilding only what its own switches touch.
 
 ### Per-file guard
 
@@ -246,10 +285,12 @@ The usage banner, verbatim:
 
 ```text
 Usage:
-  -run=DreamShader compile -Source="C:/Project/DShader/File.dsm" [-Force]
-  -run=DreamShader compile -All [-Force]
+  -run=DreamShader compile -Source="C:/Project/DShader/File.dsm" [-Force] [-Define=NAME=VALUE ...]
+  -run=DreamShader compile -All [-Force] [-Define=NAME=VALUE ...]
   -run=DreamShader decompile -Asset="/Game/Path/Asset.Asset" [-Out="C:/Project/DShader/Decompiled/File.dsm"]
 Supported asset types: Material -> .dsm, MaterialFunction -> .dsf.
+-Define (short form -D) may be repeated; -Define=NAME with no value is a bare marker that
+defined(NAME) sees. Names starting with DS_ are reserved for the built-in constants.
 ```
 
 ## Example
@@ -270,6 +311,19 @@ Compile every project source — `.dsf` first, then `.dsm` — as a CI gate:
   "C:\Projects\MyGame\MyGame.uproject" `
   -run=DreamShader compile -All -Force `
   -unattended -nopause -nosplash -stdout -log
+```
+
+Compile the whole tree twice, once per branch of a `#if`, as the CI gate that keeps an inactive
+branch from rotting — an untaken branch is never parsed, so nothing else checks it:
+
+```powershell
+foreach ($Legacy in 0, 1) {
+    & $UnrealEditorCmd $Project `
+      -run=DreamShader compile -All -Force `
+      -Define=MOONTOON_LEGACY_TOON=$Legacy `
+      -unattended -nopause -nosplash -stdout -log
+    if ($LASTEXITCODE -ne 0) { throw "DreamShader failed with MOONTOON_LEGACY_TOON=$Legacy" }
+}
 ```
 
 Decompile an existing material to a chosen path:
@@ -300,6 +354,7 @@ LogDreamShader: Display: Generated DreamShader thin-custom material /Game/Materi
 - [Editor bridge](bridge.md) — everything the commandlet deliberately does not start
 - [In-memory materials](../generation/in-memory.md) — persistent versus transient generation
 - [Caching](../generation/caching.md) — the source-hash skip `-Force` bypasses
+- [Preprocessor](../language/preprocessor.md) — what `-Define` feeds, and the other four define tiers
 - [Asset paths](../generation/asset-paths.md) — how `Name=` and `Root=` become the package path
 - [Decompiler](decompiler.md) — the export the `decompile` command drives
 - [Packages](packages.md) — why `DShader/Packages` is skipped by `-All`

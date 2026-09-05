@@ -116,7 +116,7 @@ in silence. See [Function settings](function.md).
 | [Material enums](material-enums.md) | every accepted `ShadingModel`, `BlendMode` and `Domain` spelling |
 | [Backend](backend.md) | `Graph` vs `ThinCustom`, the deprecated `Instance` alias, precedence against the project default |
 | [Function settings](function.md) | `Settings` inside `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` |
-| [Project settings](project.md) | *Project Settings ▸ DreamPlugin ▸ Dream Shader* — all 13 config properties |
+| [Project settings](project.md) | *Project Settings ▸ DreamPlugin ▸ Dream Shader* — all sixteen config properties, including *Preprocessor Defines* |
 
 ## Diagnostics
 

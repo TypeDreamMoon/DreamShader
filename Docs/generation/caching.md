@@ -37,6 +37,7 @@ with each import line blanked out and each included file bracketed by
 | change **Default Compiler Backend** | **every** source *(since 1.8.0)* |
 | change a shading-model / blend-mode / domain **mapping** | **every** source *(since 1.8.0)* |
 | upgrade the plugin, or the engine | **every** source *(since 1.8.0)* |
+| change a [preprocessor define](../language/preprocessor.md) | every source that **read** that define *(since 1.9.0)* — including one that read it while it was undefined |
 
 ### It is a build key, not just a source hash
 
@@ -49,8 +50,22 @@ check answer "still current" about an asset that is not:
 | the prepared source text | the compile's actual input, imports already inlined — which is why a changed `.dsh` or a called `.dsf` needs nothing else here |
 | [Default Compiler Backend](../settings/project.md) | decides whether a `Shader` block becomes a `UMaterial` or a thin instance |
 | the mapping tables | decide what a `Settings` key resolves to |
-| plugin version, plus a hand-bumped format tag | upgrading the generator invalidates what the old one wrote |
+| plugin version, plus a hand-bumped format tag — `DSK3` *(since 1.9.0)* | upgrading the generator invalidates what the old one wrote |
 | engine version | what is generable moves with it (Substrate, for one) |
+| the [preprocessor defines this source read](../language/preprocessor.md#rebuilds) *(since 1.9.0)* | they decide which branches of the source were compiled at all |
+
+The defines are folded in **precisely**: only the names the file actually read, each with the value
+it had, and an explicit `<undef>` sentinel for one that was read while nothing defined it. Folding
+the whole table instead would rebuild the world every time any project touched any switch; omitting
+the sentinel would be worse than either, because then *adding* a define would not move the hash and
+the source would quietly start taking a different branch with its asset never rebuilt.
+
+Two properties of that fold are load-bearing. It is **sorted** by name, case-sensitively, since
+`TMap` iteration order is not stable and an unsorted fold would hash differently run to run — which
+reads as "every asset is stale, every time". And it is **injective**: a naive `Name=Value;` join is
+not, because a value may legitimately contain `=` and `;` (`-Define=A=1;B=2` is a valid define), so
+`{A: "1;B=2"}` and `{A: "1", B: "2"}` would fold to the same string and one of them would silently
+reuse the other's cached asset.
 
 > [!NOTE]
 > Before this, the key hashed the source text alone, so changing the backend left every already
@@ -227,6 +242,7 @@ DreamShader.SourceHash   9f2c41ab
 
 - [Generation](index.md) — where the hash is computed in the pipeline
 - [import](../language/import.md) — how the prepared text is assembled
+- [Preprocessor](../language/preprocessor.md) — the defines the key folds in, and why only the ones that were read
 - [Regeneration](regeneration.md) — the ownership guard built on `DreamShader.SourceFile`
 - [Divergence](divergence.md) — the OTHER fingerprint: what the asset holds, not what the source said
 - [In-memory materials](in-memory.md) — which assets are stamped in which mode

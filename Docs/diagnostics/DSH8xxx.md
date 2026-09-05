@@ -338,7 +338,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' must declare at least one output.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1269`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1319`
 <!-- generated:end DSH8019 -->
 
 **Cause.** _Not written yet._
@@ -356,7 +356,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' must provide a Graph block.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1279`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1329`
 <!-- generated:end DSH8020 -->
 
 **Cause.** _Not written yet._
@@ -374,7 +374,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s': ExposeToLibrary must be true or false.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1373`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1423`
 <!-- generated:end DSH8021 -->
 
 **Cause.** _Not written yet._
@@ -392,7 +392,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' property '%s' conflicts with another property or input name.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1424`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1474`
 <!-- generated:end DSH8022 -->
 
 **Cause.** _Not written yet._
@@ -410,7 +410,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1456`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1508`
 <!-- generated:end DSH8023 -->
 
 **Cause.** _Not written yet._
@@ -428,7 +428,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' input '%s' uses unsupported type '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1458`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1510`
 <!-- generated:end DSH8024 -->
 
 **Cause.** _Not written yet._
@@ -446,7 +446,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' failed to create input '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1469`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1521`
 <!-- generated:end DSH8025 -->
 
 **Cause.** _Not written yet._
@@ -464,7 +464,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' failed to resolve generated input '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1509`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1559`
 <!-- generated:end DSH8026 -->
 
 **Cause.** _Not written yet._
@@ -482,7 +482,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' input '%s': %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1526`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1576`
 <!-- generated:end DSH8027 -->
 
 **Cause.** _Not written yet._
@@ -500,7 +500,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' output '%s': %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1544`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1594`
 <!-- generated:end DSH8028 -->
 
 **Cause.** _Not written yet._
@@ -518,7 +518,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' output '%s' uses unsupported type '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1619`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1669`
 <!-- generated:end DSH8029 -->
 
 **Cause.** _Not written yet._
@@ -536,7 +536,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' failed to create the function Custom node.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1626`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1676`
 <!-- generated:end DSH8030 -->
 
 **Cause.** _Not written yet._
@@ -554,7 +554,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' failed to resolve generated input '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1672`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1722`
 <!-- generated:end DSH8031 -->
 
 **Cause.** _Not written yet._
@@ -572,7 +572,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' property '%s': %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1701`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1751`
 <!-- generated:end DSH8032 -->
 
 **Cause.** _Not written yet._
@@ -590,7 +590,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' output '%s' uses unsupported type '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1723`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1773`
 <!-- generated:end DSH8033 -->
 
 **Cause.** _Not written yet._
@@ -608,7 +608,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' output '%s' was never assigned an expression.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1766`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1818`
 <!-- generated:end DSH8034 -->
 
 **Cause.** _Not written yet._
@@ -626,7 +626,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1782`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1834`
 <!-- generated:end DSH8035 -->
 
 **Cause.** _Not written yet._
@@ -644,7 +644,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' output '%s' uses unsupported type '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1784`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1836`
 <!-- generated:end DSH8036 -->
 
 **Cause.** _Not written yet._
@@ -662,7 +662,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' output '%s' does not match its declared type '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1799`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1851`
 <!-- generated:end DSH8037 -->
 
 **Cause.** _Not written yet._
@@ -680,7 +680,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 %s '%s' failed to create output '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1806`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1858`
 <!-- generated:end DSH8038 -->
 
 **Cause.** _Not written yet._
@@ -698,7 +698,7 @@ ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. 
 DreamShader header '%s' does not generate assets directly. Recompile dependent .dsm or .dsf files instead.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1933`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2033`
 <!-- generated:end DSH8039 -->
 
 **Cause.** _Not written yet._
@@ -716,7 +716,7 @@ DreamShader header '%s' does not generate assets directly. Recompile dependent .
 %s: .dsf files cannot define top-level Shader blocks.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1968`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2080`
 <!-- generated:end DSH8040 -->
 
 **Cause.** _Not written yet._
@@ -734,7 +734,7 @@ DreamShader header '%s' does not generate assets directly. Recompile dependent .
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1978`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2090`
 <!-- generated:end DSH8041 -->
 
 **Cause.** _Not written yet._
@@ -752,7 +752,7 @@ DreamShader header '%s' does not generate assets directly. Recompile dependent .
 DreamShader file '%s' did not contain any material, ShaderFunction, ShaderLayer, or ShaderLayerBlend assets to generate.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2049`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2161`
 <!-- generated:end DSH8042 -->
 
 **Cause.** _Not written yet._
@@ -770,7 +770,7 @@ DreamShader file '%s' did not contain any material, ShaderFunction, ShaderLayer,
 Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2122`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2234`
 <!-- generated:end DSH8043 -->
 
 **Cause.** _Not written yet._
@@ -788,7 +788,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2185`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2297`
 <!-- generated:end DSH8044 -->
 
 **Cause.** _Not written yet._
@@ -806,7 +806,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Base.FrontMaterial requires ShadingModel=\"Substrate\" or no explicit ShadingModel setting.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2194`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2306`
 <!-- generated:end DSH8045 -->
 
 **Cause.** _Not written yet._
@@ -824,7 +824,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Property '%s' is declared more than once. Property names must be unique.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2222`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2334`
 <!-- generated:end DSH8046 -->
 
 **Cause.** _Not written yet._
@@ -842,7 +842,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Output '%s': %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2242`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2354`
 <!-- generated:end DSH8047 -->
 
 **Cause.** _Not written yet._
@@ -860,7 +860,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Graph blocks do not support binding Outputs to the reserved name 'return'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2262`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2374`
 <!-- generated:end DSH8048 -->
 
 **Cause.** _Not written yet._
@@ -878,7 +878,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2274`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2386`
 <!-- generated:end DSH8049 -->
 
 **Cause.** _Not written yet._
@@ -896,7 +896,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Material output '%s' is written from the Graph block and bound in the Outputs block. Keep one of them.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2340`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2452`
 <!-- generated:end DSH8050 -->
 
 **Cause.** _Not written yet._
@@ -914,7 +914,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Material output '%s' expects a Substrate value.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2358`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2470`
 <!-- generated:end DSH8051 -->
 
 **Cause.** _Not written yet._
@@ -932,7 +932,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Material output '%s' expects a MaterialAttributes value.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2365`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2477`
 <!-- generated:end DSH8052 -->
 
 **Cause.** _Not written yet._
@@ -950,7 +950,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Material output '%s' expects a numeric value, but got Substrate.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2371`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2483`
 <!-- generated:end DSH8053 -->
 
 **Cause.** _Not written yet._
@@ -968,7 +968,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Material output '%s' expects %d component(s), but the value has %d.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2394`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2506`
 <!-- generated:end DSH8054 -->
 
 **Cause.** _Not written yet._
@@ -986,7 +986,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Failed to find material property '%s' while connecting a Graph output.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2401`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2513`
 <!-- generated:end DSH8055 -->
 
 **Cause.** _Not written yet._
@@ -1004,7 +1004,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2426`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2538`
 <!-- generated:end DSH8056 -->
 
 **Cause.** _Not written yet._
@@ -1022,7 +1022,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Graph output '%s' does not match its declared type.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2442`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2554`
 <!-- generated:end DSH8057 -->
 
 **Cause.** _Not written yet._
@@ -1040,7 +1040,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2475`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2587`
 <!-- generated:end DSH8058 -->
 
 **Cause.** _Not written yet._
@@ -1058,7 +1058,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Material output '%s' was assigned a value that produced no expression.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2488`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2600`
 <!-- generated:end DSH8059 -->
 
 **Cause.** _Not written yet._
@@ -1076,7 +1076,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: This material drives no outputs. Its Graph block computes values but never assigns one to 'Base.<Attribute>', and there is no Outputs block.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2499`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2611`
 <!-- generated:end DSH8060 -->
 
 **Cause.** _Not written yet._
@@ -1094,7 +1094,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Base.FrontMaterial expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2506`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2618`
 <!-- generated:end DSH8061 -->
 
 **Cause.** _Not written yet._
@@ -1112,7 +1112,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Output '%s' is declared as Substrate and cannot be generated by a material Custom node. Use a Graph block and Substrate.* nodes.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2512`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2624`
 <!-- generated:end DSH8062 -->
 
 **Cause.** _Not written yet._
@@ -1130,7 +1130,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Failed to create the material Custom node.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2525`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2637`
 <!-- generated:end DSH8063 -->
 
 **Cause.** _Not written yet._
@@ -1148,7 +1148,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2586`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2698`
 <!-- generated:end DSH8064 -->
 
 **Cause.** _Not written yet._
@@ -1166,7 +1166,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Failed to resolve Custom output '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2611`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2723`
 <!-- generated:end DSH8065 -->
 
 **Cause.** _Not written yet._
@@ -1184,7 +1184,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Material output '%s' expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2620`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2732`
 <!-- generated:end DSH8066 -->
 
 **Cause.** _Not written yet._
@@ -1202,7 +1202,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: Failed to find material property '%s' while connecting '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2630`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2742`
 <!-- generated:end DSH8067 -->
 
 **Cause.** _Not written yet._
@@ -1220,7 +1220,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2664`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2776`
 <!-- generated:end DSH8068 -->
 
 **Cause.** _Not written yet._
@@ -1238,7 +1238,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 Failed to create ThinCustom base material for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2753`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2865`
 <!-- generated:end DSH8069 -->
 
 **Cause.** _Not written yet._
@@ -1256,7 +1256,7 @@ Failed to create ThinCustom base material for '%s'.
 Cannot create a persisted ThinCustom base without an instance for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2761`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2873`
 <!-- generated:end DSH8070 -->
 
 **Cause.** _Not written yet._
@@ -1274,7 +1274,7 @@ Cannot create a persisted ThinCustom base without an instance for '%s'.
 Failed to create ThinCustom base material for instance '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2789`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2901`
 <!-- generated:end DSH8071 -->
 
 **Cause.** _Not written yet._
@@ -1292,7 +1292,7 @@ Failed to create ThinCustom base material for instance '%s'.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2818`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2930`
 <!-- generated:end DSH8072 -->
 
 **Cause.** _Not written yet._
@@ -1310,7 +1310,7 @@ Failed to create ThinCustom base material for instance '%s'.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2845`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2957`
 <!-- generated:end DSH8073 -->
 
 **Cause.** _Not written yet._
@@ -1328,7 +1328,7 @@ Failed to create ThinCustom base material for instance '%s'.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2851`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2963`
 <!-- generated:end DSH8074 -->
 
 **Cause.** _Not written yet._
@@ -1346,7 +1346,7 @@ Failed to create ThinCustom base material for instance '%s'.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2859`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2971`
 <!-- generated:end DSH8075 -->
 
 **Cause.** _Not written yet._
@@ -1364,7 +1364,7 @@ Failed to create ThinCustom base material for instance '%s'.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2934`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3046`
 <!-- generated:end DSH8076 -->
 
 **Cause.** _Not written yet._
@@ -1382,7 +1382,7 @@ Failed to create ThinCustom base material for instance '%s'.
 DreamShader source '%s' cannot generate a material asset directly.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2979`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3091`
 <!-- generated:end DSH8077 -->
 
 **Cause.** _Not written yet._
@@ -1400,7 +1400,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: This file does not define a top-level Shader block.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3014`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3138`
 <!-- generated:end DSH8078 -->
 
 **Cause.** _Not written yet._
@@ -1418,7 +1418,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: This material drives no outputs. Add an Outputs block, or write them from Graph as 'Base.BaseColor = ...'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3023`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3147`
 <!-- generated:end DSH8079 -->
 
 **Cause.** _Not written yet._
@@ -1436,7 +1436,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3034`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3158`
 <!-- generated:end DSH8080 -->
 
 **Cause.** _Not written yet._
@@ -1454,7 +1454,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: Base.FrontMaterial and Base.MaterialAttributes cannot be used by the same Shader.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3057`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3181`
 <!-- generated:end DSH8081 -->
 
 **Cause.** _Not written yet._
@@ -1472,7 +1472,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3067`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3191`
 <!-- generated:end DSH8082 -->
 
 **Cause.** _Not written yet._
@@ -1490,7 +1490,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3076`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3200`
 <!-- generated:end DSH8083 -->
 
 **Cause.** _Not written yet._
@@ -1508,7 +1508,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3105`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3229`
 <!-- generated:end DSH8084 -->
 
 **Cause.** _Not written yet._
@@ -1526,7 +1526,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3134`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3258`
 <!-- generated:end DSH8085 -->
 
 **Cause.** _Not written yet._
@@ -1544,7 +1544,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3140`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3264`
 <!-- generated:end DSH8086 -->
 
 **Cause.** _Not written yet._
@@ -1562,7 +1562,7 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s: %s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3186`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3313`
 <!-- generated:end DSH8087 -->
 
 **Cause.** _Not written yet._
@@ -2066,7 +2066,7 @@ Failed to create material function '%s'.
 Asset '%s' has been edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). 
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderGeneratedAssetMetadata.cpp:316`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderGeneratedAssetMetadata.cpp:344`
 <!-- generated:end DSH8115 -->
 
 **Cause.** _Not written yet._
@@ -2084,7 +2084,7 @@ Asset '%s' has been edited by hand since DreamShader generated it from '%s', so 
 Generated DreamShader asset '%s' could not be saved.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderGeneratedAssetMetadata.cpp:366`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderGeneratedAssetMetadata.cpp:394`
 <!-- generated:end DSH8116 -->
 
 **Cause.** _Not written yet._
@@ -2102,7 +2102,7 @@ Generated DreamShader asset '%s' could not be saved.
 Generated DreamShader asset packages could not be saved.%s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderGeneratedAssetMetadata.cpp:393`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderGeneratedAssetMetadata.cpp:421`
 <!-- generated:end DSH8117 -->
 
 **Cause.** _Not written yet._
@@ -2390,7 +2390,7 @@ Invalid asset path '%s'.
 DreamShader import cycle detected at '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:63`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:144`
 <!-- generated:end DSH8133 -->
 
 **Cause.** _Not written yet._
@@ -2408,7 +2408,7 @@ DreamShader import cycle detected at '%s'.
 DreamShader could not read '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:69`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:150`
 <!-- generated:end DSH8134 -->
 
 **Cause.** _Not written yet._
@@ -2426,7 +2426,7 @@ DreamShader could not read '%s'.
 DreamShader header '%s' may only declare Function/Namespace/GraphFunction/VirtualFunction blocks and imports.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:115`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:260`
 <!-- generated:end DSH8135 -->
 
 **Cause.** _Not written yet._
@@ -2444,7 +2444,7 @@ DreamShader header '%s' may only declare Function/Namespace/GraphFunction/Virtua
 DreamShader function file '%s' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:121`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:266`
 <!-- generated:end DSH8136 -->
 
 **Cause.** _Not written yet._
@@ -2662,6 +2662,24 @@ Output variable '%s' must declare an explicit type before binding to expression 
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:469`
 <!-- generated:end DSH8148 -->
+
+**Cause.** _Not written yet._
+
+**Fix.** _Not written yet._
+
+## DSH8149
+
+<!-- generated:begin DSH8149 -->
+**Severity** error
+
+**Message**
+
+```
+DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch that was taken -- adopting it would write that one branch back over the file and delete the rest. Move the change into the matching branch of the source by hand, or use DreamShader > Detach first if this asset should stop being generated from it.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:301`
+<!-- generated:end DSH8149 -->
 
 **Cause.** _Not written yet._
 

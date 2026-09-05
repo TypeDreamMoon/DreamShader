@@ -120,11 +120,29 @@ of truth, then recompiles so the two agree again. This is the "the asset was rig
 | :-- | :-- |
 | Backup | the previous source is copied to `<source>.bak` before anything is written |
 | Refused when | the source file declares more than one asset |
+| Refused when | the source contains [preprocessor directives](../language/preprocessor.md) — `DSH8149` *(since 1.9.0)* |
 | Replaces | the file's own form — hand-written comments, `import` directives and formatting become the decompiler's output |
 
-The multi-asset refusal matters: the [decompiler](../tools/decompiler.md) emits one block, not a
-translation unit, so adopting one asset out of a file that declares several would silently delete the
-others. Use **Export DSM** and merge by hand in that case.
+Both refusals exist for the same reason: adopting rewrites the whole file from one asset, and
+anything the file said that the asset does not hold is gone.
+
+The multi-asset refusal matters because the [decompiler](../tools/decompiler.md) emits one block, not
+a translation unit, so adopting one asset out of a file that declares several would silently delete
+the others.
+
+The directive refusal matters because a generated asset holds only the **post-cut** result — the
+branch that was taken, with no record that a branch ever existed — so rewriting the source from it
+would erase every `#if` in the file and freeze whichever configuration happened to build last. The
+gate fires on *any* directive, taken or not, and a file whose only directive is a `#define` is
+refused too; `#Region` is not a preprocessor directive and does not trip it.
+
+Use **Export DSM** and merge by hand into the right branch in either case.
+
+> [!NOTE]
+> The [VirtualFunction startup sync](../tools/virtual-function-tools.md#startup-sync-service) refuses
+> conditional sources as well, with `DSH9001`. It is not one of the three actions on this page — it
+> runs unattended at editor start rather than from the menu — but it is the other writer of source
+> files, and it splices by byte offset, which line-count conservation does not preserve.
 
 ### Detach From DreamShader
 

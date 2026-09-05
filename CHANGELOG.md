@@ -1,5 +1,112 @@
 # DreamShader ChangeLog
 
+## 1.9.0 - unreleased
+
+### Added
+
+- **Conditional compilation: `#if` / `#ifdef` / `#ifndef` / `#elif` / `#else` / `#endif`, plus
+  `#define` and `#undef`.** A
+  static switch is a node, so it can only choose between two *values* inside a `Graph` body. It has
+  nowhere to stand when the difference between two builds of a material is a *declaration* — a
+  different `ShadingModel`, a different set of `Outputs`, a different `import`, a whole block that
+  should not exist at all. Under Substrate a material wants all four at once, and no arrangement of
+  switch nodes expresses any of them, because the difference is in what the material **is** rather
+  than in what it computes. The new directives are evaluated over the source text at generation time,
+  before parsing, so they can cut any line of the file. A branch that is not taken never reaches the
+  parser and never becomes a node.
+
+  Conditions are full constant expressions — `defined`, `!`, `&&`, `||`, comparison, arithmetic and
+  string equality, with C's rule that an undefined name reads `0` — over a define table assembled
+  from five tiers, each overriding the last: the read-only builtin `DS_` environment facts
+  (`DS_ENGINE_MAJOR` / `_MINOR` / `_PATCH`, `DS_SUBSTRATE`, `DS_PLATFORM`, `DS_PLUGIN_VERSION`), then
+  **Preprocessor Defines** in the project settings, `RegisterDreamShaderDefine` from C++, a define
+  provider delegate pulled fresh at resolve time, and `-Define=NAME=VALUE` (short `-D=`) on the
+  commandlet. Everything a builtin can say is an objective fact about the compiling process, so that
+  tier is read-only in both directions and `DS_` is reserved as a *prefix* rather than as a list —
+  adding a builtin later cannot then start silently losing to a name some project already registered
+  under it. `DS_PLATFORM` is deliberately the *ini* platform name rather than `PlatformName()`, which
+  answers `WindowsEditor` in the editor and `Windows` in a cook and would preprocess one source two
+  ways across a cook boundary; `DS_PLUGIN_VERSION` falls back to `"unknown"` rather than going
+  undefined, so `defined()` cannot flip for a reason unrelated to the source.
+
+  Define names are case-sensitive, matching C and HLSL — but *not* because `FString` provides that.
+  It does not: `FString` has no in-class `operator==`, its `Equals` default has already moved to
+  case-sensitive in this engine tree, and `GetTypeHash(FString)` is still the case-insensitive
+  `Strihash`, so a default `TMap<FString, …>` makes case behaviour an engine-version detail and a
+  plugin built against 5.6, 5.7 and 5.8 would have three subtly different languages. The rule is
+  pinned instead, in key funcs that fix `ESearchCase::CaseSensitive`, and applied to **both** maps —
+  the define table and the touched-define set. Leaving the latter as a plain `TMap` is not untidiness
+  but a hole in the build key's soundness proof: `Foo` and `FOO` would merge into one entry, only one
+  value would reach the hash, and changing the other would rebuild nothing.
+
+  Two shapes of the output are load-bearing rather than tidy. **The preprocessed text has exactly as
+  many lines as the input** — every directive line and every cut line is emitted as an empty line,
+  never removed — because the diagnostics mapper recovers physical line numbers by counting lines
+  inside each file's `// Begin/End DreamShader source:` block, which is the same reason the import
+  inliner already blanks its own directive lines. Drop one line and every error below it in the file
+  points somewhere else, in every source that uses a conditional. And **the preprocessor runs before
+  imports are extracted**, which is what lets an `#if` decide whether an `import` is taken at all; the
+  price is that `#define` is file-local, unlike C, since a header is inlined only after its own
+  directives have been resolved. The two cannot both be had, and wrapping `import` is worth more than
+  C's include-order-dependent macro state — central switches have three channels built for them.
+
+  The dependency graph deliberately keeps scanning the **raw** file, so a source's dependencies are
+  the union over every branch and editing a `.dsh` that only a dead branch imports still triggers a
+  rebuild. Over-rebuilding is harmless; under-rebuilding is corruption. The build key goes the other
+  way and folds in only the defines a source **actually read**, with an explicit `<undef>` sentinel
+  for a name that was read while undefined: without the sentinel, a name absent from the map is a name
+  whose later definition would not move the hash, and a source that quietly starts taking a different
+  branch without its asset rebuilding is silent data loss. Short-circuited operands and names
+  mentioned inside a cut branch are correctly absent — the condition that killed the branch is itself
+  in the map, so it cannot change without being noticed. The fold has to be injective as well as
+  sorted, which a `Name=Value;` join is not: a value may contain `=` and `;` (`-Define=A=1;B=2` is
+  valid), so `{A: "1;B=2"}` and `{A: "1", B: "2"}` would collide and one would reuse the other's
+  cached asset. The build key tag moves to `DSK3`, so every generated asset rebuilds once.
+
+  **A `Function` body is opaque to all of this**, and finding that out was the most valuable thing
+  the implementation turned up. A `Function` block's body is HLSL handed straight to the shader
+  compiler, and the `#` directives in it belong to *that* preprocessor, with the engine's own defines.
+  Across the whole source tree every HLSL `#` line in a `.dsm`, `.dsf` or `.dsh` — nine files, six
+  `#include` and three `#if` chains — is inside such a body, with zero exceptions. Under a naive
+  whole-file line scan `MATERIALBLENDING_SOLID` is simply undefined, reads `0`, and the `#else` branch
+  wins unconditionally: `MF_MoonToonTranslucencyShadow` would have compiled green while returning the
+  wrong value for every blend mode, with no diagnostic anywhere. So the preprocessor does not descend
+  into `Function` or `GraphFunction` bodies at all — those lines are passed through verbatim, are not
+  paired, do not count toward nesting, and never enter the touched set. The Adopt and sync gates apply
+  the same rule, so a function whose HLSL branches on `PIXELSHADER` is not mistaken for a conditional
+  source and stays adoptable. Outside a body, a `#` line is passed through only where something else
+  claims it: `#Region` / `#EndRegion` keep the case-insensitive match they have always had, named
+  explicitly rather than waved through by a broader rule. Everything else is `DSH1035` — `#include`
+  (the spelling is `import`), a typo such as `#endfi`, and a mis-cased `#IF` alike, because a
+  swallowed `#endfi` would leave everything below it unconditionally enabled and a `#IF` that
+  silently did nothing is no better.
+
+  Three consequences are worth knowing before writing the first `#if`. An **inactive branch is not
+  checked at all** — not lexed, not parsed, not generated — which is exactly the property that lets a
+  `Settings` line be cut, and which means a branch nobody currently builds rots with no diagnostic;
+  compile every define set you ship, one commandlet run each. A source containing any directive
+  **cannot be adopted**: Adopt rewrites the source from the asset, the asset only ever holds the
+  post-cut result, so adopting a conditional source would silently delete its conditionals. It refuses
+  with `DSH8149` instead. And the **VirtualFunction startup sync refuses the same sources** with
+  `DSH9001`, on harder grounds: it splices rebuilt declarations over recorded *byte* offsets, and
+  line-count conservation buys line alignment only — a cut line becomes a shorter empty line, so every
+  offset past the first cut is wrong, and a preprocessed string reaching the file writer would flatten
+  every dead branch permanently. Worse, unlike Adopt nobody asks for it: it runs unattended at bridge
+  startup across every writable source. Revert and Detach are unaffected, since neither writes the
+  source, and the read-only users of the same scanner keep reading raw text. In the same spirit the
+  decompiler never emits a directive — conditional compilation is one-way syntax.
+
+  New diagnostics `DSH1030`–`DSH1042` at the driver stage, `DSH8149` on the Adopt gate, and `DSH9001`
+  opening the previously empty `DSH9xxx` tools range. `DSH1034` and `DSH1042` split on one mechanical
+  question rather than on which component threw — an expression that is *incomplete* is `DSH1034`
+  (`#if (1`, `#if 1 &&`), one that *parsed completely* with tokens left over is `DSH1042` (`#if 1 2`,
+  `#ifdef A B`, `#endif LABEL`). Splitting by throwing component was tried first and collapsed under
+  its own argument: `#ifdef A B` is justified as desugaring to `#if defined(A) B`, so the sugar and
+  the desugared form cannot carry different codes. `#define` is exempt, since its value runs to the
+  end of the line — and that value is plain **text**, never tokenized or expanded, so
+  `#define PP_SUM 1 + 1` is the five-character string `1 + 1` and not the integer `2`. Documented in
+  [Docs/language/preprocessor.md](Docs/language/preprocessor.md).
+
 ## 1.8.0 - 2026-08-21
 
 ### Fixed

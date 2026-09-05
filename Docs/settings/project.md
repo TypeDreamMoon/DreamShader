@@ -2,7 +2,7 @@
 
 > [DreamShader](../index.md) » [Settings](index.md) » **Project settings**
 
-The project-wide configuration object: fourteen properties under *Project Settings ▸ DreamPlugin ▸
+The project-wide configuration object: sixteen properties under *Project Settings ▸ DreamPlugin ▸
 Dream Shader*, persisted to the project's `DefaultEngine.ini`.
 
 | | |
@@ -37,6 +37,7 @@ Every configurable property, grouped by the category it appears under in the pan
 | Paths | Source Directory | `SourceDirectory` | `FDirectoryPath` | `DShader` | Root scanned for `.dsm` / `.dsf` / `.dsh` sources. Empty falls back to `DShader`; a relative path resolves against the project directory. `<Source>/Packages` is derived from it. |
 | Paths | Generated Shader Directory | `GeneratedShaderDirectory` | `FDirectoryPath` | `Intermediate/DreamShader/GeneratedShaders` | Where the generated `.ush` include is written and the virtual shader directory is mapped. Empty falls back to the default. |
 | Paths | **Scan Plugin Source Directories** | `bScanPluginSourceDirectories` | `bool` | `true` | When on, every enabled plugin that has a `DShader` folder contributes a source root of its own. Off leaves the project's *Source Directory* as the only root. |
+| Compiler | **Preprocessor Defines** *(since 1.9.0)* | `PreprocessorDefines` | `TMap<FString, FString>` | *empty* | Names visible to [`#if`](../language/preprocessor.md) in every source the project compiles. Keys are **case-sensitive**; an empty value is a bare marker, true to `#if` and to `defined()`. A key beginning with `DS_` is dropped with a warning — that prefix is reserved for the builtins. Editing the map rebuilds the sources that read a changed name. |
 | Compiler | **Default Compiler Backend** | `DefaultBackend` | `EDreamShaderDefaultBackend` | `ThinCustom` | Backend for a source file that does not set `Settings = { Backend = … }`. Changing it regenerates every source file in memory. |
 | Compiler | **Show In-Memory Materials In Content Browser** | `bShowInMemoryMaterialsInContentBrowser` | `bool` | `false` | When off, memory-only DreamShader instances report themselves as non-assets and disappear from the Content Browser, asset-registry enumeration and save pickers. Read live, on every query. |
 | Compiler | **Lay Out In-Memory Graphs** | `bLayoutInMemoryGraphs` | `bool` | `true` | When on, [graph layout](../generation/graph-layout.md) also runs for the memory-only materials an interactive compile produces, so the graph you see after a save matches the generated asset. Off, those graphs keep their construction coordinates — a single tall column. Graphs at or above the large-graph threshold skip layout either way. |
@@ -89,6 +90,24 @@ Full behaviour, including how a per-file `Backend` setting overrides this, is on
 > Subfolder, relative to the parent material's folder, where the Material Content Browser creates
 > new material instances. Leave empty to create them alongside the parent.
 
+*Preprocessor Defines*:
+
+> Preprocessor defines every .dsm/.dsf/.dsh source compiles with -- what its #if / #elif conditions
+> read. The name answers defined(); a value that parses as an integer compares as a number, anything
+> else as a string; an empty value still counts as defined; a name absent from this table evaluates to
+> 0, as in C. Conditions are evaluated at GENERATION time and the losing branch is cut before the
+> parser sees it, so a condition can select a Domain, a ShadingModel or a whole Outputs block -- none
+> of which a StaticSwitch can reach, because they describe what the material IS rather than what it
+> computes. Editing this table rebuilds only the generated assets whose sources actually read a name
+> that changed. Names are case-sensitive and must match [A-Za-z_][A-Za-z0-9_]*. The DS_ prefix is
+> reserved for the read-only builtins; an entry using it is dropped with a log warning rather than
+> failing the compile, since a settings mistake has no source line to report against.
+
+The builtin names this tooltip alludes to are `DS_ENGINE_MAJOR`, `DS_ENGINE_MINOR`,
+`DS_ENGINE_PATCH`, `DS_PLATFORM`, `DS_PLUGIN_VERSION` and `DS_SUBSTRATE`; they are listed out in
+[the preprocessor page](../language/preprocessor.md). The tooltip names them only by their prefix
+because UHT caps a metadata string at 1024 characters, and spelling all six out went over it.
+
 ## The mapping maps
 
 The three `Mappings` entries extend the value spellings accepted by the three enum settings. They are
@@ -112,6 +131,7 @@ The complete built-in tables are on [Material enums](material-enums.md).
 | `bShowInMemoryMaterialsInContentBrowser` | *Tools ▸ DreamShader ▸ Show In-Memory Materials*, and the Project page of the [Material Content Browser](../tools/material-browser.md). Both write the ini and re-broadcast asset creation/removal for every memory-only instance. |
 | `DefaultBackend` | Changing it in the panel triggers an immediate in-memory regeneration of every source file, plus a notification when persisted generated assets shadow the result. |
 | `SourceDirectory`, `GeneratedShaderDirectory` | Consumed by the module's directory helpers; see [Generated HLSL](../generation/generated-hlsl.md) and [Packages](../tools/packages.md). |
+| `PreprocessorDefines` | One of five tiers that make up the define table a compile sees, and the lowest-precedence one that a person edits. C++ registration and providers outrank it, and `-Define=` on the [commandlet](../tools/commandlet.md) outranks those; only the builtin `DS_` names outrank everything. See [Preprocessor ▸ Where defines come from](../language/preprocessor.md#where-defines-come-from). |
 
 ## Notes
 
@@ -148,12 +168,18 @@ InstanceSubfolder=Instances
 ```
 
 The ini keys are the raw C++ identifiers, including the `b` prefix on booleans — `bAutoCompileOnSave`,
-not `AutoCompileOnSave`. The three mapping maps are container properties; edit them in the Project
-Settings panel and let the editor write them back.
+not `AutoCompileOnSave`. The three mapping maps and *Preprocessor Defines* are container properties;
+edit them in the Project Settings panel and let the editor write them back. A hand-written entry uses
+the `+Key=((…))` form:
+
+```ini
++PreprocessorDefines=(("MOONTOON_LEGACY_TOON", "1"))
+```
 
 ## See also
 
 - [Settings](index.md) — the per-file `Settings` section this page's defaults interact with
+- [Preprocessor](../language/preprocessor.md) — what *Preprocessor Defines* feeds, and the four other tiers
 - [Backend](backend.md) — how *Default Compiler Backend* is overridden per file
 - [Material enums](material-enums.md) — the built-in tables the mapping maps extend
 - [Shader settings](material.md) — the reflected `UMaterial` property surface
