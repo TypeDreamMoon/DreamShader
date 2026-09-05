@@ -8,12 +8,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DreamShaderDiagnostic.h"
+#include "DreamShaderDefineTable.h"
 
 // FDreamShaderError, the out-parameter type of both overloads below. This header used to get it for
 // free from whichever neighbour landed earlier in the unity blob; naming it here is what makes the
 // declaration mean the same thing in a non-unity compile.
-#include "DreamShaderDefineTable.h"
 #include "DreamShaderDiagnostic.h"
 
 namespace UE::DreamShader::Editor
