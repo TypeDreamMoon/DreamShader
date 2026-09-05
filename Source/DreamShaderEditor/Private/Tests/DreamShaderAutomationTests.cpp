@@ -3,6 +3,9 @@
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderParser.h"
+// GDreamShaderUndefinedDefineSentinel, so the build-key test can spell "this name was read while it
+// had no value" the same way the preprocessor spells it, instead of hard-coding the literal.
+#include "DreamShaderPreprocessor.h"
 #include "DreamShaderSettings.h"
 #include "DreamShaderTestCommon.h"
 #include "DreamShaderTypes.h"
@@ -4965,14 +4968,19 @@ bool FDreamShaderBuildKeyCoversContextTest::RunTest(const FString& Parameters)
 
 	const FString SourceText = TEXT("Shader(Name=\"Docs/M_BuildKey\") { Graph = { } }");
 
-	const FString BaselineKey = BuildSourceHash(SourceText);
+	// The touched-define set is the second half of the key, so every comparison that varies something
+	// else has to hold it fixed. Empty is the truthful value for this source rather than a stand-in
+	// for "unavailable": it carries no directives, so preparing it reads no defines at all.
+	const UE::DreamShader::FDreamShaderDefineValueMap NoDefines;
+
+	const FString BaselineKey = BuildSourceHash(SourceText, NoDefines);
 	TestFalse(TEXT("The key is non-empty"), BaselineKey.IsEmpty());
-	TestEqual(TEXT("The key is stable for an unchanged context"), BuildSourceHash(SourceText), BaselineKey);
+	TestEqual(TEXT("The key is stable for an unchanged context"), BuildSourceHash(SourceText, NoDefines), BaselineKey);
 
 	// Different text, same context.
 	TestNotEqual(
 		TEXT("Editing the source changes the key"),
-		BuildSourceHash(SourceText + TEXT(" // edited")),
+		BuildSourceHash(SourceText + TEXT(" // edited"), NoDefines),
 		BaselineKey);
 
 	// Same text, different backend. This is the case that used to need its own forced rebuild sweep
@@ -4981,10 +4989,10 @@ bool FDreamShaderBuildKeyCoversContextTest::RunTest(const FString& Parameters)
 		FScopedDreamShaderBackendFlip BackendFlip;
 		TestNotEqual(
 			TEXT("Changing the default backend changes the key"),
-			BuildSourceHash(SourceText),
+			BuildSourceHash(SourceText, NoDefines),
 			BaselineKey);
 	}
-	TestEqual(TEXT("Putting the backend back restores the key"), BuildSourceHash(SourceText), BaselineKey);
+	TestEqual(TEXT("Putting the backend back restores the key"), BuildSourceHash(SourceText, NoDefines), BaselineKey);
 
 	// Same text, different mapping table.
 	{
@@ -4995,13 +5003,51 @@ bool FDreamShaderBuildKeyCoversContextTest::RunTest(const FString& Parameters)
 		Settings->ShadingModelMappings.Add(TEXT("DreamShaderAutomationMapping"), MSM_Unlit);
 		TestNotEqual(
 			TEXT("Adding a shading-model mapping changes the key"),
-			BuildSourceHash(SourceText),
+			BuildSourceHash(SourceText, NoDefines),
 			BaselineKey);
 	}
 	TestEqual(
 		TEXT("Removing the mapping again restores the key, so the key does not depend on map order"),
-		BuildSourceHash(SourceText),
+		BuildSourceHash(SourceText, NoDefines),
 		BaselineKey);
+
+	// Same text, different defines. This is the one input the hashed text is structurally unable to
+	// carry: SourceText arrives POST-CUT, so the branches a `#if` discarded are already gone from it.
+	// Flipping a define and flipping it back therefore reproduces text byte-identical to what an
+	// earlier stamp hashed, while the asset on disk was generated under whichever define set was live
+	// then. Without the defines in the key, "the text matches" stops meaning "the asset is current".
+	{
+		UE::DreamShader::FDreamShaderDefineValueMap TouchedDefines;
+		TouchedDefines.Add(TEXT("DREAMSHADER_AUTOMATION_SWITCH"), TEXT("1"));
+		TestNotEqual(
+			TEXT("Reading a define changes the key even when the source text is unchanged"),
+			BuildSourceHash(SourceText, TouchedDefines),
+			BaselineKey);
+	}
+
+	// The undefined sentinel has to key differently from a real value, and this is the assertion that
+	// pins it. A name read while it had no definition is recorded, not skipped -- if it were skipped,
+	// its map entry would be absent, adding that name to the settings table later would leave the key
+	// untouched, and the asset would silently keep the branch it was built with. That failure has no
+	// symptom until someone wonders why their new switch does nothing.
+	{
+		UE::DreamShader::FDreamShaderDefineValueMap ReadWhileUndefined;
+		ReadWhileUndefined.Add(
+			TEXT("DREAMSHADER_AUTOMATION_SWITCH"),
+			UE::DreamShader::GDreamShaderUndefinedDefineSentinel);
+
+		UE::DreamShader::FDreamShaderDefineValueMap ReadWithAValue;
+		ReadWithAValue.Add(TEXT("DREAMSHADER_AUTOMATION_SWITCH"), TEXT("1"));
+
+		TestNotEqual(
+			TEXT("The undefined sentinel keys differently from the same name carrying a value"),
+			BuildSourceHash(SourceText, ReadWhileUndefined),
+			BuildSourceHash(SourceText, ReadWithAValue));
+		TestNotEqual(
+			TEXT("A name read while undefined keys differently from never having been read"),
+			BuildSourceHash(SourceText, ReadWhileUndefined),
+			BaselineKey);
+	}
 	return true;
 }
 
