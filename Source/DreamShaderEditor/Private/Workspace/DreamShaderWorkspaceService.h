@@ -17,11 +17,13 @@ namespace UE::DreamShader::Editor::Private
 		static FString GetMaterialExpressionManifestFilePath();
 		static FString GetDreamShaderSettingsManifestFilePath();
 		static FString GetSubstrateBuiltinsManifestFilePath();
+		static FString GetPreprocessorDefinesManifestFilePath();
 		static FString GetBridgeDatabaseFilePath();
 		static void ResetBridgeDatabase();
 		static void ExportDreamShaderSettingsManifest();
 		static void ExportMaterialExpressionManifest();
 		static void ExportSubstrateBuiltinsManifest();
+		static void ExportPreprocessorDefinesManifest();
 		static bool WriteDreamShaderWorkspaceFile(FString& OutWorkspaceFilePath, FString& OutError);
 	};
 }

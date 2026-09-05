@@ -201,6 +201,33 @@ namespace UE::DreamShader::Editor::Private
 		FDelegateHandle ToolMenusStartupCallbackHandle;
 		FDelegateHandle PostEngineInitHandle;
 		FDelegateHandle SettingsChangedHandle;
+		/**
+		 * The preprocessor define-table revision the in-memory materials in THIS process were last
+		 * generated against. Stamped by GenerateAllInMemoryMaterials; compared by Tick.
+		 *
+		 * Polled rather than driven by an event, because no event covers the whole table. Of the four
+		 * tiers only UDreamShaderSettings announces a change; RegisterDreamShaderDefine,
+		 * UnregisterDreamShaderDefinesFrom and the provider delegates announce nothing, and a plugin
+		 * contributing a switch after startup is precisely the case conditionals were asked for.
+		 *
+		 * Nor should a hook be trusted where one exists. The settings override bumps the revision
+		 * BEFORE calling Super specifically so that the OnObjectPropertyChanged broadcast -- which
+		 * UObject::PostEditChangeProperty fires as its very first statement -- reaches this bridge with
+		 * the new value already in place. That is correct and deliberate, and it is also one statement
+		 * order away from being wrong, in a file this class does not own. A uint32 compare at the
+		 * bridge's 10Hz tick costs nothing and cannot be broken from the outside.
+		 */
+		uint32 LastGeneratedDefineRevision = 0;
+		/**
+		 * False until the first whole-project sweep has stamped a baseline.
+		 *
+		 * Needed because 0 is a legal revision and nothing reserves it as "unset": without the flag the
+		 * very first tick would compare the live revision against a fabricated 0 and regenerate the
+		 * whole project for nothing -- and would do it before post-engine-init, which is the point the
+		 * initial sweep is deliberately deferred past because the editor subsystems it needs are not
+		 * ready any earlier.
+		 */
+		bool bDefineRevisionBaselineTaken = false;
 		bool bIsShuttingDown = false;
 		/** True while this process holds owner.lock. Starts false: ownership is taken, not assumed. */
 		bool bIsBridgeOwner = false;

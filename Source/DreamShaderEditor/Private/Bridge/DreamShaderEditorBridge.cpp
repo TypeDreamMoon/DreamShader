@@ -14,6 +14,8 @@
 #include "Decompiler/DreamShaderGraphDecompiler.h"
 #include "Compile/DreamShaderEditorCompileAdapter.h"
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
+// GetDreamShaderDefineRevision, polled in Tick so a define change invalidates the in-memory materials.
+#include "DreamShaderDefineTable.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
 #include "DreamShaderVersionCompat.h"
@@ -30,6 +32,9 @@
 #include "DreamShaderMaterialInstance.h"
 #include "Misc/CoreDelegates.h"
 #include "Misc/PackageName.h"
+// ON_SCOPE_EXIT, used by GenerateAllInMemoryMaterials to stamp the define revision it swept against
+// on every exit path.
+#include "Misc/ScopeExit.h"
 #include "ObjectTools.h"
 #include "UObject/UnrealType.h"
 #include "UObject/UObjectGlobals.h"
@@ -510,6 +515,7 @@ namespace UE::DreamShader::Editor::Private
 		FDreamShaderWorkspaceService::ExportMaterialExpressionManifest();
 		FDreamShaderWorkspaceService::ExportDreamShaderSettingsManifest();
 		FDreamShaderWorkspaceService::ExportSubstrateBuiltinsManifest();
+		FDreamShaderWorkspaceService::ExportPreprocessorDefinesManifest();
 		SyncVirtualFunctionDefinitions();
 
 		// Registered unconditionally and gated inside on the LIVE setting: caching the flag here
@@ -675,6 +681,10 @@ namespace UE::DreamShader::Editor::Private
 	{
 		// In-memory generation is the editor's always-on behavior (source files are the authoring
 		// surface; the editor never writes per-material .uasset files).
+		//
+		// This call is also what arms Tick's define poll: the sweep stamps the revision it ran against,
+		// so every define contributed while startup modules were loading is already accounted for by
+		// the materials it just produced, and the first tick does not order a rebuild for them.
 		GenerateAllInMemoryMaterials();
 	}
 
@@ -689,11 +699,21 @@ namespace UE::DreamShader::Editor::Private
 		// source compiles into and the assets already generated are stale the moment it moves. The
 		// backend is the loudest of them -- it decides whether a Shader block is a UMaterial or a thin
 		// instance -- but a mapping table that retargets a Settings key is no less of a change.
+		//
+		// PreprocessorDefines belongs in that list for a sharper reason than the others: it is the only
+		// entry here that changes the source TEXT the parser sees, by cutting a different branch. It is
+		// also the only one whose effect is invisible in the generated asset, which holds nothing but
+		// the post-cut result -- so an editor that ignored this edit would keep showing materials built
+		// from branches the project no longer selects, with no way to tell from the asset that anything
+		// was wrong. The claim in the paragraph above ("every setting the build key folds in") stops
+		// being true the moment this name is missing, and the omission reads as a deliberate exclusion
+		// rather than an oversight.
 		const FName ChangedProperty = Event.GetPropertyName();
 		if (ChangedProperty != GET_MEMBER_NAME_CHECKED(UDreamShaderSettings, DefaultBackend)
 			&& ChangedProperty != GET_MEMBER_NAME_CHECKED(UDreamShaderSettings, ShadingModelMappings)
 			&& ChangedProperty != GET_MEMBER_NAME_CHECKED(UDreamShaderSettings, BlendModeMappings)
-			&& ChangedProperty != GET_MEMBER_NAME_CHECKED(UDreamShaderSettings, MaterialDomainMappings))
+			&& ChangedProperty != GET_MEMBER_NAME_CHECKED(UDreamShaderSettings, MaterialDomainMappings)
+			&& ChangedProperty != GET_MEMBER_NAME_CHECKED(UDreamShaderSettings, PreprocessorDefines))
 		{
 			return;
 		}
@@ -719,11 +739,31 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::GenerateAllInMemoryMaterials()
 	{
+		// Snapshot BEFORE the pass and recorded after it, because what this sweep can honestly claim is
+		// "the materials in memory were built against the table as it stood when I started". A define
+		// registered while the pass is running did NOT reach the files already visited, so recording
+		// the post-pass value would swallow that bump along with the rebuild it was owed. Recording the
+		// pre-pass value at worst leaves Tick one redundant sweep, which every build key then skips.
+		//
+		// Kept here, in the one function every whole-project regeneration goes through, rather than at
+		// each caller: HandleSettingsPropertyChanged already sweeps on a PreprocessorDefines edit, and
+		// without a single choke point Tick's poll would sweep the whole project a second time for the
+		// same edit, one tick later, finding nothing to do.
+		const uint32 SweptDefineRevision = UE::DreamShader::GetDreamShaderDefineRevision();
+		ON_SCOPE_EXIT
+		{
+			LastGeneratedDefineRevision = SweptDefineRevision;
+			bDefineRevisionBaselineTaken = true;
+		};
+
 		TArray<FString> SourceFiles;
 		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles);
 
 		if (SourceFiles.IsEmpty())
 		{
+			// Still counts as swept, by way of the scope guard above: with no sources there is nothing
+			// that could be stale, and returning without a baseline would leave Tick sweeping an empty
+			// project on every single define change.
 			return;
 		}
 
@@ -946,6 +986,57 @@ namespace UE::DreamShader::Editor::Private
 		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
 		{
 			return false;
+		}
+
+		// A define change invalidates every in-memory material generated before it. What sits in memory
+		// is the branch the OLD define set selected; a `dsc` run -- a fresh process, reading the new
+		// set -- writes a different one. Left out of step, the editor shows one material and the disk
+		// holds another, with nothing about either looking wrong, which is precisely the shape of the
+		// in-memory-versus-disk accidents this plugin has been bitten by before.
+		//
+		// Polled rather than hooked, because only ONE of the four define tiers announces itself.
+		// UDreamShaderSettings::PostEditChangeProperty does (and takes care to bump the revision before
+		// calling Super, so the bridge's own settings handler already sees the new value) -- but
+		// RegisterDreamShaderDefine, UnregisterDreamShaderDefinesFrom and the provider delegates have
+		// no notification at all, and a plugin that contributes a switch after startup is exactly the
+		// case this feature was asked for. A uint32 compare at 10Hz covers all four and depends on none
+		// of their internal ordering.
+		//
+		// It does not double up with the settings path: GenerateAllInMemoryMaterials stamps the
+		// revision it swept against, so a sweep that handler already ran leaves nothing here to do.
+		//
+		// Ahead of the queue drains below, so a file sitting in the debounce queue is not compiled
+		// against the old set moments before the sweep rebuilds it anyway.
+		const uint32 CurrentDefineRevision = UE::DreamShader::GetDreamShaderDefineRevision();
+		if (bDefineRevisionBaselineTaken && CurrentDefineRevision != LastGeneratedDefineRevision)
+		{
+			UE_LOG(
+				LogDreamShader,
+				Display,
+				TEXT("DreamShader preprocessor defines changed (revision %u -> %u); regenerating in-memory materials."),
+				LastGeneratedDefineRevision,
+				CurrentDefineRevision);
+
+			// Republished on the same edge, not on a poll of its own. The manifest's `defines` array
+			// IS the resolved table, so it is stale for exactly as long as the in-memory materials
+			// are -- and an extension greying out branches from a table the editor has already moved
+			// on from is the same class of accident as an in-memory material disagreeing with disk,
+			// only quieter, because nothing about the greyed-out lines looks wrong.
+			//
+			// Ahead of the sweep rather than after it: the sweep may take a while, and the manifest
+			// is a snapshot of the define table, which is already current.
+			FDreamShaderWorkspaceService::ExportPreprocessorDefinesManifest();
+
+			// Unforced, for the same reason HandleSettingsPropertyChanged stopped forcing: the build
+			// key folds in the defines each source actually READ (BuildSourceHash takes the touched
+			// set), so an affected asset fails the skip check by itself and one that reads no defines
+			// is correctly left alone. Forcing here would rebuild every asset in the project each time
+			// any define moved, most of them for nothing.
+			//
+			// That makes this the second half of a pair, and the pair is only useful whole: drop the
+			// touched-define fold out of the build key and this sweep still runs, still logs, and skips
+			// every file -- an invalidation that looks like it works and does nothing.
+			GenerateAllInMemoryMaterials();
 		}
 
 		ProcessRequestFiles();
@@ -2023,6 +2114,7 @@ namespace UE::DreamShader::Editor::Private
 		FDreamShaderWorkspaceService::ExportMaterialExpressionManifest();
 		FDreamShaderWorkspaceService::ExportDreamShaderSettingsManifest();
 		FDreamShaderWorkspaceService::ExportSubstrateBuiltinsManifest();
+		FDreamShaderWorkspaceService::ExportPreprocessorDefinesManifest();
 
 		FString WorkspaceFilePath;
 		FString Error;

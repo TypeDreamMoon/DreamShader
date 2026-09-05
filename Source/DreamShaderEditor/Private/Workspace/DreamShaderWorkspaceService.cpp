@@ -1,8 +1,11 @@
 #include "DreamShaderWorkspaceService.h"
 
 #include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderDefineTable.h"
+#include "DreamShaderDiagnostic.h"
 #include "DreamShaderEditorPersistenceUtils.h"
 #include "DreamShaderModule.h"
+#include "DreamShaderPreprocessor.h"
 #include "DreamShaderSettings.h"
 #include "DreamShaderVersionCompat.h"
 
@@ -655,6 +658,296 @@ namespace UE::DreamShader::Editor::Private
 
 			return Candidates;
 		}
+
+		// -------------------------------------------------------------------------------------------
+		// Preprocessor define manifest.
+		// -------------------------------------------------------------------------------------------
+
+		/**
+		 * The enumerator's own spelling, which is what the manifest publishes.
+		 *
+		 * Spelled out by hand because EDreamShaderDefineSource is a plain `enum class` with no UENUM
+		 * behind it, so there is no reflected name to ask for -- and it should stay that way: the
+		 * enum is a runtime-module language detail, not editor-facing data. The tier NAMES are the
+		 * contract with the extension, so this switch is the one place they are written, and adding
+		 * an enumerator without extending it is a compiler warning on every platform that enables
+		 * -Wswitch (there is no `default:` here for exactly that reason).
+		 *
+		 * Deliberately NOT the human sentence DreamShaderDefineTable.cpp's DescribeSource builds:
+		 * that one is prose for a log line and is free to be reworded, this one is a key.
+		 */
+		const TCHAR* GetDefineSourceName(const EDreamShaderDefineSource Source)
+		{
+			switch (Source)
+			{
+			case EDreamShaderDefineSource::Builtin:
+				return TEXT("Builtin");
+			case EDreamShaderDefineSource::Settings:
+				return TEXT("Settings");
+			case EDreamShaderDefineSource::Registered:
+				return TEXT("Registered");
+			case EDreamShaderDefineSource::Provider:
+				return TEXT("Provider");
+			case EDreamShaderDefineSource::CommandLine:
+				return TEXT("CommandLine");
+			case EDreamShaderDefineSource::SourceFile:
+				return TEXT("SourceFile");
+			}
+
+			// Unreachable for any declared enumerator; present so the function has a return on the
+			// path a cast-in value would take.
+			return TEXT("Unknown");
+		}
+
+		// -------------------------------------------------------------------------------------------
+		// The conformance vector.
+		//
+		// WHY THIS EXISTS. To grey out the branches a `#if` did not take, the VS Code extension has to
+		// evaluate DreamShader condition expressions in JavaScript. That makes a FOURTH hand-written
+		// statement of the same grammar -- the C++ evaluator, its contract tests, the table in
+		// Plan/preprocessor-conditionals.md section 4, and now the extension. Four independent
+		// implementations do not stay equal because someone meant them to.
+		//
+		// So the manifest carries a list of expressions together with the answer the REAL C++
+		// evaluator gives each one, computed at export time by calling it. The extension's test suite
+		// feeds the same expressions to its own evaluator and compares. Drift then surfaces as one
+		// failing test naming the expression that moved -- instead of as a source file that greys out
+		// the wrong half of itself in somebody's editor, with nothing anywhere saying so.
+		//
+		// NOTHING HERE IS A HAND-WRITTEN EXPECTATION, AND NOTHING HERE MAY BECOME ONE. The moment a
+		// human types the answer next to the expression, this stops being a cross-check between two
+		// implementations and becomes a fifth implementation of the same grammar -- which is the
+		// problem this is meant to solve, not a shortcut through it.
+		// -------------------------------------------------------------------------------------------
+
+		struct FPreprocessorConformanceFixtureDefine
+		{
+			const TCHAR* Name = nullptr;
+			const TCHAR* Value = nullptr;
+		};
+
+		/**
+		 * The define table the whole vector is evaluated against -- FIXED HERE, never the project's.
+		 *
+		 * This is the difference between a conformance test and a flaky one. Resolving the live table
+		 * instead would fold DS_ENGINE_MINOR, DS_SUBSTRATE and every row of the project's
+		 * PreprocessorDefines setting into the published answers, so a user toggling a switch in
+		 * Project Settings -- or merely opening the project on a different engine version -- would
+		 * turn the extension's test suite red for a reason that has nothing to do with the extension.
+		 * The vector is a statement about the LANGUAGE, and a statement about the language cannot
+		 * depend on one project's configuration.
+		 *
+		 * The names are `CONF_`-prefixed rather than `DS_` for a second reason: `DS_` is reserved
+		 * (IsReservedDreamShaderDefineName), and a fixture borrowing a builtin's name would smuggle a
+		 * claim about the define REGISTRY into a vector that means to make claims only about the
+		 * evaluator.
+		 *
+		 * Listed in ascending case-sensitive name order, because that is the order they are emitted
+		 * in and a manifest that reorders itself between exports is a manifest that shows up in every
+		 * diff. `conf_one` sorts after all of them because lowercase does -- it is here to pin that
+		 * define names are case-sensitive, so it must not collide with CONF_ONE.
+		 */
+		const FPreprocessorConformanceFixtureDefine GPreprocessorConformanceFixtureDefines[] =
+		{
+			{TEXT("CONF_EMPTY"),       TEXT("")},                     // bare marker: reads as 1
+			{TEXT("CONF_HEX"),         TEXT("0x10")},                 // hexadecimal value
+			{TEXT("CONF_MIN64"),       TEXT("-9223372036854775808")}, // most negative int64
+			{TEXT("CONF_NEGATIVE"),    TEXT("-3")},                   // signed value is still an integer
+			{TEXT("CONF_ONE"),         TEXT("1")},
+			{TEXT("CONF_PADDED_TEXT"), TEXT(" pad ")},                // a STRING keeps its own edges
+			{TEXT("CONF_SPACED"),      TEXT(" 7 ")},                  // a NUMBER is trimmed first
+			{TEXT("CONF_TEXT"),        TEXT("Windows")},
+			{TEXT("CONF_TEXT_MIXED"),  TEXT("1abc")},                 // not a whole integer => string
+			{TEXT("CONF_ZERO"),        TEXT("0")},
+			{TEXT("conf_one"),         TEXT("2")},                    // NOT the same define as CONF_ONE
+		};
+
+		/**
+		 * Every expression the vector publishes an answer for.
+		 *
+		 * Grouped by the rule each group is here to pin, and covering, in order: every level of the
+		 * grammar in section 4.1 (precedence, associativity, parentheses), the value-domain rules of
+		 * section 4.2 (undefined reads 0, empty reads 1, strings only compare), every edge case ruled
+		 * on in section 4.3, and several examples each of DSH1034, DSH1036, DSH1040, DSH1041 and
+		 * DSH1042.
+		 *
+		 * Read the comments as INTENT, not as expectations -- they say why a line is here, and the
+		 * answer beside it in the manifest is whatever the evaluator actually returns.
+		 */
+		const TCHAR* const GPreprocessorConformanceExpressions[] =
+		{
+			// Primaries and integer literals.
+			TEXT("0"),
+			TEXT("1"),
+			TEXT("42"),
+			TEXT("(0)"),
+			TEXT("((1))"),
+			TEXT("0x10 == 16"),
+			TEXT("0X10 == 16"),                  // 4.3: an uppercase 0X prefix is accepted too
+			TEXT("0xFF == 0xff"),                // hex DIGITS are case-insensitive, unlike names
+			TEXT("0755 == 755"),                 // there is no octal in this language
+			TEXT("9223372036854775807 > 0"),     // int64 max is a literal
+			TEXT("9223372036854775808 > 0"),     // ...and one past it is not
+			TEXT("12abc"),
+			TEXT("0x"),
+			TEXT("0xZZ"),
+
+			// Unary operators.
+			TEXT("!0"),
+			TEXT("!1"),
+			TEXT("!42"),
+			TEXT("!!42"),
+			TEXT("-1 == 0 - 1"),
+			TEXT("- -1 == 1"),
+			TEXT("+1 == 1"),
+			TEXT("-0 == 0"),
+			TEXT("!CONF_ZERO"),
+			TEXT("-9223372036854775808 < 0"),    // the LITERAL is unsigned; the '-' is an operator
+			TEXT("CONF_MIN64 < 0"),              // a define VALUE, in contrast, carries its own sign
+
+			// Multiplicative, including C's truncate-toward-zero division (4.3).
+			TEXT("2 * 3 == 6"),
+			TEXT("7 / 2 == 3"),
+			TEXT("-7 / 2 == -3"),
+			TEXT("7 / -2 == -3"),
+			TEXT("-7 % 2 == -1"),
+			TEXT("7 % -2 == 1"),
+			TEXT("CONF_MIN64 / -1 == CONF_MIN64"), // the one division with no representable answer
+			TEXT("CONF_MIN64 % -1 == 0"),
+			TEXT("1 / 0"),
+			TEXT("1 % 0"),
+			TEXT("1 / (2 - 2)"),                 // divisor computed, not written, still DSH1041
+
+			// Additive, and left associativity.
+			TEXT("2 + 3 == 5"),
+			TEXT("2 - 3 == -1"),
+			TEXT("10 - 3 - 2 == 5"),             // (10-3)-2, not 10-(3-2)
+			TEXT("100 / 10 / 5 == 2"),           // (100/10)/5, not 100/(10/5)
+
+			// Relational.
+			TEXT("1 < 2"),
+			TEXT("2 < 2"),
+			TEXT("2 <= 2"),
+			TEXT("3 > 4"),
+			TEXT("3 >= 3"),
+			TEXT("-1 < 0"),
+
+			// Equality, and its precedence against relational.
+			TEXT("1 + 1 == 2"),
+			TEXT("1 != 2"),
+			TEXT("1 == 1 == 1"),
+			TEXT("1 < 2 == 1"),                  // (1<2) == 1
+			TEXT("0 == 0 < 1"),                  // 0 == (0<1), so false -- relational binds tighter
+
+			// Logical operators and short-circuiting.
+			TEXT("1 && 1"),
+			TEXT("1 && 0"),
+			TEXT("0 || 0"),
+			TEXT("0 || 1"),
+			TEXT("1 && 2"),                      // truthiness, not equality
+			TEXT("0 && (1 / 0)"),                // right side never evaluated => no DSH1041
+			TEXT("1 || (1 / 0)"),
+			TEXT("0 && CONF_TEXT"),              // ...and no DSH1040 either
+			TEXT("1 || CONF_TEXT"),
+			TEXT("1 || 0 && 0"),                 // 1 || (0 && 0): '&&' binds tighter than '||'
+			TEXT("0 && 0 || 1"),
+			TEXT("0 && ("),                      // a dead operand is still PARSED, so this is an error
+
+			// Precedence ladder across levels.
+			TEXT("1 + 2 * 3 == 7"),
+			TEXT("(1 + 2) * 3 == 9"),
+			TEXT("-2 * 3 == -6"),
+			TEXT("!0 == 1"),                     // (!0) == 1
+			TEXT("1 + 1 == 2 && 2 * 2 == 4"),
+
+			// 'defined', parenthesized and not.
+			TEXT("defined(CONF_ONE)"),
+			TEXT("defined CONF_ONE"),
+			TEXT("defined(CONF_MISSING)"),
+			TEXT("defined(CONF_ZERO)"),          // a define whose value is 0 is still defined
+			TEXT("defined(CONF_EMPTY)"),
+			TEXT("!defined(CONF_MISSING)"),
+			TEXT("defined(1)"),
+			TEXT("defined(CONF_ONE"),
+			TEXT("defined"),
+
+			// The identifier value domain (4.2).
+			TEXT("CONF_MISSING"),                // undefined reads as 0, it is not an error
+			TEXT("CONF_MISSING == 0"),
+			TEXT("CONF_EMPTY"),                  // a bare marker reads as 1, not as the empty string
+			TEXT("CONF_EMPTY == 1"),
+			TEXT("CONF_ZERO == 0"),
+			TEXT("CONF_ONE + CONF_ONE == 2"),
+			TEXT("CONF_NEGATIVE == -3"),
+			TEXT("CONF_HEX == 16"),
+			TEXT("CONF_SPACED == 7"),            // trimmed before being read as a number
+			TEXT("CONF_ONE == 1 && conf_one == 2"), // names are case-sensitive: two distinct defines
+			TEXT("CONF_ONE == conf_one"),
+
+			// Strings, which take part in '==' and '!=' and nothing else.
+			TEXT("\"a\" == \"a\""),
+			TEXT("\"a\" == \"A\""),              // 4.3: string comparison is case-SENSITIVE
+			TEXT("\"a\" != \"b\""),
+			TEXT("\"a\\\"b\" != \"ab\""),        // the expression is: "a\"b" != "ab"
+			TEXT("CONF_TEXT == \"Windows\""),
+			TEXT("CONF_TEXT == \"windows\""),
+			TEXT("CONF_TEXT != \"Linux\""),
+			TEXT("CONF_TEXT_MIXED == \"1abc\""),
+			TEXT("CONF_PADDED_TEXT == \" pad \""), // a string value keeps its surrounding spaces
+			TEXT("CONF_PADDED_TEXT == \"pad\""),
+
+			// Type mismatches: never silently true, never silently false.
+			TEXT("\"a\""),                       // a whole condition may not be a string
+			TEXT("CONF_TEXT"),
+			TEXT("\"a\" < \"b\""),
+			TEXT("\"a\" + \"b\""),
+			TEXT("\"1\" == 1"),                  // string against number, even when it "looks" equal
+			TEXT("CONF_TEXT == 1"),
+			TEXT("!\"a\""),
+			TEXT("-\"a\""),
+			TEXT("\"a\" && 1"),
+			TEXT("1 && CONF_TEXT"),              // left side true, so the right side IS evaluated
+
+			// A complete expression followed by something else.
+			TEXT("1 2"),
+			TEXT("1)"),
+			TEXT("(1))"),
+			TEXT("1 == 1 1"),
+			TEXT("defined(CONF_ONE) CONF_ZERO"),
+
+			// Incomplete or malformed: the other side of that same line.
+			TEXT("1 &&"),
+			TEXT("&& 1"),
+			TEXT("1 &&)"),
+			TEXT("(1"),
+			TEXT("()"),
+			TEXT("1 +"),
+			TEXT("*"),
+			TEXT("1 & 1"),                       // bitwise operators are not in the grammar
+			TEXT("1 | 1"),
+			TEXT("\"unterminated"),
+
+			// No condition at all.
+			TEXT(""),
+			TEXT("   "),
+		};
+
+		/** Builds the fixture table the vector is evaluated against. */
+		FDreamShaderDefineTable BuildPreprocessorConformanceDefines()
+		{
+			FDreamShaderDefineTable Table;
+			for (const FPreprocessorConformanceFixtureDefine& Fixture : GPreprocessorConformanceFixtureDefines)
+			{
+				// Settings tier, arbitrarily: the evaluator reads values and never looks at tiers, and
+				// no fixture name is reserved, so nothing here can be refused by Set().
+				Table.Set(
+					Fixture.Name,
+					Fixture.Value,
+					EDreamShaderDefineSource::Settings,
+					TEXT("PreprocessorConformance"));
+			}
+			return Table;
+		}
 	}
 
 	bool FDreamShaderEditorLaunchUtils::LaunchVSCodeWorkspace(const FString& WorkspaceFilePath)
@@ -790,6 +1083,11 @@ namespace UE::DreamShader::Editor::Private
 		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/substrate-builtins.json"));
 	}
 
+	FString FDreamShaderWorkspaceService::GetPreprocessorDefinesManifestFilePath()
+	{
+		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/preprocessor-defines.json"));
+	}
+
 	FString FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath()
 	{
 		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/bridge.db"));
@@ -878,6 +1176,117 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		WriteSubstrateBuiltinsToBridgeDatabase(DatabaseEntries);
+	}
+
+	void FDreamShaderWorkspaceService::ExportPreprocessorDefinesManifest()
+	{
+		const FString ManifestPath = GetPreprocessorDefinesManifestFilePath();
+		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
+
+		// -----------------------------------------------------------------------------------------
+		// `defines`: the table one compile would see RIGHT NOW.
+		//
+		// This half is project-specific and expected to move -- it is what lets the extension offer
+		// completion for the names that actually exist and grey out the branches that actually die.
+		// -----------------------------------------------------------------------------------------
+		const FDreamShaderDefineTable ResolvedDefines = UE::DreamShader::ResolveDreamShaderDefines();
+
+		// GetSortedNames, not raw iteration over the map: TMap order is not stable, and an unsorted
+		// array would reshuffle itself between exports and show up as a spurious diff on every editor
+		// launch. (It sorts case-sensitively, which is the same rule the names themselves obey.)
+		const TArray<FString> SortedDefineNames = ResolvedDefines.GetSortedNames();
+
+		TArray<TSharedPtr<FJsonValue>> DefineValues;
+		DefineValues.Reserve(SortedDefineNames.Num());
+		for (const FString& Name : SortedDefineNames)
+		{
+			const FDreamShaderDefineEntry* Entry = ResolvedDefines.Find(Name);
+			if (!Entry)
+			{
+				// Unreachable: the names came from this table. Guarded rather than dereferenced blind.
+				continue;
+			}
+
+			TSharedRef<FJsonObject> DefineObject = MakeShared<FJsonObject>();
+			DefineObject->SetStringField(TEXT("name"), Name);
+			DefineObject->SetStringField(TEXT("value"), Entry->Value);
+			DefineObject->SetStringField(TEXT("source"), GetDefineSourceName(Entry->Source));
+			DefineObject->SetStringField(TEXT("sourceTag"), Entry->SourceTag);
+			// The reserved-name rule is a PREFIX rule, so this is asked of the name rather than read
+			// off the tier: a `DS_` name is read-only whoever managed to put it there, and a
+			// non-reserved name is editable even though it currently sits in the Builtin tier.
+			DefineObject->SetBoolField(TEXT("readOnly"), UE::DreamShader::IsReservedDreamShaderDefineName(Name));
+			DefineValues.Add(MakeShared<FJsonValueObject>(DefineObject));
+		}
+
+		// -----------------------------------------------------------------------------------------
+		// `fixtureDefines` + `conformance`: the cross-check against the extension's own evaluator.
+		//
+		// This half is project-INDEPENDENT by construction; see the comment on the fixture table for
+		// why that is not optional.
+		// -----------------------------------------------------------------------------------------
+		const FDreamShaderDefineTable ConformanceDefines = BuildPreprocessorConformanceDefines();
+
+		TSharedRef<FJsonObject> FixtureObject = MakeShared<FJsonObject>();
+		for (const FPreprocessorConformanceFixtureDefine& Fixture : GPreprocessorConformanceFixtureDefines)
+		{
+			// Emitted from the same array the table was built from, so the two can never disagree
+			// about what the vector was evaluated against.
+			FixtureObject->SetStringField(Fixture.Name, Fixture.Value);
+		}
+
+		TArray<TSharedPtr<FJsonValue>> ConformanceValues;
+		ConformanceValues.Reserve(UE_ARRAY_COUNT(GPreprocessorConformanceExpressions));
+		for (const TCHAR* const Expression : GPreprocessorConformanceExpressions)
+		{
+			TSharedRef<FJsonObject> CaseObject = MakeShared<FJsonObject>();
+			CaseObject->SetStringField(TEXT("expr"), Expression);
+
+			bool bResult = false;
+			FDreamShaderTextError Error;
+			if (UE::DreamShader::EvaluateDreamShaderConditionExpression(Expression, ConformanceDefines, bResult, Error))
+			{
+				// "1"/"0" as strings, not a JSON boolean or number: the field carries the value of a
+				// C-style condition, and a reader comparing it against its own evaluator's result
+				// should not have to know which of JavaScript's falsy values that maps to.
+				CaseObject->SetStringField(TEXT("value"), bResult ? TEXT("1") : TEXT("0"));
+			}
+			else
+			{
+				// The CODE, never the message. The code is the published identity; the message is
+				// reworded freely and is gathered for zh-Hans, so a test keyed on it would fail on a
+				// translation. An empty string here would mean an untagged raise site inside the
+				// evaluator, which is itself the finding -- so it is exported as-is rather than
+				// papered over with a placeholder.
+				CaseObject->SetStringField(TEXT("error"), Error.Code);
+			}
+
+			ConformanceValues.Add(MakeShared<FJsonValueObject>(CaseObject));
+		}
+
+		TSharedRef<FJsonObject> RootObject = MakeShared<FJsonObject>();
+		RootObject->SetStringField(TEXT("schema"), TEXT("DreamShader.PreprocessorDefines"));
+		RootObject->SetNumberField(TEXT("version"), 1);
+		RootObject->SetStringField(TEXT("generatedAt"), FDateTime::UtcNow().ToIso8601());
+		// The same counter the bridge polls to invalidate its in-memory materials. A consumer holding
+		// an older manifest can tell it is stale by this alone, without diffing the define list.
+		RootObject->SetNumberField(TEXT("revision"), static_cast<double>(UE::DreamShader::GetDreamShaderDefineRevision()));
+		RootObject->SetArrayField(TEXT("defines"), DefineValues);
+		RootObject->SetObjectField(TEXT("fixtureDefines"), FixtureObject);
+		RootObject->SetArrayField(TEXT("conformance"), ConformanceValues);
+
+		FString ManifestText;
+		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ManifestText);
+		FJsonSerializer::Serialize(RootObject, Writer);
+
+		if (FFileHelper::SaveStringToFile(ManifestText, *ManifestPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		{
+			UE_LOG(LogDreamShader, Display, TEXT("Wrote DreamShader preprocessor define manifest: %s"), *ManifestPath);
+		}
+		else
+		{
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to write DreamShader preprocessor define manifest: %s"), *ManifestPath);
+		}
 	}
 
 	void FDreamShaderWorkspaceService::ExportDreamShaderSettingsManifest()
