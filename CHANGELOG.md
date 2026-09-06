@@ -107,6 +107,21 @@
   `#define PP_SUM 1 + 1` is the five-character string `1 + 1` and not the integer `2`. Documented in
   [Docs/language/preprocessor.md](Docs/language/preprocessor.md).
 
+### Fixed
+
+- **The `/DreamShaderGenerated` shader directory mapping was registered too late for materials
+  loaded during engine start-up.** The runtime module loaded at the `Default` phase, but the engine
+  validates a material's cached include paths as the material loads, and a generated material
+  reached during `InitDefaultMaterials` -- `M_DreamWindGrass`, pulled in by a `PostConfigInit`
+  module -- was validated while the mapping did not exist yet. The engine stripped the
+  `/DreamShaderGenerated/MF_DreamWindSample_….ush` include from the cached data, every permutation
+  then failed with `File not found`, and the material rendered as the default material for the
+  whole session, since the start-up regeneration saw an unchanged source hash and skipped it. The
+  module now loads at `PostConfigInit`, where shader directory mappings belong; the settings object
+  does not exist yet at that phase, so the two directory settings are read from the ini directly
+  (the same values the settings object later loads), with the built-in defaults as the fallback.
+
+
 ## 1.8.0 - 2026-08-21
 
 ### Fixed

@@ -6,6 +6,8 @@
 #include "CoreGlobals.h"
 #include "Interfaces/IPluginManager.h"
 #include "Misc/Char.h"
+#include "Misc/ConfigCacheIni.h"
+#include "Misc/Parse.h"
 #include "Misc/Paths.h"
 #include "ShaderCore.h"
 #include "UObject/UObjectBase.h"
@@ -50,6 +52,27 @@ namespace UE::DreamShader
 			return UObjectInitialized() && !GExitPurge && !IsEngineExitRequested();
 		}
 
+		/**
+		 * The settings object is not constructible when this module starts: it loads at
+		 * PostConfigInit (see StartupModule for why), which is before the UObject system is up.
+		 * The ini is readable by then, so the two directory settings are taken straight from it
+		 * -- the same values the settings object will report once it exists, since that is where
+		 * it loads them from. An FDirectoryPath is written as (Path="...").
+		 */
+		static FString ReadDirectorySettingFromConfig(const TCHAR* Key)
+		{
+			FString Value;
+			if (GConfig && GConfig->GetString(TEXT("/Script/DreamShader.DreamShaderSettings"), Key, Value, GEngineIni))
+			{
+				FString Path;
+				if (FParse::Value(*Value, TEXT("Path="), Path))
+				{
+					return Path;
+				}
+			}
+			return FString();
+		}
+
 		static void RefreshConfiguredDirectories()
 		{
 			const UDreamShaderSettings* Settings = CanReadSettingsObject()
@@ -57,11 +80,11 @@ namespace UE::DreamShader
 				: nullptr;
 
 			ConfiguredDirectories.Source = ResolveProjectDirectory(
-				Settings ? Settings->SourceDirectory.Path : FString(),
+				Settings ? Settings->SourceDirectory.Path : ReadDirectorySettingFromConfig(TEXT("SourceDirectory")),
 				TEXT("DShader"));
 			ConfiguredDirectories.Package = FPaths::Combine(ConfiguredDirectories.Source, TEXT("Packages"));
 			ConfiguredDirectories.Generated = ResolveProjectDirectory(
-				Settings ? Settings->GeneratedShaderDirectory.Path : FString(),
+				Settings ? Settings->GeneratedShaderDirectory.Path : ReadDirectorySettingFromConfig(TEXT("GeneratedShaderDirectory")),
 				TEXT("Intermediate/DreamShader/GeneratedShaders"));
 			ConfiguredDirectories.bInitialized = true;
 		}
@@ -343,6 +366,17 @@ namespace UE::DreamShader
 
 void FDreamShaderModule::StartupModule()
 {
+	// This module loads at PostConfigInit, not Default, because of the mapping below. The engine
+	// validates every material's cached include paths as the material loads
+	// (FMaterialCachedExpressionData, "Expression include file path ... is invalid"), and any
+	// material reached during UMaterialInterface::InitDefaultMaterials -- M_DreamWindGrass, pulled
+	// in by a PostConfigInit module -- loads before the Default-phase modules exist. With the
+	// /DreamShaderGenerated mapping still unregistered at that point, the include was stripped
+	// from the cached data, every permutation then failed with "File not found", and the material
+	// rendered as the default material for the whole session (the startup regeneration skipped it,
+	// its source hash being unchanged). Shader directory mappings belong to PostConfigInit for
+	// exactly this reason; the cost is that the settings object is not available yet, which
+	// RefreshConfiguredDirectories covers by reading the ini.
 	IFileManager::Get().MakeDirectory(*UE::DreamShader::GetSourceShaderDirectory(), true);
 	IFileManager::Get().MakeDirectory(*UE::DreamShader::GetPackageShaderDirectory(), true);
 	IFileManager::Get().MakeDirectory(*UE::DreamShader::Private::GetConfiguredDirectories().Generated, true);

@@ -19,7 +19,7 @@
 		{
 			"Name": "DreamShader",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PostConfigInit"
 		},
 		{
 			"Name": "DreamShaderCompiler",
