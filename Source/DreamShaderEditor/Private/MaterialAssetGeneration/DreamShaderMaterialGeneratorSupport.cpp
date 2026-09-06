@@ -428,6 +428,13 @@ namespace UE::DreamShader::Editor::Private
 		Material->MaterialDomain = MD_Surface;
 		Material->SetShadingModel(MSM_DefaultLit);
 		Material->TwoSided = false;
+		// Set by the Base.MaterialAttributes binding, and only ever set -- so a rebuild whose source
+		// no longer carries that binding kept the previous generation's true. That is exactly the
+		// Substrate `#if` shape (Base.FrontMaterial plus individual root pins): with the flag still
+		// on, the engine compiled every root pin from the now-unconnected MaterialAttributes input
+		// and the individual bindings were ignored -- opacity mask, ambient occlusion and the
+		// ray-tracing custom data all read their defaults.
+		Material->bUseMaterialAttributes = false;
 		Material->OpacityMaskClipValue = 0.3333f;
 		Material->Wireframe = false;
 		Material->DitheredLODTransition = false;

@@ -122,6 +122,16 @@
   (the same values the settings object later loads), with the built-in defaults as the fallback.
 
 
+- **A rebuild kept `bUseMaterialAttributes` from the previous generation.** The flag is set by the
+  `Base.MaterialAttributes` binding and was never cleared by `ResetMaterialToDefaults`, so a source
+  that switched from `Base.MaterialAttributes` to `Base.FrontMaterial` plus individual root pins --
+  the shape of a `#if DS_SUBSTRATE` branch -- came out of the rebuild with the flag still on. The
+  engine then compiled every root pin from the unconnected MaterialAttributes input and ignored the
+  individual bindings: opacity mask, ambient occlusion and the ray-tracing custom data all read their
+  defaults, which on the MoonToon characters showed up as a whole-body darkening (the toon
+  ray-traced shadow flags live in CustomData0). The reset now clears the flag with the rest.
+
+
 ## 1.8.0 - 2026-08-21
 
 ### Fixed
