@@ -132,6 +132,10 @@
   ray-traced shadow flags live in CustomData0). The reset now clears the flag with the rest.
 
 
+- **Docs: the fork's encoded-attribute members are `MoonEncodedAttribute0`–`4`**, not the pre-rename
+  `Mooa…` spelling the MaterialAttributes, output-bindings and graph-layout pages still showed. The
+  `Mooa…` spelling remains accepted as an alias on the read and write side; only `Moon…` is emitted.
+
 ## 1.8.0 - 2026-08-21
 
 ### Fixed

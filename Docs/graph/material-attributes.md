@@ -108,8 +108,11 @@ rejected as members: `Attrs.MaterialAttributes` fails with
 message.
 
 > [!NOTE]
-> The engine fork macro `MOON_ENGINE` adds five further members, `MooaEncodedAttribute0` through
-> `MooaEncodedAttribute4` (4 components, Break output indices 27–31). They do not exist in a stock
+> The engine fork macro `MOON_ENGINE` adds five further members, `MoonEncodedAttribute0` through
+> `MoonEncodedAttribute4` (4 components, Break output indices 27–31). The pre-rename spelling
+> `MooaEncodedAttribute0` … `MooaEncodedAttribute4` is accepted as an alias on both the read and
+> the write side, so decompiled MooaToon functions still parse; only the Moon spelling is ever
+> emitted. They do not exist in a stock
 > UE 5.3–5.8 build.
 
 ### Reading a member

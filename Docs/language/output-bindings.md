@@ -108,11 +108,11 @@ These resolve only when the engine defines `MOON_ENGINE`. On a stock Unreal buil
 
 | `Base.` spelling | `EMaterialProperty` | Value type |
 | :-- | :-- | :-- |
-| `MooaEncodedAttribute0` | `MP_MooaEncodedAttribute0` | Float4 |
-| `MooaEncodedAttribute1` | `MP_MooaEncodedAttribute1` | Float4 |
-| `MooaEncodedAttribute2` | `MP_MooaEncodedAttribute2` | Float4 |
-| `MooaEncodedAttribute3` | `MP_MooaEncodedAttribute3` | Float4 |
-| `MooaEncodedAttribute4` | `MP_MooaEncodedAttribute4` | Float4 |
+| `MoonEncodedAttribute0`, `MooaEncodedAttribute0` | `MP_MoonEncodedAttribute0` | Float4 |
+| `MoonEncodedAttribute1`, `MooaEncodedAttribute1` | `MP_MoonEncodedAttribute1` | Float4 |
+| `MoonEncodedAttribute2`, `MooaEncodedAttribute2` | `MP_MoonEncodedAttribute2` | Float4 |
+| `MoonEncodedAttribute3`, `MooaEncodedAttribute3` | `MP_MoonEncodedAttribute3` | Float4 |
+| `MoonEncodedAttribute4`, `MooaEncodedAttribute4` | `MP_MoonEncodedAttribute4` | Float4 |
 
 ## Targets with side effects
 
