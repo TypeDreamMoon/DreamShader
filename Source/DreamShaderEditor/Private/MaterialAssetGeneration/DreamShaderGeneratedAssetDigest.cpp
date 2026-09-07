@@ -31,7 +31,7 @@ namespace UE::DreamShader::Editor::Private
 		// because the property set the reflection walk sees is the engine's, not ours: an engine
 		// upgrade that adds one UPROPERTY to one expression class would otherwise re-fingerprint every
 		// asset in the project at once and report the whole library as hand-edited.
-		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD1");
+		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD2");
 
 		// Node properties a user is free to change without meaning anything by it. Node coordinates are
 		// the important entry: regeneration reassigns them from the Layout section anyway (they are
@@ -337,9 +337,73 @@ namespace UE::DreamShader::Editor::Private
 		return IsDigestSafeProperty(Property, 0);
 	}
 
-	FString MakeDigestSchemaTag()
+	namespace
 	{
-		return FString::Printf(TEXT("%s-%d.%d"), DigestFormatVersion, DREAMSHADER_UE_MAJOR, DREAMSHADER_UE_MINOR);
+		// The reflected layout of one expression class as the digest sees it: every property the
+		// digest would walk, by name and C++ type, sorted. The value is what makes two stamps
+		// comparable, so it belongs in the schema tag rather than in the digest itself.
+		void AppendClassLayout(const UClass* Class, FString& InOutText)
+		{
+			TArray<FString> Lines;
+			for (TFieldIterator<FProperty> It(Class, EFieldIteratorFlags::IncludeSuper); It; ++It)
+			{
+				if (IsDigestProperty(*It))
+				{
+					Lines.Add(FString::Printf(TEXT("%s:%s"), *It->GetName(), *It->GetCPPType()));
+				}
+			}
+			Lines.Sort();
+			InOutText += Class->GetPathName();
+			InOutText += TEXT("{");
+			InOutText += FString::Join(Lines, TEXT(","));
+			InOutText += TEXT("}\n");
+		}
+
+		// The classes whose layout the asset's digest depends on: every expression class in the
+		// graph, once each, in path order so the text is stable across sessions.
+		FString BuildClassLayoutText(UObject* Asset)
+		{
+			TConstArrayView<TObjectPtr<UMaterialExpression>> Expressions;
+			if (UMaterial* Material = Cast<UMaterial>(Asset))
+			{
+				Expressions = Material->GetExpressions();
+			}
+			else if (UMaterialFunction* MaterialFunction = Cast<UMaterialFunction>(Asset))
+			{
+				Expressions = MaterialFunction->GetExpressions();
+			}
+			TArray<const UClass*> Classes;
+			for (const TObjectPtr<UMaterialExpression>& Expression : Expressions)
+			{
+				if (Expression)
+				{
+					Classes.AddUnique(Expression->GetClass());
+				}
+			}
+			Classes.Sort([](const UClass& Left, const UClass& Right)
+			{
+				return Left.GetPathName() < Right.GetPathName();
+			});
+			FString Text;
+			for (const UClass* Class : Classes)
+			{
+				AppendClassLayout(Class, Text);
+			}
+			return Text;
+		}
+	}
+
+	FString MakeDigestSchemaTag(UObject* Asset)
+	{
+		// Format version, engine version, and a fingerprint of the reflected layout of every
+		// expression class the asset uses. The last part is what an engine version cannot cover: a
+		// source build of the engine can add or rename a UPROPERTY on an expression class between two
+		// sessions without the version moving, and the digest walks exactly those properties -- so
+		// the stamp written before the change would read as a hand edit on every asset that uses the
+		// class (a MoonToon material whose fork-side expression classes gained pins was refused a
+		// rebuild that way). Folding the layout into the schema turns that into "Unstamped" instead:
+		// rebuilt normally, and restamped.
+		return FString::Printf(TEXT("%s-%d.%d-%08x"), DigestFormatVersion, DREAMSHADER_UE_MAJOR, DREAMSHADER_UE_MINOR, FCrc::StrCrc32(*BuildClassLayoutText(Asset)));
 	}
 
 	FString BuildMaterialDigestText(UMaterial* Material)
@@ -512,6 +576,6 @@ namespace UE::DreamShader::Editor::Private
 			return FString();
 		}
 
-		return FString::Printf(TEXT("%s:%08x"), *MakeDigestSchemaTag(), FCrc::StrCrc32(*DigestText));
+		return FString::Printf(TEXT("%s:%08x"), *MakeDigestSchemaTag(Asset), FCrc::StrCrc32(*DigestText));
 	}
 }

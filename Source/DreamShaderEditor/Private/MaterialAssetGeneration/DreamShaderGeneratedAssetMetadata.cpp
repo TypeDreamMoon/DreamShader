@@ -284,7 +284,7 @@ namespace UE::DreamShader::Editor::Private
 		// Schema first: a stamp written by a different digest format or a different engine cannot be
 		// compared against one written now, and reporting the difference as divergence would flag
 		// every generated asset in the project the moment either moves.
-		const FString SchemaTag = MakeDigestSchemaTag();
+		const FString SchemaTag = MakeDigestSchemaTag(Asset);
 		if (!StampedDigest.StartsWith(SchemaTag + TEXT(":"), ESearchCase::CaseSensitive))
 		{
 			return EDreamShaderDigestState::Unstamped;

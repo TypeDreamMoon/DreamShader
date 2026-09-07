@@ -42,10 +42,12 @@ namespace UE::DreamShader::Editor::Private
 		Diverged
 	};
 
-	// The schema tag a digest is stamped with. A digest is only ever compared against another digest
-	// carrying the same tag, so both the format below and the engine's own property set can change
-	// without turning every previously stamped asset into a false divergence report.
-	FString MakeDigestSchemaTag();
+	// The schema tag a digest is stamped with: the format version, the engine version, and a
+	// fingerprint of the reflected layout of every expression class the asset uses. A digest is only
+	// ever compared against another digest carrying the same tag, so the format, the engine's own
+	// property set, and a source-built engine's changes to an expression class can all move without
+	// turning every previously stamped asset into a false divergence report.
+	FString MakeDigestSchemaTag(UObject* Asset);
 
 	// Deterministic text form of the asset's generated content. Exposed (rather than only the hash)
 	// so a test can diff two of them and say WHAT diverged, and so the log can carry the difference

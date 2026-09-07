@@ -132,6 +132,16 @@
   ray-traced shadow flags live in CustomData0). The reset now clears the flag with the rest.
 
 
+- **A source-built engine's change to an expression class read as a hand edit on every asset using
+  it.** The digest schema tag was the format version plus the engine version, but the property set
+  the digest walks is per class, and a fork can add or rename a `UPROPERTY` on an expression class
+  without the engine version moving. Every asset stamped before such a change then failed the
+  divergence gate with `DSH8115` -- the MoonToon base material was refused a rebuild for exactly this
+  reason, with the asset itself untouched since the commit that regenerated it. The tag now also
+  carries a fingerprint of the reflected layout of every expression class in the asset, so a layout
+  change reads as `Unstamped` (rebuilt normally, restamped) rather than `Diverged`. The format version
+  moves to `DSD2`; every existing stamp reads as `Unstamped` once and is rewritten on the next rebuild.
+
 - **Docs: the fork's encoded-attribute members are `MoonEncodedAttribute0`–`4`**, not the pre-rename
   `Mooa…` spelling the MaterialAttributes, output-bindings and graph-layout pages still showed. The
   `Mooa…` spelling remains accepted as an alias on the read and write side; only `Moon…` is emitted.

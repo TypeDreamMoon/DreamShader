@@ -35,10 +35,13 @@ question the source hash cannot — *has somebody been working in here?*
 | **Diverged** | ours, and the contents no longer match | **refused** — see below |
 
 `Unstamped` covers two cases, both benign: an asset generated before digests existed, and one whose
-stamp carries a different schema tag. The tag is the digest format version plus the engine version
-(`DSD1-5.8`), because the property set the digest walks is the engine's. Without it, upgrading the
-engine would re-fingerprint every asset in the project at once and report the whole library as
-hand-edited.
+stamp carries a different schema tag. The tag is the digest format version, the engine version, and a
+fingerprint of the reflected layout of every expression class the asset uses
+(`DSD2-5.8-1a2b3c4d`), because the property set the digest walks is the engine's. Without the
+version, upgrading the engine would re-fingerprint every asset in the project at once and report the
+whole library as hand-edited; without the layout fingerprint, a source-built engine that adds a pin
+to one expression class between two sessions did the same to every asset using that class *(since
+1.9.0)*.
 
 ## What counts as a hand edit
 
