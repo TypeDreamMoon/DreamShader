@@ -2942,7 +2942,7 @@ namespace UE::DreamShader::Editor
 
 		if (!bForce && Private::IsGeneratedAssetSourceCurrent(Instance, SourceFilePath, SourceHash))
 		{
-			OutMessage = FString::Printf(TEXT("Skipped %s from %s; source hash is unchanged."), *Instance->GetPathName(), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			OutMessage = FString::Printf(TEXT("Skipped %s from %s; source hash is unchanged (build key %s)."), *Instance->GetPathName(), *SourceFilePath, *SourceHash); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return true;
 		}
 
@@ -3243,7 +3243,7 @@ namespace UE::DreamShader::Editor
 
 		if (!bForce && Private::IsGeneratedAssetSourceCurrent(Material, SourceFilePath, SourceHash))
 		{
-			OutMessage = FString::Printf(TEXT("Skipped %s from %s; source hash is unchanged."), *Material->GetPathName(), *SourceFilePath); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			OutMessage = FString::Printf(TEXT("Skipped %s from %s; source hash is unchanged (build key %s)."), *Material->GetPathName(), *SourceFilePath, *SourceHash); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			return true;
 		}
 
