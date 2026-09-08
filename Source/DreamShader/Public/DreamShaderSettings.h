@@ -128,6 +128,11 @@ public:
 			ToolTip="Subfolder, relative to the parent material's folder, where the Material Content Browser creates new material instances. Leave empty to create them alongside the parent."))
 	FString InstanceSubfolder = TEXT("Instances");
 
+	UPROPERTY(Config, EditAnywhere, Category="Editor",
+		meta=(DisplayName="Sync Source References On Asset Rename",
+			ToolTip="When enabled, renaming or moving an asset in the editor rewrites the .dsm/.dsf/.dsh files that reference it, so a source keeps naming the asset rather than the path it used to have. Only files under the project source directory are rewritten -- plugin source roots are never touched -- and each file is copied to a .bak next to it before it is written. Batched renames such as Fix Up Redirectors are coalesced into a single pass. Deleting an asset is not covered: a deletion has no new path to write, and the compile error it produces is the correct outcome. Turn this off if you would rather the plugin never edited your source files on its own."))
+	bool bSyncSourceReferencesOnAssetRename = true;
+
 private:
 	static FString NormalizeShadingModelKey(const FString& InName);
 	static FString NormalizeBlendModeKey(const FString& InName);

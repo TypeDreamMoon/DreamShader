@@ -1,5 +1,6 @@
 #include "Bridge/DreamShaderEditorBridge.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "SourceFiles/DreamShaderAssetRenameSyncService.h"
 #include "SourceFiles/DreamShaderSourceFileUtils.h"
 #include "UI/DreamShaderMaterialBrowser.h"
 
@@ -69,6 +70,9 @@ public:
 		Bridge->Startup();
 
 		UE::DreamShader::Editor::Private::FDreamShaderMaterialBrowser::Register();
+
+		// After the bridge, because ownership decides whether this process may rewrite sources at all.
+		UE::DreamShader::Editor::Private::FDreamShaderAssetRenameSyncService::Startup();
 	}
 
 	virtual void ShutdownModule() override
@@ -78,6 +82,8 @@ public:
 			DREAMSHADER_POST_ENGINE_INIT_DELEGATE().Remove(CookPostEngineInitHandle);
 			CookPostEngineInitHandle.Reset();
 		}
+
+		UE::DreamShader::Editor::Private::FDreamShaderAssetRenameSyncService::Shutdown();
 
 		UE::DreamShader::Editor::Private::FDreamShaderMaterialBrowser::Unregister();
 

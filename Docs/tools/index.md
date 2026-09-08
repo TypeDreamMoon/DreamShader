@@ -3,7 +3,8 @@
 > [DreamShader](../index.md) » **Tools**
 
 The editor-side surface of DreamShader: the menus, the docked browser tab, the preview renderer, the
-decompiler, the VirtualFunction actions, the on-disk bridge, and the headless commandlet.
+decompiler, the VirtualFunction actions, the asset-rename sync, the on-disk bridge, and the headless
+commandlet.
 
 | | |
 | :-- | :-- |
@@ -24,6 +25,7 @@ module is editor-only, and the runtime `DreamShader` module carries no UI.
 | [Preview](preview.md) | the thumbnail renderer, the streaming WebSocket preview, the mesh set and the limits |
 | [Decompiler](decompiler.md) | exporting an existing `UMaterial` / `UMaterialFunction` back to `.dsm` / `.dsf` |
 | [VirtualFunction tools](virtual-function-tools.md) | the conditional VirtualFunction context menu and the startup sync service |
+| [Asset rename sync](asset-rename-sync.md) | following a renamed or moved asset into the `.dsm` / `.dsf` / `.dsh` files that reference it *(since 1.9.0)* |
 | [Workspace](workspace.md) | the generated `DreamShader.code-workspace`, VSCode discovery and launch, the exported manifests |
 | [Packages](packages.md) | `DShader/Packages`: what the plugin implements and what it does not |
 | [Commandlet](commandlet.md) | `-run=DreamShader` — headless compile and decompile |
@@ -62,6 +64,7 @@ everything below it.
 | 2 | Bail out entirely | `-NoDreamShaderEditorBridge` is on the command line |
 | 3 | Create and start the editor bridge | as above |
 | 4 | Register the Material Content Browser nomad tab and its menu entries | as above |
+| 5 | Subscribe the [asset rename sync service](asset-rename-sync.md) to `OnAssetRenamed` *(since 1.9.0)* | as above, and when the asset registry is unavailable |
 
 The bridge's own startup then resets `bridge.db`, exports the three manifests, runs the
 [VirtualFunction sync service](virtual-function-tools.md#startup-sync-service), queues a full scan,
@@ -81,7 +84,7 @@ source-directory watcher, and installs the menus.
 ## See also
 
 - [Editor integration](editor-integration.md) — the complete menu and command surface
-- [Project settings](../settings/project.md) — the thirteen settings these tools read
+- [Project settings](../settings/project.md) — the fourteen settings these tools read
 - [Generation](../generation/index.md) — what a compile actually does
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage
 - [Getting started](../getting-started.md) — the first-run walkthrough

@@ -2,7 +2,7 @@
 
 > [DreamShader](../index.md) » [Settings](index.md) » **Project settings**
 
-The project-wide configuration object: sixteen properties under *Project Settings ▸ DreamPlugin ▸
+The project-wide configuration object: seventeen properties under *Project Settings ▸ DreamPlugin ▸
 Dream Shader*, persisted to the project's `DefaultEngine.ini`.
 
 | | |
@@ -47,6 +47,7 @@ Every configurable property, grouped by the category it appears under in the pan
 | Decompiler | Export Decompiled Layout | `bExportDecompiledLayout` | `bool` | `true` | When on, a decompiled `.dsm` carries a `Layout = { … }` section reproducing node positions. |
 | Editor | Open In New Window | `bOpenInNewWindow` | `bool` | `true` | When off, the VSCode launch command gets `--reuse-window`. |
 | Editor | **Material Instance Subfolder** | `InstanceSubfolder` | `FString` | `Instances` | Subfolder, relative to the parent material's folder, where the Material Content Browser creates new instances. Empty creates them alongside the parent. The asset is named `MI_<ParentName>`, uniquified. |
+| Editor | **Sync Source References On Asset Rename** *(since 1.9.0)* | `bSyncSourceReferencesOnAssetRename` | `bool` | `true` | When on, renaming or moving an asset rewrites the `.dsm` / `.dsf` / `.dsh` files that reference it, backing each one up to `<file>.bak` first. Project sources only — plugin roots are never touched. See [Asset rename sync](../tools/asset-rename-sync.md). Read live, so turning it off takes effect on the next rename. |
 
 Rows in **bold** carry an explicit `DisplayName`; the others show the name Unreal derives from the
 property identifier, which drops a leading `b` from booleans.
@@ -90,6 +91,16 @@ Full behaviour, including how a per-file `Backend` setting overrides this, is on
 > Subfolder, relative to the parent material's folder, where the Material Content Browser creates
 > new material instances. Leave empty to create them alongside the parent.
 
+*Sync Source References On Asset Rename*:
+
+> When enabled, renaming or moving an asset in the editor rewrites the .dsm/.dsf/.dsh files that
+> reference it, so a source keeps naming the asset rather than the path it used to have. Only files
+> under the project source directory are rewritten -- plugin source roots are never touched -- and
+> each file is copied to a .bak next to it before it is written. Batched renames such as Fix Up
+> Redirectors are coalesced into a single pass. Deleting an asset is not covered: a deletion has no
+> new path to write, and the compile error it produces is the correct outcome. Turn this off if you
+> would rather the plugin never edited your source files on its own.
+
 *Preprocessor Defines*:
 
 > Preprocessor defines every .dsm/.dsf/.dsh source compiles with -- what its #if / #elif conditions
@@ -131,6 +142,7 @@ The complete built-in tables are on [Material enums](material-enums.md).
 | `bShowInMemoryMaterialsInContentBrowser` | *Tools ▸ DreamShader ▸ Show In-Memory Materials*, and the Project page of the [Material Content Browser](../tools/material-browser.md). Both write the ini and re-broadcast asset creation/removal for every memory-only instance. |
 | `DefaultBackend` | Changing it in the panel triggers an immediate in-memory regeneration of every source file, plus a notification when persisted generated assets shadow the result. |
 | `SourceDirectory`, `GeneratedShaderDirectory` | Consumed by the module's directory helpers; see [Generated HLSL](../generation/generated-hlsl.md) and [Packages](../tools/packages.md). |
+| `bSyncSourceReferencesOnAssetRename` | Read on every asset rename by the [asset rename sync service](../tools/asset-rename-sync.md), and again when the coalesced batch is flushed. There is no menu entry for it. |
 | `PreprocessorDefines` | One of five tiers that make up the define table a compile sees, and the lowest-precedence one that a person edits. C++ registration and providers outrank it, and `-Define=` on the [commandlet](../tools/commandlet.md) outranks those; only the builtin `DS_` names outrank everything. See [Preprocessor ▸ Where defines come from](../language/preprocessor.md#where-defines-come-from). |
 
 ## Notes
@@ -165,6 +177,7 @@ bVerboseLogs=False
 bExportDecompiledLayout=True
 bOpenInNewWindow=True
 InstanceSubfolder=Instances
+bSyncSourceReferencesOnAssetRename=True
 ```
 
 The ini keys are the raw C++ identifiers, including the `b` prefix on booleans — `bAutoCompileOnSave`,
@@ -190,4 +203,5 @@ the `+Key=((…))` form:
 - [Material Content Browser](../tools/material-browser.md) — the Project page and the instance factory
 - [Decompiler](../tools/decompiler.md) — the layout-export toggle
 - [Workspace](../tools/workspace.md) — VSCode launch and the exported settings manifest
+- [Asset rename sync](../tools/asset-rename-sync.md) — what *Sync Source References On Asset Rename* switches on
 - [Editor integration](../tools/editor-integration.md) — the Tools menu entries
