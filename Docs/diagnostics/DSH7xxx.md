@@ -1112,7 +1112,7 @@ Invalid reflected property target.
 '%s' is not a valid boolean value for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:97`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:103`
 <!-- generated:end DSH7132 -->
 
 **Cause.** _Not written yet._
@@ -1130,7 +1130,7 @@ Invalid reflected property target.
 '%s' is not a valid integer value for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:108`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:114`
 <!-- generated:end DSH7133 -->
 
 **Cause.** _Not written yet._
@@ -1148,7 +1148,7 @@ Invalid reflected property target.
 '%s' is not a valid unsigned integer value for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:119`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:125`
 <!-- generated:end DSH7134 -->
 
 **Cause.** _Not written yet._
@@ -1166,7 +1166,7 @@ Invalid reflected property target.
 '%s' is not a valid numeric value for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:130`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:136`
 <!-- generated:end DSH7135 -->
 
 **Cause.** _Not written yet._
@@ -1184,7 +1184,7 @@ Invalid reflected property target.
 '%s' is not a valid numeric value for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:141`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:147`
 <!-- generated:end DSH7136 -->
 
 **Cause.** _Not written yet._
@@ -1202,7 +1202,7 @@ Invalid reflected property target.
 Object property '%s' expects Path(...) or an absolute Unreal object path.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:163`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:169`
 <!-- generated:end DSH7137 -->
 
 **Cause.** _Not written yet._
@@ -1220,7 +1220,7 @@ Object property '%s' expects Path(...) or an absolute Unreal object path.
 Failed to load asset '%s' for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:178`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:184`
 <!-- generated:end DSH7138 -->
 
 **Cause.** _Not written yet._
@@ -1238,7 +1238,7 @@ Failed to load asset '%s' for '%s'.
 Asset '%s' is not compatible with '%s'. Expected '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:183`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:189`
 <!-- generated:end DSH7139 -->
 
 **Cause.** _Not written yet._
@@ -1256,7 +1256,7 @@ Asset '%s' is not compatible with '%s'. Expected '%s'.
 '%s' is not a valid enum value for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:197`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:203`
 <!-- generated:end DSH7140 -->
 
 **Cause.** _Not written yet._
@@ -1274,7 +1274,7 @@ Asset '%s' is not compatible with '%s'. Expected '%s'.
 '%s' is not a valid enum value for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:212`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:218`
 <!-- generated:end DSH7141 -->
 
 **Cause.** _Not written yet._
@@ -1292,7 +1292,7 @@ Asset '%s' is not compatible with '%s'. Expected '%s'.
 '%s' is not a valid byte value for '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:222`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:228`
 <!-- generated:end DSH7142 -->
 
 **Cause.** _Not written yet._
@@ -1310,7 +1310,7 @@ Asset '%s' is not compatible with '%s'. Expected '%s'.
 Property '%s' on '%s' is not a supported literal type yet.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:236`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:242`
 <!-- generated:end DSH7143 -->
 
 **Cause.** _Not written yet._
@@ -1328,7 +1328,7 @@ Property '%s' on '%s' is not a supported literal type yet.
 Invalid reflected property target.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:243`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialLiteralPropertyWriter.cpp:249`
 <!-- generated:end DSH7144 -->
 
 **Cause.** _Not written yet._

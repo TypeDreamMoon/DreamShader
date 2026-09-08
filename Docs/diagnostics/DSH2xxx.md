@@ -14,7 +14,7 @@
 Expected '{0}' near index {1}.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:23`, `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:81`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:23`, `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:82`
 <!-- generated:end DSH2001 -->
 
 **Cause.** a delimited region (`(` for a parameter list, `{` for a body) did not open where required
@@ -34,7 +34,7 @@ Expected '{0}' near index {1}.
 Expected identifier near index {0}.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:112`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:113`
 <!-- generated:end DSH2002 -->
 
 **Cause.** an identifier was expected — attribute key, section name, block name
@@ -54,7 +54,7 @@ Expected identifier near index {0}.
 Unterminated string literal.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:146`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:147`
 <!-- generated:end DSH2003 -->
 
 **Cause.** EOF reached inside a quoted attribute value
@@ -74,7 +74,7 @@ Unterminated string literal.
 Expected value near index {0}.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:169`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:170`
 <!-- generated:end DSH2004 -->
 
 **Cause.** an attribute key was followed by `=` and then nothing
@@ -94,7 +94,7 @@ Expected value near index {0}.
 Expected ',' or ')' near index {0}.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:222`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:223`
 <!-- generated:end DSH2005 -->
 
 **Cause.** malformed header attribute list
@@ -114,7 +114,7 @@ Expected ',' or ')' near index {0}.
 Expected '{{' near index {0}.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:239`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:240`
 <!-- generated:end DSH2006 -->
 
 **Cause.** a block body was expected
@@ -134,7 +134,7 @@ Expected '{{' near index {0}.
 Unterminated block.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:324`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:325`
 <!-- generated:end DSH2007 -->
 
 **Cause.** EOF reached before a `}` closed

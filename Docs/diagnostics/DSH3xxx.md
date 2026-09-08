@@ -494,7 +494,7 @@ VirtualFunction '{0}' must declare at least one output.
 Unknown shader section '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1805`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2150`
 <!-- generated:end DSH3060 -->
 
 **Cause.** a section other than `Properties` / `Settings` / `Outputs` / `Graph` / `Layout` / `Code`
@@ -514,7 +514,7 @@ Unknown shader section '{0}'.
 Unknown shader function section '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1864`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2209`
 <!-- generated:end DSH3061 -->
 
 **Cause.** a section name a `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` body does not accept
@@ -534,7 +534,7 @@ Unknown shader function section '{0}'.
 Unknown material function section '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1961`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2306`
 <!-- generated:end DSH3062 -->
 
 **Cause.** a section other than `Properties` / `Inputs` / `Outputs` / `Results` / `Settings` / `Graph` / `Layout` / `Code`
@@ -554,7 +554,7 @@ Unknown material function section '{0}'.
 Unknown VirtualFunction section '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2029`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2374`
 <!-- generated:end DSH3063 -->
 
 **Cause.** a section other than `Inputs` / `Properties` / `Outputs` / `Results` / `Options` / `Settings`
@@ -574,7 +574,7 @@ Unknown VirtualFunction section '{0}'.
 VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2024`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2369`
 <!-- generated:end DSH3064 -->
 
 **Cause.** a `Graph` or `Code` section inside `VirtualFunction`
@@ -594,7 +594,7 @@ VirtualFunction declares an existing MaterialFunction asset and does not support
 Shader graph sections now use Graph = { ... }. Function Code = { ... } is still supported.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1800`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2145`
 <!-- generated:end DSH3065 -->
 
 **Cause.** a `Code` section inside `Shader`
@@ -614,7 +614,7 @@ Shader graph sections now use Graph = { ... }. Function Code = { ... } is still 
 ShaderFunction, ShaderLayer, and ShaderLayerBlend graph sections now use Graph = { ... }. Function Code = { ... } is still supported.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1956`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2301`
 <!-- generated:end DSH3066 -->
 
 **Cause.** a `Code` section inside a material-function block
@@ -634,7 +634,7 @@ ShaderFunction, ShaderLayer, and ShaderLayerBlend graph sections now use Graph =
 Invalid typed declaration '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1167`, `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1177`, `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1664`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1167`, `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1177`, `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2009`
 <!-- generated:end DSH3070 -->
 
 **Cause.** the left side does not split into `<Type> <Name>`, or the name is not an identifier. **A tab between the type and the name fails here** — this splitter looks for a literal space
@@ -654,7 +654,7 @@ Invalid typed declaration '{0}'.
 Output binding target cannot be empty.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1196`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1247`
 <!-- generated:end DSH3080 -->
 
 **Cause.** the left side of a binding is empty
@@ -674,7 +674,7 @@ Output binding target cannot be empty.
 Output binding target '{0}' is empty.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1209`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1260`
 <!-- generated:end DSH3081 -->
 
 **Cause.** `Base.` with nothing after it
@@ -694,7 +694,7 @@ Output binding target '{0}' is empty.
 Output binding target '{0}' must start with Base. for material outputs or Expression(...) for output nodes.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1218`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1269`
 <!-- generated:end DSH3082 -->
 
 **Cause.** a binding target that is neither form
@@ -714,7 +714,7 @@ Output binding target '{0}' must start with Base. for material outputs or Expres
 Invalid output expression target '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1227`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1278`
 <!-- generated:end DSH3083 -->
 
 **Cause.** `Expression` was not followed by a balanced `( … )`
@@ -734,7 +734,7 @@ Invalid output expression target '{0}'.
 Unsupported output target '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1235`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1286`
 <!-- generated:end DSH3084 -->
 
 **Cause.** the text before `(` is not exactly `Expression`
@@ -754,7 +754,7 @@ Unsupported output target '{0}'.
 Expression output target '{0}' must select a pin with .Pin[index].
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1244`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1295`
 <!-- generated:end DSH3085 -->
 
 **Cause.** the text after `)` does not start with `.`
@@ -774,7 +774,7 @@ Expression output target '{0}' must select a pin with .Pin[index].
 Expression output target '{0}' must use .Pin[index] syntax.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1252`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1303`
 <!-- generated:end DSH3086 -->
 
 **Cause.** the suffix after `)` is not `Pin[ … ]`
@@ -794,7 +794,7 @@ Expression output target '{0}' must use .Pin[index] syntax.
 Expression output target '{0}' has an invalid pin index.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1260`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1311`
 <!-- generated:end DSH3087 -->
 
 **Cause.** the `.Pin[…]` index is not a non-negative integer
@@ -814,7 +814,7 @@ Expression output target '{0}' has an invalid pin index.
 Expression output target argument '{0}' must use Key=Value syntax.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1273`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1324`
 <!-- generated:end DSH3088 -->
 
 **Cause.** a positional argument inside `Expression( … )`
@@ -834,7 +834,7 @@ Expression output target argument '{0}' must use Key=Value syntax.
 Invalid expression output target argument '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1282`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1333`
 <!-- generated:end DSH3089 -->
 
 **Cause.** empty key or value inside `Expression( … )`
@@ -854,7 +854,7 @@ Invalid expression output target argument '{0}'.
 Expression output target argument '{0}' is declared more than once.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1289`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1340`
 <!-- generated:end DSH3090 -->
 
 **Cause.** duplicate argument key after normalization
@@ -874,7 +874,7 @@ Expression output target argument '{0}' is declared more than once.
 Expression output target '{0}' must specify Class=\\\"...\\\".
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1304`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1355`
 <!-- generated:end DSH3091 -->
 
 **Cause.** the `Expression( … )` argument list has no `Class`
@@ -894,7 +894,7 @@ Expression output target '{0}' must specify Class=\\\"...\\\".
 Invalid output declaration initializer '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1333`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1440`
 <!-- generated:end DSH3092 -->
 
 **Cause.** an initialized output declaration whose right-hand side is empty
@@ -914,7 +914,7 @@ Invalid output declaration initializer '{0}'.
 Invalid output binding '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1345`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1452`
 <!-- generated:end DSH3093 -->
 
 **Cause.** a binding statement whose right-hand side is empty
@@ -934,7 +934,7 @@ Invalid output binding '{0}'.
 Invalid Layout statement '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1382`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1727`
 <!-- generated:end DSH3100 -->
 
 **Cause.** the statement is not a balanced `Name( … )` call
@@ -954,7 +954,7 @@ Invalid Layout statement '{0}'.
 Unexpected text after Layout statement '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1389`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1734`
 <!-- generated:end DSH3101 -->
 
 **Cause.** text after the closing `)` of a `Layout` call
@@ -974,7 +974,7 @@ Unexpected text after Layout statement '{0}'.
 Invalid Layout statement name in '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1397`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1742`
 <!-- generated:end DSH3102 -->
 
 **Cause.** the call name is not a bare identifier
@@ -994,7 +994,7 @@ Invalid Layout statement name in '{0}'.
 Layout argument '{0}' must use Key=Value syntax.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1410`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1755`
 <!-- generated:end DSH3103 -->
 
 **Cause.** a positional argument in a `Layout` call
@@ -1014,7 +1014,7 @@ Layout argument '{0}' must use Key=Value syntax.
 Invalid Layout argument '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1419`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1764`
 <!-- generated:end DSH3104 -->
 
 **Cause.** empty key or empty value in a `Layout` call
@@ -1034,7 +1034,7 @@ Invalid Layout argument '{0}'.
 Layout argument '{0}' is declared more than once.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1426`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1771`
 <!-- generated:end DSH3105 -->
 
 **Cause.** duplicate argument key
@@ -1054,7 +1054,7 @@ Layout argument '{0}' is declared more than once.
 Layout argument '{0}' is required.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1446`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1791`
 <!-- generated:end DSH3106 -->
 
 **Cause.** a required argument is absent
@@ -1074,7 +1074,7 @@ Layout argument '{0}' is required.
 Layout argument '{0}' must be an integer.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1464`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1809`
 <!-- generated:end DSH3107 -->
 
 **Cause.** `X` / `Y` / `W` / `H` is not an integer
@@ -1094,7 +1094,7 @@ Layout argument '{0}' must be an integer.
 Invalid Layout Node statement '{0}'. {1}
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1498`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1843`
 <!-- generated:end DSH3108 -->
 
 **Cause.** a `Node( … )` call failed argument validation
@@ -1114,7 +1114,7 @@ Invalid Layout Node statement '{0}'. {1}
 Invalid Layout Comment statement '{0}'. {1}
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1517`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1862`
 <!-- generated:end DSH3109 -->
 
 **Cause.** a `Comment( … )` call failed argument validation
@@ -1134,7 +1134,7 @@ Invalid Layout Comment statement '{0}'. {1}
 Layout Comment Color must be a float4 literal in '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1527`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1872`
 <!-- generated:end DSH3110 -->
 
 **Cause.** `Color=` is not a four-component literal
@@ -1154,7 +1154,7 @@ Layout Comment Color must be a float4 literal in '{0}'.
 Unknown Layout statement '{0}'.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1537`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1882`
 <!-- generated:end DSH3111 -->
 
 **Cause.** a call other than `Node` or `Comment`
@@ -1174,7 +1174,7 @@ Unknown Layout statement '{0}'.
 Graph #Region on line {0} must include a name.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1593`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1938`
 <!-- generated:end DSH3120 -->
 
 **Cause.** `#Region` with a blank name
@@ -1194,7 +1194,7 @@ Graph #Region on line {0} must include a name.
 Graph #EndRegion on line {0} has no matching #Region.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1605`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1950`
 <!-- generated:end DSH3121 -->
 
 **Cause.** an unbalanced `#EndRegion`
@@ -1214,7 +1214,7 @@ Graph #EndRegion on line {0} has no matching #Region.
 Graph #Region '{0}' is missing #EndRegion.
 ```
 
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1630`
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1975`
 <!-- generated:end DSH3122 -->
 
 **Cause.** a region left open at the end of the `Graph` body; the innermost open region is reported
@@ -1231,7 +1231,7 @@ Graph #Region '{0}' is missing #EndRegion.
 **Message**
 
 ```
-Unexpected '{{' in Properties near '{0}'. Only Group(\"Name\") {{ ... }} may open a brace here.
+Unexpected '`{' in Properties near '{0}'. Only Group(\"Name\") `{ ... `} may open a brace here.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1027`
@@ -1271,7 +1271,7 @@ Group(...) requires a non-empty name.
 **Message**
 
 ```
-Unterminated Group(\"{0}\") {{ ... }} block.
+Unterminated Group(\"{0}\") `{ ... `} block.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1085`
@@ -1282,4 +1282,104 @@ Unterminated Group(\"{0}\") {{ ... }} block.
 **Fix.** balance the braces
 
 **See** [Properties](../language/properties.md)
+
+## DSH3133
+
+<!-- generated:begin DSH3133 -->
+**Severity** error
+
+**Message**
+
+```
+Unexpected brace block in Outputs near '{0}'. Only Expression(Class=\"...\") opens a brace block here; every other Outputs statement ends with ';'.
+```
+
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1481`
+<!-- generated:end DSH3133 -->
+
+**Cause.** a `{` at statement level inside `Outputs` that is not preceded by an `Expression( ... )` head. A `.Pin[i]` suffix counts as "not a head": the pin selector belongs to the statement form, and the block form writes its pins one per line inside the braces
+
+**Fix.** open the block with the bare call -- `Expression(Class="...", ...) { ... }` -- or end the preceding statement with `;` and delete the brace
+
+**See** [Output bindings](../language/output-bindings.md#block-form)
+
+## DSH3134
+
+<!-- generated:begin DSH3134 -->
+**Severity** error
+
+**Message**
+
+```
+Unterminated Expression(...) block in Outputs after '{0}'.
+```
+
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1682`
+<!-- generated:end DSH3134 -->
+
+**Cause.** the `}` closing an `Expression( ... ) { ... }` block is missing. In practice an unbalanced brace is caught first by the enclosing `Shader` block, which reports an unterminated block instead; this code is the guard that keeps the `Outputs` scanner from slicing a range it never found
+
+**Fix.** close the block
+
+**See** [Output bindings](../language/output-bindings.md#block-form)
+
+## DSH3135
+
+<!-- generated:begin DSH3135 -->
+**Severity** error
+
+**Message**
+
+```
+Invalid statement '{0}' inside an Expression(...) block. Only Pin[index] = <source>; is allowed there.
+```
+
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1511`
+<!-- generated:end DSH3135 -->
+
+**Cause.** a statement inside an `Expression( ... ) { ... }` block that is not `Pin[index] = <source>;`. Output declarations, `Base.` bindings and nested blocks all belong outside the braces; only the pin bindings of that one node live inside
+
+**Fix.** move the statement out of the block, or rewrite it as `Pin[index] = <source>;`. A block may hold comments and blank lines freely
+
+**See** [Output bindings](../language/output-bindings.md#block-form)
+
+## DSH3136
+
+<!-- generated:begin DSH3136 -->
+**Severity** error
+
+**Message**
+
+```
+The Expression(...) block for '{0}' binds no pin. Write at least one Pin[index] = <source>; inside it, or delete the block.
+```
+
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1536`
+<!-- generated:end DSH3136 -->
+
+**Cause.** an `Expression( ... ) { }` block with no `Pin[index]` statement in it. Such a block would create nothing at all -- the node is materialized by its bindings, so a block with no binding is silently a no-op, which is exactly the class of mistake the block form exists to prevent
+
+**Fix.** bind at least one pin, or delete the block
+
+**See** [Output bindings](../language/output-bindings.md#block-form)
+
+## DSH3137
+
+<!-- generated:begin DSH3137 -->
+**Severity** error
+
+**Message**
+
+```
+Output target pin '{0}' is bound more than once: first to '{1}', then to '{2}'. An Expression(...) block and an Expression(...).Pin[i] statement that share a class and argument list describe one node, so their pins share one namespace.
+```
+
+**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1404`
+<!-- generated:end DSH3137 -->
+
+**Cause.** the same input pin of the same terminal node was bound twice. Identity is the node reuse key -- the resolved class plus the sorted argument list -- so the two bindings need not look alike: one may sit in a block and the other in a loose `Expression( ... ).Pin[i] = x;` statement, and they may even live in two different `Outputs` sections. Two `Expression( ... )` specifications whose argument lists differ are two nodes, each with its own `Pin[0]`; that is not a double bind
+
+**Fix.** delete one of the two bindings, or point the second at a different pin. If the two were meant to be different nodes, give them different argument lists -- but note that a `UMaterialExpressionCustomOutput` is normally meant to exist once per material
+
+**See** [Output bindings](../language/output-bindings.md#each-pin-once), [Node reuse](../graph/node-reuse.md)
 

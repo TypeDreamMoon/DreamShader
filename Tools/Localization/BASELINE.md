@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-480
+548
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -45,9 +45,11 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Decompiler.Service | NoAssetProvided | No asset was provided. |
 | DreamShader.Decompiler.Service | UnsupportedAssetType | DreamShader decompile supports Material and MaterialFunction assets only: {0} |
 | DreamShader.Generator | BuildingMaterialGraph | Building material graph for '{0}'... |
+| DreamShader.Generator | BuildingThinCustomGraph | Building the base material graph for '{0}'... |
 | DreamShader.Generator | ClearingOldFunctionGraph | Clearing old function graph '{0}'... |
 | DreamShader.Generator | CompilingDreamShaderSource | Compiling DreamShader source '{0}'... |
 | DreamShader.Generator | CompilingMaterial | Compiling material '{0}'... |
+| DreamShader.Generator | CompilingThinCustomShaders | Compiling shaders for '{0}'... |
 | DreamShader.Generator | ConnectingFunctionOutputs | Connecting outputs for '{0}'... |
 | DreamShader.Generator | ConnectingMaterialOutputs | Connecting material outputs for '{0}'... |
 | DreamShader.Generator | CreatingFunctionGraphNodes | Creating Graph nodes for '{0}'... |
@@ -60,6 +62,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Generator | GeneratingDreamShaderMaterial | Generating DreamShader material '{0}'... |
 | DreamShader.Generator | GeneratingDreamShaderMaterialFromSource | Generating DreamShader material from '{0}'... |
 | DreamShader.Generator | GeneratingThinCustomMaterial | Generating thin-custom material for '{0}'... |
+| DreamShader.Generator | GeneratingThinCustomStages | Emitting thin-custom material '{0}'... |
 | DreamShader.Generator | LayingOutFunction | Laying out '{0}'... |
 | DreamShader.Generator | LayingOutMaterialGraph | Laying out material graph '{0}'... |
 | DreamShader.Generator | ParsingDreamShaderSource | Parsing DreamShader source '{0}'... |
@@ -68,6 +71,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Generator | ParsingMaterialSource | Parsing material source '{0}'... |
 | DreamShader.Generator | PreparingDreamShaderGeneratedAssets | Preparing DreamShader generated assets... |
 | DreamShader.Generator | PreparingMaterialAsset | Preparing material asset '{0}'... |
+| DreamShader.Generator | ProgressStageGraph | Step 1 of 2, building the graph: {0} |
+| DreamShader.Generator | ProgressStageShaders | Step 2 of 2, compiling shaders (this can take minutes): {0} |
 | DreamShader.Generator | ReadingDreamShaderSource | Reading DreamShader source '{0}'... |
 | DreamShader.Generator | ReadingMaterialSource | Reading material source '{0}'... |
 | DreamShader.Generator | SavingFunction | Saving '{0}'... |
@@ -111,16 +116,19 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser.Scanner | ExpectedValueNearIndexD | Expected value near index {0}. |
 | DreamShader.Parser.Scanner | InvalidTextureAssetPathS | Invalid texture asset path '{0}'. |
 | DreamShader.Parser.Scanner | RelativeTexturePathReferencesRequireA | Relative texture Path(...) references require a root such as Game, Engine, or Plugin.PluginName. |
-| DreamShader.Parser.Scanner | TextureDefaultsMustUsePath | Texture defaults must use Path(Game\|Engine\|Plugin.PluginName, \"/Folder/Asset\"), Path(\"/Game/Folder/Asset\"), or a bare \"/Game/Folder/Asset\". |
+| DreamShader.Parser.Scanner | TextureDefaultsMustUsePath | Texture defaults must use Path(Game\|Engine\|Plugin.PluginName, \"Folder/Asset\"), Path(\"/Game/Folder/Asset\"), a bare \"/Game/Folder/Asset\", or a Class'/Game/Folder/Asset.Asset' reference. |
 | DreamShader.Parser.Scanner | TexturePathRequiresANonEmpty | Texture Path(...) requires a non-empty asset path. |
 | DreamShader.Parser.Scanner | TexturePathRootSHasAn | Texture Path root '{0}' has an invalid plugin name. |
 | DreamShader.Parser.Scanner | TexturePathRootSReferencesPlugin | Texture Path root '{0}' references plugin '{1}', but no enabled plugin with that name was found. |
 | DreamShader.Parser.Scanner | TexturePathRootSReferencesPlugin2 | Texture Path root '{0}' references plugin '{1}', but the plugin is not enabled. |
 | DreamShader.Parser.Scanner | TexturePathRootSReferencesPlugin3 | Texture Path root '{0}' references plugin '{1}', but the plugin cannot contain content. |
+| DreamShader.Parser.Scanner | TextureReferenceClassNotATexture | Asset reference is written as '{0}', which is not a texture class; a texture default requires {1}. |
+| DreamShader.Parser.Scanner | TextureReferenceClassWrongDimension | Asset reference is written as '{0}', but this property is declared as {1}. |
 | DreamShader.Parser.Scanner | UnexpectedTrailingTokensAfterTexturePath | Unexpected trailing tokens after texture Path(...) reference. |
 | DreamShader.Parser.Scanner | UnsupportedTexturePathRootSUse | Unsupported texture Path root '{0}'. Use Game, Engine, or Plugin.PluginName. |
 | DreamShader.Parser.Scanner | UnterminatedBlock | Unterminated block. |
 | DreamShader.Parser.Scanner | UnterminatedStringLiteral | Unterminated string literal. |
+| DreamShader.Parser.Sections | ExpressionBlockBindsNoPin | The Expression(...) block for '{0}' binds no pin. Write at least one Pin[index] = <source>; inside it, or delete the block. |
 | DreamShader.Parser.Sections | ExpressionOutputTargetArgumentSIs | Expression output target argument '{0}' is declared more than once. |
 | DreamShader.Parser.Sections | ExpressionOutputTargetArgumentSMust | Expression output target argument '{0}' must use Key=Value syntax. |
 | DreamShader.Parser.Sections | ExpressionOutputTargetSHasAn | Expression output target '{0}' has an invalid pin index. |
@@ -147,6 +155,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser.Sections | InvalidScalarDefaultValueSFor | Invalid scalar default value '{0}' for property '{1}'. |
 | DreamShader.Parser.Sections | InvalidScalarDefaultValueSFor2 | Invalid scalar default value '{0}' for property '{1}'. |
 | DreamShader.Parser.Sections | InvalidSettingDeclarationS | Invalid setting declaration '{0}'. |
+| DreamShader.Parser.Sections | InvalidStatementInExpressionBlock | Invalid statement '{0}' inside an Expression(...) block. Only Pin[index] = <source>; is allowed there. |
 | DreamShader.Parser.Sections | InvalidTextureDefaultValueSFor | Invalid texture default value '{0}' for property '{1}'. {2} |
 | DreamShader.Parser.Sections | InvalidTextureDefaultValueSFor2 | Invalid texture default value '{0}' for property '{1}'. {2} |
 | DreamShader.Parser.Sections | InvalidTextureSampleDefaultValueS | Invalid texture sample default value '{0}' for property '{1}'. {2} |
@@ -175,14 +184,16 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser.Sections | OutputBindingTargetCannotBeEmpty | Output binding target cannot be empty. |
 | DreamShader.Parser.Sections | OutputBindingTargetSIsEmpty | Output binding target '{0}' is empty. |
 | DreamShader.Parser.Sections | OutputBindingTargetSMustStart | Output binding target '{0}' must start with Base. for material outputs or Expression(...) for output nodes. |
+| DreamShader.Parser.Sections | OutputTargetPinBoundMoreThanOnce | Output target pin '{0}' is bound more than once: first to '{1}', then to '{2}'. An Expression(...) block and an Expression(...).Pin[i] statement that share a class and argument list describe one node, so their pins share one namespace. |
 | DreamShader.Parser.Sections | ParameterNodeTypeSIsRecognized | Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\"float4\\\", ...) for reflected node creation. |
 | DreamShader.Parser.Sections | ShaderGraphCodeDeprecated | Shader graph sections now use Graph = { ... }. Function Code = { ... } is still supported. |
 | DreamShader.Parser.Sections | UEBuiltinArgumentSIsDeclared | UE builtin argument '{0}' is declared more than once in '{1}'. |
 | DreamShader.Parser.Sections | UEBuiltinArgumentSMustUse | UE builtin argument '{0}' must use named syntax like Key=Value in '{1}'. |
 | DreamShader.Parser.Sections | UEBuiltinPropertyDeclarationsMustSpecify | UE builtin property declarations must specify a function name, for example UE.TexCoord UV. |
 | DreamShader.Parser.Sections | UEBuiltinPropertySDoesNot | UE builtin property '{0}' does not support inline defaults. Put arguments inside UE.{1}(...). |
+| DreamShader.Parser.Sections | UnexpectedBraceBlockInOutputs | Unexpected brace block in Outputs near '{0}'. Only Expression(Class=\"...\") opens a brace block here; every other Outputs statement ends with ';'. |
 | DreamShader.Parser.Sections | UnexpectedCharactersAfterUEBuiltinArgument | Unexpected characters after UE builtin argument list in '{0}'. |
-| DreamShader.Parser.Sections | UnexpectedInPropertiesNearSOnly | Unexpected '{{' in Properties near '{0}'. Only Group(\"Name\") {{ ... }} may open a brace here. |
+| DreamShader.Parser.Sections | UnexpectedInPropertiesNearSOnly | Unexpected '`{' in Properties near '{0}'. Only Group(\"Name\") `{ ... `} may open a brace here. |
 | DreamShader.Parser.Sections | UnexpectedTextAfterLayoutStatementS | Unexpected text after Layout statement '{0}'. |
 | DreamShader.Parser.Sections | UnknownLayoutStatementS | Unknown Layout statement '{0}'. |
 | DreamShader.Parser.Sections | UnknownMaterialFunctionSectionS | Unknown material function section '{0}'. |
@@ -192,8 +203,41 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser.Sections | UnsupportedOutputTargetS | Unsupported output target '{0}'. |
 | DreamShader.Parser.Sections | UnsupportedPropertyTypeS | Unsupported property type '{0}'. |
 | DreamShader.Parser.Sections | UnsupportedUEBuiltinFunctionSUse | Unsupported UE builtin function '{0}'. Use OutputType=\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\" for generic MaterialExpression calls. |
-| DreamShader.Parser.Sections | UnterminatedGroupBlock | Unterminated Group(\"{0}\") {{ ... }} block. |
+| DreamShader.Parser.Sections | UnterminatedGroupBlock | Unterminated Group(\"{0}\") `{ ... `} block. |
+| DreamShader.Parser.Sections | UnterminatedOutputsExpressionBlock | Unterminated Expression(...) block in Outputs after '{0}'. |
 | DreamShader.Parser.Sections | VirtualFunctionNoGraphOrCode | VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections. |
+| DreamShader.Preprocessor | BranchAfterElse | {0}({1}): '#{2}' after the '#else' on line {3}, which already closed this chain. |
+| DreamShader.Preprocessor | ConditionalNestingTooDeep | {0}({1}): '#{2}' nesting is deeper than the limit of {3}. |
+| DreamShader.Preprocessor | InvalidDefineName | {0}({1}): '#{2}' needs a name made of letters, digits and underscores and not starting with a digit; got '{3}'. |
+| DreamShader.Preprocessor | InvalidDefineNameOnDefinition | {0}({1}): '#{2}' needs a name made of letters, digits and underscores and not starting with a digit; got '{3}'. |
+| DreamShader.Preprocessor | MissingDefineNameOperand | {0}({1}): '#{2}' requires a define name. |
+| DreamShader.Preprocessor | ReservedDefineName | {0}({1}): '{3}' is a read-only built-in constant, so '#{2}' cannot change it. The 'DS_' prefix is reserved by DreamShader. |
+| DreamShader.Preprocessor | StrayConditionalBranch | {0}({1}): '#{2}' without a matching '#if'. |
+| DreamShader.Preprocessor | StrayEndif | {0}({1}): '#endif' without a matching '#if'. |
+| DreamShader.Preprocessor | UnknownDirectiveSuggestCase | Preprocessor directives are lowercase: write '#{0}'. |
+| DreamShader.Preprocessor | UnknownDirectiveSuggestImport | '#include' is HLSL: it is recognized inside a Function body and nowhere else. At the declaration level, use import \"...\" instead. |
+| DreamShader.Preprocessor | UnknownDirectiveSuggestList | A '#' line must be #if, #ifdef, #ifndef, #elif, #else, #endif, #define or #undef, or one of the parser's #Region / #EndRegion. |
+| DreamShader.Preprocessor | UnknownDirectiveSuggestNearest | Did you mean '#{0}'? |
+| DreamShader.Preprocessor | UnknownPreprocessorDirective | {0}({1}): unknown preprocessor directive '#{2}'. {3} |
+| DreamShader.Preprocessor | UnterminatedConditional | {0}({1}): this '#if' is never closed; the file ends with {2} conditional block(s) still open. |
+| DreamShader.Preprocessor.Expression | BadIntegerLiteral | '{0}' is not a valid integer literal (decimal, or 0x hexadecimal). |
+| DreamShader.Preprocessor.Expression | ConditionDivideByZero | {0}({1}): the right operand of '{2}' in this '{3}' condition is zero. |
+| DreamShader.Preprocessor.Expression | ConditionTypeMismatch | {0}({1}): type mismatch in '{2}' condition: {3} |
+| DreamShader.Preprocessor.Expression | DefinedExpectedCloseParenthesis | expected ')' to close 'defined({0})' but found {1}. |
+| DreamShader.Preprocessor.Expression | DefinedNeedsName | 'defined' needs a define name, but found {0}. |
+| DreamShader.Preprocessor.Expression | ExpectedCloseParenthesis | expected ')' but found {0}. |
+| DreamShader.Preprocessor.Expression | InvalidConditionExpression | {0}({1}): invalid '{2}' condition: {3} |
+| DreamShader.Preprocessor.Expression | MissingConditionExpression | {0}({1}): '{2}' requires a condition expression. |
+| DreamShader.Preprocessor.Expression | MixedEqualityOperands | '{0}' cannot compare a string with a number. |
+| DreamShader.Preprocessor.Expression | StringAsCondition | a condition must be a number, but this one is the string \"{0}\". Compare it with '==' instead. |
+| DreamShader.Preprocessor.Expression | StringAsTruthValue | '{0}' needs a number, but one operand is the string \"{1}\". |
+| DreamShader.Preprocessor.Expression | StringInNumericOperator | '{0}' is only defined for numbers, but one operand is the string \"{1}\". Strings compare only with '==' and '!='. |
+| DreamShader.Preprocessor.Expression | TokenEndOfCondition | the end of the condition |
+| DreamShader.Preprocessor.Expression | TokenSpelling | '{0}' |
+| DreamShader.Preprocessor.Expression | TrailingTokensAfterDirective | {0}({1}): '{2}' is already complete before '{3}'. Nothing may follow a directive but a '//' comment. |
+| DreamShader.Preprocessor.Expression | UnexpectedCharacter | unexpected character '{0}'. |
+| DreamShader.Preprocessor.Expression | UnexpectedTokenInCondition | unexpected {0}. |
+| DreamShader.Preprocessor.Expression | UnterminatedConditionString | unterminated string literal. |
 | DreamShader.Preview | CompiledPreviewMaterial | Compiled preview material for {0}. |
 | DreamShader.Preview | CompiledPreviewMaterialWithDetails | Compiled preview material for {0}. {1} |
 | DreamShader.Preview | GeneratedMaterialCouldNotBeLoaded | Generated material '{0}' could not be loaded. |
@@ -208,12 +252,14 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditor.Settings | SectionDescription | Dream Shader Settings |
 | DreamShaderEditor.Settings | SectionText | Dream Shader |
 | DreamShaderEditorBridge | DreamShaderAdoptBackupFailed | Could not back up '{0}' to '{1}'; nothing was written. |
+| DreamShaderEditorBridge | DreamShaderAdoptConditionalSource | DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch that was taken -- adopting it would write that one branch back over the file and delete the rest. Move the change into the matching branch of the source by hand, or use DreamShader > Detach first if this asset should stop being generated from it. |
 | DreamShaderEditorBridge | DreamShaderAdoptConfirm | Rewrite '{0}' from the current contents of '{1}'?\n\nThe existing source is copied to '{2}' first. The rewritten file is the decompiler's own form, so hand-written comments, imports and formatting in it are replaced. |
 | DreamShaderEditorBridge | DreamShaderAdoptInstanceNoBase | '{0}' has no base material to decompile. |
 | DreamShaderEditorBridge | DreamShaderAdoptInstanceOverrides | '{0}' has parameter overrides set on the generated instance, and those cannot be written back into '{1}' -- adopting would drop them. Move the values into the source as Properties defaults (or override them on a child material instance instead), then Revert. |
 | DreamShaderEditorBridge | DreamShaderAdoptLabel | Adopt Into Source |
 | DreamShaderEditorBridge | DreamShaderAdoptMultiAsset | '{0}' declares {1} assets, so adopting one of them would overwrite the others. Use DreamShader > Export DSM and merge the result by hand. |
 | DreamShaderEditorBridge | DreamShaderAdoptResult | Adopted '{0}' into '{1}' (backup: '{2}'). {3} |
+| DreamShaderEditorBridge | DreamShaderAdoptSourceUnreadable | Could not read '{0}'. |
 | DreamShaderEditorBridge | DreamShaderAdoptTooltip | Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it. |
 | DreamShaderEditorBridge | DreamShaderCleanGeneratedShadersLabel | Clean Generated Shaders |
 | DreamShaderEditorBridge | DreamShaderCleanGeneratedShadersTooltip | Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile. |
@@ -240,6 +286,23 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderDetachNotGenerated | '{0}' is not a DreamShader-generated asset. |
 | DreamShaderEditorBridge | DreamShaderDetachResult | '{0}' is no longer managed by DreamShader. Save it to keep the change. |
 | DreamShaderEditorBridge | DreamShaderDetachTooltip | Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset. |
+| DreamShaderEditorBridge | DreamShaderDivergenceAdopt | Adopt Into Source |
+| DreamShaderEditorBridge | DreamShaderDivergenceAdoptTip | Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it. |
+| DreamShaderEditorBridge | DreamShaderDivergenceDetach | Detach |
+| DreamShaderEditorBridge | DreamShaderDivergenceDetachTip | Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset. |
+| DreamShaderEditorBridge | DreamShaderDivergenceDismiss | Dismiss |
+| DreamShaderEditorBridge | DreamShaderDivergenceDismissTip | Leave the asset alone for now. The refusal stays in the log, in the diagnostics, and in the Material Content Browser. |
+| DreamShaderEditorBridge | DreamShaderDivergenceOpenBrowser | Open Material Browser |
+| DreamShaderEditorBridge | DreamShaderDivergenceOpenBrowserTip | Open the DreamShader Material Content Browser, which lists every source and the state of the asset it generated. |
+| DreamShaderEditorBridge | DreamShaderDivergenceRevert | Revert to Source |
+| DreamShaderEditorBridge | DreamShaderDivergenceRevertTip | Discard the hand edits and rebuild this asset from its DreamShader source. The source file is not modified. |
+| DreamShaderEditorBridge | DreamShaderDivergenceShowInMemory | Show In-Memory Materials |
+| DreamShaderEditorBridge | DreamShaderDivergenceShowInMemoryTip | This asset lives only in memory and is currently hidden. Show memory-only DreamShader materials in the Content Browser so you can find and inspect it. |
+| DreamShaderEditorBridge | DreamShaderDivergenceSubText | Rebuilding it from {0} would destroy those edits. Decide which copy is right. |
+| DreamShaderEditorBridge | DreamShaderDivergenceSummary | {0} generated assets were edited by hand and were not rebuilt. |
+| DreamShaderEditorBridge | DreamShaderDivergenceSummaryDismiss | Dismiss |
+| DreamShaderEditorBridge | DreamShaderDivergenceSummaryDismissTip | Leave them alone for now. Every refusal is in the log and in the diagnostics. |
+| DreamShaderEditorBridge | DreamShaderDivergenceTitle | '{0}' was edited by hand, so it was not rebuilt. |
 | DreamShaderEditorBridge | DreamShaderExportFunctionDSFLabel | Export DSF |
 | DreamShaderEditorBridge | DreamShaderExportFunctionDSFTooltip | Export this Material Function graph to a DreamShader .dsf source file. |
 | DreamShaderEditorBridge | DreamShaderExportFunctionNoAsset | DreamShader could not find the selected Material Function. |
@@ -266,22 +329,24 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderOpenVirtualFunctionNoAsset | DreamShader could not find the selected Material Function. |
 | DreamShaderEditorBridge | DreamShaderOpenVirtualFunctionTooltip | Open the existing DreamShader VirtualFunction definition in VSCode. |
 | DreamShaderEditorBridge | DreamShaderOpenWorkspaceLabel | Open Dream Shader Workspace (VSCode) |
-| DreamShaderEditorBridge | DreamShaderOpenWorkspaceToolbarLabel | Open Dream Shader Workspace (VSCode) |
+| DreamShaderEditorBridge | DreamShaderOpenWorkspaceSharedLabel | DreamShader Workspace |
 | DreamShaderEditorBridge | DreamShaderOpenWorkspaceToolbarTooltip | Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable. |
 | DreamShaderEditorBridge | DreamShaderOpenWorkspaceTooltip | Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable. |
 | DreamShaderEditorBridge | DreamShaderProvenanceActionsSection | Generated Asset |
 | DreamShaderEditorBridge | DreamShaderProvenanceNoAsset | DreamShader could not find the selected asset. |
 | DreamShaderEditorBridge | DreamShaderRecompileLabel | Recompile DSM |
-| DreamShaderEditorBridge | DreamShaderRecompileToolbarLabel | DSM |
-| DreamShaderEditorBridge | DreamShaderRecompileToolbarTooltip | Recompile all DreamShader .dsm and .dsf source files. |
-| DreamShaderEditorBridge | DreamShaderRecompileTooltip | Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. |
+| DreamShaderEditorBridge | DreamShaderRecompileSharedLabel | Recompile DSM |
+| DreamShaderEditorBridge | DreamShaderRecompileSharedTooltip | Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first. |
+| DreamShaderEditorBridge | DreamShaderRecompileTooltip | Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first. |
 | DreamShaderEditorBridge | DreamShaderRevertConfirm | Rebuild '{0}' from '{1}'?\n\nEvery hand edit in the asset is discarded. The source file is not modified. |
 | DreamShaderEditorBridge | DreamShaderRevertDivergedLabel | Revert to Source (discards your edits) |
 | DreamShaderEditorBridge | DreamShaderRevertLabel | Revert to Source |
 | DreamShaderEditorBridge | DreamShaderRevertTooltip | Rebuild this asset from the DreamShader source it was generated from, discarding every hand edit in it. The source file is not modified. |
+| DreamShaderEditorBridge | DreamShaderSharedSectionLabel | DreamShader |
 | DreamShaderEditorBridge | DreamShaderToggleShowInMemoryMaterialsLabel | Show In-Memory Materials |
 | DreamShaderEditorBridge | DreamShaderToggleShowInMemoryMaterialsTooltip | Show memory-only ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials and are always visible, so this toggle does not affect them. While shown, an explicit Save on one would persist it to disk (the shadow warning and Clean command cover recovery). |
 | DreamShaderEditorBridge | DreamShaderVirtualFunctionActionsSection | VirtualFunction |
+| DreamShaderEditorBridge | DreamToolsComboLabel | Dream |
 | DreamShaderEditorBridge | MaterialCompileErrorHeader | [{0} / {1}] {2} |
 | DreamShaderMaterialBrowser | AdoptBtn | Adopt Into Source |
 | DreamShaderMaterialBrowser | AdoptReadOnlyTip | This asset's source ships with a plugin and is read-only; adopt is not available. |
@@ -417,12 +482,14 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | ProvenanceExplainDiverged | The asset was edited by hand since it was generated, so a rebuild is refused to protect those edits. Decide which copy is the truth. |
 | DreamShaderMaterialBrowser | ProvenanceExplainForeign | Not generated by DreamShader. Export it to a source file to bring it under DreamShader's management. |
 | DreamShaderMaterialBrowser | ProvenanceExplainGenerated | The asset holds exactly what DreamShader last generated into it. A source change rebuilds it freely. |
+| DreamShaderMaterialBrowser | ProvenanceExplainTweaked | The generated content still matches, and you have set parameter overrides on the instance. Rebuilds go ahead as normal and put your values back; a parameter the source no longer declares is dropped and named in the log. |
 | DreamShaderMaterialBrowser | ProvenanceExplainUnstamped | Generated by DreamShader, but carrying no digest this version can compare. The next rebuild restamps it. |
 | DreamShaderMaterialBrowser | ProvenanceForeign | not generated by DreamShader |
 | DreamShaderMaterialBrowser | ProvenanceGenerated | generated (matches the last build) |
 | DreamShaderMaterialBrowser | ProvenanceHeader | Provenance |
 | DreamShaderMaterialBrowser | ProvenanceRow | Provenance |
-| DreamShaderMaterialBrowser | ProvenanceTip | Whether the asset still holds what DreamShader last generated into it. A hand-edited asset refuses to rebuild until you choose Revert, Adopt or Detach from its Content Browser context menu. |
+| DreamShaderMaterialBrowser | ProvenanceTip | Whether the asset still holds what DreamShader last generated into it. A hand-edited asset refuses to rebuild until you choose Revert, Adopt or Detach from its Content Browser context menu. Parameter overrides on a generated instance are not a hand edit: they read as 'tweaked' and survive a rebuild. |
+| DreamShaderMaterialBrowser | ProvenanceTweaked | generated, with parameter overrides on the instance |
 | DreamShaderMaterialBrowser | ProvenanceUnstamped | generated (no comparable digest) |
 | DreamShaderMaterialBrowser | QFDiverged | Edited by hand |
 | DreamShaderMaterialBrowser | QFDivergedTip | Generated assets that no longer match what DreamShader last wrote into them. |
@@ -488,6 +555,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderTests | WireUtils.Ordered | Unsupported swizzle {0} at line {1}. |
 | DreamShaderTests | WireUtils.Outer | outer [{0}] end |
 | DreamShaderTests | WireUtils.Plain | Generation aborted. |
+| DreamShaderVirtualFunctionSyncService | ConditionalSourceNotSynced | DSH9001: '{0}' uses conditional compilation, and VirtualFunction sync rewrites a source in place at byte offsets taken from the file as written -- it cannot tell which of your branches a definition belongs to, and refuses rather than risk writing one branch over the others. Refresh these definitions by moving them into a source without directives, or edit them by hand. |
 | DreamShaderVirtualFunctionSyncService | InvalidAssetReference | VirtualFunction '{0}' asset reference is invalid: {1} |
 | DreamShaderVirtualFunctionSyncService | InvalidDeclaration | VirtualFunction declaration is invalid: {0} |
 | DreamShaderVirtualFunctionSyncService | MissingClosingBrace | VirtualFunction body is missing a closing '}'. |
@@ -498,10 +566,9 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderVirtualFunctionSyncService | UpdateSourceFileFailed | DreamShader failed to update VirtualFunction source file '{0}'. |
 
 ## Deferred diagnostics inventory
-Deferred files: 48
+Deferred files: 51
 Runtime FText::FromString/FText::FromName / FString::Printf literal call sites in deferred diagnostics: 0
 Use -IncludeDeferred to lint MaterialAssetGeneration/ and Decompiler/ in the next phase.
 
 ## Auto-gathered metadata
 Unreal will add any auto-gathered UPROPERTY metadata (for example DisplayName and ToolTip) on top of this compile-time baseline. This file intentionally counts only LOCTEXT/NSLOCTEXT entries.
-

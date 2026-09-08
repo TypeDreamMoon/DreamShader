@@ -1,6 +1,6 @@
 # DreamShader ChangeLog
 
-## 1.9.0 - unreleased
+## 1.9.0 - 2026-09-08
 
 ### Added
 
@@ -107,6 +107,202 @@
   `#define PP_SUM 1 + 1` is the five-character string `1 + 1` and not the integer `2`. Documented in
   [Docs/language/preprocessor.md](Docs/language/preprocessor.md).
 
+- **A block form for `Outputs` expression targets: `Expression(Class="…", …) { Pin[0] = a; Pin[1] = b; }`.**
+  A node with output pins can be given a name and reused; a *terminal* node — `VolumetricAdvancedMaterialOutput`,
+  `ThinTranslucentMaterialOutput`, `RuntimeVirtualTextureOutput`, any `UMaterialExpressionCustomOutput` —
+  has no output at all, so it can never be a value in the language and could only be described by
+  re-stating the whole node once per pin: `Expression(Class=…, sevenProperties…).Pin[0] = x;` and
+  again for `.Pin[1]`, and again. That would merely be verbose if the repetition were decorative, but
+  the specification *is* the identity: output-target nodes are de-duplicated by class plus sorted
+  argument list, so **one mistyped or forgotten argument on one of the lines silently produced a
+  second node**, with the pins split across the two and no diagnostic anywhere. A seven-pin volumetric
+  cloud output meant seven copies of the same argument list, each of which had to stay byte-identical
+  by hand. `#define` was no escape: DreamShader's preprocessor evaluates defines for `#if` and never
+  substitutes them into the source text.
+
+  The block writes the specification once. It is lowered **in the parser** to one ordinary binding per
+  `Pin[i]`, each carrying the class and argument map computed from the single shared head, so every
+  lowered binding is byte-identical where identity is measured and the existing node cache collapses
+  them onto one node. The generator is untouched: the one-node guarantee is a property of the lowering,
+  not a new code path, and the block form and the statement form are indistinguishable downstream —
+  same class resolution, same reflected-argument writes, same pin-index checks, same diagnostics. The
+  two forms therefore mix freely: a block and a loose `Expression( … ).Pin[i] = x;` that agree on class
+  and arguments fill different pins of the *same* node.
+
+  `Expression( … ) { … }` is now the only construct that may open a brace inside `Outputs`, exactly as
+  `Group("Name") { … }` is inside `Properties`; a brace after anything else is `DSH3133` rather than a
+  confusing failure further down. Inside the block only `Pin[index] = <source>;` is accepted
+  (`DSH3135`), comments and blank lines are free, an empty block is refused rather than silently
+  building nothing (`DSH3136`), and a `;` after the closing brace is optional sugar. A multi-line head
+  is folded to one line before it is spliced onto each pin selector, so the target text every
+  downstream diagnostic quotes still reads as a single line.
+
+  "A pin may be bound only once" now holds **at parse time and across both spellings**, keyed on the
+  same class-plus-arguments-plus-index tuple the generator uses, and across repeated `Outputs`
+  sections: `DSH3137` names the pin and both sources. Previously the collision was caught only at
+  generation (`DSH8014`), which still stands as the backstop.
+
+  The decompiler emits the new form for any terminal node with two or more connected pins and keeps
+  the statement form for a single pin, so files that decompiled before this change still decompile
+  byte for byte the same. New diagnostics `DSH3133`–`DSH3137`. Documented in
+  [Docs/language/output-bindings.md](Docs/language/output-bindings.md), with the reuse-key note in
+  [Docs/graph/node-reuse.md](Docs/graph/node-reuse.md) and the emission rule in
+  [Docs/tools/decompiler.md](Docs/tools/decompiler.md). Closes GitHub issues #30 and #33.
+
+- **Content Browser references paste in as they are: `Class'/Game/Folder/Asset.Asset'` is now an
+  asset reference everywhere `Path(…)` is.** Right-clicking a texture and choosing **Copy Reference**
+  puts `/Script/Engine.Texture2D'/Game/Cloud/T_VolumeCloud_03.T_VolumeCloud_03'` on the clipboard,
+  which is the reference every other part of Unreal understands and the one thing DreamShaderLang
+  did not: pasted into a texture default it was scanned as a call to a function named `Texture2D`
+  and refused, and the only way forward was to hand-edit the pasted text down to the bare object
+  path. Both the old `Texture2D'…'` spelling and the modern `/Script/Engine.Texture2D'…'` one are now
+  stripped to the object path inside the quotes, and the shell may be written bare, in quotes, or as
+  the path argument of `Path(…)` — so `Path(Game, "Texture2D'/Game/T_X.T_X'")` and a bare paste name
+  the same asset.
+
+  The stripping lives in one shared helper (`Public/DreamShaderAssetReferenceText.h`) applied at the
+  front of **both** resolvers, because DreamShaderLang has two independent ones — the texture-default
+  resolver in the parser and the asset-reference resolver in the generator — whose accepted forms had
+  drifted apart. Adding the shell grammar twice would have widened that gap; adding it once narrows
+  it, and the same helper is what a later feature needs to *recognise* the spelling in source text.
+
+  The class in front of the quotes is not thrown away before it has been read. When the slot declares
+  what it wants, a contradiction is now an error that names both sides — `Texture2D'…'` assigned to a
+  `TextureSampleParameterVolume`, or a `MaterialFunction'…'` assigned to any texture — raised at
+  parse time, before anything is loaded, instead of surfacing much later as a load failure or as a
+  silently unbound sampler. New codes `DSH1043` (not a texture class), `DSH1044` (texture of the
+  wrong dimension) and `DSH1045` (unrelated to the class an object-valued metadata slot declares). An
+  *unknown* class is deliberately never an error: Unreal itself ignores the class when it resolves an
+  export path, and a project may name classes the plugin has never heard of, so a prefix that cannot
+  be placed is stripped and forgotten.
+
+  **Behaviour change, and the one to read twice: a root written beside a path that begins with `/` is
+  now ignored rather than prepended.** The two resolvers disagreed about this — the asset-reference
+  one dropped the root, the texture-default one prepended it, which is why
+  `Path(Game, "/Game/Textures/T_X")` resolved to `/Game/Game/Textures/T_X.T_X` and then failed to
+  load. They now agree, and a shelled reference (whose path is always absolute) falls out of the same
+  rule. The cost is that a *relative* path deliberately written with a leading slash —
+  `Path(Game, "/Textures/T_X")`, a spelling `DSH1016`'s own message used to recommend — now resolves
+  to `/Textures/T_X.T_X` and fails to load. Drop the leading slash: `Path(Game, "Textures/T_X")`.
+  `DSH1016`'s message has been corrected to stop advertising the old spelling and to mention the new
+  one.
+
+- **Renaming or moving an asset now rewrites the `.dsm` / `.dsf` / `.dsh` files that reference it.**
+  Until now the plugin listened for `OnAssetRenamed` in exactly one place — the Material Content
+  Browser's list model, to refresh a row — and the generation side heard nothing at all. Renaming a
+  texture therefore broke every source that named it, **silently**: nothing went wrong at the moment
+  of the rename, and the failure surfaced at the next rebuild as an asset that would not load, long
+  after the action that caused it and with nothing on screen connecting the two. The new service
+  closes that gap. It catches the registry's rename event, coalesces the batch, rewrites the text, and
+  lets the ordinary compile-on-save path rebuild what changed.
+
+  Every accepted spelling is followed, and **the one that was written is the one that comes back**:
+  `Path(Game, "Textures/T_X")` stays rooted and relative, `Path("/Game/…")` and a bare `"/Game/…"`
+  stay absolute, a path spelled without `.Name` does not grow one, and the shelled forms that Content
+  Browser's *Copy Reference* produces — `Texture2D'/Game/…'` and
+  `/Script/Engine.Texture2D'/Game/…'` — keep their class prefix, which is the author's and not the
+  plugin's to invent. A rooted reference only collapses to the absolute form when the asset actually
+  left the root it was written against, because at that point no relative spelling exists any more.
+
+  Two things it will not do, and both are the point rather than a limitation. **Matching is exact
+  equality on the whole path, never a prefix test**: renaming `/Game/Foo` leaves `/Game/FooBar` and
+  `/Game/Foo/T_X` alone, where a prefix match would corrupt a neighbour's references every time
+  somebody renamed an asset whose name another one starts with. And **`Function` / `GraphFunction`
+  bodies are skipped entirely**, using the same brace-, comment- and literal-aware tracker the
+  preprocessor uses to answer the same question: a body is raw HLSL handed to the shader compiler, no
+  asset path can legally live in one, and a false hit would splice a `/Game/…` string into shader
+  code. Comments are left alone for the milder version of the same reason.
+
+  The order is text first, rebuild second, and it is a guarantee rather than an accident: every file
+  in a batch reaches disk before anything is compiled, because compiling the first file while the last
+  one still named the old asset would fail for a reason that no longer exists by the time anyone reads
+  the error. Renames are coalesced for half a second — *Fix Up Redirectors* raises a few hundred
+  events in one frame, and one pass over the source tree per asset is not a plan — and only the editor
+  that owns the bridge writes anything, so two editors open on one project cannot race on the same
+  file.
+
+  Each file is copied to `<file>.bak` before it is written, the same mechanism and the same name
+  *Adopt Into Source* already uses, so there is one place to look after any DreamShader action has
+  rewritten a source; a failure to back up (`DSH9020`) leaves the file untouched rather than writing
+  it unprotected. One `Display` line per batch names every file that changed and every old → new pair
+  behind it — which is the record to reach for when your editor announces that a file you had open
+  changed on disk. Only the project source root is written; plugin roots ship their sources as
+  authored and are never touched. Deletions are deliberately out of scope: a deleted asset has no new
+  path to write, and the compile error is the correct outcome. The whole thing is switchable —
+  *Sync Source References On Asset Rename* in Project Settings ▸ DreamPlugin ▸ Dream Shader, on by
+  default, read live rather than cached at startup.
+
+- **Generation can be cancelled, and warns when a shader compile is about to become a wait.** Every
+  generation slow task now carries a Cancel button, and the cancel is checked after each progress
+  frame. Cancelling takes exactly the path a failed compile takes: the atomic-rebuild rollback puts
+  the asset back to what it held before the compile started, nothing is stamped, nothing is saved,
+  and the compile reports the new `DSH9010` — *"Generation of '{Name}' was cancelled by the user; the
+  asset was left unchanged."* The one thing it does not put back is the generated `DreamShader: `
+  comment boxes, for the same reason a failed rebuild does not: they are destroyed before the
+  rollback's snapshot is taken, and the next successful compile recreates them.
+
+  Two warnings come with it, both advisory and neither able to fail a build. `DSH9011` fires once
+  when the shader-compilation stage of one asset runs past thirty seconds, and says what a wait of
+  that length almost always is, along with the way to check it (`ShaderCompileWorker.exe` busy in
+  Task Manager means the compile is running, not hung). `DSH9012` says the same thing earlier and
+  without waiting: while a `Custom` node's code is emitted, it is scanned for a `for` or `while`
+  whose bound is one of the node's **input pins** — not a literal, not a `#define`d constant — next
+  to an **implicit-mip** sampling call (`Texture2DSample`, `Texture3DSample`, `.Sample`, but not
+  `SampleLevel` or `SampleGrad`). That pair is what forces the compiler to fully unroll a loop whose
+  iteration count it cannot know, and it is the one shape that reliably turns a compile into a
+  multi-minute stall. Neither warning is a claim that the shader is wrong; both are a claim about
+  what you are about to spend.
+
+  Cancellation is checked through a seam rather than by calling `FScopedSlowTask::ShouldCancel`
+  directly, because `ShouldCancel` is gated on `GIsSlowTask` and answers `false` without a progress
+  dialog — which would have left the cancel path with no way to be tested at all. The seam is empty
+  in every non-test build.
+
+- **`dump-graph`, a commandlet verb that writes a canonical JSON fingerprint of the graph each source
+  generates.** This is a developer tool rather than a feature of the language: nothing in a shipping
+  project needs it, and it produces no asset. It exists because the automation suite answers "does
+  this still compile" and nobody had a way to ask the question that actually matters across a
+  compiler change — "does this still compile to the *same graph*". The nearest thing was decompiling
+  both sides and diffing the text, which puts the decompiler's own reuse and swizzle opinions between
+  you and the answer, and which cannot see anything the decompiler does not print.
+
+  `-run=DreamShader dump-graph { -Source=… | -All } [-Out=<dir>]` generates each source the way
+  `compile` does and writes one `.graph.json` per generated asset, laid out as
+  `<Out>/<root>/<source path>.<asset>.graph.json` so the dump tree mirrors the source tree and
+  `git diff --no-index` compares two captures directly. The default `-Out` is
+  `<Project>/Saved/DreamShader/GraphBaseline`. `./dsc.ps1 dump-graph -All` is the short spelling;
+  `-Source`, `-All`, `-Define` and the `.dsf`-before-`.dsm` ordering are literally the same code the
+  `compile` verb uses, so a baseline can never cover a different set of sources than the compiler
+  does.
+
+  Every design decision in the format is subordinated to determinism, because a fingerprint that
+  changes between two runs of the *same* compiler cannot say anything about two different ones.
+  Node identity is positional — `n0`, `n1`, … in a post-order depth-first walk from the material
+  property inputs in `EMaterialProperty` order, or from a function's `FunctionOutput` expressions in
+  sort-priority order — so no engine-assigned name, and in particular no `_12` suffix from a
+  recreated `UObject`, can reach the file. `MaterialExpressionGuid`, a named reroute's `VariableGuid`
+  and every other `FGuid` are out because they are reissued on every rebuild; node coordinates are
+  out because regeneration reassigns them from the `Layout` section anyway; `NodeColor` is out for a
+  sharper reason found by the divergence work rather than by reading — a named reroute seeds its
+  colour from its own *path name*, so the recreated node repaints itself and two rebuilds of one
+  unchanged source would disagree. What is left is the set the output digest already treats as
+  content, which is deliberate: a dump that disagreed with the divergence gate about what counts as
+  a hand edit would be two answers to one question. Keys are sorted case-sensitively at every level,
+  floats print as `%.9g`, and the file is UTF-8 with LF endings and a trailing newline.
+
+  **The verb never writes an asset**, and that is worth knowing before the first capture. Running it
+  over a project must not mean rebuilding and re-saving every generated `.uasset` merely to read them
+  back, so the whole sweep runs with the generator's write ownership switched off — which makes
+  generation refuse, before the old graph is torn down, any asset that would persist. The consequence
+  is that an asset already on disk is dumped **as it stands** rather than regenerated. On a compiled
+  tree that is the same graph; on a stale one it is not, so compile first (`compile -All -Force`) when
+  the sources may have moved. The run counts those assets and says so on its last line rather than
+  leaving it to be discovered in a diff.
+
+  New diagnostics `DSH9030`–`DSH9034` cover the dump's own failures: the output directory, the file
+  write, a source with no asset to dump, an asset that would not load back, and an asset class the
+  dump does not cover.
+
 ### Fixed
 
 - **The `/DreamShaderGenerated` shader directory mapping was registered too late for materials
@@ -142,9 +338,98 @@
   change reads as `Unstamped` (rebuilt normally, restamped) rather than `Diverged`. The format version
   moves to `DSD2`; every existing stamp reads as `Unstamped` once and is rewritten on the next rebuild.
 
+  Which classes the fingerprint covers turned out to matter as much as the fingerprint itself. The
+  first cut fingerprinted the classes the asset holds *at check time* -- and a node added by hand is
+  usually a class the generated graph never had, so the tag moved, the check read "schema changed",
+  and the one edit the gate exists to catch went through as `Unstamped`
+  (`DreamShader.Compiler.Divergence.HandEditsAreDetected` caught it). The class list the tag was
+  computed over is now stamped next to the digest (`DreamShader.OutputDigestClasses`) and the check
+  recomputes the tag over *that* list, so a class-adding hand edit is compared and reads `Diverged`,
+  while a fork changing the layout of a class the graph already used still reads `Unstamped`.
+
 - **Docs: the fork's encoded-attribute members are `MoonEncodedAttribute0`–`4`**, not the pre-rename
   `Mooa…` spelling the MaterialAttributes, output-bindings and graph-layout pages still showed. The
   `Mooa…` spelling remains accepted as an alias on the read and write side; only `Moon…` is emitted.
+
+- **A thin-custom generation whose shader compilation ran long showed a progress bar that never
+  moved and could not be dismissed.** The whole compile — reading, parsing, building the graph, and
+  then `UpdateStaticPermutation` → `PostEditChange` → save, which is what actually pushes the shader
+  compiles — ran under a single uncancellable slow task, and the tail of it entered no progress
+  frames at all. So the two halves of a compile that behave nothing alike were hidden behind one
+  bar: graph construction, which is milliseconds, and shader compilation, which is unbounded. A
+  material with an expensive permutation therefore looked exactly like a hung plugin, and users
+  reported killing the editor because there was nothing else to do (GitHub issue #29). Progress is
+  now split and labelled — every frame says `Step 1 of 2, building the graph:` or `Step 2 of 2,
+  compiling shaders (this can take minutes):` — and the thin-custom path enters a real frame for its
+  compile-and-save half instead of leaving the bar parked at the end of the graph build. The frames
+  are nested inside the caller's coarse frame, so the accounting stays balanced and no
+  `SlowTask.cpp` work-overflow ensure fires.
+
+  Note what a cancel during stage two can and cannot do: it stops DreamShader, but it does not
+  recall shaders Unreal has already dispatched, so `ShaderCompileWorker.exe` keeps working through
+  whatever was queued. The asset is still left exactly as it was.
+
+- **A rebuild refused for divergence told you to right-click an asset that, in the editor's default
+  mode, has nothing to right-click.** `DSH8115` was four sentences of prose in the log and in the
+  VSCode problems panel, and the three answers it named -- *Revert to Source*, *Adopt Into Source*,
+  *Detach From DreamShader* -- lived only in a Content Browser context submenu. For a generated
+  ThinCustom instance that submenu is unreachable: the instance exists only in memory and has no
+  tile at all unless *Show In-Memory Materials* is on. So the message pointed at a door that was
+  not there, for exactly the assets most likely to be behind it. A refusal now also raises a
+  notification naming the asset and the source, with the three answers as buttons -- the same code
+  the menu runs, dialogs and recompile included -- plus a fourth, **Show In-Memory Materials**,
+  offered only when the refused asset is a hidden memory-only instance. That one deliberately does
+  not close the notification, so revealing the asset does not take the answers away with it. The
+  message itself is two sentences now; the explanations moved to the tooltips and to
+  [Divergence](Docs/generation/divergence.md).
+
+  Notifications are budgeted per **rebuild round** -- one watcher batch, one full scan, or one
+  compile asked for on its own -- because *Recompile DSM* on a project with fifty hand-edited assets
+  would otherwise raise fifty of them, which is not fifty offers of help but a wall in front of the
+  editor. One notification per asset per round, none stacked on top of one still waiting for an
+  answer, and past five assets in a round the rest collapse into a single summary carrying **Open
+  Material Browser**, raised at the end of the round when the total is finally known. A full
+  recompile therefore costs at most six. Nothing is raised headlessly: a commandlet, a cook and any
+  `-unattended` run get the log line and the diagnostics exactly as before.
+
+- **Dragging one slider on a generated ThinCustom instance permanently refused every future rebuild
+  of its `.dsm`.** The divergence digest folded the instance's own parameter overrides into the
+  fingerprint of what the asset holds, so an override read as a hand edit: the next time the source
+  moved, the rebuild was refused with `DSH8115` and the only ways forward were Revert, which discards
+  the very values that caused the refusal, Adopt, which refuses an instance with overrides anyway, or
+  Detach, which ends the source's ownership of the asset. Under the default backend the generated
+  asset **is** a thin instance, and tuning it is what it is for — so the gate was judging the plugin's
+  most ordinary usage a violation, and the guidance in the docs amounted to "never use the asset you
+  were given".
+
+  Parameter overrides on the ThinCustom pair are now out of the digest and have a state of their own.
+  `Tweaked` means "generated from the source, graph untouched, and the instance carries overrides".
+  It is reported in the Material Content Browser's Provenance row and section, and it does **not**
+  block anything: the gate answers only to `Diverged`. What still counts as divergence is unchanged —
+  including an edit to the hidden base material's graph, which is what a rebuild would really destroy
+  and which registers against the instance exactly as before.
+
+  A rebuild no longer costs you the values either. The overrides are read off the instance before the
+  base's graph is torn down and written back afterwards under the same name and kind — every kind the
+  engine version has, found by walking the parameter kinds by index rather than from a hand-written
+  list that would silently go out of date — and the static permutation is updated after the restore,
+  so a restored static switch produces the shader map it asks for. A name the rebuilt material no
+  longer declares cannot come back; those are dropped and named together in one `DSH8155` log line
+  rather than vanishing quietly. Restoration runs on the success path only: a failed rebuild rolls the
+  base's graph back and never reaches the clear, so the instance comes out of it untouched.
+
+  **Adopt Into Source still refuses an instance carrying overrides**, and deliberately: the
+  decompiler writes the hidden base's graph, which has nowhere to put an instance-level override, so
+  adopting would write a source describing everything except the edit you actually made.
+
+  One consequence to know about: the digest's composition changed, so its schema tag moved from
+  `DSD2` to `DSD3`. Every generated asset stamped by an earlier version — materials and material
+  functions included, not only instances — therefore reads as `Unstamped` once, is rebuilt normally
+  the next time its source moves, and is restamped. That is the supported way to retire a digest
+  format and nothing is refused by it, but it does mean the divergence gate cannot protect a hand edit
+  made *before* that first post-upgrade rebuild. Comparing the new text against an old stamp instead
+  would have reported every generated asset in the project as hand-edited, which is the outcome the
+  schema tag exists to prevent.
 
 ## 1.8.0 - 2026-08-21
 
