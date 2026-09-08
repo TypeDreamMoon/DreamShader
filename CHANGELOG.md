@@ -1,5 +1,19 @@
 # DreamShader ChangeLog
 
+## 1.9.1 - 2026-09-08
+
+### Fixed
+
+- **The decompiler reached a node's pins through `GetInputsView()`, which UE 5.5 deprecated and UE 5.8
+  reports as C4996 -- a warning today, a compile error in whichever release removes it.** The
+  custom-output pin walk and the `SetMaterialAttributes` base/value reads now count pins with
+  `GetDreamShaderExpressionInputCount()` and fetch each one with `GetInput(Index)`, which hands back
+  `nullptr` past the last pin, so the existing `IsConnected()` test covers "no such pin" and "not
+  wired" alike. The one remaining `GetInputsView()` call is the UE 5.3-5.4 branch of
+  `GetDreamShaderExpressionInputCount`, where `CountInputs()` does not exist yet and the deprecation
+  is not in force; [Docs/api/version-compat.md](Docs/api/version-compat.md) records it. Contributed by
+  @youli42 in #36.
+
 ## 1.9.0 - 2026-09-08
 
 ### Added
