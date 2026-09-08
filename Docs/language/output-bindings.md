@@ -26,6 +26,9 @@ output-declaration := <type> <name> [ = <expression> ] ;
 
 output-binding     := Base. <target> = <source> ;
                     | Expression( <key> = <value> [, <key> = <value> ]… ) . Pin[ <index> ] = <source> ;
+                    | Expression( <key> = <value> [, <key> = <value> ]… ) { <pin-binding>… } [;]
+
+pin-binding        := Pin[ <index> ] = <source> ;
 ```
 
 `<source>` is an output variable name, or the reserved name `return`. The `[` and `]` around
@@ -38,6 +41,11 @@ Statement classification is per statement, not per section:
 | no top-level `=` | bare output-variable declaration |
 | top-level `=`, left side is a valid typed declaration | initialized output declaration *(since 1.3.4)* |
 | top-level `=`, left side is **not** a valid typed declaration | output **binding** |
+| a `{` at statement level, after `Expression( … )` | [block form](#block-form) *(since 1.9.0)* |
+| a `{` at statement level, after anything else | error `DSH3133` |
+
+`Expression( … ) { … }` is the **only** construct that opens a brace inside `Outputs`, exactly as
+`Group("Name") { … }` is the only one inside [`Properties`](properties.md).
 
 Declaration grammar is on [Inputs / Outputs / Results](inputs-outputs.md#outputs-in-a-shader).
 
@@ -227,7 +235,8 @@ produces a "not a property" error.
   them. `Expression(Class="ThinTranslucentMaterialOutput").Pin[0]` is `TransmittanceColor` and
   `.Pin[1]` is `SurfaceCoverage`.
 - An index past the end fails with `Output target '{Target}' does not have Pin[{Index}].`
-- Each pin may be bound **once**: `Output target pin '{Target}' is bound more than once.`
+- Each pin may be bound **once**, and the check spans the statement and
+  [block](#block-form) forms combined: `DSH3137` at parse time, `Output target pin '{Target}' is bound more than once.` at generation.
 - Nodes are **de-duplicated by class plus sorted argument list**. Two bindings whose
   `Expression( … )` specification is identical share one node and bind different pins; a difference in
   any argument creates a second node.
@@ -261,6 +270,113 @@ Outputs = {
     Expression(Class="ClearCoatNormalCustomOutput").Pin[0] = CoatNormal;
 }
 ```
+
+## Block form
+
+*(since 1.9.0)*
+
+A terminal node with many pins has to repeat its whole `Expression( … )` specification once per pin
+in the statement form, and because the specification *is* the de-duplication key, **one forgotten
+argument silently splits the node in two**. The block form writes the specification once:
+
+```c
+Expression( <key> = <value> [, <key> = <value> ]… )
+{
+    Pin[ <index> ] = <source> ;
+    …
+}
+```
+
+```c
+Outputs = {
+    float _PhaseG_Out;
+    float _PhaseG2_Out;
+    float _PhaseBlend_Out;
+
+    Expression(Class="VolumetricAdvancedMaterialOutput",
+        PerSamplePhaseEvaluation="false",
+        MultiScatteringApproximationOctaveCount=0,
+        bGroundContribution="false")
+    {
+        Pin[0] = _PhaseG_Out;
+        Pin[1] = _PhaseG2_Out;
+        Pin[2] = _PhaseBlend_Out;
+    }
+}
+```
+
+### The one-node guarantee
+
+The block is **lowered by the parser** to one ordinary binding per `Pin[i]`, each carrying the
+`Class` and argument list computed from the shared head. Every lowered binding therefore has a
+byte-identical `Expression( … )` specification, which is exactly the
+[reuse key](#pin-indices-and-node-reuse) — so a block of *N* pins always produces **one** node. The
+argument list cannot drift between pins, because there is only one copy of it.
+
+Nothing else changes: the block form and the statement form are indistinguishable downstream. They
+share the same class resolution, the same reflected-argument writes, the same pin-index checks and
+the same diagnostics.
+
+### Rules
+
+| Rule | Detail |
+| :-- | :-- |
+| what may open a brace | only `Expression( … )`. A `{` after a variable, a `Base.` target or an `Expression( … ).Pin[i]` target is `DSH3133` |
+| head shape | `Expression(` … `)` and nothing after the closing `)` — the pin selector is written per statement inside the block |
+| statements inside | only `Pin[ <index> ] = <source> ;` — `DSH3135` otherwise |
+| comments and blank lines | allowed anywhere inside the block |
+| empty block | `DSH3136` — a block that binds no pin creates nothing, so it is rejected rather than ignored |
+| trailing `;` | optional after the closing `}`, as after `Group("Name") { … }` |
+| repeats | a block may be written more than once for the same node, and may be mixed freely with statement-form bindings for it |
+
+### Mixing the two forms
+
+A block and a loose statement that agree on class and argument list address the **same** node, so
+they fill different pins of it:
+
+```c
+Outputs = {
+    float3 Transmittance;
+    float  Coverage;
+
+    Expression(Class="ThinTranslucentMaterialOutput")
+    {
+        Pin[0] = Transmittance;
+    }
+
+    // Same specification → same node → this fills its other pin.
+    Expression(Class="ThinTranslucentMaterialOutput").Pin[1] = Coverage;
+}
+```
+
+### Each pin once
+
+The "a pin may be bound once" rule is checked at **parse time** across both forms and across
+repeated `Outputs` sections, keyed on class + sorted argument list + pin index. A second binding of
+the same pin fails with `DSH3137`, naming the pin and both sources:
+
+```text
+Output target pin 'Expression(Class="ThinTranslucentMaterialOutput").Pin[0]' is bound more than once:
+first to 'Transmittance', then to 'TransmittanceAgain'.
+```
+
+> [!NOTE]
+> Two blocks whose argument lists differ — even by one argument — are two different nodes, and each
+> of them has its own `Pin[0]`. That is not a double bind and is not diagnosed; it is the same rule
+> that made the repetition dangerous in the statement form.
+
+### Diagnostics
+
+| Code | Message |
+| :-- | :-- |
+| `DSH3133` | `Unexpected brace block in Outputs near '{Head}'. Only Expression(Class="...") opens a brace block here; every other Outputs statement ends with ';'.` |
+| `DSH3134` | `Unterminated Expression(...) block in Outputs after '{Head}'.` |
+| `DSH3135` | `Invalid statement '{Statement}' inside an Expression(...) block. Only Pin[index] = <source>; is allowed there.` |
+| `DSH3136` | `The Expression(...) block for '{Head}' binds no pin. Write at least one Pin[index] = <source>; inside it, or delete the block.` |
+| `DSH3137` | `Output target pin '{Target}' is bound more than once: first to '{First}', then to '{Second}'. …` |
+
+A head written across several lines is folded to one line in these messages and in every downstream
+diagnostic, so `{Head}` and `{Target}` always read as a single line.
 
 ## The reserved name `return`
 
@@ -326,6 +442,11 @@ Runtime substitutions are shown as `{Placeholder}` throughout this section.
 | `Expression output target argument '{Key}' is declared more than once.` | duplicate argument key |
 | `Expression output target '{Target}' must specify Class="...".` | no `Class` argument |
 | `Invalid typed declaration '{Statement}'.` | a bare declaration that is not a valid typed declaration |
+| `Unexpected brace block in Outputs near '{Head}'. …` | a `{` after anything but `Expression( … )` *(since 1.9.0)* |
+| `Unterminated Expression(...) block in Outputs after '{Head}'.` | the block's closing `}` is missing *(since 1.9.0)* |
+| `Invalid statement '{Statement}' inside an Expression(...) block. …` | a statement other than `Pin[index] = <source>;` inside a block *(since 1.9.0)* |
+| `The Expression(...) block for '{Head}' binds no pin. …` | an empty block *(since 1.9.0)* |
+| `Output target pin '{Target}' is bound more than once: first to '{First}', then to '{Second}'. …` | the same pin bound twice, in either form *(since 1.9.0)* |
 
 ### Validation
 

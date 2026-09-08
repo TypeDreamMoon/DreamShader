@@ -7,6 +7,9 @@
 
 #include "DreamShaderMaterialGeneratorCodeShared.h"
 
+#include "DreamShaderAssetReferenceText.h"
+
+#include "Engine/Texture.h"
 #include "HAL/FileManager.h"
 #include "Interfaces/IPluginManager.h"
 #include "Misc/PackageName.h"
@@ -239,7 +242,73 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	bool TryResolveDreamShaderAssetReference(const FString& InText, FString& OutObjectPath, FDreamShaderError& OutError)
+	/**
+	 * Resolves the class named by a `Class'...'` shell, or null when it names nothing this build
+	 * knows. `/Script/Module.Class` is looked up as written; a bare `Texture2D` is assumed to be an
+	 * Engine class, which is what every "Copy Reference" of the old spelling means.
+	 */
+	static const UClass* FindDreamShaderReferenceShellClass(const FDreamShaderReferenceShell& Shell)
+	{
+		if (Shell.ClassPath.StartsWith(TEXT("/")))
+		{
+			return FindObject<UClass>(nullptr, *Shell.ClassPath);
+		}
+
+		if (Shell.ClassName.IsEmpty())
+		{
+			return nullptr;
+		}
+
+		const FString EngineClassPath = FString(TEXT("/Script/Engine.")) + Shell.ClassName;
+		return FindObject<UClass>(nullptr, *EngineClassPath);
+	}
+
+	/**
+	 * Judges the class written in a `Class'...'` shell against the class the slot declares.
+	 *
+	 * An unknown class is never an error: the shell is decoration Unreal itself ignores when it
+	 * resolves the path, so a prefix DreamShader cannot place is stripped and forgotten rather than
+	 * refused. Related classes pass in either direction -- writing `Texture2D'...'` into a `UTexture`
+	 * slot is right, and so is writing `Texture'...'` into a `UTexture2D` one, because only the asset
+	 * that eventually loads can settle that.
+	 */
+	static bool ValidateAssetReferenceShellClass(
+		const FDreamShaderReferenceShell& Shell,
+		const UClass* ExpectedClass,
+		FDreamShaderError& OutError)
+	{
+		if (Shell.ClassName.IsEmpty() || !ExpectedClass)
+		{
+			return true;
+		}
+
+		if (const UClass* WrittenClass = FindDreamShaderReferenceShellClass(Shell))
+		{
+			if (WrittenClass->IsChildOf(ExpectedClass) || ExpectedClass->IsChildOf(WrittenClass))
+			{
+				return true;
+			}
+
+			return FailWith(OutError, TEXT("DSH1045"), FString::Printf(TEXT("Asset reference is written as '%s', but this slot requires a '%s'."), *Shell.ClassName, *ExpectedClass->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
+		}
+
+		// The class name is not a UClass in this build. DreamShader still knows a handful of names
+		// well enough to catch the texture/not-a-texture confusion, which is the one the pasted
+		// spelling actually produces.
+		const bool bExpectsTexture = ExpectedClass->IsChildOf(UTexture::StaticClass());
+		if (bExpectsTexture && IsKnownDreamShaderNonTextureReferenceClass(Shell.ClassName))
+		{
+			return FailWith(OutError, TEXT("DSH1045"), FString::Printf(TEXT("Asset reference is written as '%s', but this slot requires a '%s'."), *Shell.ClassName, *ExpectedClass->GetName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
+		}
+
+		return true;
+	}
+
+	bool TryResolveDreamShaderAssetReference(
+		const FString& InText,
+		FString& OutObjectPath,
+		FDreamShaderError& OutError,
+		const UClass* ExpectedClass)
 	{
 		OutObjectPath.Reset();
 
@@ -287,12 +356,31 @@ namespace UE::DreamShader::Editor::Private
 		RootName = TrimMatchingQuotes(RootName);
 		AssetPath = TrimMatchingQuotes(AssetPath);
 		AssetPath.ReplaceInline(TEXT("\\"), TEXT("/"));
+
+		// Unreal's export form -- Texture2D'/Game/Folder/Asset.Asset' or the
+		// /Script/Engine.Texture2D'...' spelling the Content Browser's "Copy Reference" produces.
+		// Stripped after the string literal is unescaped, so the shell is recognised whether it was
+		// written bare, quoted, or as an argument of Path(...); what is left inside the quotes is an
+		// absolute object path and takes the branch below.
+		FDreamShaderReferenceShell Shell;
+		if (TryStripDreamShaderReferenceShell(AssetPath, Shell))
+		{
+			if (!ValidateAssetReferenceShellClass(Shell, ExpectedClass, OutError))
+			{
+				return false;
+			}
+
+			AssetPath = Shell.ObjectPath;
+		}
+
 		if (AssetPath.IsEmpty())
 		{
 			return FailWith(OutError, TEXT("DSH8131"), TEXT("Asset reference requires a non-empty path."));
 		}
 
 		FString LongObjectPath;
+		// An absolute asset path is self-contained: a root written beside one is ignored, never
+		// prepended. The texture-default resolver agrees with this since 1.9.0.
 		if (AssetPath.StartsWith(TEXT("/")))
 		{
 			LongObjectPath = AssetPath;

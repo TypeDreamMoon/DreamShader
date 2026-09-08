@@ -76,15 +76,21 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const FString TrimmedValue = ValueText.TrimStartAndEnd();
+		const FObjectPropertyBase* AssetProperty = CastField<FObjectPropertyBase>(Property);
 		FString AssetObjectPath;
 		const bool bHasParsedAssetReference =
-			CastField<FObjectPropertyBase>(Property) != nullptr
-			&& TryResolveDreamShaderAssetReference(TrimmedValue, AssetObjectPath, OutError);
+			AssetProperty != nullptr
+			&& TryResolveDreamShaderAssetReference(TrimmedValue, AssetObjectPath, OutError, AssetProperty->PropertyClass);
 
-		if (CastField<FObjectPropertyBase>(Property) != nullptr
+		// A value that is unmistakably an asset reference reports the resolver's own failure instead
+		// of falling through to be re-read as some other kind of literal. Class'/Game/Asset.Asset'
+		// belongs in that set: it begins with neither `Path(` nor `/`, but nothing else in the
+		// language ends in a single quote.
+		if (AssetProperty != nullptr
 			&& !bHasParsedAssetReference
 			&& (TrimmedValue.StartsWith(TEXT("Path("), ESearchCase::IgnoreCase)
-				|| TrimmedValue.StartsWith(TEXT("/"))))
+				|| TrimmedValue.StartsWith(TEXT("/"))
+				|| TrimmedValue.EndsWith(TEXT("'"))))
 		{
 			return false;
 		}

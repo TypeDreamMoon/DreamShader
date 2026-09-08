@@ -1,4 +1,5 @@
 #include "DreamShaderParserInternal.h"
+#include "DreamShaderAssetReferenceText.h"
 #include "Internationalization/Text.h"
 
 #include "Interfaces/IPluginManager.h"
@@ -1000,14 +1001,80 @@ namespace UE::DreamShader::Private
 		return true;
 	}
 
-	bool ParseTextureAssetReference(const FString& InText, FString& OutObjectPath, FDreamShaderTextError& OutError)
+	/**
+	 * Judges the class written in a `Class'/Game/...'` shell against the slot it is being assigned to.
+	 *
+	 * Only two verdicts are errors, and both are things the shell says about itself: a class that is
+	 * plainly not a texture, and a texture class of the wrong dimension. Everything else -- no shell,
+	 * no class, a class DreamShader has never heard of, a texture class with no fixed dimension -- is
+	 * accepted, because the shell is decoration Unreal itself ignores and refusing an unfamiliar
+	 * prefix would break sources that work.
+	 */
+	static bool ValidateTextureReferenceShellClass(
+		const FDreamShaderReferenceShell& Shell,
+		const ETextShaderTextureType ExpectedTextureType,
+		const bool bExpectedTextureTypeIsExplicit,
+		FDreamShaderTextError& OutError)
+	{
+		if (Shell.ClassName.IsEmpty())
+		{
+			return true;
+		}
+
+		ETextShaderTextureType WrittenTextureType = ETextShaderTextureType::Texture2D;
+		if (TryGetDreamShaderReferenceTextureType(Shell.ClassName, WrittenTextureType))
+		{
+			if (bExpectedTextureTypeIsExplicit && WrittenTextureType != ExpectedTextureType)
+			{
+				return FailWith(OutError, TEXT("DSH1044"), FText::Format(LOCTEXT("TextureReferenceClassWrongDimension", "Asset reference is written as '{0}', but this property is declared as {1}."),
+						FText::FromString(Shell.ClassName),
+						FText::FromString(FString(LexDreamShaderTextureType(ExpectedTextureType)))));
+			}
+
+			return true;
+		}
+
+		if (IsKnownDreamShaderNonTextureReferenceClass(Shell.ClassName))
+		{
+			return FailWith(OutError, TEXT("DSH1043"), FText::Format(LOCTEXT("TextureReferenceClassNotATexture", "Asset reference is written as '{0}', which is not a texture class; a texture default requires {1}."),
+					FText::FromString(Shell.ClassName),
+					FText::FromString(FString(bExpectedTextureTypeIsExplicit
+						? LexDreamShaderTextureType(ExpectedTextureType)
+						: TEXT("a texture such as Texture2D, TextureCube, Texture2DArray or VolumeTexture")))));
+		}
+
+		return true;
+	}
+
+	bool ParseTextureAssetReference(
+		const FString& InText,
+		FString& OutObjectPath,
+		FDreamShaderTextError& OutError,
+		const ETextShaderTextureType ExpectedTextureType,
+		const bool bExpectedTextureTypeIsExplicit)
 	{
 		const FString Trimmed = InText.TrimStartAndEnd();
 
 		FString RootName;
 		FString AssetPath;
 
-		if (Trimmed.StartsWith(TEXT("\"")))
+		// Unreal's export form written bare -- Texture2D'/Game/Folder/Asset.Asset', or the
+		// /Script/Engine.Texture2D'...' spelling the Content Browser's "Copy Reference" produces.
+		// It has to be recognised here, ahead of everything else, because the leading class name
+		// would otherwise be scanned as a function name and rejected as "not Path". The quoted and
+		// Path(...) spellings carry the same shell inside a string literal and are stripped further
+		// down, once that literal has been unescaped.
+		FDreamShaderReferenceShell BareShell;
+		if (TryStripDreamShaderReferenceShell(Trimmed, BareShell))
+		{
+			if (!ValidateTextureReferenceShellClass(BareShell, ExpectedTextureType, bExpectedTextureTypeIsExplicit, OutError))
+			{
+				return false;
+			}
+
+			AssetPath = BareShell.ObjectPath;
+		}
+		else if (Trimmed.StartsWith(TEXT("\"")))
 		{
 			// Bare quoted absolute path: "/Game/Folder/Asset" is accepted as Path("/Game/Folder/Asset").
 			// (A root-relative path still needs Path(Root, "...") because there is no root to resolve.)
@@ -1020,7 +1087,9 @@ namespace UE::DreamShader::Private
 			FString FunctionName;
 			if (!Scanner.ParseIdentifier(FunctionName, OutError) || !FunctionName.Equals(TEXT("Path"), ESearchCase::IgnoreCase))
 			{
-				FailWith(OutError, TEXT("DSH1016"), LOCTEXT("TextureDefaultsMustUsePath", "Texture defaults must use Path(Game|Engine|Plugin.PluginName, \"/Folder/Asset\"), Path(\"/Game/Folder/Asset\"), or a bare \"/Game/Folder/Asset\"."));
+				// The root + relative form is spelled WITHOUT a leading slash on purpose: since 1.9.0 a
+				// path that starts with '/' is treated as absolute and the root beside it is ignored.
+				FailWith(OutError, TEXT("DSH1016"), LOCTEXT("TextureDefaultsMustUsePath", "Texture defaults must use Path(Game|Engine|Plugin.PluginName, \"Folder/Asset\"), Path(\"/Game/Folder/Asset\"), a bare \"/Game/Folder/Asset\", or a Class'/Game/Folder/Asset.Asset' reference."));
 				return false;
 			}
 
@@ -1064,6 +1133,21 @@ namespace UE::DreamShader::Private
 
 		AssetPath = Unquote(AssetPath.TrimStartAndEnd());
 		AssetPath.ReplaceInline(TEXT("\\"), TEXT("/"));
+
+		// The same shell again, this time as the *content* of a string literal:
+		// Path(Game, "Texture2D'/Game/X.X'"), Path("Texture2D'/Game/X.X'") and the bare quoted
+		// "Texture2D'/Game/X.X'" all arrive here unescaped, so this is where they lose the shell.
+		FDreamShaderReferenceShell Shell;
+		if (TryStripDreamShaderReferenceShell(AssetPath, Shell))
+		{
+			if (!ValidateTextureReferenceShellClass(Shell, ExpectedTextureType, bExpectedTextureTypeIsExplicit, OutError))
+			{
+				return false;
+			}
+
+			AssetPath = Shell.ObjectPath;
+		}
+
 		if (AssetPath.IsEmpty())
 		{
 			FailWith(OutError, TEXT("DSH1018"), LOCTEXT("TexturePathRequiresANonEmpty", "Texture Path(...) requires a non-empty asset path."));
@@ -1077,7 +1161,11 @@ namespace UE::DreamShader::Private
 		}
 
 		FString LongObjectPath;
-		if (RootName.TrimStartAndEnd().IsEmpty() && bAssetPathIsAbsolute)
+		// An absolute asset path is self-contained, so a root argument written beside one is ignored
+		// rather than prepended. Prepending it is what used to turn Path(Game, "/Game/T_X") into
+		// '/Game/Game/T_X.T_X'; the asset-reference resolver has always dropped the root here, and
+		// the two now agree.
+		if (bAssetPathIsAbsolute)
 		{
 			LongObjectPath = AssetPath;
 		}

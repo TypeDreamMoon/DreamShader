@@ -1,0 +1,38 @@
+// #30 / #33: the Outputs block form binds several pins on ONE terminal node, so the node's argument
+// list is written once instead of once per pin. Three Pin[i] statements -> three bindings that all
+// carry the same ExpressionClass + ExpressionArguments, which is the generator's node reuse key.
+Shader(Name="DreamShaderTests/Corpus/M_OutputsBlock")
+{
+    Settings = {
+        Domain = "Volume";
+        BlendMode = "Additive";
+    }
+
+    Outputs = {
+        vec3  Color;
+        float PhaseG;
+        float PhaseG2;
+        float PhaseBlend;
+
+        Base.EmissiveColor = Color;
+
+        // The head may span several lines; it is folded to one line for diagnostics.
+        Expression(Class="VolumetricAdvancedMaterialOutput",
+            PerSamplePhaseEvaluation="false",
+            bGroundContribution="false")
+        {
+            // Comments and blank lines are allowed inside the block.
+            Pin[0] = PhaseG;
+
+            Pin[1] = PhaseG2;
+            Pin[2] = PhaseBlend;
+        }
+    }
+
+    Graph = {
+        Color = vec3(0.5, 0.6, 0.7);
+        PhaseG = 0.5;
+        PhaseG2 = 0.2;
+        PhaseBlend = 0.1;
+    }
+}

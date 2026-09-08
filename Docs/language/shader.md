@@ -19,7 +19,7 @@ Shader(Name = "<asset-path>" [, Root = "<root>"] [,])
 {
     [Properties [=] { <property-declaration> ; … }]
     [Settings   [=] { <key> = <value> ; … }]
-    [Outputs    [=] { { <output-declaration> | <output-binding> } ; … }]
+    [Outputs    [=] { { <output-declaration> ; | <output-binding> ; | Expression( … ) { Pin[i] = <source> ; … } } … }]
     [Graph      [=] { <graph-statement> … }]
     [Layout     [=] { { Node( … ) | Comment( … ) } ; … }]
 }
@@ -72,6 +72,7 @@ synonym for `Inputs`.
 | `<type> <name> ;` | output-variable declaration; the `Graph` must assign it |
 | `<type> <name> = <expression> ;` | initialized output declaration *(since 1.3.4)* |
 | `<target> = <variable> ;` | output binding — `Base.<Property>` or `Expression( … ).Pin[<i>]` |
+| `Expression( … ) { Pin[<i>] = <variable> ; … }` | [block form](output-bindings.md#block-form) — several pins on one terminal node *(since 1.9.0)* |
 
 The rule that governs whether `Graph` is required is evaluated after the whole parse unit is read:
 
@@ -103,7 +104,7 @@ backend:
 | Backend | Asset written | Notes |
 | :-- | :-- | :-- |
 | `Graph` | `UMaterial` | the node graph is built directly on the material |
-| `ThinCustom` *(since 1.5.0)* | `UDreamShaderMaterialInstance` whose parent is a hidden `UMaterial` subobject named `MB_DreamThinBase_<leaf>` | one asset, one package |
+| `ThinCustom` *(since 1.5.0)* | `UDreamShaderMaterialInstance` whose parent is a hidden `UMaterial` subobject named `MB_DreamThinBase_<leaf>` | one asset, one package; parameter overrides you set on the instance are yours to keep — a rebuild captures them and puts back every name the new base still declares *(since 1.9.0)*, see [Divergence](../generation/divergence.md#parameter-overrides-on-a-generated-thincustom-instance) |
 | `Instance` | alias for `ThinCustom` *(deprecated in 1.5.0)* | |
 
 The backend comes from `Settings = { Backend = "…"; }` if present, otherwise from the project's
@@ -118,10 +119,11 @@ The backend comes from `Settings = { Backend = "…"; }` if present, otherwise f
 
 > [!WARNING]
 > Regeneration clears the target graph. Node positions not pinned by [`Layout`](layout.md), added
-> nodes, node property tweaks, comment boxes whose text begins with `DreamShader: `, and — under the
-> ThinCustom backend — every parameter override on the generated instance are destroyed. Only
-> comment boxes that do **not** carry the `DreamShader: ` prefix survive. See
-> [Regeneration](../generation/regeneration.md).
+> nodes, node property tweaks, and comment boxes whose text begins with `DreamShader: ` are
+> destroyed. Only comment boxes that do **not** carry the `DreamShader: ` prefix survive. Under the
+> ThinCustom backend the instance's parameter overrides are cleared too, but they are captured first
+> and restored afterwards *(since 1.9.0)* — a parameter the source no longer declares is the one case
+> that loses its value. See [Regeneration](../generation/regeneration.md).
 
 ## Notes
 

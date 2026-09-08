@@ -36,7 +36,19 @@ namespace UE::DreamShader::Private
 	bool ParseIntegerLiteral(const FString& InText, int32& OutValue);
 	bool ParseVectorLiteral(const FString& InText, FLinearColor& OutColor);
 	bool ParseBooleanLiteral(const FString& InText, bool& OutValue);
-	bool ParseTextureAssetReference(const FString& InText, FString& OutObjectPath, FDreamShaderTextError& OutError);
+	/**
+	 * The texture-default resolver. `ExpectedTextureType` is only consulted when
+	 * `bExpectedTextureTypeIsExplicit` is true -- i.e. when the declared type token names the
+	 * dimension -- and only to judge the class written in a `Class'/Game/...'` shell. Tokens such as
+	 * TextureObjectParameter carry no dimension of their own and pass the defaults, which check
+	 * nothing beyond "the written class is not something that plainly cannot be a texture".
+	 */
+	bool ParseTextureAssetReference(
+		const FString& InText,
+		FString& OutObjectPath,
+		FDreamShaderTextError& OutError,
+		ETextShaderTextureType ExpectedTextureType = ETextShaderTextureType::Texture2D,
+		bool bExpectedTextureTypeIsExplicit = false);
 	bool TryResolveUEBuiltinOutputSignature(
 		const FString& InFunctionName,
 		ETextShaderPropertyType& OutType,

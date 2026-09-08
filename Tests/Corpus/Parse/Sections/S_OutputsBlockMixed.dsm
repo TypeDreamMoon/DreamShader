@@ -1,0 +1,38 @@
+// The block form and the statement form coexist on the SAME node: identical class + argument list,
+// so the block's pin and the loose statement's pin land on one UMaterialExpression. A different
+// class is a different node. Also pins the optional ';' after the block's closing brace.
+Shader(Name="DreamShaderTests/Corpus/M_OutputsBlockMixed")
+{
+    Settings = {
+        Domain = "Surface";
+        ShadingModel = "Unlit";
+        BlendMode = "Translucent";
+    }
+
+    Outputs = {
+        vec3  Color;
+        vec3  Transmittance;
+        float Coverage;
+        vec3  CoatNormal;
+
+        Base.EmissiveColor = Color;
+
+        Expression(Class="ThinTranslucentMaterialOutput")
+        {
+            Pin[0] = Transmittance;
+        };
+
+        // Same node as the block above -- this fills its other pin.
+        Expression(Class="ThinTranslucentMaterialOutput").Pin[1] = Coverage;
+
+        // A different class -> a second node.
+        Expression(Class="ClearCoatNormalCustomOutput").Pin[0] = CoatNormal;
+    }
+
+    Graph = {
+        Color = vec3(0.2, 0.4, 0.8);
+        Transmittance = vec3(0.9, 0.9, 0.9);
+        Coverage = 1.0;
+        CoatNormal = vec3(0.0, 0.0, 1.0);
+    }
+}

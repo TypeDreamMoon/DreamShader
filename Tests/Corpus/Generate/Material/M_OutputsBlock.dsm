@@ -1,0 +1,35 @@
+// #30 / #33: the Outputs block form must GENERATE one terminal node with both pins wired. The two
+// Pin[i] statements share the block head, so they carry an identical class + argument list and hit
+// the generator's output-target reuse key -- the same node, twice.
+Shader(Name="DreamShaderTests/Generate/M_OutputsBlock", Root="Game")
+{
+    Properties { VectorParameter Tint = float4(0.9, 0.9, 0.9, 1.0); }
+    Settings {
+        Domain = "Surface";
+        ShadingModel = "DefaultLit";
+        BlendMode = "Translucent";
+    }
+
+    Outputs {
+        vec3  Color;
+        float Alpha;
+        vec3  Transmittance;
+        float Coverage;
+
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+
+        Expression(Class="ThinTranslucentMaterialOutput")
+        {
+            Pin[0] = Transmittance;
+            Pin[1] = Coverage;
+        }
+    }
+
+    Graph {
+        Color = vec3(0.2, 0.4, 0.8);
+        Alpha = 0.5;
+        Transmittance = Tint.rgb;
+        Coverage = 1.0;
+    }
+}

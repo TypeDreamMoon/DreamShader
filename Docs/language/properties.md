@@ -99,6 +99,24 @@ parentheses instead:
 UE builtin property '{Name}' does not support inline defaults. Put arguments inside UE.{Function}(...).
 ```
 
+### Texture defaults
+
+A texture token's `= <default>` is an asset reference. Four spellings are accepted, and all four
+resolve to the same object path:
+
+```c
+Texture2D A = Path(Game, "Textures/T_X");                      // root + relative path
+Texture2D B = Path("/Game/Textures/T_X");                      // absolute path
+Texture2D C = "/Game/Textures/T_X";                            // bare quoted absolute path
+Texture2D D = Texture2D'/Game/Textures/T_X.T_X';               // Content Browser "Copy Reference" (since 1.9.0)
+```
+
+The last form is what **Copy Reference** puts on the clipboard, in either the
+`/Script/Engine.Texture2D'…'` or the older `Texture2D'…'` spelling, and it may be pasted bare, in
+quotes, or as the path argument of `Path(…)`. The class in front of the quotes is checked against the
+declared texture type: pasting a `Texture2D'…'` into a `TextureSampleParameterVolume` is refused by
+name rather than left to fail at load. See [`Path(…)`](../parameters/path.md).
+
 ## `const` properties
 
 *(since 1.2.6)*

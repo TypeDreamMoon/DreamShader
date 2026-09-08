@@ -1,0 +1,24 @@
+// Only Expression(Class="...") opens a brace block inside Outputs. A brace after anything else --
+// here an output variable name -- is a syntax error rather than a silently ignored block. DSH3133.
+Shader(Name="DreamShaderTests/Corpus/M_OutputsBraceAfterVariable")
+{
+    Settings = {
+        Domain = "Surface";
+        ShadingModel = "Unlit";
+    }
+
+    Outputs = {
+        vec3 Color;
+
+        Color
+        {
+            Pin[0] = Color;
+        }
+
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = vec3(1.0, 0.0, 0.0);
+    }
+}

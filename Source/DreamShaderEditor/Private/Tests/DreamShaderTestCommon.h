@@ -275,8 +275,16 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 
 		FTextShaderDefinition Definition;
-		FString Error;
-		const bool bParsed = FTextShaderParser::Parse(Source, Definition, Error);
+		// Parse through the code-carrying overload and fold the DSHnnnn code into the string the
+		// golden's errorContains is matched against. The code is the stable half of a diagnostic --
+		// the message is free to be reworded and, eventually, translated -- so a negative fixture
+		// should be able to name the code instead of English prose. Purely additive: a golden that
+		// still names a message substring keeps matching.
+		FDreamShaderTextError ParseError;
+		const bool bParsed = FTextShaderParser::Parse(Source, Definition, ParseError);
+		const FString Error = ParseError.HasCode()
+			? FString::Printf(TEXT("%s: %s"), *ParseError.Code, *ParseError.Message.ToString())
+			: ParseError.Message.ToString();
 
 		if (ShouldUpdateDreamShaderGolden())
 		{

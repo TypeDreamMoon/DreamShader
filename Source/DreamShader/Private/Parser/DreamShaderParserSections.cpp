@@ -695,7 +695,7 @@ namespace UE::DreamShader::Private
 				{
 					Property.Type = ETextShaderPropertyType::Texture2D;
 					Property.ComponentCount = 0;
-					if (Property.bHasDefaultValue && !ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError))
+					if (Property.bHasDefaultValue && !ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError, Property.TextureType, Property.bHasExplicitTextureType))
 					{
 						FailWith(OutError, TEXT("DSH7026"), FText::Format(LOCTEXT("InvalidTextureDefaultValueSFor", "Invalid texture default value '{0}' for property '{1}'. {2}"),
 					FText::FromString(Right),
@@ -721,7 +721,7 @@ namespace UE::DreamShader::Private
 					{
 						Property.TextureType = ETextShaderTextureType::VolumeTexture;
 					}
-					if (Property.bHasDefaultValue && !ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError))
+					if (Property.bHasDefaultValue && !ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError, Property.TextureType, Property.bHasExplicitTextureType))
 					{
 						FailWith(OutError, TEXT("DSH7027"), FText::Format(LOCTEXT("InvalidTextureSampleDefaultValueS", "Invalid texture sample default value '{0}' for property '{1}'. {2}"),
 					FText::FromString(Right),
@@ -849,7 +849,7 @@ namespace UE::DreamShader::Private
 
 				if (Property.bHasDefaultValue)
 				{
-					if (!ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError))
+					if (!ParseTextureAssetReference(Right, Property.TextureDefaultObjectPath, OutError, Property.TextureType, Property.bHasExplicitTextureType))
 					{
 						FailWith(OutError, TEXT("DSH7026"), FText::Format(LOCTEXT("InvalidTextureDefaultValueSFor2", "Invalid texture default value '{0}' for property '{1}'. {2}"),
 					FText::FromString(Right),
@@ -1025,7 +1025,7 @@ namespace UE::DreamShader::Private
 					if (!TryMatchGroupHead(Buffer, GroupName))
 					{
 					FailWith(OutError, TEXT("DSH3130"), FText::Format(
-						LOCTEXT("UnexpectedInPropertiesNearSOnly", "Unexpected '{{' in Properties near '{0}'. Only Group(\"Name\") {{ ... }} may open a brace here."),
+						LOCTEXT("UnexpectedInPropertiesNearSOnly", "Unexpected '`{' in Properties near '{0}'. Only Group(\"Name\") `{ ... `} may open a brace here."),
 						FText::FromString(Buffer.TrimStartAndEnd())));
 						return false;
 					}
@@ -1083,7 +1083,7 @@ namespace UE::DreamShader::Private
 					if (InnerStart == INDEX_NONE || InnerEnd == INDEX_NONE)
 					{
 						FailWith(OutError, TEXT("DSH3132"), FText::Format(
-							LOCTEXT("UnterminatedGroupBlock", "Unterminated Group(\"{0}\") {{ ... }} block."),
+							LOCTEXT("UnterminatedGroupBlock", "Unterminated Group(\"{0}\") `{ ... `} block."),
 							FText::FromString(GroupName)));
 						return false;
 					}
@@ -1180,6 +1180,57 @@ namespace UE::DreamShader::Private
 		}
 
 		return true;
+	}
+
+	// Fold the newlines and indentation of a multi-line Expression( ... ) block head into single
+	// spaces. The head is spliced back together with ".Pin[i]" to form each lowered binding's
+	// TargetText, and that text is what every downstream diagnostic quotes -- so it has to read as
+	// one line even when the author wrote the argument list across five. Whitespace inside a string
+	// literal is left exactly as written.
+	static FString CollapseOutputHeadWhitespace(const FString& InText)
+	{
+		FString Result;
+		Result.Reserve(InText.Len());
+
+		bool bInString = false;
+		bool bPendingSpace = false;
+		for (int32 Index = 0; Index < InText.Len(); ++Index)
+		{
+			const TCHAR Char = InText[Index];
+			if (bInString)
+			{
+				Result.AppendChar(Char);
+				if (Char == TCHAR('\\') && InText.IsValidIndex(Index + 1))
+				{
+					Result.AppendChar(InText[++Index]);
+				}
+				else if (Char == TCHAR('"'))
+				{
+					bInString = false;
+				}
+				continue;
+			}
+
+			if (FChar::IsWhitespace(Char))
+			{
+				bPendingSpace = !Result.IsEmpty();
+				continue;
+			}
+
+			if (bPendingSpace)
+			{
+				Result.AppendChar(TCHAR(' '));
+				bPendingSpace = false;
+			}
+
+			Result.AppendChar(Char);
+			if (Char == TCHAR('"'))
+			{
+				bInString = true;
+			}
+		}
+
+		return Result;
 	}
 
 	bool ParseOutputStatements(
@@ -1309,19 +1360,75 @@ namespace UE::DreamShader::Private
 			return true;
 		};
 
-		const TArray<FString> Statements = SplitStatements(RemoveComments(BlockContent));
-		for (const FString& Statement : Statements)
+		// The block form and the statement form describe the SAME node, so both have to agree on what
+		// "this pin" means. This is the generator's own output-target reuse key --
+		// BuildOutputTargetCacheKey: normalized class plus the sorted argument list -- with the pin
+		// index appended, recomputed here so "each pin is bound once" can be enforced at parse time
+		// across both forms combined instead of only at generation (DSH8014), where a block and a
+		// loose statement that collide are much harder to attribute.
+		const auto MakeOutputPinKey = [](const FTextShaderOutputBinding& InBinding) -> FString
 		{
-			const FString Trimmed = Statement.TrimStartAndEnd();
-			if (Trimmed.IsEmpty())
+			TArray<FString> Parts;
+			Parts.Reserve(InBinding.ExpressionArguments.Num() + 1);
+			Parts.Add(NormalizeSettingKey(InBinding.ExpressionClass));
+
+			TArray<FString> ArgumentKeys;
+			InBinding.ExpressionArguments.GetKeys(ArgumentKeys);
+			ArgumentKeys.Sort();
+			for (const FString& Key : ArgumentKeys)
 			{
-				continue;
+				Parts.Add(Key + TEXT("=") + InBinding.ExpressionArguments.FindChecked(Key));
+			}
+
+			return FString::Join(Parts, TEXT("|")) + FString::Printf(TEXT("#%d"), InBinding.ExpressionPinIndex);
+		};
+
+		// A repeated Outputs section appends to the same array, so seed the map from what is already
+		// there: two Outputs sections binding one node's Pin[0] are still a double bind.
+		TMap<FString, FString> BoundPinSources;
+		for (const FTextShaderOutputBinding& ExistingBinding : OutOutputs)
+		{
+			if (ExistingBinding.TargetKind == FTextShaderOutputBinding::ETargetKind::ExpressionInput)
+			{
+				BoundPinSources.Add(MakeOutputPinKey(ExistingBinding), ExistingBinding.SourceText);
+			}
+		}
+
+		const auto AddOutputBinding = [&](FTextShaderOutputBinding& InBinding) -> bool
+		{
+			if (InBinding.TargetKind == FTextShaderOutputBinding::ETargetKind::ExpressionInput)
+			{
+				const FString PinKey = MakeOutputPinKey(InBinding);
+				if (const FString* PreviousSource = BoundPinSources.Find(PinKey))
+				{
+					FailWith(OutError, TEXT("DSH3137"), FText::Format(
+						LOCTEXT("OutputTargetPinBoundMoreThanOnce", "Output target pin '{0}' is bound more than once: first to '{1}', then to '{2}'. An Expression(...) block and an Expression(...).Pin[i] statement that share a class and argument list describe one node, so their pins share one namespace."),
+						FText::FromString(InBinding.TargetText),
+						FText::FromString(*PreviousSource),
+						FText::FromString(InBinding.SourceText)));
+					return false;
+				}
+
+				BoundPinSources.Add(PinKey, InBinding.SourceText);
+			}
+
+			OutOutputs.Add(MoveTemp(InBinding));
+			return true;
+		};
+
+		// One ';'-terminated statement: a declaration, an initialized declaration, or a binding.
+		const auto ParseOutputStatement = [&](const FString& InStatement) -> bool
+		{
+			const FString Statement = InStatement.TrimStartAndEnd();
+			if (Statement.IsEmpty())
+			{
+				return true;
 			}
 
 			FTextShaderOutputBinding Binding;
 			FString LeftSide;
 			FString RightSide;
-			if (SplitTopLevelAssignment(Trimmed, LeftSide, RightSide))
+			if (SplitTopLevelAssignment(Statement, LeftSide, RightSide))
 			{
 				FTextShaderVariableDeclaration Declaration;
 				if (ParseTypedDeclarationStatement(LeftSide, Declaration, OutError))
@@ -1336,7 +1443,7 @@ namespace UE::DreamShader::Private
 					}
 
 					OutOutputDeclarations.Add(Declaration);
-					continue;
+					return true;
 				}
 
 				Binding.SourceText = RightSide.TrimStartAndEnd();
@@ -1351,21 +1458,259 @@ namespace UE::DreamShader::Private
 					return false;
 				}
 
-				OutOutputs.Add(Binding);
+				return AddOutputBinding(Binding);
 			}
-			else
+
+			FTextShaderVariableDeclaration Declaration;
+			if (!ParseTypedDeclarationStatement(Statement, Declaration, OutError))
 			{
-				FTextShaderVariableDeclaration Declaration;
-				if (!ParseTypedDeclarationStatement(Trimmed, Declaration, OutError))
+				return false;
+			}
+
+			OutOutputDeclarations.Add(Declaration);
+			return true;
+		};
+
+		// The head of a block form: exactly `Expression( ... )`, nothing after the closing paren. A
+		// `.Pin[i]` suffix belongs to the statement form and is written per pin inside the block.
+		const auto ValidateExpressionBlockHead = [&OutError](const FString& InHead) -> bool
+		{
+			if (!InHead.StartsWith(TEXT("Expression"), ESearchCase::IgnoreCase)
+				|| !InHead.EndsWith(TEXT(")"), ESearchCase::CaseSensitive))
+			{
+				FailWith(OutError, TEXT("DSH3133"), FText::Format(
+					LOCTEXT("UnexpectedBraceBlockInOutputs", "Unexpected brace block in Outputs near '{0}'. Only Expression(Class=\"...\") opens a brace block here; every other Outputs statement ends with ';'."),
+					FText::FromString(InHead)));
+				return false;
+			}
+
+			return true;
+		};
+
+		// Lower `Expression( <args> ) { Pin[i] = x; ... }` to one FTextShaderOutputBinding per pin.
+		// Every one of them is built from the SAME head text, so they carry byte-identical
+		// ExpressionClass + ExpressionArguments -- which is exactly the generator's node reuse key, so
+		// the block collapses onto a single UMaterialExpression with no generator change at all.
+		const auto ParseExpressionPinBlock = [&](const FString& InHead, const FString& InBlockBody) -> bool
+		{
+			int32 BoundPinCount = 0;
+			for (const FString& PinStatement : SplitStatements(InBlockBody))
+			{
+				const FString Statement = PinStatement.TrimStartAndEnd();
+				if (Statement.IsEmpty())
+				{
+					continue;
+				}
+
+				FString LeftSide;
+				FString RightSide;
+				if (!SplitTopLevelAssignment(Statement, LeftSide, RightSide)
+					|| !LeftSide.TrimStartAndEnd().StartsWith(TEXT("Pin["), ESearchCase::IgnoreCase)
+					|| RightSide.TrimStartAndEnd().IsEmpty())
+				{
+					FailWith(OutError, TEXT("DSH3135"), FText::Format(
+						LOCTEXT("InvalidStatementInExpressionBlock", "Invalid statement '{0}' inside an Expression(...) block. Only Pin[index] = <source>; is allowed there."),
+						FText::FromString(Statement)));
+					return false;
+				}
+
+				FTextShaderOutputBinding Binding;
+				Binding.SourceText = RightSide.TrimStartAndEnd();
+				// Splicing the head back onto the pin selector and running the ordinary target parser
+				// keeps the two forms literally identical downstream: same validation, same
+				// diagnostics (DSH3086 / DSH3087 for a malformed index), same TargetText shape.
+				if (!ParseOutputTarget(InHead + TEXT(".") + LeftSide.TrimStartAndEnd(), Binding))
+				{
+					return false;
+				}
+				if (!AddOutputBinding(Binding))
 				{
 					return false;
 				}
 
-				OutOutputDeclarations.Add(Declaration);
+				++BoundPinCount;
 			}
+
+			if (BoundPinCount == 0)
+			{
+				FailWith(OutError, TEXT("DSH3136"), FText::Format(
+					LOCTEXT("ExpressionBlockBindsNoPin", "The Expression(...) block for '{0}' binds no pin. Write at least one Pin[index] = <source>; inside it, or delete the block."),
+					FText::FromString(InHead)));
+				return false;
+			}
+
+			return true;
+		};
+
+		// Statement splitting is done here rather than by SplitStatements because Outputs now has one
+		// construct that opens a brace -- Expression( ... ) { Pin[i] = x; ... } -- and SplitStatements
+		// is only paren/bracket/string aware, so it would cut the block up on its inner ';'. The ';'
+		// rule is otherwise unchanged, which is what keeps the statement form byte-identical.
+		const FString Content = RemoveComments(BlockContent);
+		int32 ParenDepth = 0;
+		int32 BracketDepth = 0;
+		bool bInString = false;
+		FString Buffer;
+
+		int32 Index = 0;
+		while (Index < Content.Len())
+		{
+			const TCHAR Char = Content[Index];
+
+			if (bInString)
+			{
+				Buffer.AppendChar(Char);
+				if (Char == TCHAR('\\') && Content.IsValidIndex(Index + 1))
+				{
+					Buffer.AppendChar(Content[Index + 1]);
+					Index += 2;
+					continue;
+				}
+				if (Char == TCHAR('"'))
+				{
+					bInString = false;
+				}
+				++Index;
+				continue;
+			}
+
+			if (Char == TCHAR('"'))
+			{
+				bInString = true;
+				Buffer.AppendChar(Char);
+				++Index;
+				continue;
+			}
+			if (Char == TCHAR('('))
+			{
+				++ParenDepth;
+				Buffer.AppendChar(Char);
+				++Index;
+				continue;
+			}
+			if (Char == TCHAR(')'))
+			{
+				ParenDepth = FMath::Max(0, ParenDepth - 1);
+				Buffer.AppendChar(Char);
+				++Index;
+				continue;
+			}
+			if (Char == TCHAR('['))
+			{
+				++BracketDepth;
+				Buffer.AppendChar(Char);
+				++Index;
+				continue;
+			}
+			if (Char == TCHAR(']'))
+			{
+				BracketDepth = FMath::Max(0, BracketDepth - 1);
+				Buffer.AppendChar(Char);
+				++Index;
+				continue;
+			}
+
+			if (ParenDepth == 0 && BracketDepth == 0)
+			{
+				if (Char == TCHAR(';'))
+				{
+					if (!ParseOutputStatement(Buffer))
+					{
+						return false;
+					}
+
+					Buffer.Reset();
+					++Index;
+					continue;
+				}
+
+				if (Char == TCHAR('{'))
+				{
+					const FString Head = CollapseOutputHeadWhitespace(Buffer);
+					if (!ValidateExpressionBlockHead(Head))
+					{
+						return false;
+					}
+
+					int32 BraceDepth = 0;
+					bool bInBlockString = false;
+					int32 InnerStart = INDEX_NONE;
+					int32 InnerEnd = INDEX_NONE;
+					for (int32 Scan = Index; Scan < Content.Len(); ++Scan)
+					{
+						const TCHAR BlockChar = Content[Scan];
+						if (bInBlockString)
+						{
+							if (BlockChar == TCHAR('\\'))
+							{
+								++Scan;
+								continue;
+							}
+							if (BlockChar == TCHAR('"'))
+							{
+								bInBlockString = false;
+							}
+							continue;
+						}
+						if (BlockChar == TCHAR('"'))
+						{
+							bInBlockString = true;
+							continue;
+						}
+						if (BlockChar == TCHAR('{'))
+						{
+							if (BraceDepth == 0)
+							{
+								InnerStart = Scan + 1;
+							}
+							++BraceDepth;
+							continue;
+						}
+						if (BlockChar == TCHAR('}'))
+						{
+							--BraceDepth;
+							if (BraceDepth == 0)
+							{
+								InnerEnd = Scan;
+								break;
+							}
+						}
+					}
+
+					if (InnerStart == INDEX_NONE || InnerEnd == INDEX_NONE)
+					{
+						FailWith(OutError, TEXT("DSH3134"), FText::Format(
+							LOCTEXT("UnterminatedOutputsExpressionBlock", "Unterminated Expression(...) block in Outputs after '{0}'."),
+							FText::FromString(Head)));
+						return false;
+					}
+
+					if (!ParseExpressionPinBlock(Head, Content.Mid(InnerStart, InnerEnd - InnerStart)))
+					{
+						return false;
+					}
+
+					Buffer.Reset();
+					Index = InnerEnd + 1;
+					while (Index < Content.Len() && FChar::IsWhitespace(Content[Index]))
+					{
+						++Index;
+					}
+					// A ';' after the closing brace is optional sugar, exactly as it is after a
+					// Group("Name") { ... } block in Properties.
+					if (Index < Content.Len() && Content[Index] == TCHAR(';'))
+					{
+						++Index;
+					}
+					continue;
+				}
+			}
+
+			Buffer.AppendChar(Char);
+			++Index;
 		}
 
-		return true;
+		return ParseOutputStatement(Buffer);
 	}
 
 	static bool ParseLayoutCallStatement(

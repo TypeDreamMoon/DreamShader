@@ -45,9 +45,19 @@ Complete list of the sites that consult the cache.
 | `fmod` / `mod` | `math-fmod\|<A>\|<B>` |
 | Generic reflected `UE.*` calls — `UE.Expression`, and any `UE.<Name>` that is **not** a registered sugar builtin — and every `Substrate.*` call | the call key plus `\|Class=<node class>\|OutputType=<token>`, and a second key per selected output |
 | `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` / `VirtualFunction` calls | the call key plus `\|Asset=<object path>`, and a second key per selected output |
+| `Outputs` expression targets — `Expression( … ).Pin[i]` and the [block form](../language/output-bindings.md#block-form) | `<normalized class>\|<key>=<value>\|…`, the argument keys sorted; the pin index is **not** part of it |
 
 The two-level keying on the last two rows means the **node** is shared across calls that differ only in
 which output they read, while each distinct output gets its own cached value.
+
+> [!NOTE]
+> The last row is a **separate map** from the expression cache above — it lives beside it for the same
+> asset and holds only the terminal nodes an `Outputs` binding created. Because the pin index is
+> excluded, every binding that agrees on class and argument list lands on one node and fills a
+> different pin of it. That is what makes the exact spelling of the argument list load-bearing: one
+> extra or missing argument is a second node, silently. The
+> [block form](../language/output-bindings.md#block-form) exists to remove the repetition that made
+> that mistake easy — it writes the specification once and lowers to N bindings that cannot disagree.
 
 ## The value identity token
 
@@ -93,6 +103,7 @@ variable between two textually identical calls correctly produces two different 
 | `StaticSwitchParameter` calls | Not keyed |
 | Parameter and property nodes | Not in this cache at all — see below |
 | Ordered swizzles such as `.rgb`, `.ga`, `.a` | No node exists to reuse; an ordered swizzle is an input channel mask on the connection |
+| An `Outputs` expression target whose argument list differs from another's by even one argument | Deliberate — the argument list is the identity. Write the pins in one [block](../language/output-bindings.md#block-form) when they are meant to be one node |
 
 ### Parameters and properties
 

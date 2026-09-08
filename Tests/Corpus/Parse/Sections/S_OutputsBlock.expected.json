@@ -1,0 +1,10 @@
+{
+	"entryPoint": "parse",
+	"outcome": "ok",
+	"definition": {
+		"name": "DreamShaderTests/Corpus/M_OutputsBlock",
+		"outputDeclarations": 4,
+		"outputs": 4,
+		"codeNotEmpty": true
+	}
+}

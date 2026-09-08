@@ -122,6 +122,12 @@ namespace UE::DreamShader::Editor::Private
 		// the Bindings table above can reach it. Walking only from the material root would drop the
 		// node and its whole input subtree silently. Emit it in the form the generator already
 		// accepts: Expression(Class="...").Pin[N] = <var>. See Docs/language/output-bindings.md.
+		//
+		// From 1.9.0 a node with two or more connected pins is written in the block form instead --
+		// Expression(Class="...") { Pin[0] = a; Pin[1] = b; } -- which states the one-node intent in
+		// the syntax rather than leaving it to the reader to notice that N statements happen to carry
+		// a byte-identical argument list. A single-pin node keeps the statement form, so every file
+		// that decompiled before this change still decompiles byte for byte the same.
 		{
 			TMap<FString, int32> CustomOutputClassCounts;
 			for (UMaterialExpression* Expression : Material->GetExpressions())
@@ -145,6 +151,10 @@ namespace UE::DreamShader::Editor::Private
 					continue;
 				}
 
+				// Pin index -> the Outputs variable that drives it, in ascending pin order. Collected
+				// first because the binding syntax depends on how many pins the node ends up with.
+				TArray<TPair<int32, FString>> BoundPins;
+
 				const TArrayView<FExpressionInput*> CustomOutputInputs = CustomOutput->GetInputsView();
 				for (int32 PinIndex = 0; PinIndex < CustomOutputInputs.Num(); ++PinIndex)
 				{
@@ -167,12 +177,27 @@ namespace UE::DreamShader::Editor::Private
 						TEXT("\t\t%s %s;"),
 						*GetDreamShaderTypeForMaterialValueType(GetDreamShaderExpressionInputValueType(CustomOutput, PinIndex)),
 						*VariableName));
+					OutputAssignments.Add(FormatGraphSetStatement(VariableName, CompileInput(*PinInput, TEXT("0.0"))));
+					BoundPins.Emplace(PinIndex, VariableName);
+				}
+
+				if (BoundPins.Num() == 1)
+				{
 					OutputBindings.Add(FString::Printf( // I18N-EXEMPT
 						TEXT("\t\tExpression(Class=\"%s\").Pin[%d] = %s;"),
 						*ClassName,
-						PinIndex,
-						*VariableName));
-					OutputAssignments.Add(FormatGraphSetStatement(VariableName, CompileInput(*PinInput, TEXT("0.0"))));
+						BoundPins[0].Key,
+						*BoundPins[0].Value));
+				}
+				else if (BoundPins.Num() > 1)
+				{
+					OutputBindings.Add(FString::Printf(TEXT("\t\tExpression(Class=\"%s\")"), *ClassName)); // I18N-EXEMPT
+					OutputBindings.Add(TEXT("\t\t{"));
+					for (const TPair<int32, FString>& BoundPin : BoundPins)
+					{
+						OutputBindings.Add(FString::Printf(TEXT("\t\t\tPin[%d] = %s;"), BoundPin.Key, *BoundPin.Value)); // I18N-EXEMPT
+					}
+					OutputBindings.Add(TEXT("\t\t}"));
 				}
 			}
 		}

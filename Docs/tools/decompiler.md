@@ -120,6 +120,34 @@ not describe its surface.
 `CustomData1`, `AmbientOcclusion`, `Refraction`, `PixelDepthOffset`, `MaterialAttributes`, and — on
 UE 5.4 and newer — `FrontMaterial`. Unconnected properties are skipped entirely.
 
+### Terminal output nodes
+
+A `UMaterialExpressionCustomOutput` (`ThinTranslucentMaterialOutput`, `ClearCoatNormalCustomOutput`,
+`VolumetricAdvancedMaterialOutput`, `VertexInterpolator`, …) has no output pins, so the material root
+cannot reach it — it is exported from the node list instead, as an
+[`Expression( … )` output binding](../language/output-bindings.md#the-expression--pini-target). One
+`Outputs` variable is declared per **connected** input pin, named after the pin, and the pin's whole
+input subtree lands in `Graph`. Which spelling is written depends on how many pins are connected:
+
+| Connected pins | Emitted as |
+| :-- | :-- |
+| 1 | the statement form, `Expression(Class="…").Pin[<i>] = <var>;` |
+| 2 or more | the [block form](../language/output-bindings.md#block-form), `Expression(Class="…") { Pin[<i>] = <var>; … }` *(since 1.9.0)* |
+| 0 | nothing — the node is dropped |
+
+Both spellings regenerate the same single node; the block form is chosen for multi-pin nodes because
+it states that intent in the syntax instead of leaving it to N repeated argument lists. A file that
+decompiled to the statement form before 1.9.0 still decompiles to it byte for byte.
+
+`Class=` carries the **reflected** class name (`MaterialExpressionThinTranslucentMaterialOutput`, no
+`U` prefix), which is what the generator's class resolution expects.
+
+> [!WARNING]
+> Output-target nodes are de-duplicated by class plus argument list, so a material holding **two**
+> nodes of the same class cannot round-trip. The decompiler exports the first and records the warning
+> `Material has more than one '{Class}' node; output targets are de-duplicated by class, so only the
+> first was exported.`
+
 ## What is exported faithfully
 
 The node walker has a curated case for each class below. Everything else falls through to the
@@ -283,6 +311,7 @@ do not fail the export.
 | `Detected a recursive reroute dependency while decompiling node '{Node}'; emitted a default literal to avoid stack overflow.` | a cycle through plain reroutes |
 | `Detected a recursive named reroute dependency for '{Node}'; emitted a default literal to avoid stack overflow.` | a cycle through named reroutes |
 | `Append node '{Node}' resolved to {A} + {B} components, which cannot fit a float4; masked its inputs down to {A2} + {B2}. Review the emitted swizzle.` | an append whose operands exceed four components |
+| `Material has more than one '{Class}' node; output targets are de-duplicated by class, so only the first was exported.` | two [terminal output nodes](#terminal-output-nodes) of the same class |
 
 ### Export failures
 
