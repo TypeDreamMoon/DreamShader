@@ -20,6 +20,7 @@
 #include "Materials/MaterialFunction.h"
 #include "Materials/MaterialInstance.h"
 #include "Misc/Crc.h"
+#include "UObject/Package.h"
 #include "UObject/TextProperty.h"
 #include "UObject/UnrealType.h"
 
@@ -31,7 +32,12 @@ namespace UE::DreamShader::Editor::Private
 		// because the property set the reflection walk sees is the engine's, not ours: an engine
 		// upgrade that adds one UPROPERTY to one expression class would otherwise re-fingerprint every
 		// asset in the project at once and report the whole library as hand-edited.
-		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD2");
+		// DSD3: a generated ThinCustom instance's own parameter overrides left the digest (see
+		// BuildMaterialInstanceDigestText). The text a DSD2 stamp was computed from listed every
+		// override array, so comparing a DSD3 text against a DSD2 stamp would report every instance in
+		// the project as hand-edited; bumping the tag retires the old stamps as Unstamped instead --
+		// rebuilt normally, and restamped -- which is what the tag is for.
+		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD3");
 
 		// Node properties a user is free to change without meaning anything by it. Node coordinates are
 		// the important entry: regeneration reassigns them from the Layout section anyway (they are
@@ -359,51 +365,85 @@ namespace UE::DreamShader::Editor::Private
 			InOutText += TEXT("}\n");
 		}
 
-		// The classes whose layout the asset's digest depends on: every expression class in the
-		// graph, once each, in path order so the text is stable across sessions.
-		FString BuildClassLayoutText(UObject* Asset)
+		// The layout text of a list of classes named by path, in the order given. A name that no longer
+		// resolves to a class is written as such rather than skipped: a class the engine dropped is a
+		// schema change too, and the tag must move for it.
+		FString BuildClassLayoutTextForNames(const TArray<FString>& ClassPathNames)
 		{
-			TConstArrayView<TObjectPtr<UMaterialExpression>> Expressions;
-			if (UMaterial* Material = Cast<UMaterial>(Asset))
-			{
-				Expressions = Material->GetExpressions();
-			}
-			else if (UMaterialFunction* MaterialFunction = Cast<UMaterialFunction>(Asset))
-			{
-				Expressions = MaterialFunction->GetExpressions();
-			}
-			TArray<const UClass*> Classes;
-			for (const TObjectPtr<UMaterialExpression>& Expression : Expressions)
-			{
-				if (Expression)
-				{
-					Classes.AddUnique(Expression->GetClass());
-				}
-			}
-			Classes.Sort([](const UClass& Left, const UClass& Right)
-			{
-				return Left.GetPathName() < Right.GetPathName();
-			});
 			FString Text;
-			for (const UClass* Class : Classes)
+			for (const FString& ClassPathName : ClassPathNames)
 			{
-				AppendClassLayout(Class, Text);
+				if (const UClass* Class = FindObject<UClass>(nullptr, *ClassPathName))
+				{
+					AppendClassLayout(Class, Text);
+				}
+				else
+				{
+					Text += ClassPathName;
+					Text += TEXT("{missing}\n");
+				}
 			}
 			return Text;
 		}
 	}
 
+	TArray<FString> CollectDigestClassPathNames(UObject* Asset)
+	{
+		// Every expression class in the graph, once each, in path order so the list is stable across
+		// sessions. Compared case-sensitively for the same reason the define tables are: FString's
+		// own ordering is not, and an order that can flip between runs is a tag that can flip.
+		TConstArrayView<TObjectPtr<UMaterialExpression>> Expressions;
+		if (UMaterial* Material = Cast<UMaterial>(Asset))
+		{
+			Expressions = Material->GetExpressions();
+		}
+		else if (UMaterialFunction* MaterialFunction = Cast<UMaterialFunction>(Asset))
+		{
+			Expressions = MaterialFunction->GetExpressions();
+		}
+		TArray<FString> ClassPathNames;
+		for (const TObjectPtr<UMaterialExpression>& Expression : Expressions)
+		{
+			if (Expression)
+			{
+				ClassPathNames.AddUnique(Expression->GetClass()->GetPathName());
+			}
+		}
+		ClassPathNames.Sort([](const FString& Left, const FString& Right)
+		{
+			return Left.Compare(Right, ESearchCase::CaseSensitive) < 0;
+		});
+		return ClassPathNames;
+	}
+
+	FString MakeDigestSchemaTagForClasses(const TArray<FString>& ClassPathNames)
+	{
+		// Format version, engine version, and a fingerprint of the reflected layout of the expression
+		// classes named. The last part is what an engine version cannot cover: a source build of the
+		// engine can add or rename a UPROPERTY on an expression class between two sessions without
+		// the version moving, and the digest walks exactly those properties -- so the stamp written
+		// before the change would read as a hand edit on every asset that uses the class (a MoonToon
+		// material whose fork-side expression classes gained pins was refused a rebuild that way).
+		// Folding the layout into the schema turns that into "Unstamped" instead: rebuilt normally,
+		// and restamped.
+		//
+		// WHICH classes is the subtle half, and it is why the list is a parameter. At stamp time it is
+		// the classes the generator just placed. At check time it must be that SAME list -- read back
+		// from the stamp -- and not whatever the asset holds now: a node added by hand is usually a
+		// class the graph did not have, and fingerprinting the current graph would then move the tag,
+		// read as "schema changed", and wave the one edit the gate exists to catch straight through
+		// as Unstamped. Found by DreamShader.Compiler.Divergence.HandEditsAreDetected.
+		return FString::Printf(
+			TEXT("%s-%d.%d-%08x"),
+			DigestFormatVersion,
+			DREAMSHADER_UE_MAJOR,
+			DREAMSHADER_UE_MINOR,
+			FCrc::StrCrc32(*BuildClassLayoutTextForNames(ClassPathNames)));
+	}
+
 	FString MakeDigestSchemaTag(UObject* Asset)
 	{
-		// Format version, engine version, and a fingerprint of the reflected layout of every
-		// expression class the asset uses. The last part is what an engine version cannot cover: a
-		// source build of the engine can add or rename a UPROPERTY on an expression class between two
-		// sessions without the version moving, and the digest walks exactly those properties -- so
-		// the stamp written before the change would read as a hand edit on every asset that uses the
-		// class (a MoonToon material whose fork-side expression classes gained pins was refused a
-		// rebuild that way). Folding the layout into the schema turns that into "Unstamped" instead:
-		// rebuilt normally, and restamped.
-		return FString::Printf(TEXT("%s-%d.%d-%08x"), DigestFormatVersion, DREAMSHADER_UE_MAJOR, DREAMSHADER_UE_MINOR, FCrc::StrCrc32(*BuildClassLayoutText(Asset)));
+		return MakeDigestSchemaTagForClasses(CollectDigestClassPathNames(Asset));
 	}
 
 	FString BuildMaterialDigestText(UMaterial* Material)
@@ -478,65 +518,86 @@ namespace UE::DreamShader::Editor::Private
 		FString Text = TEXT("KIND MaterialInstance\n");
 		Text += FString::Printf(TEXT("MI Parent=%s\n"), Instance->Parent ? *Instance->Parent->GetPathName() : TEXT("None"));
 
-		// Every override array in one reflection sweep rather than a hand-written list: the set grows
-		// between engine versions (texture collections, sparse volume textures), and a missed array
-		// would be a parameter a user can tune and silently lose. Regeneration calls
-		// ClearParameterValuesEditorOnly, so on a freshly generated instance every one of these is
-		// empty -- any content at all is somebody's hand edit.
-		TArray<TPair<FString, FString>> ParameterValues;
-		for (TFieldIterator<FProperty> It(Instance->GetClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
+		// The one exclusion that is not about cosmetics: on the ThinCustom pair the instance's own
+		// parameter overrides are NOT content, they are the user tuning the thing the instance exists
+		// to let them tune. Folding them in made dragging a slider in the instance panel read as a hand
+		// edit and permanently refuse the .dsm's rebuild -- the plugin's most ordinary usage judged a
+		// violation. They are covered instead by the Tweaked state (which does not block) and by
+		// capture-and-restore across the rebuild (DreamShaderThinCustomParameterOverrides.h), so
+		// nothing about them is silently lost by leaving them out here.
+		//
+		// The exclusion is scoped to the pair rather than to material instances at large: any OTHER
+		// generated instance shape has no rebuild that puts its overrides back, so for those the
+		// overrides stay exactly what they were -- destroyable content.
+		if (!IsThinCustomInstancePair(Instance))
 		{
-			FProperty* Property = *It;
-			if (!Property
-				|| !CastField<FArrayProperty>(Property)
-				|| !Property->GetName().EndsWith(TEXT("ParameterValues"), ESearchCase::CaseSensitive))
+			// Every override array in one reflection sweep rather than a hand-written list: the set grows
+			// between engine versions (texture collections, sparse volume textures), and a missed array
+			// would be a parameter a user can tune and silently lose. Regeneration calls
+			// ClearParameterValuesEditorOnly, so on a freshly generated instance every one of these is
+			// empty -- any content at all is somebody's hand edit.
+			TArray<TPair<FString, FString>> ParameterValues;
+			for (TFieldIterator<FProperty> It(Instance->GetClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
 			{
-				continue;
+				FProperty* Property = *It;
+				if (!Property
+					|| !CastField<FArrayProperty>(Property)
+					|| !Property->GetName().EndsWith(TEXT("ParameterValues"), ESearchCase::CaseSensitive))
+				{
+					continue;
+				}
+
+				const void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Instance);
+				if (!ValuePtr)
+				{
+					continue;
+				}
+
+				FString Value;
+				Property->ExportTextItem_Direct(Value, ValuePtr, nullptr, nullptr, PPF_None);
+				ParameterValues.Emplace(Property->GetName(), MoveTemp(Value));
 			}
 
-			const void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Instance);
-			if (!ValuePtr)
+			ParameterValues.Sort([](const TPair<FString, FString>& Left, const TPair<FString, FString>& Right)
 			{
-				continue;
+				return Left.Key < Right.Key;
+			});
+			for (const TPair<FString, FString>& Value : ParameterValues)
+			{
+				Text += FString::Printf(TEXT("MI %s=%s\n"), *Value.Key, *Value.Value);
 			}
 
-			FString Value;
-			Property->ExportTextItem_Direct(Value, ValuePtr, nullptr, nullptr, PPF_None);
-			ParameterValues.Emplace(Property->GetName(), MoveTemp(Value));
-		}
-
-		ParameterValues.Sort([](const TPair<FString, FString>& Left, const TPair<FString, FString>& Right)
-		{
-			return Left.Key < Right.Key;
-		});
-		for (const TPair<FString, FString>& Value : ParameterValues)
-		{
-			Text += FString::Printf(TEXT("MI %s=%s\n"), *Value.Key, *Value.Value);
-		}
-
-		const FStaticParameterSet& StaticParameters = Instance->GetStaticParameters();
-		for (const FStaticSwitchParameter& Switch : StaticParameters.StaticSwitchParameters)
-		{
-			Text += FString::Printf(
-				TEXT("MI Switch %s=%d/%d\n"),
-				*Switch.ParameterInfo.Name.ToString(),
-				Switch.Value ? 1 : 0,
-				Switch.bOverride ? 1 : 0);
-		}
-		for (const FStaticComponentMaskParameter& Mask : StaticParameters.EditorOnly.StaticComponentMaskParameters)
-		{
-			Text += FString::Printf(
-				TEXT("MI Mask %s=%d%d%d%d/%d\n"),
-				*Mask.ParameterInfo.Name.ToString(),
-				Mask.R ? 1 : 0,
-				Mask.G ? 1 : 0,
-				Mask.B ? 1 : 0,
-				Mask.A ? 1 : 0,
-				Mask.bOverride ? 1 : 0);
+			const FStaticParameterSet& StaticParameters = Instance->GetStaticParameters();
+			for (const FStaticSwitchParameter& Switch : StaticParameters.StaticSwitchParameters)
+			{
+				Text += FString::Printf(
+					TEXT("MI Switch %s=%d/%d\n"),
+					*Switch.ParameterInfo.Name.ToString(),
+					Switch.Value ? 1 : 0,
+					Switch.bOverride ? 1 : 0);
+			}
+			for (const FStaticComponentMaskParameter& Mask : StaticParameters.EditorOnly.StaticComponentMaskParameters)
+			{
+				Text += FString::Printf(
+					TEXT("MI Mask %s=%d%d%d%d/%d\n"),
+					*Mask.ParameterInfo.Name.ToString(),
+					Mask.R ? 1 : 0,
+					Mask.G ? 1 : 0,
+					Mask.B ? 1 : 0,
+					Mask.A ? 1 : 0,
+					Mask.bOverride ? 1 : 0);
+			}
 		}
 
 		// The ThinCustom pair is one unit: the graph lives on the hidden base, so an edit made there
 		// has to register against the instance, which is the asset the ownership metadata sits on.
+		// This half is what still makes a graph edit -- the thing a rebuild really would destroy --
+		// divergence on a ThinCustom material.
+		//
+		// Deliberately a NARROWER test than IsThinCustomInstancePair: it covers the saved pair, whose
+		// base is a subobject in the instance's own package. A memory-only base lives in the transient
+		// package and is not digested, which is unchanged from before and is the one shape of hidden
+		// base nobody can open to edit in the first place.
 		if (UMaterial* BaseMaterial = Cast<UMaterial>(Instance->Parent))
 		{
 			if (BaseMaterial->GetOutermost() == Instance->GetOutermost())
@@ -568,7 +629,7 @@ namespace UE::DreamShader::Editor::Private
 		return FString();
 	}
 
-	FString BuildOutputDigest(UObject* Asset)
+	FString BuildOutputDigest(UObject* Asset, const FString& SchemaTag)
 	{
 		const FString DigestText = BuildOutputDigestText(Asset);
 		if (DigestText.IsEmpty())
@@ -576,6 +637,68 @@ namespace UE::DreamShader::Editor::Private
 			return FString();
 		}
 
-		return FString::Printf(TEXT("%s:%08x"), *MakeDigestSchemaTag(Asset), FCrc::StrCrc32(*DigestText));
+		return FString::Printf(TEXT("%s:%08x"), *SchemaTag, FCrc::StrCrc32(*DigestText));
+	}
+
+	FString BuildOutputDigest(UObject* Asset)
+	{
+		return BuildOutputDigest(Asset, MakeDigestSchemaTag(Asset));
+	}
+
+	bool IsThinCustomInstancePair(const UMaterialInstance* Instance)
+	{
+		if (!Instance)
+		{
+			return false;
+		}
+
+		const UMaterial* BaseMaterial = Cast<UMaterial>(Instance->Parent);
+		if (!BaseMaterial)
+		{
+			return false;
+		}
+
+		// The pair is hosted two different ways, and a same-package test alone sees only one of them:
+		//
+		//   persisted -- the base is a hidden SUBOBJECT of the instance, so the two share one package;
+		//   in memory -- the base lives in the TRANSIENT package while the instance keeps its own
+		//     /Game package (PKG_NewlyCreated), so their outermosts differ.
+		//
+		// The second is the editor's default mode, which is where a designer actually tunes a slider,
+		// so a test that missed it would leave the whole point of the Tweaked state unimplemented
+		// exactly where it matters most. See EnsureThinCustomBaseMaterial.
+		return BaseMaterial->GetOuter() == Instance
+			|| BaseMaterial->GetOutermost() == Instance->GetOutermost()
+			|| BaseMaterial->GetOutermost() == GetTransientPackage();
+	}
+
+	bool GeneratedInstanceHasParameterOverrides(UObject* Asset)
+	{
+		UMaterialInstance* Instance = Cast<UMaterialInstance>(Asset);
+		if (!Instance || !IsThinCustomInstancePair(Instance))
+		{
+			return false;
+		}
+
+		// The same reflection sweep the digest used to do, for the same reason: the set of override
+		// arrays grows between engine versions, and a hand-written list would go quietly out of date.
+		for (TFieldIterator<FProperty> It(Instance->GetClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
+		{
+			const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(*It);
+			if (!ArrayProperty || !ArrayProperty->GetName().EndsWith(TEXT("ParameterValues"), ESearchCase::CaseSensitive))
+			{
+				continue;
+			}
+
+			FScriptArrayHelper ArrayHelper(ArrayProperty, ArrayProperty->ContainerPtrToValuePtr<void>(Instance));
+			if (ArrayHelper.Num() > 0)
+			{
+				return true;
+			}
+		}
+
+		const FStaticParameterSet& StaticParameters = Instance->GetStaticParameters();
+		return StaticParameters.StaticSwitchParameters.Num() > 0
+			|| StaticParameters.EditorOnly.StaticComponentMaskParameters.Num() > 0;
 	}
 }

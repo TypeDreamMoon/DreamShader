@@ -276,7 +276,7 @@ on disk        <Project>/Content/Materials/M_Emissive.uasset
 - [`UDreamShaderMaterialInstance`](../api/material-instance.md) — the C++ class reference
 - [Asset paths](asset-paths.md) — where the `.uasset` lands when it is written
 - [Caching](caching.md) — the provenance metadata and the regeneration short circuit
-- [Regeneration](regeneration.md) — parameter overrides on a generated instance do not survive
+- [Regeneration](regeneration.md) — what a rebuild destroys, and what it puts back
 - [Graph layout](graph-layout.md) — why in-memory graphs are not laid out
 - [Material Content Browser](../tools/material-browser.md) — Compile, Materialize, thumbnails
 - [Commandlet](../tools/commandlet.md) — persisting assets headlessly

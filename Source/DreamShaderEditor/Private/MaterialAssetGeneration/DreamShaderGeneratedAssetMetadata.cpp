@@ -256,7 +256,8 @@ namespace UE::DreamShader::Editor::Private
 
 	void ApplyOutputDigestMetadata(UObject* Asset)
 	{
-		const FString Digest = BuildOutputDigest(Asset);
+		const TArray<FString> ClassPathNames = CollectDigestClassPathNames(Asset);
+		const FString Digest = BuildOutputDigest(Asset, MakeDigestSchemaTagForClasses(ClassPathNames));
 		if (Digest.IsEmpty())
 		{
 			// An asset class the digest does not cover. Leave any previous stamp alone rather than
@@ -266,6 +267,9 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		SetSourceMetadataValue(Asset, TEXT("DreamShader.OutputDigest"), Digest);
+		// The classes the tag was computed over, so ClassifyGeneratedAsset can recompute the SAME tag
+		// later whatever the graph holds by then. Class path names never contain ';'.
+		SetSourceMetadataValue(Asset, TEXT("DreamShader.OutputDigestClasses"), FString::Join(ClassPathNames, TEXT(";")));
 	}
 
 	EDreamShaderDigestState ClassifyGeneratedAsset(UObject* Asset)
@@ -284,21 +288,46 @@ namespace UE::DreamShader::Editor::Private
 		// Schema first: a stamp written by a different digest format or a different engine cannot be
 		// compared against one written now, and reporting the difference as divergence would flag
 		// every generated asset in the project the moment either moves.
-		const FString SchemaTag = MakeDigestSchemaTag(Asset);
+		//
+		// The tag is recomputed over the classes recorded WITH the stamp, not over the asset as it
+		// stands: the whole point of this check is to notice a graph that changed, and a hand-added
+		// node is usually a class the generated graph never had. A stamp without the class list (one
+		// written before the list existed) falls back to the asset's current classes, which reads a
+		// class-adding hand edit as Unstamped once -- the first rebuild restamps it with the list.
+		const FString StampedClasses = GetSourceMetadataValue(Asset, TEXT("DreamShader.OutputDigestClasses"));
+		TArray<FString> ClassPathNames;
+		if (!StampedClasses.IsEmpty())
+		{
+			StampedClasses.ParseIntoArray(ClassPathNames, TEXT(";"), /*InCullEmpty*/ true);
+		}
+		else
+		{
+			ClassPathNames = CollectDigestClassPathNames(Asset);
+		}
+		const FString SchemaTag = MakeDigestSchemaTagForClasses(ClassPathNames);
 		if (!StampedDigest.StartsWith(SchemaTag + TEXT(":"), ESearchCase::CaseSensitive))
 		{
 			return EDreamShaderDigestState::Unstamped;
 		}
 
-		const FString CurrentDigest = BuildOutputDigest(Asset);
+		const FString CurrentDigest = BuildOutputDigest(Asset, SchemaTag);
 		if (CurrentDigest.IsEmpty())
 		{
 			return EDreamShaderDigestState::Unstamped;
 		}
 
-		return CurrentDigest.Equals(StampedDigest, ESearchCase::CaseSensitive)
-			? EDreamShaderDigestState::Generated
-			: EDreamShaderDigestState::Diverged;
+		if (!CurrentDigest.Equals(StampedDigest, ESearchCase::CaseSensitive))
+		{
+			return EDreamShaderDigestState::Diverged;
+		}
+
+		// The generated content matches. A ThinCustom instance carrying parameter overrides on top of
+		// it is Tweaked rather than plain Generated: the same asset, plus tuning the rebuild will carry
+		// across. Reported so the browser can say so; deliberately NOT a refusal -- every caller that
+		// gates on divergence compares against Diverged.
+		return GeneratedInstanceHasParameterOverrides(Asset)
+			? EDreamShaderDigestState::Tweaked
+			: EDreamShaderDigestState::Generated;
 	}
 
 	void ClearDreamShaderMetadata(UObject* Asset)
@@ -306,6 +335,7 @@ namespace UE::DreamShader::Editor::Private
 		RemoveSourceMetadataValue(Asset, TEXT("DreamShader.SourceFile"));
 		RemoveSourceMetadataValue(Asset, TEXT("DreamShader.SourceHash"));
 		RemoveSourceMetadataValue(Asset, TEXT("DreamShader.OutputDigest"));
+		RemoveSourceMetadataValue(Asset, TEXT("DreamShader.OutputDigestClasses"));
 	}
 
 	namespace
@@ -341,7 +371,16 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const FString SourceFile = GetGeneratedAssetSourceFile(Asset);
-		return FailWith(OutError, TEXT("DSH8115"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Asset '%s' has been edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). ") TEXT("Right-click the asset > DreamShader and choose one: 'Revert to Source' discards the edits and rebuilds, ") TEXT("'Adopt Into Source' rewrites '%s' from the edited asset, ") TEXT("'Detach From DreamShader' hands the asset over to you and stops managing it."), *Asset->GetPathName(), *SourceFile, *SourceFile));
+		// Two sentences, because the previous four were long enough that nobody read to the part that
+		// said what to do. The rest of the explanation lives in Docs/generation/divergence.md, and the
+		// three answers are now one click away in the notification the bridge raises from this.
+		//
+		// "Asset '<path>' was edited by hand since DreamShader generated it from '<source>'" is a
+		// parsing anchor as well as a sentence: Bridge/DreamShaderDivergenceNotice.h reads the asset
+		// and the source back out of this message to build that notification, because nothing else
+		// survives the trip (the compile result carries no code, and the generator's wrappers replace
+		// DSH8115 with a per-asset-type code). Reword it there too, or the notification stops firing.
+		return FailWith(OutError, TEXT("DSH8115"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). ") TEXT("Use the notification, or right-click the asset > DreamShader, and choose one: Revert to Source, Adopt Into Source, or Detach From DreamShader."), *Asset->GetPathName(), *SourceFile));
 	}
 
 	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath)

@@ -22,6 +22,7 @@
 #include "Preview/DreamShaderPreviewRenderer.h"
 #include "Provenance/DreamShaderProvenanceActions.h"
 #include "SourceFiles/DreamShaderSourceFileUtils.h"
+#include "UI/DreamShaderMaterialBrowser.h"
 #include "VirtualFunction/DreamShaderVirtualFunctionService.h"
 #include "VirtualFunction/DreamShaderVirtualFunctionSyncService.h"
 #include "Workspace/DreamShaderWorkspaceService.h"
@@ -44,7 +45,9 @@
 #include "Editor.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "Dom/JsonObject.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Framework/Commands/UIAction.h"
+#include "Framework/Docking/TabManager.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformApplicationMisc.h"
@@ -92,6 +95,59 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Notification->SetCompletionState(CompletionState);
 			}
+		}
+
+		/**
+		 * True for a generated ThinCustom instance that lives only in memory AND is currently hidden
+		 * from the Content Browser.
+		 *
+		 * This is the case the divergence notification exists for. "Right-click the asset" is sound
+		 * advice for a saved material and meaningless here: there is no tile, no asset editor, and no
+		 * way for the user to reach the three resolutions at all until the setting is flipped.
+		 */
+		bool IsHiddenInMemoryInstance(const UObject* Asset)
+		{
+			const UDreamShaderMaterialInstance* Instance = Cast<UDreamShaderMaterialInstance>(Asset);
+			if (!Instance)
+			{
+				return false;
+			}
+
+			const UPackage* Package = Instance->GetPackage();
+			if (!Package || !Package->HasAnyPackageFlags(PKG_NewlyCreated))
+			{
+				return false;
+			}
+
+			const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+			return Settings && !Settings->bShowInMemoryMaterialsInContentBrowser;
+		}
+
+		/**
+		 * A notification button that retires the toast it sits on before running its action.
+		 *
+		 * The item cannot be captured directly -- it does not exist until AddNotification returns,
+		 * which is after the buttons have been built -- so a shared box is captured instead and filled
+		 * in afterwards. Retiring first matters for more than tidiness: every one of these actions
+		 * pops a confirmation dialog, and leaving the toast behind the dialog invites a second click
+		 * on a second answer for the same asset.
+		 */
+		FSimpleDelegate MakeDivergenceButtonDelegate(
+			const TSharedRef<TWeakPtr<SNotificationItem>>& ItemHolder,
+			TFunction<void()> Action)
+		{
+			return FSimpleDelegate::CreateLambda([ItemHolder, Action = MoveTemp(Action)]()
+			{
+				if (const TSharedPtr<SNotificationItem> Item = ItemHolder->Pin())
+				{
+					// CS_Success both collapses the buttons (they are declared visible only in
+					// CS_None) and is what the bridge's "is this asset's toast still up?" test reads
+					// as answered, so the asset becomes reportable again on the next round.
+					Item->SetCompletionState(SNotificationItem::CS_Success);
+					Item->ExpireAndFadeout();
+				}
+				Action();
+			});
 		}
 
 		FString GetShaderPlatformLabel(const EShaderPlatform ShaderPlatform)
@@ -591,6 +647,10 @@ namespace UE::DreamShader::Editor::Private
 		// up on its next heartbeat instead of after the whole staleness window.
 		ReleaseBridgeOwnership();
 
+		// The divergence toasts do not expire on their own, so an unanswered one would outlive the
+		// bridge that knows what its buttons mean.
+		DismissDivergenceNotifications();
+
 		if (TickerHandle.IsValid())
 		{
 			FTSTicker::GetCoreTicker().RemoveTicker(TickerHandle);
@@ -839,6 +899,42 @@ namespace UE::DreamShader::Editor::Private
 		if (bForce)
 		{
 			ForcedPendingFiles.Add(Normalized);
+		}
+	}
+
+	void FDreamShaderEditorBridge::RequestRebuildAfterSourceRewrite(const TArray<FString>& RewrittenSourceFiles)
+	{
+		if (RewrittenSourceFiles.IsEmpty() || bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
+		{
+			return;
+		}
+
+		// Same dispatch as OnDirectoryChanged, minus the Auto Compile On Save gate. The graph is
+		// rebuilt once up front rather than per material: every file in the batch is already on disk
+		// (the caller writes the whole batch before asking), so one rebuild sees all of them.
+		RebuildDependencyGraph();
+		for (const FString& RewrittenFile : RewrittenSourceFiles)
+		{
+			if (!UE::DreamShader::IsDreamShaderSourceFile(RewrittenFile))
+			{
+				continue;
+			}
+			if (UE::DreamShader::IsDreamShaderHeaderFile(RewrittenFile))
+			{
+				QueueDependentSourcesForImport(RewrittenFile);
+			}
+			else if (UE::DreamShader::IsDreamShaderFunctionFile(RewrittenFile))
+			{
+				if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(RewrittenFile))
+				{
+					QueueSourceFile(RewrittenFile);
+				}
+				QueueDependentSourcesForImport(RewrittenFile);
+			}
+			else if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(RewrittenFile))
+			{
+				QueueSourceFile(RewrittenFile);
+			}
 		}
 	}
 
@@ -1286,6 +1382,16 @@ namespace UE::DreamShader::Editor::Private
 			PublishStatus();
 		}
 
+		// This drain is one rebuild round as the user experiences it -- one save, or the whole
+		// project after Recompile DSM -- so it is the unit the divergence notification budget is
+		// spent against. The per-file compiles below nest into it instead of each opening their own.
+		// Guarded on the batch being non-empty only to keep the idle 10Hz tick from churning rounds.
+		if (!ReadyFiles.IsEmpty())
+		{
+			BeginDivergenceRound();
+		}
+		ON_SCOPE_EXIT { if (!ReadyFiles.IsEmpty()) { EndDivergenceRound(); } };
+
 		for (const FString& ReadyFile : ReadyFiles)
 		{
 			PendingFiles.Remove(ReadyFile);
@@ -1322,6 +1428,13 @@ namespace UE::DreamShader::Editor::Private
 	bool FDreamShaderEditorBridge::CompileSourceFile(const FString& InSourceFilePath, const bool bForce, const bool bInMemory, FString& OutMessage)
 	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
+
+		// A compile asked for on its own -- the Material Content Browser's Compile button, a bridge
+		// request, the recompile a provenance action ends with -- is its own round. Inside a drain
+		// this nests and changes nothing.
+		BeginDivergenceRound();
+		ON_SCOPE_EXIT { EndDivergenceRound(); };
+
 		UE::DreamShader::Compiler::FDreamShaderCompileService CompileService(UE::DreamShader::Editor::GetEditorCompileAdapter());
 		const UE::DreamShader::Compiler::FDreamShaderCompileResult Result = CompileService.CompileAssets(SourceFilePath, bForce, bInMemory);
 		OutMessage = ToInvariantWireString(Result.Message);
@@ -1343,7 +1456,221 @@ namespace UE::DreamShader::Editor::Private
 		// After SetDiagnostics, so the response carries this compile's findings rather than
 		// whatever the store held before it ran.
 		ResolvePendingResponses(SourceFilePath, false, OutMessage);
+		// Last, and after the log line: a refused rebuild is the one failure the user cannot act on
+		// from the message alone, so it also gets a toast carrying the three answers. Every other
+		// failure is a source edit away from being fixed and stays in the log.
+		ReportDivergenceRefusal(SourceFilePath, OutMessage);
 		return false;
+	}
+
+	void FDreamShaderEditorBridge::BeginDivergenceRound()
+	{
+		DivergenceRound.Enter();
+	}
+
+	void FDreamShaderEditorBridge::EndDivergenceRound()
+	{
+		if (!DivergenceRound.Leave())
+		{
+			// A nested compile finished; the round it belongs to is still draining.
+			return;
+		}
+
+		if (DivergenceRound.ShouldShowSummary() && CanShowDivergenceNotification() && !bIsShuttingDown)
+		{
+			// Deferred to here rather than raised at the moment the budget ran out, because only now
+			// is the total known -- and "18 assets" is the number that tells the user this is a
+			// project-wide condition rather than one unlucky material.
+			ShowDivergenceSummaryNotification(DivergenceRound.GetDivergedAssetCount());
+		}
+	}
+
+	bool FDreamShaderEditorBridge::CanShowDivergenceNotification()
+	{
+		// A toast needs a Slate application to live in and a person to read it. The commandlet, the
+		// automation suite under -unattended and a cook have neither, and AddNotification there is at
+		// best wasted work and at worst a crash on a torn-down Slate.
+		return FSlateApplication::IsInitialized()
+			&& !IsRunningCommandlet()
+			&& !IsRunningDedicatedServer()
+			&& !FApp::IsUnattended();
+	}
+
+	void FDreamShaderEditorBridge::ReportDivergenceRefusal(const FString& SourceFilePath, const FString& CompileMessage)
+	{
+		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge || !CanShowDivergenceNotification())
+		{
+			return;
+		}
+
+		FDreamShaderDivergenceReport Report;
+		if (!TryParseDivergenceRefusal(CompileMessage, Report))
+		{
+			// Any other compile failure. Deliberately silent: the divergence gate is the only one
+			// whose remedy is a decision rather than an edit.
+			return;
+		}
+
+		if (Report.SourceFilePath.IsEmpty())
+		{
+			// The stamp is normally what names the source, but an asset can carry an empty one; the
+			// file being compiled is then the only honest answer.
+			Report.SourceFilePath = SourceFilePath;
+		}
+
+		const FString Key = MakeDivergenceNoticeKey(Report.AssetPath);
+
+		bool bStillOnScreen = false;
+		if (const TWeakPtr<SNotificationItem>* Existing = DivergenceNotifications.Find(Key))
+		{
+			const TSharedPtr<SNotificationItem> Pinned = Existing->Pin();
+			bStillOnScreen = Pinned.IsValid() && Pinned->GetCompletionState() == SNotificationItem::CS_None;
+		}
+		if (!bStillOnScreen)
+		{
+			DivergenceNotifications.Remove(Key);
+		}
+
+		if (DivergenceRound.Decide(Key, bStillOnScreen) == EDreamShaderDivergenceNoticeDecision::Show)
+		{
+			ShowDivergenceNotification(Report);
+		}
+	}
+
+	void FDreamShaderEditorBridge::ShowDivergenceNotification(const FDreamShaderDivergenceReport& Report)
+	{
+		// The gate ran on a live object moments ago, so this finds it without loading anything --
+		// including the memory-only instances that have no package on disk to load from.
+		UObject* Asset = FindObject<UObject>(nullptr, *Report.AssetPath);
+
+		FDreamShaderDivergenceAssetFacts Facts;
+		Facts.bAssetResolved = Asset != nullptr;
+		Facts.bHiddenInMemoryInstance = IsHiddenInMemoryInstance(Asset);
+		const FDreamShaderDivergenceNoticeButtons Buttons = DecideDivergenceNoticeButtons(Facts);
+
+		const TWeakObjectPtr<UObject> WeakAsset(Asset);
+		const FText AssetName = FText::FromString(FPackageName::ObjectPathToObjectName(Report.AssetPath));
+		const FText SourceName = FText::FromString(Report.SourceFilePath);
+
+		FNotificationInfo Info(FText::Format(
+			LOCTEXT("DreamShaderDivergenceTitle", "'{0}' was edited by hand, so it was not rebuilt."),
+			AssetName));
+		Info.SubText = FText::Format(
+			LOCTEXT("DreamShaderDivergenceSubText", "Rebuilding it from {0} would destroy those edits. Decide which copy is right."),
+			SourceName);
+		// Not fire-and-forget: this is a question, and a question that times out is a question the
+		// user never answered. Dismiss is one of the buttons for exactly that reason.
+		Info.bFireAndForget = false;
+		Info.bUseThrobber = false;
+		Info.bUseLargeFont = false;
+		Info.FadeOutDuration = 0.5f;
+		Info.WidthOverride = 440.0f;
+
+		const TSharedRef<TWeakPtr<SNotificationItem>> ItemHolder = MakeShared<TWeakPtr<SNotificationItem>>();
+
+		if (Buttons.bRevert)
+		{
+			Info.ButtonDetails.Add(FNotificationButtonInfo(
+				LOCTEXT("DreamShaderDivergenceRevert", "Revert to Source"),
+				LOCTEXT("DreamShaderDivergenceRevertTip", "Discard the hand edits and rebuild this asset from its DreamShader source. The source file is not modified."),
+				MakeDivergenceButtonDelegate(ItemHolder, [WeakAsset]() { RevertGeneratedAssetToSource(WeakAsset); }),
+				SNotificationItem::CS_None));
+		}
+		if (Buttons.bAdopt)
+		{
+			Info.ButtonDetails.Add(FNotificationButtonInfo(
+				LOCTEXT("DreamShaderDivergenceAdopt", "Adopt Into Source"),
+				LOCTEXT("DreamShaderDivergenceAdoptTip", "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it."),
+				MakeDivergenceButtonDelegate(ItemHolder, [WeakAsset]() { AdoptGeneratedAssetIntoSource(WeakAsset); }),
+				SNotificationItem::CS_None));
+		}
+		if (Buttons.bDetach)
+		{
+			Info.ButtonDetails.Add(FNotificationButtonInfo(
+				LOCTEXT("DreamShaderDivergenceDetach", "Detach"),
+				LOCTEXT("DreamShaderDivergenceDetachTip", "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset."),
+				MakeDivergenceButtonDelegate(ItemHolder, [WeakAsset]() { DetachGeneratedAssetFromDreamShader(WeakAsset); }),
+				SNotificationItem::CS_None));
+		}
+		if (Buttons.bShowInMemoryMaterials)
+		{
+			// The one button that does NOT retire the toast: it exists so the user can go and look at
+			// an asset they could not see, and taking the three answers away at that moment would
+			// leave them with a visible tile and no idea what to do with it.
+			Info.ButtonDetails.Add(FNotificationButtonInfo(
+				LOCTEXT("DreamShaderDivergenceShowInMemory", "Show In-Memory Materials"),
+				LOCTEXT("DreamShaderDivergenceShowInMemoryTip", "This asset lives only in memory and is currently hidden. Show memory-only DreamShader materials in the Content Browser so you can find and inspect it."),
+				FSimpleDelegate::CreateSP(AsShared(), &FDreamShaderEditorBridge::ToggleShowInMemoryMaterialsInContentBrowser),
+				SNotificationItem::CS_None));
+		}
+
+		Info.ButtonDetails.Add(FNotificationButtonInfo(
+			LOCTEXT("DreamShaderDivergenceDismiss", "Dismiss"),
+			LOCTEXT("DreamShaderDivergenceDismissTip", "Leave the asset alone for now. The refusal stays in the log, in the diagnostics, and in the Material Content Browser."),
+			MakeDivergenceButtonDelegate(ItemHolder, []() {}),
+			SNotificationItem::CS_None));
+
+		const TSharedPtr<SNotificationItem> Item = FSlateNotificationManager::Get().AddNotification(Info);
+		if (!Item.IsValid())
+		{
+			return;
+		}
+
+		*ItemHolder = Item;
+		DivergenceNotifications.Add(MakeDivergenceNoticeKey(Report.AssetPath), Item);
+	}
+
+	void FDreamShaderEditorBridge::ShowDivergenceSummaryNotification(const int32 DivergedAssetCount)
+	{
+		FNotificationInfo Info(FText::Format(
+			LOCTEXT("DreamShaderDivergenceSummary", "{0} generated assets were edited by hand and were not rebuilt."),
+			FText::AsNumber(DivergedAssetCount)));
+		Info.SubText = LOCTEXT(
+			"DreamShaderDivergenceSummarySubText",
+			"Too many to answer one toast at a time. The Material Content Browser lists them with the same three actions on each.");
+		Info.bFireAndForget = false;
+		Info.bUseThrobber = false;
+		Info.bUseLargeFont = false;
+		Info.FadeOutDuration = 0.5f;
+		Info.WidthOverride = 440.0f;
+
+		const TSharedRef<TWeakPtr<SNotificationItem>> ItemHolder = MakeShared<TWeakPtr<SNotificationItem>>();
+
+		Info.ButtonDetails.Add(FNotificationButtonInfo(
+			LOCTEXT("DreamShaderDivergenceOpenBrowser", "Open Material Browser"),
+			LOCTEXT("DreamShaderDivergenceOpenBrowserTip", "Open the DreamShader Material Content Browser, which lists every source and the state of the asset it generated."),
+			MakeDivergenceButtonDelegate(ItemHolder, []()
+			{
+				FGlobalTabmanager::Get()->TryInvokeTab(FDreamShaderMaterialBrowser::TabId);
+			}),
+			SNotificationItem::CS_None));
+
+		Info.ButtonDetails.Add(FNotificationButtonInfo(
+			LOCTEXT("DreamShaderDivergenceSummaryDismiss", "Dismiss"),
+			LOCTEXT("DreamShaderDivergenceSummaryDismissTip", "Leave them alone for now. Every refusal is in the log and in the diagnostics."),
+			MakeDivergenceButtonDelegate(ItemHolder, []() {}),
+			SNotificationItem::CS_None));
+
+		if (const TSharedPtr<SNotificationItem> Item = FSlateNotificationManager::Get().AddNotification(Info))
+		{
+			*ItemHolder = Item;
+		}
+	}
+
+	void FDreamShaderEditorBridge::DismissDivergenceNotifications()
+	{
+		if (FSlateApplication::IsInitialized())
+		{
+			for (TPair<FString, TWeakPtr<SNotificationItem>>& Notification : DivergenceNotifications)
+			{
+				if (const TSharedPtr<SNotificationItem> Item = Notification.Value.Pin())
+				{
+					Item->SetCompletionState(SNotificationItem::CS_Success);
+					Item->ExpireAndFadeout();
+				}
+			}
+		}
+		DivergenceNotifications.Reset();
 	}
 
 	void FDreamShaderEditorBridge::OnMaterialCompilationFinished(UMaterialInterface* MaterialInterface)

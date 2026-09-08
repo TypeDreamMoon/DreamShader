@@ -201,6 +201,14 @@ namespace UE::DreamShader::Editor::Private
 
 	bool ResolveMaterialProperty(const FString& InName, FResolvedMaterialProperty& OutProperty);
 	bool TryResolveCustomOutputType(const FString& InTypeName, ECustomMaterialOutputType& OutOutputType);
+
+	/**
+	 * Raise an advisory DSHnnnn warning from inside a generation. Logged at Warning level and queued
+	 * into the compile result's `Warnings:` block by whichever entry point is outermost; never fails
+	 * the compile. The code is spelled `TEXT("DSHnnnn")` at the call site so `.skill/gen-diagnostics.ps1`
+	 * can find it, the same way it finds FailWith.
+	 */
+	void RaiseGenerationWarning(const TCHAR* Code, const FString& Message);
 	bool ParseScalarLiteral(const FString& InText, double& OutValue);
 	bool ParseBooleanLiteral(const FString& InText, bool& OutValue);
 	bool ParseIntegerLiteral(const FString& InText, int32& OutValue);
@@ -233,7 +241,17 @@ namespace UE::DreamShader::Editor::Private
 		const FString& SourceFilePath,
 		FTextShaderDefinition& Definition,
 		FString* OutFallbackReason = nullptr);
-	bool TryResolveDreamShaderAssetReference(const FString& InText, FString& OutObjectPath, FDreamShaderError& OutError);
+	/**
+	 * The asset-reference resolver. `ExpectedClass`, when given, is only used to judge the class
+	 * written in a `Class'/Game/...'` shell -- a reference that carries no shell, or one whose class
+	 * DreamShader cannot resolve, is never rejected on those grounds. Loading and type-checking the
+	 * asset itself remains the caller's job.
+	 */
+	bool TryResolveDreamShaderAssetReference(
+		const FString& InText,
+		FString& OutObjectPath,
+		FDreamShaderError& OutError,
+		const UClass* ExpectedClass = nullptr);
 	UMaterialExpression* CreateScalarLiteralExpression(UMaterial* Material, double Value, int32 PositionY);
 	// Thin wrapper over UMaterialEditingLibrary::CreateMaterialExpressionEx, shared by literal
 	// creation, the expression factory, and graph layout (reroute/comment nodes). Exposed (was a

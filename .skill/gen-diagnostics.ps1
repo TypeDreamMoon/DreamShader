@@ -65,8 +65,18 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
     #   LOCTEXT("Key", "text")  -- parser, gathered for localization
     #   TEXT("text")            -- generator's Printf format string
     # Both are the right thing to show, so take whichever appears first.
-    $pattern = 'FailWith\(\s*\w+\s*,\s*TEXT\("(DSH\d{4})"\)(.{0,500}?)(?:LOCTEXT\(\s*"[A-Za-z0-9_]+"\s*,\s*"((?:[^"\\]|\\.)*)"\)|TEXT\("((?:[^"\\]|\\.)*)"\)|;)'
-    foreach ($match in [regex]::Matches($text, $pattern, 'Singleline')) {
+    #
+    # Two raise helpers, two severities. FailWith(OutError, TEXT("DSHnnnn"), ...) fails the compile;
+    # RaiseGenerationWarning(TEXT("DSHnnnn"), ...) is advisory and joins the result's `Warnings:`
+    # block (since 1.9.0: DSH9011, DSH9012, DSH8155). A code raised through both keeps the first
+    # severity it was seen with, which the site order below makes 'error'.
+    $messageTail = '(.{0,500}?)(?:LOCTEXT\(\s*"[A-Za-z0-9_]+"\s*,\s*"((?:[^"\\]|\\.)*)"\)|TEXT\("((?:[^"\\]|\\.)*)"\)|;)'
+    $raiseSites = @(
+        @{ Severity = 'error';   Pattern = 'FailWith\(\s*\w+\s*,\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'warning'; Pattern = 'RaiseGenerationWarning\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+    )
+    foreach ($raiseSite in $raiseSites) {
+    foreach ($match in [regex]::Matches($text, $raiseSite.Pattern, 'Singleline')) {
         $code = $match.Groups[1].Value
         $message = if ($match.Groups[3].Success) { $match.Groups[3].Value } else { $match.Groups[4].Value }
 
@@ -83,11 +93,12 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
         else {
             $found[$code] = [pscustomobject]@{
                 Code     = $code
-                Severity = 'error'
+                Severity = $raiseSite.Severity
                 Message  = $message
                 Sites    = @("$relative`:$line")
             }
         }
+    }
     }
 }
 

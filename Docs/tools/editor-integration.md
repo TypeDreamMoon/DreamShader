@@ -3,7 +3,8 @@
 > [DreamShader](../index.md) » [Tools](index.md) » **Editor integration**
 
 Every place DreamShader attaches itself to the Unreal editor UI: the Tools menu, the Level Editor
-toolbar, the Content Browser asset context menus, the Material Editor toolbar, and the Window menu.
+toolbar, the Content Browser asset context menus, the Material Editor toolbar, the Window menu, and
+the notifications it raises on its own.
 
 | | |
 | :-- | :-- |
@@ -123,6 +124,25 @@ table is on [VirtualFunction tools](virtual-function-tools.md#context-menu).
 | 3 | For a `UMaterial`: combo button `DreamShader.MaterialToolbarMenu`, label **DreamShader**, tooltip "DreamShader actions for this Material.", icon `Icons.Settings`, content = the [Material submenu](#material-submenu) |
 | 4 | For a `UMaterialFunction`: combo button `DreamShader.MaterialFunctionToolbarMenu`, label **DreamShader**, tooltip "DreamShader actions for this Material Function.", icon `Icons.Settings`, content = the [Material Function submenu](#material-function-submenu) |
 | 5 | Neither found ⇒ nothing is added to the toolbar |
+
+## Notifications
+
+The one surface on this page that DreamShader raises by itself rather than registering and waiting to
+be clicked. Notifications are suppressed wherever there is no Slate application or nobody to read one
+— a commandlet, a cook, a dedicated server, and any run with `-unattended`.
+
+| Notification | Raised when | Buttons | Reference |
+| :-- | :-- | :-- | :-- |
+| **Divergence refusal** *(since 1.9.0)* | a rebuild is refused because the asset was edited by hand (`DSH8115`) | **Revert to Source** · **Adopt Into Source** · **Detach** · **Show In-Memory Materials** (hidden memory-only instances only) · **Dismiss** | [Divergence](../generation/divergence.md#what-you-see-since-190) |
+| **Divergence summary** *(since 1.9.0)* | more than five assets diverge in one rebuild round | **Open Material Browser** · **Dismiss** | [Divergence](../generation/divergence.md#how-often-it-appears) |
+| **Shadowed in-memory materials** | the compiler backend changes while persisted assets shadow the in-memory result | *(none)* | [below](#notes) |
+| **In-memory visibility toggled** | *Show In-Memory Materials* is flipped | *(none)* | [below](#show-in-memory-materials) |
+| **Export DSM / DSF result** | a decompile from a context menu finishes or fails | *(none)* | [Decompiler](decompiler.md) |
+| **Provenance action result** | Revert, Adopt or Detach finishes or fails | *(none)* | [Divergence](../generation/divergence.md#the-three-ways-out) |
+
+The two divergence notifications do **not** time out, because they ask a question; every other
+notification on this page is a four-second toast reporting something already done. Closing the editor
+retires any divergence notification still waiting for an answer.
 
 ## Command semantics
 

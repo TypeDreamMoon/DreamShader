@@ -1,11 +1,17 @@
 ﻿#include "DreamShaderMaterialGenerator.h"
 
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
+// The pure half of progress reporting: the DSH9011 stall threshold, the DSH9012 Custom-code
+// heuristic, and the cancel override an automation test arms in place of the dialog's Cancel button.
+#include "DreamShaderGenerationProgress.h"
 #include "DreamShaderGraphRollback.h"
 #include "DreamShaderMaterialGeneratorCodeShared.h"
 #include "DreamShaderMaterialGeneratorDiagnostics.h"
 #include "DreamShaderMaterialGeneratorPrivate.h"
 #include "DreamShaderMaterialGeneratorSourceLoading.h"
+// Capture/restore of the parameter overrides a user set on a generated ThinCustom instance, across
+// the rebuild that clears them.
+#include "DreamShaderThinCustomParameterOverrides.h"
 
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
@@ -17,6 +23,9 @@
 #include "CoreGlobals.h"
 #include "Engine/Texture.h"
 #include "HAL/FileManager.h"
+// FPlatformTime, for the DSH9011 shader-compile stall watch. Unity builds pull it in through a
+// neighbouring TU; a non-unity compile of this file does not.
+#include "HAL/PlatformTime.h"
 #include "RenderUtils.h"
 #include "Interfaces/IPluginManager.h"
 #include "MaterialShared.h"
@@ -49,6 +58,150 @@ namespace UE::DreamShader::Editor
 {
 	namespace
 	{
+		// -----------------------------------------------------------------------------------------
+		// Progress: two stages, a cancel that is honoured, and the warnings raised along the way.
+		//
+		// Generation is one bar covering two very different things: building the node graph, which is
+		// milliseconds, and compiling the shaders that graph produces, which is unbounded. Labelling
+		// every frame with which of the two is running is what stops a long compile from reading as a
+		// hung plugin -- issue #29, where the bar never moved and could not be dismissed, so the only
+		// way out was to kill the editor.
+		// -----------------------------------------------------------------------------------------
+
+		/** Frame text for the graph-construction half. */
+		static FText GraphStageText(const FText& Detail)
+		{
+			return FText::Format(LOCTEXT("ProgressStageGraph", "Step 1 of 2, building the graph: {0}"), Detail);
+		}
+
+		/** Frame text for the shader-compilation half, which is the one that can take minutes. */
+		static FText ShaderStageText(const FText& Detail)
+		{
+			return FText::Format(
+				LOCTEXT("ProgressStageShaders", "Step 2 of 2, compiling shaders (this can take minutes): {0}"),
+				Detail);
+		}
+
+		/**
+		 * True when the user pressed Cancel on the slow-task dialog.
+		 *
+		 * The override is the automation seam: FSlowTask::ShouldCancel is gated on GIsSlowTask, which
+		 * only the dialog sets, so without it the cancel path could never be reached by a test.
+		 */
+		static bool IsGenerationCancelled(const FScopedSlowTask& SlowTask)
+		{
+			if (const Private::FDreamShaderGenerationCancelPredicate& Override = Private::GetDreamShaderGenerationCancelOverride())
+			{
+				return Override();
+			}
+
+			return SlowTask.ShouldCancel();
+		}
+
+		/**
+		 * DSH9010. Cancelling takes the ordinary failure path on purpose: every caller below already
+		 * unwinds through FDreamShaderGraphRollback, so returning false here restores the asset to
+		 * exactly what it held before the compile started, and nothing is stamped or saved.
+		 */
+		static bool FailBecauseCancelled(FDreamShaderError& OutError, const FString& Label)
+		{
+			return FailWith(OutError, TEXT("DSH9010"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Generation of '%s' was cancelled by the user; the asset was left unchanged."), *Label));
+		}
+
+		/**
+		 * Warnings raised while a generation runs, drained into the result message by whichever entry
+		 * point is outermost.
+		 *
+		 * Parser warnings ride on FTextShaderDefinition::Warnings, but these are raised deep inside
+		 * the graph build where the definition is const and several frames below the message being
+		 * built, so they collect here instead and join the same `Warnings:` block at the end.
+		 */
+		static TArray<FString>& GenerationWarnings()
+		{
+			static TArray<FString> Warnings;
+			return Warnings;
+		}
+
+		/** Log it and queue it. Never fails a compile -- these are advisory by definition. */
+		static void RaiseGenerationWarning(const TCHAR* Code, const FString& Message)
+		{
+			const FString Line = FString::Printf(TEXT("%s: %s"), Code, *Message); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			UE_LOG(LogDreamShader, Warning, TEXT("%s"), *Line);
+			GenerationWarnings().AddUnique(Line);
+		}
+
+		/**
+		 * Times the shader-compilation stage of one asset and, past the threshold, says what a stall
+		 * of that length usually means. Reports from the destructor so every exit path is covered.
+		 */
+		struct FShaderCompileStageWatch
+		{
+			explicit FShaderCompileStageWatch(FString InLabel)
+				: Label(MoveTemp(InLabel))
+				, StartSeconds(FPlatformTime::Seconds())
+			{
+			}
+
+			FShaderCompileStageWatch(const FShaderCompileStageWatch&) = delete;
+			FShaderCompileStageWatch& operator=(const FShaderCompileStageWatch&) = delete;
+
+			void ReportIfSlow()
+			{
+				const double ElapsedSeconds = FPlatformTime::Seconds() - StartSeconds;
+				if (!Private::ShouldWarnOnShaderCompileStall(ElapsedSeconds, bWarned))
+				{
+					return;
+				}
+
+				bWarned = true;
+				RaiseGenerationWarning(TEXT("DSH9011"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+					TEXT("Compiling shaders for '%s' took %.0f seconds. A stall of this length is almost always a Custom node whose loop bound is an input (a 'for' or 'while' whose limit is not a literal or a #define) combined with implicit-mip texture sampling -- Texture2DSample / Texture3DSample / .Sample inside divergent flow -- which forces the compiler to fully unroll an iteration count it cannot know. To confirm it is still working rather than hung, check whether ShaderCompileWorker.exe is busy in Task Manager. To fix it, bound the loop with a literal or a #define, or switch the samples to SampleLevel."),
+					*Label,
+					ElapsedSeconds));
+			}
+
+			~FShaderCompileStageWatch()
+			{
+				ReportIfSlow();
+			}
+
+		private:
+			FString Label;
+			double StartSeconds;
+			bool bWarned = false;
+		};
+
+		/**
+		 * DSH9012. Reads the Custom node's finished code and its input pins, and warns when the two
+		 * together spell the shape that pins ShaderCompileWorker for minutes. Advisory only.
+		 */
+		static void ReportCustomNodeLoopHeuristic(const UMaterialExpressionCustom* CustomExpression, const FString& NodeLabel)
+		{
+			if (!CustomExpression)
+			{
+				return;
+			}
+
+			TArray<FString> InputNames;
+			InputNames.Reserve(CustomExpression->Inputs.Num());
+			for (const FCustomInput& Input : CustomExpression->Inputs)
+			{
+				InputNames.Add(Input.InputName.ToString());
+			}
+
+			Private::FDreamShaderDynamicLoopSampleFinding Finding;
+			if (!Private::ScanCustomCodeForDynamicLoopSampling(CustomExpression->Code, InputNames, Finding))
+			{
+				return;
+			}
+
+			RaiseGenerationWarning(TEXT("DSH9012"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+				TEXT("'%s' loops on the input '%s' and samples with '%s', which takes its mip level from screen-space derivatives. The shader compiler cannot know how many iterations to expect, so it fully unrolls the loop to keep the derivatives defined, and compilation can take minutes. Bound the loop with a literal or a #define, or call SampleLevel / SampleGrad instead."),
+				*NodeLabel,
+				*Finding.LoopBoundName,
+				*Finding.SampleCall));
+		}
+
 		static bool IsIdentifierBoundary(const FString& Text, const int32 Index)
 		{
 			if (!Text.IsValidIndex(Index))
@@ -1304,16 +1457,22 @@ namespace UE::DreamShader::Editor
 				FText::FromString(FunctionDefinition.Name)));
 			if (!IsRunningCommandlet())
 			{
-				FunctionSlowTask.MakeDialogDelayed(0.25f);
+				// bShowCancelButton: a function rebuild ends in UpdateMaterialFunction, which recompiles
+				// every material that calls it. That is the wait users could not get out of.
+				FunctionSlowTask.MakeDialogDelayed(0.25f, /*bShowCancelButton*/ true);
 			}
 
 		const TCHAR* BlockKind = GetMaterialFunctionBlockKindText(FunctionDefinition.Kind);
 		FunctionSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ValidatingDreamShaderFunction", "Validating {0} '{1}'..."),
 				FText::FromString(BlockKind),
-				FText::FromString(FunctionDefinition.Name)));
+				FText::FromString(FunctionDefinition.Name))));
+			if (IsGenerationCancelled(FunctionSlowTask))
+			{
+				return FailBecauseCancelled(OutError, FunctionDefinition.Name);
+			}
 			if (FunctionDefinition.Outputs.IsEmpty())
 			{
 				return FailWith(OutError, TEXT("DSH8019"), FString::Printf(TEXT("%s '%s' must declare at least one output."), BlockKind, *FunctionDefinition.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -1387,9 +1546,16 @@ namespace UE::DreamShader::Editor
 
 		FunctionSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ClearingOldFunctionGraph", "Clearing old function graph '{0}'..."),
-				FText::FromString(MaterialFunction->GetName())));
+				FText::FromString(MaterialFunction->GetName()))));
+			// The last frame before the graph comes down. Cancelling here costs the generated comment
+			// boxes, which ClearDreamShaderGeneratedComments above already destroyed and the next
+			// compile recreates -- the same price any failure at this point pays.
+			if (IsGenerationCancelled(FunctionSlowTask))
+			{
+				return FailBecauseCancelled(OutError, FunctionDefinition.Name);
+			}
 			// Everything from here until Commit() is reversible -- including the usage below, which is
 			// why the snapshot is taken before it rather than where the old teardown sat. A function
 			// that fails to rebuild is the dangerous case: its call sites read their pins from the live
@@ -1484,9 +1650,14 @@ namespace UE::DreamShader::Editor
 			int32 MaterialAttributesInputIndex = 0;
 		FunctionSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("CreatingInputsForFunction", "Creating inputs for '{0}'..."),
-				FText::FromString(FunctionDefinition.Name)));
+				FText::FromString(FunctionDefinition.Name))));
+			// Rollback is armed above, so every cancel from here on restores the old graph.
+			if (IsGenerationCancelled(FunctionSlowTask))
+			{
+				return FailBecauseCancelled(OutError, FunctionDefinition.Name);
+			}
 			for (int32 InputIndex = 0; InputIndex < FunctionDefinition.Inputs.Num(); ++InputIndex)
 			{
 				const FTextShaderFunctionParameter& InputDefinition = FunctionDefinition.Inputs[InputIndex];
@@ -1604,9 +1775,13 @@ namespace UE::DreamShader::Editor
 			{
 		FunctionSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ParsingFunctionGraphBlock", "Parsing Graph block for '{0}'..."),
-				FText::FromString(FunctionDefinition.Name)));
+				FText::FromString(FunctionDefinition.Name))));
+				if (IsGenerationCancelled(FunctionSlowTask))
+				{
+					return FailBecauseCancelled(OutError, FunctionDefinition.Name);
+				}
 				FString CodeSourceFilePath;
 				int32 CodeStartLine = 1;
 				int32 CodeStartColumn = 1;
@@ -1642,9 +1817,13 @@ namespace UE::DreamShader::Editor
 				FDreamShaderError CodeBuildError;
 		FunctionSlowTask.EnterProgressFrame(
 			2.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("CreatingFunctionGraphNodes", "Creating Graph nodes for '{0}'..."),
-				FText::FromString(FunctionDefinition.Name)));
+				FText::FromString(FunctionDefinition.Name))));
+				if (IsGenerationCancelled(FunctionSlowTask))
+				{
+					return FailBecauseCancelled(OutError, FunctionDefinition.Name);
+				}
 				if (!CodeGraphBuilder.Build(CodeStatements, GeneratedValues, CodeBuildError))
 				{
 					OutError = CodeBuildError;
@@ -1757,6 +1936,10 @@ namespace UE::DreamShader::Editor
 					CustomExpression->Inputs.Last().Input.Connect(GetPreferredOutputIndexForProperty(Property, PropertyExpression), PropertyExpression);
 				}
 
+				// After the inputs are wired, because the heuristic is a statement about the code AND
+				// the pins together: a loop bounded by a local is fine, one bounded by an input is not.
+				ReportCustomNodeLoopHeuristic(CustomExpression, FunctionDefinition.Name);
+
 				for (int32 OutputIndex = 1; OutputIndex < FunctionDefinition.Outputs.Num(); ++OutputIndex)
 				{
 					const FTextShaderFunctionParameter& OutputDefinition = FunctionDefinition.Outputs[OutputIndex];
@@ -1804,9 +1987,13 @@ namespace UE::DreamShader::Editor
 			int32 OutputPositionY = -120;
 		FunctionSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ConnectingFunctionOutputs", "Connecting outputs for '{0}'..."),
-				FText::FromString(FunctionDefinition.Name)));
+				FText::FromString(FunctionDefinition.Name))));
+			if (IsGenerationCancelled(FunctionSlowTask))
+			{
+				return FailBecauseCancelled(OutError, FunctionDefinition.Name);
+			}
 			TArray<int32> OutputSortPriorities;
 			AssignDeterministicSortPriorities(FunctionDefinition.Outputs, OutputSortPriorities);
 			for (int32 OutputIndex = 0; OutputIndex < FunctionDefinition.Outputs.Num(); ++OutputIndex)
@@ -1882,9 +2069,16 @@ namespace UE::DreamShader::Editor
 			{
 				FunctionSlowTask.EnterProgressFrame(
 					1.0f,
-					FText::Format(
+					GraphStageText(FText::Format(
 						LOCTEXT("LayingOutFunction", "Laying out '{0}'..."),
-						FText::FromString(FunctionDefinition.Name)));
+						FText::FromString(FunctionDefinition.Name))));
+			}
+
+			// The last cancel that is free: Commit() below destroys the old graph, and the frame after
+			// it is the shader compile this whole feature exists to make interruptible.
+			if (IsGenerationCancelled(FunctionSlowTask))
+			{
+				return FailBecauseCancelled(OutError, FunctionDefinition.Name);
 			}
 
 			if (bLayoutThisFunction)
@@ -1904,11 +2098,14 @@ namespace UE::DreamShader::Editor
 			// throw away the list the recompile had just populated.
 			Rollback.Commit();
 
+			// Stage two starts here. UpdateMaterialFunction recompiles every material that calls this
+			// function, so this single frame can outlast everything above it put together.
 			FunctionSlowTask.EnterProgressFrame(
 				1.0f,
-				FText::Format(
+				ShaderStageText(FText::Format(
 					LOCTEXT("UpdatingFunction", "Updating '{0}'..."),
-					FText::FromString(FunctionDefinition.Name)));
+					FText::FromString(FunctionDefinition.Name))));
+			FShaderCompileStageWatch ShaderCompileWatch(FunctionDefinition.Name);
 			UMaterialEditingLibrary::UpdateMaterialFunction(MaterialFunction, nullptr);
 			MaterialFunction->PostEditChange();
 
@@ -1934,9 +2131,9 @@ namespace UE::DreamShader::Editor
 
 		FunctionSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			ShaderStageText(FText::Format(
 				LOCTEXT("SavingFunction", "Saving '{0}'..."),
-				FText::FromString(FunctionDefinition.Name)));
+				FText::FromString(FunctionDefinition.Name))));
 				FDreamShaderError SaveError;
 				if (!Private::SaveAssetPackage(MaterialFunction, SaveError))
 				{
@@ -1947,6 +2144,17 @@ namespace UE::DreamShader::Editor
 
 			OutGeneratedAssetPath = MaterialFunction->GetPathName();
 			return true;
+		}
+	}
+
+	namespace Private
+	{
+		// The other translation units of the generator (the ThinCustom override restore, for one)
+		// raise advisory warnings too, and they must land in the same `Warnings:` block as the ones
+		// raised here rather than in a log line nobody reads. The collector itself stays file-local.
+		void RaiseGenerationWarning(const TCHAR* Code, const FString& Message)
+		{
+			UE::DreamShader::Editor::RaiseGenerationWarning(Code, Message);
 		}
 	}
 
@@ -1973,7 +2181,12 @@ namespace UE::DreamShader::Editor
 			explicit FScopedGenerationNotice(const FString& InSourceFilePath)
 				: SourceFilePath(UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath))
 			{
-				++Depth;
+				if (++Depth == 1)
+				{
+					// One compile, one warning list. The outermost scope owns it, so the material half
+					// of a .dsm does not inherit the previous file's findings.
+					GenerationWarnings().Reset();
+				}
 			}
 
 			bool Report(bool bResult)
@@ -1991,6 +2204,35 @@ namespace UE::DreamShader::Editor
 			}
 		};
 		int32 FScopedGenerationNotice::Depth = 0;
+
+		/**
+		 * Appends whatever the generation raised to a finished result message, under the same
+		 * `Warnings:` header the parser's warnings already use.
+		 *
+		 * Only from the outermost entry point: GenerateAssetsFromFile calls GenerateMaterialFromFile,
+		 * and draining in both would print every warning twice.
+		 */
+		void AppendGenerationWarnings(FString& InOutMessage, const TArray<FString>& ParserWarnings)
+		{
+			if (FScopedGenerationNotice::Depth > 1)
+			{
+				return;
+			}
+
+			TArray<FString> AllWarnings = ParserWarnings;
+			for (const FString& Warning : GenerationWarnings())
+			{
+				AllWarnings.AddUnique(Warning);
+			}
+
+			if (AllWarnings.IsEmpty())
+			{
+				return;
+			}
+
+			InOutMessage += TEXT("\nWarnings:\n"); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			InOutMessage += FString::Join(AllWarnings, TEXT("\n"));
+		}
 	}
 
 	FOnDreamShaderSourceGenerated& OnDreamShaderSourceGenerated()
@@ -2020,14 +2262,21 @@ namespace UE::DreamShader::Editor
 				FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
 		if (!IsRunningCommandlet())
 		{
-			SourceSlowTask.MakeDialogDelayed(0.35f);
+			// bShowCancelButton: without it this dialog is the one users could only escape by killing
+			// the editor, because the shader compiles it covers are unbounded.
+			SourceSlowTask.MakeDialogDelayed(0.35f, /*bShowCancelButton*/ true);
 		}
 
 		SourceSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ReadingDreamShaderSource", "Reading DreamShader source '{0}'..."),
-				FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+				FText::FromString(FPaths::GetCleanFilename(SourceFilePath)))));
+		if (IsGenerationCancelled(SourceSlowTask))
+		{
+			return FailBecauseCancelled(OutMessage, FPaths::GetCleanFilename(SourceFilePath));
+		}
+
 		if (UE::DreamShader::IsDreamShaderHeaderFile(SourceFilePath))
 		{
 			return FailWith(OutMessage, TEXT("DSH8039"), FString::Printf(TEXT("DreamShader header '%s' does not generate assets directly. Recompile dependent .dsm or .dsf files instead."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -2057,9 +2306,14 @@ namespace UE::DreamShader::Editor
 		FString ParseError;
 		SourceSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ParsingDreamShaderSource", "Parsing DreamShader source '{0}'..."),
-				FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+				FText::FromString(FPaths::GetCleanFilename(SourceFilePath)))));
+		if (IsGenerationCancelled(SourceSlowTask))
+		{
+			return FailBecauseCancelled(OutMessage, FPaths::GetCleanFilename(SourceFilePath));
+		}
+
 		if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
 		{
 			OutMessage = FormatParseErrorWithSourceLocation(SourceFilePath, SourceText, ParseError);
@@ -2081,7 +2335,12 @@ namespace UE::DreamShader::Editor
 		}
 
 		bool bGeneratedHelperInclude = false;
-		SourceSlowTask.EnterProgressFrame(1.0f, LOCTEXT("PreparingDreamShaderGeneratedAssets", "Preparing DreamShader generated assets..."));
+		SourceSlowTask.EnterProgressFrame(1.0f, GraphStageText(LOCTEXT("PreparingDreamShaderGeneratedAssets", "Preparing DreamShader generated assets...")));
+		if (IsGenerationCancelled(SourceSlowTask))
+		{
+			return FailBecauseCancelled(OutMessage, FPaths::GetCleanFilename(SourceFilePath));
+		}
+
 		if (!Definition.Functions.IsEmpty())
 		{
 			FDreamShaderError IncludeWriteError;
@@ -2096,10 +2355,15 @@ namespace UE::DreamShader::Editor
 		TArray<FString> GeneratedAssetMessages;
 		SourceSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("GeneratingDreamShaderFunctionAssets", "Generating {0} DreamShader function asset{1}..."),
 				FText::AsNumber(Definition.MaterialFunctions.Num()),
-				FText::FromString(Definition.MaterialFunctions.Num() == 1 ? TEXT("") : TEXT("s"))));
+				FText::FromString(Definition.MaterialFunctions.Num() == 1 ? TEXT("") : TEXT("s")))));
+		if (IsGenerationCancelled(SourceSlowTask))
+		{
+			return FailBecauseCancelled(OutMessage, FPaths::GetCleanFilename(SourceFilePath));
+		}
+
 		for (const FTextShaderMaterialFunctionDefinition& FunctionDefinition : Definition.MaterialFunctions)
 		{
 			FString GeneratedAssetPath;
@@ -2122,9 +2386,14 @@ namespace UE::DreamShader::Editor
 			FDreamShaderError MaterialMessage;
 		SourceSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("GeneratingDreamShaderMaterial", "Generating DreamShader material '{0}'..."),
-				FText::FromString(Definition.Name)));
+				FText::FromString(Definition.Name))));
+			if (IsGenerationCancelled(SourceSlowTask))
+			{
+				return FailBecauseCancelled(OutMessage, Definition.Name);
+			}
+
 			if (!GenerateMaterialFromFile(SourceFilePath, MaterialMessage, bForce, bTransient))
 			{
 				OutMessage = MaterialMessage;
@@ -2162,11 +2431,8 @@ namespace UE::DreamShader::Editor
 		}
 
 		FString CompletionMessage = FString::Join(GeneratedAssetMessages, TEXT("\n"));
-		if (!Definition.Warnings.IsEmpty())
-		{
-			CompletionMessage += TEXT("\nWarnings:\n");
-			CompletionMessage += FString::Join(Definition.Warnings, TEXT("\n"));
-		}
+		// Parser warnings and generation warnings (DSH9011 / DSH9012) share one `Warnings:` block.
+		AppendGenerationWarnings(CompletionMessage, Definition.Warnings);
 		OutMessage = CompletionMessage;
 		return true;
 	}
@@ -2278,7 +2544,14 @@ namespace UE::DreamShader::Editor
 		FDreamShaderError& OutMessage)
 	{
 		Material->Modify();
-		MaterialSlowTask.EnterProgressFrame(1.0f, FText::FromString(FString::Printf(TEXT("Clearing old material graph '%s'..."), *Material->GetName()))); /* I18N-EXEMPT: deferred codegen or compatibility path */
+		MaterialSlowTask.EnterProgressFrame(1.0f, GraphStageText(FText::FromString(FString::Printf(TEXT("Clearing old material graph '%s'..."), *Material->GetName())))); /* I18N-EXEMPT: deferred codegen or compatibility path */
+		if (IsGenerationCancelled(MaterialSlowTask))
+		{
+			// Before ClearDreamShaderGeneratedComments and before the rollback is armed: the graph is
+			// still whole, so this exit costs nothing but the Modify() above.
+			return FailBecauseCancelled(OutMessage, Material->GetName());
+		}
+
 		// A live probe preview shares this material's expression collection (the Material Editor's
 		// own "Start Previewing Node" arrangement); it must drop that share before the nodes below
 		// are marked garbage.
@@ -2378,9 +2651,15 @@ namespace UE::DreamShader::Editor
 			FDreamShaderError CodeParseError;
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ParsingMaterialGraphBlock", "Parsing Graph block for '{0}'..."),
-				FText::FromString(Definition.Name)));
+				FText::FromString(Definition.Name))));
+			// The rollback is armed above, so from here a cancel restores the old graph rather than
+			// leaving an emptied asset behind -- exactly what a failed build already does.
+			if (IsGenerationCancelled(MaterialSlowTask))
+			{
+				return FailBecauseCancelled(OutMessage, Definition.Name);
+			}
 			if (!AppendInitializedOutputStatements(Definition.OutputDeclarations, CodeStatements, CodeParseError))
 			{
 				return FailWith(OutMessage, TEXT("DSH8049"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *CodeParseError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -2421,9 +2700,13 @@ namespace UE::DreamShader::Editor
 			FDreamShaderError CodeBuildError;
 		MaterialSlowTask.EnterProgressFrame(
 			2.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("CreatingMaterialGraphNodes", "Creating Graph nodes for '{0}'..."),
-				FText::FromString(Definition.Name)));
+				FText::FromString(Definition.Name))));
+			if (IsGenerationCancelled(MaterialSlowTask))
+			{
+				return FailBecauseCancelled(OutMessage, Definition.Name);
+			}
 			if (!CodeGraphBuilder.Build(CodeStatements, GeneratedCodeValues, CodeBuildError))
 			{
 				OutMessage = FormatGenerateError(SourceFilePath, CodeBuildError);
@@ -2525,9 +2808,13 @@ namespace UE::DreamShader::Editor
 
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ConnectingMaterialOutputs", "Connecting material outputs for '{0}'..."),
-				FText::FromString(Definition.Name)));
+				FText::FromString(Definition.Name))));
+			if (IsGenerationCancelled(MaterialSlowTask))
+			{
+				return FailBecauseCancelled(OutMessage, Definition.Name);
+			}
 			for (const FTextShaderOutputBinding& Binding : Definition.Outputs)
 			{
 				Private::FCodeValue OutputValue;
@@ -2627,9 +2914,14 @@ namespace UE::DreamShader::Editor
 
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("CreatingMaterialCustomNode", "Creating Custom node for '{0}'..."),
-				FText::FromString(Definition.Name)));
+				FText::FromString(Definition.Name))));
+			if (IsGenerationCancelled(MaterialSlowTask))
+			{
+				return FailBecauseCancelled(OutMessage, Definition.Name);
+			}
+
 			auto* CustomExpression = Cast<UMaterialExpressionCustom>(
 				UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionCustom::StaticClass(), 120, 0));
 			if (!CustomExpression)
@@ -2703,6 +2995,11 @@ namespace UE::DreamShader::Editor
 				CustomExpression->Inputs.Add(Input);
 				CustomExpression->Inputs.Last().Input.Connect(GetPreferredOutputIndexForProperty(Property, PropertyExpression), PropertyExpression);
 			}
+
+			// After the inputs are wired, because the heuristic is a statement about the code AND the
+			// pins together: a loop bounded by a local is fine, one bounded by an input is not. This
+			// is the whole-surface node, which is where issue #29's ray-march body lands.
+			ReportCustomNodeLoopHeuristic(CustomExpression, Definition.Name);
 
 			for (const Private::FResolvedNamedOutput& OutputDefinition : NamedOutputs)
 			{
@@ -2788,9 +3085,16 @@ namespace UE::DreamShader::Editor
 		{
 			MaterialSlowTask.EnterProgressFrame(
 				1.0f,
-				FText::Format(
+				GraphStageText(FText::Format(
 					LOCTEXT("LayingOutMaterialGraph", "Laying out material graph '{0}'..."),
-					FText::FromString(Material->GetName())));
+					FText::FromString(Material->GetName()))));
+		}
+
+		// The last cancel that is free: Commit() below destroys the old graph, and the frame after it
+		// is the shader compile this whole feature exists to make interruptible.
+		if (IsGenerationCancelled(MaterialSlowTask))
+		{
+			return FailBecauseCancelled(OutMessage, Material->GetName());
 		}
 
 		if (bLayoutThisMaterial)
@@ -2814,11 +3118,15 @@ namespace UE::DreamShader::Editor
 		// probe preview that re-wires on publish gets its own compile queued alongside this one.
 		Private::FDreamShaderGraphDebugRegistry::Get().Publish(SourceFilePath, Material, MoveTemp(GraphProbes));
 
+		// Stage two starts here. Everything above is graph construction and is measured in
+		// milliseconds; this one frame is where a heavy Custom node spends minutes, and covering both
+		// with a single unlabelled bar is what made a working compile look like a hang.
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			ShaderStageText(FText::Format(
 				LOCTEXT("CompilingMaterial", "Compiling material '{0}'..."),
-				FText::FromString(Material->GetName())));
+				FText::FromString(Material->GetName()))));
+		FShaderCompileStageWatch ShaderCompileWatch(Material->GetName());
 		UMaterialEditingLibrary::RecompileMaterial(Material);
 		Material->PostEditChange();
 		return true;
@@ -2963,6 +3271,13 @@ namespace UE::DreamShader::Editor
 			return FailWith(OutMessage, TEXT("DSH8074"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *DivergenceError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
+		// The user's tuning, read while the old parameter set is still live. It has to be taken here,
+		// before anything touches the base, because the rebuild both tears the base's graph down and
+		// clears every override off the instance below. Restored after the rebuild succeeds; a
+		// rebuild that fails returns with the overrides still on the instance, untouched.
+		Private::FDreamShaderCapturedParameterOverrides CapturedOverrides;
+		Private::CaptureThinCustomParameterOverrides(Instance, CapturedOverrides);
+
 		// After the skip check on purpose: a hash-skip must not create (or ownership-check) a base.
 		UMaterial* BaseMaterial = nullptr;
 		FDreamShaderError BaseError;
@@ -2971,12 +3286,27 @@ namespace UE::DreamShader::Editor
 			return FailWith(OutMessage, TEXT("DSH8075"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *BaseError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
+		// Two stages, one caller frame. Building the graph is milliseconds; the shader compilation
+		// that follows it is unbounded, and covering both with one unlabelled frame is what made a
+		// working compile read as a hung plugin (issue #29). This task nests inside the coarse frame
+		// the caller entered, so the frame accounting stays balanced.
+		FScopedSlowTask ThinCustomTask(
+			2.0f,
+			FText::Format(
+				LOCTEXT("GeneratingThinCustomStages", "Emitting thin-custom material '{0}'..."),
+				FText::FromString(Definition.Name)));
+
 		// Build the whole-surface Custom graph onto the base. bTransient is threaded through: the
 		// persist path lays out the base's graph (it becomes a real inspectable asset on disk), the
 		// transient path skips layout. Scope a self-contained slow-task for the build so its progress
-		// frames account against their own budget -- the caller already entered one coarse frame for
-		// the whole thin-custom generation, so threading that same task through here would overflow it
-		// (SlowTask.cpp "Work overflow" ensure).
+		// frames account against their own budget -- the stage frame entered here is one unit of
+		// ThinCustomTask, so threading that same task through would overflow it (SlowTask.cpp "Work
+		// overflow" ensure).
+		ThinCustomTask.EnterProgressFrame(
+			1.0f,
+			GraphStageText(FText::Format(
+				LOCTEXT("BuildingThinCustomGraph", "Building the base material graph for '{0}'..."),
+				FText::FromString(Definition.Name))));
 		{
 		FScopedSlowTask GraphBuildTask(
 			11.0f,
@@ -2992,12 +3322,28 @@ namespace UE::DreamShader::Editor
 			}
 		}
 
+		// Stage two: UpdateStaticPermutation, PostEditChange and the save below all push shader
+		// compilation, and this is the frame that can sit for minutes on a heavy Custom node. Saying
+		// so is the point -- a bar that names the stage is not mistaken for a stuck plugin.
+		ThinCustomTask.EnterProgressFrame(
+			1.0f,
+			ShaderStageText(FText::Format(
+				LOCTEXT("CompilingThinCustomShaders", "Compiling shaders for '{0}'..."),
+				FText::FromString(Definition.Name))));
+		FShaderCompileStageWatch ShaderCompileWatch(Definition.Name);
+
 		// Deferred recache: the single shader recache happens in UpdateStaticPermutation below, after
 		// the parent's graph is in place.
 		Instance->SetParentEditorOnly(BaseMaterial, /*RecacheShader*/ false);
 		Instance->ClearParameterValuesEditorOnly();
 		Instance->SourceFilePath = SourceFilePath;
 		Instance->SourceHash = SourceHash;
+
+		// And back on, for every name (and kind) the rebuilt base still declares. Between the clear
+		// above and the UpdateStaticPermutation below on purpose: the clear is what the restore undoes,
+		// and the permutation update is what turns a restored static switch into the matching shader
+		// map. Names the source dropped are reported once, as DSH8155.
+		Private::RestoreThinCustomParameterOverrides(Instance, BaseMaterial, CapturedOverrides, SourceFilePath);
 
 		Instance->UpdateStaticPermutation();
 		Instance->PostEditChange();
@@ -3078,14 +3424,21 @@ namespace UE::DreamShader::Editor
 				FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
 		if (!IsRunningCommandlet())
 		{
-			MaterialSlowTask.MakeDialogDelayed(0.25f);
+			// bShowCancelButton: this is the dialog issue #29 is about. Without it a permutation that
+			// grinds leaves the user a bar that never moves and cannot be dismissed.
+			MaterialSlowTask.MakeDialogDelayed(0.25f, /*bShowCancelButton*/ true);
 		}
 
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ReadingMaterialSource", "Reading material source '{0}'..."),
-				FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+				FText::FromString(FPaths::GetCleanFilename(SourceFilePath)))));
+		if (IsGenerationCancelled(MaterialSlowTask))
+		{
+			return FailBecauseCancelled(OutMessage, FPaths::GetCleanFilename(SourceFilePath));
+		}
+
 		if (UE::DreamShader::IsDreamShaderHeaderFile(SourceFilePath) || UE::DreamShader::IsDreamShaderFunctionFile(SourceFilePath))
 		{
 			return FailWith(OutMessage, TEXT("DSH8077"), FString::Printf(TEXT("DreamShader source '%s' cannot generate a material asset directly."), *SourceFilePath)); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -3115,9 +3468,14 @@ namespace UE::DreamShader::Editor
 		FString ParseError;
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("ParsingMaterialSource", "Parsing material source '{0}'..."),
-				FText::FromString(FPaths::GetCleanFilename(SourceFilePath))));
+				FText::FromString(FPaths::GetCleanFilename(SourceFilePath)))));
+		if (IsGenerationCancelled(MaterialSlowTask))
+		{
+			return FailBecauseCancelled(OutMessage, FPaths::GetCleanFilename(SourceFilePath));
+		}
+
 		if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
 		{
 			OutMessage = FormatParseErrorWithSourceLocation(SourceFilePath, SourceText, ParseError);
@@ -3210,10 +3568,21 @@ namespace UE::DreamShader::Editor
 			FText::Format(
 				LOCTEXT("GeneratingThinCustomMaterial", "Generating thin-custom material for '{0}'..."),
 				FText::FromString(Definition.Name)));
-			return GenerateThinCustomMaterialAsInstance(
+			if (IsGenerationCancelled(MaterialSlowTask))
+			{
+				return FailBecauseCancelled(OutMessage, Definition.Name);
+			}
+
+			const bool bThinCustomResult = GenerateThinCustomMaterialAsInstance(
 				SourceFilePath, SourceHash, Definition, SourceText, NamedOutputs,
 				bUsesReturn, ReturnOutputType, bReturnIsSubstrateMaterial, bUsesFrontMaterial,
 				OutMessage, bForce, bTransient);
+			if (bThinCustomResult)
+			{
+				AppendGenerationWarnings(OutMessage.Message, Definition.Warnings);
+			}
+
+			return bThinCustomResult;
 		}
 
 
@@ -3221,9 +3590,14 @@ namespace UE::DreamShader::Editor
 		FDreamShaderError MaterialError;
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			GraphStageText(FText::Format(
 				LOCTEXT("PreparingMaterialAsset", "Preparing material asset '{0}'..."),
-				FText::FromString(Definition.Name)));
+				FText::FromString(Definition.Name))));
+		if (IsGenerationCancelled(MaterialSlowTask))
+		{
+			return FailBecauseCancelled(OutMessage, Definition.Name);
+		}
+
 		if (!Private::CreateOrReuseMaterial(Definition, Material, MaterialError, bTransient) || !Material)
 		{
 			return FailWith(OutMessage, TEXT("DSH8084"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *MaterialError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -3304,9 +3678,9 @@ namespace UE::DreamShader::Editor
 
 		MaterialSlowTask.EnterProgressFrame(
 			1.0f,
-			FText::Format(
+			ShaderStageText(FText::Format(
 				LOCTEXT("SavingMaterial", "Saving material '{0}'..."),
-				FText::FromString(Material->GetName())));
+				FText::FromString(Material->GetName()))));
 			FDreamShaderError SaveError;
 			if (!Private::SaveAssetPackage(Material, SaveError))
 			{
@@ -3319,6 +3693,7 @@ namespace UE::DreamShader::Editor
 			*Material->GetPathName(),
 			*SourceFilePath,
 			bEffectiveTransient ? TEXT(" (virtual)") : (bPersistThisMaterial ? TEXT(" (saved; the asset exists on disk)") : TEXT("")));
+		AppendGenerationWarnings(OutMessage.Message, Definition.Warnings);
 		return true;
 	}
 }

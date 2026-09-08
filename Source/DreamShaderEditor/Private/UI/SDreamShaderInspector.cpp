@@ -473,7 +473,7 @@ namespace UE::DreamShader::Editor::Private
 			Rows->AddSlot().AutoHeight()[ MakeInfoRow(
 				LOCTEXT("ProvenanceRow", "Provenance"),
 				GetBrowserProvenanceLabel(Entry->Asset->Provenance),
-				LOCTEXT("ProvenanceTip", "Whether the asset still holds what DreamShader last generated into it. A hand-edited asset refuses to rebuild until you choose Revert, Adopt or Detach from its Content Browser context menu.")) ];
+				LOCTEXT("ProvenanceTip", "Whether the asset still holds what DreamShader last generated into it. A hand-edited asset refuses to rebuild until you choose Revert, Adopt or Detach from its Content Browser context menu. Parameter overrides on a generated instance are not a hand edit: they read as 'tweaked' and survive a rebuild.")) ];
 		}
 		else if (Entry->Source.IsSet() && !Entry->Source->ResolvedObjectPath.IsEmpty())
 		{
@@ -570,6 +570,9 @@ namespace UE::DreamShader::Editor::Private
 		{
 		case EDreamShaderDigestState::Generated:
 			Explanation = LOCTEXT("ProvenanceExplainGenerated", "The asset holds exactly what DreamShader last generated into it. A source change rebuilds it freely.");
+			break;
+		case EDreamShaderDigestState::Tweaked:
+			Explanation = LOCTEXT("ProvenanceExplainTweaked", "The generated content still matches, and you have set parameter overrides on the instance. Rebuilds go ahead as normal and put your values back; a parameter the source no longer declares is dropped and named in the log.");
 			break;
 		case EDreamShaderDigestState::Diverged:
 			Explanation = LOCTEXT("ProvenanceExplainDiverged", "The asset was edited by hand since it was generated, so a rebuild is refused to protect those edits. Decide which copy is the truth.");

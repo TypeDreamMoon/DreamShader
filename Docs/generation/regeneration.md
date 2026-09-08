@@ -30,7 +30,7 @@ What happens to an already-generated asset when its source file is compiled agai
 | node property tweaks on generated nodes | no — the node is deleted and recreated |
 | node positions | no, unless pinned by a [`Layout`](../language/layout.md) section |
 | material settings changed in the editor | no — every property in [Reset properties](#reset-properties) is restored to its default, then `Settings` is reapplied |
-| parameter overrides on a generated ThinCustom instance | **no** — see the warning below |
+| parameter overrides on a generated ThinCustom instance | **yes**, by name *(since 1.9.0)* — cleared and put back; see the note below |
 | `FunctionInput` / `FunctionOutput` pin identities on a material function | **yes** *(since 1.3.2)* |
 | named-reroute variable GUIDs | yes — regenerated only when invalid |
 
@@ -110,27 +110,31 @@ name's GUID has nothing to restore onto.
 
 ## Parameter overrides on a generated instance
 
+Under the **ThinCustom** backend, regeneration still calls `ClearParameterValuesEditorOnly()` on the
+emitted `UDreamShaderMaterialInstance` — the instance has to agree with a base whose parameter set may
+have changed. Since `1.9.0` it does not lose anything by it: the overrides are read off the instance
+before the rebuild and written back after it, by name and kind, and the static permutation is updated
+so a restored static switch produces the matching shader map. The instance reads as
+[`Tweaked`](divergence.md#parameter-overrides-on-a-generated-thincustom-instance) rather than
+diverged, and rebuilds are not refused.
+
 > [!WARNING]
-> Under the **ThinCustom** backend, regeneration calls `ClearParameterValuesEditorOnly()` on the
-> emitted `UDreamShaderMaterialInstance`. **Every parameter override set by hand on a generated
-> instance is wiped by a regeneration** — scalar, vector, texture, static switch, and static
-> component-mask alike.
->
-> Since `1.8.0` this no longer happens silently: an override is a hand edit like any other, so the
-> instance reads as [diverged](divergence.md) and the rebuild is refused until you pick Revert, Adopt
-> or Detach. The advice below is still the better habit, because it never reaches that point.
->
-> **Workaround:** never tune a generated instance directly. Either
->
-> - move the value into the source as a `Properties` default, so the generated instance carries it,
->   or
-> - create a **child** `UMaterialInstanceConstant` parented to the generated instance and override
->   there. The child is a normal asset that regeneration never touches, and because the generated
->   instance owns the static permutation, the child shares its shader map at no extra compile cost.
->
-> The Material Content Browser's instance-creation action produces exactly such a child, in
-> `<parent directory>/<Instance Subfolder>` — see
-> [In-memory materials](in-memory.md#materializing-to-disk).
+> A name is all that survives a graph the generator tore down and rebuilt. **Rename or remove a
+> parameter in the source and its override is gone** — reported, once, as a `DSH8155` log line naming
+> every dropped parameter. [Adopt Into Source](divergence.md#adopt-into-source) also still refuses an
+> instance carrying overrides, because the decompiler writes the base's graph and has nowhere to put
+> them.
+
+For a value you never want a rebuild to touch, the older habit is still the sturdier one. Either
+
+- move it into the source as a `Properties` default, so the generated instance carries it, or
+- create a **child** `UMaterialInstanceConstant` parented to the generated instance and override
+  there. The child is a normal asset that regeneration never touches, and because the generated
+  instance owns the static permutation, the child shares its shader map at no extra compile cost.
+
+The Material Content Browser's instance-creation action produces exactly such a child, in
+`<parent directory>/<Instance Subfolder>` — see
+[In-memory materials](in-memory.md#materializing-to-disk).
 
 ## Open in an asset editor
 
@@ -283,7 +287,7 @@ Runtime substitutions are rendered as `{Placeholder}`.
 | `Generated DreamShader asset '{Path}' could not be saved.` | the package save failed after a successful rebuild |
 | `Generated DreamShader asset packages could not be saved.` | the paired instance + base save failed |
 | `'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Clean Persisted Generated Assets to make it memory-only.` | log; a memory-only compile landed on an asset with a file behind it, so it took the persisted path — see [In-memory materials](in-memory.md#when-the-asset-already-exists-on-disk) |
-| `Asset '{ObjectPath}' has been edited by hand since DreamShader generated it from '{SourceFile}', so it was NOT rebuilt (rebuilding would destroy those edits). ...` | the [divergence](divergence.md) gate |
+| `Asset '{ObjectPath}' was edited by hand since DreamShader generated it from '{SourceFile}', so it was NOT rebuilt (rebuilding would destroy those edits). ...` | the [divergence](divergence.md) gate, which also raises a [notification](divergence.md#what-you-see-since-190) *(since 1.9.0)* |
 | `Asset '{ObjectPath}' is open in an asset editor, so it was NOT rebuilt. ...` | the [open-editor gate](#open-in-an-asset-editor) |
 
 ## Example

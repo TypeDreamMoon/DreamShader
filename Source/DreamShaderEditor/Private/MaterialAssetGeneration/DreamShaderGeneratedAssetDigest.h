@@ -38,6 +38,11 @@ namespace UE::DreamShader::Editor::Private
 		Unstamped,
 		// Ours, and the asset still holds exactly what we last generated into it.
 		Generated,
+		// Ours, the generated content still matches -- and the ThinCustom instance carries parameter
+		// overrides on top of it. Tuning a generated instance is what the instance is FOR, so this is
+		// not divergence and it does not block a rebuild; the rebuild captures the overrides and puts
+		// back every name the new base still declares. See DreamShaderThinCustomParameterOverrides.h.
+		Tweaked,
 		// Ours, and the contents no longer match the stamp: somebody edited the asset by hand.
 		Diverged
 	};
@@ -49,6 +54,13 @@ namespace UE::DreamShader::Editor::Private
 	// turning every previously stamped asset into a false divergence report.
 	FString MakeDigestSchemaTag(UObject* Asset);
 
+	// The two halves of MakeDigestSchemaTag, for the stamp/check asymmetry: the classes whose layout
+	// the tag fingerprints are recorded next to the stamp (DreamShader.OutputDigestClasses) so that a
+	// later check fingerprints the classes the stamp was MADE from, not the classes the asset holds
+	// now -- a node added by hand must read as Diverged, not as a schema change.
+	TArray<FString> CollectDigestClassPathNames(UObject* Asset);
+	FString MakeDigestSchemaTagForClasses(const TArray<FString>& ClassPathNames);
+
 	// Deterministic text form of the asset's generated content. Exposed (rather than only the hash)
 	// so a test can diff two of them and say WHAT diverged, and so the log can carry the difference
 	// when verbose logging is on. Empty for an asset class the digest does not cover.
@@ -59,7 +71,22 @@ namespace UE::DreamShader::Editor::Private
 
 	// "<schema>:<crc32>" -- what gets stamped into DreamShader.OutputDigest. Empty when the asset
 	// class is not covered, which callers must treat as "cannot judge" rather than "diverged".
+	// The one-argument form tags with the asset's current classes (stamp time); the two-argument
+	// form takes the tag the check recovered from the stamp.
 	FString BuildOutputDigest(UObject* Asset);
+	FString BuildOutputDigest(UObject* Asset, const FString& SchemaTag);
+
+	// Whether a generated ThinCustom instance carries any parameter override at all -- the difference
+	// between Generated and Tweaked. False for anything that is not a material instance, and false for
+	// an instance whose overrides ARE part of its digest (a shape the ThinCustom backend does not
+	// produce), so the answer only ever refines a state the digest already called Generated.
+	bool GeneratedInstanceHasParameterOverrides(UObject* Asset);
+
+	// Whether this instance is the ThinCustom pair: a material instance whose parent is the hidden
+	// base UMaterial generated alongside it -- a subobject in its own package when saved, an object in
+	// the transient package when memory-only. It is the shape whose parameter overrides are the user's
+	// tuning rather than a hand edit.
+	bool IsThinCustomInstancePair(const UMaterialInstance* Instance);
 
 	// Whether a struct's contents can go into a digest verbatim. Rejects anything that reaches an
 	// FExpressionInput (connections are digested structurally, by node index, so that moving or

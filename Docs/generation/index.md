@@ -121,9 +121,64 @@ flashes one, and are suppressed entirely under `IsRunningCommandlet()`.
 | whole file | `Compiling DreamShader source '{File}'...` | 6 | 0.35 s |
 | one material | `Generating DreamShader material from '{File}'...` | 11 | 0.25 s |
 | one material function | `Generating DreamShader function '{Name}'...` | 10 | 0.25 s |
-| ThinCustom emission | `Generating thin-custom material for '{Name}'...` | 8 | inherited |
+| ThinCustom emission | `Generating thin-custom material for '{Name}'...` | 2 stages | inherited |
 | graph build (nested) | `Building material graph for '{Name}'...` | 11 | inherited |
 | automatic layout | `Laying out DreamShader material graph...` | one per node | inherited |
+
+### The two stages *(since 1.9.0)*
+
+A compile is two things wearing one progress bar, and they behave nothing alike. Every frame is
+therefore prefixed with which of the two is running:
+
+| Prefix | Covers | How long it takes |
+| :-- | :-- | :-- |
+| `Step 1 of 2, building the graph:` | reading, parsing, node creation, wiring, layout | milliseconds to a second |
+| `Step 2 of 2, compiling shaders (this can take minutes):` | `UpdateStaticPermutation` → `PostEditChange` → save, and `RecompileMaterial` / `UpdateMaterialFunction` | unbounded |
+
+> [!NOTE]
+> A bar that stops moving under `Step 2 of 2` is normal. Shader compilation happens outside the
+> plugin, and a single heavy permutation can hold it for minutes. The prefix exists so that wait is
+> not mistaken for a hung compile.
+
+### Cancelling *(since 1.9.0)*
+
+Every generation dialog carries a **Cancel** button, and the cancel is checked after each progress
+frame. Cancelling takes the same path a failed compile takes:
+
+- The asset is restored to exactly what it held before the compile started — the atomic-rebuild
+  rollback is what does it, so there is never a half-built graph or an emptied material function.
+- Nothing is stamped and nothing is saved.
+- The compile reports [`DSH9010`](../diagnostics/DSH9xxx.md) as an error:
+  `Generation of '{Name}' was cancelled by the user; the asset was left unchanged.`
+
+The one thing a cancel does not put back is the generated `DreamShader: ` comment boxes on a
+material function, for the same reason a failed rebuild does not: they are destroyed before the
+snapshot is taken. The next successful compile recreates them, and comments you wrote yourself are
+never touched.
+
+> [!WARNING]
+> Cancelling does not stop shaders that Unreal has already queued. If you cancel during
+> `Step 2 of 2`, `ShaderCompileWorker.exe` keeps working through whatever was already dispatched.
+
+### When a shader compile takes too long *(since 1.9.0)*
+
+If stage two of one asset runs past **30 seconds**, generation emits `DSH9011` once, as a warning
+in the log and in the result message. It never blocks or fails the compile — it exists to say what
+that wait usually means:
+
+- A `Custom` node whose loop bound is one of its **inputs** — a `for` or `while` whose limit is not a
+  literal or a `#define`d constant.
+- Combined with **implicit-mip** texture sampling — `Texture2DSample`, `Texture3DSample` or
+  `.Sample` — inside divergent control flow.
+
+The compiler derives the mip level from screen-space derivatives, which are undefined inside
+divergent flow, so it fully unrolls a loop whose iteration count it cannot know. To confirm the
+compile is still working rather than hung, check whether `ShaderCompileWorker.exe` is busy in Task
+Manager. To fix it, bound the loop with a literal or a `#define`, or call `SampleLevel` /
+`SampleGrad`, which take the mip level as an argument.
+
+Generation also looks for that pair while it emits a `Custom` node's code and warns up front, as
+`DSH9012`, before the compile is even started. Both are advisory; neither fails a build.
 
 ## Pages
 
@@ -148,7 +203,7 @@ flashes one, and are suppressed entirely under `IsRunningCommandlet()`.
 - Material-function assets are generated **before** the material, so a `Shader` in the same file can
   call a `ShaderFunction` declared beside it.
 - Parser warnings never fail a compile. They are appended to the result message under a `Warnings:`
-  header.
+  header, and since 1.9.0 the generation warnings `DSH9011` and `DSH9012` join them there.
 - Generation is editor-only. There is no runtime code path that builds a material from
   DreamShaderLang.
 

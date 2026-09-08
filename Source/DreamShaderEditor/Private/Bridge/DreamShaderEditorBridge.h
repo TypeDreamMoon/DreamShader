@@ -3,10 +3,12 @@
 #include "CoreMinimal.h"
 
 #include "Diagnostics/DreamShaderDiagnosticsStore.h"
+#include "Bridge/DreamShaderDivergenceNotice.h"
 #include "Bridge/DreamShaderPreviewWebSocketServer.h"
 
 #include "Containers/Ticker.h"
 
+class SNotificationItem;
 class UMaterialInterface;
 class UMaterial;
 class UMaterialFunction;
@@ -35,6 +37,15 @@ namespace UE::DreamShader::Editor::Private
 		 * Browser looking at the previous result. The watcher's own compiles go through here too.
 		 */
 		bool CompileSourceFile(const FString& SourceFilePath, bool bForce, bool bInMemory, FString& OutMessage);
+
+		/**
+		 * Queue a rebuild for source files whose TEXT a plugin tool just rewrote on disk (the asset
+		 * rename sync). Dispatches exactly like the directory watcher -- headers fan out to their
+		 * dependents, functions rebuild themselves and their dependents, materials rebuild -- but
+		 * bypasses the Auto Compile On Save gate: a file the plugin itself edited must be rebuilt, or
+		 * the asset and the text it claims to come from would disagree until the user noticed.
+		 */
+		void RequestRebuildAfterSourceRewrite(const TArray<FString>& RewrittenSourceFiles);
 
 		/** After the diagnostics store was committed (written out) following one or more compiles. */
 		FSimpleMulticastDelegate& OnDiagnosticsChanged() { return DiagnosticsChangedEvent; }
@@ -169,6 +180,26 @@ namespace UE::DreamShader::Editor::Private
 		void ClearDiagnosticsForSourceAndDependencies(const FString& SourceFilePath);
 		void UpdateDiagnosticsFile();
 
+		/**
+		 * The divergence notification (Bridge/DreamShaderDivergenceNotice.h, Docs/generation/divergence.md).
+		 *
+		 * A refused rebuild used to reach the user as prose in the log telling them to right-click an
+		 * asset -- which in the editor's default in-memory mode has no tile to right-click. These turn
+		 * that refusal into a toast carrying the three resolutions themselves.
+		 */
+		/** Opens/closes one rebuild round. Nested calls join the round in progress; the outermost
+		 *  close is where a collapsed round emits its single summary. */
+		void BeginDivergenceRound();
+		void EndDivergenceRound();
+		/** Inspects one failed compile; does nothing unless the failure is a divergence refusal. */
+		void ReportDivergenceRefusal(const FString& SourceFilePath, const FString& CompileMessage);
+		void ShowDivergenceNotification(const FDreamShaderDivergenceReport& Report);
+		void ShowDivergenceSummaryNotification(int32 DivergedAssetCount);
+		/** Retires every live divergence toast. Called from Shutdown. */
+		void DismissDivergenceNotifications();
+		/** False wherever there is no Slate application or no person: commandlets, unattended runs. */
+		static bool CanShowDivergenceNotification();
+
 	private:
 		TMap<FString, double> PendingFiles;
 		/** The subset of PendingFiles queued with force; consumed when the file is compiled. */
@@ -232,6 +263,17 @@ namespace UE::DreamShader::Editor::Private
 		/** True while this process holds owner.lock. Starts false: ownership is taken, not assumed. */
 		bool bIsBridgeOwner = false;
 		bool bMenusRegistered = false;
+		/** The rebuild round currently draining, and what it has already said about it. */
+		FDreamShaderDivergenceNoticeRound DivergenceRound;
+		/**
+		 * The live actionable toast per diverged asset, keyed by MakeDivergenceNoticeKey.
+		 *
+		 * Weak on purpose: the notification list owns the item, and an entry whose pointer has
+		 * expired is exactly the signal that the toast left the screen and the asset may be reported
+		 * again. Holding it shared would keep every toast alive forever and make that test always
+		 * answer "still up".
+		 */
+		TMap<FString, TWeakPtr<SNotificationItem>> DivergenceNotifications;
 		FSimpleMulticastDelegate DiagnosticsChangedEvent;
 		FSimpleMulticastDelegate SourceTreeChangedEvent;
 		FOnSourceFileModified SourceFileModifiedEvent;

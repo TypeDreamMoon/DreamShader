@@ -63,6 +63,8 @@ namespace UE::DreamShader::Editor::Private
 		{
 		case EDreamShaderDigestState::Generated:
 			return NSLOCTEXT("DreamShaderMaterialBrowser", "ProvenanceGenerated", "generated (matches the last build)");
+		case EDreamShaderDigestState::Tweaked:
+			return NSLOCTEXT("DreamShaderMaterialBrowser", "ProvenanceTweaked", "generated, with parameter overrides on the instance");
 		case EDreamShaderDigestState::Diverged:
 			return NSLOCTEXT("DreamShaderMaterialBrowser", "ProvenanceDiverged", "edited by hand since the last build");
 		case EDreamShaderDigestState::Unstamped:

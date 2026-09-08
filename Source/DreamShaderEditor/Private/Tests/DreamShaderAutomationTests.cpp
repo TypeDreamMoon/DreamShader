@@ -1,4 +1,5 @@
-﻿#include "Commandlet/DreamShaderCommandletRunner.h"
+﻿#include "Bridge/DreamShaderDivergenceNotice.h"
+#include "Commandlet/DreamShaderCommandletRunner.h"
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
@@ -4516,6 +4517,22 @@ bool FDreamShaderDivergenceBlocksRebuildTest::RunTest(const FString& Parameters)
 			&& Message.Contains(TEXT("Adopt Into Source"))
 			&& Message.Contains(TEXT("Detach From DreamShader")));
 
+	// The other half of the DSH8115 contract, asserted against a REAL refusal rather than a rebuilt
+	// copy of the format string: the editor bridge recovers the asset and the source out of this
+	// message to raise the notification (Bridge/DreamShaderDivergenceNotice.h). Reword the message
+	// without rewording the anchor and the notification silently stops appearing, with every other
+	// assertion in this file still green. AddInfo, not the assertion text: an ObjectPath inside a
+	// failure message is swallowed by AddExpectedNewAssetProbeWarnings.
+	{
+		FDreamShaderDivergenceReport Report;
+		AddInfo(FString::Printf(TEXT("Divergence refusal message: %s"), *Message));
+		if (TestTrue(TEXT("The refusal parses as a divergence report"), TryParseDivergenceRefusal(Message, Report)))
+		{
+			TestTrue(TEXT("The parsed report names the refused asset"), Report.AssetPath == ObjectPath);
+			TestTrue(TEXT("The parsed report names a source file"), !Report.SourceFilePath.IsEmpty());
+		}
+	}
+
 	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
 	if (!TestNotNull(TEXT("The refused material still exists"), Material))
 	{
@@ -5460,9 +5477,10 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	"DreamShader.Compiler.Divergence.InstanceOverrideIsDetected",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-// The documented data-loss case on the default backend: a parameter tuned on a generated instance is
-// wiped by ClearParameterValuesEditorOnly on the next rebuild, with no diagnostic. It is a hand edit
-// like any other, so the digest has to see it.
+// A parameter tuned on a generated instance is seen, and classified as Tweaked rather than Diverged
+// -- the instance exists to be tuned, so this must not lock the source out of rebuilding. What used
+// to be the data-loss half of it (ClearParameterValuesEditorOnly wiping the value) is covered by the
+// capture/restore in DreamShaderTweakedTests.cpp; what this asserts is the classification alone.
 bool FDreamShaderDivergenceInstanceOverrideTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor;
@@ -5527,9 +5545,16 @@ bool FDreamShaderDivergenceInstanceOverrideTest::RunTest(const FString& Paramete
 
 	UMaterialEditingLibrary::SetMaterialInstanceScalarParameterValue(Instance, TEXT("Boost"), 0.9f);
 	TestEqual(
-		TEXT("Tuning a parameter on the generated instance reads as divergence"),
+		TEXT("Tuning a parameter on the generated instance reads as Tweaked, not divergence"),
 		static_cast<int32>(ClassifyGeneratedAsset(Instance)),
-		static_cast<int32>(EDreamShaderDigestState::Diverged));
+		static_cast<int32>(EDreamShaderDigestState::Tweaked));
+
+	// And Tweaked is not a refusal: the gate every generation entry point runs answers only to
+	// Diverged, so the override cannot lock this source out of rebuilding.
+	UE::DreamShader::FDreamShaderError DivergenceError;
+	TestTrue(
+		TEXT("A tweaked instance still passes the divergence gate"),
+		CheckGeneratedAssetNotDiverged(Instance, DivergenceError));
 	return true;
 }
 
