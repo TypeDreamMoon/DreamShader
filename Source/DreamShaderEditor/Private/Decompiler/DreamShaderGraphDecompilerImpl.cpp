@@ -155,10 +155,12 @@ namespace UE::DreamShader::Editor::Private
 				// first because the binding syntax depends on how many pins the node ends up with.
 				TArray<TPair<int32, FString>> BoundPins;
 
-				const TArrayView<FExpressionInput*> CustomOutputInputs = CustomOutput->GetInputsView();
-				for (int32 PinIndex = 0; PinIndex < CustomOutputInputs.Num(); ++PinIndex)
+				const int32 CustomOutputInputCount = GetDreamShaderExpressionInputCount(CustomOutput);
+				for (int32 PinIndex = 0; PinIndex < CustomOutputInputCount; ++PinIndex)
 				{
-					FExpressionInput* PinInput = CustomOutputInputs[PinIndex];
+					// GetInput() hands back nullptr past the last pin, so the test below covers
+					// both "no such pin" and "pin not wired".
+					FExpressionInput* PinInput = CustomOutput->GetInput(PinIndex);
 					if (!PinInput || !PinInput->IsConnected())
 					{
 						continue;
@@ -1474,8 +1476,7 @@ namespace UE::DreamShader::Editor::Private
 		if (UMaterialExpressionSetMaterialAttributes* SetAttributes = Cast<UMaterialExpressionSetMaterialAttributes>(Expression))
 		{
 			// Input 0 is the attribute set being chained onto; inputs 1..N pair with AttributeSetTypes.
-			const TArrayView<FExpressionInput*> SetInputs = SetAttributes->GetInputsView();
-			FExpressionInput* BaseInput = SetInputs.IsValidIndex(0) ? SetInputs[0] : nullptr;
+			FExpressionInput* BaseInput = SetAttributes->GetInput(0);
 			const FString BaseText = (BaseInput && BaseInput->IsConnected())
 				? CompileInput(*BaseInput, FString())
 				: FString();
@@ -1483,7 +1484,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString Name = DeclareMaterialAttributesChain(Expression, BaseText);
 			for (int32 SetIndex = 0; SetIndex < SetAttributes->AttributeSetTypes.Num(); ++SetIndex)
 			{
-				FExpressionInput* ValueInput = SetInputs.IsValidIndex(SetIndex + 1) ? SetInputs[SetIndex + 1] : nullptr;
+				FExpressionInput* ValueInput = SetAttributes->GetInput(SetIndex + 1);
 				EmitMaterialAttributeMemberWrite(
 					Name,
 					FMaterialAttributeDefinitionMap::GetAttributeName(SetAttributes->AttributeSetTypes[SetIndex]),
