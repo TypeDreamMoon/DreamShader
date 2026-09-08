@@ -56,11 +56,22 @@ namespace UE::DreamShader::Editor::Private::Tests::Preprocessor
 		return Count;
 	}
 
-	/** Splits on '\n' and drops a trailing '\r', so a CRLF fixture indexes the same as an LF one. */
+	/**
+	 * Splits on '\n' and drops a trailing '\r', so a CRLF fixture indexes the same as an LF one.
+	 *
+	 * A terminating newline ends the last line rather than starting an empty one: "A\nB\n" is two
+	 * lines, the way every editor and the diagnostics mapper count them. ParseIntoArray alone would
+	 * answer three, and the preprocessor -- which keeps every terminator it was given -- would then
+	 * look like it had grown a line on any input that ends the way real files end.
+	 */
 	inline TArray<FString> SplitPreprocessorLines(const FString& Text)
 	{
 		TArray<FString> Lines;
 		Text.ParseIntoArray(Lines, TEXT("\n"), /*InCullEmpty*/ false);
+		if (Lines.Num() > 0 && Text.EndsWith(TEXT("\n")) && Lines.Last().IsEmpty())
+		{
+			Lines.Pop();
+		}
 		for (FString& Line : Lines)
 		{
 			Line.RemoveFromEnd(TEXT("\r"));
@@ -2445,9 +2456,11 @@ bool FDreamShaderPreprocessorKeyFragmentTest::RunTest(const FString& Parameters)
 	{
 		const FString FragmentA = BuildDreamShaderDefineKeyFragment(A);
 		const FString FragmentB = BuildDreamShaderDefineKeyFragment(B);
+		// Case-sensitive on purpose: FString's != is Stricmp, and the one pair below that differs only
+		// by case would then read as equal -- the exact failure this test exists to catch.
 		TestTrue(
 			FString::Printf(TEXT("fragments must differ (%s): '%s' vs '%s'"), Why, *FragmentA, *FragmentB),
-			FragmentA != FragmentB);
+			!FragmentA.Equals(FragmentB, ESearchCase::CaseSensitive));
 	};
 
 	AssertDistinct(TEXT("empty vs one entry"),

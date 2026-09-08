@@ -1189,7 +1189,12 @@ namespace UE::DreamShader
 			// Through the same classifier and the same tracker the real pass uses, rather than a quick
 			// substring search. The two answers must agree -- this one gates Adopt (DSH8149), the other
 			// decides what gets cut -- and asking the same code is the only way to guarantee that.
-			if (IsRealDirective(ClassifyDirectiveLine(Line, Keyword, Rest)))
+			//
+			// Unknown counts too, not only the eight real directives: a `#IF` or a `#endfi` is a line
+			// the real pass refuses with DSH1035, so a source carrying one cannot be preprocessed at
+			// all -- and therefore cannot be adopted or synced either. Answering "no directives" for
+			// it would let those paths run over a file whose conditional structure nobody could read.
+			if (ClassifyDirectiveLine(Line, Keyword, Rest) != EDirectiveKind::None)
 			{
 				return true;
 			}
@@ -1200,8 +1205,17 @@ namespace UE::DreamShader
 
 	FString BuildDreamShaderDefineKeyFragment(const FDreamShaderDefineValueMap& TouchedDefines)
 	{
+		// Collected by walking the pairs, NOT with TMap::GetKeys. GetKeys de-duplicates through a
+		// default TSet<FString> on its way out, and that set hashes and matches case-insensitively --
+		// so a map that correctly holds `Foo`, `FOO` and `foo` as three entries hands back one name,
+		// and two of the three values never reach the key. The map's own key funcs are only half of
+		// the case rule; every place that reads the map back out has to keep the other half.
 		TArray<FString> Names;
-		TouchedDefines.GetKeys(Names);
+		Names.Reserve(TouchedDefines.Num());
+		for (const TPair<FString, FString>& Touched : TouchedDefines)
+		{
+			Names.Add(Touched.Key);
+		}
 
 		// Sorted with an explicit case-sensitive comparator, NOT with the default.
 		//
