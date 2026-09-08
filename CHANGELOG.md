@@ -1,5 +1,13 @@
 # DreamShader ChangeLog
 
+## 2.0.0 - unreleased
+
+> The 2.0 line. This is a compiler rewrite rather than a feature release: a language front end
+> that depends on nothing but Core, a graph IR between the parser and the material graph, the
+> 1.x syntax carried as a second front end of the same compiler, and the HLSL-shaped `.dss`
+> syntax alongside it. `IsBetaVersion` is set, so every tag on this branch publishes as a
+> pre-release (`v2.0.0b`). Nothing below has shipped yet; entries are added as milestones land.
+
 ## 1.9.1 - 2026-09-08
 
 ### Fixed
