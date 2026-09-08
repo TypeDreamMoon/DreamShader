@@ -33,7 +33,33 @@ namespace UE::DreamShader::Editor::Private
 	 */
 	int32 ApplyDreamShaderCommandletDefines(const FString& CommandLine);
 
+	/**
+	 * The `-Source` / `-File` / `-All` triple, resolved into the list a command works on: one file,
+	 * or every project source with `.dsf` ranked ahead of `.dsm` so a function asset exists before
+	 * the material that calls it is generated.
+	 *
+	 * Shared by `compile` and `dump-graph` rather than copied, because the two must agree on WHICH
+	 * sources a project has: a baseline that covered a different set than the compiler does would
+	 * report a missing dump as a parity difference.
+	 *
+	 * Returns false when none of the three was given, which is the usage-banner case. An empty list
+	 * with a true return is the legitimate "this project has no sources" answer.
+	 */
+	bool ResolveDreamShaderCommandletSourceFiles(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params,
+		TArray<FString>& OutSourceFiles);
+
 	bool RunDreamShaderCompileCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
+	/**
+	 * `dump-graph`: generate every named source in memory and write one canonical JSON per asset.
+	 * A developer tool -- the parity oracle for the 2.0 compiler rewrite. Never writes an asset.
+	 */
+	bool RunDreamShaderDumpGraphCommandlet(
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params);

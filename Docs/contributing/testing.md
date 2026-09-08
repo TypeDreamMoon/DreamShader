@@ -7,9 +7,9 @@ at run time.
 
 | | |
 | :-- | :-- |
-| Declared in | `Source/DreamShaderEditor/Private/Tests/` — five translation units, all inside `#if WITH_DEV_AUTOMATION_TESTS` |
+| Declared in | `Source/DreamShaderEditor/Private/Tests/` — seventeen translation units, all inside `#if WITH_DEV_AUTOMATION_TESTS` |
 | Kind | Unreal automation tests |
-| Flags | `EAutomationTestFlags::EditorContext \| EAutomationTestFlags::EngineFilter` — identical on all 40 declarations |
+| Flags | `EAutomationTestFlags::EditorContext \| EAutomationTestFlags::EngineFilter` — identical on all 128 declarations |
 | Corpus root | `<Plugin>/Tests/Corpus` |
 | Editor UI | *Tools ▸ Session Frontend ▸ Automation*, filtered on a test-name prefix |
 
@@ -30,12 +30,12 @@ Optional switches: `-nullrhi`, `-DreamShaderUpdateGolden`, `-NoDreamShaderEditor
 
 | Quantity | Value |
 | :-- | :-- |
-| Test declarations (`IMPLEMENT_*_AUTOMATION_TEST`) | 40 |
-| Simple declarations (one test each) | 38 |
+| Test declarations (`IMPLEMENT_*_AUTOMATION_TEST`) | 128 |
+| Simple declarations (one test each) | 126 |
 | Complex declarations (data-driven runners) | 2 — `DreamShader.Lang.Parse`, `DreamShader.Gen.Material` |
-| Corpus fixtures | 41 — 32 under `Parse/`, 9 under `Generate/` |
-| `.expected.json` goldens | 10 — 2 under `Parse/`, 8 under `Generate/` |
-| Individually runnable tests | **79** = 38 simple + 32 Parse sub-tests + 9 Generate sub-tests |
+| Corpus fixtures | 46 — 36 under `Parse/`, 10 under `Generate/` |
+| `.expected.json` goldens | 15 — 6 under `Parse/`, 9 under `Generate/` |
+| Individually runnable tests | **172** = 126 simple + 36 Parse sub-tests + 10 Generate sub-tests |
 
 The two complex runners enumerate the corpus tree at run time, so the runnable-test count moves with
 the fixture count and **no C++ changes when a fixture is added**.
@@ -58,6 +58,7 @@ the fixture count and **no C++ changes when a fixture is added**.
 | `DreamShader.Gen.Parameters.*` | Parameter-node creation and pin wiring | slow; editor |
 | `DreamShader.Gen.Wiring.*` | Condition wiring in the generated graph | slow; editor |
 | `DreamShader.Gen.Layout.*` | Geometry of the placed graph | slow; editor |
+| `DreamShader.DumpGraph.*` *(since 1.9.0)* | The canonical graph dump — see [Graph baseline](#graph-baseline-since-190) | slow; editor |
 | `DreamShader.Roundtrip.*` | Decompile → regenerate fidelity | slow; editor; two of them also need a real RHI |
 | `DreamShader.Render.*` | Pixel parity | needs a real RHI |
 
@@ -73,6 +74,7 @@ The split the source records: the fast `DreamShader.Lang.*` layer gates pull req
 | Generate corpus | `DreamShader.Gen.Material` |
 | Generator end-to-end tests | `DreamShader.Compiler` |
 | Decompile round trips | `DreamShader.Roundtrip` |
+| Graph dump determinism | `DreamShader.DumpGraph` |
 | Everything | `DreamShader` |
 
 ### Command-line switches
@@ -197,6 +199,44 @@ No editor, world or asset dependency; these run in milliseconds.
 | :-- | :-- | :-- |
 | `DreamShader.Lang.Parse` | `IMPLEMENT_COMPLEX_AUTOMATION_TEST` | `Tests/Corpus/Parse` |
 | `DreamShader.Gen.Material` | `IMPLEMENT_CUSTOM_COMPLEX_AUTOMATION_TEST` with a quiet base | `Tests/Corpus/Generate` |
+
+## Graph baseline *(since 1.9.0)*
+
+The automation suite says a compile still *succeeds*. It does not say the compiler still produces the
+**same graph** — and for a compiler rewrite that is the only question. The
+[`dump-graph`](../tools/commandlet.md#dump-graph-since-190) commandlet verb closes that gap: it writes
+one canonical JSON per generated asset (node classes, reflected properties, connections, pin order;
+no coordinates, colours or GUIDs), and two captures are compared with an ordinary text diff.
+
+Capture a baseline for a whole project. The compile step is not optional — `dump-graph` never writes
+an asset, so an asset already on disk is dumped as it stands rather than rebuilt:
+
+```powershell
+& $UnrealEditorCmd $Project -run=DreamShader compile -All -Force -unattended -nopause -nullrhi -nosplash -stdout -log
+& $UnrealEditorCmd $Project -run=DreamShader dump-graph -All -Out="I:/Baseline/before" -unattended -nopause -nullrhi -nosplash -stdout -log
+```
+
+Then, after the change:
+
+```powershell
+git diff --no-index -- I:/Baseline/before I:/Baseline/after
+```
+
+Every hunk is a behavioural difference. `./dsc.ps1 dump-graph -All -Out …` is the shorter spelling of
+the same two commands.
+
+Three automation tests guard the dump itself, and the first is the one that could not be replaced by
+reading the code — it generates one source **twice** and asserts the two JSON files are byte-identical,
+which is the only way to see a leaked GUID, a path-name-seeded node colour, or an object-name suffix:
+
+| Test | Asserts |
+| :-- | :-- |
+| `DreamShader.DumpGraph.Determinism` | Two full generations of one source dump identical bytes; LF endings; one trailing newline |
+| `DreamShader.DumpGraph.ExcludesEditorState` | No `MaterialExpressionGuid`, `EditorX/Y`, `NodeColor`, `Desc`, `bCollapsed`, `VariableGuid`… key survives — and the behavioural keys do |
+| `DreamShader.DumpGraph.NodeCount` | The tiny fixture dumps three nodes, every expression in the graph appears exactly once, and ids run `n0`…`n(N-1)` |
+
+All three pin the project's `DefaultBackend` to `Graph` with `FScopedDreamShaderGraphBackendPin`, and
+clean up their source file, their asset and their scratch output tree.
 
 ## Render parity
 

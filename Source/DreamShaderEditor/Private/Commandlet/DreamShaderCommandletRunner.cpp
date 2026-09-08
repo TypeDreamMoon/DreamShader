@@ -1,6 +1,7 @@
 #include "DreamShaderCommandletRunner.h"
 
 #include "DreamShaderCompileService.h"
+#include "Commandlet/DreamShaderGraphDump.h"
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Compile/DreamShaderEditorCompileAdapter.h"
 #include "Diagnostics/DreamShaderTextWireUtils.h"
@@ -22,7 +23,10 @@ namespace UE::DreamShader::Editor::Private
 			"  -run=DreamShader compile -Source=\"C:/Project/DShader/File.dsm\" [-Force] [-Define=NAME=VALUE ...]\n"
 			"  -run=DreamShader compile -All [-Force] [-Define=NAME=VALUE ...]\n"
 			"  -run=DreamShader decompile -Asset=\"/Game/Path/Asset.Asset\" [-Out=\"C:/Project/DShader/Decompiled/File.dsm\"]\n"
+			"  -run=DreamShader dump-graph { -Source=\"C:/Project/DShader/File.dsm\" | -All } [-Out=\"C:/Project/Saved/DreamShader/GraphBaseline\"]\n"
 			"Supported asset types: Material -> .dsm, MaterialFunction -> .dsf.\n"
+			"dump-graph is a developer tool: it writes one canonical JSON per generated asset and\n"
+			"never writes an asset itself. Compile the tree first if its sources have changed.\n"
 			"-Define (short form -D) may be repeated; -Define=NAME with no value is a bare marker that\n"
 			"defined(NAME) sees. Names starting with DS_ are reserved for the built-in constants.");
 	}
@@ -353,41 +357,53 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
+	bool ResolveDreamShaderCommandletSourceFiles(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params,
+		TArray<FString>& OutSourceFiles)
+	{
+		FString SourceFilePath;
+		if (TryGetCommandletParam(Tokens, Switches, Params, TEXT("Source"), SourceFilePath)
+			|| TryGetCommandletParam(Tokens, Switches, Params, TEXT("File"), SourceFilePath))
+		{
+			OutSourceFiles.Add(ResolveCommandletSourceFilePath(SourceFilePath));
+			return true;
+		}
+
+		if (!HasCommandletFlag(Tokens, Switches, TEXT("All")))
+		{
+			return false;
+		}
+
+		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(OutSourceFiles);
+		OutSourceFiles.RemoveAll([](const FString& SourceFile)
+		{
+			return UE::DreamShader::IsDreamShaderHeaderFile(SourceFile);
+		});
+		OutSourceFiles.Sort([](const FString& Left, const FString& Right)
+		{
+			const int32 LeftRank = UE::DreamShader::IsDreamShaderFunctionFile(Left) ? 0 : 1;
+			const int32 RightRank = UE::DreamShader::IsDreamShaderFunctionFile(Right) ? 0 : 1;
+			if (LeftRank != RightRank)
+			{
+				return LeftRank < RightRank;
+			}
+
+			return Left.Compare(Right, ESearchCase::IgnoreCase) < 0;
+		});
+		return true;
+	}
+
 	bool RunDreamShaderCompileCommandlet(
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params)
 	{
 		const bool bForce = HasCommandletFlag(Tokens, Switches, TEXT("Force"));
-		const bool bAll = HasCommandletFlag(Tokens, Switches, TEXT("All"));
 
 		TArray<FString> SourceFiles;
-		FString SourceFilePath;
-		if (TryGetCommandletParam(Tokens, Switches, Params, TEXT("Source"), SourceFilePath)
-			|| TryGetCommandletParam(Tokens, Switches, Params, TEXT("File"), SourceFilePath))
-		{
-			SourceFiles.Add(ResolveCommandletSourceFilePath(SourceFilePath));
-		}
-		else if (bAll)
-		{
-			FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles);
-			SourceFiles.RemoveAll([](const FString& SourceFile)
-			{
-				return UE::DreamShader::IsDreamShaderHeaderFile(SourceFile);
-			});
-			SourceFiles.Sort([](const FString& Left, const FString& Right)
-			{
-				const int32 LeftRank = UE::DreamShader::IsDreamShaderFunctionFile(Left) ? 0 : 1;
-				const int32 RightRank = UE::DreamShader::IsDreamShaderFunctionFile(Right) ? 0 : 1;
-				if (LeftRank != RightRank)
-				{
-					return LeftRank < RightRank;
-				}
-
-				return Left.Compare(Right, ESearchCase::IgnoreCase) < 0;
-			});
-		}
-		else
+		if (!ResolveDreamShaderCommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
 		{
 			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderCommandletUsage());
 			return false;
@@ -420,6 +436,97 @@ namespace UE::DreamShader::Editor::Private
 				UE_LOG(LogDreamShader, Error, TEXT("%s"), *ToInvariantWireString(Result.Message));
 				bSucceeded = false;
 			}
+		}
+
+		return bSucceeded;
+	}
+
+	bool RunDreamShaderDumpGraphCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		TArray<FString> SourceFiles;
+		if (!ResolveDreamShaderCommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		{
+			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderCommandletUsage());
+			return false;
+		}
+
+		if (SourceFiles.IsEmpty())
+		{
+			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader commandlet found no source files to dump."));
+			return true;
+		}
+
+		FString OutputDirectory;
+		if (!TryGetCommandletParam(Tokens, Switches, Params, TEXT("Out"), OutputDirectory)
+			&& !TryGetCommandletParam(Tokens, Switches, Params, TEXT("Output"), OutputDirectory))
+		{
+			OutputDirectory = GetDefaultDreamShaderGraphDumpDirectory();
+		}
+		OutputDirectory = FPaths::ConvertRelativePathToFull(OutputDirectory);
+
+		// One guard around the whole sweep rather than one per file: it flips a process-wide switch,
+		// and a per-file guard would leave a window in which some other path could persist an asset.
+		FScopedDreamShaderGraphDumpWriteGuard WriteGuard;
+
+		bool bSucceeded = true;
+		int32 DumpedAssetCount = 0;
+		int32 ReadFromDiskCount = 0;
+		for (const FString& SourceFile : SourceFiles)
+		{
+			// Same per-file guard the compile loop applies, and for the same reason: one bad path
+			// must not stop a -All sweep, but the run still has to exit non-zero.
+			if (!UE::DreamShader::IsDreamShaderSourceFile(SourceFile) || UE::DreamShader::IsDreamShaderHeaderFile(SourceFile))
+			{
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader dump-graph requires a .dsm or .dsf file: %s"), *SourceFile);
+				bSucceeded = false;
+				continue;
+			}
+
+			TArray<FDreamShaderGraphDumpEntry> Entries;
+			UE::DreamShader::FDreamShaderError DumpError;
+			if (!DumpDreamShaderGraphsForSource(SourceFile, OutputDirectory, Entries, DumpError))
+			{
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader failed to dump '%s': %s"), *SourceFile, *DumpError.Message);
+				bSucceeded = false;
+			}
+
+			for (const FDreamShaderGraphDumpEntry& Entry : Entries)
+			{
+				UE_LOG(
+					LogDreamShader,
+					Display,
+					TEXT("Dumped %s %s (%d node%s) to %s.%s"),
+					*Entry.Kind,
+					*Entry.ObjectPath,
+					Entry.NodeCount,
+					Entry.NodeCount == 1 ? TEXT("") : TEXT("s"),
+					*Entry.OutputFilePath,
+					Entry.bReadFromDisk ? TEXT(" (read from disk; not regenerated)") : TEXT(""));
+				++DumpedAssetCount;
+				ReadFromDiskCount += Entry.bReadFromDisk ? 1 : 0;
+			}
+		}
+
+		UE_LOG(
+			LogDreamShader,
+			Display,
+			TEXT("DreamShader dump-graph wrote %d graph dump(s) from %d source file(s) to %s."),
+			DumpedAssetCount,
+			SourceFiles.Num(),
+			*OutputDirectory);
+
+		// Said once, at the end, rather than per asset: on a compiled project it is the normal case
+		// and would otherwise bury the dumps it is warning about.
+		if (ReadFromDiskCount > 0)
+		{
+			UE_LOG(
+				LogDreamShader,
+				Warning,
+				TEXT("%d of them already exist on disk, so dump-graph read them as they stand instead of rebuilding them (it never writes an asset). Run 'compile -All -Force' first if those sources have changed since."),
+				ReadFromDiskCount);
 		}
 
 		return bSucceeded;

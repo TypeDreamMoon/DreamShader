@@ -9,6 +9,14 @@
     conditional-compilation preprocessor, so one source can be built for either side of
     an `#if` without editing anything.
 
+    `dump-graph` is the third verb and a DEVELOPER TOOL rather than part of the normal
+    build: it writes one canonical JSON per generated asset — node classes, reflected
+    properties, connections and pin order, with every coordinate, colour and GUID left
+    out — so two captures can be diffed. It exists to be the parity oracle for the 2.0
+    compiler rewrite. It never writes an asset, which also means an asset that already
+    exists on disk is dumped as it stands rather than rebuilt; compile the tree first
+    (`./dsc.ps1 compile -All -Force`) when the sources have moved.
+
     On top of the raw commandlet it adds:
       * engine resolution from the .uproject's EngineAssociation (no hard-coded path),
       * project discovery by walking up from the source file or the working directory,
@@ -31,6 +39,9 @@
 .EXAMPLE
     ./dsc.ps1 decompile /Game/Materials/M_Steel -Out I:/Work/M_Steel.dsm
 
+.EXAMPLE
+    ./dsc.ps1 dump-graph -All -Out I:/Baseline/before
+
 .NOTES
     Written for and verified against UE 5.8 (source build) + DreamShader 1.5.1 on Win64.
 #>
@@ -38,19 +49,24 @@
 param(
     # compile  — build one source file, or every project source with -All
     # decompile — export an existing UMaterial / UMaterialFunction back to source
+    # dump-graph — write a canonical JSON fingerprint of the graph each source generates
     [Parameter(Mandatory, Position = 0)]
-    [ValidateSet('compile', 'decompile')]
+    [ValidateSet('compile', 'decompile', 'dump-graph')]
     [string]$Command,
 
-    # compile: path to a .dsm/.dsf (absolute, or relative to DShader/ then the project).
+    # compile / dump-graph: path to a .dsm/.dsf (absolute, or relative to DShader/ then the project).
     # decompile: an object path such as /Game/Materials/M_Steel.
     [Parameter(Position = 1)]
     [string]$Target,
 
     # Compile every project source instead of one file. .dsf files are built before .dsm.
+    # dump-graph resolves -All / -Source through the same code, so the two verbs always
+    # agree on which sources a project has.
     [switch]$All,
 
     # Bypass the source-hash skip. Without it an unchanged source logs "Skipped …".
+    # Accepted by dump-graph for symmetry and ignored there: a dump always regenerates,
+    # because dumping a graph that was skipped would dump whatever was already in memory.
     [switch]$Force,
 
     # Preprocessor defines for `#if` / `#elif`, as NAME=VALUE or a bare NAME marker
@@ -72,7 +88,8 @@ param(
     # commandlet splits the payload on the FIRST `=` only.
     [string[]]$Define,
 
-    # decompile only: write here instead of <SourceDirectory>/Decompiled/….
+    # decompile: write the source here instead of <SourceDirectory>/Decompiled/….
+    # dump-graph: the root of the dump tree, instead of <Project>/Saved/DreamShader/GraphBaseline.
     [string]$Out,
 
     # The .uproject. Defaults to the nearest one at or above the target / working directory.
@@ -197,6 +214,23 @@ switch ($Command) {
     'decompile' {
         if (-not $Target) { throw "decompile needs an asset object path, e.g. /Game/Materials/M_Steel." }
         $commandletArgs += "-Asset=$Target"
+        if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
+    }
+    'dump-graph' {
+        # Deliberately the same source selection as compile, down to the -Force pass-through
+        # (which the commandlet accepts and ignores): a baseline that covered a different set
+        # of sources than the compiler does would report a missing dump as a difference.
+        if ($All) {
+            $commandletArgs += '-All'
+        }
+        elseif ($Target) {
+            $resolved = if (Test-Path -LiteralPath $Target) { (Resolve-Path -LiteralPath $Target).Path } else { $Target }
+            $commandletArgs += "-Source=$($resolved -replace '\\', '/')"
+        }
+        else {
+            throw "dump-graph needs a source file or -All."
+        }
+        if ($Force) { $commandletArgs += '-Force' }
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
     }
 }

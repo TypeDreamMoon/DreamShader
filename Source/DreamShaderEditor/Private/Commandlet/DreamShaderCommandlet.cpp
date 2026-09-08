@@ -48,6 +48,14 @@ int32 UDreamShaderCommandlet::Main(const FString& Params)
 		return UE::DreamShader::Editor::Private::RunDreamShaderCompileCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
 	}
 
+	// Spelled with a hyphen, and also accepted without one: a verb the shell may or may not have
+	// split is not worth an "Unknown DreamShader command 'dumpgraph'." for.
+	if (Command.Equals(TEXT("dump-graph"), ESearchCase::IgnoreCase)
+		|| Command.Equals(TEXT("dumpgraph"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderDumpGraphCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
 	if (Command.Equals(TEXT("decompile"), ESearchCase::IgnoreCase)
 		|| Command.Equals(TEXT("export"), ESearchCase::IgnoreCase))
 	{
