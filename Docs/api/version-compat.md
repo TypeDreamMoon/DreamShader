@@ -123,6 +123,7 @@ threshold is the same 5.4.
 | Feature | On UE ≥ 5.5 | On UE 5.3 – 5.4 |
 | :-- | :-- | :-- |
 | Counting an expression's inputs | `Expression->CountInputs()` | `Expression->GetInputsView().Num()` |
+| Reading one input pin | `Expression->GetInput(Index)` | `Expression->GetInput(Index)` — identical. `GetInputsView()` would serve too, but it is deprecated in favour of `FExpressionInputIterator` / `GetInput()` and emits C4996 on UE 5.8, so the array view is never built just to reach a single pin |
 | Resolving `UMaterialExpressionObjectPositionWS` | `StaticClass()` and `IsA<>` directly | `FindObject<UClass>(nullptr, "/Script/Engine.MaterialExpressionObjectPositionWS")` |
 | Transform basis `periodicworld` | resolves to `TRANSFORMPOSSOURCE_PeriodicWorld` | unsupported — basis resolution fails |
 | `UE.TransformPosition` argument `PeriodicWorldTileSize` | honoured | not handled |
@@ -180,6 +181,11 @@ Everything not listed above works identically on every engine from 5.3 to 5.8.
 - **The gate is compile-time, not run-time.** The plugin binary built against UE 5.3 does not
   contain the Substrate code paths at all. Moving a project to a newer engine requires rebuilding
   the plugin to gain the newer behaviours.
+- **`GetInputsView()` survives in exactly one place.** Epic deprecated it in favour of
+  `FExpressionInputIterator` and `UMaterialExpression::GetInput()`, and naming it produces C4996 on
+  UE 5.8 — a warning today, a compile error in whichever release removes it. The remaining call is
+  the UE 5.3 – 5.4 branch of `GetDreamShaderExpressionInputCount`, where `CountInputs()` does not
+  exist yet and the deprecation is not in force; every other site asks for a pin by index.
 - Many "older branch" paths are **errors with an explicit version message** rather than silent
   degradation. Every Substrate surface reachable from source — `ShadingModel="Substrate"`, a
   `Substrate` output or input type on a `Shader`/`Function`/`GraphFunction`, a `Substrate.*` builtin
