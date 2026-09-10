@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-548
+648
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -79,6 +79,106 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Generator | SavingMaterial | Saving material '{0}'... |
 | DreamShader.Generator | UpdatingFunction | Updating '{0}'... |
 | DreamShader.Generator | ValidatingDreamShaderFunction | Validating {0} '{1}'... |
+| DreamShader.Lang.Declarations | BadStorageCombination | '{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static', 'const', 'extern' or 'export', not a mix. |
+| DreamShader.Lang.Declarations | DefaultOnOutParameter | Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional. |
+| DreamShader.Lang.Declarations | ExpectedArrayClose | ']' to close the array dimension |
+| DreamShader.Lang.Declarations | ExpectedBodyOpen | '{' to open the function body |
+| DreamShader.Lang.Declarations | ExpectedBodyOrSemicolon | Expected '`{' or ';' after the parameter list of '{0}', found {1}. |
+| DreamShader.Lang.Declarations | ExpectedDeclarationName | a declaration name |
+| DreamShader.Lang.Declarations | ExpectedFieldName | a field name |
+| DreamShader.Lang.Declarations | ExpectedNextDeclarator | another name after ',' |
+| DreamShader.Lang.Declarations | ExpectedParameterListClose | ')' to close the parameter list |
+| DreamShader.Lang.Declarations | ExpectedParameterName | a parameter name |
+| DreamShader.Lang.Declarations | ExpectedSemicolonAfterDeclarators | ';' after the declaration |
+| DreamShader.Lang.Declarations | ExpectedSemicolonAfterField | ';' after the field |
+| DreamShader.Lang.Declarations | ExpectedSemicolonAfterImport | ';' after the import path |
+| DreamShader.Lang.Declarations | ExpectedSemicolonAfterStruct | ';' after the closing '}' of the struct |
+| DreamShader.Lang.Declarations | ExpectedSemicolonAfterVariable | ';' after the declaration |
+| DreamShader.Lang.Declarations | ExpectedStructName | a name after 'struct' |
+| DreamShader.Lang.Declarations | ExpectedStructOpen | '{' after the struct name |
+| DreamShader.Lang.Declarations | ExpectedTypeName | Expected a type name, found {0}. |
+| DreamShader.Lang.Declarations | ExternWithBody | '{0}' is 'extern' and binds to an existing asset, so it cannot have a body; write a prototype ending in ';'. |
+| DreamShader.Lang.Declarations | FunctionWithoutBody | '{0}' has no body. Only an 'extern' prototype may end in ';'; a function you define needs '`{...`}'. |
+| DreamShader.Lang.Declarations | ImportNeedsPath | Expected a quoted path after 'import', found {0}. |
+| DreamShader.Lang.Declarations | LegacyDeclarationNotYet | '{0}' is a 1.x declaration; the 2.0 front end does not parse it yet. Keep it in a .dsm/.dsf/.dsh compiled by the 1.x front end. |
+| DreamShader.Lang.Declarations | LinkageOnVariable | '{0}' is a variable; 'extern' and 'export' apply to functions only. |
+| DreamShader.Lang.Declarations | MalformedDocDirective | A '@' in a '///' line must be followed by a directive name; the text is kept as description. |
+| DreamShader.Lang.Declarations | MalformedInclude | '#include' needs a quoted path: #include "/Game/Shared/Common.dsh". |
+| DreamShader.Lang.Declarations | MalformedPragma | Malformed '#pragma {0}': {1} |
+| DreamShader.Lang.Declarations | OrphanDocBlock | This '///' block is not followed by a declaration and is ignored. |
+| DreamShader.Lang.Declarations | OrphanDocBlockInStruct | This '///' block is not followed by a field and is ignored. |
+| DreamShader.Lang.Declarations | PragmaExpectedKey | expected a key or a value. |
+| DreamShader.Lang.Declarations | PragmaExpectedOpen | expected '(' after the pragma name. |
+| DreamShader.Lang.Declarations | PragmaExpectedSeparator | expected ',' or ')'. |
+| DreamShader.Lang.Declarations | PragmaExpectedValue | expected a value after '{0} ='. |
+| DreamShader.Lang.Declarations | PragmaPositionalInMaterial | '{0}' needs a value: write '{0} = ...'. |
+| DreamShader.Lang.Declarations | PragmaQuotedKey | a key cannot be a quoted string. |
+| DreamShader.Lang.Declarations | PragmaTrailingText | unexpected text after ')'. |
+| DreamShader.Lang.Declarations | PragmaWithoutName | '#pragma' needs a name: material, layout, region or endregion. |
+| DreamShader.Lang.Declarations | StorageOnFunction | '{0}' is a function; 'uniform', 'static' and 'const' apply to variables only. |
+| DreamShader.Lang.Declarations | StrayDirective | Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first. |
+| DreamShader.Lang.Declarations | UnexpectedAtFileScope | Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'. |
+| DreamShader.Lang.Declarations | WhileParsingRawBody | a function body |
+| DreamShader.Lang.Declarations | WhileParsingStruct | struct '{0}' |
+| DreamShader.Lang.Expressions | ArgumentsRightParen | ')' to close an argument list |
+| DreamShader.Lang.Expressions | CastRightParen | ')' to close a cast |
+| DreamShader.Lang.Expressions | ExpectedColonInConditional | Expected ':' to complete the conditional operator, found {0}. |
+| DreamShader.Lang.Expressions | ExpectedExpression | Expected an expression, found {0}. |
+| DreamShader.Lang.Expressions | ExpectedInitializerList | Expected an initializer list, found {0}. |
+| DreamShader.Lang.Expressions | ExpectedMemberName | Expected a member or swizzle name after '.', found {0}. |
+| DreamShader.Lang.Expressions | IndexRightBracket | ']' to close an index |
+| DreamShader.Lang.Expressions | InitializerListRightBrace | '}' to close an initializer list |
+| DreamShader.Lang.Expressions | ParenRightParen | ')' to close a parenthesized expression |
+| DreamShader.Lang.Expressions | WhileParsingArgumentList | an argument list |
+| DreamShader.Lang.Expressions | WhileParsingExpression | an expression |
+| DreamShader.Lang.Expressions | WhileParsingInitializerList | an initializer list |
+| DreamShader.Lang.Lexer | HashNotAtLineStart | A '#' directive must be the first thing on its line. |
+| DreamShader.Lang.Lexer | MalformedNumber | Malformed number literal '{0}'. |
+| DreamShader.Lang.Lexer | UnknownCharacter | Unexpected character '{0}' in source. |
+| DreamShader.Lang.Lexer | UnknownStringEscape | Unknown escape sequence '\{0}' in a string literal. |
+| DreamShader.Lang.Lexer | UnterminatedBlockComment | Unterminated block comment; expected a closing '*/'. |
+| DreamShader.Lang.Lexer | UnterminatedStringLiteral | Unterminated string literal; expected a closing '"'. |
+| DreamShader.Lang.Parser | DescribeDirective | directive '#{0}' |
+| DreamShader.Lang.Parser | DescribeDocComment | a '///' comment |
+| DreamShader.Lang.Parser | DescribeEndOfFile | end of file |
+| DreamShader.Lang.Parser | DescribeIdentifier | identifier '{0}' |
+| DreamShader.Lang.Parser | DescribeKeyword | keyword '{0}' |
+| DreamShader.Lang.Parser | DescribeKind | '{0}' |
+| DreamShader.Lang.Parser | DescribeNumber | number '{0}' |
+| DreamShader.Lang.Parser | DescribeSpelling | '{0}' |
+| DreamShader.Lang.Parser | DescribeString | string '{0}' |
+| DreamShader.Lang.Parser | DescribeUnknown | '{0}' |
+| DreamShader.Lang.Parser | ExpectedFound | Expected {What}, found {Token}. |
+| DreamShader.Lang.Parser | ExpectedFoundIdentifier | Expected {What}, found {Token}. |
+| DreamShader.Lang.Parser | ExportInHeader | A '.dsh' header cannot export '{0}'; only a '.dss' file produces assets. |
+| DreamShader.Lang.Parser | LegacyFrontendUnavailable | The 1.x front end is not available in this build. |
+| DreamShader.Lang.Parser | TrailingTokenAfterExpression | Expected the end of the expression, found {0}. |
+| DreamShader.Lang.Parser | UnexpectedEndOfFile | Unexpected end of file while parsing {0}. |
+| DreamShader.Lang.Parser | WhileParsingABlock | a block |
+| DreamShader.Lang.Statements | BlockLeftBrace | '{' to open a block |
+| DreamShader.Lang.Statements | BreakSemicolon | ';' after 'break' |
+| DreamShader.Lang.Statements | ContinueSemicolon | ';' after 'continue' |
+| DreamShader.Lang.Statements | DirectiveInsideBody | Unsupported statement: the preprocessor line '#{0}' cannot appear inside a function body; mark the function /// @custom to hand its body to the shader compiler. |
+| DreamShader.Lang.Statements | DiscardSemicolon | ';' after 'discard' |
+| DreamShader.Lang.Statements | DoWhileLeftParen | '(' after 'while' |
+| DreamShader.Lang.Statements | DoWhileRightParen | ')' to close the 'while' condition |
+| DreamShader.Lang.Statements | DoWhileSemicolon | ';' after a 'do ... while' statement |
+| DreamShader.Lang.Statements | ExpectedVariableName | a variable name |
+| DreamShader.Lang.Statements | ExpectedWhileAfterDo | Expected 'while' after the body of a 'do' statement, found {0}. |
+| DreamShader.Lang.Statements | ExpressionSemicolon | ';' after an expression statement |
+| DreamShader.Lang.Statements | ForConditionSemicolon | ';' after the 'for' condition |
+| DreamShader.Lang.Statements | ForInitSemicolon | ';' after the 'for' initializer |
+| DreamShader.Lang.Statements | ForLeftParen | '(' after 'for' |
+| DreamShader.Lang.Statements | ForRightParen | ')' to close the 'for' header |
+| DreamShader.Lang.Statements | IfLeftParen | '(' after 'if' |
+| DreamShader.Lang.Statements | IfRightParen | ')' to close the 'if' condition |
+| DreamShader.Lang.Statements | ReturnSemicolon | ';' after a 'return' statement |
+| DreamShader.Lang.Statements | SwitchNotSupported | Unsupported statement '{0}': DreamShaderLang 2.0 has no switch statement, write if / else if instead. |
+| DreamShader.Lang.Statements | VarDeclSemicolon | ';' after a variable declaration |
+| DreamShader.Lang.Statements | WhileLeftParen | '(' after 'while' |
+| DreamShader.Lang.Statements | WhileParsingBlock | a block |
+| DreamShader.Lang.Statements | WhileParsingStatement | a statement |
+| DreamShader.Lang.Statements | WhileRightParen | ')' to close the 'while' condition |
 | DreamShader.Parser | AFunctionWithAReturnType | A function with a return type cannot use a bare 'return;'. Return a value, e.g. 'return expr;'. |
 | DreamShader.Parser | ATopLevelShaderFunctionGraphFunction | A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found. |
 | DreamShader.Parser | ExpectedCNearIndexD | Expected '{0}' near index {1}. |
@@ -92,15 +192,15 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser | FunctionSParameterNameReturnIs | Function '{0}' parameter name '__return' is reserved for return-type lowering. |
 | DreamShader.Parser | FunctionSParameterSUsesUnsupported | Function '{0}' parameter '{1}' uses unsupported qualifier '{2}'. Supported qualifiers are in and out. |
 | DreamShader.Parser | GraphFunctionMissingName | GraphFunction declaration is missing a valid function name. |
-| DreamShader.Parser | MaterialFunctionNameRequired | {0}(Name=\"...\") is required. |
+| DreamShader.Parser | MaterialFunctionNameRequired | {0}(Name="...") is required. |
 | DreamShader.Parser | NamespaceNameEmpty | Namespace name cannot be empty. |
-| DreamShader.Parser | NamespaceNameRequired | Namespace(Name=\"...\") is required. |
+| DreamShader.Parser | NamespaceNameRequired | Namespace(Name="...") is required. |
 | DreamShader.Parser | NamespaceNameSIsNotA | Namespace name '{0}' is not a valid identifier. |
 | DreamShader.Parser | NamespaceSMayOnlyContainFunction | Namespace '{0}' may only contain Function or GraphFunction blocks. |
 | DreamShader.Parser | OnlyOneTopLevelShaderBlock | Only one top-level Shader block is currently supported. |
 | DreamShader.Parser | SDeclarationIsMissingAFunction | {0} declaration is missing a function name after the return type '{1}'. |
 | DreamShader.Parser | ShaderMustProvideAGraphBlock | Shader must provide a Graph block. |
-| DreamShader.Parser | ShaderNameRequired | Shader(Name=\"...\") is required. |
+| DreamShader.Parser | ShaderNameRequired | Shader(Name="...") is required. |
 | DreamShader.Parser | SSIsMissingAValid | {0} '{1}' is missing a valid parameter list. {2} |
 | DreamShader.Parser | SSIsMissingAValid2 | {0} '{1}' is missing a valid body block. {2} |
 | DreamShader.Parser | UnexpectedTokenNearIndex | Unexpected token near index {0}. |
@@ -108,7 +208,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser | VirtualFunctionMustDeclareAtLeastOneOutput | VirtualFunction '{0}' must declare at least one output. |
 | DreamShader.Parser | VirtualFunctionMustProvideOptionsAsset | VirtualFunction '{0}' must provide Options = {{ Asset = Path(...); }}. |
 | DreamShader.Parser | VirtualFunctionNameCannotBeEmpty | VirtualFunction name cannot be empty. |
-| DreamShader.Parser | VirtualFunctionNameRequired | VirtualFunction(Name=\"...\") is required. |
+| DreamShader.Parser | VirtualFunctionNameRequired | VirtualFunction(Name="...") is required. |
 | DreamShader.Parser.Scanner | ExpectedCNearIndexD | Expected '{0}' near index {1}. |
 | DreamShader.Parser.Scanner | ExpectedCurlyNearIndex | Expected '{{' near index {0}. |
 | DreamShader.Parser.Scanner | ExpectedIdentifierNearIndexD | Expected identifier near index {0}. |
@@ -116,7 +216,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser.Scanner | ExpectedValueNearIndexD | Expected value near index {0}. |
 | DreamShader.Parser.Scanner | InvalidTextureAssetPathS | Invalid texture asset path '{0}'. |
 | DreamShader.Parser.Scanner | RelativeTexturePathReferencesRequireA | Relative texture Path(...) references require a root such as Game, Engine, or Plugin.PluginName. |
-| DreamShader.Parser.Scanner | TextureDefaultsMustUsePath | Texture defaults must use Path(Game\|Engine\|Plugin.PluginName, \"Folder/Asset\"), Path(\"/Game/Folder/Asset\"), a bare \"/Game/Folder/Asset\", or a Class'/Game/Folder/Asset.Asset' reference. |
+| DreamShader.Parser.Scanner | TextureDefaultsMustUsePath | Texture defaults must use Path(Game\|Engine\|Plugin.PluginName, "Folder/Asset"), Path("/Game/Folder/Asset"), a bare "/Game/Folder/Asset", or a Class'/Game/Folder/Asset.Asset' reference. |
 | DreamShader.Parser.Scanner | TexturePathRequiresANonEmpty | Texture Path(...) requires a non-empty asset path. |
 | DreamShader.Parser.Scanner | TexturePathRootSHasAn | Texture Path root '{0}' has an invalid plugin name. |
 | DreamShader.Parser.Scanner | TexturePathRootSReferencesPlugin | Texture Path root '{0}' references plugin '{1}', but no enabled plugin with that name was found. |
@@ -133,7 +233,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser.Sections | ExpressionOutputTargetArgumentSMust | Expression output target argument '{0}' must use Key=Value syntax. |
 | DreamShader.Parser.Sections | ExpressionOutputTargetSHasAn | Expression output target '{0}' has an invalid pin index. |
 | DreamShader.Parser.Sections | ExpressionOutputTargetSMustSelect | Expression output target '{0}' must select a pin with .Pin[index]. |
-| DreamShader.Parser.Sections | ExpressionOutputTargetSMustSpecify | Expression output target '{0}' must specify Class=\\\"...\\\". |
+| DreamShader.Parser.Sections | ExpressionOutputTargetSMustSpecify | Expression output target '{0}' must specify Class=\"...\". |
 | DreamShader.Parser.Sections | ExpressionOutputTargetSMustUse | Expression output target '{0}' must use .Pin[index] syntax. |
 | DreamShader.Parser.Sections | GraphEndRegionOnLineDHas | Graph #EndRegion on line {0} has no matching #Region. |
 | DreamShader.Parser.Sections | GraphRegionOnLineDMust | Graph #Region on line {0} must include a name. |
@@ -185,15 +285,15 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser.Sections | OutputBindingTargetSIsEmpty | Output binding target '{0}' is empty. |
 | DreamShader.Parser.Sections | OutputBindingTargetSMustStart | Output binding target '{0}' must start with Base. for material outputs or Expression(...) for output nodes. |
 | DreamShader.Parser.Sections | OutputTargetPinBoundMoreThanOnce | Output target pin '{0}' is bound more than once: first to '{1}', then to '{2}'. An Expression(...) block and an Expression(...).Pin[i] statement that share a class and argument list describe one node, so their pins share one namespace. |
-| DreamShader.Parser.Sections | ParameterNodeTypeSIsRecognized | Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\"float4\\\", ...) for reflected node creation. |
+| DreamShader.Parser.Sections | ParameterNodeTypeSIsRecognized | Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\"float4\", ...) for reflected node creation. |
 | DreamShader.Parser.Sections | ShaderGraphCodeDeprecated | Shader graph sections now use Graph = { ... }. Function Code = { ... } is still supported. |
 | DreamShader.Parser.Sections | UEBuiltinArgumentSIsDeclared | UE builtin argument '{0}' is declared more than once in '{1}'. |
 | DreamShader.Parser.Sections | UEBuiltinArgumentSMustUse | UE builtin argument '{0}' must use named syntax like Key=Value in '{1}'. |
 | DreamShader.Parser.Sections | UEBuiltinPropertyDeclarationsMustSpecify | UE builtin property declarations must specify a function name, for example UE.TexCoord UV. |
 | DreamShader.Parser.Sections | UEBuiltinPropertySDoesNot | UE builtin property '{0}' does not support inline defaults. Put arguments inside UE.{1}(...). |
-| DreamShader.Parser.Sections | UnexpectedBraceBlockInOutputs | Unexpected brace block in Outputs near '{0}'. Only Expression(Class=\"...\") opens a brace block here; every other Outputs statement ends with ';'. |
+| DreamShader.Parser.Sections | UnexpectedBraceBlockInOutputs | Unexpected brace block in Outputs near '{0}'. Only Expression(Class="...") opens a brace block here; every other Outputs statement ends with ';'. |
 | DreamShader.Parser.Sections | UnexpectedCharactersAfterUEBuiltinArgument | Unexpected characters after UE builtin argument list in '{0}'. |
-| DreamShader.Parser.Sections | UnexpectedInPropertiesNearSOnly | Unexpected '`{' in Properties near '{0}'. Only Group(\"Name\") `{ ... `} may open a brace here. |
+| DreamShader.Parser.Sections | UnexpectedInPropertiesNearSOnly | Unexpected '`{' in Properties near '{0}'. Only Group("Name") `{ ... `} may open a brace here. |
 | DreamShader.Parser.Sections | UnexpectedTextAfterLayoutStatementS | Unexpected text after Layout statement '{0}'. |
 | DreamShader.Parser.Sections | UnknownLayoutStatementS | Unknown Layout statement '{0}'. |
 | DreamShader.Parser.Sections | UnknownMaterialFunctionSectionS | Unknown material function section '{0}'. |
@@ -202,8 +302,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Parser.Sections | UnknownVirtualFunctionSectionS | Unknown VirtualFunction section '{0}'. |
 | DreamShader.Parser.Sections | UnsupportedOutputTargetS | Unsupported output target '{0}'. |
 | DreamShader.Parser.Sections | UnsupportedPropertyTypeS | Unsupported property type '{0}'. |
-| DreamShader.Parser.Sections | UnsupportedUEBuiltinFunctionSUse | Unsupported UE builtin function '{0}'. Use OutputType=\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\" for generic MaterialExpression calls. |
-| DreamShader.Parser.Sections | UnterminatedGroupBlock | Unterminated Group(\"{0}\") `{ ... `} block. |
+| DreamShader.Parser.Sections | UnsupportedUEBuiltinFunctionSUse | Unsupported UE builtin function '{0}'. Use OutputType=\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\" for generic MaterialExpression calls. |
+| DreamShader.Parser.Sections | UnterminatedGroupBlock | Unterminated Group("{0}") `{ ... `} block. |
 | DreamShader.Parser.Sections | UnterminatedOutputsExpressionBlock | Unterminated Expression(...) block in Outputs after '{0}'. |
 | DreamShader.Parser.Sections | VirtualFunctionNoGraphOrCode | VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections. |
 | DreamShader.Preprocessor | BranchAfterElse | {0}({1}): '#{2}' after the '#else' on line {3}, which already closed this chain. |
@@ -215,7 +315,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Preprocessor | StrayConditionalBranch | {0}({1}): '#{2}' without a matching '#if'. |
 | DreamShader.Preprocessor | StrayEndif | {0}({1}): '#endif' without a matching '#if'. |
 | DreamShader.Preprocessor | UnknownDirectiveSuggestCase | Preprocessor directives are lowercase: write '#{0}'. |
-| DreamShader.Preprocessor | UnknownDirectiveSuggestImport | '#include' is HLSL: it is recognized inside a Function body and nowhere else. At the declaration level, use import \"...\" instead. |
+| DreamShader.Preprocessor | UnknownDirectiveSuggestImport | '#include' is HLSL: it is recognized inside a Function body and nowhere else. At the declaration level, use import "..." instead. |
 | DreamShader.Preprocessor | UnknownDirectiveSuggestList | A '#' line must be #if, #ifdef, #ifndef, #elif, #else, #endif, #define or #undef, or one of the parser's #Region / #EndRegion. |
 | DreamShader.Preprocessor | UnknownDirectiveSuggestNearest | Did you mean '#{0}'? |
 | DreamShader.Preprocessor | UnknownPreprocessorDirective | {0}({1}): unknown preprocessor directive '#{2}'. {3} |
@@ -229,9 +329,9 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Preprocessor.Expression | InvalidConditionExpression | {0}({1}): invalid '{2}' condition: {3} |
 | DreamShader.Preprocessor.Expression | MissingConditionExpression | {0}({1}): '{2}' requires a condition expression. |
 | DreamShader.Preprocessor.Expression | MixedEqualityOperands | '{0}' cannot compare a string with a number. |
-| DreamShader.Preprocessor.Expression | StringAsCondition | a condition must be a number, but this one is the string \"{0}\". Compare it with '==' instead. |
-| DreamShader.Preprocessor.Expression | StringAsTruthValue | '{0}' needs a number, but one operand is the string \"{1}\". |
-| DreamShader.Preprocessor.Expression | StringInNumericOperator | '{0}' is only defined for numbers, but one operand is the string \"{1}\". Strings compare only with '==' and '!='. |
+| DreamShader.Preprocessor.Expression | StringAsCondition | a condition must be a number, but this one is the string "{0}". Compare it with '==' instead. |
+| DreamShader.Preprocessor.Expression | StringAsTruthValue | '{0}' needs a number, but one operand is the string "{1}". |
+| DreamShader.Preprocessor.Expression | StringInNumericOperator | '{0}' is only defined for numbers, but one operand is the string "{1}". Strings compare only with '==' and '!='. |
 | DreamShader.Preprocessor.Expression | TokenEndOfCondition | the end of the condition |
 | DreamShader.Preprocessor.Expression | TokenSpelling | '{0}' |
 | DreamShader.Preprocessor.Expression | TrailingTokensAfterDirective | {0}({1}): '{2}' is already complete before '{3}'. Nothing may follow a directive but a '//' comment. |

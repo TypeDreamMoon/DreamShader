@@ -4,7 +4,7 @@
   "key": "AppendNodeOverflow",
   "src": "Append node '{0}' resolved to {1} + {2} components, which cannot fit a float4; masked its inputs down to {3} + {4}. Review the emitted swizzle.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 1971
+  "line": 1972
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
@@ -18,14 +18,14 @@
   "key": "DecompilingMaterialFunction",
   "src": "Decompiling Material Function '{0}'...",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 261
+  "line": 263
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "DecompilingNode",
   "src": "Decompiling node {0}: {1}",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 2845
+  "line": 2846
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
@@ -39,70 +39,70 @@
   "key": "EmitVirtualFunctionFailed",
   "src": "Failed to emit VirtualFunction for '{0}': {1}",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 2827
+  "line": 2828
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "ExportedAsUEExpression",
   "src": "Exported '{0}' as UE.Expression; review reflected literal properties if the node has editor-only state.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 2321
+  "line": 2322
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "FormattingDSFSource",
   "src": "Formatting DSF source for '{0}'...",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 361
+  "line": 363
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "FormattingDSMSource",
   "src": "Formatting DSM source for '{0}'...",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 208
+  "line": 210
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "GetMaterialAttributesMissingOutput",
   "src": "GetMaterialAttributes node '{0}' has no attribute for output {1}; emitted a default literal.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 1515
+  "line": 1516
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "MaterialFunctionCallMissingAsset",
   "src": "A MaterialFunctionCall had no function asset and was exported as a zero literal.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 2769
+  "line": 2770
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "MaterialFunctionCallNotPlain",
   "src": "MaterialFunctionCall '{0}' is not a plain MaterialFunction; it was exported through UE.Expression.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 2777
+  "line": 2778
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "MaterialFunctionHasNoOutputs",
   "src": "MaterialFunction '{0}' does not expose any outputs.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 279
+  "line": 281
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "NamedRerouteUsageInvalidDeclaration",
   "src": "Named reroute usage '{0}' has no valid declaration; emitted a default literal.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 1454
+  "line": 1456
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "NamedRerouteUsageMissingDeclaration",
   "src": "Named reroute usage '{0}' has no valid declaration; emitted its default value.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 1214
+  "line": 1216
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
@@ -116,35 +116,35 @@
   "key": "NoMaterialFunctionAssetProvided",
   "src": "No MaterialFunction asset was provided.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 255
+  "line": 257
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "RecursiveGraphDependency",
   "src": "Detected a recursive graph dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 1421
+  "line": 1423
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "RecursiveNamedRerouteDependency",
   "src": "Detected a recursive named reroute dependency for '{0}'; emitted a default literal to avoid stack overflow.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 2345
+  "line": 2346
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "RecursiveRerouteDependency",
   "src": "Detected a recursive reroute dependency while decompiling node '{0}'; emitted a default literal to avoid stack overflow.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 1184
+  "line": 1186
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
   "key": "ScanningFunctionInputsOutputs",
   "src": "Scanning function inputs and outputs for '{0}'...",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphDecompilerImpl.cpp",
-  "line": 273
+  "line": 275
  },
  {
   "ns": "DreamShader.Decompiler.Impl",
@@ -441,6 +441,706 @@
   "line": 1469
  },
  {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "BadStorageCombination",
+  "src": "'{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static', 'const', 'extern' or 'export', not a mix.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 952
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "DefaultOnOutParameter",
+  "src": "Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 843
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedArrayClose",
+  "src": "']' to close the array dimension",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 388
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedBodyOpen",
+  "src": "'{' to open the function body",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 862
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedBodyOrSemicolon",
+  "src": "Expected '`{' or ';' after the parameter list of '{0}', found {1}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1074
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedDeclarationName",
+  "src": "a declaration name",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 997
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedFieldName",
+  "src": "a field name",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 762
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedNextDeclarator",
+  "src": "another name after ','",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1141
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedParameterListClose",
+  "src": "')' to close the parameter list",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 854
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedParameterName",
+  "src": "a parameter name",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 821
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedSemicolonAfterDeclarators",
+  "src": "';' after the declaration",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1165
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedSemicolonAfterField",
+  "src": "';' after the field",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 770
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedSemicolonAfterImport",
+  "src": "';' after the import path",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 707
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedSemicolonAfterStruct",
+  "src": "';' after the closing '}' of the struct",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 779
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedSemicolonAfterVariable",
+  "src": "';' after the declaration",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1121
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedStructName",
+  "src": "a name after 'struct'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 728
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedStructOpen",
+  "src": "'{' after the struct name",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 732
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExpectedTypeName",
+  "src": "Expected a type name, found {0}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 363
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ExternWithBody",
+  "src": "'{0}' is 'extern' and binds to an existing asset, so it cannot have a body; write a prototype ending in ';'.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1036
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "FunctionWithoutBody",
+  "src": "'{0}' has no body. Only an 'extern' prototype may end in ';'; a function you define needs '`{...`}'.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1065
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "ImportNeedsPath",
+  "src": "Expected a quoted path after 'import', found {0}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 696
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "LegacyDeclarationNotYet",
+  "src": "'{0}' is a 1.x declaration; the 2.0 front end does not parse it yet. Keep it in a .dsm/.dsf/.dsh compiled by the 1.x front end.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 983
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "LinkageOnVariable",
+  "src": "'{0}' is a variable; 'extern' and 'export' apply to functions only.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1088
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "MalformedDocDirective",
+  "src": "A '@' in a '///' line must be followed by a directive name; the text is kept as description.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 491
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "MalformedInclude",
+  "src": "'#include' needs a quoted path: #include \"/Game/Shared/Common.dsh\".",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 531
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "MalformedPragma",
+  "src": "Malformed '#pragma {0}': {1}",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 613
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "OrphanDocBlock",
+  "src": "This '///' block is not followed by a declaration and is ignored.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1193
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "OrphanDocBlockInStruct",
+  "src": "This '///' block is not followed by a field and is ignored.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 753
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "PragmaExpectedKey",
+  "src": "expected a key or a value.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 631
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "PragmaExpectedOpen",
+  "src": "expected '(' after the pragma name.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 619
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "PragmaExpectedSeparator",
+  "src": "expected ',' or ')'.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 673
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "PragmaExpectedValue",
+  "src": "expected a value after '{0} ='.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 646
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "PragmaPositionalInMaterial",
+  "src": "'{0}' needs a value: write '{0} = ...'.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 657
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "PragmaQuotedKey",
+  "src": "a key cannot be a quoted string.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 639
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "PragmaTrailingText",
+  "src": "unexpected text after ')'.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 680
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "PragmaWithoutName",
+  "src": "'#pragma' needs a name: material, layout, region or endregion.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 569
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "StorageOnFunction",
+  "src": "'{0}' is a function; 'uniform', 'static' and 'const' apply to variables only.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1010
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "StrayDirective",
+  "src": "Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 553
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "UnexpectedAtFileScope",
+  "src": "Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 1232
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "WhileParsingRawBody",
+  "src": "a function body",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 871
+ },
+ {
+  "ns": "DreamShader.Lang.Declarations",
+  "key": "WhileParsingStruct",
+  "src": "struct '{0}'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserDeclarations.cpp",
+  "line": 741
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "ArgumentsRightParen",
+  "src": "')' to close an argument list",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 550
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "CastRightParen",
+  "src": "')' to close a cast",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 253
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "ExpectedColonInConditional",
+  "src": "Expected ':' to complete the conditional operator, found {0}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 154
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "ExpectedExpression",
+  "src": "Expected an expression, found {0}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 491
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "ExpectedInitializerList",
+  "src": "Expected an initializer list, found {0}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 562
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "ExpectedMemberName",
+  "src": "Expected a member or swizzle name after '.', found {0}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 296
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "IndexRightBracket",
+  "src": "']' to close an index",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 325
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "InitializerListRightBrace",
+  "src": "'}' to close an initializer list",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 602
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "ParenRightParen",
+  "src": "')' to close a parenthesized expression",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 468
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "WhileParsingArgumentList",
+  "src": "an argument list",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 508
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "WhileParsingExpression",
+  "src": "an expression",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 383
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "WhileParsingInitializerList",
+  "src": "an initializer list",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 576
+ },
+ {
+  "ns": "DreamShader.Lang.Lexer",
+  "key": "HashNotAtLineStart",
+  "src": "A '#' directive must be the first thing on its line.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangLexer.cpp",
+  "line": 352
+ },
+ {
+  "ns": "DreamShader.Lang.Lexer",
+  "key": "MalformedNumber",
+  "src": "Malformed number literal '{0}'.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangLexer.cpp",
+  "line": 636
+ },
+ {
+  "ns": "DreamShader.Lang.Lexer",
+  "key": "UnknownCharacter",
+  "src": "Unexpected character '{0}' in source.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangLexer.cpp",
+  "line": 718
+ },
+ {
+  "ns": "DreamShader.Lang.Lexer",
+  "key": "UnknownStringEscape",
+  "src": "Unknown escape sequence '\\{0}' in a string literal.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangLexer.cpp",
+  "line": 449
+ },
+ {
+  "ns": "DreamShader.Lang.Lexer",
+  "key": "UnterminatedBlockComment",
+  "src": "Unterminated block comment; expected a closing '*/'.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangLexer.cpp",
+  "line": 330
+ },
+ {
+  "ns": "DreamShader.Lang.Lexer",
+  "key": "UnterminatedStringLiteral",
+  "src": "Unterminated string literal; expected a closing '\"'.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangLexer.cpp",
+  "line": 469
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeDirective",
+  "src": "directive '#{0}'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 229
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeDocComment",
+  "src": "a '///' comment",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 227
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeEndOfFile",
+  "src": "end of file",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 216
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeIdentifier",
+  "src": "identifier '{0}'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 218
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeKeyword",
+  "src": "keyword '{0}'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 220
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeKind",
+  "src": "'{0}'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 241
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeNumber",
+  "src": "number '{0}'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 223
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeSpelling",
+  "src": "'{0}'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 239
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeString",
+  "src": "string '{0}'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 225
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "DescribeUnknown",
+  "src": "'{0}'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 231
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "ExpectedFound",
+  "src": "Expected {What}, found {Token}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 177
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "ExpectedFoundIdentifier",
+  "src": "Expected {What}, found {Token}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 196
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "ExportInHeader",
+  "src": "A '.dsh' header cannot export '{0}'; only a '.dss' file produces assets.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 78
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "LegacyFrontendUnavailable",
+  "src": "The 1.x front end is not available in this build.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 563
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "TrailingTokenAfterExpression",
+  "src": "Expected the end of the expression, found {0}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 469
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "UnexpectedEndOfFile",
+  "src": "Unexpected end of file while parsing {0}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 249
+ },
+ {
+  "ns": "DreamShader.Lang.Parser",
+  "key": "WhileParsingABlock",
+  "src": "a block",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParser.cpp",
+  "line": 381
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "BlockLeftBrace",
+  "src": "'{' to open a block",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 434
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "BreakSemicolon",
+  "src": "';' after 'break'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 342
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "ContinueSemicolon",
+  "src": "';' after 'continue'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 356
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "DirectiveInsideBody",
+  "src": "Unsupported statement: the preprocessor line '#{0}' cannot appear inside a function body; mark the function /// @custom to hand its body to the shader compiler.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 90
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "DiscardSemicolon",
+  "src": "';' after 'discard'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 370
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "DoWhileLeftParen",
+  "src": "'(' after 'while'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 285
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "DoWhileRightParen",
+  "src": "')' to close the 'while' condition",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 296
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "DoWhileSemicolon",
+  "src": "';' after a 'do ... while' statement",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 301
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "ExpectedVariableName",
+  "src": "a variable name",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 526
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "ExpectedWhileAfterDo",
+  "src": "Expected 'while' after the body of a 'do' statement, found {0}.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 280
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "ExpressionSemicolon",
+  "src": "';' after an expression statement",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 419
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "ForConditionSemicolon",
+  "src": "';' after the 'for' condition",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 199
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "ForInitSemicolon",
+  "src": "';' after the 'for' initializer",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 178
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "ForLeftParen",
+  "src": "'(' after 'for'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 148
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "ForRightParen",
+  "src": "')' to close the 'for' header",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 214
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "IfLeftParen",
+  "src": "'(' after 'if'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 103
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "IfRightParen",
+  "src": "')' to close the 'if' condition",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 114
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "ReturnSemicolon",
+  "src": "';' after a 'return' statement",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 327
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "SwitchNotSupported",
+  "src": "Unsupported statement '{0}': DreamShaderLang 2.0 has no switch statement, write if / else if instead.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 398
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "VarDeclSemicolon",
+  "src": "';' after a variable declaration",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 554
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "WhileLeftParen",
+  "src": "'(' after 'while'",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 238
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "WhileParsingBlock",
+  "src": "a block",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 470
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "WhileParsingStatement",
+  "src": "a statement",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 58
+ },
+ {
+  "ns": "DreamShader.Lang.Statements",
+  "key": "WhileRightParen",
+  "src": "')' to close the 'while' condition",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserStatements.cpp",
+  "line": 249
+ },
+ {
   "ns": "DreamShader.Parser",
   "key": "AFunctionWithAReturnType",
   "src": "A function with a return type cannot use a bare 'return;'. Return a value, e.g. 'return expr;'.",
@@ -534,7 +1234,7 @@
  {
   "ns": "DreamShader.Parser",
   "key": "MaterialFunctionNameRequired",
-  "src": "{0}(Name=\\\"...\\\") is required.",
+  "src": "{0}(Name=\"...\") is required.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
   "line": 1006
  },
@@ -548,7 +1248,7 @@
  {
   "ns": "DreamShader.Parser",
   "key": "NamespaceNameRequired",
-  "src": "Namespace(Name=\\\"...\\\") is required.",
+  "src": "Namespace(Name=\"...\") is required.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
   "line": 745
  },
@@ -604,7 +1304,7 @@
  {
   "ns": "DreamShader.Parser",
   "key": "ShaderNameRequired",
-  "src": "Shader(Name=\\\"...\\\") is required.",
+  "src": "Shader(Name=\"...\") is required.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
   "line": 850
  },
@@ -646,7 +1346,7 @@
  {
   "ns": "DreamShader.Parser",
   "key": "VirtualFunctionNameRequired",
-  "src": "VirtualFunction(Name=\\\"...\\\") is required.",
+  "src": "VirtualFunction(Name=\"...\") is required.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParser.cpp",
   "line": 907
  },
@@ -702,7 +1402,7 @@
  {
   "ns": "DreamShader.Parser.Scanner",
   "key": "TextureDefaultsMustUsePath",
-  "src": "Texture defaults must use Path(Game|Engine|Plugin.PluginName, \\\"Folder/Asset\\\"), Path(\\\"/Game/Folder/Asset\\\"), a bare \\\"/Game/Folder/Asset\\\", or a Class'/Game/Folder/Asset.Asset' reference.",
+  "src": "Texture defaults must use Path(Game|Engine|Plugin.PluginName, \"Folder/Asset\"), Path(\"/Game/Folder/Asset\"), a bare \"/Game/Folder/Asset\", or a Class'/Game/Folder/Asset.Asset' reference.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserScanner.cpp",
   "line": 1092
  },
@@ -821,7 +1521,7 @@
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "ExpressionOutputTargetSMustSpecify",
-  "src": "Expression output target '{0}' must specify Class=\\\\\\\"...\\\\\\\".",
+  "src": "Expression output target '{0}' must specify Class=\\\"...\\\".",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 1355
  },
@@ -1185,7 +1885,7 @@
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "ParameterNodeTypeSIsRecognized",
-  "src": "Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\\\\\"float4\\\\\\\", ...) for reflected node creation.",
+  "src": "Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\"float4\\\", ...) for reflected node creation.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 735
  },
@@ -1227,7 +1927,7 @@
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "UnexpectedBraceBlockInOutputs",
-  "src": "Unexpected brace block in Outputs near '{0}'. Only Expression(Class=\\\"...\\\") opens a brace block here; every other Outputs statement ends with ';'.",
+  "src": "Unexpected brace block in Outputs near '{0}'. Only Expression(Class=\"...\") opens a brace block here; every other Outputs statement ends with ';'.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 1482
  },
@@ -1241,7 +1941,7 @@
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "UnexpectedInPropertiesNearSOnly",
-  "src": "Unexpected '`{' in Properties near '{0}'. Only Group(\\\"Name\\\") `{ ... `} may open a brace here.",
+  "src": "Unexpected '`{' in Properties near '{0}'. Only Group(\"Name\") `{ ... `} may open a brace here.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 1028
  },
@@ -1304,14 +2004,14 @@
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "UnsupportedUEBuiltinFunctionSUse",
-  "src": "Unsupported UE builtin function '{0}'. Use OutputType=\\\\\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\\\\\" for generic MaterialExpression calls.",
+  "src": "Unsupported UE builtin function '{0}'. Use OutputType=\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\" for generic MaterialExpression calls.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 582
  },
  {
   "ns": "DreamShader.Parser.Sections",
   "key": "UnterminatedGroupBlock",
-  "src": "Unterminated Group(\\\"{0}\\\") `{ ... `} block.",
+  "src": "Unterminated Group(\"{0}\") `{ ... `} block.",
   "file": "DreamShader\\Private\\Parser\\DreamShaderParserSections.cpp",
   "line": 1086
  },
@@ -1333,224 +2033,224 @@
   "ns": "DreamShader.Preprocessor",
   "key": "BranchAfterElse",
   "src": "{0}({1}): '#{2}' after the '#else' on line {3}, which already closed this chain.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 994
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "ConditionalNestingTooDeep",
   "src": "{0}({1}): '#{2}' nesting is deeper than the limit of {3}.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 877
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "InvalidDefineName",
   "src": "{0}({1}): '#{2}' needs a name made of letters, digits and underscores and not starting with a digit; got '{3}'.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 933
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "InvalidDefineNameOnDefinition",
   "src": "{0}({1}): '#{2}' needs a name made of letters, digits and underscores and not starting with a digit; got '{3}'.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 1091
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "MissingDefineNameOperand",
   "src": "{0}({1}): '#{2}' requires a define name.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 924
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "ReservedDefineName",
   "src": "{0}({1}): '{3}' is a read-only built-in constant, so '#{2}' cannot change it. The 'DS_' prefix is reserved by DreamShader.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 1105
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "StrayConditionalBranch",
   "src": "{0}({1}): '#{2}' without a matching '#if'.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 979
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "StrayEndif",
   "src": "{0}({1}): '#endif' without a matching '#if'.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 1055
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "UnknownDirectiveSuggestCase",
   "src": "Preprocessor directives are lowercase: write '#{0}'.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 607
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "UnknownDirectiveSuggestImport",
-  "src": "'#include' is HLSL: it is recognized inside a Function body and nowhere else. At the declaration level, use import \\\"...\\\" instead.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "src": "'#include' is HLSL: it is recognized inside a Function body and nowhere else. At the declaration level, use import \"...\" instead.",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 568
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "UnknownDirectiveSuggestList",
   "src": "A '#' line must be #if, #ifdef, #ifndef, #elif, #else, #endif, #define or #undef, or one of the parser's #Region / #EndRegion.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 614
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "UnknownDirectiveSuggestNearest",
   "src": "Did you mean '#{0}'?",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 610
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "UnknownPreprocessorDirective",
   "src": "{0}({1}): unknown preprocessor directive '#{2}'. {3}",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 862
  },
  {
   "ns": "DreamShader.Preprocessor",
   "key": "UnterminatedConditional",
   "src": "{0}({1}): this '#if' is never closed; the file ends with {2} conditional block(s) still open.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessor.cpp",
   "line": 1155
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "BadIntegerLiteral",
   "src": "'{0}' is not a valid integer literal (decimal, or 0x hexadecimal).",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 326
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "ConditionDivideByZero",
   "src": "{0}({1}): the right operand of '{2}' in this '{3}' condition is zero.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 87
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "ConditionTypeMismatch",
   "src": "{0}({1}): type mismatch in '{2}' condition: {3}",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 77
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "DefinedExpectedCloseParenthesis",
   "src": "expected ')' to close 'defined({0})' but found {1}.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 1022
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "DefinedNeedsName",
   "src": "'defined' needs a define name, but found {0}.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 1012
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "ExpectedCloseParenthesis",
   "src": "expected ')' but found {0}.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 960
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "InvalidConditionExpression",
   "src": "{0}({1}): invalid '{2}' condition: {3}",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 58
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "MissingConditionExpression",
   "src": "{0}({1}): '{2}' requires a condition expression.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 68
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "MixedEqualityOperands",
   "src": "'{0}' cannot compare a string with a number.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 661
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "StringAsCondition",
-  "src": "a condition must be a number, but this one is the string \\\"{0}\\\". Compare it with '==' instead.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "src": "a condition must be a number, but this one is the string \"{0}\". Compare it with '==' instead.",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 1161
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "StringAsTruthValue",
-  "src": "'{0}' needs a number, but one operand is the string \\\"{1}\\\".",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "src": "'{0}' needs a number, but one operand is the string \"{1}\".",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 511
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "StringInNumericOperator",
-  "src": "'{0}' is only defined for numbers, but one operand is the string \\\"{1}\\\". Strings compare only with '==' and '!='.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "src": "'{0}' is only defined for numbers, but one operand is the string \"{1}\". Strings compare only with '==' and '!='.",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 525
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "TokenEndOfCondition",
   "src": "the end of the condition",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 258
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "TokenSpelling",
   "src": "'{0}'",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 261
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "TrailingTokensAfterDirective",
   "src": "{0}({1}): '{2}' is already complete before '{3}'. Nothing may follow a directive but a '//' comment.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 1098
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "UnexpectedCharacter",
   "src": "unexpected character '{0}'.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 435
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "UnexpectedTokenInCondition",
   "src": "unexpected {0}.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 1000
  },
  {
   "ns": "DreamShader.Preprocessor.Expression",
   "key": "UnterminatedConditionString",
   "src": "unterminated string literal.",
-  "file": "DreamShader\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
+  "file": "DreamShaderLang\\Private\\Preprocessor\\DreamShaderPreprocessorExpression.cpp",
   "line": 387
  },
  {
@@ -1558,42 +2258,42 @@
   "key": "CompiledPreviewMaterial",
   "src": "Compiled preview material for {0}.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 703
+  "line": 704
  },
  {
   "ns": "DreamShader.Preview",
   "key": "CompiledPreviewMaterialWithDetails",
   "src": "Compiled preview material for {0}. {1}",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 706
+  "line": 707
  },
  {
   "ns": "DreamShader.Preview",
   "key": "GeneratedMaterialCouldNotBeLoaded",
   "src": "Generated material '{0}' could not be loaded.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 698
+  "line": 699
  },
  {
   "ns": "DreamShader.Preview",
   "key": "PreviewSourceMissing",
   "src": "DreamShader source '{0}' does not exist.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 664
+  "line": 665
  },
  {
   "ns": "DreamShader.Preview",
   "key": "PreviewSupportsOnlyDsm",
   "src": "DreamShader preview only supports .dsm material files: '{0}'.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 670
+  "line": 671
  },
  {
   "ns": "DreamShader.Preview",
   "key": "RenderedPreview",
   "src": "Rendered preview for {0}.",
   "file": "DreamShaderEditor\\Private\\Preview\\DreamShaderPreviewRenderer.cpp",
-  "line": 740
+  "line": 741
  },
  {
   "ns": "DreamShader.VirtualFunction",
@@ -1661,7 +2361,7 @@
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderAdoptConfirm",
-  "src": "Rewrite '{0}' from the current contents of '{1}'?\\n\\nThe existing source is copied to '{2}' first. The rewritten file is the decompiler's own form, so hand-written comments, imports and formatting in it are replaced.",
+  "src": "Rewrite '{0}' from the current contents of '{1}'?\n\nThe existing source is copied to '{2}' first. The rewritten file is the decompiler's own form, so hand-written comments, imports and formatting in it are replaced.",
   "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
   "line": 363
  },
@@ -1850,7 +2550,7 @@
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDetachConfirm",
-  "src": "Stop managing '{0}'?\\n\\nIt keeps its current contents and becomes an ordinary asset. DreamShader will never rebuild it again, and compiling '{1}' afterwards fails with an ownership error until you move or rename one of them.",
+  "src": "Stop managing '{0}'?\n\nIt keeps its current contents and becomes an ordinary asset. DreamShader will never rebuild it again, and compiling '{1}' afterwards fails with an ownership error until you move or rename one of them.",
   "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
   "line": 504
  },
@@ -2256,7 +2956,7 @@
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRevertConfirm",
-  "src": "Rebuild '{0}' from '{1}'?\\n\\nEvery hand edit in the asset is discarded. The source file is not modified.",
+  "src": "Rebuild '{0}' from '{1}'?\n\nEvery hand edit in the asset is discarded. The source file is not modified.",
   "file": "DreamShaderEditor\\Private\\Provenance\\DreamShaderProvenanceActions.cpp",
   "line": 209
  },
@@ -2356,21 +3056,21 @@
   "key": "AssetPathNoShaderBlock",
   "src": "{0}: this file does not define a top-level Shader block.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderGeneratedAssetPath.cpp",
-  "line": 92
+  "line": 93
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "AssetPathParseError",
   "src": "{0}: {1}",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderGeneratedAssetPath.cpp",
-  "line": 86
+  "line": 87
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "AssetPathReadFailed",
   "src": "Failed to read DreamShader source '{0}'.",
   "file": "DreamShaderEditor\\Private\\UI\\DreamShaderGeneratedAssetPath.cpp",
-  "line": 24
+  "line": 25
  },
  {
   "ns": "DreamShaderMaterialBrowser",

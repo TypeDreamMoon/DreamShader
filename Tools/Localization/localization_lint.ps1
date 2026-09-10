@@ -111,20 +111,23 @@ function Convert-CStringLiteral {
     $sb = [System.Text.StringBuilder]::new()
     for ($i = 0; $i -lt $Text.Length; $i++) {
         $ch = $Text[$i]
-        if ($ch -ne '\\' -or $i -eq $Text.Length - 1) {
+        # NOTE: these are [char] comparisons, so the literals must be ONE character.
+        # '\\' is a two-character PowerShell string and never equals a char, which
+        # made this whole function a no-op and left C escapes in the gathered text.
+        if ($ch -ne '\' -or $i -eq $Text.Length - 1) {
             [void]$sb.Append($ch)
             continue
         }
 
         $i++
         switch ($Text[$i]) {
-            '\\' { [void]$sb.Append('\\') }
+            '\' { [void]$sb.Append('\') }
             '"' { [void]$sb.Append('"') }
             'n' { [void]$sb.Append("`n") }
             'r' { [void]$sb.Append("`r") }
             't' { [void]$sb.Append("`t") }
             default {
-                [void]$sb.Append('\\')
+                [void]$sb.Append('\')
                 [void]$sb.Append($Text[$i])
             }
         }
@@ -382,7 +385,9 @@ function New-BaselineMarkdown {
     [void]$sb.AppendLine('| --- | --- | --- |')
 
     foreach ($entry in $Inventory | Sort-Object namespace, key, text) {
-        $text = $entry.text -replace '\|', '\|'
+        # Escapes are decoded by now, so a source string may contain a real newline.
+        # Re-escape it: one inventory entry has to stay on one Markdown table row.
+        $text = $entry.text -replace '\|', '\|' -replace "`r`n", '\n' -replace "`n", '\n' -replace "`r", '\r' -replace "`t", '\t'
         $ns = $entry.namespace -replace '\|', '\|'
         $key = $entry.key -replace '\|', '\|'
         [void]$sb.AppendLine("| $ns | $key | $text |")

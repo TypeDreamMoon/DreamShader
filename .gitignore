@@ -79,3 +79,7 @@ DerivedDataCache/*
 
 # Planning notes -- local only
 Plan/
+
+# Python bytecode cache from the localization scripts.
+__pycache__/
+*.pyc
