@@ -407,13 +407,14 @@ Editing the map bumps the define revision, which invalidates the in-memory mater
 ### From C++
 
 Two entry points, both free functions in `UE::DreamShader`, declared in
-`Public/DreamShaderDefineTable.h`.
+`Public/DreamShaderDefineResolution.h` (the `DreamShader` module — the table type itself lives in
+`DreamShaderLang`, but building one is an engine job).
 
 **Direct registration** is the simple one. The `SourceTag` identifies the contributor, so a whole
 set can be withdrawn at shutdown:
 
 ```cpp
-#include "DreamShaderDefineTable.h"
+#include "DreamShaderDefineResolution.h"
 
 void FMoonToonModule::StartupModule()
 {
@@ -438,7 +439,7 @@ moment the table is resolved, so load order stops mattering and the value may de
 was not ready at `StartupModule` time:
 
 ```cpp
-#include "DreamShaderDefineTable.h"
+#include "DreamShaderDefineResolution.h"
 
 FDelegateHandle Handle = UE::DreamShader::RegisterDreamShaderDefineProvider(
     UE::DreamShader::FDreamShaderDefineProviderDelegate::CreateLambda(

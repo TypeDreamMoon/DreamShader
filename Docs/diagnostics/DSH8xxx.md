@@ -803,7 +803,7 @@ Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
 **Message**
 
 ```
-%s: Base.FrontMaterial requires ShadingModel=\"Substrate\" or no explicit ShadingModel setting.
+%s: Base.FrontMaterial requires ShadingModel="Substrate" or no explicit ShadingModel setting.
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2579`
@@ -1901,7 +1901,7 @@ Failed to create material '%s'.
 **Message**
 
 ```
-Asset '%s' already exists and is not a DreamShader instance material. Delete it (or remove Backend=\"Instance\") before switching backends.
+Asset '%s' already exists and is not a DreamShader instance material. Delete it (or remove Backend="Instance") before switching backends.
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:563`
@@ -2392,7 +2392,7 @@ Invalid asset path '%s'.
 DreamShader import cycle detected at '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:144`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:145`
 <!-- generated:end DSH8133 -->
 
 **Cause.** _Not written yet._
@@ -2410,7 +2410,7 @@ DreamShader import cycle detected at '%s'.
 DreamShader could not read '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:150`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:151`
 <!-- generated:end DSH8134 -->
 
 **Cause.** _Not written yet._
@@ -2428,7 +2428,7 @@ DreamShader could not read '%s'.
 DreamShader header '%s' may only declare Function/Namespace/GraphFunction/VirtualFunction blocks and imports.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:260`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:261`
 <!-- generated:end DSH8135 -->
 
 **Cause.** _Not written yet._
@@ -2446,7 +2446,7 @@ DreamShader header '%s' may only declare Function/Namespace/GraphFunction/Virtua
 DreamShader function file '%s' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:266`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:267`
 <!-- generated:end DSH8136 -->
 
 **Cause.** _Not written yet._

@@ -9,7 +9,7 @@ Defined in header `DreamShaderVersionCompat.h`.
 
 | | |
 | :-- | :-- |
-| Module | `DreamShader` (Runtime), included by all three modules |
+| Module | `DreamShader` (Runtime), included by `DreamShader` and `DreamShaderEditor`. `DreamShaderLang` cannot include it — it depends on `Core` alone and has no engine version to gate on |
 | Include | `#include "DreamShaderVersionCompat.h"` |
 | Contents | 12 macros. **No types, no functions, no namespace.** |
 | Only dependency | `Runtime/Launch/Resources/Version.h` |

@@ -103,7 +103,7 @@ Everything else in the repository is absent:
 | `Config/` | `FilterPlugin.ini` is absent. It only holds the stock commented template and declares no packaged files |
 | `Images/` | README artwork is missing, so the readme's images do not render locally |
 | `.github/` | The workflow itself is not redistributed |
-| `Binaries/`, `Intermediate/` | The archive is **source-only**; the consumer's first editor launch compiles the three modules |
+| `Binaries/`, `Intermediate/` | The archive is **source-only**; the consumer's first editor launch compiles the four modules |
 
 > [!NOTE]
 > Up to and including `1.5.0` the archive shipped no `Shaders/` folder, so anything resolving

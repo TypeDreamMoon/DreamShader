@@ -74,6 +74,16 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
     $raiseSites = @(
         @{ Severity = 'error';   Pattern = 'FailWith\(\s*\w+\s*,\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
         @{ Severity = 'warning'; Pattern = 'RaiseGenerationWarning\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        # The DreamShaderLang front end (2.0) raises through its diagnostic sink:
+        #   Diagnostics.Error(TEXT("DSHnnnn"), Span, LOCTEXT(...)) / .Warning(...) / .Info(...)
+        @{ Severity = 'error';   Pattern = '\.Error\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'warning'; Pattern = '\.Warning\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'info';    Pattern = '\.Info\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        # ... and through the parser's cursor helpers, which supply the "Expected X, found Y." frame
+        # and take only the X fragment at the site:
+        #   Expect(Kind, TEXT("DSHnnnn"), LOCTEXT("Key", "';' after the field"))
+        #   ExpectIdentifier(OutName, OutSpan, TEXT("DSHnnnn"), LOCTEXT("Key", "a field name"))
+        @{ Severity = 'error';   Pattern = '\bExpect(?:Identifier)?\([^;]{0,200}?TEXT\("(DSH\d{4})"\)' + $messageTail; Frame = 'Expected {0}, found {1}.' }
     )
     foreach ($raiseSite in $raiseSites) {
     foreach ($match in [regex]::Matches($text, $raiseSite.Pattern, 'Singleline')) {
@@ -81,6 +91,23 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
         $message = if ($match.Groups[3].Success) { $match.Groups[3].Value } else { $match.Groups[4].Value }
 
         if (-not $message) { $message = '(built at runtime)' }
+        else {
+            # The message was read out of a C++ string literal, so it still carries that literal's
+            # escaping. A reader wants the message the user sees, not the way it is spelled in the
+            # source, so `\"` becomes `"` and `\\` becomes `\`. One left-to-right pass, because two
+            # sequential replaces would turn `\\"` into a quote that was never there. Other escapes
+            # (`\n`, `\t`) keep their backslash: shown as text they read better than the control
+            # character they stand for.
+            $message = [regex]::Replace($message, '\\(.)', {
+                param($escape)
+                switch ($escape.Groups[1].Value) {
+                    '"'     { '"' }
+                    '\'     { '\' }
+                    default { $escape.Value }
+                }
+            })
+            if ($raiseSite.Frame) { $message = $raiseSite.Frame -replace '\{0\}', $message }
+        }
 
         $line = ($text.Substring(0, $match.Index) -split "`n").Count
         $relative = [System.IO.Path]::GetRelativePath($pluginRoot, $file.FullName) -replace '\\', '/'

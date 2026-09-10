@@ -271,7 +271,7 @@ UE builtin argument '{0}' is declared more than once in '{1}'.
 **Message**
 
 ```
-Unsupported UE builtin function '{0}'. Use OutputType=\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\\\" for generic MaterialExpression calls.
+Unsupported UE builtin function '{0}'. Use OutputType=\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture\" for generic MaterialExpression calls.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:582`
@@ -451,7 +451,7 @@ Invalid texture sample default value '{0}' for property '{1}'. {2}
 **Message**
 
 ```
-Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\\\"float4\\\", ...) for reflected node creation.
+Parameter node type '{0}' is recognized but not supported as a plain Properties declaration yet. Use UE.{1}(OutputType=\"float4\", ...) for reflected node creation.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:735`
@@ -1037,7 +1037,7 @@ Unsupported BlendMode/RenderType '%s'.
 **Message**
 
 ```
-ShadingModel=\"Substrate\" requires Unreal Engine 5.4 or newer.
+ShadingModel="Substrate" requires Unreal Engine 5.4 or newer.
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialSettings.cpp:441`

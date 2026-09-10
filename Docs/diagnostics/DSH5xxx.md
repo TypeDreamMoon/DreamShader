@@ -551,7 +551,7 @@ UE.%s requires parameter: %s
 **Message**
 
 ```
-UE.StaticSwitchParameter requires Name=\"ParameterName\".
+UE.StaticSwitchParameter requires Name="ParameterName".
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:201`
@@ -677,7 +677,7 @@ UE.CollectionParam could not load MaterialParameterCollection '%s'.
 **Message**
 
 ```
-UE.CollectionParam requires Parameter=\"Name\".
+UE.CollectionParam requires Parameter="Name".
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:290`
@@ -839,7 +839,7 @@ Substrate builtin call '%s' requires Unreal Engine 5.4 or newer.
 **Message**
 
 ```
-Unsupported UE builtin call '%s' in Graph. For generic MaterialExpression calls, add OutputType=\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture/Substrate\".
+Unsupported UE builtin call '%s' in Graph. For generic MaterialExpression calls, add OutputType="float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture/Substrate".
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:682`
@@ -875,7 +875,7 @@ UE.%s OutputType must be a literal value.
 **Message**
 
 ```
-UE.%s OutputType=\"Substrate\" requires Unreal Engine 5.4 or newer.
+UE.%s OutputType="Substrate" requires Unreal Engine 5.4 or newer.
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:708`
@@ -929,7 +929,7 @@ UE.%s Class must be a literal value.
 **Message**
 
 ```
-UE.Expression requires Class=\"MaterialExpressionName\".
+UE.Expression requires Class="MaterialExpressionName".
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:726`
@@ -1037,7 +1037,7 @@ UE.%s failed to create '%s'.
 **Message**
 
 ```
-UE.%s OutputType=\"Substrate\" is not supported by UMaterialExpressionCustom.
+UE.%s OutputType="Substrate" is not supported by UMaterialExpressionCustom.
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:823`

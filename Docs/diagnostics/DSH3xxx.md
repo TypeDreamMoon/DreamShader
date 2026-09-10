@@ -251,7 +251,7 @@ A function with a return type cannot use a bare 'return;'. Return a value, e.g. 
 **Message**
 
 ```
-Namespace(Name=\"...\") is required.
+Namespace(Name="...") is required.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:745`
@@ -351,7 +351,7 @@ Only one top-level Shader block is currently supported.
 **Message**
 
 ```
-Shader(Name=\"...\") is required.
+Shader(Name="...") is required.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:850`
@@ -391,7 +391,7 @@ Shader must provide a Graph block.
 **Message**
 
 ```
-VirtualFunction(Name=\"...\") is required.
+VirtualFunction(Name="...") is required.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:907`
@@ -471,7 +471,7 @@ VirtualFunction '{0}' must declare at least one output.
 **Message**
 
 ```
-{0}(Name=\"...\") is required.
+{0}(Name="...") is required.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:1005`
@@ -871,7 +871,7 @@ Expression output target argument '{0}' is declared more than once.
 **Message**
 
 ```
-Expression output target '{0}' must specify Class=\\\"...\\\".
+Expression output target '{0}' must specify Class=\"...\".
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1355`
@@ -1231,7 +1231,7 @@ Graph #Region '{0}' is missing #EndRegion.
 **Message**
 
 ```
-Unexpected '`{' in Properties near '{0}'. Only Group(\"Name\") `{ ... `} may open a brace here.
+Unexpected '`{' in Properties near '{0}'. Only Group("Name") `{ ... `} may open a brace here.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1027`
@@ -1271,7 +1271,7 @@ Group(...) requires a non-empty name.
 **Message**
 
 ```
-Unterminated Group(\"{0}\") `{ ... `} block.
+Unterminated Group("{0}") `{ ... `} block.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1085`
@@ -1291,7 +1291,7 @@ Unterminated Group(\"{0}\") `{ ... `} block.
 **Message**
 
 ```
-Unexpected brace block in Outputs near '{0}'. Only Expression(Class=\"...\") opens a brace block here; every other Outputs statement ends with ';'.
+Unexpected brace block in Outputs near '{0}'. Only Expression(Class="...") opens a brace block here; every other Outputs statement ends with ';'.
 ```
 
 **Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1481`
@@ -1382,4 +1382,456 @@ Output target pin '{0}' is bound more than once: first to '{1}', then to '{2}'. 
 **Fix.** delete one of the two bindings, or point the second at a different pin. If the two were meant to be different nodes, give them different argument lists -- but note that a `UMaterialExpressionCustomOutput` is normally meant to exist once per material
 
 **See** [Output bindings](../language/output-bindings.md#each-pin-once), [Node reuse](../graph/node-reuse.md)
+
+## DSH3200
+
+<!-- generated:begin DSH3200 -->
+**Severity** error
+
+**Message**
+
+```
+Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1229`
+<!-- generated:end DSH3200 -->
+
+**Cause.** The parser reached a token at file scope that cannot begin anything: a stray `)`, `}`,
+operator, number or string outside any declaration. Typical sources are an extra closing brace
+after a function, a statement written at file scope (`x = 1;` needs a type in front of it), or a
+1.x block that lost its keyword.
+
+**Fix.** Delete the stray token or turn the line into a declaration. Recovery skips to the next
+`;`, matched `}` or line that starts a declaration, so the declarations after it still parse; fix
+the first DSH3200 and recompile before chasing the ones that follow, they are usually the same
+mistake seen from further down.
+
+## DSH3201
+
+<!-- generated:begin DSH3201 -->
+**Severity** error
+
+**Message**
+
+```
+Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:549`
+<!-- generated:end DSH3201 -->
+
+**Cause.** A `#` line other than `#pragma` or `#include` (`#if`, `#define`, `#endif`, `#error`…)
+arrived at the parser. The 2.0 parser expects preprocessed text: `#if` and `#define` are resolved
+by the DreamShader preprocessor before parsing, line count preserved, so seeing one here means the
+text was parsed raw or a directive is misspelt (`#pragam`).
+
+**Fix.** Inside a compile this cannot happen; from a tool that calls `ParseDreamShaderLang`
+directly, run the preprocessor first. If the directive is a typo, correct it. Inside a `/// @custom`
+body every `#` line is kept verbatim and never reaches this check.
+
+## DSH3202
+
+<!-- generated:begin DSH3202 -->
+**Severity** error
+
+**Message**
+
+```
+'#pragma' needs a name: material, layout, region or endregion.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:569`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:610`
+<!-- generated:end DSH3202 -->
+
+**Cause.** A `#pragma` line is not in the shape the parser reads:
+
+- no name at all (`#pragma` alone, or `#pragma (`),
+- `#pragma material` / `#pragma layout` with an argument list that is not `(Key = Value, ...)`
+  (missing `)`, a bare `=`, an unterminated string, a value that is not an identifier, number or
+  quoted string),
+- `#pragma material` with a positional argument: material settings are keyed, only `layout` takes
+  a leading positional kind (`#pragma layout(Node, ...)`).
+
+**Fix.** Write `#pragma material(ShadingModel = Unlit, BlendMode = Additive)`,
+`#pragma layout(Node, Var = UV, X = -1100, Y = -120)`, `#pragma region Title` or
+`#pragma endregion`. A `//` comment at the end of the line is fine and is stripped. An unknown
+pragma name (`#pragma once`) is not an error: it is kept as `EPragmaKind::Unknown` with its text
+and ignored by the compiler.
+
+## DSH3203
+
+<!-- generated:begin DSH3203 -->
+**Severity** error
+
+**Message**
+
+```
+'#include' needs a quoted path: #include "/Game/Shared/Common.dsh".
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:528`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:693`
+<!-- generated:end DSH3203 -->
+
+**Cause.** `#include` was not followed by a `"path"` in double quotes, or `import` was not followed
+by a quoted string. Unquoted paths (`#include /Game/X.dsh`), paths with the quotes on one side
+only, and the HLSL system-include spelling `#include <path>` are the usual cases. Angle brackets
+are not accepted: DreamShader has no system include directory, so the spelling would mean nothing
+and the printer would have to invent one.
+
+**Fix.** Quote the path: `#include "/Game/Shared/Common.dsh"` or `import "Hash.dsh";`. `import`
+needs the trailing `;`; `#include` must not have one. Both spellings produce the same
+`FIncludeDecl`; only `bImportSpelling` differs, so the printer can write the file back as it was.
+
+## DSH3204
+
+<!-- generated:begin DSH3204 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a type name, found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:360`
+<!-- generated:end DSH3204 -->
+
+**Cause.** A type name was expected and something else was found: `uniform = 1;` (type missing),
+`float3 = ...` after a prefix keyword that ate the only identifier, `out x` in a parameter list, or
+a keyword used as a type (`struct` inside a parameter list).
+
+**Fix.** Put the type in: `uniform float Intensity = 1;`. In 2.0 every declaration is
+`[uniform|static|const|extern|export] Type Name`, there is no untyped `var`.
+
+## DSH3205
+
+<!-- generated:begin DSH3205 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a name after 'struct', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1141`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:728`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:762`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:821`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:997`
+<!-- generated:end DSH3205 -->
+
+**Cause.** A name was expected and the token there is not an identifier. Raised for the name of a
+variable or function (`float ;`), a struct (`struct {`), a field, or a parameter (`float f(float)`
+— parameters must be named even when unused).
+
+**Fix.** Add the name. A parameter you do not use still needs one; it is what `@param` and the
+generated material-function input pin are called.
+
+## DSH3206
+
+<!-- generated:begin DSH3206 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '`{' or ';' after the parameter list of '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1071`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:862`
+<!-- generated:end DSH3206 -->
+
+**Cause.** After a function's parameter list the parser found neither `{` nor `;`. Usually a stray
+token between `)` and `{` (`float f() const {`, `float f() 5`), or a missing `{`.
+
+**Fix.** Follow the parameter list directly with the body, or with `;` if the function is
+`extern`. 2.0 has no qualifiers between the parameter list and the body.
+
+## DSH3207
+
+<!-- generated:begin DSH3207 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is 'extern' and binds to an existing asset, so it cannot have a body; write a prototype ending in ';'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1033`
+<!-- generated:end DSH3207 -->
+
+**Cause.** An `extern` function has a body. `extern` means "bind this name to an existing
+material-function asset" (through `/// @asset` or the library lookup), so the body would have
+nowhere to go.
+
+**Fix.** Either drop `extern` and keep the body (the function is then compiled from source), or
+drop the body and end the prototype with `;`. The body is skipped as a whole during recovery, so
+the declarations after it still parse.
+
+## DSH3208
+
+<!-- generated:begin DSH3208 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' has no body. Only an 'extern' prototype may end in ';'; a function you define needs '`{...`}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1062`
+<!-- generated:end DSH3208 -->
+
+**Cause.** A function that is not `extern` ends in `;` instead of a body. A 2.0 source file does
+not have forward declarations: helpers may be defined in any order and are resolved by name
+across the file and its includes.
+
+**Fix.** Give the function its body, or mark it `extern` if it names an existing asset. Delete the
+prototype if it was a forward declaration; it is not needed.
+
+## DSH3210
+
+<!-- generated:begin DSH3210 -->
+**Severity** error
+
+**Message**
+
+```
+A '.dsh' header cannot export '{0}'; only a '.dss' file produces assets.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:74`
+<!-- generated:end DSH3210 -->
+
+**Cause.** A `.dsh` header contains an `export` function. Headers are included into materials and
+functions and are never compiled on their own, so an `export` in one has no asset to become and
+would be duplicated into every includer.
+
+**Fix.** Remove `export` (the function becomes a plain helper visible to every file that includes
+the header), or move it into a `.dss` file of its own. Raised once per exported declaration, from
+the module loop in `LangParser.cpp`; the declaration is kept in the tree so tooling still sees it.
+
+## DSH3211
+
+<!-- generated:begin DSH3211 -->
+**Severity** error
+
+**Message**
+
+```
+Expected the end of the expression, found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:465`
+<!-- generated:end DSH3211 -->
+
+**Cause.** `ParseDreamShaderLangExpression` (tests, the language service, `#pragma` values) was
+given text that has something after a complete expression: `a + b c`, `x = 1;` (the `;` is not part
+of an expression).
+
+**Fix.** Pass exactly one expression. From the editor this only appears for a `#pragma` argument
+that is meant to be an expression and is not.
+
+## DSH3213
+
+<!-- generated:begin DSH3213 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static', 'const', 'extern' or 'export', not a mix.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1007`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1085`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:948`
+<!-- generated:end DSH3213 -->
+
+**Cause.** The declaration's prefix keywords do not go together, or go with the wrong kind of
+declaration:
+
+- a repeated or conflicting prefix: `uniform static`, `const uniform`, `export extern`,
+  `uniform uniform`;
+- a storage class on a function: `uniform float f()` — `uniform`, `static` and `const` describe
+  variables;
+- a linkage on a variable: `export float x`, `extern float3 Dir` — `extern` and `export` describe
+  functions.
+
+**Fix.** Use one of the accepted shapes: `uniform T x`, `static const T x`, `static T x`,
+`const T x`, `T x` for variables; `T f()`, `export T f()`, `extern T f();` for functions. A
+constant shared by several materials is `static const`; a value the material instance edits is
+`uniform`.
+
+## DSH3214
+
+<!-- generated:begin DSH3214 -->
+**Severity** error
+
+**Message**
+
+```
+Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:840`
+<!-- generated:end DSH3214 -->
+
+**Cause.** An `out` parameter has a default value: `out float Alpha = 1.0`. An output is written by
+the function and cannot be optional for the caller, so the default has no meaning.
+
+**Fix.** Remove the default. If the caller should be able to leave the pin unconnected, make the
+parameter `in` and return the value some other way, or give the caller a `uniform` to pass. `inout`
+parameters cannot have defaults either.
+
+## DSH3215
+
+<!-- generated:begin DSH3215 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ']' to close the array dimension, found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:388`
+<!-- generated:end DSH3215 -->
+
+**Cause.** An array dimension was opened with `[` and not closed: `float Weights[4;`,
+`float3 P[;`. The dimension must be a single expression between `[` and `]`.
+
+**Fix.** Close the bracket. Sizes are expressions and may reference `static const` values;
+`float x[]` (no size) is accepted by the parser and left for the compiler to reject or infer.
+
+## DSH3216
+
+<!-- generated:begin DSH3216 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ';' after the import path, found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1121`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1165`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:707`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:770`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:779`
+<!-- generated:end DSH3216 -->
+
+**Cause.** A declaration is missing its `;`: after a variable and its initializer, after
+`import "x.dsh"`, after a struct field, after a struct's closing `}`, or between two declarators in
+`uniform float a, b`.
+
+**Fix.** Add the `;`. The parser tells you what it was closing (the message says "after the
+declaration", "after the import path", "after the field", "after the closing '}' of the struct").
+The most common form is the missing `;` after `struct X { ... }` — HLSL and C both need it.
+
+## DSH3217
+
+<!-- generated:begin DSH3217 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '{' after the struct name, found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:732`
+<!-- generated:end DSH3217 -->
+
+**Cause.** `struct Name` was not followed by `{`. Usually a forward declaration (`struct X;`),
+which 2.0 does not have, or a base-class colon (`struct X : Y`), which it does not support.
+
+**Fix.** Define the struct in place: `struct X { float a; };`. Types are resolved by name across
+the file, so a struct may be declared after the function that uses it.
+
+## DSH3218
+
+<!-- generated:begin DSH3218 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ')' to close the parameter list, found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:854`
+<!-- generated:end DSH3218 -->
+
+**Cause.** A parameter list was not closed with `)`. Either the `)` is missing, or a parameter is
+separated with something other than `,` (`float a; float b`), or a parameter has a qualifier the
+parser does not know (`const float a` — 2.0 parameters take only `in`, `out`, `inout`).
+
+**Fix.** Separate parameters with commas and close the list. Drop `const` from parameters; inputs
+are already read-only in the generated graph.
+
+## DSH3220
+
+<!-- generated:begin DSH3220 -->
+**Severity** warning
+
+**Message**
+
+```
+A '@' in a '///' line must be followed by a directive name; the text is kept as description.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:488`
+<!-- generated:end DSH3220 -->
+
+**Cause.** *(warning)* A `///` line has a `@` at a directive position (start of the text or after a
+space) that is not followed by a directive name: `/// see @ the docs`, `/// @ desc Foo`,
+`/// @123`. The line is kept as description text, so nothing is lost, but if a directive was
+intended it was not read.
+
+**Fix.** Write directives as `@name value` with no space after the `@`: `/// @desc Overall gain`.
+An `@` inside a word (`user@host`) or followed by a space is plain text and is only warned about
+when it sits where a directive would start. Directive keys are lower-cased on read, so `@Desc`
+and `@desc` are the same key.
+
+## DSH3221
+
+<!-- generated:begin DSH3221 -->
+**Severity** warning
+
+**Message**
+
+```
+This '///' block is not followed by a field and is ignored.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1193`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:753`
+<!-- generated:end DSH3221 -->
+
+**Cause.** *(warning)* A `///` block is not attached to anything: it sits at the end of the file
+with no declaration after it, or at the end of a struct body with no field after it. Doc blocks
+belong to the declaration that follows them, so a block with nothing following is dropped.
+
+**Fix.** Move the block above the declaration it describes, or turn it into a `//` comment if it is
+just a note. A block above a `#pragma` or `#include` line attaches to that directive and is kept,
+so a file-header comment written as `///` above the first `#pragma` is not orphaned.
+
+## DSH3222
+
+<!-- generated:begin DSH3222 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a 1.x declaration; the 2.0 front end does not parse it yet. Keep it in a .dsm/.dsf/.dsh compiled by the 1.x front end.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:979`
+<!-- generated:end DSH3222 -->
+
+**Cause.** A 1.x declaration word — `Function`, `GraphFunction`, `Namespace`, `VirtualFunction`,
+`Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend` — was found where a 2.0 declaration
+starts. The 2.0 front end does not read the 1.x block syntax; until the second front end lands
+(M4) a 1.x file must keep its 1.x extension.
+
+**Fix.** Keep 1.x sources in `.dsm` / `.dsf` / `.dsh` files compiled by the 1.x front end, or port
+the declaration to 2.0: `Function float Luma(in vec3 c) { ... }` becomes
+`float Luma(float3 c) { ... }`, `Shader(Name = "X") { ... }` becomes `export void X(inout material m)
+{ ... }` with `#pragma material(...)` for the settings. The message names the word it saw; the
+whole block is skipped during recovery so the rest of the file still reports its own errors.
 

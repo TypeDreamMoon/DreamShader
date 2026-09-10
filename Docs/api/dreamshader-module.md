@@ -54,7 +54,7 @@ public:
 | Default runtime verbosity | `Log` |
 | Compile-time maximum verbosity | `All` |
 | Defined in | `DreamShader` (Runtime) |
-| Used by | all three modules — `DreamShaderEditor` includes this header solely for the category |
+| Used by | `DreamShader`, `DreamShaderCompiler` and `DreamShaderEditor` — the editor module includes this header solely for the category. **Not** `DreamShaderLang`: it depends on `Core` alone and never logs, it reports through `FLangDiagnosticSink` instead |
 
 Every message the plugin emits — parse failures surfaced to the log, generation results, cook
 progress, bridge and SQLite warnings — goes through this one category. Raise it from a config file
@@ -291,6 +291,11 @@ The generated `.ush` helper include written by a compile of any of those files l
 - [`DreamShaderSettings.h`](settings.md) — `SourceDirectory`, `GeneratedShaderDirectory`, `NormalizeMappingKey`
 - [`DreamShaderVersionCompat.h`](version-compat.md) — the macros this header pulls in
 - [`DreamShaderCompiler`](compiler-module.md) — requesting a compile from C++
+- [`DreamShaderLang`](lang-module.md) — the Core-only front end. `DreamShaderPreprocessor.h`,
+  `DreamShaderDefineTable.h` and `DreamShaderDiagnostic.h` moved into it in 2.0; the include
+  spellings did not change. Only `DreamShaderDefineResolution.h` — the tier merge that reads
+  project settings, the engine version, the plugin descriptor and the command line — stayed in
+  this module
 - [Project settings](../settings/project.md) — the two directory settings from the user's side
 - [Generated HLSL](../generation/generated-hlsl.md) — what `/DreamShaderGenerated` receives
 - [Packages](../tools/packages.md) — the `DShader/Packages` directory

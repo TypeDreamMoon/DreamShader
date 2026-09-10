@@ -515,7 +515,7 @@ Failed to assign material function '%s' to the generated call node.
 **Message**
 
 ```
-%s '%s' exposes multiple outputs. Specify Output=\"Name\" or OutputIndex=N.
+%s '%s' exposes multiple outputs. Specify Output="Name" or OutputIndex=N.
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:672`

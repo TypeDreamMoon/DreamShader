@@ -11,10 +11,10 @@
 **Message**
 
 ```
-%s
+Encountered an invalid empty Graph statement.
 ```
 
-**Raised by** `Source/DreamShader/Public/DreamShaderDiagnostic.h:140`, `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:211`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:211`, `Source/DreamShaderLang/Public/DreamShaderDiagnostic.h:140`
 <!-- generated:end DSH4001 -->
 
 **Cause.** _Not written yet._
@@ -695,7 +695,7 @@ MaterialAttributes member '%s' cannot be assigned from Graph code.
 **Message**
 
 ```
-MaterialAttributes member '%s' must be assigned a ShadingModel node, for example UE.Expression(Class=\"ShadingModel\", ShadingModel=\"MSM_DefaultLit\").
+MaterialAttributes member '%s' must be assigned a ShadingModel node, for example UE.Expression(Class="ShadingModel", ShadingModel="MSM_DefaultLit").
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1024`
@@ -1361,7 +1361,7 @@ Graph calls must target a named function.
 **Message**
 
 ```
-UE.SceneTexture expects exactly Id=\"...\" (e.g. Id=\"PostProcessInput0\").
+UE.SceneTexture expects exactly Id="..." (e.g. Id="PostProcessInput0").
 ```
 
 **Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1644`

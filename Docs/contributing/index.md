@@ -65,7 +65,7 @@ WebSocket server) and `SQLiteCore` (the bridge database). Both are engine plugin
 
 ### Build rules
 
-All three modules set `PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs` and declare no
+All four modules set `PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs` and declare no
 `PublicDefinitions` or `PrivateDefinitions`.
 
 | Module | Dependency list |
@@ -161,7 +161,7 @@ Everything is under `Private/`; nothing is exported.
 | Prove an engine-version gate on every supported engine | [`.skill/build-plugin.ps1`](#the-engine-matrix). |
 | Reproduce the release archive | Stage the seven shipped items by hand, or push a tag and let the [release workflow](release.md) do it. |
 
-`BuildPlugin` compiles all three modules against the target engine and fails on the first UBT or UHT
+`BuildPlugin` compiles all four modules against the target engine and fails on the first UBT or UHT
 error. It is the check that matters when adding an engine-version gate, because the project build
 only ever exercises one engine version. It is also the only check that sees a **link** error: an
 engine class that compiles everywhere and only resolves from UE 5.6 on is invisible to every

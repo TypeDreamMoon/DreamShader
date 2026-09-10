@@ -25,7 +25,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH1013](DSH1xxx.md#dsh1013) | error | Texture Path root '{0}' references plugin '{1}', but the plugin cannot contain content. |
 | [DSH1014](DSH1xxx.md#dsh1014) | error | Relative texture Path(...) references require a root such as Game, Engine, or Plugin.PluginName. |
 | [DSH1015](DSH1xxx.md#dsh1015) | error | Unsupported texture Path root '{0}'. Use Game, Engine, or Plugin.PluginName. |
-| [DSH1016](DSH1xxx.md#dsh1016) | error | Texture defaults must use Path(Game\|Engine\|Plugin.PluginName, \"Folder/Asset\"), Path(\"/Game/Folder/Asset\... |
+| [DSH1016](DSH1xxx.md#dsh1016) | error | Texture defaults must use Path(Game\|Engine\|Plugin.PluginName, "Folder/Asset"), Path("/Game/Folder/Asset"), ... |
 | [DSH1017](DSH1xxx.md#dsh1017) | error | Unexpected trailing tokens after texture Path(...) reference. |
 | [DSH1018](DSH1xxx.md#dsh1018) | error | Texture Path(...) requires a non-empty asset path. |
 | [DSH1019](DSH1xxx.md#dsh1019) | error | Invalid texture asset path '{0}'. |
@@ -56,6 +56,28 @@ which stays authoritative until every raise site is tagged.
 | [DSH2008](DSH2xxx.md#dsh2008) | error | Unterminated '{0}' block. |
 | [DSH2009](DSH2xxx.md#dsh2009) | error | Unexpected token near index {0}. |
 | [DSH2010](DSH2xxx.md#dsh2010) | error | A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or V... |
+| [DSH2101](DSH2xxx.md#dsh2101) | error | Unexpected character '{0}' in source. |
+| [DSH2102](DSH2xxx.md#dsh2102) | error | Unterminated block comment; expected a closing '*/'. |
+| [DSH2103](DSH2xxx.md#dsh2103) | error | Unterminated string literal; expected a closing '"'. |
+| [DSH2104](DSH2xxx.md#dsh2104) | error | Unknown escape sequence '\{0}' in a string literal. |
+| [DSH2105](DSH2xxx.md#dsh2105) | error | Malformed number literal '{0}'. |
+| [DSH2106](DSH2xxx.md#dsh2106) | error | A '#' directive must be the first thing on its line. |
+| [DSH2150](DSH2xxx.md#dsh2150) | error | Unexpected end of file while parsing {0}. |
+| [DSH2151](DSH2xxx.md#dsh2151) | error | Expected an expression, found {0}. |
+| [DSH2152](DSH2xxx.md#dsh2152) | error | Expected ')' to close a cast, found {1}. |
+| [DSH2153](DSH2xxx.md#dsh2153) | error | Expected ']' to close an index, found {1}. |
+| [DSH2154](DSH2xxx.md#dsh2154) | error | Expected ';' after the 'for' initializer, found {1}. |
+| [DSH2155](DSH2xxx.md#dsh2155) | error | Expected '}' to close an initializer list, found {1}. |
+| [DSH2157](DSH2xxx.md#dsh2157) | error | Expected '(' after 'if', found {1}. |
+| [DSH2158](DSH2xxx.md#dsh2158) | error | A positional argument cannot follow a named argument; give this argument a name too. |
+| [DSH2159](DSH2xxx.md#dsh2159) | error | Expected ':' to complete the conditional operator, found {0}. |
+| [DSH2160](DSH2xxx.md#dsh2160) | error | Unsupported statement: the preprocessor line '#{0}' cannot appear inside a function body; mark the function... |
+| [DSH2161](DSH2xxx.md#dsh2161) | error | Expected a member or swizzle name after '.', found {0}. |
+| [DSH2162](DSH2xxx.md#dsh2162) | error | An initializer list is only allowed as a variable initializer, not as a general expression. |
+| [DSH2163](DSH2xxx.md#dsh2163) | error | Expected a variable name, found {1}. |
+| [DSH2164](DSH2xxx.md#dsh2164) | error | Expected 'while' after the body of a 'do' statement, found {0}. |
+| [DSH2165](DSH2xxx.md#dsh2165) | error | Expected '{' to open a block, found {1}. |
+| [DSH2199](DSH2xxx.md#dsh2199) | error | The 1.x front end is not available in this build. |
 | [DSH3001](DSH3xxx.md#dsh3001) | error | GraphFunction declaration is missing a valid function name. |
 | [DSH3002](DSH3xxx.md#dsh3002) | error | Function declaration is missing a valid function name after SelfContained. |
 | [DSH3003](DSH3xxx.md#dsh3003) | error | {0} declaration is missing a function name after the return type '{1}'. |
@@ -68,18 +90,18 @@ which stays authoritative until every raise site is tagged.
 | [DSH3010](DSH3xxx.md#dsh3010) | error | Function '{0}' has a return type and cannot also declare out parameters. Use out parameters without a retur... |
 | [DSH3011](DSH3xxx.md#dsh3011) | error | Function '{0}' must declare at least one out parameter. |
 | [DSH3012](DSH3xxx.md#dsh3012) | error | A function with a return type cannot use a bare 'return;'. Return a value, e.g. 'return expr;'. |
-| [DSH3020](DSH3xxx.md#dsh3020) | error | Namespace(Name=\"...\") is required. |
+| [DSH3020](DSH3xxx.md#dsh3020) | error | Namespace(Name="...") is required. |
 | [DSH3021](DSH3xxx.md#dsh3021) | error | Namespace name cannot be empty. |
 | [DSH3022](DSH3xxx.md#dsh3022) | error | Namespace name '{0}' is not a valid identifier. |
 | [DSH3023](DSH3xxx.md#dsh3023) | error | Namespace '{0}' may only contain Function or GraphFunction blocks. |
 | [DSH3030](DSH3xxx.md#dsh3030) | error | Only one top-level Shader block is currently supported. |
-| [DSH3031](DSH3xxx.md#dsh3031) | error | Shader(Name=\"...\") is required. |
+| [DSH3031](DSH3xxx.md#dsh3031) | error | Shader(Name="...") is required. |
 | [DSH3032](DSH3xxx.md#dsh3032) | error | Shader must provide a Graph block. |
-| [DSH3040](DSH3xxx.md#dsh3040) | error | VirtualFunction(Name=\"...\") is required. |
+| [DSH3040](DSH3xxx.md#dsh3040) | error | VirtualFunction(Name="...") is required. |
 | [DSH3041](DSH3xxx.md#dsh3041) | error | VirtualFunction name cannot be empty. |
 | [DSH3042](DSH3xxx.md#dsh3042) | error | VirtualFunction '{0}' must provide Options = {{ Asset = Path(...); }}. |
 | [DSH3043](DSH3xxx.md#dsh3043) | error | VirtualFunction '{0}' must declare at least one output. |
-| [DSH3050](DSH3xxx.md#dsh3050) | error | {0}(Name=\"...\") is required. |
+| [DSH3050](DSH3xxx.md#dsh3050) | error | {0}(Name="...") is required. |
 | [DSH3060](DSH3xxx.md#dsh3060) | error | Unknown shader section '{0}'. |
 | [DSH3061](DSH3xxx.md#dsh3061) | error | Unknown shader function section '{0}'. |
 | [DSH3062](DSH3xxx.md#dsh3062) | error | Unknown material function section '{0}'. |
@@ -99,7 +121,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH3088](DSH3xxx.md#dsh3088) | error | Expression output target argument '{0}' must use Key=Value syntax. |
 | [DSH3089](DSH3xxx.md#dsh3089) | error | Invalid expression output target argument '{0}'. |
 | [DSH3090](DSH3xxx.md#dsh3090) | error | Expression output target argument '{0}' is declared more than once. |
-| [DSH3091](DSH3xxx.md#dsh3091) | error | Expression output target '{0}' must specify Class=\\\"...\\\". |
+| [DSH3091](DSH3xxx.md#dsh3091) | error | Expression output target '{0}' must specify Class=\"...\". |
 | [DSH3092](DSH3xxx.md#dsh3092) | error | Invalid output declaration initializer '{0}'. |
 | [DSH3093](DSH3xxx.md#dsh3093) | error | Invalid output binding '{0}'. |
 | [DSH3100](DSH3xxx.md#dsh3100) | error | Invalid Layout statement '{0}'. |
@@ -117,15 +139,35 @@ which stays authoritative until every raise site is tagged.
 | [DSH3120](DSH3xxx.md#dsh3120) | error | Graph #Region on line {0} must include a name. |
 | [DSH3121](DSH3xxx.md#dsh3121) | error | Graph #EndRegion on line {0} has no matching #Region. |
 | [DSH3122](DSH3xxx.md#dsh3122) | error | Graph #Region '{0}' is missing #EndRegion. |
-| [DSH3130](DSH3xxx.md#dsh3130) | error | Unexpected '`{' in Properties near '{0}'. Only Group(\"Name\") `{ ... `} may open a brace here. |
+| [DSH3130](DSH3xxx.md#dsh3130) | error | Unexpected '`{' in Properties near '{0}'. Only Group("Name") `{ ... `} may open a brace here. |
 | [DSH3131](DSH3xxx.md#dsh3131) | error | Group(...) requires a non-empty name. |
-| [DSH3132](DSH3xxx.md#dsh3132) | error | Unterminated Group(\"{0}\") `{ ... `} block. |
-| [DSH3133](DSH3xxx.md#dsh3133) | error | Unexpected brace block in Outputs near '{0}'. Only Expression(Class=\"...\") opens a brace block here; ever... |
+| [DSH3132](DSH3xxx.md#dsh3132) | error | Unterminated Group("{0}") `{ ... `} block. |
+| [DSH3133](DSH3xxx.md#dsh3133) | error | Unexpected brace block in Outputs near '{0}'. Only Expression(Class="...") opens a brace block here; every ... |
 | [DSH3134](DSH3xxx.md#dsh3134) | error | Unterminated Expression(...) block in Outputs after '{0}'. |
 | [DSH3135](DSH3xxx.md#dsh3135) | error | Invalid statement '{0}' inside an Expression(...) block. Only Pin[index] = <source>; is allowed there. |
 | [DSH3136](DSH3xxx.md#dsh3136) | error | The Expression(...) block for '{0}' binds no pin. Write at least one Pin[index] = <source>; inside it, or d... |
 | [DSH3137](DSH3xxx.md#dsh3137) | error | Output target pin '{0}' is bound more than once: first to '{1}', then to '{2}'. An Expression(...) block an... |
-| [DSH4001](DSH4xxx.md#dsh4001) | error | %s |
+| [DSH3200](DSH3xxx.md#dsh3200) | error | Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'. |
+| [DSH3201](DSH3xxx.md#dsh3201) | error | Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#... |
+| [DSH3202](DSH3xxx.md#dsh3202) | error | '#pragma' needs a name: material, layout, region or endregion. |
+| [DSH3203](DSH3xxx.md#dsh3203) | error | '#include' needs a quoted path: #include "/Game/Shared/Common.dsh". |
+| [DSH3204](DSH3xxx.md#dsh3204) | error | Expected a type name, found {0}. |
+| [DSH3205](DSH3xxx.md#dsh3205) | error | Expected a name after 'struct', found {1}. |
+| [DSH3206](DSH3xxx.md#dsh3206) | error | Expected '`{' or ';' after the parameter list of '{0}', found {1}. |
+| [DSH3207](DSH3xxx.md#dsh3207) | error | '{0}' is 'extern' and binds to an existing asset, so it cannot have a body; write a prototype ending in ';'. |
+| [DSH3208](DSH3xxx.md#dsh3208) | error | '{0}' has no body. Only an 'extern' prototype may end in ';'; a function you define needs '`{...`}'. |
+| [DSH3210](DSH3xxx.md#dsh3210) | error | A '.dsh' header cannot export '{0}'; only a '.dss' file produces assets. |
+| [DSH3211](DSH3xxx.md#dsh3211) | error | Expected the end of the expression, found {0}. |
+| [DSH3213](DSH3xxx.md#dsh3213) | error | '{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static',... |
+| [DSH3214](DSH3xxx.md#dsh3214) | error | Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional. |
+| [DSH3215](DSH3xxx.md#dsh3215) | error | Expected ']' to close the array dimension, found {1}. |
+| [DSH3216](DSH3xxx.md#dsh3216) | error | Expected ';' after the import path, found {1}. |
+| [DSH3217](DSH3xxx.md#dsh3217) | error | Expected '{' after the struct name, found {1}. |
+| [DSH3218](DSH3xxx.md#dsh3218) | error | Expected ')' to close the parameter list, found {1}. |
+| [DSH3220](DSH3xxx.md#dsh3220) | warning | A '@' in a '///' line must be followed by a directive name; the text is kept as description. |
+| [DSH3221](DSH3xxx.md#dsh3221) | warning | This '///' block is not followed by a field and is ignored. |
+| [DSH3222](DSH3xxx.md#dsh3222) | error | '{0}' is a 1.x declaration; the 2.0 front end does not parse it yet. Keep it in a .dsm/.dsf/.dsh compiled b... |
+| [DSH4001](DSH4xxx.md#dsh4001) | error | Encountered an invalid empty Graph statement. |
 | [DSH4002](DSH4xxx.md#dsh4002) | error | Encountered a Graph assignment without a target variable. |
 | [DSH4003](DSH4xxx.md#dsh4003) | error | MaterialAttributes member assignment '%s' requires a value. |
 | [DSH4004](DSH4xxx.md#dsh4004) | error | '%s' is reserved for the material's outputs and cannot be used as a Graph variable name. Rename the variable. |
@@ -163,7 +205,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH4036](DSH4xxx.md#dsh4036) | error | Graph variable '%s' is not a MaterialAttributes value. |
 | [DSH4037](DSH4xxx.md#dsh4037) | error | Unsupported MaterialAttributes member '%s'. |
 | [DSH4038](DSH4xxx.md#dsh4038) | error | MaterialAttributes member '%s' cannot be assigned from Graph code. |
-| [DSH4039](DSH4xxx.md#dsh4039) | error | MaterialAttributes member '%s' must be assigned a ShadingModel node, for example UE.Expression(Class=\"Shad... |
+| [DSH4039](DSH4xxx.md#dsh4039) | error | MaterialAttributes member '%s' must be assigned a ShadingModel node, for example UE.Expression(Class="Shadi... |
 | [DSH4040](DSH4xxx.md#dsh4040) | error | Failed to create a SetMaterialAttributes node. |
 | [DSH4041](DSH4xxx.md#dsh4041) | error | Failed to connect '%s' as the SetMaterialAttributes base value. |
 | [DSH4042](DSH4xxx.md#dsh4042) | error | Failed to connect MaterialAttributes member '%s'. |
@@ -200,7 +242,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH4073](DSH4xxx.md#dsh4073) | error | AppendVector cannot build %d components; Unreal material vectors support at most 4. |
 | [DSH4074](DSH4xxx.md#dsh4074) | error | Failed to create an AppendVector node. |
 | [DSH4075](DSH4xxx.md#dsh4075) | error | Graph calls must target a named function. |
-| [DSH4076](DSH4xxx.md#dsh4076) | error | UE.SceneTexture expects exactly Id=\"...\" (e.g. Id=\"PostProcessInput0\"). |
+| [DSH4076](DSH4xxx.md#dsh4076) | error | UE.SceneTexture expects exactly Id="..." (e.g. Id="PostProcessInput0"). |
 | [DSH4077](DSH4xxx.md#dsh4077) | error | SampleTexture2D expects exactly two positional arguments: (textureObject, uv). |
 | [DSH4078](DSH4xxx.md#dsh4078) | error | Graph call '%s' is ambiguous because multiple definitions use that name: %s. |
 | [DSH4079](DSH4xxx.md#dsh4079) | error | Failed to compose swizzle channel mask. |
@@ -270,14 +312,14 @@ which stays authoritative until every raise site is tagged.
 | [DSH5028](DSH5xxx.md#dsh5028) | error | UE.%s %s must be a boolean literal. |
 | [DSH5029](DSH5xxx.md#dsh5029) | error | UE.%s %s must be a text value. |
 | [DSH5030](DSH5xxx.md#dsh5030) | error | UE.%s requires parameter: %s |
-| [DSH5031](DSH5xxx.md#dsh5031) | error | UE.StaticSwitchParameter requires Name=\"ParameterName\". |
+| [DSH5031](DSH5xxx.md#dsh5031) | error | UE.StaticSwitchParameter requires Name="ParameterName". |
 | [DSH5032](DSH5xxx.md#dsh5032) | error | UE.StaticSwitchParameter Name must be a text value. |
 | [DSH5033](DSH5xxx.md#dsh5033) | error | UE.StaticSwitchParameter Default/DefaultValue must be true or false. |
 | [DSH5034](DSH5xxx.md#dsh5034) | error | UE.StaticSwitchParameter SortPriority must be an integer literal. |
 | [DSH5035](DSH5xxx.md#dsh5035) | error | UE.CollectionParam requires Collection=Path(...). |
 | [DSH5036](DSH5xxx.md#dsh5036) | error | UE.CollectionParam Collection must be Path(...) or an Unreal object path. |
 | [DSH5037](DSH5xxx.md#dsh5037) | error | UE.CollectionParam could not load MaterialParameterCollection '%s'. |
-| [DSH5038](DSH5xxx.md#dsh5038) | error | UE.CollectionParam requires Parameter=\"Name\". |
+| [DSH5038](DSH5xxx.md#dsh5038) | error | UE.CollectionParam requires Parameter="Name". |
 | [DSH5039](DSH5xxx.md#dsh5039) | error | UE.CollectionParam Parameter must be a text value. |
 | [DSH5040](DSH5xxx.md#dsh5040) | error | UE.CollectionParam collection '%s' does not contain parameter '%s'. |
 | [DSH5041](DSH5xxx.md#dsh5041) | error | Failed to create UE.CollectionParam node. |
@@ -286,18 +328,18 @@ which stays authoritative until every raise site is tagged.
 | [DSH5044](DSH5xxx.md#dsh5044) | error | Generic %s.%s calls require named arguments. |
 | [DSH5045](DSH5xxx.md#dsh5045) | error | Unsupported Substrate builtin call '%s' in Graph. |
 | [DSH5046](DSH5xxx.md#dsh5046) | error | Substrate builtin call '%s' requires Unreal Engine 5.4 or newer. |
-| [DSH5047](DSH5xxx.md#dsh5047) | error | Unsupported UE builtin call '%s' in Graph. For generic MaterialExpression calls, add OutputType=\"float1/2/... |
+| [DSH5047](DSH5xxx.md#dsh5047) | error | Unsupported UE builtin call '%s' in Graph. For generic MaterialExpression calls, add OutputType="float1/2/3... |
 | [DSH5048](DSH5xxx.md#dsh5048) | error | UE.%s OutputType must be a literal value. |
-| [DSH5049](DSH5xxx.md#dsh5049) | error | UE.%s OutputType=\"Substrate\" requires Unreal Engine 5.4 or newer. |
+| [DSH5049](DSH5xxx.md#dsh5049) | error | UE.%s OutputType="Substrate" requires Unreal Engine 5.4 or newer. |
 | [DSH5050](DSH5xxx.md#dsh5050) | error | UE.%s OutputType '%s' is not supported. |
 | [DSH5051](DSH5xxx.md#dsh5051) | error | UE.%s Class must be a literal value. |
-| [DSH5052](DSH5xxx.md#dsh5052) | error | UE.Expression requires Class=\"MaterialExpressionName\". |
+| [DSH5052](DSH5xxx.md#dsh5052) | error | UE.Expression requires Class="MaterialExpressionName". |
 | [DSH5053](DSH5xxx.md#dsh5053) | error | Substrate.%s uses a fixed MaterialExpression class and does not accept Class. |
 | [DSH5054](DSH5xxx.md#dsh5054) | error | UE.%s could not resolve MaterialExpression class '%s'. |
 | [DSH5055](DSH5xxx.md#dsh5055) | error | Substrate.%s resolved to non-Substrate class '%s'. |
 | [DSH5056](DSH5xxx.md#dsh5056) | error | UE.%s cannot use OutputName/Output together with OutputIndex. |
 | [DSH5057](DSH5xxx.md#dsh5057) | error | UE.%s failed to create '%s'. |
-| [DSH5058](DSH5xxx.md#dsh5058) | error | UE.%s OutputType=\"Substrate\" is not supported by UMaterialExpressionCustom. |
+| [DSH5058](DSH5xxx.md#dsh5058) | error | UE.%s OutputType="Substrate" is not supported by UMaterialExpressionCustom. |
 | [DSH5059](DSH5xxx.md#dsh5059) | error | UE.%s OutputType '%s' is not a valid Custom node output type. |
 | [DSH5060](DSH5xxx.md#dsh5060) | error | UE.%s: '%s' is not a property on '%s'. |
 | [DSH5061](DSH5xxx.md#dsh5061) | error | UE.%s Custom input '%s' does not accept Substrate values. |
@@ -344,7 +386,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH6026](DSH6xxx.md#dsh6026) | error | %s '%s' OutputIndex is out of range. |
 | [DSH6027](DSH6xxx.md#dsh6027) | error | %s '%s' OutputName must be a literal value. |
 | [DSH6028](DSH6xxx.md#dsh6028) | error | %s '%s' does not expose an output named '%s'. |
-| [DSH6029](DSH6xxx.md#dsh6029) | error | %s '%s' exposes multiple outputs. Specify Output=\"Name\" or OutputIndex=N. |
+| [DSH6029](DSH6xxx.md#dsh6029) | error | %s '%s' exposes multiple outputs. Specify Output="Name" or OutputIndex=N. |
 | [DSH6030](DSH6xxx.md#dsh6030) | error | %s '%s' output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer. |
 | [DSH6031](DSH6xxx.md#dsh6031) | error | %s '%s' output '%s' uses unsupported type '%s'. |
 | [DSH6032](DSH6xxx.md#dsh6032) | error | %s '%s' output '%s' does not exist on MaterialFunction asset '%s'. |
@@ -419,7 +461,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH7013](DSH7xxx.md#dsh7013) | error | UE builtin argument '{0}' must use named syntax like Key=Value in '{1}'. |
 | [DSH7014](DSH7xxx.md#dsh7014) | error | Invalid UE builtin argument '{0}' in '{1}'. |
 | [DSH7015](DSH7xxx.md#dsh7015) | error | UE builtin argument '{0}' is declared more than once in '{1}'. |
-| [DSH7016](DSH7xxx.md#dsh7016) | error | Unsupported UE builtin function '{0}'. Use OutputType=\\\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray... |
+| [DSH7016](DSH7xxx.md#dsh7016) | error | Unsupported UE builtin function '{0}'. Use OutputType=\"float1/2/3/4/Texture2D/TextureCube/Texture2DArray/V... |
 | [DSH7020](DSH7xxx.md#dsh7020) | error | Invalid property declaration '{0}'. |
 | [DSH7021](DSH7xxx.md#dsh7021) | error | Missing property name in declaration '{0}'. |
 | [DSH7022](DSH7xxx.md#dsh7022) | error | Missing property type after const in declaration '{0}'. |
@@ -460,7 +502,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH7125](DSH7xxx.md#dsh7125) | error | Invalid value '%s' for setting '%s'. %s |
 | [DSH7126](DSH7xxx.md#dsh7126) | error | Invalid value '%s' for setting '%s'. %s |
 | [DSH7127](DSH7xxx.md#dsh7127) | error | Unsupported BlendMode/RenderType '%s'. |
-| [DSH7128](DSH7xxx.md#dsh7128) | error | ShadingModel=\"Substrate\" requires Unreal Engine 5.4 or newer. |
+| [DSH7128](DSH7xxx.md#dsh7128) | error | ShadingModel="Substrate" requires Unreal Engine 5.4 or newer. |
 | [DSH7129](DSH7xxx.md#dsh7129) | error | Unsupported ShadingModel '%s'. |
 | [DSH7130](DSH7xxx.md#dsh7130) | error | Unsupported MaterialDomain '%s'. |
 | [DSH7131](DSH7xxx.md#dsh7131) | error | Invalid reflected property target. |
@@ -531,7 +573,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH8042](DSH8xxx.md#dsh8042) | error | DreamShader file '%s' did not contain any material, ShaderFunction, ShaderLayer, or ShaderLayerBlend assets... |
 | [DSH8043](DSH8xxx.md#dsh8043) | error | Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom. |
 | [DSH8044](DSH8xxx.md#dsh8044) | error | %s: %s |
-| [DSH8045](DSH8xxx.md#dsh8045) | error | %s: Base.FrontMaterial requires ShadingModel=\"Substrate\" or no explicit ShadingModel setting. |
+| [DSH8045](DSH8xxx.md#dsh8045) | error | %s: Base.FrontMaterial requires ShadingModel="Substrate" or no explicit ShadingModel setting. |
 | [DSH8046](DSH8xxx.md#dsh8046) | error | %s: Property '%s' is declared more than once. Property names must be unique. |
 | [DSH8047](DSH8xxx.md#dsh8047) | error | %s: Output '%s': %s |
 | [DSH8048](DSH8xxx.md#dsh8048) | error | %s: Graph blocks do not support binding Outputs to the reserved name 'return'. |
@@ -592,7 +634,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH8103](DSH8xxx.md#dsh8103) | error | Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the exist... |
 | [DSH8104](DSH8xxx.md#dsh8104) | error | Failed to create package '%s'. |
 | [DSH8105](DSH8xxx.md#dsh8105) | error | Failed to create material '%s'. |
-| [DSH8106](DSH8xxx.md#dsh8106) | error | Asset '%s' already exists and is not a DreamShader instance material. Delete it (or remove Backend=\"Instan... |
+| [DSH8106](DSH8xxx.md#dsh8106) | error | Asset '%s' already exists and is not a DreamShader instance material. Delete it (or remove Backend="Instanc... |
 | [DSH8107](DSH8xxx.md#dsh8107) | error | Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the exist... |
 | [DSH8108](DSH8xxx.md#dsh8108) | error | Failed to create package '%s'. |
 | [DSH8109](DSH8xxx.md#dsh8109) | error | Failed to create instance material '%s'. |
