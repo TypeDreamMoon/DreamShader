@@ -226,10 +226,10 @@ namespace UE::DreamShader::Editor::Private
 		 * Tracks whether the current line is inside a `Function` / `GraphFunction` body.
 		 *
 		 * A deliberate re-implementation of `FOpaqueRegionTracker` in
-		 * `Source/DreamShader/Private/Preprocessor/DreamShaderPreprocessor.cpp`, which is file-local
-		 * to that translation unit and has no header. The rules are the same, and they must stay the
-		 * same: a `Function` body is raw HLSL, no asset path can legally live in one, and a false hit
-		 * inside one would splice a `/Game/...` string into shader code.
+		 * `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp`, which is
+		 * file-local to that translation unit and has no header. The rules are the same, and they must
+		 * stay the same: a `Function` body is raw HLSL, no asset path can legally live in one, and a
+		 * false hit inside one would splice a `/Game/...` string into shader code.
 		 *
 		 * Comment and literal state is tracked for the same reason it is there: a `// }` or a `"{"`
 		 * inside an HLSL body would otherwise close the region early and hand the rest of the function

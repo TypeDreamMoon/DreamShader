@@ -1,6 +1,12 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
+//
+// The engine-facing half of the define system. Its counterpart, FDreamShaderDefineTable itself and
+// the name rules, lives in DreamShaderLang (Private/Preprocessor/DreamShaderDefineTable.cpp) where
+// nothing but Core is reachable; everything below reads a project setting, an engine version, the
+// plugin descriptor, a console variable, the command line or another module's delegate, so none of
+// it could follow the table across that boundary.
 
-#include "DreamShaderDefineTable.h"
+#include "DreamShaderDefineResolution.h"
 
 #include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
@@ -20,10 +26,10 @@ namespace UE::DreamShader
 	 * Unreal compiles this module in unity blobs, which paste several .cpp files into ONE translation
 	 * unit -- so a helper at `UE::DreamShader::Private` scope collides with an identically named one
 	 * in any sibling file that lands in the same blob, and `static` or an anonymous namespace does
-	 * not help because it is all still a single TU. DreamShaderPreprocessor.cpp sits in this very
-	 * directory and works on the same domain, so the collision is a question of when, not whether.
+	 * not help because it is all still a single TU. Several files in this module work on the same
+	 * domain, so the collision is a question of when, not whether.
 	 */
-	namespace Private::DefineTableImpl
+	namespace Private::DefineResolutionImpl
 	{
 		/**
 		 * Contributor tags for the tiers DreamShader itself feeds. A tier the plugin owns still gets a
@@ -32,32 +38,6 @@ namespace UE::DreamShader
 		static const TCHAR* const BuiltinSourceTag = TEXT("DreamShader");
 		static const TCHAR* const SettingsSourceTag = TEXT("ProjectSettings");
 		static const TCHAR* const CommandLineSourceTag = TEXT("CommandLine");
-
-		/** The reserved prefix. Spelled once so the check and the diagnostics cannot drift apart. */
-		static const TCHAR* const ReservedNamePrefix = TEXT("DS_");
-
-		// -------------------------------------------------------------------------------------------
-		// Name characters.
-		//
-		// Deliberately NOT FChar::IsAlpha / FChar::IsAlnum: those are Unicode-aware and would happily
-		// accept `Café` or a CJK identifier. The grammar in Plan/preprocessor-conditionals.md is the
-		// ASCII one C and HLSL use, and everything downstream assumes it -- the preprocessor's own
-		// tokenizer, the generated HLSL symbol names, and the VS Code extension's lexer. Accepting a
-		// name here that one of those rejects later is the worst outcome: the define resolves, the
-		// source compiles, and the failure lands somewhere with no obvious link back to the name.
-		// -------------------------------------------------------------------------------------------
-
-		static FORCEINLINE bool IsNameStartChar(const TCHAR Char)
-		{
-			return (Char >= TEXT('A') && Char <= TEXT('Z'))
-				|| (Char >= TEXT('a') && Char <= TEXT('z'))
-				|| Char == TEXT('_');
-		}
-
-		static FORCEINLINE bool IsNameBodyChar(const TCHAR Char)
-		{
-			return IsNameStartChar(Char) || (Char >= TEXT('0') && Char <= TEXT('9'));
-		}
 
 		/** Human-readable "who offered this", for the one-line warnings the resolve path emits. */
 		static FString DescribeSource(const EDreamShaderDefineSource Source, const FString& SourceTag)
@@ -202,96 +182,9 @@ namespace UE::DreamShader
 					TEXT("DreamShader preprocessor define '%s' from %s uses the reserved '%s' prefix ")
 					TEXT("and was ignored. That prefix is owned by the plugin's builtin environment ")
 					TEXT("facts, which are read-only."),
-					*Name, *DescribeSource(Source, SourceTag), ReservedNamePrefix);
+					*Name, *DescribeSource(Source, SourceTag), GDreamShaderReservedDefinePrefix);
 			}
 		}
-	}
-
-	// ---------------------------------------------------------------------------------------------
-	// FDreamShaderDefineTable
-	// ---------------------------------------------------------------------------------------------
-
-	bool FDreamShaderDefineTable::Set(
-		const FString& Name,
-		const FString& Value,
-		const EDreamShaderDefineSource Source,
-		const FString& SourceTag)
-	{
-		// The single choke point for the read-only rule. Every tier -- settings, C++ registration, a
-		// provider delegate holding this table by reference, the command line -- has to come through
-		// here to change anything, so putting the refusal in the container instead of in each
-		// ingestion path is what makes "builtins cannot be overridden" actually hold rather than
-		// merely being everyone's intention.
-		if (Source != EDreamShaderDefineSource::Builtin && IsReservedDreamShaderDefineName(Name))
-		{
-			return false;
-		}
-
-		// Note the asymmetry with OfferToTable: syntactic validity is NOT checked here. Each ingestion
-		// path validates, because each one has a different thing to say about a bad name (a log line,
-		// a false return, a DSH1038 with a file and a line). The container's one job is the rule that
-		// must never be bypassable.
-		FDreamShaderDefineEntry& Entry = Entries.FindOrAdd(Name);
-		Entry.Value = Value;
-		Entry.Source = Source;
-		Entry.SourceTag = SourceTag;
-		return true;
-	}
-
-	TArray<FString> FDreamShaderDefineTable::GetSortedNames() const
-	{
-		TArray<FString> Names;
-		Names.Reserve(Entries.Num());
-		for (const TPair<FString, FDreamShaderDefineEntry>& Pair : Entries)
-		{
-			Names.Add(Pair.Key);
-		}
-
-		// Explicitly case-sensitive. TArray::Sort's default predicate is FString::operator<, which is
-		// Stricmp-based: under it two names differing only in case have no defined relative order and
-		// the sort result can vary run to run. This array feeds the build key, where an unstable order
-		// reads as "every asset is stale, every time".
-		Names.Sort([](const FString& A, const FString& B)
-		{
-			return A.Compare(B, ESearchCase::CaseSensitive) < 0;
-		});
-
-		return Names;
-	}
-
-	// ---------------------------------------------------------------------------------------------
-	// Name rules
-	// ---------------------------------------------------------------------------------------------
-
-	bool IsReservedDreamShaderDefineName(const FString& Name)
-	{
-		// ESearchCase::CaseSensitive is not optional here: FString::StartsWith defaults to IgnoreCase,
-		// which would also reserve `ds_`, `Ds_` and every other spelling. Define names are
-		// case-sensitive per the header's contract, so the reservation has to be too.
-		return Name.StartsWith(Private::DefineTableImpl::ReservedNamePrefix, ESearchCase::CaseSensitive);
-	}
-
-	bool IsValidDreamShaderDefineName(const FString& Name)
-	{
-		if (Name.IsEmpty())
-		{
-			return false;
-		}
-
-		if (!Private::DefineTableImpl::IsNameStartChar(Name[0]))
-		{
-			return false;
-		}
-
-		for (int32 Index = 1; Index < Name.Len(); ++Index)
-		{
-			if (!Private::DefineTableImpl::IsNameBodyChar(Name[Index]))
-			{
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -304,7 +197,7 @@ namespace UE::DreamShader
 		// source can never be refused, so layering them onto a populated table is the same thing as
 		// seeding an empty one -- and it lets ResolveDreamShaderDefines re-assert them at the end
 		// without having to rebuild anything.
-		const FString SourceTag(Private::DefineTableImpl::BuiltinSourceTag);
+		const FString SourceTag(Private::DefineResolutionImpl::BuiltinSourceTag);
 
 		// Engine version. Read from the DREAMSHADER_UE_* macros rather than ENGINE_*_VERSION so that a
 		// fork overriding them for compat testing is reflected in what the sources see, and so that
@@ -381,7 +274,7 @@ namespace UE::DreamShader
 				TEXT("DreamShader define '%s' registered by '%s' uses the reserved '%s' prefix; the ")
 				TEXT("registration was rejected. Builtin environment defines are read-only -- pick a ")
 				TEXT("name outside that prefix."),
-				*Name, *SourceTag, Private::DefineTableImpl::ReservedNamePrefix);
+				*Name, *SourceTag, GDreamShaderReservedDefinePrefix);
 			return false;
 		}
 
@@ -392,7 +285,7 @@ namespace UE::DreamShader
 		NewEntry.Source = EDreamShaderDefineSource::Registered;
 		NewEntry.SourceTag = SourceTag;
 
-		Private::DefineTableImpl::FRegistry& Registry = Private::DefineTableImpl::GetRegistry();
+		Private::DefineResolutionImpl::FRegistry& Registry = Private::DefineResolutionImpl::GetRegistry();
 		FScopeLock Lock(&Registry.Mutex);
 
 		if (const FDreamShaderDefineEntry* Existing = Registry.Registered.Find(Name))
@@ -400,7 +293,7 @@ namespace UE::DreamShader
 			// Re-registering an identical entry is a no-op, and must not bump the revision: a
 			// StartupModule path gets run again on a hot reload, and a spurious bump throws away every
 			// ThinCustom in-memory material for nothing.
-			if (Private::DefineTableImpl::AreEntriesIdentical(*Existing, NewEntry))
+			if (Private::DefineResolutionImpl::AreEntriesIdentical(*Existing, NewEntry))
 			{
 				return true;
 			}
@@ -413,7 +306,7 @@ namespace UE::DreamShader
 
 	void UnregisterDreamShaderDefinesFrom(const FString& SourceTag)
 	{
-		Private::DefineTableImpl::FRegistry& Registry = Private::DefineTableImpl::GetRegistry();
+		Private::DefineResolutionImpl::FRegistry& Registry = Private::DefineResolutionImpl::GetRegistry();
 		FScopeLock Lock(&Registry.Mutex);
 
 		int32 RemovedCount = 0;
@@ -449,14 +342,14 @@ namespace UE::DreamShader
 		// A freshly generated handle rather than the delegate's own: two providers bound to the same
 		// method of the same object share a delegate handle, and unregistering one would then remove
 		// the other. Generated handles are unique per registration by construction.
-		Private::DefineTableImpl::FProviderRecord Record;
+		Private::DefineResolutionImpl::FProviderRecord Record;
 		Record.Handle = FDelegateHandle(FDelegateHandle::GenerateNewHandle);
 		Record.Delegate = MoveTemp(Provider);
 
 		// Copied out before the move below leaves Record in a moved-from state.
 		const FDelegateHandle Handle = Record.Handle;
 
-		Private::DefineTableImpl::FRegistry& Registry = Private::DefineTableImpl::GetRegistry();
+		Private::DefineResolutionImpl::FRegistry& Registry = Private::DefineResolutionImpl::GetRegistry();
 		FScopeLock Lock(&Registry.Mutex);
 		Registry.Providers.Add(MoveTemp(Record));
 		++Registry.Revision;
@@ -471,11 +364,11 @@ namespace UE::DreamShader
 			return;
 		}
 
-		Private::DefineTableImpl::FRegistry& Registry = Private::DefineTableImpl::GetRegistry();
+		Private::DefineResolutionImpl::FRegistry& Registry = Private::DefineResolutionImpl::GetRegistry();
 		FScopeLock Lock(&Registry.Mutex);
 
 		const int32 RemovedCount = Registry.Providers.RemoveAll(
-			[Handle](const Private::DefineTableImpl::FProviderRecord& Record)
+			[Handle](const Private::DefineResolutionImpl::FProviderRecord& Record)
 			{
 				return Record.Handle == Handle;
 			});
@@ -488,14 +381,14 @@ namespace UE::DreamShader
 
 	void SetDreamShaderCommandLineDefines(const UE::DreamShader::FDreamShaderDefineValueMap& Defines)
 	{
-		Private::DefineTableImpl::FRegistry& Registry = Private::DefineTableImpl::GetRegistry();
+		Private::DefineResolutionImpl::FRegistry& Registry = Private::DefineResolutionImpl::GetRegistry();
 		FScopeLock Lock(&Registry.Mutex);
 
 		// Names are not validated here. The command line is one of the two tiers whose bad entries are
 		// dropped with a warning at resolve time (the settings table is the other), and doing it there
 		// rather than here means the warning is emitted once per compile, next to the compile it
 		// actually affected, instead of once at startup where nobody is looking.
-		if (Private::DefineTableImpl::AreMapsIdentical(Registry.CommandLine, Defines))
+		if (Private::DefineResolutionImpl::AreMapsIdentical(Registry.CommandLine, Defines))
 		{
 			return;
 		}
@@ -506,7 +399,7 @@ namespace UE::DreamShader
 
 	FDreamShaderDefineTable ResolveDreamShaderDefines()
 	{
-		using namespace Private::DefineTableImpl;
+		using namespace Private::DefineResolutionImpl;
 
 		FDreamShaderDefineTable Table;
 
@@ -622,7 +515,7 @@ namespace UE::DreamShader
 
 	uint32 GetDreamShaderDefineRevision()
 	{
-		Private::DefineTableImpl::FRegistry& Registry = Private::DefineTableImpl::GetRegistry();
+		Private::DefineResolutionImpl::FRegistry& Registry = Private::DefineResolutionImpl::GetRegistry();
 		FScopeLock Lock(&Registry.Mutex);
 		return Registry.Revision;
 	}
@@ -638,7 +531,7 @@ namespace UE::DreamShader
 		// property already holds its new value and the old one is gone, so there is nothing left to
 		// compare against. An over-bump costs one regeneration; a missed one costs a session spent
 		// looking at a material that does not match its source.
-		Private::DefineTableImpl::FRegistry& Registry = Private::DefineTableImpl::GetRegistry();
+		Private::DefineResolutionImpl::FRegistry& Registry = Private::DefineResolutionImpl::GetRegistry();
 		FScopeLock Lock(&Registry.Mutex);
 		++Registry.Revision;
 	}

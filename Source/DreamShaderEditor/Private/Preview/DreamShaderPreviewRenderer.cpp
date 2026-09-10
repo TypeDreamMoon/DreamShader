@@ -2,6 +2,7 @@
 #include "DreamShaderDiagnostic.h"
 
 #include "DreamShaderCompileService.h"
+#include "DreamShaderDefineResolution.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderParser.h"
 // PreprocessDreamShaderSource / ResolveDreamShaderDefines: the preview must resolve its material

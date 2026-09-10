@@ -29,6 +29,7 @@ public class DreamShaderEditor : ModuleRules
 				"DirectoryWatcher",
 				"DreamShader",
 				"DreamShaderCompiler",
+				"DreamShaderLang",
 				"Engine",
 				"InputCore",
 				"Json",

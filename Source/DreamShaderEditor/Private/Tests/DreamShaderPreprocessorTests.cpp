@@ -4,11 +4,11 @@
 // DreamShaderSourceHasPreprocessorDirectives, BuildDreamShaderDefineKeyFragment, and the parts of
 // FDreamShaderDefineTable that can be exercised without the process-global registry.
 //
-// These are written against the FROZEN headers (Public/DreamShaderPreprocessor.h,
-// Public/DreamShaderDefineTable.h) and Plan/preprocessor-conditionals.md -- deliberately not
-// against the implementation. Everything asserted here is a promise the feature makes to its
-// callers, so a failure means either the implementation or the contract is wrong, never that the
-// test needs "updating to match".
+// These are written against the FROZEN headers (DreamShaderLang/Public/DreamShaderPreprocessor.h,
+// DreamShaderLang/Public/DreamShaderDefineTable.h) and Plan/preprocessor-conditionals.md --
+// deliberately not against the implementation. Everything asserted here is a promise the feature
+// makes to its callers, so a failure means either the implementation or the contract is wrong,
+// never that the test needs "updating to match".
 //
 // Two rules this file follows throughout:
 //
@@ -24,6 +24,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "DreamShaderDefineResolution.h"
 #include "DreamShaderDefineTable.h"
 #include "DreamShaderDiagnostic.h"
 #include "DreamShaderPreprocessor.h"

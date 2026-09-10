@@ -5,6 +5,7 @@
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Compile/DreamShaderEditorCompileAdapter.h"
 #include "Diagnostics/DreamShaderTextWireUtils.h"
+#include "DreamShaderDefineResolution.h"
 #include "DreamShaderDefineTable.h"
 #include "DreamShaderModule.h"
 #include "SourceFiles/DreamShaderSourceFileUtils.h"

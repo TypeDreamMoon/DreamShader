@@ -1,6 +1,6 @@
 #include "DreamShaderSettings.h"
 
-#include "DreamShaderDefineTable.h"
+#include "DreamShaderDefineResolution.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
 

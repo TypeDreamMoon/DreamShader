@@ -93,11 +93,15 @@ namespace UE::DreamShader
 	 *
 	 * @param InText                    The file's raw text.
 	 * @param InFilePathForDiagnostics  Used only to build error messages.
-	 * @param InDefines                 Resolved table, normally from ResolveDreamShaderDefines().
+	 * @param InDefines                 Resolved table, normally from ResolveDreamShaderDefines(),
+	 *                                 which lives in the DreamShader module
+	 *                                 (DreamShaderDefineResolution.h) -- building a table reads
+	 *                                 project settings, the engine version and the plugin
+	 *                                 descriptor, none of which this module may see.
 	 * @param OutResult                 Valid only when this returns true.
 	 * @param OutError                  DSH1030..DSH1042 on failure.
 	 */
-	DREAMSHADER_API bool PreprocessDreamShaderSource(
+	DREAMSHADERLANG_API bool PreprocessDreamShaderSource(
 		const FString& InText,
 		const FString& InFilePathForDiagnostics,
 		const FDreamShaderDefineTable& InDefines,
@@ -110,7 +114,7 @@ namespace UE::DreamShader
 	 * For callers that only need the Adopt-gate answer and have no define table to hand -- and for
 	 * the ones that must give that answer about a file whose conditions would fail to evaluate.
 	 */
-	DREAMSHADER_API bool DreamShaderSourceHasPreprocessorDirectives(const FString& InText);
+	DREAMSHADERLANG_API bool DreamShaderSourceHasPreprocessorDirectives(const FString& InText);
 
 	/**
 	 * Evaluates ONE `#if` / `#elif` condition on its own -- no file, no directives, no branch state.
@@ -144,7 +148,7 @@ namespace UE::DreamShader
 	 * @param bOutResult    Valid only when this returns true.
 	 * @param OutError      DSH1034, DSH1036, DSH1040, DSH1041 or DSH1042 on failure.
 	 */
-	DREAMSHADER_API bool EvaluateDreamShaderConditionExpression(
+	DREAMSHADERLANG_API bool EvaluateDreamShaderConditionExpression(
 		const FString& InExpression,
 		const FDreamShaderDefineTable& InDefines,
 		bool& bOutResult,
@@ -165,5 +169,5 @@ namespace UE::DreamShader
 	 * other's cached asset. Length-prefix the parts, or escape a delimiter that values cannot spell.
 	 * The same applies at the boundaries: {AB: "C"} and {A: "BC"} must differ.
 	 */
-	DREAMSHADER_API FString BuildDreamShaderDefineKeyFragment(const FDreamShaderDefineValueMap& TouchedDefines);
+	DREAMSHADERLANG_API FString BuildDreamShaderDefineKeyFragment(const FDreamShaderDefineValueMap& TouchedDefines);
 }

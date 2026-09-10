@@ -8,6 +8,7 @@
 #include "DreamShaderMaterialGeneratorSourceLoading.h"
 
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
+#include "DreamShaderDefineResolution.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderPreprocessor.h"
 #include "Misc/FileHelper.h"

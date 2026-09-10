@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Delegates/Delegate.h"
 
 namespace UE::DreamShader
 {
@@ -120,7 +119,7 @@ namespace UE::DreamShader
 	 * Names are CASE-SENSITIVE; see FDreamShaderDefineNameKeyFuncs for why that is pinned rather than
 	 * inherited from the container.
 	 */
-	class DREAMSHADER_API FDreamShaderDefineTable
+	class DREAMSHADERLANG_API FDreamShaderDefineTable
 	{
 	public:
 		const FDreamShaderDefineEntry* Find(const FString& Name) const { return Entries.Find(Name); }
@@ -155,80 +154,39 @@ namespace UE::DreamShader
 	};
 
 	/**
+	 * The reserved prefix, spelled once.
+	 *
+	 * IsReservedDreamShaderDefineName is the check; this is the same string as text, because the two
+	 * warnings that refuse a reserved name QUOTE it ('... uses the reserved 'DS_' prefix ...') and
+	 * those live in another module now -- the resolution half, which cannot see a file-local constant
+	 * here. Publishing it is what keeps the check and the diagnostics from drifting apart across that
+	 * boundary.
+	 */
+	inline const TCHAR* const GDreamShaderReservedDefinePrefix = TEXT("DS_");
+
+	/**
 	 * True for names DreamShader owns: the `DS_` prefix. Reserved is a prefix rule rather than a
 	 * fixed list so that adding a builtin later cannot silently start losing to a define some
 	 * project already registered under that name.
 	 */
-	DREAMSHADER_API bool IsReservedDreamShaderDefineName(const FString& Name);
+	DREAMSHADERLANG_API bool IsReservedDreamShaderDefineName(const FString& Name);
 
 	/** True for a syntactically valid define name: [A-Za-z_][A-Za-z0-9_]*. */
-	DREAMSHADER_API bool IsValidDreamShaderDefineName(const FString& Name);
-
-	/**
-	 * The environment facts, ADDED to OutTable rather than replacing its contents -- a Builtin write
-	 * is never refused, so merging is the same as seeding an empty table and also lets the resolver
-	 * re-assert the builtins over anything a later tier put in their slots.
-	 *
-	 * Recomputed on each call.
-	 *
-	 * HARD RULE for anything added here: it must be invariant for the lifetime of the process.
-	 * A define is evaluated once, at generation time, and its effect is then baked into a saved
-	 * asset; a value that can change mid-session makes the build unreproducible and the asset's
-	 * build key a lie. `r.Substrate` qualifies only because it is a read-only CVar.
-	 */
-	DREAMSHADER_API void GetBuiltinDreamShaderDefines(FDreamShaderDefineTable& OutTable);
+	DREAMSHADERLANG_API bool IsValidDreamShaderDefineName(const FString& Name);
 
 	// -----------------------------------------------------------------------------------------------
-	// Registry.
+	// Building one of these tables is somebody else's job.
 	//
-	// Free functions in this namespace rather than an IDreamShaderModule interface, matching how the
-	// rest of the plugin's cross-module surface is already shaped (GetSourceShaderRoots and family).
-	// FDreamShaderModule is a concrete class with no interface to extend.
+	// The registration, provider, command-line and resolution API -- GetBuiltinDreamShaderDefines,
+	// RegisterDreamShaderDefine, UnregisterDreamShaderDefinesFrom, FDreamShaderDefineProviderDelegate,
+	// RegisterDreamShaderDefineProvider, UnregisterDreamShaderDefineProvider,
+	// SetDreamShaderCommandLineDefines, ResolveDreamShaderDefines, GetDreamShaderDefineRevision and
+	// NotifyDreamShaderDefineSettingsChanged -- lives in the DreamShader module, in
+	// `DreamShaderDefineResolution.h`. Every one of them reads something this module is not allowed to
+	// see: UDreamShaderSettings, the engine version, the plugin descriptor, a console variable, the
+	// command line, a delegate registered by another module.
+	//
+	// What is left here is pure text: a table can be built by hand, entry by entry, which is exactly
+	// what lets the preprocessor be unit-tested exhaustively with no engine underneath it.
 	// -----------------------------------------------------------------------------------------------
-
-	/**
-	 * Contributes a define from C++. Returns false (and logs an error) for an invalid or reserved
-	 * name; the table is unchanged in that case.
-	 *
-	 * SourceTag identifies the contributor so UnregisterDreamShaderDefinesFrom can withdraw the whole
-	 * set when a plugin shuts down. Registering the same name twice from the same tag overwrites.
-	 *
-	 * Callers must register before the first compile. A module whose value depends on state that is
-	 * not ready at StartupModule time should register a provider instead -- resolution order stops
-	 * mattering there.
-	 */
-	DREAMSHADER_API bool RegisterDreamShaderDefine(const FString& Name, const FString& Value, const FString& SourceTag);
-
-	/** Withdraws every define a given contributor registered. Safe for an unknown tag. */
-	DREAMSHADER_API void UnregisterDreamShaderDefinesFrom(const FString& SourceTag);
-
-	/**
-	 * Pulled during ResolveDreamShaderDefines(), after direct registrations and before the command
-	 * line. Write into the table with Set(..., EDreamShaderDefineSource::Provider, YourTag).
-	 */
-	DECLARE_DELEGATE_OneParam(FDreamShaderDefineProviderDelegate, FDreamShaderDefineTable& /*InOutTable*/);
-
-	DREAMSHADER_API FDelegateHandle RegisterDreamShaderDefineProvider(FDreamShaderDefineProviderDelegate Provider);
-	DREAMSHADER_API void UnregisterDreamShaderDefineProvider(FDelegateHandle Handle);
-
-	/** Set once by the commandlet from `-Define=NAME=VALUE`. Replaces any previous command-line set. */
-	DREAMSHADER_API void SetDreamShaderCommandLineDefines(const FDreamShaderDefineValueMap& Defines);
-
-	/**
-	 * Builds the table one compile will see: Builtin, then Settings, Registered, Provider and
-	 * CommandLine in that order, each overwriting the last. Reserved names offered by a non-builtin
-	 * tier are dropped with a warning rather than failing the compile -- the offer is a configuration
-	 * mistake, not a source error, and it has no file or line to point at.
-	 */
-	DREAMSHADER_API FDreamShaderDefineTable ResolveDreamShaderDefines();
-
-	/**
-	 * Bumped whenever any tier changes (register, unregister, provider add/remove, command-line set,
-	 * settings edit). Anything holding compiled output keyed by the define set -- the ThinCustom
-	 * in-memory materials, above all -- compares this and invalidates when it moves.
-	 */
-	DREAMSHADER_API uint32 GetDreamShaderDefineRevision();
-
-	/** Called by the settings object's PostEditChangeProperty. Bumps the revision. */
-	DREAMSHADER_API void NotifyDreamShaderDefineSettingsChanged();
 }

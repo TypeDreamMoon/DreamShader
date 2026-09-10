@@ -15,7 +15,7 @@
 #include "Compile/DreamShaderEditorCompileAdapter.h"
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
 // GetDreamShaderDefineRevision, polled in Tick so a define change invalidates the in-memory materials.
-#include "DreamShaderDefineTable.h"
+#include "DreamShaderDefineResolution.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
 #include "DreamShaderVersionCompat.h"

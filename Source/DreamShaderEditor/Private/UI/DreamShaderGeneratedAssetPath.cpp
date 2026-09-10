@@ -2,6 +2,7 @@
 #include "DreamShaderDiagnostic.h"
 
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
+#include "DreamShaderDefineResolution.h"
 #include "DreamShaderParser.h"
 // PreprocessDreamShaderSource / ResolveDreamShaderDefines: this helper has to answer with the same
 // cut the generator made, or it names an asset the source does not build. See the block below.

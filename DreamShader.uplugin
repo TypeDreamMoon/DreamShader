@@ -17,6 +17,11 @@
 	"Installed": false,
 	"Modules": [
 		{
+			"Name": "DreamShaderLang",
+			"Type": "Runtime",
+			"LoadingPhase": "PostConfigInit"
+		},
+		{
 			"Name": "DreamShader",
 			"Type": "Runtime",
 			"LoadingPhase": "PostConfigInit"
