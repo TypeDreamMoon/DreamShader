@@ -1,0 +1,13 @@
+// `#pragma material(...)` value kinds: identifier, boolean, unsigned number, signed number and
+// quoted string. "File-level, at most one, key conflict is an error" is a semantic rule (M2);
+// the parser accepts every line and records them in source order.
+
+#pragma material(Domain = Surface, ShadingModel = Unlit, BlendMode = Translucent)
+#pragma material(TwoSided = true, bUsedWithNiagaraSprites = false)
+#pragma material(OpacityMaskClipValue = 0.333, TranslucencySortPriority = -2)
+#pragma material(Backend = "Graph")
+
+export void M_Settings(inout material m)
+{
+    m.EmissiveColor = float3(1.0, 1.0, 1.0);
+}

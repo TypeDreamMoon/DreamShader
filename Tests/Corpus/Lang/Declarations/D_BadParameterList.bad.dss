@@ -1,0 +1,6 @@
+// A parameter list with a trailing comma and no parameter after it.
+
+export float2 MF_Broken(float A, )
+{
+    return float2(A, A);
+}

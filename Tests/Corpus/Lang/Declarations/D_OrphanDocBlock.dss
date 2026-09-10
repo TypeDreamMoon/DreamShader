@@ -1,0 +1,8 @@
+// A `///` block with no declaration under it documents nothing. It is dropped with a warning
+// (DSH3221) and the file still parses -- so the block is NOT in the tree, and the printer does not
+// write it back. That is why this positive fixture still round-trips.
+
+uniform float Gain = 1.0;
+
+/// @group Look
+/// @desc This block has no declaration after it and is ignored.

@@ -1,0 +1,16 @@
+// `(Type)x` is a cast; `(expr)` is a parenthesised expression. Only built-in type spellings are
+// treated as a cast target -- the parser has no symbol table.
+
+export float Casts(float A, int I, float3 V)
+{
+    int    ToInt   = (int)A;
+    float  ToFloat = (float)I;
+    uint   ToUInt  = (uint)I;
+    half   ToHalf  = (half)A;
+    float3 ToVec   = (float3)A;
+    float2 Slice   = (float2)V;
+    float  Grouped = (A + 1.0) * 2.0;
+    float  Chained = (float)(int)A;
+
+    return ToFloat + ToInt + ToUInt + ToHalf + ToVec.x + Slice.y + Grouped + Chained;
+}

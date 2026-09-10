@@ -1,0 +1,9 @@
+// Every scalar uniform type.
+
+/// @group Scalars @desc A plain float parameter @slider 0 4
+uniform float  Float  = 1.0;
+uniform half   Half   = 0.5h;
+uniform double Double = 2.0;
+uniform int    Int    = 3;
+uniform uint   UInt   = 4u;
+uniform bool   Bool   = false;

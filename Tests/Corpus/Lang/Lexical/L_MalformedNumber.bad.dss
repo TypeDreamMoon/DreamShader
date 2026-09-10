@@ -1,0 +1,5 @@
+// Malformed numeric literals: two decimal points, an empty hex body, a dangling exponent.
+
+static const float TwoDots           = 1.2.3;
+static const int   EmptyHex          = 0x;
+static const float DanglingExponent  = 1e;

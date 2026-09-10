@@ -1,0 +1,10 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 3,
+		"structs": 2,
+		"functions": 1,
+		"roundtrip": true
+	}
+}

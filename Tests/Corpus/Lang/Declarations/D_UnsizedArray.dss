@@ -1,0 +1,14 @@
+// An unsized `[]` is recorded as a NULL array dimension -- the initializer decides the length.
+// It is the one array shape whose round trip does not go through an expression: the printer writes
+// the empty brackets back from that null entry.
+
+static const float  Kernel[]  = { -1.0, 0.0, 1.0 };
+static const float2 Corners[] = { { 0.0, 0.0 }, { 1.0, 1.0 } };
+
+float SumKernel()
+{
+    float Total   = 0.0;
+    float Local[] = { 1.0, 2.0 };
+    Total = Kernel[0] + Corners[1].x + Local[1];
+    return Total;
+}

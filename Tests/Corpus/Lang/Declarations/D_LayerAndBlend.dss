@@ -1,0 +1,15 @@
+// `/// @layer` and `/// @layerblend` pick the asset class; the signature is an ordinary one.
+// `entry` in the golden is structural: the first function whose signature is `void (inout material)`,
+// whatever its linkage.
+
+/// @layer
+export void L_Coat(inout material m)
+{
+    m.Roughness = 0.2;
+}
+
+/// @layerblend
+export void B_Mix(material Base, material Top, float Alpha, inout material Result)
+{
+    Result = Base;
+}

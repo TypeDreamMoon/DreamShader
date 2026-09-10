@@ -1,0 +1,23 @@
+// A `/// @custom` body is NOT parsed as DreamShaderLang: it is captured verbatim and handed to the
+// engine's shader compiler. Braces inside strings and comments must not end the capture, and a
+// `#` line inside the body belongs to the shader compiler, not to the DreamShader preprocessor.
+
+/// @custom
+float3 AtmosphereLightDir()
+{
+    return View.AtmosphereLightDirection[0].xyz;
+}
+
+/// @custom selfcontained
+/// @desc Braces inside strings, comments and directives must not end the raw body.
+float4 RawBodyTorture(float2 UV)
+{
+    #include "/Engine/Private/Common.ush"
+    #pragma message("an unbalanced } inside a directive")
+    // a line comment with a closing brace } and an opening one {
+    /* a block comment: } { */
+    float4 Result = float4(0.0, 0.0, 0.0, 0.0);
+    if (UV.x > 0.5) { Result.x = 1.0; }
+    printf("a closing brace } inside a string literal");
+    return Result;
+}

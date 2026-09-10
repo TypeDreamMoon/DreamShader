@@ -1,0 +1,12 @@
+// A `#` is a directive only when it is the first thing on its line. Anywhere else it is a lexical
+// error (DSH2106) and the lexer emits an Unknown token so the parser fails at the same spot --
+// here that also costs a DSH2154 for the `;` that never arrives.
+//
+// The counterpart is Declarations/D_CustomBodyOpaqueToLexer.dss: the SAME character inside a
+// `/// @custom` body is reported by nothing at all. The suppression is scoped to opaque bodies,
+// and this fixture is what says so.
+
+export void M_Broken(inout material m)
+{
+    m.EmissiveColor = float3(1.0, 1.0, 1.0) # 2.0;
+}

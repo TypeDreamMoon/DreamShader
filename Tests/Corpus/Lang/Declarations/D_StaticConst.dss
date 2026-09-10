@@ -1,0 +1,14 @@
+// The five file-scope storage combinations: `static const`, `static`, `const`, none, `uniform`.
+
+static const float  DebugScale = 1.0;
+static const float3 Luma       = float3(0.299, 0.587, 0.114);
+static const int    Steps      = 8;
+
+/// @desc A documented compile-time constant.
+static const float Epsilon = 1e-5;
+
+static float MutableStatic = 0.0;
+const  float ConstOnly     = 2.0;
+float        PlainGlobal   = 3.0;
+
+uniform float Parameter = 4.0;

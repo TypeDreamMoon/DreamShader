@@ -1,0 +1,9 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 9,
+		"uniforms": 9,
+		"roundtrip": true
+	}
+}

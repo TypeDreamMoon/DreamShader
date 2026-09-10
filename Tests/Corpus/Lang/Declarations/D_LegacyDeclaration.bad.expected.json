@@ -1,0 +1,5 @@
+{
+	"entryPoint": "lang",
+	"outcome": "error",
+	"errorContains": ["DSH3222"]
+}

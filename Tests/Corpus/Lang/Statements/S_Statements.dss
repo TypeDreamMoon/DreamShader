@@ -1,0 +1,67 @@
+// Every statement kind in 2.0.
+
+export float3 EveryStatement(float A, float3 V, bool P)
+{
+    float Local = A;                    // variable declaration
+    float X = 0.0, Y = 1.0, Z;          // several declarators, the last uninitialised
+    static const float K = 2.0;         // a local compile-time constant
+    const float C = 3.0;
+
+    Local = Local + 1.0;                // expression statement
+
+    {                                   // block
+        Local *= 2.0;
+    }
+
+    if (P)                              // if
+    {
+        Local += 1.0;
+    }
+    else if (A > 0.0)                   // else if
+    {
+        Local -= 1.0;
+    }
+    else                                // else
+    {
+        Local = 0.0;
+    }
+
+    for (int i = 0; i < 4; ++i)         // for
+    {
+        Local += float(i);
+        if (i == 2)
+        {
+            continue;                   // continue
+        }
+        if (i == 3)
+        {
+            break;                      // break
+        }
+    }
+
+    while (Local > 10.0)                // while
+    {
+        Local -= 1.0;
+    }
+
+    do                                  // do ... while
+    {
+        Local += 0.5;
+    }
+    while (Local < 1.0);
+
+    ;                                   // empty statement
+
+    if (Local < 0.0)
+    {
+        discard;                        // discard
+    }
+
+    return V * Local + X + Y + Z + K + C;   // return with a value
+}
+
+void NoReturnValue(inout material m)
+{
+    m.EmissiveColor = float3(0.0, 0.0, 0.0);
+    return;                             // bare return
+}

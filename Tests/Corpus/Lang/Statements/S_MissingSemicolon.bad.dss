@@ -1,0 +1,7 @@
+// A statement that never ends.
+
+export float MissingSemicolon(float A)
+{
+    float Local = A
+    return Local;
+}

@@ -1,0 +1,10 @@
+// Two blocks that never close. The parser must report the end of file (DSH2150) and stop: the
+// module loop, the block loop and the recovery skip all have to make progress at the last token,
+// or a truncated file hangs the editor instead of underlining a brace.
+
+export float Unterminated(float A)
+{
+    float Local = A;
+    if (Local > 0.0)
+    {
+        Local += 1.0;

@@ -1,0 +1,8 @@
+// Any other `#pragma` is kept verbatim for the printer and ignored by everything else.
+// The parser does not look inside the rest of the line.
+
+#pragma once
+#pragma warning(disable : 3206)
+#pragma pack_matrix(row_major)
+
+uniform float Gain = 1.0;

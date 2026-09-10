@@ -1,0 +1,25 @@
+// `export` functions become UMaterialFunction assets: optional inputs are HLSL default arguments,
+// extra outputs are HLSL `out` parameters.
+
+/// @library MoonToon|Shared
+/// @desc UV channel select, then scale and offset.
+/// @param UVChannel Which UV channel to read.
+export float2 MF_ScaleUV(float UVChannel = 0.0, float4 ScaleOffset = float4(1, 1, 0, 0))
+{
+    return UVChannel * ScaleOffset.xy + ScaleOffset.zw;
+}
+
+/// @library MoonToon|Sampling
+export void MF_SplitTexel(Texture2D Tex, float2 UV, out float3 RGB, out float Alpha)
+{
+    float4 Texel = Tex.Sample(UV);
+    RGB   = Texel.rgb;
+    Alpha = Texel.a;
+}
+
+/// @name /Game/Materials/Functions/MF_Desaturate
+export float3 MF_Desaturate(float3 Color, float Amount = 1.0)
+{
+    float Grey = dot(Color, float3(0.299, 0.587, 0.114));
+    return lerp(Color, float3(Grey, Grey, Grey), Amount);
+}

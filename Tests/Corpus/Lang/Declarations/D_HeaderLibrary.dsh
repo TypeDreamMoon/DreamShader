@@ -1,0 +1,27 @@
+// A `.dsh` shared header: helpers, constants, structs and includes, but never `export`.
+
+#include "/Game/Shared/Common.dsh"
+
+static const float3 LumaWeights = float3(0.299, 0.587, 0.114);
+
+uniform float SharedGain = 1.0;
+
+struct ToonSample
+{
+    float3 Colour;
+    float  Mask;
+};
+
+/// @asset /MoonToon/MaterialFunctions/Utils/MF_UVChannelSwitch
+extern float2 MF_UVChannelSwitch(float UVChannelIndex);
+
+float Luma(float3 Colour)
+{
+    return dot(Colour, LumaWeights);
+}
+
+/// @custom
+float3 AtmosphereLightDir()
+{
+    return View.AtmosphereLightDirection[0].xyz;
+}

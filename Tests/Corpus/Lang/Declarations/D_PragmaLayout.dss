@@ -1,0 +1,14 @@
+// `#pragma layout(...)`: decompiler-written node coordinates, one entry per line. The first
+// argument is positional; everything after it is `Key = Value`.
+
+#pragma layout(Node, Var = UV, X = -1100, Y = -120)
+#pragma layout(Node, Var = Tint, X = -880, Y = 40)
+#pragma layout(Comment, Text = "Sampling", X = -1200, Y = -240, Width = 520, Height = 300)
+
+uniform float4 Tint = float4(1, 1, 1, 1);
+
+export void M_Laid(inout material m)
+{
+    float2 UV = UE.TexCoord(Index = 0);
+    m.EmissiveColor = Tint.rgb * UV.x;
+}

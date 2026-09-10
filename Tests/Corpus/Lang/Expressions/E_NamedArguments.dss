@@ -1,0 +1,17 @@
+// `Ident = expr` at the top level of a call argument is a NAMED argument -- the 1.x spelling of
+// `UE.TexCoord(Index = 0)`. Positional arguments are still allowed, and may precede a named one.
+
+export void M_Named(inout material m)
+{
+    float2 UV       = UE.TexCoord(Index = 0);
+    float2 UVShort  = UE.TexCoord(0);
+    float4 VC       = UE.VertexColor();
+    float  T        = UE.Time();
+    float  Mixed    = lerp(0.0, 1.0, Alpha = 0.5);
+    float  Assigned = 0.0;
+
+    m.EmissiveColor = UE.Expression(Class = "MaterialExpressionConstant3Vector",
+                                    Constant = float3(1.0, 0.5, 0.25),
+                                    Desc = "named arguments carry pins and properties alike");
+    m.Opacity = VC.a * UV.x * UVShort.y * T + Mixed + (Assigned = 1.0);
+}

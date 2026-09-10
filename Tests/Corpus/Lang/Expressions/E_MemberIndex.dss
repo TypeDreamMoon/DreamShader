@@ -1,0 +1,19 @@
+// Member access, swizzles, indexing and call chains -- all FMemberExpr / FIndexExpr / FCallExpr.
+// The parser does not decide whether `.rgb` is a swizzle or a struct field; the semantic pass does.
+
+export float3 Chains(Texture2D Tex, float2 UV, float4x4 M)
+{
+    float4 Texel     = Tex.Sample(UV);
+    float3 Swizzle   = Texel.rgb;
+    float2 Reorder   = Texel.wz;
+    float  Component = Texel[0];
+    float  Element   = M[1][2];
+    float3 Namespace = UE.SceneTexture(Id = PostProcessInput0).Color.rgb;
+    float  Deep      = Namespace.xyz.x;
+
+    float Arr[4];
+    Arr[0] = 1.0;
+    float Indexed = Arr[1 + 2];
+
+    return Swizzle + float3(Reorder, Component) + float3(Element, Deep, Indexed) + Namespace;
+}

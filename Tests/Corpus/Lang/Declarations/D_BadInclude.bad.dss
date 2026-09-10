@@ -1,0 +1,10 @@
+// `#include` and `import` both need a DOUBLE-QUOTED path. Angle brackets are HLSL's spelling of an
+// engine-relative include and are not DreamShaderLang: a `.dss` include is always a quoted
+// DreamShader path (`/Game/...`, `@scope/pkg/...`, or a name relative to the including file).
+// All three lines below are DSH3203; the declaration after them still parses.
+
+#include <Engine/Private/Common.ush>
+#include Hash.dsh
+import Relative.dsh;
+
+uniform float Gain = 1.0;

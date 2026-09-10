@@ -1,0 +1,13 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 1,
+		"functions": 1,
+		"exports": 1,
+		"externs": 0,
+		"uniforms": 0,
+		"entry": "",
+		"roundtrip": true
+	}
+}

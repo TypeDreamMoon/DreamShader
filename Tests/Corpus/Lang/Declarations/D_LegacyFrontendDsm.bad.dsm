@@ -1,0 +1,17 @@
+// A `.dsm` asks for the 1.x front end, which arrives in M4. Until then ParseDreamShaderLang
+// answers with ONE honest DSH2199 -- the text is never even lexed -- instead of failing token by
+// token on a syntax that is not its own. This fixture is the one that has to change when the
+// legacy front end lands.
+
+Shader M_Legacy
+{
+    Properties
+    {
+        float Intensity = 1.0;
+    }
+
+    Graph
+    {
+        EmissiveColor = Intensity;
+    }
+}

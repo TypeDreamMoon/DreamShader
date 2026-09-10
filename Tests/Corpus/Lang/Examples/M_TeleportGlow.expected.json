@@ -1,0 +1,15 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 6,
+		"pragmas": 1,
+		"uniforms": 3,
+		"functions": 2,
+		"exports": 1,
+		"externs": 0,
+		"entry": "M_TeleportGlow",
+		"opaqueBodies": 0,
+		"roundtrip": true
+	}
+}

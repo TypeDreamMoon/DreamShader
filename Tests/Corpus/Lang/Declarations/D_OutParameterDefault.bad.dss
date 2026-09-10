@@ -1,0 +1,8 @@
+// Only inputs are optional. A default value on an `out` parameter would have nothing to default:
+// the caller supplies the storage, not the value.
+
+export void MF_Split(float4 Value, out float3 RGB = float3(0, 0, 0), out float Alpha)
+{
+    RGB   = Value.rgb;
+    Alpha = Value.a;
+}

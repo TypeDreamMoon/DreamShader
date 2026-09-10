@@ -1,0 +1,5 @@
+// The preprocessor consumes `#if`; one reaching the parser means the file was never preprocessed.
+
+#if DREAMSHADER_DEBUG
+uniform float Debug = 1.0;
+#endif

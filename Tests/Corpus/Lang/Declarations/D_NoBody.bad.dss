@@ -1,0 +1,3 @@
+// A non-`extern` function with no body is neither a helper nor a prototype.
+
+float3 ApplyTint(float3 Color, float3 InTint);

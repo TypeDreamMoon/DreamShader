@@ -1,0 +1,5 @@
+// A `#pragma material` argument with a `=` and no value.
+
+#pragma material(ShadingModel = , BlendMode = Additive)
+
+uniform float Gain = 1.0;

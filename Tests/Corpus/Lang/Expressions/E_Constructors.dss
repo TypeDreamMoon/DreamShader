@@ -1,0 +1,17 @@
+// A constructor call is a call whose callee is a type: `float3(...)`, `int2(...)`, `float3x3(...)`.
+
+export float4 Constructors(float A, float3 V)
+{
+    float2   V2 = float2(A, A);
+    float3   V3 = float3(V2, A);
+    float4   V4 = float4(V, 1.0);
+    int3     I3 = int3(1, 2, 3);
+    uint2    U2 = uint2(1u, 2u);
+    bool2    B2 = bool2(true, false);
+    half4    H4 = half4(0.5h, 0.5h, 0.5h, 1.0h);
+    double2  D2 = double2(1.0, 2.0);
+    float3x3 M  = float3x3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+
+    float Scalar = float(I3.x) + float(U2.y) + float(B2.x) + float(D2.x) + M[0].x + H4.a;
+    return V4 + float4(V3, 1.0) + float4(V2, Scalar, Scalar);
+}

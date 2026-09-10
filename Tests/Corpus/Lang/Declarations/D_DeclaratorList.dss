@@ -1,0 +1,11 @@
+// `uniform float2 a = ..., b = ...;` is ONE line but TWO declarations: the parser makes one
+// FVariableDecl per name and the module loop appends the rest. The `///` block above the list is
+// copied onto every name, and the printer writes each name on its own line -- structural fidelity,
+// not textual, so the round trip still reaches a fixed point.
+
+/// @group Tiling
+uniform float2 TileA = float2(1, 1), TileB = float2(2, 2);
+
+static const float One = 1.0, Two = 2.0, Three = 3.0;
+
+uniform float Gain;

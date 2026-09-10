@@ -1,0 +1,10 @@
+// `uniform bool` is a dynamic scalar parameter by default; `/// @static` asks for a static switch.
+
+uniform bool bUseDetail = false;
+
+/// @static
+uniform bool bUseNormalMap = true;
+
+/// @static @group Toggles
+/// Free text under the directives.
+uniform bool bDebug = false;

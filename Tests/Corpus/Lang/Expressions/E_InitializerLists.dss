@@ -1,0 +1,12 @@
+// `{ ... }` is only ever an initializer -- never an expression in its own right.
+
+static const float3 Weights    = { 0.299, 0.587, 0.114 };
+static const float  Kernel[3]  = { -1.0, 0.0, 1.0 };
+static const float2 Corners[2] = { { 0.0, 0.0 }, { 1.0, 1.0 } };
+
+export float3 UseInitializers()
+{
+    float4 Local    = { 1.0, 0.0, 0.0, 1.0 };
+    float  Table[2] = { Kernel[0], Kernel[2] };
+    return Weights * Local.rgb * Table[0] * Corners[1].x;
+}

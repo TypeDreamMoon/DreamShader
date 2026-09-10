@@ -1,0 +1,20 @@
+// Full C precedence; assignment and the conditional operator are right-associative.
+
+export float Precedence(float A, float B, float C, int I, int J)
+{
+    float Mul    = A + B * C - A / B;
+    float Shift  = (float)((I << 2) + (J >> 1));
+    bool  Rel    = A < B == C > A;
+    bool  Log    = A > B && B > C || C > A && !Rel;
+    int   Bits   = I & J | I ^ J;
+
+    float Chain;
+    float Other;
+    Chain = Other = A + B;
+
+    float Cond   = Rel ? (Log ? A : B) : C;
+    float Nested = A > B ? A : B > C ? B : C;
+    float Parens = (A + B) * (C - A);
+
+    return Mul + Shift + Bits + Chain + Other + Cond + Nested + Parens;
+}

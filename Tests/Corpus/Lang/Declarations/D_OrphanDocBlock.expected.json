@@ -1,0 +1,11 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"warningsContain": ["DSH3221"],
+	"module": {
+		"declarations": 1,
+		"uniforms": 1,
+		"functions": 0,
+		"roundtrip": true
+	}
+}

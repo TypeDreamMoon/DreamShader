@@ -1,0 +1,10 @@
+// An unknown escape inside a string literal. The lexer keeps the backslash and carries on, so the
+// rest of the file still parses -- but the file is still rejected (DSH2104).
+
+#pragma material(Backend = "Graph")
+
+export void M_Broken(inout material m)
+{
+    m.EmissiveColor = UE.Expression(Class = "MaterialExpressionConstant3Vector",
+                                    Desc = "an unknown escape \q keeps its backslash");
+}

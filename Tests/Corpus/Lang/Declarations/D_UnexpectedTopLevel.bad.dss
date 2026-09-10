@@ -1,0 +1,11 @@
+// A stray closing brace at file scope starts no declaration; recovery must still reach the
+// declaration after it.
+
+uniform float Gain = 1.0;
+
+}
+
+export void M_After(inout material m)
+{
+    m.EmissiveColor = Gain;
+}

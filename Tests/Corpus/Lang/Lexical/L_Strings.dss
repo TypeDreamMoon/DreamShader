@@ -1,0 +1,13 @@
+// String literals and their escapes: include paths, pragma values, call arguments.
+
+#pragma material(Backend = "Graph", ShadingModel = Unlit)
+
+#include "/Game/Shared/Common.dsh"
+
+uniform float Amount = 1.0;
+
+export void M_Strings(inout material m)
+{
+    m.EmissiveColor = UE.Expression(Class = "MaterialExpressionConstant3Vector",
+                                    Desc = "tabs\tquotes \"like this\" backslash \\ newline \n") * Amount;
+}

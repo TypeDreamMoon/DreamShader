@@ -1,0 +1,7 @@
+// `extern` prototypes bind to an existing asset through `/// @asset`. They have no body.
+
+/// @asset /MoonToon/MaterialFunctions/Utils/MF_UVChannelSwitch
+extern float2 MF_UVChannelSwitch(float UVChannelIndex);
+
+/// @asset /Engine/Functions/Engine_MaterialFunctions02/Utility/BreakOutFloat4Components
+extern void BreakOutFloat4(float4 Value, out float R, out float G, out float B, out float A);

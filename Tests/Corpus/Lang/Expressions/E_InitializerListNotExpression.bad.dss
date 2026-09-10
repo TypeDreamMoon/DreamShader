@@ -1,0 +1,8 @@
+// `{ ... }` is an initializer, not an expression. It is legal only directly after the `=` of a
+// declarator (or a parameter default), never as an operand -- saying so beats "expected an
+// expression, found '{'".
+
+export float3 Broken(float3 A)
+{
+    return A * { 1.0, 2.0, 3.0 };
+}

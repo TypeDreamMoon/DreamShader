@@ -1,0 +1,8 @@
+// Matrix uniforms, square and rectangular; a declarator without an initializer stays legal HLSL.
+
+uniform float2x2 M22 = float2x2(1, 0, 0, 1);
+uniform float3x3 M33;
+uniform float4x4 M44;
+uniform float3x4 M34;
+uniform half2x3  H23;
+uniform int4x4   I44;

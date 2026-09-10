@@ -1,0 +1,14 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 4,
+		"pragmas": 1,
+		"includes": 1,
+		"uniforms": 1,
+		"functions": 1,
+		"exports": 1,
+		"entry": "M_Strings",
+		"roundtrip": true
+	}
+}

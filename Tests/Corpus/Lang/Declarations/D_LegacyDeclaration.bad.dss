@@ -1,0 +1,11 @@
+// A 1.x section word in a `.dss` gets an honest "the 2.0 front end does not parse this yet"
+// (DSH3222) instead of "expected a declaration name, found '{'". `Shader`, `ShaderFunction`,
+// `ShaderLayer`, `ShaderLayerBlend`, `Function`, `GraphFunction`, `VirtualFunction` and
+// `Namespace` all take this path; the file belongs in a `.dsm` / `.dsf` until M4 lands.
+
+Shader
+{
+    Properties
+    {
+    }
+}

@@ -1,0 +1,41 @@
+// Every operator token the lexer knows, at least once.
+
+export float OperatorZoo(float A, float B, int I, int J, bool P, bool Q)
+{
+    float Sum  = A + B - A * B / B;
+    float Plus = +A;
+    float Neg  = -A;
+    int   Mod  = I % J;
+    int   Bits = (I & J) | (I ^ J);
+    Bits = ~Bits;
+    Bits = (I << 2) >> 1;
+
+    bool Cmp = (A < B) && (A <= B) || (A > B) && (A >= B);
+    Cmp = Cmp && (A == B) || (A != B);
+    Cmp = !Cmp;
+    Cmp = P && Q || !P;
+
+    float Acc = A;
+    Acc += B;
+    Acc -= B;
+    Acc *= B;
+    Acc /= B;
+
+    int Bit = I;
+    Bit %= J;
+    Bit &= J;
+    Bit |= J;
+    Bit ^= J;
+    Bit <<= 1;
+    Bit >>= 1;
+
+    int Pre  = ++Bit;
+    Pre  = --Bit;
+    int Post = Bit++;
+    Post = Bit--;
+
+    float4 V = float4(A, B, A, B);
+    float Comp = V[0] + V.y;
+
+    return Cmp ? Sum + Plus + Neg + Mod + Bits + Acc + Pre + Post + Comp : -Sum;
+}

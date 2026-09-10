@@ -1,0 +1,6 @@
+// A positional argument may not follow a named one.
+
+export void M_Broken(inout material m)
+{
+    m.EmissiveColor = UE.Expression(Class = "MaterialExpressionConstant", 1.0);
+}

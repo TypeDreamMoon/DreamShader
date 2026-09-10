@@ -1,0 +1,12 @@
+// `switch` is not part of DreamShaderLang 2.0.
+
+export float Switching(int Mode)
+{
+    switch (Mode)
+    {
+    case 0:
+        return 0.0;
+    default:
+        return 1.0;
+    }
+}

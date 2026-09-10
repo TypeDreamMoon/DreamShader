@@ -1,0 +1,22 @@
+// File-local helpers: no linkage keyword, inlined into the graph by default.
+
+float3 ApplyTint(float3 Color, float3 InTint)
+{
+    return Color * InTint;
+}
+
+float Luma(float3 Color)
+{
+    return dot(Color, float3(0.299, 0.587, 0.114));
+}
+
+void Split(float4 Value, out float3 RGB, out float Alpha)
+{
+    RGB   = Value.rgb;
+    Alpha = Value.a;
+}
+
+float3 WithDefaults(float3 Color, float Amount = 1.0, bool bInvert = false)
+{
+    return bInvert ? (1.0 - Color) * Amount : Color * Amount;
+}

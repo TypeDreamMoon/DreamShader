@@ -1,0 +1,20 @@
+// Every literal form the 2.0 lexer accepts.
+
+static const int    IntDecimal   = 1;
+static const uint   IntUnsigned  = 1u;
+static const int    IntHex       = 0x1F;
+static const int    IntLong      = 1L;
+static const float  FloatPlain   = 1.0;
+static const float  FloatSuffix  = 1.f;
+static const float  FloatLeading = .5;
+static const float  FloatExp     = 1e3;
+static const float  FloatExpSign = 1.5e-3;
+static const half   HalfSuffix   = 2.5h;
+static const bool   BoolTrue     = true;
+static const bool   BoolFalse    = false;
+
+float Literals()
+{
+    float Sum = 1 + 1u + 0x1F + 1.0 + 1.f + .5 + 1e3 + 2.5h;
+    return BoolTrue ? Sum : FloatExpSign;
+}

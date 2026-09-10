@@ -1,0 +1,9 @@
+// Extra outputs are HLSL `out` parameters (syntax proposal v0.4 §8). Verbatim from the proposal.
+
+export void SampleTinted(Texture2D Tex, float2 UV, float3 InTint,
+                         out float3 RGB, out float Alpha)
+{
+    float4 Texel = Tex.Sample(UV);
+    RGB   = Texel.rgb * InTint;
+    Alpha = Texel.a;
+}

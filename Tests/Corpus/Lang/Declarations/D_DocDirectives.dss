@@ -1,0 +1,14 @@
+// `///` block shapes: several directives on one line, one directive per line, free text before
+// the first `@`, and a value that runs to the next ` @` rather than to the next `@`.
+
+/// @group Look|Detail   @desc Multiplied on top   @slider 0 4
+uniform float Intensity = 2.0;
+
+/// Free text on its own line.
+/// More free text.
+/// @name /Game/FX/Parameters/Tint
+/// @sort 3
+uniform float4 Tint = float4(1, 1, 1, 1);
+
+/// Free text first, then @group Motion @desc Contact: name@example.com stays inside this value
+uniform float Speed = 1.0;

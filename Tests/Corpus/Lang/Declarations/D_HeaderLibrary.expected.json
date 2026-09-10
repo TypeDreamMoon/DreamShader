@@ -1,0 +1,17 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 7,
+		"includes": 1,
+		"constants": 1,
+		"uniforms": 1,
+		"structs": 1,
+		"functions": 3,
+		"externs": 1,
+		"exports": 0,
+		"opaqueBodies": 1,
+		"entry": "",
+		"roundtrip": true
+	}
+}

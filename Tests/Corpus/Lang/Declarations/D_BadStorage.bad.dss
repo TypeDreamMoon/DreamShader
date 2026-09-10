@@ -1,0 +1,6 @@
+// `uniform` is storage and `extern` is linkage: they cannot be combined, and neither can two
+// linkages.
+
+uniform extern float Intensity;
+
+export extern float2 MF_Both(float A);

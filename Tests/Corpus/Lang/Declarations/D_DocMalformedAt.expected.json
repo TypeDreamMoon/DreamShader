@@ -1,0 +1,9 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"warningsContain": ["DSH3220"],
+	"module": {
+		"declarations": 1,
+		"uniforms": 1
+	}
+}

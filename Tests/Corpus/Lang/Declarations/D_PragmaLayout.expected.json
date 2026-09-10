@@ -1,0 +1,13 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 5,
+		"pragmas": 3,
+		"uniforms": 1,
+		"functions": 1,
+		"exports": 1,
+		"entry": "M_Laid",
+		"roundtrip": true
+	}
+}

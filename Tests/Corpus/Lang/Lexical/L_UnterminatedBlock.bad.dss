@@ -1,0 +1,7 @@
+uniform float Gain = 1.0;
+
+/* this block comment never closes
+export void M_Broken(inout material m)
+{
+    m.EmissiveColor = Gain;
+}

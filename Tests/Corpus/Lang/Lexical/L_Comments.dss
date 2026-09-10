@@ -1,0 +1,15 @@
+// A plain line comment before everything.
+
+/* A block comment
+   spanning several lines, with a // inside it. */
+
+//// Four slashes: an ordinary comment, never a doc comment.
+
+/// A doc block above a uniform.
+/// @group Look
+uniform float Intensity = 1.0;   // trailing line comment
+
+/* leading block */ uniform float2 Tiling = float2(1.0, 1.0); /* trailing block */
+
+//// Not a doc block, so the declaration below carries no doc.
+uniform float Undocumented = 0.0;

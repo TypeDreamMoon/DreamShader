@@ -1,0 +1,8 @@
+// An `extern` prototype binds to an asset that already exists, so it has nowhere to put a body.
+// The body is skipped as a balanced brace pair so the rest of the file still parses.
+
+/// @asset /MoonToon/MaterialFunctions/Utils/MF_UVChannelSwitch
+extern float2 MF_UVChannelSwitch(float UVChannelIndex)
+{
+    return float2(UVChannelIndex, 0.0);
+}

@@ -1,0 +1,11 @@
+// A `.dsh` header is a shared library and never produces an asset, so `export` is rejected here.
+
+float3 ApplyTint(float3 Color, float3 InTint)
+{
+    return Color * InTint;
+}
+
+export void M_NotAllowed(inout material m)
+{
+    m.EmissiveColor = float3(1.0, 1.0, 1.0);
+}

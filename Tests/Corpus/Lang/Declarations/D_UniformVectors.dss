@@ -1,0 +1,11 @@
+// Vector uniforms: every scalar family, every width.
+
+uniform float2  Float2  = float2(1.0, 2.0);
+uniform float3  Float3  = float3(1.0, 2.0, 3.0);
+uniform float4  Float4  = float4(1.0, 2.0, 3.0, 4.0);
+uniform half2   Half2   = half2(0.5h, 0.5h);
+uniform half3   Half3   = half3(0.5h, 0.5h, 0.5h);
+uniform double3 Double3 = double3(1.0, 2.0, 3.0);
+uniform int3    Int3    = int3(1, 2, 3);
+uniform uint4   UInt4   = uint4(1u, 2u, 3u, 4u);
+uniform bool2   Bool2   = bool2(true, false);

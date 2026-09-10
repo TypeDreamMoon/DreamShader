@@ -1,0 +1,27 @@
+// User structs: fields may carry their own `///` block and their own array dimensions.
+// No methods, no nested structs, no bitfields.
+
+/// @desc Everything the toon shading step needs.
+struct ToonInputs
+{
+    /// @desc Albedo in linear space.
+    float3 Albedo;
+    float  NdotL;
+    /// @group Ramp
+    float2 RampUV[4];
+    int    Flags[2][3];
+};
+
+struct Ramp
+{
+    Texture2D Tex;
+    float2    UV;
+};
+
+ToonInputs Gather(float2 UV)
+{
+    ToonInputs Result;
+    Result.Albedo = float3(UV.x, UV.y, 0.0);
+    Result.NdotL  = 1.0;
+    return Result;
+}

@@ -1,0 +1,3 @@
+// `uniform` must be followed by a type name.
+
+uniform 42 Intensity;

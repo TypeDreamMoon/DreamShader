@@ -1,0 +1,17 @@
+// `#pragma region` / `#pragma endregion` are the 2.0 spelling of the 1.x `#Region` comment box.
+// The title is the rest of the line and may be empty.
+
+#pragma region Sampling
+
+uniform Texture2D BaseTex;
+
+float4 SampleBase(float2 UV)
+{
+    return BaseTex.Sample(UV);
+}
+
+#pragma endregion
+
+#pragma region
+uniform float Gain = 1.0;
+#pragma endregion

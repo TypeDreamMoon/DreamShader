@@ -1,0 +1,13 @@
+// A `#` line inside an ordinary function body is either a preprocessor line the preprocessor
+// should already have eaten, or an attempt to write HLSL where only a `/// @custom` body may.
+// Either way it is DSH2160 and the message names the fix.
+//
+// The counterpart is Declarations/D_CustomBody.dss, where the same two lines sit inside an opaque
+// body and are handed to the shader compiler untouched.
+
+export void M_Broken(inout material m)
+{
+    #if DREAMSHADER_DEBUG
+    m.EmissiveColor = float3(1.0, 0.0, 0.0);
+    #endif
+}

@@ -1,0 +1,12 @@
+// `export void <Name>(inout material m)` is the material entry: the signature declares it,
+// nothing else does. Assigning a `material` field connects that pin; leaving it alone does not.
+
+#pragma material(ShadingModel = Unlit, BlendMode = Additive)
+
+uniform float3 Colour = float3(1.0, 1.0, 1.0);
+
+export void M_Entry(inout material m)
+{
+    m.EmissiveColor = Colour;
+    m.OpacityMask   = 1.0;
+}

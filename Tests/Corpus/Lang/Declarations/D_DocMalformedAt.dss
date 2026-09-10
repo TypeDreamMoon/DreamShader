@@ -1,0 +1,5 @@
+// A `@` that is not followed by an identifier is a warning (DSH3220) and stays free text; the
+// declaration itself still parses.
+
+/// @group Look   @ not a directive   @desc Kept after the malformed marker
+uniform float Intensity = 1.0;

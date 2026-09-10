@@ -1,0 +1,17 @@
+// A `/// @custom` body is opaque HLSL, so DreamShaderLang must have no opinion about the
+// characters inside it. Every line of the body below would be a lexical error if this text were
+// DreamShaderLang -- DSH2101 for a character that starts no token, DSH2106 for a `#` that is not
+// the first thing on its line -- and none of it is reported, because the body is sliced out of
+// the source and handed to the shader compiler (`dsc check --shaders` is what may complain).
+//
+// Braces are the one thing the capture does read, so they still have to balance.
+
+/// @custom
+/// @desc Characters that are not DreamShaderLang at all.
+float3 HostileButOpaque(float2 UV)
+{
+    // A vendor intrinsic spelled with @, a $ register name, a ` and a mid-line #.
+    float3 Result = $Globals.Tint @ UV.x # 2 `;
+    int Marker = 'x';
+    return Result;
+}

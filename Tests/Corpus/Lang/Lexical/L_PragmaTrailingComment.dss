@@ -1,0 +1,7 @@
+// A `#pragma` line's trailing `//` comment is removed by the lexer and never reaches the parser.
+
+#pragma material(ShadingModel = Unlit)   // the comment is stripped here
+#pragma region Sampling                  // and here
+#pragma endregion                        // and here
+
+uniform float Gain = 1.0;

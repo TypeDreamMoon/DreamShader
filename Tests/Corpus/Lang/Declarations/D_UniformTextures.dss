@@ -1,0 +1,14 @@
+// Texture and sampler uniforms. A texture has no HLSL initializer, so its default asset lives
+// in `/// @default` and the declaration itself stays legal HLSL.
+
+/// @sampler Normal
+/// @default /Game/Textures/T_Default_N
+uniform Texture2D NormalTex;
+
+/// @default /Engine/EngineResources/WhiteSquareTexture
+uniform TextureCube CubeTex;
+
+uniform Texture2DArray ArrayTex;
+uniform Texture3D      VolumeA;
+uniform VolumeTexture  VolumeB;
+uniform SamplerState   LinearSampler;

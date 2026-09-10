@@ -1,0 +1,12 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 5,
+		"pragmas": 4,
+		"functions": 1,
+		"exports": 1,
+		"entry": "M_Settings",
+		"roundtrip": true
+	}
+}

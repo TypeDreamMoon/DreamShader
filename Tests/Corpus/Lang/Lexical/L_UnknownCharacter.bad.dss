@@ -1,0 +1,6 @@
+uniform float Gain = 1.0;
+
+export void M_Broken(inout material m)
+{
+    m.EmissiveColor = Gain $ 2.0;
+}

@@ -1,0 +1,12 @@
+// `#include "path"` and `import "path";` mean the same thing; the spelling is recorded so the
+// printer reproduces what was written. Paths are unresolved here.
+
+#include "/Game/Shared/Common.dsh"
+#include "/MoonToon/Shared/Toon.dsh"
+#include "@typedreammoon/dream-noise/Library/Noise.dsh"
+#include "Hash.dsh"
+
+import "/Game/Shared/Legacy.dsh";
+import "Relative.dsh";
+
+uniform float Gain = 1.0;

@@ -1,0 +1,11 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 13,
+		"constants": 12,
+		"functions": 1,
+		"uniforms": 0,
+		"roundtrip": true
+	}
+}

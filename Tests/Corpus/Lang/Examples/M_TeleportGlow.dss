@@ -1,0 +1,30 @@
+// Soft radial glow with a tighter hot core and a slow breathing pulse.
+
+#pragma material(ShadingModel = Unlit, BlendMode = Additive, bUsedWithNiagaraSprites = true)
+
+/// @group Glow|Look   @desc Multiplied on top of the particle colour
+uniform float4 Tint = float4(1, 1, 1, 1);
+
+/// @group Glow|Look   @desc Overall emissive gain
+uniform float Intensity = 0.7;
+
+/// @group Glow|Motion @desc Amplitude of the slow breathing pulse
+uniform float Breathe = 0.10;
+
+float GlowMask(float2 UV, float Time, float Amount)
+{
+    float2 P  = UV * 2.0 - 1.0;
+    float R2  = dot(P, P);
+    float Glow  = pow(saturate(1.0 - R2), 2.4);
+    float Hot   = pow(saturate(1.0 - R2 * 2.6), 5.0) * 0.9;
+    float Pulse = 1.0 - Amount + Amount * sin(Time * 2.1);
+    return (Glow + Hot) * Pulse;
+}
+
+export void M_TeleportGlow(inout material m)
+{
+    float2 UV = UE.TexCoord(Index = 0);
+    float4 VC = UE.VertexColor();
+
+    m.EmissiveColor = Tint.rgb * VC.rgb * GlowMask(UV, UE.Time(), Breathe) * Intensity;
+}
