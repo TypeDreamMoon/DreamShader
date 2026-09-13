@@ -1,4 +1,6 @@
 #include "DreamShaderMaterialGeneratorCodeShared.h"
+// Moon: MakeDreamShaderDeclarationName -- the identifier the decompiler writes a pin name as.
+#include "Decompiler/DreamShaderGraphDecompilerHelpers.h"
 
 #if DREAMSHADER_WITH_SUBSTRATE_BUILTINS
 #include "Materials/MaterialExpressionSubstrate.h"
@@ -834,9 +836,33 @@ namespace UE::DreamShader::Editor::Private
 			CustomExpression->AdditionalOutputs.Reset();
 		}
 
-		TArray<TPair<FName, FCodeValue>> BoundInputValues;
+		// Reflected literal properties are applied BEFORE any pin is bound, whatever order the source
+		// wrote them in. A node's pin table can depend on one of its own properties -- GetInputName() /
+		// GetInput() on UMaterialExpressionMoonToonModifier are decided by its Modifier enum -- so
+		// binding `Intensity=` while the node still holds its default Modifier looks the pin up in the
+		// wrong table and fails with DSH5060 ("'Intensity' is not a property"). The decompiler emits
+		// pins first and properties last, which is exactly the losing order. Membership in the first
+		// group is decided by reflection alone (a non-input UPROPERTY of that name exists), so it does
+		// not depend on the pin state either.
+		TArray<const FCodeCallArgument*> OrderedArguments;
+		OrderedArguments.Reserve(Arguments.Num());
 		for (const FCodeCallArgument& Argument : Arguments)
 		{
+			const FProperty* LiteralProperty = FindMaterialExpressionArgumentProperty(ExpressionClass, Argument.Name);
+			if (LiteralProperty && !IsMaterialExpressionInputProperty(LiteralProperty))
+			{
+				OrderedArguments.Add(&Argument);
+			}
+		}
+		for (const FCodeCallArgument& Argument : Arguments)
+		{
+			OrderedArguments.AddUnique(&Argument);
+		}
+
+		TArray<TPair<FName, FCodeValue>> BoundInputValues;
+		for (const FCodeCallArgument* OrderedArgument : OrderedArguments)
+		{
+			const FCodeCallArgument& Argument = *OrderedArgument;
 			const FString NormalizedArgumentName = UE::DreamShader::NormalizeSettingKey(Argument.Name);
 			if (NormalizedArgumentName == UE::DreamShader::NormalizeSettingKey(TEXT("Class"))
 				|| NormalizedArgumentName == UE::DreamShader::NormalizeSettingKey(TEXT("OutputType"))
@@ -854,9 +880,14 @@ namespace UE::DreamShader::Editor::Private
 			{
 				FExpressionInput* CandidateInput = Expression->GetInput(InputIndex);
 				const FName InputName = Expression->GetInputName(InputIndex);
-				if (CandidateInput
-					&& !InputName.IsNone()
-					&& UE::DreamShader::NormalizeSettingKey(InputName.ToString()) == NormalizedArgumentName)
+				// A pin is matched by its display name as written, and by the IDENTIFIER the decompiler
+				// writes it as (BuildGenericExpressionCall runs it through MakeDreamShaderDeclarationName, so
+				// "Main Light Shadow Color" is emitted as Main_Light_Shadow_Color). Without the second
+				// spelling every multi-word pin name failed to round trip with DSH5060.
+				const bool bPinNameMatches = CandidateInput && !InputName.IsNone()
+					&& (UE::DreamShader::NormalizeSettingKey(InputName.ToString()) == NormalizedArgumentName
+						|| UE::DreamShader::NormalizeSettingKey(MakeDreamShaderDeclarationName(InputName.ToString(), TEXT("Input"), InputIndex)) == NormalizedArgumentName);
+				if (bPinNameMatches)
 				{
 					BoundInputByPinName = CandidateInput;
 					BoundInputIndexByPinName = InputIndex;
