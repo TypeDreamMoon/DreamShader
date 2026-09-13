@@ -736,7 +736,7 @@ registered spelling instead.
 | `StaticSwitchParameter '{Name}' True input: {Message}` | the `True` expression failed to evaluate |
 | `StaticSwitchParameter '{Name}' False input: {Message}` | the `False` expression failed to evaluate |
 | `StaticSwitchParameter '{Name}' cannot switch Texture object values.` | a branch is a texture object |
-| `StaticSwitchParameter '{Name}' cannot switch Substrate values.` | a branch is a Substrate value |
+| `StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.` | one branch is a Substrate value and the other is not |
 | `StaticSwitchParameter '{Name}' cannot mix MaterialAttributes and numeric branches.` | one branch is `MaterialAttributes`, the other is not |
 | `StaticSwitchParameter '{Name}' branches must have the same component count, got {Left} and {Right}.` | branch widths differ |
 | `Failed to create StaticSwitchParameter node '{Name}'.` | node creation failed |

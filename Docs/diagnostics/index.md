@@ -639,7 +639,7 @@ references, and parameter reads from `Graph`.
 | `Relative texture Path(...) references require a root such as Game, Engine, or Plugin.PluginName.` | a relative texture default with no root | add a root | [Path](../parameters/path.md) |
 | `StaticSwitchParameter '{Name}' branches must have the same component count, got {A} and {B}.` | the two branch widths differ | make them equal | [Parameter nodes](../parameters/parameter-nodes.md) |
 | `StaticSwitchParameter '{Name}' cannot mix MaterialAttributes and numeric branches.` | one branch yields attributes, the other a number | make both the same kind | [Parameter nodes](../parameters/parameter-nodes.md) |
-| `StaticSwitchParameter '{Name}' cannot switch Substrate values.` | a `Substrate` branch | switch earlier | [Parameter nodes](../parameters/parameter-nodes.md) |
+| `StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.` | one `Substrate` branch, one numeric | make both branches closures | [Parameter nodes](../parameters/parameter-nodes.md) |
 | `StaticSwitchParameter '{Name}' cannot switch Texture object values.` | a texture-object branch | switch the sampled result | [Parameter nodes](../parameters/parameter-nodes.md) |
 | `StaticSwitchParameter '{Name}' False input: {Detail}` | the false branch failed to evaluate | see the inner message | [Parameter nodes](../parameters/parameter-nodes.md) |
 | `StaticSwitchParameter '{Name}' True input: {Detail}` | the true branch failed to evaluate | see the inner message | [Parameter nodes](../parameters/parameter-nodes.md) |

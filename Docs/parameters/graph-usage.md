@@ -157,7 +157,7 @@ Both branches are required. Rules on the two branch values:
 | Rule | Message when violated |
 | :-- | :-- |
 | Neither branch may be a texture object | `StaticSwitchParameter '{Name}' cannot switch Texture object values.` |
-| Neither branch may be a `Substrate` value | `StaticSwitchParameter '{Name}' cannot switch Substrate values.` |
+| The branches may not mix `Substrate` with numeric (two `Substrate` branches are fine) | `StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.` |
 | The branches may not mix `MaterialAttributes` with numeric | `StaticSwitchParameter '{Name}' cannot mix MaterialAttributes and numeric branches.` |
 | Both branches must have the same component count | `StaticSwitchParameter '{Name}' branches must have the same component count, got {Left} and {Right}.` |
 
@@ -216,7 +216,7 @@ Runtime substitutions are shown as `{Placeholder}` throughout this table.
 | `StaticSwitchParameter '{Name}' True input: {Inner}` | the true branch failed to evaluate |
 | `StaticSwitchParameter '{Name}' False input: {Inner}` | the false branch failed to evaluate |
 | `StaticSwitchParameter '{Name}' cannot switch Texture object values.` | a branch is a texture object |
-| `StaticSwitchParameter '{Name}' cannot switch Substrate values.` | a branch is a `Substrate` value |
+| `StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.` | one branch is a `Substrate` value and the other is not |
 | `StaticSwitchParameter '{Name}' cannot mix MaterialAttributes and numeric branches.` | one branch is `MaterialAttributes`, the other is not |
 | `StaticSwitchParameter '{Name}' branches must have the same component count, got {Left} and {Right}.` | mismatched branch widths |
 | `StaticSwitchParameter '{Name}': {Inner}` | metadata application failed on the switch node |

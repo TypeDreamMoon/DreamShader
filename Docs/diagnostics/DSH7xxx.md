@@ -587,15 +587,25 @@ StaticSwitchParameter '%s' cannot switch Texture object values.
 **Message**
 
 ```
-StaticSwitchParameter '%s' cannot switch Substrate values.
+StaticSwitchParameter '%s' cannot mix Substrate and numeric branches.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:211`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:216`
 <!-- generated:end DSH7103 -->
 
-**Cause.** _Not written yet._
+**Cause.** One branch of the switch is a `Substrate` value and the other is not. Switching between
+two Substrate closures **is** allowed — the engine resolves the static bool while it builds the
+material topology tree and descends only the taken side, so the compiler still knows the single
+topology it has to translate. What it cannot do is reconcile a closure with a number, because the
+two sides would not even be the same kind of value.
 
-**Fix.** _Not written yet._
+**Fix.** Make both branches closures, or make both of them numeric. If one side is meant to be "no
+closure", give it the closure you want in that case (a plain `Substrate.Slab(…)`, or for Moon toon a
+`Kind = Default` BSDF) rather than a constant.
+
+> [!NOTE]
+> Before 2026-09-13 this code refused *any* Substrate branch. A two-closure switch is the shape a
+> master material uses to pick a shading variant from a static parameter, so it is allowed now.
 
 ## DSH7104
 

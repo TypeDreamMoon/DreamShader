@@ -477,7 +477,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH7041](DSH7xxx.md#dsh7041) | error | Invalid empty setting key in '{0}'. |
 | [DSH7101](DSH7xxx.md#dsh7101) | error | StaticSwitchParameter '%s' requires True=... and False=... inputs. |
 | [DSH7102](DSH7xxx.md#dsh7102) | error | StaticSwitchParameter '%s' cannot switch Texture object values. |
-| [DSH7103](DSH7xxx.md#dsh7103) | error | StaticSwitchParameter '%s' cannot switch Substrate values. |
+| [DSH7103](DSH7xxx.md#dsh7103) | error | StaticSwitchParameter '%s' cannot mix Substrate and numeric branches. |
 | [DSH7104](DSH7xxx.md#dsh7104) | error | StaticSwitchParameter '%s' cannot mix MaterialAttributes and numeric branches. |
 | [DSH7105](DSH7xxx.md#dsh7105) | error | StaticSwitchParameter '%s' branches must have the same component count, got %d and %d. |
 | [DSH7106](DSH7xxx.md#dsh7106) | error | Failed to create StaticSwitchParameter node '%s'. |

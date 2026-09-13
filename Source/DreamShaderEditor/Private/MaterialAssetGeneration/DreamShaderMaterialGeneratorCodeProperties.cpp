@@ -206,9 +206,14 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return FailWith(OutError, TEXT("DSH7102"), FString::Printf(TEXT("StaticSwitchParameter '%s' cannot switch Texture object values."), *Property.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
-		if (TrueValue.bIsSubstrateMaterial || FalseValue.bIsSubstrateMaterial)
+		// Two Substrate branches are fine; one of each is not. UMaterialExpressionStaticSwitchParameter
+		// selects a branch at TOPOLOGY time -- SubstrateGenerateMaterialTopologyTree resolves the static
+		// bool through GetEffectiveInput and descends only that side -- so the compiler still knows the
+		// one topology it has to translate. What it cannot do is reconcile a closure with a number, and
+		// that is the case this still refuses.
+		if (TrueValue.bIsSubstrateMaterial != FalseValue.bIsSubstrateMaterial)
 		{
-			return FailWith(OutError, TEXT("DSH7103"), FString::Printf(TEXT("StaticSwitchParameter '%s' cannot switch Substrate values."), *Property.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
+			return FailWith(OutError, TEXT("DSH7103"), FString::Printf(TEXT("StaticSwitchParameter '%s' cannot mix Substrate and numeric branches."), *Property.Name)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 		if (TrueValue.bIsMaterialAttributes != FalseValue.bIsMaterialAttributes)
 		{
@@ -260,7 +265,10 @@ namespace UE::DreamShader::Editor::Private
 		OutValue.ComponentCount = TrueValue.ComponentCount;
 		OutValue.bIsTextureObject = false;
 		OutValue.bIsMaterialAttributes = TrueValue.bIsMaterialAttributes;
-		OutValue.bIsSubstrateMaterial = false;
+		// Carried, not cleared: the switch is transparent to the kind of value it passes through
+		// (IsResultSubstrateMaterial on the node says the same), and Base.FrontMaterial's binding check
+		// reads this flag. Both branches agree by the time we get here.
+		OutValue.bIsSubstrateMaterial = TrueValue.bIsSubstrateMaterial;
 		return true;
 	}
 

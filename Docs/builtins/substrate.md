@@ -158,15 +158,24 @@ declared as a Substrate output resolves to a pin that is not a Substrate value, 
 A `Substrate` value can only be:
 
 - assigned to a `Substrate`-typed `Graph` variable or `Outputs` declaration;
-- passed to another `Substrate.*` wrapper's Substrate-typed input;
+- passed to another `Substrate.*` wrapper's Substrate-typed input, or to a Substrate-typed input pin
+  of a [`UE.Expression`](ue-expression.md) node;
+- selected by a `StaticSwitchParameter` whose **other** branch is also a `Substrate` value;
 - bound to `Base.FrontMaterial`.
 
 It cannot be swizzled, used with `+ - * /`
 (`Arithmetic operators cannot be applied to Substrate values.`), passed to a
 [math builtin](math.md) (`Math function '{Name}' only accepts numeric scalar/vector arguments.`),
-switched by a `StaticSwitchParameter`
-(`StaticSwitchParameter '{Name}' cannot switch Substrate values.`), or produced by an HLSL Custom
-node.
+mixed with a numeric value across the two branches of a `StaticSwitchParameter`
+(`StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.`), or produced by an
+HLSL Custom node.
+
+> [!NOTE]
+> A static switch over two closures is how a master material picks a shading variant from a static
+> parameter: `UMaterialExpressionStaticSwitchParameter` resolves the bool while the engine builds the
+> material topology tree and descends only the taken branch, so the translator still sees one
+> topology. `Graph if` is a different thing -- it lowers to a runtime node -- and still refuses
+> Substrate values (`Graph if statement cannot select Substrate value '{Name}'.`).
 
 ---
 
@@ -615,7 +624,7 @@ substituted text.
 | `UE.{Name} Custom input '{Pin}' does not accept Substrate values.` | a Substrate value was fed to a `Custom` node input |
 | `Arithmetic operators cannot be applied to Substrate values.` | a Substrate value used with `+ - * /` |
 | `Math function '{Name}' only accepts numeric scalar/vector arguments.` | a Substrate value passed to a [math builtin](math.md) |
-| `StaticSwitchParameter '{Name}' cannot switch Substrate values.` | a Substrate value on a `True=` / `False=` branch |
+| `StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.` | one branch is a Substrate value and the other is not |
 | `Base.FrontMaterial requires Unreal Engine 5.4 or newer.` | the binding target used on UE 5.3 |
 | `{File}: Base.FrontMaterial requires ShadingModel="Substrate" or no explicit ShadingModel setting.` | a conflicting explicit shading model |
 | `{File}: Base.FrontMaterial and Base.MaterialAttributes cannot be used by the same Shader.` | both bindings present |

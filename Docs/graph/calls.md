@@ -384,7 +384,7 @@ Runtime substitutions are shown as `{Placeholder}` throughout these tables. `{Ki
 | `StaticSwitchParameter '{Name}' True input: {Error}` | The true branch failed to evaluate. |
 | `StaticSwitchParameter '{Name}' False input: {Error}` | The false branch failed to evaluate. |
 | `StaticSwitchParameter '{Name}' cannot switch Texture object values.` | A branch is a texture object. |
-| `StaticSwitchParameter '{Name}' cannot switch Substrate values.` | A branch is a `Substrate` value. |
+| `StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.` | One branch is a `Substrate` value and the other is not. |
 | `StaticSwitchParameter '{Name}' cannot mix MaterialAttributes and numeric branches.` | The two branches disagree on the attribute flag. |
 | `StaticSwitchParameter '{Name}' branches must have the same component count, got {Left} and {Right}.` | The two branches have different widths. |
 | `Failed to create StaticSwitchParameter node '{Name}'.` | The node could not be created. |
