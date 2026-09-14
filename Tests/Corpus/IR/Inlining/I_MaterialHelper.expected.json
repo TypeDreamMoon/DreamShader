@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"I_MaterialHelper.dss\"\n\nproduct 0 Material \"M_MaterialHelper\" backend=Graph\n  %0 = Constant(Value=(1, 0, 0)) : float3 @L11:C18\n  %1 = Constant(Value=(1)) : float @L12:C17 \"Opacity\"\n  %2 = MaterialSink(BaseColor=%0, Opacity=%1) @L9:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_MaterialHelper"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

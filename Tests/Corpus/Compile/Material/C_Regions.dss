@@ -1,0 +1,18 @@
+// Regions survive all the way to the asset: each `#pragma region` becomes a comment box around the
+// nodes its lines made. The graph dump does not list comment boxes, so this golden pins the nodes.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+#pragma region Parameters
+uniform float A = 1;
+uniform float B = 2;
+#pragma endregion
+
+export void M_C2Regions(inout material m)
+{
+    #pragma region Maths
+    float Sum = A + B;
+    float Scaled = Sum * 0.5;
+    #pragma endregion
+    m.Opacity = Scaled;
+    m.EmissiveColor = float3(Scaled, Scaled, Scaled);
+}

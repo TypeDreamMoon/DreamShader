@@ -1,0 +1,6 @@
+// `@layer` is a MaterialLayer product with a MaterialAttributes input and output.
+/// @layer
+export void L_Tint(inout material m)
+{
+    m.BaseColor = float3(1, 0.5, 0.25);
+}

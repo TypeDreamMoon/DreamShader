@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"B_DynamicIf.dss\"\n\nproduct 0 Material \"M_DynamicIf\" backend=Graph\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L10:C17 \"UV\"\n  %1 = Swizzle(%0, Mask=\"x\") : float @L12:C9\n  %2 = Parameter(DefaultValue=(0.5), ParameterName=\"Threshold\", SortPriority=0) : float @L6:C1 \"Threshold\"\n  %3 = Constant(Value=(1, 0, 0)) : float3 @L14:C18 \"Colour\"\n  %4 = Constant(Value=(0, 0, 1)) : float3 @L18:C18 \"Colour\"\n  %5 = Compare(%1, %2, %3, %4, %4) : float3 @L12:C5\n  %6 = MaterialSink(EmissiveColor=%5) @L8:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_DynamicIf"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

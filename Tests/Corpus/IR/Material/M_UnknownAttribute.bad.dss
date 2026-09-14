@@ -1,0 +1,10 @@
+// An attribute the material attribute table does not carry. The material attribute table is
+// catalog knowledge, so this is a CATALOG error (DSH5200) and the message can suggest a spelling
+// that differs only in case -- the usual mistake, since 1.x matched these case-insensitively and
+// 2.0 does not. DSH4207 is the neighbouring rule: a member access on a value that is not a
+// `material` at all (see M_MemberOnNonMaterial.bad.dss).
+
+export void M_UnknownAttribute(inout material m)
+{
+    m.Metallic = 1;
+}

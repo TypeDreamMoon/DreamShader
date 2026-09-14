@@ -1,0 +1,12 @@
+// A trip count the binder cannot prove is refused with a pointer at @custom.
+uniform float Count = 4;
+
+export void M_DynamicBound(inout material m)
+{
+    float Sum = 0;
+    for (float i = 0; i < Count; ++i)
+    {
+        Sum = Sum + 1;
+    }
+    m.Opacity = Sum;
+}

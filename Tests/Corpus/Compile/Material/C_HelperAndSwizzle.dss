@@ -1,0 +1,25 @@
+// A helper to inline, a reflected node, a swizzle and a texture sample -- the four things every
+// material does, in one asset. No swizzle becomes an inline FExpressionInput mask (plan 3.3): `Tint.rgb`
+// and `Texel.rgb` read the named `RGB` output, and `Texel.a` is a ComponentMask node.
+#pragma material(ShadingModel = Unlit, BlendMode = Additive)
+
+/// @group Glow|Look @desc Multiplied on top of the sample
+uniform float4 Tint = float4(1, 1, 1, 1);
+/// @group Glow|Look @desc Overall emissive gain
+uniform float Intensity = 0.7;
+/// @sampler Color
+uniform Texture2D Source;
+
+float GlowMask(float2 UV)
+{
+    float2 P = UV * 2.0 - 1.0;
+    return saturate(1.0 - dot(P, P));
+}
+
+export void M_C2HelperAndSwizzle(inout material m)
+{
+    float2 UV = UE.TextureCoordinate(CoordinateIndex = 0);
+    float4 Texel = Source.Sample(UV);
+    m.EmissiveColor = Texel.rgb * Tint.rgb * GlowMask(UV) * Intensity;
+    m.Opacity = Texel.a;
+}

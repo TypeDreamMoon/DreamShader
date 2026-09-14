@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"D_DifferentArguments.dss\"\n\nproduct 0 Material \"M_DifferentArguments\" backend=Graph\n  %0 = TextureParameter(ParameterName=\"Tex\", SortPriority=0) : Texture2D @L2:C1 \"Tex\"\n  %1 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L6:C27 \"A\"\n  %2 = TextureSample(%0, %1, _, _) : [RGBA:float4, R:float, G:float, B:float, A:float] @L6:C16 \"A\"\n  %3 = Reflected[TextureCoordinate](CoordinateIndex=1) : float2 @L7:C27 \"B\"\n  %4 = TextureSample(%0, %3, _, _) : [RGBA:float4, R:float, G:float, B:float, A:float] @L7:C16 \"B\"\n  %5 = Swizzle(%2, Mask=\"xyz\") : float3 @L8:C23 \"EmissiveColor\"\n  %6 = Swizzle(%4, Mask=\"xyz\") : float3 @L8:C31 \"EmissiveColor\"\n  %7 = Add(%5, %6) : float3 @L8:C23 \"EmissiveColor\"\n  %8 = MaterialSink(EmissiveColor=%7) @L4:C1\n  sink %8\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_DifferentArguments"
+		],
+		"nodeCounts": [
+			9
+		]
+	}
+}

@@ -1,0 +1,12 @@
+// A `for` whose trip count the binder can prove constant is unrolled.
+uniform float Gain = 0.25;
+
+export void M_UnrolledFor(inout material m)
+{
+    float Sum = 0;
+    for (int i = 0; i < 4; ++i)
+    {
+        Sum = Sum + Gain;
+    }
+    m.Opacity = Sum;
+}

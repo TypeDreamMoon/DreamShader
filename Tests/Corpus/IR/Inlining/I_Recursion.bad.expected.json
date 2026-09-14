@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "error",
+	"errorContains": [
+		"DSH6220"
+	],
+	"ir": "",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_Recursion"
+		],
+		"nodeCounts": [
+			1
+		]
+	}
+}

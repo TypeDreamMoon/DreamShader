@@ -1,0 +1,21 @@
+// CONTRACT 6.3 with the 6.13 #20 ruling: a dynamic condition that is a BARE COMPARISON lowers to a
+// Compare node -- A and B are the comparison's own operands and the three branches are picked by
+// kind -- and the bool node the comparison would have made is pruned. `Select` is for a condition
+// that is not a bare comparison; B_DynamicIfSelect.dss is that case.
+
+uniform float Threshold = 0.5;
+
+export void M_DynamicIf(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0);
+    float3 Colour = float3(0, 0, 0);
+    if (UV.x > Threshold)
+    {
+        Colour = float3(1, 0, 0);
+    }
+    else
+    {
+        Colour = float3(0, 0, 1);
+    }
+    m.EmissiveColor = Colour;
+}

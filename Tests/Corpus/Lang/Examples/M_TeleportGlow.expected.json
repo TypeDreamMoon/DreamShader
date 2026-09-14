@@ -9,7 +9,7 @@
 		"exports": 1,
 		"externs": 0,
 		"entry": "M_TeleportGlow",
-		"opaqueBodies": 0,
+		"opaqueBodies": 1,
 		"roundtrip": true
 	}
 }

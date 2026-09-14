@@ -1,0 +1,8 @@
+// An unclosed region is a refusal, not a guess (CONTRACT 6.8).
+#pragma region Open
+uniform float A = 1;
+
+export void M_Unbalanced(inout material m)
+{
+    m.Opacity = A;
+}

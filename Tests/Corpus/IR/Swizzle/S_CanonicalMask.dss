@@ -1,0 +1,16 @@
+// CONTRACT 6.6 with the 6.13 #19 and #29 rulings: a Swizzle node's mask is a single channel or a
+// strictly ascending run, so a ComponentMask is only ever a NARROWING. A reorder (`V.zyx`) and a
+// replication (`V.xxx`) are both one Swizzle per component plus an Append -- which is also exactly
+// what a person building the graph by hand would have had to do. `rgba` is rewritten to `xyzw` at
+// bind time and `v[3]` is the `w` mask.
+
+uniform float4 V = float4(1, 2, 3, 4);
+uniform float S = 1;
+
+export void M_CanonicalMask(inout material m)
+{
+    m.EmissiveColor = V.rgb;
+    m.Roughness = V[3];
+    m.Opacity = S.r;
+    m.Normal = V.zyx;
+}

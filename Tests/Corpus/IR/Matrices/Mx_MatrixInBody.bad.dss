@@ -1,0 +1,13 @@
+// CONTRACT decision "Matrices", as amended by 6.13: the graph has no matrices, and there is no
+// @custom matrix pin to smuggle one through either.
+//
+// The matrix is declared and never read on purpose. DSH4361 is about a matrix VALUE reaching the
+// lowering pass, and the declaration's initializer already is one. Reading a row (`Rotation[0][0]`)
+// never gets that far: the binder refuses a matrix index earlier, with its own DSH4244, so a
+// fixture written that way would pin the binder's index rule instead of this one.
+
+export void M_MatrixInBody(inout material m)
+{
+    float3x3 Rotation = float3x3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    m.Normal = float3(0, 0, 1);
+}

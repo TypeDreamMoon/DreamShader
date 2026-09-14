@@ -1,0 +1,7 @@
+// `.z` on a float2 names a component that is not there.
+uniform float2 V = float2(1, 2);
+
+export void M_OutOfRange(inout material m)
+{
+    m.Opacity = V.z;
+}

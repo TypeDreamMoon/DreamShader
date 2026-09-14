@@ -1,0 +1,14 @@
+// CONTRACT 6.13 #29: a repeated component in an RVALUE is HLSL replication and is LEGAL. It lowers
+// the same way a reorder does -- one single-channel Swizzle per component, then an Append -- because
+// no ComponentMask can repeat a channel. `rrr` is rewritten to `xxx` at bind time like any other
+// rgba spelling, so the two lines below are the same graph and the dedupe pass says so.
+
+uniform float4 V = float4(1, 2, 3, 4);
+
+export void M_ReplicationIsAppend(inout material m)
+{
+    float3 FromXyzw = V.xxx;
+    float3 FromRgba = V.rrr;
+    float3 Mixed = V.xxy;
+    m.EmissiveColor = FromXyzw + FromRgba + Mixed;
+}

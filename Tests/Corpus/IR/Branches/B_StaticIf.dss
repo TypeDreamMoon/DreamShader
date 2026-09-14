@@ -1,0 +1,18 @@
+// CONTRACT 6.3: a static bool condition merges both branches with StaticSwitch.
+
+/// @static
+uniform bool UseWarm = true;
+
+export void M_StaticIf(inout material m)
+{
+    float3 Colour = float3(0, 0, 0);
+    if (UseWarm)
+    {
+        Colour = float3(1, 0.5, 0);
+    }
+    else
+    {
+        Colour = float3(0, 0.5, 1);
+    }
+    m.EmissiveColor = Colour;
+}

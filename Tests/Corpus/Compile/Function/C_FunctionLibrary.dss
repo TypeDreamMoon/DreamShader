@@ -1,0 +1,17 @@
+// One asset per export (CONTRACT 6.9), and the call between them a MaterialFunctionCall pointing at
+// the sibling's asset -- which is also what makes the pipeline compile products in dependency order.
+
+/// @library DreamShaderTests|Compile2
+/// @desc Scales a UV pair.
+/// @param UV    The coordinates to scale.
+/// @param Scale The factor.
+export float2 MF_C2Scale(float2 UV, float Scale = 1.0)
+{
+    return UV * Scale;
+}
+
+/// @desc Scales, then offsets.
+export float2 MF_C2ScaleOffset(float2 UV, float Scale = 1.0, float2 Offset = float2(0, 0))
+{
+    return MF_C2Scale(UV, Scale) + Offset;
+}

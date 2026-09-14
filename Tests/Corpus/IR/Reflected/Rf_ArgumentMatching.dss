@@ -1,0 +1,15 @@
+// CONTRACT 6.10: a named argument matches a pin first and a property second; a positional argument
+// follows PositionalParameters; a constant argument to a pin with a Const* twin is written as the
+// PROPERTY, which is what keeps the output the same shape 1.x produced.
+
+uniform float3 Colour = float3(1, 0, 0);
+uniform float Alpha = 0.25;
+
+export void M_ArgumentMatching(inout material m)
+{
+    float2 Named = UE.TexCoord(CoordinateIndex = 0);
+    float2 Positional = UE.TexCoord(1);
+    m.BaseColor = UE.LinearInterpolate(A = Colour, B = float3(0, 0, 0), Alpha = 0.5);
+    m.EmissiveColor = UE.LinearInterpolate(A = Colour, B = float3(0, 0, 0), Alpha = Alpha);
+    m.Opacity = Named.x + Positional.y;
+}

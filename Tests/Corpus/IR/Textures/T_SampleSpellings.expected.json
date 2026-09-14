@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"T_SampleSpellings.dss\"\n\nproduct 0 Material \"M_SampleSpellings\" backend=Graph\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L17:C17 \"UV\"\n  %1 = TextureParameter(ParameterName=\"Tex\", SortPriority=0) : Texture2D @L13:C1 \"Tex\"\n  %2 = TextureSample(%1, %0, _, _) : [RGBA:float4, R:float, G:float, B:float, A:float] @L18:C20 \"Plain\"\n  %3 = TextureSample(%1, %0, %1, _) : [RGBA:float4, R:float, G:float, B:float, A:float] @L19:C26 \"WithSampler\"\n  %4 = Constant(Value=(0)) : float @L21:C44 \"WithLevel\"\n  %5 = TextureSample(%1, %0, _, %4, MipValueMode=\"MipLevel\") : [RGBA:float4, R:float, G:float, B:float, A:float] @L21:C24 \"WithLevel\"\n  %6 = Add(%2, %3) : float4 @L22:C24 \"EmissiveColor\"\n  %7 = Add(%6, %3) : float4 @L22:C24 \"EmissiveColor\"\n  %8 = Add(%7, %5) : float4 @L22:C24 \"EmissiveColor\"\n  %9 = Swizzle(%8, Mask=\"xyz\") : float3 @L22:C23 \"EmissiveColor\"\n  %10 = Swizzle(%2, Mask=\"w\") : float @L23:C17 \"Opacity\"\n  %11 = MaterialSink(EmissiveColor=%9, Opacity=%10) @L15:C1\n  sink %11\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_SampleSpellings"
+		],
+		"nodeCounts": [
+			12
+		]
+	}
+}

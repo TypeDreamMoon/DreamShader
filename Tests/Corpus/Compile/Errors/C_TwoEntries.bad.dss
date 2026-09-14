@@ -1,0 +1,4 @@
+// One file, one material (decision 11 #15). The refusal has to reach the 1.x wire form, because
+// that is what the bridge and the Problems panel read.
+export void M_C2First(inout material m) { m.Opacity = 1; }
+export void M_C2Second(inout material m) { m.Opacity = 1; }

@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Rf_LegacyArgumentNames.dss\"\n\nproduct 0 Material \"M_LegacyArgumentNames\" backend=Graph\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L8:C21 \"Legacy\"\n  %1 = Add(%0, %0) : float2 @L10:C30 \"EmissiveColor\"\n  %2 = Constant(Value=(0)) : float @L10:C50 \"EmissiveColor\"\n  %3 = Append(%1, %2) : float3 @L10:C23 \"EmissiveColor\"\n  %4 = MaterialSink(EmissiveColor=%3) @L6:C1\n  sink %4\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LegacyArgumentNames"
+		],
+		"nodeCounts": [
+			5
+		]
+	}
+}

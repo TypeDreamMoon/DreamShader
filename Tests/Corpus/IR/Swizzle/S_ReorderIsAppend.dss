@@ -1,0 +1,9 @@
+// The reorder case on its own, so the golden shows the Append chain rather than burying it among
+// four other statements: `V.yx` is Swizzle(y), Swizzle(x), Append -- never Swizzle("yx").
+
+uniform float4 V = float4(1, 2, 3, 4);
+
+export void M_ReorderIsAppend(inout material m)
+{
+    m.EmissiveColor = float3(V.yx, 0);
+}

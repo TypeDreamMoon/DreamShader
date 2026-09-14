@@ -1,0 +1,24 @@
+// Nested ifs compose, and a variable declared inside a branch does not escape it (CONTRACT 6.3).
+
+/// @static
+uniform bool UseWarm = true;
+uniform float Threshold = 0.5;
+
+export void M_NestedIf(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0);
+    float3 Colour = float3(0, 0, 0);
+    if (UseWarm)
+    {
+        float Local = UV.x * 2;
+        if (Local > Threshold)
+        {
+            Colour = float3(1, 0.5, 0);
+        }
+        else
+        {
+            Colour = float3(0.5, 0.25, 0);
+        }
+    }
+    m.EmissiveColor = Colour;
+}

@@ -1,0 +1,24 @@
+// CONTRACT 6.4: a Helper is inlined, an `out` parameter writes back into the caller's lvalue, and
+// every node made while inlining carries the call site as well as its own span.
+
+uniform float Gain = 2;
+
+float Scale(float x, float k)
+{
+    return x * k;
+}
+
+void Split(float x, out float Half, out float Double)
+{
+    Half = x * 0.5;
+    Double = x * 2;
+}
+
+export void M_HelperInlined(inout material m)
+{
+    float A = Scale(Gain, 3);
+    float H = 0;
+    float D = 0;
+    Split(A, H, D);
+    m.Opacity = H + D;
+}

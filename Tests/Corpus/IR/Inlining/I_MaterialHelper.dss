@@ -1,0 +1,13 @@
+// A Helper taking `inout material` is inlined on the field map like any other (CONTRACT 6.4), so
+// it too leaves no MakeMaterialAttributes behind.
+
+void ApplyBase(inout material m, float3 Colour)
+{
+    m.BaseColor = Colour;
+}
+
+export void M_MaterialHelper(inout material m)
+{
+    ApplyBase(m, float3(1, 0, 0));
+    m.Opacity = 1;
+}

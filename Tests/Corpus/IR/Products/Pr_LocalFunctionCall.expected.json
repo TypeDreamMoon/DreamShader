@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Pr_LocalFunctionCall.dss\"\n\nproduct 0 MaterialFunction \"MF_Inner\" backend=Graph\n  %0 = FunctionInput(InputName=\"UV\", InputType=\"Vector2\", IsOptional=false, SortPriority=0) : float2 @L4:C1 \"UV\"\n  %1 = FunctionInput(InputName=\"Scale\", InputType=\"Scalar\", IsOptional=true, PreviewValue=(1, 1, 1, 1), SortPriority=1) : float @L4:C1 \"Scale\"\n  %2 = Multiply(%0, %1) : float2 @L6:C12\n  %3 = FunctionOutput(%2, OutputName=\"Result\", SortPriority=0) @L4:C1 \"Result\"\n  inputs %0, %1\n  outputs %3\n\nproduct 1 MaterialFunction \"MF_Outer\" backend=Graph\n  %0 = FunctionInput(InputName=\"UV\", InputType=\"Vector2\", IsOptional=false, SortPriority=0) : float2 @L9:C1 \"UV\"\n  %1 = FunctionInput(InputName=\"Scale\", InputType=\"Scalar\", IsOptional=true, PreviewValue=(1, 1, 1, 1), SortPriority=1) : float @L9:C1 \"Scale\"\n  %2 = FunctionInput(InputName=\"Offset\", InputType=\"Vector2\", IsOptional=true, PreviewValue=(0, 0, 0, 1), SortPriority=2) : float2 @L9:C1 \"Offset\"\n  %3 = FunctionCall[MF_Inner](UV=%0, Scale=%1, FunctionPath=\"\", LocalFunction=0) : [Result:float2] @L11:C12\n  %4 = Add(%3, %2) : float2 @L11:C12\n  %5 = FunctionOutput(%4, OutputName=\"Result\", SortPriority=0) @L9:C1 \"Result\"\n  inputs %0, %1, %2\n  outputs %5\n",
+	"module":
+	{
+		"products": 2,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction",
+			"MaterialFunction"
+		],
+		"productNames": [
+			"MF_Inner",
+			"MF_Outer"
+		],
+		"nodeCounts": [
+			4,
+			6
+		]
+	}
+}

@@ -1,0 +1,7 @@
+// `Substrate.` is a namespace root of its own (decision 11 #11) and the only producer of a
+// Substrate value, which only a Substrate pin accepts.
+
+export void M_Substrate(inout material m)
+{
+    m.FrontMaterial = Substrate.Unlit(EmissiveColor = float3(0.1, 0.6, 1.0));
+}

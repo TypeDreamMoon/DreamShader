@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Rf_CustomOutputStatement.dss\"\n\nproduct 0 Material \"M_CustomOutputStatement\" backend=Graph\n  %0 = Constant(Value=(1, 0, 0)) : float3 @L7:C19 \"BaseColor\"\n  %1 = Constant(Value=(0, 0, 1)) : float3 @L8:C44\n  %2 = Reflected[ClearCoatNormalCustomOutput](Input=%1) @L8:C5\n  %3 = MaterialSink(BaseColor=%0) @L5:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_CustomOutputStatement"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

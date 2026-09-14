@@ -1,0 +1,12 @@
+// CONTRACT 6.2: the field map's entries become the sink's inputs DIRECTLY. The golden's job is to
+// show that no MakeMaterialAttributes appears anywhere in a plain entry.
+
+uniform float3 Colour = float3(1, 0, 0);
+
+export void M_FieldMap(inout material m)
+{
+    m.BaseColor = Colour;
+    m.Roughness = 0.4;
+    m.EmissiveColor = m.BaseColor * 2;
+    m.Opacity = 1;
+}

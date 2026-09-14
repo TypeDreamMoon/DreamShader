@@ -1,0 +1,9 @@
+// Extra outputs are `out` parameters, and a texture parameter is a real function input: the two
+// halves of the function signature that 1.x spelled with separate Inputs and Outputs blocks.
+
+export void MF_C2SampleTinted(Texture2D Tex, float2 UV, float3 InTint, out float3 RGB, out float Alpha)
+{
+    float4 Texel = Tex.Sample(UV);
+    RGB = Texel.rgb * InTint;
+    Alpha = Texel.a;
+}

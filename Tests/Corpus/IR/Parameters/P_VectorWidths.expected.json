@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"P_VectorWidths.dss\"\n\nproduct 0 Material \"M_VectorWidths\" backend=Graph\n  %0 = Parameter(DefaultValue=(1, 0, 0), ParameterName=\"Triple\", SortPriority=1) : float4 @L6:C1 \"Triple\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L6:C1 \"BaseColor\"\n  %2 = Parameter(DefaultValue=(1, 1, 1, 1), ParameterName=\"Quad\", SortPriority=2) : float4 @L7:C1 \"Quad\"\n  %3 = Swizzle(%2, Mask=\"xyz\") : float3 @L12:C23 \"EmissiveColor\"\n  %4 = Parameter(DefaultValue=(1, 1), ParameterName=\"Pair\", SortPriority=0) : float4 @L5:C1 \"Pair\"\n  %5 = Swizzle(%4, Mask=\"xy\") : float2 @L5:C1 \"Opacity\"\n  %6 = Swizzle(%4, Mask=\"x\") : float @L13:C17 \"Opacity\"\n  %7 = Constant(Value=(1)) : float @L14:C29 \"Normal\"\n  %8 = Append(%5, %7) : float3 @L14:C16 \"Normal\"\n  %9 = MaterialSink(BaseColor=%1, EmissiveColor=%3, Opacity=%6, Normal=%8) @L9:C1\n  sink %9\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_VectorWidths"
+		],
+		"nodeCounts": [
+			10
+		]
+	}
+}

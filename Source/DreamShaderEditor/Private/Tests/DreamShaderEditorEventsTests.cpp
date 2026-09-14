@@ -99,7 +99,7 @@ bool FDreamShaderSourceGeneratedEventTest::RunTest(const FString& Parameters)
 
 	FString Message;
 	TestTrue(FString::Printf(TEXT("Assets generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true));
+		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true));
 	if (TestEqual(TEXT("One notice for GenerateAssetsFromFile, not one per layer"), Notices.Num(), 1))
 	{
 		TestEqual(TEXT("The notice names the normalized source path"), Notices[0].Key, SourceFilePath);
@@ -108,7 +108,7 @@ bool FDreamShaderSourceGeneratedEventTest::RunTest(const FString& Parameters)
 
 	Notices.Reset();
 	TestTrue(FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true));
+		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true));
 	TestEqual(TEXT("One notice for GenerateMaterialFromFile on its own"), Notices.Num(), 1);
 
 	// A failing source: the notice still fires, reporting failure.
@@ -119,7 +119,7 @@ bool FDreamShaderSourceGeneratedEventTest::RunTest(const FString& Parameters)
 	Notices.Reset();
 	AddExpectedError(TEXT("NoSuchIdentifier"), EAutomationExpectedErrorFlags::Contains, -1);
 	TestFalse(TEXT("A broken source fails to generate"),
-		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true));
+		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true));
 	if (TestEqual(TEXT("One notice for the failed generation"), Notices.Num(), 1))
 	{
 		TestFalse(TEXT("The notice reports failure"), Notices[0].Value);
@@ -166,7 +166,7 @@ bool FDreamShaderBridgeCompileFeedsDiagnosticsTest::RunTest(const FString& Param
 
 	AddExpectedError(TEXT("NoSuchIdentifier"), EAutomationExpectedErrorFlags::Contains, -1);
 	FString Message;
-	TestFalse(TEXT("The broken source fails through the bridge"), Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, /*bInMemory*/ true, Message));
+	TestFalse(TEXT("The broken source fails through the bridge"), Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, Message));
 	TestFalse(TEXT("The failure message comes back"), Message.IsEmpty());
 	TestEqual(TEXT("The failure committed the diagnostics store once"), DiagnosticsCommits, 1);
 
@@ -182,7 +182,7 @@ bool FDreamShaderBridgeCompileFeedsDiagnosticsTest::RunTest(const FString& Param
 		return false;
 	}
 	TestTrue(FString::Printf(TEXT("The fixed source compiles through the bridge: %s"), *Message),
-		Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, /*bInMemory*/ true, Message));
+		Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, Message));
 	TestEqual(TEXT("The success committed the diagnostics store again"), DiagnosticsCommits, 2);
 	Records = Bridge->GetDiagnosticsForSource(SourceFilePath);
 	TestTrue(TEXT("The success cleared the file's records"), Records == nullptr || Records->Num() == 0);

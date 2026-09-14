@@ -1,0 +1,15 @@
+// CONTRACT 6.13: a `material` may cross into a reflected pin or a FunctionCall input, never into a
+// @custom -- the engine has no Custom pin that carries material attributes, so a node built anyway
+// would compile here and fail in the shader compiler.
+
+/// @custom
+float3 Shade(material In, float3 Colour)
+{
+    return Colour;
+}
+
+export void M_MaterialIntoCustom(inout material m)
+{
+    m.BaseColor = float3(1, 0, 0);
+    m.EmissiveColor = Shade(m, float3(1, 1, 1));
+}

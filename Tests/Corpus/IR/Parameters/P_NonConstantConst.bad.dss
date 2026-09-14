@@ -1,0 +1,8 @@
+// A `static const` initialiser has to fold; a uniform never does.
+uniform float Gain = 1;
+static const float K = Gain * 2;
+
+export void M_NonConstantConst(inout material m)
+{
+    m.Opacity = K;
+}

@@ -1,0 +1,5 @@
+// A custom-output class is a statement, not a value (CONTRACT 6.10).
+export void M_CustomOutputAsValue(inout material m)
+{
+    m.Opacity = UE.ClearCoatNormalCustomOutput(Input = float3(0, 0, 1)).x;
+}

@@ -1,0 +1,19 @@
+// CONTRACT 6.9: every `export` of a library becomes its own product, inputs and outputs keep
+// declaration order with DENSE sort priorities, a default makes an input optional, and a return
+// value is named Result.
+
+/// @library MoonToon|Shared
+/// @desc Scales a UV pair.
+/// @param UV    The coordinates to scale.
+/// @param Scale The factor.
+export float2 MF_Scale(float2 UV, float Scale = 1.0)
+{
+    return UV * Scale;
+}
+
+export void MF_SampleTinted(Texture2D Tex, float2 UV, float3 InTint, out float3 RGB, out float Alpha)
+{
+    float4 Texel = Tex.Sample(UV);
+    RGB = Texel.rgb * InTint;
+    Alpha = Texel.a;
+}

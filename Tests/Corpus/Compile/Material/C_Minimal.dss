@@ -1,0 +1,10 @@
+// The smallest thing the 2.0 pipeline can produce: one uniform, one attribute, one asset.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+/// @group Look @desc The emissive tint
+uniform float3 Tint = float3(1, 0.2, 0.2);
+
+export void M_C2Minimal(inout material m)
+{
+    m.EmissiveColor = Tint;
+}

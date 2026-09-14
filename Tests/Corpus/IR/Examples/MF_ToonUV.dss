@@ -1,0 +1,15 @@
+// Shared UV construction: pick a UV channel, scale it, offset it.
+// Verbatim from the syntax proposal v0.4 §8; `SampleTinted` is the sibling MF_SampleTinted.dss.
+
+/// @asset /MoonToon/MaterialFunctions/Utils/MF_UVChannelSwitch
+extern float2 MF_UVChannelSwitch(float UVChannelIndex);
+
+/// @library MoonToon|Shared
+/// @desc UV channel select, then scale and offset. ScaleOffset is xy = scale, zw = offset.
+/// @param UVChannel    Which UV channel to read.
+/// @param ScaleOffset  xy scales the UV, zw is added afterwards.
+export float2 MF_ToonUV(float UVChannel = 0.0, float4 ScaleOffset = float4(1, 1, 0, 0))
+{
+    float2 Selected = MF_UVChannelSwitch(UVChannel);
+    return Selected * ScaleOffset.xy + ScaleOffset.zw;
+}

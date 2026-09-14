@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"T_SampleLevel.dss\"\n\nproduct 0 Material \"M_SampleLevel\" backend=Graph\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L6:C17 \"UV\"\n  %1 = TextureParameter(ParameterName=\"Tex\", SortPriority=0) : Texture2D @L2:C1 \"Tex\"\n  %2 = Constant(Value=(0)) : float @L7:C43 \"EmissiveColor\"\n  %3 = TextureSample(%1, %0, _, %2, MipValueMode=\"MipLevel\") : [RGBA:float4, R:float, G:float, B:float, A:float] @L7:C23 \"EmissiveColor\"\n  %4 = Swizzle(%3, Mask=\"xyz\") : float3 @L7:C23 \"EmissiveColor\"\n  %5 = MaterialSink(EmissiveColor=%4) @L4:C1\n  sink %5\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_SampleLevel"
+		],
+		"nodeCounts": [
+			6
+		]
+	}
+}

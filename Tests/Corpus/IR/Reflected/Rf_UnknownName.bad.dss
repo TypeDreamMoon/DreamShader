@@ -1,0 +1,5 @@
+// An unknown reflected name is a name error with a case-insensitive "did you mean".
+export void M_UnknownName(inout material m)
+{
+    m.Opacity = UE.NoSuchNode();
+}

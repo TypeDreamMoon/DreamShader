@@ -168,7 +168,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 
 		FString Message;
 		if (!TestTrue(FString::Printf(TEXT("Generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourcePathOut, Message, /*bForce*/ true, /*bTransient*/ true)))
+			FMaterialGenerator::GenerateMaterialFromFile(SourcePathOut, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 		{
 			return false;
 		}
@@ -267,7 +267,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 
 		FString Message;
 		if (!TestTrue(FString::Printf(TEXT("Generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourcePathOut, Message, /*bForce*/ true, /*bTransient*/ true)))
+			FMaterialGenerator::GenerateMaterialFromFile(SourcePathOut, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 		{
 			return false;
 		}
@@ -404,7 +404,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 
 		FString Message;
 		if (!TestTrue(FString::Printf(TEXT("Generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourcePathOut, Message, /*bForce*/ true, /*bTransient*/ true)))
+			FMaterialGenerator::GenerateMaterialFromFile(SourcePathOut, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 		{
 			return false;
 		}

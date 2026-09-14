@@ -1,0 +1,17 @@
+// `#pragma region` / `#pragma endregion` are the one `#` line a body may hold. They become
+// FPragmaStmt nodes and draw a comment box around the nodes the statements between them produce,
+// exactly as the 1.x `#Region` did. Every other `#` line in a body stays DSH2160 (S_DirectiveInBody).
+
+export void M_Regions(inout material m)
+{
+    #pragma region Sampling
+    float2 UV = UE.TexCoord(Index = 0);
+    float4 VC = UE.VertexColor();
+    #pragma endregion
+
+    #pragma region Output // nested boxes are allowed
+    #pragma region Emissive
+    m.EmissiveColor = VC.rgb * UV.x;
+    #pragma endregion
+    #pragma endregion
+}

@@ -1,0 +1,15 @@
+// CONTRACT 6.7 and decision 11 #5 together: the language has no `let` because two identical calls
+// are ONE node. Two UE.TexCoord calls, two samples above them and two identical multiplies all
+// collapse, because the key is structural.
+
+uniform Texture2D Tex;
+uniform float Gain = 1;
+
+export void M_IdenticalCalls(inout material m)
+{
+    float4 A = Tex.Sample(UE.TexCoord(CoordinateIndex = 0));
+    float4 B = Tex.Sample(UE.TexCoord(CoordinateIndex = 0));
+    float3 Left = (A * Gain).rgb;
+    float3 Right = (B * Gain).rgb;
+    m.EmissiveColor = Left + Right;
+}

@@ -1,0 +1,10 @@
+// The other half of CONTRACT 6.13: a `material` crossing into a reflected pin is exactly where a
+// MakeMaterialAttributes node is still made, and reading a field back off the result is a
+// GetMaterialAttributes.
+
+export void M_MaterialIntoPin(inout material m)
+{
+    m.BaseColor = float3(1, 0, 0);
+    m.Roughness = 0.5;
+    m.Opacity = UE.BlendMaterialAttributes(A = m, B = m, Alpha = 0.25).Roughness;
+}

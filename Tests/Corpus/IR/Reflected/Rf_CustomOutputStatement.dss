@@ -1,0 +1,9 @@
+// CONTRACT 6.13 #23: a reflected class with NO outputs is a legal statement root. It drives nothing
+// -- nothing can read it -- so the prune pass has to know it is a root rather than dead weight,
+// which is the opposite of every other node with no users.
+
+export void M_CustomOutputStatement(inout material m)
+{
+    m.BaseColor = float3(1, 0, 0);
+    UE.ClearCoatNormalCustomOutput(Input = float3(0, 0, 1));
+}

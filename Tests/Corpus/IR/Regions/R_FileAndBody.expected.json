@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"R_FileAndBody.dss\"\n\nproduct 0 Material \"M_Regions\" backend=Graph\n  region 0 \"Parameters\" parent=-1\n  region 1 \"Outer\" parent=-1\n  region 2 \"Inner\" parent=1\n  layout Node var=Sum x=120 y=-40\n  layout Comment name=\"Maths\" x=0 y=0 w=400 h=200\n  %0 = Parameter(DefaultValue=(1), ParameterName=\"A\", SortPriority=0) : float @L5:C1 {Parameters} \"A\"\n  %1 = Parameter(DefaultValue=(2), ParameterName=\"B\", SortPriority=1) : float @L6:C1 {Parameters} \"B\"\n  %2 = Add(%0, %1) : float @L15:C17 {Outer} \"Sum\"\n  %3 = Constant(Value=(2)) : float @L17:C26 {Inner} \"Scaled\"\n  %4 = Multiply(%2, %3) : float @L17:C20 {Inner} \"Scaled\"\n  %5 = Constant(Value=(1)) : float @L19:C28 {Outer} \"Final\"\n  %6 = Add(%4, %5) : float @L19:C19 {Outer} \"Final\"\n  %7 = MaterialSink(Opacity=%6) @L12:C1\n  sink %7\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_Regions"
+		],
+		"nodeCounts": [
+			8
+		]
+	}
+}

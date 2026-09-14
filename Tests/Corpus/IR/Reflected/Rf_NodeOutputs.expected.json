@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Rf_NodeOutputs.dss\"\n\nproduct 0 Material \"M_NodeOutputs\" backend=Graph\n  %0 = Reflected[SceneTexture](SceneTextureId=\"PostProcessInput0\") : [Color:float4, Size:float2, InvSize:float2] @L6:C23 \"EmissiveColor\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L6:C23 \"EmissiveColor\"\n  %2 = Swizzle(%0#2, Mask=\"x\") : float @L7:C17 \"Opacity\"\n  %3 = MaterialSink(EmissiveColor=%1, Opacity=%2) @L4:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_NodeOutputs"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

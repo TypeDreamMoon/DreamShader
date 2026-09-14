@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"MF_SampleTinted.dss\"\n\nproduct 0 MaterialFunction \"SampleTinted\" backend=Graph\n  %0 = FunctionInput(InputName=\"Tex\", InputType=\"Texture2D\", IsOptional=false, SortPriority=0) : Texture2D @L3:C1 \"Tex\"\n  %1 = FunctionInput(InputName=\"UV\", InputType=\"Vector2\", IsOptional=false, SortPriority=1) : float2 @L3:C1 \"UV\"\n  %2 = FunctionInput(InputName=\"InTint\", InputType=\"Vector3\", IsOptional=false, SortPriority=2) : float3 @L3:C1 \"InTint\"\n  %3 = TextureSample(%0, %1, _, _) : [RGBA:float4, R:float, G:float, B:float, A:float] @L6:C20 \"Texel\"\n  %4 = Swizzle(%3, Mask=\"xyz\") : float3 @L7:C13 \"RGB\"\n  %5 = Multiply(%4, %2) : float3 @L7:C13 \"RGB\"\n  %6 = Swizzle(%3, Mask=\"w\") : float @L8:C13 \"Alpha\"\n  %7 = FunctionOutput(%5, OutputName=\"RGB\", SortPriority=0) @L3:C1 \"RGB\"\n  %8 = FunctionOutput(%6, OutputName=\"Alpha\", SortPriority=1) @L3:C1 \"Alpha\"\n  inputs %0, %1, %2\n  outputs %7, %8\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction"
+		],
+		"productNames": [
+			"SampleTinted"
+		],
+		"nodeCounts": [
+			9
+		]
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S_ReorderIsAppend.dss\"\n\nproduct 0 Material \"M_ReorderIsAppend\" backend=Graph\n  %0 = Parameter(DefaultValue=(1, 2, 3, 4), ParameterName=\"V\", SortPriority=0) : float4 @L4:C1 \"V\"\n  %1 = Swizzle(%0, Mask=\"y\") : float @L8:C30 \"EmissiveColor\"\n  %2 = Swizzle(%0, Mask=\"x\") : float @L8:C30 \"EmissiveColor\"\n  %3 = Append(%1, %2) : float2 @L8:C30 \"EmissiveColor\"\n  %4 = Constant(Value=(0)) : float @L8:C36 \"EmissiveColor\"\n  %5 = Append(%3, %4) : float3 @L8:C23 \"EmissiveColor\"\n  %6 = MaterialSink(EmissiveColor=%5) @L6:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_ReorderIsAppend"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

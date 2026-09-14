@@ -1,0 +1,21 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"passes": false,
+	"ir": "module \"D_IdenticalCallsRaw.dss\"\n\nproduct 0 Material \"M_IdenticalCallsRaw\" backend=Graph\n  %0 = TextureParameter(ParameterName=\"Tex\", SortPriority=0) : Texture2D @L4:C1 \"Tex\"\n  %1 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L9:C27 \"A\"\n  %2 = TextureSample(%0, %1, _, _) : [RGBA:float4, R:float, G:float, B:float, A:float] @L9:C16 \"A\"\n  %3 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L10:C27 \"B\"\n  %4 = TextureSample(%0, %3, _, _) : [RGBA:float4, R:float, G:float, B:float, A:float] @L10:C16 \"B\"\n  %5 = Parameter(DefaultValue=(1), ParameterName=\"Gain\", SortPriority=1) : float @L5:C1 \"Gain\"\n  %6 = Multiply(%2, %5) : float4 @L11:C20 \"Left\"\n  %7 = Swizzle(%6, Mask=\"xyz\") : float3 @L11:C19 \"Left\"\n  %8 = Multiply(%4, %5) : float4 @L12:C21 \"Right\"\n  %9 = Swizzle(%8, Mask=\"xyz\") : float3 @L12:C20 \"Right\"\n  %10 = Add(%7, %9) : float3 @L13:C23 \"EmissiveColor\"\n  %11 = MaterialSink(EmissiveColor=%10) @L7:C1\n  sink %11\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_IdenticalCallsRaw"
+		],
+		"nodeCounts": [
+			12
+		]
+	}
+}

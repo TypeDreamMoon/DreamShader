@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S_ReplicationIsAppend.dss\"\n\nproduct 0 Material \"M_ReplicationIsAppend\" backend=Graph\n  %0 = Parameter(DefaultValue=(1, 2, 3, 4), ParameterName=\"V\", SortPriority=0) : float4 @L6:C1 \"V\"\n  %1 = Swizzle(%0, Mask=\"x\") : float @L10:C23 \"FromXyzw\"\n  %2 = Append(%1, %1) : float2 @L10:C23 \"FromXyzw\"\n  %3 = Append(%2, %1) : float3 @L10:C23 \"FromXyzw\"\n  %4 = Swizzle(%0, Mask=\"y\") : float @L12:C20 \"Mixed\"\n  %5 = Append(%2, %4) : float3 @L12:C20 \"Mixed\"\n  %6 = Add(%3, %3) : float3 @L13:C23 \"EmissiveColor\"\n  %7 = Add(%6, %5) : float3 @L13:C23 \"EmissiveColor\"\n  %8 = MaterialSink(EmissiveColor=%7) @L8:C1\n  sink %8\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_ReplicationIsAppend"
+		],
+		"nodeCounts": [
+			9
+		]
+	}
+}

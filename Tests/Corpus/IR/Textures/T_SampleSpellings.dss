@@ -1,0 +1,24 @@
+// CONTRACT 6.5 with the 6.13 #14 ruling: a TextureSample always has four operand slots,
+// [Texture, UV, Sampler, Level], with an empty slot printed as `_`. So the spellings normalise to
+// the same SHAPE, not all to the same node:
+//
+//   Tex.Sample(UV)                -> [tex, uv,  _,  _ ]
+//   Tex.Sample(Tex, UV)           -> [tex, uv, tex,  _ ]
+//   Texture2DSample(Tex, Tex, UV) -> [tex, uv, tex,  _ ]   <- merges with the line above
+//   Tex.SampleLevel(UV, 0)        -> [tex, uv,  _,  lvl]
+//
+// Written in one file so the dedupe pass has to do both halves of its job in one graph: merge the
+// two that really are the same call, and leave alone the two that are not.
+
+uniform Texture2D Tex;
+
+export void M_SampleSpellings(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0);
+    float4 Plain = Tex.Sample(UV);
+    float4 WithSampler = Tex.Sample(Tex, UV);
+    float4 HlslSpelling = Texture2DSample(Tex, Tex, UV);
+    float4 WithLevel = Tex.SampleLevel(UV, 0);
+    m.EmissiveColor = (Plain + WithSampler + HlslSpelling + WithLevel).rgb;
+    m.Opacity = Plain.a;
+}

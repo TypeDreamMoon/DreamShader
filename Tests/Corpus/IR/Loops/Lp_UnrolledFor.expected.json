@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Lp_UnrolledFor.dss\"\n\nproduct 0 Material \"M_UnrolledFor\" backend=Graph\n  %0 = Constant(Value=(0)) : float @L6:C17 \"Sum\"\n  %1 = Parameter(DefaultValue=(0.25), ParameterName=\"Gain\", SortPriority=0) : float @L2:C1 \"Gain\"\n  %2 = Add(%0, %1) : float @L9:C15 \"Sum\"\n  %3 = Add(%2, %1) : float @L9:C15 \"Sum\"\n  %4 = Add(%3, %1) : float @L9:C15 \"Sum\"\n  %5 = Add(%4, %1) : float @L9:C15 \"Sum\"\n  %6 = MaterialSink(Opacity=%5) @L4:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_UnrolledFor"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

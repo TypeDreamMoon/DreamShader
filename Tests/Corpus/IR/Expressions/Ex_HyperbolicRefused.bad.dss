@@ -1,0 +1,8 @@
+// CONTRACT 6.13 #23: `sinh` / `cosh` / `tanh` are binder errors. EIROp has entries for them -- the
+// enum may only grow, so they stay -- but the graph has no node that computes them, and accepting
+// the spelling only to fail later would be the worst of both.
+
+export void M_HyperbolicRefused(inout material m)
+{
+    m.Opacity = tanh(0.5);
+}

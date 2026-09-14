@@ -1,0 +1,7 @@
+// An attribute the engine's material attribute table does not carry. Unlike the IR corpus, this one
+// goes through the REFLECTED catalog, so it also pins that the reflection producer and the hand
+// written test catalog agree about what an unknown attribute is.
+export void M_C2UnknownAttribute(inout material m)
+{
+    m.NoSuchAttribute = 1;
+}

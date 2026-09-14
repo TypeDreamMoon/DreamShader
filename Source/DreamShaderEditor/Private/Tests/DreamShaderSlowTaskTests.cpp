@@ -282,12 +282,12 @@ bool FDreamShaderCancelledGenerationLeavesAssetTest::RunTest(const FString& Para
 		IFileManager::Get().Delete(*SourceFilePath, /*bRequireExists*/ false, /*bEvenIfReadOnly*/ true);
 	};
 
-	// bTransient: the material is built into an in-memory /Game package and never written to disk,
+	// Ephemeral: the material is built into an unsaved /Game package and never written to disk,
 	// so the test leaves no asset behind -- but it is still a real, loadable UMaterial.
 	UE::DreamShader::FDreamShaderError GoodMessage;
 	if (!TestTrue(
 			FString::Printf(TEXT("The first generation succeeds: %s"), *GoodMessage.Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, GoodMessage, /*bForce*/ true, /*bTransient*/ true)))
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, GoodMessage, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
@@ -319,7 +319,7 @@ bool FDreamShaderCancelledGenerationLeavesAssetTest::RunTest(const FString& Para
 			[Material]() { return Material->GetExpressions().Num() == 0; });
 
 		UE::DreamShader::FDreamShaderError CancelMessage;
-		const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, CancelMessage, /*bForce*/ true, /*bTransient*/ true);
+		const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, CancelMessage, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 
 		TestFalse(TEXT("A cancelled generation reports failure"), bRebuilt);
 		TestEqual(TEXT("Cancellation is reported as DSH9010"), CancelMessage.Code, FString(TEXT("DSH9010")));

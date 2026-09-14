@@ -1,0 +1,9 @@
+// CONTRACT 6.11: the header's structs, globals and functions join the module's tables, and the
+// resolved path feeds the dependency graph and the build key.
+
+#include "Shared.dsh"
+
+export void M_Header(inout material m)
+{
+    m.Opacity = SharedHelper(0.5);
+}

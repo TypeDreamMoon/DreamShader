@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"B_StaticIf.dss\"\n\nproduct 0 Material \"M_StaticIf\" backend=Graph\n  %0 = Parameter(DefaultValue=(1), IsStatic=true, ParameterName=\"UseWarm\", SortPriority=0) : bool @L4:C1 \"UseWarm\"\n  %1 = Constant(Value=(1, 0.5, 0)) : float3 @L11:C18 \"Colour\"\n  %2 = Constant(Value=(0, 0.5, 1)) : float3 @L15:C18 \"Colour\"\n  %3 = StaticSwitch(%0, %1, %2) : float3 @L9:C5\n  %4 = MaterialSink(EmissiveColor=%3) @L6:C1\n  sink %4\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_StaticIf"
+		],
+		"nodeCounts": [
+			5
+		]
+	}
+}

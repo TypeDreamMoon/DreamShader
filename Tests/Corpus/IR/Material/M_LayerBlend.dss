@@ -1,0 +1,9 @@
+// A layer blend's inputs arrive THROUGH pins, so reading a field off one is GetMaterialAttributes
+// and the result is a SetMaterialAttributes chain (CONTRACT 6.2, last two sentences).
+
+/// @layerblend
+export void B_LayerBlend(material A, material B, inout material R)
+{
+    R.BaseColor = A.BaseColor;
+    R.Roughness = B.Roughness;
+}

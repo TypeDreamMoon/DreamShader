@@ -1,0 +1,6 @@
+// The 2.0 language is case-sensitive everywhere, and this is where a `ue.texcoord` typo is caught.
+export void M_WrongCase(inout material m)
+{
+    float2 UV = UE.texcoord(0);
+    m.Opacity = UV.x;
+}

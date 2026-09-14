@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Pr_FunctionLibrary.dss\"\n\nproduct 0 MaterialFunction \"MF_Scale\" backend=Graph\n  library \"MoonToon|Shared\"\n  desc \"Scales a UV pair.\"\n  %0 = FunctionInput(Description=\"The coordinates to scale.\", InputName=\"UV\", InputType=\"Vector2\", IsOptional=false, SortPriority=0) : float2 @L9:C1 \"UV\"\n  %1 = FunctionInput(Description=\"The factor.\", InputName=\"Scale\", InputType=\"Scalar\", IsOptional=true, PreviewValue=(1, 1, 1, 1), SortPriority=1) : float @L9:C1 \"Scale\"\n  %2 = Multiply(%0, %1) : float2 @L11:C12\n  %3 = FunctionOutput(%2, OutputName=\"Result\", SortPriority=0) @L9:C1 \"Result\"\n  inputs %0, %1\n  outputs %3\n\nproduct 1 MaterialFunction \"MF_SampleTinted\" backend=Graph\n  %0 = FunctionInput(InputName=\"Tex\", InputType=\"Texture2D\", IsOptional=false, SortPriority=0) : Texture2D @L14:C1 \"Tex\"\n  %1 = FunctionInput(InputName=\"UV\", InputType=\"Vector2\", IsOptional=false, SortPriority=1) : float2 @L14:C1 \"UV\"\n  %2 = FunctionInput(InputName=\"InTint\", InputType=\"Vector3\", IsOptional=false, SortPriority=2) : float3 @L14:C1 \"InTint\"\n  %3 = TextureSample(%0, %1, _, _) : [RGBA:float4, R:float, G:float, B:float, A:float] @L16:C20 \"Texel\"\n  %4 = Swizzle(%3, Mask=\"xyz\") : float3 @L17:C11 \"RGB\"\n  %5 = Multiply(%4, %2) : float3 @L17:C11 \"RGB\"\n  %6 = Swizzle(%3, Mask=\"w\") : float @L18:C13 \"Alpha\"\n  %7 = FunctionOutput(%5, OutputName=\"RGB\", SortPriority=0) @L14:C1 \"RGB\"\n  %8 = FunctionOutput(%6, OutputName=\"Alpha\", SortPriority=1) @L14:C1 \"Alpha\"\n  inputs %0, %1, %2\n  outputs %7, %8\n",
+	"module":
+	{
+		"products": 2,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction",
+			"MaterialFunction"
+		],
+		"productNames": [
+			"MF_Scale",
+			"MF_SampleTinted"
+		],
+		"nodeCounts": [
+			4,
+			9
+		]
+	}
+}

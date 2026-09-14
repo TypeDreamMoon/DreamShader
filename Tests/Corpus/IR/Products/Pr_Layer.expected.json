@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Pr_Layer.dss\"\n\nproduct 0 MaterialLayer \"L_Tint\" backend=Graph\n  %0 = FunctionInput(InputName=\"m\", InputType=\"MaterialAttributes\", IsOptional=false, SortPriority=0) : material @L3:C1 \"m\"\n  %1 = Constant(Value=(1, 0.5, 0.25)) : float3 @L5:C19 \"BaseColor\"\n  %2 = SetMaterialAttributes(MaterialAttributes=%0, BaseColor=%1, AttributeSetTypes=\"[BaseColor]\") : material @L3:C1\n  %3 = FunctionOutput(%2, OutputName=\"m\", SortPriority=0) @L3:C1 \"m\"\n  inputs %0\n  outputs %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialLayer"
+		],
+		"productNames": [
+			"L_Tint"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

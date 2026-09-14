@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"B_NestedIf.dss\"\n\nproduct 0 Material \"M_NestedIf\" backend=Graph\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L9:C17 \"UV\"\n  %1 = Constant(Value=(0, 0, 0)) : float3 @L10:C21 \"Colour\"\n  %2 = Parameter(DefaultValue=(1), IsStatic=true, ParameterName=\"UseWarm\", SortPriority=0) : bool @L4:C1 \"UseWarm\"\n  %3 = Swizzle(%0, Mask=\"x\") : float @L13:C23 \"Local\"\n  %4 = Constant(Value=(2)) : float @L13:C30 \"Local\"\n  %5 = Multiply(%3, %4) : float @L13:C23 \"Local\"\n  %6 = Parameter(DefaultValue=(0.5), ParameterName=\"Threshold\", SortPriority=1) : float @L5:C1 \"Threshold\"\n  %7 = Constant(Value=(1, 0.5, 0)) : float3 @L16:C22 \"Colour\"\n  %8 = Constant(Value=(0.5, 0.25, 0)) : float3 @L20:C22 \"Colour\"\n  %9 = Compare(%5, %6, %7, %8, %8) : float3 @L14:C9\n  %10 = StaticSwitch(%2, %9, %1) : float3 @L11:C5\n  %11 = MaterialSink(EmissiveColor=%10) @L7:C1\n  sink %11\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_NestedIf"
+		],
+		"nodeCounts": [
+			12
+		]
+	}
+}

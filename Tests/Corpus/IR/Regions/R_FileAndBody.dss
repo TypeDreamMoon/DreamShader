@@ -1,0 +1,22 @@
+// CONTRACT 6.8: file-scope `#pragma region` groups declarations, in-body ones group the nodes of
+// the statements between them, both nest, and a `#pragma layout` line is carried through untouched.
+
+#pragma region Parameters
+uniform float A = 1;
+uniform float B = 2;
+#pragma endregion
+
+#pragma layout(Node, Var = "Sum", X = 120, Y = -40)
+#pragma layout(Comment, Name = "Maths", X = 0, Y = 0, W = 400, H = 200)
+
+export void M_Regions(inout material m)
+{
+    #pragma region Outer
+    float Sum = A + B;
+    #pragma region Inner
+    float Scaled = Sum * 2;
+    #pragma endregion
+    float Final = Scaled + 1;
+    #pragma endregion
+    m.Opacity = Final;
+}

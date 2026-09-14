@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"MF_ToonUV.dss\"\n\nproduct 0 MaterialFunction \"MF_ToonUV\" backend=Graph\n  library \"MoonToon|Shared\"\n  desc \"UV channel select, then scale and offset. ScaleOffset is xy = scale, zw = offset.\"\n  %0 = FunctionInput(Description=\"Which UV channel to read.\", InputName=\"UVChannel\", InputType=\"Scalar\", IsOptional=true, PreviewValue=(0, 0, 0, 0), SortPriority=0) : float @L11:C1 \"UVChannel\"\n  %1 = FunctionInput(Description=\"xy scales the UV, zw is added afterwards.\", InputName=\"ScaleOffset\", InputType=\"Vector4\", IsOptional=true, PreviewValue=(1, 1, 0, 0), SortPriority=1) : float4 @L11:C1 \"ScaleOffset\"\n  %2 = FunctionCall[/MoonToon/MaterialFunctions/Utils/MF_UVChannelSwitch](UVChannelIndex=%0, FunctionPath=\"/MoonToon/MaterialFunctions/Utils/MF_UVChannelSwitch\") : [Result:float2] @L13:C23 \"Selected\"\n  %3 = Swizzle(%1, Mask=\"xy\") : float2 @L14:C23\n  %4 = Multiply(%2, %3) : float2 @L14:C12\n  %5 = Swizzle(%1, Mask=\"zw\") : float2 @L14:C40\n  %6 = Add(%4, %5) : float2 @L14:C12\n  %7 = FunctionOutput(%6, OutputName=\"Result\", SortPriority=0) @L11:C1 \"Result\"\n  inputs %0, %1\n  outputs %7\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction"
+		],
+		"productNames": [
+			"MF_ToonUV"
+		],
+		"nodeCounts": [
+			8
+		]
+	}
+}

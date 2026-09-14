@@ -1,0 +1,8 @@
+// Recursion cannot be inlined (CONTRACT 6.4).
+float Ping(float x) { return Pong(x); }
+float Pong(float x) { return Ping(x); }
+
+export void M_Recursion(inout material m)
+{
+    m.Opacity = Ping(1);
+}

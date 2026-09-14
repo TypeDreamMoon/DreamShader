@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Rf_ArgumentMatching.dss\"\n\nproduct 0 Material \"M_ArgumentMatching\" backend=Graph\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L10:C20 \"Named\"\n  %1 = Reflected[TextureCoordinate](CoordinateIndex=1) : float2 @L11:C25 \"Positional\"\n  %2 = Parameter(DefaultValue=(1, 0, 0), ParameterName=\"Colour\", SortPriority=0) : float4 @L5:C1 \"Colour\"\n  %3 = Swizzle(%2, Mask=\"xyz\") : float3 @L5:C1 \"BaseColor\"\n  %4 = Reflected[LinearInterpolate](A=%3, ConstAlpha=0.5, ConstB=0) : float3 @L12:C19 \"BaseColor\"\n  %5 = Parameter(DefaultValue=(0.25), ParameterName=\"Alpha\", SortPriority=1) : float @L6:C1 \"Alpha\"\n  %6 = Reflected[LinearInterpolate](A=%3, Alpha=%5, ConstB=0) : float3 @L13:C23 \"EmissiveColor\"\n  %7 = Swizzle(%0, Mask=\"x\") : float @L14:C17 \"Opacity\"\n  %8 = Swizzle(%1, Mask=\"y\") : float @L14:C27 \"Opacity\"\n  %9 = Add(%7, %8) : float @L14:C17 \"Opacity\"\n  %10 = MaterialSink(BaseColor=%4, EmissiveColor=%6, Opacity=%9) @L8:C1\n  sink %10\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_ArgumentMatching"
+		],
+		"nodeCounts": [
+			11
+		]
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"P_UniformKinds.dss\"\n\nproduct 0 Material \"M_UniformKinds\" backend=Graph\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L21:C17 \"UV\"\n  %1 = Parameter(DefaultValue=(1, 1), ParameterName=\"Tiling\", SortPriority=1) : float4 @L5:C1 \"Tiling\"\n  %2 = Swizzle(%1, Mask=\"xy\") : float2 @L5:C1 \"UV\"\n  %3 = Multiply(%0, %2) : float2 @L21:C17 \"UV\"\n  %4 = TextureParameter(ParameterName=\"NormalMap\", SamplerType=\"Normal\", SortPriority=7) : Texture2D @L15:C1 \"NormalMap\"\n  %5 = TextureSample(%4, %3, _, _, SamplerType=\"Normal\") : [RGBA:float4, R:float, G:float, B:float, A:float] @L22:C16 \"Normal\"\n  %6 = Swizzle(%5, Mask=\"xyz\") : float3 @L22:C16 \"Normal\"\n  %7 = Parameter(DefaultValue=(1, 0, 0), ParameterName=\"Colour\", SortPriority=2) : float4 @L6:C1 \"Colour\"\n  %8 = Swizzle(%7, Mask=\"xyz\") : float3 @L6:C1 \"EmissiveColor\"\n  %9 = Parameter(DefaultValue=(1, 1, 1, 1), ParameterName=\"Tint\", SortPriority=3) : float4 @L7:C1 \"Tint\"\n  %10 = Swizzle(%9, Mask=\"xyz\") : float3 @L23:C32 \"EmissiveColor\"\n  %11 = Multiply(%8, %10) : float3 @L23:C23 \"EmissiveColor\"\n  %12 = Parameter(DefaultValue=(0.7), Description=\"The overall gain\", Group=\"Look\", ParameterName=\"Gain\", SliderMax=4, SliderMin=0, SortPriority=20) : float @L4:C1 \"Gain\"\n  %13 = Multiply(%11, %12) : float3 @L23:C23 \"EmissiveColor\"\n  %14 = Constant(Value=(0.5)) : float @L17:C1 \"EmissiveColor\"\n  %15 = Multiply(%13, %14) : float3 @L23:C23 \"EmissiveColor\"\n  %16 = Parameter(DefaultValue=(0), ParameterName=\"Invert\", SortPriority=5) : float @L9:C1 \"Invert\"\n  %17 = Constant(Value=(1)) : float @L24:C26 \"Opacity\"\n  %18 = Subtract(%17, %12) : float @L24:C26 \"Opacity\"\n  %19 = Select(%16, %18, %12) : float @L24:C17 \"Opacity\"\n  %20 = Parameter(DefaultValue=(0), ParameterName=\"Channel\", SortPriority=4) : float @L8:C1 \"Channel\"\n  %21 = Parameter(DefaultValue=(1), IsStatic=true, ParameterName=\"UseColour\", SortPriority=6) : bool @L12:C1 \"UseColour\"\n  %22 = StaticSwitch(%21, %8, %10) : float3 @L26:C19 \"BaseColor\"\n  %23 = MaterialSink(Normal=%6, EmissiveColor=%15, Opacity=%19, Roughness=%20, BaseColor=%22) @L19:C1\n  sink %23\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_UniformKinds"
+		],
+		"nodeCounts": [
+			24
+		]
+	}
+}

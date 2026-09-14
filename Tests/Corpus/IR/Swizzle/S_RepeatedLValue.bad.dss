@@ -1,0 +1,13 @@
+// The one place a repeated component is still an error (CONTRACT 6.13 #29): an assignment TARGET.
+// `Local.xxy = ...` would have to write two different values into x, and there is no order in which
+// that means anything. The code is DSH4230 -- S's one swizzle-shape code, the same number an
+// out-of-range or mixed-family mask gets (`SwizzleRepeatTarget` in BindAssign).
+
+uniform float4 V = float4(1, 2, 3, 4);
+
+export void M_RepeatedLValue(inout material m)
+{
+    float4 Local = V;
+    Local.xxy = float3(1, 2, 3);
+    m.EmissiveColor = Local.rgb;
+}

@@ -365,7 +365,7 @@ bool FDreamShaderOutputsBlockSingleNodeTest::RunTest(const FString& Parameters)
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("block-form material generates: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(FixturePath, Message, /*bForce*/ true, /*bTransient*/ true)))
+		FMaterialGenerator::GenerateMaterialFromFile(FixturePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
@@ -423,7 +423,7 @@ bool FDreamShaderOutputsBlockRoundtripTest::RunTest(const FString& Parameters)
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("block-form material generates: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(FixturePath, Message, /*bForce*/ true, /*bTransient*/ true)))
+		FMaterialGenerator::GenerateMaterialFromFile(FixturePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
@@ -461,7 +461,7 @@ bool FDreamShaderOutputsBlockRoundtripTest::RunTest(const FString& Parameters)
 	FString RoundtripMessage;
 	if (!TestTrue(
 		FString::Printf(TEXT("decompiled block form re-generates: %s"), *RoundtripMessage),
-		FMaterialGenerator::GenerateMaterialFromFile(Scratch.FilePath, RoundtripMessage, /*bForce*/ true, /*bTransient*/ true)))
+		FMaterialGenerator::GenerateMaterialFromFile(Scratch.FilePath, RoundtripMessage, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 	{
 		AddInfo(FString::Printf(TEXT("decompiled source:\n%s"), *DecompiledSource));
 		return false;

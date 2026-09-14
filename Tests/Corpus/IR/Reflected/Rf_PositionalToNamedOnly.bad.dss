@@ -1,0 +1,5 @@
+// A class with no PositionalParameters takes named arguments only.
+export void M_PositionalToNamedOnly(inout material m)
+{
+    m.Opacity = UE.VertexColor(1).x;
+}

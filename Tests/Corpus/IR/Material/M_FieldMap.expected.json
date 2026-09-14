@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"M_FieldMap.dss\"\n\nproduct 0 Material \"M_FieldMap\" backend=Graph\n  %0 = Parameter(DefaultValue=(1, 0, 0), ParameterName=\"Colour\", SortPriority=0) : float4 @L4:C1 \"Colour\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L4:C1 \"BaseColor\"\n  %2 = Constant(Value=(0.4)) : float @L9:C19 \"Roughness\"\n  %3 = Constant(Value=(2)) : float @L10:C37 \"EmissiveColor\"\n  %4 = Multiply(%1, %3) : float3 @L10:C23 \"EmissiveColor\"\n  %5 = Constant(Value=(1)) : float @L11:C17 \"Opacity\"\n  %6 = MaterialSink(BaseColor=%1, Roughness=%2, EmissiveColor=%4, Opacity=%5) @L6:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_FieldMap"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

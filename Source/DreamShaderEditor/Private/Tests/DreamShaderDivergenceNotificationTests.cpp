@@ -105,7 +105,7 @@ bool FDreamShaderDivergenceNoticeParseTest::RunTest(const FString& Parameters)
 		// The ThinCustom case the whole feature exists for: an instance with no tile to right-click.
 		FDreamShaderDivergenceReport Report;
 		TestTrue(
-			TEXT("An in-memory instance refusal is recognised"),
+			TEXT("An Ephemeral instance refusal is recognised"),
 			TryParseDivergenceRefusal(
 				MakeRefusal(TEXT("/Game/DreamShader/MI_Cloud.MI_Cloud"), TEXT("DShader/MI_Cloud.dsm")),
 				Report));
@@ -161,7 +161,7 @@ bool FDreamShaderDivergenceNoticeButtonsTest::RunTest(const FString& Parameters)
 		// is worse than offering none, so an unresolvable asset gets an informational toast.
 		FDreamShaderDivergenceAssetFacts Facts;
 		Facts.bAssetResolved = false;
-		Facts.bHiddenInMemoryInstance = false;
+		Facts.bHiddenEphemeralInstance = false;
 		const FDreamShaderDivergenceNoticeButtons Buttons = DecideDivergenceNoticeButtons(Facts);
 		TestEqual(TEXT("An unresolved asset gets no action buttons"), Buttons.Num(), 0);
 		TestFalse(TEXT("...and reports that it has none"), Buttons.HasAnyAction());
@@ -170,12 +170,12 @@ bool FDreamShaderDivergenceNoticeButtonsTest::RunTest(const FString& Parameters)
 	{
 		FDreamShaderDivergenceAssetFacts Facts;
 		Facts.bAssetResolved = true;
-		Facts.bHiddenInMemoryInstance = false;
+		Facts.bHiddenEphemeralInstance = false;
 		const FDreamShaderDivergenceNoticeButtons Buttons = DecideDivergenceNoticeButtons(Facts);
 		TestTrue(TEXT("A saved asset is offered Revert"), Buttons.bRevert);
 		TestTrue(TEXT("A saved asset is offered Adopt"), Buttons.bAdopt);
 		TestTrue(TEXT("A saved asset is offered Detach"), Buttons.bDetach);
-		TestFalse(TEXT("A visible asset is NOT offered the visibility toggle"), Buttons.bShowInMemoryMaterials);
+		TestFalse(TEXT("A visible asset is NOT offered the visibility toggle"), Buttons.bShowEphemeralMaterials);
 		TestEqual(TEXT("...three buttons in total"), Buttons.Num(), 3);
 	}
 
@@ -184,11 +184,11 @@ bool FDreamShaderDivergenceNoticeButtonsTest::RunTest(const FString& Parameters)
 		// something that is not on screen at all.
 		FDreamShaderDivergenceAssetFacts Facts;
 		Facts.bAssetResolved = true;
-		Facts.bHiddenInMemoryInstance = true;
+		Facts.bHiddenEphemeralInstance = true;
 		const FDreamShaderDivergenceNoticeButtons Buttons = DecideDivergenceNoticeButtons(Facts);
-		TestTrue(TEXT("A hidden in-memory instance keeps the three resolutions"),
+		TestTrue(TEXT("A hidden Ephemeral instance keeps the three resolutions"),
 			Buttons.bRevert && Buttons.bAdopt && Buttons.bDetach);
-		TestTrue(TEXT("...and gains Show In-Memory Materials"), Buttons.bShowInMemoryMaterials);
+		TestTrue(TEXT("...and gains Show Ephemeral Materials"), Buttons.bShowEphemeralMaterials);
 		TestEqual(TEXT("...four buttons in total"), Buttons.Num(), 4);
 	}
 

@@ -1,0 +1,12 @@
+// `discard` has no graph form (CONTRACT 6.3).
+uniform float Threshold = 0.5;
+
+export void M_DiscardInBranch(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0);
+    if (UV.x > Threshold)
+    {
+        discard;
+    }
+    m.Opacity = 1;
+}

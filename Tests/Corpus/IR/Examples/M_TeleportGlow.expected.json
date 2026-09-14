@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"M_TeleportGlow.dss\"\n\nproduct 0 Material \"M_TeleportGlow\" backend=Graph settings{BlendMode=Additive, ShadingModel=Unlit, bUsedWithNiagaraSprites=true}\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L27:C17 \"UV\"\n  %1 = Reflected[VertexColor]() : float4 @L28:C17 \"VC\"\n  %2 = Parameter(DefaultValue=(1, 1, 1, 1), Description=\"Multiplied on top of the particle colour\", Group=\"Glow|Look\", ParameterName=\"Tint\", SortPriority=0) : float4 @L6:C1 \"Tint\"\n  %3 = Swizzle(%2, Mask=\"xyz\") : float3 @L30:C23 \"EmissiveColor\"\n  %4 = Swizzle(%1, Mask=\"xyz\") : float3 @L30:C34 \"EmissiveColor\"\n  %5 = Multiply(%3, %4) : float3 @L30:C23 \"EmissiveColor\"\n  %6 = Reflected[Time]() : float @L30:C56 \"EmissiveColor\"\n  %7 = Parameter(DefaultValue=(0.1), Description=\"Amplitude of the slow breathing pulse\", Group=\"Glow|Motion\", ParameterName=\"Breathe\", SortPriority=2) : float @L12:C1 \"Breathe\"\n  %8 = Custom[GlowMask](uv=%0, time=%6, breathe=%7, Code=\"// Begin DreamShader source: <corpus>/IR/Examples/M_TeleportGlow.dss\\n// DreamShader custom: GlowMask line 16\\n\\n    float2 p = uv * 2.0 - 1.0;\\n    float r2 = dot(p, p);\\n    float glow = pow(saturate(1.0 - r2), 2.4);\\n    float hot  = pow(saturate(1.0 - r2 * 2.6), 5.0) * 0.9;\\n    float pulse = 1.0 - breathe + breathe * sin(time * 2.1);\\n    return (glow + hot) * pulse;\\n// End DreamShader source: <corpus>/IR/Examples/M_TeleportGlow.dss\\n\", Description=\"GlowMask\", OutputType=\"Float1\") : [Result:float] @L30:C43 \"EmissiveColor\"\n  %9 = Multiply(%5, %8) : float3 @L30:C23 \"EmissiveColor\"\n  %10 = Parameter(DefaultValue=(0.7), Description=\"Overall emissive gain\", Group=\"Glow|Look\", ParameterName=\"Intensity\", SortPriority=1) : float @L9:C1 \"Intensity\"\n  %11 = Multiply(%9, %10) : float3 @L30:C23 \"EmissiveColor\"\n  %12 = MaterialSink(EmissiveColor=%11) @L25:C1\n  sink %12\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_TeleportGlow"
+		],
+		"nodeCounts": [
+			13
+		]
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"In_Header.dss\"\ninclude \"Shared.dsh\"\n\nproduct 0 Material \"M_Header\" backend=Graph\n  %0 = Constant(Value=(0.5)) : float @L8:C30 \"Opacity\"\n  %1 = Parameter(DefaultValue=(2), ParameterName=\"SharedGain\", SortPriority=0) : float @L4:C1 in \"Shared.dsh\" \"SharedGain\"\n  %2 = Multiply(%0, %1) : float @L8:C12 in \"Shared.dsh\" via L8:C17 \"Opacity\"\n  %3 = MaterialSink(Opacity=%2) @L6:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 1,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_Header"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

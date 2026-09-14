@@ -1,0 +1,13 @@
+// A legal `/// @custom`: the body is verbatim HLSL, the parameters are the Custom node's pins, and
+// the generated code opens with unit H's two marker lines.
+
+/// @custom
+float3 Posterise(float3 Colour, float Steps)
+{
+    return floor(Colour * Steps) / Steps;
+}
+
+export void M_CustomNode(inout material m)
+{
+    m.EmissiveColor = Posterise(float3(1, 0.5, 0.25), 4);
+}

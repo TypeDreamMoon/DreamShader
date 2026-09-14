@@ -1,0 +1,11 @@
+// `Backend = ThinCustom` produces the instance/hidden-base pair rather than a plain UMaterial, so
+// the golden's `assets` names a ThinCustomInstance and the dump's `backend` says ThinCustom.
+#pragma material(Backend = ThinCustom, ShadingModel = Unlit, BlendMode = Opaque)
+
+uniform float4 Tint = float4(1, 0.5, 0.25, 1);
+uniform float Boost = 0.5;
+
+export void M_C2ThinCustom(inout material m)
+{
+    m.EmissiveColor = Tint.rgb * Boost;
+}

@@ -13,20 +13,42 @@ Corpus/
 │   ├── TopLevel/       # Shader / ShaderFunction / Namespace / VirtualFunction ...
 │   ├── Sections/       # Properties / Settings / Outputs / Inputs / Options / Graph
 │   └── Types/          # float/vec/int/bool 家族 / Texture* / MaterialAttributes / Substrate
-├── Generate/           # 1.x 资产生成层 (FMaterialGenerator, bTransient), 慢, 要编辑器
+├── Generate/           # 1.x 资产生成层 (FMaterialGenerator, 允许 Ephemeral ThinCustom), 慢, 要编辑器
 └── Lang/               # 2.0 前端 (ParseDreamShaderLang), 主要吃 .dss/.dsh, 纯 Core
     ├── Lexical/        # 注释 / 字符串与转义 / 每种字面量 / 每个运算符 / #pragma 尾注释
     ├── Expressions/    # 优先级 / 命名实参 / 强制转换 / 构造器 / 成员与下标链 / 初始化列表
     ├── Statements/     # 每种语句 / for 的各种形态 / switch 与缺分号负例
     ├── Declarations/   # uniform / static const / 三种 linkage / struct / #include / #pragma / /// 块
     └── Examples/       # 完整可读的整文件（语法提案里的真实例子）
+├── IR/                 # 2.0 中端 (bind -> build -> passes -> validate), 纯 Core, 无资产 I/O
+│   ├── Parameters/     # uniform 各种类型 / static const / 裸全局负例         (契约 §6.1)
+│   ├── Material/       # material 字段图 / 不出 MakeMaterialAttributes / 边界 (§6.2, §6.13)
+│   ├── Branches/       # static if -> StaticSwitch, dynamic if -> Select     (§6.3)
+│   ├── Inlining/       # Helper 内联 / out 回写 / 递归负例                    (§6.4)
+│   ├── Textures/       # 四种采样拼写归一                                     (§6.5)
+│   ├── Swizzle/        # 规范掩码 xyzw / v[3] / 重复分量负例                  (§6.6)
+│   ├── Dedupe/         # 两次相同调用合一（配一个 passes:false 的对照）       (§6.7)
+│   ├── Regions/        # 文件级 + 体内 #pragma region / layout 提示            (§6.8)
+│   ├── Products/       # 产物种类 / 函数 IO 密集 SortPriority / 入口规则       (§6.9)
+│   ├── Reflected/      # 实参匹配 / const 属性优先 / Node 多输出 / Substrate   (§6.10)
+│   ├── Includes/       # #include 合表（Shared.dsh 被 runner 跳过）           (§6.11)
+│   ├── Matrices/       # 矩阵在图里没有形态                                   (DSH4361)
+│   ├── Loops/          # 可展开 for / 动态上界负例                            (DSH4360)
+│   ├── Custom/         # @custom 节点与 H 的标记行                            (§6.13)
+│   └── Examples/       # Lang/Examples 三个文件的**副本**（见下方"两处已知的重复"）
+└── Compile/            # 2.0 全链路 (FMaterialGenerator::GenerateAssetsFromFile), 慢, 要编辑器
+    ├── Material/       # 最小材质 / 内联+swizzle / 静态开关 / ThinCustom / region
+    ├── Function/       # 函数库（一个 export 一个资产）/ 纹理函数
+    └── Errors/         # 端到端的拒绝（码要走到 1.x wire form）
 ```
 
 | 子树 | 入口点 | runner | 自动化测试名 |
 |---|---|---|---|
 | `Parse/` | `FTextShaderParser::Parse` | `RunDreamShaderParseCorpusCase` | `DreamShader.Lang.Parse.*` |
-| `Generate/` | `FMaterialGenerator::Generate*FromFile`（transient） | `RunDreamShaderGenerateCorpusCase` | `DreamShader.Lang.Generate.*` |
+| `Generate/` | `FMaterialGenerator::Generate*FromFile`（允许 Ephemeral ThinCustom） | `RunDreamShaderGenerateCorpusCase` | `DreamShader.Lang.Generate.*` |
 | `Lang/` | `ParseDreamShaderLang`（2.0 前端） | `RunDreamShaderLangCorpusCase` | `DreamShader.Lang2.Corpus.*` |
+| `IR/` | `Bind` → `BuildDreamShaderIR` → `RunDreamShaderIRPasses` → `ValidateDreamShaderIR` | `RunDreamShaderIRCorpusCase` | `DreamShader.Lang2.CorpusIR.*` |
+| `Compile/` | `FMaterialGenerator::GenerateAssetsFromFile`（`.dss` 走 2.0 管线） | `RunDreamShaderCompileCorpusCase` | `DreamShader.Compiler2.Corpus.*` |
 
 三个 runner 都在 `Source/DreamShaderEditor/Private/Tests/DreamShaderTestCommon.h`，各自的
 `IMPLEMENT_COMPLEX_AUTOMATION_TEST` 在同目录的 `DreamShaderCorpus<Layer>Tests.cpp`。
@@ -110,6 +132,85 @@ Corpus/
   （`Auto` 按扩展名选 legacy，而 legacy 到 M4 才有 ⇒ DSH2199）。它不走 `Parse/` runner：
   三个 runner 各自只枚举自己那一层目录。
 
+## `ir` 金样本字段（2.0 中端，`IR/` 子树）
+
+`IR/` 下每个 `.dss` 只跑一次完整中端：parse → bind → build → passes → validate。全部字段可选。
+
+```json
+{
+  "entryPoint": "ir",
+  "outcome": "ok",                  // ok | error
+  "errorContains":   ["DSH4210"],   // Error 级诊断的子串（**跨阶段**：parse/bind/lower/validate 合在一起）
+  "warningsContain": ["DSH8210"],
+  "passes": true,                   // false = 不跑 passes（用来做 dedupe 前后的对照）
+  "irPending": true,                // 跳过 `ir` 文本比对，只校 outcome / 码 / module 计数
+  "ir": "<DumpDreamShaderIRText 的输出，逐字节>",
+  "module": {
+    "products": 1,                  // FIRModule::Products.Num()
+    "includes": 0,                  // FIRModule::Includes.Num()
+    "sinks": 1,                     // Graph.Sink != INDEX_NONE 的产物数
+    "productKinds": ["Material"],   // LexToString(EIRProductKind)，按产物顺序
+    "productNames": ["M_X"],
+    "nodeCounts": [12]              // 每个产物的 Graph.Nodes.Num()
+  }
+}
+```
+
+要点：
+
+- **这一层用的 builtin 目录是手写的那一份**（`MakeDreamShaderTestBuiltinCatalog()`，在
+  `DreamShaderTestCommon.h`），不是引擎反射。所以 `IR/` 的夹具只能用那份目录里声明的 builtin：
+  `UE.TextureCoordinate`（别名 `TexCoord`）、`UE.VertexColor`（故意只有一个 float4 输出）、`UE.VertexColorViews`（引擎 VertexColor 的真实形状：RGB / R / G / B / A 五个通道视图输出）、`UE.Time`、`UE.SceneTexture`（三输出）、
+  `UE.LinearInterpolate`（三个 pin 各带 `Const*` 孪生属性）、`UE.BlendMaterialAttributes`、
+  `UE.ClearCoatNormalCustomOutput`（custom output）、`Substrate.Unlit`；材质属性只有
+  BaseColor / EmissiveColor（别名 Emissive）/ Roughness / Normal / Opacity / WorldPositionOffset /
+  FrontMaterial / MaterialAttributes（整组，给整体赋值用）八个。**要用真反射的用例放 `Compile/`。**
+  理由是金样本的可比性：引擎多一个 pin 就整棵语料变红的金样本，说的不是编译器的事。
+- **`irPending: true` 是"这条金样本的文本部分还没填"**。批次 1 写语料时 I1 的
+  `DumpDreamShaderIRText` 还没定行格式，所以先把 outcome、DSHnnnn 码和结构计数钉住；等格式落地，
+  跑一次 `-DreamShaderUpdateGolden`、**人工 review diff**、再删掉这个标记，夹具就变成逐字节金样本。
+- **金样本不带机器和版本信息**：`ir` 文本里的语料根目录写成 `<corpus>/`（`@custom` 的源码标记会带文件路径），Compile 金样本里 fixture 自己的临时包路径写成 `<package>/`，graph dump 去掉 `asset` / `source` / `plugin` 三个根键。换机器、换检出目录、升插件版本号都不该让金样本变红。
+- `.dsh` 不会被当成用例跑（头文件没有产物可断言），只作为 `#include` 的目标存在。
+- **`IR/` 的 runner 不做预处理**：夹具就是已经预处理完的文本，和 `Lang/` 一样。要写 `#if` 的用例放 `Compile/`。
+- `#include` 只解析到**同目录的同名文件**；真正的 include resolver（P 写的那个）由 `Compile/` 层覆盖。
+
+## `compile` 金样本字段（2.0 全链路，`Compile/` 子树）
+
+`Compile/` 下每个 `.dss` 会被**复制到项目 DShader 根下它自己的目录**再编译——2.0 管线里 Graph 材质和
+材质函数一律落盘（没有“transient 请求”这回事；Ephemeral / Materialized 两态只属于 ThinCustom），
+资产落点跟着源文件路径走，而语料目录不是源根。复制件和它产出的所有资产都由 runner 清掉。
+
+```json
+{
+  "entryPoint": "compile",
+  "outcome": "ok",                  // ok | error
+  "errorContains": ["DSH8290"],     // 断言 1.x wire form（`DSHnnnn: message`）
+  "graphPending": true,             // 跳过 graphDump 比对，只校 outcome / 码 / assets
+  "assets": [
+    { "name": "M_X", "kind": "Material", "nodeCount": 7, "path": "M_X.M_X" }
+  ],
+  "graphDump": "<每个资产的规范化 dump-graph JSON，按资产名排序拼接>"
+}
+```
+
+要点：
+
+- `name` 是**资产叶名**，不是包路径：runner 把夹具复制到哪个 scratch 目录是 runner 的实现细节，
+  金样本写整条 object path 就是在断言那个细节。`path` 可选，按**后缀**匹配（给 `/// @name /Game/...` 用）。
+- `kind` 用 dump 里的那一套：`Material` / `MaterialFunction` / `MaterialLayer` / `MaterialLayerBlend` /
+  `ThinCustomInstance`。
+- `graphDump` 的规范化只去掉两个根级键：`asset`（object path）和 `source`（root + 相对路径）——
+  坐标、颜色、guid、引擎重建时追加的名字后缀，dump 本身就排除了（见 `Commandlet/DreamShaderGraphDump.h`）。
+- `graphPending` 同 `irPending`：先钉 outcome / 码 / 资产清单，第一次跑通后再 `-DreamShaderUpdateGolden`
+  填 dump、review diff、删标记。
+
+## 两处已知的重复
+
+- `IR/Examples/` 下的三个 `.dss` 是 `Lang/Examples/` 的**逐字节副本**。三个 runner 各自只枚举自己
+  那一层目录，所以同一个文件没法同时属于两层；改了一边记得改另一边（`diff` 一下就知道）。
+- `IR/` 与 `Compile/` 有几组同题材的夹具（字段图、静态开关、函数库、§6.13 边界）。这是故意的：
+  `IR/` 钉的是节点形状，`Compile/` 钉的是它变成资产之后还是那个形状，两者会在不同的地方坏掉。
+
 ## 运行
 
 编辑器内：`Tools > Test Automation`，筛 `DreamShader.Lang.Parse`。
@@ -125,6 +226,23 @@ Corpus/
 
 只跑 2.0 前端语料，把过滤器换成 `DreamShader.Lang2.Corpus`；整个 2.0 前端（语料 +
 各单元测试）是 `DreamShader.Lang2`。编辑器内同理，在 `Tools > Test Automation` 里筛。
+
+批次 1（M2+M3）新增的两层：
+
+| 想跑什么 | 过滤器 | 快慢 |
+|---|---|---|
+| 中端语料 | `DreamShader.Lang2.CorpusIR` | 快（纯 Core） |
+| 绑定器单元测试 | `DreamShader.Lang2.Binder` | 快 |
+| IR 单元测试 | `DreamShader.Lang2.IR` | 快 |
+| 前端 + 中端全部 | `DreamShader.Lang2` | 快 |
+| 全链路语料 | `DreamShader.Compiler2.Corpus` | 慢（写 /Game 资产） |
+| 全链路 + 与 1.x 对拍 | `DreamShader.Compiler2` | 慢 |
+
+`DreamShader.Compiler2.Parity.*` 是 plan §8 的对拍 oracle：同一个材质分别走 1.x 的 `.dsm/.dsf`
+孪生文件和 2.0 的 `.dss`，两边都编译、都 dump、都规范化，然后 diff。**diff 就是新管线的 bug，除非
+另行证明。** 两边源文件写法上的差异（1.x 给了 SortPriority、Group 里带空格、描述措辞不同）在测试里
+按**键名**成对剔除，每一条都在调用处写了理由；结构性的东西（节点、连线、类、默认值、材质设置、
+引脚名）一条都不在剔除名单上。
 
 ## 更新金样本
 

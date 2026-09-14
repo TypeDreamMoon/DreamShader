@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"I_HelperInlined.dss\"\n\nproduct 0 Material \"M_HelperInlined\" backend=Graph\n  %0 = Parameter(DefaultValue=(2), ParameterName=\"Gain\", SortPriority=0) : float @L4:C1 \"Gain\"\n  %1 = Constant(Value=(3)) : float @L19:C27 \"A\"\n  %2 = Multiply(%0, %1) : float @L8:C12 via L19:C15 \"A\"\n  %3 = Constant(Value=(0.5)) : float @L13:C16 via L22:C5 \"Half\"\n  %4 = Multiply(%2, %3) : float @L13:C12 via L22:C5 \"Half\"\n  %5 = Constant(Value=(2)) : float @L14:C18 via L22:C5 \"Double\"\n  %6 = Multiply(%2, %5) : float @L14:C14 via L22:C5 \"Double\"\n  %7 = Add(%4, %6) : float @L23:C17 \"Opacity\"\n  %8 = MaterialSink(Opacity=%7) @L17:C1\n  sink %8\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_HelperInlined"
+		],
+		"nodeCounts": [
+			9
+		]
+	}
+}

@@ -224,6 +224,23 @@ bool FDreamShaderExtractImportPathTest::RunTest(const FString& Parameters)
 	TestFalse(TEXT("unquoted path rejected"), Extract(TEXT("import Shared/Common.dsh;"), Path));
 	TestFalse(TEXT("non-import line"), Extract(TEXT("Shader(Name=\"M\")"), Path));
 	TestFalse(TEXT("trailing junk rejected"), Extract(TEXT("import \"X.dsh\" garbage"), Path));
+	// In 1.x a `#include` is HLSL inside a `Function` body, never an import.
+	TestFalse(TEXT("#include is not a 1.x import"), Extract(TEXT("#include \"/Plugin/DreamShader/DreamShaderBuiltins.ush\""), Path));
+	TestFalse(TEXT("#include of a header is not a 1.x import either"), Extract(TEXT("#include \"Shared/Common.dsh\""), Path));
+
+	auto ExtractInclude = [](const TCHAR* Line, FString& OutPath)
+	{
+		return FDreamShaderDependencyGraphService::TryExtractIncludePathFromLine(Line, OutPath);
+	};
+
+	TestTrue(TEXT("2.0 include of a header"), ExtractInclude(TEXT("#include \"Shared/Common.dsh\""), Path));
+	TestEqual(TEXT("2.0 include path"), Path, FString(TEXT("Shared/Common.dsh")));
+	TestTrue(TEXT("space after # and no extension"), ExtractInclude(TEXT("# include \"Noise\""), Path));
+	TestEqual(TEXT("extensionless include path"), Path, FString(TEXT("Noise")));
+	TestFalse(TEXT("HLSL include is not an edge"), ExtractInclude(TEXT("#include \"/Engine/Private/Common.ush\""), Path));
+	TestFalse(TEXT("import is not an include"), ExtractInclude(TEXT("import \"X.dsh\";"), Path));
+	TestFalse(TEXT("#pragma is not an include"), ExtractInclude(TEXT("#pragma material(BlendMode = Masked)"), Path));
+	TestFalse(TEXT("commented include ignored"), ExtractInclude(TEXT("// #include \"X.dsh\""), Path));
 	return true;
 }
 

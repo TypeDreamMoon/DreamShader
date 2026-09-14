@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"M_LayerBlend.dss\"\n\nproduct 0 MaterialLayerBlend \"B_LayerBlend\" backend=Graph\n  %0 = FunctionInput(InputName=\"A\", InputType=\"MaterialAttributes\", IsOptional=false, SortPriority=0) : material @L5:C1 \"A\"\n  %1 = FunctionInput(InputName=\"B\", InputType=\"MaterialAttributes\", IsOptional=false, SortPriority=1) : material @L5:C1 \"B\"\n  %2 = FunctionInput(InputName=\"R\", InputType=\"MaterialAttributes\", IsOptional=false, SortPriority=2) : material @L5:C1 \"R\"\n  %3 = GetMaterialAttributes(MaterialAttributes=%0) : [BaseColor:float3, EmissiveColor:float3, Roughness:float, Normal:float3, Opacity:float, WorldPositionOffset:float3, FrontMaterial:Substrate, MaterialAttributes:material] @L7:C19 \"BaseColor\"\n  %4 = GetMaterialAttributes(MaterialAttributes=%1) : [BaseColor:float3, EmissiveColor:float3, Roughness:float, Normal:float3, Opacity:float, WorldPositionOffset:float3, FrontMaterial:Substrate, MaterialAttributes:material] @L8:C19 \"Roughness\"\n  %5 = SetMaterialAttributes(MaterialAttributes=%2, BaseColor=%3, Roughness=%4#2, AttributeSetTypes=\"[BaseColor, Roughness]\") : material @L5:C1\n  %6 = FunctionOutput(%5, OutputName=\"R\", SortPriority=0) @L5:C1 \"R\"\n  inputs %0, %1, %2\n  outputs %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialLayerBlend"
+		],
+		"productNames": [
+			"B_LayerBlend"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

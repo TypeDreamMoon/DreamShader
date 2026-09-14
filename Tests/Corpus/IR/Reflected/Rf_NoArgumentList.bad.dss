@@ -1,0 +1,7 @@
+// Every reflected expression is a CALL: the argument list is where its pins and properties go, so
+// `UE.Time` without one is not a value (DSH5211).
+
+export void M_NoArgumentList(inout material m)
+{
+    m.Opacity = UE.Time;
+}

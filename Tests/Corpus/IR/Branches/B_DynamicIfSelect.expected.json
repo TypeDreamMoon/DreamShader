@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"B_DynamicIfSelect.dss\"\n\nproduct 0 Material \"M_DynamicIfSelect\" backend=Graph\n  %0 = Parameter(DefaultValue=(1), ParameterName=\"Enabled\", SortPriority=0) : float @L4:C1 \"Enabled\"\n  %1 = Constant(Value=(1, 0, 0)) : float3 @L11:C18 \"Colour\"\n  %2 = Constant(Value=(0, 0, 1)) : float3 @L15:C18 \"Colour\"\n  %3 = Select(%0, %1, %2) : float3 @L9:C5\n  %4 = MaterialSink(EmissiveColor=%3) @L6:C1\n  sink %4\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_DynamicIfSelect"
+		],
+		"nodeCounts": [
+			5
+		]
+	}
+}

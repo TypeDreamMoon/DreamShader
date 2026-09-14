@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Rf_Substrate.dss\"\n\nproduct 0 Material \"M_Substrate\" backend=Graph\n  %0 = Constant(Value=(0.1, 0.6, 1)) : float3 @L6:C55 \"FrontMaterial\"\n  %1 = Reflected[Unlit](EmissiveColor=%0) : Substrate @L6:C23 \"FrontMaterial\"\n  %2 = MaterialSink(FrontMaterial=%1) @L4:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_Substrate"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

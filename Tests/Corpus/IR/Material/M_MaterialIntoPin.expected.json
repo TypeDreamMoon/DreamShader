@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"M_MaterialIntoPin.dss\"\n\nproduct 0 Material \"M_MaterialIntoPin\" backend=Graph\n  %0 = Constant(Value=(1, 0, 0)) : float3 @L7:C19 \"BaseColor\"\n  %1 = Constant(Value=(0.5)) : float @L8:C19 \"Roughness\"\n  %2 = MakeMaterialAttributes(BaseColor=%0, Roughness=%1) : material @L9:C48 \"Opacity\"\n  %3 = Constant(Value=(0.25)) : float @L9:C66 \"Opacity\"\n  %4 = Reflected[BlendMaterialAttributes](A=%2, B=%2, Alpha=%3) : material @L9:C17 \"Opacity\"\n  %5 = GetMaterialAttributes(MaterialAttributes=%4) : [BaseColor:float3, EmissiveColor:float3, Roughness:float, Normal:float3, Opacity:float, WorldPositionOffset:float3, FrontMaterial:Substrate, MaterialAttributes:material] @L9:C17 \"Opacity\"\n  %6 = MaterialSink(BaseColor=%0, Roughness=%1, Opacity=%5#2) @L5:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_MaterialIntoPin"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

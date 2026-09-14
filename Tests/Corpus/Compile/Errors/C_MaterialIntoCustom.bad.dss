@@ -1,0 +1,15 @@
+// CONTRACT 6.13: a `material` may not cross into a @custom. Asserted end to end as well as in the
+// IR corpus, because the failure it prevents is a SHADER compile failure -- the kind that only
+// shows up once the asset exists.
+
+/// @custom
+float3 Shade(material In, float3 Colour)
+{
+    return Colour;
+}
+
+export void M_C2MaterialIntoCustom(inout material m)
+{
+    m.BaseColor = float3(1, 0, 0);
+    m.EmissiveColor = Shade(m, float3(1, 1, 1));
+}

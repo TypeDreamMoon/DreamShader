@@ -1,0 +1,8 @@
+// SampleLevel carries a mip, which is the one thing that makes it a different node.
+uniform Texture2D Tex;
+
+export void M_SampleLevel(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0);
+    m.EmissiveColor = Tex.SampleLevel(UV, 0).rgb;
+}

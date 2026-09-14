@@ -1,0 +1,14 @@
+// The same source with the passes turned OFF, so the golden shows what the builder produced before
+// dedupe merged anything. The pair is the test: the two goldens must differ.
+
+uniform Texture2D Tex;
+uniform float Gain = 1;
+
+export void M_IdenticalCallsRaw(inout material m)
+{
+    float4 A = Tex.Sample(UE.TexCoord(CoordinateIndex = 0));
+    float4 B = Tex.Sample(UE.TexCoord(CoordinateIndex = 0));
+    float3 Left = (A * Gain).rgb;
+    float3 Right = (B * Gain).rgb;
+    m.EmissiveColor = Left + Right;
+}

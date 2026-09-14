@@ -76,7 +76,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 			case EBrowserSourceStatus::NotCompiled: return TEXT("NotCompiled");
 			case EBrowserSourceStatus::UpToDate: return TEXT("UpToDate");
 			case EBrowserSourceStatus::Stale: return TEXT("Stale");
-			case EBrowserSourceStatus::InMemoryUntracked: return TEXT("InMemoryUntracked");
+			case EBrowserSourceStatus::EphemeralUntracked: return TEXT("EphemeralUntracked");
 			case EBrowserSourceStatus::Error: return TEXT("Error");
 			case EBrowserSourceStatus::Library: return TEXT("Library");
 			default: return TEXT("Unresolved");
@@ -196,15 +196,15 @@ bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 	// 1. Memory-only compile: path and hash are stamped like a saved build's, so it reads current.
 	FString Message;
 	if (!TestTrue(FString::Printf(TEXT("In-memory generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true)))
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
 	Model.RefreshEntry(Entry);
-	ExpectStatus(*this, TEXT("After an in-memory compile"), Entry, EBrowserSourceStatus::UpToDate);
+	ExpectStatus(*this, TEXT("After an Ephemeral compile"), Entry, EBrowserSourceStatus::UpToDate);
 	if (TestTrue(TEXT("The asset half is attached after a compile"), Entry->Asset.IsSet()))
 	{
-		TestEqual(TEXT("A memory-only build reads as in-memory storage"), static_cast<int32>(Entry->Asset->Storage), static_cast<int32>(EBrowserStorage::InMemory));
+		TestEqual(TEXT("An Ephemeral build reads as Ephemeral storage"), static_cast<int32>(Entry->Asset->Storage), static_cast<int32>(EBrowserStorage::Ephemeral));
 		TestEqual(TEXT("A fresh build classifies as Generated"), static_cast<int32>(Entry->Asset->Provenance), static_cast<int32>(EDreamShaderDigestState::Generated));
 	}
 
@@ -223,7 +223,7 @@ bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 
 	// 2. Persisted compile: the hash is stamped, so currency can be judged.
 	if (!TestTrue(FString::Printf(TEXT("Persisted generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ false)))
+			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ false)))
 	{
 		return false;
 	}
@@ -350,7 +350,7 @@ bool FDreamShaderBrowserModelUnmanagedTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("It is unmanaged: an asset half and no source half"), Entry->IsUnmanaged());
 	TestEqual(TEXT("Its key is its object path"), Entry->Key, ObjectPath);
 	TestEqual(TEXT("Its provenance is Foreign"), static_cast<int32>(Entry->Asset->Provenance), static_cast<int32>(EDreamShaderDigestState::Foreign));
-	TestEqual(TEXT("A never-saved material reads as in-memory"), static_cast<int32>(Entry->Asset->Storage), static_cast<int32>(EBrowserStorage::InMemory));
+	TestEqual(TEXT("A never-saved material reads as Ephemeral"), static_cast<int32>(Entry->Asset->Storage), static_cast<int32>(EBrowserStorage::Ephemeral));
 	TestFalse(TEXT("A loaded asset is described from the object, not the registry"), Entry->Asset->bFromRegistryOnly);
 	TestEqual(TEXT("The mount point is /Game"), Entry->Asset->MountPoint, FString(TEXT("/Game")));
 	TestTrue(TEXT("The unmanaged count includes it"), Model.GetUnmanagedCount() >= 1);
@@ -366,8 +366,8 @@ bool FDreamShaderBrowserModelUnmanagedTest::RunTest(const FString& Parameters)
 	Filter.bHideUnmanaged = true;
 	TestFalse(TEXT("Hide unmanaged drops it"), Filter.Matches(*Entry));
 	Filter = FBrowserFilter();
-	Filter.bInMemoryOnly = true;
-	TestTrue(TEXT("The in-memory filter keeps a never-saved plain material"), Filter.Matches(*Entry));
+	Filter.bEphemeralOnly = true;
+	TestTrue(TEXT("The Ephemeral filter keeps a never-saved plain material"), Filter.Matches(*Entry));
 	Filter = FBrowserFilter();
 	Filter.bErrorsOnly = true;
 	TestFalse(TEXT("The errors filter drops it: it has no compile to fail"), Filter.Matches(*Entry));

@@ -1,0 +1,15 @@
+// The neighbour of M_UnknownAttribute.bad.dss, and the reason the two codes are not one.
+//
+// `Substrate.Unlit(...)` has exactly one output, so the call is a Substrate VALUE rather than a
+// `node`, and a Substrate value has no members at all -- not a material attribute, not a swizzle.
+// That is DSH4207, the binder's general "a value of this type has no such member".
+//
+// An unknown attribute ON a material is the other rule and the other code (DSH5200): there the
+// object really is a `material`, the member really is looked up in the catalog's attribute table,
+// and the message can suggest a spelling that differs only in case. Pinning both here is what keeps
+// a future simplification from collapsing them into one.
+
+export void M_MemberOnNonMaterial(inout material m)
+{
+    m.EmissiveColor = Substrate.Unlit(EmissiveColor = float3(1, 1, 1)).BaseColor;
+}

@@ -1,0 +1,9 @@
+// Included by In_Header.dss. The IR runner never runs a `.dsh` on its own -- a header produces no
+// product, so there is nothing to assert on.
+
+uniform float SharedGain = 2;
+
+float SharedHelper(float x)
+{
+    return x * SharedGain;
+}

@@ -1,0 +1,27 @@
+// CONTRACT 6.1: one row of the uniform table per declaration, and `static const` next to them.
+
+/// @group Look @sort 20 @slider 0 4 @desc The overall gain
+uniform float Gain = 0.7;
+uniform float2 Tiling = float2(1, 1);
+uniform float3 Colour = float3(1, 0, 0);
+uniform float4 Tint = float4(1, 1, 1, 1);
+uniform int Channel = 0;
+uniform bool Invert = false;
+
+/// @static
+uniform bool UseColour = true;
+
+/// @sampler Normal
+uniform Texture2D NormalMap;
+
+static const float Half = 1.0 / 2.0;
+
+export void M_UniformKinds(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0) * Tiling;
+    m.Normal = NormalMap.Sample(UV).rgb;
+    m.EmissiveColor = Colour * Tint.rgb * Gain * Half;
+    m.Opacity = Invert ? 1 - Gain : Gain;
+    m.Roughness = float(Channel);
+    m.BaseColor = UseColour ? Colour : Tint.rgb;
+}

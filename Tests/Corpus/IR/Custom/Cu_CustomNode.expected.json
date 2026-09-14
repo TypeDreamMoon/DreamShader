@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Cu_CustomNode.dss\"\n\nproduct 0 Material \"M_CustomNode\" backend=Graph\n  %0 = Constant(Value=(1, 0.5, 0.25)) : float3 @L12:C33 \"EmissiveColor\"\n  %1 = Constant(Value=(4)) : float @L12:C55 \"EmissiveColor\"\n  %2 = Custom[Posterise](Colour=%0, Steps=%1, Code=\"// Begin DreamShader source: <corpus>/IR/Custom/Cu_CustomNode.dss\\n// DreamShader custom: Posterise line 6\\n\\n    return floor(Colour * Steps) / Steps;\\n// End DreamShader source: <corpus>/IR/Custom/Cu_CustomNode.dss\\n\", Description=\"Posterise\", OutputType=\"Float3\") : [Result:float3] @L12:C23 \"EmissiveColor\"\n  %3 = MaterialSink(EmissiveColor=%2) @L10:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_CustomNode"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

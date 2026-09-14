@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S_CanonicalMask.dss\"\n\nproduct 0 Material \"M_CanonicalMask\" backend=Graph\n  %0 = Parameter(DefaultValue=(1, 2, 3, 4), ParameterName=\"V\", SortPriority=0) : float4 @L7:C1 \"V\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L12:C23 \"EmissiveColor\"\n  %2 = Swizzle(%0, Mask=\"w\") : float @L13:C19 \"Roughness\"\n  %3 = Parameter(DefaultValue=(1), ParameterName=\"S\", SortPriority=1) : float @L8:C1 \"S\"\n  %4 = Swizzle(%0, Mask=\"z\") : float @L15:C16 \"Normal\"\n  %5 = Swizzle(%0, Mask=\"y\") : float @L15:C16 \"Normal\"\n  %6 = Swizzle(%0, Mask=\"x\") : float @L15:C16 \"Normal\"\n  %7 = Append(%4, %5) : float2 @L15:C16 \"Normal\"\n  %8 = Append(%7, %6) : float3 @L15:C16 \"Normal\"\n  %9 = MaterialSink(EmissiveColor=%1, Roughness=%2, Opacity=%3, Normal=%8) @L10:C1\n  sink %9\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_CanonicalMask"
+		],
+		"nodeCounts": [
+			10
+		]
+	}
+}

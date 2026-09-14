@@ -1,0 +1,9 @@
+// Dedupe must not merge what only LOOKS alike: a different CoordinateIndex is a different key.
+uniform Texture2D Tex;
+
+export void M_DifferentArguments(inout material m)
+{
+    float4 A = Tex.Sample(UE.TexCoord(CoordinateIndex = 0));
+    float4 B = Tex.Sample(UE.TexCoord(CoordinateIndex = 1));
+    m.EmissiveColor = A.rgb + B.rgb;
+}

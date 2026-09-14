@@ -1,0 +1,18 @@
+// The other half of the 6.13 #20 ruling: the condition is a dynamic bool that is NOT a comparison,
+// so there is nothing for a Compare node to put on its A and B pins and the merge is a Select.
+
+uniform bool Enabled = true;
+
+export void M_DynamicIfSelect(inout material m)
+{
+    float3 Colour = float3(0, 0, 0);
+    if (Enabled)
+    {
+        Colour = float3(1, 0, 0);
+    }
+    else
+    {
+        Colour = float3(0, 0, 1);
+    }
+    m.EmissiveColor = Colour;
+}

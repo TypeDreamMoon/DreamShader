@@ -1,0 +1,12 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 1,
+		"pragmas": 0,
+		"functions": 1,
+		"exports": 1,
+		"entry": "M_Regions",
+		"roundtrip": true
+	}
+}

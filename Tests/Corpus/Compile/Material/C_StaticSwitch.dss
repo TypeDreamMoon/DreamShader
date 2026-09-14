@@ -1,0 +1,21 @@
+// A static bool merges with a StaticSwitch, which reaches the asset as a real static switch
+// parameter -- the one branch shape that changes the shader permutation rather than the maths.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+/// @static
+/// @group Look @desc Warm or cool
+uniform bool UseWarm = true;
+
+export void M_C2StaticSwitch(inout material m)
+{
+    float3 Colour = float3(0, 0, 0);
+    if (UseWarm)
+    {
+        Colour = float3(1, 0.5, 0);
+    }
+    else
+    {
+        Colour = float3(0, 0.5, 1);
+    }
+    m.EmissiveColor = Colour;
+}

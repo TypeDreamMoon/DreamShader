@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"D_IdenticalCalls.dss\"\n\nproduct 0 Material \"M_IdenticalCalls\" backend=Graph\n  %0 = TextureParameter(ParameterName=\"Tex\", SortPriority=0) : Texture2D @L5:C1 \"Tex\"\n  %1 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L10:C27 \"A\"\n  %2 = TextureSample(%0, %1, _, _) : [RGBA:float4, R:float, G:float, B:float, A:float] @L10:C16 \"A\"\n  %3 = Parameter(DefaultValue=(1), ParameterName=\"Gain\", SortPriority=1) : float @L6:C1 \"Gain\"\n  %4 = Multiply(%2, %3) : float4 @L12:C20 \"Left\"\n  %5 = Swizzle(%4, Mask=\"xyz\") : float3 @L12:C19 \"Left\"\n  %6 = Add(%5, %5) : float3 @L14:C23 \"EmissiveColor\"\n  %7 = MaterialSink(EmissiveColor=%6) @L8:C1\n  sink %7\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_IdenticalCalls"
+		],
+		"nodeCounts": [
+			8
+		]
+	}
+}

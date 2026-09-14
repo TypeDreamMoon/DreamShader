@@ -2282,7 +2282,7 @@ bool FDreamShaderGenerateInstanceBackendTest::RunTest(const FString& Parameters)
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("Instance-alias generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -2330,7 +2330,7 @@ bool FDreamShaderGenerateThinCustomBackendTest::RunTest(const FString& Parameter
 	FScopedDreamShaderAutomationArtifacts Artifacts;
 	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoThinCustom"));
 	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
-	// Persist-mode generation (bTransient defaults false below) hides the base as a subobject INSIDE the
+	// Materialized generation (the Ephemeral opt-in defaults false below) hides the base as a subobject INSIDE the
 	// instance's package -- there is no separate sibling asset. BaseSiblingObjectPath is the path such a
 	// sibling WOULD have had before convergence; the test asserts below that it never reaches disk.
 	const FString BaseSiblingObjectPath = MakeAutomationObjectPath(FString::Printf(TEXT("MB_DreamThinBase_%s"), *AssetName));
@@ -2534,7 +2534,7 @@ bool FDreamShaderThinCustomVsGraphParityTest::RunTest(const FString& Parameters)
 			FString Message;
 			if (!TestTrue(
 				FString::Printf(TEXT("[%s] %s twin generation succeeds: %s"), Case.CaseName, TwinBackends[TwinIndex], *Message),
-				FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true)))
+				FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 			{
 				return false;
 			}
@@ -2758,7 +2758,7 @@ bool FDreamShaderMTestToonRoundTripRenderTest::RunTest(const FString& Parameters
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Decompiled M_Test_Toon re-generates (0 errors): %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true)))
+		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
@@ -3010,7 +3010,7 @@ bool FDreamShaderGenerateThinCustomTextureTest::RunTest(const FString& Parameter
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom texture generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3104,7 +3104,7 @@ bool FDreamShaderGenerateThinCustomUITest::RunTest(const FString& Parameters)
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom UI generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3181,7 +3181,7 @@ bool FDreamShaderGenerateThinCustomPostProcessTest::RunTest(const FString& Param
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom PostProcess generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3269,7 +3269,7 @@ bool FDreamShaderGenerateThinCustomSceneReadsTest::RunTest(const FString& Parame
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom scene-reads generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3353,7 +3353,7 @@ bool FDreamShaderGenerateThinCustomMaterialAttributesTest::RunTest(const FString
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom MaterialAttributes generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3430,7 +3430,7 @@ bool FDreamShaderGenerateInstanceBackendStateReadsTest::RunTest(const FString& P
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("State-read alias generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3519,7 +3519,7 @@ Shader(Name="DreamShaderTests/Automation/%s", Root="Game")
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("Imported-function alias generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3592,7 +3592,7 @@ bool FDreamShaderGenerateInstanceBackendBaseOverridesTest::RunTest(const FString
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ true);
+	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("Base-overrides alias generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -4461,8 +4461,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 // The whole point: a source edit that would previously have cleared the graph now comes out as a
-// refusal, with the asset byte-for-byte as the user left it. Force still gets through, because that
-// is what the Revert action is.
+// refusal, with the asset byte-for-byte as the user left it. -Force alone is refused as well; only a
+// revert-scoped rebuild gets through, because only the Revert action may override a divergence.
 bool FDreamShaderDivergenceBlocksRebuildTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor;
@@ -5221,7 +5221,7 @@ bool FDreamShaderWriteOwnerDeferralTest::RunTest(const FString& Parameters)
 		// shared file is off limits to it.
 		TestTrue(
 			FString::Printf(TEXT("The compile is skipped rather than failed: %s"), *Message),
-			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bTransient*/ true));
+			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true));
 		TestTrue(
 			FString::Printf(TEXT("The skip says who owns writing: %s"), *Message),
 			Message.Contains(TEXT("owns this project's DreamShader bridge")));
@@ -5239,7 +5239,7 @@ bool FDreamShaderWriteOwnerDeferralTest::RunTest(const FString& Parameters)
 	// And the owner still writes it, so the deferral is about ownership and nothing else.
 	TestTrue(
 		FString::Printf(TEXT("The write owner rebuilds the same source: %s"), *Message),
-		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bTransient*/ true));
+		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true));
 	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
 	if (TestNotNull(TEXT("The rebuilt asset loads"), Material))
 	{
@@ -5384,11 +5384,11 @@ bool FDreamShaderPersistedAssetRebuiltOnDiskTest::RunTest(const FString& Paramet
 		return false;
 	}
 
-	// The editor's own call shape: in-memory, unforced.
+	// The editor's own call shape: Ephemeral allowed, unforced.
 	FString Message;
 	if (!TestTrue(
-			FString::Printf(TEXT("An in-memory compile of a disk-backed asset succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bTransient*/ true)))
+			FString::Printf(TEXT("A compile of a disk-backed asset succeeds: %s"), *Message),
+			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
@@ -5403,7 +5403,7 @@ bool FDreamShaderPersistedAssetRebuiltOnDiskTest::RunTest(const FString& Paramet
 
 	// Both paths stamp a hash now, so the hash moving only says the rebuild happened; the
 	// discriminator for WHICH path is below -- a persisted rebuild saves (package clean, file present)
-	// where an in-memory one clears the dirty flag and writes nothing.
+	// where an Ephemeral one clears the dirty flag and writes nothing.
 	const FString StampedHashAfter = GetGeneratedAssetSourceHash(Material);
 	TestFalse(TEXT("The rebuild left a source hash stamped"), StampedHashAfter.IsEmpty());
 	TestNotEqual(TEXT("The rebuild re-stamped the source hash"), StampedHashAfter, StampedHashBefore);
@@ -5415,12 +5415,12 @@ bool FDreamShaderPersistedAssetRebuiltOnDiskTest::RunTest(const FString& Paramet
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FDreamShaderMemoryOnlyAssetStaysInMemoryTest,
-	"DreamShader.Compiler.Persistence.MemoryOnlyAssetStaysInMemory",
+	FDreamShaderEphemeralAssetStaysEphemeralTest,
+	"DreamShader.Compiler.Persistence.EphemeralAssetStaysEphemeral",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 // The other half of the same rule: an asset with no file behind it must not acquire one.
-bool FDreamShaderMemoryOnlyAssetStaysInMemoryTest::RunTest(const FString& Parameters)
+bool FDreamShaderEphemeralAssetStaysEphemeralTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor;
 	using namespace UE::DreamShader::Editor::Private;
@@ -5448,7 +5448,7 @@ bool FDreamShaderMemoryOnlyAssetStaysInMemoryTest::RunTest(const FString& Parame
 	FString Message;
 	if (!TestTrue(
 			FString::Printf(TEXT("In-memory generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bTransient*/ true)))
+			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}

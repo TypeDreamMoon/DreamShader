@@ -1,0 +1,12 @@
+// A call from one export to another is a FunctionCall to that PRODUCT (Prop LocalFunction), not an
+// inline copy: the pipeline compiles a file's products in dependency order.
+
+export float2 MF_Inner(float2 UV, float Scale = 1.0)
+{
+    return UV * Scale;
+}
+
+export float2 MF_Outer(float2 UV, float Scale = 1.0, float2 Offset = float2(0, 0))
+{
+    return MF_Inner(UV, Scale) + Offset;
+}

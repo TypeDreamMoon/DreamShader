@@ -1,0 +1,7 @@
+// A global is `uniform` or `static const`, and nothing else (CONTRACT 6.1, last row).
+float Loose = 1;
+
+export void M_BareGlobal(inout material m)
+{
+    m.Opacity = Loose;
+}
