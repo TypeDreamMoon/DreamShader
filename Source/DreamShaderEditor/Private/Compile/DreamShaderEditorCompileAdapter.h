@@ -5,11 +5,11 @@
 
 namespace UE::DreamShader::Editor
 {
-	class FEditorCompileAdapter final : public Compiler::IDreamShaderCompiler
+	class FEditorCompileAdapter final : public UE::DreamShader::Compiler::IDreamShaderCompiler
 	{
 	public:
-		virtual Compiler::FDreamShaderCompileResult CompileAssets(const Compiler::FDreamShaderCompileRequest& Request) override;
-		virtual Compiler::FDreamShaderCompileResult CompileMaterial(const Compiler::FDreamShaderCompileRequest& Request) override;
+		virtual UE::DreamShader::Compiler::FDreamShaderCompileResult CompileAssets(const UE::DreamShader::Compiler::FDreamShaderCompileRequest& Request) override;
+		virtual UE::DreamShader::Compiler::FDreamShaderCompileResult CompileMaterial(const UE::DreamShader::Compiler::FDreamShaderCompileRequest& Request) override;
 	};
 
 	FEditorCompileAdapter& GetEditorCompileAdapter();

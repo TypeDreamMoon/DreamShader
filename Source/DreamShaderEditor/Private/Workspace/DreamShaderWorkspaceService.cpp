@@ -1269,7 +1269,7 @@ namespace UE::DreamShader::Editor::Private
 		RootObject->SetStringField(TEXT("schema"), TEXT("DreamShader.PreprocessorDefines"));
 		RootObject->SetNumberField(TEXT("version"), 1);
 		RootObject->SetStringField(TEXT("generatedAt"), FDateTime::UtcNow().ToIso8601());
-		// The same counter the bridge polls to invalidate its in-memory materials. A consumer holding
+		// The same counter the bridge polls to invalidate its generated materials. A consumer holding
 		// an older manifest can tell it is stale by this alone, without diffing the define list.
 		RootObject->SetNumberField(TEXT("revision"), static_cast<double>(UE::DreamShader::GetDreamShaderDefineRevision()));
 		RootObject->SetArrayField(TEXT("defines"), DefineValues);

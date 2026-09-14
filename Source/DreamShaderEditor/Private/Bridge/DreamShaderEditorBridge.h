@@ -36,7 +36,7 @@ namespace UE::DreamShader::Editor::Private
 		 * FMaterialGenerator call bypasses, leaving the VSCode extension and the Material Content
 		 * Browser looking at the previous result. The watcher's own compiles go through here too.
 		 */
-		bool CompileSourceFile(const FString& SourceFilePath, bool bForce, bool bInMemory, FString& OutMessage);
+		bool CompileSourceFile(const FString& SourceFilePath, bool bForce, FString& OutMessage);
 
 		/**
 		 * Queue a rebuild for source files whose TEXT a plugin tool just rewrote on disk (the asset
@@ -58,9 +58,9 @@ namespace UE::DreamShader::Editor::Private
 
 		/** Writes the VSCode workspace (and the manifests it needs) and opens it. */
 		void OpenDreamShaderWorkspace();
-		/** Flips the global in-memory-materials visibility setting and re-announces every such
+		/** Flips the global Ephemeral-materials visibility setting and re-announces every such
 		 *  instance to the asset registry. Toasts the new count. */
-		void ToggleShowInMemoryMaterialsInContentBrowser();
+		void ToggleShowEphemeralMaterials();
 		/** Decompile a hand-authored asset into a new .dsm / .dsf under the project root. Toasts. */
 		void ExportMaterialToDreamShaderFile(TWeakObjectPtr<UMaterial> Material);
 		void ExportMaterialFunctionToDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
@@ -125,7 +125,7 @@ namespace UE::DreamShader::Editor::Private
 
 		/**
 		 * Queue every project source. Forced when the caller MEANS a rebuild -- Recompile DSM, Clean
-		 * Generated Shaders, an explicit recompile request -- because an in-memory asset now carries a
+		 * Generated Shaders, an explicit recompile request -- because an unsaved asset now carries a
 		 * source hash like a saved one, and the non-forced path would skip every unchanged source,
 		 * leaving a cleaned shader directory empty. The watcher's compile-on-save stays unforced: the
 		 * hash is the whole point there.
@@ -133,8 +133,8 @@ namespace UE::DreamShader::Editor::Private
 		void QueueFullScan(bool bForce = false);
 		void HandlePostEngineInit();
 		void HandleSettingsPropertyChanged(UObject* Object, struct FPropertyChangedEvent& Event);
-		/** Materialize every source file in memory. Never forces -- see the definition for why. */
-		void GenerateAllInMemoryMaterials();
+		/** Compile every project source file. Never forces -- see the definition for why. */
+		void GenerateAllSources();
 		void QueueSourceFile(const FString& SourceFilePath, bool bForce = false);
 		void QueueDependentSourcesForImport(const FString& ImportFilePath);
 		void OnDirectoryChanged(const TArray<FFileChangeData>& FileChanges);
@@ -157,7 +157,8 @@ namespace UE::DreamShader::Editor::Private
 		void PopulateMaterialFunctionDreamShaderMenu(UToolMenu* InMenu, TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void RequestRecompileAll();
 		void RequestCleanGeneratedShaders();
-		void RequestCleanPersistedGeneratedAssets();
+		/** Make Ephemeral: deletes the packages of Materialized ThinCustom products. */
+		void RequestMakeEphemeral();
 		int32 CollectPersistedGeneratedAssets(TArray<UObject*>& OutAssets);
 		/**
 		 * Adds whichever of the three provenance answers (Revert / Adopt / Detach, see
@@ -184,7 +185,7 @@ namespace UE::DreamShader::Editor::Private
 		 * The divergence notification (Bridge/DreamShaderDivergenceNotice.h, Docs/generation/divergence.md).
 		 *
 		 * A refused rebuild used to reach the user as prose in the log telling them to right-click an
-		 * asset -- which in the editor's default in-memory mode has no tile to right-click. These turn
+		 * asset -- which for an Ephemeral product has no tile to right-click. These turn
 		 * that refusal into a toast carrying the three resolutions themselves.
 		 */
 		/** Opens/closes one rebuild round. Nested calls join the round in progress; the outermost
@@ -233,8 +234,8 @@ namespace UE::DreamShader::Editor::Private
 		FDelegateHandle PostEngineInitHandle;
 		FDelegateHandle SettingsChangedHandle;
 		/**
-		 * The preprocessor define-table revision the in-memory materials in THIS process were last
-		 * generated against. Stamped by GenerateAllInMemoryMaterials; compared by Tick.
+		 * The preprocessor define-table revision the materials in THIS process were last generated
+		 * against. Stamped by GenerateAllSources; compared by Tick.
 		 *
 		 * Polled rather than driven by an event, because no event covers the whole table. Of the four
 		 * tiers only UDreamShaderSettings announces a change; RegisterDreamShaderDefine,

@@ -148,70 +148,121 @@ namespace UE::DreamShader::Editor::Private
 	// to "share one code path" with LoadPreparedDreamShaderSourceRecursive would make the dependency
 	// set follow the live define values, and every source reachable only from a currently-false branch
 	// would silently drop out of the graph -- a missed rebuild with nothing at all to notice it by.
+	namespace
+	{
+		/**
+		 * `<Keyword> "path"` or `<Keyword> 'path'`, then an optional `;`, then nothing but a comment.
+		 * TrimmedLine is already trimmed and starts where the keyword should.
+		 */
+		bool TryExtractQuotedPathAfterKeyword(FString TrimmedLine, const FString& Keyword, FString& OutPath)
+		{
+			if (!TrimmedLine.StartsWith(Keyword, ESearchCase::IgnoreCase))
+			{
+				return false;
+			}
+
+			const int32 KeywordLength = Keyword.Len();
+			if (TrimmedLine.Len() > KeywordLength
+				&& !FChar::IsWhitespace(TrimmedLine[KeywordLength]))
+			{
+				return false;
+			}
+
+			TrimmedLine.RightChopInline(KeywordLength, DREAMSHADER_ALLOW_SHRINKING_NO);
+			TrimmedLine.TrimStartAndEndInline();
+			if (TrimmedLine.Len() < 2 || (TrimmedLine[0] != TCHAR('"') && TrimmedLine[0] != TCHAR('\'')))
+			{
+				return false;
+			}
+
+			const TCHAR Quote = TrimmedLine[0];
+			int32 ClosingQuoteIndex = INDEX_NONE;
+			bool bEscaped = false;
+			for (int32 Index = 1; Index < TrimmedLine.Len(); ++Index)
+			{
+				const TCHAR Character = TrimmedLine[Index];
+				if (bEscaped)
+				{
+					bEscaped = false;
+					continue;
+				}
+				if (Character == TCHAR('\\'))
+				{
+					bEscaped = true;
+					continue;
+				}
+				if (Character == Quote)
+				{
+					ClosingQuoteIndex = Index;
+					break;
+				}
+			}
+
+			if (ClosingQuoteIndex == INDEX_NONE)
+			{
+				return false;
+			}
+
+			FString TrailingText = TrimmedLine.Mid(ClosingQuoteIndex + 1).TrimStartAndEnd();
+			if (TrailingText.StartsWith(TEXT(";")))
+			{
+				TrailingText.RightChopInline(1, DREAMSHADER_ALLOW_SHRINKING_NO);
+				TrailingText.TrimStartAndEndInline();
+			}
+			if (!TrailingText.IsEmpty() && !TrailingText.StartsWith(TEXT("//")))
+			{
+				return false;
+			}
+
+			OutPath = TrimmedLine.Mid(1, ClosingQuoteIndex - 1).TrimStartAndEnd();
+			return !OutPath.IsEmpty();
+		}
+	}
+
 	bool FDreamShaderDependencyGraphService::TryExtractImportPathFromLine(const FString& Line, FString& OutPath)
 	{
+		// 1.x only. The generator's source loader, the preview renderer and the generated-asset-path
+		// scan run this over 1.x text, where `#include` is HLSL inside a `Function` body and never an
+		// import -- counting it here broke Generate.FunctionIncludeHoist (09-14). The 2.0 edge is
+		// TryExtractIncludePathFromLine; the dependency scan asks both.
 		FString TrimmedLine = Line.TrimStartAndEnd();
-		if (TrimmedLine.StartsWith(TEXT("//"))
-			|| !TrimmedLine.StartsWith(TEXT("import"), ESearchCase::IgnoreCase))
+		if (TrimmedLine.StartsWith(TEXT("//")))
+		{
+			return false;
+		}
+		return TryExtractQuotedPathAfterKeyword(MoveTemp(TrimmedLine), TEXT("import"), OutPath);
+	}
+
+	bool FDreamShaderDependencyGraphService::TryExtractIncludePathFromLine(const FString& Line, FString& OutPath)
+	{
+		// The preprocessor never sees a `.dss` `#include` (the binder resolves it), so the dependency
+		// scan has to notice it itself. Whitespace between `#` and `include` is legal. Only a DreamShader
+		// header is an edge -- a `.dsh`, a `.dss`, or no extension, which means `.dsh`
+		// (DreamShaderCompilerIncludes.cpp) -- so an HLSL `#include "/Engine/Private/Common.ush"` inside
+		// a `@custom` body is not one.
+		FString TrimmedLine = Line.TrimStartAndEnd();
+		if (!TrimmedLine.StartsWith(TEXT("#")))
+		{
+			return false;
+		}
+		TrimmedLine.RightChopInline(1, DREAMSHADER_ALLOW_SHRINKING_NO);
+		TrimmedLine.TrimStartInline();
+
+		FString Path;
+		if (!TryExtractQuotedPathAfterKeyword(MoveTemp(TrimmedLine), TEXT("include"), Path))
 		{
 			return false;
 		}
 
-		const int32 ImportKeywordLength = 6;
-		if (TrimmedLine.Len() > ImportKeywordLength
-			&& !FChar::IsWhitespace(TrimmedLine[ImportKeywordLength]))
+		if (!FPaths::GetExtension(Path).IsEmpty()
+			&& !UE::DreamShader::IsDreamShaderHeaderFile(Path)
+			&& !UE::DreamShader::IsDreamShaderLang2File(Path))
 		{
 			return false;
 		}
 
-		TrimmedLine.RightChopInline(ImportKeywordLength, DREAMSHADER_ALLOW_SHRINKING_NO);
-		TrimmedLine.TrimStartAndEndInline();
-		if (TrimmedLine.Len() < 2 || (TrimmedLine[0] != TCHAR('"') && TrimmedLine[0] != TCHAR('\'')))
-		{
-			return false;
-		}
-
-		const TCHAR Quote = TrimmedLine[0];
-		int32 ClosingQuoteIndex = INDEX_NONE;
-		bool bEscaped = false;
-		for (int32 Index = 1; Index < TrimmedLine.Len(); ++Index)
-		{
-			const TCHAR Character = TrimmedLine[Index];
-			if (bEscaped)
-			{
-				bEscaped = false;
-				continue;
-			}
-			if (Character == TCHAR('\\'))
-			{
-				bEscaped = true;
-				continue;
-			}
-			if (Character == Quote)
-			{
-				ClosingQuoteIndex = Index;
-				break;
-			}
-		}
-
-		if (ClosingQuoteIndex == INDEX_NONE)
-		{
-			return false;
-		}
-
-		FString TrailingText = TrimmedLine.Mid(ClosingQuoteIndex + 1).TrimStartAndEnd();
-		if (TrailingText.StartsWith(TEXT(";")))
-		{
-			TrailingText.RightChopInline(1, DREAMSHADER_ALLOW_SHRINKING_NO);
-			TrailingText.TrimStartAndEndInline();
-		}
-		if (!TrailingText.IsEmpty() && !TrailingText.StartsWith(TEXT("//")))
-		{
-			return false;
-		}
-
-		OutPath = TrimmedLine.Mid(1, ClosingQuoteIndex - 1).TrimStartAndEnd();
-		return !OutPath.IsEmpty();
+		OutPath = MoveTemp(Path);
+		return true;
 	}
 
 	FString FDreamShaderDependencyGraphService::NormalizeImportSpecifier(const FString& ImportSpecifier)
@@ -343,7 +394,8 @@ namespace UE::DreamShader::Editor::Private
 		for (const FString& Line : Lines)
 		{
 			FString ImportPath;
-			if (!TryExtractImportPathFromLine(Line, ImportPath))
+			// `import "x";` (1.x) and `#include "x.dsh"` (2.0) are the same edge.
+			if (!TryExtractImportPathFromLine(Line, ImportPath) && !TryExtractIncludePathFromLine(Line, ImportPath))
 			{
 				continue;
 			}

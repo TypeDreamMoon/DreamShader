@@ -1,4 +1,5 @@
 #include "Bridge/DreamShaderEditorBridge.h"
+#include "Compiler/DreamShaderSourceNavigation.h"
 #include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
 #include "SourceFiles/DreamShaderAssetRenameSyncService.h"
 #include "SourceFiles/DreamShaderSourceFileUtils.h"
@@ -71,6 +72,10 @@ public:
 
 		UE::DreamShader::Editor::Private::FDreamShaderMaterialBrowser::Register();
 
+		// Node <-> source navigation: the material editor graph-node context menu entry. Gated with
+		// every other menu, so -NoDreamShaderEditorBridge and a commandlet run see none of it.
+		UE::DreamShader::Editor::Private::FDreamShaderSourceNavigationMenu::Register();
+
 		// After the bridge, because ownership decides whether this process may rewrite sources at all.
 		UE::DreamShader::Editor::Private::FDreamShaderAssetRenameSyncService::Startup();
 	}
@@ -84,6 +89,8 @@ public:
 		}
 
 		UE::DreamShader::Editor::Private::FDreamShaderAssetRenameSyncService::Shutdown();
+
+		UE::DreamShader::Editor::Private::FDreamShaderSourceNavigationMenu::Unregister();
 
 		UE::DreamShader::Editor::Private::FDreamShaderMaterialBrowser::Unregister();
 
@@ -118,7 +125,7 @@ private:
 		UE_LOG(LogDreamShader, Display, TEXT("DreamShader cook: generating %d source file(s) as persistent assets..."), SourceFiles.Num());
 
 		// Writing the .uasset is not enough for the cooker to find it. A cook request is resolved
-		// through IAssetRegistry::DoesPackageExistOnDisk, which consults only the registry's in-memory
+		// through IAssetRegistry::DoesPackageExistOnDisk, which consults only the registry's cached
 		// State and has no filesystem fallback -- so a package the registry never scanned is dropped
 		// from the request list even though the file is right there on disk, and
 		// DirectoriesToAlwaysCook silently skips it. Generation runs on post-engine-init, which is

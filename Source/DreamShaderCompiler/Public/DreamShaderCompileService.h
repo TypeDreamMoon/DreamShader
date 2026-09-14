@@ -12,8 +12,13 @@ namespace UE::DreamShader::Compiler
 		{
 		}
 
-		FDreamShaderCompileResult CompileAssets(const FString& SourceFilePath, bool bForce = false, bool bTransient = false);
-		FDreamShaderCompileResult CompileMaterial(const FString& SourceFilePath, bool bForce = false, bool bTransient = false);
+		/**
+		 * Persistence applies to ThinCustom products only (see EThinCustomPersistence); Graph materials
+		 * and material functions always save. It defaults to Materialized so a headless caller keeps
+		 * writing assets to disk.
+		 */
+		FDreamShaderCompileResult CompileAssets(const FString& SourceFilePath, bool bForce = false, EThinCustomPersistence Persistence = EThinCustomPersistence::Materialized);
+		FDreamShaderCompileResult CompileMaterial(const FString& SourceFilePath, bool bForce = false, EThinCustomPersistence Persistence = EThinCustomPersistence::Materialized);
 
 	private:
 		IDreamShaderCompiler& Compiler;

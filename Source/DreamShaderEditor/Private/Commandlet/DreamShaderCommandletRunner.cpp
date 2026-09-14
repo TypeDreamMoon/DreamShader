@@ -2,6 +2,7 @@
 
 #include "DreamShaderCompileService.h"
 #include "Commandlet/DreamShaderGraphDump.h"
+#include "Compiler/DreamShaderCompilerTools.h"
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Compile/DreamShaderEditorCompileAdapter.h"
 #include "Diagnostics/DreamShaderTextWireUtils.h"
@@ -25,7 +26,15 @@ namespace UE::DreamShader::Editor::Private
 			"  -run=DreamShader compile -All [-Force] [-Define=NAME=VALUE ...]\n"
 			"  -run=DreamShader decompile -Asset=\"/Game/Path/Asset.Asset\" [-Out=\"C:/Project/DShader/Decompiled/File.dsm\"]\n"
 			"  -run=DreamShader dump-graph { -Source=\"C:/Project/DShader/File.dsm\" | -All } [-Out=\"C:/Project/Saved/DreamShader/GraphBaseline\"]\n"
+			"  -run=DreamShader check { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Shaders] [-Platform=SM6,SM5] [-Quality=High] [-Timeout=120] [-DiagnosticsOut=<file>]\n"
+			"  -run=DreamShader dump-ir { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Out=<dir>] [-Json]\n"
+			"  -run=DreamShader index { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Out=<dir>]\n"
+			"  -run=DreamShader export-catalog [-Out=<file>]\n"
 			"Supported asset types: Material -> .dsm, MaterialFunction -> .dsf.\n"
+			"check, dump-ir, index and export-catalog belong to the 2.0 pipeline and take `.dss`\n"
+			"sources only. check writes no asset at all; -Shaders is the exception -- a shader\n"
+			"compile needs a real material, so it builds and saves the products the way compile\n"
+			"does, then reports HLSL errors as stage: shader.\n"
 			"dump-graph is a developer tool: it writes one canonical JSON per generated asset and\n"
 			"never writes an asset itself. Compile the tree first if its sources have changed.\n"
 			"-Define (short form -D) may be repeated; -Define=NAME with no value is a bare marker that\n"
@@ -531,6 +540,44 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		return bSucceeded;
+	}
+
+	// --------------------------------------------------------------------------- the 2.0 verbs
+	//
+	// Forwarders only. The bodies are in Compiler/DreamShaderCompilerTools.cpp for the reason the
+	// header gives: the 2.0 verbs share no machinery with the 1.x ones, and putting them here would
+	// make this file the place two pipelines meet for no gain.
+
+	bool RunDreamShaderCheckCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		return UE::DreamShader::Editor::Compiler::RunDreamShaderCheckCommandlet(Tokens, Switches, Params);
+	}
+
+	bool RunDreamShaderDumpIRCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		return UE::DreamShader::Editor::Compiler::RunDreamShaderDumpIRCommandlet(Tokens, Switches, Params);
+	}
+
+	bool RunDreamShaderIndexCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		return UE::DreamShader::Editor::Compiler::RunDreamShaderIndexCommandlet(Tokens, Switches, Params);
+	}
+
+	bool RunDreamShaderExportCatalogCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		return UE::DreamShader::Editor::Compiler::RunDreamShaderExportCatalogCommandlet(Tokens, Switches, Params);
 	}
 
 	bool RunDreamShaderDecompileCommandlet(

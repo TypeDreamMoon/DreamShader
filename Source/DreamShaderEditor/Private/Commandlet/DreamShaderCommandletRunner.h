@@ -68,4 +68,36 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params,
 		UE::DreamShader::Editor::IDreamShaderDecompiler& Decompiler);
+
+	// ---------------------------------------------------------------------------- the 2.0 verbs
+	//
+	// `check`, `dump-ir`, `index` and `export-catalog` work on `.dss` sources through the 2.0
+	// pipeline. They are implemented in Compiler/DreamShaderCompilerTools.cpp, not here: they share
+	// no code with the 1.x verbs -- a different source selection (`.dss` rather than `.dsm`/`.dsf`),
+	// a different driver, and diagnostics that come out of an FLangDiagnosticSink rather than an
+	// FDreamShaderError. These four are forwarders, so the dispatcher keeps naming one namespace.
+
+	/** `check <file|-All> [-Shaders] [-Platform=] [-Quality=] [-Timeout=] [-DiagnosticsOut=]`. */
+	bool RunDreamShaderCheckCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
+
+	/** `dump-ir <file|-All> [-Out=<dir>] [-Json]`. */
+	bool RunDreamShaderDumpIRCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
+
+	/** `index <file|-All> [-Out=<dir>]`. */
+	bool RunDreamShaderIndexCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
+
+	/** `export-catalog [-Out=<file>]`. */
+	bool RunDreamShaderExportCatalogCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
 }

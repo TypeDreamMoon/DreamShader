@@ -59,6 +59,7 @@ namespace UE::DreamShader::Editor::Private
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsm"), RootSourceFiles);
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsh"), RootSourceFiles);
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsf"), RootSourceFiles);
+			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dss"), RootSourceFiles);
 
 			// This scan drops every file under Packages; the generatable scan below drops only the
 			// package .dsm files. The asymmetry is deliberate -- see Docs/language/source-files.md.
@@ -81,6 +82,8 @@ namespace UE::DreamShader::Editor::Private
 		{
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsm"), OutSourceFiles);
 			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dsf"), OutSourceFiles);
+			// A `.dss` generates assets like a `.dsm`/`.dsf` does (a `.dsh` never does).
+			AppendSourceFilesWithExtension(Root.Directory, TEXT("*.dss"), OutSourceFiles);
 		}
 
 		OutSourceFiles.RemoveAll([](const FString& SourceFile)

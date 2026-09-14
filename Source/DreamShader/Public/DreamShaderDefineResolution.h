@@ -82,8 +82,8 @@ namespace UE::DreamShader
 
 	/**
 	 * Bumped whenever any tier changes (register, unregister, provider add/remove, command-line set,
-	 * settings edit). Anything holding compiled output keyed by the define set -- the ThinCustom
-	 * in-memory materials, above all -- compares this and invalidates when it moves.
+	 * settings edit). Anything holding compiled output keyed by the define set -- the Ephemeral
+	 * ThinCustom products, above all -- compares this and invalidates when it moves.
 	 */
 	DREAMSHADER_API uint32 GetDreamShaderDefineRevision();
 

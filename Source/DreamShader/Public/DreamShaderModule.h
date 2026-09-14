@@ -68,6 +68,9 @@ namespace UE::DreamShader
 	DREAMSHADER_API bool IsDreamShaderMaterialFile(const FString& InPath);
 	DREAMSHADER_API bool IsDreamShaderHeaderFile(const FString& InPath);
 	DREAMSHADER_API bool IsDreamShaderFunctionFile(const FString& InPath);
+	/** `.dss` -- the 2.0 language. */
+	DREAMSHADER_API bool IsDreamShaderLang2File(const FString& InPath);
+	/** Any of the four: `.dsm`, `.dsh`, `.dsf`, `.dss`. */
 	DREAMSHADER_API bool IsDreamShaderSourceFile(const FString& InPath);
 }
 

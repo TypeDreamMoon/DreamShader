@@ -2425,7 +2425,7 @@ namespace UE::DreamShader::Editor::Private
 
 			if (bQuiet)
 			{
-				// The in-memory path runs this on every save. Report the block in one frame rather
+				// An interactive compile runs this on every save. Report the block in one frame rather
 				// than formatting a status string per node, which is the bulk of the cost at this size.
 				PositionedCount += PlacedBlock.Expressions.Num();
 				LayoutSlowTask.EnterProgressFrame(static_cast<float>(PlacedBlock.Expressions.Num()));

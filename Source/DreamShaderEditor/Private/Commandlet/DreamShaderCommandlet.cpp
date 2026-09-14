@@ -56,6 +56,30 @@ int32 UDreamShaderCommandlet::Main(const FString& Params)
 		return UE::DreamShader::Editor::Private::RunDreamShaderDumpGraphCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
 	}
 
+	// The 2.0 verbs. Hyphenated spellings are accepted without the hyphen as well, for the same
+	// reason dump-graph is: a verb the shell may or may not have split is not worth an error for.
+	if (Command.Equals(TEXT("check"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderCheckCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
+	if (Command.Equals(TEXT("dump-ir"), ESearchCase::IgnoreCase)
+		|| Command.Equals(TEXT("dumpir"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderDumpIRCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
+	if (Command.Equals(TEXT("index"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderIndexCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
+	if (Command.Equals(TEXT("export-catalog"), ESearchCase::IgnoreCase)
+		|| Command.Equals(TEXT("exportcatalog"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderExportCatalogCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
 	if (Command.Equals(TEXT("decompile"), ESearchCase::IgnoreCase)
 		|| Command.Equals(TEXT("export"), ESearchCase::IgnoreCase))
 	{

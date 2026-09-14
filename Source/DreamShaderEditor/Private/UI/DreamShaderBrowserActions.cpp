@@ -24,15 +24,16 @@ namespace UE::DreamShader::Editor::Private
 	{
 		// Through the bridge when there is one, so the result lands in the diagnostics store (and from
 		// there in diagnostics.json and the VSCode extension) and a previous error on the file is
-		// cleared on success. A direct generator call does neither. Forced and in memory, like the
-		// buttons always were.
+		// cleared on success. A direct generator call does neither. Forced, and a ThinCustom product
+		// stays Ephemeral, like the buttons always were.
 		bool CompileSource(const FString& SourceFilePath, FString& OutMessage)
 		{
 			if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
 			{
-				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, /*bInMemory*/ true, OutMessage);
+				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage);
 			}
-			return UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, OutMessage, /*bForce*/ true, /*bTransient*/ true);
+			return UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(
+				SourceFilePath, OutMessage, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
 		}
 	}
 

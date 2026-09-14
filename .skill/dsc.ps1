@@ -17,6 +17,14 @@
     exists on disk is dumped as it stands rather than rebuilt; compile the tree first
     (`./dsc.ps1 compile -All -Force`) when the sources have moved.
 
+    `check`, `dump-ir`, `index` and `export-catalog` belong to the 2.0 pipeline and
+    take `.dss` sources only. `check` runs the compiler as far as IR validation and
+    writes no asset — it is the CI gate. `check -Shaders` goes further, and costs more:
+    it BUILDS AND SAVES the assets (2.0 has no transient one) and compiles their
+    shaders, so an HLSL mistake in a `@custom` body fails here rather than in somebody's
+    editor a week later. `dump-ir` and `index` are language-service tools, and
+    `export-catalog` publishes the builtin node catalog the extension binds `UE.*` against.
+
     On top of the raw commandlet it adds:
       * engine resolution from the .uproject's EngineAssociation (no hard-coded path),
       * project discovery by walking up from the source file or the working directory,
@@ -42,6 +50,15 @@
 .EXAMPLE
     ./dsc.ps1 dump-graph -All -Out I:/Baseline/before
 
+.EXAMPLE
+    ./dsc.ps1 check -All
+
+.EXAMPLE
+    ./dsc.ps1 check DShader/Materials/M_Toon.dss -Shaders -Platform SM6,SM5 -Quality High
+
+.EXAMPLE
+    ./dsc.ps1 export-catalog
+
 .NOTES
     Written for and verified against UE 5.8 (source build) + DreamShader 1.5.1 on Win64.
 #>
@@ -50,11 +67,16 @@ param(
     # compile  — build one source file, or every project source with -All
     # decompile — export an existing UMaterial / UMaterialFunction back to source
     # dump-graph — write a canonical JSON fingerprint of the graph each source generates
+    # check — 2.0 only: compile a .dss as far as IR validation, writing no asset
+    # dump-ir — 2.0 only: write the lowered IR of a .dss as text (and JSON with -Json)
+    # index — 2.0 only: write the symbol index a language service reads
+    # export-catalog — 2.0 only: write the builtin node catalog as JSON
     [Parameter(Mandatory, Position = 0)]
-    [ValidateSet('compile', 'decompile', 'dump-graph')]
+    [ValidateSet('compile', 'decompile', 'dump-graph', 'check', 'dump-ir', 'index', 'export-catalog')]
     [string]$Command,
 
     # compile / dump-graph: path to a .dsm/.dsf (absolute, or relative to DShader/ then the project).
+    # check / dump-ir / index: the same, for a .dss.
     # decompile: an object path such as /Game/Materials/M_Steel.
     [Parameter(Position = 1)]
     [string]$Target,
@@ -90,7 +112,38 @@ param(
 
     # decompile: write the source here instead of <SourceDirectory>/Decompiled/….
     # dump-graph: the root of the dump tree, instead of <Project>/Saved/DreamShader/GraphBaseline.
+    # dump-ir: instead of <Project>/Saved/DreamShader/IR. index: instead of …/Index.
+    # export-catalog: the file, instead of <Project>/Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json.
     [string]$Out,
+
+    # check: after the graph is validated, build and SAVE the assets and compile their
+    # shaders. The saving is not optional -- 2.0 has no transient asset -- so pass this
+    # only where `compile` would be welcome too. It is the only thing that catches an
+    # HLSL error in a `@custom` body without an editor. Slow: it runs the real compiler.
+    [switch]$Shaders,
+
+    # check -Shaders: which shader platforms to compile for, comma separated — SM6, SM5,
+    # ES3_1, or a shader format name such as PCD3D_SM6. Default: the host's own.
+    [string]$Platform,
+
+    # check -Shaders: which material quality levels, comma separated — Low, Medium, High,
+    # Epic. Default: the project's current scalability level, which is what an editor shows.
+    [string]$Quality,
+
+    # check -Shaders: seconds to wait per material before calling the compile a hang.
+    # Default 120. A timeout is reported as an error, never waited out forever.
+    [int]$Timeout,
+
+    # check: also write the diagnostics as JSON here (schema dreamshader-diagnostics,
+    # version 1, plus the optional `length` field). One file per source under -All.
+    [string]$DiagnosticsOut,
+
+    # dump-ir: write the JSON form beside the text one.
+    [switch]$Json,
+
+    # Keep -nullrhi on for `check -Shaders`, where it is dropped by default. Only useful
+    # for testing the cook-target half on a machine with no GPU — see the note below.
+    [switch]$NullRhi,
 
     # The .uproject. Defaults to the nearest one at or above the target / working directory.
     [string]$Project,
@@ -233,6 +286,34 @@ switch ($Command) {
         if ($Force) { $commandletArgs += '-Force' }
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
     }
+    { $_ -in @('check', 'dump-ir', 'index') } {
+        # The 2.0 verbs share one source selection, deliberately: `check` and `dump-ir` that
+        # disagreed about which files a project has would report a missing dump as a
+        # difference, which is the same trap dump-graph documents.
+        if ($All) {
+            $commandletArgs += '-All'
+        }
+        elseif ($Target) {
+            $resolved = if (Test-Path -LiteralPath $Target) { (Resolve-Path -LiteralPath $Target).Path } else { $Target }
+            $commandletArgs += "-Source=$($resolved -replace '\\', '/')"
+        }
+        else {
+            throw "$Command needs a .dss source file or -All."
+        }
+        if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
+        if ($Force) { $commandletArgs += '-Force' }
+        if ($Json) { $commandletArgs += '-Json' }
+        if ($Shaders) { $commandletArgs += '-Shaders' }
+        if ($Platform) { $commandletArgs += "-Platform=$Platform" }
+        if ($Quality) { $commandletArgs += "-Quality=$Quality" }
+        if ($Timeout) { $commandletArgs += "-Timeout=$Timeout" }
+        if ($DiagnosticsOut) { $commandletArgs += "-DiagnosticsOut=$($DiagnosticsOut -replace '\\', '/')" }
+    }
+    'export-catalog' {
+        # No source: the catalog is a property of the engine and the loaded plugins, not of
+        # any one file.
+        if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
+    }
 }
 
 # One `-Define=` per item, never one joined switch: the commandlet installs the whole set at
@@ -245,8 +326,18 @@ foreach ($item in $Define) {
 }
 
 # -nullrhi keeps the run off the GPU. Drop it only when something needs real shader
-# compilation, e.g. reading back material compile errors.
-$commandletArgs += @('-unattended', '-nopause', '-nullrhi', '-nosplash', '-stdout', '-NoLogTimes')
+# compilation, e.g. reading back material compile errors — which is exactly what
+# `check -Shaders` does, so that combination drops it by default.
+#
+# Not a preference: FApp::CanEverRender() is false whenever -nullrhi is on the command
+# line, and UMaterial::CacheResourceShadersForRendering is gated on it. The RENDERING
+# shader maps are therefore never built, and those are the only ones whose FMaterialResource
+# a plugin can reach a public accessor for. With -nullrhi the check still drives the
+# cook-target compilers and still reports a timeout, but its error TEXT has to come out of
+# the engine log instead. Pass -NullRhi to force that configuration on purpose.
+$useNullRhi = (-not ($Command -eq 'check' -and $Shaders)) -or $NullRhi
+$commandletArgs += @('-unattended', '-nopause', '-nosplash', '-stdout', '-NoLogTimes')
+if ($useNullRhi) { $commandletArgs += '-nullrhi' }
 
 Write-Host "dsc: $Command  project=$(Split-Path -Leaf $uproject)  engine=$engineRoot" -ForegroundColor DarkGray
 
@@ -300,7 +391,7 @@ if ($generated.Count -gt 0) {
         $full = Join-Path $projectDir $relative
 
         if (-not (Test-Path -LiteralPath $full)) {
-            Write-Host "  $objectPath  -> $relative (not on disk; in-memory only)" -ForegroundColor DarkGray
+            Write-Host "  $objectPath  -> $relative (not on disk; Ephemeral)" -ForegroundColor DarkGray
             continue
         }
 
@@ -325,7 +416,7 @@ if ($generated.Count -gt 0) {
     }
 
     if (-not $CleanNew) {
-        Write-Host "  (pass -CleanNew to delete the untracked ones — they shadow the editor's in-memory materials)" -ForegroundColor DarkGray
+        Write-Host "  (pass -CleanNew to delete the untracked ones — they shadow the editor's Ephemeral products)" -ForegroundColor DarkGray
     }
 }
 

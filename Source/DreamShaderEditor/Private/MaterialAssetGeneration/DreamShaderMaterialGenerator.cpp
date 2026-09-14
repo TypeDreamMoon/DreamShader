@@ -1,5 +1,6 @@
 ﻿#include "DreamShaderMaterialGenerator.h"
 
+#include "Compiler/DreamShaderCompilerPipeline.h"
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
 // The pure half of progress reporting: the DSH9011 stall threshold, the DSH9012 Custom-code
 // heuristic, and the cancel override an automation test arms in place of the dialog's Cancel button.
@@ -13,6 +14,8 @@
 // the rebuild that clears them.
 #include "DreamShaderThinCustomParameterOverrides.h"
 
+// EThinCustomPersistence: the two states a ThinCustom product can be in (plan v2 §5).
+#include "DreamShaderCompilerInterfaces.h"
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderParser.h"
@@ -2060,7 +2063,6 @@ namespace UE::DreamShader::Editor
 				OutputPositionY += 180;
 			}
 
-			const bool bLayoutThisFunction = !bEffectiveTransient || GetDefault<UDreamShaderSettings>()->bLayoutInMemoryGraphs;
 			if (bEffectiveTransient)
 			{
 				FunctionSlowTask.EnterProgressFrame(1.0f);
@@ -2081,16 +2083,15 @@ namespace UE::DreamShader::Editor
 				return FailBecauseCancelled(OutError, FunctionDefinition.Name);
 			}
 
-			if (bLayoutThisFunction)
-			{
-				Private::LayoutGeneratedExpressions(
-					nullptr,
-					MaterialFunction,
-					&FunctionDefinition.Layout,
-					GeneratedExpressionsByVariable.IsEmpty() ? nullptr : &GeneratedExpressionsByVariable,
-					RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
-					bEffectiveTransient);
-			}
+			// Layout always runs (architecture plan v2 §5.2): the only remaining opt-out is the
+			// large-graph performance guard inside LayoutGeneratedExpressions itself.
+			Private::LayoutGeneratedExpressions(
+				nullptr,
+				MaterialFunction,
+				&FunctionDefinition.Layout,
+				GeneratedExpressionsByVariable.IsEmpty() ? nullptr : &GeneratedExpressionsByVariable,
+				RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
+				bEffectiveTransient);
 
 			// The graph is complete and nothing below can fail. Before UpdateMaterialFunction, because
 			// that reaches ForceRecompileForRendering, which is one of the two places that REBUILD
@@ -2120,8 +2121,8 @@ namespace UE::DreamShader::Editor
 			if (bEffectiveTransient)
 			{
 				FunctionSlowTask.EnterProgressFrame(1.0f);
-				// Modify()/PostEditChange dirtied the in-memory package; clear it so no save-all or
-				// exit prompt can silently persist an in-memory material function.
+				// Modify()/PostEditChange dirtied the unsaved package; clear it so no save-all or
+				// exit prompt can silently persist a material function that was never meant to reach disk.
 				MaterialFunction->GetPackage()->SetDirtyFlag(false);
 			}
 			else
@@ -2255,6 +2256,12 @@ namespace UE::DreamShader::Editor
 	bool FMaterialGenerator::GenerateAssetsFromFileInternal(const FString& InSourceFilePath, FDreamShaderError& OutMessage, const bool bForce, const bool bTransient)
 	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
+		if (UE::DreamShader::Editor::Compiler::IsDreamShaderLang2Source(SourceFilePath))
+		{
+			// A `.dss` never reaches the 1.x generator: the 2.0 pipeline owns it end to end, and it
+			// has no transient request -- every asset it makes is saved (plan §5).
+			return UE::DreamShader::Editor::Compiler::CompileDreamShaderLang2File(SourceFilePath, bForce, OutMessage);
+		}
 		FScopedSlowTask SourceSlowTask(
 			6.0f,
 			FText::Format(
@@ -3076,7 +3083,6 @@ namespace UE::DreamShader::Editor
 			}
 		}
 
-		const bool bLayoutThisMaterial = !bTransient || GetDefault<UDreamShaderSettings>()->bLayoutInMemoryGraphs;
 		if (bTransient)
 		{
 			MaterialSlowTask.EnterProgressFrame(1.0f);
@@ -3097,16 +3103,15 @@ namespace UE::DreamShader::Editor
 			return FailBecauseCancelled(OutMessage, Material->GetName());
 		}
 
-		if (bLayoutThisMaterial)
-		{
-			Private::LayoutGeneratedExpressions(
-				Material,
-				nullptr,
-				&Definition.Layout,
-				GeneratedExpressionsByVariable.IsEmpty() ? nullptr : &GeneratedExpressionsByVariable,
-				RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
-				bTransient);
-		}
+		// Layout always runs (architecture plan v2 §5.2): the only remaining opt-out is the large-graph
+		// performance guard inside LayoutGeneratedExpressions itself.
+		Private::LayoutGeneratedExpressions(
+			Material,
+			nullptr,
+			&Definition.Layout,
+			GeneratedExpressionsByVariable.IsEmpty() ? nullptr : &GeneratedExpressionsByVariable,
+			RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
+			bTransient);
 
 		// The graph is complete and nothing below can fail, so the old one is finally expendable.
 		// Before the recompile, not after: the recompile is what publishes the new graph to the
@@ -3135,7 +3140,7 @@ namespace UE::DreamShader::Editor
 	// The hidden base UMaterial that carries the ThinCustom whole-surface graph (the instance parents
 	// to it). Hosting splits on bTransient:
 	//
-	// - TRANSIENT (the editor's in-memory default): the base lives in the transient package. Objects
+	// - EPHEMERAL (the editor's default): the base lives in the transient package. Objects
 	//   whose outermost is GetTransientPackage() are excluded from IsAsset() and every content-browser
 	//   / asset-registry enumeration, so the base is naturally hidden with no override needed (the
 	//   instance hides itself via its own IsAsset()). Nothing is ever saved.
@@ -3215,7 +3220,7 @@ namespace UE::DreamShader::Editor
 	// Graph construction wholesale) and emit a lightweight UDreamShaderMaterialInstance of it. The
 	// instance is a plain thin MIC -- parameters, settings, domains, and scene reads all live on the
 	// base as ordinary nodes and properties, enumerated and compiled natively by the engine. What the
-	// instance adds is the in-memory hiding (IsAsset) and root shader-map ownership
+	// instance adds is the Ephemeral hiding (IsAsset) and root shader-map ownership
 	// (HasOverridenBaseProperties, since the parent is a UMaterial).
 	static bool GenerateThinCustomMaterialAsInstance(
 		const FString& SourceFilePath,
@@ -3238,12 +3243,19 @@ namespace UE::DreamShader::Editor
 			return FailWith(OutMessage, TEXT("DSH8072"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *InstanceError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
-		// Storage decides from here, not the request (see IsGeneratedAssetPersisted). Asking the
-		// instance answers for the pair: the base is a subobject of it, so they share one package and
-		// one file.
-		const bool bEffectiveTransient = bTransient && !Private::IsGeneratedAssetPersisted(Instance);
+		// THE Ephemeral/Materialized decision for this product (architecture plan v2 §5.1). Two things
+		// make it Materialized: an explicit Materialize request (the Materialize action, creating a child
+		// instance, a cook -- all of which reach here with bTransient false), and a package that already
+		// exists on disk, because storage decides and a product on disk stays on disk. Asking the instance
+		// answers for the pair: the base is a subobject of it, so they share one package and one file.
+		using UE::DreamShader::Compiler::EThinCustomPersistence;
+		const EThinCustomPersistence Persistence =
+			(bTransient && !Private::IsGeneratedAssetPersisted(Instance))
+				? EThinCustomPersistence::Ephemeral
+				: EThinCustomPersistence::Materialized;
+		const bool bEphemeral = (Persistence == EThinCustomPersistence::Ephemeral);
 
-		if (Private::ShouldDeferPersistedAssetToWriteOwner(Instance, !bEffectiveTransient, OutMessage))
+		if (Private::ShouldDeferPersistedAssetToWriteOwner(Instance, !bEphemeral, OutMessage))
 		{
 			return true;
 		}
@@ -3281,7 +3293,7 @@ namespace UE::DreamShader::Editor
 		// After the skip check on purpose: a hash-skip must not create (or ownership-check) a base.
 		UMaterial* BaseMaterial = nullptr;
 		FDreamShaderError BaseError;
-		if (!EnsureThinCustomBaseMaterial(Definition, bEffectiveTransient, Instance, BaseMaterial, BaseError) || !BaseMaterial)
+		if (!EnsureThinCustomBaseMaterial(Definition, bEphemeral, Instance, BaseMaterial, BaseError) || !BaseMaterial)
 		{
 			return FailWith(OutMessage, TEXT("DSH8075"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *BaseError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
@@ -3316,7 +3328,7 @@ namespace UE::DreamShader::Editor
 			if (!PopulateMaterialGraphFromDefinition(
 					BaseMaterial, Definition, SourceFilePath, SourceText, NamedOutputs,
 					bUsesReturn, ReturnOutputType, bReturnIsSubstrateMaterial, bUsesFrontMaterial,
-					bEffectiveTransient, GraphBuildTask, OutMessage))
+					bEphemeral, GraphBuildTask, OutMessage))
 			{
 				return false;
 			}
@@ -3353,9 +3365,9 @@ namespace UE::DreamShader::Editor
 		// the asset is not left in.
 		Private::ApplyOutputDigestMetadata(Instance);
 
-		if (bEffectiveTransient)
+		if (bEphemeral)
 		{
-			// The editor-only setters and PostEditChange dirtied the in-memory package; clear it so no
+			// The editor-only setters and PostEditChange dirtied the unsaved package; clear it so no
 			// save-all or exit prompt can silently persist a virtual instance material.
 			Instance->GetPackage()->SetDirtyFlag(false);
 		}
@@ -3373,7 +3385,7 @@ namespace UE::DreamShader::Editor
 			// Commit the package to disk. The editor save path drops any package UPackage::IsEmptyPackage()
 			// reports as empty, and that check counts only objects whose IsAsset() is true. While the
 			// package is PKG_NewlyCreated, UDreamShaderMaterialInstance::IsAsset() returns false (its
-			// in-memory-hiding rule) and the base is a non-asset subobject, so the package looks empty and
+			// Ephemeral-hiding rule) and the base is a non-asset subobject, so the package looks empty and
 			// is silently skipped. Editor bookkeeping on a memory-only instance (MarkPackageDirty above)
 			// re-asserts PKG_NewlyCreated, so clear it as the very LAST step before saving -- now that we
 			// are persisting it -- to make the instance report as a real asset. Restore the flag if the
@@ -3417,6 +3429,11 @@ namespace UE::DreamShader::Editor
 	bool FMaterialGenerator::GenerateMaterialFromFileInternal(const FString& InSourceFilePath, FDreamShaderError& OutMessage, const bool bForce, const bool bTransient)
 	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
+		if (UE::DreamShader::Editor::Compiler::IsDreamShaderLang2Source(SourceFilePath))
+		{
+			// See GenerateAssetsFromFileInternal: a `.dss` is the 2.0 pipeline's alone.
+			return UE::DreamShader::Editor::Compiler::CompileDreamShaderLang2File(SourceFilePath, bForce, OutMessage);
+		}
 		FScopedSlowTask MaterialSlowTask(
 			11.0f,
 			FText::Format(
@@ -3603,12 +3620,12 @@ namespace UE::DreamShader::Editor
 			return FailWith(OutMessage, TEXT("DSH8084"), FString::Printf(TEXT("%s: %s"), *SourceFilePath, *MaterialError)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
-		// From here on the asset's storage decides, not the request: an in-memory compile that landed on
+		// From here on the asset's storage decides, not the request: a compile that landed on
 		// an asset with a file behind it is a persisted compile. See IsGeneratedAssetPersisted.
 		const bool bPersistThisMaterial = bTransient && Private::IsGeneratedAssetPersisted(Material);
 		const bool bEffectiveTransient = bTransient && !bPersistThisMaterial;
 
-		// Only one process per project writes these files. A second editor keeps its own in-memory
+		// Only one process per project writes these files. A second editor keeps its own unsaved
 		// materials current and leaves the shared one to whoever owns the bridge.
 		if (Private::ShouldDeferPersistedAssetToWriteOwner(Material, !bEffectiveTransient, OutMessage))
 		{
@@ -3647,7 +3664,7 @@ namespace UE::DreamShader::Editor
 		}
 
 		// Stamped for both modes, and ahead of the transient dirty-flag reset below because writing
-		// package metadata dirties the package. An in-memory material is regenerated from scratch every
+		// package metadata dirties the package. An unsaved material is regenerated from scratch every
 		// session, so its stamp only has to survive until the next compile in THIS one -- which is
 		// exactly the window in which a hand edit to it can be destroyed.
 		//
@@ -3667,8 +3684,8 @@ namespace UE::DreamShader::Editor
 		if (bEffectiveTransient)
 		{
 			MaterialSlowTask.EnterProgressFrame(1.0f);
-			// Modify()/PostEditChange dirtied the in-memory package; clear it so no save-all or
-			// exit prompt can silently persist an in-memory material and fork the source of truth.
+			// Modify()/PostEditChange dirtied the unsaved package; clear it so no save-all or
+			// exit prompt can silently persist it and fork the source of truth.
 			Material->GetPackage()->SetDirtyFlag(false);
 		}
 		else

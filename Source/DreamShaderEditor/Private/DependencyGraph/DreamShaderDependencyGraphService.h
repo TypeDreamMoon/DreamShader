@@ -7,6 +7,12 @@ namespace UE::DreamShader::Editor::Private
 	struct FDreamShaderDependencyGraphService
 	{
 		static bool TryExtractImportPathFromLine(const FString& Line, FString& OutPath);
+		/**
+		 * The 2.0 edge: `#include "path"` naming a DreamShader header (`.dsh`, `.dss`, or no extension).
+		 * Kept apart from TryExtractImportPathFromLine, which callers run over 1.x text where `#include`
+		 * is HLSL inside a `Function` body.
+		 */
+		static bool TryExtractIncludePathFromLine(const FString& Line, FString& OutPath);
 		static FString NormalizeImportSpecifier(const FString& ImportSpecifier);
 		/**
 		 * `OutError`, when given, is filled only for a failure the caller could not have described

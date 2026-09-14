@@ -22,7 +22,7 @@ enum class EDreamShaderDefaultBackend : uint8
 	/**
 	 * Build the material graph on a hidden per-material base UMaterial and emit a lightweight
 	 * material instance of it. Full Graph feature surface (the construction is shared) plus the
-	 * instance's in-memory hiding and root shader-map ownership. The default.
+	 * instance's Ephemeral hiding and root shader-map ownership. The default.
 	 */
 	ThinCustom,
 };
@@ -82,23 +82,29 @@ public:
 			ToolTip="When enabled, every enabled plugin that ships a DShader folder contributes its own source root, so a plugin can carry the .dsm/.dsf/.dsh files that build its materials. Plugin roots are discovered and compiled but never rewritten by the editor -- only the project's own source directory is writable. Imports never cross roots: a file resolves its imports against its own root and that root's Packages folder."))
 	bool bScanPluginSourceDirectories = true;
 
-	// The single compiler knob. DreamShader always generates materials in memory in the editor
-	// (source files are the authoring surface; the editor never writes per-material .uasset files) and
-	// materializes them as persistent assets during cooking — so there is no in-memory on/off toggle.
+	// The single compiler knob. ThinCustom products are Ephemeral by default in the editor (source
+	// files are the authoring surface) and materialize on an explicit action, a cook, or when a child
+	// instance is created — so there is no persistence on/off toggle. Graph materials and material
+	// functions have no Ephemeral state at all.
 	UPROPERTY(Config, EditAnywhere, Category="Compiler",
 		meta=(DisplayName="Default Compiler Backend",
-			ToolTip="How DreamShader materializes a source file that does not specify Settings = { Backend = \"...\" }. ThinCustom (the default) builds the material graph on a hidden per-material base and emits a lightweight, memory-only material instance of it -- full feature surface, no visible per-material asset. Graph builds a visible UMaterial node graph. Instance is a deprecated alias for ThinCustom."))
+			ToolTip="How DreamShader materializes a source file that does not specify Settings = { Backend = \"...\" }. ThinCustom (the default) builds the material graph on a hidden per-material base and emits a lightweight, Ephemeral material instance of it -- full feature surface, no visible per-material asset. Graph builds a visible UMaterial node graph. Instance is a deprecated alias for ThinCustom."))
 	EDreamShaderDefaultBackend DefaultBackend = EDreamShaderDefaultBackend::ThinCustom;
 
 	UPROPERTY(Config, EditAnywhere, Category="Compiler",
-		meta=(DisplayName="Show In-Memory Materials In Content Browser",
-			ToolTip="Applies to the ThinCustom/Instance backend only -- it is the only one that can hide itself, via UDreamShaderMaterialInstance::IsAsset. When enabled, those memory-only materials appear in the Content Browser like unsaved assets. Disabled by default: the source files are the intended authoring surface, and hiding the materials also prevents accidental Save actions from materializing them to disk. Graph-backend materials are plain UMaterials with no way to opt out of asset enumeration, so they are always visible and this setting does not affect them."))
-	bool bShowInMemoryMaterialsInContentBrowser = false;
+		meta=(DisplayName="Show Ephemeral Materials",
+			ToolTip="Applies to the ThinCustom/Instance backend only -- it is the only one with an Ephemeral state, which it hides via UDreamShaderMaterialInstance::IsAsset. When enabled, Ephemeral materials appear in the Content Browser like unsaved assets. Disabled by default: the source files are the intended authoring surface, and hiding the materials also prevents accidental Save actions from materializing them to disk. Graph-backend materials are plain UMaterials with no way to opt out of asset enumeration, so they are always visible and this setting does not affect them."))
+	bool bShowEphemeralMaterials = false;
 
-	UPROPERTY(Config, EditAnywhere, Category="Compiler",
-		meta=(DisplayName="Lay Out In-Memory Graphs",
-			ToolTip="Whether the graph placement pass -- node positions and comment boxes -- also runs for the memory-only materials an interactive compile produces. Off, those graphs keep the fixed coordinates the construction pass assigned, which is a single tall column of nodes: readable only once the material is materialized or cooked. On (the default), what you see after a save matches what the generated asset will look like. Costs one placement pass per compile; graphs at or above the large-graph threshold skip it either way."))
-	bool bLayoutInMemoryGraphs = true;
+	/**
+	 * Folds the pre-2.0 spelling of the visibility toggle into bShowEphemeralMaterials.
+	 *
+	 * A renamed config property is simply not found on load, so an existing DefaultEngine.ini would
+	 * silently fall back to the new property's default and a user who had turned the toggle ON would
+	 * find it OFF. See DreamShaderSettings.cpp for the one-key migration; delete both once 2.0 has
+	 * shipped.
+	 */
+	virtual void PostInitProperties() override;
 
 	// The project-wide tier of the preprocessor define table. Two other tiers outrank it -- C++
 	// registration (RegisterDreamShaderDefine / a define provider) and the compiler's own -Define=

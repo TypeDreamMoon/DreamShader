@@ -334,7 +334,7 @@ namespace UE::DreamShader::Editor::Private
 	// against the same measure the placement used.
 	FLayoutNodeSize EstimateMaterialNodeSize(UMaterialExpression* Expression);
 	void LayoutGeneratedExpressions(UMaterial* Material, UMaterialFunction* MaterialFunction);
-	// bQuiet drops the per-node slow-task frames. The in-memory path lays out on every save, where
+	// bQuiet drops the per-node slow-task frames. An interactive compile lays out on every save, where
 	// formatting one progress string per node costs more than the placement itself.
 	void LayoutGeneratedExpressions(
 		UMaterial* Material,
@@ -455,19 +455,19 @@ namespace UE::DreamShader::Editor::Private
 	/**
 	 * True when a compile that would land on disk has to leave the asset alone because another process
 	 * owns writing it. Reported as a skip rather than a failure: a second editor is a legitimate way to
-	 * work, its own in-memory materials still compile, and only the shared file is off limits.
+	 * work, its own unsaved materials still compile, and only the shared file is off limits.
 	 */
 	bool ShouldDeferPersistedAssetToWriteOwner(UObject* Asset, bool bWouldPersist, FDreamShaderError& OutMessage);
 
 	// Whether the asset has a file behind it. The generation paths ask this right after creating or
-	// reusing their target and downgrade an in-memory request to a persisted one when it answers yes:
-	// where the asset lives decides how it is rebuilt, so there is never an in-memory copy of an
+	// reusing their target and downgrade an Ephemeral request to a Materialized one when it answers yes:
+	// where the asset lives decides how it is rebuilt, so there is never a memory-only copy of an
 	// on-disk asset disagreeing with the file underneath it.
 	bool IsGeneratedAssetPersisted(UObject* Asset);
 	// The project-relative source path stamped at generation time -- the asset's answer to "which file
 	// am I built from", which the Adopt action needs in order to know what to rewrite.
 	FString GetGeneratedAssetSourceFile(UObject* Asset);
-	// The stamped source hash. Only a persisted build writes one -- an in-memory build stamps the path
+	// The stamped source hash. Only a persisted build writes one -- a memory-only build stamps the path
 	// alone, deliberately, so the skip check stays off -- which makes this the plainest reading of
 	// which of the two paths a compile actually took.
 	FString GetGeneratedAssetSourceHash(UObject* Asset);

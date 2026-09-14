@@ -4,6 +4,7 @@
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
 
+#include "Misc/ConfigCacheIni.h"
 #include "UObject/UnrealType.h"
 
 namespace UE::DreamShader::Private
@@ -86,6 +87,44 @@ UDreamShaderSettings::UDreamShaderSettings()
 
 	SourceDirectory.Path = TEXT("DShader");
 	GeneratedShaderDirectory.Path = TEXT("Intermediate/DreamShader/GeneratedShaders");
+}
+
+void UDreamShaderSettings::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+	// bShowEphemeralMaterials was called bShowInMemoryMaterialsInContentBrowser before 2.0. Config
+	// load matches keys by property name, so the old key is not read into the renamed property at all
+	// -- a user who had turned the toggle ON would silently find it OFF. Read the old key directly and
+	// fold it in. This is deliberately NOT a deprecated UPROPERTY shim: UHT keeps the "_DEPRECATED"
+	// suffix in the property's name, and LoadConfig keys off that name, so the shim would look for
+	// "bShowInMemoryMaterialsInContentBrowser_DEPRECATED" and never match the key actually in the ini.
+	//
+	// Only the old key wins: if the new key is present the config has already been migrated, and only
+	// a true is carried over, since false is the default either way. Nothing is written back -- the
+	// old key is left in place, harmless, until the next time the settings are saved.
+	//
+	// Delete this whole function (and its declaration) once 2.0 has shipped.
+	if (!GConfig)
+	{
+		return;
+	}
+
+	// GEngineIni, not GetDefaultConfigFilename(): the class is UCLASS(Config=Engine), and GEngineIni is
+	// the merged hierarchy LoadConfig itself reads, so a value set in Saved/Config counts too.
+	const FString Section = GetClass()->GetPathName();
+
+	bool bMigrated = false;
+	if (GConfig->GetBool(*Section, TEXT("bShowEphemeralMaterials"), bMigrated, GEngineIni))
+	{
+		return;
+	}
+
+	bool bLegacyValue = false;
+	if (GConfig->GetBool(*Section, TEXT("bShowInMemoryMaterialsInContentBrowser"), bLegacyValue, GEngineIni))
+	{
+		bShowEphemeralMaterials = bLegacyValue;
+	}
 }
 
 #if WITH_EDITOR

@@ -683,7 +683,10 @@ namespace UE::DreamShader::Editor::Private
 
 		UE::DreamShader::Compiler::FDreamShaderCompileService CompileService(UE::DreamShader::Editor::GetEditorCompileAdapter());
 		// Editor materials are always memory-only, so a preview compile is transient (never persists).
-		const UE::DreamShader::Compiler::FDreamShaderCompileResult CompileResult = CompileService.CompileMaterial(SourceFilePath, Request.bForceRecompile, /*bTransient*/ true);
+		const UE::DreamShader::Compiler::FDreamShaderCompileResult CompileResult = CompileService.CompileMaterial(
+				SourceFilePath,
+				Request.bForceRecompile,
+				UE::DreamShader::Compiler::EThinCustomPersistence::Ephemeral);
 		if (!CompileResult.bSucceeded)
 		{
 			OutResult.Message = CompileResult.Message;

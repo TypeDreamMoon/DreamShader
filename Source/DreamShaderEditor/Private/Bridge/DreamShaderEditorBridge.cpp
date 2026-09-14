@@ -13,8 +13,10 @@
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Decompiler/DreamShaderGraphDecompiler.h"
 #include "Compile/DreamShaderEditorCompileAdapter.h"
+// The reveal-node request handler and its response writer (node <-> source navigation).
+#include "Compiler/DreamShaderSourceNavigation.h"
 #include "DependencyGraph/DreamShaderDependencyGraphService.h"
-// GetDreamShaderDefineRevision, polled in Tick so a define change invalidates the in-memory materials.
+// GetDreamShaderDefineRevision, polled in Tick so a define change invalidates the generated materials.
 #include "DreamShaderDefineResolution.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
@@ -33,7 +35,7 @@
 #include "DreamShaderMaterialInstance.h"
 #include "Misc/CoreDelegates.h"
 #include "Misc/PackageName.h"
-// ON_SCOPE_EXIT, used by GenerateAllInMemoryMaterials to stamp the define revision it swept against
+// ON_SCOPE_EXIT, used by GenerateAllSources to stamp the define revision it swept against
 // on every exit path.
 #include "Misc/ScopeExit.h"
 #include "ObjectTools.h"
@@ -98,14 +100,14 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		/**
-		 * True for a generated ThinCustom instance that lives only in memory AND is currently hidden
-		 * from the Content Browser.
+		 * True for a generated ThinCustom instance that is Ephemeral AND is currently hidden from the
+		 * Content Browser.
 		 *
 		 * This is the case the divergence notification exists for. "Right-click the asset" is sound
 		 * advice for a saved material and meaningless here: there is no tile, no asset editor, and no
 		 * way for the user to reach the three resolutions at all until the setting is flipped.
 		 */
-		bool IsHiddenInMemoryInstance(const UObject* Asset)
+		bool IsHiddenEphemeralInstance(const UObject* Asset)
 		{
 			const UDreamShaderMaterialInstance* Instance = Cast<UDreamShaderMaterialInstance>(Asset);
 			if (!Instance)
@@ -120,7 +122,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
-			return Settings && !Settings->bShowInMemoryMaterialsInContentBrowser;
+			return Settings && !Settings->bShowEphemeralMaterials;
 		}
 
 		/**
@@ -739,13 +741,12 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::HandlePostEngineInit()
 	{
-		// In-memory generation is the editor's always-on behavior (source files are the authoring
-		// surface; the editor never writes per-material .uasset files).
+		// The startup sweep is the editor's always-on behavior (source files are the authoring surface).
 		//
 		// This call is also what arms Tick's define poll: the sweep stamps the revision it ran against,
 		// so every define contributed while startup modules were loading is already accounted for by
 		// the materials it just produced, and the first tick does not order a rebuild for them.
-		GenerateAllInMemoryMaterials();
+		GenerateAllSources();
 	}
 
 	void FDreamShaderEditorBridge::HandleSettingsPropertyChanged(UObject* Object, FPropertyChangedEvent& Event)
@@ -783,21 +784,21 @@ namespace UE::DreamShader::Editor::Private
 		// the key hashed the source text and could not see the setting the user had just changed. Now it
 		// can, so every affected asset fails the skip check on its own -- and, just as importantly, one
 		// that the setting does NOT affect is still skipped instead of being needlessly rebuilt.
-		GenerateAllInMemoryMaterials();
+		GenerateAllSources();
 
-		// Stale persisted assets shadow the in-memory versions; point the user at the cleanup.
+		// Stale persisted assets shadow the Ephemeral versions; point the user at the cleanup.
 		TArray<UObject*> ShadowingAssets;
 		if (CollectPersistedGeneratedAssets(ShadowingAssets) > 0)
 		{
 			ShowDreamShaderNotification(
 				FText::Format(
-					LOCTEXT("DreamShaderInMemoryModeShadowed", "{0} previously generated asset(s) are still saved on disk and shadow the in-memory materials. Run Tools > DreamShader > Clean Persisted Generated Assets to remove them."),
+					LOCTEXT("DreamShaderEphemeralShadowed", "{0} previously generated asset(s) are still saved on disk and shadow the Ephemeral materials. Run Tools > DreamShader > Make Ephemeral to remove them."),
 					FText::AsNumber(ShadowingAssets.Num())),
 				SNotificationItem::CS_Fail);
 		}
 	}
 
-	void FDreamShaderEditorBridge::GenerateAllInMemoryMaterials()
+	void FDreamShaderEditorBridge::GenerateAllSources()
 	{
 		// Snapshot BEFORE the pass and recorded after it, because what this sweep can honestly claim is
 		// "the materials in memory were built against the table as it stood when I started". A define
@@ -831,7 +832,7 @@ namespace UE::DreamShader::Editor::Private
 		// to contain both a function and its callers.
 		FDreamShaderDependencyGraphService::SortByDependencyOrder(SourceFiles);
 
-		UE_LOG(LogDreamShader, Display, TEXT("DreamShader in-memory material mode: generating %d source file(s) in memory..."), SourceFiles.Num());
+		UE_LOG(LogDreamShader, Display, TEXT("DreamShader: generating %d source file(s)..."), SourceFiles.Num());
 
 		int32 SuccessCount = 0;
 		int32 FailCount = 0;
@@ -844,25 +845,26 @@ namespace UE::DreamShader::Editor::Private
 			}
 
 			FString Message;
-			// Never forced. Forcing was free while an in-memory asset regenerated regardless of its
+			// Never forced. Forcing was free while an Ephemeral product regenerated regardless of its
 			// build key; it stopped being free once an asset that exists on disk started being rebuilt
 			// AND SAVED as one, because this sweep runs on every editor launch -- it would rewrite every
 			// persisted generated asset each time, for rebuilds the key had already ruled out. The key
 			// is what decides, and it now covers the settings a caller might once have forced past.
-			const bool bSuccess = FMaterialGenerator::GenerateAssetsFromFile(NormalizedPath, Message, /*bForce*/ false, /*bTransient*/ true);
+			const bool bSuccess = FMaterialGenerator::GenerateAssetsFromFile(
+				NormalizedPath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true);
 			if (bSuccess)
 			{
 				++SuccessCount;
-				UE_LOG(LogDreamShader, Display, TEXT("  [In-Memory] %s"), *Message);
+				UE_LOG(LogDreamShader, Display, TEXT("  [Ephemeral] %s"), *Message);
 			}
 			else
 			{
 				++FailCount;
-				UE_LOG(LogDreamShader, Warning, TEXT("  [In-Memory] Failed: %s"), *Message);
+				UE_LOG(LogDreamShader, Warning, TEXT("  [Ephemeral] Failed: %s"), *Message);
 			}
 		}
 
-		UE_LOG(LogDreamShader, Display, TEXT("DreamShader in-memory material generation complete: %d succeeded, %d failed."), SuccessCount, FailCount);
+		UE_LOG(LogDreamShader, Display, TEXT("DreamShader generation complete: %d succeeded, %d failed."), SuccessCount, FailCount);
 
 		// A ThinCustom/Instance-backend material that is hiding itself reports "Generated ... (virtual)"
 		// like any other and then cannot be found anywhere — no Content Browser tile, no registry hit,
@@ -870,7 +872,7 @@ namespace UE::DreamShader::Editor::Private
 		// reads as a generation failure. Name the count and the way out once per pass so a successful
 		// build is never mistaken for a lost asset. Graph-backend materials are always visible and are
 		// deliberately not counted here.
-		if (!GetDefault<UDreamShaderSettings>()->bShowInMemoryMaterialsInContentBrowser)
+		if (!GetDefault<UDreamShaderSettings>()->bShowEphemeralMaterials)
 		{
 			int32 HiddenCount = 0;
 			for (TObjectIterator<UDreamShaderMaterialInstance> It; It; ++It)
@@ -885,8 +887,8 @@ namespace UE::DreamShader::Editor::Private
 			if (HiddenCount > 0)
 			{
 				UE_LOG(LogDreamShader, Display,
-					TEXT("  %d of them are memory-only ThinCustom materials hidden from the Content Browser and the asset registry (their folders will not appear either). ")
-					TEXT("Enable Tools > DreamShader > Show In-Memory Materials to browse them, or set Backend = \"Graph\" on a source to make it always visible."),
+					TEXT("  %d of them are Ephemeral ThinCustom materials hidden from the Content Browser and the asset registry (their folders will not appear either). ")
+					TEXT("Enable Tools > DreamShader > Show Ephemeral Materials to browse them, or set Backend = \"Graph\" on a source to make it always visible."),
 					HiddenCount);
 			}
 		}
@@ -1084,11 +1086,11 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		// A define change invalidates every in-memory material generated before it. What sits in memory
+		// A define change invalidates every material generated before it. What sits in memory
 		// is the branch the OLD define set selected; a `dsc` run -- a fresh process, reading the new
 		// set -- writes a different one. Left out of step, the editor shows one material and the disk
 		// holds another, with nothing about either looking wrong, which is precisely the shape of the
-		// in-memory-versus-disk accidents this plugin has been bitten by before.
+		// memory-versus-disk accidents this plugin has been bitten by before.
 		//
 		// Polled rather than hooked, because only ONE of the four define tiers announces itself.
 		// UDreamShaderSettings::PostEditChangeProperty does (and takes care to bump the revision before
@@ -1098,7 +1100,7 @@ namespace UE::DreamShader::Editor::Private
 		// case this feature was asked for. A uint32 compare at 10Hz covers all four and depends on none
 		// of their internal ordering.
 		//
-		// It does not double up with the settings path: GenerateAllInMemoryMaterials stamps the
+		// It does not double up with the settings path: GenerateAllSources stamps the
 		// revision it swept against, so a sweep that handler already ran leaves nothing here to do.
 		//
 		// Ahead of the queue drains below, so a file sitting in the debounce queue is not compiled
@@ -1109,14 +1111,14 @@ namespace UE::DreamShader::Editor::Private
 			UE_LOG(
 				LogDreamShader,
 				Display,
-				TEXT("DreamShader preprocessor defines changed (revision %u -> %u); regenerating in-memory materials."),
+				TEXT("DreamShader preprocessor defines changed (revision %u -> %u); regenerating all sources."),
 				LastGeneratedDefineRevision,
 				CurrentDefineRevision);
 
 			// Republished on the same edge, not on a poll of its own. The manifest's `defines` array
-			// IS the resolved table, so it is stale for exactly as long as the in-memory materials
+			// IS the resolved table, so it is stale for exactly as long as the generated materials
 			// are -- and an extension greying out branches from a table the editor has already moved
-			// on from is the same class of accident as an in-memory material disagreeing with disk,
+			// on from is the same class of accident as a material in memory disagreeing with disk,
 			// only quieter, because nothing about the greyed-out lines looks wrong.
 			//
 			// Ahead of the sweep rather than after it: the sweep may take a while, and the manifest
@@ -1132,7 +1134,7 @@ namespace UE::DreamShader::Editor::Private
 			// That makes this the second half of a pair, and the pair is only useful whole: drop the
 			// touched-define fold out of the build key and this sweep still runs, still logs, and skips
 			// every file -- an invalidation that looks like it works and does nothing.
-			GenerateAllInMemoryMaterials();
+			GenerateAllSources();
 		}
 
 		ProcessRequestFiles();
@@ -1333,12 +1335,26 @@ namespace UE::DreamShader::Editor::Private
 				RespondTo(RequestId, bPreviewSucceeded, ToInvariantWireString(PreviewResult.Message),
 					nullptr, (FPlatformTime::Seconds() - StartedAt) * 1000.0);
 			}
+			else if (Action.Equals(TEXT("reveal-node"), ESearchCase::IgnoreCase))
+			{
+				// Node <-> source navigation (plan 13.2). Everything it does lives in
+				// Compiler/DreamShaderSourceNavigation.cpp, including writing the answer: this
+				// response carries assetPath and expressions, which RespondTo has no room for, so
+				// it writes the same envelope itself rather than a second file beside one.
+				const FDreamShaderRevealNodeResult RevealResult =
+					HandleDreamShaderRevealNodeRequest(*RequestObject);
+				WriteDreamShaderRevealNodeResponse(
+					RequestId,
+					GetResponseDirectory(),
+					RevealResult,
+					(FPlatformTime::Seconds() - StartedAt) * 1000.0);
+			}
 			else
 			{
 				// Never silent. A client that asked for something this build does not have
 				// needs to be told so, not left waiting for a response that is never coming.
 				RespondTo(RequestId, false, FString::Printf(
-					TEXT("Unknown action '%s'. This build understands: ping, recompile, cleanGeneratedShaders, previewMaterial."),
+					TEXT("Unknown action '%s'. This build understands: ping, recompile, cleanGeneratedShaders, previewMaterial, reveal-node."),
 					*Action));
 			}
 
@@ -1422,10 +1438,10 @@ namespace UE::DreamShader::Editor::Private
 	{
 		const bool bForce = ForcedPendingFiles.Remove(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath)) > 0;
 		FString Message;
-		CompileSourceFile(SourceFilePath, bForce, /*bInMemory*/ true, Message);
+		CompileSourceFile(SourceFilePath, bForce, Message);
 	}
 
-	bool FDreamShaderEditorBridge::CompileSourceFile(const FString& InSourceFilePath, const bool bForce, const bool bInMemory, FString& OutMessage)
+	bool FDreamShaderEditorBridge::CompileSourceFile(const FString& InSourceFilePath, const bool bForce, FString& OutMessage)
 	{
 		const FString SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
 
@@ -1436,7 +1452,8 @@ namespace UE::DreamShader::Editor::Private
 		ON_SCOPE_EXIT { EndDivergenceRound(); };
 
 		UE::DreamShader::Compiler::FDreamShaderCompileService CompileService(UE::DreamShader::Editor::GetEditorCompileAdapter());
-		const UE::DreamShader::Compiler::FDreamShaderCompileResult Result = CompileService.CompileAssets(SourceFilePath, bForce, bInMemory);
+		const UE::DreamShader::Compiler::FDreamShaderCompileResult Result =
+			CompileService.CompileAssets(SourceFilePath, bForce, UE::DreamShader::Compiler::EThinCustomPersistence::Ephemeral);
 		OutMessage = ToInvariantWireString(Result.Message);
 		if (Result.bSucceeded)
 		{
@@ -1545,7 +1562,7 @@ namespace UE::DreamShader::Editor::Private
 
 		FDreamShaderDivergenceAssetFacts Facts;
 		Facts.bAssetResolved = Asset != nullptr;
-		Facts.bHiddenInMemoryInstance = IsHiddenInMemoryInstance(Asset);
+		Facts.bHiddenEphemeralInstance = IsHiddenEphemeralInstance(Asset);
 		const FDreamShaderDivergenceNoticeButtons Buttons = DecideDivergenceNoticeButtons(Facts);
 
 		const TWeakObjectPtr<UObject> WeakAsset(Asset);
@@ -1592,15 +1609,15 @@ namespace UE::DreamShader::Editor::Private
 				MakeDivergenceButtonDelegate(ItemHolder, [WeakAsset]() { DetachGeneratedAssetFromDreamShader(WeakAsset); }),
 				SNotificationItem::CS_None));
 		}
-		if (Buttons.bShowInMemoryMaterials)
+		if (Buttons.bShowEphemeralMaterials)
 		{
 			// The one button that does NOT retire the toast: it exists so the user can go and look at
 			// an asset they could not see, and taking the three answers away at that moment would
 			// leave them with a visible tile and no idea what to do with it.
 			Info.ButtonDetails.Add(FNotificationButtonInfo(
-				LOCTEXT("DreamShaderDivergenceShowInMemory", "Show In-Memory Materials"),
-				LOCTEXT("DreamShaderDivergenceShowInMemoryTip", "This asset lives only in memory and is currently hidden. Show memory-only DreamShader materials in the Content Browser so you can find and inspect it."),
-				FSimpleDelegate::CreateSP(AsShared(), &FDreamShaderEditorBridge::ToggleShowInMemoryMaterialsInContentBrowser),
+				LOCTEXT("DreamShaderDivergenceShowEphemeral", "Show Ephemeral Materials"),
+				LOCTEXT("DreamShaderDivergenceShowEphemeralTip", "This asset is Ephemeral -- it has no file on disk -- and is currently hidden. Show Ephemeral DreamShader materials in the Content Browser so you can find and inspect it."),
+				FSimpleDelegate::CreateSP(AsShared(), &FDreamShaderEditorBridge::ToggleShowEphemeralMaterials),
 				SNotificationItem::CS_None));
 		}
 
@@ -1890,22 +1907,22 @@ namespace UE::DreamShader::Editor::Private
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")),
 				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestCleanGeneratedShaders)));
 			Section.AddMenuEntry(
-				TEXT("DreamShader.CleanPersistedGeneratedAssets"),
-				LOCTEXT("DreamShaderCleanPersistedGeneratedAssetsLabel", "Clean Persisted Generated Assets"),
-				LOCTEXT("DreamShaderCleanPersistedGeneratedAssetsTooltip", "Delete DreamShader-generated material assets that are saved on disk (they shadow in-memory material mode). Shows a confirmation with the full list; source files are untouched and regenerate in memory."),
+				TEXT("DreamShader.MakeEphemeral"),
+				LOCTEXT("DreamShaderMakeEphemeralLabel", "Make Ephemeral"),
+				LOCTEXT("DreamShaderMakeEphemeralTooltip", "Delete the packages of Materialized ThinCustom products so they go back to being Ephemeral. Shows a confirmation with the full list; source files are untouched and the products are rebuilt in memory. Graph materials and material functions are not listed -- they have no Ephemeral state."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Delete")),
-				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestCleanPersistedGeneratedAssets)));
+				FUIAction(FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::RequestMakeEphemeral)));
 			Section.AddMenuEntry(
-				TEXT("DreamShader.ToggleShowInMemoryMaterials"),
-				LOCTEXT("DreamShaderToggleShowInMemoryMaterialsLabel", "Show In-Memory Materials"),
-				LOCTEXT("DreamShaderToggleShowInMemoryMaterialsTooltip", "Show memory-only ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials and are always visible, so this toggle does not affect them. While shown, an explicit Save on one would persist it to disk (the shadow warning and Clean command cover recovery)."),
+				TEXT("DreamShader.ToggleShowEphemeralMaterials"),
+				LOCTEXT("DreamShaderToggleShowEphemeralMaterialsLabel", "Show Ephemeral Materials"),
+				LOCTEXT("DreamShaderToggleShowEphemeralMaterialsTooltip", "Show Ephemeral ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials with no Ephemeral state, so this toggle does not affect them. While shown, an explicit Save on one would materialize it to disk (the shadow warning and Make Ephemeral cover recovery)."),
 				FSlateIcon(),
 				FUIAction(
-					FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::ToggleShowInMemoryMaterialsInContentBrowser),
+					FExecuteAction::CreateSP(AsShared(), &FDreamShaderEditorBridge::ToggleShowEphemeralMaterials),
 					FCanExecuteAction(),
 					FIsActionChecked::CreateLambda([]()
 					{
-						return GetDefault<UDreamShaderSettings>()->bShowInMemoryMaterialsInContentBrowser;
+						return GetDefault<UDreamShaderSettings>()->bShowEphemeralMaterials;
 					})),
 				EUserInterfaceActionType::ToggleButton);
 			Section.AddMenuEntry(
@@ -2324,8 +2341,9 @@ namespace UE::DreamShader::Editor::Private
 		Filter.PackagePaths.Add(TEXT("/Game"));
 		Filter.bRecursivePaths = true;
 		Filter.bRecursiveClasses = true;
-		Filter.ClassPaths.Add(UMaterial::StaticClass()->GetClassPathName());
-		Filter.ClassPaths.Add(UMaterialFunction::StaticClass()->GetClassPathName());
+		// ThinCustom products only: they are the only ones with an Ephemeral state to go back to
+		// (architecture plan v2 §5.1). A Graph UMaterial or a .dsf UMaterialFunction on disk is not a
+		// shadow of anything -- deleting it would just delete the product.
 		Filter.ClassPaths.Add(UDreamShaderMaterialInstance::StaticClass()->GetClassPathName());
 
 		TArray<FAssetData> AssetDataList;
@@ -2333,8 +2351,8 @@ namespace UE::DreamShader::Editor::Private
 
 		for (const FAssetData& AssetData : AssetDataList)
 		{
-			// Only assets that actually live on disk qualify; in-memory assets are the
-			// desired end state. The provenance metadata gate means hand-authored materials are
+			// Only assets that actually live on disk qualify; Ephemeral is the desired end
+			// state. The provenance metadata gate means hand-authored materials are
 			// never touched — only assets DreamShader itself generated (including orphans whose
 			// source file has since been deleted or renamed).
 			if (!FPackageName::DoesPackageExist(AssetData.PackageName.ToString()))
@@ -2352,7 +2370,7 @@ namespace UE::DreamShader::Editor::Private
 		return OutAssets.Num();
 	}
 
-	void FDreamShaderEditorBridge::ToggleShowInMemoryMaterialsInContentBrowser()
+	void FDreamShaderEditorBridge::ToggleShowEphemeralMaterials()
 	{
 		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
 		{
@@ -2360,9 +2378,9 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		UDreamShaderSettings* Settings = GetMutableDefault<UDreamShaderSettings>();
-		Settings->bShowInMemoryMaterialsInContentBrowser = !Settings->bShowInMemoryMaterialsInContentBrowser;
+		Settings->bShowEphemeralMaterials = !Settings->bShowEphemeralMaterials;
 		Settings->TryUpdateDefaultConfigFile();
-		const bool bShow = Settings->bShowInMemoryMaterialsInContentBrowser;
+		const bool bShow = Settings->bShowEphemeralMaterials;
 
 		// IsAsset() reads the setting live; broadcast per-instance registry events so the Content
 		// Browser (and open asset pickers) add/remove the tiles immediately instead of on the next
@@ -2390,13 +2408,13 @@ namespace UE::DreamShader::Editor::Private
 		ShowDreamShaderNotification(
 			FText::Format(
 				bShow
-					? LOCTEXT("DreamShaderInMemoryMaterialsShown", "Showing {0} in-memory material(s) in the Content Browser and asset pickers.")
-					: LOCTEXT("DreamShaderInMemoryMaterialsHidden", "Hidden {0} in-memory material(s) from the Content Browser and asset pickers."),
+					? LOCTEXT("DreamShaderEphemeralMaterialsShown", "Showing {0} Ephemeral material(s) in the Content Browser and asset pickers.")
+					: LOCTEXT("DreamShaderEphemeralMaterialsHidden", "Hidden {0} Ephemeral material(s) from the Content Browser and asset pickers."),
 				FText::AsNumber(ToggledCount)),
 			SNotificationItem::CS_Success);
 	}
 
-	void FDreamShaderEditorBridge::RequestCleanPersistedGeneratedAssets()
+	void FDreamShaderEditorBridge::RequestMakeEphemeral()
 	{
 		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
 		{
@@ -2407,7 +2425,7 @@ namespace UE::DreamShader::Editor::Private
 		if (CollectPersistedGeneratedAssets(AssetsToDelete) == 0)
 		{
 			ShowDreamShaderNotification(
-				LOCTEXT("DreamShaderCleanPersistedNoneFound", "No persisted DreamShader-generated assets found."),
+				LOCTEXT("DreamShaderMakeEphemeralNoneFound", "No Materialized DreamShader ThinCustom products found."),
 				SNotificationItem::CS_Success);
 			return;
 		}
@@ -2415,17 +2433,17 @@ namespace UE::DreamShader::Editor::Private
 		// Standard editor delete flow: lists the assets, checks references, and asks the user to
 		// confirm. Sources (.dsm/.dsf) are untouched, so everything is regenerable.
 		const int32 DeletedCount = ObjectTools::DeleteObjects(AssetsToDelete, /*bShowConfirmation*/ true);
-		UE_LOG(LogDreamShader, Display, TEXT("DreamShader deleted %d of %d persisted generated asset(s)."), DeletedCount, AssetsToDelete.Num());
+		UE_LOG(LogDreamShader, Display, TEXT("DreamShader made %d of %d Materialized product(s) Ephemeral."), DeletedCount, AssetsToDelete.Num());
 
 		if (DeletedCount > 0)
 		{
-			// Recreate the deleted assets in memory right away so references resolve without a restart.
-			GenerateAllInMemoryMaterials();
+			// Rebuild the deleted products in memory right away so references resolve without a restart.
+			GenerateAllSources();
 		}
 
 		ShowDreamShaderNotification(
 			FText::Format(
-				LOCTEXT("DreamShaderCleanPersistedResult", "Deleted {0} of {1} persisted generated asset(s)."),
+				LOCTEXT("DreamShaderMakeEphemeralResult", "Made {0} of {1} Materialized product(s) Ephemeral."),
 				FText::AsNumber(DeletedCount),
 				FText::AsNumber(AssetsToDelete.Num())),
 			DeletedCount > 0 ? SNotificationItem::CS_Success : SNotificationItem::CS_Fail);

@@ -73,7 +73,7 @@ namespace UE::DreamShader::Editor::Private
 				|| StaticParameters.EditorOnly.StaticComponentMaskParameters.Num() > 0;
 		}
 
-		void ShowDreamShaderNotification(const FText& Message, SNotificationItem::ECompletionState CompletionState)
+		void ShowDreamShaderProvenanceNotification(const FText& Message, SNotificationItem::ECompletionState CompletionState)
 		{
 			FNotificationInfo Info(Message);
 			Info.ExpireDuration = 4.0f;
@@ -87,15 +87,21 @@ namespace UE::DreamShader::Editor::Private
 		// Through the bridge when there is one, so the diagnostics store (and everything fed from it:
 		// diagnostics.json, the VSCode extension, the browser) sees the result; straight to the compile
 		// service otherwise. Always forced: both callers have just decided the asset must be rebuilt.
-		bool CompileSourceForProvenance(const FString& SourceFilePath, bool bInMemory, FString& OutMessage)
+		bool CompileSourceForProvenance(const FString& SourceFilePath, bool bAllowEphemeralThinCustom, FString& OutMessage)
 		{
 			if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
 			{
-				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, bInMemory, OutMessage);
+				// The bridge is always the interactive path, which leaves a ThinCustom product Ephemeral.
+				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage);
 			}
 			UE::DreamShader::Compiler::FDreamShaderCompileService CompileService(UE::DreamShader::Editor::GetEditorCompileAdapter());
 			const UE::DreamShader::Compiler::FDreamShaderCompileResult Result =
-				CompileService.CompileAssets(SourceFilePath, /*bForce*/ true, bInMemory);
+				CompileService.CompileAssets(
+					SourceFilePath,
+					/*bForce*/ true,
+					bAllowEphemeralThinCustom
+						? UE::DreamShader::Compiler::EThinCustomPersistence::Ephemeral
+						: UE::DreamShader::Compiler::EThinCustomPersistence::Materialized);
 			OutMessage = ToInvariantWireString(Result.Message);
 			return Result.bSucceeded;
 		}
@@ -199,7 +205,7 @@ namespace UE::DreamShader::Editor::Private
 		FString Error;
 		if (!TryResolveGeneratedAssetSourceFile(AssetObject, SourceFilePath, Error))
 		{
-			ShowDreamShaderNotification(FText::FromString(Error), SNotificationItem::CS_Fail);
+			ShowDreamShaderProvenanceNotification(FText::FromString(Error), SNotificationItem::CS_Fail);
 			return;
 		}
 
@@ -220,7 +226,7 @@ namespace UE::DreamShader::Editor::Private
 		FString CloseError;
 		if (!TryCloseAssetEditorsFor(AssetObject, bEditorWasOpen, CloseError))
 		{
-			ShowDreamShaderNotification(FText::FromString(CloseError), SNotificationItem::CS_Fail);
+			ShowDreamShaderProvenanceNotification(FText::FromString(CloseError), SNotificationItem::CS_Fail);
 			return;
 		}
 
@@ -234,12 +240,12 @@ namespace UE::DreamShader::Editor::Private
 		bool bReverted = false;
 		{
 			FScopedDreamShaderRevertDiverged RevertScope;
-			bReverted = CompileSourceForProvenance(SourceFilePath, /*bInMemory*/ !bPersisted, RevertMessage);
+			bReverted = CompileSourceForProvenance(SourceFilePath, /*bAllowEphemeralThinCustom*/ !bPersisted, RevertMessage);
 		}
 
 		ReopenAssetEditorFor(AssetObject, bEditorWasOpen);
 
-		ShowDreamShaderNotification(
+		ShowDreamShaderProvenanceNotification(
 			FText::FromString(RevertMessage),
 			bReverted ? SNotificationItem::CS_Success : SNotificationItem::CS_Fail);
 		UE_LOG(
@@ -258,7 +264,7 @@ namespace UE::DreamShader::Editor::Private
 		FString Error;
 		if (!TryResolveGeneratedAssetSourceFile(AssetObject, SourceFilePath, Error))
 		{
-			ShowDreamShaderNotification(FText::FromString(Error), SNotificationItem::CS_Fail);
+			ShowDreamShaderProvenanceNotification(FText::FromString(Error), SNotificationItem::CS_Fail);
 			return;
 		}
 
@@ -282,7 +288,7 @@ namespace UE::DreamShader::Editor::Private
 		FString RawSourceText;
 		if (!FFileHelper::LoadFileToString(RawSourceText, *SourceFilePath))
 		{
-			ShowDreamShaderNotification(
+			ShowDreamShaderProvenanceNotification(
 				FText::Format(
 					LOCTEXT("DreamShaderAdoptSourceUnreadable", "Could not read '{0}'."),
 					FText::FromString(SourceFilePath)),
@@ -306,7 +312,7 @@ namespace UE::DreamShader::Editor::Private
 					FText::FromString(SourceFilePath),
 					FText::FromString(AssetObject->GetPathName())));
 
-			ShowDreamShaderNotification(ConditionalError.Message, SNotificationItem::CS_Fail);
+			ShowDreamShaderProvenanceNotification(ConditionalError.Message, SNotificationItem::CS_Fail);
 
 			// Spelled out again rather than logging ConditionalError.Message, so the log line stays
 			// English under a localized editor and carries the code as its own field -- which is how
@@ -330,7 +336,7 @@ namespace UE::DreamShader::Editor::Private
 		FDreamShaderError LoadError;
 		if (!UE::DreamShader::Editor::LoadPreparedDreamShaderSource(SourceFilePath, PreparedSource, LoadError))
 		{
-			ShowDreamShaderNotification(FText::FromString(LoadError), SNotificationItem::CS_Fail);
+			ShowDreamShaderProvenanceNotification(FText::FromString(LoadError), SNotificationItem::CS_Fail);
 			return;
 		}
 
@@ -338,7 +344,7 @@ namespace UE::DreamShader::Editor::Private
 		FString ParseError;
 		if (!UE::DreamShader::FTextShaderParser::Parse(PreparedSource, Definition, ParseError))
 		{
-			ShowDreamShaderNotification(
+			ShowDreamShaderProvenanceNotification(
 				FText::FromString(FString::Printf(TEXT("DreamShader could not parse '%s': %s"), *SourceFilePath, *ParseError)), // I18N-EXEMPT
 				SNotificationItem::CS_Fail);
 			return;
@@ -347,7 +353,7 @@ namespace UE::DreamShader::Editor::Private
 		const int32 DeclaredAssetCount = (Definition.Name.IsEmpty() ? 0 : 1) + Definition.MaterialFunctions.Num();
 		if (DeclaredAssetCount != 1)
 		{
-			ShowDreamShaderNotification(
+			ShowDreamShaderProvenanceNotification(
 				FText::Format(
 					LOCTEXT("DreamShaderAdoptMultiAsset", "'{0}' declares {1} assets, so adopting one of them would overwrite the others. Use DreamShader > Export DSM and merge the result by hand."),
 					FText::FromString(SourceFilePath),
@@ -375,7 +381,7 @@ namespace UE::DreamShader::Editor::Private
 		FString CloseError;
 		if (!TryCloseAssetEditorsFor(AssetObject, bEditorWasOpen, CloseError))
 		{
-			ShowDreamShaderNotification(FText::FromString(CloseError), SNotificationItem::CS_Fail);
+			ShowDreamShaderProvenanceNotification(FText::FromString(CloseError), SNotificationItem::CS_Fail);
 			return;
 		}
 
@@ -389,7 +395,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (HasAnyParameterOverride(Instance))
 			{
-				ShowDreamShaderNotification(
+				ShowDreamShaderProvenanceNotification(
 					FText::Format(
 						LOCTEXT("DreamShaderAdoptInstanceOverrides", "'{0}' has parameter overrides set on the generated instance, and those cannot be written back into '{1}' -- adopting would drop them. Move the values into the source as Properties defaults (or override them on a child material instance instead), then Revert."),
 						FText::FromString(AssetObject->GetPathName()),
@@ -401,7 +407,7 @@ namespace UE::DreamShader::Editor::Private
 			DecompileSubject = Instance->Parent;
 			if (!Cast<UMaterial>(DecompileSubject))
 			{
-				ShowDreamShaderNotification(
+				ShowDreamShaderProvenanceNotification(
 					FText::Format(
 						LOCTEXT("DreamShaderAdoptInstanceNoBase", "'{0}' has no base material to decompile."),
 						FText::FromString(AssetObject->GetPathName())),
@@ -419,7 +425,7 @@ namespace UE::DreamShader::Editor::Private
 		const UE::DreamShader::Editor::FDreamShaderDecompileResult Result = DecompileService.DecompileAsset(Request);
 		if (!Result.bSucceeded)
 		{
-			ShowDreamShaderNotification(
+			ShowDreamShaderProvenanceNotification(
 				FText::FromString(FString::Printf(TEXT("DreamShader could not decompile '%s': %s"), *AssetObject->GetPathName(), *Result.Error)), // I18N-EXEMPT
 				SNotificationItem::CS_Fail);
 			return;
@@ -427,7 +433,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (IFileManager::Get().Copy(*BackupFilePath, *SourceFilePath, true) != COPY_OK)
 		{
-			ShowDreamShaderNotification(
+			ShowDreamShaderProvenanceNotification(
 				FText::Format(
 					LOCTEXT("DreamShaderAdoptBackupFailed", "Could not back up '{0}' to '{1}'; nothing was written."),
 					FText::FromString(SourceFilePath),
@@ -439,7 +445,7 @@ namespace UE::DreamShader::Editor::Private
 		FString SaveError;
 		if (!FDecompiledSourceWriter::Save(Result, SaveError))
 		{
-			ShowDreamShaderNotification(FText::FromString(SaveError), SNotificationItem::CS_Fail);
+			ShowDreamShaderProvenanceNotification(FText::FromString(SaveError), SNotificationItem::CS_Fail);
 			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader adopt failed to write '%s': %s"), *SourceFilePath, *SaveError);
 			return;
 		}
@@ -454,11 +460,11 @@ namespace UE::DreamShader::Editor::Private
 		FScopedDreamShaderRevertDiverged RevertScope;
 		const bool bPersisted = FPackageName::DoesPackageExist(AssetObject->GetOutermost()->GetName());
 		FString CompileMessage;
-		const bool bCompiled = CompileSourceForProvenance(SourceFilePath, /*bInMemory*/ !bPersisted, CompileMessage);
+		const bool bCompiled = CompileSourceForProvenance(SourceFilePath, /*bAllowEphemeralThinCustom*/ !bPersisted, CompileMessage);
 
 		ReopenAssetEditorFor(AssetObject, bEditorWasOpen);
 
-		ShowDreamShaderNotification(
+		ShowDreamShaderProvenanceNotification(
 			FText::Format(
 				LOCTEXT("DreamShaderAdoptResult", "Adopted '{0}' into '{1}' (backup: '{2}'). {3}"),
 				FText::FromString(AssetObject->GetPathName()),
@@ -481,7 +487,7 @@ namespace UE::DreamShader::Editor::Private
 		UObject* AssetObject = Asset.Get();
 		if (!AssetObject)
 		{
-			ShowDreamShaderNotification(
+			ShowDreamShaderProvenanceNotification(
 				LOCTEXT("DreamShaderDetachNoAsset", "DreamShader could not find the selected asset."),
 				SNotificationItem::CS_Fail);
 			return;
@@ -489,7 +495,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!HasDreamShaderSourceMetadata(AssetObject))
 		{
-			ShowDreamShaderNotification(
+			ShowDreamShaderProvenanceNotification(
 				FText::Format(
 					LOCTEXT("DreamShaderDetachNotGenerated", "'{0}' is not a DreamShader-generated asset."),
 					FText::FromString(AssetObject->GetPathName())),
@@ -511,7 +517,7 @@ namespace UE::DreamShader::Editor::Private
 		ClearDreamShaderMetadata(AssetObject);
 		AssetObject->MarkPackageDirty();
 
-		ShowDreamShaderNotification(
+		ShowDreamShaderProvenanceNotification(
 			FText::Format(
 				LOCTEXT("DreamShaderDetachResult", "'{0}' is no longer managed by DreamShader. Save it to keep the change."),
 				FText::FromString(AssetObject->GetPathName())),

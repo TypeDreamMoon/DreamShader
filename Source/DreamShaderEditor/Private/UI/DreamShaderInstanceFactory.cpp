@@ -73,7 +73,9 @@ namespace UE::DreamShader::Editor::Private
 
 		const FString ObjectPath = Material->GetPathName();
 		FString Message;
-		if (!FMaterialGenerator::GenerateAssetsFromFile(DreamInstance->SourceFilePath, Message, /*bForce*/ true, /*bTransient*/ false))
+		// false == do NOT allow Ephemeral: this IS the Materialize action (architecture plan v2 §5.1).
+		if (!FMaterialGenerator::GenerateAssetsFromFile(
+				DreamInstance->SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ false))
 		{
 			OutError = FText::Format(LOCTEXT("FactoryMaterializeFailed", "Failed to materialize the material to disk: {0}"), FText::FromString(Message)).ToString();
 			return nullptr;
