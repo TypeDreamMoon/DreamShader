@@ -335,6 +335,6 @@ return __ds_Remap01_out0;
 - [HLSL library](../builtins/hlsl-library.md) — `Shaders/DreamShaderBuiltins.ush`, the hand-written companion
 - [Caching](caching.md) — the *other* hash, and why the include is not covered by it
 - [Project settings](../settings/project.md) — **Generated Shader Directory**
-- [In-memory materials](in-memory.md) — *Clean Generated Shaders* and the other maintenance actions
+- [Ephemeral materials](ephemeral.md) — *Clean Generated Shaders* and the other maintenance actions
 - [Generation](index.md) — where the include is written in the pipeline
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

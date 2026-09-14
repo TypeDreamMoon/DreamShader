@@ -29,11 +29,17 @@ the parser, the types and the settings header transitively.
 
 namespace UE::DreamShader::Compiler
 {
+    enum class EThinCustomPersistence : uint8
+    {
+        Ephemeral,
+        Materialized,
+    };
+
     struct DREAMSHADERCOMPILER_API FDreamShaderCompileRequest
     {
         FString SourceFilePath;
         bool bForce = false;
-        bool bTransient = false;
+        EThinCustomPersistence ThinCustomPersistence = EThinCustomPersistence::Materialized;
     };
 
     struct DREAMSHADERCOMPILER_API FDreamShaderCompileResult
@@ -62,12 +68,16 @@ context, where the macro is not pre-defined.
 | :-- | :-- | :-- | :-- |
 | `SourceFilePath` | `FString` | `""` | Path to a `.dsm` or `.dsf`. The shipped implementation normalizes it, so a relative path is accepted. A `.dsh` is rejected by both entry points. |
 | `bForce` | `bool` | `false` | Bypass the source-hash skip check. With `false`, an asset whose package metadata still matches is left untouched and the call **succeeds** with a `Skipped …` message. |
-| `bTransient` | `bool` | `false` | `true` — everything is created in the transient package or as a subobject, nothing is saved, and the package's dirty flag is explicitly cleared so a *Save All* cannot persist it. `false` — real packages, `MarkPackageDirty`, source metadata stamped, package saved. |
+| `ThinCustomPersistence` | `EThinCustomPersistence` | `Materialized` | Which state a ThinCustom product this compile touches should end in. `Ephemeral` — the hidden base is created in the transient package, nothing is saved, and the package's dirty flag is explicitly cleared so a *Save All* cannot persist it. `Materialized` — a real package, `MarkPackageDirty`, source metadata stamped, package saved. **Ignored by the Graph and material-function backends**, which have no Ephemeral state. |
 
 > [!NOTE]
-> `bTransient == true` is the editor's **normal** mode, not an exotic flag. The bridge and the
-> preview renderer both pass `true`; only the commandlet, the cook path and the explicit
-> *Materialize* action pass `false`. See [In-memory materials](../generation/in-memory.md).
+> `Ephemeral` is the editor's **normal** state for a ThinCustom product, not an exotic flag. The
+> bridge and the preview renderer both ask for it; the commandlet, the cook path and the explicit
+> *Materialize* action take the `Materialized` default. See
+> [Ephemeral materials](../generation/ephemeral.md).
+>
+> The default is `Materialized` rather than `Ephemeral` so a caller that does not name a state — a
+> headless tool — writes assets to disk, which is what a headless tool is for.
 
 ### `FDreamShaderCompileResult`
 
@@ -125,10 +135,12 @@ namespace UE::DreamShader::Compiler
 
         FDreamShaderCompileResult CompileAssets(const FString& SourceFilePath,
                                                 bool bForce = false,
-                                                bool bTransient = false);
+                                                EThinCustomPersistence Persistence
+                                                    = EThinCustomPersistence::Materialized);
         FDreamShaderCompileResult CompileMaterial(const FString& SourceFilePath,
                                                   bool bForce = false,
-                                                  bool bTransient = false);
+                                                  EThinCustomPersistence Persistence
+                                                      = EThinCustomPersistence::Materialized);
 
     private:
         IDreamShaderCompiler& Compiler;
@@ -153,9 +165,9 @@ namespace UE::DreamShader::Compiler
 
 | Caller | Call | Effect |
 | :-- | :-- | :-- |
-| Editor bridge, on file save or a queued request | `CompileAssets(SourceFilePath, false, /*bTransient*/ true)` | Hash-skip active, memory-only — the common path |
-| Commandlet `-run=DreamShader compile` | `CompileAssets(SourceFile, bForce)` | `bTransient` defaults to `false`, so assets are persisted |
-| Preview renderer | `CompileMaterial(SourceFilePath, true, /*bTransient*/ true)` | Always forced, memory-only |
+| Editor bridge, on file save or a queued request | `CompileAssets(SourceFilePath, false, EThinCustomPersistence::Ephemeral)` | Hash-skip active, ThinCustom stays Ephemeral — the common path |
+| Commandlet `-run=DreamShader compile` | `CompileAssets(SourceFile, bForce)` | takes the `Materialized` default, so assets are persisted |
+| Preview renderer | `CompileMaterial(SourceFilePath, true, EThinCustomPersistence::Ephemeral)` | Always forced, never writes a file |
 
 ## `DreamShaderCompilerModule.h`
 
@@ -203,8 +215,11 @@ namespace UE::DreamShader::Editor
 
 | Adapter method | Delegates to |
 | :-- | :-- |
-| `CompileAssets` | `FMaterialGenerator::GenerateAssetsFromFile(Request.SourceFilePath, Result.Message, Request.bForce, Request.bTransient)` |
-| `CompileMaterial` | `FMaterialGenerator::GenerateMaterialFromFile(Request.SourceFilePath, Result.Message, Request.bForce, Request.bTransient)` |
+| `CompileAssets` | `FMaterialGenerator::GenerateAssetsFromFile(Request.SourceFilePath, Result.Message, Request.bForce, Request.ThinCustomPersistence == EThinCustomPersistence::Ephemeral)` |
+| `CompileMaterial` | `FMaterialGenerator::GenerateMaterialFromFile(Request.SourceFilePath, Result.Message, Request.bForce, Request.ThinCustomPersistence == EThinCustomPersistence::Ephemeral)` |
+
+The 1.x generator still spells this as a `bool bTransient` parameter; M4 deletes that parameter along
+with the generator.
 | `GetEditorCompileAdapter()` | Returns a function-local `static FEditorCompileAdapter` — a lazily constructed process-wide singleton. Initialization is thread-safe through magic statics; the adapter itself is not thread-safe. |
 
 Each adapter method does exactly one thing: call the generator static and copy its `bool` return into
@@ -264,12 +279,12 @@ substitutions are shown as `{Placeholder}`.
 | Message | Condition |
 | :-- | :-- |
 | `Generated {Kind} {AssetPath} from {File}.` | one line per `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` asset |
-| `Generated DreamShader thin-custom material {AssetPath} from {File}.` | ThinCustom-backend material — the default path. No `(virtual)` suffix, whatever `bTransient` is |
-| `Generated {AssetPath} from {File}.{Suffix}` | Graph-backend material; `{Suffix}` is ` (virtual)` when `bTransient` |
+| `Generated DreamShader thin-custom material {AssetPath} from {File}.` | ThinCustom-backend material — the default path. No `(virtual)` suffix in either state |
+| `Generated {AssetPath} from {File}.{Suffix}` | Graph-backend material; `{Suffix}` is ` (virtual)` when nothing was written to disk |
 | `Generated DreamShader helper include '{Path}' from {File}.` | the unit declared only `Function` blocks |
 | `DreamShader file '{File}' contains VirtualFunction declarations only; no assets were generated.` | nothing to generate, but not an error |
 | `DreamShader file '{File}' contains GraphFunction declarations only; no assets were generated.` | nothing to generate, but not an error |
-| `Skipped {AssetPath} from {File}; source hash is unchanged.` | `bForce == false` and the package metadata still matches |
+| `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` | `bForce == false` and the package metadata still matches |
 | `\nWarnings:\n` + the joined parser warnings | appended to any successful message when warnings were emitted |
 
 ### Failure
@@ -351,7 +366,8 @@ void CompileOne(Compiler::IDreamShaderCompiler& InCompiler, const FString& InPat
     Compiler::FDreamShaderCompileService Service(InCompiler);
 
     const Compiler::FDreamShaderCompileResult Result =
-        Service.CompileAssets(NormalizeSourceFilePath(InPath), /*bForce*/ false, /*bTransient*/ true);
+        Service.CompileAssets(NormalizeSourceFilePath(InPath), /*bForce*/ false,
+                              EThinCustomPersistence::Ephemeral);
 
     UE_LOG(LogDreamShader, Display, TEXT("%s"), *Result.Message);
 }
@@ -374,7 +390,7 @@ No Outputs block was provided. Generation requires explicit material property bi
 - [`DreamShaderTypes.h`](types.md) — the definition a compile produces from the source text
 - [`DreamShaderModule.h`](dreamshader-module.md) — `NormalizeSourceFilePath` for building a request
 - [Generation](../generation/index.md) — the pipeline the shipped implementation runs
-- [In-memory materials](../generation/in-memory.md) — what `bTransient` means in practice
+- [Ephemeral materials](../generation/ephemeral.md) — what the two states mean in practice
 - [Caching](../generation/caching.md) — the hash check `bForce` bypasses
 - [Commandlet](../tools/commandlet.md) — `-run=DreamShader`, the persisting caller
 - [Editor bridge](../tools/bridge.md) — the memory-only caller and the JSON diagnostics

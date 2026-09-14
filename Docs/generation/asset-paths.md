@@ -210,7 +210,7 @@ When an asset already exists at the resolved path, the class must match:
 | `/<MountRoot>/…` | wherever that mount is registered |
 
 The file is `<directory>/<Leaf>.uasset`. It is written only in persist mode — see
-[In-memory materials](in-memory.md).
+[Ephemeral materials](ephemeral.md).
 
 ## Notes
 
@@ -281,7 +281,7 @@ on disk                          <Project>/Plugins/MoonToon/Content/Mat/Test.uas
 - [Shader](../language/shader.md) — the header attributes as part of the block grammar
 - [ShaderFunction](../language/shader-function.md) — the same attributes on a function block
 - [ShaderLayer / ShaderLayerBlend](../language/shader-layer.md) — the layer asset kinds
-- [In-memory materials](in-memory.md) — when the `.uasset` is actually written
+- [Ephemeral materials](ephemeral.md) — when the `.uasset` is actually written
 - [Regeneration](regeneration.md) — the ownership guard and where it does not apply
 - [Caching](caching.md) — the provenance metadata that marks an asset as DreamShader-generated
 - [Path(Root, "…")](../parameters/path.md) — the *other* path grammar, for referencing existing assets

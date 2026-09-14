@@ -155,7 +155,7 @@ The full reference lives in [`Docs/`](Docs/index.md), and is published at
 | **[Builtins](Docs/builtins/index.md)** | the `UE.*` catalogue, [math builtins](Docs/builtins/math.md), [`Substrate.*`](Docs/builtins/substrate.md), the [`UE.Expression`](Docs/builtins/ue-expression.md) escape hatch |
 | **[Parameters](Docs/parameters/index.md)** | the 21 parameter-node tokens, compact types, [metadata keys](Docs/parameters/metadata.md), [`SamplerType`](Docs/parameters/sampler-type.md) |
 | **[Settings](Docs/settings/index.md)** | [material settings](Docs/settings/material.md) and their [enum values](Docs/settings/material-enums.md), function settings, [project settings](Docs/settings/project.md) |
-| **[Generation](Docs/generation/index.md)** | [asset paths](Docs/generation/asset-paths.md), [in-memory materials](Docs/generation/in-memory.md), [caching](Docs/generation/caching.md), [graph layout](Docs/generation/graph-layout.md) |
+| **[Generation](Docs/generation/index.md)** | [asset paths](Docs/generation/asset-paths.md), [Ephemeral materials](Docs/generation/ephemeral.md), [caching](Docs/generation/caching.md), [graph layout](Docs/generation/graph-layout.md) |
 | **[Editor tools](Docs/tools/index.md)** | browser, preview, decompiler, workspace, packages, bridge, [commandlet](Docs/tools/commandlet.md) |
 | **[Diagnostics](Docs/diagnostics/index.md)** | every message the compiler can emit, by pipeline stage |
 | **[Examples](Docs/examples/index.md)** | complete sources you can copy as they are |

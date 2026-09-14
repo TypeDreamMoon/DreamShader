@@ -139,7 +139,7 @@ Every `UPROPERTY` is `Config, EditAnywhere`.
 | `SourceDirectory` | `FDirectoryPath` | `Paths` | `DShader` | `RelativeToGameDir` |
 | `GeneratedShaderDirectory` | `FDirectoryPath` | `Paths` | `Intermediate/DreamShader/GeneratedShaders` | `RelativeToGameDir` |
 | `DefaultBackend` | `EDreamShaderDefaultBackend` | `Compiler` | `ThinCustom` | `DisplayName="Default Compiler Backend"`, `ToolTip` |
-| `bShowInMemoryMaterialsInContentBrowser` | `bool` | `Compiler` | `false` | `DisplayName="Show In-Memory Materials In Content Browser"`, `ToolTip` |
+| `bShowEphemeralMaterials` | `bool` | `Compiler` | `false` | `DisplayName="Show Ephemeral Materials"`, `ToolTip` |
 | `bAutoCompileOnSave` | `bool` | `Compiler` | `true` | — |
 | `SaveDebounceSeconds` | `float` | `Compiler` | `0.25f` | `ClampMin="0.05"`, `ClampMax="10.0"`, `UIMin="0.05"`, `UIMax="2.0"` |
 | `bVerboseLogs` | `bool` | `Compiler` | `false` | — |
@@ -151,10 +151,10 @@ What each property *does* is on [Project settings](../settings/project.md); this
 declaration.
 
 > [!NOTE]
-> There is deliberately **no in-memory on/off toggle**. The header records the reason: DreamShader
+> There is deliberately **no persistence on/off toggle**. The header records the reason: DreamShader
 > always generates in the editor's memory — source files are the authoring surface, and the editor
 > never writes per-material `.uasset` files — and materializes to disk during cooking.
-> `DefaultBackend` is the single compiler knob. See [In-memory materials](../generation/in-memory.md).
+> `DefaultBackend` is the single compiler knob. See [Ephemeral materials](../generation/ephemeral.md).
 
 ## `NormalizeMappingKey`
 
@@ -403,7 +403,7 @@ UDreamShaderSettings::BuildDefaultBlendModeMappings(Aliases);   // 12 entries: 8
 - [Backend](../settings/backend.md) — how `DefaultBackend` interacts with a per-file `Backend`
 - [`DreamShaderTypes.h`](types.md) — `NormalizeSettingKey`, the other normalizer
 - [`DreamShaderModule.h`](dreamshader-module.md) — the directory helpers that consume the two path settings
-- [`DreamShaderMaterialInstance.h`](material-instance.md) — the class whose `IsAsset()` reads `bShowInMemoryMaterialsInContentBrowser`
+- [`DreamShaderMaterialInstance.h`](material-instance.md) — the class whose `IsAsset()` reads `bShowEphemeralMaterials`
 - [`DreamShaderVersionCompat.h`](version-compat.md) — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`, the `Strata` gate
 - [Shader settings](../settings/material.md) — the `Settings` keys these resolvers serve
 - [Workspace](../tools/workspace.md) — the exported alias manifest and `bridge.db`

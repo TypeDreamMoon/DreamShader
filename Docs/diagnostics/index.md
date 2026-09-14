@@ -717,7 +717,7 @@ package saving.
 | `Asset '{ObjectPath}' already exists as '{Actual}', but {Kind} generation requires '{Expected}'. Delete or move the existing asset and regenerate it.` | the block kind changed, e.g. `ShaderFunction` → `ShaderLayer` | delete the old asset and regenerate | [ShaderLayer](../language/shader-layer.md) |
 | `Asset '{ObjectPath}' was edited by hand since DreamShader generated it from '{SourceFile}', so it was NOT rebuilt ...` | the divergence gate — the asset no longer matches the digest stamped at its last generation | answer the [notification](../generation/divergence.md#what-you-see-since-190), or right-click the asset > DreamShader: Revert to Source, Adopt Into Source, or Detach From DreamShader | [Divergence](../generation/divergence.md) |
 | `Asset '{ObjectPath}' is open in an asset editor, so it was NOT rebuilt. ...` | an asset editor holds a pre-rebuild copy of the asset and would write it back on Apply | close the editor and compile again | [Regeneration](../generation/regeneration.md#open-in-an-asset-editor) |
-| `Cannot create a persisted ThinCustom base without an instance for '{Name}'.` | the ThinCustom persist path ran with no instance to host the hidden base | report as a bug | [In-memory materials](../generation/in-memory.md) |
+| `Cannot create a persisted ThinCustom base without an instance for '{Name}'.` | the ThinCustom persist path ran with no instance to host the hidden base | report as a bug | [Ephemeral materials](../generation/ephemeral.md) |
 | `DreamShader asset name '{Name}' produced an invalid asset name.` | the leaf segment became empty after `SanitizeObjectName` | use a name with legal characters | [Asset paths](../generation/asset-paths.md) |
 | `DreamShader asset name must resolve to a non-empty asset path.` | `Name` is empty after trimming and slash stripping | supply a name | [Asset paths](../generation/asset-paths.md) |
 | `DreamShader asset path '{Path}' is not a valid Unreal object path.` | the assembled package path failed `IsValidObjectPath` | shorten or clean the name and root | [Asset paths](../generation/asset-paths.md) |
@@ -737,8 +737,8 @@ package saving.
 | `Failed to create material '{ObjectPath}'.` | the material factory returned null | report as a bug | [Generation](../generation/index.md) |
 | `Failed to create material function '{ObjectPath}'.` | the function factory returned null | report as a bug | [Generation](../generation/index.md) |
 | `Failed to create package '{PackageName}'.` | `CreatePackage` failed | check the path and permissions | [Asset paths](../generation/asset-paths.md) |
-| `Failed to create ThinCustom base material for '{Name}'.` | the transient hidden base `UMaterial` could not be created | report as a bug | [In-memory materials](../generation/in-memory.md) |
-| `Failed to create ThinCustom base material for instance '{ObjectPath}'.` | the persisted hidden base subobject could not be created | report as a bug | [In-memory materials](../generation/in-memory.md) |
+| `Failed to create ThinCustom base material for '{Name}'.` | the transient hidden base `UMaterial` could not be created | report as a bug | [Ephemeral materials](../generation/ephemeral.md) |
+| `Failed to create ThinCustom base material for instance '{ObjectPath}'.` | the persisted hidden base subobject could not be created | report as a bug | [Ephemeral materials](../generation/ephemeral.md) |
 | `Generated DreamShader asset '{ObjectPath}' could not be saved.` | `SavePackages` failed for a single asset | check source control and file permissions | [Generation](../generation/index.md) |
 | `Generated DreamShader asset packages could not be saved.` | `SavePackages` failed for a dependent asset pair; each failed path is appended | check source control and file permissions | [Generation](../generation/index.md) |
 | `Invalid output source or target expression.` | an `Outputs` binding had neither a usable source nor a usable target | fix the binding | [Output bindings](../language/output-bindings.md) |
@@ -789,9 +789,9 @@ Success and status messages returned by the same pipeline — useful when script
 | `DreamShader file '{File}' contains VirtualFunction declarations only; no assets were generated.` | success; the file only declares existing assets |
 | `Generated DreamShader helper include '{Path}' from {File}.` | the generated `.ush` was written |
 | `Generated DreamShader thin-custom material {ObjectPath} from {File}.` | ThinCustom backend succeeded |
-| `Generated {ObjectPath} from {File}.{Suffix}` | Graph backend succeeded; `{Suffix}` is ` (virtual)` for an in-memory material |
+| `Generated {ObjectPath} from {File}.{Suffix}` | Graph backend succeeded; `{Suffix}` is ` (virtual)` when nothing was written to disk |
 | `Generated {Kind} {ObjectPath} from {File}.` | a material function succeeded |
-| `Skipped {ObjectPath} from {File}; source hash is unchanged.` | the source-hash cache short-circuited; pass `-Force` to override |
+| `Skipped {ObjectPath} from {File}; source hash is unchanged (build key {BuildKey}).` | the source-hash cache short-circuited; pass `-Force` to override |
 
 ---
 
@@ -903,7 +903,7 @@ result message or logged under `LogDreamShader`.
 | `DreamShader commandlet found no source files to compile.` | `compile -All` resolved an empty list. The commandlet still exits **0** |
 | `Failed to open DreamShader bridge database for diagnostics: {Detail}` | `bridge.db` could not be opened; the JSON sinks are still written |
 | `Failed to persist the parameter-visibility flag on the instance host material: {Detail}` | the ThinCustom host material could not be updated |
-| `'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Clean Persisted Generated Assets to make it memory-only.` | a memory-only compile landed on an asset that has a file behind it; storage decides, so it was rebuilt and saved |
+| `'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Make Ephemeral to make it Ephemeral again.` | a compile landed on an asset that has a file behind it; storage decides, so it was rebuilt and saved |
 | `No Outputs block was provided. Generation requires explicit material property bindings.` | a `Shader` declared no output bindings. The parse succeeds; generation then fails with `{File}: Outputs block is required.` |
 | `Skipping automatic layout for large DreamShader graph ({Count} nodes). Existing generated positions will be used.` | logged at `Display`; auto-layout was skipped for a large graph |
 

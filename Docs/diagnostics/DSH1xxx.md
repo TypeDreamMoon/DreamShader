@@ -237,7 +237,7 @@ form that validates.
 {0}({1}): this '#if' is never closed; the file ends with {2} conditional block(s) still open.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1154`
+**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1209`
 <!-- generated:end DSH1030 -->
 
 **Cause.** a `#if` / `#ifdef` / `#ifndef` chain was opened and the file ended before its `#endif`; the count is how many chains are still open. Directives inside a `Function` or `GraphFunction` body are not counted -- those belong to the HLSL compiler -- so a chain cannot be closed from inside a body
@@ -257,7 +257,7 @@ form that validates.
 {0}({1}): '#endif' without a matching '#if'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1054`
+**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1109`
 <!-- generated:end DSH1031 -->
 
 **Cause.** an `#endif` was found while no DreamShader chain was open. The usual cause is an `#if` that sits inside a `Function` body (opaque to this preprocessor) with its `#endif` after the closing brace
@@ -277,7 +277,7 @@ form that validates.
 {0}({1}): '#{2}' without a matching '#if'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:978`
+**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1033`
 <!-- generated:end DSH1032 -->
 
 **Cause.** `#elif` or `#else` appeared while no `#if` chain was open
@@ -297,7 +297,7 @@ form that validates.
 {0}({1}): '#{2}' after the '#else' on line {3}, which already closed this chain.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:993`
+**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1048`
 <!-- generated:end DSH1033 -->
 
 **Cause.** the chain already took its `#else` on the line shown, and `#else` closes a chain: nothing but `#endif` may follow it
@@ -337,7 +337,7 @@ form that validates.
 {0}({1}): unknown preprocessor directive '#{2}'. {3}
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:861`
+**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:916`
 <!-- generated:end DSH1035 -->
 
 **Cause.** a `#` line outside a function body did not spell one of the eight directives (`#if #ifdef #ifndef #elif #else #endif #define #undef`) or the pass-through pair `#Region` / `#EndRegion`. Directives are case-sensitive, so `#IF` lands here too, and `#include` is not one of them (imports are spelled `import`). This is an error rather than a warning because a directive that was silently skipped -- a typo such as `#endfi` -- would leave every line below it unconditionally compiled
@@ -357,7 +357,7 @@ form that validates.
 {0}({1}): '#{2}' requires a define name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:923`, `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp:67`
+**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:978`, `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessorExpression.cpp:67`
 <!-- generated:end DSH1036 -->
 
 **Cause.** `#ifdef`, `#ifndef`, `#define` or `#undef` was written with nothing after it
@@ -377,7 +377,7 @@ form that validates.
 {0}({1}): '#{2}' nesting is deeper than the limit of {3}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:876`
+**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:931`
 <!-- generated:end DSH1037 -->
 
 **Cause.** conditional chains are nested deeper than the fixed limit shown
@@ -397,7 +397,7 @@ form that validates.
 {0}({1}): '#{2}' needs a name made of letters, digits and underscores and not starting with a digit; got '{3}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1090`, `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:932`
+**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1145`, `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:987`
 <!-- generated:end DSH1038 -->
 
 **Cause.** the name after the directive is not an identifier: it must be letters, digits and underscores and must not start with a digit
@@ -417,7 +417,7 @@ form that validates.
 {0}({1}): '{3}' is a read-only built-in constant, so '#{2}' cannot change it. The 'DS_' prefix is reserved by DreamShader.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1104`
+**Raised by** `Source/DreamShaderLang/Private/Preprocessor/DreamShaderPreprocessor.cpp:1159`
 <!-- generated:end DSH1039 -->
 
 **Cause.** the `DS_` prefix is reserved for the read-only built-in facts about the compiling process (`DS_ENGINE_MAJOR`, `DS_ENGINE_MINOR`, `DS_ENGINE_PATCH`, `DS_SUBSTRATE`, `DS_PLATFORM`, `DS_PLUGIN_VERSION`, ...). They cannot be defined or undefined from a source file, and the reservation is by prefix so that a built-in added later can never lose to a name a project registered first

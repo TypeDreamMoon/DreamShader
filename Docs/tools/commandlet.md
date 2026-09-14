@@ -149,7 +149,7 @@ one file produces several assets, the messages are joined with newlines.
 | `Generated {Kind} {AssetPath} from {SourceFile}.` | a `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` asset generated; `{Kind}` is the block keyword |
 | `Generated {AssetPath} from {SourceFile}.` | material generated (Graph backend) |
 | `Generated DreamShader thin-custom material {AssetPath} from {SourceFile}.` | material generated (ThinCustom backend) |
-| `Skipped {AssetPath} from {SourceFile}; source hash is unchanged.` | hash match — pass `-Force` to regenerate |
+| `Skipped {AssetPath} from {SourceFile}; source hash is unchanged (build key {BuildKey}).` | hash match — pass `-Force` to regenerate |
 | `Generated DreamShader helper include '{Path}' from {SourceFile}.` | the file produced only a generated `.ush` |
 | `DreamShader file '{Path}' contains VirtualFunction declarations only; no assets were generated.` | success, nothing to write |
 | `DreamShader file '{Path}' contains GraphFunction declarations only; no assets were generated.` | success, nothing to write |
@@ -197,7 +197,7 @@ A **developer tool**, not part of a normal build. It generates each source the w
 then, instead of saving an asset, writes one canonical JSON file describing the graph that generation
 produced: node classes, their reflected properties, every connection, and pin order.
 
-The reason it exists is [parity](../contributing/testing.md#graph-baseline). A JSON capture taken
+The reason it exists is [parity](../contributing/testing.md#graph-baseline-since-190). A JSON capture taken
 before a compiler change is the only ground truth a rewritten compiler can be held to, source file by
 source file — the machine-readable version of "decompile both and diff the text", without the
 decompiler's own opinions in the middle. Two captures are compared with an ordinary text diff.
@@ -393,9 +393,9 @@ A flag may be written bare or with a value. The value is lowercased before match
 - **The commandlet writes real packages.** Compilation runs with the transient flag off, so
   `/Game/...` `.uasset` files are created and saved on disk. The interactive editor does the
   opposite: every compile there is memory-only. This is the intended way to materialize a whole
-  project's sources in CI. See [In-memory materials](../generation/in-memory.md).
+  project's sources in CI. See [Ephemeral materials](../generation/ephemeral.md).
 - Because assets are persisted, a commandlet run can leave assets on disk that shadow the editor's
-  in-memory materials. *Tools ▸ DreamShader ▸ Clean Persisted Generated Assets* removes them.
+  Ephemeral materials. *Tools ▸ DreamShader ▸ Make Ephemeral* removes them.
 - Cooking is a separate commandlet. On the cook **director** only (a process whose `-run=` contains
   `Cook` and that does not carry `-cookworker`), DreamShader materializes every project source as a
   persistent asset before the cook proper. A generation failure there is `Fatal` and aborts the cook:
@@ -521,9 +521,9 @@ LogDreamShader: Display: Generated DreamShader thin-custom material /Game/Materi
 ## See also
 
 - [Editor bridge](bridge.md) — everything the commandlet deliberately does not start
-- [Testing](../contributing/testing.md#graph-baseline) — the graph baseline `dump-graph` produces
+- [Testing](../contributing/testing.md#graph-baseline-since-190) — the graph baseline `dump-graph` produces
 - [Divergence](../generation/divergence.md) — the output digest whose "what counts as content" rule the dump shares
-- [In-memory materials](../generation/in-memory.md) — persistent versus transient generation
+- [Ephemeral materials](../generation/ephemeral.md) — persistent versus transient generation
 - [Caching](../generation/caching.md) — the source-hash skip `-Force` bypasses
 - [Preprocessor](../language/preprocessor.md) — what `-Define` feeds, and the other four define tiers
 - [Asset paths](../generation/asset-paths.md) — how `Name=` and `Root=` become the package path

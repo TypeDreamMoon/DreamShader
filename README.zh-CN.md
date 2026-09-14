@@ -145,7 +145,7 @@ Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某�
 | **[Builtins](Docs/builtins/index.md)** | `UE.*` 目录、[数学 builtin](Docs/builtins/math.md)、[`Substrate.*`](Docs/builtins/substrate.md)、逃生舱 [`UE.Expression`](Docs/builtins/ue-expression.md) |
 | **[参数](Docs/parameters/index.md)** | 21 个参数节点 token、紧凑类型、[metadata 键](Docs/parameters/metadata.md)、[`SamplerType`](Docs/parameters/sampler-type.md) |
 | **[设置](Docs/settings/index.md)** | [材质设置](Docs/settings/material.md)及其[枚举值](Docs/settings/material-enums.md)、函数设置、[项目设置](Docs/settings/project.md) |
-| **[生成](Docs/generation/index.md)** | [资产路径](Docs/generation/asset-paths.md)、[内存材质](Docs/generation/in-memory.md)、[缓存](Docs/generation/caching.md)、[节点布局](Docs/generation/graph-layout.md) |
+| **[生成](Docs/generation/index.md)** | [资产路径](Docs/generation/asset-paths.md)、[内存材质](Docs/generation/ephemeral.md)、[缓存](Docs/generation/caching.md)、[节点布局](Docs/generation/graph-layout.md) |
 | **[编辑器工具](Docs/tools/index.md)** | 浏览器、预览、反编译器、workspace、Package、Bridge、[commandlet](Docs/tools/commandlet.md) |
 | **[诊断信息](Docs/diagnostics/index.md)** | 编译器可能发出的每一条消息，按阶段归类 |
 | **[示例](Docs/examples/index.md)** | 可以直接复制的完整源文件 |

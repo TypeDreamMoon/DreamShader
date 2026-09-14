@@ -3,11 +3,15 @@
 > [DreamShader](../index.md) » **DreamShaderLang 2.0**
 
 > [!IMPORTANT]
-> **This is a front end, not a pipeline.** As of milestone **M1** of the `2.0` line, DreamShaderLang
-> 2.0 can *read* a `.dss` file — lex it, parse it into a tree, print that tree back out — and
-> nothing more. There is no semantic analysis, no HLSL emission and **no asset generation** behind
-> it yet. Everything that actually builds a `UMaterial` today still goes through the
-> [1.x language](../language/index.md), which is unchanged and stays supported.
+> **A `.dss` now compiles.** As of **M2+M3**, the 2.0 line is a whole pipeline: preprocess → parse →
+> **bind → lower to a graph IR → run the passes → validate → emit**, ending in a real `UMaterial` or
+> `UMaterialFunction` built by the same reflection factory, digest, provenance, atomic rebuild and
+> layout the 1.x generator uses. `dsc compile` builds one; `dsc check` stops at IR validation and
+> writes nothing; `dsc dump-ir` and `dsc index` show the middle.
+>
+> The **1.x language is untouched and stays supported**: `.dsm` and `.dsf` still go through the
+> [1.x pipeline](../language/index.md), which M4 will fold into this one as a second front end.
+> Parsing a `.dsm` through the 2.0 entry point is still `DSH2199` until then.
 
 DreamShaderLang 2.0 drops the 1.x section blocks (`Shader`, `Properties`, `Outputs`, `Graph`, …) and
 writes a material as what it always was underneath: **HLSL with declarations**. Metadata that used
@@ -18,9 +22,9 @@ source with no side files and no strip step.
 | :-- | :-- |
 | Extensions | `.dss` — a 2.0 compilation unit · `.dsh` — a shared header |
 | 1.x extensions | `.dsm` / `.dsf` — unchanged, second front end, arrives in M4 |
-| Module | [`DreamShaderLang`](../api/lang-module.md) (`Core` only) |
-| Tests | `DreamShader.Lang2.*` |
-| Status | M1: lexer + 2.0 parser + printer + corpus |
+| Module | [`DreamShaderLang`](../api/lang-module.md) (`Core` only) — front end, binder and IR; the emitter is in `DreamShaderEditor` |
+| Tests | `DreamShader.Lang2.*`, `DreamShader.Compiler2.*` |
+| Status | M1: lexer + 2.0 parser + printer + corpus · **M2+M3: binder, IR, passes, validator, emitter, `dsc check` / `dump-ir` / `index` / `export-catalog`, node ↔ source navigation** |
 
 ## Two short examples
 
@@ -130,15 +134,48 @@ error anywhere else — a `$` register name, a `@` intrinsic, a `'`, a `#` in th
 is reported by nothing here. `dsc check --shaders` is what gets to complain about that text. The
 same `#` one line outside the body is still `DSH2106`; the silence is scoped to the body.
 
-## What M1 does *not* do yet
+## What the pipeline does today
 
-- **No assets.** Nothing generates a `UMaterial` or `UMaterialFunction` from a `.dss`. The 1.x
-  pipeline is untouched and remains the way to build.
-- **No semantics.** The tree is syntax only. Names are not resolved, types are not checked,
-  overloads are not selected, `///` values are not validated, and `#include` / `import` paths are
-  not read. A `.dss` that parses cleanly may still be nonsense.
+Everything M1 listed as missing except the legacy front end is now in:
+
+- **Assets.** A `.dss` compiles to a `UMaterial`, a `UMaterialFunction`, a Material Layer or a Layer
+  Blend, through the 1.x asset factory, digest, provenance, atomic rebuild and graph layout — so
+  divergence detection, *Revert* / *Adopt* / *Detach* and the Content Browser all behave as they do
+  for a `.dsm`.
+- **Semantics.** Names are resolved, expressions are typed, calls are matched against signatures or
+  against the engine's expression catalog, `///` directive values are validated, and `#include` /
+  `import` paths are read and bound (a name defined twice across files is `DSH4210`, a cycle is
+  `DSH4211`).
+- **A graph IR** between the two, with constant folding, structural de-duplication and dead-node
+  pruning, and a validator that runs before anything touches an asset. `dsc dump-ir` prints it.
+- **A symbol index** (`dsc index`) and **node ↔ source navigation**: every emitted expression carries
+  its source line in the asset's `DreamShader.SourceSpans` metadata, the Material Editor's node
+  context menu gets *DreamShader ▸ Open Source Line*, and the editor bridge answers `reveal-node` in
+  the other direction.
+- **A shader check.** `dsc check -Shaders` builds the products and reports HLSL compile errors
+  against the source line they came from.
+
+## What the pipeline does *not* do yet
+
 - **No legacy front end.** Parsing a `.dsm` or `.dsf` through the 2.0 entry point reports `DSH2199`
-  until M4; use the [1.x parser](../api/parser.md) for those.
+  until M4; use the [1.x parser](../api/parser.md) for those. Both pipelines run side by side until
+  then, and the 1.x generator is what still compiles `.dsm` / `.dsf`.
+- **No decompiler into the IR** (M5), **no new layout** (M6) — the 1.x layout is called on the
+  emitted graph, bridges and all — and **no Substrate sugar** (M7).
+- **No Material Layer *stack*.** `@layer` and `@layerblend` produce the two function kinds, but the
+  material-level layer stack is a future `#pragma material` key.
+- **No `let` / `auto`, and a node is not a value you can store.** Write the call where its output is
+  read; two identical calls become one node, so re-writing it costs nothing.
+- **No matrices in the graph.** A matrix that does not fold away is `DSH4361` wherever it appears —
+  including a `@custom` pin, which the engine has no matrix type for. Compute it inside the custom
+  body instead.
+- **No unbounded loops.** `for` / `while` / `do` are unrolled when the trip count is a provable
+  constant (`MaxUnrolledIterations`, 64 by default); anything else is `DSH4360` with a pointer at
+  `/// @custom`. `discard` inside a branch is `DSH4362` — the graph has no form for it.
+- **No `material` into a Custom node's input.** The engine's custom-expression translator has no
+  material-attributes input pin, so a `/// @custom` function with a `material` parameter is
+  `DSH6252`. Outputs may be attributes.
+- **No hyperbolics.** `sinh` / `cosh` / `tanh` have no material node; write them in a `@custom` body.
 - **No preprocessing inside the parser.** The parser expects text whose `#if` has already been
   resolved; a stray `#if` reaching it is `DSH3201` at file scope and `DSH2160` inside a function
   body, where the fix is to mark the function `/// @custom`.
@@ -157,14 +194,25 @@ the contract; the wording is not.
 | `DSH2150`–`DSH2189` | expressions and statements. Allocated today: `2150`–`2155`, `2157`–`2165` |
 | `DSH2199` | the legacy front end was requested but is not available yet |
 | `DSH3200`–`DSH3249` | declarations, types, `#` directives, `///` blocks. Allocated today: `3200`–`3208`, `3210`, `3211`, `3213`–`3218`, `3220`–`3222` |
+| `DSH4200`–`DSH4299` | the binder — names, types, expressions, statements, loops, regions |
+| `DSH4300`–`DSH4349` | the IR validator |
+| `DSH4350`–`DSH4399` | lowering refusals — matrices, unprovable loops, `discard` in a branch, an attribute read before it is written |
+| `DSH5200`–`DSH5299` | reflected `UE.*` calls, the expression catalog, material attributes |
+| `DSH6200`–`DSH6219` | function kinds, the entry, `export` / `extern` |
+| `DSH6220`–`DSH6249` | helper inlining |
+| `DSH6250`–`DSH6299` | `/// @custom` HLSL |
+| `DSH7200`–`DSH7249` | uniforms, `///` directives, `#pragma material` |
+| `DSH8200`–`DSH8299` | the emitter, asset creation and the pipeline driver |
+| `DSH9020`–`DSH9059` | the tools (`check`, `dump-ir`, `index`, `export-catalog`) and node ↔ source navigation |
 
 See the [diagnostics index](../diagnostics/index.md) for cause and fix per code.
 
 ## Running the tests
 
-The 2.0 front end has no CLI and no editor UI yet; the automation suite is how you exercise it.
+`dsc.ps1` drives the pipeline headlessly (`compile`, `check`, `dump-ir`, `index`, `export-catalog` —
+see [Commandlet](../tools/commandlet.md)); the automation suite is how the layers are pinned.
 
-In the editor: *Tools ▸ Test Automation*, filter for `DreamShader.Lang2`.
+In the editor: *Tools ▸ Test Automation*, filter for `DreamShader.Lang2` or `DreamShader.Compiler2`.
 
 Headless:
 
@@ -183,6 +231,10 @@ Headless:
 | `DreamShader.Lang2.Expressions.*` | Precedence, calls, casts, constructors, chains |
 | `DreamShader.Lang2.Statements.*` | Every statement kind, `for` shapes, recovery |
 | `DreamShader.Lang2.Printer.*` | Round-tripping and formatting |
+| `DreamShader.Lang2.Binder.*` | Name resolution, typing, call matching, function kinds, directives |
+| `DreamShader.Lang2.IR.*` | Lowering, the passes, the validator |
+| `DreamShader.Lang2.CorpusIR.*` | `Tests/Corpus/IR/` — `.dss` in, `DumpDreamShaderIRText` golden out |
+| `DreamShader.Compiler2.{Smoke,Corpus,Parity}.*` | End to end to a real asset, and the `dump-graph` diff against the 1.x twin of the same material |
 
 To cover a new construct, drop a `.dss` (plus an optional `.expected.json`) into the corpus tree —
 no C++, no recompile. The golden schema is documented in

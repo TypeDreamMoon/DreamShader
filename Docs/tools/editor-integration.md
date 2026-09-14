@@ -23,8 +23,8 @@ editor is shutting down.
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | `DreamShader.RecompileAll` | **Recompile DSM** | "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics." | `Icons.Refresh` | Rebuilds the dependency graph and queues every project `.dsm` and `.dsf` for compilation, **forced** past the source-hash skip | [below](#recompile-dsm) |
 | `DreamShader.CleanGeneratedShaders` | **Clean Generated Shaders** | "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile." | `Icons.Delete` | Deletes every `*.ush` under the generated-shader directory, then queues a full **forced** scan so every file is regenerated | [below](#clean-generated-shaders) |
-| `DreamShader.CleanPersistedGeneratedAssets` | **Clean Persisted Generated Assets** | "Delete DreamShader-generated material assets that are saved on disk (they shadow in-memory material mode). Shows a confirmation with the full list; source files are untouched and regenerate in memory." | `Icons.Delete` | Deletes on-disk assets carrying DreamShader provenance metadata, through the standard editor delete flow | [below](#clean-persisted-generated-assets) |
-| `DreamShader.ToggleShowInMemoryMaterials` | **Show In-Memory Materials** | "Show memory-only DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. While shown, an explicit Save on one would persist it to disk (the shadow warning and Clean command cover recovery)." | *(none)* | Toggle button. Flips `bShowInMemoryMaterialsInContentBrowser` and writes it to `DefaultEngine.ini` | [below](#show-in-memory-materials) |
+| `DreamShader.MakeEphemeral` | **Make Ephemeral** | "Delete the packages of Materialized ThinCustom products so they go back to being Ephemeral. Shows a confirmation with the full list; source files are untouched and the products are rebuilt in memory. Graph materials and material functions are not listed — they have no Ephemeral state." | `Icons.Delete` | Deletes the on-disk packages of ThinCustom products carrying DreamShader provenance metadata, through the standard editor delete flow | [below](#make-ephemeral) |
+| `DreamShader.ToggleShowEphemeralMaterials` | **Show Ephemeral Materials** | "Show Ephemeral DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. While shown, an explicit Save on one would materialize it to disk (the shadow warning and Make Ephemeral cover recovery)." | *(none)* | Toggle button. Flips `bShowEphemeralMaterials` and writes it to `DefaultEngine.ini` | [below](#show-ephemeral-materials) |
 | `DreamShader.OpenWorkspace` | **Open Dream Shader Workspace (VSCode)** *(since 1.2.1)* | "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable." | `Icons.OpenInExternalEditor` | Re-exports the three bridge manifests, rewrites `DShader/DreamShader.code-workspace`, then launches it | [Workspace](workspace.md) |
 | `OpenMaterialContentBrowser` | **Material Content Browser** *(since 1.5.0)* | "Open the DreamShader Material Content Browser." | `ClassIcon.Material` | Invokes the `DreamShaderMaterialBrowser` nomad tab | [Material Content Browser](material-browser.md) |
 
@@ -133,10 +133,10 @@ be clicked. Notifications are suppressed wherever there is no Slate application 
 
 | Notification | Raised when | Buttons | Reference |
 | :-- | :-- | :-- | :-- |
-| **Divergence refusal** *(since 1.9.0)* | a rebuild is refused because the asset was edited by hand (`DSH8115`) | **Revert to Source** · **Adopt Into Source** · **Detach** · **Show In-Memory Materials** (hidden memory-only instances only) · **Dismiss** | [Divergence](../generation/divergence.md#what-you-see-since-190) |
+| **Divergence refusal** *(since 1.9.0)* | a rebuild is refused because the asset was edited by hand (`DSH8115`) | **Revert to Source** · **Adopt Into Source** · **Detach** · **Show Ephemeral Materials** (hidden Ephemeral instances only) · **Dismiss** | [Divergence](../generation/divergence.md#what-you-see-since-190) |
 | **Divergence summary** *(since 1.9.0)* | more than five assets diverge in one rebuild round | **Open Material Browser** · **Dismiss** | [Divergence](../generation/divergence.md#how-often-it-appears) |
-| **Shadowed in-memory materials** | the compiler backend changes while persisted assets shadow the in-memory result | *(none)* | [below](#notes) |
-| **In-memory visibility toggled** | *Show In-Memory Materials* is flipped | *(none)* | [below](#show-in-memory-materials) |
+| **Shadowed Ephemeral materials** | the compiler backend changes while persisted assets shadow the Ephemeral result | *(none)* | [below](#notes) |
+| **Ephemeral visibility toggled** | *Show Ephemeral Materials* is flipped | *(none)* | [below](#show-ephemeral-materials) |
 | **Export DSM / DSF result** | a decompile from a context menu finishes or fails | *(none)* | [Decompiler](decompiler.md) |
 | **Provenance action result** | Revert, Adopt or Detach finishes or fails | *(none)* | [Divergence](../generation/divergence.md#the-three-ways-out) |
 
@@ -172,7 +172,7 @@ Deletes generated `.ush` includes and queues a full scan.
 | `DreamShader deleted {Count} generated shader file(s) from '{Directory}'.` | Display | success |
 | `DreamShader cleaned generated shader includes and queued a full .dsm/.dsf recompile scan.` | Display | after the queue is stamped |
 
-### Clean Persisted Generated Assets
+### Make Ephemeral
 
 Finds and deletes DreamShader-generated assets that exist on disk, because a saved asset shadows the
 memory-only material generated from the same source.
@@ -196,22 +196,22 @@ whose source file was deleted or renamed still qualify.
 
 Log: `DreamShader deleted {Deleted} of {Total} persisted generated asset(s).`
 
-### Show In-Memory Materials
+### Show Ephemeral Materials
 
-Flips `bShowInMemoryMaterialsInContentBrowser` and writes it straight to the project's
+Flips `bShowEphemeralMaterials` and writes it straight to the project's
 `DefaultEngine.ini`. It then walks every live `UDreamShaderMaterialInstance` whose package is newly
 created and broadcasts asset creation or asset removal, so tiles appear or disappear immediately
 rather than at the next re-enumeration.
 
 | Toast | Condition |
 | :-- | :-- |
-| `Showing {Count} in-memory material(s) in the Content Browser and asset pickers.` | turned on |
-| `Hidden {Count} in-memory material(s) from the Content Browser and asset pickers.` | turned off |
+| `Showing {Count} Ephemeral material(s) in the Content Browser and asset pickers.` | turned on |
+| `Hidden {Count} Ephemeral material(s) from the Content Browser and asset pickers.` | turned off |
 
 > [!WARNING]
-> While memory-only materials are shown, they also appear in save pickers, and an explicit *Save*
-> writes one to disk. The saved copy then shadows the in-memory material. Recover with *Clean
-> Persisted Generated Assets*.
+> While Ephemeral materials are shown, they also appear in save pickers, and an explicit *Save*
+> Materializes one. The saved copy then shadows the Ephemeral product. Recover with
+> *Make Ephemeral*.
 
 The Project page of the [Material Content Browser](material-browser.md#project-page) carries a
 checkbox for the same global setting. That checkbox early-outs when the value is unchanged and shows
@@ -243,7 +243,7 @@ accepted spelling. When present, `StartupModule` returns before creating anythin
 
 | Disabled | Still active |
 | :-- | :-- |
-| The editor bridge — file watcher and auto-compile-on-save, the debounce queue, the diagnostics store and all three of its sinks, `bridge.db`, the request-file poller, the VirtualFunction startup sync, the in-memory generation of all sources at post-engine-init, the settings watcher | The runtime `DreamShader` module — parser, generator, settings object, `UDreamShaderMaterialInstance` |
+| The editor bridge — file watcher and auto-compile-on-save, the debounce queue, the diagnostics store and all three of its sinks, `bridge.db`, the request-file poller, the VirtualFunction startup sync, the Ephemeral generation of all sources at post-engine-init, the settings watcher | The runtime `DreamShader` module — parser, generator, settings object, `UDreamShaderMaterialInstance` |
 | The preview WebSocket server on port `17864`, and the whole preview renderer | The `-run=DreamShader` [commandlet](commandlet.md), which never uses the bridge |
 | Every menu, toolbar and context-menu entry on this page | Assets already generated and saved on disk |
 | The Material Content Browser tab registration — the tab cannot be opened at all | |
@@ -275,12 +275,68 @@ Launch the editor with the integration off, then do the same work headlessly:
   from disk, on every right-click of a Material Function asset. On projects with many sources the
   menu takes measurably longer to open. See
   [VirtualFunction tools](virtual-function-tools.md#context-menu).
-- The *Show In-Memory Materials* toggle's checked state is read live from the settings object, so
+- The *Show Ephemeral Materials* toggle's checked state is read live from the settings object, so
   changing the value in Project Settings updates the menu check mark.
 - Changing *Default Compiler Backend* in Project Settings regenerates every source file in memory and
   raises a failure-state toast when persisted assets would shadow the result:
-  `{Count} previously generated asset(s) are still saved on disk and shadow the in-memory materials. Run Tools > DreamShader > Clean Persisted Generated Assets to remove them.`
+  `{Count} previously generated asset(s) are still saved on disk and shadow the Ephemeral materials. Run Tools > DreamShader > Make Ephemeral to remove them.`
   No other settings property triggers a reaction.
+
+## Material Editor node context menu
+
+*(since 2.0.0)* Right-clicking a node in the Material Editor graph that DreamShader generated adds a
+**DreamShader** submenu, in a `DreamShader` section of the node's own context menu.
+
+| | |
+| :-- | :-- |
+| Registered by | `DreamShaderEditor` at module startup, through `UToolMenus::RegisterStartupCallback` |
+| ToolMenu owner | `DreamShaderSourceNavigation` |
+| Menus extended | `GraphEditor.GraphNodeContextMenu.MaterialGraphNode` and the `_Custom`, `_Composite`, `_Operator`, `_PinBase`, `_Knot` variants |
+| Entry condition | the node's expression GUID appears in some loaded asset's `DreamShader.SourceSpans` metadata |
+
+> [!NOTE]
+> A node with no recorded source position gets **no menu at all** — not a disabled one. Every node of
+> every hand-authored material in the project is in that state, and a greyed-out entry on all of them
+> would be noise. The same is true of an asset built by the 1.x generator, which writes no span table;
+> rebuild the source through the 2.0 pipeline to get the entries.
+
+| Entry | Label | Effect |
+| :-- | :-- | :-- |
+| `DreamShader.OpenSourceLine` | **Open Source Line** | Opens the source file at the node's line and column, through the same three-step launcher chain as *Open Dream Shader Workspace* — VSCode, the OS default editor, Notepad |
+| `DreamShader.OpenCallSite` | **Open Call Site** | Present only when the node came from an **inlined helper**: opens the line that CALLED the helper, which is usually in a different function and often a different file |
+
+A failure is a four-second failure toast plus a `LogDreamShader` error carrying `DSH9058` — either the
+source file is gone, or no launcher would start.
+
+## `reveal-node` — the reverse direction
+
+*(since 2.0.0)* The [bridge](bridge.md) request that goes the other way: from a line of source to the
+node in the Material Editor. It is what the VSCode extension's *Reveal in Material Editor* command
+sends.
+
+| Field | Type | Notes |
+| :-- | :-- | :-- |
+| `action` | string | `"reveal-node"` |
+| `file` | string | required, non-empty; absolute or project-relative, normalized either way |
+| `line` | number | required, 1-based |
+
+Served synchronously: it finds the assets stamped with that source file, picks the expressions whose
+span falls on the line, opens the Material Editor for the asset that owns them and selects the first.
+A node that **starts** on the line wins over one that was merely inlined from a call there.
+
+The response is the ordinary `Responses/<requestId>.json` envelope with four fields added:
+
+| Field | Type | Notes |
+| :-- | :-- | :-- |
+| `version` | number | always `1` — the payload version of the added fields, separate from `protocol` |
+| `assetPath` | string | the asset whose graph was opened; for a ThinCustom product this is the hidden **base material**, which is where the graph lives |
+| `instanceAssetPath` | string | present only for a ThinCustom product: the instance the base is addressed by |
+| `expressions` | array | every matching expression GUID, hyphenated (`FGuid` `DigitsWithHyphens`, the spelling the asset metadata uses), the selected one first |
+
+Failures come back as `ok: false` with the reason in `diagnostics` (`stage: "navigate"`), coded
+`DSH9050`–`DSH9057`. The two worth knowing: `DSH9051` means no asset from that source is loaded in
+this editor — compile the file first — and `DSH9052` means the assets exist but were built before
+node navigation, so they carry no span table and need a `-Force` rebuild.
 
 ## See also
 
@@ -292,5 +348,5 @@ Launch the editor with the integration off, then do the same work headlessly:
 - [Bridge](bridge.md) — the file and WebSocket surfaces the switch disables
 - [Commandlet](commandlet.md) — the headless entry point
 - [Project settings](../settings/project.md) — every setting these commands read or write
-- [In-memory materials](../generation/in-memory.md) — why persisted assets shadow generated ones
+- [Ephemeral materials](../generation/ephemeral.md) — why persisted assets shadow generated ones
 - [Generated HLSL](../generation/generated-hlsl.md) — what *Clean Generated Shaders* deletes

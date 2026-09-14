@@ -1394,7 +1394,7 @@ Output target pin '{0}' is bound more than once: first to '{1}', then to '{2}'. 
 Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1229`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1244`
 <!-- generated:end DSH3200 -->
 
 **Cause.** The parser reached a token at file scope that cannot begin anything: a stray `)`, `}`,
@@ -1418,7 +1418,7 @@ mistake seen from further down.
 Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:549`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:564`
 <!-- generated:end DSH3201 -->
 
 **Cause.** A `#` line other than `#pragma` or `#include` (`#if`, `#define`, `#endif`, `#error`…)
@@ -1441,7 +1441,7 @@ body every `#` line is kept verbatim and never reaches this check.
 '#pragma' needs a name: material, layout, region or endregion.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:569`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:610`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:584`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:625`
 <!-- generated:end DSH3202 -->
 
 **Cause.** A `#pragma` line is not in the shape the parser reads:
@@ -1470,7 +1470,7 @@ and ignored by the compiler.
 '#include' needs a quoted path: #include "/Game/Shared/Common.dsh".
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:528`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:693`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:543`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:708`
 <!-- generated:end DSH3203 -->
 
 **Cause.** `#include` was not followed by a `"path"` in double quotes, or `import` was not followed
@@ -1515,7 +1515,7 @@ a keyword used as a type (`struct` inside a parameter list).
 Expected a name after 'struct', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1141`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:728`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:762`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:821`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:997`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1012`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1156`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:743`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:777`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:836`
 <!-- generated:end DSH3205 -->
 
 **Cause.** A name was expected and the token there is not an identifier. Raised for the name of a
@@ -1536,7 +1536,7 @@ generated material-function input pin are called.
 Expected '`{' or ';' after the parameter list of '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1071`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:862`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1086`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:877`
 <!-- generated:end DSH3206 -->
 
 **Cause.** After a function's parameter list the parser found neither `{` nor `;`. Usually a stray
@@ -1556,7 +1556,7 @@ token between `)` and `{` (`float f() const {`, `float f() 5`), or a missing `{`
 '{0}' is 'extern' and binds to an existing asset, so it cannot have a body; write a prototype ending in ';'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1033`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1048`
 <!-- generated:end DSH3207 -->
 
 **Cause.** An `extern` function has a body. `extern` means "bind this name to an existing
@@ -1578,7 +1578,7 @@ the declarations after it still parse.
 '{0}' has no body. Only an 'extern' prototype may end in ';'; a function you define needs '`{...`}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1062`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1077`
 <!-- generated:end DSH3208 -->
 
 **Cause.** A function that is not `extern` ends in `;` instead of a body. A 2.0 source file does
@@ -1642,7 +1642,7 @@ that is meant to be an expression and is not.
 '{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static', 'const', 'extern' or 'export', not a mix.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1007`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1085`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:948`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1022`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1100`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:963`
 <!-- generated:end DSH3213 -->
 
 **Cause.** The declaration's prefix keywords do not go together, or go with the wrong kind of
@@ -1671,7 +1671,7 @@ constant shared by several materials is `static const`; a value the material ins
 Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:840`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:855`
 <!-- generated:end DSH3214 -->
 
 **Cause.** An `out` parameter has a default value: `out float Alpha = 1.0`. An output is written by
@@ -1712,7 +1712,7 @@ Expected ']' to close the array dimension, found {1}.
 Expected ';' after the import path, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1121`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1165`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:707`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:770`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:779`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1136`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1180`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:722`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:785`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:794`
 <!-- generated:end DSH3216 -->
 
 **Cause.** A declaration is missing its `;`: after a variable and its initializer, after
@@ -1734,7 +1734,7 @@ The most common form is the missing `;` after `struct X { ... }` — HLSL and C 
 Expected '{' after the struct name, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:732`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:747`
 <!-- generated:end DSH3217 -->
 
 **Cause.** `struct Name` was not followed by `{`. Usually a forward declaration (`struct X;`),
@@ -1754,7 +1754,7 @@ the file, so a struct may be declared after the function that uses it.
 Expected ')' to close the parameter list, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:854`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:869`
 <!-- generated:end DSH3218 -->
 
 **Cause.** A parameter list was not closed with `)`. Either the `)` is missing, or a parameter is
@@ -1775,7 +1775,7 @@ are already read-only in the generated graph.
 A '@' in a '///' line must be followed by a directive name; the text is kept as description.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:488`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:493`
 <!-- generated:end DSH3220 -->
 
 **Cause.** *(warning)* A `///` line has a `@` at a directive position (start of the text or after a
@@ -1799,7 +1799,7 @@ and `@desc` are the same key.
 This '///' block is not followed by a field and is ignored.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1193`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:753`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1208`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:768`
 <!-- generated:end DSH3221 -->
 
 **Cause.** *(warning)* A `///` block is not attached to anything: it sits at the end of the file
@@ -1821,7 +1821,7 @@ so a file-header comment written as `///` above the first `#pragma` is not orpha
 '{0}' is a 1.x declaration; the 2.0 front end does not parse it yet. Keep it in a .dsm/.dsf/.dsh compiled by the 1.x front end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:979`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:994`
 <!-- generated:end DSH3222 -->
 
 **Cause.** A 1.x declaration word — `Function`, `GraphFunction`, `Namespace`, `VirtualFunction`,

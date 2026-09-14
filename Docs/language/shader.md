@@ -115,7 +115,7 @@ The backend comes from `Settings = { Backend = "…"; }` if present, otherwise f
 > The interactive editor never writes a per-material `.uasset`. Auto-compile-on-save, the Gen page
 > buttons, and the live preview all generate **in memory**. Assets reach disk only at cook, through
 > the [commandlet](../tools/commandlet.md), or through an explicit *Materialize* action. See
-> [In-memory materials](../generation/in-memory.md).
+> [Ephemeral materials](../generation/ephemeral.md).
 
 > [!WARNING]
 > Regeneration clears the target graph. Node positions not pinned by [`Layout`](layout.md), added
@@ -260,7 +260,7 @@ on disk     <Project>/Content/Materials/M_Emissive.uasset      (persist mode onl
 - [Shader settings](../settings/material.md) — every key a `Shader`'s `Settings` accepts
 - [Backend](../settings/backend.md) — `Graph` vs `ThinCustom`, and the deprecated `Instance` alias
 - [Asset paths](../generation/asset-paths.md) — `Name=` + `Root=` → package path
-- [In-memory materials](../generation/in-memory.md) — memory-only generation and materializing to disk
+- [Ephemeral materials](../generation/ephemeral.md) — memory-only generation and materializing to disk
 - [Regeneration](../generation/regeneration.md) — what survives a rebuild and what does not
 - [ShaderFunction](shader-function.md) — the reusable `UMaterialFunction` block
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

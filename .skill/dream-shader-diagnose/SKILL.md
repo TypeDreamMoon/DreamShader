@@ -60,7 +60,7 @@ section exists precisely for this. The recurring causes:
 | a `UE.Expression` node comes back at its class default | struct-, array-, map- and set-valued properties are dropped with no per-property warning |
 | a commandlet flag did the opposite of what you meant | an unrecognised boolean value evaluates to **on**. `-Force=disable` enables it |
 | `compile -All` was green but built nothing | an empty source list is a Warning, and still exits `0` |
-| the editor shows a stale material | a previous commandlet run left a real `.uasset` on disk that shadows in-memory generation. Delete it, or use *Tools ▸ DreamShader ▸ Clean Persisted Generated Assets* |
+| the editor shows a stale material | a previous commandlet run left a real `.uasset` on disk that shadows the Ephemeral product. Delete it, or use *Tools ▸ DreamShader ▸ Make Ephemeral* |
 
 ## Where diagnostics live
 

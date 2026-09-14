@@ -618,7 +618,7 @@ closure", give it the closure you want in that case (a plain `Substrate.Slab(…
 StaticSwitchParameter '%s' cannot mix MaterialAttributes and numeric branches.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:215`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:220`
 <!-- generated:end DSH7104 -->
 
 **Cause.** _Not written yet._
@@ -636,7 +636,7 @@ StaticSwitchParameter '%s' cannot mix MaterialAttributes and numeric branches.
 StaticSwitchParameter '%s' branches must have the same component count, got %d and %d.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:219`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:224`
 <!-- generated:end DSH7105 -->
 
 **Cause.** _Not written yet._
@@ -654,7 +654,7 @@ StaticSwitchParameter '%s' branches must have the same component count, got %d a
 Failed to create StaticSwitchParameter node '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:236`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:241`
 <!-- generated:end DSH7106 -->
 
 **Cause.** _Not written yet._
@@ -672,7 +672,7 @@ Failed to create StaticSwitchParameter node '%s'.
 Parameter '%s' did not produce an expression node.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:318`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:326`
 <!-- generated:end DSH7107 -->
 
 **Cause.** _Not written yet._
@@ -690,7 +690,7 @@ Parameter '%s' did not produce an expression node.
 Parameter '%s' must be called with named arguments wiring its input pins (e.g. %s(Coordinates=...) or %s(Input=...)).
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:325`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:333`
 <!-- generated:end DSH7108 -->
 
 **Cause.** _Not written yet._
@@ -708,7 +708,7 @@ Parameter '%s' must be called with named arguments wiring its input pins (e.g. %
 Parameter '%s' (%s) has no input pin named '%s'. Asset slots (Texture/Curve/Font/...) are set via [%s=Path(...)] metadata, not call arguments.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:345`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:353`
 <!-- generated:end DSH7109 -->
 
 **Cause.** _Not written yet._
@@ -726,7 +726,7 @@ Parameter '%s' (%s) has no input pin named '%s'. Asset slots (Texture/Curve/Font
 Parameter '%s' input '%s' must be a numeric value.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:355`
+**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeProperties.cpp:363`
 <!-- generated:end DSH7110 -->
 
 **Cause.** _Not written yet._
@@ -1524,4 +1524,471 @@ Failed to create a float%d constant expression.
 **Cause.** _Not written yet._
 
 **Fix.** _Not written yet._
+
+## DSH7200
+
+<!-- generated:begin DSH7200 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is set twice by '#pragma material'; it was already set on line {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:428`
+<!-- generated:end DSH7200 -->
+
+**Cause.** One `#pragma material` key is set twice, possibly on two different lines — the lines are
+merged into one settings table. Keys are compared without regard to case, as the 1.x settings were.
+
+**Fix.** Delete one of the two. The message names the line the first one was written on.
+
+## DSH7201
+
+<!-- generated:begin DSH7201 -->
+**Severity** error
+
+**Message**
+
+```
+'Backend' has no value; write 'Backend = Graph' or 'Backend = ThinCustom'. An empty value meant Graph in 1.x and means nothing now.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:476`
+<!-- generated:end DSH7201 -->
+
+**Cause.** `Backend` was given an empty value. 1.x read `Backend = ""` as `Graph`, which silently
+overrode the project default with a value nobody wrote; 2.0 refuses it rather than carry the trap
+forward.
+
+**Fix.** Write `Backend = Graph` or `Backend = ThinCustom`, or delete the key to take the project
+default.
+
+## DSH7202
+
+<!-- generated:begin DSH7202 -->
+**Severity** error
+
+**Message**
+
+```
+'Backend = {0}' is not a backend; the backends are 'Graph' and 'ThinCustom'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:505`
+<!-- generated:end DSH7202 -->
+
+**Cause.** `Backend` names something that is not a backend.
+
+**Fix.** The backends are `Graph` (a visible material graph) and `ThinCustom` (a hidden base
+material plus a lightweight instance). `Instance` is the old spelling of `ThinCustom` and still
+works, with a warning.
+
+## DSH7203
+
+<!-- generated:begin DSH7203 -->
+**Severity** warning
+
+**Message**
+
+```
+'#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1169`
+<!-- generated:end DSH7203 -->
+
+**Cause.** The file has `#pragma material(...)` and no material entry to configure. A function
+library does not become a `UMaterial`, so the settings have nothing to apply to.
+
+**Fix.** Delete the pragma, or add the `export void Name(inout material m)` the file was meant to
+have.
+
+## DSH7204
+
+<!-- generated:begin DSH7204 -->
+**Severity** warning
+
+**Message**
+
+```
+'Backend = Instance' is the old spelling of 'Backend = ThinCustom'; write the new one.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:497`
+<!-- generated:end DSH7204 -->
+
+**Cause.** `Backend = Instance` — the 1.x deprecation-window spelling of `ThinCustom`.
+
+**Fix.** Write `Backend = ThinCustom`. Nothing changes about what is produced.
+
+## DSH7205
+
+<!-- generated:begin DSH7205 -->
+**Severity** error
+
+**Message**
+
+```
+'#pragma material' takes 'Key = Value' pairs; '{0}' has no key.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:412`
+<!-- generated:end DSH7205 -->
+
+**Cause.** `#pragma material` was given something without a key.
+
+**Fix.** Write `Key = Value`. The keys are the `UMaterial` property names; unknown ones are passed
+through to the material by reflection, so a misspelt key is reported by the emitter and not here.
+
+## DSH7210
+
+<!-- generated:begin DSH7210 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a compile-time constant, and this initializer is not one; a constant is built from literals and other constants.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:285`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:585`
+<!-- generated:end DSH7210 -->
+
+**Cause.** A `static const` (or `const`) has an initializer the binder cannot fold to a value. A
+constant becomes a Constant node in the graph, so its value has to exist before anything runs.
+
+**Fix.** Build it from literals and other constants. A value that depends on a `uniform`, a texture
+sample or a node is not a constant — declare it as an ordinary local.
+
+## DSH7211
+
+<!-- generated:begin DSH7211 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a file-scope variable with no storage class; write 'uniform' for a material parameter or 'static const' for a compile-time constant.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:696`
+<!-- generated:end DSH7211 -->
+
+**Cause.** A file-scope variable has no storage class: `float Gain = 1.0;` or `static float …`.
+Neither has a node. A file-scope value is either an input to the material (`uniform`) or a constant
+folded into it (`static const`).
+
+**Fix.** Write `uniform` or `static const`. `const` alone is accepted and means the same as
+`static const`.
+
+## DSH7212
+
+<!-- generated:begin DSH7212 -->
+**Severity** error
+
+**Message**
+
+```
+A file-scope variable of type {0} has no node; a 'uniform' or 'static const' must be numeric, bool, a texture or a sampler.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:723`
+<!-- generated:end DSH7212 -->
+
+**Cause.** A file-scope variable has a type with no node: a `material`, a `Substrate` value, a user
+`struct`, `void`.
+
+**Fix.** A `material` is produced by the entry, not declared; a `struct` is a compile-time
+aggregate and lives inside a function; a `Substrate` value comes from a `Substrate.` node.
+
+## DSH7213
+
+<!-- generated:begin DSH7213 -->
+**Severity** error
+
+**Message**
+
+```
+A texture uniform has no HLSL initializer; write its default asset as '/// @default /Game/...'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:735`
+<!-- generated:end DSH7213 -->
+
+**Cause.** A texture `uniform` has an HLSL initializer. A texture has no literal value.
+
+**Fix.** Write its default asset as `/// @default /Game/Textures/T_Name` above the declaration, and
+leave the declaration itself as plain legal HLSL.
+
+## DSH7214
+
+<!-- generated:begin DSH7214 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a compile-time constant and must be initialised where it is declared.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:744`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:552`
+<!-- generated:end DSH7214 -->
+
+**Cause.** A `static const` — at file scope or inside a function — has no initializer.
+
+**Fix.** Initialise it where it is declared, or drop `const` to make it an ordinary variable.
+
+## DSH7215
+
+<!-- generated:begin DSH7215 -->
+**Severity** error
+
+**Message**
+
+```
+'@layer' and '@layerblend' make two different assets; a function is one or the other.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:380`
+<!-- generated:end DSH7215 -->
+
+**Cause.** One function carries both `@layer` and `@layerblend`. They select two different asset
+classes.
+
+**Fix.** Keep the one that matches the signature: `@layer` for `void (inout material)`,
+`@layerblend` for `void (material …, inout material)`.
+
+## DSH7216
+
+<!-- generated:begin DSH7216 -->
+**Severity** error
+
+**Message**
+
+```
+A 'uniform' array has no parameter node; declare one uniform per element, or make it 'static const'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:766`
+<!-- generated:end DSH7216 -->
+
+**Cause.** A `uniform` is declared as an array. There is no array parameter node.
+
+**Fix.** Declare one uniform per element, or make it `static const` if the values are fixed, or use
+a texture for a table that has to be read at run time.
+
+## DSH7220
+
+<!-- generated:begin DSH7220 -->
+**Severity** error
+
+**Message**
+
+```
+'@slider' takes two numbers, a minimum and a maximum; '{0}' is not that.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:187`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:197`
+<!-- generated:end DSH7220 -->
+
+**Cause.** `@slider` is not two numbers, or its minimum is not below its maximum.
+
+**Fix.** Write `/// @slider 0 4`.
+
+## DSH7221
+
+<!-- generated:begin DSH7221 -->
+**Severity** error
+
+**Message**
+
+```
+'@sort' takes one whole number; '{0}' is not that.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:220`
+<!-- generated:end DSH7221 -->
+
+**Cause.** `@sort` is not one whole number.
+
+**Fix.** Write `/// @sort 3`. Without it, parameters sort in declaration order.
+
+## DSH7222
+
+<!-- generated:begin DSH7222 -->
+**Severity** error
+
+**Message**
+
+```
+'@sampler' needs a sampler type after it, such as 'Color', 'Normal' or 'LinearColor'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:255`
+<!-- generated:end DSH7222 -->
+
+**Cause.** `@sampler` has no value.
+
+**Fix.** Name a sampler type: `Color`, `Normal`, `LinearColor`, `Grayscale`, `Masks`, … The list
+comes from the engine, so an unknown spelling is reported by the emitter and not here.
+
+## DSH7223
+
+<!-- generated:begin DSH7223 -->
+**Severity** error
+
+**Message**
+
+```
+'@static' asks for a static switch and is only meaningful on a 'uniform bool'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:755`
+<!-- generated:end DSH7223 -->
+
+**Cause.** `@static` sits on something that is not a `uniform bool`. It asks for a static switch,
+which only a boolean parameter can become.
+
+**Fix.** Delete the directive, or change the declaration to `uniform bool`.
+
+## DSH7224
+
+<!-- generated:begin DSH7224 -->
+**Severity** warning
+
+**Message**
+
+```
+'@{0}' means nothing here; it belongs on {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:823`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:136`
+<!-- generated:end DSH7224 -->
+
+**Cause.** A `///` directive is written on a declaration where it cannot mean anything: `@slider` on
+a function, `@library` on a uniform, `@sampler` on something that is not a texture, `@asset` on a function that is not an `extern`
+prototype, `@library` or `@name` on a function that is not `export`. It is dropped.
+
+**Fix.** Move it to the declaration it belongs to, or delete it. Unknown keys are **not** this
+warning — they are passed through to the node by reflection.
+
+## DSH7225
+
+<!-- generated:begin DSH7225 -->
+**Severity** warning
+
+**Message**
+
+```
+'@param {0}' does not name a parameter of '{1}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:904`
+<!-- generated:end DSH7225 -->
+
+**Cause.** `@param <name>` names something that is not a parameter of the function. Usually the
+parameter was renamed and the comment was not.
+
+**Fix.** Correct the name, or delete the line.
+
+## DSH7226
+
+<!-- generated:begin DSH7226 -->
+**Severity** warning
+
+**Message**
+
+```
+'@custom {0}' is not a modifier this language knows; the only one is 'selfcontained'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:344`
+<!-- generated:end DSH7226 -->
+
+**Cause.** `@custom` is followed by a word that is not a modifier it knows.
+
+**Fix.** The only modifier is `selfcontained`. `Inline`, the 1.x spelling, is gone.
+
+## DSH7227
+
+<!-- generated:begin DSH7227 -->
+**Severity** error
+
+**Message**
+
+```
+'@{0}' needs a value after it.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:150`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:304`
+<!-- generated:end DSH7227 -->
+
+**Cause.** A directive that needs a value has none: `@name`, `@asset`, `@library`, `@default`, or
+`@param` without a parameter name.
+
+**Fix.** Write the value after the key. A directive's value runs to the next ` @` or to the end of
+the line.
+
+## DSH7228
+
+<!-- generated:begin DSH7228 -->
+**Severity** warning
+
+**Message**
+
+```
+'@custom' on '{0}' did not make its body opaque; the directive has to sit in the '///' block directly above the declaration.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1122`
+<!-- generated:end DSH7228 -->
+
+**Cause.** `@custom` was recorded on a function whose body was parsed as DreamShaderLang rather
+than captured verbatim. The parser only makes a body opaque when it sees `@custom` in the `///`
+block **directly above** the declaration.
+
+**Fix.** Move the `@custom` line so nothing separates it from the declaration.
+
+## DSH7229
+
+<!-- generated:begin DSH7229 -->
+**Severity** warning
+
+**Message**
+
+```
+'@{0}' is written twice in this block; the last one wins.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:120`
+<!-- generated:end DSH7229 -->
+
+**Cause.** One key appears twice in one `///` block. The last one wins.
+
+**Fix.** Delete the earlier one. `@param` is the one key that may legitimately repeat and never
+reports this.
+
+## DSH7230
+
+<!-- generated:begin DSH7230 -->
+**Severity** warning
+
+**Message**
+
+```
+'#pragma layout' expects a whole number for '{0}'; '{1}' was ignored.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:530`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:550`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:591`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:603`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:614`
+<!-- generated:end DSH7230 -->
+
+**Cause.** A `#pragma layout(...)` line could not be read: no `Node`/`Comment` selector, an unknown
+key, or a coordinate that is not a whole number. The line is ignored and nothing else is affected.
+
+**Fix.** Layout is written by the decompiler and is rarely edited by hand; the shape is
+`#pragma layout(Node, Var = UV, X = -1100, Y = -120)` and
+`#pragma layout(Comment, Text = "Sampling", X = …, Y = …, Width = …, Height = …)`. A node with no
+layout entry is simply placed by the layout pass.
 

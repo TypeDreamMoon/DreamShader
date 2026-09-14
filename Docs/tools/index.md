@@ -79,7 +79,7 @@ source-directory watcher, and installs the menus.
 - Toasts raised by the bridge expire after 4 seconds; toasts raised from the Dream Shader Gen page
   expire after 3.5 seconds.
 - The editor never writes a per-material `.uasset` on its own. See
-  [In-memory materials](../generation/in-memory.md).
+  [Ephemeral materials](../generation/ephemeral.md).
 
 ## See also
 

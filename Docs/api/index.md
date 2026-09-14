@@ -18,7 +18,7 @@ party can implement.
 
 | Module | Type | Loading phase | Public headers | Export macro | Purpose |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| `DreamShaderLang` | `Runtime` | `PostConfigInit` | 11 | `DREAMSHADERLANG_API` | The front end, and the only module that depends on `Core` alone: source text and spans, diagnostics, the lexer, the AST, the parser, the printer, and the preprocessor with its define table. Knows nothing about the engine — engine facts arrive as parameters. |
+| `DreamShaderLang` | `Runtime` | `PostConfigInit` | 21 | `DREAMSHADERLANG_API` | The front end and the middle end, and the only module that depends on `Core` alone: source text and spans, diagnostics, the lexer, the AST, the parser, the printer, the preprocessor with its define table, the binder (`Semantic/`) and the engine-free graph IR with its builder, passes and validator (`IR/`). Knows nothing about the engine — engine facts arrive as parameters, or as data in an `FBuiltinCatalog`. |
 | `DreamShader` | `Runtime` | `PostConfigInit` | 8 | `DREAMSHADER_API` | Log category, canonical path helpers, the parsed-source data model, the 1.x parser, the define-resolution tiers that feed the preprocessor its engine-side values, the project settings object, the generated instance class, and the engine-version macros. |
 | `DreamShaderCompiler` | `Runtime` | `Default` | 3 | `DREAMSHADERCOMPILER_API` | A pure abstraction layer: the compile request/result structs, the `IDreamShaderCompiler` interface, and a thin service wrapper. Contains no material-generation code. |
 | `DreamShaderEditor` | `Editor` | `Default` | **0** | *(none used)* | Everything that actually builds assets: the generator, the decompiler, the bridge, the preview, the Material Content Browser, the commandlet, the workspace exporter. |
@@ -182,7 +182,7 @@ three public headers, which use only `FString`.
 | [`DreamShaderMaterialInstance.h`](material-instance.md) | `UDreamShaderMaterialInstance` and its two overrides |
 | [`DreamShaderVersionCompat.h`](version-compat.md) | The compat macros and every version-gated behaviour they select |
 | [`DreamShaderCompiler`](compiler-module.md) | The compile interface, request/result structs, service, and module |
-| [`DreamShaderLang`](lang-module.md) | The 2.0 front-end module: the `Lang/` headers, the two preprocessor headers that moved into it, the four entry points, and the `Lang` fixture corpus |
+| [`DreamShaderLang`](lang-module.md) | The 2.0 front end and middle end: the `Lang/`, `Semantic/` and `IR/` headers, the two preprocessor headers that moved into it, every entry point from preprocess to IR validation, and the `Lang` fixture corpus |
 | `DreamShaderDefineTable.h` · `DreamShaderPreprocessor.h` · `DreamShaderDefineResolution.h` | No page of their own yet; the whole surface is documented from the language side, on [Preprocessor](../language/preprocessor.md). The first two live in `DreamShaderLang` — see the [DreamShaderLang page](lang-module.md) |
 
 ## Notes

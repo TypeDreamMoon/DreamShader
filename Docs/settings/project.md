@@ -39,8 +39,7 @@ Every configurable property, grouped by the category it appears under in the pan
 | Paths | **Scan Plugin Source Directories** | `bScanPluginSourceDirectories` | `bool` | `true` | When on, every enabled plugin that has a `DShader` folder contributes a source root of its own. Off leaves the project's *Source Directory* as the only root. |
 | Compiler | **Preprocessor Defines** *(since 1.9.0)* | `PreprocessorDefines` | `TMap<FString, FString>` | *empty* | Names visible to [`#if`](../language/preprocessor.md) in every source the project compiles. Keys are **case-sensitive**; an empty value is a bare marker, true to `#if` and to `defined()`. A key beginning with `DS_` is dropped with a warning — that prefix is reserved for the builtins. Editing the map rebuilds the sources that read a changed name. |
 | Compiler | **Default Compiler Backend** | `DefaultBackend` | `EDreamShaderDefaultBackend` | `ThinCustom` | Backend for a source file that does not set `Settings = { Backend = … }`. Changing it regenerates every source file in memory. |
-| Compiler | **Show In-Memory Materials In Content Browser** | `bShowInMemoryMaterialsInContentBrowser` | `bool` | `false` | When off, memory-only DreamShader instances report themselves as non-assets and disappear from the Content Browser, asset-registry enumeration and save pickers. Read live, on every query. |
-| Compiler | **Lay Out In-Memory Graphs** | `bLayoutInMemoryGraphs` | `bool` | `true` | When on, [graph layout](../generation/graph-layout.md) also runs for the memory-only materials an interactive compile produces, so the graph you see after a save matches the generated asset. Off, those graphs keep their construction coordinates — a single tall column. Graphs at or above the large-graph threshold skip layout either way. |
+| Compiler | **Show Ephemeral Materials** | `bShowEphemeralMaterials` | `bool` | `false` | When off, memory-only DreamShader instances report themselves as non-assets and disappear from the Content Browser, asset-registry enumeration and save pickers. Read live, on every query. |
 | Compiler | Auto Compile On Save | `bAutoCompileOnSave` | `bool` | `true` | When off, the source-directory watcher ignores file changes entirely. |
 | Compiler | Save Debounce Seconds | `SaveDebounceSeconds` | `float` | `0.25` | Quiet period after a file change before compiling. Clamped to `[0.05, 10.0]`; the slider stops at `2.0`. Falls back to `0.25` when the settings object is unavailable. |
 | Compiler | Verbose Logs | `bVerboseLogs` | `bool` | `false` | Adds `Display`-level logging of the dependent-file compile queue. |
@@ -80,7 +79,7 @@ Full behaviour, including how a per-file `Backend` setting overrides this, is on
 > lightweight, memory-only material instance of it -- full feature surface, no visible per-material
 > asset. Graph builds a visible UMaterial node graph. Instance is a deprecated alias for ThinCustom.
 
-*Show In-Memory Materials In Content Browser*:
+*Show Ephemeral Materials*:
 
 > When enabled, the memory-only DreamShader materials appear in the Content Browser like unsaved
 > assets. Disabled by default: the source files are the intended authoring surface, and hiding the
@@ -139,8 +138,8 @@ The complete built-in tables are on [Material enums](material-enums.md).
 
 | Setting | Also reachable from |
 | :-- | :-- |
-| `bShowInMemoryMaterialsInContentBrowser` | *Tools ▸ DreamShader ▸ Show In-Memory Materials*, and the Project page of the [Material Content Browser](../tools/material-browser.md). Both write the ini and re-broadcast asset creation/removal for every memory-only instance. |
-| `DefaultBackend` | Changing it in the panel triggers an immediate in-memory regeneration of every source file, plus a notification when persisted generated assets shadow the result. |
+| `bShowEphemeralMaterials` | *Tools ▸ DreamShader ▸ Show Ephemeral Materials*, and the Project page of the [Material Content Browser](../tools/material-browser.md). Both write the ini and re-broadcast asset creation/removal for every memory-only instance. |
+| `DefaultBackend` | Changing it in the panel triggers an immediate regeneration of every source file, plus a notification when persisted generated assets shadow the result. |
 | `SourceDirectory`, `GeneratedShaderDirectory` | Consumed by the module's directory helpers; see [Generated HLSL](../generation/generated-hlsl.md) and [Packages](../tools/packages.md). |
 | `bSyncSourceReferencesOnAssetRename` | Read on every asset rename by the [asset rename sync service](../tools/asset-rename-sync.md), and again when the coalesced batch is flushed. There is no menu entry for it. |
 | `PreprocessorDefines` | One of five tiers that make up the define table a compile sees, and the lowest-precedence one that a person edits. C++ registration and providers outrank it, and `-Define=` on the [commandlet](../tools/commandlet.md) outranks those; only the builtin `DS_` names outrank everything. See [Preprocessor ▸ Where defines come from](../language/preprocessor.md#where-defines-come-from). |
@@ -150,10 +149,13 @@ The complete built-in tables are on [Material enums](material-enums.md).
 - The class is `Config=Engine, DefaultConfig`, so values live in the **project's**
   `Config/DefaultEngine.ini`, not in a per-user file. They are shared by everyone who checks the
   project out.
-- There is **no in-memory on/off toggle**. The editor always generates in memory — source files are
+- There is **no persistence on/off toggle**. A ThinCustom product is Ephemeral — source files are
   the authoring surface — and materialization to disk happens at cook, through the
   [commandlet](../tools/commandlet.md), or through an explicit action. *Default Compiler Backend*
-  replaced the old In-Memory toggle in 1.5.0.
+  replaced the old In-Memory toggle in 1.5.0. **Removed in `2.0.0`:** *Lay Out In-Memory Graphs*
+  (`bLayoutInMemoryGraphs`). Graph layout now always runs; only the large-graph performance guard
+  can skip it. The *Show Ephemeral Materials* key was `bShowInMemoryMaterialsInContentBrowser`
+  before `2.0.0` and is migrated on load.
 - `GeneratedShaderDirectory` is only consulted while the virtual shader directory is unmapped. If a
   mapping already exists for this project, **the existing mapping wins over the setting** until the
   editor restarts.
@@ -170,7 +172,7 @@ The complete built-in tables are on [Material enums](material-enums.md).
 SourceDirectory=(Path="DShader")
 GeneratedShaderDirectory=(Path="Intermediate/DreamShader/GeneratedShaders")
 DefaultBackend=ThinCustom
-bShowInMemoryMaterialsInContentBrowser=False
+bShowEphemeralMaterials=False
 bAutoCompileOnSave=True
 SaveDebounceSeconds=0.250000
 bVerboseLogs=False
@@ -198,7 +200,7 @@ the `+Key=((…))` form:
 - [Shader settings](material.md) — the reflected `UMaterial` property surface
 - [Settings API](../api/settings.md) — `UDreamShaderSettings` in C++
 - [Material instance API](../api/material-instance.md) — the `IsAsset()` behaviour driven by the visibility toggle
-- [In-memory materials](../generation/in-memory.md) — what "memory-only" means in practice
+- [Ephemeral materials](../generation/ephemeral.md) — what "memory-only" means in practice
 - [Generated HLSL](../generation/generated-hlsl.md) — what `GeneratedShaderDirectory` receives
 - [Material Content Browser](../tools/material-browser.md) — the Project page and the instance factory
 - [Decompiler](../tools/decompiler.md) — the layout-export toggle

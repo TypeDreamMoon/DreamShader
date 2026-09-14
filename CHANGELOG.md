@@ -8,6 +8,56 @@
 > syntax alongside it. `IsBetaVersion` is set, so every tag on this branch publishes as a
 > pre-release (`v2.0.0b`). Nothing below has shipped yet; entries are added as milestones land.
 
+### Changed
+
+- **"In-memory" is gone; a ThinCustom product is *Ephemeral* or *Materialized*.** The word meant
+  three different things at once, and that was the whole problem: a `bTransient` request flag on the
+  compile request (which all three product kinds carried), the `IsAsset()` lie that hides a generated
+  instance (which only ThinCustom has), and a "storage decides" rule that could overrule the request
+  after the fact. A user reading `DSH8115` could not tell which one was being talked about, and
+  neither, on a bad day, could the code -- the accident where `dream_build` reached only memory while
+  a stale file on disk won came out of exactly that confusion.
+
+  There is now one concept with one name.
+  `UE::DreamShader::Compiler::EThinCustomPersistence { Ephemeral, Materialized }` is the state of a
+  **ThinCustom** product, and nothing else has such a state: a `Graph`-backend `UMaterial` and a
+  `.dsf` `UMaterialFunction` are ordinary engine assets with no `IsAsset()` to lie with. Two
+  transitions exist -- **Materialize** (an explicit action, a cook, or creating a child instance) and
+  **Make Ephemeral** (deleting the package on disk) -- and one rule decides everything else: a product
+  with a package on disk stays on disk.
+
+  The behaviour of each state is unchanged. What changed is that it can now be named.
+
+  | Before | Now |
+  | :-- | :-- |
+  | `FDreamShaderCompileRequest::bTransient` | `FDreamShaderCompileRequest::ThinCustomPersistence` |
+  | `FDreamShaderCompileService::Compile*(path, bForce, bTransient)` | `Compile*(path, bForce, EThinCustomPersistence)`, defaulting to `Materialized` |
+  | `FDreamShaderEditorBridge::CompileSourceFile(path, bForce, bInMemory, msg)` | `CompileSourceFile(path, bForce, msg)` -- the bridge is always the interactive path |
+  | `FDreamShaderEditorBridge::GenerateAllInMemoryMaterials()` | `GenerateAllSources()` |
+  | `[In-Memory]` log prefix | `[Ephemeral]`, on ThinCustom lines |
+  | *Show In-Memory Materials* (`bShowInMemoryMaterialsInContentBrowser`) | *Show Ephemeral Materials* (`bShowEphemeralMaterials`) |
+  | *Clean Persisted Generated Assets* | *Make Ephemeral* |
+  | `EBrowserStorage::InMemory` / `EBrowserSourceStatus::InMemoryUntracked` | `::Ephemeral` / `::EphemeralUntracked` |
+  | `Docs/generation/in-memory.md` | [`Docs/generation/ephemeral.md`](Docs/generation/ephemeral.md) |
+
+  **Config migration.** A project that set `bShowInMemoryMaterialsInContentBrowser` in
+  `DefaultEngine.ini` is migrated on load: the old key is read once and folded into
+  `bShowEphemeralMaterials`, so the toggle does not silently revert to its default. The migration is
+  a `PostInitProperties` read of the raw key rather than a deprecated `UPROPERTY` shim, because UHT
+  keeps the `_DEPRECATED` suffix in a property's name and config load keys off that name -- the shim
+  would look for a key nobody ever wrote.
+
+- **`Make Ephemeral` lists ThinCustom products only.** *Clean Persisted Generated Assets* used to
+  offer to delete saved `UMaterial` and `UMaterialFunction` assets too. Those have no Ephemeral state
+  to return to, so deleting them was not "making them ephemeral" -- it was just deleting them. The
+  command now scans for `UDreamShaderMaterialInstance` alone.
+
+- **Graph layout always runs.** The *Lay Out In-Memory Graphs* project setting
+  (`bLayoutInMemoryGraphs`, added in 1.5.x to turn layout back on for memory-only materials) is
+  **removed**, along with both of its readers. Layout runs for every generated graph; the only
+  remaining opt-out is the large-graph performance guard (1200 expressions with no `Layout` section),
+  which is unchanged.
+
 ## 1.9.1 - 2026-09-08
 
 ### Fixed

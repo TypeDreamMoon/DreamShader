@@ -81,7 +81,7 @@ dsc: FAILED (exit 1)
 **The commandlet writes real `.uasset` files. The interactive editor does not.** Inside the editor
 DreamShader generates materials in memory, deliberately — the source file is the authoring surface,
 and no `.uasset` appears in the Content Browser. A commandlet run persists them, and those files
-then **shadow** the editor's in-memory generation on the next load (logged as a warning).
+then **shadow** the editor's Ephemeral products on the next load (logged as a warning).
 
 So a verification run leaves the project subtly different from how it started. `-CleanNew` is the
 answer: it deletes exactly the assets that git says are untracked, prunes the folders they leave
@@ -135,6 +135,6 @@ whether the new bytes should be kept.
 ## See also
 
 - [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md) — the full flag surface behind the driver
-- [`Docs/generation/in-memory.md`](../../Docs/generation/in-memory.md) — why the editor does not write assets
+- [`Docs/generation/ephemeral.md`](../../Docs/generation/ephemeral.md) — the two ThinCustom states
 - [`Docs/generation/caching.md`](../../Docs/generation/caching.md) — the hash skip `-Force` bypasses
 - [`dream-shader-diagnose`](../dream-shader-diagnose/SKILL.md) — resolving a message

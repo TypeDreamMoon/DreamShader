@@ -92,11 +92,11 @@ To work with the result:
 
 - Open *Tools ▸ DreamShader ▸ Material Content Browser* and switch to the **Dream Shader Gen** page.
   It lists the source files, their compile status, and a preview.
-- Or set *Project Settings ▸ DreamPlugin ▸ Dream Shader ▸ Compiler ▸ Show In-Memory Materials In
+- Or set *Project Settings ▸ DreamPlugin ▸ Dream Shader ▸ Compiler ▸ Show Ephemeral Materials In
   Content Browser* to make them visible like unsaved assets.
 - Or materialize a material to disk from the browser when you need a real asset on disk.
 
-Cooking materializes the assets automatically. See [In-memory materials](generation/in-memory.md).
+Cooking materializes the assets automatically. See [Ephemeral materials](generation/ephemeral.md).
 
 ## When something fails
 

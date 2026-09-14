@@ -134,7 +134,7 @@ For a value you never want a rebuild to touch, the older habit is still the stur
 
 The Material Content Browser's instance-creation action produces exactly such a child, in
 `<parent directory>/<Instance Subfolder>` — see
-[In-memory materials](in-memory.md#materializing-to-disk).
+[Ephemeral materials](ephemeral.md#materializing-to-disk).
 
 ## Open in an asset editor
 
@@ -286,7 +286,7 @@ Runtime substitutions are rendered as `{Placeholder}`.
 | `Asset '{ObjectPath}' already exists as '{ActualClass}', but {Kind} generation requires '{ExpectedClass}'. Delete or move the existing asset and regenerate it.` | function kind, wrong material-function subclass |
 | `Generated DreamShader asset '{Path}' could not be saved.` | the package save failed after a successful rebuild |
 | `Generated DreamShader asset packages could not be saved.` | the paired instance + base save failed |
-| `'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Clean Persisted Generated Assets to make it memory-only.` | log; a memory-only compile landed on an asset with a file behind it, so it took the persisted path — see [In-memory materials](in-memory.md#when-the-asset-already-exists-on-disk) |
+| `'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Make Ephemeral to make it Ephemeral again.` | log; a compile landed on an asset with a file behind it, so it took the Materialized path — see [Ephemeral materials](ephemeral.md#when-the-asset-already-exists-on-disk) |
 | `Asset '{ObjectPath}' was edited by hand since DreamShader generated it from '{SourceFile}', so it was NOT rebuilt (rebuilding would destroy those edits). ...` | the [divergence](divergence.md) gate, which also raises a [notification](divergence.md#what-you-see-since-190) *(since 1.9.0)* |
 | `Asset '{ObjectPath}' is open in an asset editor, so it was NOT rebuilt. ...` | the [open-editor gate](#open-in-an-asset-editor) |
 
@@ -322,7 +322,7 @@ Color node dragged to (900, 400)                 back to (-400, 0), pinned by La
 ## See also
 
 - [Caching](caching.md) — when regeneration is skipped, and the provenance metadata the guard uses
-- [In-memory materials](in-memory.md) — child instances, materializing, and when storage decides the mode
+- [Ephemeral materials](ephemeral.md) — child instances, materializing, and when storage decides the mode
 - [Graph layout](graph-layout.md) — why node positions move, and how `Layout` pins them
 - [Layout](../language/layout.md) — the `Comment(Name=…)` directive that names generated boxes
 - [Shader settings](../settings/material.md) — every key that survives the property reset

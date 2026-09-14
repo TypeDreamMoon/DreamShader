@@ -86,10 +86,10 @@ Both conditions are needed. The pid test alone would hand the bridge to a second
 the first was mid-compile, since a compile blocks the game thread and stops the heartbeat; the
 heartbeat test alone would leave the bridge unowned for a stale window after a hard crash.
 
-A non-owning editor still compiles its own in-memory materials — those are per-process and nobody
+A non-owning editor still compiles its own Ephemeral materials — those are per-process and nobody
 else's business — but it does not consume requests, does not write `status.json`, and **does not
 write generated assets to disk**. That last one matters because
-[storage decides how a rebuild persists](../generation/in-memory.md#when-the-asset-already-exists-on-disk):
+[storage decides how a rebuild persists](../generation/ephemeral.md#when-the-asset-already-exists-on-disk):
 without it, two editors would both `SavePackage` the same file, and a save that loses that race is
 not a merge — it is a corrupted package or a dead editor. Such a compile reports:
 
@@ -144,6 +144,7 @@ and **rename** it into `Requests/` so it appears atomically.
 | `recompile` | `scope: "file"`, `sourceFile` | Queue one file into the debounce queue, **forced** past the source-hash skip | **when that compile finishes** |
 | `cleanGeneratedShaders` | — | Delete the generated `*.ush` includes, then queue a full rescan | immediately |
 | `previewMaterial` | `sourceFile` | Render one preview synchronously and write `preview.json` | immediately, with the render result |
+| `reveal-node` | `file`, `line` | Find the node generated from that line, open its material editor and select it *(since 2.0.0)* | immediately, with the asset path and expression GUIDs |
 
 > [!IMPORTANT]
 > `recompile` with `scope: "file"` is the only action whose response is **deferred**. The file goes
@@ -255,6 +256,38 @@ directory. Point DreamShaderSettings.GeneratedShaderDirectory back under Interme
 
 The result is written to `preview.json` with status `ready` or `error`, and logged as
 `DreamShader preview: {Message}` at `Display` on success or `Error` on failure.
+
+### `reveal-node`
+
+*(since 2.0.0)* The reverse of node → source navigation: from a line of a `.dss` source to the node
+in the Material Editor. It is what the VSCode extension's *Reveal in Material Editor* command sends;
+the editor-side half is described in [editor integration](editor-integration.md#reveal-node--the-reverse-direction).
+
+| Field | Type | Default | Constraint |
+| :-- | :-- | :-- | :-- |
+| `action` | string | — | `"reveal-node"` |
+| `file` | string | — | required; absolute or project-relative, normalized either way |
+| `line` | number | — | required, 1-based |
+| `requestId` | string | *(absent)* | names the response file |
+
+Served synchronously: the bridge finds the assets stamped with that source file, picks the
+expressions whose recorded span falls on the line (a node that **starts** on the line wins over one
+merely inlined from a call there), opens the Material Editor for the asset that owns them and
+selects the first.
+
+The response is the ordinary `Responses/<requestId>.json` envelope with four fields added:
+
+| Field | Type | Notes |
+| :-- | :-- | :-- |
+| `version` | number | always `1` — the payload version of the added fields, separate from `protocol` |
+| `assetPath` | string | the asset whose graph was opened; for a ThinCustom product the hidden **base material**, where the graph lives |
+| `instanceAssetPath` | string | present only for a ThinCustom product: the instance the base is addressed by |
+| `expressions` | array | every matching expression GUID, hyphenated, the selected one first |
+
+Failures come back as `ok: false` with the reason in `diagnostics` (`stage: "navigate"`), coded
+`DSH9050`–`DSH9057`. `DSH9051` means no asset from that source is loaded in this editor — compile
+the file first; `DSH9052` means the assets were built before node navigation existed and carry no
+span table — rebuild with `-Force`.
 
 ## WebSocket server
 
@@ -745,7 +778,7 @@ source therefore always maps to the same file name, and each render overwrites i
 | Effect | Detail |
 | :-- | :-- |
 | Bridge | not created — no request polling, no WebSocket server, no directory watcher, no diagnostics writer, no manifests, no `bridge.db` |
-| Startup in-memory generation | does not run |
+| Startup Ephemeral generation | does not run |
 | Material Content Browser | tab and menu entries are not registered |
 | Tools menu, toolbar, context menus | not registered |
 | Cook hook | unaffected — it is installed on a different code path |

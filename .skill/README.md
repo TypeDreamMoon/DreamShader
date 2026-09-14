@@ -75,7 +75,7 @@ Full flag surface and troubleshooting: [`dream-shader-verify`](dream-shader-veri
 > **The commandlet writes real `.uasset` files; the interactive editor does not.** DreamShader
 > generates materials in memory by design — the source file is the authoring surface, and no asset
 > appears in the Content Browser. A headless compile persists them, and those files then *shadow*
-> in-memory generation on the next editor load.
+> Ephemeral generation on the next editor load.
 >
 > `-CleanNew` is the answer, and it is why the driver consults git rather than guessing. Keep it on
 > while iterating.

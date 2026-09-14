@@ -76,9 +76,17 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
         @{ Severity = 'warning'; Pattern = 'RaiseGenerationWarning\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
         # The DreamShaderLang front end (2.0) raises through its diagnostic sink:
         #   Diagnostics.Error(TEXT("DSHnnnn"), Span, LOCTEXT(...)) / .Warning(...) / .Info(...)
-        @{ Severity = 'error';   Pattern = '\.Error\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
-        @{ Severity = 'warning'; Pattern = '\.Warning\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
-        @{ Severity = 'info';    Pattern = '\.Info\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'error';   Pattern = '(?:\.|->)Error\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'warning'; Pattern = '(?:\.|->)Warning\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'info';    Pattern = '(?:\.|->)Info\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        # The Editor-side units wrap that sink in a one-line member (or lambda) helper that also
+        # carries the node's source span, so the raise reads Fail(TEXT("DSHnnnn"), Node, LOCTEXT(...)).
+        # The code is still a literal at the site, which is what the rule asks for (contract section 0.8), but
+        # the helper's name is not .Error(, so it has to be listed here or the code is invisible and
+        # the page for it is never written. Matched with a lookbehind so FailWith( -- a different
+        # dialect, already above -- is not counted twice.
+        @{ Severity = 'error';   Pattern = '(?<![A-Za-z0-9_])Fail\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'warning'; Pattern = '(?<![A-Za-z0-9_])Warn\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
         # ... and through the parser's cursor helpers, which supply the "Expected X, found Y." frame
         # and take only the X fragment at the site:
         #   Expect(Kind, TEXT("DSHnnnn"), LOCTEXT("Key", "';' after the field"))

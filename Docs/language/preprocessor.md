@@ -401,7 +401,7 @@ switches that describe *this project*, shared by everyone who clones it.
 +PreprocessorDefines=(("TOON_QUALITY", "2"))
 ```
 
-Editing the map bumps the define revision, which invalidates the in-memory materials — see
+Editing the map bumps the define revision, which invalidates the Ephemeral materials — see
 [Rebuilds](#rebuilds).
 
 ### From C++
@@ -669,7 +669,7 @@ cannot matter until the condition that killed the branch changes — and that co
 > no `FOO`*, so skipping it would mean that injecting `FOO` later changes no hash, rebuilds nothing,
 > and silently takes the other branch.
 
-Changing the define table also bumps the revision that the ThinCustom in-memory materials are keyed
+Changing the define table also bumps the revision that the ThinCustom Ephemeral materials are keyed
 against, so the editor rebuilds them rather than leaving materials on screen that were generated
 under the previous set. Without that, what the editor showed and what a commandlet wrote to disk
 could disagree with no visible cause.

@@ -160,18 +160,18 @@ question that fades away is one you never answered.
 | **Revert to Source** | discards the edits and rebuilds | [Revert to Source](#revert-to-source) |
 | **Adopt Into Source** | rewrites the source from the asset | [Adopt Into Source](#adopt-into-source) |
 | **Detach** | stops managing the asset | [Detach From DreamShader](#detach-from-dreamshader) |
-| **Show In-Memory Materials** | reveals the asset in the Content Browser — only when it is a hidden [memory-only](in-memory.md) instance | [the Tools menu toggle](../tools/editor-integration.md#show-in-memory-materials) |
+| **Show Ephemeral Materials** | reveals the asset in the Content Browser — only when it is a hidden [Ephemeral](ephemeral.md) instance | [the Tools menu toggle](../tools/editor-integration.md#show-ephemeral-materials) |
 | **Dismiss** | closes the notification and changes nothing | — |
 
 The first three are the same code the right-click menu runs, so each still confirms with a dialog,
 still closes and reopens any open asset editor, and still recompiles afterwards. All of them except
-*Show In-Memory Materials* close the notification: that one exists so you can go and **look** at an
+*Show Ephemeral Materials* close the notification: that one exists so you can go and **look** at an
 asset you could not see, and taking the three answers away at that moment would leave you with a
 visible tile and nothing to do with it.
 
 The fourth button is the reason the notification exists at all. In the editor's default
-[in-memory mode](in-memory.md) a generated ThinCustom instance has no tile in the Content Browser
-unless *Show In-Memory Materials* is on — so "right-click the asset" named something that was not on
+[the Ephemeral state](ephemeral.md) a generated ThinCustom instance has no tile in the Content Browser
+unless *Show Ephemeral Materials* is on — so "right-click the asset" named something that was not on
 screen, and the three answers were unreachable for exactly the assets most likely to diverge.
 
 ### How often it appears
@@ -261,7 +261,7 @@ detach only edits it in memory.
 
 - The digest is stamped for memory-only assets too, along with the source path and hash. Without
   the path the asset reads as `Foreign` and the gate never fires — which would have left it dead in
-  the editor's default in-memory mode.
+  the editor's default the Ephemeral state.
 - A digest is only ever compared against one carrying the same schema tag. Changing the tag is the
   supported way to retire a digest format without flagging the world. `1.9.0` changed it — taking the
   instance's overrides out of the digest changed what the digest is made of — so every asset stamped
@@ -274,6 +274,6 @@ detach only edits it in memory.
 
 - [Regeneration](regeneration.md) — what a rebuild destroys, and the ownership guard
 - [Caching](caching.md) — the source hash, and why it is not this
-- [In-memory materials](in-memory.md) — the mode most of these assets live in
+- [Ephemeral materials](ephemeral.md) — the mode most of these assets live in
 - [Decompiler](../tools/decompiler.md) — what the Adopt action writes
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

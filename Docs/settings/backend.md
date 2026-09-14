@@ -31,7 +31,7 @@ The value is matched case-insensitively after trimming and quote-stripping; quot
 | Value | Resolves to | Produces |
 | :-- | :-- | :-- |
 | `Graph` | `Graph` | one `UMaterial` at the resolved asset path, with the node graph built directly on it |
-| `ThinCustom` | `ThinCustom` | a `UDreamShaderMaterialInstance` at the resolved asset path, parented to a hidden `UMaterial` named `MB_DreamThinBase_…` — the suffix differs between in-memory and persist mode, see [`ThinCustom`](#thincustom-since-150) |
+| `ThinCustom` | `ThinCustom` | a `UDreamShaderMaterialInstance` at the resolved asset path, parented to a hidden `UMaterial` named `MB_DreamThinBase_…` — the suffix differs between the Ephemeral and Materialized states, see [`ThinCustom`](#thincustom-since-150) |
 | `Instance` | `ThinCustom` | identical to `ThinCustom` *(deprecated in 1.5.0)* |
 | *(empty string)* | `Graph` | as `Graph` — **not** the project default |
 | *(key absent)* | the project's *Default Compiler Backend* | see [Precedence](#precedence) |
@@ -85,9 +85,9 @@ reported for that file.
 | Aspect | Behaviour |
 | :-- | :-- |
 | Asset written | a `UDreamShaderMaterialInstance` — a `UMaterialInstanceConstant` subclass — at the resolved asset path. **This instance is the addressable asset.** |
-| Hidden base name, in-memory mode | `MB_DreamThinBase_<sanitized Name>` — the whole `Shader` `Name`, with every character outside `[A-Za-z0-9_]` replaced by `_`. `Name="Docs/M_Tint"` gives `MB_DreamThinBase_Docs_M_Tint` |
+| Hidden base name, the Ephemeral state | `MB_DreamThinBase_<sanitized Name>` — the whole `Shader` `Name`, with every character outside `[A-Za-z0-9_]` replaced by `_`. `Name="Docs/M_Tint"` gives `MB_DreamThinBase_Docs_M_Tint` |
 | Hidden base name, persist mode | `MB_DreamThinBase_<instance leaf name>` — the instance's own object name, with no path component. `Name="Docs/M_Tint"` gives `MB_DreamThinBase_M_Tint` |
-| Base ownership, in-memory mode | owned by the transient package, flagged public, standalone and transient |
+| Base ownership, the Ephemeral state | owned by the transient package, flagged public, standalone and transient |
 | Base ownership, persist mode | a **subobject of the instance**, so the pair shares one package and one `.uasset` |
 | Graph and settings | built on the **base**; every `Settings` key lands there, not on the instance |
 | Instance wiring | parent set to the base, parameter overrides cleared, source path and hash stamped, static permutation updated |
@@ -98,20 +98,20 @@ reported for that file.
 | Override | Rule |
 | :-- | :-- |
 | `HasOverridenBaseProperties()` | forced `true` when the parent is a `UMaterial` — that is, for the root instance over the hidden base; any other parent falls through to the stock implementation. A child instance parented to a DreamShader instance therefore **shares** the root's compiled shader map instead of compiling its own. |
-| `IsAsset()` | `false` while the package is newly created **and** *Show In-Memory Materials In Content Browser* is off. Memory-only materials are hidden from the Content Browser, asset-registry enumeration and save pickers. The setting is read live, on every call. |
+| `IsAsset()` | `false` while the package is newly created **and** *Show Ephemeral Materials* is off. Memory-only materials are hidden from the Content Browser, asset-registry enumeration and save pickers. The setting is read live, on every call. |
 
-Both backends log a warning when in-memory generation is shadowed by an already-saved asset:
-`In-memory material mode: '{Asset}' already exists as a saved asset, which shadows in-memory
-regeneration. Delete the saved asset to make it fully in-memory.` See
-[In-memory materials](../generation/in-memory.md).
+Both backends log a warning when Ephemeral generation is shadowed by an already-saved asset:
+`'{Asset}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run
+Tools > DreamShader > Make Ephemeral to make it Ephemeral again.` See
+[Ephemeral materials](../generation/ephemeral.md).
 
 ## Changing the project default
 
 Changing *Default Compiler Backend* while the editor is running regenerates every source file in
 memory and logs `DreamShader default compiler backend changed; regenerating all source files in
 memory.` If persisted generated assets exist, a notification points at the cleanup action:
-`{Count} previously generated asset(s) are still saved on disk and shadow the in-memory materials.
-Run Tools > DreamShader > Clean Persisted Generated Assets to remove them.`
+`{Count} previously generated asset(s) are still saved on disk and shadow the Ephemeral materials.
+Run Tools > DreamShader > Make Ephemeral to remove them.`
 
 Switching an individual material between backends leaves the previous asset behind. The reuse-conflict
 errors above are what you hit next; delete the stale asset and regenerate.
@@ -125,7 +125,7 @@ errors above are what you hit next; delete the stale asset and regenerate.
   value **inherited** from the hidden base — that is where the settings were written.
 - Neither backend writes a `.uasset` during ordinary editor work. Assets reach disk at cook time,
   through the [commandlet](../tools/commandlet.md), or through an explicit *Materialize* action. See
-  [In-memory materials](../generation/in-memory.md).
+  [Ephemeral materials](../generation/ephemeral.md).
 - `Backend` is honoured only in a `Shader` block. In a `ShaderFunction` `Settings` block it is one of
   the keys that is [silently ignored](function.md).
 
@@ -146,10 +146,10 @@ Informational messages:
 
 | Message | Meaning |
 | :-- | :-- |
-| `Generated {Asset} from {File}.{Virtual}` | `Graph` backend success; `{Virtual}` is ` (virtual)` for in-memory generation and empty otherwise |
+| `Generated {Asset} from {File}.{Virtual}` | `Graph` backend success; `{Virtual}` is ` (virtual)` for Ephemeral generation and empty otherwise |
 | `Generated DreamShader thin-custom material {Asset} from {File}.` | `ThinCustom` backend success |
-| `Skipped {Asset} from {File}; source hash is unchanged.` | the [source-hash cache](../generation/caching.md) suppressed the rebuild |
-| `In-memory material mode: '{Asset}' already exists as a saved asset, which shadows in-memory regeneration. Delete the saved asset to make it fully in-memory.` | a saved asset shadows the memory-only one |
+| `Skipped {Asset} from {File}; source hash is unchanged (build key {BuildKey}).` | the [source-hash cache](../generation/caching.md) suppressed the rebuild |
+| `'{Asset}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Make Ephemeral to make it Ephemeral again.` | the product is Materialized, so storage decides |
 
 ## Example
 
@@ -203,8 +203,8 @@ The same file with `Backend = "Graph";` instead produces a single `UMaterial` at
 
 - [Settings](index.md) — the block grammar shared by every block kind
 - [Shader settings](material.md) — the other special keys and the reflection resolver
-- [Project settings](project.md) — *Default Compiler Backend* and the in-memory visibility toggle
-- [In-memory materials](../generation/in-memory.md) — memory-only generation, the hidden base, materializing to disk
+- [Project settings](project.md) — *Default Compiler Backend* and the Ephemeral visibility toggle
+- [Ephemeral materials](../generation/ephemeral.md) — memory-only generation, the hidden base, materializing to disk
 - [Generation pipeline](../generation/index.md) — where backend resolution sits in the pipeline
 - [Asset paths](../generation/asset-paths.md) — how `Name` and `Root` become a package path
 - [Caching](../generation/caching.md) — the source-hash skip

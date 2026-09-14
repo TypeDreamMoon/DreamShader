@@ -11,7 +11,7 @@ version.
 | Applies to | DreamShaderLang `1.8.0` |
 | Engines | UE `5.3` – `5.8`; anything version-gated is marked inline |
 | Assumed source root | `<Project>/DShader` — the `SourceDirectory` [project setting](../settings/project.md) |
-| Generated output | in memory by default; see [In-memory materials](../generation/in-memory.md) |
+| Generated output | in memory by default; see [Ephemeral materials](../generation/ephemeral.md) |
 
 Every snippet below is a whole file. Paths in the leading comment are the on-disk location the
 example assumes; `import` specifiers resolve against that layout. Assets referenced with
@@ -1072,7 +1072,7 @@ Substitute `-All` for `-Source=` to compile every `.dsf` and `.dsm` in the proje
 editor, the commandlet writes **persistent** assets.
 
 *See also:* [Getting started](../getting-started.md) ·
-[In-memory materials](../generation/in-memory.md) · [Commandlet](../tools/commandlet.md) ·
+[Ephemeral materials](../generation/ephemeral.md) · [Commandlet](../tools/commandlet.md) ·
 [Editor integration](../tools/editor-integration.md)
 
 ## See also

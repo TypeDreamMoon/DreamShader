@@ -128,11 +128,11 @@ fan-out for coincident slots. Anything still unplaced goes into a fallback colum
 everything positioned.
 
 > [!WARNING]
-> **Layout is skipped entirely in transient (in-memory) mode.** Auto-compile-on-save, the Gen page
+> **Layout always runs (since `2.0.0`).** Auto-compile-on-save, the Gen page
 > buttons and the live preview all generate in memory, so a `Layout` block has no visible effect
 > there — the nodes keep whatever positions the construction pass produced. Positions appear only in
 > a persisted asset: at cook, through the commandlet, or after an explicit *Materialize*. See
-> [In-memory materials](../generation/in-memory.md).
+> [Ephemeral materials](../generation/ephemeral.md).
 
 > [!NOTE]
 > A second `Layout` section **resets** the first rather than appending. Only the last `Layout` block
@@ -287,7 +287,7 @@ Nothing is written to disk unless the material is persisted — see the transien
 - [Output bindings](output-bindings.md) — the reroute pairs created for each binding
 - [Graph layout](../generation/graph-layout.md) — the automatic pass, its blocks, constants and limits
 - [Regeneration](../generation/regeneration.md) — the `DreamShader: ` comment prefix rule
-- [In-memory materials](../generation/in-memory.md) — why layout is skipped for memory-only materials
+- [Ephemeral materials](../generation/ephemeral.md) — why layout is skipped for memory-only materials
 - [Decompiler](../tools/decompiler.md) — round-tripping `Layout` out of an existing material
 - [Project settings](../settings/project.md) — **Export Decompiled Layout**
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

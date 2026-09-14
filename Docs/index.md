@@ -1,16 +1,16 @@
 # DreamShader reference
 
-DreamShader compiles **DreamShaderLang** source files — `.dsm`, `.dsf`, `.dsh` — into standard Unreal
-Engine material assets: `UMaterial`, `UMaterialFunction`, `UMaterialFunctionMaterialLayer`, and
-`UMaterialFunctionMaterialLayerBlend`. Source files are the authoring surface; the assets are build
-output and can always be regenerated.
+DreamShader compiles **DreamShaderLang** source files — `.dsm`, `.dsf`, `.dsh` and, on the 2.0 line,
+`.dss` — into standard Unreal Engine material assets: `UMaterial`, `UMaterialFunction`,
+`UMaterialFunctionMaterialLayer`, and `UMaterialFunctionMaterialLayerBlend`. Source files are the
+authoring surface; the assets are build output and can always be regenerated.
 
 | | |
 | :-- | :-- |
 | Version | `2.0.0b` (beta line; last stable `1.9.1`) |
 | Engines | Unreal Engine `5.3` – `5.8` (Win64 verified) |
-| Modules | `DreamShader` (Runtime), `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
-| Source extensions | `.dsm` material · `.dsf` function · `.dsh` header |
+| Modules | `DreamShaderLang` (Runtime), `DreamShader` (Runtime), `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
+| Source extensions | `.dsm` material · `.dsf` function · `.dsh` header · `.dss` 2.0 compilation unit |
 | Project settings | *Project Settings ▸ DreamPlugin ▸ Dream Shader* |
 | License | MIT |
 
@@ -19,6 +19,12 @@ New here? Start with **[Getting started](getting-started.md)**, then **[Examples
 ---
 
 ## DreamShaderLang
+
+> [!NOTE]
+> Two syntaxes, one compiler. The **1.x** syntax documented below (`.dsm` / `.dsf` / `.dsh`) is the
+> one that ships. The **2.0** syntax — `.dss`, HLSL with declarations instead of section blocks —
+> compiles through the new binder/IR/emitter pipeline on the `2.0` line and has its own page:
+> **[DreamShaderLang 2.0](language-v2/index.md)**.
 
 ### [Language reference](language/index.md)
 
@@ -122,7 +128,7 @@ The statement and expression language inside `Graph = { ... }`, which materialis
 | | |
 | :-- | :-- |
 | [Asset paths](generation/asset-paths.md) | `Name=` and `Root=` to package and disk paths |
-| [In-memory materials](generation/in-memory.md) | The thin instance, hidden base, cook behaviour |
+| [Ephemeral materials](generation/ephemeral.md) | The thin instance, hidden base, cook behaviour |
 | [Caching](generation/caching.md) | Source hashing and skipped rebuilds |
 | [Graph layout](generation/graph-layout.md) | Automatic placement and its limits |
 | [Regeneration](generation/regeneration.md) | What survives a rebuild and what does not |

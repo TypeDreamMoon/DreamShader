@@ -437,7 +437,7 @@ the previous statement is usually the one missing its `;`.
 Expected ')' to close a cast, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:253`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:468`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:550`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:114`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:214`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:249`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:296`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:253`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:468`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:550`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:152`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:252`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:287`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:334`
 <!-- generated:end DSH2152 -->
 
 **Cause.** an unbalanced `(`. The parser read a complete expression and then found something other
@@ -477,7 +477,7 @@ DreamShaderLang, so the `,` ends the index).
 Expected ';' after the 'for' initializer, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:178`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:199`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:301`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:327`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:342`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:356`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:370`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:419`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:554`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:216`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:237`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:339`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:365`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:380`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:394`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:408`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:457`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:592`
 <!-- generated:end DSH2154 -->
 
 **Cause.** a statement that does not end with `;`. Unlike 1.x, the 2.0 grammar has no
@@ -521,7 +521,7 @@ nested lists are written `{ { 1, 2 }, { 3, 4 } }`.
 Expected '(' after 'if', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:103`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:148`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:238`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:285`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:141`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:186`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:276`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:323`
 <!-- generated:end DSH2157 -->
 
 **Cause.** a control-flow keyword whose parenthesised header is missing. In DreamShaderLang, as in
@@ -582,7 +582,7 @@ middle operand ran past the `:` because a bracket inside it is unbalanced.
 Unsupported statement: the preprocessor line '#{0}' cannot appear inside a function body; mark the function /// @custom to hand its body to the shader compiler.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:397`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:89`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:127`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:435`
 <!-- generated:end DSH2160 -->
 
 **Message (statement)** `Unsupported statement '{0}': DreamShaderLang 2.0 has no switch statement,
@@ -653,7 +653,7 @@ with a type.
 Expected a variable name, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:526`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:564`
 <!-- generated:end DSH2163 -->
 
 **Cause.** a declaration whose declarator has no name: a doubled `,` (`float a,, b;`), a `,` before
@@ -674,7 +674,7 @@ or `Name[dims] = init`.
 Expected 'while' after the body of a 'do' statement, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:279`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:317`
 <!-- generated:end DSH2164 -->
 
 **Cause.** a `do` whose `while` is missing or misspelled.
@@ -693,7 +693,7 @@ is DSH2154, not this code.
 Expected '{' to open a block, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:434`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:472`
 <!-- generated:end DSH2165 -->
 
 **Cause.** a block was required and something else was found. In M1 this is reachable only when a
@@ -713,7 +713,7 @@ caller asks for a block without checking first — a function body whose `{` is 
 The 1.x front end is not available in this build.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:560`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:576`
 <!-- generated:end DSH2199 -->
 
 **Cause.** a `.dsm` or `.dsf` file was handed to the 2.0 front end, which does not read the 1.x block syntax. The 1.x syntax becomes a second front end producing the same AST, but that front end is not in this build yet, so the honest answer is one error rather than a 2.0 parse of 1.x text failing token by token and explaining nothing.

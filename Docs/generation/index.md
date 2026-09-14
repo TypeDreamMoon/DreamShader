@@ -71,7 +71,7 @@ the emitted instance.
 | Trigger | Forced | Target | Result |
 | :-- | :-- | :-- | :-- |
 | Auto-compile on save (file watcher + debounce) | no | memory | hash-skip active; the most common path |
-| *Generate all in-memory materials* — editor startup, and whenever the **Default Compiler Backend** setting changes | yes | memory | every project source recompiled |
+| *Generate all Ephemeral materials* — editor startup, and whenever the **Default Compiler Backend** setting changes | yes | memory | every project source recompiled |
 | Material Content Browser *Compile* / thumbnail-refresh buttons | yes | memory | one source |
 | Live preview renderer | yes | memory | one source |
 | *Materialize*, and creating a child instance of a memory-only material | yes | **disk** | one source, persisted |
@@ -85,7 +85,7 @@ Debounce Seconds** (default `0.25`, clamped to `[0.05, 10.0]`). See
 > [!NOTE]
 > The interactive editor never writes a per-material `.uasset`. The source file is the authoring
 > surface; generated assets live in memory until a cook, the commandlet, or an explicit
-> *Materialize* puts them on disk. See [In-memory materials](in-memory.md).
+> *Materialize* puts them on disk. See [Ephemeral materials](ephemeral.md).
 
 ## Outcomes that are not assets
 
@@ -105,7 +105,7 @@ A source file can compile successfully and produce nothing to place in the Conte
 | `Generated {Kind} {AssetPath} from {File}.` | each `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` |
 | `Generated {AssetPath} from {File}.{Suffix}` | a `Graph`-backend material; `{Suffix}` is ` (virtual)` in memory-only mode |
 | `Generated DreamShader thin-custom material {AssetPath} from {File}.` | a ThinCustom-backend material |
-| `Skipped {AssetPath} from {File}; source hash is unchanged.` | the hash short circuit — see [Caching](caching.md) |
+| `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` | the hash short circuit — see [Caching](caching.md) |
 | `Generated DreamShader helper include '{Path}' from {File}.` | a unit with `Function` blocks and no assets |
 
 Runtime substitutions are rendered as `{Placeholder}` on this page; the compiler emits the
@@ -185,7 +185,7 @@ Generation also looks for that pair while it emits a `Custom` node's code and wa
 | Page | Covers |
 | :-- | :-- |
 | [Asset paths](asset-paths.md) | `Name=` + `Root=` → package path → on-disk `.uasset` |
-| [In-memory materials](in-memory.md) | the ThinCustom result, the hidden base, visibility, materializing, cook |
+| [Ephemeral materials](ephemeral.md) | the ThinCustom result, the hidden base, visibility, materializing, cook |
 | [Caching](caching.md) | the source hash, the metadata keys, when regeneration is skipped |
 | [Graph layout](graph-layout.md) | how generated nodes are positioned, and when layout is skipped |
 | [Regeneration](regeneration.md) | what a rebuild destroys and what survives |

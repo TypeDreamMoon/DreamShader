@@ -81,7 +81,7 @@ reuse the other's cached asset.
 > Editing a `.dsh` invalidates every dependent `.dsm` and `.dsf`, but a header never generates
 > anything by itself — saving it fails with `DreamShader header '{File}' does not generate assets
 > directly. Recompile dependent .dsm or .dsf files instead.` The dependents are only rebuilt when
-> they are themselves compiled: on their own save, or through *Generate all in-memory materials*
+> they are themselves compiled: on their own save, or through *Generate all Ephemeral materials*
 > (editor startup and every change to a setting the build key covers), the Material
 > Content Browser's Compile button, the [commandlet](../tools/commandlet.md), or a cook.
 
@@ -130,7 +130,7 @@ the project-relative form the metadata stores; `SourceHash` is the same eight-he
 
 > [!NOTE]
 > `DreamShader.SourceFile` doubles as the **ownership marker**. Its presence is what tells
-> DreamShader that an asset is its own to overwrite, and what *Clean Persisted Generated Assets*
+> DreamShader that an asset is its own to overwrite, and what *Make Ephemeral*
 > filters on. See [Regeneration](regeneration.md#ownership-guard).
 
 ## When regeneration is skipped
@@ -149,8 +149,8 @@ Per asset kind:
 
 | Asset | Skip point | Extra condition | Message |
 | :-- | :-- | :-- | :-- |
-| ThinCustom material | after the instance is created or reused, **before** the hidden base is created | — | `Skipped {AssetPath} from {File}; source hash is unchanged.` |
-| `Graph`-backend material | after the material is created or reused | — | `Skipped {AssetPath} from {File}; source hash is unchanged.` |
+| ThinCustom material | after the instance is created or reused, **before** the hidden base is created | — | `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` |
+| `Graph`-backend material | after the material is created or reused | — | `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` |
 | Material function | after the function asset is created or reused | the asset's material-function usage must already match the one the block requires | *silent* — the asset path is returned with no message |
 
 Placing the ThinCustom check before the base is created is what makes a skip cheap: no base
@@ -165,15 +165,15 @@ material, no ownership check, no graph teardown.
 | Path | Force |
 | :-- | :-- |
 | Auto-compile on save | **no** — the hash short circuit is active |
-| *Generate all in-memory materials* (startup) | **no** — see [In-memory materials](in-memory.md#where-the-asset-lives-decides) |
-| *Generate all in-memory materials* (backend-setting change) | yes |
+| The startup sweep (`GenerateAllSources`) | **no** — see [Ephemeral materials](ephemeral.md#when-the-asset-already-exists-on-disk) |
+| *Generate all Ephemeral materials* (backend-setting change) | yes |
 | *Tools ▸ DreamShader ▸ Recompile DSM*, *Clean Generated Shaders* | yes — queued through the bridge as forced |
 | Bridge `recompile` request (`scope: "file"` / `"all"`) | yes — an explicit request means "rebuild" |
 | Material Content Browser Compile / thumbnail refresh | yes |
 | Live preview render | yes |
 | *Materialize*, and child-instance creation | yes |
 | Cook | yes |
-| Commandlet `-run=DreamShader` | only with [`-Force`](../tools/commandlet.md#compile--generate); otherwise it reports `Skipped {AssetPath} from {SourceFile}; source hash is unchanged.` |
+| Commandlet `-run=DreamShader` | only with [`-Force`](../tools/commandlet.md#compile--generate); otherwise it reports `Skipped {AssetPath} from {SourceFile}; source hash is unchanged (build key {BuildKey}).` |
 
 There is no way to clear the stored hash from the source language. To force a rebuild without a
 force-capable entry point, either change the source text (any change, including whitespace), or
@@ -199,7 +199,7 @@ Runtime substitutions are rendered as `{Placeholder}`.
 
 | Message | Cause |
 | :-- | :-- |
-| `Skipped {AssetPath} from {File}; source hash is unchanged.` | the short circuit fired for a material |
+| `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` | the short circuit fired for a material |
 | `DreamShader header '{File}' does not generate assets directly. Recompile dependent .dsm or .dsf files instead.` | a `.dsh` was compiled directly |
 
 ## Example
@@ -226,7 +226,7 @@ Observed sequence:
 
 ```text
 save M_Ramp.dsm      Generated DreamShader thin-custom material /Game/Materials/M_Ramp from ...M_Ramp.dsm.
-save M_Ramp.dsm      Skipped /Game/Materials/M_Ramp from ...M_Ramp.dsm; source hash is unchanged.
+save M_Ramp.dsm      Skipped /Game/Materials/M_Ramp from ...M_Ramp.dsm; source hash is unchanged (build key …).
 edit Common.dsh      (saving the header itself generates nothing)
 save M_Ramp.dsm      Generated DreamShader thin-custom material /Game/Materials/M_Ramp from ...M_Ramp.dsm.
 ```
@@ -245,7 +245,7 @@ DreamShader.SourceHash   9f2c41ab
 - [Preprocessor](../language/preprocessor.md) — the defines the key folds in, and why only the ones that were read
 - [Regeneration](regeneration.md) — the ownership guard built on `DreamShader.SourceFile`
 - [Divergence](divergence.md) — the OTHER fingerprint: what the asset holds, not what the source said
-- [In-memory materials](in-memory.md) — which assets are stamped in which mode
+- [Ephemeral materials](ephemeral.md) — which assets are stamped in which mode
 - [`UDreamShaderMaterialInstance`](../api/material-instance.md) — `SourceFilePath` and `SourceHash`
 - [Generated HLSL](generated-hlsl.md) — the include's separate, path-based hash
 - [Commandlet](../tools/commandlet.md) — headless compiles and forcing

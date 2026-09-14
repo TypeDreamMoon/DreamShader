@@ -101,7 +101,7 @@ virtual bool IsAsset() const override;
 
 | | |
 | :-- | :-- |
-| Returns | `false` when the owning package has `PKG_NewlyCreated` **and** `bShowInMemoryMaterialsInContentBrowser` is `false` |
+| Returns | `false` when the owning package has `PKG_NewlyCreated` **and** `bShowEphemeralMaterials` is `false` |
 | Otherwise | defers to `Super::IsAsset()` |
 
 Returning `false` removes the object from the Content Browser, from the asset registry's
@@ -112,7 +112,7 @@ and behaves like any other asset.
 
 > [!NOTE]
 > The setting is read on **every call**, through `GetDefault<UDreamShaderSettings>()`. Toggling
-> *Show In-Memory Materials In Content Browser* changes the answer immediately, with no reload; the
+> *Show Ephemeral Materials* changes the answer immediately, with no reload; the
 > editor re-broadcasts asset creation and removal for every memory-only instance so the browser
 > refreshes. See [Project settings](../settings/project.md).
 
@@ -183,12 +183,12 @@ DreamShader
 
 ## See also
 
-- [In-memory materials](../generation/in-memory.md) — the hidden base, visibility, and materializing
+- [Ephemeral materials](../generation/ephemeral.md) — the hidden base, visibility, and materializing
 - [Backend](../settings/backend.md) — `ThinCustom` versus `Graph`, and the deprecated `Instance` alias
 - [Regeneration](../generation/regeneration.md) — what a rebuild destroys on the instance
 - [Caching](../generation/caching.md) — the package metadata keys the skip check actually uses
 - [Project settings](../settings/project.md) — the visibility toggle behind `IsAsset()`
-- [`DreamShaderSettings.h`](settings.md) — `bShowInMemoryMaterialsInContentBrowser` in C++
+- [`DreamShaderSettings.h`](settings.md) — `bShowEphemeralMaterials` in C++
 - [Material Content Browser](../tools/material-browser.md) — creating child instances and materializing
 - [`Shader`](../language/shader.md) — the block that generates this asset
 - [Asset paths](../generation/asset-paths.md) — where the package lands

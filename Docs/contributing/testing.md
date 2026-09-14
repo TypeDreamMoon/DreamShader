@@ -83,7 +83,7 @@ The split the source records: the fast `DreamShader.Lang.*` layer gates pull req
 | :-- | :-- |
 | `-nullrhi` | No rendering device. `DreamShader.Render.ThinCustomVsGraphParity` and `DreamShader.Roundtrip.MTestToonRenderParity` self-skip. Every other test still runs. |
 | `-DreamShaderUpdateGolden` | Both corpus runners **rewrite** each `.expected.json` from the actual result instead of asserting it. See [Regenerating goldens](#regenerating-goldens). |
-| `-NoDreamShaderEditorBridge` | Skips creating the editor bridge and the Material Content Browser: no directory watcher, no in-memory generation pass at startup, no WebSocket listener on `127.0.0.1:17864`. Useful when a run must not compete with the bridge for the same sources. |
+| `-NoDreamShaderEditorBridge` | Skips creating the editor bridge and the Material Content Browser: no directory watcher, no Ephemeral generation pass at startup, no WebSocket listener on `127.0.0.1:17864`. Useful when a run must not compete with the bridge for the same sources. |
 | `-unattended -nopause -nosplash` | Standard headless flags; no modal dialogs, no splash, no keypress on exit. |
 | `-log` / `-stdout` | Route the log to the console. |
 
@@ -373,8 +373,8 @@ DreamShader.Gen.Material.Material.M_Surface
 
 | Extension | Parse layer | Generate layer |
 | :-- | :-- | :-- |
-| `.dsm` | `FTextShaderParser::Parse` | `FMaterialGenerator::GenerateMaterialFromFile(path, msg, bForce=true, bTransient=true)` |
-| `.dsf` | `FTextShaderParser::Parse` | `FMaterialGenerator::GenerateAssetsFromFile(path, msg, bForce=true, bTransient=true)` |
+| `.dsm` | `FTextShaderParser::Parse` | `FMaterialGenerator::GenerateMaterialFromFile(path, msg, bForce=true, bAllowEphemeralThinCustom=true)` |
+| `.dsf` | `FTextShaderParser::Parse` | `FMaterialGenerator::GenerateAssetsFromFile(path, msg, bForce=true, bAllowEphemeralThinCustom=true)` |
 | `.dsh` | `FTextShaderParser::Parse` | skipped with an info message |
 
 The Generate layer always runs transient, so no `/Game` package is written and no cleanup is needed.

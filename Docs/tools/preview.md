@@ -313,7 +313,7 @@ Resulting `<Project>/Saved/DreamShader/Bridge/preview.json`:
 - [Bridge](bridge.md) — the request-file protocol and the full WebSocket message schema
 - [Material Content Browser](material-browser.md) — the Gen page's static thumbnail, which this is not
 - [Editor integration](editor-integration.md) — `-NoDreamShaderEditorBridge`, which disables the server
-- [In-memory materials](../generation/in-memory.md) — why a preview compile never writes an asset
+- [Ephemeral materials](../generation/ephemeral.md) — why a preview compile never writes an asset
 - [Backend](../settings/backend.md) — why the previewed object may be an instance rather than a `UMaterial`
 - [Source files](../language/source-files.md) — why only `.dsm` can produce a material
 - [Workspace](workspace.md) — the editor extension that drives the streaming client

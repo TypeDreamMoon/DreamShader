@@ -112,7 +112,7 @@ it matches the package directory itself as well as anything beneath it at any de
 
 | Feature | Enumerator | Sees package `.dsm` | Sees package `.dsf` / `.dsh` |
 | :-- | :-- | :-- | :-- |
-| Startup in-memory generation | full | no | no |
+| Startup Ephemeral generation | full | no | no |
 | [Commandlet](commandlet.md) `compile -All` | full | no | no |
 | Cook-time materialization | full | no | no |
 | Material Content Browser, Gen page list | full | no | no |
