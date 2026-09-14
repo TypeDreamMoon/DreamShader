@@ -21,6 +21,7 @@
 
 #include "Internationalization/Internationalization.h"
 #include "Internationalization/Text.h"
+#include "Misc/Char.h"
 #include "Templates/UniquePtr.h"
 #include "Templates/UnrealTemplate.h"
 
@@ -80,11 +81,48 @@ namespace UE::DreamShader::Lang::Private
 
 		if (Check(ELangTokenKind::Directive))
 		{
-			// A `#` line inside a body is either a preprocessor line the preprocessor should have
-			// eaten, or an attempt to write HLSL that only `/// @custom` bodies may contain.
+			// `#pragma region` / `#pragma endregion` are the one `#` line a body may hold: they draw
+			// a comment box around the nodes the statements between them produce, as the 1.x
+			// `#Region` did. Any other `#` line is either a preprocessor line the preprocessor
+			// should have eaten, or an attempt to write HLSL that only `/// @custom` bodies may
+			// contain.
 			const FLangSpan DirectiveSpan = Current().Span;
 			const FString DirectiveText = Current().Text;
 			Advance();
+
+			{
+				// The token text is the line after `#`, trimmed: `pragma region Title`.
+				const auto SplitFirstWord = [](const FString& Text, FString& OutWord, FString& OutRest)
+				{
+					int32 Index = 0;
+					while (Index < Text.Len() && !FChar::IsWhitespace(Text[Index]))
+					{
+						++Index;
+					}
+					OutWord = Text.Left(Index);
+					OutRest = Text.Mid(Index).TrimStartAndEnd();
+				};
+
+				FString Word;
+				FString Rest;
+				SplitFirstWord(DirectiveText, Word, Rest);
+				if (Word.Equals(TEXT("pragma"), ESearchCase::CaseSensitive))
+				{
+					FString PragmaName;
+					FString PragmaText;
+					SplitFirstWord(Rest, PragmaName, PragmaText);
+					const bool bRegion = PragmaName.Equals(TEXT("region"), ESearchCase::CaseSensitive);
+					const bool bEndRegion = PragmaName.Equals(TEXT("endregion"), ESearchCase::CaseSensitive);
+					if (bRegion || bEndRegion)
+					{
+						TUniquePtr<FPragmaStmt> Node = MakeUnique<FPragmaStmt>();
+						Node->PragmaKind = bRegion ? EPragmaKind::Region : EPragmaKind::EndRegion;
+						Node->Text = bRegion ? PragmaText : FString();
+						Node->Span = DirectiveSpan;
+						return MoveTemp(Node);
+					}
+				}
+			}
 
 			Diagnostics.Error(TEXT("DSH2160"), DirectiveSpan, FText::Format(
 				LOCTEXT("DirectiveInsideBody", "Unsupported statement: the preprocessor line '#{0}' cannot appear inside a function body; mark the function /// @custom to hand its body to the shader compiler."),

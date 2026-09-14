@@ -40,6 +40,7 @@ namespace UE::DreamShader::Lang
 		case ENodeKind::ContinueStmt:        return TEXT("ContinueStmt");
 		case ENodeKind::DiscardStmt:         return TEXT("DiscardStmt");
 		case ENodeKind::EmptyStmt:           return TEXT("EmptyStmt");
+		case ENodeKind::PragmaStmt:          return TEXT("PragmaStmt");
 
 		// declarations
 		case ENodeKind::VariableDecl:        return TEXT("VariableDecl");

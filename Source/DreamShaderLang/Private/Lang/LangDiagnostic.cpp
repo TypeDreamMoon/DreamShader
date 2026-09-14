@@ -148,6 +148,22 @@ namespace UE::DreamShader::Lang
 		Add(ELangSeverity::Info, Code, Span, Message);
 	}
 
+	bool FLangDiagnosticSink::Error(const TCHAR* Code, const FString& InFilePath, const FLangSpan& Span, const FText& Message)
+	{
+		Add(ELangSeverity::Error, Code, InFilePath, Span, Message);
+		return false;
+	}
+
+	void FLangDiagnosticSink::Warning(const TCHAR* Code, const FString& InFilePath, const FLangSpan& Span, const FText& Message)
+	{
+		Add(ELangSeverity::Warning, Code, InFilePath, Span, Message);
+	}
+
+	void FLangDiagnosticSink::Info(const TCHAR* Code, const FString& InFilePath, const FLangSpan& Span, const FText& Message)
+	{
+		Add(ELangSeverity::Info, Code, InFilePath, Span, Message);
+	}
+
 	void FLangDiagnosticSink::Append(FLangDiagnosticSink&& Other)
 	{
 		Diagnostics.Reserve(Diagnostics.Num() + Other.Diagnostics.Num());
@@ -185,12 +201,17 @@ namespace UE::DreamShader::Lang
 
 	void FLangDiagnosticSink::Add(const ELangSeverity Severity, const TCHAR* Code, const FLangSpan& Span, const FText& Message)
 	{
+		Add(Severity, Code, FilePath, Span, Message);
+	}
+
+	void FLangDiagnosticSink::Add(const ELangSeverity Severity, const TCHAR* Code, const FString& InFilePath, const FLangSpan& Span, const FText& Message)
+	{
 		FLangDiagnostic Diagnostic;
 		Diagnostic.Code = Code;
 		Diagnostic.Severity = Severity;
 		Diagnostic.Message = Message;
 		Diagnostic.Span = Span;
-		Diagnostic.FilePath = FilePath;
+		Diagnostic.FilePath = InFilePath;
 
 		if (Severity == ELangSeverity::Error)
 		{

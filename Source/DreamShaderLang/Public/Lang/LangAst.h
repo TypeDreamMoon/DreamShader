@@ -189,6 +189,7 @@ namespace UE::DreamShader::Lang
 		ContinueStmt,
 		DiscardStmt,
 		EmptyStmt,
+		PragmaStmt,
 
 		// declarations
 		VariableDecl,
@@ -558,6 +559,36 @@ namespace UE::DreamShader::Lang
 		FEmptyStmt() : FStmt(StaticKind) {}
 	};
 
+	enum class EPragmaKind : uint8
+	{
+		/** `#pragma material(Key = Value, ...)` -- file-level material settings. */
+		Material,
+		/** `#pragma layout(Node|Comment, Key = Value, ...)` -- decompiler-written node coordinates. */
+		Layout,
+		/** `#pragma region Name`. */
+		Region,
+		/** `#pragma endregion`. */
+		EndRegion,
+		/** Any other `#pragma`; kept for the printer, ignored by everything else. */
+		Unknown,
+	};
+
+	/**
+	 * `#pragma region Title` / `#pragma endregion` inside a function body: the one `#` line a body
+	 * may hold. It draws a comment box around the nodes the statements between the pair produce,
+	 * as the 1.x `#Region` did. Every other `#` line in a body is DSH2160. PragmaKind is Region or
+	 * EndRegion, never anything else.
+	 */
+	struct FPragmaStmt final : FStmt
+	{
+		static constexpr ENodeKind StaticKind = ENodeKind::PragmaStmt;
+		FPragmaStmt() : FStmt(StaticKind) {}
+
+		EPragmaKind PragmaKind = EPragmaKind::Region;
+		/** The title after `region`; empty for `endregion`. */
+		FString Text;
+	};
+
 	// ------------------------------------------------------------------------------------------
 	// Declarations
 	// ------------------------------------------------------------------------------------------
@@ -678,20 +709,6 @@ namespace UE::DreamShader::Lang
 		FString Path;
 		FLangSpan PathSpan;
 		bool bImportSpelling = false;
-	};
-
-	enum class EPragmaKind : uint8
-	{
-		/** `#pragma material(Key = Value, ...)` -- file-level material settings. */
-		Material,
-		/** `#pragma layout(Node|Comment, Key = Value, ...)` -- decompiler-written node coordinates. */
-		Layout,
-		/** `#pragma region Name`. */
-		Region,
-		/** `#pragma endregion`. */
-		EndRegion,
-		/** Any other `#pragma`; kept for the printer, ignored by everything else. */
-		Unknown,
 	};
 
 	/** One `Key = Value` of a pragma. Value is the raw spelling; a quoted string has its quotes removed and bQuoted set. */

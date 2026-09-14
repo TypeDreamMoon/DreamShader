@@ -75,6 +75,21 @@ namespace UE::DreamShader
 	};
 
 	/**
+	 * Which language's `#` lines the preprocessor is reading.
+	 *
+	 * Legacy is 1.x: the eight conditional directives plus the parser's `#Region` / `#EndRegion`, with
+	 * `Function` / `GraphFunction` bodies opaque. Lang2 is a `.dss` and every header it includes:
+	 * `#pragma` and `#include` are that language's own file-level lines and pass through to the parser
+	 * untouched, and the opaque bodies are the `/// @custom` ones. The extension cannot decide this --
+	 * a `.dsh` is a header in both languages -- so the caller says.
+	 */
+	enum class EDreamShaderPreprocessDialect : uint8
+	{
+		Legacy,
+		Lang2,
+	};
+
+	/**
 	 * Runs the preprocessor over one file's text.
 	 *
 	 * Pure text in, pure text out -- no asset, no world, no engine state beyond the define table it is
@@ -100,13 +115,15 @@ namespace UE::DreamShader
 	 *                                 descriptor, none of which this module may see.
 	 * @param OutResult                 Valid only when this returns true.
 	 * @param OutError                  DSH1030..DSH1042 on failure.
+	 * @param InDialect                 Lang2 for a `.dss` compile and its headers; see EDreamShaderPreprocessDialect.
 	 */
 	DREAMSHADERLANG_API bool PreprocessDreamShaderSource(
 		const FString& InText,
 		const FString& InFilePathForDiagnostics,
 		const FDreamShaderDefineTable& InDefines,
 		FDreamShaderPreprocessResult& OutResult,
-		FDreamShaderTextError& OutError);
+		FDreamShaderTextError& OutError,
+		EDreamShaderPreprocessDialect InDialect = EDreamShaderPreprocessDialect::Legacy);
 
 	/**
 	 * Cheap scan for whether text contains any preprocessor directive, without evaluating anything.

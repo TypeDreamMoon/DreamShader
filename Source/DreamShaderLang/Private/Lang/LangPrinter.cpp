@@ -994,6 +994,23 @@ namespace UE::DreamShader::Lang
 				AppendLine(IndentLevel, TEXT(";"));
 				break;
 
+			case ENodeKind::PragmaStmt:
+			{
+				// Indented like the statements around it: the lexer takes a `#` after leading
+				// whitespace as a directive, so this reads back as the same FPragmaStmt.
+				const FPragmaStmt& Pragma = static_cast<const FPragmaStmt&>(Stmt);
+				FString Line = Pragma.PragmaKind == EPragmaKind::EndRegion
+					? FString(TEXT("#pragma endregion"))
+					: FString(TEXT("#pragma region"));
+				if (!Pragma.Text.IsEmpty())
+				{
+					Line += TEXT(" ");
+					Line += Pragma.Text;
+				}
+				AppendLine(IndentLevel, Line);
+				break;
+			}
+
 			default:
 				break;
 			}

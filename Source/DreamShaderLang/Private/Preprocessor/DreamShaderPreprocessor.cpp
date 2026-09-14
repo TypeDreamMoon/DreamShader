@@ -241,6 +241,8 @@ namespace UE::DreamShader
 			EState State = EState::Outside;
 			int32 BraceDepth = 0;
 			bool bInBlockComment = false;
+			/** Lang2: a `/// @custom` block opens the opaque body, and `Function` means nothing. */
+			bool bLang2 = false;
 
 			/** Asked BEFORE the line is scanned, so a declaration line is still ordinary source. */
 			bool IsOpaque() const
@@ -251,6 +253,16 @@ namespace UE::DreamShader
 			void ScanLine(const FString& InLine)
 			{
 				const int32 Length = InLine.Len();
+
+				if (bLang2 && State == EState::Outside && IsCustomDocLine(InLine))
+				{
+					// The `///` block above a `@custom` function: its body is HLSL, whose `#if PIXELSHADER`
+					// and `#include` must reach the shader compiler as written, and the `{` that opens it is
+					// on a later line. The rest of this line is a comment either way.
+					State = EState::SeekingBody;
+					BraceDepth = 0;
+					return;
+				}
 
 				// A `#`-shaped line is never a Function declaration, whatever words follow. Without this
 				// a region comment spelled `#Region Function helpers` would open an opaque region that
@@ -350,7 +362,8 @@ namespace UE::DreamShader
 
 							// Case-sensitive, matching FScanner::TryConsumeKeyword, which is what
 							// actually decides whether the parser sees a Function block.
-							if (!bLineIsHashShaped
+							if (!bLang2
+								&& !bLineIsHashShaped
 								&& (Token.Equals(TEXT("Function"), ESearchCase::CaseSensitive)
 									|| Token.Equals(TEXT("GraphFunction"), ESearchCase::CaseSensitive)))
 							{
@@ -361,6 +374,14 @@ namespace UE::DreamShader
 
 						// Braces outside a Function body belong to Shader, Namespace and the section
 						// blocks, and are none of this tracker's business.
+						continue;
+					}
+
+					if (bLang2 && State == EState::SeekingBody && Character == TCHAR(';'))
+					{
+						// A `@custom` declaration that ended without a body (the binder reports it); the next
+						// `{` belongs to someone else.
+						State = EState::Outside;
 						continue;
 					}
 
@@ -384,6 +405,28 @@ namespace UE::DreamShader
 			}
 
 		private:
+			/** A `///` line that names `@custom` as a whole word. */
+			static bool IsCustomDocLine(const FString& InLine)
+			{
+				const FString Trimmed = InLine.TrimStart();
+				if (!Trimmed.StartsWith(TEXT("///"), ESearchCase::CaseSensitive))
+				{
+					return false;
+				}
+				static const FString Word = TEXT("@custom");
+				int32 Found = Trimmed.Find(Word, ESearchCase::CaseSensitive);
+				while (Found != INDEX_NONE)
+				{
+					const int32 After = Found + Word.Len();
+					if (After >= Trimmed.Len() || !(FChar::IsAlnum(Trimmed[After]) || Trimmed[After] == TCHAR('_')))
+					{
+						return true;
+					}
+					Found = Trimmed.Find(Word, ESearchCase::CaseSensitive, ESearchDir::FromStart, After);
+				}
+				return false;
+			}
+
 			static bool HasClosingQuoteOnLine(const FString& InLine, const int32 InOpenIndex)
 			{
 				for (int32 Index = InOpenIndex + 1; Index < InLine.Len(); ++Index)
@@ -467,7 +510,7 @@ namespace UE::DreamShader
 		 * tracker's job, and a line inside one never reaches here -- which is why `#include`, legal and
 		 * common at the top of an HLSL body, needs no entry above.
 		 */
-		EDirectiveKind ClassifyDirectiveLine(const FString& InLine, FString& OutKeyword, FString& OutRest)
+		EDirectiveKind ClassifyDirectiveLine(const FString& InLine, FString& OutKeyword, FString& OutRest, const bool bLang2 = false)
 		{
 			OutKeyword.Reset();
 			OutRest.Reset();
@@ -499,6 +542,16 @@ namespace UE::DreamShader
 
 			OutKeyword = InLine.Mid(KeywordStart, Index - KeywordStart);
 			OutRest = InLine.Mid(Index);
+
+			// Lang2's own file-level lines: `#pragma` carries material settings, layout and regions, and
+			// `#include` names a header the binder resolves. Neither is a conditional, and the parser needs
+			// both exactly as written.
+			if (bLang2
+				&& (OutKeyword.Equals(TEXT("pragma"), ESearchCase::CaseSensitive)
+					|| OutKeyword.Equals(TEXT("include"), ESearchCase::CaseSensitive)))
+			{
+				return EDirectiveKind::None;
+			}
 
 			for (const TCHAR* const GraphKeyword : GGraphDirectiveKeywords)
 			{
@@ -735,7 +788,8 @@ namespace UE::DreamShader
 		const FString& InFilePathForDiagnostics,
 		const FDreamShaderDefineTable& InDefines,
 		FDreamShaderPreprocessResult& OutResult,
-		FDreamShaderTextError& OutError)
+		FDreamShaderTextError& OutError,
+		const EDreamShaderPreprocessDialect InDialect)
 	{
 		OutResult.Text.Reset();
 		OutResult.TouchedDefines.Reset();
@@ -754,6 +808,7 @@ namespace UE::DreamShader
 
 		TArray<FConditionalFrame> Stack;
 		FOpaqueRegionTracker OpaqueRegion;
+		OpaqueRegion.bLang2 = InDialect == EDreamShaderPreprocessDialect::Lang2;
 
 		auto IsEmitting = [&Stack]() -> bool
 		{
@@ -816,7 +871,7 @@ namespace UE::DreamShader
 			FString Rest;
 			const EDirectiveKind Kind = bOpaque
 				? EDirectiveKind::None
-				: ClassifyDirectiveLine(Line, Keyword, Rest);
+				: ClassifyDirectiveLine(Line, Keyword, Rest, OpaqueRegion.bLang2);
 
 			const bool bEmitting = IsEmitting();
 
