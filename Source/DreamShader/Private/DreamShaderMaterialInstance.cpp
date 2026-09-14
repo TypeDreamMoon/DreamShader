@@ -23,14 +23,14 @@ bool UDreamShaderMaterialInstance::HasOverridenBaseProperties() const
 
 bool UDreamShaderMaterialInstance::IsAsset() const
 {
-	// Memory-only in-memory instances hide from asset enumeration — the Content Browser and the
-	// asset registry discover in-memory assets by iterating live objects and asking IsAsset()
+	// Ephemeral instances hide from asset enumeration — the Content Browser and the asset registry
+	// discover assets that have no file by iterating live objects and asking IsAsset()
 	// (AssetRegistry.cpp object-iterator path), so returning false here removes them from the
 	// browser and from save pickers (which also prevents an accidental explicit Save from
 	// materializing them). The source file is the authoring surface; references still resolve
-	// through the object path. Persisted instances behave like normal assets.
+	// through the object path. Materialized instances behave like normal assets.
 	if (GetPackage()->HasAnyPackageFlags(PKG_NewlyCreated)
-		&& !GetDefault<UDreamShaderSettings>()->bShowInMemoryMaterialsInContentBrowser)
+		&& !GetDefault<UDreamShaderSettings>()->bShowEphemeralMaterials)
 	{
 		return false;
 	}

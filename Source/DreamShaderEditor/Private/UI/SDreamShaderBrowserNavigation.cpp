@@ -135,7 +135,7 @@ namespace UE::DreamShader::Editor::Private
 					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFErrors", "Errors"), LOCTEXT("QFErrorsTip", "Sources whose last compile failed, or that could not be read."), &FBrowserFilter::bErrorsOnly) ]
 					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFStale", "Stale"), LOCTEXT("QFStaleTip", "Sources that changed since their asset was last generated."), &FBrowserFilter::bStaleOnly) ]
 					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFDiverged", "Edited by hand"), LOCTEXT("QFDivergedTip", "Generated assets that no longer match what DreamShader last wrote into them."), &FBrowserFilter::bDivergedOnly) ]
-					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFInMemory", "In memory"), LOCTEXT("QFInMemoryTip", "Materials that exist only in memory and have not been written to disk."), &FBrowserFilter::bInMemoryOnly) ]
+					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFEphemeral", "Ephemeral"), LOCTEXT("QFEphemeralTip", "Materials that have not been written to disk."), &FBrowserFilter::bEphemeralOnly) ]
 					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFHideLibraries", "Hide functions"), LOCTEXT("QFHideLibrariesTip", "Drop every .dsf and .dsh from the list."), &FBrowserFilter::bHideLibraries) ]
 					+ SVerticalBox::Slot().AutoHeight()[ MakeQuickFilter(LOCTEXT("QFHideUnmanaged", "Hide unmanaged"), LOCTEXT("QFHideUnmanagedTip", "Drop the materials DreamShader does not manage from the list."), &FBrowserFilter::bHideUnmanaged) ]
 				]

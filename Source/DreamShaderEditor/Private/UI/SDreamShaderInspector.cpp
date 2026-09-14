@@ -366,7 +366,7 @@ namespace UE::DreamShader::Editor::Private
 		const TSharedPtr<FBrowserEntry> EntryRef = Entry;
 		const TWeakPtr<FDreamShaderBrowserModel> WeakModel = Model;
 		const bool bHasSource = Entry->Source.IsSet();
-		const bool bInMemory = Entry->Asset.IsSet() && Entry->Asset->Storage == EBrowserStorage::InMemory;
+		const bool bEphemeral = Entry->Asset.IsSet() && Entry->Asset->Storage == EBrowserStorage::Ephemeral;
 
 		if (!Entry->IsLibrary())
 		{
@@ -396,7 +396,7 @@ namespace UE::DreamShader::Editor::Private
 				LOCTEXT("POpenMatTip", "Open the generated material asset."),
 				[EntryRef]() { FDreamShaderBrowserActions::OpenMaterial(*EntryRef); }) ];
 		}
-		if (Material && bInMemory)
+		if (Material && bEphemeral)
 		{
 			ActionBox->AddSlot()[ MakeActionButton(
 				LOCTEXT("MaterializeBtn", "Materialize"),

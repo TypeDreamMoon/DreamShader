@@ -25,7 +25,7 @@ namespace UE::DreamShader::Editor::Private
 		bool bErrorsOnly = false;
 		bool bStaleOnly = false;
 		bool bDivergedOnly = false;
-		bool bInMemoryOnly = false;
+		bool bEphemeralOnly = false;
 		bool bHideLibraries = false;
 		bool bHideUnmanaged = false;
 		// Absolute, normalized source directory; only sources under it pass. Empty = everything,
@@ -33,7 +33,7 @@ namespace UE::DreamShader::Editor::Private
 		FString SourceDirectoryScope;
 		static const TCHAR* UnmanagedScope() { return TEXT("#unmanaged"); }
 
-		bool HasStatusFilter() const { return bErrorsOnly || bStaleOnly || bDivergedOnly || bInMemoryOnly; }
+		bool HasStatusFilter() const { return bErrorsOnly || bStaleOnly || bDivergedOnly || bEphemeralOnly; }
 		bool Matches(const FBrowserEntry& Entry) const;
 		// The status toggles alone, for a view that does its own search and scoping (the asset picker).
 		bool MatchesStatus(const FBrowserEntry& Entry) const;

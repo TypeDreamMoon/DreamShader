@@ -123,7 +123,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 		if (!AssetData.IsValid())
 		{
-			// A memory-only material is not in the registry unless the in-memory toggle is on.
+			// An Ephemeral material is not in the registry unless the visibility toggle is on.
 			if (UObject* Object = FindObject<UObject>(nullptr, *ObjectPath))
 			{
 				AssetData = FAssetData(Object);
@@ -154,9 +154,9 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return !Filter.MatchesStatus(*Entry);
 		}
-		// Not a scanned source's asset: only the in-memory toggle can say yes to it.
-		const bool bInMemory = (AssetData.PackageFlags & PKG_NewlyCreated) != 0;
-		return !(Filter.bInMemoryOnly && bInMemory);
+		// Not a scanned source's asset: only the Ephemeral toggle can say yes to it.
+		const bool bEphemeral = (AssetData.PackageFlags & PKG_NewlyCreated) != 0;
+		return !(Filter.bEphemeralOnly && bEphemeral);
 	}
 
 	void SDreamShaderAssetsView::OnAssetSelected(const FAssetData&)

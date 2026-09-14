@@ -30,8 +30,8 @@ namespace UE::DreamShader::Editor::Private
 			return { INVTEXT("●"), FLinearColor(0.10f, 0.62f, 0.20f), NSLOCTEXT("DreamShaderMaterialBrowser", "StatusUpToDate", "up to date") };
 		case EBrowserSourceStatus::Stale:
 			return { INVTEXT("●"), FLinearColor(0.90f, 0.62f, 0.12f), NSLOCTEXT("DreamShaderMaterialBrowser", "StatusStale", "stale") };
-		case EBrowserSourceStatus::InMemoryUntracked:
-			return { INVTEXT("◐"), FLinearColor(0.10f, 0.62f, 0.20f), NSLOCTEXT("DreamShaderMaterialBrowser", "StatusInMemoryUntracked", "compiled in memory") };
+		case EBrowserSourceStatus::EphemeralUntracked:
+			return { INVTEXT("◐"), FLinearColor(0.10f, 0.62f, 0.20f), NSLOCTEXT("DreamShaderMaterialBrowser", "StatusEphemeralUntracked", "compiled, Ephemeral") };
 		case EBrowserSourceStatus::NotCompiled:
 			return { INVTEXT("○"), FLinearColor(0.50f, 0.50f, 0.50f), NSLOCTEXT("DreamShaderMaterialBrowser", "StatusNever", "not compiled") };
 		case EBrowserSourceStatus::Error:
@@ -76,8 +76,8 @@ namespace UE::DreamShader::Editor::Private
 
 	inline FText GetBrowserStorageLabel(EBrowserStorage Storage)
 	{
-		return Storage == EBrowserStorage::InMemory
-			? NSLOCTEXT("DreamShaderMaterialBrowser", "InMemory", "memory-only (not saved)")
+		return Storage == EBrowserStorage::Ephemeral
+			? NSLOCTEXT("DreamShaderMaterialBrowser", "Ephemeral", "Ephemeral (no file on disk)")
 			: NSLOCTEXT("DreamShaderMaterialBrowser", "OnDisk", "on disk");
 	}
 

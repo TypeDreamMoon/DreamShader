@@ -69,7 +69,7 @@ namespace UE::DreamShader::Editor::Private
 			return nullptr;
 		}
 		// Find first: a memory-only material has no package on disk, and LoadObject on it would log
-		// a failed load before falling back to the in-memory object.
+		// a failed load before falling back to the object in memory.
 		if (UMaterialInterface* Found = FindObject<UMaterialInterface>(nullptr, *ObjectPath))
 		{
 			return Found;
@@ -100,7 +100,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return true;
 		}
-		if (bInMemoryOnly && Entry.Asset.IsSet() && Entry.Asset->Storage == EBrowserStorage::InMemory)
+		if (bEphemeralOnly && Entry.Asset.IsSet() && Entry.Asset->Storage == EBrowserStorage::Ephemeral)
 		{
 			return true;
 		}
@@ -478,7 +478,7 @@ namespace UE::DreamShader::Editor::Private
 		OutInfo = FBrowserAssetInfo();
 		OutInfo.AssetData = AssetData;
 		OutInfo.ObjectPath = AssetData.GetObjectPathString();
-		OutInfo.Storage = (AssetData.PackageFlags & PKG_NewlyCreated) != 0 ? EBrowserStorage::InMemory : EBrowserStorage::OnDisk;
+		OutInfo.Storage = (AssetData.PackageFlags & PKG_NewlyCreated) != 0 ? EBrowserStorage::Ephemeral : EBrowserStorage::OnDisk;
 		OutInfo.Provenance = EDreamShaderDigestState::Foreign;
 		OutInfo.bFromRegistryOnly = true;
 		const UClass* AssetClass = AssetData.GetClass();
@@ -645,7 +645,7 @@ namespace UE::DreamShader::Editor::Private
 		OutInfo.ObjectPath = Asset->GetPathName();
 		const UPackage* Package = Asset->GetPackage();
 		OutInfo.Storage = (Package && Package->HasAnyPackageFlags(PKG_NewlyCreated))
-			? EBrowserStorage::InMemory
+			? EBrowserStorage::Ephemeral
 			: EBrowserStorage::OnDisk;
 		OutInfo.Provenance = ClassifyGeneratedAsset(Asset);
 		OutInfo.bOpenInEditor = IsGeneratedAssetOpenInEditor(Asset);
@@ -724,7 +724,7 @@ namespace UE::DreamShader::Editor::Private
 		// Nothing to compare, so "stale" would be a guess; say what is known.
 		if (!IsGeneratedAssetPersisted(Asset) && GetGeneratedAssetSourceHash(Asset).IsEmpty())
 		{
-			Source.Status = EBrowserSourceStatus::InMemoryUntracked;
+			Source.Status = EBrowserSourceStatus::EphemeralUntracked;
 			return;
 		}
 

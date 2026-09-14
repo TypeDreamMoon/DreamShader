@@ -33,7 +33,7 @@ namespace UE::DreamShader::Editor::Private
 		NotCompiled,       // no object at the resolved object path
 		UpToDate,          // asset exists and its stamped source hash matches the current source
 		Stale,             // asset exists but its stamped source hash differs from the current source
-		InMemoryUntracked, // asset exists in memory and carries no source hash -- a memory-only build
+		EphemeralUntracked, // asset exists in memory and carries no source hash -- an Ephemeral build
 		                   // deliberately stamps the path alone, so currency cannot be judged; this is
 		                   // NOT stale, it is "compiled, freshness unknown"
 		Error,             // the last compile (from this browser, or per the bridge's diagnostics) failed
@@ -44,7 +44,7 @@ namespace UE::DreamShader::Editor::Private
 	enum class EBrowserStorage : uint8
 	{
 		OnDisk,
-		InMemory, // PKG_NewlyCreated: materializing would move it to disk
+		Ephemeral, // PKG_NewlyCreated: materializing would move it to disk
 	};
 
 	struct FBrowserSourceInfo

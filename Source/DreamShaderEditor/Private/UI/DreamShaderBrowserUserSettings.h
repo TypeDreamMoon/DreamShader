@@ -57,7 +57,7 @@ public:
 	bool bDivergedOnly = false;
 
 	UPROPERTY(Config)
-	bool bInMemoryOnly = false;
+	bool bEphemeralOnly = false;
 
 	UPROPERTY(Config)
 	bool bHideLibraries = false;

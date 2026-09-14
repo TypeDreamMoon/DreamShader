@@ -5,7 +5,7 @@
 // (Tests/DreamShaderDivergenceNotificationTests.cpp). See Docs/generation/divergence.md.
 //
 // A rebuild that is refused because the asset was hand-edited (DSH8115) used to reach the user only
-// as prose in the log, pointing at a Content Browser submenu -- which for a hidden in-memory
+// as prose in the log, pointing at a Content Browser submenu -- which for a hidden Ephemeral
 // ThinCustom instance does not exist, because neither does the tile you would right-click. The
 // bridge now raises an actionable notification instead. Three questions have to be answered first,
 // and all three are pure:
@@ -134,7 +134,7 @@ namespace UE::DreamShader::Editor::Private
 		 * ...and it is a memory-only ThinCustom instance that the Content Browser is currently
 		 * hiding, so "right-click the asset" names something the user cannot see.
 		 */
-		bool bHiddenInMemoryInstance = false;
+		bool bHiddenEphemeralInstance = false;
 	};
 
 	/** Which buttons the toast carries. */
@@ -143,11 +143,11 @@ namespace UE::DreamShader::Editor::Private
 		bool bRevert = false;
 		bool bAdopt = false;
 		bool bDetach = false;
-		bool bShowInMemoryMaterials = false;
+		bool bShowEphemeralMaterials = false;
 
 		int32 Num() const
 		{
-			return (bRevert ? 1 : 0) + (bAdopt ? 1 : 0) + (bDetach ? 1 : 0) + (bShowInMemoryMaterials ? 1 : 0);
+			return (bRevert ? 1 : 0) + (bAdopt ? 1 : 0) + (bDetach ? 1 : 0) + (bShowEphemeralMaterials ? 1 : 0);
 		}
 		bool HasAnyAction() const { return Num() > 0; }
 	};
@@ -170,7 +170,7 @@ namespace UE::DreamShader::Editor::Private
 		Buttons.bRevert = true;
 		Buttons.bAdopt = true;
 		Buttons.bDetach = true;
-		Buttons.bShowInMemoryMaterials = Facts.bHiddenInMemoryInstance;
+		Buttons.bShowEphemeralMaterials = Facts.bHiddenEphemeralInstance;
 		return Buttons;
 	}
 

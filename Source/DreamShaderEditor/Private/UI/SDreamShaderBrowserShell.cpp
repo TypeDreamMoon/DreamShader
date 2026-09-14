@@ -114,7 +114,7 @@ namespace UE::DreamShader::Editor::Private
 		SharedState->Filter.bErrorsOnly = Settings->bErrorsOnly;
 		SharedState->Filter.bStaleOnly = Settings->bStaleOnly;
 		SharedState->Filter.bDivergedOnly = Settings->bDivergedOnly;
-		SharedState->Filter.bInMemoryOnly = Settings->bInMemoryOnly;
+		SharedState->Filter.bEphemeralOnly = Settings->bEphemeralOnly;
 		SharedState->Filter.bHideLibraries = Settings->bHideLibraries;
 		SharedState->Filter.bHideUnmanaged = Settings->bHideUnmanaged;
 		SharedState->Filter.SourceDirectoryScope = SharedState->Scope.Mode == EDreamShaderBrowserViewMode::Sources ? SharedState->Scope.SourceDirectory : FString();
@@ -438,19 +438,19 @@ namespace UE::DreamShader::Editor::Private
 
 		Menu.BeginSection(TEXT("Global"), LOCTEXT("ViewSectionGlobal", "Content Browser"));
 		Menu.AddMenuEntry(
-			LOCTEXT("ShowInMemory", "Show in-memory materials"),
-			LOCTEXT("ShowInMemoryTip", "Show DreamShader's memory-only materials here and in the Content Browser (global project setting)."),
+			LOCTEXT("ShowEphemeral", "Show Ephemeral materials"),
+			LOCTEXT("ShowEphemeralTip", "Show DreamShader's Ephemeral materials here and in the Content Browser (global project setting)."),
 			FSlateIcon(),
 			FUIAction(
 				FExecuteAction::CreateLambda([]()
 				{
 					if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
 					{
-						Bridge->ToggleShowInMemoryMaterialsInContentBrowser();
+						Bridge->ToggleShowEphemeralMaterials();
 					}
 				}),
 				FCanExecuteAction::CreateLambda([]() { return GetDreamShaderEditorBridge() != nullptr; }),
-				FIsActionChecked::CreateLambda([]() { return GetDefault<UDreamShaderSettings>()->bShowInMemoryMaterialsInContentBrowser; })),
+				FIsActionChecked::CreateLambda([]() { return GetDefault<UDreamShaderSettings>()->bShowEphemeralMaterials; })),
 			NAME_None,
 			EUserInterfaceActionType::ToggleButton);
 		Menu.EndSection();
@@ -465,13 +465,13 @@ namespace UE::DreamShader::Editor::Private
 		const auto ToggleOnly = [State](bool FBrowserFilter::*Member)
 		{
 			const bool bWasOn = State->Filter.*Member;
-			State->Filter.bErrorsOnly = State->Filter.bStaleOnly = State->Filter.bDivergedOnly = State->Filter.bInMemoryOnly = false;
+			State->Filter.bErrorsOnly = State->Filter.bStaleOnly = State->Filter.bDivergedOnly = State->Filter.bEphemeralOnly = false;
 			State->Filter.*Member = !bWasOn;
 			State->NotifyFilterChanged();
 		};
 		const auto ClearStatusFilters = [State]()
 		{
-			State->Filter.bErrorsOnly = State->Filter.bStaleOnly = State->Filter.bDivergedOnly = State->Filter.bInMemoryOnly = false;
+			State->Filter.bErrorsOnly = State->Filter.bStaleOnly = State->Filter.bDivergedOnly = State->Filter.bEphemeralOnly = false;
 			State->NotifyFilterChanged();
 		};
 
@@ -505,7 +505,7 @@ namespace UE::DreamShader::Editor::Private
 				]
 				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
 				[
-					MakeStatusCount(LOCTEXT("StatusInMemoryCount", "in memory"), TAttribute<int32>::CreateLambda([this]() { return CountInMemory; }), FLinearColor(0.50f, 0.50f, 0.50f), [ToggleOnly]() { ToggleOnly(&FBrowserFilter::bInMemoryOnly); })
+					MakeStatusCount(LOCTEXT("StatusEphemeralCount", "Ephemeral"), TAttribute<int32>::CreateLambda([this]() { return CountEphemeral; }), FLinearColor(0.50f, 0.50f, 0.50f), [ToggleOnly]() { ToggleOnly(&FBrowserFilter::bEphemeralOnly); })
 				]
 				+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
 				[
@@ -603,14 +603,14 @@ namespace UE::DreamShader::Editor::Private
 
 	void SDreamShaderBrowserShell::OnModelChanged()
 	{
-		CountTotal = CountOk = CountStale = CountErrors = CountDiverged = CountInMemory = CountUnmanaged = 0;
+		CountTotal = CountOk = CountStale = CountErrors = CountDiverged = CountEphemeral = CountUnmanaged = 0;
 		for (const TSharedPtr<FBrowserEntry>& Entry : Model->GetEntries())
 		{
 			if (Entry->IsUnmanaged())
 			{
 				++CountUnmanaged;
 				if (Entry->Asset->Provenance == EDreamShaderDigestState::Diverged) { ++CountDiverged; }
-				if (Entry->Asset->Storage == EBrowserStorage::InMemory) { ++CountInMemory; }
+				if (Entry->Asset->Storage == EBrowserStorage::Ephemeral) { ++CountEphemeral; }
 				continue;
 			}
 			++CountTotal;
@@ -619,7 +619,7 @@ namespace UE::DreamShader::Editor::Private
 				switch (Entry->Source->Status)
 				{
 				case EBrowserSourceStatus::UpToDate:
-				case EBrowserSourceStatus::InMemoryUntracked:
+				case EBrowserSourceStatus::EphemeralUntracked:
 					++CountOk;
 					break;
 				case EBrowserSourceStatus::Stale:
@@ -636,7 +636,7 @@ namespace UE::DreamShader::Editor::Private
 			if (Entry->Asset.IsSet())
 			{
 				if (Entry->Asset->Provenance == EDreamShaderDigestState::Diverged) { ++CountDiverged; }
-				if (Entry->Asset->Storage == EBrowserStorage::InMemory) { ++CountInMemory; }
+				if (Entry->Asset->Storage == EBrowserStorage::Ephemeral) { ++CountEphemeral; }
 			}
 		}
 	}
@@ -707,7 +707,7 @@ namespace UE::DreamShader::Editor::Private
 		Settings->bErrorsOnly = SharedState->Filter.bErrorsOnly;
 		Settings->bStaleOnly = SharedState->Filter.bStaleOnly;
 		Settings->bDivergedOnly = SharedState->Filter.bDivergedOnly;
-		Settings->bInMemoryOnly = SharedState->Filter.bInMemoryOnly;
+		Settings->bEphemeralOnly = SharedState->Filter.bEphemeralOnly;
 		Settings->bHideLibraries = SharedState->Filter.bHideLibraries;
 		Settings->bHideUnmanaged = SharedState->Filter.bHideUnmanaged;
 		Settings->bTileView = SourcesView.IsValid() && SourcesView->IsTileView();
@@ -812,10 +812,10 @@ namespace UE::DreamShader::Editor::Private
 		return Entry.IsValid() && !Entry->IsLibrary() && !Entry->GetObjectPath().IsEmpty() && Entry->Asset.IsSet();
 	}
 
-	bool SDreamShaderBrowserShell::HasSelectionInMemory() const
+	bool SDreamShaderBrowserShell::HasSelectionEphemeral() const
 	{
 		const TSharedPtr<FBrowserEntry> Entry = FirstSelected();
-		return Entry.IsValid() && Entry->Asset.IsSet() && Entry->Asset->Storage == EBrowserStorage::InMemory;
+		return Entry.IsValid() && Entry->Asset.IsSet() && Entry->Asset->Storage == EBrowserStorage::Ephemeral;
 	}
 
 	bool SDreamShaderBrowserShell::HasSelectionGenerated() const
@@ -860,9 +860,9 @@ namespace UE::DreamShader::Editor::Private
 			FCanExecuteAction::CreateLambda([this]() { const TSharedPtr<FBrowserEntry> E = FirstSelected(); return E.IsValid() && !E->IsLibrary(); }));
 		CommandList->MapAction(Commands.Materialize,
 			FExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::ExecuteMaterialize),
-			FCanExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::HasSelectionInMemory),
+			FCanExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::HasSelectionEphemeral),
 			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SDreamShaderBrowserShell::HasSelectionInMemory));
+			FIsActionButtonVisible::CreateSP(this, &SDreamShaderBrowserShell::HasSelectionEphemeral));
 		CommandList->MapAction(Commands.RevealInContentBrowser,
 			FExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::ExecuteRevealInContentBrowser),
 			FCanExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::HasSelectionWithMaterial));
@@ -980,7 +980,7 @@ namespace UE::DreamShader::Editor::Private
 		// Every memory-only entry in the selection; the others are already on disk.
 		for (const TSharedPtr<FBrowserEntry>& Entry : TArray<TSharedPtr<FBrowserEntry>>(Selection))
 		{
-			if (Entry.IsValid() && Entry->Asset.IsSet() && Entry->Asset->Storage == EBrowserStorage::InMemory)
+			if (Entry.IsValid() && Entry->Asset.IsSet() && Entry->Asset->Storage == EBrowserStorage::Ephemeral)
 			{
 				FDreamShaderBrowserActions::Materialize(*Model, Entry);
 			}

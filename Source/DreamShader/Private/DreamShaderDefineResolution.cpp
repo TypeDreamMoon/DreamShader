@@ -292,7 +292,7 @@ namespace UE::DreamShader
 		{
 			// Re-registering an identical entry is a no-op, and must not bump the revision: a
 			// StartupModule path gets run again on a hot reload, and a spurious bump throws away every
-			// ThinCustom in-memory material for nothing.
+			// Ephemeral ThinCustom product for nothing.
 			if (Private::DefineResolutionImpl::AreEntriesIdentical(*Existing, NewEntry))
 			{
 				return true;
@@ -524,7 +524,7 @@ namespace UE::DreamShader
 	{
 		// The settings tier is read live from the CDO in ResolveDreamShaderDefines, so there is
 		// nothing to copy across -- the bump IS the entire effect. It is what tells whatever holds
-		// compiled output (the ThinCustom in-memory materials above all) that the material built from
+		// compiled output (the Ephemeral ThinCustom products above all) that the material built from
 		// the previous define set no longer describes what the source says.
 		//
 		// Unconditional, unlike the registry writers: by the time PostEditChangeProperty runs the
