@@ -396,6 +396,86 @@ namespace UE::DreamShader::Lang::Private
 			Out += bTrailingComma ? TEXT(",\n") : TEXT("\n");
 		}
 
+		/** A global's type for the index: the resolved type, or the spelling when nothing resolves it (a `.dsi` `Font`, a typo). */
+		FString DescribeSymbolIndexGlobalType(const FBoundGlobal& Global)
+		{
+			return (Global.Type.IsError() && Global.Decl) ? Global.Decl->Type.Name : Global.Type.ToString();
+		}
+
+		/**
+		 * The `instance` section of a `.dsi` (batch 2; research-instance section 8.4): the parent reference and its
+		 * resolved path, the keys and the overrides with their spans, and the parent's parameters as the schema
+		 * lists them, so an editor can complete an override's name.
+		 */
+		void AppendSymbolIndexInstanceSection(FString& Out, const FBoundModule& Bound, const FString& RootFile)
+		{
+			const FBoundInstance& Instance = Bound.Instance;
+			const IR::FIRParameterSchema* Schema = Bound.ParentSchema;
+
+			Out += TEXT("  \"instance\": {\n");
+			AppendField(Out, TEXT("    "), TEXT("parent"), Instance.ParentReference, true);
+			AppendField(Out, TEXT("    "), TEXT("parentObject"), Schema ? Schema->ParentObjectPath : FString(), true);
+			Out += TEXT("    \"parentSpan\": {\n");
+			AppendSpan(Out, TEXT("      "), RootFile, Instance.ParentSpan);
+			Out += TEXT("\n    },\n");
+
+			Out += TEXT("    \"settings\": [\n");
+			for (int32 Index = 0; Index < Instance.Settings.Num(); ++Index)
+			{
+				Out += TEXT("      {\n");
+				AppendField(Out, TEXT("        "), TEXT("key"), Instance.Settings[Index].Key, true);
+				AppendField(Out, TEXT("        "), TEXT("value"), Instance.Settings[Index].Value, true);
+				AppendSpan(Out, TEXT("        "), RootFile, Instance.SettingSpans.IsValidIndex(Index) ? Instance.SettingSpans[Index] : FLangSpan());
+				Out += TEXT("\n      }");
+				Out += (Index + 1 < Instance.Settings.Num()) ? TEXT(",\n") : TEXT("\n");
+			}
+			Out += TEXT("    ],\n");
+
+			Out += TEXT("    \"overrides\": [\n");
+			for (int32 Index = 0; Index < Instance.Overrides.Num(); ++Index)
+			{
+				const FBoundInstanceOverride& Override = Instance.Overrides[Index];
+				const FBoundGlobal* Global = Bound.Globals.IsValidIndex(Override.GlobalIndex) ? &Bound.Globals[Override.GlobalIndex] : nullptr;
+
+				Out += TEXT("      {\n");
+				AppendField(Out, TEXT("        "), TEXT("name"), Override.ParameterName, true);
+				AppendField(Out, TEXT("        "), TEXT("variable"), Global ? Global->Name : FString(), true);
+				AppendField(Out, TEXT("        "), TEXT("kind"), IR::LexToString(Override.Kind), true);
+				Out += FString::Printf(TEXT("        \"schemaIndex\": %d,\n"), Override.SchemaIndex);
+				Out += FString::Printf(TEXT("        \"page\": %d,\n"), Override.FontPage);
+				AppendSpan(
+					Out,
+					TEXT("        "),
+					Global ? Global->File : RootFile,
+					(Global && Global->Decl) ? Global->Decl->Declarator.NameSpan : FLangSpan());
+				Out += TEXT("\n      }");
+				Out += (Index + 1 < Instance.Overrides.Num()) ? TEXT(",\n") : TEXT("\n");
+			}
+			Out += TEXT("    ],\n");
+
+			Out += TEXT("    \"schema\": {\n");
+			Out += FString::Printf(TEXT("      \"valid\": %s,\n"), (Schema && Schema->bValid) ? TEXT("true") : TEXT("false"));
+			AppendField(Out, TEXT("      "), TEXT("origin"), Schema ? Schema->Origin : FString(), true);
+			Out += TEXT("      \"parameters\": [\n");
+			const int32 Count = Schema ? Schema->Parameters.Num() : 0;
+			for (int32 Index = 0; Index < Count; ++Index)
+			{
+				const IR::FIRParameterSchemaEntry& Entry = Schema->Parameters[Index];
+				Out += TEXT("        {\n");
+				AppendField(Out, TEXT("          "), TEXT("name"), Entry.Name, true);
+				AppendField(Out, TEXT("          "), TEXT("kind"), IR::LexToString(Entry.Kind), true);
+				AppendField(Out, TEXT("          "), TEXT("type"), Entry.DeclaredType.IsError() ? FString() : Entry.DeclaredType.ToString(), true);
+				AppendField(Out, TEXT("          "), TEXT("group"), Entry.Group, true);
+				Out += FString::Printf(TEXT("          \"sort\": %d,\n"), Entry.SortPriority);
+				Out += FString::Printf(TEXT("          \"pruned\": %s\n"), Entry.bPruned ? TEXT("true") : TEXT("false"));
+				Out += TEXT("        }");
+				Out += (Index + 1 < Count) ? TEXT(",\n") : TEXT("\n");
+			}
+			Out += TEXT("      ]\n");
+			Out += TEXT("    }\n");
+			Out += TEXT("  }\n");
+		}
+
 	}
 }
 
@@ -555,7 +635,7 @@ namespace UE::DreamShader::Lang
 			AppendField(Out, TEXT("      "), TEXT("kind"), Global.bIsParameter ? TEXT("uniform") : TEXT("constant"), true);
 			AppendField(Out, TEXT("      "), TEXT("name"), Global.Name, true);
 			AppendField(Out, TEXT("      "), TEXT("signature"), BuildVariableSignature(*Global.Decl), true);
-			AppendField(Out, TEXT("      "), TEXT("type"), Global.Type.ToString(), true);
+			AppendField(Out, TEXT("      "), TEXT("type"), DescribeSymbolIndexGlobalType(Global), true);
 			AppendField(Out, TEXT("      "), TEXT("doc"), Global.Directives.Desc, true);
 			AppendSpan(Out, TEXT("      "), Global.File, Global.Decl->Declarator.NameSpan);
 			Out += TEXT("\n    }");
@@ -600,6 +680,11 @@ namespace UE::DreamShader::Lang
 				AppendField(Out, TEXT("      "), TEXT("name"), Param.Name, true);
 				AppendField(Out, TEXT("      "), TEXT("container"), Function.Name, true);
 				AppendField(Out, TEXT("      "), TEXT("type"), BoundParam.Type.ToString(), true);
+				if (!BoundParam.PinName.IsEmpty())
+				{
+					// `@pin`: the engine's name for this pin (batch 2).
+					AppendField(Out, TEXT("      "), TEXT("pin"), BoundParam.PinName, true);
+				}
 				AppendField(Out, TEXT("      "), TEXT("doc"), BoundParam.Doc, true);
 				AppendSpan(Out, TEXT("      "), Function.File, Param.NameSpan);
 				Out += TEXT("\n    }");
@@ -664,7 +749,7 @@ namespace UE::DreamShader::Lang
 			Out += TEXT("    {\n");
 			AppendField(Out, TEXT("      "), TEXT("name"), Directives.Name.IsEmpty() ? Global.Name : Directives.Name, true);
 			AppendField(Out, TEXT("      "), TEXT("variable"), Global.Name, true);
-			AppendField(Out, TEXT("      "), TEXT("type"), Global.Type.ToString(), true);
+			AppendField(Out, TEXT("      "), TEXT("type"), DescribeSymbolIndexGlobalType(Global), true);
 			AppendField(Out, TEXT("      "), TEXT("group"), Directives.Group, true);
 			AppendField(Out, TEXT("      "), TEXT("desc"), Directives.Desc, true);
 			AppendField(Out, TEXT("      "), TEXT("sampler"), Directives.Sampler, true);
@@ -726,7 +811,15 @@ namespace UE::DreamShader::Lang
 			Out += TEXT("\n    }");
 		}
 		Out += bFirstParameter ? TEXT("") : TEXT("\n");
-		Out += TEXT("  ]\n");
+		if (Bound.Instance.bIsInstance)
+		{
+			Out += TEXT("  ],\n");
+			AppendSymbolIndexInstanceSection(Out, Bound, RootFile);
+		}
+		else
+		{
+			Out += TEXT("  ]\n");
+		}
 
 		Out += TEXT("}\n");
 		return Out;
