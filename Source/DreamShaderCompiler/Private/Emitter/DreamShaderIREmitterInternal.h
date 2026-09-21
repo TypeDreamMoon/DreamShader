@@ -12,8 +12,7 @@
 // component count, a texture flag, a MaterialAttributes flag, a Substrate flag and an inline mask
 // on every value because it was inferring types as it built the graph. The IR knows all of that
 // before the emitter starts, so a value here is only (expression, output index) -- and the inline
-// mask is gone for good: a Swizzle is a ComponentMask node, never an FExpressionInput mask
-// (plan §3.3, CONTRACT §6.6).
+// mask is gone for good: a Swizzle is a ComponentMask node, never an FExpressionInput mask.
 
 #pragma once
 
@@ -60,7 +59,7 @@ namespace UE::DreamShader::Editor::Compiler
 	 *
 	 * OutputIndices maps an IR output SLOT to the engine output INDEX, and it exists because the two
 	 * disagree on real classes. TextureSample is the plain example: the IR names its outputs
-	 * RGBA,R,G,B,A (CONTRACT §6.5) while UMaterialExpressionTextureSample publishes them as
+	 * RGBA,R,G,B,A while UMaterialExpressionTextureSample publishes them as
 	 * RGB,R,G,B,A,RGBA -- slot 0 and index 0 are different values, and a wire built on the
 	 * assumption that they are the same is the "SceneTexture Color.r became InvSize" failure with a
 	 * different name. Empty means identity, which is every node whose outputs the catalog read off
@@ -291,7 +290,7 @@ namespace UE::DreamShader::Editor::Compiler
 	/**
 	 * True when a string property holds an asset reference a legacy source carried unresolved -- `Path(Root, "rel")`, a quoted
 	 * path, a `Class'/Game/...'` shell -- rather than a plain object path. The front end is Core-only and leaves those to the
-	 * emitter (CONTRACT section 2.1), which resolves them with TryResolveDreamShaderAssetReference.
+	 * emitter, which resolves them with TryResolveDreamShaderAssetReference.
 	 */
 	bool IsDreamShaderAssetReferenceSpelling(const FString& Text);
 

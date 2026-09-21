@@ -2,7 +2,7 @@
 //
 // Parameter and texture-parameter nodes, and the metadata that goes on them.
 //
-// The class a `uniform` becomes is settled by CONTRACT §6.1 and carried in the IR, not decided
+// The class a `uniform` becomes is settled by the binder and carried in the IR, not decided
 // here: a static bool is a StaticBoolParameter, a float2..4 is a VectorParameter (with the builder's
 // own Swizzle node after it for the narrow widths -- a float2 uniform is NOT a
 // DoubleVectorParameter, which is what 1.x does and what the parity test measures), and everything
@@ -53,7 +53,7 @@ namespace UE::DreamShader::Editor::Compiler
 		 * UMaterialExpressionVectorParameter publishes RGB, R, G, B, A, RGBA -- its output 0 is a
 		 * THREE-channel mask, not the float4 the IR's slot 0 names. The builder gives a vector
 		 * uniform a float4 output and takes the declared width with a Swizzle after it
-		 * (IRBuilderMaterial.cpp, CONTRACT 6.13 #22), so an identity slot -> index map wires slot 0
+		 * (IRBuilderMaterial.cpp), so an identity slot -> index map wires slot 0
 		 * to RGB: a `uniform float4` would silently lose its alpha, and a float3's `.xyz` could
 		 * never take the named-output shortcut #22 describes, because that shortcut first asks
 		 * whether the operand is the whole of its expression's output -- which output 0 is not.
@@ -199,7 +199,7 @@ namespace UE::DreamShader::Editor::Compiler
 	bool FIREmitter::EmitTextureParameter(const int32 NodeIndex, const IR::FIRNode& Node)
 	{
 		// TextureObjectParameter rather than TextureSampleParameter2D: a 2.0 texture uniform is a
-		// texture OBJECT that a separate TextureSample node reads (CONTRACT §6.5), so one uniform
+		// texture OBJECT that a separate TextureSample node reads, so one uniform
 		// sampled twice is one parameter and two samples rather than two parameters.
 		auto* Texture = Cast<UMaterialExpressionTextureObjectParameter>(
 			CreateExpression(UMaterialExpressionTextureObjectParameter::StaticClass(), Node));

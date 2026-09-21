@@ -23,7 +23,7 @@ namespace UE::DreamShader::Editor::Compiler
 		/**
 		 * Splits `/Game/Some/Path/M_X` into Root `/Game/Some/Path` and Name `M_X`.
 		 *
-		 * This is what makes CONTRACT §2's "a full path in @name is AssetPathOverride" land on the
+		 * This is what makes "a full path in @name is AssetPathOverride" land on the
 		 * 1.x root rules rather than beside them: ResolveDreamShaderAssetDestination treats its
 		 * AssetName as relative to Root and its Root's first segment as the mount point, so handing
 		 * it the whole path as a name would produce `/Game/Game/Some/Path/M_X`. Splitting at the
@@ -93,7 +93,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 		if (Product.bLegacyAssetPath)
 		{
-			// A legacy source (rule L10, agreement A12): the 1.x `Name=` -- folders allowed -- and `Root=` exactly as written,
+			// A legacy source (rule L10): the 1.x `Name=` -- folders allowed -- and `Root=` exactly as written,
 			// resolved by the 1.x root rules and never mirrored under the source's folder, because 1.x never did.
 			OutDefinition.Name = Product.Name;
 			OutDefinition.Root = Product.AssetRoot;
@@ -129,7 +129,7 @@ namespace UE::DreamShader::Editor::Compiler
 		{
 			Private::ApplyDefaultRootFromSourceFile(SourceFilePath, OutDefinition);
 
-			// The 2.0 default, as the plan and the syntax proposal fix it (source-root-relative folder
+			// The 2.0 default (source-root-relative folder
 			// plus the product name): `DShader/FX/Glow.dss` exporting `M_Glow` is `/Game/FX/M_Glow`, and
 			// the same file under a plugin's root lands under that plugin's mount point. A bare `@name`
 			// still replaces only the leaf; a full-path one never reaches here. The 1.x rule stopped at

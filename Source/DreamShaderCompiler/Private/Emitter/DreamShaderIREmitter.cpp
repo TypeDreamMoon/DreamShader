@@ -31,7 +31,7 @@
 #include "Assets/DreamShaderThinCustomParameterOverrides.h"
 // FDreamShaderShaderCompileStallWatch (DSH9011).
 #include "DreamShaderCompilerServiceInternal.h"
-// The graph debug table the probe preview and breakpoints read (agreement A1).
+// The graph debug table the probe preview and breakpoints read.
 #include "DreamShaderGraphDebugInfo.h"
 // `.dsi`: the instance product (IsMemoryOnlyMaterial / MaterializeDreamShaderMaterial, the schema, the keys).
 #include "DreamShaderCompilerService.h"
@@ -162,14 +162,14 @@ namespace UE::DreamShader::Editor::Compiler
 				return true;
 			}
 
-			// Case-insensitive, as the file system is. The pipeline stamps project-relative paths (debt B5); a module built
+			// Case-insensitive, as the file system is. The pipeline stamps project-relative paths; a module built
 			// without a stamper -- a test, a tool -- carries the absolute one.
 			return Source.File.Equals(StampedSourceFilePath, ESearchCase::IgnoreCase)
 				|| Source.File.Equals(SourceFilePath, ESearchCase::IgnoreCase);
 		}
 
 		/**
-		 * The graph debug table of one built material (agreement A1): one probe per statement that bound a named variable in
+		 * The graph debug table of one built material: one probe per statement that bound a named variable in
 		 * the compiled file, pointing at the expression output its value became. A binding in an included header is not a
 		 * probe of this file, and 2.0 never puts an inline mask on a wire, so no probe carries one.
 		 */
@@ -215,7 +215,7 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 
 		/**
-		 * `DreamShader.DecompileHints`, version 1 (agreement A6; research-decompiler section 6.5): what the graph itself cannot
+		 * `DreamShader.DecompileHints`, version 1: what the graph itself cannot
 		 * say about where its nodes came from. See WriteDreamShaderDecompileHints for the shape.
 		 */
 		FString BuildDreamShaderDecompileHintsJson(const IR::FIRGraph& Graph, const FIREmitter& Emitter)
@@ -420,7 +420,7 @@ namespace UE::DreamShader::Editor::Compiler
 		{
 			Material->Modify();
 
-			// First of all (agreement A1): a probe preview material shares this material's expression collection and has to
+			// First of all: a probe preview material shares this material's expression collection and has to
 			// let go of it before a single node below is detached or destroyed.
 			Private::FDreamShaderGraphDebugRegistry::Get().NotifyGraphMaterialAboutToReset(Material);
 
@@ -1002,7 +1002,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 		/**
 		 * The MaterialInstance product of a `.dsi`: one plain UMaterialInstanceConstant of its parent, with its overrides
-		 * and keys set through one FMaterialInstanceParameterUpdateContext (research-instance section 3.6). The asset is
+		 * and keys set through one FMaterialInstanceParameterUpdateContext. The asset is
 		 * not touched until every check has passed: the gates, the parent, the cycle, the drift against the loaded
 		 * parent, every value and every key.
 		 */
@@ -1312,8 +1312,8 @@ namespace UE::DreamShader::Editor::Compiler
 			if (Pair.Value.HasCallSite())
 			{
 				// callFile only when the call site is in another file -- a helper inlined from an
-				// included .dsh has its Span in the header and its CallSite in the caller (CONTRACT
-				// 6.13 #6). Omitted when the two agree, which is every same-file inline, so the
+				// included .dsh has its Span in the header and its CallSite in the caller.
+				// Omitted when the two agree, which is every same-file inline, so the
 				// common row stays the shape it was and the reader falls back to "file".
 				if (!Pair.Value.CallSiteFile.IsEmpty()
 					&& !Pair.Value.CallSiteFile.Equals(Pair.Value.File, ESearchCase::CaseSensitive))

@@ -260,7 +260,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 	/**
 	 * `<OutputDirectory>/<root>/<source path relative to that root>.index.json`, where the symbol index of a source
-	 * lives (plan section 13.4). An empty OutputDirectory is the default, `<Project>/Saved/DreamShader/Index`. The root
+	 * lives. An empty OutputDirectory is the default, `<Project>/Saved/DreamShader/Index`. The root
 	 * folder is what keeps two source roots that each hold a `Materials/M_Foo.dss` apart; a file under no root goes
 	 * under `External` by its file name.
 	 *

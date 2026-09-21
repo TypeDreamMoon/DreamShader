@@ -22,7 +22,7 @@ public class DreamShaderCompiler : ModuleRules
 				"Engine"
 			});
 
-		// Private: what the moved files include (research-relocation section 4.2). AssetRegistry
+		// Private: what the moved files include. AssetRegistry
 		// (AssetRegistry/AssetRegistryModule.h), AssetTools (AssetViewUtils.h), Json (the diagnostics wire
 		// JSON), MaterialEditor (MaterialEditingLibrary.h), Projects (Interfaces/IPluginManager.h) and
 		// UnrealEd (Editor.h, Factories/MaterialFactoryNew.h, ObjectTools.h, FileHelpers.h, MaterialGraph/*).

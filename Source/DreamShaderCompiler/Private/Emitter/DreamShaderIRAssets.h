@@ -35,7 +35,7 @@ namespace UE::DreamShader::Editor::Compiler
 	 * Builds the minimal FTextShaderDefinition the 1.x asset factory and ApplySettings read:
 	 * Name, Root and Settings, and nothing else.
 	 *
-	 * Naming follows CONTRACT §2 "Product naming". A bare `Name` is the leaf and the root rules
+	 * Product naming. A bare `Name` is the leaf and the root rules
 	 * apply, which for a source under a plugin source root means the plugin's own mount point
 	 * (ApplyDefaultRootFromSourceFile). An `AssetPathOverride` that names a full package path is
 	 * split at its last separator: everything before it becomes Root -- so `/Game`, `/Plugin.X` and
@@ -87,7 +87,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 	/**
 	 * The MaterialInstance product of a `.dsi`: a PLAIN UMaterialInstanceConstant, never the ThinCustom class and its IsAsset
-	 * trick (research-instance section 3.6 step 2). Refuses an existing asset of another class, the ThinCustom one included
+	 * trick. Refuses an existing asset of another class, the ThinCustom one included
 	 * (DSH8241), and a saved asset DreamShader did not generate (DSH8242); DSH8253 when the package or the object cannot be
 	 * created. Always persisted: an instance has no memory-only state.
 	 */

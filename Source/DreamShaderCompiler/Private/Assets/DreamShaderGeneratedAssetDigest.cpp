@@ -607,7 +607,7 @@ namespace UE::DreamShader::Editor::Private
 					Mask.bOverride ? 1 : 0);
 			}
 
-			// A `.dsi` instance's keys (research-instance section 3.6 step 8): BasePropertyOverrides and the key table are
+			// A `.dsi` instance's keys: BasePropertyOverrides and the key table are
 			// content a rebuild resets, so a hand edit of them has to read as Diverged. In this branch only, so the
 			// ThinCustom pair's digest -- and with it the format tag -- is unchanged.
 			::UE::DreamShader::Editor::Compiler::AppendInstanceSettingsDigestLines(Instance, Text);

@@ -4,8 +4,8 @@
 //
 // The sink is the one node with no expression of its own. A material's outputs are pins on the
 // UMaterial, not on a node in its graph, so a MaterialSink is emitted by connecting each of its
-// named inputs to Material->GetExpressionInputForProperty(...). That is also why CONTRACT §6.2 has
-// the entry's field map become the sink's inputs directly rather than a MakeMaterialAttributes node:
+// named inputs to Material->GetExpressionInputForProperty(...). That is also why
+// the entry's field map becomes the sink's inputs directly rather than a MakeMaterialAttributes node:
 // the 1.x generator wires `Base.BaseColor = x` straight onto the property pin, and anything else
 // would show up as an extra node in the parity diff.
 //

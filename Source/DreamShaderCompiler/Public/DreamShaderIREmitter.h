@@ -11,7 +11,7 @@
 // the atomic rollback, layout, the output digest, save, publish) unchanged.
 //
 // If the emitter ever has to work out what a node MEANS, the builder or a pass did not finish its
-// job; that is a builder gap, reported as one, not patched here (plan §3.3, CONTRACT §3).
+// job; that is a builder gap, reported as one, not patched here.
 //
 // Diagnostics: DSH8200-8289, LOCTEXT_NAMESPACE "DreamShader.Emitter". Nothing here asserts. Every
 // failure is a diagnostic and leaves the asset exactly as it was, because the rollback is armed
@@ -51,7 +51,7 @@ namespace UE::DreamShader::Editor::Compiler
 	 *
 	 * `EmittedProductAssetPaths` maps a product index in the same FIRModule to the object path the
 	 * asset it was emitted to actually landed on. A `FunctionCall` node with Prop::LocalFunction set
-	 * is a call to another product of this file, and the pipeline (unit P) compiles products in
+	 * is a call to another product of this file, and the pipeline compiles products in
 	 * dependency order, so by the time a caller is emitted its callee is in here. See the report's
 	 * "Contract changes needed": this field is an addition to the §5 signature.
 	 */
@@ -96,19 +96,19 @@ namespace UE::DreamShader::Editor::Compiler
 
 	/**
 	 * Writes the node -> source-line table into the asset's package metadata, key
-	 * `DreamShader.SourceSpans` (plan §11 #10, CONTRACT §2).
+	 * `DreamShader.SourceSpans`.
 	 *
 	 * JSON object keyed by the expression's MaterialExpressionGuid:
 	 *   { "<guid>": { "file", "line", "col", "len", "callFile", "callLine", "callCol" } }
 	 * `callLine`/`callCol` are present only for a node made while inlining a helper, and `callFile`
-	 * only when that call site is in another file than the span (CONTRACT 6.13 #6) -- a helper
+	 * only when that call site is in another file than the span -- a helper
 	 * inlined from an included `.dsh`. Never Desc: Desc is the user's, and the digest reads it.
 	 */
 	DREAMSHADERCOMPILER_API void WriteDreamShaderSourceSpans(UObject* Asset, const TMap<FGuid, IR::FIRSourceRef>& Spans);
 
 	/**
-	 * Writes `DreamShader.DecompileHints` into the asset's package metadata, beside DreamShader.SourceSpans (agreement A6; wire
-	 * schema version 1, research-decompiler section 6.5):
+	 * Writes `DreamShader.DecompileHints` into the asset's package metadata, beside DreamShader.SourceSpans (wire
+	 * schema version 1):
 	 *
 	 *   { "version": 1,
 	 *     "names":       { "<ExpressionGuid>": "Albedo" },
@@ -124,7 +124,7 @@ namespace UE::DreamShader::Editor::Compiler
 	DREAMSHADERCOMPILER_API void WriteDreamShaderDecompileHints(UObject* Asset, const FString& Json);
 
 	/**
-	 * THE swizzle rule, in the one place it is decided (plan §3.3 as amended by CONTRACT §6.13 #22).
+	 * THE swizzle rule, in the one place it is decided.
 	 *
 	 * A Swizzle is never an inline FExpressionInput mask. Every pin the emitter connects is written
 	 * with Mask = 0 (FIREmitter::ConnectValueToInput), so UMaterialGraph::GetValidOutputIndex -- which

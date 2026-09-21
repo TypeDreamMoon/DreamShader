@@ -39,7 +39,7 @@ namespace UE::DreamShader::Editor::Compiler
 	 * attribute table.
 	 *
 	 * Deterministic: expressions are sorted by class name and everything inside an entry keeps the
-	 * engine's own declaration order, because unit P exports this as JSON for the tools and the
+	 * engine's own declaration order, because the catalog manifest exports this as JSON for the tools and the
 	 * language service and a reordering would read as a diff on every export.
 	 */
 	DREAMSHADERCOMPILER_API void BuildBuiltinCatalogFromReflection(IR::FBuiltinCatalog& OutCatalog);

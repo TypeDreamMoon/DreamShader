@@ -72,7 +72,7 @@ namespace UE::DreamShader::Editor::Compiler
 			return TEXT("compile");
 		}
 
-		// The ranges are CONTRACT §7 plus the 1.x allocation that predates it. Written as explicit
+		// The ranges are the 2.0 allocation plus the 1.x one that predates it. Written as explicit
 		// bands rather than as `Number / 1000` because two of them are split inside one thousand:
 		// DSH4200-4299 is the binder while DSH4300-4399 is the IR, and DSH6200-6219 is the binder
 		// while DSH6220-6299 is lowering and custom HLSL.

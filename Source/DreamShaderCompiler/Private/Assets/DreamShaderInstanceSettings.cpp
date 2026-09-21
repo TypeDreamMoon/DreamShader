@@ -27,7 +27,7 @@ namespace UE::DreamShader::Editor::Compiler
 		};
 
 		/**
-		 * The table (research-instance section 3.1 (b)). Looked up by name at run time, so a row whose property this
+		 * The table. Looked up by name at run time, so a row whose property this
 		 * engine does not have (a fork's own override, a property a later version renames) simply is not a key here.
 		 */
 		const FDreamShaderInstanceKeyRow DreamShaderInstanceKeyRows[] =

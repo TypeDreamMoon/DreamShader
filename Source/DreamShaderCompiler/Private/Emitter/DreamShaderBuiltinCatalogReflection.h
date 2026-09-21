@@ -7,8 +7,8 @@
 // producer of that data in the editor; LoadBuiltinCatalogFromJson is the other one, for the tools
 // and the language service, and the two have to agree for the same engine.
 //
-// The entry point is declared in DreamShaderIREmitter.h (CONTRACT §5 names it there). This header
-// exists for the pieces unit P's catalog-manifest exporter may want to reuse.
+// The entry point is declared in DreamShaderIREmitter.h. This header
+// exists for the pieces the catalog-manifest exporter may want to reuse.
 
 #pragma once
 

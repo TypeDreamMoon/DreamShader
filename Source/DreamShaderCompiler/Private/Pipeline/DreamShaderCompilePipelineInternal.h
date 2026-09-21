@@ -14,7 +14,7 @@
 namespace UE::DreamShader::Editor::Compiler
 {
 	/**
-	 * The preprocessor dialect a file is read in, by its kind (agreement A4): `.dsm` / `.dsf` Legacy, `.dsh` Mixed,
+	 * The preprocessor dialect a file is read in, by its kind: `.dsm` / `.dsf` Legacy, `.dsh` Mixed,
 	 * `.dss` / `.dsi` Lang2. The pipeline asks it for the compiled file and the include resolver for every header, so a
 	 * header is read the same way whichever kind of source includes it.
 	 */

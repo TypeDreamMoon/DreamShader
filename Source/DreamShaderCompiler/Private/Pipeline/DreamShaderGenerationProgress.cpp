@@ -5,8 +5,7 @@
 // It is here, in the compiler module's DLL, and nowhere else on purpose. The declaration used to be an
 // inline function with a function-local static, and an inline function gets one such static per DLL that
 // instantiates it: an automation test in the editor module would arm its own copy while the pipeline in
-// this module read another, and the cancel test would stop cancelling without failing to build
-// (research-relocation section 4.7).
+// this module read another, and the cancel test would stop cancelling without failing to build.
 
 #include "DreamShaderGenerationProgress.h"
 

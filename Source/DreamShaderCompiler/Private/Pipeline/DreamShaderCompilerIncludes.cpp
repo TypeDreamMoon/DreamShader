@@ -213,7 +213,7 @@ namespace UE::DreamShader::Editor::Compiler
 		// Preprocessed ON ITS OWN, against the compile's table. See the class comment: a `#define`
 		// in a header is not visible to the file that included it, and that is the rule, not a gap.
 		// The dialect is the included file's (a `.dsh` is Mixed), never the includer's: one header reads
-		// the same whether a `.dss` or a legacy `.dsm` pulled it in (agreement A4).
+		// the same whether a `.dss` or a legacy `.dsm` pulled it in.
 		UE::DreamShader::FDreamShaderPreprocessResult PreprocessResult;
 		UE::DreamShader::FDreamShaderTextError PreprocessError;
 		if (!UE::DreamShader::PreprocessDreamShaderSource(RawText, ResolvedPath, Defines, PreprocessResult, PreprocessError, GetDreamShaderPreprocessDialectForFile(ResolvedPath)))

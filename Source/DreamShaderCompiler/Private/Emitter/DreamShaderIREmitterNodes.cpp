@@ -5,8 +5,7 @@
 // The dispatch below is the whole of the emitter's "intelligence", and it is deliberately shallow:
 // a structural op has one shape, a core math op reads its class and its pin names out of
 // FIRCoreOpInfo, and the handful of core ops the engine has no node for are lowered here by hand in
-// exactly the shape the 1.x generator produced -- so a `.dss` and its 1.x twin dump the same graph
-// (CONTRACT §1, the parity test unit T writes).
+// exactly the shape the 1.x generator produced -- so a `.dss` and its 1.x twin dump the same graph.
 //
 // Nothing here infers a type. The IR carries Outputs[] on every node; if a width or a kind is
 // needed it is read, never worked out.
@@ -178,7 +177,7 @@ namespace UE::DreamShader::Editor::Compiler
 	 * 1.x agrees with this for a float3 uniform only: it selected a VectorParameter's `RGB` output for
 	 * the uniform's value (TryCreatePropertyValue, CodeProperties.cpp ~110). `.rgb` of a float4
 	 * VectorParameter or of a TextureSample it wrote as an inline `rgb` mask on the RGBA output instead
-	 * (41 VectorParameter wires in the 1.9.0 trial baseline) -- the form plan §3.3 retires, so that is
+	 * (41 VectorParameter wires in the 1.9.0 trial baseline) -- the form 2.0 retires, so that is
 	 * a registered parity delta, not a shape to copy.
 	 *
 	 * The output must be genuinely NAMED, so VertexColor's unnamed mask-shaped outputs are left to a
@@ -1094,8 +1093,8 @@ namespace UE::DreamShader::Editor::Compiler
 			return true;
 		}
 
-		// Otherwise a real ComponentMask node, never an inline FExpressionInput mask (plan §3.3,
-		// CONTRACT §6.6). The inline form is what DSK2 was about: the material graph editor re-points
+		// Otherwise a real ComponentMask node, never an inline FExpressionInput mask.
+		// The inline form is what DSK2 was about: the material graph editor re-points
 		// a masked wire at whichever output matches the mask, so an inline mask on a multi-output
 		// node silently became a different value on the first Apply.
 		auto* Mask = Cast<UMaterialExpressionComponentMask>(CreateExpression(UMaterialExpressionComponentMask::StaticClass(), Node));
@@ -1166,8 +1165,8 @@ namespace UE::DreamShader::Editor::Compiler
 		// CodeExpressions.cpp ~630: a zero literal node for B, then ConnectBranches(True, False,
 		// True)), and it is what keeps a 2.0 ternary and its 1.x `if` twin dumping identically.
 		//
-		// NOT an If against 0.5 -- the comment in IRCoreOps.h says 0.5 and is wrong (CONTRACT
-		// §6.13 #21). A midpoint test would agree with this one for a strict 0/1 bool and disagree
+		// NOT an If against 0.5 -- the comment in IRCoreOps.h says 0.5 and is wrong.
+		// A midpoint test would agree with this one for a strict 0/1 bool and disagree
 		// for every other truthy value, which is exactly the case a `float` condition produces.
 		UMaterialExpression* Zero = CreateScalarConstant(Node, 0.0);
 		auto* If = Cast<UMaterialExpressionIf>(CreateExpression(UMaterialExpressionIf::StaticClass(), Node));
@@ -1344,14 +1343,14 @@ namespace UE::DreamShader::Editor::Compiler
 
 		if (const IR::FIRProperty* CodeProperty = Node.FindProperty(IR::Prop::Code))
 		{
-			// Verbatim. Prop::Code arrives finished from unit H
+			// Verbatim. Prop::Code arrives finished from the custom-HLSL builder
 			// (IR/IRCustomHlsl.h, BuildDreamShaderCustomNodeCode), which owns the 2.0 versions of
 			// every rule the 1.x DreamShaderHlslFunctionCodegen.cpp had -- the sampler pairing, the
 			// generated_wrapper_* struct, include hoisting, and EnsureTopLevelReturn among them.
 			//
 			// Re-applying EnsureTopLevelReturn here would be worse than redundant. H's code carries
 			// the CustomCodeMarker comment lines that make `check --shaders` able to map a
-			// shader-compile error back to a source line (CONTRACT §6.13.3), and those depend on one
+			// shader-compile error back to a source line, and those depend on one
 			// emitted line per source line. EnsureTopLevelReturn appends `\nreturn 0.0;` whenever
 			// its brace-depth-0 scan finds no `return` -- which would land AFTER the closing
 			// `// End DreamShader source:` marker, breaking the mapping and silently changing what
@@ -1509,7 +1508,7 @@ namespace UE::DreamShader::Editor::Compiler
 			SourceSpans.Add(Expression->MaterialExpressionGuid, Node.Source);
 		}
 
-		// DreamShader.DecompileHints (agreement A6): what the graph cannot say about a node. The FIRST name wins -- a
+		// DreamShader.DecompileHints: what the graph cannot say about a node. The FIRST name wins -- a
 		// passthrough registers its operand's expression again under its own variable, and the value was first assigned
 		// to the operand's.
 		if (!Node.DebugName.IsEmpty() && !DecompileNames.Contains(Expression->MaterialExpressionGuid))

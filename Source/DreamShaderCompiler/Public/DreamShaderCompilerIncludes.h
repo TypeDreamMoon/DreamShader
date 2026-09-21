@@ -128,7 +128,7 @@ namespace UE::DreamShader::Editor::Compiler
 	 *   2. A specifier starting with `/` is ROOT-ANCHORED: it is never relative to the including
 	 *      file. `/Game/` at the front is dropped -- that prefix is the engine's content-root
 	 *      spelling, which a `.dsh` under `DShader/` has no counterpart for, and the 2.0 syntax
-	 *      examples write it (CONTRACT §6.11). The remainder is tried against the including file's
+	 *      examples write it. The remainder is tried against the including file's
 	 *      own root first, then every other root, `Directory` before `PackagesDirectory`.
 	 *   3. Anything else goes through the 1.x rules --
 	 *      FDreamShaderDependencyGraphService::ResolveImportPath -- which cover the root qualifier

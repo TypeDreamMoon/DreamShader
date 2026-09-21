@@ -10,8 +10,6 @@
 //       (PhysMaterial + bOverridePhysMaterial, SubsurfaceProfile + bOverrideSubsurfaceProfile, ...).
 // Anything else is refused. Keys a `.dsi` no longer names revert to "not overridden" on every build: the base
 // overrides start from a default struct, and every table row is reset to its class default first.
-//
-// Design: Plan/m4m5/research-instance.md sections 3.1 (keys), 3.6 (apply, digest) and 5 (read back).
 
 #pragma once
 
@@ -53,7 +51,7 @@ namespace UE::DreamShader::Editor::Compiler
 	DREAMSHADERCOMPILER_API const TArray<FString>& GetInstanceSettingKeys();
 
 	/**
-	 * The digest lines of an instance that is not a ThinCustom pair (research-instance section 3.6 step 8):
+	 * The digest lines of an instance that is not a ThinCustom pair:
 	 * `MI Base <BasePropertyOverrides as text>` and one `MI Key <Property>=<value>` per table property and flag the
 	 * class has, so a hand edit of BlendMode or PhysMaterial on a `.dsi` instance reads as Diverged.
 	 */

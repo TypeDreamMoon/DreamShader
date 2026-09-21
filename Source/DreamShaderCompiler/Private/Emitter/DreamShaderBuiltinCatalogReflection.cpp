@@ -117,8 +117,8 @@ namespace UE::DreamShader::Editor::Compiler
 		/**
 		 * The classes that take positional arguments, and in what order.
 		 *
-		 * Deliberately small. CONTRACT §6.10 makes "no positional parameters" the default and has S
-		 * refuse a positional argument with DSH5220, so an entry missing here costs an author one
+		 * Deliberately small. "No positional parameters" is the default and the binder
+		 * refuses a positional argument with DSH5220, so an entry missing here costs an author one
 		 * `Name =` and an entry added here wrongly silently binds an argument to the wrong pin. 1.x
 		 * itself accepted positional form for exactly two classes (Transform and TransformPosition,
 		 * index 0 only); the rest below are the constructors and one-argument nodes where the
@@ -195,7 +195,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 		/**
 		 * The argument spellings 1.x accepted for a pin or property whose engine name is something
-		 * else (CONTRACT §6.13 #35).
+		 * else.
 		 *
 		 * `UE.TexCoord(Index = 0)` is the spelling of every 1.x Graph line and of all three
 		 * `Lang/Examples/*.dss`, and the engine property is `CoordinateIndex` -- so without these the
@@ -436,8 +436,7 @@ namespace UE::DreamShader::Editor::Compiler
 		 * 56 of the ~276 expression classes override it -- so `TextureCoordinate` and
 		 * `ReflectionVectorWS` both report "a float of some width" and land on `Numeric`, which
 		 * TypeFromCatalogValueType reads as float1-that-broadcasts. `float2 UV = UE.TexCoord(0)` then
-		 * binds as a float1 and S reports a type error on a line that is perfectly correct
-		 * (CONTRACT §6.13 #32).
+		 * binds as a float1 and S reports a type error on a line that is perfectly correct.
 		 *
 		 * The masked outputs need none of this: a mask IS the width, and the base class narrows by
 		 * it already. This table is only for the unmasked ones the engine leaves at `MCT_Float`.
@@ -1040,7 +1039,7 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 
 		// Sorted by class name, not by short name: two classes can share a short name only if they
-		// share a class name, so this is the one key with no ties -- and unit P exports this as JSON
+		// share a class name, so this is the one key with no ties -- and the catalog manifest exports this as JSON
 		// where a reordering would read as a diff on every export.
 		OutCatalog.Expressions.Sort([](const IR::FCatalogExpression& Left, const IR::FCatalogExpression& Right)
 		{
@@ -1139,7 +1138,7 @@ namespace UE::DreamShader::Editor::Compiler
 		if (OutCatalog.Expressions.IsEmpty())
 		{
 			// No DSHnnnn here on purpose. BuildBuiltinCatalogFromReflection takes no diagnostic sink
-			// (its signature is frozen by CONTRACT 5) and a code that only ever appears inside a log
+			// and a code that only ever appears inside a log
 			// string is invisible to .skill/gen-diagnostics.ps1 -- it would exist in the binary and
 			// in no document. The condition IS reported with a code: the pipeline asks
 			// FBuiltinCatalog::IsEmpty() straight after this and raises DSH8297 into the sink, which

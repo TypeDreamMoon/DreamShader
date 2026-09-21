@@ -509,7 +509,7 @@ namespace UE::DreamShader::Editor::Private
 	 * Declared here, defined out of line in the compiler module, and exported -- never inline. An
 	 * inline function with a function-local static gets one static per DLL: a test in the editor module
 	 * would arm its own copy while the pipeline in the compiler module read another, and the cancel test
-	 * would stop cancelling without failing to build (research-relocation §4.7).
+	 * would stop cancelling without failing to build.
 	 */
 	DREAMSHADERCOMPILER_API FDreamShaderGenerationCancelPredicate& GetDreamShaderGenerationCancelOverride();
 

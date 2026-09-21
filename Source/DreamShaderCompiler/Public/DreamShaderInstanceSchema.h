@@ -7,7 +7,7 @@
 //
 // Producer A, from the parent's IR, is engine-free and lives in DreamShaderLang (IR/IRInstanceSchema.h). Both
 // encode FIRParameterSchemaEntry::ParentValue the way FIRInstanceOverride::Value documents, so the binder cannot
-// tell which one it was handed. Design: Plan/m4m5/research-instance.md sections 3.4 and 7 (IN-E).
+// tell which one it was handed.
 
 #pragma once
 

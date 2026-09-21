@@ -8,7 +8,7 @@
 //     extension, forwards the request's ThinCustom persistence, and words the result.
 //   * OnDreamShaderSourceGenerated -- fired once per OUTERMOST compile of a source, by the service and
 //     never by the pipeline: the pipeline runs inside the service, so firing in both would double every
-//     notice (CONTRACT m2m3 §6.13 #39).
+//     notice.
 //   * IsMemoryOnlyMaterial / MaterializeDreamShaderMaterial -- moved from UI/DreamShaderInstanceFactory.cpp
 //     in the compiler relocation, because materializing IS a compile with a Materialized request.
 //   * GetDreamShaderLastCompileDiagnostics -- each source's most recent compile as structured records, which

@@ -470,7 +470,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 
-			// A `.dsi` depends on the source that builds its parent (research-instance section 3.7): a parent is compiled
+			// A `.dsi` depends on the source that builds its parent: a parent is compiled
 			// before the instances of it, and a chain orders itself.
 			if (UE::DreamShader::IsDreamShaderInstanceFile(SourceFile))
 			{

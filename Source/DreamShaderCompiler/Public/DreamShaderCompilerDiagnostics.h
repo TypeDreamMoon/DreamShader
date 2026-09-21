@@ -15,7 +15,7 @@
 //     frozen DreamShaderCompilerPipeline.h promises its caller. Every remaining diagnostic follows
 //     on its own line in the same form -- see BuildLang2CompileError for why that is not padding.
 //   * FDreamShaderDiagnosticRecord + span length, for the diagnostics store the bridge reads.
-//   * The wire JSON, `version: 1` with the new optional `length` field (plan §3.7).
+//   * The wire JSON, `version: 1` with the new optional `length` field.
 //
 // Messages are converted to their INVARIANT form on the way out (ToInvariantWireString), so a log
 // line, a JSON file and a corpus expectation read the same English whatever the editor culture is.
@@ -65,7 +65,7 @@ namespace UE::DreamShader::Editor::Compiler
 	 * Derived from the code rather than passed down from the raise site on purpose. A sink is
 	 * merged and moved between stages (the include resolver's sub-sink joins the binder's), so by
 	 * the time a diagnostic is reported nobody still knows which call raised it -- but its code
-	 * range says, and the ranges are the contract (CONTRACT §7). An unrecognised code answers
+	 * range says, and the ranges are the contract. An unrecognised code answers
 	 * `compile`, never an empty string, so the field is never written blank.
 	 */
 	DREAMSHADERCOMPILER_API FString Lang2StageForCode(const FString& Code);

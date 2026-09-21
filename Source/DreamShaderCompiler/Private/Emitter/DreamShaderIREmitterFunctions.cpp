@@ -12,7 +12,7 @@
 // 2. SortPriority. UMaterialFunction::GetInputsAndOutputs sorts with an unstable introsort, so two
 //    inputs sharing a priority come out in an order nothing in the source decides -- and that order
 //    is the fallback the call sites use. The IR hands over dense, tie-free priorities
-//    (CONTRACT §6.9, "Input/output SortPriority = declaration order, dense"), and they are written
+//    ("Input/output SortPriority = declaration order, dense"), and they are written
 //    through unchanged; the emitter does not re-derive them.
 
 #include "Emitter/DreamShaderIREmitterInternal.h"
@@ -218,7 +218,7 @@ namespace UE::DreamShader::Editor::Compiler
 		// to another export of the SAME file carries a product index instead, because that asset's
 		// path is not known until it has been emitted. The pipeline compiles products in dependency
 		// order and hands the emitted paths back in the context, so by the time a caller is emitted
-		// its callee is in the table (CONTRACT §2, "Helper vs export vs extern calls").
+		// its callee is in the table ("Helper vs export vs extern calls").
 		FString FunctionPath;
 		if (const IR::FIRProperty* LocalFunction = Node.FindProperty(IR::Prop::LocalFunction))
 		{
@@ -249,7 +249,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 		// A legacy source carries its references unresolved -- `Path(Root, "rel")`, a quoted path, a `Class'...'` shell --
 		// because the front end is Core-only. Resolved here by the resolver the literal writer already uses for object
-		// properties, so all three reference sites of the legacy language agree (research-legacy section 3.8).
+		// properties, so all three reference sites of the legacy language agree.
 		if (IsDreamShaderAssetReferenceSpelling(FunctionPath))
 		{
 			FString ResolvedPath;

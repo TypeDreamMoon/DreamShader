@@ -9,8 +9,6 @@
 // or `/// @name` above the pragma) -- because resolving a `.dsi` would need its parent, which is what the index is
 // for. A legacy `.dsm` product is not in the index: an instance of one names it by path and resolves as a foreign
 // parent (its schema then comes from the loaded asset).
-//
-// Design: Plan/m4m5/research-instance.md sections 3.4 and 3.7 (IN-P).
 
 #pragma once
 
@@ -84,8 +82,8 @@ namespace UE::DreamShader::Editor::Compiler
 
 	/**
 	 * The `.dsi` sources to rebuild after SourceFilePath rebuilt: every instance whose Parent resolves to one of its
-	 * products, and the instances of those, transitively, each once. The bridge queues them (research-instance
-	 * section 3.7), so a renamed or retyped parent parameter surfaces as the child's error without a child edit.
+	 * products, and the instances of those, transitively, each once. The bridge queues them,
+	 * so a renamed or retyped parent parameter surfaces as the child's error without a child edit.
 	 */
 	DREAMSHADERCOMPILER_API void CollectInstanceDependents(const FString& SourceFilePath, TArray<FString>& OutInstanceSourceFiles);
 

@@ -11,7 +11,7 @@
 //
 // Namespace UE::DreamShader, not UE::DreamShader::Compiler: inside UE::DreamShader::Editor a bare
 // `Compiler::` names UE::DreamShader::Editor::Compiler, so a nested namespace here would be hidden from
-// exactly the callers that use it most (CONTRACT m2m3 §6.13 #52a).
+// exactly the callers that use it most.
 //
 // Moved here in the compiler relocation from DreamShaderCompiler/Public/DreamShaderCompilerInterfaces.h. The
 // wrapper FDreamShaderCompileService and the editor's compile adapter are gone; callers use the interface.

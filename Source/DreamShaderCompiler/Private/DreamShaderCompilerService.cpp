@@ -2,7 +2,7 @@
 //
 // See DreamShaderCompilerService.h and DreamShaderCompilerServiceInternal.h.
 //
-// Re-homed here in the compiler relocation (research-relocation sections 3 and 6):
+// Re-homed here in the compiler relocation:
 //
 //   * from MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp -- the OnDreamShaderSourceGenerated
 //     delegate and its outermost-only notice (1.x FScopedGenerationNotice), the warnings collector
@@ -190,7 +190,7 @@ namespace UE::DreamShader::Editor::Compiler
 			FDreamShaderLang2PipelineResult Result;
 			const bool bPipelineSucceeded = RunDreamShaderLang2Pipeline(SourceFilePath, Options, Result);
 
-			// The symbol index a language service reads (plan section 13.4), refreshed by every compile that got as far
+			// The symbol index a language service reads, refreshed by every compile that got as far
 			// as a bound module -- a failed one included: navigation matters most in a file that does not build. Not
 			// being able to write it is no failure of the compile, and says so in the log only.
 			if (Result.Bound.IsValid())

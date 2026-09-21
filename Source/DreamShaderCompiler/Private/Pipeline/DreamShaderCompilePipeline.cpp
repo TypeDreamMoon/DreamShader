@@ -16,7 +16,7 @@
 //   validate        IR               ValidateDreamShaderIR
 //   emit            emitter          EmitDreamShaderIRProduct, once per product, in dependency order
 //
-// One pipeline for every compilable kind since the compiler relocation (CONTRACT section 2.1, agreement A4): `.dss` and `.dsi` take the
+// One pipeline for every compilable kind since the compiler relocation: `.dss` and `.dsi` take the
 // 2.0 front end, `.dsm` and `.dsf` the legacy one, and a `.dsh` included by any of them is parsed declaration by
 // declaration. The parser's Auto front end makes that choice from the path; this file makes the matching choice of
 // preprocessor dialect, here and in the include resolver, and everything after the parse is one chain.
@@ -82,7 +82,7 @@
 namespace UE::DreamShader::Editor::Compiler
 {
 	// No namespace-scope `using namespace` in this file: the compiler module builds as one unity blob, and a directive
-	// here would reach every later `Editor::Compiler` block of every other file in it (research-relocation section 4.7).
+	// here would reach every later `Editor::Compiler` block of every other file in it.
 	// The function bodies that call into the front end and the IR open the two namespaces locally instead.
 
 	bool IsDreamShaderLang2Source(const FString& SourceFilePath)
@@ -133,7 +133,7 @@ namespace UE::DreamShader::Editor::Compiler
 		{
 			// The ABSOLUTE path, as the 1.x prepared-source digest hashed it
 			// (MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp): the build key is compared on
-			// this machine only, and keeping its input identical keeps a migrated source's key comparable (debt B5 (d)).
+			// this machine only, and keeping its input identical keeps a migrated source's key comparable.
 			FString Block;
 			Block += FString::Printf(TEXT("// Begin DreamShader source: %s\n"), *FilePath); /* I18N-EXEMPT: build-key material, never displayed */
 			Block += Text;
@@ -389,7 +389,7 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 
 		/**
-		 * The `.dsi` half of a run, between the parse and the bind (research-instance sections 3.4 and 3.7): resolve the
+		 * The `.dsi` half of a run, between the parse and the bind: resolve the
 		 * Parent, build the schema the binder checks the overrides against -- from the parent source's IR when a
 		 * DreamShader source builds it (producer A), else from the loaded asset (producer B) -- and, in an emitting run,
 		 * compile a missing or stale DreamShader parent first. Fills OutResult.ParentObjectPath and ParentSchema; every
@@ -795,7 +795,7 @@ namespace UE::DreamShader::Editor::Compiler
 				if (bIsInstanceSource)
 				{
 					// The resolved parent is part of an instance's build key -- a bare-name Parent can re-resolve with no text
-					// change -- and the parent's schema deliberately is not (research-instance section 3.7).
+					// change -- and the parent's schema deliberately is not.
 					DigestText += FString::Printf(TEXT("Parent=%s\n"), *OutResult.ParentObjectPath); /* I18N-EXEMPT: build-key material, never displayed */
 				}
 				OutResult.SourceHash = Private::BuildSourceHash(DigestText, OutResult.TouchedDefines);

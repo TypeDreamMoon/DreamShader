@@ -12,7 +12,7 @@
 //
 // FTextShaderDefinition and friends (runtime DreamShaderTypes.h) stay in these signatures: the asset
 // factory, ApplySettings and the layout still read the 1.x definition shape, which the IR assets adapter
-// fills (research-relocation §9 Q2).
+// fills.
 
 #pragma once
 
@@ -216,7 +216,7 @@ namespace UE::DreamShader::Editor::Private
 	DREAMSHADERCOMPILER_API void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath, const FString& SourceHash);
 	/**
 	 * The project-relative, forward-slashed spelling of a source path: what DreamShader.SourceFile stamps, and
-	 * what the pipeline hands the IR builder as FIRBuildOptions::StampSourcePath (debt B5), so neither the
+	 * what the pipeline hands the IR builder as FIRBuildOptions::StampSourcePath, so neither the
 	 * metadata nor a Custom node's code changes with the machine or the checkout. A file outside the project
 	 * directory keeps its absolute path. Readers resolve a relative answer against the project directory.
 	 */
