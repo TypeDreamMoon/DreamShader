@@ -1,4 +1,4 @@
 {
 	"entryPoint": "roundtrip",
-	"text": "#pragma material(ShadingModel = Unlit, Backend = Graph)\n\n/// @group Look\n/// @static\nuniform bool UseWarm = true;\n\nexport void M_RtStaticSwitch(inout material m)\n{\n    float3 Colour = float3(0.0, 0.5, 1.0);\n    float3 Colour_2 = float3(1.0, 0.5, 0.0);\n\n    m.EmissiveColor = UseWarm ? Colour_2 : Colour;\n}\n\n#pragma layout(Node, Var = UseWarm, X = 0, Y = -256)\n#pragma layout(Node, Var = Colour, X = 148, Y = -620)\n#pragma layout(Node, Var = Colour_2, X = 148, Y = -80)\n"
+	"text": "#pragma material(ShadingModel = Unlit, Backend = Graph)\n\n/// @group Look\n/// @static\nuniform bool UseWarm = true;\n\nexport void M_RtStaticSwitch(inout material m)\n{\n    float3 Colour = float3(0.0, 0.5, 1.0);\n    float3 Colour_2 = float3(1.0, 0.5, 0.0);\n\n    m.EmissiveColor = UseWarm ? Colour_2 : Colour;\n}\n\n#pragma layout(Node, Var = UseWarm, X = -976, Y = 80)\n#pragma layout(Node, Var = Colour, X = -816, Y = 592)\n#pragma layout(Node, Var = Colour_2, X = -816, Y = 240)\n"
 }

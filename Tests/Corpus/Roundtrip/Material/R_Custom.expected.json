@@ -1,4 +1,4 @@
 {
 	"entryPoint": "roundtrip",
-	"text": "#pragma material(ShadingModel = Unlit, Backend = Graph)\n\nuniform float3 Tint = float3(1.0, 0.5, 0.25);\n\n/// @custom\nfloat Luma(float3 Colour)\n{\n    return dot(Colour, float3(0.299, 0.587, 0.114));\n}\n\n/// @custom\nfloat3 Desaturate(float3 Colour, float Amount)\n{\n    float L = Luma(Colour);\n    return lerp(Colour, float3(L, L, L), Amount);\n}\n\nexport void M_RtCustom(inout material m)\n{\n    m.EmissiveColor = Desaturate(Tint, 0.5);\n}\n\n#pragma layout(Node, Var = Tint, X = 0, Y = -620)\n"
+	"text": "#pragma material(ShadingModel = Unlit, Backend = Graph)\n\nuniform float3 Tint = float3(1.0, 0.5, 0.25);\n\n/// @custom\nfloat Luma(float3 Colour)\n{\n    return dot(Colour, float3(0.299, 0.587, 0.114));\n}\n\n/// @custom\nfloat3 Desaturate(float3 Colour, float Amount)\n{\n    float L = Luma(Colour);\n    return lerp(Colour, float3(L, L, L), Amount);\n}\n\nexport void M_RtCustom(inout material m)\n{\n    m.EmissiveColor = Desaturate(Tint, 0.5);\n}\n\n#pragma layout(Node, Var = Tint, X = -1200, Y = 80)\n"
 }

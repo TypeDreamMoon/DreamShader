@@ -1,4 +1,4 @@
 {
 	"entryPoint": "roundtrip",
-	"text": "#pragma material(ShadingModel = Unlit, Backend = ThinCustom)\n\nuniform float3 Tint = float3(1.0, 0.5, 0.25);\nuniform float Boost = 0.5;\n\nexport void M_RtThinCustom(inout material m)\n{\n    m.EmissiveColor = Tint * Boost;\n}\n\n#pragma layout(Node, Var = Boost, X = 90, Y = -180)\n#pragma layout(Node, Var = Tint, X = 0, Y = -620)\n"
+	"text": "#pragma material(ShadingModel = Unlit, Backend = ThinCustom)\n\nuniform float3 Tint = float3(1.0, 0.5, 0.25);\nuniform float Boost = 0.5;\n\nexport void M_RtThinCustom(inout material m)\n{\n    m.EmissiveColor = Tint * Boost;\n}\n\n#pragma layout(Node, Var = Boost, X = -832, Y = 320)\n#pragma layout(Node, Var = Tint, X = -1200, Y = 80)\n"
 }

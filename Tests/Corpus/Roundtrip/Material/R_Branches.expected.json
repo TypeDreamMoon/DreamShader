@@ -1,4 +1,4 @@
 {
 	"entryPoint": "roundtrip",
-	"text": "#pragma material(ShadingModel = Unlit, Backend = Graph)\n\nuniform float Mask = 0.6;\n\nexport void M_RtBranches(inout material m)\n{\n    float3 Colour = float3(0.0, 0.0, 1.0);\n    float3 Colour_2 = float3(1.0, 0.0, 0.0);\n\n    m.EmissiveColor = Mask > 0.5 ? Colour_2 : Colour;\n}\n\n#pragma layout(Node, Var = Colour, X = 18, Y = -620)\n#pragma layout(Node, Var = Colour_2, X = 18, Y = 76)\n#pragma layout(Node, Var = Mask, X = 0, Y = -256)\n"
+	"text": "#pragma material(ShadingModel = Unlit, Backend = Graph)\n\nuniform float Mask = 0.6;\n\nexport void M_RtBranches(inout material m)\n{\n    float3 Colour = float3(0.0, 0.0, 1.0);\n    float3 Colour_2 = float3(1.0, 0.0, 0.0);\n\n    m.EmissiveColor = Mask > 0.5 ? Colour_2 : Colour;\n}\n\n#pragma layout(Node, Var = Colour, X = -848, Y = 736)\n#pragma layout(Node, Var = Colour_2, X = -848, Y = 384)\n#pragma layout(Node, Var = Mask, X = -864, Y = 80)\n"
 }
