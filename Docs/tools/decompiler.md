@@ -12,8 +12,15 @@ equivalent DreamShaderLang source file.
 | Writes to | `<SourceDirectory>/Decompiled/…` unless an explicit output path is given |
 | Since | `1.3.5` (Content Browser actions) |
 
+> [!IMPORTANT]
+> **There are two decompilers.** This page describes the **1.x** one, which writes `.dsm` / `.dsf`
+> and is kept behind `-Format=Legacy`. The **2.0 decompiler** is the default since M5: it reads the
+> asset's graph into the compiler's own IR and prints a `.dss` — or a [`.dsi`](../language-v2/instances.md)
+> for a material instance — and its output is *proved*: the text is compiled again and the two IRs are
+> compared. See [The 2.0 decompiler](#the-20-decompiler) at the end of this page.
+
 > [!NOTE]
-> Treat the decompiler as a **migration starting point**, not a round-trip guarantee. It reproduces
+> Treat the 1.x decompiler as a **migration starting point**, not a round-trip guarantee. It reproduces
 > the graph's structure and the parts of the node state it can express, then leaves a `// Warning:`
 > comment for everything it could not. The
 > [known round-trip gaps](#known-round-trip-gaps) below are the ones worth checking by hand before
@@ -416,6 +423,38 @@ Shader(Name="Decompiled/Materials/Game/Materials/M_Steel")
     }
 }
 ```
+
+## The 2.0 decompiler
+
+```powershell
+./dsc.ps1 decompile /Game/Materials/M_Steel                  # writes DShader/Decompiled/.../M_Steel.dss
+./dsc.ps1 decompile /Game/Materials/MI_Steel_Worn            # a material instance: MI_Steel_Worn.dsi
+./dsc.ps1 decompile -SourceFile DShader/Functions/Lib.dss    # every asset that source builds, in one file
+./dsc.ps1 decompile /Game/Materials/M_Steel -Format Legacy   # the 1.x text described above
+```
+
+It is the compiler run backwards: **graph → IR → AST → printer**.
+
+1. *Import.* Each expression is read back as the IR op the emitter writes for it; anything else is a
+   reflected `UE.<Class>(...)` node over the builtin catalog. Inline pin masks become swizzles by
+   the emitter's own rule, comment boxes become `#pragma region`s, node positions become
+   `#pragma layout` hints.
+2. *Raise.* Nodes nothing reads are pruned, and the shapes the emitter lowers by hand are read back
+   (a StaticSwitch over a static bool is an `if` / `?:`, a Set-attributes chain is `m.X = ...`).
+3. *Write.* Uniforms in display order (`@sort` only where a priority is not the uniform's place), a
+   local for a value that is read twice or that a statement named, custom functions recovered from
+   their node's code with their helpers, layers and blends in their own signatures, an `extern`
+   prototype for every function asset the graph calls.
+4. *Prove.* The printed text is parsed again (`DSH9089` if it does not), and the round-trip tests
+   compile it and compare IRs.
+
+What the language cannot say is named, never dropped silently: `DSH9060`–`DSH9074` from the import
+(a missing function asset, a class outside the catalog, a Preview-pin default expression, additional
+defines on a Custom node) and `DSH9075`–`DSH9084` from the writer (a renamed identifier, positions of
+values written inline, an `extern` inferred from its calls).
+
+A plain `UMaterialInstanceConstant` is written as a `.dsi`: the parent, the `#pragma instance` keys
+it overrides, and the parameters that differ from the parent.
 
 ## See also
 

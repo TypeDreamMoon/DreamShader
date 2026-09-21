@@ -25,7 +25,7 @@ It is not a skill and `sync-skills.ps1` does not publish it.
 | :-- | :-- | :-- |
 | [`dream-shader-create`](dream-shader-create/SKILL.md) | `<description>` | writes a new material or function from plain language, then compiles it to prove it builds |
 | [`dream-shader-optimize`](dream-shader-optimize/SKILL.md) | `<file>` | dedupes, renames, retargets and restores lost state in a decompiled source |
-| [`dream-shader-decompile`](dream-shader-decompile/SKILL.md) | `<asset>` | exports an existing `UMaterial` / `UMaterialFunction` back to source |
+| [`dream-shader-decompile`](dream-shader-decompile/SKILL.md) | `<asset>` | exports an existing material, function, layer, blend or material instance back to source — `.dss` / `.dsi` by default, `.dsm` / `.dsf` with `-Format Legacy` |
 | [`dream-shader-verify`](dream-shader-verify/SKILL.md) | `<file>` \| `-All` | compiles headlessly; exit `0` / `1` |
 | [`dream-shader-diagnose`](dream-shader-diagnose/SKILL.md) | `<message>` | routes a diagnostic to its pipeline stage, explains it, fixes it |
 
@@ -60,6 +60,21 @@ exits with the commandlet's own code.
 | `-Raw` | the whole engine log instead of just the DreamShader lines |
 
 Full flag surface and troubleshooting: [`dream-shader-verify`](dream-shader-verify/SKILL.md).
+
+### The 2.0 verbs
+
+The skills above were written for 1.x sources and still work: a `.dsm` / `.dsf` is built by the same
+compiler as a `.dss`, through the legacy front end. The driver has more verbs than the skills use:
+
+| Verb | Does |
+| :-- | :-- |
+| `check <file>` \| `-All` | compiles as far as IR validation and writes **no asset** — the fast gate. `-Shaders` builds the products and reports HLSL errors against source lines |
+| `migrate <file>` \| `-All` \| `-Root <name>` | rewrites 1.x sources as `.dss`, proving each rewrite first; `-Check` writes nothing — [`Docs/tools/migrate.md`](../Docs/tools/migrate.md) |
+| `decompile <asset>` | 2.0 text by default; a material instance comes out as a [`.dsi`](../Docs/language-v2/instances.md) |
+| `dump-ir`, `index`, `export-catalog` | language-service tools: the lowered IR, the symbol index, the builtin node catalog |
+
+`compile`, `check`, `dump-ir`, `index` and `dump-graph` take every compilable source: `.dss`, `.dsi`,
+`.dsm`, `.dsf`. The 2.0 language itself: [`Docs/language-v2/index.md`](../Docs/language-v2/index.md).
 
 ## What the driver adds over the raw commandlet
 

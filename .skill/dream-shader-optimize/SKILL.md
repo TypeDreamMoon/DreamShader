@@ -1,14 +1,30 @@
 ---
 name: dream-shader-optimize
-description: Clean up a decompiled DreamShaderLang source — deduplicate repeated subexpressions, rename machine-generated variables, retarget the asset path, and restore state the decompiler drops — then recompile to prove the result still builds. Use when asked to optimize, clean up, tidy, refactor, or make readable a .dsm / .dsf produced by the DreamShader decompiler.
+description: Clean up a decompiled DreamShaderLang source — deduplicate repeated subexpressions, rename machine-generated variables, retarget the asset path, and restore state the decompiler drops — then recompile to prove the result still builds. Use when asked to optimize, clean up, tidy, refactor, or make readable a .dss, .dsm or .dsf produced by the DreamShader decompiler.
 ---
 
 # dream-shader-optimize `<file>`
 
-The decompiler is a **migration starting point, not a round-trip guarantee**. Its output compiles,
-but it is machine-shaped: `Multiply_7`, duplicated subexpressions, an asset path that points at
-`Decompiled/…`, and silently missing node state. This skill turns that into a source file a human
-would have written — without changing what the material renders.
+A decompiled source compiles, but it is machine-shaped. This skill turns it into a source file a
+human would have written — without changing what the material renders.
+
+**Which decompiler wrote the file decides how much there is to do.**
+
+| | 2.0 text — `.dss` (the default since M5) | 1.x text — `.dsm` / `.dsf` (`-Format Legacy`) |
+| :-- | :-- | :-- |
+| round trip | proved: the text is parsed again, and the round-trip suite compares IRs | **a migration starting point, not a guarantee** |
+| names | a value read once is written inline; a local that has to exist keeps the name its statement gave it (a graph DreamShader built) or takes one from its node (`Sample`, `Combined`, `Multiply_2`) | `Multiply_7`, `DS_Shared_3`, every node a variable |
+| duplicated subexpressions | none: a value read twice gets one local | yes — pass 4.2 |
+| what the text cannot say | named at the head of the file, `// Warning: DSHnnnn: …` | partly named, partly **dropped silently** — pass 4.6 |
+| asset it rebuilds | a new one where the file is, unless `-KeepAssetPath` wrote `/// @name` | a second copy under `Decompiled/…` — pass 4.1 |
+
+For a `.dss`, the work is: read the `// Warning:` lines and resolve each
+([`Docs/diagnostics/DSH9xxx.md`](../../Docs/diagnostics/DSH9xxx.md)), rename what deserves a better
+name (a renamed local must be renamed in its `#pragma layout(Node, Var = …)` line too), swap
+class-exact `UE.<Class>(…)` calls for HLSL where the rule below allows it — or decompile again with
+`-Readable`, which does that for you — and retarget: move the file to the place that names the
+original asset, or give the export `/// @name <asset path>`. Then recompile (steps 2 and 4 below
+are the same for both formats). **The passes in section 4 are written for the 1.x text.**
 
 Paths below are relative to the plugin root, `Plugins/DreamShader/`.
 
@@ -169,8 +185,8 @@ Read these before promising a clean migration — full table in
   the original.
 - An **append wider than four components** was masked down — components were dropped. Check the
   emitted swizzle.
-- **Material instances are rejected outright.** Export the parent `UMaterial`, then re-create the
-  instance.
+- **Material instances are rejected outright** by the 1.x exporter. Decompile them as 2.0 text
+  instead: an instance comes out as a [`.dsi`](../../Docs/language-v2/instances.md).
 - `GatherMode` round-trips only on UE 5.6+; `bHasPixelAnimation`, `Base.FrontMaterial` and the
   `Substrate` shading-model spelling only on UE 5.4+.
 

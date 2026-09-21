@@ -23,12 +23,13 @@ module is editor-only, and the runtime `DreamShader` module carries no UI.
 | [Editor integration](editor-integration.md) | every menu entry, toolbar button, context-menu action and tab spawner, with labels, tooltips, icons and effects |
 | [Material Content Browser](material-browser.md) | the docked browser tab: sources and assets side by side with status, diagnostics, provenance, dependencies and inheritance; live preview; the instance factory and *Materialize* |
 | [Preview](preview.md) | the thumbnail renderer, the streaming WebSocket preview, the mesh set and the limits |
-| [Decompiler](decompiler.md) | exporting an existing `UMaterial` / `UMaterialFunction` back to `.dsm` / `.dsf` |
+| [Decompiler](decompiler.md) | exporting an existing material, function, layer, blend or instance back to source: `.dss` / `.dsi` (2.0, the default) or `.dsm` / `.dsf` |
+| [Migrate](migrate.md) | `dsc migrate`: 1.x sources rewritten as `.dss`, each rewrite proved before it is written *(2.0)* |
 | [VirtualFunction tools](virtual-function-tools.md) | the conditional VirtualFunction context menu and the startup sync service |
 | [Asset rename sync](asset-rename-sync.md) | following a renamed or moved asset into the `.dsm` / `.dsf` / `.dsh` files that reference it *(since 1.9.0)* |
 | [Workspace](workspace.md) | the generated `DreamShader.code-workspace`, VSCode discovery and launch, the exported manifests |
 | [Packages](packages.md) | `DShader/Packages`: what the plugin implements and what it does not |
-| [Commandlet](commandlet.md) | `-run=DreamShader` — headless compile and decompile |
+| [Commandlet](commandlet.md) | `-run=DreamShader` — headless compile, decompile, migrate, check and the IR tools |
 | [Bridge](bridge.md) | request files, the diagnostics sinks, `bridge.db`, the WebSocket protocol |
 
 ## Which side implements what

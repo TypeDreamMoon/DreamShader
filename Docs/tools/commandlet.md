@@ -18,14 +18,28 @@ and decompiles existing material assets back into source files.
 ```text
 UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 
-<command> ::= { compile | generate | decompile | export | dump-graph }
+<command> ::= { compile | generate | decompile | export | migrate | dump-graph
+              | check | dump-ir | index | export-catalog }
 
 -run=DreamShader { compile | generate } { -Source=<path> | -File=<path> | -All } [-Force]
                                         [-Define=<NAME>[=<value>]]…
--run=DreamShader { decompile | export } -Asset=<object-path> [{ -Out | -Output }=<path>]
+-run=DreamShader { decompile | export } { -Asset=<object-path> | -SourceFile=<path> }
+                                        [{ -Out | -Output }=<path>] [-Format={ Dss | Legacy | Auto }]
+                                        [-KeepAssetPath] [-Readable] [-DiagnosticsOut=<file>]
+-run=DreamShader migrate { -Source=<path> | -All | -Root=<source root> }
+                                        [-Check] [-DryRun] [-Out=<dir>] [-NoBackup]
 -run=DreamShader dump-graph { -Source=<path> | -File=<path> | -All } [{ -Out | -Output }=<dir>]
                                         [-Define=<NAME>[=<value>]]…
+-run=DreamShader check { -Source=<path> | -All } [-Shaders] [-Platform=<list>] [-Quality=<list>]
+                                        [-Timeout=<seconds>] [-DiagnosticsOut=<file>]
+-run=DreamShader dump-ir { -Source=<path> | -All } [-Out=<dir>] [-Json]
+-run=DreamShader index { -Source=<path> | -All } [-Out=<dir>]
+-run=DreamShader export-catalog [-Out=<file>]
 ```
+
+`compile`, `dump-graph`, `check`, `dump-ir` and `index` take **every compilable source**: `.dss`,
+`.dsi`, `.dsm` and `.dsf`. There is one compiler; a 1.x source is read by the legacy front end and a
+`.dsh` header is compiled through the sources that include it.
 
 Commandlet flags declared by the class: `IsClient = false`, `IsEditor = true`, `IsServer = false`,
 `LogToConsole = true`.
@@ -40,8 +54,13 @@ is trimmed.
 | :-- | :-- | :-- |
 | `compile` | — | Compile one source file or every project source into assets |
 | `generate` | `compile` | Identical; alternate spelling |
-| `decompile` | — | Export a `UMaterial` / `UMaterialFunction` graph to a source file |
+| `decompile` | — | Export a material, function, layer, blend or material instance to a source file: 2.0 text by default (`.dss`, or `.dsi` for an instance), 1.x text with `-Format=Legacy` or an `-Out` ending in `.dsm` / `.dsf` — see [Decompiler](decompiler.md) |
 | `export` | `decompile` | Identical; alternate spelling |
+| `migrate` *(2.0)* | — | Rewrite 1.x sources as `.dss`, proving each rewrite first — see [Migrate](migrate.md) |
+| `check` *(2.0)* | — | Compile as far as IR validation and write no asset; `-Shaders` builds the products and reports HLSL errors against source lines |
+| `dump-ir` *(2.0)* | — | Write the lowered graph IR of a source as text, and as JSON with `-Json` |
+| `index` *(2.0)* | — | Write the symbol index a language service reads |
+| `export-catalog` *(2.0)* | — | Write the builtin node catalog as JSON, so tools can bind `UE.*` without an editor |
 | `dump-graph` *(since 1.9.0)* | — | Write a canonical JSON fingerprint of the graph each source generates |
 | `dumpgraph` | `dump-graph` | Identical; the hyphen is optional |
 
@@ -163,8 +182,13 @@ A message ending in ` (virtual)` indicates a transient asset; the commandlet nev
 
 | Option | Aliases | Type | Required | Default | Meaning |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| **`-Asset=<object-path>`** | — | string | **yes** | — | The asset to decompile |
+| **`-Asset=<object-path>`** | — | string | one of the two | — | The asset to decompile |
+| **`-SourceFile=<path>`** | — | string | one of the two | — | Decompile every asset that source builds into one file |
 | `-Out=<path>` | `-Output=<path>` | string | no | computed | Destination file |
+| `-Format=<Dss\|Legacy\|Auto>` | — | enum | no | `Auto` | `Auto` lets the extension of `-Out` decide: `.dsm` / `.dsf` is 1.x text, anything else 2.0. A format that contradicts the extension is `DSH9085`. |
+| `-KeepAssetPath` | — | flag | no | off | Write `/// @name` with the asset's own path when the output file would otherwise name another |
+| `-Readable` | — | flag | no | off | Prefer HLSL sugar over class-exact node calls (a rebuilt graph may then differ in node classes) |
+| `-DiagnosticsOut=<file>` | — | string | no | — | The decompile's diagnostics as JSON (schema `dreamshader-diagnostics`) |
 
 ### Asset path normalization
 
