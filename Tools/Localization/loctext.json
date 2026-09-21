@@ -2503,42 +2503,42 @@
   "key": "BoolFunctionInput",
   "src": "The input '{0}' of '{1}' is a dynamic bool pin, which the language has no parameter for; it is written as 'bool' and rebuilds as a scalar pin.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1246
+  "line": 1270
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "BreakWithoutMaterial",
   "src": "{0} reads the attributes of no material; a zero stands in for every value read from it.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1490
+  "line": 1514
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "CallWithoutFunction",
   "src": "{0} calls a material function that is missing; a zero stands in for every value read from it.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1275
+  "line": 1299
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "CaptionDropped",
   "src": "'{0}' has the caption '{1}', which source has no directive for; the rebuilt function has none.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2324
+  "line": 2349
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "ClassNotInCatalog",
   "src": "{0} is of a class the builtin catalog does not list (abstract, deprecated, or from a module loaded after the catalog was built); a zero stands in for every value read from it.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1779
+  "line": 1803
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "CustomDefinesDropped",
   "src": "{0} carries {1} additional define(s), which a '/// @custom' function cannot declare; the rebuilt node has none. Move them into the body as '#define' lines.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1389
+  "line": 1413
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
@@ -2559,14 +2559,14 @@
   "key": "DynamicPinsDropped",
   "src": "{0} has {1} wired input(s) the class does not declare as named pins, so a call cannot connect them; the rebuilt node leaves them unconnected.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1831
+  "line": 1855
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "GetAttributesAsBreak",
   "src": "{0} is a GetMaterialAttributes node; reading a material's attributes always rebuilds as a BreakMaterialAttributes.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1540
+  "line": 1564
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
@@ -2580,7 +2580,7 @@
   "key": "MakeAttributeUnknown",
   "src": "{0} sets '{1}', which is no material attribute the catalog knows; the connection is dropped.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1430
+  "line": 1454
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
@@ -2601,21 +2601,21 @@
   "key": "PinsIgnoredUnderAttributes",
   "src": "'{0}' reads its attributes as one set, so the {1} individual pin(s) that are also wired are ignored, by the engine and here.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2285
+  "line": 2310
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "PreviewPinConnected",
   "src": "The input '{0}' of '{1}' has its Preview pin wired. Source says that as a default that is an expression ('float {0} = UE.TexCoord(Index = 1).r'), which the decompiler does not write yet; the rebuilt input previews its number.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1253
+  "line": 1277
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "PropertyKindSkipped",
   "src": "{0} changes '{1}', a property of a kind a call argument cannot carry (an array, a map, a delegate); the rebuilt node has the default.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1866
+  "line": 1890
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
@@ -2643,14 +2643,14 @@
   "key": "StaticSwitchFalseBranch",
   "src": "False",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1619
+  "line": 1643
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "StaticSwitchFolded",
   "src": "{0} has nothing wired to Value, so it is its {1} branch and nothing else; the rebuilt graph has no switch there.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1617
+  "line": 1641
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
@@ -2664,28 +2664,28 @@
   "key": "StaticSwitchTrueBranch",
   "src": "True",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1619
+  "line": 1643
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "TextureSampleParameterSplit",
   "src": "{0} is a texture sample parameter, which the language writes as a texture uniform and a sample of it; the rebuilt graph has a TextureObjectParameter and a TextureSample in its place.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1185
+  "line": 1209
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "UnreachableExpressions",
   "src": "{0} expression(s) of '{1}' feed no output and are not part of the source; a build would prune them all the same.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2194
+  "line": 2219
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "UnsupportedAsset",
   "src": "'{0}' is neither a material nor a material function, so it has no graph to read. A material instance decompiles to a '.dsi'.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2401
+  "line": 2426
  },
  {
   "ns": "DreamShader.Decompiler.IR",
@@ -2895,42 +2895,42 @@
   "key": "AtlasOverride",
   "src": "'{0}' is a curve atlas row, and '{1}' picks its curve; a '.dsi' can state the row's number and nothing else, so the rebuilt instance loses the curve.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderInstanceDecompiler.cpp",
-  "line": 259
+  "line": 264
  },
  {
   "ns": "DreamShader.Decompiler.Instance",
   "key": "BoolParameterHoldsNumber",
   "src": "'{0}' is declared 'bool' by the parent's source and '{1}' sets it to {2}; the override is written as a 'float'.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderInstanceDecompiler.cpp",
-  "line": 248
+  "line": 253
  },
  {
   "ns": "DreamShader.Decompiler.Instance",
   "key": "InstanceWithoutParent",
   "src": "'{0}' has no parent material, and a '.dsi' is nothing but overrides of one.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderInstanceDecompiler.cpp",
-  "line": 159
+  "line": 164
  },
  {
   "ns": "DreamShader.Decompiler.Instance",
   "key": "LayerOverridesSkipped",
   "src": "'{0}' overrides {1} parameter(s) of its material layers or blends, which a '.dsi' cannot address; they are left out.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderInstanceDecompiler.cpp",
-  "line": 278
+  "line": 283
  },
  {
   "ns": "DreamShader.Decompiler.Instance",
   "key": "OverrideNameSanitized",
   "src": "The parameter '{0}' is not a name a variable can have; it is written under another with '/// @name {0}'.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderInstanceDecompiler.cpp",
-  "line": 267
+  "line": 272
  },
  {
   "ns": "DreamShader.Decompiler.Instance",
   "key": "UnsupportedInstanceState",
   "src": "'{0}' overrides '{1}', which '#pragma instance' has no key for; the rebuilt instance has the parent's.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderInstanceDecompiler.cpp",
-  "line": 298
+  "line": 303
  },
  {
   "ns": "DreamShader.Decompiler.Service",
@@ -3077,14 +3077,14 @@
   "key": "AssetDiverged",
   "src": "'{0}' no longer holds what DreamShader generated into it, so it was not rebuilt. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 393
+  "line": 398
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "AssetOpenInEditor",
   "src": "'{0}' is open in an asset editor, so it was not rebuilt. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 383
+  "line": 388
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3105,7 +3105,7 @@
   "key": "BadProductIndex",
   "src": "Product index {0} does not exist in this module, which has {1}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1235
+  "line": 1240
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3231,35 +3231,35 @@
   "key": "CreateFunctionFailed",
   "src": "The material function for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 742
+  "line": 747
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CreateInstanceFailed",
   "src": "The ThinCustom instance for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 597
+  "line": 602
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CreateMaterialFailed",
   "src": "The material for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 521
+  "line": 526
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CreateMaterialInstanceFailed",
   "src": "The material instance for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1023
+  "line": 1028
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CreateThinBaseFailed",
   "src": "The hidden base material for '{0}' could not be created. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 636
+  "line": 641
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3294,21 +3294,21 @@
   "key": "DeferredToWriteOwner",
   "src": "'{0}' was left alone: another editor owns writing this project's generated assets to disk.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 358
+  "line": 363
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "DestinationFailed",
   "src": "'{0}' does not resolve to a valid asset path. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1260
+  "line": 1265
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "EmitCancelled",
   "src": "Building '{0}' was cancelled; the asset is as it was before this compile.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 309
+  "line": 314
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3399,56 +3399,56 @@
   "key": "InstanceParentCycle",
   "src": "'{0}' cannot parent to '{1}': that parent already descends from this instance.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1094
+  "line": 1099
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentDoesNotLoad",
   "src": "The parent '{0}' of '{1}' does not load; compile the source that builds it, or correct the Parent key.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1050
+  "line": 1055
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentDrift",
   "src": "The parent asset '{0}' has no parameter {1} of the kind this instance overrides; the asset is older than its source. Compile the parent source first.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1116
+  "line": 1121
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentDropped",
   "src": "The engine dropped '{0}' as the parent of '{1}' while applying the static overrides; that parent does not allow them.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1186
+  "line": 1191
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentMaterializeFailed",
   "src": "The parent '{0}' of '{1}' exists only in memory and could not be saved first. {2}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1075
+  "line": 1080
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentMaterialized",
   "src": "'{0}' was memory-only, so it was saved to disk first: '{1}' parents to it.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1083
+  "line": 1088
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentMemoryOnlyForeign",
   "src": "The parent '{0}' exists only in memory and no DreamShader source builds it, so '{1}' cannot be saved against it; save the parent first.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1063
+  "line": 1068
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceValueNotApplied",
   "src": "The override of '{0}' could not be applied: {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1134
+  "line": 1139
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3504,7 +3504,7 @@
   "key": "NoCatalog",
   "src": "The emitter needs the builtin catalog the front end was bound against, but the emit context carries none.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1245
+  "line": 1250
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3609,14 +3609,14 @@
   "key": "RollbackNotArmed",
   "src": "'{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 437
+  "line": 442
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "RollbackNotArmedFunction",
   "src": "'{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 792
+  "line": 797
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3630,28 +3630,28 @@
   "key": "SaveFunctionFailed",
   "src": "'{0}' was built but could not be saved. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 868
+  "line": 873
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SaveInstanceFailed",
   "src": "'{0}' was built but could not be saved. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 713
+  "line": 718
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SaveMaterialFailed",
   "src": "'{0}' was built but could not be saved. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 564
+  "line": 569
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SaveMaterialInstanceFailed",
   "src": "'{0}' was built but could not be saved. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1209
+  "line": 1214
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3700,7 +3700,7 @@
   "key": "SettingsRefused",
   "src": "A material setting on '{0}' was refused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 453
+  "line": 458
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3721,7 +3721,7 @@
   "key": "SourceHashCurrent",
   "src": "'{0}' was left alone: its source hash is unchanged since it was last built.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 370
+  "line": 375
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3840,7 +3840,7 @@
   "key": "UnknownProductKind",
   "src": "'{0}' has a product kind the emitter does not know how to materialize.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1286
+  "line": 1291
  },
  {
   "ns": "DreamShader.Emitter",
@@ -4785,56 +4785,56 @@
   "key": "BadKeyValue",
   "src": "'{0}' is not a valid value for the instance key '{1}'. {2}",
   "file": "DreamShaderCompiler\\Private\\Assets\\DreamShaderInstanceSettings.cpp",
-  "line": 350
+  "line": 375
  },
  {
   "ns": "DreamShader.InstanceSettings",
   "key": "RefusedBackend",
   "src": "an instance has no backend of its own; it is a plain material instance of its parent.",
   "file": "DreamShaderCompiler\\Private\\Assets\\DreamShaderInstanceSettings.cpp",
-  "line": 126
+  "line": 127
  },
  {
   "ns": "DreamShader.InstanceSettings",
   "key": "RefusedBaseStruct",
   "src": "write the overrides as keys of their own, such as BlendMode or TwoSided.",
   "file": "DreamShaderCompiler\\Private\\Assets\\DreamShaderInstanceSettings.cpp",
-  "line": 134
+  "line": 135
  },
  {
   "ns": "DreamShader.InstanceSettings",
   "key": "RefusedFlag",
   "src": "an override flag follows from the key that sets its value.",
   "file": "DreamShaderCompiler\\Private\\Assets\\DreamShaderInstanceSettings.cpp",
-  "line": 138
+  "line": 139
  },
  {
   "ns": "DreamShader.InstanceSettings",
   "key": "RefusedKey",
   "src": "'{0}' cannot be set from an instance file: {1}",
   "file": "DreamShaderCompiler\\Private\\Assets\\DreamShaderInstanceSettings.cpp",
-  "line": 317
+  "line": 342
  },
  {
   "ns": "DreamShader.InstanceSettings",
   "key": "RefusedParameterArray",
   "src": "parameter values are written as uniform overrides.",
   "file": "DreamShaderCompiler\\Private\\Assets\\DreamShaderInstanceSettings.cpp",
-  "line": 142
+  "line": 143
  },
  {
   "ns": "DreamShader.InstanceSettings",
   "key": "RefusedUsageFlags",
   "src": "usage flags are a bitmask the engine merges with the parent's, which one key value cannot express.",
   "file": "DreamShaderCompiler\\Private\\Assets\\DreamShaderInstanceSettings.cpp",
-  "line": 130
+  "line": 131
  },
  {
   "ns": "DreamShader.InstanceSettings",
   "key": "UnknownKey",
   "src": "'{0}' is not an instance key; a key is a material property an instance can override, such as BlendMode, TwoSided, OpacityMaskClipValue or PhysMaterial.",
   "file": "DreamShaderCompiler\\Private\\Assets\\DreamShaderInstanceSettings.cpp",
-  "line": 341
+  "line": 366
  },
  {
   "ns": "DreamShader.Lang.Declarations",
@@ -7081,35 +7081,35 @@
   "key": "IncludePreprocessFailed",
   "src": "'{0}' failed conditional compilation: {1}: {2}",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilerIncludes.cpp",
-  "line": 226
+  "line": 228
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "IncludeUnparsable",
   "src": "'{0}', included from '{1}', could not be parsed; its own errors are above.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilerIncludes.cpp",
-  "line": 256
+  "line": 258
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "IncludeUnreadable",
   "src": "'{0}', included from '{1}', resolved but could not be read.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilerIncludes.cpp",
-  "line": 207
+  "line": 209
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "IncludeUnresolved",
   "src": "'{0}', included from '{1}', could not be resolved: {2}.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilerIncludes.cpp",
-  "line": 172
+  "line": 174
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "IncludeWrongKind",
   "src": "'{0}' is not a DreamShader header; an include names a '.dsh' (or a '.dss'), not a '{1}' file.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilerIncludes.cpp",
-  "line": 196
+  "line": 198
  },
  {
   "ns": "DreamShader.Pipeline",

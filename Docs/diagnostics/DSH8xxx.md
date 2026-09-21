@@ -896,7 +896,7 @@ DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch tha
 rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material no longer declares: %s.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderThinCustomParameterOverrides.cpp:240`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderThinCustomParameterOverrides.cpp:287`
 <!-- generated:end DSH8155 -->
 
 **Cause.** a rebuild of a ThinCustom material captured the parameter overrides set on the generated instance and put them back afterwards, but one or more of them named a parameter the rebuilt material no longer declares -- the source renamed it, removed it, or changed its kind -- so those values had nowhere to go and were dropped. Restoration matches by name and kind, because a name is the only thing that survives a graph the generator tears down and rebuilds. The same line reports an override of a parameter kind this build cannot re-apply (a texture collection, for instance)
@@ -916,7 +916,7 @@ rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material 
 '{0}' does not resolve to a valid asset path. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1259`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1010`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1264`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1010`
 <!-- generated:end DSH8200 -->
 
 **Cause.** The product's asset name, or the `/// @name /Game/...` path override, does not resolve
@@ -941,7 +941,7 @@ mount, so it needs no `/Game` prefix at all.
 The material for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:520`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:525`
 <!-- generated:end DSH8201 -->
 
 **Cause.** The destination for a material product exists and is not a `UMaterial`, or it exists on
@@ -963,7 +963,7 @@ move or delete the existing asset, then compile again.
 The material function for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:741`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:746`
 <!-- generated:end DSH8202 -->
 
 **Cause.** As DSH8201, for a material function product — with one extra way to fail: the asset at
@@ -985,7 +985,7 @@ every material that calls the function holds a typed reference to it.
 The ThinCustom instance for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:596`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:601`
 <!-- generated:end DSH8203 -->
 
 **Cause.** As DSH8201, for the `UDreamShaderMaterialInstance` a ThinCustom material becomes.
@@ -1005,7 +1005,7 @@ material or pin the backend back with `#pragma material(Backend = "Graph")`.
 The emitter needs the builtin catalog the front end was bound against, but the emit context carries none.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1245`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1250`
 <!-- generated:end DSH8204 -->
 
 **Cause.** `EmitDreamShaderIRProduct` was called with no `FIREmitContext::Catalog`, or with an
@@ -1028,7 +1028,7 @@ before any compile and has no sink to raise into, so it has no code).
 Product index {0} does not exist in this module, which has {1}.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1234`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:252`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1239`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:252`
 <!-- generated:end DSH8205 -->
 
 **Cause.** An internal inconsistency: the product index is out of range for the module, or the
@@ -1048,7 +1048,7 @@ shows the graph the emitter was handed.
 '{0}' is open in an asset editor, so it was not rebuilt. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:382`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:387`
 <!-- generated:end DSH8206 -->
 
 **Cause.** The asset is open in an asset editor. An open editor does not edit the asset itself: it
@@ -1070,7 +1070,7 @@ would pop a save prompt in the middle of a compile-on-save.
 '{0}' no longer holds what DreamShader generated into it, so it was not rebuilt. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:392`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:397`
 <!-- generated:end DSH8207 -->
 
 **Cause.** The asset no longer holds what DreamShader last generated into it — somebody edited the
@@ -1094,7 +1094,7 @@ is for.
 '{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:436`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:791`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:441`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:796`
 <!-- generated:end DSH8208 -->
 
 **Cause.** The atomic rollback could not take a snapshot of the asset before the rebuild started,
@@ -1116,7 +1116,7 @@ from scratch.
 '{0}' was left alone: another editor owns writing this project's generated assets to disk.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:357`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:362`
 <!-- generated:end DSH8209 -->
 
 **Cause.** Another editor holds this project's DreamShader bridge ownership lock, and only that
@@ -1253,7 +1253,7 @@ the material that calls the function and pass the value in as a function input.
 A material setting on '{0}' was refused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:452`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:457`
 <!-- generated:end DSH8215 -->
 
 **Cause.** A `#pragma material(...)` key is not a settable property path on `UMaterial`, or its
@@ -1546,7 +1546,7 @@ A matrix or a user struct cannot be a function input; pass its components separa
 '{0}' was built but could not be saved. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1208`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:563`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:712`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:867`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1213`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:568`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:717`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:872`
 <!-- generated:end DSH8229 -->
 
 **Cause.** The asset was built successfully but its package could not be written to disk — read-only
@@ -1566,7 +1566,7 @@ built in memory, so the next compile will save it without rebuilding.
 Cannot create a ThinCustom base material without an instance.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:296`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:313`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:635`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:296`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:313`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:640`
 <!-- generated:end DSH8230 -->
 
 **Cause.** The hidden base `UMaterial` a ThinCustom instance parents to could not be created as a
@@ -1587,7 +1587,7 @@ a fresh pair is created.
 '{0}' has a product kind the emitter does not know how to materialize.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1285`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1290`
 <!-- generated:end DSH8232 -->
 
 **Cause.** The product kind has no asset shape the emitter knows how to build. Internal.
@@ -1664,7 +1664,7 @@ earlier, by name. Report it with the source file.
 '{0}' was left alone: its source hash is unchanged since it was last built.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:369`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:374`
 <!-- generated:end DSH8237 -->
 
 **Cause.** The asset this product compiles to already carries the source hash of this build: the
@@ -1688,7 +1688,7 @@ reaches the divergence gate instead (DSH8207).
 The material instance for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1022`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1027`
 <!-- generated:end DSH8240 -->
 
 **Cause.** The instance asset of a `.dsi` could not be created or reused; the sentence after it is
@@ -1745,7 +1745,7 @@ Into Source* / `dsc decompile`.
 The parent '{0}' of '{1}' does not load; compile the source that builds it, or correct the Parent key.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1049`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1074`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1054`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1079`
 <!-- generated:end DSH8243 -->
 
 **Cause.** The parent named by `Parent = ...` could not be loaded, or it exists only in memory -- a
@@ -1767,7 +1767,7 @@ message carries the save error: free the package file it names.
 '{0}' was memory-only, so it was saved to disk first: '{1}' parents to it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1082`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1087`
 <!-- generated:end DSH8244 -->
 
 **Cause.** The parent was built into memory only (an Ephemeral build) and an instance on disk cannot
@@ -1786,7 +1786,7 @@ point at an object that is not. The parent was saved first.
 '{0}' cannot parent to '{1}': that parent already descends from this instance.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1093`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1098`
 <!-- generated:end DSH8245 -->
 
 **Cause.** `Parent` names an instance that itself descends from this one, so the parent chain would
@@ -1805,7 +1805,7 @@ be a loop.
 The parent asset '{0}' has no parameter {1} of the kind this instance overrides; the asset is older than its source. Compile the parent source first.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1115`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1120`
 <!-- generated:end DSH8246 -->
 
 **Cause.** The parent asset on disk lacks a parameter the instance overrides, although the parent's
@@ -1824,7 +1824,7 @@ source declares it: the parent asset is older than its source.
 The engine dropped '{0}' as the parent of '{1}' while applying the static overrides; that parent does not allow them.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1185`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1190`
 <!-- generated:end DSH8247 -->
 
 **Cause.** Applying the static switch overrides made the engine clear the instance's parent. It does
@@ -1845,7 +1845,7 @@ its parent's shaders.
 The parent '{0}' exists only in memory and no DreamShader source builds it, so '{1}' cannot be saved against it; save the parent first.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1062`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1067`
 <!-- generated:end DSH8248 -->
 
 **Cause.** The parent exists only in memory and no DreamShader source builds it (a material created
@@ -1864,7 +1864,7 @@ in the editor and never saved), so the instance has nothing on disk to reference
 '{0}' is not an instance key; a key is a material property an instance can override, such as BlendMode, TwoSided, OpacityMaskClipValue or PhysMaterial.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:340`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:365`
 <!-- generated:end DSH8249 -->
 
 **Cause.** A key of `#pragma instance(...)` is not something a material instance can override. The
@@ -1886,7 +1886,7 @@ else lives.
 '{0}' is not a valid value for the instance key '{1}'. {2}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:349`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:374`
 <!-- generated:end DSH8250 -->
 
 **Cause.** The value of an instance key does not fit its property; the sentence after it says what
@@ -1906,7 +1906,7 @@ object paths or `None`.
 '{0}' cannot be set from an instance file: {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:316`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:341`
 <!-- generated:end DSH8251 -->
 
 **Cause.** The key names something an instance file does not set that way; the sentence after it
@@ -1929,7 +1929,7 @@ points to.
 The override of '{0}' could not be applied: {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1133`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1138`
 <!-- generated:end DSH8252 -->
 
 **Cause.** One override could not be written into the instance; the reason follows. Usually the
@@ -2167,7 +2167,7 @@ on Windows a text editor holding an exclusive lock is enough to cause this.
 '{0}' failed conditional compilation: {1}: {2}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:644`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:225`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:644`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:227`
 <!-- generated:end DSH8291 -->
 
 **Cause.** The conditional-compilation preprocessor refused the file. The message carries the
@@ -2193,7 +2193,7 @@ file that tests it, or the define belongs in the project settings table.
 '{0}', included from '{1}', could not be resolved: {2}.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:171`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:173`
 <!-- generated:end DSH8292 -->
 
 **Cause.** An `#include` (or `import`) named a file that no source root contains. The resolution
@@ -2222,7 +2222,7 @@ including file, start the path with `/`.
 '{0}', included from '{1}', resolved but could not be read.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:206`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:208`
 <!-- generated:end DSH8293 -->
 
 **Cause.** The include resolved to a real path, and opening it failed. Unlike DSH8292 the file was
@@ -2242,7 +2242,7 @@ read-only is still readable; a file open exclusively in another tool is not.
 '{0}', included from '{1}', could not be parsed; its own errors are above.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:255`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:257`
 <!-- generated:end DSH8294 -->
 
 **Cause.** An included header did not parse. Its own parse errors were reported first, against the
@@ -2263,7 +2263,7 @@ carry the header's line numbers. A header is reported once per compile however m
 '{0}' is not a DreamShader header; an include names a '.dsh' (or a '.dss'), not a '{1}' file.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:195`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:197`
 <!-- generated:end DSH8295 -->
 
 **Cause.** An include resolved to a file that is not a DreamShader header. Only `.dsh` (and, for a
@@ -2333,7 +2333,7 @@ cached copy and `InvalidateDreamShaderBuiltinCatalog`.
 Building '{0}' was cancelled; the asset is as it was before this compile.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:308`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:604`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:313`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:604`
 <!-- generated:end DSH8298 -->
 
 **Cause.** The user pressed Cancel on the compile's progress dialog. Nothing was written: the emit

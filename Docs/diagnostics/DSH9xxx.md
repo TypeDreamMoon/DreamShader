@@ -946,7 +946,7 @@ an emitter bug, not an authoring mistake: report it with the asset path, which t
 '{0}' is neither a material nor a material function, so it has no graph to read. A material instance decompiles to a '.dsi'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2400`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2425`
 <!-- generated:end DSH9060 -->
 
 **Cause.** The asset handed to the 2.0 decompiler is neither a material nor a material function
@@ -967,7 +967,7 @@ routes it to `.dsi` output on its own.
 {0} expression(s) of '{1}' feed no output and are not part of the source; a build would prune them all the same.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2193`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2218`
 <!-- generated:end DSH9061 -->
 
 **Cause.** The graph holds expressions that feed no output: leftovers of editing. A source cannot
@@ -1006,7 +1006,7 @@ treats the reroute pin as unconnected and writes a zero for the read that closes
 The named reroute {0} has no declaration; the pin that reads it is treated as unconnected.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1489`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:395`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:433`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1513`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:395`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:433`
 <!-- generated:end DSH9063 -->
 
 **Cause.** A node reads something that is not there: a NamedRerouteUsage whose declaration no longer
@@ -1027,7 +1027,7 @@ unconnected; a read of no material's attributes is written as zero.
 {0} calls a material function that is missing; a zero stands in for every value read from it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1274`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1298`
 <!-- generated:end DSH9064 -->
 
 **Cause.** A MaterialFunctionCall node's function asset is missing (deleted, or its plugin is not
@@ -1047,7 +1047,7 @@ zero to keep the rest of the text compilable.
 {0} is of a class the builtin catalog does not list (abstract, deprecated, or from a module loaded after the catalog was built); a zero stands in for every value read from it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1778`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1802`
 <!-- generated:end DSH9065 -->
 
 **Cause.** An expression is of a class the builtin catalog does not list -- abstract, deprecated, or
@@ -1068,7 +1068,7 @@ its catalog (restart after enabling it), then decompile again.
 The input '{0}' of '{1}' is a dynamic bool pin, which the language has no parameter for; it is written as 'bool' and rebuilds as a scalar pin.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1245`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1269`
 <!-- generated:end DSH9066 -->
 
 **Cause.** A function input is of the engine's dynamic `Bool` pin type. The language has `bool`
@@ -1089,7 +1089,7 @@ the asset to StaticBool or Scalar before decompiling.
 {0} carries {1} additional define(s), which a '/// @custom' function cannot declare; the rebuilt node has none. Move them into the body as '#define' lines.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1388`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1412`
 <!-- generated:end DSH9067 -->
 
 **Cause.** A Custom node carries Additional Defines. A `/// @custom` function declares inputs,
@@ -1108,7 +1108,7 @@ outputs and code, and has no directive for defines.
 {0} changes '{1}', which a '///' directive cannot carry; the rebuilt parameter has the default.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1865`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:948`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1889`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:948`
 <!-- generated:end DSH9068 -->
 
 **Cause.** A node changes a property the text cannot carry: on a parameter, one that no `///`
@@ -1130,7 +1130,7 @@ rebuilt node has the engine default for it.
 {0} has nothing wired to Value, so it is its {1} branch and nothing else; the rebuilt graph has no switch there.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1616`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1640`
 <!-- generated:end DSH9069 -->
 
 **Cause.** A StaticSwitch has nothing wired to its `Value` pin, so it always takes the branch its
@@ -1150,7 +1150,7 @@ switchable.
 {0} has {1} wired input(s) the class does not declare as named pins, so a call cannot connect them; the rebuilt node leaves them unconnected.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1830`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1854`
 <!-- generated:end DSH9070 -->
 
 **Cause.** A node has inputs wired that its class does not declare as named pins (dynamic inputs of
@@ -1170,7 +1170,7 @@ to write those wires.
 The input '{0}' of '{1}' has its Preview pin wired. Source says that as a default that is an expression ('float {0} = UE.TexCoord(Index = 1).r'), which the decompiler does not write yet; the rebuilt input previews its number.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1252`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2323`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1276`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2348`
 <!-- generated:end DSH9071 -->
 
 **Cause.** A material function states something about its interface that source does not write yet.
@@ -1193,7 +1193,7 @@ has to be set on the rebuilt asset.
 {0} is read through its output {1}, which is no material attribute the catalog knows; a zero stands in for that read.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1429`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:603`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:628`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1453`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:603`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:628`
 <!-- generated:end DSH9072 -->
 
 **Cause.** A material-attributes node is used through something the catalog does not know: a
@@ -1215,7 +1215,7 @@ node in the asset.
 {0} is a StaticSwitchParameter, which the language writes as a '/// @static' uniform and a static branch; the rebuilt graph has those two nodes in its place.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1070`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1184`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1539`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1070`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1208`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:1563`
 <!-- generated:end DSH9073 -->
 
 **Cause.** One engine node the language writes as two, or under another class. A
@@ -1238,7 +1238,7 @@ names and static permutations are the same.
 '{0}' reads its attributes as one set, so the {1} individual pin(s) that are also wired are ignored, by the engine and here.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2284`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderGraphImport.cpp:2309`
 <!-- generated:end DSH9074 -->
 
 **Cause.** A material with *Use Material Attributes* on reads its attributes from the one
@@ -1757,7 +1757,7 @@ either, because the two would declare the same assets.
 '{0}' has no parent material, and a '.dsi' is nothing but overrides of one.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:158`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:163`
 <!-- generated:end DSH9100 -->
 
 **Cause.** The material instance has no parent. A `.dsi` is nothing but overrides of a parent, so
@@ -1776,7 +1776,7 @@ there is nothing to write.
 '{0}' overrides {1} parameter(s) of its material layers or blends, which a '.dsi' cannot address; they are left out.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:277`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:282`
 <!-- generated:end DSH9101 -->
 
 **Cause.** The instance overrides parameters of its material layers or blends. A `.dsi` addresses
@@ -1795,7 +1795,7 @@ global parameters only, so those overrides are left out of the text and would be
 The parameter '{0}' is not a name a variable can have; it is written under another with '/// @name {0}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:266`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:271`
 <!-- generated:end DSH9102 -->
 
 **Cause.** A parameter's name is not an identifier (`Base Color`, `UV-Scale`). The override is
@@ -1833,7 +1833,7 @@ resolves, so the instance's overrides cannot be checked against a parameter list
 '{0}' overrides '{1}', which '#pragma instance' has no key for; the rebuilt instance has the parent's.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:297`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:302`
 <!-- generated:end DSH9104 -->
 
 **Cause.** The instance overrides a base property `#pragma instance` has no key for. The rebuilt
@@ -1852,7 +1852,7 @@ instance takes the parent's value.
 '{0}' is a curve atlas row, and '{1}' picks its curve; a '.dsi' can state the row's number and nothing else, so the rebuilt instance loses the curve.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:258`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:263`
 <!-- generated:end DSH9105 -->
 
 **Cause.** A scalar override is a curve-atlas row: the engine stores the curve and atlas beside the
@@ -1871,7 +1871,7 @@ number. A `.dsi` can state the number only.
 '{0}' is declared 'bool' by the parent's source and '{1}' sets it to {2}; the override is written as a 'float'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:247`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:252`
 <!-- generated:end DSH9106 -->
 
 **Cause.** The parent's source declares the parameter `bool` (a scalar 0/1 parameter), and the
