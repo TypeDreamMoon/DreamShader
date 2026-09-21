@@ -72,9 +72,15 @@ compiler as a `.dss`, through the legacy front end. The driver has more verbs th
 | `migrate <file>` \| `-All` \| `-Root <name>` | rewrites 1.x sources as `.dss`, proving each rewrite first; `-Check` writes nothing — [`Docs/tools/migrate.md`](../Docs/tools/migrate.md) |
 | `decompile <asset>` | 2.0 text by default; a material instance comes out as a [`.dsi`](../Docs/language-v2/instances.md) |
 | `dump-ir`, `index`, `export-catalog` | language-service tools: the lowered IR, the symbol index, the builtin node catalog |
+| `dump-layout <file>` \| `-All` | draws the IR graph layouts — `Blocks`, `SourceBands`, `Layered` — of every product as SVG, building nothing; `-Style` names one, `-Json` adds the coordinates |
+| `fmt <file>` \| `-All` | rewrites 2.0 sources (`.dss`, `.dsi`, 2.0 headers) in the printer's layout, refusing any file it cannot vouch for; `-Check` writes nothing and fails when a file would change |
+| `list-generated <file>` \| `-All` | names every asset the sources build, building none: `-ListAs Packages \| Files \| GitIgnore \| Json`, `-Out <file>` — [`Docs/generation/source-control.md`](../Docs/generation/source-control.md) |
 
-`compile`, `check`, `dump-ir`, `index` and `dump-graph` take every compilable source: `.dss`, `.dsi`,
-`.dsm`, `.dsf`. The 2.0 language itself: [`Docs/language-v2/index.md`](../Docs/language-v2/index.md).
+`compile`, `check`, `dump-ir`, `dump-layout`, `index`, `list-generated` and `dump-graph` take every
+compilable source: `.dss`, `.dsi`, `.dsm`, `.dsf`. The 2.0 language itself:
+[`Docs/language-v2/index.md`](../Docs/language-v2/index.md); its Substrate sugar — operators, legacy
+parameters on a slab, values built member by member — works in 1.x sources too:
+[`Docs/language-v2/substrate.md`](../Docs/language-v2/substrate.md).
 
 ## What the driver adds over the raw commandlet
 

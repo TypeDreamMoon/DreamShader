@@ -32,6 +32,7 @@ under `Saved/DreamShader/Bridge/`.
 ├─ material-expressions.json   outbound reflected UMaterialExpression catalogue
 ├─ settings.json               outbound enum alias tables
 ├─ substrate-builtins.json     outbound Substrate builtin catalogue
+├─ dreamshader-builtin-catalog.json  outbound the 2.0 binder's node catalog (since 2.0.0)
 ├─ preview.json                outbound one-shot preview result
 └─ Preview/                    outbound rendered PNGs
    └─ <stem>-<crc32>.png
@@ -48,7 +49,7 @@ Startup, in order. `Bridge`, `Bridge/Requests` and `Bridge/Preview` are created 
 | 2 | Delete `bridge.db`, `bridge.db-wal`, `bridge.db-shm` and the whole `diagnostics/` directory |
 | 3 | Export `material-expressions.json`, `settings.json`, `substrate-builtins.json` (and their SQLite tables) |
 | 4 | Scan and refresh `VirtualFunction` declarations |
-| 5 | Register a post-engine-init handler that generates every source file in memory |
+| 5 | Register a post-engine-init handler that generates every source file in memory, and then exports `dreamshader-builtin-catalog.json` *(since 2.0.0)* — after the sweep, because the catalog is reflection over every loaded expression class and only then is every module loaded |
 | 6 | Register a project-settings property watcher |
 | 7 | Queue a full rescan and write `diagnostics.json` |
 | 8 | Start the preview WebSocket server on port `17864` |
@@ -288,6 +289,27 @@ Failures come back as `ok: false` with the reason in `diagnostics` (`stage: "nav
 `DSH9050`–`DSH9057`. `DSH9051` means no asset from that source is loaded in this editor — compile
 the file first; `DSH9052` means the assets were built before node navigation existed and carry no
 span table — rebuild with `-Force`.
+
+## Symbol index
+
+*(since 2.0.0)* Every compile that gets as far as a bound module — a **failed** one included, because
+navigation matters most in a file that does not build — refreshes
+
+```text
+<Project>/Saved/DreamShader/Index/<root>/<source path relative to that root>.index.json
+```
+
+(schema `dreamshader-symbol-index`, version `1`): the declarations of the source and of every header
+it includes — kind, name, signature, type, doc, position — every mention of a name as a span, the
+resolved include paths, and the parameter schema. `<root>` is `Project` or a plugin's name, which
+keeps two source roots that each hold a `Materials/M_Foo.dss` apart. `dsc index` writes the same file
+by the same rule, so a language service reads one place whoever compiled last; a file whose text would
+not change is not rewritten, so an unchanged compile wakes no watcher.
+
+The VS Code extension answers Go to Definition, Find References, Hover, the Outline, Signature Help and
+Rename for `.dss` sources from these files, and completes `UE.` / `Substrate.` from
+`dreamshader-builtin-catalog.json` — the binder's own table of node classes, pins, properties, aliases
+and positional orders.
 
 ## WebSocket server
 
@@ -589,7 +611,9 @@ Everything the bridge writes, and who reads it.
 | `material-expressions.json` | outbound | no |
 | `settings.json` | outbound | no |
 | `substrate-builtins.json` | outbound | no |
+| `dreamshader-builtin-catalog.json` | outbound | no — also written by `dsc export-catalog`, and on *Open DreamShader Workspace* |
 | `preview.json` | outbound | no |
+| `../Index/<root>/<source>.index.json` | outbound | no — the [symbol index](#symbol-index) of a source, beside the bridge directory rather than in it |
 | `Preview/<stem>-<crc32>.png` | outbound | no |
 | `<SourceDirectory>/DreamShader.code-workspace` | outbound | no — see [Workspace](workspace.md) |
 

@@ -9,7 +9,7 @@ and decompiles existing material assets back into source files.
 | :-- | :-- |
 | Kind | `UCommandlet` subclass — `UDreamShaderCommandlet`, in the `DreamShaderEditor` module |
 | Invocation | `-run=DreamShader` (equivalently `-run=DreamShaderCommandlet`) |
-| Commands | `compile`, `generate`, `decompile`, `export`, `dump-graph` *(since 1.9.0)* |
+| Commands | `compile`, `generate`, `decompile`, `export`, `dump-graph` *(since 1.9.0)*; `migrate`, `check`, `dump-ir`, `dump-layout`, `index`, `export-catalog`, `fmt`, `list-generated` *(2.0)* |
 | Exit codes | `0` success, `1` failure |
 | Log category | `LogDreamShader` |
 
@@ -19,7 +19,7 @@ and decompiles existing material assets back into source files.
 UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 
 <command> ::= { compile | generate | decompile | export | migrate | dump-graph
-              | check | dump-ir | index | export-catalog }
+              | check | dump-ir | dump-layout | index | export-catalog | fmt | list-generated }
 
 -run=DreamShader { compile | generate } { -Source=<path> | -File=<path> | -All } [-Force]
                                         [-Define=<NAME>[=<value>]]…
@@ -33,13 +33,19 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 -run=DreamShader check { -Source=<path> | -All } [-Shaders] [-Platform=<list>] [-Quality=<list>]
                                         [-Timeout=<seconds>] [-DiagnosticsOut=<file>]
 -run=DreamShader dump-ir { -Source=<path> | -All } [-Out=<dir>] [-Json]
+-run=DreamShader dump-layout { -Source=<path> | -All } [-Style={ Blocks | SourceBands | Layered | All }]
+                                        [-Out=<dir>] [-Json]
 -run=DreamShader index { -Source=<path> | -All } [-Out=<dir>]
 -run=DreamShader export-catalog [-Out=<file>]
+-run=DreamShader fmt { -Source=<path> | -All } [-Check] [-Out=<dir>]
+-run=DreamShader list-generated { -Source=<path> | -All } [-As={ Packages | Files | GitIgnore | Json }]
+                                        [-Out=<file>] [-IncludeEphemeral]
 ```
 
-`compile`, `dump-graph`, `check`, `dump-ir` and `index` take **every compilable source**: `.dss`,
-`.dsi`, `.dsm` and `.dsf`. There is one compiler; a 1.x source is read by the legacy front end and a
-`.dsh` header is compiled through the sources that include it.
+`compile`, `dump-graph`, `check`, `dump-ir`, `dump-layout`, `index` and `list-generated` take **every
+compilable source**: `.dss`, `.dsi`, `.dsm` and `.dsf`. There is one compiler; a 1.x source is read by
+the legacy front end and a `.dsh` header is compiled through the sources that include it. `fmt` takes
+2.0 text — `.dss`, `.dsi`, and a `.dsh` that has no 1.x declarations left.
 
 Commandlet flags declared by the class: `IsClient = false`, `IsEditor = true`, `IsServer = false`,
 `LogToConsole = true`.
@@ -59,8 +65,11 @@ is trimmed.
 | `migrate` *(2.0)* | — | Rewrite 1.x sources as `.dss`, proving each rewrite first — see [Migrate](migrate.md) |
 | `check` *(2.0)* | — | Compile as far as IR validation and write no asset; `-Shaders` builds the products and reports HLSL errors against source lines |
 | `dump-ir` *(2.0)* | — | Write the lowered graph IR of a source as text, and as JSON with `-Json` |
-| `index` *(2.0)* | — | Write the symbol index a language service reads |
-| `export-catalog` *(2.0)* | — | Write the builtin node catalog as JSON, so tools can bind `UE.*` without an editor |
+| `dump-layout` *(2.0)* | — | Draw the 2.0 graph layout of every product of a source as SVG, building nothing — see [`dump-layout`](#dump-layout) |
+| `index` *(2.0)* | — | Write the symbol index a language service reads. The editor writes the same file after every compile. |
+| `export-catalog` *(2.0)* | — | Write the builtin node catalog as JSON, so tools can bind `UE.*` without an editor. The editor writes the same file once it has loaded. |
+| `fmt` *(2.0)* | `format` | Rewrite 2.0 sources in the printer's layout; `-Check` reports and writes nothing — see [`fmt`](#fmt) |
+| `list-generated` *(2.0)* | — | Name every asset the sources build, building none — see [`list-generated`](#list-generated) |
 | `dump-graph` *(since 1.9.0)* | — | Write a canonical JSON fingerprint of the graph each source generates |
 | `dumpgraph` | `dump-graph` | Identical; the hyphen is optional |
 
@@ -298,6 +307,13 @@ Each node is `{ id, class, props, inputs }`, plus `reroute` on a named-reroute u
 name**, because the name is the declaration's identity in the source while its GUID is reissued on
 every rebuild.
 
+An input's `name` is the engine's own, with one exception *(since 2.0.0)*: `BreakMaterialAttributes`,
+`GetMaterialAttributes` and `SetMaterialAttributes` name their inputs with translated text, so theirs
+are written as `MaterialAttributes` and the attribute's own name (`BaseColor`, `FrontMaterial`) -- a
+capture must not depend on the language of the editor that took it. For the same reason a Get and a
+Set carry their attribute lists in `props` as names, `AttributeGetTypes` and `AttributeSetTypes`,
+although every other `FGuid` is left out: for these two nodes the list is the behaviour.
+
 ### The exclusion list
 
 Determinism beats completeness: a fingerprint that changes between two runs of the *same* compiler
@@ -353,6 +369,72 @@ or an entry in the parity log.
 
 Output is UTF-8 without a BOM, two-space indents, keys sorted case-sensitively at every level, LF line
 endings and a trailing newline.
+
+## `dump-layout`
+
+*(since 2.0.0)* Draws where a layout computed on the IR would put the nodes of every product of a source,
+as one SVG per product and style, without building an asset. It is how to look at **Blocks**, **Source
+Bands** and **Layered** before choosing a [Graph Layout Style](../generation/graph-layout.md#layout-styles).
+For `Blocks` the picture shows the boxes and the named reroutes between them: a declaration beside the
+value, a usage in every box that reads it, and no wire from one box to another.
+
+| Option | Default | Meaning |
+| :-- | :-- | :-- |
+| `-Source=<path>` / `-All` | one is required | which sources |
+| `-Style=` | `All` | `Blocks`, `SourceBands`, `Layered`, or `All` for one picture of each. `Classic` is the 1.x layout, which works on the finished graph and cannot be drawn from the IR ([`DSH9041`](../diagnostics/DSH9xxx.md)). |
+| `-Out=<dir>` | `<Project>/Saved/DreamShader/Layout` | root of the output tree, laid out `<root name>/<path relative to the root>` like `dump-ir`'s |
+| `-Json` | off | also write the coordinates — positions, sizes, columns, bands, comment boxes, the count of long edges, and for `Blocks` the boxes, the reroutes between them and the reroutes in front of the outputs — beside each SVG |
+
+Files are named `<source file>.<Product>.<Style>.layout.svg` (and `.json`). Node sizes are estimated
+from the IR — a node's pins and its title — so the picture shows the arrangement, not the exact
+footprint a live node has. A file that cannot be written is [`DSH9040`](../diagnostics/DSH9xxx.md).
+
+## `fmt`
+
+*(since 2.0.0)* The formatter is the language's own printer over a parse that kept its comments and
+blank lines; there is no second opinion about layout anywhere. `fmt` rewrites each file in place.
+
+| Option | Meaning |
+| :-- | :-- |
+| `-Source=<path>` | one file — any 2.0 source, in any source root |
+| `-All` | every `.dss`, `.dsi` and `.dsh` under the **writable** source roots — the project's own; a plugin ships its sources as they are, and naming one of its files is how to format it anyway |
+| `-Check` | write nothing; every file that would change is [`DSH9046`](../diagnostics/DSH9xxx.md) and the run fails — the form for CI |
+| `-Out=<dir>` | write the formatted copies under this directory, mirroring the source tree, instead of over the sources |
+
+What it guarantees, per file, before it writes a byte: the formatted text **parses**, to the **same
+declarations**, with **every comment** the file had, and formatting it **again** changes nothing. A
+file that fails any of those is left alone and reported as [`DSH9044`](../diagnostics/DSH9xxx.md) — a
+fault of the formatter, never of the file. The file's own line terminator is kept, so a format is
+never a whole-file diff.
+
+Two kinds of file are left as they are, and neither is an error:
+
+| File | Why | Code |
+| :-- | :-- | :-- |
+| one with 1.x declarations — a `.dsm`, a `.dsf`, a `.dsh` that still has `Function` blocks | what the printer writes for those is 2.0 text, and turning 1.x into 2.0 is [`migrate`](migrate.md), which proves far more before it writes | `DSH9042` (info) |
+| one that uses `#if` outside a `/// @custom` body | the parser reads preprocessed text and `fmt` reads the file as it is on disk; reprinting one side of an `#if` would delete the other | `DSH9043` (info) |
+
+The run ends with one line: `DreamShader fmt: 3 rewritten, 41 already formatted, 2 left alone, 0 failed
+of 46 file(s). RESULT=OK`.
+
+## `list-generated`
+
+*(since 2.0.0)* Names every asset the sources build — front end, binder and destination rules, and
+nothing after them: no asset is built, loaded or saved. It is what ignore rules and P4 typemaps are
+written from; [Source control](../generation/source-control.md) has the recipes.
+
+| Option | Default | Meaning |
+| :-- | :-- | :-- |
+| `-Source=<path>` / `-All` | one is required | which sources; `-All` covers plugin source roots too |
+| `-As=` | `Packages` | `Packages` — long package names; `Files` — paths relative to the project directory; `GitIgnore` — the same paths anchored with `/`, under a header comment; `Json` — every field (schema `dreamshader-generated-assets`, version 1) |
+| `-Out=<file>` | the log | write the list here. A script should always pass it: the log is for reading. |
+| `-IncludeEphemeral` | off | also list a ThinCustom material that is memory-only right now; it has no file, so it is left out of a list ignore rules are written from |
+
+A source that does not compile still contributes the products that were established before the
+failure, and the run ends `RESULT=FAILED` — a list is never silently short. Assets outside the project
+directory (an engine-level plugin's content) have no project-relative path; `Files` and `GitIgnore`
+say how many were left out ([`DSH9049`](../diagnostics/DSH9xxx.md)). An unknown `-As` is `DSH9048`; a
+list that cannot be written is `DSH9047`.
 
 ## Argument syntax
 

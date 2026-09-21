@@ -440,7 +440,11 @@ It is the compiler run backwards: **graph → IR → AST → printer**.
    the emitter's own rule, comment boxes become `#pragma region`s, node positions become
    `#pragma layout` hints.
 2. *Raise.* Nodes nothing reads are pruned, and the shapes the emitter lowers by hand are read back
-   (a StaticSwitch over a static bool is an `if` / `?:`, a Set-attributes chain is `m.X = ...`).
+   (a StaticSwitch over a static bool is an `if` / `?:`, a Set-attributes chain is `m.X = ...`). The
+   [Substrate sugar](../language-v2/substrate.md#decompiling) is read back here too, wherever that is
+   graph-exact: `SubstrateAdd` / `SubstrateWeight` / `SubstrateHorizontalMixing` with nothing set on
+   them are `A + B`, `A * w` and `lerp(A, B, t)`, and a conversion node that feeds one BSDF and nothing
+   else becomes `BaseColor = ...` / `Haziness = ...` / `Transmittance = ...` on that BSDF.
 3. *Write.* Uniforms in display order (`@sort` only where a priority is not the uniform's place), a
    local for a value that is read twice or that a statement named, custom functions recovered from
    their node's code with their helpers, layers and blends in their own signatures, an `extern`
@@ -452,6 +456,10 @@ What the language cannot say is named, never dropped silently: `DSH9060`–`DSH9
 (a missing function asset, a class outside the catalog, a Preview-pin default expression, additional
 defines on a Custom node) and `DSH9075`–`DSH9084` from the writer (a renamed identifier, positions of
 values written inline, an `extern` inferred from its calls).
+
+A Substrate node is written under the name sources use — `Substrate.Slab(...)`, the first alias the
+catalog lists for the class — rather than the reflected `SubstrateSlabBSDF`; both resolve to the same
+class.
 
 A plain `UMaterialInstanceConstant` is written as a `.dsi`: the parent, the `#pragma instance` keys
 it overrides, and the parameters that differ from the parent.
