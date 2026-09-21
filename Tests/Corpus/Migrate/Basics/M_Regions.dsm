@@ -1,0 +1,22 @@
+// `#Region` pairs become `#pragma region` pairs, around the same statements.
+Shader(Name="DreamShaderTests/Migrate/M_MgRegions")
+{
+    Properties = {
+        float A = 1.0;
+        float B = 2.0;
+    }
+
+    Outputs = {
+        float Value;
+        Base.Opacity = Value;
+    }
+
+    Graph = {
+        #Region "Maths"
+        float Sum = A + B;
+        // inside the region
+        float Scaled = Sum * 0.5;
+        #EndRegion
+        Value = Scaled;
+    }
+}

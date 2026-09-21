@@ -1,0 +1,5 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"text": "// Rule L7: `opt` without a value is an optional input previewing zero; 2.0 spells the zero.\n/// @name DreamShaderTests/Migrate/MF_MgOpt\nexport void MF_MgOpt(float3 InColor, float Strength = 0.0, float4 Extra = float4(0.0, 0.0, 0.0, 1.0), out float3 OutColor)\n{\n    OutColor = InColor * Strength + Extra.rgb;\n}\n"
+}

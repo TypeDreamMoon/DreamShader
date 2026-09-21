@@ -1,0 +1,12 @@
+// Without an answer from the host, `@root` stays and the rewrite says so (DSH9094).
+Shader(Name="Folder/M_MgRootKept", Root="Game")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = vec3(0.0, 1.0, 0.0);
+    }
+}

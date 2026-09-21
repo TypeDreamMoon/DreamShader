@@ -1,0 +1,26 @@
+// A minimal 1.x material: every section once, comments in every place a comment can sit.
+Shader(Name="DreamShaderTests/Migrate/M_MgMinimal", Root="Game")
+{
+    Properties = {
+        // The tint the artist sees.
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0) [
+            Group="Look";
+        ];
+        ScalarParameter Strength = 2.0;
+    }
+
+    Settings = {
+        Domain = "Surface";
+        ShadingModel = "Unlit";
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        // Scale the tint.
+        Color = Tint.rgb * Strength; // trailing note
+    }
+}

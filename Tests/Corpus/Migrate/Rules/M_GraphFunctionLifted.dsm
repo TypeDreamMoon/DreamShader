@@ -1,0 +1,39 @@
+// Rule L8, plan section 11 #19: a GraphFunction becomes a `/// @custom` function whose `UE.` calls stay in its body,
+// written the way a `.dss` reads them; both front ends lift them into inputs of the Custom node (`_ds_<Fn>_UE<k>`),
+// so the migrated text builds the very nodes the 1.x text builds. The second one stood inside a `Namespace`.
+GraphFunction MgPulse(in float2 uv, in float Gain, out float pulse) {
+    float t = UE.Time();
+    float mixed = UE.Lerp(A = 0.0, B = Gain, Alpha = 0.5);
+    pulse = sin(uv.x * 8.0 + t) * mixed;
+}
+
+Namespace(Name="MgSpace")
+{
+    GraphFunction Texel(in float scale, out float2 result) {
+        // the size of one texel, scaled
+        float2 inv = UE.Expression(Class="SceneTexture", OutputType="float2", Output="InvSize", SceneTextureId="SceneColor");
+        result = inv * scale;
+    }
+}
+
+Shader(Name="DreamShaderTests/Migrate/M_MgGraphFunction")
+{
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float2 uv = UE.TexCoord(Index = 0);
+        float First;
+        float Second;
+        MgPulse(uv, 2.0, First);
+        MgPulse(uv, 4.0, Second);
+        vec2 Size;
+        MgSpace::Texel(2.0, Size);
+        Color = vec3(Size, 0.0);
+        Alpha = First * Second;
+    }
+}

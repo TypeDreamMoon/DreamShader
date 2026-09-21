@@ -1,0 +1,5 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"text": "// A header fixture: 1.x blocks beside a 2.0 declaration. Only the 1.x ones change; the 2.0 one is reprinted.\n// This comment block stays where it is.\n\nfloat Twice(float x)\n{\n    return x * 2.0;\n}\n\n/// @custom\nvoid Remap01(float value, out float result)\n{\r\n    // hlsl, verbatim\r\n    result = saturate(value * 0.5 + 0.5);\r\n}\n\n/// @custom\n/// @name Common::ApplyTint\nvoid Common_ApplyTint(float3 color, float3 tint, out float3 result)\n{\r\n    result = lerp(color, color * tint, 1.0);\r\n}\n\n// A lifted call in a 1.x spelling, two lines below the block's indentation.\n/// @custom\n/// @name Common::TexelSize\nvoid Common_TexelSize(float scale, out float2 result)\n{\r\n    float2 inv = UE.SceneTexture(SceneTextureId = \"SceneColor\").InvSize;\r\n    result = inv * scale;\r\n}\n\n/// @custom\nvoid WindPulse(float2 uv, out float pulse)\n{\r\n    float t = UE.Time();\r\n    pulse = sin(uv.x * 8.0 + t);\r\n}\n"
+}

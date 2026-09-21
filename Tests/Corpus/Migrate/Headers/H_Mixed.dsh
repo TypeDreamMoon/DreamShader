@@ -1,0 +1,30 @@
+// A header fixture: 1.x blocks beside a 2.0 declaration. Only the 1.x ones change; the 2.0 one is reprinted.
+// This comment block stays where it is.
+
+float Twice(float x)
+{
+    return x * 2.0;
+}
+
+Function Remap01(in float value, out float result) {
+    // hlsl, verbatim
+    result = saturate(value * 0.5 + 0.5);
+}
+
+Namespace(Name="Common")
+{
+    Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
+        result = mix(color, color * tint, 1.0);
+    }
+
+    // A lifted call in a 1.x spelling, two lines below the block's indentation.
+    GraphFunction TexelSize(in float scale, out float2 result) {
+        float2 inv = UE.Expression(Class="SceneTexture", OutputType="float2", Output="InvSize", SceneTextureId="SceneColor");
+        result = inv * scale;
+    }
+}
+
+GraphFunction WindPulse(in float2 uv, out float pulse) {
+    float t = UE.Time();
+    pulse = sin(uv.x * 8.0 + t);
+}

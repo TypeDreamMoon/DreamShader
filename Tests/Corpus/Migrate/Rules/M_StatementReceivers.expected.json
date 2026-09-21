@@ -1,0 +1,8 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH5283"
+	],
+	"text": "// Rule L5: a statement call passes its receivers last, the return value's first; a receiver nobody declared is\n// declared by the call.\n/// @asset Path(Game, \"Functions/MF_MgTwoOut\")\nextern float3 MF_MgTwoOut(float3 Colour, float Gain = 1.0, out float Weight);\n\n/// @custom\nfloat Halve(float value)\n{ return value * 0.5; }\n\n/// @name DreamShaderTests/Migrate/M_MgReceivers\nexport void M_MgReceivers(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float Alpha = 0;\n    float W;\n    // both receivers undeclared, the optional input left out\n    float3 Shaded = MF_MgTwoOut(float3(1.0, 0.5, 0.25), Weight = W);\n    float Halved = 0;\n    Halved = Halve(W);\n    Color = Shaded;\n    Alpha = Halved;\n    Base.EmissiveColor = Color;\n    Base.Opacity = Alpha;\n}\n"
+}

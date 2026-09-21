@@ -1,0 +1,7 @@
+// Shared by the migrate fixtures that import it. Not a fixture itself (a header fixture is named H_*).
+Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
+    // tint in linear space
+    result = color * tint;
+}
+
+Function float Luma(in vec3 color) { return dot(color, float3(0.299, 0.587, 0.114)); }

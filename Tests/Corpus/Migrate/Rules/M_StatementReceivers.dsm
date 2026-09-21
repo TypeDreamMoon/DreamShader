@@ -1,0 +1,39 @@
+// Rule L5: a statement call passes its receivers last, the return value's first; a receiver nobody declared is
+// declared by the call.
+VirtualFunction(Name="MF_MgTwoOut")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_MgTwoOut");
+    }
+
+    Inputs = {
+        float3 Colour;
+        opt float Gain = 1.0;
+    }
+
+    Outputs = {
+        float3 Result;
+        float Weight;
+    }
+}
+
+Function float Halve(in float value) { return value * 0.5; }
+
+Shader(Name="DreamShaderTests/Migrate/M_MgReceivers")
+{
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        // both receivers undeclared, the optional input left out
+        MF_MgTwoOut(vec3(1.0, 0.5, 0.25), Shaded, W);
+        float Halved;
+        Halve(W, Halved);
+        Color = Shaded;
+        Alpha = Halved;
+    }
+}

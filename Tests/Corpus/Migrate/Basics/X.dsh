@@ -1,0 +1,2 @@
+// What M_RootImport.bad.dsm imports; the Core runner resolves an import by its leaf.
+Function vec3 Shade(in vec3 color) { return color * 0.5; }

@@ -1,0 +1,34 @@
+// Rule L3b: two selections over one call become ONE call statement with a variable per output.
+VirtualFunction(Name="MF_MgSplit")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_MgSplit");
+    }
+
+    Inputs = {
+        float2 UV;
+    }
+
+    Outputs = {
+        float3 Head;
+        float Tail;
+    }
+}
+
+Shader(Name="DreamShaderTests/Migrate/M_MgSelectShared")
+{
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float2 uv = UE.TexCoord(Index = 0);
+        // first use
+        Color = MF_MgSplit(uv, Output = "Head");
+        // second use of the same call
+        Alpha = MF_MgSplit(uv, OutputIndex = 1);
+    }
+}

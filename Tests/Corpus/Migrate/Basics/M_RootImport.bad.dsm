@@ -1,0 +1,15 @@
+// A root-qualified import has no `#include` spelling. The 1.x front end refuses it (DSH2252) before the rewrite's own
+// DSH9091 can, so nothing is printed.
+import "Project:X.dsh";
+
+Shader(Name="DreamShaderTests/Migrate/M_MgRootImport")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = Shade(vec3(1.0, 1.0, 1.0));
+    }
+}

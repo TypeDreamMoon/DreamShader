@@ -1,0 +1,8 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH5278"
+	],
+	"text": "// Rule L12: an enumerator spelled the engine's way becomes the catalog's spelling.\n/// @name DreamShaderTests/Migrate/M_MgEnum\nexport void M_MgEnum(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    Color = UE.SceneTexture(SceneTextureId = SceneColor).Color.rgb;\n    Base.EmissiveColor = Color;\n}\n"
+}

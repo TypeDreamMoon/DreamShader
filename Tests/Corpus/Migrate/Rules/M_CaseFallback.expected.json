@@ -1,0 +1,9 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH5276",
+		"DSH5275"
+	],
+	"text": "// Rule L19: names in another case are written the way they were declared.\n\n/// @sort 32\nuniform float Strength = 2.0;\n\n/// @name DreamShaderTests/Migrate/M_MgCase\nexport void M_MgCase(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float2 MyUV = UE.TextureCoordinate(CoordinateIndex = 0);\n    float Pulse = saturate(MyUV.x * Strength);\n    Color = float3(Pulse, Pulse, Pulse);\n    Base.EmissiveColor = Color;\n}\n"
+}

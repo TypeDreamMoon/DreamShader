@@ -1,0 +1,8 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH5277"
+	],
+	"text": "// Rule L2: the GLSL spellings 1.x accepted, written as HLSL.\n\n/// @sort 32\nuniform float3 A = float3(1.0, 0.0, 0.0);\n/// @sort 32\nuniform float3 B = float3(0.0, 0.0, 1.0);\n/// @sort 32\nuniform float T = 0.25;\n\n/// @name DreamShaderTests/Migrate/M_MgGlsl\nexport void M_MgGlsl(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float3 Mixed = lerp(A, B, T);\n    Color = frac(Mixed * 4.0) + fmod(Mixed, 0.5);\n    Base.EmissiveColor = Color;\n}\n"
+}

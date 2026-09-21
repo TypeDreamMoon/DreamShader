@@ -1,0 +1,18 @@
+// Rule L19: names in another case are written the way they were declared.
+Shader(Name="DreamShaderTests/Migrate/M_MgCase")
+{
+    Properties = {
+        float Strength = 2.0;
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.emissivecolor = Color;
+    }
+
+    Graph = {
+        float2 MyUV = UE.texcoord(index = 0);
+        float Pulse = Saturate(myuv.x * strength);
+        Color = vec3(Pulse, Pulse, Pulse);
+    }
+}

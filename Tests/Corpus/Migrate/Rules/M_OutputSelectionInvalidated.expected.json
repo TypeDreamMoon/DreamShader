@@ -1,0 +1,5 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"text": "// Rule L3b, and where sharing ends: `uv` is written between the two selections, so they are two calls.\n/// @asset Path(Game, \"Functions/MF_MgSplit2\")\nextern void MF_MgSplit2(float2 UV, out float3 Head, out float Tail);\n\n/// @name DreamShaderTests/Migrate/M_MgSelectInvalidated\nexport void M_MgSelectInvalidated(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float Alpha = 0;\n    float2 uv = UE.TexCoord(Index = 0);\n    float3 MF_MgSplit2_Head;\n    float MF_MgSplit2_Tail;\n    MF_MgSplit2(uv, Head = MF_MgSplit2_Head, Tail = MF_MgSplit2_Tail);\n    Color = MF_MgSplit2_Head;\n    uv = uv * 2.0;\n    float3 MF_MgSplit2_Head_2;\n    float MF_MgSplit2_Tail_2;\n    MF_MgSplit2(uv, Head = MF_MgSplit2_Head_2, Tail = MF_MgSplit2_Tail_2);\n    Alpha = MF_MgSplit2_Tail_2;\n    Base.EmissiveColor = Color;\n    Base.Opacity = Alpha;\n}\n"
+}

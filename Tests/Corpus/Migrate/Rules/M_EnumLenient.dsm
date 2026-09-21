@@ -1,0 +1,12 @@
+// Rule L12: an enumerator spelled the engine's way becomes the catalog's spelling.
+Shader(Name="DreamShaderTests/Migrate/M_MgEnum")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = UE.SceneTexture(Id = PPI_SceneColor).rgb;
+    }
+}

@@ -1,0 +1,5 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"text": "// `#Region` pairs become `#pragma region` pairs, around the same statements.\n\n/// @sort 32\nuniform float A = 1.0;\n/// @sort 32\nuniform float B = 2.0;\n\n/// @name DreamShaderTests/Migrate/M_MgRegions\nexport void M_MgRegions(inout material Base)\n{\n    float Value = 0;\n    #pragma region Maths\n    float Sum = A + B;\n    // inside the region\n    float Scaled = Sum * 0.5;\n    #pragma endregion\n    Value = Scaled;\n    Base.Opacity = Value;\n}\n"
+}

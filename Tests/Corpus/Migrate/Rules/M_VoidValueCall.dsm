@@ -1,0 +1,28 @@
+// Rule L3b: a function that returns nothing, called as a value: the value is its first `out`.
+VirtualFunction(Name="MF_MgOnlyOuts")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_MgOnlyOuts");
+    }
+
+    Inputs = {
+        float3 Colour;
+    }
+
+    Outputs = {
+        float3 Tinted;
+        float Weight;
+    }
+}
+
+Shader(Name="DreamShaderTests/Migrate/M_MgVoidValue")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = MF_MgOnlyOuts(vec3(1.0, 0.5, 0.25)) + vec3(0.1, 0.1, 0.1);
+    }
+}

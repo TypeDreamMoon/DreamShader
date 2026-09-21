@@ -1,0 +1,8 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH7204"
+	],
+	"text": "#pragma material(Backend = ThinCustom, ShadingModel = \"Unlit\")\n// `Backend = \"Instance\"` is the old name of ThinCustom.\n/// @name DreamShaderTests/Migrate/M_MgBackend\nexport void M_MgBackend(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    Color = float3(1.0, 0.5, 0.25);\n    Base.EmissiveColor = Color;\n}\n"
+}

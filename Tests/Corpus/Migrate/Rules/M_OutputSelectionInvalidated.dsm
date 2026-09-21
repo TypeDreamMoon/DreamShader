@@ -1,0 +1,33 @@
+// Rule L3b, and where sharing ends: `uv` is written between the two selections, so they are two calls.
+VirtualFunction(Name="MF_MgSplit2")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_MgSplit2");
+    }
+
+    Inputs = {
+        float2 UV;
+    }
+
+    Outputs = {
+        float3 Head;
+        float Tail;
+    }
+}
+
+Shader(Name="DreamShaderTests/Migrate/M_MgSelectInvalidated")
+{
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float2 uv = UE.TexCoord(Index = 0);
+        Color = MF_MgSplit2(uv, Output = "Head");
+        uv = uv * 2.0;
+        Alpha = MF_MgSplit2(uv, Output = "Tail");
+    }
+}

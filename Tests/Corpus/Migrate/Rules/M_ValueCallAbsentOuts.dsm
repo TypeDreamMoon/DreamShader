@@ -1,0 +1,28 @@
+// Rule L3b: a value call is the function's first output and leaves the others out; 2.0 wants every `out` passed.
+VirtualFunction(Name="MF_MgResultAndMore")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_MgResultAndMore");
+    }
+
+    Inputs = {
+        float3 Colour;
+    }
+
+    Outputs = {
+        float3 Result;
+        float Extra;
+    }
+}
+
+Shader(Name="DreamShaderTests/Migrate/M_MgAbsentOuts")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = MF_MgResultAndMore(vec3(1.0, 0.5, 0.25)) * 2.0;
+    }
+}

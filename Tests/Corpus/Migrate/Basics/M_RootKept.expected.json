@@ -1,0 +1,8 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH9094"
+	],
+	"text": "// Without an answer from the host, `@root` stays and the rewrite says so (DSH9094).\n/// @name Folder/M_MgRootKept\n/// @root Game\nexport void M_MgRootKept(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    Color = float3(0.0, 1.0, 0.0);\n    Base.EmissiveColor = Color;\n}\n"
+}

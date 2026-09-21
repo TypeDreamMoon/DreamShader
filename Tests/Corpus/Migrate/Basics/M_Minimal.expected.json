@@ -1,0 +1,9 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"productNames":
+	{
+		"M_MgMinimal": ""
+	},
+	"text": "#pragma material(Domain = \"Surface\", ShadingModel = \"Unlit\")\n// A minimal 1.x material: every section once, comments in every place a comment can sit.\n\n// The tint the artist sees.\n/// @group Look\n/// @sort 32\nuniform float4 Tint = float4(1.0, 0.5, 0.25, 1.0);\n/// @sort 32\nuniform float Strength = 2.0;\n\nexport void M_MgMinimal(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    // Scale the tint.\n    Color = Tint.rgb * Strength; // trailing note\n    Base.EmissiveColor = Color;\n}\n"
+}

@@ -1,0 +1,17 @@
+// Rule L7: `opt` without a value is an optional input previewing zero; 2.0 spells the zero.
+ShaderFunction(Name="DreamShaderTests/Migrate/MF_MgOpt")
+{
+    Inputs = {
+        vec3 InColor;
+        opt float Strength;
+        opt vec4 Extra;
+    }
+
+    Outputs = {
+        vec3 OutColor;
+    }
+
+    Graph = {
+        OutColor = InColor * Strength + Extra.rgb;
+    }
+}

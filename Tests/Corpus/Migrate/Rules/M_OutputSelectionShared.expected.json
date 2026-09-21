@@ -1,0 +1,5 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"text": "// Rule L3b: two selections over one call become ONE call statement with a variable per output.\n/// @asset Path(Game, \"Functions/MF_MgSplit\")\nextern void MF_MgSplit(float2 UV, out float3 Head, out float Tail);\n\n/// @name DreamShaderTests/Migrate/M_MgSelectShared\nexport void M_MgSelectShared(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float Alpha = 0;\n    float2 uv = UE.TexCoord(Index = 0);\n    float3 MF_MgSplit_Head;\n    float MF_MgSplit_Tail;\n    MF_MgSplit(uv, Head = MF_MgSplit_Head, Tail = MF_MgSplit_Tail);\n    // first use\n    Color = MF_MgSplit_Head;\n    // second use of the same call\n    Alpha = MF_MgSplit_Tail;\n    Base.EmissiveColor = Color;\n    Base.Opacity = Alpha;\n}\n"
+}
