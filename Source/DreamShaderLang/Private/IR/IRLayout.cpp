@@ -1142,10 +1142,13 @@ namespace UE::DreamShader::IR
 
 	FIRLayoutNodeSize EstimateDreamShaderIRRerouteSize(const FString& Name)
 	{
-		// A named reroute is its name and one pin.
+		// A named reroute is a title and one row of pins. The numbers are the ones the host measures a live node with
+		// (title row 46, pin row 28, body padding 22; ten units a title character over 48 of padding, 140 to 520 wide),
+		// because these nodes do not exist when the pass runs and cannot be measured: an estimate below the live node's
+		// size stacks two usages into each other.
 		FIRLayoutNodeSize Size;
-		Size.Width = FMath::Clamp(72 + Name.Len() * 8, 128, 400);
-		Size.Height = 48;
+		Size.Width = FMath::Clamp(48 + Name.Len() * 10, 140, 520);
+		Size.Height = 46 + 28 + 22;
 		return Size;
 	}
 
