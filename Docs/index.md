@@ -9,8 +9,8 @@ authoring surface; the assets are build output and can always be regenerated.
 | :-- | :-- |
 | Version | `2.0.0` |
 | Engines | Unreal Engine `5.3` – `5.8` (Win64 verified) |
-| Modules | `DreamShaderLang` (Runtime), `DreamShader` (Runtime), `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
-| Source extensions | `.dsm` material · `.dsf` function · `.dsh` header · `.dss` 2.0 compilation unit |
+| Modules | `DreamShaderLang` (Runtime), `DreamShader` (Runtime), `DreamShaderCompiler` (Editor), `DreamShaderEditor` (Editor) |
+| Source extensions | `.dsm` material · `.dsf` function · `.dsh` header · `.dss` 2.0 compilation unit · `.dsi` 2.0 material instance |
 | Project settings | *Project Settings ▸ DreamPlugin ▸ Dream Shader* |
 | License | MIT |
 
@@ -21,10 +21,10 @@ New here? Start with **[Getting started](getting-started.md)**, then **[Examples
 ## DreamShaderLang
 
 > [!NOTE]
-> Two syntaxes, one compiler. The **1.x** syntax documented below (`.dsm` / `.dsf` / `.dsh`) is the
-> one that ships. The **2.0** syntax — `.dss`, HLSL with declarations instead of section blocks —
-> compiles through the new binder/IR/emitter pipeline on the `2.0` line and has its own page:
-> **[DreamShaderLang 2.0](language-v2/index.md)**.
+> Two syntaxes, one compiler. The **1.x** syntax documented below (`.dsm` / `.dsf` / `.dsh`) and the
+> **2.0** syntax — `.dss`, HLSL with declarations instead of section blocks, and `.dsi` material
+> instances — both compile through the binder/IR/emitter pipeline of `2.0.0`. The 2.0 syntax has its
+> own page: **[DreamShaderLang 2.0](language-v2/index.md)**.
 
 ### [Language reference](language/index.md)
 

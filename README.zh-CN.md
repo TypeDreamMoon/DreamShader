@@ -246,7 +246,7 @@ Windows 上 UE `5.3` 和 `5.4` 可能需要 MSVC `14.38` 工具链——更新�
 | 版本 | `2.0.0` |
 | 语言 | `DreamShaderLang` |
 | Unreal Engine | `5.3` – `5.8` |
-| 模块 | `DreamShader`、`DreamShaderCompiler`（Runtime），`DreamShaderEditor`（Editor） |
+| 模块 | `DreamShaderLang`、`DreamShader`（Runtime），`DreamShaderCompiler`、`DreamShaderEditor`（Editor） |
 | 作者 | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |
 | 文档 | <https://shader.toolchain.64hz.cn/> |

@@ -263,7 +263,7 @@ while compiling older engine headers, before plugin code is reached.
 | Version | `2.0.0` |
 | Language | `DreamShaderLang` |
 | Unreal Engine | `5.3` – `5.8` |
-| Modules | `DreamShader`, `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
+| Modules | `DreamShaderLang`, `DreamShader` (Runtime), `DreamShaderCompiler`, `DreamShaderEditor` (Editor) |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |
 | Docs | <https://shader.toolchain.64hz.cn/> |
