@@ -1,0 +1,2 @@
+// A positional argument is not `Key = Value` (DSH3202).
+#pragma instance(Foo)

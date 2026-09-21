@@ -1,0 +1,19 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module":
+	{
+		"declarations": 4,
+		"pragmas": 0,
+		"includes": 0,
+		"structs": 0,
+		"uniforms": 3,
+		"constants": 0,
+		"functions": 1,
+		"exports": 1,
+		"externs": 0,
+		"opaqueBodies": 0,
+		"entry": "M_GroupedDeclarators",
+		"roundtrip": true
+	}
+}

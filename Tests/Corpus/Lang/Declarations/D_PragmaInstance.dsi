@@ -1,0 +1,9 @@
+// `#pragma instance(...)`: EPragmaKind::Instance, keyed arguments, quoted and bare values; then overrides.
+#pragma instance(Parent = "/Game/M_Parent", BlendMode = Translucent)
+
+/// @name Base Color
+uniform float3 BaseColour = float3(1, 0, 0);
+/// @static
+uniform bool UseWarm = false;
+/// @default /Game/T_X
+uniform Texture2D Source;

@@ -1,0 +1,7 @@
+// `uniform float a, b = 2, c;` is three declarations that remember they were written as one.
+uniform float a, b = 2, c;
+
+export void M_GroupedDeclarators(inout material m)
+{
+    m.Opacity = a + b + c;
+}

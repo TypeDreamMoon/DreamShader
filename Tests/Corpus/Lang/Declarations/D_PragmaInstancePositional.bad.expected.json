@@ -2,6 +2,6 @@
 	"entryPoint": "lang",
 	"outcome": "error",
 	"errorContains": [
-		"DSH2241"
+		"DSH3202"
 	]
 }

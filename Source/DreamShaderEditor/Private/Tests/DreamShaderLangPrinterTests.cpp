@@ -492,11 +492,12 @@ bool FDreamShaderLang2PrinterMaterialTest::RunTest(const FString& Parameters)
 	FString Printed;
 	RunRoundTrip(*this, Label, TEXT("Inline/M_TeleportGlow.dss"), MakeMaterialSource(), &Printed);
 
-	// The layout of section 7: a pragma written back with its spelling, one `///` directive per
-	// line, a blank line between top-level declarations, Allman braces, four-space indentation,
-	// `inout` kept and `in` omitted, and a named argument spelled `Name = value`.
+	// The layout of section 7: a pragma written back with its spelling, a parsed `///` block line by
+	// line as it was written (the pieces of one source line joined by three spaces; batch 2,
+	// FDocBlock::Order), a blank line between top-level declarations, Allman braces, four-space
+	// indentation, `inout` kept and `in` omitted, and a named argument spelled `Name = value`.
 	TestContains(*this, Label, Printed, TEXT("#pragma material(ShadingModel = Unlit, BlendMode = Additive, bUsedWithNiagaraSprites = true)"));
-	TestContains(*this, Label, Printed, TEXT("/// @group Glow|Look\n/// @desc Multiplied on top of the particle colour\nuniform float4 Tint = float4(1, 1, 1, 1);"));
+	TestContains(*this, Label, Printed, TEXT("/// @group Glow|Look   @desc Multiplied on top of the particle colour\nuniform float4 Tint = float4(1, 1, 1, 1);"));
 	TestContains(*this, Label, Printed, TEXT(";\n\n/// @group Glow|Motion"));
 	TestContains(*this, Label, Printed, TEXT("float GlowMask(float2 UV, float Time, float Amount)\n{\n"));
 	TestContains(*this, Label, Printed, TEXT("export void M_TeleportGlow(inout material m)\n{\n"));

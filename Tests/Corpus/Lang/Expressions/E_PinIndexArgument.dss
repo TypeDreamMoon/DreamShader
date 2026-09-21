@@ -1,0 +1,5 @@
+// `Pin[1] = x`: an input pin by engine index, which a migrated file prints and has to read back.
+export void M_PinIndexArgument(inout material m)
+{
+    m.EmissiveColor = UE.Expression(Class = "LinearInterpolate", Pin[0] = float3(1, 0, 0), Pin[1] = float3(0, 0, 1), Pin[2] = 0.5);
+}

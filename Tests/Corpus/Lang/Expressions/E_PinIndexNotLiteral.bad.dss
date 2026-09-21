@@ -1,0 +1,6 @@
+// The index of `Pin[...]` is a literal.
+export void M_PinIndexNotLiteral(inout material m)
+{
+    float x = 1;
+    m.EmissiveColor = UE.Expression(Class = "LinearInterpolate", Pin[x] = float3(1, 0, 0));
+}

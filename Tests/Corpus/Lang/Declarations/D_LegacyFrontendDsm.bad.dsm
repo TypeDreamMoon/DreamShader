@@ -1,7 +1,7 @@
-// A `.dsm` asks for the 1.x front end, which arrives in M4. Until then ParseDreamShaderLang
-// answers with ONE honest DSH2199 -- the text is never even lexed -- instead of failing token by
-// token on a syntax that is not its own. This fixture is the one that has to change when the
-// legacy front end lands.
+// A `.dsm` asks for the 1.x front end, and since batch 2 (M4) it gets it: the Auto front end sends this file to
+// the legacy parser instead of answering DSH2199. The legacy parser holds it to the 1.x rules, and a block word
+// without its `(Name = "...")` attribute list is DSH2241. This fixture pins the front-end selection, which is
+// why it lives in the Lang layer and not in Legacy/Parse.
 
 Shader M_Legacy
 {

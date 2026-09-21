@@ -1,0 +1,19 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module":
+	{
+		"declarations": 1,
+		"pragmas": 0,
+		"includes": 0,
+		"structs": 0,
+		"uniforms": 0,
+		"constants": 0,
+		"functions": 1,
+		"exports": 1,
+		"externs": 0,
+		"opaqueBodies": 0,
+		"entry": "M_PinIndexArgument",
+		"roundtrip": true
+	}
+}

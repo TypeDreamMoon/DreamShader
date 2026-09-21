@@ -738,11 +738,23 @@ bool FDreamShaderLang2DeclarationsDiagnosticsTest::RunTest(const FString& Parame
 		}
 	}
 
-	// The legacy front end is not available yet.
+	// A .dsm goes to the legacy front end (batch 2, M4): DSH2199 "legacy front end unavailable" is gone and the 1.x
+	// rules answer instead. A Shader block with no Graph section is DSH2255 there, and the parse carries the legacy
+	// migration side information.
 	{
 		const FLangParseResult Result = Parse(TEXT("Shader(Name=\"X\") { }"), TEXT("Legacy.dsm"));
-		TestFalse(TEXT(".dsm does not succeed"), Result.Succeeded());
-		ExpectFirstErrorCode(*this, Result, TEXT("DSH2199"), TEXT(".dsm routed to the legacy front end"));
+		TestFalse(TEXT(".dsm without a Graph section does not succeed"), Result.Succeeded());
+		TestTrue(TEXT(".dsm was parsed by the legacy front end (FLangParseResult::Legacy is set)"), Result.Legacy.IsValid());
+
+		bool bSawNoGraph = false;
+		bool bSawUnavailable = false;
+		for (const FLangDiagnostic& Diagnostic : Result.Diagnostics.GetDiagnostics())
+		{
+			bSawNoGraph |= Diagnostic.Severity == ELangSeverity::Error && Diagnostic.Code.Equals(TEXT("DSH2255"), ESearchCase::CaseSensitive);
+			bSawUnavailable |= Diagnostic.Code.Equals(TEXT("DSH2199"), ESearchCase::CaseSensitive);
+		}
+		TestTrue(TEXT("a Shader block with no Graph section is DSH2255"), bSawNoGraph);
+		TestFalse(TEXT("DSH2199 is no longer raised"), bSawUnavailable);
 	}
 
 	return true;
