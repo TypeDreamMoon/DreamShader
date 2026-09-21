@@ -24,7 +24,7 @@
 #include "Algo/Reverse.h"
 
 // This file's own namespace: the module builds as a unity blob.
-namespace UE::DreamShader::Editor::Private::Batch2RulesTests
+namespace UE::DreamShader::Editor::Private::LegacyRulesTests
 {
 	using namespace UE::DreamShader::Lang;
 	using namespace UE::DreamShader::IR;
@@ -68,13 +68,13 @@ namespace UE::DreamShader::Editor::Private::Batch2RulesTests
 // ---------------------------------------------------------------------------------------------
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FDreamShaderBatch2SourceStampingTest,
-	"DreamShader.Lang2.Batch2.SourceStamping",
+	FDreamShaderLegacyRulesSourceStampingTest,
+	"DreamShader.Lang2.LegacyRules.SourceStamping",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FDreamShaderBatch2SourceStampingTest::RunTest(const FString& Parameters)
+bool FDreamShaderLegacyRulesSourceStampingTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader::Editor::Private::Batch2RulesTests;
+	using namespace UE::DreamShader::Editor::Private::LegacyRulesTests;
 
 	const TCHAR* Source = TEXT(
 		"/// @custom\n"
@@ -152,13 +152,13 @@ bool FDreamShaderBatch2SourceStampingTest::RunTest(const FString& Parameters)
 // ---------------------------------------------------------------------------------------------
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FDreamShaderBatch2StatementBindingsTest,
-	"DreamShader.Lang2.Batch2.StatementBindings",
+	FDreamShaderLegacyRulesStatementBindingsTest,
+	"DreamShader.Lang2.LegacyRules.StatementBindings",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FDreamShaderBatch2StatementBindingsTest::RunTest(const FString& Parameters)
+bool FDreamShaderLegacyRulesStatementBindingsTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader::Editor::Private::Batch2RulesTests;
+	using namespace UE::DreamShader::Editor::Private::LegacyRulesTests;
 
 	const TCHAR* Source = TEXT(
 		"/// @custom\n"
@@ -221,13 +221,13 @@ bool FDreamShaderBatch2StatementBindingsTest::RunTest(const FString& Parameters)
 // ---------------------------------------------------------------------------------------------
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FDreamShaderBatch2PinNamesTest,
-	"DreamShader.Lang2.Batch2.PinNames",
+	FDreamShaderLegacyRulesPinNamesTest,
+	"DreamShader.Lang2.LegacyRules.PinNames",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FDreamShaderBatch2PinNamesTest::RunTest(const FString& Parameters)
+bool FDreamShaderLegacyRulesPinNamesTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader::Editor::Private::Batch2RulesTests;
+	using namespace UE::DreamShader::Editor::Private::LegacyRulesTests;
 
 	{
 		FIRRun Run;
@@ -281,13 +281,13 @@ bool FDreamShaderBatch2PinNamesTest::RunTest(const FString& Parameters)
 // ---------------------------------------------------------------------------------------------
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FDreamShaderBatch2LegacyScopeTest,
-	"DreamShader.Lang2.Batch2.LegacyScope",
+	FDreamShaderLegacyRulesLegacyScopeTest,
+	"DreamShader.Lang2.LegacyRules.LegacyScope",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FDreamShaderBatch2LegacyScopeTest::RunTest(const FString& Parameters)
+bool FDreamShaderLegacyRulesLegacyScopeTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader::Editor::Private::Batch2RulesTests;
+	using namespace UE::DreamShader::Editor::Private::LegacyRulesTests;
 
 	// One line of meaning, written in both languages.
 	{
@@ -394,13 +394,13 @@ bool FDreamShaderBatch2LegacyScopeTest::RunTest(const FString& Parameters)
 // ---------------------------------------------------------------------------------------------
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FDreamShaderBatch2InstanceSchemaTest,
-	"DreamShader.Lang2.Batch2.InstanceSchema",
+	FDreamShaderLegacyRulesInstanceSchemaTest,
+	"DreamShader.Lang2.LegacyRules.InstanceSchema",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FDreamShaderBatch2InstanceSchemaTest::RunTest(const FString& Parameters)
+bool FDreamShaderLegacyRulesInstanceSchemaTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader::Editor::Private::Batch2RulesTests;
+	using namespace UE::DreamShader::Editor::Private::LegacyRulesTests;
 
 	FIRRun Parent;
 	Lower(Parent, TEXT("M_SchemaParent.dss"), TEXT(
