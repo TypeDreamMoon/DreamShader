@@ -335,7 +335,7 @@ namespace UE::DreamShader::Editor::Compiler
 	{
 		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
 		IR::EIRLayoutStyle Style = IR::EIRLayoutStyle::Blocks;
-		switch (Settings ? Settings->GraphLayoutStyle : EDreamShaderGraphLayoutStyle::Classic)
+		switch (Settings ? Settings->GraphLayoutStyle : EDreamShaderGraphLayoutStyle::Blocks)
 		{
 		case EDreamShaderGraphLayoutStyle::Blocks:
 			Style = IR::EIRLayoutStyle::Blocks;

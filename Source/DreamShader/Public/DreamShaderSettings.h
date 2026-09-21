@@ -130,8 +130,8 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category="Compiler",
 		meta=(DisplayName="Graph Layout Style",
-			ToolTip="How the nodes of a generated graph are placed. Classic is the 1.x layout. The other three are computed on the compiler's IR, before any node exists, and are deterministic. Blocks boxes the graph by region and run of statements, in source order, and lets no wire leave a box: a value another box reads travels through a named reroute, and a constant is repeated where it is read. Source Bands puts one horizontal band per source statement, top to bottom in source order, so the graph reads like the file; Layered draws the whole graph as one layered drawing; those two insert no reroute nodes. Node positions are not part of a generated asset's digest: changing this never makes an asset look hand-edited, and it takes effect the next time a source is rebuilt. `dsc dump-layout` draws the three IR styles of a source as SVG without building anything."))
-	EDreamShaderGraphLayoutStyle GraphLayoutStyle = EDreamShaderGraphLayoutStyle::Classic;
+			ToolTip="How the nodes of a generated graph are placed. Blocks, the default, boxes the graph by region and run of statements, in source order, and lets no wire leave a box: a value another box reads travels through a named reroute, and a constant is repeated where it is read. Source Bands puts one horizontal band per source statement, top to bottom in source order, so the graph reads like the file; Layered draws the whole graph as one layered drawing; those two insert no reroute nodes. These three are computed on the compiler's IR, before any node exists, and are deterministic. Classic is the 1.x layout, which works on the finished graph. Node positions are not part of a generated asset's digest: changing this never makes an asset look hand-edited, and it takes effect the next time a source is rebuilt. `dsc dump-layout` draws the three IR styles of a source as SVG without building anything."))
+	EDreamShaderGraphLayoutStyle GraphLayoutStyle = EDreamShaderGraphLayoutStyle::Blocks;
 
 	UPROPERTY(Config, EditAnywhere, Category="Compiler")
 	bool bAutoCompileOnSave = true;
