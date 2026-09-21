@@ -6,8 +6,8 @@
 
 #include "DreamShaderModule.h"
 #include "DreamShaderTestCommon.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
-#include "Preview/DreamShaderGraphDebugInfo.h"
+#include "DreamShaderCompilerService.h"
+#include "DreamShaderGraphDebugInfo.h"
 #include "Preview/DreamShaderPreviewRenderer.h"
 #include "Preview/DreamShaderPreviewSession.h"
 #include "Preview/DreamShaderProbePreview.h"
@@ -100,11 +100,20 @@ namespace UE::DreamShader::Editor::Private::Tests
 		// A material with several distinct-colored bindings on their own lines, so a probe on each
 		// line renders a predictably different emissive color. The Graph block starts far enough down
 		// that a wrong line-offset would be obvious.
+		//
+		// Every binding reads the `Gain` parameter (1.0, so the colours are what they look like): since batch 2 a 1.x
+		// source goes through the 2.0 passes, which fold `vec3(1,0,0) + vec3(0,1,0) + vec3(0,0,1)` into one constant
+		// and prune the three it no longer reads -- and a binding with no node left has no probe. A value that reads a
+		// parameter cannot fold, so each line keeps the node its probe shows.
 		FString MakeProbeSource(const FString& AssetName)
 		{
 			return FString::Printf(TEXT(R"(
 Shader(Name="DreamShaderTests/Automation/%s")
 {
+    Properties = {
+        ScalarParameter Gain = 1.0;
+    }
+
     Settings = {
         Domain = "UI";
         ShadingModel = "Unlit";
@@ -116,9 +125,9 @@ Shader(Name="DreamShaderTests/Automation/%s")
     }
 
     Graph = {
-        vec3 RedValue = vec3(1.0, 0.0, 0.0);
-        vec3 GreenValue = vec3(0.0, 1.0, 0.0);
-        vec3 BlueValue = vec3(0.0, 0.0, 1.0);
+        vec3 RedValue = vec3(1.0, 0.0, 0.0) * Gain;
+        vec3 GreenValue = vec3(0.0, 1.0, 0.0) * Gain;
+        vec3 BlueValue = vec3(0.0, 0.0, 1.0) * Gain;
         Color = RedValue + GreenValue + BlueValue;
     }
 }
@@ -168,7 +177,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 
 		FString Message;
 		if (!TestTrue(FString::Printf(TEXT("Generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourcePathOut, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourcePathOut, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true)))
 		{
 			return false;
 		}
@@ -267,7 +276,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 
 		FString Message;
 		if (!TestTrue(FString::Printf(TEXT("Generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourcePathOut, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourcePathOut, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true)))
 		{
 			return false;
 		}
@@ -404,7 +413,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 
 		FString Message;
 		if (!TestTrue(FString::Printf(TEXT("Generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourcePathOut, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourcePathOut, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true)))
 		{
 			return false;
 		}

@@ -1,9 +1,12 @@
 ﻿#include "Bridge/DreamShaderDivergenceNotice.h"
 #include "Commandlet/DreamShaderCommandletRunner.h"
-#include "DependencyGraph/DreamShaderDependencyGraphService.h"
+#include "DreamShaderDependencyGraphService.h"
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
-#include "DreamShaderParser.h"
+// ParseDreamShaderLang: the 1.x runtime parser is gone (batch 2, M4); legacy sources parse through the legacy front end.
+#include "Lang/LangLegacy.h"
+#include "Lang/LangParser.h"
+#include "Lang/LangSource.h"
 // GDreamShaderUndefinedDefineSentinel, so the build-key test can spell "this name was read while it
 // had no value" the same way the preprocessor spells it, instead of hard-coding the literal.
 #include "DreamShaderPreprocessor.h"
@@ -11,13 +14,14 @@
 #include "DreamShaderTestCommon.h"
 #include "DreamShaderTypes.h"
 #include "DreamShaderVersionCompat.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "DreamShaderCompilerService.h"
 // EstimateMaterialNodeSize / FLayoutNodeSize, so the layout test measures placed nodes by the same
 // rule the placement pass used.
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
-// IsInlineInputMaskGraphStable, so GraphStableComponentMasks can assert the generated wiring against the
-// same rule the material graph editor applies when it rebuilds a graph.
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeShared.h"
+#include "DreamShaderGeneratedAssets.h"
+// The version-compatible material-expression helpers. (IsInlineInputMaskGraphStable and the test that used it,
+// Compiler.Generate.GraphStableComponentMasks, left in batch 2: the 2.0 emitter never writes an inline mask, which
+// Compiler2.Smoke.MaterialEndToEnd pins.)
+#include "DreamShaderMaterialExpressionCompat.h"
 #include "Preview/DreamShaderPreviewRenderer.h"
 
 #include "AssetCompilingManager.h"
@@ -78,7 +82,7 @@
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "ObjectTools.h"
-#include "Diagnostics/DreamShaderTextWireUtils.h"
+#include "DreamShaderTextWireUtils.h"
 #include "UObject/UObjectGlobals.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -197,10 +201,11 @@ namespace UE::DreamShader::Editor::Private::Tests
 		TArray<FString> ObjectPaths;
 	};
 
-	FString MakeMinimalMaterialSource(const FString& AssetName)
+	/** BlockName is the whole `Name=` value: `DreamShaderTests/Automation/M_X`, or a fixture's MakeLegacyAssetName. */
+	FString MakeMinimalMaterialSourceNamed(const FString& BlockName)
 	{
 		return FString::Printf(TEXT(R"(
-Shader(Name="DreamShaderTests/Automation/%s")
+Shader(Name="%s")
 {
     Properties = {
         vec3 Tint = vec3(1.0, 0.2, 0.2);
@@ -220,7 +225,12 @@ Shader(Name="DreamShaderTests/Automation/%s")
         Color = Tint;
     }
 }
-)"), *AssetName);
+)"), *BlockName);
+	}
+
+	FString MakeMinimalMaterialSource(const FString& AssetName)
+	{
+		return MakeMinimalMaterialSourceNamed(FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *AssetName));
 	}
 
 	// A Volume-domain material, the shape whose bUsedWithVolumetricCloud the domain supplies. Volume
@@ -266,12 +276,13 @@ Function ApplyAutomationTint(in vec3 color, in vec3 tint, out vec3 result) {
 )");
 	}
 
-	FString MakeImportedFunctionSource(const FString& HeaderFileName, const FString& AssetName)
+	/** BlockName is the whole `Name=` value; see MakeMinimalMaterialSourceNamed. */
+	FString MakeImportedFunctionSourceNamed(const FString& HeaderFileName, const FString& BlockName)
 	{
 		return FString::Printf(TEXT(R"(
 import "%s";
 
-ShaderFunction(Name="DreamShaderTests/Automation/%s")
+ShaderFunction(Name="%s")
 {
     Inputs = {
         vec3 InColor;
@@ -286,13 +297,19 @@ ShaderFunction(Name="DreamShaderTests/Automation/%s")
         ApplyAutomationTint(InColor, InTint, OutColor);
     }
 }
-)"), *HeaderFileName, *AssetName);
+)"), *HeaderFileName, *BlockName);
 	}
 
-	FString MakeSubstrateMaterialSource(const FString& AssetName)
+	FString MakeImportedFunctionSource(const FString& HeaderFileName, const FString& AssetName)
+	{
+		return MakeImportedFunctionSourceNamed(HeaderFileName, FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *AssetName));
+	}
+
+	/** BlockName is the whole `Name=` value; see MakeMinimalMaterialSourceNamed. */
+	FString MakeSubstrateMaterialSourceNamed(const FString& BlockName)
 	{
 		return FString::Printf(TEXT(R"(
-Shader(Name="DreamShaderTests/Automation/%s")
+Shader(Name="%s")
 {
     Outputs = {
         Substrate Surface;
@@ -303,7 +320,12 @@ Shader(Name="DreamShaderTests/Automation/%s")
         Surface = Substrate.Unlit(EmissiveColor=vec3(0.1, 0.6, 1.0));
     }
 }
-)"), *AssetName);
+)"), *BlockName);
+	}
+
+	FString MakeSubstrateMaterialSource(const FString& AssetName)
+	{
+		return MakeSubstrateMaterialSourceNamed(FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *AssetName));
 	}
 }
 
@@ -312,189 +334,78 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	"DreamShader.Compiler.Parser.MinimalMaterial",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
+// Batch 2 (M4): the 1.x runtime parser is gone. The same minimal source parses through the legacy front end, and the
+// facts the FTextShaderDefinition assertions named are read off FLegacyMigrationInfo and the synthesized tree by
+// SummariseDreamShaderLegacyParse, the Parse corpus's reader.
 bool FDreamShaderParserMinimalMaterialTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Lang;
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
-	FTextShaderDefinition Definition;
-	FString ParseError;
-	const bool bParsed = FTextShaderParser::Parse(MakeMinimalMaterialSource(TEXT("M_ParserMinimal")), Definition, ParseError);
-	if (!TestTrue(FString::Printf(TEXT("Parser succeeds: %s"), *ParseError), bParsed))
+	const FString Source = MakeMinimalMaterialSource(TEXT("M_ParserMinimal"));
+	const FLangSourceText Text(TEXT("M_ParserMinimal.dsm"), Source);
+	const FLangParseResult Result = ParseDreamShaderLang(Text, FLangParseOptions());
+	if (!TestTrue(
+			FString::Printf(TEXT("The legacy front end parses the minimal material: %s"),
+				*FString::Join(GatherDreamShaderLangDiagnostics(Result.Diagnostics, ELangSeverity::Error), TEXT(" | "))),
+			Result.Succeeded() && Result.Legacy.IsValid()))
 	{
 		return false;
 	}
 
-	TestEqual(TEXT("Shader name"), Definition.Name, FString(TEXT("DreamShaderTests/Automation/M_ParserMinimal")));
-	FString Domain;
-	TestTrue(TEXT("Domain setting exists"), Definition.TryGetSetting(TEXT("Domain"), Domain));
-	TestEqual(TEXT("Domain setting"), Domain, FString(TEXT("UI")));
-	TestEqual(TEXT("Output declaration count"), Definition.OutputDeclarations.Num(), 1);
-	TestEqual(TEXT("Output binding count"), Definition.Outputs.Num(), 1);
-	TestFalse(TEXT("Graph code is captured"), Definition.Code.IsEmpty());
+	const FLegacyParseSummary Summary = SummariseDreamShaderLegacyParse(Result, Source);
+	TestEqual(TEXT("Shader name"), Summary.Name, FString(TEXT("DreamShaderTests/Automation/M_ParserMinimal")));
+	const TPair<FString, FString>* Domain = Summary.Settings.FindByPredicate([](const TPair<FString, FString>& Setting)
+	{
+		return Setting.Key.Equals(TEXT("Domain"), ESearchCase::IgnoreCase);
+	});
+	if (TestNotNull(TEXT("Domain setting exists"), Domain))
+	{
+		TestEqual(TEXT("Domain setting"), Domain->Value, FString(TEXT("UI")));
+	}
+	TestEqual(TEXT("Output declaration count"), Summary.OutputDeclarations, 1);
+	TestEqual(TEXT("Output binding count"), Summary.Outputs, 1);
+	TestTrue(TEXT("Graph code is captured"), Summary.bCodeNotEmpty);
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderGenerateMinimalMaterialTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler.Generate.MinimalMaterial",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
+// 1.x built this Graph material transiently. A Graph material always saves in 2.0, so the test compiles in a scratch
+// package root (FDreamShaderCompile2Fixture) whose destructor deletes the source and every asset under it.
 bool FDreamShaderGenerateMinimalMaterialTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader::Editor;
-	using namespace UE::DreamShader::Editor::Private::Tests;
-
-	FScopedDreamShaderAutomationArtifacts Artifacts;
-	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoMinimal"));
-	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
-	Artifacts.AddObjectPath(ObjectPath);
-	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
-	AddExpectedAutomationCleanupWarnings(*this);
-
-	FString SourceFilePath;
-	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), MakeMinimalMaterialSource(AssetName), SourceFilePath))
-	{
-		return false;
-	}
-	Artifacts.AddSourceFile(SourceFilePath);
-
-	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true);
-	if (!TestTrue(FString::Printf(TEXT("Material generation succeeds: %s"), *Message), bGenerated))
-	{
-		return false;
-	}
-
-	UMaterial* GeneratedMaterial = LoadObject<UMaterial>(nullptr, *ObjectPath);
-	TestNotNull(FString::Printf(TEXT("Generated material loads from '%s'."), *ObjectPath), GeneratedMaterial);
-	return true;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FDreamShaderGraphStableComponentMasksTest,
-	"DreamShader.Compiler.Generate.GraphStableComponentMasks",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-
-// A swizzle taken off a multi-output node must not be written as an inline FExpressionInput mask: the
-// material graph editor resolves such a connection through UMaterialGraph::GetValidOutputIndex, which
-// distrusts OutputIndex 0 whenever a mask is present, finds no pin carrying that mask, and falls back to
-// the node's LAST output -- so ScreenPosition.ViewportUV.x silently became PixelPosition, and the next
-// Apply/Save wrote that back. ScreenPosition stands in for SceneTexture (the case this was found on)
-// because it has the same shape without a material-domain restriction.
-bool FDreamShaderGraphStableComponentMasksTest::RunTest(const FString& Parameters)
-{
-	using namespace UE::DreamShader::Editor;
-	using namespace UE::DreamShader::Editor::Private;
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
 	FScopedDreamShaderGraphBackendPin BackendPin;
-	FScopedDreamShaderAutomationArtifacts Artifacts;
-	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoMaskStable"));
-	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
-	Artifacts.AddObjectPath(ObjectPath);
-	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	FDreamShaderCompile2Fixture Fixture(TEXT("MinimalMaterial"), TEXT("Automation"), TEXT("dsm"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
 	AddExpectedAutomationCleanupWarnings(*this);
 
-	const FString Source = FString::Printf(TEXT(R"(
-Shader(Name="DreamShaderTests/Automation/%s")
-{
-    Settings = {
-        Domain = "UI";
-        ShadingModel = "Unlit";
-    }
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoMinimal"));
+	const FString ObjectPath = Fixture.MakeObjectPath(AssetName);
+	Fixture.TrackObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
 
-    Outputs = {
-        vec3 Color;
-        Base.EmissiveColor = Color;
-    }
-
-    Graph = {
-        float2 Screen = UE.Expression(Class="ScreenPosition", OutputType="float2");
-        float U = Screen.x;
-        Color = vec3(U, U, U);
-    }
-}
-)"), *AssetName);
-
-	FString SourceFilePath;
-	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+	if (!Fixture.WriteSource(*this, MakeMinimalMaterialSourceNamed(Fixture.MakeLegacyAssetName(AssetName))))
 	{
 		return false;
 	}
-	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	if (!TestTrue(
-			FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+	const bool bGenerated = CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), Message, true);
+	if (!TestTrue(FString::Printf(TEXT("Material compile succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
 	}
 
-	// Deliberately not naming ObjectPath in the message: AddExpectedNewAssetProbeWarnings suppresses every
-	// log line that contains it, which would swallow this failure too.
-	UObject* GeneratedObject = LoadObject<UObject>(nullptr, *ObjectPath);
-	UMaterial* Material = Cast<UMaterial>(GeneratedObject);
-	if (!TestNotNull(
-			FString::Printf(
-				TEXT("The generated asset is a UMaterial (actual: %s)"),
-				GeneratedObject ? *GeneratedObject->GetClass()->GetName() : TEXT("<null>")),
-			Material))
-	{
-		return false;
-	}
-
-	int32 MaskedInputCount = 0;
-	int32 UnstableInputCount = 0;
-	bool bHasComponentMaskNode = false;
-	for (UMaterialExpression* Expression : Material->GetExpressions())
-	{
-		if (!Expression)
-		{
-			continue;
-		}
-
-		bHasComponentMaskNode |= Expression->IsA<UMaterialExpressionComponentMask>();
-
-		for (FExpressionInputIterator It{ Expression }; It; ++It)
-		{
-			const FExpressionInput* Input = It.Input;
-			if (!Input || !Input->Expression || Input->Mask == 0)
-			{
-				continue;
-			}
-
-			++MaskedInputCount;
-			const int32 ChannelMask =
-				(Input->MaskR != 0 ? 0x1 : 0)
-				| (Input->MaskG != 0 ? 0x2 : 0)
-				| (Input->MaskB != 0 ? 0x4 : 0)
-				| (Input->MaskA != 0 ? 0x8 : 0);
-			if (!IsInlineInputMaskGraphStable(Input->Expression, Input->OutputIndex, ChannelMask))
-			{
-				++UnstableInputCount;
-				AddError(FString::Printf(
-					TEXT("'%s' takes a mask off '%s' output %d that the graph editor re-points at output %d."),
-					*Expression->GetName(),
-					*Input->Expression->GetName(),
-					Input->OutputIndex,
-					ResolveGraphEditorOutputIndex(
-						Input->Expression,
-						Input->OutputIndex,
-						Input->Mask,
-						Input->MaskR,
-						Input->MaskG,
-						Input->MaskB,
-						Input->MaskA)));
-			}
-		}
-	}
-
-	TestEqual(TEXT("No generated connection carries a mask the graph editor would rewrite"), UnstableInputCount, 0);
-	TestTrue(
-		FString::Printf(TEXT("The swizzle is materialized as a ComponentMask node (masked inputs seen: %d)"), MaskedInputCount),
-		bHasComponentMaskNode);
+	// Not naming the object path in the message: the probe suppression above would swallow the failure with it.
+	UMaterial* GeneratedMaterial = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	TestNotNull(TEXT("The compiled material loads from the fixture's package path."), GeneratedMaterial);
 	return true;
 }
 
@@ -549,7 +460,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	FString Message;
 	if (!TestTrue(
 			FString::Printf(TEXT("A material with no Outputs block generates: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
@@ -593,14 +504,21 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderGraphMaterialOutputSinkRejectionsTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler.Generate.GraphMaterialOutputSinkRejections",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-// The four ways `Base` can be used wrongly, each of which has to fail with its own message rather
-// than as a confusing symptom further down: driving one property from both places, shadowing the
-// name, reading it, and assigning a value too wide for the property.
+// Four ways a 1.x source can misuse `Base`. The 1.x generator refused all four with sentences of its own. The legacy
+// front end (batch 2, M4) lowers `Base` to the entry's `inout material Base` parameter, so each case is now what the
+// 2.0 rules make of it:
+//   * a property driven from both the Outputs block and Graph: two writes to one attribute, and the later one wins
+//     (the Outputs bindings follow the Graph statements in the entry body) -- no refusal;
+//   * a Graph variable named Base: a local hiding a parameter, DSH4220;
+//   * reading a material output back: a read of an attribute written earlier, which 2.0 allows -- no refusal;
+//   * a value wider than its property: an assignment the binder refuses (the code is pinned in phase 2).
+// The two cases that no longer refuse are listed as 1.x-only rejections in Plan/m4m5/TE-report.md (Open questions).
 bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor;
@@ -608,16 +526,19 @@ bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& P
 
 	FScopedDreamShaderGraphBackendPin BackendPin;
 	FScopedDreamShaderAutomationArtifacts Artifacts;
+	AddExpectedAutomationCleanupWarnings(*this);
 
-	struct FRejectionCase
+	struct FSinkCase
 	{
 		const TCHAR* Label;
 		const TCHAR* NameSuffix;
 		const TCHAR* Body;
-		const TCHAR* ExpectedFragment;
+		bool bCompiles;
+		/** Asserted on a refusal when not empty. */
+		const TCHAR* ExpectedCode;
 	};
 
-	const FRejectionCase Cases[] =
+	const FSinkCase Cases[] =
 	{
 		{
 			TEXT("a property driven from both the Outputs block and Graph"),
@@ -633,7 +554,8 @@ bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& P
         Base.EmissiveColor = vec3(0.0, 1.0, 0.0);
     }
 )"),
-			TEXT("is written from the Graph block and bound in the Outputs block"),
+			true,
+			TEXT(""),
 		},
 		{
 			TEXT("a Graph variable named Base"),
@@ -644,7 +566,8 @@ bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& P
         Base.EmissiveColor = Base;
     }
 )"),
-			TEXT("is reserved for the material's outputs"),
+			false,
+			TEXT("DSH4220"),
 		},
 		{
 			TEXT("reading a material output back"),
@@ -656,7 +579,8 @@ bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& P
         Base.OpacityMask = Echo.r;
     }
 )"),
-			TEXT("can only be written, not read"),
+			true,
+			TEXT(""),
 		},
 		{
 			TEXT("a value wider than the property it is assigned to"),
@@ -667,14 +591,20 @@ bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& P
         Base.OpacityMask = vec3(1.0, 0.0, 0.0);
     }
 )"),
-			TEXT("expects 1 component(s)"),
+			false,
+			TEXT(""),
 		},
 	};
 
-	for (const FRejectionCase& Case : Cases)
+	for (const FSinkCase& Case : Cases)
 	{
 		const FString CaseAssetPrefix = FString(TEXT("M_AutoSinkBad")) + Case.NameSuffix;
 		const FString AssetName = MakeUniqueTestAssetName(*CaseAssetPrefix);
+		// A case that compiles writes a real asset (a Graph material always saves), so every case is cleaned up.
+		const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+		Artifacts.AddObjectPath(ObjectPath);
+		AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+
 		const FString Source = FString::Printf(TEXT(R"(
 Shader(Name="DreamShaderTests/Automation/%s")
 {
@@ -693,97 +623,109 @@ Shader(Name="DreamShaderTests/Automation/%s")
 		Artifacts.AddSourceFile(SourceFilePath);
 
 		FString Message;
-		TestFalse(
-			FString::Printf(TEXT("Generation refuses %s."), Case.Label),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true));
-		TestTrue(
-			FString::Printf(TEXT("The failure for %s names the cause. Got: %s"), Case.Label, *Message),
-			Message.Contains(Case.ExpectedFragment));
+		const bool bCompiled = CompileDreamShaderTestMaterial(SourceFilePath, Message, true);
+		TestEqual(
+			FString::Printf(TEXT("%s: %s"), Case.Label, Case.bCompiles ? TEXT("compiles under the 2.0 rules") : TEXT("is refused")),
+			bCompiled,
+			Case.bCompiles);
+		if (!bCompiled && !Case.bCompiles && FCString::Strlen(Case.ExpectedCode) > 0)
+		{
+			TestTrue(
+				FString::Printf(TEXT("The refusal for %s is %s. Got: %s"), Case.Label, Case.ExpectedCode, *Message),
+				Message.Contains(Case.ExpectedCode));
+		}
+		if (bCompiled != Case.bCompiles)
+		{
+			AddInfo(FString::Printf(TEXT("%s: the compile reported: %s"), Case.Label, *Message));
+		}
 	}
 
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderGenerateDsfWithImportTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler.Generate.DsfWithImport",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
+// A material function always saves in 2.0, so the header and the function go into a scratch fixture whose destructor
+// deletes both files and every asset under its package path.
 bool FDreamShaderGenerateDsfWithImportTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader::Editor;
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
-	FScopedDreamShaderAutomationArtifacts Artifacts;
-	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_AutoImport"));
-	const FString HeaderFileName = FunctionName + TEXT("_Shared.dsh");
-	const FString ObjectPath = MakeAutomationObjectPath(FunctionName);
-	Artifacts.AddObjectPath(ObjectPath);
-	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	FDreamShaderCompile2Fixture Fixture(TEXT("DsfWithImport"), TEXT("Automation"), TEXT("dsf"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
 	AddExpectedAutomationCleanupWarnings(*this);
 
-	FString HeaderFilePath;
-	if (!WriteAutomationSourceFile(*this, HeaderFileName, MakeSharedHeaderSource(), HeaderFilePath))
-	{
-		return false;
-	}
-	Artifacts.AddSourceFile(HeaderFilePath);
+	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_AutoImport"));
+	const FString HeaderFileName = FunctionName + TEXT("_Shared.dsh");
+	const FString ObjectPath = Fixture.MakeObjectPath(FunctionName);
+	Fixture.TrackObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
 
-	FString FunctionFilePath;
-	if (!WriteAutomationSourceFile(*this, FunctionName + TEXT(".dsf"), MakeImportedFunctionSource(HeaderFileName, FunctionName), FunctionFilePath))
+	FString HeaderFilePath;
+	if (!Fixture.WriteSiblingSource(*this, HeaderFileName, MakeSharedHeaderSource(), HeaderFilePath))
 	{
 		return false;
 	}
-	Artifacts.AddSourceFile(FunctionFilePath);
+
+	if (!Fixture.WriteSource(*this, MakeImportedFunctionSourceNamed(HeaderFileName, Fixture.MakeLegacyAssetName(FunctionName))))
+	{
+		return false;
+	}
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateAssetsFromFile(FunctionFilePath, Message, true);
-	if (!TestTrue(FString::Printf(TEXT("Imported .dsf generation succeeds: %s"), *Message), bGenerated))
+	const bool bGenerated = CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Message, true);
+	if (!TestTrue(FString::Printf(TEXT("Imported .dsf compile succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
 	}
 
 	UMaterialFunction* GeneratedFunction = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
-	TestNotNull(FString::Printf(TEXT("Generated material function loads from '%s'."), *ObjectPath), GeneratedFunction);
+	TestNotNull(TEXT("The compiled material function loads from the fixture's package path."), GeneratedFunction);
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderGenerateSubstrateMaterialTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler.Generate.SubstrateMaterial",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
+// 1.x built this Graph material transiently; in 2.0 it saves, so it compiles in a scratch package root.
 bool FDreamShaderGenerateSubstrateMaterialTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader::Editor;
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
 #if DREAMSHADER_WITH_SUBSTRATE_BUILTINS
-	FScopedDreamShaderAutomationArtifacts Artifacts;
-	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoSubstrate"));
-	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
-	Artifacts.AddObjectPath(ObjectPath);
-	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	FScopedDreamShaderGraphBackendPin BackendPin;
+	FDreamShaderCompile2Fixture Fixture(TEXT("SubstrateMaterial"), TEXT("Automation"), TEXT("dsm"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
 	AddExpectedAutomationCleanupWarnings(*this);
 
-	FString SourceFilePath;
-	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), MakeSubstrateMaterialSource(AssetName), SourceFilePath))
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoSubstrate"));
+	const FString ObjectPath = Fixture.MakeObjectPath(AssetName);
+	Fixture.TrackObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+
+	if (!Fixture.WriteSource(*this, MakeSubstrateMaterialSourceNamed(Fixture.MakeLegacyAssetName(AssetName))))
 	{
 		return false;
 	}
-	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true);
-	if (!TestTrue(FString::Printf(TEXT("Substrate material generation succeeds: %s"), *Message), bGenerated))
+	const bool bGenerated = CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), Message, true);
+	if (!TestTrue(FString::Printf(TEXT("Substrate material compile succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
 	}
 
 	UMaterial* GeneratedMaterial = LoadObject<UMaterial>(nullptr, *ObjectPath);
-	TestNotNull(FString::Printf(TEXT("Generated Substrate material loads from '%s'."), *ObjectPath), GeneratedMaterial);
+	TestNotNull(TEXT("The compiled Substrate material loads from the fixture's package path."), GeneratedMaterial);
 #else
-	AddInfo(TEXT("DreamShader Substrate builtins are not available for this Unreal Engine version; skipping generation test."));
+	AddInfo(TEXT("DreamShader Substrate builtins are not available for this Unreal Engine version; skipping the compile test."));
 #endif
 	return true;
 }
@@ -815,13 +757,13 @@ bool FDreamShaderSourceHashSkipTest::RunTest(const FString& Parameters)
 	FString FirstMessage;
 	if (!TestTrue(
 		FString::Printf(TEXT("Initial material generation succeeds: %s"), *FirstMessage),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, FirstMessage, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, FirstMessage, true)))
 	{
 		return false;
 	}
 
 	FText SecondMessage;
-	const bool bSkipped = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, SecondMessage, false);
+	const bool bSkipped = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, SecondMessage, false);
 	if (!TestTrue(FString::Printf(TEXT("Unchanged material generation succeeds: %s"), *UE::DreamShader::Editor::Private::ToInvariantWireString(SecondMessage)), bSkipped))
 	{
 		return false;
@@ -948,7 +890,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
@@ -1048,7 +990,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
@@ -1073,11 +1015,14 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	// The round-trip property: the decompiled output must be valid DreamShaderLang that re-parses.
 	// This is the only automated coverage of the decompiler's parameter-reuse and material-setting
 	// emission paths, so a malformed export (e.g. duplicate parameter declarations) is caught here.
-	FTextShaderDefinition ReparsedDefinition;
-	FString ReparseError;
+	// Batch 2 (M4): the 1.x text decompiler still writes a `.dsm`, and a `.dsm` parses through the legacy front end.
+	const UE::DreamShader::Lang::FLangSourceText ReparseText(TEXT("Decompiled/M_RoundTrip.dsm"), DecompiledSource);
+	const UE::DreamShader::Lang::FLangParseResult Reparsed =
+		UE::DreamShader::Lang::ParseDreamShaderLang(ReparseText, UE::DreamShader::Lang::FLangParseOptions());
 	TestTrue(
-		FString::Printf(TEXT("Decompiled source re-parses: %s"), *ReparseError),
-		FTextShaderParser::Parse(DecompiledSource, ReparsedDefinition, ReparseError));
+		FString::Printf(TEXT("Decompiled source re-parses: %s"),
+			*FString::Join(GatherDreamShaderLangDiagnostics(Reparsed.Diagnostics, UE::DreamShader::Lang::ELangSeverity::Error), TEXT(" | "))),
+		Reparsed.Succeeded());
 	TestTrue(TEXT("Decompiled source declares a parameter"), DecompiledSource.Contains(TEXT("Parameter")));
 	return true;
 }
@@ -1121,7 +1066,7 @@ bool FDreamShaderRoundTripSubstrateMaterialTest::RunTest(const FString& Paramete
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Substrate material generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
@@ -1165,7 +1110,7 @@ bool FDreamShaderRoundTripSubstrateMaterialTest::RunTest(const FString& Paramete
 	FString ReMessage;
 	TestTrue(
 		FString::Printf(TEXT("Decompiled Substrate source re-generates: %s"), *ReMessage),
-		FMaterialGenerator::GenerateMaterialFromFile(ReSourceFilePath, ReMessage, true));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(ReSourceFilePath, ReMessage, true));
 
 	return true;
 }
@@ -1212,7 +1157,7 @@ bool FDreamShaderVolumeDomainVolumetricCloudUsageTest::RunTest(const FString& Pa
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Volume material generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
@@ -1264,7 +1209,7 @@ bool FDreamShaderVolumeDomainVolumetricCloudUsageTest::RunTest(const FString& Pa
 	FString FogMessage;
 	if (!TestTrue(
 		FString::Printf(TEXT("Fog-only Volume material generation succeeds: %s"), *FogMessage),
-		FMaterialGenerator::GenerateMaterialFromFile(FogSourceFilePath, FogMessage, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(FogSourceFilePath, FogMessage, true)))
 	{
 		return false;
 	}
@@ -1306,7 +1251,7 @@ bool FDreamShaderVolumeDomainVolumetricCloudUsageTest::RunTest(const FString& Pa
 	FString FogReMessage;
 	if (!TestTrue(
 		FString::Printf(TEXT("Decompiled fog-only Volume source re-generates: %s"), *FogReMessage),
-		FMaterialGenerator::GenerateMaterialFromFile(FogReSourceFilePath, FogReMessage, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(FogReSourceFilePath, FogReMessage, true)))
 	{
 		return false;
 	}
@@ -1391,7 +1336,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Switch/append material generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
@@ -1443,7 +1388,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	FString ReMessage;
 	TestTrue(
 		FString::Printf(TEXT("Decompiled switch/append source re-generates: %s"), *ReMessage),
-		FMaterialGenerator::GenerateMaterialFromFile(ReSourceFilePath, ReMessage, true));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(ReSourceFilePath, ReMessage, true));
 
 	return true;
 }
@@ -1523,7 +1468,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Custom additional-output material generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
@@ -1561,7 +1506,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	FString ReMessage;
 	if (!TestTrue(
 		FString::Printf(TEXT("Decompiled Custom additional-output source re-generates: %s"), *ReMessage),
-		FMaterialGenerator::GenerateMaterialFromFile(ReSourceFilePath, ReMessage, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(ReSourceFilePath, ReMessage, true)))
 	{
 		return false;
 	}
@@ -1649,7 +1594,7 @@ ShaderFunction(Name="DreamShaderTests/Automation/%s")
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("StaticBool function generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
@@ -1692,7 +1637,7 @@ ShaderFunction(Name="DreamShaderTests/Automation/%s")
 	FString ReMessage;
 	if (!TestTrue(
 		FString::Printf(TEXT("Decompiled StaticBool function re-generates: %s"), *ReMessage),
-		FMaterialGenerator::GenerateAssetsFromFile(ReSourceFilePath, ReMessage, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(ReSourceFilePath, ReMessage, true)))
 	{
 		return false;
 	}
@@ -1817,7 +1762,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		FString Message;
 		if (!Test.TestTrue(
 			FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
-			UE::DreamShader::Editor::FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 		{
 			return false;
 		}
@@ -2044,11 +1989,14 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	TestFalse(TEXT("A one-argument 'step' does not generate."),
-		UE::DreamShader::Editor::FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true));
+	TestFalse(TEXT("A one-argument 'step' does not compile."),
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true));
+	// The 1.x generator's sentence ("Math function 'step' expects exactly 2 arguments.") retired with it. The binder
+	// checks a builtin's arity before anything else and reports it as DSH4224 ("'step' takes 2 arguments and 1 were
+	// given"), never as an unknown function.
 	TestTrue(
-		FString::Printf(TEXT("The failure names step's arity, not an unknown function. Got: %s"), *Message),
-		Message.Contains(TEXT("Math function 'step' expects exactly 2 arguments.")));
+		FString::Printf(TEXT("The failure is step's arity (DSH4224), not an unknown function. Got: %s"), *Message),
+		Message.Contains(TEXT("DSH4224")));
 	return true;
 }
 
@@ -2071,15 +2019,14 @@ bool FDreamShaderParameterNodeGenerationTest::RunTest(const FString& Parameters)
 
 	FScopedDreamShaderAutomationArtifacts Artifacts;
 	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_Params"));
-	// Scal and Vec are declared WITHOUT `= value` on purpose (optional-default contract); Dyn carries
-	// an inline default. All three are referenced so lazy materialization actually creates the nodes.
+	// Scal and Vec are declared WITHOUT `= value` on purpose (optional-default contract), and both are referenced so
+	// lazy materialization actually creates the nodes.
 	const FString Source = FString::Printf(TEXT(R"(
 Shader(Name="DreamShaderTests/Automation/%s")
 {
     Properties = {
         ScalarParameter Scal [Group="Gen"; SortPriority=10;];
         VectorParameter Vec [Group="Gen"; SortPriority=20;];
-        DynamicParameter Dyn = float4(0.1, 0.2, 0.3, 1.0) [Group="Gen"; SortPriority=30;];
     }
 
     Settings = { Domain = "Surface"; ShadingModel = "Unlit"; BlendMode = "Opaque"; }
@@ -2090,7 +2037,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
     }
 
     Graph = {
-        Color = Vec.rgb * Scal + Dyn.rgb;
+        Color = Vec.rgb * Scal;
     }
 }
 )"), *AssetName);
@@ -2105,8 +2052,41 @@ Shader(Name="DreamShaderTests/Automation/%s")
 		CountMaterialExpressionsOfClass<UMaterialExpressionScalarParameter>(Material), 1);
 	TestEqual(TEXT("VectorParameter declared without a default generates exactly one node"),
 		CountMaterialExpressionsOfClass<UMaterialExpressionVectorParameter>(Material), 1);
-	TestEqual(TEXT("DynamicParameter generates exactly one node"),
-		CountMaterialExpressionsOfClass<UMaterialExpressionDynamicParameter>(Material), 1);
+
+	// DynamicParameter has no 2.0 spelling (research-legacy.md 2.3): since batch 2 a 1.x source that declares one is
+	// refused with DSH3253 instead of generating the node. A `.dss` still reaches the class through UE.Expression.
+	{
+		const FString RefusedName = MakeUniqueTestAssetName(TEXT("M_ParamsDynamic"));
+		Artifacts.AddObjectPath(MakeAutomationObjectPath(RefusedName));
+		const FString RefusedSource = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s")
+{
+    Properties = {
+        DynamicParameter Dyn = float4(0.1, 0.2, 0.3, 1.0) [Group="Gen"; SortPriority=30;];
+    }
+
+    Settings = { Domain = "Surface"; ShadingModel = "Unlit"; BlendMode = "Opaque"; }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = Dyn.rgb;
+    }
+}
+)"), *RefusedName);
+
+		FString RefusedPath;
+		if (WriteAutomationSourceFile(*this, RefusedName + TEXT(".dsm"), RefusedSource, RefusedPath))
+		{
+			Artifacts.AddSourceFile(RefusedPath);
+			FString Message;
+			TestFalse(TEXT("A DynamicParameter property does not compile from a 1.x source"), CompileDreamShaderTestMaterial(RefusedPath, Message, true));
+			TestTrue(FString::Printf(TEXT("The refusal is DSH3253. Got: %s"), *Message), Message.Contains(TEXT("DSH3253")));
+		}
+	}
 	return true;
 }
 
@@ -2136,16 +2116,18 @@ bool FDreamShaderOtherParameterNodeGenerationTest::RunTest(const FString& Parame
 		const TCHAR* NodeType;        // DSL keyword
 		const TCHAR* Default;         // inline default literal, or nullptr to declare without one
 		const TCHAR* RefExpr;         // graph expression that references the parameter and yields a vec3
-		const TCHAR* ExpectedClass;   // expected UMaterialExpression subclass name
+		const TCHAR* ExpectedClass;   // expected UMaterialExpression subclass name; nullptr = refused with DSH3253
 	};
 
+	// DoubleVector, CurveAtlasRow and FontSample have no 2.0 spelling (research-legacy.md 2.3): since batch 2 a 1.x
+	// source that declares one is refused with DSH3253 rather than generating the node.
 	static const FOtherParameterCase Cases[] = {
-		{ TEXT("DoubleVectorParameter"),        TEXT("float4(1, 2, 3, 4)"),    TEXT("P.rgb"),   TEXT("MaterialExpressionDoubleVectorParameter") },
-		{ TEXT("CurveAtlasRowParameter"),       TEXT("float3(0.5, 0.5, 0.5)"), TEXT("P"),       TEXT("MaterialExpressionCurveAtlasRowParameter") },
+		{ TEXT("DoubleVectorParameter"),        TEXT("float4(1, 2, 3, 4)"),    TEXT("P.rgb"),   nullptr },
+		{ TEXT("CurveAtlasRowParameter"),       TEXT("float3(0.5, 0.5, 0.5)"), TEXT("P"),       nullptr },
 		{ TEXT("ChannelMaskParameter"),         nullptr,                       TEXT("vec3(P)"), TEXT("MaterialExpressionChannelMaskParameter") },
 		{ TEXT("StaticComponentMaskParameter"), TEXT("float4(1, 1, 0, 0)"),    TEXT("P.rgb"),   TEXT("MaterialExpressionStaticComponentMaskParameter") },
 		{ TEXT("TextureSampleParameter2D"),     nullptr,                       TEXT("P.rgb"),   TEXT("MaterialExpressionTextureSampleParameter2D") },
-		{ TEXT("FontSampleParameter"),          nullptr,                       TEXT("P.rgb"),   TEXT("MaterialExpressionFontSampleParameter") },
+		{ TEXT("FontSampleParameter"),          nullptr,                       TEXT("P.rgb"),   nullptr },
 	};
 
 	FScopedDreamShaderAutomationArtifacts Artifacts;
@@ -2162,6 +2144,26 @@ Shader(Name="DreamShaderTests/Automation/%s")
     Graph = { Color = %s; }
 }
 )"), *AssetName, Case.NodeType, *DefaultClause, Case.RefExpr);
+
+		if (!Case.ExpectedClass)
+		{
+			Artifacts.AddObjectPath(MakeAutomationObjectPath(AssetName));
+			FString SourceFilePath;
+			if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
+			{
+				continue;
+			}
+			Artifacts.AddSourceFile(SourceFilePath);
+
+			FString Message;
+			TestFalse(
+				*FString::Printf(TEXT("%s does not compile from a 1.x source"), Case.NodeType),
+				CompileDreamShaderTestMaterial(SourceFilePath, Message, true));
+			TestTrue(
+				*FString::Printf(TEXT("%s is refused with DSH3253. Got: %s"), Case.NodeType, *Message),
+				Message.Contains(TEXT("DSH3253")));
+			continue;
+		}
 
 		UMaterial* Material = nullptr;
 		if (!GenerateAndLoadMaterial(*this, Artifacts, AssetName, Source, Material))
@@ -2282,7 +2284,7 @@ bool FDreamShaderGenerateInstanceBackendTest::RunTest(const FString& Parameters)
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("Instance-alias generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -2370,7 +2372,7 @@ bool FDreamShaderGenerateThinCustomBackendTest::RunTest(const FString& Parameter
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom material generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -2534,7 +2536,7 @@ bool FDreamShaderThinCustomVsGraphParityTest::RunTest(const FString& Parameters)
 			FString Message;
 			if (!TestTrue(
 				FString::Printf(TEXT("[%s] %s twin generation succeeds: %s"), Case.CaseName, TwinBackends[TwinIndex], *Message),
-				FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+				::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true)))
 			{
 				return false;
 			}
@@ -2758,7 +2760,7 @@ bool FDreamShaderMTestToonRoundTripRenderTest::RunTest(const FString& Parameters
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Decompiled M_Test_Toon re-generates (0 errors): %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
@@ -3010,7 +3012,7 @@ bool FDreamShaderGenerateThinCustomTextureTest::RunTest(const FString& Parameter
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom texture generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3104,7 +3106,7 @@ bool FDreamShaderGenerateThinCustomUITest::RunTest(const FString& Parameters)
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom UI generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3181,7 +3183,7 @@ bool FDreamShaderGenerateThinCustomPostProcessTest::RunTest(const FString& Param
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom PostProcess generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3269,7 +3271,7 @@ bool FDreamShaderGenerateThinCustomSceneReadsTest::RunTest(const FString& Parame
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom scene-reads generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3353,7 +3355,7 @@ bool FDreamShaderGenerateThinCustomMaterialAttributesTest::RunTest(const FString
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("ThinCustom MaterialAttributes generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3430,7 +3432,7 @@ bool FDreamShaderGenerateInstanceBackendStateReadsTest::RunTest(const FString& P
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("State-read alias generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3519,7 +3521,7 @@ Shader(Name="DreamShaderTests/Automation/%s", Root="Game")
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("Imported-function alias generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3592,7 +3594,7 @@ bool FDreamShaderGenerateInstanceBackendBaseOverridesTest::RunTest(const FString
 	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+	const bool bGenerated = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true);
 	if (!TestTrue(FString::Printf(TEXT("Base-overrides alias generation succeeds: %s"), *Message), bGenerated))
 	{
 		return false;
@@ -3837,7 +3839,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
@@ -3953,184 +3955,6 @@ Shader(Name="DreamShaderTests/Automation/%s")
 
 
 // ---------------------------------------------------------------------------------------------
-// Function `#include` hoisting: leading directives leave the body and reach file scope
-// ---------------------------------------------------------------------------------------------
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FDreamShaderParserFunctionIncludeHoistTest,
-	"DreamShader.Compiler.Parser.FunctionIncludeHoist",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-
-bool FDreamShaderParserFunctionIncludeHoistTest::RunTest(const FString& Parameters)
-{
-	using namespace UE::DreamShader;
-
-	const FString Source = TEXT(R"(
-// leading includes, comments between them, one in angle brackets
-Function float3 WithIncludes(in float3 c)
-{
-    // header comment stays in the body
-    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
-    /* block */ #include <Engine/Private/Common.ush>
-    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
-    return c * 2.0;
-}
-
-// an include after the first statement is not hoisted (old behaviour, lands inside the function)
-Function float3 LateInclude(in float3 c)
-{
-    float k = 1.0;
-    #include "/Plugin/Late/Late.ush"
-    return c * k;
-}
-
-Function SelfContained float3 Embedded(in float3 c)
-{
-    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
-    return c;
-}
-)");
-
-	FTextShaderDefinition Definition;
-	FString ParseError;
-	const bool bParsed = FTextShaderParser::Parse(Source, Definition, ParseError);
-	if (!TestTrue(FString::Printf(TEXT("Parser succeeds: %s"), *ParseError), bParsed))
-	{
-		return false;
-	}
-	if (!TestEqual(TEXT("Three functions"), Definition.Functions.Num(), 3))
-	{
-		return false;
-	}
-
-	const FTextShaderFunctionDefinition& WithIncludes = Definition.Functions[0];
-	TestEqual(TEXT("Two distinct leading includes hoisted (duplicate collapsed)"), WithIncludes.IncludePaths.Num(), 2);
-	if (WithIncludes.IncludePaths.Num() == 2)
-	{
-		TestEqual(TEXT("first include path, quotes stripped"), WithIncludes.IncludePaths[0], FString(TEXT("/Plugin/DreamShader/DreamShaderBuiltins.ush")));
-		TestEqual(TEXT("second include path, angle brackets stripped"), WithIncludes.IncludePaths[1], FString(TEXT("Engine/Private/Common.ush")));
-	}
-	TestFalse(TEXT("Hoisted directives are removed from the body"), WithIncludes.HLSL.Contains(TEXT("#include")));
-	TestTrue(TEXT("Comment before the directives is kept"), WithIncludes.HLSL.Contains(TEXT("header comment stays")));
-	TestTrue(TEXT("Statements are kept"), WithIncludes.HLSL.Contains(TEXT("c * 2.0")));
-
-	const FTextShaderFunctionDefinition& Late = Definition.Functions[1];
-	TestEqual(TEXT("A non-leading include is not hoisted"), Late.IncludePaths.Num(), 0);
-	TestTrue(TEXT("...and stays in the body"), Late.HLSL.Contains(TEXT("#include \"/Plugin/Late/Late.ush\"")));
-
-	const FTextShaderFunctionDefinition& Embedded = Definition.Functions[2];
-	TestTrue(TEXT("SelfContained parsed"), Embedded.bSelfContained);
-	TestEqual(TEXT("SelfContained function hoists too"), Embedded.IncludePaths.Num(), 1);
-	return true;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FDreamShaderGenerateFunctionIncludeHoistTest,
-	"DreamShader.Compiler.Generate.FunctionIncludeHoist",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-
-bool FDreamShaderGenerateFunctionIncludeHoistTest::RunTest(const FString& Parameters)
-{
-	using namespace UE::DreamShader::Editor;
-	using namespace UE::DreamShader::Editor::Private::Tests;
-
-	FScopedDreamShaderAutomationArtifacts Artifacts;
-	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_AutoIncludeHoist"));
-	const FString ObjectPath = MakeAutomationObjectPath(FunctionName);
-	Artifacts.AddObjectPath(ObjectPath);
-	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
-	AddExpectedAutomationCleanupWarnings(*this);
-
-	const FString Source = FString::Printf(TEXT(R"(
-Function float3 HoistPlain(in float3 c)
-{
-    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
-    return c * 2.0;
-}
-
-Function SelfContained float3 HoistEmbedded(in float3 c)
-{
-    #include "/Plugin/DreamShader/DreamShaderBuiltins.ush"
-    return c * 3.0;
-}
-
-ShaderFunction(Name="DreamShaderTests/Automation/%s")
-{
-    Inputs  = { vec3 InColor; }
-    Outputs = { vec3 OutPlain; vec3 OutEmbedded; }
-    Graph = {
-        OutPlain = HoistPlain(InColor);
-        OutEmbedded = HoistEmbedded(InColor);
-    }
-}
-)"), *FunctionName);
-
-	FString SourceFilePath;
-	if (!WriteAutomationSourceFile(*this, FunctionName + TEXT(".dsf"), Source, SourceFilePath))
-	{
-		return false;
-	}
-	Artifacts.AddSourceFile(SourceFilePath);
-
-	FString Message;
-	const bool bGenerated = FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, true);
-	if (!TestTrue(FString::Printf(TEXT("Generation succeeds: %s"), *Message), bGenerated))
-	{
-		return false;
-	}
-
-	UMaterialFunction* GeneratedFunction = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
-	if (!TestNotNull(TEXT("Generated material function loads"), GeneratedFunction))
-	{
-		return false;
-	}
-
-	const FString HoistedPath = TEXT("/Plugin/DreamShader/DreamShaderBuiltins.ush");
-	const FString GeneratedIncludeVirtualPath = UE::DreamShader::Editor::Private::BuildGeneratedIncludeVirtualPath(SourceFilePath);
-
-	// The generated .ush carries the include at file scope, ahead of the first function.
-	const FString GeneratedIncludeRealPath = FPaths::Combine(UE::DreamShader::GetGeneratedShaderDirectory(), FPaths::GetCleanFilename(GeneratedIncludeVirtualPath));
-	FString GeneratedInclude;
-	if (TestTrue(TEXT("Generated include exists"), FFileHelper::LoadFileToString(GeneratedInclude, *GeneratedIncludeRealPath)))
-	{
-		const FString Directive = FString::Printf(TEXT("#include \"%s\""), *HoistedPath);
-		const int32 IncludeIndex = GeneratedInclude.Find(Directive);
-		const int32 FirstFunctionIndex = GeneratedInclude.Find(TEXT("DreamShaderFn_"));
-		TestTrue(TEXT("Hoisted include is emitted once at file scope"), IncludeIndex != INDEX_NONE && GeneratedInclude.Find(Directive, ESearchCase::CaseSensitive, ESearchDir::FromStart, IncludeIndex + 1) == INDEX_NONE);
-		TestTrue(TEXT("...before the first function definition"), IncludeIndex != INDEX_NONE && FirstFunctionIndex != INDEX_NONE && IncludeIndex < FirstFunctionIndex);
-	}
-
-	int32 PlainNodes = 0;
-	int32 EmbeddedNodes = 0;
-	for (auto&& ExpressionPtr : GeneratedFunction->GetExpressions())
-	{
-		UMaterialExpressionCustom* Custom = Cast<UMaterialExpressionCustom>(ExpressionPtr);
-		if (!Custom)
-		{
-			continue;
-		}
-		TestFalse(FString::Printf(TEXT("No node embeds a raw #include (%s)"), *Custom->Description), Custom->Code.Contains(TEXT("#include")));
-		if (Custom->Description == TEXT("HoistPlain"))
-		{
-			++PlainNodes;
-			TestTrue(TEXT("Plain call attaches the generated include"), Custom->IncludeFilePaths.Contains(GeneratedIncludeVirtualPath));
-		}
-		else if (Custom->Description == TEXT("HoistEmbedded"))
-		{
-			++EmbeddedNodes;
-			TestTrue(TEXT("Embedded call attaches the hoisted include itself"), Custom->IncludeFilePaths.Contains(HoistedPath));
-			const int32 HoistedIndex = Custom->IncludeFilePaths.IndexOfByKey(HoistedPath);
-			const int32 GeneratedIndex = Custom->IncludeFilePaths.IndexOfByKey(GeneratedIncludeVirtualPath);
-			TestTrue(TEXT("Hoisted include precedes the generated include when both are present"), GeneratedIndex == INDEX_NONE || HoistedIndex < GeneratedIndex);
-		}
-	}
-	TestEqual(TEXT("One Custom node for the plain call"), PlainNodes, 1);
-	TestEqual(TEXT("One Custom node for the embedded call"), EmbeddedNodes, 1);
-	return true;
-}
-
-
-// ---------------------------------------------------------------------------------------------
 // Divergence detection: the output digest, and the gate that refuses to rebuild over a hand edit.
 //
 // Two failure directions matter, and they are not symmetric. A MISSED edit destroys somebody's
@@ -4144,10 +3968,10 @@ namespace UE::DreamShader::Editor::Private::Tests
 	/** A minimal Graph-backend material whose tint is a caller-chosen literal, so the source hash
 	 *  can be moved (which is what makes a rebuild attempt reach the divergence gate at all --
 	 *  an unchanged source is skipped long before it). */
-	FString MakeDivergenceMaterialSource(const FString& AssetName, const TCHAR* TintExpression)
+	FString MakeDivergenceMaterialSourceNamed(const FString& BlockName, const TCHAR* TintExpression)
 	{
 		return FString::Printf(TEXT(R"(
-Shader(Name="DreamShaderTests/Automation/%s")
+Shader(Name="%s")
 {
     Properties = {
         vec3 Tint = %s;
@@ -4168,13 +3992,18 @@ Shader(Name="DreamShaderTests/Automation/%s")
         Color = Tint;
     }
 }
-)"), *AssetName, TintExpression);
+)"), *BlockName, TintExpression);
 	}
 
-	FString MakeDivergenceFunctionSource(const FString& AssetName, const TCHAR* ScaleExpression)
+	FString MakeDivergenceMaterialSource(const FString& AssetName, const TCHAR* TintExpression)
+	{
+		return MakeDivergenceMaterialSourceNamed(FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *AssetName), TintExpression);
+	}
+
+	FString MakeDivergenceFunctionSourceNamed(const FString& BlockName, const TCHAR* ScaleExpression)
 	{
 		return FString::Printf(TEXT(R"(
-ShaderFunction(Name="DreamShaderTests/Automation/%s")
+ShaderFunction(Name="%s")
 {
     Inputs = {
         vec3 InColor;
@@ -4188,7 +4017,12 @@ ShaderFunction(Name="DreamShaderTests/Automation/%s")
         OutColor = (InColor * %s);
     }
 }
-)"), *AssetName, ScaleExpression);
+)"), *BlockName, ScaleExpression);
+	}
+
+	FString MakeDivergenceFunctionSource(const FString& AssetName, const TCHAR* ScaleExpression)
+	{
+		return MakeDivergenceFunctionSourceNamed(FString::Printf(TEXT("DreamShaderTests/Automation/%s"), *AssetName), ScaleExpression);
 	}
 
 	/** Report the first line on which two digest texts differ. A bare hash comparison can only say
@@ -4243,13 +4077,50 @@ ShaderFunction(Name="DreamShaderTests/Automation/%s")
 		FString Message;
 		if (!Test.TestTrue(
 				FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
-				FMaterialGenerator::GenerateMaterialFromFile(OutSourceFilePath, Message, /*bForce*/ true)))
+				::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(OutSourceFilePath, Message, /*bForce*/ true)))
 		{
 			return nullptr;
 		}
 
 		UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
 		Test.TestNotNull(FString::Printf(TEXT("Generated material loads from '%s'."), *ObjectPath), Material);
+		return Material;
+	}
+}
+
+namespace UE::DreamShader::Editor::Private::Tests
+{
+	/**
+	 * GenerateDivergenceTestMaterial in a scratch package root. The tests that built their Graph material transiently
+	 * under 1.x (Atomic.*, Divergence.DetachHandsTheAssetOver, OpenEditor.OpenAssetEditorBlocksRebuild) use this one:
+	 * a Graph material always saves in 2.0, and the fixture deletes the source and every asset under its package path.
+	 * The source's Name= points at the fixture's package path, so a rebuild of the same asset rewrites Fixture's source.
+	 */
+	UMaterial* CompileDivergenceFixtureMaterial(
+		FAutomationTestBase& Test,
+		FDreamShaderCompile2Fixture& Fixture,
+		const FString& AssetName,
+		const TCHAR* TintExpression)
+	{
+		const FString ObjectPath = Fixture.MakeObjectPath(AssetName);
+		Fixture.TrackObjectPath(ObjectPath);
+		AddExpectedNewAssetProbeWarnings(Test, ObjectPath);
+
+		if (!Fixture.WriteSource(Test, MakeDivergenceMaterialSourceNamed(Fixture.MakeLegacyAssetName(AssetName), TintExpression)))
+		{
+			return nullptr;
+		}
+
+		FString Message;
+		if (!Test.TestTrue(
+				FString::Printf(TEXT("Material compile succeeds: %s"), *Message),
+				CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), Message, /*bForce*/ true)))
+		{
+			return nullptr;
+		}
+
+		UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+		Test.TestNotNull(TEXT("The compiled material loads from the fixture's package path."), Material);
 		return Material;
 	}
 }
@@ -4296,7 +4167,7 @@ bool FDreamShaderDivergenceCleanRebuildTest::RunTest(const FString& Parameters)
 	FString Message;
 	if (!TestTrue(
 			FString::Printf(TEXT("Identical rebuild succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true)))
 	{
 		return false;
 	}
@@ -4506,7 +4377,7 @@ bool FDreamShaderDivergenceBlocksRebuildTest::RunTest(const FString& Parameters)
 	}
 
 	FString Message;
-	const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ false);
+	const bool bRebuilt = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ false);
 	TestFalse(TEXT("A changed source does NOT rebuild over a hand-edited asset"), bRebuilt);
 	TestTrue(
 		FString::Printf(TEXT("The refusal explains itself: %s"), *Message),
@@ -4551,14 +4422,14 @@ bool FDreamShaderDivergenceBlocksRebuildTest::RunTest(const FString& Parameters)
 	// and the editor's startup sweep asserts it for every file it touches.
 	TestFalse(
 		TEXT("Even a forced rebuild does not overwrite a hand-edited asset"),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true));
 
 	// Revert: what the user's confirmation of the Revert dialog reaches the generator as.
 	{
 		FScopedDreamShaderRevertDiverged RevertScope;
 		if (!TestTrue(
 				FString::Printf(TEXT("A revert-scoped rebuild goes through: %s"), *Message),
-				FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true)))
+				::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true)))
 		{
 			return false;
 		}
@@ -4576,8 +4447,9 @@ bool FDreamShaderDivergenceBlocksRebuildTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderDivergenceDetachTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler.Divergence.DetachHandsTheAssetOver",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -4588,16 +4460,12 @@ bool FDreamShaderDivergenceDetachTest::RunTest(const FString& Parameters)
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
 	FScopedDreamShaderGraphBackendPin BackendPin;
-	FScopedDreamShaderAutomationArtifacts Artifacts;
-	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoDivergeDetach"));
-	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
-	Artifacts.AddObjectPath(ObjectPath);
-	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	FDreamShaderCompile2Fixture Fixture(TEXT("DivergenceDetach"), TEXT("Automation"), TEXT("dsm"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
 	AddExpectedAutomationCleanupWarnings(*this);
 
-	FString SourceFilePath;
-	UMaterial* Material = GenerateDivergenceTestMaterial(
-		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoDivergeDetach"));
+	UMaterial* Material = CompileDivergenceFixtureMaterial(*this, Fixture, AssetName, TEXT("vec3(1.0, 0.2, 0.2)"));
 	if (!Material)
 	{
 		return false;
@@ -4612,7 +4480,7 @@ bool FDreamShaderDivergenceDetachTest::RunTest(const FString& Parameters)
 	// The ownership guard takes over from here: even a forced rebuild has to leave it alone, because
 	// after a detach the asset is indistinguishable from one somebody authored by hand.
 	FString Message;
-	const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true);
+	const bool bRebuilt = CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), Message, /*bForce*/ true);
 	TestFalse(TEXT("A forced rebuild does not reclaim a detached asset"), bRebuilt);
 	TestTrue(
 		FString::Printf(TEXT("The refusal is the ownership guard's: %s"), *Message),
@@ -4655,7 +4523,7 @@ bool FDreamShaderDivergenceFunctionTest::RunTest(const FString& Parameters)
 	FString Message;
 	if (!TestTrue(
 			FString::Printf(TEXT("Function generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(SourceFilePath, Message, /*bForce*/ true)))
 	{
 		return false;
 	}
@@ -4688,7 +4556,7 @@ bool FDreamShaderDivergenceFunctionTest::RunTest(const FString& Parameters)
 		return false;
 	}
 
-	const bool bRebuilt = FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false);
+	const bool bRebuilt = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(SourceFilePath, Message, /*bForce*/ false);
 	TestFalse(TEXT("A changed source does NOT rebuild over a hand-edited function"), bRebuilt);
 	TestTrue(
 		FString::Printf(TEXT("The refusal explains itself: %s"), *Message),
@@ -4719,8 +4587,9 @@ bool FDreamShaderDivergenceFunctionTest::RunTest(const FString& Parameters)
 // compiled one at a time by the graph builder, which runs after the old graph is gone.
 // ---------------------------------------------------------------------------------------------
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderAtomicRebuildMaterialTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler.Atomic.FailedMaterialRebuildRestoresGraph",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -4731,16 +4600,13 @@ bool FDreamShaderAtomicRebuildMaterialTest::RunTest(const FString& Parameters)
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
 	FScopedDreamShaderGraphBackendPin BackendPin;
-	FScopedDreamShaderAutomationArtifacts Artifacts;
-	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoAtomic"));
-	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
-	Artifacts.AddObjectPath(ObjectPath);
-	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	FDreamShaderCompile2Fixture Fixture(TEXT("AtomicMaterial"), TEXT("Automation"), TEXT("dsm"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
 	AddExpectedAutomationCleanupWarnings(*this);
 
-	FString SourceFilePath;
-	UMaterial* Material = GenerateDivergenceTestMaterial(
-		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoAtomic"));
+	const FString ObjectPath = Fixture.MakeObjectPath(AssetName);
+	UMaterial* Material = CompileDivergenceFixtureMaterial(*this, Fixture, AssetName, TEXT("vec3(1.0, 0.2, 0.2)"));
 	if (!Material)
 	{
 		return false;
@@ -4757,9 +4623,10 @@ bool FDreamShaderAtomicRebuildMaterialTest::RunTest(const FString& Parameters)
 	// reapplied, so this is state a failed build passes through and has to come back from.
 	TestEqual(TEXT("The good build applied Domain=UI"), static_cast<int32>(Material->MaterialDomain.GetValue()), static_cast<int32>(MD_UI));
 
-	// Parses as a file, fails as a graph.
+	// Parses as a file, fails as a graph: the undefined identifier is a bind error, which the pipeline reports before the
+	// emitter touches the asset -- so what this pins in 2.0 is that a failed build leaves the asset exactly as it was.
 	const FString BrokenSource = FString::Printf(TEXT(R"(
-Shader(Name="DreamShaderTests/Automation/%s")
+Shader(Name="%s")
 {
     Properties = {
         vec3 Tint = vec3(1.0, 0.2, 0.2);
@@ -4780,15 +4647,15 @@ Shader(Name="DreamShaderTests/Automation/%s")
         Color = ThisIdentifierIsNotDefinedAnywhere;
     }
 }
-)"), *AssetName);
+)"), *Fixture.MakeLegacyAssetName(AssetName));
 
-	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), BrokenSource, SourceFilePath))
+	if (!Fixture.WriteSource(*this, BrokenSource))
 	{
 		return false;
 	}
 
 	FString Message;
-	const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true);
+	const bool bRebuilt = CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), Message, /*bForce*/ true);
 	if (!TestFalse(FString::Printf(TEXT("A broken Graph body fails the build: %s"), *Message), bRebuilt))
 	{
 		return false;
@@ -4815,8 +4682,9 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderAtomicRebuildFunctionTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler.Atomic.FailedFunctionRebuildRestoresGraph",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -4829,34 +4697,31 @@ bool FDreamShaderAtomicRebuildFunctionTest::RunTest(const FString& Parameters)
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
 	FScopedDreamShaderGraphBackendPin BackendPin;
-	FScopedDreamShaderAutomationArtifacts Artifacts;
-	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_AutoAtomic"));
-	const FString ObjectPath = MakeAutomationObjectPath(FunctionName);
-	Artifacts.AddObjectPath(ObjectPath);
-	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	// A material function always saves in 2.0, so it compiles in a scratch package root that deletes it afterwards.
+	FDreamShaderCompile2Fixture Fixture(TEXT("AtomicFunction"), TEXT("Automation"), TEXT("dsf"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
 	AddExpectedAutomationCleanupWarnings(*this);
 
-	FString SourceFilePath;
-	if (!WriteAutomationSourceFile(
-			*this,
-			FunctionName + TEXT(".dsf"),
-			MakeDivergenceFunctionSource(FunctionName, TEXT("0.5")),
-			SourceFilePath))
+	const FString FunctionName = MakeUniqueTestAssetName(TEXT("F_AutoAtomic"));
+	const FString ObjectPath = Fixture.MakeObjectPath(FunctionName);
+	Fixture.TrackObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+
+	if (!Fixture.WriteSource(*this, MakeDivergenceFunctionSourceNamed(Fixture.MakeLegacyAssetName(FunctionName), TEXT("0.5"))))
 	{
 		return false;
 	}
-	Artifacts.AddSourceFile(SourceFilePath);
 
 	FString Message;
 	if (!TestTrue(
-			FString::Printf(TEXT("Function generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true)))
+			FString::Printf(TEXT("Function compile succeeds: %s"), *Message),
+			CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Message, /*bForce*/ true)))
 	{
 		return false;
 	}
 
 	UMaterialFunction* Function = LoadObject<UMaterialFunction>(nullptr, *ObjectPath);
-	if (!TestNotNull(TEXT("Generated function loads"), Function))
+	if (!TestNotNull(TEXT("Compiled function loads"), Function))
 	{
 		return false;
 	}
@@ -4881,7 +4746,7 @@ bool FDreamShaderAtomicRebuildFunctionTest::RunTest(const FString& Parameters)
 	}
 
 	const FString BrokenSource = FString::Printf(TEXT(R"(
-ShaderFunction(Name="DreamShaderTests/Automation/%s")
+ShaderFunction(Name="%s")
 {
     Inputs = {
         vec3 InColor;
@@ -4895,14 +4760,14 @@ ShaderFunction(Name="DreamShaderTests/Automation/%s")
         OutColor = (InColor * ThisIdentifierIsNotDefinedAnywhere);
     }
 }
-)"), *FunctionName);
+)"), *Fixture.MakeLegacyAssetName(FunctionName));
 
-	if (!WriteAutomationSourceFile(*this, FunctionName + TEXT(".dsf"), BrokenSource, SourceFilePath))
+	if (!Fixture.WriteSource(*this, BrokenSource))
 	{
 		return false;
 	}
 
-	const bool bRebuilt = FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true);
+	const bool bRebuilt = CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Message, /*bForce*/ true);
 	if (!TestFalse(FString::Printf(TEXT("A broken Graph body fails the function build: %s"), *Message), bRebuilt))
 	{
 		return false;
@@ -5221,7 +5086,7 @@ bool FDreamShaderWriteOwnerDeferralTest::RunTest(const FString& Parameters)
 		// shared file is off limits to it.
 		TestTrue(
 			FString::Printf(TEXT("The compile is skipped rather than failed: %s"), *Message),
-			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true));
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(SourceFilePath, Message, /*bForce*/ false, /*bEphemeralThinCustom*/ true));
 		TestTrue(
 			FString::Printf(TEXT("The skip says who owns writing: %s"), *Message),
 			Message.Contains(TEXT("owns this project's DreamShader bridge")));
@@ -5239,7 +5104,7 @@ bool FDreamShaderWriteOwnerDeferralTest::RunTest(const FString& Parameters)
 	// And the owner still writes it, so the deferral is about ownership and nothing else.
 	TestTrue(
 		FString::Printf(TEXT("The write owner rebuilds the same source: %s"), *Message),
-		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(SourceFilePath, Message, /*bForce*/ false, /*bEphemeralThinCustom*/ true));
 	Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
 	if (TestNotNull(TEXT("The rebuilt asset loads"), Material))
 	{
@@ -5256,8 +5121,9 @@ bool FDreamShaderWriteOwnerDeferralTest::RunTest(const FString& Parameters)
 // pre-rebuild copy, and the next Apply silently reverts everything the rebuild did.
 // ---------------------------------------------------------------------------------------------
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderOpenEditorBlocksRebuildTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler.OpenEditor.OpenAssetEditorBlocksRebuild",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -5268,16 +5134,12 @@ bool FDreamShaderOpenEditorBlocksRebuildTest::RunTest(const FString& Parameters)
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
 	FScopedDreamShaderGraphBackendPin BackendPin;
-	FScopedDreamShaderAutomationArtifacts Artifacts;
-	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoOpenEditor"));
-	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
-	Artifacts.AddObjectPath(ObjectPath);
-	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	FDreamShaderCompile2Fixture Fixture(TEXT("OpenEditor"), TEXT("Automation"), TEXT("dsm"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
 	AddExpectedAutomationCleanupWarnings(*this);
 
-	FString SourceFilePath;
-	UMaterial* Material = GenerateDivergenceTestMaterial(
-		*this, Artifacts, AssetName, ObjectPath, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath);
+	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoOpenEditor"));
+	UMaterial* Material = CompileDivergenceFixtureMaterial(*this, Fixture, AssetName, TEXT("vec3(1.0, 0.2, 0.2)"));
 	if (!Material)
 	{
 		return false;
@@ -5302,18 +5164,14 @@ bool FDreamShaderOpenEditorBlocksRebuildTest::RunTest(const FString& Parameters)
 	}
 
 	// Move the source, so the compile is not skipped by the source hash before it reaches the gate.
-	if (!WriteAutomationSourceFile(
-			*this,
-			AssetName + TEXT(".dsm"),
-			MakeDivergenceMaterialSource(AssetName, TEXT("vec3(0.1, 0.9, 0.4)")),
-			SourceFilePath))
+	if (!Fixture.WriteSource(*this, MakeDivergenceMaterialSourceNamed(Fixture.MakeLegacyAssetName(AssetName), TEXT("vec3(0.1, 0.9, 0.4)"))))
 	{
 		AssetEditorSubsystem->CloseAllEditorsForAsset(Material);
 		return false;
 	}
 
 	FString Message;
-	const bool bRebuiltWhileOpen = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true);
+	const bool bRebuiltWhileOpen = CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), Message, /*bForce*/ true);
 	TestFalse(TEXT("A rebuild is refused while an asset editor is open"), bRebuiltWhileOpen);
 	TestTrue(
 		FString::Printf(TEXT("The refusal says why: %s"), *Message),
@@ -5325,7 +5183,7 @@ bool FDreamShaderOpenEditorBlocksRebuildTest::RunTest(const FString& Parameters)
 	// And the same compile goes through once it is closed — the gate is the only thing that stopped it.
 	TestTrue(
 		FString::Printf(TEXT("The rebuild succeeds once the editor is closed: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true));
+		CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), Message, /*bForce*/ true));
 	return true;
 }
 
@@ -5388,7 +5246,7 @@ bool FDreamShaderPersistedAssetRebuiltOnDiskTest::RunTest(const FString& Paramet
 	FString Message;
 	if (!TestTrue(
 			FString::Printf(TEXT("A compile of a disk-backed asset succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(SourceFilePath, Message, /*bForce*/ false, /*bEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
@@ -5419,14 +5277,15 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	"DreamShader.Compiler.Persistence.EphemeralAssetStaysEphemeral",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-// The other half of the same rule: an asset with no file behind it must not acquire one.
+// The other half of the same rule: an asset with no file behind it must not acquire one. Since batch 2 only a ThinCustom
+// product has a memory-only state (a Graph material or a function always saves), so the rule is pinned on one: the
+// UDreamShaderMaterialInstance, whose hidden base lives in the transient package while it is Ephemeral.
 bool FDreamShaderEphemeralAssetStaysEphemeralTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor;
 	using namespace UE::DreamShader::Editor::Private;
 	using namespace UE::DreamShader::Editor::Private::Tests;
 
-	FScopedDreamShaderGraphBackendPin BackendPin;
 	FScopedDreamShaderAutomationArtifacts Artifacts;
 	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_AutoMemoryOnly"));
 	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
@@ -5434,12 +5293,32 @@ bool FDreamShaderEphemeralAssetStaysEphemeralTest::RunTest(const FString& Parame
 	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
 	AddExpectedAutomationCleanupWarnings(*this);
 
+	const FString Source = FString::Printf(TEXT(R"(
+Shader(Name="DreamShaderTests/Automation/%s", Root="Game")
+{
+    Properties = {
+        vec3 Tint = vec3(1.0, 0.2, 0.2);
+    }
+
+    Settings = {
+        Backend = "ThinCustom";
+        Domain = "UI";
+        ShadingModel = "Unlit";
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = Tint;
+    }
+}
+)"), *AssetName);
+
 	FString SourceFilePath;
-	if (!WriteAutomationSourceFile(
-			*this,
-			AssetName + TEXT(".dsm"),
-			MakeDivergenceMaterialSource(AssetName, TEXT("vec3(1.0, 0.2, 0.2)")),
-			SourceFilePath))
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), Source, SourceFilePath))
 	{
 		return false;
 	}
@@ -5447,27 +5326,27 @@ bool FDreamShaderEphemeralAssetStaysEphemeralTest::RunTest(const FString& Parame
 
 	FString Message;
 	if (!TestTrue(
-			FString::Printf(TEXT("In-memory generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true)))
+			FString::Printf(TEXT("In-memory compile succeeds: %s"), *Message),
+			CompileDreamShaderTestAssets(SourceFilePath, Message, /*bForce*/ false, /*bEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
 
-	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
-	if (!TestNotNull(TEXT("The memory-only material exists"), Material))
+	UDreamShaderMaterialInstance* Instance = FindObject<UDreamShaderMaterialInstance>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("The memory-only ThinCustom instance exists"), Instance))
 	{
 		return false;
 	}
 
-	TestFalse(TEXT("No file was written for a memory-only material"), FPackageName::DoesPackageExist(Material->GetOutermost()->GetName()));
+	TestFalse(TEXT("No file was written for a memory-only material"), FPackageName::DoesPackageExist(Instance->GetOutermost()->GetName()));
 	// A memory-only build stamps its hash like a saved one: an unchanged source is skipped on save,
-	// and the explicit rebuild routes (Recompile DSM, Clean Generated Shaders, a recompile request)
+	// and the explicit rebuild routes (Recompile, Clean Generated Shaders, a recompile request)
 	// force past it. The browser reads the same stamp to say whether the asset is current.
-	TestFalse(TEXT("A memory-only build stamps a source hash"), GetGeneratedAssetSourceHash(Material).IsEmpty());
-	TestFalse(TEXT("A memory-only material is not left dirty"), Material->GetOutermost()->IsDirty());
+	TestFalse(TEXT("A memory-only build stamps a source hash"), GetGeneratedAssetSourceHash(Instance).IsEmpty());
+	TestFalse(TEXT("A memory-only material is not left dirty"), Instance->GetOutermost()->IsDirty());
 	TestEqual(
 		TEXT("A memory-only material is still recognized as ours, so the divergence gate applies"),
-		static_cast<int32>(ClassifyGeneratedAsset(Material)),
+		static_cast<int32>(ClassifyGeneratedAsset(Instance)),
 		static_cast<int32>(EDreamShaderDigestState::Generated));
 	return true;
 }
@@ -5527,7 +5406,7 @@ bool FDreamShaderDivergenceInstanceOverrideTest::RunTest(const FString& Paramete
 	FString Message;
 	if (!TestTrue(
 			FString::Printf(TEXT("ThinCustom generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true)))
 	{
 		return false;
 	}
@@ -5630,7 +5509,7 @@ ShaderFunction(Name="DreamShaderTests/Automation/%s")
 	FString Message;
 	if (!TestTrue(
 		FString::Printf(TEXT("Function generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, true)))
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(SourceFilePath, Message, true)))
 	{
 		return false;
 	}

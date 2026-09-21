@@ -3,40 +3,52 @@
 // DreamShader.Compiler2.* -- the 2.0 pipeline end to end, and the parity oracle against the 1.x
 // generator it replaces (plan section 8, item 1).
 //
-// The smoke tests drive a `.dss` through UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile -- whose `.dss`
-// hook routes it into the new pipeline and never into the 1.x code -- and assert on the asset that
-// came out: the graph, the provenance metadata, the source-span table, the skip-when-current rule,
-// and the divergence refusal. They deliberately reuse the 1.x provenance helpers rather than
-// reimplementing them: reusing the digest and the metadata is the whole shape of batch 1, and a
-// test that accepted a second implementation of them would not notice if the new pipeline had one.
+// The smoke tests drive a `.dss` through the compiler service (CompileDreamShaderTestAssets, the test compile
+// facade of DreamShaderTestCommon.h) and assert on the asset that came out: the graph, the provenance metadata,
+// the source-span table, the skip-when-current rule, and the divergence refusal. They deliberately reuse the
+// provenance helpers rather than reimplementing them: reusing the digest and the metadata is the whole shape of
+// batch 1, and a test that accepted a second implementation of them would not notice if the new pipeline had one.
 //
-// The parity tests compile the SAME material twice -- once from its 1.x `.dsm`/`.dsf` twin in the
-// DShader roots and once from its 2.0 `.dss` in Tests/Corpus/Lang/Examples -- dump both with
-// BuildDreamShaderGraphDumpJson, normalise away the two things that name WHERE an asset came from,
-// and diff. A difference is a bug in the new pipeline until proven otherwise; the only differences
-// this file forgives are the ones that come from the two SOURCES being written differently rather
-// than compiled differently, and each of those is named at its use with the reason.
+// The parity tests used to compile the SAME material twice -- once from its 1.x `.dsm`/`.dsf` twin in the DShader
+// roots and once from its 2.0 `.dss` in Tests/Corpus/Lang/Examples -- and diff the two dumps. Batch 2 (M4) deleted
+// the 1.x generator, so nothing can compile the twin any more: each pair is now the 2.0 compile of the example
+// against a pending compile golden under Tests/Corpus/Parity, and phase 2 reviews the filled golden against the
+// twin's frozen B2 dump (Saved/DreamShader/GraphBaseline/v2-6c2e0b6-formal) with Tools/Parity/graph_parity.py, which
+// applies the registered normalisations the live comparison used to apply here.
 
 #include "DreamShaderTestCommon.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Commandlet/DreamShaderGraphDump.h"
-#include "Compiler/DreamShaderIREmitterInternal.h"
+#include "DreamShaderIREmitter.h"
 #include "Decompiler/DreamShaderGraphDecompilerHelpers.h"
+// ResolveDreamShaderInlineMask: what an inline mask means, shared with the decompiler's importer (A10).
+#include "Decompiler/DreamShaderInlineMask.h"
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
-#include "MaterialAssetGeneration/DreamShaderGeneratedAssetDigest.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderGeneratedAssetDigest.h"
+#include "DreamShaderCompilerService.h"
+#include "DreamShaderGeneratedAssets.h"
+
+// Batch 2: the B5 / B7 smoke tests and the extern-to-layer compile (SE ruling 14).
+#include "DreamShaderCompilePipeline.h"
+#include "IR/IRCustomHlsl.h"
+#include "Lang/LangDiagnostic.h"
+#include "Tools/DreamShaderShaderCheck.h"
 
 #include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
 #include "Interfaces/IPluginManager.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialExpression.h"
+#include "Materials/MaterialExpressionComment.h"
 #include "Materials/MaterialExpressionComponentMask.h"
+#include "Materials/MaterialExpressionCustom.h"
+#include "Materials/MaterialExpressionScalarParameter.h"
+#include "Materials/MaterialFunctionMaterialLayer.h"
+#include "Materials/MaterialFunctionMaterialLayerBlend.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
 #include "Materials/MaterialExpressionMaterialFunctionCall.h"
 #include "Materials/MaterialExpressionMultiply.h"
@@ -187,140 +199,14 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 	}
 
 	// =============================================================================================
-	// The 1.x twins
+	// Inline masks of a foreign graph
 	// =============================================================================================
 
-	/** Every DShader source root the project has, in the order the plan lists them. */
-	inline TArray<FString> GetDreamShaderSourceRoots()
-	{
-		TArray<FString> Roots;
-		Roots.Add(UE::DreamShader::GetSourceShaderDirectory());
-
-		const TCHAR* PluginNames[] = { TEXT("MoonToon"), TEXT("DreamGUI"), TEXT("DreamDynamicWorld") };
-		for (const TCHAR* PluginName : PluginNames)
-		{
-			if (const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName))
-			{
-				Roots.Add(FPaths::Combine(Plugin->GetBaseDir(), TEXT("DShader")));
-			}
-		}
-		return Roots;
-	}
-
-	/** The first file with this leaf name under any DShader root, or empty. */
-	inline FString FindLegacyTwin(const FString& LeafFileName)
-	{
-		for (const FString& Root : GetDreamShaderSourceRoots())
-		{
-			if (Root.IsEmpty() || !IFileManager::Get().DirectoryExists(*Root))
-			{
-				continue;
-			}
-
-			TArray<FString> Files;
-			IFileManager::Get().FindFilesRecursive(Files, *Root, *LeafFileName, true, false, false);
-			if (Files.Num() > 0)
-			{
-				Files.Sort();
-				return FPaths::ConvertRelativePathToFull(Files[0]);
-			}
-		}
-		return FString();
-	}
-
-	/**
-	 * Retarget a 1.x source at a scratch asset path.
-	 *
-	 * A parity run must NOT compile the twin where it really lives: `M_TeleportGlow.dsm` names
-	 * `/Game/FX/M_TeleportGlow`, which is a real asset in this project, and a transient request for
-	 * an asset that exists on disk is downgraded to a persisted one (IsGeneratedAssetPersisted) --
-	 * so "just compile it in memory" would rewrite the user's material. Rewriting the block header's
-	 * `Name=` and `Root=` moves the whole thing somewhere nothing else lives, which is also what
-	 * makes the two dumps comparable: neither side is then named after where it came from.
-	 *
-	 * Only the LAST block header is rewritten, which is the product block: a `.dsf` opens with the
-	 * `VirtualFunction(Name="...")` prototypes whose names are call targets, not asset paths.
-	 */
-	inline bool RetargetLegacySource(const FString& Source, const FString& AssetPath, FString& OutSource)
-	{
-		const TCHAR* BlockKeywords[] = { TEXT("ShaderLayerBlend("), TEXT("ShaderLayer("), TEXT("ShaderFunction("), TEXT("Shader(") };
-
-		int32 BlockStart = INDEX_NONE;
-		for (const TCHAR* Keyword : BlockKeywords)
-		{
-			const int32 Index = Source.Find(Keyword, ESearchCase::CaseSensitive, ESearchDir::FromEnd);
-			if (Index != INDEX_NONE && Index > BlockStart)
-			{
-				BlockStart = Index;
-			}
-		}
-		if (BlockStart == INDEX_NONE)
-		{
-			return false;
-		}
-
-		const int32 HeaderEnd = Source.Find(TEXT(")"), ESearchCase::CaseSensitive, ESearchDir::FromStart, BlockStart);
-		if (HeaderEnd == INDEX_NONE)
-		{
-			return false;
-		}
-
-		FString Header = Source.Mid(BlockStart, HeaderEnd - BlockStart + 1);
-
-		auto ReplaceKey = [&Header](const TCHAR* Key, const FString& Value) -> bool
-		{
-			const FString Needle = FString::Printf(TEXT("%s=\""), Key);
-			const int32 Start = Header.Find(Needle, ESearchCase::CaseSensitive);
-			if (Start == INDEX_NONE)
-			{
-				return false;
-			}
-			const int32 ValueStart = Start + Needle.Len();
-			const int32 ValueEnd = Header.Find(TEXT("\""), ESearchCase::CaseSensitive, ESearchDir::FromStart, ValueStart);
-			if (ValueEnd == INDEX_NONE)
-			{
-				return false;
-			}
-			Header = Header.Left(ValueStart) + Value + Header.Mid(ValueEnd);
-			return true;
-		};
-
-		if (!ReplaceKey(TEXT("Name"), AssetPath))
-		{
-			return false;
-		}
-		// Root is optional in 1.x; when it is there it has to come back to Game so the retargeted
-		// path means what it says.
-		ReplaceKey(TEXT("Root"), TEXT("Game"));
-
-		OutSource = Source.Left(BlockStart) + Header + Source.Mid(HeaderEnd + 1);
-		return true;
-	}
-
-	/** One parity pair, and the keys whose difference is the SOURCES' fault rather than a compiler's. */
-	struct FParityPair
-	{
-		/** Leaf name under Tests/Corpus/Lang/Examples. */
-		const TCHAR* LangExample;
-		/** Leaf name of the 1.x twin, looked for under every DShader root. */
-		const TCHAR* LegacyTwin;
-		/** The asset leaf both sides are retargeted to produce. */
-		const TCHAR* AssetLeaf;
-		/** Dump keys dropped from BOTH sides, with the reason, before the diff. */
-		TArray<FString> SourceLevelDeltas;
-		/**
-		 * Rewrite every inline mask of the 1.x graph by the emitter's own swizzle rule before it is
-		 * dumped (Plan/v2-parity-deltas.md PD-1). The 2.0 emitter never writes an inline mask, so without
-		 * this every `.rgb` of a 1.x graph reads as a structural difference that is not one.
-		 */
-		bool bNormaliseLegacyInlineMasks = true;
-		/**
-		 * Whole-line substitutions applied to the 1.x dump: the left side is matched against the trimmed
-		 * line and replaced keeping the indentation (PS-1, a pin the two sources name differently). An
-		 * entry that matches no line fails the pair, because a stale substitution would be a silent lie.
-		 */
-		TArray<TPair<FString, FString>> LegacyLineSubstitutions;
-	};
+	// What an inline mask MEANS is the decompiler's ResolveDreamShaderInlineMask (Decompiler/DreamShaderInlineMask.h,
+	// CONTRACT-UNITS A10): the importer and this oracle read a foreign graph with one rule. What is left here is what only
+	// an oracle does with the answer -- rewrite the asset the way the 2.0 emitter would have spelled the same swizzle.
+	// Called by DreamShader.Compiler2.Smoke.InlineMaskNormalisation below; the parity tests stopped compiling the 1.x twin
+	// in batch 2.
 
 	/**
 	 * Rewrites every inline mask of a 1.x graph the way the 2.0 emitter spells the same swizzle
@@ -348,35 +234,17 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 			}
 			const int32 OutputIndex = Input.OutputIndex;
 
-			// The operand's channels: a masked output's own, else every channel of its width.
-			TArray<int32> Channels;
+			// The inline mask relative to the operand, spelled the way the IR spells a Swizzle: the shared rule.
 			const FExpressionOutput* Output = Source->Outputs.IsValidIndex(OutputIndex) ? &Source->Outputs[OutputIndex] : nullptr;
-			if (Output && Output->Mask)
+			const UE::DreamShader::Editor::Private::FDreamShaderInlineMask Resolved = UE::DreamShader::Editor::Private::ResolveDreamShaderInlineMask(
+				Input,
+				Output,
+				FMath::Clamp(UE::DreamShader::Editor::Private::GetExpressionOutputComponentCount(Source, OutputIndex), 1, 4));
+			if (!Resolved.bMasked)
 			{
-				if (Output->MaskR) { Channels.Add(0); }
-				if (Output->MaskG) { Channels.Add(1); }
-				if (Output->MaskB) { Channels.Add(2); }
-				if (Output->MaskA) { Channels.Add(3); }
+				return;
 			}
-			else
-			{
-				const int32 Width = FMath::Clamp(UE::DreamShader::Editor::Private::GetExpressionOutputComponentCount(Source, OutputIndex), 1, 4);
-				for (int32 Channel = 0; Channel < Width; ++Channel)
-				{
-					Channels.Add(Channel);
-				}
-			}
-
-			// The inline mask relative to the operand, spelled the way the IR spells a Swizzle.
-			const bool bPicked[4] = { Input.MaskR != 0, Input.MaskG != 0, Input.MaskB != 0, Input.MaskA != 0 };
-			FString Relative;
-			for (int32 Position = 0; Position < Channels.Num(); ++Position)
-			{
-				if (bPicked[Channels[Position]])
-				{
-					Relative.AppendChar(TEXT("xyzw")[Position]);
-				}
-			}
+			const FString& Relative = Resolved.Relative;
 
 			const auto Rewire = [&Input](UMaterialExpression* Expression, const int32 Index)
 			{
@@ -390,12 +258,12 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 			};
 
 			int32 Selected = INDEX_NONE;
-			if (Relative.Len() == Channels.Num())
+			if (Resolved.bIdentity)
 			{
 				// The identity: the IR builder never makes that Swizzle.
 				Rewire(Source, OutputIndex);
 			}
-			else if (UE::DreamShader::Editor::Compiler::TryResolveSwizzleAsNamedOutput(Source, OutputIndex, Channels.Num(), Relative, Selected))
+			else if (UE::DreamShader::Editor::Compiler::TryResolveSwizzleAsNamedOutput(Source, OutputIndex, Resolved.OperandWidth, Relative, Selected))
 			{
 				Rewire(Source, Selected);
 			}
@@ -459,264 +327,53 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 		}
 	}
 
+	// =============================================================================================
+	// Parity goldens (batch 2, M4)
+	// =============================================================================================
+
+	/** One parity pair: a 2.0 example and where its 1.x twin's frozen dump lives. */
+	struct FParityGoldenPair
+	{
+		/** Leaf name under Tests/Corpus/Lang/Examples. */
+		const TCHAR* LangExample = nullptr;
+		/** The twin's dump, relative to <Project>/Saved/DreamShader/GraphBaseline/v2-6c2e0b6-formal: what phase 2 compares with. */
+		const TCHAR* BaselineDump = nullptr;
+	};
+
 	/**
-	 * Compile one source, dump every asset it produced, and hand back the normalised text.
+	 * Compile the example exactly as a Compile corpus fixture is compiled -- a scratch copy under the project's DShader
+	 * root, the Graph backend pinned, forced, every produced asset dumped, normalised and deleted again -- and judge it
+	 * against `Tests/Corpus/Parity/<stem>.expected.json` rather than the golden beside the example, which belongs to the
+	 * Lang layer. Reusing RunDreamShaderCompileCorpusCase gives the pair that runner's cleanup, `<package>/` rule,
+	 * pending flag and -DreamShaderUpdateGolden behaviour unchanged.
 	 *
-	 * The caller owns the scratch fixture, so both halves of a parity pair are cleaned up together
-	 * whichever of them failed.
+	 * The golden starts graphPending. Phase 2 fills it, then compares its `graphDump` with BaselineDump using
+	 * `python Tools/Parity/graph_parity.py pair <baseline> <candidate>`; only a reviewed pair drops the flag.
 	 */
-	inline bool CompileAndDump(
-		FAutomationTestBase& Test,
-		const FString& SourceFilePath,
-		const FString& PackagePath,
-		TArray<FString>& InOutCleanupPaths,
-		FString& OutDump,
-		FString& OutError,
-		const bool bNormaliseInlineMasks = false)
-	{
-		UE::DreamShader::FDreamShaderError Error;
-		const bool bCompiled = UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(
-			SourceFilePath, Error, /*bForce*/ true, /*bTransient*/ false);
-		OutError = Error.Code.IsEmpty() ? Error.Message : FString::Printf(TEXT("%s: %s"), *Error.Code, *Error.Message);
-
-		if (!bCompiled)
-		{
-			return false;
-		}
-
-		FAssetRegistryModule& AssetRegistryModule =
-			FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-		IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
-
-		TArray<FString> ScanPaths;
-		ScanPaths.Add(PackagePath);
-		AssetRegistry.ScanPathsSynchronous(ScanPaths, /*bForceRescan*/ true);
-
-		FARFilter Filter;
-		Filter.PackagePaths.Add(FName(*PackagePath));
-		Filter.bRecursivePaths = true;
-
-		TArray<FAssetData> Assets;
-		AssetRegistry.GetAssets(Filter, Assets);
-
-		TArray<TPair<FString, FString>> Dumps;
-		for (const FAssetData& AssetData : Assets)
-		{
-			UObject* Asset = AssetData.GetAsset();
-			if (!Asset)
-			{
-				continue;
-			}
-			InOutCleanupPaths.AddUnique(Asset->GetPathName());
-			if (bNormaliseInlineMasks)
-			{
-				NormaliseLegacyInlineMasks(Asset);
-			}
-			Dumps.Add({ Asset->GetName(), NormaliseDreamShaderGraphDumpJson(
-				UE::DreamShader::Editor::Private::BuildDreamShaderGraphDumpJson(Asset, FString(), nullptr)) });
-		}
-
-		if (Dumps.Num() == 0)
-		{
-			OutError = TEXT("the compile reported success but produced no asset the registry could see");
-			return false;
-		}
-
-		Dumps.Sort([](const TPair<FString, FString>& A, const TPair<FString, FString>& B)
-		{
-			return A.Key.Compare(B.Key, ESearchCase::CaseSensitive) < 0;
-		});
-
-		TArray<FString> Parts;
-		for (const TPair<FString, FString>& Dump : Dumps)
-		{
-			Parts.Add(FString::Printf(TEXT("=== %s ==="), *Dump.Key));
-			Parts.Add(Dump.Value);
-		}
-		OutDump = FString::Join(Parts, TEXT("\n"));
-		return true;
-	}
-
-	/** Delete every asset a parity run made, and the two scratch sources. */
-	inline void CleanUpParityRun(const TArray<FString>& ObjectPaths, const TArray<FString>& SourceFilePaths)
-	{
-		TArray<UObject*> ObjectsToDelete;
-		for (const FString& ObjectPath : ObjectPaths)
-		{
-			if (UObject* Asset = LoadObject<UObject>(nullptr, *ObjectPath))
-			{
-				ObjectsToDelete.Add(Asset);
-			}
-		}
-		if (ObjectsToDelete.Num() > 0)
-		{
-			ObjectTools::DeleteObjectsUnchecked(ObjectsToDelete);
-		}
-
-		for (const FString& SourceFilePath : SourceFilePaths)
-		{
-			IFileManager::Get().Delete(*SourceFilePath, false, true);
-		}
-	}
-
-	/** `<Corpus>/Lang/Examples/<Leaf>`. */
-	inline FString GetLangExamplePath(const TCHAR* Leaf)
+	inline bool RunParityGoldenPair(FAutomationTestBase& Test, const FParityGoldenPair& Pair)
 	{
 		const FString Root = GetDreamShaderCorpusRoot();
-		return Root.IsEmpty() ? FString() : FPaths::Combine(Root, TEXT("Lang"), TEXT("Examples"), Leaf);
-	}
-
-	/** The scratch source path a parity half writes to. */
-	inline FString MakeParitySourcePath(const FString& Area, const FString& Leaf)
-	{
-		return UE::DreamShader::NormalizeSourceFilePath(FPaths::Combine(
-			UE::DreamShader::GetSourceShaderDirectory(),
-			TEXT("DreamShaderTests"),
-			TEXT("Parity"),
-			Area,
-			Leaf));
-	}
-
-	/** The package path that scratch source's assets land in. */
-	inline FString MakeParityPackagePath(const FString& Area)
-	{
-		return FString::Printf(TEXT("/Game/DreamShaderTests/Parity/%s"), *Area);
-	}
-
-	/** Run one parity pair. Returns false only when the comparison itself could not be made. */
-	inline bool RunParityPair(FAutomationTestBase& Test, const FParityPair& Pair)
-	{
-		const FString ExamplePath = GetLangExamplePath(Pair.LangExample);
-		FString ExampleText;
-		if (!FFileHelper::LoadFileToString(ExampleText, *ExamplePath))
+		if (Root.IsEmpty())
 		{
-			Test.AddError(FString::Printf(TEXT("Cannot read the 2.0 example '%s'."), *ExamplePath));
+			Test.AddError(TEXT("The DreamShader test corpus root could not be located."));
 			return false;
 		}
 
-		const FString TwinPath = FindLegacyTwin(Pair.LegacyTwin);
-		if (TwinPath.IsEmpty())
+		const FString Stem = FPaths::GetBaseFilename(FString(Pair.LangExample));
+		FCorpusCase Case = MakeDreamShaderCorpusCase(FPaths::Combine(Root, TEXT("Lang"), TEXT("Examples"), Pair.LangExample));
+		Case.RelativeName = FString::Printf(TEXT("Parity/%s"), *Stem);
+		Case.ExpectedPath = FPaths::Combine(Root, TEXT("Parity"), Stem + TEXT(".expected.json"));
+		Case.bHasExpectationFile = IFileManager::Get().FileExists(*Case.ExpectedPath);
+		if (!Test.TestTrue(TEXT("the parity golden exists (Tests/Corpus/Parity)"), Case.bHasExpectationFile))
 		{
-			// Not a failure of the compiler: the oracle simply has nothing to compare against in
-			// this checkout. A warning, never silence -- an oracle that stops looking without
-			// saying so is worse than no oracle.
-			Test.AddWarning(FString::Printf(
-				TEXT("Parity skipped for '%s': no 1.x twin named '%s' under any DShader root."),
-				Pair.LangExample, Pair.LegacyTwin));
-			return true;
-		}
-
-		FString TwinText;
-		if (!FFileHelper::LoadFileToString(TwinText, *TwinPath))
-		{
-			Test.AddError(FString::Printf(TEXT("Cannot read the 1.x twin '%s'."), *TwinPath));
 			return false;
 		}
 
-		const FString Unique = FGuid::NewGuid().ToString(EGuidFormats::Digits).Left(8);
-		const FString LegacyArea = FString::Printf(TEXT("Legacy_%s"), *Unique);
-		const FString Lang2Area = FString::Printf(TEXT("Lang2_%s"), *Unique);
-
-		FString RetargetedTwin;
-		if (!RetargetLegacySource(
-				TwinText,
-				FString::Printf(TEXT("DreamShaderTests/Parity/%s/%s"), *LegacyArea, Pair.AssetLeaf),
-				RetargetedTwin))
-		{
-			Test.AddError(FString::Printf(
-				TEXT("Could not retarget the 1.x twin '%s'; it has no recognisable block header."), *TwinPath));
-			return false;
-		}
-
-		const FString LegacySourcePath = MakeParitySourcePath(LegacyArea, FPaths::GetCleanFilename(TwinPath));
-		const FString Lang2SourcePath = MakeParitySourcePath(Lang2Area, FString(Pair.LangExample));
-		const FString LegacyPackagePath = MakeParityPackagePath(LegacyArea);
-		const FString Lang2PackagePath = MakeParityPackagePath(Lang2Area);
-
-		TArray<FString> CleanupObjects;
-		TArray<FString> CleanupSources;
-		CleanupSources.Add(LegacySourcePath);
-		CleanupSources.Add(Lang2SourcePath);
-		ON_SCOPE_EXIT { CleanUpParityRun(CleanupObjects, CleanupSources); };
-
-		// Suppressions, never requirements: the new-asset probe fires on some engine builds only.
-		Test.AddExpectedError(LegacyPackagePath, EAutomationExpectedErrorFlags::Contains, -1);
-		Test.AddExpectedError(Lang2PackagePath, EAutomationExpectedErrorFlags::Contains, -1);
-		Test.AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);
-
-		IFileManager::Get().MakeDirectory(*FPaths::GetPath(LegacySourcePath), true);
-		IFileManager::Get().MakeDirectory(*FPaths::GetPath(Lang2SourcePath), true);
-		if (!FFileHelper::SaveStringToFile(RetargetedTwin, *LegacySourcePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM)
-			|| !FFileHelper::SaveStringToFile(ExampleText, *Lang2SourcePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
-		{
-			Test.AddError(TEXT("Could not write the parity scratch sources."));
-			return false;
-		}
-
-		// The goldens of both halves describe GRAPH-backend output.
-		FScopedDreamShaderGraphBackendPin BackendPin;
-
-		FString LegacyDump;
-		FString LegacyError;
-		if (!CompileAndDump(Test, LegacySourcePath, LegacyPackagePath, CleanupObjects, LegacyDump, LegacyError, Pair.bNormaliseLegacyInlineMasks))
-		{
-			Test.AddWarning(FString::Printf(
-				TEXT("Parity skipped for '%s': the 1.x twin did not compile in this checkout (%s)."),
-				Pair.LangExample, *LegacyError));
-			return true;
-		}
-
-		FString Lang2Dump;
-		FString Lang2Error;
-		if (!CompileAndDump(Test, Lang2SourcePath, Lang2PackagePath, CleanupObjects, Lang2Dump, Lang2Error))
-		{
-			Test.AddError(FString::Printf(
-				TEXT("The 2.0 pipeline failed to compile '%s': %s"), Pair.LangExample, *Lang2Error));
-			return false;
-		}
-
-		FString LegacyFiltered = FilterDreamShaderGraphDumpKeys(LegacyDump, Pair.SourceLevelDeltas);
-		if (Pair.LegacyLineSubstitutions.Num() > 0)
-		{
-			TArray<FString> Lines;
-			LegacyFiltered.ParseIntoArray(Lines, TEXT("\n"), /*bCullEmpty*/ false);
-			for (const TPair<FString, FString>& Substitution : Pair.LegacyLineSubstitutions)
-			{
-				int32 Hits = 0;
-				for (FString& Line : Lines)
-				{
-					if (Line.TrimStartAndEnd().Equals(Substitution.Key, ESearchCase::CaseSensitive))
-					{
-						const int32 Indent = Line.Len() - Line.TrimStart().Len();
-						Line = Line.Left(Indent) + Substitution.Value;
-						++Hits;
-					}
-				}
-				if (Hits == 0)
-				{
-					Test.AddError(FString::Printf(
-						TEXT("'%s': the 1.x dump has no line '%s' to substitute, so the substitution is stale."),
-						Pair.LangExample, *Substitution.Key));
-				}
-			}
-			LegacyFiltered = FString::Join(Lines, TEXT("\n"));
-		}
-		const FString Lang2Filtered = FilterDreamShaderGraphDumpKeys(Lang2Dump, Pair.SourceLevelDeltas);
-
-		const bool bEqual = LegacyFiltered.Equals(Lang2Filtered, ESearchCase::CaseSensitive);
-		Test.TestTrue(
-			FString::Printf(TEXT("'%s' compiles to the same graph through both pipelines"), Pair.LangExample),
-			bEqual);
-		if (!bEqual)
-		{
-			Test.AddInfo(FString::Printf(
-				TEXT("'%s': %s"), Pair.LangExample,
-				*DescribeDreamShaderTextDifference(Lang2Filtered, LegacyFiltered)));
-			Test.AddInfo(FString::Printf(TEXT("1.x dump:\n%s"), *LegacyFiltered));
-			Test.AddInfo(FString::Printf(TEXT("2.0 dump:\n%s"), *Lang2Filtered));
-		}
-
-		return true;
+		Test.AddInfo(FString::Printf(
+			TEXT("Parity pair '%s': review the golden's graphDump against Saved/DreamShader/GraphBaseline/v2-6c2e0b6-formal/%s with Tools/Parity/graph_parity.py pair."),
+			Pair.LangExample,
+			Pair.BaselineDump));
+		return RunDreamShaderCompileCorpusCase(Test, Case);
 	}
 }
 
@@ -751,7 +408,7 @@ bool FDreamShaderCompiler2MaterialEndToEndTest::RunTest(const FString& Parameter
 	UE::DreamShader::FDreamShaderError Error;
 	if (!TestTrue(
 			FString::Printf(TEXT("a .dss compiles through the 2.0 pipeline: %s"), *Error.Message),
-			UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
 	{
 		AddInfo(FString::Printf(TEXT("the pipeline reported: %s: %s"), *Error.Code, *Error.Message));
 		return false;
@@ -890,7 +547,7 @@ bool FDreamShaderCompiler2SourceSpansTest::RunTest(const FString& Parameters)
 
 	UE::DreamShader::FDreamShaderError Error;
 	if (!TestTrue(TEXT("the material compiles"),
-			UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
 	{
 		AddInfo(FString::Printf(TEXT("the pipeline reported: %s: %s"), *Error.Code, *Error.Message));
 		return false;
@@ -999,7 +656,7 @@ bool FDreamShaderCompiler2RebuildRulesTest::RunTest(const FString& Parameters)
 
 	UE::DreamShader::FDreamShaderError Error;
 	if (!TestTrue(TEXT("the first compile succeeds"),
-			UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
 	{
 		AddInfo(FString::Printf(TEXT("the pipeline reported: %s: %s"), *Error.Code, *Error.Message));
 		return false;
@@ -1022,7 +679,7 @@ bool FDreamShaderCompiler2RebuildRulesTest::RunTest(const FString& Parameters)
 	// The pipeline reports SUCCESS for a skip: nothing failed, there was simply nothing to do.
 	UE::DreamShader::FDreamShaderError SkipError;
 	TestTrue(TEXT("recompiling an unchanged source succeeds (as a skip)"),
-		UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), SkipError, /*bForce*/ false));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), SkipError, /*bForce*/ false));
 	TestTrue(TEXT("and the source is still current"),
 		IsGeneratedAssetSourceCurrent(Material, Fixture.GetSourceFilePath(), FirstHash));
 
@@ -1030,7 +687,7 @@ bool FDreamShaderCompiler2RebuildRulesTest::RunTest(const FString& Parameters)
 	// moved without the source moving would make every asset in a project read as hand-edited.
 	UE::DreamShader::FDreamShaderError ForceError;
 	if (TestTrue(TEXT("-Force rebuilds"),
-			UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), ForceError, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), ForceError, /*bForce*/ true)))
 	{
 		Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
 		if (TestNotNull(TEXT("the material still loads after the rebuild"), Material))
@@ -1055,7 +712,7 @@ bool FDreamShaderCompiler2RebuildRulesTest::RunTest(const FString& Parameters)
 	// so nothing is refused and nothing is reported.
 	UE::DreamShader::FDreamShaderError UnchangedError;
 	TestTrue(TEXT("an unchanged source over a diverged asset is still a skip"),
-		UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), UnchangedError, /*bForce*/ false));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), UnchangedError, /*bForce*/ false));
 	TestTrue(TEXT("and the skip left the edit alone"), Material->TwoSided != 0);
 
 	// Move the source. Without this the compile never reaches the gate, and the refusal below would
@@ -1066,7 +723,7 @@ bool FDreamShaderCompiler2RebuildRulesTest::RunTest(const FString& Parameters)
 	}
 
 	UE::DreamShader::FDreamShaderError DivergedError;
-	const bool bRebuilt = UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(
+	const bool bRebuilt = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(
 		Fixture.GetSourceFilePath(), DivergedError, /*bForce*/ false);
 	TestFalse(TEXT("a changed source does NOT rebuild over a diverged asset"), bRebuilt);
 	TestTrue(TEXT("and the refused asset is still TwoSided, untouched"), Material->TwoSided != 0);
@@ -1078,7 +735,7 @@ bool FDreamShaderCompiler2RebuildRulesTest::RunTest(const FString& Parameters)
 	// forces every file in the project.
 	UE::DreamShader::FDreamShaderError ForcedError;
 	TestFalse(TEXT("-Force alone does not overwrite a diverged asset"),
-		UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), ForcedError, /*bForce*/ true));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), ForcedError, /*bForce*/ true));
 	TestTrue(TEXT("and still leaves the edit alone"), Material->TwoSided != 0);
 
 	// Revert: what the user's confirmation of the Revert dialog reaches the generator as.
@@ -1086,7 +743,7 @@ bool FDreamShaderCompiler2RebuildRulesTest::RunTest(const FString& Parameters)
 	{
 		FScopedDreamShaderRevertDiverged RevertScope;
 		UE::DreamShader::FDreamShaderError RevertError;
-		bReverted = UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), RevertError, /*bForce*/ true);
+		bReverted = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), RevertError, /*bForce*/ true);
 		if (!bReverted)
 		{
 			AddInfo(FString::Printf(TEXT("the revert reported: %s: %s"), *RevertError.Code, *RevertError.Message));
@@ -1135,7 +792,7 @@ bool FDreamShaderCompiler2ThinCustomTest::RunTest(const FString& Parameters)
 
 	UE::DreamShader::FDreamShaderError Error;
 	if (!TestTrue(TEXT("a ThinCustom .dss compiles"),
-			UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
 	{
 		AddInfo(FString::Printf(TEXT("the pipeline reported: %s: %s"), *Error.Code, *Error.Message));
 		return false;
@@ -1200,7 +857,7 @@ bool FDreamShaderCompiler2FunctionLibraryTest::RunTest(const FString& Parameters
 
 	UE::DreamShader::FDreamShaderError Error;
 	if (!TestTrue(TEXT("a function library .dss compiles"),
-			UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
 	{
 		AddInfo(FString::Printf(TEXT("the pipeline reported: %s: %s"), *Error.Code, *Error.Message));
 		return false;
@@ -1282,27 +939,16 @@ bool FDreamShaderCompiler2ParityMaterialTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
 
-	FParityPair Pair;
+	FParityGoldenPair Pair;
 	Pair.LangExample = TEXT("M_TeleportGlow.dss");
-	Pair.LegacyTwin = TEXT("M_TeleportGlow.dsm");
-	Pair.AssetLeaf = TEXT("M_TeleportGlow");
-	// The two sources are not a literal translation of one another -- the 1.x one predates the 2.0
-	// syntax and gives its parameters sort priorities and slightly different prose. These three keys
-	// are therefore a difference of AUTHORSHIP, not of compilation, and dropping them is what leaves
-	// the graph itself as the thing being compared. Nothing structural is on this list: a node, a
-	// connection, a class, a default value or a material setting that differs is a real difference
-	// and fails.
-	Pair.SourceLevelDeltas.Add(TEXT("SortPriority"));   // the .dsm sets 10/20/30; the .dss sets none
-	Pair.SourceLevelDeltas.Add(TEXT("Group"));          // "Glow | Look" vs "Glow|Look"
-	Pair.SourceLevelDeltas.Add(TEXT("Description"));    // "brightness pulse" vs "breathing pulse"
-	// PD-3 (Plan/v2-parity-deltas.md): the one Custom node differs in FORM, not in value. 1.x puts the
-	// `Function` body in a generated include and the node calls DreamShaderFn_GlowMask from it; 2.0 writes
-	// the body into the node between source markers (CONTRACT 6.13 #3). The node's class, inputs, output
-	// type and connections all stay compared; only the two keys that carry the form are dropped.
-	Pair.SourceLevelDeltas.Add(TEXT("Code"));
-	Pair.SourceLevelDeltas.Add(TEXT("IncludeFilePaths"));
-
-	return RunParityPair(*this, Pair);
+	Pair.BaselineDump = TEXT("Project/Materials/FX/M_TeleportGlow.dsm.M_TeleportGlow.graph.json");
+	// What the live comparison forgave, and the review of the filled golden has to forgive the same way: the two
+	// sources are not a literal translation of one another, so SortPriority (10/20/30 in the .dsm, none in the .dss),
+	// Group ("Glow | Look" vs "Glow|Look") and Description ("brightness pulse" vs "breathing pulse") differ by
+	// authorship; PD-3 keeps the Custom node's Code and IncludeFilePaths out (graph_parity.py's default key filter).
+	// Nothing structural is forgiven: a node, a connection, a class, a default value or a material setting that
+	// differs is a real difference.
+	return RunParityGoldenPair(*this, Pair);
 }
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
@@ -1315,24 +961,436 @@ bool FDreamShaderCompiler2ParityFunctionTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
 
-	FParityPair Pair;
+	FParityGoldenPair Pair;
 	Pair.LangExample = TEXT("MF_ToonUV.dss");
-	Pair.LegacyTwin = TEXT("MF_ToonUV.dsf");
-	Pair.AssetLeaf = TEXT("MF_ToonUV");
-	// Two differences between the graphs are not compiler bugs, and both are absorbed exactly rather than
-	// by dropping a key (Plan/v2-parity-deltas.md):
-	//  - PD-1: `ScaleOffset.rg` / `.ba` are inline masks on the FunctionInput's wires in 1.x and
-	//    ComponentMask nodes in 2.0, which never writes an inline mask. The 1.x graph is normalised by the
-	//    emitter's own rule before its dump (bNormaliseLegacyInlineMasks, on by default), which also
-	//    settles `outputs[].type` (PD-2): the dump infers a width without seeing an inline mask.
-	//  - PS-1: the output is `UV` in the .dsf and `Result` in the .dss, which returns its value
-	//    (CONTRACT 6.9). A pin name is structural and `name` keys every input pin as well, so the four
-	//    lines that carry it are substituted in the 1.x dump instead of a key being dropped.
-	Pair.LegacyLineSubstitutions.Add({ TEXT("\"OutputName\": \"UV\","), TEXT("\"OutputName\": \"Result\",") });
-	Pair.LegacyLineSubstitutions.Add({ TEXT("\"name\": \"UV\","), TEXT("\"name\": \"Result\",") });
-	Pair.LegacyLineSubstitutions.Add({ TEXT("\"Name\": \"DS_UV_0\""), TEXT("\"Name\": \"DS_Result_0\"") });
-	Pair.LegacyLineSubstitutions.Add({ TEXT("\"declaration\": \"DS_UV_0\""), TEXT("\"declaration\": \"DS_Result_0\"") });
-	return RunParityPair(*this, Pair);
+	Pair.BaselineDump = TEXT("MoonToon/MaterialFunctions/Shared/MF_ToonUV.dsf.MF_ToonUV.graph.json");
+	// Two differences between the graphs are not compiler bugs (Plan/v2-parity-deltas.md), and the review absorbs them
+	// exactly rather than by dropping a key:
+	//  - PD-1: `ScaleOffset.rg` / `.ba` are inline masks on the FunctionInput's wires in 1.x and ComponentMask nodes in
+	//    2.0, which never writes an inline mask; graph_parity.py folds both into one channel list (normalisation M),
+	//    which also settles `outputs[].type` (PD-2).
+	//  - PS-1: the output is `UV` in the .dsf and `Result` in the .dss, which returns its value (CONTRACT 6.9). The pin
+	//    name, the output reroute `DS_UV_0` / `DS_Result_0` and every input that names it differ by that rename only.
+	return RunParityGoldenPair(*this, Pair);
+}
+
+// =================================================================================================
+// Batch 2 debts (Plan/m4m5/CONTRACT.md section 1.1)
+// =================================================================================================
+
+namespace UE::DreamShader::Editor::Private::Compiler2Tests
+{
+	/** Writes and compiles Source into the fixture and loads the asset named AssetName; null with the reason on Test. */
+	template <typename TAsset>
+	inline TAsset* CompileSmokeFixture(FAutomationTestBase& Test, FDreamShaderCompile2Fixture& Fixture, const FString& Source, const FString& AssetName)
+	{
+		Test.AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
+		Test.AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);
+		if (!Fixture.WriteSource(Test, Source))
+		{
+			return nullptr;
+		}
+
+		UE::DreamShader::FDreamShaderError Error;
+		if (!::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Error, /*bForce*/ true))
+		{
+			Test.AddError(FString::Printf(TEXT("the fixture does not compile: %s: %s"), *Error.Code, *Error.Message));
+			return nullptr;
+		}
+
+		const FString ObjectPath = Fixture.MakeObjectPath(AssetName);
+		Fixture.TrackObjectPath(ObjectPath);
+		TAsset* Asset = LoadObject<TAsset>(nullptr, *ObjectPath);
+		if (!Asset)
+		{
+			Test.AddError(FString::Printf(TEXT("the compile did not make '%s'."), *ObjectPath));
+		}
+		return Asset;
+	}
+
+	/** True when Inner's box lies inside Outer's. */
+	inline bool CommentContains(const UMaterialExpressionComment& Outer, const UMaterialExpressionComment& Inner)
+	{
+		return Inner.MaterialExpressionEditorX >= Outer.MaterialExpressionEditorX
+			&& Inner.MaterialExpressionEditorY >= Outer.MaterialExpressionEditorY
+			&& Inner.MaterialExpressionEditorX + Inner.SizeX <= Outer.MaterialExpressionEditorX + Outer.SizeX
+			&& Inner.MaterialExpressionEditorY + Inner.SizeY <= Outer.MaterialExpressionEditorY + Outer.SizeY;
+	}
+}
+
+// B5: nothing the compile writes into an asset names this machine.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCompiler2MachineIndependentPathsTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Smoke.MachineIndependentPaths",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderCompiler2MachineIndependentPathsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	const FString AssetName = TEXT("M_C2Paths");
+	FDreamShaderCompile2Fixture Fixture(AssetName, TEXT("Compiler2"));
+	UMaterial* Material = CompileSmokeFixture<UMaterial>(*this, Fixture, TEXT(
+		"#pragma material(ShadingModel = Unlit, BlendMode = Opaque)\n"
+		"\n"
+		"/// @custom\n"
+		"float3 Posterise(float3 Colour, float Steps)\n"
+		"{\n"
+		"    return floor(Colour * Steps) / Steps;\n"
+		"}\n"
+		"\n"
+		"uniform float3 Tint = float3(1, 0.5, 0.25);\n"
+		"\n"
+		"export void M_C2Paths(inout material m)\n"
+		"{\n"
+		"    m.EmissiveColor = Posterise(Tint, 4);\n"
+		"}\n"), AssetName);
+	if (!Material)
+	{
+		return false;
+	}
+
+	const FString ProjectDirectory = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
+
+	int32 CustomNodes = 0;
+	for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+	{
+		const UMaterialExpressionCustom* Custom = Cast<UMaterialExpressionCustom>(Expression.Get());
+		if (!Custom)
+		{
+			continue;
+		}
+		++CustomNodes;
+		TestTrue(TEXT("the code names its source"), Custom->Code.Contains(TEXT("// Begin DreamShader source: ")));
+		TestFalse(FString::Printf(TEXT("the code holds no project directory\n%s"), *Custom->Code), Custom->Code.Contains(ProjectDirectory, ESearchCase::IgnoreCase));
+		TestFalse(TEXT("the code holds no drive letter"), Custom->Code.Contains(TEXT(":/")) || Custom->Code.Contains(TEXT(":\\")));
+		TestTrue(TEXT("the marker path is the project-relative one"), Custom->Code.Contains(MakeProjectRelativeSourcePath(Fixture.GetSourceFilePath())));
+	}
+	TestEqual(TEXT("one Custom node"), CustomNodes, 1);
+
+	// The source spans the navigation reads.
+	const FString Spans = GetAssetMetadata(Material, TEXT("DreamShader.SourceSpans"));
+	TestFalse(TEXT("DreamShader.SourceSpans is written"), Spans.IsEmpty());
+	TestFalse(FString::Printf(TEXT("and names no project directory\n%s"), *Spans), Spans.Contains(ProjectDirectory, ESearchCase::IgnoreCase));
+
+	// The stamped source file is the same relative spelling.
+	const FString SourceFile = GetAssetMetadata(Material, TEXT("DreamShader.SourceFile"));
+	TestTrue(FString::Printf(TEXT("DreamShader.SourceFile is project-relative ('%s')"), *SourceFile), FPaths::IsRelative(SourceFile));
+	return true;
+}
+
+// B7: what the graph dump cannot see -- comment boxes and node descriptions.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCompiler2RegionsAndDescriptionsTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Smoke.RegionsAndDescriptions",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderCompiler2RegionsAndDescriptionsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	// A material.
+	{
+		const FString AssetName = TEXT("M_C2Boxes");
+		FDreamShaderCompile2Fixture Fixture(AssetName, TEXT("Compiler2"));
+		UMaterial* Material = CompileSmokeFixture<UMaterial>(*this, Fixture, TEXT(
+			"#pragma material(ShadingModel = Unlit, BlendMode = Opaque)\n"
+			"\n"
+			"/// @desc The overall gain\n"
+			"uniform float Gain = 0.5;\n"
+			"uniform float Bias = 0.25;\n"
+			"\n"
+			"export void M_C2Boxes(inout material m)\n"
+			"{\n"
+			"    #pragma region Outer\n"
+			"    float Scaled = Gain * 2;\n"
+			"    #pragma region Inner\n"
+			"    float Shifted = Scaled + Bias;\n"
+			"    #pragma endregion\n"
+			"    float Final = Shifted * Scaled;\n"
+			"    #pragma endregion\n"
+			"    m.EmissiveColor = float3(Final, Final, Final);\n"
+			"}\n"), AssetName);
+		if (!Material)
+		{
+			return false;
+		}
+
+		const UMaterialExpressionComment* Outer = nullptr;
+		const UMaterialExpressionComment* Inner = nullptr;
+		int32 Boxes = 0;
+		for (const TObjectPtr<UMaterialExpressionComment>& Comment : Material->GetEditorComments())
+		{
+			if (!Comment)
+			{
+				continue;
+			}
+			++Boxes;
+			// A region's box carries the generator's prefix, as every box a build makes has since 1.x.
+			if (Comment->Text == TEXT("DreamShader: Outer")) { Outer = Comment.Get(); }
+			if (Comment->Text == TEXT("DreamShader: Inner")) { Inner = Comment.Get(); }
+		}
+		// The build boxes its output blocks too ("Output: EmissiveColor", "Material Output"); the regions are two of them.
+		TestTrue(TEXT("the two region boxes are among the boxes"), Boxes >= 2);
+		if (!Outer || !Inner)
+		{
+			for (const TObjectPtr<UMaterialExpressionComment>& Comment : Material->GetEditorComments())
+			{
+				AddInfo(FString::Printf(TEXT("a comment box titled '%s'"), Comment ? *Comment->Text : TEXT("<null>")));
+			}
+		}
+		if (TestNotNull(TEXT("the Outer box"), Outer) && TestNotNull(TEXT("the Inner box"), Inner))
+		{
+			TestTrue(TEXT("Inner lies inside Outer"), CommentContains(*Outer, *Inner));
+			TestFalse(TEXT("and not the other way round"), CommentContains(*Inner, *Outer));
+		}
+
+		const UMaterialExpression* Gain = nullptr;
+		for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+		{
+			if (Expression && Expression->GetParameterName() == FName(TEXT("Gain")))
+			{
+				Gain = Expression.Get();
+			}
+		}
+		if (TestNotNull(TEXT("the Gain parameter"), Gain))
+		{
+			TestEqual(TEXT("`@desc` is the parameter node's description"), Gain->Desc, FString(TEXT("The overall gain")));
+		}
+	}
+
+	// A function: the same boxes, on the function's own comment list.
+	{
+		const FString AssetName = TEXT("MF_C2Boxes");
+		FDreamShaderCompile2Fixture Fixture(AssetName, TEXT("Compiler2"));
+		UMaterialFunction* Function = CompileSmokeFixture<UMaterialFunction>(*this, Fixture, TEXT(
+			"export float MF_C2Boxes(float Value, float Scale = 2.0)\n"
+			"{\n"
+			"    #pragma region Maths\n"
+			"    float Scaled = Value * Scale;\n"
+			"    #pragma endregion\n"
+			"    return Scaled + 1;\n"
+			"}\n"), AssetName);
+		if (!Function)
+		{
+			return false;
+		}
+		int32 Boxes = 0;
+		bool bFoundMaths = false;
+		for (const TObjectPtr<UMaterialExpressionComment>& Comment : Function->GetEditorComments())
+		{
+			if (Comment)
+			{
+				++Boxes;
+				bFoundMaths = bFoundMaths || Comment->Text == TEXT("DreamShader: Maths");
+			}
+		}
+		TestTrue(TEXT("the function has its boxes"), Boxes >= 1);
+		TestTrue(TEXT("titled after its region"), bFoundMaths);
+	}
+	return true;
+}
+
+// A10: the oracle's normalisation of a foreign graph's inline masks, on the decompiler's reading of what a mask means.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCompiler2InlineMaskNormalisationTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Smoke.InlineMaskNormalisation",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderCompiler2InlineMaskNormalisationTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	const FString AssetName = TEXT("M_C2InlineMask");
+	FDreamShaderCompile2Fixture Fixture(AssetName, TEXT("Compiler2"));
+	UMaterial* Material = CompileSmokeFixture<UMaterial>(*this, Fixture, TEXT(
+		"#pragma material(ShadingModel = Unlit, BlendMode = Opaque)\n"
+		"uniform float4 Tint = float4(1, 0.5, 0.25, 1);\n"
+		"export void M_C2InlineMask(inout material m)\n"
+		"{\n"
+		"    m.EmissiveColor = Tint.rgb;\n"
+		"    m.Opacity = Tint.a;\n"
+		"}\n"), AssetName);
+	if (!Material)
+	{
+		return false;
+	}
+
+	UMaterialExpression* Tint = nullptr;
+	for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+	{
+		if (Expression && Expression->GetParameterName() == FName(TEXT("Tint")))
+		{
+			Tint = Expression.Get();
+		}
+	}
+	FExpressionInput* Emissive = Material->GetExpressionInputForProperty(MP_EmissiveColor);
+	FExpressionInput* Opacity = Material->GetExpressionInputForProperty(MP_Opacity);
+	if (!TestNotNull(TEXT("the Tint parameter"), Tint) || !TestNotNull(TEXT("EmissiveColor"), Emissive) || !TestNotNull(TEXT("Opacity"), Opacity))
+	{
+		return false;
+	}
+
+	// Rewire both pins the way 1.x did: the whole value behind an inline mask. On a VectorParameter the whole value is the
+	// RGBA output (index 5); output 0 is RGB, which has no alpha for `.ga` to keep.
+	const int32 RGBAIndex = Tint->Outputs.IndexOfByPredicate([](const FExpressionOutput& Output) { return Output.OutputName == FName(TEXT("RGBA")); });
+	if (!TestTrue(TEXT("the parameter publishes an RGBA output"), RGBAIndex != INDEX_NONE))
+	{
+		return false;
+	}
+	const auto MaskOnWhole = [Tint, RGBAIndex](FExpressionInput& Input, const bool bR, const bool bG, const bool bB, const bool bA)
+	{
+		Input.Expression = Tint;
+		Input.OutputIndex = RGBAIndex;
+		Input.Mask = 1;
+		Input.MaskR = bR ? 1 : 0;
+		Input.MaskG = bG ? 1 : 0;
+		Input.MaskB = bB ? 1 : 0;
+		Input.MaskA = bA ? 1 : 0;
+	};
+	MaskOnWhole(*Emissive, true, true, true, false);
+	// `.ga`: no named output publishes that, so it has to become a ComponentMask node.
+	MaskOnWhole(*Opacity, false, true, false, true);
+
+	NormaliseLegacyInlineMasks(Material);
+
+	TestEqual(TEXT("no inline mask is left on EmissiveColor"), Emissive->Mask, 0);
+	TestEqual(TEXT("no inline mask is left on Opacity"), Opacity->Mask, 0);
+
+	const int32 RGBIndex = Tint->Outputs.IndexOfByPredicate([](const FExpressionOutput& Output) { return Output.OutputName == FName(TEXT("RGB")); });
+	TestTrue(TEXT("`.rgb` of the whole value is the parameter's own RGB output"), Emissive->Expression == Tint && Emissive->OutputIndex == RGBIndex);
+
+	const UMaterialExpressionComponentMask* MaskNode = Cast<UMaterialExpressionComponentMask>(Opacity->Expression);
+	if (TestNotNull(TEXT("`.ga` is a ComponentMask node"), MaskNode))
+	{
+		TestTrue(TEXT("keeping G and A"), !MaskNode->R && MaskNode->G && !MaskNode->B && MaskNode->A);
+		TestTrue(TEXT("of the whole value"), MaskNode->Input.Expression == Tint && MaskNode->Input.OutputIndex == RGBAIndex);
+	}
+	return true;
+}
+
+// L10 (CO): a 1.x block lands where its Name= says, never where its file is.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCompiler2LegacyDestinationTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Smoke.LegacyDestination",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderCompiler2LegacyDestinationTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	FDreamShaderCompile2Fixture Fixture(TEXT("LegacyDestination"), TEXT("Compiler2"), TEXT("dsm"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
+	AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);
+
+	// A folder inside Name=, and a file stem that is not the asset's name: neither the source folder nor the file name
+	// may show up in the destination.
+	const FString Source = FString::Printf(TEXT(
+		"Shader(Name=\"%s\", Root=\"Game\")\n"
+		"{\n"
+		"    Settings = { ShadingModel = \"Unlit\"; Backend = \"Graph\"; }\n"
+		"    Outputs = { vec3 Color; Base.EmissiveColor = Color; }\n"
+		"    Graph = { Color = vec3(1.0, 0.5, 0.25); }\n"
+		"}\n"), *Fixture.MakeLegacyAssetName(TEXT("Folder/M_C2LegacyDest")));
+	if (!Fixture.WriteSource(*this, Source))
+	{
+		return false;
+	}
+
+	UE::DreamShader::FDreamShaderError Error;
+	if (!TestTrue(FString::Printf(TEXT("the `.dsm` compiles (%s: %s)"), *Error.Code, *Error.Message),
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(Fixture.GetSourceFilePath(), Error, /*bForce*/ true)))
+	{
+		return false;
+	}
+
+	const FString Expected = FString::Printf(TEXT("%s/Folder/M_C2LegacyDest.M_C2LegacyDest"), *Fixture.GetPackagePath());
+	Fixture.TrackObjectPath(Expected);
+	TestNotNull(TEXT("the asset is where Name= says"), LoadObject<UMaterial>(nullptr, *Expected));
+	TestNull(TEXT("and not where the file's own name would put it"), FindObject<UMaterial>(nullptr, *Fixture.MakeObjectPath(TEXT("LegacyDestination"))));
+	return true;
+}
+
+// SE ruling 14: `extern` to a material layer, called from an entry.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCompiler2ExternLayerTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Smoke.ExternLayer",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderCompiler2ExternLayerTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	// The layer first, as an asset of its own file.
+	FDreamShaderCompile2Fixture LayerFixture(TEXT("ML_C2ExternLayer"), TEXT("Compiler2"));
+	UMaterialFunctionMaterialLayer* Layer = CompileSmokeFixture<UMaterialFunctionMaterialLayer>(*this, LayerFixture, TEXT(
+		"/// @layer\n"
+		"export void ML_C2ExternLayer(inout material m)\n"
+		"{\n"
+		"    m.BaseColor = m.BaseColor * float3(1, 0.5, 0.25);\n"
+		"}\n"), TEXT("ML_C2ExternLayer"));
+	if (!Layer)
+	{
+		return false;
+	}
+
+	// Then a material that reaches it through a prototype.
+	FDreamShaderCompile2Fixture MaterialFixture(TEXT("M_C2ExternLayer"), TEXT("Compiler2"));
+	const FString Source = FString::Printf(TEXT(
+		"#pragma material(ShadingModel = DefaultLit, BlendMode = Opaque)\n"
+		"\n"
+		"/// @asset %s/ML_C2ExternLayer\n"
+		"extern void ML_C2ExternLayer(inout material m);\n"
+		"\n"
+		"export void M_C2ExternLayer(inout material m)\n"
+		"{\n"
+		"    m.BaseColor = float3(1, 1, 1);\n"
+		"    ML_C2ExternLayer(m);\n"
+		"    m.Roughness = 0.5;\n"
+		"}\n"), *LayerFixture.GetPackagePath());
+	UMaterial* Material = CompileSmokeFixture<UMaterial>(*this, MaterialFixture, Source, TEXT("M_C2ExternLayer"));
+	if (!Material)
+	{
+		return false;
+	}
+
+	int32 Calls = 0;
+	for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+	{
+		const UMaterialExpressionMaterialFunctionCall* Call = Cast<UMaterialExpressionMaterialFunctionCall>(Expression.Get());
+		if (Call)
+		{
+			++Calls;
+			TestTrue(TEXT("the call is bound to the layer asset"), Call->MaterialFunction == Layer);
+		}
+	}
+	TestEqual(TEXT("one call to the layer"), Calls, 1);
+	return true;
 }
 
 #endif // WITH_DEV_AUTOMATION_TESTS

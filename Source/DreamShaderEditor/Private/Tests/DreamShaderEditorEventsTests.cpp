@@ -9,7 +9,7 @@
 
 #include "Bridge/DreamShaderEditorBridge.h"
 #include "Diagnostics/DreamShaderDiagnosticsStore.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "DreamShaderCompilerService.h"
 
 #include "Misc/AutomationTest.h"
 
@@ -99,7 +99,7 @@ bool FDreamShaderSourceGeneratedEventTest::RunTest(const FString& Parameters)
 
 	FString Message;
 	TestTrue(FString::Printf(TEXT("Assets generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true));
 	if (TestEqual(TEXT("One notice for GenerateAssetsFromFile, not one per layer"), Notices.Num(), 1))
 	{
 		TestEqual(TEXT("The notice names the normalized source path"), Notices[0].Key, SourceFilePath);
@@ -108,7 +108,7 @@ bool FDreamShaderSourceGeneratedEventTest::RunTest(const FString& Parameters)
 
 	Notices.Reset();
 	TestTrue(FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true));
 	TestEqual(TEXT("One notice for GenerateMaterialFromFile on its own"), Notices.Num(), 1);
 
 	// A failing source: the notice still fires, reporting failure.
@@ -119,7 +119,7 @@ bool FDreamShaderSourceGeneratedEventTest::RunTest(const FString& Parameters)
 	Notices.Reset();
 	AddExpectedError(TEXT("NoSuchIdentifier"), EAutomationExpectedErrorFlags::Contains, -1);
 	TestFalse(TEXT("A broken source fails to generate"),
-		FMaterialGenerator::GenerateAssetsFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true));
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true));
 	if (TestEqual(TEXT("One notice for the failed generation"), Notices.Num(), 1))
 	{
 		TestFalse(TEXT("The notice reports failure"), Notices[0].Value);

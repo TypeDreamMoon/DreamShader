@@ -17,7 +17,7 @@
 #include "Commandlet/DreamShaderGraphDump.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderTestCommon.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "DreamShaderCompilerService.h"
 
 #include "HAL/FileManager.h"
 #include "Materials/Material.h"

@@ -3,27 +3,30 @@
 // The Outputs block form -- Expression(Class="...", args...) { Pin[0] = a; Pin[1] = b; } -- added in
 // 1.9.0 for GitHub issues #30 / #33.
 //
-// The whole point of the form is a GUARANTEE that cannot be seen in the parse tree alone: however
-// many pins the block binds, the material ends up with exactly ONE terminal node. That guarantee is
-// not implemented in the generator -- it falls out of the parser lowering every pin to a binding
-// with a byte-identical ExpressionClass + ExpressionArguments, which is the generator's existing
-// output-target reuse key. So it has to be asserted where it is observable: on the generated graph.
+// The whole point of the form is a GUARANTEE that cannot be seen in the source alone: however many pins the
+// block binds, the material ends up with exactly ONE terminal node. In 1.x it fell out of the parser lowering
+// every pin to a binding with a byte-identical ExpressionClass + ExpressionArguments. The legacy front end
+// (batch 2, M4) keeps it in the tree: every pin whose head has an equal class and argument list becomes a
+// `Pin[i] = source` argument (FArgument::PinIndex) of ONE `UE.Expression(Class = ...)` statement call, so the
+// parse layer asserts the merge and the graph layer asserts the one node.
 //
 // Layers here:
-//   DreamShader.Lang.OutputsBlock.*  parse only, fast -- lowering shape and the new diagnostics.
-//   DreamShader.Gen.Graph.*          generates a material and counts nodes; needs the editor.
+//   DreamShader.Lang.OutputsBlock.*  parse only (the legacy front end), fast -- the merged call and the diagnostics.
+//   DreamShader.Gen.Graph.*          compiles a material and counts nodes; needs the editor.
 
 #include "CoreMinimal.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "DreamShaderParser.h"
-#include "DreamShaderTypes.h"
 #include "DreamShaderTestCommon.h"
 
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Decompiler/DreamShaderGraphDecompiler.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "DreamShaderCompilerService.h"
+#include "Lang/LangAst.h"
+#include "Lang/LangDiagnostic.h"
+#include "Lang/LangParser.h"
+#include "Lang/LangSource.h"
 
 #include "HAL/FileManager.h"
 #include "Materials/Material.h"
@@ -35,8 +38,6 @@
 
 namespace UE::DreamShader::Editor::Private::OutputsBlockTests
 {
-	using namespace UE::DreamShader;
-
 	// The reflected class name, without the U prefix -- what GetClass()->GetName() answers and what
 	// the decompiler writes into Class="...". See Docs/language/output-bindings.md.
 	static const TCHAR* ThinTranslucentClassName = TEXT("MaterialExpressionThinTranslucentMaterialOutput");
@@ -87,19 +88,91 @@ Shader(Name="DreamShaderTests/OutputsBlock/M_Parse", Root="Game")
 			"}\n"), OutputsBody, GraphBody);
 	}
 
-	/** Parse and return the DSHnnnn code of the failure, or an empty string when it parsed. */
+	/** One parse through the legacy front end (Auto picks it for a `.dsm`). */
+	static UE::DreamShader::Lang::FLangParseResult ParseOutputsBlockSource(const FString& Source)
+	{
+		const UE::DreamShader::Lang::FLangSourceText Text(TEXT("M_OutputsBlockCase.dsm"), Source);
+		return UE::DreamShader::Lang::ParseDreamShaderLang(Text, UE::DreamShader::Lang::FLangParseOptions());
+	}
+
+	/** Parse and return the DSHnnnn code of the first error, or an empty string when it parsed. */
 	static FString ParseForCode(const FString& Source, FString& OutMessage)
 	{
-		FTextShaderDefinition Definition;
-		FDreamShaderTextError Error;
-		if (FTextShaderParser::Parse(Source, Definition, Error))
+		const UE::DreamShader::Lang::FLangParseResult Result = ParseOutputsBlockSource(Source);
+		for (const UE::DreamShader::Lang::FLangDiagnostic& Diagnostic : Result.Diagnostics.GetDiagnostics())
 		{
-			OutMessage.Reset();
+			if (Diagnostic.Severity == UE::DreamShader::Lang::ELangSeverity::Error)
+			{
+				OutMessage = UE::DreamShader::Lang::FLangDiagnosticSink::ToWireString(Diagnostic);
+				return Diagnostic.Code;
+			}
+		}
+
+		OutMessage.Reset();
+		return FString();
+	}
+
+	/** The material entry the legacy front end made of a Shader block, or null. */
+	static const UE::DreamShader::Lang::FFunctionDecl* FindOutputsBlockEntry(const UE::DreamShader::Lang::FModule& Module)
+	{
+		for (const UE::DreamShader::Lang::FDeclPtr& Decl : Module.Declarations)
+		{
+			const UE::DreamShader::Lang::FFunctionDecl* Function = Decl.IsValid() ? Decl->As<UE::DreamShader::Lang::FFunctionDecl>() : nullptr;
+			if (Function && Function->IsMaterialEntry() && Function->Body.IsValid())
+			{
+				return Function;
+			}
+		}
+		return nullptr;
+	}
+
+	/** The `Class = "..."` string of a `UE.Expression(...)` call, or empty when the call is anything else. */
+	static FString GetOutputsBlockExpressionClass(const UE::DreamShader::Lang::FCallExpr& Call)
+	{
+		using namespace UE::DreamShader::Lang;
+
+		const FMemberExpr* Callee = Call.Callee.IsValid() ? Call.Callee->As<FMemberExpr>() : nullptr;
+		const FIdentifierExpr* Namespace = (Callee && Callee->Object.IsValid()) ? Callee->Object->As<FIdentifierExpr>() : nullptr;
+		if (!Namespace
+			|| !Namespace->Name.Equals(TEXT("UE"), ESearchCase::CaseSensitive)
+			|| !Callee->Member.Equals(TEXT("Expression"), ESearchCase::CaseSensitive))
+		{
 			return FString();
 		}
 
-		OutMessage = Error.Message.ToString();
-		return Error.Code;
+		for (const FArgument& Argument : Call.Arguments)
+		{
+			if (Argument.Name.Equals(TEXT("Class"), ESearchCase::IgnoreCase) && Argument.Value.IsValid())
+			{
+				if (const FLiteralExpr* Literal = Argument.Value->As<FLiteralExpr>())
+				{
+					return Literal->Text;
+				}
+			}
+		}
+		return FString();
+	}
+
+	/** Every statement call of the entry body that targets `UE.Expression(Class = "<ClassName>")`. */
+	static TArray<const UE::DreamShader::Lang::FCallExpr*> FindOutputsBlockTargetCalls(
+		const UE::DreamShader::Lang::FFunctionDecl& Entry,
+		const TCHAR* ClassName)
+	{
+		using namespace UE::DreamShader::Lang;
+
+		TArray<const FCallExpr*> Calls;
+		for (const FStmtPtr& Statement : Entry.Body->Statements)
+		{
+			const FExprStmt* ExpressionStatement = Statement.IsValid() ? Statement->As<FExprStmt>() : nullptr;
+			const FCallExpr* Call = (ExpressionStatement && ExpressionStatement->Expression.IsValid())
+				? ExpressionStatement->Expression->As<FCallExpr>()
+				: nullptr;
+			if (Call && GetOutputsBlockExpressionClass(*Call).Equals(ClassName, ESearchCase::CaseSensitive))
+			{
+				Calls.Add(Call);
+			}
+		}
+		return Calls;
 	}
 
 	/** Every expression node of the given reflected class name that the material owns. */
@@ -125,37 +198,35 @@ Shader(Name="DreamShaderTests/OutputsBlock/M_Parse", Root="Game")
 	static FString GetGenerateCorpusFixturePath(const TCHAR* FileName)
 	{
 		const FString Root = UE::DreamShader::Editor::Private::Tests::GetDreamShaderCorpusRoot();
-		return Root.IsEmpty() ? FString() : FPaths::Combine(Root, TEXT("Generate"), TEXT("Material"), FileName);
+		// Batch 2: the Generate corpus is the Legacy compile layer now (Tests/Corpus/Legacy/Compile).
+		return Root.IsEmpty() ? FString() : FPaths::Combine(Root, TEXT("Legacy"), TEXT("Compile"), TEXT("Material"), FileName);
 	}
 
-	/** A scratch .dsm under Intermediate/, deleted on scope exit. Never inside the DShader source
-	 *  root: writing there would wake the editor's source watcher mid-test. */
-	struct FScopedScratchSource
+	/**
+	 * Copy the M_OutputsBlock fixture into the test's scratch fixture, retargeted so its asset lands under the fixture's
+	 * package path (a 1.x destination follows Name=, not the source folder), and write it as the fixture's main source.
+	 */
+	static bool WriteOutputsBlockFixture(
+		FAutomationTestBase& Test,
+		UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2Fixture& Fixture,
+		const TCHAR* AssetName)
 	{
-		FString FilePath;
-
-		bool Write(FAutomationTestBase& Test, const TCHAR* FileName, const FString& SourceText)
+		const FString FixturePath = GetGenerateCorpusFixturePath(TEXT("M_OutputsBlock.dsm"));
+		FString FixtureText;
+		if (!Test.TestTrue(TEXT("the M_OutputsBlock corpus fixture is readable"), !FixturePath.IsEmpty() && FFileHelper::LoadFileToString(FixtureText, *FixturePath)))
 		{
-			FilePath = FPaths::ConvertRelativePathToFull(
-				FPaths::Combine(FPaths::ProjectIntermediateDir(), TEXT("DreamShaderTests"), FileName));
-			IFileManager::Get().MakeDirectory(*FPaths::GetPath(FilePath), true);
-			if (!FFileHelper::SaveStringToFile(SourceText, *FilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
-			{
-				Test.AddError(TEXT("Failed to write the scratch DreamShader source file."));
-				FilePath.Reset();
-				return false;
-			}
-			return true;
+			return false;
 		}
 
-		~FScopedScratchSource()
+		FString Retargeted;
+		if (!Test.TestTrue(
+				TEXT("the fixture's Shader block can be pointed at the scratch package path"),
+				UE::DreamShader::Editor::Private::Tests::RetargetDreamShaderLegacyBlockName(FixtureText, Fixture.MakeLegacyAssetName(AssetName), Retargeted)))
 		{
-			if (!FilePath.IsEmpty())
-			{
-				IFileManager::Get().Delete(*FilePath, false, true);
-			}
+			return false;
 		}
-	};
+		return Fixture.WriteSource(Test, Retargeted);
+	}
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -169,72 +240,83 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FDreamShaderOutputsBlockLoweringTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Lang;
 	using namespace UE::DreamShader::Editor::Private::OutputsBlockTests;
 
-	FTextShaderDefinition Definition;
-	FString ParseError;
-	if (!TestTrue(FString::Printf(TEXT("block-form source parses: %s"), *ParseError),
-		FTextShaderParser::Parse(MakeBlockFormSource(), Definition, ParseError)))
+	const FLangParseResult Result = ParseOutputsBlockSource(MakeBlockFormSource());
+	if (!TestTrue(
+			FString::Printf(TEXT("block-form source parses: %s"),
+				*FString::Join(UE::DreamShader::Editor::Private::Tests::GatherDreamShaderLangDiagnostics(Result.Diagnostics, ELangSeverity::Error), TEXT(" | "))),
+			Result.Succeeded()))
 	{
 		return false;
 	}
 
-	// One Base.* binding plus one binding per pin.
-	if (!TestEqual(TEXT("block form lowers to one binding per pin"), Definition.Outputs.Num(), 4))
+	const FFunctionDecl* Entry = FindOutputsBlockEntry(*Result.Module);
+	if (!TestNotNull(TEXT("the Shader block became a material entry"), Entry))
 	{
 		return false;
 	}
 
-	TArray<const FTextShaderOutputBinding*> PinBindings;
-	for (const FTextShaderOutputBinding& Binding : Definition.Outputs)
+	// THE contract: one node key, one statement call, however many pins the block binds.
+	const TArray<const FCallExpr*> Calls = FindOutputsBlockTargetCalls(*Entry, TEXT("VolumetricAdvancedMaterialOutput"));
+	if (!TestEqual(TEXT("the block lowers to exactly one UE.Expression(Class = \"VolumetricAdvancedMaterialOutput\") call"), Calls.Num(), 1))
 	{
-		if (Binding.TargetKind == FTextShaderOutputBinding::ETargetKind::ExpressionInput)
+		return false;
+	}
+
+	TArray<const FArgument*> Pins;
+	TArray<FString> HeadArguments;
+	for (const FArgument& Argument : Calls[0]->Arguments)
+	{
+		if (Argument.PinIndex != INDEX_NONE)
 		{
-			PinBindings.Add(&Binding);
+			Pins.Add(&Argument);
+		}
+		else
+		{
+			HeadArguments.Add(Argument.Name);
 		}
 	}
 
-	if (!TestEqual(TEXT("three expression-input bindings"), PinBindings.Num(), 3))
+	// The head is written once, on the call, not once per pin.
+	TestEqual(TEXT("head arguments kept once (Class + two properties)"), HeadArguments.Num(), 3);
+	TestTrue(TEXT("the head keeps PerSamplePhaseEvaluation"), HeadArguments.ContainsByPredicate([](const FString& Name) { return Name.Equals(TEXT("PerSamplePhaseEvaluation"), ESearchCase::CaseSensitive); }));
+	TestTrue(TEXT("the head keeps bGroundContribution"), HeadArguments.ContainsByPredicate([](const FString& Name) { return Name.Equals(TEXT("bGroundContribution"), ESearchCase::CaseSensitive); }));
+
+	if (!TestEqual(TEXT("one Pin[i] argument per pin"), Pins.Num(), 3))
 	{
 		return false;
 	}
 
-	// THE contract: identical class + identical argument map on every pin, because that pair is the
-	// generator's output-target reuse key. Anything that diverges here splits the node in two.
-	for (int32 Index = 0; Index < PinBindings.Num(); ++Index)
+	static const TCHAR* const ExpectedSources[] = { TEXT("PhaseG"), TEXT("PhaseG2"), TEXT("PhaseBlend") };
+	for (int32 Index = 0; Index < Pins.Num(); ++Index)
 	{
-		const FTextShaderOutputBinding& Binding = *PinBindings[Index];
-		TestEqual(
-			*FString::Printf(TEXT("pin %d resolves the same class"), Index),
-			Binding.ExpressionClass,
-			PinBindings[0]->ExpressionClass);
-		TestEqual(
-			*FString::Printf(TEXT("pin %d carries the same argument count"), Index),
-			Binding.ExpressionArguments.Num(),
-			PinBindings[0]->ExpressionArguments.Num());
-		for (const TPair<FString, FString>& Argument : PinBindings[0]->ExpressionArguments)
-		{
-			const FString* Value = Binding.ExpressionArguments.Find(Argument.Key);
-			if (TestNotNull(*FString::Printf(TEXT("pin %d carries argument '%s'"), Index, *Argument.Key), Value))
-			{
-				TestEqual(*FString::Printf(TEXT("pin %d argument '%s' value"), Index, *Argument.Key), *Value, Argument.Value);
-			}
-		}
-		TestEqual(*FString::Printf(TEXT("pin %d index"), Index), Binding.ExpressionPinIndex, Index);
+		TestEqual(*FString::Printf(TEXT("pin argument %d selects Pin[%d]"), Index, Index), Pins[Index]->PinIndex, Index);
+		TestTrue(*FString::Printf(TEXT("pin argument %d is unnamed"), Index), Pins[Index]->Name.IsEmpty());
+
+		const FIdentifierExpr* Source = Pins[Index]->Value.IsValid() ? Pins[Index]->Value->As<FIdentifierExpr>() : nullptr;
+		TestTrue(
+			*FString::Printf(TEXT("pin %d binds '%s' (sources bound in written order)"), Index, ExpectedSources[Index]),
+			Source && Source->Name.Equals(ExpectedSources[Index], ESearchCase::CaseSensitive));
 	}
 
-	TestEqual(TEXT("class resolved from the head"), PinBindings[0]->ExpressionClass, FString(TEXT("VolumetricAdvancedMaterialOutput")));
-	TestEqual(TEXT("head arguments kept (Class + two properties)"), PinBindings[0]->ExpressionArguments.Num(), 3);
-	TestEqual(TEXT("sources bound in written order"), PinBindings[1]->SourceText, FString(TEXT("PhaseG2")));
+	// Every diagnostic about a pin quotes the pin's own line, so each argument keeps the span of its `Pin[i] = x`.
+	TestTrue(TEXT("the last pin's span is below the first pin's"), Pins[2]->Span.Line > Pins[0]->Span.Line);
 
-	// TargetText is what every downstream diagnostic quotes, so a head written across three lines
-	// must still read as one line and still end in the pin it selects.
-	const FString TargetText = PinBindings[2]->TargetText;
-	AddInfo(FString::Printf(TEXT("lowered TargetText: %s"), *TargetText));
-	TestFalse(TEXT("TargetText has no embedded newline"), TargetText.Contains(TEXT("\n")));
-	TestTrue(TEXT("TargetText names the pin it selects"), TargetText.EndsWith(TEXT(".Pin[2]")));
-	TestTrue(TEXT("TargetText keeps the head arguments"), TargetText.Contains(TEXT("bGroundContribution")));
+	// The plain binding beside the block stays an assignment to the material.
+	int32 BaseBindings = 0;
+	for (const FStmtPtr& Statement : Entry->Body->Statements)
+	{
+		const FExprStmt* ExpressionStatement = Statement.IsValid() ? Statement->As<FExprStmt>() : nullptr;
+		const FAssignExpr* Assign = (ExpressionStatement && ExpressionStatement->Expression.IsValid()) ? ExpressionStatement->Expression->As<FAssignExpr>() : nullptr;
+		const FMemberExpr* Target = (Assign && Assign->Target.IsValid()) ? Assign->Target->As<FMemberExpr>() : nullptr;
+		if (Target && Target->Member.Equals(TEXT("EmissiveColor"), ESearchCase::CaseSensitive))
+		{
+			++BaseBindings;
+		}
+	}
+	TestEqual(TEXT("Base.EmissiveColor = Color stays one assignment"), BaseBindings, 1);
 
 	return true;
 }
@@ -244,6 +326,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	"DreamShader.Lang.OutputsBlock.Diagnostics",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
+// The 1.x parser's DSH3133-3137 retired with it; the legacy front end reports the same mistakes under its own codes
+// (Plan/m4m5/FE-diagnostics.md): DSH3266 a statement Outputs does not know, DSH3267 a malformed output target,
+// DSH3268 a pin bound twice, DSH3269 an empty target block.
 bool FDreamShaderOutputsBlockDiagnosticsTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor::Private::OutputsBlockTests;
@@ -259,46 +344,40 @@ bool FDreamShaderOutputsBlockDiagnosticsTest::RunTest(const FString& Parameters)
 	static const FCase Cases[] =
 	{
 		{
-			TEXT("brace after a plain variable"), TEXT("DSH3133"),
+			TEXT("brace after a plain variable"), TEXT("DSH3266"),
 			TEXT("        vec3 Color;\n        Color\n        {\n            Pin[0] = Color;\n        }\n        Base.EmissiveColor = Color;\n"),
 			TEXT("        Color = vec3(1.0, 0.0, 0.0);\n")
 		},
 		{
 			// A `.Pin[i]` suffix belongs to the statement form; the block writes its pins inside.
-			TEXT("brace after a pin-selecting target"), TEXT("DSH3133"),
+			TEXT("brace after a pin-selecting target"), TEXT("DSH3267"),
 			TEXT("        vec3 Color;\n        Base.EmissiveColor = Color;\n        Expression(Class=\"ThinTranslucentMaterialOutput\").Pin[0]\n        {\n            Pin[1] = Color;\n        }\n"),
 			TEXT("        Color = vec3(1.0, 0.0, 0.0);\n")
 		},
-		// DSH3134 (unterminated block) has no fixture on purpose: the Outputs body handed to the
-		// section parser is already brace-balanced -- ExtractBalancedBlock returns the text between a
-		// matching pair -- so a block whose '}' is missing is reported by the enclosing Shader block
-		// as an unterminated block long before the Outputs scanner sees it. DSH3134 stays as the
-		// guard that keeps the scanner from slicing with INDEX_NONE.
 		{
-			TEXT("non-pin statement inside a block"), TEXT("DSH3135"),
+			TEXT("non-pin statement inside a block"), TEXT("DSH3267"),
 			TEXT("        vec3 Color;\n        Base.EmissiveColor = Color;\n        Expression(Class=\"ThinTranslucentMaterialOutput\")\n        {\n            float Extra;\n        }\n"),
 			TEXT("        Color = vec3(1.0, 0.0, 0.0);\n")
 		},
 		{
-			TEXT("empty block"), TEXT("DSH3136"),
+			TEXT("empty block"), TEXT("DSH3269"),
 			TEXT("        vec3 Color;\n        Base.EmissiveColor = Color;\n        Expression(Class=\"ThinTranslucentMaterialOutput\")\n        {\n            // nothing\n        }\n"),
 			TEXT("        Color = vec3(1.0, 0.0, 0.0);\n")
 		},
 		{
-			TEXT("same pin twice inside one block"), TEXT("DSH3137"),
+			TEXT("same pin twice inside one block"), TEXT("DSH3268"),
 			TEXT("        vec3 Color;\n        vec3 A;\n        vec3 B;\n        Base.EmissiveColor = Color;\n        Expression(Class=\"ThinTranslucentMaterialOutput\")\n        {\n            Pin[0] = A;\n            Pin[0] = B;\n        }\n"),
 			TEXT("        Color = vec3(1.0, 0.0, 0.0);\n        A = vec3(1.0, 1.0, 1.0);\n        B = vec3(0.0, 0.0, 0.0);\n")
 		},
 		{
 			// The cross-form rule: the block bound Pin[0], the loose statement names the same node.
-			TEXT("block pin re-bound by a statement"), TEXT("DSH3137"),
+			TEXT("block pin re-bound by a statement"), TEXT("DSH3268"),
 			TEXT("        vec3 Color;\n        vec3 A;\n        vec3 B;\n        Base.EmissiveColor = Color;\n        Expression(Class=\"ThinTranslucentMaterialOutput\")\n        {\n            Pin[0] = A;\n        }\n        Expression(Class=\"ThinTranslucentMaterialOutput\").Pin[0] = B;\n"),
 			TEXT("        Color = vec3(1.0, 0.0, 0.0);\n        A = vec3(1.0, 1.0, 1.0);\n        B = vec3(0.0, 0.0, 0.0);\n")
 		},
 		{
-			// ...and the same rule between two loose statements, which used to be caught only at
-			// generation time (DSH8014).
-			TEXT("statement pin re-bound by a statement"), TEXT("DSH3137"),
+			// ...and the same rule between two loose statements.
+			TEXT("statement pin re-bound by a statement"), TEXT("DSH3268"),
 			TEXT("        vec3 Color;\n        vec3 A;\n        vec3 B;\n        Base.EmissiveColor = Color;\n        Expression(Class=\"ThinTranslucentMaterialOutput\").Pin[0] = A;\n        Expression(Class=\"ThinTranslucentMaterialOutput\").Pin[0] = B;\n"),
 			TEXT("        Color = vec3(1.0, 0.0, 0.0);\n        A = vec3(1.0, 1.0, 1.0);\n        B = vec3(0.0, 0.0, 0.0);\n")
 		},
@@ -323,14 +402,14 @@ bool FDreamShaderOutputsBlockDiagnosticsTest::RunTest(const FString& Parameters)
 		if (FCString::Strlen(Case.ExpectedCode) == 0)
 		{
 			TestTrue(
-				*FString::Printf(TEXT("%s parses (got %s %s)"), Case.Label, *Code, *Message),
+				*FString::Printf(TEXT("%s parses (got %s)"), Case.Label, *Message),
 				Code.IsEmpty());
 			continue;
 		}
 
 		if (!TestEqual(*FString::Printf(TEXT("%s raises the right code"), Case.Label), Code, FString(Case.ExpectedCode)))
 		{
-			AddInfo(FString::Printf(TEXT("%s actual message: %s"), Case.Label, *Message));
+			AddInfo(FString::Printf(TEXT("%s actual first error: %s"), Case.Label, *Message));
 		}
 	}
 
@@ -343,7 +422,7 @@ bool FDreamShaderOutputsBlockDiagnosticsTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderOutputsBlockSingleNodeTest,
-	UE::DreamShader::Editor::Private::Tests::FDreamShaderGenerateCorpusTestBase,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Gen.Graph.OutputsBlockSingleNode",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -356,22 +435,28 @@ bool FDreamShaderOutputsBlockSingleNodeTest::RunTest(const FString& Parameters)
 	// LoadObject<UMaterial> only answers under the Graph backend; the default is ThinCustom.
 	FScopedDreamShaderGraphBackendPin BackendPin;
 
-	const FString FixturePath = GetGenerateCorpusFixturePath(TEXT("M_OutputsBlock.dsm"));
-	if (!TestFalse(TEXT("Generate corpus fixture located"), FixturePath.IsEmpty()))
+	// A Graph material always saves (batch 2), so the fixture compiles in a scratch package root that deletes it.
+	FDreamShaderCompile2Fixture Fixture(TEXT("OutputsBlockSingleNode"), TEXT("Automation"), TEXT("dsm"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
+	AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);
+
+	if (!WriteOutputsBlockFixture(*this, Fixture, TEXT("M_OutputsBlock")))
 	{
 		return false;
 	}
 
 	FString Message;
 	if (!TestTrue(
-		FString::Printf(TEXT("block-form material generates: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(FixturePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+		FString::Printf(TEXT("block-form material compiles: %s"), *Message),
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
 
-	UMaterial* Material = LoadObject<UMaterial>(nullptr, TEXT("/Game/DreamShaderTests/Generate/M_OutputsBlock.M_OutputsBlock"));
-	if (!TestNotNull(TEXT("generated material loads"), Material))
+	const FString ObjectPath = Fixture.MakeObjectPath(TEXT("M_OutputsBlock"));
+	Fixture.TrackObjectPath(ObjectPath);
+	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("compiled material loads"), Material))
 	{
 		return false;
 	}
@@ -398,13 +483,14 @@ bool FDreamShaderOutputsBlockSingleNodeTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderOutputsBlockRoundtripTest,
-	UE::DreamShader::Editor::Private::Tests::FDreamShaderGenerateCorpusTestBase,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Gen.Graph.OutputsBlockRoundtrip",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-// Generate -> decompile -> the decompiled text uses the BLOCK form -> regenerate -> still one node.
-// The middle step is the one that would silently regress: a decompiler that kept emitting N loose
-// statements still round-trips, so only an assertion on the emitted syntax catches it.
+// Compile -> decompile (the 1.x text decompiler, kept behind -Format=Legacy) -> the decompiled text uses the BLOCK
+// form -> compile again through the legacy front end -> still one node. The middle step is the one that would silently
+// regress: a decompiler that kept emitting N loose statements still round-trips, so only an assertion on the emitted
+// syntax catches it.
 bool FDreamShaderOutputsBlockRoundtripTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor;
@@ -414,22 +500,27 @@ bool FDreamShaderOutputsBlockRoundtripTest::RunTest(const FString& Parameters)
 
 	FScopedDreamShaderGraphBackendPin BackendPin;
 
-	const FString FixturePath = GetGenerateCorpusFixturePath(TEXT("M_OutputsBlock.dsm"));
-	if (!TestFalse(TEXT("Generate corpus fixture located"), FixturePath.IsEmpty()))
+	FDreamShaderCompile2Fixture Fixture(TEXT("OutputsBlockRoundtrip"), TEXT("Automation"), TEXT("dsm"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
+	AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);
+
+	if (!WriteOutputsBlockFixture(*this, Fixture, TEXT("M_OutputsBlock")))
 	{
 		return false;
 	}
 
 	FString Message;
 	if (!TestTrue(
-		FString::Printf(TEXT("block-form material generates: %s"), *Message),
-		FMaterialGenerator::GenerateMaterialFromFile(FixturePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+		FString::Printf(TEXT("block-form material compiles: %s"), *Message),
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
 
-	UMaterial* Material = LoadObject<UMaterial>(nullptr, TEXT("/Game/DreamShaderTests/Generate/M_OutputsBlock.M_OutputsBlock"));
-	if (!TestNotNull(TEXT("generated material loads"), Material))
+	const FString ObjectPath = Fixture.MakeObjectPath(TEXT("M_OutputsBlock"));
+	Fixture.TrackObjectPath(ObjectPath);
+	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("compiled material loads"), Material))
 	{
 		return false;
 	}
@@ -439,7 +530,7 @@ bool FDreamShaderOutputsBlockRoundtripTest::RunTest(const FString& Parameters)
 	if (!TestTrue(
 		FString::Printf(TEXT("decompile succeeds: %s"), *DecompileError),
 		GetGraphDecompiler().DecompileMaterial(
-			Material, TEXT("DreamShaderTests/OutputsBlock/M_Roundtrip"), DecompiledSource, DecompileError)))
+			Material, Fixture.MakeLegacyAssetName(TEXT("M_Roundtrip")), DecompiledSource, DecompileError)))
 	{
 		return false;
 	}
@@ -452,23 +543,26 @@ bool FDreamShaderOutputsBlockRoundtripTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("block binds Pin[0]"), DecompiledSource.Contains(TEXT("\t\t\tPin[0] = ")));
 	TestTrue(TEXT("block binds Pin[1]"), DecompiledSource.Contains(TEXT("\t\t\tPin[1] = ")));
 
-	FScopedScratchSource Scratch;
-	if (!Scratch.Write(*this, TEXT("M_OutputsBlockRoundtrip.dsm"), DecompiledSource))
+	// Written beside the fixture's source: a legacy source compiles from under a DShader root, and the fixture deletes it.
+	FString RoundtripPath;
+	if (!Fixture.WriteSiblingSource(*this, TEXT("M_OutputsBlockRoundtrip.dsm"), DecompiledSource, RoundtripPath))
 	{
 		return false;
 	}
 
 	FString RoundtripMessage;
 	if (!TestTrue(
-		FString::Printf(TEXT("decompiled block form re-generates: %s"), *RoundtripMessage),
-		FMaterialGenerator::GenerateMaterialFromFile(Scratch.FilePath, RoundtripMessage, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+		FString::Printf(TEXT("decompiled block form compiles again: %s"), *RoundtripMessage),
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(RoundtripPath, RoundtripMessage, /*bForce*/ true, /*bEphemeralThinCustom*/ true)))
 	{
 		AddInfo(FString::Printf(TEXT("decompiled source:\n%s"), *DecompiledSource));
 		return false;
 	}
 
-	UMaterial* Roundtripped = LoadObject<UMaterial>(nullptr, TEXT("/Game/DreamShaderTests/OutputsBlock/M_Roundtrip.M_Roundtrip"));
-	if (!TestNotNull(TEXT("re-generated material loads"), Roundtripped))
+	const FString RoundtripObjectPath = Fixture.MakeObjectPath(TEXT("M_Roundtrip"));
+	Fixture.TrackObjectPath(RoundtripObjectPath);
+	UMaterial* Roundtripped = LoadObject<UMaterial>(nullptr, *RoundtripObjectPath);
+	if (!TestNotNull(TEXT("re-compiled material loads"), Roundtripped))
 	{
 		return false;
 	}

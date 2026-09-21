@@ -13,8 +13,8 @@
 
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderVersionCompat.h"
-#include "MaterialAssetGeneration/DreamShaderGeneratedAssetDigest.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderGeneratedAssetDigest.h"
+#include "DreamShaderGeneratedAssets.h"
 
 #include "MaterialEditingLibrary.h"
 #include "Materials/Material.h"
@@ -186,7 +186,7 @@ bool FDreamShaderTweakedOverridesSurviveRebuildTest::RunTest(const FString& Para
 	FString Message;
 	if (!TestTrue(
 			FString::Printf(TEXT("ThinCustom generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true)))
 	{
 		return false;
 	}
@@ -219,7 +219,7 @@ bool FDreamShaderTweakedOverridesSurviveRebuildTest::RunTest(const FString& Para
 		return false;
 	}
 
-	const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ false);
+	const bool bRebuilt = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ false);
 	if (!TestTrue(FString::Printf(TEXT("A changed source rebuilds a tweaked instance: %s"), *Message), bRebuilt))
 	{
 		return false;
@@ -288,7 +288,7 @@ bool FDreamShaderTweakedRemovedParameterIsDroppedTest::RunTest(const FString& Pa
 	FString Message;
 	if (!TestTrue(
 			FString::Printf(TEXT("ThinCustom generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true)))
 	{
 		return false;
 	}
@@ -311,7 +311,7 @@ bool FDreamShaderTweakedRemovedParameterIsDroppedTest::RunTest(const FString& Pa
 		return false;
 	}
 
-	const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ false);
+	const bool bRebuilt = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ false);
 	if (!TestTrue(FString::Printf(TEXT("Dropping an overridden parameter is not an error: %s"), *Message), bRebuilt))
 	{
 		return false;
@@ -373,7 +373,7 @@ bool FDreamShaderTweakedBaseGraphEditDivergesTest::RunTest(const FString& Parame
 	FString Message;
 	if (!TestTrue(
 			FString::Printf(TEXT("ThinCustom generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true)))
 	{
 		return false;
 	}

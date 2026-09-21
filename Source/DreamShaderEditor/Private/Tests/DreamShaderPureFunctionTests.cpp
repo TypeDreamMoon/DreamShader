@@ -9,9 +9,9 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Commandlet/DreamShaderCommandletRunner.h"
-#include "DependencyGraph/DreamShaderDependencyGraphService.h"
+#include "DreamShaderDependencyGraphService.h"
 #include "Diagnostics/DreamShaderDiagnosticsStore.h"
-#include "Diagnostics/DreamShaderTextWireUtils.h"
+#include "DreamShaderTextWireUtils.h"
 
 #include "Internationalization/Culture.h"
 #include "Misc/AutomationTest.h"

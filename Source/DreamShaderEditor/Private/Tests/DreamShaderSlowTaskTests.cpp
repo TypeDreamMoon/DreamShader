@@ -1,10 +1,10 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // Progress reporting: the DSH9012 Custom-code heuristic, the DSH9011 stall threshold, and the
-// DSH9010 cancel path.
+// DSH8298 cancel path (the 1.x DSH9010 retired with the generator in batch 2).
 //
 // The first two are pure string/number functions and run in microseconds. The third drives the real
-// generator, because the only claim worth making about cancellation is the one about the asset: a
+// compiler service, because the only claim worth making about cancellation is the one about the asset: a
 // cancelled rebuild has to leave it byte-for-byte what it was, which is a statement about the
 // rollback and cannot be made without a graph to roll back.
 
@@ -14,12 +14,12 @@
 
 #include "DreamShaderModule.h"
 #include "DreamShaderTestCommon.h"
-#include "MaterialAssetGeneration/DreamShaderGeneratedAssetDigest.h"
-#include "MaterialAssetGeneration/DreamShaderGenerationProgress.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "DreamShaderGeneratedAssetDigest.h"
+#include "DreamShaderGenerationProgress.h"
+#include "DreamShaderCompilerService.h"
 // ClassifyGeneratedAsset, so the cancel test can say the restored asset is still ours rather than
 // only that it has the same number of nodes.
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderGeneratedAssets.h"
 
 #include "Materials/Material.h"
 #include "Misc/AutomationTest.h"
@@ -192,12 +192,17 @@ bool FDreamShaderShaderCompileStallThresholdTest::RunTest(const FString& Paramet
 }
 
 // -------------------------------------------------------------------------------------------
-// DSH9010 -- cancelling leaves the asset exactly as it was
+// DSH8298 -- cancelling leaves the asset exactly as it was
 //
 // Headless cancellation needs the override seam: FSlowTask::ShouldCancel is gated on GIsSlowTask,
 // which only the progress dialog sets, so an automation run cannot press the button. The predicate
 // used below does better than counting checks anyway -- it fires the moment the graph is actually
 // empty, which is precisely the window the rollback exists to cover.
+//
+// Batch 2 (M4): the seam is declared in DreamShaderGenerationProgress.h and defined, exported, in the compiler
+// module (research-relocation section 4.7). An inline definition would give this editor-module test its own copy
+// while the pipeline in the compiler module read another, and the test would stop cancelling without failing to
+// build. A cancelled 2.0 compile is DSH8298; the 1.x generator's DSH9010 retired with it.
 // -------------------------------------------------------------------------------------------
 
 namespace UE::DreamShader::Editor::Private::SlowTaskTests
@@ -207,16 +212,11 @@ namespace UE::DreamShader::Editor::Private::SlowTaskTests
 		return FString::Printf(TEXT("M_AutoCancel_%s"), *FGuid::NewGuid().ToString(EGuidFormats::Digits));
 	}
 
-	FString MakeSlowTaskObjectPath(const FString& AssetName)
-	{
-		return FString::Printf(TEXT("/Game/DreamShaderTests/Automation/%s.%s"), *AssetName, *AssetName);
-	}
-
-	/** A Graph-backend material with one knob, so two variants produce two different digests. */
-	FString MakeSlowTaskMaterialSource(const FString& AssetName, const TCHAR* TintExpression)
+	/** A Graph-backend material with one knob, so two variants produce two different digests. BlockName is the whole Name=. */
+	FString MakeSlowTaskMaterialSource(const FString& BlockName, const TCHAR* TintExpression)
 	{
 		return FString::Printf(TEXT(R"(
-Shader(Name="DreamShaderTests/Automation/%s")
+Shader(Name="%s")
 {
     Settings = {
         Backend = "Graph";
@@ -232,30 +232,13 @@ Shader(Name="DreamShaderTests/Automation/%s")
         Color = %s;
     }
 }
-)"), *AssetName, TintExpression);
-	}
-
-	bool WriteSlowTaskSource(FAutomationTestBase& Test, const FString& AssetName, const TCHAR* TintExpression, FString& OutSourceFilePath)
-	{
-		OutSourceFilePath = UE::DreamShader::NormalizeSourceFilePath(
-			FPaths::Combine(UE::DreamShader::GetSourceShaderDirectory(), TEXT("Tests"), TEXT("Automation"), AssetName + TEXT(".dsm")));
-		IFileManager::Get().MakeDirectory(*FPaths::GetPath(OutSourceFilePath), true);
-		if (!FFileHelper::SaveStringToFile(
-				MakeSlowTaskMaterialSource(AssetName, TintExpression),
-				*OutSourceFilePath,
-				FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
-		{
-			Test.AddError(FString::Printf(TEXT("Failed to write DreamShader automation source file '%s'."), *OutSourceFilePath));
-			return false;
-		}
-
-		return true;
+)"), *BlockName, TintExpression);
 	}
 }
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderCancelledGenerationLeavesAssetTest,
-	UE::DreamShader::Editor::Private::Tests::FDreamShaderGenerateCorpusTestBase,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler.Progress.CancelledGenerationLeavesAssetUnchanged",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -269,45 +252,45 @@ bool FDreamShaderCancelledGenerationLeavesAssetTest::RunTest(const FString& Para
 	// so LoadObject<UMaterial> has something to find.
 	Tests::FScopedDreamShaderGraphBackendPin BackendPin;
 
-	const FString AssetName = MakeSlowTaskAssetName();
-	const FString ObjectPath = MakeSlowTaskObjectPath(AssetName);
+	// A Graph material always saves since batch 2 (only a ThinCustom product has a memory-only state), so the material
+	// is built in a scratch package root whose fixture deletes the source and every asset under it on the way out.
+	Tests::FDreamShaderCompile2Fixture Fixture(TEXT("CancelledGeneration"), TEXT("Automation"), TEXT("dsm"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
+	AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);
 
-	FString SourceFilePath;
-	if (!WriteSlowTaskSource(*this, AssetName, TEXT("vec3(1.0, 0.2, 0.2)"), SourceFilePath))
+	const FString AssetName = MakeSlowTaskAssetName();
+	const FString ObjectPath = Fixture.MakeObjectPath(AssetName);
+	Fixture.TrackObjectPath(ObjectPath);
+
+	if (!Fixture.WriteSource(*this, MakeSlowTaskMaterialSource(Fixture.MakeLegacyAssetName(AssetName), TEXT("vec3(1.0, 0.2, 0.2)"))))
 	{
 		return false;
 	}
-	ON_SCOPE_EXIT
-	{
-		IFileManager::Get().Delete(*SourceFilePath, /*bRequireExists*/ false, /*bEvenIfReadOnly*/ true);
-	};
 
-	// Ephemeral: the material is built into an unsaved /Game package and never written to disk,
-	// so the test leaves no asset behind -- but it is still a real, loadable UMaterial.
 	UE::DreamShader::FDreamShaderError GoodMessage;
 	if (!TestTrue(
-			FString::Printf(TEXT("The first generation succeeds: %s"), *GoodMessage.Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, GoodMessage, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+			FString::Printf(TEXT("The first compile succeeds: %s"), *GoodMessage.Message),
+			Tests::CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), GoodMessage, /*bForce*/ true)))
 	{
 		return false;
 	}
 
 	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
-	if (!TestNotNull(TEXT("The generated material is loadable"), Material))
+	if (!TestNotNull(TEXT("The compiled material is loadable"), Material))
 	{
 		return false;
 	}
 
 	const int32 GoodExpressionCount = Material->GetExpressions().Num();
 	const FString GoodDigest = BuildOutputDigest(Material);
-	if (!TestTrue(TEXT("The first generation produced a non-empty graph"), GoodExpressionCount > 0))
+	if (!TestTrue(TEXT("The first compile produced a non-empty graph"), GoodExpressionCount > 0))
 	{
 		return false;
 	}
 
 	// A materially different source, so a rebuild that ran to completion could not possibly leave the
 	// digest where it was. Anything the assertions below see is therefore the rollback's work.
-	if (!WriteSlowTaskSource(*this, AssetName, TEXT("vec3(0.05, 0.6, 0.9)"), SourceFilePath))
+	if (!Fixture.WriteSource(*this, MakeSlowTaskMaterialSource(Fixture.MakeLegacyAssetName(AssetName), TEXT("vec3(0.05, 0.6, 0.9)"))))
 	{
 		return false;
 	}
@@ -319,10 +302,10 @@ bool FDreamShaderCancelledGenerationLeavesAssetTest::RunTest(const FString& Para
 			[Material]() { return Material->GetExpressions().Num() == 0; });
 
 		UE::DreamShader::FDreamShaderError CancelMessage;
-		const bool bRebuilt = FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, CancelMessage, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+		const bool bRebuilt = Tests::CompileDreamShaderTestMaterial(Fixture.GetSourceFilePath(), CancelMessage, /*bForce*/ true);
 
-		TestFalse(TEXT("A cancelled generation reports failure"), bRebuilt);
-		TestEqual(TEXT("Cancellation is reported as DSH9010"), CancelMessage.Code, FString(TEXT("DSH9010")));
+		TestFalse(TEXT("A cancelled compile reports failure"), bRebuilt);
+		TestEqual(TEXT("Cancellation is reported as DSH8298"), CancelMessage.Code, FString(TEXT("DSH8298")));
 		AddInfo(FString::Printf(TEXT("Cancellation message: %s"), *CancelMessage.Message));
 	}
 
@@ -339,7 +322,7 @@ bool FDreamShaderCancelledGenerationLeavesAssetTest::RunTest(const FString& Para
 		static_cast<int32>(ClassifyGeneratedAsset(Material)),
 		static_cast<int32>(EDreamShaderDigestState::Generated));
 
-	// And the seam puts itself away: outside the scope above, generation is back on the real dialog.
+	// And the seam puts itself away: outside the scope above, the compile is back on the real dialog.
 	TestFalse(TEXT("The cancel override is cleared when its scope ends"), static_cast<bool>(GetDreamShaderGenerationCancelOverride()));
 	return true;
 }

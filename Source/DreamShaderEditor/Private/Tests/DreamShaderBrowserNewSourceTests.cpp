@@ -96,7 +96,7 @@ bool FDreamShaderNewSourceTemplatesTest::RunTest(const FString& Parameters)
 			AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
 			FString Message;
 			TestTrue(FString::Printf(TEXT("The material template compiles: %s"), *Message),
-				FMaterialGenerator::GenerateAssetsFromFile(FilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true));
+				::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(FilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true));
 
 			FString Unused;
 			TestFalse(TEXT("Creating the same file again is refused"), CreateNewSourceFile(Request, Unused, Error));
@@ -121,7 +121,7 @@ bool FDreamShaderNewSourceTemplatesTest::RunTest(const FString& Parameters)
 			AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
 			FString Message;
 			TestTrue(FString::Printf(TEXT("The function template compiles: %s"), *Message),
-				FMaterialGenerator::GenerateAssetsFromFile(FilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true));
+				::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(FilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true));
 		}
 	}
 
@@ -168,7 +168,7 @@ Shader(Name="Tests/Automation/%s")
 				AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
 				FString Message;
 				TestTrue(FString::Printf(TEXT("A material importing the header template compiles: %s"), *Message),
-					FMaterialGenerator::GenerateAssetsFromFile(ImporterPath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true));
+					::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(ImporterPath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true));
 			}
 		}
 	}

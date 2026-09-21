@@ -1,76 +1,92 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// Complete coverage for the parameter-expression Properties surface: every parameter node type the
-// parser recognises is declared here and asserted on both axes -- parse (correct ParameterNodeType /
-// base Type / component count / default flag) and generate (the right UMaterialExpression*Parameter
-// node is actually created in the material graph). Also pins the "default is optional" contract:
-// a declaration without `= value` parses and generates with bHasDefaultValue == false.
+// Complete coverage for the parameter-expression Properties surface of a 1.x source, as the legacy front end
+// reads it. Batch 2 (M4) deleted the 1.x runtime parser, so the parse axis is now "which 2.0 form does each
+// parameter node type become" (research-legacy.md 2.3, FE-report "Legacy synthesis"):
+//
+//   * a `uniform` declaration: ScalarParameter -> `float`, StaticBoolParameter -> `/// @static` `bool`,
+//     VectorParameter -> `float4`, TextureObjectParameter -> `Texture2D` whose default is a `/// @default`;
+//   * no declaration but one reflected call per use, recorded in FLegacyMigrationInfo::ParameterDeclarations: the
+//     static switch, the channel mask, the static component mask and every texture-sample parameter;
+//   * DSH3253, a node type 2.0 has no spelling for: DoubleVector, CurveAtlasRow, Dynamic, FontSample,
+//     SpriteTextureSampler, TextureCollection, SparseVolumeTextureObject.
+//
+// Also pins the "default is optional" contract and the Group / SortPriority / Slider metadata the directives come
+// from. The generate axis (the node really appears in the graph) is DreamShader.Gen.Parameters.* in
+// DreamShaderAutomationTests.cpp.
 
 #include "CoreMinimal.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "DreamShaderParser.h"
-#include "DreamShaderTypes.h"
 #include "DreamShaderTestCommon.h"
 
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "Lang/LangAst.h"
+#include "Lang/LangDiagnostic.h"
+#include "Lang/LangLegacy.h"
+#include "Lang/LangParser.h"
+#include "Lang/LangSource.h"
 
-#include "Materials/Material.h"
-#include "Materials/MaterialExpression.h"
 #include "Misc/AutomationTest.h"
-#include "UObject/UObjectIterator.h"
 
 namespace UE::DreamShader::Editor::Private::ParameterTests
 {
-	using namespace UE::DreamShader;
+	/** The 2.0 form the legacy front end gives a 1.x property type. */
+	enum class EParameterTestForm : uint8
+	{
+		/** A `uniform` declaration of UniformType. */
+		Uniform,
+		/** No declaration: FLegacyParameterDeclaration, expanded at every use. */
+		ExpandAtUse,
+		/** DSH3253. */
+		Unsupported,
+	};
 
 	struct FParameterCase
 	{
-		const TCHAR* NodeType;          // the DSL keyword == ParameterNodeType
+		const TCHAR* NodeType;          // the 1.x keyword
 		const TCHAR* Default;           // inline default literal, or nullptr for "declare without default"
-		ETextShaderPropertyType Type;   // expected base type
-		int32 ComponentCount;           // expected component count
+		EParameterTestForm Form;
+		const TCHAR* UniformType;       // Form == Uniform: the declaration's FTypeRef::Name
 	};
 
-	// One row per parameter node type the parser accepts in a plain Properties declaration.
+	// One row per parameter node type 1.x accepted in a plain Properties declaration.
 	static const FParameterCase GParameterCases[] = {
-		// Scalar family
-		{ TEXT("ScalarParameter"),                         TEXT("0.55"),                                ETextShaderPropertyType::Scalar,   1 },
-		{ TEXT("ScalarParameter"),                         nullptr,                                     ETextShaderPropertyType::Scalar,   1 }, // optional default
-		{ TEXT("StaticBoolParameter"),                     TEXT("true"),                                ETextShaderPropertyType::Scalar,   1 },
-		{ TEXT("StaticSwitchParameter"),                   TEXT("false"),                               ETextShaderPropertyType::Scalar,   1 },
-		// Vector family (float4 output)
-		{ TEXT("VectorParameter"),                         TEXT("float4(0.1, 0.2, 0.3, 1.0)"),          ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("VectorParameter"),                         nullptr,                                     ETextShaderPropertyType::Vector,   4 }, // optional default
-		{ TEXT("DoubleVectorParameter"),                   TEXT("float4(1, 2, 3, 4)"),                  ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("ChannelMaskParameter"),                    TEXT("float4(1, 0, 0, 0)"),                  ETextShaderPropertyType::Vector,   1 },
-		{ TEXT("StaticComponentMaskParameter"),            TEXT("float4(1, 1, 0, 0)"),                  ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("CurveAtlasRowParameter"),                  TEXT("float3(0.5, 0.5, 0.5)"),               ETextShaderPropertyType::Vector,   3 },
-		{ TEXT("DynamicParameter"),                        TEXT("float4(0, 0, 0, 0)"),                  ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("FontSampleParameter"),                     nullptr,                                     ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("SpriteTextureSampler"),                    nullptr,                                     ETextShaderPropertyType::Vector,   4 },
-		// Texture object family (texture input, no sampled output)
-		{ TEXT("TextureObjectParameter"),                  TEXT("Path(Game, \"Probe/T_Default\")"),     ETextShaderPropertyType::Texture2D, 0 },
-		{ TEXT("TextureObjectParameter"),                  nullptr,                                     ETextShaderPropertyType::Texture2D, 0 }, // optional default
-		{ TEXT("TextureCollectionParameter"),              nullptr,                                     ETextShaderPropertyType::Texture2D, 0 },
-		{ TEXT("SparseVolumeTextureObjectParameter"),      nullptr,                                     ETextShaderPropertyType::Texture2D, 0 },
-		// Texture sample family (float4 sampled output)
-		{ TEXT("TextureSampleParameter2D"),                nullptr,                                     ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("TextureSampleParameter2DArray"),           nullptr,                                     ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("TextureSampleParameterCube"),              nullptr,                                     ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("TextureSampleParameterCubeArray"),         nullptr,                                     ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("TextureSampleParameterVolume"),            nullptr,                                     ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("TextureSampleParameterSubUV"),             nullptr,                                     ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("RuntimeVirtualTextureSampleParameter"),    nullptr,                                     ETextShaderPropertyType::Vector,   4 },
-		{ TEXT("SparseVolumeTextureSampleParameter"),      nullptr,                                     ETextShaderPropertyType::Vector,   4 },
+		// Declarations
+		{ TEXT("ScalarParameter"),                      TEXT("0.55"),                                EParameterTestForm::Uniform,     TEXT("float") },
+		{ TEXT("ScalarParameter"),                      nullptr,                                     EParameterTestForm::Uniform,     TEXT("float") }, // optional default
+		{ TEXT("StaticBoolParameter"),                  TEXT("true"),                                EParameterTestForm::Uniform,     TEXT("bool") },
+		{ TEXT("VectorParameter"),                      TEXT("float4(0.1, 0.2, 0.3, 1.0)"),          EParameterTestForm::Uniform,     TEXT("float4") },
+		{ TEXT("VectorParameter"),                      nullptr,                                     EParameterTestForm::Uniform,     TEXT("float4") }, // optional default
+		{ TEXT("TextureObjectParameter"),               TEXT("Path(Game, \"Probe/T_Default\")"),     EParameterTestForm::Uniform,     TEXT("Texture2D") },
+		{ TEXT("TextureObjectParameter"),               nullptr,                                     EParameterTestForm::Uniform,     TEXT("Texture2D") }, // optional default
+		// Expanded at every use
+		{ TEXT("StaticSwitchParameter"),                TEXT("false"),                               EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("ChannelMaskParameter"),                 TEXT("float4(1, 0, 0, 0)"),                  EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("StaticComponentMaskParameter"),         TEXT("float4(1, 1, 0, 0)"),                  EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("TextureSampleParameter2D"),             nullptr,                                     EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("TextureSampleParameter2DArray"),        nullptr,                                     EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("TextureSampleParameterCube"),           nullptr,                                     EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("TextureSampleParameterCubeArray"),      nullptr,                                     EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("TextureSampleParameterVolume"),         nullptr,                                     EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("TextureSampleParameterSubUV"),          nullptr,                                     EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("RuntimeVirtualTextureSampleParameter"), nullptr,                                     EParameterTestForm::ExpandAtUse, nullptr },
+		{ TEXT("SparseVolumeTextureSampleParameter"),   nullptr,                                     EParameterTestForm::ExpandAtUse, nullptr },
+		// No 2.0 spelling
+		{ TEXT("DoubleVectorParameter"),                TEXT("float4(1, 2, 3, 4)"),                  EParameterTestForm::Unsupported, nullptr },
+		{ TEXT("CurveAtlasRowParameter"),               TEXT("float3(0.5, 0.5, 0.5)"),               EParameterTestForm::Unsupported, nullptr },
+		{ TEXT("DynamicParameter"),                     TEXT("float4(0, 0, 0, 0)"),                  EParameterTestForm::Unsupported, nullptr },
+		{ TEXT("FontSampleParameter"),                  nullptr,                                     EParameterTestForm::Unsupported, nullptr },
+		{ TEXT("SpriteTextureSampler"),                 nullptr,                                     EParameterTestForm::Unsupported, nullptr },
+		{ TEXT("TextureCollectionParameter"),           nullptr,                                     EParameterTestForm::Unsupported, nullptr },
+		{ TEXT("SparseVolumeTextureObjectParameter"),   nullptr,                                     EParameterTestForm::Unsupported, nullptr },
 	};
 
-	// Build a Shader source declaring one property per case, named P0..PN.
-	static FString BuildAllParametersSource()
+	// A Shader source declaring one property per listed case, named P<index>.
+	static FString BuildParameterTestSource(const TArray<int32>& CaseIndices)
 	{
 		FString Properties;
-		for (int32 Index = 0; Index < UE_ARRAY_COUNT(GParameterCases); ++Index)
+		for (const int32 Index : CaseIndices)
 		{
 			const FParameterCase& Case = GParameterCases[Index];
 			if (Case.Default)
@@ -92,6 +108,67 @@ namespace UE::DreamShader::Editor::Private::ParameterTests
 			"    Graph = { Color = vec3(0.5, 0.5, 0.5); }\n"
 			"}\n"), *Properties);
 	}
+
+	/** One legacy parse: the file name only picks the front end (Auto: `.dsm` -> legacy). */
+	static UE::DreamShader::Lang::FLangParseResult ParseParameterTestSource(const FString& Text, const TCHAR* FileName = TEXT("M_AllParameterTypes.dsm"))
+	{
+		const UE::DreamShader::Lang::FLangSourceText Source(FileName, Text);
+		return UE::DreamShader::Lang::ParseDreamShaderLang(Source, UE::DreamShader::Lang::FLangParseOptions());
+	}
+
+	static FString DescribeParameterTestErrors(const UE::DreamShader::Lang::FLangParseResult& Result)
+	{
+		return FString::Join(
+			UE::DreamShader::Editor::Private::Tests::GatherDreamShaderLangDiagnostics(Result.Diagnostics, UE::DreamShader::Lang::ELangSeverity::Error),
+			TEXT(" | "));
+	}
+
+	static bool HasParameterTestError(const UE::DreamShader::Lang::FLangParseResult& Result, const TCHAR* Code)
+	{
+		for (const UE::DreamShader::Lang::FLangDiagnostic& Diagnostic : Result.Diagnostics.GetDiagnostics())
+		{
+			if (Diagnostic.Severity == UE::DreamShader::Lang::ELangSeverity::Error && Diagnostic.Code.Equals(Code, ESearchCase::CaseSensitive))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** The file-scope `uniform` (or `static const`) declaration of that name, or null. */
+	static const UE::DreamShader::Lang::FVariableDecl* FindParameterTestVariable(const UE::DreamShader::Lang::FModule& Module, const FString& Name)
+	{
+		for (const UE::DreamShader::Lang::FDeclPtr& Decl : Module.Declarations)
+		{
+			const UE::DreamShader::Lang::FVariableDecl* Variable = Decl.IsValid() ? Decl->As<UE::DreamShader::Lang::FVariableDecl>() : nullptr;
+			if (Variable && Variable->Declarator.Name.Equals(Name, ESearchCase::CaseSensitive))
+			{
+				return Variable;
+			}
+		}
+		return nullptr;
+	}
+
+	/** The expanded-at-use parameter-node declaration of that name, or null. */
+	static const UE::DreamShader::Lang::FLegacyParameterDeclaration* FindParameterTestDeclaration(
+		const UE::DreamShader::Lang::FLegacyMigrationInfo& Info,
+		const FString& Name)
+	{
+		return Info.ParameterDeclarations.FindByPredicate([&Name](const UE::DreamShader::Lang::FLegacyParameterDeclaration& Candidate)
+		{
+			return Candidate.Name.Equals(Name, ESearchCase::CaseSensitive);
+		});
+	}
+
+	/** The value of a `///` directive the legacy front end wrote on a declaration, or an empty optional. */
+	static TOptional<FString> GetParameterTestDirective(const UE::DreamShader::Lang::FVariableDecl& Variable, const TCHAR* Key)
+	{
+		if (const UE::DreamShader::Lang::FDocDirective* Directive = Variable.Doc.Find(Key))
+		{
+			return Directive->Value;
+		}
+		return TOptional<FString>();
+	}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -101,49 +178,108 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FDreamShaderParameterParseAllTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Lang;
 	using namespace UE::DreamShader::Editor::Private::ParameterTests;
 
-	FTextShaderDefinition Definition;
-	FString ParseError;
-	const bool bParsed = FTextShaderParser::Parse(BuildAllParametersSource(), Definition, ParseError);
-	if (!TestTrue(FString::Printf(TEXT("source with every parameter type parses: %s"), *ParseError), bParsed))
-	{
-		return false;
-	}
-
-	if (!TestEqual(TEXT("one property parsed per case"), Definition.Properties.Num(), (int32)UE_ARRAY_COUNT(GParameterCases)))
-	{
-		return false;
-	}
-
+	TArray<int32> WithForm;
+	TArray<int32> WithoutForm;
 	for (int32 Index = 0; Index < UE_ARRAY_COUNT(GParameterCases); ++Index)
 	{
+		(GParameterCases[Index].Form == EParameterTestForm::Unsupported ? WithoutForm : WithForm).Add(Index);
+	}
+
+	const FLangParseResult Result = ParseParameterTestSource(BuildParameterTestSource(WithForm));
+	if (!TestTrue(
+			FString::Printf(TEXT("every parameter type with a 2.0 form parses through the legacy front end: %s"), *DescribeParameterTestErrors(Result)),
+			Result.Succeeded() && Result.Legacy.IsValid()))
+	{
+		return false;
+	}
+
+	for (const int32 Index : WithForm)
+	{
 		const FParameterCase& Case = GParameterCases[Index];
-		const FString PropertyName = FString::Printf(TEXT("P%d"), Index);
-		const FTextShaderPropertyDefinition* Property = Definition.Properties.FindByPredicate(
-			[&PropertyName](const FTextShaderPropertyDefinition& Candidate) { return Candidate.Name == PropertyName; });
+		const FString Name = FString::Printf(TEXT("P%d"), Index);
+		const FString Label = FString::Printf(TEXT("%s (%s)"), *Name, Case.NodeType);
 
-		if (!TestNotNull(*FString::Printf(TEXT("%s (%s) parsed"), *PropertyName, Case.NodeType), Property))
+		const FVariableDecl* Variable = FindParameterTestVariable(*Result.Module, Name);
+		const FLegacyParameterDeclaration* Declaration = FindParameterTestDeclaration(*Result.Legacy, Name);
+
+		if (Case.Form == EParameterTestForm::Uniform)
 		{
-			continue;
-		}
+			TestTrue(*FString::Printf(TEXT("%s is not recorded as an expanded parameter node"), *Label), Declaration == nullptr);
+			if (!TestNotNull(*FString::Printf(TEXT("%s is a declaration"), *Label), Variable))
+			{
+				continue;
+			}
 
-		const FString Label = FString::Printf(TEXT("%s (%s)"), *PropertyName, Case.NodeType);
-		TestEqual(*FString::Printf(TEXT("%s ParameterNodeType"), *Label), Property->ParameterNodeType, FString(Case.NodeType));
-		TestEqual(*FString::Printf(TEXT("%s source is Parameter"), *Label), (int32)Property->Source, (int32)ETextShaderPropertySource::Parameter);
-		TestEqual(*FString::Printf(TEXT("%s base Type"), *Label), (int32)Property->Type, (int32)Case.Type);
-		TestEqual(*FString::Printf(TEXT("%s ComponentCount"), *Label), Property->ComponentCount, Case.ComponentCount);
-		TestEqual(*FString::Printf(TEXT("%s bHasDefaultValue matches presence of inline default"), *Label), Property->bHasDefaultValue, Case.Default != nullptr);
+			TestEqual(*FString::Printf(TEXT("%s storage is uniform"), *Label), static_cast<int32>(Variable->Storage), static_cast<int32>(EStorageClass::Uniform));
+			TestTrue(
+				*FString::Printf(TEXT("%s type is '%s' (actual '%s')"), *Label, Case.UniformType, *Variable->Type.Name),
+				Variable->Type.Name.Equals(Case.UniformType, ESearchCase::CaseSensitive));
+			TestTrue(*FString::Printf(TEXT("%s is marked legacy"), *Label), Variable->bLegacy);
+
+			// A texture default is a `/// @default` directive; a value default is the initializer.
+			const bool bHasDefault = Variable->Type.IsTexture()
+				? Variable->Doc.Has(TEXT("default"))
+				: Variable->Declarator.Initializer.IsValid();
+			TestEqual(*FString::Printf(TEXT("%s carries a default exactly when one was written"), *Label), bHasDefault, Case.Default != nullptr);
+
+			if (FCString::Strcmp(Case.NodeType, TEXT("StaticBoolParameter")) == 0)
+			{
+				TestTrue(*FString::Printf(TEXT("%s is a /// @static uniform"), *Label), Variable->Doc.Has(TEXT("static")));
+			}
+
+			const TOptional<FString> Group = GetParameterTestDirective(*Variable, TEXT("group"));
+			TestTrue(
+				*FString::Printf(TEXT("%s Group=\"Params\" becomes /// @group Params"), *Label),
+				Group.IsSet() && Group.GetValue().Equals(TEXT("Params"), ESearchCase::CaseSensitive));
+			const TOptional<FString> Sort = GetParameterTestDirective(*Variable, TEXT("sort"));
+			TestTrue(
+				*FString::Printf(TEXT("%s SortPriority=%d becomes /// @sort %d"), *Label, Index, Index),
+				Sort.IsSet() && Sort.GetValue().Equals(FString::FromInt(Index), ESearchCase::CaseSensitive));
+		}
+		else
+		{
+			TestTrue(*FString::Printf(TEXT("%s makes no declaration"), *Label), Variable == nullptr);
+			if (!TestNotNull(*FString::Printf(TEXT("%s is recorded as a parameter node expanded at its uses"), *Label), Declaration))
+			{
+				continue;
+			}
+
+			TestTrue(
+				*FString::Printf(TEXT("%s NodeType is '%s' (actual '%s')"), *Label, Case.NodeType, *Declaration->NodeType),
+				Declaration->NodeType.Equals(Case.NodeType, ESearchCase::CaseSensitive));
+			TestEqual(
+				*FString::Printf(TEXT("%s keeps its default text exactly when one was written"), *Label),
+				!Declaration->DefaultText.IsEmpty(),
+				Case.Default != nullptr);
+			TestTrue(
+				*FString::Printf(TEXT("%s keeps its 1.x metadata"), *Label),
+				Declaration->Metadata.ContainsByPredicate([](const TPair<FString, FString>& Entry)
+				{
+					return Entry.Key.Equals(TEXT("Group"), ESearchCase::IgnoreCase);
+				}));
+		}
+	}
+
+	// A type with no 2.0 spelling is refused on its own, so one refusal cannot hide another.
+	for (const int32 Index : WithoutForm)
+	{
+		const FParameterCase& Case = GParameterCases[Index];
+		const FLangParseResult Refused = ParseParameterTestSource(BuildParameterTestSource({ Index }));
+		TestTrue(
+			*FString::Printf(TEXT("%s has no 2.0 spelling: DSH3253 (actual: %s)"), Case.NodeType, *DescribeParameterTestErrors(Refused)),
+			HasParameterTestError(Refused, TEXT("DSH3253")));
 	}
 
 	return true;
 }
 
-// Group("X") { ... } Properties scope: stamps the group + an auto-incrementing SortPriority (step 10,
-// global counter; explicit values win and don't consume a slot); loose params are untouched. Also
-// pins the Slider(min,max) shorthand and asset-in-= (bare quoted absolute path) -- none of which the
-// corpus golden can see, so they are asserted at the FTextShaderDefinition level here.
+// Group("X") { ... } Properties scope: stamps the group + an auto-incrementing SortPriority (step 10, global
+// counter; explicit values win and don't consume a slot); a loose parameter gets the synthesized `@sort 32` that
+// stands for 1.x's "no SortPriority written" (research-legacy.md D11). Also pins the Slider(min,max) shorthand and
+// asset-in-= (a bare quoted absolute path) on an expanded texture-sample parameter.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderPropertyGroupScopeTest,
 	"DreamShader.Lang.ParameterExpressions.GroupScope",
@@ -151,7 +287,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FDreamShaderPropertyGroupScopeTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Lang;
+	using namespace UE::DreamShader::Editor::Private::ParameterTests;
 
 	const FString Source = TEXT(R"(
 Shader(Name="DreamShaderTests/Params/M_GroupScope", Root="Game")
@@ -174,68 +311,68 @@ Shader(Name="DreamShaderTests/Params/M_GroupScope", Root="Game")
 }
 )");
 
-	FTextShaderDefinition Definition;
-	FString ParseError;
-	if (!TestTrue(FString::Printf(TEXT("Group-scope source parses: %s"), *ParseError),
-		FTextShaderParser::Parse(Source, Definition, ParseError)))
+	const FLangParseResult Result = ParseParameterTestSource(Source, TEXT("M_GroupScope.dsm"));
+	if (!TestTrue(FString::Printf(TEXT("Group-scope source parses: %s"), *DescribeParameterTestErrors(Result)), Result.Succeeded() && Result.Legacy.IsValid()))
 	{
 		return false;
 	}
 
-	auto Find = [&Definition](const TCHAR* Name) -> const FTextShaderPropertyDefinition*
-	{
-		return Definition.Properties.FindByPredicate(
-			[Name](const FTextShaderPropertyDefinition& Candidate) { return Candidate.Name == Name; });
-	};
-
-	const FTextShaderPropertyDefinition* A = Find(TEXT("A"));
-	const FTextShaderPropertyDefinition* B = Find(TEXT("B"));
-	const FTextShaderPropertyDefinition* C = Find(TEXT("C"));
-	const FTextShaderPropertyDefinition* D = Find(TEXT("D"));
-	const FTextShaderPropertyDefinition* Loose = Find(TEXT("Loose"));
-	const FTextShaderPropertyDefinition* Tex = Find(TEXT("Tex"));
+	const FVariableDecl* A = FindParameterTestVariable(*Result.Module, TEXT("A"));
+	const FVariableDecl* B = FindParameterTestVariable(*Result.Module, TEXT("B"));
+	const FVariableDecl* C = FindParameterTestVariable(*Result.Module, TEXT("C"));
+	const FVariableDecl* D = FindParameterTestVariable(*Result.Module, TEXT("D"));
+	const FVariableDecl* Loose = FindParameterTestVariable(*Result.Module, TEXT("Loose"));
+	const FLegacyParameterDeclaration* Tex = FindParameterTestDeclaration(*Result.Legacy, TEXT("Tex"));
 	if (!TestNotNull(TEXT("A"), A) || !TestNotNull(TEXT("B"), B) || !TestNotNull(TEXT("C"), C)
 		|| !TestNotNull(TEXT("D"), D) || !TestNotNull(TEXT("Loose"), Loose) || !TestNotNull(TEXT("Tex"), Tex))
 	{
 		return false;
 	}
 
-	// Group stamping.
-	TestEqual(TEXT("A inherits group 'Surface'"), A->Metadata.Group, FString(TEXT("Surface")));
-	TestEqual(TEXT("B inherits group 'Surface'"), B->Metadata.Group, FString(TEXT("Surface")));
-	TestEqual(TEXT("C inherits group 'Detail'"), C->Metadata.Group, FString(TEXT("Detail")));
-	TestEqual(TEXT("D inherits group 'Detail'"), D->Metadata.Group, FString(TEXT("Detail")));
-	TestTrue(TEXT("loose param keeps no group"), Loose->Metadata.Group.IsEmpty());
-
-	// Auto SortPriority: global counter, step 10; explicit value (C) wins and does not consume a slot.
-	TestTrue(TEXT("A auto-sorted"), A->Metadata.bHasSortPriority);
-	TestEqual(TEXT("A SortPriority == 0"), A->Metadata.SortPriority, 0);
-	TestEqual(TEXT("B SortPriority == 10"), B->Metadata.SortPriority, 10);
-	TestEqual(TEXT("C keeps explicit SortPriority == 99"), C->Metadata.SortPriority, 99);
-	TestEqual(TEXT("D SortPriority == 20 (explicit C didn't consume the counter)"), D->Metadata.SortPriority, 20);
-	TestFalse(TEXT("loose param is not auto-sorted"), Loose->Metadata.bHasSortPriority);
-
-	// Slider(0, 1) shorthand -> two slider reflected properties.
-	int32 SliderKeyCount = 0;
-	for (const TPair<FString, FString>& Pair : A->Metadata.ReflectedProperties)
+	const auto DirectiveIs = [](const FVariableDecl& Variable, const TCHAR* Key, const TCHAR* Expected) -> bool
 	{
-		if (Pair.Key.Contains(TEXT("slider"), ESearchCase::IgnoreCase))
-		{
-			++SliderKeyCount;
-		}
-	}
-	TestEqual(TEXT("Slider(0,1) expands to SliderMin + SliderMax"), SliderKeyCount, 2);
+		const TOptional<FString> Value = GetParameterTestDirective(Variable, Key);
+		return Value.IsSet() && Value.GetValue().Equals(Expected, ESearchCase::CaseSensitive);
+	};
 
-	// asset-in-= via a bare quoted absolute path.
-	TestTrue(TEXT("Tex bound an asset path from '= \"/Engine/...\"'"),
-		Tex->TextureDefaultObjectPath.Contains(TEXT("WhiteSquareTexture")));
+	// Group stamping.
+	TestTrue(TEXT("A inherits /// @group Surface"), DirectiveIs(*A, TEXT("group"), TEXT("Surface")));
+	TestTrue(TEXT("B inherits /// @group Surface"), DirectiveIs(*B, TEXT("group"), TEXT("Surface")));
+	TestTrue(TEXT("C inherits /// @group Detail"), DirectiveIs(*C, TEXT("group"), TEXT("Detail")));
+	TestTrue(TEXT("D inherits /// @group Detail"), DirectiveIs(*D, TEXT("group"), TEXT("Detail")));
+	TestFalse(TEXT("the loose parameter keeps no group"), Loose->Doc.Has(TEXT("group")));
+
+	// Auto SortPriority: global counter, step 10; the explicit value (C) wins and does not consume a slot.
+	TestTrue(TEXT("A /// @sort 0"), DirectiveIs(*A, TEXT("sort"), TEXT("0")));
+	TestTrue(TEXT("B /// @sort 10"), DirectiveIs(*B, TEXT("sort"), TEXT("10")));
+	TestTrue(TEXT("C keeps the explicit /// @sort 99"), DirectiveIs(*C, TEXT("sort"), TEXT("99")));
+	TestTrue(TEXT("D /// @sort 20 (the explicit C did not consume the counter)"), DirectiveIs(*D, TEXT("sort"), TEXT("20")));
+
+	// No SortPriority written and no group: 1.x left the engine default, which the legacy front end spells out.
+	TestTrue(TEXT("the loose parameter gets the synthesized /// @sort 32"), DirectiveIs(*Loose, TEXT("sort"), TEXT("32")));
+	TestTrue(
+		TEXT("and the synthesized directive is recorded for migrate"),
+		Result.Legacy->SynthesizedDirectives.ContainsByPredicate([Loose](const FLegacySynthesizedDirective& Directive)
+		{
+			return Directive.Decl == Loose
+				&& Directive.Key.Equals(TEXT("sort"), ESearchCase::CaseSensitive)
+				&& Directive.Value.Equals(TEXT("32"), ESearchCase::CaseSensitive);
+		}));
+
+	// Slider(0, 1) shorthand -> one /// @slider directive with both bounds.
+	TestTrue(TEXT("Slider(0, 1) becomes /// @slider 0 1"), DirectiveIs(*A, TEXT("slider"), TEXT("0 1")));
+
+	// asset-in-= via a bare quoted absolute path, on a parameter node expanded at its uses.
+	TestTrue(
+		FString::Printf(TEXT("Tex keeps the texture path it was declared with (actual '%s')"), *Tex->DefaultText),
+		Tex->DefaultText.Contains(TEXT("/Engine/EngineResources/WhiteSquareTexture")));
 
 	return true;
 }
 
-// Nested Group("Outer") { Group("Inner") { ... } } composes into "Outer|Inner", matching Unreal's
-// native '|' sub-category syntax; a sibling statement directly inside the outer group keeps just
-// the outer name, and Group("A|B") typed as a single literal name is passed through unchanged.
+// Nested Group("Outer") { Group("Inner") { ... } } composes into "Outer|Inner", matching Unreal's native '|'
+// sub-category syntax; a sibling statement directly inside the outer group keeps just the outer name, and
+// Group("A|B") typed as a single literal name is passed through unchanged.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderPropertyNestedGroupScopeTest,
 	"DreamShader.Lang.ParameterExpressions.NestedGroupScope",
@@ -243,7 +380,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FDreamShaderPropertyNestedGroupScopeTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Lang;
+	using namespace UE::DreamShader::Editor::Private::ParameterTests;
 
 	const FString Source = TEXT(R"(
 Shader(Name="DreamShaderTests/Params/M_NestedGroupScope", Root="Game")
@@ -265,31 +403,29 @@ Shader(Name="DreamShaderTests/Params/M_NestedGroupScope", Root="Game")
 }
 )");
 
-	FTextShaderDefinition Definition;
-	FString ParseError;
-	if (!TestTrue(FString::Printf(TEXT("Nested-group-scope source parses: %s"), *ParseError),
-		FTextShaderParser::Parse(Source, Definition, ParseError)))
+	const FLangParseResult Result = ParseParameterTestSource(Source, TEXT("M_NestedGroupScope.dsm"));
+	if (!TestTrue(FString::Printf(TEXT("Nested-group-scope source parses: %s"), *DescribeParameterTestErrors(Result)), Result.Succeeded()))
 	{
 		return false;
 	}
 
-	auto Find = [&Definition](const TCHAR* Name) -> const FTextShaderPropertyDefinition*
-	{
-		return Definition.Properties.FindByPredicate(
-			[Name](const FTextShaderPropertyDefinition& Candidate) { return Candidate.Name == Name; });
-	};
-
-	const FTextShaderPropertyDefinition* Test = Find(TEXT("Test"));
-	const FTextShaderPropertyDefinition* Rough = Find(TEXT("Rough"));
-	const FTextShaderPropertyDefinition* Explicit = Find(TEXT("Explicit"));
+	const FVariableDecl* Test = FindParameterTestVariable(*Result.Module, TEXT("Test"));
+	const FVariableDecl* Rough = FindParameterTestVariable(*Result.Module, TEXT("Rough"));
+	const FVariableDecl* Explicit = FindParameterTestVariable(*Result.Module, TEXT("Explicit"));
 	if (!TestNotNull(TEXT("Test"), Test) || !TestNotNull(TEXT("Rough"), Rough) || !TestNotNull(TEXT("Explicit"), Explicit))
 	{
 		return false;
 	}
 
-	TestEqual(TEXT("Test (nested Group(\"SS\") inside Group(\"Surface\")) composes to 'Surface|SS'"), Test->Metadata.Group, FString(TEXT("Surface|SS")));
-	TestEqual(TEXT("Rough (direct child of Group(\"Surface\")) keeps just 'Surface'"), Rough->Metadata.Group, FString(TEXT("Surface")));
-	TestEqual(TEXT("Explicit (single literal 'Manual|Literal' name) passes through unchanged"), Explicit->Metadata.Group, FString(TEXT("Manual|Literal")));
+	const auto GroupOf = [](const FVariableDecl& Variable) -> FString
+	{
+		const TOptional<FString> Value = GetParameterTestDirective(Variable, TEXT("group"));
+		return Value.IsSet() ? Value.GetValue() : FString(TEXT("<none>"));
+	};
+
+	TestEqual(TEXT("Test (nested Group(\"SS\") inside Group(\"Surface\")) composes to 'Surface|SS'"), GroupOf(*Test), FString(TEXT("Surface|SS")));
+	TestEqual(TEXT("Rough (direct child of Group(\"Surface\")) keeps just 'Surface'"), GroupOf(*Rough), FString(TEXT("Surface")));
+	TestEqual(TEXT("Explicit (single literal 'Manual|Literal' name) passes through unchanged"), GroupOf(*Explicit), FString(TEXT("Manual|Literal")));
 
 	return true;
 }

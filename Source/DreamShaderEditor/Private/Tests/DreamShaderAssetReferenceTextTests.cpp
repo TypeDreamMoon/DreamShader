@@ -5,11 +5,13 @@
 // Three layers, deliberately:
 //
 //   * the shared helper (Public/DreamShaderAssetReferenceText.h) as a pure function, because it is
-//     the one piece BOTH resolvers and the rename-sync service depend on, and a pure test is the
+//     the one piece both the resolver and the rename-sync service depend on, and a pure test is the
 //     only one that can enumerate the malformed spellings cheaply;
-//   * the texture-default resolver through FTextShaderParser::Parse, which is where the shelled,
-//     quoted and Path(...) spellings have to agree on one resolved object path;
-//   * generation, where the resolved path has to end up on the actual UMaterialExpression.
+//   * the asset-reference resolver the compiler uses (TryResolveDreamShaderAssetReference), fed the default text
+//     the legacy front end carries unresolved for a 1.x property. That is where the shelled, quoted and Path(...)
+//     spellings have to agree on one resolved object path. Batch 2 (M4) deleted the 1.x runtime parser, which
+//     resolved them at parse time; the legacy front end keeps the text and the emitter resolves it;
+//   * compilation, where the resolved path has to end up on the actual UMaterialExpression.
 //
 // The fixtures reference /Engine/EngineResources/DefaultTexture, which ships with the engine, so
 // nothing here needs a project asset or a content fixture.
@@ -19,10 +21,16 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "DreamShaderAssetReferenceText.h"
-#include "DreamShaderParser.h"
+// TryResolveDreamShaderAssetReference: the resolver every compile-side reference goes through.
+#include "DreamShaderGeneratedAssets.h"
 #include "DreamShaderTypes.h"
+#include "Lang/LangLegacy.h"
+#include "Lang/LangParser.h"
+#include "Lang/LangSource.h"
 
 #include "Engine/Texture.h"
+#include "Engine/Texture2D.h"
+#include "Engine/VolumeTexture.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialExpression.h"
 #include "Materials/MaterialExpressionTextureSampleParameter2D.h"
@@ -75,11 +83,49 @@ namespace UE::DreamShader::Editor::Private::Tests
 			TArray<FString> ObjectPaths;
 		};
 
-		/** Find one parsed property by name. */
-		static const FTextShaderPropertyDefinition* FindProperty(const FTextShaderDefinition& Definition, const TCHAR* Name)
+		/** A one-property 1.x Shader around one Properties declaration. */
+		static FString MakeShellReferenceSource(const FString& Declaration)
 		{
-			return Definition.Properties.FindByPredicate(
-				[Name](const FTextShaderPropertyDefinition& Candidate) { return Candidate.Name == Name; });
+			return FString::Printf(TEXT(
+				"Shader(Name=\"DreamShaderTests/Params/M_ShellForms\", Root=\"Game\")\n"
+				"{\n"
+				"    Properties { %s }\n"
+				"    Settings { Domain = \"Surface\"; ShadingModel = \"Unlit\"; BlendMode = \"Opaque\"; }\n"
+				"    Outputs { vec3 Color; Base.EmissiveColor = Color; }\n"
+				"    Graph { Color = vec3(0.5, 0.5, 0.5); }\n"
+				"}\n"), *Declaration);
+		}
+
+		/**
+		 * The default text a 1.x source gave the texture-sample parameter `Name`, as the legacy front end carries it: a
+		 * texture-sample parameter is expanded at its uses, so it is recorded as a FLegacyParameterDeclaration whose
+		 * DefaultText is the source text verbatim, and the emitter resolves that text. Records a failure and answers
+		 * false when the source does not parse or the declaration is missing.
+		 */
+		static bool GetLegacyTextureDefaultText(FAutomationTestBase& Test, const FString& Source, const TCHAR* Name, FString& OutText)
+		{
+			const UE::DreamShader::Lang::FLangSourceText Text(TEXT("M_ShellForms.dsm"), Source);
+			const UE::DreamShader::Lang::FLangParseResult Result = UE::DreamShader::Lang::ParseDreamShaderLang(Text, UE::DreamShader::Lang::FLangParseOptions());
+			if (!Test.TestTrue(
+					*FString::Printf(TEXT("property %s: the legacy front end parses its source (%s)"), Name,
+						*FString::Join(GatherDreamShaderLangDiagnostics(Result.Diagnostics, UE::DreamShader::Lang::ELangSeverity::Error), TEXT(" | "))),
+					Result.Succeeded() && Result.Legacy.IsValid()))
+			{
+				return false;
+			}
+
+			const UE::DreamShader::Lang::FLegacyParameterDeclaration* Declaration = Result.Legacy->ParameterDeclarations.FindByPredicate(
+				[Name](const UE::DreamShader::Lang::FLegacyParameterDeclaration& Candidate)
+				{
+					return Candidate.Name.Equals(Name, ESearchCase::CaseSensitive);
+				});
+			if (!Test.TestNotNull(*FString::Printf(TEXT("property %s is recorded with its default"), Name), Declaration))
+			{
+				return false;
+			}
+
+			OutText = Declaration->DefaultText;
+			return Test.TestFalse(*FString::Printf(TEXT("property %s keeps its default text"), Name), OutText.IsEmpty());
 		}
 	}
 }
@@ -232,64 +278,60 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FDreamShaderTextureDefaultShellFormsTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Editor::Private;
 	using namespace UE::DreamShader::Editor::Private::Tests::ShellReference;
 
-	const FString Source = TEXT(R"(
-Shader(Name="DreamShaderTests/Params/M_ShellForms", Root="Game")
-{
-    Properties {
-        TextureSampleParameter2D A = "/Script/Engine.Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'";
-        TextureSampleParameter2D B = "Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'";
-        TextureSampleParameter2D C = Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture';
-        TextureSampleParameter2D D = Path("Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'");
-        TextureSampleParameter2D E = Path(Game, "Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'");
-        TextureSampleParameter2D F = Path(Game, "/Engine/EngineResources/DefaultTexture");
-        TextureSampleParameter2D G = "/Engine/EngineResources/DefaultTexture";
-        TextureSampleParameter2D H = Path(Engine, "EngineResources/DefaultTexture");
-    }
-    Settings { Domain = "Surface"; ShadingModel = "Unlit"; BlendMode = "Opaque"; }
-    Outputs { vec3 Color; Base.EmissiveColor = Color; }
-    Graph { Color = A.rgb; }
-}
-)");
-
-	FTextShaderDefinition Definition;
-	FDreamShaderTextError ParseError;
-	// Parse first: reading the error inside the assertion's message argument would format it before
-	// Parse has run.
-	const bool bParsed = FTextShaderParser::Parse(Source, Definition, ParseError);
-	if (!TestTrue(
-		FString::Printf(TEXT("shelled texture defaults parse [%s] %s"), *ParseError.Code, *ParseError.Message.ToString()),
-		bParsed))
+	struct FFormCase
 	{
-		return false;
-	}
+		const TCHAR* What;
+		const TCHAR* Default;
+	};
 
-	// Every spelling above names the same asset. The point of the feature is that they agree, so they
-	// are asserted against one expected path rather than against each other.
-	static const TCHAR* const Names[] = { TEXT("A"), TEXT("B"), TEXT("C"), TEXT("D"), TEXT("E"), TEXT("F"), TEXT("G"), TEXT("H") };
-	for (const TCHAR* const Name : Names)
+	// Every spelling below names the same asset. The point of the feature is that they agree, so they are asserted
+	// against one expected path rather than against each other. One source per spelling, so a spelling the legacy
+	// front end does not carry is reported on its own.
+	static const FFormCase Cases[] =
 	{
-		const FTextShaderPropertyDefinition* Property = FindProperty(Definition, Name);
-		if (!TestNotNull(*FString::Printf(TEXT("property %s parsed"), Name), Property))
+		{ TEXT("A: quoted /Script/ shell"),     TEXT("\"/Script/Engine.Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'\"") },
+		{ TEXT("B: quoted bare-class shell"),   TEXT("\"Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'\"") },
+		{ TEXT("C: unquoted shell"),            TEXT("Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'") },
+		{ TEXT("D: Path(shell)"),               TEXT("Path(\"Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'\")") },
+		{ TEXT("E: Path(root, shell)"),         TEXT("Path(Game, \"Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'\")") },
+		{ TEXT("F: Path(root, absolute path)"), TEXT("Path(Game, \"/Engine/EngineResources/DefaultTexture\")") },
+		{ TEXT("G: quoted package path"),       TEXT("\"/Engine/EngineResources/DefaultTexture\"") },
+		{ TEXT("H: Path(Engine, relative)"),    TEXT("Path(Engine, \"EngineResources/DefaultTexture\")") },
+	};
+
+	for (const FFormCase& Case : Cases)
+	{
+		FString DefaultText;
+		if (!GetLegacyTextureDefaultText(
+				*this,
+				MakeShellReferenceSource(FString::Printf(TEXT("TextureSampleParameter2D P = %s;"), Case.Default)),
+				TEXT("P"),
+				DefaultText))
+		{
+			AddInfo(FString::Printf(TEXT("[%s] was not carried through the legacy front end."), Case.What));
+			continue;
+		}
+
+		FString ObjectPath;
+		UE::DreamShader::FDreamShaderError Error;
+		const bool bResolved = TryResolveDreamShaderAssetReference(DefaultText, ObjectPath, Error, UTexture::StaticClass());
+		if (!TestTrue(*FString::Printf(TEXT("[%s] '%s' resolves (%s %s)"), Case.What, *DefaultText, *Error.Code, *Error.Message), bResolved))
 		{
 			continue;
 		}
 
-		TestEqual(
-			*FString::Printf(TEXT("property %s resolves to the engine texture"), Name),
-			Property->TextureDefaultObjectPath,
-			FString(EngineTexturePath));
+		TestEqual(*FString::Printf(TEXT("[%s] resolves to the engine texture"), Case.What), ObjectPath, FString(EngineTexturePath));
 	}
 
 	return true;
 }
 
-// A root written beside an absolute path is IGNORED, not prepended -- the behaviour the
-// asset-reference resolver has always had, which the texture-default resolver now matches. Before
-// 1.9.0 this produced '/Game/Engine/...' and then failed to load. Kept as its own test because it is
-// a deliberate behaviour CHANGE, not new syntax.
+// A root written beside an absolute path is IGNORED, not prepended -- the behaviour the asset-reference resolver
+// has always had, and since 1.9.0 the texture defaults too. Before 1.9.0 this produced '/Game/Engine/...' and then
+// failed to load. Kept as its own test because it is a deliberate behaviour CHANGE, not new syntax.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderTextureDefaultRootIgnoredTest,
 	"DreamShader.Lang.AssetReferences.RootIgnoredForAbsolutePath",
@@ -297,50 +339,42 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FDreamShaderTextureDefaultRootIgnoredTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Editor::Private;
 	using namespace UE::DreamShader::Editor::Private::Tests::ShellReference;
 
-	const FString Source = TEXT(R"(
-Shader(Name="DreamShaderTests/Params/M_RootIgnored", Root="Game")
-{
-    Properties {
-        TextureSampleParameter2D A = Path(Game, "/Engine/EngineResources/DefaultTexture");
-        TextureSampleParameter2D B = Path(Plugin.DreamShader, "/Engine/EngineResources/DefaultTexture");
-    }
-    Settings { Domain = "Surface"; ShadingModel = "Unlit"; BlendMode = "Opaque"; }
-    Outputs { vec3 Color; Base.EmissiveColor = Color; }
-    Graph { Color = A.rgb; }
-}
-)");
-
-	FTextShaderDefinition Definition;
-	FDreamShaderTextError ParseError;
-	const bool bParsed = FTextShaderParser::Parse(Source, Definition, ParseError);
-	if (!TestTrue(
-		FString::Printf(TEXT("root + absolute path parses [%s] %s"), *ParseError.Code, *ParseError.Message.ToString()),
-		bParsed))
-	{
-		return false;
-	}
+	const FString Source = MakeShellReferenceSource(TEXT(
+		"TextureSampleParameter2D A = Path(Game, \"/Engine/EngineResources/DefaultTexture\");\n"
+		"        TextureSampleParameter2D B = Path(Plugin.DreamShader, \"/Engine/EngineResources/DefaultTexture\");"));
 
 	for (const TCHAR* const Name : { TEXT("A"), TEXT("B") })
 	{
-		const FTextShaderPropertyDefinition* Property = FindProperty(Definition, Name);
-		if (!TestNotNull(*FString::Printf(TEXT("property %s parsed"), Name), Property))
+		FString DefaultText;
+		if (!GetLegacyTextureDefaultText(*this, Source, Name, DefaultText))
+		{
+			continue;
+		}
+
+		FString ObjectPath;
+		UE::DreamShader::FDreamShaderError Error;
+		if (!TestTrue(
+				*FString::Printf(TEXT("property %s resolves (%s %s)"), Name, *Error.Code, *Error.Message),
+				TryResolveDreamShaderAssetReference(DefaultText, ObjectPath, Error, UTexture::StaticClass())))
 		{
 			continue;
 		}
 
 		TestEqual(
 			*FString::Printf(TEXT("property %s ignores the root and keeps the absolute path"), Name),
-			Property->TextureDefaultObjectPath,
+			ObjectPath,
 			FString(EngineTexturePath));
 	}
 
 	return true;
 }
 
-// The class in the shell is checked against the slot, before anything is loaded.
+// The class in the shell is checked against the slot, before anything is loaded. In 2.0 the check is the resolver's,
+// judged against the class the receiving slot declares: related classes pass in either direction, an unrelated one is
+// DSH1045, and a class name DreamShader cannot place is never an error.
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderTextureDefaultShellClassCheckTest,
 	FDreamShaderShellReferenceQuietTestBase,
@@ -349,73 +383,64 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 
 bool FDreamShaderTextureDefaultShellClassCheckTest::RunTest(const FString& Parameters)
 {
-	using namespace UE::DreamShader;
-	using namespace UE::DreamShader::Editor::Private::Tests::ShellReference;
+	using namespace UE::DreamShader::Editor::Private;
 
 	struct FClassCase
 	{
 		const TCHAR* What;
-		const TCHAR* Declaration;
-		bool bParses;
-		const TCHAR* MessageContains;  // asserted only when bParses is false
+		const TCHAR* Reference;
+		UClass* SlotClass;
+		bool bResolves;
+		const TCHAR* MessageContains;  // asserted only when bResolves is false
 	};
 
-	static const FClassCase Cases[] =
+	const FClassCase Cases[] =
 	{
 		// The dimension the slot declares wins over the class the paste happened to carry.
 		{ TEXT("Texture2D into a Volume slot"),
-		  TEXT("TextureSampleParameterVolume P = \"Texture2D'/Engine/EngineResources/DefaultVolumeTexture.DefaultVolumeTexture'\";"),
-		  false, TEXT("VolumeTexture") },
+		  TEXT("\"Texture2D'/Engine/EngineResources/DefaultVolumeTexture.DefaultVolumeTexture'\""),
+		  UVolumeTexture::StaticClass(), false, TEXT("VolumeTexture") },
 		{ TEXT("VolumeTexture into a 2D slot"),
-		  TEXT("TextureSampleParameter2D P = \"VolumeTexture'/Engine/EngineResources/DefaultTexture.DefaultTexture'\";"),
-		  false, TEXT("VolumeTexture") },
+		  TEXT("\"VolumeTexture'/Engine/EngineResources/DefaultTexture.DefaultTexture'\""),
+		  UTexture2D::StaticClass(), false, TEXT("VolumeTexture") },
 		// A class that plainly cannot be a texture, whatever the slot's dimension.
 		{ TEXT("MaterialFunction into a texture slot"),
-		  TEXT("TextureSampleParameter2D P = \"MaterialFunction'/Engine/EngineResources/DefaultTexture.DefaultTexture'\";"),
-		  false, TEXT("MaterialFunction") },
+		  TEXT("\"MaterialFunction'/Engine/EngineResources/DefaultTexture.DefaultTexture'\""),
+		  UTexture2D::StaticClass(), false, TEXT("MaterialFunction") },
 
 		// Accepted: the class agrees, or DreamShader has no opinion about it.
 		{ TEXT("matching dimension"),
-		  TEXT("TextureSampleParameter2D P = \"Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'\";"),
-		  true, nullptr },
-		{ TEXT("render target of the right dimension"),
-		  TEXT("TextureSampleParameter2D P = \"TextureRenderTarget2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'\";"),
-		  true, nullptr },
+		  TEXT("\"Texture2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'\""),
+		  UTexture2D::StaticClass(), true, nullptr },
+		// A render target is a UTexture but not a UTexture2D: the slot that takes one is a UTexture slot, as the
+		// Texture property of every texture-sample node is.
+		{ TEXT("render target into a texture slot"),
+		  TEXT("\"TextureRenderTarget2D'/Engine/EngineResources/DefaultTexture.DefaultTexture'\""),
+		  UTexture::StaticClass(), true, nullptr },
 		{ TEXT("unknown class is not an error"),
-		  TEXT("TextureSampleParameter2D P = \"MyProjectTexture'/Engine/EngineResources/DefaultTexture.DefaultTexture'\";"),
-		  true, nullptr },
-		// TextureObjectParameter declares no dimension of its own, so only the not-a-texture half of
-		// the check applies to it.
+		  TEXT("\"MyProjectTexture'/Engine/EngineResources/DefaultTexture.DefaultTexture'\""),
+		  UTexture2D::StaticClass(), true, nullptr },
+		// A texture slot that declares no dimension of its own judges only the not-a-texture half.
 		{ TEXT("dimensionless slot ignores the dimension"),
-		  TEXT("TextureObjectParameter P = \"VolumeTexture'/Engine/EngineResources/DefaultTexture.DefaultTexture'\";"),
-		  true, nullptr },
+		  TEXT("\"VolumeTexture'/Engine/EngineResources/DefaultTexture.DefaultTexture'\""),
+		  UTexture::StaticClass(), true, nullptr },
 		{ TEXT("dimensionless slot still refuses a non-texture"),
-		  TEXT("TextureObjectParameter P = \"CurveLinearColor'/Engine/EngineResources/DefaultTexture.DefaultTexture'\";"),
-		  false, TEXT("CurveLinearColor") },
+		  TEXT("\"CurveLinearColor'/Engine/EngineResources/DefaultTexture.DefaultTexture'\""),
+		  UTexture::StaticClass(), false, TEXT("CurveLinearColor") },
 	};
 
 	for (const FClassCase& Case : Cases)
 	{
-		const FString Source = FString::Printf(TEXT(
-			"Shader(Name=\"DreamShaderTests/Params/M_ShellClass\", Root=\"Game\")\n"
-			"{\n"
-			"    Properties { %s }\n"
-			"    Settings { Domain = \"Surface\"; ShadingModel = \"Unlit\"; BlendMode = \"Opaque\"; }\n"
-			"    Outputs { vec3 Color; Base.EmissiveColor = Color; }\n"
-			"    Graph { Color = vec3(0.5, 0.5, 0.5); }\n"
-			"}\n"), Case.Declaration);
+		FString ObjectPath;
+		UE::DreamShader::FDreamShaderError Error;
+		const bool bResolved = TryResolveDreamShaderAssetReference(Case.Reference, ObjectPath, Error, Case.SlotClass);
 
-		FTextShaderDefinition Definition;
-		FDreamShaderTextError ParseError;
-		const bool bParsed = FTextShaderParser::Parse(Source, Definition, ParseError);
-		const FString Message = ParseError.Message.ToString();
-
-		if (!TestEqual(*FString::Printf(TEXT("[%s] parses or not (%s)"), Case.What, *Message), (int32)bParsed, (int32)Case.bParses))
+		if (!TestEqual(*FString::Printf(TEXT("[%s] resolves or not (%s %s)"), Case.What, *Error.Code, *Error.Message), (int32)bResolved, (int32)Case.bResolves))
 		{
 			continue;
 		}
 
-		if (Case.bParses)
+		if (Case.bResolves)
 		{
 			continue;
 		}
@@ -423,15 +448,16 @@ bool FDreamShaderTextureDefaultShellClassCheckTest::RunTest(const FString& Param
 		// The message names both the class that was written and what the slot wanted -- that precision
 		// is the whole reason the check exists rather than waiting for the load to fail.
 		TestTrue(
-			*FString::Printf(TEXT("[%s] the message names the written class. Got: %s"), Case.What, *Message),
-			Message.Contains(Case.MessageContains));
+			*FString::Printf(TEXT("[%s] the refusal names the class. Got: %s"), Case.What, *Error.Message),
+			Error.Message.Contains(Case.MessageContains));
+		TestEqual(*FString::Printf(TEXT("[%s] the refusal is DSH1045"), Case.What), Error.Code, FString(TEXT("DSH1045")));
 	}
 
 	return true;
 }
 
 // -------------------------------------------------------------------------------------------------
-// Generation: the resolved path has to reach the material.
+// Compilation: the resolved path has to reach the material.
 // -------------------------------------------------------------------------------------------------
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
@@ -487,14 +513,14 @@ Shader(Name="DreamShaderTests/Automation/%s")
 
 	FString Message;
 	if (!TestTrue(
-		FString::Printf(TEXT("a material whose texture defaults are pasted references generates: %s"), *Message),
-		UE::DreamShader::Editor::FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true)))
+		FString::Printf(TEXT("a material whose texture defaults are pasted references compiles: %s"), *Message),
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 	{
 		return false;
 	}
 
 	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
-	if (!TestNotNull(TEXT("the generated material loads"), Material))
+	if (!TestNotNull(TEXT("the compiled material loads"), Material))
 	{
 		return false;
 	}
@@ -525,7 +551,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	return true;
 }
 
-// The class check refuses the paste before generation gets anywhere near loading the asset.
+// The class check refuses the paste before the compile gets anywhere near loading the asset.
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderCopyReferenceShellClassMismatchTest,
 	FDreamShaderShellReferenceQuietTestBase,
@@ -539,6 +565,12 @@ bool FDreamShaderCopyReferenceShellClassMismatchTest::RunTest(const FString& Par
 
 	FScopedShellReferenceArtifacts Artifacts;
 	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_ShellRefBad"));
+	// The refusal is the expected outcome, but a compile that wrongly succeeds writes a real asset (a Graph material
+	// always saves in batch 2), so the object path is cleaned up either way.
+	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
+	Artifacts.AddObjectPath(ObjectPath);
+	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+	AddExpectedAutomationCleanupWarnings(*this);
 
 	// A VolumeTexture slot fed a reference whose shell says Texture2D. The asset behind the path is a
 	// perfectly good volume texture: only the class written in the shell is wrong, which is exactly
@@ -570,12 +602,10 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	}
 	Artifacts.AddSourceFile(SourceFilePath);
 
-	// Transient: the source never gets far enough to write an asset, so nothing has to be cleaned up
-	// in the content browser and no new-asset probe warning has to be expected.
 	FString Message;
 	TestFalse(
-		TEXT("a texture default whose shell class contradicts the slot does not generate"),
-		UE::DreamShader::Editor::FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, true, true));
+		TEXT("a texture default whose shell class contradicts the slot does not compile"),
+		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true, true));
 
 	TestTrue(
 		FString::Printf(TEXT("the failure names the class that was written. Got: %s"), *Message),

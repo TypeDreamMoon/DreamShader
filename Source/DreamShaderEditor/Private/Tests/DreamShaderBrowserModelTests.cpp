@@ -14,6 +14,7 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/PackageName.h"
 #include "UObject/Package.h"
 #include "UObject/UObjectGlobals.h"
 
@@ -156,6 +157,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 // The states a .dsm moves through as the browser sees them: never compiled -> compiled in memory
 // (current, because a memory-only build stamps its hash like a saved one) -> persisted and current
 // -> stale once the source moves. Also the join from the generated asset back to its scanned source.
+// ThinCustom since batch 2: it is the one backend with a memory-only state (a Graph material always saves),
+// so it is the only one that can walk the Ephemeral step at all.
 bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor;
@@ -170,7 +173,7 @@ bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 	AddExpectedAutomationCleanupWarnings(*this);
 
 	FString SourceFilePath;
-	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), MakeBrowserMaterialSource(AssetName, TEXT("Graph"), TEXT("vec3(1.0, 0.2, 0.2)")), SourceFilePath))
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), MakeBrowserMaterialSource(AssetName, TEXT("ThinCustom"), TEXT("vec3(1.0, 0.2, 0.2)")), SourceFilePath))
 	{
 		return false;
 	}
@@ -196,7 +199,7 @@ bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 	// 1. Memory-only compile: path and hash are stamped like a saved build's, so it reads current.
 	FString Message;
 	if (!TestTrue(FString::Printf(TEXT("In-memory generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true)))
 	{
 		return false;
 	}
@@ -223,7 +226,7 @@ bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 
 	// 2. Persisted compile: the hash is stamped, so currency can be judged.
 	if (!TestTrue(FString::Printf(TEXT("Persisted generation succeeds: %s"), *Message),
-			FMaterialGenerator::GenerateMaterialFromFile(SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ false)))
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ false)))
 	{
 		return false;
 	}
@@ -231,11 +234,22 @@ bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 	ExpectStatus(*this, TEXT("After a persisted compile"), Entry, EBrowserSourceStatus::UpToDate);
 	if (TestTrue(TEXT("The asset half survives the persist"), Entry->Asset.IsSet()))
 	{
+		if (Entry->Asset->Storage != EBrowserStorage::OnDisk)
+		{
+			// What the storage column read, for the failure below: the flag it keys on and whether a file is there.
+			const UObject* Persisted = FindObject<UObject>(nullptr, *Entry->Asset->ObjectPath);
+			const UPackage* PersistedPackage = Persisted ? Persisted->GetPackage() : nullptr;
+			AddInfo(FString::Printf(TEXT("persisted asset: class=%s flags=0x%08x onDisk=%d dirty=%d"),
+				Persisted ? *Persisted->GetClass()->GetName() : TEXT("<none>"),
+				PersistedPackage ? static_cast<uint32>(PersistedPackage->GetPackageFlags()) : 0u,
+				PersistedPackage && FPackageName::DoesPackageExist(PersistedPackage->GetName()) ? 1 : 0,
+				PersistedPackage && PersistedPackage->IsDirty() ? 1 : 0));
+		}
 		TestEqual(TEXT("A persisted build reads as on-disk storage"), static_cast<int32>(Entry->Asset->Storage), static_cast<int32>(EBrowserStorage::OnDisk));
 	}
 
 	// 3. Move the source: the stamped hash no longer matches.
-	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), MakeBrowserMaterialSource(AssetName, TEXT("Graph"), TEXT("vec3(0.2, 1.0, 0.2)")), SourceFilePath))
+	if (!WriteAutomationSourceFile(*this, AssetName + TEXT(".dsm"), MakeBrowserMaterialSource(AssetName, TEXT("ThinCustom"), TEXT("vec3(0.2, 1.0, 0.2)")), SourceFilePath))
 	{
 		return false;
 	}
