@@ -22,12 +22,42 @@
 #include "CoreMinimal.h"
 #include "Lang/LangAst.h"
 #include "Lang/LangDiagnostic.h"
+#include "Lang/LangLegacy.h"
 #include "Lang/LangParser.h"
 #include "Lang/LangSource.h"
 #include "Lang/LangToken.h"
 
 namespace UE::DreamShader::Lang::Private
 {
+	/** One 1.x `Properties` entry as the legacy parser collected it, before it became a uniform or was expanded at its uses. */
+	struct FLegacyProperty
+	{
+		FString Name;
+		FString NodeType;
+		FExprPtr Default;
+		FString DefaultText;
+		/** Synthesized, canonical keys. */
+		TArray<FDocDirective> Metadata;
+		/** As written, for FLegacyParameterDeclaration. */
+		TArray<TPair<FString, FString>> RawMetadata;
+		bool bConst = false;
+		bool bExpandAtUse = false;
+		FLangSpan Span;
+	};
+
+	/** The 1.x block being parsed: its header attributes and what its sections have collected. */
+	struct FLegacyBlockContext
+	{
+		FString BlockWord;
+		FString Name;
+		FString Root;
+		bool bHasRoot = false;
+		bool bMaterial = false;
+		TArray<FLegacyProperty> Properties;
+		/** Null when the caller did not ask for migration information. */
+		FLegacyMigrationInfo* Info = nullptr;
+	};
+
 	class FLangParser
 	{
 	public:
@@ -172,6 +202,126 @@ namespace UE::DreamShader::Lang::Private
 		/** True when the cursor is at `(` Type `)` -- a cast -- rather than a parenthesised expression. */
 		bool IsCastStart() const;
 
+		// ------------------------------------------------------ legacy top level (LangLegacyParser.cpp)
+
+		/** The legacy module loop, to EndOfFile. Info may be null (no migration information asked for). */
+		TUniquePtr<FModule> ParseLegacyModule(FLegacyMigrationInfo* Info);
+		/** One legacy top-level construct; it may yield several declarations. */
+		bool ParseLegacyTopLevel(TArray<FDeclPtr>& OutDecls);
+		/** At a block word (`Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend`): the block and its sections. */
+		bool ParseLegacyBlock(TArray<FDeclPtr>& OutDecls);
+		/** At `(`: the `Key = value, ...` of a block header. */
+		bool ParseLegacyAttributes(TArray<FPragmaArgument>& OutAttributes);
+		/** At `Function` / `GraphFunction`; NamespaceName is empty outside a `Namespace`. */
+		FDeclPtr ParseLegacyFunction(const FString& NamespaceName);
+		/**
+		 * The `UE.Name(...)` calls of Function.RawBody parsed into Function.HoistedCalls, each one an input of the
+		 * function's Custom node (rule L8 for a 1.x GraphFunction; plan section 11 #19 for a `/// @custom` function).
+		 * The text stays in RawBody; the code builder replaces it by the input's name. BodyContentOffset is where
+		 * RawBody starts in the file, InputNames the names a lifted input may not take.
+		 */
+		void LiftCallsOutOfOpaqueBody(FFunctionDecl& Function, const FString& QualifiedName, int32 BodyContentOffset, const TArray<FString>& InputNames);
+		/** At `Namespace`. */
+		bool ParseLegacyNamespace(TArray<FDeclPtr>& OutDecls);
+		/** At `VirtualFunction`. */
+		FDeclPtr ParseLegacyVirtualFunction();
+
+		// ------------------------------------------------------ legacy sections (LangLegacySections.cpp)
+
+		bool ParseLegacyProperties(FLegacyBlockContext& Block, TArray<FDeclPtr>& OutDecls);
+		bool ParseLegacySettings(FLegacyBlockContext& Block, TArray<FPragmaArgument>& OutSettings);
+		bool ParseLegacyOutputs(FLegacyBlockContext& Block, TArray<FStmtPtr>& OutHead, TArray<FStmtPtr>& OutTail);
+		bool ParseLegacyParams(FLegacyBlockContext& Block, EParamDirection Direction, TArray<FParam>& OutParams);
+		bool ParseLegacyLayout(TArray<FDeclPtr>& OutDecls);
+
+		// -------------------------------------------------- legacy statements (LangLegacyStatements.cpp)
+
+		TUniquePtr<FBlockStmt> ParseLegacyGraphBody(FLegacyBlockContext& Block);
+		/** The restriction pass over a parsed legacy body: reports what 1.x silently truncated; never rewrites. */
+		void ValidateLegacyBody(const FBlockStmt& Body);
+
+		// ------------------------------------------------ legacy expressions (LangLegacyExpressions.cpp)
+
+		/** The parse-time rewrites of 1.x call spellings onto 2.0 shapes (research-legacy.md section 3.6). Block may be null. */
+		FExprPtr RewriteLegacyCall(FLegacyBlockContext* Block, TUniquePtr<FCallExpr> Call);
+		/** Classifies a 1.x type spelling (case-insensitive; `vec*`, `MaterialAttributes`, `StaticBool`) and writes the 2.0 spelling into Name. */
+		static void ClassifyLegacyTypeName(const FString& Spelling, FTypeRef& InOutType);
+
+		// ------------------------------------------------ FE additions: trivia (LangParser.cpp)
+
+		/** Set by ParseDreamShaderLang when the parse keeps trivia; the skips below then record what they drop. */
+		void SetKeepTrivia(bool bInKeepTrivia) { bKeepTrivia = bInKeepTrivia; }
+		bool KeepsTrivia() const { return bKeepTrivia; }
+		/** A `///` token the grammar skipped (inside a body, or lexed where 1.x reads it as a comment): kept as a comment. */
+		void RecordSkippedDocComment(const FLangToken& Token);
+		/** A `///` block that was parsed and then discarded (DSH3221): one comment per line. */
+		void RecordSkippedDocBlock(const FDocBlock& Doc);
+		/** Everything recorded so far, in recording order; empties the list. */
+		TArray<FLangComment> TakeSkippedComments() { return MoveTemp(SkippedComments); }
+
+		// ------------------------------------------ FE additions: legacy state (LangLegacyParser.cpp)
+
+		/** The migration record legacy constructs report into; null when none was asked for. */
+		void SetLegacyInfo(FLegacyMigrationInfo* InInfo) { LegacyInfo = InInfo; }
+		FLegacyMigrationInfo* GetLegacyInfo() const { return LegacyInfo; }
+		/** True while parsing 1.x text: a legacy module, or a legacy declaration inside a `.dsh`. */
+		bool IsLegacyMode() const { return Frontend == ELangFrontend::Legacy || LegacyScopeDepth > 0; }
+		/** At a `.dsh` legacy word (`Function`, `GraphFunction`, `Namespace`, `VirtualFunction`, a block word): one legacy construct. Doc is the `///` block above it. */
+		bool ParseLegacyDeclarationInHeader(FDocBlock&& Doc, TArray<FDeclPtr>& OutDecls);
+		/** After a failed legacy top-level construct: skip to the next line that starts a top-level word, or past the `}` closing the construct. */
+		void SkipToLegacyTopLevelBoundary();
+		/** A `.dsm`/`.dsf`/`.dsh` top-level word the legacy front end owns (exact case). */
+		static bool IsLegacyTopLevelWord(const FString& Text);
+		/** `Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend`, `MaterialLayer`, `MaterialLayerBlend` (exact case). */
+		static bool IsLegacyAssetBlockWord(const FString& Text);
+
+		// ------------------------------------ FE additions: legacy expressions (LangLegacyExpressions.cpp)
+
+		/** Legacy classification of a type spelling; true for every builtin the 1.x type tokens name. */
+		static bool IsLegacyBuiltinTypeName(const FString& Name);
+		/** In legacy mode, at `Ident :: Ident ...`: the flattened `N_F` identifier (1.x SanitizeIdentifier). */
+		FExprPtr ParseLegacyQualifiedName();
+		/** In legacy mode, a bare read of a property expanded at its uses (TextureSampleParameter2D, ChannelMaskParameter, ...); null when Name is none. */
+		FExprPtr TryExpandLegacyPropertyRead(const FString& Name, const FLangSpan& Span);
+		/** Records one rename into the migration info (no-op without one). */
+		void RecordLegacyRename(FLegacyRename::EKind Kind, const FString& From, const FString& To, const FLangSpan& Span);
+		/** The 1.x typed zero for a declaration without an initializer; null for a type 1.x refused to zero (texture, Substrate, sampler, named). */
+		static FExprPtr MakeLegacyZeroInitializer(const FTypeRef& Type, const FLangSpan& Span);
+
+		// -------------------------------------- FE additions: legacy statements (LangLegacyStatements.cpp)
+
+		/** In legacy mode, at a Directive token inside a Graph body: `#Region "Name"` / `#EndRegion` as an FPragmaStmt. */
+		FStmtPtr ParseLegacyRegionDirective();
+		/**
+		 * The inputs of the block being read whose 1.x type was `StaticBool`: the type alias table reads the token as
+		 * `bool`, and the block's function says `/// @static <Name>` for each, which is what keeps the pin a StaticBool one.
+		 * Filled by ParseLegacyParamsWithDocs, taken by the block once its function exists.
+		 */
+		TArray<FString> LegacyStaticBoolInputs;
+
+		/** Typed zero initializers for every declarator of Body that has none (1.x semantics), recorded as synthesized. */
+		void SynthesizeLegacyInitializers(FBlockStmt& Body);
+		/**
+		 * 1.x read `T x = {a, b, c};` as `T x = T(a, b, c);` and `T x = {};` as the zero of T (EvaluateBraceInitializer).
+		 * Rewritten before the restriction pass, which would otherwise refuse the list (DSH2214): a braced ASSIGNMENT
+		 * still is, because the type it constructs is the target's and the parser does not know it.
+		 */
+		void RewriteLegacyBraceInitializers(FBlockStmt& Body);
+		/** The restriction pass over one expression in value position (an Outputs binding source, a section default). */
+		void ValidateLegacyValue(const FExpr& Expr);
+
+		// ---------------------------------------- FE additions: legacy sections (LangLegacySections.cpp)
+
+		/**
+		 * Parses tokens [First, End) of this parser as one legacy expression, all of them consumed (DSH3211 otherwise):
+		 * a 1.x value sits inside section syntax (`float X = 1.0 [Group = "G"];`) that the expression grammar would
+		 * misread past its end. Same source, same sink, same migration record and block context; the cursor of
+		 * this parser is not moved. Null after reporting.
+		 */
+		FExprPtr ParseLegacyExpressionRange(int32 First, int32 End);
+		/** ParseLegacyParams, plus the names in 1.x declaration order and each `[Description = ...]` as (name, text). */
+		bool ParseLegacyParamsWithDocs(FLegacyBlockContext& Block, EParamDirection Direction, TArray<FParam>& OutParams, TArray<FString>& OutDeclaredNames, TArray<TPair<FString, FString>>& OutDocs);
+
 	private:
 		const FLangSourceText& Source;
 		TArray<FLangToken> Tokens;
@@ -179,5 +329,57 @@ namespace UE::DreamShader::Lang::Private
 		ELangFrontend Frontend;
 		ELangFileKind FileKind;
 		FLangDiagnosticSink& Diagnostics;
+
+		// FE additions: trivia.
+		bool bKeepTrivia = false;
+		TArray<FLangComment> SkippedComments;
+
+		// FE additions: legacy state.
+		FLegacyMigrationInfo* LegacyInfo = nullptr;
+		/** Above zero while a `.dsh` legacy declaration is being parsed by the 2.0 module loop. */
+		int32 LegacyScopeDepth = 0;
+		/** The block whose sections are being parsed; property calls and reads expand against it. Null outside a block. */
+		FLegacyBlockContext* LegacyBlock = nullptr;
+		/** The declaration renames are recorded against (a Function / GraphFunction being built); may be null. */
+		const FDecl* LegacyRenameDecl = nullptr;
+		/** Index expressions the rewrites synthesized (`[k]` selections): the restriction pass accepts these. */
+		TSet<const FExpr*> LegacySynthesizedIndexExprs;
+		/** Callee-and-argument keys of output-selecting calls, for FLegacyOutputSelection::Group (case-sensitive compare). */
+		TArray<FString> LegacySelectionGroupKeys;
+		/** Every entry, function and extern name the legacy front end produced in this module (collision suffixes). */
+		TArray<FString> LegacyUsedNames;
+		/** One `Shader` block per file (1.x DSH3030). */
+		bool bLegacySawShaderBlock = false;
+		/** Set when any legacy construct parsed (a legacy module with none is an error). */
+		bool bLegacySawConstruct = false;
+		/** The `///` block the 2.0 module loop read above a `.dsh` legacy declaration; the declaration takes it. */
+		FDocBlock LegacyPendingDoc;
 	};
+
+	/** Shared by the four legacy translation units. Names are specific so the unity blob cannot collide with them. */
+	namespace LegacyAst
+	{
+		FExprPtr MakeIdentifier(const FString& Name, const FLangSpan& Span);
+		FExprPtr MakeStringLiteral(const FString& Value, const FLangSpan& Span);
+		FExprPtr MakeIntLiteral(int64 Value, const FLangSpan& Span);
+		FExprPtr MakeFloatLiteral(const FString& Lexeme, double Value, const FLangSpan& Span);
+		FExprPtr MakeBoolLiteral(bool bValue, const FLangSpan& Span);
+		/** `UE.<Name>` as a callee. */
+		FExprPtr MakeReflectedCallee(const FString& Namespace, const FString& Name, const FLangSpan& Span);
+		FArgument MakeNamedArgument(const FString& Name, FExprPtr Value, const FLangSpan& Span);
+		/** `UE.Expression(Class = "<ClassName>")`, arguments to be appended. */
+		TUniquePtr<FCallExpr> MakeExpressionCall(const FString& ClassName, const FLangSpan& Span);
+		/** `Object.Member`. */
+		FExprPtr MakeMember(FExprPtr Object, const FString& Member, const FLangSpan& Span);
+		/** 1.x `SanitizeIdentifier`: every non-`[A-Za-z0-9_]` to `_`, runs of `_` collapsed, a digit start prefixed. */
+		FString SanitizeIdentifier(const FString& Text);
+		/** The literal a 1.x metadata or setting value spelled, from its text as written: `"..."` a string, a number, `true`/`false` a bool, a word an identifier, anything else the raw text as a string. */
+		FExprPtr MakeValueExpressionFromText(const FString& WrittenText, const FLangSpan& Span);
+		/** `Text` without surrounding quotes, 1.x escapes resolved (`\n \r \t \" \\`); unquoted text is only trimmed. */
+		FString Unquote(const FString& Text);
+		/** A canonical 2.0 vector literal for a 1.x vector default (1 value v,v,v,1; 2 values a,b,0,0; 3 values alpha 1); false when a part is not a number or bool. */
+		bool TryNormalizeVectorLiteral(const FString& WrittenText, double OutValues[4]);
+		/** `float4(r, g, b, a)` from four numbers, printed with the shortest round-trip text. */
+		FExprPtr MakeFloat4Constructor(const double Values[4], const FLangSpan& Span);
+	}
 }

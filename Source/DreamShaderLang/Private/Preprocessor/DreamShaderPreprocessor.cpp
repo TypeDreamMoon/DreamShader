@@ -241,8 +241,38 @@ namespace UE::DreamShader
 			EState State = EState::Outside;
 			int32 BraceDepth = 0;
 			bool bInBlockComment = false;
-			/** Lang2: a `/// @custom` block opens the opaque body, and `Function` means nothing. */
-			bool bLang2 = false;
+			/** Lang2 and Mixed: a `/// @custom` block opens an opaque body. */
+			bool bCustomDocOpensBody = false;
+			/** Legacy and Mixed: a `Function` / `GraphFunction` token opens an opaque body. */
+			bool bFunctionTokenOpensBody = true;
+			/** Lang2 and Mixed: `#pragma` and `#include` are the language's own lines and pass through. */
+			bool bPassPragmaAndInclude = false;
+			/** The body being sought was announced by `/// @custom`, so a `;` before any `{` ends the declaration. */
+			bool bOpenedByCustomDoc = false;
+
+			void SetDialect(const EDreamShaderPreprocessDialect InDialect)
+			{
+				// A `.dsh` holds both languages declaration by declaration (Mixed), so it needs the union of
+				// the two openers and of the pass-through lines; the switch names every dialect on purpose.
+				switch (InDialect)
+				{
+				case EDreamShaderPreprocessDialect::Legacy:
+					bCustomDocOpensBody = false;
+					bFunctionTokenOpensBody = true;
+					bPassPragmaAndInclude = false;
+					break;
+				case EDreamShaderPreprocessDialect::Lang2:
+					bCustomDocOpensBody = true;
+					bFunctionTokenOpensBody = false;
+					bPassPragmaAndInclude = true;
+					break;
+				case EDreamShaderPreprocessDialect::Mixed:
+					bCustomDocOpensBody = true;
+					bFunctionTokenOpensBody = true;
+					bPassPragmaAndInclude = true;
+					break;
+				}
+			}
 
 			/** Asked BEFORE the line is scanned, so a declaration line is still ordinary source. */
 			bool IsOpaque() const
@@ -254,13 +284,14 @@ namespace UE::DreamShader
 			{
 				const int32 Length = InLine.Len();
 
-				if (bLang2 && State == EState::Outside && IsCustomDocLine(InLine))
+				if (bCustomDocOpensBody && State == EState::Outside && IsCustomDocLine(InLine))
 				{
 					// The `///` block above a `@custom` function: its body is HLSL, whose `#if PIXELSHADER`
 					// and `#include` must reach the shader compiler as written, and the `{` that opens it is
 					// on a later line. The rest of this line is a comment either way.
 					State = EState::SeekingBody;
 					BraceDepth = 0;
+					bOpenedByCustomDoc = true;
 					return;
 				}
 
@@ -362,13 +393,14 @@ namespace UE::DreamShader
 
 							// Case-sensitive, matching FScanner::TryConsumeKeyword, which is what
 							// actually decides whether the parser sees a Function block.
-							if (!bLang2
+							if (bFunctionTokenOpensBody
 								&& !bLineIsHashShaped
 								&& (Token.Equals(TEXT("Function"), ESearchCase::CaseSensitive)
 									|| Token.Equals(TEXT("GraphFunction"), ESearchCase::CaseSensitive)))
 							{
 								State = EState::SeekingBody;
 								BraceDepth = 0;
+								bOpenedByCustomDoc = false;
 							}
 						}
 
@@ -377,7 +409,7 @@ namespace UE::DreamShader
 						continue;
 					}
 
-					if (bLang2 && State == EState::SeekingBody && Character == TCHAR(';'))
+					if (bOpenedByCustomDoc && State == EState::SeekingBody && Character == TCHAR(';'))
 					{
 						// A `@custom` declaration that ended without a body (the binder reports it); the next
 						// `{` belongs to someone else.
@@ -808,7 +840,7 @@ namespace UE::DreamShader
 
 		TArray<FConditionalFrame> Stack;
 		FOpaqueRegionTracker OpaqueRegion;
-		OpaqueRegion.bLang2 = InDialect == EDreamShaderPreprocessDialect::Lang2;
+		OpaqueRegion.SetDialect(InDialect);
 
 		auto IsEmitting = [&Stack]() -> bool
 		{
@@ -871,7 +903,7 @@ namespace UE::DreamShader
 			FString Rest;
 			const EDirectiveKind Kind = bOpaque
 				? EDirectiveKind::None
-				: ClassifyDirectiveLine(Line, Keyword, Rest, OpaqueRegion.bLang2);
+				: ClassifyDirectiveLine(Line, Keyword, Rest, OpaqueRegion.bPassPragmaAndInclude);
 
 			const bool bEmitting = IsEmitting();
 

@@ -87,6 +87,8 @@ namespace UE::DreamShader
 	{
 		Legacy,
 		Lang2,
+		/** A `.dsh`: both opaque-body triggers (`Function`/`GraphFunction` tokens and `/// @custom`), with `#pragma`, `#include` and `#Region` passed through. */
+		Mixed,
 	};
 
 	/**
