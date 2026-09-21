@@ -765,6 +765,26 @@ namespace UE::DreamShader::Editor::Compiler
 			}
 			OutResult.bSourceHadPreprocessorDirectives |= OutResult.Includes->AnyIncludeHadDirectives();
 
+			// Substrate sugar S4: a material whose Substrate mode is not Legacy builds another graph in a Substrate
+			// project, so `DS_SUBSTRATE` belongs to its build key as surely as if the text had read it in an `#if`.
+			bool bSubstrateEnabled = false;
+			if (const FDreamShaderDefineEntry* SubstrateDefine = OutResult.Defines.IsValid() ? OutResult.Defines->Find(FString(TEXT("DS_SUBSTRATE"))) : nullptr)
+			{
+				bSubstrateEnabled = FCString::Atoi(*SubstrateDefine->Value) != 0;
+				bool bAnyModeReadsIt = false;
+				if (OutResult.Bound.IsValid())
+				{
+					for (const FBoundProduct& BoundProduct : OutResult.Bound->Products)
+					{
+						bAnyModeReadsIt = bAnyModeReadsIt || BoundProduct.SubstrateMode != EIRSubstrateMode::Legacy;
+					}
+				}
+				if (bAnyModeReadsIt && !OutResult.TouchedDefines.Contains(FString(TEXT("DS_SUBSTRATE"))))
+				{
+					OutResult.TouchedDefines.Add(FString(TEXT("DS_SUBSTRATE")), SubstrateDefine->Value);
+				}
+			}
+
 			// The build key covers the headers' CONTENT, not merely their paths: editing a `.dsh` must invalidate every
 			// asset built from a source that includes it, and the source's own text does not change when the header
 			// does. Headers first, then the file, matching the order the 1.x inliner emitted them in.
@@ -806,6 +826,7 @@ namespace UE::DreamShader::Editor::Compiler
 			{
 				return Private::MakeProjectRelativeSourcePath(File);
 			};
+			BuildOptions.bSubstrateEnabled = bSubstrateEnabled;
 
 			OutResult.IR = BuildDreamShaderIR(*OutResult.Bound, BuildOptions, OutResult.Diagnostics);
 			if (bIsInstanceSource && OutResult.IR.IsValid())
