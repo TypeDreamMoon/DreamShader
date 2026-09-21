@@ -3,10 +3,6 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-#ifndef DREAMSHADERCOMPILER_API
-#define DREAMSHADERCOMPILER_API
-#endif
-
 class DREAMSHADERCOMPILER_API FDreamShaderCompilerModule : public IModuleInterface
 {
 public:

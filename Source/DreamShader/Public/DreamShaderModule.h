@@ -70,7 +70,9 @@ namespace UE::DreamShader
 	DREAMSHADER_API bool IsDreamShaderFunctionFile(const FString& InPath);
 	/** `.dss` -- the 2.0 language. */
 	DREAMSHADER_API bool IsDreamShaderLang2File(const FString& InPath);
-	/** Any of the four: `.dsm`, `.dsh`, `.dsf`, `.dss`. */
+	/** `.dsi` -- a 2.0 material instance: one `#pragma instance(...)` plus uniform overrides of its parent. */
+	DREAMSHADER_API bool IsDreamShaderInstanceFile(const FString& InPath);
+	/** Any of the five: `.dsm`, `.dsh`, `.dsf`, `.dss`, `.dsi`. */
 	DREAMSHADER_API bool IsDreamShaderSourceFile(const FString& InPath);
 }
 

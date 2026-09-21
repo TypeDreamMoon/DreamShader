@@ -1,0 +1,564 @@
+﻿#pragma once
+
+// Engine-version shims over UMaterialExpression and friends: one answer per question, whatever the
+// engine version. Renamed from MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeShared.h and
+// trimmed in the M4 relocation (research-relocation §2.2) to what the emitter, the digest, the layout,
+// dump-graph and the decompiler -- `-Format=Legacy` included -- still ask. Inline only: nothing here is
+// exported, and nothing here may hold state (one copy per DLL).
+//
+// The include block is load-bearing beyond this header: the decompiler and dump-graph include this file
+// for its helpers and get the Materials/* headers from it. Keep it whole until those includers name what
+// they use.
+
+#include "DreamShaderGeneratedAssets.h"
+#include "Engine/Texture2DArray.h"
+#include "Engine/VolumeTexture.h"
+#include "Materials/MaterialExpressionTextureBase.h"
+#include "Materials/MaterialExpressionTextureProperty.h"
+#include "SparseVolumeTexture/SparseVolumeTexture.h"
+#include "DreamShaderModule.h"
+#include "DreamShaderVersionCompat.h"
+
+#include "MaterialEditingLibrary.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialExpressionAdd.h"
+#include "Materials/MaterialExpressionAppendVector.h"
+#include "Materials/MaterialExpressionAbs.h"
+#include "Materials/MaterialExpressionArccosine.h"
+#include "Materials/MaterialExpressionArcsine.h"
+#include "Materials/MaterialExpressionArctangent.h"
+#include "Materials/MaterialExpressionArctangent2.h"
+#include "Materials/MaterialExpressionBreakMaterialAttributes.h"
+#include "Materials/MaterialExpressionCameraVectorWS.h"
+#include "Materials/MaterialExpressionCeil.h"
+#include "Materials/MaterialExpressionClamp.h"
+#include "Materials/MaterialExpressionCollectionParameter.h"
+#include "Materials/MaterialExpressionComponentMask.h"
+#include "Materials/MaterialExpressionConstant.h"
+#include "Materials/MaterialExpressionCosine.h"
+#include "Materials/MaterialExpressionCrossProduct.h"
+#include "Materials/MaterialExpressionCurveAtlasRowParameter.h"
+#include "Materials/MaterialExpressionCustom.h"
+#include "Materials/MaterialExpressionDivide.h"
+#include "Materials/MaterialExpressionDotProduct.h"
+#include "Materials/MaterialExpressionLength.h"
+#include "Materials/MaterialExpressionFloor.h"
+#include "Materials/MaterialExpressionFmod.h"
+#include "Materials/MaterialExpressionFrac.h"
+#include "Materials/MaterialExpressionFunctionInput.h"
+#include "Materials/MaterialExpressionFunctionOutput.h"
+#include "Materials/MaterialExpressionIf.h"
+#include "Materials/MaterialExpressionLinearInterpolate.h"
+#include "Materials/MaterialExpressionMakeMaterialAttributes.h"
+#include "Materials/MaterialExpressionMaterialFunctionCall.h"
+#include "Materials/MaterialExpressionMax.h"
+#include "Materials/MaterialExpressionMin.h"
+#include "Materials/MaterialExpressionMultiply.h"
+#include "Materials/MaterialExpressionNormalize.h"
+#include "Materials/MaterialExpressionObjectPositionWS.h"
+#include "Materials/MaterialExpressionCameraPositionWS.h"
+#include "Materials/MaterialExpressionObjectBounds.h"
+#include "Materials/MaterialExpressionObjectRadius.h"
+#include "Materials/MaterialExpressionPanner.h"
+#include "Materials/MaterialExpressionPerInstanceFadeAmount.h"
+#include "Materials/MaterialExpressionPerInstanceRandom.h"
+#include "Materials/MaterialExpressionPixelDepth.h"
+#include "Materials/MaterialExpressionPixelNormalWS.h"
+#include "Materials/MaterialExpressionPower.h"
+#include "Materials/MaterialExpressionReflectionVectorWS.h"
+#include "Materials/MaterialExpressionRotator.h"
+#include "Materials/MaterialExpressionSaturate.h"
+#include "Materials/MaterialExpressionSceneColor.h"
+#include "Materials/MaterialExpressionSceneDepth.h"
+#include "Materials/MaterialExpressionScreenPosition.h"
+#include "Materials/MaterialExpressionTwoSidedSign.h"
+#include "Materials/MaterialExpressionSetMaterialAttributes.h"
+#include "Materials/MaterialExpressionSine.h"
+#include "Materials/MaterialExpressionSmoothStep.h"
+#include "Materials/MaterialExpressionSquareRoot.h"
+#include "Materials/MaterialExpressionStep.h"
+#include "Materials/MaterialExpressionStaticBool.h"
+#include "Materials/MaterialExpressionStaticComponentMaskParameter.h"
+#include "Materials/MaterialExpressionStaticSwitchParameter.h"
+#include "Materials/MaterialExpressionSubtract.h"
+#include "Materials/MaterialExpressionTextureCoordinate.h"
+#include "Materials/MaterialExpressionTime.h"
+#include "Materials/MaterialExpressionTransform.h"
+#include "Materials/MaterialExpressionTransformPosition.h"
+#include "Materials/MaterialExpressionVertexColor.h"
+#include "Materials/MaterialExpressionVertexNormalWS.h"
+#include "Materials/MaterialExpressionVertexTangentWS.h"
+#include "Materials/MaterialExpressionWorldPosition.h"
+#include "Materials/MaterialAttributeDefinitionMap.h"
+#include "Materials/MaterialFunction.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "MaterialValueType.h"
+#include "UObject/UnrealType.h"
+
+namespace UE::DreamShader::Editor::Private
+{
+	inline bool TryResolveExpressionOutputIndex(const UMaterialExpression* Expression, const FString& OutputSpecifier, int32& OutIndex)
+	{
+		if (!Expression || Expression->Outputs.Num() == 0)
+		{
+			return false;
+		}
+
+		const FName DesiredOutput(*OutputSpecifier.TrimStartAndEnd());
+		if (DesiredOutput.IsNone())
+		{
+			OutIndex = 0;
+			return true;
+		}
+
+		for (int32 OutputIndex = 0; OutputIndex < Expression->Outputs.Num(); ++OutputIndex)
+		{
+			const FExpressionOutput& Output = Expression->Outputs[OutputIndex];
+			if (!Output.OutputName.IsNone())
+			{
+				if (Output.OutputName == DesiredOutput)
+				{
+					OutIndex = OutputIndex;
+					return true;
+				}
+				continue;
+			}
+
+			if (Output.MaskR && Output.MaskG && !Output.MaskB && !Output.MaskA && DesiredOutput == FName(TEXT("RG")))
+			{
+				OutIndex = OutputIndex;
+				return true;
+			}
+			if (Output.MaskR && Output.MaskG && Output.MaskB && !Output.MaskA && DesiredOutput == FName(TEXT("RGB")))
+			{
+				OutIndex = OutputIndex;
+				return true;
+			}
+			if (Output.MaskR && Output.MaskG && Output.MaskB && Output.MaskA && DesiredOutput == FName(TEXT("RGBA")))
+			{
+				OutIndex = OutputIndex;
+				return true;
+			}
+			if (Output.MaskR && !Output.MaskG && !Output.MaskB && !Output.MaskA && DesiredOutput == FName(TEXT("R")))
+			{
+				OutIndex = OutputIndex;
+				return true;
+			}
+			if (!Output.MaskR && Output.MaskG && !Output.MaskB && !Output.MaskA && DesiredOutput == FName(TEXT("G")))
+			{
+				OutIndex = OutputIndex;
+				return true;
+			}
+			if (!Output.MaskR && !Output.MaskG && Output.MaskB && !Output.MaskA && DesiredOutput == FName(TEXT("B")))
+			{
+				OutIndex = OutputIndex;
+				return true;
+			}
+			if (!Output.MaskR && !Output.MaskG && !Output.MaskB && Output.MaskA && DesiredOutput == FName(TEXT("A")))
+			{
+				OutIndex = OutputIndex;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	inline bool IsTextureMaterialValueType(const EMaterialValueType ValueType)
+	{
+		switch (ValueType)
+		{
+		case MCT_Texture:
+		case MCT_Texture2D:
+		case MCT_TextureCube:
+		case MCT_Texture2DArray:
+		case MCT_TextureExternal:
+		case MCT_VolumeTexture:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	inline bool IsSubstrateMaterialValueType(const EMaterialValueType ValueType)
+	{
+#if DREAMSHADER_WITH_SUBSTRATE_BUILTINS
+		return ValueType == MCT_Substrate;
+#else
+		return ValueType == MCT_Strata;
+#endif
+	}
+
+	inline int32 GetComponentCountForMaterialValueType(const EMaterialValueType ValueType)
+	{
+		switch (ValueType)
+		{
+		case MCT_Float:
+		case MCT_Float1:
+		case MCT_LWCScalar:
+		case MCT_StaticBool:
+		case MCT_Bool:
+			return 1;
+		case MCT_Float2:
+		case MCT_LWCVector2:
+			return 2;
+		case MCT_Float3:
+		case MCT_LWCVector3:
+			return 3;
+		case MCT_Float4:
+		case MCT_LWCVector4:
+			return 4;
+		default:
+			return 0;
+		}
+	}
+
+	inline EMaterialValueType GetDreamShaderExpressionInputValueType(UMaterialExpression* Expression, const int32 InputIndex)
+	{
+		if (!Expression)
+		{
+			return MCT_Unknown;
+		}
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+		return Expression->GetInputValueType(InputIndex);
+#else
+		return static_cast<EMaterialValueType>(Expression->GetInputType(InputIndex));
+#endif
+	}
+
+	/**
+	 * Width of a TextureProperty node's output, which the engine does not reflect.
+	 *
+	 * UMaterialExpressionTextureProperty never overrides GetOutputValueType, so the base class answers
+	 * with the scalar default and every Texture Size / Texel Size read looks like a float. The real
+	 * width is decided at translate time by GetTexturePropertyValueType: float3 for a texture that has
+	 * a third axis -- 2D array, volume, sparse volume -- and float2 for everything else. Decompiling it
+	 * as a scalar produces source that widens the value by hand, which then appends two float3s and
+	 * fails to compile. Same rule as the engine, applied where the engine forgot to publish it.
+	 */
+	inline bool TryGetTexturePropertyOutputValueType(UMaterialExpression* Expression, EMaterialValueType& OutValueType)
+	{
+		const UMaterialExpressionTextureProperty* TextureProperty = Cast<UMaterialExpressionTextureProperty>(Expression);
+		if (!TextureProperty)
+		{
+			return false;
+		}
+
+		// The width follows the texture wired into TextureObject, so an unconnected pin has no answer
+		// to give -- leave it to the caller rather than guessing float2 and being wrong on an array.
+		const FExpressionInput TracedTextureInput = TextureProperty->TextureObject.GetTracedInput();
+		const UMaterialExpressionTextureBase* TextureExpression =
+			Cast<UMaterialExpressionTextureBase>(TracedTextureInput.Expression);
+		const UTexture* Texture = TextureExpression ? ToRawPtr(TextureExpression->Texture) : nullptr;
+		if (!Texture)
+		{
+			return false;
+		}
+
+		OutValueType = (Texture->IsA<UTexture2DArray>() || Texture->IsA<UVolumeTexture>() || Texture->IsA<USparseVolumeTexture>())
+			? MCT_Float3
+			: MCT_Float2;
+		return true;
+	}
+
+	inline EMaterialValueType GetDreamShaderExpressionOutputValueType(UMaterialExpression* Expression, const int32 OutputIndex)
+	{
+		if (!Expression)
+		{
+			return MCT_Unknown;
+		}
+
+		EMaterialValueType TexturePropertyValueType = MCT_Unknown;
+		if (TryGetTexturePropertyOutputValueType(Expression, TexturePropertyValueType))
+		{
+			return TexturePropertyValueType;
+		}
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+		return Expression->GetOutputValueType(OutputIndex);
+#else
+		return static_cast<EMaterialValueType>(Expression->GetOutputType(OutputIndex));
+#endif
+	}
+
+	inline int32 GetDreamShaderExpressionInputCount(UMaterialExpression* Expression)
+	{
+		if (!Expression)
+		{
+			return 0;
+		}
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 5)
+		return Expression->CountInputs();
+#else
+		return Expression->GetInputsView().Num();
+#endif
+	}
+
+	// Whether the material editor draws a preview thumbnail on this node, which is worth a node's
+	// height in the layout pass. UE 5.7 exposes it as ShouldShowPreview(); earlier engines have the
+	// two flags it is composed from and nothing that reads them.
+	inline bool DoesDreamShaderExpressionShowPreview(const UMaterialExpression* Expression)
+	{
+		if (!Expression)
+		{
+			return false;
+		}
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 7)
+		return Expression->ShouldShowPreview();
+#else
+		return !Expression->bHidePreviewWindow && !Expression->bCollapsed;
+#endif
+	}
+
+	inline bool ConnectDreamShaderSetMaterialAttributeInput(
+		UMaterialExpressionSetMaterialAttributes* Expression,
+		const EMaterialProperty Attribute,
+		UMaterialExpression* InputExpression,
+		const int32 OutputIndex)
+	{
+		if (!Expression || !InputExpression || OutputIndex == INDEX_NONE)
+		{
+			return false;
+		}
+
+		int32 InputIndex = 0;
+		if (Attribute != MP_MaterialAttributes)
+		{
+			const FGuid AttributeId = FMaterialAttributeDefinitionMap::GetID(Attribute);
+			const int32 ExistingAttributeIndex = Expression->AttributeSetTypes.Find(AttributeId);
+			if (ExistingAttributeIndex != INDEX_NONE)
+			{
+				InputIndex = ExistingAttributeIndex + 1;
+			}
+			else
+			{
+				const int32 NewAttributeIndex = Expression->AttributeSetTypes.Add(AttributeId);
+				Expression->PreEditChange(nullptr);
+				InputIndex = Expression->Inputs.Add(FExpressionInput());
+				if (NewAttributeIndex == INDEX_NONE || !Expression->Inputs.IsValidIndex(InputIndex))
+				{
+					return false;
+				}
+				Expression->Inputs[InputIndex].InputName = FName(*FMaterialAttributeDefinitionMap::GetDisplayNameForMaterial(AttributeId, Expression->Material).ToString());
+			}
+		}
+
+		if (!Expression->Inputs.IsValidIndex(InputIndex))
+		{
+			return false;
+		}
+
+		Expression->Inputs[InputIndex].Connect(OutputIndex, InputExpression);
+		return Expression->Inputs[InputIndex].IsConnected();
+	}
+
+	inline void RebuildDreamShaderCustomOutputs(UMaterialExpressionCustom* Expression)
+	{
+		if (!Expression)
+		{
+			return;
+		}
+
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+		Expression->RebuildOutputs();
+#else
+		Expression->Outputs.Reset(Expression->AdditionalOutputs.Num() + 1);
+		if (Expression->AdditionalOutputs.Num() == 0)
+		{
+			Expression->bShowOutputNameOnPin = false;
+			Expression->Outputs.Add(FExpressionOutput(TEXT("")));
+		}
+		else
+		{
+			Expression->bShowOutputNameOnPin = true;
+			Expression->Outputs.Add(FExpressionOutput(TEXT("return")));
+			for (const FCustomOutput& CustomOutput : Expression->AdditionalOutputs)
+			{
+				if (!CustomOutput.OutputName.IsNone())
+				{
+					Expression->Outputs.Add(FExpressionOutput(CustomOutput.OutputName));
+				}
+			}
+		}
+#endif
+	}
+
+	inline UClass* GetDreamShaderScreenPositionExpressionClass()
+	{
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+		return UMaterialExpressionScreenPosition::StaticClass();
+#else
+		return FindObject<UClass>(nullptr, TEXT("/Script/Engine.MaterialExpressionScreenPosition"));
+#endif
+	}
+
+	inline bool IsDreamShaderScreenPositionExpression(const UMaterialExpression* Expression)
+	{
+		if (!Expression)
+		{
+			return false;
+		}
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+		return Expression->IsA<UMaterialExpressionScreenPosition>();
+#else
+		UClass* ScreenPositionClass = GetDreamShaderScreenPositionExpressionClass();
+		return ScreenPositionClass && Expression->IsA(ScreenPositionClass);
+#endif
+	}
+
+	inline UClass* GetDreamShaderObjectPositionExpressionClass()
+	{
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 5)
+		return UMaterialExpressionObjectPositionWS::StaticClass();
+#else
+		return FindObject<UClass>(nullptr, TEXT("/Script/Engine.MaterialExpressionObjectPositionWS"));
+#endif
+	}
+
+	inline bool IsDreamShaderObjectPositionExpression(const UMaterialExpression* Expression)
+	{
+		if (!Expression)
+		{
+			return false;
+		}
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 5)
+		return Expression->IsA<UMaterialExpressionObjectPositionWS>();
+#else
+		UClass* ObjectPositionClass = GetDreamShaderObjectPositionExpressionClass();
+		return ObjectPositionClass && Expression->IsA(ObjectPositionClass);
+#endif
+	}
+
+	inline bool IsDreamShaderRotatorExpression(const UMaterialExpression* Expression)
+	{
+		return Expression && Expression->GetClass()->GetName().Equals(TEXT("MaterialExpressionRotator"), ESearchCase::IgnoreCase);
+	}
+
+	// StaticClass() for an engine material-expression class that carries no export macro, e.g.
+	// UMaterialExpressionSceneDepth: UCLASS() with neither MinimalAPI nor ENGINE_API.
+	//
+	// From UE 5.6, UHT emits DECLARE_CLASS2 with an exported Z_Construct_<Class>_NoRegister, so
+	// StaticClass() resolves from a plugin regardless. UE 5.5 and earlier emit
+	// DECLARE_CLASS(..., NO_API): GetPrivateStaticClass never leaves Engine.dll and naming
+	// StaticClass() is an unresolved external -- a *link* error, so it compiles clean on every
+	// engine and only shows up in a full BuildPlugin. There the class is resolved by script path.
+	//
+	// Takes the class name without the leading U. Null below 5.6 if the class is not loaded, so
+	// call sites must guard, the same way ObjectPositionWS and ScreenPosition already do.
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+#define DREAMSHADER_ENGINE_EXPRESSION_CLASS(ExpressionName) U##ExpressionName::StaticClass()
+#else
+#define DREAMSHADER_ENGINE_EXPRESSION_CLASS(ExpressionName) \
+	FindObject<UClass>(nullptr, TEXT("/Script/Engine.") TEXT(#ExpressionName))
+#endif
+
+	inline bool TryResolveKnownExpressionOutputComponentCount(
+		const UMaterialExpression* Expression,
+		const int32 OutputIndex,
+		int32& OutComponentCount)
+	{
+		(void)OutputIndex;
+
+		if (!Expression)
+		{
+			return false;
+		}
+
+		if (Cast<UMaterialExpressionTextureCoordinate>(Expression)
+			|| Cast<UMaterialExpressionPanner>(Expression)
+			|| IsDreamShaderScreenPositionExpression(Expression)
+			|| IsDreamShaderRotatorExpression(Expression))
+		{
+			OutComponentCount = 2;
+			return true;
+		}
+
+		if (Cast<UMaterialExpressionWorldPosition>(Expression)
+			|| IsDreamShaderObjectPositionExpression(Expression)
+			|| Cast<UMaterialExpressionCameraVectorWS>(Expression)
+			|| Cast<UMaterialExpressionVertexNormalWS>(Expression)
+			|| Cast<UMaterialExpressionVertexTangentWS>(Expression)
+			|| Cast<UMaterialExpressionTransform>(Expression)
+			|| Cast<UMaterialExpressionTransformPosition>(Expression))
+		{
+			OutComponentCount = 3;
+			return true;
+		}
+
+		const FString ClassName = Expression->GetClass()->GetName();
+		if (ClassName.Equals(TEXT("MaterialExpressionSceneTexelSize"), ESearchCase::IgnoreCase))
+		{
+			OutComponentCount = 2;
+			return true;
+		}
+		if (ClassName.Equals(TEXT("MaterialExpressionSkyAtmosphereLightDirection"), ESearchCase::IgnoreCase))
+		{
+			OutComponentCount = 3;
+			return true;
+		}
+		if (ClassName.Equals(TEXT("MaterialExpressionPixelNormalWS"), ESearchCase::IgnoreCase)
+			|| ClassName.Equals(TEXT("MaterialExpressionCrossProduct"), ESearchCase::IgnoreCase))
+		{
+			OutComponentCount = 3;
+			return true;
+		}
+		if (ClassName.Equals(TEXT("MaterialExpressionPixelDepth"), ESearchCase::IgnoreCase))
+		{
+			OutComponentCount = 1;
+			return true;
+		}
+		if (ClassName.Equals(TEXT("MaterialExpressionTwoSidedSign"), ESearchCase::IgnoreCase)
+			|| ClassName.Equals(TEXT("MaterialExpressionArctangent2Fast"), ESearchCase::IgnoreCase)
+			|| ClassName.Equals(TEXT("MaterialExpressionLength"), ESearchCase::IgnoreCase)
+			|| ClassName.Equals(TEXT("MaterialExpressionMaterialXLuminance"), ESearchCase::IgnoreCase))
+		{
+			OutComponentCount = 1;
+			return true;
+		}
+
+		return false;
+	}
+
+	inline bool TryResolveMaterialAttributesBreakOutputIndex(const EMaterialProperty Property, int32& OutOutputIndex)
+	{
+		switch (Property)
+		{
+		case MP_BaseColor: OutOutputIndex = 0; return true;
+		case MP_Metallic: OutOutputIndex = 1; return true;
+		case MP_Specular: OutOutputIndex = 2; return true;
+		case MP_Roughness: OutOutputIndex = 3; return true;
+		case MP_Anisotropy: OutOutputIndex = 4; return true;
+		case MP_EmissiveColor: OutOutputIndex = 5; return true;
+		case MP_Opacity: OutOutputIndex = 6; return true;
+		case MP_OpacityMask: OutOutputIndex = 7; return true;
+		case MP_Normal: OutOutputIndex = 8; return true;
+		case MP_Tangent: OutOutputIndex = 9; return true;
+		case MP_WorldPositionOffset: OutOutputIndex = 10; return true;
+		case MP_SubsurfaceColor: OutOutputIndex = 11; return true;
+		case MP_CustomData0: OutOutputIndex = 12; return true;
+		case MP_CustomData1: OutOutputIndex = 13; return true;
+		case MP_AmbientOcclusion: OutOutputIndex = 14; return true;
+		case MP_Refraction: OutOutputIndex = 15; return true;
+		case MP_CustomizedUVs0: OutOutputIndex = 16; return true;
+		case MP_CustomizedUVs1: OutOutputIndex = 17; return true;
+		case MP_CustomizedUVs2: OutOutputIndex = 18; return true;
+		case MP_CustomizedUVs3: OutOutputIndex = 19; return true;
+		case MP_CustomizedUVs4: OutOutputIndex = 20; return true;
+		case MP_CustomizedUVs5: OutOutputIndex = 21; return true;
+		case MP_CustomizedUVs6: OutOutputIndex = 22; return true;
+		case MP_CustomizedUVs7: OutOutputIndex = 23; return true;
+		case MP_PixelDepthOffset: OutOutputIndex = 24; return true;
+		case MP_Displacement: OutOutputIndex = 26; return true;
+#if DREAMSHADER_WITH_MOON_ENGINE
+		// Matches the tail of UMaterialExpressionBreakMaterialAttributes' output list, which appends
+		// these five after Displacement.
+		case MP_MoonEncodedAttribute0: OutOutputIndex = 27; return true;
+		case MP_MoonEncodedAttribute1: OutOutputIndex = 28; return true;
+		case MP_MoonEncodedAttribute2: OutOutputIndex = 29; return true;
+		case MP_MoonEncodedAttribute3: OutOutputIndex = 30; return true;
+		case MP_MoonEncodedAttribute4: OutOutputIndex = 31; return true;
+#endif
+		default:
+			return false;
+		}
+	}
+}

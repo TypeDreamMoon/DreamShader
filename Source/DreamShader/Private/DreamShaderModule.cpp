@@ -363,15 +363,21 @@ namespace UE::DreamShader
 		return FPaths::GetExtension(InPath, true).Equals(TEXT(".dss"), ESearchCase::IgnoreCase);
 	}
 
+	bool IsDreamShaderInstanceFile(const FString& InPath)
+	{
+		return FPaths::GetExtension(InPath, true).Equals(TEXT(".dsi"), ESearchCase::IgnoreCase);
+	}
+
 	bool IsDreamShaderSourceFile(const FString& InPath)
 	{
-		// A `.dss` is a source file to everything that scans, watches or lists sources -- the
-		// startup scan, the DirectoryWatcher, `compile -All`, the browser -- and reaches the 2.0
-		// pipeline through the generator's dispatch. Only the generator itself tells the kinds apart.
+		// A `.dss` or a `.dsi` is a source file to everything that scans, watches or lists sources -- the
+		// startup scan, the DirectoryWatcher, `compile -All`, the browser -- and reaches the pipeline through
+		// the compiler service. Only the pipeline itself tells the kinds apart.
 		return IsDreamShaderMaterialFile(InPath)
 			|| IsDreamShaderHeaderFile(InPath)
 			|| IsDreamShaderFunctionFile(InPath)
-			|| IsDreamShaderLang2File(InPath);
+			|| IsDreamShaderLang2File(InPath)
+			|| IsDreamShaderInstanceFile(InPath);
 	}
 }
 
