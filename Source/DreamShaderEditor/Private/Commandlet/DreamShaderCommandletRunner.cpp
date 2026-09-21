@@ -35,13 +35,18 @@ namespace UE::DreamShader::Editor::Private
 			"  -run=DreamShader dump-graph { -Source=\"C:/Project/DShader/File.dsm\" | -All } [-Out=\"C:/Project/Saved/DreamShader/GraphBaseline\"]\n"
 			"  -run=DreamShader check { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Shaders] [-Platform=SM6,SM5] [-Quality=High] [-Timeout=120] [-DiagnosticsOut=<file>]\n"
 			"  -run=DreamShader dump-ir { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Out=<dir>] [-Json]\n"
+			"  -run=DreamShader dump-layout { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Style=Blocks|SourceBands|Layered|All] [-Out=<dir>] [-Json]\n"
 			"  -run=DreamShader index { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Out=<dir>]\n"
 			"  -run=DreamShader export-catalog [-Out=<file>]\n"
+			"  -run=DreamShader fmt { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Check] [-Out=<dir>]\n"
+			"  -run=DreamShader list-generated { -Source=\"C:/Project/DShader/File.dss\" | -All } [-As=Packages|Files|GitIgnore|Json] [-Out=<file>] [-IncludeEphemeral]\n"
 			"decompile writes 2.0 text by default -- a .dss for a Material or MaterialFunction, a .dsi for a\n"
 			"MaterialInstanceConstant; -Format=Legacy, or an -Out ending in .dsm or .dsf, writes the 1.x text.\n"
 			"-SourceFile decompiles every asset that source builds into one file; -KeepAssetPath keeps each asset's own path.\n"
 			"migrate rewrites 1.x sources (.dsm, .dsf, .dsh) as .dss; -Check verifies the rewrite and writes nothing.\n"
 			"-All takes the writable source roots; -Root names one root, a plugin's included, by its name or its plugin's.\n"
+			"fmt rewrites 2.0 sources in the printer's layout (-All: the writable roots); -Check writes nothing and fails\n"
+			"when a file would change. list-generated names every asset the sources build, building nothing.\n"
 			"compile, dump-graph, check, dump-ir and index take any compilable source -- .dss, .dsi,\n"
 			".dsm or .dsf; a .dsh header is compiled through the sources that include it.\n"
 			"check writes no asset at all; -Shaders is the exception -- a shader\n"
@@ -617,6 +622,14 @@ namespace UE::DreamShader::Editor::Private
 		const TMap<FString, FString>& Params)
 	{
 		return UE::DreamShader::Editor::Compiler::RunDreamShaderFormatCommandlet(Tokens, Switches, Params);
+	}
+
+	bool RunDreamShaderListGeneratedCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		return UE::DreamShader::Editor::Compiler::RunDreamShaderListGeneratedCommandlet(Tokens, Switches, Params);
 	}
 
 	bool RunDreamShaderDecompileCommandlet(

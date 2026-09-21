@@ -30,6 +30,7 @@
 #include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
+#include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -369,14 +370,21 @@ namespace UE::DreamShader::Editor::Compiler
 			"  -run=DreamShader check { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Shaders]\n"
 			"                         [-Platform=SM6,SM5] [-Quality=High] [-Timeout=120] [-DiagnosticsOut=<file>]\n"
 			"  -run=DreamShader dump-ir { -Source=... | -All } [-Out=<dir>] [-Json]\n"
+			"  -run=DreamShader dump-layout { -Source=... | -All } [-Style=Blocks|SourceBands|Layered|All] [-Out=<dir>] [-Json]\n"
 			"  -run=DreamShader index { -Source=... | -All } [-Out=<dir>]\n"
 			"  -run=DreamShader export-catalog [-Out=<file>]\n"
+			"  -run=DreamShader fmt { -Source=... | -All } [-Check] [-Out=<dir>]\n"
+			"  -run=DreamShader list-generated { -Source=... | -All } [-As=Packages|Files|GitIgnore|Json] [-Out=<file>] [-IncludeEphemeral]\n"
 			"check runs the 2.0 pipeline to IR validation and writes no asset. -Shaders is the one\n"
 			"exception: a shader compile needs a real material and 2.0 has no transient asset, so\n"
 			"it builds and saves the products as compile does, then reports HLSL errors as\n"
 			"stage: shader.\n"
 			"dump-ir, index and export-catalog are language-service and debugging tools.\n"
-			"check, dump-ir and index take any compilable source: .dss, .dsi, .dsm or .dsf.");
+			"dump-layout draws the 2.0 graph layout of each product as SVG, building nothing.\n"
+			"fmt rewrites 2.0 sources (.dss, .dsi, a .dsh without 1.x declarations) in the printer's layout; -All takes the\n"
+			"writable source roots, -Check writes nothing and fails when a file would change.\n"
+			"list-generated names every asset the sources build, for a .gitignore or a P4 typemap; nothing is built.\n"
+			"check, dump-ir, dump-layout, index and list-generated take any compilable source: .dss, .dsi, .dsm or .dsf.");
 	}
 
 	// -------------------------------------------------------------------------------------- check
@@ -980,6 +988,238 @@ namespace UE::DreamShader::Editor::Compiler
 			FailedCount,
 			SourceFiles.Num()));
 		return bSucceeded;
+	}
+
+	// ------------------------------------------------------------------------------- list-generated
+
+	namespace
+	{
+		enum class EGeneratedListFormat : uint8
+		{
+			Packages,
+			Files,
+			GitIgnore,
+			Json,
+		};
+
+		bool TryParseGeneratedListFormat(const FString& Text, EGeneratedListFormat& OutFormat)
+		{
+			if (Text.IsEmpty() || Text.Equals(TEXT("Packages"), ESearchCase::IgnoreCase)) { OutFormat = EGeneratedListFormat::Packages; return true; }
+			if (Text.Equals(TEXT("Files"), ESearchCase::IgnoreCase)) { OutFormat = EGeneratedListFormat::Files; return true; }
+			if (Text.Equals(TEXT("GitIgnore"), ESearchCase::IgnoreCase)) { OutFormat = EGeneratedListFormat::GitIgnore; return true; }
+			if (Text.Equals(TEXT("Json"), ESearchCase::IgnoreCase)) { OutFormat = EGeneratedListFormat::Json; return true; }
+			return false;
+		}
+
+		/** One asset a source builds, as `list-generated` reports it. */
+		struct FGeneratedAssetRecord
+		{
+			FString SourceFile;
+			FString Kind;
+			FString Backend;
+			FString PackageName;
+			FString ObjectPath;
+			/** Absolute path of the package file; empty when the package name maps to no mounted content root. */
+			FString FilePath;
+			/** FilePath relative to the project directory, forward slashes; empty when the file lies outside it. */
+			FString ProjectRelativePath;
+			bool bOnDisk = false;
+			/** False for a ThinCustom material that is memory-only right now: it has no file to ignore or to type. */
+			bool bPersistent = true;
+		};
+	}
+
+	bool RunDreamShaderListGeneratedCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		TArray<FString> SourceFiles;
+		if (!ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		{
+			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderLang2CommandletUsage());
+			return false;
+		}
+
+		FLangDiagnosticSink ToolSink;
+		const FLangSpan NoSpan;
+
+		EGeneratedListFormat Format = EGeneratedListFormat::Packages;
+		const FString FormatText = GetParam(Tokens, Switches, Params, TEXT("As"));
+		if (!TryParseGeneratedListFormat(FormatText, Format))
+		{
+			ToolSink.Error(TEXT("DSH9048"), NoSpan, FText::Format(
+				LOCTEXT("ListGeneratedUnknownFormat", "'-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json."),
+				FText::FromString(FormatText)));
+			LogLang2Diagnostics(ToolSink, FString());
+			LogSummary(false, TEXT("DreamShader list-generated: nothing was listed."));
+			return false;
+		}
+		const bool bIncludeEphemeral = HasFlag(Tokens, Switches, TEXT("IncludeEphemeral"));
+
+		FString ProjectDirectory = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
+		FPaths::NormalizeDirectoryName(ProjectDirectory);
+		ProjectDirectory += TEXT("/");
+
+		bool bAllSucceeded = true;
+		TArray<FGeneratedAssetRecord> Records;
+		for (const FString& SourceFile : SourceFiles)
+		{
+			FLangDiagnosticSink FileSink(SourceFile);
+			if (!RequireLang2Source(SourceFile, LOCTEXT("VerbListGenerated", "list-generated"), FileSink))
+			{
+				LogLang2Diagnostics(FileSink, SourceFile);
+				bAllSucceeded = false;
+				continue;
+			}
+
+			FDreamShaderProductResolution Resolution;
+			if (!ResolveDreamShaderSourceProducts(SourceFile, Resolution))
+			{
+				// What was established before the failure is still listed: a list that silently lost the assets of one
+				// broken file would un-ignore them.
+				LogLang2Diagnostics(Resolution.Diagnostics, SourceFile);
+				bAllSucceeded = false;
+			}
+
+			for (const FDreamShaderResolvedProduct& Product : Resolution.Products)
+			{
+				FGeneratedAssetRecord Record;
+				Record.SourceFile = SourceFile;
+				// A backend is a material's: a product of any other kind carries the file's backend along and is built as a
+				// graph whatever it says, so that is what the list calls it.
+				const bool bThinCustomMaterial = Product.Kind == UE::DreamShader::IR::EIRProductKind::Material
+					&& Product.Backend == UE::DreamShader::IR::EIRBackend::ThinCustom;
+				Record.Kind = UE::DreamShader::IR::LexToString(Product.Kind);
+				Record.Backend = UE::DreamShader::IR::LexToString(
+					bThinCustomMaterial ? UE::DreamShader::IR::EIRBackend::ThinCustom : UE::DreamShader::IR::EIRBackend::Graph);
+				Record.PackageName = Product.PackageName;
+				Record.ObjectPath = Product.ObjectPath;
+
+				FString Filename;
+				if (FPackageName::TryConvertLongPackageNameToFilename(Product.PackageName, Filename, FPackageName::GetAssetPackageExtension()))
+				{
+					Record.FilePath = FPaths::ConvertRelativePathToFull(Filename);
+					FPaths::NormalizeFilename(Record.FilePath);
+					Record.bOnDisk = IFileManager::Get().FileExists(*Record.FilePath);
+					if (Record.FilePath.StartsWith(ProjectDirectory, ESearchCase::IgnoreCase))
+					{
+						Record.ProjectRelativePath = Record.FilePath.RightChop(ProjectDirectory.Len());
+					}
+				}
+
+				// A Graph material, a function and an instance always save; a ThinCustom material saves when it is
+				// Materialized, and storage is what says so (DreamShaderIRAssets.h).
+				Record.bPersistent = !bThinCustomMaterial || Record.bOnDisk;
+				if (!Record.bPersistent && !bIncludeEphemeral)
+				{
+					continue;
+				}
+				Records.Add(MoveTemp(Record));
+			}
+		}
+
+		Records.Sort([](const FGeneratedAssetRecord& Left, const FGeneratedAssetRecord& Right)
+		{
+			return Left.PackageName.Compare(Right.PackageName, ESearchCase::IgnoreCase) < 0;
+		});
+
+		FString Text;
+		int32 OutsideProject = 0;
+		switch (Format)
+		{
+		case EGeneratedListFormat::Packages:
+			for (const FGeneratedAssetRecord& Record : Records)
+			{
+				Text += Record.PackageName + TEXT("\n");
+			}
+			break;
+
+		case EGeneratedListFormat::Files:
+		case EGeneratedListFormat::GitIgnore:
+			if (Format == EGeneratedListFormat::GitIgnore)
+			{
+				Text += TEXT("# Generated by `dsc list-generated -As=GitIgnore`: the assets DreamShader builds from source.\n"); /* I18N-EXEMPT: a comment in a generated file */
+				Text += TEXT("# Paths are relative to the project directory; see Docs/generation/source-control.md.\n"); /* I18N-EXEMPT: a comment in a generated file */
+			}
+			for (const FGeneratedAssetRecord& Record : Records)
+			{
+				if (Record.ProjectRelativePath.IsEmpty())
+				{
+					++OutsideProject;
+					continue;
+				}
+				// A leading slash anchors the pattern at the directory the .gitignore is in.
+				Text += (Format == EGeneratedListFormat::GitIgnore ? TEXT("/") : TEXT("")) + Record.ProjectRelativePath + TEXT("\n");
+			}
+			break;
+
+		case EGeneratedListFormat::Json:
+		{
+			TArray<TSharedPtr<FJsonValue>> Assets;
+			for (const FGeneratedAssetRecord& Record : Records)
+			{
+				const TSharedRef<FJsonObject> Asset = MakeShared<FJsonObject>();
+				Asset->SetStringField(TEXT("source"), Record.SourceFile);
+				Asset->SetStringField(TEXT("kind"), Record.Kind);
+				Asset->SetStringField(TEXT("backend"), Record.Backend);
+				Asset->SetStringField(TEXT("package"), Record.PackageName);
+				Asset->SetStringField(TEXT("objectPath"), Record.ObjectPath);
+				Asset->SetStringField(TEXT("file"), Record.FilePath);
+				Asset->SetStringField(TEXT("projectRelativeFile"), Record.ProjectRelativePath);
+				Asset->SetBoolField(TEXT("onDisk"), Record.bOnDisk);
+				Asset->SetBoolField(TEXT("persistent"), Record.bPersistent);
+				Assets.Add(MakeShared<FJsonValueObject>(Asset));
+			}
+			const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
+			Root->SetStringField(TEXT("schema"), TEXT("dreamshader-generated-assets"));
+			Root->SetNumberField(TEXT("version"), 1);
+			Root->SetArrayField(TEXT("assets"), Assets);
+			const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Text);
+			FJsonSerializer::Serialize(Root, Writer);
+			Text += TEXT("\n");
+			break;
+		}
+		}
+
+		if (OutsideProject > 0)
+		{
+			ToolSink.Warning(TEXT("DSH9049"), NoSpan, FText::Format(
+				LOCTEXT("ListGeneratedOutsideProject", "{0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no project-relative path; '-As=Packages' or '-As=Json' lists them."),
+				FText::AsNumber(OutsideProject)));
+		}
+
+		const FString OutParam = GetOutParam(Tokens, Switches, Params);
+		if (!OutParam.IsEmpty())
+		{
+			const FString OutputPath = FPaths::ConvertRelativePathToFull(OutParam);
+			FString WriteError;
+			if (!WriteToolFile(OutputPath, Text, WriteError))
+			{
+				ToolSink.Error(TEXT("DSH9047"), NoSpan, FText::Format(
+					LOCTEXT("ListGeneratedWriteFailed", "The list of generated assets could not be written: {0}."),
+					FText::FromString(WriteError)));
+				bAllSucceeded = false;
+			}
+		}
+		else
+		{
+			// One log line per entry, so the driver's output is the list.
+			TArray<FString> Lines;
+			Text.ParseIntoArrayLines(Lines, /* bCullEmpty */ true);
+			for (const FString& Line : Lines)
+			{
+				UE_LOG(LogDreamShader, Display, TEXT("%s"), *Line);
+			}
+		}
+
+		LogLang2Diagnostics(ToolSink, FString());
+		LogSummary(bAllSucceeded, FString::Printf( /* I18N-EXEMPT: machine-readable verdict line */
+			TEXT("DreamShader list-generated: %d asset(s) from %d source(s)%s."),
+			Records.Num(),
+			SourceFiles.Num(),
+			OutParam.IsEmpty() ? TEXT("") : *FString::Printf(TEXT(" to %s"), *FPaths::ConvertRelativePathToFull(OutParam))));
+		return bAllSucceeded;
 	}
 
 	// ----------------------------------------------------------------------------- export-catalog

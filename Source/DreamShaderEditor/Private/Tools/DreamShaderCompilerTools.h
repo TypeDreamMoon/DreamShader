@@ -1,8 +1,9 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The four 2.0 commandlet verbs -- `check`, `dump-ir`, `index`, `export-catalog` -- and the source
-// selection they share. They take the same (Tokens, Switches, Params) triple UCommandlet hands its
-// Main and that every existing verb already takes, so the dispatcher stays a dispatcher.
+// The 2.0 commandlet verbs -- `check`, `dump-ir`, `dump-layout`, `index`, `export-catalog`, `fmt`,
+// `list-generated` -- and the source selection they share. They take the same (Tokens, Switches, Params)
+// triple UCommandlet hands its Main and that every existing verb already takes, so the dispatcher stays a
+// dispatcher.
 //
 // Until the compiler relocation this header also carried the pipeline's rich entry point
 // (FDreamShaderLang2PipelineOptions / FDreamShaderLang2PipelineResult / RunDreamShaderLang2Pipeline).
@@ -96,4 +97,14 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params);
 
+	/**
+	 * `list-generated <file|-All> [-As=Packages|Files|GitIgnore|Json] [-Out=<file>] [-IncludeEphemeral]` -- every asset
+	 * the sources build, located without building it (ResolveDreamShaderSourceProducts): what a `.gitignore` or a P4
+	 * typemap is written from (plan section 13.7, Docs/generation/source-control.md). A ThinCustom material that is
+	 * memory-only has no file and is left out unless `-IncludeEphemeral` asks for it.
+	 */
+	bool RunDreamShaderListGeneratedCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
 }

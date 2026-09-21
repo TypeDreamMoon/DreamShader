@@ -92,6 +92,12 @@ int32 UDreamShaderCommandlet::Main(const FString& Params)
 		return UE::DreamShader::Editor::Private::RunDreamShaderFormatCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
 	}
 
+	if (Command.Equals(TEXT("list-generated"), ESearchCase::IgnoreCase)
+		|| Command.Equals(TEXT("listgenerated"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderListGeneratedCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
 	if (Command.Equals(TEXT("decompile"), ESearchCase::IgnoreCase)
 		|| Command.Equals(TEXT("export"), ESearchCase::IgnoreCase))
 	{

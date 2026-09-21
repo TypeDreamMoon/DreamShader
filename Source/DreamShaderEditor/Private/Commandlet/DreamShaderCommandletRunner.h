@@ -71,11 +71,11 @@ namespace UE::DreamShader::Editor::Private
 
 	// ---------------------------------------------------------------------------- the 2.0 verbs
 	//
-	// `check`, `dump-ir`, `index` and `export-catalog` run the 2.0 pipeline themselves, over any
-	// compilable source. They are implemented in Tools/DreamShaderCompilerTools.cpp, not here: they
-	// drive the pipeline directly rather than through the compiler service `compile` calls, and their
-	// diagnostics come out of an FLangDiagnosticSink rather than an FDreamShaderError. These four are
-	// forwarders, so the dispatcher keeps naming one namespace.
+	// `check`, `dump-ir`, `dump-layout`, `index`, `export-catalog`, `fmt` and `list-generated` run the 2.0
+	// pipeline -- or, for `fmt`, the front end alone -- themselves. They are implemented in
+	// Tools/DreamShaderCompilerTools.cpp, not here: they drive the pipeline directly rather than through the
+	// compiler service `compile` calls, and their diagnostics come out of an FLangDiagnosticSink rather than an
+	// FDreamShaderError. These are forwarders, so the dispatcher keeps naming one namespace.
 
 	/** `check <file|-All> [-Shaders] [-Platform=] [-Quality=] [-Timeout=] [-DiagnosticsOut=]`. */
 	bool RunDreamShaderCheckCommandlet(
@@ -113,4 +113,9 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params);
 
+	/** `list-generated <file|-All> [-As=Packages|Files|GitIgnore|Json] [-Out=<file>] [-IncludeEphemeral]`. */
+	bool RunDreamShaderListGeneratedCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
 }
