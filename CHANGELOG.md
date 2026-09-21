@@ -8,7 +8,97 @@
 > syntax alongside it. `IsBetaVersion` is set, so every tag on this branch publishes as a
 > pre-release (`v2.0.0b`). Nothing below has shipped yet; entries are added as milestones land.
 
+### Added
+
+- **DreamShaderLang 2.0: `.dss` sources.** A material written as what it always was underneath --
+  HLSL with declarations. `uniform`s are parameters, `///` doc comments carry their metadata
+  (`@group`, `@sort`, `@slider`, `@static`, `@default`, `@name`), `#pragma material(...)` holds the
+  settings, and one `export void M(inout material m)` is the entry; an exported function with a
+  return value is a material function, a `material`-typed one a layer or a blend. Real expressions,
+  `if` / `for` / `?:`, helper functions that inline into the graph, `#include`, `/// @custom` HLSL
+  bodies, and `extern` prototypes with `/// @asset` for function assets that already exist.
+  [`Docs/language-v2/index.md`](Docs/language-v2/index.md).
+
+- **One compiler, two front ends.** preprocess -> parse -> bind -> lower to a graph IR -> passes ->
+  validate -> emit. A `.dss` is read by the 2.0 parser and a `.dsm` / `.dsf` by a **legacy front
+  end** that reads the 1.x language into the same tree, so every source is built by the same IR
+  emitter. Measured against frozen 1.x graph dumps of four real source roots: 68 of 68 sources
+  rebuild the same graph, node for node. A `.dsh` header is read per declaration and may hold both
+  dialects, so a project can migrate one file at a time.
+
+- **Material instances as source: `.dsi`.** `#pragma instance(Parent = "M_Skin", BlendMode = Masked)`
+  and one `uniform` per override, checked against the parent's real parameters (an unknown name, a
+  name that differs only by case, another type and a missing `/// @static` are all diagnostics, not
+  silent no-ops). The parent is a bare name of a DreamShader source in the same root or any object
+  path; a stale parent is compiled first; instances of instances work. An override deleted from the
+  file is deleted from the asset. [`Docs/language-v2/instances.md`](Docs/language-v2/instances.md).
+
+- **`dsc migrate`: 1.x sources rewritten as `.dss`, each rewrite proved before it is written.** No
+  comment is lost, the text builds as 2.0, it builds the same graph (the two IRs are compared from
+  their roots), and the asset stays where it is. `-Check` writes nothing; `-All` takes the writable
+  roots, `-Root <name>` one root, a plugin's included. What only the documented 1.x rules made work
+  is written out as explicit 2.0 text, and each such rule is also a diagnostic on the 1.x source, so
+  `dsc check` on a `.dsm` shows what a migration would change. On the development project all 71
+  sources of four roots build as 2.0, and 68 compare equal; the three that do not are true
+  differences the old text hid. [`Docs/tools/migrate.md`](Docs/tools/migrate.md).
+
+- **A decompiler that writes 2.0 text.** `dsc decompile` reads the asset's graph into the compiler's
+  own IR and prints a `.dss` -- or a `.dsi` for a material instance, holding only what differs from
+  the parent. The printed text is parsed again before it is written, and the round-trip suite
+  compiles it and compares IRs. What the language cannot say is named at the head of the file
+  (`// Warning: DSH9064: ...`), never dropped silently. `-SourceFile` decompiles every asset one
+  source builds into one file, `-KeepAssetPath` writes the `/// @name` that lets a rebuild take over
+  the original, `-Readable` prefers HLSL sugar over class-exact node calls, `-DiagnosticsOut` writes
+  the diagnostics as JSON. The 1.x exporter stays behind `-Format Legacy`.
+
+- **`UE.` calls inside a `/// @custom` body.** `float T = UE.Time();` in custom HLSL is lifted out
+  into an input of the Custom node and wired at every call site, the way 1.x `GraphFunction` bodies
+  always worked -- now by the same code in both front ends. A lifted call may read the function's
+  parameters, not its locals (`DSH6326`).
+
+- **New commandlet verbs.** `check` compiles as far as IR validation and writes no asset (`-Shaders`
+  builds the products and reports HLSL errors against source lines); `dump-ir` writes the lowered IR,
+  `index` the symbol index a language service reads, `export-catalog` the builtin node catalog as
+  JSON, so tools can bind `UE.*` without an editor. Every verb that takes a source takes `.dss`,
+  `.dsi`, `.dsm` and `.dsf`.
+
+- **Editor.** *New Instance* in the Material Content Browser; *Adopt Into Source* on a hand-edited
+  instance rewrites its `.dsi` value by value, so comments and order survive; node <-> source
+  navigation for assets built from a `.dss`.
+
+- **Every diagnostic has a page.** 617 `DSHnnnn` codes, each with its message, where it is raised,
+  a cause and a fix, including the codes raised from several places with different messages.
+  [`Docs/diagnostics/README.md`](Docs/diagnostics/README.md).
+
 ### Changed
+
+- **The compiler is its own module, and the compile interface moved to the runtime module.** Through
+  1.9.x `DreamShaderCompiler` was a Runtime module holding only an interface, and the compiler lived
+  privately in `DreamShaderEditor`. `DreamShaderCompiler` is now an **Editor** module that holds the
+  pipeline, the emitter and the asset layer, and the interface lives where every caller can reach it.
+
+  | Before | Now |
+  | :-- | :-- |
+  | `#include "DreamShaderCompilerInterfaces.h"` (module `DreamShaderCompiler`) | `#include "DreamShaderCompilerInterface.h"` (module `DreamShader`) |
+  | `UE::DreamShader::Compiler::IDreamShaderCompiler`, `...::FDreamShaderCompileRequest`, `...::EThinCustomPersistence` | the same names in `UE::DreamShader` |
+  | `FDreamShaderCompileService Service(Adapter); Service.CompileAssets(...)` | `GetDreamShaderCompiler()->CompileAssets(Request)` -- null in a game target, so check it |
+  | `FDreamShaderCompileResult { bSucceeded, Message }` | plus `Code`, the `DSHnnnn` of the first error |
+  | no way to reach the shipped compiler from another module | `GetDreamShaderCompiler()`; the pipeline, the emitter and the catalog are exported for editor modules |
+
+  [`Docs/api/compiler-module.md`](Docs/api/compiler-module.md).
+
+- **1.x sources keep their documented leniencies and lose the undocumented silent ones.** Where 1.x
+  accepted a text without a word and built something other than what it said, the legacy front end
+  says so: an operator the 1.x expression reader stopped at (`a < b ? x : y` silently became `a`) is
+  `DSH2200`; an argument a call spelling never read is `DSH5254`; a name in another case
+  (`DSH5275`), a `float4` wired into a `float3` place (`DSH5289`), a variable assigned without ever
+  being declared (`DSH5292`) still build, and now say what they rely on. The file-kind rule for a
+  `.dsh` is decided per declaration (`DSH2249`) instead of by a substring scan, so a comment that
+  mentions `Shader(` no longer fails a header.
+
+- **`decompile` writes 2.0 text by default.** A script that expects a `.dsm` / `.dsf` passes
+  `-Format Legacy`, or an `-Out` with that extension. Material instances, which the 1.x exporter
+  rejected, decompile to a `.dsi`.
 
 - **"In-memory" is gone; a ThinCustom product is *Ephemeral* or *Materialized*.** The word meant
   three different things at once, and that was the whole problem: a `bTransient` request flag on the
@@ -57,6 +147,17 @@
   **removed**, along with both of its readers. Layout runs for every generated graph; the only
   remaining opt-out is the large-graph performance guard (1200 expressions with no `Layout` section),
   which is unchanged.
+
+### Removed
+
+- **The 1.x generator and the 1.x parser.** `Source/DreamShaderEditor/Private/MaterialAssetGeneration`
+  (42 files) and `DreamShaderParser.h` with `FTextShaderParser::Parse` are gone; the legacy front end
+  and the IR emitter do their work. `DreamShaderTypes.h` stays, because the asset layer still speaks
+  it, but nothing parses into it any more. The 1.x parser's own codes (`DSH2007`, `DSH3133`,
+  `DSH3137` and their neighbours) are no longer raised; [`Docs/api/parser.md`](Docs/api/parser.md)
+  maps the old entry point to the new one.
+
+- **`FDreamShaderCompileService` and the editor's compile adapter.** See *Changed* above.
 
 ## 1.9.1 - 2026-09-08
 

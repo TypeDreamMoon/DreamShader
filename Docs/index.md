@@ -159,7 +159,7 @@ The statement and expression language inside `Graph = { ... }`, which materialis
 | :-- | :-- |
 | [`DreamShaderModule.h`](api/dreamshader-module.md) | Module, log category, exported functions |
 | [`DreamShaderTypes.h`](api/types.md) | The parsed-source data model |
-| [`DreamShaderParser.h`](api/parser.md) | Parser entry point |
+| [`DreamShaderParser.h`](api/parser.md) | Retired in 2.0 — what replaced the 1.x parser entry point |
 | [`DreamShaderSettings.h`](api/settings.md) | `UDreamShaderSettings` |
 | [`DreamShaderMaterialInstance.h`](api/material-instance.md) | The generated instance class |
 | [`DreamShaderVersionCompat.h`](api/version-compat.md) | Engine-version macros |

@@ -53,6 +53,13 @@
 > Keep every `.dsm`, `.dsf` and `.dsh` file in version control. The generated Unreal assets can
 > always be rebuilt from source, so they do not need to be.
 
+> [!NOTE]
+> **On the 2.0 beta line** one compiler builds both syntaxes: the 1.x language shown below keeps
+> working unchanged, and beside it there is an HLSL-shaped one — [`.dss`](Docs/language-v2/index.md)
+> sources, [`.dsi`](Docs/language-v2/instances.md) material instances, a decompiler that writes them,
+> and [`dsc migrate`](Docs/tools/migrate.md), which rewrites a 1.x file and proves the rewrite builds
+> the same graph before it writes anything.
+
 ---
 
 ## What it looks like

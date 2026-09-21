@@ -2,14 +2,14 @@
 
 > [DreamShader](../index.md) » [Contributing](index.md) » **Testing**
 
-The plugin's Unreal automation suite, and the on-disk fixture corpus that two of its tests enumerate
-at run time.
+The plugin's Unreal automation suite, and the on-disk fixture corpus that thirteen of its tests
+enumerate at run time.
 
 | | |
 | :-- | :-- |
-| Declared in | `Source/DreamShaderEditor/Private/Tests/` — seventeen translation units, all inside `#if WITH_DEV_AUTOMATION_TESTS` |
+| Declared in | `Source/DreamShaderEditor/Private/Tests/` — 37 translation units, all inside `#if WITH_DEV_AUTOMATION_TESTS` |
 | Kind | Unreal automation tests |
-| Flags | `EAutomationTestFlags::EditorContext \| EAutomationTestFlags::EngineFilter` — identical on all 128 declarations |
+| Flags | `EAutomationTestFlags::EditorContext \| EAutomationTestFlags::EngineFilter` — identical on all 261 declarations |
 | Corpus root | `<Plugin>/Tests/Corpus` |
 | Editor UI | *Tools ▸ Session Frontend ▸ Automation*, filtered on a test-name prefix |
 
@@ -30,15 +30,16 @@ Optional switches: `-nullrhi`, `-DreamShaderUpdateGolden`, `-NoDreamShaderEditor
 
 | Quantity | Value |
 | :-- | :-- |
-| Test declarations (`IMPLEMENT_*_AUTOMATION_TEST`) | 128 |
-| Simple declarations (one test each) | 126 |
-| Complex declarations (data-driven runners) | 2 — `DreamShader.Lang.Parse`, `DreamShader.Gen.Material` |
-| Corpus fixtures | 46 — 36 under `Parse/`, 10 under `Generate/` |
-| `.expected.json` goldens | 15 — 6 under `Parse/`, 9 under `Generate/` |
-| Individually runnable tests | **172** = 126 simple + 36 Parse sub-tests + 10 Generate sub-tests |
+| Test declarations (`IMPLEMENT_*_AUTOMATION_TEST`) | 261 |
+| Simple declarations (one test each) | 248 |
+| Complex declarations (data-driven runners) | 13 — see [Corpus runners](#corpus-runners--13-declarations) |
+| Corpus fixtures | 473 sources under `Tests/Corpus/` |
+| `.expected.json` goldens | 468 |
+| Individually runnable tests | **855** in a `DreamShader` run (2026-09-20) |
 
-The two complex runners enumerate the corpus tree at run time, so the runnable-test count moves with
-the fixture count and **no C++ changes when a fixture is added**.
+The complex runners enumerate the corpus tree at run time, so the runnable-test count moves with the
+fixture count and **no C++ changes when a fixture is added**. `DreamShader.Lang2.RoundtripIR` sweeps
+fixtures that belong to other layers, which is why the runnable count is not "simple + fixtures".
 
 ## Test groups
 
@@ -50,10 +51,18 @@ the fixture count and **no C++ changes when a fixture is added**.
 | `DreamShader.Lang.ParameterExpressions.*` | Parser `Properties` surface | fast; parser only |
 | `DreamShader.Commandlet.Args.*` | Commandlet argument parsing | milliseconds; pure |
 | `DreamShader.Commandlet.Compile.*` | Commandlet runner smoke test | slow; editor; writes a real `/Game` asset |
-| `DreamShader.Compiler.Parser.*` | Generator front end, end to end | slow; editor |
-| `DreamShader.Compiler.Generate.*` | Generator end to end | slow; editor |
+| `DreamShader.Compiler.Parser.*` | 1.x sources through the compiler, end to end | slow; editor |
+| `DreamShader.Compiler.Generate.*` | 1.x sources through the compiler, end to end | slow; editor |
 | `DreamShader.Compiler.SourceHash.*` | The regeneration skip check | slow; editor |
-| `DreamShader.Gen.Material.*` | Data-driven Generate corpus | slow; editor |
+| `DreamShader.Lang2.{Lexer,Expressions,Statements,Declarations,Printer,Trivia}.*` | The 2.0 front end, unit by unit | milliseconds; `Core` only |
+| `DreamShader.Lang2.{Binder,IR,IRCompare,InstanceSource,Migrate,Batch2}.*` | Binder, IR, the comparator, `.dsi` text, the migrator | fast; hand-made catalog, no assets |
+| `DreamShader.Lang2.Corpus*.*` | Data-driven text layers: `Lang/`, `IR/`, `Legacy/Parse`, `Legacy/IR`, `Decompile/`, `Migrate/` | fast; no asset I/O |
+| `DreamShader.Lang2.RoundtripIR.*` | Every fixture that lowers: IR → text → IR is equivalent | fast; no asset I/O |
+| `DreamShader.Compiler2.{Smoke,Instance,Decompile,Migrate,Provenance,Parity}.*` | The 2.0 pipeline, instances, the decompile service, `dsc migrate`, Adopt, graph parity against 1.x captures | slow; editor |
+| `DreamShader.Compiler2.Corpus*.*` | Data-driven compile layers: `Compile/`, `Legacy/Compile`, `Instance/` | slow; editor |
+| `DreamShader.Compiler2.Roundtrip.*` | `.dss` → asset → decompile → asset, both dumps equal | slow; editor |
+| `DreamShader.Compiler.{Divergence,Atomic,Tweaked,Persistence,BuildKey,Order}.*` | Hand-edit detection, atomic rebuild, Ephemeral/Materialized, the build key | slow; editor |
+| `DreamShader.Browser.*` · `DreamShader.AssetRenameSync.*` · `DreamShader.Preview.*` | Material Content Browser model, asset-rename rewriting, preview probes (`Preview.ProbePreview.RendersBinding` needs a real RHI) | mixed |
 | `DreamShader.Gen.Graph.*` | Node-shape assertions on the generated graph | slow; editor |
 | `DreamShader.Gen.Parameters.*` | Parameter-node creation and pin wiring | slow; editor |
 | `DreamShader.Gen.Wiring.*` | Condition wiring in the generated graph | slow; editor |
@@ -62,17 +71,25 @@ the fixture count and **no C++ changes when a fixture is added**.
 | `DreamShader.Roundtrip.*` | Decompile → regenerate fidelity | slow; editor; two of them also need a real RHI |
 | `DreamShader.Render.*` | Pixel parity | needs a real RHI |
 
-The split the source records: the fast `DreamShader.Lang.*` layer gates pull requests, the slow
-`DreamShader.Gen.*` layer runs nightly.
+The split the source records: the fast `DreamShader.Lang.*` and `DreamShader.Lang2.*` layers gate
+pull requests, the slow `DreamShader.Compiler*` and `DreamShader.Gen.*` layers run nightly. The whole
+suite takes about a minute and a half headlessly.
+
+> [!WARNING]
+> **Close the editor first.** A run compiles sources and writes assets under `/Game/DreamShaderTests`;
+> with an editor open on the same project the two fight over the bridge's write ownership and over
+> package files.
 
 ## Running headlessly
 
 | Goal | Filter |
 | :-- | :-- |
-| Fast gate — parse corpus, pure helpers, parameter parsing | `DreamShader.Lang` |
+| Fast gate — 1.x parse-equivalence corpus, pure helpers, the preprocessor | `DreamShader.Lang.` |
+| Fast gate — the 2.0 front end, binder, IR, decompile and migrate text layers | `DreamShader.Lang2` |
 | Commandlet argument helpers only | `DreamShader.Commandlet.Args` |
-| Generate corpus | `DreamShader.Gen.Material` |
-| Generator end-to-end tests | `DreamShader.Compiler` |
+| 1.x sources compiled end to end (the former Generate corpus) | `DreamShader.Compiler2.CorpusLegacy` |
+| The 2.0 pipeline end to end | `DreamShader.Compiler2` |
+| 1.x-era end-to-end tests | `DreamShader.Compiler.` |
 | Decompile round trips | `DreamShader.Roundtrip` |
 | Graph dump determinism | `DreamShader.DumpGraph` |
 | Everything | `DreamShader` |
@@ -82,7 +99,7 @@ The split the source records: the fast `DreamShader.Lang.*` layer gates pull req
 | Switch | Effect on the suite |
 | :-- | :-- |
 | `-nullrhi` | No rendering device. `DreamShader.Render.ThinCustomVsGraphParity` and `DreamShader.Roundtrip.MTestToonRenderParity` self-skip. Every other test still runs. |
-| `-DreamShaderUpdateGolden` | Both corpus runners **rewrite** each `.expected.json` from the actual result instead of asserting it. See [Regenerating goldens](#regenerating-goldens). |
+| `-DreamShaderUpdateGolden` | Every corpus runner **rewrites** each `.expected.json` from the actual result instead of asserting it. See [Regenerating goldens](#regenerating-goldens). |
 | `-NoDreamShaderEditorBridge` | Skips creating the editor bridge and the Material Content Browser: no directory watcher, no Ephemeral generation pass at startup, no WebSocket listener on `127.0.0.1:17864`. Useful when a run must not compete with the bridge for the same sources. |
 | `-unattended -nopause -nosplash` | Standard headless flags; no modal dialogs, no splash, no keypress on exit. |
 | `-log` / `-stdout` | Route the log to the console. |
@@ -105,7 +122,6 @@ Every condition under which a test returns success without asserting anything.
 | `DreamShader.Render.ThinCustomVsGraphParity` | `GUsingNullRHI` or `!FApp::CanEverRender()` | `Skipping ThinCustom-vs-Graph render parity: no usable RHI (-nullrhi). Run without -nullrhi for the full pixel comparison.` |
 | `DreamShader.Roundtrip.MTestToonRenderParity` | `GUsingNullRHI` or `!FApp::CanEverRender()` | `Skipping M_Test_Toon round-trip render parity: no usable RHI (run without -nullrhi).` |
 | `DreamShader.Roundtrip.MTestToonRenderParity` | the project asset it round-trips is absent | `Skipping M_Test_Toon round-trip: '{ObjectPath}' is not present in this project.` |
-| `DreamShader.Gen.Material.*` | the fixture's extension is `.dsh` | `[{SourcePath}] is a .dsh header; nothing to generate (skipped).` |
 
 Runtime substitutions are shown as `{Placeholder}` in every message table on this page.
 
@@ -126,9 +142,9 @@ The editor-level tests all use the same scaffolding.
 | `FScopedDreamShaderGraphBackendPin` | RAII: forces `UDreamShaderSettings::DefaultBackend = Graph` for the scope and restores the previous value. |
 
 > [!NOTE]
-> The Generate corpus goldens encode **Graph-backend** semantics, so the Generate runner pins
-> `DefaultBackend = Graph` for the duration of each case. The project default is `ThinCustom`. A
-> fixture written against ThinCustom-specific behaviour will not behave as expected in the corpus.
+> The `Compile/` corpus goldens encode **Graph-backend** semantics, so that runner pins
+> `DefaultBackend = Graph` for the duration of each case. `Legacy/Compile/` is the exception: its
+> goldens were seeded from the 1.x captures of 2026-09-15 and pin **ThinCustom**, the project default.
 
 ## Test index
 
@@ -193,12 +209,26 @@ No editor, world or asset dependency; these run in milliseconds.
 | `DreamShader.Lang.Import.NormalizeSpecifier` | `NormalizeImportSpecifier`: extensionless specifiers gain `.dsh`, backslashes and leading `./` are stripped |
 | `DreamShader.Commandlet.Args.SplitAndGet` | Commandlet key/value normalization and the `Params → Switches → Tokens` search order |
 
-### Corpus runners — 2 declarations
+### Corpus runners — 13 declarations
 
-| Test base name | Macro | Corpus subtree |
-| :-- | :-- | :-- |
-| `DreamShader.Lang.Parse` | `IMPLEMENT_COMPLEX_AUTOMATION_TEST` | `Tests/Corpus/Parse` |
-| `DreamShader.Gen.Material` | `IMPLEMENT_CUSTOM_COMPLEX_AUTOMATION_TEST` with a quiet base | `Tests/Corpus/Generate` |
+| Test base name | Corpus subtree |
+| :-- | :-- |
+| `DreamShader.Lang.Parse` | `Parse/` — the 1.x parse-equivalence set, read by the legacy front end |
+| `DreamShader.Lang2.Corpus` | `Lang/` |
+| `DreamShader.Lang2.CorpusIR` | `IR/` (its `Instances/*.dsi` included) |
+| `DreamShader.Lang2.CorpusLegacyParse` | `Legacy/Parse/` |
+| `DreamShader.Lang2.CorpusLegacyIR` | `Legacy/IR/` |
+| `DreamShader.Lang2.CorpusDecompile` | `Decompile/` |
+| `DreamShader.Lang2.CorpusMigrate` | `Migrate/` |
+| `DreamShader.Lang2.RoundtripIR` | sweeps `IR/`, `Lang/Examples/` and `Compile/` without a text golden |
+| `DreamShader.Lang2.Trivia.CommentInvariant` | every fixture that parses, in both languages, one sub-test per corpus directory: no comment is lost through parse → print |
+| `DreamShader.Compiler2.Corpus` | `Compile/` |
+| `DreamShader.Compiler2.CorpusLegacy` | `Legacy/Compile/` — the former `Generate/` fixtures |
+| `DreamShader.Compiler2.CorpusInstance` | `Instance/` |
+| `DreamShader.Compiler2.Roundtrip.Corpus` | `Roundtrip/` |
+
+The four `Compiler2` runners are `IMPLEMENT_CUSTOM_COMPLEX_AUTOMATION_TEST` with a quiet base (graph
+auto-layout trips a benign engine ensure); the rest are `IMPLEMENT_COMPLEX_AUTOMATION_TEST`.
 
 ## Graph baseline *(since 1.9.0)*
 
@@ -269,89 +299,37 @@ Parity cases — ThinCustom and Graph twins of the same body, differing only in 
 
 `Tests/Corpus` lives under the **plugin**, not under the project's `DShader` tree, so it travels with
 the plugin and is never picked up by ordinary source discovery.
+[`Tests/Corpus/README.md`](../../Tests/Corpus/README.md) is the reference for the tree, every golden
+schema and every runner; this section is the map.
 
-```text
-<Plugin>/Tests/Corpus/
-  README.md
-  Parse/                      -> DreamShader.Lang.Parse.*
-    Builtins/                 B_  UE.* and Substrate.* call surfaces
-    Graph/                    G_  Graph statements and expressions
-    Lexical/                  L_  comments, strings, block balance
-    Sections/                 S_  Properties / Settings / Outputs / Inputs
-    TopLevel/                 T_  Shader / ShaderFunction / Namespace / VirtualFunction
-    Types/                    Ty_ type tokens and aliases
-  Generate/                   -> DreamShader.Gen.Material.*
-    Material/                 M_  end-to-end generation cases
-```
+| Layer | Sources | What a case does | Needs |
+| :-- | --: | :-- | :-- |
+| `Parse/` | 36 | a 1.x text is accepted or refused by the legacy front end exactly as 1.x did | `Core` |
+| `Lang/` | 72 | one `ParseDreamShaderLang`, structural counts, print → parse → print is byte-identical | `Core` |
+| `IR/` | 116 | bind → build → passes → validate; the golden is the IR dump | `Core`, hand-made catalog |
+| `Legacy/Parse/` | 117 | 1.x text → legacy front end (with trivia) → the 2.0 text it prints, which has to parse as 2.0 | `Core` |
+| `Legacy/IR/` | 46 | one fixture per documented 1.x rule (L2–L26) | `Core`, hand-made catalog |
+| `Decompile/` | 25 | `.dss` → IR → AST → text, and that text lowers to an equivalent IR | `Core`, hand-made catalog |
+| `Migrate/` | 20 | 1.x text → migrator → 2.0 text: no comment lost, it builds, the IR is equivalent | `Core`, hand-made catalog |
+| `Compile/` | 10 | the whole pipeline into assets; the golden holds the graph dump | editor |
+| `Legacy/Compile/` | 10 | the same for 1.x sources | editor |
+| `Instance/` | 10 | a `.dsi` with the sibling `.dss` its `Parent` names | editor |
+| `Roundtrip/` | 11 | `.dss` → asset → decompile service → text → asset; both dumps equal | editor |
+| `Parity/` | — | goldens only: 1.x graph captures the `Lang/Examples` sources have to reproduce | editor |
 
-Discovery is recursive over `*.dsm`, `*.dsf` and `*.dsh` under the layer directory, then sorted.
+Discovery is recursive over the layer's extensions, then sorted.
 
 > [!WARNING]
 > `Tests/` is **not** in the [release archive](release.md#archive-contents). A plugin installed from
-> a release zip has no corpus, so `DreamShader.Lang.Parse` and `DreamShader.Gen.Material` enumerate
-> zero sub-tests and the suite silently shrinks from 79 runnable tests to 38. Run the corpus from a
-> repository checkout.
-
-### Parse fixtures (32)
-
-| Directory | Fixture | Golden |
-| :-- | :-- | :-- |
-| `Parse/Builtins` | `B_Substrate.dsm` | — |
-| `Parse/Builtins` | `B_UEBuiltins.dsm` | — |
-| `Parse/Graph` | `G_Arithmetic.dsm` | — |
-| `Parse/Graph` | `G_BraceInit.dsm` | — |
-| `Parse/Graph` | `G_IfElse.dsm` | — |
-| `Parse/Graph` | `G_MaterialAttributes.dsm` | — |
-| `Parse/Graph` | `G_MathBuiltins.dsm` | — |
-| `Parse/Graph` | `G_SwizzleReorder.dsm` | — |
-| `Parse/Lexical` | `L_Comments.dsm` | — |
-| `Parse/Lexical` | `L_UnterminatedBlock.bad.dsm` | `L_UnterminatedBlock.bad.expected.json` |
-| `Parse/Lexical` | `L_UnterminatedString.bad.dsm` | — (implicit "must fail") |
-| `Parse/Sections` | `S_ExplicitParams.dsm` | — |
-| `Parse/Sections` | `S_NoEqualsSections.dsm` | — |
-| `Parse/Sections` | `S_OptInputs.dsf` | — |
-| `Parse/Sections` | `S_OutputsBinding.dsm` | — |
-| `Parse/Sections` | `S_PropertiesConst.dsm` | — |
-| `Parse/Sections` | `S_SettingsExtended.dsm` | — |
-| `Parse/Sections` | `S_ShaderFunctionNoEquals.dsf` | — |
-| `Parse/TopLevel` | `T_FunctionNoOut.bad.dsh` | — (implicit "must fail") |
-| `Parse/TopLevel` | `T_FunctionReturnType.dsh` | — |
-| `Parse/TopLevel` | `T_FunctionReturnVoid.bad.dsh` | — (implicit "must fail") |
-| `Parse/TopLevel` | `T_FunctionSelfContained.dsh` | — |
-| `Parse/TopLevel` | `T_GraphFunction.dsh` | — |
-| `Parse/TopLevel` | `T_MinimalShader.dsm` | `T_MinimalShader.expected.json` |
-| `Parse/TopLevel` | `T_Namespace.dsh` | — |
-| `Parse/TopLevel` | `T_ShaderFunction.dsf` | — |
-| `Parse/TopLevel` | `T_ShaderLayer.dsf` | — |
-| `Parse/TopLevel` | `T_ShaderLayerBlend.dsf` | — |
-| `Parse/TopLevel` | `T_ShaderNoName.bad.dsm` | — (implicit "must fail") |
-| `Parse/TopLevel` | `T_TwoShaders.bad.dsm` | — (implicit "must fail") |
-| `Parse/TopLevel` | `T_VirtualFunction.dsh` | — |
-| `Parse/Types` | `Ty_VectorAliases.dsm` | — |
-
-### Generate fixtures (9)
-
-| Fixture | Golden `outcome` | Golden `messageContains` |
-| :-- | :-- | :-- |
-| `M_GraphBuiltins.dsm` | `ok` | — |
-| `M_IfBranchParamRead.dsm` | `ok` | — |
-| `M_IfBranchTypeMismatch.dsm` | `error` | `["inconsistent types"]` |
-| `M_IntegerDivide.dsm` | `error` | `["Integer division is not supported"]` |
-| `M_MaterialAttributeRead.dsm` | `ok` | — |
-| `M_ScalarSwizzle.dsm` | `error` | `["Swizzle"]` |
-| `M_Suffix.dsm` | `ok` | — |
-| `M_Surface.dsm` | *no golden* — implicit "must succeed" | — |
-| `M_Truncate.dsm` | `error` | `["matching vector sizes"]` |
-
-Some `Generate/` fixtures deliberately encode a **known generator defect**: they assert today's wrong
-message, and turn red — demanding a golden update — when the defect is fixed.
+> a release zip has no corpus, so the thirteen runners enumerate zero sub-tests and the suite silently
+> shrinks to its simple declarations. Run the corpus from a repository checkout.
 
 ### Naming convention
 
 | Convention | Rule |
 | :-- | :-- |
-| Layer prefix | `L_` lexical, `T_` top-level, `S_` sections, `Ty_` types, `G_` graph, `B_` builtins, `M_` generate/material |
-| Negative case | the filename **contains `.bad.`**, matched case-insensitively. With no golden, the default expectation flips to "parse or generation FAILS" |
+| Layer prefix | a short prefix per directory (`L_` lexical, `T_` top-level, `S_` sections, `Ty_` types, `E_` expressions, `D_` declarations or decompile, `Rf_` reflected, `Cu_` custom, `M_` material, `I_` instance, `H_` header …) |
+| Negative case | the filename **contains `.bad.`**, matched case-insensitively. With no golden, the default expectation flips to "this FAILS" |
 | Golden name | only the last extension is stripped, so `X.bad.dsm` pairs with `X.bad.expected.json` and `X.dsm` with `X.expected.json` |
 | Golden presence | optional — absent means the defaults apply: positive ⇒ must succeed, `.bad.` ⇒ must fail |
 | Sub-test name | the path relative to the layer directory with the extension stripped and `/` and `\` replaced by `.` |
@@ -360,38 +338,44 @@ Resulting full test names:
 
 ```text
 DreamShader.Lang.Parse.TopLevel.T_MinimalShader
-DreamShader.Lang.Parse.Lexical.L_UnterminatedBlock.bad
-DreamShader.Gen.Material.Material.M_Surface
+DreamShader.Lang2.CorpusIR.Reflected.Rf_LateBoundPin
+DreamShader.Compiler2.CorpusLegacy.Material.M_Surface
 ```
 
-> [!NOTE]
-> The Generate layer's segment is doubled — `DreamShader.Gen.Material` is the runner's own name and
-> `Material` is the subdirectory under `Corpus/Generate/`. Filtering on `DreamShader.Gen.Material`
-> still selects all of them.
+### Entry point per layer
 
-### Entry point per extension
+| Layer | Entry point |
+| :-- | :-- |
+| `Parse/`, `Lang/` | `ParseDreamShaderLang` — `Auto` picks the legacy front end for `.dsm` / `.dsf`, and per declaration in a `.dsh` |
+| `IR/`, `Legacy/IR/` | `BindDreamShaderLang` → `BuildDreamShaderIR` → `RunDreamShaderIRPasses` → `ValidateDreamShaderIR` |
+| `Legacy/Parse/` | `ParseDreamShaderLang` with `bKeepTrivia` → `PrintDreamShaderLang`, and the printed text parsed again as 2.0 |
+| `Decompile/` | `RaiseDreamShaderIR` → `BuildDreamShaderAstFromIR` → print → lower again → `AreDreamShaderIRModulesEquivalent` |
+| `Migrate/` | legacy parse + bind → `MigrateDreamShaderLegacyModule` → print → comments counted → built as 2.0 → IR equivalence |
+| `Compile/`, `Legacy/Compile/`, `Instance/`, `Parity/` | `CompileDreamShaderTestAssets` — the test façade over the compiler service's `CompileAssets` — then `dump-graph`'s dump of every asset |
+| `Roundtrip/` | compile → `RunDreamShaderDecompileRequest` over the whole source → compile the text under another scratch root → compare the two dumps |
 
-| Extension | Parse layer | Generate layer |
-| :-- | :-- | :-- |
-| `.dsm` | `FTextShaderParser::Parse` | `FMaterialGenerator::GenerateMaterialFromFile(path, msg, bForce=true, bAllowEphemeralThinCustom=true)` |
-| `.dsf` | `FTextShaderParser::Parse` | `FMaterialGenerator::GenerateAssetsFromFile(path, msg, bForce=true, bAllowEphemeralThinCustom=true)` |
-| `.dsh` | `FTextShaderParser::Parse` | skipped with an info message |
-
-The Generate layer always runs transient, so no `/Game` package is written and no cleanup is needed.
+The compile layers copy each fixture into a scratch source root and build into
+`/Game/DreamShaderTests/...`, and clean both up.
 
 ## `.expected.json`
 
-Every field is opt-in; an absent field asserts nothing. Fields under `definition` are read by the
-Parse layer only — the Generate runner ignores the whole `definition` object.
+Every field is opt-in; an absent field asserts nothing. The table below is the **`Parse/` layer's**
+golden (`"entryPoint": "parse"`): since the 1.x parser retired in 2.0, its `definition` fields are
+read out of the legacy front end's AST and `FLegacyMigrationInfo` instead of an
+`FTextShaderDefinition`, under the same names. Every other layer has its own shape — `lang`, `ir`,
+`legacy`, `legacy-ir`, `decompile`, `migrate`, `compile`, `roundtrip` — documented in
+[`Tests/Corpus/README.md`](../../Tests/Corpus/README.md). Two conventions they share:
+`errorContains` / `warningsContain` / `infosContain` hold `DSHnnnn` codes rather than message text,
+and a `...Pending: true` flag (`textPending`, `irPending`, `graphPending`) skips the byte comparison
+of a golden nobody has reviewed yet — removing the flag is the reviewer's act, never the writer's.
 
 | Field | Type | Layer | Meaning |
 | :-- | :-- | :-- | :-- |
 | `entryPoint` | string | — | **Informational only.** Never read by the decoder. The golden writers emit `"parse"` or `"generate"` |
-| `outcome` | string | both | `"error"`, compared case-insensitively, expects failure; **any other value, including `"ok"`, expects success**. Overrides the `.bad.` filename default |
-| `errorContains` | string[] | both | Every substring must appear in the diagnostic, compared case-insensitively. The Parse layer asserts it only on the failure path; the Generate layer asserts it either way |
-| `warningsContain` | string[] | Parse | Each substring must be found in some entry of `Definition.Warnings`, case-insensitively |
-| `messageContains` | string[] | Generate | Folded into `errorContains`; asserted against the generator's message whether the outcome is `ok` or `error` |
-| `definition.name` | string | Parse | Exact `FTextShaderDefinition::Name` |
+| `outcome` | string | all | `"error"`, compared case-insensitively, expects failure; **any other value, including `"ok"`, expects success**. Overrides the `.bad.` filename default |
+| `errorContains` | string[] | all | Every substring must appear in some error diagnostic, compared case-insensitively — in practice the `DSHnnnn` code |
+| `warningsContain` | string[] | all | Each substring must be found in some warning diagnostic, case-insensitively |
+| `definition.name` | string | Parse | The `Name=` of the first product block |
 | `definition.settings` | object | Parse | String → string. Asserted through `TryGetSetting`: **key case-insensitive, value exact**; every listed key must be present |
 | `definition.outputDeclarations` | number | Parse | Count of output declarations |
 | `definition.outputs` | number | Parse | Count of output bindings |
@@ -408,28 +392,29 @@ Parse layer only — the Generate runner ignores the whole `definition` object.
 
 ## Adding a fixture
 
-1. Drop a `.dsm`, `.dsf` or `.dsh` into `Tests/Corpus/Parse/<Layer>/` or
-   `Tests/Corpus/Generate/Material/`. Use the layer prefix; add `.bad.` to the stem for a negative
-   case.
+1. Drop a source into the layer's directory — `Tests/Corpus/IR/<Area>/X.dss`,
+   `Tests/Corpus/Legacy/Compile/Material/M_X.dsm`, … Use the layer prefix; add `.bad.` to the stem
+   for a negative case.
 2. Optionally add `<same stem>.expected.json` with any subset of the fields above. A positive case
    with no golden still asserts "must succeed"; a `.bad.` case with no golden asserts "must fail".
-3. **Write no C++ and do not recompile.** Both runners enumerate the tree on the next run.
+3. **Write no C++ and do not recompile.** Every runner enumerates its tree on the next run.
 4. Run the layer once to see the new sub-test appear:
    `-ExecCmds="Automation RunTests DreamShader.Lang.Parse; Quit"`.
 5. To bootstrap a golden from the actual result, add `-DreamShaderUpdateGolden` and run again, then
-   review the written JSON by hand before committing.
+   review the written JSON by hand before committing. A new text, IR or graph golden is written with
+   its `...Pending` flag set; delete the flag once you have read the golden line by line.
 
 ### Regenerating goldens
 
 With `-DreamShaderUpdateGolden` on the command line, each runner writes the golden instead of
 asserting it, logging `Updated golden '{Path}'.` or, on a write failure, `Failed to write golden '{Path}'.`
 
-What the writers emit:
-
-| Layer | Emitted fields |
-| :-- | :-- |
-| Parse | `entryPoint: "parse"`, `outcome`, then either `errorContains: [<the error>]` or a `definition` object with `name` (omitted when empty), `outputDeclarations`, `outputs`, `materialFunctions`, `materialFunction0Kind` (only when at least one exists), `virtualFunctions`, `codeNotEmpty` and `settings` (only when non-empty); plus a top-level `warningsContain` when the parse produced warnings |
-| Generate | `entryPoint: "generate"`, `outcome`, `messageContains: [<the message>]` |
+What the `Parse/` writer emits: `entryPoint: "parse"`, `outcome`, then either
+`errorContains: [<the codes>]` or a `definition` object with `name` (omitted when empty),
+`outputDeclarations`, `outputs`, `materialFunctions`, `materialFunction0Kind` (only when at least one
+exists), `virtualFunctions`, `codeNotEmpty` and `settings` (only when non-empty); plus a top-level
+`warningsContain` when the parse produced warnings. The other layers' writers are described with
+their schemas in the corpus README.
 
 Output is pretty-printed JSON.
 
@@ -523,7 +508,7 @@ DreamShader.Lang.Parse.TopLevel.T_TwoShaders.bad
 - [Preview](../tools/preview.md) — the renderer the parity tests drive
 - [Backend](../settings/backend.md) — `Graph` vs `ThinCustom`, the axis the parity cases compare
 - [Project settings](../settings/project.md) — `DefaultBackend`, which the Generate runner pins to `Graph`
-- [Parser API](../api/parser.md) — `FTextShaderParser::Parse`, the Parse layer's entry point
+- [`DreamShaderLang`](../api/lang-module.md) — `ParseDreamShaderLang` and every other entry point the text layers call
 - [Diagnostics index](../diagnostics/index.md) — the messages fixtures assert against
 - [Version compatibility](../api/version-compat.md) — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` and the UE 5.4 skip
 </content>

@@ -51,6 +51,12 @@
 > [!TIP]
 > 把所有 `.dsm`、`.dsf`、`.dsh` 文件纳入版本管理。生成的 Unreal 资产随时可以从源文件重建，不需要提交。
 
+> [!NOTE]
+> **2.0 beta 线**上，两种语法由同一个编译器构建：下面展示的 1.x 语法照常可用；与它并列的是一套
+> HLSL 形态的新语法 —— [`.dss`](Docs/language-v2/index.md) 源文件、[`.dsi`](Docs/language-v2/instances.md)
+> 材质实例、能写出这两种文件的反编译器，以及 [`dsc migrate`](Docs/tools/migrate.md)：它把 1.x 文件改写成
+> 2.0，并在落盘之前先证明改写后的文本构建出同一张图。
+
 ---
 
 ## 长什么样
