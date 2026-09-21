@@ -1,0 +1,14 @@
+{
+	"entryPoint": "parse",
+	"outcome": "ok",
+	"definition":
+	{
+		"name": "Functions/F_NoEquals",
+		"outputDeclarations": 0,
+		"outputs": 0,
+		"materialFunctions": 1,
+		"materialFunction0Kind": "ShaderFunction",
+		"virtualFunctions": 0,
+		"codeNotEmpty": true
+	}
+}

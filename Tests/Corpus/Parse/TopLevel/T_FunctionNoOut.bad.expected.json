@@ -2,6 +2,6 @@
 	"entryPoint": "parse",
 	"outcome": "error",
 	"errorContains": [
-		"DSH3266"
+		"DSH6305"
 	]
 }

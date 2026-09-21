@@ -1,0 +1,18 @@
+{
+	"entryPoint": "parse",
+	"outcome": "ok",
+	"definition":
+	{
+		"name": "DreamShaderTests/Corpus/M_VecAliases",
+		"outputDeclarations": 1,
+		"outputs": 1,
+		"materialFunctions": 0,
+		"virtualFunctions": 0,
+		"codeNotEmpty": true,
+		"settings":
+		{
+			"Domain": "UI",
+			"ShadingModel": "Unlit"
+		}
+	}
+}

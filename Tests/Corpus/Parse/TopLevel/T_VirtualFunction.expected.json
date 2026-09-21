@@ -1,0 +1,12 @@
+{
+	"entryPoint": "parse",
+	"outcome": "ok",
+	"definition":
+	{
+		"outputDeclarations": 0,
+		"outputs": 0,
+		"materialFunctions": 0,
+		"virtualFunctions": 1,
+		"codeNotEmpty": false
+	}
+}

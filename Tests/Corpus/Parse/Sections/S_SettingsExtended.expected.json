@@ -1,0 +1,21 @@
+{
+	"entryPoint": "parse",
+	"outcome": "ok",
+	"definition":
+	{
+		"name": "DreamShaderTests/Corpus/M_SettingsExtended",
+		"outputDeclarations": 2,
+		"outputs": 2,
+		"materialFunctions": 0,
+		"virtualFunctions": 0,
+		"codeNotEmpty": true,
+		"settings":
+		{
+			"Domain": "Surface",
+			"ShadingModel": "DefaultLit",
+			"BlendMode": "Translucent",
+			"TwoSided": "true",
+			"Wireframe": "false"
+		}
+	}
+}

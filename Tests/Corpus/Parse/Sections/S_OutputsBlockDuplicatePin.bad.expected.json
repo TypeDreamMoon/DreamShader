@@ -1,5 +1,7 @@
 {
 	"entryPoint": "parse",
 	"outcome": "error",
-	"errorContains": ["DSH3137"]
+	"errorContains": [
+		"DSH3268"
+	]
 }

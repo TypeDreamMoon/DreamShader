@@ -1,0 +1,14 @@
+{
+	"entryPoint": "parse",
+	"outcome": "ok",
+	"definition":
+	{
+		"name": "Layers/L_SimpleSurface",
+		"outputDeclarations": 0,
+		"outputs": 0,
+		"materialFunctions": 1,
+		"materialFunction0Kind": "ShaderLayer",
+		"virtualFunctions": 0,
+		"codeNotEmpty": true
+	}
+}
