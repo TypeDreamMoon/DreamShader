@@ -221,6 +221,14 @@ namespace UE::DreamShader::IR::Private
 				}
 			}
 
+			// Substrate sugar S5: `Substrate S = Substrate.Slab();` declares a value still to be built. No node yet: a
+			// node is made after what it reads, and what this one reads is written on the lines below.
+			if (Function->Locals[Slot].SubstrateBuilderClass != INDEX_NONE)
+			{
+				Frame().Locals[Slot] = FLoweredValue::MakeBuilder(BeginSubstrateBuilder(*Declarator.Initializer, Declarator.Name, Declarator.Span));
+				continue;
+			}
+
 			const FLoweredValue Value = LowerExpr(*Declarator.Initializer);
 
 			// A declared type is authoritative about width: `float3 c = 1;` is a float3.
@@ -555,6 +563,13 @@ namespace UE::DreamShader::IR::Private
 			FLoweredValue Result = TrueValue;
 			CarryPartial(Result, FalseValue);
 			return Result;
+		}
+
+		// Substrate sugar S5: a value still being built that one arm replaced (`S = T;`) is chosen against as the node
+		// it would have been. Against nothing at all it stays what it is, and the rule below for one empty arm keeps it.
+		if ((TrueValue.IsBuilder() && !FalseValue.IsEmpty()) || (FalseValue.IsBuilder() && !TrueValue.IsEmpty()))
+		{
+			return MergeValues(TakeSlotValue(TrueValue), TakeSlotValue(FalseValue), Condition, bStaticCondition, Span, What);
 		}
 
 		if (TrueValue.IsAggregate() && FalseValue.IsAggregate())

@@ -44,6 +44,13 @@ namespace UE::DreamShader::IR
 		/** Keep FIRNode::DebugName (the variable a value was first assigned to). Layout hints match on it. */
 		bool bKeepDebugNames = true;
 		/**
+		 * Whether the project has Substrate on: the host's `DS_SUBSTRATE`. Read by `#pragma material(Substrate = Bridge)`,
+		 * which folds the shading attributes into a Substrate node when it is, and by `Substrate = Native`, which refuses to
+		 * build when it is not (Substrate sugar S4). A host that sets it has to put `DS_SUBSTRATE` into the build key of
+		 * every source whose mode is not Legacy; the pipeline does.
+		 */
+		bool bSubstrateEnabled = false;
+		/**
 		 * An override for the catalog the build reads. Normally null: the catalog travels on
 		 * `FBoundModule::Catalog`, which the binder sets, and every catalog index in the bound
 		 * module is an index into that one. Setting this replaces it, which is what a tool that

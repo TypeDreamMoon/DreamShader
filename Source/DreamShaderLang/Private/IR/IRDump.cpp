@@ -646,6 +646,11 @@ namespace UE::DreamShader::IR
 				*Product.Name,
 				LexToString(Product.Backend));
 
+			if (Product.SubstrateMode != EIRSubstrateMode::Legacy)
+			{
+				Header += FString::Printf(TEXT(" substrate=%s"), LexToString(Product.SubstrateMode));
+			}
+
 			if (Product.Settings.Num() > 0)
 			{
 				Header += FString::Printf(TEXT(" settings{%s}"), *Private::RenderSettings(Product.Settings));
@@ -769,6 +774,10 @@ namespace UE::DreamShader::IR
 			Writer.KeyString(TEXT("kind"), LexToString(Product.Kind));
 			Writer.KeyString(TEXT("name"), Product.Name);
 			Writer.KeyString(TEXT("backend"), LexToString(Product.Backend));
+			if (Product.SubstrateMode != EIRSubstrateMode::Legacy)
+			{
+				Writer.KeyString(TEXT("substrate"), LexToString(Product.SubstrateMode));
+			}
 
 			if (!Product.AssetPathOverride.IsEmpty())
 			{

@@ -138,12 +138,18 @@ namespace UE::DreamShader::IR::Private
 			Value,
 			Aggregate,
 			Material,
+			/**
+			 * Substrate sugar S5: a Substrate value still being built (`Substrate S = Substrate.Slab();`). BuilderId
+			 * names its record in FIRBuilder::SubstrateBuilders; taking the value makes the node (TakeSlotValue).
+			 */
+			Builder,
 		};
 
 		EKind Kind = EKind::Empty;
 		FIRValue Value;
 		TArray<FLoweredValue> Fields;
 		FMaterialValue Material;
+		int32 BuilderId = INDEX_NONE;
 		/**
 		 * Empty because nothing has assigned the slot on any path that reaches here -- a local declared
 		 * without an initializer -- rather than because what was assigned already reported. Reading a
@@ -166,7 +172,15 @@ namespace UE::DreamShader::IR::Private
 		bool IsValue() const { return Kind == EKind::Value && Value.IsValid(); }
 		bool IsAggregate() const { return Kind == EKind::Aggregate; }
 		bool IsMaterial() const { return Kind == EKind::Material; }
+		bool IsBuilder() const { return Kind == EKind::Builder && BuilderId != INDEX_NONE; }
 
+		static FLoweredValue MakeBuilder(int32 InBuilderId)
+		{
+			FLoweredValue Result;
+			Result.Kind = EKind::Builder;
+			Result.BuilderId = InBuilderId;
+			return Result;
+		}
 		static FLoweredValue NeverAssigned()
 		{
 			FLoweredValue Result;
@@ -290,6 +304,36 @@ namespace UE::DreamShader::IR::Private
 		TArray<TArray<FLoweredValue>> Params;
 	};
 
+	/**
+	 * Substrate sugar S5: a Substrate value still being built. A node is made after what it reads (the invariant the
+	 * passes stand on, IRPasses.cpp) and what a builder reads is written after its declaration, so the declaration
+	 * makes this record and no node; the node is made when the value is first taken. The record lives beside the
+	 * slots and not in them, so that the node is made once: whichever arm of an `if` takes the value first makes it,
+	 * and the other arm, and the code after the `if`, take the same node.
+	 */
+	struct FSubstrateBuilderState
+	{
+		/** The `Substrate.Slab()` the local was declared with; its bound record says which node. */
+		const FExpr* Call = nullptr;
+		/** The local: the node's debug name, and what a message calls it. */
+		FString Name;
+		/** The region the declaration stood in, which is where the node belongs wherever the value is first taken. */
+		int32 Region = INDEX_NONE;
+		/** The declarator: the statement that bound the name, for the statement binding the node gets when it is made. */
+		Lang::FLangSpan DeclSpan;
+		/** What the members were given, by pin, in the order they were first written. */
+		TArray<FIRInput> Inputs;
+		/** ...and the arguments of sugar S3 among them, which are no pins of the node. */
+		TArray<TPair<FString, FIRValue>> Virtual;
+		TOptional<double> IorConstant;
+		/** The value has been taken: Node is what it made, or nothing when making it failed and said so. */
+		bool bTaken = false;
+		FIRValue Node;
+	};
+
+	/** The pin type a virtual argument of sugar S3 is fitted to: a colour is three wide, everything else is a scalar. */
+	ECatalogValueType SubstrateVirtualArgumentType(const FString& Name);
+
 	class FIRBuilder
 	{
 	public:
@@ -368,6 +412,46 @@ namespace UE::DreamShader::IR::Private
 		FIRValue MakeConstant(const double* Components, int32 Num, const Lang::FLangSpan& Span);
 		FIRValue MakeScalarConstant(double Value, const Lang::FLangSpan& Span);
 		FIRValue MakeCoreOp(EIROp Op, TArray<FIRValue> Operands, const FIRType& Result, const Lang::FLangSpan& Span);
+		/**
+		 * A reflected node the builder makes on its own account -- the expansion of a sugar. Output 0 of the new node; None,
+		 * with nothing raised, when the catalog has no `Namespace.ShortName` (the caller knows what to say about that).
+		 */
+		FIRValue MakeReflectedNode(const TCHAR* Namespace, const TCHAR* ShortName, TArray<FIRInput>&& Inputs, const Lang::FLangSpan& Span);
+		/**
+		 * Substrate sugar S3: the conversion nodes behind `Substrate.Slab(BaseColor = ..., Haziness = ..., IOR = ...)`, wired
+		 * into Node's real pins. Virtual holds the lowered virtual arguments by name; IorConstant is set when `IOR` folded.
+		 */
+		void ExpandSubstrateVirtualArguments(
+			FIRNode& Node,
+			const TArray<TPair<FString, FIRValue>>& Virtual,
+			const TOptional<double>& IorConstant,
+			const Lang::FLangSpan& Span);
+		/**
+		 * Substrate sugar S4, `Substrate = Bridge` in a Substrate project: the shading attributes of a sink move into one
+		 * `Substrate.ShadingModels` node that feeds FrontMaterial; what the engine still reads off the material itself
+		 * (Opacity, OpacityMask, WorldPositionOffset, ...) stays. False, with Sink untouched, when the mode, the project, the
+		 * domain or the material itself says there is nothing to fold.
+		 */
+		bool FoldSinkIntoSubstrate(FIRNode& Sink, const Lang::FLangSpan& Span);
+		/** Sugar S5: the record behind `Substrate S = Substrate.Slab();`. The index is what the slot holds. */
+		int32 BeginSubstrateBuilder(const FExpr& Call, const FString& Name, const Lang::FLangSpan& DeclSpan);
+		/** Sugar S5: the builder's node, made on the first call and the same one on every call after. */
+		FIRValue MaterialiseSubstrateBuilder(int32 BuilderId);
+		/** A slot's value as something that can be used: a builder becomes its node, anything else is itself. */
+		FLoweredValue TakeSlotValue(const FLoweredValue& Slot);
+		/** Sugar S5: the builder the local of a bound `S.Pin` holds right now; INDEX_NONE, and DSH4383 said, when it holds none. */
+		int32 FindSubstrateBuilder(const FBoundExpr& PinBound, const FExpr& Site);
+		/** Sugar S5: what a member was given; None when nothing gave it a value on this path. */
+		FIRValue ValueOfSubstrateBuilderMember(int32 BuilderId, const FString& Member, const Lang::FLangSpan& Span);
+		FLoweredValue LowerSubstrateBuilderRead(const FExpr& Expr, const FBoundExpr& Bound);
+		/** ValueExpr is null for `++` / `--`; CompoundOp is EIROp::Count for a plain `=`. */
+		FLoweredValue LowerSubstrateBuilderWrite(
+			const FExpr& Expr,
+			const FBoundExpr& Bound,
+			const FBoundExpr& TargetBound,
+			const FExpr* ValueExpr,
+			EIROp CompoundOp,
+			bool bValueIsPrevious);
 		FIRValue MakeSwizzle(FIRValue Value, const FString& Mask, const Lang::FLangSpan& Span);
 		FIRValue MakeAppend(const TArray<FIRValue>& Parts, const Lang::FLangSpan& Span);
 		FIRValue MakeBroadcast(FIRValue Value, int32 Width, const Lang::FLangSpan& Span);
@@ -451,7 +535,8 @@ namespace UE::DreamShader::IR::Private
 		FLoweredValue LowerConstructor(const FExpr& Expr, const FBoundExpr& Bound);
 		FLoweredValue LowerStructConstructor(const FExpr& Expr, const FBoundExpr& Bound);
 		FLoweredValue LowerInitializerList(const FExpr& Expr, const FBoundExpr& Bound);
-		FLoweredValue LowerReflectedCall(const FExpr& Expr, const FBoundExpr& Bound);
+		/** Builder (sugar S5): the members a builder was given, which join the call's own arguments -- it has none. */
+		FLoweredValue LowerReflectedCall(const FExpr& Expr, const FBoundExpr& Bound, const FSubstrateBuilderState* Builder = nullptr);
 		FLoweredValue LowerTextureSample(const FExpr& Expr, const FBoundExpr& Bound);
 		FLoweredValue LowerConditional(const FExpr& Expr, const FBoundExpr& Bound);
 		FLoweredValue LowerAssign(const FExpr& Expr, const FBoundExpr& Bound);
@@ -582,6 +667,8 @@ namespace UE::DreamShader::IR::Private
 
 		/** The product being built. */
 		FIRGraph* Graph = nullptr;
+		/** Its bound record: the sink reads the Substrate mode and the Domain off it. Null outside BuildProduct. */
+		const FBoundProduct* CurrentBoundProduct = nullptr;
 		FString SourceFile;
 		/** Product index by bound function index, so a call to a same-file export finds Prop::LocalFunction. */
 		TMap<int32, int32> ProductByFunction;
@@ -589,6 +676,8 @@ namespace UE::DreamShader::IR::Private
 		TArray<TUniquePtr<FFrame>> Frames;
 		/** Uniform/constant globals already lowered in this graph, by FBoundModule::Globals index. */
 		TMap<int32, FLoweredValue> GlobalValues;
+		/** Sugar S5: the Substrate values being built in this graph; FLoweredValue::BuilderId indexes it. */
+		TArray<FSubstrateBuilderState> SubstrateBuilders;
 
 		TArray<FConditionEntry> ConditionStack;
 		int32 CurrentRegion = INDEX_NONE;

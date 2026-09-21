@@ -545,6 +545,7 @@ namespace UE::DreamShader::IR::Private
 					Node.Inputs.Add({ Material.PinSpellingOf(Name), *Value });
 				}
 			}
+			FoldSinkIntoSubstrate(Node, Span);
 		}
 
 		const FIRValue Sink = AddNode(MoveTemp(Node), Span);

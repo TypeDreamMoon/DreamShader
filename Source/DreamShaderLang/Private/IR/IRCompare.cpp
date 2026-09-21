@@ -699,6 +699,11 @@ namespace UE::DreamShader::IR
 					OutDifference = FString::Printf(TEXT("the backend is %s on one side and %s on the other"), LexToString(A.Backend), LexToString(B.Backend));
 					return false;
 				}
+				if (A.SubstrateMode != B.SubstrateMode)
+				{
+					OutDifference = FString::Printf(TEXT("the Substrate mode is %s on one side and %s on the other"), LexToString(A.SubstrateMode), LexToString(B.SubstrateMode));
+					return false;
+				}
 				const FString SettingsA = RenderSettings(A.Settings);
 				const FString SettingsB = RenderSettings(B.Settings);
 				if (!SettingsA.Equals(SettingsB, ESearchCase::CaseSensitive))

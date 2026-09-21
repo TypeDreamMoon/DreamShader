@@ -288,6 +288,24 @@ namespace UE::DreamShader::IR
 	};
 	DREAMSHADERLANG_API const TCHAR* LexToString(EIRBackend Backend);
 
+	/**
+	 * `#pragma material(Substrate = ...)` (Substrate sugar S4): what a material written against the legacy attributes
+	 * becomes in a project that has Substrate on.
+	 */
+	enum class EIRSubstrateMode : uint8
+	{
+		/** The attributes as written, whatever the project: the engine converts them when it has to. The default. */
+		Legacy,
+		/**
+		 * One source for both kinds of project. With Substrate off, the attributes as written; with it on, the shading
+		 * attributes folded into one Substrate.ShadingModels node on FrontMaterial, the rest left on the material.
+		 */
+		Bridge,
+		/** The source drives FrontMaterial itself; with Substrate off that is an error, not an asset the engine cannot compile. */
+		Native,
+	};
+	DREAMSHADERLANG_API const TCHAR* LexToString(EIRSubstrateMode Mode);
+
 	// ------------------------------------------------------------------------ instances (.dsi)
 
 	/** The engine parameter kinds an instance can override. Mirrors EMaterialParameterType's set; never cast from it. */
@@ -406,6 +424,8 @@ namespace UE::DreamShader::IR
 		/** `#pragma material(...)` keys as written, Backend removed. Materials only. */
 		TMap<FString, FString> Settings;
 		EIRBackend Backend = EIRBackend::Graph;
+		/** Material products: `#pragma material(Substrate = ...)`. */
+		EIRSubstrateMode SubstrateMode = EIRSubstrateMode::Legacy;
 		/** `/// @library Cat|Sub`: exposes the function to the material function library. Functions only. */
 		FString LibraryPath;
 		/** `/// @desc`. */

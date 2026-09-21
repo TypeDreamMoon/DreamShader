@@ -88,6 +88,8 @@ namespace UE::DreamShader::IR::Private
 			return true;
 		case EKind::Material:
 			return Material == Other.Material;
+		case EKind::Builder:
+			return BuilderId == Other.BuilderId;
 		default:
 			return false;
 		}
@@ -143,6 +145,8 @@ namespace UE::DreamShader::IR::Private
 		OutProduct.AssetPathOverride = BoundProduct.AssetPathOverride;
 		OutProduct.Settings = BoundProduct.Settings;
 		OutProduct.Backend = BoundProduct.Backend;
+		OutProduct.SubstrateMode = BoundProduct.SubstrateMode;
+		CurrentBoundProduct = &BoundProduct;
 		OutProduct.BoundFunctionIndex = BoundProduct.FunctionIndex;
 		// 1.x destination (legacy rule L10, CONTRACT-UNITS A12): carried as the binder decided it.
 		OutProduct.bLegacyAssetPath = BoundProduct.bLegacyAssetPath;
@@ -176,6 +180,7 @@ namespace UE::DreamShader::IR::Private
 		Graph = &OutProduct.Graph;
 		Frames.Reset();
 		GlobalValues.Reset();
+		SubstrateBuilders.Reset();
 		// A body's own regions nest under the box its function was declared in (S-report #9).
 		CurrentRegion = INDEX_NONE;
 		if (Function.Decl)
@@ -545,6 +550,7 @@ namespace UE::DreamShader::IR::Private
 			return;
 		case FLoweredValue::EKind::Empty:
 		case FLoweredValue::EKind::Value:
+		case FLoweredValue::EKind::Builder:
 			if (!Value.bPartiallyAssigned)
 			{
 				Value.bPartiallyAssigned = true;
@@ -689,6 +695,32 @@ namespace UE::DreamShader::IR::Private
 		Node.Op = Op;
 		Node.Operands = MoveTemp(Operands);
 		Node.Outputs.Add(Result);
+		return AddNode(MoveTemp(Node), Span);
+	}
+
+	FIRValue FIRBuilder::MakeReflectedNode(const TCHAR* Namespace, const TCHAR* ShortName, TArray<FIRInput>&& Inputs, const FLangSpan& Span)
+	{
+		if (!Catalog)
+		{
+			return FIRValue::None();
+		}
+		const int32 CatalogIndex = Catalog->FindExpression(Namespace, ShortName);
+		if (!Catalog->Expressions.IsValidIndex(CatalogIndex))
+		{
+			return FIRValue::None();
+		}
+		const FCatalogExpression& Entry = Catalog->Expressions[CatalogIndex];
+
+		FIRNode Node;
+		Node.Op = EIROp::Reflected;
+		Node.ClassName = Entry.ShortName;
+		Node.CatalogIndex = CatalogIndex;
+		for (const FCatalogPin& Output : Entry.Outputs)
+		{
+			Node.Outputs.Add(TypeFromCatalogValueType(Output.Type));
+			Node.OutputNames.Add(Output.Name);
+		}
+		Node.Inputs = MoveTemp(Inputs);
 		return AddNode(MoveTemp(Node), Span);
 	}
 
@@ -1457,12 +1489,48 @@ namespace UE::DreamShader::IR::Private
 		const bool bFalseSubstrate = FalseType.Kind == EIRTypeKind::Substrate;
 		if (bTrueSubstrate || bFalseSubstrate)
 		{
-			if (!bStaticCondition || bTrueSubstrate != bFalseSubstrate)
+			if (bTrueSubstrate != bFalseSubstrate)
 			{
 				Diagnostics.Error(TEXT("DSH4378"), Span, FText::Format(
-					LOCTEXT("IRBuilderSubstrateBranch", "A branch over {0} values needs a static condition, and this one is decided at run time; make the condition a '/// @static' uniform bool, or mix the two values with a Substrate mixing node."),
+					LOCTEXT("IRBuilderSubstrateBranchMixed", "A branch chooses between two {0} values or between two numbers, and this one has one of each."),
 					FText::FromString(FIRType::Substrate().ToString())));
 				return TrueValue;
+			}
+			if (!bStaticCondition)
+			{
+				// Substrate sugar S2. The engine's If does not carry a Substrate value; SubstrateSelect does:
+				// `SelectValue > Threshold ? B : A`, Threshold 0.5 by default, which a 0/1 condition lands on either side of.
+				// The condition reaches the pin as the same argument would in `Substrate.Select(SelectValue = c)`: a bool
+				// becomes a number first (ValueForPin's Numeric conversion), so the two spellings are one graph.
+				TArray<FIRInput> Inputs;
+				Inputs.Add({ FString(TEXT("A")), FalseValue });
+				Inputs.Add({ FString(TEXT("B")), TrueValue });
+				Inputs.Add({ FString(TEXT("SelectValue")), CoerceToWidth(ApplyConversion(Condition, EIRConversion::Numeric, INDEX_NONE, Span), 1, Span) });
+				const FIRValue Selected = MakeReflectedNode(TEXT("Substrate"), TEXT("Select"), MoveTemp(Inputs), Span);
+				if (!Selected.IsValid())
+				{
+					Diagnostics.Error(TEXT("DSH4378"), Span, FText::Format(
+						LOCTEXT("IRBuilderSubstrateBranch", "A run-time branch over {0} values becomes a 'Substrate.Select' node, which Unreal Engine has from 5.6 on and this engine does not; make the condition a '/// @static' uniform bool, or mix the two values with lerp()."),
+						FText::FromString(FIRType::Substrate().ToString())));
+					return TrueValue;
+				}
+
+				// Select always blends parameters, and the engine refuses some pairs of unlike BSDFs. Said as a warning:
+				// which pairs is the engine's business, and it reports them itself when the material compiles.
+				if (Graph && Graph->Nodes.IsValidIndex(TrueValue.Node) && Graph->Nodes.IsValidIndex(FalseValue.Node))
+				{
+					const FIRNode& TrueNode = Graph->Nodes[TrueValue.Node];
+					const FIRNode& FalseNode = Graph->Nodes[FalseValue.Node];
+					if (TrueNode.Op == EIROp::Reflected && FalseNode.Op == EIROp::Reflected
+						&& !TrueNode.ClassName.Equals(FalseNode.ClassName, ESearchCase::CaseSensitive))
+					{
+						Diagnostics.Warning(TEXT("DSH4380"), Span, FText::Format(
+							LOCTEXT("IRBuilderSubstrateSelectKinds", "This branch becomes a 'Substrate.Select', which parameter-blends its two inputs; they are a '{0}' and a '{1}', and the engine may refuse to blend unlike BSDFs."),
+							FText::FromString(TrueNode.ClassName),
+							FText::FromString(FalseNode.ClassName)));
+					}
+				}
+				return Selected;
 			}
 			return MakeCoreOp(EIROp::StaticSwitch, { Condition, TrueValue, FalseValue }, FIRType::Substrate(), Span);
 		}

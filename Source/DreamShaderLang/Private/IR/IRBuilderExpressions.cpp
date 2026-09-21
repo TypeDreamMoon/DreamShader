@@ -284,7 +284,8 @@ namespace UE::DreamShader::IR::Private
 			// A value one arm of an `if` assigned and the other did not: this read is where that matters
 			// (debt B6 (ii)).
 			ReportPartialRead(Frame().Locals[BoundExpr->LocalSlot]);
-			return Frame().Locals[BoundExpr->LocalSlot];
+			// Substrate sugar S5: naming a value still being built takes it, and that is what makes its node.
+			return TakeSlotValue(Frame().Locals[BoundExpr->LocalSlot]);
 		}
 
 		case EBoundExprKind::Param:
@@ -502,6 +503,10 @@ namespace UE::DreamShader::IR::Private
 		case EBoundExprKind::FunctionCallOutput:
 			// Legacy rule L3b (IRBuilderLegacy.cpp).
 			return LowerFunctionCallOutput(Expr, *BoundExpr);
+
+		case EBoundExprKind::SubstrateBuilderPin:
+			// Substrate sugar S5 (IRBuilderSubstrate.cpp): what the member was given. A write is an Assign.
+			return LowerSubstrateBuilderRead(Expr, *BoundExpr);
 
 		case EBoundExprKind::Error:
 		default:
@@ -773,6 +778,12 @@ namespace UE::DreamShader::IR::Private
 
 	const FExpr* FIRBuilder::ArgumentExpr(const FExpr& CallExpr, const FBoundArgument& Argument) const
 	{
+		// Substrate sugar S1: `A + B` bound as a node call. The operands are the arguments, by ordinal.
+		if (const FBinaryExpr* Binary = CallExpr.As<FBinaryExpr>())
+		{
+			return Argument.ArgumentIndex == 0 ? Binary->Left.Get() : Argument.ArgumentIndex == 1 ? Binary->Right.Get() : nullptr;
+		}
+
 		const FCallExpr* Call = CallExpr.As<FCallExpr>();
 		if (!Call || !Call->Arguments.IsValidIndex(Argument.ArgumentIndex))
 		{
@@ -885,7 +896,7 @@ namespace UE::DreamShader::IR::Private
 		}
 	}
 
-	FLoweredValue FIRBuilder::LowerReflectedCall(const FExpr& Expr, const FBoundExpr& BoundExpr)
+	FLoweredValue FIRBuilder::LowerReflectedCall(const FExpr& Expr, const FBoundExpr& BoundExpr, const FSubstrateBuilderState* Builder)
 	{
 		// A missing catalog was reported once for the whole module; saying it again per call would
 		// bury the one message that matters under one per `UE.*` line.
@@ -941,11 +952,35 @@ namespace UE::DreamShader::IR::Private
 
 		TArray<FString> LateBoundPins;
 		TArray<FString> WrittenPins;
+		// Substrate sugar S3: what `BaseColor = ...` and its kind lowered to, by name, and an `IOR` that was a number.
+		TArray<TPair<FString, FIRValue>> VirtualValues;
+		TOptional<double> IorConstant;
 		for (const FBoundArgument& Argument : BoundExpr.Args)
 		{
 			const FExpr* Value = ArgumentExpr(Expr, Argument);
 			if (!Value)
 			{
+				continue;
+			}
+
+			if (Argument.bIsVirtual)
+			{
+				const FExpr* InnerValue = Unparen(Value);
+				const FBoundExpr* BoundVirtual = InnerValue ? Bound(*InnerValue) : nullptr;
+				if (BoundVirtual && BoundVirtual->bIsConstant && Argument.Target.Equals(TEXT("IOR"), ESearchCase::CaseSensitive))
+				{
+					IorConstant = BoundVirtual->ConstantValue[0];
+					continue;
+				}
+				const FIRValue Lowered = ValueForPin(
+					LowerExpr(*Value),
+					SubstrateVirtualArgumentType(Argument.Target),
+					Argument.Conversion,
+					Value->Span);
+				if (Lowered.IsValid())
+				{
+					VirtualValues.Add(TPair<FString, FIRValue>(Argument.Target, Lowered));
+				}
 				continue;
 			}
 
@@ -1038,6 +1073,20 @@ namespace UE::DreamShader::IR::Private
 					LateBoundPins.AddUnique(Argument.Target);
 				}
 			}
+		}
+		if (Builder)
+		{
+			// Substrate sugar S5: the members a builder was given are the arguments its call did not have.
+			Node.Inputs.Append(Builder->Inputs);
+			VirtualValues.Append(Builder->Virtual);
+			if (Builder->IorConstant.IsSet())
+			{
+				IorConstant = Builder->IorConstant;
+			}
+		}
+		if (VirtualValues.Num() > 0 || IorConstant.IsSet())
+		{
+			ExpandSubstrateVirtualArguments(Node, VirtualValues, IorConstant, Expr.Span);
 		}
 		if (WrittenPins.Num() > 0)
 		{
@@ -1239,6 +1288,16 @@ namespace UE::DreamShader::IR::Private
 		if (!TargetExpr || (!bIsStep && !ValueExpr))
 		{
 			return FLoweredValue();
+		}
+
+		// Substrate sugar S5: `S.Pin = x` on a value still being built connects the pin. There is no slot behind it.
+		{
+			const FExpr* InnerTarget = Unparen(TargetExpr);
+			const FBoundExpr* TargetBound = InnerTarget ? Bound(*InnerTarget) : nullptr;
+			if (TargetBound && TargetBound->Kind == EBoundExprKind::SubstrateBuilderPin)
+			{
+				return LowerSubstrateBuilderWrite(Expr, BoundExpr, *TargetBound, bIsStep ? nullptr : ValueExpr, CompoundOp, bValueIsPrevious);
+			}
 		}
 
 		FLValueRef Ref;
@@ -1521,6 +1580,11 @@ namespace UE::DreamShader::IR::Private
 		if (!Slot)
 		{
 			return FLoweredValue();
+		}
+		if (Slot->IsBuilder())
+		{
+			// Substrate sugar S5: read whole -- the copy an `inout` argument makes -- a value still being built is its node.
+			return TakeSlotValue(*Slot);
 		}
 
 		if (!Ref.MaterialAttribute.IsEmpty())

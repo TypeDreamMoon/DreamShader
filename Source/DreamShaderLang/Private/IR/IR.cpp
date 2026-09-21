@@ -509,6 +509,18 @@ namespace UE::DreamShader::IR
 		return TEXT("Graph");
 	}
 
+	const TCHAR* LexToString(const EIRSubstrateMode Mode)
+	{
+		switch (Mode)
+		{
+		case EIRSubstrateMode::Legacy: return TEXT("Legacy");
+		case EIRSubstrateMode::Bridge: return TEXT("Bridge");
+		case EIRSubstrateMode::Native: return TEXT("Native");
+		}
+
+		return TEXT("Legacy");
+	}
+
 	int32 FIRModule::CountProducts(const EIRProductKind Kind) const
 	{
 		int32 Count = 0;
