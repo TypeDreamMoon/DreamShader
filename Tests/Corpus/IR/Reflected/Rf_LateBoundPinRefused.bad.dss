@@ -1,0 +1,9 @@
+// Rule L24 is for the classes that name their pins per node. Anywhere else a name the class does not list is a slip
+// (DSH5213), as it always was in a `.dss`.
+uniform float3 V = float3(1, 2, 3);
+uniform float Gain = 0.5;
+
+export void M_RfLateBoundPinRefused(inout material m)
+{
+    m.Opacity = UE.DotProduct(A = V, B = V, Intensity = Gain);
+}

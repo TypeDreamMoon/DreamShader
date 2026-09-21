@@ -1,0 +1,6 @@
+// A required pin left open is said (DSH5219, a warning) and the graph still builds: "required" is how the engine draws
+// a pin, and whether the node can do without it is something only the material compile knows.
+export void M_RequiredPinMissing(inout material m)
+{
+    m.Opacity = UE.DotProduct(A = float3(1, 0, 0));
+}

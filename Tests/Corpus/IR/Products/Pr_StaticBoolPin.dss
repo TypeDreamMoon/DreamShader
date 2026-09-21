@@ -1,0 +1,14 @@
+// `/// @static <Parameter>`: that `bool` input is a StaticBool pin (the 1.x `StaticBool` input). The value stays a bool in
+// the graph, an `if` on it is a StaticSwitch whose two sides are both built, and its default travels as PreviewValue,
+// which the emitter turns into a StaticBool node on the input's Preview pin.
+/// @static UseDimmed
+/// @param UseDimmed Halve the colour
+export float3 MF_PrStaticBoolPin(float3 Colour, bool UseDimmed = false, float Gain = 1.0)
+{
+    float3 Result = Colour * Gain;
+    if (UseDimmed)
+    {
+        Result = Result * 0.5;
+    }
+    return Result;
+}

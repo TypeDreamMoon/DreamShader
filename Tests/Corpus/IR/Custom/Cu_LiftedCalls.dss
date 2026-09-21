@@ -1,0 +1,17 @@
+// Plan section 11 #19: a `UE.` call in a `/// @custom` body is a graph node wired to an input of the Custom node
+// (`_ds_<Fn>_UE0`, `_UE1`), lowered at every call site with the parameters holding that call's arguments. The two
+// calls differ in `Gain`, so their UE1 inputs differ; the Time node behind UE0 is one node for both.
+
+/// @custom
+float Pulse(float2 UV, float Gain)
+{
+    float T = UE.Time();
+    float Mixed = UE.LinearInterpolate(A = 0.0, B = Gain, Alpha = 0.5);
+    return sin(UV.x * 8.0 + T) * Mixed;
+}
+
+export void M_CuLiftedCalls(inout material m)
+{
+    float2 UV = UE.TextureCoordinate(CoordinateIndex = 0);
+    m.Opacity = Pulse(UV, 2.0) * Pulse(UV, 4.0);
+}

@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"B6_ConstantConditional.dss\"\n\nproduct 0 Material \"M_B6_ConstantConditional\" backend=Graph\n  %0 = Constant(Value=(0.5)) : float @L9:C27 \"Direct\"\n  %1 = Constant(Value=(0.4375)) : float @L16:C9 \"Sum\"\n  %2 = MaterialSink(Opacity=%0, Roughness=%1) @L6:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_B6_ConstantConditional"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

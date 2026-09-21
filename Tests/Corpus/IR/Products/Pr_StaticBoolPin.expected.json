@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Pr_StaticBoolPin.dss\"\n\nproduct 0 MaterialFunction \"MF_PrStaticBoolPin\" backend=Graph\n  %0 = FunctionInput(InputName=\"Colour\", InputType=\"Vector3\", IsOptional=false, SortPriority=0) : float3 @L6:C1 \"Colour\"\n  %1 = FunctionInput(Description=\"Halve the colour\", InputName=\"UseDimmed\", InputType=\"StaticBool\", IsOptional=true, PreviewValue=(0, 0, 0, 0), SortPriority=1) : bool @L6:C1 \"UseDimmed\"\n  %2 = FunctionInput(InputName=\"Gain\", InputType=\"Scalar\", IsOptional=true, PreviewValue=(1, 1, 1, 1), SortPriority=2) : float @L6:C1 \"Gain\"\n  %3 = Multiply(%0, %2) : float3 @L8:C21 \"Result\"\n  %4 = Constant(Value=(0.5)) : float @L11:C27 \"Result\"\n  %5 = Multiply(%3, %4) : float3 @L11:C18 \"Result\"\n  %6 = StaticSwitch(%1, %5, %3) : float3 @L9:C5\n  %7 = FunctionOutput(%6, OutputName=\"Result\", SortPriority=0) @L6:C1 \"Result\"\n  inputs %0, %1, %2\n  outputs %7\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction"
+		],
+		"productNames": [
+			"MF_PrStaticBoolPin"
+		],
+		"nodeCounts": [
+			8
+		]
+	}
+}

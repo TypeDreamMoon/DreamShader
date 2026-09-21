@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Cu_LiftedCalls.dss\"\n\nproduct 0 Material \"M_CuLiftedCalls\" backend=Graph\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L15:C17 \"UV\"\n  %1 = Constant(Value=(2)) : float @L16:C27 \"Opacity\"\n  %2 = Reflected[Time]() : float @L8:C15 via L16:C17 \"Opacity\"\n  %3 = Reflected[LinearInterpolate](B=%1, ConstA=0, ConstAlpha=0.5) : float @L9:C19 via L16:C17 \"Opacity\"\n  %4 = Custom[Pulse](UV=%0, Gain=%1, _ds_Pulse_UE0=%2, _ds_Pulse_UE1=%3, Code=\"// Begin DreamShader source: <corpus>/IR/Custom/Cu_LiftedCalls.dss\\n// DreamShader custom: Pulse line 7\\n\\n    float T = _ds_Pulse_UE0;\\n    float Mixed = _ds_Pulse_UE1                                       ;\\n    return sin(UV.x * 8.0 + T) * Mixed;\\n// End DreamShader source: <corpus>/IR/Custom/Cu_LiftedCalls.dss\\n\", Description=\"Pulse\", OutputType=\"Float1\") : [Result:float] @L16:C17 \"Opacity\"\n  %5 = Constant(Value=(4)) : float @L16:C44 \"Opacity\"\n  %6 = Reflected[LinearInterpolate](B=%5, ConstA=0, ConstAlpha=0.5) : float @L9:C19 via L16:C34 \"Opacity\"\n  %7 = Custom[Pulse](UV=%0, Gain=%5, _ds_Pulse_UE0=%2, _ds_Pulse_UE1=%6, Code=\"// Begin DreamShader source: <corpus>/IR/Custom/Cu_LiftedCalls.dss\\n// DreamShader custom: Pulse line 7\\n\\n    float T = _ds_Pulse_UE0;\\n    float Mixed = _ds_Pulse_UE1                                       ;\\n    return sin(UV.x * 8.0 + T) * Mixed;\\n// End DreamShader source: <corpus>/IR/Custom/Cu_LiftedCalls.dss\\n\", Description=\"Pulse\", OutputType=\"Float1\") : [Result:float] @L16:C34 \"Opacity\"\n  %8 = Multiply(%4, %7) : float @L16:C17 \"Opacity\"\n  %9 = MaterialSink(Opacity=%8) @L13:C1\n  sink %9\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_CuLiftedCalls"
+		],
+		"nodeCounts": [
+			10
+		]
+	}
+}

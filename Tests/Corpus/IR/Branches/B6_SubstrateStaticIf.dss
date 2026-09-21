@@ -1,0 +1,16 @@
+// Batch 2, debt B6 (i): an `if` whose arms leave a Substrate value keeps the arm type. Under a static
+// condition the merge is a StaticSwitch typed Substrate (1.x does the same since 0eee929); it is never
+// narrowed to a float1 conditional.
+
+/// @static
+uniform bool UseWarm = true;
+
+export void M_B6_SubstrateStaticIf(inout material m)
+{
+    Substrate Front = Substrate.Unlit(EmissiveColor = float3(0, 0.5, 1));
+    if (UseWarm)
+    {
+        Front = Substrate.Unlit(EmissiveColor = float3(1, 0.5, 0));
+    }
+    m.FrontMaterial = Front;
+}

@@ -1,0 +1,18 @@
+// Batch 2, debt B6 (ii): a local declared before an `if`, then assigned and read only inside one arm, is
+// correct code and lowers cleanly. DSH4372 is said only when the partially assigned value is read after
+// the `if`; B6_OneArmReadAfter.bad.dss is that case.
+
+uniform float Threshold = 0.5;
+
+export void M_B6_OneArmReadInside(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0);
+    float Scale;
+    float3 Colour = float3(0, 0, 0);
+    if (UV.x > Threshold)
+    {
+        Scale = 2;
+        Colour = float3(0.5, 0.25, 0) * Scale;
+    }
+    m.EmissiveColor = Colour;
+}

@@ -1,0 +1,8 @@
+// Rule L4, general: a Custom class names the inputs it wants at the call; the validator lets the node carry them.
+uniform float A = 1;
+uniform float B = 2;
+
+export void M_CustomDynamicInputs(inout material m)
+{
+    m.Opacity = UE.Expression(Class = "Custom", Code = "return X + Y;", OutputType = Float1, X = A, Y = B);
+}

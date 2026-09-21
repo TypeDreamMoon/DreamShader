@@ -1,0 +1,15 @@
+// Plan section 11 #19: a lifted call is evaluated in the graph, outside the body, so it can read the function's
+// parameters and the file's globals and nothing the body declares (DSH6326).
+
+/// @custom
+float Shifted(float2 UV)
+{
+    float Index = 1.0;
+    float2 Other = UE.TextureCoordinate(CoordinateIndex = Index);
+    return UV.x * Other.y;
+}
+
+export void M_CuLiftedCallReadsLocal(inout material m)
+{
+    m.Opacity = Shifted(UE.TextureCoordinate(CoordinateIndex = 0));
+}

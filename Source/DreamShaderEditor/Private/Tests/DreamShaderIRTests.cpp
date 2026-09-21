@@ -568,6 +568,11 @@ bool FDreamShaderLang2IRMaterialFieldsTest::RunTest(const FString& Parameters)
 			TestTrue(
 				TEXT("and a layer blend returns a SetMaterialAttributes chain"),
 				CountOp(BlendGraph, EIROp::SetMaterialAttributes) > 0);
+			// The engine's layer stack takes a blend with exactly two FunctionInputs, so nothing arrives through the result.
+			TestEqual(
+				TEXT("the `inout material` result of a blend is an output only"),
+				CountOp(BlendGraph, EIROp::FunctionInput),
+				2);
 		}
 		else
 		{

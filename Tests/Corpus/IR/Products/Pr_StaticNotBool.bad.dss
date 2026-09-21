@@ -1,0 +1,6 @@
+// `@static` makes a parameter a static bool pin, which only a `bool` input can be (DSH7231).
+/// @static Gain
+export float3 MF_PrStaticNotBool(float3 Colour, float Gain = 1.0)
+{
+    return Colour * Gain;
+}

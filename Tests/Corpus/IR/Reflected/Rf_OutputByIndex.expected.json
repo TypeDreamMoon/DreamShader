@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"Rf_OutputByIndex.dss\"\n\nproduct 0 Material \"M_OutputByIndex\" backend=Graph\n  %0 = Reflected[SceneTexture](SceneTextureId=\"SceneColor\") : [Color:float4, Size:float2, InvSize:float2] @L4:C17 \"Opacity\"\n  %1 = Swizzle(%0#2, Mask=\"x\") : float @L4:C17 \"Opacity\"\n  %2 = MaterialSink(Opacity=%1) @L2:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_OutputByIndex"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

@@ -1,0 +1,10 @@
+// Rule L24 in a `.dss`: a class whose nodes name their pins after a property (the catalog says so) takes a pin by the
+// name the node shows -- `Thickness`, which the default node does not have -- and the emitter looks it up on the node
+// it built (DSH8212 when no pin is called that). Said with an Info (DSH5291). `Intensity` is a name the default
+// node shows, so the catalog lists it, and `ChannelX` is the pin's own name.
+uniform float Gain = 0.5;
+
+export void M_RfLateBoundPin(inout material m)
+{
+    m.Opacity = Substrate.MoonToonModifier(Modifier = OilFilm, Thickness = Gain, Intensity = 0.25, ChannelX = Gain).Id;
+}

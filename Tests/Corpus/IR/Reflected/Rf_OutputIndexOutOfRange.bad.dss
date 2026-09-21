@@ -1,0 +1,5 @@
+// SceneTexture has three outputs (DSH5282).
+export void M_OutputIndexOutOfRange(inout material m)
+{
+    m.Opacity = UE.SceneTexture(SceneTextureId = SceneColor)[9].x;
+}

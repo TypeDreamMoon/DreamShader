@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"B6_OneArmReadInside.dss\"\n\nproduct 0 Material \"M_B6_OneArmReadInside\" backend=Graph\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L9:C17 \"UV\"\n  %1 = Constant(Value=(0, 0, 0)) : float3 @L11:C21 \"Colour\"\n  %2 = Swizzle(%0, Mask=\"x\") : float @L12:C9\n  %3 = Parameter(DefaultValue=(0.5), ParameterName=\"Threshold\", SortPriority=0) : float @L5:C1 \"Threshold\"\n  %4 = Constant(Value=(1, 0.5, 0)) : float3 @L15:C18 \"Colour\"\n  %5 = Compare(%2, %3, %4, %1, %1) : float3 @L12:C5\n  %6 = MaterialSink(EmissiveColor=%5) @L7:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_B6_OneArmReadInside"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

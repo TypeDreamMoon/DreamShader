@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH5219"
+	],
+	"ir": "module \"Rf_RequiredPinMissing.dss\"\n\nproduct 0 Material \"M_RequiredPinMissing\" backend=Graph\n  %0 = Constant(Value=(1, 0, 0)) : float3 @L5:C35 \"Opacity\"\n  %1 = Reflected[DotProduct](A=%0) : float @L5:C17 \"Opacity\"\n  %2 = MaterialSink(Opacity=%1) @L3:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_RequiredPinMissing"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

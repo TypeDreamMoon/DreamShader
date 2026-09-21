@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH5291"
+	],
+	"ir": "module \"Rf_LateBoundPin.dss\"\n\nproduct 0 Material \"M_RfLateBoundPin\" backend=Graph\n  %0 = Parameter(DefaultValue=(0.5), ParameterName=\"Gain\", SortPriority=0) : float @L5:C1 \"Gain\"\n  %1 = Constant(Value=(0.25)) : float @L9:C94 \"Opacity\"\n  %2 = Reflected[MoonToonModifier](Thickness=%0, ChannelW=%1, ChannelX=%0, LateBoundPins=\"[Thickness]\", Modifier=\"OilFilm\", WrittenPins=\"[ChannelW=Intensity]\") : [Payload:float4, Id:float] @L9:C17 \"Opacity\"\n  %3 = MaterialSink(Opacity=%2#1) @L7:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_RfLateBoundPin"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

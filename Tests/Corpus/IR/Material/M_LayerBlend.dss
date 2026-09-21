@@ -1,5 +1,5 @@
-// A layer blend's inputs arrive THROUGH pins, so reading a field off one is GetMaterialAttributes
-// and the result is a SetMaterialAttributes chain (CONTRACT 6.2, last two sentences).
+// A layer blend's inputs arrive THROUGH pins, so reading a field off one is GetMaterialAttributes. Nothing arrives
+// through its `inout material`: the result starts empty, so what the blend writes is one MakeMaterialAttributes.
 
 /// @layerblend
 export void B_LayerBlend(material A, material B, inout material R)

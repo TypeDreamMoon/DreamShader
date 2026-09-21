@@ -1,0 +1,8 @@
+{
+	"entryPoint": "ir",
+	"outcome": "error",
+	"errorContains": [
+		"DSH5224",
+		"DSH6326"
+	]
+}

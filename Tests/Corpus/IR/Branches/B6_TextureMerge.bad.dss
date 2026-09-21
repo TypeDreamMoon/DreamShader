@@ -1,0 +1,20 @@
+// Batch 2, debt B6 (i): no material graph node switches a texture object, so an `if` that leaves a
+// texture in a local is refused -- static condition or not -- with a message that names the texture
+// type (DSH4379) instead of a float1 conditional.
+
+/// @default /Engine/EngineResources/DefaultTexture
+uniform Texture2D First;
+/// @default /Engine/EngineResources/WhiteSquareTexture
+uniform Texture2D Second;
+/// @static
+uniform bool UseSecond = false;
+
+export void M_B6_TextureMerge(inout material m)
+{
+    Texture2D Chosen = First;
+    if (UseSecond)
+    {
+        Chosen = Second;
+    }
+    m.BaseColor = Chosen.Sample(UE.TexCoord(CoordinateIndex = 0)).rgb;
+}

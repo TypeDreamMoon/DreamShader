@@ -1,0 +1,22 @@
+// Batch 2, debt B6 (iii): a `?:` whose condition the compiler can decide lowers only its live side, so a
+// read on the dead side -- here a local nothing has assigned yet -- is not DSH4376. The first `?:` is
+// decided by the binder (a literal condition); the one in the loop is decided by the builder, one
+// unrolled trip at a time: on the first trip `i > 0` is false and `Previous` is never read.
+
+export void M_B6_ConstantConditional(inout material m)
+{
+    float Unset;
+    float Direct = true ? 0.5 : Unset;
+
+    float Previous;
+    float Sum = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        float Current = i > 0 ? Previous * 0.5 : 0.25;
+        Sum += Current;
+        Previous = Current;
+    }
+
+    m.Opacity = Direct;
+    m.Roughness = Sum;
+}

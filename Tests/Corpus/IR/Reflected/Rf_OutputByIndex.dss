@@ -1,0 +1,5 @@
+// The general form of rule L3a: `UE.X(...)[k]` reads output k of the node, in any source.
+export void M_OutputByIndex(inout material m)
+{
+    m.Opacity = UE.SceneTexture(SceneTextureId = SceneColor)[2].x;
+}

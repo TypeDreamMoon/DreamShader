@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"B6_SubstrateStaticIf.dss\"\n\nproduct 0 Material \"M_B6_SubstrateStaticIf\" backend=Graph\n  %0 = Constant(Value=(0, 0.5, 1)) : float3 @L10:C55 \"Front\"\n  %1 = Reflected[Unlit](EmissiveColor=%0) : Substrate @L10:C23 \"Front\"\n  %2 = Parameter(DefaultValue=(1), IsStatic=true, ParameterName=\"UseWarm\", SortPriority=0) : bool @L6:C1 \"UseWarm\"\n  %3 = Constant(Value=(1, 0.5, 0)) : float3 @L13:C49 \"Front\"\n  %4 = Reflected[Unlit](EmissiveColor=%3) : Substrate @L13:C17 \"Front\"\n  %5 = StaticSwitch(%2, %4, %1) : Substrate @L11:C5\n  %6 = MaterialSink(FrontMaterial=%5) @L8:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_B6_SubstrateStaticIf"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

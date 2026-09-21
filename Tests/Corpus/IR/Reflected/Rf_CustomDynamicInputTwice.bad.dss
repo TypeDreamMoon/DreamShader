@@ -1,0 +1,7 @@
+// An input named twice (DSH4215).
+uniform float A = 1;
+
+export void M_CustomDynamicInputTwice(inout material m)
+{
+    m.Opacity = UE.Expression(Class = "Custom", Code = "return X;", OutputType = Float1, X = A, X = A);
+}

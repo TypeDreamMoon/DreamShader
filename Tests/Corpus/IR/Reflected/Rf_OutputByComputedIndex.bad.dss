@@ -1,0 +1,7 @@
+// The output index is a literal (DSH5281).
+uniform float K = 1;
+
+export void M_OutputByComputedIndex(inout material m)
+{
+    m.Opacity = UE.SceneTexture(SceneTextureId = SceneColor)[K].x;
+}

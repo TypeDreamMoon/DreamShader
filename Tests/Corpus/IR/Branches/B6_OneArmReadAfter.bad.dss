@@ -1,0 +1,16 @@
+// Batch 2, debt B6 (ii), the other half: the value one arm assigned is read after the `if`, where the
+// other arm leaves it with nothing, so DSH4372 is said -- once, at the `if`, however many reads follow.
+
+uniform float Threshold = 0.5;
+
+export void M_B6_OneArmReadAfter(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0);
+    float Scale;
+    if (UV.x > Threshold)
+    {
+        Scale = 2;
+    }
+    m.Opacity = Scale;
+    m.Roughness = Scale;
+}
