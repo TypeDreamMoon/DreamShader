@@ -4,315 +4,315 @@
   "key": "ArraySizeNotLiteral",
   "src": "An array size must be an integer literal.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 629
+  "line": 631
  },
  {
   "ns": "DreamShader.Binder",
   "key": "ArraySizeOutOfRange",
   "src": "An array size must be between 1 and 4096.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 639
+  "line": 641
  },
  {
   "ns": "DreamShader.Binder",
   "key": "ConstantNeedsInitializer",
   "src": "'{0}' is a compile-time constant and must be initialised where it is declared.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 784
+  "line": 786
  },
  {
   "ns": "DreamShader.Binder",
   "key": "CustomBodyParsed",
   "src": "'@custom' on '{0}' did not make its body opaque; the directive has to sit in the '///' block directly above the declaration.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1266
+  "line": 1268
  },
  {
   "ns": "DreamShader.Binder",
   "key": "CustomMaterialParameter",
   "src": "'{0}' is '@custom', so '{1}' becomes an input pin of a Custom node, and a Custom node cannot take a material; pass the fields it needs instead.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1249
+  "line": 1251
  },
  {
   "ns": "DreamShader.Binder",
   "key": "DirectiveWrongLinkage",
   "src": "'@{0}' means nothing here; it belongs on {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 894
+  "line": 896
  },
  {
   "ns": "DreamShader.Binder",
   "key": "DuplicateParameter",
   "src": "'{0}' is declared twice in the parameter list of '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 922
+  "line": 924
  },
  {
   "ns": "DreamShader.Binder",
   "key": "DuplicateStructField",
   "src": "'{0}' is declared twice in struct '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 669
+  "line": 671
  },
  {
   "ns": "DreamShader.Binder",
   "key": "EmptyCatalog",
   "src": "The builtin catalog is empty, so no 'UE.' expression and no material attribute can be resolved; export it with 'dsc export-catalog'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 282
+  "line": 283
  },
  {
   "ns": "DreamShader.Binder",
   "key": "EntryAndExports",
   "src": "'{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both. Move it to its own file, or drop 'export' to make it a helper.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1293
+  "line": 1295
  },
  {
   "ns": "DreamShader.Binder",
   "key": "ExternWithoutAsset",
   "src": "'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1128
+  "line": 1130
  },
  {
   "ns": "DreamShader.Binder",
   "key": "FunctionShadowsBuiltin",
   "src": "'{0}' is a builtin operation and cannot be redeclared; rename the function.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 821
+  "line": 823
  },
  {
   "ns": "DreamShader.Binder",
   "key": "GlobalStorage",
   "src": "'{0}' is a file-scope variable with no storage class; write 'uniform' for a material parameter or 'static const' for a compile-time constant.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 734
+  "line": 736
  },
  {
   "ns": "DreamShader.Binder",
   "key": "GlobalTypeUnsupported",
   "src": "A file-scope variable of type {0} has no node; a 'uniform' or 'static const' must be numeric, bool, a texture or a sampler.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 761
+  "line": 763
  },
  {
   "ns": "DreamShader.Binder",
   "key": "HoistedCallRecursion",
   "src": "'{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node, so the graph would never end.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1456
+  "line": 1459
  },
  {
   "ns": "DreamShader.Binder",
   "key": "IncludeCycle",
   "src": "Including '{0}' from '{1}' closes a cycle; a header may not include itself, directly or through another header.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 426
+  "line": 428
  },
  {
   "ns": "DreamShader.Binder",
   "key": "IncludesUnavailable",
   "src": "'{0}' cannot be read: this front end was started without an include resolver, so nothing a header declares is visible.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 390
+  "line": 392
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LayerBlendNotExported",
   "src": "'@layerblend' makes '{0}' a material layer blend asset, so it has to be 'export'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1170
+  "line": 1172
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LayerBlendSignature",
   "src": "A '@layerblend' function is written 'export void {0}(material Base, material Top, ..., inout material Result)': at least one 'material' input and a final 'inout material'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1180
+  "line": 1182
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LayerNotExported",
   "src": "'@layer' makes '{0}' a material layer asset, so it has to be 'export'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1142
+  "line": 1144
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LayerSignature",
   "src": "A '@layer' function is written 'export void {0}(inout material m)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1152
+  "line": 1154
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LegacyBlockNameTaken",
   "src": "The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 847
+  "line": 849
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LinkageTargetExport",
   "src": "an exported function",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 900
+  "line": 902
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LinkageTargetExtern",
   "src": "an 'extern' prototype",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 897
+  "line": 899
  },
  {
   "ns": "DreamShader.Binder",
   "key": "LinkageTargetLegacyExport",
   "src": "a block of a 1.x source that produces an asset",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 899
+  "line": 901
  },
  {
   "ns": "DreamShader.Binder",
   "key": "MaterialPragmaWithoutEntry",
   "src": "'#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1312
+  "line": 1314
  },
  {
   "ns": "DreamShader.Binder",
   "key": "MultiDimensionalArray",
   "src": "A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 587
+  "line": 589
  },
  {
   "ns": "DreamShader.Binder",
   "key": "ParamDocUnknown",
   "src": "'@param {0}' does not name a parameter of '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1048
+  "line": 1050
  },
  {
   "ns": "DreamShader.Binder",
   "key": "PinDocUnknown",
   "src": "'@pin {0}' does not name a parameter of '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1022
+  "line": 1024
  },
  {
   "ns": "DreamShader.Binder",
   "key": "PrototypeWithoutExtern",
   "src": "'{0}' has no body; a prototype has to be 'extern' and carry '/// @asset'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1229
+  "line": 1231
  },
  {
   "ns": "DreamShader.Binder",
   "key": "RedefinitionAcrossFiles",
   "src": "'{0}' is declared in '{1}' and again in '{2}'; a name included from a header may not be declared a second time.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 473
+  "line": 475
  },
  {
   "ns": "DreamShader.Binder",
   "key": "RedefinitionSameFile",
   "src": "'{0}' is already declared in this file; one name declares one thing.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 463
+  "line": 465
  },
  {
   "ns": "DreamShader.Binder",
   "key": "StaticDocUnknown",
   "src": "'@static {0}' does not name a parameter of '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1000
+  "line": 1002
  },
  {
   "ns": "DreamShader.Binder",
   "key": "StaticOnNonBoolUniform",
   "src": "'@static' asks for a static switch and is only meaningful on a 'uniform bool'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 794
+  "line": 796
  },
  {
   "ns": "DreamShader.Binder",
   "key": "StaticParamNotBool",
   "src": "'@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 975
+  "line": 977
  },
  {
   "ns": "DreamShader.Binder",
   "key": "StaticParamOut",
   "src": "an 'out' or 'inout' parameter",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 979
+  "line": 981
  },
  {
   "ns": "DreamShader.Binder",
   "key": "TextureUniformInitializer",
   "src": "A texture uniform has no HLSL initializer; write its default asset as '/// @default /Game/...'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 772
+  "line": 774
  },
  {
   "ns": "DreamShader.Binder",
   "key": "TwoEntries",
   "src": "'{0}' is a second material entry; '{1}' above it is already the entry, and one file makes one material.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 1200
+  "line": 1202
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UniformArray",
   "src": "A 'uniform' array has no parameter node; declare one uniform per element, or make it 'static const'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 805
+  "line": 807
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UnknownType",
   "src": "'{0}' is not a builtin type and no 'struct' of that name is declared before this line.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 552
+  "line": 554
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UnknownTypeDidYouMean",
   "src": "'{0}' is not a type; did you mean '{1}'? Type names are case-sensitive.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 541
+  "line": 543
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UnsizedArrayNeedsInitializer",
   "src": "An unsized array needs an initializer list to take its length from.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 606
+  "line": 608
  },
  {
   "ns": "DreamShader.Binder",
   "key": "UnsupportedType",
   "src": "'{0}' is not a type this front end can resolve.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 566
+  "line": 568
  },
  {
   "ns": "DreamShader.Binder",
   "key": "VoidParameter",
   "src": "A parameter cannot be 'void'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 944
+  "line": 946
  },
  {
   "ns": "DreamShader.Binder",
   "key": "VoidStructField",
   "src": "A struct field cannot be 'void'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinder.cpp",
-  "line": 687
+  "line": 689
  },
  {
   "ns": "DreamShader.Binder.Directives",
@@ -368,7 +368,7 @@
   "key": "EndRegionWithoutRegion",
   "src": "'#pragma endregion' closes a box that was never opened.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 789
+  "line": 838
  },
  {
   "ns": "DreamShader.Binder.Directives",
@@ -382,49 +382,49 @@
   "key": "LayoutBadColor",
   "src": "'#pragma layout' expects 'Color' as three or four numbers in quotes, such as \"0.1 0.16 0.22 0.35\"; '{0}' was ignored.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 705
+  "line": 754
  },
  {
   "ns": "DreamShader.Binder.Directives",
   "key": "LayoutBadValue",
   "src": "'#pragma layout' expects a whole number for '{0}'; '{1}' was ignored.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 623
+  "line": 672
  },
  {
   "ns": "DreamShader.Binder.Directives",
   "key": "LayoutColorOnNode",
   "src": "'#pragma layout(Node, ...)' places a node, and 'Color' colours only a comment box; the colour was ignored.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 755
+  "line": 804
  },
  {
   "ns": "DreamShader.Binder.Directives",
   "key": "LayoutExtraPositional",
   "src": "'#pragma layout' takes one positional selector; '{0}' was ignored.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 643
+  "line": 692
  },
  {
   "ns": "DreamShader.Binder.Directives",
   "key": "LayoutNoKind",
   "src": "'#pragma layout' starts with 'Node' or 'Comment'; the line was ignored.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 727
+  "line": 776
  },
  {
   "ns": "DreamShader.Binder.Directives",
   "key": "LayoutUnknownKey",
   "src": "'#pragma layout' has no '{0}' key; it was ignored.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 716
+  "line": 765
  },
  {
   "ns": "DreamShader.Binder.Directives",
   "key": "LayoutUnknownKind",
   "src": "'#pragma layout({0}, ...)' is neither 'Node' nor 'Comment'; the line was ignored.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 739
+  "line": 788
  },
  {
   "ns": "DreamShader.Binder.Directives",
@@ -459,14 +459,14 @@
   "key": "RegionNotClosed",
   "src": "'#pragma region {0}' is never closed; add a '#pragma endregion'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 817
+  "line": 866
  },
  {
   "ns": "DreamShader.Binder.Directives",
   "key": "RegionNotClosedUnnamed",
   "src": "This '#pragma region' is never closed; add a '#pragma endregion'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
-  "line": 808
+  "line": 857
  },
  {
   "ns": "DreamShader.Binder.Directives",
@@ -502,6 +502,13 @@
   "src": "'@static' on a function is written '@static <ParameterName>'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
   "line": 294
+ },
+ {
+  "ns": "DreamShader.Binder.Directives",
+  "key": "SubstrateModeUnknown",
+  "src": "'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderDirectives.cpp",
+  "line": 647
  },
  {
   "ns": "DreamShader.Binder.Directives",
@@ -606,763 +613,770 @@
   "key": "AbstractClass",
   "src": "'{0}' is abstract and cannot be made into a node.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4152
+  "line": 4265
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArgumentOf",
   "src": "The '{0}' argument of '{1}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3735
+  "line": 3833
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArgumentTwice",
   "src": "'{0}' is given twice in this call to '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3663
+  "line": 3761
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArrayElement",
   "src": "This array element",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2754
+  "line": 2842
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArrayIndexNotConstant",
   "src": "An array index must be a compile-time constant: the graph has no arrays, so every element is read at compile time.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1618
+  "line": 1638
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArrayIndexOutOfRange",
   "src": "Element {0} is out of range for an array of {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1628
+  "line": 1648
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArrayInitializerCount",
   "src": "This array has {0} elements and its initializer has {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2728
+  "line": 2816
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArrayNeedsList",
   "src": "An array is initialised with a list, as in '= { 1.0, 2.0 }'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2717
+  "line": 2805
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArrayNotFolded",
   "src": "This array is not a compile-time constant, and the graph has no arrays; declare it 'static const' with a constant initializer.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1655
+  "line": 1675
+ },
+ {
+  "ns": "DreamShader.Binder.Expressions",
+  "key": "AssignToBuilderPinComponent",
+  "src": "A member of a Substrate value is a pin, and a pin is connected whole; build the vector first and assign that.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
+  "line": 2407
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "AssignToGlobal",
   "src": "A 'uniform' is an input and a 'static const' is a constant; neither can be assigned to. Copy it into a local first.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2301
+  "line": 2366
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "AssignToInParam",
   "src": "An 'in' parameter is a function input pin and cannot be written to; declare it 'out' or 'inout', or copy it into a local.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2309
+  "line": 2374
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "AssignToNonLValue",
   "src": "The left of '=' has to be a variable, a struct field, a material pin or a swizzle of one.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2328
+  "line": 2415
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "AssignmentTarget",
   "src": "This assignment",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2365
+  "line": 2453
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "BitwiseAssignUnsupported",
   "src": "'{0}=' has no graph form; the graph carries floats, not bit patterns.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2345
+  "line": 2433
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "BitwiseNotUnsupported",
   "src": "'~' has no graph form; the graph has no integers to complement. Move the code into a '/// @custom' function.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2160
+  "line": 2193
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "BitwiseUnsupported",
   "src": "'{0}' has no graph form; the graph carries floats, not bit patterns. Move the code into a '/// @custom' function.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2231
+  "line": 2274
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CallToProduct",
   "src": "'{0}' is a {1} asset, not a function this file may call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3456
+  "line": 3554
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CalleeNotCallable",
   "src": "This is not something that can be called; a call names a function, a builtin, a type or 'UE.'/'Substrate.' followed by a node.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3001
+  "line": 3089
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CannotIndex",
   "src": "A value of type {0} cannot be indexed.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1720
+  "line": 1740
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CastFromNonNumeric",
   "src": "A value of type {0} cannot be cast to {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2502
+  "line": 2590
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CastNarrows",
   "src": "A cast from {0} to {1} drops components; write the swizzle that says which, such as '.xyz'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2517
+  "line": 2605
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CastOperand",
   "src": "This cast",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2523
+  "line": 2611
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CastToNonNumeric",
   "src": "A cast to {0} has no meaning here; only numbers and bools can be cast.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2490
+  "line": 2578
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ChannelViewAcrossOutputs",
   "src": "'{0}.{1}' publishes the channels of '.{2}' on different outputs; read them one output at a time from {3}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1409
+  "line": 1429
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ClassNotLiteral",
   "src": "'Class' takes the expression class as a quoted string.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4055
+  "line": 4153
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalBranches",
   "src": "The two halves of '?:' are {0} and {1}; they have to make one value.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2429
+  "line": 2517
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalCondition",
   "src": "The condition of '?:' has to be a single true-or-false value, and this is {0}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2398
+  "line": 2486
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalConditionWhat",
   "src": "The condition of '?:'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2403
+  "line": 2491
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalFalse",
   "src": "The 'else' half of '?:'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2436
+  "line": 2524
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalTrue",
   "src": "The 'then' half of '?:'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2435
+  "line": 2523
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorArgumentType",
   "src": "A constructor takes numbers, and this is {0}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3094
+  "line": 3182
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorComponent",
   "src": "This constructor component",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3153
+  "line": 3241
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorCount",
   "src": "{0} needs {1} components and these arguments supply {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3126
+  "line": 3214
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorMatrixArgument",
   "src": "A matrix cannot be a constructor component.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3105
+  "line": 3193
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorNamedArguments",
   "src": "A constructor takes its components in order; named arguments belong on 'UE.' nodes and on function calls.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3050
+  "line": 3138
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorNoArguments",
   "src": "{0}() has no components; write the value, as in 'float3(0.0)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3060
+  "line": 3148
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpArgumentTwice",
   "src": "The '{0}' argument of '{1}' is given twice.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3345
+  "line": 3433
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpArityExact",
   "src": "'{0}' takes {1} arguments and {2} were given.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3392
+  "line": 3480
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpArityRange",
   "src": "'{0}' takes between {1} and {2} arguments, and {3} were given.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3397
+  "line": 3485
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpMissingArgument",
   "src": "'{0}' is missing its '{1}' argument.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3373
+  "line": 3461
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpNoPins",
   "src": "'{0}' takes its arguments in order and has no argument called '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3311
+  "line": 3399
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpNoSuchPin",
   "src": "'{0}' has no argument called '{1}'; its arguments are {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3315
+  "line": 3403
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpTooManyArguments",
   "src": "'{0}' takes at most {1} arguments.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3331
+  "line": 3419
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CustomCallOutputIndexRange",
   "src": "This Custom node declares {0} output(s), counted from 0, and this selects output {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1573
+  "line": 1593
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CustomOutputAsValue",
   "src": "'{0}.{1}' is an output node, not a value: write it as a statement on a line of its own.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4602
+  "line": 4732
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "DynamicInputTwice",
   "src": "'{0}' is connected twice in this call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4405
+  "line": 4518
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "DynamicInputType",
   "src": "'{0}' becomes an input of the custom node, which carries a number or a texture, and this argument is {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4431
+  "line": 4544
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "EnumNotSpelling",
   "src": "'{0}' is an enumerated property; write one of its values, as in 'SamplerType = Normal'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3898
+  "line": 3996
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ExpressionNeedsClass",
   "src": "'UE.Expression' reaches a node this language has no name for, so it needs 'Class = \"MaterialExpressionName\"'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4088
+  "line": 4186
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "GlslAlias",
   "src": "'{0}' is the GLSL spelling; this language is HLSL, so write '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2920
+  "line": 3008
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "HyperbolicUnsupported",
   "src": "The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it in a '/// @custom' body, where the shader compiler has it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3250
+  "line": 3338
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "IncrementNeedsLValue",
   "src": "'++' and '--' write back into what they read, so they need a variable.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2174
+  "line": 2207
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "InitializerElement",
   "src": "This initializer element",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2663
+  "line": 2751
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "InitializerListBadTarget",
   "src": "A value of type {0} cannot be written as an initializer list.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2634
+  "line": 2722
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "InitializerListCount",
   "src": "{0} needs {1} components and this list supplies {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2695
+  "line": 2783
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "InitializerListNoTarget",
   "src": "An initializer list only has a meaning against a declared type; it cannot stand on its own.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2566
+  "line": 2654
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "IntegerDivide",
   "src": "Both sides of this '/' are integers, and the material graph has no integer division; write 'float(a) / b' for the fraction, or 'floor(float(a) / b)' for the whole part.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2006
+  "line": 2026
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyDefaultDropped",
   "src": "'{0}.{1}' has no 'DefaultValue', so the default written for this parameter is dropped, as 1.x dropped it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4451
+  "line": 4571
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyDefaultOutput",
   "src": "'{0}' has more than one output and is read as its first, '{1}', which is what 1.x did; a '.dss' names the output.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1792
+  "line": 1812
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyEnumerator",
   "src": "'{0}' is not spelled like a value of '{1}', and 1.x matched enumerators loosely, so this is '{2}'; a '.dss' writes '{2}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3924
+  "line": 4022
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyGlslAlias",
   "src": "'{0}' is the GLSL spelling of '{1}'; a 1.x source may use it and it is read as '{1}', and a '.dss' writes '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2906
+  "line": 2994
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyImplicitLocal",
   "src": "'{0}' is not declared, and as in 1.x this assignment declares it, as a local of type {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2277
+  "line": 2320
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyLateBoundPin",
   "src": "'{0}.{1}' lists no pin called '{2}'; it is connected by that name once the node exists, because a node may name its pins after its properties.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4480
+  "line": 4600
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyRequiredPin",
   "src": "'{0}.{1}' leaves its required '{2}' pin unconnected, which 1.x allowed and the engine reports when the material compiles.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4561
+  "line": 4691
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacySelectOrdinalNotConstant",
   "src": "An output is selected by a whole number the compiler knows, and this index is computed.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1526
+  "line": 1546
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyTruncation",
   "src": "{0} expects {1}, and this is {2}: its leading components are taken, which is what 1.x did; a '.dss' writes the swizzle.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1855
+  "line": 1875
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "MatrixIndex",
   "src": "A matrix row cannot be read: the graph has no matrices. Move the code into a '/// @custom' function, where the matrix is an input.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1670
+  "line": 1690
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "MissingArgument",
   "src": "'{0}' needs an argument for '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3715
+  "line": 3813
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NamedOnly",
   "src": "'{0}.{1}' takes named arguments: write 'Pin = value'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4240
+  "line": 4353
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NamespaceAsValue",
   "src": "'{0}' is a namespace, not a value; write '{0}.SomeNode(...)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 706
+  "line": 717
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoConversion",
   "src": "{0} expects {1}, and this is {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1884
+  "line": 1904
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchMember",
   "src": "A value of type {0} has no member '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1254
+  "line": 1274
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchMethod",
   "src": "A value of type {0} has no method '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2871
+  "line": 2959
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchParameter",
   "src": "'{0}' has no parameter called '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3642
+  "line": 3740
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchParameterDidYouMean",
   "src": "'{0}' has no parameter called '{1}'; did you mean '{2}'?",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3646
+  "line": 3744
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchPinOrProperty",
   "src": "'{0}.{1}' has no pin or property called '{2}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4519
+  "line": 4639
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchPinOrPropertyDidYouMean",
   "src": "'{0}.{1}' has no pin or property called '{2}'; did you mean '{3}'?",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4524
+  "line": 4644
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchTextureMethod",
   "src": "A texture has no '{0}' method; it has 'Sample' and 'SampleLevel'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4709
+  "line": 4839
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NodeNeedsNamedOutput",
   "src": "{0} expects {1}, and '{2}' has more than one output; name the one you mean: {3}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1815
+  "line": 1835
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NodeNeedsOutput",
   "src": "{0} expects {1}, and this node has more than one output; name the one you mean.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1811
+  "line": 1831
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NodeOutputIndexNotConstant",
   "src": "An output is selected by a whole number the compiler knows, and this index is computed.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1561
+  "line": 1581
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NodeOutputIndexRange",
   "src": "'{0}.{1}' has {2} output(s), counted from 0, and this selects output {3}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1593
+  "line": 1613
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NotConstructible",
   "src": "A value of type {0} cannot be constructed; it comes from a declaration or a node.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3039
+  "line": 3127
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OpNotCallable",
   "src": "'{0}' is not an operation this language spells as a call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2058
+  "line": 2078
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OperandNotNumeric",
   "src": "'{0}' works on numbers, and this is {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1977
+  "line": 1997
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OperandOf",
   "src": "'{0}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2075
+  "line": 2095
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OutArgumentNotLValue",
   "src": "'{0}' is an out parameter of '{1}', so its argument has to be a variable.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3747
+  "line": 3845
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OutArgumentType",
   "src": "'{0}' writes back {1}, and this variable is {2}; an out argument has to match exactly.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3776
+  "line": 3874
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PinArgumentNotReflectedCall",
   "src": "'Pin[{0}] = ...' connects a node's input pin by its engine index, and only a 'UE.' or 'Substrate.' node call has one; pass this argument by name or by position.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2811
+  "line": 2899
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PinIndexOutOfRange",
   "src": "'{0}.{1}' has {2} input pin(s), counted from 0, and this argument connects pin {3}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4215
+  "line": 4328
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PinOf",
   "src": "The '{0}' pin of '{1}.{2}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4342
+  "line": 4455
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PinTwice",
   "src": "'{0}' is connected twice in this call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4297
+  "line": 4410
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PropertyNotConstant",
   "src": "'{0}' is written into the node itself, not connected to it, so its value has to be known at compile time.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4011
+  "line": 4109
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PropertyNotSpelling",
   "src": "'{0}' takes a name or an asset path; write it as a quoted string.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3969
+  "line": 4067
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PropertyTwice",
   "src": "'{0}' is set twice in this call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4367
+  "line": 4480
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ReflectedNotCalled",
   "src": "'{0}.{1}' is a node and has to be called: write '{0}.{1}(...)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 999
+  "line": 1019
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "RequiredPin",
   "src": "'{0}.{1}' leaves its required '{2}' pin unconnected; unless the node reads a default for it, the engine reports it when the material compiles.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4578
+  "line": 4708
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "RequiredPinOrConst",
   "src": "'{0}.{1}' leaves its required '{2}' pin unconnected and '{3}' unset; unless the node reads a default for it, the engine reports it when the material compiles.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4583
+  "line": 4713
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ResultReceiverNotLValue",
   "src": "'{0}' hands its return value to the argument in this place, so the argument has to be a variable.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3803
+  "line": 3901
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ResultReceiverType",
   "src": "'{0}' returns {1}, and the variable receiving it is {2}; a receiver has to match exactly.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3821
+  "line": 3919
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleArity",
   "src": "'Sample' is written 'Tex.Sample(UV)' or 'Tex.Sample(Sampler, UV)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4754
+  "line": 4884
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleLevelArgument",
   "src": "The mip level of a texture sample",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4791
+  "line": 4921
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleLevelArgument2",
   "src": "The mip level of a texture sample",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4880
+  "line": 5010
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleLevelArity",
   "src": "'SampleLevel' is written 'Tex.SampleLevel(UV, Level)' or 'Tex.SampleLevel(Sampler, UV, Level)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4753
+  "line": 4883
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleNamedArguments",
   "src": "A texture sample takes its arguments in order: an optional sampler, the coordinates, and for 'SampleLevel' the mip level.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4720
+  "line": 4850
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleNotSampler",
   "src": "The second argument of 'Texture2DSample' is the sampler, and this is {0}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4849
+  "line": 4979
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleNotTexture",
   "src": "The first argument of a texture sample is the texture, and this is {0}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4833
+  "line": 4963
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleUV",
   "src": "The coordinates of a texture sample",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4782
+  "line": 4912
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleUV2",
   "src": "The coordinates of a texture sample",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4872
+  "line": 5002
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1376,105 +1390,119 @@
   "key": "StructConstructorCount",
   "src": "'{0}' has {1} fields and this call supplies {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3198
+  "line": 3286
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "StructField2",
   "src": "This struct field",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2612
+  "line": 2700
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "StructFieldArgument",
   "src": "This struct field",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3221
+  "line": 3309
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "StructInitializerCount",
   "src": "'{0}' has {1} fields and this list has {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2590
+  "line": 2678
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SubstrateClass",
   "src": "'Substrate.' already names the node, so it takes no 'Class' argument.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4047
+  "line": 4145
+ },
+ {
+  "ns": "DreamShader.Binder.Expressions",
+  "key": "SubstrateCompoundAssign",
+  "src": "A Substrate value has no compound assignment; write 'S = S + T' (Substrate.Add) or 'S = S * w' (Substrate.Weight).",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
+  "line": 2351
+ },
+ {
+  "ns": "DreamShader.Binder.Expressions",
+  "key": "SubstrateNodeNeedsNewerEngine",
+  "src": "'Substrate.{0}' is a node Unreal Engine has from {1} on; this engine does not have it.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
+  "line": 4211
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SwizzleLength",
   "src": "'.{0}' is not a swizzle; a swizzle is one to four of 'xyzw' or 'rgba'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1271
+  "line": 1291
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SwizzleLetter",
   "src": "'.{0}' is not a swizzle; '{1}' is not one of 'xyzw' or 'rgba'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1290
+  "line": 1310
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SwizzleMixedSets",
   "src": "'.{0}' mixes 'xyzw' with 'rgba'; a swizzle picks one family.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1326
+  "line": 1346
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SwizzleOutOfRange",
   "src": "'.{0}' reads component {1} of a value that has {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1306
+  "line": 1326
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SwizzleRepeatTarget",
   "src": "'.{0}' names one component twice, so this assignment would write it twice with no order between the two; assign each component on its own line.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2319
+  "line": 2384
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "Texture2DSampleArity",
   "src": "'Texture2DSample' is written 'Texture2DSample(Tex, TexSampler, UV)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4821
+  "line": 4951
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "Texture2DSampleLevelArity",
   "src": "'Texture2DSampleLevel' is written 'Texture2DSampleLevel(Tex, TexSampler, UV, Level)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4820
+  "line": 4950
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "TextureMethodNotCalled",
   "src": "'{0}' on a texture is a call: write 'Tex.{0}(UV)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1244
+  "line": 1264
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "TooManyArguments",
   "src": "'{0}' takes {1} arguments and more were given.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3589
+  "line": 3687
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "TooManyPositional",
   "src": "'{0}.{1}' takes {2} arguments in order; name the rest.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4257
+  "line": 4370
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1488,147 +1516,147 @@
   "key": "UnaryUnsupported",
   "src": "This operator has no graph form.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2203
+  "line": 2236
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownAttribute",
   "src": "A material has no '{0}' pin.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1067
+  "line": 1087
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownAttributeDidYouMean",
   "src": "A material has no '{0}' pin; did you mean '{1}'? Attribute names are case-sensitive.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1056
+  "line": 1076
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownCallee",
   "src": "'{0}' is not a function, a builtin or a struct.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2988
+  "line": 3076
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownCalleeDidYouMean",
   "src": "'{0}' is not declared; did you mean '{1}'? Names are case-sensitive.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2991
+  "line": 3079
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownClass",
   "src": "'{0}' is not a material expression class this engine has.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4076
+  "line": 4174
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownCustomCallOutput",
   "src": "This Custom node declares no output called '{0}'; its outputs are '{1}'. An output is declared by 'AdditionalOutputs'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1149
+  "line": 1169
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownEnumerator",
   "src": "'{0}' is not a value of '{1}' on '{2}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3939
+  "line": 4037
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownEnumeratorDidYouMean",
   "src": "'{0}' is not a value of '{1}'; did you mean '{2}'?",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3944
+  "line": 4042
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownField",
   "src": "'{0}' has no field called '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1106
+  "line": 1126
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownFieldDidYouMean",
   "src": "'{0}' has no field called '{1}'; did you mean '{2}'?",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1110
+  "line": 1130
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownName",
   "src": "'{0}' is not declared in this scope.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 757
+  "line": 768
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownNameDidYouMean",
   "src": "'{0}' is not declared; did you mean '{1}'? Names are case-sensitive.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 746
+  "line": 757
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownOutput",
   "src": "'{0}.{1}' has no output called '{2}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1205
+  "line": 1225
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownOutputDidYouMean",
   "src": "'{0}.{1}' has no output called '{2}'; did you mean '{3}'?",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1216
+  "line": 1236
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownOutputListed",
   "src": "'{0}.{1}' has no output called '{2}'; its outputs are {3}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1210
+  "line": 1230
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownReflected",
   "src": "'{0}.{1}' is not a node this engine has; 'UE.Expression(Class = \"...\")' reaches one the language has no name for.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4124
+  "line": 4237
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownReflectedDidYouMean",
   "src": "'{0}.{1}' is not a node; did you mean '{0}.{2}'? Node names are case-sensitive.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4112
+  "line": 4225
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "VectorIndexNotConstant",
   "src": "A component index must be a compile-time constant; write a swizzle such as '.z', or select with 'lerp'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1683
+  "line": 1703
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "VectorIndexOutOfRange",
   "src": "Component {0} is out of range for a value that has {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1693
+  "line": 1713
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "VoidCallAsValue",
   "src": "'{0}' returns nothing, so its call has no value; its results come back through its out parameters.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3850
+  "line": 3948
  },
  {
   "ns": "DreamShader.Binder.Instance",
@@ -1971,84 +1999,84 @@
   "key": "BreakOutsideLoop",
   "src": "'break' leaves a loop, and this one is not inside a 'for', 'while' or 'do'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 467
+  "line": 477
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "ConditionNotScalar",
   "src": "{0} has to be a single true-or-false value, and this is {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 618
+  "line": 633
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "ConstantNotConstant",
   "src": "'{0}' is a compile-time constant, and this initializer is not one; a constant is built from literals and other constants.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 292
+  "line": 295
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "ContinueOutsideLoop",
   "src": "'continue' starts the next turn of a loop, and this one is not inside a 'for', 'while' or 'do'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 468
+  "line": 478
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "DiscardOutsideEntry",
   "src": "'discard' belongs in a material entry or a layer; a material function has no pixel of its own to drop. Write the mask into 'm.OpacityMask' instead.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 487
+  "line": 497
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "DoWhileCondition",
   "src": "The condition of a 'do'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 703
+  "line": 721
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "ForCondition",
   "src": "The condition of a 'for'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 654
+  "line": 672
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "GlobalInitializer",
   "src": "The initializer of '{0}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 280
+  "line": 283
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "IfCondition",
   "src": "The condition of an 'if'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 631
+  "line": 646
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "LocalConstantNeedsInitializer",
   "src": "'{0}' is a compile-time constant and must be initialised where it is declared.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 564
+  "line": 574
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "LocalConstantNotConstant",
   "src": "'{0}' is a compile-time constant, and this initializer is not one.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 597
+  "line": 612
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "LocalInitializer",
   "src": "The initializer of '{0}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 587
+  "line": 601
  },
  {
   "ns": "DreamShader.Binder.Statements",
@@ -2083,56 +2111,231 @@
   "key": "OutParamNeverAssigned",
   "src": "'{0}' is an 'out' parameter of '{1}' but the body never assigns it, so a caller would read a value nothing produced. Assign it before the function returns, or remove the parameter.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 387
+  "line": 397
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "ParameterDefault",
   "src": "The default value of '{0}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 359
+  "line": 369
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "ReturnValue",
   "src": "The value returned from '{0}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 748
+  "line": 766
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "ReturnWithValue",
   "src": "'{0}' returns nothing, so this 'return' cannot carry a value; extra results are written to 'out' parameters.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 738
+  "line": 756
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "ReturnWithoutValue",
   "src": "'{0}' returns {1}, so this 'return' needs a value.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 722
+  "line": 740
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "VoidLocal",
   "src": "A variable cannot be 'void'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 538
+  "line": 548
  },
  {
   "ns": "DreamShader.Binder.Statements",
   "key": "WhileCondition",
   "src": "The condition of a 'while'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderStatements.cpp",
-  "line": 679
+  "line": 697
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderNoSuchPin",
+  "src": "'{0}' builds a '{1}.{2}', which has no pin called '{3}'.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 541
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderPinConflict",
+  "src": "'{0}.{1}': '{2}' and '{3}' parameterize the same pins; give one of them.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 636
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderReadUnset",
+  "src": "'{0}.{1}' has not been given a value, so there is nothing to read; a member of a Substrate value reads back what was written to it.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 654
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderReadWriteUnset",
+  "src": "'{0}.{1}' has not been given a value, so there is nothing for this operator to start from; assign it first.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 586
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderReassigned",
+  "src": "'{0}' has been assigned a whole Substrate value since it was declared, and that value has no members; build a new value, or write the members before the assignment.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 511
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderRequiredPin",
+  "src": "'{0}' is used with the required '{1}' pin of '{2}.{3}' unconnected; unless the node reads a default for it, the engine reports it when the material compiles.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 421
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderRequires",
+  "src": "'{0}.{1}' is measured against '{2}', and '{0}' was given no '{2}' before this use.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 469
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderSealed",
+  "src": "The Substrate value '{0}' is sealed: it has been used already, and its node is what it was then. Write its members before using it.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 560
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderThicknessAlone",
+  "src": "'{0}.Thickness' is how deep 'Transmittance' is measured, and '{0}' was given no 'Transmittance' before this use.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 459
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderVirtualConflict",
+  "src": "'{0}.{1}': '{2}' and '{3}' parameterize the same pins; give one of them.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 605
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "BuilderWriteInBranch",
+  "src": "A member of the Substrate value '{0}' cannot be written inside an 'if': that would be one node in two versions. Build two values and choose between them.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 574
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "LegacyBuilderRequiredPin",
+  "src": "'{0}' is used with the required '{1}' pin of '{2}.{3}' unconnected, which 1.x allowed and the engine reports when the material compiles.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 408
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "SubstrateLerpMixed",
+  "src": "'lerp' mixes two Substrate values or two numbers, and these are {0} and {1}.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 307
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "SubstrateNodeMissing",
+  "src": "{0} needs the node 'Substrate.{1}', and this engine has no such node; Substrate nodes exist from Unreal Engine 5.4 on.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 166
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "SubstrateNodeNeedsEngine",
+  "src": "{0} needs the node 'Substrate.{1}', which Unreal Engine has from {2} on; this engine does not have it.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 153
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "SubstrateOperator",
+  "src": "Substrate values support only '+' (Substrate.Add) and '* scalar' (Substrate.Weight); use lerp() for mixing and Substrate.Layer() for layering.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 278
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "SugarAdd",
+  "src": "'+' over two Substrate values",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 254
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "SugarLerp",
+  "src": "'lerp' over two Substrate values",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 318
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "SugarPinOf",
+  "src": "The '{0}' side of {1}",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 226
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "SugarWeight",
+  "src": "'*' over a Substrate value and a number",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 265
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "VirtualArgumentOf",
+  "src": "The '{0}' argument of '{1}.{2}'",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 723
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "VirtualConflict",
+  "src": "'{0}.{1}': '{2}' and '{3}' parameterize the same pins; give one of them.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 830
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "VirtualRequires",
+  "src": "'{0}.{1}': '{2}' is measured against '{3}', and this call gives no '{3}'.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 845
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "VirtualThicknessAlone",
+  "src": "'{0}.{1}': 'Thickness' is how deep 'Transmittance' is measured, and this call gives no 'Transmittance'.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 789
+ },
+ {
+  "ns": "DreamShader.Binder.Substrate",
+  "key": "VirtualTwice",
+  "src": "'{0}' is given twice in this call.",
+  "file": "DreamShaderLang\\Private\\Semantic\\LangBinderSubstrate.cpp",
+  "line": 702
  },
  {
   "ns": "DreamShader.CommandletRunner",
   "key": "DecompileDiagnosticsOutFailed",
   "src": "The diagnostics JSON could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderCommandletRunner.cpp",
-  "line": 710
+  "line": 739
  },
  {
   "ns": "DreamShader.CustomHlsl",
@@ -2780,6 +2983,13 @@
  },
  {
   "ns": "DreamShader.Decompiler.Service",
+  "key": "DecompilerCannotWriteDss",
+  "src": "The decompile was asked for 2.0 text and was handed the 1.x decompiler, which writes '.dsm' and '.dsf' only; build the service with GetIRDecompiler() for Format = Dss.",
+  "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderDecompileService.cpp",
+  "line": 304
+ },
+ {
+  "ns": "DreamShader.Decompiler.Service",
   "key": "FailedToCreateOutputDirectory",
   "src": "DreamShader failed to create output directory '{0}'.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderDecompileService.cpp",
@@ -2846,21 +3056,21 @@
   "key": "AndFailed",
   "src": "Failed to create the Multiply node a logical and lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 781
+  "line": 785
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "AppendArity",
   "src": "An Append node takes two operands; this one has {0}. Three or more parts are chained by the IR builder, not here.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1119
+  "line": 1123
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "AppendFailed",
   "src": "Failed to create an AppendVector node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1133
+  "line": 1137
  },
  {
   "ns": "DreamShader.Emitter",
@@ -2888,14 +3098,14 @@
   "key": "BadNodeIndex",
   "src": "The topological order of '{0}' names node {1}, which the graph does not have.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 253
+  "line": 254
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "BadProductIndex",
   "src": "Product index {0} does not exist in this module, which has {1}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1228
+  "line": 1235
  },
  {
   "ns": "DreamShader.Emitter",
@@ -2909,168 +3119,175 @@
   "key": "BreakAttributesFailed",
   "src": "Failed to create a BreakMaterialAttributes node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
-  "line": 190
+  "line": 239
+ },
+ {
+  "ns": "DreamShader.Emitter",
+  "key": "BreakAttributesNoBase",
+  "src": "A GetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to read.",
+  "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
+  "line": 245
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "BreakAttributesSlotNotPublished",
   "src": "BreakMaterialAttributes does not publish the attribute '{0}', so it cannot be read from a material that came through a pin.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1561
+  "line": 1570
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CollectionParameterMissing",
   "src": "The material parameter collection '{0}' has no parameter called '{1}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 576
+  "line": 580
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CompareArity",
   "src": "A Compare node takes five operands (A, B, greater, equal, less); this one has {0}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1189
+  "line": 1193
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CompareFailed",
   "src": "Failed to create an If node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1207
+  "line": 1211
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CompareLowerFailed",
   "src": "Failed to create the If node a comparison lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 837
+  "line": 841
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ConnectNoExpression",
   "src": "Cannot connect an input on an expression that was not created.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1709
+  "line": 1736
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "Constant2Failed",
   "src": "Failed to create a Constant2Vector node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 367
+  "line": 371
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "Constant3Failed",
   "src": "Failed to create a Constant3Vector node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 379
+  "line": 383
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "Constant4Failed",
   "src": "Failed to create a Constant4Vector node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 394
+  "line": 398
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ConstantFailed",
   "src": "Failed to create a Constant node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 356
+  "line": 360
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ConstantNoValue",
   "src": "A Constant node carries no Value property.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 343
+  "line": 347
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CoreOpClassMissing",
   "src": "The core operation '{0}' maps to expression class '{1}', which this engine does not have.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 663
+  "line": 667
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CoreOpFailed",
   "src": "Failed to create a '{0}' node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 672
+  "line": 676
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CoreOpTooManyOperands",
   "src": "The core operation '{0}' was given {1} operands, but its table names only {2} pins.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 692
+  "line": 696
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CreateFunctionFailed",
   "src": "The material function for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 738
+  "line": 742
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CreateInstanceFailed",
   "src": "The ThinCustom instance for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 593
+  "line": 597
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CreateMaterialFailed",
   "src": "The material for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 517
+  "line": 521
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CreateMaterialInstanceFailed",
   "src": "The material instance for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1016
+  "line": 1023
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CreateThinBaseFailed",
   "src": "The hidden base material for '{0}' could not be created. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 632
+  "line": 636
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CustomBadAdditionalOutput",
   "src": "'{0}' is not a Custom node additional output; the emitter expects Name:Type.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1400
+  "line": 1404
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CustomBadAdditionalOutputType",
   "src": "'{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1408
+  "line": 1412
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CustomBadOutputType",
   "src": "'{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1367
+  "line": 1371
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CustomFailed",
   "src": "Failed to create a Custom node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1328
+  "line": 1332
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3084,7 +3301,7 @@
   "key": "DestinationFailed",
   "src": "'{0}' does not resolve to a valid asset path. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1253
+  "line": 1260
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3168,63 +3385,70 @@
   "key": "FwidthFailed",
   "src": "Failed to create the nodes fwidth lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 903
+  "line": 907
+ },
+ {
+  "ns": "DreamShader.Emitter",
+  "key": "GetAttributesFailed",
+  "src": "Failed to create a GetMaterialAttributes node.",
+  "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
+  "line": 339
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentCycle",
   "src": "'{0}' cannot parent to '{1}': that parent already descends from this instance.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1087
+  "line": 1094
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentDoesNotLoad",
   "src": "The parent '{0}' of '{1}' does not load; compile the source that builds it, or correct the Parent key.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1043
+  "line": 1050
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentDrift",
   "src": "The parent asset '{0}' has no parameter {1} of the kind this instance overrides; the asset is older than its source. Compile the parent source first.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1109
+  "line": 1116
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentDropped",
   "src": "The engine dropped '{0}' as the parent of '{1}' while applying the static overrides; that parent does not allow them.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1179
+  "line": 1186
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentMaterializeFailed",
   "src": "The parent '{0}' of '{1}' exists only in memory and could not be saved first. {2}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1068
+  "line": 1075
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentMaterialized",
   "src": "'{0}' was memory-only, so it was saved to disk first: '{1}' parents to it.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1076
+  "line": 1083
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceParentMemoryOnlyForeign",
   "src": "The parent '{0}' exists only in memory and no DreamShader source builds it, so '{1}' cannot be saved against it; save the parent first.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1056
+  "line": 1063
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "InstanceValueNotApplied",
   "src": "The override of '{0}' could not be applied: {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1127
+  "line": 1134
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3238,35 +3462,56 @@
   "key": "MakeAttributesFailed",
   "src": "Failed to create a MakeMaterialAttributes node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
-  "line": 74
+  "line": 75
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "MakeAttributesNoPin",
   "src": "MakeMaterialAttributes has no pin for the attribute '{0}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
-  "line": 109
+  "line": 125
+ },
+ {
+  "ns": "DreamShader.Emitter",
+  "key": "MakeAttributesNoPinNorSet",
+  "src": "MakeMaterialAttributes has no pin for the attribute '{0}', and SetMaterialAttributes could not take it either.",
+  "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
+  "line": 157
+ },
+ {
+  "ns": "DreamShader.Emitter",
+  "key": "MakeAttributesSetFailed",
+  "src": "Failed to create the SetMaterialAttributes node that carries what MakeMaterialAttributes has no pin for.",
+  "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
+  "line": 142
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "MissingOperand",
   "src": "This node needs operand {0}, but it has only {1}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1601
+  "line": 1628
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "NegateFailed",
   "src": "Failed to create the Multiply node a negation lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 740
+  "line": 744
+ },
+ {
+  "ns": "DreamShader.Emitter",
+  "key": "NoCatalog",
+  "src": "The emitter needs the builtin catalog the front end was bound against, but the emit context carries none.",
+  "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
+  "line": 1245
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "NoLowering",
   "src": "The core operation '{0}' has no engine expression class and no lowering in the emitter.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1026
+  "line": 1030
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3287,14 +3532,14 @@
   "key": "NotFailed",
   "src": "Failed to create the Subtract node a logical not lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 760
+  "line": 764
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "OrFailed",
   "src": "Failed to create the Max node a logical or lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 802
+  "line": 806
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3315,49 +3560,49 @@
   "key": "PropertyMissing",
   "src": "'{0}' has no property named '{1}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1743
+  "line": 1770
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "PropertyNotReflected",
   "src": "'{0}' has no property named '{1}', so that value was not written.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1736
+  "line": 1763
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "PropertyWriteFailed",
   "src": "'{0}' could not take '{1}' for its '{2}' property. {3}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1756
+  "line": 1783
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "RcpFailed",
   "src": "Failed to create the Divide node a reciprocal lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 859
+  "line": 863
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ReflectFailed",
   "src": "Failed to create the nodes reflect lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 934
+  "line": 938
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ReflectedFailed",
   "src": "Failed to create a '{0}' node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 515
+  "line": 519
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "RefractFailed",
   "src": "Failed to create the nodes refract lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 982
+  "line": 986
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3371,42 +3616,42 @@
   "key": "RollbackNotArmedFunction",
   "src": "'{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 788
+  "line": 792
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "RsqrtFailed",
   "src": "Failed to create the nodes an inverse square root lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 878
+  "line": 882
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SaveFunctionFailed",
   "src": "'{0}' was built but could not be saved. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 861
+  "line": 868
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SaveInstanceFailed",
   "src": "'{0}' was built but could not be saved. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 709
+  "line": 713
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SaveMaterialFailed",
   "src": "'{0}' was built but could not be saved. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 560
+  "line": 564
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SaveMaterialInstanceFailed",
   "src": "'{0}' was built but could not be saved. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1202
+  "line": 1209
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3420,28 +3665,35 @@
   "key": "SelectArity",
   "src": "A Select node takes three operands (condition, then, else); this one has {0}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1147
+  "line": 1151
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SelectFailed",
   "src": "Failed to create the If node a select lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1172
+  "line": 1176
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SetAttributesConnectFailed",
   "src": "SetMaterialAttributes could not take a value for the attribute '{0}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
-  "line": 172
+  "line": 221
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SetAttributesFailed",
   "src": "Failed to create a SetMaterialAttributes node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
-  "line": 124
+  "line": 173
+ },
+ {
+  "ns": "DreamShader.Emitter",
+  "key": "SetAttributesNoBase",
+  "src": "A SetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to modify.",
+  "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
+  "line": 181
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3455,7 +3707,14 @@
   "key": "SinkNoPropertyInput",
   "src": "This material has no input for the attribute '{0}'; check the material domain and shading model the file asks for.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
-  "line": 287
+  "line": 388
+ },
+ {
+  "ns": "DreamShader.Emitter",
+  "key": "SinkWithoutMaterial",
+  "src": "This graph carries a MaterialSink, which only a material product has; a material function drives FunctionOutput nodes instead.",
+  "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterMaterial.cpp",
+  "line": 372
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3483,35 +3742,35 @@
   "key": "StaticSwitchArity",
   "src": "A StaticSwitch node takes three operands (condition, then, else); this one has {0}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1224
+  "line": 1228
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "StaticSwitchFailed",
   "src": "Failed to create a StaticSwitch node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1239
+  "line": 1243
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SwizzleBadMask",
   "src": "'{0}' is not a canonical swizzle mask; the emitter expects a subset of xyzw in order.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1064
+  "line": 1068
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SwizzleFailed",
   "src": "Failed to create a ComponentMask node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1100
+  "line": 1104
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SwizzleNoMask",
   "src": "A Swizzle node carries no Mask property.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1054
+  "line": 1058
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3536,52 +3795,59 @@
  },
  {
   "ns": "DreamShader.Emitter",
+  "key": "TextureSampleArity",
+  "src": "A TextureSample node needs a texture in operand 0 and a UV in operand 1; one of them is not set.",
+  "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
+  "line": 1266
+ },
+ {
+  "ns": "DreamShader.Emitter",
   "key": "TextureSampleFailed",
   "src": "Failed to create a TextureSample node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1276
+  "line": 1280
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "UnhandledOp",
   "src": "The emitter has no rule for the IR operation '{0}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 332
+  "line": 336
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "UnknownAttribute",
   "src": "'{0}' is not a material attribute this engine has.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1786
+  "line": 1813
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "UnknownExpressionClass",
   "src": "'{0}' is not a material expression class this engine has.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 507
+  "line": 511
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "UnknownPin",
   "src": "'{0}' has no input pin named '{1}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1715
+  "line": 1742
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "UnknownProductKind",
   "src": "'{0}' has a product kind the emitter does not know how to materialize.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitter.cpp",
-  "line": 1279
+  "line": 1286
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ValueNotEmitted",
   "src": "This node reads node {0}, which has not been emitted; the graph's topological order is inconsistent.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1546
+  "line": 1555
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3589,6 +3855,55 @@
   "src": "Failed to create a VectorParameter node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterParameters.cpp",
   "line": 150
+ },
+ {
+  "ns": "DreamShader.Format",
+  "key": "FormatCheckComment",
+  "src": "the comment '{0}' is not in it",
+  "file": "DreamShaderLang\\Private\\Lang\\LangFormat.cpp",
+  "line": 168
+ },
+ {
+  "ns": "DreamShader.Format",
+  "key": "FormatCheckFailed",
+  "src": "The formatted text of '{0}' failed its own check -- {1} -- so nothing was written. This is a fault of the formatter, not of the file.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangFormat.cpp",
+  "line": 131
+ },
+ {
+  "ns": "DreamShader.Format",
+  "key": "FormatCheckParse",
+  "src": "it does not parse ({0})",
+  "file": "DreamShaderLang\\Private\\Lang\\LangFormat.cpp",
+  "line": 151
+ },
+ {
+  "ns": "DreamShader.Format",
+  "key": "FormatCheckStable",
+  "src": "formatting it again gives another text",
+  "file": "DreamShaderLang\\Private\\Lang\\LangFormat.cpp",
+  "line": 173
+ },
+ {
+  "ns": "DreamShader.Format",
+  "key": "FormatCheckTree",
+  "src": "it parses to other declarations than the file does",
+  "file": "DreamShaderLang\\Private\\Lang\\LangFormat.cpp",
+  "line": 156
+ },
+ {
+  "ns": "DreamShader.Format",
+  "key": "FormatLegacy",
+  "src": "'{0}' has 1.x declarations, and what the printer writes for those is 2.0 text; rewriting 1.x as 2.0 is 'dsc migrate', so 'fmt' leaves the file as it is.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangFormat.cpp",
+  "line": 109
+ },
+ {
+  "ns": "DreamShader.Format",
+  "key": "FormatPreprocessor",
+  "src": "'{0}' uses the preprocessor outside a custom body; 'fmt' reads the file as it is on disk and would have to drop one side of every '#if', so it leaves the file as it is.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangFormat.cpp",
+  "line": 95
  },
  {
   "ns": "DreamShader.IR.Validator",
@@ -4166,10 +4481,24 @@
  },
  {
   "ns": "DreamShader.IRBuilder",
+  "key": "IRBuilderAggregateAsValue",
+  "src": "A struct has no graph form here; use one of its fields.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
+  "line": 533
+ },
+ {
+  "ns": "DreamShader.IRBuilder",
+  "key": "IRBuilderAggregateIntoPin",
+  "src": "A struct has no graph form; pass one of its fields, or move the whole thing into a '/// @custom' function.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
+  "line": 183
+ },
+ {
+  "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderAppendTooWide",
   "src": "This builds a {0}-component value, but a material graph carries at most four components.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilder.cpp",
-  "line": 1078
+  "line": 1113
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4187,10 +4516,17 @@
  },
  {
   "ns": "DreamShader.IRBuilder",
+  "key": "IRBuilderDiscard",
+  "src": "'discard' has no material-graph form; set the material's OpacityMask to zero instead, or move the branch into a '/// @custom' function.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderStatements.cpp",
+  "line": 125
+ },
+ {
+  "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderFieldOfNonMaterial",
   "src": "The IR builder cannot read '{0}' here: the binder typed what it is read from as a material, but that did not lower to one.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 383
+  "line": 384
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4211,7 +4547,7 @@
   "key": "IRBuilderLoopNotUnrollable",
   "src": "This loop runs a number of times the compiler cannot fix at {0} or fewer, and a material graph has no loops; give it a constant trip count, or move it into a '/// @custom' function.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderStatements.cpp",
-  "line": 411
+  "line": 419
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4239,14 +4575,14 @@
   "key": "IRBuilderNestedAttributeWrite",
   "src": "'{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 1392
+  "line": 1451
  },
  {
   "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderNoAttributeEntry",
   "src": "The material attribute table has no entry {0}; the module was bound against a different catalog than this build is reading.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 1482
+  "line": 1541
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4257,10 +4593,17 @@
  },
  {
   "ns": "DreamShader.IRBuilder",
+  "key": "IRBuilderNoCatalog",
+  "src": "This module was bound without a builtin catalog, so no 'UE.*' call and no material attribute can be named; run the bind with a catalog, or pass one in FIRBuildOptions.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilder.cpp",
+  "line": 121
+ },
+ {
+  "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderNoExpressionEntry",
   "src": "The builtin catalog has no expression entry {0}; the module was bound against a different catalog than this build is reading.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 902
+  "line": 913
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4274,28 +4617,35 @@
   "key": "IRBuilderNoLowering",
   "src": "The IR builder has no lowering for a bound expression of kind {0}.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 509
+  "line": 514
  },
  {
   "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderNoTextureObject",
   "src": "'{0}' is a constant texture, which is a TextureObject node, and this engine has no such material expression; declare it 'uniform'.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderMaterial.cpp",
-  "line": 640
+  "line": 641
+ },
+ {
+  "ns": "DreamShader.IRBuilder",
+  "key": "IRBuilderNoWholeSetAttribute",
+  "src": "The material attribute table has no 'MaterialAttributes' entry, so a material that was replaced as a whole has no input to reach this material's output through; export the catalog again from this engine.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderMaterial.cpp",
+  "line": 532
  },
  {
   "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderOneArmedMaterialWrite",
   "src": "'{0}' is set in only one arm of this 'if' and has no value before it; set it in both arms, or before the 'if'.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilder.cpp",
-  "line": 632
+  "line": 641
  },
  {
   "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderOneArmedWrite",
   "src": "'{0}' is assigned in only one arm of this 'if' and has no value before it; assign it in both arms, or give it a value before the 'if'.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilder.cpp",
-  "line": 608
+  "line": 617
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4309,7 +4659,7 @@
   "key": "IRBuilderPropertyNotLiteral",
   "src": "'{0}' is a property of {1} and needs a literal; this argument is computed at run time.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 972
+  "line": 1007
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4335,30 +4685,93 @@
  {
   "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderSubstrateBranch",
-  "src": "A branch over {0} values needs a static condition, and this one is decided at run time; make the condition a '/// @static' uniform bool, or mix the two values with a Substrate mixing node.",
+  "src": "A run-time branch over {0} values becomes a 'Substrate.Select' node, which Unreal Engine has from 5.6 on and this engine does not; make the condition a '/// @static' uniform bool, or mix the two values with lerp().",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilder.cpp",
-  "line": 1460
+  "line": 1513
+ },
+ {
+  "ns": "DreamShader.IRBuilder",
+  "key": "IRBuilderSubstrateBranchMixed",
+  "src": "A branch chooses between two {0} values or between two numbers, and this one has one of each.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilder.cpp",
+  "line": 1495
+ },
+ {
+  "ns": "DreamShader.IRBuilder",
+  "key": "IRBuilderSubstrateSelectKinds",
+  "src": "This branch becomes a 'Substrate.Select', which parameter-blends its two inputs; they are a '{0}' and a '{1}', and the engine may refuse to blend unlike BSDFs.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilder.cpp",
+  "line": 1528
  },
  {
   "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderTextureBranch",
   "src": "A branch can only choose between numbers, bools and static Substrate values, and these are {0} objects, which no material graph node switches; sample each texture first and branch on the samples.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilder.cpp",
-  "line": 1449
+  "line": 1484
  },
  {
   "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderUnsetLocalRead",
   "src": "'{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or give it an initializer where it is declared.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 1376
+  "line": 1435
+ },
+ {
+  "ns": "DreamShader.IRBuilder",
+  "key": "IRBuilderWholeMaterialMerge",
+  "src": "The two sides of this branch end with a different whole material, and DreamShader chooses between attribute values, not between whole materials; assign the attributes one at a time on both sides, or mix the two materials with UE.BlendMaterialAttributes.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderStatements.cpp",
+  "line": 758
  },
  {
   "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderWholeMaterialMergeNamed",
   "src": "'{0}' holds a different whole material in each arm of this 'if', and DreamShader chooses between attribute values, not between whole materials; assign its attributes one at a time in both arms, or mix the two materials with UE.BlendMaterialAttributes.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderStatements.cpp",
-  "line": 748
+  "line": 763
+ },
+ {
+  "ns": "DreamShader.IRBuilder.Substrate",
+  "key": "IRBuilderSubstrateBuilderGone",
+  "src": "'{0}' is not the Substrate value being built any more when a loop comes round to '{0}.{1}': an earlier trip assigned it. Declare the value inside the loop, or finish it before the loop.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderSubstrate.cpp",
+  "line": 202
+ },
+ {
+  "ns": "DreamShader.IRBuilder.Substrate",
+  "key": "IRBuilderSubstrateBuilderTaken",
+  "src": "The Substrate value '{0}' has been used by the time a loop comes round to this write of '{0}.{1}', and its node is what it was then. Declare the value inside the loop, or finish it before the loop.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderSubstrate.cpp",
+  "line": 278
+ },
+ {
+  "ns": "DreamShader.IRBuilder.Substrate",
+  "key": "IRBuilderSubstrateBuilderUnset",
+  "src": "'{0}.{1}' has no value where it is read: the line that writes it did not run on the way here. Give it a value on every path first.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderSubstrate.cpp",
+  "line": 248
+ },
+ {
+  "ns": "DreamShader.IRBuilder.Substrate",
+  "key": "IRBuilderSubstrateBuilderUnsetWrite",
+  "src": "'{0}.{1}' has no value for this operator to start from: the line that writes it did not run on the way here. Give it a value on every path first.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderSubstrate.cpp",
+  "line": 305
+ },
+ {
+  "ns": "DreamShader.IRBuilder.Substrate",
+  "key": "IRBuilderSubstrateConversionMissing",
+  "src": "'{0}' is converted by the node 'Substrate.{1}', and this engine has no such node; give the pins it feeds directly.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderSubstrate.cpp",
+  "line": 508
+ },
+ {
+  "ns": "DreamShader.IRBuilder.Substrate",
+  "key": "IRBuilderSubstrateNativeOff",
+  "src": "This material drives FrontMaterial and says 'Substrate = Native', and Substrate is off in this project; the engine could not compile the asset. Turn Substrate on, or write 'Substrate = Bridge' and the legacy attributes.",
+  "file": "DreamShaderLang\\Private\\IR\\IRBuilderSubstrate.cpp",
+  "line": 416
  },
  {
   "ns": "DreamShader.IRPasses",
@@ -4761,6 +5174,13 @@
  },
  {
   "ns": "DreamShader.Lang.Expressions",
+  "key": "InitializerListNotAnExpression",
+  "src": "An initializer list is only allowed as a variable initializer, not as a general expression.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 535
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
   "key": "InitializerListRightBrace",
   "src": "'}' to close an initializer list",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
@@ -4772,6 +5192,13 @@
   "src": "')' to close a parenthesized expression",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
   "line": 521
+ },
+ {
+  "ns": "DreamShader.Lang.Expressions",
+  "key": "PositionalAfterNamedArgument",
+  "src": "A positional argument cannot follow a named argument; give this argument a name too.",
+  "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
+  "line": 602
  },
  {
   "ns": "DreamShader.Lang.Expressions",
@@ -5009,7 +5436,7 @@
   "key": "BareReturn",
   "src": "Expected a value after 'return' in '{0}', which returns '{1}', found a bare 'return;'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2095
+  "line": 2098
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
@@ -5037,49 +5464,49 @@
   "key": "ExposeNotBool",
   "src": "Expected 'true' or 'false' for 'ExposeToLibrary', found '{0}'; 1.x ignored the setting and so does this front end.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1104
+  "line": 1107
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "FunctionBodyOpen",
   "src": "Expected '`{' to open the body of '{0}', found {1}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2058
+  "line": 2061
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "FunctionName",
   "src": "Expected a function name after '{0}', found {1}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1898
+  "line": 1901
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "FunctionNameOrParen",
   "src": "Expected '(' or a function name after '{0}', found {1}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1927
+  "line": 1930
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "FunctionParamsOpen",
   "src": "Expected '(' to open the parameter list of '{0}', found {1}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1936
+  "line": 1939
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "FunctionSettingIgnored",
   "src": "'{0}' is not a setting of '{1}'; 1.x ignored it and so does this front end.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1130
+  "line": 1133
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "GraphModifier",
   "src": "Expected a return type or a name after 'GraphFunction', found the modifier '{0}', which only a Function takes.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1866
+  "line": 1869
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
@@ -5093,7 +5520,7 @@
   "key": "HoistUnterminated",
   "src": "Expected a ')' to close the 'UE.' call in the body of '{0}', found the end of the body.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2148
+  "line": 2151
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
@@ -5128,21 +5555,21 @@
   "key": "InlineModifier",
   "src": "'Inline' is the old spelling of 'SelfContained'; the function becomes '@custom selfcontained'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1886
+  "line": 1889
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "LayerInputRenamed",
   "src": "The layer input '{0}' becomes the 'inout material' parameter named after the output '{1}', so the input pin changes its name.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1184
+  "line": 1187
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "LayerWithoutMaterial",
   "src": "Expected a MaterialAttributes output on '{0}', found none.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1153
+  "line": 1156
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
@@ -5156,35 +5583,35 @@
   "key": "NameAfterModifier",
   "src": "Expected a function name after '{0}', found '('.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1875
+  "line": 1878
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "NamespaceMember",
   "src": "Expected only Function and GraphFunction blocks inside the namespace '{0}', found {1}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2307
+  "line": 2310
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "NamespaceNoName",
   "src": "Expected a 'Name = \"...\"' attribute with a name on 'Namespace', found none.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2259
+  "line": 2262
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "NamespaceNotIdentifier",
   "src": "Expected the namespace name to be an identifier, found '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2260
+  "line": 2263
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "NamespaceOpen",
   "src": "Expected '`{' to open the namespace '{0}', found {1}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2270
+  "line": 2273
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
@@ -5198,7 +5625,7 @@
   "key": "NoResult",
   "src": "Expected '{0}' to return a value or to have at least one 'out' parameter, found neither.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2049
+  "line": 2052
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
@@ -5212,28 +5639,28 @@
   "key": "ParamQualifier",
   "src": "Expected 'in' or 'out' before the parameter '{0}' of '{1}', found '{2}'; a 1.x function has no 'inout'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1998
+  "line": 2001
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "ParamWords",
   "src": "Expected '[in|out] Type Name' in the parameter list of '{0}', found '{1}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1984
+  "line": 1987
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "ReturnAndOut",
   "src": "Expected either a return type or 'out' parameters on '{0}', found both.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2042
+  "line": 2045
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "ReturnParamName",
   "src": "Expected a parameter name other than '__return', which 1.x reserved, in '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2010
+  "line": 2013
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
@@ -5261,21 +5688,21 @@
   "key": "ShaderWithoutGraph",
   "src": "Expected a Graph section in the Shader '{0}', found none.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 977
+  "line": 980
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "ShaderWithoutOutputs",
   "src": "The Shader '{0}' has no Outputs section, so nothing its Graph computes reaches the material.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 984
+  "line": 987
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "SubstrateNotHoisted",
   "src": "A 'Substrate.' call in the body of '{0}' is not lifted into a node, because no custom node input carries a Substrate value; it reaches the shader compiler as text.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2155
+  "line": 2158
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
@@ -5310,70 +5737,70 @@
   "key": "UserExposedCaption",
   "src": "'UserExposedCaption' has no 2.0 spelling and is not applied; its value is kept for migration.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1118
+  "line": 1121
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "VirtualBody",
   "src": "Expected no body in the VirtualFunction '{0}', which declares an existing asset, found the section '{1}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2466
+  "line": 2469
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "VirtualNoAsset",
   "src": "Expected an 'Asset = Path(...)' option on the VirtualFunction '{0}', found none.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2511
+  "line": 2514
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "VirtualNoName",
   "src": "Expected a 'Name = \"...\"' attribute with a name on 'VirtualFunction', found none.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2373
+  "line": 2376
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "VirtualNoOutput",
   "src": "Expected at least one output on the VirtualFunction '{0}', found none.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2518
+  "line": 2521
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "VirtualNotIdentifier",
   "src": "Expected the VirtualFunction name to be an identifier, found '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2374
+  "line": 2377
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "VirtualOpen",
   "src": "Expected '`{' to open the VirtualFunction '{0}', found {1}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2384
+  "line": 2387
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "VirtualSectionName",
   "src": "Expected a section name such as 'Inputs' in the VirtualFunction '{0}', found {1}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2423
+  "line": 2426
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "VirtualSectionOpen",
   "src": "Expected '`{' after the section name '{0}', found {1}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2440
+  "line": 2443
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "VirtualUnknownSection",
   "src": "Expected a VirtualFunction section (Inputs, Outputs or Options), found '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2474
+  "line": 2477
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
@@ -5387,21 +5814,21 @@
   "key": "WhileNamespace",
   "src": "the namespace '{0}'",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2279
+  "line": 2282
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "WhileParams",
   "src": "the parameter list of '{0}'",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 1960
+  "line": 1963
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",
   "key": "WhileVirtual",
   "src": "the VirtualFunction '{0}'",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyParser.cpp",
-  "line": 2406
+  "line": 2409
  },
  {
   "ns": "DreamShader.Lang.LegacySections",
@@ -6385,6 +6812,13 @@
  },
  {
   "ns": "DreamShader.Migrate",
+  "key": "CatalogEmpty",
+  "src": "The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound and nothing can be migrated.",
+  "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
+  "line": 144
+ },
+ {
+  "ns": "DreamShader.Migrate",
   "key": "CommentsLost",
   "src": "{0} comment(s) of '{1}' would not be in the migrated file ({2}), so nothing was written; this is a fault of the migration, not of the source.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
@@ -6623,17 +7057,24 @@
  },
  {
   "ns": "DreamShader.Pipeline",
+  "key": "CatalogEmpty",
+  "src": "The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.",
+  "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
+  "line": 737
+ },
+ {
+  "ns": "DreamShader.Pipeline",
   "key": "CompileCancelled",
   "src": "Compiling '{0}' was cancelled; nothing was written.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 604
+  "line": 605
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "CompilingLang2Source",
   "src": "Compiling DreamShader source '{0}'...",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 578
+  "line": 579
  },
  {
   "ns": "DreamShader.Pipeline",
@@ -6675,112 +7116,112 @@
   "key": "InstanceChainCycle",
   "src": "'{0}' is its own ancestor: following Parent from it comes back to it ({1}).",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 426
+  "line": 427
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "InstanceChainTooDeep",
   "src": "The Parent chain above '{0}' is more than {1} instances deep; a chain that long is almost always a mistake in a Parent key.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 434
+  "line": 435
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "Lang2Binding",
   "src": "Resolving names in '{0}'...",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 727
+  "line": 728
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "Lang2Emitting",
   "src": "Building the graph for '{0}'...",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 864
+  "line": 886
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "Lang2Lowering",
   "src": "Lowering '{0}' to IR...",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 791
+  "line": 812
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "Lang2Parsing",
   "src": "Parsing '{0}'...",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 674
+  "line": 675
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "Lang2Reading",
   "src": "Reading '{0}'...",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 612
+  "line": 613
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "Lang2Validating",
   "src": "Validating the IR of '{0}'...",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 843
+  "line": 865
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "NotACompilableSource",
   "src": "'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 565
+  "line": 566
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "ParentCompileFailed",
   "src": "The parent source '{0}' failed to compile, so this instance has no parent to build against. {1}",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 514
+  "line": 515
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "ParentCompiledFirst",
   "src": "'{0}' was missing or older than its source, so '{1}' was compiled first.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 503
+  "line": 504
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "ParentSourceDoesNotBuild",
   "src": "The parent '{0}' comes from '{1}', which does not compile, so the parameters this instance overrides cannot be checked; compile that source to see why.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 482
+  "line": 483
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "ProductCycle",
   "src": "The exported functions {0} call one another in a cycle, so there is no order in which they can be built; an exported function may call another only in one direction.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 875
+  "line": 897
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "ResolveDestinationFailed",
   "src": "'{0}' does not resolve to a valid asset path. {1}",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 989
+  "line": 1011
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "SourcePreprocessFailed",
   "src": "'{0}' failed conditional compilation: {1}: {2}",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 644
+  "line": 645
  },
  {
   "ns": "DreamShader.Pipeline",
   "key": "SourceUnreadable",
   "src": "'{0}' could not be read.",
   "file": "DreamShaderCompiler\\Private\\Pipeline\\DreamShaderCompilePipeline.cpp",
-  "line": 622
+  "line": 623
  },
  {
   "ns": "DreamShader.Preprocessor",
@@ -7102,35 +7543,91 @@
   "key": "DiagnosticsOutFailed",
   "src": "The diagnostics JSON could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 475
+  "line": 507
  },
  {
   "ns": "DreamShader.Tools",
   "key": "DumpIRWriteFailed",
   "src": "The IR dump could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 555
+  "line": 587
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "DumpLayoutBadStyle",
+  "src": "'{0}' is not a layout style; -Style takes Blocks, SourceBands, Layered or All.",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 652
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "DumpLayoutWriteFailed",
+  "src": "The layout dump could not be written: {0}.",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 730
  },
  {
   "ns": "DreamShader.Tools",
   "key": "ExportCatalogEmpty",
   "src": "The builtin catalog came back empty, so '{0}' describes no expression at all. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 692
+  "line": 1254
  },
  {
   "ns": "DreamShader.Tools",
   "key": "ExportCatalogWriteFailed",
   "src": "The builtin catalog manifest could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 678
+  "line": 1240
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "FormatCheckWouldChange",
+  "src": "'{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it.",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 956
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "FormatReadFailed",
+  "src": "'{0}' could not be read, so it was not formatted.",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 922
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "FormatWriteFailed",
+  "src": "The formatted text of '{0}' could not be written: {1}. A file that is read-only -- checked in, not checked out -- is the usual reason.",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 966
  },
  {
   "ns": "DreamShader.Tools",
   "key": "IndexWriteFailed",
   "src": "The symbol index could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 643
+  "line": 821
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "ListGeneratedOutsideProject",
+  "src": "{0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no project-relative path; '-As=Packages' or '-As=Json' lists them.",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 1188
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "ListGeneratedUnknownFormat",
+  "src": "'-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json.",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 1052
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "ListGeneratedWriteFailed",
+  "src": "The list of generated assets could not be written: {0}.",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 1200
  },
  {
   "ns": "DreamShader.Tools",
@@ -7144,7 +7641,7 @@
   "key": "NotALang2SourceForVerb",
   "src": "'{0}' is not a compilable DreamShader source (.dss, .dsi, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 251
+  "line": 257
  },
  {
   "ns": "DreamShader.Tools",
@@ -7159,6 +7656,13 @@
   "src": "Shader compilation for '{0}' did not finish within {1} seconds per material. A compile that never finishes is usually a dynamic loop or a texture read whose mip cannot be resolved in a divergent branch; move it into a '@custom' body with an explicit SampleLevel.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderShaderCheck.cpp",
   "line": 757
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "ShaderErrorsUnreadable",
+  "src": "Shader errors cannot be read in this configuration: '-nullrhi' switches the rendering shader maps off, and no cook target platform matched the requested platforms. Re-run without '-nullrhi', or pass a '-Platform=' an active target platform supports.",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderShaderCheck.cpp",
+  "line": 765
  },
  {
   "ns": "DreamShader.Tools",
@@ -7179,21 +7683,35 @@
   "key": "VerbCheck",
   "src": "check",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 421
+  "line": 453
  },
  {
   "ns": "DreamShader.Tools",
   "key": "VerbDumpIR",
   "src": "dump-ir",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 525
+  "line": 557
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "VerbDumpLayout",
+  "src": "dump-layout",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 675
  },
  {
   "ns": "DreamShader.Tools",
   "key": "VerbIndex",
   "src": "index",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 614
+  "line": 791
+ },
+ {
+  "ns": "DreamShader.Tools",
+  "key": "VerbListGenerated",
+  "src": "list-generated",
+  "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
+  "line": 1069
  },
  {
   "ns": "DreamShader.VirtualFunction",
@@ -7242,14 +7760,14 @@
   "key": "SectionDescription",
   "src": "Dream Shader Settings",
   "file": "DreamShader\\Public\\DreamShaderSettings.h",
-  "line": 44
+  "line": 58
  },
  {
   "ns": "DreamShaderEditor.Settings",
   "key": "SectionText",
   "src": "Dream Shader",
   "file": "DreamShader\\Public\\DreamShaderSettings.h",
-  "line": 43
+  "line": 57
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -7354,7 +7872,7 @@
   "key": "DreamShaderAdoptLabel",
   "src": "Adopt Into Source",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2624
+  "line": 2642
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -7417,7 +7935,7 @@
   "key": "DreamShaderAdoptTooltip",
   "src": "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2625
+  "line": 2643
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -7431,21 +7949,21 @@
   "key": "DreamShaderAdoptTweaksLabel",
   "src": "Adopt Tweaks as Source Defaults",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2643
+  "line": 2661
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderAdoptTweaksTooltip",
   "src": "Write this instance's parameter overrides into the .dss as the defaults of its uniforms, then clear them from the instance. The source is backed up first.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2645
+  "line": 2663
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderAdoptTweaksUnavailableTooltip",
   "src": "Only a .dss source under a writable root takes tweaks as uniform defaults; use Extract Tweaks to .dsi instead.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2646
+  "line": 2664
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -7459,133 +7977,133 @@
   "key": "DreamShaderCleanGeneratedShadersLabel",
   "src": "Clean Generated Shaders",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2275
+  "line": 2293
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCleanGeneratedShadersTooltip",
   "src": "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2276
+  "line": 2294
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionCallLabel",
   "src": "CopyVirtualFunctionCall",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2801
+  "line": 2819
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionCallNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3453
+  "line": 3472
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionCallTooltip",
   "src": "Copy a DreamShader Graph call example for this VirtualFunction.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2802
+  "line": 2820
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionLabel",
   "src": "CopyVirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2763
+  "line": 2781
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3140
+  "line": 3159
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionPrototypeLabel",
   "src": "Copy extern Prototype (2.0)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2783
+  "line": 2801
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionPrototypeTooltip",
   "src": "Copy the 2.0 extern prototype of this Material Function, with its /// @asset line, for a .dss or a .dsh.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2784
+  "line": 2802
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionReferenceLabel",
   "src": "Copy Virtual Function Reference",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2751
+  "line": 2769
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionReferenceNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3387
+  "line": 3406
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionReferenceTooltip",
   "src": "Copy a DreamShader Graph call that references this existing VirtualFunction.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2752
+  "line": 2770
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionTooltip",
   "src": "Copy a complete DreamShader VirtualFunction declaration for this Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2764
+  "line": 2782
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionLabel",
   "src": "CreateVirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2772
+  "line": 2790
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3174
+  "line": 3193
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionPrototypeLabel",
   "src": "Create extern Prototype (2.0)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2792
+  "line": 2810
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionPrototypeTooltip",
   "src": "Create a .dsh file holding the 2.0 extern prototype of this Material Function, for .dss sources to #include.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2793
+  "line": 2811
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionTooltip",
   "src": "Create a .dsh file containing the VirtualFunction declaration.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2773
+  "line": 2791
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDecompileActionsSection",
   "src": "Decompiler",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2677
+  "line": 2695
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -7599,7 +8117,7 @@
   "key": "DreamShaderDetachLabel",
   "src": "Detach From DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2631
+  "line": 2649
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -7627,476 +8145,483 @@
   "key": "DreamShaderDetachTooltip",
   "src": "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2632
+  "line": 2650
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceAdopt",
   "src": "Adopt Into Source",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1969
+  "line": 1987
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceAdoptTip",
   "src": "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1970
+  "line": 1988
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceDetach",
   "src": "Detach",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1977
+  "line": 1995
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceDetachTip",
   "src": "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1978
+  "line": 1996
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceDismiss",
   "src": "Dismiss",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1995
+  "line": 2013
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceDismissTip",
   "src": "Leave the asset alone for now. The refusal stays in the log, in the diagnostics, and in the Material Content Browser.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1996
+  "line": 2014
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceOpenBrowser",
   "src": "Open Material Browser",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2027
+  "line": 2045
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceOpenBrowserTip",
   "src": "Open the DreamShader Material Content Browser, which lists every source and the state of the asset it generated.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2028
+  "line": 2046
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceRevert",
   "src": "Revert to Source",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1961
+  "line": 1979
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceRevertTip",
   "src": "Discard the hand edits and rebuild this asset from its DreamShader source. The source file is not modified.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1962
+  "line": 1980
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceShowEphemeral",
   "src": "Show Ephemeral Materials",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1988
+  "line": 2006
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceShowEphemeralTip",
   "src": "This asset is Ephemeral -- it has no file on disk -- and is currently hidden. Show Ephemeral DreamShader materials in the Content Browser so you can find and inspect it.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1989
+  "line": 2007
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceSubText",
   "src": "Rebuilding it from {0} would destroy those edits. Decide which copy is right.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1946
+  "line": 1964
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceSummary",
   "src": "{0} generated assets were edited by hand and were not rebuilt.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2013
+  "line": 2031
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceSummaryDismiss",
   "src": "Dismiss",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2036
+  "line": 2054
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceSummaryDismissTip",
   "src": "Leave them alone for now. Every refusal is in the log and in the diagnostics.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2037
+  "line": 2055
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamShaderDivergenceSummarySubText",
+  "src": "Too many to answer one toast at a time. The Material Content Browser lists them with the same three actions on each.",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 2033
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDivergenceTitle",
   "src": "'{0}' was edited by hand, so it was not rebuilt.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 1943
+  "line": 1961
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderEphemeralMaterialsHidden",
   "src": "Hidden {0} Ephemeral material(s) from the Content Browser and asset pickers.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2909
+  "line": 2927
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderEphemeralMaterialsShown",
   "src": "Showing {0} Ephemeral material(s) in the Content Browser and asset pickers.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2908
+  "line": 2926
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderEphemeralShadowed",
   "src": "{0} previously generated asset(s) are still saved on disk and shadow the Ephemeral materials. Run Tools > DreamShader > Make Ephemeral to remove them.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 877
+  "line": 895
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFailed",
   "src": "DreamShader failed to export '{0}': {1}",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3086
+  "line": 3105
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionDssLabel",
   "src": "Export .dss",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2717
+  "line": 2735
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionDssTooltip",
   "src": "Decompile this Material Function graph into a 2.0 DreamShader .dss source file.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2718
+  "line": 2736
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionLegacyLabel",
   "src": "Export Legacy .dsf",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2726
+  "line": 2744
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionLegacyTooltip",
   "src": "Decompile this Material Function graph into a 1.x .dsf source file, with the 1.x decompiler that is kept through 2.0.x.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2727
+  "line": 2745
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3034
+  "line": 3053
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportInstanceNoAsset",
   "src": "DreamShader could not find the selected material instance.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3058
+  "line": 3077
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialDssLabel",
   "src": "Export .dss",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2680
+  "line": 2698
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialDssTooltip",
   "src": "Decompile this Material graph into a 2.0 DreamShader .dss source file.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2681
+  "line": 2699
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialInstanceDsiLabel",
   "src": "Export .dsi",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2530
+  "line": 2548
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialInstanceDsiTooltip",
   "src": "Decompile this material instance into a .dsi source file: its parent, its instance settings and every parameter that differs from the parent.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2531
+  "line": 2549
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialLegacyLabel",
   "src": "Export Legacy .dsm",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2689
+  "line": 2707
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialLegacyTooltip",
   "src": "Decompile this Material graph into a 1.x .dsm source file, with the 1.x decompiler that is kept through 2.0.x.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2690
+  "line": 2708
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialNoAsset",
   "src": "DreamShader could not find the selected Material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3010
+  "line": 3029
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExported",
   "src": "Exported '{0}'.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3128
+  "line": 3147
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportedNotOpened",
   "src": "Exported '{0}' but could not open it.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3119
+  "line": 3138
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExtractTweaksLabel",
   "src": "Extract Tweaks to .dsi",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2654
+  "line": 2672
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExtractTweaksTooltip",
   "src": "Write this instance's parameter overrides into a new .dsi whose parent is this material, compile it, and clear the overrides from this instance.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2655
+  "line": 2673
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderFunctionDecompileActionsSection",
   "src": "Decompiler",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2714
+  "line": 2732
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderFunctionProvenanceActionsSection",
   "src": "Generated Asset",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2708
+  "line": 2726
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderInstanceConstantDecompileActionsSection",
   "src": "Decompiler",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2527
+  "line": 2545
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderInstanceConstantProvenanceActionsSection",
   "src": "Generated Asset",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2521
+  "line": 2539
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderInstanceProvenanceActionsSection",
   "src": "Generated Asset",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2481
+  "line": 2499
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMakeEphemeralLabel",
   "src": "Make Ephemeral",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2281
+  "line": 2299
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMakeEphemeralNoneFound",
   "src": "No Materialized DreamShader ThinCustom products found.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2925
+  "line": 2943
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMakeEphemeralResult",
   "src": "Made {0} of {1} Materialized product(s) Ephemeral.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2943
+  "line": 2961
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMakeEphemeralTooltip",
   "src": "Delete the packages of Materialized ThinCustom products so they go back to being Ephemeral. Shows a confirmation with the full list; source files are untouched and the products are rebuilt in memory. Graph materials and material functions are not listed -- they have no Ephemeral state.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2282
+  "line": 2300
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2410
+  "line": 2428
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialActionsTooltip",
   "src": "DreamShader actions for this Material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2411
+  "line": 2429
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2436
+  "line": 2454
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionActionsTooltip",
   "src": "DreamShader actions for this Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2437
+  "line": 2455
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionToolbarMenuLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2595
+  "line": 2613
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionToolbarMenuTooltip",
   "src": "DreamShader actions for this Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2596
+  "line": 2614
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialInstanceActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2462
+  "line": 2480
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialInstanceActionsTooltip",
   "src": "DreamShader actions for this generated material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2463
+  "line": 2481
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialInstanceConstantActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2501
+  "line": 2519
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialInstanceConstantActionsTooltip",
   "src": "DreamShader actions for this material instance.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2502
+  "line": 2520
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialToolbarMenuLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2577
+  "line": 2595
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialToolbarMenuTooltip",
   "src": "DreamShader actions for this Material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2578
+  "line": 2596
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenVirtualFunctionLabel",
   "src": "OpenVirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2742
+  "line": 2760
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenVirtualFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3343
+  "line": 3362
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenVirtualFunctionTooltip",
   "src": "Open the existing DreamShader VirtualFunction definition in VSCode.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2743
+  "line": 2761
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceLabel",
   "src": "Open Dream Shader Workspace (VSCode)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2300
+  "line": 2318
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceSharedLabel",
   "src": "DreamShader Workspace",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2315
+  "line": 2333
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceToolbarTooltip",
   "src": "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2316
+  "line": 2334
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceTooltip",
   "src": "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2301
+  "line": 2319
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderProvenanceActionsSection",
   "src": "Generated Asset",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2671
+  "line": 2689
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -8131,28 +8656,28 @@
   "key": "DreamShaderRecompileLabel",
   "src": "Recompile DSM",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2263
+  "line": 2281
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileSharedLabel",
   "src": "Recompile DSM",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2321
+  "line": 2339
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileSharedTooltip",
   "src": "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2322
+  "line": 2340
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileTooltip",
   "src": "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2264
+  "line": 2282
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -8166,42 +8691,42 @@
   "key": "DreamShaderRevertDivergedLabel",
   "src": "Revert to Source (discards your edits)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2616
+  "line": 2634
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRevertLabel",
   "src": "Revert to Source",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2617
+  "line": 2635
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRevertTooltip",
   "src": "Rebuild this asset from the DreamShader source it was generated from, discarding every hand edit in it. The source file is not modified.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2618
+  "line": 2636
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderSharedSectionLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2312
+  "line": 2330
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderToggleShowEphemeralMaterialsLabel",
   "src": "Show Ephemeral Materials",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2287
+  "line": 2305
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderToggleShowEphemeralMaterialsTooltip",
   "src": "Show Ephemeral ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials with no Ephemeral state, so this toggle does not affect them. While shown, an explicit Save on one would materialize it to disk (the shadow warning and Make Ephemeral cover recovery).",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2288
+  "line": 2306
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -8327,63 +8852,70 @@
   "key": "DreamShaderVirtualFunctionActionsSection",
   "src": "VirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2736
+  "line": 2754
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeCopied",
   "src": "Copied the extern prototype of {0}.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3162
+  "line": 3181
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeCreated",
   "src": "Created '{0}'.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3238
+  "line": 3257
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeDirectoryFailed",
   "src": "DreamShader failed to create directory '{0}'.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3207
+  "line": 3226
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeFailed",
   "src": "DreamShader failed to build the extern prototype of '{0}': {1}",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3151
+  "line": 3170
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeNotOpened",
   "src": "Created '{0}' but could not open it.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3229
+  "line": 3248
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeWriteFailed",
   "src": "DreamShader failed to write '{0}'.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3218
+  "line": 3237
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamToolsComboLabel",
   "src": "Dream",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2227
+  "line": 2245
+ },
+ {
+  "ns": "DreamShaderEditorBridge",
+  "key": "DreamToolsComboTooltip",
+  "src": "Dream-family language tools: open a source workspace in VSCode, or rebuild a whole source tree (DreamShader / DreamFX / DreamUI).",
+  "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
+  "line": 2246
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "MaterialCompileErrorHeader",
   "src": "[{0} / {1}] {2}",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2146
+  "line": 2164
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -8397,182 +8929,182 @@
   "key": "CustomCodeUnreadable",
   "src": "The code of the custom node '{0}' carries DreamShader's markers and does not read as what the compiler writes; it is kept verbatim as the body of one function, the functions it embeds included.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 1218
+  "line": 1221
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "CustomPinRenamed",
   "src": "The custom function '{0}' has a pin '{1}' the language cannot declare under that name; it is written as '{2}', and the body still says '{1}'.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 1429
+  "line": 1432
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "CustomRenamed",
   "src": "The custom function '{0}' is written as '{1}': the name is taken or is not one the language allows. A custom body that calls it by the old name has to be changed by hand.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 1275
+  "line": 1278
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "ExternInferred",
   "src": "'{0}' is called and its interface was not available, so its 'extern' prototype is written from the calls alone: pins no call connects are missing from it, and their order is the order the calls wire them in.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 1134
+  "line": 1137
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "InstanceProduct",
   "src": "'{0}' is a material instance, which is written as a '.dsi' (PrintDreamShaderInstance), not as part of a '.dss'.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 1880
+  "line": 1890
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "LayerApproximated",
   "src": "'{0}' is a {1}, and {2}.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 957
+  "line": 960
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "LayerDemoted",
   "src": "'{0}' is a {1}, and its pins are not the ones the language writes that kind with; it is written as a plain exported function, which builds a material function.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 948
+  "line": 951
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "LayerMaterialRequired",
   "src": "its material input '{0}' has to be connected, and the language makes the materials of a layer and of a blend optional, as the engine's own are: the rebuilt asset lets that input go unconnected",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 246
+  "line": 249
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "LayerOutputRenamed",
   "src": "its output pin '{0}' is written under the input's name '{1}', because a layer's material goes in and out through one parameter",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 275
+  "line": 278
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "LayoutHintsAmbiguous",
   "src": "{0} variable name(s) are placed differently by more than one function of this file, and '#pragma layout' goes by name for the whole file; their positions are not kept.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 1913
+  "line": 1923
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "LayoutHintsDropped",
   "src": "{0} node position(s) of '{1}' belong to values the source writes inline, and a position is kept by variable name; those nodes are placed by the layout pass when the file is built.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 1689
+  "line": 1699
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "OutputUnconnected",
   "src": "The output '{0}' of '{1}' is not connected to anything; nothing is written to it.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 1805
+  "line": 1815
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "OutputWithoutParam",
   "src": "The output '{0}' of '{1}' did not become a parameter; nothing is written to it.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 1828
+  "line": 1838
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "UniformDisagrees",
   "src": "The parameter '{0}' appears more than once and its nodes do not agree on its default, group or kind; the uniform is written from the first one, in '{1}'.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 547
+  "line": 550
  },
  {
   "ns": "DreamShaderIRToAst",
   "key": "UniformRenamed",
   "src": "The uniform '{0}' is written as '{1}': the name is already taken in this file.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAst.cpp",
-  "line": 662
+  "line": 665
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "AttributesWithoutMaterial",
   "src": "it reads the attributes of no material",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1621
+  "line": 1625
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallInputUnconnectedSkipped",
   "src": "{0} leaves the required input '{1}' of '{2}' unconnected and nothing can stand in for it; the call is written without it and will not compile as it is.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1469
+  "line": 1473
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallInputUnconnectedZero",
   "src": "{0} leaves the required input '{1}' of '{2}' unconnected; '0.0' is passed for it.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1468
+  "line": 1472
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallInputUndeclared",
   "src": "{0} connects an input '{1}' that '{2}' does not declare; the connection is dropped.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1506
+  "line": 1510
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallOfVoidAsValue",
   "src": "the function it calls returns nothing",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1543
+  "line": 1547
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallOutWithoutLocal",
   "src": "the function it calls has 'out' parameters and the call was taken for a plain value",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1485
+  "line": 1489
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallWithoutCallee",
   "src": "the function it calls could not be declared",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1539
+  "line": 1543
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CompareAsReflectedCall",
   "src": "{0} is an If whose branches no comparison selects between; it is written as 'UE.If(...)'.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1367
+  "line": 1371
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CoreOpArity",
   "src": "it has the wrong number of operands",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1301
+  "line": 1305
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CoreOpMissingOperand",
   "src": "one of its operands is not connected",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1296
+  "line": 1300
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CoreOpNoSpelling",
   "src": "the language has no spelling for this operation",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1439
+  "line": 1443
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
@@ -8600,35 +9132,35 @@
   "key": "ReflectedPropertySkipped",
   "src": "{0} sets '{1}' to a list, which a call has no argument for; the property is left at its default.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1087
+  "line": 1091
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "ReflectedPropertyUnnamed",
   "src": "{0} sets a property '{1}' whose name an argument cannot carry; it is left at its default.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1110
+  "line": 1114
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "ReflectedUnnamedPin",
   "src": "{0} has an input '{1}' that is neither a pin of '{2}.{3}' nor a name an argument can carry; it is left unconnected.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1061
+  "line": 1065
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "SampleWithoutOperands",
   "src": "a texture sample needs its texture and its coordinates",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1232
+  "line": 1236
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "SwizzleWithoutMask",
   "src": "the component mask is missing",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1311
+  "line": 1315
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
@@ -9265,14 +9797,14 @@
   "key": "FactoryMaterializeFailed",
   "src": "Failed to materialize the material to disk: {0}",
   "file": "DreamShaderCompiler\\Private\\DreamShaderCompilerService.cpp",
-  "line": 345
+  "line": 359
  },
  {
   "ns": "DreamShaderMaterialBrowser",
   "key": "FactoryReloadFailed",
   "src": "Materialized the material but could not reload it at {0}.",
   "file": "DreamShaderCompiler\\Private\\DreamShaderCompilerService.cpp",
-  "line": 352
+  "line": 366
  },
  {
   "ns": "DreamShaderMaterialBrowser",
@@ -9426,7 +9958,7 @@
   "key": "MaterializeNoSource",
   "src": "This material is memory-only and has no DreamShader source file to materialize from.",
   "file": "DreamShaderCompiler\\Private\\DreamShaderCompilerService.cpp",
-  "line": 328
+  "line": 342
  },
  {
   "ns": "DreamShaderMaterialBrowser",

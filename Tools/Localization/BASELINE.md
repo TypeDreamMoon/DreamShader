@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-1503
+1579
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -88,6 +88,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Directives | SliderRange | '@slider' needs its minimum below its maximum. |
 | DreamShader.Binder.Directives | SortMalformed | '@sort' takes one whole number; '{0}' is not that. |
 | DreamShader.Binder.Directives | StaticNeedsParam | '@static' on a function is written '@static <ParameterName>'. |
+| DreamShader.Binder.Directives | SubstrateModeUnknown | 'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'. |
 | DreamShader.Binder.Directives | TargetExtern | an 'extern' prototype |
 | DreamShader.Binder.Directives | TargetFunction | an exported function |
 | DreamShader.Binder.Directives | TargetFunction2 | a function |
@@ -112,6 +113,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Expressions | ArrayNeedsList | An array is initialised with a list, as in '= { 1.0, 2.0 }'. |
 | DreamShader.Binder.Expressions | ArrayNotFolded | This array is not a compile-time constant, and the graph has no arrays; declare it 'static const' with a constant initializer. |
 | DreamShader.Binder.Expressions | AssignmentTarget | This assignment |
+| DreamShader.Binder.Expressions | AssignToBuilderPinComponent | A member of a Substrate value is a pin, and a pin is connected whole; build the vector first and assign that. |
 | DreamShader.Binder.Expressions | AssignToGlobal | A 'uniform' is an input and a 'static const' is a constant; neither can be assigned to. Copy it into a local first. |
 | DreamShader.Binder.Expressions | AssignToInParam | An 'in' parameter is a function input pin and cannot be written to; declare it 'out' or 'inout', or copy it into a local. |
 | DreamShader.Binder.Expressions | AssignToNonLValue | The left of '=' has to be a variable, a struct field, a material pin or a swizzle of one. |
@@ -217,6 +219,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Expressions | StructFieldArgument | This struct field |
 | DreamShader.Binder.Expressions | StructInitializerCount | '{0}' has {1} fields and this list has {2}. |
 | DreamShader.Binder.Expressions | SubstrateClass | 'Substrate.' already names the node, so it takes no 'Class' argument. |
+| DreamShader.Binder.Expressions | SubstrateCompoundAssign | A Substrate value has no compound assignment; write 'S = S + T' (Substrate.Add) or 'S = S * w' (Substrate.Weight). |
+| DreamShader.Binder.Expressions | SubstrateNodeNeedsNewerEngine | 'Substrate.{0}' is a node Unreal Engine has from {1} on; this engine does not have it. |
 | DreamShader.Binder.Expressions | SwizzleLength | '.{0}' is not a swizzle; a swizzle is one to four of 'xyzw' or 'rgba'. |
 | DreamShader.Binder.Expressions | SwizzleLetter | '.{0}' is not a swizzle; '{1}' is not one of 'xyzw' or 'rgba'. |
 | DreamShader.Binder.Expressions | SwizzleMixedSets | '.{0}' mixes 'xyzw' with 'rgba'; a swizzle picks one family. |
@@ -320,6 +324,31 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Statements | ReturnWithValue | '{0}' returns nothing, so this 'return' cannot carry a value; extra results are written to 'out' parameters. |
 | DreamShader.Binder.Statements | VoidLocal | A variable cannot be 'void'. |
 | DreamShader.Binder.Statements | WhileCondition | The condition of a 'while' |
+| DreamShader.Binder.Substrate | BuilderNoSuchPin | '{0}' builds a '{1}.{2}', which has no pin called '{3}'. |
+| DreamShader.Binder.Substrate | BuilderPinConflict | '{0}.{1}': '{2}' and '{3}' parameterize the same pins; give one of them. |
+| DreamShader.Binder.Substrate | BuilderReadUnset | '{0}.{1}' has not been given a value, so there is nothing to read; a member of a Substrate value reads back what was written to it. |
+| DreamShader.Binder.Substrate | BuilderReadWriteUnset | '{0}.{1}' has not been given a value, so there is nothing for this operator to start from; assign it first. |
+| DreamShader.Binder.Substrate | BuilderReassigned | '{0}' has been assigned a whole Substrate value since it was declared, and that value has no members; build a new value, or write the members before the assignment. |
+| DreamShader.Binder.Substrate | BuilderRequiredPin | '{0}' is used with the required '{1}' pin of '{2}.{3}' unconnected; unless the node reads a default for it, the engine reports it when the material compiles. |
+| DreamShader.Binder.Substrate | BuilderRequires | '{0}.{1}' is measured against '{2}', and '{0}' was given no '{2}' before this use. |
+| DreamShader.Binder.Substrate | BuilderSealed | The Substrate value '{0}' is sealed: it has been used already, and its node is what it was then. Write its members before using it. |
+| DreamShader.Binder.Substrate | BuilderThicknessAlone | '{0}.Thickness' is how deep 'Transmittance' is measured, and '{0}' was given no 'Transmittance' before this use. |
+| DreamShader.Binder.Substrate | BuilderVirtualConflict | '{0}.{1}': '{2}' and '{3}' parameterize the same pins; give one of them. |
+| DreamShader.Binder.Substrate | BuilderWriteInBranch | A member of the Substrate value '{0}' cannot be written inside an 'if': that would be one node in two versions. Build two values and choose between them. |
+| DreamShader.Binder.Substrate | LegacyBuilderRequiredPin | '{0}' is used with the required '{1}' pin of '{2}.{3}' unconnected, which 1.x allowed and the engine reports when the material compiles. |
+| DreamShader.Binder.Substrate | SubstrateLerpMixed | 'lerp' mixes two Substrate values or two numbers, and these are {0} and {1}. |
+| DreamShader.Binder.Substrate | SubstrateNodeMissing | {0} needs the node 'Substrate.{1}', and this engine has no such node; Substrate nodes exist from Unreal Engine 5.4 on. |
+| DreamShader.Binder.Substrate | SubstrateNodeNeedsEngine | {0} needs the node 'Substrate.{1}', which Unreal Engine has from {2} on; this engine does not have it. |
+| DreamShader.Binder.Substrate | SubstrateOperator | Substrate values support only '+' (Substrate.Add) and '* scalar' (Substrate.Weight); use lerp() for mixing and Substrate.Layer() for layering. |
+| DreamShader.Binder.Substrate | SugarAdd | '+' over two Substrate values |
+| DreamShader.Binder.Substrate | SugarLerp | 'lerp' over two Substrate values |
+| DreamShader.Binder.Substrate | SugarPinOf | The '{0}' side of {1} |
+| DreamShader.Binder.Substrate | SugarWeight | '*' over a Substrate value and a number |
+| DreamShader.Binder.Substrate | VirtualArgumentOf | The '{0}' argument of '{1}.{2}' |
+| DreamShader.Binder.Substrate | VirtualConflict | '{0}.{1}': '{2}' and '{3}' parameterize the same pins; give one of them. |
+| DreamShader.Binder.Substrate | VirtualRequires | '{0}.{1}': '{2}' is measured against '{3}', and this call gives no '{3}'. |
+| DreamShader.Binder.Substrate | VirtualThicknessAlone | '{0}.{1}': 'Thickness' is how deep 'Transmittance' is measured, and this call gives no 'Transmittance'. |
+| DreamShader.Binder.Substrate | VirtualTwice | '{0}' is given twice in this call. |
 | DreamShader.CommandletRunner | DecompileDiagnosticsOutFailed | The diagnostics JSON could not be written: {0}. |
 | DreamShader.CustomHlsl | CustomBadFunctionIndex | Custom node code was asked for function {0}, but the bound module has {1}. |
 | DreamShader.CustomHlsl | CustomCallArity | '{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise. |
@@ -413,6 +442,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Decompiler.Service | DecompileFormatContradictsExtension | '{0}' ends in '.{1}', which is read as {2} source, and the decompile was asked for {3} text; name the file after the text, or leave the format to the extension. |
 | DreamShader.Decompiler.Service | DecompileLegacyLanguage | 1.x |
 | DreamShader.Decompiler.Service | DecompileLegacyText | 1.x |
+| DreamShader.Decompiler.Service | DecompilerCannotWriteDss | The decompile was asked for 2.0 text and was handed the 1.x decompiler, which writes '.dsm' and '.dsf' only; build the service with GetIRDecompiler() for Format = Dss. |
 | DreamShader.Decompiler.Service | FailedToCreateOutputDirectory | DreamShader failed to create output directory '{0}'. |
 | DreamShader.Decompiler.Service | FailedToResolveOutputFilePath | DreamShader failed to resolve an output file path. |
 | DreamShader.Decompiler.Service | FailedToWriteDecompiledSource | DreamShader failed to write decompiled source '{0}'. |
@@ -432,6 +462,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Emitter | BadProductIndex | Product index {0} does not exist in this module, which has {1}. |
 | DreamShader.Emitter | BadSamplerType | '{0}' is not a sampler type; write one of the EMaterialSamplerType names, such as Color, Normal or LinearColor. |
 | DreamShader.Emitter | BreakAttributesFailed | Failed to create a BreakMaterialAttributes node. |
+| DreamShader.Emitter | BreakAttributesNoBase | A GetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to read. |
 | DreamShader.Emitter | BreakAttributesSlotNotPublished | BreakMaterialAttributes does not publish the attribute '{0}', so it cannot be read from a material that came through a pin. |
 | DreamShader.Emitter | CollectionParameterMissing | The material parameter collection '{0}' has no parameter called '{1}'. |
 | DreamShader.Emitter | CompareArity | A Compare node takes five operands (A, B, greater, equal, less); this one has {0}. |
@@ -469,6 +500,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Emitter | FunctionOutputFailed | Failed to create a FunctionOutput node. |
 | DreamShader.Emitter | FunctionReferenceUnresolved | The function reference '{0}' does not resolve to an asset path. {1} |
 | DreamShader.Emitter | FwidthFailed | Failed to create the nodes fwidth lowers to. |
+| DreamShader.Emitter | GetAttributesFailed | Failed to create a GetMaterialAttributes node. |
 | DreamShader.Emitter | InstanceParentCycle | '{0}' cannot parent to '{1}': that parent already descends from this instance. |
 | DreamShader.Emitter | InstanceParentDoesNotLoad | The parent '{0}' of '{1}' does not load; compile the source that builds it, or correct the Parent key. |
 | DreamShader.Emitter | InstanceParentDrift | The parent asset '{0}' has no parameter {1} of the kind this instance overrides; the asset is older than its source. Compile the parent source first. |
@@ -480,8 +512,11 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Emitter | LocalFunctionNotEmitted | This call targets product {0} of the same file, but that product has not been emitted yet; the pipeline must compile products in dependency order. |
 | DreamShader.Emitter | MakeAttributesFailed | Failed to create a MakeMaterialAttributes node. |
 | DreamShader.Emitter | MakeAttributesNoPin | MakeMaterialAttributes has no pin for the attribute '{0}'. |
+| DreamShader.Emitter | MakeAttributesNoPinNorSet | MakeMaterialAttributes has no pin for the attribute '{0}', and SetMaterialAttributes could not take it either. |
+| DreamShader.Emitter | MakeAttributesSetFailed | Failed to create the SetMaterialAttributes node that carries what MakeMaterialAttributes has no pin for. |
 | DreamShader.Emitter | MissingOperand | This node needs operand {0}, but it has only {1}. |
 | DreamShader.Emitter | NegateFailed | Failed to create the Multiply node a negation lowers to. |
+| DreamShader.Emitter | NoCatalog | The emitter needs the builtin catalog the front end was bound against, but the emit context carries none. |
 | DreamShader.Emitter | NoLowering | The core operation '{0}' has no engine expression class and no lowering in the emitter. |
 | DreamShader.Emitter | NoOrganizationField | '{0}' exposes no '{1}' field, so that value was not written. |
 | DreamShader.Emitter | NoParameterNameProperty | '{0}' exposes no ParameterName, so the name '{1}' was not written. |
@@ -508,8 +543,10 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Emitter | SelectFailed | Failed to create the If node a select lowers to. |
 | DreamShader.Emitter | SetAttributesConnectFailed | SetMaterialAttributes could not take a value for the attribute '{0}'. |
 | DreamShader.Emitter | SetAttributesFailed | Failed to create a SetMaterialAttributes node. |
+| DreamShader.Emitter | SetAttributesNoBase | A SetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to modify. |
 | DreamShader.Emitter | SettingsRefused | A material setting on '{0}' was refused. {1} |
 | DreamShader.Emitter | SinkNoPropertyInput | This material has no input for the attribute '{0}'; check the material domain and shading model the file asks for. |
+| DreamShader.Emitter | SinkWithoutMaterial | This graph carries a MaterialSink, which only a material product has; a material function drives FunctionOutput nodes instead. |
 | DreamShader.Emitter | SourceHashCurrent | '{0}' was left alone: its source hash is unchanged since it was last built. |
 | DreamShader.Emitter | StaticBoolDefaultFailed | Failed to create the StaticBool node that holds a static bool input's default. |
 | DreamShader.Emitter | StaticBoolParamFailed | Failed to create a StaticBoolParameter node. |
@@ -521,6 +558,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Emitter | TextureDefaultMissing | The default texture for parameter '{0}' could not be loaded from '{1}'. |
 | DreamShader.Emitter | TextureDefaultReferenceUnresolved | The default texture reference '{0}' of parameter '{1}' does not resolve to an asset path. {2} |
 | DreamShader.Emitter | TextureParamFailed | Failed to create a TextureObjectParameter node. |
+| DreamShader.Emitter | TextureSampleArity | A TextureSample node needs a texture in operand 0 and a UV in operand 1; one of them is not set. |
 | DreamShader.Emitter | TextureSampleFailed | Failed to create a TextureSample node. |
 | DreamShader.Emitter | UnhandledOp | The emitter has no rule for the IR operation '{0}'. |
 | DreamShader.Emitter | UnknownAttribute | '{0}' is not a material attribute this engine has. |
@@ -529,6 +567,13 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Emitter | UnknownProductKind | '{0}' has a product kind the emitter does not know how to materialize. |
 | DreamShader.Emitter | ValueNotEmitted | This node reads node {0}, which has not been emitted; the graph's topological order is inconsistent. |
 | DreamShader.Emitter | VectorParamFailed | Failed to create a VectorParameter node. |
+| DreamShader.Format | FormatCheckComment | the comment '{0}' is not in it |
+| DreamShader.Format | FormatCheckFailed | The formatted text of '{0}' failed its own check -- {1} -- so nothing was written. This is a fault of the formatter, not of the file. |
+| DreamShader.Format | FormatCheckParse | it does not parse ({0}) |
+| DreamShader.Format | FormatCheckStable | formatting it again gives another text |
+| DreamShader.Format | FormatCheckTree | it parses to other declarations than the file does |
+| DreamShader.Format | FormatLegacy | '{0}' has 1.x declarations, and what the printer writes for those is 2.0 text; rewriting 1.x as 2.0 is 'dsc migrate', so 'fmt' leaves the file as it is. |
+| DreamShader.Format | FormatPreprocessor | '{0}' uses the preprocessor outside a custom body; 'fmt' reads the file as it is on disk and would have to drop one side of every '#if', so it leaves the file as it is. |
 | DreamShader.InstanceSettings | BadKeyValue | '{0}' is not a valid value for the instance key '{1}'. {2} |
 | DreamShader.InstanceSettings | RefusedBackend | an instance has no backend of its own; it is a plain material instance of its parent. |
 | DreamShader.InstanceSettings | RefusedBaseStruct | write the overrides as keys of their own, such as BlendMode or TwoSided. |
@@ -619,9 +664,12 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.IR.Validator | WrongArityExact | Node {0} has {1} operand(s); this op takes exactly {2}. |
 | DreamShader.IR.Validator | WrongArityRange | Node {0} has {1} operand(s); this op takes {2} to {3}. |
 | DreamShader.IR.Validator | WrongPropertyKind | Node {0} stores property '{1}' as {2}; it must be {3}. |
+| DreamShader.IRBuilder | IRBuilderAggregateAsValue | A struct has no graph form here; use one of its fields. |
+| DreamShader.IRBuilder | IRBuilderAggregateIntoPin | A struct has no graph form; pass one of its fields, or move the whole thing into a '/// @custom' function. |
 | DreamShader.IRBuilder | IRBuilderAppendTooWide | This builds a {0}-component value, but a material graph carries at most four components. |
 | DreamShader.IRBuilder | IRBuilderAttributeNotSet | '{0}' is read before anything wrote it; a material attribute has no value until this function assigns one. |
 | DreamShader.IRBuilder | IRBuilderCallEntry | '{0}' is this file's material entry and is called by the engine, not by the shader. |
+| DreamShader.IRBuilder | IRBuilderDiscard | 'discard' has no material-graph form; set the material's OpacityMask to zero instead, or move the branch into a '/// @custom' function. |
 | DreamShader.IRBuilder | IRBuilderFieldOfNonMaterial | The IR builder cannot read '{0}' here: the binder typed what it is read from as a material, but that did not lower to one. |
 | DreamShader.IRBuilder | IRBuilderInlineDepth | Inlining '{0}' would go {1} calls deep, past the limit of {2}; flatten the call chain or move part of it into a '/// @custom' function. |
 | DreamShader.IRBuilder | IRBuilderJumpInBranch | '{0}' inside an 'if' cannot be unrolled, because both arms of the 'if' become nodes and only one of them may leave the loop; move it to the top of the loop body, or write the loop in a '/// @custom' function. |
@@ -632,10 +680,12 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.IRBuilder | IRBuilderNestedAttributeWrite | '{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself. |
 | DreamShader.IRBuilder | IRBuilderNoAttributeEntry | The material attribute table has no entry {0}; the module was bound against a different catalog than this build is reading. |
 | DreamShader.IRBuilder | IRBuilderNoBody | '{0}' has no body to inline; give it one, mark it 'extern' with '/// @asset', or '/// @custom'. |
+| DreamShader.IRBuilder | IRBuilderNoCatalog | This module was bound without a builtin catalog, so no 'UE.*' call and no material attribute can be named; run the bind with a catalog, or pass one in FIRBuildOptions. |
 | DreamShader.IRBuilder | IRBuilderNoExpressionEntry | The builtin catalog has no expression entry {0}; the module was bound against a different catalog than this build is reading. |
 | DreamShader.IRBuilder | IRBuilderNoInputType | A parameter of type {0} cannot be a material function input; the graph has no pin that carries one. |
 | DreamShader.IRBuilder | IRBuilderNoLowering | The IR builder has no lowering for a bound expression of kind {0}. |
 | DreamShader.IRBuilder | IRBuilderNoTextureObject | '{0}' is a constant texture, which is a TextureObject node, and this engine has no such material expression; declare it 'uniform'. |
+| DreamShader.IRBuilder | IRBuilderNoWholeSetAttribute | The material attribute table has no 'MaterialAttributes' entry, so a material that was replaced as a whole has no input to reach this material's output through; export the catalog again from this engine. |
 | DreamShader.IRBuilder | IRBuilderOneArmedMaterialWrite | '{0}' is set in only one arm of this 'if' and has no value before it; set it in both arms, or before the 'if'. |
 | DreamShader.IRBuilder | IRBuilderOneArmedWrite | '{0}' is assigned in only one arm of this 'if' and has no value before it; assign it in both arms, or give it a value before the 'if'. |
 | DreamShader.IRBuilder | IRBuilderOutArgNotLValue | '{0}' is an '{1}' parameter of {2}, so the argument has to be something that can be assigned to; this expression cannot. |
@@ -643,10 +693,19 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.IRBuilder | IRBuilderReadNoAttributeEntry | The material attribute table has no entry {0}; the module was bound against a different catalog than this build is reading. |
 | DreamShader.IRBuilder | IRBuilderRecursion | '{0}' calls itself, and an inlined function has no stack to recurse on; rewrite it as a loop with a constant trip count, or as a '/// @custom' function. |
 | DreamShader.IRBuilder | IRBuilderRecursionCycle | '{0}' is already being inlined further up this call chain; an inlined function cannot call back into itself. |
-| DreamShader.IRBuilder | IRBuilderSubstrateBranch | A branch over {0} values needs a static condition, and this one is decided at run time; make the condition a '/// @static' uniform bool, or mix the two values with a Substrate mixing node. |
+| DreamShader.IRBuilder | IRBuilderSubstrateBranch | A run-time branch over {0} values becomes a 'Substrate.Select' node, which Unreal Engine has from 5.6 on and this engine does not; make the condition a '/// @static' uniform bool, or mix the two values with lerp(). |
+| DreamShader.IRBuilder | IRBuilderSubstrateBranchMixed | A branch chooses between two {0} values or between two numbers, and this one has one of each. |
+| DreamShader.IRBuilder | IRBuilderSubstrateSelectKinds | This branch becomes a 'Substrate.Select', which parameter-blends its two inputs; they are a '{0}' and a '{1}', and the engine may refuse to blend unlike BSDFs. |
 | DreamShader.IRBuilder | IRBuilderTextureBranch | A branch can only choose between numbers, bools and static Substrate values, and these are {0} objects, which no material graph node switches; sample each texture first and branch on the samples. |
 | DreamShader.IRBuilder | IRBuilderUnsetLocalRead | '{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or give it an initializer where it is declared. |
+| DreamShader.IRBuilder | IRBuilderWholeMaterialMerge | The two sides of this branch end with a different whole material, and DreamShader chooses between attribute values, not between whole materials; assign the attributes one at a time on both sides, or mix the two materials with UE.BlendMaterialAttributes. |
 | DreamShader.IRBuilder | IRBuilderWholeMaterialMergeNamed | '{0}' holds a different whole material in each arm of this 'if', and DreamShader chooses between attribute values, not between whole materials; assign its attributes one at a time in both arms, or mix the two materials with UE.BlendMaterialAttributes. |
+| DreamShader.IRBuilder.Substrate | IRBuilderSubstrateBuilderGone | '{0}' is not the Substrate value being built any more when a loop comes round to '{0}.{1}': an earlier trip assigned it. Declare the value inside the loop, or finish it before the loop. |
+| DreamShader.IRBuilder.Substrate | IRBuilderSubstrateBuilderTaken | The Substrate value '{0}' has been used by the time a loop comes round to this write of '{0}.{1}', and its node is what it was then. Declare the value inside the loop, or finish it before the loop. |
+| DreamShader.IRBuilder.Substrate | IRBuilderSubstrateBuilderUnset | '{0}.{1}' has no value where it is read: the line that writes it did not run on the way here. Give it a value on every path first. |
+| DreamShader.IRBuilder.Substrate | IRBuilderSubstrateBuilderUnsetWrite | '{0}.{1}' has no value for this operator to start from: the line that writes it did not run on the way here. Give it a value on every path first. |
+| DreamShader.IRBuilder.Substrate | IRBuilderSubstrateConversionMissing | '{0}' is converted by the node 'Substrate.{1}', and this engine has no such node; give the pins it feeds directly. |
+| DreamShader.IRBuilder.Substrate | IRBuilderSubstrateNativeOff | This material drives FrontMaterial and says 'Substrate = Native', and Substrate is off in this project; the engine could not compile the asset. Turn Substrate on, or write 'Substrate = Bridge' and the legacy attributes. |
 | DreamShader.IRPasses | IRPassesUnusedUniform | '{0}' is declared but nothing reads it, so it is not in the generated material. |
 | DreamShader.Lang.Declarations | BadStorageCombination | '{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static', 'const', 'extern' or 'export', not a mix. |
 | DreamShader.Lang.Declarations | DefaultOnOutParameter | Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional. |
@@ -696,8 +755,10 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.Expressions | ExpectedInitializerList | Expected an initializer list, found {0}. |
 | DreamShader.Lang.Expressions | ExpectedMemberName | Expected a member or swizzle name after '.', found {0}. |
 | DreamShader.Lang.Expressions | IndexRightBracket | ']' to close an index |
+| DreamShader.Lang.Expressions | InitializerListNotAnExpression | An initializer list is only allowed as a variable initializer, not as a general expression. |
 | DreamShader.Lang.Expressions | InitializerListRightBrace | '}' to close an initializer list |
 | DreamShader.Lang.Expressions | ParenRightParen | ')' to close a parenthesized expression |
+| DreamShader.Lang.Expressions | PositionalAfterNamedArgument | A positional argument cannot follow a named argument; give this argument a name too. |
 | DreamShader.Lang.Expressions | WhileParsingArgumentList | an argument list |
 | DreamShader.Lang.Expressions | WhileParsingExpression | an expression |
 | DreamShader.Lang.Expressions | WhileParsingInitializerList | an initializer list |
@@ -928,6 +989,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.LegacyTextureDefaults | TextureReferenceClassNotATexture | Asset reference is written as '{0}', which is not a texture class; a texture default requires {1}. |
 | DreamShader.LegacyTextureDefaults | TextureReferenceClassWrongDimension | Asset reference is written as '{0}', but this property is declared as {1}. |
 | DreamShader.Migrate | AssetMoves | '{0}' builds '{1}', and its migrated text would build '{2}': a new asset, with the old one left behind. Give the declaration a '/// @name {1}'. |
+| DreamShader.Migrate | CatalogEmpty | The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound and nothing can be migrated. |
 | DreamShader.Migrate | CommentsLost | {0} comment(s) of '{1}' would not be in the migrated file ({2}), so nothing was written; this is a fault of the migration, not of the source. |
 | DreamShader.Migrate | ConditionalSource | '{0}' uses '#if' conditional compilation, and only the branch taken with today's defines would reach the migrated file; migrate it by hand, or remove the conditionals first. |
 | DreamShader.Migrate | GraphDiffers | The migrated text of '{0}' does not build the graph the 1.x file builds: {1} |
@@ -962,6 +1024,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Navigation | SpanTableBadRow | The DreamShader.SourceSpans entry '{Key}' of '{Asset}' is not an object with file/line/col and was skipped; that node cannot be navigated to. |
 | DreamShader.Navigation | SpanTableBadSpan | The DreamShader.SourceSpans entry '{Key}' of '{Asset}' names no file or a line below 1 and was skipped; that node cannot be navigated to. |
 | DreamShader.Navigation | SpanTableNotJson | The DreamShader.SourceSpans metadata of '{Asset}' is not a JSON object, so no node on it can be mapped back to a source line; rebuild the asset from its source. |
+| DreamShader.Pipeline | CatalogEmpty | The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded. |
 | DreamShader.Pipeline | CompileCancelled | Compiling '{0}' was cancelled; nothing was written. |
 | DreamShader.Pipeline | CompilingLang2Source | Compiling DreamShader source '{0}'... |
 | DreamShader.Pipeline | IncludePreprocessFailed | '{0}' failed conditional compilation: {1}: {2} |
@@ -1032,18 +1095,29 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.ProductIndex | ParentReferenceUnresolved | The parent '{0}' does not resolve to an asset path. {1} |
 | DreamShader.Tools | DiagnosticsOutFailed | The diagnostics JSON could not be written: {0}. |
 | DreamShader.Tools | DumpIRWriteFailed | The IR dump could not be written: {0}. |
+| DreamShader.Tools | DumpLayoutBadStyle | '{0}' is not a layout style; -Style takes Blocks, SourceBands, Layered or All. |
+| DreamShader.Tools | DumpLayoutWriteFailed | The layout dump could not be written: {0}. |
 | DreamShader.Tools | ExportCatalogEmpty | The builtin catalog came back empty, so '{0}' describes no expression at all. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded. |
 | DreamShader.Tools | ExportCatalogWriteFailed | The builtin catalog manifest could not be written: {0}. |
+| DreamShader.Tools | FormatCheckWouldChange | '{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it. |
+| DreamShader.Tools | FormatReadFailed | '{0}' could not be read, so it was not formatted. |
+| DreamShader.Tools | FormatWriteFailed | The formatted text of '{0}' could not be written: {1}. A file that is read-only -- checked in, not checked out -- is the usual reason. |
 | DreamShader.Tools | IndexWriteFailed | The symbol index could not be written: {0}. |
+| DreamShader.Tools | ListGeneratedOutsideProject | {0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no project-relative path; '-As=Packages' or '-As=Json' lists them. |
+| DreamShader.Tools | ListGeneratedUnknownFormat | '-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json. |
+| DreamShader.Tools | ListGeneratedWriteFailed | The list of generated assets could not be written: {0}. |
 | DreamShader.Tools | NoMaterialToCheck | '{0}' produced no material, so there are no shaders to compile; a function library is checked by the material that calls it. |
 | DreamShader.Tools | NotALang2SourceForVerb | '{0}' is not a compilable DreamShader source (.dss, .dsi, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it. |
 | DreamShader.Tools | ShaderCompileError | [{0} / {1}] {2} |
 | DreamShader.Tools | ShaderCompileTimedOut | Shader compilation for '{0}' did not finish within {1} seconds per material. A compile that never finishes is usually a dynamic loop or a texture read whose mip cannot be resolved in a divergent branch; move it into a '@custom' body with an explicit SampleLevel. |
+| DreamShader.Tools | ShaderErrorsUnreadable | Shader errors cannot be read in this configuration: '-nullrhi' switches the rendering shader maps off, and no cook target platform matched the requested platforms. Re-run without '-nullrhi', or pass a '-Platform=' an active target platform supports. |
 | DreamShader.Tools | UnknownQualityLevel | '{0}' is not a material quality level. Write Low, Medium, High or Epic. |
 | DreamShader.Tools | UnknownShaderPlatform | '{0}' is not a shader platform this engine knows. Write SM6, SM5, ES3_1, or a shader format name such as PCD3D_SM6. |
 | DreamShader.Tools | VerbCheck | check |
 | DreamShader.Tools | VerbDumpIR | dump-ir |
+| DreamShader.Tools | VerbDumpLayout | dump-layout |
 | DreamShader.Tools | VerbIndex | index |
+| DreamShader.Tools | VerbListGenerated | list-generated |
 | DreamShader.VirtualFunction | InvalidMaterialFunctionPackagePath | MaterialFunction '{0}' does not have a valid package path. |
 | DreamShader.VirtualFunction | MaterialFunctionHasNoOutputs | MaterialFunction '{0}' does not expose any outputs. |
 | DreamShader.VirtualFunction | NoMaterialFunctionAssetProvided | No MaterialFunction asset was provided. |
@@ -1122,6 +1196,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderDivergenceSummary | {0} generated assets were edited by hand and were not rebuilt. |
 | DreamShaderEditorBridge | DreamShaderDivergenceSummaryDismiss | Dismiss |
 | DreamShaderEditorBridge | DreamShaderDivergenceSummaryDismissTip | Leave them alone for now. Every refusal is in the log and in the diagnostics. |
+| DreamShaderEditorBridge | DreamShaderDivergenceSummarySubText | Too many to answer one toast at a time. The Material Content Browser lists them with the same three actions on each. |
 | DreamShaderEditorBridge | DreamShaderDivergenceTitle | '{0}' was edited by hand, so it was not rebuilt. |
 | DreamShaderEditorBridge | DreamShaderEphemeralMaterialsHidden | Hidden {0} Ephemeral material(s) from the Content Browser and asset pickers. |
 | DreamShaderEditorBridge | DreamShaderEphemeralMaterialsShown | Showing {0} Ephemeral material(s) in the Content Browser and asset pickers. |
@@ -1213,6 +1288,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderVirtualFunctionPrototypeNotOpened | Created '{0}' but could not open it. |
 | DreamShaderEditorBridge | DreamShaderVirtualFunctionPrototypeWriteFailed | DreamShader failed to write '{0}'. |
 | DreamShaderEditorBridge | DreamToolsComboLabel | Dream |
+| DreamShaderEditorBridge | DreamToolsComboTooltip | Dream-family language tools: open a source workspace in VSCode, or rebuild a whole source tree (DreamShader / DreamFX / DreamUI). |
 | DreamShaderEditorBridge | MaterialCompileErrorHeader | [{0} / {1}] {2} |
 | DreamShaderEditorBridge | ProvenanceCompilerUnavailable | The DreamShader compiler module is not available, so nothing was rebuilt. |
 | DreamShaderIRToAst | CustomCodeUnreadable | The code of the custom node '{0}' carries DreamShader's markers and does not read as what the compiler writes; it is kept verbatim as the body of one function, the functions it embeds included. |
@@ -1527,3 +1603,4 @@ Use -IncludeDeferred to lint MaterialAssetGeneration/ and Decompiler/ in the nex
 
 ## Auto-gathered metadata
 Unreal will add any auto-gathered UPROPERTY metadata (for example DisplayName and ToolTip) on top of this compile-time baseline. This file intentionally counts only LOCTEXT/NSLOCTEXT entries.
+
