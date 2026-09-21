@@ -38,7 +38,7 @@ question the source hash cannot — *has somebody been working in here?*
 `Unstamped` covers two cases, both benign: an asset generated before digests existed, and one whose
 stamp carries a different schema tag. The tag is the digest format version, the engine version, and a
 fingerprint of the reflected layout of every expression class the asset uses
-(`DSD2-5.8-1a2b3c4d`), because the property set the digest walks is the engine's. Without the
+(`DSD4-5.8-1a2b3c4d`), because the property set the digest walks is the engine's. Without the
 version, upgrading the engine would re-fingerprint every asset in the project at once and report the
 whole library as hand-edited; without the layout fingerprint, a source-built engine that adds a pin
 to one expression class between two sessions did the same to every asset using that class *(since
@@ -61,6 +61,7 @@ protect something that was never in danger.
 | :-- | :-- |
 | a node added, deleted, or rewired | **yes** |
 | a property changed on a generated node (including a parameter's default value) | **yes** |
+| which attributes a `GetMaterialAttributes` publishes, or a `SetMaterialAttributes` sets | **yes** *(Get: since 2.0.0)* |
 | a material property input (an `Outputs` binding) rewired | **yes** |
 | any property in [Reset properties](regeneration.md#reset-properties) | **yes** |
 | a material function's `Description`, `UserExposedCaption`, `ExposeToLibrary`, `LibraryCategories`, usage | **yes** |
@@ -77,6 +78,14 @@ protect something that was never in danger.
 > A named reroute seeds its display colour from its own object path name, which changes every time
 > the node is recreated. It is excluded for that reason as much as for being cosmetic: leaving it in
 > made two rebuilds of one unchanged source disagree with each other.
+
+> [!NOTE]
+> The digest does not depend on the language the editor runs in *(since 2.0.0)*. It names a node's
+> inputs, and three engine nodes name theirs with translated text -- `BreakMaterialAttributes`, and
+> `GetMaterialAttributes` / `SetMaterialAttributes`, whose pins show the attributes' display names --
+> so through 1.9 a layer stamped by an English editor read as `Diverged` in a Chinese one. Those
+> inputs are named by the attribute itself now. The format tag moved from `DSD3` to `DSD4` with
+> that, so every asset reads as `Unstamped` once after the upgrade.
 
 ## Parameter overrides on a generated ThinCustom instance
 
