@@ -1,0 +1,17 @@
+// A ShaderLayer whose input has a name of its own (DSH3277): 1.x kept the input under that name and started the output
+// as an empty MakeMaterialAttributes, so the body opens with `material Base = Attrs; Attrs = <empty>;`. What is not
+// written is not passed on. No `opt`: the input has to be connected, as it had to be in 1.x.
+ShaderLayer(Name="Layers/ML_LiRenamedInput")
+{
+    Inputs = {
+        MaterialAttributes Base;
+    }
+
+    Outputs = {
+        MaterialAttributes Attrs;
+    }
+
+    Graph = {
+        Attrs.BaseColor = Base.BaseColor * vec3(1.0, 0.5, 0.25);
+    }
+}

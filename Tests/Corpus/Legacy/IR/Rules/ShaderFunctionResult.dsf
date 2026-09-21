@@ -1,0 +1,19 @@
+// A first output named Result is the function's return value; the other outputs follow as `out`s in 1.x order.
+ShaderFunction(Name="Functions/MF_LiResult")
+{
+    Inputs = {
+        vec3 InColor;
+    }
+
+    Outputs = {
+        vec3 Result;
+        float Weight;
+        float Extra;
+    }
+
+    Graph = {
+        Result = InColor * 0.5;
+        Weight = 0.25;
+        Extra = 0.75;
+    }
+}

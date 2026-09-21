@@ -1,0 +1,19 @@
+// A 1.x local without an initializer is zero of its exact width; a material local is an empty MakeMaterialAttributes.
+Shader(Name="M_LiZero")
+{
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float S;
+        vec2 P;
+        vec3 Q;
+        vec4 R;
+        Color = Q + vec3(S, P.y, R.a);
+        Alpha = S;
+    }
+}

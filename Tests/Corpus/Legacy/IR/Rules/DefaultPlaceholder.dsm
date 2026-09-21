@@ -1,0 +1,36 @@
+// Rule L25: `default` holds the place of an input and leaves it unconnected, which is how the 1.x decompiler wrote an
+// input nothing was wired to. An input the call does not pass at all (`Tail`) stays unconnected too.
+VirtualFunction(Name="MF_LiThree")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_LiThree");
+    }
+
+    Inputs = {
+        opt float First = 1.0;
+        float Second;
+        opt float Tail = 2.0;
+    }
+
+    Outputs = {
+        float Result;
+    }
+}
+
+Shader(Name="M_LiDefaultPlaceholder")
+{
+    Properties = {
+        ScalarParameter Gain = 0.5;
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0);
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        float Value;
+        Base.Opacity = Value;
+    }
+
+    Graph = {
+        Value = MF_LiThree(default, Gain);
+    }
+}

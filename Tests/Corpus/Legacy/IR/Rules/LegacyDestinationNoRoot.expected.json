@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"LegacyDestinationNoRoot.dsm\"\n\nproduct 0 Material \"Dir/M_LiDestNoRoot\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(1, 0.5, 0.25)) : float3 @L10:C17 \"Color\"\n  %1 = MaterialSink(EmissiveColor=%0) @L2:C1\n  sink %1\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"Dir/M_LiDestNoRoot"
+		],
+		"nodeCounts": [
+			2
+		]
+	}
+}

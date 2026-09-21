@@ -1,0 +1,40 @@
+// Rule L5: a statement call passes its receivers last, one per output, the return value first; an optional input in
+// between may be left out. `OutA` / `OutB` receive outputs 0 / 1, and `r` holds the return value.
+VirtualFunction(Name="MF_LiTwoOut")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_LiTwoOut");
+    }
+
+    Inputs = {
+        float3 Colour;
+        opt float Gain = 1.0;
+    }
+
+    Outputs = {
+        float3 A;
+        float B;
+    }
+}
+
+Function float Halve(in float value) { return value * 0.5; }
+
+Shader(Name="M_LiStatementReceivers")
+{
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        vec3 OutA;
+        float OutB;
+        MF_LiTwoOut(vec3(1.0, 0.5, 0.25), OutA, OutB);
+        float r;
+        Halve(OutB, r);
+        Color = OutA;
+        Alpha = r;
+    }
+}

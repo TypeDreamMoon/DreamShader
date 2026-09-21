@@ -1,0 +1,27 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH5276",
+		"DSH5276",
+		"DSH5275",
+		"DSH5275",
+		"DSH5276"
+	],
+	"ir": "module \"CaseFallback.dsm\"\n\nproduct 0 Material \"M_LiCase\" backend=Graph\n  legacy root \"\"\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L10:C26 \"MyLocal\"\n  %1 = Swizzle(%0, Mask=\"x\") : float @L11:C22 \"Color\"\n  %2 = Swizzle(%0, Mask=\"y\") : float @L11:C33 \"Color\"\n  %3 = Constant(Value=(0)) : float @L11:C44 \"Color\"\n  %4 = Append(%1, %2) : float2 @L11:C17 \"Color\"\n  %5 = Append(%4, %3) : float3 @L11:C17 \"Color\"\n  %6 = MaterialSink(EmissiveColor=%5) @L2:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiCase"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

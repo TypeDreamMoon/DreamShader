@@ -1,0 +1,16 @@
+// A default that is a graph expression is what the input's Preview pin carries (D10): the engine reads it when the caller
+// leaves the pin unconnected. DreamGUI's widget record index is one.
+ShaderFunction(Name="Functions/MF_LiPreviewDefault")
+{
+    Inputs = {
+        opt float RecordIndex = UE.TexCoord(Index = 1).r;
+    }
+
+    Outputs = {
+        float Result;
+    }
+
+    Graph = {
+        Result = RecordIndex * 2.0;
+    }
+}

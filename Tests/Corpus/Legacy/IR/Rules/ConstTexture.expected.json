@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"ConstTexture.dsm\"\n\nproduct 0 Material \"M_LiConstTexture\" backend=Graph\n  legacy root \"\"\n  %0 = Reflected[TextureObject](Texture=\"Path(Engine, \\\"EngineResources/DefaultTexture\\\")\") : Texture2D @L6:C9 \"Noise\"\n  %1 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L15:C41 \"A\"\n  %2 = Reflected[TextureSample](TextureObject=%0, Coordinates=%1, ClassSpecifier=\"TextureSample\") : [RGB:float3, R:float, G:float, B:float, A:float, RGBA:float4] @L15:C18 \"A\"\n  %3 = Reflected[TextureObject](ClassSpecifier=\"TextureObject\", Texture=\"Path(Engine, \\\"EngineResources/DefaultTexture\\\")\") : Texture @L16:C34 \"B\"\n  %4 = Reflected[TextureSample](TextureObject=%3, Coordinates=%1, ClassSpecifier=\"TextureSample\") : [RGB:float3, R:float, G:float, B:float, A:float, RGBA:float4] @L16:C18 \"B\"\n  %5 = Add(%2, %4) : float3 @L17:C17 \"Color\"\n  %6 = MaterialSink(EmissiveColor=%5) @L3:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiConstTexture"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

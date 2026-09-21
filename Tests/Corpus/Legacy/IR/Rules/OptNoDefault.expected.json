@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"OptNoDefault.dsf\"\n\nproduct 0 MaterialFunction \"Functions/MF_LiOpt\" backend=Graph\n  legacy root \"\"\n  %0 = FunctionInput(InputName=\"InColor\", InputType=\"Vector3\", IsOptional=false, SortPriority=0) : float3 @L2:C1 \"InColor\"\n  %1 = FunctionInput(InputName=\"Strength\", InputType=\"Scalar\", IsOptional=true, SortPriority=1) : float @L2:C1 \"Strength\"\n  %2 = Multiply(%0, %1) : float3 @L14:C20 \"OutColor\"\n  %3 = FunctionOutput(%2, OutputName=\"OutColor\", SortPriority=0) @L2:C1 \"OutColor\"\n  inputs %0, %1\n  outputs %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction"
+		],
+		"productNames": [
+			"Functions/MF_LiOpt"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

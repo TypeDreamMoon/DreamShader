@@ -1,0 +1,16 @@
+// A ShaderLayer whose input and output share a name, as the one real 1.x layer does: one `inout material`, which is
+// optional because the input said `opt`. Nothing is seeded: the output starts as the input.
+ShaderLayer(Name="Layers/ML_LiSameName")
+{
+    Inputs = {
+        opt MaterialAttributes Attrs;
+    }
+
+    Outputs = {
+        MaterialAttributes Attrs;
+    }
+
+    Graph = {
+        Attrs.Roughness = 0.5;
+    }
+}

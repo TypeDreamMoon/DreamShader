@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"LayerSameName.dsf\"\n\nproduct 0 MaterialLayer \"Layers/ML_LiSameName\" backend=Graph\n  legacy root \"\"\n  %0 = FunctionInput(InputName=\"Attrs\", InputType=\"MaterialAttributes\", IsOptional=true, SortPriority=0) : material @L3:C1 \"Attrs\"\n  %1 = Constant(Value=(0.5)) : float @L14:C27 \"Roughness\"\n  %2 = SetMaterialAttributes(MaterialAttributes=%0, Roughness=%1, AttributeSetTypes=\"[Roughness]\") : material @L3:C1\n  %3 = FunctionOutput(%2, OutputName=\"Attrs\", SortPriority=0) @L3:C1 \"Attrs\"\n  inputs %0\n  outputs %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialLayer"
+		],
+		"productNames": [
+			"Layers/ML_LiSameName"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

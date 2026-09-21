@@ -1,0 +1,13 @@
+// Rule L19: 1.x read names ignoring case. A local (DSH5275), a builtin and its argument, an attribute (DSH5276).
+Shader(Name="M_LiCase")
+{
+    Outputs = {
+        vec3 Color;
+        Base.emissivecolor = Color;
+    }
+
+    Graph = {
+        float2 MyLocal = UE.texcoord(index = 0);
+        Color = vec3(mylocal.x, mylocal.y, 0.0);
+    }
+}

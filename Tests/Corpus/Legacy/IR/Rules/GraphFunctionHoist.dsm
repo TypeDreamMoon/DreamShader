@@ -1,0 +1,21 @@
+// Rule L8: a GraphFunction's `UE.*` calls are lifted into Custom inputs after its parameters (`_ds_<Fn>_UE0`, `_UE1`),
+// bound at every call site with the parameters replaced by that call's arguments: two calls with different `Gain`
+// are two Custom nodes whose UE1 inputs differ.
+import "GraphFunctionHoist.dsh";
+
+Shader(Name="M_LiGraphFunctionHoist")
+{
+    Outputs = {
+        float Alpha;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float2 uv = UE.TexCoord(Index = 0);
+        float First;
+        float Second;
+        LiPulse(uv, 2.0, First);
+        LiPulse(uv, 4.0, Second);
+        Alpha = First * Second;
+    }
+}

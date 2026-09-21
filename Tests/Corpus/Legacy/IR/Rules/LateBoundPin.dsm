@@ -1,0 +1,20 @@
+// Rule L24: a named argument that carries a value and names no pin the catalog lists becomes an input of that name. The
+// catalog is read off each class's default object, and a node may name its pins after its properties; the emitter looks
+// the name up on the live node (DSH8212 when it has none). Said with an Info (DSH5291).
+Shader(Name="M_LiLateBoundPin")
+{
+    Properties = {
+        ScalarParameter Gain = 0.5;
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0);
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        float Value;
+        Base.Opacity = Value;
+    }
+
+    Graph = {
+        Value = UE.Expression(Class="DotProduct", OutputType="float", A=V, B=V, Intensity=Gain);
+    }
+}

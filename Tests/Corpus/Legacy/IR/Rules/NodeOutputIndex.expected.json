@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"NodeOutputIndex.dsm\"\n\nproduct 0 Material \"M_LiNodeOutputIndex\" backend=Graph\n  legacy root \"\"\n  %0 = Reflected[SceneTexture](ClassSpecifier=\"SceneTexture\", SceneTextureId=\"SceneColor\") : [Color:float4, Size:float2, InvSize:float2] @L10:C26 \"InvSize\"\n  %1 = Swizzle(%0#2, Mask=\"x\") : float @L11:C17 \"Alpha\"\n  %2 = MaterialSink(Opacity=%1) @L2:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiNodeOutputIndex"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

@@ -1,0 +1,23 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH5291"
+	],
+	"ir": "module \"LateBoundPin.dsm\"\n\nproduct 0 Material \"M_LiLateBoundPin\" backend=Graph\n  legacy root \"\"\n  %0 = Parameter(DefaultValue=(1, 2, 3), ParameterName=\"V\", SortPriority=32) : float4 @L9:C9 \"V\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L9:C9 \"Value\"\n  %2 = Parameter(DefaultValue=(0.5), ParameterName=\"Gain\", SortPriority=32) : float @L7:C9 \"Gain\"\n  %3 = Reflected[DotProduct](A=%1, B=%1, Intensity=%2, ClassSpecifier=\"DotProduct\", LateBoundPins=\"[Intensity]\") : float @L18:C17 \"Value\"\n  %4 = MaterialSink(Opacity=%3) @L4:C1\n  sink %4\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiLateBoundPin"
+		],
+		"nodeCounts": [
+			5
+		]
+	}
+}

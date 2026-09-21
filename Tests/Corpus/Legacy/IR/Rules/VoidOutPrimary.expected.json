@@ -1,0 +1,24 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH5283",
+		"DSH5283"
+	],
+	"ir": "module \"VoidOutPrimary.dsm\"\n\nproduct 0 Material \"M_LiVoidOutPrimary\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(0.5)) : float @L19:C15\n  %1 = Custom[Split](a=%0, AdditionalOutputs=\"[c:Float1]\", Code=\"float3 b = (float3)0;\\n// Begin DreamShader source: <corpus>/Legacy/IR/Rules/VoidOutPrimary.dsm\\n// DreamShader custom: Split line 4\\n\\n    b = float3(a, a, a);\\n    c = a * 0.5;\\n// End DreamShader source: <corpus>/Legacy/IR/Rules/VoidOutPrimary.dsm\\nreturn b;\\n\", Description=\"Split\", OutputType=\"Float3\") : [b:float3, c:float] @L19:C9\n  %2 = MaterialSink(EmissiveColor=%1, Opacity=%1#1) @L9:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiVoidOutPrimary"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

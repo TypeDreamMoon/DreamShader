@@ -1,0 +1,12 @@
+// `Expression(Class = ...).Pin[0] = a` binds input 0 of the class by engine index.
+Shader(Name="M_LiPinIndex")
+{
+    Outputs = {
+        vec3 N;
+        Expression(Class="ClearCoatNormalCustomOutput").Pin[0] = N;
+    }
+
+    Graph = {
+        N = vec3(0.0, 0.0, 1.0);
+    }
+}

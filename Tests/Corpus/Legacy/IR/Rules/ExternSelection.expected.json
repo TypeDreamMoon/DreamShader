@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"ExternSelection.dsm\"\n\nproduct 0 Material \"M_LiExternSelection\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(1, 0.5, 0.25)) : float3 @L30:C18 \"i\"\n  %1 = FunctionCall[Path(Game, \"Functions/MF_LiSplit\")](Colour=%0, DeclaredInputs=\"[Colour, Gain]\", FunctionPath=\"Path(Game, \\\"Functions/MF_LiSplit\\\")\") : [A:float3, B:float] @L31:C19 \"x\"\n  %2 = Add(%1, %1) : float3 @L34:C17 \"Color\"\n  %3 = MaterialSink(EmissiveColor=%2, Opacity=%1#1) @L20:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiExternSelection"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

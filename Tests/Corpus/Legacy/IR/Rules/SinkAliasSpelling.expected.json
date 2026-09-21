@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"SinkAliasSpelling.dss\"\n\nproduct 0 Material \"M_LiSinkAlias\" backend=Graph\n  %0 = Constant(Value=(1, 0.5, 0.25)) : float3 @L4:C18 \"EmissiveColor\"\n  %1 = MaterialSink(Emissive=%0) @L2:C1\n  sink %1\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiSinkAlias"
+		],
+		"nodeCounts": [
+			2
+		]
+	}
+}

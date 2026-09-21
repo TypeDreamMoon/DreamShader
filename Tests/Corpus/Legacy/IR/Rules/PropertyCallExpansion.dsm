@@ -1,0 +1,20 @@
+// A StaticSwitchParameter property is expanded at every call: two call sites, two Reflected StaticSwitchParameter nodes
+// of one ParameterName (the engine treats them as one parameter).
+Shader(Name="M_LiPropertyCall")
+{
+    Properties = {
+        StaticSwitchParameter UseWarm = true;
+    }
+
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        Color = UseWarm(True = vec3(1.0, 0.5, 0.0), False = vec3(0.0, 0.5, 1.0));
+        Alpha = UseWarm(True = 1.0, False = 0.5);
+    }
+}

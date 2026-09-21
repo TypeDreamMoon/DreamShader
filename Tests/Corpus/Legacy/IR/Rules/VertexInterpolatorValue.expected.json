@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"VertexInterpolatorValue.dsm\"\n\nproduct 0 Material \"M_LiVertexInterpolator\" backend=Graph\n  legacy root \"\"\n  %0 = Parameter(DefaultValue=(1, 2, 3), ParameterName=\"V\", SortPriority=32) : float4 @L8:C9 \"V\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L8:C9 \"Interpolated\"\n  %2 = Reflected[VertexInterpolator](Input=%1, ClassSpecifier=\"VertexInterpolator\", WrittenPins=\"[Input=VS]\") : [PS:float3] @L17:C29 \"Interpolated\"\n  %3 = MaterialSink(EmissiveColor=%2) @L3:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiVertexInterpolator"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

@@ -1,0 +1,19 @@
+// `extern` to a layer and to a layer blend: FunctionCall nodes with MaterialAttributes pins, and the entry's material goes
+// on from the call's output.
+/// @asset /Game/Layers/ML_LiExternal
+extern void ML_LiExternal(inout material m);
+
+/// @asset /Game/Layers/MLB_LiExternal
+extern void MLB_LiExternal(material A, material B, inout material R);
+
+export void M_LiExternLayer(inout material m)
+{
+    m.BaseColor = float3(1, 0, 0);
+    ML_LiExternal(m);
+    material Bottom;
+    Bottom.BaseColor = float3(0, 1, 0);
+    material Top;
+    Top.BaseColor = float3(0, 0, 1);
+    MLB_LiExternal(Bottom, Top, m);
+    m.Opacity = m.Roughness;
+}

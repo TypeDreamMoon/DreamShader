@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"LayerBlend.dsf\"\n\nproduct 0 MaterialLayerBlend \"Layers/MLB_LiOverlay\" backend=Graph\n  legacy root \"\"\n  %0 = FunctionInput(BlendInputRelevance=\"Bottom\", InputName=\"Under\", InputType=\"MaterialAttributes\", IsOptional=false, SortPriority=0) : material @L3:C1 \"Under\"\n  %1 = FunctionInput(BlendInputRelevance=\"Top\", InputName=\"Over\", InputType=\"MaterialAttributes\", IsOptional=true, SortPriority=1) : material @L3:C1 \"Over\"\n  %2 = GetMaterialAttributes(MaterialAttributes=%0) : [BaseColor:float3, EmissiveColor:float3, Roughness:float, Normal:float3, Opacity:float, WorldPositionOffset:float3, FrontMaterial:Substrate, MaterialAttributes:material] @L19:C32 \"BaseColor\"\n  %3 = GetMaterialAttributes(MaterialAttributes=%1) : [BaseColor:float3, EmissiveColor:float3, Roughness:float, Normal:float3, Opacity:float, WorldPositionOffset:float3, FrontMaterial:Substrate, MaterialAttributes:material] @L19:C49 \"BaseColor\"\n  %4 = Parameter(DefaultValue=(0.5), ParameterName=\"Alpha\", SortPriority=32) : float @L6:C9 \"Alpha\"\n  %5 = Lerp(%2, %3, %4) : float3 @L19:C27 \"BaseColor\"\n  %6 = MakeMaterialAttributes(BaseColor=%5) : material @L3:C1\n  %7 = FunctionOutput(%6, OutputName=\"Attrs\", SortPriority=0) @L3:C1 \"Attrs\"\n  inputs %0, %1\n  outputs %7\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialLayerBlend"
+		],
+		"productNames": [
+			"Layers/MLB_LiOverlay"
+		],
+		"nodeCounts": [
+			8
+		]
+	}
+}

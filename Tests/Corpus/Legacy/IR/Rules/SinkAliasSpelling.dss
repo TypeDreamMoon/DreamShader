@@ -1,0 +1,5 @@
+// Rule L14: the sink pin keeps the spelling the source used; the alias and then the canonical name is the canonical pin.
+export void M_LiSinkAlias(inout material m)
+{
+    m.Emissive = float3(1, 0.5, 0.25);
+}

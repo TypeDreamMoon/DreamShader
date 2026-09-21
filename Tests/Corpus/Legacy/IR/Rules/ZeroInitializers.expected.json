@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"ZeroInitializers.dsm\"\n\nproduct 0 Material \"M_LiZero\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(0)) : float @L12:C15 \"S\"\n  %1 = Constant(Value=(0, 0, 0)) : float3 @L14:C14 \"Q\"\n  %2 = MaterialSink(EmissiveColor=%1, Opacity=%0) @L2:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiZero"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

@@ -1,0 +1,6 @@
+// Rule L14: written through the alias and then through the canonical name, the canonical pin wins.
+export void M_LiSinkAliasCanonical(inout material m)
+{
+    m.Emissive = float3(1, 0.5, 0.25);
+    m.EmissiveColor = float3(0, 0.5, 1);
+}

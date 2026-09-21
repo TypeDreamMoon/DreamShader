@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"ShaderFunctionResult.dsf\"\n\nproduct 0 MaterialFunction \"Functions/MF_LiResult\" backend=Graph\n  legacy root \"\"\n  %0 = FunctionInput(InputName=\"InColor\", InputType=\"Vector3\", IsOptional=false, SortPriority=0) : float3 @L2:C1 \"InColor\"\n  %1 = Constant(Value=(0.5)) : float @L15:C28 \"Result\"\n  %2 = Multiply(%0, %1) : float3 @L15:C18 \"Result\"\n  %3 = Constant(Value=(0.25)) : float @L16:C18 \"Weight\"\n  %4 = Constant(Value=(0.75)) : float @L17:C17 \"Extra\"\n  %5 = FunctionOutput(%2, OutputName=\"Result\", SortPriority=0) @L2:C1 \"Result\"\n  %6 = FunctionOutput(%3, OutputName=\"Weight\", SortPriority=1) @L2:C1 \"Weight\"\n  %7 = FunctionOutput(%4, OutputName=\"Extra\", SortPriority=2) @L2:C1 \"Extra\"\n  inputs %0\n  outputs %5, %6, %7\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction"
+		],
+		"productNames": [
+			"Functions/MF_LiResult"
+		],
+		"nodeCounts": [
+			8
+		]
+	}
+}

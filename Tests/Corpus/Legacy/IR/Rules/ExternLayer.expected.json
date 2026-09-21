@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"ExternLayer.dss\"\n\nproduct 0 Material \"M_LiExternLayer\" backend=Graph\n  %0 = Constant(Value=(1, 0, 0)) : float3 @L11:C19 \"BaseColor\"\n  %1 = MakeMaterialAttributes(BaseColor=%0) : material @L12:C5\n  %2 = FunctionCall[/Game/Layers/ML_LiExternal](m=%1, FunctionPath=\"/Game/Layers/ML_LiExternal\") : [m:material] @L12:C5\n  %3 = Constant(Value=(0, 1, 0)) : float3 @L14:C24 \"BaseColor\"\n  %4 = Constant(Value=(0, 0, 1)) : float3 @L16:C21 \"BaseColor\"\n  %5 = MakeMaterialAttributes(BaseColor=%3) : material @L17:C5\n  %6 = MakeMaterialAttributes(BaseColor=%4) : material @L17:C5\n  %7 = FunctionCall[/Game/Layers/MLB_LiExternal](A=%5, B=%6, R=%2, FunctionPath=\"/Game/Layers/MLB_LiExternal\") : [R:material] @L17:C5\n  %8 = GetMaterialAttributes(MaterialAttributes=%7) : [BaseColor:float3, EmissiveColor:float3, Roughness:float, Normal:float3, Opacity:float, WorldPositionOffset:float3, FrontMaterial:Substrate, MaterialAttributes:material] @L18:C17 \"Opacity\"\n  %9 = SetMaterialAttributes(MaterialAttributes=%7, Opacity=%8#2, AttributeSetTypes=\"[Opacity]\") : material @L9:C1\n  %10 = MaterialSink(MaterialAttributes=%9) @L9:C1\n  sink %10\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiExternLayer"
+		],
+		"nodeCounts": [
+			11
+		]
+	}
+}

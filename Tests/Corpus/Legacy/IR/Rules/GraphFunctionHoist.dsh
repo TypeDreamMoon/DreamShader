@@ -1,0 +1,6 @@
+// The header of GraphFunctionHoist.dsm.
+GraphFunction LiPulse(in float2 uv, in float Gain, out float pulse) {
+    float t = UE.Time();
+    float mixed = UE.Lerp(A = 0.0, B = Gain, Alpha = 0.5);
+    pulse = sin(uv.x * 8.0 + t) * mixed;
+}

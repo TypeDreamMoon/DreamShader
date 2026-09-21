@@ -1,0 +1,21 @@
+// Rule L8: a lifted call reading a name nobody declares, said once for two calls (DSH6326).
+GraphFunction LiNowhere(in float2 uv, out float pulse) {
+    float2 other = UE.TexCoord(Index = Nowhere);
+    pulse = uv.x * other.y;
+}
+
+Shader(Name="M_LiGraphFunctionUndeclared")
+{
+    Outputs = {
+        float Alpha;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float A;
+        float B;
+        LiNowhere(UE.TexCoord(Index = 0), A);
+        LiNowhere(UE.TexCoord(Index = 1), B);
+        Alpha = A * B;
+    }
+}

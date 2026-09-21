@@ -1,0 +1,21 @@
+// A ShaderLayerBlend: exactly its two materials as inputs (Bottom and Top for the layer stack, by name or else in
+// order), and the result starts empty the way 1.x seeded it -- nothing arrives through the `inout material`.
+ShaderLayerBlend(Name="Layers/MLB_LiOverlay")
+{
+    Properties = {
+        float Alpha = 0.5;
+    }
+
+    Inputs = {
+        MaterialAttributes Under;
+        opt MaterialAttributes Over;
+    }
+
+    Outputs = {
+        MaterialAttributes Attrs;
+    }
+
+    Graph = {
+        Attrs.BaseColor = lerp(Under.BaseColor, Over.BaseColor, Alpha);
+    }
+}

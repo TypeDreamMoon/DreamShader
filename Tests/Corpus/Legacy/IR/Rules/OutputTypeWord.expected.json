@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"OutputTypeWord.dsm\"\n\nproduct 0 Material \"M_LiOutputTypeWord\" backend=Graph\n  legacy root \"\"\n  %0 = Reflected[CameraPositionWS](ClassSpecifier=\"CameraPositionWS\") : float @L18:C21 \"Cam\"\n  %1 = Parameter(DefaultValue=(1, 2, 3), ParameterName=\"V\", SortPriority=32) : float4 @L9:C9 \"V\"\n  %2 = Swizzle(%1, Mask=\"xyz\") : float3 @L9:C9 \"Color\"\n  %3 = Subtract(%2, %0) : float3 @L19:C17 \"Color\"\n  %4 = MaterialSink(EmissiveColor=%3) @L4:C1\n  sink %4\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiOutputTypeWord"
+		],
+		"nodeCounts": [
+			5
+		]
+	}
+}

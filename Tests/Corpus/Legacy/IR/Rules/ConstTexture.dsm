@@ -1,0 +1,19 @@
+// `const Texture2D T = Path(...)` is a texture nobody can override: a TextureObject node in 1.x, and what a `static const`
+// texture with a `/// @default` is in 2.0. `Texture = Path(...)` written in a call is the same kind of reference.
+Shader(Name="M_LiConstTexture")
+{
+    Properties = {
+        const Texture2D Noise = Path(Engine, "EngineResources/DefaultTexture");
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        vec3 A = SampleTexture2D(Noise, UE.TexCoord(Index = 0)).rgb;
+        vec3 B = SampleTexture2D(UE.Expression(Class="TextureObject", Texture=Path(Engine, "EngineResources/DefaultTexture")), UE.TexCoord(Index = 0)).rgb;
+        Color = A + B;
+    }
+}

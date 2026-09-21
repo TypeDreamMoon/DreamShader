@@ -1,0 +1,29 @@
+// Rule L3b: an output the function does not have (DSH5280; the message lists `A`, `B`).
+VirtualFunction(Name="MF_LiSplitU")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_LiSplitU");
+    }
+
+    Inputs = {
+        float3 Colour;
+        opt float Gain = 1.0;
+    }
+
+    Outputs = {
+        float3 A;
+        float B;
+    }
+}
+
+Shader(Name="M_LiExternSelectionUnknown")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = MF_LiSplitU(vec3(1.0, 1.0, 1.0), Output = "Nope");
+    }
+}

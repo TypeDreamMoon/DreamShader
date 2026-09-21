@@ -1,0 +1,10 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "error",
+	"errorContains": [
+		"DSH5285"
+	],
+	"warningsContain": [
+		"DSH5279"
+	]
+}

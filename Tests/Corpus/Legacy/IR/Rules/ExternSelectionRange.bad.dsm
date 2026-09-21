@@ -1,0 +1,29 @@
+// Rule L3b: an output ordinal past the last output (DSH5282).
+VirtualFunction(Name="MF_LiSplitR")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_LiSplitR");
+    }
+
+    Inputs = {
+        float3 Colour;
+        opt float Gain = 1.0;
+    }
+
+    Outputs = {
+        float3 A;
+        float B;
+    }
+}
+
+Shader(Name="M_LiExternSelectionRange")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = MF_LiSplitR(vec3(1.0, 1.0, 1.0), OutputIndex = 5);
+    }
+}

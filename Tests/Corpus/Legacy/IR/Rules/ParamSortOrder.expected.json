@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"ParamSortOrder.dsf\"\n\nproduct 0 MaterialFunction \"Functions/MF_LiParamSort\" backend=Graph\n  legacy root \"\"\n  %0 = FunctionInput(InputName=\"First\", InputType=\"Vector3\", IsOptional=false, SortPriority=0) : float3 @L2:C1 \"First\"\n  %1 = FunctionInput(InputName=\"Second\", InputType=\"Vector3\", IsOptional=false, SortPriority=1) : float3 @L2:C1 \"Second\"\n  %2 = Add(%0, %1) : float3 @L14:C20 \"OutColor\"\n  %3 = FunctionOutput(%2, OutputName=\"OutColor\", SortPriority=0) @L2:C1 \"OutColor\"\n  inputs %0, %1\n  outputs %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction"
+		],
+		"productNames": [
+			"Functions/MF_LiParamSort"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

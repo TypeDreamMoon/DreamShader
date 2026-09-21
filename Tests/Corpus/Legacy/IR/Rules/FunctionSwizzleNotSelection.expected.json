@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"FunctionSwizzleNotSelection.dsm\"\n\nproduct 0 Material \"M_LiFunctionSwizzle\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(1, 0.5, 0.25)) : float3 @L12:C23 \"Color\"\n  %1 = Custom[Shade](color=%0, Code=\"// Begin DreamShader source: <corpus>/Legacy/IR/Rules/FunctionSwizzleNotSelection.dsm\\n// DreamShader custom: Shade line 2\\n return color * 0.5; \\n// End DreamShader source: <corpus>/Legacy/IR/Rules/FunctionSwizzleNotSelection.dsm\\n\", Description=\"Shade\", OutputType=\"Float3\") : [Result:float3] @L12:C17 \"Color\"\n  %2 = Swizzle(%1, Mask=\"z\") : float @L12:C17 \"Color\"\n  %3 = Swizzle(%1, Mask=\"y\") : float @L12:C17 \"Color\"\n  %4 = Swizzle(%1, Mask=\"x\") : float @L12:C17 \"Color\"\n  %5 = Append(%2, %3) : float2 @L12:C17 \"Color\"\n  %6 = Append(%5, %4) : float3 @L12:C17 \"Color\"\n  %7 = MaterialSink(EmissiveColor=%6) @L4:C1\n  sink %7\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiFunctionSwizzle"
+		],
+		"nodeCounts": [
+			8
+		]
+	}
+}

@@ -1,0 +1,21 @@
+// Rule L23: a block's asset and a function the file can call may share a name, which 1.x kept apart and MoonToon's
+// sources do as a matter of course. The block's function steps aside (`MF_LiTint_Asset`, Info DSH5290); the call in the
+// Graph reaches the header's function, and the asset keeps its name.
+import "BlockNamedLikeFunction.dsh";
+
+ShaderFunction(Name="Functions/MF_LiTint")
+{
+    Inputs = {
+        vec3 Colour;
+    }
+
+    Outputs = {
+        vec3 Result;
+    }
+
+    Graph = {
+        vec3 Tinted;
+        MF_LiTint(Colour, Tinted);
+        Result = Tinted;
+    }
+}

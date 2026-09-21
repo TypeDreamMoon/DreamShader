@@ -1,0 +1,20 @@
+// Rule L8: a lifted call may read the function's own parameters and nothing of a caller (DSH6325).
+GraphFunction LiLeak(in float2 uv, out float pulse) {
+    float2 other = UE.TexCoord(Index = CallerLocal);
+    pulse = uv.x * other.y;
+}
+
+Shader(Name="M_LiGraphFunctionCallerLocal")
+{
+    Outputs = {
+        float Alpha;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float CallerLocal = 1.0;
+        float Value;
+        LiLeak(UE.TexCoord(Index = 0), Value);
+        Alpha = Value;
+    }
+}

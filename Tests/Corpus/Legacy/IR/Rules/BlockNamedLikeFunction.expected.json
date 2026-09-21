@@ -1,0 +1,23 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH5290"
+	],
+	"ir": "module \"BlockNamedLikeFunction.dsf\"\ninclude \"BlockNamedLikeFunction.dsh\"\n\nproduct 0 MaterialFunction \"Functions/MF_LiTint\" backend=Graph\n  legacy root \"\"\n  %0 = FunctionInput(InputName=\"Colour\", InputType=\"Vector3\", IsOptional=false, SortPriority=0) : float3 @L6:C1 \"Colour\"\n  %1 = Custom[MF_LiTint](colour=%0, Code=\"float3 result = (float3)0;\\n// Begin DreamShader source: <corpus>/Legacy/IR/Rules/BlockNamedLikeFunction.dsh\\n// DreamShader custom: MF_LiTint line 2\\n\\n    result = colour * float3(1.0, 0.5, 0.25);\\n// End DreamShader source: <corpus>/Legacy/IR/Rules/BlockNamedLikeFunction.dsh\\nreturn result;\\n\", Description=\"MF_LiTint\", OutputType=\"Float3\") : [result:float3] @L18:C9\n  %2 = FunctionOutput(%1, OutputName=\"Result\", SortPriority=0) @L6:C1 \"Result\"\n  inputs %0\n  outputs %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 1,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction"
+		],
+		"productNames": [
+			"Functions/MF_LiTint"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

@@ -1,0 +1,6 @@
+// The zero is a 1.x rule: in a `.dss` an unset read is still DSH4376.
+export void M_LiUninitialised(inout material m)
+{
+    float S;
+    m.Opacity = S;
+}

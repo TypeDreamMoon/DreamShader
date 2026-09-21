@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"SinkAliasThenCanonical.dss\"\n\nproduct 0 Material \"M_LiSinkAliasCanonical\" backend=Graph\n  %0 = Constant(Value=(0, 0.5, 1)) : float3 @L5:C23 \"EmissiveColor\"\n  %1 = MaterialSink(EmissiveColor=%0) @L2:C1\n  sink %1\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiSinkAliasCanonical"
+		],
+		"nodeCounts": [
+			2
+		]
+	}
+}

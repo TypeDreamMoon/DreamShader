@@ -1,0 +1,16 @@
+// Rule L7: `opt` without a default is an optional input with no preview value (IsOptional, no PreviewValue).
+ShaderFunction(Name="Functions/MF_LiOpt")
+{
+    Inputs = {
+        vec3 InColor;
+        opt float Strength;
+    }
+
+    Outputs = {
+        vec3 OutColor;
+    }
+
+    Graph = {
+        OutColor = InColor * Strength;
+    }
+}

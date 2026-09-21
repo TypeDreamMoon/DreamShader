@@ -1,0 +1,12 @@
+// The class has one input (DSH5285).
+Shader(Name="M_LiPinIndexRange")
+{
+    Outputs = {
+        vec3 N;
+        Expression(Class="ClearCoatNormalCustomOutput").Pin[9] = N;
+    }
+
+    Graph = {
+        N = vec3(0.0, 0.0, 1.0);
+    }
+}

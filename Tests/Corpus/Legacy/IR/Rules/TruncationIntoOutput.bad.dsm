@@ -1,0 +1,19 @@
+// Rule L22 stops at a material output: 1.x narrowed everywhere else and refused this (its DSH4046), because
+// `Base.OpacityMask = SomeColour` would quietly become that colour's red channel and render.
+Shader(Name="M_LiTruncationIntoOutput")
+{
+    Properties = {
+        ScalarParameter Gain = 0.5;
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0);
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        vec4 Wide;
+        Base.EmissiveColor = Wide;
+    }
+
+    Graph = {
+        Wide = Tint;
+    }
+}

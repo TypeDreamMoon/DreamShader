@@ -1,0 +1,23 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH5279"
+	],
+	"ir": "module \"RequiredPinLegacy.dsm\"\n\nproduct 0 Material \"M_LiRequiredPin\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(1, 0, 0)) : float3 @L10:C53 \"Alpha\"\n  %1 = Reflected[DotProduct](A=%0, ClassSpecifier=\"DotProduct\") : float @L10:C17 \"Alpha\"\n  %2 = MaterialSink(Opacity=%1) @L2:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiRequiredPin"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

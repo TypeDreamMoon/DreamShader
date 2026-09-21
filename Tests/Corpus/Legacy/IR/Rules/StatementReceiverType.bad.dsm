@@ -1,0 +1,17 @@
+// Rules L5 and L22: a receiver takes the leading components of a wider value, and a scalar spread over it, as 1.x fitted
+// what came back to the variable that received it. A narrower vector fits nothing (DSH4218).
+Function vec2 Pair(in float value) { return vec2(value, value * 0.5); }
+
+Shader(Name="M_LiReceiverType")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        vec3 r;
+        Pair(1.0, r);
+        Color = r;
+    }
+}

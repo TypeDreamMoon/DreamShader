@@ -1,0 +1,17 @@
+// A property without SortPriority has 1.x's 32: written as a synthesized `@sort 32`, so the parameter keeps its place.
+Shader(Name="M_LiSort32")
+{
+    Properties = {
+        ScalarParameter Explicit = 1.0 [SortPriority=3];
+        ScalarParameter Implicit = 2.0;
+    }
+
+    Outputs = {
+        float Alpha;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        Alpha = Explicit + Implicit;
+    }
+}

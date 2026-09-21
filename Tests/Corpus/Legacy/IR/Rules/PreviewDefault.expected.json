@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"PreviewDefault.dsf\"\n\nproduct 0 MaterialFunction \"Functions/MF_LiPreviewDefault\" backend=Graph\n  legacy root \"\"\n  %0 = FunctionInput(Preview=%2, InputName=\"RecordIndex\", InputType=\"Scalar\", IsOptional=true, SortPriority=0) : float @L3:C1 \"RecordIndex\"\n  %1 = Reflected[TextureCoordinate](CoordinateIndex=1) : float2 @L6:C33\n  %2 = Swizzle(%1, Mask=\"x\") : float @L6:C33\n  %3 = Constant(Value=(2)) : float @L14:C32 \"Result\"\n  %4 = Multiply(%0, %3) : float @L14:C18 \"Result\"\n  %5 = FunctionOutput(%4, OutputName=\"Result\", SortPriority=0) @L3:C1 \"Result\"\n  inputs %0\n  outputs %5\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialFunction"
+		],
+		"productNames": [
+			"Functions/MF_LiPreviewDefault"
+		],
+		"nodeCounts": [
+			6
+		]
+	}
+}

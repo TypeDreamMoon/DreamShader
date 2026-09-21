@@ -1,0 +1,23 @@
+// Rule L9: a function with only `out`s returns its first `out` as the Custom node's primary output. Golden review:
+// OutputType = Float3, output 0 `b`, AdditionalOutputs ["c:Float1"]; Code has `float3 b = (float3)0;` before the Begin
+// marker and ends `return b;`. The receivers `B` and `C` are undeclared: DSH5283 twice.
+Function Split(in float a, out vec3 b, out float c) {
+    b = float3(a, a, a);
+    c = a * 0.5;
+}
+
+Shader(Name="M_LiVoidOutPrimary")
+{
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        Split(0.5, B, C);
+        Color = B;
+        Alpha = C;
+    }
+}

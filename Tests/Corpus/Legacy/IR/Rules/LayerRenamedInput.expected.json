@@ -1,0 +1,23 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH3277"
+	],
+	"ir": "module \"LayerRenamedInput.dsf\"\n\nproduct 0 MaterialLayer \"Layers/ML_LiRenamedInput\" backend=Graph\n  legacy root \"\"\n  %0 = FunctionInput(InputName=\"Attrs\", InputType=\"MaterialAttributes\", IsOptional=false, SortPriority=0) : material @L4:C1 \"Attrs\"\n  %1 = Reflected[MakeMaterialAttributes](ClassSpecifier=\"MakeMaterialAttributes\") : material @L7:C9 \"Attrs\"\n  %2 = GetMaterialAttributes(MaterialAttributes=%0) : [BaseColor:float3, EmissiveColor:float3, Roughness:float, Normal:float3, Opacity:float, WorldPositionOffset:float3, FrontMaterial:Substrate, MaterialAttributes:material] @L15:C27 \"BaseColor\"\n  %3 = Constant(Value=(1, 0.5, 0.25)) : float3 @L15:C44 \"BaseColor\"\n  %4 = Multiply(%2, %3) : float3 @L15:C27 \"BaseColor\"\n  %5 = SetMaterialAttributes(MaterialAttributes=%1, BaseColor=%4, AttributeSetTypes=\"[BaseColor]\") : material @L4:C1\n  %6 = FunctionOutput(%5, OutputName=\"Attrs\", SortPriority=0) @L4:C1 \"Attrs\"\n  inputs %0\n  outputs %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialLayer"
+		],
+		"productNames": [
+			"Layers/ML_LiRenamedInput"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

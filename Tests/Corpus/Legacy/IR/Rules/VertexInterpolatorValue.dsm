@@ -1,0 +1,20 @@
+// A custom-output class that has an output is a value (VertexInterpolator), and a typed pin takes a narrower vector as
+// it is: the engine says float4 for this pin and interpolates a float3.
+Shader(Name="M_LiVertexInterpolator")
+{
+    Properties = {
+        ScalarParameter Gain = 0.5;
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0);
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        vec3 Interpolated = UE.Expression(Class="VertexInterpolator", OutputType="float3", VS=V);
+        Color = Interpolated;
+    }
+}

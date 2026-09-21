@@ -1,0 +1,4 @@
+// The HLSL function a ShaderFunction of the same name wraps: BlockNamedLikeFunction.dsf.
+Function MF_LiTint(in vec3 colour, out vec3 result) {
+    result = colour * vec3(1.0, 0.5, 0.25);
+}

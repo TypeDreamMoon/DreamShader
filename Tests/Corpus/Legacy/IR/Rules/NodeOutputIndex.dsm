@@ -1,0 +1,13 @@
+// Rule L3a: `OutputIndex = 2` on a reflected call reads output 2 of the ONE node.
+Shader(Name="M_LiNodeOutputIndex")
+{
+    Outputs = {
+        float Alpha;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float2 InvSize = UE.Expression(Class="SceneTexture", SceneTextureId="SceneColor", OutputIndex=2);
+        Alpha = InvSize.x;
+    }
+}

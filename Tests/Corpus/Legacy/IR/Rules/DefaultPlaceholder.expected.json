@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"DefaultPlaceholder.dsm\"\n\nproduct 0 Material \"M_LiDefaultPlaceholder\" backend=Graph\n  legacy root \"\"\n  %0 = Parameter(DefaultValue=(0.5), ParameterName=\"Gain\", SortPriority=32) : float @L23:C9 \"Gain\"\n  %1 = FunctionCall[Path(Game, \"Functions/MF_LiThree\")](Second=%0, DeclaredInputs=\"[First, Second, Tail]\", FunctionPath=\"Path(Game, \\\"Functions/MF_LiThree\\\")\") : [Result:float] @L34:C17 \"Value\"\n  %2 = MaterialSink(Opacity=%1) @L20:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiDefaultPlaceholder"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

@@ -1,0 +1,12 @@
+// Rule L13: a required pin left out is a warning in a 1.x body (DSH5279), and the graph still builds.
+Shader(Name="M_LiRequiredPin")
+{
+    Outputs = {
+        float Alpha;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        Alpha = UE.Expression(Class="DotProduct", A=vec3(1.0, 0.0, 0.0));
+    }
+}

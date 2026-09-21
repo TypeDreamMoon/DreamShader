@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"PinIndex.dsm\"\n\nproduct 0 Material \"M_LiPinIndex\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(0, 0, 1)) : float3 @L10:C13 \"N\"\n  %1 = Reflected[ClearCoatNormalCustomOutput](Input=%0, ClassSpecifier=\"ClearCoatNormalCustomOutput\") @L6:C9\n  %2 = MaterialSink() @L2:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiPinIndex"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

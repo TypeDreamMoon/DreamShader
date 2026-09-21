@@ -1,0 +1,21 @@
+// Rule L26: `Acc = 0.25;` with no declaration anywhere declares Acc, as wide as the value: 1.x had one table of values by
+// name, and an assignment to a name it did not hold put it there. Said with an Info (DSH5292).
+Shader(Name="M_LiImplicitLocal")
+{
+    Properties = {
+        ScalarParameter Gain = 0.5;
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0);
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        float Value;
+        Base.Opacity = Value;
+    }
+
+    Graph = {
+        Acc = 0.25;
+        Acc = Acc + Gain;
+        Value = Acc;
+    }
+}

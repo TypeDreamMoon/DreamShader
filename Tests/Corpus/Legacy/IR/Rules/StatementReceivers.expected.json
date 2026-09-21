@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"StatementReceivers.dsm\"\n\nproduct 0 Material \"M_LiStatementReceivers\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(1, 0.5, 0.25)) : float3 @L34:C21\n  %1 = FunctionCall[Path(Game, \"Functions/MF_LiTwoOut\")](Colour=%0, DeclaredInputs=\"[Colour, Gain]\", FunctionPath=\"Path(Game, \\\"Functions/MF_LiTwoOut\\\")\") : [A:float3, B:float] @L34:C9\n  %2 = Custom[Halve](value=%1#1, Code=\"// Begin DreamShader source: <corpus>/Legacy/IR/Rules/StatementReceivers.dsm\\n// DreamShader custom: Halve line 20\\n return value * 0.5; \\n// End DreamShader source: <corpus>/Legacy/IR/Rules/StatementReceivers.dsm\\n\", Description=\"Halve\", OutputType=\"Float1\") : [Result:float] @L36:C9\n  %3 = MaterialSink(EmissiveColor=%1, Opacity=%2) @L22:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiStatementReceivers"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

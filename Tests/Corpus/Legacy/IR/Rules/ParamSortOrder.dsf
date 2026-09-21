@@ -1,0 +1,16 @@
+// Inputs are ordered by SortPriority, then by declaration: `Second` (5) comes before `First` (32, 1.x's default).
+ShaderFunction(Name="Functions/MF_LiParamSort")
+{
+    Inputs = {
+        vec3 First;
+        vec3 Second [SortPriority=5];
+    }
+
+    Outputs = {
+        vec3 OutColor;
+    }
+
+    Graph = {
+        OutColor = First + Second;
+    }
+}

@@ -1,0 +1,21 @@
+// A 1.x call is as wide as its `OutputType` said: 1.x had no catalog, typed the value by that word and wired the node as
+// it was. `Cam` is a float to this body although CameraPositionWS is a float3, so nothing cuts it down on the way into the
+// variable, and `V - Cam` subtracts the whole camera position in the graph -- as it did in 1.x.
+Shader(Name="M_LiOutputTypeWord")
+{
+    Properties = {
+        ScalarParameter Gain = 0.5;
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0);
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        float Cam = UE.Expression(Class="CameraPositionWS", OutputType="float");
+        Color = V - Cam;
+    }
+}

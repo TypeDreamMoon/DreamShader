@@ -1,0 +1,25 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH5289",
+		"DSH5289",
+		"DSH5289"
+	],
+	"ir": "module \"TruncationFit.dsm\"\n\nproduct 0 Material \"M_LiTruncation\" backend=Graph\n  legacy root \"\"\n  %0 = Parameter(DefaultValue=(1, 0.5, 0.25, 1), ParameterName=\"Tint\", SortPriority=32) : float4 @L9:C9 \"Tint\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L21:C14 \"Narrow\"\n  %2 = Custom[Luma](colour=%1, Code=\"// Begin DreamShader source: <corpus>/Legacy/IR/Rules/TruncationFit.dsm\\n// DreamShader custom: Luma line 3\\n return dot(colour, float3(0.299, 0.587, 0.114)); \\n// End DreamShader source: <corpus>/Legacy/IR/Rules/TruncationFit.dsm\\n\", Description=\"Luma\", OutputType=\"Float1\") : [Result:float] @L23:C17 \"Alpha\"\n  %3 = Multiply(%1, %1) : float3 @L24:C17 \"Color\"\n  %4 = MaterialSink(EmissiveColor=%3, Opacity=%2) @L5:C1\n  sink %4\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiTruncation"
+		],
+		"nodeCounts": [
+			5
+		]
+	}
+}

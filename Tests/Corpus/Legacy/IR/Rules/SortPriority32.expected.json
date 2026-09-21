@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"SortPriority32.dsm\"\n\nproduct 0 Material \"M_LiSort32\" backend=Graph\n  legacy root \"\"\n  %0 = Parameter(DefaultValue=(1), ParameterName=\"Explicit\", SortPriority=3) : float @L5:C9 \"Explicit\"\n  %1 = Parameter(DefaultValue=(2), ParameterName=\"Implicit\", SortPriority=32) : float @L6:C9 \"Implicit\"\n  %2 = Add(%0, %1) : float @L15:C17 \"Alpha\"\n  %3 = MaterialSink(Opacity=%2) @L2:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiSort32"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

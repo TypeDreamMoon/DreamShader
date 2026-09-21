@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"GraphFunctionHoist.dsm\"\ninclude \"GraphFunctionHoist.dsh\"\n\nproduct 0 Material \"M_LiGraphFunctionHoist\" backend=Graph\n  legacy root \"\"\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L14:C21 \"uv\"\n  %1 = Constant(Value=(2)) : float @L17:C21\n  %2 = Reflected[Time]() : float @L3:C15 in \"GraphFunctionHoist.dsh\" via L17:C9\n  %3 = Constant(Value=(0)) : float @L4:C31 in \"GraphFunctionHoist.dsh\" via L17:C9\n  %4 = Constant(Value=(0.5)) : float @L4:C54 in \"GraphFunctionHoist.dsh\" via L17:C9\n  %5 = Reflected[LinearInterpolate](A=%3, B=%1, Alpha=%4) : float @L4:C19 in \"GraphFunctionHoist.dsh\" via L17:C9\n  %6 = Custom[LiPulse](uv=%0, Gain=%1, _ds_LiPulse_UE0=%2, _ds_LiPulse_UE1=%5, Code=\"float pulse = (float)0;\\n// Begin DreamShader source: <corpus>/Legacy/IR/Rules/GraphFunctionHoist.dsh\\n// DreamShader custom: LiPulse line 2\\n\\n    float t = _ds_LiPulse_UE0;\\n    float mixed = _ds_LiPulse_UE1                        ;\\n    pulse = sin(uv.x * 8.0 + t) * mixed;\\n// End DreamShader source: <corpus>/Legacy/IR/Rules/GraphFunctionHoist.dsh\\nreturn pulse;\\n\", Description=\"LiPulse\", OutputType=\"Float1\") : [pulse:float] @L17:C9\n  %7 = Constant(Value=(4)) : float @L18:C21\n  %8 = Reflected[LinearInterpolate](A=%3, B=%7, Alpha=%4) : float @L4:C19 in \"GraphFunctionHoist.dsh\" via L18:C9\n  %9 = Custom[LiPulse](uv=%0, Gain=%7, _ds_LiPulse_UE0=%2, _ds_LiPulse_UE1=%8, Code=\"float pulse = (float)0;\\n// Begin DreamShader source: <corpus>/Legacy/IR/Rules/GraphFunctionHoist.dsh\\n// DreamShader custom: LiPulse line 2\\n\\n    float t = _ds_LiPulse_UE0;\\n    float mixed = _ds_LiPulse_UE1                        ;\\n    pulse = sin(uv.x * 8.0 + t) * mixed;\\n// End DreamShader source: <corpus>/Legacy/IR/Rules/GraphFunctionHoist.dsh\\nreturn pulse;\\n\", Description=\"LiPulse\", OutputType=\"Float1\") : [pulse:float] @L18:C9\n  %10 = Multiply(%6, %9) : float @L19:C17 \"Alpha\"\n  %11 = MaterialSink(Opacity=%10) @L6:C1\n  sink %11\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 1,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiGraphFunctionHoist"
+		],
+		"nodeCounts": [
+			12
+		]
+	}
+}

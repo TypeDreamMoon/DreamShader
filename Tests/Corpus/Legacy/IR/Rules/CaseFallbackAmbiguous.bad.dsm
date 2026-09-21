@@ -1,0 +1,14 @@
+// Rule L19 binds a name in another case only when exactly one declaration matches (DSH4200 otherwise).
+Shader(Name="M_LiCaseAmbiguous")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        float Ab = 1.0;
+        float AB = 2.0;
+        Color = vec3(ab, ab, ab);
+    }
+}
