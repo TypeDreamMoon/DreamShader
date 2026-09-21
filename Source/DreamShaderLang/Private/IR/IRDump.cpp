@@ -14,6 +14,7 @@
 #include "IR/IRCoreOps.h"
 #include "IR/IRTypes.h"
 
+#include "Misc/Char.h"
 #include "Misc/CString.h"
 #include "Misc/Paths.h"
 
@@ -256,6 +257,200 @@ namespace UE::DreamShader::IR
 			return Line;
 		}
 
+		/**
+		 * A layout comment colour channel as a dump writes it: rounded to six decimals first, so the float32 a
+		 * hint stores reads `0.1` and not `0.100000001`, then the one culture-invariant number formatter.
+		 */
+		static double RoundIRDumpLayoutColorChannel(const float Channel)
+		{
+			return FMath::RoundToDouble(static_cast<double>(Channel) * 1000000.0) / 1000000.0;
+		}
+
+		// ------------------------------------------------------------------ instances (batch 2)
+
+		/** A text the dump writes between quotes, escaped like a property: backslash, line breaks, tab, quote. */
+		static FString QuoteIRDumpText(const FString& Text)
+		{
+			return FString::Printf(TEXT("\"%s\""), *EscapeQuoted(FIRPropertyValue::MakeString(Text).ToString()));
+		}
+
+		static const TCHAR* LexIRDumpParameterAssociation(const EIRParameterAssociation Association)
+		{
+			switch (Association)
+			{
+			case EIRParameterAssociation::Global: return TEXT("Global");
+			case EIRParameterAssociation::Layer:  return TEXT("Layer");
+			case EIRParameterAssociation::Blend:  return TEXT("Blend");
+			}
+			return TEXT("Global");
+		}
+
+		/** An instance key's value: bare when it is one word (`Translucent`, `true`, `0.5`), quoted otherwise (a path). */
+		static FString RenderIRDumpInstanceSettingValue(const FString& Value)
+		{
+			bool bBare = !Value.IsEmpty();
+			for (const TCHAR Char : Value)
+			{
+				if (!(FChar::IsAlnum(Char) || Char == TCHAR('_') || Char == TCHAR('.') || Char == TCHAR('+') || Char == TCHAR('-')))
+				{
+					bBare = false;
+					break;
+				}
+			}
+			return bBare ? Value : QuoteIRDumpText(Value);
+		}
+
+		/** `4`, `(1, 0.2, 0.1)` (a vector as wide as it was declared), `true`, `"/Game/T"`, `None`. */
+		static FString RenderIRDumpInstanceOverrideValue(const FIRInstanceOverride& Override)
+		{
+			const FIRPropertyValue& Value = Override.Value;
+			switch (Value.Kind)
+			{
+			case EIRPropertyKind::Bool:
+				return Value.B ? TEXT("true") : TEXT("false");
+			case EIRPropertyKind::Float4:
+			{
+				int32 Count = FMath::Clamp(Value.N, 1, 4);
+				const bool bVector = Override.Kind == EIRParameterKind::Vector || Override.Kind == EIRParameterKind::DoubleVector;
+				if (bVector && Override.DeclaredType.GraphComponentCount() > 0)
+				{
+					Count = FMath::Min(Count, Override.DeclaredType.GraphComponentCount());
+				}
+				if (Count == 1 && Override.Kind == EIRParameterKind::Scalar)
+				{
+					return FormatIRNumber(Value.V[0]);
+				}
+				FString Result = TEXT("(");
+				for (int32 Index = 0; Index < Count; ++Index)
+				{
+					Result += Index > 0 ? TEXT(", ") : TEXT("");
+					Result += FormatIRNumber(Value.V[Index]);
+				}
+				return Result + TEXT(")");
+			}
+			case EIRPropertyKind::Object:
+				return Value.S.IsEmpty() ? FString(TEXT("None")) : QuoteIRDumpText(Value.S);
+			case EIRPropertyKind::Int:
+			case EIRPropertyKind::Float:
+			case EIRPropertyKind::String:
+			case EIRPropertyKind::Name:
+			case EIRPropertyKind::Enum:
+			case EIRPropertyKind::StringList:
+				return RenderPropertyValue(Value);
+			}
+			return RenderPropertyValue(Value);
+		}
+
+		/**
+		 * A MaterialInstance product as text (research-instance section 3.5): no backend and no graph, the parent
+		 * with the schema it was checked against, the keys in source order, one line per override.
+		 */
+		static void AppendIRDumpInstanceLines(const FIRProduct& Product, const int32 ProductIndex, TArray<FString>& Lines)
+		{
+			Lines.Add(FString::Printf(TEXT("product %d %s \"%s\""), ProductIndex, LexToString(Product.Kind), *Product.Name));
+			if (!Product.AssetPathOverride.IsEmpty())
+			{
+				Lines.Add(FString::Printf(TEXT("  path \"%s\""), *Product.AssetPathOverride));
+			}
+
+			const FIRInstance& Instance = Product.Instance;
+			FString ParentLine = FString::Printf(TEXT("  parent %s"), *QuoteIRDumpText(Instance.ParentReference));
+			if (!Instance.ParentObjectPath.IsEmpty())
+			{
+				ParentLine += FString::Printf(TEXT(" object=%s"), *QuoteIRDumpText(Instance.ParentObjectPath));
+			}
+			if (Instance.ParentSchema.bValid)
+			{
+				ParentLine += FString::Printf(
+					TEXT(" schema=%s params=%d"),
+					Instance.ParentSchema.Origin.IsEmpty() ? TEXT("?") : *Instance.ParentSchema.Origin,
+					Instance.ParentSchema.Parameters.Num());
+			}
+			else
+			{
+				ParentLine += TEXT(" schema=none");
+			}
+			Lines.Add(ParentLine);
+
+			for (const TPair<FString, FString>& Setting : Instance.Settings)
+			{
+				Lines.Add(FString::Printf(TEXT("  setting %s %s"), *Setting.Key, *RenderIRDumpInstanceSettingValue(Setting.Value)));
+			}
+
+			for (const FIRInstanceOverride& Override : Instance.Overrides)
+			{
+				// An asset kind (a Font, a runtime virtual texture) has no value type: `-`, not the Error type's name.
+				FString Line = FString::Printf(
+					TEXT("  override %s %s %s %s"),
+					*QuoteIRDumpText(Override.ParameterName),
+					LexToString(Override.Kind),
+					Override.DeclaredType.IsError() ? TEXT("-") : *Override.DeclaredType.ToString(),
+					*RenderIRDumpInstanceOverrideValue(Override));
+				if (Override.Kind == EIRParameterKind::Font || Override.FontPage != 0)
+				{
+					Line += FString::Printf(TEXT(" page=%d"), Override.FontPage);
+				}
+				if (!Override.VariableName.IsEmpty() && !Override.VariableName.Equals(Override.ParameterName, ESearchCase::CaseSensitive))
+				{
+					Line += FString::Printf(TEXT(" var=%s"), *Override.VariableName);
+				}
+				Lines.Add(Line);
+			}
+		}
+
+		static void WriteIRDumpInstanceJson(FIRJsonWriter& Writer, const FIRModule& Module, const FIRInstance& Instance)
+		{
+			Writer.Key(TEXT("instance"));
+			Writer.BeginObject();
+			Writer.KeyString(TEXT("parent"), Instance.ParentReference);
+			Writer.KeyString(TEXT("parentObject"), Instance.ParentObjectPath);
+			Writer.KeyString(TEXT("schemaOrigin"), Instance.ParentSchema.bValid ? Instance.ParentSchema.Origin : FString());
+			Writer.KeyInt(TEXT("schemaParameters"), Instance.ParentSchema.bValid ? Instance.ParentSchema.Parameters.Num() : 0);
+
+			Writer.Key(TEXT("settings"));
+			Writer.BeginArray();
+			for (const TPair<FString, FString>& Setting : Instance.Settings)
+			{
+				Writer.BeginArray();
+				Writer.ValueString(Setting.Key);
+				Writer.ValueString(Setting.Value);
+				Writer.EndArray();
+			}
+			Writer.EndArray();
+
+			Writer.Key(TEXT("overrides"));
+			Writer.BeginArray();
+			for (const FIRInstanceOverride& Override : Instance.Overrides)
+			{
+				Writer.BeginObject();
+				Writer.KeyString(TEXT("name"), Override.ParameterName);
+				Writer.KeyString(TEXT("kind"), LexToString(Override.Kind));
+				Writer.KeyString(TEXT("association"), LexIRDumpParameterAssociation(Override.Association));
+				Writer.KeyInt(TEXT("index"), Override.AssociationIndex);
+				Writer.KeyString(TEXT("type"), Override.DeclaredType.IsError() ? FString() : Override.DeclaredType.ToString());
+				Writer.KeyString(TEXT("value"), Override.Value.ToString());
+				Writer.KeyString(TEXT("var"), Override.VariableName);
+				if (Override.Kind == EIRParameterKind::Font || Override.FontPage != 0)
+				{
+					Writer.KeyInt(TEXT("page"), Override.FontPage);
+				}
+				Writer.Key(TEXT("span"));
+				Writer.BeginObject();
+				Writer.KeyInt(TEXT("line"), Override.Source.Span.Line);
+				Writer.KeyInt(TEXT("column"), Override.Source.Span.Column);
+				Writer.KeyInt(TEXT("length"), Override.Source.Span.Length);
+				if (IsForeignFile(Module.SourceFilePath, Override.Source.File))
+				{
+					Writer.KeyString(TEXT("file"), CleanFileName(Override.Source.File));
+				}
+				Writer.EndObject();
+				Writer.EndObject();
+			}
+			Writer.EndArray();
+
+			Writer.EndObject();
+		}
+
 		static FString RenderIndexList(const TArray<int32>& Indices)
 		{
 			FString Result;
@@ -438,6 +633,12 @@ namespace UE::DreamShader::IR
 
 			Lines.Add(FString());
 
+			if (Product.Kind == EIRProductKind::MaterialInstance)
+			{
+				Private::AppendIRDumpInstanceLines(Product, ProductIndex, Lines);
+				continue;
+			}
+
 			FString Header = FString::Printf(
 				TEXT("product %d %s \"%s\" backend=%s"),
 				ProductIndex,
@@ -454,6 +655,11 @@ namespace UE::DreamShader::IR
 			if (!Product.AssetPathOverride.IsEmpty())
 			{
 				Lines.Add(FString::Printf(TEXT("  path \"%s\""), *Product.AssetPathOverride));
+			}
+			if (Product.bLegacyAssetPath)
+			{
+				// 1.x destination (legacy rule L10): Name may carry folders, AssetRoot is the Root= spelling.
+				Lines.Add(FString::Printf(TEXT("  legacy root \"%s\""), *Private::EscapeQuoted(Product.AssetRoot)));
 			}
 			if (!Product.LibraryPath.IsEmpty())
 			{
@@ -491,6 +697,15 @@ namespace UE::DreamShader::IR
 				if (Hint.bHasSize)
 				{
 					HintLine += FString::Printf(TEXT(" w=%d h=%d"), Hint.W, Hint.H);
+				}
+				if (Hint.bHasColor)
+				{
+					HintLine += FString::Printf(
+						TEXT(" color=(%s, %s, %s, %s)"),
+						*Private::FormatIRNumber(Private::RoundIRDumpLayoutColorChannel(Hint.Color[0])),
+						*Private::FormatIRNumber(Private::RoundIRDumpLayoutColorChannel(Hint.Color[1])),
+						*Private::FormatIRNumber(Private::RoundIRDumpLayoutColorChannel(Hint.Color[2])),
+						*Private::FormatIRNumber(Private::RoundIRDumpLayoutColorChannel(Hint.Color[3])));
 				}
 				Lines.Add(HintLine);
 			}
@@ -571,6 +786,15 @@ namespace UE::DreamShader::IR
 			{
 				Writer.KeyInt(TEXT("boundFunction"), Product.BoundFunctionIndex);
 			}
+			if (Product.bLegacyAssetPath)
+			{
+				Writer.KeyBool(TEXT("legacyAssetPath"), true);
+				Writer.KeyString(TEXT("assetRoot"), Product.AssetRoot);
+			}
+			if (Product.Kind == EIRProductKind::MaterialInstance)
+			{
+				Private::WriteIRDumpInstanceJson(Writer, Module, Product.Instance);
+			}
 
 			if (Product.Settings.Num() > 0)
 			{
@@ -629,6 +853,16 @@ namespace UE::DreamShader::IR
 					{
 						Writer.KeyInt(TEXT("w"), Hint.W);
 						Writer.KeyInt(TEXT("h"), Hint.H);
+					}
+					if (Hint.bHasColor)
+					{
+						Writer.Key(TEXT("color"));
+						Writer.BeginArray();
+						for (int32 Channel = 0; Channel < 4; ++Channel)
+						{
+							Writer.ValueNumber(Private::RoundIRDumpLayoutColorChannel(Hint.Color[Channel]));
+						}
+						Writer.EndArray();
 					}
 					Writer.EndObject();
 				}

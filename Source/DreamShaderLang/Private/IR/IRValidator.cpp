@@ -122,6 +122,10 @@ namespace UE::DreamShader::IR
 				{ Prop::AdditionalOutputs, EIRPropertyKind::StringList },
 				{ Prop::AttributeSetTypes, EIRPropertyKind::StringList },
 				{ Prop::ClassSpecifier,    EIRPropertyKind::String },
+				{ Prop::LateBoundPins,     EIRPropertyKind::StringList },
+				{ Prop::WrittenPins,       EIRPropertyKind::StringList },
+				{ Prop::DeclaredInputs,    EIRPropertyKind::StringList },
+				{ Prop::BlendInputRelevance, EIRPropertyKind::Enum },
 			};
 
 			for (const FPropertyKindRule& Rule : Rules)
@@ -351,7 +355,11 @@ namespace UE::DreamShader::IR
 							? LOCTEXT("TakesNamedInputs", "named inputs")
 							: LOCTEXT("TakesNothing", "no inputs at all")));
 			}
-			if (Style != EIROperandStyle::Named && Node.Inputs.Num() != 0)
+			// A FunctionInput reads nothing, with one exception: the value on its Preview pin, which is what a default that
+			// is a graph expression and not a number is (`float Index = UE.TexCoord(Index = 1).r`).
+			const bool bPreviewOnly = Node.Op == EIROp::FunctionInput && Node.Inputs.Num() == 1
+				&& Node.Inputs[0].Pin.Equals(Prop::PreviewPin, ESearchCase::CaseSensitive);
+			if (Style != EIROperandStyle::Named && Node.Inputs.Num() != 0 && !bPreviewOnly)
 			{
 				Context.bValid &= Context.Sink.Error(
 					TEXT("DSH4304"),
@@ -734,9 +742,15 @@ namespace UE::DreamShader::IR
 						FText::FromString(Expression.ShortName)));
 			}
 
+			// A Custom node's inputs are whatever its call named (batch 2, legacy rule L4): the class has no fixed input pins
+			// to check them against, and the emitter declares one FCustomInput per entry.
+			const bool bDynamicInputs = Expression.ClassName.Equals(TEXT("MaterialExpressionCustom"), ESearchCase::CaseSensitive);
+			// Legacy rule L24: pins the node names after its properties, which the class's default object does not list.
+			const FIRProperty* LateBoundPins = Node.FindProperty(Prop::LateBoundPins);
 			for (const FIRInput& Input : Node.Inputs)
 			{
-				if (Expression.FindInput(Input.Pin) != INDEX_NONE)
+				if (bDynamicInputs || Expression.FindInput(Input.Pin) != INDEX_NONE
+					|| (LateBoundPins != nullptr && LateBoundPins->Value.List.Contains(Input.Pin)))
 				{
 					continue;
 				}
@@ -755,7 +769,9 @@ namespace UE::DreamShader::IR
 			{
 				// ClassSpecifier is the IR's own record of what the author wrote; it never reaches
 				// reflection, so the class is not expected to have it.
-				if (Property.Name.Equals(Prop::ClassSpecifier, ESearchCase::CaseSensitive))
+				if (Property.Name.Equals(Prop::ClassSpecifier, ESearchCase::CaseSensitive)
+					|| Property.Name.Equals(Prop::LateBoundPins, ESearchCase::CaseSensitive)
+					|| Property.Name.Equals(Prop::WrittenPins, ESearchCase::CaseSensitive))
 				{
 					continue;
 				}
@@ -1272,6 +1288,185 @@ namespace UE::DreamShader::IR
 							TextFromInt(HintIndex),
 							DescribeProductRef(ProductIndex, Product)));
 				}
+				if (bIsNode && Hint.bHasColor)
+				{
+					// The binder drops such a colour with DSH7230; a hand-built or imported module is what reaches here.
+					Context.Sink.Warning(
+						TEXT("DSH4328"),
+						Product.Source.Span,
+						FText::Format(
+							LOCTEXT("LayoutHintNodeColor", "Layout hint {0} of product {1} places a node and carries a colour, and only a comment box has one, so the colour is ignored."),
+							TextFromInt(HintIndex),
+							DescribeProductRef(ProductIndex, Product)));
+				}
+			}
+		}
+
+		// ---------------------------------------------------------------------------- instance
+
+		/** FIRInstanceOverride::Value's encoding per kind (IR.h), for DSH4331; OutExpected describes it for the message. */
+		static bool IsValidatorInstanceValueShape(const FIRInstanceOverride& Override, FText& OutExpected)
+		{
+			const FIRPropertyValue& Value = Override.Value;
+			switch (Override.Kind)
+			{
+			case EIRParameterKind::Scalar:
+				OutExpected = LOCTEXT("InstanceValueScalar", "a Float4 of one component");
+				return Value.Kind == EIRPropertyKind::Float4 && Value.N == 1;
+			case EIRParameterKind::Vector:
+			case EIRParameterKind::DoubleVector:
+				OutExpected = LOCTEXT("InstanceValueVector", "a Float4 of four components");
+				return Value.Kind == EIRPropertyKind::Float4 && Value.N == 4;
+			case EIRParameterKind::StaticSwitch:
+				OutExpected = LOCTEXT("InstanceValueStaticSwitch", "a Bool");
+				return Value.Kind == EIRPropertyKind::Bool;
+			case EIRParameterKind::StaticComponentMask:
+			{
+				OutExpected = LOCTEXT("InstanceValueMask", "a Float4 of four components, each 0 or 1");
+				if (Value.Kind != EIRPropertyKind::Float4 || Value.N != 4)
+				{
+					return false;
+				}
+				for (int32 Channel = 0; Channel < 4; ++Channel)
+				{
+					if (Value.V[Channel] != 0.0 && Value.V[Channel] != 1.0)
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+			case EIRParameterKind::Texture:
+			case EIRParameterKind::TextureCollection:
+			case EIRParameterKind::Font:
+			case EIRParameterKind::RuntimeVirtualTexture:
+			case EIRParameterKind::SparseVolumeTexture:
+			case EIRParameterKind::ParameterCollection:
+				OutExpected = LOCTEXT("InstanceValueObject", "an Object path, empty for None");
+				return Value.Kind == EIRPropertyKind::Object;
+			}
+			return false;
+		}
+
+		/**
+		 * A MaterialInstance product (research-instance section 3.5): no graph, a parent, well-formed and unique
+		 * overrides, and -- when the product carries a valid schema -- only overrides the parent has. The schema
+		 * travels inside the product, so the validator's signature did not change.
+		 */
+		static void ValidateInstanceProduct(
+			FIRValidationContext& Context,
+			const FIRProduct& Product,
+			const int32 ProductIndex)
+		{
+			const FIRGraph& Graph = Product.Graph;
+			const FIRInstance& Instance = Product.Instance;
+
+			if (Graph.Nodes.Num() > 0 || Graph.Sink != INDEX_NONE || Graph.FunctionInputs.Num() > 0 || Graph.FunctionOutputs.Num() > 0)
+			{
+				Context.bValid &= Context.Sink.Error(
+					TEXT("DSH4329"),
+					Product.Source.Span,
+					FText::Format(
+						LOCTEXT("InstanceHasGraph", "Product {0} is a material instance, which assigns its parent's parameters and has no graph, and it carries {1} node(s), a sink or a function signature."),
+						DescribeProductRef(ProductIndex, Product),
+						TextFromInt(Graph.Nodes.Num())));
+			}
+
+			if (Instance.ParentReference.TrimStartAndEnd().IsEmpty())
+			{
+				Context.bValid &= Context.Sink.Error(
+					TEXT("DSH4330"),
+					Product.Source.Span,
+					FText::Format(
+						LOCTEXT("InstanceNoParent", "Material instance product {0} needs the material it is an instance of, and its parent reference is empty."),
+						DescribeProductRef(ProductIndex, Product)));
+			}
+
+			if (Product.Backend != EIRBackend::Graph)
+			{
+				Context.bValid &= Context.Sink.Error(
+					TEXT("DSH4335"),
+					Product.Source.Span,
+					FText::Format(
+						LOCTEXT("InstanceBackend", "Material instance product {0} carries backend {1}, and an instance is a plain material instance with the default backend."),
+						DescribeProductRef(ProductIndex, Product),
+						FText::FromString(LexToString(Product.Backend))));
+			}
+
+			for (int32 Index = 0; Index < Instance.Overrides.Num(); ++Index)
+			{
+				const FIRInstanceOverride& Override = Instance.Overrides[Index];
+
+				FText Expected;
+				if (!IsValidatorInstanceValueShape(Override, Expected))
+				{
+					Context.bValid &= Context.Sink.Error(
+						TEXT("DSH4331"),
+						Override.Source.Span,
+						FText::Format(
+							LOCTEXT("InstanceValueShape", "Override '{0}' of product {1} is a {2} override holding a {3} value, and a {2} override holds {4}."),
+							FText::FromString(Override.ParameterName),
+							DescribeProductRef(ProductIndex, Product),
+							FText::FromString(LexToString(Override.Kind)),
+							FText::FromString(LexPropertyKind(Override.Value.Kind)),
+							Expected));
+				}
+				if (Override.FontPage < 0)
+				{
+					Context.bValid &= Context.Sink.Error(
+						TEXT("DSH4331"),
+						Override.Source.Span,
+						FText::Format(
+							LOCTEXT("InstanceFontPage", "Override '{0}' of product {1} sets font page {2}, and a font page is zero or more."),
+							FText::FromString(Override.ParameterName),
+							DescribeProductRef(ProductIndex, Product),
+							TextFromInt(Override.FontPage)));
+				}
+
+				for (int32 Earlier = 0; Earlier < Index; ++Earlier)
+				{
+					const FIRInstanceOverride& Other = Instance.Overrides[Earlier];
+					if (Other.Association == Override.Association
+						&& Other.AssociationIndex == Override.AssociationIndex
+						&& Other.ParameterName.Equals(Override.ParameterName, ESearchCase::CaseSensitive))
+					{
+						Context.bValid &= Context.Sink.Error(
+							TEXT("DSH4332"),
+							Override.Source.Span,
+							FText::Format(
+								LOCTEXT("InstanceDuplicateOverride", "Product {0} overrides '{1}' twice, and an instance sets each parameter once."),
+								DescribeProductRef(ProductIndex, Product),
+								FText::FromString(Override.ParameterName)));
+						break;
+					}
+				}
+
+				if (Instance.ParentSchema.bValid)
+				{
+					const int32 EntryIndex = Instance.ParentSchema.Find(Override.ParameterName, Override.Association, Override.AssociationIndex);
+					if (EntryIndex == INDEX_NONE || Instance.ParentSchema.Parameters[EntryIndex].bPruned)
+					{
+						Context.bValid &= Context.Sink.Error(
+							TEXT("DSH4333"),
+							Override.Source.Span,
+							FText::Format(
+								LOCTEXT("InstanceNotInSchema", "Override '{0}' of product {1} names a parameter, and the parent schema the product carries has no such parameter."),
+								FText::FromString(Override.ParameterName),
+								DescribeProductRef(ProductIndex, Product)));
+					}
+					else if (Instance.ParentSchema.Parameters[EntryIndex].Kind != Override.Kind)
+					{
+						Context.bValid &= Context.Sink.Error(
+							TEXT("DSH4333"),
+							Override.Source.Span,
+							FText::Format(
+								LOCTEXT("InstanceSchemaKind", "Override '{0}' of product {1} is a {2} override, and the parent schema lists that parameter as {3}."),
+								FText::FromString(Override.ParameterName),
+								DescribeProductRef(ProductIndex, Product),
+								FText::FromString(LexToString(Override.Kind)),
+								FText::FromString(LexToString(Instance.ParentSchema.Parameters[EntryIndex].Kind))));
+					}
+				}
 			}
 		}
 
@@ -1408,6 +1603,21 @@ namespace UE::DreamShader::IR
 		Private::FIRValidationContext Context{ Module, Catalog, Diagnostics };
 		Context.bHasCatalog = !Catalog.IsEmpty();
 
+		// A `.dsi` makes one material instance and nothing else (research-instance section 3.5).
+		if (Module.CountProducts(EIRProductKind::MaterialInstance) > 0 && Module.Products.Num() > 1)
+		{
+			const FIRProduct* FirstInstance = Module.Products.FindByPredicate([](const FIRProduct& Candidate)
+			{
+				return Candidate.Kind == EIRProductKind::MaterialInstance;
+			});
+			Context.bValid &= Diagnostics.Error(
+				TEXT("DSH4334"),
+				FirstInstance ? FirstInstance->Source.Span : Lang::FLangSpan(),
+				FText::Format(
+					LOCTEXT("InstanceBesideProducts", "This module holds a material instance and {0} other product(s), and a material instance is the only product of its file."),
+					Private::TextFromInt(Module.Products.Num() - 1)));
+		}
+
 		for (int32 ProductIndex = 0; ProductIndex < Module.Products.Num(); ++ProductIndex)
 		{
 			const FIRProduct& Product = Module.Products[ProductIndex];
@@ -1438,6 +1648,14 @@ namespace UE::DreamShader::IR
 						break;
 					}
 				}
+			}
+
+			if (Product.Kind == EIRProductKind::MaterialInstance)
+			{
+				// An instance has no graph to structure, walk, order or key; ValidateProductStructure would
+				// judge its empty graph as a function's (LH-report section 5).
+				Private::ValidateInstanceProduct(Context, Product, ProductIndex);
+				continue;
 			}
 
 			Private::ValidateProductStructure(Context, Product, ProductIndex);

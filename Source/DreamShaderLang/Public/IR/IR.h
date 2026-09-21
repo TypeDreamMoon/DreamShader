@@ -123,15 +123,21 @@ namespace UE::DreamShader::IR
 		inline const TCHAR* const InputType = TEXT("InputType");             // FunctionInput: Enum ("Scalar", "Vector2", "Vector3", "Vector4", "Texture2D", "TextureCube", "MaterialAttributes", "StaticBool", "Bool", "Substrate"...)
 		inline const TCHAR* const IsOptional = TEXT("IsOptional");           // FunctionInput: Bool (had a default)
 		inline const TCHAR* const PreviewValue = TEXT("PreviewValue");       // FunctionInput: Float4
+		inline const TCHAR* const BlendInputRelevance = TEXT("BlendInputRelevance"); // FunctionInput of a blend: Enum ("Bottom", "Top"); absent is General
 		inline const TCHAR* const OutputName = TEXT("OutputName");           // FunctionOutput: Name
 		inline const TCHAR* const FunctionPath = TEXT("FunctionPath");       // FunctionCall: Object (asset path); "" + IsLocalFunction for a same-module export
 		inline const TCHAR* const LocalFunction = TEXT("LocalFunction");     // FunctionCall: Int (product index in this module) when calling a same-file export
+		inline const TCHAR* const DeclaredInputs = TEXT("DeclaredInputs");   // FunctionCall to an asset: StringList, every input the prototype declares, in order -- where an input the asset names otherwise is found
 		inline const TCHAR* const Code = TEXT("Code");                       // Custom: String
 		inline const TCHAR* const OutputType = TEXT("OutputType");           // Custom: Enum ("Float1".."Float4", "MaterialAttributes")
 		inline const TCHAR* const IncludeFilePaths = TEXT("IncludeFilePaths"); // Custom: StringList
 		inline const TCHAR* const AdditionalOutputs = TEXT("AdditionalOutputs"); // Custom: StringList "Name:Type"
 		inline const TCHAR* const AttributeSetTypes = TEXT("AttributeSetTypes"); // SetMaterialAttributes: StringList of attribute names, in Inputs order
 		inline const TCHAR* const ClassSpecifier = TEXT("ClassSpecifier");   // Reflected: String, what the author wrote
+		/** Not a property: the one named input a FunctionInput may have, the graph value wired to its Preview pin. */
+		inline const TCHAR* const PreviewPin = TEXT("Preview");
+		inline const TCHAR* const WrittenPins = TEXT("WrittenPins");         // Reflected: StringList "Pin=Written", inputs the source named by another spelling than the member's; the emitter looks that spelling up on the live node first
+		inline const TCHAR* const LateBoundPins = TEXT("LateBoundPins");     // Reflected: StringList, inputs named by what the catalog does not list; the emitter finds them on the live node (legacy rule L24)
 	}
 
 	// ------------------------------------------------------------------------------ nodes
@@ -220,6 +226,21 @@ namespace UE::DreamShader::IR
 		int32 W = 0;
 		int32 H = 0;
 		bool bHasSize = false;
+		/** Comment: `Color = "r g b a"` was given. */
+		bool bHasColor = false;
+		/** Comment: box colour, linear RGBA; the default is the layout pass's own. */
+		float Color[4] = { 0.10f, 0.16f, 0.22f, 0.35f };
+	};
+
+	/** One statement that bound a named variable: what the graph-debug table maps a source line to. */
+	struct FIRStatementBinding
+	{
+		/** The variable the statement assigned. */
+		FString Name;
+		/** The value it bound. */
+		FIRValue Value;
+		/** The statement. */
+		FIRSourceRef Source;
 	};
 
 	struct DREAMSHADERLANG_API FIRGraph
@@ -232,6 +253,10 @@ namespace UE::DreamShader::IR
 		/** Function products: FunctionInput nodes in declaration order, and FunctionOutput nodes in declaration order. */
 		TArray<int32> FunctionInputs;
 		TArray<int32> FunctionOutputs;
+		/** ParameterName of every uniform the prune pass removed (the data behind DSH4390); feeds FIRParameterSchemaEntry::bPruned. */
+		TArray<FString> PrunedParameters;
+		/** Filled by the IR builder in statement order: every statement that bound a named variable (probes and breakpoints). */
+		TArray<FIRStatementBinding> StatementBindings;
 
 		int32 AddNode(FIRNode&& Node);
 		const FIRNode& operator[](int32 Index) const { return Nodes[Index]; }
@@ -253,6 +278,8 @@ namespace UE::DreamShader::IR
 		MaterialFunction,
 		MaterialLayer,
 		MaterialLayerBlend,
+		/** A `.dsi`: one UMaterialInstanceConstant. Graph is empty; Instance carries the assignments. */
+		MaterialInstance,
 	};
 	DREAMSHADERLANG_API const TCHAR* LexToString(EIRProductKind Kind);
 
@@ -262,6 +289,114 @@ namespace UE::DreamShader::IR
 		ThinCustom,
 	};
 	DREAMSHADERLANG_API const TCHAR* LexToString(EIRBackend Backend);
+
+	// ------------------------------------------------------------------------ instances (.dsi)
+
+	/** The engine parameter kinds an instance can override. Mirrors EMaterialParameterType's set; never cast from it. */
+	enum class EIRParameterKind : uint8
+	{
+		Scalar,
+		Vector,
+		DoubleVector,
+		Texture,
+		TextureCollection,
+		Font,
+		RuntimeVirtualTexture,
+		SparseVolumeTexture,
+		StaticSwitch,
+		ParameterCollection,
+		StaticComponentMask,
+	};
+	DREAMSHADERLANG_API const TCHAR* LexToString(EIRParameterKind Kind);
+	DREAMSHADERLANG_API bool TryParseParameterKind(const FString& Text, EIRParameterKind& OutKind);
+
+	/** EMaterialParameterAssociation without the engine. Only Global is expressible in a `.dsi` today. */
+	enum class EIRParameterAssociation : uint8
+	{
+		Global,
+		Layer,
+		Blend,
+	};
+
+	/** One parameter of the parent, as an instance sees it. */
+	struct FIRParameterSchemaEntry
+	{
+		FString Name;
+		EIRParameterKind Kind = EIRParameterKind::Scalar;
+		EIRParameterAssociation Association = EIRParameterAssociation::Global;
+		int32 AssociationIndex = INDEX_NONE;
+		/** The uniform's declared type when the parent is DreamShader source (float3, int, bool, Texture2D); Error when unknown. */
+		FIRType DeclaredType = FIRType::Error();
+		/** Texture-like kinds: the dimension when known. */
+		Lang::ETextureKind TextureKind = Lang::ETextureKind::None;
+		/** The parent's effective value (its default, or a parent instance's override); encoded like FIRInstanceOverride::Value. */
+		FIRPropertyValue ParentValue;
+		int32 ParentFontPage = 0;
+		/** Declared by the parent source but pruned (DSH4390), so the parent asset has no such parameter. */
+		bool bPruned = false;
+		FString Group;
+		int32 SortPriority = 0;
+		/** Where the parent declares it, when known. */
+		FString DeclFile;
+		Lang::FLangSpan DeclSpan;
+	};
+
+	struct DREAMSHADERLANG_API FIRParameterSchema
+	{
+		/** False when no schema could be produced; name and type checks are then skipped (DSH7263). */
+		bool bValid = false;
+		/** "ir" (the parent's source, lowered this run) or "asset" (read off the loaded parent). */
+		FString Origin;
+		FString ParentObjectPath;
+		/** The DreamShader source producing the parent; empty for a foreign parent. */
+		FString ParentSourceFile;
+		bool bParentIsInstance = false;
+		TArray<FIRParameterSchemaEntry> Parameters;
+
+		/** Case-sensitive. */
+		int32 Find(const FString& Name, EIRParameterAssociation Association = EIRParameterAssociation::Global, int32 AssociationIndex = INDEX_NONE) const;
+		/** For did-you-mean and the case-only mismatch (DSH7264). */
+		int32 FindIgnoreCase(const FString& Name) const;
+		/** Sorted "name|association|index|kind|type" lines. Tests and language service; deliberately not in the build key. */
+		FString MakeFingerprint() const;
+	};
+
+	/** One `uniform` of a `.dsi`: an assignment to one parent parameter. */
+	struct FIRInstanceOverride
+	{
+		/** The engine parameter name: `@name`, else the identifier. */
+		FString ParameterName;
+		/** The identifier as written; equals ParameterName unless `@name` was used. */
+		FString VariableName;
+		EIRParameterKind Kind = EIRParameterKind::Scalar;
+		EIRParameterAssociation Association = EIRParameterAssociation::Global;
+		int32 AssociationIndex = INDEX_NONE;
+		/**
+		 * Scalar: Float4 N=1. Vector, DoubleVector: Float4 N=4 (channels the source did not write carry the
+		 * parent's value). StaticSwitch: Bool. StaticComponentMask: Float4 N=4 of 0/1. Texture-like kinds and
+		 * Font: Object, "" = an explicit None.
+		 */
+		FIRPropertyValue Value;
+		/** Font only. */
+		int32 FontPage = 0;
+		/** The spelled type; Error when the payload came from decompiling an instance of a foreign parent. */
+		FIRType DeclaredType = FIRType::Error();
+		FIRSourceRef Source;
+	};
+
+	/** The payload of a MaterialInstance product. */
+	struct FIRInstance
+	{
+		/** `Parent = ...` as written. */
+		FString ParentReference;
+		/** Resolved by the host before binding; empty in an engine-free check that could not resolve it. */
+		FString ParentObjectPath;
+		TArray<FIRInstanceOverride> Overrides;
+		/** The other `#pragma instance` keys, in source order, values as written (quotes removed). */
+		TArray<TPair<FString, FString>> Settings;
+		/** What the overrides were checked against; bValid false when nothing was available. */
+		FIRParameterSchema ParentSchema;
+	};
 
 	struct FIRProduct
 	{
@@ -281,6 +416,12 @@ namespace UE::DreamShader::IR
 		int32 BoundFunctionIndex = INDEX_NONE;
 		FIRSourceRef Source;
 		FIRGraph Graph;
+		/** See FBoundProduct::bLegacyAssetPath; Name then holds the 1.x Name= (folders allowed). */
+		bool bLegacyAssetPath = false;
+		/** See FBoundProduct::AssetRoot: the 1.x Root= spelling; empty is the 1.x default root. */
+		FString AssetRoot;
+		/** MaterialInstance only. */
+		FIRInstance Instance;
 	};
 
 	struct DREAMSHADERLANG_API FIRModule
