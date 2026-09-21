@@ -719,7 +719,7 @@ The setting '{0}' is written twice; the later value wins, as it did in 1.x.
 '{0}' is not a setting of '{1}'; 1.x ignored it and so does this front end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1127`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1130`
 <!-- generated:end DSH3263 -->
 
 **Cause.** The setting is not one the block's kind has (a material setting in a ShaderFunction, a
@@ -739,7 +739,7 @@ misspelt function setting). 1.x ignored what it did not know, so the source buil
 'UserExposedCaption' has no 2.0 spelling and is not applied; its value is kept for migration.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1115`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1118`
 <!-- generated:end DSH3264 -->
 
 **Cause.** `UserExposedCaption` is set on a function. 2.0 has no directive for it, so the asset is
@@ -759,7 +759,7 @@ migrating.
 Expected 'true' or 'false' for 'ExposeToLibrary', found '{0}'; 1.x ignored the setting and so does this front end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1101`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1104`
 <!-- generated:end DSH3265 -->
 
 **Cause.** `ExposeToLibrary` is neither `true` nor `false`. 1.x ignored such a value and left the
@@ -987,7 +987,7 @@ Expected 'Color' to be a vector literal such as '(0.1, 0.16, 0.22, 0.35)', found
 The layer input '{0}' becomes the 'inout material' parameter named after the output '{1}', so the input pin changes its name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1180`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1183`
 <!-- generated:end DSH3277 -->
 
 **Cause.** A 1.x layer names its MaterialAttributes input one thing and its output another. A 2.0
@@ -1010,7 +1010,7 @@ once.
 Expected a MaterialAttributes output on '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1150`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1153`
 <!-- generated:end DSH3278 -->
 
 **Cause.** A `ShaderLayer` or `ShaderLayerBlend` has no output of type `MaterialAttributes`. The

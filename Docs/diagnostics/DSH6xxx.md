@@ -14,7 +14,7 @@
 '{0}' is a second material entry; '{1}' above it is already the entry, and one file makes one material.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1195`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1197`
 <!-- generated:end DSH6200 -->
 
 **Cause.** Two exported functions in one file have the signature `void (inout material)`. That
@@ -35,7 +35,7 @@ a material — an internal function with that signature is not an entry.
 '{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both. Move it to its own file, or drop 'export' to make it a helper.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1288`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1290`
 <!-- generated:end DSH6201 -->
 
 **Cause.** A file has a material entry **and** exported functions, layers or layer blends. One file
@@ -55,7 +55,7 @@ helpers that are inlined into the material.
 'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1123`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1125`
 <!-- generated:end DSH6202 -->
 
 **Cause.** An `extern` prototype has no `/// @asset` above it, so there is nothing for it to bind
@@ -74,7 +74,7 @@ to.
 '@layer' makes '{0}' a material layer asset, so it has to be 'export'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1137`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1165`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1139`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1167`
 <!-- generated:end DSH6203 -->
 
 **Cause.** `@layer` or `@layerblend` on a function that is not `export`. Both directives name an
@@ -93,7 +93,7 @@ asset the file produces, and only an exported function produces one.
 A '@layer' function is written 'export void {0}(inout material m)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1147`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1149`
 <!-- generated:end DSH6204 -->
 
 **Cause.** A `@layer` function does not have the signature `void Name(inout material m)`.
@@ -112,7 +112,7 @@ modifies it in place.
 A '@layerblend' function is written 'export void {0}(material Base, material Top, ..., inout material Result)': at least one 'material' input and a final 'inout material'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1175`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1177`
 <!-- generated:end DSH6205 -->
 
 **Cause.** A `@layerblend` function does not have the shape
@@ -132,7 +132,7 @@ other parameter an input, and a final `inout material`.
 '{0}' is a builtin operation and cannot be redeclared; rename the function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:816`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:818`
 <!-- generated:end DSH6206 -->
 
 **Cause.** A function is declared with the name of a builtin operation (`dot`, `lerp`, `saturate`,
@@ -152,7 +152,7 @@ ambiguous at every call site.
 '{0}' is a {1} asset, not a function this file may call.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3451`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3549`
 <!-- generated:end DSH6208 -->
 
 **Cause.** A call to the material entry, a `@layer` or a `@layerblend`. Those are assets, not
@@ -171,7 +171,7 @@ functions this file may call — a layer is applied by the material that uses it
 '{0}' has no body; a prototype has to be 'extern' and carry '/// @asset'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1224`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1226`
 <!-- generated:end DSH6209 -->
 
 **Cause.** A function has no body and is not `extern`. Normally the parser catches this first
@@ -190,7 +190,7 @@ functions this file may call — a layer is applied by the material that uses it
 '{0}' is '@custom', so '{1}' becomes an input pin of a Custom node, and a Custom node cannot take a material; pass the fields it needs instead.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1244`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1246`
 <!-- generated:end DSH6210 -->
 
 **Cause.** A `/// @custom` function takes a `material` as an input (`material m` or
@@ -212,7 +212,7 @@ a Custom node may produce attributes even though it cannot consume them.
 '{0}' is an 'out' parameter of '{1}' but the body never assigns it, so a caller would read a value nothing produced. Assign it before the function returns, or remove the parameter.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:382`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:392`
 <!-- generated:end DSH6211 -->
 
 **Cause.** A function declares an `out` parameter and its body never writes it — not as a whole,
@@ -676,7 +676,7 @@ header, and rename the local `@custom` function so the two do not look like the 
 Expected a function name after '{0}', found '('.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1872`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1895`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1924`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1875`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1898`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1927`
 <!-- generated:end DSH6300 -->
 
 **Cause.** `Function` or `GraphFunction` (with its optional modifier and return type) is followed by
@@ -695,7 +695,7 @@ Expected a function name after '{0}', found '('.
 Expected '[in|out] Type Name' in the parameter list of '{0}', found '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1981`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1984`
 <!-- generated:end DSH6301 -->
 
 **Cause.** A parameter of a 1.x function is not `[in|out] Type Name`. 1.x parameters have no
@@ -714,7 +714,7 @@ defaults and no metadata; those belong to the `Inputs` of a ShaderFunction.
 Expected 'in' or 'out' before the parameter '{0}' of '{1}', found '{2}'; a 1.x function has no 'inout'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1994`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1997`
 <!-- generated:end DSH6302 -->
 
 **Cause.** A parameter of a 1.x function carries `inout`, or another word where `in` / `out` goes.
@@ -733,7 +733,7 @@ Expected 'in' or 'out' before the parameter '{0}' of '{1}', found '{2}'; a 1.x f
 Expected a parameter name other than '__return', which 1.x reserved, in '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2007`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2010`
 <!-- generated:end DSH6303 -->
 
 **Cause.** A parameter is called `__return`. 1.x lowered a function's return value into an `out`
@@ -752,7 +752,7 @@ parameter of that name, so the name is taken.
 Expected either a return type or 'out' parameters on '{0}', found both.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2039`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2042`
 <!-- generated:end DSH6304 -->
 
 **Cause.** A 1.x function has a return type and `out` parameters. 1.x allowed one or the other: a
@@ -772,7 +772,7 @@ result an `out`.
 Expected '{0}' to return a value or to have at least one 'out' parameter, found neither.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2046`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2049`
 <!-- generated:end DSH6305 -->
 
 **Cause.** A 1.x function returns nothing and has no `out` parameter, so its Custom node would have
@@ -791,7 +791,7 @@ no value for the graph to read.
 'Inline' is the old spelling of 'SelfContained'; the function becomes '@custom selfcontained'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1883`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1886`
 <!-- generated:end DSH6306 -->
 
 **Cause.** `Function Inline` is used. In 1.x `Inline` is an exact synonym of `SelfContained` -- the
@@ -811,7 +811,7 @@ include -- and 2.0 keeps one spelling.
 Expected a return type or a name after 'GraphFunction', found the modifier '{0}', which only a Function takes.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1863`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1866`
 <!-- generated:end DSH6307 -->
 
 **Cause.** `GraphFunction` is followed by `SelfContained` or `Inline`. Those modifiers belong to
@@ -830,7 +830,7 @@ Expected a return type or a name after 'GraphFunction', found the modifier '{0}'
 Expected a value after 'return' in '{0}', which returns '{1}', found a bare 'return;'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2091`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2094`
 <!-- generated:end DSH6308 -->
 
 **Cause.** A 1.x function with a return type contains a bare `return;`. 1.x lowered `return x;` into
@@ -849,7 +849,7 @@ an assignment to its result, and a `return` without a value has nothing to assig
 Expected a 'Name = "..."' attribute with a name on 'Namespace', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2255`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2258`
 <!-- generated:end DSH6309 -->
 
 **Cause.** `Namespace` has no `Name = "..."` attribute, or the name is not an identifier. The name
@@ -868,7 +868,7 @@ becomes the prefix of every function in the block (`N::F`, flattened to `N_F`).
 Expected only Function and GraphFunction blocks inside the namespace '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2304`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2307`
 <!-- generated:end DSH6310 -->
 
 **Cause.** A `Namespace` block holds something other than `Function` and `GraphFunction` blocks. A
@@ -888,7 +888,7 @@ namespaces.
 Expected a 'Name = "..."' attribute with a name on 'VirtualFunction', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2369`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2372`
 <!-- generated:end DSH6311 -->
 
 **Cause.** `VirtualFunction` has no `Name = "..."` attribute. The name is what Graph code calls.
@@ -906,7 +906,7 @@ Expected a 'Name = "..."' attribute with a name on 'VirtualFunction', found none
 Expected an 'Asset = Path(...)' option on the VirtualFunction '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2508`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2511`
 <!-- generated:end DSH6312 -->
 
 **Cause.** A VirtualFunction has no `Asset = Path(...)` in its `Options`. The whole point of the
@@ -925,7 +925,7 @@ block is to say which existing material function the name stands for.
 Expected at least one output on the VirtualFunction '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2515`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2518`
 <!-- generated:end DSH6313 -->
 
 **Cause.** A VirtualFunction declares no output. A call to it would be a node nothing can read.
@@ -943,7 +943,7 @@ Expected at least one output on the VirtualFunction '{0}', found none.
 Expected a ')' to close the 'UE.' call in the body of '{0}', found the end of the body.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2145`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2148`
 <!-- generated:end DSH6314 -->
 
 **Cause.** A `UE.` call in a verbatim body -- a 1.x GraphFunction, or a `/// @custom` function --
@@ -964,7 +964,7 @@ followed by a name and `(`.
 A 'Substrate.' call in the body of '{0}' is not lifted into a node, because no custom node input carries a Substrate value; it reaches the shader compiler as text.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2152`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2155`
 <!-- generated:end DSH6316 -->
 
 **Cause.** A verbatim body calls `Substrate.<Node>(...)`. `UE.` calls in such a body are lifted into
@@ -984,7 +984,7 @@ is left where it is and the shader compiler will not know the name.
 Expected '(' to open the parameter list of '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1933`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2055`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1936`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2058`
 <!-- generated:end DSH6319 -->
 
 **Cause.** A 1.x function's name is not followed by `(`, or its parameter list is not followed by
@@ -1108,7 +1108,7 @@ number or a texture.
 '{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node, so the graph would never end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1451`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1454`
 <!-- generated:end DSH6330 -->
 
 **Cause.** A function reaches itself through a call lifted out of its body: the lifted `UE.` call's

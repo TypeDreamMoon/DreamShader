@@ -1039,7 +1039,7 @@ so does this front end; the warning is there because the first value is dead tex
 Expected a Shader section (Properties, Settings, Outputs, Graph or Layout), found '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2471`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:931`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2474`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:931`
 <!-- generated:end DSH2245 -->
 
 **Cause.** A word that is no section opens a line inside a block. A Shader has `Properties`,
@@ -1078,7 +1078,7 @@ Expected 'Graph' as the body section of '{0}', found 'Code', which 1.x accepted 
 Expected no body in the VirtualFunction '{0}', which declares an existing asset, found the section '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2463`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2466`
 <!-- generated:end DSH2247 -->
 
 **Cause.** A VirtualFunction has a `Graph` or `Code` section. A VirtualFunction declares the
@@ -1236,7 +1236,7 @@ removed it.
 Expected a Graph section in the Shader '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:974`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:977`
 <!-- generated:end DSH2255 -->
 
 **Cause.** A Shader has no `Graph` section, so there is nothing to build.
@@ -1254,7 +1254,7 @@ Expected a Graph section in the Shader '{0}', found none.
 The Shader '{0}' has no Outputs section, so nothing its Graph computes reaches the material.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:981`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:984`
 <!-- generated:end DSH2256 -->
 
 **Cause.** A Shader has a Graph and no `Outputs` section, so no value reaches a material attribute.
@@ -1273,7 +1273,7 @@ The material builds, with nothing wired to it.
 Expected '`{' to open the '{0}' block, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2267`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2381`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2420`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2437`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:744`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:817`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:834`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2270`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2384`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2423`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2440`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:744`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:817`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:834`
 <!-- generated:end DSH2257 -->
 
 **Cause.** A block is not opened where one has to be: the attribute list of a `Shader`,

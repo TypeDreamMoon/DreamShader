@@ -736,7 +736,7 @@ works, with a warning.
 '#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1308`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1310`
 <!-- generated:end DSH7203 -->
 
 **Cause.** The file has `#pragma material(...)` and no material entry to configure. A function
@@ -793,7 +793,7 @@ through to the material by reflection, so a misspelt key is reported by the emit
 '{0}' is a compile-time constant, and this initializer is not one; a constant is built from literals and other constants.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:287`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:592`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:290`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:607`
 <!-- generated:end DSH7210 -->
 
 **Cause.** A `static const` (or `const`) has an initializer the binder cannot fold to a value. A
@@ -813,7 +813,7 @@ sample or a node is not a constant — declare it as an ordinary local.
 '{0}' is a file-scope variable with no storage class; write 'uniform' for a material parameter or 'static const' for a compile-time constant.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:729`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:731`
 <!-- generated:end DSH7211 -->
 
 **Cause.** A file-scope variable has no storage class: `float Gain = 1.0;` or `static float …`.
@@ -834,7 +834,7 @@ folded into it (`static const`).
 A file-scope variable of type {0} has no node; a 'uniform' or 'static const' must be numeric, bool, a texture or a sampler.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:756`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:758`
 <!-- generated:end DSH7212 -->
 
 **Cause.** A file-scope variable has a type with no node: a `material`, a `Substrate` value, a user
@@ -854,7 +854,7 @@ aggregate and lives inside a function; a `Substrate` value comes from a `Substra
 A texture uniform has no HLSL initializer; write its default asset as '/// @default /Game/...'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:768`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:770`
 <!-- generated:end DSH7213 -->
 
 **Cause.** A texture `uniform` has an HLSL initializer. A texture has no literal value.
@@ -873,7 +873,7 @@ leave the declaration itself as plain legal HLSL.
 '{0}' is a compile-time constant and must be initialised where it is declared.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:779`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:559`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:781`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:569`
 <!-- generated:end DSH7214 -->
 
 **Cause.** A `static const` — at file scope or inside a function — has no initializer.
@@ -911,7 +911,7 @@ classes.
 A 'uniform' array has no parameter node; declare one uniform per element, or make it 'static const'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:801`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:803`
 <!-- generated:end DSH7216 -->
 
 **Cause.** A `uniform` is declared as an array. There is no array parameter node.
@@ -985,7 +985,7 @@ comes from the engine, so an unknown spelling is reported by the emitter and not
 '@static' asks for a static switch and is only meaningful on a 'uniform bool'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:790`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:792`
 <!-- generated:end DSH7223 -->
 
 **Cause.** `@static` sits on something that is not a `uniform bool`. It asks for a static switch,
@@ -1004,7 +1004,7 @@ which only a boolean parameter can become.
 '@{0}' means nothing here; it belongs on {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:889`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:138`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:891`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:138`
 <!-- generated:end DSH7224 -->
 
 **Cause.** A `///` directive is written on a declaration where it cannot mean anything: `@slider` on
@@ -1025,7 +1025,7 @@ warning — they are passed through to the node by reflection.
 '@static {0}' does not name a parameter of '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1017`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1043`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:995`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1019`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1045`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:997`
 <!-- generated:end DSH7225 -->
 
 **Cause.** `@param <name>` names something that is not a parameter of the function. Usually the
@@ -1082,7 +1082,7 @@ the line.
 '@custom' on '{0}' did not make its body opaque; the directive has to sit in the '///' block directly above the declaration.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1261`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1263`
 <!-- generated:end DSH7228 -->
 
 **Cause.** `@custom` was recorded on a function whose body was parsed as DreamShaderLang rather
@@ -1121,7 +1121,7 @@ reports this.
 '#pragma layout' expects a whole number for '{0}'; '{1}' was ignored.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:618`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:638`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:700`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:711`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:723`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:734`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:751`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:667`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:687`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:749`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:760`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:772`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:783`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:800`
 <!-- generated:end DSH7230 -->
 
 **Cause.** A `#pragma layout(...)` line could not be read: no `Node`/`Comment` selector, an unknown
@@ -1143,13 +1143,34 @@ layout entry is simply placed by the layout pass.
 '@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:970`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:972`
 <!-- generated:end DSH7231 -->
 
 **Cause.** `/// @static <Parameter>` on a function makes that parameter a StaticBool pin -- a pin
 whose value picks a shader permutation -- and the parameter named is not a `bool`.
 
 **Fix.** Name a `bool` parameter, or remove the directive.
+
+## DSH7232
+
+<!-- generated:begin DSH7232 -->
+**Severity** error
+
+**Message**
+
+```
+'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:642`
+<!-- generated:end DSH7232 -->
+
+**Cause.** `#pragma material(Substrate = ...)` (or the `Substrate` setting of a 1.x `Shader`) names
+something other than the three modes.
+
+**Fix.** Write `Legacy` (the default: built as written, the engine converts), `Bridge` (the legacy
+attributes become one `Substrate.ShadingModels` node in a Substrate project) or `Native` (the source
+is Substrate source).
 
 ## DSH7250
 

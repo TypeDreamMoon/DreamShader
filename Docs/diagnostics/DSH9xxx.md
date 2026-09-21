@@ -34,7 +34,7 @@ DSH9001: '{0}' uses conditional compilation, and VirtualFunction sync rewrites a
 Compiling shaders for '%s' took %.0f seconds. A stall of this length is almost always a Custom node whose loop bound is an input (a 'for' or 'while' whose limit is not a literal or a #define) combined with implicit-mip texture sampling -- Texture2DSample / Texture3DSample / .Sample inside divergent flow -- which forces the compiler to fully unroll an iteration count it cannot know. To confirm it is still working rather than hung, check whether ShaderCompileWorker.exe is busy in Task Manager. To fix it, bound the loop with a literal or a #define, or switch the samples to SampleLevel.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp:230`
+**Raised by** `Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp:244`
 <!-- generated:end DSH9011 -->
 
 **Cause.** the shader-compilation half of one asset's generation -- `UpdateStaticPermutation`, `PostEditChange`, the material recompile and the save -- ran for more than thirty seconds. Thirty seconds is not a performance budget; plenty of legitimate materials pass it on a cold shader cache. It is the point past which a still progress bar stops reading as "working" and starts reading as "hung", and this warning exists so that the difference is stated rather than guessed at
@@ -54,7 +54,7 @@ Compiling shaders for '%s' took %.0f seconds. A stall of this length is almost a
 '%s' loops on the input '%s' and samples with '%s', which takes its mip level from screen-space derivatives. The shader compiler cannot know how many iterations to expect, so it fully unrolls the loop to keep the derivatives defined, and compilation can take minutes. Bound the loop with a literal or a #define, or call SampleLevel / SampleGrad instead.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp:258`
+**Raised by** `Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp:272`
 <!-- generated:end DSH9012 -->
 
 **Cause.** the HLSL going onto a `Custom` node contains two things that are harmless alone and expensive together: a `for` or `while` whose bound is one of the node's **input pins** (an identifier the shader compiler cannot resolve to a constant, unlike a literal or a `#define`d name), and a sampling call whose mip level is **implicit** -- `Texture2DSample`, `Texture3DSample`, the other `Texture*Sample` helpers or a member `.Sample()`. Implicit-mip sampling derives the level from screen-space derivatives, which are undefined inside divergent control flow, so the compiler keeps them defined by fully unrolling the surrounding loop -- with no iteration count to unroll to. That is what turns a ray-march body into a multi-minute compile
@@ -114,7 +114,7 @@ Could not write '%s' after renaming an asset it references; the file as it was i
 The IR dump could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:554`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:586`
 <!-- generated:end DSH9022 -->
 
 **Cause.** `dump-ir` could not create its output directory or write the dump file. The message says
@@ -136,7 +136,7 @@ looks wrong.
 The symbol index could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:642`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:820`
 <!-- generated:end DSH9023 -->
 
 **Cause.** `index` could not create its output directory or write the index file. The default
@@ -155,7 +155,7 @@ directory is `<Project>/Saved/DreamShader/Index`.
 The builtin catalog manifest could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:677`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1239`
 <!-- generated:end DSH9024 -->
 
 **Cause.** `export-catalog` could not create its directory or write the manifest. The default path is
@@ -176,7 +176,7 @@ lock or at a read-only `Saved/`.
 The builtin catalog came back empty, so '{0}' describes no expression at all. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:691`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1253`
 <!-- generated:end DSH9025 -->
 
 **Cause.** The manifest was written and describes no expression at all. A language service that binds
@@ -299,7 +299,7 @@ an undeclared identifier here rather than a node.
 DreamShader failed to create graph dump directory '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1508`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1533`
 <!-- generated:end DSH9030 -->
 
 **Cause.** `dump-graph` could not create the folder the dump belongs in. The dump tree mirrors the source tree -- `<Out>/<root>/<source path>.<asset>.graph.json` -- so one folder is created per source subdirectory, and this is that `MakeDirectory` failing: a `-Out` under a drive that does not exist, a folder the process cannot write to, or a *file* sitting where the dump needs a directory
@@ -319,7 +319,7 @@ DreamShader failed to create graph dump directory '%s'.
 DreamShader failed to write graph dump '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1519`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1544`
 <!-- generated:end DSH9031 -->
 
 **Cause.** the folder was there but the JSON could not be written into it. Almost always the file is open in another program, or read-only because a previous capture was committed to version control and checked out read-only
@@ -339,7 +339,7 @@ DreamShader failed to write graph dump '%s'.
 DreamShader could not work out which assets '%s' builds, so there is no graph to dump.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1412`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1421`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1460`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1437`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1446`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1485`
 <!-- generated:end DSH9032 -->
 
 **Cause.** the file was read and preprocessed, but it does not resolve to an asset to dump: either the parse failed, or the source declares no `Shader`, `ShaderFunction`, `ShaderLayer` or `ShaderLayerBlend` block at all. A `.dsh` header never reaches this point, but a `.dsm` that only declares `Function` or `VirtualFunction` bodies does -- those generate a `.ush` include or nothing, not a graph, so there is nothing for a fingerprint to describe
@@ -359,7 +359,7 @@ DreamShader could not work out which assets '%s' builds, so there is no graph to
 DreamShader could not resolve generated asset '%s' from '%s' after generation.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1484`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1509`
 <!-- generated:end DSH9033 -->
 
 **Cause.** generation reported success, but the asset it should have produced could not be loaded back from the object path the source names. The usual cause is that the asset already exists on disk, `dump-graph`'s write guard refused to rebuild it, *and* it failed to load -- a broken or missing package behind a path the source still claims
@@ -379,7 +379,7 @@ DreamShader could not resolve generated asset '%s' from '%s' after generation.
 DreamShader cannot dump '%s': %s is not a Material, MaterialFunction or material instance.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1496`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1521`
 <!-- generated:end DSH9034 -->
 
 **Cause.** the object at the source's asset path is not a class the dump covers -- not a `UMaterial`, not a `UMaterialFunction` (or layer / layer blend), and not a `UDreamShaderMaterialInstance`. Something else is squatting on the path the source resolves to; generation itself refuses to overwrite a foreign asset (`DSH8102` / `DSH8103` and friends)
@@ -399,7 +399,7 @@ DreamShader cannot dump '%s': %s is not a Material, MaterialFunction or material
 '{0}' is not a compilable DreamShader source (.dss, .dsi, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:250`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:256`
 <!-- generated:end DSH9035 -->
 
 **Cause.** `check`, `dump-ir` or `index` was given a file that is not a `.dss`. These three verbs
@@ -422,7 +422,7 @@ Note that `-All` never produces this: it enumerates `.dss` files only. It is alw
 The diagnostics JSON could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:709`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:474`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:738`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:506`
 <!-- generated:end DSH9036 -->
 
 **Cause.** `-DiagnosticsOut=` was given and the JSON could not be written. With one source the path
@@ -489,7 +489,7 @@ platforms supports.
 %s: DSH9039: the DreamShader 2.0 pipeline failed without raising a diagnostic.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1024`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1046`
 <!-- generated:end DSH9039 -->
 
 **Cause.** Internal invariant. The 2.0 pipeline returned failure without putting a single error in
@@ -499,6 +499,206 @@ raises before it refuses, so reaching this means a stage returned false on a pat
 **Fix.** Not a source problem — report it. The message names the file, which is enough to reproduce.
 Running `dsc dump-ir` on the same file usually shows how far the run got, since that verb keeps
 whatever the pipeline produced even when it failed.
+
+## DSH9040
+
+<!-- generated:begin DSH9040 -->
+**Severity** error
+
+**Message**
+
+```
+The layout dump could not be written: {0}.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:729`
+<!-- generated:end DSH9040 -->
+
+**Cause.** `dsc dump-layout` could not write one of its files -- the SVG, or the JSON beside it
+under `-Json`. The message carries the file system's reason.
+
+**Fix.** Point `-Out` at a directory that can be written, and close whatever holds the file open.
+
+## DSH9041
+
+<!-- generated:begin DSH9041 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is not a layout style; -Style takes Blocks, SourceBands, Layered or All.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:651`
+<!-- generated:end DSH9041 -->
+
+**Cause.** `dsc dump-layout -Style` was given something other than `Blocks`, `SourceBands`, `Layered`
+or `All`. `Classic`, the 1.x layout, is not among them: it works on the finished graph and cannot be
+drawn from the IR.
+
+**Fix.** Leave `-Style` out for one picture of each, or name one of the three.
+
+## DSH9042
+
+<!-- generated:begin DSH9042 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' has 1.x declarations, and what the printer writes for those is 2.0 text; rewriting 1.x as 2.0 is 'dsc migrate', so 'fmt' leaves the file as it is.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangFormat.cpp:108`
+<!-- generated:end DSH9042 -->
+
+**Cause.** `dsc fmt` met a header that still has 1.x declarations. The printer writes 2.0 text, so
+formatting such a file would migrate it by the back door -- without the checks `dsc migrate` runs.
+Information, not an error: the file is left as it is and the run goes on.
+
+**Fix.** Nothing. Run `dsc migrate` when the header is to become 2.0; `fmt` formats it from then on.
+
+## DSH9043
+
+<!-- generated:begin DSH9043 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' uses the preprocessor outside a custom body; 'fmt' reads the file as it is on disk and would have to drop one side of every '#if', so it leaves the file as it is.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangFormat.cpp:94`
+<!-- generated:end DSH9043 -->
+
+**Cause.** `dsc fmt` met a file that uses `#if`, `#ifdef` or their kin outside a `/// @custom` body.
+The formatter reads the file as it is on disk, without preprocessing, and the parser keeps only the
+text between directives -- it would have to drop one side of every conditional. Information, not an
+error: the file is left as it is.
+
+**Fix.** Nothing. Format such a file by hand, or move the conditional part into a header of its own.
+
+## DSH9044
+
+<!-- generated:begin DSH9044 -->
+**Severity** error
+
+**Message**
+
+```
+The formatted text of '{0}' failed its own check -- {1} -- so nothing was written. This is a fault of the formatter, not of the file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangFormat.cpp:130`
+<!-- generated:end DSH9044 -->
+
+**Cause.** The text `dsc fmt` produced failed the formatter's own check: it has to parse, parse to
+the same declarations as the original, keep every `//` and `/* */` comment, and come out unchanged
+when formatted again. Nothing was written. This is a fault of the formatter, never of the file.
+
+**Fix.** Report it with the file. The message names which of the four checks failed.
+
+## DSH9045
+
+<!-- generated:begin DSH9045 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' could not be read, so it was not formatted.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:921`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:965`
+<!-- generated:end DSH9045 -->
+
+**Cause.** `dsc fmt` could not read a source, or could not write the formatted text back. A file
+that is read-only -- checked in to Perforce and not checked out -- is the usual reason for the
+second.
+
+**Fix.** Check the file out, or make it writable, and run `fmt` again. `fmt -Check` reads only.
+
+## DSH9046
+
+<!-- generated:begin DSH9046 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:955`
+<!-- generated:end DSH9046 -->
+
+**Cause.** `dsc fmt -Check` found a file that `fmt` would rewrite. `-Check` writes nothing and fails
+the run, which is the form for CI.
+
+**Fix.** Run `dsc fmt` on the file (or `-All`) and commit the result.
+
+## DSH9047
+
+<!-- generated:begin DSH9047 -->
+**Severity** error
+
+**Message**
+
+```
+The list of generated assets could not be written: {0}.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1199`
+<!-- generated:end DSH9047 -->
+
+**Cause.** `dsc list-generated -Out` could not write the list. The message carries the file system's
+reason.
+
+**Fix.** Point `-Out` at a file that can be written; a relative path is taken against the directory
+`dsc.ps1` was called from.
+
+## DSH9048
+
+<!-- generated:begin DSH9048 -->
+**Severity** error
+
+**Message**
+
+```
+'-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1051`
+<!-- generated:end DSH9048 -->
+
+**Cause.** `dsc list-generated -As` (`-ListAs` in `dsc.ps1`) was given something other than the four
+formats.
+
+**Fix.** `Packages` for package names, `Files` for project-relative files, `GitIgnore` for a ready
+ignore block, `Json` for everything.
+
+## DSH9049
+
+<!-- generated:begin DSH9049 -->
+**Severity** warning
+
+**Message**
+
+```
+{0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no project-relative path; '-As=Packages' or '-As=Json' lists them.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1187`
+<!-- generated:end DSH9049 -->
+
+**Cause.** Some generated assets lie outside the project directory -- the content of a plugin
+installed in the engine -- so they have no project-relative path and were left out of a `Files` or
+`GitIgnore` list. A warning: the rest of the list is complete.
+
+**Fix.** Use `-As=Packages` or `-As=Json` to see them. Ignore rules for an engine plugin's content
+belong in that plugin's repository.
 
 ## DSH9050
 
@@ -1058,7 +1258,7 @@ and so by the decompiler.
 The uniform '{0}' is written as '{1}': the name is already taken in this file.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1274`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:661`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:69`
+**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1277`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:664`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:69`
 <!-- generated:end DSH9075 -->
 
 **Cause.** Something in the decompiled file could not keep its name: a parameter whose name is taken
@@ -1100,7 +1300,7 @@ breaks, or is empty). It is written in a form that can.
 {0} node position(s) of '{1}' belong to values the source writes inline, and a position is kept by variable name; those nodes are placed by the layout pass when the file is built.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1688`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1912`
+**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1698`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1922`
 <!-- generated:end DSH9077 -->
 
 **Cause.** Some node positions are not kept. A position is stored by variable name (`#pragma
@@ -1121,7 +1321,7 @@ by the layout pass on the next build.
 The output '{0}' of '{1}' did not become a parameter; nothing is written to it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1827`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1879`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1060`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:793`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:121`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:319`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:360`
+**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1837`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1889`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1064`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:793`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:121`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:319`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:360`
 <!-- generated:end DSH9078 -->
 
 **Cause.** Something in the graph has no place in the text being written: a function output that did
@@ -1144,7 +1344,7 @@ a node that cannot be written, the message says why.
 {0} is an If whose branches no comparison selects between; it is written as 'UE.If(...)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1366`
+**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1370`
 <!-- generated:end DSH9079 -->
 
 **Cause.** An If node's A/B inputs are not a comparison the language can write as `a > b ? x : y`
@@ -1164,7 +1364,7 @@ a node that cannot be written, the message says why.
 The parameter '{0}' appears more than once and its nodes do not agree on its default, group or kind; the uniform is written from the first one, in '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:546`
+**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:549`
 <!-- generated:end DSH9080 -->
 
 **Cause.** A parameter name is used by more than one node and the nodes disagree on default, group
@@ -1183,7 +1383,7 @@ or kind. The engine takes one of them; the uniform is written from the first one
 '{0}' is called and its interface was not available, so its 'extern' prototype is written from the calls alone: pins no call connects are missing from it, and their order is the order the calls wire them in.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1133`
+**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1136`
 <!-- generated:end DSH9081 -->
 
 **Cause.** The text calls a material function whose asset was not available to read an interface
@@ -1205,7 +1405,7 @@ against the asset's pins.
 The code of the custom node '{0}' carries DreamShader's markers and does not read as what the compiler writes; it is kept verbatim as the body of one function, the functions it embeds included.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1217`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1428`
+**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1220`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1431`
 <!-- generated:end DSH9082 -->
 
 **Cause.** A Custom node's code could not be taken apart cleanly. Either it carries DreamShader's
@@ -1229,7 +1429,7 @@ match the parameter.
 '{0}' is a {1}, and its pins are not the ones the language writes that kind with; it is written as a plain exported function, which builds a material function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:947`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:956`
+**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:950`, `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:959`
 <!-- generated:end DSH9083 -->
 
 **Cause.** The asset is a material layer or blend whose pins are not the shape the language writes
@@ -1250,7 +1450,7 @@ declare it `extern`.
 The output '{0}' of '{1}' is not connected to anything; nothing is written to it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1804`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1086`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1109`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1466`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1505`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:204`
+**Raised by** `Source/DreamShaderLang/Private/Decompile/IRToAst.cpp:1814`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1090`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1113`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1470`, `Source/DreamShaderLang/Private/Decompile/IRToAstExpressions.cpp:1509`, `Source/DreamShaderLang/Private/Decompile/IRToAstStatements.cpp:204`
 <!-- generated:end DSH9084 -->
 
 **Cause.** Something is left at a default because the graph or the language gives nothing to write:

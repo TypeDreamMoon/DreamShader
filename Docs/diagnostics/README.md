@@ -250,8 +250,12 @@ which stays authoritative until every raise site is tagged.
 | [DSH4375](DSH4xxx.md#dsh4375) | error | The two sides of this branch end with a different whole material, and DreamShader chooses between attribute... |
 | [DSH4376](DSH4xxx.md#dsh4376) | error | '{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or gi... |
 | [DSH4377](DSH4xxx.md#dsh4377) | error | '{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to... |
-| [DSH4378](DSH4xxx.md#dsh4378) | error | A branch over {0} values needs a static condition, and this one is decided at run time; make the condition ... |
+| [DSH4378](DSH4xxx.md#dsh4378) | error | A branch chooses between two {0} values or between two numbers, and this one has one of each. |
 | [DSH4379](DSH4xxx.md#dsh4379) | error | A branch can only choose between numbers, bools and static Substrate values, and these are {0} objects, whi... |
+| [DSH4380](DSH4xxx.md#dsh4380) | warning | This branch becomes a 'Substrate.Select', which parameter-blends its two inputs; they are a '{0}' and a '{1... |
+| [DSH4381](DSH4xxx.md#dsh4381) | error | '{0}' is converted by the node 'Substrate.{1}', and this engine has no such node; give the pins it feeds di... |
+| [DSH4382](DSH4xxx.md#dsh4382) | error | This material drives FrontMaterial and says 'Substrate = Native', and Substrate is off in this project; the... |
+| [DSH4383](DSH4xxx.md#dsh4383) | error | '{0}' is not the Substrate value being built any more when a loop comes round to '{0}.{1}': an earlier trip... |
 | [DSH4390](DSH4xxx.md#dsh4390) | info | '{0}' is declared but nothing reads it, so it is not in the generated material. |
 | [DSH5200](DSH5xxx.md#dsh5200) | error | A material has no '{0}' pin; did you mean '{1}'? Attribute names are case-sensitive. |
 | [DSH5201](DSH5xxx.md#dsh5201) | error | This Custom node declares no output called '{0}'; its outputs are '{1}'. An output is declared by 'Addition... |
@@ -305,6 +309,13 @@ which stays authoritative until every raise site is tagged.
 | [DSH5290](DSH5xxx.md#dsh5290) | info | The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the b... |
 | [DSH5291](DSH5xxx.md#dsh5291) | info | '{0}.{1}' lists no pin called '{2}'; it is connected by that name once the node exists, because a node may ... |
 | [DSH5292](DSH5xxx.md#dsh5292) | info | '{0}' is not declared, and as in 1.x this assignment declares it, as a local of type {1}. |
+| [DSH5293](DSH5xxx.md#dsh5293) | error | A Substrate value has no compound assignment; write 'S = S + T' (Substrate.Add) or 'S = S * w' (Substrate.W... |
+| [DSH5294](DSH5xxx.md#dsh5294) | error | 'Substrate.{0}' is a node Unreal Engine has from {1} on; this engine does not have it. |
+| [DSH5295](DSH5xxx.md#dsh5295) | error | '{0}.{1}': '{2}' and '{3}' parameterize the same pins; give one of them. |
+| [DSH5296](DSH5xxx.md#dsh5296) | error | '{0}.Thickness' is how deep 'Transmittance' is measured, and '{0}' was given no 'Transmittance' before this... |
+| [DSH5297](DSH5xxx.md#dsh5297) | error | '{0}' has been assigned a whole Substrate value since it was declared, and that value has no members; build... |
+| [DSH5298](DSH5xxx.md#dsh5298) | error | A member of the Substrate value '{0}' cannot be written inside an 'if': that would be one node in two versi... |
+| [DSH5299](DSH5xxx.md#dsh5299) | error | '{0}' builds a '{1}.{2}', which has no pin called '{3}'. |
 | [DSH6200](DSH6xxx.md#dsh6200) | error | '{0}' is a second material entry; '{1}' above it is already the entry, and one file makes one material. |
 | [DSH6201](DSH6xxx.md#dsh6201) | error | '{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both... |
 | [DSH6202](DSH6xxx.md#dsh6202) | error | 'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it. |
@@ -417,6 +428,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH7229](DSH7xxx.md#dsh7229) | warning | '@{0}' is written twice in this block; the last one wins. |
 | [DSH7230](DSH7xxx.md#dsh7230) | warning | '#pragma layout' expects a whole number for '{0}'; '{1}' was ignored. |
 | [DSH7231](DSH7xxx.md#dsh7231) | error | '@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}. |
+| [DSH7232](DSH7xxx.md#dsh7232) | error | 'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'. |
 | [DSH7250](DSH7xxx.md#dsh7250) | error | A '.dsi' needs one '#pragma instance(Parent = "...")' naming the material it is an instance of, and this fi... |
 | [DSH7251](DSH7xxx.md#dsh7251) | error | '#pragma instance' is written a second time, and one '.dsi' is one material instance; the line {0} already ... |
 | [DSH7252](DSH7xxx.md#dsh7252) | error | 'Parent' in '#pragma instance' names the material this is an instance of, and it is empty. |
@@ -577,6 +589,16 @@ which stays authoritative until every raise site is tagged.
 | [DSH9037](DSH9xxx.md#dsh9037) | info | '{0}' produced no material, so there are no shaders to compile; a function library is checked by the materi... |
 | [DSH9038](DSH9xxx.md#dsh9038) | warning | Shader errors cannot be read in this configuration: '-nullrhi' switches the rendering shader maps off, and ... |
 | [DSH9039](DSH9xxx.md#dsh9039) | error | %s: DSH9039: the DreamShader 2.0 pipeline failed without raising a diagnostic. |
+| [DSH9040](DSH9xxx.md#dsh9040) | error | The layout dump could not be written: {0}. |
+| [DSH9041](DSH9xxx.md#dsh9041) | error | '{0}' is not a layout style; -Style takes Blocks, SourceBands, Layered or All. |
+| [DSH9042](DSH9xxx.md#dsh9042) | info | '{0}' has 1.x declarations, and what the printer writes for those is 2.0 text; rewriting 1.x as 2.0 is 'dsc... |
+| [DSH9043](DSH9xxx.md#dsh9043) | info | '{0}' uses the preprocessor outside a custom body; 'fmt' reads the file as it is on disk and would have to ... |
+| [DSH9044](DSH9xxx.md#dsh9044) | error | The formatted text of '{0}' failed its own check -- {1} -- so nothing was written. This is a fault of the f... |
+| [DSH9045](DSH9xxx.md#dsh9045) | error | '{0}' could not be read, so it was not formatted. |
+| [DSH9046](DSH9xxx.md#dsh9046) | error | '{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it. |
+| [DSH9047](DSH9xxx.md#dsh9047) | error | The list of generated assets could not be written: {0}. |
+| [DSH9048](DSH9xxx.md#dsh9048) | error | '-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json. |
+| [DSH9049](DSH9xxx.md#dsh9049) | warning | {0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no proje... |
 | [DSH9050](DSH9xxx.md#dsh9050) | error | reveal-node needs a non-empty 'file' and a 'line' of 1 or more; got file '{File}' and line {Line}. |
 | [DSH9051](DSH9xxx.md#dsh9051) | error | No asset loaded in this editor was generated from '{File}', so there is no graph to reveal a node in; compi... |
 | [DSH9052](DSH9xxx.md#dsh9052) | error | The {Count} asset(s) generated from '{File}' carry no DreamShader.SourceSpans metadata, so no node on them ... |
