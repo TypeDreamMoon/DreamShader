@@ -103,8 +103,10 @@ namespace UE::DreamShader::Lang::Private
 			const FString& Key = Entry.Key;
 			const FString Value = Entry.Value.TrimStartAndEnd();
 
-			// `@param` is the one key that may legitimately repeat.
-			if (!Key.Equals(Directive::Param, ESearchCase::CaseSensitive))
+			// `@param`, `@pin` and a function's `@static` are the keys that may legitimately repeat: once per parameter.
+			if (!Key.Equals(Directive::Param, ESearchCase::CaseSensitive)
+				&& !Key.Equals(Directive::Pin, ESearchCase::CaseSensitive)
+				&& !(bOnFunction && Key.Equals(Directive::Static, ESearchCase::CaseSensitive)))
 			{
 				bool bRepeat = false;
 				for (const FString& Previous : Seen)
@@ -244,7 +246,8 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (Key.Equals(Directive::Sampler, ESearchCase::CaseSensitive))
 			{
-				if (!bOnUniform || !bOnTexture)
+				// A texture, whoever may override it: a `uniform` is a parameter, a `static const` a TextureObject node.
+				if (!bOnTexture || !(bOnUniform || Target == EDirectiveTarget::Constant))
 				{
 					WrongTarget(LOCTEXT("TargetTextureUniform", "a texture 'uniform'"));
 				}
@@ -265,7 +268,7 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (Key.Equals(Directive::Default, ESearchCase::CaseSensitive))
 			{
-				if (!bOnUniform || !bOnTexture)
+				if (!bOnTexture || !(bOnUniform || Target == EDirectiveTarget::Constant))
 				{
 					WrongTarget(LOCTEXT("TargetTextureUniform2", "a texture 'uniform'"));
 				}
@@ -276,8 +279,30 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (Key.Equals(Directive::Static, ESearchCase::CaseSensitive))
 			{
-				// Whether it sits on a `uniform bool` is checked where the type is known.
-				Out.bStatic = true;
+				if (bOnFunction)
+				{
+					// `@static <ParameterName> [<ParameterName>...]`: those bool parameters are StaticBool pins. Whether
+					// each names a bool input is checked where the parameters are known (DSH7231).
+					TArray<FString> Words;
+					SplitWords(Value, Words);
+					if (Words.Num() == 0)
+					{
+						Diagnostics.Error(
+							TEXT("DSH7227"),
+							CurrentFile,
+							Entry.Span,
+							LOCTEXT("StaticNeedsParam", "'@static' on a function is written '@static <ParameterName>'."));
+					}
+					for (const FString& Word : Words)
+					{
+						Out.StaticParams.AddUnique(Word);
+					}
+				}
+				else
+				{
+					// Whether it sits on a `uniform bool` is checked where the type is known.
+					Out.bStatic = true;
+				}
 			}
 			else if (Key.Equals(Directive::Library, ESearchCase::CaseSensitive))
 			{
@@ -314,6 +339,55 @@ namespace UE::DreamShader::Lang::Private
 					Out.ParamDocs.Emplace(ParamName, MoveTemp(Text));
 				}
 			}
+			else if (Key.Equals(Directive::Pin, ESearchCase::CaseSensitive))
+			{
+				// `@pin <ParameterName> <engine pin name...>` (batch 2; research-decompiler section 6.6): the name the
+				// engine gives a function pin when it is not an identifier, `Base Color` for `BaseColor`.
+				if (!bOnFunction)
+				{
+					WrongTarget(LOCTEXT("TargetFunctionPin", "a function"));
+				}
+
+				TArray<FString> Words;
+				SplitWords(Value, Words);
+				const FString PinName = Words.Num() > 0 ? Value.RightChop(Words[0].Len()).TrimStartAndEnd() : FString();
+				if (Words.Num() < 2 || PinName.IsEmpty())
+				{
+					Diagnostics.Error(
+						TEXT("DSH7227"),
+						CurrentFile,
+						Entry.Span,
+						LOCTEXT("PinNeedsNames", "'@pin' is written '@pin <ParameterName> <engine pin name>'."));
+				}
+				else
+				{
+					const FString ParamName = Words[0];
+					int32 Existing = INDEX_NONE;
+					for (int32 Index = 0; Index < Out.PinNames.Num(); ++Index)
+					{
+						if (Out.PinNames[Index].Key.Equals(ParamName, ESearchCase::CaseSensitive))
+						{
+							Existing = Index;
+							break;
+						}
+					}
+					if (Existing != INDEX_NONE)
+					{
+						Diagnostics.Warning(
+							TEXT("DSH7229"),
+							CurrentFile,
+							Entry.Span,
+							FText::Format(
+								LOCTEXT("DirectiveRepeated", "'@{0}' is written twice in this block; the last one wins."),
+								FText::FromString(FString(TEXT("pin ")) + ParamName)));
+						Out.PinNames[Existing].Value = PinName;
+					}
+					else
+					{
+						Out.PinNames.Emplace(ParamName, PinName);
+					}
+				}
+			}
 			else if (Key.Equals(Directive::Asset, ESearchCase::CaseSensitive))
 			{
 				if (!bOnFunction)
@@ -323,6 +397,20 @@ namespace UE::DreamShader::Lang::Private
 				if (RequireValue())
 				{
 					Out.Asset = Value;
+				}
+			}
+			else if (Key.Equals(Directive::Root, ESearchCase::CaseSensitive))
+			{
+				// `@root <Game | Engine | Plugin.Name | Plugins/Name | /Mount>` (batch 2, legacy rule L10): the Root= of the 1.x
+				// block the declaration came from. Whether it means anything there is said with the linkage (DeclareFunction).
+				if (!bOnFunction)
+				{
+					WrongTarget(LOCTEXT("TargetFunctionRoot", "an exported function"));
+				}
+				if (RequireValue())
+				{
+					Out.Root = Value;
+					Out.bHasRoot = true;
 				}
 			}
 			else if (Key.Equals(Directive::Custom, ESearchCase::CaseSensitive))
@@ -586,6 +674,38 @@ namespace UE::DreamShader::Lang::Private
 			{
 				if (TryParseInt(Argument.Value, Number)) { Hint.H = Number; Hint.bHasSize = true; } else { BadValue(Argument); }
 			}
+			else if (Argument.Key.Equals(TEXT("Color"), ESearchCase::IgnoreCase))
+			{
+				// `Color = "r g b a"` (research-decompiler section 6.4): one QUOTED value, because a pragma
+				// argument list splits at commas. Three numbers take an alpha of 1, the way a 1.x colour
+				// literal did; a comma between the numbers is read as a space.
+				TArray<FString> Words;
+				SplitWords(Argument.Value.Replace(TEXT(","), TEXT(" "), ESearchCase::CaseSensitive), Words);
+				double Channels[4] = { 0.0, 0.0, 0.0, 1.0 };
+				bool bParsed = Argument.bQuoted && (Words.Num() == 3 || Words.Num() == 4);
+				for (int32 Channel = 0; bParsed && Channel < Words.Num(); ++Channel)
+				{
+					bParsed = TryParseDouble(Words[Channel], Channels[Channel]);
+				}
+				if (bParsed)
+				{
+					Hint.bHasColor = true;
+					for (int32 Channel = 0; Channel < 4; ++Channel)
+					{
+						Hint.Color[Channel] = static_cast<float>(Channels[Channel]);
+					}
+				}
+				else
+				{
+					Diagnostics.Warning(
+						TEXT("DSH7230"),
+						CurrentFile,
+						Argument.Span,
+						FText::Format(
+							LOCTEXT("LayoutBadColor", "'#pragma layout' expects 'Color' as three or four numbers in quotes, such as \"0.1 0.16 0.22 0.35\"; '{0}' was ignored."),
+							FText::FromString(Argument.Value)));
+				}
+			}
 			else
 			{
 				Diagnostics.Warning(
@@ -625,6 +745,16 @@ namespace UE::DreamShader::Lang::Private
 		// the validator only warns on an odd one, and the emitter compares exactly -- so it is made
 		// exact here, once.
 		Hint.Kind = Hint.Kind.Equals(TEXT("Node"), ESearchCase::IgnoreCase) ? TEXT("Node") : TEXT("Comment");
+
+		if (Hint.bHasColor && Hint.Kind.Equals(TEXT("Node"), ESearchCase::CaseSensitive))
+		{
+			Diagnostics.Warning(
+				TEXT("DSH7230"),
+				CurrentFile,
+				Decl.Span,
+				LOCTEXT("LayoutColorOnNode", "'#pragma layout(Node, ...)' places a node, and 'Color' colours only a comment box; the colour was ignored."));
+			Hint.bHasColor = false;
+		}
 
 		Bound.LayoutHints.Add(MoveTemp(Hint));
 	}

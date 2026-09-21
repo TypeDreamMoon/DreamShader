@@ -77,6 +77,7 @@ namespace UE::DreamShader::Lang
 		case EBoundExprKind::InitializerList:   return TEXT("InitializerList");
 		case EBoundExprKind::Paren:             return TEXT("Paren");
 		case EBoundExprKind::StructConstructor: return TEXT("StructConstructor");
+		case EBoundExprKind::FunctionCallOutput: return TEXT("FunctionCallOutput");
 		}
 		return TEXT("Unknown");
 	}
@@ -88,6 +89,18 @@ namespace UE::DreamShader::Lang
 			if (Doc.Key.Equals(ParamName, ESearchCase::CaseSensitive))
 			{
 				return &Doc.Value;
+			}
+		}
+		return nullptr;
+	}
+
+	const FString* FBoundDirectives::FindPinName(const FString& ParamName) const
+	{
+		for (const TPair<FString, FString>& Pin : PinNames)
+		{
+			if (Pin.Key.Equals(ParamName, ESearchCase::CaseSensitive))
+			{
+				return &Pin.Value;
 			}
 		}
 		return nullptr;
@@ -251,6 +264,14 @@ namespace UE::DreamShader::Lang::Private
 		// THIS catalog, so the bound module carries it rather than leaving the reader to guess.
 		Bound.Catalog = Options.Catalog;
 
+		// Batch 2: a `.dsi` has no functions, no graph and no catalog lookups. Instance mode replaces
+		// everything below, the empty-catalog warning included (research-instance section 3.3).
+		if (RootModule.FileKind == ELangFileKind::Dsi)
+		{
+			BindInstanceModule();
+			return;
+		}
+
 		if (Catalog.IsEmpty())
 		{
 			// Not an error: `dsc index` on a file the editor has never opened still wants a symbol
@@ -274,6 +295,9 @@ namespace UE::DreamShader::Lang::Private
 		BindGlobals();
 
 		CallGraph.SetNum(Bound.Functions.Num());
+		// Legacy rule L8: the calls lifted out of opaque bodies first, so every call site below can judge the names
+		// they could not see (CheckHoistedCallNamesAtCallSite).
+		BindHoistedCalls();
 		for (int32 Index = 0; Index < Bound.Functions.Num(); ++Index)
 		{
 			BindFunctionBody(Index);
@@ -326,6 +350,8 @@ namespace UE::DreamShader::Lang::Private
 				case EPragmaKind::Layout:    BindLayoutPragma(Pragma); break;
 				case EPragmaKind::Region:    OpenRegion(Pragma.Text, Pragma.Span, FileRegions); break;
 				case EPragmaKind::EndRegion: CloseRegion(Pragma.Span, FileRegions); break;
+				// Only a `.dsi` holds one, and a `.dsi` never reaches the declare pass (BindInstanceModule).
+				case EPragmaKind::Instance:  ReportInstancePragmaOutsideDsi(Pragma); break;
 				case EPragmaKind::Unknown:   break;
 				}
 				break;
@@ -476,6 +502,13 @@ namespace UE::DreamShader::Lang::Private
 			}
 		}
 		return true;
+	}
+
+	bool FLangBinder::IsNameDeclared(const FString& Name) const
+	{
+		return Bound.Structs.ContainsByPredicate([&Name](const FBoundStruct& Struct) { return Struct.Name.Equals(Name, ESearchCase::CaseSensitive); })
+			|| Bound.Globals.ContainsByPredicate([&Name](const FBoundGlobal& Global) { return Global.Name.Equals(Name, ESearchCase::CaseSensitive); })
+			|| Bound.Functions.ContainsByPredicate([&Name](const FBoundFunction& Function) { return Function.Name.Equals(Name, ESearchCase::CaseSensitive); });
 	}
 
 	bool FLangBinder::ResolveTypeRef(const FTypeRef& Ref, IR::FIRType& OutType)
@@ -739,7 +772,9 @@ namespace UE::DreamShader::Lang::Private
 				LOCTEXT("TextureUniformInitializer", "A texture uniform has no HLSL initializer; write its default asset as '/// @default /Game/...'."));
 		}
 
-		if (Global.bIsConstant && !Declarator.Initializer)
+		// A constant texture is the asset of its `/// @default` (a TextureObject node, IRBuilderMaterial.cpp), and has no
+		// initializer to write any more than a texture uniform has (DSH7213).
+		if (Global.bIsConstant && !Declarator.Initializer && !Global.Type.IsTexture())
 		{
 			Diagnostics.Error(
 				TEXT("DSH7214"),
@@ -788,13 +823,38 @@ namespace UE::DreamShader::Lang::Private
 			return;
 		}
 
-		if (!CheckNameAvailable(Decl.Name, Decl.NameSpan, File))
+		// Legacy rule L23: 1.x kept the assets its blocks build and the functions of its shader code apart, and naming a
+		// ShaderFunction after the HLSL function it wraps is an idiom (`Function MF_ToonMatcap` in a header,
+		// `ShaderFunction(Name="MaterialFunctions/MF_ToonMatcap")` in the file that imports it). 2.0 has one scope. The
+		// block's function is nothing a source can call, so it is the one that steps aside: it is declared under a name of
+		// its own, which the migrator writes, and the asset keeps its `/// @name`.
+		FString DeclaredName = Decl.Name;
+		if (Decl.bLegacy && Decl.Linkage == EFunctionLinkage::Export && IsNameDeclared(Decl.Name))
+		{
+			for (int32 Suffix = 1; ; ++Suffix)
+			{
+				DeclaredName = Suffix == 1 ? Decl.Name + TEXT("_Asset") : FString::Printf(TEXT("%s_Asset%d"), *Decl.Name, Suffix);
+				if (!IsNameDeclared(DeclaredName))
+				{
+					break;
+				}
+			}
+			Diagnostics.Info(
+				TEXT("DSH5290"),
+				File,
+				Decl.NameSpan,
+				FText::Format(
+					LOCTEXT("LegacyBlockNameTaken", "The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name."),
+					FText::FromString(Decl.Name),
+					FText::FromString(DeclaredName)));
+		}
+		else if (!CheckNameAvailable(Decl.Name, Decl.NameSpan, File))
 		{
 			return;
 		}
 
 		FBoundFunction Function;
-		Function.Name = Decl.Name;
+		Function.Name = DeclaredName;
 		Function.Decl = &Decl;
 		Function.Linkage = Decl.Linkage;
 		Function.File = File;
@@ -806,15 +866,21 @@ namespace UE::DreamShader::Lang::Private
 
 		// BindDirectives only knows it is looking at a function. Three keys are read for one linkage
 		// alone and ignored on every other: `@asset` binds an `extern` prototype to its asset, and
-		// `@library` and `@name` describe the asset an `export` produces. Said here, where the linkage
-		// is known, with the code and wording of the other misplaced directives.
+		// `@library` and `@name` describe the asset an `export` produces. `@name` names one more thing:
+		// the Custom node a `/// @custom` function is, which says the function's own name without it
+		// (a 1.x function of a Namespace block said `N::F` there, and its migrated text still does).
+		// Said here, where the linkage is known, with the code and wording of the other misplaced directives.
+		const bool bCustomFunction = Decl.Doc.Has(Directive::Custom);
 		for (const FDocDirective& Entry : Decl.Doc.Directives)
 		{
 			const bool bAsset = Entry.Key.Equals(Directive::Asset, ESearchCase::CaseSensitive);
 			const bool bExportOnly = Entry.Key.Equals(Directive::Library, ESearchCase::CaseSensitive)
-				|| Entry.Key.Equals(Directive::Name, ESearchCase::CaseSensitive);
+				|| (Entry.Key.Equals(Directive::Name, ESearchCase::CaseSensitive) && !bCustomFunction);
+			// `@root` (batch 2, legacy rule L10) is the Root= of a 1.x block that produces an asset, and describes nothing else.
+			const bool bRoot = Entry.Key.Equals(Directive::Root, ESearchCase::CaseSensitive);
 			const bool bMisplaced = (bAsset && Decl.Linkage != EFunctionLinkage::Extern)
-				|| (bExportOnly && Decl.Linkage != EFunctionLinkage::Export);
+				|| (bExportOnly && Decl.Linkage != EFunctionLinkage::Export)
+				|| (bRoot && (Decl.Linkage != EFunctionLinkage::Export || !Decl.bLegacy));
 			if (!bMisplaced)
 			{
 				continue;
@@ -829,7 +895,9 @@ namespace UE::DreamShader::Lang::Private
 					FText::FromString(Entry.Key),
 					bAsset
 						? LOCTEXT("LinkageTargetExtern", "an 'extern' prototype")
-						: LOCTEXT("LinkageTargetExport", "an exported function")));
+						: bRoot
+							? LOCTEXT("LinkageTargetLegacyExport", "a block of a 1.x source that produces an asset")
+							: LOCTEXT("LinkageTargetExport", "an exported function")));
 		}
 
 		Function.Params.Reserve(Decl.Params.Num());
@@ -861,7 +929,8 @@ namespace UE::DreamShader::Lang::Private
 			Bound_.Name = Param.Name;
 			Bound_.Direction = Param.Direction;
 			Bound_.Default = Param.Default.Get();
-			Bound_.bOptional = Param.Default != nullptr;
+			// Legacy rule L7 (every source): a default makes an input optional, and so does a 1.x `opt` written without one.
+			Bound_.bOptional = Param.Default != nullptr || Param.bOptional;
 			if (!ResolveTypeRef(Param.Type, Bound_.Type))
 			{
 				Bound_.Type = IR::FIRType::Error();
@@ -882,8 +951,78 @@ namespace UE::DreamShader::Lang::Private
 			{
 				Bound_.Doc = *Doc;
 			}
+			// `@pin`: the engine's name for the pin (research-decompiler section 6.6); empty keeps the identifier.
+			if (const FString* PinName = Function.Directives.FindPinName(Param.Name))
+			{
+				Bound_.PinName = *PinName;
+			}
+			// `@static`: a StaticBool pin. Only a single `bool` that goes IN can be one.
+			if (Function.Directives.StaticParams.Contains(Param.Name))
+			{
+				const bool bBoolInput = Param.Direction == EParamDirection::In
+					&& Bound_.Type.IsBool() && Bound_.Type.GraphComponentCount() == 1 && Bound_.ArrayCount == 0;
+				if (bBoolInput)
+				{
+					Bound_.bStatic = true;
+				}
+				else if (!Bound_.Type.IsError())
+				{
+					Diagnostics.Error(
+						TEXT("DSH7231"),
+						CurrentFile,
+						Param.Span,
+						FText::Format(
+							LOCTEXT("StaticParamNotBool", "'@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}."),
+							FText::FromString(Param.Name),
+							Param.Direction == EParamDirection::In
+								? DescribeType(Bound_.Type)
+								: LOCTEXT("StaticParamOut", "an 'out' or 'inout' parameter")));
+				}
+			}
 
 			Function.Params.Add(MoveTemp(Bound_));
+		}
+
+		// `@static` naming something that is not a parameter: the same stale-doc warning as `@pin` and `@param`.
+		for (const FString& StaticName : Function.Directives.StaticParams)
+		{
+			const bool bFound = Function.Params.ContainsByPredicate([&StaticName](const FBoundParam& Param)
+			{
+				return Param.Name.Equals(StaticName, ESearchCase::CaseSensitive);
+			});
+			if (!bFound)
+			{
+				Diagnostics.Warning(
+					TEXT("DSH7225"),
+					CurrentFile,
+					Decl.Doc.Span,
+					FText::Format(
+						LOCTEXT("StaticDocUnknown", "'@static {0}' does not name a parameter of '{1}'."),
+						FText::FromString(StaticName),
+						FText::FromString(Decl.Name)));
+			}
+		}
+
+		// `@pin` naming something that is not a parameter: the same stale-doc warning as `@param`. `Result` names the
+		// return value's output of a function that has one.
+		for (const TPair<FString, FString>& Pin : Function.Directives.PinNames)
+		{
+			bool bFound = Pin.Key.Equals(TEXT("Result"), ESearchCase::CaseSensitive) && !Function.ReturnType.IsVoid();
+			for (const FBoundParam& Param : Function.Params)
+			{
+				bFound = bFound || Param.Name.Equals(Pin.Key, ESearchCase::CaseSensitive);
+			}
+			if (!bFound)
+			{
+				Diagnostics.Warning(
+					TEXT("DSH7225"),
+					CurrentFile,
+					Decl.Doc.Span,
+					FText::Format(
+						LOCTEXT("PinDocUnknown", "'@pin {0}' does not name a parameter of '{1}'."),
+						FText::FromString(Pin.Key),
+						FText::FromString(Decl.Name)));
+			}
 		}
 
 		// `@param` naming something that is not a parameter is a stale doc comment, which is the one
@@ -1203,10 +1342,21 @@ namespace UE::DreamShader::Lang::Private
 			Product.Backend = ResolvedBackend;
 			Product.AssetName = Function.Name;
 
+			const FString& NameDirective = Function.Directives.Name;
+			if (Function.Decl && Function.Decl->bLegacy)
+			{
+				// Legacy rule L10: a 1.x block keeps its 1.x destination. `@name` is the Name= it was written with,
+				// folders and all, and `@root` its Root=; the emitter places it without mirroring the source folder.
+				Product.bLegacyAssetPath = true;
+				Product.AssetRoot = Function.Directives.bHasRoot ? Function.Directives.Root : FString();
+				if (!NameDirective.IsEmpty())
+				{
+					Product.AssetName = NameDirective;
+				}
+			}
 			// CONTRACT §2: a full path in `@name` overrides the destination; a bare name replaces
 			// the leaf and lets the 1.x root rules place it.
-			const FString& NameDirective = Function.Directives.Name;
-			if (!NameDirective.IsEmpty())
+			else if (!NameDirective.IsEmpty())
 			{
 				if (NameDirective.StartsWith(TEXT("/"), ESearchCase::CaseSensitive))
 				{
@@ -1284,6 +1434,27 @@ namespace UE::DreamShader::Lang::Private
 			// Reported by I2 when it tries to inline (DSH6220); the binder only records the fact,
 			// because a recursive Custom or Extern function is not a problem until something inlines.
 			Bound.Functions[Index].bRecursive = Reaches[Index].Contains(Index);
+		}
+
+		// Legacy rule L8: a custom function whose lifted calls reach itself makes a new node at every call, which would
+		// never end. Said here, once; the IR builder then leaves such a call unlowered in silence.
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const FBoundFunction& Function = Bound.Functions[Index];
+			if (!Function.bRecursive
+				|| Function.Kind != EBoundFunctionKind::Custom
+				|| !Function.Decl
+				|| Function.Decl->HoistedCalls.Num() == 0)
+			{
+				continue;
+			}
+			Diagnostics.Error(
+				TEXT("DSH6330"),
+				Function.File,
+				Function.Decl->NameSpan,
+				FText::Format(
+					LOCTEXT("HoistedCallRecursion", "'{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node, so the graph would never end."),
+					FText::FromString(Function.Name)));
 		}
 	}
 

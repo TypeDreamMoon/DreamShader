@@ -14,6 +14,10 @@
 //      has a type and a lowering.
 //   3. The core-op table (IRCoreOps.h) is the only place an arity or a typing rule is written. This
 //      file reads Typing, MinArity, MaxArity and InputPins from it and holds no copy.
+//
+// Batch 2: the legacy rules (research-legacy section 3.7) hook in where they apply -- L2, L3a, L3b, L4, L5, L8,
+// L12, L13 and L19 -- and their helpers live in LangBinderLegacy.cpp. Codes raised here for them: DSH5277, DSH5278,
+// DSH5279, DSH5281, DSH5282, DSH5284 and DSH5285.
 
 #include "LangBinderInternal.h"
 
@@ -511,10 +515,10 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		case ENodeKind::MemberExpr:
-			return BindMember(*static_cast<const FMemberExpr*>(&Expr));
+			return BindMember(*static_cast<const FMemberExpr*>(&Expr), Expected);
 
 		case ENodeKind::IndexExpr:
-			return BindIndex(*static_cast<const FIndexExpr*>(&Expr));
+			return BindIndex(*static_cast<const FIndexExpr*>(&Expr), Expected);
 
 		case ENodeKind::CallExpr:
 			return BindCall(*static_cast<const FCallExpr*>(&Expr), Expected, bStatement);
@@ -680,6 +684,17 @@ namespace UE::DreamShader::Lang::Private
 			return Emit(Expr, MoveTemp(Binding));
 		}
 
+		// Batch 2, legacy rule L19: a 1.x source was read ignoring case, so a unique case-insensitive match is taken there,
+		// with a warning.
+		if (IsLegacyScope())
+		{
+			FBoundExpr Fallback;
+			if (TryBindLegacyIdentifierIgnoringCase(Expr, Fallback))
+			{
+				return Emit(Expr, MoveTemp(Fallback));
+			}
+		}
+
 		if (Expr.Name.Equals(Namespaces::UE, ESearchCase::CaseSensitive)
 			|| Expr.Name.Equals(Namespaces::Substrate, ESearchCase::CaseSensitive))
 		{
@@ -690,6 +705,14 @@ namespace UE::DreamShader::Lang::Private
 				FText::Format(
 					LOCTEXT("NamespaceAsValue", "'{0}' is a namespace, not a value; write '{0}.SomeNode(...)'."),
 					FText::FromString(Expr.Name)));
+			return Fail(Expr);
+		}
+
+		// Legacy rule L8: a name a lifted call cannot see is judged at each call site, where the caller is known
+		// (CheckHoistedCallNamesAtCallSite), rather than here.
+		if (bBindingHoistedCall)
+		{
+			HoistedUnresolvedNames.FindOrAdd(HoistingFunctionIndex).Emplace(Expr.Name, Expr.Span);
 			return Fail(Expr);
 		}
 
@@ -784,11 +807,185 @@ namespace UE::DreamShader::Lang::Private
 		return false;
 	}
 
-	IR::FIRType FLangBinder::BindMember(const FMemberExpr& Expr)
+	namespace
+	{
+		/** `Float3`, `CMOT_Float3`, `float3`: a Custom node output type as a value type. */
+		bool TryTypeOfCustomOutputEnumerator(const FString& Text, IR::FIRType& OutType)
+		{
+			FString Key = Text.TrimStartAndEnd().ToLower();
+			Key.RemoveFromStart(TEXT("cmot_"));
+			if (Key == TEXT("float1") || Key == TEXT("float")) { OutType = IR::FIRType::Float(1); return true; }
+			if (Key == TEXT("float2")) { OutType = IR::FIRType::Float(2); return true; }
+			if (Key == TEXT("float3")) { OutType = IR::FIRType::Float(3); return true; }
+			if (Key == TEXT("float4")) { OutType = IR::FIRType::Float(4); return true; }
+			if (Key == TEXT("materialattributes")) { OutType = IR::FIRType::Material(); return true; }
+			return false;
+		}
+
+		/**
+		 * `((OutputName="Extra",OutputType=CMOT_Float1),(...))`, the engine's own text for TArray<FCustomOutput>, which is
+		 * how a source writes the property. One name and one type text per innermost group; a group without a name is
+		 * skipped, because the engine gives such an output no pin either.
+		 */
+		void ParseCustomAdditionalOutputs(const FString& Text, TArray<FString>& OutNames, TArray<FString>& OutTypeTexts)
+		{
+			int32 GroupStart = INDEX_NONE;
+			bool bInQuotes = false;
+			for (int32 Index = 0; Index < Text.Len(); ++Index)
+			{
+				const TCHAR Character = Text[Index];
+				if (Character == TEXT('"') && (Index == 0 || Text[Index - 1] != TEXT('\\')))
+				{
+					bInQuotes = !bInQuotes;
+					continue;
+				}
+				if (bInQuotes)
+				{
+					continue;
+				}
+				if (Character == TEXT('('))
+				{
+					GroupStart = Index + 1;
+					continue;
+				}
+				if (Character != TEXT(')') || GroupStart == INDEX_NONE)
+				{
+					continue;
+				}
+
+				const FString Group = Text.Mid(GroupStart, Index - GroupStart);
+				GroupStart = INDEX_NONE;
+
+				FString Name;
+				FString TypeText;
+				TArray<FString> Fields;
+				Group.ParseIntoArray(Fields, TEXT(","), /* bCullEmpty */ true);
+				for (const FString& Field : Fields)
+				{
+					FString Key;
+					FString Value;
+					if (!Field.Split(TEXT("="), &Key, &Value))
+					{
+						continue;
+					}
+					Key.TrimStartAndEndInline();
+					Value = Value.TrimStartAndEnd().TrimQuotes();
+					if (Key.Equals(TEXT("OutputName"), ESearchCase::IgnoreCase)) { Name = Value; }
+					else if (Key.Equals(TEXT("OutputType"), ESearchCase::IgnoreCase)) { TypeText = Value; }
+				}
+				if (!Name.IsEmpty())
+				{
+					OutNames.Add(Name);
+					OutTypeTexts.Add(TypeText);
+				}
+			}
+		}
+	}
+
+	const FBoundExpr* FLangBinder::FindCallOutputs(const FExpr& Object) const
+	{
+		const FExpr* Inner = &Object;
+		while (const FParenExpr* Paren = Inner->As<FParenExpr>())
+		{
+			if (!Paren->Inner)
+			{
+				return nullptr;
+			}
+			Inner = Paren->Inner.Get();
+		}
+		const FBoundExpr* Found = Lookup(*Inner);
+		return (Found && Found->Kind == EBoundExprKind::ReflectedCall && Found->CallOutputTypes.Num() > 0) ? Found : nullptr;
+	}
+
+	IR::FIRType FLangBinder::ResolveNodeDefaultOf(const FExpr& Operand) const
+	{
+		const IR::FIRType Type = TypeOf(Operand);
+		if (Type.IsNode())
+		{
+			if (const FBoundExpr* Call = FindCallOutputs(Operand))
+			{
+				return Call->CallOutputTypes[0];
+			}
+		}
+		return ResolveNodeDefault(Type);
+	}
+
+	void FLangBinder::CollectCustomClassOutputs(const FCallExpr& Expr, const IR::FCatalogExpression& Class, FBoundExpr& Binding)
+	{
+		// Output 0: what `OutputType` says, else what the class says (the engine's own default, Float3).
+		IR::FIRType ReturnType = Class.Outputs.Num() > 0 ? IR::TypeFromCatalogValueType(Class.Outputs[0].Type) : IR::FIRType::Float(3);
+		TArray<FString> AdditionalNames;
+		TArray<FString> AdditionalTypeTexts;
+		for (const FArgument& Argument : Expr.Arguments)
+		{
+			if (!Argument.Value)
+			{
+				continue;
+			}
+			if (Argument.Name.Equals(TEXT("OutputType"), ESearchCase::IgnoreCase))
+			{
+				FString Spelling;
+				IR::FIRType Spelled;
+				if (FlattenClassSpecifier(*Argument.Value, Spelling) && TryTypeOfCustomOutputEnumerator(Spelling, Spelled))
+				{
+					ReturnType = Spelled;
+				}
+			}
+			else if (Argument.Name.Equals(TEXT("AdditionalOutputs"), ESearchCase::IgnoreCase))
+			{
+				const FLiteralExpr* Literal = Argument.Value->As<FLiteralExpr>();
+				if (Literal && Literal->LiteralKind == ELiteralKind::String)
+				{
+					ParseCustomAdditionalOutputs(Literal->Text, AdditionalNames, AdditionalTypeTexts);
+				}
+			}
+		}
+
+		// The engine names output 0 `return` exactly when there are more (UMaterialExpressionCustom::RebuildOutputs).
+		Binding.CallOutputNames.Add(AdditionalNames.Num() > 0 ? FString(TEXT("return")) : (Class.Outputs.Num() > 0 ? Class.Outputs[0].Name : FString()));
+		Binding.CallOutputTypes.Add(ReturnType);
+		for (int32 Index = 0; Index < AdditionalNames.Num(); ++Index)
+		{
+			IR::FIRType Type = IR::FIRType::Float(1);
+			TryTypeOfCustomOutputEnumerator(AdditionalTypeTexts[Index], Type);
+			Binding.CallOutputNames.Add(AdditionalNames[Index]);
+			Binding.CallOutputTypes.Add(Type);
+		}
+	}
+
+	IR::FIRType FLangBinder::TypeOfSelectedNodeOutput(const IR::FCatalogExpression& Class, const int32 OutputIndex, const IR::FIRType* Expected) const
+	{
+		bool bAnyWidth = false;
+		const IR::FIRType Catalogued = IR::TypeFromCatalogValueType(Class.Outputs[OutputIndex].Type, &bAnyWidth);
+		if (bAnyWidth && Expected && Expected->IsNumeric() && Expected->Cols == 1)
+		{
+			return MakeNumeric(IR::EIRTypeKind::Float, Expected->Rows);
+		}
+		return Catalogued;
+	}
+
+	IR::FIRType FLangBinder::BindMember(const FMemberExpr& Expr, const IR::FIRType* Expected)
 	{
 		if (!Expr.Object)
 		{
 			return Fail(Expr);
+		}
+
+		// Legacy rule L3b: `F(args).Out` on an Extern / ExportFunction / Custom function picks one of its outputs (the 1.x
+		// `Output = "Out"`), and the call is bound in selection mode. A `.dss` keeps the rule that a call cannot pick an out.
+		if (IsLegacyScope())
+		{
+			if (const FCallExpr* Call = Expr.Object->As<FCallExpr>())
+			{
+				// A 1.x Graph could swizzle a call's value too (`F(x).rgb`), so a member that names no output of a
+				// function that returns a value is left to the ordinary member rules below.
+				const int32 Callee = FindSelectableLegacyCallee(*Call);
+				if (Callee != INDEX_NONE
+					&& (Bound.Functions[Callee].ReturnType.IsVoid() || NamesLegacyOutput(Bound.Functions[Callee], Expr.Member)))
+				{
+					return BindFunctionCallOutput(Expr, *Call, Callee, Expr.Member, INDEX_NONE, Expr.MemberSpan);
+				}
+			}
 		}
 
 		FString Namespace;
@@ -805,7 +1002,29 @@ namespace UE::DreamShader::Lang::Private
 			return Fail(Expr);
 		}
 
-		const IR::FIRType ObjectType = BindExpr(*Expr.Object);
+		// A swizzle says how wide its object has to be at least -- `.rgb` reads component 2 -- and that is the only width
+		// there is for a node whose one output the catalog calls Numeric and whose inputs say nothing either (a parameter
+		// node: `StaticComponentMaskParameter P` read as `P.rgb`). A hint: an object that knows its width ignores it.
+		// Legacy scope only (rule L3c's sibling): 1.x never asked how wide a node was, while a `.dss` that swizzles a
+		// scalar node past its width is told so (DSH4230) rather than handed to the engine.
+		IR::FIRType SwizzleHint;
+		const IR::FIRType* ObjectExpected = nullptr;
+		if (IsLegacyScope() && IsChannelViewSwizzleSpelling(Expr.Member) && Expr.Object->Is<FCallExpr>())
+		{
+			int32 Widest = 0;
+			for (int32 Index = 0; Index < Expr.Member.Len(); ++Index)
+			{
+				bool bRgba = false;
+				Widest = FMath::Max(Widest, SwizzleComponent(Expr.Member[Index], bRgba) + 1);
+			}
+			if (Widest >= 2)
+			{
+				SwizzleHint = MakeNumeric(IR::EIRTypeKind::Float, Widest);
+				ObjectExpected = &SwizzleHint;
+			}
+		}
+
+		const IR::FIRType ObjectType = BindExpr(*Expr.Object, ObjectExpected);
 		if (ObjectType.IsError())
 		{
 			return Fail(Expr);
@@ -813,7 +1032,17 @@ namespace UE::DreamShader::Lang::Private
 
 		if (ObjectType.IsMaterial())
 		{
-			const int32 AttributeIndex = Catalog.FindMaterialAttribute(Expr.Member);
+			int32 AttributeIndex = Catalog.FindMaterialAttribute(Expr.Member);
+			if (AttributeIndex == INDEX_NONE && IsLegacyScope())
+			{
+				// Legacy rule L19: 1.x matched attribute names ignoring case.
+				const int32 Loose = Catalog.FindMaterialAttributeIgnoreCase(Expr.Member);
+				if (Loose != INDEX_NONE)
+				{
+					ReportLegacyCatalogCaseFallback(Expr.Member, Catalog.MaterialAttributes[Loose].Name, Expr.MemberSpan);
+					AttributeIndex = Loose;
+				}
+			}
 			if (AttributeIndex == INDEX_NONE)
 			{
 				const int32 Close = Catalog.FindMaterialAttributeIgnoreCase(Expr.Member);
@@ -900,7 +1129,53 @@ namespace UE::DreamShader::Lang::Private
 				return Fail(Expr);
 			}
 			const IR::FCatalogExpression& Class = Catalog.Expressions[ObjectType.CatalogIndex];
-			const int32 OutputIndex = Class.FindOutput(Expr.Member);
+
+			// A Custom-class call declared its outputs itself (`AdditionalOutputs = "((OutputName=\"Extra\",...))"`).
+			if (const FBoundExpr* Call = FindCallOutputs(*Expr.Object))
+			{
+				int32 Slot = Call->CallOutputNames.IndexOfByPredicate([&Expr](const FString& Name) { return Name.Equals(Expr.Member, ESearchCase::CaseSensitive); });
+				if (Slot == INDEX_NONE && IsLegacyScope())
+				{
+					// Legacy rule L19 again: 1.x compared the name ignoring case.
+					Slot = Call->CallOutputNames.IndexOfByPredicate([&Expr](const FString& Name) { return Name.Equals(Expr.Member, ESearchCase::IgnoreCase); });
+				}
+				if (Slot == INDEX_NONE)
+				{
+					Diagnostics.Error(
+						TEXT("DSH5201"),
+						CurrentFile,
+						Expr.MemberSpan,
+						FText::Format(
+							LOCTEXT("UnknownCustomCallOutput", "This Custom node declares no output called '{0}'; its outputs are '{1}'. An output is declared by 'AdditionalOutputs'."),
+							FText::FromString(Expr.Member),
+							FText::FromString(FString::Join(Call->CallOutputNames, TEXT("', '")))));
+					return Fail(Expr);
+				}
+
+				FBoundExpr Binding;
+				Binding.Kind = EBoundExprKind::NodeOutput;
+				Binding.FieldIndex = Slot;
+				Binding.Index = ObjectType.CatalogIndex;
+				Binding.Type = Call->CallOutputTypes[Slot];
+				return Emit(Expr, MoveTemp(Binding));
+			}
+
+			int32 OutputIndex = Class.FindOutput(Expr.Member);
+			// `.rgb` after a node of channel views is a swizzle, in a 1.x body as anywhere (the branch below): it is not the
+			// output `RGB` written in the wrong case, and the commonest 1.x idiom there is -- `SampleTexture2D(T, uv).rgb` --
+			// is nothing to warn about.
+			int32 SwizzledViewWidth = 0;
+			const bool bViewSwizzle = IsChannelViewSwizzleSpelling(Expr.Member) && TryGetChannelViewWidth(Class, SwizzledViewWidth);
+			if (OutputIndex == INDEX_NONE && IsLegacyScope() && !bViewSwizzle)
+			{
+				// Legacy rule L19: 1.x matched output names ignoring case.
+				const int32 Loose = FindCatalogOutputIgnoringCaseUniquely(Class, Expr.Member);
+				if (Loose != INDEX_NONE)
+				{
+					ReportLegacyCatalogCaseFallback(Expr.Member, Class.Outputs[Loose].Name, Expr.MemberSpan);
+					OutputIndex = Loose;
+				}
+			}
 			if (OutputIndex == INDEX_NONE)
 			{
 				// A node whose outputs are all channel views of one value (see Convert) answers a swizzle
@@ -950,7 +1225,7 @@ namespace UE::DreamShader::Lang::Private
 			Binding.Kind = EBoundExprKind::NodeOutput;
 			Binding.FieldIndex = OutputIndex;
 			Binding.Index = ObjectType.CatalogIndex;
-			Binding.Type = IR::TypeFromCatalogValueType(Class.Outputs[OutputIndex].Type);
+			Binding.Type = TypeOfSelectedNodeOutput(Class, OutputIndex, Expected);
 			return Emit(Expr, MoveTemp(Binding));
 		}
 
@@ -1222,11 +1497,38 @@ namespace UE::DreamShader::Lang::Private
 		return false;
 	}
 
-	IR::FIRType FLangBinder::BindIndex(const FIndexExpr& Expr)
+	IR::FIRType FLangBinder::BindIndex(const FIndexExpr& Expr, const IR::FIRType* Expected)
 	{
 		if (!Expr.Object || !Expr.Index)
 		{
 			return Fail(Expr);
+		}
+
+		// Legacy rule L3b: `F(args)[k]` on an Extern / ExportFunction / Custom function picks its 1.x output k (the 1.x
+		// `OutputIndex = k`: 0 is the return value when there is one, then the out parameters).
+		if (IsLegacyScope())
+		{
+			if (const FCallExpr* Call = Expr.Object->As<FCallExpr>())
+			{
+				const int32 Callee = FindSelectableLegacyCallee(*Call);
+				if (Callee != INDEX_NONE)
+				{
+					BindExpr(*Expr.Index);
+					double Ordinal[4] = { 0.0, 0.0, 0.0, 0.0 };
+					int32 OrdinalComponents = 0;
+					if (!GetConstant(*Expr.Index, Ordinal, OrdinalComponents) || OrdinalComponents != 1)
+					{
+						BindUserFunctionCall(*Call, Callee, /* bStatement */ false, /* bSelection */ true);
+						Diagnostics.Error(
+							TEXT("DSH5281"),
+							CurrentFile,
+							Expr.Index->Span,
+							LOCTEXT("LegacySelectOrdinalNotConstant", "An output is selected by a whole number the compiler knows, and this index is computed."));
+						return Fail(Expr);
+					}
+					return BindFunctionCallOutput(Expr, *Call, Callee, FString(), static_cast<int32>(Ordinal[0]), Expr.Index->Span);
+				}
+			}
 		}
 
 		const IR::FIRType ObjectType = BindExpr(*Expr.Object);
@@ -1240,6 +1542,69 @@ namespace UE::DreamShader::Lang::Private
 		int32 IndexComponents = 0;
 		const bool bConstantIndex = GetConstant(*Expr.Index, IndexValue, IndexComponents) && IndexComponents == 1;
 		const int32 Index = bConstantIndex ? static_cast<int32>(IndexValue[0]) : INDEX_NONE;
+
+		// Legacy rule L3a (batch 2, every source): `UE.X(...)[k]` on a node with several outputs is its output k, in the
+		// catalog's order, which is the engine's.
+		if (ObjectType.IsNode())
+		{
+			if (!Catalog.Expressions.IsValidIndex(ObjectType.CatalogIndex))
+			{
+				return Fail(Expr);
+			}
+			const IR::FCatalogExpression& Class = Catalog.Expressions[ObjectType.CatalogIndex];
+			if (!bConstantIndex)
+			{
+				Diagnostics.Error(
+					TEXT("DSH5281"),
+					CurrentFile,
+					Expr.Index->Span,
+					LOCTEXT("NodeOutputIndexNotConstant", "An output is selected by a whole number the compiler knows, and this index is computed."));
+				return Fail(Expr);
+			}
+			if (const FBoundExpr* Call = FindCallOutputs(*Expr.Object))
+			{
+				if (Index < 0 || Index >= Call->CallOutputTypes.Num())
+				{
+					Diagnostics.Error(
+						TEXT("DSH5282"),
+						CurrentFile,
+						Expr.Index->Span,
+						FText::Format(
+							LOCTEXT("CustomCallOutputIndexRange", "This Custom node declares {0} output(s), counted from 0, and this selects output {1}."),
+							FText::AsNumber(Call->CallOutputTypes.Num()),
+							FText::AsNumber(Index)));
+					return Fail(Expr);
+				}
+
+				FBoundExpr Binding;
+				Binding.Kind = EBoundExprKind::NodeOutput;
+				Binding.FieldIndex = Index;
+				Binding.Index = ObjectType.CatalogIndex;
+				Binding.Type = Call->CallOutputTypes[Index];
+				return Emit(Expr, MoveTemp(Binding));
+			}
+			if (Index < 0 || Index >= Class.Outputs.Num())
+			{
+				Diagnostics.Error(
+					TEXT("DSH5282"),
+					CurrentFile,
+					Expr.Index->Span,
+					FText::Format(
+						LOCTEXT("NodeOutputIndexRange", "'{0}.{1}' has {2} output(s), counted from 0, and this selects output {3}."),
+						FText::FromString(Class.Namespace),
+						FText::FromString(Class.ShortName),
+						FText::AsNumber(Class.Outputs.Num()),
+						FText::AsNumber(Index)));
+				return Fail(Expr);
+			}
+
+			FBoundExpr Binding;
+			Binding.Kind = EBoundExprKind::NodeOutput;
+			Binding.FieldIndex = Index;
+			Binding.Index = ObjectType.CatalogIndex;
+			Binding.Type = TypeOfSelectedNodeOutput(Class, Index, Expected);
+			return Emit(Expr, MoveTemp(Binding));
+		}
 
 		const int32 ArrayCount = GetArrayCount(*Expr.Object);
 		if (ArrayCount > 0)
@@ -1389,7 +1754,7 @@ namespace UE::DreamShader::Lang::Private
 				? &Catalog.Expressions[From.CatalogIndex]
 				: nullptr;
 
-			const IR::FIRType Default = ResolveNodeDefault(From);
+			const IR::FIRType Default = ResolveNodeDefaultOf(Operand);
 			bool bFits = !Default.IsNode() && Default == To;
 
 			int32 ViewWidth = 0;
@@ -1406,6 +1771,34 @@ namespace UE::DreamShader::Lang::Private
 			{
 				SetConversion(Operand, IR::EIRConversion::DefaultOutput);
 				return IR::EIRConversion::DefaultOutput;
+			}
+
+			// Legacy rule L3c: 1.x read a node with several outputs as its FIRST one wherever a value was wanted
+			// (`float2 vp = UE.ScreenPosition();`), and never asked how wide that output was. Taken where the catalog
+			// does not know the width either (a Numeric output, which is what the engine says for every unmasked one):
+			// the declared type of what it feeds is then the only width there is, as for a single-output node. An
+			// output the catalog does type keeps the exact-fit rule above.
+			if (IsLegacyScope() && Class != nullptr && Class->Outputs.Num() > 1 && To.IsNumeric() && To.Cols == 1)
+			{
+				bool bAnyWidth = false;
+				IR::TypeFromCatalogValueType(Class->Outputs[0].Type, &bAnyWidth);
+				if (bAnyWidth)
+				{
+					Diagnostics.Info(
+						TEXT("DSH5287"),
+						CurrentFile,
+						Operand.Span,
+						FText::Format(
+							LOCTEXT("LegacyDefaultOutput", "'{0}' has more than one output and is read as its first, '{1}', which is what 1.x did; a '.dss' names the output."),
+							DescribeType(From),
+							FText::FromString(Class->Outputs[0].Name)));
+					if (FBoundExpr* OperandBinding = Bound.Expressions.Find(&Operand))
+					{
+						OperandBinding->bLegacyDefaultOutput = true;
+					}
+					SetConversion(Operand, IR::EIRConversion::DefaultOutput);
+					return IR::EIRConversion::DefaultOutput;
+				}
 			}
 
 			const FString OutputNames = Class != nullptr ? QuoteNodeOutputNames(*Class) : FString();
@@ -1436,6 +1829,41 @@ namespace UE::DreamShader::Lang::Private
 		if (Conversion == IR::EIRConversion::None && To.IsBool() && From.IsNumeric() && From.Cols == 1 && From.Rows == To.Rows)
 		{
 			Conversion = IR::EIRConversion::Numeric;
+		}
+
+		// A pin's width is the engine's word for "up to this many": VertexInterpolator says float4 and interpolates a float3
+		// as it is, and the IR builder hands a narrower vector to a typed pin untouched (CoerceToWidth). The binder agrees,
+		// in both languages: what a node does with fewer components than it could take is the node's business.
+		if (Conversion == IR::EIRConversion::None && Site == EConversionSite::Pin
+			&& From.IsNumeric() && To.IsNumeric() && From.Cols == 1 && To.Cols == 1 && From.Rows > 1 && From.Rows < To.Rows)
+		{
+			Conversion = IR::EIRConversion::Identity;
+		}
+
+		// Legacy rule L22: 1.x cut a value down to the place it went (CoerceValueToType: more components than expected is
+		// the leading swizzle), for an initializer, an assignment, an argument and a pin alike, and real sources lean on
+		// it (`float Depth = UE.CameraPositionWS();`, a float4 colour into a float3 parameter). A `.dss` writes the
+		// swizzle, which is what the migrator does with this.
+		if (Conversion == IR::EIRConversion::None && IsLegacyScope() && !bConvertingIntoMaterialOutput
+			&& From.IsNumeric() && To.IsNumeric() && From.Cols == 1 && To.Cols == 1 && From.Rows > To.Rows && To.Rows >= 1)
+		{
+			Diagnostics.Info(
+				TEXT("DSH5289"),
+				CurrentFile,
+				Operand.Span,
+				FText::Format(
+					LOCTEXT("LegacyTruncation", "{0} expects {1}, and this is {2}: its leading components are taken, which is what 1.x did; a '.dss' writes the swizzle."),
+					What,
+					DescribeType(To),
+					DescribeType(From)));
+			if (FBoundExpr* OperandBinding = Bound.Expressions.Find(&Operand))
+			{
+				OperandBinding->LegacyTruncateWidth = To.Rows;
+			}
+			// A node's pin is the one place where 1.x fitted nothing: it connected what was written, and the engine took
+			// the components the pin uses. The frozen graphs have no mask there, so none is made (Identity); the width is
+			// still recorded, because a `.dss` has to write the swizzle 2.0 asks for.
+			Conversion = Site == EConversionSite::Pin ? IR::EIRConversion::Identity : IR::EIRConversion::Truncate;
 		}
 
 		if (Conversion == IR::EIRConversion::None)
@@ -1533,7 +1961,7 @@ namespace UE::DreamShader::Lang::Private
 		{
 			// A node standing in for a value is widened to its default output here too, so the width
 			// and kind fold sees the real type; Convert() records the DefaultOutput step.
-			const IR::FIRType Type = ResolveNodeDefault(Operand ? TypeOf(*Operand) : IR::FIRType::Error());
+			const IR::FIRType Type = Operand ? ResolveNodeDefaultOf(*Operand) : IR::FIRType::Error();
 			if (Type.IsError())
 			{
 				bAnyError = true;
@@ -1563,6 +1991,19 @@ namespace UE::DreamShader::Lang::Private
 
 		if (bAnyError)
 		{
+			return Binding;
+		}
+
+		// The graph has no integer divide: `int(7) / int(2)` would build a float Divide and come out 3.5 where HLSL
+		// says 3. 1.x refused it (DSH4063) rather than emit the wrong number, and so does this front end, for every
+		// source. One float operand makes it a float division, which is what the graph has.
+		if (Info.Op == IR::EIROp::Divide && (Kind == IR::EIRTypeKind::Int || Kind == IR::EIRTypeKind::UInt))
+		{
+			Diagnostics.Error(
+				TEXT("DSH4243"),
+				CurrentFile,
+				Span,
+				LOCTEXT("IntegerDivide", "Both sides of this '/' are integers, and the material graph has no integer division; write 'float(a) / b' for the fraction, or 'floor(float(a) / b)' for the whole part."));
 			return Binding;
 		}
 
@@ -1806,8 +2247,45 @@ namespace UE::DreamShader::Lang::Private
 			return Fail(Expr);
 		}
 
+		// Legacy rule L26: `VAcc = 0.0;` with no declaration anywhere. 1.x had one table of values by name, and an
+		// assignment to a name it did not hold put it there, as wide as the value. The name becomes a local of the value's
+		// type here, and the migrator writes the declaration.
+		bool bValueBound = false;
+		if (IsLegacyScope() && Expr.Op == EAssignOp::Assign && CurrentFunction != nullptr)
+		{
+			const FIdentifierExpr* Name = Expr.Target->As<FIdentifierExpr>();
+			if (Name != nullptr
+				&& FindLocal(Name->Name) == INDEX_NONE
+				&& FindParam(Name->Name) == INDEX_NONE
+				&& FindGlobal(Name->Name) == INDEX_NONE
+				&& !HasDeclarationIgnoringCase(Name->Name))
+			{
+				IR::FIRType ValueType = BindExpr(*Expr.Value);
+				bValueBound = true;
+				if (ValueType.IsNode())
+				{
+					ValueType = ResolveNodeDefaultOf(*Expr.Value);
+				}
+				if (!ValueType.IsError() && !ValueType.IsNode() && !ValueType.IsVoid())
+				{
+					DeclareLocal(Name->Name, ValueType, nullptr, 0, Name->Span);
+					Diagnostics.Info(
+						TEXT("DSH5292"),
+						CurrentFile,
+						Name->Span,
+						FText::Format(
+							LOCTEXT("LegacyImplicitLocal", "'{0}' is not declared, and as in 1.x this assignment declares it, as a local of type {1}."),
+							FText::FromString(Name->Name),
+							DescribeType(ValueType)));
+				}
+			}
+		}
+
 		const IR::FIRType TargetType = BindExpr(*Expr.Target);
-		BindExpr(*Expr.Value);
+		if (!bValueBound)
+		{
+			BindExpr(*Expr.Value);
+		}
 
 		if (!TargetType.IsError() && !IsLValue(*Expr.Target))
 		{
@@ -1871,7 +2349,21 @@ namespace UE::DreamShader::Lang::Private
 			CoreOp = Info->Op;
 		}
 
-		Convert(*Expr.Value, TargetType, EConversionSite::Assignment, LOCTEXT("AssignmentTarget", "This assignment"));
+		{
+			// `Base.Opacity = c4;` in the entry: the one place 1.x refused to narrow (see bConvertingIntoMaterialOutput).
+			bool bIntoMaterialOutput = false;
+			if (CurrentFunction != nullptr && CurrentFunction->Kind == EBoundFunctionKind::Entry)
+			{
+				const FMemberExpr* Member = Expr.Target->As<FMemberExpr>();
+				const FBoundExpr* Object = (Member && Member->Object) ? Lookup(*Member->Object) : nullptr;
+				const FBoundExpr* TargetBinding = Lookup(*Expr.Target);
+				bIntoMaterialOutput = TargetBinding != nullptr && TargetBinding->Kind == EBoundExprKind::MaterialField
+					&& Object != nullptr && Object->Kind == EBoundExprKind::Param
+					&& Object->Index == (CurrentFunction->MaterialResultParam != INDEX_NONE ? CurrentFunction->MaterialResultParam : 0);
+			}
+			TGuardValue<bool> Guard(bConvertingIntoMaterialOutput, bIntoMaterialOutput);
+			Convert(*Expr.Value, TargetType, EConversionSite::Assignment, LOCTEXT("AssignmentTarget", "This assignment"));
+		}
 
 		RecordLocalWrite(Expr, *Expr.Target);
 
@@ -1891,8 +2383,10 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		const IR::FIRType ConditionType = BindExpr(*Expr.Condition);
-		const IR::FIRType TrueType = ResolveNodeDefault(BindExpr(*Expr.TrueValue));
-		const IR::FIRType FalseType = ResolveNodeDefault(BindExpr(*Expr.FalseValue));
+		BindExpr(*Expr.TrueValue);
+		BindExpr(*Expr.FalseValue);
+		const IR::FIRType TrueType = ResolveNodeDefaultOf(*Expr.TrueValue);
+		const IR::FIRType FalseType = ResolveNodeDefaultOf(*Expr.FalseValue);
 
 		if (!ConditionType.IsError() && !IsConditionType(ConditionType))
 		{
@@ -2297,6 +2791,41 @@ namespace UE::DreamShader::Lang::Private
 			return Fail(Expr);
 		}
 
+		// `Pin[i] = x` connects a node's input pin by its engine index, and only a reflected `UE.` / `Substrate.` node call
+		// has engine inputs; BindReflectedCall binds it in every file kind. Every other callee would read the argument as a
+		// positional one, so it is refused here, before the call is bound.
+		{
+			const FMemberExpr* const ReflectedMember = Callee->As<FMemberExpr>();
+			FString ReflectedNamespace;
+			const bool bReflectedCall = ReflectedMember && ReflectedMember->Object && IsNamespaceRoot(*ReflectedMember->Object, ReflectedNamespace);
+			bool bRefusedPinArgument = false;
+			for (const FArgument& Argument : Expr.Arguments)
+			{
+				if (!bReflectedCall && Argument.PinIndex != INDEX_NONE)
+				{
+					Diagnostics.Error(
+						TEXT("DSH5286"),
+						CurrentFile,
+						Argument.Span,
+						FText::Format(
+							LOCTEXT("PinArgumentNotReflectedCall", "'Pin[{0}] = ...' connects a node's input pin by its engine index, and only a 'UE.' or 'Substrate.' node call has one; pass this argument by name or by position."),
+							FText::AsNumber(Argument.PinIndex)));
+					bRefusedPinArgument = true;
+				}
+			}
+			if (bRefusedPinArgument)
+			{
+				for (const FArgument& Argument : Expr.Arguments)
+				{
+					if (Argument.Value)
+					{
+						BindExpr(*Argument.Value);
+					}
+				}
+				return Fail(Expr);
+			}
+		}
+
 		// A constructor: `float3(...)`, and `ToonInputs(...)` once the type resolves to a struct.
 		if (const FTypeExpr* TypeCallee = Callee->As<FTypeExpr>())
 		{
@@ -2366,6 +2895,20 @@ namespace UE::DreamShader::Lang::Private
 
 			if (const IR::FIRCoreOpInfo* Alias = IR::FindCoreOpByGlslAlias(Name))
 			{
+				if (IsLegacyScope())
+				{
+					// Legacy rule L2: a 1.x source may keep the GLSL spelling; it is the op, said out loud.
+					Diagnostics.Warning(
+						TEXT("DSH5277"),
+						CurrentFile,
+						Identifier->Span,
+						FText::Format(
+							LOCTEXT("LegacyGlslAlias", "'{0}' is the GLSL spelling of '{1}'; a 1.x source may use it and it is read as '{1}', and a '.dss' writes '{1}'."),
+							FText::FromString(Name),
+							FText::FromString(Alias->HlslName ? Alias->HlslName : TEXT(""))));
+					return BindCoreOpCall(Expr, *Alias);
+				}
+
 				// 1.x rewrote `mix` to `lerp` behind the author's back; 2.0 names the HLSL spelling
 				// and refuses, because a silent rewrite is exactly the class of mistake this front
 				// end exists to stop.
@@ -2397,6 +2940,24 @@ namespace UE::DreamShader::Lang::Private
 			if (StructIndex != INDEX_NONE)
 			{
 				return BindStructConstructor(Expr, StructIndex);
+			}
+
+			// Legacy rule L19: 1.x called builtins and functions ignoring case.
+			if (IsLegacyScope())
+			{
+				bool bIsGlslAlias = false;
+				if (const IR::FIRCoreOpInfo* LooseOp = FindCoreOpIgnoringCase(Name, bIsGlslAlias))
+				{
+					const TCHAR* const Spelling = bIsGlslAlias ? LooseOp->GlslAlias : LooseOp->HlslName;
+					ReportLegacyCaseFallback(Name, Spelling ? FString(Spelling) : FString(), Identifier->Span);
+					return BindCoreOpCall(Expr, *LooseOp);
+				}
+				const int32 LooseFunction = FindFunctionIgnoringCaseUniquely(Name);
+				if (LooseFunction != INDEX_NONE)
+				{
+					ReportLegacyCaseFallback(Name, Bound.Functions[LooseFunction].Name, Identifier->Span);
+					return BindUserFunctionCall(Expr, LooseFunction, bStatement);
+				}
 			}
 
 			for (const FArgument& Argument : Expr.Arguments)
@@ -2872,7 +3433,7 @@ namespace UE::DreamShader::Lang::Private
 		return Emit(Expr, MoveTemp(Binding));
 	}
 
-	IR::FIRType FLangBinder::BindUserFunctionCall(const FCallExpr& Expr, int32 FunctionIndex, bool bStatement)
+	IR::FIRType FLangBinder::BindUserFunctionCall(const FCallExpr& Expr, int32 FunctionIndex, bool bStatement, bool bSelection)
 	{
 		const FBoundFunction& Function = Bound.Functions[FunctionIndex];
 
@@ -2902,10 +3463,77 @@ namespace UE::DreamShader::Lang::Private
 		// a call that fails to type is still a call.
 		CurrentCallees.Add(FunctionIndex);
 
+		// Batch 2, the legacy call rules (research-legacy sections 2.8.5 and 3.7). In a 1.x body a call to an Extern,
+		// ExportFunction or Custom function reads the way 1.x read it:
+		//   - a value call passes inputs only and is the function's output 0 (L3b), so its out arguments may be
+		//     absent -- as they may under a selector, `F(args).Out` / `F(args)[k]` (bSelection);
+		//   - a positional statement call passes its receivers last, one per output with the return value first
+		//     (L5), and a receiver nobody declared becomes a local of that output's type.
+		const bool bLegacyScope = IsLegacyScope();
+		const bool bLegacyCall = bLegacyScope && IsSelectableLegacyKind(Function.Kind);
+		const bool bAbsentOutsAllowed = bSelection || (bLegacyCall && !bStatement);
+
+		TArray<FString> LegacyOutputNames;
+		TArray<FString> LegacyPinNames;
+		TArray<IR::FIRType> LegacyOutputTypes;
+		if (bLegacyCall)
+		{
+			CollectLegacyOutputs(Function, LegacyOutputNames, LegacyPinNames, LegacyOutputTypes);
+		}
+
+		int32 InParamCount = 0;
+		for (const FBoundParam& Param : Function.Params)
+		{
+			InParamCount += Param.Direction == EParamDirection::In ? 1 : 0;
+		}
+
+		// The argument the trailing receivers start at; INDEX_NONE reads the call the 2.0 way.
+		int32 FirstReceiver = INDEX_NONE;
+		if (bLegacyCall && bStatement && !bSelection && !Expr.HasNamedArguments()
+			&& LegacyOutputNames.Num() > 0
+			&& Expr.Arguments.Num() >= LegacyOutputNames.Num()
+			&& Expr.Arguments.Num() - LegacyOutputNames.Num() <= InParamCount)
+		{
+			FirstReceiver = Expr.Arguments.Num() - LegacyOutputNames.Num();
+		}
+
+		// The Ordinal-th input (or output) parameter, in declaration order.
+		const auto NthParam = [&Function](const int32 Ordinal, const bool bInput) -> int32
+		{
+			int32 Seen = 0;
+			for (int32 Param = 0; Param < Function.Params.Num(); ++Param)
+			{
+				if ((Function.Params[Param].Direction == EParamDirection::In) != bInput)
+				{
+					continue;
+				}
+				if (Seen++ == Ordinal)
+				{
+					return Param;
+				}
+			}
+			return INDEX_NONE;
+		};
+
 		TArray<const FExpr*> Matched;
 		TArray<int32> ArgumentOfParam;
 		Matched.Init(nullptr, Function.Params.Num());
 		ArgumentOfParam.Init(INDEX_NONE, Function.Params.Num());
+
+		// Legacy rule L25: `F(a, default, c)`. The 1.x decompiler wrote `default` for an input nothing was connected to,
+		// and 1.x left that input unconnected. It holds a place in the argument list and is nothing else: no value is
+		// bound for it, and the parameter counts as left out on purpose, whether or not it has a default of its own.
+		TArray<bool> LeftToDefault;
+		LeftToDefault.Init(false, Function.Params.Num());
+		const auto IsDefaultPlaceholder = [this, bLegacyScope](const FArgument& Argument)
+		{
+			const FIdentifierExpr* Word = (bLegacyScope && Argument.Value) ? Argument.Value->As<FIdentifierExpr>() : nullptr;
+			return Word != nullptr && Word->Name.Equals(TEXT("default"), ESearchCase::CaseSensitive) && !IsNameDeclared(Word->Name);
+		};
+
+		// L5: the argument that receives the return value of a legacy statement call.
+		const FExpr* ResultReceiver = nullptr;
+		int32 ResultReceiverArgument = INDEX_NONE;
 
 		int32 NextParam = 0;
 		bool bAnyError = false;
@@ -2920,7 +3548,34 @@ namespace UE::DreamShader::Lang::Private
 			}
 
 			int32 ParamIndex = INDEX_NONE;
-			if (Argument.Name.IsEmpty())
+			if (FirstReceiver != INDEX_NONE)
+			{
+				if (Index < FirstReceiver)
+				{
+					ParamIndex = NthParam(Index, /* bInput */ true);
+				}
+				else
+				{
+					const int32 Ordinal = Index - FirstReceiver;
+					if (!Function.ReturnType.IsVoid() && Ordinal == 0)
+					{
+						DeclareLegacyImplicitOutLocal(*Argument.Value, Function.ReturnType, TEXT("Result"), Function.Name);
+						BindExpr(*Argument.Value, &Function.ReturnType);
+						ResultReceiver = Argument.Value.Get();
+						ResultReceiverArgument = Index;
+						continue;
+					}
+					ParamIndex = NthParam(Function.ReturnType.IsVoid() ? Ordinal : Ordinal - 1, /* bInput */ false);
+				}
+				if (!Function.Params.IsValidIndex(ParamIndex))
+				{
+					// Not reachable through the counts above; bound anyway, so nothing under it goes unbound.
+					BindExpr(*Argument.Value);
+					bAnyError = true;
+					continue;
+				}
+			}
+			else if (Argument.Name.IsEmpty())
 			{
 				ParamIndex = NextParam++;
 				if (!Function.Params.IsValidIndex(ParamIndex))
@@ -2946,6 +3601,25 @@ namespace UE::DreamShader::Lang::Private
 					{
 						ParamIndex = Param;
 						break;
+					}
+				}
+				if (ParamIndex == INDEX_NONE && bLegacyScope)
+				{
+					// Legacy rule L19: 1.x matched argument names ignoring case.
+					int32 Loose = INDEX_NONE;
+					bool bAmbiguous = false;
+					for (int32 Param = 0; Param < Function.Params.Num(); ++Param)
+					{
+						if (Function.Params[Param].Name.Equals(Argument.Name, ESearchCase::IgnoreCase))
+						{
+							bAmbiguous = bAmbiguous || Loose != INDEX_NONE;
+							Loose = Param;
+						}
+					}
+					if (Loose != INDEX_NONE && !bAmbiguous)
+					{
+						ReportLegacyCaseFallback(Argument.Name, Function.Params[Loose].Name, Argument.NameSpan);
+						ParamIndex = Loose;
 					}
 				}
 				if (ParamIndex == INDEX_NONE)
@@ -2993,9 +3667,28 @@ namespace UE::DreamShader::Lang::Private
 				continue;
 			}
 
+			if (Function.Params[ParamIndex].Direction == EParamDirection::In && IsDefaultPlaceholder(Argument))
+			{
+				LeftToDefault[ParamIndex] = true;
+				continue;
+			}
+
+			if (bLegacyScope && bStatement && Function.Params[ParamIndex].Direction != EParamDirection::In)
+			{
+				// Legacy rule L5: a 1.x out target needs no declaration.
+				DeclareLegacyImplicitOutLocal(*Argument.Value, Function.Params[ParamIndex].Type, Function.Params[ParamIndex].Name, Function.Name);
+			}
+
 			BindExpr(*Argument.Value, &Function.Params[ParamIndex].Type);
 			Matched[ParamIndex] = Argument.Value.Get();
 			ArgumentOfParam[ParamIndex] = Index;
+		}
+
+		// Legacy rule L8 (every source): the names the calls lifted out of the callee's body could not see, judged
+		// here, where the caller is known.
+		if (Function.Decl && Function.Decl->HoistedCalls.Num() > 0)
+		{
+			CheckHoistedCallNamesAtCallSite(Expr, FunctionIndex);
 		}
 
 		FBoundExpr Binding;
@@ -3010,7 +3703,9 @@ namespace UE::DreamShader::Lang::Private
 
 			if (!Value)
 			{
-				if (!Param.bOptional)
+				// L3b: a legacy value call and a selected call leave the outputs they do not read unconnected.
+				const bool bAbsentOut = bAbsentOutsAllowed && Param.Direction == EParamDirection::Out;
+				if (!Param.bOptional && !bAbsentOut && !LeftToDefault[ParamIndex])
 				{
 					Diagnostics.Error(
 						TEXT("DSH4217"),
@@ -3061,9 +3756,17 @@ namespace UE::DreamShader::Lang::Private
 				// variable, and an unrolled count taken from the step alone would be wrong.
 				RecordLocalWrite(Expr, *Value);
 
-				// ...and exactly the parameter's type: a conversion has nowhere to live on the way back.
+				// ...and exactly the parameter's type: a conversion has nowhere to live on the way back. A 1.x source is the
+				// exception (legacy rule L22): its generator fitted what came back to the variable that received it, the
+				// leading components of a wider output or a scalar spread over a vector, and real sources receive a
+				// float4 output in a float3 (`MF_DreamWindSample(P, Velocity, ...)`). The IR builder does the same.
 				const IR::FIRType ValueType = TypeOf(*Value);
-				if (!ValueType.IsError() && !Param.Type.IsError() && ValueType != Param.Type)
+				const auto IsLegacyFit = [this](const IR::FIRType& From, const IR::FIRType& To)
+				{
+					return IsLegacyScope() && From.IsNumeric() && To.IsNumeric() && From.Cols == 1 && To.Cols == 1
+						&& (From.Rows == To.Rows || From.Rows > To.Rows || From.Rows == 1);
+				};
+				if (!ValueType.IsError() && !Param.Type.IsError() && ValueType != Param.Type && !IsLegacyFit(Param.Type, ValueType))
 				{
 					Diagnostics.Error(
 						TEXT("DSH4218"),
@@ -3081,21 +3784,73 @@ namespace UE::DreamShader::Lang::Private
 			Binding.Args.Add(MoveTemp(Argument));
 		}
 
+		if (ResultReceiver)
+		{
+			// L5: the receiver of the return value is written back like an `out` argument, and has to be one.
+			FBoundArgument Receiver;
+			Receiver.ArgumentIndex = ResultReceiverArgument;
+			Receiver.Target = TEXT("Result");
+			// One past the parameters: the IR builder's mark for "the return value is stored here".
+			Receiver.TargetIndex = Function.Params.Num();
+
+			if (!IsLValue(*ResultReceiver))
+			{
+				Diagnostics.Error(
+					TEXT("DSH4239"),
+					CurrentFile,
+					ResultReceiver->Span,
+					FText::Format(
+						LOCTEXT("ResultReceiverNotLValue", "'{0}' hands its return value to the argument in this place, so the argument has to be a variable."),
+						FText::FromString(Function.Name)));
+				bAnyError = true;
+			}
+			else
+			{
+				RecordLocalWrite(Expr, *ResultReceiver);
+				const IR::FIRType ReceiverType = TypeOf(*ResultReceiver);
+				const bool bLegacyFit = IsLegacyScope() && ReceiverType.IsNumeric() && Function.ReturnType.IsNumeric()
+					&& ReceiverType.Cols == 1 && Function.ReturnType.Cols == 1
+					&& (Function.ReturnType.Rows >= ReceiverType.Rows || Function.ReturnType.Rows == 1);
+				if (!ReceiverType.IsError() && !Function.ReturnType.IsError() && ReceiverType != Function.ReturnType && !bLegacyFit)
+				{
+					Diagnostics.Error(
+						TEXT("DSH4218"),
+						CurrentFile,
+						ResultReceiver->Span,
+						FText::Format(
+							LOCTEXT("ResultReceiverType", "'{0}' returns {1}, and the variable receiving it is {2}; a receiver has to match exactly."),
+							FText::FromString(Function.Name),
+							DescribeType(Function.ReturnType),
+							DescribeType(ReceiverType)));
+					bAnyError = true;
+				}
+			}
+			Binding.Args.Add(MoveTemp(Receiver));
+		}
+
 		if (bAnyError)
 		{
 			return Fail(Expr);
 		}
 
-		if (Function.ReturnType.IsVoid() && !bStatement)
+		if (Function.ReturnType.IsVoid() && !bStatement && !bSelection)
 		{
-			Diagnostics.Error(
-				TEXT("DSH4238"),
-				CurrentFile,
-				Expr.Span,
-				FText::Format(
-					LOCTEXT("VoidCallAsValue", "'{0}' returns nothing, so its call has no value; its results come back through its out parameters."),
-					FText::FromString(Function.Name)));
-			return Fail(Expr);
+			if (bLegacyCall && LegacyOutputTypes.Num() > 0)
+			{
+				// L3b: a 1.x value call is the function's output 0, here its first out parameter.
+				Binding.Type = LegacyOutputTypes[0];
+			}
+			else
+			{
+				Diagnostics.Error(
+					TEXT("DSH4238"),
+					CurrentFile,
+					Expr.Span,
+					FText::Format(
+						LOCTEXT("VoidCallAsValue", "'{0}' returns nothing, so its call has no value; its results come back through its out parameters."),
+						FText::FromString(Function.Name)));
+				return Fail(Expr);
+			}
 		}
 
 		return Emit(Expr, MoveTemp(Binding));
@@ -3156,6 +3911,21 @@ namespace UE::DreamShader::Lang::Private
 						bFound = true;
 						break;
 					}
+				}
+				FString LegacyEnumerator;
+				if (!bFound && IsLegacyScope() && TryMatchLegacyEnumerator(Spelling, Property, LegacyEnumerator))
+				{
+					// Legacy rule L12: 1.x matched enumerators loosely. The IR builder writes the catalog's spelling.
+					Diagnostics.Warning(
+						TEXT("DSH5278"),
+						CurrentFile,
+						Value->Span,
+						FText::Format(
+							LOCTEXT("LegacyEnumerator", "'{0}' is not spelled like a value of '{1}', and 1.x matched enumerators loosely, so this is '{2}'; a '.dss' writes '{2}'."),
+							FText::FromString(Spelling),
+							FText::FromString(Property.Name),
+							FText::FromString(LegacyEnumerator)));
+					bFound = true;
 				}
 				if (!bFound)
 				{
@@ -3287,6 +4057,15 @@ namespace UE::DreamShader::Lang::Private
 			else
 			{
 				CatalogIndex = Catalog.FindExpressionByClass(ClassSpecifier);
+				if (CatalogIndex == INDEX_NONE && IsLegacyScope())
+				{
+					// Legacy rule L19: 1.x resolved expression classes ignoring case.
+					CatalogIndex = FindExpressionByClassIgnoringCaseUniquely(ClassSpecifier);
+					if (CatalogIndex != INDEX_NONE)
+					{
+						ReportLegacyCatalogCaseFallback(ClassSpecifier, Catalog.Expressions[CatalogIndex].ClassName, ClassArgument->Span);
+					}
+				}
 				if (CatalogIndex == INDEX_NONE)
 				{
 					Diagnostics.Error(
@@ -3311,6 +4090,15 @@ namespace UE::DreamShader::Lang::Private
 		else
 		{
 			CatalogIndex = Catalog.FindExpression(Namespace, Name);
+			if (CatalogIndex == INDEX_NONE && IsLegacyScope())
+			{
+				// Legacy rule L19: 1.x resolved node names ignoring case.
+				CatalogIndex = FindExpressionIgnoringCaseUniquely(Namespace, Name);
+				if (CatalogIndex != INDEX_NONE)
+				{
+					ReportLegacyCatalogCaseFallback(Name, Catalog.Expressions[CatalogIndex].ShortName, NameSpan);
+				}
+			}
 			if (CatalogIndex == INDEX_NONE)
 			{
 				const int32 Close = Catalog.FindExpressionIgnoreCase(Namespace, Name);
@@ -3374,10 +4162,15 @@ namespace UE::DreamShader::Lang::Private
 		InputBound.Init(false, Class.Inputs.Num());
 		// The widest value arriving on a pin that does not fix its width: a Numeric output follows it.
 		decltype(IR::FIRType::Rows) WidestAnyWidthArgument = 1;
+		// A pin the engine does not type takes what is not a number too: a StaticSwitch chooses between two Substrate
+		// slabs, or two whole materials, as readily as between two colours. What went in is what comes out.
+		IR::FIRType AnyWidthCarried = IR::FIRType::Error();
 		PropertyBound.Init(false, Class.Properties.Num());
 
 		int32 PositionalIndex = 0;
 		bool bAnyError = false;
+		// L4: the inputs a Custom class's call named, compared case-sensitively (HLSL declares them verbatim).
+		TArray<FString> DynamicInputNames;
 
 		for (int32 Index = 0; Index < Expr.Arguments.Num(); ++Index)
 		{
@@ -3404,7 +4197,32 @@ namespace UE::DreamShader::Lang::Private
 			}
 
 			FString Target = Argument.Name;
-			if (Target.IsEmpty())
+			if (Argument.PinIndex != INDEX_NONE)
+			{
+				// 1.x `Expression(Class = "...").Pin[i] = x` (batch 2): the input pin by the engine's index, which is the
+				// order the catalog lists a class's inputs in.
+				if (!Class.Inputs.IsValidIndex(Argument.PinIndex))
+				{
+					if (Argument.Value)
+					{
+						BindExpr(*Argument.Value);
+					}
+					Diagnostics.Error(
+						TEXT("DSH5285"),
+						CurrentFile,
+						Argument.Span,
+						FText::Format(
+							LOCTEXT("PinIndexOutOfRange", "'{0}.{1}' has {2} input pin(s), counted from 0, and this argument connects pin {3}."),
+							FText::FromString(Class.Namespace),
+							FText::FromString(Class.ShortName),
+							FText::AsNumber(Class.Inputs.Num()),
+							FText::AsNumber(Argument.PinIndex)));
+					bAnyError = true;
+					continue;
+				}
+				Target = Class.Inputs[Argument.PinIndex].Name;
+			}
+			if (Target.IsEmpty() && Argument.PinIndex == INDEX_NONE)
 			{
 				// Only the classes the catalog gives a canonical order take positional arguments;
 				// everything else is named-only, as all of them were in 1.x.
@@ -3447,7 +4265,26 @@ namespace UE::DreamShader::Lang::Private
 			}
 
 			// An input pin first, then a reflected literal property.
-			const int32 InputIndex = Class.FindInput(Target);
+			int32 InputIndex = Argument.PinIndex != INDEX_NONE ? Argument.PinIndex : Class.FindInput(Target);
+			int32 LoosePropertyIndex = INDEX_NONE;
+			if (InputIndex == INDEX_NONE && IsLegacyScope() && Class.FindProperty(Target) == INDEX_NONE)
+			{
+				// Legacy rule L19: 1.x matched pin and property names ignoring case.
+				const FLangSpan& TargetSpan = Argument.Name.IsEmpty() ? Argument.Span : Argument.NameSpan;
+				InputIndex = FindCatalogInputIgnoringCaseUniquely(Class, Target);
+				if (InputIndex != INDEX_NONE)
+				{
+					ReportLegacyCatalogCaseFallback(Target, Class.Inputs[InputIndex].Name, TargetSpan);
+				}
+				else
+				{
+					LoosePropertyIndex = FindCatalogPropertyIgnoringCaseUniquely(Class, Target);
+					if (LoosePropertyIndex != INDEX_NONE)
+					{
+						ReportLegacyCatalogCaseFallback(Target, Class.Properties[LoosePropertyIndex].Name, TargetSpan);
+					}
+				}
+			}
 			if (InputIndex != INDEX_NONE)
 			{
 				if (InputBound[InputIndex])
@@ -3480,11 +4317,20 @@ namespace UE::DreamShader::Lang::Private
 					Bound_.ArgumentIndex = Index;
 					Bound_.Target = Pin.Name;
 					Bound_.TargetIndex = InputIndex;
+					if (!Argument.Name.IsEmpty() && Argument.PinIndex == INDEX_NONE && !Argument.Name.Equals(Pin.Name, ESearchCase::IgnoreCase))
+					{
+						Bound_.WrittenTarget = Argument.Name;
+					}
 
 					if (bAnyWidth && ValueType.IsNumeric() && ValueType.Cols == 1)
 					{
 						// The pin does not constrain the width, so whatever arrives is what it gets.
 						Bound_.Conversion = IR::EIRConversion::Identity;
+					}
+					else if (bAnyWidth && (ValueType.IsMaterial() || ValueType.Kind == IR::EIRTypeKind::Substrate))
+					{
+						Bound_.Conversion = IR::EIRConversion::Identity;
+						AnyWidthCarried = ValueType;
 					}
 					else
 					{
@@ -3508,7 +4354,7 @@ namespace UE::DreamShader::Lang::Private
 				continue;
 			}
 
-			const int32 PropertyIndex = Class.FindProperty(Target);
+			const int32 PropertyIndex = LoosePropertyIndex != INDEX_NONE ? LoosePropertyIndex : Class.FindProperty(Target);
 			if (PropertyIndex != INDEX_NONE)
 			{
 				if (PropertyBound[PropertyIndex])
@@ -3540,9 +4386,114 @@ namespace UE::DreamShader::Lang::Private
 				continue;
 			}
 
+			// Legacy rule L4 (batch 2, every source): `UE.Expression(Class = "Custom", ...)` takes a named argument it has
+			// no pin or property for as an input of that name, which the emitter adds to the node's Inputs.
+			if (!Argument.Name.IsEmpty() && Class.ClassName.Equals(TEXT("MaterialExpressionCustom"), ESearchCase::CaseSensitive))
+			{
+				const bool bTwice = DynamicInputNames.ContainsByPredicate([&Target](const FString& Existing)
+				{
+					return Existing.Equals(Target, ESearchCase::CaseSensitive);
+				});
+				const IR::FIRType ValueType = Argument.Value ? BindExpr(*Argument.Value) : IR::FIRType::Error();
+				if (bTwice)
+				{
+					Diagnostics.Error(
+						TEXT("DSH4215"),
+						CurrentFile,
+						Argument.Span,
+						FText::Format(
+							LOCTEXT("DynamicInputTwice", "'{0}' is connected twice in this call."),
+							FText::FromString(Target)));
+					bAnyError = true;
+					continue;
+				}
+				DynamicInputNames.Add(Target);
+
+				FBoundArgument Dynamic;
+				Dynamic.ArgumentIndex = Index;
+				Dynamic.Target = Target;
+				if (ValueType.IsNode() && Argument.Value)
+				{
+					// A node with several outputs feeds its default one, as anywhere a single value is wanted.
+					Dynamic.Conversion = IR::EIRConversion::DefaultOutput;
+					SetConversion(*Argument.Value, IR::EIRConversion::DefaultOutput);
+				}
+				else if (!ValueType.IsError()
+					&& !ValueType.IsBool()
+					&& !ValueType.IsTexture()
+					&& !(ValueType.IsNumeric() && !ValueType.IsMatrix()))
+				{
+					Diagnostics.Error(
+						TEXT("DSH5284"),
+						CurrentFile,
+						Argument.Span,
+						FText::Format(
+							LOCTEXT("DynamicInputType", "'{0}' becomes an input of the custom node, which carries a number or a texture, and this argument is {1}."),
+							FText::FromString(Target),
+							DescribeType(ValueType)));
+					bAnyError = true;
+				}
+				Binding.Args.Add(MoveTemp(Dynamic));
+				continue;
+			}
+
+			// Legacy rule L21: a 1.x `Properties` default written for a parameter node whose class has no `DefaultValue`
+			// (`StaticComponentMaskParameter P = float4(1, 1, 0, 0)`). 1.x looked the property up, found none and went
+			// on; the front end cannot know the class, so the argument arrives here. It is left unbound -- the builder
+			// lowers bound arguments only, and the migrator drops it -- and said out loud, because the default is lost.
+			if (IsLegacyScope() && Argument.Name.Equals(TEXT("DefaultValue"), ESearchCase::IgnoreCase))
+			{
+				Diagnostics.Warning(
+					TEXT("DSH5288"),
+					CurrentFile,
+					Argument.NameSpan,
+					FText::Format(
+						LOCTEXT("LegacyDefaultDropped", "'{0}.{1}' has no 'DefaultValue', so the default written for this parameter is dropped, as 1.x dropped it."),
+						FText::FromString(Class.Namespace),
+						FText::FromString(Class.ShortName)));
+				continue;
+			}
+
+			IR::FIRType UnknownValueType = IR::FIRType::Error();
 			if (Argument.Value)
 			{
-				BindExpr(*Argument.Value);
+				UnknownValueType = BindExpr(*Argument.Value);
+			}
+
+			// Legacy rule L24: a pin the catalog has no name for. The catalog is read off each class's default object, and
+			// a node may name its pins by what its properties say (the engine fork's MoonToonModifier calls ChannelX
+			// `Intensity` once `Modifier = "OilFilm"`). 1.x looked a pin up on the node it had just built, properties
+			// applied, so such a name worked. A named argument that carries a graph value is taken as that: the node
+			// gets an input of the written name, and the emitter connects it on the live node or says it has none (DSH8212).
+			const bool bGraphValue = (UnknownValueType.IsNumeric() && !UnknownValueType.IsMatrix())
+				|| UnknownValueType.IsTexture() || UnknownValueType.IsMaterial() || UnknownValueType.IsNode()
+				|| UnknownValueType.Kind == IR::EIRTypeKind::Substrate;
+			// In a `.dss` too, for a class the catalog knows to name its pins per node: there the name is the only one
+			// the author can read off the node, and a name no node shows is still refused, by the emitter.
+			if ((IsLegacyScope() || Class.bHasInstanceDependentPins) && !Argument.Name.IsEmpty() && bGraphValue)
+			{
+				Diagnostics.Info(
+					TEXT("DSH5291"),
+					CurrentFile,
+					Argument.NameSpan,
+					FText::Format(
+						LOCTEXT("LegacyLateBoundPin", "'{0}.{1}' lists no pin called '{2}'; it is connected by that name once the node exists, because a node may name its pins after its properties."),
+						FText::FromString(Class.Namespace),
+						FText::FromString(Class.ShortName),
+						FText::FromString(Target)));
+
+				FBoundArgument Late;
+				Late.ArgumentIndex = Index;
+				Late.Target = Target;
+				Late.bIsProperty = false;
+				Late.TargetIndex = INDEX_NONE;
+				if (UnknownValueType.IsNode())
+				{
+					Late.Conversion = IR::EIRConversion::DefaultOutput;
+					SetConversion(*Argument.Value, IR::EIRConversion::DefaultOutput);
+				}
+				Binding.Args.Add(MoveTemp(Late));
+				continue;
 			}
 
 			// The 1.x spellings are candidates too, so a near miss on an alias still gets named.
@@ -3599,28 +4550,46 @@ namespace UE::DreamShader::Lang::Private
 				continue;
 			}
 
-			Diagnostics.Error(
+			if (IsLegacyScope())
+			{
+				// Legacy rule L13: 1.x never checked a required pin, so a 1.x source is told and goes on.
+				Diagnostics.Warning(
+					TEXT("DSH5279"),
+					CurrentFile,
+					Expr.Span,
+					FText::Format(
+						LOCTEXT("LegacyRequiredPin", "'{0}.{1}' leaves its required '{2}' pin unconnected, which 1.x allowed and the engine reports when the material compiles."),
+						FText::FromString(Class.Namespace),
+						FText::FromString(Class.ShortName),
+						FText::FromString(Pin.Name)));
+				continue;
+			}
+
+			// A warning, not an error. "Required" is the engine's word for how a pin is drawn: no `RequiredInput =
+			// "false"` on the property. Most nodes do fail to compile with such a pin open, and some read a default
+			// instead (MakeMaterialAttributes, and nodes of an engine fork that never set the metadata) -- a source
+			// that leaves one open on purpose has no other way to say so, and the engine is the one that knows.
+			Diagnostics.Warning(
 				TEXT("DSH5219"),
 				CurrentFile,
 				Expr.Span,
 				Pin.ConstPropertyName.IsEmpty()
 					? FText::Format(
-						LOCTEXT("RequiredPin", "'{0}.{1}' needs its '{2}' pin connected."),
+						LOCTEXT("RequiredPin", "'{0}.{1}' leaves its required '{2}' pin unconnected; unless the node reads a default for it, the engine reports it when the material compiles."),
 						FText::FromString(Class.Namespace),
 						FText::FromString(Class.ShortName),
 						FText::FromString(Pin.Name))
 					: FText::Format(
-						LOCTEXT("RequiredPinOrConst", "'{0}.{1}' needs its '{2}' pin connected, or '{3}' set to a literal."),
+						LOCTEXT("RequiredPinOrConst", "'{0}.{1}' leaves its required '{2}' pin unconnected and '{3}' unset; unless the node reads a default for it, the engine reports it when the material compiles."),
 						FText::FromString(Class.Namespace),
 						FText::FromString(Class.ShortName),
 						FText::FromString(Pin.Name),
 						FText::FromString(Pin.ConstPropertyName)));
-			bAnyError = true;
 		}
 
-		// A custom-output class is a statement, and a class with no output is one too: there is
-		// nothing to read back either way.
-		const bool bValueless = Class.bIsCustomOutput || Class.Outputs.Num() == 0;
+		// A class with no output is a statement: there is nothing to read back. Most custom-output classes are that;
+		// VertexInterpolator is one too and hands its value on through an output, so it is a value like any other node.
+		const bool bValueless = Class.Outputs.Num() == 0;
 		if (bValueless)
 		{
 			if (!bStatement)
@@ -3637,6 +4606,14 @@ namespace UE::DreamShader::Lang::Private
 			}
 			Binding.Type = IR::FIRType::Void();
 		}
+		else if (Class.ClassName.Equals(TEXT("MaterialExpressionCustom"), ESearchCase::CaseSensitive))
+		{
+			// Rule L4, the output side: the class has one output of the engine's default type, and a CALL says what its
+			// node really publishes -- `OutputType` for the value it returns, `AdditionalOutputs` for the rest. One
+			// output is a plain value of that type; several make the call a node whose outputs are selected by name.
+			CollectCustomClassOutputs(Expr, Class, Binding);
+			Binding.Type = Binding.CallOutputTypes.Num() > 1 ? IR::FIRType::Node(CatalogIndex) : Binding.CallOutputTypes[0];
+		}
 		else if (Class.Outputs.Num() > 1)
 		{
 			Binding.Type = IR::FIRType::Node(CatalogIndex);
@@ -3645,7 +4622,12 @@ namespace UE::DreamShader::Lang::Private
 		{
 			bool bAnyWidth = false;
 			IR::FIRType OutputType = IR::TypeFromCatalogValueType(Class.Outputs[0].Type, &bAnyWidth);
-			if (bAnyWidth && WidestAnyWidthArgument > 1)
+			if (bAnyWidth && !AnyWidthCarried.IsError())
+			{
+				// A switch between two Substrate slabs is a Substrate slab.
+				OutputType = AnyWidthCarried;
+			}
+			else if (bAnyWidth && WidestAnyWidthArgument > 1)
 			{
 				// A Numeric output follows its inputs (CONTRACT #43): lerp(float3, 0, a) is a float3 whatever
 				// it is written into, and a use that wants another width converts from there.
@@ -3656,6 +4638,22 @@ namespace UE::DreamShader::Lang::Private
 				// No input is wider than a scalar, so the declared type of whatever it feeds is the best
 				// answer there is. A catalog that spells the width wins over this.
 				OutputType = MakeNumeric(IR::EIRTypeKind::Float, Expected->Rows);
+			}
+
+			// A 1.x call that said `OutputType = "float"`: 1.x had no catalog, typed the value by that word and wired the
+			// node as it was. `float Cam = UE.Expression(Class="CameraPositionWS", OutputType="float")` followed by
+			// `WorldPosition - Cam` subtracts the whole camera position in the 1.x graph, whatever the word said; typing
+			// it by the catalog would cut it down to `.r` on the way into the variable (rule L22) and build another graph.
+			if (IsLegacyScope() && OutputType.IsNumeric() && OutputType.Cols == 1
+				&& (Expr.LegacyResultType.Category == ETypeCategory::Scalar || Expr.LegacyResultType.Category == ETypeCategory::Vector))
+			{
+				IR::FIRType Declared;
+				if (ResolveTypeRef(Expr.LegacyResultType, Declared) && Declared.IsNumeric() && Declared.Cols == 1 && Declared != OutputType)
+				{
+					Binding.LegacyCatalogType = OutputType;
+					OutputType = Declared;
+					Binding.bLegacyDeclaredType = true;
+				}
 			}
 			Binding.Type = OutputType;
 		}

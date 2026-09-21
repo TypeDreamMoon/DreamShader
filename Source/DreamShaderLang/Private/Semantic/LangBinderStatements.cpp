@@ -254,6 +254,8 @@ namespace UE::DreamShader::Lang::Private
 			// A `static const` declared in a header is bound here, so its initializer's spans lie
 			// in the header.
 			CurrentFile = Global.File;
+			// Batch 2: the legacy rules follow the declaration being bound (FDecl::bLegacy).
+			CurrentDecl = Global.Decl;
 
 			const IR::FIRType DeclaredType = Global.Type;
 			const int32 ArrayCount = GetGlobalArrayCount(Index);
@@ -293,6 +295,7 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		CurrentFile = RootModule.FilePath;
+		CurrentDecl = nullptr;
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -311,6 +314,8 @@ namespace UE::DreamShader::Lang::Private
 		// A helper that came from a `.dsh` has its whole body bound here, and every span in it lies
 		// in that header.
 		CurrentFile = CurrentFunction->File;
+		// Batch 2: the legacy rules apply inside a body the legacy front end produced (FDecl::bLegacy).
+		CurrentDecl = CurrentFunction->Decl;
 		Scopes.Reset();
 		LocalArrayValues.Reset();
 		LocalWrites.Reset();
@@ -390,11 +395,13 @@ namespace UE::DreamShader::Lang::Private
 
 		if (CallGraph.IsValidIndex(FunctionIndex))
 		{
-			CallGraph[FunctionIndex] = CurrentCallees;
+			// Appended: BindHoistedCalls has already recorded what the function's lifted calls call (legacy rule L8).
+			CallGraph[FunctionIndex].Append(CurrentCallees);
 		}
 
 		CurrentFunction = nullptr;
 		CurrentFunctionIndex = INDEX_NONE;
+		CurrentDecl = nullptr;
 		CurrentRegion = INDEX_NONE;
 		OuterRegion = INDEX_NONE;
 		CurrentFile = RootModule.FilePath;

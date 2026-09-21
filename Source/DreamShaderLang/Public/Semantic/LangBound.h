@@ -39,13 +39,16 @@ namespace UE::DreamShader::Lang
 		inline const TCHAR* const Name = TEXT("name");           // parameter name, or asset path for a function
 		inline const TCHAR* const Sampler = TEXT("sampler");     // "Color" | "Normal" | "LinearColor" | ...
 		inline const TCHAR* const Default = TEXT("default");     // texture default asset path
-		inline const TCHAR* const Static = TEXT("static");       // uniform bool -> static switch
+		inline const TCHAR* const Static = TEXT("static");       // uniform bool -> static switch; on a function, "<ParamName>": that bool parameter is a StaticBool pin
 		inline const TCHAR* const Library = TEXT("library");     // "Cat|Sub"
 		inline const TCHAR* const Param = TEXT("param");         // "<name> <text>"
 		inline const TCHAR* const Asset = TEXT("asset");         // extern binding
 		inline const TCHAR* const Custom = TEXT("custom");       // "" | "selfcontained"
 		inline const TCHAR* const Layer = TEXT("layer");
 		inline const TCHAR* const LayerBlend = TEXT("layerblend");
+		inline const TCHAR* const Page = TEXT("page");           // `.dsi` Font override: the font page
+		inline const TCHAR* const Pin = TEXT("pin");             // "<ParamName> <engine pin name...>"
+		inline const TCHAR* const Root = TEXT("root");           // 1.x Root= spelling: Game | Engine | Plugin.Name | Plugins/Name | /Mount
 	}
 
 	/** Every directive on one declaration, parsed. Unknown keys sit in Passthrough. */
@@ -74,8 +77,17 @@ namespace UE::DreamShader::Lang
 		TMap<FString, FString> Passthrough;
 		/** The free text of the block, joined with newlines; what Desc falls back to. */
 		FString FreeText;
+		/** `@pin <Param> <Engine Name>`, in order: a function pin whose engine name is not an identifier. */
+		TArray<TPair<FString, FString>> PinNames;
+		/** `@static <Param>` on a function, in order: the bool parameters that are StaticBool pins (the 1.x `StaticBool` input). */
+		TArray<FString> StaticParams;
+		/** `@root`: the 1.x Root= spelling of a legacy product's destination (FBoundProduct::AssetRoot). */
+		FString Root;
+		bool bHasRoot = false;
 
 		const FString* FindParamDoc(const FString& ParamName) const;
+		/** The `@pin` engine name given for a parameter, or null. */
+		const FString* FindPinName(const FString& ParamName) const;
 	};
 
 	// ------------------------------------------------------------------------ declarations
@@ -127,6 +139,14 @@ namespace UE::DreamShader::Lang
 		/** `@param` text, if any. */
 		FString Doc;
 		int32 ArrayCount = 0;
+		/** `@pin`: the engine's pin name when it is not an identifier; empty = Name. */
+		FString PinName;
+		/**
+		 * `@static <Name>` on the function: a `bool` input that is a FunctionInput_StaticBool pin, whose value is known
+		 * when the material compiles. An `if` on it is a StaticSwitch, and its default is a StaticBool node on the
+		 * input's Preview pin, because the engine reads no PreviewValue for such a pin.
+		 */
+		bool bStatic = false;
 	};
 
 	enum class EBoundFunctionKind : uint8
@@ -185,6 +205,9 @@ namespace UE::DreamShader::Lang
 		FString AssetPathOverride;
 		TMap<FString, FString> Settings;
 		IR::EIRBackend Backend = IR::EIRBackend::Graph;
+		/** 1.x destination: AssetName may carry folders, AssetRoot is the Root= spelling (empty: the 1.x default root), and the source folder is not mirrored. */
+		bool bLegacyAssetPath = false;
+		FString AssetRoot;
 	};
 
 	// ------------------------------------------------------------------------- expressions
@@ -216,7 +239,10 @@ namespace UE::DreamShader::Lang
 		Cast,
 		/** `UE.X(...)` / `Substrate.X(...)` / `UE.Expression(Class = ...)`: Index into the catalog; Args map arguments. */
 		ReflectedCall,
-		/** A call to a Helper / Custom / ExportFunction / Extern function: Index into Functions; Args map arguments to parameters. */
+		/**
+		 * A call to a Helper / Custom / ExportFunction / Extern function: Index into Functions; Args map arguments to parameters.
+		 * In a legacy scope a value call of a void function is typed as its first output, which the IR builder reads (L3b).
+		 */
 		FunctionCall,
 		/** `Tex.Sample(UV)` / `Tex.Sample(S, UV)` / `Texture2DSample(Tex, S, UV)`: arguments normalised in Args as Texture, UV, [Sampler]. */
 		TextureSample,
@@ -232,6 +258,13 @@ namespace UE::DreamShader::Lang
 		Paren,
 		/** A constructor of a user struct: `ToonInputs(a, b)` or `{a, b}` against a struct target. */
 		StructConstructor,
+		/**
+		 * Legacy only: `F(args).Out` / `F(args)[k]` where F is an Extern / ExportFunction / Custom function.
+		 * The Object call is bound in selection mode (its out arguments may be absent and are not written
+		 * back); FieldIndex is the 1.x output ordinal: 0 is the return value when F is not void, then the out
+		 * parameters in declaration order.
+		 */
+		FunctionCallOutput,
 	};
 	DREAMSHADERLANG_API const TCHAR* LexToString(EBoundExprKind Kind);
 
@@ -242,9 +275,20 @@ namespace UE::DreamShader::Lang
 		int32 ArgumentIndex = INDEX_NONE;
 		/** ReflectedCall: the pin or property name; FunctionCall: the parameter name; TextureSample: "Texture"/"UV"/"Sampler". */
 		FString Target;
+		/**
+		 * ReflectedCall, a pin: what the source called it, when that is not the member's own name. The catalog is read off each
+		 * class's default object, and a node may show other names on its pins once its properties are set (the engine
+		 * fork's MoonToon nodes do), so an alias taken from a default object's display name can belong to another pin of the
+		 * live node. The emitter looks this spelling up on the live node first, which is the order 1.x matched in.
+		 */
+		FString WrittenTarget;
 		/** ReflectedCall: the argument is a literal property (not a pin). */
 		bool bIsProperty = false;
-		/** ReflectedCall: index into the catalog entry's Inputs or Properties. FunctionCall: the parameter index. */
+		/**
+		 * ReflectedCall: index into the catalog entry's Inputs or Properties; INDEX_NONE with bIsProperty == false is an input
+		 * a Custom class's call named (L4). FunctionCall: the parameter index; Params.Num() marks a legacy statement call's
+		 * return-value receiver (L5).
+		 */
 		int32 TargetIndex = INDEX_NONE;
 		/** The conversion applied to the argument's value. */
 		IR::EIRConversion Conversion = IR::EIRConversion::Identity;
@@ -273,6 +317,60 @@ namespace UE::DreamShader::Lang
 		double ConstantValue[4] = { 0.0, 0.0, 0.0, 0.0 };
 		/** Conversion applied when this expression is used where its parent expects Type's counterpart (set on operands by the parent). */
 		IR::EIRConversion Conversion = IR::EIRConversion::Identity;
+		/**
+		 * Legacy rule L3c: a node with several outputs read as its first one because a 1.x source used it as a value, where
+		 * 2.0 asks for the output's name (DSH5201). Conversion is DefaultOutput; the migrator writes the name in.
+		 */
+		bool bLegacyDefaultOutput = false;
+		/**
+		 * Legacy rule L22: the width this expression is cut down to where it is used. 1.x took the leading components of a
+		 * value wider than its place without a word (Conversion is Truncate) -- except at a node's pin, where it connected
+		 * the value as it was and left the rest to the engine (Conversion is Identity). The migrator writes the swizzle
+		 * either way.
+		 */
+		int32 LegacyTruncateWidth = 0;
+		/**
+		 * ReflectedCall in a 1.x body: Type is what the call's `OutputType` said and not what the catalog says, which is how
+		 * 1.x typed it. The node carries that width too, so that nothing downstream corrects what 1.x never corrected.
+		 */
+		bool bLegacyDeclaredType = false;
+		/** With bLegacyDeclaredType: what the catalog says the call makes, which is what a `.dss` has to declare. */
+		IR::FIRType LegacyCatalogType = IR::FIRType::Error();
+		/**
+		 * ReflectedCall on the Custom class (`UE.Expression(Class = "Custom", ...)`): the outputs THIS call declares, which
+		 * the class cannot say -- output 0 typed by its `OutputType` argument (named `return` once there are more), then
+		 * every entry of `AdditionalOutputs` in order. Empty for every other call. A NodeOutput selected from such a call
+		 * keeps the slot in FieldIndex like any other.
+		 */
+		TArray<FString> CallOutputNames;
+		TArray<IR::FIRType> CallOutputTypes;
+	};
+
+	// ------------------------------------------------------------------------ instances (.dsi)
+
+	/** One `uniform` of a `.dsi`, bound: the parent parameter it assigns. */
+	struct FBoundInstanceOverride
+	{
+		/** Index into FBoundModule::Globals. */
+		int32 GlobalIndex = INDEX_NONE;
+		FString ParameterName;
+		IR::EIRParameterKind Kind = IR::EIRParameterKind::Scalar;
+		/** Index into the schema bound against; INDEX_NONE without one. */
+		int32 SchemaIndex = INDEX_NONE;
+		int32 FontPage = 0;
+	};
+
+	/** The `#pragma instance(...)` header of a `.dsi` and its overrides, bound. */
+	struct FBoundInstance
+	{
+		bool bIsInstance = false;
+		const FPragmaDecl* Pragma = nullptr;
+		FString ParentReference;
+		FLangSpan ParentSpan;
+		/** Every key but Parent, in source order, values as written. */
+		TArray<TPair<FString, FString>> Settings;
+		TArray<FLangSpan> SettingSpans;
+		TArray<FBoundInstanceOverride> Overrides;
 	};
 
 	// ------------------------------------------------------------------------------ module
@@ -308,6 +406,10 @@ namespace UE::DreamShader::Lang
 		TMap<const FNode*, int32> StatementRegions;
 		/** Every `for`/`while`/`do` statement the binder proved bounded: the trip count. Absent means "not unrollable". */
 		TMap<const FNode*, int32> LoopTripCounts;
+		/** `.dsi` only. */
+		FBoundInstance Instance;
+		/** `.dsi` only: the schema bound against; owned by the caller, must outlive this. Null when unchecked. */
+		const IR::FIRParameterSchema* ParentSchema = nullptr;
 
 		const FBoundExpr* Find(const FExpr& Expr) const { return Expressions.Find(&Expr); }
 		const FBoundExpr& Get(const FExpr& Expr) const;
@@ -338,6 +440,10 @@ namespace UE::DreamShader::Lang
 		int32 MaxUnrolledIterations = 64;
 		/** Helper inlining depth before the binder calls it recursion. */
 		int32 MaxInlineDepth = 32;
+		/** `.dsi` only: the parent's parameters, resolved by the host. Null = names and types unchecked (DSH7263). */
+		const IR::FIRParameterSchema* ParentSchema = nullptr;
+		/** `.dsi` only: the resolved parent object path, carried into FIRInstance::ParentObjectPath. */
+		FString ParentObjectPath;
 	};
 
 	struct FLangBindResult

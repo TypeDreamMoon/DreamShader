@@ -122,6 +122,8 @@ namespace UE::DreamShader::Lang::Private
 		bool ResolveTypeRef(const FTypeRef& Ref, IR::FIRType& OutType);
 		/** DSH4210 when the name is already a struct, a global or a function; names both files. */
 		bool CheckNameAvailable(const FString& Name, const FLangSpan& Span, const FString& File);
+		/** Whether a struct, a global or a function of this name is declared already; CheckNameAvailable without the message. */
+		bool IsNameDeclared(const FString& Name) const;
 		/**
 		 * The single `[n]` a declarator may carry: 0 when there is none, the element count otherwise.
 		 * An unsized `[]` takes its count from Initializer. Reports DSH4241 / DSH4242 and returns false.
@@ -157,8 +159,14 @@ namespace UE::DreamShader::Lang::Private
 
 		IR::FIRType BindLiteral(const FLiteralExpr& Expr);
 		IR::FIRType BindIdentifier(const FIdentifierExpr& Expr);
-		IR::FIRType BindMember(const FMemberExpr& Expr);
-		IR::FIRType BindIndex(const FIndexExpr& Expr);
+		IR::FIRType BindMember(const FMemberExpr& Expr, const IR::FIRType* Expected = nullptr);
+		IR::FIRType BindIndex(const FIndexExpr& Expr, const IR::FIRType* Expected = nullptr);
+		/**
+		 * The type of output OutputIndex of a node with several outputs. The catalog calls an output Numeric when the
+		 * engine does not say how wide it is (every unmasked output); the declared type of what the output feeds is then
+		 * the best answer there is, the rule a single-output node already follows.
+		 */
+		IR::FIRType TypeOfSelectedNodeOutput(const IR::FCatalogExpression& Class, int32 OutputIndex, const IR::FIRType* Expected) const;
 		IR::FIRType BindCall(const FCallExpr& Expr, const IR::FIRType* Expected, bool bStatement);
 		IR::FIRType BindUnary(const FUnaryExpr& Expr);
 		IR::FIRType BindBinary(const FBinaryExpr& Expr);
@@ -179,7 +187,11 @@ namespace UE::DreamShader::Lang::Private
 		IR::FIRType BindConstructor(const FCallExpr& Expr, const FTypeRef& TypeRef);
 		IR::FIRType BindStructConstructor(const FCallExpr& Expr, int32 StructIndex);
 		IR::FIRType BindCoreOpCall(const FCallExpr& Expr, const IR::FIRCoreOpInfo& Info);
-		IR::FIRType BindUserFunctionCall(const FCallExpr& Expr, int32 FunctionIndex, bool bStatement);
+		/**
+		 * bSelection (legacy rule L3b): the call is the object of a selector (`F(args).Out`, `F(args)[k]`), so its `out`
+		 * arguments may be absent and a void call is not refused as a value.
+		 */
+		IR::FIRType BindUserFunctionCall(const FCallExpr& Expr, int32 FunctionIndex, bool bStatement, bool bSelection = false);
 		IR::FIRType BindReflectedCall(const FCallExpr& Expr, const FString& Namespace, const FString& Name, const FLangSpan& NameSpan, const IR::FIRType* Expected, bool bStatement);
 		/** `Tex.Sample(UV)` / `Tex.Sample(S, UV)` / `Tex.SampleLevel(UV, L)` (CONTRACT §6.5). */
 		IR::FIRType BindTextureSampleMethod(const FCallExpr& Expr, const FMemberExpr& Callee, const IR::FIRType& TextureType);
@@ -239,6 +251,94 @@ namespace UE::DreamShader::Lang::Private
 		/** Records FBoundModule::LoopTripCounts when, and only when, the count can be proved. */
 		void ProveTripCount(const FStmt& Loop, const FStmt* Init, const FExpr* Condition, const FExpr* Step, const FStmt* Body);
 
+		// ------------------------------------------------- instance mode (LangBinderInstance.cpp, batch 2)
+
+		/**
+		 * A `.dsi` (FModule::FileKind == Dsi): the pragma, the overrides, their initializers, the checks
+		 * against FBindOptions::ParentSchema and the one MaterialInstance product. Replaces the declare
+		 * pass and everything after it (research-instance section 3.3).
+		 */
+		void BindInstanceModule();
+		/** `#pragma instance(...)` in a `.dsi`: Parent, the other keys in source order, the `@name` of its `///` block. */
+		void BindInstancePragma(const FPragmaDecl& Pragma);
+		/** DSH7255: `#pragma instance` in a file that is not a `.dsi`. */
+		void ReportInstancePragmaOutsideDsi(const FPragmaDecl& Pragma);
+		/** One `uniform` of a `.dsi`: its parameter kind from the spelled type and `@static`, its shape, its directives. */
+		void DeclareInstanceOverride(const FVariableDecl& Decl);
+		/** The directives an override may carry (`@name`, `@default`, `@static`, `@page`); DSH7262 for the rest. */
+		FBoundDirectives BindInstanceOverrideDirectives(const FDocBlock& Doc, int32& OutFontPage, bool& bOutHasPage);
+		/** Binds and folds every override initializer (numeric and bool kinds only). */
+		void BindInstanceInitializers();
+		/** Constant initializers (DSH7265), then every override against the parent schema (DSH7258-7261, 7264, 7268), or DSH7263. */
+		void CheckInstanceOverrides();
+		/** The one MaterialInstance product: the file stem, or the pragma's `@name` with the `.dss` split rule. */
+		void BuildInstanceProduct();
+
+		/** `.dsi` only: the `@name` written in the `///` block above `#pragma instance`. */
+		FString InstanceAssetName;
+
+		// ------------------------------------------------------- legacy rules (LangBinderLegacy.cpp, batch 2)
+
+		/** The declaration whose body, initializer or lifted calls are being bound; its FDecl::bLegacy selects the 1.x rules. */
+		const FDecl* CurrentDecl = nullptr;
+		/** Research-legacy section 3.7: the rules that apply only where FDecl::bLegacy is set. */
+		bool IsLegacyScope() const { return CurrentDecl != nullptr && CurrentDecl->bLegacy; }
+		/**
+		 * Set while the value of a write into the ENTRY's material is converted. Legacy rule L22 stops there: 1.x narrowed
+		 * everywhere but refused it into a material output (its DSH4046), because `Base.OpacityMask = SomeColour` would
+		 * quietly become that colour's red channel and render.
+		 */
+		bool bConvertingIntoMaterialOutput = false;
+
+		/** L19: the one local, parameter or global whose name matches Expr's ignoring case; fills the binding and warns DSH5275. */
+		bool TryBindLegacyIdentifierIgnoringCase(const FIdentifierExpr& Expr, FBoundExpr& OutBinding);
+		/** Whether any visible local, parameter or global matches ignoring case. No diagnostic. */
+		bool HasDeclarationIgnoringCase(const FString& Name) const;
+		/** L19: the one function whose name matches ignoring case, else INDEX_NONE. No diagnostic. */
+		int32 FindFunctionIgnoringCaseUniquely(const FString& Name) const;
+		/** L19: DSH5275, a name accepted through the case fallback. */
+		void ReportLegacyCaseFallback(const FString& Written, const FString& Declared, const FLangSpan& Span);
+		/** L19: DSH5276, an engine name (class, attribute, pin, property, output) accepted through the case fallback. */
+		void ReportLegacyCatalogCaseFallback(const FString& Written, const FString& Catalogued, const FLangSpan& Span);
+		/** L19: the one catalog class a `Class = "..."` specifier matches ignoring case, else INDEX_NONE. */
+		int32 FindExpressionByClassIgnoringCaseUniquely(const FString& ClassSpecifier) const;
+		/** L19: the one entry of Namespace whose short name or alias matches Name ignoring case, else INDEX_NONE. */
+		int32 FindExpressionIgnoringCaseUniquely(const FString& Namespace, const FString& Name) const;
+		/** L19: the one input / property / output (aliases included) matching ignoring case, else INDEX_NONE. */
+		static int32 FindCatalogInputIgnoringCaseUniquely(const IR::FCatalogExpression& Class, const FString& Name);
+		static int32 FindCatalogPropertyIgnoringCaseUniquely(const IR::FCatalogExpression& Class, const FString& Name);
+		static int32 FindCatalogOutputIgnoringCaseUniquely(const IR::FCatalogExpression& Class, const FString& Name);
+		/** L19: the one core op whose HLSL name (or GLSL alias) matches ignoring case, else null. */
+		static const IR::FIRCoreOpInfo* FindCoreOpIgnoringCase(const FString& Name, bool& bOutIsGlslAlias);
+		/** L12: the one enumerator a 1.x spelling names, compared ignoring case, spaces, `_`, `-`, `:`, `.`, `/` and an enum prefix. */
+		static bool TryMatchLegacyEnumerator(const FString& Spelling, const IR::FCatalogProperty& Property, FString& OutEnumerator);
+
+		/** L3b: the Extern / ExportFunction / Custom function a legacy selector may pick an output of, else INDEX_NONE. */
+		int32 FindSelectableLegacyCallee(const FCallExpr& Call) const;
+		/** The 1.x outputs of a function in ordinal order: the return value when not void ("Result"), then the out and inout parameters. */
+		static void CollectLegacyOutputs(const FBoundFunction& Function, TArray<FString>& OutNames, TArray<FString>& OutPinNames, TArray<IR::FIRType>& OutTypes);
+		/** L3b: whether Name spells one of Function's 1.x outputs (its identifier or its `@pin` name), ignoring case. */
+		static bool NamesLegacyOutput(const FBoundFunction& Function, const FString& Name);
+		/** L3b: the kinds a legacy call may select an output of, or read as its output 0: Extern, ExportFunction, Custom. */
+		static bool IsSelectableLegacyKind(EBoundFunctionKind Kind);
+		/** L3b: `F(args).Out` (OutputName) or `F(args)[k]` (OutputOrdinal): binds Call in selection mode and emits FunctionCallOutput on Selector. */
+		IR::FIRType BindFunctionCallOutput(const FExpr& Selector, const FCallExpr& Call, int32 FunctionIndex, const FString& OutputName, int32 OutputOrdinal, const FLangSpan& SelectorSpan);
+
+		/** L5: an undeclared identifier receiving an output of a legacy statement call becomes a local of that output's type (Info DSH5283). */
+		void DeclareLegacyImplicitOutLocal(const FExpr& Argument, const IR::FIRType& Type, const FString& Receives, const FString& CalleeName);
+
+		/** L8: every call lifted out of an opaque body (FFunctionDecl::HoistedCalls), bound once in its function's scope. */
+		void BindHoistedCalls();
+		/** L8: at a call site, each name the callee's lifted calls could not resolve: DSH6325 when the caller has it, DSH6326 when nothing does. */
+		void CheckHoistedCallNamesAtCallSite(const FCallExpr& Call, int32 CalleeIndex);
+		/** L8: true while BindHoistedCalls binds; an unresolved identifier is recorded rather than reported. */
+		bool bBindingHoistedCall = false;
+		int32 HoistingFunctionIndex = INDEX_NONE;
+		/** L8: per function index, the names its lifted calls could not resolve, with their spans (in that function's file). */
+		TMap<int32, TArray<TPair<FString, FLangSpan>>> HoistedUnresolvedNames;
+		/** L8: DSH6325 / DSH6326 report keys already said, compared case-sensitively. */
+		TArray<FString> HoistedNamesReported;
+
 		// ------------------------------------------------------------------------------- shared state
 
 		const FModule& GetRootModule() const { return RootModule; }
@@ -264,6 +364,12 @@ namespace UE::DreamShader::Lang::Private
 		 * EIRConversion::DefaultOutput names. Anything else comes back unchanged.
 		 */
 		IR::FIRType ResolveNodeDefault(const IR::FIRType& Type) const;
+		/** The same for an operand: a Custom-class call answers with the output 0 it declared itself. */
+		IR::FIRType ResolveNodeDefaultOf(const FExpr& Operand) const;
+		/** The bound Custom-class call behind Object (parentheses looked through), when it declared its own outputs; else null. */
+		const FBoundExpr* FindCallOutputs(const FExpr& Object) const;
+		/** Fills Binding.CallOutputNames / CallOutputTypes from the call's `OutputType` and `AdditionalOutputs` arguments. */
+		void CollectCustomClassOutputs(const FCallExpr& Expr, const IR::FCatalogExpression& Class, FBoundExpr& Binding);
 
 		/** An Error-typed binding for an expression whose diagnostic was already reported. */
 		IR::FIRType Fail(const FExpr& Expr);
