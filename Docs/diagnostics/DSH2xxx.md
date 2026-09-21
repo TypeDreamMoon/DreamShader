@@ -3,206 +3,6 @@
 > The block between the generated markers is written by `.skill/gen-diagnostics.ps1`.
 > Everything below a marker is written by hand and survives a regeneration.
 
-## DSH2001
-
-<!-- generated:begin DSH2001 -->
-**Severity** error
-
-**Message**
-
-```
-Expected '{0}' near index {1}.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:23`, `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:82`
-<!-- generated:end DSH2001 -->
-
-**Cause.** a delimited region (`(` for a parameter list, `{` for a body) did not open where required
-
-**Fix.** add the delimiter
-
-**See** [Function](../language/function.md)
-
-## DSH2002
-
-<!-- generated:begin DSH2002 -->
-**Severity** error
-
-**Message**
-
-```
-Expected identifier near index {0}.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:113`
-<!-- generated:end DSH2002 -->
-
-**Cause.** an identifier was expected — attribute key, section name, block name
-
-**Fix.** identifiers are `[A-Za-z_][A-Za-z0-9_]*`
-
-**See** [Lexical elements](../language/lexical.md)
-
-## DSH2003
-
-<!-- generated:begin DSH2003 -->
-**Severity** error
-
-**Message**
-
-```
-Unterminated string literal.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:147`
-<!-- generated:end DSH2003 -->
-
-**Cause.** EOF reached inside a quoted attribute value
-
-**Fix.** close the `"`
-
-**See** [Lexical elements](../language/lexical.md)
-
-## DSH2004
-
-<!-- generated:begin DSH2004 -->
-**Severity** error
-
-**Message**
-
-```
-Expected value near index {0}.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:170`
-<!-- generated:end DSH2004 -->
-
-**Cause.** an attribute key was followed by `=` and then nothing
-
-**Fix.** supply a value; an unquoted value ends at the first `,` or `)`
-
-**See** [Shader](../language/shader.md)
-
-## DSH2005
-
-<!-- generated:begin DSH2005 -->
-**Severity** error
-
-**Message**
-
-```
-Expected ',' or ')' near index {0}.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:223`
-<!-- generated:end DSH2005 -->
-
-**Cause.** malformed header attribute list
-
-**Fix.** separate attributes with `,`; a trailing `,` before `)` is allowed
-
-**See** [Shader](../language/shader.md)
-
-## DSH2006
-
-<!-- generated:begin DSH2006 -->
-**Severity** error
-
-**Message**
-
-```
-Expected '{{' near index {0}.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:240`
-<!-- generated:end DSH2006 -->
-
-**Cause.** a block body was expected
-
-**Fix.** add the `{ … }` body
-
-**See** [Source files](../language/source-files.md)
-
-## DSH2007
-
-<!-- generated:begin DSH2007 -->
-**Severity** error
-
-**Message**
-
-```
-Unterminated block.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserScanner.cpp:325`
-<!-- generated:end DSH2007 -->
-
-**Cause.** EOF reached before a `}` closed
-
-**Fix.** balance the braces
-
-**See** [Lexical elements](../language/lexical.md)
-
-## DSH2008
-
-<!-- generated:begin DSH2008 -->
-**Severity** error
-
-**Message**
-
-```
-Unterminated '{0}' block.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:108`
-<!-- generated:end DSH2008 -->
-
-**Cause.** EOF reached before the matching delimiter of a generic delimited block, e.g. an unclosed `(` parameter list
-
-**Fix.** balance the delimiters
-
-**See** [Function](../language/function.md)
-
-## DSH2009
-
-<!-- generated:begin DSH2009 -->
-**Severity** error
-
-**Message**
-
-```
-Unexpected token near index {0}.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:986`
-<!-- generated:end DSH2009 -->
-
-**Cause.** no top-level keyword matched at this position; an `import` line handed straight to the parser also lands here
-
-**Fix.** check keyword spelling and case — top-level keywords are the only case-**sensitive** tokens in the language
-
-**See** [Keywords](../language/keywords.md)
-
-## DSH2010
-
-<!-- generated:begin DSH2010 -->
-**Severity** error
-
-**Message**
-
-```
-A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:1032`
-<!-- generated:end DSH2010 -->
-
-**Cause.** the parse unit declared no recognized top-level block; an empty `Namespace` body also lands here
-
-**Fix.** add a top-level block, or check that the keyword's case is exact
-
-**See** [Keywords](../language/keywords.md)
-
 ## DSH2101
 
 <!-- generated:begin DSH2101 -->
@@ -214,7 +14,7 @@ A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLa
 Unexpected character '{0}' in source.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:717`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:780`
 <!-- generated:end DSH2101 -->
 
 **Cause.** a character that is not part of any DreamShaderLang token: a stray `@`, `$`, a backtick, a
@@ -243,7 +43,7 @@ at that spot as well; both messages describe the same typo.
 Unterminated block comment; expected a closing '*/'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:329`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:353`
 <!-- generated:end DSH2102 -->
 
 **Cause.** a `/*` with no `*/` after it. Block comments do not nest: the first `*/` closes the
@@ -269,7 +69,7 @@ To comment out a region that already contains block comments, use `///`-free `//
 Unterminated string literal; expected a closing '"'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:468`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:507`
 <!-- generated:end DSH2103 -->
 
 **Cause.** a `"` with no closing `"` before the end of its line. A DreamShaderLang string never spans
@@ -296,7 +96,7 @@ around it is still parsed and any further mistakes in the file are still reporte
 Unknown escape sequence '\{0}' in a string literal.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:448`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:487`
 <!-- generated:end DSH2104 -->
 
 **Cause.** a backslash inside a string followed by something other than the six escapes the language
@@ -324,7 +124,7 @@ Nothing is silently lost, and a source that round-trips through the printer come
 Malformed number literal '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:635`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:698`
 <!-- generated:end DSH2105 -->
 
 **Cause.** something that starts like a number but is not one. The shapes that reach here:
@@ -366,7 +166,7 @@ reports its own errors.
 A '#' directive must be the first thing on its line.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:351`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLexer.cpp:382`
 <!-- generated:end DSH2106 -->
 
 **Cause.** a `#` that is not the first non-whitespace character on its physical line — `int a = 1;
@@ -416,7 +216,7 @@ function whose `}` is missing; the reported position is the end of the file, not
 Expected an expression, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:490`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:561`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:543`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:630`
 <!-- generated:end DSH2151 -->
 
 **Cause.** a token that cannot begin a value turned up where a value was required: a stray `,` or
@@ -437,7 +237,7 @@ the previous statement is usually the one missing its `;`.
 Expected ')' to close a cast, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:253`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:468`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:550`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:152`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:252`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:287`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:334`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:253`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:521`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:619`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:159`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:259`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:294`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:341`
 <!-- generated:end DSH2152 -->
 
 **Cause.** an unbalanced `(`. The parser read a complete expression and then found something other
@@ -477,7 +277,7 @@ DreamShaderLang, so the `,` ends the index).
 Expected ';' after the 'for' initializer, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:216`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:237`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:339`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:365`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:380`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:394`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:408`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:457`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:592`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:223`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:244`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:346`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:372`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:387`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:401`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:415`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:464`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:600`
 <!-- generated:end DSH2154 -->
 
 **Cause.** a statement that does not end with `;`. Unlike 1.x, the 2.0 grammar has no
@@ -501,7 +301,7 @@ function.
 Expected '}' to close an initializer list, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:602`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:671`
 <!-- generated:end DSH2155 -->
 
 **Cause.** a `{ … }` initializer whose `}` is missing, or an element that is not an expression
@@ -521,7 +321,7 @@ nested lists are written `{ { 1, 2 }, { 3, 4 } }`.
 Expected '(' after 'if', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:141`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:186`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:276`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:323`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:148`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:193`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:283`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:330`
 <!-- generated:end DSH2157 -->
 
 **Cause.** a control-flow keyword whose parenthesised header is missing. In DreamShaderLang, as in
@@ -540,7 +340,7 @@ HLSL, the condition of `if`, `for`, `while` and `do … while` is always parenth
 A positional argument cannot follow a named argument; give this argument a name too.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:533`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:602`
 <!-- generated:end DSH2158 -->
 
 **Cause.** a call that mixes the two argument forms in the wrong order — `Fn(A = 1, x)`. A named
@@ -582,7 +382,7 @@ middle operand ran past the `:` because a bracket inside it is unbalanced.
 Unsupported statement: the preprocessor line '#{0}' cannot appear inside a function body; mark the function /// @custom to hand its body to the shader compiler.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:127`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:435`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:134`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:442`
 <!-- generated:end DSH2160 -->
 
 **Message (statement)** `Unsupported statement '{0}': DreamShaderLang 2.0 has no switch statement,
@@ -632,7 +432,7 @@ was meant to be part of a float literal (`1 .5`).
 An initializer list is only allowed as a variable initializer, not as a general expression.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:482`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:535`
 <!-- generated:end DSH2162 -->
 
 **Cause.** a `{ … }` used as a value — as a call argument, in a `return`, or on the right of an
@@ -653,7 +453,7 @@ with a type.
 Expected a variable name, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:564`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:572`
 <!-- generated:end DSH2163 -->
 
 **Cause.** a declaration whose declarator has no name: a doubled `,` (`float a,, b;`), a `,` before
@@ -674,7 +474,7 @@ or `Name[dims] = init`.
 Expected 'while' after the body of a 'do' statement, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:317`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:324`
 <!-- generated:end DSH2164 -->
 
 **Cause.** a `do` whose `while` is missing or misspelled.
@@ -693,7 +493,7 @@ is DSH2154, not this code.
 Expected '{' to open a block, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:472`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:479`
 <!-- generated:end DSH2165 -->
 
 **Cause.** a block was required and something else was found. In M1 this is reachable only when a
@@ -702,25 +502,803 @@ caller asks for a block without checking first — a function body whose `{` is 
 **Fix.** open the block with `{`. An `extern` function has no body at all and ends with `;`; a
 `/// @custom` function still needs its braces, the parser simply does not read inside them.
 
-## DSH2199
+## DSH2200
 
-<!-- generated:begin DSH2199 -->
+<!-- generated:begin DSH2200 -->
 **Severity** error
 
 **Message**
 
 ```
-The 1.x front end is not available in this build.
+(built at runtime)
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:576`
-<!-- generated:end DSH2199 -->
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:550`
+<!-- generated:end DSH2200 -->
 
-**Cause.** a `.dsm` or `.dsf` file was handed to the 2.0 front end, which does not read the 1.x block syntax. The 1.x syntax becomes a second front end producing the same AST, but that front end is not in this build yet, so the honest answer is one error rather than a 2.0 parse of 1.x text failing token by token and explaining nothing.
+**Cause.** A 1.x Graph expression used a comparison, a logical operator or `?:` outside an `if`
+condition. The 1.x expression reader knew `+ - * /`, calls and members; at anything else it stopped
+and used what it had read so far, so `a < b ? x : y` silently became `a`. The legacy front end
+refuses the text instead of reproducing that.
 
-**Fix.** nothing to fix in the source. Until the second front end lands, `.dsm` and `.dsf` files are compiled by the 1.x pipeline, which is still the default one; only `.dss` and `.dsh` reach this front end. If you meant to write 2.0 syntax, give the file a `.dss` extension.
+**Fix.** Put the choice in an `if` / `else` (1.x compares there), or use a node such as
+`UE.If(...)`; or move the code to a `.dss` file, where these operators exist.
 
-**Note.** the front end is chosen by extension: `.dss` and `.dsh` (and an unknown or absent extension) take the 2.0 front end, `.dsm` and `.dsf` ask for the 1.x one. A caller can override that with `FLangParseOptions::Frontend`, and asking for `ELangFrontend::Legacy` explicitly reports this same code. A module is still returned, holding no declarations, so a language service can keep working on the file.
+## DSH2201
 
-**See** [DreamShaderLang 2.0](../language-v2/index.md)
+<!-- generated:begin DSH2201 -->
+**Severity** error
+
+**Message**
+
+```
+(built at runtime)
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:546`
+<!-- generated:end DSH2201 -->
+
+**Cause.** A 1.x Graph expression used `%`, a shift or a bitwise operator. 1.x had none of them: it
+stopped reading at the operator and silently dropped the rest of the expression.
+
+**Fix.** Use `fmod(a, b)` for a remainder; for anything bitwise, move the code into a `Function`
+(HLSL) or to a `.dss` file.
+
+## DSH2202
+
+<!-- generated:begin DSH2202 -->
+**Severity** error
+
+**Message**
+
+```
+Expected no '[ ]' in a 1.x Graph expression, found '{0}', where 1.x silently dropped the index and everything after it; use a swizzle such as '.r' or move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:392`
+<!-- generated:end DSH2202 -->
+
+**Cause.** A 1.x Graph expression indexed a value with `[ ]`. 1.x dropped the index and everything
+after it without a word, so the graph never did what the text says.
+
+**Fix.** Take a component with a swizzle (`.r`, `.xy`); to read an output of a node by number write
+`OutputIndex = k` in the call. Real indexing needs a `.dss` file.
+
+## DSH2203
+
+<!-- generated:begin DSH2203 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a constructor such as 'float3(x)' in a 1.x Graph expression, found the cast '({0})', which 1.x never had; move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:502`
+<!-- generated:end DSH2203 -->
+
+**Cause.** A C-style cast such as `(float3)x` stands in a 1.x Graph expression. 1.x had constructors
+only.
+
+**Fix.** Write the constructor, `float3(x)`, or move the code to a `.dss` file.
+
+## DSH2204
+
+<!-- generated:begin DSH2204 -->
+**Severity** error
+
+**Message**
+
+```
+Expected an assignment only as a whole 1.x Graph statement, found one inside an expression; move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:513`
+<!-- generated:end DSH2204 -->
+
+**Cause.** An assignment was used as a value inside a 1.x Graph expression (`a = (b = c)`, or an
+assignment as a call argument). In 1.x an assignment is a whole statement.
+
+**Fix.** Split it into two statements, or move the code to a `.dss` file.
+
+## DSH2205
+
+<!-- generated:begin DSH2205 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '=' in a 1.x Graph assignment, found '{0}', which 1.x read as the declaration of a variable named '{1}'; write 'x = x + y' or move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:316`
+<!-- generated:end DSH2205 -->
+
+**Cause.** A compound assignment (`+=`, `*=`, ...) stands in a 1.x Graph body. 1.x did not know
+these operators: it read `x += y` as the declaration of a variable, with `x` as its type, and failed
+much later or not at all.
+
+**Fix.** Write it out: `x = x + y;`. Compound assignment exists in a `.dss` file.
+
+## DSH2206
+
+<!-- generated:begin DSH2206 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a variable or 'variable.member' on the left of a 1.x Graph assignment, found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:341`
+<!-- generated:end DSH2206 -->
+
+**Cause.** The left side of a 1.x Graph assignment is neither a variable nor `variable.member`. 1.x
+could assign to a local, an output, or one member of `Base` / a material variable, and to nothing
+else (not to a swizzle of a swizzle, an index or a call result).
+
+**Fix.** Assign to a plain variable and combine the parts with a constructor on the right-hand side.
+
+## DSH2207
+
+<!-- generated:begin DSH2207 -->
+**Severity** error
+
+**Message**
+
+```
+Expected no '++' or '--' in a 1.x Graph expression, found '{0}'; move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:444`
+<!-- generated:end DSH2207 -->
+
+**Cause.** `++` or `--` stands in a 1.x Graph expression. 1.x had no such operators and no loops to
+use them in.
+
+**Fix.** Write `x = x + 1.0;`, or move the code to a `.dss` file.
+
+## DSH2208
+
+<!-- generated:begin DSH2208 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a declaration, an assignment, a call or 'if' in a 1.x Graph body, found '{0}', which 1.x did not have; move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:227`
+<!-- generated:end DSH2208 -->
+
+**Cause.** A statement 1.x never had opens this line of a Graph body: `for`, `while`, `return`,
+`switch`, `break` and the like. A 1.x Graph body is declarations, assignments, calls and `if` /
+`else`.
+
+**Fix.** Move loops and early exits into a `Function` (HLSL), or migrate the file and write them in
+the `.dss`.
+
+## DSH2209
+
+<!-- generated:begin DSH2209 -->
+**Severity** error
+
+**Message**
+
+```
+Expected braces around the body of a 1.x Graph 'if', found a single statement.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:256`, `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:281`
+<!-- generated:end DSH2209 -->
+
+**Cause.** The body of a 1.x Graph `if` or `else` is a single statement without braces, and 1.x
+required them.
+
+**Fix.** Put `{ }` around the body, even when it is one statement.
+
+## DSH2210
+
+<!-- generated:begin DSH2210 -->
+**Severity** error
+
+**Message**
+
+```
+Expected at most one comparison in a 1.x Graph 'if' condition, found '{0}' as well, where 1.x silently dropped the rest of the condition; move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:298`
+<!-- generated:end DSH2210 -->
+
+**Cause.** A 1.x Graph `if` condition holds more than one comparison (`a > b && c < d`). 1.x read
+the first comparison and silently dropped the rest, so the branch was taken on half of the
+condition.
+
+**Fix.** Nest two `if`s, or compute the combined mask first and compare that; `&&` and `||` work in
+a `.dss` file.
+
+## DSH2211
+
+<!-- generated:begin DSH2211 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a call or an assignment as a 1.x Graph statement, found an expression whose value is never used.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:150`
+<!-- generated:end DSH2211 -->
+
+**Cause.** A 1.x Graph statement is an expression whose value goes nowhere, such as `a + b;`. It
+builds nodes nothing reads, which is almost always a lost assignment.
+
+**Fix.** Assign the value to a variable or an output, or delete the line.
+
+## DSH2212
+
+<!-- generated:begin DSH2212 -->
+**Severity** error
+
+**Message**
+
+```
+Expected no storage keyword on a 1.x Graph variable, found '{0}'; move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:96`
+<!-- generated:end DSH2212 -->
+
+**Cause.** A storage keyword (`static`, `const`, `uniform`) stands on a variable inside a 1.x Graph
+body. 1.x locals had none; constants and parameters live in `Properties`.
+
+**Fix.** Remove the keyword, or declare the value in `Properties`. A `.dss` file has `const` locals.
+
+## DSH2213
+
+<!-- generated:begin DSH2213 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a single value in a 1.x Graph declaration, found the array declarator '{0}'; move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:108`
+<!-- generated:end DSH2213 -->
+
+**Cause.** A 1.x Graph variable is declared as an array. The 1.x graph had no array values.
+
+**Fix.** Use separate variables, or move the code to a `.dss` file or into a `Function`.
+
+## DSH2214
+
+<!-- generated:begin DSH2214 -->
+**Severity** error
+
+**Message**
+
+```
+Expected an expression as a 1.x Graph initializer, found an initializer list; use a constructor such as 'float3(a, b, c)'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:522`
+<!-- generated:end DSH2214 -->
+
+**Cause.** A braced list stands where 1.x did not read one. 1.x accepted `T x = {a, b, c};` as the
+constructor `T(a, b, c)` and `T x = {};` as zero, in a declaration, where the type is written next
+to it; in an assignment or as an argument the list has no type to construct.
+
+**Fix.** Write the constructor: `float3(a, b, c)`.
+
+## DSH2215
+
+<!-- generated:begin DSH2215 -->
+**Severity** error
+
+**Message**
+
+```
+Expected an initializer on the 1.x Graph variable '{0}' of type '{1}', found none, and 1.x had no zero value for that type.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:1165`
+<!-- generated:end DSH2215 -->
+
+**Cause.** A 1.x Graph variable has no initializer and a type 1.x had no zero for (a texture, a
+Substrate value, a sampler, a user type). Numbers started as zero and a `MaterialAttributes` as an
+empty set; nothing else had a default.
+
+**Fix.** Give the variable an initializer.
+
+## DSH2216
+
+<!-- generated:begin DSH2216 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a name after '#Region', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:1023`
+<!-- generated:end DSH2216 -->
+
+**Cause.** `#Region` has no name after it. The name is the title of the comment box the region
+becomes in the graph.
+
+**Fix.** Write `#Region "Name"`.
+
+## DSH2217
+
+<!-- generated:begin DSH2217 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a '#Region' before this '#EndRegion', found none open.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:171`
+<!-- generated:end DSH2217 -->
+
+**Cause.** An `#EndRegion` has no `#Region` open before it in this Graph body.
+
+**Fix.** Remove it, or add the `#Region "Name"` it was meant to close.
+
+## DSH2218
+
+<!-- generated:begin DSH2218 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '#EndRegion' to close the region '{0}' before the end of the Graph body, found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:65`
+<!-- generated:end DSH2218 -->
+
+**Cause.** A `#Region` is still open where the Graph body ends.
+
+**Fix.** Close it with `#EndRegion` before the body's `}`.
+
+## DSH2219
+
+<!-- generated:begin DSH2219 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '#Region' or '#EndRegion' as the only '#' line in a 1.x Graph body, found '#{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:1007`
+<!-- generated:end DSH2219 -->
+
+**Cause.** A `#` line other than `#Region` / `#EndRegion` stands inside a 1.x Graph body.
+Conditional compilation (`#if` ...) is resolved before the parser runs; anything that reaches it
+here is a directive 1.x did not have, such as `#pragma` or `#include`.
+
+**Fix.** Move `import` lines to the top of the file; `#pragma` belongs in a `.dss` file.
+
+## DSH2220
+
+<!-- generated:begin DSH2220 -->
+**Severity** error
+
+**Message**
+
+```
+Expected no bare block in a 1.x Graph body, found one; 1.x has blocks only after 'if' and 'else'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:191`
+<!-- generated:end DSH2220 -->
+
+**Cause.** A bare `{ ... }` block stands in a 1.x Graph body. 1.x had blocks only after `if` and
+`else`, and its variables were all of one scope, so a block of its own meant nothing.
+
+**Fix.** Remove the braces.
+
+## DSH2222
+
+<!-- generated:begin DSH2222 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a decimal number in a 1.x Graph expression, found the hexadecimal literal '{0}', which 1.x read as 0 followed by a name; move this code to a .dss file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:364`
+<!-- generated:end DSH2222 -->
+
+**Cause.** A hexadecimal literal stands in a 1.x Graph expression. The 1.x number reader stopped
+after the `0` and read `x1F` as a name, so the value was silently 0.
+
+**Fix.** Write the number in decimal.
+
+## DSH2240
+
+<!-- generated:begin DSH2240 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a top-level Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend, Function, GraphFunction, Namespace, VirtualFunction or import, found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:476`
+<!-- generated:end DSH2240 -->
+
+**Cause.** Something other than a 1.x block opens a declaration at the top of a `.dsm` / `.dsf`
+file, or of a 1.x part of a `.dsh`.
+
+**Fix.** A 1.x file is a list of `Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend`,
+`Function`, `GraphFunction`, `Namespace`, `VirtualFunction` blocks and `import` lines. Check for a
+stray token or an unclosed block above this line.
+
+## DSH2241
+
+<!-- generated:begin DSH2241 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '(' with the block's attributes, such as '(Name = "M_Example")', found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:525`
+<!-- generated:end DSH2241 -->
+
+**Cause.** A block word is not followed by its attribute list. Every 1.x block says at least its
+name there.
+
+**Fix.** Write `Shader(Name = "M_Example")` and open the body with `{` after it.
+
+## DSH2242
+
+<!-- generated:begin DSH2242 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a 'Name = "..."' attribute on '{0}', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:731`
+<!-- generated:end DSH2242 -->
+
+**Cause.** The block has an attribute list and no `Name` in it. The name is the asset the block
+builds (or, for a VirtualFunction, the name calls use).
+
+**Fix.** Add `Name = "..."`.
+
+## DSH2243
+
+<!-- generated:begin DSH2243 -->
+**Severity** error
+
+**Message**
+
+```
+Expected an attribute name such as 'Name', found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:544`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:553`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:564`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:610`
+<!-- generated:end DSH2243 -->
+
+**Cause.** The attribute list of a block is not `Key = value` pairs separated by commas: a key is
+missing, the `=` is, or the value is not a string, a word or a number.
+
+**Fix.** Write each attribute as `Key = "value"`.
+
+## DSH2244
+
+<!-- generated:begin DSH2244 -->
+**Severity** warning
+
+**Message**
+
+```
+The attribute '{0}' is written twice; the later value wins, as it did in 1.x.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:592`
+<!-- generated:end DSH2244 -->
+
+**Cause.** One attribute is written twice in a block's attribute list. 1.x kept the later value, and
+so does this front end; the warning is there because the first value is dead text.
+
+**Fix.** Remove one of them.
+
+## DSH2245
+
+<!-- generated:begin DSH2245 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a Shader section (Properties, Settings, Outputs, Graph or Layout), found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2471`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:931`
+<!-- generated:end DSH2245 -->
+
+**Cause.** A word that is no section opens a line inside a block. A Shader has `Properties`,
+`Settings`, `Outputs`, `Graph` and `Layout`; a ShaderFunction has `Inputs` instead of `Properties`;
+a VirtualFunction has `Options`, `Inputs` and `Outputs`.
+
+**Fix.** Check the spelling (sections are case-sensitive) and that the section before it is closed.
+
+## DSH2246
+
+<!-- generated:begin DSH2246 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'Graph' as the body section of '{0}', found 'Code', which 1.x accepted only inside a Function.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:923`
+<!-- generated:end DSH2246 -->
+
+**Cause.** A Shader or ShaderFunction block has a `Code` section. 1.x read `Code` only inside a
+`Function`; in an asset block the body is `Graph`.
+
+**Fix.** Rename the section to `Graph`, or move the HLSL into a `Function` and call it.
+
+## DSH2247
+
+<!-- generated:begin DSH2247 -->
+**Severity** error
+
+**Message**
+
+```
+Expected no body in the VirtualFunction '{0}', which declares an existing asset, found the section '{1}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2463`
+<!-- generated:end DSH2247 -->
+
+**Cause.** A VirtualFunction has a `Graph` or `Code` section. A VirtualFunction declares the
+interface of an asset that already exists; it builds nothing.
+
+**Fix.** Remove the body, or make the block a `ShaderFunction` if the source is meant to build the
+asset.
+
+## DSH2248
+
+<!-- generated:begin DSH2248 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a 1.x block in a '.{0}' file, found {1}, which is 2.0 syntax; 2.0 declarations belong in a .dss file or a .dsh header.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:467`
+<!-- generated:end DSH2248 -->
+
+**Cause.** 2.0 syntax (a `uniform`, an `export` function, a `#pragma`) stands in a `.dsm` or `.dsf`
+file, which is read by the 1.x front end only.
+
+**Fix.** Put 2.0 declarations in a `.dss` file, or in a `.dsh` header, which takes both dialects.
+`dsc migrate` rewrites a whole 1.x file.
+
+## DSH2249
+
+<!-- generated:begin DSH2249 -->
+**Severity** error
+
+**Message**
+
+```
+Expected only Function, GraphFunction, Namespace and VirtualFunction blocks in a '.dsh' header, found the asset block '{0}', which belongs in a .dsm or .dsf file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:490`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:687`
+<!-- generated:end DSH2249 -->
+
+**Cause.** A `.dsh` header holds a block that builds an asset (`Shader`, `ShaderFunction`, a layer).
+A header is included into other files; an asset block in it would be built once per including file.
+
+**Fix.** Move the block into a `.dsm` / `.dsf` of its own and keep functions and VirtualFunctions in
+the header.
+
+## DSH2250
+
+<!-- generated:begin DSH2250 -->
+**Severity** error
+
+**Message**
+
+```
+Expected one Shader block in a file, found a second one.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:715`
+<!-- generated:end DSH2250 -->
+
+**Cause.** A file holds two `Shader` blocks. A material source is one material.
+
+**Fix.** Give each material its own file.
+
+## DSH2251
+
+<!-- generated:begin DSH2251 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' is the old spelling of '{1}'; it still reads the same.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:705`
+<!-- generated:end DSH2251 -->
+
+**Cause.** A block word of an earlier 1.x release is used (`MaterialLayer` for `ShaderLayer`,
+`MaterialLayerBlend` for `ShaderLayerBlend`). It reads the same.
+
+**Fix.** Nothing has to change; `dsc migrate` writes the current form.
+
+## DSH2252
+
+<!-- generated:begin DSH2252 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a double-quoted path after 'import', found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:378`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:390`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:407`
+<!-- generated:end DSH2252 -->
+
+**Cause.** An `import` line the front end does not read. Three cases: `import` is not followed by a
+double-quoted path (1.x also let it stand in single quotes); the path names a file that is no `.dsh`
+header -- a material or function file is compiled on its own, never included; or the path is
+root-qualified (`Project:Shared/Common.dsh`, `Plugin.X:...`), which the 2.0 include resolver, shared
+by both front ends, does not read.
+
+**Fix.** Write `import "Shared/Common.dsh";` with a path relative to this file or to its own source
+root. A header that lives in another root has to be reached through a package or copied.
+
+## DSH2253
+
+<!-- generated:begin DSH2253 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' is read as 'import'; write it in lower case.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:369`
+<!-- generated:end DSH2253 -->
+
+**Cause.** `Import` (or another casing) is used for `import`. 1.x matched the word loosely.
+
+**Fix.** Write `import` in lower case.
+
+## DSH2254
+
+<!-- generated:begin DSH2254 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a top-level Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend, Function, GraphFunction, Namespace or VirtualFunction block in this 1.x file, found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:307`
+<!-- generated:end DSH2254 -->
+
+**Cause.** The file has no block at all: it is empty, everything in it is commented out, or an `#if`
+removed it.
+
+**Fix.** A `.dsm` needs a `Shader`, a `.dsf` a `ShaderFunction`, `ShaderLayer` or
+`ShaderLayerBlend`. Delete the file if it is a leftover.
+
+## DSH2255
+
+<!-- generated:begin DSH2255 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a Graph section in the Shader '{0}', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:974`
+<!-- generated:end DSH2255 -->
+
+**Cause.** A Shader has no `Graph` section, so there is nothing to build.
+
+**Fix.** Add `Graph = { ... }`.
+
+## DSH2256
+
+<!-- generated:begin DSH2256 -->
+**Severity** warning
+
+**Message**
+
+```
+The Shader '{0}' has no Outputs section, so nothing its Graph computes reaches the material.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:981`
+<!-- generated:end DSH2256 -->
+
+**Cause.** A Shader has a Graph and no `Outputs` section, so no value reaches a material attribute.
+The material builds, with nothing wired to it.
+
+**Fix.** Add `Outputs = { ... }` with at least one `Base.<Attribute> = <variable>;` binding.
+
+## DSH2257
+
+<!-- generated:begin DSH2257 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '`{' to open the '{0}' block, found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2267`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2381`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2420`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2437`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:744`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:817`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:834`
+<!-- generated:end DSH2257 -->
+
+**Cause.** A block is not opened where one has to be: the attribute list of a `Shader`,
+`ShaderFunction`, `Namespace` or `VirtualFunction` is not followed by `{`, a section name
+(`Properties`, `Graph`, `Inputs`, ...) is missing inside the block, or the section name is not
+followed by `{`.
+
+**Fix.** Open the body with `{` on the same line or the next, and start each section with its name.
+
+## DSH2258
+
+<!-- generated:begin DSH2258 -->
+**Severity** warning
+
+**Message**
+
+```
+The section '{0}' is written twice; the later one wins, as it did in 1.x.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:897`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:911`
+<!-- generated:end DSH2258 -->
+
+**Cause.** One section is written twice in a block. 1.x kept the later one and dropped the first
+silently; this front end does the same and says so.
+
+**Fix.** Merge the two sections into one.
 

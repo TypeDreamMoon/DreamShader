@@ -3,1374 +3,6 @@
 > The block between the generated markers is written by `.skill/gen-diagnostics.ps1`.
 > Everything below a marker is written by hand and survives a regeneration.
 
-## DSH5001
-
-<!-- generated:begin DSH5001 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' only accepts positional arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:31`
-<!-- generated:end DSH5001 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5002
-
-<!-- generated:begin DSH5002 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' is missing argument %d.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:41`
-<!-- generated:end DSH5002 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5003
-
-<!-- generated:begin DSH5003 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' only accepts numeric scalar/vector arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:49`
-<!-- generated:end DSH5003 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5004
-
-<!-- generated:begin DSH5004 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' could not bind input '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:64`
-<!-- generated:end DSH5004 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5005
-
-<!-- generated:begin DSH5005 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' failed to access input '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:70`
-<!-- generated:end DSH5005 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5006
-
-<!-- generated:begin DSH5006 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 1 argument.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:84`
-<!-- generated:end DSH5006 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5007
-
-<!-- generated:begin DSH5007 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create math function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:107`
-<!-- generated:end DSH5007 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5008
-
-<!-- generated:begin DSH5008 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 2 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:135`
-<!-- generated:end DSH5008 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5009
-
-<!-- generated:begin DSH5009 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create math function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:160`
-<!-- generated:end DSH5009 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5010
-
-<!-- generated:begin DSH5010 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 3 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:191`
-<!-- generated:end DSH5010 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5011
-
-<!-- generated:begin DSH5011 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create math function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:219`
-<!-- generated:end DSH5011 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5012
-
-<!-- generated:begin DSH5012 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 3 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:260`
-<!-- generated:end DSH5012 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5013
-
-<!-- generated:begin DSH5013 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create math function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:285`
-<!-- generated:end DSH5013 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5014
-
-<!-- generated:begin DSH5014 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 2 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:303`
-<!-- generated:end DSH5014 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5015
-
-<!-- generated:begin DSH5015 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create math function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:326`
-<!-- generated:end DSH5015 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5016
-
-<!-- generated:begin DSH5016 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 2 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:342`
-<!-- generated:end DSH5016 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5017
-
-<!-- generated:begin DSH5017 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create math function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:365`
-<!-- generated:end DSH5017 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5018
-
-<!-- generated:begin DSH5018 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 2 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:382`
-<!-- generated:end DSH5018 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5019
-
-<!-- generated:begin DSH5019 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create math function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:407`
-<!-- generated:end DSH5019 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5020
-
-<!-- generated:begin DSH5020 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 3 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:433`
-<!-- generated:end DSH5020 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5021
-
-<!-- generated:begin DSH5021 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create math function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:458`
-<!-- generated:end DSH5021 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5022
-
-<!-- generated:begin DSH5022 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 2 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:517`
-<!-- generated:end DSH5022 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5023
-
-<!-- generated:begin DSH5023 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create math function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:540`
-<!-- generated:end DSH5023 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5024
-
-<!-- generated:begin DSH5024 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 2 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:604`
-<!-- generated:end DSH5024 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5025
-
-<!-- generated:begin DSH5025 -->
-**Severity** error
-
-**Message**
-
-```
-Math function '%s' expects exactly 3 arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeMathBuiltins.cpp:669`
-<!-- generated:end DSH5025 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5026
-
-<!-- generated:begin DSH5026 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s %s must be an integer literal.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:96`
-<!-- generated:end DSH5026 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5027
-
-<!-- generated:begin DSH5027 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s %s must be a numeric literal.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:113`
-<!-- generated:end DSH5027 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5028
-
-<!-- generated:begin DSH5028 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s %s must be a boolean literal.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:131`
-<!-- generated:end DSH5028 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5029
-
-<!-- generated:begin DSH5029 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s %s must be a text value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:148`
-<!-- generated:end DSH5029 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5030
-
-<!-- generated:begin DSH5030 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s requires parameter: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:181`
-<!-- generated:end DSH5030 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5031
-
-<!-- generated:begin DSH5031 -->
-**Severity** error
-
-**Message**
-
-```
-UE.StaticSwitchParameter requires Name="ParameterName".
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:203`
-<!-- generated:end DSH5031 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5032
-
-<!-- generated:begin DSH5032 -->
-**Severity** error
-
-**Message**
-
-```
-UE.StaticSwitchParameter Name must be a text value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:209`
-<!-- generated:end DSH5032 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5033
-
-<!-- generated:begin DSH5033 -->
-**Severity** error
-
-**Message**
-
-```
-UE.StaticSwitchParameter Default/DefaultValue must be true or false.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:225`
-<!-- generated:end DSH5033 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5034
-
-<!-- generated:begin DSH5034 -->
-**Severity** error
-
-**Message**
-
-```
-UE.StaticSwitchParameter SortPriority must be an integer literal.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:243`
-<!-- generated:end DSH5034 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5035
-
-<!-- generated:begin DSH5035 -->
-**Severity** error
-
-**Message**
-
-```
-UE.CollectionParam requires Collection=Path(...).
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:264`
-<!-- generated:end DSH5035 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5036
-
-<!-- generated:begin DSH5036 -->
-**Severity** error
-
-**Message**
-
-```
-UE.CollectionParam Collection must be Path(...) or an Unreal object path.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:270`
-<!-- generated:end DSH5036 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5037
-
-<!-- generated:begin DSH5037 -->
-**Severity** error
-
-**Message**
-
-```
-UE.CollectionParam could not load MaterialParameterCollection '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:282`
-<!-- generated:end DSH5037 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5038
-
-<!-- generated:begin DSH5038 -->
-**Severity** error
-
-**Message**
-
-```
-UE.CollectionParam requires Parameter="Name".
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:292`
-<!-- generated:end DSH5038 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5039
-
-<!-- generated:begin DSH5039 -->
-**Severity** error
-
-**Message**
-
-```
-UE.CollectionParam Parameter must be a text value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:298`
-<!-- generated:end DSH5039 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5040
-
-<!-- generated:begin DSH5040 -->
-**Severity** error
-
-**Message**
-
-```
-UE.CollectionParam collection '%s' does not contain parameter '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:306`
-<!-- generated:end DSH5040 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5041
-
-<!-- generated:begin DSH5041 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create UE.CollectionParam node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:313`
-<!-- generated:end DSH5041 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5042
-
-<!-- generated:begin DSH5042 -->
-**Severity** error
-
-**Message**
-
-```
-UE.CollectionParam SortPriority must be an integer literal.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:343`
-<!-- generated:end DSH5042 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5043
-
-<!-- generated:begin DSH5043 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create UE.%s.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:382`
-<!-- generated:end DSH5043 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5044
-
-<!-- generated:begin DSH5044 -->
-**Severity** error
-
-**Message**
-
-```
-Generic %s.%s calls require named arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:659`
-<!-- generated:end DSH5044 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5045
-
-<!-- generated:begin DSH5045 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported Substrate builtin call '%s' in Graph.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:670`
-<!-- generated:end DSH5045 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5046
-
-<!-- generated:begin DSH5046 -->
-**Severity** error
-
-**Message**
-
-```
-Substrate builtin call '%s' requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:673`
-<!-- generated:end DSH5046 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5047
-
-<!-- generated:begin DSH5047 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported UE builtin call '%s' in Graph. For generic MaterialExpression calls, add OutputType="float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture/Substrate".
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:684`
-<!-- generated:end DSH5047 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5048
-
-<!-- generated:begin DSH5048 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s OutputType must be a literal value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:703`
-<!-- generated:end DSH5048 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5049
-
-<!-- generated:begin DSH5049 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s OutputType="Substrate" requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:710`
-<!-- generated:end DSH5049 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5050
-
-<!-- generated:begin DSH5050 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s OutputType '%s' is not supported.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:712`
-<!-- generated:end DSH5050 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5051
-
-<!-- generated:begin DSH5051 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s Class must be a literal value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:723`
-<!-- generated:end DSH5051 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5052
-
-<!-- generated:begin DSH5052 -->
-**Severity** error
-
-**Message**
-
-```
-UE.Expression requires Class="MaterialExpressionName".
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:728`
-<!-- generated:end DSH5052 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5053
-
-<!-- generated:begin DSH5053 -->
-**Severity** error
-
-**Message**
-
-```
-Substrate.%s uses a fixed MaterialExpression class and does not accept Class.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:733`
-<!-- generated:end DSH5053 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5054
-
-<!-- generated:begin DSH5054 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s could not resolve MaterialExpression class '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:739`
-<!-- generated:end DSH5054 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5055
-
-<!-- generated:begin DSH5055 -->
-**Severity** error
-
-**Message**
-
-```
-Substrate.%s resolved to non-Substrate class '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:743`
-<!-- generated:end DSH5055 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5056
-
-<!-- generated:begin DSH5056 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s cannot use OutputName/Output together with OutputIndex.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:754`
-<!-- generated:end DSH5056 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5057
-
-<!-- generated:begin DSH5057 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s failed to create '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:819`
-<!-- generated:end DSH5057 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5058
-
-<!-- generated:begin DSH5058 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s OutputType="Substrate" is not supported by UMaterialExpressionCustom.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:825`
-<!-- generated:end DSH5058 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5059
-
-<!-- generated:begin DSH5059 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s OutputType '%s' is not a valid Custom node output type.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:832`
-<!-- generated:end DSH5059 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5060
-
-<!-- generated:begin DSH5060 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s: '%s' is not a property on '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:903`
-<!-- generated:end DSH5060 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5061
-
-<!-- generated:begin DSH5061 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s Custom input '%s' does not accept Substrate values.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:913`
-<!-- generated:end DSH5061 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5062
-
-<!-- generated:begin DSH5062 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s failed to bind input '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:945`
-<!-- generated:end DSH5062 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5063
-
-<!-- generated:begin DSH5063 -->
-**Severity** error
-
-**Message**
-
-```
-%s.%s input '%s' expects a Substrate value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:967`
-<!-- generated:end DSH5063 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5064
-
-<!-- generated:begin DSH5064 -->
-**Severity** error
-
-**Message**
-
-```
-%s.%s input '%s' expects a MaterialAttributes value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:974`
-<!-- generated:end DSH5064 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5065
-
-<!-- generated:begin DSH5065 -->
-**Severity** error
-
-**Message**
-
-```
-%s.%s input '%s' does not accept Substrate values.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:979`
-<!-- generated:end DSH5065 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5066
-
-<!-- generated:begin DSH5066 -->
-**Severity** error
-
-**Message**
-
-```
-%s.%s input '%s' does not accept MaterialAttributes values.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:983`
-<!-- generated:end DSH5066 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5067
-
-<!-- generated:begin DSH5067 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s property '%s' must use Path(...) or an Unreal object path.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1003`
-<!-- generated:end DSH5067 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5068
-
-<!-- generated:begin DSH5068 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s property '%s' must use a literal value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1008`
-<!-- generated:end DSH5068 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5069
-
-<!-- generated:begin DSH5069 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s property '%s': %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1014`
-<!-- generated:end DSH5069 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5070
-
-<!-- generated:begin DSH5070 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s OutputName must be a non-empty literal value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1028`
-<!-- generated:end DSH5070 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5071
-
-<!-- generated:begin DSH5071 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s OutputIndex is out of range for '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1036`
-<!-- generated:end DSH5071 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5072
-
-<!-- generated:begin DSH5072 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s OutputIndex is out of range for '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1072`
-<!-- generated:end DSH5072 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5073
-
-<!-- generated:begin DSH5073 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s OutputName must be a literal value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1080`
-<!-- generated:end DSH5073 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5074
-
-<!-- generated:begin DSH5074 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s output '%s' was not found on '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1085`
-<!-- generated:end DSH5074 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5075
-
-<!-- generated:begin DSH5075 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s created '%s', but it has no material outputs.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1090`
-<!-- generated:end DSH5075 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH5076
-
-<!-- generated:begin DSH5076 -->
-**Severity** error
-
-**Message**
-
-```
-%s.%s output is not a Substrate value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeUE.cpp:1193`
-<!-- generated:end DSH5076 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
 ## DSH5200
 
 <!-- generated:begin DSH5200 -->
@@ -1382,7 +14,7 @@ UE.%s created '%s', but it has no material outputs.
 A material has no '{0}' pin; did you mean '{1}'? Attribute names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:822`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:833`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1051`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1062`
 <!-- generated:end DSH5200 -->
 
 **Cause.** `m.<Name>` names no material pin. The table comes from the engine, so the message can
@@ -1401,10 +33,10 @@ case-insensitively and 2.0 does not.
 **Message**
 
 ```
-'{0}.{1}' has no output called '{2}'.
+This Custom node declares no output called '{0}'; its outputs are '{1}'. An output is declared by 'AdditionalOutputs'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1129`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1412`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:923`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1144`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1198`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1404`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1805`
 <!-- generated:end DSH5201 -->
 
 **Cause.** Three shapes, one code — all say "this node's outputs need naming". The message lists
@@ -1441,7 +73,7 @@ is listed under the channels it keeps.
 The builtin catalog is empty, so no 'UE.' expression and no material attribute can be resolved; export it with 'dsc export-catalog'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:258`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:279`
 <!-- generated:end DSH5202 -->
 
 **Cause.** The binder was given an empty builtin catalog, so no `UE.` node and no material pin can
@@ -1462,7 +94,7 @@ file is affected — the symbol index is still produced.
 '{0}.{1}' is not a node; did you mean '{0}.{2}'? Node names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3319`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3331`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4107`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4119`
 <!-- generated:end DSH5210 -->
 
 **Cause.** `UE.X` / `Substrate.X` names no class this engine has. Node names are **case-sensitive**;
@@ -1482,7 +114,7 @@ a case-only match is suggested.
 '{0}.{1}' is a node and has to be called: write '{0}.{1}(...)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:797`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:994`
 <!-- generated:end DSH5211 -->
 
 **Cause.** `UE.X` was written without an argument list. A node is made by calling it, even when it
@@ -1501,7 +133,7 @@ takes nothing.
 '{0}' is not a material expression class this engine has.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3292`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4071`
 <!-- generated:end DSH5212 -->
 
 **Cause.** The `Class` argument does not name a material expression class. The class name is
@@ -1520,7 +152,7 @@ accepted with or without its `MaterialExpression` prefix and as a full `/Script/
 '{0}.{1}' has no pin or property called '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3562`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4513`
 <!-- generated:end DSH5213 -->
 
 **Cause.** A named argument to a reflected node matches neither an input pin nor a reflected
@@ -1541,7 +173,7 @@ it usually has a `Const`-prefixed property name — `ConstA` beside the `A` pin.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1484`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1912`
 <!-- generated:end DSH5214 -->
 
 **Cause.** A value does not fit the pin it feeds: the wrong width, or a kind the pin does not take
@@ -1562,7 +194,7 @@ whatever arrives.
 '{0}' is not a value of '{1}' on '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3163`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3933`
 <!-- generated:end DSH5215 -->
 
 **Cause.** The value of an enumerated property is not one of that enum's values. A case-only match
@@ -1582,7 +214,7 @@ is suggested.
 'Substrate.' already names the node, so it takes no 'Class' argument.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3273`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4043`
 <!-- generated:end DSH5216 -->
 
 **Cause.** A `Class` argument was given to a `Substrate.` call. The `Substrate.` prefix already
@@ -1601,7 +233,7 @@ names the class.
 'Class' takes the expression class as a quoted string.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3281`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4051`
 <!-- generated:end DSH5217 -->
 
 **Cause.** The `Class` argument is not a literal the binder can read. It accepts a quoted string, a
@@ -1620,7 +252,7 @@ bare identifier and a dotted name.
 'UE.Expression' reaches a node this language has no name for, so it needs 'Class = "MaterialExpressionName"'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3305`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4084`
 <!-- generated:end DSH5218 -->
 
 **Cause.** `UE.Expression(...)` without `Class`. `Expression` is the escape hatch for a node the
@@ -1631,20 +263,27 @@ language has no name for, so the class is the one thing it cannot infer.
 ## DSH5219
 
 <!-- generated:begin DSH5219 -->
-**Severity** error
+**Severity** warning
 
 **Message**
 
 ```
-'{0}.{1}' needs its '{2}' pin connected.
+'{0}.{1}' leaves its required '{2}' pin unconnected; unless the node reads a default for it, the engine reports it when the material compiles.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3602`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4572`
 <!-- generated:end DSH5219 -->
 
-**Cause.** A pin the engine requires was left unconnected, and its literal twin was not set either.
+**Cause.** A pin the engine draws as required was left unconnected, and its literal twin was not set
+either. It is a warning, not an error: `required` only means the property has no `RequiredInput =
+"false"`. Most nodes do fail to compile with such a pin open, but some read a default instead
+(MakeMaterialAttributes, the per-level inputs of a switch, nodes of an engine fork that never set
+the metadata), and only the material compile knows. A class whose nodes show pins per setting has no
+statically required pin at all.
 
-**Fix.** Connect the pin, or set its `Const…` property to a literal.
+**Fix.** Connect the pin, or set its `Const...` property to a literal. If the node is meant to run
+with the pin open, nothing has to change; `dsc check -Shaders` compiles the material and reports a
+real `missing input`.
 
 ## DSH5220
 
@@ -1657,7 +296,7 @@ language has no name for, so the class is the one thing it cannot infer.
 '{0}.{1}' takes named arguments: write 'Pin = value'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3417`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4235`
 <!-- generated:end DSH5220 -->
 
 **Cause.** A positional argument was given to a node that has no canonical argument order. Most
@@ -1676,7 +315,7 @@ reflected classes are named-only — the pin order an engine class happens to ha
 '{0}.{1}' takes {2} arguments in order; name the rest.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3434`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4252`
 <!-- generated:end DSH5221 -->
 
 **Cause.** More positional arguments than the node's canonical order defines.
@@ -1694,7 +333,7 @@ reflected classes are named-only — the pin order an engine class happens to ha
 '{0}' is abstract and cannot be made into a node.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3359`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4147`
 <!-- generated:end DSH5223 -->
 
 **Cause.** The class is abstract and cannot be instantiated.
@@ -1712,7 +351,7 @@ reflected classes are named-only — the pin order an engine class happens to ha
 '{0}' is an enumerated property; write one of its values, as in 'SamplerType = Normal'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3138`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3194`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3236`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3893`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3964`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4006`
 <!-- generated:end DSH5224 -->
 
 **Cause.** A literal property was given something that is not a literal: an expression the binder
@@ -1733,7 +372,7 @@ computed belongs on a pin, not in a property.
 The first argument of a texture sample is the texture, and this is {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3830`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4828`
 <!-- generated:end DSH5230 -->
 
 **Cause.** The first argument of `Texture2DSample` is not a texture.
@@ -1751,11 +390,657 @@ The first argument of a texture sample is the texture, and this is {0}.
 The second argument of 'Texture2DSample' is the sampler, and this is {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3846`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4844`
 <!-- generated:end DSH5231 -->
 
 **Cause.** The second argument of `Texture2DSample` is not a sampler.
 
 **Fix.** Pass `<TextureName>Sampler`, the sampler the translator pairs with the texture, or use the
 shorter `Tex.Sample(UV)`, which takes it from the texture itself.
+
+## DSH5250
+
+<!-- generated:begin DSH5250 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'OutputIndex' to be a whole number of zero or more, found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1009`
+<!-- generated:end DSH5250 -->
+
+**Cause.** `OutputIndex` selects an output of a 1.x call by position, and its value is not a whole
+number from 0 up.
+
+**Fix.** Write `OutputIndex = 1`, or name the output: `Output = "Alpha"`.
+
+## DSH5251
+
+<!-- generated:begin DSH5251 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'Output' to name an output with a quoted name or an identifier, found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1030`
+<!-- generated:end DSH5251 -->
+
+**Cause.** `Output` selects an output of a 1.x call by name, and its value is neither a quoted
+string nor an identifier.
+
+**Fix.** Write `Output = "RGB"`.
+
+## DSH5252
+
+<!-- generated:begin DSH5252 -->
+**Severity** error
+
+**Message**
+
+```
+Expected either 'Output' or 'OutputIndex' on this call, found both.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:998`
+<!-- generated:end DSH5252 -->
+
+**Cause.** One 1.x call carries both `Output` and `OutputIndex`. They are two ways of choosing one
+output.
+
+**Fix.** Keep one of them.
+
+## DSH5253
+
+<!-- generated:begin DSH5253 -->
+**Severity** error
+
+**Message**
+
+```
+Expected an output selector only on a call that has outputs, found one on the constructor '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1046`
+<!-- generated:end DSH5253 -->
+
+**Cause.** An output selector (`Output` / `OutputIndex`) stands on a constructor such as
+`float3(...)`, which has no outputs.
+
+**Fix.** Remove the selector, or take the component with a swizzle.
+
+## DSH5254
+
+<!-- generated:begin DSH5254 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' takes no positional argument here; 1.x ignored it, so it is dropped.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1061`, `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1070`
+<!-- generated:end DSH5254 -->
+
+**Cause.** A 1.x call spelling was given an argument it does not read: a positional argument where
+the spelling takes named ones only, or a named argument that is none of its own. 1.x skipped both
+without a word, so the node was built without that value; the front end drops it too and says so.
+
+**Fix.** Name the argument the way the spelling reads it (`Pin = value`), or delete it.
+
+## DSH5255
+
+<!-- generated:begin DSH5255 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'UE.SceneTexture' to take exactly one argument, 'Id = ...', found {0} argument(s).
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1252`
+<!-- generated:end DSH5255 -->
+
+**Cause.** The 1.x shorthand `UE.SceneTexture(Id = ...)` takes its scene texture id and nothing
+else.
+
+**Fix.** Write `UE.SceneTexture(Id = PPI_SceneColor)`; any other property of the node needs
+`UE.Expression(Class = "SceneTexture", ...)`.
+
+## DSH5256
+
+<!-- generated:begin DSH5256 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'SampleTexture2D' to take exactly two positional arguments, a texture and coordinates, found {0} argument(s).
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1179`
+<!-- generated:end DSH5256 -->
+
+**Cause.** The 1.x shorthand `SampleTexture2D(Texture, UV)` takes exactly a texture and coordinates.
+
+**Fix.** Pass both and nothing else; for a mip level or derivatives use `UE.Expression(Class =
+"TextureSample", ...)`.
+
+## DSH5257
+
+<!-- generated:begin DSH5257 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'UE.StaticSwitchParameter' to name its parameter with 'Name = "..."', found no name.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1284`
+<!-- generated:end DSH5257 -->
+
+**Cause.** `UE.StaticSwitchParameter(...)` has no `Name`. The name is the parameter an instance
+overrides, and what makes two calls the same switch.
+
+**Fix.** Add `Name = "Use Detail"`.
+
+## DSH5258
+
+<!-- generated:begin DSH5258 -->
+**Severity** error
+
+**Message**
+
+```
+Expected the static switch '{0}' to be called with a 'True = ...' and a 'False = ...' input, found at most one of them.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1122`, `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1309`
+<!-- generated:end DSH5258 -->
+
+**Cause.** A static switch is called without both of its sides. The node chooses between its `True`
+and `False` inputs; with one of them missing there is nothing to choose.
+
+**Fix.** Pass `True = ...` and `False = ...`.
+
+## DSH5259
+
+<!-- generated:begin DSH5259 -->
+**Severity** error
+
+**Message**
+
+```
+Expected every argument of the parameter call '{0}' to name an input pin, found a positional argument.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1150`
+<!-- generated:end DSH5259 -->
+
+**Cause.** A property that is a parameter node (a `TextureSampleParameter2D`, a
+`StaticSwitchParameter`, ...) is called with a positional argument. Such a call is the node with its
+pins wired, and pins go by name.
+
+**Fix.** Name each argument: `MyTex(Coordinates = uv)`.
+
+## DSH5260
+
+<!-- generated:begin DSH5260 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a name after '::', found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:561`
+<!-- generated:end DSH5260 -->
+
+**Cause.** `Namespace::` is not followed by a function name.
+
+**Fix.** Write `N::F(...)`.
+
+## DSH5261
+
+<!-- generated:begin DSH5261 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'OutputType' of a Custom expression to be float1 to float4 or MaterialAttributes, found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1488`
+<!-- generated:end DSH5261 -->
+
+**Cause.** The `OutputType` of a `UE.Expression(Class = "Custom", ...)` call is not a type a Custom
+node can return.
+
+**Fix.** Use `float1` .. `float4` (or `float` .. `float4`), or `MaterialAttributes`.
+
+## DSH5263
+
+<!-- generated:begin DSH5263 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'Default' of 'UE.StaticSwitchParameter' to be true or false, found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1329`
+<!-- generated:end DSH5263 -->
+
+**Cause.** `Default` of a `UE.StaticSwitchParameter(...)` call is not `true` or `false`.
+
+**Fix.** Write `Default = true`.
+
+## DSH5264
+
+<!-- generated:begin DSH5264 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'SortPriority' of 'UE.StaticSwitchParameter' to be a whole number, found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1343`
+<!-- generated:end DSH5264 -->
+
+**Cause.** `SortPriority` of a `UE.StaticSwitchParameter(...)` call is not a whole number.
+
+**Fix.** Write an integer.
+
+## DSH5265
+
+<!-- generated:begin DSH5265 -->
+**Severity** error
+
+**Message**
+
+```
+Expected the parameter call '{0}' to take only its inputs, found an output selector.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1090`
+<!-- generated:end DSH5265 -->
+
+**Cause.** A call to a parameter-node property carries `Output` / `OutputIndex`. Such a call is
+rewritten into the node with its pins wired, and the selector has nowhere to go.
+
+**Fix.** Select the output after the call with a member: `MyTex(Coordinates = uv).rgb`.
+
+## DSH5275
+
+<!-- generated:begin DSH5275 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' matches '{1}' only in case; a 1.x source is read ignoring case, so this is '{1}', and a '.dss' needs the exact spelling.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:83`
+<!-- generated:end DSH5275 -->
+
+**Cause.** Rule L19. A name in a 1.x source matches a declaration only when case is ignored. 1.x
+compared most names ignoring case, so the source builds; a `.dss` is case-sensitive.
+
+**Fix.** Spell the name the way it is declared. `dsc migrate` does this for every such name.
+
+## DSH5276
+
+<!-- generated:begin DSH5276 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' matches the engine name '{1}' only in case; 1.x matched engine names ignoring case, so this is '{1}', and a '.dss' needs the exact spelling.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:95`
+<!-- generated:end DSH5276 -->
+
+**Cause.** Rule L19, for engine names: a `UE.` class, a pin, a property or an output matches only
+when case is ignored. 1.x looked these up ignoring case.
+
+**Fix.** Use the engine's spelling, which the message shows. `dsc migrate` writes it.
+
+## DSH5277
+
+<!-- generated:begin DSH5277 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' is the GLSL spelling of '{1}'; a 1.x source may use it and it is read as '{1}', and a '.dss' writes '{1}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2901`
+<!-- generated:end DSH5277 -->
+
+**Cause.** Rule L2. A GLSL function or type spelling is used in a 1.x source (`mix`, `fract`, `mod`,
+`vec3`). 1.x rewrote them; a `.dss` takes HLSL only.
+
+**Fix.** Write the HLSL name the message gives. `dsc migrate` does.
+
+## DSH5278
+
+<!-- generated:begin DSH5278 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' is not spelled like a value of '{1}', and 1.x matched enumerators loosely, so this is '{2}'; a '.dss' writes '{2}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3919`
+<!-- generated:end DSH5278 -->
+
+**Cause.** Rule L12. An enum value is written the engine's way (`PPI_SceneColor`,
+`TRANSFORM_Tangent`, `SAMPLERTYPE_Color`) or with its `Enum::` scope. 1.x matched enumerators
+loosely -- prefix, scope and case aside -- and this front end resolves the same value; a `.dss`
+takes the short form the catalog lists.
+
+**Fix.** Write the value as the message spells it.
+
+## DSH5279
+
+<!-- generated:begin DSH5279 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}.{1}' leaves its required '{2}' pin unconnected, which 1.x allowed and the engine reports when the material compiles.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4556`
+<!-- generated:end DSH5279 -->
+
+**Cause.** Rule L13. A `UE.` node is built in a 1.x body with a pin open that the engine draws as
+required. 1.x never checked, and many such sources compile because the node reads a default. In a
+`.dss` the same thing is DSH5219, also a warning.
+
+**Fix.** Wire the pin if the material fails to compile with 'missing input'; otherwise nothing has
+to change.
+
+## DSH5280
+
+<!-- generated:begin DSH5280 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' has no output to select, and this call selects '{1}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:592`
+<!-- generated:end DSH5280 -->
+
+**Cause.** A 1.x call selects an output (`Output = ...`, `OutputIndex = ...`, or a receiver passed
+last) on something that has none: a helper with no result, or a call that is no node and no
+function.
+
+**Fix.** Remove the selector, or call something that has the output.
+
+## DSH5281
+
+<!-- generated:begin DSH5281 -->
+**Severity** error
+
+**Message**
+
+```
+An output is selected by a whole number the compiler knows, and this index is computed.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1522`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1557`
+<!-- generated:end DSH5281 -->
+
+**Cause.** `node[k]` reads output `k` of a node, and `k` is not a constant the compiler can
+evaluate. Which wire is connected cannot depend on a run-time value.
+
+**Fix.** Use a literal index, or name the output.
+
+## DSH5282
+
+<!-- generated:begin DSH5282 -->
+**Severity** error
+
+**Message**
+
+```
+This Custom node declares {0} output(s), counted from 0, and this selects output {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1568`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1588`, `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:611`
+<!-- generated:end DSH5282 -->
+
+**Cause.** An output index is past the outputs the node or function declares. Outputs count from 0;
+a Custom node has its return value at 0 and its additional outputs after it.
+
+**Fix.** Use an index inside the range, or name the output.
+
+## DSH5283
+
+<!-- generated:begin DSH5283 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' is not declared, and as in 1.x it is declared here as a local of type {1} receiving '{2}' of '{3}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:652`
+<!-- generated:end DSH5283 -->
+
+**Cause.** Rule L5. A 1.x statement call passes a receiver (`F(a, Out)`) that is declared nowhere.
+1.x declared it on the spot with the type of the output it receives, and the front end does the
+same.
+
+**Fix.** Nothing has to change. `dsc migrate` writes the declaration out.
+
+## DSH5284
+
+<!-- generated:begin DSH5284 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' becomes an input of the custom node, which carries a number or a texture, and this argument is {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4426`
+<!-- generated:end DSH5284 -->
+
+**Cause.** An argument of a `Custom` node call is a value a Custom node input cannot carry: a
+material, a Substrate value, a sampler. A Custom input takes a number or a texture.
+
+**Fix.** Pass the components the code needs (`m.BaseColor`), not the whole material.
+
+## DSH5285
+
+<!-- generated:begin DSH5285 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}.{1}' has {2} input pin(s), counted from 0, and this argument connects pin {3}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4210`
+<!-- generated:end DSH5285 -->
+
+**Cause.** `Pin[k] = value` names an input pin by its engine index, and the class has fewer pins
+than that.
+
+**Fix.** Use an index the class has, or name the pin.
+
+## DSH5286
+
+<!-- generated:begin DSH5286 -->
+**Severity** error
+
+**Message**
+
+```
+'Pin[{0}] = ...' connects a node's input pin by its engine index, and only a 'UE.' or 'Substrate.' node call has one; pass this argument by name or by position.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2806`
+<!-- generated:end DSH5286 -->
+
+**Cause.** `Pin[k] = value` is used on a call that is no `UE.` / `Substrate.` node: a user function,
+an intrinsic, a constructor. Only a reflected node has engine pin indices.
+
+**Fix.** Pass the argument by name or by position.
+
+## DSH5287
+
+<!-- generated:begin DSH5287 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' has more than one output and is read as its first, '{1}', which is what 1.x did; a '.dss' names the output.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1787`
+<!-- generated:end DSH5287 -->
+
+**Cause.** Rule L3c. A node with several outputs is used as a value in a 1.x body without saying
+which output. 1.x read the first one; so does this front end, and it says which that is.
+
+**Fix.** Nothing has to change. A `.dss` names the output (`UE.ScreenPosition().ViewportUV`), and
+`dsc migrate` writes it.
+
+## DSH5288
+
+<!-- generated:begin DSH5288 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}.{1}' has no 'DefaultValue', so the default written for this parameter is dropped, as 1.x dropped it.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4446`
+<!-- generated:end DSH5288 -->
+
+**Cause.** A 1.x property is a parameter node without a `DefaultValue` property (a collection
+parameter, for one) and has a default written after `=`. 1.x dropped it.
+
+**Fix.** Remove the default; set the value where the node takes it (the collection asset).
+
+## DSH5289
+
+<!-- generated:begin DSH5289 -->
+**Severity** info
+
+**Message**
+
+```
+{0} expects {1}, and this is {2}: its leading components are taken, which is what 1.x did; a '.dss' writes the swizzle.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1850`
+<!-- generated:end DSH5289 -->
+
+**Cause.** Rule L22. A value is wider than the place it goes -- a `float4` parameter assigned to a
+`vec3` variable, passed as a `float3` argument -- and 1.x cut it down to its leading components
+without a word. Only a wider value into a narrower place: two operands of different widths are still
+an error (DSH4226).
+
+**Fix.** Nothing has to change. Writing the swizzle (`Tint.rgb`) says what is meant, and `dsc
+migrate` writes it.
+
+## DSH5290
+
+<!-- generated:begin DSH5290 -->
+**Severity** info
+
+**Message**
+
+```
+The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:842`
+<!-- generated:end DSH5290 -->
+
+**Cause.** Rule L23. A block builds an asset named like a function this file can call (a
+`ShaderFunction(Name = ".../MF_X")` next to a `Function MF_X`). 1.x kept assets and functions in two
+tables, so both existed; 2.0 has one name table, and the block's function is declared as
+`<Name>_Asset` while the asset keeps its name.
+
+**Fix.** Nothing has to change. The migrated file declares the export under the new identifier with
+a `/// @name` for the asset.
+
+## DSH5291
+
+<!-- generated:begin DSH5291 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}.{1}' lists no pin called '{2}'; it is connected by that name once the node exists, because a node may name its pins after its properties.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4475`
+<!-- generated:end DSH5291 -->
+
+**Cause.** Rule L24. A named argument is not a pin or property the catalog lists for the class. The
+catalog is read off each class's default object, and some nodes name their pins after a property
+(MoonToonModifier shows other pins per modifier, TextureSample shows `CoordinatesDX` only under
+`MipValueMode = Derivative`). The pin is wired by that name on the node once it exists; if the node
+shows no such pin, the build fails there (DSH8212). In a `.dss` this applies only to classes the
+catalog flags as naming their pins per node; elsewhere an unknown name is DSH5213.
+
+**Fix.** Nothing to do if the name is what the node shows. The pin's own property name (`ChannelW`)
+always resolves and does not need the lookup.
+
+## DSH5292
+
+<!-- generated:begin DSH5292 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' is not declared, and as in 1.x this assignment declares it, as a local of type {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2272`
+<!-- generated:end DSH5292 -->
+
+**Cause.** Rule L26. `x = value;` in a 1.x body assigns to a name declared nowhere. 1.x declared the
+variable there, with the type of the value.
+
+**Fix.** Nothing has to change; `dsc migrate` writes `T x = value;`. In a `.dss` an undeclared name
+is an error.
 

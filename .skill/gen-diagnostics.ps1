@@ -87,6 +87,20 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
         # dialect, already above -- is not counted twice.
         @{ Severity = 'error';   Pattern = '(?<![A-Za-z0-9_])Fail\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
         @{ Severity = 'warning'; Pattern = '(?<![A-Za-z0-9_])Warn\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        # Batch 2: the decompiler and the migrator raise from inside a class, where the helper is a member
+        # called bare -- Error(TEXT("DSHnnnn"), LOCTEXT(...)), Warning(...), Info(...) -- or takes the result
+        # it reports into first: Fail(OutResult, TEXT(...), ...), Warn(OutResult, TEXT(...), ...),
+        # AddDecompileServiceError(Result, TEXT(...), ...). The lookbehind keeps `.Error(` (above) and
+        # `AddError(` out, so nothing is counted twice.
+        @{ Severity = 'error';   Pattern = '(?<![A-Za-z0-9_.>])Error\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'warning'; Pattern = '(?<![A-Za-z0-9_.>])Warning\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'info';    Pattern = '(?<![A-Za-z0-9_.>])Info\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'error';   Pattern = '(?<![A-Za-z0-9_])Fail\(\s*\w+\s*,\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'warning'; Pattern = '(?<![A-Za-z0-9_])Warn\(\s*\w+\s*,\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        @{ Severity = 'error';   Pattern = 'AddDecompileServiceError\(\s*\w+\s*,\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
+        # ... and one diagnostic is filled in field by field: `Warning.Code = TEXT("DSHnnnn");` with the
+        # message a few lines further down, past that statement's own `;`.
+        @{ Severity = 'warning'; Pattern = 'Warning\.Code\s*=\s*TEXT\("(DSH\d{4})"\)\s*;(.{0,600}?)(?:LOCTEXT\(\s*"[A-Za-z0-9_]+"\s*,\s*"((?:[^"\\]|\\.)*)"\)|TEXT\("((?:[^"\\]|\\.)*)"\))' }
         # ... and through the parser's cursor helpers, which supply the "Expected X, found Y." frame
         # and take only the X fragment at the site:
         #   Expect(Kind, TEXT("DSHnnnn"), LOCTEXT("Key", "';' after the field"))

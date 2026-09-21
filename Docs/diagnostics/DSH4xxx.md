@@ -3,2076 +3,6 @@
 > The block between the generated markers is written by `.skill/gen-diagnostics.ps1`.
 > Everything below a marker is written by hand and survives a regeneration.
 
-## DSH4001
-
-<!-- generated:begin DSH4001 -->
-**Severity** error
-
-**Message**
-
-```
-Encountered an invalid empty Graph statement.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:211`, `Source/DreamShaderLang/Public/DreamShaderDiagnostic.h:140`
-<!-- generated:end DSH4001 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4002
-
-<!-- generated:begin DSH4002 -->
-**Severity** error
-
-**Message**
-
-```
-Encountered a Graph assignment without a target variable.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:221`
-<!-- generated:end DSH4002 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4003
-
-<!-- generated:begin DSH4003 -->
-**Severity** error
-
-**Message**
-
-```
-MaterialAttributes member assignment '%s' requires a value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:249`
-<!-- generated:end DSH4003 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4004
-
-<!-- generated:begin DSH4004 -->
-**Severity** error
-
-**Message**
-
-```
-'%s' is reserved for the material's outputs and cannot be used as a Graph variable name. Rename the variable.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:279`
-<!-- generated:end DSH4004 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4005
-
-<!-- generated:begin DSH4005 -->
-**Severity** error
-
-**Message**
-
-```
-Graph variable '%s' is declared more than once.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:284`
-<!-- generated:end DSH4005 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4006
-
-<!-- generated:begin DSH4006 -->
-**Severity** error
-
-**Message**
-
-```
-Graph variable '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:322`
-<!-- generated:end DSH4006 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4007
-
-<!-- generated:begin DSH4007 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported Graph variable type '%s' for '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:324`
-<!-- generated:end DSH4007 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4008
-
-<!-- generated:begin DSH4008 -->
-**Severity** error
-
-**Message**
-
-```
-Graph builder is not initialized.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:445`
-<!-- generated:end DSH4008 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4009
-
-<!-- generated:begin DSH4009 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if statement could not resolve both branch values for '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:499`
-<!-- generated:end DSH4009 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4010
-
-<!-- generated:begin DSH4010 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if branches assign variable '%s' with inconsistent types
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:532`
-<!-- generated:end DSH4010 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4011
-
-<!-- generated:begin DSH4011 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if statement cannot select texture value '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:538`
-<!-- generated:end DSH4011 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4012
-
-<!-- generated:begin DSH4012 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if statement cannot select Substrate value '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:542`
-<!-- generated:end DSH4012 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4013
-
-<!-- generated:begin DSH4013 -->
-**Severity** error
-
-**Message**
-
-```
-Texture values cannot be selected by Graph if statements.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:574`
-<!-- generated:end DSH4013 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4014
-
-<!-- generated:begin DSH4014 -->
-**Severity** error
-
-**Message**
-
-```
-Substrate values cannot be selected by Graph if statements.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:578`
-<!-- generated:end DSH4014 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4015
-
-<!-- generated:begin DSH4015 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if branches cannot mix MaterialAttributes and numeric values.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:582`
-<!-- generated:end DSH4015 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4016
-
-<!-- generated:begin DSH4016 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if condition left side must evaluate to a scalar value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:593`
-<!-- generated:end DSH4016 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4017
-
-<!-- generated:begin DSH4017 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a zero literal for Graph if condition.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:602`
-<!-- generated:end DSH4017 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4018
-
-<!-- generated:begin DSH4018 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if condition right side must evaluate to a scalar value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:616`
-<!-- generated:end DSH4018 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4019
-
-<!-- generated:begin DSH4019 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a Material If node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:623`
-<!-- generated:end DSH4019 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4020
-
-<!-- generated:begin DSH4020 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported Graph if comparison operator '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:664`
-<!-- generated:end DSH4020 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4021
-
-<!-- generated:begin DSH4021 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a MakeMaterialAttributes node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:794`
-<!-- generated:end DSH4021 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4022
-
-<!-- generated:begin DSH4022 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported Graph variable type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:818`
-<!-- generated:end DSH4022 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4023
-
-<!-- generated:begin DSH4023 -->
-**Severity** error
-
-**Message**
-
-```
-Graph variable type '%s' requires an explicit initializer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:828`
-<!-- generated:end DSH4023 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4024
-
-<!-- generated:begin DSH4024 -->
-**Severity** error
-
-**Message**
-
-```
-Graph variable type '%s' requires an explicit initializer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:833`
-<!-- generated:end DSH4024 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4025
-
-<!-- generated:begin DSH4025 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a default literal node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:840`
-<!-- generated:end DSH4025 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4026
-
-<!-- generated:begin DSH4026 -->
-**Severity** error
-
-**Message**
-
-```
-Initializer '%s' is not a valid brace initializer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:875`
-<!-- generated:end DSH4026 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4027
-
-<!-- generated:begin DSH4027 -->
-**Severity** error
-
-**Message**
-
-```
-Brace initializer assignment is not supported for texture variable '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:917`
-<!-- generated:end DSH4027 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4028
-
-<!-- generated:begin DSH4028 -->
-**Severity** error
-
-**Message**
-
-```
-Brace initializer assignment is not supported for Substrate variable '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:921`
-<!-- generated:end DSH4028 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4029
-
-<!-- generated:begin DSH4029 -->
-**Severity** error
-
-**Message**
-
-```
-Brace initializer assignment is not supported for texture output '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:938`
-<!-- generated:end DSH4029 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4030
-
-<!-- generated:begin DSH4030 -->
-**Severity** error
-
-**Message**
-
-```
-Brace initializer assignment is not supported for Substrate output '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:942`
-<!-- generated:end DSH4030 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4031
-
-<!-- generated:begin DSH4031 -->
-**Severity** error
-
-**Message**
-
-```
-Brace initializer assignment for '%s' requires a declared scalar or vector target type.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:951`
-<!-- generated:end DSH4031 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4032
-
-<!-- generated:begin DSH4032 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported MaterialAttributes member '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:964`
-<!-- generated:end DSH4032 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4033
-
-<!-- generated:begin DSH4033 -->
-**Severity** error
-
-**Message**
-
-```
-MaterialAttributes member '%s' does not have a numeric scalar/vector type.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:971`
-<!-- generated:end DSH4033 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4034
-
-<!-- generated:begin DSH4034 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid MaterialAttributes member assignment target '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:983`
-<!-- generated:end DSH4034 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4035
-
-<!-- generated:begin DSH4035 -->
-**Severity** error
-
-**Message**
-
-```
-Unknown MaterialAttributes variable '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:989`
-<!-- generated:end DSH4035 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4036
-
-<!-- generated:begin DSH4036 -->
-**Severity** error
-
-**Message**
-
-```
-Graph variable '%s' is not a MaterialAttributes value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:993`
-<!-- generated:end DSH4036 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4037
-
-<!-- generated:begin DSH4037 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported MaterialAttributes member '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1000`
-<!-- generated:end DSH4037 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4038
-
-<!-- generated:begin DSH4038 -->
-**Severity** error
-
-**Message**
-
-```
-MaterialAttributes member '%s' cannot be assigned from Graph code.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1014`
-<!-- generated:end DSH4038 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4039
-
-<!-- generated:begin DSH4039 -->
-**Severity** error
-
-**Message**
-
-```
-MaterialAttributes member '%s' must be assigned a ShadingModel node, for example UE.Expression(Class="ShadingModel", ShadingModel="MSM_DefaultLit").
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1024`
-<!-- generated:end DSH4039 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4040
-
-<!-- generated:begin DSH4040 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a SetMaterialAttributes node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1031`
-<!-- generated:end DSH4040 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4041
-
-<!-- generated:begin DSH4041 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to connect '%s' as the SetMaterialAttributes base value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1036`
-<!-- generated:end DSH4041 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4042
-
-<!-- generated:begin DSH4042 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to connect MaterialAttributes member '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1041`
-<!-- generated:end DSH4042 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4043
-
-<!-- generated:begin DSH4043 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid material output assignment target '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1059`
-<!-- generated:end DSH4043 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4044
-
-<!-- generated:begin DSH4044 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported material output '%s.%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1065`
-<!-- generated:end DSH4044 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4045
-
-<!-- generated:begin DSH4045 -->
-**Severity** error
-
-**Message**
-
-```
-Material output '%s' cannot be assigned from Graph code.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1081`
-<!-- generated:end DSH4045 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4046
-
-<!-- generated:begin DSH4046 -->
-**Severity** error
-
-**Message**
-
-```
-Material output '%s' expects %d component(s), but the value has %d. Select the channels you mean, for example '.r'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1095`
-<!-- generated:end DSH4046 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4047
-
-<!-- generated:begin DSH4047 -->
-**Severity** error
-
-**Message**
-
-```
-Graph expression statements currently support only Function calls with explicit out arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1162`
-<!-- generated:end DSH4047 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4048
-
-<!-- generated:begin DSH4048 -->
-**Severity** error
-
-**Message**
-
-```
-Graph expression statements must call a named Function.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1168`
-<!-- generated:end DSH4048 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4049
-
-<!-- generated:begin DSH4049 -->
-**Severity** error
-
-**Message**
-
-```
-Graph expression statement '%s' is unsupported. Only DreamShader Function, GraphFunction, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction calls may use statement syntax.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1182`
-<!-- generated:end DSH4049 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4050
-
-<!-- generated:begin DSH4050 -->
-**Severity** error
-
-**Message**
-
-```
-Graph expression statement '%s' is ambiguous because multiple callable definitions exist.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1186`
-<!-- generated:end DSH4050 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4051
-
-<!-- generated:begin DSH4051 -->
-**Severity** error
-
-**Message**
-
-```
-Empty Graph expression.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1209`
-<!-- generated:end DSH4051 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4052
-
-<!-- generated:begin DSH4052 -->
-**Severity** error
-
-**Message**
-
-```
-'%s' is the material's outputs and can only be written, not read. Read the value you assigned to it instead.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1222`
-<!-- generated:end DSH4052 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4053
-
-<!-- generated:begin DSH4053 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a StaticBool node for literal '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1249`
-<!-- generated:end DSH4053 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4054
-
-<!-- generated:begin DSH4054 -->
-**Severity** error
-
-**Message**
-
-```
-Unknown Graph identifier '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1254`
-<!-- generated:end DSH4054 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4055
-
-<!-- generated:begin DSH4055 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid numeric literal '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1262`
-<!-- generated:end DSH4055 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4056
-
-<!-- generated:begin DSH4056 -->
-**Severity** error
-
-**Message**
-
-```
-String literals can only be used in named UE builtin arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1271`
-<!-- generated:end DSH4056 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4057
-
-<!-- generated:begin DSH4057 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported Graph expression kind.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1286`
-<!-- generated:end DSH4057 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4058
-
-<!-- generated:begin DSH4058 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported unary operator '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1312`
-<!-- generated:end DSH4058 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4059
-
-<!-- generated:begin DSH4059 -->
-**Severity** error
-
-**Message**
-
-```
-Arithmetic operators cannot be applied to texture values.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1340`
-<!-- generated:end DSH4059 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4060
-
-<!-- generated:begin DSH4060 -->
-**Severity** error
-
-**Message**
-
-```
-Arithmetic operators cannot be applied to MaterialAttributes values.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1344`
-<!-- generated:end DSH4060 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4061
-
-<!-- generated:begin DSH4061 -->
-**Severity** error
-
-**Message**
-
-```
-Arithmetic operators cannot be applied to Substrate values.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1348`
-<!-- generated:end DSH4061 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4062
-
-<!-- generated:begin DSH4062 -->
-**Severity** error
-
-**Message**
-
-```
-Operator '%s' requires matching vector sizes or a scalar/vector pair, got %d and %d component(s).
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1383`
-<!-- generated:end DSH4062 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4063
-
-<!-- generated:begin DSH4063 -->
-**Severity** error
-
-**Message**
-
-```
-Integer division is not supported by the material graph; use float() or floor(a/b).
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1436`
-<!-- generated:end DSH4063 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4064
-
-<!-- generated:begin DSH4064 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported or failed binary operator '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1450`
-<!-- generated:end DSH4064 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4065
-
-<!-- generated:begin DSH4065 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported MaterialAttributes member '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1476`
-<!-- generated:end DSH4065 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4066
-
-<!-- generated:begin DSH4066 -->
-**Severity** error
-
-**Message**
-
-```
-MaterialAttributes member '%s' cannot be read as a numeric value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1482`
-<!-- generated:end DSH4066 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4067
-
-<!-- generated:begin DSH4067 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a BreakMaterialAttributes node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1489`
-<!-- generated:end DSH4067 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4068
-
-<!-- generated:begin DSH4068 -->
-**Severity** error
-
-**Message**
-
-```
-BreakMaterialAttributes does not expose member '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1516`
-<!-- generated:end DSH4068 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4069
-
-<!-- generated:begin DSH4069 -->
-**Severity** error
-
-**Message**
-
-```
-Texture values do not support swizzle/member access in Code.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1530`
-<!-- generated:end DSH4069 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4070
-
-<!-- generated:begin DSH4070 -->
-**Severity** error
-
-**Message**
-
-```
-Substrate values do not support swizzle/member access in Graph.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1534`
-<!-- generated:end DSH4070 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4071
-
-<!-- generated:begin DSH4071 -->
-**Severity** error
-
-**Message**
-
-```
-Cannot build an empty vector.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1544`
-<!-- generated:end DSH4071 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4072
-
-<!-- generated:begin DSH4072 -->
-**Severity** error
-
-**Message**
-
-```
-AppendVector inputs must be numeric scalar/vector values.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1558`
-<!-- generated:end DSH4072 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4073
-
-<!-- generated:begin DSH4073 -->
-**Severity** error
-
-**Message**
-
-```
-AppendVector cannot build %d components; Unreal material vectors support at most 4.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1565`
-<!-- generated:end DSH4073 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4074
-
-<!-- generated:begin DSH4074 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create an AppendVector node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1587`
-<!-- generated:end DSH4074 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4075
-
-<!-- generated:begin DSH4075 -->
-**Severity** error
-
-**Message**
-
-```
-Graph calls must target a named function.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1612`
-<!-- generated:end DSH4075 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4076
-
-<!-- generated:begin DSH4076 -->
-**Severity** error
-
-**Message**
-
-```
-UE.SceneTexture expects exactly Id="..." (e.g. Id="PostProcessInput0").
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1644`
-<!-- generated:end DSH4076 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4077
-
-<!-- generated:begin DSH4077 -->
-**Severity** error
-
-**Message**
-
-```
-SampleTexture2D expects exactly two positional arguments: (textureObject, uv).
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1702`
-<!-- generated:end DSH4077 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4078
-
-<!-- generated:begin DSH4078 -->
-**Severity** error
-
-**Message**
-
-```
-Graph call '%s' is ambiguous because multiple definitions use that name: %s.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeExpressions.cpp:1767`
-<!-- generated:end DSH4078 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4079
-
-<!-- generated:begin DSH4079 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to compose swizzle channel mask.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeSwizzle.cpp:114`
-<!-- generated:end DSH4079 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4080
-
-<!-- generated:begin DSH4080 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a ComponentMask node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeSwizzle.cpp:153`
-<!-- generated:end DSH4080 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4081
-
-<!-- generated:begin DSH4081 -->
-**Severity** error
-
-**Message**
-
-```
-Channel %d is invalid for a value with %d components.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeSwizzle.cpp:205`
-<!-- generated:end DSH4081 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4082
-
-<!-- generated:begin DSH4082 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported swizzle '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeSwizzle.cpp:222`
-<!-- generated:end DSH4082 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4083
-
-<!-- generated:begin DSH4083 -->
-**Severity** error
-
-**Message**
-
-```
-Swizzle '%s' is invalid for a value with %d components.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeSwizzle.cpp:248`
-<!-- generated:end DSH4083 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4084
-
-<!-- generated:begin DSH4084 -->
-**Severity** error
-
-**Message**
-
-```
-Swizzle '%s' is invalid for a value with %d components.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeSwizzle.cpp:273`
-<!-- generated:end DSH4084 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4085
-
-<!-- generated:begin DSH4085 -->
-**Severity** error
-
-**Message**
-
-```
-Expected a MaterialAttributes value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCoercion.cpp:48`
-<!-- generated:end DSH4085 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4086
-
-<!-- generated:begin DSH4086 -->
-**Severity** error
-
-**Message**
-
-```
-Expected a Substrate value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCoercion.cpp:59`
-<!-- generated:end DSH4086 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4087
-
-<!-- generated:begin DSH4087 -->
-**Severity** error
-
-**Message**
-
-```
-Expected a texture object value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCoercion.cpp:70`
-<!-- generated:end DSH4087 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4088
-
-<!-- generated:begin DSH4088 -->
-**Severity** error
-
-**Message**
-
-```
-Expected a texture object value with a matching texture type.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCoercion.cpp:75`
-<!-- generated:end DSH4088 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4089
-
-<!-- generated:begin DSH4089 -->
-**Severity** error
-
-**Message**
-
-```
-MaterialAttributes values cannot be assigned to numeric outputs.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCoercion.cpp:84`
-<!-- generated:end DSH4089 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4090
-
-<!-- generated:begin DSH4090 -->
-**Severity** error
-
-**Message**
-
-```
-Substrate values cannot be assigned to numeric outputs.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCoercion.cpp:89`
-<!-- generated:end DSH4090 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4091
-
-<!-- generated:begin DSH4091 -->
-**Severity** error
-
-**Message**
-
-```
-Texture objects cannot be assigned to numeric outputs.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCoercion.cpp:94`
-<!-- generated:end DSH4091 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4092
-
-<!-- generated:begin DSH4092 -->
-**Severity** error
-
-**Message**
-
-```
-Expected %d component(s) but got %d.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCoercion.cpp:128`
-<!-- generated:end DSH4092 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4093
-
-<!-- generated:begin DSH4093 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a constant float%d node for constructor '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeConstructors.cpp:138`
-<!-- generated:end DSH4093 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4094
-
-<!-- generated:begin DSH4094 -->
-**Severity** error
-
-**Message**
-
-```
-Constructor '%s' does not accept named arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeConstructors.cpp:157`
-<!-- generated:end DSH4094 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4095
-
-<!-- generated:begin DSH4095 -->
-**Severity** error
-
-**Message**
-
-```
-Constructor '%s' cannot use Texture2D arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeConstructors.cpp:168`
-<!-- generated:end DSH4095 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4096
-
-<!-- generated:begin DSH4096 -->
-**Severity** error
-
-**Message**
-
-```
-Constructor '%s' cannot use MaterialAttributes arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeConstructors.cpp:172`
-<!-- generated:end DSH4096 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4097
-
-<!-- generated:begin DSH4097 -->
-**Severity** error
-
-**Message**
-
-```
-Constructor '%s' cannot use Substrate arguments.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeConstructors.cpp:176`
-<!-- generated:end DSH4097 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4098
-
-<!-- generated:begin DSH4098 -->
-**Severity** error
-
-**Message**
-
-```
-Constructor '%s' expects a single scalar input.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeConstructors.cpp:186`
-<!-- generated:end DSH4098 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4099
-
-<!-- generated:begin DSH4099 -->
-**Severity** error
-
-**Message**
-
-```
-Constructor '%s' expects %d total components but got %d.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeConstructors.cpp:222`
-<!-- generated:end DSH4099 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4100
-
-<!-- generated:begin DSH4100 -->
-**Severity** error
-
-**Message**
-
-```
-Expected 'if'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:246`
-<!-- generated:end DSH4100 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4101
-
-<!-- generated:begin DSH4101 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if statement is missing a condition block.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:253`
-<!-- generated:end DSH4101 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4102
-
-<!-- generated:begin DSH4102 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if statement has an unterminated condition block.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:259`
-<!-- generated:end DSH4102 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4103
-
-<!-- generated:begin DSH4103 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if statement is missing a '{ ... }' body.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:266`
-<!-- generated:end DSH4103 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4104
-
-<!-- generated:begin DSH4104 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if statement has an unterminated body block.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:272`
-<!-- generated:end DSH4104 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4105
-
-<!-- generated:begin DSH4105 -->
-**Severity** error
-
-**Message**
-
-```
-Graph else statement is missing a '{ ... }' body.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:288`
-<!-- generated:end DSH4105 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4106
-
-<!-- generated:begin DSH4106 -->
-**Severity** error
-
-**Message**
-
-```
-Graph else statement has an unterminated body block.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:294`
-<!-- generated:end DSH4106 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4107
-
-<!-- generated:begin DSH4107 -->
-**Severity** error
-
-**Message**
-
-```
-Output declaration initializer requires a type and name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:694`
-<!-- generated:end DSH4107 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4108
-
-<!-- generated:begin DSH4108 -->
-**Severity** error
-
-**Message**
-
-```
-Output declaration '%s' has an empty initializer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:700`
-<!-- generated:end DSH4108 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4109
-
-<!-- generated:begin DSH4109 -->
-**Severity** error
-
-**Message**
-
-```
-Unexpected token '%s' in Graph expression.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:732`
-<!-- generated:end DSH4109 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4110
-
-<!-- generated:begin DSH4110 -->
-**Severity** error
-
-**Message**
-
-```
-Expected token type %d in Graph expression near '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:931`
-<!-- generated:end DSH4110 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4111
-
-<!-- generated:begin DSH4111 -->
-**Severity** error
-
-**Message**
-
-```
-Graph if condition is empty.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:1235`
-<!-- generated:end DSH4111 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4112
-
-<!-- generated:begin DSH4112 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid Graph if statement '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:1291`
-<!-- generated:end DSH4112 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4113
-
-<!-- generated:begin DSH4113 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid Graph if body in '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:1303`
-<!-- generated:end DSH4113 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4114
-
-<!-- generated:begin DSH4114 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid Graph else body in '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:1331`
-<!-- generated:end DSH4114 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH4115
-
-<!-- generated:begin DSH4115 -->
-**Severity** error
-
-**Message**
-
-```
-Unexpected text after Graph if statement: '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeParsing.cpp:1344`
-<!-- generated:end DSH4115 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
 ## DSH4200
 
 <!-- generated:begin DSH4200 -->
@@ -2084,7 +14,7 @@ Unexpected text after Graph if statement: '%s'.
 '{0}' is not declared; did you mean '{1}'? Names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:718`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:729`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:741`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:752`
 <!-- generated:end DSH4200 -->
 
 **Cause.** An identifier does not name a local, a parameter or a file-scope declaration that is
@@ -2107,7 +37,7 @@ the bottom of the file declares nothing for the code above it.
 '{0}' is not a type; did you mean '{1}'? Type names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:503`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:514`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:528`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:650`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:871`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:527`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:536`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:547`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:561`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:683`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:940`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:534`
 <!-- generated:end DSH4201 -->
 
 **Cause.** A type spelling is neither a builtin (`float3`, `Texture2D`, `material`, `Substrate`, …)
@@ -2128,7 +58,7 @@ comes from a header, check that the header is included above this line.
 A string has no value in an expression; it is only ever the value of a reflected property, as in 'UE.Expression(Class = "...")'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:616`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:620`
 <!-- generated:end DSH4202 -->
 
 **Cause.** A quoted string reached an expression. The language has no string values: a string is
@@ -2148,7 +78,7 @@ only ever the value of a reflected literal property, as in `UE.Expression(Class 
 '{0}' is a namespace, not a value; write '{0}.SomeNode(...)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:686`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:701`
 <!-- generated:end DSH4203 -->
 
 **Cause.** `UE` or `Substrate` was used as if it were a variable. They are namespaces; the only
@@ -2168,7 +98,7 @@ it — a declared `UE` wins over the namespace, and the reflected call is then w
 '{0}' is a type, not a value; write '{0}(...)' to construct one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:503`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:507`
 <!-- generated:end DSH4204 -->
 
 **Cause.** A type name appears where a value is expected: `float3;`, `x = float3`, `f(float3)`.
@@ -2186,7 +116,7 @@ it — a declared `UE` wins over the namespace, and the reflected call is then w
 '{0}' has no field called '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:871`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1100`
 <!-- generated:end DSH4205 -->
 
 **Cause.** A `struct` value was asked for a field it does not have. The message names the struct and
@@ -2205,7 +135,7 @@ suggests a field that differs only in case, when there is one.
 '{0}' on a texture is a call: write 'Tex.{0}(UV)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:964`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1239`
 <!-- generated:end DSH4206 -->
 
 **Cause.** `Tex.Sample` (or `Tex.SampleLevel`) appears without its argument list. A texture's
@@ -2224,7 +154,7 @@ methods are calls; there is no value to take from the method itself.
 A value of type {0} has no member '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:974`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1249`
 <!-- generated:end DSH4207 -->
 
 **Cause.** A member access was written on a value whose type has no members of that kind: a swizzle
@@ -2244,7 +174,7 @@ only valid on a numeric value of at least three components, and `m.BaseColor` on
 A value of type {0} has no method '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2337`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2421`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2436`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3706`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2866`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2982`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2997`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4704`
 <!-- generated:end DSH4208 -->
 
 **Cause.** A call was written on something that is not callable: a name that is not a function, a
@@ -2265,7 +195,7 @@ reach an engine node through `UE.Expression(Class = "…")`.
 '{0}' is already declared in this file; one name declares one thing.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:432`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:442`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:458`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:468`
 <!-- generated:end DSH4210 -->
 
 **Cause.** One name is declared twice. Structs, file-scope variables and functions share one
@@ -2287,7 +217,7 @@ when their parameter lists differ.
 Including '{0}' from '{1}' closes a cycle; a header may not include itself, directly or through another header.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:395`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:421`
 <!-- generated:end DSH4211 -->
 
 **Cause.** Following an `#include` / `import` leads back to a file already being read. The message
@@ -2307,7 +237,7 @@ header both of them include; DreamShaderLang has no include guards to make a cyc
 '{0}' cannot be read: this front end was started without an include resolver, so nothing a header declares is visible.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:359`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:385`
 <!-- generated:end DSH4212 -->
 
 **Cause.** The file has an `#include` / `import` and this front end was started without an include
@@ -2328,7 +258,7 @@ every name the header would have declared to be `DSH4200` as well.
 '{0}' is declared twice in struct '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:631`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:664`
 <!-- generated:end DSH4213 -->
 
 **Cause.** A `struct` declares two fields with the same name.
@@ -2346,7 +276,7 @@ every name the header would have declared to be `DSH4200` as well.
 '{0}' is declared twice in the parameter list of '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:849`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:917`
 <!-- generated:end DSH4214 -->
 
 **Cause.** A parameter list declares one name twice.
@@ -2364,7 +294,7 @@ every name the header would have declared to be `DSH4200` as well.
 The '{0}' argument of '{1}' is given twice.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2779`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2984`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3455`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3516`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3340`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3658`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4292`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4362`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4400`
 <!-- generated:end DSH4215 -->
 
 **Cause.** One argument slot is filled twice in a call: the same parameter named twice, a named
@@ -2385,7 +315,7 @@ named argument that names one of those parameters is the duplicate.
 '{0}' takes its arguments in order and has no argument called '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2744`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2962`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3305`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3636`
 <!-- generated:end DSH4216 -->
 
 **Cause.** A named argument names nothing in the callee: no parameter of that function, or no pin
@@ -2405,7 +335,7 @@ a function's parameters.
 '{0}' is missing its '{1}' argument.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2807`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3015`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3368`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3710`
 <!-- generated:end DSH4217 -->
 
 **Cause.** A call leaves a parameter with no argument and no default, or a builtin without one of
@@ -2425,7 +355,7 @@ function's input optional.
 '{0}' writes back {1}, and this variable is {2}; an out argument has to match exactly.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3068`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3771`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3816`
 <!-- generated:end DSH4218 -->
 
 **Cause.** An argument passed to an `out` / `inout` parameter is a variable of a different type.
@@ -2467,7 +397,7 @@ fine — they are not visible to each other and each gets its own slot.
 {0}() has no components; write the value, as in 'float3(0.0)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2494`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3055`
 <!-- generated:end DSH4221 -->
 
 **Cause.** A constructor was written with no arguments: `float3()`.
@@ -2486,7 +416,7 @@ time.
 '{0}' has {1} fields and this list has {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2091`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2196`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2229`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2560`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2632`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2585`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2690`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2723`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3121`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3193`
 <!-- generated:end DSH4222 -->
 
 **Cause.** The pieces do not add up: a constructor whose arguments' components do not total the
@@ -2507,7 +437,7 @@ write `v4.xyz`. The one exception is a single scalar, which broadcasts to any wi
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1462`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1991`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2003`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2018`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2473`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1890`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2485`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2497`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2512`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3034`
 <!-- generated:end DSH4223 -->
 
 **Cause.** A cast the graph cannot carry: to or from a type that is not a number or a bool, or a
@@ -2527,7 +457,7 @@ For a texture, a sampler, a `material` or a `Substrate` value there is no cast a
 '{0}' takes at most {1} arguments.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2765`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2825`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2929`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3750`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3817`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3326`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3386`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3584`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4748`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4815`
 <!-- generated:end DSH4224 -->
 
 **Cause.** A call has more or fewer arguments than the callee takes. For a texture sample the
@@ -2547,7 +477,7 @@ on whether it was written.
 A constructor takes its components in order; named arguments belong on 'UE.' nodes and on function calls.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2485`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3718`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3046`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4716`
 <!-- generated:end DSH4225 -->
 
 **Cause.** Named arguments were used where only positional ones are taken: a constructor, a texture
@@ -2567,7 +497,7 @@ or a property, and on calls to declared functions, where they match a parameter.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1496`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1544`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1930`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2528`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2540`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1924`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1972`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2424`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3089`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3101`
 <!-- generated:end DSH4226 -->
 
 **Cause.** An operand does not fit where it is used. The two common shapes are a width that does not
@@ -2588,7 +518,7 @@ width, so `v3 * 2.0` is fine and `v3 * v2` is not.
 '{0}' is not an operation this language spells as a call.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1612`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1715`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1758`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1785`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1862`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2053`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2156`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2199`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2226`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2340`
 <!-- generated:end DSH4227 -->
 
 **Cause.** An operator with no graph form: `&`, `|`, `^`, `<<`, `>>`, `~` and their assignment
@@ -2608,7 +538,7 @@ HLSL the shader compiler sees whole.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1451`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1879`
 <!-- generated:end DSH4228 -->
 
 **Cause.** A value does not fit where it is being stored: the right of an `=`, an initializer, a
@@ -2628,7 +558,7 @@ parameter default or a `return`. The message names both types.
 A 'uniform' is an input and a 'static const' is a constant; neither can be assigned to. Copy it into a local first.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1819`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1846`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2297`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2324`
 <!-- generated:end DSH4229 -->
 
 **Cause.** The left of an `=` is not something that can be written to: a `uniform` (a material
@@ -2648,7 +578,7 @@ is set from outside it.
 '.{0}' is not a swizzle; a swizzle is one to four of 'xyzw' or 'rgba'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1010`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1026`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1046`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1323`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1836`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:991`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1266`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1285`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1301`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1321`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1688`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2314`
 <!-- generated:end DSH4230 -->
 
 **Cause.** One of five things:
@@ -2676,7 +606,7 @@ result would depend on how the graph happened to be built.
 '{0}.{1}' is an output node, not a value: write it as a statement on a line of its own.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3628`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4597`
 <!-- generated:end DSH4231 -->
 
 **Cause.** A node with no value was used as one. Custom-output classes (`ClearCoatBottomNormal`,
@@ -2696,7 +626,7 @@ than producing something to read, and a class with no output pins is the same ca
 A component index must be a compile-time constant; write a swizzle such as '.z', or select with 'lerp'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1314`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1679`
 <!-- generated:end DSH4233 -->
 
 **Cause.** `v[i]` with an index the binder cannot evaluate. A component index becomes a swizzle,
@@ -2715,7 +645,7 @@ and a swizzle is fixed when the graph is built.
 A value of type {0} cannot be indexed.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1350`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1715`
 <!-- generated:end DSH4234 -->
 
 **Cause.** `[...]` was written on a value that is neither an array, a vector nor a matrix.
@@ -2733,7 +663,7 @@ A value of type {0} cannot be indexed.
 '++' and '--' write back into what they read, so they need a variable.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1729`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2170`
 <!-- generated:end DSH4235 -->
 
 **Cause.** `++` or `--` was applied to something that is not a variable. They read and write back,
@@ -2752,7 +682,7 @@ so they need somewhere to write.
 An 'in' parameter is a function input pin and cannot be written to; declare it 'out' or 'inout', or copy it into a local.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1827`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2305`
 <!-- generated:end DSH4236 -->
 
 **Cause.** An `in` parameter was assigned to. In a graph an input parameter is a function input pin,
@@ -2772,7 +702,7 @@ local and modify that.
 An initializer list only has a meaning against a declared type; it cannot stand on its own.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2068`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2135`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2219`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2562`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2629`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2713`
 <!-- generated:end DSH4237 -->
 
 **Cause.** An initializer list appears where nothing says what it should become — or a target that
@@ -2793,7 +723,7 @@ is not a list.
 '{0}' returns nothing, so its call has no value; its results come back through its out parameters.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3091`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3845`
 <!-- generated:end DSH4238 -->
 
 **Cause.** A call to a function that returns `void` was used as a value.
@@ -2812,7 +742,7 @@ parameters, which the caller declares as variables and reads after the call.
 '{0}' is an out parameter of '{1}', so its argument has to be a variable.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3047`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3742`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3798`
 <!-- generated:end DSH4239 -->
 
 **Cause.** The argument passed to an `out` / `inout` parameter is not a variable, so there is
@@ -2831,7 +761,7 @@ nowhere to write the result.
 '#pragma endregion' closes a box that was never opened.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:655`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:674`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:682`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:785`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:804`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:812`
 <!-- generated:end DSH4240 -->
 
 **Cause.** `#pragma region` and `#pragma endregion` do not pair up — an `endregion` with nothing
@@ -2851,7 +781,7 @@ body, so a region opened in a header cannot be closed by the file that included 
 A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:550`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:583`
 <!-- generated:end DSH4241 -->
 
 **Cause.** A declaration has more than one `[n]`. The graph has no arrays at all; the one dimension
@@ -2870,7 +800,7 @@ that is supported exists only so a `static const` table can be indexed at compil
 An array index must be a compile-time constant: the graph has no arrays, so every element is read at compile time.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1249`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1258`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1286`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1614`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1623`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1651`
 <!-- generated:end DSH4242 -->
 
 **Cause.** An array element could not be resolved at compile time: a non-constant index, an index
@@ -2880,6 +810,27 @@ every element read has to fold to a value while compiling.
 **Fix.** Declare the array `static const` with a constant initializer and index it with a literal
 or a `static const`. For a table that has to be read at run time, use a texture or a `@custom`
 function.
+
+## DSH4243
+
+<!-- generated:begin DSH4243 -->
+**Severity** error
+
+**Message**
+
+```
+Both sides of this '/' are integers, and the material graph has no integer division; write 'float(a) / b' for the fraction, or 'floor(float(a) / b)' for the whole part.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2002`
+<!-- generated:end DSH4243 -->
+
+**Cause.** Both operands of a `/` are integers. HLSL would divide them as integers and drop the
+fraction; a material graph has no integer division at all -- every value in it is a float -- so the
+two would disagree, and the compiler does not pick one silently.
+
+**Fix.** Say which one is meant: `float(a) / b` for the fraction, `floor(float(a) / b)` for the
+whole part.
 
 ## DSH4244
 
@@ -2892,7 +843,7 @@ function.
 A matrix row cannot be read: the graph has no matrices. Move the code into a '/// @custom' function, where the matrix is an input.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1301`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1666`
 <!-- generated:end DSH4244 -->
 
 **Cause.** A row of a matrix was read (`M[1]`). A matrix has no graph value; it exists only as a
@@ -2911,7 +862,7 @@ A matrix row cannot be read: the graph has no matrices. Move the code into a '//
 An unsized array needs an initializer list to take its length from.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:569`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:592`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:602`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:602`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:625`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:635`
 <!-- generated:end DSH4245 -->
 
 **Cause.** An array size is not an integer literal between 1 and 4096, or an unsized `[]` has no
@@ -2931,7 +882,7 @@ expression — even a constant one — cannot be used.
 The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it in a '/// @custom' body, where the shader compiler has it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2684`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3245`
 <!-- generated:end DSH4246 -->
 
 **Cause.** `sinh`, `cosh` or `tanh` was called. The core table carries all three so a `/// @custom`
@@ -2954,7 +905,7 @@ terms of `exp` explicitly is also fine — the point is that the file, not the e
 '{0}' is the GLSL spelling; this language is HLSL, so write '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2372`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2915`
 <!-- generated:end DSH4250 -->
 
 **Cause.** A GLSL spelling was used: `mix`, `fract`, `mod`. 1.x silently rewrote these to their
@@ -2995,7 +946,7 @@ the intent obvious to the next reader.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1473`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1899`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:606`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1901`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2393`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:613`
 <!-- generated:end DSH4260 -->
 
 **Cause.** The condition of an `if`, a `for`, a `while`, a `do` or a `?:` is not a single
@@ -3015,7 +966,7 @@ out by hand. A number is accepted and means "not zero".
 '{0}' returns {1}, so this 'return' needs a value.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:710`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:717`
 <!-- generated:end DSH4261 -->
 
 **Cause.** A bare `return;` in a function that declares a return type.
@@ -3034,7 +985,7 @@ parameters.
 '{0}' returns nothing, so this 'return' cannot carry a value; extra results are written to 'out' parameters.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:726`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:733`
 <!-- generated:end DSH4262 -->
 
 **Cause.** `return <value>;` in a `void` function.
@@ -3052,7 +1003,7 @@ parameters.
 'discard' belongs in a material entry or a layer; a material function has no pixel of its own to drop. Write the mask into 'm.OpacityMask' instead.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:476`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:483`
 <!-- generated:end DSH4263 -->
 
 **Cause.** `discard` in a function that is not the material entry, a `@layer` or a `@layerblend`.
@@ -3072,7 +1023,7 @@ into the entry.
 'break' leaves a loop, and this one is not inside a 'for', 'while' or 'do'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:455`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:462`
 <!-- generated:end DSH4264 -->
 
 **Cause.** `break` or `continue` outside any loop.
@@ -3091,7 +1042,7 @@ into the entry.
 Node {0} reads {1} from node %{2}, which does not exist; the graph has {3} nodes.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:217`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:221`
 <!-- generated:end DSH4300 -->
 
 **Cause.** A node's operand or named input refers to node `%N`, and the graph has no node with
@@ -3114,7 +1065,7 @@ you wrote causes this; report the file.
 Node {0} reads {1} from node {2}, which is a statement and produces no value.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:236`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:249`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:240`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:253`
 <!-- generated:end DSH4301 -->
 
 **Cause.** Two shapes. Either a node reads output *k* of a node that has fewer than *k*+1 outputs
@@ -3141,7 +1092,7 @@ builder gave the node; the catalog entry's `Outputs` array is the authority for 
 Node {0} has {1} operand(s); this op takes exactly {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:374`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:385`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:382`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:393`
 <!-- generated:end DSH4302 -->
 
 **Cause.** The node has more or fewer operands than its op accepts. The arity comes from
@@ -3162,7 +1113,7 @@ literal counts. Author side: report the file, with the expression the diagnostic
 Node {0} has nothing connected to {1}; every operand of this op must carry a value.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:205`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:209`
 <!-- generated:end DSH4303 -->
 
 **Cause.** An operand slot that must carry a value is empty. Only two slots in the whole IR may be
@@ -3184,7 +1135,7 @@ a lowering path that returns early on an error it did not report. Author side: r
 Node {0} carries {1} positional operand(s); this op takes {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:343`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:356`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:347`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:364`
 <!-- generated:end DSH4304 -->
 
 **Cause.** The node uses the wrong connection style for its op. `IR.h` fixes this per op: the core
@@ -3208,7 +1159,7 @@ than tolerated. Author side: report the file.
 Node {0} has a named input with no pin name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:932`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:945`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:948`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:961`
 <!-- generated:end DSH4305 -->
 
 **Cause.** A named input has an empty pin name, or the same pin name appears twice on one node. An
@@ -3231,7 +1182,7 @@ call; if you did not, report the file.
 Node {0} does arithmetic on operand {1}, which is a {2}; the graph carries only float1 to float4, so a matrix, a texture or a material cannot reach a math node.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:682`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:696`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:690`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:704`
 <!-- generated:end DSH4306 -->
 
 **Cause.** A math node reads or produces a value the material graph has no wire for. The graph
@@ -3254,7 +1205,7 @@ assigned to the operand is wrong.
 Node {0} is a statement and must have no outputs, but it declares {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:285`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:296`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:289`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:300`
 <!-- generated:end DSH4307 -->
 
 **Cause.** Either a value node declares no outputs — nothing can read it, so it cannot have been
@@ -3279,7 +1230,7 @@ the value; a node added and typed later is the usual source. Author side: report
 Node {0} has {1} output name(s) for {2} output(s); the two lists are either parallel or the names are omitted.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:307`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:327`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:311`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:331`
 <!-- generated:end DSH4308 -->
 
 **Cause.** `OutputNames` exists to name multi-output nodes, and it is either empty (the node's
@@ -3300,7 +1251,7 @@ entry's `Outputs` names verbatim. Author side: report the file.
 Node {0} is a reflected node with catalog index {1}, which is not an entry of the builtin catalog.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1022`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:713`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1038`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:721`
 <!-- generated:end DSH4309 -->
 
 **Cause.** Two shapes of the same mistake. Either a `Reflected` node's `CatalogIndex` does not
@@ -3324,7 +1275,7 @@ is positional and an older manifest does not match a newer engine.
 Node {0} connects pin '{1}', which '{2}' does not have.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:744`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:758`
 <!-- generated:end DSH4310 -->
 
 **Cause.** A reflected node connects a pin the class does not have. The catalog's `Inputs` list is
@@ -3347,7 +1298,7 @@ reflection exporter skipped it — check `IsMaterialExpressionInputProperty`.
 Node {0} sets property '{1}', which '{2}' does not have.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:784`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:800`
 <!-- generated:end DSH4311 -->
 
 **Cause.** A reflected node sets a property the class does not have. `ClassSpecifier` (the IR's own
@@ -3370,7 +1321,7 @@ catalog, the reflection exporter filtered it — check the property-flag test in
 Node {0} names class '{1}' but its catalog entry is '{2}'; the two must agree.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:727`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:735`
 <!-- generated:end DSH4312 -->
 
 **Cause.** The node's `ClassName` and the catalog entry its `CatalogIndex` points at name two
@@ -3391,7 +1342,7 @@ point the node is built, never from the source text; the author's spelling belon
 Material product {0} has {1} MaterialSink node(s); a material has exactly one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1056`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1066`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1080`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1091`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1072`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1082`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1096`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1107`
 <!-- generated:end DSH4313 -->
 
 **Cause.** The product's sink does not match its kind. A `Material` product has exactly one
@@ -3414,7 +1365,7 @@ file.
 Product {0} lists node %{1} in its {2}, and that node does not exist.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1109`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1121`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1142`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1152`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1166`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1125`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1137`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1158`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1168`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1182`
 <!-- generated:end DSH4314 -->
 
 **Cause.** The graph's `FunctionInputs` / `FunctionOutputs` lists and the FunctionInput /
@@ -3436,7 +1387,7 @@ report the file.
 Product {0} is a {1} and produces nothing; a material function needs at least one FunctionOutput.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1176`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1192`
 <!-- generated:end DSH4315 -->
 
 **Cause.** A material function, layer or layer blend has no `FunctionOutput` node, so the asset
@@ -3458,7 +1409,7 @@ actually spelled `inout`. Compiler side: check `FBoundFunction::MaterialResultPa
 Product {0} cannot be ordered: these nodes feed themselves, directly or through others -- {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1321`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1516`
 <!-- generated:end DSH4316 -->
 
 **Cause.** The graph cannot be put in an order where every operand precedes its user, which means
@@ -3481,7 +1432,7 @@ function the nodes come from.
 Node {0} needs a string Mask property holding the component letters.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:504`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:516`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:546`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:559`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:577`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:512`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:524`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:554`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:567`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:585`
 <!-- generated:end DSH4317 -->
 
 **Cause.** A `Swizzle` node's mask is missing, is not a string, is empty, is longer than four
@@ -3511,7 +1462,7 @@ legal source, so seeing this means the split did not happen — report the file.
 Node {0} masks '{1}' out of a {2}, which has only {3} component(s).
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:607`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:615`
 <!-- generated:end DSH4318 -->
 
 **Cause.** The mask names a component the operand does not have — `.w` on a `float3`, `.z` on a
@@ -3533,7 +1484,7 @@ between binding and lowering — usually a conversion inserted on the wrong side
 Node {0} switches on a {1}; a StaticSwitch condition is a single static bool.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:640`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:653`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:648`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:661`
 <!-- generated:end DSH4319 -->
 
 **Cause.** A branch node's condition has the wrong type. A `StaticSwitch` condition must be a
@@ -3557,7 +1508,7 @@ dynamic, which is also fine.
 Node {0} sits in region {1}, which does not exist; the graph has {2} region(s).
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1195`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1212`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:400`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1211`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1228`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:408`
 <!-- generated:end DSH4320 -->
 
 **Cause.** A region reference does not resolve: a node sits in a region index the graph does not
@@ -3580,7 +1531,7 @@ file if you see this one instead.
 Product {0} has dedupe keys on {1} of its {2} nodes; the key is either computed for the whole graph or for none of it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1342`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1537`
 <!-- generated:end DSH4321 -->
 
 **Cause.** Some nodes of a graph have a `DedupeKey` and others do not. The key is structural: it is computed for the whole graph in one pass or for none of it, because a key
@@ -3601,7 +1552,7 @@ Author side: report the file.
 Nodes %{0} and %{1} of product {2} have the same dedupe key, so the dedupe pass should have merged them into one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1391`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1586`
 <!-- generated:end DSH4322 -->
 
 **Cause.** Two nodes of one graph have the same dedupe key, so they describe the same expression
@@ -3623,7 +1574,7 @@ output is still correct, just larger than it should be.
 Node {0} needs property '{1}' and does not have it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:484`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:492`
 <!-- generated:end DSH4323 -->
 
 **Cause.** A node is missing a property its op cannot do without: `Constant` without `Value`,
@@ -3644,7 +1595,7 @@ Node {0} needs property '{1}' and does not have it.
 Node {0} carries a property with no name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:424`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:437`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:459`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:432`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:445`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:467`
 <!-- generated:end DSH4324 -->
 
 **Cause.** Three shapes: a property with no name, the same property set twice on one node, or a
@@ -3667,7 +1618,7 @@ and never to a `Reflected` node, whose properties are engine names passed throug
 Node {0} writes attribute '{1}', which is not in the engine's material attribute table.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:870`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:888`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:886`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:904`
 <!-- generated:end DSH4325 -->
 
 **Cause.** An attribute name written into a `MakeMaterialAttributes`, `SetMaterialAttributes`,
@@ -3690,7 +1641,7 @@ array is missing it — re-export the manifest.
 Product {0} has no name; the asset name comes from the exported function or from '/// @name'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1417`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1430`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1627`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1640`
 <!-- generated:end DSH4326 -->
 
 **Cause.** A product has an empty `Name`, or two products of one file would be called the same
@@ -3712,7 +1663,7 @@ has to be unique. Compiler side: the binder decides product names; check `FBound
 Node {0} calls local product {1}, which this module does not have; it has {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:809`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:821`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:837`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:825`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:837`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:853`
 <!-- generated:end DSH4327 -->
 
 **Cause.** A `FunctionCall` node does not say what it calls. It needs either `Prop::LocalFunction`
@@ -3736,7 +1687,7 @@ its `/// @asset /Game/...` line.
 Layout hint {0} of product {1} has kind '{2}'; a hint is spelled exactly 'Node' or 'Comment', so this one places nothing.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1245`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1257`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1267`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1261`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1273`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1283`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1294`
 <!-- generated:end DSH4328 -->
 
 **Cause.** A `#pragma layout(...)` hint is not one the layout pass can apply: its kind is neither
@@ -3746,6 +1697,144 @@ error: the product still compiles and the automatic layout still runs; only this
 **Fix.** Author side: write `#pragma layout(Node, Var = Tint, X = 10, Y = 20)` or
 `#pragma layout(Comment, Name = "Lighting", X = 0, Y = 0, W = 400, H = 200)`. Compiler side: hints
 are carried through untouched from `FBoundModule::LayoutHints`, so the parse is the place to look.
+
+## DSH4329
+
+<!-- generated:begin DSH4329 -->
+**Severity** error
+
+**Message**
+
+```
+Product {0} is a material instance, which assigns its parent's parameters and has no graph, and it carries {1} node(s), a sink or a function signature.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1366`
+<!-- generated:end DSH4329 -->
+
+**Cause.** An IR product of kind MaterialInstance carries graph nodes, a sink or a function
+signature. An instance only assigns its parent's parameters. This is an internal consistency check
+of the IR validator: no source text can cause it.
+
+**Fix.** Report it with the `.dsi` that produced it; it is a defect of the compiler.
+
+## DSH4330
+
+<!-- generated:begin DSH4330 -->
+**Severity** error
+
+**Message**
+
+```
+Material instance product {0} needs the material it is an instance of, and its parent reference is empty.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1377`
+<!-- generated:end DSH4330 -->
+
+**Cause.** A MaterialInstance product has no parent reference. The binder refuses a `.dsi` without a
+`Parent` earlier (DSH7250, DSH7252), so reaching this is an internal error.
+
+**Fix.** Report it with the source that produced it.
+
+## DSH4331
+
+<!-- generated:begin DSH4331 -->
+**Severity** error
+
+**Message**
+
+```
+Override '{0}' of product {1} is a {2} override holding a {3} value, and a {2} override holds {4}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1403`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1416`
+<!-- generated:end DSH4331 -->
+
+**Cause.** An instance override holds a value of another kind than its parameter kind takes -- a
+Scalar is one number, a Vector four, a StaticSwitch a bool, an asset kind an object path -- or a
+Font override names a negative page. Internal consistency check: the binder refuses both in source
+(`DSH7259`, `DSH7266`).
+
+**Fix.** Report it with the source that produced it.
+
+## DSH4332
+
+<!-- generated:begin DSH4332 -->
+**Severity** error
+
+**Message**
+
+```
+Product {0} overrides '{1}' twice, and an instance sets each parameter once.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1433`
+<!-- generated:end DSH4332 -->
+
+**Cause.** One parameter is overridden twice in an instance product. The binder reports the same
+thing on the source (DSH7261); this is the validator's backstop.
+
+**Fix.** Remove one of the two `uniform` lines of that name from the `.dsi`.
+
+## DSH4333
+
+<!-- generated:begin DSH4333 -->
+**Severity** error
+
+**Message**
+
+```
+Override '{0}' of product {1} names a parameter, and the parent schema the product carries has no such parameter.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1449`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1459`
+<!-- generated:end DSH4333 -->
+
+**Cause.** An instance product overrides a parameter its parent schema does not list, or lists under
+another kind. The binder checks both against the same schema (`DSH7258`, `DSH7259`), so reaching
+this means the two saw different schemas.
+
+**Fix.** Rebuild the parent first, then the instance; if it persists, report it.
+
+## DSH4334
+
+<!-- generated:begin DSH4334 -->
+**Severity** error
+
+**Message**
+
+```
+This module holds a material instance and {0} other product(s), and a material instance is the only product of its file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1613`
+<!-- generated:end DSH4334 -->
+
+**Cause.** A module holds a material instance together with other products. A `.dsi` is one instance
+and nothing else; the front end refuses functions and other declarations in it, so this is the
+validator's backstop.
+
+**Fix.** Keep each instance in a `.dsi` of its own.
+
+## DSH4335
+
+<!-- generated:begin DSH4335 -->
+**Severity** error
+
+**Message**
+
+```
+Material instance product {0} carries backend {1}, and an instance is a plain material instance with the default backend.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1387`
+<!-- generated:end DSH4335 -->
+
+**Cause.** A MaterialInstance product carries a backend. `Backend` is a property of a material; an
+instance is always a plain UMaterialInstanceConstant.
+
+**Fix.** Remove `Backend` from `#pragma instance(...)`.
 
 ## DSH4350
 
@@ -3758,7 +1847,7 @@ are carried through untouched from `FBoundModule::LayoutHints`, so the parse is 
 The IR builder cannot read '{0}' here: the binder typed what it is read from as a material, but that did not lower to one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:361`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:473`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:382`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:508`
 <!-- generated:end DSH4350 -->
 
 **Cause.** The IR builder reached a bound expression whose `EBoundExprKind` it has no case for.
@@ -3788,7 +1877,7 @@ Until then, rewriting the expression in a simpler form usually avoids the kind t
 This module was bound without a builtin catalog, so no 'UE.*' call and no material attribute can be named; run the bind with a catalog, or pass one in FIRBuildOptions.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:110`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1366`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:866`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:315`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:419`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:116`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1481`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:901`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:420`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:532`
 <!-- generated:end DSH4352 -->
 
 **Cause.** Three shapes, told apart by where the message points.
@@ -3828,7 +1917,7 @@ classes were loaded.
 This loop runs a number of times the compiler cannot fix at {0} or fewer, and a material graph has no loops; give it a constant trip count, or move it into a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:405`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:410`
 <!-- generated:end DSH4360 -->
 
 **Cause.** A `for`, `while` or `do` whose trip count the binder could not prove constant, or proved
@@ -3853,7 +1942,7 @@ in the graph even when it is legal: it puts one node per iteration into the asse
 This expression is {0} and the material graph has no matrices; compute it inside the custom body instead.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:242`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:254`
 <!-- generated:end DSH4361 -->
 
 **Cause.** An expression is a matrix (`float3x3`, `float4x4`) and something wanted its value. A
@@ -3876,7 +1965,7 @@ where it is free.
 'discard' has no material-graph form; set the material's OpacityMask to zero instead, or move the branch into a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:123`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:125`
 <!-- generated:end DSH4362 -->
 
 **Cause.** `discard` in a body that becomes a graph. The material graph has no early-out: a
@@ -3898,7 +1987,7 @@ same reason: its code is one expression inside a bigger shader.
 '{0}' inside an 'if' cannot be unrolled, because both arms of the 'if' become nodes and only one of them may leave the loop; move it to the top of the loop body, or write the loop in a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:112`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:114`
 <!-- generated:end DSH4363 -->
 
 **Cause.** A `break` or `continue` inside an `if` inside a loop the builder is unrolling. Unrolling
@@ -3921,7 +2010,7 @@ graph loop: move it into a `/// @custom` function.
 A parameter of type {0} cannot be a material function input; the graph has no pin that carries one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:210`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:251`
 <!-- generated:end DSH4364 -->
 
 **Cause.** An exported function has a parameter whose type cannot be a material function input.
@@ -3945,7 +2034,7 @@ this file, drop `export`: an internal helper takes any type, because it is inlin
 A struct has no graph form; pass one of its fields, or move the whole thing into a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:182`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:493`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:183`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:528`
 <!-- generated:end DSH4365 -->
 
 **Cause.** A struct value reached a place that needs one graph value -- a pin, an operand, a
@@ -3954,6 +2043,27 @@ values while the file is being compiled and is flattened away, so it has no sing
 
 **Fix.** Use the field you meant (`Inputs.Roughness`, not `Inputs`). To pass a whole struct to
 something, make the callee an internal helper, which is inlined and can take it.
+
+## DSH4366
+
+<!-- generated:begin DSH4366 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a constant texture, which is a TextureObject node, and this engine has no such material expression; declare it 'uniform'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:639`
+<!-- generated:end DSH4366 -->
+
+**Cause.** A `static const` texture (in 1.x, `const Texture2D T = Path(...)`) is built as a
+TextureObject node, and the builtin catalog of this engine has no such class. Stock engines all have
+it; a stripped-down catalog, or one loaded from an incomplete manifest, may not.
+
+**Fix.** Declare the texture `uniform` (a texture parameter), or re-export the catalog (`dsc
+export-catalog`) if a stale manifest is in use.
 
 ## DSH4370
 
@@ -3966,7 +2076,7 @@ something, make the callee an internal helper, which is inlined and can take it.
 '{0}' is read before anything wrote it; a material attribute has no value until this function assigns one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:346`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:453`
 <!-- generated:end DSH4370 -->
 
 **Cause.** A material attribute was read before anything wrote it: `float r = m.Roughness;` in a
@@ -3995,7 +2105,7 @@ first.
 A 'material' value reached a pin that carries {0}; only a MaterialAttributes pin accepts one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:172`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:210`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:173`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:222`
 <!-- generated:end DSH4371 -->
 
 **Cause.** A `material` value was passed to something that cannot take one: a reflected node's pin
@@ -4014,10 +2124,10 @@ MaterialAttributes, check that the `extern` prototype declares that parameter `m
 **Message**
 
 ```
-'{0}' is set in only one arm of this 'if' and has no value before it; set it in both arms, or before the 'if'.
+'{0}' is assigned in only one arm of this 'if' and has no value before it; assign it in both arms, or give it a value before the 'if'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:651`, `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:690`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:607`, `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:631`
 <!-- generated:end DSH4372 -->
 
 **Cause.** A variable or a material attribute is assigned in one arm of an `if` and not in the
@@ -4044,7 +2154,7 @@ missing and nothing is reported: the value is the other arm's on every path the 
 '{0}' is a property of {1} and needs a literal; this argument is computed at run time.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:923`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:971`
 <!-- generated:end DSH4373 -->
 
 **Cause.** An argument bound to a *property* of a reflected node is not a literal. A property is
@@ -4067,7 +2177,7 @@ takes an expression.
 This builds a {0}-component value, but a material graph carries at most four components.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:792`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1077`
 <!-- generated:end DSH4374 -->
 
 **Cause.** A constructor, a swizzle or a coercion asked for more than four components:
@@ -4088,7 +2198,7 @@ cannot make anything wider.
 The two sides of this branch end with a different whole material, and DreamShader chooses between attribute values, not between whole materials; assign the attributes one at a time on both sides, or mix the two materials with UE.BlendMaterialAttributes.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:704`, `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:708`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:743`, `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:747`
 <!-- generated:end DSH4375 -->
 
 **Cause.** The two arms of an `if` -- or the two sides of a `?:`, or a `return` inside an `if` and
@@ -4118,7 +2228,7 @@ version.
 '{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or give it an initializer where it is declared.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1260`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1375`
 <!-- generated:end DSH4376 -->
 
 **Cause.** A local is read -- or compound-assigned (`x += 1`, `++x`), which reads it first -- at a
@@ -4150,7 +2260,7 @@ reading `v`, or a component of it, before anything was written.
 '{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1276`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1391`
 <!-- generated:end DSH4377 -->
 
 **Cause.** An assignment writes into the material an attribute holds:
@@ -4165,6 +2275,48 @@ material, such as the result of `UE.BlendMaterialAttributes(...)`. Writing one c
 ordinary attribute (`m.BaseColor.x = 1`) is not this error: that is a read-modify-write of the
 attribute, the same as one component of a local.
 
+## DSH4378
+
+<!-- generated:begin DSH4378 -->
+**Severity** error
+
+**Message**
+
+```
+A branch over {0} values needs a static condition, and this one is decided at run time; make the condition a '/// @static' uniform bool, or mix the two values with a Substrate mixing node.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1459`
+<!-- generated:end DSH4378 -->
+
+**Cause.** An `if` or `?:` decided at run time leaves a Substrate value in each arm. A run-time
+branch in a graph is an If or Lerp node over numbers; the only node that switches a Substrate value
+is a StaticSwitch, which needs a condition known when the shader is compiled.
+
+**Fix.** Make the condition a `/// @static uniform bool` (one shader permutation per side), or blend
+the two materials with a Substrate mixing node such as `Substrate.HorizontalMixing(...)` and drive
+its `Mix` with the condition.
+
+## DSH4379
+
+<!-- generated:begin DSH4379 -->
+**Severity** error
+
+**Message**
+
+```
+A branch can only choose between numbers, bools and static Substrate values, and these are {0} objects, which no material graph node switches; sample each texture first and branch on the samples.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1448`
+<!-- generated:end DSH4379 -->
+
+**Cause.** A branch leaves a texture object or a sampler in a variable, with a different one on each
+side. No material graph node chooses between two texture objects, static condition or not.
+
+**Fix.** Sample both textures and branch on the sampled colours; with a `/// @static` condition only
+the taken side ends up in the shader.
+
 ## DSH4390
 
 <!-- generated:begin DSH4390 -->
@@ -4176,7 +2328,7 @@ attribute, the same as one component of a local.
 '{0}' is declared but nothing reads it, so it is not in the generated material.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRPasses.cpp:805`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRPasses.cpp:871`
 <!-- generated:end DSH4390 -->
 
 **Cause.** Informational. A `uniform` is declared but nothing in the file reads it, so no parameter

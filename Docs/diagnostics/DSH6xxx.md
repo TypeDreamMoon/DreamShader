@@ -3,1626 +3,6 @@
 > The block between the generated markers is written by `.skill/gen-diagnostics.ps1`.
 > Everything below a marker is written by hand and survives a regeneration.
 
-## DSH6001
-
-<!-- generated:begin DSH6001 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' must declare at least one output.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:119`
-<!-- generated:end DSH6001 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6002
-
-<!-- generated:begin DSH6002 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' could not load MaterialFunction asset '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:125`
-<!-- generated:end DSH6002 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6003
-
-<!-- generated:begin DSH6003 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a MaterialFunctionCall node for '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:132`
-<!-- generated:end DSH6003 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6004
-
-<!-- generated:begin DSH6004 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to assign material function '%s' to the generated call node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:137`
-<!-- generated:end DSH6004 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6005
-
-<!-- generated:begin DSH6005 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' input arguments cannot mix positional and named forms.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:156`
-<!-- generated:end DSH6005 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6006
-
-<!-- generated:begin DSH6006 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' input '%s' does not exist on MaterialFunction asset '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:188`
-<!-- generated:end DSH6006 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6007
-
-<!-- generated:begin DSH6007 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' is missing required input '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:198`
-<!-- generated:end DSH6007 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6008
-
-<!-- generated:begin DSH6008 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' input '%s' is not optional and cannot use default.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:208`
-<!-- generated:end DSH6008 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6009
-
-<!-- generated:begin DSH6009 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:225`
-<!-- generated:end DSH6009 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6010
-
-<!-- generated:begin DSH6010 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' input '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:227`
-<!-- generated:end DSH6010 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6011
-
-<!-- generated:begin DSH6011 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' received %d positional input argument(s), but only %d input(s) are declared.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:241`
-<!-- generated:end DSH6011 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6012
-
-<!-- generated:begin DSH6012 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' does not have an input named '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:263`
-<!-- generated:end DSH6012 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6013
-
-<!-- generated:begin DSH6013 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' statement call requires an active Graph build context.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:282`
-<!-- generated:end DSH6013 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6014
-
-<!-- generated:begin DSH6014 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' must declare at least one output.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:287`
-<!-- generated:end DSH6014 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6015
-
-<!-- generated:begin DSH6015 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' statement calls currently use positional arguments only.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:294`
-<!-- generated:end DSH6015 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6016
-
-<!-- generated:begin DSH6016 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' expects output target arguments after its inputs, but got %d total argument(s) for %d output(s).
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:300`
-<!-- generated:end DSH6016 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6017
-
-<!-- generated:begin DSH6017 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' expects at most %d input argument(s) followed by %d output target(s), but got %d input argument(s).
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:306`
-<!-- generated:end DSH6017 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6018
-
-<!-- generated:begin DSH6018 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' is missing required input '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:313`
-<!-- generated:end DSH6018 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6019
-
-<!-- generated:begin DSH6019 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output argument %d must be a plain variable name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:332`
-<!-- generated:end DSH6019 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6020
-
-<!-- generated:begin DSH6020 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' has an empty output target name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:338`
-<!-- generated:end DSH6020 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6021
-
-<!-- generated:begin DSH6021 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' cannot write multiple outputs into '%s' in the same call.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:343`
-<!-- generated:end DSH6021 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6022
-
-<!-- generated:begin DSH6022 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:374`
-<!-- generated:end DSH6022 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6023
-
-<!-- generated:begin DSH6023 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:376`
-<!-- generated:end DSH6023 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6024
-
-<!-- generated:begin DSH6024 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' does not exist on MaterialFunction asset '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:398`
-<!-- generated:end DSH6024 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6025
-
-<!-- generated:begin DSH6025 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' cannot use OutputName/Output together with OutputIndex.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:558`
-<!-- generated:end DSH6025 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6026
-
-<!-- generated:begin DSH6026 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' OutputIndex is out of range.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:644`
-<!-- generated:end DSH6026 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6027
-
-<!-- generated:begin DSH6027 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' OutputName must be a literal value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:652`
-<!-- generated:end DSH6027 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6028
-
-<!-- generated:begin DSH6028 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' does not expose an output named '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:667`
-<!-- generated:end DSH6028 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6029
-
-<!-- generated:begin DSH6029 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' exposes multiple outputs. Specify Output="Name" or OutputIndex=N.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:672`
-<!-- generated:end DSH6029 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6030
-
-<!-- generated:begin DSH6030 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:683`
-<!-- generated:end DSH6030 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6031
-
-<!-- generated:begin DSH6031 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:685`
-<!-- generated:end DSH6031 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6032
-
-<!-- generated:begin DSH6032 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' does not exist on MaterialFunction asset '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeFunctionCalls.cpp:707`
-<!-- generated:end DSH6032 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6033
-
-<!-- generated:begin DSH6033 -->
-**Severity** error
-
-**Message**
-
-```
-Unknown Graph function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:91`
-<!-- generated:end DSH6033 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6034
-
-<!-- generated:begin DSH6034 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' has %d outputs and must be called with explicit out variables, for example %s(..., ResultA, ResultB).
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:96`
-<!-- generated:end DSH6034 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6035
-
-<!-- generated:begin DSH6035 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' returns one value and expects %d input argument(s) when used as a value expression, but got %d.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:101`
-<!-- generated:end DSH6035 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6036
-
-<!-- generated:begin DSH6036 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' currently uses positional arguments only.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:108`
-<!-- generated:end DSH6036 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6037
-
-<!-- generated:begin DSH6037 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' has unsupported result type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:122`
-<!-- generated:end DSH6037 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6038
-
-<!-- generated:begin DSH6038 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:147`
-<!-- generated:end DSH6038 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6039
-
-<!-- generated:begin DSH6039 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' input '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:149`
-<!-- generated:end DSH6039 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6040
-
-<!-- generated:begin DSH6040 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' input '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:153`
-<!-- generated:end DSH6040 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6041
-
-<!-- generated:begin DSH6041 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a Custom node for DreamShader Function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:168`
-<!-- generated:end DSH6041 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6042
-
-<!-- generated:begin DSH6042 -->
-**Severity** error
-
-**Message**
-
-```
-GraphFunction value call requires an active Graph build context.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:250`
-<!-- generated:end DSH6042 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6043
-
-<!-- generated:begin DSH6043 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' has %d outputs and must be called with explicit out variables, for example %s(..., ResultA, ResultB).
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:255`
-<!-- generated:end DSH6043 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6044
-
-<!-- generated:begin DSH6044 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' returns one value and expects %d input argument(s) when used as a value expression, but got %d.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:260`
-<!-- generated:end DSH6044 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6045
-
-<!-- generated:begin DSH6045 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' currently uses positional arguments only.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:267`
-<!-- generated:end DSH6045 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6046
-
-<!-- generated:begin DSH6046 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' did not produce a value result.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:302`
-<!-- generated:end DSH6046 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6047
-
-<!-- generated:begin DSH6047 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' must declare at least one out result.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:312`
-<!-- generated:end DSH6047 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6048
-
-<!-- generated:begin DSH6048 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' expects %d arguments (%d inputs, %d out targets) but got %d.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:318`
-<!-- generated:end DSH6048 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6049
-
-<!-- generated:begin DSH6049 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' currently uses positional arguments only.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:325`
-<!-- generated:end DSH6049 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6050
-
-<!-- generated:begin DSH6050 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' has unsupported result type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:339`
-<!-- generated:end DSH6050 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6051
-
-<!-- generated:begin DSH6051 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:364`
-<!-- generated:end DSH6051 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6052
-
-<!-- generated:begin DSH6052 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' input '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:366`
-<!-- generated:end DSH6052 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6053
-
-<!-- generated:begin DSH6053 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' input '%s' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:370`
-<!-- generated:end DSH6053 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6054
-
-<!-- generated:begin DSH6054 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' out argument %d must be a plain variable name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:389`
-<!-- generated:end DSH6054 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6055
-
-<!-- generated:begin DSH6055 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' has an empty out target name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:395`
-<!-- generated:end DSH6055 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6056
-
-<!-- generated:begin DSH6056 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' cannot write multiple out results into '%s' in the same call.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:400`
-<!-- generated:end DSH6056 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6057
-
-<!-- generated:begin DSH6057 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a Custom node for DreamShader Function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:411`
-<!-- generated:end DSH6057 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6058
-
-<!-- generated:begin DSH6058 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' has unsupported result type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:530`
-<!-- generated:end DSH6058 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6059
-
-<!-- generated:begin DSH6059 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' has unsupported result type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:553`
-<!-- generated:end DSH6059 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6060
-
-<!-- generated:begin DSH6060 -->
-**Severity** error
-
-**Message**
-
-```
-GraphFunction call requires an active Graph build context.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:578`
-<!-- generated:end DSH6060 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6061
-
-<!-- generated:begin DSH6061 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' must declare at least one out result.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:583`
-<!-- generated:end DSH6061 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6062
-
-<!-- generated:begin DSH6062 -->
-**Severity** error
-
-**Message**
-
-```
-GraphFunction cycle detected: %s.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:594`
-<!-- generated:end DSH6062 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6063
-
-<!-- generated:begin DSH6063 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' expects %d arguments (%d inputs, %d out targets) but got %d.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:615`
-<!-- generated:end DSH6063 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6064
-
-<!-- generated:begin DSH6064 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' currently uses positional arguments only.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:622`
-<!-- generated:end DSH6064 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6065
-
-<!-- generated:begin DSH6065 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:648`
-<!-- generated:end DSH6065 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6066
-
-<!-- generated:begin DSH6066 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' input '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:650`
-<!-- generated:end DSH6066 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6067
-
-<!-- generated:begin DSH6067 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' out argument %d must be a plain variable name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:671`
-<!-- generated:end DSH6067 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6068
-
-<!-- generated:begin DSH6068 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' has an empty out target name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:677`
-<!-- generated:end DSH6068 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6069
-
-<!-- generated:begin DSH6069 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' cannot write multiple out results into '%s' in the same call.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:682`
-<!-- generated:end DSH6069 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6070
-
-<!-- generated:begin DSH6070 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' Graph body is invalid: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:710`
-<!-- generated:end DSH6070 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6071
-
-<!-- generated:begin DSH6071 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' result '%s' was never assigned.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:741`
-<!-- generated:end DSH6071 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6072
-
-<!-- generated:begin DSH6072 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' result '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:752`
-<!-- generated:end DSH6072 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6073
-
-<!-- generated:begin DSH6073 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' result '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:754`
-<!-- generated:end DSH6073 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6074
-
-<!-- generated:begin DSH6074 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' has unsupported result type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:779`
-<!-- generated:end DSH6074 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6075
-
-<!-- generated:begin DSH6075 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:805`
-<!-- generated:end DSH6075 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6076
-
-<!-- generated:begin DSH6076 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' input '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:807`
-<!-- generated:end DSH6076 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6077
-
-<!-- generated:begin DSH6077 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' input '%s' uses Substrate, which is only supported by GraphFunction Graph blocks.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:811`
-<!-- generated:end DSH6077 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6078
-
-<!-- generated:begin DSH6078 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' out argument %d must be a plain variable name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:832`
-<!-- generated:end DSH6078 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6079
-
-<!-- generated:begin DSH6079 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' has an empty out target name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:838`
-<!-- generated:end DSH6079 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6080
-
-<!-- generated:begin DSH6080 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' cannot write multiple out results into '%s' in the same call.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:843`
-<!-- generated:end DSH6080 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6081
-
-<!-- generated:begin DSH6081 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a Custom node for DreamShader GraphFunction '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:854`
-<!-- generated:end DSH6081 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6082
-
-<!-- generated:begin DSH6082 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' contains an unterminated UE.* call.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:1042`
-<!-- generated:end DSH6082 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6083
-
-<!-- generated:begin DSH6083 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' UE input '%s' cannot be passed into a Custom node input.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:1060`
-<!-- generated:end DSH6083 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6084
-
-<!-- generated:begin DSH6084 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' has unsupported result type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:1159`
-<!-- generated:end DSH6084 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6085
-
-<!-- generated:begin DSH6085 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader GraphFunction '%s' has unsupported result type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeCalls.cpp:1182`
-<!-- generated:end DSH6085 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6086
-
-<!-- generated:begin DSH6086 -->
-**Severity** error
-
-**Message**
-
-```
-SelfContained Function cycle detected: %s. HLSL Custom nodes cannot compile recursive DreamShader functions.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderHlslFunctionCodegen.cpp:1024`
-<!-- generated:end DSH6086 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6087
-
-<!-- generated:begin DSH6087 -->
-**Severity** error
-
-**Message**
-
-```
-Unknown SelfContained DreamShader Function '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderHlslFunctionCodegen.cpp:1098`
-<!-- generated:end DSH6087 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6088
-
-<!-- generated:begin DSH6088 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' is declared more than once.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderHlslFunctionCodegen.cpp:1234`
-<!-- generated:end DSH6088 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6089
-
-<!-- generated:begin DSH6089 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader Function '%s' collides with another generated helper symbol '%s'. Rename the Function or Namespace.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderHlslFunctionCodegen.cpp:1242`
-<!-- generated:end DSH6089 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH6090
-
-<!-- generated:begin DSH6090 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to write generated helper include '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderHlslFunctionCodegen.cpp:1283`
-<!-- generated:end DSH6090 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
 ## DSH6200
 
 <!-- generated:begin DSH6200 -->
@@ -1634,7 +14,7 @@ Failed to write generated helper include '%s'.
 '{0}' is a second material entry; '{1}' above it is already the entry, and one file makes one material.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1056`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1195`
 <!-- generated:end DSH6200 -->
 
 **Cause.** Two exported functions in one file have the signature `void (inout material)`. That
@@ -1655,7 +35,7 @@ a material — an internal function with that signature is not an entry.
 '{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both. Move it to its own file, or drop 'export' to make it a helper.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1149`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1288`
 <!-- generated:end DSH6201 -->
 
 **Cause.** A file has a material entry **and** exported functions, layers or layer blends. One file
@@ -1675,7 +55,7 @@ helpers that are inlined into the material.
 'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:984`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1123`
 <!-- generated:end DSH6202 -->
 
 **Cause.** An `extern` prototype has no `/// @asset` above it, so there is nothing for it to bind
@@ -1694,7 +74,7 @@ to.
 '@layer' makes '{0}' a material layer asset, so it has to be 'export'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1026`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:998`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1137`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1165`
 <!-- generated:end DSH6203 -->
 
 **Cause.** `@layer` or `@layerblend` on a function that is not `export`. Both directives name an
@@ -1713,7 +93,7 @@ asset the file produces, and only an exported function produces one.
 A '@layer' function is written 'export void {0}(inout material m)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1008`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1147`
 <!-- generated:end DSH6204 -->
 
 **Cause.** A `@layer` function does not have the signature `void Name(inout material m)`.
@@ -1732,7 +112,7 @@ modifies it in place.
 A '@layerblend' function is written 'export void {0}(material Base, material Top, ..., inout material Result)': at least one 'material' input and a final 'inout material'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1036`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1175`
 <!-- generated:end DSH6205 -->
 
 **Cause.** A `@layerblend` function does not have the shape
@@ -1752,7 +132,7 @@ other parameter an input, and a final `inout material`.
 '{0}' is a builtin operation and cannot be redeclared; rename the function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:781`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:816`
 <!-- generated:end DSH6206 -->
 
 **Cause.** A function is declared with the name of a builtin operation (`dot`, `lerp`, `saturate`,
@@ -1772,7 +152,7 @@ ambiguous at every call site.
 '{0}' is a {1} asset, not a function this file may call.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2890`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3451`
 <!-- generated:end DSH6208 -->
 
 **Cause.** A call to the material entry, a `@layer` or a `@layerblend`. Those are assets, not
@@ -1791,7 +171,7 @@ functions this file may call — a layer is applied by the material that uses it
 '{0}' has no body; a prototype has to be 'extern' and carry '/// @asset'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1085`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1224`
 <!-- generated:end DSH6209 -->
 
 **Cause.** A function has no body and is not `extern`. Normally the parser catches this first
@@ -1810,7 +190,7 @@ functions this file may call — a layer is applied by the material that uses it
 '{0}' is '@custom', so '{1}' becomes an input pin of a Custom node, and a Custom node cannot take a material; pass the fields it needs instead.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1105`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1244`
 <!-- generated:end DSH6210 -->
 
 **Cause.** A `/// @custom` function takes a `material` as an input (`material m` or
@@ -1832,7 +212,7 @@ a Custom node may produce attributes even though it cannot consume them.
 '{0}' is an 'out' parameter of '{1}' but the body never assigns it, so a caller would read a value nothing produced. Assign it before the function returns, or remove the parameter.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:377`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:382`
 <!-- generated:end DSH6211 -->
 
 **Cause.** A function declares an `out` parameter and its body never writes it — not as a whole,
@@ -1856,7 +236,7 @@ DreamShaderLang statements.
 '{0}' calls itself, and an inlined function has no stack to recurse on; rewrite it as a loop with a constant trip count, or as a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:211`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:220`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:258`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:267`
 <!-- generated:end DSH6220 -->
 
 **Cause.** An inlined function calls itself, directly or through others. Inlining has no stack:
@@ -1878,7 +258,7 @@ call closes the cycle; both functions are named in the message across the two re
 Inlining '{0}' would go {1} calls deep, past the limit of {2}; flatten the call chain or move part of it into a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:228`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:275`
 <!-- generated:end DSH6221 -->
 
 **Cause.** Inlining went deeper than `MaxInlineDepth` (32 by default) without recursing. A chain of
@@ -1900,7 +280,7 @@ nodes. Raising the limit is a pipeline option, not a source one.
 '{0}' is an '{1}' parameter of {2}, so the argument has to be something that can be assigned to; this expression cannot.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:113`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:128`
 <!-- generated:end DSH6222 -->
 
 **Cause.** An argument passed to an `out` or `inout` parameter is not something that can be
@@ -1921,7 +301,7 @@ Passing a literal, a call's result or an arithmetic expression to an `out` param
 '{0}' is this file's material entry and is called by the engine, not by the shader.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:198`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:237`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:234`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:284`
 <!-- generated:end DSH6223 -->
 
 **Cause.** Either a call to this file's material entry -- the `void (inout material)` function the
@@ -1943,7 +323,7 @@ stands for, or mark it `/// @custom` and write its HLSL.
 '{0}' has no verbatim HLSL body, so it cannot become a custom node; only a '/// @custom' function can.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1777`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1789`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1800`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:991`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1094`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1945`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1957`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1968`
 <!-- generated:end DSH6250 -->
 
 **Cause.** `BuildDreamShaderCustomNodeCode` was called for a function index that does not exist, or
@@ -1967,7 +347,7 @@ calls the entry point directly, pass the index of a function whose `///` block c
 '{0}' declares '{1}' as 'inout', which a custom node cannot carry; split it into an 'in' parameter and an 'out' parameter.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1032`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1135`
 <!-- generated:end DSH6251 -->
 
 **Cause.** A `@custom` parameter is declared `inout`. A custom node carries its `out` parameters as
@@ -1997,7 +377,7 @@ is not a custom node.
 '{0}' takes the material '{1}' as an input; a custom node cannot accept material attributes on a pin, so read the fields the body needs and pass them as floats.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1069`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1172`
 <!-- generated:end DSH6252 -->
 
 **Cause.** A `@custom` function takes `material` (material attributes) as an input. The engine's
@@ -2027,7 +407,7 @@ only for the function the node is being built for.
 '{0}' uses Substrate on '{1}'; a custom node has no Substrate pins, so build that part of the material out of reflected Substrate nodes.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1043`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1087`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1146`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1190`
 <!-- generated:end DSH6253 -->
 
 **Cause.** A `@custom` signature mentions `Substrate`. A custom node has no Substrate pins in any
@@ -2047,7 +427,7 @@ keep the `@custom` function to the float maths around it.
 '{0}' returns a texture through '{1}'; a custom node output carries float1..4 or material attributes, never a texture object.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1055`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1097`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1158`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1200`
 <!-- generated:end DSH6254 -->
 
 **Cause.** A `@custom` function returns a texture or a sampler, or hands one back through an `out`
@@ -2068,7 +448,7 @@ that carries a texture object, and HLSL will not return one from a function eith
 '{0}' declares '{1}' twice in the HLSL it generates; a texture parameter also claims '{1}Sampler', which the engine declares alongside it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1008`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1111`
 <!-- generated:end DSH6255 -->
 
 **Cause.** Two parameters of one `@custom` function end up with the same name in the HLSL that is
@@ -2090,7 +470,7 @@ one to rename when a texture and an explicit sampler meet.
 '{0}' returns void but its body uses 'return;'; a custom node always returns its first output, so give the function a return type or restructure the body.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1110`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1213`
 <!-- generated:end DSH6256 -->
 
 **Cause.** A `@custom` function declared `void` uses a bare `return;` in its body. The function the
@@ -2112,7 +492,7 @@ through `out` parameters — it just cannot `return`.
 '{0}' declares a return type but its body never returns a value; the node's first output will be 0.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1123`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1226`
 <!-- generated:end DSH6257 -->
 
 **Cause.** A `@custom` function declares a return type, but its body contains no `return` anywhere
@@ -2133,7 +513,7 @@ parameters if the body is only there for its side effects.
 '{0}' has an '#include' with an empty path; write the virtual shader path the header lives at, for example "/Engine/Private/Common.ush".
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:910`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:956`
 <!-- generated:end DSH6258 -->
 
 **Cause.** A `#include` at the top of a `@custom` body has an empty path (`#include ""`). Leading
@@ -2156,7 +536,7 @@ statement stays in the body, where it lands inside a function and only works for
 '{0}' differs from the function '{1}' only in case; HLSL is case-sensitive, so this call is left for the shader compiler. Did you mean '{1}'?
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1198`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1322`
 <!-- generated:end DSH6259 -->
 
 **Cause.** A call inside a `@custom` body names something that differs from a function of this module
@@ -2179,7 +559,7 @@ there is no way to tell them apart at this level.
 The '@custom' functions {0} call each other in a cycle; HLSL has no recursion, so their bodies cannot be embedded in a custom node.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1237`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1361`
 <!-- generated:end DSH6260 -->
 
 **Cause.** Two or more `@custom` functions call each other, directly or through others. Their bodies
@@ -2201,7 +581,7 @@ will still refuse real recursion, but a bounded unrolled form can be written by 
 '{0}' is not a '@custom' function and cannot be called from the HLSL body of '{1}'; a custom node sees no graph values, so mark '{0}' '@custom' as well or move the call out of the body.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1183`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1307`
 <!-- generated:end DSH6261 -->
 
 **Cause.** A `@custom` body calls a function of this module that is not itself `@custom` — a helper,
@@ -2228,7 +608,7 @@ float3 Shade(float3 Color, float Mask) { ... }   // Mask computed by the caller,
 '{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1483`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1618`
 <!-- generated:end DSH6262 -->
 
 **Cause.** A call to a `@custom` function that takes a texture passes the wrong number of arguments.
@@ -2250,7 +630,7 @@ leave it out here — the sampler pairing needs every position.
 The texture argument for '{0}' of '{1}' has to be a plain texture name, because the sampler that goes with it is named after it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1517`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1653`
 <!-- generated:end DSH6263 -->
 
 **Cause.** The argument in a texture position of a call to a `@custom` function is not a plain name
@@ -2273,7 +653,7 @@ chosen one in as a parameter of the outer custom function.
 '{0}' is 'selfcontained', so the '@custom' function '{1}' it calls is not embedded in its node; the call is left for the shader compiler to resolve out of this body's own includes.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1298`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1422`
 <!-- generated:end DSH6264 -->
 
 **Cause.** A `@custom selfcontained` body calls another `@custom` function of the module. A
@@ -2284,4 +664,456 @@ call is left for the shader compiler, which will only find the symbol if one of 
 **Fix.** Drop `selfcontained` if the call is meant to be embedded (that is the default behaviour, and
 the closure is pulled in for you). Keep `selfcontained` if the symbol really comes from an included
 header, and rename the local `@custom` function so the two do not look like the same thing.
+
+## DSH6300
+
+<!-- generated:begin DSH6300 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a function name after '{0}', found '('.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1872`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1895`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1924`
+<!-- generated:end DSH6300 -->
+
+**Cause.** `Function` or `GraphFunction` (with its optional modifier and return type) is followed by
+`(` where the function's name should be.
+
+**Fix.** Write `Function float3 MyFunction(in float3 value) { ... }`.
+
+## DSH6301
+
+<!-- generated:begin DSH6301 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '[in|out] Type Name' in the parameter list of '{0}', found '{1}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1981`
+<!-- generated:end DSH6301 -->
+
+**Cause.** A parameter of a 1.x function is not `[in|out] Type Name`. 1.x parameters have no
+defaults and no metadata; those belong to the `Inputs` of a ShaderFunction.
+
+**Fix.** Write each parameter as `in float3 color` or `out float result`.
+
+## DSH6302
+
+<!-- generated:begin DSH6302 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'in' or 'out' before the parameter '{0}' of '{1}', found '{2}'; a 1.x function has no 'inout'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1994`
+<!-- generated:end DSH6302 -->
+
+**Cause.** A parameter of a 1.x function carries `inout`, or another word where `in` / `out` goes.
+1.x functions had inputs and results, never a parameter that was both.
+
+**Fix.** Split it into an `in` and an `out` parameter. A `.dss` function may use `inout`.
+
+## DSH6303
+
+<!-- generated:begin DSH6303 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a parameter name other than '__return', which 1.x reserved, in '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2007`
+<!-- generated:end DSH6303 -->
+
+**Cause.** A parameter is called `__return`. 1.x lowered a function's return value into an `out`
+parameter of that name, so the name is taken.
+
+**Fix.** Rename the parameter.
+
+## DSH6304
+
+<!-- generated:begin DSH6304 -->
+**Severity** error
+
+**Message**
+
+```
+Expected either a return type or 'out' parameters on '{0}', found both.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2039`
+<!-- generated:end DSH6304 -->
+
+**Cause.** A 1.x function has a return type and `out` parameters. 1.x allowed one or the other: a
+returned value is the Custom node's output, and so is the first `out`.
+
+**Fix.** Return the first result and keep no `out` parameter, or drop the return type and make every
+result an `out`.
+
+## DSH6305
+
+<!-- generated:begin DSH6305 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '{0}' to return a value or to have at least one 'out' parameter, found neither.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2046`
+<!-- generated:end DSH6305 -->
+
+**Cause.** A 1.x function returns nothing and has no `out` parameter, so its Custom node would have
+no value for the graph to read.
+
+**Fix.** Give it a return type or an `out` parameter.
+
+## DSH6306
+
+<!-- generated:begin DSH6306 -->
+**Severity** warning
+
+**Message**
+
+```
+'Inline' is the old spelling of 'SelfContained'; the function becomes '@custom selfcontained'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1883`
+<!-- generated:end DSH6306 -->
+
+**Cause.** `Function Inline` is used. In 1.x `Inline` is an exact synonym of `SelfContained` -- the
+function's HLSL is embedded into each caller's Custom node instead of being referenced through the
+include -- and 2.0 keeps one spelling.
+
+**Fix.** Write `Function SelfContained`. Migrated files say `/// @custom selfcontained`.
+
+## DSH6307
+
+<!-- generated:begin DSH6307 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a return type or a name after 'GraphFunction', found the modifier '{0}', which only a Function takes.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1863`
+<!-- generated:end DSH6307 -->
+
+**Cause.** `GraphFunction` is followed by `SelfContained` or `Inline`. Those modifiers belong to
+`Function`; a GraphFunction is always one Custom node per call.
+
+**Fix.** Remove the modifier.
+
+## DSH6308
+
+<!-- generated:begin DSH6308 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a value after 'return' in '{0}', which returns '{1}', found a bare 'return;'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2091`
+<!-- generated:end DSH6308 -->
+
+**Cause.** A 1.x function with a return type contains a bare `return;`. 1.x lowered `return x;` into
+an assignment to its result, and a `return` without a value has nothing to assign.
+
+**Fix.** Return a value on every path.
+
+## DSH6309
+
+<!-- generated:begin DSH6309 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a 'Name = "..."' attribute with a name on 'Namespace', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2255`
+<!-- generated:end DSH6309 -->
+
+**Cause.** `Namespace` has no `Name = "..."` attribute, or the name is not an identifier. The name
+becomes the prefix of every function in the block (`N::F`, flattened to `N_F`).
+
+**Fix.** Write `Namespace(Name = "BL") { ... }`.
+
+## DSH6310
+
+<!-- generated:begin DSH6310 -->
+**Severity** error
+
+**Message**
+
+```
+Expected only Function and GraphFunction blocks inside the namespace '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2304`
+<!-- generated:end DSH6310 -->
+
+**Cause.** A `Namespace` block holds something other than `Function` and `GraphFunction` blocks. A
+namespace groups HLSL functions and nothing else: no assets, no VirtualFunctions, no nested
+namespaces.
+
+**Fix.** Move the other block out of the namespace.
+
+## DSH6311
+
+<!-- generated:begin DSH6311 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a 'Name = "..."' attribute with a name on 'VirtualFunction', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2369`
+<!-- generated:end DSH6311 -->
+
+**Cause.** `VirtualFunction` has no `Name = "..."` attribute. The name is what Graph code calls.
+
+**Fix.** Add the name.
+
+## DSH6312
+
+<!-- generated:begin DSH6312 -->
+**Severity** error
+
+**Message**
+
+```
+Expected an 'Asset = Path(...)' option on the VirtualFunction '{0}', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2508`
+<!-- generated:end DSH6312 -->
+
+**Cause.** A VirtualFunction has no `Asset = Path(...)` in its `Options`. The whole point of the
+block is to say which existing material function the name stands for.
+
+**Fix.** Add `Options = { Asset = Path(Game, "Functions/MF_Example"); }`.
+
+## DSH6313
+
+<!-- generated:begin DSH6313 -->
+**Severity** error
+
+**Message**
+
+```
+Expected at least one output on the VirtualFunction '{0}', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2515`
+<!-- generated:end DSH6313 -->
+
+**Cause.** A VirtualFunction declares no output. A call to it would be a node nothing can read.
+
+**Fix.** Declare the outputs of the asset under `Outputs`, in the asset's order.
+
+## DSH6314
+
+<!-- generated:begin DSH6314 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a ')' to close the 'UE.' call in the body of '{0}', found the end of the body.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2145`
+<!-- generated:end DSH6314 -->
+
+**Cause.** A `UE.` call in a verbatim body -- a 1.x GraphFunction, or a `/// @custom` function --
+opens a parenthesis that the body never closes, so the call that is to be lifted into a node input
+has no end.
+
+**Fix.** Close the call. If the text is not meant as a node call, it cannot start with `UE.`
+followed by a name and `(`.
+
+## DSH6316
+
+<!-- generated:begin DSH6316 -->
+**Severity** warning
+
+**Message**
+
+```
+A 'Substrate.' call in the body of '{0}' is not lifted into a node, because no custom node input carries a Substrate value; it reaches the shader compiler as text.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2152`
+<!-- generated:end DSH6316 -->
+
+**Cause.** A verbatim body calls `Substrate.<Node>(...)`. `UE.` calls in such a body are lifted into
+inputs of the Custom node; a Substrate value cannot travel through a Custom node input, so the call
+is left where it is and the shader compiler will not know the name.
+
+**Fix.** Build the Substrate node in a graph body and keep only numbers in the HLSL.
+
+## DSH6319
+
+<!-- generated:begin DSH6319 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '(' to open the parameter list of '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1933`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2055`
+<!-- generated:end DSH6319 -->
+
+**Cause.** A 1.x function's name is not followed by `(`, or its parameter list is not followed by
+the `{` that opens its body.
+
+**Fix.** Write the parameter list, empty if need be, and the body: `Function float Pi() { return
+3.14159; }`.
+
+## DSH6325
+
+<!-- generated:begin DSH6325 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' lifts a 'UE.' call out of its body that reads '{1}', which 1.x took from the caller's scope and 2.0 does not; pass '{1}' to '{0}' as a parameter.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:780`
+<!-- generated:end DSH6325 -->
+
+**Cause.** Rule L8. A `UE.` call lifted out of a GraphFunction body reads a variable of the CALLER.
+1.x evaluated lifted calls in the caller's scope, so this worked by accident of naming; the lifted
+call is now bound in the function's own scope -- its parameters and the file's globals -- so that a
+function means the same thing wherever it is called.
+
+**Fix.** Add a parameter for the value and pass it at the call.
+
+## DSH6326
+
+<!-- generated:begin DSH6326 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' lifts a 'UE.' call out of its body that reads '{1}', which is neither a parameter of '{0}' nor declared at file scope.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:791`
+<!-- generated:end DSH6326 -->
+
+**Cause.** A `UE.` call lifted out of a verbatim body reads a name that is neither one of the
+function's parameters nor declared at file scope. A lifted call is evaluated in the graph, outside
+the HLSL, so it cannot see a variable the body declares.
+
+**Fix.** Pass the value in as a parameter, or compute it in the graph and hand the result to the
+function.
+
+## DSH6327
+
+<!-- generated:begin DSH6327 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' takes the 'UE.' calls lifted out of its body as inputs of its own custom node, so the HLSL body of '{1}' cannot call it; call it from a graph body instead.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1291`
+<!-- generated:end DSH6327 -->
+
+**Cause.** An HLSL body calls a function whose own body has `UE.` calls lifted out of it. Those
+calls are inputs of that function's OWN Custom node; embedded as a helper in another node's code it
+would have nobody to wire them.
+
+**Fix.** Call the function from a graph body and pass its result in, or move the `UE.` calls out of
+it into parameters.
+
+## DSH6328
+
+<!-- generated:begin DSH6328 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' lifts the call behind its input '{1}' out of a place its body does not have, so its custom node's code cannot be built.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1015`
+<!-- generated:end DSH6328 -->
+
+**Cause.** A lifted call's recorded place lies outside the body text it belongs to. The front end
+records where each `UE.` call stands in the body and the code builder replaces that range by the
+input's name; the two disagree only when a declaration was altered between them. Internal error.
+
+**Fix.** Report it with the source.
+
+## DSH6329
+
+<!-- generated:begin DSH6329 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' carries 'UE.' calls lifted out of its body, and only a '@custom' function with a verbatim body lifts calls into its node's inputs.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:695`, `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:727`
+<!-- generated:end DSH6329 -->
+
+**Cause.** A function that is not a `/// @custom` function with a verbatim body carries lifted
+calls, or a lifted call makes a value no Custom input carries (a material, a Substrate value). The
+first is an internal inconsistency; the second means the body calls a node whose result is not a
+number or a texture.
+
+**Fix.** For the second case, build that node in a graph body instead of inside the HLSL.
+
+## DSH6330
+
+<!-- generated:begin DSH6330 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node, so the graph would never end.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1451`
+<!-- generated:end DSH6330 -->
+
+**Cause.** A function reaches itself through a call lifted out of its body: the lifted `UE.` call's
+arguments call the function again. Each call of such a function is a new Custom node with its own
+lifted inputs, so the expansion would not end.
+
+**Fix.** Break the cycle: compute the inner value in the graph and pass it in.
 

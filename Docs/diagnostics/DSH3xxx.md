@@ -3,1386 +3,6 @@
 > The block between the generated markers is written by `.skill/gen-diagnostics.ps1`.
 > Everything below a marker is written by hand and survives a regeneration.
 
-## DSH3001
-
-<!-- generated:begin DSH3001 -->
-**Severity** error
-
-**Message**
-
-```
-GraphFunction declaration is missing a valid function name.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:636`
-<!-- generated:end DSH3001 -->
-
-**Cause.** the token after `GraphFunction` is not an identifier
-
-**Fix.** supply a name; note that `GraphFunction` accepts no `SelfContained` / `Inline` modifier
-
-**See** [GraphFunction](../language/graph-function.md)
-
-## DSH3002
-
-<!-- generated:begin DSH3002 -->
-**Severity** error
-
-**Message**
-
-```
-Function declaration is missing a valid function name after SelfContained.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:650`
-<!-- generated:end DSH3002 -->
-
-**Cause.** `Function SelfContained(` or `Function Inline(`
-
-**Fix.** supply a name after the modifier
-
-**See** [Function](../language/function.md)
-
-## DSH3003
-
-<!-- generated:begin DSH3003 -->
-**Severity** error
-
-**Message**
-
-```
-{0} declaration is missing a function name after the return type '{1}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:668`
-<!-- generated:end DSH3003 -->
-
-**Cause.** a return type was read but no name followed
-
-**Fix.** supply a name
-
-**See** [Function](../language/function.md)
-
-## DSH3004
-
-<!-- generated:begin DSH3004 -->
-**Severity** error
-
-**Message**
-
-```
-{0} '{1}' is missing a valid parameter list. {2}
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:682`
-<!-- generated:end DSH3004 -->
-
-**Cause.** the `( … )` parameter list could not be extracted
-
-**Fix.** balance the parentheses
-
-**See** [Function](../language/function.md)
-
-## DSH3005
-
-<!-- generated:begin DSH3005 -->
-**Severity** error
-
-**Message**
-
-```
-{0} '{1}' is missing a valid body block. {2}
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:692`
-<!-- generated:end DSH3005 -->
-
-**Cause.** the `{ … }` body of a `Function` / `GraphFunction` could not be extracted
-
-**Fix.** balance the braces
-
-**See** [Function](../language/function.md)
-
-## DSH3006
-
-<!-- generated:begin DSH3006 -->
-**Severity** error
-
-**Message**
-
-```
-Function '{0}' has an invalid return type '{1}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:524`
-<!-- generated:end DSH3006 -->
-
-**Cause.** the return-type token normalized to the empty string
-
-**Fix.** use a real type token
-
-**See** [Types](../language/types.md)
-
-## DSH3007
-
-<!-- generated:begin DSH3007 -->
-**Severity** error
-
-**Message**
-
-```
-Function '{0}' has an invalid parameter declaration '{1}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:544`, `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:581`
-<!-- generated:end DSH3007 -->
-
-**Cause.** the parameter did not split into 2 or 3 whitespace-separated tokens, or its type or name was empty
-
-**Fix.** write `[in\
-
-**See** out] <Type> <Name>` | [Function](../language/function.md)
-
-## DSH3008
-
-<!-- generated:begin DSH3008 -->
-**Severity** error
-
-**Message**
-
-```
-Function '{0}' parameter '{1}' uses unsupported qualifier '{2}'. Supported qualifiers are in and out.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:572`
-<!-- generated:end DSH3008 -->
-
-**Cause.** a qualifier other than `in` / `out` — `inout` included
-
-**Fix.** use `in` or `out`
-
-**See** [Function](../language/function.md)
-
-## DSH3009
-
-<!-- generated:begin DSH3009 -->
-**Severity** error
-
-**Message**
-
-```
-Function '{0}' parameter name '__return' is reserved for return-type lowering.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:589`
-<!-- generated:end DSH3009 -->
-
-**Cause.** a user parameter named `__return` (matched ignoring case)
-
-**Fix.** rename the parameter
-
-**See** [Function](../language/function.md)
-
-## DSH3010
-
-<!-- generated:begin DSH3010 -->
-**Severity** error
-
-**Message**
-
-```
-Function '{0}' has a return type and cannot also declare out parameters. Use out parameters without a return type for multiple outputs.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:609`
-<!-- generated:end DSH3010 -->
-
-**Cause.** a return-typed `Function` also declared `out`
-
-**Fix.** pick one form
-
-**See** [Function](../language/function.md)
-
-## DSH3011
-
-<!-- generated:begin DSH3011 -->
-**Severity** error
-
-**Message**
-
-```
-Function '{0}' must declare at least one out parameter.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:616`
-<!-- generated:end DSH3011 -->
-
-**Cause.** no `out` parameter and no return type
-
-**Fix.** add an `out` parameter or a return type
-
-**See** [Function](../language/function.md)
-
-## DSH3012
-
-<!-- generated:begin DSH3012 -->
-**Severity** error
-
-**Message**
-
-```
-A function with a return type cannot use a bare 'return;'. Return a value, e.g. 'return expr;'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:489`
-<!-- generated:end DSH3012 -->
-
-**Cause.** a top-level `return;` inside a `Function` that declares a return type
-
-**Fix.** return a value, or drop the return type and use `out` parameters
-
-**See** [Function](../language/function.md)
-
-## DSH3020
-
-<!-- generated:begin DSH3020 -->
-**Severity** error
-
-**Message**
-
-```
-Namespace(Name="...") is required.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:745`
-<!-- generated:end DSH3020 -->
-
-**Cause.** the header has no `Name` attribute
-
-**Fix.** add `Name="…"`
-
-**See** [Namespace](../language/namespace.md)
-
-## DSH3021
-
-<!-- generated:begin DSH3021 -->
-**Severity** error
-
-**Message**
-
-```
-Namespace name cannot be empty.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:752`
-<!-- generated:end DSH3021 -->
-
-**Cause.** `Namespace(Name="")`
-
-**Fix.** supply a name
-
-**See** [Namespace](../language/namespace.md)
-
-## DSH3022
-
-<!-- generated:begin DSH3022 -->
-**Severity** error
-
-**Message**
-
-```
-Namespace name '{0}' is not a valid identifier.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:761`
-<!-- generated:end DSH3022 -->
-
-**Cause.** the name contains an illegal character
-
-**Fix.** use `[A-Za-z_][A-Za-z0-9_]*`
-
-**See** [Namespace](../language/namespace.md)
-
-## DSH3023
-
-<!-- generated:begin DSH3023 -->
-**Severity** error
-
-**Message**
-
-```
-Namespace '{0}' may only contain Function or GraphFunction blocks.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:800`
-<!-- generated:end DSH3023 -->
-
-**Cause.** any other token in a `Namespace` body, including a nested `Namespace`
-
-**Fix.** move the block out; namespaces do not nest
-
-**See** [Namespace](../language/namespace.md)
-
-## DSH3030
-
-<!-- generated:begin DSH3030 -->
-**Severity** error
-
-**Message**
-
-```
-Only one top-level Shader block is currently supported.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:835`
-<!-- generated:end DSH3030 -->
-
-**Cause.** a second `Shader` keyword in the parse unit — enforced across the whole transitive import closure, not per file
-
-**Fix.** split into separate `.dsm` files
-
-**See** [Shader](../language/shader.md)
-
-## DSH3031
-
-<!-- generated:begin DSH3031 -->
-**Severity** error
-
-**Message**
-
-```
-Shader(Name="...") is required.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:850`
-<!-- generated:end DSH3031 -->
-
-**Cause.** the `Shader` header has no `Name` attribute
-
-**Fix.** add `Name="…"`
-
-**See** [Shader](../language/shader.md)
-
-## DSH3032
-
-<!-- generated:begin DSH3032 -->
-**Severity** error
-
-**Message**
-
-```
-Shader must provide a Graph block.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:1047`
-<!-- generated:end DSH3032 -->
-
-**Cause.** a `Shader` with an empty `Code` and no initialized output declaration
-
-**Fix.** add `Graph = { … }`, or initialize an output declaration
-
-**See** [Shader](../language/shader.md)
-
-## DSH3040
-
-<!-- generated:begin DSH3040 -->
-**Severity** error
-
-**Message**
-
-```
-VirtualFunction(Name="...") is required.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:907`
-<!-- generated:end DSH3040 -->
-
-**Cause.** the header has no `Name` attribute
-
-**Fix.** add `Name="…"`
-
-**See** [VirtualFunction](../language/virtual-function.md)
-
-## DSH3041
-
-<!-- generated:begin DSH3041 -->
-**Severity** error
-
-**Message**
-
-```
-VirtualFunction name cannot be empty.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:912`
-<!-- generated:end DSH3041 -->
-
-**Cause.** `VirtualFunction(Name="")`
-
-**Fix.** supply a name
-
-**See** [VirtualFunction](../language/virtual-function.md)
-
-## DSH3042
-
-<!-- generated:begin DSH3042 -->
-**Severity** error
-
-**Message**
-
-```
-VirtualFunction '{0}' must provide Options = {{ Asset = Path(...); }}.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:940`
-<!-- generated:end DSH3042 -->
-
-**Cause.** neither the header `Asset=` attribute nor `Options.Asset` supplied a non-empty asset
-
-**Fix.** add one of them
-
-**See** [VirtualFunction](../language/virtual-function.md)
-
-## DSH3043
-
-<!-- generated:begin DSH3043 -->
-**Severity** error
-
-**Message**
-
-```
-VirtualFunction '{0}' must declare at least one output.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:946`
-<!-- generated:end DSH3043 -->
-
-**Cause.** the block declared no `Outputs` / `Results` entry
-
-**Fix.** add an output
-
-**See** [VirtualFunction](../language/virtual-function.md)
-
-## DSH3050
-
-<!-- generated:begin DSH3050 -->
-**Severity** error
-
-**Message**
-
-```
-{0}(Name="...") is required.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParser.cpp:1005`
-<!-- generated:end DSH3050 -->
-
-**Cause.** a `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` / `MaterialLayer` / `MaterialLayerBlend` header has no `Name`; `{Block}` echoes the spelling actually typed
-
-**Fix.** add `Name="…"`
-
-**See** [ShaderFunction](../language/shader-function.md)
-
-## DSH3060
-
-<!-- generated:begin DSH3060 -->
-**Severity** error
-
-**Message**
-
-```
-Unknown shader section '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2150`
-<!-- generated:end DSH3060 -->
-
-**Cause.** a section other than `Properties` / `Settings` / `Outputs` / `Graph` / `Layout` / `Code`
-
-**Fix.** check the spelling; `Inputs`, `Results` and `Options` are not accepted in a `Shader`
-
-**See** [Shader](../language/shader.md)
-
-## DSH3061
-
-<!-- generated:begin DSH3061 -->
-**Severity** error
-
-**Message**
-
-```
-Unknown shader function section '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2209`
-<!-- generated:end DSH3061 -->
-
-**Cause.** a section name a `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` body does not accept
-
-**Fix.** use `Properties`, `Inputs`, `Outputs`, `Settings`, `Graph` or `Layout`
-
-**See** [ShaderFunction](../language/shader-function.md)
-
-## DSH3062
-
-<!-- generated:begin DSH3062 -->
-**Severity** error
-
-**Message**
-
-```
-Unknown material function section '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2306`
-<!-- generated:end DSH3062 -->
-
-**Cause.** a section other than `Properties` / `Inputs` / `Outputs` / `Results` / `Settings` / `Graph` / `Layout` / `Code`
-
-**Fix.** check the spelling; `Options` is not accepted here
-
-**See** [ShaderFunction](../language/shader-function.md)
-
-## DSH3063
-
-<!-- generated:begin DSH3063 -->
-**Severity** error
-
-**Message**
-
-```
-Unknown VirtualFunction section '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2374`
-<!-- generated:end DSH3063 -->
-
-**Cause.** a section other than `Inputs` / `Properties` / `Outputs` / `Results` / `Options` / `Settings`
-
-**Fix.** remove it; `Graph`, `Code` and `Layout` are not accepted here
-
-**See** [VirtualFunction](../language/virtual-function.md)
-
-## DSH3064
-
-<!-- generated:begin DSH3064 -->
-**Severity** error
-
-**Message**
-
-```
-VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2369`
-<!-- generated:end DSH3064 -->
-
-**Cause.** a `Graph` or `Code` section inside `VirtualFunction`
-
-**Fix.** remove it — a `VirtualFunction` only *declares* an existing asset
-
-**See** [VirtualFunction](../language/virtual-function.md)
-
-## DSH3065
-
-<!-- generated:begin DSH3065 -->
-**Severity** error
-
-**Message**
-
-```
-Shader graph sections now use Graph = { ... }. Function Code = { ... } is still supported.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2145`
-<!-- generated:end DSH3065 -->
-
-**Cause.** a `Code` section inside `Shader`
-
-**Fix.** rename it to `Graph`
-
-**See** [Shader](../language/shader.md)
-
-## DSH3066
-
-<!-- generated:begin DSH3066 -->
-**Severity** error
-
-**Message**
-
-```
-ShaderFunction, ShaderLayer, and ShaderLayerBlend graph sections now use Graph = { ... }. Function Code = { ... } is still supported.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2301`
-<!-- generated:end DSH3066 -->
-
-**Cause.** a `Code` section inside a material-function block
-
-**Fix.** rename it to `Graph`
-
-**See** [ShaderFunction](../language/shader-function.md)
-
-## DSH3070
-
-<!-- generated:begin DSH3070 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid typed declaration '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1167`, `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1177`, `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:2009`
-<!-- generated:end DSH3070 -->
-
-**Cause.** the left side does not split into `<Type> <Name>`, or the name is not an identifier. **A tab between the type and the name fails here** — this splitter looks for a literal space
-
-**Fix.** replace the tab with a space
-
-**See** [Inputs / Outputs / Results](../language/inputs-outputs.md)
-
-## DSH3080
-
-<!-- generated:begin DSH3080 -->
-**Severity** error
-
-**Message**
-
-```
-Output binding target cannot be empty.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1247`
-<!-- generated:end DSH3080 -->
-
-**Cause.** the left side of a binding is empty
-
-**Fix.** supply a target
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3081
-
-<!-- generated:begin DSH3081 -->
-**Severity** error
-
-**Message**
-
-```
-Output binding target '{0}' is empty.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1260`
-<!-- generated:end DSH3081 -->
-
-**Cause.** `Base.` with nothing after it
-
-**Fix.** name a material property
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3082
-
-<!-- generated:begin DSH3082 -->
-**Severity** error
-
-**Message**
-
-```
-Output binding target '{0}' must start with Base. for material outputs or Expression(...) for output nodes.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1269`
-<!-- generated:end DSH3082 -->
-
-**Cause.** a binding target that is neither form
-
-**Fix.** use `Base.<Property>` or `Expression( … ).Pin[i]`
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3083
-
-<!-- generated:begin DSH3083 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid output expression target '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1278`
-<!-- generated:end DSH3083 -->
-
-**Cause.** `Expression` was not followed by a balanced `( … )`
-
-**Fix.** fix the parentheses
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3084
-
-<!-- generated:begin DSH3084 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported output target '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1286`
-<!-- generated:end DSH3084 -->
-
-**Cause.** the text before `(` is not exactly `Expression`
-
-**Fix.** use `Expression( … )`
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3085
-
-<!-- generated:begin DSH3085 -->
-**Severity** error
-
-**Message**
-
-```
-Expression output target '{0}' must select a pin with .Pin[index].
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1295`
-<!-- generated:end DSH3085 -->
-
-**Cause.** the text after `)` does not start with `.`
-
-**Fix.** append `.Pin[<index>]`
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3086
-
-<!-- generated:begin DSH3086 -->
-**Severity** error
-
-**Message**
-
-```
-Expression output target '{0}' must use .Pin[index] syntax.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1303`
-<!-- generated:end DSH3086 -->
-
-**Cause.** the suffix after `)` is not `Pin[ … ]`
-
-**Fix.** use exactly `.Pin[<index>]`
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3087
-
-<!-- generated:begin DSH3087 -->
-**Severity** error
-
-**Message**
-
-```
-Expression output target '{0}' has an invalid pin index.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1311`
-<!-- generated:end DSH3087 -->
-
-**Cause.** the `.Pin[…]` index is not a non-negative integer
-
-**Fix.** use `.Pin[0]`, `.Pin[1]`, …
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3088
-
-<!-- generated:begin DSH3088 -->
-**Severity** error
-
-**Message**
-
-```
-Expression output target argument '{0}' must use Key=Value syntax.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1324`
-<!-- generated:end DSH3088 -->
-
-**Cause.** a positional argument inside `Expression( … )`
-
-**Fix.** every argument must be `Key=Value`
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3089
-
-<!-- generated:begin DSH3089 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid expression output target argument '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1333`
-<!-- generated:end DSH3089 -->
-
-**Cause.** empty key or value inside `Expression( … )`
-
-**Fix.** supply both sides
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3090
-
-<!-- generated:begin DSH3090 -->
-**Severity** error
-
-**Message**
-
-```
-Expression output target argument '{0}' is declared more than once.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1340`
-<!-- generated:end DSH3090 -->
-
-**Cause.** duplicate argument key after normalization
-
-**Fix.** remove the duplicate
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3091
-
-<!-- generated:begin DSH3091 -->
-**Severity** error
-
-**Message**
-
-```
-Expression output target '{0}' must specify Class=\"...\".
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1355`
-<!-- generated:end DSH3091 -->
-
-**Cause.** the `Expression( … )` argument list has no `Class`
-
-**Fix.** add `Class="MaterialExpressionName"`
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3092
-
-<!-- generated:begin DSH3092 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid output declaration initializer '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1440`
-<!-- generated:end DSH3092 -->
-
-**Cause.** an initialized output declaration whose right-hand side is empty
-
-**Fix.** supply an initializer
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3093
-
-<!-- generated:begin DSH3093 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid output binding '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1452`
-<!-- generated:end DSH3093 -->
-
-**Cause.** a binding statement whose right-hand side is empty
-
-**Fix.** supply a source variable or expression
-
-**See** [Output bindings](../language/output-bindings.md)
-
-## DSH3100
-
-<!-- generated:begin DSH3100 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid Layout statement '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1727`
-<!-- generated:end DSH3100 -->
-
-**Cause.** the statement is not a balanced `Name( … )` call
-
-**Fix.** fix the parentheses
-
-**See** [Layout](../language/layout.md)
-
-## DSH3101
-
-<!-- generated:begin DSH3101 -->
-**Severity** error
-
-**Message**
-
-```
-Unexpected text after Layout statement '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1734`
-<!-- generated:end DSH3101 -->
-
-**Cause.** text after the closing `)` of a `Layout` call
-
-**Fix.** end the statement at `)`
-
-**See** [Layout](../language/layout.md)
-
-## DSH3102
-
-<!-- generated:begin DSH3102 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid Layout statement name in '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1742`
-<!-- generated:end DSH3102 -->
-
-**Cause.** the call name is not a bare identifier
-
-**Fix.** use `Node` or `Comment`
-
-**See** [Layout](../language/layout.md)
-
-## DSH3103
-
-<!-- generated:begin DSH3103 -->
-**Severity** error
-
-**Message**
-
-```
-Layout argument '{0}' must use Key=Value syntax.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1755`
-<!-- generated:end DSH3103 -->
-
-**Cause.** a positional argument in a `Layout` call
-
-**Fix.** use `Key=Value`
-
-**See** [Layout](../language/layout.md)
-
-## DSH3104
-
-<!-- generated:begin DSH3104 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid Layout argument '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1764`
-<!-- generated:end DSH3104 -->
-
-**Cause.** empty key or empty value in a `Layout` call
-
-**Fix.** supply both sides
-
-**See** [Layout](../language/layout.md)
-
-## DSH3105
-
-<!-- generated:begin DSH3105 -->
-**Severity** error
-
-**Message**
-
-```
-Layout argument '{0}' is declared more than once.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1771`
-<!-- generated:end DSH3105 -->
-
-**Cause.** duplicate argument key
-
-**Fix.** remove the duplicate
-
-**See** [Layout](../language/layout.md)
-
-## DSH3106
-
-<!-- generated:begin DSH3106 -->
-**Severity** error
-
-**Message**
-
-```
-Layout argument '{0}' is required.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1791`
-<!-- generated:end DSH3106 -->
-
-**Cause.** a required argument is absent
-
-**Fix.** supply it
-
-**See** [Layout](../language/layout.md)
-
-## DSH3107
-
-<!-- generated:begin DSH3107 -->
-**Severity** error
-
-**Message**
-
-```
-Layout argument '{0}' must be an integer.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1809`
-<!-- generated:end DSH3107 -->
-
-**Cause.** `X` / `Y` / `W` / `H` is not an integer
-
-**Fix.** use an integer
-
-**See** [Layout](../language/layout.md)
-
-## DSH3108
-
-<!-- generated:begin DSH3108 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid Layout Node statement '{0}'. {1}
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1843`
-<!-- generated:end DSH3108 -->
-
-**Cause.** a `Node( … )` call failed argument validation
-
-**Fix.** supply `Var`, `X`, `Y`
-
-**See** [Layout](../language/layout.md)
-
-## DSH3109
-
-<!-- generated:begin DSH3109 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid Layout Comment statement '{0}'. {1}
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1862`
-<!-- generated:end DSH3109 -->
-
-**Cause.** a `Comment( … )` call failed argument validation
-
-**Fix.** supply `Name`, `X`, `Y`, `W`, `H`; `Color` is optional
-
-**See** [Layout](../language/layout.md)
-
-## DSH3110
-
-<!-- generated:begin DSH3110 -->
-**Severity** error
-
-**Message**
-
-```
-Layout Comment Color must be a float4 literal in '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1872`
-<!-- generated:end DSH3110 -->
-
-**Cause.** `Color=` is not a four-component literal
-
-**Fix.** write `Color=float4(r, g, b, a)`
-
-**See** [Layout](../language/layout.md)
-
-## DSH3111
-
-<!-- generated:begin DSH3111 -->
-**Severity** error
-
-**Message**
-
-```
-Unknown Layout statement '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1882`
-<!-- generated:end DSH3111 -->
-
-**Cause.** a call other than `Node` or `Comment`
-
-**Fix.** use `Node` or `Comment`
-
-**See** [Layout](../language/layout.md)
-
-## DSH3120
-
-<!-- generated:begin DSH3120 -->
-**Severity** error
-
-**Message**
-
-```
-Graph #Region on line {0} must include a name.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1938`
-<!-- generated:end DSH3120 -->
-
-**Cause.** `#Region` with a blank name
-
-**Fix.** write `#Region "Name"` or `#Region Name`
-
-**See** [Layout](../language/layout.md)
-
-## DSH3121
-
-<!-- generated:begin DSH3121 -->
-**Severity** error
-
-**Message**
-
-```
-Graph #EndRegion on line {0} has no matching #Region.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1950`
-<!-- generated:end DSH3121 -->
-
-**Cause.** an unbalanced `#EndRegion`
-
-**Fix.** remove it or add the opening directive
-
-**See** [Layout](../language/layout.md)
-
-## DSH3122
-
-<!-- generated:begin DSH3122 -->
-**Severity** error
-
-**Message**
-
-```
-Graph #Region '{0}' is missing #EndRegion.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1975`
-<!-- generated:end DSH3122 -->
-
-**Cause.** a region left open at the end of the `Graph` body; the innermost open region is reported
-
-**Fix.** close the region
-
-**See** [Layout](../language/layout.md)
-
-## DSH3130
-
-<!-- generated:begin DSH3130 -->
-**Severity** error
-
-**Message**
-
-```
-Unexpected '`{' in Properties near '{0}'. Only Group("Name") `{ ... `} may open a brace here.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1027`
-<!-- generated:end DSH3130 -->
-
-**Cause.** a `{` inside `Properties` that is not a `Group("Name")` head
-
-**Fix.** remove the brace, or write a proper `Group("Name") { … }`
-
-**See** [Properties](../language/properties.md)
-
-## DSH3131
-
-<!-- generated:begin DSH3131 -->
-**Severity** error
-
-**Message**
-
-```
-Group(...) requires a non-empty name.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1034`
-<!-- generated:end DSH3131 -->
-
-**Cause.** `Group("")`
-
-**Fix.** supply a name
-
-**See** [Properties](../language/properties.md)
-
-## DSH3132
-
-<!-- generated:begin DSH3132 -->
-**Severity** error
-
-**Message**
-
-```
-Unterminated Group("{0}") `{ ... `} block.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1085`
-<!-- generated:end DSH3132 -->
-
-**Cause.** a `Group` scope left unclosed
-
-**Fix.** balance the braces
-
-**See** [Properties](../language/properties.md)
-
-## DSH3133
-
-<!-- generated:begin DSH3133 -->
-**Severity** error
-
-**Message**
-
-```
-Unexpected brace block in Outputs near '{0}'. Only Expression(Class="...") opens a brace block here; every other Outputs statement ends with ';'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1481`
-<!-- generated:end DSH3133 -->
-
-**Cause.** a `{` at statement level inside `Outputs` that is not preceded by an `Expression( ... )` head. A `.Pin[i]` suffix counts as "not a head": the pin selector belongs to the statement form, and the block form writes its pins one per line inside the braces
-
-**Fix.** open the block with the bare call -- `Expression(Class="...", ...) { ... }` -- or end the preceding statement with `;` and delete the brace
-
-**See** [Output bindings](../language/output-bindings.md#block-form)
-
-## DSH3134
-
-<!-- generated:begin DSH3134 -->
-**Severity** error
-
-**Message**
-
-```
-Unterminated Expression(...) block in Outputs after '{0}'.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1682`
-<!-- generated:end DSH3134 -->
-
-**Cause.** the `}` closing an `Expression( ... ) { ... }` block is missing. In practice an unbalanced brace is caught first by the enclosing `Shader` block, which reports an unterminated block instead; this code is the guard that keeps the `Outputs` scanner from slicing a range it never found
-
-**Fix.** close the block
-
-**See** [Output bindings](../language/output-bindings.md#block-form)
-
-## DSH3135
-
-<!-- generated:begin DSH3135 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid statement '{0}' inside an Expression(...) block. Only Pin[index] = <source>; is allowed there.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1511`
-<!-- generated:end DSH3135 -->
-
-**Cause.** a statement inside an `Expression( ... ) { ... }` block that is not `Pin[index] = <source>;`. Output declarations, `Base.` bindings and nested blocks all belong outside the braces; only the pin bindings of that one node live inside
-
-**Fix.** move the statement out of the block, or rewrite it as `Pin[index] = <source>;`. A block may hold comments and blank lines freely
-
-**See** [Output bindings](../language/output-bindings.md#block-form)
-
-## DSH3136
-
-<!-- generated:begin DSH3136 -->
-**Severity** error
-
-**Message**
-
-```
-The Expression(...) block for '{0}' binds no pin. Write at least one Pin[index] = <source>; inside it, or delete the block.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1536`
-<!-- generated:end DSH3136 -->
-
-**Cause.** an `Expression( ... ) { }` block with no `Pin[index]` statement in it. Such a block would create nothing at all -- the node is materialized by its bindings, so a block with no binding is silently a no-op, which is exactly the class of mistake the block form exists to prevent
-
-**Fix.** bind at least one pin, or delete the block
-
-**See** [Output bindings](../language/output-bindings.md#block-form)
-
-## DSH3137
-
-<!-- generated:begin DSH3137 -->
-**Severity** error
-
-**Message**
-
-```
-Output target pin '{0}' is bound more than once: first to '{1}', then to '{2}'. An Expression(...) block and an Expression(...).Pin[i] statement that share a class and argument list describe one node, so their pins share one namespace.
-```
-
-**Raised by** `Source/DreamShader/Private/Parser/DreamShaderParserSections.cpp:1404`
-<!-- generated:end DSH3137 -->
-
-**Cause.** the same input pin of the same terminal node was bound twice. Identity is the node reuse key -- the resolved class plus the sorted argument list -- so the two bindings need not look alike: one may sit in a block and the other in a loose `Expression( ... ).Pin[i] = x;` statement, and they may even live in two different `Outputs` sections. Two `Expression( ... )` specifications whose argument lists differ are two nodes, each with its own `Pin[0]`; that is not a double bind
-
-**Fix.** delete one of the two bindings, or point the second at a different pin. If the two were meant to be different nodes, give them different argument lists -- but note that a `UMaterialExpressionCustomOutput` is normally meant to exist once per material
-
-**See** [Output bindings](../language/output-bindings.md#each-pin-once), [Node reuse](../graph/node-reuse.md)
-
 ## DSH3200
 
 <!-- generated:begin DSH3200 -->
@@ -1394,7 +14,7 @@ Output target pin '{0}' is bound more than once: first to '{1}', then to '{2}'. 
 Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1244`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1284`
 <!-- generated:end DSH3200 -->
 
 **Cause.** The parser reached a token at file scope that cannot begin anything: a stray `)`, `}`,
@@ -1418,7 +38,7 @@ mistake seen from further down.
 Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:564`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:586`
 <!-- generated:end DSH3201 -->
 
 **Cause.** A `#` line other than `#pragma` or `#include` (`#if`, `#define`, `#endif`, `#error`…)
@@ -1438,10 +58,10 @@ body every `#` line is kept verbatim and never reaches this check.
 **Message**
 
 ```
-'#pragma' needs a name: material, layout, region or endregion.
+'#pragma' needs a name: material, instance, layout, region or endregion.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:584`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:625`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:606`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:651`
 <!-- generated:end DSH3202 -->
 
 **Cause.** A `#pragma` line is not in the shape the parser reads:
@@ -1470,7 +90,7 @@ and ignored by the compiler.
 '#include' needs a quoted path: #include "/Game/Shared/Common.dsh".
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:543`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:708`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:565`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:734`
 <!-- generated:end DSH3203 -->
 
 **Cause.** `#include` was not followed by a `"path"` in double quotes, or `import` was not followed
@@ -1494,7 +114,7 @@ needs the trailing `;`; `#include` must not have one. Both spellings produce the
 Expected a type name, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:360`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:353`
 <!-- generated:end DSH3204 -->
 
 **Cause.** A type name was expected and something else was found: `uniform = 1;` (type missing),
@@ -1515,7 +135,7 @@ a keyword used as a type (`struct` inside a parameter list).
 Expected a name after 'struct', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1012`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1156`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:743`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:777`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:836`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1040`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1195`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:769`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:804`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:863`
 <!-- generated:end DSH3205 -->
 
 **Cause.** A name was expected and the token there is not an identifier. Raised for the name of a
@@ -1536,7 +156,7 @@ generated material-function input pin are called.
 Expected '`{' or ';' after the parameter list of '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1086`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:877`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1122`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:904`
 <!-- generated:end DSH3206 -->
 
 **Cause.** After a function's parameter list the parser found neither `{` nor `;`. Usually a stray
@@ -1556,7 +176,7 @@ token between `)` and `{` (`float f() const {`, `float f() 5`), or a missing `{`
 '{0}' is 'extern' and binds to an existing asset, so it cannot have a body; write a prototype ending in ';'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1048`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1076`
 <!-- generated:end DSH3207 -->
 
 **Cause.** An `extern` function has a body. `extern` means "bind this name to an existing
@@ -1578,7 +198,7 @@ the declarations after it still parse.
 '{0}' has no body. Only an 'extern' prototype may end in ';'; a function you define needs '`{...`}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1077`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1113`
 <!-- generated:end DSH3208 -->
 
 **Cause.** A function that is not `extern` ends in `;` instead of a body. A 2.0 source file does
@@ -1621,7 +241,7 @@ the module loop in `LangParser.cpp`; the declaration is kept in the tree so tool
 Expected the end of the expression, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:465`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParser.cpp:572`
 <!-- generated:end DSH3211 -->
 
 **Cause.** `ParseDreamShaderLangExpression` (tests, the language service, `#pragma` values) was
@@ -1642,7 +262,7 @@ that is meant to be an expression and is not.
 '{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static', 'const', 'extern' or 'export', not a mix.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1022`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1100`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:963`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1050`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1136`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:990`
 <!-- generated:end DSH3213 -->
 
 **Cause.** The declaration's prefix keywords do not go together, or go with the wrong kind of
@@ -1671,7 +291,7 @@ constant shared by several materials is `static const`; a value the material ins
 Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:855`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:882`
 <!-- generated:end DSH3214 -->
 
 **Cause.** An `out` parameter has a default value: `out float Alpha = 1.0`. An output is written by
@@ -1692,7 +312,7 @@ parameters cannot have defaults either.
 Expected ']' to close the array dimension, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:388`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:391`
 <!-- generated:end DSH3215 -->
 
 **Cause.** An array dimension was opened with `[` and not closed: `float Weights[4;`,
@@ -1712,7 +332,7 @@ Expected ']' to close the array dimension, found {1}.
 Expected ';' after the import path, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1136`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1180`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:722`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:785`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:794`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1172`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1219`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:748`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:812`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:821`
 <!-- generated:end DSH3216 -->
 
 **Cause.** A declaration is missing its `;`: after a variable and its initializer, after
@@ -1734,7 +354,7 @@ The most common form is the missing `;` after `struct X { ... }` — HLSL and C 
 Expected '{' after the struct name, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:747`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:773`
 <!-- generated:end DSH3217 -->
 
 **Cause.** `struct Name` was not followed by `{`. Usually a forward declaration (`struct X;`),
@@ -1754,7 +374,7 @@ the file, so a struct may be declared after the function that uses it.
 Expected ')' to close the parameter list, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:869`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:896`
 <!-- generated:end DSH3218 -->
 
 **Cause.** A parameter list was not closed with `)`. Either the `)` is missing, or a parameter is
@@ -1775,7 +395,7 @@ are already read-only in the generated graph.
 A '@' in a '///' line must be followed by a directive name; the text is kept as description.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:493`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:515`
 <!-- generated:end DSH3220 -->
 
 **Cause.** *(warning)* A `///` line has a `@` at a directive position (start of the text or after a
@@ -1799,7 +419,7 @@ and `@desc` are the same key.
 This '///' block is not followed by a field and is ignored.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1208`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:768`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1247`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:794`
 <!-- generated:end DSH3221 -->
 
 **Cause.** *(warning)* A `///` block is not attached to anything: it sits at the end of the file
@@ -1818,10 +438,10 @@ so a file-header comment written as `///` above the first `#pragma` is not orpha
 **Message**
 
 ```
-'{0}' is a 1.x declaration; the 2.0 front end does not parse it yet. Keep it in a .dsm/.dsf/.dsh compiled by the 1.x front end.
+Expected a 2.0 declaration, found the 1.x declaration '{0}'; 1.x declarations belong in a .dsh header or in a .dsm or .dsf file.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:994`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1022`
 <!-- generated:end DSH3222 -->
 
 **Cause.** A 1.x declaration word — `Function`, `GraphFunction`, `Namespace`, `VirtualFunction`,
@@ -1834,4 +454,567 @@ the declaration to 2.0: `Function float Luma(in vec3 c) { ... }` becomes
 `float Luma(float3 c) { ... }`, `Shader(Name = "X") { ... }` becomes `export void X(inout material m)
 { ... }` with `#pragma material(...)` for the settings. The message names the word it saw; the
 whole block is skipped during recovery so the rest of the file still reports its own errors.
+
+## DSH3250
+
+<!-- generated:begin DSH3250 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a property type and a name, found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1044`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:721`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:733`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:775`
+<!-- generated:end DSH3250 -->
+
+**Cause.** A line of a `Properties` section does not start with a type and a name. Each property is
+`<Type> <Name> [= default] [ [metadata] ];`.
+
+**Fix.** Check the line above for a missing `;`, and that the type is one word (`float3`,
+`Texture2D`, `ScalarParameter`, ...).
+
+## DSH3251
+
+<!-- generated:begin DSH3251 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a property type after 'const', found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:676`
+<!-- generated:end DSH3251 -->
+
+**Cause.** `const` is not followed by a property type.
+
+**Fix.** Write `const float K = 1.0;` or `const Texture2D Noise = Path(...);`.
+
+## DSH3252
+
+<!-- generated:begin DSH3252 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a property type such as 'float', 'float4', 'Texture2D' or 'ScalarParameter', found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:841`
+<!-- generated:end DSH3252 -->
+
+**Cause.** The word in type position is not a type a 1.x property can have: not an HLSL value type,
+not a texture type, and not one of the parameter node classes 1.x knew by name.
+
+**Fix.** Use a value type (`float` ... `float4`, `vec*`), a texture type, or a parameter class such
+as `ScalarParameter`, `VectorParameter`, `TextureObjectParameter`, `StaticSwitchParameter`. Types
+are case-sensitive.
+
+## DSH3253
+
+<!-- generated:begin DSH3253 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a property type with a 2.0 spelling, found '{0}{1}', which has none; move this material to a .dss file and write the node with UE.Expression.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:853`
+<!-- generated:end DSH3253 -->
+
+**Cause.** The property is a node class 1.x could declare and 2.0 has no declaration for, or `const`
+stands on a property that cannot be a constant (a parameter node). Both front ends build one AST, so
+a property needs a 2.0 form: a `uniform`, a `static const`, or a node expanded where it is read.
+
+**Fix.** Declare it as a plain value or parameter; for any other node class migrate the material to
+a `.dss` file and write the node where it is used, as `UE.<Class>(...)`.
+
+## DSH3254
+
+<!-- generated:begin DSH3254 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a default value after '{0} =', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:755`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:871`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:913`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:937`
+<!-- generated:end DSH3254 -->
+
+**Cause.** A property has `=` and nothing the front end can read as a default after it. A default is
+a number, a constructor (`float4(1, 0, 0, 1)`), `true` / `false`, an asset reference (`Path(...)`, a
+quoted object path, a Content Browser reference), or a `UE.*` node for a builtin property.
+
+**Fix.** Write the default in one of those forms, or remove the `=`.
+
+## DSH3255
+
+<!-- generated:begin DSH3255 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ']' to close the metadata block, found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:188`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:201`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:255`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:275`
+<!-- generated:end DSH3255 -->
+
+**Cause.** A metadata block `[ ... ]` after a property or parameter is not closed, or an entry in it
+is not `Key = value;`.
+
+**Fix.** Close the block with `]` and end each entry with `;`.
+
+## DSH3256
+
+<!-- generated:begin DSH3256 -->
+**Severity** error
+
+**Message**
+
+```
+Expected the metadata key '{0}' once, found it again.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:309`
+<!-- generated:end DSH3256 -->
+
+**Cause.** One metadata key is written twice in the same `[ ... ]` block.
+
+**Fix.** Keep one of them.
+
+## DSH3257
+
+<!-- generated:begin DSH3257 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'Slider(min, max)' with two numbers, found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:238`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:301`
+<!-- generated:end DSH3257 -->
+
+**Cause.** `Slider` does not have the form `Slider(min, max)` with two numbers, or the range is
+given twice: `Slider(...)` together with a `SliderMin` / `SliderMax` style bound in the same
+metadata block.
+
+**Fix.** Write the range once, for example `Slider(0.0, 4.0)`.
+
+## DSH3258
+
+<!-- generated:begin DSH3258 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'SortPriority' to be a whole number, found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1799`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:475`
+<!-- generated:end DSH3258 -->
+
+**Cause.** `SortPriority` (or its short form `Sort`) is not a whole number. The engine sorts
+parameters by an integer.
+
+**Fix.** Write an integer: `SortPriority = 10;`.
+
+## DSH3259
+
+<!-- generated:begin DSH3259 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ')' to close the arguments of 'UE.{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:705`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:819`
+<!-- generated:end DSH3259 -->
+
+**Cause.** A builtin property (`float3 Cam = UE.CameraPositionWS();`) opens the argument list of its
+`UE.*` node and never closes it, or gives the node's arguments as a default value after the name
+instead of inside the parentheses.
+
+**Fix.** Close the `)`, and write the node's arguments inside it: `float2 UV = UE.TexCoord(Index =
+1);`.
+
+## DSH3260
+
+<!-- generated:begin DSH3260 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a name inside 'Group("...")', found an empty string.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:637`
+<!-- generated:end DSH3260 -->
+
+**Cause.** `Group("") { ... }` has an empty name. The members of such a block take the name as their
+parameter group.
+
+**Fix.** Give the group a name, or drop the block and let the properties stand ungrouped.
+
+## DSH3261
+
+<!-- generated:begin DSH3261 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a setting name such as 'BlendMode', found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1112`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1137`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1149`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1163`
+<!-- generated:end DSH3261 -->
+
+**Cause.** A line of a `Settings` section does not start with a setting name. Each setting is
+`<Name> = <value>;`.
+
+**Fix.** Check the line above for a missing `;`.
+
+## DSH3262
+
+<!-- generated:begin DSH3262 -->
+**Severity** warning
+
+**Message**
+
+```
+The setting '{0}' is written twice; the later value wins, as it did in 1.x.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1183`
+<!-- generated:end DSH3262 -->
+
+**Cause.** One setting is written twice. 1.x kept the later value, and so does this front end.
+
+**Fix.** Remove one of them.
+
+## DSH3263
+
+<!-- generated:begin DSH3263 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' is not a setting of '{1}'; 1.x ignored it and so does this front end.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1127`
+<!-- generated:end DSH3263 -->
+
+**Cause.** The setting is not one the block's kind has (a material setting in a ShaderFunction, a
+misspelt function setting). 1.x ignored what it did not know, so the source builds as it always did
+-- without that setting.
+
+**Fix.** Check the spelling against `Docs/settings`, or remove the line.
+
+## DSH3264
+
+<!-- generated:begin DSH3264 -->
+**Severity** warning
+
+**Message**
+
+```
+'UserExposedCaption' has no 2.0 spelling and is not applied; its value is kept for migration.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1115`
+<!-- generated:end DSH3264 -->
+
+**Cause.** `UserExposedCaption` is set on a function. 2.0 has no directive for it, so the asset is
+built without it; the value is kept in the migration record.
+
+**Fix.** Nothing to do for the build. If the caption matters, set it on the asset by hand after
+migrating.
+
+## DSH3265
+
+<!-- generated:begin DSH3265 -->
+**Severity** warning
+
+**Message**
+
+```
+Expected 'true' or 'false' for 'ExposeToLibrary', found '{0}'; 1.x ignored the setting and so does this front end.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1101`
+<!-- generated:end DSH3265 -->
+
+**Cause.** `ExposeToLibrary` is neither `true` nor `false`. 1.x ignored such a value and left the
+function where it was.
+
+**Fix.** Write `ExposeToLibrary = true;`.
+
+## DSH3266
+
+<!-- generated:begin DSH3266 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ';' after the output declaration '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1204`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1324`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1629`
+<!-- generated:end DSH3266 -->
+
+**Cause.** An `Outputs` section is not what the front end reads: the section is not opened with `{`,
+a declaration has no `;` after it, or a line is neither an output declaration, `Base.<Attribute> =
+<source>;`, nor `Expression(...).Pin[<index>] = <source>;`.
+
+**Fix.** End each line with `;` and use one of the three forms.
+
+## DSH3267
+
+<!-- generated:begin DSH3267 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'Pin[<index>] = <source>' for an Expression(...) output target, found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1232`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1417`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1427`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1439`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1450`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1466`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1495`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1561`
+<!-- generated:end DSH3267 -->
+
+**Cause.** An `Outputs` binding to a custom-output node is not of the form `Expression(Class =
+"...").Pin[<index>] = <source>;` (or, in block form, `Pin[<index>] = <source>;` inside the braces).
+
+**Fix.** Name the pin by its index: `Pin[0] = Color;`.
+
+## DSH3268
+
+<!-- generated:begin DSH3268 -->
+**Severity** error
+
+**Message**
+
+```
+Expected each pin of Expression(Class = "{0}") to be bound once, found Pin[{1}] bound again.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1608`
+<!-- generated:end DSH3268 -->
+
+**Cause.** The block form of an `Expression(...)` output target binds one pin twice.
+
+**Fix.** Keep one binding per pin.
+
+## DSH3269
+
+<!-- generated:begin DSH3269 -->
+**Severity** error
+
+**Message**
+
+```
+Expected at least one 'Pin[<index>] = <source>;' in the Expression(...) block, found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1551`
+<!-- generated:end DSH3269 -->
+
+**Cause.** The block form of an `Expression(...)` output target has no pin binding in it, so the
+node would be built with nothing wired.
+
+**Fix.** Add at least one `Pin[<index>] = <source>;`.
+
+## DSH3270
+
+<!-- generated:begin DSH3270 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a source after 'Pin[{0}] =', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1248`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1304`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1369`
+<!-- generated:end DSH3270 -->
+
+**Cause.** An `=` in an `Outputs` section has nothing after it: `Pin[<index>] =`, `Base.<Attribute>
+=`, or the initializer of an output declaration.
+
+**Fix.** Name a variable of the Graph, or a constant, as the source.
+
+## DSH3271
+
+<!-- generated:begin DSH3271 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a parameter type and name such as 'float Amount', found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1661`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1696`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1732`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1758`
+<!-- generated:end DSH3271 -->
+
+**Cause.** A line of an `Inputs` or `Outputs` section of a function is not `[opt] <Type> <Name> [=
+default] [ [metadata] ];`.
+
+**Fix.** Check the type spelling and the `;` of the line above.
+
+## DSH3272
+
+<!-- generated:begin DSH3272 -->
+**Severity** warning
+
+**Message**
+
+```
+'opt' on the output '{0}' means nothing; 1.x ignored it and so does this front end.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1772`
+<!-- generated:end DSH3272 -->
+
+**Cause.** `opt` stands on an output. Only an input can be optional; 1.x read the word and did
+nothing with it.
+
+**Fix.** Remove it.
+
+## DSH3273
+
+<!-- generated:begin DSH3273 -->
+**Severity** warning
+
+**Message**
+
+```
+A default on the output '{0}' means nothing; 1.x ignored it, so it is dropped.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1780`
+<!-- generated:end DSH3273 -->
+
+**Cause.** An output has a default. An output is what the Graph assigns; 1.x read the default and
+dropped it.
+
+**Fix.** Remove the default, or assign the value in the Graph.
+
+## DSH3274
+
+<!-- generated:begin DSH3274 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'Node(...)' or 'Comment(...)' in the Layout section, found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1840`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1865`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1886`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1896`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1908`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1924`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1940`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1959`
+<!-- generated:end DSH3274 -->
+
+**Cause.** A `Layout` section holds something other than `Node(...)` and `Comment(...)` entries.
+
+**Fix.** Write `Node(Var = "Name", X = 0, Y = 0);` or `Comment(Name = "Title", X = 0, Y = 0, W =
+400, H = 200);`.
+
+## DSH3275
+
+<!-- generated:begin DSH3275 -->
+**Severity** error
+
+**Message**
+
+```
+Expected the argument '{0}' in '{1}(...)', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2000`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2012`
+<!-- generated:end DSH3275 -->
+
+**Cause.** A `Node(...)` or `Comment(...)` entry lacks an argument it cannot do without -- `Var`,
+`X`, `Y` for a node; `Name`, `X`, `Y`, `W`, `H` for a comment -- or a position or size is not a
+whole number.
+
+**Fix.** Add the argument; positions and sizes are integers in graph units.
+
+## DSH3276
+
+<!-- generated:begin DSH3276 -->
+**Severity** error
+
+**Message**
+
+```
+Expected 'Color' to be a vector literal such as '(0.1, 0.16, 0.22, 0.35)', found '{0}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2038`
+<!-- generated:end DSH3276 -->
+
+**Cause.** The `Color` of a `Comment(...)` is not four numbers in parentheses.
+
+**Fix.** Write `Color = (0.1, 0.16, 0.22, 0.35)` -- red, green, blue, alpha.
+
+## DSH3277
+
+<!-- generated:begin DSH3277 -->
+**Severity** warning
+
+**Message**
+
+```
+The layer input '{0}' becomes the 'inout material' parameter named after the output '{1}', so the input pin changes its name.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1180`
+<!-- generated:end DSH3277 -->
+
+**Cause.** A 1.x layer names its MaterialAttributes input one thing and its output another. A 2.0
+layer has one `inout material` parameter, which is both pins, and it takes the output's name -- so
+the layer asset's input pin is renamed. Inside the body the old input name still reads the incoming
+material.
+
+**Fix.** Nothing has to change in the source. A layer stack wires a layer's one input by position,
+so existing stacks keep working; a graph that wired the function call by pin name needs reconnecting
+once.
+
+## DSH3278
+
+<!-- generated:begin DSH3278 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a MaterialAttributes output on '{0}', found none.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1150`
+<!-- generated:end DSH3278 -->
+
+**Cause.** A `ShaderLayer` or `ShaderLayerBlend` has no output of type `MaterialAttributes`. The
+layer stack reads exactly one such output from a layer or a blend.
+
+**Fix.** Declare it in `Outputs`: `MaterialAttributes Result;`.
 

@@ -3,1572 +3,6 @@
 > The block between the generated markers is written by `.skill/gen-diagnostics.ps1`.
 > Everything below a marker is written by hand and survives a regeneration.
 
-## DSH8001
-
-<!-- generated:begin DSH8001 -->
-**Severity** error
-
-**Message**
-
-```
-Input '%s' default expression '%s' does not match declared type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:462`
-<!-- generated:end DSH8001 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8002
-
-<!-- generated:begin DSH8002 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create a MakeMaterialAttributes node for '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:493`
-<!-- generated:end DSH8002 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8003
-
-<!-- generated:begin DSH8003 -->
-**Severity** error
-
-**Message**
-
-```
-Property '%s' has a recursive UE builtin dependency.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:544`
-<!-- generated:end DSH8003 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8004
-
-<!-- generated:begin DSH8004 -->
-**Severity** error
-
-**Message**
-
-```
-Function '%s' has an invalid parameter declaration '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:941`
-<!-- generated:end DSH8004 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8005
-
-<!-- generated:begin DSH8005 -->
-**Severity** error
-
-**Message**
-
-```
-Function '%s' parameter '%s' uses unsupported qualifier '%s'. Supported qualifiers are in and out.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:966`
-<!-- generated:end DSH8005 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8006
-
-<!-- generated:begin DSH8006 -->
-**Severity** error
-
-**Message**
-
-```
-Function '%s' has an invalid parameter declaration '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:971`
-<!-- generated:end DSH8006 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8007
-
-<!-- generated:begin DSH8007 -->
-**Severity** error
-
-**Message**
-
-```
-Function '%s' must declare at least one out parameter.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:988`
-<!-- generated:end DSH8007 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8008
-
-<!-- generated:begin DSH8008 -->
-**Severity** error
-
-**Message**
-
-```
-Output target '%s' could not resolve MaterialExpression class '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1121`
-<!-- generated:end DSH8008 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8009
-
-<!-- generated:begin DSH8009 -->
-**Severity** error
-
-**Message**
-
-```
-Output target '%s' failed to create '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1128`
-<!-- generated:end DSH8009 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8010
-
-<!-- generated:begin DSH8010 -->
-**Severity** error
-
-**Message**
-
-```
-Output target '%s': '%s' is not a property on '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1142`
-<!-- generated:end DSH8010 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8011
-
-<!-- generated:begin DSH8011 -->
-**Severity** error
-
-**Message**
-
-```
-Output target '%s': inline input property '%s' is not supported yet. Bind through .Pin[index] instead.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1147`
-<!-- generated:end DSH8011 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8012
-
-<!-- generated:begin DSH8012 -->
-**Severity** error
-
-**Message**
-
-```
-Output target '%s': %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1153`
-<!-- generated:end DSH8012 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8013
-
-<!-- generated:begin DSH8013 -->
-**Severity** error
-
-**Message**
-
-```
-Invalid output source or target expression.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1172`
-<!-- generated:end DSH8013 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8014
-
-<!-- generated:begin DSH8014 -->
-**Severity** error
-
-**Message**
-
-```
-Output target pin '%s' is bound more than once.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1178`
-<!-- generated:end DSH8014 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8015
-
-<!-- generated:begin DSH8015 -->
-**Severity** error
-
-**Message**
-
-```
-Output target '%s' does not have Pin[%d].
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1184`
-<!-- generated:end DSH8015 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8016
-
-<!-- generated:begin DSH8016 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' must declare exactly one MaterialAttributes output.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1270`
-<!-- generated:end DSH8016 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8017
-
-<!-- generated:begin DSH8017 -->
-**Severity** error
-
-**Message**
-
-```
-ShaderLayer '%s' must declare at most one input, and it must be MaterialAttributes. Use Properties for layer controls.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1286`
-<!-- generated:end DSH8017 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8018
-
-<!-- generated:begin DSH8018 -->
-**Severity** error
-
-**Message**
-
-```
-ShaderLayerBlend '%s' must declare exactly two inputs, both MaterialAttributes. Use Properties for blend controls.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1294`
-<!-- generated:end DSH8018 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8019
-
-<!-- generated:begin DSH8019 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' must declare at least one output.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1481`
-<!-- generated:end DSH8019 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8020
-
-<!-- generated:begin DSH8020 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' must provide a Graph block.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1491`
-<!-- generated:end DSH8020 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8021
-
-<!-- generated:begin DSH8021 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s': ExposeToLibrary must be true or false.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1592`
-<!-- generated:end DSH8021 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8022
-
-<!-- generated:begin DSH8022 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' property '%s' conflicts with another property or input name.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1643`
-<!-- generated:end DSH8022 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8023
-
-<!-- generated:begin DSH8023 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' input '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1682`
-<!-- generated:end DSH8023 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8024
-
-<!-- generated:begin DSH8024 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' input '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1684`
-<!-- generated:end DSH8024 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8025
-
-<!-- generated:begin DSH8025 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' failed to create input '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1695`
-<!-- generated:end DSH8025 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8026
-
-<!-- generated:begin DSH8026 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' failed to resolve generated input '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1733`
-<!-- generated:end DSH8026 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8027
-
-<!-- generated:begin DSH8027 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' input '%s': %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1750`
-<!-- generated:end DSH8027 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8028
-
-<!-- generated:begin DSH8028 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s': %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1768`
-<!-- generated:end DSH8028 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8029
-
-<!-- generated:begin DSH8029 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1851`
-<!-- generated:end DSH8029 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8030
-
-<!-- generated:begin DSH8030 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' failed to create the function Custom node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1858`
-<!-- generated:end DSH8030 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8031
-
-<!-- generated:begin DSH8031 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' failed to resolve generated input '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1904`
-<!-- generated:end DSH8031 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8032
-
-<!-- generated:begin DSH8032 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' property '%s': %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1933`
-<!-- generated:end DSH8032 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8033
-
-<!-- generated:begin DSH8033 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:1959`
-<!-- generated:end DSH8033 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8034
-
-<!-- generated:begin DSH8034 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' was never assigned an expression.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2008`
-<!-- generated:end DSH8034 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8035
-
-<!-- generated:begin DSH8035 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2024`
-<!-- generated:end DSH8035 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8036
-
-<!-- generated:begin DSH8036 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' uses unsupported type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2026`
-<!-- generated:end DSH8036 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8037
-
-<!-- generated:begin DSH8037 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' output '%s' does not match its declared type '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2041`
-<!-- generated:end DSH8037 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8038
-
-<!-- generated:begin DSH8038 -->
-**Severity** error
-
-**Message**
-
-```
-%s '%s' failed to create output '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2048`
-<!-- generated:end DSH8038 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8039
-
-<!-- generated:begin DSH8039 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader header '%s' does not generate assets directly. Recompile dependent .dsm or .dsf files instead.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2289`
-<!-- generated:end DSH8039 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8040
-
-<!-- generated:begin DSH8040 -->
-**Severity** error
-
-**Message**
-
-```
-%s: .dsf files cannot define top-level Shader blocks.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2341`
-<!-- generated:end DSH8040 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8041
-
-<!-- generated:begin DSH8041 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2356`
-<!-- generated:end DSH8041 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8042
-
-<!-- generated:begin DSH8042 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader file '%s' did not contain any material, ShaderFunction, ShaderLayer, or ShaderLayerBlend assets to generate.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2437`
-<!-- generated:end DSH8042 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8043
-
-<!-- generated:begin DSH8043 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported Backend '%s'. Supported values: Graph, Instance, ThinCustom.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2507`
-<!-- generated:end DSH8043 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8044
-
-<!-- generated:begin DSH8044 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2577`
-<!-- generated:end DSH8044 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8045
-
-<!-- generated:begin DSH8045 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Base.FrontMaterial requires ShadingModel="Substrate" or no explicit ShadingModel setting.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2586`
-<!-- generated:end DSH8045 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8046
-
-<!-- generated:begin DSH8046 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Property '%s' is declared more than once. Property names must be unique.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2614`
-<!-- generated:end DSH8046 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8047
-
-<!-- generated:begin DSH8047 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Output '%s': %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2634`
-<!-- generated:end DSH8047 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8048
-
-<!-- generated:begin DSH8048 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Graph blocks do not support binding Outputs to the reserved name 'return'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2654`
-<!-- generated:end DSH8048 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8049
-
-<!-- generated:begin DSH8049 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2672`
-<!-- generated:end DSH8049 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8050
-
-<!-- generated:begin DSH8050 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Material output '%s' is written from the Graph block and bound in the Outputs block. Keep one of them.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2742`
-<!-- generated:end DSH8050 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8051
-
-<!-- generated:begin DSH8051 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Material output '%s' expects a Substrate value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2760`
-<!-- generated:end DSH8051 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8052
-
-<!-- generated:begin DSH8052 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Material output '%s' expects a MaterialAttributes value.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2767`
-<!-- generated:end DSH8052 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8053
-
-<!-- generated:begin DSH8053 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Material output '%s' expects a numeric value, but got Substrate.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2773`
-<!-- generated:end DSH8053 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8054
-
-<!-- generated:begin DSH8054 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Material output '%s' expects %d component(s), but the value has %d.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2796`
-<!-- generated:end DSH8054 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8055
-
-<!-- generated:begin DSH8055 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Failed to find material property '%s' while connecting a Graph output.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2803`
-<!-- generated:end DSH8055 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8056
-
-<!-- generated:begin DSH8056 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2832`
-<!-- generated:end DSH8056 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8057
-
-<!-- generated:begin DSH8057 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Graph output '%s' does not match its declared type.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2848`
-<!-- generated:end DSH8057 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8058
-
-<!-- generated:begin DSH8058 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2881`
-<!-- generated:end DSH8058 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8059
-
-<!-- generated:begin DSH8059 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Material output '%s' was assigned a value that produced no expression.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2894`
-<!-- generated:end DSH8059 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8060
-
-<!-- generated:begin DSH8060 -->
-**Severity** error
-
-**Message**
-
-```
-%s: This material drives no outputs. Its Graph block computes values but never assigns one to 'Base.<Attribute>', and there is no Outputs block.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2905`
-<!-- generated:end DSH8060 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8061
-
-<!-- generated:begin DSH8061 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Base.FrontMaterial expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2912`
-<!-- generated:end DSH8061 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8062
-
-<!-- generated:begin DSH8062 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Output '%s' is declared as Substrate and cannot be generated by a material Custom node. Use a Graph block and Substrate.* nodes.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2918`
-<!-- generated:end DSH8062 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8063
-
-<!-- generated:begin DSH8063 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Failed to create the material Custom node.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2936`
-<!-- generated:end DSH8063 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8064
-
-<!-- generated:begin DSH8064 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:2997`
-<!-- generated:end DSH8064 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8065
-
-<!-- generated:begin DSH8065 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Failed to resolve Custom output '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3027`
-<!-- generated:end DSH8065 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8066
-
-<!-- generated:begin DSH8066 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Material output '%s' expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3036`
-<!-- generated:end DSH8066 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8067
-
-<!-- generated:begin DSH8067 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Failed to find material property '%s' while connecting '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3046`
-<!-- generated:end DSH8067 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8068
-
-<!-- generated:begin DSH8068 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3080`
-<!-- generated:end DSH8068 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8069
-
-<!-- generated:begin DSH8069 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create ThinCustom base material for '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3178`
-<!-- generated:end DSH8069 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8070
-
-<!-- generated:begin DSH8070 -->
-**Severity** error
-
-**Message**
-
-```
-Cannot create a persisted ThinCustom base without an instance for '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3186`
-<!-- generated:end DSH8070 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8071
-
-<!-- generated:begin DSH8071 -->
-**Severity** error
-
-**Message**
-
-```
-Failed to create ThinCustom base material for instance '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3214`
-<!-- generated:end DSH8071 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8072
-
-<!-- generated:begin DSH8072 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3243`
-<!-- generated:end DSH8072 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8073
-
-<!-- generated:begin DSH8073 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3277`
-<!-- generated:end DSH8073 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8074
-
-<!-- generated:begin DSH8074 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3283`
-<!-- generated:end DSH8074 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8075
-
-<!-- generated:begin DSH8075 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3298`
-<!-- generated:end DSH8075 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8076
-
-<!-- generated:begin DSH8076 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3404`
-<!-- generated:end DSH8076 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8077
-
-<!-- generated:begin DSH8077 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader source '%s' cannot generate a material asset directly.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3461`
-<!-- generated:end DSH8077 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8078
-
-<!-- generated:begin DSH8078 -->
-**Severity** error
-
-**Message**
-
-```
-%s: This file does not define a top-level Shader block.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3513`
-<!-- generated:end DSH8078 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8079
-
-<!-- generated:begin DSH8079 -->
-**Severity** error
-
-**Message**
-
-```
-%s: This material drives no outputs. Add an Outputs block, or write them from Graph as 'Base.BaseColor = ...'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3522`
-<!-- generated:end DSH8079 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8080
-
-<!-- generated:begin DSH8080 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3533`
-<!-- generated:end DSH8080 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8081
-
-<!-- generated:begin DSH8081 -->
-**Severity** error
-
-**Message**
-
-```
-%s: Base.FrontMaterial and Base.MaterialAttributes cannot be used by the same Shader.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3556`
-<!-- generated:end DSH8081 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8082
-
-<!-- generated:begin DSH8082 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3566`
-<!-- generated:end DSH8082 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8083
-
-<!-- generated:begin DSH8083 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3575`
-<!-- generated:end DSH8083 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8084
-
-<!-- generated:begin DSH8084 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3620`
-<!-- generated:end DSH8084 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8085
-
-<!-- generated:begin DSH8085 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3649`
-<!-- generated:end DSH8085 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8086
-
-<!-- generated:begin DSH8086 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3655`
-<!-- generated:end DSH8086 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8087
-
-<!-- generated:begin DSH8087 -->
-**Severity** error
-
-**Message**
-
-```
-%s: %s
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp:3704`
-<!-- generated:end DSH8087 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
 ## DSH8088
 
 <!-- generated:begin DSH8088 -->
@@ -1580,12 +14,13 @@ DreamShader source '%s' cannot generate a material asset directly.
 %s contains an invalid folder segment.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:42`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:42`
 <!-- generated:end DSH8088 -->
 
-**Cause.** _Not written yet._
+**Cause.** The asset name a source declares contains a folder segment that cannot be part of a
+package path: empty (`A//B`), `.` or `..`, or a character the engine refuses in a path.
 
-**Fix.** _Not written yet._
+**Fix.** Write the name as plain folders and an asset name: `Characters/Hero/M_Hero`.
 
 ## DSH8089
 
@@ -1598,12 +33,15 @@ DreamShader source '%s' cannot generate a material asset directly.
 DreamShader Root '%s' references project plugin '%s', but no enabled plugin with that name was found.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:59`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:59`
 <!-- generated:end DSH8089 -->
 
-**Cause.** _Not written yet._
+**Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
+1.x `Root = "..."` on the block; in 2.0 the source root the file lies under, or `/// @name` with an
+object path). This root names a plugin no enabled plugin of the project answers to.
 
-**Fix.** _Not written yet._
+**Fix.** Check the plugin's name (the `.uplugin` file name, not its friendly name) and that it is
+enabled for this project.
 
 ## DSH8090
 
@@ -1616,12 +54,16 @@ DreamShader Root '%s' references project plugin '%s', but no enabled plugin with
 DreamShader Root '%s' must reference a project plugin under '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:66`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:66`
 <!-- generated:end DSH8090 -->
 
-**Cause.** _Not written yet._
+**Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
+1.x `Root = "..."` on the block; in 2.0 the source root the file lies under, or `/// @name` with an
+object path). This root names a plugin that is not one of the project's own (an engine or
+marketplace plugin). DreamShader only writes assets into plugins under the project's `Plugins`
+folder.
 
-**Fix.** _Not written yet._
+**Fix.** Target a project plugin, or `Game`.
 
 ## DSH8091
 
@@ -1634,12 +76,14 @@ DreamShader Root '%s' must reference a project plugin under '%s'.
 DreamShader Root '%s' references project plugin '%s', but the plugin is not enabled.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:71`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:71`
 <!-- generated:end DSH8091 -->
 
-**Cause.** _Not written yet._
+**Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
+1.x `Root = "..."` on the block; in 2.0 the source root the file lies under, or `/// @name` with an
+object path). The plugin exists and is disabled, so its content path is not mounted.
 
-**Fix.** _Not written yet._
+**Fix.** Enable the plugin in the `.uproject` or the Plugins window.
 
 ## DSH8092
 
@@ -1652,12 +96,14 @@ DreamShader Root '%s' references project plugin '%s', but the plugin is not enab
 DreamShader Root '%s' references project plugin '%s', but the plugin cannot contain content.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:76`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:76`
 <!-- generated:end DSH8092 -->
 
-**Cause.** _Not written yet._
+**Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
+1.x `Root = "..."` on the block; in 2.0 the source root the file lies under, or `/// @name` with an
+object path). The plugin is enabled and its descriptor says `CanContainContent: false`.
 
-**Fix.** _Not written yet._
+**Fix.** Set `"CanContainContent": true` in the `.uplugin`.
 
 ## DSH8093
 
@@ -1670,12 +116,14 @@ DreamShader Root '%s' references project plugin '%s', but the plugin cannot cont
 DreamShader Root '%s' references project plugin '%s', but its Content directory does not exist: '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:82`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:82`
 <!-- generated:end DSH8093 -->
 
-**Cause.** _Not written yet._
+**Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
+1.x `Root = "..."` on the block; in 2.0 the source root the file lies under, or `/// @name` with an
+object path). The plugin can hold content, and its `Content` directory is not on disk.
 
-**Fix.** _Not written yet._
+**Fix.** Create the folder the message names.
 
 ## DSH8094
 
@@ -1688,12 +136,15 @@ DreamShader Root '%s' references project plugin '%s', but its Content directory 
 DreamShader Root '%s' references project plugin '%s', but the plugin content is not mounted.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:88`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:88`
 <!-- generated:end DSH8094 -->
 
-**Cause.** _Not written yet._
+**Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
+1.x `Root = "..."` on the block; in 2.0 the source root the file lies under, or `/// @name` with an
+object path). The plugin's content directory exists and the engine has not mounted it -- typically a
+plugin that was enabled or created while the editor was running.
 
-**Fix.** _Not written yet._
+**Fix.** Restart the editor (or the commandlet run) so the mount point is registered.
 
 ## DSH8095
 
@@ -1706,12 +157,14 @@ DreamShader Root '%s' references project plugin '%s', but the plugin content is 
 DreamShader Root '%s' has an invalid plugin name.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:165`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:165`
 <!-- generated:end DSH8095 -->
 
-**Cause.** _Not written yet._
+**Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
+1.x `Root = "..."` on the block; in 2.0 the source root the file lies under, or `/// @name` with an
+object path). The plugin part of this root is empty or not a name (`Plugin.` with nothing after it).
 
-**Fix.** _Not written yet._
+**Fix.** Write `Plugin.MyPlugin`.
 
 ## DSH8096
 
@@ -1724,12 +177,12 @@ DreamShader Root '%s' has an invalid plugin name.
 DreamShader Root '%s' has an invalid plugin name.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:179`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:179`
 <!-- generated:end DSH8096 -->
 
-**Cause.** _Not written yet._
+**Cause.** Same as DSH8095, for the `Plugins.<Name>` spelling of the root.
 
-**Fix.** _Not written yet._
+**Fix.** Write `Plugins.MyPlugin`.
 
 ## DSH8097
 
@@ -1742,12 +195,14 @@ DreamShader Root '%s' has an invalid plugin name.
 DreamShader Root '%s' has an invalid package root.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:192`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:192`
 <!-- generated:end DSH8097 -->
 
-**Cause.** _Not written yet._
+**Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
+1.x `Root = "..."` on the block; in 2.0 the source root the file lies under, or `/// @name` with an
+object path). This root is none of those, or resolves to a package root the engine does not know.
 
-**Fix.** _Not written yet._
+**Fix.** Use `Game`, `Engine` or `Plugin.<Name>`.
 
 ## DSH8098
 
@@ -1760,12 +215,12 @@ DreamShader Root '%s' has an invalid package root.
 DreamShader asset name must resolve to a non-empty asset path.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:306`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:306`
 <!-- generated:end DSH8098 -->
 
-**Cause.** _Not written yet._
+**Cause.** The declared asset name is empty once trimmed.
 
-**Fix.** _Not written yet._
+**Fix.** Give the block a `Name`, or the export a name.
 
 ## DSH8099
 
@@ -1778,12 +233,12 @@ DreamShader asset name must resolve to a non-empty asset path.
 DreamShader asset name must resolve to a non-empty asset path.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:313`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:313`
 <!-- generated:end DSH8099 -->
 
-**Cause.** _Not written yet._
+**Cause.** The declared asset name consists of separators only (`/`), so no asset name is left.
 
-**Fix.** _Not written yet._
+**Fix.** End the path in an asset name: `Folder/M_Example`.
 
 ## DSH8100
 
@@ -1796,12 +251,13 @@ DreamShader asset name must resolve to a non-empty asset path.
 DreamShader asset name '%s' produced an invalid asset name.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:319`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:319`
 <!-- generated:end DSH8100 -->
 
-**Cause.** _Not written yet._
+**Cause.** The last segment of the declared asset name is not a valid object name (it contains a
+character such as `.`, `:` or a space the engine refuses).
 
-**Fix.** _Not written yet._
+**Fix.** Rename the asset using letters, digits and `_`.
 
 ## DSH8101
 
@@ -1814,12 +270,14 @@ DreamShader asset name '%s' produced an invalid asset name.
 Asset '%s' is open in an asset editor, so it was NOT rebuilt. An open editor works on its own copy of the asset and writes that copy back when you press Apply or Save, 
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:404`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:404`
 <!-- generated:end DSH8101 -->
 
-**Cause.** _Not written yet._
+**Cause.** The asset is open in an asset editor. An open editor works on a copy of the asset and
+writes it back on Apply or Save, which would undo the rebuild; a material editor with unsaved
+changes may also have diverged from the source.
 
-**Fix.** _Not written yet._
+**Fix.** Close that asset's editor tab and compile again.
 
 ## DSH8102
 
@@ -1832,12 +290,13 @@ Asset '%s' is open in an asset editor, so it was NOT rebuilt. An open editor wor
 Asset '%s' already exists and is not a Material.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:498`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:498`
 <!-- generated:end DSH8102 -->
 
-**Cause.** _Not written yet._
+**Cause.** A package already sits where the material would go, and the object in it is not a
+UMaterial.
 
-**Fix.** _Not written yet._
+**Fix.** Rename the source's product, or move the existing asset.
 
 ## DSH8103
 
@@ -1850,12 +309,14 @@ Asset '%s' already exists and is not a Material.
 Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:507`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:507`
 <!-- generated:end DSH8103 -->
 
-**Cause.** _Not written yet._
+**Cause.** A material already sits at the target path and carries no DreamShader provenance, so it
+was made by hand. DreamShader never overwrites an asset it did not generate.
 
-**Fix.** _Not written yet._
+**Fix.** Rename the product, move or delete the hand-made asset, or decompile it into a source
+first.
 
 ## DSH8104
 
@@ -1868,12 +329,13 @@ Asset '%s' already exists and was not generated by DreamShader. Rename your shad
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:517`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:516`
 <!-- generated:end DSH8104 -->
 
-**Cause.** _Not written yet._
+**Cause.** `CreatePackage` failed for the material's package -- an invalid long package name, or the
+engine refusing the mount point.
 
-**Fix.** _Not written yet._
+**Fix.** Check the root and folder of the product; the log line above it has the engine's reason.
 
 ## DSH8105
 
@@ -1886,12 +348,13 @@ Failed to create package '%s'.
 Failed to create material '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:539`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:532`
 <!-- generated:end DSH8105 -->
 
-**Cause.** _Not written yet._
+**Cause.** The UMaterial object could not be created in its package.
 
-**Fix.** _Not written yet._
+**Fix.** Look for an engine error right above it in the log (a name clash with a redirector is the
+usual cause); fix up redirectors in that folder.
 
 ## DSH8106
 
@@ -1904,12 +367,13 @@ Failed to create material '%s'.
 Asset '%s' already exists and is not a DreamShader instance material. Delete it (or remove Backend="Instance") before switching backends.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:563`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:560`
 <!-- generated:end DSH8106 -->
 
-**Cause.** _Not written yet._
+**Cause.** `Backend = ThinCustom` builds a DreamShader instance material, and the asset at that path
+is of another class (a plain material from an earlier Graph build, usually).
 
-**Fix.** _Not written yet._
+**Fix.** Delete the old asset, or keep the backend it was built with.
 
 ## DSH8107
 
@@ -1922,12 +386,13 @@ Asset '%s' already exists and is not a DreamShader instance material. Delete it 
 Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:573`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:570`
 <!-- generated:end DSH8107 -->
 
-**Cause.** _Not written yet._
+**Cause.** Same as DSH8103, for a ThinCustom instance: the existing asset was not generated by
+DreamShader.
 
-**Fix.** _Not written yet._
+**Fix.** Rename the product, or move or delete the existing asset.
 
 ## DSH8108
 
@@ -1940,12 +405,12 @@ Asset '%s' already exists and was not generated by DreamShader. Rename your shad
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:583`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:580`
 <!-- generated:end DSH8108 -->
 
-**Cause.** _Not written yet._
+**Cause.** `CreatePackage` failed for a ThinCustom instance's package.
 
-**Fix.** _Not written yet._
+**Fix.** Check the product's root and folder.
 
 ## DSH8109
 
@@ -1958,12 +423,12 @@ Failed to create package '%s'.
 Failed to create instance material '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:595`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:592`
 <!-- generated:end DSH8109 -->
 
-**Cause.** _Not written yet._
+**Cause.** The ThinCustom instance material object could not be created.
 
-**Fix.** _Not written yet._
+**Fix.** Look for the engine's error above it in the log.
 
 ## DSH8110
 
@@ -1976,12 +441,15 @@ Failed to create instance material '%s'.
 Asset '%s' already exists as '%s', but %s generation requires '%s'. Delete or move the existing asset and regenerate it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:634`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:631`
 <!-- generated:end DSH8110 -->
 
-**Cause.** _Not written yet._
+**Cause.** A function asset exists at the target path with another class than the source builds: a
+plain MaterialFunction where the source is a layer, a layer where it is a blend. The three are
+distinct engine classes and an asset cannot change class in place.
 
-**Fix.** _Not written yet._
+**Fix.** Delete or move the existing asset and compile again; references to it have to be re-made,
+so prefer a new name when the old asset is in use.
 
 ## DSH8111
 
@@ -1994,12 +462,13 @@ Asset '%s' already exists as '%s', but %s generation requires '%s'. Delete or mo
 Asset '%s' already exists and is not a MaterialFunction asset.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:640`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:637`
 <!-- generated:end DSH8111 -->
 
-**Cause.** _Not written yet._
+**Cause.** A package already sits where the function would go, and the object in it is no material
+function at all.
 
-**Fix.** _Not written yet._
+**Fix.** Rename the product, or move the existing asset.
 
 ## DSH8112
 
@@ -2012,12 +481,13 @@ Asset '%s' already exists and is not a MaterialFunction asset.
 Asset '%s' already exists and was not generated by DreamShader. Rename your function or move/delete the existing asset before regenerating.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:647`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:644`
 <!-- generated:end DSH8112 -->
 
-**Cause.** _Not written yet._
+**Cause.** A material function already sits at the target path and was not generated by DreamShader.
 
-**Fix.** _Not written yet._
+**Fix.** Rename the function, move or delete the existing asset, or decompile it into a source
+first.
 
 ## DSH8113
 
@@ -2030,12 +500,12 @@ Asset '%s' already exists and was not generated by DreamShader. Rename your func
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:657`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:653`
 <!-- generated:end DSH8113 -->
 
-**Cause.** _Not written yet._
+**Cause.** `CreatePackage` failed for a function's package.
 
-**Fix.** _Not written yet._
+**Fix.** Check the product's root and folder.
 
 ## DSH8114
 
@@ -2048,12 +518,12 @@ Failed to create package '%s'.
 Failed to create material function '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetFactory.cpp:675`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:666`
 <!-- generated:end DSH8114 -->
 
-**Cause.** _Not written yet._
+**Cause.** The material function object could not be created.
 
-**Fix.** _Not written yet._
+**Fix.** Look for the engine's error above it in the log.
 
 ## DSH8115
 
@@ -2066,7 +536,7 @@ Failed to create material function '%s'.
 Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). 
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderGeneratedAssetMetadata.cpp:383`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:395`
 <!-- generated:end DSH8115 -->
 
 **Cause.** the asset no longer matches the output digest stamped at its last generation -- somebody edited it by hand, and a rebuild would destroy that work
@@ -2086,12 +556,14 @@ Asset '%s' was edited by hand since DreamShader generated it from '%s', so it wa
 Generated DreamShader asset '%s' could not be saved.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderGeneratedAssetMetadata.cpp:433`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:445`
 <!-- generated:end DSH8116 -->
 
-**Cause.** _Not written yet._
+**Cause.** A generated asset could not be written to disk: the `.uasset` is read-only or checked in,
+another process holds it, or the disk is full.
 
-**Fix.** _Not written yet._
+**Fix.** Check the file out / clear the read-only flag and compile again. Until then the asset
+exists in memory only.
 
 ## DSH8117
 
@@ -2104,12 +576,13 @@ Generated DreamShader asset '%s' could not be saved.
 Generated DreamShader asset packages could not be saved.%s
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderGeneratedAssetMetadata.cpp:460`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:475`
 <!-- generated:end DSH8117 -->
 
-**Cause.** _Not written yet._
+**Cause.** Saving the batch of generated packages failed; the list after the message names each
+package and why.
 
-**Fix.** _Not written yet._
+**Fix.** Fix the first cause listed (usually a read-only file) and compile again.
 
 ## DSH8118
 
@@ -2122,12 +595,14 @@ Generated DreamShader asset packages could not be saved.%s
 Asset Path root '%s' references plugin '%s', but no enabled plugin with that name was found.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:123`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:123`
 <!-- generated:end DSH8118 -->
 
-**Cause.** _Not written yet._
+**Cause.** `Path(Root, "Folder/Asset")` resolves its first argument to a mount point: `Game`,
+`Engine`, or `Plugin.<Name>` / `Plugins.<Name>`. This one names a plugin that no enabled plugin
+answers to.
 
-**Fix.** _Not written yet._
+**Fix.** Check the plugin's name and that it is enabled.
 
 ## DSH8119
 
@@ -2140,12 +615,13 @@ Asset Path root '%s' references plugin '%s', but no enabled plugin with that nam
 Asset Path root '%s' references plugin '%s', but the plugin is not enabled.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:128`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:128`
 <!-- generated:end DSH8119 -->
 
-**Cause.** _Not written yet._
+**Cause.** `Path(Root, "Folder/Asset")` resolves its first argument to a mount point: `Game`,
+`Engine`, or `Plugin.<Name>` / `Plugins.<Name>`. The plugin exists and is disabled.
 
-**Fix.** _Not written yet._
+**Fix.** Enable it.
 
 ## DSH8120
 
@@ -2158,12 +634,14 @@ Asset Path root '%s' references plugin '%s', but the plugin is not enabled.
 Asset Path root '%s' references plugin '%s', but the plugin cannot contain content.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:133`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:133`
 <!-- generated:end DSH8120 -->
 
-**Cause.** _Not written yet._
+**Cause.** `Path(Root, "Folder/Asset")` resolves its first argument to a mount point: `Game`,
+`Engine`, or `Plugin.<Name>` / `Plugins.<Name>`. The plugin cannot contain content
+(`CanContainContent: false`).
 
-**Fix.** _Not written yet._
+**Fix.** Point the reference at a plugin that holds the asset, or enable content in the `.uplugin`.
 
 ## DSH8121
 
@@ -2176,12 +654,14 @@ Asset Path root '%s' references plugin '%s', but the plugin cannot contain conte
 Asset Path root '%s' references plugin '%s', but its Content directory does not exist: '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:139`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:139`
 <!-- generated:end DSH8121 -->
 
-**Cause.** _Not written yet._
+**Cause.** `Path(Root, "Folder/Asset")` resolves its first argument to a mount point: `Game`,
+`Engine`, or `Plugin.<Name>` / `Plugins.<Name>`. The plugin's `Content` directory is missing on
+disk.
 
-**Fix.** _Not written yet._
+**Fix.** Check the path the message prints.
 
 ## DSH8122
 
@@ -2194,12 +674,14 @@ Asset Path root '%s' references plugin '%s', but its Content directory does not 
 Asset Path root '%s' references plugin '%s', but the plugin content is not mounted.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:145`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:145`
 <!-- generated:end DSH8122 -->
 
-**Cause.** _Not written yet._
+**Cause.** `Path(Root, "Folder/Asset")` resolves its first argument to a mount point: `Game`,
+`Engine`, or `Plugin.<Name>` / `Plugins.<Name>`. The plugin's content is not mounted in this
+session.
 
-**Fix.** _Not written yet._
+**Fix.** Restart the editor so the plugin's mount point is registered.
 
 ## DSH8123
 
@@ -2212,12 +694,13 @@ Asset Path root '%s' references plugin '%s', but the plugin content is not mount
 Relative asset Path(...) references require a root such as Game, Engine, or Plugin.PluginName.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:190`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:190`
 <!-- generated:end DSH8123 -->
 
-**Cause.** _Not written yet._
+**Cause.** `Path("Folder/Asset")` with one argument has to be an absolute object path (`/Game/...`).
+A relative path needs the root as its first argument.
 
-**Fix.** _Not written yet._
+**Fix.** Write `Path(Game, "Folder/Asset")`.
 
 ## DSH8124
 
@@ -2230,12 +713,12 @@ Relative asset Path(...) references require a root such as Game, Engine, or Plug
 Asset Path root '%s' has an invalid plugin name.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:210`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:210`
 <!-- generated:end DSH8124 -->
 
-**Cause.** _Not written yet._
+**Cause.** The plugin part of a `Plugin.<Name>` root is empty or not a name.
 
-**Fix.** _Not written yet._
+**Fix.** Write `Path(Plugin.MyPlugin, "Folder/Asset")`.
 
 ## DSH8125
 
@@ -2248,12 +731,12 @@ Asset Path root '%s' has an invalid plugin name.
 Asset Path root '%s' has an invalid plugin name.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:223`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:223`
 <!-- generated:end DSH8125 -->
 
-**Cause.** _Not written yet._
+**Cause.** Same as DSH8124, for the `Plugins.<Name>` spelling.
 
-**Fix.** _Not written yet._
+**Fix.** Write `Path(Plugins.MyPlugin, "Folder/Asset")`.
 
 ## DSH8126
 
@@ -2266,12 +749,12 @@ Asset Path root '%s' has an invalid plugin name.
 Unsupported asset Path root '%s'. Use Game, Engine, or Plugin.PluginName.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:233`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:233`
 <!-- generated:end DSH8126 -->
 
-**Cause.** _Not written yet._
+**Cause.** The first argument of `Path(...)` is none of the roots DreamShader knows.
 
-**Fix.** _Not written yet._
+**Fix.** Use `Game`, `Engine`, or `Plugin.<Name>`.
 
 ## DSH8127
 
@@ -2284,12 +767,12 @@ Unsupported asset Path root '%s'. Use Game, Engine, or Plugin.PluginName.
 Asset reference cannot be empty.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:318`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:318`
 <!-- generated:end DSH8127 -->
 
-**Cause.** _Not written yet._
+**Cause.** An asset reference is empty: `Path()`, an empty string, or a default left blank.
 
-**Fix.** _Not written yet._
+**Fix.** Name the asset, or remove the reference.
 
 ## DSH8128
 
@@ -2302,12 +785,12 @@ Asset reference cannot be empty.
 Asset Path(...) reference is missing a closing ')'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:327`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:327`
 <!-- generated:end DSH8128 -->
 
-**Cause.** _Not written yet._
+**Cause.** `Path(` is never closed.
 
-**Fix.** _Not written yet._
+**Fix.** Add the `)`.
 
 ## DSH8129
 
@@ -2320,12 +803,12 @@ Asset Path(...) reference is missing a closing ')'.
 Asset Path(...) contains an unterminated string literal.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:334`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:334`
 <!-- generated:end DSH8129 -->
 
-**Cause.** _Not written yet._
+**Cause.** A string inside `Path(...)` has no closing quote.
 
-**Fix.** _Not written yet._
+**Fix.** Close the string.
 
 ## DSH8130
 
@@ -2338,12 +821,12 @@ Asset Path(...) contains an unterminated string literal.
 Asset Path(...) expects either 1 argument (/Game/... path) or 2 arguments (Game|Engine|Plugin.PluginName, asset path).
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:348`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:348`
 <!-- generated:end DSH8130 -->
 
-**Cause.** _Not written yet._
+**Cause.** `Path(...)` has no argument or more than two.
 
-**Fix.** _Not written yet._
+**Fix.** Write `Path("/Game/Folder/Asset")` or `Path(Game, "Folder/Asset")`.
 
 ## DSH8131
 
@@ -2356,12 +839,12 @@ Asset Path(...) expects either 1 argument (/Game/... path) or 2 arguments (Game|
 Asset reference requires a non-empty path.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:378`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:378`
 <!-- generated:end DSH8131 -->
 
-**Cause.** _Not written yet._
+**Cause.** The path part of an asset reference is empty (`Path(Game, "")`).
 
-**Fix.** _Not written yet._
+**Fix.** Write the asset's folder and name.
 
 ## DSH8132
 
@@ -2374,300 +857,13 @@ Asset reference requires a non-empty path.
 Invalid asset path '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderAssetReferenceResolution.cpp:402`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:402`
 <!-- generated:end DSH8132 -->
 
-**Cause.** _Not written yet._
+**Cause.** What the reference resolves to is not a valid object path: it has a character the engine
+refuses, a doubled `/`, or no asset name.
 
-**Fix.** _Not written yet._
-
-## DSH8133
-
-<!-- generated:begin DSH8133 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader import cycle detected at '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:145`
-<!-- generated:end DSH8133 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8134
-
-<!-- generated:begin DSH8134 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader could not read '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:151`
-<!-- generated:end DSH8134 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8135
-
-<!-- generated:begin DSH8135 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader header '%s' may only declare Function/Namespace/GraphFunction/VirtualFunction blocks and imports.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:261`
-<!-- generated:end DSH8135 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8136
-
-<!-- generated:begin DSH8136 -->
-**Severity** error
-
-**Message**
-
-```
-DreamShader function file '%s' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp:267`
-<!-- generated:end DSH8136 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8137
-
-<!-- generated:begin DSH8137 -->
-**Severity** error
-
-**Message**
-
-```
-UE.%s for property '%s' does not support argument '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderMaterialGeneratorSupport.cpp:93`
-<!-- generated:end DSH8137 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8138
-
-<!-- generated:begin DSH8138 -->
-**Severity** error
-
-**Message**
-
-```
-Outputs declarations cannot use the reserved name 'return'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:359`
-<!-- generated:end DSH8138 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8139
-
-<!-- generated:begin DSH8139 -->
-**Severity** error
-
-**Message**
-
-```
-Output '%s' uses Substrate, which requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:366`
-<!-- generated:end DSH8139 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8140
-
-<!-- generated:begin DSH8140 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported output type '%s' for '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:370`
-<!-- generated:end DSH8140 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8141
-
-<!-- generated:begin DSH8141 -->
-**Severity** error
-
-**Message**
-
-```
-Output variable '%s' is declared with conflicting types.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:378`
-<!-- generated:end DSH8141 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8142
-
-<!-- generated:begin DSH8142 -->
-**Severity** error
-
-**Message**
-
-```
-Base.FrontMaterial requires Unreal Engine 5.4 or newer.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:404`
-<!-- generated:end DSH8142 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8143
-
-<!-- generated:begin DSH8143 -->
-**Severity** error
-
-**Message**
-
-```
-Unsupported material output '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:406`
-<!-- generated:end DSH8143 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8144
-
-<!-- generated:begin DSH8144 -->
-**Severity** error
-
-**Message**
-
-```
-The reserved output name 'return' can only bind to Base material properties.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:418`
-<!-- generated:end DSH8144 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8145
-
-<!-- generated:begin DSH8145 -->
-**Severity** error
-
-**Message**
-
-```
-The return value is bound to material properties with incompatible types.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:429`
-<!-- generated:end DSH8145 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8146
-
-<!-- generated:begin DSH8146 -->
-**Severity** error
-
-**Message**
-
-```
-Output variable '%s' is bound to incompatible material properties.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:446`
-<!-- generated:end DSH8146 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8147
-
-<!-- generated:begin DSH8147 -->
-**Severity** error
-
-**Message**
-
-```
-Output variable '%s' is declared as '%s' but bound material property '%s' expects a different type.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:461`
-<!-- generated:end DSH8147 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
-
-## DSH8148
-
-<!-- generated:begin DSH8148 -->
-**Severity** error
-
-**Message**
-
-```
-Output variable '%s' must declare an explicit type before binding to expression target '%s'.
-```
-
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderTypeResolution.cpp:469`
-<!-- generated:end DSH8148 -->
-
-**Cause.** _Not written yet._
-
-**Fix.** _Not written yet._
+**Fix.** Copy the reference from the Content Browser (*Copy Reference*).
 
 ## DSH8149
 
@@ -2680,7 +876,7 @@ Output variable '%s' must declare an explicit type before binding to expression 
 DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch that was taken -- adopting it would write that one branch back over the file and delete the rest. Move the change into the matching branch of the source by hand, or use DreamShader > Detach first if this asset should stop being generated from it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:307`
+**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:454`, `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:653`, `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:918`
 <!-- generated:end DSH8149 -->
 
 **Cause.** **Adopt Into Source** was asked to rewrite a source that uses conditional compilation (`#if` / `#ifdef` / `#ifndef`). Adopt rebuilds the source text from the asset, and the asset only ever holds the branch that was taken -- so adopting would write that one branch back over the file and silently delete every other branch
@@ -2700,7 +896,7 @@ DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch tha
 rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material no longer declares: %s.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/MaterialAssetGeneration/DreamShaderThinCustomParameterOverrides.cpp:240`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderThinCustomParameterOverrides.cpp:240`
 <!-- generated:end DSH8155 -->
 
 **Cause.** a rebuild of a ThinCustom material captured the parameter overrides set on the generated instance and put them back afterwards, but one or more of them named a parameter the rebuilt material no longer declares -- the source renamed it, removed it, or changed its kind -- so those values had nowhere to go and were dropped. Restoration matches by name and kind, because a name is the only thing that survives a graph the generator tears down and rebuilds. The same line reports an override of a parameter kind this build cannot re-apply (a texture collection, for instance)
@@ -2720,7 +916,7 @@ rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material 
 '{0}' does not resolve to a valid asset path. {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:640`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1252`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:988`
 <!-- generated:end DSH8200 -->
 
 **Cause.** The product's asset name, or the `/// @name /Game/...` path override, does not resolve
@@ -2745,7 +941,7 @@ mount, so it needs no `/Game` prefix at all.
 The material for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:296`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:516`
 <!-- generated:end DSH8201 -->
 
 **Cause.** The destination for a material product exists and is not a `UMaterial`, or it exists on
@@ -2767,7 +963,7 @@ move or delete the existing asset, then compile again.
 The material function for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:483`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:737`
 <!-- generated:end DSH8202 -->
 
 **Cause.** As DSH8201, for a material function product — with one extra way to fail: the asset at
@@ -2789,7 +985,7 @@ every material that calls the function holds a typed reference to it.
 The ThinCustom instance for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:362`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:592`
 <!-- generated:end DSH8203 -->
 
 **Cause.** As DSH8201, for the `UDreamShaderMaterialInstance` a ThinCustom material becomes.
@@ -2809,7 +1005,7 @@ material or pin the backend back with `#pragma material(Backend = "Graph")`.
 The emitter needs the builtin catalog the front end was bound against, but the emit context carries none.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:626`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1238`
 <!-- generated:end DSH8204 -->
 
 **Cause.** `EmitDreamShaderIRProduct` was called with no `FIREmitContext::Catalog`, or with an
@@ -2832,7 +1028,7 @@ before any compile and has no sink to raise into, so it has no code).
 Product index {0} does not exist in this module, which has {1}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:615`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:241`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1227`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:252`
 <!-- generated:end DSH8205 -->
 
 **Cause.** An internal inconsistency: the product index is out of range for the module, or the
@@ -2852,7 +1048,7 @@ shows the graph the emitter was handed.
 '{0}' is open in an asset editor, so it was not rebuilt. {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:188`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:382`
 <!-- generated:end DSH8206 -->
 
 **Cause.** The asset is open in an asset editor. An open editor does not edit the asset itself: it
@@ -2874,7 +1070,7 @@ would pop a save prompt in the middle of a compile-on-save.
 '{0}' no longer holds what DreamShader generated into it, so it was not rebuilt. {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:198`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:392`
 <!-- generated:end DSH8207 -->
 
 **Cause.** The asset no longer holds what DreamShader last generated into it — somebody edited the
@@ -2898,7 +1094,7 @@ is for.
 '{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:237`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:531`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:436`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:787`
 <!-- generated:end DSH8208 -->
 
 **Cause.** The atomic rollback could not take a snapshot of the asset before the rebuild started,
@@ -2920,7 +1116,7 @@ from scratch.
 '{0}' was left alone: another editor owns writing this project's generated assets to disk.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:163`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:357`
 <!-- generated:end DSH8209 -->
 
 **Cause.** Another editor holds this project's DreamShader bridge ownership lock, and only that
@@ -2941,7 +1137,7 @@ is reported as a skip, not a failure.
 '{0}' has no property named '{1}', so that value was not written.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1467`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:280`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:317`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1735`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:324`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:361`
 <!-- generated:end DSH8210 -->
 
 **Cause.** A `/// @key value` on a uniform, or a Group / Desc / SortPriority / slider, named
@@ -2965,7 +1161,7 @@ leave: it starts working when the property appears.
 '{0}' is not a material expression class this engine has.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:430`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:488`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:506`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:662`
 <!-- generated:end DSH8211 -->
 
 **Cause.** A `UE.X(...)` or `UE.Expression(Class = "X")` names a material expression class this
@@ -2987,7 +1183,7 @@ different node or guard the code with `#if`.
 MakeMaterialAttributes has no pin for the attribute '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterMaterial.cpp:108`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterMaterial.cpp:171`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1446`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:108`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:171`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1714`
 <!-- generated:end DSH8212 -->
 
 **Cause.** A node's named input does not match any `FExpressionInput` on its expression class. As
@@ -3009,7 +1205,7 @@ through `CustomizedUVs7`.
 '{0}' has no property named '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1474`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1487`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:271`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:328`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1742`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1755`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:315`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:372`
 <!-- generated:end DSH8213 -->
 
 **Cause.** A reflected property refused the value: the wrong literal shape for its type. The quoted
@@ -3031,7 +1227,7 @@ starting with `/`. For a number, remove any unit suffix.
 Failed to create a FunctionInput node.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:107`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:219`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:38`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterMaterial.cpp:124`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterMaterial.cpp:190`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterMaterial.cpp:74`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1033`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1065`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1102`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1154`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1441`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:345`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:356`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:368`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:383`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:438`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:497`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:566`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:586`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:607`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:628`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:663`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:685`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:704`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:729`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:760`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:808`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:926`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:959`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:998`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:136`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:150`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:170`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:208`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:123`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:152`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:281`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:40`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:124`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:190`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:74`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1100`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1133`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1172`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1207`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1239`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1276`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1328`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1709`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:356`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:367`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:379`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:394`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:514`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:671`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:740`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:760`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:781`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:802`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:837`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:859`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:878`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:903`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:934`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:982`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:136`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:150`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:208`
 <!-- generated:end DSH8214 -->
 
 **Cause.** `UMaterialEditingLibrary` refused to create an expression of that class in this asset.
@@ -3052,7 +1248,7 @@ the material that calls the function and pass the value in as a function input.
 A material setting on '{0}' was refused. {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:247`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:452`
 <!-- generated:end DSH8215 -->
 
 **Cause.** A `#pragma material(...)` key is not a settable property path on `UMaterial`, or its
@@ -3073,7 +1269,7 @@ value is not valid for that property. The quoted 1.x message says which of the t
 BreakMaterialAttributes does not publish the attribute '{0}', so it cannot be read from a material that came through a pin.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1361`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1517`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1560`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1785`
 <!-- generated:end DSH8216 -->
 
 **Cause.** One of two things. A material attribute name (`m.SomeThing`, a `MakeMaterialAttributes`
@@ -3101,7 +1297,7 @@ PixelDepthOffset, `ClearCoat` / `ClearCoatRoughness` for CustomData0 / CustomDat
 This material has no input for the attribute '{0}'; check the material domain and shading model the file asks for.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterMaterial.cpp:286`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:286`
 <!-- generated:end DSH8217 -->
 
 **Cause.** The attribute exists, but this material has no input pin for it. A material's available
@@ -3122,7 +1318,7 @@ Roughness, an Opaque material has no Opacity.
 The default texture for parameter '{0}' could not be loaded from '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:219`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:236`
 <!-- generated:end DSH8218 -->
 
 **Cause.** A texture uniform's default asset path does not load.
@@ -3142,7 +1338,7 @@ is followed, a deleted asset is not.
 This function call names no material function asset.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:204`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:210`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:226`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:247`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:272`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:288`
 <!-- generated:end DSH8219 -->
 
 **Cause.** A `FunctionCall` node's material function asset could not be loaded, or the engine
@@ -3163,7 +1359,7 @@ break the cycle — two functions that call each other need the shared part fact
 '{0}' has no input named '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:249`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:331`
 <!-- generated:end DSH8220 -->
 
 **Cause.** A call names an input the function asset does not have. Either the function was rebuilt
@@ -3183,7 +1379,7 @@ does the function's own Details panel.
 '{0}' has no output named '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:286`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:385`
 <!-- generated:end DSH8221 -->
 
 **Cause.** As DSH8220, for an output. A function's single unnamed return is called `Result`.
@@ -3201,7 +1397,7 @@ does the function's own Details panel.
 This call targets product {0} of the same file, but that product has not been emitted yet; the pipeline must compile products in dependency order.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:186`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:229`
 <!-- generated:end DSH8222 -->
 
 **Cause.** A call to another exported function of the SAME file ran before that function's asset
@@ -3222,7 +1418,7 @@ binder should have refused first. Report it with the source file.
 The emitter has no rule for the IR operation '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:320`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:851`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1025`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:331`
 <!-- generated:end DSH8223 -->
 
 **Cause.** The IR carries an operation the emitter has no rule for: a core op whose table entry
@@ -3242,7 +1438,7 @@ operation named in the message.
 A SetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to modify.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterMaterial.cpp:132`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterMaterial.cpp:196`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1014`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1049`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1088`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1379`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:332`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:517`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:944`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:972`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:132`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:196`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1118`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1146`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1188`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1223`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1262`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1600`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:343`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:691`
 <!-- generated:end DSH8224 -->
 
 **Cause.** A node's operand or input count does not match its operation — a Select with two
@@ -3262,7 +1458,7 @@ should have caught it.
 This node reads node {0}, which has not been emitted; the graph's topological order is inconsistent.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1346`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1545`
 <!-- generated:end DSH8225 -->
 
 **Cause.** A node reads a value from a node that has not been emitted yet, which means the graph's
@@ -3282,7 +1478,7 @@ cause and `dsc dump-ir` shows it.
 A Swizzle node carries no Mask property.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:880`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:889`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1054`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1063`
 <!-- generated:end DSH8226 -->
 
 **Cause.** A Swizzle node's `Mask` property is missing, empty, longer than four components, or
@@ -3303,7 +1499,7 @@ a message that quotes it. Report it with the source file.
 '{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1192`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1225`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterNodes.cpp:1233`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1366`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1399`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1407`
 <!-- generated:end DSH8227 -->
 
 **Cause.** A `@custom` function's return type, or one of its `out` parameters, does not map to a
@@ -3325,7 +1521,7 @@ input.
 '{0}' is not a material function input type; write one of Scalar, Vector2, Vector3, Vector4, Texture2D, TextureCube, Texture2DArray, VolumeTexture, StaticBool, Bool, MaterialAttributes or Substrate.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:53`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:55`
 <!-- generated:end DSH8228 -->
 
 **Cause.** A material function input's type does not map to an `EFunctionInputType`.
@@ -3345,7 +1541,7 @@ A matrix or a user struct cannot be a function input; pass its components separa
 '{0}' was built but could not be saved. {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:329`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:454`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:592`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1201`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:559`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:708`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:860`
 <!-- generated:end DSH8229 -->
 
 **Cause.** The asset was built successfully but its package could not be written to disk — read-only
@@ -3365,7 +1561,7 @@ built in memory, so the next compile will save it without rebuilding.
 Cannot create a ThinCustom base material without an instance.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIRAssets.cpp:228`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIRAssets.cpp:252`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:394`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:296`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:313`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:631`
 <!-- generated:end DSH8230 -->
 
 **Cause.** The hidden base `UMaterial` a ThinCustom instance parents to could not be created as a
@@ -3386,7 +1582,7 @@ a fresh pair is created.
 '{0}' has a product kind the emitter does not know how to materialize.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:663`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1278`
 <!-- generated:end DSH8232 -->
 
 **Cause.** The product kind has no asset shape the emitter knows how to build. Internal.
@@ -3404,7 +1600,7 @@ a fresh pair is created.
 This graph carries a MaterialSink, which only a material product has; a material function drives FunctionOutput nodes instead.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterMaterial.cpp:271`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:271`
 <!-- generated:end DSH8233 -->
 
 **Cause.** A graph carries a `MaterialSink` but is being emitted into a material function. Only a
@@ -3424,7 +1620,7 @@ material product has output pins of its own; a function drives `FunctionOutput` 
 Function output '{0}' has {1} operands; it needs exactly the one value it returns.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterFunctions.cpp:134`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:179`
 <!-- generated:end DSH8234 -->
 
 **Cause.** A `FunctionOutput` node has no operand, so the output pin would drive nothing.
@@ -3443,7 +1639,7 @@ earlier, by name. Report it with the source file.
 '{0}' is not a sampler type; write one of the EMaterialSamplerType names, such as Color, Normal or LinearColor.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitterParameters.cpp:234`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:278`
 <!-- generated:end DSH8235 -->
 
 **Cause.** A texture uniform's `@sampler` names something that is not an `EMaterialSamplerType`.
@@ -3463,7 +1659,7 @@ earlier, by name. Report it with the source file.
 '{0}' was left alone: its source hash is unchanged since it was last built.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderIREmitter.cpp:175`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:369`
 <!-- generated:end DSH8237 -->
 
 **Cause.** The asset this product compiles to already carries the source hash of this build: the
@@ -3476,6 +1672,461 @@ generator writes for the same skip, and it does not list the asset as generated.
 anyway. The skip leaves an asset edited by hand untouched. Once the source changes, the next compile
 reaches the divergence gate instead (DSH8207).
 
+## DSH8240
+
+<!-- generated:begin DSH8240 -->
+**Severity** error
+
+**Message**
+
+```
+The material instance for '{0}' could not be created or reused. {1}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1015`
+<!-- generated:end DSH8240 -->
+
+**Cause.** The instance asset of a `.dsi` could not be created or reused; the sentence after it is
+the reason (DSH8241, DSH8242 or DSH8253 in words).
+
+**Fix.** Act on that reason.
+
+## DSH8241
+
+<!-- generated:begin DSH8241 -->
+**Severity** error
+
+**Message**
+
+```
+Asset '%s' already exists as a '%s'; a .dsi builds a plain MaterialInstanceConstant. Rename the instance file or move the existing asset.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:251`
+<!-- generated:end DSH8241 -->
+
+**Cause.** An asset of another class already sits where the `.dsi` would build its instance -- a
+material, or a ThinCustom instance of a `.dss` with the same name.
+
+**Fix.** Rename the `.dsi` (its file name is the asset's name) or move the existing asset.
+
+## DSH8242
+
+<!-- generated:begin DSH8242 -->
+**Severity** error
+
+**Message**
+
+```
+Asset '%s' already exists and was not generated by DreamShader. Rename the instance file or move/delete the existing asset before building it.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:260`
+<!-- generated:end DSH8242 -->
+
+**Cause.** A material instance already sits at the target path and was not generated by DreamShader.
+
+**Fix.** Rename the `.dsi`, or adopt the existing instance into a source with *DreamShader > Adopt
+Into Source* / `dsc decompile`.
+
+## DSH8243
+
+<!-- generated:begin DSH8243 -->
+**Severity** error
+
+**Message**
+
+```
+The parent '{0}' of '{1}' does not load; compile the source that builds it, or correct the Parent key.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1042`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1067`
+<!-- generated:end DSH8243 -->
+
+**Cause.** The parent named by `Parent = ...` could not be loaded, or it exists only in memory -- a
+product of this same run -- and could not be saved before the instance that needs it on disk. A bare
+name is looked up among the products of the sources under the same root; an object path is loaded as
+written.
+
+**Fix.** Compile the source that builds the parent, or correct the key. For the in-memory case the
+message carries the save error: free the package file it names.
+
+## DSH8244
+
+<!-- generated:begin DSH8244 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' was memory-only, so it was saved to disk first: '{1}' parents to it.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1075`
+<!-- generated:end DSH8244 -->
+
+**Cause.** The parent was built into memory only (an Ephemeral build) and an instance on disk cannot
+point at an object that is not. The parent was saved first.
+
+**Fix.** Nothing to fix.
+
+## DSH8245
+
+<!-- generated:begin DSH8245 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' cannot parent to '{1}': that parent already descends from this instance.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1086`
+<!-- generated:end DSH8245 -->
+
+**Cause.** `Parent` names an instance that itself descends from this one, so the parent chain would
+be a loop.
+
+**Fix.** Point `Parent` at a material or at an instance further up.
+
+## DSH8246
+
+<!-- generated:begin DSH8246 -->
+**Severity** error
+
+**Message**
+
+```
+The parent asset '{0}' has no parameter {1} of the kind this instance overrides; the asset is older than its source. Compile the parent source first.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1108`
+<!-- generated:end DSH8246 -->
+
+**Cause.** The parent asset on disk lacks a parameter the instance overrides, although the parent's
+source declares it: the parent asset is older than its source.
+
+**Fix.** Compile the parent's source, then the instance.
+
+## DSH8247
+
+<!-- generated:begin DSH8247 -->
+**Severity** error
+
+**Message**
+
+```
+The engine dropped '{0}' as the parent of '{1}' while applying the static overrides; that parent does not allow them.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1178`
+<!-- generated:end DSH8247 -->
+
+**Cause.** Applying the static switch overrides made the engine clear the instance's parent. It does
+that when the parent may not get new shader permutations: a cooked material (content shipped without
+its editor data), for which the engine refuses to compile a permutation of the instance's own.
+
+**Fix.** Parent to an uncooked material, or drop the `/// @static` overrides so the instance shares
+its parent's shaders.
+
+## DSH8248
+
+<!-- generated:begin DSH8248 -->
+**Severity** error
+
+**Message**
+
+```
+The parent '{0}' exists only in memory and no DreamShader source builds it, so '{1}' cannot be saved against it; save the parent first.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1055`
+<!-- generated:end DSH8248 -->
+
+**Cause.** The parent exists only in memory and no DreamShader source builds it (a material created
+in the editor and never saved), so the instance has nothing on disk to reference.
+
+**Fix.** Save the parent asset first.
+
+## DSH8249
+
+<!-- generated:begin DSH8249 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is not an instance key; a key is a material property an instance can override, such as BlendMode, TwoSided, OpacityMaskClipValue or PhysMaterial.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:340`
+<!-- generated:end DSH8249 -->
+
+**Cause.** A key of `#pragma instance(...)` is not something a material instance can override. The
+keys are the fields of the engine's base property overrides (`BlendMode`, `TwoSided`,
+`ShadingModel`, `OpacityMaskClipValue`, `DitheredLODTransition`, ...) and a fixed table of instance
+properties (`PhysMaterial`, `SubsurfaceProfile`, ...).
+
+**Fix.** Check the spelling, or set the property on the parent material, which is where everything
+else lives.
+
+## DSH8250
+
+<!-- generated:begin DSH8250 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is not a valid value for the instance key '{1}'. {2}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:349`
+<!-- generated:end DSH8250 -->
+
+**Cause.** The value of an instance key does not fit its property; the sentence after it says what
+was expected.
+
+**Fix.** Enum values go without their prefix (`Translucent`), bools as `true` / `false`, assets as
+object paths or `None`.
+
+## DSH8251
+
+<!-- generated:begin DSH8251 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' cannot be set from an instance file: {1}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderInstanceSettings.cpp:316`
+<!-- generated:end DSH8251 -->
+
+**Cause.** The key names something an instance file does not set that way; the sentence after it
+says which: `Backend` (an instance has none), `UsageFlags` (a bitmask the engine merges with the
+parent's), the `BasePropertyOverrides` struct as a whole or one of its `bOverride...` flags (a flag
+follows from the key that sets its value), or a `...ParameterValues` array (parameters are `uniform`
+overrides).
+
+**Fix.** Write the single key (`BlendMode = Translucent`) or the `uniform` override the message
+points to.
+
+## DSH8252
+
+<!-- generated:begin DSH8252 -->
+**Severity** error
+
+**Message**
+
+```
+The override of '{0}' could not be applied: {1}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1126`
+<!-- generated:end DSH8252 -->
+
+**Cause.** One override could not be written into the instance; the reason follows. Usually the
+asset a texture-like override names does not load or is of the wrong class.
+
+**Fix.** Fix the `/// @default` path of that override.
+
+## DSH8253
+
+<!-- generated:begin DSH8253 -->
+**Severity** error
+
+**Message**
+
+```
+Failed to create package '%s'.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:272`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:279`
+<!-- generated:end DSH8253 -->
+
+**Cause.** The instance's package, or the `UMaterialInstanceConstant` in it, could not be created:
+`CreatePackage` or `NewObject` failed for the path the message names.
+
+**Fix.** Check where the `.dsi` lies: its folder under the source root becomes the package path, and
+the file's name the asset's.
+
+## DSH8254
+
+<!-- generated:begin DSH8254 -->
+**Severity** error
+
+**Message**
+
+```
+The material parameter collection '{0}' has no parameter called '{1}'.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:575`
+<!-- generated:end DSH8254 -->
+
+**Cause.** A `CollectionParameter` node names a parameter its material parameter collection does not
+have. The engine stores the parameter by id and reads the name back from it, so a name without an id
+would silently become `None`.
+
+**Fix.** Use a parameter name the collection asset has (scalar or vector), or add it to the
+collection.
+
+## DSH8260
+
+<!-- generated:begin DSH8260 -->
+**Severity** error
+
+**Message**
+
+```
+The parent '{0}' comes from '{1}', which does not compile, so the parameters this instance overrides cannot be checked; compile that source to see why.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:481`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:513`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:387`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:416`
+<!-- generated:end DSH8260 -->
+
+**Cause.** The parent of a `.dsi` cannot be used. It is built by a DreamShader source that does not
+compile, so there is no parameter list to check the overrides against and no asset to build against;
+or `Parent` does not resolve to an asset path; or it names nothing: no asset exists there, and no
+source under the source roots builds it.
+
+**Fix.** Compile the parent's source and fix what it reports, or correct `Parent`.
+
+## DSH8261
+
+<!-- generated:begin DSH8261 -->
+**Severity** error
+
+**Message**
+
+```
+No material or instance named '{0}' is built by a source under '{1}'; write the parent's asset path, or check the name.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:452`
+<!-- generated:end DSH8261 -->
+
+**Cause.** `Parent` is a bare name, and no source under this file's source root builds a material or
+instance of that name.
+
+**Fix.** Check the name, or write the parent's object path (`/Game/...`).
+
+## DSH8262
+
+<!-- generated:begin DSH8262 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' names more than one product under '{1}' ({2}); write the parent's asset path instead.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:466`
+<!-- generated:end DSH8262 -->
+
+**Cause.** `Parent` is a bare name that more than one source under the root builds.
+
+**Fix.** Write the parent's object path instead.
+
+## DSH8263
+
+<!-- generated:begin DSH8263 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is its own ancestor: following Parent from it comes back to it ({1}).
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:425`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:398`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:446`
+<!-- generated:end DSH8263 -->
+
+**Cause.** An instance is its own ancestor: `Parent` names the instance itself, by path or by name,
+or following `Parent` from it leads back to it (the message lists the chain).
+
+**Fix.** Break the cycle: point `Parent` at the material the chain should end in.
+
+## DSH8264
+
+<!-- generated:begin DSH8264 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' was missing or older than its source, so '{1}' was compiled first.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:502`
+<!-- generated:end DSH8264 -->
+
+**Cause.** The parent's asset was missing or older than its source when the instance was compiled,
+so the parent was compiled first.
+
+**Fix.** Nothing to fix.
+
+## DSH8265
+
+<!-- generated:begin DSH8265 -->
+**Severity** error
+
+**Message**
+
+```
+The Parent chain above '{0}' is more than {1} instances deep; a chain that long is almost always a mistake in a Parent key.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:433`
+<!-- generated:end DSH8265 -->
+
+**Cause.** The chain of `Parent` keys above this instance is deeper than the compiler follows. Real
+instance chains are a handful deep.
+
+**Fix.** Look for a `Parent` that points the wrong way.
+
+## DSH8270
+
+<!-- generated:begin DSH8270 -->
+**Severity** error
+
+**Message**
+
+```
+The function reference '{0}' does not resolve to an asset path. {1}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:259`
+<!-- generated:end DSH8270 -->
+
+**Cause.** The `/// @asset` of an `extern` function (or the `Asset` of a 1.x VirtualFunction) does
+not resolve to an object path; the reason follows (one of DSH8118-DSH8132 in words).
+
+**Fix.** Fix the reference; *Copy Reference* in the Content Browser gives a path that always
+resolves.
+
+## DSH8271
+
+<!-- generated:begin DSH8271 -->
+**Severity** error
+
+**Message**
+
+```
+The default texture reference '{0}' of parameter '{1}' does not resolve to an asset path. {2}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:221`
+<!-- generated:end DSH8271 -->
+
+**Cause.** The `/// @default` texture of a parameter does not resolve to an object path; the reason
+follows.
+
+**Fix.** Fix the reference.
+
 ## DSH8290
 
 <!-- generated:begin DSH8290 -->
@@ -3487,7 +2138,7 @@ reaches the divergence gate instead (DSH8207).
 '{0}' could not be read.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerPipeline.cpp:374`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:621`
 <!-- generated:end DSH8290 -->
 
 **Cause.** The compiler could not open the `.dss` it was asked to compile. The path was normalised
@@ -3511,7 +2162,7 @@ on Windows a text editor holding an exclusive lock is enough to cause this.
 '{0}' failed conditional compilation: {1}: {2}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerIncludes.cpp:223`, `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerPipeline.cpp:391`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:643`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:225`
 <!-- generated:end DSH8291 -->
 
 **Cause.** The conditional-compilation preprocessor refused the file. The message carries the
@@ -3537,7 +2188,7 @@ file that tests it, or the define belongs in the project settings table.
 '{0}', included from '{1}', could not be resolved: {2}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerIncludes.cpp:171`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:171`
 <!-- generated:end DSH8292 -->
 
 **Cause.** An `#include` (or `import`) named a file that no source root contains. The resolution
@@ -3566,7 +2217,7 @@ including file, start the path with `/`.
 '{0}', included from '{1}', resolved but could not be read.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerIncludes.cpp:206`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:206`
 <!-- generated:end DSH8293 -->
 
 **Cause.** The include resolved to a real path, and opening it failed. Unlike DSH8292 the file was
@@ -3586,7 +2237,7 @@ read-only is still readable; a file open exclusively in another tool is not.
 '{0}', included from '{1}', could not be parsed; its own errors are above.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerIncludes.cpp:253`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:255`
 <!-- generated:end DSH8294 -->
 
 **Cause.** An included header did not parse. Its own parse errors were reported first, against the
@@ -3607,7 +2258,7 @@ carry the header's line numbers. A header is reported once per compile however m
 '{0}' is not a DreamShader header; an include names a '.dsh' (or a '.dss'), not a '{1}' file.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerIncludes.cpp:195`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:195`
 <!-- generated:end DSH8295 -->
 
 **Cause.** An include resolved to a file that is not a DreamShader header. Only `.dsh` (and, for a
@@ -3625,10 +2276,10 @@ with a different grammar, and an include of one would be parsed as 2.0 text and 
 **Message**
 
 ```
-'{0}' is not a 2.0 source; the 2.0 pipeline compiles '.dss' files, and a '.dsh' header is compiled only through the '.dss' that includes it.
+'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerPipeline.cpp:336`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:564`
 <!-- generated:end DSH8296 -->
 
 **Cause.** The 2.0 pipeline was handed a file whose extension is not `.dss`. `.dsh` answers this too,
@@ -3649,7 +2300,7 @@ them to the 1.x generator.
 The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerPipeline.cpp:448`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:736`
 <!-- generated:end DSH8297 -->
 
 **Cause.** The builtin expression catalog — every `UE.*` node, its pins, its properties and the
@@ -3674,10 +2325,10 @@ cached copy and `InvalidateDreamShaderBuiltinCatalog`.
 **Message**
 
 ```
-Compiling '{0}' was cancelled; nothing was written.
+Building '{0}' was cancelled; the asset is as it was before this compile.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerPipeline.cpp:358`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:308`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:603`
 <!-- generated:end DSH8298 -->
 
 **Cause.** The user pressed Cancel on the compile's progress dialog. Nothing was written: the emit
@@ -3698,7 +2349,7 @@ engine's own queue and is not cancelled by this.
 The exported functions {0} call one another in a cycle, so there is no order in which they can be built; an exported function may call another only in one direction.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Compiler/DreamShaderCompilerPipeline.cpp:547`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:874`
 <!-- generated:end DSH8299 -->
 
 **Cause.** Two or more exported functions of one file call one another, directly or through others.
