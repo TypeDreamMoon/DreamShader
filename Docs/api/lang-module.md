@@ -3,10 +3,12 @@
 > [DreamShader](../index.md) » [C++ API](index.md) » **`DreamShaderLang`**
 
 `DreamShaderLang` is the front end **and the middle end**: the text goes in, a lowered graph comes
-out. Lexer, preprocessor, parser, AST, printer, binder, the graph IR with its passes and validator,
-and the diagnostic types live here — and nothing else does. It was split out of `DreamShader` for
-2.0 so the language can be exercised without an editor, reused by a language service, and reasoned
-about as a language rather than as a plugin.
+out — and, since M5, the other way round. Lexer, preprocessor, both parsers (2.0 and the 1.x legacy
+front end), AST, printer, binder, the graph IR with its passes, validator and comparator, the writer
+that turns an IR back into source, the 1.x → 2.0 migrator, and the diagnostic types live here — and
+nothing else does. It was split out of `DreamShader` for 2.0 so the language can be exercised
+without an editor, reused by a language service, and reasoned about as a language rather than as a
+plugin.
 
 The line the module does *not* cross is the engine: an `FIRModule` names no `UObject`, no asset and
 no expression class object. Engine knowledge arrives as plain data in an
@@ -19,10 +21,10 @@ save to, and load from, JSON.
 | Type / loading phase | `Runtime` / `PostConfigInit` |
 | Dependencies | **`Core` only** |
 | Export macro | `DREAMSHADERLANG_API` |
-| Public headers | 4 at the module root + 7 under `Lang/` + 1 under `Semantic/` + 9 under `IR/` |
+| Public headers | 27: 4 at the module root + 9 under `Lang/` + 1 under `Semantic/` + 11 under `IR/` + 1 under `Decompile/` + 1 under `Migrate/` |
 | Namespaces | `UE::DreamShader::Lang` (2.0 front end and binder) · `UE::DreamShader::IR` (the graph IR and the builtin catalog) · `UE::DreamShader` (preprocessor, define table, `FDreamShaderError`) |
 | Reflected types | **none** — no `UCLASS`, no `USTRUCT`, no `UENUM` |
-| Status | new in `2.0`. M1 shipped the lexer, the 2.0 parser and the printer; M2+M3 add the binder, the IR, its builder, passes and validator, and the custom-HLSL builder |
+| Status | new in `2.0`. M1 shipped the lexer, the 2.0 parser and the printer; M2+M3 the binder, the IR, its builder, passes and validator, and the custom-HLSL builder; M4+M5 the legacy front end, `.dsi` sources, comment trivia, the IR comparator, IR → source, and the migrator |
 
 ## The Core-only rule
 
@@ -60,8 +62,10 @@ Everything here is in `UE::DreamShader::Lang`. Include paths keep the `Lang/` pr
 | `Lang/LangToken.h` | `ELangTokenKind`, `ELangKeyword`, `FLangToken`, `TryGetLangKeyword`, `GetLangTokenSpelling`. Type names are **not** keywords: `float3`, `Texture2D`, `material` and user struct names all reach the parser as identifiers. |
 | `Lang/LangLexer.h` | `LexDreamShaderLang` and `FLangLexOptions`. One lexer serves both syntaxes. |
 | `Lang/LangAst.h` | The tree both front ends produce: `FTypeRef`, `FDocBlock`/`FDocDirective`, `ENodeKind`, the expression / statement / declaration node structs, and `FModule`. Ownership is `TUniquePtr` down the tree; sub-kinds are told apart with `As<T>()` — no RTTI, no visitors. |
-| `Lang/LangParser.h` | `ParseDreamShaderLang`, `ParseDreamShaderLangExpression`, `ELangFrontend`, `FLangParseOptions`, `FLangParseResult`. |
-| `Lang/LangPrinter.h` | `PrintDreamShaderLang` and the per-node overloads, plus `FLangPrintOptions`. |
+| `Lang/LangParser.h` | `ParseDreamShaderLang`, `ParseDreamShaderLangExpression`, `ELangFrontend`, `FLangParseOptions` (`Frontend`, `bKeepTrivia`), `FLangParseResult` (`Module`, `Diagnostics`, and `Legacy` for a 1.x source). |
+| `Lang/LangPrinter.h` | `PrintDreamShaderLang` and the per-node overloads (`PrintDreamShaderLangExpr`, …), plus `FLangPrintOptions`. |
+| `Lang/LangLegacy.h` *(M4)* | `FLegacyMigrationInfo` — what a 1.x text said, beside the AST it became: `FLegacyBlock`, `FLegacySection`, `FLegacyParameterDeclaration`, `FLegacyAssetReference`, `FLegacyOutputSelection`, `FLegacyRename`, the synthesized initializers and directives. The binder reads it to apply the 1.x rules; the migrator reads it to write them out. |
+| `Lang/LangInstanceSource.h` *(M5)* | `.dsi` text: `BuildDreamShaderInstanceModule` / `PrintDreamShaderInstance` (an `IR::FIRInstance` → tree → text), `RewriteDreamShaderInstanceSource` and `RewriteDreamShaderUniformDefaults` (value-by-value edits of an existing file, as `FLangSourceEdit`s, so comments and order survive), `FormatDreamShaderFloatLiteral`, `MakeDreamShaderIdentifier`. |
 
 ### `Semantic/` — the binder
 
@@ -79,7 +83,7 @@ back at neither.
 
 ### `IR/` — the graph IR
 
-`UE::DreamShader::IR`, nine headers. The IR is the material graph before it is a material graph:
+`UE::DreamShader::IR`, eleven headers. The IR is the material graph before it is a material graph:
 nodes, operands, properties and products, with no engine type anywhere in it. Include paths keep the
 `IR/` prefix.
 
@@ -93,11 +97,23 @@ nodes, operands, properties and products, with no engine type anywhere in it. In
 | `IR/IRPasses.h` | `FIRPassOptions` (`bFoldConstants`, `bDedupe`, `bPrune`) and `RunDreamShaderIRPasses`. |
 | `IR/IRValidator.h` | `ValidateDreamShaderIR` — one lowered module against the IR's own rules and against the catalog. An empty catalog skips the checks that need engine knowledge rather than failing them, so a hand-built graph can be validated in a unit test. |
 | `IR/IRDump.h` | `DumpDreamShaderIRText` (the `dsc dump-ir` rendering, and the golden the IR corpus diffs) and `DumpDreamShaderIRJson`. |
+| `IR/IRCompare.h` *(M5)* | `AreDreamShaderIRModulesEquivalent` and `FIRCompareOptions` — two modules compared from their roots, with the first difference in words, followed down to the deepest node that differs. What "the decompiled text means the same" and "the migrated text builds the same graph" are measured with. The options say which differences are one asset written two ways: debug names, regions, Custom-code markers and spacing, a constant against its `Const*` twin, an identity swizzle. |
+| `IR/IRInstanceSchema.h` *(M5)* | `BuildParameterSchemaFromIR` — the parameter schema a `.dsi` binds against, taken from its parent's IR (the editor side builds the same schema from an asset). |
 | `IR/IRCustomHlsl.h` | `FCustomNodeCode` (`Code`, `IncludeFilePaths`, `InlinedFunctions`), `BuildDreamShaderCustomNodeCode`, and the `CustomCodeMarker` grammar with `TryParseCustomCodeBodyMarker` — the line markers a Custom node's body carries, which `dsc check -Shaders` maps shader-compile errors back through. |
 
 > The IR holds **no source positions in its identity**: `FIRSourceRef` rides on a node for tooling
 > (the asset's `DreamShader.SourceSpans` table, node ↔ source navigation) and is never part of a
 > dedupe key. Two structurally identical nodes merge no matter where they were written.
+
+### `Decompile/` and `Migrate/` — the way back *(M5)*
+
+`UE::DreamShader::Lang`, one header each. Neither knows about assets: the editor module imports a
+graph into an `FIRModule` and hands it over.
+
+| Header | Purpose |
+| :-- | :-- |
+| `Decompile/IRToAst.h` | `RaiseDreamShaderIR` — the emitter's lowered shapes read back as source-level ones, in place (a StaticSwitch over a static bool is an `if`, a Set-attributes chain is `m.X = …`) — and `BuildDreamShaderAstFromIR` with `FIRToAstOptions` (`bEmitLayout`, `bEmitBackend`, `bReadable`, the `extern` interfaces and product paths the host knows, header comments). The result is an ordinary `FModule`; `PrintDreamShaderLang` makes it text. |
+| `Migrate/LangMigrate.h` | `MigrateDreamShaderLegacyModule` — rewrites a **bound** 1.x module in place into one that means the same without the legacy rules (the header's table lists each rewrite with its rule number) — and `CollectDreamShaderComments`, which the host uses to prove no comment was lost. |
 
 ### Module root — what moved here in 2.0
 
@@ -137,6 +153,10 @@ validator, two dumps, a printer, and one call for parsing a single expression on
 | `DumpDreamShaderIRText(Module)` / `…Json(Module)` | `IR/IRDump.h` | The human rendering (`dsc dump-ir`, and the golden the IR corpus diffs) and the machine one (`dsc dump-ir -Json`). |
 | `BuildDreamShaderCustomNodeCode(Bound, FunctionIndex, Out, Diagnostics)` | `IR/IRCustomHlsl.h` | One `/// @custom` function → the HLSL a Custom node carries, with its hoisted `#include`s and its embedded helpers. Deterministic: two calls for the same function produce the same string, which is what lets the dedupe key run over `Prop::Code`. |
 | `LoadBuiltinCatalogFromJson(...)` / `SaveBuiltinCatalogToJson(...)` | `IR/IRCatalog.h` | The catalog's on-disk form. `dsc export-catalog` writes it; a tool that binds outside the editor reads it. |
+| `AreDreamShaderIRModulesEquivalent(A, B, Options, OutDifference)` | `IR/IRCompare.h` | True when two modules describe the same products with equivalent graphs; otherwise the first difference, in words. |
+| `RaiseDreamShaderIR(Module, Diagnostics)` → `BuildDreamShaderAstFromIR(Module, Catalog, Options, Diagnostics)` | `Decompile/IRToAst.h` | An `FIRModule` → an `FModule` that lowers back to an equivalent IR. What the language cannot say is a diagnostic (`DSH9075`–`DSH9084`), never a silent drop. |
+| `MigrateDreamShaderLegacyModule(Module, Legacy, Bound, Options, Diagnostics)` | `Migrate/LangMigrate.h` | Rewrites a 1.x module in place. `Bound` was bound against `Module` and is only read; **its node pointers are stale once this returns**. False after an error: the module is then not worth printing. |
+| `PrintDreamShaderInstance(Instance, FilePath, AssetPathOverride)` | `Lang/LangInstanceSource.h` | The `.dsi` text for an instance payload: optional `/// @name`, `#pragma instance(...)`, one `uniform` per override. |
 
 ```cpp
 // MyTooling.Build.cs:  PrivateDependencyModuleNames.AddRange(new[] { "Core", "DreamShaderLang" });
@@ -173,12 +193,16 @@ extension carried by `FLangSourceText::GetPath()`:
 | Extension | `ELangFileKind` | Front end |
 | :-- | :-- | :-- |
 | `.dss` | `Dss` | 2.0 |
-| `.dsh` | `Dsh` | 2.0 (a shared header; both syntaxes may appear, and `export` is rejected) |
-| `.dsm` | `Dsm` | legacy — **not available yet**, reports `DSH2199` |
-| `.dsf` | `Dsf` | legacy — **not available yet**, reports `DSH2199` |
+| `.dsi` | `Dsi` | 2.0 — a material instance: a `#pragma instance` and `uniform` overrides, nothing else |
+| `.dsh` | `Dsh` | decided **per declaration**: a shared header may hold both syntaxes while a project migrates. `export` and asset blocks are rejected |
+| `.dsm` | `Dsm` | legacy |
+| `.dsf` | `Dsf` | legacy |
 
-The legacy front end lands in M4 and lowers 1.x constructs onto the *same* AST node kinds, so
-nothing downstream has to know which parser produced a module.
+The legacy front end *(M4)* lowers 1.x constructs onto the *same* AST node kinds — a `Shader` block
+becomes uniforms, a `#pragma material` and one exported function — so nothing downstream has to know
+which parser produced a module. What the 1.x text said beyond that (block names, sections, renames,
+output selections) rides beside the tree in `FLangParseResult::Legacy`, and the declarations carry
+`bLegacy`, which is what makes the binder apply the documented 1.x rules to them and to nothing else.
 
 ### Printer contract
 
@@ -187,7 +211,10 @@ same tree as `parse(X)`. Concretely — parentheses are emitted where `FParenExp
 wherever precedence requires; `///` blocks are re-emitted one directive per line after the free
 text; an opaque (`/// @custom`) body is written verbatim from `RawBody`; pragmas and includes keep
 their spelling; literals keep the lexeme as written, so `1.0f`, `0x10` and `2u` survive. Comments
-other than `///` are not in the tree and are **not** reproduced.
+other than `///` are reproduced when the parse kept them: with `FLangParseOptions::bKeepTrivia` every
+comment and blank line is attached to the declaration or statement it stood by
+(`FModule::Trivia`), and the printer writes them back — which is what lets `dsc migrate` promise
+that no comment is lost. Without the option they are dropped, as before.
 
 `FLangPrintOptions::NewLine` defaults to `\n`, but an opaque body is a slice of its source and
 keeps that file's terminators, so printing a CRLF file yields mixed terminators. That is stable:
@@ -221,7 +248,10 @@ message text.**
 | :-- | :-- | :-- |
 | `DSH2101`–`DSH2119` | the lexer (allocated: `2101`–`2106`) | `2101` unknown character · `2102` unterminated block comment · `2103` unterminated string · `2104` unknown escape · `2105` malformed number · `2106` a `#` that is not the first thing on its line |
 | `DSH2150`–`DSH2189` | expressions and statements (allocated: `2150`–`2155`, `2157`–`2165`) | `2150` unexpected end of file · `2158` positional argument after a named one · `2160` unsupported statement (`switch`, and a `#` line inside a body) · `2162` an initializer list used as an expression |
-| `DSH2199` | front-end selection | legacy front end requested but not available (until M4) |
+| `DSH2199` | front-end selection | retired in M4, when the legacy front end arrived |
+| `DSH2200`–`DSH2258` | the legacy front end — blocks, attribute lists, `import`, Graph statements | `2200` an operator 1.x silently truncated at · `2248` 2.0 syntax in a `.dsm` / `.dsf` · `2249` an asset block in a `.dsh` · `2252` an `import` the include resolver does not read |
+| `DSH3250`–`DSH3278` | the legacy front end — `Properties`, `Settings`, `Outputs`, `Inputs`, `Layout` sections | |
+| `DSH6300`–`DSH6330` | the legacy front end and binder — `Function` / `GraphFunction`, lifted `UE.` calls | `6326` a lifted call reads a body local |
 | `DSH3200`–`DSH3249` | declarations, types, directives, doc blocks (allocated: `3200`–`3208`, `3210`, `3211`, `3213`–`3218`, `3220`–`3222`) | `3201` stray preprocessor directive · `3203` `#include` / `import` without a **double-quoted** path · `3204` expected a type name · `3208` function without a body · `3213` bad storage/linkage combination · `3220` malformed `@` directive (**warning**) · `3221` orphan `///` block (**warning**) · `3222` a 1.x declaration word |
 
 The binder, the builder, the passes, the validator and the custom-HLSL builder raise through the
@@ -237,6 +267,10 @@ same sink, with their own ranges:
 | `DSH6220`–`DSH6249` | helper inlining |
 | `DSH6250`–`DSH6299` | `/// @custom` HLSL |
 | `DSH7200`–`DSH7249` | uniforms, `///` directives, `#pragma material` |
+| `DSH7250`–`DSH7270` | `.dsi`: `#pragma instance`, overrides against the parent's schema |
+| `DSH5250`–`DSH5292` | the documented 1.x rules (`L1`–`L26`), each one a diagnostic where it rewrites or drops something |
+| `DSH9075`–`DSH9084` | IR → source: what the writer renamed, could not place, or left at a default |
+| `DSH9091`, `DSH9094` | the migrator (the host's proofs around it, in the editor module, are the rest of `DSH9090`–`DSH9099`) |
 
 `DSH1030`–`DSH1042` (the preprocessor's own codes) moved into this module with the preprocessor and
 kept their numbers. The prose for every code lives under [Diagnostics](../diagnostics/index.md).
@@ -253,7 +287,7 @@ every fixture as its own sub-test.
 | Test | `DreamShader.Lang2.Corpus.<Area>.<Fixture>` |
 | Runner | `RunDreamShaderLangCorpusCase` in `Source/DreamShaderEditor/Private/Tests/DreamShaderTestCommon.h` |
 | Registration | `Source/DreamShaderEditor/Private/Tests/DreamShaderCorpusLangTests.cpp` |
-| Fixtures | `Tests/Corpus/Lang/{Lexical,Expressions,Statements,Declarations,Examples}/` — `.dss` and `.dsh`, plus one `.dsm` that pins front-end selection (`DSH2199`) |
+| Fixtures | `Tests/Corpus/Lang/{Lexical,Expressions,Statements,Declarations,Examples}/` — `.dss` and `.dsh`, plus one `.dsm` that pins front-end selection: it reaches the legacy front end and fails there (`DSH2241`) |
 | Golden schema | `"entryPoint": "lang"` — see [`Tests/Corpus/README.md`](../../Tests/Corpus/README.md) |
 
 Each case is parsed once through `ParseDreamShaderLang`, then checked against its golden:

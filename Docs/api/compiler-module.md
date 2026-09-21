@@ -2,398 +2,287 @@
 
 > [DreamShader](../index.md) » [C++ API](index.md) » **DreamShaderCompiler**
 
-The compile abstraction layer: a request struct, a result struct, the `IDreamShaderCompiler`
-interface, a thin service wrapper, and a module class. It contains no material-generation code — its
-whole purpose is to let code request a compile without linking `DreamShaderEditor`.
+The compiler's back half: the pipeline that drives a source from text to assets, the IR emitter, the
+asset layer under it, the builtin catalog built from reflection, and the product index. The front
+half — lexer to validated IR — is [`DreamShaderLang`](lang-module.md), which knows nothing about the
+engine; this module is where a `UObject` is first touched.
 
 | | |
 | :-- | :-- |
-| Module | `DreamShaderCompiler` (Runtime, `Default` loading phase) |
-| Public headers | `DreamShaderCompilerInterfaces.h`, `DreamShaderCompileService.h`, `DreamShaderCompilerModule.h` |
-| Namespace | `UE::DreamShader::Compiler` (interfaces and service) · global scope (module class) |
+| Module | `DreamShaderCompiler` (**Editor**, `Default` loading phase) |
+| Public headers | 19 — the ones a caller meets are listed [below](#public-headers) |
+| Namespace | `UE::DreamShader::Editor::Compiler` · `UE::DreamShader::Editor` (the generated-notice delegate) · global scope (module class) |
 | Export macro | `DREAMSHADERCOMPILER_API` |
-| Build dependencies | `Core`, `CoreUObject`, `DreamShader`, `Engine` — all **public** |
+| Public dependencies | `Core`, `CoreUObject`, `DreamShader`, `DreamShaderLang`, `Engine` |
+| Private dependencies | `AssetRegistry`, `AssetTools`, `Json`, `MaterialEditor`, `Projects`, `UnrealEd` |
 | Reflection | none |
 
-Because `DreamShader` is a *public* dependency, a module that lists `DreamShaderCompiler` also gets
-the parser, the types and the settings header transitively.
+> [!IMPORTANT]
+> **Changed in 2.0 (M4).** Through 1.9.x this was a *Runtime* module holding nothing but the compile
+> interface, and the compiler itself lived privately in `DreamShaderEditor`. The two swapped places:
+> the interface moved **down** into the runtime module as
+> [`DreamShaderCompilerInterface.h`](#the-interface-lives-in-dreamshader), and the compiler moved
+> **out** of the editor module into this one. `DreamShaderCompilerInterfaces.h`,
+> `FDreamShaderCompileService`, the editor's `FEditorCompileAdapter` and the 1.x `FMaterialGenerator`
+> are gone.
 
-## `DreamShaderCompilerInterfaces.h`
+## The interface lives in `DreamShader`
+
+An Editor-type module is absent from game targets, so nothing outside the editor may depend on it at
+build time. The request, the result and the interface therefore live in the **runtime** module, in a
+header that needs nothing but `Core`:
 
 ```cpp
-#include "CoreMinimal.h"
+#include "DreamShaderCompilerInterface.h"   // module: DreamShader
 
-#ifndef DREAMSHADERCOMPILER_API
-#define DREAMSHADERCOMPILER_API
-#endif
-
-namespace UE::DreamShader::Compiler
+namespace UE::DreamShader
 {
-    enum class EThinCustomPersistence : uint8
-    {
-        Ephemeral,
-        Materialized,
-    };
+    enum class EThinCustomPersistence : uint8 { Ephemeral, Materialized };
 
-    struct DREAMSHADERCOMPILER_API FDreamShaderCompileRequest
+    struct DREAMSHADER_API FDreamShaderCompileRequest
     {
         FString SourceFilePath;
         bool bForce = false;
         EThinCustomPersistence ThinCustomPersistence = EThinCustomPersistence::Materialized;
     };
 
-    struct DREAMSHADERCOMPILER_API FDreamShaderCompileResult
+    struct DREAMSHADER_API FDreamShaderCompileResult
     {
         bool bSucceeded = false;
         FText Message;
+        FString Code;
     };
 
-    class DREAMSHADERCOMPILER_API IDreamShaderCompiler
+    class DREAMSHADER_API IDreamShaderCompiler
     {
     public:
         virtual ~IDreamShaderCompiler() = default;
-
         virtual FDreamShaderCompileResult CompileAssets(const FDreamShaderCompileRequest& Request) = 0;
         virtual FDreamShaderCompileResult CompileMaterial(const FDreamShaderCompileRequest& Request) = 0;
     };
+
+    DREAMSHADER_API IDreamShaderCompiler* GetDreamShaderCompiler();
+    DREAMSHADER_API void RegisterDreamShaderCompiler(IDreamShaderCompiler* Compiler);
 }
 ```
 
-The `#ifndef DREAMSHADERCOMPILER_API` guard makes the header compile outside a UnrealBuildTool
-context, where the macro is not pre-defined.
+The namespace is `UE::DreamShader`, not `UE::DreamShader::Compiler`: inside
+`UE::DreamShader::Editor` a bare `Compiler::` names `UE::DreamShader::Editor::Compiler`, so a nested
+namespace here would be hidden from exactly the callers that use it most.
 
 ### `FDreamShaderCompileRequest`
 
 | Member | Type | Default | Meaning |
 | :-- | :-- | :-- | :-- |
-| `SourceFilePath` | `FString` | `""` | Path to a `.dsm` or `.dsf`. The shipped implementation normalizes it, so a relative path is accepted. A `.dsh` is rejected by both entry points. |
-| `bForce` | `bool` | `false` | Bypass the source-hash skip check. With `false`, an asset whose package metadata still matches is left untouched and the call **succeeds** with a `Skipped …` message. |
-| `ThinCustomPersistence` | `EThinCustomPersistence` | `Materialized` | Which state a ThinCustom product this compile touches should end in. `Ephemeral` — the hidden base is created in the transient package, nothing is saved, and the package's dirty flag is explicitly cleared so a *Save All* cannot persist it. `Materialized` — a real package, `MarkPackageDirty`, source metadata stamped, package saved. **Ignored by the Graph and material-function backends**, which have no Ephemeral state. |
+| `SourceFilePath` | `FString` | `""` | A `.dss`, `.dsi`, `.dsm` or `.dsf`; the compiler normalizes it, so a relative path is accepted. A `.dsh` header is not a compile unit. |
+| `bForce` | `bool` | `false` | Rebuild even when a product's stamped build key says its asset is current. With `false`, such a product is left untouched and the call **succeeds** with a `Skipped …` line. |
+| `ThinCustomPersistence` | `EThinCustomPersistence` | `Materialized` | Which state a ThinCustom product this compile touches should end in. **Ignored by the Graph, function and instance products**, which always save. |
 
 > [!NOTE]
 > `Ephemeral` is the editor's **normal** state for a ThinCustom product, not an exotic flag. The
 > bridge and the preview renderer both ask for it; the commandlet, the cook path and the explicit
-> *Materialize* action take the `Materialized` default. See
-> [Ephemeral materials](../generation/ephemeral.md).
->
-> The default is `Materialized` rather than `Ephemeral` so a caller that does not name a state — a
-> headless tool — writes assets to disk, which is what a headless tool is for.
+> *Materialize* action take the `Materialized` default, so a caller that does not name a state — a
+> headless tool — writes assets to disk. See [Ephemeral materials](../generation/ephemeral.md).
 
 ### `FDreamShaderCompileResult`
 
-| Member | Type | Default | Meaning |
-| :-- | :-- | :-- | :-- |
-| `bSucceeded` | `bool` | `false` | Whether the compile completed. A skipped compile counts as success. |
-| `Message` | `FText` | `empty` | On success: one line per generated asset, joined with `\n`, optionally followed by `"\nWarnings:\n"` and the joined parser warnings. On failure: the single diagnostic. The wire-form remains English via `ToInvariantWireString()`. |
+| Member | Type | Meaning |
+| :-- | :-- | :-- |
+| `bSucceeded` | `bool` | Whether the compile completed. A skipped compile counts as success. |
+| `Message` | `FText` | The report in the wire shape the bridge, the extensions and `dsc.ps1` parse — see [Result messages](#result-messages). A caller that writes it to a wire passes it through `ToInvariantWireString`. |
+| `Code` | `FString` | The `DSHnnnn` code of the first error; empty on success. Carried beside `Message` so a caller that keys on codes does not parse it back out of the text. |
 
-There is no structured diagnostic list, no severity, and no line/column. `Message` is human-readable
-text; the machine-readable diagnostics go to the bridge's JSON files instead. See
-[Editor bridge](../tools/bridge.md).
+The structured diagnostics of a compile — every error, warning and info with its code, stage,
+severity and span — are not in the result; ask
+[`GetDreamShaderLastCompileDiagnostics`](#dreamshadercompilerserviceh) for them.
 
 ### `IDreamShaderCompiler`
 
-The extension point. Two pure virtuals and a defaulted virtual destructor; no other members, no
-copy/move policy declared.
-
-```cpp
-virtual FDreamShaderCompileResult CompileAssets(const FDreamShaderCompileRequest& Request) = 0;
-```
-
-| | |
+| Method | Contract |
 | :-- | :-- |
-| Contract | Generate **everything** the source file declares: the helper `.ush` include if the unit has any `Function` block, every `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend`, and the material if a `Shader` block is present. |
-| Must reject | `.dsh` inputs — a header never generates assets directly. |
-| Success with no assets | A unit that declares only `VirtualFunction` or only `GraphFunction` blocks succeeds and generates nothing. A unit that declares nothing generatable **fails**. |
+| `CompileAssets` | Every product of the source: its material and every exported function, layer and blend — or, for a `.dsi`, the one material instance (building a stale parent first). |
+| `CompileMaterial` | The source's material product only: the preview's route. |
 
-```cpp
-virtual FDreamShaderCompileResult CompileMaterial(const FDreamShaderCompileRequest& Request) = 0;
-```
+### `GetDreamShaderCompiler()`
 
-| | |
+The registered compiler, **or null**. In an editor build the compiler module is loaded on demand when
+nothing has registered yet — both modules are `Default`-phase, and start order within a phase is not
+a contract. Null in a game target, where the module does not exist, and while the engine is shutting
+down. **Every caller must handle null.** Game thread only whenever it may have to load the module.
+
+`RegisterDreamShaderCompiler` is for the compiler module itself: its service from `StartupModule`,
+`nullptr` from `ShutdownModule`. The registry does not own the object. It is exported, so another
+module *can* register a replacement — there is no chaining and no arbitration, the last call wins.
+
+## Public headers
+
+| Header | What it declares |
 | :-- | :-- |
-| Contract | Generate only the material — the top-level `Shader` block. |
-| Must reject | Both `.dsh` **and** `.dsf` inputs. |
-| Requires | A non-empty `Shader(Name=…)` and a non-empty `Outputs` section. |
+| `DreamShaderCompilerService.h` | `FDreamShaderCompilerService` — the one implementation of `IDreamShaderCompiler`; `OnDreamShaderSourceGenerated`; `IsMemoryOnlyMaterial` / `MaterializeDreamShaderMaterial`; `GetDreamShaderLastCompileDiagnostics` |
+| `DreamShaderCompilePipeline.h` | `IsDreamShaderLang2Source`, `CompileDreamShaderLang2File`, `RunDreamShaderLang2Pipeline` with its options and result, `ResolveDreamShaderSourceProducts`, `ResolveDreamShaderProductDestination`, `ResolveDreamShaderLegacyTextureTypes` |
+| `DreamShaderIREmitter.h` | `FIREmitContext`, `EmitDreamShaderIRProduct` — one finished `IR::FIRProduct` in, one saved asset out; the source-span and decompile-hint writers |
+| `DreamShaderBuiltinCatalog.h` | `GetDreamShaderBuiltinCatalog`, `InvalidateDreamShaderBuiltinCatalog`, `BuildBuiltinCatalogFromReflection` — the `IR::FBuiltinCatalog` the binder and the emitter share |
+| `DreamShaderProductIndex.h` | `FDreamShaderProductIndex` — which source builds which asset; `ResolveInstanceParent`, `CollectInstanceDependents`, `FindInstanceParentSourceFile` for `.dsi` files |
+| `DreamShaderInstanceSchema.h` · `DreamShaderInstanceSettings.h` | the parameter schema of a parent asset (`BuildParameterSchemaFromAsset`), and the `#pragma instance` keys (`ApplyInstanceSettings`, `ReadInstanceSettings`, `GetInstanceSettingKeys`) |
+| `DreamShaderCompilerDiagnostics.h` · `DreamShaderDiagnosticRecord.h` | the wire line (`FormatLang2DiagnosticWireLine`), the diagnostics JSON, and the record the bridge's store files |
+| `DreamShaderCompilerIncludes.h` | `FDreamShaderIncludeResolver` — `#include` resolution over the source roots and packages |
+| `DreamShaderGeneratedAssets.h` · `DreamShaderGeneratedAssetDigest.h` | destination rules, source metadata, the ownership guard, the output digest behind [divergence detection](../generation/divergence.md) |
+| `DreamShaderDependencyGraphService.h` · `DreamShaderSourceFileUtils.h` · `DreamShaderGraphDebugInfo.h` · `DreamShaderGenerationProgress.h` · `DreamShaderMaterialExpressionCompat.h` · `DreamShaderTextWireUtils.h` | what the editor module's tools share with the compiler: who includes whom, source enumeration, node ↔ source debug info, the progress heuristics (the shader-compile stall threshold, the Cancel seam), engine-version shims for expression APIs, culture-invariant wire strings |
+| `DreamShaderCompilerModule.h` | `FDreamShaderCompilerModule`: registers the service on startup, unregisters it on shutdown |
 
-The interface expresses **no thread-affinity contract**. The only shipped implementation is
-game-thread- and editor-only; see [Thread and context requirements](#thread-and-context-requirements).
+Everything here is editor-only API. It is exported so `DreamShaderEditor` — the commandlet, the
+bridge, the browser, the decompiler, the tests — can link it; a third-party editor module can too.
 
-## `DreamShaderCompileService.h`
-
-```cpp
-#include "DreamShaderCompilerInterfaces.h"
-
-namespace UE::DreamShader::Compiler
-{
-    class DREAMSHADERCOMPILER_API FDreamShaderCompileService
-    {
-    public:
-        explicit FDreamShaderCompileService(IDreamShaderCompiler& InCompiler)
-            : Compiler(InCompiler)
-        {
-        }
-
-        FDreamShaderCompileResult CompileAssets(const FString& SourceFilePath,
-                                                bool bForce = false,
-                                                EThinCustomPersistence Persistence
-                                                    = EThinCustomPersistence::Materialized);
-        FDreamShaderCompileResult CompileMaterial(const FString& SourceFilePath,
-                                                  bool bForce = false,
-                                                  EThinCustomPersistence Persistence
-                                                      = EThinCustomPersistence::Materialized);
-
-    private:
-        IDreamShaderCompiler& Compiler;
-    };
-}
-```
-
-| Aspect | Detail |
-| :-- | :-- |
-| Constructor | `explicit`, header-inline, stores a **reference** |
-| `CompileAssets` | Packs the three arguments into an `FDreamShaderCompileRequest` and forwards to `Compiler.CompileAssets` |
-| `CompileMaterial` | The same, forwarding to `Compiler.CompileMaterial` |
-| Added logic | **None.** The service is purely argument packing, so a caller need not name the request struct. |
-| Copy / move | Copy construction is allowed; the reference member makes the class non-assignable |
-
-> [!WARNING]
-> The service holds a **reference**, not a shared pointer. The referenced `IDreamShaderCompiler`
-> must outlive the service. Every shipped call site avoids the problem by constructing the service
-> on the stack immediately before use and letting it die at the end of the scope. Follow that idiom.
-
-### Shipped call sites
-
-| Caller | Call | Effect |
-| :-- | :-- | :-- |
-| Editor bridge, on file save or a queued request | `CompileAssets(SourceFilePath, false, EThinCustomPersistence::Ephemeral)` | Hash-skip active, ThinCustom stays Ephemeral — the common path |
-| Commandlet `-run=DreamShader compile` | `CompileAssets(SourceFile, bForce)` | takes the `Materialized` default, so assets are persisted |
-| Preview renderer | `CompileMaterial(SourceFilePath, true, EThinCustomPersistence::Ephemeral)` | Always forced, never writes a file |
-
-## `DreamShaderCompilerModule.h`
+## `DreamShaderCompilerService.h`
 
 ```cpp
-#include "CoreMinimal.h"
-#include "Modules/ModuleManager.h"
-
-#ifndef DREAMSHADERCOMPILER_API
-#define DREAMSHADERCOMPILER_API
-#endif
-
-class DREAMSHADERCOMPILER_API FDreamShaderCompilerModule : public IModuleInterface
-{
-public:
-    virtual void StartupModule() override;
-    virtual void ShutdownModule() override;
-};
-```
-
-Registered with `IMPLEMENT_MODULE(FDreamShaderCompilerModule, DreamShaderCompiler)`.
-
-> [!NOTE]
-> **Both methods are empty.** The module exists so the headers have a module to live in; it
-> registers nothing, allocates nothing, and holds no state. There are no `Get()` or `IsAvailable()`
-> accessors.
-
-## How the editor module plugs in
-
-`DreamShaderEditor` implements the interface with a private adapter that is **not exported**:
-
-```cpp
-// Private to DreamShaderEditor — not reachable from another module.
 namespace UE::DreamShader::Editor
 {
-    class FEditorCompileAdapter final : public Compiler::IDreamShaderCompiler
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnDreamShaderSourceGenerated, const FString& /*SourceFilePath*/, bool /*bSucceeded*/);
+    DREAMSHADERCOMPILER_API FOnDreamShaderSourceGenerated& OnDreamShaderSourceGenerated();
+}
+
+namespace UE::DreamShader::Editor::Compiler
+{
+    class DREAMSHADERCOMPILER_API FDreamShaderCompilerService final : public ::UE::DreamShader::IDreamShaderCompiler
     {
     public:
-        virtual Compiler::FDreamShaderCompileResult CompileAssets  (const Compiler::FDreamShaderCompileRequest&) override;
-        virtual Compiler::FDreamShaderCompileResult CompileMaterial(const Compiler::FDreamShaderCompileRequest&) override;
+        static FDreamShaderCompilerService& Get();
+        // CompileAssets / CompileMaterial
     };
 
-    FEditorCompileAdapter& GetEditorCompileAdapter();
+    DREAMSHADERCOMPILER_API bool GetDreamShaderLastCompileDiagnostics(const FString& SourceFilePath, TArray<FLang2DiagnosticRecord>& OutRecords);
 }
 ```
 
-| Adapter method | Delegates to |
-| :-- | :-- |
-| `CompileAssets` | `FMaterialGenerator::GenerateAssetsFromFile(Request.SourceFilePath, Result.Message, Request.bForce, Request.ThinCustomPersistence == EThinCustomPersistence::Ephemeral)` |
-| `CompileMaterial` | `FMaterialGenerator::GenerateMaterialFromFile(Request.SourceFilePath, Result.Message, Request.bForce, Request.ThinCustomPersistence == EThinCustomPersistence::Ephemeral)` |
-
-The 1.x generator still spells this as a `bool bTransient` parameter; M4 deletes that parameter along
-with the generator.
-| `GetEditorCompileAdapter()` | Returns a function-local `static FEditorCompileAdapter` — a lazily constructed process-wide singleton. Initialization is thread-safe through magic statics; the adapter itself is not thread-safe. |
-
-Each adapter method does exactly one thing: call the generator static and copy its `bool` return into
-`bSucceeded` and its out-text into `Message`.
-
-### What a third party can and cannot do today
-
 | | |
 | :-- | :-- |
-| **Can** implement `IDreamShaderCompiler` and drive it through `FDreamShaderCompileService`, or call it directly | ✔ |
-| **Can** link `DreamShaderCompiler` from a Runtime module and pass around `FDreamShaderCompileRequest` / `FDreamShaderCompileResult` without any editor dependency | ✔ |
-| **Can** wrap the shipped behaviour by implementing the interface and forwarding to a compile the editor triggers by other means | ✔ |
-| **Cannot** obtain the shipped implementation from outside `DreamShaderEditor` — `GetEditorCompileAdapter()` is declared in a private header of a module that exports nothing | ✘ |
-| **Cannot** register an implementation with the plugin — **there is no registry, no factory and no delegate.** The three shipped call sites name `GetEditorCompileAdapter()` directly | ✘ |
-| **Cannot** replace or intercept what the bridge, the preview or the commandlet compile with | ✘ |
-| **Cannot** call the generator directly — `FMaterialGenerator` lives in a private editor header | ✘ |
+| The service | Picks the front end by extension, forwards the request's ThinCustom persistence to the pipeline, and words the result. Every compile route — the bridge's watcher, a commandlet, the Material Content Browser, a provenance action, a test — ends here. |
+| `OnDreamShaderSourceGenerated` | Fired once per **outermost** compile of a source, after it succeeded or failed, with the normalized path. A compile nested inside another (a `.dsi` building its stale parent) does not fire. |
+| `MaterializeDreamShaderMaterial` | Persists a memory-only ThinCustom product by compiling its source again with `bForce` and `Materialized`, then reloading it by object path. |
+| `GetDreamShaderLastCompileDiagnostics` | Each source's most recent compile as structured records — code, stage, severity, span length — which the bridge files into its diagnostics store instead of re-parsing a result's text. |
 
-> [!WARNING]
-> `IDreamShaderCompiler` is an abstraction boundary, not a plug-in point. Implementing it lets your
-> own code speak the same vocabulary; it does not let you substitute a backend into DreamShader's
-> own pipeline. To trigger the shipped generator from C++ outside the editor module, use the
-> [commandlet](../tools/commandlet.md) or the bridge's
-> [request files](../tools/bridge.md).
+## `DreamShaderCompilePipeline.h`
+
+The pipeline is **preprocess → parse → bind → lower → passes → validate → emit**, and this header is
+the same driver with its intermediate products handed back instead of dropped.
+
+| Call | Use |
+| :-- | :-- |
+| `IsDreamShaderLang2Source(Path)` | True for every file the pipeline compiles on its own: `.dss` and `.dsi` through the 2.0 front end, `.dsm` and `.dsf` through the legacy one. A `.dsh` answers false. (The name predates M4, when only `.dss` answered true.) |
+| `CompileDreamShaderLang2File(Path, bForce, OutError)` | The service's `CompileAssets` with a `Materialized` request, spelled with an `FDreamShaderError` for callers that want the code and the text apart. |
+| `RunDreamShaderLang2Pipeline(Path, Options, OutResult)` | The whole run. `Options.bEmitAssets = false` stops after IR validation — that is `dsc check`. The result owns the parsed module, the bound module and the IR, **in a load-bearing member order** (the bound module points into the parsed ones); it keeps whatever the run got as far as, so a language service gets an AST from a false return. |
+| `ResolveDreamShaderSourceProducts(Path, OutResult)` | Which assets a source builds, and under which build key, **without building them**: front end, binder and IR builder, then the emitter's own destination rules. Creates, loads and saves nothing and opens no progress dialog — the Material Content Browser calls it for every source it lists. |
+| `ResolveDreamShaderProductDestination(Product, Path, …)` | Where one product would land if `Path` declared it. The decompiler asks this before it writes a file, to find out whether the text needs a `/// @name` to keep the asset where it is. |
 
 ## Thread and context requirements
 
-Obligations that apply to anyone calling through the shipped adapter:
-
-- **Game thread, editor build only.** Both generator entry points open an `FScopedSlowTask` and,
-  outside a commandlet, show a modal progress dialog after a short delay.
-- They create and modify `UPackage`s and `UMaterial`s, and call `Modify()`, `PostEditChange()` and
-  the asset save path — all game-thread-only operations.
-- Progress frames: 6 for `CompileAssets`, 11 for `CompileMaterial`.
-- The calls are **synchronous**. There is no async variant, no future, and no completion delegate.
-
-### Control flow of the shipped implementation
-
-`CompileAssets`: reject `.dsh` → load and import-expand the source → parse → CRC32 the prepared text
-→ reject a `Shader` block in a `.dsf` → write the generated helper `.ush` include if the unit has any
-`Function` block → generate each material-function asset in declaration order → generate the material
-if the unit declares one → assemble the message.
-
-`CompileMaterial`: reject `.dsh` and `.dsf` → load and expand → parse → hash → require a `Shader`
-name → require a non-empty `Outputs` → validate settings, then outputs → reject `Base.FrontMaterial`
-together with `Base.MaterialAttributes` → write the helper include → resolve the backend → take the
-ThinCustom or the Graph path → source-hash skip check → build → persist, or clear the dirty flag.
-
-The full pipeline is on [Generation](../generation/index.md).
+- **Game thread, editor build only.** The emit half creates and modifies `UPackage`s, `UMaterial`s and
+  `UMaterialInstanceConstant`s and runs the asset save path; binding reads the builtin catalog, which
+  is built from reflection.
+- Outside a commandlet a compile opens an `FScopedSlowTask` and shows a modal progress dialog after a
+  short delay; Cancel is reported as `bCancelled`, distinct from a failure.
+- The calls are **synchronous**. There is no async variant, no future, and no completion callback
+  other than `OnDreamShaderSourceGenerated`.
 
 ## Result messages
 
-Every string the shipped adapter can put in `FDreamShaderCompileResult::Message`. Runtime
-substitutions are shown as `{Placeholder}`.
+`FDreamShaderCompileResult::Message` keeps the 1.x wire shape on purpose: `.skill/dsc.ps1` greps the
+`Generated` lines to list the assets a run wrote, and the bridge logs the message verbatim.
 
 ### Success
 
-| Message | Condition |
+One line per product, in emit order:
+
+| Line | Condition |
 | :-- | :-- |
-| `Generated {Kind} {AssetPath} from {File}.` | one line per `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` asset |
-| `Generated DreamShader thin-custom material {AssetPath} from {File}.` | ThinCustom-backend material — the default path. No `(virtual)` suffix in either state |
-| `Generated {AssetPath} from {File}.{Suffix}` | Graph-backend material; `{Suffix}` is ` (virtual)` when nothing was written to disk |
-| `Generated DreamShader helper include '{Path}' from {File}.` | the unit declared only `Function` blocks |
-| `DreamShader file '{File}' contains VirtualFunction declarations only; no assets were generated.` | nothing to generate, but not an error |
-| `DreamShader file '{File}' contains GraphFunction declarations only; no assets were generated.` | nothing to generate, but not an error |
-| `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` | `bForce == false` and the package metadata still matches |
-| `\nWarnings:\n` + the joined parser warnings | appended to any successful message when warnings were emitted |
+| `Generated {Kind} {ObjectPath} from {File}.` | the product was built. `{Kind}` is `Material`, `MaterialFunction`, `MaterialLayer`, `MaterialLayerBlend` or `MaterialInstance` |
+| `Skipped {ObjectPath} from {File}; source hash is unchanged (build key {BuildKey}).` | `bForce == false` and the asset's stamped build key still matches |
+| `Skipped {ObjectPath}; another editor owns this project's DreamShader bridge, and only that one writes generated assets to disk.` | a second editor on the same project |
+| `Compiled {File}; it declares no material and no exported function, so no asset was written.` | a source with no product |
+| `\nWarnings:\n` + one wire line per warning | appended when the run raised warnings: its own diagnostics, then what `RaiseGenerationWarning` collected |
 
 ### Failure
 
-| Message | Condition |
-| :-- | :-- |
-| `DreamShader header '{File}' does not generate assets directly. Recompile dependent .dsm or .dsf files instead.` | `CompileAssets` on a `.dsh` |
-| `DreamShader source '{File}' cannot generate a material asset directly.` | `CompileMaterial` on a `.dsh` or `.dsf` |
-| `{File}: .dsf files cannot define top-level Shader blocks.` | a `.dsf` containing a `Shader` block |
-| `{File}: This file does not define a top-level Shader block.` | `CompileMaterial` on a unit with no `Shader` |
-| `{File}: Outputs block is required.` | the `Shader` declared no output bindings |
-| `{File}: Base.FrontMaterial and Base.MaterialAttributes cannot be used by the same Shader.` | both bindings present |
-| `DreamShader file '{File}' did not contain any material, ShaderFunction, ShaderLayer, or ShaderLayerBlend assets to generate.` | `CompileAssets` produced nothing generatable |
-| `{File}: {InnerError}` | the generic wrapper for validation, backend-resolution, include-writing and save errors |
+The first error as `<file>(<line>,<column>): DSHnnnn: <message>`, then every other diagnostic on its
+own line. `Code` holds that first `DSHnnnn`. The codes are catalogued under
+[Diagnostics](../diagnostics/index.md); the emitter's own are `DSH8200`–`DSH8289`.
 
-The skip check that produces the `Skipped …` message returns `true` only when the asset exists, the
-new hash is non-empty, the package metadata `DreamShader.SourceFile` equals the project-relative
-source path (compared ignoring case) **and** `DreamShader.SourceHash` equals the new hash (compared
-case-sensitively). Material functions additionally require the asset's material-function usage to
-match the expected kind. See [Caching](../generation/caching.md).
-
-## Notes
-
-- The module declares no delegates, so a compile cannot be observed asynchronously. Poll the return
-  value, or read the bridge's diagnostics files.
-- `FDreamShaderCompileRequest` and `FDreamShaderCompileResult` carry `DREAMSHADERCOMPILER_API` even
-  though they are header-only aggregates. That is harmless and makes them safe to name across a DLL
-  boundary in any configuration.
-- An editor-private decompiler abstraction mirrors this design almost exactly — a request struct, a
-  result struct, an `IDreamShaderDecompiler` interface with two methods, and an
-  `FDreamShaderDecompileService`. It is **not** public and not linkable. See
-  [Decompiler](../tools/decompiler.md).
-- Nothing in this module reads project settings, touches the file system or logs. All of that
-  happens inside the implementation.
+The build key behind the `Skipped` line covers the preprocessed text of the file **and of every
+header**, the defines the preprocessor read, and — for a `.dsi` — the parent's object path. See
+[Caching](../generation/caching.md).
 
 ## Example
 
-Implementing the interface — for example, to route compiles through your own queue:
+Requesting a compile without linking the compiler module — this is all a runtime or a third-party
+editor module needs:
+
+```csharp
+// MyTooling.Build.cs
+PrivateDependencyModuleNames.AddRange(new[] { "Core", "DreamShader" });
+```
 
 ```cpp
-#include "DreamShaderCompileService.h"
-#include "DreamShaderCompilerInterfaces.h"
+#include "DreamShaderCompilerInterface.h"
 #include "DreamShaderModule.h"
 
 using namespace UE::DreamShader;
 
-class FLoggingCompiler final : public Compiler::IDreamShaderCompiler
+void CompileOne(const FString& InPath)
 {
-public:
-    explicit FLoggingCompiler(Compiler::IDreamShaderCompiler& InInner) : Inner(InInner) {}
-
-    virtual Compiler::FDreamShaderCompileResult CompileAssets(const Compiler::FDreamShaderCompileRequest& Request) override
+    IDreamShaderCompiler* Compiler = GetDreamShaderCompiler();
+    if (!Compiler)
     {
-        const double Start = FPlatformTime::Seconds();
-        Compiler::FDreamShaderCompileResult Result = Inner.CompileAssets(Request);
-        UE_LOG(LogDreamShader, Display, TEXT("CompileAssets(%s) -> %s in %.1f ms"),
-            *Request.SourceFilePath,
-            Result.bSucceeded ? TEXT("ok") : TEXT("failed"),
-            (FPlatformTime::Seconds() - Start) * 1000.0);
-        return Result;
+        return; // a game target, or the engine is shutting down
     }
 
-    virtual Compiler::FDreamShaderCompileResult CompileMaterial(const Compiler::FDreamShaderCompileRequest& Request) override
-    {
-        return Inner.CompileMaterial(Request);
-    }
+    FDreamShaderCompileRequest Request;
+    Request.SourceFilePath = InPath;
+    Request.ThinCustomPersistence = EThinCustomPersistence::Ephemeral;
 
-private:
-    Compiler::IDreamShaderCompiler& Inner;
-};
-```
-
-Driving it through the service — note that the service is a stack value built immediately before use,
-so the referenced compiler cannot dangle:
-
-```cpp
-void CompileOne(Compiler::IDreamShaderCompiler& InCompiler, const FString& InPath)
-{
-    Compiler::FDreamShaderCompileService Service(InCompiler);
-
-    const Compiler::FDreamShaderCompileResult Result =
-        Service.CompileAssets(NormalizeSourceFilePath(InPath), /*bForce*/ false,
-                              EThinCustomPersistence::Ephemeral);
-
-    UE_LOG(LogDreamShader, Display, TEXT("%s"), *Result.Message);
+    const FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);
+    UE_LOG(LogDreamShader, Display, TEXT("%s"), *Result.Message.ToString());
 }
 ```
 
-A typical successful message for a file declaring one function asset and one material:
+A typical successful message for a `.dss` that exports one function and one material:
 
 ```text
-Generated ShaderFunction /Game/Functions/F_Tint from I:/Project/DShader/Materials/M_Emissive.dsm.
-Generated DreamShader thin-custom material /Game/Materials/M_Emissive from I:/Project/DShader/Materials/M_Emissive.dsm.
+Generated MaterialFunction /Game/FX/MF_Tint.MF_Tint from I:/Project/DShader/FX/Glow.dss.
+Generated Material /Game/FX/M_Glow.M_Glow from I:/Project/DShader/FX/Glow.dss.
+```
 
-Warnings:
-No Outputs block was provided. Generation requires explicit material property bindings.
+Running the front half only, the way `dsc check` does:
+
+```cpp
+#include "DreamShaderCompilePipeline.h"      // module: DreamShaderCompiler (editor only)
+#include "DreamShaderCompilerDiagnostics.h"  // FormatLang2DiagnosticWireLine
+
+using namespace UE::DreamShader::Editor::Compiler;
+
+bool Check(const FString& InPath)
+{
+    FDreamShaderLang2PipelineOptions Options;
+    Options.bEmitAssets = false;
+
+    FDreamShaderLang2PipelineResult Run;
+    const bool bOk = RunDreamShaderLang2Pipeline(InPath, Options, Run);
+    for (const UE::DreamShader::Lang::FLangDiagnostic& Diagnostic : Run.Diagnostics.GetDiagnostics())
+    {
+        UE_LOG(LogTemp, Display, TEXT("%s"), *FormatLang2DiagnosticWireLine(Diagnostic, Run.SourceFilePath));
+    }
+    return bOk;
+}
 ```
 
 ## See also
 
 - [C++ API](index.md) — modules, headers, linkage, and build dependencies
-- [`DreamShaderParser.h`](parser.md) — the front end this module's implementations run first
-- [`DreamShaderTypes.h`](types.md) — the definition a compile produces from the source text
+- [`DreamShaderLang`](lang-module.md) — the front end and the IR this module runs and emits
 - [`DreamShaderModule.h`](dreamshader-module.md) — `NormalizeSourceFilePath` for building a request
-- [Generation](../generation/index.md) — the pipeline the shipped implementation runs
+- [Generation](../generation/index.md) — what an emitted asset looks like
 - [Ephemeral materials](../generation/ephemeral.md) — what the two states mean in practice
-- [Caching](../generation/caching.md) — the hash check `bForce` bypasses
+- [Caching](../generation/caching.md) — the build key `bForce` bypasses
 - [Commandlet](../tools/commandlet.md) — `-run=DreamShader`, the persisting caller
 - [Editor bridge](../tools/bridge.md) — the memory-only caller and the JSON diagnostics
-- [Preview](../tools/preview.md) — the forced memory-only material caller
-- [Decompiler](../tools/decompiler.md) — the mirrored, editor-private abstraction
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

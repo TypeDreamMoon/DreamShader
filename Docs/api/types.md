@@ -2,8 +2,13 @@
 
 > [DreamShader](../index.md) » [C++ API](index.md) » **DreamShaderTypes.h**
 
-The parsed-source data model: every struct and enum that [`FTextShaderParser::Parse`](parser.md)
-fills and the generator consumes.
+The 1.x source data model. Through 1.9.x, `FTextShaderParser::Parse` filled these structs and the
+generator built assets from them. **Since 2.0 nothing parses into them**: a 1.x source is read by the
+legacy front end into the language module's AST (see [the retired parser page](parser.md)). The
+header stays because the compiler's asset layer still speaks it — `BuildDefinitionForIRProduct` fills
+an `FTextShaderDefinition` (name, root, settings) from an IR product to resolve where an asset goes
+and how its material is configured — and because the VirtualFunction tools and `dump-graph` in the
+editor module still use a few of its structs and enums.
 
 Defined in header `DreamShaderTypes.h`.
 
@@ -574,12 +579,10 @@ its keys normalized this way before storage. Read those maps directly only throu
 
 ## Notes
 
-- **`FTextShaderDefinition::HLSL` and `FTextShaderMaterialFunctionDefinition::HLSL` are never
-  populated by the parser.** They are always empty in a definition returned by
-  [`Parse`](parser.md). Only `FTextShaderFunctionDefinition::HLSL` — the body of a `Function` or
-  `GraphFunction` — is filled. Code that reads either of the other two gets an empty string, and
-  code that writes to them is writing to a field the shipped generator reads on a fallback path
-  only.
+- **Most members are vestigial in 2.0.** The compiler fills `Name`, `Root` and `Settings` of an
+  `FTextShaderDefinition` (and the kind, name, root and settings of an
+  `FTextShaderMaterialFunctionDefinition`) and nothing else: properties, outputs, graph code and
+  layout travel as IR. Do not expect a definition obtained from the compiler to describe the source.
 - The structs have no reflection, no `Serialize`, and no `operator==`. They are not
   network-replicated, not saveable, and not comparable without writing a comparison yourself.
 - Type tokens arrive already normalized. `vec3` becomes `float3`, `mat4` becomes `float4x4`, and so
@@ -592,10 +595,9 @@ its keys normalized this way before storage. Read those maps directly only throu
 
 ## Example
 
-Reading a parsed definition without touching the generator:
+Reading a definition:
 
 ```cpp
-#include "DreamShaderParser.h"
 #include "DreamShaderTypes.h"
 
 using namespace UE::DreamShader;
@@ -636,7 +638,7 @@ LogDreamShader:   ShaderFunction 'Functions/F_Tint'
 
 ## See also
 
-- [`DreamShaderParser.h`](parser.md) — the function that fills every struct on this page
+- [`DreamShaderParser.h`](parser.md) — retired in 2.0; what reads a 1.x source now
 - [`DreamShaderModule.h`](dreamshader-module.md) — `SanitizeIdentifier` and the normalizer comparison
 - [`DreamShaderSettings.h`](settings.md) — `NormalizeMappingKey` and the enum-alias catalogues
 - [Properties](../language/properties.md) — the grammar behind `FTextShaderPropertyDefinition`
