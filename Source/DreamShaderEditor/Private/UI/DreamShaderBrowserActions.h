@@ -32,7 +32,8 @@ namespace UE::DreamShader::Editor::Private
 		static void OpenMaterial(const FBrowserEntry& Entry);
 
 		// Open the create-instance dialog on the entry's material, compiling it first if it has
-		// never been generated.
+		// never been generated: the `.dsi` dialog for a DreamShader product, the unmanaged-instance
+		// dialog for anything else.
 		static void CreateInstance(FDreamShaderBrowserModel& Model, const TSharedPtr<FBrowserEntry>& Entry);
 
 		// Write the entry's memory-only material (and its base) to disk. Returns the persisted

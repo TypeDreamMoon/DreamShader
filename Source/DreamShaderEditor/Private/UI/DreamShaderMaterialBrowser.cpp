@@ -82,11 +82,11 @@ namespace UE::DreamShader::Editor::Private
 			InSection.AddMenuEntry(
 				"DreamShader.CreateInstance",
 				LOCTEXT("CBCreateInstance", "Create DreamShader instance"),
-				LOCTEXT("CBCreateInstanceTip", "Create a material instance that shares this material's compiled shader map."),
+				LOCTEXT("CBCreateInstanceTipDsi", "Create a material instance of this material: a .dsi source file compiled into the instance when DreamShader generated the material, an ordinary instance asset otherwise."),
 				FSlateIcon(FAppStyle::GetAppStyleSetName(), "ClassIcon.MaterialInstanceConstant"),
 				FUIAction(FExecuteAction::CreateLambda([WeakMaterial = TWeakObjectPtr<UMaterialInterface>(Material)]()
 				{
-					if (UMaterialInterface* M = WeakMaterial.Get()) { OpenCreateInstanceDialog(M); }
+					if (UMaterialInterface* M = WeakMaterial.Get()) { OpenCreateInstanceDialogForParent(M); }
 				})));
 		}
 

@@ -1,21 +1,36 @@
 #include "UI/DreamShaderInstanceFactory.h"
 #include "DreamShaderDiagnostic.h"
 
+#include "Bridge/DreamShaderEditorBridge.h"
+#include "DreamShaderCompilerInterface.h"
 #include "DreamShaderMaterialInstance.h"
+#include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderCompilerService.h"
+#include "DreamShaderGeneratedAssets.h"
+// IsDreamShaderLang2Source: which stamped sources make a parent a DreamShader product.
+#include "DreamShaderCompilePipeline.h"
+#include "DreamShaderTextWireUtils.h"
+#include "Provenance/DreamShaderProvenanceActions.h"
+#include "UI/DreamShaderBrowserNewSource.h"
+#include "UI/DreamShaderGeneratedAssetPath.h"
+#include "Workspace/DreamShaderWorkspaceService.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
+#include "DesktopPlatformModule.h"
 #include "Dialogs/DlgPickPath.h"
 #include "Editor.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Framework/Notifications/NotificationManager.h"
+#include "HAL/FileManager.h"
+#include "IDesktopPlatform.h"
 #include "Widgets/Notifications/SNotificationList.h"
 #include "IAssetTools.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/PackageName.h"
+#include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
 #include "Styling/AppStyle.h"
 #include "Styling/SlateTypes.h"
@@ -49,45 +64,38 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-	}
-
-	bool IsMemoryOnlyMaterial(UMaterialInterface* Material)
-	{
-		UPackage* Package = Material ? Material->GetPackage() : nullptr;
-		return Package && Package->HasAnyPackageFlags(PKG_NewlyCreated);
-	}
-
-	UMaterialInterface* MaterializeDreamShaderMaterial(UMaterialInterface* Material, FString& OutError)
-	{
-		if (!IsMemoryOnlyMaterial(Material))
+		// The Parent a hand-written `.dsi` would spell: the package path when the object is named after its package (the
+		// usual asset), else the full object path.
+		FString MakeInstanceFactoryParentReference(const UMaterialInterface* Parent)
 		{
-			return Material;
+			const FString ObjectPath = Parent->GetPathName();
+			const FString PackageName = FPackageName::ObjectPathToPackageName(ObjectPath);
+			return FPackageName::GetShortName(PackageName).Equals(Parent->GetName(), ESearchCase::CaseSensitive) ? PackageName : ObjectPath;
 		}
 
-		UDreamShaderMaterialInstance* DreamInstance = Cast<UDreamShaderMaterialInstance>(Material);
-		if (!DreamInstance || DreamInstance->SourceFilePath.IsEmpty())
+		// Through the bridge when there is one, so the diagnostics store, diagnostics.json and the browser see the result;
+		// straight to the compiler otherwise. Forced: the file was written a moment ago and has to exist as an asset now.
+		bool CompileInstanceFactorySource(const FString& SourceFilePath, FString& OutMessage)
 		{
-			OutError = LOCTEXT("MaterializeNoSource", "This material is memory-only and has no DreamShader source file to materialize from.").ToString();
-			return nullptr;
+			if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge())
+			{
+				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage);
+			}
+			::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler();
+			if (!Compiler)
+			{
+				OutMessage = LOCTEXT("FactoryCompilerUnavailable", "The DreamShader compiler module is not available, so the instance was not compiled.").ToString();
+				return false;
+			}
+			::UE::DreamShader::FDreamShaderCompileRequest Request;
+			Request.SourceFilePath = SourceFilePath;
+			Request.bForce = true;
+			// A `.dsi` instance always saves; a memory-only parent is materialized by the compile itself (DSH8244).
+			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
+			const ::UE::DreamShader::FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);
+			OutMessage = ToInvariantWireString(Result.Message);
+			return Result.bSucceeded;
 		}
-
-		const FString ObjectPath = Material->GetPathName();
-		FString Message;
-		// false == do NOT allow Ephemeral: this IS the Materialize action (architecture plan v2 §5.1).
-		if (!FMaterialGenerator::GenerateAssetsFromFile(
-				DreamInstance->SourceFilePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ false))
-		{
-			OutError = FText::Format(LOCTEXT("FactoryMaterializeFailed", "Failed to materialize the material to disk: {0}"), FText::FromString(Message)).ToString();
-			return nullptr;
-		}
-
-		UMaterialInterface* Persisted = LoadObject<UMaterialInterface>(nullptr, *ObjectPath);
-		if (!Persisted)
-		{
-			OutError = FText::Format(LOCTEXT("FactoryReloadFailed", "Materialized the material but could not reload it at {0}."), FText::FromString(ObjectPath)).ToString();
-			return nullptr;
-		}
-		return Persisted;
 	}
 
 	void GetDefaultInstanceDestination(UMaterialInterface* Parent, FString& OutPackagePath, FString& OutAssetName)
@@ -363,6 +371,342 @@ namespace UE::DreamShader::Editor::Private
 			]);
 
 		GEditor->EditorAddModalWindow(Window);
+	}
+
+	bool IsDreamShaderInstanceSourceParent(UMaterialInterface* Parent)
+	{
+		if (!Parent || !HasDreamShaderSourceMetadata(Parent))
+		{
+			return false;
+		}
+		FString SourceFilePath;
+		FString Error;
+		return TryResolveGeneratedAssetSourceFile(Parent, SourceFilePath, Error)
+			&& ::UE::DreamShader::Editor::Compiler::IsDreamShaderLang2Source(SourceFilePath);
+	}
+
+	void GetDefaultInstanceSourceDestination(UMaterialInterface* Parent, FString& OutDirectory, FString& OutFileStem)
+	{
+		OutDirectory.Reset();
+		OutFileStem.Reset();
+		if (!Parent)
+		{
+			return;
+		}
+
+		// Beside the parent's source, in the same instance subfolder the unmanaged instance uses, so the `.dsi`'s asset (the
+		// folder's mirrored /Game path) lands where an unmanaged instance of the same parent would have.
+		FString SourceFilePath;
+		FString Error;
+		const bool bHasSource = TryResolveGeneratedAssetSourceFile(Parent, SourceFilePath, Error);
+		const ::UE::DreamShader::FDreamShaderSourceRoot* const Root = bHasSource ? ::UE::DreamShader::FindSourceRootForFile(SourceFilePath) : nullptr;
+		const FString BaseDirectory = (Root && Root->bWritable)
+			? FPaths::GetPath(SourceFilePath)
+			: ::UE::DreamShader::GetSourceShaderDirectory();
+		const FString Subfolder = GetDefault<UDreamShaderSettings>()->InstanceSubfolder;
+		OutDirectory = ::UE::DreamShader::NormalizeSourceFilePath(Subfolder.IsEmpty() ? BaseDirectory : FPaths::Combine(BaseDirectory, Subfolder));
+
+		const FString ParentLeaf = FPackageName::GetShortName(FPackageName::ObjectPathToPackageName(Parent->GetPathName()));
+		const FString BaseStem = FString::Printf(TEXT("MI_%s"), *::UE::DreamShader::SanitizeIdentifier(ParentLeaf)); // I18N-EXEMPT: file name
+		OutFileStem = BaseStem;
+		for (int32 Suffix = 2; IFileManager::Get().FileExists(*FPaths::Combine(OutDirectory, OutFileStem + TEXT(".dsi"))); ++Suffix)
+		{
+			OutFileStem = FString::Printf(TEXT("%s_%d"), *BaseStem, Suffix); // I18N-EXEMPT: file name
+		}
+	}
+
+	FCreateInstanceSourceResult CreateDreamShaderInstanceSource(
+		UMaterialInterface* Parent,
+		const FString& Directory,
+		const FString& FileStem,
+		bool bOpenAfterCreate)
+	{
+		FCreateInstanceSourceResult Result;
+		if (!Parent)
+		{
+			Result.Error = LOCTEXT("NoParent", "No parent material was provided.").ToString();
+			return Result;
+		}
+
+		FNewSourceRequest Request;
+		Request.Kind = EBrowserSourceKind::Instance;
+		Request.Directory = Directory;
+		Request.FileStem = FileStem;
+		Request.ParentReference = MakeInstanceFactoryParentReference(Parent);
+		if (!CreateNewSourceFile(Request, Result.SourceFilePath, Result.Error))
+		{
+			return Result;
+		}
+
+		FString CompileMessage;
+		if (!CompileInstanceFactorySource(Result.SourceFilePath, CompileMessage))
+		{
+			Result.Error = CompileMessage;
+			return Result;
+		}
+
+		// The asset the file built, by the same resolution the compile used.
+		FString ObjectPath;
+		FString SourceHash;
+		FText ResolveError;
+		if (ResolveGeneratedAssetProduct(Result.SourceFilePath, /*bMaterialOnly*/ false, ObjectPath, SourceHash, ResolveError))
+		{
+			Result.Instance = FindObject<UMaterialInstanceConstant>(nullptr, *ObjectPath);
+			if (!Result.Instance)
+			{
+				Result.Instance = LoadObject<UMaterialInstanceConstant>(nullptr, *ObjectPath);
+			}
+		}
+		if (!Result.Instance)
+		{
+			Result.Error = FText::Format(
+				LOCTEXT("FactoryInstanceSourceNoAsset", "'{0}' compiled, but no material instance was found at the asset path it builds."),
+				FText::FromString(Result.SourceFilePath)).ToString();
+			return Result;
+		}
+
+		if (bOpenAfterCreate && GEditor)
+		{
+			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Result.Instance);
+		}
+
+		Result.bSucceeded = true;
+		return Result;
+	}
+
+	void OpenCreateInstanceSourceDialog(UMaterialInterface* Parent)
+	{
+		if (!Parent)
+		{
+			NotifyInstance(LOCTEXT("SelectFirst", "Select a material to create an instance of."), false);
+			return;
+		}
+
+		FString DefaultDirectory;
+		FString DefaultStem;
+		GetDefaultInstanceSourceDestination(Parent, DefaultDirectory, DefaultStem);
+
+		TSharedRef<FString> StemValue = MakeShared<FString>(DefaultStem);
+		TSharedRef<FString> DirectoryValue = MakeShared<FString>(DefaultDirectory);
+		TSharedRef<bool> OpenAfterValue = MakeShared<bool>(true);
+		// Set by the secondary button; read once this modal has closed, so the unmanaged dialog never opens on top of it.
+		TSharedRef<bool> OpenUnmanagedValue = MakeShared<bool>(false);
+		const TWeakObjectPtr<UMaterialInterface> WeakParent(Parent);
+
+		TSharedRef<SEditableTextBox> DirectoryBox = SNew(SEditableTextBox)
+			.Text(FText::FromString(*DirectoryValue))
+			.OnTextChanged_Lambda([DirectoryValue](const FText& NewText) { *DirectoryValue = NewText.ToString(); });
+
+		TSharedRef<SWindow> Window = SNew(SWindow)
+			.Title(LOCTEXT("CreateInstanceSourceTitle", "Create material instance (.dsi)"))
+			.ClientSize(FVector2D(560.0f, 270.0f))
+			.SupportsMinimize(false)
+			.SupportsMaximize(false);
+
+		const auto CloseWindow = [Window]()
+		{
+			Window->RequestDestroyWindow();
+		};
+
+		Window->SetContent(
+			SNew(SBorder)
+			.BorderImage(FAppStyle::Get().GetBrush("Brushes.Panel"))
+			.Padding(FMargin(16.0f))
+			[
+				SNew(SVerticalBox)
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SGridPanel)
+					.FillColumn(1, 1.0f)
+
+					+ SGridPanel::Slot(0, 0).Padding(4.0f).VAlign(VAlign_Center)
+					[
+						SNew(STextBlock).Text(LOCTEXT("InstanceSourceParentLabel", "Parent"))
+					]
+					+ SGridPanel::Slot(1, 0).Padding(4.0f).VAlign(VAlign_Center)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(MakeInstanceFactoryParentReference(Parent)))
+						.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+					]
+
+					+ SGridPanel::Slot(0, 1).Padding(4.0f).VAlign(VAlign_Center)
+					[
+						SNew(STextBlock).Text(LOCTEXT("InstanceSourceNameLabel", "Name"))
+					]
+					+ SGridPanel::Slot(1, 1).Padding(4.0f)
+					[
+						SNew(SEditableTextBox)
+						.Text(FText::FromString(*StemValue))
+						.SelectAllTextWhenFocused(true)
+						.OnTextChanged_Lambda([StemValue](const FText& NewText) { *StemValue = NewText.ToString().TrimStartAndEnd(); })
+					]
+
+					+ SGridPanel::Slot(0, 2).Padding(4.0f).VAlign(VAlign_Center)
+					[
+						SNew(STextBlock).Text(LOCTEXT("InstanceSourceFolderLabel", "Source folder"))
+					]
+					+ SGridPanel::Slot(1, 2).Padding(4.0f)
+					[
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot().FillWidth(1.0f)
+						[
+							DirectoryBox
+						]
+						+ SHorizontalBox::Slot().AutoWidth().Padding(4.0f, 0.0f, 0.0f, 0.0f)
+						[
+							SNew(SButton)
+							.Text(LOCTEXT("InstanceSourceBrowse", "Browse..."))
+							.OnClicked_Lambda([DirectoryValue, DirectoryBox, Window]()
+							{
+								IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+								FString Chosen;
+								if (DesktopPlatform && DesktopPlatform->OpenDirectoryDialog(
+										FSlateApplication::Get().FindBestParentWindowHandleForDialogs(Window),
+										LOCTEXT("InstanceSourcePickFolder", "Choose a source folder").ToString(),
+										*DirectoryValue,
+										Chosen))
+								{
+									*DirectoryValue = ::UE::DreamShader::NormalizeSourceFilePath(Chosen);
+									DirectoryBox->SetText(FText::FromString(*DirectoryValue));
+								}
+								return FReply::Handled();
+							})
+						]
+					]
+
+					+ SGridPanel::Slot(1, 3).Padding(4.0f)
+					[
+						SNew(SCheckBox)
+						.IsChecked(ECheckBoxState::Checked)
+						.OnCheckStateChanged_Lambda([OpenAfterValue](ECheckBoxState State) { *OpenAfterValue = (State == ECheckBoxState::Checked); })
+						[
+							SNew(STextBlock).Text(LOCTEXT("InstanceSourceOpenAfter", "Open the instance after creating"))
+						]
+					]
+				]
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(4.0f, 6.0f, 4.0f, 0.0f)
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("InstanceSourceHint", "A .dsi source is written into the folder and compiled now. Its asset lands at the folder's /Game path, and every value you tune there can be adopted back into the file."))
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+					.AutoWrapText(true)
+				]
+
+				+ SVerticalBox::Slot()
+				.FillHeight(1.0f)
+				[
+					SNew(SSpacer)
+				]
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SHorizontalBox)
+
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.Padding(4.0f, 0.0f)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("InstanceSourceUnmanaged", "Unmanaged instance..."))
+						.ToolTipText(LOCTEXT("InstanceSourceUnmanagedTip", "Create an ordinary material instance asset instead, with no source file describing it."))
+						.OnClicked_Lambda([OpenUnmanagedValue, CloseWindow]()
+						{
+							*OpenUnmanagedValue = true;
+							CloseWindow();
+							return FReply::Handled();
+						})
+					]
+
+					+ SHorizontalBox::Slot()
+					.FillWidth(1.0f)
+					[
+						SNew(SSpacer)
+					]
+
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.Padding(4.0f, 0.0f)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("Cancel", "Cancel"))
+						.OnClicked_Lambda([CloseWindow]() { CloseWindow(); return FReply::Handled(); })
+					]
+
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.Padding(4.0f, 0.0f)
+					[
+						SNew(SButton)
+						.ButtonStyle(&FAppStyle::Get().GetWidgetStyle<FButtonStyle>("PrimaryButton"))
+						.Text(LOCTEXT("InstanceSourceCreate", "Create .dsi"))
+						.OnClicked_Lambda([WeakParent, StemValue, DirectoryValue, OpenAfterValue, CloseWindow]()
+						{
+							UMaterialInterface* ParentPtr = WeakParent.Get();
+							if (!ParentPtr)
+							{
+								NotifyInstance(LOCTEXT("ParentGone", "The parent material is no longer available."), false);
+								CloseWindow();
+								return FReply::Handled();
+							}
+							const FCreateInstanceSourceResult Outcome = CreateDreamShaderInstanceSource(
+								ParentPtr, *DirectoryValue, *StemValue, *OpenAfterValue);
+							if (Outcome.bSucceeded)
+							{
+								NotifyInstance(
+									FText::Format(LOCTEXT("InstanceSourceCreated", "Created {0}"), FText::FromString(FPaths::GetCleanFilename(Outcome.SourceFilePath))),
+									true);
+								CloseWindow();
+							}
+							else if (!Outcome.SourceFilePath.IsEmpty())
+							{
+								// The file exists and did not compile: it is the thing to fix now, so the dialog goes and the source opens.
+								NotifyInstance(
+									FText::Format(
+										LOCTEXT("InstanceSourceCompileFailed", "Created {0}, but it did not compile: {1}"),
+										FText::FromString(FPaths::GetCleanFilename(Outcome.SourceFilePath)),
+										FText::FromString(Outcome.Error)),
+									false);
+								CloseWindow();
+								FDreamShaderEditorLaunchUtils::LaunchTextFileInPreferredEditor(Outcome.SourceFilePath);
+							}
+							else
+							{
+								NotifyInstance(FText::FromString(Outcome.Error), false);
+							}
+							return FReply::Handled();
+						})
+					]
+				]
+			]);
+
+		GEditor->EditorAddModalWindow(Window);
+
+		if (*OpenUnmanagedValue)
+		{
+			if (UMaterialInterface* ParentPtr = WeakParent.Get())
+			{
+				OpenCreateInstanceDialog(ParentPtr);
+			}
+		}
+	}
+
+	void OpenCreateInstanceDialogForParent(UMaterialInterface* Parent)
+	{
+		if (IsDreamShaderInstanceSourceParent(Parent))
+		{
+			OpenCreateInstanceSourceDialog(Parent);
+		}
+		else
+		{
+			OpenCreateInstanceDialog(Parent);
+		}
 	}
 }
 

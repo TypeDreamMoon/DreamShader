@@ -32,10 +32,12 @@ namespace UE::DreamShader::Editor::Private
 	{
 		switch (Kind)
 		{
+		case EBrowserSourceKind::Material: return TEXT("dsm");
 		case EBrowserSourceKind::Function: return TEXT("dsf");
 		case EBrowserSourceKind::Header: return TEXT("dsh");
-		default: return TEXT("dsm");
+		case EBrowserSourceKind::Instance: return TEXT("dsi");
 		}
+		return TEXT("dsm");
 	}
 
 	namespace
@@ -44,10 +46,12 @@ namespace UE::DreamShader::Editor::Private
 		{
 			switch (Kind)
 			{
+			case EBrowserSourceKind::Material: return TEXT("NewMaterial.dsm");
 			case EBrowserSourceKind::Function: return TEXT("NewFunction.dsf");
 			case EBrowserSourceKind::Header: return TEXT("NewHeader.dsh");
-			default: return TEXT("NewMaterial.dsm");
+			case EBrowserSourceKind::Instance: return TEXT("NewInstance.dsi");
 			}
+			return TEXT("NewMaterial.dsm");
 		}
 
 		FString GetTemplatesDirectory()
@@ -92,6 +96,14 @@ namespace UE::DreamShader::Editor::Private
 			}
 			return Stem;
 		}
+
+		// A Parent value as the pragma quotes it: trimmed, and without quotes of its own, which would end the string early.
+		FString MakeNewSourceParentText(const FString& ParentReference)
+		{
+			FString Text = ParentReference.TrimStartAndEnd();
+			Text.ReplaceInline(TEXT("\""), TEXT(""));
+			return Text;
+		}
 	}
 
 	bool RenderNewSourceTemplate(const FNewSourceRequest& Request, FString& OutText, FString& OutError)
@@ -109,6 +121,7 @@ namespace UE::DreamShader::Editor::Private
 		OutText.ReplaceInline(TEXT("{NAME}"), *BlockName);
 		OutText.ReplaceInline(TEXT("{FILENAME}"), *FileName);
 		OutText.ReplaceInline(TEXT("{ASSETPATH}"), *(TEXT("/Game/") + BlockName));
+		OutText.ReplaceInline(TEXT("{PARENT}"), *MakeNewSourceParentText(Request.ParentReference));
 		return true;
 	}
 
@@ -117,6 +130,12 @@ namespace UE::DreamShader::Editor::Private
 		if (!IsValidStem(Request.FileStem))
 		{
 			OutError = LOCTEXT("NewSourceBadName", "The name must be an identifier: letters, digits and underscores, not starting with a digit.").ToString();
+			return false;
+		}
+		if (Request.Kind == EBrowserSourceKind::Instance && MakeNewSourceParentText(Request.ParentReference).IsEmpty())
+		{
+			// A `.dsi` without a Parent fails its first compile (DSH7252); saying so here costs the user nothing.
+			OutError = LOCTEXT("NewSourceNeedsParent", "An instance needs a parent: the asset path of a material, or the name of a product under the same source root.").ToString();
 			return false;
 		}
 		const FString Directory = UE::DreamShader::NormalizeSourceFilePath(Request.Directory);
@@ -148,7 +167,7 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	void OpenNewSourceDialog(EBrowserSourceKind Kind, const FString& DefaultDirectory, TFunction<void(const FString&)> OnCreated)
+	void OpenNewSourceDialog(EBrowserSourceKind Kind, const FString& DefaultDirectory, TFunction<void(const FString&)> OnCreated, const FString& DefaultParent)
 	{
 		// Default into the project root when the caller's directory is not writable (a plugin's).
 		FString StartDirectory = UE::DreamShader::NormalizeSourceFilePath(DefaultDirectory);
@@ -169,14 +188,20 @@ namespace UE::DreamShader::Editor::Private
 			Title = LOCTEXT("NewHeaderTitle", "New header (.dsh)");
 			DefaultStem = INVTEXT("Common");
 			break;
-		default:
+		case EBrowserSourceKind::Instance:
+			Title = LOCTEXT("NewInstanceTitle", "New material instance (.dsi)");
+			DefaultStem = INVTEXT("MI_NewInstance");
+			break;
+		case EBrowserSourceKind::Material:
 			Title = LOCTEXT("NewMaterialTitle", "New material (.dsm)");
 			DefaultStem = INVTEXT("M_NewMaterial");
 			break;
 		}
+		const bool bInstance = Kind == EBrowserSourceKind::Instance;
 
 		TSharedRef<FString> StemValue = MakeShared<FString>(DefaultStem.ToString());
 		TSharedRef<FString> DirectoryValue = MakeShared<FString>(StartDirectory);
+		TSharedRef<FString> ParentValue = MakeShared<FString>(DefaultParent.TrimStartAndEnd());
 
 		TSharedRef<SEditableTextBox> DirectoryBox = SNew(SEditableTextBox)
 			.Text(FText::FromString(*DirectoryValue))
@@ -184,10 +209,73 @@ namespace UE::DreamShader::Editor::Private
 
 		TSharedRef<SWindow> Window = SNew(SWindow)
 			.Title(Title)
-			.ClientSize(FVector2D(520.0f, 200.0f))
+			.ClientSize(FVector2D(520.0f, bInstance ? 240.0f : 200.0f))
 			.SupportsMinimize(false)
 			.SupportsMaximize(false);
 		const auto CloseWindow = [Window]() { Window->RequestDestroyWindow(); };
+
+		TSharedRef<SGridPanel> Fields = SNew(SGridPanel)
+			.FillColumn(1, 1.0f)
+
+			+ SGridPanel::Slot(0, 0).Padding(4.0f).VAlign(VAlign_Center)
+			[
+				SNew(STextBlock).Text(LOCTEXT("NewSourceNameLabel", "Name"))
+			]
+			+ SGridPanel::Slot(1, 0).Padding(4.0f)
+			[
+				SNew(SEditableTextBox)
+				.Text(DefaultStem)
+				.SelectAllTextWhenFocused(true)
+				.OnTextChanged_Lambda([StemValue](const FText& NewText) { *StemValue = NewText.ToString().TrimStartAndEnd(); })
+			]
+
+			+ SGridPanel::Slot(0, 1).Padding(4.0f).VAlign(VAlign_Center)
+			[
+				SNew(STextBlock).Text(LOCTEXT("NewSourceFolderLabel", "Folder"))
+			]
+			+ SGridPanel::Slot(1, 1).Padding(4.0f)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot().FillWidth(1.0f)
+				[
+					DirectoryBox
+				]
+				+ SHorizontalBox::Slot().AutoWidth().Padding(4.0f, 0.0f, 0.0f, 0.0f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("NewSourceBrowse", "Browse..."))
+					.OnClicked_Lambda([DirectoryValue, DirectoryBox, Window]()
+					{
+						IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+						FString Chosen;
+						if (DesktopPlatform && DesktopPlatform->OpenDirectoryDialog(
+								FSlateApplication::Get().FindBestParentWindowHandleForDialogs(Window),
+								LOCTEXT("NewSourcePickFolder", "Choose a source folder").ToString(),
+								*DirectoryValue,
+								Chosen))
+						{
+							*DirectoryValue = UE::DreamShader::NormalizeSourceFilePath(Chosen);
+							DirectoryBox->SetText(FText::FromString(*DirectoryValue));
+						}
+						return FReply::Handled();
+					})
+				]
+			];
+
+		if (bInstance)
+		{
+			Fields->AddSlot(0, 2).Padding(4.0f).VAlign(VAlign_Center)
+			[
+				SNew(STextBlock).Text(LOCTEXT("NewSourceParentLabel", "Parent"))
+			];
+			Fields->AddSlot(1, 2).Padding(4.0f)
+			[
+				SNew(SEditableTextBox)
+				.Text(FText::FromString(*ParentValue))
+				.HintText(LOCTEXT("NewSourceParentHint", "/Game/Materials/M_Base, or the name of a product"))
+				.OnTextChanged_Lambda([ParentValue](const FText& NewText) { *ParentValue = NewText.ToString().TrimStartAndEnd(); })
+			];
+		}
 
 		Window->SetContent(
 			SNew(SBorder)
@@ -198,59 +286,15 @@ namespace UE::DreamShader::Editor::Private
 
 				+ SVerticalBox::Slot().AutoHeight()
 				[
-					SNew(SGridPanel)
-					.FillColumn(1, 1.0f)
-
-					+ SGridPanel::Slot(0, 0).Padding(4.0f).VAlign(VAlign_Center)
-					[
-						SNew(STextBlock).Text(LOCTEXT("NewSourceNameLabel", "Name"))
-					]
-					+ SGridPanel::Slot(1, 0).Padding(4.0f)
-					[
-						SNew(SEditableTextBox)
-						.Text(DefaultStem)
-						.SelectAllTextWhenFocused(true)
-						.OnTextChanged_Lambda([StemValue](const FText& NewText) { *StemValue = NewText.ToString().TrimStartAndEnd(); })
-					]
-
-					+ SGridPanel::Slot(0, 1).Padding(4.0f).VAlign(VAlign_Center)
-					[
-						SNew(STextBlock).Text(LOCTEXT("NewSourceFolderLabel", "Folder"))
-					]
-					+ SGridPanel::Slot(1, 1).Padding(4.0f)
-					[
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().FillWidth(1.0f)
-						[
-							DirectoryBox
-						]
-						+ SHorizontalBox::Slot().AutoWidth().Padding(4.0f, 0.0f, 0.0f, 0.0f)
-						[
-							SNew(SButton)
-							.Text(LOCTEXT("NewSourceBrowse", "Browse..."))
-							.OnClicked_Lambda([DirectoryValue, DirectoryBox, Window]()
-							{
-								IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
-								FString Chosen;
-								if (DesktopPlatform && DesktopPlatform->OpenDirectoryDialog(
-										FSlateApplication::Get().FindBestParentWindowHandleForDialogs(Window),
-										LOCTEXT("NewSourcePickFolder", "Choose a source folder").ToString(),
-										*DirectoryValue,
-										Chosen))
-								{
-									*DirectoryValue = UE::DreamShader::NormalizeSourceFilePath(Chosen);
-									DirectoryBox->SetText(FText::FromString(*DirectoryValue));
-								}
-								return FReply::Handled();
-							})
-						]
-					]
+					Fields
 				]
 
 				+ SVerticalBox::Slot().AutoHeight().Padding(4.0f, 6.0f, 4.0f, 0.0f)
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("NewSourceHint", "The file is written from the plugin's template and compiled by the watcher on save."))
+					.Text(bInstance
+						? LOCTEXT("NewSourceInstanceHint", "The file is written from the plugin's template and compiled by the watcher on save. Its asset lands at the folder's /Game path; add one uniform per parameter to override.")
+						: LOCTEXT("NewSourceHint", "The file is written from the plugin's template and compiled by the watcher on save."))
 					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 					.AutoWrapText(true)
 				]
@@ -274,12 +318,13 @@ namespace UE::DreamShader::Editor::Private
 						SNew(SButton)
 						.ButtonStyle(&FAppStyle::Get().GetWidgetStyle<FButtonStyle>("PrimaryButton"))
 						.Text(LOCTEXT("NewSourceCreate", "Create"))
-						.OnClicked_Lambda([Kind, StemValue, DirectoryValue, OnCreated, CloseWindow]()
+						.OnClicked_Lambda([Kind, StemValue, DirectoryValue, ParentValue, OnCreated, CloseWindow]()
 						{
 							FNewSourceRequest Request;
 							Request.Kind = Kind;
 							Request.Directory = *DirectoryValue;
 							Request.FileStem = *StemValue;
+							Request.ParentReference = *ParentValue;
 							FString FilePath;
 							FString Error;
 							if (CreateNewSourceFile(Request, FilePath, Error))

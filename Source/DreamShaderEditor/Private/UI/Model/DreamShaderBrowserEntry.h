@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // The Material Content Browser's unit of display: one entry per thing the browser can show, with a
-// source half (a .dsm/.dsf/.dsh on disk) and an asset half (a UMaterialInterface / UMaterialFunction
+// source half (a .dss/.dsi/.dsm/.dsf/.dsh on disk) and an asset half (a UMaterialInterface / UMaterialFunction
 // in the project), either of which may be absent. A source that has never been compiled has no asset
 // half; a hand-authored material DreamShader never generated has no source half; a generated material
 // has both, joined through the DreamShader.SourceFile stamp. The inspector renders whichever halves are
@@ -12,7 +12,7 @@
 #include "AssetRegistry/AssetData.h"
 #include "CoreMinimal.h"
 #include "Diagnostics/DreamShaderDiagnosticsStore.h"
-#include "MaterialAssetGeneration/DreamShaderGeneratedAssetDigest.h"
+#include "DreamShaderGeneratedAssetDigest.h"
 
 class UMaterialInterface;
 class UObject;
@@ -21,9 +21,10 @@ namespace UE::DreamShader::Editor::Private
 {
 	enum class EBrowserSourceKind : uint8
 	{
-		Material, // .dsm
+		Material, // .dsm, .dss
 		Function, // .dsf
 		Header,   // .dsh
+		Instance, // .dsi: one material instance, compiled like a material (never a library)
 	};
 
 	// The source half's compile status. Library kinds (.dsf / .dsh) carry `Library`; the other values
@@ -64,7 +65,7 @@ namespace UE::DreamShader::Editor::Private
 		// For materials: the headers and functions this file imports, transitively (absolute paths).
 		TArray<FString> Imports;
 
-		bool IsLibrary() const { return Kind != EBrowserSourceKind::Material; }
+		bool IsLibrary() const { return Kind == EBrowserSourceKind::Function || Kind == EBrowserSourceKind::Header; }
 	};
 
 	struct FBrowserAssetInfo

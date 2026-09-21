@@ -372,7 +372,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			ActionBox->AddSlot()[ MakeActionButton(
 				LOCTEXT("CreateInstanceBtn", "Create instance"),
-				LOCTEXT("PInstTip", "Create a material instance of this material."),
+				LOCTEXT("PInstTipDsi", "Write a .dsi instance of this material and compile it (an ordinary material instance when DreamShader did not generate the material)."),
 				[WeakModel, EntryRef]()
 				{
 					if (TSharedPtr<FDreamShaderBrowserModel> M = WeakModel.Pin()) { FDreamShaderBrowserActions::CreateInstance(*M, EntryRef); }
@@ -420,7 +420,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			ActionBox->AddSlot()[ MakeActionButton(
 				LOCTEXT("POpenSrc", "Open source"),
-				LOCTEXT("POpenSrcTip", "Open the .dsm/.dsf in your preferred editor."),
+				LOCTEXT("POpenSrcTipAny", "Open the source file in your preferred editor."),
 				[EntryRef]() { FDreamShaderBrowserActions::OpenSource(*EntryRef); }) ];
 		}
 		return ActionBox;
@@ -572,7 +572,7 @@ namespace UE::DreamShader::Editor::Private
 			Explanation = LOCTEXT("ProvenanceExplainGenerated", "The asset holds exactly what DreamShader last generated into it. A source change rebuilds it freely.");
 			break;
 		case EDreamShaderDigestState::Tweaked:
-			Explanation = LOCTEXT("ProvenanceExplainTweaked", "The generated content still matches, and you have set parameter overrides on the instance. Rebuilds go ahead as normal and put your values back; a parameter the source no longer declares is dropped and named in the log.");
+			Explanation = LOCTEXT("ProvenanceExplainTweakedActions", "The generated content still matches, and you have set parameter overrides on the instance. Rebuilds go ahead as normal and put your values back; a parameter the source no longer declares is dropped and named in the log. Adopt Tweaks writes the values into the source as defaults, and Extract Tweaks moves them into a .dsi instance.");
 			break;
 		case EDreamShaderDigestState::Diverged:
 			Explanation = LOCTEXT("ProvenanceExplainDiverged", "The asset was edited by hand since it was generated, so a rebuild is refused to protect those edits. Decide which copy is the truth.");
@@ -594,8 +594,8 @@ namespace UE::DreamShader::Editor::Private
 			{
 				const TWeakObjectPtr<UMaterial> WeakMaterial(Material);
 				Buttons->AddSlot()[ MakeActionButton(
-					LOCTEXT("ExportDsmBtn", "Export DSM"),
-					LOCTEXT("ExportDsmTip", "Decompile this material into a .dsm source file under the project's DShader root."),
+					LOCTEXT("ExportDssMaterialBtn", "Export .dss"),
+					LOCTEXT("ExportDssMaterialTip", "Decompile this material into a .dss source file under the project's DShader root."),
 					[WeakMaterial]()
 					{
 						if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge()) { Bridge->ExportMaterialToDreamShaderFile(WeakMaterial); }
@@ -605,12 +605,26 @@ namespace UE::DreamShader::Editor::Private
 			{
 				const TWeakObjectPtr<UMaterialFunction> WeakFunction(Function);
 				Buttons->AddSlot()[ MakeActionButton(
-					LOCTEXT("ExportDsfBtn", "Export DSF"),
-					LOCTEXT("ExportDsfTip", "Decompile this material function into a .dsf source file under the project's DShader root."),
+					LOCTEXT("ExportDssFunctionBtn", "Export .dss"),
+					LOCTEXT("ExportDssFunctionTip", "Decompile this material function into a .dss source file under the project's DShader root."),
 					[WeakFunction]()
 					{
 						if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge()) { Bridge->ExportMaterialFunctionToDreamShaderFile(WeakFunction); }
 					}) ];
+			}
+			else if (UMaterialInstanceConstant* InstanceConstant = Cast<UMaterialInstanceConstant>(Object))
+			{
+				if (!InstanceConstant->IsA<UDreamShaderMaterialInstance>())
+				{
+					const TWeakObjectPtr<UMaterialInstanceConstant> WeakInstance(InstanceConstant);
+					Buttons->AddSlot()[ MakeActionButton(
+						LOCTEXT("ExportDsiBtn", "Export .dsi"),
+						LOCTEXT("ExportDsiTip", "Decompile this material instance into a .dsi source file: its parent, its instance settings and every parameter that differs from the parent."),
+						[WeakInstance]()
+						{
+							if (FDreamShaderEditorBridge* Bridge = GetDreamShaderEditorBridge()) { Bridge->ExportMaterialInstanceToDreamShaderFile(WeakInstance); }
+						}) ];
+				}
 			}
 		}
 		else
@@ -640,6 +654,25 @@ namespace UE::DreamShader::Editor::Private
 						if (TSharedPtr<FDreamShaderBrowserModel> M = WeakModel.Pin()) { M->RefreshStatuses(); }
 					}
 				}) ];
+
+			// The two answers to a Tweaked ThinCustom instance (CONTRACT section 2.3). Adopt Tweaks needs a writable `.dss`;
+			// Extract Tweaks writes a new `.dsi` and falls back to the project root for it.
+			if (Asset.Provenance == EDreamShaderDigestState::Tweaked && IsGeneratedInstanceTweaked(FindAsset()))
+			{
+				const bool bCanAdoptTweaks = CanAdoptTweaksIntoSourceDefaults(FindAsset());
+				TSharedRef<SWidget> AdoptTweaksButton = MakeActionButton(
+					LOCTEXT("AdoptTweaksBtn", "Adopt Tweaks as Source Defaults"),
+					bCanAdoptTweaks
+						? LOCTEXT("AdoptTweaksTip", "Write this instance's parameter overrides into the .dss as the defaults of its uniforms, then clear them from the instance. The source is backed up first.")
+						: LOCTEXT("AdoptTweaksUnavailableTip", "Only a .dss source under a writable root takes tweaks as uniform defaults; use Extract Tweaks to .dsi instead."),
+					[FindAsset]() { if (UObject* Object = FindAsset()) { AdoptTweaksIntoSourceDefaults(Object); } });
+				AdoptTweaksButton->SetEnabled(bCanAdoptTweaks);
+				Buttons->AddSlot()[ AdoptTweaksButton ];
+				Buttons->AddSlot()[ MakeActionButton(
+					LOCTEXT("ExtractTweaksBtn", "Extract Tweaks to .dsi"),
+					LOCTEXT("ExtractTweaksTip", "Write this instance's parameter overrides into a new .dsi whose parent is this material, compile it, and clear the overrides from this instance."),
+					[FindAsset]() { if (UObject* Object = FindAsset()) { ExtractTweaksToInstanceSource(Object); } }) ];
+			}
 		}
 
 		return SNew(SVerticalBox)

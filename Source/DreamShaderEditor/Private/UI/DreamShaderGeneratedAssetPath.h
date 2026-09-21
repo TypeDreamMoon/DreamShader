@@ -4,11 +4,21 @@
 
 namespace UE::DreamShader::Editor::Private
 {
-	// Resolves the /Game object path a .dsm/.dsf source file compiles to, by reading + parsing the
-	// source's top-level Shader/Function block Name+Root (imports stripped) and running it through
-	// ResolveDreamShaderAssetDestination -- the same recipe the compiler and preview renderer use. This
-	// is the source -> generated-asset link the Material Content Browser needs to compute per-file status
-	// (never-compiled vs up-to-date vs stale) without an on-disk registry. Returns false with OutError if
-	// the file can't be read, doesn't parse, or declares no top-level block.
-	bool ResolveGeneratedAssetObjectPath(const FString& SourceFilePath, FString& OutObjectPath, FString& OutError);
+	/**
+	 * The generated asset a source file stands for, and the build key its products are stamped with, found without
+	 * building anything. Product resolution (ResolveDreamShaderSourceProducts) answers it for every compilable kind
+	 * (`.dss`, `.dsi`, `.dsm`, `.dsf`) with the front end, binder, IR builder, destination rules and define set a
+	 * compile uses, so the path is the one a build writes and the key the one it stamps.
+	 *
+	 * "The asset" is the material product when there is one, else the instance. Unless bMaterialOnly is set (the
+	 * preview, which renders a material), a source with neither answers its first product -- a function file's first
+	 * export. Returns false with OutError, in the wire form of the first diagnostic, when the source does not get as far
+	 * as its products or declares none that qualifies.
+	 */
+	bool ResolveGeneratedAssetProduct(
+		const FString& SourceFilePath,
+		bool bMaterialOnly,
+		FString& OutObjectPath,
+		FString& OutSourceHash,
+		FText& OutError);
 }

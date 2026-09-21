@@ -4,7 +4,7 @@
 
 #include "Bridge/DreamShaderEditorBridge.h"
 #include "DreamShaderModule.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "DreamShaderCompilerService.h"
 #include "UI/DreamShaderInstanceFactory.h"
 #include "UI/Model/DreamShaderBrowserModel.h"
 #include "Workspace/DreamShaderWorkspaceService.h"
@@ -32,8 +32,19 @@ namespace UE::DreamShader::Editor::Private
 			{
 				return Bridge->CompileSourceFile(SourceFilePath, /*bForce*/ true, OutMessage);
 			}
-			return UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(
-				SourceFilePath, OutMessage, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+			::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler();
+			if (!Compiler)
+			{
+				OutMessage = LOCTEXT("CompilerUnavailable", "The DreamShader compiler module is not available, so nothing was compiled.").ToString();
+				return false;
+			}
+			::UE::DreamShader::FDreamShaderCompileRequest Request;
+			Request.SourceFilePath = SourceFilePath;
+			Request.bForce = true;
+			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
+			const ::UE::DreamShader::FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);
+			OutMessage = Result.Message.ToString();
+			return Result.bSucceeded;
 		}
 	}
 
@@ -148,7 +159,8 @@ namespace UE::DreamShader::Editor::Private
 
 		if (Material)
 		{
-			OpenCreateInstanceDialog(Material);
+			// A `.dsi` for a DreamShader product, an ordinary instance asset for anything else.
+			OpenCreateInstanceDialogForParent(Material);
 		}
 		else
 		{

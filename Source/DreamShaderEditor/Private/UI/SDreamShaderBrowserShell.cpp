@@ -25,8 +25,10 @@
 #include "HAL/PlatformApplicationMisc.h"
 #include "IContentBrowserSingleton.h"
 #include "ISettingsModule.h"
+#include "DreamShaderMaterialInstance.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialFunction.h"
+#include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/PackageName.h"
 #include "Modules/ModuleManager.h"
@@ -366,6 +368,23 @@ namespace UE::DreamShader::Editor::Private
 				// Into the folder the navigation tree points at when it is a source folder; the
 				// dialog falls back to the project root otherwise.
 				const FString Directory = SharedState->Scope.Mode == EDreamShaderBrowserViewMode::Sources ? SharedState->Scope.SourceDirectory : FString();
+
+				// An instance starts out parented to the selection, spelled the way a hand-written Parent is: the
+				// package path when the asset is named after its package.
+				FString DefaultParent;
+				if (Kind == EBrowserSourceKind::Instance)
+				{
+					const TSharedPtr<FBrowserEntry> Selected = FirstSelected();
+					const FString ObjectPath = (Selected.IsValid() && !Selected->IsLibrary()) ? Selected->GetObjectPath() : FString();
+					if (!ObjectPath.IsEmpty())
+					{
+						const FString PackageName = FPackageName::ObjectPathToPackageName(ObjectPath);
+						DefaultParent = FPackageName::GetShortName(PackageName).Equals(FPackageName::ObjectPathToObjectName(ObjectPath), ESearchCase::CaseSensitive)
+							? PackageName
+							: ObjectPath;
+					}
+				}
+
 				const TWeakPtr<SDreamShaderBrowserShell> WeakThis = SharedThis(this);
 				OpenNewSourceDialog(Kind, Directory, [WeakThis](const FString& CreatedPath)
 				{
@@ -376,12 +395,13 @@ namespace UE::DreamShader::Editor::Private
 						This->Model->RefreshAll();
 						This->ShowSource(CreatedPath);
 					}
-				});
+				}, DefaultParent);
 			})));
 		};
 		AddKind(EBrowserSourceKind::Material, LOCTEXT("NewMaterial", "Material (.dsm)"), LOCTEXT("NewMaterialTip", "A Shader block with a base colour and roughness, ready to compile."));
 		AddKind(EBrowserSourceKind::Function, LOCTEXT("NewFunction", "Material function (.dsf)"), LOCTEXT("NewFunctionTip", "A ShaderFunction block with one input, one optional input and one output."));
 		AddKind(EBrowserSourceKind::Header, LOCTEXT("NewHeader", "Header (.dsh)"), LOCTEXT("NewHeaderTip", "A header with one Function, for materials to import."));
+		AddKind(EBrowserSourceKind::Instance, LOCTEXT("NewInstance", "Instance (.dsi)"), LOCTEXT("NewInstanceTip", "A material instance source: a #pragma instance naming its parent, and one uniform per parameter to override."));
 		return Menu.MakeWidget();
 	}
 
@@ -890,8 +910,12 @@ namespace UE::DreamShader::Editor::Private
 			FExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::ExecuteExportSource),
 			FCanExecuteAction::CreateLambda([this]()
 			{
+				// A material or a material function becomes a .dss, a plain material instance a .dsi.
 				UObject* Asset = FirstSelectedAssetObject();
-				return HasSelectionForeignMaterial() && GetDreamShaderEditorBridge() && (Cast<UMaterial>(Asset) || Cast<UMaterialFunction>(Asset));
+				const bool bExportable = Cast<UMaterial>(Asset)
+					|| Cast<UMaterialFunction>(Asset)
+					|| (Cast<UMaterialInstanceConstant>(Asset) && !Asset->IsA<UDreamShaderMaterialInstance>());
+				return HasSelectionForeignMaterial() && GetDreamShaderEditorBridge() && bExportable;
 			}));
 		CommandList->MapAction(Commands.FocusSearch,
 			FExecuteAction::CreateLambda([this]()
@@ -1061,6 +1085,13 @@ namespace UE::DreamShader::Editor::Private
 		else if (UMaterialFunction* Function = Cast<UMaterialFunction>(Asset))
 		{
 			Bridge->ExportMaterialFunctionToDreamShaderFile(Function);
+		}
+		else if (UMaterialInstanceConstant* InstanceConstant = Cast<UMaterialInstanceConstant>(Asset))
+		{
+			if (!InstanceConstant->IsA<UDreamShaderMaterialInstance>())
+			{
+				Bridge->ExportMaterialInstanceToDreamShaderFile(InstanceConstant);
+			}
 		}
 	}
 

@@ -3,13 +3,13 @@
 #include "UI/Model/DreamShaderBrowserModel.h"
 
 #include "Bridge/DreamShaderEditorBridge.h"
-#include "DependencyGraph/DreamShaderDependencyGraphService.h"
+#include "DreamShaderDependencyGraphService.h"
 #include "DreamShaderDiagnostic.h"
 #include "DreamShaderModule.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.h"
-#include "SourceFiles/DreamShaderSourceFileUtils.h"
+#include "DreamShaderCompilerService.h"
+#include "DreamShaderGeneratedAssets.h"
+#include "DreamShaderCompilePipeline.h"
+#include "DreamShaderSourceFileUtils.h"
 #include "UI/DreamShaderGeneratedAssetPath.h"
 
 #include "AssetRegistry/IAssetRegistry.h"
@@ -416,6 +416,11 @@ namespace UE::DreamShader::Editor::Private
 			{
 				Source.Kind = EBrowserSourceKind::Function;
 			}
+			else if (UE::DreamShader::IsDreamShaderInstanceFile(Source.FilePath))
+			{
+				// Its status is its instance product's, resolved like a material's (ResolveGeneratedAssetProduct).
+				Source.Kind = EBrowserSourceKind::Instance;
+			}
 			else
 			{
 				Source.Kind = EBrowserSourceKind::Material;
@@ -669,11 +674,15 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		FString Error;
-		if (!ResolveGeneratedAssetObjectPath(Source.FilePath, Source.ResolvedObjectPath, Error))
+		// The object path and the build key together, from product resolution: the key compared below is computed by
+		// the code, and from the inputs, a compile stamps -- the preprocessed file and every header, the defines they
+		// read, a `.dsi`'s parent -- so a current asset reads UpToDate and a rebuild always makes a stale one current.
+		FString SourceHash;
+		FText ResolveError;
+		if (!ResolveGeneratedAssetProduct(Source.FilePath, /*bMaterialOnly*/ false, Source.ResolvedObjectPath, SourceHash, ResolveError))
 		{
 			Source.Status = EBrowserSourceStatus::Unresolved;
-			Source.StatusDetail = FText::FromString(Error);
+			Source.StatusDetail = ResolveError;
 			return;
 		}
 
@@ -687,33 +696,8 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		// The five-parameter load, not the convenience overload: the hash below is compared against
-		// the one the generator stamped into the asset, so it has to be computed from EXACTLY the same
-		// inputs. The generator folds in the defines the preprocessor read; handing BuildSourceHash an
-		// empty map here would not be "no defines available", it would be a positive claim that this
-		// source reads none -- a different key for the same source, and every conditional material in
-		// the browser would read Stale forever, with a rebuild that never makes it up to date.
-		FString PreparedText;
-		UE::DreamShader::FDreamShaderDefineValueMap TouchedDefines;
-		// Not the browser's business: whether a source uses conditionals changes nothing about whether
-		// its asset is current. It gates Adopt, over in the provenance actions.
-		bool bDiscardedAnySourceHadDirectives = false;
-		FDreamShaderError LoadError;
-		if (!UE::DreamShader::Editor::LoadPreparedDreamShaderSource(
-			Source.FilePath,
-			PreparedText,
-			TouchedDefines,
-			bDiscardedAnySourceHadDirectives,
-			LoadError))
-		{
-			Source.Status = EBrowserSourceStatus::Unresolved;
-			Source.StatusDetail = FText::FromString(LoadError);
-			return;
-		}
-
 		Source.StatusDetail = FText::FromString(Source.ResolvedObjectPath);
 
-		const FString SourceHash = BuildSourceHash(PreparedText, TouchedDefines);
 		if (IsGeneratedAssetSourceCurrent(Asset, Source.FilePath, SourceHash))
 		{
 			Source.Status = EBrowserSourceStatus::UpToDate;
