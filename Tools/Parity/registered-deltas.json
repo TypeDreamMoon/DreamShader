@@ -1,0 +1,10 @@
+{
+ "M_MaterialAttributeRead.dsm.M_MaterialAttributeRead.graph.json": {
+  "delta": "PD-6",
+  "why": "An attribute read back from a material the same graph wrote is the value written: 1.x built Break(Set(Make, Roughness = R)) and read the Break, 2.0 hands R on. The comparator folds that read where the dump names the attribute in English; this capture was dumped by an editor in another culture and names it in that language.",
+  "lines": [
+   "^property MP_Roughness: wire 3/None != 0/None$",
+   "^property MP_Roughness: class BreakMaterialAttributes != ScalarParameter$"
+  ]
+ }
+}
