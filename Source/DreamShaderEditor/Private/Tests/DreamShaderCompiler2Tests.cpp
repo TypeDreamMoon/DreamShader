@@ -1359,21 +1359,8 @@ bool FDreamShaderCompiler2BlocksLayoutTest::RunTest(const FString& Parameters)
 
 	FScopedDreamShaderGraphBackendPin BackendPin;
 
-	// The project's setting for the length of this test, put back whatever happens.
-	struct FScopedLayoutStyle
-	{
-		EDreamShaderGraphLayoutStyle Saved;
-		explicit FScopedLayoutStyle(const EDreamShaderGraphLayoutStyle Style)
-			: Saved(GetDefault<UDreamShaderSettings>()->GraphLayoutStyle)
-		{
-			GetMutableDefault<UDreamShaderSettings>()->GraphLayoutStyle = Style;
-		}
-		~FScopedLayoutStyle()
-		{
-			GetMutableDefault<UDreamShaderSettings>()->GraphLayoutStyle = Saved;
-		}
-	};
-	FScopedLayoutStyle LayoutStyle(EDreamShaderGraphLayoutStyle::Blocks);
+	// Blocks is the default, and a project may have chosen another style: this test is about this one.
+	FScopedDreamShaderLayoutStylePin LayoutStyle(EDreamShaderGraphLayoutStyle::Blocks);
 
 	static const TCHAR* const Source = TEXT(
 		"#pragma material(ShadingModel = Unlit)\n"

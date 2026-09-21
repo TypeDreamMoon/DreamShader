@@ -3836,120 +3836,136 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	}
 	Artifacts.AddSourceFile(SourceFilePath);
 
-	FString Message;
-	if (!TestTrue(
-		FString::Printf(TEXT("Material generation succeeds: %s"), *Message),
-		::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
+	// The promises below are every style's. Blocks is what a project gets unless it says otherwise; Classic, the 1.x
+	// layout, is the one the overlap was found in. Each builds the same source over again, by force.
+	struct FStyleCase
 	{
-		return false;
-	}
-
-	UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
-	if (!TestNotNull(TEXT("Generated material loads"), Material))
-	{
-		return false;
-	}
-
-	struct FPlacedNode
-	{
-		UMaterialExpression* Expression = nullptr;
-		int32 MinX = 0;
-		int32 MinY = 0;
-		int32 MaxX = 0;
-		int32 MaxY = 0;
+		EDreamShaderGraphLayoutStyle Style;
+		const TCHAR* Name;
 	};
-
-	TArray<FPlacedNode> PlacedNodes;
-	for (auto&& ExpressionPtr : Material->GetExpressions())
+	static const FStyleCase StyleCases[] = {
+		{ EDreamShaderGraphLayoutStyle::Blocks, TEXT("Blocks") },
+		{ EDreamShaderGraphLayoutStyle::Classic, TEXT("Classic") },
+	};
+	for (const FStyleCase& Case : StyleCases)
 	{
-		UMaterialExpression* Expression = ExpressionPtr;
-		if (!Expression)
+		FScopedDreamShaderLayoutStylePin StylePin(Case.Style);
+
+		FString Message;
+		if (!TestTrue(
+			FString::Printf(TEXT("%s: material generation succeeds: %s"), Case.Name, *Message),
+			::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestMaterial(SourceFilePath, Message, true)))
 		{
-			continue;
+			return false;
 		}
 
-		// Measured by exactly the rule the placement used, so the assertion below is about where the
-		// nodes were put rather than about the estimate itself.
-		const FLayoutNodeSize Size = EstimateMaterialNodeSize(Expression);
-		FPlacedNode& Placed = PlacedNodes.AddDefaulted_GetRef();
-		Placed.Expression = Expression;
-		Placed.MinX = Expression->MaterialExpressionEditorX;
-		Placed.MinY = Expression->MaterialExpressionEditorY;
-		Placed.MaxX = Placed.MinX + Size.Width;
-		Placed.MaxY = Placed.MinY + Size.Height;
-	}
-
-	if (!TestTrue(TEXT("Generated graph has enough nodes to exercise layout."), PlacedNodes.Num() >= 8))
-	{
-		return false;
-	}
-
-	// The regression this guards: spacing used to be a fixed 220 rows / 420 columns against an assumed
-	// 320 x 150 footprint. A node carrying an expression preview is already ~248 tall on its own, so
-	// column neighbours overlapped each other.
-	int32 OverlapCount = 0;
-	FString FirstOverlap;
-	for (int32 Left = 0; Left < PlacedNodes.Num(); ++Left)
-	{
-		for (int32 Right = Left + 1; Right < PlacedNodes.Num(); ++Right)
+		UMaterial* Material = LoadObject<UMaterial>(nullptr, *ObjectPath);
+		if (!TestNotNull(*FString::Printf(TEXT("%s: generated material loads"), Case.Name), Material))
 		{
-			const FPlacedNode& First = PlacedNodes[Left];
-			const FPlacedNode& Second = PlacedNodes[Right];
-			const bool bOverlaps = First.MinX < Second.MaxX && Second.MinX < First.MaxX
-				&& First.MinY < Second.MaxY && Second.MinY < First.MaxY;
-			if (!bOverlaps)
+			return false;
+		}
+
+		struct FPlacedNode
+		{
+			UMaterialExpression* Expression = nullptr;
+			int32 MinX = 0;
+			int32 MinY = 0;
+			int32 MaxX = 0;
+			int32 MaxY = 0;
+		};
+
+		TArray<FPlacedNode> PlacedNodes;
+		for (auto&& ExpressionPtr : Material->GetExpressions())
+		{
+			UMaterialExpression* Expression = ExpressionPtr;
+			if (!Expression)
 			{
 				continue;
 			}
 
-			++OverlapCount;
-			if (FirstOverlap.IsEmpty())
+			// Measured by exactly the rule the placement used, so the assertion below is about where the
+			// nodes were put rather than about the estimate itself.
+			const FLayoutNodeSize Size = EstimateMaterialNodeSize(Expression);
+			FPlacedNode& Placed = PlacedNodes.AddDefaulted_GetRef();
+			Placed.Expression = Expression;
+			Placed.MinX = Expression->MaterialExpressionEditorX;
+			Placed.MinY = Expression->MaterialExpressionEditorY;
+			Placed.MaxX = Placed.MinX + Size.Width;
+			Placed.MaxY = Placed.MinY + Size.Height;
+		}
+
+		if (!TestTrue(*FString::Printf(TEXT("%s: the generated graph has enough nodes to exercise layout."), Case.Name), PlacedNodes.Num() >= 8))
+		{
+			return false;
+		}
+
+		// The regression this guards: spacing used to be a fixed 220 rows / 420 columns against an assumed
+		// 320 x 150 footprint. A node carrying an expression preview is already ~248 tall on its own, so
+		// column neighbours overlapped each other.
+		int32 OverlapCount = 0;
+		FString FirstOverlap;
+		for (int32 Left = 0; Left < PlacedNodes.Num(); ++Left)
+		{
+			for (int32 Right = Left + 1; Right < PlacedNodes.Num(); ++Right)
 			{
-				FirstOverlap = FString::Printf(
-					TEXT("%s (%d,%d)-(%d,%d) vs %s (%d,%d)-(%d,%d)"),
-					*First.Expression->GetName(), First.MinX, First.MinY, First.MaxX, First.MaxY,
-					*Second.Expression->GetName(), Second.MinX, Second.MinY, Second.MaxX, Second.MaxY);
+				const FPlacedNode& First = PlacedNodes[Left];
+				const FPlacedNode& Second = PlacedNodes[Right];
+				const bool bOverlaps = First.MinX < Second.MaxX && Second.MinX < First.MaxX
+					&& First.MinY < Second.MaxY && Second.MinY < First.MaxY;
+				if (!bOverlaps)
+				{
+					continue;
+				}
+
+				++OverlapCount;
+				if (FirstOverlap.IsEmpty())
+				{
+					FirstOverlap = FString::Printf(
+						TEXT("%s (%d,%d)-(%d,%d) vs %s (%d,%d)-(%d,%d)"),
+						*First.Expression->GetName(), First.MinX, First.MinY, First.MaxX, First.MaxY,
+						*Second.Expression->GetName(), Second.MinX, Second.MinY, Second.MaxX, Second.MaxY);
+				}
 			}
 		}
-	}
 
-	TestEqual(
-		*FString::Printf(TEXT("No two laid-out nodes overlap (first: %s)"), *FirstOverlap),
-		OverlapCount,
-		0);
+		TestEqual(
+			*FString::Printf(TEXT("%s: no two laid-out nodes overlap (first: %s)"), Case.Name, *FirstOverlap),
+			OverlapCount,
+			0);
 
-	// Generated boxes carry bGroupMode, so a node poking out of the box it sits in is a node the box
-	// will leave behind when it is dragged.
-	int32 CommentCount = 0;
-	int32 EscapingNodeCount = 0;
-	for (auto&& CommentPtr : Material->GetEditorComments())
-	{
-		UMaterialExpressionComment* Comment = CommentPtr;
-		if (!Comment || !Comment->Text.StartsWith(TEXT("DreamShader: ")))
+		// Generated boxes carry bGroupMode, so a node poking out of the box it sits in is a node the box
+		// will leave behind when it is dragged.
+		int32 CommentCount = 0;
+		int32 EscapingNodeCount = 0;
+		for (auto&& CommentPtr : Material->GetEditorComments())
 		{
-			continue;
-		}
-
-		++CommentCount;
-		const int32 BoxMinX = Comment->MaterialExpressionEditorX;
-		const int32 BoxMinY = Comment->MaterialExpressionEditorY;
-		const int32 BoxMaxX = BoxMinX + Comment->SizeX;
-		const int32 BoxMaxY = BoxMinY + Comment->SizeY;
-		for (const FPlacedNode& Node : PlacedNodes)
-		{
-			const bool bIntersects = Node.MinX < BoxMaxX && BoxMinX < Node.MaxX
-				&& Node.MinY < BoxMaxY && BoxMinY < Node.MaxY;
-			const bool bContained = Node.MinX >= BoxMinX && Node.MaxX <= BoxMaxX
-				&& Node.MinY >= BoxMinY && Node.MaxY <= BoxMaxY;
-			if (bIntersects && !bContained)
+			UMaterialExpressionComment* Comment = CommentPtr;
+			if (!Comment || !Comment->Text.StartsWith(TEXT("DreamShader: ")))
 			{
-				++EscapingNodeCount;
+				continue;
+			}
+
+			++CommentCount;
+			const int32 BoxMinX = Comment->MaterialExpressionEditorX;
+			const int32 BoxMinY = Comment->MaterialExpressionEditorY;
+			const int32 BoxMaxX = BoxMinX + Comment->SizeX;
+			const int32 BoxMaxY = BoxMinY + Comment->SizeY;
+			for (const FPlacedNode& Node : PlacedNodes)
+			{
+				const bool bIntersects = Node.MinX < BoxMaxX && BoxMinX < Node.MaxX
+					&& Node.MinY < BoxMaxY && BoxMinY < Node.MaxY;
+				const bool bContained = Node.MinX >= BoxMinX && Node.MaxX <= BoxMaxX
+					&& Node.MinY >= BoxMinY && Node.MaxY <= BoxMaxY;
+				if (bIntersects && !bContained)
+				{
+					++EscapingNodeCount;
+				}
 			}
 		}
-	}
 
-	TestTrue(TEXT("Layout produced at least one DreamShader comment box."), CommentCount > 0);
-	TestEqual(TEXT("No node hangs out of the comment box it sits in."), EscapingNodeCount, 0);
+		TestTrue(*FString::Printf(TEXT("%s: layout produced at least one DreamShader comment box."), Case.Name), CommentCount > 0);
+		TestEqual(*FString::Printf(TEXT("%s: no node hangs out of the comment box it sits in."), Case.Name), EscapingNodeCount, 0);
+	}
 	return true;
 }
 

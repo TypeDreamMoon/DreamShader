@@ -394,6 +394,24 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 	};
 
+	// Pins the project's Graph Layout Style for a test's duration, and puts back whatever it was: a test about one
+	// style's graph -- its reroutes, where its nodes stand -- must not follow the project's setting.
+	struct FScopedDreamShaderLayoutStylePin
+	{
+		EDreamShaderGraphLayoutStyle SavedStyle;
+
+		explicit FScopedDreamShaderLayoutStylePin(const EDreamShaderGraphLayoutStyle Style)
+			: SavedStyle(GetMutableDefault<UDreamShaderSettings>()->GraphLayoutStyle)
+		{
+			GetMutableDefault<UDreamShaderSettings>()->GraphLayoutStyle = Style;
+		}
+
+		~FScopedDreamShaderLayoutStylePin()
+		{
+			GetMutableDefault<UDreamShaderSettings>()->GraphLayoutStyle = SavedStyle;
+		}
+	};
+
 	/**
 	 * A compile a test needs to have SUCCEEDED. What the compiler said goes out as an Info line and the error names no
 	 * path: a fixture registers its package path as an expected error (the new-asset probes quote it), and an error line
