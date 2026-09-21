@@ -1577,5 +1577,14 @@
  "DreamShader.Tools|VerbDumpLayout": "dump-layout",
  "DreamShader.Tools|VerbListGenerated": "list-generated",
  "DreamShaderEditorBridge|DreamShaderDivergenceSummarySubText": "数量太多，没法逐个用通知回答。Material Content Browser 里列出了它们，每一项都有同样的三个操作。",
- "DreamShaderEditorBridge|DreamToolsComboTooltip": "Dream 系列语言工具：在 VSCode 中打开源码工作区，或者重建整棵源码树（DreamShader / DreamFX / DreamUI）。"
+ "DreamShaderEditorBridge|DreamToolsComboTooltip": "Dream 系列语言工具：在 VSCode 中打开源码工作区，或者重建整棵源码树（DreamShader / DreamFX / DreamUI）。",
+ "DreamShaderMaterialBrowser|NewSectionLang2": "DreamShaderLang 2.0",
+ "DreamShaderMaterialBrowser|NewSectionLegacy": "1.x 块语法",
+ "DreamShaderMaterialBrowser|NewMaterialDss": "材质 (.dss)",
+ "DreamShaderMaterialBrowser|NewMaterialDssTip": "带声明的 HLSL：两个 uniform，加一个写基础色和粗糙度的导出入口，可直接编译。",
+ "DreamShaderMaterialBrowser|NewMaterialDssTitle": "新建材质 (.dss)",
+ "DreamShaderMaterialBrowser|NewFunctionDss": "材质函数 (.dss)",
+ "DreamShaderMaterialBrowser|NewFunctionDssTip": "一个导出函数：一个输入、一个可选输入、一个返回值。.dss 里的每个 export 各自是一个资产。",
+ "DreamShaderMaterialBrowser|NewFunctionDssTitle": "新建材质函数 (.dss)",
+ "DreamShaderMaterialBrowser|NewSourceDssHint": "文件按插件的模板写出，保存时由监视器编译。名称就是 export 的名字，也就是资产名；文件夹决定它落在 /Game 下的哪里。"
 }

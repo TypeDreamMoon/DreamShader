@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-1579
+1588
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -1451,6 +1451,9 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | NavSources | Sources |
 | DreamShaderMaterialBrowser | NavUnmanaged | Not managed by DreamShader |
 | DreamShaderMaterialBrowser | NewFunction | Material function (.dsf) |
+| DreamShaderMaterialBrowser | NewFunctionDss | Material function (.dss) |
+| DreamShaderMaterialBrowser | NewFunctionDssTip | An exported function with one input, one optional input and a return value. Every export of a .dss is an asset of its own. |
+| DreamShaderMaterialBrowser | NewFunctionDssTitle | New material function (.dss) |
 | DreamShaderMaterialBrowser | NewFunctionTip | A ShaderFunction block with one input, one optional input and one output. |
 | DreamShaderMaterialBrowser | NewFunctionTitle | New material function (.dsf) |
 | DreamShaderMaterialBrowser | NewHeader | Header (.dsh) |
@@ -1460,16 +1463,22 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | NewInstanceTip | A material instance source: a #pragma instance naming its parent, and one uniform per parameter to override. |
 | DreamShaderMaterialBrowser | NewInstanceTitle | New material instance (.dsi) |
 | DreamShaderMaterialBrowser | NewMaterial | Material (.dsm) |
+| DreamShaderMaterialBrowser | NewMaterialDss | Material (.dss) |
+| DreamShaderMaterialBrowser | NewMaterialDssTip | HLSL with declarations: two uniforms and an exported entry that writes base colour and roughness, ready to compile. |
+| DreamShaderMaterialBrowser | NewMaterialDssTitle | New material (.dss) |
 | DreamShaderMaterialBrowser | NewMaterialTip | A Shader block with a base colour and roughness, ready to compile. |
 | DreamShaderMaterialBrowser | NewMaterialTitle | New material (.dsm) |
 | DreamShaderMaterialBrowser | NewMenu | New |
 | DreamShaderMaterialBrowser | NewMenuTip | Create a new source file from a template, in the selected folder. |
 | DreamShaderMaterialBrowser | NewObjectFailed | Failed to create the material instance object. |
+| DreamShaderMaterialBrowser | NewSectionLang2 | DreamShaderLang 2.0 |
+| DreamShaderMaterialBrowser | NewSectionLegacy | 1.x blocks |
 | DreamShaderMaterialBrowser | NewSourceBadName | The name must be an identifier: letters, digits and underscores, not starting with a digit. |
 | DreamShaderMaterialBrowser | NewSourceBrowse | Browse... |
 | DreamShaderMaterialBrowser | NewSourceCancel | Cancel |
 | DreamShaderMaterialBrowser | NewSourceCreate | Create |
 | DreamShaderMaterialBrowser | NewSourceCreated | Created {0} |
+| DreamShaderMaterialBrowser | NewSourceDssHint | The file is written from the plugin's template and compiled by the watcher on save. The name is the export's, and so the asset's; the folder decides where under /Game it lands. |
 | DreamShaderMaterialBrowser | NewSourceExists | '{0}' already exists. |
 | DreamShaderMaterialBrowser | NewSourceFolderLabel | Folder |
 | DreamShaderMaterialBrowser | NewSourceHint | The file is written from the plugin's template and compiled by the watcher on save. |
