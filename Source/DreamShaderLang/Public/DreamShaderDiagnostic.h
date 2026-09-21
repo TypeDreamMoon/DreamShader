@@ -137,7 +137,7 @@ namespace UE::DreamShader
 	}
 
 	/**
-	 * Formatting stays at the call site -- `FailWith(E, TEXT("DSH4001"), FString::Printf(TEXT("%s"), X))`
+	 * Formatting stays at the call site -- `FailWith(E, TEXT("DSHnnnn"), FString::Printf(TEXT("%s"), X))`
 	 * -- rather than being forwarded through here as a format string plus arguments. FString::Printf
 	 * takes a *checked* format string that has to be a literal the compiler can still see, so a
 	 * variadic wrapper cannot pass one along: the format would arrive as a runtime `const TCHAR*` and
