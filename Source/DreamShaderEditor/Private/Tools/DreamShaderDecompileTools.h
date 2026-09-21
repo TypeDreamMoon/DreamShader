@@ -6,7 +6,7 @@
 // Every editor caller goes through here -- the Content Browser and Material Content Browser exports, Adopt, the
 // bridge's `decompile` request and the commandlet's `decompile` verb -- so "1.x text or 2.0 text" is decided in exactly
 // one place. The service, the 1.x decompiler behind Format = Legacy (GetGraphDecompiler) and the 2.0 decompiler behind
-// Format = Dss (GetIRDecompiler) belong to the decompiler unit (Decompiler/; research-decompiler section 6.7).
+// Format = Dss (GetIRDecompiler) belong to the decompiler unit (Decompiler/).
 
 #pragma once
 

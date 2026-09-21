@@ -64,7 +64,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		// The 1.x extensions are the only thing that still asks for the 1.x text; 2.0 is the default for everything else,
-		// an instance's `.dsi` included (research-decompiler section 7.4).
+		// an instance's `.dsi` included.
 		const FString Extension = FPaths::GetExtension(OutputFilePath, /*bIncludeDot*/ false);
 		const bool bLegacyExtension = Extension.Equals(TEXT("dsm"), ESearchCase::IgnoreCase)
 			|| Extension.Equals(TEXT("dsf"), ESearchCase::IgnoreCase);

@@ -242,8 +242,8 @@ namespace UE::DreamShader::Editor::Compiler
 		 *
 		 * NOT DSH9021: that code is already live and documented in
 		 * SourceFiles/DreamShaderAssetRenameSyncService.cpp ("Could not write ... after renaming an
-		 * asset it references"), alongside DSH9020. CONTRACT 7 hands DSH9020-9049 to this unit
-		 * without noticing the two the rename-sync service had already taken.
+		 * asset it references"), alongside DSH9020. DSH9020-9049 is this file's range, and
+		 * the rename-sync service had already taken two of it.
 		 */
 		bool RequireLang2Source(const FString& SourceFilePath, const FText& VerbName, FLangDiagnosticSink& Diagnostics)
 		{
@@ -431,7 +431,7 @@ namespace UE::DreamShader::Editor::Compiler
 			// Said once, up front, because it is the one thing about this verb that surprises
 			// people: plain `check` writes nothing, but `-Shaders` has to BUILD the assets before
 			// their shaders can be compiled, and 2.0 has no transient asset to build them into
-			// (plan §5 -- every product saves). Holding the write guard instead was tried and is
+			// (every product saves). Holding the write guard instead was tried and is
 			// wrong: it makes the emitter SKIP every product rather than build it off disk, so the
 			// run would compile the shaders of whatever happened to be on disk already and report
 			// a clean gate on a source it never looked at.

@@ -9,7 +9,7 @@
 // prune on), the validator and RaiseDreamShaderIR over it before BuildDreamShaderAstFromIR. DreamShaderIRDecompiler.cpp
 // is that caller.
 //
-// Design: Plan/m4m5/research-decompiler.md section 3. Diagnostics: DSH9060-9074.
+// Diagnostics: DSH9060-9074.
 
 #pragma once
 

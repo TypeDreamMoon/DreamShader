@@ -46,8 +46,8 @@ namespace UE::DreamShader::Editor::Private
 	};
 
 	// True when Parent is a DreamShader product -- it carries a source stamp that resolves to a compilable
-	// source (`.dss`, `.dsi`, `.dsm`, `.dsf`) -- so an instance of it is written as a `.dsi` (CONTRACT
-	// section 2.3, Material Browser Create instance).
+	// source (`.dss`, `.dsi`, `.dsm`, `.dsf`) -- so an instance of it is written as a `.dsi`
+	// (Material Browser, Create Instance).
 	bool IsDreamShaderInstanceSourceParent(UMaterialInterface* Parent);
 
 	// The default `.dsi` for an instance of Parent: <the parent source's folder>/<InstanceSubfolder> (the

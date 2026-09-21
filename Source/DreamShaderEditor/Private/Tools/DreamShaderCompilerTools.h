@@ -48,9 +48,9 @@ namespace UE::DreamShader::Editor::Compiler
 	 * run against a tree you do not want touched.
 	 *
 	 * `-Shaders` is the exception, and it is a real one: a shader compile needs a real material, and
-	 * 2.0 has no transient asset to build one into (plan §5), so `check -Shaders` builds and saves
+	 * 2.0 has no transient asset to build one into, so `check -Shaders` builds and saves
 	 * the products exactly as `compile` does before compiling their shaders. It says so in the log
-	 * before it starts. See DreamShaderShaderCheck.h and plan §13.3.
+	 * before it starts. See DreamShaderShaderCheck.h.
 	 */
 	bool RunDreamShaderCheckCommandlet(
 		const TArray<FString>& Tokens,
@@ -73,7 +73,7 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params);
 
-	/** `index <file|-All> [-Out=<dir>]` -- BuildDreamShaderSymbolIndexJson per file (plan §13.4). */
+	/** `index <file|-All> [-Out=<dir>]` -- BuildDreamShaderSymbolIndexJson per file. */
 	bool RunDreamShaderIndexCommandlet(
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
@@ -90,7 +90,7 @@ namespace UE::DreamShader::Editor::Compiler
 	 * `.dsh` with no 1.x declarations), rewriting each in place. `-All` takes the writable source roots only, as
 	 * `migrate -All` does: a plugin ships its sources as they are. `-Check` writes nothing and fails when a file would
 	 * change, which is the CI form; `-Out` writes the formatted copies under a directory instead of over the sources.
-	 * Reads no asset and builds nothing (plan section 13.4).
+	 * Reads no asset and builds nothing.
 	 */
 	bool RunDreamShaderFormatCommandlet(
 		const TArray<FString>& Tokens,
@@ -100,7 +100,7 @@ namespace UE::DreamShader::Editor::Compiler
 	/**
 	 * `list-generated <file|-All> [-As=Packages|Files|GitIgnore|Json] [-Out=<file>] [-IncludeEphemeral]` -- every asset
 	 * the sources build, located without building it (ResolveDreamShaderSourceProducts): what a `.gitignore` or a P4
-	 * typemap is written from (plan section 13.7, Docs/generation/source-control.md). A ThinCustom material that is
+	 * typemap is written from (Docs/generation/source-control.md). A ThinCustom material that is
 	 * memory-only has no file and is left out unless `-IncludeEphemeral` asks for it.
 	 */
 	bool RunDreamShaderListGeneratedCommandlet(

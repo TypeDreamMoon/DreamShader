@@ -2,10 +2,10 @@
 //
 // An inline FExpressionInput mask, read the way the IR spells a Swizzle.
 //
-// The 2.0 emitter never writes one (CONTRACT 6.13 #22: a Swizzle is an output selection or a ComponentMask node), but
+// The 2.0 emitter never writes one (a Swizzle is an output selection or a ComponentMask node), but
 // 1.x assets and hand-wired graphs carry them, and both readers of a foreign graph -- the decompiler's importer and
 // the parity oracle that normalises a 1.x graph before comparing it -- have to agree on what such a mask means
-// (Plan/v2-parity-deltas.md PD-1). This is that meaning, in one place.
+// (Tools/Parity/README.md, PD-1). This is that meaning, in one place.
 //
 // The mask bits of a pin name ABSOLUTE channels (R, G, B, A) of the expression's value; the value that arrives through
 // a masked OUTPUT has only that output's channels. So the mask is resolved against the output: a pin that keeps G and B

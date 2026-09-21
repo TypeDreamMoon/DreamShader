@@ -35,8 +35,8 @@
 
 #include "Tools/DreamShaderShaderCheck.h"
 
-// Unit N's parsed `DreamShader.SourceSpans` table. Reused rather than re-parsed here: the guid key
-// format (EGuidFormats::DigitsWithHyphens) and the field names are unit E's choice, and a second
+// Navigation's parsed `DreamShader.SourceSpans` table. Reused rather than re-parsed here: the guid key
+// format (EGuidFormats::DigitsWithHyphens) and the field names are the emitter's choice, and a second
 // reader of that JSON is a second place for them to drift.
 #include "Navigation/DreamShaderSourceNavigation.h"
 
@@ -247,7 +247,7 @@ namespace UE::DreamShader::Editor::Compiler
 		 * at `// End DreamShader source:`. A block without a `custom` line starts at line 1, as a 1.x prepared source
 		 * always did -- the reason the preprocessor and the include inliner must conserve lines.
 		 *
-		 * The marker path is the stamped one (debt B5): project-relative in an asset the pipeline built, so it is
+		 * The marker path is the stamped one: project-relative in an asset the pipeline built, so it is
 		 * resolved against the project directory here, the way navigation resolves a span's file.
 		 */
 		bool MapCustomCodeLineToSource(const FString& Code, const int32 CodeLine, FShaderErrorLocation& OutLocation)
@@ -663,7 +663,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 		for (UMaterial* Material : Materials)
 		{
-			// No sink passed: a malformed table is unit N's DSH9053 to raise when navigation needs
+			// No sink passed: a malformed table is navigation's DSH9053 to raise when navigation needs
 			// it, and a shader gate that failed because the SPAN TABLE was bad would be reporting
 			// the wrong problem.
 			const Private::FDreamShaderSourceSpanTable Spans =

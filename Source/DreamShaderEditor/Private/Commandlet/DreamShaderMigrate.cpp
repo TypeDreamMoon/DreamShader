@@ -793,7 +793,7 @@ namespace UE::DreamShader::Editor::Private
 			Named.Add(SourceFilePath);
 
 			// A header comes along when nothing outside the set includes it; otherwise it stays 1.x, which a `.dss`
-			// includes just as well (research-decompiler section 5.7).
+			// includes just as well.
 			TSet<FString> Headers;
 			TSet<FString> Visited;
 			FDreamShaderDependencyGraphService::CollectHeaderDependenciesRecursive(SourceFilePath, Headers, Visited);

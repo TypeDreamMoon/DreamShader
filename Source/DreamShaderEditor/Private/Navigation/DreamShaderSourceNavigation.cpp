@@ -60,7 +60,7 @@ namespace UE::DreamShader::Editor::Private
 		/** Set by Register(), consumed by Unregister(). Mirrors the Material Content Browser's handle. */
 		static FDelegateHandle GNavigationMenuStartupHandle;
 
-		/** The diagnostics `stage` for everything this file raises (contract §6.12: stage is the wire's). */
+		/** The diagnostics `stage` for everything this file raises (stage is the wire's). */
 		static const TCHAR* NavigationDiagnosticStage = TEXT("navigate");
 
 		/**
@@ -133,9 +133,9 @@ namespace UE::DreamShader::Editor::Private
 		/**
 		 * The sink's diagnostics in the form the bridge writes out.
 		 *
-		 * A local converter on purpose: P owns the real one (Compiler/DreamShaderCompilerDiagnostics,
-		 * contract §5), it does not exist yet, and a navigation refusal must not wait on it. Replace
-		 * the body with a call to P's converter when it lands -- the field mapping is the same.
+		 * A local converter on purpose, written before the compiler's own
+		 * (DreamShaderCompilerDiagnostics.h) existed: a navigation refusal could not wait on it. The field
+		 * mapping is the same, so the body can become a call to that one.
 		 */
 		TArray<FDreamShaderDiagnosticRecord> ToDiagnosticRecords(
 			const FLangDiagnosticSink& Sink,
@@ -332,7 +332,7 @@ namespace UE::DreamShader::Editor::Private
 
 		// A ThinCustom product is addressed as the instance, but the graph -- and therefore the table
 		// -- lives on the hidden base material it parents to. Walk the chain rather than reading
-		// Parent once: an instance OF a generated instance (the .dsi case, plan §13.1) is legal.
+		// Parent once: an instance OF a generated instance (the .dsi case) is legal.
 		UMaterialInstance* Instance = Cast<UMaterialInstance>(Asset);
 		int32 Guard = 16;
 		while (Instance && Guard-- > 0)
@@ -427,7 +427,7 @@ namespace UE::DreamShader::Editor::Private
 			Span.Line = ReadIntField(*RowObject, TEXT("line"), 1);
 			Span.Column = ReadIntField(*RowObject, TEXT("col"), 1);
 			Span.Length = ReadIntField(*RowObject, TEXT("len"), 0);
-			// `callFile` is written only when the call site is in another file (CONTRACT 6.13 #6);
+			// `callFile` is written only when the call site is in another file;
 			// absent means the same file as `file`. See FDreamShaderSourceSpan.
 			(*RowObject)->TryGetStringField(TEXT("callFile"), Span.CallFile);
 			Span.CallLine = ReadIntField(*RowObject, TEXT("callLine"), 0);
@@ -503,7 +503,7 @@ namespace UE::DreamShader::Editor::Private
 			else if (bCallFileMatches && Span.CallLine == Line)
 			{
 				// The node itself sits inside a helper, on a different line of (possibly) a different
-				// file; the line the user pointed at is where that helper was CALLED. Contract §6.4.
+				// file; the line the user pointed at is where that helper was CALLED.
 				ViaCallSite.Emplace(Span.CallColumn, Pair.Key);
 			}
 			else if (bSpanFileMatches && Span.Line < Line && Line <= Span.Line + Span.Length)

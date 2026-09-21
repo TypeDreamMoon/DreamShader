@@ -2,9 +2,8 @@
 //
 // Graph dump: a canonical, byte-stable JSON description of the material graph a DreamShader source
 // generates. This is a DEVELOPER TOOL, not a shipping feature -- it exists to be the parity oracle
-// for the 2.0 compiler rewrite (Plan/v2-architecture.md section 8, item 1). The current generator is
-// going to be deleted; a JSON capture taken on the current tree is the only ground truth the
-// replacement can be compared against, source file by source file.
+// of the 2.0 compiler. The 1.x generator is deleted; the JSON captures taken while it existed are the
+// only ground truth its replacement can be compared against, source file by source file.
 //
 // Everything here is subordinated to determinism. A fingerprint that changes between two runs of the
 // SAME compiler cannot say anything about two DIFFERENT compilers, so anything that is not a

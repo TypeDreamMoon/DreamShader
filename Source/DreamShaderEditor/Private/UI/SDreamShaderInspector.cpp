@@ -655,7 +655,7 @@ namespace UE::DreamShader::Editor::Private
 					}
 				}) ];
 
-			// The two answers to a Tweaked ThinCustom instance (CONTRACT section 2.3). Adopt Tweaks needs a writable `.dss`;
+			// The two answers to a Tweaked ThinCustom instance. Adopt Tweaks needs a writable `.dss`;
 			// Extract Tweaks writes a new `.dsi` and falls back to the project root for it.
 			if (Asset.Provenance == EDreamShaderDigestState::Tweaked && IsGeneratedInstanceTweaked(FindAsset()))
 			{

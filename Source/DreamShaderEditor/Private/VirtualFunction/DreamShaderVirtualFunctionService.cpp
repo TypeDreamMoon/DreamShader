@@ -558,7 +558,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		// `@pin` wherever BuildDefinition had to rename an engine pin: a call is wired by pin name, and a renamed pin binds
-		// nothing (research-decompiler section 6.6). The names are rebuilt with the rule BuildDefinition applied.
+		// nothing. The names are rebuilt with the rule BuildDefinition applied.
 		TArray<FFunctionExpressionInput> FunctionInputs;
 		TArray<FFunctionExpressionOutput> FunctionOutputs;
 		MaterialFunction->GetInputsAndOutputs(FunctionInputs, FunctionOutputs);

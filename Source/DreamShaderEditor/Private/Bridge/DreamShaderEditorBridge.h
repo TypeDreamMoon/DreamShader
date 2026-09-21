@@ -151,7 +151,7 @@ namespace UE::DreamShader::Editor::Private
 		/**
 		 * After a `.dss` or `.dsi` compiled: queue every `.dsi` whose Parent resolves to one of its products, transitively
 		 * (CollectInstanceDependents), never the source itself. So a renamed or retyped parent parameter surfaces as the
-		 * child's error without a child edit (research-instance section 3.7).
+		 * child's error without a child edit.
 		 */
 		void QueueDependentInstances(const FString& SourceFilePath);
 		void OnDirectoryChanged(const TArray<FFileChangeData>& FileChanges);

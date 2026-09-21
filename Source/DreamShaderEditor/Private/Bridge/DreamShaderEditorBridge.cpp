@@ -832,7 +832,7 @@ namespace UE::DreamShader::Editor::Private
 		// the materials it just produced, and the first tick does not order a rebuild for them.
 		GenerateAllSources();
 
-		// The builtin catalog a language service binds `UE.*` and `Substrate.*` against (plan section 13.4): pins,
+		// The builtin catalog a language service binds `UE.*` and `Substrate.*` against: pins,
 		// properties, aliases and positional orders, as the binder sees them. Here and not with the manifests above,
 		// because the catalog is reflection over every loaded expression class, and only now is every module loaded;
 		// the sweep just before this has built it, so the export costs a file write.
@@ -1491,7 +1491,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			else if (Action.Equals(TEXT("reveal-node"), ESearchCase::IgnoreCase))
 			{
-				// Node <-> source navigation (plan 13.2). Everything it does lives in
+				// Node <-> source navigation. Everything it does lives in
 				// Compiler/DreamShaderSourceNavigation.cpp, including writing the answer: this
 				// response carries assetPath and expressions, which RespondTo has no room for, so
 				// it writes the same envelope itself rather than a second file beside one.
@@ -2651,7 +2651,7 @@ namespace UE::DreamShader::Editor::Private
 			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Unlink")),
 			FUIAction(FExecuteAction::CreateStatic(&DetachGeneratedAssetFromDreamShader, Asset)));
 
-		// The two answers to a Tweaked ThinCustom instance (CONTRACT section 2.3). Adopt Tweaks needs a writable `.dss`;
+		// The two answers to a Tweaked ThinCustom instance. Adopt Tweaks needs a writable `.dss`;
 		// Extract Tweaks writes a new `.dsi` beside the source, or under the project root when that folder is read-only.
 		if (State == EDreamShaderDigestState::Tweaked && IsGeneratedInstanceTweaked(AssetObject))
 		{

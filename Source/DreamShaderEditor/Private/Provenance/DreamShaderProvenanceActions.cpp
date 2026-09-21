@@ -7,7 +7,7 @@
 // functions, the ThinCustom instance and a `.dsi` material instance alike, from the Content Browser
 // context menu and the Material Content Browser.
 //
-// Plus the two answers to a Tweaked ThinCustom instance (CONTRACT section 2.3): Adopt Tweaks writes the
+// Plus the two answers to a Tweaked ThinCustom instance: Adopt Tweaks writes the
 // instance's parameter overrides into the `.dss` as uniform defaults, Extract Tweaks writes them into a
 // new `.dsi`.
 //
@@ -164,7 +164,7 @@ namespace UE::DreamShader::Editor::Private
 
 		/**
 		 * Drops every parameter override the instance itself carries, statics included, through one update context -- the
-		 * permutation is updated once, when the context closes (CONTRACT section 2.3, parameter updates).
+		 * permutation is updated once, when the context closes (parameter updates).
 		 */
 		void ClearProvenanceInstanceTweaks(UMaterialInstance* Instance)
 		{
@@ -707,7 +707,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		// Every override the instance itself carries, equal to the parent or not: an override the author pinned to the
-		// parent's value must stay pinned (research-instance section 4.4 step 3).
+		// parent's value must stay pinned.
 		FInstanceDecompileOptions DecompileOptions;
 		DecompileOptions.Filter = EInstanceDecompileFilter::OverriddenOnly;
 		DecompileOptions.TargetSourceFilePath = SourceFilePath;

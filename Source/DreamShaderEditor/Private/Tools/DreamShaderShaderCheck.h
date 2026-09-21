@@ -1,9 +1,9 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// `dsc check --shaders` -- the headless shader-compilation gate (plan §13.3).
+// `dsc check --shaders` -- the headless shader-compilation gate.
 //
 // WHAT IT COSTS, first, because it surprises people: a shader compile needs a real material,
-// and 2.0 has no transient asset to build one into (plan section 5 -- every product saves).
+// and 2.0 has no transient asset to build one into (every product saves).
 // So `check -Shaders` BUILDS AND SAVES the products the way `compile` does, and only plain
 // `check` is the write-nothing gate. Holding the generator's write guard instead was tried and
 // is wrong: it makes the emitter skip each product rather than build it off disk, so the run
@@ -37,9 +37,9 @@
 // which it reports nothing at all, and "no errors" is the one answer a gate must never get wrong.
 //
 // MAPPING BACK TO SOURCE, best first:
-//   1. The asset's `DreamShader.SourceSpans` table (CONTRACT §11 #10): the error names a
+//   1. The asset's `DreamShader.SourceSpans` table: the error names a
 //      UMaterialExpression, the table maps its guid to a file/line/column/length. Exact.
-//   2. The `// Begin/End DreamShader source:` markers unit H emits inside a Custom node's code:
+//   2. The `// Begin/End DreamShader source:` markers the custom-HLSL builder emits inside a Custom node's code:
 //      count lines within the block, as the 1.x diagnostics mapper does.
 //   3. The source file at line 1, with the raw compiler text in `detail`. Honest, not helpful.
 

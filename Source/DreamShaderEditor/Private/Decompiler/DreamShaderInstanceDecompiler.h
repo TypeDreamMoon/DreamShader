@@ -8,7 +8,7 @@
 // of a `.dsi` and the two tweak actions of a ThinCustom pair want every override the instance itself carries, equal to
 // the parent or not, because an override pinned to the parent's value has to stay pinned.
 //
-// Design: Plan/m4m5/research-instance.md section 5. Diagnostics: DSH9100-9102, DSH9104-9106 (DSH9103 is Adopt's).
+// Diagnostics: DSH9100-9102, DSH9104-9106 (DSH9103 is Adopt's).
 
 #pragma once
 

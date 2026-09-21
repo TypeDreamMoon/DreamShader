@@ -1,10 +1,10 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// Node <-> source line navigation (plan §13.2, contract §5 row N).
+// Node <-> source line navigation.
 //
 // A 2.0 compile stamps every generated asset with a `DreamShader.SourceSpans` metadata table --
 // `{ "<ExpressionGuid>": { "file", "line", "col", "len", "callLine", "callCol" } }`, written by
-// DreamShaderIREmitter's WriteDreamShaderSourceSpans (unit E, contract §2 decision §11 #10). This
+// DreamShaderIREmitter's WriteDreamShaderSourceSpans. This
 // file is the only reader of that table, and it turns it into the two directions of navigation:
 //
 //   graph -> source  the material editor's node context menu grows *DreamShader > Open Source Line*
@@ -45,8 +45,8 @@ namespace UE::DreamShader::Editor::Private
 	 * length in TCHARs (the emitter copies Lang::FLangSpan::Length), kept because a language service
 	 * wants to select the expression, not just put the caret in front of it.
 	 *
-	 * CallLine/CallColumn are the call site of the helper the node was inlined from (contract §6.4:
-	 * every node made while inlining carries Source.CallSite). They are 0 when the node was not
+	 * CallLine/CallColumn are the call site of the helper the node was inlined from
+	 * (every node made while inlining carries Source.CallSite). They are 0 when the node was not
 	 * inlined, which is what HasCallSite() answers -- a call site is never at line 0.
 	 */
 	struct FDreamShaderSourceSpan
@@ -59,7 +59,7 @@ namespace UE::DreamShader::Editor::Private
 		/**
 		 * The file the CALL SITE is in, when it differs from File.
 		 *
-		 * Optional: IR::FIRSourceRef carries CallSiteFile alongside File (CONTRACT 6.13 #6), and
+		 * Optional: IR::FIRSourceRef carries CallSiteFile alongside File, and
 		 * WriteDreamShaderSourceSpans emits `callFile` only when the two differ -- a helper defined
 		 * in an imported `.dsh` and called from a `.dss` is exactly that case. Empty here means the
 		 * same file as File, which is every same-file inline.
@@ -88,7 +88,7 @@ namespace UE::DreamShader::Editor::Private
 	class FDreamShaderSourceSpanTable
 	{
 	public:
-		/** The package metadata key. Same string on the writing side (unit E). */
+		/** The package metadata key. Same string on the writing side. */
 		static const TCHAR* GetMetadataKey();
 
 		/**
@@ -121,7 +121,7 @@ namespace UE::DreamShader::Editor::Private
 		 * Every guid whose span names File and covers Line.
 		 *
 		 * `OutOnLine` are the nodes whose span STARTS on that line -- what the caller wants to select.
-		 * `OutViaCallSite` are the nodes of an inlined helper whose CALL is on that line (contract §6.4).
+		 * `OutViaCallSite` are the nodes of an inlined helper whose CALL is on that line.
 		 * `OutCovering` are the nodes whose span starts earlier and may reach the line (a `@custom`
 		 * body); the table records a character length and not an end line, so this one is a bounded
 		 * guess and is meant to be consulted only when the other two are empty.

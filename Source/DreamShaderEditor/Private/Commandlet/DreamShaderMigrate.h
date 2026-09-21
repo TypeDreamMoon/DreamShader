@@ -19,8 +19,6 @@
 // Refused: a source with `#if` conditionals (DSH9090: only the branch taken today would survive), an `import` that
 // names a source root (DSH9091), a `.dsh` with nothing 1.x in it (DSH9093), a file that is not a 1.x source or cannot
 // be read (DSH9095), an output that already exists or cannot be written (DSH9099).
-//
-// Design: Plan/m4m5/research-decompiler.md section 5. Declarations: Plan/m4m5/EE-report.md, "From DM" item 4.
 
 #pragma once
 

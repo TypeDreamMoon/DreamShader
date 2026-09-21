@@ -34,7 +34,7 @@ namespace UE::DreamShader::Editor::Private
 
 	/**
 	 * The two answers to a Tweaked ThinCustom instance -- one whose generated content still matches and which carries
-	 * parameter overrides (CONTRACT section 2.3). Adopt Tweaks writes the overrides into the `.dss` as the defaults of its
+	 * parameter overrides. Adopt Tweaks writes the overrides into the `.dss` as the defaults of its
 	 * uniforms and clears them from the instance; Extract Tweaks writes them into a new `.dsi` whose Parent is the
 	 * instance, compiles it, and clears them from the instance. Both confirm, close editors, toast and log.
 	 */
@@ -91,7 +91,7 @@ namespace UE::DreamShader::Editor::Private
 	FDreamShaderProvenanceOutcome AdoptGeneratedAssetIntoSourceCore(UObject* Asset, const FString& SourceFilePath, bool bWriteBackup);
 
 	/**
-	 * Adopt of a `.dsi` (research-instance section 4.4): the overrides the instance itself carries are decompiled
+	 * Adopt of a `.dsi`: the overrides the instance itself carries are decompiled
 	 * (OverriddenOnly), spliced into the file by RewriteDreamShaderInstanceSource -- only declarations whose values changed
 	 * are touched, so `//` comments and order survive -- and the instance is rebuilt inside the revert scope. DSH9103 when
 	 * the file's Parent no longer resolves; refused for state a `.dsi` cannot state (layer or blend overrides, UsageFlags).

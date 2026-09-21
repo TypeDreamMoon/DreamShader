@@ -11,7 +11,7 @@
 // with nothing wired to Value is whichever branch its default picks. And an engine GetMaterialAttributes hands its
 // material through on output 0.
 //
-// What an expression becomes (research-decompiler.md section 3.3): the core op the emitter would write the very same
+// What an expression becomes: the core op the emitter would write the very same
 // expression for -- every operand pin wired, every other property at its default -- and otherwise a Reflected node over
 // the catalog, with the connected pins as inputs and the non-default properties, `Const*` twins of unwired pins always
 // among them, as properties. The twins are always written because that is the shape RaiseDreamShaderIR matches.
@@ -1760,7 +1760,7 @@ namespace UE::DreamShader::Editor::Private
 				return FromEngine;
 			}
 
-			// "Some float": the width follows the inputs, as the builder types the same call (CONTRACT 6.13 #61(c)).
+			// "Some float": the width follows the inputs, as the builder types the same call.
 			int32 Widest = 1;
 			for (const FIRInput& Input : Node.Inputs)
 			{

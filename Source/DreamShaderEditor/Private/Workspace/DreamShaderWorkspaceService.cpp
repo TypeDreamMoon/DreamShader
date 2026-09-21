@@ -706,7 +706,7 @@ namespace UE::DreamShader::Editor::Private
 		// WHY THIS EXISTS. To grey out the branches a `#if` did not take, the VS Code extension has to
 		// evaluate DreamShader condition expressions in JavaScript. That makes a FOURTH hand-written
 		// statement of the same grammar -- the C++ evaluator, its contract tests, the table in
-		// Plan/preprocessor-conditionals.md section 4, and now the extension. Four independent
+		// Docs/language/preprocessor.md, and now the extension. Four independent
 		// implementations do not stay equal because someone meant them to.
 		//
 		// So the manifest carries a list of expressions together with the answer the REAL C++
