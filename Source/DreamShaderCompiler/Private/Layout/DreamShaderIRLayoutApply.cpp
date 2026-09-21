@@ -23,6 +23,8 @@
 #include "Emitter/DreamShaderIREmitterInternal.h"
 
 #include "DreamShaderGeneratedAssets.h"
+// GetDreamShaderExpressionInputCount: the inputs of an expression, counted the way every engine version lets them be.
+#include "DreamShaderMaterialExpressionCompat.h"
 #include "DreamShaderSettings.h"
 #include "IR/IRLayout.h"
 

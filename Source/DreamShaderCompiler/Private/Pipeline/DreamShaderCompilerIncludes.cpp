@@ -9,6 +9,8 @@
 #include "DreamShaderModule.h"
 #include "DreamShaderPreprocessor.h"
 #include "Lang/LangParser.h"
+// GetDreamShaderPreprocessDialectForFile: a header is read in the dialect its own kind says.
+#include "Pipeline/DreamShaderCompilePipelineInternal.h"
 
 #include "HAL/FileManager.h"
 #include "Internationalization/Text.h"
