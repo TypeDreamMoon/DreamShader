@@ -302,36 +302,55 @@ namespace UE::DreamShader::Editor::Compiler
 		});
 	}
 
+	namespace
+	{
+		/** `-Source=` / `-File=`, or a bare positional argument after the verb; resolved the way `compile` resolves it. */
+		bool TryGetExplicitSourceFile(
+			const TArray<FString>& Tokens,
+			const TArray<FString>& Switches,
+			const TMap<FString, FString>& Params,
+			FString& OutSourceFile)
+		{
+			FString SourceFilePath = GetParam(Tokens, Switches, Params, TEXT("Source"));
+			if (SourceFilePath.IsEmpty())
+			{
+				SourceFilePath = GetParam(Tokens, Switches, Params, TEXT("File"));
+			}
+
+			if (!SourceFilePath.IsEmpty())
+			{
+				OutSourceFile = ResolveSourcePath(SourceFilePath);
+				return true;
+			}
+
+			// A bare positional argument, so `dsc check DShader/Materials/M_Foo.dss` works. Tokens[0] is
+			// the verb itself, so the scan starts at 1.
+			for (int32 Index = 1; Index < Tokens.Num(); ++Index)
+			{
+				FString Key;
+				FString Value;
+				if (Private::TrySplitCommandletAssignment(Tokens[Index], Key, Value) || Tokens[Index].StartsWith(TEXT("-")))
+				{
+					continue;
+				}
+
+				OutSourceFile = ResolveSourcePath(Tokens[Index]);
+				return true;
+			}
+			return false;
+		}
+	}
+
 	bool ResolveDreamShaderLang2CommandletSourceFiles(
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params,
 		TArray<FString>& OutSourceFiles)
 	{
-		FString SourceFilePath = GetParam(Tokens, Switches, Params, TEXT("Source"));
-		if (SourceFilePath.IsEmpty())
+		FString Explicit;
+		if (TryGetExplicitSourceFile(Tokens, Switches, Params, Explicit))
 		{
-			SourceFilePath = GetParam(Tokens, Switches, Params, TEXT("File"));
-		}
-
-		if (!SourceFilePath.IsEmpty())
-		{
-			OutSourceFiles.Add(ResolveSourcePath(SourceFilePath));
-			return true;
-		}
-
-		// A bare positional argument, so `dsc check DShader/Materials/M_Foo.dss` works. Tokens[0] is
-		// the verb itself, so the scan starts at 1.
-		for (int32 Index = 1; Index < Tokens.Num(); ++Index)
-		{
-			FString Key;
-			FString Value;
-			if (Private::TrySplitCommandletAssignment(Tokens[Index], Key, Value) || Tokens[Index].StartsWith(TEXT("-")))
-			{
-				continue;
-			}
-
-			OutSourceFiles.Add(ResolveSourcePath(Tokens[Index]));
+			OutSourceFiles.Add(MoveTemp(Explicit));
 			return true;
 		}
 
@@ -809,6 +828,158 @@ namespace UE::DreamShader::Editor::Compiler
 			*OutputDirectory));
 
 		return bAllSucceeded;
+	}
+
+	// ------------------------------------------------------------------------------------------ fmt
+
+	namespace
+	{
+		/** Every 2.0-syntax file under the WRITABLE source roots, minus the `Packages` trees, sorted. */
+		void FindProjectDreamShaderFormatSources(TArray<FString>& OutSourceFiles)
+		{
+			OutSourceFiles.Reset();
+
+			for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
+			{
+				// A plugin ships its sources as they are (FDreamShaderSourceRoot::bWritable); naming one of its files is
+				// how to format it anyway.
+				if (Root.Directory.IsEmpty() || !Root.bWritable)
+				{
+					continue;
+				}
+
+				TArray<FString> Found;
+				for (const TCHAR* const Pattern : { TEXT("*.dss"), TEXT("*.dsi"), TEXT("*.dsh") })
+				{
+					IFileManager::Get().FindFilesRecursive(Found, *Root.Directory, Pattern, /*Files*/ true, /*Directories*/ false, /*bClearFileNames*/ false);
+				}
+
+				for (const FString& File : Found)
+				{
+					const FString Normalized = UE::DreamShader::NormalizeSourceFilePath(File);
+					if (UE::DreamShader::IsPathUnderSourceDirectory(Normalized, Root.PackagesDirectory))
+					{
+						continue;
+					}
+					OutSourceFiles.AddUnique(Normalized);
+				}
+			}
+
+			OutSourceFiles.Sort([](const FString& Left, const FString& Right)
+			{
+				return Left.Compare(Right, ESearchCase::IgnoreCase) < 0;
+			});
+		}
+	}
+
+	bool RunDreamShaderFormatCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		TArray<FString> SourceFiles;
+		FString Explicit;
+		if (TryGetExplicitSourceFile(Tokens, Switches, Params, Explicit))
+		{
+			SourceFiles.Add(MoveTemp(Explicit));
+		}
+		else if (HasFlag(Tokens, Switches, TEXT("All")))
+		{
+			FindProjectDreamShaderFormatSources(SourceFiles);
+		}
+		else
+		{
+			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderLang2CommandletUsage());
+			return false;
+		}
+
+		const bool bCheck = HasFlag(Tokens, Switches, TEXT("Check"));
+		const FString OutParam = GetOutParam(Tokens, Switches, Params);
+		const FString OutputDirectory = OutParam.IsEmpty() ? FString() : FPaths::ConvertRelativePathToFull(OutParam);
+
+		int32 ChangedCount = 0;
+		int32 UnchangedCount = 0;
+		int32 SkippedCount = 0;
+		int32 FailedCount = 0;
+
+		for (const FString& SourceFile : SourceFiles)
+		{
+			FLangDiagnosticSink FileSink(SourceFile);
+			const FLangSpan NoSpan;
+
+			FString Text;
+			if (!FFileHelper::LoadFileToString(Text, *SourceFile))
+			{
+				FileSink.Error(TEXT("DSH9045"), NoSpan, FText::Format(
+					LOCTEXT("FormatReadFailed", "'{0}' could not be read, so it was not formatted."),
+					FText::FromString(SourceFile)));
+				LogLang2Diagnostics(FileSink, SourceFile);
+				++FailedCount;
+				continue;
+			}
+
+			FString Formatted;
+			const UE::DreamShader::Lang::ELangFormatOutcome Outcome = UE::DreamShader::Lang::FormatDreamShaderLangSource(
+				UE::DreamShader::Lang::FLangSourceText(SourceFile, Text),
+				UE::DreamShader::Lang::FLangFormatOptions(),
+				Formatted,
+				FileSink);
+
+			switch (Outcome)
+			{
+			case UE::DreamShader::Lang::ELangFormatOutcome::Unchanged:
+				++UnchangedCount;
+				break;
+
+			case UE::DreamShader::Lang::ELangFormatOutcome::Skipped:
+				++SkippedCount;
+				break;
+
+			case UE::DreamShader::Lang::ELangFormatOutcome::Failed:
+				++FailedCount;
+				break;
+
+			case UE::DreamShader::Lang::ELangFormatOutcome::Changed:
+			{
+				++ChangedCount;
+				if (bCheck)
+				{
+					FileSink.Error(TEXT("DSH9046"), NoSpan, FText::Format(
+						LOCTEXT("FormatCheckWouldChange", "'{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it."),
+						FText::FromString(SourceFile)));
+					break;
+				}
+
+				const FString TargetPath = OutputDirectory.IsEmpty() ? SourceFile : MakeOutputFilePath(OutputDirectory, SourceFile, TEXT(""));
+				FString WriteError;
+				if (!WriteToolFile(TargetPath, Formatted, WriteError))
+				{
+					FileSink.Error(TEXT("DSH9045"), NoSpan, FText::Format(
+						LOCTEXT("FormatWriteFailed", "The formatted text of '{0}' could not be written: {1}. A file that is read-only -- checked in, not checked out -- is the usual reason."),
+						FText::FromString(SourceFile),
+						FText::FromString(WriteError)));
+					--ChangedCount;
+					++FailedCount;
+					break;
+				}
+				UE_LOG(LogDreamShader, Display, TEXT("Formatted %s%s."), *SourceFile, OutputDirectory.IsEmpty() ? TEXT("") : *FString::Printf(TEXT(" to %s"), *TargetPath));
+				break;
+			}
+			}
+
+			LogLang2Diagnostics(FileSink, SourceFile);
+		}
+
+		const bool bSucceeded = FailedCount == 0 && (!bCheck || ChangedCount == 0);
+		LogSummary(bSucceeded, FString::Printf( /* I18N-EXEMPT: machine-readable verdict line */
+			TEXT("DreamShader fmt: %d %s, %d already formatted, %d left alone, %d failed of %d file(s)."),
+			ChangedCount,
+			bCheck ? TEXT("would be rewritten") : TEXT("rewritten"),
+			UnchangedCount,
+			SkippedCount,
+			FailedCount,
+			SourceFiles.Num()));
+		return bSucceeded;
 	}
 
 	// ----------------------------------------------------------------------------- export-catalog

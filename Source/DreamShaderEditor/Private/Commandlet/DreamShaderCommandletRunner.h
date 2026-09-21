@@ -106,4 +106,11 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params);
+
+	/** `fmt <file|-All> [-Check] [-Out=<dir>]`. */
+	bool RunDreamShaderFormatCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
+
 }

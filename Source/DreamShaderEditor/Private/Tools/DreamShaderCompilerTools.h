@@ -83,4 +83,17 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params);
+
+	/**
+	 * `fmt <file|-All> [-Check] [-Out=<dir>]` -- FormatDreamShaderLangSource over 2.0 sources (`.dss`, `.dsi`, and a
+	 * `.dsh` with no 1.x declarations), rewriting each in place. `-All` takes the writable source roots only, as
+	 * `migrate -All` does: a plugin ships its sources as they are. `-Check` writes nothing and fails when a file would
+	 * change, which is the CI form; `-Out` writes the formatted copies under a directory instead of over the sources.
+	 * Reads no asset and builds nothing (plan section 13.4).
+	 */
+	bool RunDreamShaderFormatCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
+
 }

@@ -86,6 +86,12 @@ int32 UDreamShaderCommandlet::Main(const FString& Params)
 		return UE::DreamShader::Editor::Private::RunDreamShaderExportCatalogCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
 	}
 
+	if (Command.Equals(TEXT("fmt"), ESearchCase::IgnoreCase)
+		|| Command.Equals(TEXT("format"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderFormatCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
 	if (Command.Equals(TEXT("decompile"), ESearchCase::IgnoreCase)
 		|| Command.Equals(TEXT("export"), ESearchCase::IgnoreCase))
 	{
