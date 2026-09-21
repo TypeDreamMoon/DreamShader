@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// DreamShaderLang 2.0 lexer tests (milestone M1, agent A).
+// DreamShaderLang 2.0 lexer tests.
 //
 // Covers the four files of the lexer layer:
 //   Source/DreamShaderLang/Private/Lang/LangSource.cpp      -- FLangSourceText, the line table, file kinds

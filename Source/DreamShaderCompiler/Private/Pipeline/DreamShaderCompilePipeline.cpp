@@ -16,7 +16,7 @@
 //   validate        IR               ValidateDreamShaderIR
 //   emit            emitter          EmitDreamShaderIRProduct, once per product, in dependency order
 //
-// One pipeline for every compilable kind since M4 (CONTRACT section 2.1, agreement A4): `.dss` and `.dsi` take the
+// One pipeline for every compilable kind since the compiler relocation (CONTRACT section 2.1, agreement A4): `.dss` and `.dsi` take the
 // 2.0 front end, `.dsm` and `.dsf` the legacy one, and a `.dsh` included by any of them is parsed declaration by
 // declaration. The parser's Auto front end makes that choice from the path; this file makes the matching choice of
 // preprocessor dialect, here and in the include resolver, and everything after the parse is one chain.

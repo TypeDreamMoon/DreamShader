@@ -6,7 +6,7 @@
 // The whole point of the form is a GUARANTEE that cannot be seen in the source alone: however many pins the
 // block binds, the material ends up with exactly ONE terminal node. In 1.x it fell out of the parser lowering
 // every pin to a binding with a byte-identical ExpressionClass + ExpressionArguments. The legacy front end
-// (batch 2, M4) keeps it in the tree: every pin whose head has an equal class and argument list becomes a
+// keeps it in the tree: every pin whose head has an equal class and argument list becomes a
 // `Pin[i] = source` argument (FArgument::PinIndex) of ONE `UE.Expression(Class = ...)` statement call, so the
 // parse layer asserts the merge and the graph layer asserts the one node.
 //
@@ -198,7 +198,7 @@ Shader(Name="DreamShaderTests/OutputsBlock/M_Parse", Root="Game")
 	static FString GetGenerateCorpusFixturePath(const TCHAR* FileName)
 	{
 		const FString Root = UE::DreamShader::Editor::Private::Tests::GetDreamShaderCorpusRoot();
-		// Batch 2: the Generate corpus is the Legacy compile layer now (Tests/Corpus/Legacy/Compile).
+		// The Generate corpus is the Legacy compile layer now (Tests/Corpus/Legacy/Compile).
 		return Root.IsEmpty() ? FString() : FPaths::Combine(Root, TEXT("Legacy"), TEXT("Compile"), TEXT("Material"), FileName);
 	}
 
@@ -435,7 +435,7 @@ bool FDreamShaderOutputsBlockSingleNodeTest::RunTest(const FString& Parameters)
 	// LoadObject<UMaterial> only answers under the Graph backend; the default is ThinCustom.
 	FScopedDreamShaderGraphBackendPin BackendPin;
 
-	// A Graph material always saves (batch 2), so the fixture compiles in a scratch package root that deletes it.
+	// A Graph material always saves, so the fixture compiles in a scratch package root that deletes it.
 	FDreamShaderCompile2Fixture Fixture(TEXT("OutputsBlockSingleNode"), TEXT("Automation"), TEXT("dsm"));
 	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
 	AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);

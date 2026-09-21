@@ -15,8 +15,6 @@
 // Source positions ARE here, on every node: FIRSourceRef carries the span the node came from and,
 // for a node made while inlining a helper, the span of the call site as well. The emitter writes
 // them into the asset so the editor can jump from a node back to the line (plan §13.2).
-//
-// FROZEN for batch 1 (M2+M3).
 
 #pragma once
 

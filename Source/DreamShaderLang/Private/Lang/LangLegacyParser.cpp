@@ -19,7 +19,7 @@
 //
 // Every declaration it makes is marked FDecl::bLegacy, and everything 2.0 cannot say is recorded in
 // FLegacyMigrationInfo (LangLegacy.h), the one channel of 1.x facts to migrate, Adopt and the
-// VirtualFunction sync (batch-2 contract, agreement A11).
+// VirtualFunction sync (agreement A11).
 
 #include "LangParserInternal.h"
 
@@ -1132,7 +1132,7 @@ namespace UE::DreamShader::Lang::Private
 			}
 
 			// Outputs: the first one (1.x order) named `Result` is the return value; the rest are `out` parameters
-			// after the inputs (batch-2 contract 2.4). A layer's material output is its `inout material`.
+			// after the inputs (contract 2.4). A layer's material output is its `inout material`.
 			int32 ReturnOutput = INDEX_NONE;
 			int32 MaterialOutput = INDEX_NONE;
 			if (bLayer || bLayerBlend)

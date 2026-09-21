@@ -6,7 +6,7 @@ description: Export an existing Unreal material, material function, layer, layer
 # dream-shader-decompile `<asset>`
 
 Read an existing asset's node graph and write the DreamShaderLang source that builds it. Since 2.0
-(M5) the default output is **2.0 text** — a `.dss`, or a `.dsi` for a material instance — written
+the default output is **2.0 text** — a `.dss`, or a `.dsi` for a material instance — written
 by the compiler run backwards (graph → IR → AST → printer). The 1.x exporter that writes `.dsm` /
 `.dsf` is still there behind `-Format Legacy`.
 

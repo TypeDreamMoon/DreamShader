@@ -14,8 +14,8 @@
 // written. The binder reads Typing to type a call, the IR builder reads it to build the node, the
 // emitter reads ExpressionClass and InputPins to make the engine node. Nobody else may hold a copy.
 //
-// FROZEN for batch 1 (M2+M3). The enum may only GROW at the end (before Count); the table entries
-// for existing ops may not change meaning.
+// The enum may only GROW at the end (before Count); the table entries for existing ops may not change
+// meaning: goldens and saved IR name ops by them.
 
 #pragma once
 

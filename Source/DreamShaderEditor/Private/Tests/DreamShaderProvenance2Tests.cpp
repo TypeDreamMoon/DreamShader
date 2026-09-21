@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // DreamShader.Compiler2.Provenance.* -- the headless cores of the provenance actions (Provenance/
-// DreamShaderProvenanceActions.h) after batch 2: Adopt writes 2.0 text through the 2.0 decompiler, a 1.x source
+// DreamShaderProvenanceActions.h) in 2.0: Adopt writes 2.0 text through the 2.0 decompiler, a 1.x source
 // adopts as a migration, a `.dsi` adopts as a splice, and a ThinCustom instance's tweaks go either into the source's
 // defaults or into a `.dsi` of their own.
 //

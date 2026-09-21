@@ -189,7 +189,7 @@ namespace UE::DreamShader::IR::Private
 		if (!Function.ReturnType.IsVoid())
 		{
 			const FString* Doc = Function.Directives.FindParamDoc(TEXT("Result"));
-			// `@pin Result <name>` renames the return value's output (batch 2).
+			// `@pin Result <name>` renames the return value's output.
 			const FString* ResultPin = Function.Directives.FindPinName(TEXT("Result"));
 			MakeFunctionOutput(ResultPin ? *ResultPin : FString(TEXT("Result")), Doc ? *Doc : FString(), OutputSort++, Frame().ReturnValue, Function.Decl->Span);
 		}
@@ -276,7 +276,7 @@ namespace UE::DreamShader::IR::Private
 		Node.Op = EIROp::FunctionInput;
 		Node.Outputs.Add(Param.bStatic ? FIRType::Bool(1) : GraphTypeOf(Param.Type));
 		Node.DebugName = Param.Name;
-		// `@pin` (batch 2): the engine's pin name when it is not an identifier; the variable keeps the identifier.
+		// `@pin`: the engine's pin name when it is not an identifier; the variable keeps the identifier.
 		Node.Properties.Add({ FString(Prop::InputName), FIRPropertyValue::MakeName(Param.PinName.IsEmpty() ? Param.Name : Param.PinName) });
 		Node.Properties.Add({ FString(Prop::InputType), FIRPropertyValue::MakeEnum(InputType) });
 		Node.Properties.Add({ FString(Prop::SortPriority), FIRPropertyValue::MakeInt(SortPriority) });

@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 
 // FDreamShaderDiagnosticRecord / FDreamShaderDiagnosticLocation. They live in the compiler module since
-// the M4 relocation, so the compiler can build records without depending on this store.
+// the compiler relocation, so the compiler can build records without depending on this store.
 #include "DreamShaderDiagnosticRecord.h"
 
 namespace UE::DreamShader::Editor::Private

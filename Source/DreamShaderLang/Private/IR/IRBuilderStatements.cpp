@@ -12,7 +12,7 @@
 //
 // Diagnostics owned by this file: DSH4360, DSH4362, DSH4363, DSH4375. DSH4372 (a value assigned in
 // one arm only) is decided here -- the merge marks the value -- and said in IRBuilder.cpp when the
-// marked value is read (batch 2, debt B6 (ii)).
+// marked value is read.
 
 #include "IRBuilderInternal.h"
 

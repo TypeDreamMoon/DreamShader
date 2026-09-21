@@ -1,6 +1,6 @@
 # Graph parity comparator
 
-`graph_parity.py` compares `dsc.ps1 dump-graph` output (schema 1) by graph structure. It exists for M4: the 1.x
+`graph_parity.py` compares `dsc.ps1 dump-graph` output (schema 1) by graph structure. It exists because the 1.x
 generator is deleted, so its output survives only as frozen dumps, and the 2.0 compiler (legacy front end included) must
 reproduce them.
 
@@ -47,7 +47,7 @@ python Tools/Parity/graph_parity.py pair <baseline.graph.json> <candidate.graph.
 `--allow` names a JSON file of `{ "<file glob>": { "delta": "PD-6", "lines": ["<regex>", ...] } }`. A file whose every
 difference line matches one of its patterns is reported as *equal under a registered delta* and counted apart, so a
 difference no normalisation can reach stays visible without failing the run. `registered-deltas.json` holds the one
-such file of the M4 sweep (`M_MaterialAttributeRead`, PD-6: its 1.x capture has localised pin names).
+such file of the sweep (`M_MaterialAttributeRead`, PD-6: its 1.x capture has localised pin names).
 
 Files pair by their path relative to each root. `compare` prints a Markdown report (also written with `--report`), lists
 metadata differences (kind, backend, settings, function inputs/outputs, instance block) and, for each differing root, the
@@ -55,9 +55,9 @@ first divergences found by walking both signatures from that root. Exit code 0 m
 
 `stats` runs the normalisations over one tree and prints what each did.
 
-## The M4 sweep
+## The sweep
 
-`run_parity_sweep.py` runs the whole comparison in phase 2, with the editor closed:
+`run_parity_sweep.py` runs the whole comparison, with the editor closed:
 
 ```
 python Tools/Parity/run_parity_sweep.py [--skip-compile] [--keep-assets] [--legacy-corpus <dir>] [--out <dir>]
@@ -75,7 +75,7 @@ python Tools/Parity/run_parity_sweep.py [--skip-compile] [--keep-assets] [--lega
 Reports, logs and backups land in `<Project>/Saved/DreamShader/ParitySweep/<stamp>/`. The exit code is 0 only when both
 comparisons are equal.
 
-Result of the M4 sweeps (09-18 to 09-20, nine runs): **68 of 68 roots equal, 6 of 6 Legacy fixtures equal** (one under
+Result of the sweeps (09-18 to 09-20, nine runs): **68 of 68 roots equal, 6 of 6 Legacy fixtures equal** (one under
 PD-6), with the other plugin repositories' `git status` identical before and after every run.
 
 ## Validation (09-15, against the independent counts in `Plan/m4m5/research-legacy.md` §2.0)

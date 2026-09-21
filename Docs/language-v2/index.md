@@ -3,7 +3,7 @@
 > [DreamShader](../index.md) » **DreamShaderLang 2.0**
 
 > [!IMPORTANT]
-> **One compiler builds everything.** As of **M4+M5** there is one pipeline -- preprocess → parse →
+> **One compiler builds everything.** There is one pipeline -- preprocess → parse →
 > bind → lower to a graph IR → run the passes → validate → emit -- and two front ends in front of it:
 > a `.dss` is read by the 2.0 parser, and a `.dsm` / `.dsf` by a **legacy front end** that reads the
 > [1.x language](../language/index.md) into the same tree. The 1.x generator is gone; what it built is
@@ -24,7 +24,7 @@ source with no side files and no strip step.
 | 1.x extensions | `.dsm` / `.dsf` — read by the legacy front end, built by the same compiler |
 | Modules | [`DreamShaderLang`](../api/lang-module.md) (`Core` only) — both front ends, binder, IR, decompile and migrate · `DreamShaderCompiler` (editor) — pipeline, emitter, assets |
 | Tests | `DreamShader.Lang2.*`, `DreamShader.Compiler2.*` |
-| Status | M1: lexer + 2.0 parser + printer · M2+M3: binder, IR, passes, validator, emitter, tools, node ↔ source navigation · **M4+M5: legacy front end, `.dsi`, decompiler 2.0, `dsc migrate`** |
+| Status | pre-release (`2.0.0b`): both front ends, binder, IR, passes, validator, emitter, node ↔ source navigation, `.dsi`, the 2.0 decompiler, `dsc migrate`, the Substrate sugar, the IR graph layouts, `dsc fmt` |
 
 ## Two short examples
 
@@ -71,7 +71,7 @@ export float2 MF_ToonUV(float UVChannel = 0.0, float4 ScaleOffset = float4(1, 1,
 }
 ```
 
-## What the M1 parser accepts
+## What the parser accepts
 
 ### Declarations
 
@@ -83,7 +83,7 @@ export float2 MF_ToonUV(float UVChannel = 0.0, float4 ScaleOffset = float4(1, 1,
 | `export <Type> Name(params) { … }` | Produces an asset. `void (inout material)` means a material; anything else, a material function. |
 | `extern <Type> Name(params);` | A prototype bound to an existing asset through `/// @asset`. No body. |
 | `struct Name { … };` | Fields may carry their own `///` block and array dimensions. No methods, no nesting. |
-| `#include "path"` · `import "path";` | The same thing; the spelling is recorded so the printer reproduces what was written. The path must be **double-quoted**: `#include <Engine/Private/Common.ush>` is HLSL's spelling, not this one, and is `DSH3203`. Paths are **not** resolved in M1. |
+| `#include "path"` · `import "path";` | The same thing; the spelling is recorded so the printer reproduces what was written. The path must be **double-quoted**: `#include <Engine/Private/Common.ush>` is HLSL's spelling, not this one, and is `DSH3203`. The parser does not open the file; the binder reads and binds it. |
 | `#pragma material(Key = Value, …)` | File-level material settings. |
 | `#pragma layout(Node\|Comment, Key = Value, …)` | Decompiler-written node coordinates. |
 | `#pragma region Name` · `#pragma endregion` | The 2.0 spelling of the 1.x `#Region` comment box. |
@@ -162,7 +162,7 @@ Description), which is otherwise the function's name.
 
 ## What the pipeline does today
 
-Everything M1 listed as missing is now in:
+What happens to a parsed file:
 
 - **Assets.** A `.dss` compiles to a `UMaterial`, a `UMaterialFunction`, a Material Layer or a Layer
   Blend, through the 1.x asset factory, digest, provenance, atomic rebuild and graph layout — so
@@ -191,7 +191,7 @@ Everything M1 listed as missing is now in:
 - **Comments survive a rewrite.** The parser keeps `//` and `/* */` comments as trivia on the
   declaration or statement they stand by, and the printer writes them back.
 
-### Since batch 2
+### Pins, defaults, layers and blends
 
 | Feature | Spelling |
 | :-- | :-- |
@@ -206,8 +206,9 @@ Everything M1 listed as missing is now in:
 
 ## What the pipeline does *not* do yet
 
-- **No new layout** (M6) — the 1.x layout is called on the emitted graph, bridges and all — and
-  **no Substrate sugar** (M7).
+- **The 1.x layout is still the default.** The three layouts that read the IR — *Blocks*, which boxes the
+  graph by region and statement and joins the boxes with named reroutes, *Source Bands* and *Layered* —
+  are a [project setting](../generation/graph-layout.md#layout-styles).
 - **No Material Layer *stack*.** `@layer` and `@layerblend` produce the two function kinds, but the
   material-level layer stack is a future `#pragma material` key.
 - **No `let` / `auto`, and a node is not a value you can store.** Write the call where its output is

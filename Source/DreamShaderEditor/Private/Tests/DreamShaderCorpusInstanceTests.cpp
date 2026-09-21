@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// Data-driven runner for `.dsi` sources end to end (batch 2, M5): Tests/Corpus/Instance.
+// Data-driven runner for `.dsi` sources end to end: Tests/Corpus/Instance.
 //
 // A fixture is a `.dsi`; the `.dss` (or `.dsi`) its `#pragma instance(Parent = ...)` names sits beside it in the
 // corpus and is copied into the same scratch directory, so a bare-name Parent resolves among sibling products the way

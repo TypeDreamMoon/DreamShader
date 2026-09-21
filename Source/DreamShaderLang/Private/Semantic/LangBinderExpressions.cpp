@@ -15,7 +15,7 @@
 //   3. The core-op table (IRCoreOps.h) is the only place an arity or a typing rule is written. This
 //      file reads Typing, MinArity, MaxArity and InputPins from it and holds no copy.
 //
-// Batch 2: the legacy rules (research-legacy section 3.7) hook in where they apply -- L2, L3a, L3b, L4, L5, L8,
+// The legacy rules (research-legacy section 3.7) hook in where they apply -- L2, L3a, L3b, L4, L5, L8,
 // L12, L13 and L19 -- and their helpers live in LangBinderLegacy.cpp. Codes raised here for them: DSH5277, DSH5278,
 // DSH5279, DSH5281, DSH5282, DSH5284 and DSH5285.
 
@@ -684,7 +684,7 @@ namespace UE::DreamShader::Lang::Private
 			return Emit(Expr, MoveTemp(Binding));
 		}
 
-		// Batch 2, legacy rule L19: a 1.x source was read ignoring case, so a unique case-insensitive match is taken there,
+		// Legacy rule L19: a 1.x source was read ignoring case, so a unique case-insensitive match is taken there,
 		// with a warning.
 		if (IsLegacyScope())
 		{
@@ -1543,7 +1543,7 @@ namespace UE::DreamShader::Lang::Private
 		const bool bConstantIndex = GetConstant(*Expr.Index, IndexValue, IndexComponents) && IndexComponents == 1;
 		const int32 Index = bConstantIndex ? static_cast<int32>(IndexValue[0]) : INDEX_NONE;
 
-		// Legacy rule L3a (batch 2, every source): `UE.X(...)[k]` on a node with several outputs is its output k, in the
+		// Legacy rule L3a (every source): `UE.X(...)[k]` on a node with several outputs is its output k, in the
 		// catalog's order, which is the engine's.
 		if (ObjectType.IsNode())
 		{
@@ -3463,7 +3463,7 @@ namespace UE::DreamShader::Lang::Private
 		// a call that fails to type is still a call.
 		CurrentCallees.Add(FunctionIndex);
 
-		// Batch 2, the legacy call rules (research-legacy sections 2.8.5 and 3.7). In a 1.x body a call to an Extern,
+		// The legacy call rules (research-legacy sections 2.8.5 and 3.7). In a 1.x body a call to an Extern,
 		// ExportFunction or Custom function reads the way 1.x read it:
 		//   - a value call passes inputs only and is the function's output 0 (L3b), so its out arguments may be
 		//     absent -- as they may under a selector, `F(args).Out` / `F(args)[k]` (bSelection);
@@ -4199,7 +4199,7 @@ namespace UE::DreamShader::Lang::Private
 			FString Target = Argument.Name;
 			if (Argument.PinIndex != INDEX_NONE)
 			{
-				// 1.x `Expression(Class = "...").Pin[i] = x` (batch 2): the input pin by the engine's index, which is the
+				// 1.x `Expression(Class = "...").Pin[i] = x`: the input pin by the engine's index, which is the
 				// order the catalog lists a class's inputs in.
 				if (!Class.Inputs.IsValidIndex(Argument.PinIndex))
 				{
@@ -4386,7 +4386,7 @@ namespace UE::DreamShader::Lang::Private
 				continue;
 			}
 
-			// Legacy rule L4 (batch 2, every source): `UE.Expression(Class = "Custom", ...)` takes a named argument it has
+			// Legacy rule L4 (every source): `UE.Expression(Class = "Custom", ...)` takes a named argument it has
 			// no pin or property for as an input of that name, which the emitter adds to the node's Inputs.
 			if (!Argument.Name.IsEmpty() && Class.ClassName.Equals(TEXT("MaterialExpressionCustom"), ESearchCase::CaseSensitive))
 			{

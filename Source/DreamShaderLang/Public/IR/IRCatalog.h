@@ -12,8 +12,6 @@
 // and the tools, from the JSON the editor exports for the language service (LoadBuiltinCatalogFromJson).
 // Both must produce the same content for the same engine; the JSON round-trips through
 // SaveBuiltinCatalogToJson so that can be tested.
-//
-// FROZEN for batch 1 (M2+M3).
 
 #pragma once
 

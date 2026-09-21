@@ -7,12 +7,12 @@
 // facade of DreamShaderTestCommon.h) and assert on the asset that came out: the graph, the provenance metadata,
 // the source-span table, the skip-when-current rule, and the divergence refusal. They deliberately reuse the
 // provenance helpers rather than reimplementing them: reusing the digest and the metadata is the whole shape of
-// batch 1, and a test that accepted a second implementation of them would not notice if the new pipeline had one.
+// the 2.0 pipeline, and a test that accepted a second implementation of them would not notice if it had one.
 //
 // The parity tests used to compile the SAME material twice -- once from its 1.x `.dsm`/`.dsf` twin in the DShader
-// roots and once from its 2.0 `.dss` in Tests/Corpus/Lang/Examples -- and diff the two dumps. Batch 2 (M4) deleted
-// the 1.x generator, so nothing can compile the twin any more: each pair is now the 2.0 compile of the example
-// against a pending compile golden under Tests/Corpus/Parity, and phase 2 reviews the filled golden against the
+// roots and once from its 2.0 `.dss` in Tests/Corpus/Lang/Examples -- and diff the two dumps. The 1.x generator is
+// gone, so nothing can compile the twin any more: each pair is now the 2.0 compile of the example
+// against a compile golden under Tests/Corpus/Parity, and a filled golden is reviewed against the
 // twin's frozen B2 dump (Saved/DreamShader/GraphBaseline/v2-6c2e0b6-formal) with Tools/Parity/graph_parity.py, which
 // applies the registered normalisations the live comparison used to apply here.
 
@@ -32,7 +32,7 @@
 #include "DreamShaderCompilerService.h"
 #include "DreamShaderGeneratedAssets.h"
 
-// Batch 2: the B5 / B7 smoke tests and the extern-to-layer compile (SE ruling 14).
+// The B5 / B7 smoke tests and the extern-to-layer compile (SE ruling 14).
 #include "DreamShaderCompilePipeline.h"
 #include "IR/IRCustomHlsl.h"
 #include "Lang/LangDiagnostic.h"
@@ -75,11 +75,11 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 	// Sources
 	// =============================================================================================
 
-	/** The batch-1 smoke material: a helper to inline, two uniforms, a reflected call, a swizzle. */
+	/** The smoke material: a helper to inline, two uniforms, a reflected call, a swizzle. */
 	inline FString MakeSmokeMaterialSource(const FString& AssetName)
 	{
 		return FString::Printf(TEXT(
-			"// The batch-1 end-to-end material.\n"
+			"// The end-to-end smoke material.\n"
 			"#pragma material(ShadingModel = Unlit, BlendMode = Additive)\n"
 			"\n"
 			"/// @group Glow|Look @desc Multiplied on top of the particle colour\n"
@@ -206,7 +206,7 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 	// CONTRACT-UNITS A10): the importer and this oracle read a foreign graph with one rule. What is left here is what only
 	// an oracle does with the answer -- rewrite the asset the way the 2.0 emitter would have spelled the same swizzle.
 	// Called by DreamShader.Compiler2.Smoke.InlineMaskNormalisation below; the parity tests stopped compiling the 1.x twin
-	// in batch 2.
+	// in 2.0.
 
 	/**
 	 * Rewrites every inline mask of a 1.x graph the way the 2.0 emitter spells the same swizzle
@@ -328,7 +328,7 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 	}
 
 	// =============================================================================================
-	// Parity goldens (batch 2, M4)
+	// Parity goldens
 	// =============================================================================================
 
 	/** One parity pair: a 2.0 example and where its 1.x twin's frozen dump lives. */
@@ -336,7 +336,7 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 	{
 		/** Leaf name under Tests/Corpus/Lang/Examples. */
 		const TCHAR* LangExample = nullptr;
-		/** The twin's dump, relative to <Project>/Saved/DreamShader/GraphBaseline/v2-6c2e0b6-formal: what phase 2 compares with. */
+		/** The twin's dump, relative to <Project>/Saved/DreamShader/GraphBaseline/v2-6c2e0b6-formal: what a filled golden is compared with. */
 		const TCHAR* BaselineDump = nullptr;
 	};
 
@@ -347,7 +347,7 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 	 * Lang layer. Reusing RunDreamShaderCompileCorpusCase gives the pair that runner's cleanup, `<package>/` rule,
 	 * pending flag and -DreamShaderUpdateGolden behaviour unchanged.
 	 *
-	 * The golden starts graphPending. Phase 2 fills it, then compares its `graphDump` with BaselineDump using
+	 * The golden starts graphPending. Once filled, its `graphDump` is compared with BaselineDump using
 	 * `python Tools/Parity/graph_parity.py pair <baseline> <candidate>`; only a reviewed pair drops the flag.
 	 */
 	inline bool RunParityGoldenPair(FAutomationTestBase& Test, const FParityGoldenPair& Pair)
@@ -975,7 +975,7 @@ bool FDreamShaderCompiler2ParityFunctionTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// Batch 2 debts (Plan/m4m5/CONTRACT.md section 1.1)
+// What the dump cannot see, and what must not depend on the machine
 // =================================================================================================
 
 namespace UE::DreamShader::Editor::Private::Compiler2Tests

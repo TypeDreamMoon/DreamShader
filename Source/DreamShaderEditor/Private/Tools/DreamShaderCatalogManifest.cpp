@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // See DreamShaderCatalogManifest.h. The cache half of this file moved to the compiler module
-// (Private/Pipeline/DreamShaderBuiltinCatalog.cpp) in the M4 relocation.
+// (Private/Pipeline/DreamShaderBuiltinCatalog.cpp) in the compiler relocation.
 
 #include "Tools/DreamShaderCatalogManifest.h"
 

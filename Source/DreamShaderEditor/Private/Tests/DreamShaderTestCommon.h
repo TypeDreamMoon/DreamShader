@@ -12,7 +12,7 @@
 // Run with -DreamShaderUpdateGolden to (re)write each golden from the actual parse result;
 // review the resulting json/diff by hand before committing.
 //
-// Batch 2 (M4): the 1.x runtime parser and the FMaterialGenerator facade are deleted. The Parse layer
+// The 1.x runtime parser and the FMaterialGenerator facade are deleted. The Parse layer
 // runs through the legacy front end, and every compile in the tests goes through the compile facade
 // below (CompileDreamShaderTestAssets / CompileDreamShaderTestMaterial), which asks the registered
 // compiler service.
@@ -38,9 +38,8 @@
 #include "Lang/LangPrinter.h"
 #include "Lang/LangSource.h"
 
-// Batch 1 (M2+M3): the IR and Compile corpus layers at the end of this file need the 2.0 front
-// end's semantic and IR headers, plus the `dump-graph` builder that is the Compile layer's golden
-// format. Additive: nothing above this line changed.
+// The IR and Compile corpus layers at the end of this file need the 2.0 front end's semantic and IR
+// headers, plus the `dump-graph` builder that is the Compile layer's golden format.
 #include "IR/IR.h"
 #include "IR/IRBuilder.h"
 #include "IR/IRCatalog.h"
@@ -170,7 +169,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	}
 
 	// ---------------------------------------------------------------------------------------------
-	// The compile facade (batch 2, M4 relocation)
+	// The compile facade
 	//
 	// The 1.x FMaterialGenerator facade is deleted. Every production caller now asks the registered
 	// compiler -- ::UE::DreamShader::GetDreamShaderCompiler(), implemented by the compiler module's
@@ -373,7 +372,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	// The project's default backend, pinned
 	//
 	// (The Generate layer that lived here drove the 1.x generator. Its fixtures moved to
-	// Tests/Corpus/Legacy/Compile in batch 2 and run through the Compile layer's runner below.)
+	// Tests/Corpus/Legacy/Compile in 2.0 and run through the Compile layer's runner below.)
 	// ---------------------------------------------------------------------------------------------
 
 	// Pins the project DefaultBackend to Graph for a test's duration: tests that assert
@@ -923,7 +922,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	}
 
 	// ---------------------------------------------------------------------------------------------
-	// Parse layer (Tests/Corpus/Parse/**), retargeted in batch 2 (M4) to the legacy front end.
+	// Parse layer (Tests/Corpus/Parse/**), retargeted in 2.0 to the legacy front end.
 	//
 	// The 1.x runtime parser (FTextShaderParser) is deleted, so these fixtures are the parse-equivalence
 	// set of research-legacy.md section 7 item 2: the legacy front end has to accept or refuse each one
@@ -1320,7 +1319,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	}
 
 	// =============================================================================================
-	// IR layer (Tests/Corpus/IR/**) and Compile layer (Tests/Corpus/Compile/**) -- batch 1 (M2+M3).
+	// IR layer (Tests/Corpus/IR/**) and Compile layer (Tests/Corpus/Compile/**).
 	//
 	// Two more data-driven layers, built the same way the Lang layer above is: drop a `.dss` under
 	// Tests/Corpus/<Layer>/<Area>/ with an optional `<name>.expected.json` and the runner discovers
@@ -1571,8 +1570,8 @@ namespace UE::DreamShader::Editor::Private::Tests
 			Catalog.Expressions.Add(MoveTemp(Expression));
 		}
 
-		// Batch 2: the classes a 1.x source reaches through the legacy front end's rewrites. Appended, so no index of
-		// the classes above moves and no batch 1 golden changes.
+		// The classes a 1.x source reaches through the legacy front end's rewrites. Appended, so no index of
+		// the classes above moves and no golden written before them changes.
 
 		// UE.StaticSwitchParameter -- a PARAMETER class with pins: what a 1.x `StaticSwitchParameter` property expands to
 		// at every call (research-legacy.md section 3.6), and the target of rule L20.
@@ -1952,7 +1951,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		Out.IRText = DumpDreamShaderIRText(*Out.Module);
 		// A `@custom` body names its source file in the Custom-code markers, and a corpus fixture's file is
 		// an absolute path on this machine. Goldens are committed, so the corpus root reads <corpus>/ on both
-		// sides of the compare. The product itself still embeds the absolute path; that is tracked for M4.
+		// sides of the compare.
 		{
 			FString CorpusRoot = GetDreamShaderCorpusRoot();
 			CorpusRoot.ReplaceInline(TEXT("\\"), TEXT("/"));
@@ -2724,7 +2723,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		~FDreamShaderCompile2Fixture()
 		{
 			// Everything under the fixture's package path is the fixture's, whether or not a test tracked it: a product
-			// the compile made under a name the test never asked for would otherwise outlive the run (batch 2: a Graph
+			// the compile made under a name the test never asked for would otherwise outlive the run (a Graph
 			// material or function always saves, so nothing a fixture compiles is memory-only unless it is ThinCustom).
 			{
 				FAssetRegistryModule& AssetRegistryModule =

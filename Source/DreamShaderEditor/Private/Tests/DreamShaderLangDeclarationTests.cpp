@@ -738,7 +738,7 @@ bool FDreamShaderLang2DeclarationsDiagnosticsTest::RunTest(const FString& Parame
 		}
 	}
 
-	// A .dsm goes to the legacy front end (batch 2, M4): DSH2199 "legacy front end unavailable" is gone and the 1.x
+	// A .dsm goes to the legacy front end: DSH2199 "legacy front end unavailable" is gone and the 1.x
 	// rules answer instead. A Shader block with no Graph section is DSH2255 there, and the parse carries the legacy
 	// migration side information.
 	{

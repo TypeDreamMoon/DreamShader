@@ -496,7 +496,7 @@ Expected '{' to open a block, found {1}.
 **Raised by** `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:479`
 <!-- generated:end DSH2165 -->
 
-**Cause.** a block was required and something else was found. In M1 this is reachable only when a
+**Cause.** a block was required and something else was found. This is reachable only when a
 caller asks for a block without checking first — a function body whose `{` is missing reports it.
 
 **Fix.** open the block with `{`. An `extern` function has no body at all and ends with `;`; a

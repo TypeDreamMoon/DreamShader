@@ -34,12 +34,12 @@
 //     BuildTextureSamplerArgumentName got the name from too.
 //   * calls to other @custom functions -- rewritten to the wrapper member, with the companion
 //     sampler argument spliced in after every texture argument.
-//   * a `UE.` call a 1.x GraphFunction body carries (batch 2, legacy rule L8) -- the front end lifted it into a node
+//   * a `UE.` call a 1.x GraphFunction body carries (legacy rule L8) -- the front end lifted it into a node
 //     input (FHoistedCall), and the input's name takes the call's place, padded to the call's length and keeping its
 //     line breaks. A function with such inputs cannot be embedded in another node's code (DSH6327), and a lifted
 //     range the body does not have is DSH6328.
 //
-// And one thing a void function with `out` parameters gets (batch 2, rule L9, the 1.x shape of such a node): its
+// And one thing a void function with `out` parameters gets (rule L9, the 1.x shape of such a node): its
 // first `out` parameter is the node's primary output rather than an additional one, so the node's own body declares
 // it ahead of the markers and returns it at the end. A 1.x function is written that way as a helper too, because a
 // 1.x body calls one as a value (`float4 a = Fetch(lut, i, size);`); a `/// @custom` helper keeps the signature it

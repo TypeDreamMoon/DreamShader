@@ -2,7 +2,7 @@
 //
 // See DreamShaderCompilerService.h and DreamShaderCompilerServiceInternal.h.
 //
-// Re-homed here in the M4 relocation (research-relocation sections 3 and 6):
+// Re-homed here in the compiler relocation (research-relocation sections 3 and 6):
 //
 //   * from MaterialAssetGeneration/DreamShaderMaterialGenerator.cpp -- the OnDreamShaderSourceGenerated
 //     delegate and its outermost-only notice (1.x FScopedGenerationNotice), the warnings collector

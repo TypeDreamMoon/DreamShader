@@ -157,7 +157,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 // The states a .dsm moves through as the browser sees them: never compiled -> compiled in memory
 // (current, because a memory-only build stamps its hash like a saved one) -> persisted and current
 // -> stale once the source moves. Also the join from the generated asset back to its scanned source.
-// ThinCustom since batch 2: it is the one backend with a memory-only state (a Graph material always saves),
+// ThinCustom since 2.0: it is the one backend with a memory-only state (a Graph material always saves),
 // so it is the only one that can walk the Ephemeral step at all.
 bool FDreamShaderBrowserModelStatusTest::RunTest(const FString& Parameters)
 {

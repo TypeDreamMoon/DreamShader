@@ -264,5 +264,5 @@ namespace UE::DreamShader::Editor::Compiler
 	bool TryResolveMaterialPropertyFromCatalog(const IR::FBuiltinCatalog& Catalog, const FString& AttributeName, EMaterialProperty& OutProperty);
 
 	// TryResolveSwizzleAsNamedOutput -- THE swizzle rule -- is declared in the public DreamShaderIREmitter.h
-	// since the M4 relocation, exported for the parity oracle and the M5 graph importer.
+	// since the compiler relocation, exported for the parity oracle and the graph importer.
 }

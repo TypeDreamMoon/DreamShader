@@ -341,7 +341,7 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (Key.Equals(Directive::Pin, ESearchCase::CaseSensitive))
 			{
-				// `@pin <ParameterName> <engine pin name...>` (batch 2; research-decompiler section 6.6): the name the
+				// `@pin <ParameterName> <engine pin name...>` (research-decompiler section 6.6): the name the
 				// engine gives a function pin when it is not an identifier, `Base Color` for `BaseColor`.
 				if (!bOnFunction)
 				{
@@ -401,7 +401,7 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (Key.Equals(Directive::Root, ESearchCase::CaseSensitive))
 			{
-				// `@root <Game | Engine | Plugin.Name | Plugins/Name | /Mount>` (batch 2, legacy rule L10): the Root= of the 1.x
+				// `@root <Game | Engine | Plugin.Name | Plugins/Name | /Mount>` (legacy rule L10): the Root= of the 1.x
 				// block the declaration came from. Whether it means anything there is said with the linkage (DeclareFunction).
 				if (!bOnFunction)
 				{

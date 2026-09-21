@@ -6,7 +6,7 @@
 > that depends on nothing but Core, a graph IR between the parser and the material graph, the
 > 1.x syntax carried as a second front end of the same compiler, and the HLSL-shaped `.dss`
 > syntax alongside it. `IsBetaVersion` is set, so every tag on this branch publishes as a
-> pre-release (`v2.0.0b`). Nothing below has shipped yet; entries are added as milestones land.
+> pre-release (`v2.0.0b`). Nothing below has shipped yet; entries are added as the work lands.
 
 ### Added
 

@@ -14,8 +14,7 @@
 //   - A parse method that returns bool has already reported on false.
 //   - Spans: every node's Span runs from its first token to its last; use SpanFrom(StartIndex).
 //   - Diagnostics carry a literal code: `Diagnostics.Error(TEXT("DSH2151"), Span, LOCTEXT(...))`.
-//     Codes are allocated per translation unit -- see Plan/m1/CONTRACT.md -- and must not be
-//     reused across units.
+//     Codes are allocated per translation unit and must not be reused across units.
 
 #pragma once
 

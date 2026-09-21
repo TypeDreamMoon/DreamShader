@@ -12,9 +12,6 @@
 // signature its author wrote. While lowering, the graph's narrower model applies: every numeric
 // value is float1..4, a bool is 0/1, an int is a float, a matrix is legal only inside a custom node.
 // GraphComponentCount() is that narrowing, written down once.
-//
-// FROZEN for batch 1 (M2+M3). Add nothing here without telling the orchestrator: three agents
-// compile against it.
 
 #pragma once
 

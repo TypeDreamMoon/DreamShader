@@ -6,11 +6,11 @@
 // Region and DebugName are written.
 //
 // Diagnostics owned by this file: DSH4352 (no builtin catalog, said once for the whole module),
-// DSH4372 (a value assigned in one arm of an `if`, read after it -- batch 2, debt B6 (ii)), DSH4374
+// DSH4372 (a value assigned in one arm of an `if`, read after it), DSH4374
 // (Append over four components), DSH4378 (a run-time branch over Substrate values) and DSH4379 (a
-// branch over texture objects or samplers) -- the last two batch 2, debt B6 (i).
+// branch over texture objects or samplers).
 //
-// Batch 2, debt B5: every FIRSourceRef file the builder writes goes through StampFile, so an asset
+// Every FIRSourceRef file the builder writes goes through StampFile, so an asset
 // never carries the machine's absolute path. Diagnostics keep the absolute path.
 
 #include "IRBuilderInternal.h"
@@ -1433,7 +1433,7 @@ namespace UE::DreamShader::IR::Private
 			return TrueValue;
 		}
 
-		// Batch 2, debt B6 (i). A texture object, a sampler and a Substrate value have no width, so the
+		// A texture object, a sampler and a Substrate value have no width, so the
 		// width typing below would make any conditional over them a float1 -- a graph that validates and
 		// means nothing. A texture or a sampler has no node that switches it at all; a Substrate value
 		// has one, the StaticSwitch, and only under a static condition (1.x since 0eee929).

@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The binder's legacy rules (batch 2; design: Plan/m4m5/research-legacy.md section 3.7).
+// The binder's legacy rules (design: Plan/m4m5/research-legacy.md section 3.7).
 //
 // A declaration the legacy front end produced carries FDecl::bLegacy, and inside it -- its body, its initializer,
 // the calls lifted out of its opaque body -- the binder reads the source the way 1.x did wherever the two languages

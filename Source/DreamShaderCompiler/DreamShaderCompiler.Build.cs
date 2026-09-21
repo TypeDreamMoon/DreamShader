@@ -6,7 +6,7 @@ public class DreamShaderCompiler : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		// An Editor-type module since the M4 relocation (DreamShader.uplugin): the 2.0 pipeline, the IR
+		// An Editor-type module since the compiler relocation (DreamShader.uplugin): the 2.0 pipeline, the IR
 		// emitter and the asset layer under them, moved down from DreamShaderEditor.
 		//
 		// Public, because the public headers expose them: UMaterial* / EMaterialProperty /

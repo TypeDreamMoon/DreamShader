@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// DreamShader.Lang2.InstanceSource.* -- `.dsi` text without the compiler (Lang/LangInstanceSource.h, batch 2 unit FE
-// deliverable 4): the text of an instance payload, which the decompiler writes for a MaterialInstanceConstant, and the
+// DreamShader.Lang2.InstanceSource.* -- `.dsi` text without the compiler (Lang/LangInstanceSource.h):
+// the text of an instance payload, which the decompiler writes for a MaterialInstanceConstant, and the
 // in-place rewrites behind Adopt of a `.dsi` and "Adopt tweaks as source defaults" on a `.dss`.
 //
 // A rewrite is a splice over the parsed file, never a reprint. So the assertion that matters in every success case is

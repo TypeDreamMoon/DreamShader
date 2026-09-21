@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The IR builder's side of the legacy rules (batch 2; design: Plan/m4m5/research-legacy.md section 3.7).
+// The IR builder's side of the legacy rules (design: Plan/m4m5/research-legacy.md section 3.7).
 //
 //   L3b  `F(args).Out` / `F(args)[k]` on an Extern / ExportFunction / Custom function. The call becomes its node the
 //        way every call does -- out arguments that are there are written back, absent ones are not -- and the value

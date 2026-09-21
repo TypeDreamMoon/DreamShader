@@ -2,7 +2,7 @@
 //
 // Data-driven parse-layer runner. Enumerates every fixture under Tests/Corpus/Parse and asserts
 // each against its golden through the legacy front end (ParseDreamShaderLang, Auto front end; pure,
-// no editor asset I/O -- the fast layer). Since batch 2 (M4) deleted the 1.x runtime parser, these
+// no editor asset I/O -- the fast layer). Since 2.0 deleted the 1.x runtime parser, these
 // fixtures are the parse-equivalence set: accepted or refused exactly as 1.x did.
 // Each fixture surfaces as its own automation sub-test under "DreamShader.Lang.Parse.*".
 //

@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// DreamShaderLang 2.0 expression and statement tests (M1, agent C).
+// DreamShaderLang 2.0 expression and statement tests.
 //
 // Everything here goes through the PUBLIC front-end API -- ParseDreamShaderLangExpression for the
 // expression grammar, ParseDreamShaderLang on a `void f() { ... }` source for statements -- so the

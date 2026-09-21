@@ -59,7 +59,7 @@ namespace UE::DreamShader::Lang
 		/**
 		 * The same three for a diagnostic about a file other than the sink's own: a declaration in
 		 * an included header, a helper inlined from one. InFilePath names that file; the span is a
-		 * position inside it. (Since 2.0 M2: the binder sees every included module through one sink.)
+		 * position inside it. (The binder sees every included module through one sink.)
 		 */
 		bool Error(const TCHAR* Code, const FString& InFilePath, const FLangSpan& Span, const FText& Message);
 		void Warning(const TCHAR* Code, const FString& InFilePath, const FLangSpan& Span, const FText& Message);

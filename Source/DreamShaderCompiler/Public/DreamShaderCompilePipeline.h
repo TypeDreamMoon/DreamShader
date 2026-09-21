@@ -2,7 +2,7 @@
 //
 // The compile pipeline's public surface: preprocess -> parse -> bind -> lower -> validate -> emit.
 //
-// Merged in the M4 relocation from two batch-1 headers of the editor module:
+// Merged in the compiler relocation from two headers of the editor module:
 //
 //   * the frozen DreamShaderCompilerPipeline.h -- IsDreamShaderLang2Source and
 //     CompileDreamShaderLang2File, the thin entry the 1.x generator dispatched a `.dss` through;
@@ -49,7 +49,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 	/**
 	 * True for every file the pipeline compiles on its own: `.dss` and `.dsi` through the 2.0 front end, `.dsm`
-	 * and `.dsf` through the legacy one (the name predates M4, when only `.dss` answered true). A `.dsh` header
+	 * and `.dsf` through the legacy one (the name is older than that: once only `.dss` answered true). A `.dsh` header
 	 * answers false: it is compiled only as part of the source that includes it.
 	 */
 	DREAMSHADERCOMPILER_API bool IsDreamShaderLang2Source(const FString& SourceFilePath);

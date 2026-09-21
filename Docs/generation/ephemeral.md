@@ -24,10 +24,6 @@ decides, never the compile that asked.
 > are ordinary engine assets with no way to opt out of asset enumeration — there is no `IsAsset()` to
 > lie with — so they have no Ephemeral form and nothing on this page applies to them. The 2.0 rule for
 > those two is simply that **every successful generation saves them to disk**.
->
-> *Not yet true of the binary.* The 1.x generator still honours a memory-only request for Graph
-> materials and material functions; M4 removes that path along with the generator. Until then the
-> interactive editor still builds those two in memory.
 
 | | |
 | :-- | :-- |

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// DreamShader.Lang2.Trivia.* -- comments and blank lines through the front end and back out of the printer (batch 2,
-// unit FE deliverables 1 and 3): Comment tokens, the attach pass behind FLangParseOptions::bKeepTrivia, FDocBlock::Order,
+// DreamShader.Lang2.Trivia.* -- comments and blank lines through the front end and back out of the printer:
+// Comment tokens, the attach pass behind FLangParseOptions::bKeepTrivia, FDocBlock::Order,
 // declarations that share one statement, `#pragma instance`, and the printer reproducing all of it.
 //
 // `dsc migrate`, Adopt and the VirtualFunction sync all print a parsed file back, so "a comment survives" is not a

@@ -1,4 +1,4 @@
-// Batch 2, debt B6 (ii): a local declared before an `if`, then assigned and read only inside one arm, is
+// A local declared before an `if`, then assigned and read only inside one arm, is
 // correct code and lowers cleanly. DSH4372 is said only when the partially assigned value is read after
 // the `if`; B6_OneArmReadAfter.bad.dss is that case.
 

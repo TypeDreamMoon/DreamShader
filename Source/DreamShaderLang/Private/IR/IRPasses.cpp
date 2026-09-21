@@ -749,7 +749,7 @@ namespace UE::DreamShader::IR::Private
 	}
 
 	/**
-	 * FIRGraph::PrunedParameters (batch 2): the ParameterName of every Parameter / TextureParameter node a prune
+	 * FIRGraph::PrunedParameters: the ParameterName of every Parameter / TextureParameter node a prune
 	 * removed, the data behind DSH4390 and FIRParameterSchemaEntry::bPruned. A name another node still carries
 	 * after the passes is not pruned, and a name is recorded once, compared case-sensitively.
 	 */

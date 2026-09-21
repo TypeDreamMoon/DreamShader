@@ -3,7 +3,7 @@
 #include "DreamShaderDependencyGraphService.h"
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
-// ParseDreamShaderLang: the 1.x runtime parser is gone (batch 2, M4); legacy sources parse through the legacy front end.
+// ParseDreamShaderLang: the 1.x runtime parser is gone; legacy sources parse through the legacy front end.
 #include "Lang/LangLegacy.h"
 #include "Lang/LangParser.h"
 #include "Lang/LangSource.h"
@@ -19,7 +19,7 @@
 // rule the placement pass used.
 #include "DreamShaderGeneratedAssets.h"
 // The version-compatible material-expression helpers. (IsInlineInputMaskGraphStable and the test that used it,
-// Compiler.Generate.GraphStableComponentMasks, left in batch 2: the 2.0 emitter never writes an inline mask, which
+// Compiler.Generate.GraphStableComponentMasks, left in 2.0: the 2.0 emitter never writes an inline mask, which
 // Compiler2.Smoke.MaterialEndToEnd pins.)
 #include "DreamShaderMaterialExpressionCompat.h"
 #include "Preview/DreamShaderPreviewRenderer.h"
@@ -334,7 +334,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	"DreamShader.Compiler.Parser.MinimalMaterial",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-// Batch 2 (M4): the 1.x runtime parser is gone. The same minimal source parses through the legacy front end, and the
+// The 1.x runtime parser is gone. The same minimal source parses through the legacy front end, and the
 // facts the FTextShaderDefinition assertions named are read off FLegacyMigrationInfo and the synthesized tree by
 // SummariseDreamShaderLegacyParse, the Parse corpus's reader.
 bool FDreamShaderParserMinimalMaterialTest::RunTest(const FString& Parameters)
@@ -511,13 +511,13 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 // Four ways a 1.x source can misuse `Base`. The 1.x generator refused all four with sentences of its own. The legacy
-// front end (batch 2, M4) lowers `Base` to the entry's `inout material Base` parameter, so each case is now what the
+// front end lowers `Base` to the entry's `inout material Base` parameter, so each case is now what the
 // 2.0 rules make of it:
 //   * a property driven from both the Outputs block and Graph: two writes to one attribute, and the later one wins
 //     (the Outputs bindings follow the Graph statements in the entry body) -- no refusal;
 //   * a Graph variable named Base: a local hiding a parameter, DSH4220;
 //   * reading a material output back: a read of an attribute written earlier, which 2.0 allows -- no refusal;
-//   * a value wider than its property: an assignment the binder refuses (the code is pinned in phase 2).
+//   * a value wider than its property: an assignment the binder refuses.
 // The two cases that no longer refuse are listed as 1.x-only rejections in Plan/m4m5/TE-report.md (Open questions).
 bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& Parameters)
 {
@@ -1015,7 +1015,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	// The round-trip property: the decompiled output must be valid DreamShaderLang that re-parses.
 	// This is the only automated coverage of the decompiler's parameter-reuse and material-setting
 	// emission paths, so a malformed export (e.g. duplicate parameter declarations) is caught here.
-	// Batch 2 (M4): the 1.x text decompiler still writes a `.dsm`, and a `.dsm` parses through the legacy front end.
+	// The 1.x text decompiler still writes a `.dsm`, and a `.dsm` parses through the legacy front end.
 	const UE::DreamShader::Lang::FLangSourceText ReparseText(TEXT("Decompiled/M_RoundTrip.dsm"), DecompiledSource);
 	const UE::DreamShader::Lang::FLangParseResult Reparsed =
 		UE::DreamShader::Lang::ParseDreamShaderLang(ReparseText, UE::DreamShader::Lang::FLangParseOptions());
@@ -2053,7 +2053,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	TestEqual(TEXT("VectorParameter declared without a default generates exactly one node"),
 		CountMaterialExpressionsOfClass<UMaterialExpressionVectorParameter>(Material), 1);
 
-	// DynamicParameter has no 2.0 spelling (research-legacy.md 2.3): since batch 2 a 1.x source that declares one is
+	// DynamicParameter has no 2.0 spelling (research-legacy.md 2.3): since 2.0 a 1.x source that declares one is
 	// refused with DSH3253 instead of generating the node. A `.dss` still reaches the class through UE.Expression.
 	{
 		const FString RefusedName = MakeUniqueTestAssetName(TEXT("M_ParamsDynamic"));
@@ -2119,7 +2119,7 @@ bool FDreamShaderOtherParameterNodeGenerationTest::RunTest(const FString& Parame
 		const TCHAR* ExpectedClass;   // expected UMaterialExpression subclass name; nullptr = refused with DSH3253
 	};
 
-	// DoubleVector, CurveAtlasRow and FontSample have no 2.0 spelling (research-legacy.md 2.3): since batch 2 a 1.x
+	// DoubleVector, CurveAtlasRow and FontSample have no 2.0 spelling (research-legacy.md 2.3): since 2.0 a 1.x
 	// source that declares one is refused with DSH3253 rather than generating the node.
 	static const FOtherParameterCase Cases[] = {
 		{ TEXT("DoubleVectorParameter"),        TEXT("float4(1, 2, 3, 4)"),    TEXT("P.rgb"),   nullptr },
@@ -5277,7 +5277,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	"DreamShader.Compiler.Persistence.EphemeralAssetStaysEphemeral",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-// The other half of the same rule: an asset with no file behind it must not acquire one. Since batch 2 only a ThinCustom
+// The other half of the same rule: an asset with no file behind it must not acquire one. Since 2.0 only a ThinCustom
 // product has a memory-only state (a Graph material or a function always saves), so the rule is pinned on one: the
 // UDreamShaderMaterialInstance, whose hidden base lives in the transient package while it is Ephemeral.
 bool FDreamShaderEphemeralAssetStaysEphemeralTest::RunTest(const FString& Parameters)

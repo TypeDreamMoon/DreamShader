@@ -9,7 +9,7 @@
 // after the first compile brings expression classes with it and a catalog that predates it would
 // report them as unknown names.
 //
-// Split out of DreamShaderCatalogManifest.h in the M4 relocation. The cache is compiler state and
+// Split out of DreamShaderCatalogManifest.h in the compiler relocation. The cache is compiler state and
 // lives here, in the compiler module, beside the reflection producer that fills it. The manifest --
 // the same data as JSON, for the language service and the tools -- stays in the editor module
 // (Tools/DreamShaderCatalogManifest.h), because its directory comes from the editor's workspace service.

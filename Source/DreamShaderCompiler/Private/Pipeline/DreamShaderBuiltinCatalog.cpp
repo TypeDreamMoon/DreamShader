@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // See DreamShaderBuiltinCatalog.h. The cache half of the former DreamShaderCatalogManifest.cpp, moved
-// verbatim in the M4 relocation; the manifest export stayed in the editor module.
+// verbatim in the compiler relocation; the manifest export stayed in the editor module.
 
 #include "DreamShaderBuiltinCatalog.h"
 

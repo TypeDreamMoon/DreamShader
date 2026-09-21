@@ -264,7 +264,7 @@ namespace UE::DreamShader::Lang::Private
 		// THIS catalog, so the bound module carries it rather than leaving the reader to guess.
 		Bound.Catalog = Options.Catalog;
 
-		// Batch 2: a `.dsi` has no functions, no graph and no catalog lookups. Instance mode replaces
+		// A `.dsi` has no functions, no graph and no catalog lookups. Instance mode replaces
 		// everything below, the empty-catalog warning included (research-instance section 3.3).
 		if (RootModule.FileKind == ELangFileKind::Dsi)
 		{
@@ -876,7 +876,7 @@ namespace UE::DreamShader::Lang::Private
 			const bool bAsset = Entry.Key.Equals(Directive::Asset, ESearchCase::CaseSensitive);
 			const bool bExportOnly = Entry.Key.Equals(Directive::Library, ESearchCase::CaseSensitive)
 				|| (Entry.Key.Equals(Directive::Name, ESearchCase::CaseSensitive) && !bCustomFunction);
-			// `@root` (batch 2, legacy rule L10) is the Root= of a 1.x block that produces an asset, and describes nothing else.
+			// `@root` (legacy rule L10) is the Root= of a 1.x block that produces an asset, and describes nothing else.
 			const bool bRoot = Entry.Key.Equals(Directive::Root, ESearchCase::CaseSensitive);
 			const bool bMisplaced = (bAsset && Decl.Linkage != EFunctionLinkage::Extern)
 				|| (bExportOnly && Decl.Linkage != EFunctionLinkage::Export)
@@ -1328,7 +1328,7 @@ namespace UE::DreamShader::Lang::Private
 				continue;
 			}
 
-			// A header cannot export (DSH3210, M1), so a product always comes from the root file.
+			// A header cannot export (DSH3210), so a product always comes from the root file.
 			// The guard is here so a file that already reported that mistake does not also produce
 			// an asset out of the header it included.
 			if (!Function.File.Equals(RootModule.FilePath, ESearchCase::IgnoreCase))

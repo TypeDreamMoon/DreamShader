@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // Complete coverage for the parameter-expression Properties surface of a 1.x source, as the legacy front end
-// reads it. Batch 2 (M4) deleted the 1.x runtime parser, so the parse axis is now "which 2.0 form does each
+// reads it. The 1.x runtime parser is gone, so the parse axis is now "which 2.0 form does each
 // parameter node type become" (research-legacy.md 2.3, FE-report "Legacy synthesis"):
 //
 //   * a `uniform` declaration: ScalarParameter -> `float`, StaticBoolParameter -> `/// @static` `bool`,

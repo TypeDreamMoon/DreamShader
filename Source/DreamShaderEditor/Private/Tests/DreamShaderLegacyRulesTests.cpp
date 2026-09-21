@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// DreamShader.Lang2.Batch2.* -- the middle end's batch 2 agreements that are claims about ONE value rather than about a
-// whole graph, and so read better as a unit test than as a corpus golden (unit SE's requests, Plan/m4m5/SE-report.md):
+// DreamShader.Lang2.LegacyRules.* -- the middle end's rules that are claims about ONE value rather than about a
+// whole graph, and so read better as a unit test than as a corpus golden:
 //
 //   SourceStamping      debt B5: FIRBuildOptions::StampSourcePath reaches every place a file is written down.
 //   StatementBindings   the probe table: which statement bound which name, in statement order, surviving the passes.

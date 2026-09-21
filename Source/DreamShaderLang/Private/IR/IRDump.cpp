@@ -266,7 +266,7 @@ namespace UE::DreamShader::IR
 			return FMath::RoundToDouble(static_cast<double>(Channel) * 1000000.0) / 1000000.0;
 		}
 
-		// ------------------------------------------------------------------ instances (batch 2)
+		// ------------------------------------------------------------------ instances
 
 		/** A text the dump writes between quotes, escaped like a property: backslash, line breaks, tab, quote. */
 		static FString QuoteIRDumpText(const FString& Text)

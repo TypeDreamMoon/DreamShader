@@ -28,7 +28,7 @@
 #include "DreamShaderCompilerInterface.h"
 
 // GetDreamShaderBuiltinCatalog and BuildBuiltinCatalogFromReflection. The reflection producer was
-// declared in this header until the M4 relocation gave the catalog one of its own; included so that
+// declared in this header until the compiler relocation gave the catalog one of its own; included so that
 // its callers still see it.
 #include "DreamShaderBuiltinCatalog.h"
 

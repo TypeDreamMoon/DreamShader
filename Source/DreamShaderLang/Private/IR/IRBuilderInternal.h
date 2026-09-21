@@ -57,7 +57,7 @@ namespace UE::DreamShader::IR::Private
 		int32 BreakNode = INDEX_NONE;
 		/**
 		 * Attributes one arm of an `if` wrote and the other did not, on a material with no source to
-		 * fall back to, each with the `if` it was merged at (batch 2, debt B6 (ii)). Reading one -- a
+		 * fall back to, each with the `if` it was merged at. Reading one -- a
 		 * field read, the material crossing into a pin, the sink -- is DSH4372; a map nothing reads
 		 * again says nothing. Diagnostic state, not value: not part of operator==.
 		 */
@@ -80,7 +80,7 @@ namespace UE::DreamShader::IR::Private
 
 		/**
 		 * Attribute (canonical name) -> the spelling it was written with, when that is another name the catalog resolves
-		 * to the same attribute (`CustomizedUV1`). The sink's pin keeps it (legacy rule L14, batch 2, every source), so the
+		 * to the same attribute (`CustomizedUV1`). The sink's pin keeps it (legacy rule L14, every source), so the
 		 * emitter's reroute carries the author's word as 1.x did. Presentation, not value: not part of operator==.
 		 */
 		TArray<TPair<FString, FString>> Spellings;
@@ -152,8 +152,8 @@ namespace UE::DreamShader::IR::Private
 		 */
 		bool bNeverAssigned = false;
 		/**
-		 * The value one arm of an `if` assigned while the other left the slot with nothing (batch 2,
-		 * debt B6 (ii)). The merge no longer reports that: a local assigned and read inside one arm is
+		 * The value one arm of an `if` assigned while the other left the slot with nothing.
+		 * The merge does not report that: a local assigned and read inside one arm is
 		 * fine. A read of the merged value is DSH4372, naming PartialName and pointing at the `if`
 		 * (PartialSpan). Diagnostic state, like bNeverAssigned: not part of operator==.
 		 */
@@ -529,7 +529,7 @@ namespace UE::DreamShader::IR::Private
 			TArray<FLValueRef>& OutTargets);
 		/**
 		 * "Result" plus every out/inout parameter, in the order a product's FunctionOutputs use. bEnginePinNames
-		 * names them the way the called asset's FunctionOutputs are named (`@pin`, batch 2) -- a FunctionCall node;
+		 * names them the way the called asset's FunctionOutputs are named (`@pin`) -- a FunctionCall node;
 		 * false keeps the identifiers, which a Custom node's HLSL declares.
 		 */
 		static void CollectCallOutputs(const FBoundFunction& Callee, TArray<FString>& OutNames, TArray<FIRType>& OutTypes, bool bEnginePinNames);
@@ -537,7 +537,7 @@ namespace UE::DreamShader::IR::Private
 		static FString CallPinName(const FBoundParam& Param, bool bEnginePinNames);
 		void WriteBackOutputs(const FBoundFunction& Callee, const TArray<FLValueRef>& Targets, FIRValue Node, const TArray<FString>& OutputNames, const Lang::FLangSpan& Span, bool bEnginePinNames);
 
-		// ------------------------------------------------------------ legacy rules (IRBuilderLegacy.cpp, batch 2)
+		// ------------------------------------------------------------ legacy rules (IRBuilderLegacy.cpp)
 		/** L3b: `F(args).Out` / `F(args)[k]`: the call lowered as any call is, then the node output its 1.x ordinal names. */
 		FLoweredValue LowerFunctionCallOutput(const FExpr& Expr, const FBoundExpr& Bound);
 		/** L3b: the output a 1.x ordinal names on the node the last MakeCustomNode / MakeFunctionCallNode made, as Type. */

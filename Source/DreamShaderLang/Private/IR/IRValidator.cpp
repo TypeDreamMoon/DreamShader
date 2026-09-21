@@ -742,7 +742,7 @@ namespace UE::DreamShader::IR
 						FText::FromString(Expression.ShortName)));
 			}
 
-			// A Custom node's inputs are whatever its call named (batch 2, legacy rule L4): the class has no fixed input pins
+			// A Custom node's inputs are whatever its call named (legacy rule L4): the class has no fixed input pins
 			// to check them against, and the emitter declares one FCustomInput per entry.
 			const bool bDynamicInputs = Expression.ClassName.Equals(TEXT("MaterialExpressionCustom"), ESearchCase::CaseSensitive);
 			// Legacy rule L24: pins the node names after its properties, which the class's default object does not list.

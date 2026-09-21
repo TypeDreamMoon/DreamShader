@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// Data-driven runners for the reverse direction (batch 2, M5): decompile and migrate.
+// Data-driven runners for the reverse direction: decompile and migrate.
 //
 //   Tests/Corpus/Decompile    DreamShader.Lang2.CorpusDecompile        Core only. `.dss` -> IR -> RaiseDreamShaderIR ->
 //                                                                      BuildDreamShaderAstFromIR -> printed text (golden), and

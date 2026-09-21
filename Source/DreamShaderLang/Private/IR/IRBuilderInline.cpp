@@ -13,7 +13,7 @@
 // while the body is lowered and restored afterwards. Without that a helper called inside an `if`
 // would think its own `return` was conditional.
 //
-// Batch 2: the legacy rules reach calls here -- a statement call's return-value receiver (L5), the calls lifted out of
+// The legacy rules reach calls here -- a statement call's return-value receiver (L5), the calls lifted out of
 // a GraphFunction body (L8), a legacy void custom function's primary output (L9) and the node an output selection reads
 // (L3b, LastCallNode) -- with their lowering in IRBuilderLegacy.cpp.
 //
@@ -560,7 +560,7 @@ namespace UE::DreamShader::IR::Private
 			const FIRValue Value = ValueForParam(Arguments[Index], Callee.Params[Index].Type, EIRConversion::Identity, Expr.Span);
 			if (Value.IsValid())
 			{
-				// The called asset's FunctionInput is named by `@pin` when it has one (batch 2).
+				// The called asset's FunctionInput is named by `@pin` when it has one.
 				Node.Inputs.Add({ CallPinName(Callee.Params[Index], /* bEnginePinNames */ true), Value });
 			}
 		}

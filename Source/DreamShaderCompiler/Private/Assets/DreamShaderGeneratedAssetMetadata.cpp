@@ -95,7 +95,7 @@ namespace UE::DreamShader::Editor::Private
 	// different machine (or a moved project directory) records the same identity instead of an
 	// absolute path that differs per machine. Sources outside the project (rare) stay absolute.
 	//
-	// Exported since M4 (DreamShaderGeneratedAssets.h): the pipeline stamps the IR with the same spelling
+	// Exported since the compiler relocation (DreamShaderGeneratedAssets.h): the pipeline stamps the IR with the same spelling
 	// (debt B5). The outside-the-project test is explicit now, because FPaths::MakePathRelativeTo answers a
 	// `../`-relative path for anything on the project's drive -- the machine-dependent spelling this exists
 	// to avoid -- and only gives up across drives.

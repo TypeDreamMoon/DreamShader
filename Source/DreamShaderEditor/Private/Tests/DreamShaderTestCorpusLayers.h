@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The corpus layers of batch 2 (M4 + M5), beside the ones in DreamShaderTestCommon.h:
+// The corpus layers of the legacy front end, the decompiler and the migrator, beside the ones in DreamShaderTestCommon.h:
 //
 //   Tests/Corpus/Legacy/Parse    `"entryPoint": "legacy"`     1.x text -> legacy front end -> printed 2.0 text
 //   Tests/Corpus/Decompile       `"entryPoint": "decompile"`  .dss -> IR -> AST -> printed text -> IR again

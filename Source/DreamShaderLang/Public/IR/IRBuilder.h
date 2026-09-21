@@ -60,8 +60,8 @@ namespace UE::DreamShader::IR
 		 * BuildDreamShaderCustomNodeCode). Unset means the file exactly as the binder recorded it.
 		 *
 		 * The pipeline sets it to the project-relative path, so neither the node code (and with it
-		 * the shader keys) nor the metadata changes with the machine or the checkout (batch 2
-		 * contract, debt B5). Diagnostics never go through it: they are read on this machine.
+		 * the shader keys) nor the metadata changes with the machine or the checkout.
+		 * Diagnostics never go through it: they are read on this machine.
 		 */
 		TFunction<FString(const FString& File)> StampSourcePath;
 	};

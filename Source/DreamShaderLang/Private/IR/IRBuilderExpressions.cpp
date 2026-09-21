@@ -1156,7 +1156,7 @@ namespace UE::DreamShader::IR::Private
 			return FLoweredValue();
 		}
 
-		// Batch 2, debt B6 (iii): a condition the compiler can already decide picks its side here, and only
+		// A condition the compiler can already decide picks its side here, and only
 		// that side is lowered. Lowering both put the dead side's nodes in the graph -- and reported what
 		// the dead side reads, DSH4376 for a local nothing had assigned yet. The binder's fold answers a
 		// literal or a `static const`; the builder's answers a loop variable on one trip of an unrolled loop.
@@ -1485,7 +1485,7 @@ namespace UE::DreamShader::IR::Private
 				return false;
 			}
 			Out.MaterialAttribute = Entry->Name;
-			// Legacy rule L14 (batch 2, every source): another spelling the catalog resolves to this attribute is kept for
+			// Legacy rule L14 (every source): another spelling the catalog resolves to this attribute is kept for
 			// the sink's pin.
 			if (const FMemberExpr* Member = Inner->As<FMemberExpr>())
 			{

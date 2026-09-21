@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// DreamShader.Compiler2.Instance.* -- a `.dsi` end to end: one source, one UMaterialInstanceConstant (batch 2, M5).
+// DreamShader.Compiler2.Instance.* -- a `.dsi` end to end: one source, one UMaterialInstanceConstant.
 //
 // The graph-shaped half of an instance (what it overrides, as a dump) is data: Tests/Corpus/Instance, run by
 // DreamShader.Compiler2.CorpusInstance. These are the claims a dump cannot make: how a Parent resolves among the

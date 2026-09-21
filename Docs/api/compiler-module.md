@@ -18,7 +18,7 @@ engine; this module is where a `UObject` is first touched.
 | Reflection | none |
 
 > [!IMPORTANT]
-> **Changed in 2.0 (M4).** Through 1.9.x this was a *Runtime* module holding nothing but the compile
+> **Changed in 2.0.** Through 1.9.x this was a *Runtime* module holding nothing but the compile
 > interface, and the compiler itself lived privately in `DreamShaderEditor`. The two swapped places:
 > the interface moved **down** into the runtime module as
 > [`DreamShaderCompilerInterface.h`](#the-interface-lives-in-dreamshader), and the compiler moved
@@ -169,7 +169,7 @@ the same driver with its intermediate products handed back instead of dropped.
 
 | Call | Use |
 | :-- | :-- |
-| `IsDreamShaderLang2Source(Path)` | True for every file the pipeline compiles on its own: `.dss` and `.dsi` through the 2.0 front end, `.dsm` and `.dsf` through the legacy one. A `.dsh` answers false. (The name predates M4, when only `.dss` answered true.) |
+| `IsDreamShaderLang2Source(Path)` | True for every file the pipeline compiles on its own: `.dss` and `.dsi` through the 2.0 front end, `.dsm` and `.dsf` through the legacy one. A `.dsh` answers false. (The name is older than that: once only `.dss` answered true.) |
 | `CompileDreamShaderLang2File(Path, bForce, OutError)` | The service's `CompileAssets` with a `Materialized` request, spelled with an `FDreamShaderError` for callers that want the code and the text apart. |
 | `RunDreamShaderLang2Pipeline(Path, Options, OutResult)` | The whole run. `Options.bEmitAssets = false` stops after IR validation — that is `dsc check`. The result owns the parsed module, the bound module and the IR, **in a load-bearing member order** (the bound module points into the parsed ones); it keeps whatever the run got as far as, so a language service gets an AST from a false return. |
 | `ResolveDreamShaderSourceProducts(Path, OutResult)` | Which assets a source builds, and under which build key, **without building them**: front end, binder and IR builder, then the emitter's own destination rules. Creates, loads and saves nothing and opens no progress dialog — the Material Content Browser calls it for every source it lists. |

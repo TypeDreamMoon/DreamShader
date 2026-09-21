@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// Instance mode: the binder for a `.dsi` (batch 2; design: Plan/m4m5/research-instance.md section 3.3).
+// Instance mode: the binder for a `.dsi` (design: Plan/m4m5/research-instance.md section 3.3).
 //
 // A `.dsi` is one `#pragma instance(Parent = "...", Key = Value, ...)` and a list of `uniform` overrides,
 // and it becomes one UMaterialInstanceConstant. Nothing in it lowers to a node: an override is an

@@ -25,8 +25,7 @@
 //
 // They do not exist under `-nullrhi`. UMaterial::CacheResourceShadersForRendering is gated on
 // FApp::CanEverRender(), which is false when `-nullrhi` is on the command line (Misc/App.h) -- so in
-// exactly the configuration CI runs in, the direct read finds nothing to read. That is the question
-// plan §13.3 says M3 must answer, and this is the answer: the rendering path is dead under
+// exactly the configuration CI runs in, the direct read finds nothing to read. The rendering path is dead under
 // `-nullrhi`; the COOKING path is not, because cooking is what commandlets do.
 //
 // So the cook path (BeginCacheForCookedPlatformData / IsCachedCookedPlatformDataLoaded, pumped with

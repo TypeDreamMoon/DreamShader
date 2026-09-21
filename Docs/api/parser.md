@@ -6,7 +6,7 @@
 > **`DreamShaderParser.h` and `FTextShaderParser` no longer exist.** Through 1.9.x,
 > `FTextShaderParser::Parse` in the `DreamShader` module turned 1.x source text into an
 > [`FTextShaderDefinition`](types.md#ftextshaderdefinition), and the 1.x generator built assets from
-> that struct. 2.0 (M4) retired both: a `.dsm` / `.dsf` / `.dsh` is now read by the **legacy front
+> that struct. 2.0 retired both: a `.dsm` / `.dsf` / `.dsh` is now read by the **legacy front
 > end** of the one compiler, into the same AST a `.dss` parses to.
 
 ## What to call instead

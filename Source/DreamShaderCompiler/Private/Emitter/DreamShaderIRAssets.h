@@ -13,7 +13,7 @@
 //
 // Persistence: a material and a material function always save. A ThinCustom instance follows the compile
 // request's EThinCustomPersistence { Ephemeral, Materialized }, which the pipeline forwards through
-// FIREmitContext since M4; storage still decides, so an instance whose package is on disk stays Materialized.
+// FIREmitContext since the compiler relocation; storage still decides, so an instance whose package is on disk stays Materialized.
 
 #pragma once
 

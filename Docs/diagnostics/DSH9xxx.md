@@ -568,8 +568,8 @@ The {Count} asset(s) generated from '{File}' carry no DreamShader.SourceSpans me
 no per-node spans.
 
 **Fix.** Rebuild the source with `-Force` (the source hash says the asset is current, so an ordinary
-rebuild skips it and the table is never written). `.dsm` / `.dsf` sources will keep answering this
-until M4 moves them onto the 2.0 pipeline; navigation is a `.dss` feature in this release.
+rebuild skips it and the table is never written). A `.dsm` / `.dsf` source is built by the same
+emitter and gets the table too; only an asset the 1.x generator left behind answers this.
 
 ## DSH9053
 

@@ -8,7 +8,7 @@
 // `UE.*` without an editor: LoadBuiltinCatalogFromJson on that file must produce what reflection
 // produced here, and the round trip through SaveBuiltinCatalogToJson is what lets that be tested.
 //
-// Until the M4 relocation this header also declared the cache itself. The cache moved down into the
+// Until the compiler relocation this header also declared the cache itself. The cache moved down into the
 // compiler module; the manifest stays here because its directory comes from
 // FDreamShaderWorkspaceService, which is editor-module code. The cache header is included below, so
 // every caller of the export still sees GetDreamShaderBuiltinCatalog and InvalidateDreamShaderBuiltinCatalog.

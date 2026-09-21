@@ -2,7 +2,7 @@
 
 // Engine-version shims over UMaterialExpression and friends: one answer per question, whatever the
 // engine version. Renamed from MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeShared.h and
-// trimmed in the M4 relocation (research-relocation §2.2) to what the emitter, the digest, the layout,
+// trimmed in the compiler relocation (research-relocation §2.2) to what the emitter, the digest, the layout,
 // dump-graph and the decompiler -- `-Format=Legacy` included -- still ask. Inline only: nothing here is
 // exported, and nothing here may hold state (one copy per DLL).
 //

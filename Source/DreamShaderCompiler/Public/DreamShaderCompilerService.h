@@ -10,7 +10,7 @@
 //     never by the pipeline: the pipeline runs inside the service, so firing in both would double every
 //     notice (CONTRACT m2m3 §6.13 #39).
 //   * IsMemoryOnlyMaterial / MaterializeDreamShaderMaterial -- moved from UI/DreamShaderInstanceFactory.cpp
-//     in the M4 relocation, because materializing IS a compile with a Materialized request.
+//     in the compiler relocation, because materializing IS a compile with a Materialized request.
 //   * GetDreamShaderLastCompileDiagnostics -- each source's most recent compile as structured records, which
 //     the bridge files into its diagnostics store instead of re-parsing a result's text.
 //

@@ -36,7 +36,7 @@ namespace UE::DreamShader::Editor::Compiler
 		 * Two things come out of it: which classes live in the `Substrate` namespace rather than
 		 * `UE`, and the 1.x spellings that must keep resolving -- `Substrate.HorizontalMix` and
 		 * `Substrate.HorizontalMixing` are the same node, and a source that says either has to keep
-		 * compiling after M4 deletes the 1.x front end.
+		 * compiling now that the 1.x front end is gone.
 		 *
 		 * Only the CLASS list is authoritative here. A Substrate class this table does not name
 		 * still lands in the catalog, in the Substrate namespace, under its reflected short name;
@@ -89,8 +89,7 @@ namespace UE::DreamShader::Editor::Compiler
 		 * `UE.TranslatedWorldPosition` is deliberately absent. In 1.x it was WorldPosition with
 		 * WorldPositionShaderOffset forced to WPT_CameraRelative -- a class plus a property, not an
 		 * alias -- and an alias here would silently give it the node's ABSOLUTE world position
-		 * default. It is recorded in the report as a follow-up for the Substrate/sugar milestone
-		 * (M7), where a spelling that carries a property belongs.
+		 * default. A spelling that carries a property belongs with the Substrate sugar, not in a table of aliases.
 		 */
 		struct FUECatalogAlias
 		{

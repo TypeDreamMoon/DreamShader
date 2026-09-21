@@ -87,7 +87,7 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
         # dialect, already above -- is not counted twice.
         @{ Severity = 'error';   Pattern = '(?<![A-Za-z0-9_])Fail\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
         @{ Severity = 'warning'; Pattern = '(?<![A-Za-z0-9_])Warn\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
-        # Batch 2: the decompiler and the migrator raise from inside a class, where the helper is a member
+        # The decompiler and the migrator raise from inside a class, where the helper is a member
         # called bare -- Error(TEXT("DSHnnnn"), LOCTEXT(...)), Warning(...), Info(...) -- or takes the result
         # it reports into first: Fail(OutResult, TEXT(...), ...), Warn(OutResult, TEXT(...), ...),
         # AddDecompileServiceError(Result, TEXT(...), ...). The lookbehind keeps `.Error(` (above) and

@@ -101,7 +101,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		// line renders a predictably different emissive color. The Graph block starts far enough down
 		// that a wrong line-offset would be obvious.
 		//
-		// Every binding reads the `Gain` parameter (1.0, so the colours are what they look like): since batch 2 a 1.x
+		// Every binding reads the `Gain` parameter (1.0, so the colours are what they look like): since 2.0 a 1.x
 		// source goes through the 2.0 passes, which fold `vec3(1,0,0) + vec3(0,1,0) + vec3(0,0,1)` into one constant
 		// and prune the three it no longer reads -- and a binding with no node left has no probe. A value that reads a
 		// parameter cannot fold, so each line keeps the node its probe shows.

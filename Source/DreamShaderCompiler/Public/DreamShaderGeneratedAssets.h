@@ -4,8 +4,8 @@
 // the ownership guard, source metadata and the build key, the divergence gate, saving, reflection and
 // literal writes, material settings, graph support and layout.
 //
-// Renamed from MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h and trimmed in the M4
-// relocation (research-relocation §2.1). Everything that served only the 1.x graph builder is gone: the
+// Renamed from MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h and trimmed in the compiler
+// relocation. Everything that served only the 1.x graph builder is gone: the
 // code tokens and values, FCodeGraphBuilder, the property and literal expression factories, the HLSL
 // function codegen. The rest is exported, because the editor module -- bridge, browser, provenance,
 // preview, decompiler, tests -- calls it directly.
@@ -130,7 +130,7 @@ namespace UE::DreamShader::Editor::Private
 	 * `DS_<Name>_<RouteIndex>`, where <Name> is RouteName trimmed and run through SanitizeIdentifier,
 	 * `Output` stands in for a blank RouteName, and a negative RouteIndex drops the `_<RouteIndex>`
 	 * suffix. Exposed as the one spelling of the rule: the emitter names every output reroute with it,
-	 * and the graph importer (M5) recognises a generated reroute by it.
+	 * and the graph importer recognises a generated reroute by it.
 	 */
 	DREAMSHADERCOMPILER_API FString MakeDreamShaderOutputRerouteName(const FString& RouteName, int32 RouteIndex);
 	/**

@@ -11,8 +11,6 @@
 //
 // Every question a later stage could ask about a name, a type or a directive is answered here.
 // If the IR builder or the emitter finds itself looking a name up, the binder has a gap.
-//
-// FROZEN for batch 1 (M2+M3).
 
 #pragma once
 

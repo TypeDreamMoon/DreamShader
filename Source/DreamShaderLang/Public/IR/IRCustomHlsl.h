@@ -110,8 +110,7 @@ namespace UE::DreamShader::IR
 	 * `StampSourcePath` names the file in the Begin/End markers; I2 passes
 	 * `FIRBuildOptions::StampSourcePath`. Unset means the file exactly as the binder recorded it.
 	 * The pipeline's stamper makes it project-relative, so the code is the same on every machine
-	 * and a reader resolves a relative marker path against the project directory (batch 2
-	 * contract, debt B5).
+	 * and a reader resolves a relative marker path against the project directory.
 	 */
 	DREAMSHADERLANG_API bool BuildDreamShaderCustomNodeCode(
 		const Lang::FBoundModule& Bound,

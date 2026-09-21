@@ -21,7 +21,7 @@
 //   Expressions   spot checks on the exact spelling of a printed expression (the parenthesis rules).
 //   Corpus        every non-".bad." fixture under Tests/Corpus/Lang reaches the same fixed point.
 //
-// The tests cannot run until the whole DreamShaderLang module compiles (M1's combined build pass).
+// The tests cannot run until the whole DreamShaderLang module compiles.
 
 #include "CoreMinimal.h"
 
@@ -493,7 +493,7 @@ bool FDreamShaderLang2PrinterMaterialTest::RunTest(const FString& Parameters)
 	RunRoundTrip(*this, Label, TEXT("Inline/M_TeleportGlow.dss"), MakeMaterialSource(), &Printed);
 
 	// The layout of section 7: a pragma written back with its spelling, a parsed `///` block line by
-	// line as it was written (the pieces of one source line joined by three spaces; batch 2,
+	// line as it was written (the pieces of one source line joined by three spaces;
 	// FDocBlock::Order), a blank line between top-level declarations, Allman braces, four-space
 	// indentation, `inout` kept and `in` omitted, and a named argument spelled `Name = value`.
 	TestContains(*this, Label, Printed, TEXT("#pragma material(ShadingModel = Unlit, BlendMode = Additive, bUsedWithNiagaraSprites = true)"));

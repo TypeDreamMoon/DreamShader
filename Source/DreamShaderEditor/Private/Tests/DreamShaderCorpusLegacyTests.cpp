@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// Data-driven runners for 1.x sources through the 2.0 pipeline (batch 2, M4): the legacy front end is the only thing
+// Data-driven runners for 1.x sources through the 2.0 pipeline: the legacy front end is the only thing
 // that reads a `.dsm` / `.dsf` now, and these three layers are what says it reads them the way 1.x did.
 //
 //   Tests/Corpus/Legacy/Parse     DreamShader.Lang2.CorpusLegacyParse   Core only. ParseDreamShaderLang with trivia: codes,

@@ -10,7 +10,7 @@ human would have written — without changing what the material renders.
 
 **Which decompiler wrote the file decides how much there is to do.**
 
-| | 2.0 text — `.dss` (the default since M5) | 1.x text — `.dsm` / `.dsf` (`-Format Legacy`) |
+| | 2.0 text — `.dss` (the default) | 1.x text — `.dsm` / `.dsf` (`-Format Legacy`) |
 | :-- | :-- | :-- |
 | round trip | proved: the text is parsed again, and the round-trip suite compares IRs | **a migration starting point, not a guarantee** |
 | names | a value read once is written inline; a local that has to exist keeps the name its statement gave it (a graph DreamShader built) or takes one from its node (`Sample`, `Combined`, `Multiply_2`) | `Multiply_7`, `DS_Shared_3`, every node a variable |

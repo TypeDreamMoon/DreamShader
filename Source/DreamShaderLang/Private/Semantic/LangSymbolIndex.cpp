@@ -403,7 +403,7 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		/**
-		 * The `instance` section of a `.dsi` (batch 2; research-instance section 8.4): the parent reference and its
+		 * The `instance` section of a `.dsi` (research-instance section 8.4): the parent reference and its
 		 * resolved path, the keys and the overrides with their spans, and the parent's parameters as the schema
 		 * lists them, so an editor can complete an override's name.
 		 */
@@ -682,7 +682,7 @@ namespace UE::DreamShader::Lang
 				AppendField(Out, TEXT("      "), TEXT("type"), BoundParam.Type.ToString(), true);
 				if (!BoundParam.PinName.IsEmpty())
 				{
-					// `@pin`: the engine's name for this pin (batch 2).
+					// `@pin`: the engine's name for this pin.
 					AppendField(Out, TEXT("      "), TEXT("pin"), BoundParam.PinName, true);
 				}
 				AppendField(Out, TEXT("      "), TEXT("doc"), BoundParam.Doc, true);

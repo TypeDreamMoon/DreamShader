@@ -1,4 +1,4 @@
-// Batch 2, debt B6 (i): an `if` whose arms leave a Substrate value keeps the arm type. Under a static
+// An `if` whose arms leave a Substrate value keeps the arm type. Under a static
 // condition the merge is a StaticSwitch typed Substrate (1.x does the same since 0eee929); it is never
 // narrowed to a float1 conditional.
 

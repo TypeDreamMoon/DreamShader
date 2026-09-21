@@ -446,8 +446,8 @@ Expected a 2.0 declaration, found the 1.x declaration '{0}'; 1.x declarations be
 
 **Cause.** A 1.x declaration word — `Function`, `GraphFunction`, `Namespace`, `VirtualFunction`,
 `Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend` — was found where a 2.0 declaration
-starts. The 2.0 front end does not read the 1.x block syntax; until the second front end lands
-(M4) a 1.x file must keep its 1.x extension.
+starts. The 2.0 front end does not read the 1.x block syntax: the extension chooses the front end, and
+a `.dss` has asked for this one.
 
 **Fix.** Keep 1.x sources in `.dsm` / `.dsf` / `.dsh` files compiled by the 1.x front end, or port
 the declaration to 2.0: `Function float Luma(in vec3 c) { ... }` becomes

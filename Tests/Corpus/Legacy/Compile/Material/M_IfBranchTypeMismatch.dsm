@@ -2,7 +2,7 @@
 // component sizes (then=float3, else=float). The merge previously took the type from the then
 // branch and silently broadcast the scalar else to float3, so 1.x made it an error.
 //
-// Batch 2: a local belongs to the block that declares it, as in every `.dss`, so these are two variables that never
+// A local belongs to the block that declares it, as in every `.dss`, so these are two variables that never
 // meet and there is nothing to merge: the material builds, and `Color` is the one value an If selects. Expected: OK.
 Shader(Name="DreamShaderTests/Generate/M_IfBranchTypeMismatch", Root="Game")
 {

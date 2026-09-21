@@ -254,7 +254,7 @@ namespace UE::DreamShader::Lang::Private
 			// A `static const` declared in a header is bound here, so its initializer's spans lie
 			// in the header.
 			CurrentFile = Global.File;
-			// Batch 2: the legacy rules follow the declaration being bound (FDecl::bLegacy).
+			// The legacy rules follow the declaration being bound (FDecl::bLegacy).
 			CurrentDecl = Global.Decl;
 
 			const IR::FIRType DeclaredType = Global.Type;
@@ -314,7 +314,7 @@ namespace UE::DreamShader::Lang::Private
 		// A helper that came from a `.dsh` has its whole body bound here, and every span in it lies
 		// in that header.
 		CurrentFile = CurrentFunction->File;
-		// Batch 2: the legacy rules apply inside a body the legacy front end produced (FDecl::bLegacy).
+		// The legacy rules apply inside a body the legacy front end produced (FDecl::bLegacy).
 		CurrentDecl = CurrentFunction->Decl;
 		Scopes.Reset();
 		LocalArrayValues.Reset();

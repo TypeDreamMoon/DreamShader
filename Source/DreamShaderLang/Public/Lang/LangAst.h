@@ -7,7 +7,7 @@
 //
 //   1. The tree is syntax, not meaning. A member access is FMemberExpr whether it turns out to be
 //      a swizzle, a struct field or `UE.TexCoord`; an identifier is FIdentifierExpr whether it names
-//      a uniform, a local or a builtin. Resolution is the semantic pass's job (M2) and is recorded
+//      a uniform, a local or a builtin. Resolution is the semantic pass's job and is recorded
 //      there, not here, so a parser never has to know the symbol table.
 //   2. Every node carries the span it was parsed from. Diagnostics, the printer's raw-body slices,
 //      node<->source navigation and the future language service all read it.

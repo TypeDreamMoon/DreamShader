@@ -4,7 +4,7 @@
 // selection they share. They take the same (Tokens, Switches, Params) triple UCommandlet hands its
 // Main and that every existing verb already takes, so the dispatcher stays a dispatcher.
 //
-// Until the M4 relocation this header also carried the pipeline's rich entry point
+// Until the compiler relocation this header also carried the pipeline's rich entry point
 // (FDreamShaderLang2PipelineOptions / FDreamShaderLang2PipelineResult / RunDreamShaderLang2Pipeline).
 // That half moved into the compiler module as DreamShaderCompilePipeline.h, which is included below so
 // that every caller of the verbs still sees the driver they run.

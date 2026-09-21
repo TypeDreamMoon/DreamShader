@@ -1120,7 +1120,7 @@ namespace UE::DreamShader::Lang
 		{
 			// The two frozen 1.x extensions take the legacy front end. `.dss`, `.dsi` and an unknown or absent
 			// extension take the 2.0 one; so does a `.dsh`, whose module loop hands each 1.x declaration to
-			// the legacy front end by itself (batch-2 contract, agreement A4).
+			// the legacy front end by itself (agreement A4).
 			Frontend = (FileKind == ELangFileKind::Dsm || FileKind == ELangFileKind::Dsf)
 				? ELangFrontend::Legacy
 				: ELangFrontend::Dss;

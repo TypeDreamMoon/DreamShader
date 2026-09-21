@@ -14,7 +14,7 @@ equivalent DreamShaderLang source file.
 
 > [!IMPORTANT]
 > **There are two decompilers.** This page describes the **1.x** one, which writes `.dsm` / `.dsf`
-> and is kept behind `-Format=Legacy`. The **2.0 decompiler** is the default since M5: it reads the
+> and is kept behind `-Format=Legacy`. The **2.0 decompiler** is the default: it reads the
 > asset's graph into the compiler's own IR and prints a `.dss` — or a [`.dsi`](../language-v2/instances.md)
 > for a material instance — and its output is *proved*: the text is compiled again and the two IRs are
 > compared. See [The 2.0 decompiler](#the-20-decompiler) at the end of this page.

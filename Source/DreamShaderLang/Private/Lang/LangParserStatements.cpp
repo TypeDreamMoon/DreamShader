@@ -45,7 +45,7 @@ namespace UE::DreamShader::Lang::Private
 	FStmtPtr FLangParser::ParseStatement()
 	{
 		// The lexer emits every `///` line, wherever it is. Above a declaration one forms a doc
-		// block; inside a body it documents nothing in M1, so it is a comment like any other and
+		// block; inside a body it documents nothing, so it is a comment like any other and
 		// must not turn into "expected an expression, found a '///' comment". Skipped before the
 		// span starts, so the statement's span covers the statement and not the comment above it.
 		while (Check(ELangTokenKind::DocComment))

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // The DreamShaderLang 2.0 binder, split across five translation units that share this one class,
-// the same way the M1 parser shares LangParserInternal.h:
+// the same way the parser shares LangParserInternal.h:
 //
 //   LangBinder.cpp             entry point, includes, the declare pass, function kinds, products,
 //                              the call graph, and the out-of-line members of LangBound.h
@@ -251,7 +251,7 @@ namespace UE::DreamShader::Lang::Private
 		/** Records FBoundModule::LoopTripCounts when, and only when, the count can be proved. */
 		void ProveTripCount(const FStmt& Loop, const FStmt* Init, const FExpr* Condition, const FExpr* Step, const FStmt* Body);
 
-		// ------------------------------------------------- instance mode (LangBinderInstance.cpp, batch 2)
+		// ------------------------------------------------- instance mode (LangBinderInstance.cpp)
 
 		/**
 		 * A `.dsi` (FModule::FileKind == Dsi): the pragma, the overrides, their initializers, the checks
@@ -277,7 +277,7 @@ namespace UE::DreamShader::Lang::Private
 		/** `.dsi` only: the `@name` written in the `///` block above `#pragma instance`. */
 		FString InstanceAssetName;
 
-		// ------------------------------------------------------- legacy rules (LangBinderLegacy.cpp, batch 2)
+		// ------------------------------------------------------- legacy rules (LangBinderLegacy.cpp)
 
 		/** The declaration whose body, initializer or lifted calls are being bound; its FDecl::bLegacy selects the 1.x rules. */
 		const FDecl* CurrentDecl = nullptr;

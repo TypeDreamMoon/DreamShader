@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The MaterialInstance product of a `.dsi` (batch 2; research-instance section 3.5, CONTRACT-UNITS A2).
+// The MaterialInstance product of a `.dsi` (research-instance section 3.5, CONTRACT-UNITS A2).
 //
 // An instance is a set of assignments against the parent's parameters, not a graph: the product's Graph
 // stays empty and no `.dsi` uniform ever becomes a Parameter node. FBoundModule::Instance and

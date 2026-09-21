@@ -3,7 +3,7 @@
 // One located diagnostic about one source file, in the shape the editor's diagnostics store holds and
 // the wire files (diagnostics.json, diagnostics/*.json, bridge.db) publish.
 //
-// Split out of Diagnostics/DreamShaderDiagnosticsStore.h in the M4 relocation, so that the compiler
+// Split out of Diagnostics/DreamShaderDiagnosticsStore.h in the compiler relocation, so that the compiler
 // module can build records (DreamShaderCompilerDiagnostics.h) without depending on the store, which
 // keeps SQLite and stays in the editor module. Plain data: nothing here needs exporting.
 

@@ -9,8 +9,8 @@
 //     only one that can enumerate the malformed spellings cheaply;
 //   * the asset-reference resolver the compiler uses (TryResolveDreamShaderAssetReference), fed the default text
 //     the legacy front end carries unresolved for a 1.x property. That is where the shelled, quoted and Path(...)
-//     spellings have to agree on one resolved object path. Batch 2 (M4) deleted the 1.x runtime parser, which
-//     resolved them at parse time; the legacy front end keeps the text and the emitter resolves it;
+//     spellings have to agree on one resolved object path. The 1.x runtime parser, which resolved them at
+//     parse time, is gone; the legacy front end keeps the text and the emitter resolves it;
 //   * compilation, where the resolved path has to end up on the actual UMaterialExpression.
 //
 // The fixtures reference /Engine/EngineResources/DefaultTexture, which ships with the engine, so
@@ -566,7 +566,7 @@ bool FDreamShaderCopyReferenceShellClassMismatchTest::RunTest(const FString& Par
 	FScopedShellReferenceArtifacts Artifacts;
 	const FString AssetName = MakeUniqueTestAssetName(TEXT("M_ShellRefBad"));
 	// The refusal is the expected outcome, but a compile that wrongly succeeds writes a real asset (a Graph material
-	// always saves in batch 2), so the object path is cleaned up either way.
+	// always saves in 2.0), so the object path is cleaned up either way.
 	const FString ObjectPath = MakeAutomationObjectPath(AssetName);
 	Artifacts.AddObjectPath(ObjectPath);
 	AddExpectedNewAssetProbeWarnings(*this, ObjectPath);

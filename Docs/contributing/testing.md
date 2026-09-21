@@ -55,7 +55,8 @@ fixtures that belong to other layers, which is why the runnable count is not "si
 | `DreamShader.Compiler.Generate.*` | 1.x sources through the compiler, end to end | slow; editor |
 | `DreamShader.Compiler.SourceHash.*` | The regeneration skip check | slow; editor |
 | `DreamShader.Lang2.{Lexer,Expressions,Statements,Declarations,Printer,Trivia}.*` | The 2.0 front end, unit by unit | milliseconds; `Core` only |
-| `DreamShader.Lang2.{Binder,IR,IRCompare,InstanceSource,Migrate,Batch2}.*` | Binder, IR, the comparator, `.dsi` text, the migrator | fast; hand-made catalog, no assets |
+| `DreamShader.Lang2.{Binder,IR,IRCompare,InstanceSource,Migrate,LegacyRules}.*` | Binder, IR, the comparator, `.dsi` text, the migrator | fast; hand-made catalog, no assets |
+| `DreamShader.Lang2.{IRLayout,SubstrateSugar,Format}.*` | The three IR graph layouts, the Substrate sugar (each spelling against the nodes it stands for, and read back by the decompiler), `dsc fmt`'s core | fast; hand-made catalog, no assets |
 | `DreamShader.Lang2.Corpus*.*` | Data-driven text layers: `Lang/`, `IR/`, `Legacy/Parse`, `Legacy/IR`, `Decompile/`, `Migrate/` | fast; no asset I/O |
 | `DreamShader.Lang2.RoundtripIR.*` | Every fixture that lowers: IR → text → IR is equivalent | fast; no asset I/O |
 | `DreamShader.Compiler2.{Smoke,Instance,Decompile,Migrate,Provenance,Parity}.*` | The 2.0 pipeline, instances, the decompile service, `dsc migrate`, Adopt, graph parity against 1.x captures | slow; editor |

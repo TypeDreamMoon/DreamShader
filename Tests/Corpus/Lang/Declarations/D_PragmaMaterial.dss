@@ -1,5 +1,5 @@
 // `#pragma material(...)` value kinds: identifier, boolean, unsigned number, signed number and
-// quoted string. "File-level, at most one, key conflict is an error" is a semantic rule (M2);
+// quoted string. "File-level, at most one, key conflict is an error" is a semantic rule, the binder's;
 // the parser accepts every line and records them in source order.
 
 #pragma material(Domain = Surface, ShadingModel = Unlit, BlendMode = Translucent)

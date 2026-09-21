@@ -1,4 +1,4 @@
-// Batch 2, debt B6 (i): no material graph node switches a texture object, so an `if` that leaves a
+// No material graph node switches a texture object, so an `if` that leaves a
 // texture in a local is refused -- static condition or not -- with a message that names the texture
 // type (DSH4379) instead of a float1 conditional.
 
