@@ -256,6 +256,30 @@ namespace UE::DreamShader::Editor::Compiler
 		FString& OutObjectPath,
 		FString& OutError);
 
+	// ------------------------------------------------------------------------------ symbol index
+
+	/**
+	 * `<OutputDirectory>/<root>/<source path relative to that root>.index.json`, where the symbol index of a source
+	 * lives (plan section 13.4). An empty OutputDirectory is the default, `<Project>/Saved/DreamShader/Index`. The root
+	 * folder is what keeps two source roots that each hold a `Materials/M_Foo.dss` apart; a file under no root goes
+	 * under `External` by its file name.
+	 *
+	 * One rule for both writers -- `dsc index` and the compiler service -- so that a language service reads one place
+	 * whoever compiled last.
+	 */
+	DREAMSHADERCOMPILER_API FString GetDreamShaderSymbolIndexFilePath(const FString& SourceFilePath, const FString& OutputDirectory = FString());
+
+	/**
+	 * Writes BuildDreamShaderSymbolIndexJson(Bound) there. A file that already holds that text is left alone, so an
+	 * unchanged compile does not wake whoever watches the folder. False, with OutError, when it could not be written.
+	 */
+	DREAMSHADERCOMPILER_API bool WriteDreamShaderSymbolIndex(
+		const FString& SourceFilePath,
+		const UE::DreamShader::Lang::FBoundModule& Bound,
+		const FString& OutputDirectory,
+		FString& OutIndexPath,
+		FString& OutError);
+
 	/**
 	 * `TextureObjectParameter Font = Path(Plugins.DreamGUI, "Textures/FontArray")`: the type token is one node class that
 	 * carries any dimension, and 1.x took the dimension from the asset (ResolveEffectiveTextureType). The front end reads

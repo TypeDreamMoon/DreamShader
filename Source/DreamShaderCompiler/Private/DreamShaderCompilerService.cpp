@@ -190,6 +190,20 @@ namespace UE::DreamShader::Editor::Compiler
 			FDreamShaderLang2PipelineResult Result;
 			const bool bPipelineSucceeded = RunDreamShaderLang2Pipeline(SourceFilePath, Options, Result);
 
+			// The symbol index a language service reads (plan section 13.4), refreshed by every compile that got as far
+			// as a bound module -- a failed one included: navigation matters most in a file that does not build. Not
+			// being able to write it is no failure of the compile, and says so in the log only.
+			if (Result.Bound.IsValid())
+			{
+				FString IndexPath;
+				FString IndexError;
+				if (!WriteDreamShaderSymbolIndex(
+					Result.SourceFilePath.IsEmpty() ? SourceFilePath : Result.SourceFilePath, *Result.Bound, FString(), IndexPath, IndexError))
+				{
+					UE_LOG(LogDreamShader, Verbose, TEXT("DreamShader symbol index of '%s' was not written: %s."), *SourceFilePath, *IndexError);
+				}
+			}
+
 			// Kept as records for GetDreamShaderLastCompileDiagnostics before the report below flattens them into text:
 			// each keeps its code, stage, severity and span.
 			TArray<FLang2DiagnosticRecord> Records;

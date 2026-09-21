@@ -72,6 +72,7 @@
 #include "DreamShaderGeneratedAssets.h"
 #include "Semantic/LangBound.h"
 
+#include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Misc/ScopedSlowTask.h"
@@ -1125,6 +1126,60 @@ namespace UE::DreamShader::Editor::Compiler
 			OutError.Message += FString::Join(Warnings, TEXT("\n"));
 		}
 
+		return true;
+	}
+
+	// ------------------------------------------------------------------------------ symbol index
+
+	FString GetDreamShaderSymbolIndexFilePath(const FString& SourceFilePath, const FString& OutputDirectory)
+	{
+		const FString Directory = OutputDirectory.IsEmpty()
+			? FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader"), TEXT("Index")))
+			: OutputDirectory;
+
+		FString RootName = TEXT("External");
+		FString Relative = FPaths::GetCleanFilename(SourceFilePath);
+		if (const UE::DreamShader::FDreamShaderSourceRoot* Root = UE::DreamShader::FindSourceRootForFile(SourceFilePath))
+		{
+			RootName = Root->DisplayName.IsEmpty() ? FString(TEXT("Project")) : Root->DisplayName;
+			FString Candidate = SourceFilePath;
+			// The trailing slash is what MakePathRelativeTo needs to read the base as a directory.
+			const FString RootWithSlash = Root->Directory + TEXT("/");
+			if (FPaths::MakePathRelativeTo(Candidate, *RootWithSlash))
+			{
+				Relative = Candidate;
+			}
+		}
+		return FPaths::Combine(Directory, RootName, Relative + TEXT(".index.json"));
+	}
+
+	bool WriteDreamShaderSymbolIndex(
+		const FString& SourceFilePath,
+		const UE::DreamShader::Lang::FBoundModule& Bound,
+		const FString& OutputDirectory,
+		FString& OutIndexPath,
+		FString& OutError)
+	{
+		OutIndexPath = GetDreamShaderSymbolIndexFilePath(SourceFilePath, OutputDirectory);
+		const FString Json = UE::DreamShader::Lang::BuildDreamShaderSymbolIndexJson(Bound);
+
+		FString Existing;
+		if (FFileHelper::LoadFileToString(Existing, *OutIndexPath) && Existing.Equals(Json, ESearchCase::CaseSensitive))
+		{
+			return true;
+		}
+
+		const FString Directory = FPaths::GetPath(OutIndexPath);
+		if (!Directory.IsEmpty() && !IFileManager::Get().MakeDirectory(*Directory, true))
+		{
+			OutError = FString::Printf(TEXT("could not create directory '%s'"), *Directory); /* I18N-EXEMPT: wrapped by the caller's coded diagnostic */
+			return false;
+		}
+		if (!FFileHelper::SaveStringToFile(Json, *OutIndexPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		{
+			OutError = FString::Printf(TEXT("could not write '%s'"), *OutIndexPath); /* I18N-EXEMPT: wrapped by the caller's coded diagnostic */
+			return false;
+		}
 		return true;
 	}
 

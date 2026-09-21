@@ -635,9 +635,10 @@ namespace UE::DreamShader::Editor::Compiler
 				continue;
 			}
 
-			const FString IndexPath = MakeOutputFilePath(OutputDirectory, SourceFile, TEXT(".index.json"));
+			// The one rule the compiler service writes by too, so a language service reads one place.
+			FString IndexPath;
 			FString WriteError;
-			if (!WriteToolFile(IndexPath, UE::DreamShader::Lang::BuildDreamShaderSymbolIndexJson(*Result.Bound), WriteError))
+			if (!WriteDreamShaderSymbolIndex(SourceFile, *Result.Bound, OutputDirectory, IndexPath, WriteError))
 			{
 				FileSink.Error(TEXT("DSH9023"), NoSpan, FText::Format(
 					LOCTEXT("IndexWriteFailed", "The symbol index could not be written: {0}."),
