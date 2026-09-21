@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 2,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 3,
+		"synthesizedDirectives": 1,
+		"renames": 4,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 1,
+		"outputSelectionGroups": 0
+	},
+	"text": "// Output declarations become zero-initialised locals of the entry; `Base.X = src;` keeps its spelling on the material.\n/// @name M_LpOutputs\nexport void M_LpOutputs(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float Alpha = 0;\n    float2 Pair = float2(0, 0);\n    Color = float3(1.0, 0.5, 0.25);\n    Alpha = 0.5;\n    Pair = float2(0.0, 1.0);\n    Base.EmissiveColor = Color;\n    Base.Opacity = Alpha;\n}\n"
+}

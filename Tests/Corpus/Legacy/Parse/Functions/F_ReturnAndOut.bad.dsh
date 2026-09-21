@@ -1,0 +1,2 @@
+// A return type or `out` parameters, not both.
+Function float Broken(in float a, out float b) { b = a; return a; }

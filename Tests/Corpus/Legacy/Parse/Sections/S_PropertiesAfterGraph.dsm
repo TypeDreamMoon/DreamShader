@@ -1,0 +1,16 @@
+// Section order is free: a property declared after Graph is still a property in Graph.
+Shader(Name="M_LpPropertiesLast")
+{
+    Outputs = {
+        float Value;
+        Base.Opacity = Value;
+    }
+
+    Graph = {
+        Value = Late * 2.0;
+    }
+
+    Properties = {
+        float Late = 0.25;
+    }
+}

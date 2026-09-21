@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 1,
+		"synthesizedInitializers": 2,
+		"synthesizedDirectives": 3,
+		"renames": 4,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 3,
+		"outputSelectionGroups": 1
+	},
+	"text": "/// @sort 32\nuniform Texture2D Source;\n/// @sort 32\nuniform float3 V = float3(1.0, 2.0, 3.0);\n// The 1.x shorthands: `UE.SceneTexture(Id = ...)`, `SampleTexture2D(Tex, UV)`, `BreakOutFloat3Components(v, Output = \"G\")`.\n/// @name M_LpShorthands\nexport void M_LpShorthands(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float Alpha = 0;\n    float3 Scene = UE.Expression(Class = \"SceneTexture\", SceneTextureId = PPI_SceneColor)[0].rgb;\n    float3 Texel = UE.Expression(Class = \"TextureSample\", TextureObject = Source, Coordinates = UE.TexCoord(Index = 0)).rgb;\n    Alpha = V.g;\n    Color = Scene + Texel;\n    Base.EmissiveColor = Color;\n    Base.Opacity = Alpha;\n}\n"
+}

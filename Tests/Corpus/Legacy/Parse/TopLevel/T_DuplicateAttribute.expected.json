@@ -1,0 +1,24 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH2244"
+	],
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 2,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 1,
+		"renames": 2,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 1,
+		"outputSelectionGroups": 0
+	},
+	"text": "// An attribute written twice: the later one wins, with a warning (DSH2244).\n/// @name M_LpDuplicateAttribute\nexport void M_LpDuplicateAttribute(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    Color = float3(1.0, 0.5, 0.25);\n    Base.EmissiveColor = Color;\n}\n"
+}

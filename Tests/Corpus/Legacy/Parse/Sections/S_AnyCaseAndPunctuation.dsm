@@ -1,0 +1,20 @@
+// Section names in any case, with and without `=`, with and without a closing `;`.
+Shader(Name="M_LpSections")
+{
+    properties = {
+        float A = 1.0;
+    };
+
+    SETTINGS {
+        ShadingModel = "Unlit";
+    }
+
+    Outputs {
+        float Value;
+        Base.Opacity = Value;
+    };
+
+    graph = {
+        Value = A;
+    }
+}

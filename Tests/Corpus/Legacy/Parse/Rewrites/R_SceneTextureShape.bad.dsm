@@ -1,0 +1,16 @@
+// `UE.SceneTexture` takes exactly `Id = ...`.
+Shader(Name="M_LpRSceneTextureShape")
+{
+    Properties = {
+        TextureObjectParameter Source;
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = UE.SceneTexture(SceneTextureId = PPI_SceneColor).rgb;
+    }
+}

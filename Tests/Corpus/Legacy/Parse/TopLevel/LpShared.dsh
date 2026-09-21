@@ -1,0 +1,2 @@
+// Imported by T_Import.dsm and T_ImportCapitals.dsm.
+Function float LpHalf(in float value) { return value * 0.5; }

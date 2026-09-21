@@ -1,0 +1,2 @@
+// `__return` is the generated name of the return value.
+Function Broken(in float __return, out float b) { b = __return; }

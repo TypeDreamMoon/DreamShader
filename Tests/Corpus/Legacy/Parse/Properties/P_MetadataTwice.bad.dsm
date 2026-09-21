@@ -1,0 +1,16 @@
+// A metadata key written twice.
+Shader(Name="M_LpMetaTwice")
+{
+    Properties = {
+        ScalarParameter Gain = 1.0 [Group="A"; Group="B"];
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = vec3(1.0, 0.5, 0.25);
+    }
+}

@@ -1,0 +1,7 @@
+// A Shader has to have a Graph, or at least Outputs that declare something.
+Shader(Name="M_LpNoGraph")
+{
+    Settings = {
+        ShadingModel = "Unlit";
+    }
+}

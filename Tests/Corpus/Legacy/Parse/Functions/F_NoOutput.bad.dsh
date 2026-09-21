@@ -1,0 +1,2 @@
+// No return type and no `out`: the function gives nothing back.
+Function Broken(in float a) { }

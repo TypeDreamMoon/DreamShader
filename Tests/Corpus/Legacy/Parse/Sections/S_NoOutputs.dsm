@@ -1,0 +1,7 @@
+// A Shader without Outputs builds a material that writes nothing (DSH2256, a warning).
+Shader(Name="M_LpNoOutputs")
+{
+    Graph = {
+        float Unused = 1.0;
+    }
+}

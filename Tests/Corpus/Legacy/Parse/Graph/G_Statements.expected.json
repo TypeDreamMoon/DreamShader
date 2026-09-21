@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 3,
+		"renames": 4,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 3,
+		"outputSelectionGroups": 0
+	},
+	"text": "/// @sort 32\nuniform float A = 1.0;\n/// @sort 32\nuniform float3 V = float3(1.0, 2.0, 3.0);\n// Every statement form a 1.x Graph had: declarations, assignments, member writes, calls, `if` / `else` with one comparison, regions.\n/// @name M_LpGStatements\nexport void M_LpGStatements(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float Local = A * 2.0;\n    float3 Tinted = V * Local;\n    Tinted.x = 0.5;\n    #pragma region Branch\n    if (A > 0.5)\n    {\n        Color = Tinted;\n    }\n    else\n    {\n        Color = float3(0.0, 0.0, 0.0);\n    }\n    #pragma endregion\n    float t = UE.Time();\n    Color = Color * sin(t);\n    Base.EmissiveColor = Color;\n}\n"
+}

@@ -1,0 +1,15 @@
+// A layer has to output MaterialAttributes.
+ShaderLayer(Name="Layers/ML_LpNoMaterial")
+{
+    Inputs = {
+        MaterialAttributes Base;
+    }
+
+    Outputs = {
+        vec3 Color;
+    }
+
+    Graph = {
+        Color = Base.BaseColor;
+    }
+}

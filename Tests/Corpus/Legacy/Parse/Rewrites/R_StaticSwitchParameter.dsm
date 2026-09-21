@@ -1,0 +1,16 @@
+// A StaticSwitchParameter property is not a uniform: it expands into a reflected call wherever it is called.
+Shader(Name="M_LpStaticSwitch")
+{
+    Properties = {
+        StaticSwitchParameter UseWarm = true [Group="Look"];
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = UseWarm(True = vec3(1.0, 0.5, 0.0), False = vec3(0.0, 0.5, 1.0));
+    }
+}

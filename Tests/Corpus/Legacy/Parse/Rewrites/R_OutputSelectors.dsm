@@ -1,0 +1,32 @@
+// `Output = "N"` and `OutputIndex = k`: a selection over the call. Two equal calls share a group.
+VirtualFunction(Name="MF_LpSplit")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_LpSplit");
+    }
+
+    Inputs = {
+        float2 UV;
+    }
+
+    Outputs = {
+        float3 Head;
+        float Tail;
+    }
+}
+
+Shader(Name="M_LpSelectors")
+{
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float2 uv = UE.TexCoord(Index = 0);
+        Color = MF_LpSplit(uv, Output = "Head");
+        Alpha = MF_LpSplit(uv, OutputIndex = 1);
+    }
+}

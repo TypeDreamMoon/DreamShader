@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 5,
+		"synthesizedDirectives": 3,
+		"renames": 6,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 3,
+		"outputSelectionGroups": 0
+	},
+	"text": "/// @sort 32\nuniform float A = 1.0;\n/// @sort 32\nuniform float3 V = float3(1.0, 2.0, 3.0);\n// A local without an initializer is zero of its exact width in 1.x; the front end writes the zero (SynthesizedInitializers).\n/// @name M_LpGZero\nexport void M_LpGZero(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float S = 0;\n    float2 P = float2(0, 0);\n    float3 Q = float3(0, 0, 0);\n    float4 R = float4(0, 0, 0, 0);\n    Color = Q + float3(S, P.x, R.a);\n    Base.EmissiveColor = Color;\n}\n"
+}

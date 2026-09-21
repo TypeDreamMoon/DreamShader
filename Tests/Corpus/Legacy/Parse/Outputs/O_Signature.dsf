@@ -1,0 +1,19 @@
+// Inputs with `opt` and defaults; outputs: a first output called Result is the return value, the rest are `out`.
+ShaderFunction(Name="Functions/MF_LpSignature")
+{
+    Inputs = {
+        vec3 InColor [Description="The colour"];
+        opt float Strength = 1.0;
+        opt float Bias;
+    }
+
+    Outputs = {
+        vec3 Result;
+        float Weight [Description="Its weight"];
+    }
+
+    Graph = {
+        Result = InColor * Strength + Bias;
+        Weight = Strength;
+    }
+}

@@ -1,0 +1,13 @@
+// An `Expression(...) { }` block that binds no pin.
+Shader(Name="M_LpEmptyBlock")
+{
+    Outputs = {
+        Expression(Class="VolumetricAdvancedMaterialOutput")
+        {
+        }
+    }
+
+    Graph = {
+        float A = 0.5;
+    }
+}

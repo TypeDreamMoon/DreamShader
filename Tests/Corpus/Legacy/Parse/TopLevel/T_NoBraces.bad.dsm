@@ -1,0 +1,2 @@
+// A block without its braces.
+Shader(Name="M_LpNoBraces")

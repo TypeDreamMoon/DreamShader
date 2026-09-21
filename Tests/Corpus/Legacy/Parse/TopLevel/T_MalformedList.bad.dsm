@@ -1,0 +1,12 @@
+// An attribute list that is not `Key = Value, ...`.
+Shader(Name "M_LpMalformed")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = vec3(1.0, 0.5, 0.25);
+    }
+}

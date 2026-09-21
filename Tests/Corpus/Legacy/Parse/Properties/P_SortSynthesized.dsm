@@ -1,0 +1,17 @@
+// One property with an explicit sort and one without: the one without gets 1.x's 32, recorded as synthesized.
+Shader(Name="M_LpSort")
+{
+    Properties = {
+        ScalarParameter First = 1.0 [SortPriority=3];
+        ScalarParameter Second = 2.0;
+    }
+
+    Outputs = {
+        float Value;
+        Base.Opacity = Value;
+    }
+
+    Graph = {
+        Value = First + Second;
+    }
+}

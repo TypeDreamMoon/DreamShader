@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 4,
+		"renames": 1,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 5,
+		"outputSelectionGroups": 0
+	},
+	"text": "/// @group Look\n/// @desc Overall gain\n/// @slider 0 4\n/// @sort 5\nuniform float Gain = 0.5;\n/// @name Base Tint\n/// @sort 32\nuniform float4 Tint = float4(1.0, 0.5, 0.25, 1.0);\n/// @sort 32\nuniform Texture2D Source;\n/// @static\n/// @sort 32\nuniform bool UseWarm = true;\n// The four uniform shapes with metadata: group, description, slider, explicit sort, parameter name.\n/// @name M_LpUniforms\nexport void M_LpUniforms(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    Color = Tint.rgb * Gain;\n    Base.EmissiveColor = Color;\n}\n"
+}

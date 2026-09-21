@@ -1,0 +1,11 @@
+// A VirtualFunction names the asset it stands for.
+VirtualFunction(Name="MF_LpNoAsset")
+{
+    Inputs = {
+        float A;
+    }
+
+    Outputs = {
+        float Result;
+    }
+}

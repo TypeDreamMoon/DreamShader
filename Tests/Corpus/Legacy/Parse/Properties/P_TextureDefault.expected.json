@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 1,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 2,
+		"renames": 1,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 2,
+		"outputSelectionGroups": 0
+	},
+	"text": "/// @default Path(Engine, \"EngineResources/DefaultTexture\")\n/// @sort 32\nuniform Texture2D Source;\n// A texture default is an asset reference, carried unresolved as `/// @default`.\n/// @name M_LpTextureDefault\nexport void M_LpTextureDefault(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    Color = UE.Expression(Class = \"TextureSample\", TextureObject = Source, Coordinates = UE.TexCoord(Index = 0)).rgb;\n    Base.EmissiveColor = Color;\n}\n"
+}

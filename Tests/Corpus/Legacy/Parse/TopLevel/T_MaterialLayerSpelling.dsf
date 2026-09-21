@@ -1,0 +1,15 @@
+// `MaterialLayer` is the old spelling of `ShaderLayer` (DSH2251).
+MaterialLayer(Name="Layers/ML_LpOldSpelling")
+{
+    Inputs = {
+        MaterialAttributes Base;
+    }
+
+    Outputs = {
+        MaterialAttributes Attrs;
+    }
+
+    Graph = {
+        Attrs.Roughness = 0.5;
+    }
+}

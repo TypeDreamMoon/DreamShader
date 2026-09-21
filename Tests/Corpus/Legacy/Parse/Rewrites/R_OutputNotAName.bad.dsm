@@ -1,0 +1,16 @@
+// `Output` names an output.
+Shader(Name="M_LpROutputNotAName")
+{
+    Properties = {
+        TextureObjectParameter Source;
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = UE.VertexColor(Output = 1.5);
+    }
+}

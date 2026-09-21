@@ -1,0 +1,6 @@
+// A GraphFunction's `UE.*` calls are lifted into inputs `_ds_<Fn>_UE<n>`; the body keeps its lines.
+GraphFunction WindPulse(in float2 uv, in float UVIndex, out float pulse) {
+    float t = UE.Time();
+    float2 second = UE.TexCoord(Index = UVIndex);
+    pulse = sin(uv.x * 8.0 + t) * second.y;
+}

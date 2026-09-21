@@ -1,0 +1,23 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "error",
+	"errorContains": [
+		"DSH5256"
+	],
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 2,
+		"renames": 1,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 2,
+		"outputSelectionGroups": 0
+	}
+}

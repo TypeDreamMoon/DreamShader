@@ -1,0 +1,18 @@
+// `True` / `FALSE`, `vec3`, `mix` / `fract` / `mod`: read the 1.x way, written the 2.0 way where the front end owns the spelling.
+Shader(Name="M_LpGSpellings")
+{
+    Properties = {
+        float A = 1.0;
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        vec3 Mixed = mix(V, vec3(1.0, 1.0, 1.0), 0.25);
+        Color = fract(Mixed) + mod(Mixed, 0.5);
+    }
+}

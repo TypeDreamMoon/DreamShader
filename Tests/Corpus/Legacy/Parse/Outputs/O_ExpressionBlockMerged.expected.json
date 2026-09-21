@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 2,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 2,
+		"synthesizedDirectives": 1,
+		"renames": 0,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 1,
+		"outputSelectionGroups": 0
+	},
+	"text": "// Two `Expression(...)` heads with one key are one call; `.Pin[i] = x` lines are its pin arguments.\n/// @name M_LpExpressionBlock\nexport void M_LpExpressionBlock(inout material Base)\n{\n    float PhaseG = 0;\n    float PhaseG2 = 0;\n    PhaseG = 0.5;\n    PhaseG2 = 0.25;\n    UE.Expression(Class = \"VolumetricAdvancedMaterialOutput\", bGroundContribution = \"false\", Pin[0] = PhaseG, Pin[1] = PhaseG2);\n}\n"
+}

@@ -1,0 +1,18 @@
+// A VirtualFunction is an `extern` prototype; its Asset is carried unresolved.
+VirtualFunction(Name="MF_LpExternal")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_LpExternal");
+        Description = "An existing material function.";
+    }
+
+    Inputs = {
+        float3 Color;
+        opt float Alpha = 1.0;
+    }
+
+    Outputs = {
+        float3 Result;
+        float Weight;
+    }
+}

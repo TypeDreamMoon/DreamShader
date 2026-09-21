@@ -1,0 +1,24 @@
+// Function settings: Description and the library pair become directives; the ones 1.x ignored are said (DSH3263),
+// UserExposedCaption has no spelling (DSH3264), and ExposeToLibrary is a bool (DSH3265).
+ShaderFunction(Name="Functions/MF_LpSettings")
+{
+    Inputs = {
+        vec3 InColor;
+    }
+
+    Outputs = {
+        vec3 OutColor;
+    }
+
+    Settings = {
+        Description = "Tint helper";
+        ExposeToLibrary = maybe;
+        LibraryCategories = "DreamShader|Tests";
+        UserExposedCaption = "Tint";
+        BlendMode = "Opaque";
+    }
+
+    Graph = {
+        OutColor = InColor;
+    }
+}

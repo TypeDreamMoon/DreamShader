@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 0,
+		"blocks": 0,
+		"sections": 0,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 0,
+		"synthesizedDirectives": 0,
+		"renames": 0,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 0,
+		"outputSelectionGroups": 0
+	},
+	"text": "// No 1.x block: no legacy side information at all. A lower-case `function` is an identifier, not a block word.\nfloat function_like(float x)\n{\n    return x;\n}\n"
+}

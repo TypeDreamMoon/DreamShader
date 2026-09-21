@@ -1,0 +1,4 @@
+// `Inline` is the old spelling of `SelfContained` (DSH6306).
+Function Inline Half(in float value, out float result) {
+    result = value * 0.5;
+}

@@ -1,0 +1,2 @@
+// A function needs a name.
+Function (in float a, out float b) { b = a; }

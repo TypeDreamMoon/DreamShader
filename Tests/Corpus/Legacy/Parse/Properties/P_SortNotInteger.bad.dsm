@@ -1,0 +1,16 @@
+// SortPriority is a whole number.
+Shader(Name="M_LpSortNotInteger")
+{
+    Properties = {
+        ScalarParameter Gain = 1.0 [SortPriority=1.5];
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = vec3(1.0, 0.5, 0.25);
+    }
+}

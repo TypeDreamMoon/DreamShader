@@ -1,0 +1,2 @@
+// A function with a return type returns a value.
+Function float Broken(in float a) { return; }

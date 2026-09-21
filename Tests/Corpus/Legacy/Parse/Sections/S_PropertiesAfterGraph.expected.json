@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 2,
+		"renames": 0,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 2,
+		"outputSelectionGroups": 0
+	},
+	"text": "/// @sort 32\nuniform float Late = 0.25;\n// Section order is free: a property declared after Graph is still a property in Graph.\n/// @name M_LpPropertiesLast\nexport void M_LpPropertiesLast(inout material Base)\n{\n    float Value = 0;\n    Value = Late * 2.0;\n    Base.Opacity = Value;\n}\n"
+}

@@ -1,0 +1,16 @@
+// A second Graph section: read, with a warning (DSH2258).
+Shader(Name="M_LpGraphTwice")
+{
+    Outputs = {
+        float Value;
+        Base.Opacity = Value;
+    }
+
+    Graph = {
+        float A = 1.0;
+    }
+
+    Graph = {
+        Value = A;
+    }
+}

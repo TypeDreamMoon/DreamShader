@@ -1,0 +1,24 @@
+// The four uniform shapes with metadata: group, description, slider, explicit sort, parameter name.
+Shader(Name="M_LpUniforms")
+{
+    Properties = {
+        ScalarParameter Gain = 0.5 [
+            Group="Look";
+            Description="Overall gain";
+            Slider(0, 4);
+            SortPriority=5;
+        ];
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0) [ParameterName="Base Tint"];
+        TextureObjectParameter Source;
+        StaticBoolParameter UseWarm = true;
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = Tint.rgb * Gain;
+    }
+}

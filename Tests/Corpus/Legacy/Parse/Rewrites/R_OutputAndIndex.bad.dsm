@@ -1,0 +1,16 @@
+// One selector per call.
+Shader(Name="M_LpROutputAndIndex")
+{
+    Properties = {
+        TextureObjectParameter Source;
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = UE.VertexColor(Output = "RGB", OutputIndex = 0);
+    }
+}

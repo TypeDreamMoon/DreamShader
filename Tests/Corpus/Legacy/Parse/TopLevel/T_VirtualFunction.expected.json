@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 0,
+		"parameterDeclarations": 0,
+		"assetReferences": 1,
+		"outputSelections": 0,
+		"synthesizedInitializers": 0,
+		"synthesizedDirectives": 2,
+		"renames": 0,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 1,
+		"outputSelectionGroups": 0
+	},
+	"text": "// A VirtualFunction is an `extern` prototype; its Asset is carried unresolved.\n/// @asset Path(Game, \"Functions/MF_LpExternal\")\n/// @desc An existing material function.\nextern float3 MF_LpExternal(float3 Color, float Alpha = 1.0, out float Weight);\n"
+}

@@ -1,0 +1,20 @@
+// Compact spellings: a type and a default are a uniform; `const` is a `static const`.
+Shader(Name="M_LpCompact")
+{
+    Properties = {
+        const float DebugScale = 1.0;
+        float Strength = 1.0;
+        vec2 Offset = vec2(0.25, 0.75);
+        vec3 Tint = vec3(1.0, 1.0, 1.0);
+        vec4 Full = vec4(0.1, 0.2, 0.3, 0.4);
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = Tint * Strength * DebugScale + vec3(Offset.x, Offset.y, Full.a);
+    }
+}

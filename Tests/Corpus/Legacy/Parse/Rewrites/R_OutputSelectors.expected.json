@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 2,
+		"sections": 2,
+		"parameterDeclarations": 0,
+		"assetReferences": 1,
+		"outputSelections": 2,
+		"synthesizedInitializers": 2,
+		"synthesizedDirectives": 2,
+		"renames": 1,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 2,
+		"outputSelectionGroups": 1
+	},
+	"text": "// `Output = \"N\"` and `OutputIndex = k`: a selection over the call. Two equal calls share a group.\n/// @asset Path(Game, \"Functions/MF_LpSplit\")\nextern void MF_LpSplit(float2 UV, out float3 Head, out float Tail);\n\n/// @name M_LpSelectors\nexport void M_LpSelectors(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float Alpha = 0;\n    float2 uv = UE.TexCoord(Index = 0);\n    Color = MF_LpSplit(uv).Head;\n    Alpha = MF_LpSplit(uv)[1];\n    Base.EmissiveColor = Color;\n    Base.Opacity = Alpha;\n}\n"
+}

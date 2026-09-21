@@ -1,0 +1,7 @@
+// 2.0 syntax in a `.dsm`: the file has to be a `.dss`.
+uniform float Gain = 1.0;
+
+export void M_LpLang2(inout material m)
+{
+    m.Opacity = Gain;
+}

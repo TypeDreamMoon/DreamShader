@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 0,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 0,
+		"synthesizedDirectives": 1,
+		"renames": 0,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 1,
+		"outputSelectionGroups": 0
+	},
+	"text": "// A header mixes the two languages per declaration: only the 1.x blocks are legacy declarations.\nfloat Twice(float x)\n{\n    return x * 2.0;\n}\n\n/// @custom\nvoid Remap01(float value, out float result)\n{\r\n    result = saturate(value * 0.5 + 0.5);\r\n}\n\n/// @custom\nfloat3 Posterise(float3 Colour, float Steps)\n{\r\n    return floor(Colour * Steps) / Steps;\r\n}\n"
+}

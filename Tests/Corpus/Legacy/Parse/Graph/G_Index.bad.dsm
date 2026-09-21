@@ -1,0 +1,18 @@
+// An index.
+Shader(Name="M_LpGIndex")
+{
+    Properties = {
+        float A = 1.0;
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        float C = V[0];
+        Color = V * C;
+    }
+}

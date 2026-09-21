@@ -1,0 +1,16 @@
+// `UE.StaticSwitchParameter` names its parameter.
+Shader(Name="M_LpRStaticSwitchNoName")
+{
+    Properties = {
+        TextureObjectParameter Source;
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = UE.StaticSwitchParameter(True = vec3(1.0, 0.0, 0.0), False = vec3(0.0, 0.0, 1.0));
+    }
+}

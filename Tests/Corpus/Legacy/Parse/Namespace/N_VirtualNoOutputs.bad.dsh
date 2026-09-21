@@ -1,0 +1,11 @@
+// A VirtualFunction has outputs.
+VirtualFunction(Name="MF_LpNoOutputs")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_LpNoOutputs");
+    }
+
+    Inputs = {
+        float A;
+    }
+}

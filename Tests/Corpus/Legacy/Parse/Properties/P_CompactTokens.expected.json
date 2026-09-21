@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 5,
+		"renames": 5,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 6,
+		"outputSelectionGroups": 0
+	},
+	"text": "static const float DebugScale = 1.0;\n/// @sort 32\nuniform float Strength = 1.0;\n/// @sort 32\nuniform float2 Offset = float2(0.25, 0.75);\n/// @sort 32\nuniform float3 Tint = float3(1.0, 1.0, 1.0);\n/// @sort 32\nuniform float4 Full = float4(0.1, 0.2, 0.3, 0.4);\n// Compact spellings: a type and a default are a uniform; `const` is a `static const`.\n/// @name M_LpCompact\nexport void M_LpCompact(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    Color = Tint * Strength * DebugScale + float3(Offset.x, Offset.y, Full.a);\n    Base.EmissiveColor = Color;\n}\n"
+}

@@ -1,0 +1,2 @@
+// A function without its body.
+Function float Broken(in float a)

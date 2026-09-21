@@ -1,0 +1,18 @@
+// Two `Expression(...)` heads with one key are one call; `.Pin[i] = x` lines are its pin arguments.
+Shader(Name="M_LpExpressionBlock")
+{
+    Outputs = {
+        float PhaseG;
+        float PhaseG2;
+        Expression(Class="VolumetricAdvancedMaterialOutput", bGroundContribution="false")
+        {
+            Pin[0] = PhaseG;
+        }
+        Expression(Class="VolumetricAdvancedMaterialOutput", bGroundContribution="false").Pin[1] = PhaseG2;
+    }
+
+    Graph = {
+        PhaseG = 0.5;
+        PhaseG2 = 0.25;
+    }
+}

@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 2,
+		"renames": 0,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 3,
+		"outputSelectionGroups": 0
+	},
+	"text": "/// @sort 3\nuniform float First = 1.0;\n/// @sort 32\nuniform float Second = 2.0;\n// One property with an explicit sort and one without: the one without gets 1.x's 32, recorded as synthesized.\n/// @name M_LpSort\nexport void M_LpSort(inout material Base)\n{\n    float Value = 0;\n    Value = First + Second;\n    Base.Opacity = Value;\n}\n"
+}

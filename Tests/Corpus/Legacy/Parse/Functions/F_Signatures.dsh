@@ -1,0 +1,11 @@
+// Function shapes: `out` parameters, a return type, SelfContained; GLSL type and intrinsic spellings inside bodies
+// are rewritten, each recorded as a rename.
+Function Remap01(in float value, out float result) {
+    result = saturate(value * 0.5 + 0.5);
+}
+
+Function float Luma(in vec3 color) { return dot(color, vec3(0.299, 0.587, 0.114)); }
+
+Function SelfContained Blend(in vec3 a, in vec3 b, in float t, out vec3 result) {
+    result = mix(a, b, fract(t));
+}

@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 2,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 1,
+		"renames": 2,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 2,
+		"outputSelectionGroups": 0
+	},
+	"text": "// `import` is an include with the import spelling kept for the printer.\nimport \"LpShared.dsh\";\n\n/// @name M_LpImport\nexport void M_LpImport(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    Color = float3(1.0, 0.5, 0.25);\n    Base.EmissiveColor = Color;\n}\n"
+}

@@ -1,0 +1,15 @@
+// A VirtualFunction declares an asset; it has no body.
+VirtualFunction(Name="MF_LpWithGraph")
+{
+    Options = {
+        Asset = Path(Game, "Functions/MF_LpWithGraph");
+    }
+
+    Outputs = {
+        float Result;
+    }
+
+    Graph = {
+        Result = 1.0;
+    }
+}

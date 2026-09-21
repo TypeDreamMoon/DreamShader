@@ -1,0 +1,15 @@
+// A header mixes the two languages per declaration: only the 1.x blocks are legacy declarations.
+float Twice(float x)
+{
+    return x * 2.0;
+}
+
+Function Remap01(in float value, out float result) {
+    result = saturate(value * 0.5 + 0.5);
+}
+
+/// @custom
+float3 Posterise(float3 Colour, float Steps)
+{
+    return floor(Colour * Steps) / Steps;
+}

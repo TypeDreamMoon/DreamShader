@@ -1,0 +1,5 @@
+// A `UE.*` call that never closes.
+GraphFunction float Broken(in float x) {
+    float t = UE.Time(;
+    return x;
+}

@@ -1,0 +1,16 @@
+// A ShaderFunction: inputs are parameters, the first output is the return value only when it is called Result.
+ShaderFunction(Name="Functions/MF_LpTint")
+{
+    Inputs = {
+        vec3 InColor;
+        vec3 InTint;
+    }
+
+    Outputs = {
+        vec3 OutColor;
+    }
+
+    Graph = {
+        OutColor = InColor * InTint;
+    }
+}

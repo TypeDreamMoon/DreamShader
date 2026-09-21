@@ -1,0 +1,15 @@
+// `Namespace N { Function F }` is `N_F`, and the flatten map remembers `N::F`.
+Namespace(Name="Common")
+{
+    Function ApplyTint(in vec3 color, in vec3 tint, out vec3 result) {
+        result = color * tint;
+    }
+
+    Function Twice(in float value, out float result) {
+        result = Common::Half(value) * 4.0;
+    }
+
+    Function Half(in float value, out float result) {
+        result = value * 0.5;
+    }
+}

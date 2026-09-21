@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 0,
+		"synthesizedDirectives": 1,
+		"renames": 3,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 1,
+		"outputSelectionGroups": 0
+	},
+	"text": "// A ShaderFunction: inputs are parameters, the first output is the return value only when it is called Result.\n/// @name Functions/MF_LpTint\nexport void MF_LpTint(float3 InColor, float3 InTint, out float3 OutColor)\n{\n    OutColor = InColor * InTint;\n}\n"
+}

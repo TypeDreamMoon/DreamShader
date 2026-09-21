@@ -1,0 +1,7 @@
+// Only functions live in a namespace.
+Namespace(Name="Common")
+{
+    Properties = {
+        float A = 1.0;
+    }
+}

@@ -1,0 +1,5 @@
+// A `Substrate.*` call in a GraphFunction body is not lifted (DSH6316, a warning).
+GraphFunction float Weight(in float x) {
+    float unused = Substrate.Unlit(EmissiveColor = float3(x, x, x));
+    return x;
+}

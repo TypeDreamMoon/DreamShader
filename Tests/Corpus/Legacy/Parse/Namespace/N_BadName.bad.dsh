@@ -1,0 +1,5 @@
+// A namespace needs a usable name.
+Namespace(Name="")
+{
+    Function F(in float a, out float b) { b = a; }
+}

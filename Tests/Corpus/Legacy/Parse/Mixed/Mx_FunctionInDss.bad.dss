@@ -1,0 +1,4 @@
+// A 1.x block word in a `.dss`.
+Function Remap01(in float value, out float result) {
+    result = saturate(value);
+}

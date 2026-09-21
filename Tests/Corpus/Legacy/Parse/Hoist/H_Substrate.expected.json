@@ -1,0 +1,25 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH6316"
+	],
+	"roundtrip": false,
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 0,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 0,
+		"synthesizedDirectives": 1,
+		"renames": 0,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 1,
+		"outputSelectionGroups": 0
+	},
+	"text": "// A `Substrate.*` call in a GraphFunction body is not lifted (DSH6316, a warning).\n/// @custom\nfloat Weight(float x)\n{\r\n    float unused = Substrate.Unlit(EmissiveColor = float3(x, x, x));\r\n    return x;\r\n}\n"
+}

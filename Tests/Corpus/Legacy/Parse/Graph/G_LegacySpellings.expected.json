@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 3,
+		"renames": 4,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 3,
+		"outputSelectionGroups": 0
+	},
+	"text": "/// @sort 32\nuniform float A = 1.0;\n/// @sort 32\nuniform float3 V = float3(1.0, 2.0, 3.0);\n// `True` / `FALSE`, `vec3`, `mix` / `fract` / `mod`: read the 1.x way, written the 2.0 way where the front end owns the spelling.\n/// @name M_LpGSpellings\nexport void M_LpGSpellings(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float3 Mixed = mix(V, float3(1.0, 1.0, 1.0), 0.25);\n    Color = fract(Mixed) + mod(Mixed, 0.5);\n    Base.EmissiveColor = Color;\n}\n"
+}

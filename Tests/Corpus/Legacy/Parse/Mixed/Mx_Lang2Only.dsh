@@ -1,0 +1,5 @@
+// No 1.x block: no legacy side information at all. A lower-case `function` is an identifier, not a block word.
+float function_like(float x)
+{
+    return x;
+}

@@ -1,0 +1,4 @@
+// `SelfContained` has no meaning on a GraphFunction.
+GraphFunction SelfContained Pulse(in float x, out float y) {
+    y = x;
+}

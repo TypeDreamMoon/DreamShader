@@ -1,0 +1,22 @@
+// `Group("G") { }` stamps the group and an automatic sort (0, 10, 20 ...); nesting composes with `|`.
+Shader(Name="M_LpGroupScope")
+{
+    Properties = {
+        Group("Surface") {
+            ScalarParameter A = 0.5;
+            Group("Detail") {
+                ScalarParameter B = 0.25;
+            }
+        }
+        ScalarParameter Loose = 1.0;
+    }
+
+    Outputs = {
+        float Value;
+        Base.Opacity = Value;
+    }
+
+    Graph = {
+        Value = A + B + Loose;
+    }
+}

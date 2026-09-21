@@ -1,0 +1,18 @@
+// One pin of an output expression bound twice.
+Shader(Name="M_LpPinTwice")
+{
+    Outputs = {
+        float A;
+        float B;
+        Expression(Class="VolumetricAdvancedMaterialOutput")
+        {
+            Pin[0] = A;
+            Pin[0] = B;
+        }
+    }
+
+    Graph = {
+        A = 0.5;
+        B = 0.25;
+    }
+}

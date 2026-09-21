@@ -1,0 +1,18 @@
+// An `if` body without braces.
+Shader(Name="M_LpGIfWithoutBraces")
+{
+    Properties = {
+        float A = 1.0;
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        if (A > 0.5)
+            Color = V;
+    }
+}

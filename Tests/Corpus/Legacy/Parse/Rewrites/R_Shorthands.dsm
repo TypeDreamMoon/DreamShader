@@ -1,0 +1,22 @@
+// The 1.x shorthands: `UE.SceneTexture(Id = ...)`, `SampleTexture2D(Tex, UV)`, `BreakOutFloat3Components(v, Output = "G")`.
+Shader(Name="M_LpShorthands")
+{
+    Properties = {
+        TextureObjectParameter Source;
+        vec3 V = vec3(1.0, 2.0, 3.0);
+    }
+
+    Outputs = {
+        vec3 Color;
+        float Alpha;
+        Base.EmissiveColor = Color;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        vec3 Scene = UE.SceneTexture(Id = PPI_SceneColor).rgb;
+        vec3 Texel = SampleTexture2D(Source, UE.TexCoord(Index = 0)).rgb;
+        Alpha = BreakOutFloat3Components(V, Output = "G");
+        Color = Scene + Texel;
+    }
+}

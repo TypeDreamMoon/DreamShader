@@ -1,0 +1,16 @@
+// `SampleTexture2D` takes a texture and coordinates.
+Shader(Name="M_LpRSampleTexture2DShape")
+{
+    Properties = {
+        TextureObjectParameter Source;
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = SampleTexture2D(Source).rgb;
+    }
+}

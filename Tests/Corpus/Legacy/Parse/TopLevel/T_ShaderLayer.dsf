@@ -1,0 +1,15 @@
+// A ShaderLayer: one `inout material`, named after the 1.x output.
+ShaderLayer(Name="Layers/ML_LpTint")
+{
+    Inputs = {
+        MaterialAttributes Base;
+    }
+
+    Outputs = {
+        MaterialAttributes Attrs;
+    }
+
+    Graph = {
+        Attrs.BaseColor = Base.BaseColor * vec3(1.0, 0.5, 0.25);
+    }
+}

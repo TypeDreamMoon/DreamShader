@@ -1,0 +1,2 @@
+// A parameter is `[in|out] Type Name`: two or three words. One word is neither.
+Function Broken(value, out float b) { b = 1.0; }

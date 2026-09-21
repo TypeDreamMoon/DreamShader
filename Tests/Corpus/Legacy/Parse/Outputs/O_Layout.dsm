@@ -1,0 +1,18 @@
+// Layout: nodes by variable, comment boxes with a colour normalised to four numbers.
+Shader(Name="M_LpLayout")
+{
+    Outputs = {
+        float Value;
+        Base.Opacity = Value;
+    }
+
+    Graph = {
+        float Sum = 1.0 + 2.0;
+        Value = Sum;
+    }
+
+    Layout = {
+        Node(Var="Sum", X=-320, Y=48);
+        Comment(Name="Maths", X=-400, Y=0, W=300, H=200, Color=float4(0.15, 0.15, 0.15, 0.5));
+    }
+}

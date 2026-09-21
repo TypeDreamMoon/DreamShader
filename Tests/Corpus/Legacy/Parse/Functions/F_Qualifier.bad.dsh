@@ -1,0 +1,2 @@
+// `inout` is not a 1.x qualifier.
+Function Broken(inout float a, out float b) { b = a; }
