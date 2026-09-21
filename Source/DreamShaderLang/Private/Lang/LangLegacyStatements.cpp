@@ -766,7 +766,7 @@ namespace UE::DreamShader::Lang::Private
 				return TEXT("float3");
 			}
 			// ScreenPosition, VertexColor, and a collection parameter: 1.x read a collection's width off the
-			// asset; without assets the front end takes the vector width (research-legacy.md 9 Q21).
+			// asset; without assets the front end takes the vector width.
 			return TEXT("float4");
 		}
 
@@ -906,7 +906,7 @@ namespace UE::DreamShader::Lang::Private
 				FExprPtr Value;
 				if (bCollection && (Key.Equals(TEXT("Collection"), ESearchCase::IgnoreCase) || Key.Equals(TEXT("Asset"), ESearchCase::IgnoreCase)))
 				{
-					// Unresolved on purpose; the emitter resolves `Path(...)` (research-legacy.md 3.8).
+					// Unresolved on purpose; the emitter resolves `Path(...)`.
 					Name = TEXT("Collection");
 					CollectionText = LegacyAst::Unquote(Argument.Value);
 					Value = LegacyAst::MakeStringLiteral(CollectionText, Property.Span);

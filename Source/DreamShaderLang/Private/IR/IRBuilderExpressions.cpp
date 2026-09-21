@@ -37,10 +37,10 @@ namespace UE::DreamShader::IR::Private
 	}
 
 	/**
-	 * The word a property-bound argument was written as. Unit S records such an argument as a
+	 * The word a property-bound argument was written as. The binder records such an argument as a
 	 * `Literal` whose `FIRType` may be `Error`, because there is no `FIRType` for a name, an
-	 * enumerator or an asset path -- the spelling lives in the AST and this is where it is read
-	 * (S-report, "What the IR builder can rely on" #4). `UE.Foo(Id = PP.Input0)` flattens to
+	 * enumerator or an asset path -- the spelling lives in the AST and this is where it is read.
+	 * `UE.Foo(Id = PP.Input0)` flattens to
 	 * "PP.Input0"; the emitter's reflected enum writer resolves a prefixless entry name itself.
 	 */
 	static bool TryFlattenWord(const FExpr* Expr, FString& Out)
@@ -248,7 +248,7 @@ namespace UE::DreamShader::IR::Private
 
 		if (BoundExpr->Type.IsMatrix())
 		{
-			// Everywhere, `/// @custom` pins included (CONTRACT section 6.13 #2): there is no matrix
+			// Everywhere, `/// @custom` pins included: there is no matrix
 			// ECustomMaterialOutputType and no matrix input pin, so a matrix that did not fold away
 			// has nowhere to go. Inside a custom body it is free, because it never crosses a pin.
 			Diagnostics.Error(TEXT("DSH4361"), Expr.Span, FText::Format(
@@ -281,8 +281,7 @@ namespace UE::DreamShader::IR::Private
 					return FLoweredValue();
 				}
 			}
-			// A value one arm of an `if` assigned and the other did not: this read is where that matters
-			// (debt B6 (ii)).
+			// A value one arm of an `if` assigned and the other did not: this read is where that matters.
 			ReportPartialRead(Frame().Locals[BoundExpr->LocalSlot]);
 			// Substrate sugar S5: naming a value still being built takes it, and that is what makes its node.
 			return TakeSlotValue(Frame().Locals[BoundExpr->LocalSlot]);
@@ -488,7 +487,7 @@ namespace UE::DreamShader::IR::Private
 
 		case EBoundExprKind::Paren:
 		{
-			// `(e)` and unary `+e`, which the binder records as transparent too (S-report #6).
+			// `(e)` and unary `+e`, which the binder records as transparent too.
 			if (const FParenExpr* Paren = Expr.As<FParenExpr>())
 			{
 				return Paren->Inner ? LowerExpr(*Paren->Inner) : FLoweredValue();
@@ -597,7 +596,7 @@ namespace UE::DreamShader::IR::Private
 	FLoweredValue FIRBuilder::LowerCoreOp(const FExpr& Expr, const FBoundExpr& BoundExpr)
 	{
 		// Call syntax carries Args, one per operand slot, with TargetIndex = the operand POSITION;
-		// operator syntax carries none and its operands are the AST children in order (S-report #3).
+		// operator syntax carries none and its operands are the AST children in order.
 		// Reading the arguments in AST order instead would put `lerp(0.0, 1.0, Alpha = 0.5)` together
 		// wrong, which is exactly the case the binder added Args for.
 		TArray<const FExpr*> OperandExprs;
@@ -634,7 +633,7 @@ namespace UE::DreamShader::IR::Private
 
 		// `!`, `&&` and `||` want a truth value. A number reaching one carries Conversion Numeric
 		// into a bool target, which the graph has no type for, so it becomes the comparison against
-		// zero that HLSL means by it (S-report #10). A bool operand is already one and is left alone.
+		// zero that HLSL means by it. A bool operand is already one and is left alone.
 		const bool bLogicalOp = BoundExpr.CoreOp == EIROp::LogicalAnd
 			|| BoundExpr.CoreOp == EIROp::LogicalOr
 			|| BoundExpr.CoreOp == EIROp::LogicalNot;
@@ -813,7 +812,7 @@ namespace UE::DreamShader::IR::Private
 		{
 			// A word, not a value: a quoted string, a bare enumerator, a dotted enum path or an
 			// asset path. The binder types all of them Error on purpose, so the spelling comes out
-			// of the AST rather than out of the bound record (S-report #4).
+			// of the AST rather than out of the bound record.
 			FString Text;
 			if (!TryFlattenWord(Inner, Text))
 			{
@@ -907,7 +906,7 @@ namespace UE::DreamShader::IR::Private
 		if (!Catalog->Expressions.IsValidIndex(BoundExpr.Index))
 		{
 			// A catalog without the entry the binder recorded is not the catalog the module was bound
-			// against (CONTRACT section 6.13 #28). Said here, at the call, because returning nothing in
+			// against. Said here, at the call, because returning nothing in
 			// silence would drop whatever this call feeds.
 			Diagnostics.Error(TEXT("DSH4352"), Expr.Span, FText::Format(
 				LOCTEXT("IRBuilderNoExpressionEntry", "The builtin catalog has no expression entry {0}; the module was bound against a different catalog than this build is reading."),
@@ -928,7 +927,7 @@ namespace UE::DreamShader::IR::Private
 		{
 			// A Numeric output follows its inputs (Add, Multiply, LinearInterpolate). The binder has already
 			// widened the call to what it is used as, and that width is what every reader of the node --
-			// WidthOf, CoerceToWidth, the validator -- has to see (CONTRACT 6.13 #32).
+			// WidthOf, CoerceToWidth, the validator -- has to see.
 			FIRType OutputType = TypeFromCatalogValueType(Output.Type);
 			if (Output.Type == ECatalogValueType::Numeric && Entry.Outputs.Num() == 1
 				&& BoundExpr.Type.IsNumeric() && !BoundExpr.Type.IsMatrix())
@@ -987,8 +986,8 @@ namespace UE::DreamShader::IR::Private
 			if (Argument.bIsProperty)
 			{
 				// `UE.Expression(Class = "X")`: the Class argument selected the catalog entry rather
-				// than naming one of its properties, and the binder records it with no TargetIndex
-				// (S-report #4). Keep what the author wrote under its own property name.
+				// than naming one of its properties, and the binder records it with no TargetIndex.
+				// Keep what the author wrote under its own property name.
 				if (Argument.TargetIndex == INDEX_NONE && Argument.Target.Equals(TEXT("Class"), ESearchCase::CaseSensitive))
 				{
 					FString ClassText;
@@ -1116,7 +1115,7 @@ namespace UE::DreamShader::IR::Private
 		{
 			// `Tex.Sample(UV)` and `Tex.SampleLevel(UV, L)` have no argument for the texture: it is
 			// the object the method was called on, and the binder marks that with ArgumentIndex
-			// INDEX_NONE (S-report #2). The callee itself is never in the bound map, but its object
+			// INDEX_NONE. The callee itself is never in the bound map, but its object
 			// is, so this reaches the value and not the name.
 			const FExpr* Value = ArgumentExpr(Expr, Argument);
 			if (!Value && Argument.ArgumentIndex == INDEX_NONE)
@@ -1158,7 +1157,7 @@ namespace UE::DreamShader::IR::Private
 
 		FIRNode Node;
 		Node.Op = EIROp::TextureSample;
-		// EXACTLY four operands, always (CONTRACT section 6.13 #14): [Texture, UV, Sampler, Level],
+		// EXACTLY four operands, always: [Texture, UV, Sampler, Level],
 		// with FIRValue::None() in the slots the source did not fill. The validator accepts an empty
 		// value in slots 2 and 3 of this op alone, and the emitter indexes rather than counts, so
 		// `Tex.SampleLevel(UV, L)` keeps its level at operand 3 with no sampler in front of it.
@@ -1258,7 +1257,7 @@ namespace UE::DreamShader::IR::Private
 	{
 		// Two spellings land here. `x = e` and `x += e` are an FAssignExpr; `++x`, `x++`, `--x` and
 		// `x--` are an FUnaryExpr the binder also records as an Assign, with CoreOp saying which way
-		// and the operand serving as both the target and the left operand (S-report #5).
+		// and the operand serving as both the target and the left operand.
 		const FExpr* TargetExpr = nullptr;
 		const FExpr* ValueExpr = nullptr;
 		EIROp CompoundOp = EIROp::Count;
@@ -1374,7 +1373,7 @@ namespace UE::DreamShader::IR::Private
 		}
 
 		StoreLValue(Ref, Value, Expr.Span);
-		// The statement bound this variable (CONTRACT-UNITS A1): the probe on this line shows what it holds now.
+		// The statement bound this variable: the probe on this line shows what it holds now.
 		RecordStatementBinding(DescribeLValueRef(Ref), BoundValueOfLValueRef(Ref), Expr.Span);
 
 		// The name a value is known by: the variable it was first assigned to, which is what the
@@ -1444,7 +1443,7 @@ namespace UE::DreamShader::IR::Private
 		{
 			Spelling = TEXT("MaterialAttributes");
 		}
-		// CONTRACT section 6.2's field map records one value per attribute and has no record inside a
+		// The material's field map records one value per attribute and has no record inside a
 		// record, so a write into the material an attribute holds has no lowering -- and it must never be
 		// taken for a write to the outer material's attribute of the same name, which it once was.
 		Diagnostics.Error(TEXT("DSH4377"), Target.Span, FText::Format(
@@ -1523,8 +1522,8 @@ namespace UE::DreamShader::IR::Private
 			if (!Out.MaterialAttribute.IsEmpty())
 			{
 				// An attribute of the material held in an attribute: `m.MaterialAttributes.Roughness`. The
-				// field map records one value per attribute and has no record inside a record (CONTRACT
-				// section 6.2), so there is no write to lower -- and resolving on used to overwrite the
+				// field map records one value per attribute and has no record inside a record,
+				// so there is no write to lower -- and resolving on used to overwrite the
 				// attribute and land the write on m.Roughness. The caller refuses it (DSH4377); a READ of
 				// the same spelling goes through the value and never asks.
 				Out.bNestedAttribute = true;
@@ -1593,8 +1592,8 @@ namespace UE::DreamShader::IR::Private
 			{
 				return FLoweredValue();
 			}
-			// A compound assignment reads before it writes, and a read of an attribute is the read of
-			// contract section 6.2 wherever it happens: the recorded value, the incoming material's
+			// A compound assignment reads before it writes, and a read of an attribute is the same read
+			// wherever it happens: the recorded value, the incoming material's
 			// through GetMaterialAttributes, or DSH4370. Looking at the recorded values alone made
 			// `m.Roughness *= 0.5` in a layer find nothing and leave the attribute untouched, silently.
 			const int32 AttributeIndex = Catalog ? Catalog->FindMaterialAttribute(Ref.MaterialAttribute) : INDEX_NONE;
@@ -1741,7 +1740,7 @@ namespace UE::DreamShader::IR::Private
 		}
 
 		// A uniform declared inside `#pragma region Parameters` puts its parameter node in that box.
-		// The binder keys file-scope declarations into StatementRegions by their FDecl (S-report #9),
+		// The binder keys file-scope declarations into StatementRegions by their FDecl,
 		// so the node takes the DECLARATION's region rather than the region of whichever statement
 		// happened to read the uniform first -- which, since the node is made once and memoised,
 		// would otherwise be an arbitrary choice.
@@ -1769,7 +1768,7 @@ namespace UE::DreamShader::IR::Private
 				FIRSourceRef& Source = Graph->Nodes[NodeIndex].Source;
 				if (!DeclarationFile.IsEmpty())
 				{
-					// Stamped like every other file the IR writes (debt B5).
+					// Stamped like every other file the IR writes.
 					Source.File = StampFile(DeclarationFile);
 				}
 				Source.CallSite = FLangSpan();

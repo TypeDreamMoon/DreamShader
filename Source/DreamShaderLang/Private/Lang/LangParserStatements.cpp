@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // Statements and blocks. The set is deliberately small -- 2.0 lowers to a material graph, so every
-// statement here has a graph meaning (see Plan/syntax-v2-proposal.md section 10): declarations,
+// statement here has a graph meaning: declarations,
 // expressions, blocks, `if`/`else`, the three loops, `return`, `break`, `continue`, `discard` and
 // the empty statement. `switch` is not in the language, and says so rather than reading as a call.
 //

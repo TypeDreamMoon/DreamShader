@@ -13,8 +13,6 @@
 // that Name says which node the hint places (bindings follow their nodes through the passes), and the
 // builder writes the pragma under the variable that node's value ended up as. A hint for a value that
 // was written inline is dropped (DSH9077).
-//
-// Design: Plan/m4m5/research-decompiler.md sections 3.9 and 4; CONTRACT section 2.4.
 
 #pragma once
 
@@ -92,7 +90,7 @@ namespace UE::DreamShader::Lang
 		FLangDiagnosticSink& Diagnostics);
 
 	/**
-	 * Raises the emitter's lowered shapes back to source-level ones, in place (research-decompiler.md section 3.9).
+	 * Raises the emitter's lowered shapes back to source-level ones, in place.
 	 * With a catalog it also reads the Substrate sugar back: `A + B`, `A * w` and `lerp(A, B, t)` for the three
 	 * composition nodes, and `BaseColor = / Metallic = / Haziness = / Transmittance =` for a conversion node that feeds
 	 * one BSDF and nothing else. Both are graph-exact, like every other rule; the catalog is what says which engine class

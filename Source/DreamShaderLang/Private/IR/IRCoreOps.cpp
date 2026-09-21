@@ -43,7 +43,7 @@ namespace UE::DreamShader::IR
 			{ EIROp::FunctionCall,           nullptr,        TEXT("call"),        0, 0, EIRTypingRule::Special,         TEXT("MaterialFunctionCall"),   {},                                                                           nullptr },
 			{ EIROp::Custom,                 nullptr,        TEXT("@custom"),     0, 0, EIRTypingRule::Special,         TEXT("Custom"),                 {},                                                                           nullptr },
 			// Arity is 4-4, not 2-4: the operands are ALWAYS [Texture, UV, Sampler, Level] with
-			// FIRValue::None() in an absent slot (IR.h FIRNode::Operands, CONTRACT §6.13 #14), so a
+			// FIRValue::None() in an absent slot (IR.h FIRNode::Operands), so a
 			// reader indexes and never counts. InputPins stops after two because the sampler slot has
 			// no FExpressionInput at all on UMaterialExpressionTextureSample -- it is SamplerSource
 			// plus the paired sampler object -- and the array is nullptr-terminated, so it cannot

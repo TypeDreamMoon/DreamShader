@@ -422,7 +422,7 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		/**
-		 * The `///` directives a uniform gets from its 1.x metadata (research-legacy.md 2.3): Group/Category ->
+		 * The `///` directives a uniform gets from its 1.x metadata: Group/Category ->
 		 * @group, Description/Desc/Tooltip -> @desc, SortPriority/Sort -> @sort, ParameterName -> @name,
 		 * SamplerType -> @sampler, Slider(a,b) or both slider bounds -> @slider; every other key passes through
 		 * under its lower-case spelling. False when SortPriority is not a whole number (reported).
@@ -1018,7 +1018,7 @@ namespace UE::DreamShader::Lang::Private
 			if (!bHasSort && !bConst)
 			{
 				// 1.x left SortPriority at the engine default when none was written; 2.0 would number the
-				// declaration order instead (research-legacy.md D11).
+				// declaration order instead.
 				AddLegacyDirective(Variable->Doc, TEXT("sort"), TEXT("32"), FLangSpan());
 				if (Info)
 				{
@@ -1384,7 +1384,7 @@ namespace UE::DreamShader::Lang::Private
 				}
 				ValidateLegacyValue(*SourceValue);
 
-				// The member keeps the author's spelling (`CustomizedUV1`): it names the sink reroute (D12).
+				// The member keeps the author's spelling (`CustomizedUV1`): it names the sink reroute (Tools/Parity/README.md, D12).
 				TUniquePtr<FAssignExpr> Assign = MakeUnique<FAssignExpr>();
 				Assign->Op = EAssignOp::Assign;
 				Assign->Target = LegacyAst::MakeMember(LegacyAst::MakeIdentifier(TEXT("Base"), BaseToken.Span), AttributeToken.Text, AttributeToken.Span);
@@ -2042,7 +2042,7 @@ namespace UE::DreamShader::Lang::Private
 						bShapeOk = false;
 						continue;
 					}
-					// `Color = "r g b a"`: the quoted form the 2.0 layout pragma reads (research-decompiler.md 6.4).
+					// `Color = "r g b a"`: the quoted form the 2.0 layout pragma reads.
 					Extra.Key = TEXT("Color");
 					Extra.Value = FString::Printf(
 						TEXT("%s %s %s %s"),

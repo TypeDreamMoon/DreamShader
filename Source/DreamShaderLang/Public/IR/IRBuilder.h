@@ -10,8 +10,8 @@
 //
 // Values are SSA. A local variable is a mutable *environment slot* holding a lowered value, not a
 // mutable node: `x = x + 1` rebinds the slot to a new Add node and leaves the old one alone. A
-// struct-typed local is a slot holding a field map (structs never become nodes -- plan section 11 #1
-// (c)); a `material`-typed local is a slot holding the attribute map of contract section 6.2.
+// struct-typed local is a slot holding a field map (structs never become nodes);
+// a `material`-typed local is a slot holding the attribute map.
 //
 // Control flow is erased. `if` becomes StaticSwitch or Select over every slot the two branches
 // disagree about; loops are unrolled with the binder's trip count; `return` becomes a merge at the

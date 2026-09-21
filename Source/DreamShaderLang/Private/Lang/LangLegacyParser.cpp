@@ -5,7 +5,7 @@
 //
 // The legacy front end is not a second parser. It is this same FLangParser with the Frontend member set to
 // Legacy (or, inside a `.dsh`, with a legacy scope open around one declaration), reading the shared token
-// stream and producing the ordinary 2.0 tree (Plan/m4m5/research-legacy.md section 3):
+// stream and producing the ordinary 2.0 tree:
 //
 //   Shader(Name = "Dir/M_X", Root = "R")  ->  #pragma material(...)          (Settings)
 //                                            uniform ... / static const ...  (Properties)
@@ -19,7 +19,7 @@
 //
 // Every declaration it makes is marked FDecl::bLegacy, and everything 2.0 cannot say is recorded in
 // FLegacyMigrationInfo (LangLegacy.h), the one channel of 1.x facts to migrate, Adopt and the
-// VirtualFunction sync (agreement A11).
+// VirtualFunction sync.
 
 #include "LangParserInternal.h"
 
@@ -2131,7 +2131,7 @@ namespace UE::DreamShader::Lang::Private
 	}
 
 	// ---------------------------------------------------------------------------------------------
-	// Calls lifted out of an opaque body (rule L8; plan section 11 #19 for a `/// @custom` function)
+	// Calls lifted out of an opaque body (rule L8; the same lift for a `/// @custom` function)
 	// ---------------------------------------------------------------------------------------------
 
 	void FLangParser::LiftCallsOutOfOpaqueBody(FFunctionDecl& Function, const FString& QualifiedName, const int32 BodyContentOffset, const TArray<FString>& InputNames)
@@ -2552,7 +2552,7 @@ namespace UE::DreamShader::Lang::Private
 
 		if (!AssetText.IsEmpty())
 		{
-			// Unresolved: `Path(Plugins.MoonToon, "...")` needs plugin mounts, which the emitter has (research-legacy.md 3.8).
+			// Unresolved: `Path(Plugins.MoonToon, "...")` needs plugin mounts, which the emitter has.
 			LegacyParser::AddLegacyBlockDirective(LegacyInfo, *Function, TEXT("asset"), AssetText);
 			if (LegacyInfo)
 			{

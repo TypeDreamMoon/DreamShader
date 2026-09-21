@@ -6,7 +6,7 @@
 // comes out of parse(print(parse(X))) is the tree parse(X) produced. Everything here therefore
 // treats layout as free and the token stream as fixed:
 //
-//   * Layout follows the 2.0 proposal (Plan/syntax-v2-proposal.md, sections 7 and 8): four spaces
+//   * Layout: four spaces
 //     per level, Allman braces, one blank line between top-level declarations, a `///` block glued
 //     to the declaration below it, `in` omitted on parameters because it is the default.
 //   * Parentheses come back where FParenExpr recorded them (it prints its own and counts as an

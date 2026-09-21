@@ -5,12 +5,12 @@
 // Two directions. BuildDreamShaderInstanceModule turns an instance payload -- what the decompiler reads off
 // a MaterialInstanceConstant -- into the ordinary tree, and PrintDreamShaderInstance prints it; the output is
 // deterministic (overrides in payload order, canonical number text), which is what makes decompile -> print
-// idempotent (research-instance.md 5).
+// idempotent.
 //
 // The rewrites go the other way: Adopt of a `.dsi`, and "Adopt tweaks as source defaults" on a `.dss`, change
 // an existing file. They never reprint it. Each change is an edit over the parsed spans, and everything between
 // the edits is the author's text byte for byte: `//` comments, blank lines, declaration order, the spelling of
-// every value that did not change (`4` stays `4` where the payload would print `4.0`). research-instance.md 4.4.
+// every value that did not change (`4` stays `4` where the payload would print `4.0`).
 //
 // The smallest edit that states the new value wins: the initializer alone, or one `@default` / `@page`
 // directive. A declaration whose shape cannot hold the value any more (a `float` that must become a texture,

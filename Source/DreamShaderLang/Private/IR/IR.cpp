@@ -4,7 +4,7 @@
 //
 // Two of these are load-bearing beyond their size:
 //
-//   * FIRPropertyValue::ToString() is a WIRE format. It renders the dedupe key (CONTRACT §6.7),
+//   * FIRPropertyValue::ToString() is a WIRE format. It renders the dedupe key,
 //     the text dump (the corpus golden) and the JSON dump, so it must be culture-invariant, stable
 //     between runs, and single-line -- a Custom node's Code is a whole HLSL body and a dump that
 //     let it break the line would break "one node per line".

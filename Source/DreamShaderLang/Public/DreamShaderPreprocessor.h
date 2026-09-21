@@ -14,7 +14,7 @@
 // that needs a different ShadingModel or a different Outputs block under Substrate has nowhere to
 // put a switch node, because the difference is in what the material IS, not in what it computes.
 //
-// See Plan/preprocessor-conditionals.md for the full design and the decisions behind it.
+// See Docs/language/preprocessor.md for the language as an author sees it.
 
 #pragma once
 

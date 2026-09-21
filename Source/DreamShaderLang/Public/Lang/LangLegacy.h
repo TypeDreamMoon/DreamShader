@@ -12,7 +12,7 @@
 // pointer in it refers into that result's Module. GraphFunction hoists live on the tree itself
 // (FFunctionDecl::HoistedCalls).
 //
-// Core-only, like the rest of the module. Design: Plan/m4m5/research-legacy.md sections 3 and 4 (H8).
+// Core-only, like the rest of the module.
 
 #pragma once
 
@@ -149,7 +149,7 @@ namespace UE::DreamShader::Lang
 		TArray<FLegacyParameterDeclaration> ParameterDeclarations;
 		TArray<FLegacyAssetReference> AssetReferences;
 		TArray<FLegacyOutputSelection> OutputSelections;
-		/** "N::F" -> "N_F". A TArray, not a TMap: FString keys compare case-insensitively (CONTRACT 0.10). */
+		/** "N::F" -> "N_F". A TArray, not a TMap: FString keys compare case-insensitively. */
 		TArray<TPair<FString, FString>> NamespaceFlatten;
 		/** Function / GraphFunction bodies and type spellings. */
 		TArray<FLegacyRename> BodyRenames;

@@ -160,7 +160,7 @@ namespace UE::DreamShader::IR::Private
 
 		const FIRValue Node = Made.IsValue() ? Made.Value : FIRValue::None();
 		SubstrateBuilders[BuilderId].Node = Node;
-		// The declaration bound this name (CONTRACT-UNITS A1), and only now is there a value to say it holds: the
+		// The declaration bound this name, and only now is there a value to say it holds: the
 		// layout's band for that line, and a probe on it, find the node through this.
 		RecordStatementBinding(State.Name, Node, State.DeclSpan);
 		return Node;

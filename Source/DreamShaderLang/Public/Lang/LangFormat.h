@@ -14,7 +14,7 @@
 //   * a file that uses the preprocessor outside an opaque body: the parser reads preprocessed text, the formatter
 //     reads the file as it is on disk, and reprinting either branch of an `#if` would delete the other (DSH9043).
 //
-// Core-only. Design: Plan/v2-architecture.md section 13.4.
+// Core-only.
 
 #pragma once
 

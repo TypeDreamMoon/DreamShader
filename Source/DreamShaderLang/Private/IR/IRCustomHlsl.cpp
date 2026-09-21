@@ -385,7 +385,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 
 	/**
 	 * A local copy of UE::DreamShader::SanitizeIdentifier: that one lives in the DreamShader runtime
-	 * module, and DreamShaderLang depends on Core and nothing else (CONTRACT §0.9). Behaviour is the
+	 * module, and DreamShaderLang depends on Core and nothing else. Behaviour is the
 	 * 1.x one, character for character, so both codegens agree on the `DreamShaderFn_*` symbol a
 	 * name produces -- which the decompiler relies on to recognise generated helpers.
 	 */
@@ -795,7 +795,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		FLangSpan MakeBodySpan(const FBoundFunction& Function, int32 OffsetInBody, int32 Length) const;
 		FLangSpan NameSpanOf(const FBoundFunction& Function) const;
 
-		/** The file as a marker line names it (debt B5); the identity when unset. */
+		/** The file as a marker line names it; the identity when unset. */
 		FString StampMarkerFile(const FString& File) const
 		{
 			return (File.IsEmpty() || !StampSourcePath) ? File : StampSourcePath(File);
@@ -1377,7 +1377,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		VisitStack.Add(FunctionIndex);
 
 		// A `selfcontained` body promises to stand on its own: nothing of the module is pulled into
-		// it, so its own calls are not followed. See H-report.md for how 1.x's modifier maps over.
+		// it, so its own calls are not followed.
 		if (!Prepared->bSelfContained)
 		{
 			TArray<int32> Callees;
@@ -1854,7 +1854,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 				*Prepared.ParamTypes[PrimaryOut]);
 		}
 
-		// Stamped (debt B5): the project-relative path in an asset, so the code is the same on every
+		// Stamped: the project-relative path in an asset, so the code is the same on every
 		// machine; a reader resolves a relative marker path against the project directory.
 		const FString MarkerFile = StampMarkerFile(Function.File);
 		OutCode += FString(CustomCodeMarker::BeginPrefix) + MarkerFile + TEXT("\n");

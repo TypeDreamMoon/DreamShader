@@ -9,7 +9,7 @@ namespace UE::DreamShader::Lang
 {
 	struct FLangPrintOptions
 	{
-		/** One indentation level. Four spaces, the spelling the 2.0 proposal uses. */
+		/** One indentation level. Four spaces. */
 		FString Indent = TEXT("    ");
 		/** Line terminator. */
 		FString NewLine = TEXT("\n");

@@ -2,7 +2,7 @@
 //
 // The operations an IR node can be, and the table that describes the core family.
 //
-// Two families, on purpose (plan §3.3). The CORE family -- arithmetic, comparison, selection,
+// Two families, on purpose. The CORE family -- arithmetic, comparison, selection,
 // swizzle, construction, sampling, static branching, function calls -- is modelled natively so its
 // typing rules and its lowering live in one table here, and the emitter that turns a core op into
 // an engine node is mechanical. The REFLECTED family -- `UE.*`, `Substrate.*`,

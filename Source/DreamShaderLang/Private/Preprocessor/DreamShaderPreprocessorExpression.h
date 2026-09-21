@@ -8,7 +8,7 @@
 // that a table, a settings object or a command line exists, which is what lets both halves be
 // exercised on their own.
 //
-// Grammar and value domain: Plan/preprocessor-conditionals.md, section 4.
+// Grammar and value domain: Docs/language/preprocessor.md.
 
 #pragma once
 

@@ -3,7 +3,7 @@
 // The half of the language that lives in comments and `#` lines: `///` directives, `#pragma
 // material`, `#pragma layout`, `#pragma region`.
 //
-// This is the deliberate trade the 2.0 syntax made (proposal §5): `@asset`, `@library`, `@custom`,
+// This is the deliberate trade the 2.0 syntax made: `@asset`, `@library`, `@custom`,
 // `@layer` decide behaviour, so deleting a comment changes the meaning of the file. What follows
 // is the other half of that bargain -- a directive is validated as strictly as a keyword would be,
 // a value that does not parse is a message and not a shrug, and a directive written on a
@@ -254,7 +254,7 @@ namespace UE::DreamShader::Lang::Private
 				if (Value.IsEmpty())
 				{
 					// The accepted spellings are the engine's EMaterialSamplerType enumerators, which
-					// this module cannot see (CONTRACT §0.9); the emitter resolves and rejects them.
+					// this module cannot see; the emitter resolves and rejects them.
 					Diagnostics.Error(
 						TEXT("DSH7222"),
 						CurrentFile,
@@ -341,7 +341,7 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (Key.Equals(Directive::Pin, ESearchCase::CaseSensitive))
 			{
-				// `@pin <ParameterName> <engine pin name...>` (research-decompiler section 6.6): the name the
+				// `@pin <ParameterName> <engine pin name...>`: the name the
 				// engine gives a function pin when it is not an identifier, `Base Color` for `BaseColor`.
 				if (!bOnFunction)
 				{
@@ -458,7 +458,7 @@ namespace UE::DreamShader::Lang::Private
 			else
 			{
 				// Everything the language does not define: the emitter reflects it onto the node by
-				// its engine name, exactly as 1.x did with unknown metadata keys (CONTRACT §6.1).
+				// its engine name, exactly as 1.x did with unknown metadata keys.
 				Out.Passthrough.Add(Key, Value);
 			}
 		}
@@ -557,7 +557,7 @@ namespace UE::DreamShader::Lang::Private
 
 		const FString Trimmed = Value.TrimStartAndEnd().TrimQuotes().TrimStartAndEnd();
 
-		// Proposal §5, the one deliberate break with 1.x: 1.x read `Backend = ""` as Graph, which
+		// The one deliberate break with 1.x: 1.x read `Backend = ""` as Graph, which
 		// silently overrode the project default with a value nobody wrote. 2.0 refuses it.
 		if (Trimmed.IsEmpty())
 		{
@@ -725,7 +725,7 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (Argument.Key.Equals(TEXT("Color"), ESearchCase::IgnoreCase))
 			{
-				// `Color = "r g b a"` (research-decompiler section 6.4): one QUOTED value, because a pragma
+				// `Color = "r g b a"`: one QUOTED value, because a pragma
 				// argument list splits at commas. Three numbers take an alpha of 1, the way a 1.x colour
 				// literal did; a comma between the numbers is read as a space.
 				TArray<FString> Words;
@@ -790,7 +790,7 @@ namespace UE::DreamShader::Lang::Private
 			return;
 		}
 
-		// Canonical spelling (CONTRACT §6.13 #47): the selector was accepted case-insensitively above,
+		// Canonical spelling: the selector was accepted case-insensitively above,
 		// the validator only warns on an odd one, and the emitter compares exactly -- so it is made
 		// exact here, once.
 		Hint.Kind = Hint.Kind.Equals(TEXT("Node"), ESearchCase::IgnoreCase) ? TEXT("Node") : TEXT("Comment");

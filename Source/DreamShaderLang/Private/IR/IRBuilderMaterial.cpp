@@ -2,8 +2,8 @@
 //
 // The four product shapes, the `material` field map, and uniforms.
 //
-// A `material` is a map from attribute name to value for as long as it can be (contract section
-// 6.2). It becomes a node only when it has to: at the end of an Entry the map's entries are the
+// A `material` is a map from attribute name to value for as long as it can be.
+// It becomes a node only when it has to: at the end of an Entry the map's entries are the
 // MaterialSink's inputs directly -- no MakeMaterialAttributes, which is what the 1.x generator
 // produces and what an author expects to see -- and everywhere else (a Layer's output, a material
 // crossing into a pin) it becomes SetMaterialAttributes over the material it came from, or
@@ -169,7 +169,7 @@ namespace UE::DreamShader::IR::Private
 
 		PushFrame(Function, IndexOfFunction(BoundModule, Function));
 
-		// Inputs in declaration order with dense SortPriority (plan section 6.2). An `out` parameter
+		// Inputs in declaration order with dense SortPriority. An `out` parameter
 		// is not an input; an `inout` one is both.
 		int32 InputSort = 0;
 		for (int32 Index = 0; Index < Function.Params.Num(); ++Index)

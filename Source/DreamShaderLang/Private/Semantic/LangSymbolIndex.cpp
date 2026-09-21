@@ -1,13 +1,13 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The symbol index a language service reads (plan §13.4): what this file declares, where every
+// The symbol index a language service reads: what this file declares, where every
 // name is mentioned, which headers it pulled in, and the parameter schema.
 //
 // It works on a bound module that has errors, deliberately. A file that does not compile is
 // exactly the file whose author most needs go-to-definition, so nothing here asks Succeeded() --
 // it reads whatever the declare pass managed to record and walks the AST for the rest.
 //
-// The JSON is written by hand. `DreamShaderLang` depends on Core alone (CONTRACT §0.9) and `Json`
+// The JSON is written by hand. `DreamShaderLang` depends on Core alone and `Json`
 // is a separate module, so FJsonObject and TJsonWriter are not reachable from here; the escaper
 // below is the whole of what this file needs from one.
 
@@ -403,7 +403,7 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		/**
-		 * The `instance` section of a `.dsi` (research-instance section 8.4): the parent reference and its
+		 * The `instance` section of a `.dsi`: the parent reference and its
 		 * resolved path, the keys and the overrides with their spans, and the parent's parameters as the schema
 		 * lists them, so an editor can complete an override's name.
 		 */

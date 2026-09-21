@@ -40,7 +40,7 @@ namespace UE::DreamShader::IR::Private
 	/** Through FParenExpr, to the expression that actually says something. */
 	const FExpr* Unparen(const FExpr* Expr);
 
-	/** The attribute map a `material` value is while lowering (contract section 6.2). */
+	/** The attribute map a `material` value is while lowering. */
 	struct FMaterialValue
 	{
 		/** Attribute names in first-write order; MaterialSink inputs follow this order. */
@@ -211,8 +211,8 @@ namespace UE::DreamShader::IR::Private
 		/**
 		 * A node output as a slot holds it. A MaterialAttributes output is a `material` that arrived
 		 * through a pin -- an empty map whose Source is that output, so a field read breaks it open with
-		 * GetMaterialAttributes and a write sets on top of it, exactly as for a layer's input (contract
-		 * section 6.2) -- and anything else is a plain value. Every producer of a value whose type may
+		 * GetMaterialAttributes and a write sets on top of it, exactly as for a layer's input
+		 * -- and anything else is a plain value. Every producer of a value whose type may
 		 * be `material` goes through here: held as a plain Value, a material has no fields the rest of
 		 * the builder can read, and a read of one used to lower to nothing without a word.
 		 */
@@ -380,7 +380,7 @@ namespace UE::DreamShader::IR::Private
 		 * a helper called. False, and both outputs untouched, outside inlining.
 		 */
 		bool ActiveCallSite(Lang::FLangSpan& OutSpan, FString& OutFile) const;
-		/** A file as the IR writes it into anything that reaches an asset: FIRBuildOptions::StampSourcePath, or unchanged (debt B5). */
+		/** A file as the IR writes it into anything that reaches an asset: FIRBuildOptions::StampSourcePath, or unchanged. */
 		FString StampFile(const FString& File) const;
 		/** Where something made right now came from: the current frame's file, the span, and the outermost call site; files stamped. */
 		FIRSourceRef MakeSourceRef(const Lang::FLangSpan& Span) const;
@@ -499,7 +499,7 @@ namespace UE::DreamShader::IR::Private
 		FIRType TypeOfValue(FIRValue Value) const;
 		/** The graph's narrowing of a bound type: numerics become float1..4, bools stay bool, the rest passes. */
 		FIRType GraphTypeOf(const FIRType& Type) const;
-		/** True when every leaf of the value is a static bool Parameter (contract section 6.3). */
+		/** True when every leaf of the value is a static bool Parameter. */
 		bool IsStaticCondition(FIRValue Value) const;
 		/** True when the value is built from Constant nodes alone, through ops the fold pass can fold. */
 		bool IsCompileTimeConstant(FIRValue Value) const;
@@ -647,7 +647,7 @@ namespace UE::DreamShader::IR::Private
 		/**
 		 * An output the catalog calls Numeric has no width of its own, and on a node with several outputs the builder
 		 * wrote it as one component. The first use that knows a width gives it to the node, so every reader of that
-		 * output -- WidthOf, CoerceToWidth, the validator -- sees it (CONTRACT 6.13 #32, extended to selected outputs).
+		 * output -- WidthOf, CoerceToWidth, the validator -- sees it (extended to selected outputs).
 		 * Never narrows.
 		 */
 		void RetypeAnyWidthOutput(FIRValue Value, int32 Width);

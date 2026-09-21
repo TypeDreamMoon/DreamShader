@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The binder's legacy rules (design: Plan/m4m5/research-legacy.md section 3.7).
+// The binder's legacy rules.
 //
 // A declaration the legacy front end produced carries FDecl::bLegacy, and inside it -- its body, its initializer,
 // the calls lifted out of its opaque body -- the binder reads the source the way 1.x did wherever the two languages
@@ -471,7 +471,7 @@ namespace UE::DreamShader::Lang::Private
 
 	bool FLangBinder::IsSelectableLegacyKind(const EBoundFunctionKind Kind)
 	{
-		// The kinds a 1.x source called as nodes with outputs (research-legacy section 2.8.5): a Function or
+		// The kinds a 1.x source called as nodes with outputs: a Function or
 		// GraphFunction block (Custom), a ShaderFunction of the same file (ExportFunction), a VirtualFunction (Extern).
 		switch (Kind)
 		{

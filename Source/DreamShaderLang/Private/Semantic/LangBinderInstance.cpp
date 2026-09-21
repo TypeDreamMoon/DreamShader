@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// Instance mode: the binder for a `.dsi` (design: Plan/m4m5/research-instance.md section 3.3).
+// Instance mode: the binder for a `.dsi`.
 //
 // A `.dsi` is one `#pragma instance(Parent = "...", Key = Value, ...)` and a list of `uniform` overrides,
 // and it becomes one UMaterialInstanceConstant. Nothing in it lowers to a node: an override is an
@@ -11,7 +11,7 @@
 // override is checked and DSH7263 says so, once.
 //
 // The instance keys other than Parent are carried through as written: they name engine properties that
-// the Compiler layer resolves and checks (DSH8249 and friends), never this module (CONTRACT section 0.9).
+// the Compiler layer resolves and checks (DSH8249 and friends), never this module.
 //
 // Diagnostics owned by this file: DSH7250-DSH7270.
 
@@ -131,7 +131,7 @@ namespace UE::DreamShader::Lang::Private
 
 		/**
 		 * Whether an override spelled as Type (of kind Kind) can assign the parent parameter Entry. The rules of
-		 * CONTRACT section 2.3 and research-instance section 3.1: a scalar takes any scalar spelling; a vector
+		 * A scalar takes any scalar spelling; a vector
 		 * takes the parent's declared width or float4 (float3 or float4 for a foreign parent); a DoubleVector
 		 * takes a four-component vector; a texture's dimension must match when both sides know it; every other
 		 * kind must be exactly that kind. `@static` has been checked before this is asked.
@@ -341,7 +341,7 @@ namespace UE::DreamShader::Lang::Private
 		}
 		Bound.Instance.Pragma = &Pragma;
 
-		// The `///` block above the pragma names the asset (CONTRACT section 2.3); nothing else is read there.
+		// The `///` block above the pragma names the asset; nothing else is read there.
 		for (const FDocDirective& Entry : Pragma.Doc.Directives)
 		{
 			if (Entry.Key.Equals(Directive::Name, ESearchCase::CaseSensitive))
@@ -828,7 +828,7 @@ namespace UE::DreamShader::Lang::Private
 					&& !Schema->Parameters[CaseIndex].bPruned)
 				{
 					// The engine compares parameter names ignoring case, so `intensity` would quietly work there;
-					// the language does not (research-instance section 9, risk 2).
+					// the language does not (risk 2).
 					Diagnostics.Error(
 						TEXT("DSH7264"),
 						CurrentFile,

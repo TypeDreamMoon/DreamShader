@@ -4,7 +4,7 @@
 //
 //   Helper          inlined -- a fresh frame, the body lowered into the caller's graph, `return`
 //                   folded, `out` parameters written back through the caller's lvalues
-//   Custom          one UMaterialExpressionCustom whose HLSL comes from unit H
+//   Custom          one UMaterialExpressionCustom whose HLSL comes from the custom-HLSL builder
 //   ExportFunction  a FunctionCall to the product this file also produces (Prop::LocalFunction)
 //   Extern          a FunctionCall to the asset `/// @asset` names (Prop::FunctionPath)
 //
@@ -195,7 +195,7 @@ namespace UE::DreamShader::IR::Private
 				Returned = FLoweredValue::Of(CoerceToWidth(Returned.Value, TargetWidth, Span));
 			}
 			StoreLValue(Targets[Index], Returned, Span);
-			// The call statement bound this variable too, as a side effect (CONTRACT-UNITS A1).
+			// The call statement bound this variable too, as a side effect.
 			RecordStatementBinding(DescribeLValueRef(Targets[Index]), BoundValueOfLValueRef(Targets[Index]), Span);
 		}
 	}
@@ -375,12 +375,12 @@ namespace UE::DreamShader::IR::Private
 
 	FLoweredValue FIRBuilder::MakeCustomNode(const FExpr& Expr, const FBoundExpr& BoundExpr, const FBoundFunction& Callee, int32 CalleeIndex)
 	{
-		// Unit H is asked first, because it is the one that refuses a body that cannot become a
-		// Custom node at all -- a `material` parameter among them (DSH6252, CONTRACT section 6.13
-		// #1: the 5.8 translator has no MaterialAttributes case for a custom INPUT pin). When it
+		// The custom-HLSL builder is asked first, because it is the one that refuses a body that cannot become a
+		// Custom node at all -- a `material` parameter among them (DSH6252:
+		// the 5.8 translator has no MaterialAttributes case for a custom INPUT pin). When it
 		// says no, there is nothing left to lower and it has already reported why.
 		FCustomNodeCode Code;
-		// The stamper names the file in the code's Begin/End markers (debt B5), so the node code -- and
+		// The stamper names the file in the code's Begin/End markers, so the node code -- and
 		// with it the shader keys -- is the same on every machine.
 		if (!BuildDreamShaderCustomNodeCode(BoundModule, CalleeIndex, Code, Diagnostics, Options.StampSourcePath))
 		{
@@ -392,7 +392,7 @@ namespace UE::DreamShader::IR::Private
 		const bool bArgumentsBound = BindCallArguments(Expr, BoundExpr, Callee, Arguments, Targets);
 
 		// Legacy rule L8: the `UE.` calls lifted out of the body, lowered with this call's arguments; each becomes an input
-		// of the node, under the name unit H put in the code where the call was.
+		// of the node, under the name the custom-HLSL builder put in the code where the call was.
 		TArray<FIRInput> HoistedInputs;
 		const bool bHoistedLowered = bArgumentsBound && LowerHoistedCallInputs(Callee, CalleeIndex, Arguments, Expr.Span, HoistedInputs);
 
@@ -422,7 +422,7 @@ namespace UE::DreamShader::IR::Private
 		// A void `/// @custom` function still has to hand the graph one output, because the engine's
 		// Custom node always has one. It is the function's first `out` parameter, which is the node 1.x
 		// made of such a function (rule L9) and the one a migrated file has to keep making; a function
-		// with no `out` at all returns a Float1 that unit H's EnsureTopLevelReturn gives the body.
+		// with no `out` at all returns a Float1 that the custom-HLSL builder's EnsureTopLevelReturn gives the body.
 		const int32 PrimaryOut = CustomPrimaryOutParam(Callee);
 		Node.Properties.Add({ FString(Prop::OutputType), FIRPropertyValue::MakeEnum(
 			PrimaryOut != INDEX_NONE ? CustomOutputTypeName(Callee.Params[PrimaryOut].Type)
@@ -436,7 +436,7 @@ namespace UE::DreamShader::IR::Private
 				continue;
 			}
 			// Belt and braces for section 6.13 #1: a Custom input pin never carries attributes, so
-			// nothing here may build MakeMaterialAttributes. Unit H refuses such a function above,
+			// nothing here may build MakeMaterialAttributes. The custom-HLSL builder refuses such a function above,
 			// which is where the diagnostic comes from; this is only the guarantee that no other
 			// path can quietly synthesise the node the translator would choke on.
 			if (Callee.Params[Index].Type.IsMaterial() || Arguments[Index].IsMaterial())

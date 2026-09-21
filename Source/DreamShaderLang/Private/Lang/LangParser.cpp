@@ -477,7 +477,7 @@ namespace UE::DreamShader::Lang::Private
 		{
 			const int32 StartIndex = Index;
 
-			// A `.dsh` holds both syntaxes, one declaration at a time (research-legacy.md 3.5): past the
+			// A `.dsh` holds both syntaxes, one declaration at a time: past the
 			// `///` block, an exact-case 1.x word hands the declaration to the legacy front end.
 			if (FileKind == ELangFileKind::Dsh)
 			{
@@ -589,7 +589,7 @@ namespace UE::DreamShader::Lang::Private
 // The lexer emits Comment tokens only when asked; ParseDreamShaderLang pulls every one of them out of
 // the stream before the parser runs, so no grammar rule ever sees a comment. After the parse, the
 // attach pass hangs each comment on an anchor -- a file-scope declaration, or a statement of a block at
-// any depth (Plan/m4m5/research-decompiler.md section 5.2):
+// any depth:
 //
 //   - inside an anchor's span, and not inside a block that anchor holds: that anchor's Trailing when
 //     the comment starts on the anchor's last line, else one of its Leading comments;
@@ -1120,7 +1120,7 @@ namespace UE::DreamShader::Lang
 		{
 			// The two frozen 1.x extensions take the legacy front end. `.dss`, `.dsi` and an unknown or absent
 			// extension take the 2.0 one; so does a `.dsh`, whose module loop hands each 1.x declaration to
-			// the legacy front end by itself (agreement A4).
+			// the legacy front end by itself.
 			Frontend = (FileKind == ELangFileKind::Dsm || FileKind == ELangFileKind::Dsf)
 				? ELangFrontend::Legacy
 				: ELangFrontend::Dss;

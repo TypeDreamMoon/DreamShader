@@ -448,7 +448,7 @@ namespace UE::DreamShader::Lang::Private
 		case ELangTokenKind::Identifier:
 			if (IsLegacyMode())
 			{
-				// The 1.x spellings a 2.0 file does not have (research-legacy.md 3.3): `N::F` is the flattened
+				// The 1.x spellings a 2.0 file does not have: `N::F` is the flattened
 				// function `N_F`; `True` and `FALSE` are the bool literals; a type token is classified the 1.x
 				// way; and a bare read of a parameter-node property is its reflected call.
 				if (Peek(1).Kind == ELangTokenKind::Colon && Peek(2).Kind == ELangTokenKind::Colon)

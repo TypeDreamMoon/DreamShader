@@ -34,7 +34,7 @@
 // The bound module says what each 1.x spelling resolved to. Nothing here decides whether the result means the same:
 // the host builds the printed text with the 2.0 front end and compares (Editor: Commandlet/DreamShaderMigrate.cpp).
 //
-// Design: Plan/m4m5/research-decompiler.md section 5. Diagnostics: DSH9091, DSH9094.
+// Diagnostics: DSH9091, DSH9094.
 
 #pragma once
 

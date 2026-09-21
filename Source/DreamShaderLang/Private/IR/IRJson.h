@@ -2,7 +2,7 @@
 //
 // A small JSON reader and writer for the IR module.
 //
-// Why hand-written: DreamShaderLang depends on Core and on nothing else (CONTRACT §0.9), and the
+// Why hand-written: DreamShaderLang depends on Core and on nothing else, and the
 // `Json` module is not Core. Two things in this module are JSON on the wire -- the builtin catalog
 // manifest (IRCatalog.cpp) and the IR dump (IRDump.cpp) -- and both are read or diffed by tools and
 // by the corpus tests, so the output has to be byte-stable, not merely valid.

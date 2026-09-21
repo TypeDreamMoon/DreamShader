@@ -11,8 +11,6 @@
 // uniform's declared type and declaration span, and the uniforms the product has no parameter for
 // (pruned, or never read at all) as `bPruned` entries, so the binder can say why an override of one is
 // unknown (DSH7258).
-//
-// Design: Plan/m4m5/research-instance.md sections 3.4 and 6.3-6.4.
 
 #include "IR/IRInstanceSchema.h"
 

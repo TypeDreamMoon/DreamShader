@@ -7,8 +7,8 @@
 // The IgnoreCase variants exist only to put a "did you mean" on the end of a diagnostic and must
 // never be used to resolve a name.
 //
-// The JSON half is hand-written (IRJson.h) because this module may not depend on the Json module
-// (CONTRACT §0.9). The schema is the one spelled in IRCatalog.h and the writer is canonical: every
+// The JSON half is hand-written (IRJson.h) because this module may not depend on the Json module.
+// The schema is the one spelled in IRCatalog.h and the writer is canonical: every
 // optional field is omitted when it holds its default, so SaveBuiltinCatalogToJson(load(x)) == x
 // byte for byte for any x this writer produced.
 

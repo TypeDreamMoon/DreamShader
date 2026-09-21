@@ -562,7 +562,7 @@ namespace UE::DreamShader::Lang
 
 		void FMigrator::MigrateLiftedCalls(FFunctionDecl& Function)
 		{
-			// Rule L8, plan section 11 #19: the `UE.` calls of a GraphFunction stay in its body, and a `/// @custom` function
+			// Rule L8: the `UE.` calls of a GraphFunction stay in its body, and a `/// @custom` function
 			// has them lifted the same way. What 1.x let such a call say -- `UE.Expression(Class = ...)`, a class or an
 			// argument under another name, an output chosen inside the parentheses -- the legacy front end rewrote on the
 			// call it parsed, and the rules of a graph body apply to it as to any call: it is printed back into the body

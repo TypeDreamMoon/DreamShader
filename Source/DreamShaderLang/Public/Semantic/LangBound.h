@@ -26,7 +26,7 @@ namespace UE::DreamShader::Lang
 {
 	/**
 	 * The `///` directives that carry meaning, canonical lower-case (the parser lower-cases keys).
-	 * Anything else is passed through by its key to the parameter or function node (plan §5).
+	 * Anything else is passed through by its key to the parameter or function node.
 	 */
 	namespace Directive
 	{
@@ -488,7 +488,7 @@ namespace UE::DreamShader::Lang
 	DREAMSHADERLANG_API FLangBindResult BindDreamShaderLang(const FModule& Module, const FBindOptions& Options);
 
 	/**
-	 * The symbol index for the language service (plan §13.4): declarations with kind, name, span,
+	 * The symbol index for the language service: declarations with kind, name, span,
 	 * signature and doc; every reference as name -> spans; resolved include paths; the parameter
 	 * schema. JSON, schema "dreamshader-symbol-index" version 1. Works on a bound module with
 	 * errors -- an editor wants navigation on a broken file most of all.

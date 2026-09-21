@@ -113,7 +113,7 @@ namespace UE::DreamShader::IR::Private
 		OutModule.SourceFilePath = SourceFile;
 		OutModule.Includes = BoundModule.IncludePaths;
 
-		// A `.dsi` names no `UE.*` node and no attribute, so it needs no catalog (research-instance section 3.5).
+		// A `.dsi` names no `UE.*` node and no attribute, so it needs no catalog.
 		if (!Catalog && !BoundModule.Instance.bIsInstance)
 		{
 			// Said once, at the top of the file, rather than at every `UE.*` call and every material
@@ -148,13 +148,13 @@ namespace UE::DreamShader::IR::Private
 		OutProduct.SubstrateMode = BoundProduct.SubstrateMode;
 		CurrentBoundProduct = &BoundProduct;
 		OutProduct.BoundFunctionIndex = BoundProduct.FunctionIndex;
-		// 1.x destination (legacy rule L10, CONTRACT-UNITS A12): carried as the binder decided it.
+		// 1.x destination (legacy rule L10): carried as the binder decided it.
 		OutProduct.bLegacyAssetPath = BoundProduct.bLegacyAssetPath;
 		OutProduct.AssetRoot = BoundProduct.AssetRoot;
 
 		if (BoundProduct.Kind == EIRProductKind::MaterialInstance)
 		{
-			// A `.dsi` (CONTRACT-UNITS A2): no graph at all -- not even the file's regions and layout hints.
+			// A `.dsi`: no graph at all -- not even the file's regions and layout hints.
 			BuildInstanceProduct(BoundProduct, OutProduct);
 			return;
 		}
@@ -181,7 +181,7 @@ namespace UE::DreamShader::IR::Private
 		Frames.Reset();
 		GlobalValues.Reset();
 		SubstrateBuilders.Reset();
-		// A body's own regions nest under the box its function was declared in (S-report #9).
+		// A body's own regions nest under the box its function was declared in.
 		CurrentRegion = INDEX_NONE;
 		if (Function.Decl)
 		{
@@ -415,8 +415,8 @@ namespace UE::DreamShader::IR::Private
 
 	void FIRBuilder::RecordStatementBinding(const FString& Name, FIRValue Value, const FLangSpan& Span)
 	{
-		// One entry per statement that binds a named variable, in the order the statements are lowered
-		// (CONTRACT-UNITS A1): an unrolled loop and a helper inlined twice record once per copy, each with
+		// One entry per statement that binds a named variable, in the order the statements are lowered:
+		// an unrolled loop and a helper inlined twice record once per copy, each with
 		// its own call site, which is what a probe on that line has to choose between.
 		if (!Graph || Name.IsEmpty())
 		{
@@ -659,7 +659,7 @@ namespace UE::DreamShader::IR::Private
 	{
 		check(Graph != nullptr);
 
-		// The one place a node's Source is written; MakeSourceRef stamps its files (debt B5).
+		// The one place a node's Source is written; MakeSourceRef stamps its files.
 		Node.Source = MakeSourceRef(Span);
 		Node.Region = CurrentRegion;
 		if (!Options.bKeepDebugNames)
@@ -1047,7 +1047,7 @@ namespace UE::DreamShader::IR::Private
 			// Not in a 1.x body. There the width is what a declaration SAID -- a VirtualFunction's `float3 HeadForward`, an
 			// `OutputType="float3"` -- and the 1.x generator took no declaration's word for it: `.rgb` was a mask on the
 			// wire whatever it was written after, and cut a float4 that had been declared float3 down to what the author
-			// meant. The frozen 1.x graphs have that mask, so a legacy frame keeps it (as a ComponentMask, PD-1).
+			// meant. The frozen 1.x graphs have that mask, so a legacy frame keeps it (as a ComponentMask; Tools/Parity/README.md, PD-1).
 			if (bIdentity && !IsLegacyFrame())
 			{
 				return Value;

@@ -285,7 +285,7 @@ namespace UE::DreamShader::Lang::Private
 
 			if (Global.bIsConstant && !IsConstantExpr(*Declarator.Initializer))
 			{
-				// CONTRACT §6.1: a `static const` becomes a Constant node, so its value has to exist
+				// A `static const` becomes a Constant node, so its value has to exist
 				// before anything runs.
 				Diagnostics.Error(
 					TEXT("DSH7210"),
@@ -376,7 +376,7 @@ namespace UE::DreamShader::Lang::Private
 			// The body's own block pushes a scope of its own, so a local may not hide a parameter.
 			BindBlock(*Decl->Body);
 
-			// An `out` parameter the body never writes (CONTRACT §6.13 #48). Whole, swizzled, indexed
+			// An `out` parameter the body never writes. Whole, swizzled, indexed
 			// and field writes all count, and so does handing it to another call's `out` / `inout`
 			// parameter; a write on one branch only counts too -- this is "never", not "not always".
 			// Opaque bodies (`@custom`, 1.x `Function`) never get here: they are not statements.
@@ -420,7 +420,7 @@ namespace UE::DreamShader::Lang::Private
 	void FLangBinder::BindStmt(const FStmt& Stmt)
 	{
 		// Every statement remembers the innermost box it sits in; the IR builder stamps the nodes it
-		// makes from that statement with it (CONTRACT §6.8).
+		// makes from that statement with it.
 		Bound.StatementRegions.Add(&Stmt, CurrentRegion);
 
 		switch (Stmt.Kind)

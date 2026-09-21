@@ -5,9 +5,7 @@
 // When the parent of an instance is a DreamShader product its parameters are known without the
 // engine: they are what its source lowers to. This is that producer (producer A); the other one reads
 // the schema off a loaded parent asset and lives on the editor side. The schema is not part of the
-// build key; the resolved parent object path is (CONTRACT section 2.3).
-//
-// Design: Plan/m4m5/research-instance.md section 6.4.
+// build key; the resolved parent object path is.
 
 #pragma once
 

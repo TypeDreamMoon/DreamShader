@@ -636,7 +636,7 @@ namespace UE::DreamShader::Lang
 		/**
 		 * Parsed by the legacy (1.x) front end: a `.dsm`/`.dsf` declaration, or a `Function` /
 		 * `GraphFunction` / `Namespace` / `VirtualFunction` block in a `.dsh`. The binder and the IR builder
-		 * apply the documented 1.x rules to it and to everything in its body (Plan/m4m5/research-legacy.md section 3.7).
+		 * apply the documented 1.x rules to it and to everything in its body.
 		 */
 		bool bLegacy = false;
 	};
@@ -690,7 +690,7 @@ namespace UE::DreamShader::Lang
 
 	/**
 	 * A `UE.*` / `Substrate.*` call written inside an opaque `/// @custom` body, lifted into an input pin of the
-	 * Custom node (plan section 11 #19; the 1.x GraphFunction rule). RawBody keeps the call's text; the code builder
+	 * Custom node (the 1.x GraphFunction rule). RawBody keeps the call's text; the code builder
 	 * replaces [RawBodyOffset, RawBodyOffset + RawBodyLength) with InputName. Call is bound once, in its function's own
 	 * scope; the IR builder lowers it at every call site with the parameters bound to that call's arguments.
 	 */

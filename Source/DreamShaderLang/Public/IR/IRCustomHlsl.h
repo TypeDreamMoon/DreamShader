@@ -16,8 +16,7 @@
 // This is the 2.0 home of the rules that lived in the 1.x
 // `MaterialAssetGeneration/DreamShaderHlslFunctionCodegen.cpp`. The shapes that survive verbatim:
 // the `DreamShaderFn_` symbol prefix, the `<Param>Sampler` pairing, the `generated_wrapper_*`
-// struct, `EnsureTopLevelReturn`, and leading-`#include` hoisting. What changed and why is in
-// `Plan/m2m3/H-report.md`.
+// struct, `EnsureTopLevelReturn`, and leading-`#include` hoisting.
 
 #pragma once
 
@@ -59,7 +58,7 @@ namespace UE::DreamShader::IR
 
 	/**
 	 * The comment markers `Code` carries so a shader-compile error can be mapped back to a source
-	 * line (plan §13.3). One Begin/End pair wraps each verbatim body -- the embedded helpers' and
+	 * line. One Begin/End pair wraps each verbatim body -- the embedded helpers' and
 	 * this function's -- so a body that came from an `#include`d header maps to that header.
 	 *
 	 * The pair is spelled exactly as the 1.x prepared-source markers

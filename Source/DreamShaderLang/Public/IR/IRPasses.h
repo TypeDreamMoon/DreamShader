@@ -4,7 +4,7 @@
 //
 // They run on a module the builder just produced and leave it in the shape the emitter expects:
 // no duplicate nodes, no dead nodes, no identity swizzles, every FIRValue in range. The dedupe key
-// of contract section 6.7 is computed here and stamped on every node; the emitter reads it and may
+// is computed here and stamped on every node; the emitter reads it and may
 // not re-derive it, because the rule "two nodes with the same class and the same sorted argument
 // table are one node" is what 1.x did at build time and is now a property of the IR.
 //
@@ -24,7 +24,7 @@ namespace UE::DreamShader::IR
 	{
 		/** Fold math, Swizzle and Append whose operands are all Constant. */
 		bool bFoldConstants = true;
-		/** Merge nodes with equal DedupeKey (contract section 6.7). */
+		/** Merge nodes with equal DedupeKey. */
 		bool bDedupe = true;
 		/** Drop nodes no sink, function output or custom-output statement reaches. */
 		bool bPrune = true;

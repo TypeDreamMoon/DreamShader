@@ -3,9 +3,9 @@
 // `.dsi` source text without the compiler: the text of an instance payload (what the decompiler writes
 // for a MaterialInstanceConstant), and in-place rewrites of an existing file (Adopt of a `.dsi`, and
 // "Adopt tweaks as source defaults" on a `.dss`). A rewrite is a span splice over the parsed file, never
-// a reprint, so `//` comments and declaration order survive (CONTRACT section 2.3).
+// a reprint, so `//` comments and declaration order survive.
 //
-// Core-only. Design: Plan/m4m5/research-instance.md section 6.6.
+// Core-only.
 
 #pragma once
 

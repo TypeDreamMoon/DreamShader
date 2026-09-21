@@ -9,7 +9,7 @@
 //   - expansion: a 1.x parameter-node property (StaticSwitchParameter, ChannelMaskParameter,
 //     TextureSampleParameter2D, ...) has no 2.0 uniform, so every call or read of it becomes its own
 //     reflected `UE.Expression(Class = ...)` call -- one node per use, exactly the node set 1.x made;
-//   - rewriting: the output-selecting pseudo-arguments and the 1.x shorthands (research-legacy.md 3.6).
+//   - rewriting: the output-selecting pseudo-arguments and the 1.x shorthands.
 //
 // Nothing here looks a name up in a symbol table. What the parser cannot know -- whether `F` is an
 // extern, whether `UE.X` has an output called `Min` -- stays for the binder, which applies the legacy
@@ -861,7 +861,7 @@ namespace UE::DreamShader::Lang::Private
 				}
 				else if (IsLegacyTextureSampleParameterType(Property.NodeType))
 				{
-					// Unresolved on purpose: the emitter resolves `Path(...)` (research-legacy.md 3.8).
+					// Unresolved on purpose: the emitter resolves `Path(...)`.
 					FExprPtr Asset = LegacyAst::MakeStringLiteral(Property.DefaultText.TrimStartAndEnd(), UseSpan);
 					OutAsset = Asset.Get();
 					Call->Arguments.Add(LegacyAst::MakeNamedArgument(TEXT("Texture"), MoveTemp(Asset), UseSpan));
@@ -963,7 +963,7 @@ namespace UE::DreamShader::Lang::Private
 
 		// -- `Texture = Path(Plugins.MoonToon, "Textures/T")`: an asset reference written in place, which is how the 1.x
 		// decompiler wrote every texture and collection of a node. It is no call: it is carried as the text it is,
-		// unresolved, the way a property's default is (research-legacy 3.8) -- the front end cannot see plugin mounts, and
+		// unresolved, the way a property's default is -- the front end cannot see plugin mounts, and
 		// the emitter resolves the spelling.
 		if (bNamedCallee && Namespace.IsEmpty() && Name.Equals(TEXT("Path"), ESearchCase::IgnoreCase))
 		{

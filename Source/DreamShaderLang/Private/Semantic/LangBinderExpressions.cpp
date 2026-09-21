@@ -15,7 +15,7 @@
 //   3. The core-op table (IRCoreOps.h) is the only place an arity or a typing rule is written. This
 //      file reads Typing, MinArity, MaxArity and InputPins from it and holds no copy.
 //
-// The legacy rules (research-legacy section 3.7) hook in where they apply -- L2, L3a, L3b, L4, L5, L8,
+// The legacy rules hook in where they apply -- L2, L3a, L3b, L4, L5, L8,
 // L12, L13 and L19 -- and their helpers live in LangBinderLegacy.cpp. Codes raised here for them: DSH5277, DSH5278,
 // DSH5279, DSH5281, DSH5282, DSH5284 and DSH5285.
 
@@ -661,7 +661,7 @@ namespace UE::DreamShader::Lang::Private
 			Binding.Kind = EBoundExprKind::Param;
 			Binding.Index = ParamIndex;
 			Binding.Type = Param.Type;
-			// CONTRACT §5: only an `out` / `inout` parameter is an lvalue. An `in` parameter is a
+			// Only an `out` / `inout` parameter is an lvalue. An `in` parameter is a
 			// function input pin, and a graph cannot write to one.
 			Binding.bLValue = Param.Direction != EParamDirection::In;
 			return Emit(Expr, MoveTemp(Binding));
@@ -806,7 +806,7 @@ namespace UE::DreamShader::Lang::Private
 		if (const FTypeExpr* TypeExpr = Object.As<FTypeExpr>())
 		{
 			// `Substrate` is a builtin type spelling, so the parser hands it over as a type and not
-			// as an identifier; plan §11 #11 accepts both shapes rather than changing the parser.
+			// as an identifier; both shapes are accepted rather than changing the parser.
 			if (TypeExpr->Type.Category == ETypeCategory::Substrate
 				|| TypeExpr->Type.Name.Equals(Namespaces::Substrate, ESearchCase::CaseSensitive))
 			{
@@ -1094,7 +1094,7 @@ namespace UE::DreamShader::Lang::Private
 			Binding.Kind = EBoundExprKind::MaterialField;
 			Binding.FieldIndex = AttributeIndex;
 			Binding.Type = Catalog.MaterialAttributes[AttributeIndex].ValueType;
-			// CONTRACT §6.2: a material is a field map, so every attribute of an assignable material
+			// A material is a field map, so every attribute of an assignable material
 			// is assignable. Reading one that was never written is the IR builder's DSH4370.
 			Binding.bLValue = IsLValue(*Expr.Object);
 			return Emit(Expr, MoveTemp(Binding));
@@ -1681,7 +1681,7 @@ namespace UE::DreamShader::Lang::Private
 
 		if (ObjectType.IsMatrix())
 		{
-			// A matrix has no graph value at all (CONTRACT §2), so reading a row is refused here
+			// A matrix has no graph value at all, so reading a row is refused here
 			// rather than lowered into something that silently is not one.
 			Diagnostics.Error(
 				TEXT("DSH4244"),
@@ -1693,7 +1693,7 @@ namespace UE::DreamShader::Lang::Private
 
 		if (ObjectType.IsNumeric())
 		{
-			// CONTRACT §6.6: `v[3]` with a constant index is the swizzle `w`.
+			// `v[3]` with a constant index is the swizzle `w`.
 			if (!bConstantIndex)
 			{
 				Diagnostics.Error(
@@ -1762,7 +1762,7 @@ namespace UE::DreamShader::Lang::Private
 		// The one wider reading is the 1.x generator's own (TryRetargetChannelMaskToOutput,
 		// DreamShaderMaterialGeneratorCodeShared.h): when every output is a channel VIEW of one value,
 		// the node IS that value, and a place that wants exactly the whole of it takes it --
-		// `float4 VC = UE.VertexColor();`, which is how 1.x, the decompiler and the syntax proposal all
+		// `float4 VC = UE.VertexColor();`, which is how 1.x and the decompiler both
 		// write a vertex colour. Only when the default output LEADS that value (VertexColor's RGB):
 		// DefaultOutput is output 0 and the IR builder lowers the value through it, so a read inside
 		// those channels (`VC.rgb`) is exactly that pin, and a lone leading channel is never broadcast
@@ -1890,7 +1890,7 @@ namespace UE::DreamShader::Lang::Private
 		{
 			// One sentence, five codes. The message is written out at each of the five raise sites
 			// rather than hoisted into a local, because .skill/gen-diagnostics.ps1 reads a code's
-			// message out of the LOCTEXT that follows it (CONTRACT §0.8) and a local would leave all
+			// message out of the LOCTEXT that follows it and a local would leave all
 			// five documented as "(built at runtime)". The key is the same at every site, so the
 			// localization gather still sees exactly one entry.
 			switch (Site)
@@ -2966,7 +2966,7 @@ namespace UE::DreamShader::Lang::Private
 		{
 			const FString& Name = Identifier->Name;
 
-			// CONTRACT §6.5: the free-function spellings of a texture sample.
+			// The free-function spellings of a texture sample.
 			if (Name.Equals(TEXT("Texture2DSample"), ESearchCase::CaseSensitive))
 			{
 				return BindTextureSampleFunction(Expr, false);
@@ -3318,7 +3318,7 @@ namespace UE::DreamShader::Lang::Private
 	{
 		const FString Name = FString(Info.HlslName ? Info.HlslName : TEXT(""));
 
-		// CONTRACT §6.13 #23: the ops exist in the core table, but the material graph has no
+		// The ops exist in the core table, but the material graph has no
 		// hyperbolic node and the emitter will not synthesise one out of Exp. Refused here, at the
 		// call, rather than three stages later where the message would be about a missing class.
 		if (Info.Op == IR::EIROp::Sinh || Info.Op == IR::EIROp::Cosh || Info.Op == IR::EIROp::Tanh)
@@ -3561,7 +3561,7 @@ namespace UE::DreamShader::Lang::Private
 		// a call that fails to type is still a call.
 		CurrentCallees.Add(FunctionIndex);
 
-		// The legacy call rules (research-legacy sections 2.8.5 and 3.7). In a 1.x body a call to an Extern,
+		// The legacy call rules. In a 1.x body a call to an Extern,
 		// ExportFunction or Custom function reads the way 1.x read it:
 		//   - a value call passes inputs only and is the function's output 0 (L3b), so its out arguments may be
 		//     absent -- as they may under a selector, `F(args).Out` / `F(args)[k]` (bSelection);
@@ -3955,7 +3955,7 @@ namespace UE::DreamShader::Lang::Private
 	}
 
 	// ---------------------------------------------------------------------------------------------
-	// Reflected calls (CONTRACT §6.10)
+	// Reflected calls
 	// ---------------------------------------------------------------------------------------------
 
 	bool FLangBinder::BindPropertyArgument(const FArgument& Argument, const IR::FCatalogProperty& Property, const FString& ClassName)
@@ -4759,7 +4759,7 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (bAnyWidth && WidestAnyWidthArgument > 1)
 			{
-				// A Numeric output follows its inputs (CONTRACT #43): lerp(float3, 0, a) is a float3 whatever
+				// A Numeric output follows its inputs: lerp(float3, 0, a) is a float3 whatever
 				// it is written into, and a use that wants another width converts from there.
 				OutputType = MakeNumeric(IR::EIRTypeKind::Float, WidestAnyWidthArgument);
 			}
@@ -4797,7 +4797,7 @@ namespace UE::DreamShader::Lang::Private
 	}
 
 	// ---------------------------------------------------------------------------------------------
-	// Texture sampling (CONTRACT §6.5)
+	// Texture sampling
 	// ---------------------------------------------------------------------------------------------
 
 	namespace
@@ -4865,7 +4865,7 @@ namespace UE::DreamShader::Lang::Private
 		// counting, so `Tex.Sample(UV)` and `Tex.Sample(S, UV)` both land where they should and a
 		// wrong argument gets a message about its type instead of about the arity. A texture there is
 		// the 1.x spelling of the same slot -- `Tex.Sample(Tex, UV)`, a texture standing in for its own
-		// sampler (CONTRACT 6.13 #51) -- and counts only when the arguments leave room for a sampler,
+		// sampler -- and counts only when the arguments leave room for a sampler,
 		// so a texture passed where the coordinates belong still gets the type error.
 		const int32 WithSampler = 2 + (bLevel ? 1 : 0);
 		const bool bHasSampler = Values.Num() > 0

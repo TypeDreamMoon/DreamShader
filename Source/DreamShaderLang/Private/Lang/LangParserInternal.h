@@ -215,7 +215,7 @@ namespace UE::DreamShader::Lang::Private
 		FDeclPtr ParseLegacyFunction(const FString& NamespaceName);
 		/**
 		 * The `UE.Name(...)` calls of Function.RawBody parsed into Function.HoistedCalls, each one an input of the
-		 * function's Custom node (rule L8 for a 1.x GraphFunction; plan section 11 #19 for a `/// @custom` function).
+		 * function's Custom node (rule L8 for a 1.x GraphFunction; the same lift for a `/// @custom` function).
 		 * The text stays in RawBody; the code builder replaces it by the input's name. BodyContentOffset is where
 		 * RawBody starts in the file, InputNames the names a lifted input may not take.
 		 */
@@ -241,7 +241,7 @@ namespace UE::DreamShader::Lang::Private
 
 		// ------------------------------------------------ legacy expressions (LangLegacyExpressions.cpp)
 
-		/** The parse-time rewrites of 1.x call spellings onto 2.0 shapes (research-legacy.md section 3.6). Block may be null. */
+		/** The parse-time rewrites of 1.x call spellings onto 2.0 shapes. Block may be null. */
 		FExprPtr RewriteLegacyCall(FLegacyBlockContext* Block, TUniquePtr<FCallExpr> Call);
 		/** Classifies a 1.x type spelling (case-insensitive; `vec*`, `MaterialAttributes`, `StaticBool`) and writes the 2.0 spelling into Name. */
 		static void ClassifyLegacyTypeName(const FString& Spelling, FTypeRef& InOutType);

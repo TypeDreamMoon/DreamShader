@@ -1089,7 +1089,7 @@ namespace UE::DreamShader::Lang::Private
 					}
 					Function->bOpaqueBody = true;
 
-					// Plan section 11 #19: a `UE.` call in the body is a graph node wired to an input of the Custom node.
+					// A `UE.` call in the body is a graph node wired to an input of the Custom node.
 					TArray<FString> ParamNames;
 					for (const FParam& Param : Function->Params)
 					{

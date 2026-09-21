@@ -556,7 +556,7 @@ namespace UE::DreamShader::IR::Private
 	/**
 	 * FString's own hash and operator== ignore case, so a plain TMap<FString, int32> merges two keys
 	 * that differ only in case -- `uniform float Gain` and `uniform float gain`, or two @custom bodies
-	 * -- and a structural key must never do that (CONTRACT 6.7).
+	 * -- and a structural key must never do that.
 	 */
 	struct FIRPassesCaseSensitiveKeyFuncs : BaseKeyFuncs<TPair<FString, int32>, FString, /*bInAllowDuplicateKeys*/ false>
 	{
@@ -632,7 +632,7 @@ namespace UE::DreamShader::IR::Private
 			}
 			const FIRNode& Node = Graph.Nodes[Index];
 			// The roots: every statement -- the material's own pins, a function's outputs and a
-			// reflected custom-output node, which IsStatement() covers since CONTRACT 6.13 #19 --
+			// reflected custom-output node, which IsStatement() covers --
 			// plus a function's inputs, which are part of the asset's signature whether or not the
 			// body reads them.
 			const bool bIsRoot = Node.IsStatement() || Node.Op == EIROp::FunctionInput;
@@ -726,7 +726,7 @@ namespace UE::DreamShader::IR::Private
 		Graph.FunctionInputs.RemoveAll([](int32 Index) { return Index == INDEX_NONE; });
 		Graph.FunctionOutputs.RemoveAll([](int32 Index) { return Index == INDEX_NONE; });
 
-		// The statement bindings hold node indices too (CONTRACT-UNITS A1, the probe table): a merged node's
+		// The statement bindings hold node indices too (the probe table): a merged node's
 		// binding follows the merge to its survivor, and a binding whose node was pruned keeps its name and
 		// its line with no value, which the probe publisher skips. The slot stays: a merge never moves a
 		// read to another output, and folding rewrites in place.
@@ -859,7 +859,7 @@ namespace UE::DreamShader::IR
 		{
 			if (Product.Kind == EIRProductKind::MaterialInstance)
 			{
-				// A `.dsi` product has no graph to pass over (research-instance section 3.5).
+				// A `.dsi` product has no graph to pass over.
 				continue;
 			}
 

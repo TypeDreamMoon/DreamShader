@@ -13,7 +13,7 @@
 //
 // Conventions every method follows:
 //
-//   - A bind method reports through the sink with a literal DSHnnnn code (CONTRACT §0.8) and keeps
+//   - A bind method reports through the sink with a literal DSHnnnn code and keeps
 //     going: a failing expression is typed Error, which ClassifyConversion turns into Identity
 //     against everything, so one mistake does not cascade into a second message.
 //   - NEVER hold a reference into FBoundModule::Expressions across a nested bind: the map rehashes.
@@ -22,7 +22,7 @@
 //   - Identifier comparison is CASE-SENSITIVE (`Equals(..., ESearchCase::CaseSensitive)`) everywhere.
 //     `FString::operator==` and `TMap<FString, ...>` are both case-INSENSITIVE in UE, so no symbol
 //     table here is a TMap keyed by a name -- the tables are small and scanned linearly.
-//   - Core-only (CONTRACT §0.9): every engine fact arrives through IR::FBuiltinCatalog.
+//   - Core-only: every engine fact arrives through IR::FBuiltinCatalog.
 
 #pragma once
 
@@ -61,7 +61,7 @@ namespace UE::DreamShader::Lang::Private
 		StructField,
 	};
 
-	/** The two namespace roots a reflected call may be spelled with (plan §11 #11). */
+	/** The two namespace roots a reflected call may be spelled with. */
 	namespace Namespaces
 	{
 		inline const TCHAR* const UE = TEXT("UE");
@@ -74,7 +74,7 @@ namespace UE::DreamShader::Lang::Private
 	/**
 	 * Where a conversion was needed, which is the same thing as which diagnostic a failed one
 	 * raises. It is an enum and not the code itself because .skill/gen-diagnostics.ps1 finds raise
-	 * sites by the literal shape `.Error(TEXT("DSHnnnn")` (CONTRACT §0.8), and a code handed to a
+	 * sites by the literal shape `.Error(TEXT("DSHnnnn")`, and a code handed to a
 	 * helper as a parameter is invisible to it. Convert() spells all five out.
 	 */
 	enum class EConversionSite : uint8
@@ -116,9 +116,9 @@ namespace UE::DreamShader::Lang::Private
 		void DeclareGlobal(const FVariableDecl& Decl, const FString& File);
 		void DeclareFunction(const FFunctionDecl& Decl, const FString& File);
 
-		/** Decides Helper / Custom / Entry / Layer / LayerBlend / ExportFunction / Extern (CONTRACT §2, §6.9). */
+		/** Decides Helper / Custom / Entry / Layer / LayerBlend / ExportFunction / Extern (§6.9). */
 		void ClassifyFunctions();
-		/** One FBoundProduct per Entry / Layer / LayerBlend / ExportFunction (CONTRACT §6.9). */
+		/** One FBoundProduct per Entry / Layer / LayerBlend / ExportFunction. */
 		void BuildProducts();
 		/** Marks every Helper that can reach itself through the call graph; I2 reports it. */
 		void DetectRecursion();
@@ -231,7 +231,7 @@ namespace UE::DreamShader::Lang::Private
 		/** S7: DSH5294, naming the engine version a node arrived with when that is why it is missing. */
 		void ReportMissingSubstrateNode(const TCHAR* NodeName, const FLangSpan& Span, const FText& Spelling);
 		bool TryDescribeSubstrateVersionGate(const FString& NodeName, FText& OutEngine) const;
-		/** `Tex.Sample(UV)` / `Tex.Sample(S, UV)` / `Tex.SampleLevel(UV, L)` (CONTRACT §6.5). */
+		/** `Tex.Sample(UV)` / `Tex.Sample(S, UV)` / `Tex.SampleLevel(UV, L)`. */
 		IR::FIRType BindTextureSampleMethod(const FCallExpr& Expr, const FMemberExpr& Callee, const IR::FIRType& TextureType);
 		/** `Texture2DSample(Tex, S, UV)` / `Texture2DSampleLevel(Tex, S, UV, L)`. */
 		IR::FIRType BindTextureSampleFunction(const FCallExpr& Expr, bool bHasLevel);
@@ -248,12 +248,12 @@ namespace UE::DreamShader::Lang::Private
 		 */
 		IR::EIRConversion Convert(const FExpr& Operand, const IR::FIRType& To, EConversionSite Site, const FText& What);
 
-		/** Lower-cases `rgba` onto `xyzw`, checks range and repeats (CONTRACT §6.6). False after reporting. */
+		/** Lower-cases `rgba` onto `xyzw`, checks range and repeats. False after reporting. */
 		bool CanonicaliseSwizzle(const FString& Mask, int32 SourceWidth, const FLangSpan& Span, FString& OutMask);
 
 		/** A reflected literal property argument: a literal, an enumerator spelling or an asset path. */
 		bool BindPropertyArgument(const FArgument& Argument, const IR::FCatalogProperty& Property, const FString& ClassName);
-		/** `UE` spelled as an identifier, or `Substrate` spelled as a type (plan §11 #11). */
+		/** `UE` spelled as an identifier, or `Substrate` spelled as a type. */
 		bool IsNamespaceRoot(const FExpr& Object, FString& OutNamespace) const;
 
 		/** How many elements the value this expression names has, or 0 when it is not an array. */
@@ -294,7 +294,7 @@ namespace UE::DreamShader::Lang::Private
 		/**
 		 * A `.dsi` (FModule::FileKind == Dsi): the pragma, the overrides, their initializers, the checks
 		 * against FBindOptions::ParentSchema and the one MaterialInstance product. Replaces the declare
-		 * pass and everything after it (research-instance section 3.3).
+		 * pass and everything after it.
 		 */
 		void BindInstanceModule();
 		/** `#pragma instance(...)` in a `.dsi`: Parent, the other keys in source order, the `@name` of its `///` block. */

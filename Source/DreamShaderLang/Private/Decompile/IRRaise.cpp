@@ -14,7 +14,7 @@
 // that shares a node with anything else stays as it is and prints as the nodes it is made of, which the
 // compiler turns back into the same nodes.
 //
-// Imported shapes, for reference (research-decompiler.md section 3.3): a class with every operand pin connected
+// Imported shapes, for reference: a class with every operand pin connected
 // is the core op; the same class with a `Const*` twin in use is a Reflected node with the connected pins as
 // Inputs and the twin as a property.
 //

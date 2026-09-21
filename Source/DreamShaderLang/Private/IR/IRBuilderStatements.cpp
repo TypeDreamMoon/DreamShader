@@ -192,7 +192,7 @@ namespace UE::DreamShader::IR::Private
 
 			// `float W[4] = { … }`: the binder types the initializer list as the ELEMENT type, since
 			// there is no array FIRType, and gives one FBoundArgument per element with TargetIndex =
-			// the element index (S-report #8). Lowering it as a constructor would Append the elements
+			// the element index. Lowering it as a constructor would Append the elements
 			// into one vector instead of filling four slots.
 			if (Function->Locals[Slot].ArrayCount > 0)
 			{
@@ -375,7 +375,7 @@ namespace UE::DreamShader::IR::Private
 			return;
 		}
 
-		// A local declared inside either arm is out of scope once the `if` ends (CONTRACT 6.3): no later
+		// A local declared inside either arm is out of scope once the `if` ends: no later
 		// line can name it, so there is nothing to merge -- and merging it anyway reports DSH4372 against
 		// a variable that only ever existed in one arm by definition. Cleared in both states, so the merge
 		// sees two Empty slots and leaves the slot alone. A declaration's span and the `if`'s are in the

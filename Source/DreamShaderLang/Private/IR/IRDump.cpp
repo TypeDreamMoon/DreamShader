@@ -70,8 +70,8 @@ namespace UE::DreamShader::IR
 			if (!Value.IsValid())
 			{
 				// An absent slot. `TextureSample` always carries four operands and leaves the
-				// sampler or the level as FIRValue::None() when the source did not give one
-				// (CONTRACT §6.13 #14); `_` keeps the slot visible so the golden shows WHICH
+				// sampler or the level as FIRValue::None() when the source did not give one;
+				// `_` keeps the slot visible so the golden shows WHICH
 				// operand is missing rather than silently shortening the list.
 				return TEXT("_");
 			}
@@ -342,7 +342,7 @@ namespace UE::DreamShader::IR
 		}
 
 		/**
-		 * A MaterialInstance product as text (research-instance section 3.5): no backend and no graph, the parent
+		 * A MaterialInstance product as text: no backend and no graph, the parent
 		 * with the schema it was checked against, the keys in source order, one line per override.
 		 */
 		static void AppendIRDumpInstanceLines(const FIRProduct& Product, const int32 ProductIndex, TArray<FString>& Lines)

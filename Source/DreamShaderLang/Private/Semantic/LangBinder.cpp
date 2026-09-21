@@ -260,13 +260,13 @@ namespace UE::DreamShader::Lang::Private
 	void FLangBinder::Run()
 	{
 		Bound.Module = &RootModule;
-		// CONTRACT §6.13 #18: every catalog index the binder records -- FIRType::CatalogIndex,
+		// Every catalog index the binder records -- FIRType::CatalogIndex,
 		// FBoundExpr::Index on a ReflectedCall, FieldIndex on a MaterialField -- is an index into
 		// THIS catalog, so the bound module carries it rather than leaving the reader to guess.
 		Bound.Catalog = Options.Catalog;
 
 		// A `.dsi` has no functions, no graph and no catalog lookups. Instance mode replaces
-		// everything below, the empty-catalog warning included (research-instance section 3.3).
+		// everything below, the empty-catalog warning included.
 		if (RootModule.FileKind == ELangFileKind::Dsi)
 		{
 			BindInstanceModule();
@@ -727,7 +727,7 @@ namespace UE::DreamShader::Lang::Private
 			break;
 
 		default:
-			// CONTRACT §6.1: the two storage classes a global may have are the two that have a node.
+			// The two storage classes a global may have are the two that have a node.
 			Diagnostics.Error(
 				TEXT("DSH7211"),
 				CurrentFile,
@@ -953,7 +953,7 @@ namespace UE::DreamShader::Lang::Private
 			{
 				Bound_.Doc = *Doc;
 			}
-			// `@pin`: the engine's name for the pin (research-decompiler section 6.6); empty keeps the identifier.
+			// `@pin`: the engine's name for the pin; empty keeps the identifier.
 			if (const FString* PinName = Function.Directives.FindPinName(Param.Name))
 			{
 				Bound_.PinName = *PinName;
@@ -1113,7 +1113,7 @@ namespace UE::DreamShader::Lang::Private
 			const bool bExported = Function.Linkage == EFunctionLinkage::Export;
 			CurrentFile = Function.File;
 
-			// The order below is CONTRACT §2 with the directives lifted above the signature test:
+			// The order below has the directives lifted above the signature test:
 			// `/// @layer export void L(inout material)` matches the entry signature too, and the
 			// directive is the more specific statement of intent.
 			if (Function.Linkage == EFunctionLinkage::Extern)
@@ -1234,10 +1234,10 @@ namespace UE::DreamShader::Lang::Private
 
 			if (Function.Directives.bCustom)
 			{
-				// CONTRACT §6.13: a Custom node's inputs are translator-typed pins, and the 5.8
+				// A Custom node's inputs are translator-typed pins, and the 5.8
 				// material translator has no MaterialAttributes input type for one. An `out material`
 				// or a `material` return is still fine -- a Custom node may produce attributes.
-				// Unit H checks this again at IR-build time (DSH6252); this is the same refusal said
+				// The custom-HLSL builder checks this again at IR-build time (DSH6252); this is the same refusal said
 				// at the declaration, where the author can see the parameter list.
 				for (const FBoundParam& Param : Function.Params)
 				{
@@ -1270,7 +1270,7 @@ namespace UE::DreamShader::Lang::Private
 			}
 		}
 
-		// CONTRACT §11 #15: one file, one product kind.
+		// One file, one product kind.
 		if (EntryIndex != INDEX_NONE)
 		{
 			for (int32 Index = 0; Index < Bound.Functions.Num(); ++Index)
@@ -1357,7 +1357,7 @@ namespace UE::DreamShader::Lang::Private
 					Product.AssetName = NameDirective;
 				}
 			}
-			// CONTRACT §2: a full path in `@name` overrides the destination; a bare name replaces
+			// A full path in `@name` overrides the destination; a bare name replaces
 			// the leaf and lets the 1.x root rules place it.
 			else if (!NameDirective.IsEmpty())
 			{

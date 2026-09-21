@@ -11,7 +11,7 @@
 // The direction of every rule here is "print what the IR builder would turn back into this graph": the comments
 // name the forward rule they invert (IRBuilder*.cpp, Compiler: Emitter/DreamShaderIREmitter*.cpp).
 //
-// Diagnostics: DSH9075-9084 (Plan/m4m5/DM-diagnostics.md).
+// Diagnostics: DSH9075-9084.
 
 #pragma once
 
@@ -594,7 +594,7 @@ namespace UE::DreamShader::Lang::DecompileAst
 		/** Per node, one entry per reading edge. */
 		TArray<TArray<FReadEdge>> Readers;
 		/** Every name a root write goes by -- an attribute of the sink, a function output -- gathered on first use (OwnsHintName). */
-		/** A TArray, not a TSet: FString keys hash and compare ignoring case (CONTRACT 0.10), and these names are exact. */
+		/** A TArray, not a TSet: FString keys hash and compare ignoring case, and these names are exact. */
 		mutable TArray<FString> WriteNames;
 		mutable bool bWriteNamesKnown = false;
 		TArray<int32> Order;

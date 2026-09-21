@@ -118,7 +118,7 @@ namespace UE::DreamShader::IR
 		}
 		if (Cols != 1)
 		{
-			// A matrix. The graph has no matrix wires at all (decision §2 "Matrices"), so this is
+			// A matrix. The graph has no matrix wires at all, so this is
 			// 0 rather than Rows*Cols: a caller asking "can the graph carry this" must hear no.
 			return 0;
 		}

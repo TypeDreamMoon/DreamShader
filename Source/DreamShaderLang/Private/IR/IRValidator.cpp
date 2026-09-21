@@ -5,7 +5,7 @@
 // House rules for this file:
 //
 //   * Every raise site spells its own `Sink.Error(TEXT("DSHnnnn"), ...)` literally, because
-//     .skill/gen-diagnostics.ps1 finds codes by that exact shape (CONTRACT §0.8). Error() returns
+//     .skill/gen-diagnostics.ps1 finds codes by that exact shape. Error() returns
 //     false, so `bValid &= Sink.Error(...)` both reports and records in one line.
 //   * Nothing here indexes without checking first. The whole point of a validator is to survive
 //     data that is wrong, including data that is wrong in ways the builder did not imagine.
@@ -72,8 +72,8 @@ namespace UE::DreamShader::IR
 		/**
 		 * Operand slots that may legitimately be left unset.
 		 *
-		 * TextureSample is the ONLY op with optional operands (IR.h FIRNode::Operands,
-		 * CONTRACT §6.13 #14): its operands are always the four [Texture, UV, Sampler, Level], with
+		 * TextureSample is the ONLY op with optional operands (IR.h FIRNode::Operands):
+		 * its operands are always the four [Texture, UV, Sampler, Level], with
 		 * FIRValue::None() in a slot the source did not give, so the emitter indexes rather than
 		 * counts. Texture and UV are still required -- a sample with no texture is not a sample.
 		 *
@@ -278,9 +278,9 @@ namespace UE::DreamShader::IR
 			// Outputs. A statement produces nothing and everything else produces something; a value
 			// node with no outputs cannot be read at all, which no later pass checks for.
 			//
-			// The test is FIRNode::IsStatement() rather than an op list ON PURPOSE (CONTRACT §6.13
-			// #19): a reflected custom-output class -- UE.VolumetricAdvancedMaterialOutput and its
-			// kind -- is a legal root with zero Outputs, and the frozen header is the one place that
+			// The test is FIRNode::IsStatement() rather than an op list ON PURPOSE:
+			// a reflected custom-output class -- UE.VolumetricAdvancedMaterialOutput and its
+			// kind -- is a legal root with zero Outputs, and IR.h is the one place that
 			// says so. Do not "fix" this into `Op == MaterialSink || Op == FunctionOutput`.
 			if (Node.IsStatement())
 			{
@@ -549,8 +549,8 @@ namespace UE::DreamShader::IR
 
 				if (Component == INDEX_NONE)
 				{
-					// Canonical masks are lower-case xyzw; `rgba` is rewritten at bind time
-					// (CONTRACT §6.6), so anything else here is a builder mistake, not an author's.
+					// Canonical masks are lower-case xyzw; `rgba` is rewritten at bind time,
+					// so anything else here is a builder mistake, not an author's.
 					Context.bValid &= Context.Sink.Error(
 						TEXT("DSH4317"),
 						Node.Source.Span,
@@ -577,7 +577,7 @@ namespace UE::DreamShader::IR
 
 				if (Component < PreviousComponent)
 				{
-					// CONTRACT §6.13 #20: a ComponentMask carries four independent R/G/B/A flags and
+					// A ComponentMask carries four independent R/G/B/A flags and
 					// has no way to express ORDER, so a mask can only ever be strictly ascending.
 					// The builder splits `.yx` into per-channel masks plus an AppendVector, which is
 					// what 1.x emitted; a descending mask reaching here would silently come out as
@@ -780,8 +780,8 @@ namespace UE::DreamShader::IR
 					continue;
 				}
 
-				// A literal written where a pin's `Const*` twin exists is stored as that property
-				// (CONTRACT §6.10); accept it whether or not the exporter listed it separately.
+				// A literal written where a pin's `Const*` twin exists is stored as that property;
+				// accept it whether or not the exporter listed it separately.
 				bool bIsConstTwin = false;
 				for (const FCatalogPin& Pin : Expression.Inputs)
 				{
@@ -1349,7 +1349,7 @@ namespace UE::DreamShader::IR
 		}
 
 		/**
-		 * A MaterialInstance product (research-instance section 3.5): no graph, a parent, well-formed and unique
+		 * A MaterialInstance product: no graph, a parent, well-formed and unique
 		 * overrides, and -- when the product carries a valid schema -- only overrides the parent has. The schema
 		 * travels inside the product, so the validator's signature did not change.
 		 */
@@ -1603,7 +1603,7 @@ namespace UE::DreamShader::IR
 		Private::FIRValidationContext Context{ Module, Catalog, Diagnostics };
 		Context.bHasCatalog = !Catalog.IsEmpty();
 
-		// A `.dsi` makes one material instance and nothing else (research-instance section 3.5).
+		// A `.dsi` makes one material instance and nothing else.
 		if (Module.CountProducts(EIRProductKind::MaterialInstance) > 0 && Module.Products.Num() > 1)
 		{
 			const FIRProduct* FirstInstance = Module.Products.FindByPredicate([](const FIRProduct& Candidate)
@@ -1653,7 +1653,7 @@ namespace UE::DreamShader::IR
 			if (Product.Kind == EIRProductKind::MaterialInstance)
 			{
 				// An instance has no graph to structure, walk, order or key; ValidateProductStructure would
-				// judge its empty graph as a function's (LH-report section 5).
+				// judge its empty graph as a function's.
 				Private::ValidateInstanceProduct(Context, Product, ProductIndex);
 				continue;
 			}

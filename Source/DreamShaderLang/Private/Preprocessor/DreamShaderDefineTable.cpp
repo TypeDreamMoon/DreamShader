@@ -25,7 +25,7 @@ namespace UE::DreamShader
 		// Name characters.
 		//
 		// Deliberately NOT FChar::IsAlpha / FChar::IsAlnum: those are Unicode-aware and would happily
-		// accept `Café` or a CJK identifier. The grammar in Plan/preprocessor-conditionals.md is the
+		// accept `Café` or a CJK identifier. The grammar (Docs/language/preprocessor.md) is the
 		// ASCII one C and HLSL use, and everything downstream assumes it -- the preprocessor's own
 		// tokenizer, the generated HLSL symbol names, and the VS Code extension's lexer. Accepting a
 		// name here that one of those rejects later is the worst outcome: the define resolves, the
