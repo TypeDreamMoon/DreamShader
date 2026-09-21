@@ -34,6 +34,16 @@
 //     BuildTextureSamplerArgumentName got the name from too.
 //   * calls to other @custom functions -- rewritten to the wrapper member, with the companion
 //     sampler argument spliced in after every texture argument.
+//   * a `UE.` call a 1.x GraphFunction body carries (batch 2, legacy rule L8) -- the front end lifted it into a node
+//     input (FHoistedCall), and the input's name takes the call's place, padded to the call's length and keeping its
+//     line breaks. A function with such inputs cannot be embedded in another node's code (DSH6327), and a lifted
+//     range the body does not have is DSH6328.
+//
+// And one thing a void function with `out` parameters gets (batch 2, rule L9, the 1.x shape of such a node): its
+// first `out` parameter is the node's primary output rather than an additional one, so the node's own body declares
+// it ahead of the markers and returns it at the end. A 1.x function is written that way as a helper too, because a
+// 1.x body calls one as a value (`float4 a = Fetch(lut, i, size);`); a `/// @custom` helper keeps the signature it
+// declares, which is the one its callers wrote.
 //
 // Engine facts this file encodes as text (all from HLSLMaterialTranslator::CustomExpression, 5.8):
 // an additional output is declared by the engine as `inout MaterialFloatN <Name>` and is already
@@ -681,6 +691,29 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		}
 	}
 
+	/** Rule L9: the first `out` parameter of a function that returns nothing, which its NODE returns as the primary output; else INDEX_NONE. */
+	int32 FindCustomPrimaryOutParam(const FBoundFunction& Function)
+	{
+		if (!Function.ReturnType.IsVoid())
+		{
+			return INDEX_NONE;
+		}
+		for (int32 Index = 0; Index < Function.Params.Num(); ++Index)
+		{
+			if (Function.Params[Index].Direction == EParamDirection::Out)
+			{
+				return Index;
+			}
+		}
+		return INDEX_NONE;
+	}
+
+	/** The 1.x half of L9: the HLSL function of a 1.x declaration returns that parameter as well, wherever it is written. */
+	int32 FindLegacyPrimaryOutParam(const FBoundFunction& Function)
+	{
+		return (Function.Decl && Function.Decl->bLegacy) ? FindCustomPrimaryOutParam(Function) : INDEX_NONE;
+	}
+
 	// ------------------------------------------------------------------------ prepared function
 
 	/** One `@custom` function, ready to emit. */
@@ -705,9 +738,10 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 	class FCustomCodeBuilder
 	{
 	public:
-		FCustomCodeBuilder(const FBoundModule& InBound, FLangDiagnosticSink& InDiagnostics)
+		FCustomCodeBuilder(const FBoundModule& InBound, FLangDiagnosticSink& InDiagnostics, const TFunction<FString(const FString& File)>& InStampSourcePath)
 			: Bound(InBound)
 			, Diagnostics(InDiagnostics)
+			, StampSourcePath(InStampSourcePath)
 		{
 			for (int32 Index = 0; Index < Bound.Functions.Num(); ++Index)
 			{
@@ -723,6 +757,8 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		const FPreparedFunction* Prepare(int32 FunctionIndex);
 		void ValidateSignature(const FPreparedFunction& Prepared, bool bIsRoot);
 		void HoistLeadingIncludes(const FBoundFunction& Function, FString& InOutBody, TArray<FString>& OutIncludes);
+		/** Legacy rule L8: every lifted call's text in the body replaced by its input's name; DSH6328 for a range the body does not have. */
+		void SubstituteHoistedCalls(const FBoundFunction& Function, FString& InOutBody);
 
 		void CollectClosure(int32 RootIndex, TArray<int32>& OutOrder);
 		bool VisitForClosure(int32 FunctionIndex, TArray<int32>& OutOrder);
@@ -759,8 +795,16 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		FLangSpan MakeBodySpan(const FBoundFunction& Function, int32 OffsetInBody, int32 Length) const;
 		FLangSpan NameSpanOf(const FBoundFunction& Function) const;
 
+		/** The file as a marker line names it (debt B5); the identity when unset. */
+		FString StampMarkerFile(const FString& File) const
+		{
+			return (File.IsEmpty() || !StampSourcePath) ? File : StampSourcePath(File);
+		}
+
 		const FBoundModule& Bound;
 		FLangDiagnosticSink& Diagnostics;
+		/** FIRBuildOptions::StampSourcePath, handed through by the IR builder; lives for the whole Build call. */
+		const TFunction<FString(const FString& File)>& StampSourcePath;
 		TMap<FString, TArray<int32>> FunctionsByName;
 		/** TUniquePtr so a later Prepare() cannot move the object an earlier pointer refers to. */
 		TMap<int32, TUniquePtr<FPreparedFunction>> PreparedByIndex;
@@ -773,6 +817,8 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		TSet<FString> ReportedNonCustomCalls;
 		TSet<FString> ReportedCaseOnlyMatches;
 		TSet<FString> ReportedSelfContainedCalls;
+		/** DSH6327: the callee spellings already reported, compared case-sensitively. */
+		TArray<FString> ReportedHoistingHelpers;
 
 		bool bOk = true;
 	};
@@ -935,6 +981,62 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		}
 	}
 
+	// ------------------------------------------------------------------------------ lifted calls
+
+	void FCustomCodeBuilder::SubstituteHoistedCalls(const FBoundFunction& Function, FString& InOutBody)
+	{
+		if (!Function.Decl || Function.Decl->HoistedCalls.Num() == 0)
+		{
+			return;
+		}
+		const TArray<Lang::FHoistedCall>& Calls = Function.Decl->HoistedCalls;
+
+		// Last first: replacing a later call changes no offset of an earlier one.
+		TArray<int32> Order;
+		Order.Reserve(Calls.Num());
+		for (int32 Index = 0; Index < Calls.Num(); ++Index)
+		{
+			Order.Add(Index);
+		}
+		Order.Sort([&Calls](const int32 A, const int32 B)
+		{
+			return Calls[A].RawBodyOffset > Calls[B].RawBodyOffset;
+		});
+
+		// Everything from here on has been replaced already, so a range may not reach into it.
+		int32 Limit = InOutBody.Len();
+		for (const int32 CallIndex : Order)
+		{
+			const Lang::FHoistedCall& Hoisted = Calls[CallIndex];
+			const int32 Start = Hoisted.RawBodyOffset;
+			const int32 End = Start + Hoisted.RawBodyLength;
+			if (Start < 0 || Hoisted.RawBodyLength <= 0 || End > Limit || Hoisted.InputName.IsEmpty())
+			{
+				bOk = Diagnostics.Error(
+					TEXT("DSH6328"),
+					NameSpanOf(Function),
+					FText::Format(
+						LOCTEXT("CustomHoistedRange", "'{0}' lifts the call behind its input '{1}' out of a place its body does not have, so its custom node's code cannot be built."),
+						FText::FromString(Function.Name),
+						FText::FromString(Hoisted.InputName))) && bOk;
+				continue;
+			}
+
+			// The input's name where the call was, padded to the call's length when it is shorter, with every line break
+			// the call spanned kept, so each line after it still matches the source file.
+			const FString Newlines = CarriedNewlines(InOutBody, Start, End);
+			FString Replacement = Hoisted.InputName;
+			const int32 Padding = Hoisted.RawBodyLength - Replacement.Len() - Newlines.Len();
+			if (Padding > 0)
+			{
+				Replacement += FString::ChrN(Padding, TCHAR(' '));
+			}
+			Replacement += Newlines;
+			InOutBody = InOutBody.Left(Start) + Replacement + InOutBody.Mid(End);
+			Limit = Start;
+		}
+	}
+
 	// ----------------------------------------------------------------------------------- prepare
 
 	const FPreparedFunction* FCustomCodeBuilder::Prepare(const int32 FunctionIndex)
@@ -965,6 +1067,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 
 		Prepared->Body = Function.Decl ? Function.Decl->RawBody : FString();
 		HoistLeadingIncludes(Function, Prepared->Body, Prepared->Includes);
+		SubstituteHoistedCalls(Function, Prepared->Body);
 		AnalyseBody(Prepared->Body, Prepared->Shape);
 
 		// A body that is one expression and nothing else -- no top-level `return`, no statement of
@@ -1173,7 +1276,28 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 					const int32 Callee = FindFunctionExact(Identifier);
 					if (Callee != INDEX_NONE)
 					{
-						if (Bound.Functions[Callee].Kind == EBoundFunctionKind::Custom)
+						const Lang::FFunctionDecl* const CalleeDecl = Bound.Functions[Callee].Decl;
+						const bool bHoisting = CalleeDecl != nullptr && CalleeDecl->HoistedCalls.Num() > 0;
+						if (Bound.Functions[Callee].Kind == EBoundFunctionKind::Custom && bHoisting)
+						{
+							// Legacy rule L8: its lifted calls are inputs of its own node, which HLSL inside another node cannot reach.
+							const bool bReported = ReportedHoistingHelpers.ContainsByPredicate([&Identifier](const FString& Reported)
+							{
+								return Reported.Equals(Identifier, ESearchCase::CaseSensitive);
+							});
+							if (!bReported)
+							{
+								ReportedHoistingHelpers.Add(Identifier);
+								bOk = Diagnostics.Error(
+									TEXT("DSH6327"),
+									MakeBodySpan(Function, Index, IdentifierEnd - Index),
+									FText::Format(
+										LOCTEXT("CustomCallsHoistingFunction", "'{0}' takes the 'UE.' calls lifted out of its body as inputs of its own custom node, so the HLSL body of '{1}' cannot call it; call it from a graph body instead."),
+										FText::FromString(Bound.Functions[Callee].Name),
+										FText::FromString(Function.Name))) && bOk;
+							}
+						}
+						else if (Bound.Functions[Callee].Kind == EBoundFunctionKind::Custom)
 						{
 							OutCallees.AddUnique(Callee);
 						}
@@ -1476,7 +1600,18 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		TArray<TPair<int32, int32>> Ranges;
 		SplitTopLevelArguments(ArgumentBlock, Ranges);
 
-		if (Ranges.Num() != Callee.Params.Num())
+		// Legacy rule L9: the callee's HLSL function returns its first result, so a call passes every parameter but that one.
+		const int32 CalleePrimaryOut = FindLegacyPrimaryOutParam(Callee);
+		TArray<int32> ParamOfArgument;
+		for (int32 ParamIndex = 0; ParamIndex < Callee.Params.Num(); ++ParamIndex)
+		{
+			if (ParamIndex != CalleePrimaryOut)
+			{
+				ParamOfArgument.Add(ParamIndex);
+			}
+		}
+
+		if (Ranges.Num() != ParamOfArgument.Num())
 		{
 			// Each sampler has to be spliced in beside its texture, so the positions have to line
 			// up. Without that there is nothing sensible to emit.
@@ -1486,7 +1621,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 				FText::Format(
 					LOCTEXT("CustomCallArity", "'{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise."),
 					FText::FromString(Callee.Name),
-					Callee.Params.Num(),
+					ParamOfArgument.Num(),
 					Ranges.Num())) && bOk;
 			OutRewritten = Replacement;
 			OutNextIndex = IdentifierEnd;
@@ -1501,7 +1636,8 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 			const FString RawArgument = ArgumentBlock.Mid(Range.Key, Range.Value - Range.Key);
 			Arguments.Add(RewriteText(Owner, RawArgument, BaseOffset + OpenParenIndex + 1 + Range.Key, Replacements));
 
-			if (!Callee.Params[ArgumentIndex].Type.IsTexture())
+			const FBoundParam& CalleeParam = Callee.Params[ParamOfArgument[ArgumentIndex]];
+			if (!CalleeParam.Type.IsTexture())
 			{
 				continue;
 			}
@@ -1519,7 +1655,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 					MakeBodySpan(*Owner.Function, BaseOffset + OpenParenIndex + 1 + Range.Key, Range.Value - Range.Key),
 					FText::Format(
 						LOCTEXT("CustomTextureArgumentNotAName", "The texture argument for '{0}' of '{1}' has to be a plain texture name, because the sampler that goes with it is named after it."),
-						FText::FromString(Callee.Params[ArgumentIndex].Name),
+						FText::FromString(CalleeParam.Name),
 						FText::FromString(Callee.Name))) && bOk;
 				continue;
 			}
@@ -1651,11 +1787,18 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		// Declaration order, not "inputs then outputs": a 2.0 signature may interleave them, and the
 		// call sites we rewrite are in the author's order. (1.x reordered because its section
 		// grammar kept Inputs and Results in separate lists to begin with.)
+		// Legacy rule L9: a 1.x function's first result is what its HLSL function RETURNS (1.x
+		// AppendGeneratedFunctionDefinition), which is what lets a body say `float4 a = Fetch(lut, i, size);`.
+		const int32 PrimaryOut = FindLegacyPrimaryOutParam(Function);
 		for (int32 ParamIndex = 0; ParamIndex < Function.Params.Num(); ++ParamIndex)
 		{
 			const FBoundParam& Param = Function.Params[ParamIndex];
 			const FString& TypeName = Prepared.ParamTypes[ParamIndex];
 
+			if (ParamIndex == PrimaryOut)
+			{
+				continue;
+			}
 			if (Param.Direction == EParamDirection::Out)
 			{
 				Parameters.Add(FString::Printf(TEXT("out %s %s"), *TypeName, *Param.Name));
@@ -1695,7 +1838,26 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 			OutCode += TailIndent + TEXT("return\n");
 		}
 
-		OutCode += FString(CustomCodeMarker::BeginPrefix) + Function.File + TEXT("\n");
+		// Rule L9: the node's own body returns a void function's first `out` parameter, which the engine does not declare
+		// (it is the primary output, not an additional one); declared here, ahead of the markers, so the body's lines
+		// keep their numbers.
+		// (A 1.x helper returns it too: 1.x wrote every function that way, and a 1.x body calls one as a value.)
+		const int32 PrimaryOut = bIsRoot ? FindCustomPrimaryOutParam(Function) : FindLegacyPrimaryOutParam(Function);
+		const bool bReturnsPrimaryOut = PrimaryOut != INDEX_NONE && Prepared.ParamTypes.IsValidIndex(PrimaryOut);
+		if (bReturnsPrimaryOut)
+		{
+			OutCode += FString::Printf(
+				TEXT("%s%s %s = (%s)0;\n"),
+				*TailIndent,
+				*Prepared.ParamTypes[PrimaryOut],
+				*Function.Params[PrimaryOut].Name,
+				*Prepared.ParamTypes[PrimaryOut]);
+		}
+
+		// Stamped (debt B5): the project-relative path in an asset, so the code is the same on every
+		// machine; a reader resolves a relative marker path against the project directory.
+		const FString MarkerFile = StampMarkerFile(Function.File);
+		OutCode += FString(CustomCodeMarker::BeginPrefix) + MarkerFile + TEXT("\n");
 		OutCode += MarkerLine + TEXT("\n");
 
 		const FString Rewritten = NormalizeLineEndings(RewriteText(Prepared, Prepared.Body, 0, Replacements));
@@ -1705,7 +1867,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 			OutCode += TEXT("\n");
 		}
 
-		OutCode += FString(CustomCodeMarker::EndPrefix) + Function.File + TEXT("\n");
+		OutCode += FString(CustomCodeMarker::EndPrefix) + MarkerFile + TEXT("\n");
 
 		if (Prepared.bBareExpression)
 		{
@@ -1719,9 +1881,13 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		// @custom still has to hand the graph a number.
 		const bool bNeedsFallback = bIsRoot
 			? (!Prepared.Shape.bHasTopLevelReturn || Function.ReturnType.IsVoid())
-			: (!Function.ReturnType.IsVoid() && !Prepared.Shape.bHasTopLevelReturn);
+			: ((!Function.ReturnType.IsVoid() && !Prepared.Shape.bHasTopLevelReturn) || bReturnsPrimaryOut);
 
-		if (bNeedsFallback)
+		if (bNeedsFallback && bReturnsPrimaryOut)
+		{
+			OutCode += TailIndent + TEXT("return ") + Function.Params[PrimaryOut].Name + TEXT(";\n");
+		}
+		else if (bNeedsFallback)
 		{
 			const TCHAR* const Zero = Function.ReturnType.IsVoid() ? TEXT("0.0") : ZeroLiteralFor(Function.ReturnType);
 			OutCode += TailIndent + TEXT("return ") + Zero + TEXT(";\n");
@@ -1736,10 +1902,12 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		const FBoundFunction& Function = *Prepared.Function;
 		const FString Indent = TEXT("\t");
 
+		// Legacy rule L9: the first result of a 1.x function is its return value, declared by the body block below.
+		const int32 PrimaryOut = FindLegacyPrimaryOutParam(Function);
 		OutCode += FString::Printf(
 			TEXT("%s%s %s(%s)\n%s{\n"),
 			*Indent,
-			*Prepared.ReturnType,
+			Prepared.ParamTypes.IsValidIndex(PrimaryOut) ? *Prepared.ParamTypes[PrimaryOut] : *Prepared.ReturnType,
 			*Prepared.Symbol,
 			*BuildParameterList(Prepared),
 			*Indent);
@@ -1748,7 +1916,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		// outputs, which the engine zero-initialises at the call site -- so 1.x's zeroing stays.
 		for (int32 ParamIndex = 0; ParamIndex < Function.Params.Num(); ++ParamIndex)
 		{
-			if (Function.Params[ParamIndex].Direction != EParamDirection::Out)
+			if (Function.Params[ParamIndex].Direction != EParamDirection::Out || ParamIndex == PrimaryOut)
 			{
 				continue;
 			}
@@ -1919,9 +2087,10 @@ namespace UE::DreamShader::IR
 		const Lang::FBoundModule& Bound,
 		const int32 FunctionIndex,
 		FCustomNodeCode& Out,
-		Lang::FLangDiagnosticSink& Diagnostics)
+		Lang::FLangDiagnosticSink& Diagnostics,
+		const TFunction<FString(const FString& File)>& StampSourcePath)
 	{
-		CustomHlslPrivate::FCustomCodeBuilder Builder(Bound, Diagnostics);
+		CustomHlslPrivate::FCustomCodeBuilder Builder(Bound, Diagnostics, StampSourcePath);
 		return Builder.Build(FunctionIndex, Out);
 	}
 }

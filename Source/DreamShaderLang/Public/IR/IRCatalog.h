@@ -104,6 +104,13 @@ namespace UE::DreamShader::IR
 		bool bIsCustomOutput = false;
 		/** The class is abstract or otherwise not creatable; listed so the language service can explain. */
 		bool bIsAbstract = false;
+		/**
+		 * The default node shows fewer pins than the class declares: which pins a node of this class has, and what it
+		 * calls them, depends on its properties (TextureSample's CoordinatesDX under MipValueMode = Derivative, the
+		 * engine fork's MoonToonModifier naming its channels after the chosen modifier). Inputs lists every declared
+		 * pin under its property name, which always resolves; a name a node shows is looked up on the node (rule L24).
+		 */
+		bool bHasInstanceDependentPins = false;
 
 		int32 FindInput(const FString& Name) const;
 		int32 FindOutput(const FString& Name) const;

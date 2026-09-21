@@ -13,6 +13,10 @@
 // while the body is lowered and restored afterwards. Without that a helper called inside an `if`
 // would think its own `return` was conditional.
 //
+// Batch 2: the legacy rules reach calls here -- a statement call's return-value receiver (L5), the calls lifted out of
+// a GraphFunction body (L8), a legacy void custom function's primary output (L9) and the node an output selection reads
+// (L3b, LastCallNode) -- with their lowering in IRBuilderLegacy.cpp.
+//
 // Diagnostics owned by this file: DSH6220, DSH6221, DSH6222, DSH6223.
 
 #include "IRBuilderInternal.h"
@@ -38,20 +42,26 @@ namespace UE::DreamShader::IR::Private
 		return FString::Printf(TEXT("Float%d"), Width);
 	}
 
-	void FIRBuilder::CollectCallOutputs(const FBoundFunction& Callee, TArray<FString>& OutNames, TArray<FIRType>& OutTypes)
+	FString FIRBuilder::CallPinName(const FBoundParam& Param, bool bEnginePinNames)
+	{
+		return (bEnginePinNames && !Param.PinName.IsEmpty()) ? Param.PinName : Param.Name;
+	}
+
+	void FIRBuilder::CollectCallOutputs(const FBoundFunction& Callee, TArray<FString>& OutNames, TArray<FIRType>& OutTypes, bool bEnginePinNames)
 	{
 		// The order a product's FunctionOutputs are made in, so a call's output names line up with
 		// the asset's outputs without either side having to look at the other.
 		if (!Callee.ReturnType.IsVoid())
 		{
-			OutNames.Add(TEXT("Result"));
+			const FString* ResultPin = bEnginePinNames ? Callee.Directives.FindPinName(TEXT("Result")) : nullptr;
+			OutNames.Add(ResultPin ? *ResultPin : FString(TEXT("Result")));
 			OutTypes.Add(Callee.ReturnType);
 		}
 		for (const FBoundParam& Param : Callee.Params)
 		{
 			if (Param.Direction != EParamDirection::In)
 			{
-				OutNames.Add(Param.Name);
+				OutNames.Add(CallPinName(Param, bEnginePinNames));
 				OutTypes.Add(Param.Type);
 			}
 		}
@@ -73,6 +83,11 @@ namespace UE::DreamShader::IR::Private
 		for (const FBoundArgument& Argument : BoundExpr.Args)
 		{
 			int32 ParamIndex = Argument.TargetIndex;
+			if (ParamIndex == Callee.Params.Num())
+			{
+				// A legacy statement call's return-value receiver (L5): stored once the node exists.
+				continue;
+			}
 			if (!Callee.Params.IsValidIndex(ParamIndex))
 			{
 				ParamIndex = INDEX_NONE;
@@ -150,7 +165,8 @@ namespace UE::DreamShader::IR::Private
 		const TArray<FLValueRef>& Targets,
 		FIRValue Node,
 		const TArray<FString>& OutputNames,
-		const FLangSpan& Span)
+		const FLangSpan& Span,
+		bool bEnginePinNames)
 	{
 		for (int32 Index = 0; Index < Callee.Params.Num(); ++Index)
 		{
@@ -158,14 +174,29 @@ namespace UE::DreamShader::IR::Private
 			{
 				continue;
 			}
-			const int32 OutputIndex = OutputNames.IndexOfByKey(Callee.Params[Index].Name);
+			// Case-sensitive: two outputs may differ only in case, and IndexOfByKey on FString would not see it.
+			const FString PinName = CallPinName(Callee.Params[Index], bEnginePinNames);
+			const int32 OutputIndex = OutputNames.IndexOfByPredicate([&PinName](const FString& Name)
+			{
+				return Name.Equals(PinName, ESearchCase::CaseSensitive);
+			});
 			if (OutputIndex == INDEX_NONE)
 			{
 				continue;
 			}
 			// An `out material` comes back as a MaterialAttributes output: the caller's material is
 			// replaced by that set, which it can go on reading and writing like any other material.
-			StoreLValue(Targets[Index], FLoweredValue::OfOutput(FIRValue{ Node.Node, OutputIndex }, Callee.Params[Index].Type), Span);
+			FLoweredValue Returned = FLoweredValue::OfOutput(FIRValue{ Node.Node, OutputIndex }, Callee.Params[Index].Type);
+			// Legacy rule L22: what comes back is fitted to the variable that receives it. 2.0 asks for an exact match, so
+			// the widths differ in a 1.x body only.
+			const int32 TargetWidth = DeclaredTypeOf(Targets[Index]).GraphComponentCount();
+			if (Returned.IsValue() && TargetWidth > 0 && Targets[Index].SwizzleMask.IsEmpty() && WidthOf(Returned.Value) != TargetWidth)
+			{
+				Returned = FLoweredValue::Of(CoerceToWidth(Returned.Value, TargetWidth, Span));
+			}
+			StoreLValue(Targets[Index], Returned, Span);
+			// The call statement bound this variable too, as a side effect (CONTRACT-UNITS A1).
+			RecordStatementBinding(DescribeLValueRef(Targets[Index]), BoundValueOfLValueRef(Targets[Index]), Span);
 		}
 	}
 
@@ -179,19 +210,24 @@ namespace UE::DreamShader::IR::Private
 		}
 
 		const FBoundFunction& Callee = BoundModule.Functions[BoundExpr.Index];
+		LastCallNode = FIRValue::None();
+
+		FLoweredValue Result;
 		switch (Callee.Kind)
 		{
 		case EBoundFunctionKind::Helper:
 			return InlineHelper(Expr, BoundExpr, Callee, BoundExpr.Index);
 
 		case EBoundFunctionKind::Custom:
-			return MakeCustomNode(Expr, BoundExpr, Callee, BoundExpr.Index);
+			Result = MakeCustomNode(Expr, BoundExpr, Callee, BoundExpr.Index);
+			break;
 
 		case EBoundFunctionKind::ExportFunction:
 		case EBoundFunctionKind::Layer:
 		case EBoundFunctionKind::LayerBlend:
 		case EBoundFunctionKind::Extern:
-			return MakeFunctionCallNode(Expr, BoundExpr, Callee, BoundExpr.Index);
+			Result = MakeFunctionCallNode(Expr, BoundExpr, Callee, BoundExpr.Index);
+			break;
 
 		case EBoundFunctionKind::Entry:
 		default:
@@ -200,6 +236,17 @@ namespace UE::DreamShader::IR::Private
 				FText::FromString(Callee.Name)));
 			return FLoweredValue();
 		}
+
+		// Legacy rule L5: a 1.x statement call hands its return value to the argument that receives it.
+		WriteBackLegacyResultReceiver(Expr, BoundExpr, Callee, Result);
+
+		// Legacy rule L3b: a 1.x value call of a function that returns nothing is its first output, which is what the
+		// binder typed the call as.
+		if (Callee.ReturnType.IsVoid() && !BoundExpr.Type.IsVoid() && !BoundExpr.Type.IsError())
+		{
+			return SelectCallOutput(Callee, 0, BoundExpr.Type);
+		}
+		return Result;
 	}
 
 	// --------------------------------------------------------------------------------- inlining
@@ -310,6 +357,7 @@ namespace UE::DreamShader::IR::Private
 				continue;
 			}
 			StoreLValue(Targets[Index], FinalParams[Index], Expr.Span);
+			RecordStatementBinding(DescribeLValueRef(Targets[Index]), BoundValueOfLValueRef(Targets[Index]), Expr.Span);
 		}
 
 		if (Result.IsValue())
@@ -332,14 +380,25 @@ namespace UE::DreamShader::IR::Private
 		// #1: the 5.8 translator has no MaterialAttributes case for a custom INPUT pin). When it
 		// says no, there is nothing left to lower and it has already reported why.
 		FCustomNodeCode Code;
-		if (!BuildDreamShaderCustomNodeCode(BoundModule, CalleeIndex, Code, Diagnostics))
+		// The stamper names the file in the code's Begin/End markers (debt B5), so the node code -- and
+		// with it the shader keys -- is the same on every machine.
+		if (!BuildDreamShaderCustomNodeCode(BoundModule, CalleeIndex, Code, Diagnostics, Options.StampSourcePath))
 		{
 			return FLoweredValue();
 		}
 
 		TArray<FLoweredValue> Arguments;
 		TArray<FLValueRef> Targets;
-		if (!BindCallArguments(Expr, BoundExpr, Callee, Arguments, Targets))
+		const bool bArgumentsBound = BindCallArguments(Expr, BoundExpr, Callee, Arguments, Targets);
+
+		// Legacy rule L8: the `UE.` calls lifted out of the body, lowered with this call's arguments; each becomes an input
+		// of the node, under the name unit H put in the code where the call was.
+		TArray<FIRInput> HoistedInputs;
+		const bool bHoistedLowered = bArgumentsBound && LowerHoistedCallInputs(Callee, CalleeIndex, Arguments, Expr.Span, HoistedInputs);
+
+		// Calls among the arguments made nodes of their own; the node an output selection reads is the one made below.
+		LastCallNode = FIRValue::None();
+		if (!bHoistedLowered)
 		{
 			return FLoweredValue();
 		}
@@ -348,17 +407,27 @@ namespace UE::DreamShader::IR::Private
 		Node.Op = EIROp::Custom;
 		Node.ClassName = Callee.Name;
 		Node.Properties.Add({ FString(Prop::Code), FIRPropertyValue::MakeString(Code.Code) });
-		Node.Properties.Add({ FString(Prop::Description), FIRPropertyValue::MakeString(Callee.Name) });
+		// The node says which function it is: its `/// @name`, else its own name. A 1.x function of a Namespace block
+		// says it the way 1.x did, `BL::TexNoise1D`.
+		const bool bLegacyQualified = Callee.Decl != nullptr && !Callee.Decl->LegacyQualifiedName.IsEmpty();
+		Node.Properties.Add({ FString(Prop::Description), FIRPropertyValue::MakeString(
+			bLegacyQualified ? Callee.Decl->LegacyQualifiedName
+			: !Callee.Directives.Name.IsEmpty() ? Callee.Directives.Name
+			: Callee.Name) });
 		if (!Code.IncludeFilePaths.IsEmpty())
 		{
 			Node.Properties.Add({ FString(Prop::IncludeFilePaths), FIRPropertyValue::MakeStringList(Code.IncludeFilePaths) });
 		}
 
 		// A void `/// @custom` function still has to hand the graph one output, because the engine's
-		// Custom node always has one; unit H's EnsureTopLevelReturn gives the body something to
-		// return, and Float1 is what that something is.
+		// Custom node always has one. It is the function's first `out` parameter, which is the node 1.x
+		// made of such a function (rule L9) and the one a migrated file has to keep making; a function
+		// with no `out` at all returns a Float1 that unit H's EnsureTopLevelReturn gives the body.
+		const int32 PrimaryOut = CustomPrimaryOutParam(Callee);
 		Node.Properties.Add({ FString(Prop::OutputType), FIRPropertyValue::MakeEnum(
-			Callee.ReturnType.IsVoid() ? FString(TEXT("Float1")) : CustomOutputTypeName(Callee.ReturnType)) });
+			PrimaryOut != INDEX_NONE ? CustomOutputTypeName(Callee.Params[PrimaryOut].Type)
+			: Callee.ReturnType.IsVoid() ? FString(TEXT("Float1"))
+			: CustomOutputTypeName(Callee.ReturnType)) });
 
 		for (int32 Index = 0; Index < Callee.Params.Num(); ++Index)
 		{
@@ -380,18 +449,22 @@ namespace UE::DreamShader::IR::Private
 				Node.Inputs.Add({ Callee.Params[Index].Name, Value });
 			}
 		}
+		Node.Inputs.Append(HoistedInputs);
 
 		TArray<FString> OutputNames;
 		TArray<FIRType> OutputTypes;
-		CollectCallOutputs(Callee, OutputNames, OutputTypes);
+		// A Custom node's pins are the HLSL identifiers its code declares: never the `@pin` names.
+		CollectCallOutputs(Callee, OutputNames, OutputTypes, /* bEnginePinNames */ false);
 
-		// Output 0 is the return value. Everything after it is an AdditionalOutputs entry, spelled
-		// "Name:Type" so the emitter can rebuild the node's pins without consulting anything else.
-		Node.Outputs.Add(Callee.ReturnType.IsVoid() ? FIRType::Float(1) : GraphTypeOf(Callee.ReturnType));
-		Node.OutputNames.Add(Callee.ReturnType.IsVoid() ? FString(TEXT("Result")) : OutputNames[0]);
+		// Output 0 is the return value -- or, under L9, the first `out` parameter, which CollectCallOutputs lists first
+		// too. Everything after it is an AdditionalOutputs entry, spelled "Name:Type" so the emitter can rebuild the
+		// node's pins without consulting anything else. LegacySelectionSlot reads this layout.
+		const bool bPlaceholderOutput = OutputNames.IsEmpty() || (Callee.ReturnType.IsVoid() && PrimaryOut == INDEX_NONE);
+		Node.Outputs.Add(bPlaceholderOutput ? FIRType::Float(1) : GraphTypeOf(OutputTypes[0]));
+		Node.OutputNames.Add(bPlaceholderOutput ? FString(TEXT("Result")) : OutputNames[0]);
 
 		TArray<FString> Additional;
-		const int32 FirstOutParam = Callee.ReturnType.IsVoid() ? 0 : 1;
+		const int32 FirstOutParam = bPlaceholderOutput ? 0 : 1;
 		for (int32 Index = FirstOutParam; Index < OutputNames.Num(); ++Index)
 		{
 			Node.Outputs.Add(GraphTypeOf(OutputTypes[Index]));
@@ -404,10 +477,11 @@ namespace UE::DreamShader::IR::Private
 		}
 
 		const FIRValue AddedNode = AddNode(MoveTemp(Node), Expr.Span);
+		LastCallNode = AddedNode;
 
 		// Copied out before the write-back, which makes nodes of its own and may move the array.
 		TArray<FString> NodeOutputNames = Graph->Nodes[AddedNode.Node].OutputNames;
-		WriteBackOutputs(Callee, Targets, AddedNode, NodeOutputNames, Expr.Span);
+		WriteBackOutputs(Callee, Targets, AddedNode, NodeOutputNames, Expr.Span, /* bEnginePinNames */ false);
 
 		// A `material` return (OutputType MaterialAttributes) is a material that arrived through a pin.
 		return Callee.ReturnType.IsVoid() ? FLoweredValue() : FLoweredValue::OfOutput(AddedNode, Callee.ReturnType);
@@ -419,7 +493,10 @@ namespace UE::DreamShader::IR::Private
 	{
 		TArray<FLoweredValue> Arguments;
 		TArray<FLValueRef> Targets;
-		if (!BindCallArguments(Expr, BoundExpr, Callee, Arguments, Targets))
+		const bool bArgumentsBound = BindCallArguments(Expr, BoundExpr, Callee, Arguments, Targets);
+		// Calls among the arguments made nodes of their own; the node an output selection reads is the one made below.
+		LastCallNode = FIRValue::None();
+		if (!bArgumentsBound)
 		{
 			return FLoweredValue();
 		}
@@ -441,24 +518,56 @@ namespace UE::DreamShader::IR::Private
 			const FString AssetPath = Callee.Directives.Asset;
 			Node.ClassName = AssetPath;
 			Node.Properties.Add({ FString(Prop::FunctionPath), FIRPropertyValue::MakeObject(AssetPath) });
+
+			// A 1.x VirtualFunction's inputs in its own order. An asset is somebody else's: its pin may be `Alpha Threshold`
+			// where the declaration can only say `Alpha_Threshold`, and 1.x then went by where the input stands (name first,
+			// then the declared position). A 2.0 `extern` says such a pin with `/// @pin` and needs no second guess.
+			if (Callee.Decl != nullptr && Callee.Decl->bLegacy)
+			{
+				TArray<FString> DeclaredInputs;
+				for (const FBoundParam& Param : Callee.Params)
+				{
+					if (Param.Direction != EParamDirection::Out)
+					{
+						DeclaredInputs.Add(CallPinName(Param, /* bEnginePinNames */ true));
+					}
+				}
+				Node.Properties.Add({ FString(Prop::DeclaredInputs), FIRPropertyValue::MakeStringList(DeclaredInputs) });
+			}
+		}
+
+		// An input the call does not pass stays UNCONNECTED, and the asset's own default stands in for it -- which is what
+		// the engine means by an optional input, what 1.x built, and what the decompiler reads back as an argument left
+		// out. BindCallArguments has lowered the prototype's default for it, because a helper and a Custom node need a
+		// value in hand; a call node does not, and wiring that constant in would override the asset with what a prototype
+		// claims about it (for an export of this file the two are the same value anyway).
+		TArray<bool> bPassed;
+		bPassed.Init(false, Callee.Params.Num());
+		for (const FBoundArgument& Passed : BoundExpr.Args)
+		{
+			if (bPassed.IsValidIndex(Passed.TargetIndex))
+			{
+				bPassed[Passed.TargetIndex] = true;
+			}
 		}
 
 		for (int32 Index = 0; Index < Callee.Params.Num(); ++Index)
 		{
-			if (Callee.Params[Index].Direction == EParamDirection::Out || !Arguments.IsValidIndex(Index))
+			if (Callee.Params[Index].Direction == EParamDirection::Out || !Arguments.IsValidIndex(Index) || !bPassed[Index])
 			{
 				continue;
 			}
 			const FIRValue Value = ValueForParam(Arguments[Index], Callee.Params[Index].Type, EIRConversion::Identity, Expr.Span);
 			if (Value.IsValid())
 			{
-				Node.Inputs.Add({ Callee.Params[Index].Name, Value });
+				// The called asset's FunctionInput is named by `@pin` when it has one (batch 2).
+				Node.Inputs.Add({ CallPinName(Callee.Params[Index], /* bEnginePinNames */ true), Value });
 			}
 		}
 
 		TArray<FString> OutputNames;
 		TArray<FIRType> OutputTypes;
-		CollectCallOutputs(Callee, OutputNames, OutputTypes);
+		CollectCallOutputs(Callee, OutputNames, OutputTypes, /* bEnginePinNames */ true);
 		for (int32 Index = 0; Index < OutputNames.Num(); ++Index)
 		{
 			Node.Outputs.Add(GraphTypeOf(OutputTypes[Index]));
@@ -473,7 +582,8 @@ namespace UE::DreamShader::IR::Private
 		}
 
 		const FIRValue Result = AddNode(MoveTemp(Node), Expr.Span);
-		WriteBackOutputs(Callee, Targets, Result, OutputNames, Expr.Span);
+		LastCallNode = Result;
+		WriteBackOutputs(Callee, Targets, Result, OutputNames, Expr.Span, /* bEnginePinNames */ true);
 
 		// A `material` result is a material that arrived through a pin: `MF_Layer(m).Roughness` and
 		// `m = MF_Layer(m);` both need the map with that output as its source, not a bare value.

@@ -11,7 +11,7 @@
 // reflected MaterialAttributes output, a function call's `material` -- is a map with that output as
 // its source, like a layer's input, and an Entry left holding one gives its sink the whole set.
 //
-// Diagnostics owned by this file: DSH4352, DSH4364, DSH4370.
+// Diagnostics owned by this file: DSH4352, DSH4364, DSH4366, DSH4370.
 
 #include "IRBuilderInternal.h"
 
@@ -46,6 +46,29 @@ namespace UE::DreamShader::IR::Private
 		{
 			OutValue[Index] = Components[Index];
 		}
+	}
+
+	/**
+	 * Which of the two materials a blend's input is, for the engine's layer stack (UE 5.7 on): what the pin's name says
+	 * where it says so, and otherwise the first material is the bottom one. The 1.x generator's rule, kept word for word
+	 * so that a 1.x ShaderLayerBlend and its 2.0 text build one asset.
+	 */
+	static const TCHAR* BlendInputRelevanceOf(const FString& PinName, const int32 MaterialInputIndex)
+	{
+		FString Normalized = PinName;
+		Normalized.ReplaceInline(TEXT(" "), TEXT(""));
+		Normalized.ReplaceInline(TEXT("_"), TEXT(""));
+		Normalized.ReplaceInline(TEXT("-"), TEXT(""));
+		if (Normalized.Equals(TEXT("Top"), ESearchCase::IgnoreCase) || Normalized.Equals(TEXT("TopLayer"), ESearchCase::IgnoreCase))
+		{
+			return TEXT("Top");
+		}
+		if (Normalized.Equals(TEXT("Bottom"), ESearchCase::IgnoreCase) || Normalized.Equals(TEXT("BottomLayer"), ESearchCase::IgnoreCase)
+			|| Normalized.Equals(TEXT("Base"), ESearchCase::IgnoreCase) || Normalized.Equals(TEXT("BaseLayer"), ESearchCase::IgnoreCase))
+		{
+			return TEXT("Bottom");
+		}
+		return MaterialInputIndex == 0 ? TEXT("Bottom") : TEXT("Top");
 	}
 
 	// ------------------------------------------------------------------------------- products
@@ -94,10 +117,16 @@ namespace UE::DreamShader::IR::Private
 
 		const int32 ResultParam = Function.MaterialResultParam != INDEX_NONE ? Function.MaterialResultParam : 0;
 
-		// Every `material` parameter of a layer or a layer blend is a MaterialAttributes
-		// FunctionInput -- the `inout` result included, because `inout` means the caller's material
-		// arrives and leaves. Reading an attribute of one makes GetMaterialAttributes against it;
-		// writing one records it in the map and the output below sets it back.
+		// Every `material` parameter of a layer is a MaterialAttributes FunctionInput -- its `inout`
+		// included, because the caller's material arrives and leaves through it. Reading an attribute
+		// of one makes GetMaterialAttributes against it; writing one records it in the map and the
+		// output below sets it back.
+		//
+		// A blend's `inout material` is its result and nothing arrives through it: the engine takes a
+		// blend with exactly two FunctionInputs (UMaterialExpressionMaterialAttributeLayers counts every
+		// one of them), which are the two materials it blends. So it starts empty, the way the entry's
+		// material does, and only the output below is made for it. That is also what a 1.x
+		// ShaderLayerBlend was: its inputs, and an output seeded with an empty MakeMaterialAttributes.
 		int32 SortPriority = 0;
 		for (int32 Index = 0; Index < Function.Params.Num(); ++Index)
 		{
@@ -105,20 +134,29 @@ namespace UE::DreamShader::IR::Private
 			{
 				continue;
 			}
+			if (bIsBlend && Index == ResultParam)
+			{
+				Frame().Params[Index] = FLoweredValue::MakeMaterial();
+				continue;
+			}
 			Frame().Params[Index] = MakeFunctionInput(Function, Index, SortPriority++);
 		}
+		ApplyFunctionInputPreviews(Function);
 
 		LowerBlock(*Function.Decl->Body);
 		ResolveExits();
 
-		const FString OutputName = Function.Params.IsValidIndex(ResultParam) && !Function.Params[ResultParam].Name.IsEmpty()
+		const FString ParamName = Function.Params.IsValidIndex(ResultParam) && !Function.Params[ResultParam].Name.IsEmpty()
 			? Function.Params[ResultParam].Name
 			: TEXT("Material");
+		// `@pin` renames the output pin the engine sees; `@param` still documents it under its identifier.
+		const FString OutputName = (Function.Params.IsValidIndex(ResultParam) && !Function.Params[ResultParam].PinName.IsEmpty())
+			? Function.Params[ResultParam].PinName
+			: ParamName;
 
 		FLoweredValue Result = Frame().Params.IsValidIndex(ResultParam) ? Frame().Params[ResultParam] : FLoweredValue();
-		MakeFunctionOutput(OutputName, Function.Directives.FindParamDoc(OutputName) ? *Function.Directives.FindParamDoc(OutputName) : FString(), 0, Result, Function.Decl->Span);
+		MakeFunctionOutput(OutputName, Function.Directives.FindParamDoc(ParamName) ? *Function.Directives.FindParamDoc(ParamName) : FString(), 0, Result, Function.Decl->Span);
 
-		(void)bIsBlend;
 		PopFrame();
 	}
 
@@ -142,6 +180,7 @@ namespace UE::DreamShader::IR::Private
 			}
 			Frame().Params[Index] = MakeFunctionInput(Function, Index, InputSort++);
 		}
+		ApplyFunctionInputPreviews(Function);
 
 		LowerBlock(*Function.Decl->Body);
 		ResolveExits();
@@ -150,7 +189,9 @@ namespace UE::DreamShader::IR::Private
 		if (!Function.ReturnType.IsVoid())
 		{
 			const FString* Doc = Function.Directives.FindParamDoc(TEXT("Result"));
-			MakeFunctionOutput(TEXT("Result"), Doc ? *Doc : FString(), OutputSort++, Frame().ReturnValue, Function.Decl->Span);
+			// `@pin Result <name>` renames the return value's output (batch 2).
+			const FString* ResultPin = Function.Directives.FindPinName(TEXT("Result"));
+			MakeFunctionOutput(ResultPin ? *ResultPin : FString(TEXT("Result")), Doc ? *Doc : FString(), OutputSort++, Frame().ReturnValue, Function.Decl->Span);
 		}
 		for (int32 Index = 0; Index < Function.Params.Num(); ++Index)
 		{
@@ -159,7 +200,7 @@ namespace UE::DreamShader::IR::Private
 				continue;
 			}
 			MakeFunctionOutput(
-				Function.Params[Index].Name,
+				Function.Params[Index].PinName.IsEmpty() ? Function.Params[Index].Name : Function.Params[Index].PinName,
 				Function.Params[Index].Doc,
 				OutputSort++,
 				Frame().Params.IsValidIndex(Index) ? Frame().Params[Index] : FLoweredValue(),
@@ -223,7 +264,9 @@ namespace UE::DreamShader::IR::Private
 		const FBoundParam& Param = Function.Params[ParamIndex];
 		const FLangSpan Span = Function.Decl ? Function.Decl->Span : FLangSpan();
 
-		const FString InputType = FunctionInputTypeName(Param.Type, Span);
+		// `@static`: a StaticBool pin. The value stays a bool in the graph -- a StaticSwitch reads nothing else -- where a
+		// plain `bool` parameter is the number its Scalar pin carries.
+		const FString InputType = Param.bStatic ? FString(TEXT("StaticBool")) : FunctionInputTypeName(Param.Type, Span);
 		if (InputType.IsEmpty())
 		{
 			return FLoweredValue();
@@ -231,9 +274,10 @@ namespace UE::DreamShader::IR::Private
 
 		FIRNode Node;
 		Node.Op = EIROp::FunctionInput;
-		Node.Outputs.Add(GraphTypeOf(Param.Type));
+		Node.Outputs.Add(Param.bStatic ? FIRType::Bool(1) : GraphTypeOf(Param.Type));
 		Node.DebugName = Param.Name;
-		Node.Properties.Add({ FString(Prop::InputName), FIRPropertyValue::MakeName(Param.Name) });
+		// `@pin` (batch 2): the engine's pin name when it is not an identifier; the variable keeps the identifier.
+		Node.Properties.Add({ FString(Prop::InputName), FIRPropertyValue::MakeName(Param.PinName.IsEmpty() ? Param.Name : Param.PinName) });
 		Node.Properties.Add({ FString(Prop::InputType), FIRPropertyValue::MakeEnum(InputType) });
 		Node.Properties.Add({ FString(Prop::SortPriority), FIRPropertyValue::MakeInt(SortPriority) });
 		if (!Param.Doc.IsEmpty())
@@ -241,8 +285,28 @@ namespace UE::DreamShader::IR::Private
 			Node.Properties.Add({ FString(Prop::Description), FIRPropertyValue::MakeString(Param.Doc) });
 		}
 
-		const bool bOptional = Param.bOptional || Param.Default != nullptr;
+		// A layer's and a blend's materials are optional, as the engine's own layer and blend templates make them: the
+		// bottom layer of a stack gets nothing on its input, and a required input there does not compile. A 1.x layer
+		// said so itself (`opt`) and keeps what it said.
+		const bool bLayerMaterial = Param.Type.IsMaterial()
+			&& (Function.Kind == EBoundFunctionKind::Layer || Function.Kind == EBoundFunctionKind::LayerBlend);
+		const bool bLegacy = Function.Decl != nullptr && Function.Decl->bLegacy;
+		const bool bOptional = Param.bOptional || Param.Default != nullptr || (bLayerMaterial && !bLegacy);
 		Node.Properties.Add({ FString(Prop::IsOptional), FIRPropertyValue::MakeBool(bOptional) });
+		if (bLayerMaterial && Function.Kind == EBoundFunctionKind::LayerBlend)
+		{
+			int32 MaterialInputIndex = 0;
+			for (int32 Index = 0; Index < ParamIndex; ++Index)
+			{
+				if (Function.Params[Index].Direction == EParamDirection::In && Function.Params[Index].Type.IsMaterial())
+				{
+					++MaterialInputIndex;
+				}
+			}
+			Node.Properties.Add({
+				FString(Prop::BlendInputRelevance),
+				FIRPropertyValue::MakeEnum(BlendInputRelevanceOf(Param.PinName.IsEmpty() ? Param.Name : Param.PinName, MaterialInputIndex)) });
+		}
 		if (Param.Default)
 		{
 			if (const FBoundExpr* BoundDefault = Bound(*Param.Default))
@@ -271,6 +335,45 @@ namespace UE::DreamShader::IR::Private
 		return FLoweredValue::Of(Value);
 	}
 
+	void FIRBuilder::ApplyFunctionInputPreviews(const FBoundFunction& Function)
+	{
+		if (!Graph)
+		{
+			return;
+		}
+
+		for (int32 Index = 0; Index < Function.Params.Num(); ++Index)
+		{
+			const FBoundParam& Param = Function.Params[Index];
+			if (Param.Direction == EParamDirection::Out || Param.Default == nullptr || !Frame().Params.IsValidIndex(Index))
+			{
+				continue;
+			}
+			const FBoundExpr* BoundDefault = Bound(*Param.Default);
+			if (!BoundDefault || BoundDefault->bIsConstant)
+			{
+				// A number is the input's PreviewValue (MakeFunctionInput).
+				continue;
+			}
+
+			const FLoweredValue& Input = Frame().Params[Index];
+			const int32 InputNode = Input.IsMaterial() ? Input.Material.Source.Node : (Input.IsValue() ? Input.Value.Node : INDEX_NONE);
+			if (!Graph->Nodes.IsValidIndex(InputNode) || Graph->Nodes[InputNode].Op != EIROp::FunctionInput)
+			{
+				continue;
+			}
+
+			// `opt float Index = UE.TexCoord(Index = 1).r`: what the pin carries when nobody connects it. The engine has
+			// one place for that, the input's Preview pin, and the 1.x generator wired it there.
+			const FLoweredValue Lowered = LowerExpr(*Param.Default);
+			const FIRValue Preview = ValueForParam(Lowered, Param.Type, BoundDefault->Conversion, Param.Default->Span);
+			if (Preview.IsValid() && Preview.Node != InputNode)
+			{
+				Graph->Nodes[InputNode].Inputs.Add({ FString(Prop::PreviewPin), Preview });
+			}
+		}
+	}
+
 	void FIRBuilder::MakeFunctionOutput(const FString& Name, const FString& Description, int32 SortPriority, const FLoweredValue& Value, const FLangSpan& Span)
 	{
 		FIRValue Operand = FIRValue::None();
@@ -280,6 +383,8 @@ namespace UE::DreamShader::IR::Private
 		}
 		else if (Value.IsValue())
 		{
+			// The output reads the value: an `out` parameter one arm of an `if` left partial says so here.
+			ReportPartialRead(Value);
 			Operand = Value.Value;
 		}
 
@@ -321,6 +426,8 @@ namespace UE::DreamShader::IR::Private
 
 		if (const FIRValue* Existing = Material.Fields.Find(Entry->Name))
 		{
+			// Written in one arm of an `if` only, with nothing to fall back to: this read is DSH4372 (B6 ii).
+			ReportPartialAttributeRead(Material, Entry->Name);
 			Out = *Existing;
 			return true;
 		}
@@ -351,6 +458,9 @@ namespace UE::DreamShader::IR::Private
 
 	FIRValue FIRBuilder::MakeSetMaterialAttributes(const FMaterialValue& Material, const FLangSpan& Span)
 	{
+		// The set reads every attribute written on top of the source.
+		ReportPartialAttributes(Material);
+
 		FIRNode Node;
 		Node.Op = EIROp::SetMaterialAttributes;
 		Node.Inputs.Add({ TEXT("MaterialAttributes"), Material.Source });
@@ -374,6 +484,9 @@ namespace UE::DreamShader::IR::Private
 
 	FIRValue FIRBuilder::MaterialiseMaterial(const FMaterialValue& Material, const FLangSpan& Span)
 	{
+		// A material crossing into a pin reads every attribute it holds (B6 ii).
+		ReportPartialAttributes(Material);
+
 		if (Material.HasSource())
 		{
 			// Nothing was written: the value IS the material that came in.
@@ -422,11 +535,14 @@ namespace UE::DreamShader::IR::Private
 		}
 		else
 		{
+			// The sink reads every attribute the material holds (B6 ii).
+			ReportPartialAttributes(Material);
 			for (const FString& Name : Material.Order)
 			{
 				if (const FIRValue* Value = Material.Fields.Find(Name))
 				{
-					Node.Inputs.Add({ Name, *Value });
+					// The pin as the author spelled the attribute (legacy rule L14): the emitter names its reroute after it.
+					Node.Inputs.Add({ Material.PinSpellingOf(Name), *Value });
 				}
 			}
 		}
@@ -512,8 +628,44 @@ namespace UE::DreamShader::IR::Private
 			return FLoweredValue::Of(MakeConstant(Components, Width, DeclSpan));
 		}
 
-		// ----- a texture, uniform or const: one TextureParameter either way; a const one simply has
-		// no name the material instance can override, which the emitter turns into a TextureObject.
+		// ----- a `static const` texture is a texture nobody can override: a TextureObject node holding the asset of its
+		// `/// @default`, which is what 1.x built for `const Texture2D Noise = Path(...)`. Not a TextureParameter: every
+		// reader of that op (the instance schema, the pruned-parameter list, the decompiler's uniforms) means a parameter.
+		if (Global.Type.IsTexture() && Global.bIsConstant)
+		{
+			const int32 ClassIndex = Catalog ? Catalog->FindExpression(TEXT("UE"), TEXT("TextureObject")) : INDEX_NONE;
+			if (ClassIndex == INDEX_NONE)
+			{
+				Diagnostics.Error(TEXT("DSH4366"), DeclSpan, FText::Format(
+					LOCTEXT("IRBuilderNoTextureObject", "'{0}' is a constant texture, which is a TextureObject node, and this engine has no such material expression; declare it 'uniform'."),
+					FText::FromString(Global.Name)));
+				return FLoweredValue();
+			}
+
+			FIRNode Node;
+			Node.Op = EIROp::Reflected;
+			Node.CatalogIndex = ClassIndex;
+			Node.ClassName = Catalog->Expressions[ClassIndex].ShortName;
+			Node.Outputs.Add(Global.Type);
+			Node.OutputNames.Add(FString());
+			Node.DebugName = Global.Name;
+			if (!Global.Directives.DefaultAsset.IsEmpty())
+			{
+				Node.Properties.Add({ FString(TEXT("Texture")), FIRPropertyValue::MakeObject(Global.Directives.DefaultAsset) });
+			}
+			if (!Global.Directives.Sampler.IsEmpty())
+			{
+				Node.Properties.Add({ FString(Prop::SamplerType), FIRPropertyValue::MakeEnum(Global.Directives.Sampler) });
+			}
+			const FString Description = Global.Directives.Desc.IsEmpty() ? Global.Directives.FreeText : Global.Directives.Desc;
+			if (!Description.IsEmpty())
+			{
+				Node.Properties.Add({ FString(TEXT("Desc")), FIRPropertyValue::MakeString(Description) });
+			}
+			return FLoweredValue::Of(AddNode(MoveTemp(Node), DeclSpan));
+		}
+
+		// ----- a texture uniform: one TextureParameter.
 		if (Global.Type.IsTexture())
 		{
 			FIRNode Node;

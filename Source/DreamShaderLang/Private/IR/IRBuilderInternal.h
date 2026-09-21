@@ -55,9 +55,73 @@ namespace UE::DreamShader::IR::Private
 		FIRValue Source;
 		/** The GetMaterialAttributes node made for Source, so one material breaks once. */
 		int32 BreakNode = INDEX_NONE;
+		/**
+		 * Attributes one arm of an `if` wrote and the other did not, on a material with no source to
+		 * fall back to, each with the `if` it was merged at (batch 2, debt B6 (ii)). Reading one -- a
+		 * field read, the material crossing into a pin, the sink -- is DSH4372; a map nothing reads
+		 * again says nothing. Diagnostic state, not value: not part of operator==.
+		 */
+		TArray<TPair<FString, Lang::FLangSpan>> PartialAttributes;
 
 		bool HasSource() const { return Source.IsValid(); }
 		bool operator==(const FMaterialValue& Other) const;
+		/** Index into PartialAttributes, case-sensitive; INDEX_NONE when the attribute is not partial. */
+		int32 FindPartialAttribute(const FString& Name) const
+		{
+			for (int32 Index = 0; Index < PartialAttributes.Num(); ++Index)
+			{
+				if (PartialAttributes[Index].Key.Equals(Name, ESearchCase::CaseSensitive))
+				{
+					return Index;
+				}
+			}
+			return INDEX_NONE;
+		}
+
+		/**
+		 * Attribute (canonical name) -> the spelling it was written with, when that is another name the catalog resolves
+		 * to the same attribute (`CustomizedUV1`). The sink's pin keeps it (legacy rule L14, batch 2, every source), so the
+		 * emitter's reroute carries the author's word as 1.x did. Presentation, not value: not part of operator==.
+		 */
+		TArray<TPair<FString, FString>> Spellings;
+
+		/** The pin name the sink gives an attribute: its written spelling, or the canonical name. */
+		const FString& PinSpellingOf(const FString& Name) const
+		{
+			for (const TPair<FString, FString>& Entry : Spellings)
+			{
+				if (Entry.Key.Equals(Name, ESearchCase::CaseSensitive))
+				{
+					return Entry.Value;
+				}
+			}
+			return Name;
+		}
+
+		/** Records how an attribute was written; an empty spelling forgets it (the latest write used the canonical name). */
+		void SetSpelling(const FString& Name, const FString& Spelling)
+		{
+			const int32 Existing = Spellings.IndexOfByPredicate([&Name](const TPair<FString, FString>& Entry)
+			{
+				return Entry.Key.Equals(Name, ESearchCase::CaseSensitive);
+			});
+			if (Spelling.IsEmpty())
+			{
+				if (Existing != INDEX_NONE)
+				{
+					Spellings.RemoveAt(Existing);
+				}
+				return;
+			}
+			if (Existing != INDEX_NONE)
+			{
+				Spellings[Existing].Value = Spelling;
+			}
+			else
+			{
+				Spellings.Emplace(Name, Spelling);
+			}
+		}
 	};
 
 	/**
@@ -87,6 +151,15 @@ namespace UE::DreamShader::IR::Private
 		 * Not part of operator==: to a merge, two Empty slots are the same value.
 		 */
 		bool bNeverAssigned = false;
+		/**
+		 * The value one arm of an `if` assigned while the other left the slot with nothing (batch 2,
+		 * debt B6 (ii)). The merge no longer reports that: a local assigned and read inside one arm is
+		 * fine. A read of the merged value is DSH4372, naming PartialName and pointing at the `if`
+		 * (PartialSpan). Diagnostic state, like bNeverAssigned: not part of operator==.
+		 */
+		bool bPartiallyAssigned = false;
+		Lang::FLangSpan PartialSpan;
+		FString PartialName;
 
 		bool IsEmpty() const { return Kind == EKind::Empty; }
 		bool IsNeverAssigned() const { return Kind == EKind::Empty && bNeverAssigned; }
@@ -153,6 +226,8 @@ namespace UE::DreamShader::IR::Private
 		TArray<int32> FieldPath;
 		/** Non-empty: the base resolves to a material and this attribute is what is written. */
 		FString MaterialAttribute;
+		/** The member as written, when it is another spelling of MaterialAttribute (legacy rule L14); empty otherwise. */
+		FString MaterialAttributeSpelling;
 		/** Non-empty: a read-modify-write through this component mask. */
 		FString SwizzleMask;
 		/**
@@ -228,8 +303,15 @@ namespace UE::DreamShader::IR::Private
 		void BuildEntryProduct(const FBoundFunction& Function);
 		void BuildLayerProduct(const FBoundFunction& Function, bool bIsBlend);
 		void BuildFunctionProduct(const FBoundFunction& Function);
+		/** A `.dsi` (IRBuilderInstance.cpp): the FIRInstance payload from FBoundModule::Instance and ParentSchema; the graph stays empty. */
+		void BuildInstanceProduct(const FBoundProduct& BoundProduct, FIRProduct& OutProduct);
 		/** The FunctionInput node for one parameter, plus the slot value it seeds. */
 		FLoweredValue MakeFunctionInput(const FBoundFunction& Function, int32 ParamIndex, int32 SortPriority);
+		/**
+		 * Defaults that are graph expressions: lowered once every input exists, because one default may read the input
+		 * beside it, and wired to the Preview pin of the input they belong to.
+		 */
+		void ApplyFunctionInputPreviews(const FBoundFunction& Function);
 		void MakeFunctionOutput(const FString& Name, const FString& Description, int32 SortPriority, const FLoweredValue& Value, const Lang::FLangSpan& Span);
 		/** Prop::InputType for a parameter type; empty (and DSH4364) when the type has no function-input form. */
 		FString FunctionInputTypeName(const FIRType& Type, const Lang::FLangSpan& Span);
@@ -254,6 +336,32 @@ namespace UE::DreamShader::IR::Private
 		 * a helper called. False, and both outputs untouched, outside inlining.
 		 */
 		bool ActiveCallSite(Lang::FLangSpan& OutSpan, FString& OutFile) const;
+		/** A file as the IR writes it into anything that reaches an asset: FIRBuildOptions::StampSourcePath, or unchanged (debt B5). */
+		FString StampFile(const FString& File) const;
+		/** Where something made right now came from: the current frame's file, the span, and the outermost call site; files stamped. */
+		FIRSourceRef MakeSourceRef(const Lang::FLangSpan& Span) const;
+
+		// ---------------------------------------------------------------------- statement bindings
+		/** Appends one FIRGraph::StatementBindings entry for the graph being built. */
+		void RecordStatementBinding(const FString& Name, FIRValue Value, const Lang::FLangSpan& Span);
+		/** `Colour`, `P.A`, `Weights[2]`, `m.BaseColor`: the variable an lvalue names, without its swizzle. Empty when it cannot be told. */
+		FString DescribeLValueRef(const FLValueRef& Ref) const;
+		/** The one graph value the variable an lvalue names holds now, or FIRValue::None(). Makes no node. */
+		FIRValue BoundValueOfLValueRef(const FLValueRef& Ref);
+		/** A slot's single graph value: a Value's, or the set of a material nothing was written on top of; else None. */
+		static FIRValue SingleGraphValueOf(const FLoweredValue& Value);
+
+		// ------------------------------------------------------------ one-armed assignments (B6 ii)
+		/** Marks a merged value (every leaf of an aggregate, every attribute of a material) as assigned in one arm only. */
+		void MarkPartial(FLoweredValue& Value, const Lang::FLangSpan& Span, const FString& Name) const;
+		/** Carries Other's partial marks onto Value where Value has none (a merge whose sides compare equal). */
+		static void CarryPartial(FLoweredValue& Value, const FLoweredValue& Other);
+		/** DSH4372 for a read of a plain value assigned in one arm only; once per `if` and name. */
+		void ReportPartialRead(const FLoweredValue& Value);
+		/** DSH4372 for a read of one attribute a single arm wrote; once per `if` and attribute. */
+		void ReportPartialAttributeRead(const FMaterialValue& Material, const FString& Name);
+		/** Every partial attribute of a material that is being read whole (into a pin, a set, the sink). */
+		void ReportPartialAttributes(const FMaterialValue& Material);
 
 		// -------------------------------------------------------------------------------- nodes
 		FIRValue AddNode(FIRNode&& Node, const Lang::FLangSpan& Span);
@@ -419,14 +527,45 @@ namespace UE::DreamShader::IR::Private
 			const FBoundFunction& Callee,
 			TArray<FLoweredValue>& OutValues,
 			TArray<FLValueRef>& OutTargets);
-		/** "Result" plus every out/inout parameter, in the order a product's FunctionOutputs use. */
-		static void CollectCallOutputs(const FBoundFunction& Callee, TArray<FString>& OutNames, TArray<FIRType>& OutTypes);
-		void WriteBackOutputs(const FBoundFunction& Callee, const TArray<FLValueRef>& Targets, FIRValue Node, const TArray<FString>& OutputNames, const Lang::FLangSpan& Span);
+		/**
+		 * "Result" plus every out/inout parameter, in the order a product's FunctionOutputs use. bEnginePinNames
+		 * names them the way the called asset's FunctionOutputs are named (`@pin`, batch 2) -- a FunctionCall node;
+		 * false keeps the identifiers, which a Custom node's HLSL declares.
+		 */
+		static void CollectCallOutputs(const FBoundFunction& Callee, TArray<FString>& OutNames, TArray<FIRType>& OutTypes, bool bEnginePinNames);
+		/** The name a parameter's pin has on the node: its `@pin` name for a FunctionCall node, its identifier otherwise. */
+		static FString CallPinName(const FBoundParam& Param, bool bEnginePinNames);
+		void WriteBackOutputs(const FBoundFunction& Callee, const TArray<FLValueRef>& Targets, FIRValue Node, const TArray<FString>& OutputNames, const Lang::FLangSpan& Span, bool bEnginePinNames);
+
+		// ------------------------------------------------------------ legacy rules (IRBuilderLegacy.cpp, batch 2)
+		/** L3b: `F(args).Out` / `F(args)[k]`: the call lowered as any call is, then the node output its 1.x ordinal names. */
+		FLoweredValue LowerFunctionCallOutput(const FExpr& Expr, const FBoundExpr& Bound);
+		/** L3b: the output a 1.x ordinal names on the node the last MakeCustomNode / MakeFunctionCallNode made, as Type. */
+		FLoweredValue SelectCallOutput(const FBoundFunction& Callee, int32 Ordinal, const FIRType& Type);
+		/** L3b: the node output a 1.x ordinal is: one further on a void custom node, whose output 0 is a placeholder (not under L9). */
+		static int32 LegacySelectionSlot(const FBoundFunction& Callee, int32 Ordinal);
+		/** L9: the first `out` parameter of a void custom function, which is its node's primary output; else INDEX_NONE. */
+		static int32 CustomPrimaryOutParam(const FBoundFunction& Callee);
+		/** L5: a legacy statement call's return value, stored into the argument whose FBoundArgument::TargetIndex is Params.Num(). */
+		void WriteBackLegacyResultReceiver(const FExpr& Expr, const FBoundExpr& Bound, const FBoundFunction& Callee, const FLoweredValue& Result);
+		/** L8: every call lifted out of Callee's body, lowered with Callee's parameters bound to Arguments; false when they may not be. */
+		bool LowerHoistedCallInputs(const FBoundFunction& Callee, int32 CalleeIndex, const TArray<FLoweredValue>& Arguments, const Lang::FLangSpan& Span, TArray<FIRInput>& OutInputs);
+		/** True while lowering a declaration the legacy front end produced (FDecl::bLegacy). */
+		bool IsLegacyFrame() const;
+		/** L12: a 1.x enumerator spelling rewritten as the catalog spells it, when exactly one enumerator matches loosely. */
+		static void CanonicaliseLegacyEnumerator(const FCatalogProperty& Property, FIRPropertyValue& InOutValue);
 
 		// ------------------------------------------------------------------------------ globals
 		FLoweredValue GlobalValue(int32 GlobalIndex, const Lang::FLangSpan& Span);
 		/** The uncached half of GlobalValue: the Parameter / TextureParameter / Constant node itself. */
 		FLoweredValue MakeGlobalValue(int32 GlobalIndex, const Lang::FLangSpan& Span);
+		/**
+		 * An output the catalog calls Numeric has no width of its own, and on a node with several outputs the builder
+		 * wrote it as one component. The first use that knows a width gives it to the node, so every reader of that
+		 * output -- WidthOf, CoerceToWidth, the validator -- sees it (CONTRACT 6.13 #32, extended to selected outputs).
+		 * Never narrows.
+		 */
+		void RetypeAnyWidthOutput(FIRValue Value, int32 Width);
 		/** DefaultSortPriority: the uniform's place in declaration order, written when there is no `@sort`. */
 		void ApplyParameterMetadata(FIRNode& Node, const FBoundDirectives& Directives, const FString& FallbackName, int32 DefaultSortPriority = INDEX_NONE);
 
@@ -462,5 +601,11 @@ namespace UE::DreamShader::IR::Private
 		int32 InOutArgumentDepth = 0;
 		/** Read sites DSH4376 was said for, so an unrolled loop or a helper inlined twice says it once. */
 		TSet<const FExpr*> UnsetReadsReported;
+		/** `if` span + name DSH4372 was said for (B6 ii), compared case-sensitively; scanned, it stays short. */
+		TArray<FString> PartialReadsReported;
+		/** L3b: the node the last MakeCustomNode / MakeFunctionCallNode made; None when that call made none. */
+		FIRValue LastCallNode;
+		/** L8: the functions whose lifted calls are being lowered right now, innermost last. */
+		TArray<int32> HoistingStack;
 	};
 }

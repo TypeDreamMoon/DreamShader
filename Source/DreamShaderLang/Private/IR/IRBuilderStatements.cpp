@@ -10,7 +10,9 @@
 // that reached it -- and the end of the body folds the exits into the final state in reverse order,
 // which is exactly what `if (c) return a; ... return b;` means once the jumps are gone.
 //
-// Diagnostics owned by this file: DSH4360, DSH4362, DSH4363, DSH4372, DSH4375.
+// Diagnostics owned by this file: DSH4360, DSH4362, DSH4363, DSH4375. DSH4372 (a value assigned in
+// one arm only) is decided here -- the merge marks the value -- and said in IRBuilder.cpp when the
+// marked value is read (batch 2, debt B6 (ii)).
 
 #include "IRBuilderInternal.h"
 
@@ -213,6 +215,8 @@ namespace UE::DreamShader::IR::Private
 					}
 					Frame().Locals[Slot] = MoveTemp(Elements);
 					SetDebugName(FirstNode, Declarator.Name);
+					// An array has no one graph value; the binding still says this line bound the name.
+					RecordStatementBinding(Declarator.Name, FIRValue::None(), Declarator.Span);
 					continue;
 				}
 			}
@@ -234,6 +238,7 @@ namespace UE::DreamShader::IR::Private
 			}
 
 			SetDebugName(FirstNode, Declarator.Name);
+			RecordStatementBinding(Declarator.Name, SingleGraphValueOf(Frame().Locals[Slot]), Declarator.Span);
 		}
 	}
 
@@ -546,7 +551,10 @@ namespace UE::DreamShader::IR::Private
 		}
 		if (TrueValue == FalseValue)
 		{
-			return TrueValue;
+			// Equal values, but the one-armed marks are not part of equality: keep both sides'.
+			FLoweredValue Result = TrueValue;
+			CarryPartial(Result, FalseValue);
+			return Result;
 		}
 
 		if (TrueValue.IsAggregate() && FalseValue.IsAggregate())
@@ -646,13 +654,17 @@ namespace UE::DreamShader::IR::Private
 						bool bConditionHolds = false;
 						const bool bDecided = TryDecideCondition(Condition, bConditionHolds);
 						const bool bMissingArmRuns = Left ? !bConditionHolds : bConditionHolds;
-						if (!bDecided || bMissingArmRuns)
-						{
-							Diagnostics.Error(TEXT("DSH4372"), Span, FText::Format(
-								LOCTEXT("IRBuilderOneArmedMaterialWrite", "'{0}' is set in only one arm of this 'if' and has no value before it; set it in both arms, or before the 'if'."),
-								FText::FromString(Name)));
-						}
 						Merged = Left ? *Left : (Right ? *Right : FIRValue::None());
+						if (Merged.IsValid() && (!bDecided || bMissingArmRuns))
+						{
+							// Debt B6 (ii): marked, not reported. An attribute written and read inside one arm
+							// and never again is not a mistake; a read after the `if` -- a field read, the
+							// material crossing into a pin, the sink -- is, and says DSH4372 then.
+							if (Result.Material.FindPartialAttribute(Name) == INDEX_NONE)
+							{
+								Result.Material.PartialAttributes.Emplace(Name, Span);
+							}
+						}
 					}
 				}
 
@@ -660,6 +672,27 @@ namespace UE::DreamShader::IR::Private
 				{
 					Result.Material.Order.Add(Name);
 					Result.Material.Fields.Add(Name, Merged);
+
+					// An attribute that was already one-armed on either side stays one-armed after the merge.
+					const FMaterialValue* const Sides[2] = { &TrueValue.Material, &FalseValue.Material };
+					for (const FMaterialValue* Side : Sides)
+					{
+						const int32 SidePartial = Side->FindPartialAttribute(Name);
+						if (SidePartial != INDEX_NONE && Result.Material.FindPartialAttribute(Name) == INDEX_NONE)
+						{
+							Result.Material.PartialAttributes.Add(Side->PartialAttributes[SidePartial]);
+						}
+					}
+					// ...and keeps the spelling it was written with (legacy rule L14), the true arm's when both have one.
+					for (const FMaterialValue* Side : Sides)
+					{
+						const FString& Spelling = Side->PinSpellingOf(Name);
+						if (!Spelling.Equals(Name, ESearchCase::CaseSensitive)
+							&& Result.Material.PinSpellingOf(Name).Equals(Name, ESearchCase::CaseSensitive))
+						{
+							Result.Material.SetSpelling(Name, Spelling);
+						}
+					}
 				}
 			}
 			return Result;
@@ -668,12 +701,16 @@ namespace UE::DreamShader::IR::Private
 		if (TrueValue.IsValue() && FalseValue.IsValue())
 		{
 			const int32 Width = FMath::Max(WidthOf(TrueValue.Value), WidthOf(FalseValue.Value));
-			return FLoweredValue::Of(MakeConditional(
+			FLoweredValue Result = FLoweredValue::Of(MakeConditional(
 				Condition,
 				bStaticCondition,
 				CoerceToWidth(TrueValue.Value, Width, Span),
 				CoerceToWidth(FalseValue.Value, Width, Span),
 				Span));
+			// A value one arm of an EARLIER `if` left partial is still partial whichever way this one goes.
+			CarryPartial(Result, TrueValue);
+			CarryPartial(Result, FalseValue);
+			return Result;
 		}
 
 		// One arm produced a value and the other produced nothing at all.
@@ -685,13 +722,15 @@ namespace UE::DreamShader::IR::Private
 			bool bConditionHolds = false;
 			const bool bDecided = TryDecideCondition(Condition, bConditionHolds);
 			const bool bEmptyArmRuns = TrueValue.IsEmpty() ? bConditionHolds : !bConditionHolds;
+			FLoweredValue Result = TrueValue.IsEmpty() ? FalseValue : TrueValue;
 			if (!What.IsEmpty() && (!bDecided || bEmptyArmRuns))
 			{
-				Diagnostics.Error(TEXT("DSH4372"), Span, FText::Format(
-					LOCTEXT("IRBuilderOneArmedWrite", "'{0}' is assigned in only one arm of this 'if' and has no value before it; assign it in both arms, or give it a value before the 'if'."),
-					FText::FromString(What)));
+				// Debt B6 (ii): marked, not reported. A local declared before the `if`, assigned and read
+				// inside one arm and never read again is correct code; DSH4372 is said by the first read of
+				// the merged value (ReportPartialRead), which is the read that can see the missing arm.
+				MarkPartial(Result, Span, What);
 			}
-			return TrueValue.IsEmpty() ? FalseValue : TrueValue;
+			return Result;
 		}
 
 		return TrueValue;

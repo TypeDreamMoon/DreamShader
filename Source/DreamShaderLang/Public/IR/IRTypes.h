@@ -126,6 +126,12 @@ namespace UE::DreamShader::IR
 		Numeric,
 		/** Node -> its default (index 0) output. */
 		DefaultOutput,
+		/**
+		 * A vector used where a narrower one is wanted: its leading components. ClassifyConversion never answers this --
+		 * 2.0 asks for the swizzle -- and the binder gives it to a 1.x source, whose generator cut every value down to the
+		 * place it went (legacy rule L22).
+		 */
+		Truncate,
 		None,
 	};
 	DREAMSHADERLANG_API EIRConversion ClassifyConversion(const FIRType& From, const FIRType& To);

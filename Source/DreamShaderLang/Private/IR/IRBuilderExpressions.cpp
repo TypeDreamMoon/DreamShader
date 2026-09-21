@@ -165,7 +165,8 @@ namespace UE::DreamShader::IR::Private
 	{
 		if (Value.IsMaterial())
 		{
-			if (PinType == ECatalogValueType::MaterialAttributes || PinType == ECatalogValueType::Unknown)
+			// Numeric is the engine's "I do not say": a StaticSwitch takes two materials as readily as two colours.
+			if (PinType == ECatalogValueType::MaterialAttributes || PinType == ECatalogValueType::Unknown || PinType == ECatalogValueType::Numeric)
 			{
 				return MaterialiseMaterial(Value.Material, Span);
 			}
@@ -186,6 +187,17 @@ namespace UE::DreamShader::IR::Private
 		}
 
 		FIRValue Result = ApplyConversion(Value.Value, Conversion, INDEX_NONE, Span);
+		// Legacy rule L22, the pin side: a 1.x body hands a node what it wrote, however wide (LangBinderExpressions.cpp
+		// Convert). Narrower values are left alone below in every source.
+		if (IsLegacyFrame())
+		{
+			const int32 PinWidth = PinType == ECatalogValueType::Float1 ? 1 : PinType == ECatalogValueType::Float2 ? 2
+				: PinType == ECatalogValueType::Float3 ? 3 : PinType == ECatalogValueType::Float4 ? 4 : 0;
+			if (PinWidth > 0 && WidthOf(Result) > PinWidth)
+			{
+				return Result;
+			}
+		}
 		switch (PinType)
 		{
 		case ECatalogValueType::Float1: return CoerceToWidth(Result, 1, Span);
@@ -269,13 +281,21 @@ namespace UE::DreamShader::IR::Private
 					return FLoweredValue();
 				}
 			}
+			// A value one arm of an `if` assigned and the other did not: this read is where that matters
+			// (debt B6 (ii)).
+			ReportPartialRead(Frame().Locals[BoundExpr->LocalSlot]);
 			return Frame().Locals[BoundExpr->LocalSlot];
 		}
 
 		case EBoundExprKind::Param:
 		{
 			const FFrame& Current = Frame();
-			return Current.Params.IsValidIndex(BoundExpr->Index) ? Current.Params[BoundExpr->Index] : FLoweredValue();
+			if (!Current.Params.IsValidIndex(BoundExpr->Index))
+			{
+				return FLoweredValue();
+			}
+			ReportPartialRead(Current.Params[BoundExpr->Index]);
+			return Current.Params[BoundExpr->Index];
 		}
 
 		case EBoundExprKind::Global:
@@ -302,6 +322,7 @@ namespace UE::DreamShader::IR::Private
 					return FLoweredValue();
 				}
 			}
+			ReportPartialRead(Base.Fields[BoundExpr->FieldIndex]);
 			return Base.Fields[BoundExpr->FieldIndex];
 		}
 
@@ -379,7 +400,12 @@ namespace UE::DreamShader::IR::Private
 			if (Base.IsAggregate())
 			{
 				// An array element. The bound record puts the element index in FieldIndex.
-				return Base.Fields.IsValidIndex(BoundExpr->FieldIndex) ? Base.Fields[BoundExpr->FieldIndex] : FLoweredValue();
+				if (!Base.Fields.IsValidIndex(BoundExpr->FieldIndex))
+				{
+					return FLoweredValue();
+				}
+				ReportPartialRead(Base.Fields[BoundExpr->FieldIndex]);
+				return Base.Fields[BoundExpr->FieldIndex];
 			}
 			if (Base.IsValue())
 			{
@@ -402,6 +428,11 @@ namespace UE::DreamShader::IR::Private
 			}
 			FIRValue Result = Base.Value;
 			Result.Output = BoundExpr->FieldIndex;
+			// A Numeric output the binder typed from what it feeds (`float2 uv = UE.ScreenPosition().ViewportUV;`).
+			if (BoundExpr->Type.IsNumeric() && !BoundExpr->Type.IsMatrix())
+			{
+				RetypeAnyWidthOutput(Result, BoundExpr->Type.GraphComponentCount());
+			}
 			// An output typed MaterialAttributes is a `material` that arrived through a pin.
 			return FLoweredValue::OfOutput(Result, BoundExpr->Type);
 		}
@@ -467,6 +498,10 @@ namespace UE::DreamShader::IR::Private
 			}
 			return FLoweredValue();
 		}
+
+		case EBoundExprKind::FunctionCallOutput:
+			// Legacy rule L3b (IRBuilderLegacy.cpp).
+			return LowerFunctionCallOutput(Expr, *BoundExpr);
 
 		case EBoundExprKind::Error:
 		default:
@@ -889,10 +924,23 @@ namespace UE::DreamShader::IR::Private
 			{
 				OutputType = BoundExpr.Type;
 			}
+			else if (BoundExpr.bLegacyDeclaredType && Entry.Outputs.Num() == 1 && BoundExpr.Type.IsNumeric() && !BoundExpr.Type.IsMatrix())
+			{
+				// A 1.x call typed by its own `OutputType`: the node is as wide as 1.x believed it.
+				OutputType = BoundExpr.Type;
+			}
 			Node.Outputs.Add(OutputType);
 			Node.OutputNames.Add(Output.Name);
 		}
+		if (BoundExpr.CallOutputTypes.Num() > 0)
+		{
+			// A Custom-class call declared its outputs itself (rule L4): `OutputType`, then `AdditionalOutputs`.
+			Node.Outputs = BoundExpr.CallOutputTypes;
+			Node.OutputNames = BoundExpr.CallOutputNames;
+		}
 
+		TArray<FString> LateBoundPins;
+		TArray<FString> WrittenPins;
 		for (const FBoundArgument& Argument : BoundExpr.Args)
 		{
 			const FExpr* Value = ArgumentExpr(Expr, Argument);
@@ -925,17 +973,26 @@ namespace UE::DreamShader::IR::Private
 						FText::FromString(Argument.Target), FText::FromString(Entry.ShortName)));
 					continue;
 				}
+				if (Property && Property->Type == ECatalogValueType::Enum && IsLegacyFrame())
+				{
+					// Legacy rule L12: the binder accepted a loose 1.x spelling; the node carries the catalog's.
+					CanonicaliseLegacyEnumerator(*Property, PropertyValue);
+				}
 				Node.Properties.Add({ Argument.Target, PropertyValue });
 				continue;
 			}
 
+			// An input a Custom class's call named (legacy rule L4) has no catalog pin: it keeps its name and the value's width.
 			const FCatalogPin* Pin = Entry.Inputs.IsValidIndex(Argument.TargetIndex) ? &Entry.Inputs[Argument.TargetIndex] : nullptr;
 
 			// A constant reaching a pin that has a "Const*" twin is written as the twin, which is
 			// what the 1.x generator's output looks like and what an author sees in the editor.
 			const FExpr* Inner = Unparen(Value);
 			const FBoundExpr* BoundValue = Inner ? Bound(*Inner) : nullptr;
-			if (Pin && !Pin->ConstPropertyName.IsEmpty() && BoundValue && BoundValue->bIsConstant)
+			// Not in a 1.x body: `UE.Expression(Class = "Step", Y = 0.5, X = d)` names the PIN, and the 1.x generator
+			// evaluated what was written there into a Constant node and wired it (it wrote `ConstY` only where the source
+			// said `ConstY`). The frozen 1.x graphs have that node, so a legacy frame makes it too.
+			if (Pin && !Pin->ConstPropertyName.IsEmpty() && BoundValue && BoundValue->bIsConstant && !IsLegacyFrame())
 			{
 				// In the TWIN's type, not the pin's: the engine types a pin loosely (Lerp's Alpha is any
 				// float, `Numeric`) while its twin is a plain `float` property, and a width-1 vector would
@@ -970,7 +1027,25 @@ namespace UE::DreamShader::IR::Private
 			if (PinValue.IsValid())
 			{
 				Node.Inputs.Add({ Argument.Target, PinValue });
+				if (Pin && !Argument.WrittenTarget.IsEmpty())
+				{
+					WrittenPins.AddUnique(Argument.Target + TEXT("=") + Argument.WrittenTarget);
+				}
+				if (!Pin && Entry.FindInput(Argument.Target) == INDEX_NONE)
+				{
+					// Legacy rule L24: a name the class's default object does not list. Said on the node, so that the
+					// validator knows it is meant and the emitter looks for it where it can be: on the live node.
+					LateBoundPins.AddUnique(Argument.Target);
+				}
 			}
+		}
+		if (WrittenPins.Num() > 0)
+		{
+			Node.Properties.Add({ FString(Prop::WrittenPins), FIRPropertyValue::MakeStringList(WrittenPins) });
+		}
+		if (LateBoundPins.Num() > 0 && !Entry.ClassName.Equals(TEXT("MaterialExpressionCustom"), ESearchCase::CaseSensitive))
+		{
+			Node.Properties.Add({ FString(Prop::LateBoundPins), FIRPropertyValue::MakeStringList(LateBoundPins) });
 		}
 
 		// A class whose one output is MaterialAttributes (`UE.BlendMaterialAttributes`) makes a
@@ -1081,7 +1156,36 @@ namespace UE::DreamShader::IR::Private
 			return FLoweredValue();
 		}
 
-		const FIRValue Condition = LowerValue(*Conditional->Condition);
+		// Batch 2, debt B6 (iii): a condition the compiler can already decide picks its side here, and only
+		// that side is lowered. Lowering both put the dead side's nodes in the graph -- and reported what
+		// the dead side reads, DSH4376 for a local nothing had assigned yet. The binder's fold answers a
+		// literal or a `static const`; the builder's answers a loop variable on one trip of an unrolled loop.
+		bool bDecided = false;
+		bool bConditionHolds = false;
+		FIRValue Condition = FIRValue::None();
+		const FBoundExpr* BoundCondition = Bound(*Conditional->Condition);
+		if (BoundCondition && BoundCondition->bIsConstant && !BoundCondition->Type.IsError())
+		{
+			bDecided = true;
+			bConditionHolds = BoundCondition->ConstantValue[0] != 0.0;
+		}
+		else
+		{
+			Condition = LowerValue(*Conditional->Condition);
+			bDecided = TryDecideCondition(Condition, bConditionHolds);
+		}
+
+		const int32 Width = FMath::Max(BoundExpr.Type.GraphComponentCount(), 1);
+		if (bDecided)
+		{
+			FLoweredValue Live = LowerExpr(bConditionHolds ? *Conditional->TrueValue : *Conditional->FalseValue);
+			if (Live.IsValue())
+			{
+				Live.Value = CoerceToWidth(Live.Value, Width, Expr.Span);
+			}
+			return Live;
+		}
+
 		const FLoweredValue TrueValue = LowerExpr(*Conditional->TrueValue);
 		const FLoweredValue FalseValue = LowerExpr(*Conditional->FalseValue);
 
@@ -1094,7 +1198,6 @@ namespace UE::DreamShader::IR::Private
 			return FLoweredValue();
 		}
 
-		const int32 Width = FMath::Max(BoundExpr.Type.GraphComponentCount(), 1);
 		const FIRValue TrueSide = CoerceToWidth(TrueValue.Value, Width, Expr.Span);
 		const FIRValue FalseSide = CoerceToWidth(FalseValue.Value, Width, Expr.Span);
 		return FLoweredValue::Of(MakeConditional(Condition, IsStaticCondition(Condition), TrueSide, FalseSide, Expr.Span));
@@ -1199,9 +1302,21 @@ namespace UE::DreamShader::IR::Private
 					Value = FLoweredValue::Of(ApplyConversion(Value.Value, EIRConversion::DefaultOutput, TargetWidth, Expr.Span));
 				}
 			}
+
+			// Legacy rule L22: a 1.x store cut the value down to what it was stored in -- a variable, a material
+			// attribute, the components a swizzle names. The binder says to how many.
+			if (const FBoundExpr* BoundValue = Bound(*ValueExpr))
+			{
+				if (Value.IsValue() && BoundValue->Conversion == EIRConversion::Truncate && BoundValue->LegacyTruncateWidth > 0)
+				{
+					Value = FLoweredValue::Of(ApplyConversion(Value.Value, EIRConversion::Truncate, BoundValue->LegacyTruncateWidth, Expr.Span));
+				}
+			}
 		}
 
 		StoreLValue(Ref, Value, Expr.Span);
+		// The statement bound this variable (CONTRACT-UNITS A1): the probe on this line shows what it holds now.
+		RecordStatementBinding(DescribeLValueRef(Ref), BoundValueOfLValueRef(Ref), Expr.Span);
 
 		// The name a value is known by: the variable it was first assigned to, which is what the
 		// layout hints match on and what a node's description shows.
@@ -1370,6 +1485,17 @@ namespace UE::DreamShader::IR::Private
 				return false;
 			}
 			Out.MaterialAttribute = Entry->Name;
+			// Legacy rule L14 (batch 2, every source): another spelling the catalog resolves to this attribute is kept for
+			// the sink's pin.
+			if (const FMemberExpr* Member = Inner->As<FMemberExpr>())
+			{
+				if (Catalog
+					&& !Member->Member.Equals(Entry->Name, ESearchCase::CaseSensitive)
+					&& Catalog->FindMaterialAttribute(Member->Member) == BoundExpr->FieldIndex)
+				{
+					Out.MaterialAttributeSpelling = Member->Member;
+				}
+			}
 			return true;
 		}
 
@@ -1415,6 +1541,9 @@ namespace UE::DreamShader::IR::Private
 			}
 			return FLoweredValue::Of(Ref.SwizzleMask.IsEmpty() ? Field : MakeSwizzle(Field, Ref.SwizzleMask, Span));
 		}
+
+		// `x += e` and `++x` read x first: a value one arm of an `if` left partial is read here (B6 ii).
+		ReportPartialRead(*Slot);
 
 		if (!Ref.SwizzleMask.IsEmpty() && Slot->IsValue())
 		{
@@ -1472,6 +1601,8 @@ namespace UE::DreamShader::IR::Private
 				Slot->Material.Order.Add(Ref.MaterialAttribute);
 			}
 			Slot->Material.Fields.Add(Ref.MaterialAttribute, Stored);
+			// L14: the latest write's spelling is the one the sink shows; a canonical spelling forgets an earlier alias.
+			Slot->Material.SetSpelling(Ref.MaterialAttribute, Ref.MaterialAttributeSpelling);
 			return;
 		}
 
@@ -1574,7 +1705,8 @@ namespace UE::DreamShader::IR::Private
 				FIRSourceRef& Source = Graph->Nodes[NodeIndex].Source;
 				if (!DeclarationFile.IsEmpty())
 				{
-					Source.File = DeclarationFile;
+					// Stamped like every other file the IR writes (debt B5).
+					Source.File = StampFile(DeclarationFile);
 				}
 				Source.CallSite = FLangSpan();
 				Source.CallSiteFile.Reset();

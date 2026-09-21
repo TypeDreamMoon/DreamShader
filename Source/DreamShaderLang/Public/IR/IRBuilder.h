@@ -23,6 +23,7 @@
 #include "CoreMinimal.h"
 #include "IR/IR.h"
 #include "Lang/LangDiagnostic.h"
+#include "Templates/Function.h"
 #include "Templates/UniquePtr.h"
 
 namespace UE::DreamShader::Lang
@@ -52,6 +53,17 @@ namespace UE::DreamShader::IR
 		 * uniforms, helpers, custom nodes -- but no `UE.*` call and no material attribute.
 		 */
 		const FBuiltinCatalog* Catalog = nullptr;
+		/**
+		 * How a source file is named wherever the IR writes it into something that ends up in an
+		 * asset: every `FIRSourceRef::File` (the emitter's `DreamShader.SourceSpans` table) and the
+		 * `// Begin/End DreamShader source:` markers in Custom node code (handed on to
+		 * BuildDreamShaderCustomNodeCode). Unset means the file exactly as the binder recorded it.
+		 *
+		 * The pipeline sets it to the project-relative path, so neither the node code (and with it
+		 * the shader keys) nor the metadata changes with the machine or the checkout (batch 2
+		 * contract, debt B5). Diagnostics never go through it: they are read on this machine.
+		 */
+		TFunction<FString(const FString& File)> StampSourcePath;
 	};
 
 	/**

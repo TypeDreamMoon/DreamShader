@@ -381,7 +381,7 @@ namespace UE::DreamShader::IR::Private
 
 	// ------------------------------------------------------------------- swizzle canonicalisation
 
-	static bool CanonicaliseSwizzles(FIRGraph& Graph, TArray<int32>& Canonical, TArray<bool>& bAlive)
+	static bool CanonicaliseSwizzles(FIRGraph& Graph, TArray<int32>& Canonical, TArray<bool>& bAlive, const bool bKeepIdentityMasks)
 	{
 		bool bChanged = false;
 		const TCHAR* const Components = TEXT("xyzw");
@@ -414,7 +414,9 @@ namespace UE::DreamShader::IR::Private
 			// ...and only when the source is its node's DEFAULT output. Canonical[] repoints a
 			// user's FIRValue by node index alone and leaves the output slot where it was, so
 			// collapsing `(%7#3).x` onto %7 would quietly move the read from output 3 to output 0.
-			if (Mask.Len() == SourceWidth && Source.Output == 0)
+			// Not in the graph of a 1.x block: there a written `.rgb` is a mask whatever the source's width was SAID to be
+			// (IRBuilder.cpp MakeSwizzle), and the frozen 1.x graphs have it.
+			if (Mask.Len() == SourceWidth && Source.Output == 0 && !bKeepIdentityMasks)
 			{
 				bool bIdentity = true;
 				for (int32 Component = 0; Component < Mask.Len(); ++Component)
@@ -723,9 +725,63 @@ namespace UE::DreamShader::IR::Private
 		}
 		Graph.FunctionInputs.RemoveAll([](int32 Index) { return Index == INDEX_NONE; });
 		Graph.FunctionOutputs.RemoveAll([](int32 Index) { return Index == INDEX_NONE; });
+
+		// The statement bindings hold node indices too (CONTRACT-UNITS A1, the probe table): a merged node's
+		// binding follows the merge to its survivor, and a binding whose node was pruned keeps its name and
+		// its line with no value, which the probe publisher skips. The slot stays: a merge never moves a
+		// read to another output, and folding rewrites in place.
+		for (FIRStatementBinding& Binding : Graph.StatementBindings)
+		{
+			if (!Binding.Value.IsValid())
+			{
+				continue;
+			}
+			const int32 Remapped = Remap(Binding.Value.Node);
+			if (Remapped == INDEX_NONE)
+			{
+				Binding.Value = FIRValue::None();
+			}
+			else
+			{
+				Binding.Value.Node = Remapped;
+			}
+		}
 	}
 
-	static void RunGraphPasses(FIRGraph& Graph, const FIRPassOptions& Options, TArray<FPrunedParameter>& OutUnusedParameters)
+	/**
+	 * FIRGraph::PrunedParameters (batch 2): the ParameterName of every Parameter / TextureParameter node a prune
+	 * removed, the data behind DSH4390 and FIRParameterSchemaEntry::bPruned. A name another node still carries
+	 * after the passes is not pruned, and a name is recorded once, compared case-sensitively.
+	 */
+	static void RecordIRPassesPrunedParameters(FIRGraph& Graph, const TArray<FPrunedParameter>& Removed)
+	{
+		for (const FPrunedParameter& Entry : Removed)
+		{
+			if (Entry.Name.IsEmpty())
+			{
+				continue;
+			}
+			const bool bStillThere = Graph.Nodes.ContainsByPredicate([&Entry](const FIRNode& Node)
+			{
+				if (Node.Op != EIROp::Parameter && Node.Op != EIROp::TextureParameter)
+				{
+					return false;
+				}
+				const FIRProperty* Name = Node.FindProperty(Prop::ParameterName);
+				return Name != nullptr && Name->Value.S.Equals(Entry.Name, ESearchCase::CaseSensitive);
+			});
+			const bool bRecorded = Graph.PrunedParameters.ContainsByPredicate([&Entry](const FString& Existing)
+			{
+				return Existing.Equals(Entry.Name, ESearchCase::CaseSensitive);
+			});
+			if (!bStillThere && !bRecorded)
+			{
+				Graph.PrunedParameters.Add(Entry.Name);
+			}
+		}
+	}
+
+	static void RunGraphPasses(FIRGraph& Graph, const FIRPassOptions& Options, const bool bLegacyProduct, TArray<FPrunedParameter>& OutUnusedParameters)
 	{
 		TArray<int32> Canonical;
 		Canonical.SetNum(Graph.Nodes.Num());
@@ -744,9 +800,10 @@ namespace UE::DreamShader::IR::Private
 		// one Constant and leaves the literals it folded behind, unread, and a merge must never keep one of
 		// those as the node that survives -- a live read would inherit the span and name of a value nothing
 		// reads. This pass reports nothing; the prune at the end reports the parameters nobody reads.
+		// Not reported, but still pruned: FIRGraph::PrunedParameters takes these too, after the re-index below.
+		TArray<FPrunedParameter> NotReported;
 		if (Options.bPrune)
 		{
-			TArray<FPrunedParameter> NotReported;
 			Prune(Graph, Canonical, bAlive, NotReported);
 		}
 
@@ -756,7 +813,7 @@ namespace UE::DreamShader::IR::Private
 			if (Options.bFoldConstants)
 			{
 				bChanged |= FoldConstants(Graph);
-				bChanged |= CanonicaliseSwizzles(Graph, Canonical, bAlive);
+				bChanged |= CanonicaliseSwizzles(Graph, Canonical, bAlive, /* bKeepIdentityMasks */ bLegacyProduct);
 			}
 			if (Options.bDedupe)
 			{
@@ -774,6 +831,9 @@ namespace UE::DreamShader::IR::Private
 		}
 
 		Reindex(Graph, Canonical, bAlive);
+
+		RecordIRPassesPrunedParameters(Graph, NotReported);
+		RecordIRPassesPrunedParameters(Graph, OutUnusedParameters);
 
 		// The keys are stamped again on the final indices, so a second run of the whole pipeline
 		// produces byte-identical keys on a graph nothing else changed.
@@ -797,8 +857,14 @@ namespace UE::DreamShader::IR
 	{
 		for (FIRProduct& Product : Module.Products)
 		{
+			if (Product.Kind == EIRProductKind::MaterialInstance)
+			{
+				// A `.dsi` product has no graph to pass over (research-instance section 3.5).
+				continue;
+			}
+
 			TArray<Private::FPrunedParameter> UnusedParameters;
-			Private::RunGraphPasses(Product.Graph, Options, UnusedParameters);
+			Private::RunGraphPasses(Product.Graph, Options, Product.bLegacyAssetPath, UnusedParameters);
 
 			for (const Private::FPrunedParameter& Parameter : UnusedParameters)
 			{

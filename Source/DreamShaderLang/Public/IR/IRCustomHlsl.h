@@ -25,6 +25,7 @@
 
 #include "Lang/LangDiagnostic.h"
 #include "Semantic/LangBound.h"
+#include "Templates/Function.h"
 
 namespace UE::DreamShader::IR
 {
@@ -66,10 +67,14 @@ namespace UE::DreamShader::IR
 	 * those reads the file path unchanged. The line a block starts at cannot be carried by that
 	 * form -- 1.x always started at line 1 -- so it rides on a second line:
 	 *
-	 *     // Begin DreamShader source: D:/Proj/DShader/M_X.dss
+	 *     // Begin DreamShader source: DShader/FX/M_X.dss
 	 *     // DreamShader custom: GlowMask line 42
 	 *     <the body, verbatim, one emitted line per source line, no added indent>
-	 *     // End DreamShader source: D:/Proj/DShader/M_X.dss
+	 *     // End DreamShader source: DShader/FX/M_X.dss
+	 *
+	 * The path is the stamped one (FIRBuildOptions::StampSourcePath): project-relative in an asset,
+	 * as recorded by the binder only when no stamper was given. A reader resolves a relative path
+	 * against the project directory.
 	 *
 	 * Reading rule: on Begin, take the file; on the `custom` line, set the current source line to
 	 * N; every following line that is not a marker maps to the current line and then increments it;
@@ -101,10 +106,17 @@ namespace UE::DreamShader::IR
 	 *
 	 * I2 calls this once per Custom node it makes. Two calls for the same function produce the same
 	 * string, so the dedupe key (§6.7) over `Prop::Code` behaves.
+	 *
+	 * `StampSourcePath` names the file in the Begin/End markers; I2 passes
+	 * `FIRBuildOptions::StampSourcePath`. Unset means the file exactly as the binder recorded it.
+	 * The pipeline's stamper makes it project-relative, so the code is the same on every machine
+	 * and a reader resolves a relative marker path against the project directory (batch 2
+	 * contract, debt B5).
 	 */
 	DREAMSHADERLANG_API bool BuildDreamShaderCustomNodeCode(
 		const Lang::FBoundModule& Bound,
 		int32 FunctionIndex,
 		FCustomNodeCode& Out,
-		Lang::FLangDiagnosticSink& Diagnostics);
+		Lang::FLangDiagnosticSink& Diagnostics,
+		const TFunction<FString(const FString& File)>& StampSourcePath = TFunction<FString(const FString& File)>());
 }

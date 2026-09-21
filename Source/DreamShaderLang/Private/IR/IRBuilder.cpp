@@ -5,8 +5,13 @@
 // beside this one; they all come back here to AddNode, which is the only place FIRNode::Source,
 // Region and DebugName are written.
 //
-// Diagnostics owned by this file: DSH4352 (no builtin catalog, said once for the whole module)
-// and DSH4374 (Append over four components).
+// Diagnostics owned by this file: DSH4352 (no builtin catalog, said once for the whole module),
+// DSH4372 (a value assigned in one arm of an `if`, read after it -- batch 2, debt B6 (ii)), DSH4374
+// (Append over four components), DSH4378 (a run-time branch over Substrate values) and DSH4379 (a
+// branch over texture objects or samplers) -- the last two batch 2, debt B6 (i).
+//
+// Batch 2, debt B5: every FIRSourceRef file the builder writes goes through StampFile, so an asset
+// never carries the machine's absolute path. Diagnostics keep the absolute path.
 
 #include "IRBuilderInternal.h"
 
@@ -103,7 +108,8 @@ namespace UE::DreamShader::IR::Private
 		OutModule.SourceFilePath = SourceFile;
 		OutModule.Includes = BoundModule.IncludePaths;
 
-		if (!Catalog)
+		// A `.dsi` names no `UE.*` node and no attribute, so it needs no catalog (research-instance section 3.5).
+		if (!Catalog && !BoundModule.Instance.bIsInstance)
 		{
 			// Said once, at the top of the file, rather than at every `UE.*` call and every material
 			// attribute below: one missing catalog is one problem, not fifty.
@@ -135,6 +141,16 @@ namespace UE::DreamShader::IR::Private
 		OutProduct.Settings = BoundProduct.Settings;
 		OutProduct.Backend = BoundProduct.Backend;
 		OutProduct.BoundFunctionIndex = BoundProduct.FunctionIndex;
+		// 1.x destination (legacy rule L10, CONTRACT-UNITS A12): carried as the binder decided it.
+		OutProduct.bLegacyAssetPath = BoundProduct.bLegacyAssetPath;
+		OutProduct.AssetRoot = BoundProduct.AssetRoot;
+
+		if (BoundProduct.Kind == EIRProductKind::MaterialInstance)
+		{
+			// A `.dsi` (CONTRACT-UNITS A2): no graph at all -- not even the file's regions and layout hints.
+			BuildInstanceProduct(BoundProduct, OutProduct);
+			return;
+		}
 
 		// Every product carries the file's whole region tree and its layout hints: FIRNode::Region is
 		// an index into it and FBoundModule::StatementRegions is indexed the same way, so copying the
@@ -151,7 +167,7 @@ namespace UE::DreamShader::IR::Private
 		const FBoundFunction& Function = BoundModule.Functions[BoundProduct.FunctionIndex];
 		OutProduct.Description = Function.Directives.Desc.IsEmpty() ? Function.Directives.FreeText : Function.Directives.Desc;
 		OutProduct.LibraryPath = Function.Directives.Library;
-		OutProduct.Source.File = Function.File.IsEmpty() ? SourceFile : Function.File;
+		OutProduct.Source.File = StampFile(Function.File.IsEmpty() ? SourceFile : Function.File);
 		OutProduct.Source.Span = Function.Decl ? Function.Decl->Span : FLangSpan();
 
 		Graph = &OutProduct.Graph;
@@ -355,22 +371,287 @@ namespace UE::DreamShader::IR::Private
 		return false;
 	}
 
+	FString FIRBuilder::StampFile(const FString& File) const
+	{
+		// Unset is the identity, which is what the corpus runner and every unit test build with.
+		if (File.IsEmpty() || !Options.StampSourcePath)
+		{
+			return File;
+		}
+		return Options.StampSourcePath(File);
+	}
+
+	FIRSourceRef FIRBuilder::MakeSourceRef(const FLangSpan& Span) const
+	{
+		// File names the span, so it is the file the code that produced the node was written in --
+		// an inlined helper from a `.dsh` keeps the header's path -- and CallSite/CallSiteFile point
+		// back into the product's own body, which is a different file exactly then.
+		FIRSourceRef Source;
+		FString File = SourceFile;
+		if (!Frames.IsEmpty() && Frames.Last()->Function && !Frames.Last()->Function->File.IsEmpty())
+		{
+			File = Frames.Last()->Function->File;
+		}
+		Source.File = StampFile(File);
+		Source.Span = Span;
+
+		FString CallSiteFile;
+		if (ActiveCallSite(Source.CallSite, CallSiteFile))
+		{
+			Source.CallSiteFile = StampFile(CallSiteFile);
+		}
+		return Source;
+	}
+
+	// ------------------------------------------------------------------------ statement bindings
+
+	void FIRBuilder::RecordStatementBinding(const FString& Name, FIRValue Value, const FLangSpan& Span)
+	{
+		// One entry per statement that binds a named variable, in the order the statements are lowered
+		// (CONTRACT-UNITS A1): an unrolled loop and a helper inlined twice record once per copy, each with
+		// its own call site, which is what a probe on that line has to choose between.
+		if (!Graph || Name.IsEmpty())
+		{
+			return;
+		}
+		FIRStatementBinding Binding;
+		Binding.Name = Name;
+		Binding.Value = (Value.IsValid() && Graph->Nodes.IsValidIndex(Value.Node)) ? Value : FIRValue::None();
+		Binding.Source = MakeSourceRef(Span);
+		Graph->StatementBindings.Add(MoveTemp(Binding));
+	}
+
+	FString FIRBuilder::DescribeLValueRef(const FLValueRef& Ref) const
+	{
+		if (!Ref.IsValid() || !Frames.IsValidIndex(Ref.FrameIndex) || !Frames[Ref.FrameIndex]->Function)
+		{
+			return FString();
+		}
+
+		const FBoundFunction& Function = *Frames[Ref.FrameIndex]->Function;
+		FString Name;
+		FIRType Type = FIRType::Error();
+		int32 ArrayCount = 0;
+		if (Ref.bParam)
+		{
+			if (!Function.Params.IsValidIndex(Ref.BaseIndex))
+			{
+				return FString();
+			}
+			Name = Function.Params[Ref.BaseIndex].Name;
+			Type = Function.Params[Ref.BaseIndex].Type;
+			ArrayCount = Function.Params[Ref.BaseIndex].ArrayCount;
+		}
+		else
+		{
+			if (!Function.Locals.IsValidIndex(Ref.BaseIndex))
+			{
+				return FString();
+			}
+			Name = Function.Locals[Ref.BaseIndex].Name;
+			Type = Function.Locals[Ref.BaseIndex].Type;
+			ArrayCount = Function.Locals[Ref.BaseIndex].ArrayCount;
+		}
+
+		// The path the same walk DeclaredTypeOf takes: an element of an array, then a field of a struct.
+		for (const int32 Field : Ref.FieldPath)
+		{
+			if (ArrayCount > 0)
+			{
+				Name += FString::Printf(TEXT("[%d]"), Field);
+				ArrayCount = 0;
+				continue;
+			}
+			if (!Type.IsStruct()
+				|| !BoundModule.Structs.IsValidIndex(Type.StructIndex)
+				|| !BoundModule.Structs[Type.StructIndex].Fields.IsValidIndex(Field))
+			{
+				break;
+			}
+			const FBoundStructField& StructField = BoundModule.Structs[Type.StructIndex].Fields[Field];
+			Name += TEXT(".") + StructField.Name;
+			Type = StructField.Type;
+			ArrayCount = StructField.ArrayCount;
+		}
+
+		if (!Ref.MaterialAttribute.IsEmpty())
+		{
+			Name += TEXT(".") + Ref.MaterialAttribute;
+		}
+		return Name;
+	}
+
+	FIRValue FIRBuilder::BoundValueOfLValueRef(const FLValueRef& Ref)
+	{
+		// ResolveSlot ignores the swizzle: a write through a mask rebinds the whole slot, and the whole
+		// value is what a probe on that line shows.
+		FLoweredValue* Slot = ResolveSlot(Ref);
+		if (!Slot)
+		{
+			return FIRValue::None();
+		}
+		if (!Ref.MaterialAttribute.IsEmpty())
+		{
+			if (Slot->IsMaterial())
+			{
+				if (const FIRValue* Field = Slot->Material.Fields.Find(Ref.MaterialAttribute))
+				{
+					return *Field;
+				}
+			}
+			return FIRValue::None();
+		}
+		return SingleGraphValueOf(*Slot);
+	}
+
+	FIRValue FIRBuilder::SingleGraphValueOf(const FLoweredValue& Value)
+	{
+		if (Value.IsValue())
+		{
+			return Value.Value;
+		}
+		if (Value.IsMaterial() && Value.Material.HasSource() && Value.Material.Order.IsEmpty())
+		{
+			// A material nothing was written on top of IS the set it came from; with writes it has no one
+			// node until something materialises it, and recording would have to make one.
+			return Value.Material.Source;
+		}
+		return FIRValue::None();
+	}
+
+	// ------------------------------------------------------------- one-armed assignments (B6 ii)
+
+	void FIRBuilder::MarkPartial(FLoweredValue& Value, const FLangSpan& Span, const FString& Name) const
+	{
+		switch (Value.Kind)
+		{
+		case FLoweredValue::EKind::Aggregate:
+			for (FLoweredValue& Field : Value.Fields)
+			{
+				MarkPartial(Field, Span, Name);
+			}
+			return;
+		case FLoweredValue::EKind::Material:
+			for (const FString& Attribute : Value.Material.Order)
+			{
+				if (Value.Material.FindPartialAttribute(Attribute) == INDEX_NONE)
+				{
+					Value.Material.PartialAttributes.Emplace(Attribute, Span);
+				}
+			}
+			return;
+		case FLoweredValue::EKind::Empty:
+		case FLoweredValue::EKind::Value:
+			if (!Value.bPartiallyAssigned)
+			{
+				Value.bPartiallyAssigned = true;
+				Value.PartialSpan = Span;
+				Value.PartialName = Name;
+			}
+			return;
+		}
+	}
+
+	void FIRBuilder::CarryPartial(FLoweredValue& Value, const FLoweredValue& Other)
+	{
+		if (Other.bPartiallyAssigned && !Value.bPartiallyAssigned)
+		{
+			Value.bPartiallyAssigned = true;
+			Value.PartialSpan = Other.PartialSpan;
+			Value.PartialName = Other.PartialName;
+		}
+		if (Value.IsAggregate() && Other.IsAggregate())
+		{
+			for (int32 Index = 0; Index < Value.Fields.Num() && Index < Other.Fields.Num(); ++Index)
+			{
+				CarryPartial(Value.Fields[Index], Other.Fields[Index]);
+			}
+		}
+		if (Value.IsMaterial() && Other.IsMaterial())
+		{
+			for (const TPair<FString, FLangSpan>& Partial : Other.Material.PartialAttributes)
+			{
+				if (Value.Material.FindPartialAttribute(Partial.Key) == INDEX_NONE)
+				{
+					Value.Material.PartialAttributes.Add(Partial);
+				}
+			}
+		}
+	}
+
+	void FIRBuilder::ReportPartialRead(const FLoweredValue& Value)
+	{
+		// The same stand-downs as DSH4376: an `inout` argument's copy-in is not a read the author wrote,
+		// and a read in an arm the compiler can tell may never run proves nothing about the paths the
+		// shader takes. Nothing is cleared, so a later read that does count still reports.
+		if (!Value.bPartiallyAssigned || InOutArgumentDepth > 0 || IsInArmThatMayNotRun())
+		{
+			return;
+		}
+
+		const FString Key = FString::Printf(
+			TEXT("%d:%d:%d:%s"),
+			Value.PartialSpan.Offset,
+			Value.PartialSpan.Line,
+			Value.PartialSpan.Column,
+			*Value.PartialName);
+		for (const FString& Reported : PartialReadsReported)
+		{
+			if (Reported.Equals(Key, ESearchCase::CaseSensitive))
+			{
+				return;
+			}
+		}
+		PartialReadsReported.Add(Key);
+
+		Diagnostics.Error(TEXT("DSH4372"), Value.PartialSpan, FText::Format(
+			LOCTEXT("IRBuilderOneArmedWrite", "'{0}' is assigned in only one arm of this 'if' and has no value before it; assign it in both arms, or give it a value before the 'if'."),
+			FText::FromString(Value.PartialName)));
+	}
+
+	void FIRBuilder::ReportPartialAttributeRead(const FMaterialValue& Material, const FString& Name)
+	{
+		const int32 PartialIndex = Material.FindPartialAttribute(Name);
+		if (PartialIndex == INDEX_NONE || IsInArmThatMayNotRun())
+		{
+			return;
+		}
+
+		const FLangSpan& Span = Material.PartialAttributes[PartialIndex].Value;
+		const FString Key = FString::Printf(TEXT("%d:%d:%d:@%s"), Span.Offset, Span.Line, Span.Column, *Name);
+		for (const FString& Reported : PartialReadsReported)
+		{
+			if (Reported.Equals(Key, ESearchCase::CaseSensitive))
+			{
+				return;
+			}
+		}
+		PartialReadsReported.Add(Key);
+
+		Diagnostics.Error(TEXT("DSH4372"), Span, FText::Format(
+			LOCTEXT("IRBuilderOneArmedMaterialWrite", "'{0}' is set in only one arm of this 'if' and has no value before it; set it in both arms, or before the 'if'."),
+			FText::FromString(Name)));
+	}
+
+	void FIRBuilder::ReportPartialAttributes(const FMaterialValue& Material)
+	{
+		for (const TPair<FString, FLangSpan>& Partial : Material.PartialAttributes)
+		{
+			if (Material.Fields.Contains(Partial.Key))
+			{
+				ReportPartialAttributeRead(Material, Partial.Key);
+			}
+		}
+	}
+
 	// ------------------------------------------------------------------------------------ nodes
 
 	FIRValue FIRBuilder::AddNode(FIRNode&& Node, const FLangSpan& Span)
 	{
 		check(Graph != nullptr);
 
-		// File names the span, so it is the file the code that produced the node was written in --
-		// an inlined helper from a `.dsh` keeps the header's path -- and CallSite/CallSiteFile point
-		// back into the product's own body, which is a different file exactly then.
-		Node.Source.File = SourceFile;
-		if (!Frames.IsEmpty() && Frames.Last()->Function && !Frames.Last()->Function->File.IsEmpty())
-		{
-			Node.Source.File = Frames.Last()->Function->File;
-		}
-		Node.Source.Span = Span;
-		ActiveCallSite(Node.Source.CallSite, Node.Source.CallSiteFile);
+		// The one place a node's Source is written; MakeSourceRef stamps its files (debt B5).
+		Node.Source = MakeSourceRef(Span);
 		Node.Region = CurrentRegion;
 		if (!Options.bKeepDebugNames)
 		{
@@ -728,7 +1009,11 @@ namespace UE::DreamShader::IR::Private
 					break;
 				}
 			}
-			if (bIdentity)
+			// Not in a 1.x body. There the width is what a declaration SAID -- a VirtualFunction's `float3 HeadForward`, an
+			// `OutputType="float3"` -- and the 1.x generator took no declaration's word for it: `.rgb` was a mask on the
+			// wire whatever it was written after, and cut a float4 that had been declared float3 down to what the author
+			// meant. The frozen 1.x graphs have that mask, so a legacy frame keeps it (as a ComponentMask, PD-1).
+			if (bIdentity && !IsLegacyFrame())
 			{
 				return Value;
 			}
@@ -839,6 +1124,30 @@ namespace UE::DreamShader::IR::Private
 		return MakeCoreOp(EIROp::Broadcast, { Value }, FIRType::Float(FMath::Clamp(Width, 1, 4)), Span);
 	}
 
+	void FIRBuilder::RetypeAnyWidthOutput(const FIRValue Value, const int32 Width)
+	{
+		if (!Graph || !Catalog || Width < 2 || Width > 4 || !Graph->Nodes.IsValidIndex(Value.Node))
+		{
+			return;
+		}
+		FIRNode& Node = Graph->Nodes[Value.Node];
+		if (Node.Op != EIROp::Reflected
+			|| !Catalog->Expressions.IsValidIndex(Node.CatalogIndex)
+			|| !Node.Outputs.IsValidIndex(Value.Output))
+		{
+			return;
+		}
+		const FCatalogExpression& Entry = Catalog->Expressions[Node.CatalogIndex];
+		if (!Entry.Outputs.IsValidIndex(Value.Output) || Entry.Outputs[Value.Output].Type != ECatalogValueType::Numeric)
+		{
+			return;
+		}
+		if (Node.Outputs[Value.Output].IsNumeric() && Node.Outputs[Value.Output].GraphComponentCount() < Width)
+		{
+			Node.Outputs[Value.Output] = FIRType::Float(Width);
+		}
+	}
+
 	FIRValue FIRBuilder::ApplyConversion(FIRValue Value, EIRConversion Conversion, int32 TargetWidth, const FLangSpan& Span)
 	{
 		if (!Value.IsValid())
@@ -876,9 +1185,16 @@ namespace UE::DreamShader::IR::Private
 				{
 					return Whole;
 				}
+				// Legacy rule L3c: the first output of a node whose outputs the catalog cannot give a width
+				// (`float2 vp = UE.ScreenPosition();`). What it feeds is the width it has.
+				RetypeAnyWidthOutput(OutputZero, TargetWidth);
 			}
 			return OutputZero;
 		}
+
+		case EIRConversion::Truncate:
+			// Legacy rule L22: the leading components, where the place says how many it takes.
+			return TargetWidth > 0 ? CoerceToWidth(Value, TargetWidth, Span) : Value;
 
 		case EIRConversion::Identity:
 		case EIRConversion::None:
@@ -901,6 +1217,12 @@ namespace UE::DreamShader::IR::Private
 		{
 			const FIRProperty* Static = Node.FindProperty(Prop::IsStatic);
 			return Static != nullptr && Static->Value.B;
+		}
+		case EIROp::FunctionInput:
+		{
+			// `@static`: a StaticBool pin is as static as a static bool parameter.
+			const FIRProperty* InputType = Node.FindProperty(Prop::InputType);
+			return InputType != nullptr && InputType->Value.S.Equals(TEXT("StaticBool"), ESearchCase::CaseSensitive);
 		}
 		case EIROp::LogicalNot:
 		case EIROp::LogicalAnd:
@@ -1109,6 +1431,37 @@ namespace UE::DreamShader::IR::Private
 		{
 			ReportWholeMaterialMerge(FString(), Span);
 			return TrueValue;
+		}
+
+		// Batch 2, debt B6 (i). A texture object, a sampler and a Substrate value have no width, so the
+		// width typing below would make any conditional over them a float1 -- a graph that validates and
+		// means nothing. A texture or a sampler has no node that switches it at all; a Substrate value
+		// has one, the StaticSwitch, and only under a static condition (1.x since 0eee929).
+		const FIRType TrueType = TypeOfValue(TrueValue);
+		const FIRType FalseType = TypeOfValue(FalseValue);
+		const auto IsTextureOrSampler = [](const FIRType& Type) -> bool
+		{
+			return Type.IsTexture() || Type.Kind == EIRTypeKind::SamplerState;
+		};
+		if (IsTextureOrSampler(TrueType) || IsTextureOrSampler(FalseType))
+		{
+			Diagnostics.Error(TEXT("DSH4379"), Span, FText::Format(
+				LOCTEXT("IRBuilderTextureBranch", "A branch can only choose between numbers, bools and static Substrate values, and these are {0} objects, which no material graph node switches; sample each texture first and branch on the samples."),
+				FText::FromString((IsTextureOrSampler(TrueType) ? TrueType : FalseType).ToString())));
+			return TrueValue;
+		}
+		const bool bTrueSubstrate = TrueType.Kind == EIRTypeKind::Substrate;
+		const bool bFalseSubstrate = FalseType.Kind == EIRTypeKind::Substrate;
+		if (bTrueSubstrate || bFalseSubstrate)
+		{
+			if (!bStaticCondition || bTrueSubstrate != bFalseSubstrate)
+			{
+				Diagnostics.Error(TEXT("DSH4378"), Span, FText::Format(
+					LOCTEXT("IRBuilderSubstrateBranch", "A branch over {0} values needs a static condition, and this one is decided at run time; make the condition a '/// @static' uniform bool, or mix the two values with a Substrate mixing node."),
+					FText::FromString(FIRType::Substrate().ToString())));
+				return TrueValue;
+			}
+			return MakeCoreOp(EIROp::StaticSwitch, { Condition, TrueValue, FalseValue }, FIRType::Substrate(), Span);
 		}
 
 		const int32 Width = FMath::Max(WidthOf(TrueValue), WidthOf(FalseValue));

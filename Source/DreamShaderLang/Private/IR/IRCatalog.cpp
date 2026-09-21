@@ -640,6 +640,7 @@ namespace UE::DreamShader::IR
 				Expression.bIsParameter = Item.GetBool(TEXT("isParameter"), false);
 				Expression.bIsCustomOutput = Item.GetBool(TEXT("isCustomOutput"), false);
 				Expression.bIsAbstract = Item.GetBool(TEXT("isAbstract"), false);
+				Expression.bHasInstanceDependentPins = Item.GetBool(TEXT("hasInstanceDependentPins"), false);
 
 				if (const Private::FIRJsonValue* Inputs = Item.FindArray(TEXT("inputs")))
 				{
@@ -815,6 +816,10 @@ namespace UE::DreamShader::IR
 			if (Expression.bIsAbstract)
 			{
 				Writer.KeyBool(TEXT("isAbstract"), true);
+			}
+			if (Expression.bHasInstanceDependentPins)
+			{
+				Writer.KeyBool(TEXT("hasInstanceDependentPins"), true);
 			}
 
 			Writer.EndObject();
