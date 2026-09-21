@@ -66,6 +66,65 @@
   instance rewrites its `.dsi` value by value, so comments and order survive; node <-> source
   navigation for assets built from a `.dss`.
 
+- **Substrate sugar.** A Substrate graph written the way it is thought of. `A + B`, `A * w` and
+  `lerp(A, B, t)` over Substrate values are `Substrate.Add`, `Weight` and `HorizontalMix`; the five
+  composition nodes take their operands by position, and `Substrate.Mix` / `Substrate.Layer` are their
+  short names. `Substrate.Slab(BaseColor = ..., Metallic = ..., Haziness = ..., Transmittance = ...,
+  IOR = ...)` takes the parameters people have textures for, and the compiler puts the conversion node
+  in front of the pins they stand for -- shared between slabs that convert the same values, folded to
+  a constant for an `IOR` that is a number. An `if` or `?:` decided at run time over Substrate values
+  is a `Substrate.Select` (UE 5.6; earlier 2.0 builds refused it). `Substrate S = Substrate.Slab();` followed by
+  `S.Roughness = r;` builds a value member by member, in any order, `#if` lines included, and the first
+  use of `S` makes the node -- through the path the call takes, so the two spellings cannot differ.
+  `m.FrontMaterial` of a material that arrived through a pin reads through GetMaterialAttributes,
+  which is what lets a layer blend carry Substrate. Every sugar is a spelling and nothing else: the
+  graph is the one the long form makes, both front ends have it (a `.dsm` writes
+  `Base.FrontMaterial = Substrate.Layer(Clear * Coat, Body, 0.01);` in its `Outputs`, and needs no
+  `Graph` section when its `Outputs` compute everything), and the decompiler reads it back wherever
+  that is graph-exact. [`Docs/language-v2/substrate.md`](Docs/language-v2/substrate.md).
+
+- **`#pragma material(Substrate = Legacy | Bridge | Native)`.** One source for two kinds of project.
+  Under `Bridge`, in a project that has Substrate on, the shading attributes of a Surface material move
+  into one `Substrate.ShadingModels` node on `FrontMaterial`, and what the engine still reads off the
+  material itself -- `Opacity`, `WorldPositionOffset`, the customized UVs -- stays. `Native` driving
+  `FrontMaterial` with Substrate off is refused before the engine gets the chance (`DSH4382`). `Legacy`
+  is the default and changes nothing. `DS_SUBSTRATE` joins the build key of every material that says
+  `Bridge` or `Native`, so switching the project setting rebuilds exactly those.
+
+- **Graph layouts that read the source.** *Project Settings > DreamShader > Graph Layout Style* has
+  three styles computed on the compiler's IR rather than on the finished graph. `Blocks` is a page of
+  boxes in source order -- one per `#pragma region` or run of statements, a region that holds regions
+  a box around their boxes -- each a small left-to-right drawing, with **no wire between two boxes**: a
+  value another box reads gets a named reroute (`DS_<variable>`) beside it and a usage in every box
+  that reads it, a constant is written again where it is read, and what drives the material leaves its
+  box through the reroute pair in front of the output. `SourceBands` is one band per statement in the
+  order of the text; `Layered` is the whole graph in layers by distance from the outputs; those two
+  insert nothing. All three obey `#pragma layout` to the unit, box `#pragma region`s with their
+  nesting and are deterministic. `Classic` -- the 1.x layout -- stays the default. `dsc dump-layout`
+  draws the IR styles for any source as SVG (coordinates as JSON with `-Json`) and builds nothing.
+  [`Docs/generation/graph-layout.md`](Docs/generation/graph-layout.md#layout-styles).
+
+- **`dsc fmt`.** The language's own printer as a formatter, for `.dss`, `.dsi` and 2.0 headers. It
+  refuses to write a file it cannot vouch for: the formatted text has to parse, to the same
+  declarations, with every comment, and format to itself -- otherwise the file is left alone and the
+  fault is the formatter's (`DSH9044`). A file with 1.x declarations is `migrate`'s, a file that uses
+  `#if` is left as it is; `-All` takes the project's own source root, `-Check` writes nothing and
+  fails when a file would change.
+
+- **`dsc list-generated`, and a page on source control.** Every asset the sources build, named
+  without building any: package names, project-relative files, a ready `.gitignore` block, or JSON.
+  [`Docs/generation/source-control.md`](Docs/generation/source-control.md) sets out which generated
+  assets have files at all since 2.0 and the two workable recipes for versioning them -- ignore them
+  and build on every machine, or commit them as writable derived binaries and let CI prove they match
+  their sources.
+
+- **The editor feeds the language service.** Every compile that gets as far as a bound module -- a
+  failed one included -- refreshes the symbol index of its source under `Saved/DreamShader/Index`,
+  by the rule `dsc index` writes by; the builtin node catalog is exported once the editor has loaded.
+  The VS Code extension (2.0.0) answers Go to Definition, Find References, Hover, the Outline, Rename
+  and `UE.` / `Substrate.` completion for `.dss` sources from those two files, and its *Reveal in
+  Material Editor* command drives the bridge's `reveal-node`.
+
 - **Every diagnostic has a page.** 617 `DSHnnnn` codes, each with its message, where it is raised,
   a cause and a fix, including the codes raised from several places with different messages.
   [`Docs/diagnostics/README.md`](Docs/diagnostics/README.md).
@@ -137,6 +196,14 @@
   keeps the `_DEPRECATED` suffix in a property's name and config load keys off that name -- the shim
   would look for a key nobody ever wrote.
 
+- **A run-time `if` over Substrate values compiles.** It was `DSH4378` in earlier builds of this
+  line; it is a `Substrate.Select` now, and the code is left for an engine that has no such node.
+
+- **The decompiler writes Substrate the way sources do.** `Substrate.Slab(...)` rather than the
+  reflected `Substrate.SubstrateSlabBSDF(...)`, operators and `lerp` for the three composition nodes
+  with nothing set on them, and `BaseColor = ...` for a conversion node that feeds one BSDF and
+  nothing else. All of it is graph-exact, so none of it waits for `-Readable`.
+
 - **`Make Ephemeral` lists ThinCustom products only.** *Clean Persisted Generated Assets* used to
   offer to delete saved `UMaterial` and `UMaterialFunction` assets too. Those have no Ephemeral state
   to return to, so deleting them was not "making them ephemeral" -- it was just deleting them. The
@@ -148,6 +215,15 @@
   remaining opt-out is the large-graph performance guard (1200 expressions with no `Layout` section),
   which is unchanged.
 
+- **`dump-graph` names the pins of the attribute nodes by attribute.** `BreakMaterialAttributes`,
+  `GetMaterialAttributes` and `SetMaterialAttributes` name their inputs with translated text, so a capture
+  taken in a Chinese editor did not compare equal to one taken in an English editor. Their inputs are
+  `MaterialAttributes` and the attribute's own name now, and a Get or a Set also lists its attributes in
+  `props` (`AttributeGetTypes`, `AttributeSetTypes`) -- they are arrays of `FGuid`, which the dump leaves
+  out everywhere else, and without them two Gets that publish different attributes dumped alike. A
+  capture of a graph that has one of these nodes differs from a 1.9 capture of the same graph; nothing
+  else moved.
+
 ### Removed
 
 - **The 1.x generator and the 1.x parser.** `Source/DreamShaderEditor/Private/MaterialAssetGeneration`
@@ -158,6 +234,25 @@
   maps the old entry point to the new one.
 
 - **`FDreamShaderCompileService` and the editor's compile adapter.** See *Changed* above.
+
+### Fixed
+
+- **A generated layer, blend or attribute function read as hand-edited in an editor of another
+  language.** The [divergence](Docs/generation/divergence.md) digest named every input by the engine's
+  `GetInputName`, and three nodes answer that with translated text: `BreakMaterialAttributes` (`Attr`),
+  and `GetMaterialAttributes` / `SetMaterialAttributes`, whose pins carry the attributes' display
+  names. A digest stamped by an English editor therefore did not match what a Chinese editor computed
+  for the same graph, and on a team that uses both, each side saw the other's assets as `Diverged` and
+  was refused the rebuild. Inputs are named by the attribute itself now, and the digest also covers
+  which attributes a `GetMaterialAttributes` publishes -- retargeting an output moves no connection, so
+  that hand edit went unseen. The digest format moves from `DSD3` to `DSD4`: as with every format
+  change, each generated asset reads as `Unstamped` once and is restamped by its next rebuild, which
+  means a hand edit made before that rebuild is not detected.
+
+- **A layer blend could not write `FrontMaterial`.** A blend's result starts empty, so its writes
+  become a `MakeMaterialAttributes` -- which has no pin for `FrontMaterial` or `SurfaceThickness`
+  (`DSH8212`). What Make has no pin for is set by a `SetMaterialAttributes` on top of it, in both
+  front ends.
 
 ## 1.9.1 - 2026-09-08
 

@@ -43,6 +43,8 @@ Corpus/
 │   ├── Matrices/       # 矩阵在图里没有形态                                   (DSH4361)
 │   ├── Loops/          # 可展开 for / 动态上界负例                            (DSH4360)
 │   ├── Custom/         # @custom 节点与 H 的标记行                            (§6.13)
+│   ├── Substrate/      # Substrate 糖: S1 运算符/位置实参, S2 动态分支→Select, S3 虚拟实参, S4 Bridge/Native
+│   │                   #   (金样本 `"substrate": true` = 工程开了 Substrate), S5 builder, S8 层混合的 FrontMaterial
 │   └── Examples/       # Lang/Examples 三个文件的**副本**（见下方"两处已知的重复"）
 └── Compile/            # 2.0 全链路 (测试编译门面 CompileDreamShaderTestAssets → 编译器服务), 慢, 要编辑器
     ├── Material/       # 最小材质 / 内联+swizzle / 静态开关 / ThinCustom / region

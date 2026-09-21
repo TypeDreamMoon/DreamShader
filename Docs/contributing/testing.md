@@ -30,12 +30,12 @@ Optional switches: `-nullrhi`, `-DreamShaderUpdateGolden`, `-NoDreamShaderEditor
 
 | Quantity | Value |
 | :-- | :-- |
-| Test declarations (`IMPLEMENT_*_AUTOMATION_TEST`) | 261 |
-| Simple declarations (one test each) | 248 |
+| Test declarations (`IMPLEMENT_*_AUTOMATION_TEST`) | 277 |
+| Simple declarations (one test each) | 264 |
 | Complex declarations (data-driven runners) | 13 — see [Corpus runners](#corpus-runners--13-declarations) |
-| Corpus fixtures | 473 sources under `Tests/Corpus/` |
-| `.expected.json` goldens | 468 |
-| Individually runnable tests | **855** in a `DreamShader` run (2026-09-20) |
+| Corpus fixtures | 513 sources under `Tests/Corpus/` |
+| `.expected.json` goldens | 508 |
+| Individually runnable tests | **945** in a `DreamShader` run (2026-09-21) |
 
 The complex runners enumerate the corpus tree at run time, so the runnable-test count moves with the
 fixture count and **no C++ changes when a fixture is added**. `DreamShader.Lang2.RoundtripIR` sweeps
@@ -307,12 +307,12 @@ schema and every runner; this section is the map.
 | :-- | --: | :-- | :-- |
 | `Parse/` | 36 | a 1.x text is accepted or refused by the legacy front end exactly as 1.x did | `Core` |
 | `Lang/` | 72 | one `ParseDreamShaderLang`, structural counts, print → parse → print is byte-identical | `Core` |
-| `IR/` | 116 | bind → build → passes → validate; the golden is the IR dump | `Core`, hand-made catalog |
+| `IR/` | 151 | bind → build → passes → validate; the golden is the IR dump | `Core`, hand-made catalog |
 | `Legacy/Parse/` | 117 | 1.x text → legacy front end (with trivia) → the 2.0 text it prints, which has to parse as 2.0 | `Core` |
-| `Legacy/IR/` | 46 | one fixture per documented 1.x rule (L2–L26) | `Core`, hand-made catalog |
+| `Legacy/IR/` | 49 | one fixture per documented 1.x rule (L2–L26), and the Substrate sugar as 1.x spells it | `Core`, hand-made catalog |
 | `Decompile/` | 25 | `.dss` → IR → AST → text, and that text lowers to an equivalent IR | `Core`, hand-made catalog |
 | `Migrate/` | 20 | 1.x text → migrator → 2.0 text: no comment lost, it builds, the IR is equivalent | `Core`, hand-made catalog |
-| `Compile/` | 10 | the whole pipeline into assets; the golden holds the graph dump | editor |
+| `Compile/` | 12 | the whole pipeline into assets; the golden holds the graph dump | editor |
 | `Legacy/Compile/` | 10 | the same for 1.x sources | editor |
 | `Instance/` | 10 | a `.dsi` with the sibling `.dss` its `Parent` names | editor |
 | `Roundtrip/` | 11 | `.dss` → asset → decompile service → text → asset; both dumps equal | editor |

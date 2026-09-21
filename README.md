@@ -50,8 +50,9 @@
 </table>
 
 > [!TIP]
-> Keep every `.dsm`, `.dsf` and `.dsh` file in version control. The generated Unreal assets can
-> always be rebuilt from source, so they do not need to be.
+> Keep every source file — `.dss`, `.dsi`, `.dsh`, `.dsm`, `.dsf` — in version control. The generated
+> Unreal assets can always be rebuilt from source; whether to version them as well is a choice with two
+> workable answers, and [Source control](Docs/generation/source-control.md) has both.
 
 > [!NOTE]
 > **On the 2.0 beta line** one compiler builds both syntaxes: the 1.x language shown below keeps

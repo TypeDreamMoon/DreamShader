@@ -204,6 +204,15 @@ What happens to a parsed file:
 | A pin named per node | for a class whose nodes name their pins after a property (`Substrate.MoonToonModifier`, TextureSample's derivative pins), a name the catalog does not list is looked up on the built node (`DSH5291`, refused there with `DSH8212`). The pin's own property name always resolves. |
 | Unpassed optional inputs | stay unconnected on the call node; the callee's default applies. |
 
+### Substrate, layout and tooling
+
+| Feature | Spelling |
+| :-- | :-- |
+| [Substrate sugar](substrate.md) | `A + B`, `A * w`, `lerp(A, B, t)` over Substrate values; `Substrate.Slab(BaseColor = ..., Metallic = ...)`; a run-time `if` over Substrate values; `Substrate S = Substrate.Slab(); S.Roughness = r;`; `#pragma material(Substrate = Legacy \| Bridge \| Native)` |
+| A layout that reads the source | *Project Settings ▸ DreamShader ▸ Graph Layout Style* — [Blocks, Source Bands or Layered](../generation/graph-layout.md#layout-styles); `dsc dump-layout` draws all three without building anything |
+| A formatter | [`dsc fmt`](../tools/commandlet.md#fmt) — the printer, with a check that refuses to write a file it cannot vouch for |
+| The generated assets, listed | [`dsc list-generated`](../tools/commandlet.md#list-generated), for [source control](../generation/source-control.md) |
+
 ## What the pipeline does *not* do yet
 
 - **The 1.x layout is still the default.** The three layouts that read the IR — *Blocks*, which boxes the
@@ -296,6 +305,8 @@ no C++, no recompile. The golden schema is documented in
 
 ## See also
 
+- [Substrate sugar](substrate.md) — operators, legacy parameters on a slab, values built member by member, `Substrate =`
+- [Material instances](instances.md) — `.dsi`
 - [`DreamShaderLang` C++ API](../api/lang-module.md) — the module, its headers and entry points
 - [Language reference (1.x)](../language/index.md) — the syntax that ships today
 - [Preprocessor](../language/preprocessor.md) — `#if` and the define table, shared by both syntaxes
