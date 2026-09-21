@@ -1,6 +1,6 @@
 """Structural parity comparator for DreamShader dump-graph JSON (schema 1).
 
-The 1.x generator is deleted in M4, so its output survives only as frozen dumps
+The 1.x generator is deleted, so its output survives only as frozen dumps
 (`Saved/DreamShader/GraphBaseline/v2-6c2e0b6-formal`, `.../v2-6c2e0b6-generate-corpus`). The 2.0 compiler must
 reproduce them. A dump numbers its nodes n0, n1, ... in a canonical traversal, so one extra or missing node renumbers
 everything after it and a text diff is useless. This tool compares graphs by structure instead: every root (a material
@@ -19,6 +19,8 @@ Both sides go through the same normalisations, so a normalisation can only erase
   A  material attributes (PD-4): a chain of SetMaterialAttributes nodes over a material, or over an empty
      MakeMaterialAttributes, is one set of attributes over that material.
   G  attribute reads (PD-6): BreakMaterialAttributes over a material the graph wrote reads the value written.
+  L  translated pin names: the material input of a Break / Get / SetMaterialAttributes node is `MaterialAttributes`
+     whatever the capture calls it. A dump taken before 2.0 wrote the engine's translated text there.
   P  pin prefixes (PD-7): a mask that is exactly the leading components a material attribute (or a known
      custom-output pin) reads is dropped; 1.x lost such masks on those pins, 2.0 keeps them.
   B  splats (PD-5): AppendVector(x, x) over one wire is x; the engine spreads a scalar where a vector is wanted.
@@ -350,7 +352,13 @@ class Graph:
                 source, base, channels = self.resolve(edge)
                 channels = drop_pin_prefix(channels, CUSTOM_OUTPUT_PIN_WIDTH.get((self.cls[nid], edge.get("index", 0))))
                 child = self.node_sig(source) if source is not None else ("missing", base)
-                inputs.append((edge.get("index", 0), edge.get("name", ""), base, channels, child))
+                name = edge.get("name", "")
+                # L: the engine names this input with translated text, and a dump taken before 2.0 wrote that down.
+                if self.cls[nid] in ("BreakMaterialAttributes", "GetMaterialAttributes") and int(edge.get("index", 0)) == 0:
+                    if name != "MaterialAttributes":
+                        self.stats["L: translated pin name normalised"] += 1
+                    name = "MaterialAttributes"
+                inputs.append((edge.get("index", 0), name, base, channels, child))
             sig = (self.cls[nid], props, tuple(inputs))
             # C (D4): an AppendVector of constants is the constant vector. 1.x built the zero of a `float3 v;` by
             # appending one Constant node to itself; 2.0 writes the Constant3Vector.

@@ -72,6 +72,7 @@
 #include "Materials/MaterialExpressionSceneDepth.h"
 #include "Materials/MaterialExpressionScreenPosition.h"
 #include "Materials/MaterialExpressionTwoSidedSign.h"
+#include "Materials/MaterialExpressionGetMaterialAttributes.h"
 #include "Materials/MaterialExpressionSetMaterialAttributes.h"
 #include "Materials/MaterialExpressionSine.h"
 #include "Materials/MaterialExpressionSmoothStep.h"
@@ -307,6 +308,41 @@ namespace UE::DreamShader::Editor::Private
 #else
 		return !Expression->bHidePreviewWindow && !Expression->bCollapsed;
 #endif
+	}
+
+	/**
+	 * The name of an input for anything that is compared across sessions: the asset digest, the graph dump.
+	 *
+	 * The engine's own GetInputName, except on the three nodes that take a material apart or put one together. Break
+	 * names its input with a translated text, and Get and Set name theirs after the attributes' DISPLAY names, which
+	 * are translated as well -- so a digest stamped in an English editor did not match the one a Chinese editor
+	 * computed for the same graph, and the asset read as hand-edited. Those are named after the attribute itself,
+	 * which no culture translates.
+	 */
+	inline FName GetDreamShaderStableInputName(const UMaterialExpression* Expression, const int32 InputIndex)
+	{
+		if (!Expression)
+		{
+			return FName();
+		}
+
+		static const FName MaterialAttributesName(TEXT("MaterialAttributes"));
+		if (const UMaterialExpressionSetMaterialAttributes* Set = Cast<UMaterialExpressionSetMaterialAttributes>(Expression))
+		{
+			if (InputIndex == 0)
+			{
+				return MaterialAttributesName;
+			}
+			return Set->AttributeSetTypes.IsValidIndex(InputIndex - 1)
+				? FName(*FMaterialAttributeDefinitionMap::GetAttributeName(Set->AttributeSetTypes[InputIndex - 1]))
+				: FName();
+		}
+		if (InputIndex == 0
+			&& (Expression->IsA<UMaterialExpressionGetMaterialAttributes>() || Expression->IsA<UMaterialExpressionBreakMaterialAttributes>()))
+		{
+			return MaterialAttributesName;
+		}
+		return Expression->GetInputName(InputIndex);
 	}
 
 	inline bool ConnectDreamShaderSetMaterialAttributeInput(

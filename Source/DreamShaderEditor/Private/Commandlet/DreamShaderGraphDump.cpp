@@ -37,11 +37,14 @@
 #include "HAL/FileManager.h"
 #include "Interfaces/IPluginManager.h"
 #include "Materials/Material.h"
+#include "Materials/MaterialAttributeDefinitionMap.h"
 #include "Materials/MaterialExpression.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
 #include "Materials/MaterialExpressionFunctionOutput.h"
+#include "Materials/MaterialExpressionGetMaterialAttributes.h"
 #include "Materials/MaterialExpressionMaterialFunctionCall.h"
 #include "Materials/MaterialExpressionNamedReroute.h"
+#include "Materials/MaterialExpressionSetMaterialAttributes.h"
 #include "Materials/MaterialFunction.h"
 #include "Materials/MaterialFunctionMaterialLayer.h"
 #include "Materials/MaterialFunctionMaterialLayerBlend.h"
@@ -505,6 +508,27 @@ namespace UE::DreamShader::Editor::Private
 				Props->Set(Property->GetName(), MakeReflectedValueJson(Property, ValuePtr));
 			}
 
+			// The attribute lists of Get/SetMaterialAttributes are arrays of FGuid, which the loop above leaves out with
+			// every other guid -- and they are the one place a guid is behaviour: which attribute output 1 of a Get is,
+			// which one input 2 of a Set drives. Written by the attribute's own name, which no culture translates.
+			const auto MakeAttributeNamesJson = [](const TArray<FGuid>& AttributeIds)
+			{
+				const FDumpJsonRef Names = FDumpJson::Array();
+				for (const FGuid& AttributeId : AttributeIds)
+				{
+					Names->Add(FDumpJson::String(FMaterialAttributeDefinitionMap::GetAttributeName(AttributeId)));
+				}
+				return Names;
+			};
+			if (const UMaterialExpressionSetMaterialAttributes* Set = Cast<UMaterialExpressionSetMaterialAttributes>(Expression))
+			{
+				Props->Set(TEXT("AttributeSetTypes"), MakeAttributeNamesJson(Set->AttributeSetTypes));
+			}
+			else if (const UMaterialExpressionGetMaterialAttributes* Get = Cast<UMaterialExpressionGetMaterialAttributes>(Expression))
+			{
+				Props->Set(TEXT("AttributeGetTypes"), MakeAttributeNamesJson(Get->AttributeGetTypes));
+			}
+
 			return Props;
 		}
 
@@ -727,7 +751,8 @@ namespace UE::DreamShader::Editor::Private
 					}
 
 					const FDumpJsonRef Connection = MakeConnectionJson(*Input, Order);
-					const FName InputName = Expression->GetInputName(InputIndex);
+					// The stable name: three engine nodes name their inputs with translated text (GetDreamShaderStableInputName).
+					const FName InputName = GetDreamShaderStableInputName(Expression, InputIndex);
 					Connection->Set(TEXT("index"), FDumpJson::Int(InputIndex));
 					Connection->Set(TEXT("name"), InputName.IsNone() ? FDumpJson::Null() : FDumpJson::String(InputName.ToString()));
 					Inputs->Add(Connection);

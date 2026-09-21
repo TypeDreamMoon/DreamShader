@@ -1,4 +1,4 @@
-"""Phase-2 parity sweep for M4: build the four DShader roots and the Legacy corpus through the 2.0 compiler, dump them,
+"""The parity sweep: build the four DShader roots and the Legacy corpus through the 2.0 compiler, dump them,
 compare the dumps with the frozen 1.x captures, and leave every repository exactly as it was.
 
     python Tools/Parity/run_parity_sweep.py [--project <DevTest dir>] [--skip-compile] [--keep-assets]

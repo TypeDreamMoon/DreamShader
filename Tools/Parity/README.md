@@ -26,6 +26,7 @@ of the subgraph feeding it, so node numbering never matters.
 | K | Props named by `--filter-keys` are left out (default `Code`, `IncludeFilePaths`, `AdditionalOutputs`; pass `--filter-keys ""` to compare everything). | PD-3, D5, D7 |
 | A | A chain of SetMaterialAttributes nodes over a material, or over an empty MakeMaterialAttributes, is one set of attributes over that material. | PD-4 |
 | G | BreakMaterialAttributes over a material the graph wrote reads the value written. Works where the dump's attribute names are English; a capture taken under another culture goes through `--allow`. | PD-6 |
+| L | The material input of a `BreakMaterialAttributes` / `GetMaterialAttributes` node is `MaterialAttributes`, whatever the capture calls it: the engine names it with translated text, and a dump taken before 2.0 wrote that down (2.0 dumps the stable name, see `Docs/tools/commandlet.md`). | — |
 | P | A mask that is exactly the leading components a material attribute (or a known custom-output pin) reads is dropped: 1.x lost such masks on those pins, 2.0 keeps them. | PD-7 |
 | B | `AppendVector(x, x)` over one wire is `x`: the engine spreads a scalar where a vector is wanted. | PD-5 |
 | C | `AppendVector(constant, constant)` is the constant vector. | D4 |

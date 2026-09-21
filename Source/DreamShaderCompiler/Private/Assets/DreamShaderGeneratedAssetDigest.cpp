@@ -39,7 +39,10 @@ namespace UE::DreamShader::Editor::Private
 		// override array, so comparing a DSD3 text against a DSD2 stamp would report every instance in
 		// the project as hand-edited; bumping the tag retires the old stamps as Unstamped instead --
 		// rebuilt normally, and restamped -- which is what the tag is for.
-		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD3");
+		// DSD4: an input is named by GetDreamShaderStableInputName. Break, Get and SetMaterialAttributes name their inputs
+		// with translated text, so a DSD3 digest of a graph that has one depended on the language of the editor that
+		// stamped it, and a team with editors in two languages saw each other's layers and blends as hand-edited.
+		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD4");
 
 		// Node properties a user is free to change without meaning anything by it. Node coordinates are
 		// the important entry: regeneration reassigns them from the Layout section anyway (they are
@@ -260,11 +263,25 @@ namespace UE::DreamShader::Editor::Private
 
 				AppendObjectProperties(Expression, TEXT(" ARG"), InOutText);
 
+				// Which attributes a GetMaterialAttributes publishes is an array of FGuid, left out above with every other
+				// guid -- and the one place a guid is content: retargeting output 1 from BaseColor to Normal moves no
+				// connection. By the attribute's own name. (A Set's list is in its input names below.)
+				if (const UMaterialExpressionGetMaterialAttributes* Get = Cast<UMaterialExpressionGetMaterialAttributes>(Expression))
+				{
+					FString AttributeNames;
+					for (const FGuid& AttributeId : Get->AttributeGetTypes)
+					{
+						AttributeNames += FMaterialAttributeDefinitionMap::GetAttributeName(AttributeId);
+						AttributeNames += TEXT(",");
+					}
+					InOutText += FString::Printf(TEXT(" ARG AttributeGetTypes=%s\n"), *AttributeNames);
+				}
+
 				const int32 InputCount = GetDreamShaderExpressionInputCount(Expression);
 				for (int32 InputIndex = 0; InputIndex < InputCount; ++InputIndex)
 				{
 					const FExpressionInput* Input = Expression->GetInput(InputIndex);
-					const FName InputName = Expression->GetInputName(InputIndex);
+					const FName InputName = GetDreamShaderStableInputName(Expression, InputIndex);
 					InOutText += FString::Printf(
 						TEXT(" IN %d %s=%s\n"),
 						InputIndex,
