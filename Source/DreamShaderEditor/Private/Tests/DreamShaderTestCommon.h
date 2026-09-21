@@ -1723,6 +1723,96 @@ namespace UE::DreamShader::Editor::Private::Tests
 			Catalog.Expressions.Add(MoveTemp(Expression));
 		}
 
+		// The Substrate nodes the sugar expands to, with the engine's own pin names, the 1.x aliases and the
+		// positional orders the reflection filler gives them. Appended after every other class, so no index moves.
+		{
+			const auto AddSubstrate = [&Catalog](
+				const TCHAR* ShortName,
+				const TCHAR* ClassName,
+				std::initializer_list<TPair<const TCHAR*, ECatalogValueType>> Inputs,
+				std::initializer_list<TPair<const TCHAR*, ECatalogValueType>> Outputs,
+				std::initializer_list<const TCHAR*> Aliases,
+				std::initializer_list<const TCHAR*> Positional)
+			{
+				FCatalogExpression Expression;
+				Expression.Namespace = TEXT("Substrate");
+				Expression.ShortName = ShortName;
+				Expression.ClassName = ClassName;
+				Expression.ClassPathName = FString(TEXT("/Script/Engine.")) + ClassName;
+				for (const TPair<const TCHAR*, ECatalogValueType>& Input : Inputs)
+				{
+					Expression.Inputs.Add(MakeDreamShaderTestPin(Input.Key, Input.Value));
+				}
+				for (const TPair<const TCHAR*, ECatalogValueType>& Output : Outputs)
+				{
+					Expression.Outputs.Add(MakeDreamShaderTestPin(Output.Key, Output.Value));
+				}
+				for (const TCHAR* Alias : Aliases)
+				{
+					Expression.Aliases.Add(Alias);
+				}
+				for (const TCHAR* Parameter : Positional)
+				{
+					Expression.PositionalParameters.Add(Parameter);
+				}
+				Catalog.Expressions.Add(MoveTemp(Expression));
+			};
+			using FPinSpec = TPair<const TCHAR*, ECatalogValueType>;
+
+			AddSubstrate(TEXT("Slab"), TEXT("MaterialExpressionSubstrateSlabBSDF"),
+				{ FPinSpec(TEXT("DiffuseAlbedo"), ECatalogValueType::Float3), FPinSpec(TEXT("F0"), ECatalogValueType::Float3),
+				  FPinSpec(TEXT("F90"), ECatalogValueType::Float3), FPinSpec(TEXT("Roughness"), ECatalogValueType::Float1),
+				  FPinSpec(TEXT("Normal"), ECatalogValueType::Float3), FPinSpec(TEXT("SSSMFP"), ECatalogValueType::Float3),
+				  FPinSpec(TEXT("EmissiveColor"), ECatalogValueType::Float3), FPinSpec(TEXT("SecondRoughness"), ECatalogValueType::Float1),
+				  FPinSpec(TEXT("SecondRoughnessWeight"), ECatalogValueType::Float1), FPinSpec(TEXT("FuzzAmount"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT(""), ECatalogValueType::Substrate) }, {}, {});
+			AddSubstrate(TEXT("SimpleClearCoat"), TEXT("MaterialExpressionSubstrateSimpleClearCoatBSDF"),
+				{ FPinSpec(TEXT("DiffuseAlbedo"), ECatalogValueType::Float3), FPinSpec(TEXT("F0"), ECatalogValueType::Float3),
+				  FPinSpec(TEXT("Roughness"), ECatalogValueType::Float1), FPinSpec(TEXT("ClearCoatCoverage"), ECatalogValueType::Float1),
+				  FPinSpec(TEXT("ClearCoatRoughness"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT(""), ECatalogValueType::Substrate) }, {}, {});
+			AddSubstrate(TEXT("Add"), TEXT("MaterialExpressionSubstrateAdd"),
+				{ FPinSpec(TEXT("A"), ECatalogValueType::Substrate), FPinSpec(TEXT("B"), ECatalogValueType::Substrate) },
+				{ FPinSpec(TEXT(""), ECatalogValueType::Substrate) }, {}, { TEXT("A"), TEXT("B") });
+			AddSubstrate(TEXT("Weight"), TEXT("MaterialExpressionSubstrateWeight"),
+				{ FPinSpec(TEXT("A"), ECatalogValueType::Substrate), FPinSpec(TEXT("Weight"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT(""), ECatalogValueType::Substrate) }, {}, { TEXT("A"), TEXT("Weight") });
+			AddSubstrate(TEXT("HorizontalMixing"), TEXT("MaterialExpressionSubstrateHorizontalMixing"),
+				{ FPinSpec(TEXT("Background"), ECatalogValueType::Substrate), FPinSpec(TEXT("Foreground"), ECatalogValueType::Substrate),
+				  FPinSpec(TEXT("Mix"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT(""), ECatalogValueType::Substrate) },
+				{ TEXT("HorizontalMix"), TEXT("Mix") }, { TEXT("Background"), TEXT("Foreground"), TEXT("Mix") });
+			AddSubstrate(TEXT("VerticalLayering"), TEXT("MaterialExpressionSubstrateVerticalLayering"),
+				{ FPinSpec(TEXT("Top"), ECatalogValueType::Substrate), FPinSpec(TEXT("Base"), ECatalogValueType::Substrate),
+				  FPinSpec(TEXT("Thickness"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT(""), ECatalogValueType::Substrate) },
+				{ TEXT("VerticalLayer"), TEXT("Layer") }, { TEXT("Top"), TEXT("Base"), TEXT("Thickness") });
+			AddSubstrate(TEXT("Select"), TEXT("MaterialExpressionSubstrateSelect"),
+				{ FPinSpec(TEXT("A"), ECatalogValueType::Substrate), FPinSpec(TEXT("B"), ECatalogValueType::Substrate),
+				  FPinSpec(TEXT("SelectValue"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT(""), ECatalogValueType::Substrate) }, {}, { TEXT("A"), TEXT("B"), TEXT("SelectValue") });
+			AddSubstrate(TEXT("MetalnessToDiffuseAlbedoF0"), TEXT("MaterialExpressionSubstrateMetalnessToDiffuseAlbedoF0"),
+				{ FPinSpec(TEXT("BaseColor"), ECatalogValueType::Float3), FPinSpec(TEXT("Metallic"), ECatalogValueType::Float1),
+				  FPinSpec(TEXT("Specular"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT("DiffuseAlbedo"), ECatalogValueType::Float3), FPinSpec(TEXT("F0"), ECatalogValueType::Float3) }, {}, {});
+			AddSubstrate(TEXT("HazinessToSecondaryRoughness"), TEXT("MaterialExpressionSubstrateHazinessToSecondaryRoughness"),
+				{ FPinSpec(TEXT("BaseRoughness"), ECatalogValueType::Float1), FPinSpec(TEXT("Haziness"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT("SecondRoughness"), ECatalogValueType::Float1), FPinSpec(TEXT("SecondRoughnessWeight"), ECatalogValueType::Float1) }, {}, {});
+			AddSubstrate(TEXT("TransmittanceToMFP"), TEXT("MaterialExpressionSubstrateTransmittanceToMFP"),
+				{ FPinSpec(TEXT("TransmittanceColor"), ECatalogValueType::Float3), FPinSpec(TEXT("Thickness"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT("MFP"), ECatalogValueType::Float3), FPinSpec(TEXT("Thickness"), ECatalogValueType::Float1) }, {}, {});
+			AddSubstrate(TEXT("ShadingModels"), TEXT("MaterialExpressionSubstrateShadingModels"),
+				{ FPinSpec(TEXT("BaseColor"), ECatalogValueType::Float3), FPinSpec(TEXT("Metallic"), ECatalogValueType::Float1),
+				  FPinSpec(TEXT("Specular"), ECatalogValueType::Float1), FPinSpec(TEXT("Roughness"), ECatalogValueType::Float1),
+				  FPinSpec(TEXT("EmissiveColor"), ECatalogValueType::Float3), FPinSpec(TEXT("Normal"), ECatalogValueType::Float3),
+				  FPinSpec(TEXT("Opacity"), ECatalogValueType::Float1) },
+				{ FPinSpec(TEXT(""), ECatalogValueType::Substrate) }, {}, {});
+			// The node's own shading model, as the engine declares it: what `Substrate = Bridge` writes the material's into.
+			Catalog.Expressions.Last().Properties.Add(MakeDreamShaderTestProperty(
+				TEXT("ShadingModelOverride"), ECatalogValueType::Enum,
+				{ TEXT("MSM_Unlit"), TEXT("MSM_DefaultLit"), TEXT("MSM_Subsurface"), TEXT("MSM_ClearCoat"), TEXT("MSM_TwoSidedFoliage") }));
+		}
+
 		// The material attribute table -- the seven CONTRACT 6.1/6.2 name, so that an attribute outside it
 		// (`m.Metallic`) is a negative fixture with somewhere to land -- plus the whole-set entry below.
 		Catalog.MaterialAttributes.Add(MakeDreamShaderTestAttribute(TEXT("BaseColor"), TEXT("MP_BaseColor"), FIRType::Float(3)));
@@ -1803,6 +1893,8 @@ namespace UE::DreamShader::Editor::Private::Tests
 		/** `.dsi` only: what the binder checks the overrides against, and the path the instance product carries. */
 		const UE::DreamShader::IR::FIRParameterSchema* ParentSchema = nullptr;
 		FString ParentObjectPath;
+		/** FIRBuildOptions::bSubstrateEnabled: the project has Substrate on, which is what `Substrate = Bridge` folds for. */
+		bool bSubstrateEnabled = false;
 	};
 
 	/**
@@ -1924,6 +2016,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		// The catalog the bind ran against, said out loud as the pipeline says it (the bound module carries it too).
 		BuildOptions.Catalog = &Catalog;
 		BuildOptions.StampSourcePath = Options.StampSourcePath;
+		BuildOptions.bSubstrateEnabled = Options.bSubstrateEnabled;
 		Out.Module = BuildDreamShaderIR(*Out.Bind.Bound, BuildOptions, Out.Lowering);
 		Out.bBuilt = Out.Module.IsValid() && !Out.Lowering.HasErrors();
 		if (!Out.bBuilt)
@@ -1979,6 +2072,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	 *     "errorContains":   ["DSH4210"],   // substrings of the ERROR diagnostics' wire strings
 	 *     "warningsContain": ["DSH8210"],
 	 *     "passes": true,                   // false stops before RunDreamShaderIRPasses
+	 *     "substrate": true,                // the project has Substrate on (FIRBuildOptions::bSubstrateEnabled)
 	 *     "irPending": true,                // skip the `ir` compare; outcome/codes/module still run
 	 *     "ir": "<DumpDreamShaderIRText output, verbatim>",
 	 *     "module": {
@@ -2006,6 +2100,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		TArray<FString> InfosContain;
 
 		bool bRunPasses = true;
+		bool bSubstrate = false;
 		bool bIRPending = false;
 		bool bCheckIR = false;              FString IR;
 
@@ -2091,6 +2186,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 
 		bool BoolValue = false;
 		if (Root->TryGetBoolField(TEXT("passes"), BoolValue)) { Out.bRunPasses = BoolValue; }
+		if (Root->TryGetBoolField(TEXT("substrate"), BoolValue)) { Out.bSubstrate = BoolValue; }
 		if (Root->TryGetBoolField(TEXT("irPending"), BoolValue)) { Out.bIRPending = BoolValue; }
 
 		FString StringValue;
@@ -2132,7 +2228,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	 * the same time would silently promote an unreviewed dump to a byte-exact golden. Deleting it is
 	 * a person's job, after reading the diff.
 	 */
-	inline FString BuildDreamShaderIRGoldenJson(const FDreamShaderIRRun& Run, bool bRunPasses, bool bPending = false, const TCHAR* EntryPoint = TEXT("ir"))
+	inline FString BuildDreamShaderIRGoldenJson(const FDreamShaderIRRun& Run, bool bRunPasses, bool bPending = false, const TCHAR* EntryPoint = TEXT("ir"), bool bSubstrate = false)
 	{
 		const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
 		Root->SetStringField(TEXT("entryPoint"), EntryPoint);
@@ -2172,6 +2268,11 @@ namespace UE::DreamShader::Editor::Private::Tests
 		if (!bRunPasses)
 		{
 			Root->SetBoolField(TEXT("passes"), false);
+		}
+		if (bSubstrate)
+		{
+			// An option of the run, like `passes`: an update writes it back, or the next run would build something else.
+			Root->SetBoolField(TEXT("substrate"), true);
 		}
 		if (bPending)
 		{
@@ -2413,6 +2514,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 
 		FDreamShaderIRRunOptions Options;
 		Options.bRunPasses = Expectation.bRunPasses;
+		Options.bSubstrateEnabled = Expectation.bSubstrate;
 		Options.IncludeDirectory = FPaths::GetPath(Case.SourcePath);
 
 		// A `.dsi` binds against its parent's parameters: the sibling its Parent names, lowered first.
@@ -2428,7 +2530,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 
 		if (ShouldUpdateDreamShaderGolden())
 		{
-			const FString Json = BuildDreamShaderIRGoldenJson(Run, Expectation.bRunPasses, Expectation.bIRPending, Layer.EntryPoint);
+			const FString Json = BuildDreamShaderIRGoldenJson(Run, Expectation.bRunPasses, Expectation.bIRPending, Layer.EntryPoint, Expectation.bSubstrate);
 			if (FFileHelper::SaveStringToFile(Json, *Case.ExpectedPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 			{
 				Test.AddInfo(FString::Printf(TEXT("Updated golden '%s'."), *Case.ExpectedPath));
@@ -2445,6 +2547,8 @@ namespace UE::DreamShader::Editor::Private::Tests
 			Test.TestTrue(
 				FString::Printf(TEXT("[%s] the pipeline should REFUSE this source"), *Case.SourcePath),
 				Run.Errors.Num() > 0);
+			// A golden pins the code; the words are what a reviewer reads, so the report carries them.
+			Test.AddInfo(FString::Printf(TEXT("[%s] refused with: %s"), *FPaths::GetCleanFilename(Case.SourcePath), *Run.ErrorText()));
 		}
 		else if (Run.Errors.Num() > 0)
 		{
@@ -2458,6 +2562,10 @@ namespace UE::DreamShader::Editor::Private::Tests
 			Test.TestTrue(
 				FString::Printf(TEXT("[%s] an error contains '%s' (actual: %s)"), *Case.SourcePath, *Needle, *Run.ErrorText()),
 				Run.Errors.ContainsByPredicate([&Needle](const FString& Line) { return Line.Contains(Needle, ESearchCase::CaseSensitive); }));
+		}
+		if (Expectation.WarningsContain.Num() > 0)
+		{
+			Test.AddInfo(FString::Printf(TEXT("[%s] warned: %s"), *FPaths::GetCleanFilename(Case.SourcePath), *Run.WarningText()));
 		}
 		for (const FString& Needle : Expectation.WarningsContain)
 		{
