@@ -1,5 +1,0 @@
-{
-	"entryPoint": "generate",
-	"outcome": "error",
-	"messageContains": ["inconsistent types"]
-}

@@ -1,5 +1,0 @@
-{
-	"entryPoint": "generate",
-	"outcome": "error",
-	"messageContains": ["matching vector sizes"]
-}

@@ -1,6 +1,6 @@
 // Bug #10 repro: int/uint constructors are first-class in the DSL but the material graph has no
 // integer-divide node, so int(7)/int(2) would silently emit a float Divide (=3.5) instead of
-// truncating to 3. Integer division must now be an explicit generation error.
+// truncating to 3. Integer division is an explicit error: DSH4063 in 1.x, DSH4243 since batch 2 (every source).
 Shader(Name="DreamShaderTests/Generate/M_IntegerDivide", Root="Game")
 {
     Settings = {

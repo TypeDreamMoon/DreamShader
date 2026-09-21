@@ -1,15 +1,15 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // Data-driven runner for the whole 2.0 pipeline. Enumerates every fixture under
-// Tests/Corpus/Compile, copies it under the project's DShader root, compiles it through
-// FMaterialGenerator::GenerateAssetsFromFile (whose `.dss` hook routes it into the new pipeline),
+// Tests/Corpus/Compile, copies it under the project's DShader root, compiles it through the
+// compiler service (CompileDreamShaderTestAssets, the test compile facade of DreamShaderTestCommon.h),
 // and asserts the assets it produced against the fixture's `"entryPoint": "compile"` golden —
 // outcome, the DSHnnnn codes, the asset list, and the normalised `dump-graph` JSON.
 //
-// Slow layer: editor, reflection, real /Game packages. The 2.0 pipeline has no transient request
-// (Compiler/DreamShaderCompilerPipeline.h), so a fixture really does write assets; the runner's
-// fixture object deletes both the copy and every asset it made on the way out, whatever happened
-// in between.
+// Slow layer: editor, reflection, real /Game packages. A Graph material or a material function always
+// saves (only a ThinCustom product has a memory-only state), so a fixture really does write assets; the
+// runner's fixture object deletes both the copy and every asset under its package path on the way out,
+// whatever happened in between.
 //
 // Add coverage: drop a .dss under Tests/Corpus/Compile/<Area>/ (+ optional .expected.json). No new
 // C++, no recompile.
