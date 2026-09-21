@@ -26,6 +26,21 @@
     shaders, so an HLSL mistake in a `@custom` body fails here rather than in somebody's
     editor a week later. `dump-ir` and `index` are language-service tools, and
     `export-catalog` publishes the builtin node catalog the extension binds `UE.*` against.
+    `dump-layout` draws the graph layout of every product of a source as SVG -- every
+    style unless `-Style` names one -- without building an asset: the way to look at
+    Blocks, Source Bands and Layered before choosing a Graph Layout Style in the project
+    settings.
+
+    `fmt` rewrites 2.0 sources -- `.dss`, `.dsi`, and a `.dsh` that has no 1.x declarations
+    left -- in the printer's layout, in place. It refuses to write a file it cannot vouch
+    for (the formatted text has to parse to the same declarations with every comment), it
+    leaves a file that uses `#if` alone, and `-All` takes the project's own source root only:
+    a plugin ships its sources as they are. `fmt -Check` writes nothing and fails when a file
+    would change, which is the form for CI. `list-generated` names every asset the sources
+    build without building any -- package names by default, project-relative files with
+    `-ListAs Files`, a ready `.gitignore` block with `-ListAs GitIgnore`, everything with
+    `-ListAs Json` -- which is what Docs/generation/source-control.md writes ignore rules and
+    P4 typemaps from.
 
     `decompile` writes 2.0 text by default: a `.dss` for a material or a material
     function, a `.dsi` for a material instance (only the parameters that differ from
@@ -84,6 +99,9 @@
 .EXAMPLE
     ./dsc.ps1 export-catalog
 
+.EXAMPLE
+    ./dsc.ps1 dump-layout DShader/Materials/M_Toon.dss -Out I:/Work/Layout
+
 .NOTES
     Written for and verified against UE 5.8 (source build) + DreamShader 1.5.1 on Win64.
 #>
@@ -94,11 +112,14 @@ param(
     # dump-graph — write a canonical JSON fingerprint of the graph each source generates
     # check — 2.0 pipeline: compile a source as far as IR validation, writing no asset
     # dump-ir — 2.0 pipeline: write the lowered IR of a source as text (and JSON with -Json)
+    # dump-layout — 2.0 pipeline: draw the graph layout of a source's products as SVG, building nothing
     # index — 2.0 pipeline: write the symbol index a language service reads
     # export-catalog — 2.0 pipeline: write the builtin node catalog as JSON
     # migrate — rewrite 1.x sources (.dsm, .dsf, .dsh) as .dss
+    # fmt — rewrite 2.0 sources in the printer's layout (-Check: report, write nothing)
+    # list-generated — name every asset the sources build, for a .gitignore or a P4 typemap
     [Parameter(Mandatory, Position = 0)]
-    [ValidateSet('compile', 'decompile', 'dump-graph', 'check', 'dump-ir', 'index', 'export-catalog', 'migrate')]
+    [ValidateSet('compile', 'decompile', 'dump-graph', 'check', 'dump-ir', 'dump-layout', 'index', 'export-catalog', 'migrate', 'fmt', 'list-generated')]
     [string]$Command,
 
     # compile / dump-graph / check / dump-ir / index: path to a compilable source -- .dss, .dsi,
@@ -143,6 +164,8 @@ param(
     # beside each source.
     # dump-graph: the root of the dump tree, instead of <Project>/Saved/DreamShader/GraphBaseline.
     # dump-ir: instead of <Project>/Saved/DreamShader/IR. index: instead of …/Index.
+    # fmt: write the formatted copies under this directory instead of over the sources.
+    # list-generated: write the list to this file instead of to the log.
     # export-catalog: the file, instead of <Project>/Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json.
     [string]$Out,
 
@@ -186,7 +209,18 @@ param(
     [string]$SourceFile,
 
     # migrate: verify the rewrite (re-parse, compare the IR) and write nothing.
+    # fmt: write nothing, and fail when a file is not in the formatter's layout.
     [switch]$Check,
+
+    # list-generated: Packages (long package names, the default), Files (paths relative to the
+    # project directory), GitIgnore (the same paths as an anchored .gitignore block), or Json
+    # (every field: source, kind, backend, package, file, onDisk, persistent).
+    [ValidateSet('Packages', 'Files', 'GitIgnore', 'Json')]
+    [string]$ListAs,
+
+    # list-generated: also list a ThinCustom material that is memory-only right now. It has no
+    # file, so it is left out of a list that ignore rules are written from.
+    [switch]$IncludeEphemeral,
 
     # migrate: report what would be written and write nothing.
     [switch]$DryRun,
@@ -198,8 +232,12 @@ param(
     # (`-Root MoonToon`). `-All` takes the writable roots only, which leaves a plugin's root out.
     [string]$Root,
 
-    # dump-ir: write the JSON form beside the text one.
+    # dump-ir: write the JSON form beside the text one. dump-layout: the coordinates as JSON beside each SVG.
     [switch]$Json,
+
+    # dump-layout: Blocks, SourceBands, Layered, or All (the default) for one picture of each.
+    [ValidateSet('Blocks', 'SourceBands', 'Layered', 'All')]
+    [string]$Style,
 
     # Keep -nullrhi on for `check -Shaders`, where it is dropped by default. Only useful
     # for testing the cook-target half on a machine with no GPU — see the note below.
@@ -356,7 +394,7 @@ switch ($Command) {
         if ($Force) { $commandletArgs += '-Force' }
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
     }
-    { $_ -in @('check', 'dump-ir', 'index') } {
+    { $_ -in @('check', 'dump-ir', 'dump-layout', 'index') } {
         # The 2.0 verbs share one source selection, deliberately: `check` and `dump-ir` that
         # disagreed about which files a project has would report a missing dump as a
         # difference, which is the same trap dump-graph documents.
@@ -373,6 +411,7 @@ switch ($Command) {
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
         if ($Force) { $commandletArgs += '-Force' }
         if ($Json) { $commandletArgs += '-Json' }
+        if ($Style) { $commandletArgs += "-Style=$Style" }
         if ($Shaders) { $commandletArgs += '-Shaders' }
         if ($Platform) { $commandletArgs += "-Platform=$Platform" }
         if ($Quality) { $commandletArgs += "-Quality=$Quality" }
@@ -383,6 +422,27 @@ switch ($Command) {
         # No source: the catalog is a property of the engine and the loaded plugins, not of
         # any one file.
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
+    }
+    { $_ -in @('fmt', 'list-generated') } {
+        if ($All) {
+            $commandletArgs += '-All'
+        }
+        elseif ($Target) {
+            $resolved = if (Test-Path -LiteralPath $Target) { (Resolve-Path -LiteralPath $Target).Path } else { $Target }
+            $commandletArgs += "-Source=$($resolved -replace '\\', '/')"
+        }
+        else {
+            throw "$Command needs a source file or -All."
+        }
+        if ($Out) {
+            # Against the directory the driver was started in, not the engine's Binaries folder, which is what a
+            # relative path means to the commandlet. The file does not have to exist yet.
+            $resolvedOut = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Out)
+            $commandletArgs += "-Out=$($resolvedOut -replace '\\', '/')"
+        }
+        if ($Check) { $commandletArgs += '-Check' }
+        if ($ListAs) { $commandletArgs += "-As=$ListAs" }
+        if ($IncludeEphemeral) { $commandletArgs += '-IncludeEphemeral' }
     }
     'migrate' {
         # The commandlet orders a -All set headers first and migrates a header only when every
