@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // DreamShader.Compiler2.* -- the 2.0 pipeline end to end, and the parity oracle against the 1.x
-// generator it replaces (plan section 8, item 1).
+// generator it replaces.
 //
 // The smoke tests drive a `.dss` through the compiler service (CompileDreamShaderTestAssets, the test compile
 // facade of DreamShaderTestCommon.h) and assert on the asset that came out: the graph, the provenance metadata,
@@ -33,7 +33,7 @@
 #include "DreamShaderCompilerService.h"
 #include "DreamShaderGeneratedAssets.h"
 
-// The B5 / B7 smoke tests and the extern-to-layer compile (SE ruling 14).
+// The B5 / B7 smoke tests and the extern-to-layer compile.
 #include "DreamShaderCompilePipeline.h"
 #include "IR/IRCustomHlsl.h"
 #include "Lang/LangDiagnostic.h"
@@ -205,15 +205,15 @@ namespace UE::DreamShader::Editor::Private::Compiler2Tests
 	// Inline masks of a foreign graph
 	// =============================================================================================
 
-	// What an inline mask MEANS is the decompiler's ResolveDreamShaderInlineMask (Decompiler/DreamShaderInlineMask.h,
-	// CONTRACT-UNITS A10): the importer and this oracle read a foreign graph with one rule. What is left here is what only
+	// What an inline mask MEANS is the decompiler's ResolveDreamShaderInlineMask (Decompiler/DreamShaderInlineMask.h):
+	// the importer and this oracle read a foreign graph with one rule. What is left here is what only
 	// an oracle does with the answer -- rewrite the asset the way the 2.0 emitter would have spelled the same swizzle.
 	// Called by DreamShader.Compiler2.Smoke.InlineMaskNormalisation below; the parity tests stopped compiling the 1.x twin
 	// in 2.0.
 
 	/**
 	 * Rewrites every inline mask of a 1.x graph the way the 2.0 emitter spells the same swizzle
-	 * (Plan/v2-parity-deltas.md PD-1): an identity mask disappears, a leading-channel mask moves the wire
+	 * (Tools/Parity/README.md, PD-1): an identity mask disappears, a leading-channel mask moves the wire
 	 * to the named output (TryResolveSwizzleAsNamedOutput, the emitter's own rule), and any other mask
 	 * becomes one ComponentMask node per source, output and mask, which the emitter dedupes the same way.
 	 * Only ever run on a scratch asset that the parity run deletes afterwards.
@@ -445,8 +445,7 @@ bool FDreamShaderCompiler2MaterialEndToEndTest::RunTest(const FString& Parameter
 		CountExpressionsOfClass<UMaterialExpressionMaterialFunctionCall>(Material), 0);
 	// `Tint.rgb` takes the leading three channels of the whole float4 parameter, and a VectorParameter
 	// publishes exactly those channels as its own named RGB output -- so the swizzle IS that output
-	// and makes no node (CONTRACT 6.13 #22; the earlier "is a ComponentMask node" predates #22 and
-	// asserted the wrong half of plan 3.3). What plan 3.3 rules out is the inline FExpressionInput
+	// and makes no node. What 2.0 rules out is the inline FExpressionInput
 	// mask: when the material editor rebuilds a graph, UMaterialGraph::GetValidOutputIndex re-points a
 	// masked wire on output 0 at whichever output matches the mask (DSK2). Choosing an output is what
 	// the editor itself writes when a wire is dragged from that pin, so it survives the rebuild. Both
@@ -521,7 +520,7 @@ bool FDreamShaderCompiler2MaterialEndToEndTest::RunTest(const FString& Parameter
 }
 
 // =================================================================================================
-// The source-span table -- decision 11 #10, plan 13.2
+// The source-span table
 // =================================================================================================
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
@@ -614,7 +613,7 @@ bool FDreamShaderCompiler2SourceSpansTest::RunTest(const FString& Parameters)
 			++WithCallSite;
 		}
 
-		// CONTRACT 6.13 #6: `callFile` is written only when the call site lies in a DIFFERENT file
+		// `callFile` is written only when the call site lies in a DIFFERENT file
 		// from the span -- a helper inlined out of an included `.dsh`. This source includes nothing,
 		// so the key must not appear; an entry that carried it would mean the writer stopped
 		// comparing the two paths and started writing both unconditionally.
@@ -866,7 +865,7 @@ bool FDreamShaderCompiler2FunctionLibraryTest::RunTest(const FString& Parameters
 		return false;
 	}
 
-	// One asset per export, and every one of them a UMaterialFunction (CONTRACT 6.9).
+	// One asset per export, and every one of them a UMaterialFunction.
 	TArray<FDreamShaderCompiledAsset> Assets;
 	Fixture.CollectProducedAssets(Assets);
 
@@ -892,7 +891,7 @@ bool FDreamShaderCompiler2FunctionLibraryTest::RunTest(const FString& Parameters
 		return false;
 	}
 
-	// The inner function's inputs keep declaration order with dense sort priorities (plan 6.2):
+	// The inner function's inputs keep declaration order with dense sort priorities:
 	// tied priorities are what silently reordered a function's pins in 1.x.
 	TArray<int32> InputPriorities;
 	for (const TObjectPtr<UMaterialExpression>& Expression : ScaleOffset->GetExpressions())
@@ -929,7 +928,7 @@ bool FDreamShaderCompiler2FunctionLibraryTest::RunTest(const FString& Parameters
 }
 
 // =================================================================================================
-// Parity with the 1.x generator -- plan section 8, item 1
+// Parity with the 1.x generator
 // =================================================================================================
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
@@ -967,12 +966,12 @@ bool FDreamShaderCompiler2ParityFunctionTest::RunTest(const FString& Parameters)
 	FParityGoldenPair Pair;
 	Pair.LangExample = TEXT("MF_ToonUV.dss");
 	Pair.BaselineDump = TEXT("MoonToon/MaterialFunctions/Shared/MF_ToonUV.dsf.MF_ToonUV.graph.json");
-	// Two differences between the graphs are not compiler bugs (Plan/v2-parity-deltas.md), and the review absorbs them
+	// Two differences between the graphs are not compiler bugs (Tools/Parity/README.md), and the review absorbs them
 	// exactly rather than by dropping a key:
 	//  - PD-1: `ScaleOffset.rg` / `.ba` are inline masks on the FunctionInput's wires in 1.x and ComponentMask nodes in
 	//    2.0, which never writes an inline mask; graph_parity.py folds both into one channel list (normalisation M),
 	//    which also settles `outputs[].type` (PD-2).
-	//  - PS-1: the output is `UV` in the .dsf and `Result` in the .dss, which returns its value (CONTRACT 6.9). The pin
+	//  - PS-1: the output is `UV` in the .dsf and `Result` in the .dss, which returns its value. The pin
 	//    name, the output reroute `DS_UV_0` / `DS_Result_0` and every input that names it differ by that rename only.
 	return RunParityGoldenPair(*this, Pair);
 }
@@ -1641,7 +1640,7 @@ bool FDreamShaderCompiler2LegacyDestinationTest::RunTest(const FString& Paramete
 	return true;
 }
 
-// SE ruling 14: `extern` to a material layer, called from an entry.
+// `extern` to a material layer, called from an entry.
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderCompiler2ExternLayerTest,
 	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,

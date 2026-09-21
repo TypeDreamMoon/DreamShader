@@ -1,4 +1,4 @@
-// CONTRACT 6.3 with the 6.13 #20 ruling: a dynamic condition that is a BARE COMPARISON lowers to a
+// A dynamic condition that is a BARE COMPARISON lowers to a
 // Compare node -- A and B are the comparison's own operands and the three branches are picked by
 // kind -- and the bool node the comparison would have made is pruned. `Select` is for a condition
 // that is not a bare comparison; B_DynamicIfSelect.dss is that case.

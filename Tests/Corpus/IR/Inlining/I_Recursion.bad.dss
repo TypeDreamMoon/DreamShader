@@ -1,4 +1,4 @@
-// Recursion cannot be inlined (CONTRACT 6.4).
+// Recursion cannot be inlined.
 float Ping(float x) { return Pong(x); }
 float Pong(float x) { return Ping(x); }
 

@@ -1,5 +1,5 @@
 // A helper to inline, a reflected node, a swizzle and a texture sample -- the four things every
-// material does, in one asset. No swizzle becomes an inline FExpressionInput mask (plan 3.3): `Tint.rgb`
+// material does, in one asset. No swizzle becomes an inline FExpressionInput mask: `Tint.rgb`
 // and `Texel.rgb` read the named `RGB` output, and `Texel.a` is a ComponentMask node.
 #pragma material(ShadingModel = Unlit, BlendMode = Additive)
 

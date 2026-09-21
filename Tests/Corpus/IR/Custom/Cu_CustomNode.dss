@@ -1,5 +1,5 @@
 // A legal `/// @custom`: the body is verbatim HLSL, the parameters are the Custom node's pins, and
-// the generated code opens with unit H's two marker lines.
+// the generated code opens with the custom-HLSL builder's two marker lines.
 
 /// @custom
 float3 Posterise(float3 Colour, float Steps)

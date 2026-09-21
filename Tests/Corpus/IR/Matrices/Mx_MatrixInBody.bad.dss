@@ -1,4 +1,4 @@
-// CONTRACT decision "Matrices", as amended by 6.13: the graph has no matrices, and there is no
+// The graph has no matrices, and there is no
 // @custom matrix pin to smuggle one through either.
 //
 // The matrix is declared and never read on purpose. DSH4361 is about a matrix VALUE reaching the

@@ -105,8 +105,7 @@ Parse / Lang / IR / Compile 各层的 runner 在 `Source/DreamShaderEditor/Priva
 
 ## `.expected.json` 字段（全部可选、声明式）
 
-`Parse/` 层的 `parse` 金样本。1.x 的 `FTextShaderParser` 已删除，这一层现在是 research-legacy.md §7 第 2 项的
-**解析等价集**：legacy 前端必须像 1.x 一样接受或拒绝每个夹具。字段名没变，含义改为从 AST 与 `FLegacyMigrationInfo`
+`Parse/` 层的 `parse` 金样本。1.x 的 `FTextShaderParser` 已删除，这一层现在是**解析等价集**：legacy 前端必须像 1.x 一样接受或拒绝每个夹具。字段名没变，含义改为从 AST 与 `FLegacyMigrationInfo`
 读出（`DreamShaderTestCommon.h` 的 `SummariseDreamShaderLegacyParse`）：
 
 ```json
@@ -129,7 +128,7 @@ Parse / Lang / IR / Compile 各层的 runner 在 `Source/DreamShaderEditor/Priva
 ```
 
 `errorContains` 写 legacy 前端的码：1.x 解析器的 DSH2007 / DSH3133 / DSH3137 随它退役，对应的是 DSH2150 一类的
-EOF 码 / DSH3266 / DSH3268（码表见 `Plan/m4m5/FE-diagnostics.md`）。
+EOF 码 / DSH3266 / DSH3268。
 
 ## `lang` 金样本字段（2.0 前端，`Lang/` 子树）
 
@@ -286,7 +285,7 @@ IR 与 Compile 两层：
 | 全链路语料 | `DreamShader.Compiler2.Corpus` | 慢（写 /Game 资产） |
 | 全链路 + 与 1.x 对拍 | `DreamShader.Compiler2` | 慢 |
 
-`DreamShader.Compiler2.Parity.*` 是 plan §8 的对拍 oracle。最初它把同一个材质分别走 1.x 的 `.dsm/.dsf` 孪生文件和
+`DreamShader.Compiler2.Parity.*` 是对拍 oracle。最初它把同一个材质分别走 1.x 的 `.dsm/.dsf` 孪生文件和
 2.0 的 `.dss` 两边现编、现 dump、再 diff；1.x 生成器删除之后，孪生文件再也编不出来，所以现在每一对只编 2.0
 的 `Lang/Examples/*.dss`，与 `Parity/<名字>.expected.json` 这份 **compile 金样本**比对（先是 `graphPending`）。随后
 用 `-DreamShaderUpdateGolden` 填上 `graphDump`，再拿孪生文件冻结的 B2 dump

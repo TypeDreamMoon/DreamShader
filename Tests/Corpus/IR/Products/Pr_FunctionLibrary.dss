@@ -1,4 +1,4 @@
-// CONTRACT 6.9: every `export` of a library becomes its own product, inputs and outputs keep
+// Every `export` of a library becomes its own product, inputs and outputs keep
 // declaration order with DENSE sort priorities, a default makes an input optional, and a return
 // value is named Result.
 

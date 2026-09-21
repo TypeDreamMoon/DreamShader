@@ -1,4 +1,4 @@
-// One asset per export (CONTRACT 6.9), and the call between them a MaterialFunctionCall pointing at
+// One asset per export, and the call between them a MaterialFunctionCall pointing at
 // the sibling's asset -- which is also what makes the pipeline compile products in dependency order.
 
 /// @library DreamShaderTests|Compile2

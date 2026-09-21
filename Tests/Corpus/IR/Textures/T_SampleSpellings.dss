@@ -1,4 +1,4 @@
-// CONTRACT 6.5 with the 6.13 #14 ruling: a TextureSample always has four operand slots,
+// A TextureSample always has four operand slots,
 // [Texture, UV, Sampler, Level], with an empty slot printed as `_`. So the spellings normalise to
 // the same SHAPE, not all to the same node:
 //

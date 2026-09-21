@@ -200,7 +200,7 @@ bool FDreamShaderShaderCompileStallThresholdTest::RunTest(const FString& Paramet
 // empty, which is precisely the window the rollback exists to cover.
 //
 // The seam is declared in DreamShaderGenerationProgress.h and defined, exported, in the compiler
-// module (research-relocation section 4.7). An inline definition would give this editor-module test its own copy
+// module. An inline definition would give this editor-module test its own copy
 // while the pipeline in the compiler module read another, and the test would stop cancelling without failing to
 // build. A cancelled 2.0 compile is DSH8298; the 1.x generator's DSH9010 retired with it.
 // -------------------------------------------------------------------------------------------

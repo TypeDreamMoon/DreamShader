@@ -1,4 +1,4 @@
-// Plan section 11 #19: a `UE.` call in a `/// @custom` body is a graph node wired to an input of the Custom node
+// A `UE.` call in a `/// @custom` body is a graph node wired to an input of the Custom node
 // (`_ds_<Fn>_UE0`, `_UE1`), lowered at every call site with the parameters holding that call's arguments. The two
 // calls differ in `Gain`, so their UE1 inputs differ; the Time node behind UE0 is one node for both.
 

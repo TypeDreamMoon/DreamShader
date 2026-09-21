@@ -3,7 +3,7 @@
 // DreamShader.Lang2.LegacyRules.* -- the middle end's rules that are claims about ONE value rather than about a
 // whole graph, and so read better as a unit test than as a corpus golden:
 //
-//   SourceStamping      debt B5: FIRBuildOptions::StampSourcePath reaches every place a file is written down.
+//   SourceStamping      FIRBuildOptions::StampSourcePath reaches every place a file is written down.
 //   StatementBindings   the probe table: which statement bound which name, in statement order, surviving the passes.
 //   PinNames            `/// @pin`: an engine pin name that is not an identifier.
 //   LegacyScope         the 1.x rules are rules of a 1.x BODY: the same text in a `.dss` is refused.

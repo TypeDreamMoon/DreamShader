@@ -1,4 +1,4 @@
-// Nested ifs compose, and a variable declared inside a branch does not escape it (CONTRACT 6.3).
+// Nested ifs compose, and a variable declared inside a branch does not escape it.
 
 /// @static
 uniform bool UseWarm = true;

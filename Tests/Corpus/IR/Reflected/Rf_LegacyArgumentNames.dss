@@ -1,4 +1,4 @@
-// CONTRACT 6.13 #35: the catalog carries Aliases on pins and properties, so the 1.x argument
+// The catalog carries Aliases on pins and properties, so the 1.x argument
 // spellings keep working -- `Index` is `CoordinateIndex` and `UV` is `Coordinates`. The binder
 // resolves them to the canonical names, so nothing downstream ever sees the alias; the two calls
 // below are therefore the same node and the dedupe pass merges them.

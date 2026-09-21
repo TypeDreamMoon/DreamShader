@@ -1,4 +1,4 @@
-// The other half of CONTRACT 6.13: a `material` crossing into a reflected pin is exactly where a
+// The other half of the rule: a `material` crossing into a reflected pin is exactly where a
 // MakeMaterialAttributes node is still made, and reading a field back off the result is a
 // GetMaterialAttributes.
 

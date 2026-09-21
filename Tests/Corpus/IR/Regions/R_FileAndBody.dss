@@ -1,4 +1,4 @@
-// CONTRACT 6.8: file-scope `#pragma region` groups declarations, in-body ones group the nodes of
+// File-scope `#pragma region` groups declarations, in-body ones group the nodes of
 // the statements between them, both nest, and a `#pragma layout` line is carried through untouched.
 
 #pragma region Parameters

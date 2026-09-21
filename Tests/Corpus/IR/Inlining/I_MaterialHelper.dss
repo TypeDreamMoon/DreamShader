@@ -1,4 +1,4 @@
-// A Helper taking `inout material` is inlined on the field map like any other (CONTRACT 6.4), so
+// A Helper taking `inout material` is inlined on the field map like any other, so
 // it too leaves no MakeMaterialAttributes behind.
 
 void ApplyBase(inout material m, float3 Colour)

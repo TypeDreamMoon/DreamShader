@@ -1,5 +1,5 @@
 // A class with more than one output is a value of type `Node`; an output is picked by member
-// access (decision 11 #1(b)).
+// access.
 
 export void M_NodeOutputs(inout material m)
 {

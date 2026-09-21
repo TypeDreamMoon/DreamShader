@@ -1,4 +1,4 @@
-// CONTRACT 6.13 #22: every vector uniform is a VectorParameter (a float4 node) plus a Swizzle that
+// Every vector uniform is a VectorParameter (a float4 node) plus a Swizzle that
 // narrows it -- float2 gets `xy`, float3 gets `xyz`, float4 gets no swizzle at all. One rule, so the
 // emitter never has to ask how wide the author declared the parameter.
 

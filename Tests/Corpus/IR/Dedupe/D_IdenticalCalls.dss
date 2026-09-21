@@ -1,4 +1,4 @@
-// CONTRACT 6.7 and decision 11 #5 together: the language has no `let` because two identical calls
+// The language has no `let` because two identical calls
 // are ONE node. Two UE.TexCoord calls, two samples above them and two identical multiplies all
 // collapse, because the key is structural.
 

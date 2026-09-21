@@ -1,4 +1,4 @@
-// An attribute is write-then-read only (CONTRACT 6.2).
+// An attribute is write-then-read only.
 export void M_ReadBeforeWrite(inout material m)
 {
     m.EmissiveColor = m.BaseColor;

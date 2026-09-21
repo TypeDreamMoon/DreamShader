@@ -4,8 +4,8 @@
 // DreamShaderSourceHasPreprocessorDirectives, BuildDreamShaderDefineKeyFragment, and the parts of
 // FDreamShaderDefineTable that can be exercised without the process-global registry.
 //
-// These are written against the FROZEN headers (DreamShaderLang/Public/DreamShaderPreprocessor.h,
-// DreamShaderLang/Public/DreamShaderDefineTable.h) and Plan/preprocessor-conditionals.md --
+// These are written against the public headers (DreamShaderLang/Public/DreamShaderPreprocessor.h,
+// DreamShaderLang/Public/DreamShaderDefineTable.h) and Docs/language/preprocessor.md --
 // deliberately not against the implementation. Everything asserted here is a promise the feature
 // makes to its callers, so a failure means either the implementation or the contract is wrong,
 // never that the test needs "updating to match".
@@ -912,7 +912,7 @@ bool FDreamShaderPreprocessorShadowedTouchTest::RunTest(const FString& Parameter
 // -------------------------------------------------------------------------------------------------
 // Constant-expression evaluation.
 //
-// Table-driven against the grammar in Plan/preprocessor-conditionals.md 4.1. Every case is spelled as
+// Table-driven against the grammar in Docs/language/preprocessor.md. Every case is spelled as
 // a condition that must be TRUE or FALSE, so a value assertion ("2*3 is 6") is written as an equality
 // the evaluator has to get right ("2 * 3 == 6"). Precedence and associativity cases are chosen so the
 // WRONG grouping gives the opposite answer -- a case both groupings agree on proves nothing.

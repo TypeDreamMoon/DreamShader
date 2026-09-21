@@ -1,4 +1,4 @@
-// `discard` has no graph form (CONTRACT 6.3).
+// `discard` has no graph form.
 uniform float Threshold = 0.5;
 
 export void M_DiscardInBranch(inout material m)

@@ -326,8 +326,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	"DreamShader.Lang.OutputsBlock.Diagnostics",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-// The 1.x parser's DSH3133-3137 retired with it; the legacy front end reports the same mistakes under its own codes
-// (Plan/m4m5/FE-diagnostics.md): DSH3266 a statement Outputs does not know, DSH3267 a malformed output target,
+// The 1.x parser's DSH3133-3137 retired with it; the legacy front end reports the same mistakes under its own codes:
+// DSH3266 a statement Outputs does not know, DSH3267 a malformed output target,
 // DSH3268 a pin bound twice, DSH3269 an empty target block.
 bool FDreamShaderOutputsBlockDiagnosticsTest::RunTest(const FString& Parameters)
 {

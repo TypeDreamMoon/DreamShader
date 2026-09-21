@@ -1,4 +1,4 @@
-// CONTRACT 6.1: one row of the uniform table per declaration, and `static const` next to them.
+// One row of the uniform table per declaration, and `static const` next to them.
 
 /// @group Look @sort 20 @slider 0 4 @desc The overall gain
 uniform float Gain = 0.7;

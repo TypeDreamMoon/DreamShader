@@ -81,7 +81,7 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
         @{ Severity = 'info';    Pattern = '(?:\.|->)Info\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
         # The Editor-side units wrap that sink in a one-line member (or lambda) helper that also
         # carries the node's source span, so the raise reads Fail(TEXT("DSHnnnn"), Node, LOCTEXT(...)).
-        # The code is still a literal at the site, which is what the rule asks for (contract section 0.8), but
+        # The code is still a literal at the site, which is what the rule asks for, but
         # the helper's name is not .Error(, so it has to be listed here or the code is invisible and
         # the page for it is never written. Matched with a lookbehind so FailWith( -- a different
         # dialect, already above -- is not counted twice.

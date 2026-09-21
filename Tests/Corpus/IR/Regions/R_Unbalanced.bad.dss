@@ -1,4 +1,4 @@
-// An unclosed region is a refusal, not a guess (CONTRACT 6.8).
+// An unclosed region is a refusal, not a guess.
 #pragma region Open
 uniform float A = 1;
 

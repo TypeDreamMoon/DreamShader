@@ -16,7 +16,7 @@
 // class of bug that would silently rewrite a user's material on the first editor round trip.
 //
 // Three layers:
-//   RoundTrip.*   fixed point on inline sources: the proposal's section 7 material and section 8
+//   RoundTrip.*   fixed point on inline sources: a material, a
 //                 function, a struct, an opaque `/// @custom` body, control flow, precedence.
 //   Expressions   spot checks on the exact spelling of a printed expression (the parenthesis rules).
 //   Corpus        every non-".bad." fixture under Tests/Corpus/Lang reaches the same fixed point.
@@ -250,7 +250,7 @@ namespace UE::DreamShader::Editor::Private::LangPrinterTests
 	// Inline sources
 	// ---------------------------------------------------------------------------------------------
 
-	/** The proposal's section 7 material, verbatim (Plan/syntax-v2-proposal.md). */
+	/** The material the round trip is pinned on. */
 	static FString MakeMaterialSource()
 	{
 		return TEXT(R"DSS(// Soft radial glow with a tighter hot core and a slow breathing pulse.
@@ -287,7 +287,7 @@ export void M_TeleportGlow(inout material m)
 	}
 
 	/**
-	 * The proposal's section 8 material function, plus the `out` parameter form, an `extern`
+	 * A material function, plus the `out` parameter form, an `extern`
 	 * prototype, both include spellings and a `///` block with a paragraph break (a bare `///`
 	 * line, which the parser keeps as an empty free-text line).
 	 */

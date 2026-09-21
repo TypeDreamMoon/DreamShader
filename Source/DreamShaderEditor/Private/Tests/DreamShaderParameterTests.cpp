@@ -2,7 +2,7 @@
 //
 // Complete coverage for the parameter-expression Properties surface of a 1.x source, as the legacy front end
 // reads it. The 1.x runtime parser is gone, so the parse axis is now "which 2.0 form does each
-// parameter node type become" (research-legacy.md 2.3, FE-report "Legacy synthesis"):
+// parameter node type become":
 //
 //   * a `uniform` declaration: ScalarParameter -> `float`, StaticBoolParameter -> `/// @static` `bool`,
 //     VectorParameter -> `float4`, TextureObjectParameter -> `Texture2D` whose default is a `/// @default`;
@@ -278,7 +278,7 @@ bool FDreamShaderParameterParseAllTest::RunTest(const FString& Parameters)
 
 // Group("X") { ... } Properties scope: stamps the group + an auto-incrementing SortPriority (step 10, global
 // counter; explicit values win and don't consume a slot); a loose parameter gets the synthesized `@sort 32` that
-// stands for 1.x's "no SortPriority written" (research-legacy.md D11). Also pins the Slider(min,max) shorthand and
+// stands for 1.x's "no SortPriority written". Also pins the Slider(min,max) shorthand and
 // asset-in-= (a bare quoted absolute path) on an expanded texture-sample parameter.
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderPropertyGroupScopeTest,

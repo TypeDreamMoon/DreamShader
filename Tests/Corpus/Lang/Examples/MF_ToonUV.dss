@@ -1,5 +1,5 @@
 // Shared UV construction: pick a UV channel, scale it, offset it.
-// Verbatim from the syntax proposal v0.4 §8; `SampleTinted` is the sibling MF_SampleTinted.dss.
+// `SampleTinted` is the sibling MF_SampleTinted.dss.
 
 /// @asset /MoonToon/MaterialFunctions/Utils/MF_UVChannelSwitch
 extern float2 MF_UVChannelSwitch(float UVChannelIndex);

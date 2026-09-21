@@ -518,7 +518,6 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 //   * a Graph variable named Base: a local hiding a parameter, DSH4220;
 //   * reading a material output back: a read of an attribute written earlier, which 2.0 allows -- no refusal;
 //   * a value wider than its property: an assignment the binder refuses.
-// The two cases that no longer refuse are listed as 1.x-only rejections in Plan/m4m5/TE-report.md (Open questions).
 bool FDreamShaderGraphMaterialOutputSinkRejectionsTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor;
@@ -2053,7 +2052,7 @@ Shader(Name="DreamShaderTests/Automation/%s")
 	TestEqual(TEXT("VectorParameter declared without a default generates exactly one node"),
 		CountMaterialExpressionsOfClass<UMaterialExpressionVectorParameter>(Material), 1);
 
-	// DynamicParameter has no 2.0 spelling (research-legacy.md 2.3): since 2.0 a 1.x source that declares one is
+	// DynamicParameter has no 2.0 spelling: since 2.0 a 1.x source that declares one is
 	// refused with DSH3253 instead of generating the node. A `.dss` still reaches the class through UE.Expression.
 	{
 		const FString RefusedName = MakeUniqueTestAssetName(TEXT("M_ParamsDynamic"));
@@ -2119,7 +2118,7 @@ bool FDreamShaderOtherParameterNodeGenerationTest::RunTest(const FString& Parame
 		const TCHAR* ExpectedClass;   // expected UMaterialExpression subclass name; nullptr = refused with DSH3253
 	};
 
-	// DoubleVector, CurveAtlasRow and FontSample have no 2.0 spelling (research-legacy.md 2.3): since 2.0 a 1.x
+	// DoubleVector, CurveAtlasRow and FontSample have no 2.0 spelling: since 2.0 a 1.x
 	// source that declares one is refused with DSH3253 rather than generating the node.
 	static const FOtherParameterCase Cases[] = {
 		{ TEXT("DoubleVectorParameter"),        TEXT("float4(1, 2, 3, 4)"),    TEXT("P.rgb"),   nullptr },

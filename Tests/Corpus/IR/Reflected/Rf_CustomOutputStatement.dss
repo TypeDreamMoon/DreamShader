@@ -1,4 +1,4 @@
-// CONTRACT 6.13 #23: a reflected class with NO outputs is a legal statement root. It drives nothing
+// A reflected class with NO outputs is a legal statement root. It drives nothing
 // -- nothing can read it -- so the prune pass has to know it is a root rather than dead weight,
 // which is the opposite of every other node with no users.
 

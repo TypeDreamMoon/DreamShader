@@ -1,6 +1,6 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// DreamShader.Lang2.Binder.* -- the 2.0 semantic binder (unit S), through its public entry points
+// DreamShader.Lang2.Binder.* -- the 2.0 semantic binder, through its public entry points
 // BindDreamShaderLang and BuildDreamShaderSymbolIndexJson.
 //
 // The catalog is the hand-built MakeDreamShaderTestBuiltinCatalog() from DreamShaderTestCommon.h,
@@ -649,7 +649,7 @@ namespace UE::DreamShader::Editor::Private::Lang2BinderTests
 }
 
 // =================================================================================================
-// Uniforms and constants -- CONTRACT 6.1
+// Uniforms and constants
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -777,7 +777,7 @@ bool FDreamShaderLang2BinderUniformsTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// `///` directives -- CONTRACT 6.1, second half
+// `///` directives
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -869,7 +869,7 @@ bool FDreamShaderLang2BinderDirectivesTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// Function kinds, the entry rule and the products -- CONTRACT 6.9, decision 11 #15
+// Function kinds, the entry rule and the products
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -947,7 +947,7 @@ bool FDreamShaderLang2BinderFunctionKindsTest::RunTest(const FString& Parameters
 	}
 
 	// A material: the entry, its sink parameter, and a helper with the same SIGNATURE that is not
-	// an entry because it is not exported (decision 11 #15).
+	// an entry because it is not exported.
 	{
 		FBindCase Case;
 		BindSource(Case, TEXT(
@@ -1035,7 +1035,7 @@ bool FDreamShaderLang2BinderFunctionKindsTest::RunTest(const FString& Parameters
 		}
 	}
 
-	// The two refusals of decision 11 #15.
+	// The two refusals of the entry rule.
 	ExpectCode(*this, TEXT("two exported entries are refused"), TEXT(
 		"export void M_One(inout material m) { m.Opacity = 1; }\n"
 		"export void M_Two(inout material m) { m.Opacity = 1; }\n"), TEXT("DSH6200"));
@@ -1120,7 +1120,7 @@ bool FDreamShaderLang2BinderExpressionsTest::RunTest(const FString& Parameters)
 	TestEqualSensitive(TEXT("E ? Gain : 0"), InitShape(Case, TEXT("M_Case"), 8),
 		FString(TEXT("(cond : float (local #4 : bool) (global #0 : float) (lit 0! : int~num))")));
 
-	// CONTRACT 6.13 #23: the hyperbolic spellings are binder errors. EIROp keeps entries for them --
+	// The hyperbolic spellings are binder errors. EIROp keeps entries for them --
 	// the enum may only grow -- but the graph has no node that computes one, and accepting the
 	// spelling only to fail further down would be the worst of both worlds.
 	for (const TCHAR* Spelling : { TEXT("sinh"), TEXT("cosh"), TEXT("tanh") })
@@ -1157,7 +1157,7 @@ bool FDreamShaderLang2BinderExpressionsTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// Swizzle -- CONTRACT 6.6
+// Swizzle
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -1203,13 +1203,13 @@ bool FDreamShaderLang2BinderSwizzleTest::RunTest(const FString& Parameters)
 	TestEqualSensitive(TEXT("S.r"), InitShape(Case, TEXT("M_Case"), 3),
 		FString(TEXT("(swz x : float (global #1 : float))")));
 
-	// `v[3]` with a constant index is the same node as `.w` (CONTRACT 6.6).
+	// `v[3]` with a constant index is the same node as `.w`.
 	TestEqualSensitive(TEXT("V[3]"), InitShape(Case, TEXT("M_Case"), 4),
 		FString(TEXT("(idx w : float (global #0 : float4))")));
 	TestEqualSensitive(TEXT("V.zx"), InitShape(Case, TEXT("M_Case"), 5),
 		FString(TEXT("(swz zx : float2 (global #0 : float4))")));
 
-	// CONTRACT 6.13 #29: a repeated component in an RVALUE is HLSL replication and is perfectly
+	// A repeated component in an RVALUE is HLSL replication and is perfectly
 	// legal -- `V.xxx` is "broadcast x three ways", which the graph builds out of single-channel
 	// masks and an Append. Only an out-of-range component has nothing to lower to.
 	{
@@ -1276,7 +1276,7 @@ bool FDreamShaderLang2BinderSwizzleTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// The material value -- CONTRACT 6.2
+// The material value
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -1330,7 +1330,7 @@ bool FDreamShaderLang2BinderMaterialAttributesTest::RunTest(const FString& Param
 	TestEqualSensitive(TEXT("m.Opacity = 1"), StmtExprShape(Case, TEXT("M_Case"), 2),
 		*FString::Printf(TEXT("(assign : float (mfield #%d : float (param #0 : material)) (lit 1! : int~num))"), Opacity));
 
-	// A read of an attribute that was written earlier is legal: write-then-read (CONTRACT 6.2).
+	// A read of an attribute that was written earlier is legal: write-then-read.
 	TestEqualSensitive(TEXT("m.BaseColor read back"), InitShape(Case, TEXT("M_Case"), 3),
 		*FString::Printf(TEXT("(mfield #%d : float3 (param #0 : material))"), BaseColour));
 
@@ -1356,7 +1356,7 @@ bool FDreamShaderLang2BinderMaterialAttributesTest::RunTest(const FString& Param
 }
 
 // =================================================================================================
-// Reflected calls -- CONTRACT 6.10
+// Reflected calls
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -1411,7 +1411,7 @@ bool FDreamShaderLang2BinderReflectedCallsTest::RunTest(const FString& Parameter
 		*FString::Printf(TEXT("(refl #%d : float2 [CoordinateIndex=prop#0 id] (lit 0! : int))"), TexCoord));
 
 	// The 1.x spelling binds to the same property through the catalog's alias -- and resolves to
-	// the CANONICAL name, so nothing downstream ever sees `Index` (CONTRACT 6.13 #35).
+	// the CANONICAL name, so nothing downstream ever sees `Index`.
 	{
 		FBindCase Sugar;
 		BindSource(Sugar, TEXT(
@@ -1446,7 +1446,7 @@ bool FDreamShaderLang2BinderReflectedCallsTest::RunTest(const FString& Parameter
 			TEXT("(out #0 : float4 (refl #%d : node#%d [SceneTextureId=prop#0 id] (lit ? : <error>)))"),
 			SceneTexture, SceneTexture));
 
-	// An argument matches an INPUT PIN first and a property second (CONTRACT 6.10), so `Alpha` is
+	// An argument matches an INPUT PIN first and a property second, so `Alpha` is
 	// the pin even though it has a `ConstAlpha` twin: preferring the property for a constant is
 	// I2's choice at lowering time, not the binder's, and DreamShader.Lang2.IR.ReflectedArguments
 	// is where that preference is pinned. A Numeric pin does not constrain the width, so the
@@ -1465,7 +1465,7 @@ bool FDreamShaderLang2BinderReflectedCallsTest::RunTest(const FString& Parameter
 			TEXT("(swz xyz : float3 (refl #%d : float4 [Class=prop#-1 id] (lit MaterialExpressionVertexColor : <error>)))"),
 			VertexColor));
 
-	// Substrate is a namespace root of its own (decision 11 #11), and its result is opaque.
+	// Substrate is a namespace root of its own, and its result is opaque.
 	{
 		FBindCase Substrate;
 		BindSource(Substrate, TEXT(
@@ -1498,7 +1498,7 @@ bool FDreamShaderLang2BinderReflectedCallsTest::RunTest(const FString& Parameter
 	ExpectCode(*this, TEXT("a custom output used as a value is refused"), TEXT(
 		"export void M_Case(inout material m) { m.Opacity = UE.ClearCoatNormalCustomOutput(Input = float3(0, 0, 1)).x; }\n"), TEXT("DSH4231"));
 
-	// The positive half of the same rule (CONTRACT 6.13 #23): as a STATEMENT it is perfectly legal.
+	// The positive half of the same rule: as a STATEMENT it is perfectly legal.
 	// A class with no outputs is a statement root, not an error -- DSH4231 is about reading a value
 	// that does not exist, never about the call.
 	{
@@ -1518,7 +1518,7 @@ bool FDreamShaderLang2BinderReflectedCallsTest::RunTest(const FString& Parameter
 }
 
 // =================================================================================================
-// Textures -- CONTRACT 6.5
+// Textures
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -1556,10 +1556,10 @@ bool FDreamShaderLang2BinderTexturesTest::RunTest(const FString& Parameters)
 		return false;
 	}
 
-	// CONTRACT 6.5: every spelling normalises to ONE bound kind whose arguments are named from one
+	// Every spelling normalises to ONE bound kind whose arguments are named from one
 	// vocabulary -- Texture, UV, Sampler, Level. Which of the four a spelling supplies is the whole
 	// difference between them, and the names are what let the IR builder fill fixed operand slots
-	// (CONTRACT 6.13 #14) without re-reading the syntax.
+	// without re-reading the syntax.
 	//
 	// Asserted as the SET of targets rather than as a whole-tree dump on purpose: whether the
 	// receiver of `Tex.Sample(UV)` is recorded as argument -1 or as a synthetic argument 0 is an
@@ -1666,7 +1666,7 @@ bool FDreamShaderLang2BinderTexturesTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// Calls to functions of this file -- CONTRACT decision "Helper vs export vs extern"
+// Calls to functions of this file
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -1737,7 +1737,7 @@ bool FDreamShaderLang2BinderCallsTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// Regions -- CONTRACT 6.8
+// Regions
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -1838,7 +1838,7 @@ bool FDreamShaderLang2BinderRegionsTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// Loops -- decision "Loops"
+// Loops
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -1918,7 +1918,7 @@ bool FDreamShaderLang2BinderLoopsTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// Includes -- CONTRACT 6.11
+// Includes
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -2008,7 +2008,7 @@ bool FDreamShaderLang2BinderIncludesTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// `#pragma material` and the products -- CONTRACT 6.9, decision "Product naming"
+// `#pragma material` and the products
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -2087,7 +2087,7 @@ bool FDreamShaderLang2BinderPragmaMaterialTest::RunTest(const FString& Parameter
 }
 
 // =================================================================================================
-// Structs -- decision 11 #1(c)
+// Structs
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -2143,7 +2143,7 @@ bool FDreamShaderLang2BinderStructsTest::RunTest(const FString& Parameters)
 }
 
 // =================================================================================================
-// The symbol index -- plan 13.4
+// The symbol index
 // =================================================================================================
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(

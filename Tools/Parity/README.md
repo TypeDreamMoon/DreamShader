@@ -32,6 +32,9 @@ of the subgraph feeding it, so node numbering never matters.
 | C | `AppendVector(constant, constant)` is the constant vector. | D4 |
 | T | The `type` a dump gives a function output is left out of the metadata comparison: the 1.x dump inferred it past inline masks. | PD-2 |
 
+The last column is the name a difference was registered under when the 1.x baselines were reviewed; the comparator's
+comments and the tests that lean on a normalisation quote it.
+
 Channel widths come from the engine's output layouts (`MaterialExpressions.cpp`), a small table of single-output classes,
 `FunctionInput` types and, for `MaterialFunctionCall`, the callee's own dump when it is in the same tree. When a width is
 unknown only an `rgba` mask is treated as identity; anything else is kept and will show as a wire difference for review.
@@ -79,9 +82,9 @@ comparisons are equal.
 Result of the sweeps (09-18 to 09-20, nine runs): **68 of 68 roots equal, 6 of 6 Legacy fixtures equal** (one under
 PD-6), with the other plugin repositories' `git status` identical before and after every run.
 
-## Validation (09-15, against the independent counts in `Plan/m4m5/research-legacy.md` §2.0)
+## Validation (against independent counts of the same baseline)
 
-| Check on `v2-6c2e0b6-formal` | Tool | Research | Note |
+| Check on `v2-6c2e0b6-formal` | Tool | Independent count | Note |
 | :-- | --: | --: | :-- |
 | inline masks in the dump | 203 | 203 | exact |
 | unreachable nodes | 22 in 11 files | 24 in 11 files | the research also counted one dead named-reroute pair; reroutes are transparent here. Same classes: AppendVector 11, Constant 4, Constant4Vector 4, MakeMaterialAttributes 2, VectorParameter 1 |

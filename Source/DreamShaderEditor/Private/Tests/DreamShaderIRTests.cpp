@@ -1,13 +1,13 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// DreamShader.Lang2.IR.* -- the IR builder, the passes and the validator (units I1 and I2), driven
+// DreamShader.Lang2.IR.* -- the IR builder, the passes and the validator, driven
 // through their public entry points on small hand-written sources.
 //
-// One test per cross-unit agreement of Plan/m2m3/CONTRACT.md section 6, named after it. These are
-// the agreements two units had to agree on in prose; a test that fails here is one of the two
-// having read that prose differently, which is exactly the failure the section exists to catch.
+// One test per agreement between the binder, the IR builder and the emitter, named after it. These are
+// the places two of them had to agree in prose; a test that fails here is one of the two having read
+// that prose differently.
 //
-// Assertions are structural rather than byte-exact wherever the CONTRACT pins a SHAPE (a
+// Assertions are structural rather than byte-exact wherever the agreement pins a SHAPE (a
 // StaticSwitch with both branches, one TextureSample whatever the spelling, one node where there
 // were two identical calls) and full-string on the compact dump only where the whole graph is the
 // claim -- idempotence, most of all. The dump is this file's own, not I1's DumpDreamShaderIRText:
@@ -212,7 +212,7 @@ namespace UE::DreamShader::Editor::Private::Lang2IRTests
 					Line += TEXT(",");
 				}
 				// `_` for an absent slot, the spelling I1's text dump uses. A TextureSample always
-				// has four operands (CONTRACT 6.13 #14) and two of them are usually empty, so a
+				// has four operands and two of them are usually empty, so a
 				// dump that printed `n-1#0` for those would be unreadable exactly where it matters.
 				Line += Node.Operands[Operand].IsValid()
 					? FString::Printf(TEXT("n%d#%d"), Node.Operands[Operand].Node, Node.Operands[Operand].Output)
@@ -390,7 +390,7 @@ bool FDreamShaderLang2IRParameterKindsTest::RunTest(const FString& Parameters)
 		{
 			TestEqualSensitive(TEXT("a scalar uniform is float1"), Gain.Outputs[0].ToString(), FString(TEXT("float")));
 		}
-		// Every piece of the parameter's metadata that CONTRACT 6.1 lists comes from the directives.
+		// Every piece of the parameter's metadata comes from the directives.
 		TestEqualSensitive(TEXT("Group"), PropText(Gain, Prop::Group), FString(TEXT("Look")));
 		TestEqualSensitive(TEXT("Description"), PropText(Gain, Prop::Description), FString(TEXT("The gain")));
 		TestEqualSensitive(TEXT("SortPriority"), PropText(Gain, Prop::SortPriority), FString(TEXT("20")));
@@ -425,7 +425,7 @@ bool FDreamShaderLang2IRParameterKindsTest::RunTest(const FString& Parameters)
 		TestEqualSensitive(TEXT("SamplerType"), PropText(Graph.Nodes[TextureIndex], Prop::SamplerType), FString(TEXT("Normal")));
 	}
 
-	// CONTRACT 6.13 #22: a vector uniform is a float4 VectorParameter narrowed by a Swizzle --
+	// A vector uniform is a float4 VectorParameter narrowed by a Swizzle --
 	// `xy` for a float2, `xyz` for a float3, nothing at all for a float4. One rule, so the emitter
 	// never has to ask how wide the author declared the parameter.
 	const int32 ColourIndex = [&Graph]() -> int32
@@ -507,7 +507,7 @@ bool FDreamShaderLang2IRMaterialFieldsTest::RunTest(const FString& Parameters)
 	}
 	const FIRGraph& Graph = Found->Graph;
 
-	// The whole of CONTRACT 6.2 in one assertion: the map's entries become the sink's inputs
+	// The material's field map in one assertion: the map's entries become the sink's inputs
 	// directly, so there is nothing to make attributes out of.
 	TestEqual(TEXT("a plain entry makes no MakeMaterialAttributes"), CountOp(Graph, EIROp::MakeMaterialAttributes), 0);
 	TestEqual(TEXT("and no SetMaterialAttributes"), CountOp(Graph, EIROp::SetMaterialAttributes), 0);
@@ -657,7 +657,7 @@ bool FDreamShaderLang2IRBranchesTest::RunTest(const FString& Parameters)
 		if (Found)
 		{
 			const FIRGraph& Graph = Found->Graph;
-			// CONTRACT 6.13 #20: the condition is a BARE COMPARISON, so the merge is a Compare
+			// The condition is a BARE COMPARISON, so the merge is a Compare
 			// node carrying the comparison's own operands -- and the bool node that comparison
 			// would otherwise have produced is pruned, because nothing reads it any more.
 			TestEqual(TEXT("a bare comparison merges with Compare"), CountOp(Graph, EIROp::Compare), 1);
@@ -807,7 +807,7 @@ bool FDreamShaderLang2IRInliningTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("a helper call makes no FunctionCall node"), CountOp(Graph, EIROp::FunctionCall), 0);
 
 	// Every node made while inlining carries the CALL SITE as well as its own span, which is what
-	// gives the editor two places to jump to (plan 13.2).
+	// gives the editor two places to jump to.
 	int32 WithCallSite = 0;
 	for (const FIRNode& Node : Graph.Nodes)
 	{
@@ -820,7 +820,7 @@ bool FDreamShaderLang2IRInliningTest::RunTest(const FString& Parameters)
 			TestTrue(
 				TEXT("and the two spans are different places"),
 				Node.Source.Span.Offset != Node.Source.CallSite.Offset);
-			// CONTRACT 6.13 #6: CallSiteFile names the CALLER's file, and differs from File only
+			// CallSiteFile names the CALLER's file, and differs from File only
 			// when the helper came out of an included header. This helper lives in the same file, so
 			// the two agree -- Tests/Corpus/IR/Includes is where the cross-file case is written down.
 			TestTrue(
@@ -850,7 +850,7 @@ bool FDreamShaderLang2IRInliningTest::RunTest(const FString& Parameters)
 			HasCode(Recursive, TEXT("DSH6220")));
 	}
 
-	// A helper taking `inout material` is inlined on the field map like any other (CONTRACT 6.4).
+	// A helper taking `inout material` is inlined on the field map like any other.
 	{
 		FIRRun Material;
 		Lower(Material, TEXT(
@@ -898,7 +898,7 @@ bool FDreamShaderLang2IRTextureShapeTest::RunTest(const FString& Parameters)
 	using namespace UE::DreamShader::IR;
 	using namespace UE::DreamShader::Editor::Private::Lang2IRTests;
 
-	// CONTRACT 6.13 #14: a TextureSample ALWAYS has four operands, [Texture, UV, Sampler, Level],
+	// A TextureSample ALWAYS has four operands, [Texture, UV, Sampler, Level],
 	// with FIRValue::None() in an absent slot. So the four spellings do not all lower to the same
 	// node -- they lower to the same SHAPE, with the slots the spelling supplied filled in and the
 	// rest empty. A fixed arity is what lets the emitter index operands instead of counting them.
@@ -1044,7 +1044,7 @@ bool FDreamShaderLang2IRSwizzleShapeTest::RunTest(const FString& Parameters)
 	using namespace UE::DreamShader::IR;
 	using namespace UE::DreamShader::Editor::Private::Lang2IRTests;
 
-	// CONTRACT 6.6 with the 6.13 #19 ruling: a Swizzle node's mask is always strictly ascending. A
+	// A Swizzle node's mask is always strictly ascending. A
 	// ComponentMask is therefore only ever a NARROWING -- a reorder is Swizzles plus an Append,
 	// which is what a person building the graph by hand would have had to do as well.
 	{
@@ -1077,7 +1077,7 @@ bool FDreamShaderLang2IRSwizzleShapeTest::RunTest(const FString& Parameters)
 		Masks.Sort([](const FString& A, const FString& B) { return A.Compare(B, ESearchCase::CaseSensitive) < 0; });
 
 		// Two narrowings, and no Append: neither of these reorders anything. The float4 uniform's
-		// own VectorParameter needs no swizzle either (CONTRACT 6.13 #22).
+		// own VectorParameter needs no swizzle either.
 		if (TestEqual(TEXT("two masks"), Masks.Num(), 2))
 		{
 			TestEqualSensitive(TEXT("V[3] is the w mask"), Masks[0], FString(TEXT("w")));
@@ -1129,7 +1129,7 @@ bool FDreamShaderLang2IRSwizzleShapeTest::RunTest(const FString& Parameters)
 		AddInfo(FString::Printf(TEXT("reorder graph:\n%s"), *GraphShape(Graph)));
 	}
 
-	// CONTRACT 6.13 #29: replication is the same shape as a reorder. `V.xxx` is legal HLSL and
+	// Replication is the same shape as a reorder. `V.xxx` is legal HLSL and
 	// lowers to single-channel masks plus an Append -- there is no ComponentMask that repeats a
 	// channel, so "ascending" and "replicating" are satisfied by the same rule: one mask per
 	// component, assembled afterwards.
@@ -1257,7 +1257,7 @@ bool FDreamShaderLang2IRDedupeTest::RunTest(const FString& Parameters)
 		}
 	}
 
-	// A DebugName difference is not an identity difference (CONTRACT 6.7): the first name wins.
+	// A DebugName difference is not an identity difference: the first name wins.
 	{
 		FIRRun Named;
 		Lower(Named, TEXT(
@@ -1417,7 +1417,7 @@ bool FDreamShaderLang2IRProductsTest::RunTest(const FString& Parameters)
 
 		if (TestEqual(TEXT("two function inputs"), Graph.FunctionInputs.Num(), 2))
 		{
-			// SortPriority is declaration order, DENSE (plan 6.2): 1.x's tie-break bug was that two
+			// SortPriority is declaration order, DENSE: 1.x's tie-break bug was that two
 			// inputs could share a priority and the engine then reordered them silently.
 			for (int32 Index = 0; Index < 2; ++Index)
 			{
@@ -1559,7 +1559,7 @@ bool FDreamShaderLang2IRReflectedArgumentsTest::RunTest(const FString& Parameter
 		TestTrue(TEXT("and carry the catalog index"), WithConstant.CatalogIndex != INDEX_NONE);
 	}
 
-	// CONTRACT 6.13 #23: a reflected class with NO outputs is a legal statement ROOT. Nothing can
+	// A reflected class with NO outputs is a legal statement ROOT. Nothing can
 	// read it, so the prune pass has to know it is a root rather than dead weight -- the opposite of
 	// the rule it applies to every other node with no users.
 	{
@@ -1905,7 +1905,7 @@ bool FDreamShaderLang2IRCustomBoundariesTest::RunTest(const FString& Parameters)
 		}
 	}
 
-	// ---- the NEGATIVE half: a `material` may NOT cross into a @custom (CONTRACT 6.13) ----
+	// ---- the NEGATIVE half: a `material` may NOT cross into a @custom ----
 
 	// The engine has no pin typed like a MaterialAttributes input on a Custom node, so there is
 	// nothing to make the node out of. Refusing at the boundary is the only honest answer; the
@@ -1928,7 +1928,7 @@ bool FDreamShaderLang2IRCustomBoundariesTest::RunTest(const FString& Parameters)
 		TestTrue(
 			FString::Printf(TEXT("a material passed into a @custom is refused (actual: %s)"), *Run.ErrorText()),
 			Run.Errors.Num() > 0);
-		// DSH6252 is the code the amendment names; the range check keeps the test honest if the
+		// DSH6252 is the code; the range check keeps the test honest if the
 		// refusal turns out to belong to the binder's function-kind range instead.
 		TestTrue(
 			FString::Printf(TEXT("and named by a custom-HLSL or function-kind code (actual: %s)"), *Run.ErrorText()),
@@ -2014,7 +2014,7 @@ bool FDreamShaderLang2IRCustomBoundariesTest::RunTest(const FString& Parameters)
 				TestEqualSensitive(TEXT("the node names the function"), Custom.ClassName, FString(TEXT("Posterise")));
 
 				// The generated code opens with two marker lines, so `Contains` -- never an exact
-				// match on the whole string. The markers are unit H's, they carry a line number,
+				// match on the whole string. The markers are the custom-HLSL builder's, they carry a line number,
 				// and pinning them here would make this test fail every time the body moved.
 				const FString Code = PropText(Custom, Prop::Code);
 				TestTrue(

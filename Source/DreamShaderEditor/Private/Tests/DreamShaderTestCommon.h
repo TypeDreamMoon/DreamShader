@@ -185,7 +185,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	// test that built a Graph material "transient" under 1.x now writes a real asset and needs a scratch
 	// package root (FDreamShaderCompile2Fixture) that cleans it up.
 	//
-	// CompileMaterial and CompileAssets are one compile in the service (CO-report); both are kept so a
+	// CompileMaterial and CompileAssets are one compile in the service; both are kept so a
 	// call site still says which one it meant.
 	// ---------------------------------------------------------------------------------------------
 
@@ -943,7 +943,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	// Parse layer (Tests/Corpus/Parse/**), retargeted in 2.0 to the legacy front end.
 	//
 	// The 1.x runtime parser (FTextShaderParser) is deleted, so these fixtures are the parse-equivalence
-	// set of research-legacy.md section 7 item 2: the legacy front end has to accept or refuse each one
+	// set: the legacy front end has to accept or refuse each one
 	// exactly as the 1.x parser did, and the goldens plus the `.bad.` names record which. The parse is
 	// ParseDreamShaderLang with the Auto front end -- a `.dsm`/`.dsf` goes to the legacy parser, a `.dsh`
 	// declaration by declaration -- which is the parse a compile makes. No preprocessing, as before.
@@ -1430,7 +1430,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	 * classes they name in the respects the front end cares about (pin names, output counts, which
 	 * pins have a Const* twin, which class is a custom output) and deliberately trimmed everywhere
 	 * else -- UE.VertexColor has one float4 output here where the engine class has five, because
-	 * `.rgb` on it must be an ordinary Swizzle (CONTRACT 6.6) and one output is what makes that so.
+	 * `.rgb` on it must be an ordinary Swizzle and one output is what makes that so.
 	 */
 	inline UE::DreamShader::IR::FBuiltinCatalog MakeDreamShaderTestBuiltinCatalog()
 	{
@@ -1487,7 +1487,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 
 		// UE.SceneTexture -- THREE outputs, so its result type is `Node` and an output has to be
-		// selected by member access before the value can be used (decision 11 #1(b)).
+		// selected by member access before the value can be used.
 		{
 			FCatalogExpression Expression;
 			Expression.Namespace = TEXT("UE");
@@ -1506,7 +1506,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 
 		// UE.LinearInterpolate -- three pins, each with a Const* twin: the const-property
-		// preference of CONTRACT 6.10 has to have somewhere to happen.
+		// preference has to have somewhere to happen.
 		{
 			FCatalogExpression Expression;
 			Expression.Namespace = TEXT("UE");
@@ -1527,7 +1527,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 			Catalog.Expressions.Add(MoveTemp(Expression));
 		}
 
-		// A custom-output class: a statement, never a value (CONTRACT 6.10, DSH4231).
+		// A custom-output class: a statement, never a value (DSH4231).
 		{
 			FCatalogExpression Expression;
 			Expression.Namespace = TEXT("UE");
@@ -1539,7 +1539,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 			Catalog.Expressions.Add(MoveTemp(Expression));
 		}
 
-		// A reflected class with MaterialAttributes PINS: the one place CONTRACT 6.13 still wants a
+		// A reflected class with MaterialAttributes PINS: the one place that still wants a
 		// MakeMaterialAttributes node made, now that a `material` may not cross into a @custom.
 		{
 			FCatalogExpression Expression;
@@ -1555,7 +1555,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 
 		// The Substrate namespace: a second namespace root, and the only producer of a Substrate
-		// value (decision 11 #11 -- `Substrate.Unlit` and `UE.Unlit` must resolve to the same entry
+		// value (`Substrate.Unlit` and `UE.Unlit` must resolve to the same entry
 		// only through the namespace the catalog records, never by accident).
 		{
 			FCatalogExpression Expression;
@@ -1592,7 +1592,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		// the classes above moves and no golden written before them changes.
 
 		// UE.StaticSwitchParameter -- a PARAMETER class with pins: what a 1.x `StaticSwitchParameter` property expands to
-		// at every call (research-legacy.md section 3.6), and the target of rule L20.
+		// at every call, and the target of rule L20.
 		{
 			FCatalogExpression Expression;
 			Expression.Namespace = TEXT("UE");
@@ -1831,7 +1831,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 				{ TEXT("MSM_Unlit"), TEXT("MSM_DefaultLit"), TEXT("MSM_Subsurface"), TEXT("MSM_ClearCoat"), TEXT("MSM_TwoSidedFoliage") }));
 		}
 
-		// The material attribute table -- the seven CONTRACT 6.1/6.2 name, so that an attribute outside it
+		// The material attribute table -- seven of them, so that an attribute outside it
 		// (`m.Metallic`) is a negative fixture with somewhere to land -- plus the whole-set entry below.
 		Catalog.MaterialAttributes.Add(MakeDreamShaderTestAttribute(TEXT("BaseColor"), TEXT("MP_BaseColor"), FIRType::Float(3)));
 		Catalog.MaterialAttributes.Add(MakeDreamShaderTestAttribute(TEXT("EmissiveColor"), TEXT("MP_EmissiveColor"), FIRType::Float(3), { TEXT("Emissive") }));
@@ -1906,7 +1906,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		FString IncludeDirectory;
 		/** Keep comments and blank lines (FModule::Trivia) on the MAIN module: what the printer and migrate runners read. */
 		bool bKeepTrivia = false;
-		/** FIRBuildOptions::StampSourcePath (debt B5); unset keeps the paths as given. */
+		/** FIRBuildOptions::StampSourcePath; unset keeps the paths as given. */
 		TFunction<FString(const FString& File)> StampSourcePath;
 		/** `.dsi` only: what the binder checks the overrides against, and the path the instance product carries. */
 		const UE::DreamShader::IR::FIRParameterSchema* ParentSchema = nullptr;
@@ -1974,7 +1974,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 			{
 				// Fixture-local resolution only: the leaf of whatever was written, looked for next
 				// to the including file and then in the layer's include directory. The corpus is a
-				// flat set of small files on purpose -- the real resolver (unit P) is what knows
+				// flat set of small files on purpose -- the real resolver is what knows
 				// about /Game, @scope and the source roots, and it is the Compile layer that
 				// exercises it.
 				const FString Leaf = FPaths::GetCleanFilename(IncludePath);
@@ -2103,7 +2103,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	 *     }
 	 *   }
 	 *
-	 * `irPending` is the corpus's way of being useful before unit I1 has settled the dump's exact
+	 * `irPending` is the corpus's way of being useful before the IR dump has settled its exact
 	 * line format: the outcome, the codes and the structural counts are asserted from day one, and
 	 * the text golden is filled in by a `-DreamShaderUpdateGolden` run once the format is real.
 	 * Dropping the flag is what turns a fixture into a byte-exact golden -- an update run always
@@ -2826,7 +2826,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		 * RelativeName is the corpus-relative, extension-free name; it becomes the scratch subtree.
 		 *
 		 * Extension is the main source's: `dss` for the Compile corpus, `dsm` / `dsf` for a legacy source. A legacy
-		 * destination follows the block's `Name=` and never the source folder (research-legacy.md L10), so a legacy
+		 * destination follows the block's `Name=` and never the source folder (legacy rule L10), so a legacy
 		 * fixture writes `Name="<MakeLegacyAssetName(...)>"` to land under this fixture's package path.
 		 */
 		explicit FDreamShaderCompile2Fixture(
@@ -3020,7 +3020,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	 * when the header has one, set `Root="Game"`. False when there is no Shader / ShaderFunction / ShaderLayer /
 	 * ShaderLayerBlend header with a quoted `Name`.
 	 *
-	 * A legacy destination follows `Name=` and never the source folder (research-legacy.md L10), so a test that
+	 * A legacy destination follows `Name=` and never the source folder (legacy rule L10), so a test that
 	 * compiles a real 1.x source from a scratch directory has to move its Name too, or it writes over the real asset.
 	 * Only the last header is rewritten, which is the product block: a `.dsf` opens with `VirtualFunction(Name = "...")`
 	 * prototypes whose names are call targets, not asset paths. Moved here from DreamShaderCompiler2Tests.cpp
@@ -3368,7 +3368,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 	 * produced are deleted by the fixture's destructor whatever happens in between.
 	 *
 	 * A legacy source (`.dsm` / `.dsf`) is the exception to "the destination follows the source path": its block's
-	 * `Name=` decides (research-legacy.md L10), so the copy's last product block is renamed to land under the fixture's
+	 * `Name=` decides (legacy rule L10), so the copy's last product block is renamed to land under the fixture's
 	 * package path, keeping the fixture's own stem as the asset name.
 	 */
 	inline bool RunDreamShaderCompileCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case, const FDreamShaderCompileCorpusLayer& Layer)

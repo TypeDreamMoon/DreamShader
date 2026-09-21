@@ -1,4 +1,4 @@
-// CONTRACT 6.3: a static bool condition merges both branches with StaticSwitch.
+// A static bool condition merges both branches with StaticSwitch.
 
 /// @static
 uniform bool UseWarm = true;
