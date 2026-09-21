@@ -49,6 +49,12 @@ blendmode   rendertype   shadingmodel   materialdomain   domain   backend
 | **`MaterialDomain`** | `Domain` | one of the [domain spellings](material-enums.md#domain) | `Surface` | sets `UMaterial::MaterialDomain` |
 | **`Backend`** | — | `Graph`, `ThinCustom`, `Instance`, or the empty string | the project's *Default Compiler Backend* | selects the materialization strategy — see [Backend](backend.md) |
 
+One more key is read by the compiler and never reaches the material *(since 2.0.0)*:
+
+| Key | Value grammar | Value when the key is absent | Effect |
+| :-- | :-- | :-- | :-- |
+| **`Substrate`** | `Legacy`, `Bridge`, `Native` | `Legacy` | how a material written against the legacy attributes is read in a project that has Substrate on — `Bridge` folds the shading attributes of a Surface material into one `Substrate.ShadingModels` node on `FrontMaterial`. See [Substrate sugar](../language-v2/substrate.md#one-source-two-kinds-of-project--substrate-). An unknown mode is `DSH7232`. |
+
 When both a canonical key and its synonym are present, the **canonical** key wins: `BlendMode` beats
 `RenderType`, `MaterialDomain` beats `Domain`. There is no diagnostic for the conflict.
 

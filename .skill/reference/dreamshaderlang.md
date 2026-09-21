@@ -119,7 +119,11 @@ StaticBoolParameter`.
   `UE.TransformVector` / `UE.TransformPosition`.
 - No `vec1`. Use `float`.
 - Texture, `SamplerState` and `Substrate` declarations inside `Graph` **require an initializer**.
-- `Substrate` requires UE 5.4+.
+- `Substrate` requires UE 5.4+. Since 2.0 a Substrate value has sugar, in a `.dsm` as in a `.dss`:
+  `A + B` (Add), `A * w` (Weight), `lerp(A, B, t)` (HorizontalMix), `Substrate.Layer(Top, Base, t)`,
+  `Substrate.Slab(BaseColor = c, Metallic = m, Roughness = r)` with the conversion node added for you,
+  and `Substrate S = Substrate.Slab(); S.Roughness = r;` — see
+  [`Docs/language-v2/substrate.md`](../../Docs/language-v2/substrate.md).
 
 Full validity matrix per declaration position: [`Docs/language/types.md`](../../Docs/language/types.md).
 
