@@ -41,7 +41,12 @@
 #include "Engine/Texture.h"
 #include "Materials/MaterialInstanceBasePropertyOverrides.h"
 #include "Materials/MaterialInstanceConstant.h"
+// FMaterialParameterInfo and its kin: Materials/MaterialParameters.h from UE 5.7, MaterialTypes.h before.
+#if DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER
 #include "Materials/MaterialParameters.h"
+#else
+#include "MaterialTypes.h"
+#endif
 #include "Misc/PackageName.h"
 #include "SparseVolumeTexture/SparseVolumeTexture.h"
 #include "VT/RuntimeVirtualTexture.h"
@@ -983,7 +988,7 @@ namespace UE::DreamShader::Editor::Compiler
 #endif
 
 			case IR::EIRParameterKind::ParameterCollection:
-#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+#if DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS
 				if (!LoadReference(UMaterialParameterCollection::StaticClass(), Object))
 				{
 					return false;

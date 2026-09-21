@@ -18,7 +18,16 @@
 #include "Engine/VolumeTexture.h"
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialInterface.h"
+// FMaterialParameterInfo and its kin: Materials/MaterialParameters.h from UE 5.7, MaterialTypes.h before.
+#if DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER
 #include "Materials/MaterialParameters.h"
+#else
+#include "MaterialTypes.h"
+#endif
+#if DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS
+// A parameter value may be a parameter collection, and reading it as a UObject needs the whole type.
+#include "Materials/MaterialParameterCollection.h"
+#endif
 #include "Misc/CString.h"
 
 namespace UE::DreamShader::Editor::Compiler
@@ -40,6 +49,8 @@ namespace UE::DreamShader::Editor::Compiler
 			case EMaterialParameterType::StaticComponentMask:   OutKind = IR::EIRParameterKind::StaticComponentMask; return true;
 #if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
 			case EMaterialParameterType::TextureCollection:     OutKind = IR::EIRParameterKind::TextureCollection; return true;
+#endif
+#if DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS
 			case EMaterialParameterType::ParameterCollection:   OutKind = IR::EIRParameterKind::ParameterCollection; return true;
 #endif
 			default:
@@ -132,7 +143,7 @@ namespace UE::DreamShader::Editor::Compiler
 			}
 			case IR::EIRParameterKind::ParameterCollection:
 			{
-#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+#if DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS
 				const UObject* Collection = Value.ParameterCollection;
 				Entry.ParentValue = IR::FIRPropertyValue::MakeObject(GetDreamShaderSchemaObjectPath(Collection));
 #else
@@ -165,7 +176,7 @@ namespace UE::DreamShader::Editor::Compiler
 			return false;
 #endif
 		case IR::EIRParameterKind::ParameterCollection:
-#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+#if DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS
 			OutType = EMaterialParameterType::ParameterCollection;
 			return true;
 #else

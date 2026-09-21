@@ -65,6 +65,13 @@
 // parameter is a value plus slider bounds and there is no enumerated-control surface to round trip.
 #define DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE DREAMSHADER_UE_VERSION_AT_LEAST(5, 7)
 
+// Set from DreamShader.Build.cs, which asks the engine header that declares EMaterialParameterType whether it has a
+// ParameterCollection enumerator: a material instance can override a parameter collection only where it does, and
+// UE 5.6 stops at TextureCollection. The fallback is for a translation unit built outside that module's definitions.
+#ifndef DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS
+#define DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
+#endif
+
 // UE 5.7 moved the material-parameter types (FMaterialParameterInfo and friends) into
 // Materials/MaterialParameters.h and deprecated the MaterialTypes.h that used to declare them.
 // Including the wrong one is a hard error going back and a deprecation warning going forward.

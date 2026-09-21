@@ -94,6 +94,55 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
+		// Two editor-only setters are younger than the oldest engine this builds on: a MaterialInstanceConstant of UE 5.6
+		// and earlier cannot be given a double vector or a static component mask this way. Asked of the type rather than
+		// of a version number, so an engine in between answers for itself; false is the "this build cannot express that
+		// kind" of ApplyCapturedOverride below, which the caller reports by name.
+		template <typename InstanceType>
+		bool TrySetDoubleVectorOverride(InstanceType* Instance, const FMaterialParameterInfo& Info, const FVector4d& Value)
+		{
+			if constexpr (requires { Instance->SetDoubleVectorParameterValueEditorOnly(Info, Value); })
+			{
+				Instance->SetDoubleVectorParameterValueEditorOnly(Info, Value);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		template <typename InstanceType>
+		bool TrySetStaticComponentMaskOverride(InstanceType* Instance, const FMaterialParameterInfo& Info, const FStaticComponentMaskValue& Value)
+		{
+			if constexpr (requires { Instance->SetStaticComponentMaskParameterValueEditorOnly(Info, Value); })
+			{
+				Instance->SetStaticComponentMaskParameterValueEditorOnly(Info, Value);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
+		// Where the setters are known to exist, the question above has to be answered yes: a mistyped argument would
+		// make it a quiet no, and the override would be reported as inexpressible on the one engine that can express it.
+		static_assert(
+			requires(UMaterialInstanceConstant* Instance, const FMaterialParameterInfo& Info, const FVector4d& Value)
+			{
+				Instance->SetDoubleVectorParameterValueEditorOnly(Info, Value);
+			},
+			"SetDoubleVectorParameterValueEditorOnly is asked for with the wrong arguments.");
+		static_assert(
+			requires(UMaterialInstanceConstant* Instance, const FMaterialParameterInfo& Info, const FStaticComponentMaskValue& Value)
+			{
+				Instance->SetStaticComponentMaskParameterValueEditorOnly(Info, Value);
+			},
+			"SetStaticComponentMaskParameterValueEditorOnly is asked for with the wrong arguments.");
+#endif
+
 		// Write one captured value back onto the instance. False means "this build cannot express that
 		// kind as an editor-only set", which the caller reports exactly like a parameter the source
 		// dropped -- both end with the value gone, and both deserve to be said out loud.
@@ -112,8 +161,7 @@ namespace UE::DreamShader::Editor::Private
 				Instance->SetVectorParameterValueEditorOnly(Override.Info, Value.AsLinearColor());
 				return true;
 			case EMaterialParameterType::DoubleVector:
-				Instance->SetDoubleVectorParameterValueEditorOnly(Override.Info, Value.AsVector4d());
-				return true;
+				return TrySetDoubleVectorOverride(Instance, Override.Info, Value.AsVector4d());
 			case EMaterialParameterType::Texture:
 				Instance->SetTextureParameterValueEditorOnly(Override.Info, Value.Texture);
 				return true;
@@ -130,8 +178,7 @@ namespace UE::DreamShader::Editor::Private
 				Instance->SetStaticSwitchParameterValueEditorOnly(Override.Info, Value.AsStaticSwitch());
 				return true;
 			case EMaterialParameterType::StaticComponentMask:
-				Instance->SetStaticComponentMaskParameterValueEditorOnly(Override.Info, Value.AsStaticComponentMask());
-				return true;
+				return TrySetStaticComponentMaskOverride(Instance, Override.Info, Value.AsStaticComponentMask());
 			default:
 				// Texture collections, parameter collections, and whatever a later engine adds. The
 				// capture above still SEES them (it walks kinds by index), so they are named in the

@@ -14,7 +14,12 @@
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialParameterCollection.h"
+// FMaterialParameterInfo and its kin: Materials/MaterialParameters.h from UE 5.7, MaterialTypes.h before.
+#if DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER
 #include "Materials/MaterialParameters.h"
+#else
+#include "MaterialTypes.h"
+#endif
 #include "Misc/Paths.h"
 #include "UObject/Package.h"
 
@@ -100,7 +105,7 @@ namespace UE::DreamShader::Editor::Private
 			}
 			case EIRParameterKind::ParameterCollection:
 			{
-#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+#if DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS
 				const UObject* Collection = Value.ParameterCollection;
 				Override.Value = FIRPropertyValue::MakeObject(ObjectPathOf(Collection));
 #else

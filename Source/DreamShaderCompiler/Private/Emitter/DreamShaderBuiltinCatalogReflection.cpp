@@ -1050,7 +1050,31 @@ namespace UE::DreamShader::Editor::Compiler
 
 		const UEnum* PropertyEnum = StaticEnum<EMaterialProperty>();
 		TArray<TPair<FString, FGuid>> NameToIdList;
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
 		FMaterialAttributeDefinitionMap::GetAttributeNameToIDList(NameToIdList);
+#else
+		// The list is private before UE 5.8. What it holds that this loop keeps -- the attributes that have an
+		// EMaterialProperty of their own -- is reachable through the enum and the public lookups: a property the table
+		// does not hold answers the default id, and that id does not map back to the property.
+		if (PropertyEnum)
+		{
+			for (int32 EnumIndex = 0; EnumIndex < PropertyEnum->NumEnums(); ++EnumIndex)
+			{
+				const int64 EnumValue = PropertyEnum->GetValueByIndex(EnumIndex);
+				if (EnumValue < 0 || EnumValue >= static_cast<int64>(MP_MAX))
+				{
+					continue;
+				}
+
+				const EMaterialProperty Property = static_cast<EMaterialProperty>(EnumValue);
+				const FGuid AttributeId = FMaterialAttributeDefinitionMap::GetID(Property);
+				if (AttributeId.IsValid() && FMaterialAttributeDefinitionMap::GetProperty(AttributeId) == Property)
+				{
+					NameToIdList.Emplace(FMaterialAttributeDefinitionMap::GetAttributeName(Property), AttributeId);
+				}
+			}
+		}
+#endif
 
 		for (const TPair<FString, FGuid>& NameToId : NameToIdList)
 		{

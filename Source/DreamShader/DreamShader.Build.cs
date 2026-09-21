@@ -40,5 +40,33 @@ public class DreamShader : ModuleRules
 		}
 
 		PublicDefinitions.Add("DREAMSHADER_WITH_MOON_ENGINE=" + (bHasMoonMaterialAttributes ? "1" : "0"));
+
+		// A material instance can override a parameter collection from the engine version whose
+		// EMaterialParameterType has a ParameterCollection enumerator -- UE 5.6 stops at TextureCollection. A `case`
+		// label cannot ask the type whether the enumerator exists, so this is asked of the header that declares the
+		// enum, for the same reasons as above: Materials/MaterialParameters.h where the engine has it, MaterialTypes.h
+		// before.
+		bool bHasParameterCollectionParameters = false;
+		string EnginePublicDirectory = Path.Combine(EngineDirectory, "Source", "Runtime", "Engine", "Public");
+		foreach (string Relative in new[] { Path.Combine("Materials", "MaterialParameters.h"), "MaterialTypes.h" })
+		{
+			string ParameterTypesHeader = Path.Combine(EnginePublicDirectory, Relative);
+			if (!File.Exists(ParameterTypesHeader))
+			{
+				continue;
+			}
+
+			string HeaderText = File.ReadAllText(ParameterTypesHeader);
+			int EnumStart = HeaderText.IndexOf("enum class EMaterialParameterType");
+			int EnumEnd = EnumStart < 0 ? -1 : HeaderText.IndexOf("};", EnumStart);
+			if (EnumStart >= 0 && EnumEnd > EnumStart)
+			{
+				string EnumText = HeaderText.Substring(EnumStart, EnumEnd - EnumStart);
+				bHasParameterCollectionParameters = System.Text.RegularExpressions.Regex.IsMatch(EnumText, @"\bParameterCollection\b");
+				break;
+			}
+		}
+
+		PublicDefinitions.Add("DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS=" + (bHasParameterCollectionParameters ? "1" : "0"));
 	}
 }

@@ -6,6 +6,7 @@
 
 #include "DreamShaderGeneratedAssets.h"
 #include "DreamShaderSettings.h"
+#include "DreamShaderVersionCompat.h"
 
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialInstanceBasePropertyOverrides.h"
@@ -287,6 +288,30 @@ namespace UE::DreamShader::Editor::Compiler
 				}
 			}
 		}
+
+		/**
+		 * Whether the instance overrides its parent's usage flags. The field is younger than the oldest engine this builds
+		 * on, so it is asked of the type: an engine without it has no such override to report.
+		 */
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
+		// Known to be there from 5.8: a misspelling below would otherwise read as "this engine has no such override".
+		static_assert(
+			requires(const FMaterialInstanceBasePropertyOverrides& Base) { Base.bOverride_UsageFlags; },
+			"FMaterialInstanceBasePropertyOverrides::bOverride_UsageFlags is asked for under the wrong name.");
+#endif
+
+		template <typename OverridesType>
+		bool HasDreamShaderUsageFlagsOverride(const OverridesType& Base)
+		{
+			if constexpr (requires { Base.bOverride_UsageFlags; })
+			{
+				return Base.bOverride_UsageFlags != 0;
+			}
+			else
+			{
+				return false;
+			}
+		}
 	}
 
 	bool ApplyInstanceSettings(
@@ -385,7 +410,7 @@ namespace UE::DreamShader::Editor::Compiler
 				MakeDreamShaderBaseOverrideKey(Field.Value),
 				ExportDreamShaderInstanceSettingValue(Field.Value, Field.Value->ContainerPtrToValuePtr<void>(&Base)));
 		}
-		if (Base.bOverride_UsageFlags != 0)
+		if (DreamShaderInstanceSettingsDetail::HasDreamShaderUsageFlagsOverride(Base))
 		{
 			OutUnsupported.Add(TEXT("UsageFlags"));
 		}

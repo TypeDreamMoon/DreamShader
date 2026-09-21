@@ -1073,6 +1073,30 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
+		namespace
+		{
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+			// Known to be there from 5.6: a misspelling below would otherwise read as "nothing is set".
+			static_assert(
+				requires(const UMaterialExpressionTextureSample* Sample) { Sample->GatherMode; },
+				"UMaterialExpressionTextureSample::GatherMode is asked for under the wrong name.");
+#endif
+
+			/** A TextureSample has a gather mode from UE 5.6 on; an engine without the property has nothing set on it. */
+			template <typename SampleType>
+			bool HasDefaultGatherMode(const SampleType* Sample, const SampleType* Defaults)
+			{
+				if constexpr (requires { Sample->GatherMode; })
+				{
+					return Sample->GatherMode == Defaults->GatherMode;
+				}
+				else
+				{
+					return true;
+				}
+			}
+		}
+
 		bool FGraphImporter::CanBeCoreSample(const UMaterialExpressionTextureSample* Sample, bool& bOutHasLevel) const
 		{
 			bOutHasLevel = false;
@@ -1082,7 +1106,7 @@ namespace UE::DreamShader::Editor::Private
 				|| Sample->CoordinatesDY.Expression
 				|| Sample->AutomaticViewMipBiasValue.Expression
 				|| Sample->SamplerSource != Defaults->SamplerSource
-				|| Sample->GatherMode != Defaults->GatherMode
+				|| !HasDefaultGatherMode(Sample, Defaults)
 				|| Sample->AutomaticViewMipBias != Defaults->AutomaticViewMipBias)
 			{
 				return false;
@@ -1916,7 +1940,8 @@ namespace UE::DreamShader::Editor::Private
 #if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
 			const FString Json = Package->GetMetaData().GetValue(Asset, TEXT("DreamShader.DecompileHints"));
 #else
-			const UMetaData* MetaData = Package->GetMetaData();
+			// Not const: UMetaData::GetValue is not, before the metadata became a plain struct.
+			UMetaData* MetaData = Package->GetMetaData();
 			const FString Json = MetaData ? MetaData->GetValue(Asset, TEXT("DreamShader.DecompileHints")) : FString();
 #endif
 			if (Json.IsEmpty())
