@@ -2,11 +2,6 @@
 
 #include "CoreMinimal.h"
 
-namespace UE::DreamShader::Editor
-{
-	class IDreamShaderDecompiler;
-}
-
 namespace UE::DreamShader::Editor::Private
 {
 	const TCHAR* GetDreamShaderCommandletUsage();
@@ -63,19 +58,24 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params);
+	/**
+	 * `decompile { -Asset=<path> | -SourceFile=<file> } [-Out=<file>] [-Format=Dss|Legacy|Auto] [-KeepAssetPath] [-Readable]
+	 * [-DiagnosticsOut=<file>]`: one decompile through the editor's decompile seam (Tools/DreamShaderDecompileTools.h), which
+	 * picks the 1.x or the 2.0 decompiler by the format, written to disk. `-SourceFile` alone decompiles every asset that source
+	 * builds into one file. False when the decompile, the write or the diagnostics file failed.
+	 */
 	bool RunDreamShaderDecompileCommandlet(
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
-		const TMap<FString, FString>& Params,
-		UE::DreamShader::Editor::IDreamShaderDecompiler& Decompiler);
+		const TMap<FString, FString>& Params);
 
 	// ---------------------------------------------------------------------------- the 2.0 verbs
 	//
-	// `check`, `dump-ir`, `index` and `export-catalog` work on `.dss` sources through the 2.0
-	// pipeline. They are implemented in Compiler/DreamShaderCompilerTools.cpp, not here: they share
-	// no code with the 1.x verbs -- a different source selection (`.dss` rather than `.dsm`/`.dsf`),
-	// a different driver, and diagnostics that come out of an FLangDiagnosticSink rather than an
-	// FDreamShaderError. These four are forwarders, so the dispatcher keeps naming one namespace.
+	// `check`, `dump-ir`, `index` and `export-catalog` run the 2.0 pipeline themselves, over any
+	// compilable source. They are implemented in Tools/DreamShaderCompilerTools.cpp, not here: they
+	// drive the pipeline directly rather than through the compiler service `compile` calls, and their
+	// diagnostics come out of an FLangDiagnosticSink rather than an FDreamShaderError. These four are
+	// forwarders, so the dispatcher keeps naming one namespace.
 
 	/** `check <file|-All> [-Shaders] [-Platform=] [-Quality=] [-Timeout=] [-DiagnosticsOut=]`. */
 	bool RunDreamShaderCheckCommandlet(

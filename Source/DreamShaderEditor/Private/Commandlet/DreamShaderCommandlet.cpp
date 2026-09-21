@@ -1,8 +1,8 @@
 #include "DreamShaderCommandlet.h"
 
 #include "Commandlet/DreamShaderCommandletRunner.h"
-#include "Decompiler/DreamShaderDecompileService.h"
-#include "Decompiler/DreamShaderGraphDecompiler.h"
+// RunDreamShaderMigrateCommandlet: the `migrate` verb, owned by the decompiler unit.
+#include "Commandlet/DreamShaderMigrate.h"
 #include "DreamShaderModule.h"
 
 UDreamShaderCommandlet::UDreamShaderCommandlet()
@@ -83,11 +83,13 @@ int32 UDreamShaderCommandlet::Main(const FString& Params)
 	if (Command.Equals(TEXT("decompile"), ESearchCase::IgnoreCase)
 		|| Command.Equals(TEXT("export"), ESearchCase::IgnoreCase))
 	{
-		return UE::DreamShader::Editor::Private::RunDreamShaderDecompileCommandlet(
-			Tokens,
-			Switches,
-			ParamValues,
-			UE::DreamShader::Editor::Private::GetGraphDecompiler()) ? 0 : 1;
+		// The format picks the decompiler (-Format=Dss|Legacy|Auto); the verb no longer takes one from here.
+		return UE::DreamShader::Editor::Private::RunDreamShaderDecompileCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
+	if (Command.Equals(TEXT("migrate"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderMigrateCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
 	}
 
 	UE_LOG(LogDreamShader, Error, TEXT("Unknown DreamShader command '%s'.\n%s"), *Command, UE::DreamShader::Editor::Private::GetDreamShaderCommandletUsage());

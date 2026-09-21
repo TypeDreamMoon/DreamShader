@@ -7,7 +7,6 @@
 
 #include "DreamShaderMaterialInstance.h"
 #include "DreamShaderModule.h"
-#include "DreamShaderParser.h"
 #include "DreamShaderTypes.h"
 #include "DreamShaderVersionCompat.h"
 
@@ -16,11 +15,10 @@
 // is this function input" would be a second thing to keep in step with the language.
 #include "Decompiler/DreamShaderGraphDecompilerHelpers.h"
 
-// The 2.0 pipeline, for the `.dss` branch of DumpDreamShaderGraphsForSource. A `.dss` cannot go
-// through the 1.x front end this file otherwise uses to work out which assets a source produces.
-#include "Compiler/DreamShaderCompilerDiagnostics.h"
-#include "Compiler/DreamShaderCompilerPipeline.h"
-#include "Compiler/DreamShaderCompilerTools.h"
+// Product resolution and the pipeline, which DumpDreamShaderGraphsForSource runs for every source kind.
+#include "DreamShaderCompilerDiagnostics.h"
+#include "DreamShaderCompilePipeline.h"
+#include "Tools/DreamShaderCompilerTools.h"
 
 // IsDigestProperty -- the project's existing answer to "which reflected property is CONTENT rather
 // than presentation". It already excludes node coordinates, node colour, Desc, the comment-bubble
@@ -29,11 +27,12 @@
 // non-editable (GraphNode, and the Material / Function back-pointers). Sharing it is deliberate: a
 // dump that disagreed with the divergence digest about what counts as content would be two answers
 // to one question.
-#include "MaterialAssetGeneration/DreamShaderGeneratedAssetDigest.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeShared.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.h"
+#include "DreamShaderGeneratedAssetDigest.h"
+#include "DreamShaderInstanceSettings.h"
+#include "DreamShaderCompilerService.h"
+#include "DreamShaderMaterialExpressionCompat.h"
+#include "DreamShaderGeneratedAssets.h"
+#include "DreamShaderCompilePipeline.h"
 
 #include "HAL/FileManager.h"
 #include "Interfaces/IPluginManager.h"
@@ -47,6 +46,7 @@
 #include "Materials/MaterialFunctionMaterialLayer.h"
 #include "Materials/MaterialFunctionMaterialLayerBlend.h"
 #include "Materials/MaterialInstance.h"
+#include "Materials/MaterialInstanceConstant.h"
 #include "Misc/FileHelper.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
@@ -1265,10 +1265,11 @@ namespace UE::DreamShader::Editor::Private
 
 		int32 NodeCount = 0;
 
-		// UDreamShaderMaterialInstance is a UMaterialInstance and never a UMaterial, but asking in the
-		// other order would be a live trap for whoever adds the next asset class.
-		if (UMaterialInstance* Instance = Cast<UMaterialInstance>(Asset))
+		// Instances first: UDreamShaderMaterialInstance and a `.dsi` product are UMaterialInstances and never
+		// UMaterials, but asking in the other order would be a live trap for whoever adds the next asset class.
+		if (UDreamShaderMaterialInstance* const ThinCustomInstance = Cast<UDreamShaderMaterialInstance>(Asset))
 		{
+			UMaterialInstance* const Instance = ThinCustomInstance;
 			Root->Set(TEXT("kind"), FDumpJson::String(TEXT("ThinCustomInstance")));
 			Root->Set(TEXT("backend"), FDumpJson::String(TEXT("ThinCustom")));
 
@@ -1287,6 +1288,41 @@ namespace UE::DreamShader::Editor::Private
 			// The graph itself lives on the hidden base material the instance parents to; a
 			// ThinCustom dump that stopped at the instance would describe an empty asset.
 			AppendMaterialGraphSections(Cast<UMaterial>(Instance->Parent), Root, NodeCount);
+		}
+		else if (UMaterialInstance* const MaterialInstance = Cast<UMaterialInstance>(Asset))
+		{
+			// A `.dsi` product: an instance of a parent that is an asset in its own right. The dump is the instance --
+			// its parent and the values it overrides -- and never the parent's graph, which the parent's own dump
+			// describes; appending it would change every instance baseline whenever its parent changes.
+			Root->Set(TEXT("kind"), FDumpJson::String(TEXT("MaterialInstance")));
+
+			const FDumpJsonRef InstanceJson = FDumpJson::Object();
+			const FDumpJsonRef Parent = FDumpJson::Object();
+			Parent->Set(
+				TEXT("kind"),
+				FDumpJson::String(MaterialInstance->Parent ? MaterialInstance->Parent->GetClass()->GetName() : TEXT("None")));
+			// Unlike a ThinCustom base, this parent is addressable, so its path is the same in every capture.
+			Parent->Set(
+				TEXT("path"),
+				FDumpJson::String(MaterialInstance->Parent ? MaterialInstance->Parent->GetPathName() : FString()));
+			InstanceJson->Set(TEXT("parent"), Parent);
+			InstanceJson->Set(TEXT("parameters"), MakeInstanceParametersJson(MaterialInstance));
+
+			// The `#pragma instance` keys the asset holds, read back the way the decompiler reads them: the base property
+			// overrides whose flag is set and the table rows, so a BlendMode that was written without its flag is absent.
+			const FDumpJsonRef Settings = FDumpJson::Object();
+			if (const UMaterialInstanceConstant* const Constant = Cast<UMaterialInstanceConstant>(MaterialInstance))
+			{
+				TArray<TPair<FString, FString>> Keys;
+				TArray<FString> Unsupported;
+				UE::DreamShader::Editor::Compiler::ReadInstanceSettings(Constant, Keys, Unsupported);
+				for (const TPair<FString, FString>& Key : Keys)
+				{
+					Settings->Set(Key.Key, FDumpJson::String(Key.Value));
+				}
+			}
+			InstanceJson->Set(TEXT("settings"), Settings);
+			Root->Set(TEXT("instance"), InstanceJson);
 		}
 		else if (UMaterial* Material = Cast<UMaterial>(Asset))
 		{
@@ -1328,12 +1364,16 @@ namespace UE::DreamShader::Editor::Private
 
 	namespace
 	{
-		/** The `Kind` string of one dumped asset. Shared by the 1.x and 2.0 paths below. */
+		/** The `Kind` string of one dumped asset: the `kind` BuildDreamShaderGraphDumpJson writes for it. */
 		FString ClassifyDumpedAsset(UObject* Asset)
 		{
 			if (Asset->IsA<UDreamShaderMaterialInstance>())
 			{
 				return TEXT("ThinCustomInstance");
+			}
+			if (Asset->IsA<UMaterialInstance>())
+			{
+				return TEXT("MaterialInstance");
 			}
 			if (Asset->IsA<UMaterialFunctionMaterialLayerBlend>())
 			{
@@ -1349,116 +1389,6 @@ namespace UE::DreamShader::Editor::Private
 			}
 			return TEXT("Material");
 		}
-
-		/**
-		 * The `.dss` half of dump-graph.
-		 *
-		 * It cannot share the 1.x body above. That body works out which assets a source produces by
-		 * running the 1.x front end over it -- LoadPreparedDreamShaderSource, FTextShaderParser::Parse,
-		 * ResolveDreamShaderAssetDestination per block -- and a `.dss` fails that parse at the first
-		 * line (DSH9032). The 2.0 pipeline hands the asset back from the emit instead, so there is
-		 * nothing to resolve: the products ARE the answer.
-		 *
-		 * The caller's FScopedDreamShaderGraphDumpWriteGuard still applies -- it is a process-wide
-		 * switch the emitter's asset layer reads -- so this writes no `.uasset` either, and an asset
-		 * that already exists on disk is dumped as it stands rather than rebuilt, exactly as in the
-		 * 1.x path.
-		 */
-		bool DumpDreamShaderLang2GraphsForSource(
-			const FString& NormalizedSource,
-			const FString& OutputDirectory,
-			TArray<FDreamShaderGraphDumpEntry>& OutEntries,
-			UE::DreamShader::FDreamShaderError& OutError)
-		{
-			UE::DreamShader::Editor::Compiler::FDreamShaderLang2PipelineOptions Options;
-			// Always forced, for the reason the 1.x path is: a dump of a graph that was skipped
-			// because its hash matched would be a dump of whatever happened to be in memory.
-			Options.bForce = true;
-			Options.bEmitAssets = true;
-
-			UE::DreamShader::Editor::Compiler::FDreamShaderLang2PipelineResult Result;
-			if (!UE::DreamShader::Editor::Compiler::RunDreamShaderLang2Pipeline(NormalizedSource, Options, Result))
-			{
-				UE::DreamShader::Editor::Compiler::BuildLang2CompileError(Result.Diagnostics, NormalizedSource, OutError);
-				if (OutError.IsEmpty())
-				{
-					FailWith(OutError, TEXT("DSH9032"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("DreamShader could not compile '%s', so there is no graph to dump."),
-						*NormalizedSource));
-				}
-				return false;
-			}
-
-			if (Result.ProductAssets.IsEmpty())
-			{
-				return FailWith(OutError, TEXT("DSH9032"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("DreamShader source '%s' declares no material and no exported function, so there is no graph to dump."),
-					*NormalizedSource));
-			}
-
-			bool bSucceeded = true;
-			for (int32 Slot = 0; Slot < Result.ProductAssets.Num(); ++Slot)
-			{
-				UObject* Asset = Result.ProductAssets[Slot].Get();
-				if (!Asset)
-				{
-					FailWith(OutError, TEXT("DSH9033"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("DreamShader could not resolve generated asset '%s' from '%s' after generation."),
-						*Result.ProductAssetPaths[Slot],
-						*NormalizedSource));
-					bSucceeded = false;
-					continue;
-				}
-
-				const FString ObjectPath = Asset->GetPathName();
-
-				int32 NodeCount = 0;
-				const FString Json = BuildDreamShaderGraphDumpJson(Asset, NormalizedSource, &NodeCount);
-				if (Json.IsEmpty())
-				{
-					FailWith(OutError, TEXT("DSH9034"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("DreamShader cannot dump '%s': %s is not a Material, MaterialFunction or DreamShader instance material."),
-						*ObjectPath,
-						*Asset->GetClass()->GetName()));
-					bSucceeded = false;
-					continue;
-				}
-
-				const FString OutputFilePath = MakeDreamShaderGraphDumpFilePath(OutputDirectory, NormalizedSource, ObjectPath);
-				const FString OutputFileDirectory = FPaths::GetPath(OutputFilePath);
-				if (!IFileManager::Get().MakeDirectory(*OutputFileDirectory, true))
-				{
-					FailWith(OutError, TEXT("DSH9030"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("DreamShader failed to create graph dump directory '%s'."),
-						*OutputFileDirectory));
-					bSucceeded = false;
-					continue;
-				}
-
-				if (!FFileHelper::SaveStringToFile(Json, *OutputFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
-				{
-					FailWith(OutError, TEXT("DSH9031"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-						TEXT("DreamShader failed to write graph dump '%s'."),
-						*OutputFilePath));
-					bSucceeded = false;
-					continue;
-				}
-
-				FDreamShaderGraphDumpEntry Entry;
-				Entry.ObjectPath = ObjectPath;
-				Entry.OutputFilePath = OutputFilePath;
-				Entry.NodeCount = NodeCount;
-				// Asked AFTER the emit, unlike the 1.x path, and that is correct here rather than a
-				// slip: a package this run created has no file behind it yet, so this answers
-				// false for it and true only for an asset that really was on disk and therefore left
-				// alone by the write guard.
-				Entry.bReadFromDisk = FPackageName::DoesPackageExist(Asset->GetOutermost()->GetName());
-				Entry.Kind = ClassifyDumpedAsset(Asset);
-				OutEntries.Add(MoveTemp(Entry));
-			}
-
-			return bSucceeded;
-		}
 	}
 
 	bool DumpDreamShaderGraphsForSource(
@@ -1469,94 +1399,86 @@ namespace UE::DreamShader::Editor::Private
 	{
 		const FString NormalizedSource = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
 
-		// A `.dss` never reaches the 1.x resolution below: it would fail FTextShaderParser::Parse at
-		// the first line and be reported as "declares no material", which is both wrong and useless.
-		if (UE::DreamShader::Editor::Compiler::IsDreamShaderLang2Source(NormalizedSource))
+		// The assets a source compiles to, resolved by the compile's own front half -- the front end its extension
+		// picks, the binder, the IR builder and the destination rules -- for a `.dss`, `.dsi`, `.dsm` and `.dsf` alike.
+		// Reading them off the compile's success MESSAGE instead would mean parsing prose, and the message is empty for
+		// the assets the write guard refuses.
+		UE::DreamShader::Editor::Compiler::FDreamShaderProductResolution Resolution;
+		if (!UE::DreamShader::Editor::Compiler::ResolveDreamShaderSourceProducts(NormalizedSource, Resolution))
 		{
-			return DumpDreamShaderLang2GraphsForSource(NormalizedSource, OutputDirectory, OutEntries, OutError);
-		}
-
-		// The asset paths a source compiles to, resolved the same way the generator resolves them --
-		// preprocess, parse, apply the plugin-root default, then ResolveDreamShaderAssetDestination.
-		// Reading them off the generator's success MESSAGE instead would mean parsing prose, and the
-		// message is empty for the assets the write guard refuses.
-		FString PreparedSource;
-		if (!LoadPreparedDreamShaderSource(NormalizedSource, PreparedSource, OutError))
-		{
+			UE::DreamShader::Editor::Compiler::BuildLang2CompileError(Resolution.Diagnostics, NormalizedSource, OutError);
+			if (OutError.IsEmpty())
+			{
+				FailWith(OutError, TEXT("DSH9032"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+					TEXT("DreamShader could not work out which assets '%s' builds, so there is no graph to dump."),
+					*NormalizedSource));
+			}
 			return false;
 		}
 
-		FTextShaderDefinition Definition;
-		FString ParseError;
-		if (!FTextShaderParser::Parse(PreparedSource, Definition, ParseError))
+		if (Resolution.Products.IsEmpty())
 		{
 			return FailWith(OutError, TEXT("DSH9032"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-				TEXT("%s: %s"),
-				*NormalizedSource,
-				*ParseError));
+				TEXT("DreamShader source '%s' declares no material, material instance or exported function, so there is no graph to dump."),
+				*NormalizedSource));
 		}
-
-		ApplyDefaultRootFromSourceFile(NormalizedSource, Definition);
 
 		struct FDumpTarget
 		{
-			FString PackageName;
+			int32 ProductIndex = INDEX_NONE;
 			FString ObjectPath;
 			bool bExistedOnDisk = false;
 		};
 
 		TArray<FDumpTarget> Targets;
-		auto AddTarget = [&Targets, &OutError](const FString& Name, const FString& RootValue) -> bool
+		Targets.Reserve(Resolution.Products.Num());
+		for (const UE::DreamShader::Editor::Compiler::FDreamShaderResolvedProduct& Product : Resolution.Products)
 		{
-			FDumpTarget Target;
-			FString AssetLeaf;
-			if (!ResolveDreamShaderAssetDestination(Name, RootValue, Target.PackageName, Target.ObjectPath, AssetLeaf, OutError))
+			FDumpTarget& Target = Targets.AddDefaulted_GetRef();
+			Target.ProductIndex = Product.ProductIndex;
+			Target.ObjectPath = Product.ObjectPath;
+			// Asked BEFORE the compile, because that is when the answer is still about the project on disk rather
+			// than about anything this run created. It is also exactly the condition the write guard asks, so it
+			// predicts which assets the compile leaves as they stand.
+			Target.bExistedOnDisk = FPackageName::DoesPackageExist(Product.PackageName);
+		}
+
+		UE::DreamShader::Editor::Compiler::FDreamShaderLang2PipelineOptions Options;
+		// Always forced: a dump of a graph that was skipped because its hash matched would be a dump of whatever
+		// happened to be in memory.
+		Options.bForce = true;
+		Options.bEmitAssets = true;
+		// A ThinCustom product stays Ephemeral, and the caller's write guard makes that binding rather than advisory.
+		Options.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
+
+		UE::DreamShader::Editor::Compiler::FDreamShaderLang2PipelineResult Result;
+		if (!UE::DreamShader::Editor::Compiler::RunDreamShaderLang2Pipeline(NormalizedSource, Options, Result))
+		{
+			UE::DreamShader::Editor::Compiler::BuildLang2CompileError(Result.Diagnostics, NormalizedSource, OutError);
+			if (OutError.IsEmpty())
 			{
-				return false;
+				FailWith(OutError, TEXT("DSH9032"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
+					TEXT("DreamShader could not compile '%s', so there is no graph to dump."),
+					*NormalizedSource));
 			}
-
-			// Asked BEFORE generation, because that is when the answer is still about the project on
-			// disk rather than about anything this run created. It is also exactly the condition
-			// IsGeneratedAssetPersisted asks, so it predicts which assets the write guard will refuse
-			// to rebuild.
-			Target.bExistedOnDisk = FPackageName::DoesPackageExist(Target.PackageName);
-			Targets.Add(MoveTemp(Target));
-			return true;
-		};
-
-		for (const FTextShaderMaterialFunctionDefinition& FunctionDefinition : Definition.MaterialFunctions)
-		{
-			if (!AddTarget(FunctionDefinition.Name, FunctionDefinition.Root))
-			{
-				return false;
-			}
-		}
-
-		if (!Definition.Name.IsEmpty() && !AddTarget(Definition.Name, Definition.Root))
-		{
-			return false;
-		}
-
-		if (Targets.IsEmpty())
-		{
-			return FailWith(OutError, TEXT("DSH9032"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-				TEXT("DreamShader source '%s' declares no material, ShaderFunction, ShaderLayer or ShaderLayerBlend block, so there is no graph to dump."),
-				*NormalizedSource));
-		}
-
-		// Always forced: a dump of a graph that was skipped because its hash matched would be a dump
-		// of whatever happened to be in memory. A ThinCustom product stays Ephemeral, and the caller's
-		// write guard makes that binding rather than advisory.
-		if (!FMaterialGenerator::GenerateAssetsFromFile(
-				NormalizedSource, OutError, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true))
-		{
 			return false;
 		}
 
 		bool bSucceeded = true;
 		for (const FDumpTarget& Target : Targets)
 		{
-			UObject* Asset = LoadObject<UObject>(nullptr, *Target.ObjectPath);
+			// The asset the run handed back for this product or, for one the write guard left alone, whatever the
+			// object path holds on disk.
+			UObject* Asset = nullptr;
+			const int32 Slot = Result.ProductOrder.IndexOfByKey(Target.ProductIndex);
+			if (Result.ProductAssets.IsValidIndex(Slot))
+			{
+				Asset = Result.ProductAssets[Slot].Get();
+			}
+			if (!Asset)
+			{
+				Asset = LoadObject<UObject>(nullptr, *Target.ObjectPath);
+			}
 			if (!Asset)
 			{
 				FailWith(OutError, TEXT("DSH9033"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
@@ -1572,7 +1494,7 @@ namespace UE::DreamShader::Editor::Private
 			if (Json.IsEmpty())
 			{
 				FailWith(OutError, TEXT("DSH9034"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("DreamShader cannot dump '%s': %s is not a Material, MaterialFunction or DreamShader instance material."),
+					TEXT("DreamShader cannot dump '%s': %s is not a Material, MaterialFunction or material instance."),
 					*Target.ObjectPath,
 					*Asset->GetClass()->GetName()));
 				bSucceeded = false;

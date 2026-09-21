@@ -32,7 +32,7 @@ namespace UE::DreamShader::Editor::Private
 		/** `/Game/Path/Asset.Asset`. */
 		FString ObjectPath;
 
-		/** `Material` / `MaterialFunction` / `MaterialLayer` / `MaterialLayerBlend` / `ThinCustomInstance`. */
+		/** `Material` / `MaterialFunction` / `MaterialLayer` / `MaterialLayerBlend` / `ThinCustomInstance` / `MaterialInstance`. */
 		FString Kind;
 
 		/** Absolute path of the `.graph.json` that was written. */
@@ -97,7 +97,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& ObjectPath);
 
 	/**
-	 * Generates one source in memory and writes one JSON file per asset it produces.
+	 * Compiles one source of any kind (`.dss`, `.dsi`, `.dsm`, `.dsf`) and writes one JSON file per asset it produces.
 	 *
 	 * Callers must already hold an FScopedDreamShaderGraphDumpWriteGuard: this function does not
 	 * install one, because a `-All` run needs a single guard around the whole sweep rather than one

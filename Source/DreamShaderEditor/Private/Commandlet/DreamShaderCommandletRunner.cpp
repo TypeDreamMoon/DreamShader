@@ -1,20 +1,26 @@
 #include "DreamShaderCommandletRunner.h"
 
-#include "DreamShaderCompileService.h"
+#include "DreamShaderCompilerInterface.h"
 #include "Commandlet/DreamShaderGraphDump.h"
-#include "Compiler/DreamShaderCompilerTools.h"
+#include "Tools/DreamShaderCompilerTools.h"
 #include "Decompiler/DreamShaderDecompileService.h"
-#include "Compile/DreamShaderEditorCompileAdapter.h"
-#include "Diagnostics/DreamShaderTextWireUtils.h"
+// The decompile verb's format, decompiler choice, asset loading and diagnostics, shared with the bridge and Adopt.
+#include "Tools/DreamShaderDecompileTools.h"
+#include "DreamShaderCompilerDiagnostics.h"
+#include "DreamShaderCompilerInterface.h"
+#include "DreamShaderTextWireUtils.h"
 #include "DreamShaderDefineResolution.h"
 #include "DreamShaderDefineTable.h"
 #include "DreamShaderModule.h"
-#include "SourceFiles/DreamShaderSourceFileUtils.h"
+#include "DreamShaderSourceFileUtils.h"
+#include "Lang/LangDiagnostic.h"
 
 #include "Commandlets/Commandlet.h"
 #include "HAL/FileManager.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
+
+#define LOCTEXT_NAMESPACE "DreamShader.CommandletRunner"
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -24,15 +30,21 @@ namespace UE::DreamShader::Editor::Private
 			"Usage:\n"
 			"  -run=DreamShader compile -Source=\"C:/Project/DShader/File.dsm\" [-Force] [-Define=NAME=VALUE ...]\n"
 			"  -run=DreamShader compile -All [-Force] [-Define=NAME=VALUE ...]\n"
-			"  -run=DreamShader decompile -Asset=\"/Game/Path/Asset.Asset\" [-Out=\"C:/Project/DShader/Decompiled/File.dsm\"]\n"
+			"  -run=DreamShader decompile { -Asset=\"/Game/Path/Asset.Asset\" | -SourceFile=\"C:/Project/DShader/File.dss\" } [-Out=<file>] [-Format=Dss|Legacy|Auto] [-KeepAssetPath] [-Readable] [-DiagnosticsOut=<file>]\n"
+			"  -run=DreamShader migrate { -Source=\"C:/Project/DShader/File.dsm\" | -All | -Root=<source root> } [-Check] [-DryRun] [-Out=<dir>] [-NoBackup]\n"
 			"  -run=DreamShader dump-graph { -Source=\"C:/Project/DShader/File.dsm\" | -All } [-Out=\"C:/Project/Saved/DreamShader/GraphBaseline\"]\n"
 			"  -run=DreamShader check { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Shaders] [-Platform=SM6,SM5] [-Quality=High] [-Timeout=120] [-DiagnosticsOut=<file>]\n"
 			"  -run=DreamShader dump-ir { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Out=<dir>] [-Json]\n"
 			"  -run=DreamShader index { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Out=<dir>]\n"
 			"  -run=DreamShader export-catalog [-Out=<file>]\n"
-			"Supported asset types: Material -> .dsm, MaterialFunction -> .dsf.\n"
-			"check, dump-ir, index and export-catalog belong to the 2.0 pipeline and take `.dss`\n"
-			"sources only. check writes no asset at all; -Shaders is the exception -- a shader\n"
+			"decompile writes 2.0 text by default -- a .dss for a Material or MaterialFunction, a .dsi for a\n"
+			"MaterialInstanceConstant; -Format=Legacy, or an -Out ending in .dsm or .dsf, writes the 1.x text.\n"
+			"-SourceFile decompiles every asset that source builds into one file; -KeepAssetPath keeps each asset's own path.\n"
+			"migrate rewrites 1.x sources (.dsm, .dsf, .dsh) as .dss; -Check verifies the rewrite and writes nothing.\n"
+			"-All takes the writable source roots; -Root names one root, a plugin's included, by its name or its plugin's.\n"
+			"compile, dump-graph, check, dump-ir and index take any compilable source -- .dss, .dsi,\n"
+			".dsm or .dsf; a .dsh header is compiled through the sources that include it.\n"
+			"check writes no asset at all; -Shaders is the exception -- a shader\n"
 			"compile needs a real material, so it builds and saves the products the way compile\n"
 			"does, then reports HLSL errors as stage: shader.\n"
 			"dump-graph is a developer tool: it writes one canonical JSON per generated asset and\n"
@@ -425,18 +437,29 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		UE::DreamShader::Compiler::FDreamShaderCompileService CompileService(UE::DreamShader::Editor::GetEditorCompileAdapter());
+		::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler();
+		if (!Compiler)
+		{
+			UE_LOG(LogDreamShader, Error, TEXT("DreamShader compile: the DreamShaderCompiler module is not available in this process."));
+			return false;
+		}
+
 		bool bSucceeded = true;
 		for (const FString& SourceFile : SourceFiles)
 		{
 			if (!UE::DreamShader::IsDreamShaderSourceFile(SourceFile) || UE::DreamShader::IsDreamShaderHeaderFile(SourceFile))
 			{
-				UE_LOG(LogDreamShader, Error, TEXT("DreamShader compile requires a .dsm or .dsf file: %s"), *SourceFile);
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader compile requires a .dss, .dsi, .dsm or .dsf file: %s"), *SourceFile);
 				bSucceeded = false;
 				continue;
 			}
 
-			const UE::DreamShader::Compiler::FDreamShaderCompileResult Result = CompileService.CompileAssets(SourceFile, bForce);
+			// Materialized: a commandlet has no editor session to keep an Ephemeral product alive in.
+			::UE::DreamShader::FDreamShaderCompileRequest Request;
+			Request.SourceFilePath = SourceFile;
+			Request.bForce = bForce;
+			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Materialized;
+			const ::UE::DreamShader::FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);
 			if (Result.bSucceeded)
 			{
 				UE_LOG(LogDreamShader, Display, TEXT("%s"), *ToInvariantWireString(Result.Message));
@@ -490,7 +513,7 @@ namespace UE::DreamShader::Editor::Private
 			// must not stop a -All sweep, but the run still has to exit non-zero.
 			if (!UE::DreamShader::IsDreamShaderSourceFile(SourceFile) || UE::DreamShader::IsDreamShaderHeaderFile(SourceFile))
 			{
-				UE_LOG(LogDreamShader, Error, TEXT("DreamShader dump-graph requires a .dsm or .dsf file: %s"), *SourceFile);
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader dump-graph requires a .dss, .dsi, .dsm or .dsf file: %s"), *SourceFile);
 				bSucceeded = false;
 				continue;
 			}
@@ -583,21 +606,24 @@ namespace UE::DreamShader::Editor::Private
 	bool RunDreamShaderDecompileCommandlet(
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
-		const TMap<FString, FString>& Params,
-		UE::DreamShader::Editor::IDreamShaderDecompiler& Decompiler)
+		const TMap<FString, FString>& Params)
 	{
 		FString AssetPath;
-		if (!TryGetCommandletParam(Tokens, Switches, Params, TEXT("Asset"), AssetPath))
+		FString SourceFilePath;
+		const bool bHasAsset = TryGetCommandletParam(Tokens, Switches, Params, TEXT("Asset"), AssetPath);
+		const bool bHasSourceFile = TryGetCommandletParam(Tokens, Switches, Params, TEXT("SourceFile"), SourceFilePath);
+		if (!bHasAsset && !bHasSourceFile)
 		{
 			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderCommandletUsage());
 			return false;
 		}
 
-		FString LoadPath;
-		UObject* Asset = LoadCommandletAsset(AssetPath, LoadPath);
-		if (!Asset)
+		::UE::DreamShader::Editor::EDreamShaderDecompileFormat Format = ::UE::DreamShader::Editor::EDreamShaderDecompileFormat::Auto;
+		FString FormatText;
+		if (TryGetCommandletParam(Tokens, Switches, Params, TEXT("Format"), FormatText)
+			&& !TryParseDreamShaderDecompileFormat(FormatText, Format))
 		{
-			UE_LOG(LogDreamShader, Error, TEXT("DreamShader could not load asset '%s'."), *AssetPath);
+			UE_LOG(LogDreamShader, Error, TEXT("DreamShader decompile: -Format takes Dss, Legacy or Auto; got '%s'."), *FormatText);
 			return false;
 		}
 
@@ -608,14 +634,90 @@ namespace UE::DreamShader::Editor::Private
 			OutputPath.Reset();
 		}
 
-		FDreamShaderDecompileService DecompileService(Decompiler);
-		UE::DreamShader::Editor::FDreamShaderDecompileRequest Request;
+		if (bHasSourceFile)
+		{
+			SourceFilePath = ResolveCommandletSourceFilePath(SourceFilePath);
+		}
+
+		FString LoadPath;
+		UObject* Asset = nullptr;
+		if (bHasAsset)
+		{
+			Asset = LoadCommandletAsset(AssetPath, LoadPath);
+			if (!Asset)
+			{
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader could not load asset '%s'."), *AssetPath);
+				return false;
+			}
+		}
+		else
+		{
+			// The source alone: any asset it builds stands for the set, and the service decompiles every one of them.
+			FString LoadError;
+			Asset = LoadDreamShaderDecompileSourceProduct(SourceFilePath, LoadError);
+			if (!Asset)
+			{
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader decompile: %s"), *LoadError);
+				return false;
+			}
+			LoadPath = Asset->GetPathName();
+		}
+
+		::UE::DreamShader::Editor::FDreamShaderDecompileRequest Request;
 		Request.Asset = Asset;
 		Request.OutputFilePath = OutputPath;
-		const UE::DreamShader::Editor::FDreamShaderDecompileResult Result = DecompileService.DecompileAsset(Request);
+		Request.Format = Format;
+		Request.bKeepAssetPath = HasCommandletFlag(Tokens, Switches, TEXT("KeepAssetPath"));
+		Request.SourceFilePath = bHasSourceFile ? SourceFilePath : FString();
+		Request.bReadable = HasCommandletFlag(Tokens, Switches, TEXT("Readable"));
+		const ::UE::DreamShader::Editor::FDreamShaderDecompileResult Result = RunDreamShaderDecompileRequest(Request);
+		const FString DiagnosticsFile = !Result.OutputFilePath.IsEmpty()
+			? Result.OutputFilePath
+			: (bHasSourceFile ? SourceFilePath : LoadPath);
+
+		// Every diagnostic on its own located line, the way `check` logs them, so dsc.ps1 colours each by its severity.
+		for (const ::UE::DreamShader::Lang::FLangDiagnostic& Diagnostic : Result.Diagnostics)
+		{
+			const FString WireLine = ::UE::DreamShader::Editor::Compiler::FormatLang2DiagnosticWireLine(Diagnostic, DiagnosticsFile);
+			switch (Diagnostic.Severity)
+			{
+			case ::UE::DreamShader::Lang::ELangSeverity::Error:
+				UE_LOG(LogDreamShader, Error, TEXT("%s"), *WireLine);
+				break;
+			case ::UE::DreamShader::Lang::ELangSeverity::Warning:
+				UE_LOG(LogDreamShader, Warning, TEXT("%s"), *WireLine);
+				break;
+			case ::UE::DreamShader::Lang::ELangSeverity::Info:
+				UE_LOG(LogDreamShader, Display, TEXT("%s"), *WireLine);
+				break;
+			}
+		}
+
+		// Written whether or not the decompile succeeded: the failure is exactly what a CI step wants in the file.
+		bool bDiagnosticsWritten = true;
+		FString DiagnosticsOut;
+		if (TryGetCommandletParam(Tokens, Switches, Params, TEXT("DiagnosticsOut"), DiagnosticsOut))
+		{
+			TArray<::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord> Records;
+			BuildDreamShaderDecompileDiagnosticRecords(Result, DiagnosticsFile, Records);
+			FString WriteError;
+			if (!::UE::DreamShader::Editor::Compiler::WriteLang2DiagnosticsWireJson(DiagnosticsOut, DiagnosticsFile, Records, WriteError))
+			{
+				// The code `check -DiagnosticsOut` raises for the same failure, with the same words.
+				::UE::DreamShader::Lang::FLangDiagnosticSink WriteSink(DiagnosticsFile);
+				const ::UE::DreamShader::Lang::FLangSpan NoSpan;
+				WriteSink.Error(TEXT("DSH9036"), NoSpan, FText::Format(
+					LOCTEXT("DecompileDiagnosticsOutFailed", "The diagnostics JSON could not be written: {0}."),
+					FText::FromString(WriteError)));
+				::UE::DreamShader::Editor::Compiler::LogLang2Diagnostics(WriteSink, DiagnosticsFile);
+				bDiagnosticsWritten = false;
+			}
+		}
+
 		if (!Result.bSucceeded)
 		{
-			UE_LOG(LogDreamShader, Error, TEXT("DreamShader failed to decompile '%s': %s"), *LoadPath, *Result.Error);
+			const FString Reason = DescribeDreamShaderDecompileFailure(Result);
+			UE_LOG(LogDreamShader, Error, TEXT("DreamShader failed to decompile '%s': %s"), *LoadPath, *Reason);
 			return false;
 		}
 
@@ -626,7 +728,16 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		UE_LOG(LogDreamShader, Display, TEXT("DreamShader decompiled '%s' to '%s'."), *LoadPath, *Result.OutputFilePath);
-		return true;
+		const ::UE::DreamShader::Editor::EDreamShaderDecompileFormat ResolvedFormat = ResolveDreamShaderDecompileFormat(Format, OutputPath);
+		UE_LOG(
+			LogDreamShader,
+			Display,
+			TEXT("DreamShader decompiled '%s' to '%s' (%s)."),
+			*LoadPath,
+			*Result.OutputFilePath,
+			LexDreamShaderDecompileFormat(ResolvedFormat));
+		return bDiagnosticsWritten;
 	}
 }
+
+#undef LOCTEXT_NAMESPACE
