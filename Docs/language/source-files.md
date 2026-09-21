@@ -86,9 +86,13 @@ enough for `.dsf` while `.dsh` needs six. Likewise `MaterialLayerBlend(` does no
 > therefore passes, and the imported blocks are compiled as part of the translation unit. The kind
 > rules constrain what you write in a file, not what its import closure ends up containing.
 
-The check lives in the editor source loader. The runtime parser entry point is extension-agnostic:
-calling it directly on the text of a `.dsh` will happily parse a `Shader(…)` block out of it. See
-[`DreamShaderParser.h`](../api/parser.md).
+> [!IMPORTANT]
+> **Changed in 2.0.** The substring scan above is how the 1.x loader decided, and it retired with the
+> 1.x parser. The legacy front end decides **per declaration**: an asset block (`Shader`,
+> `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend`) in a `.dsh` header is `DSH2249`, raised at
+> the block word. A comment or a string that merely contains `Shader(` no longer trips anything, and
+> `Shader (` with a space no longer slips past. 2.0 syntax in a `.dsm` / `.dsf` is `DSH2248`; in a
+> `.dsh` both dialects may stand side by side. See [the retired parser page](../api/parser.md).
 
 ## Source roots
 

@@ -3,15 +3,15 @@
 > [DreamShader](../index.md) » **DreamShaderLang 2.0**
 
 > [!IMPORTANT]
-> **A `.dss` now compiles.** As of **M2+M3**, the 2.0 line is a whole pipeline: preprocess → parse →
-> **bind → lower to a graph IR → run the passes → validate → emit**, ending in a real `UMaterial` or
-> `UMaterialFunction` built by the same reflection factory, digest, provenance, atomic rebuild and
-> layout the 1.x generator uses. `dsc compile` builds one; `dsc check` stops at IR validation and
-> writes nothing; `dsc dump-ir` and `dsc index` show the middle.
+> **One compiler builds everything.** As of **M4+M5** there is one pipeline -- preprocess → parse →
+> bind → lower to a graph IR → run the passes → validate → emit -- and two front ends in front of it:
+> a `.dss` is read by the 2.0 parser, and a `.dsm` / `.dsf` by a **legacy front end** that reads the
+> [1.x language](../language/index.md) into the same tree. The 1.x generator is gone; what it built is
+> reproduced node for node (68 of 68 real sources, measured against frozen 1.x graph dumps).
 >
-> The **1.x language is untouched and stays supported**: `.dsm` and `.dsf` still go through the
-> [1.x pipeline](../language/index.md), which M4 will fold into this one as a second front end.
-> Parsing a `.dsm` through the 2.0 entry point is still `DSH2199` until then.
+> New with it: **material instances as source** ([`.dsi`](instances.md)), a **decompiler that writes
+> `.dss`**, and **[`dsc migrate`](../tools/migrate.md)**, which rewrites a 1.x file as 2.0 and proves
+> the rewrite before it writes anything.
 
 DreamShaderLang 2.0 drops the 1.x section blocks (`Shader`, `Properties`, `Outputs`, `Graph`, …) and
 writes a material as what it always was underneath: **HLSL with declarations**. Metadata that used
@@ -20,11 +20,11 @@ source with no side files and no strip step.
 
 | | |
 | :-- | :-- |
-| Extensions | `.dss` — a 2.0 compilation unit · `.dsh` — a shared header |
-| 1.x extensions | `.dsm` / `.dsf` — unchanged, second front end, arrives in M4 |
-| Module | [`DreamShaderLang`](../api/lang-module.md) (`Core` only) — front end, binder and IR; the emitter is in `DreamShaderEditor` |
+| Extensions | `.dss` — a 2.0 compilation unit · `.dsi` — a [material instance](instances.md) · `.dsh` — a shared header, which may hold both dialects |
+| 1.x extensions | `.dsm` / `.dsf` — read by the legacy front end, built by the same compiler |
+| Modules | [`DreamShaderLang`](../api/lang-module.md) (`Core` only) — both front ends, binder, IR, decompile and migrate · `DreamShaderCompiler` (editor) — pipeline, emitter, assets |
 | Tests | `DreamShader.Lang2.*`, `DreamShader.Compiler2.*` |
-| Status | M1: lexer + 2.0 parser + printer + corpus · **M2+M3: binder, IR, passes, validator, emitter, `dsc check` / `dump-ir` / `index` / `export-catalog`, node ↔ source navigation** |
+| Status | M1: lexer + 2.0 parser + printer · M2+M3: binder, IR, passes, validator, emitter, tools, node ↔ source navigation · **M4+M5: legacy front end, `.dsi`, decompiler 2.0, `dsc migrate`** |
 
 ## Two short examples
 
@@ -134,9 +134,35 @@ error anywhere else — a `$` register name, a `@` intrinsic, a `'`, a `#` in th
 is reported by nothing here. `dsc check --shaders` is what gets to complain about that text. The
 same `#` one line outside the body is still `DSH2106`; the silence is scoped to the body.
 
+With one exception, which is the point of it: **a `UE.` node call inside the body is lifted into the
+graph.** The call's text stays where it is; the compiler builds that node, wires it to an extra input
+of the Custom node (`_ds_<Function>_UE0`, `_UE1`, ...) and puts the input's name in the call's place.
+
+```hlsl
+/// @custom
+float Pulse(float2 UV, float Gain)
+{
+    float T = UE.Time();                                              // a Time node, wired in
+    float Mixed = UE.LinearInterpolate(A = 0.0, B = Gain, Alpha = 0.5); // built once per call site
+    return sin(UV.x * 8.0 + T) * Mixed;
+}
+```
+
+A lifted call is evaluated in the graph, outside the HLSL: it may read the function's parameters (they
+are replaced by each call's arguments) and the file's globals, and nothing the body declares
+(`DSH6326`). An output may be selected after the call (`UE.SceneTexture(...).InvSize`, `[k]`). A
+function with lifted calls cannot be called from another HLSL body (`DSH6327`), because those inputs
+belong to its own node.
+
+**What the node looks like.** A function that returns a value is a Custom node with that output. A
+`void` function's **first `out` parameter is the node's primary output** and the other `out`s are its
+additional outputs, which is the node a 1.x `Function` always made; a `void` function without any
+`out` returns an unused float. `/// @name` on a `@custom` function sets the node's title (its
+Description), which is otherwise the function's name.
+
 ## What the pipeline does today
 
-Everything M1 listed as missing except the legacy front end is now in:
+Everything M1 listed as missing is now in:
 
 - **Assets.** A `.dss` compiles to a `UMaterial`, a `UMaterialFunction`, a Material Layer or a Layer
   Blend, through the 1.x asset factory, digest, provenance, atomic rebuild and graph layout — so
@@ -154,14 +180,34 @@ Everything M1 listed as missing except the legacy front end is now in:
   the other direction.
 - **A shader check.** `dsc check -Shaders` builds the products and reports HLSL compile errors
   against the source line they came from.
+- **The 1.x language**, through the legacy front end: every documented 1.x leniency is a numbered rule
+  that applies to 1.x text only and says so where it applies (`DSH5275`–`DSH5292`), so a 1.x source
+  builds what it always built while a `.dss` stays strict. Silent 1.x behaviour that was never
+  documented is an error with a message that says what 1.x did (`DSH2200`–`DSH2222`).
+- **Material instances** as [`.dsi`](instances.md) sources, checked against their parent's parameters.
+- **The way back.** `dsc decompile` reads a material, function, layer, blend or instance into the IR
+  and prints 2.0 text ([decompiler](../tools/decompiler.md)); [`dsc migrate`](../tools/migrate.md)
+  rewrites 1.x sources as `.dss`. Both are proved by compiling the text they wrote and comparing IRs.
+- **Comments survive a rewrite.** The parser keeps `//` and `/* */` comments as trivia on the
+  declaration or statement they stand by, and the printer writes them back.
+
+### Since batch 2
+
+| Feature | Spelling |
+| :-- | :-- |
+| A StaticBool function pin | `/// @static <Parameter>` on the function, for a `bool` parameter (`DSH7231` otherwise). An `if` on it is a StaticSwitch. |
+| A default that is a graph expression | `float Row = UE.TexCoord(CoordinateIndex = 1).r` -- wired to the input's Preview pin. A constant default stays a preview value. |
+| A texture nobody can override | `/// @default /Game/T_Noise` + `static const Texture2D Noise;` -- a TextureObject node, not a parameter. `@sampler` applies. |
+| A layer blend | `/// @layerblend export void B(material Bottom, material Top, inout material Result)` -- two material inputs and a result that **starts empty**; `Bottom` / `Top` (also `Base`) set the pins' blend relevance. |
+| A material layer | `/// @layer export void L(inout material m)` -- the input is optional, as the engine's own layer templates make it. |
+| A required pin left open | a warning (`DSH5219`), not an error: only the material compile knows whether the node reads a default for it. |
+| A pin named per node | for a class whose nodes name their pins after a property (`Substrate.MoonToonModifier`, TextureSample's derivative pins), a name the catalog does not list is looked up on the built node (`DSH5291`, refused there with `DSH8212`). The pin's own property name always resolves. |
+| Unpassed optional inputs | stay unconnected on the call node; the callee's default applies. |
 
 ## What the pipeline does *not* do yet
 
-- **No legacy front end.** Parsing a `.dsm` or `.dsf` through the 2.0 entry point reports `DSH2199`
-  until M4; use the [1.x parser](../api/parser.md) for those. Both pipelines run side by side until
-  then, and the 1.x generator is what still compiles `.dsm` / `.dsf`.
-- **No decompiler into the IR** (M5), **no new layout** (M6) — the 1.x layout is called on the
-  emitted graph, bridges and all — and **no Substrate sugar** (M7).
+- **No new layout** (M6) — the 1.x layout is called on the emitted graph, bridges and all — and
+  **no Substrate sugar** (M7).
 - **No Material Layer *stack*.** `@layer` and `@layerblend` produce the two function kinds, but the
   material-level layer stack is a future `#pragma material` key.
 - **No `let` / `auto`, and a node is not a value you can store.** Write the call where its output is
@@ -180,8 +226,8 @@ Everything M1 listed as missing except the legacy front end is now in:
   resolved; a stray `#if` reaching it is `DSH3201` at file scope and `DSH2160` inside a function
   body, where the fix is to mark the function `/// @custom`.
 - **No `switch`** (`DSH2160`), and no comma operator.
-- **Comments other than `///` are not preserved.** They are not in the tree, so the printer does not
-  reproduce them.
+- **No layer parameters in a `.dsi`.** An instance file sets global parameters; a parameter that
+  exists only on a material layer or blend is `DSH7268`.
 
 ## Diagnostics
 
@@ -192,18 +238,25 @@ the contract; the wording is not.
 | :-- | :-- |
 | `DSH2101`–`DSH2119` | the lexer. Allocated today: `2101` unknown character · `2102` unterminated block comment · `2103` unterminated string · `2104` unknown escape · `2105` malformed number · `2106` a `#` that is not the first thing on its line |
 | `DSH2150`–`DSH2189` | expressions and statements. Allocated today: `2150`–`2155`, `2157`–`2165` |
-| `DSH2199` | the legacy front end was requested but is not available yet |
+| `DSH2200`–`DSH2269` | the legacy front end: 1.x Graph statements (`2200`–`2222`) and top-level blocks (`2240`–`2258`) |
 | `DSH3200`–`DSH3249` | declarations, types, `#` directives, `///` blocks. Allocated today: `3200`–`3208`, `3210`, `3211`, `3213`–`3218`, `3220`–`3222` |
+| `DSH3250`–`DSH3299` | the legacy front end's sections: Properties, Settings, Outputs, Inputs, Layout |
 | `DSH4200`–`DSH4299` | the binder — names, types, expressions, statements, loops, regions |
 | `DSH4300`–`DSH4349` | the IR validator |
 | `DSH4350`–`DSH4399` | lowering refusals — matrices, unprovable loops, `discard` in a branch, an attribute read before it is written |
-| `DSH5200`–`DSH5299` | reflected `UE.*` calls, the expression catalog, material attributes |
+| `DSH5200`–`DSH5249` | reflected `UE.*` calls, the expression catalog, material attributes |
+| `DSH5250`–`DSH5292` | 1.x call spellings (`5250`–`5265`) and the numbered legacy rules (`5275`–`5292`) |
 | `DSH6200`–`DSH6219` | function kinds, the entry, `export` / `extern` |
 | `DSH6220`–`DSH6249` | helper inlining |
 | `DSH6250`–`DSH6299` | `/// @custom` HLSL |
+| `DSH6300`–`DSH6330` | 1.x `Function` / `GraphFunction` / `Namespace` / `VirtualFunction`, and calls lifted out of a verbatim body |
 | `DSH7200`–`DSH7249` | uniforms, `///` directives, `#pragma material` |
-| `DSH8200`–`DSH8299` | the emitter, asset creation and the pipeline driver |
+| `DSH7250`–`DSH7270` | `.dsi`: `#pragma instance` and overrides |
+| `DSH8200`–`DSH8299` | the emitter, asset creation and the pipeline driver (`8240`–`8265`: material instances) |
 | `DSH9020`–`DSH9059` | the tools (`check`, `dump-ir`, `index`, `export-catalog`) and node ↔ source navigation |
+| `DSH9060`–`DSH9089` | the decompiler: graph import (`9060`–`9074`), IR to source (`9075`–`9084`), the service (`9085`–`9089`) |
+| `DSH9090`–`DSH9099` | `dsc migrate` |
+| `DSH9100`–`DSH9109` | `.dsi` read-back and the instance source rewriter |
 
 See the [diagnostics index](../diagnostics/index.md) for cause and fix per code.
 
