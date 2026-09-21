@@ -1,0 +1,14 @@
+// Sugar S1, the other spelling: the five composition nodes take their operands by position, and
+// `Substrate.Mix` / `Substrate.Layer` are the short names of HorizontalMixing / VerticalLayering. Both are
+// catalog data, so the binder needs no rule for them.
+
+export void M_S1_PositionalAndNames(inout material m)
+{
+    Substrate A = Substrate.Slab(Roughness = 0.8);
+    Substrate B = Substrate.Slab(Roughness = 0.1);
+
+    Substrate Summed = Substrate.Add(A, B);
+    Substrate Weighted = Substrate.Weight(Summed, 0.5);
+    Substrate Mixed = Substrate.Mix(A, Weighted, 0.25);
+    m.FrontMaterial = Substrate.Layer(Mixed, B, 0.01);
+}

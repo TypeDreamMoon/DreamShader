@@ -41,6 +41,7 @@
 
 #include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
+#include "HAL/IConsoleManager.h"
 #include "Interfaces/IPluginManager.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialExpression.h"
@@ -1199,6 +1200,145 @@ bool FDreamShaderCompiler2RegionsAndDescriptionsTest::RunTest(const FString& Par
 		}
 		TestTrue(TEXT("the function has its boxes"), Boxes >= 1);
 		TestTrue(TEXT("titled after its region"), bFoundMaths);
+	}
+	return true;
+}
+
+// Substrate sugar S2 and S4 against the engine's own nodes. Both read the project: `Substrate = Bridge` folds only where
+// Substrate is on, so the test asks the same question the compiler does (`r.Substrate`, DS_SUBSTRATE's source) and holds
+// either way. The nodes are found by class name and read by reflection -- the Substrate expression classes are
+// MinimalAPI, and nothing here needs more of them than their properties.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCompiler2SubstrateBridgeAndSelectTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Smoke.SubstrateBridgeAndSelect",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderCompiler2SubstrateBridgeAndSelectTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	const IConsoleVariable* SubstrateVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.Substrate"));
+	const bool bSubstrate = SubstrateVar && SubstrateVar->GetInt() != 0;
+	AddInfo(FString::Printf(TEXT("r.Substrate is %s in this project."), bSubstrate ? TEXT("on") : TEXT("off")));
+
+	const auto FindByClass = [](const UMaterial& Material, const TCHAR* ClassName, int32& OutCount) -> UMaterialExpression*
+	{
+		UMaterialExpression* Found = nullptr;
+		OutCount = 0;
+		for (const TObjectPtr<UMaterialExpression>& Expression : Material.GetExpressions())
+		{
+			if (Expression && Expression->GetClass()->GetName().Equals(ClassName, ESearchCase::CaseSensitive))
+			{
+				Found = Found ? Found : Expression.Get();
+				++OutCount;
+			}
+		}
+		return Found;
+	};
+	const auto IsPinConnected = [](UMaterialExpression& Expression, const TCHAR* PinName) -> bool
+	{
+		for (int32 Index = 0; ; ++Index)
+		{
+			const FExpressionInput* Input = Expression.GetInput(Index);
+			if (!Input)
+			{
+				return false;
+			}
+			if (Expression.GetInputName(Index).ToString().Replace(TEXT(" "), TEXT("")).Equals(PinName, ESearchCase::IgnoreCase))
+			{
+				return Input->Expression != nullptr;
+			}
+		}
+	};
+
+	// S4: the legacy shading attributes of a Bridge material, in a Substrate project, are one ShadingModels node.
+	{
+		const FString AssetName = TEXT("M_C2Bridge");
+		FDreamShaderCompile2Fixture Fixture(AssetName, TEXT("Compiler2"));
+		UMaterial* Material = CompileSmokeFixture<UMaterial>(*this, Fixture, TEXT(
+			"#pragma material(ShadingModel = ClearCoat, Substrate = Bridge)\n"
+			"\n"
+			"uniform float3 Tint = float3(0.8, 0.2, 0.2);\n"
+			"\n"
+			"export void M_C2Bridge(inout material m)\n"
+			"{\n"
+			"    m.BaseColor = Tint;\n"
+			"    m.Roughness = 0.4;\n"
+			"    m.ClearCoat = 1.0;\n"
+			"    m.WorldPositionOffset = float3(0, 0, 1);\n"
+			"}\n"), AssetName);
+		if (!Material)
+		{
+			return false;
+		}
+
+		int32 Count = 0;
+		UMaterialExpression* ShadingModels = FindByClass(*Material, TEXT("MaterialExpressionSubstrateShadingModels"), Count);
+		const FExpressionInput* BaseColor = Material->GetExpressionInputForProperty(MP_BaseColor);
+		const FExpressionInput* Front = Material->GetExpressionInputForProperty(MP_FrontMaterial);
+		const FExpressionInput* Offset = Material->GetExpressionInputForProperty(MP_WorldPositionOffset);
+		TestTrue(TEXT("WorldPositionOffset stays on the material in either project"), Offset && Offset->Expression != nullptr);
+		if (bSubstrate)
+		{
+			TestEqual(TEXT("one ShadingModels node"), Count, 1);
+			TestTrue(TEXT("FrontMaterial is driven"), Front && Front->Expression != nullptr);
+			TestTrue(TEXT("BaseColor left the material"), BaseColor && BaseColor->Expression == nullptr);
+			if (ShadingModels)
+			{
+				TestTrue(TEXT("...for the node's BaseColor"), IsPinConnected(*ShadingModels, TEXT("BaseColor")));
+				TestTrue(TEXT("Roughness with it"), IsPinConnected(*ShadingModels, TEXT("Roughness")));
+				TestTrue(TEXT("ClearCoat with it"), IsPinConnected(*ShadingModels, TEXT("ClearCoat")));
+
+				const FByteProperty* Override = FindFProperty<FByteProperty>(ShadingModels->GetClass(), TEXT("ShadingModelOverride"));
+				if (TestNotNull(TEXT("the node has a ShadingModelOverride"), Override))
+				{
+					TestEqual(TEXT("the material's shading model is the node's"),
+						static_cast<int32>(Override->GetPropertyValue_InContainer(ShadingModels)), static_cast<int32>(MSM_ClearCoat));
+				}
+			}
+		}
+		else
+		{
+			TestEqual(TEXT("no ShadingModels node where Substrate is off"), Count, 0);
+			TestTrue(TEXT("BaseColor is on the material"), BaseColor && BaseColor->Expression != nullptr);
+		}
+	}
+
+	// S2: a run-time choice between two Substrate values is the engine's Select, its three pins driven.
+	{
+		const FString AssetName = TEXT("M_C2Select");
+		FDreamShaderCompile2Fixture Fixture(AssetName, TEXT("Compiler2"));
+		UMaterial* Material = CompileSmokeFixture<UMaterial>(*this, Fixture, TEXT(
+			"uniform float Blend = 0.75;\n"
+			"\n"
+			"export void M_C2Select(inout material m)\n"
+			"{\n"
+			"    Substrate Rough = Substrate.Slab(Roughness = 0.9);\n"
+			"    Substrate Smooth = Substrate.Slab(Roughness = 0.1);\n"
+			"    m.FrontMaterial = Blend > 0.5 ? Smooth : Rough;\n"
+			"}\n"), AssetName);
+		if (!Material)
+		{
+			return false;
+		}
+
+		int32 Count = 0;
+		UMaterialExpression* Select = FindByClass(*Material, TEXT("MaterialExpressionSubstrateSelect"), Count);
+		TestEqual(TEXT("one Select node"), Count, 1);
+		if (Select)
+		{
+			TestTrue(TEXT("A is driven"), IsPinConnected(*Select, TEXT("A")));
+			TestTrue(TEXT("B is driven"), IsPinConnected(*Select, TEXT("B")));
+			TestTrue(TEXT("SelectValue is driven"), IsPinConnected(*Select, TEXT("SelectValue")));
+		}
+		int32 Slabs = 0;
+		FindByClass(*Material, TEXT("MaterialExpressionSubstrateSlabBSDF"), Slabs);
+		TestEqual(TEXT("between the two slabs"), Slabs, 2);
 	}
 	return true;
 }

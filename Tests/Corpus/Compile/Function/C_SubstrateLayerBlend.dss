@@ -1,0 +1,11 @@
+// Sugar S8 against the engine: a layer blend that carries Substrate. `Bottom.FrontMaterial` is read through a
+// GetMaterialAttributes node -- BreakMaterialAttributes has no FrontMaterial output -- and the result is written
+// through SetMaterialAttributes.
+
+/// @layerblend
+/// @library DreamShaderTests|Compile2
+export void MLB_C2SubstrateBlend(material Bottom, material Top, float Alpha, inout material R)
+{
+    R.FrontMaterial = lerp(Bottom.FrontMaterial, Top.FrontMaterial, Alpha);
+    R.Opacity = lerp(Bottom.Opacity, Top.Opacity, Alpha);
+}

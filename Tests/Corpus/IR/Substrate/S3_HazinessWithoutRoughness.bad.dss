@@ -1,0 +1,6 @@
+// `Haziness` is measured against the call's own `Roughness`, so it needs one (DSH5296).
+
+export void M_S3_HazinessWithoutRoughness(inout material m)
+{
+    m.FrontMaterial = Substrate.Slab(Haziness = 0.3);
+}

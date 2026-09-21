@@ -1,0 +1,24 @@
+// The node is made once, by whichever arm takes the value first, and the other arm takes the same node. A
+// builder declared inside an arm is that arm's own, and may be written there.
+
+/// @static
+uniform bool Wet = false;
+
+export void M_S5_BuilderAcrossBranch(inout material m)
+{
+    Substrate Base = Substrate.Slab();
+    Base.Roughness = 0.8;
+
+    Substrate Front = Substrate.Unlit(EmissiveColor = float3(0, 0, 0));
+    if (Wet)
+    {
+        Substrate Film = Substrate.Slab();
+        Film.Roughness = 0.05;
+        Front = Substrate.Layer(Film, Base, 0.01);
+    }
+    else
+    {
+        Front = Base;
+    }
+    m.FrontMaterial = Front;
+}

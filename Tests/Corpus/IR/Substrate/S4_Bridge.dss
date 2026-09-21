@@ -1,0 +1,13 @@
+// Sugar S4, `Substrate = Bridge` in a project that has Substrate on: the shading attributes of the sink go into one
+// Substrate.ShadingModels node on FrontMaterial, pin for pin as the engine's own conversion of a legacy material does
+// it. BaseColor and Roughness MOVE; Opacity is COPIED -- the node gets it and the material keeps it; and what has no
+// pin on the node (WorldPositionOffset) stays where it was written.
+#pragma material(ShadingModel = DefaultLit, Substrate = Bridge)
+
+export void M_S4_Bridge(inout material m)
+{
+    m.BaseColor = float3(0.8, 0.2, 0.2);
+    m.Roughness = 0.4;
+    m.Opacity = 1.0;
+    m.WorldPositionOffset = float3(0, 0, 1);
+}

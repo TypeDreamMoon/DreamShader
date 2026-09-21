@@ -1,0 +1,7 @@
+// `lerp` mixes two Substrate values or two numbers, never one of each (DSH5293).
+
+export void M_S1_LerpMixed(inout material m)
+{
+    Substrate A = Substrate.Slab(Roughness = 0.8);
+    m.FrontMaterial = lerp(A, 1.0, 0.5);
+}

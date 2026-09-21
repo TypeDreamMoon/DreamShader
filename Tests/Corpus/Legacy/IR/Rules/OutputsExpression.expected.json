@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"OutputsExpression.dsm\"\n\nproduct 0 Material \"M_LiOutputsExpression\" backend=Graph\n  legacy root \"\"\n  %0 = Parameter(DefaultValue=(1, 0.5, 0.25, 1), ParameterName=\"Tint\", SortPriority=32) : float4 @L8:C9 \"Tint\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L17:C22 \"Color\"\n  %2 = Constant(Value=(0.5)) : float @L17:C33 \"Color\"\n  %3 = Multiply(%1, %2) : float3 @L17:C22 \"Color\"\n  %4 = Parameter(DefaultValue=(0.5), ParameterName=\"Glow\", SortPriority=32) : float @L7:C9 \"Glow\"\n  %5 = Multiply(%3, %4) : float3 @L12:C30 \"EmissiveColor\"\n  %6 = Constant(Value=(2)) : float @L13:C40 \"Opacity\"\n  %7 = Multiply(%4, %6) : float @L13:C33 \"Opacity\"\n  %8 = Saturate(%7) : float @L13:C24 \"Opacity\"\n  %9 = MaterialSink(EmissiveColor=%5, Opacity=%8) @L4:C1\n  sink %9\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiOutputsExpression"
+		],
+		"nodeCounts": [
+			10
+		]
+	}
+}

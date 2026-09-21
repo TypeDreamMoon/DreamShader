@@ -1,0 +1,9 @@
+// `Substrate = Native` driving FrontMaterial in a project that has Substrate off: the engine could not compile
+// the asset, and the builder says so before it tries (DSH4382).
+
+#pragma material(Substrate = Native)
+
+export void M_S4_NativeSubstrateOff(inout material m)
+{
+    m.FrontMaterial = Substrate.Slab(Roughness = 0.4);
+}

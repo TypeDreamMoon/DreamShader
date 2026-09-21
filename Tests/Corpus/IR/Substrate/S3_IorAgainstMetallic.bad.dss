@@ -1,0 +1,6 @@
+// `IOR` sets F0, and so does `Metallic`: one of them (DSH5295).
+
+export void M_S3_IorAgainstMetallic(inout material m)
+{
+    m.FrontMaterial = Substrate.Slab(IOR = 1.5, Metallic = 1.0, Roughness = 0.5);
+}

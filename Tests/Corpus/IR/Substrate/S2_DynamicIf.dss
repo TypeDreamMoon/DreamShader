@@ -1,0 +1,15 @@
+// Sugar S2: an `if` decided at run time over Substrate values is a Substrate.Select -- A is what the `else`
+// side left, B what the `then` side left, SelectValue the condition. (Earlier 2.0 builds refused this outright,
+// DSH4378; the node exists from Unreal Engine 5.6 on, and the refusal is now only for an engine without it.)
+
+uniform bool Enabled = true;
+
+export void M_S2_DynamicIf(inout material m)
+{
+    Substrate Front = Substrate.Unlit(EmissiveColor = float3(0, 0.5, 1));
+    if (Enabled)
+    {
+        Front = Substrate.Unlit(EmissiveColor = float3(1, 0.5, 0));
+    }
+    m.FrontMaterial = Front;
+}

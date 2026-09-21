@@ -1,0 +1,17 @@
+// A member read is whatever was connected and makes no node; `*=` and `++` start from it. A second write to
+// the same member replaces the first.
+
+uniform float Rough = 0.4;
+
+export void M_S5_BuilderReadWrite(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    Paint.Roughness = 0.9;
+    Paint.Roughness = Rough;
+    Paint.Roughness *= 0.5;
+    Paint.FuzzAmount = Paint.Roughness;
+    Paint.IOR = 1.5;
+
+    m.FrontMaterial = Paint;
+    m.Opacity = Paint.Roughness;
+}

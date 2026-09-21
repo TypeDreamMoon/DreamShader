@@ -1,0 +1,10 @@
+// Sugar S2, as an expression: `c ? A : B` over Substrate values is the same Select.
+
+uniform float Blend = 0.75;
+
+export void M_S2_DynamicConditional(inout material m)
+{
+    Substrate Rough = Substrate.Slab(Roughness = 0.9);
+    Substrate Smooth = Substrate.Slab(Roughness = 0.1);
+    m.FrontMaterial = Blend > 0.5 ? Smooth : Rough;
+}

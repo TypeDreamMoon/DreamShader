@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S1_PositionalAndNames.dss\"\n\nproduct 0 Material \"M_S1_PositionalAndNames\" backend=Graph\n  %0 = Constant(Value=(0.8)) : float @L7:C46 \"A\"\n  %1 = Reflected[Slab](Roughness=%0) : Substrate @L7:C19 \"A\"\n  %2 = Constant(Value=(0.1)) : float @L8:C46 \"B\"\n  %3 = Reflected[Slab](Roughness=%2) : Substrate @L8:C19 \"B\"\n  %4 = Reflected[Add](A=%1, B=%3) : Substrate @L10:C24 \"Summed\"\n  %5 = Constant(Value=(0.5)) : float @L11:C51 \"Weighted\"\n  %6 = Reflected[Weight](A=%4, Weight=%5) : Substrate @L11:C26 \"Weighted\"\n  %7 = Constant(Value=(0.25)) : float @L12:C50 \"Mixed\"\n  %8 = Reflected[HorizontalMixing](Background=%1, Foreground=%6, Mix=%7) : Substrate @L12:C23 \"Mixed\"\n  %9 = Constant(Value=(0.01)) : float @L13:C49 \"FrontMaterial\"\n  %10 = Reflected[VerticalLayering](Top=%8, Base=%3, Thickness=%9) : Substrate @L13:C23 \"FrontMaterial\"\n  %11 = MaterialSink(FrontMaterial=%10) @L5:C1\n  sink %11\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S1_PositionalAndNames"
+		],
+		"nodeCounts": [
+			12
+		]
+	}
+}

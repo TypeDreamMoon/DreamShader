@@ -1,0 +1,8 @@
+// A member is a pin of the node, or a virtual argument the node takes (DSH5299).
+
+export void M_S5_NoSuchPin(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    Paint.Shininess = 0.4;
+    m.FrontMaterial = Paint;
+}

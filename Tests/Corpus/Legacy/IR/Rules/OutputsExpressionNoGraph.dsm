@@ -1,0 +1,14 @@
+// Substrate sugar S6, the other half: a Shader whose Outputs compute everything needs no Graph section (DSH2255 is for
+// a Shader that has neither).
+Shader(Name="M_LiOutputsExpressionNoGraph")
+{
+    Properties = {
+        ScalarParameter Glow = 0.5;
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0);
+    }
+
+    Outputs = {
+        Base.EmissiveColor = Tint.rgb * Glow;
+        Base.Opacity = saturate(Glow * 2.0);
+    }
+}

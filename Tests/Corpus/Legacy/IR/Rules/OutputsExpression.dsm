@@ -1,0 +1,19 @@
+// Substrate sugar S6: the right side of an Outputs binding is an expression of its own. 1.x took a variable name there,
+// so every output cost a declaration and an assignment in the Graph; the expression is read after the Graph has run, and
+// may use what the Graph computed.
+Shader(Name="M_LiOutputsExpression")
+{
+    Properties = {
+        ScalarParameter Glow = 0.5;
+        VectorParameter Tint = float4(1.0, 0.5, 0.25, 1.0);
+    }
+
+    Outputs = {
+        Base.EmissiveColor = Color * Glow;
+        Base.Opacity = saturate(Glow * 2.0);
+    }
+
+    Graph = {
+        vec3 Color = Tint.rgb * 0.5;
+    }
+}

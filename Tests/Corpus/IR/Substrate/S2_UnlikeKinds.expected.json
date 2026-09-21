@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH4380"
+	],
+	"ir": "module \"S2_UnlikeKinds.dss\"\n\nproduct 0 Material \"M_S2_UnlikeKinds\" backend=Graph\n  %0 = Constant(Value=(0.5)) : float @L8:C50 \"Front\"\n  %1 = Reflected[Slab](Roughness=%0) : Substrate @L8:C23 \"Front\"\n  %2 = Parameter(DefaultValue=(0), ParameterName=\"Emissive\", SortPriority=0) : float @L4:C1 \"Emissive\"\n  %3 = Constant(Value=(1, 1, 1)) : float3 @L11:C49 \"Front\"\n  %4 = Reflected[Unlit](EmissiveColor=%3) : Substrate @L11:C17 \"Front\"\n  %5 = Reflected[Select](A=%1, B=%4, SelectValue=%2) : Substrate @L9:C5\n  %6 = MaterialSink(FrontMaterial=%5) @L6:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S2_UnlikeKinds"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

@@ -1,0 +1,10 @@
+// The same source before the passes: two conversion nodes, one per call.
+
+uniform float3 Albedo = float3(0.8, 0.1, 0.1);
+
+export void M_S3_SharedConversionUnmerged(inout material m)
+{
+    Substrate Rough = Substrate.Slab(BaseColor = Albedo, Metallic = 1.0, Roughness = 0.9);
+    Substrate Smooth = Substrate.Slab(BaseColor = Albedo, Metallic = 1.0, Roughness = 0.1);
+    m.FrontMaterial = lerp(Rough, Smooth, 0.5);
+}

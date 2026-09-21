@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S5_BuilderInLoop.dss\"\n\nproduct 0 Material \"M_S5_BuilderInLoop\" backend=Graph\n  %0 = Constant(Value=(0, 0, 0)) : float3 @L5:C55 \"Stack\"\n  %1 = Reflected[Unlit](EmissiveColor=%0) : Substrate @L5:C23 \"Stack\"\n  %2 = Constant(Value=(0)) : float @L6:C18 \"i\"\n  %3 = Constant(Value=(0.25)) : float @L9:C31\n  %4 = Reflected[Slab](Roughness=%2) : Substrate @L8:C27 \"Sheet\"\n  %5 = Reflected[Weight](A=%4, Weight=%3) : Substrate @L10:C25 \"Stack\"\n  %6 = Reflected[Add](A=%1, B=%5) : Substrate @L10:C17 \"Stack\"\n  %7 = Reflected[Slab](Roughness=%3) : Substrate @L8:C27 \"Sheet\"\n  %8 = Reflected[Weight](A=%7, Weight=%3) : Substrate @L10:C25 \"Stack\"\n  %9 = Reflected[Add](A=%6, B=%8) : Substrate @L10:C17 \"Stack\"\n  %10 = Constant(Value=(0.5)) : float @L9:C27\n  %11 = Reflected[Slab](Roughness=%10) : Substrate @L8:C27 \"Sheet\"\n  %12 = Reflected[Weight](A=%11, Weight=%3) : Substrate @L10:C25 \"Stack\"\n  %13 = Reflected[Add](A=%9, B=%12) : Substrate @L10:C17 \"Stack\"\n  %14 = MaterialSink(FrontMaterial=%13) @L3:C1\n  sink %14\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S5_BuilderInLoop"
+		],
+		"nodeCounts": [
+			15
+		]
+	}
+}

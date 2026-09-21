@@ -1,0 +1,6 @@
+// `Thickness` is the thickness the `Transmittance` is given for; alone it converts nothing (DSH5296).
+
+export void M_S3_ThicknessAlone(inout material m)
+{
+    m.FrontMaterial = Substrate.Slab(Roughness = 0.5, Thickness = 0.2);
+}

@@ -1,0 +1,9 @@
+// A pin is connected whole: one component of it is nothing a node can take (DSH4229).
+
+export void M_S5_SwizzleWrite(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    Paint.DiffuseAlbedo = float3(1, 0, 0);
+    Paint.DiffuseAlbedo.r = 0.5;
+    m.FrontMaterial = Paint;
+}

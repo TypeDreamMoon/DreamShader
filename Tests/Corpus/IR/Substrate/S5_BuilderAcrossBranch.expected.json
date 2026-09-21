@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S5_BuilderAcrossBranch.dss\"\n\nproduct 0 Material \"M_S5_BuilderAcrossBranch\" backend=Graph\n  %0 = Constant(Value=(0.8)) : float @L10:C22\n  %1 = Parameter(DefaultValue=(0), IsStatic=true, ParameterName=\"Wet\", SortPriority=0) : bool @L5:C1 \"Wet\"\n  %2 = Constant(Value=(0.05)) : float @L16:C26\n  %3 = Reflected[Slab](Roughness=%2) : Substrate @L15:C26 \"Film\"\n  %4 = Reflected[Slab](Roughness=%0) : Substrate @L9:C22 \"Base\"\n  %5 = Constant(Value=(0.01)) : float @L17:C45 \"Front\"\n  %6 = Reflected[VerticalLayering](Top=%3, Base=%4, Thickness=%5) : Substrate @L17:C17 \"Front\"\n  %7 = StaticSwitch(%1, %6, %4) : Substrate @L13:C5\n  %8 = MaterialSink(FrontMaterial=%7) @L7:C1\n  sink %8\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S5_BuilderAcrossBranch"
+		],
+		"nodeCounts": [
+			9
+		]
+	}
+}

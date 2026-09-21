@@ -1,0 +1,11 @@
+// The same source in a project that has Substrate off: nothing moves, and the graph is the one Legacy makes.
+// The product still says which mode it was written in.
+#pragma material(ShadingModel = DefaultLit, Substrate = Bridge)
+
+export void M_S4_BridgeSubstrateOff(inout material m)
+{
+    m.BaseColor = float3(0.8, 0.2, 0.2);
+    m.Roughness = 0.4;
+    m.Opacity = 1.0;
+    m.WorldPositionOffset = float3(0, 0, 1);
+}

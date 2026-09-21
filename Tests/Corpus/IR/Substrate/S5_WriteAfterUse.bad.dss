@@ -1,0 +1,9 @@
+// Taking the value seals it: its node is what it was then, and a member write comes too late (DSH5297).
+
+export void M_S5_WriteAfterUse(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    Paint.Roughness = 0.4;
+    m.FrontMaterial = Paint;
+    Paint.Roughness = 0.1;
+}

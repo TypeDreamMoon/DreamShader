@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S5_Builder.dss\"\n\nproduct 0 Material \"M_S5_Builder\" backend=Graph\n  %0 = Parameter(DefaultValue=(0.4), ParameterName=\"Rough\", SortPriority=1) : float @L6:C1 \"Rough\"\n  %1 = Parameter(DefaultValue=(0.8, 0.1, 0.1), ParameterName=\"Albedo\", SortPriority=0) : float4 @L5:C1 \"Albedo\"\n  %2 = Swizzle(%1, Mask=\"xyz\") : float3 @L5:C1\n  %3 = Constant(Value=(1)) : float @L13:C22\n  %4 = Constant(Value=(0.3)) : float @L14:C22\n  %5 = Constant(Value=(0.1)) : float @L15:C36\n  %6 = Multiply(%2, %5) : float3 @L15:C27\n  %7 = Reflected[MetalnessToDiffuseAlbedoF0](BaseColor=%2, Metallic=%3) : [DiffuseAlbedo:float3, F0:float3] @L10:C23 \"Paint\"\n  %8 = Reflected[HazinessToSecondaryRoughness](BaseRoughness=%0, Haziness=%4) : [SecondRoughness:float, SecondRoughnessWeight:float] @L10:C23 \"Paint\"\n  %9 = Reflected[Slab](Roughness=%0, EmissiveColor=%6, DiffuseAlbedo=%7, F0=%7#1, SecondRoughness=%8, SecondRoughnessWeight=%8#1) : Substrate @L10:C23 \"Paint\"\n  %10 = MaterialSink(FrontMaterial=%9) @L8:C1\n  sink %10\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S5_Builder"
+		],
+		"nodeCounts": [
+			11
+		]
+	}
+}

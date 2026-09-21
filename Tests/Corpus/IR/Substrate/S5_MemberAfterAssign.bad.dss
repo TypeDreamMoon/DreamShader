@@ -1,0 +1,10 @@
+// A builder that is assigned whole holds another value, and that value has no members (DSH5297).
+
+export void M_S5_MemberAfterAssign(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    Paint.Roughness = 0.4;
+    Paint = Substrate.Slab(Roughness = 0.2);
+    m.Opacity = Paint.Roughness;
+    m.FrontMaterial = Paint;
+}

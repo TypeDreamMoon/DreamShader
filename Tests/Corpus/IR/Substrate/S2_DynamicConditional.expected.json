@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S2_DynamicConditional.dss\"\n\nproduct 0 Material \"M_S2_DynamicConditional\" backend=Graph\n  %0 = Constant(Value=(0.9)) : float @L7:C50 \"Rough\"\n  %1 = Reflected[Slab](Roughness=%0) : Substrate @L7:C23 \"Rough\"\n  %2 = Constant(Value=(0.1)) : float @L8:C51 \"Smooth\"\n  %3 = Reflected[Slab](Roughness=%2) : Substrate @L8:C24 \"Smooth\"\n  %4 = Parameter(DefaultValue=(0.75), ParameterName=\"Blend\", SortPriority=0) : float @L3:C1 \"Blend\"\n  %5 = Constant(Value=(0.5)) : float @L9:C31 \"FrontMaterial\"\n  %6 = Greater(%4, %5) : bool @L9:C23 \"FrontMaterial\"\n  %7 = Convert(%6) : float @L9:C23 \"FrontMaterial\"\n  %8 = Reflected[Select](A=%1, B=%3, SelectValue=%7) : Substrate @L9:C23 \"FrontMaterial\"\n  %9 = MaterialSink(FrontMaterial=%8) @L5:C1\n  sink %9\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S2_DynamicConditional"
+		],
+		"nodeCounts": [
+			10
+		]
+	}
+}

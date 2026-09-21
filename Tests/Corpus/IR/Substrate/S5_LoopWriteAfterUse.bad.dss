@@ -1,0 +1,14 @@
+// The binder reads a body once, top to bottom, and this write is above the use. An unrolled loop comes round
+// to it again after the first trip took the value, and that the builder sees (DSH4383).
+
+export void M_S5_LoopWriteAfterUse(inout material m)
+{
+    Substrate Stack = Substrate.Unlit(EmissiveColor = float3(0, 0, 0));
+    Substrate Sheet = Substrate.Slab();
+    for (int i = 0; i < 2; ++i)
+    {
+        Sheet.Roughness = i * 0.5;
+        Stack = Stack + Sheet;
+    }
+    m.FrontMaterial = Stack;
+}

@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S8_LayerBlendFrontMaterial.dss\"\n\nproduct 0 MaterialLayerBlend \"B_S8_LayerBlendFrontMaterial\" backend=Graph\n  %0 = FunctionInput(BlendInputRelevance=\"Bottom\", InputName=\"Bottom\", InputType=\"MaterialAttributes\", IsOptional=true, SortPriority=0) : material @L6:C1 \"Bottom\"\n  %1 = FunctionInput(BlendInputRelevance=\"Top\", InputName=\"Top\", InputType=\"MaterialAttributes\", IsOptional=true, SortPriority=1) : material @L6:C1 \"Top\"\n  %2 = FunctionInput(InputName=\"Alpha\", InputType=\"Scalar\", IsOptional=false, SortPriority=2) : float @L6:C1 \"Alpha\"\n  %3 = GetMaterialAttributes(MaterialAttributes=%0) : [BaseColor:float3, EmissiveColor:float3, Roughness:float, Normal:float3, Opacity:float, WorldPositionOffset:float3, FrontMaterial:Substrate, MaterialAttributes:material] @L8:C28 \"FrontMaterial\"\n  %4 = GetMaterialAttributes(MaterialAttributes=%1) : [BaseColor:float3, EmissiveColor:float3, Roughness:float, Normal:float3, Opacity:float, WorldPositionOffset:float3, FrontMaterial:Substrate, MaterialAttributes:material] @L8:C50 \"FrontMaterial\"\n  %5 = Reflected[HorizontalMixing](Background=%3#6, Foreground=%4#6, Mix=%2) : Substrate @L8:C23 \"FrontMaterial\"\n  %6 = MakeMaterialAttributes(FrontMaterial=%5, Opacity=%4#4) : material @L6:C1\n  %7 = FunctionOutput(%6, OutputName=\"R\", SortPriority=0) @L6:C1 \"R\"\n  inputs %0, %1, %2\n  outputs %7\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialLayerBlend"
+		],
+		"productNames": [
+			"B_S8_LayerBlendFrontMaterial"
+		],
+		"nodeCounts": [
+			8
+		]
+	}
+}

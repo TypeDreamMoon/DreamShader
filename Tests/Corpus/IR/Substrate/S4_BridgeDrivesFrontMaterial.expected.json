@@ -1,0 +1,21 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"substrate": true,
+	"ir": "module \"S4_BridgeDrivesFrontMaterial.dss\"\n\nproduct 0 Material \"M_S4_BridgeDrivesFrontMaterial\" backend=Graph substrate=Bridge\n  %0 = Constant(Value=(0.4)) : float @L7:C50 \"FrontMaterial\"\n  %1 = Reflected[Slab](Roughness=%0) : Substrate @L7:C23 \"FrontMaterial\"\n  %2 = Constant(Value=(1)) : float @L8:C17 \"Opacity\"\n  %3 = MaterialSink(FrontMaterial=%1, Opacity=%2) @L5:C1\n  sink %3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S4_BridgeDrivesFrontMaterial"
+		],
+		"nodeCounts": [
+			4
+		]
+	}
+}

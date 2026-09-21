@@ -1,0 +1,6 @@
+// FrontMaterial takes a Substrate value; a number is refused where it is written.
+
+export void M_S8_FrontMaterialNumber(inout material m)
+{
+    m.FrontMaterial = 0.5;
+}

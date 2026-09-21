@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"OutputsExpressionNoGraph.dsm\"\n\nproduct 0 Material \"M_LiOutputsExpressionNoGraph\" backend=Graph\n  legacy root \"\"\n  %0 = Parameter(DefaultValue=(1, 0.5, 0.25, 1), ParameterName=\"Tint\", SortPriority=32) : float4 @L7:C9 \"Tint\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L11:C30 \"EmissiveColor\"\n  %2 = Parameter(DefaultValue=(0.5), ParameterName=\"Glow\", SortPriority=32) : float @L6:C9 \"Glow\"\n  %3 = Multiply(%1, %2) : float3 @L11:C30 \"EmissiveColor\"\n  %4 = Constant(Value=(2)) : float @L12:C40 \"Opacity\"\n  %5 = Multiply(%2, %4) : float @L12:C33 \"Opacity\"\n  %6 = Saturate(%5) : float @L12:C24 \"Opacity\"\n  %7 = MaterialSink(EmissiveColor=%3, Opacity=%6) @L3:C1\n  sink %7\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiOutputsExpressionNoGraph"
+		],
+		"nodeCounts": [
+			8
+		]
+	}
+}

@@ -1,0 +1,10 @@
+// Sugar S8: `FrontMaterial` of a material that arrived through a pin is a Substrate value, read with
+// GetMaterialAttributes like any other attribute, and written like one. That is what lets a layer blend carry
+// Substrate: the blend is one lerp (S1) between the two fronts.
+
+/// @layerblend
+export void B_S8_LayerBlendFrontMaterial(material Bottom, material Top, float Alpha, inout material R)
+{
+    R.FrontMaterial = lerp(Bottom.FrontMaterial, Top.FrontMaterial, Alpha);
+    R.Opacity = Top.Opacity;
+}

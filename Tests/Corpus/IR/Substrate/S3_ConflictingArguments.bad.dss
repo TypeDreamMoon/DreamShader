@@ -1,0 +1,6 @@
+// `BaseColor` and `DiffuseAlbedo` parameterize the same pins; a call gives one of them (DSH5295).
+
+export void M_S3_ConflictingArguments(inout material m)
+{
+    m.FrontMaterial = Substrate.Slab(BaseColor = float3(1, 0, 0), DiffuseAlbedo = float3(0, 1, 0), Roughness = 0.5);
+}

@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S4_BridgeSubstrateOff.dss\"\n\nproduct 0 Material \"M_S4_BridgeSubstrateOff\" backend=Graph substrate=Bridge settings{ShadingModel=DefaultLit}\n  %0 = Constant(Value=(0.8, 0.2, 0.2)) : float3 @L7:C19 \"BaseColor\"\n  %1 = Constant(Value=(0.4)) : float @L8:C19 \"Roughness\"\n  %2 = Constant(Value=(1)) : float @L9:C17 \"Opacity\"\n  %3 = Constant(Value=(0, 0, 1)) : float3 @L10:C29 \"WorldPositionOffset\"\n  %4 = MaterialSink(BaseColor=%0, Roughness=%1, Opacity=%2, WorldPositionOffset=%3) @L5:C1\n  sink %4\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S4_BridgeSubstrateOff"
+		],
+		"nodeCounts": [
+			5
+		]
+	}
+}

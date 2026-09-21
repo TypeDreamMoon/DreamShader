@@ -1,0 +1,22 @@
+// The Substrate sugar in a 1.x source: both front ends arrive at one binder, so `+`, `* scalar`, `lerp`, the short
+// names, the virtual arguments of S3 and an expression on the right of an Outputs binding (S6) are the same nodes here as
+// in a `.dss`.
+Shader(Name="M_LiSubstrateSugar")
+{
+    Properties = {
+        ScalarParameter Rust = 0.3;
+        ScalarParameter Coat = 1.0;
+        VectorParameter Tint = float4(0.8, 0.4, 0.2, 1.0);
+    }
+
+    Outputs = {
+        Base.FrontMaterial = Substrate.Layer(Clear * Coat, Body, 0.01);
+    }
+
+    Graph = {
+        Substrate Metal = Substrate.Slab(BaseColor = Tint.rgb, Metallic = 1.0, Roughness = 0.35);
+        Substrate RustS = Substrate.Slab(BaseColor = Tint.rgb * vec3(0.6, 0.3, 0.1), Roughness = 0.9);
+        Substrate Body = lerp(Metal, RustS, saturate(Rust));
+        Substrate Clear = Substrate.Slab(IOR = 1.5, Roughness = 0.1);
+    }
+}

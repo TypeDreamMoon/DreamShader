@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S1_Operators.dss\"\n\nproduct 0 Material \"M_S1_Operators\" backend=Graph\n  %0 = Constant(Value=(0.5, 0.4, 0.3)) : float3 @L9:C52 \"Dry\"\n  %1 = Constant(Value=(0.8)) : float @L9:C87 \"Dry\"\n  %2 = Reflected[Slab](DiffuseAlbedo=%0, Roughness=%1) : Substrate @L9:C21 \"Dry\"\n  %3 = Constant(Value=(0.2, 0.2, 0.2)) : float3 @L10:C52 \"Wet\"\n  %4 = Constant(Value=(0.1)) : float @L10:C87 \"Wet\"\n  %5 = Reflected[Slab](DiffuseAlbedo=%3, Roughness=%4) : Substrate @L10:C21 \"Wet\"\n  %6 = Constant(Value=(1, 0.5, 0)) : float3 @L11:C54 \"Glow\"\n  %7 = Reflected[Unlit](EmissiveColor=%6) : Substrate @L11:C22 \"Glow\"\n  %8 = Parameter(DefaultValue=(0.25), ParameterName=\"Wetness\", SortPriority=0) : float @L5:C1 \"Wetness\"\n  %9 = Reflected[HorizontalMixing](Background=%2, Foreground=%5, Mix=%8) : Substrate @L13:C23 \"Mixed\"\n  %10 = Constant(Value=(0.5)) : float @L14:C36 \"Lit\"\n  %11 = Reflected[Weight](A=%7, Weight=%10) : Substrate @L14:C29 \"Lit\"\n  %12 = Reflected[Add](A=%9, B=%11) : Substrate @L14:C21 \"Lit\"\n  %13 = Constant(Value=(0.25)) : float @L15:C29 \"FrontMaterial\"\n  %14 = Reflected[Weight](A=%7, Weight=%13) : Substrate @L15:C29 \"FrontMaterial\"\n  %15 = Reflected[Add](A=%12, B=%14) : Substrate @L15:C23 \"FrontMaterial\"\n  %16 = MaterialSink(FrontMaterial=%15) @L7:C1\n  sink %16\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S1_Operators"
+		],
+		"nodeCounts": [
+			17
+		]
+	}
+}

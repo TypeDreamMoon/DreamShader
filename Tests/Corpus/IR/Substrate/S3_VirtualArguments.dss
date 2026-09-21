@@ -1,0 +1,20 @@
+// Sugar S3: arguments that are no pin of the BSDF but the inputs of a conversion node in front of it.
+//   BaseColor / Metallic / Specular -> Substrate.MetalnessToDiffuseAlbedoF0 -> DiffuseAlbedo, F0
+//   Haziness (with the call's own Roughness) -> Substrate.HazinessToSecondaryRoughness -> SecondRoughness, SecondRoughnessWeight
+//   Transmittance [, Thickness] -> Substrate.TransmittanceToMFP -> SSSMFP
+//   IOR -> F0 = ((n - 1) / (n + 1))^2: a constant when the index is a number, four nodes when it is computed
+
+uniform float3 Albedo = float3(0.8, 0.1, 0.1);
+uniform float Metal = 1.0;
+uniform float Haze = 0.3;
+uniform float Ior = 1.33;
+
+export void M_S3_VirtualArguments(inout material m)
+{
+    Substrate Paint = Substrate.Slab(BaseColor = Albedo, Metallic = Metal, Specular = 0.5, Roughness = 0.4, Haziness = Haze);
+    Substrate Glass = Substrate.Slab(DiffuseAlbedo = float3(0, 0, 0), IOR = 1.5, Roughness = 0.05, Transmittance = float3(0.9, 0.95, 1.0), Thickness = 0.2);
+    Substrate Water = Substrate.Slab(IOR = Ior, Roughness = 0.02);
+    Substrate Coat = Substrate.SimpleClearCoat(BaseColor = Albedo, Metallic = 0.0, Roughness = 0.5, ClearCoatCoverage = 1.0);
+
+    m.FrontMaterial = lerp(Paint + Coat * 0.5, lerp(Glass, Water, 0.5), 0.5);
+}

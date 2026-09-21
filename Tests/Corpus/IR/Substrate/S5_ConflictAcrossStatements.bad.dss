@@ -1,0 +1,9 @@
+// The pairs that parameterize the same pins, across statements this time (DSH5295).
+
+export void M_S5_ConflictAcrossStatements(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    Paint.BaseColor = float3(1, 0, 0);
+    Paint.DiffuseAlbedo = float3(0, 1, 0);
+    m.FrontMaterial = Paint;
+}

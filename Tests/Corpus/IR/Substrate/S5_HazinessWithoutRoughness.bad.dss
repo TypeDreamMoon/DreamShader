@@ -1,0 +1,9 @@
+// What a call is asked in one place a builder is asked when it is finished: `Haziness` is measured against
+// `Roughness`, and by the first use of the value nothing had given one (DSH5296).
+
+export void M_S5_HazinessWithoutRoughness(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    Paint.Haziness = 0.3;
+    m.FrontMaterial = Paint;
+}

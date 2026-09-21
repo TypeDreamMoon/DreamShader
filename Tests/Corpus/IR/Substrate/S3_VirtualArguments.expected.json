@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S3_VirtualArguments.dss\"\n\nproduct 0 Material \"M_S3_VirtualArguments\" backend=Graph\n  %0 = Parameter(DefaultValue=(0.8, 0.1, 0.1), ParameterName=\"Albedo\", SortPriority=0) : float4 @L7:C1 \"Albedo\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L7:C1 \"Paint\"\n  %2 = Parameter(DefaultValue=(1), ParameterName=\"Metal\", SortPriority=1) : float @L8:C1 \"Metal\"\n  %3 = Constant(Value=(0.5)) : float @L14:C87 \"Paint\"\n  %4 = Constant(Value=(0.4)) : float @L14:C104 \"Paint\"\n  %5 = Parameter(DefaultValue=(0.3), ParameterName=\"Haze\", SortPriority=2) : float @L9:C1 \"Haze\"\n  %6 = Reflected[MetalnessToDiffuseAlbedoF0](BaseColor=%1, Metallic=%2, Specular=%3) : [DiffuseAlbedo:float3, F0:float3] @L14:C23 \"Paint\"\n  %7 = Reflected[HazinessToSecondaryRoughness](BaseRoughness=%4, Haziness=%5) : [SecondRoughness:float, SecondRoughnessWeight:float] @L14:C23 \"Paint\"\n  %8 = Reflected[Slab](Roughness=%4, DiffuseAlbedo=%6, F0=%6#1, SecondRoughness=%7, SecondRoughnessWeight=%7#1) : Substrate @L14:C23 \"Paint\"\n  %9 = Constant(Value=(0, 0, 0)) : float3 @L15:C54 \"Glass\"\n  %10 = Constant(Value=(0.05)) : float @L15:C94 \"Glass\"\n  %11 = Constant(Value=(0.9, 0.95, 1)) : float3 @L15:C116 \"Glass\"\n  %12 = Constant(Value=(0.2)) : float @L15:C152 \"Glass\"\n  %13 = Reflected[TransmittanceToMFP](TransmittanceColor=%11, Thickness=%12) : [MFP:float3, Thickness:float] @L15:C23 \"Glass\"\n  %14 = Constant(Value=(0.04, 0.04, 0.04)) : float3 @L15:C23 \"Glass\"\n  %15 = Reflected[Slab](DiffuseAlbedo=%9, Roughness=%10, SSSMFP=%13, F0=%14) : Substrate @L15:C23 \"Glass\"\n  %16 = Parameter(DefaultValue=(1.33), ParameterName=\"Ior\", SortPriority=3) : float @L10:C1 \"Ior\"\n  %17 = Constant(Value=(0.02)) : float @L16:C61 \"Water\"\n  %18 = Constant(Value=(1)) : float @L16:C23 \"Water\"\n  %19 = Subtract(%16, %18) : float @L16:C23 \"Water\"\n  %20 = Add(%16, %18) : float @L16:C23 \"Water\"\n  %21 = Divide(%19, %20) : float @L16:C23 \"Water\"\n  %22 = Multiply(%21, %21) : float @L16:C23 \"Water\"\n  %23 = Broadcast(%22) : float3 @L16:C23 \"Water\"\n  %24 = Reflected[Slab](Roughness=%17, F0=%23) : Substrate @L16:C23 \"Water\"\n  %25 = Constant(Value=(0)) : float @L17:C79 \"Coat\"\n  %26 = Reflected[MetalnessToDiffuseAlbedoF0](BaseColor=%1, Metallic=%25) : [DiffuseAlbedo:float3, F0:float3] @L17:C22 \"Coat\"\n  %27 = Reflected[SimpleClearCoat](Roughness=%3, ClearCoatCoverage=%18, DiffuseAlbedo=%26, F0=%26#1) : Substrate @L17:C22 \"Coat\"\n  %28 = Reflected[Weight](A=%27, Weight=%3) : Substrate @L19:C36 \"FrontMaterial\"\n  %29 = Reflected[Add](A=%8, B=%28) : Substrate @L19:C28 \"FrontMaterial\"\n  %30 = Reflected[HorizontalMixing](Background=%15, Foreground=%24, Mix=%3) : Substrate @L19:C48 \"FrontMaterial\"\n  %31 = Reflected[HorizontalMixing](Background=%29, Foreground=%30, Mix=%3) : Substrate @L19:C23 \"FrontMaterial\"\n  %32 = MaterialSink(FrontMaterial=%31) @L12:C1\n  sink %32\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S3_VirtualArguments"
+		],
+		"nodeCounts": [
+			33
+		]
+	}
+}

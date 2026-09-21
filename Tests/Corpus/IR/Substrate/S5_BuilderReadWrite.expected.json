@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S5_BuilderReadWrite.dss\"\n\nproduct 0 Material \"M_S5_BuilderReadWrite\" backend=Graph\n  %0 = Parameter(DefaultValue=(0.4), ParameterName=\"Rough\", SortPriority=0) : float @L4:C1 \"Rough\"\n  %1 = Constant(Value=(0.5)) : float @L11:C24\n  %2 = Multiply(%0, %1) : float @L11:C5\n  %3 = Constant(Value=(0.04, 0.04, 0.04)) : float3 @L8:C23 \"Paint\"\n  %4 = Reflected[Slab](Roughness=%2, FuzzAmount=%2, F0=%3) : Substrate @L8:C23 \"Paint\"\n  %5 = MaterialSink(FrontMaterial=%4, Opacity=%2) @L6:C1\n  sink %5\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S5_BuilderReadWrite"
+		],
+		"nodeCounts": [
+			6
+		]
+	}
+}

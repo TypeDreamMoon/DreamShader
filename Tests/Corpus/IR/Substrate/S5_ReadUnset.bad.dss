@@ -1,0 +1,8 @@
+// A member reads back what was written to it, and nothing was (DSH5299).
+
+export void M_S5_ReadUnset(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    m.Opacity = Paint.Roughness;
+    m.FrontMaterial = Paint;
+}

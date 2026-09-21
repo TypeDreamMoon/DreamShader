@@ -2,7 +2,7 @@
 	"entryPoint": "ir",
 	"outcome": "error",
 	"errorContains": [
-		"DSH4378"
+		"DSH4382"
 	],
 	"ir": "",
 	"module":
@@ -14,10 +14,10 @@
 			"Material"
 		],
 		"productNames": [
-			"M_B6_SubstrateDynamicIf"
+			"M_S4_NativeSubstrateOff"
 		],
 		"nodeCounts": [
-			12
+			3
 		]
 	}
 }

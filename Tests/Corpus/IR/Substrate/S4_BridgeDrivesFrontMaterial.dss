@@ -1,0 +1,9 @@
+// A Bridge material that drives FrontMaterial itself is left as written: there is nothing to fold into.
+
+#pragma material(Substrate = Bridge)
+
+export void M_S4_BridgeDrivesFrontMaterial(inout material m)
+{
+    m.FrontMaterial = Substrate.Slab(Roughness = 0.4);
+    m.Opacity = 1.0;
+}

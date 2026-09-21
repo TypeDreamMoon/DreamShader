@@ -1,0 +1,25 @@
+// The Substrate sugar against the engine's own nodes: operators and lerp (S1), the virtual arguments of a
+// slab (S3) and a value built member by member (S5). The graph dump is what says the sugar made the nodes it
+// stands for -- a MetalnessToDiffuseAlbedoF0 in front of each slab that gave a BaseColor, one HorizontalMixing,
+// one Weight, one VerticalLayering -- and nothing else.
+
+/// @group Surface
+uniform float3 Albedo = float3(0.8, 0.4, 0.2);
+/// @group Surface
+uniform float Rust = 0.3;
+/// @group Surface
+uniform float Coat = 1.0;
+
+export void M_C2SubstrateSugar(inout material m)
+{
+    Substrate Metal = Substrate.Slab(BaseColor = Albedo, Metallic = 1.0, Roughness = 0.35, Haziness = 0.25);
+
+    Substrate RustS = Substrate.Slab();
+    RustS.BaseColor = Albedo * float3(0.6, 0.3, 0.1);
+    RustS.Roughness = 0.9;
+
+    Substrate Body = lerp(Metal, RustS, saturate(Rust));
+    Substrate Clear = Substrate.Slab(IOR = 1.5, Roughness = 0.1);
+
+    m.FrontMaterial = Substrate.Layer(Clear * Coat, Body, 0.01);
+}

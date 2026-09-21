@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S2_DynamicIf.dss\"\n\nproduct 0 Material \"M_S2_DynamicIf\" backend=Graph\n  %0 = Constant(Value=(0, 0.5, 1)) : float3 @L9:C55 \"Front\"\n  %1 = Reflected[Unlit](EmissiveColor=%0) : Substrate @L9:C23 \"Front\"\n  %2 = Parameter(DefaultValue=(1), ParameterName=\"Enabled\", SortPriority=0) : float @L5:C1 \"Enabled\"\n  %3 = Constant(Value=(1, 0.5, 0)) : float3 @L12:C49 \"Front\"\n  %4 = Reflected[Unlit](EmissiveColor=%3) : Substrate @L12:C17 \"Front\"\n  %5 = Reflected[Select](A=%1, B=%4, SelectValue=%2) : Substrate @L10:C5\n  %6 = MaterialSink(FrontMaterial=%5) @L7:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S2_DynamicIf"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

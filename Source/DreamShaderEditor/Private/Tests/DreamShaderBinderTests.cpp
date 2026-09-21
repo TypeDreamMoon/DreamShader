@@ -584,6 +584,10 @@ namespace UE::DreamShader::Editor::Private::Lang2BinderTests
 			return Result + TEXT(")");
 		}
 
+		case EBoundExprKind::SubstrateBuilderPin:
+			// Substrate sugar S5: `S.Pin` on a value still being built; the local is not an operand of it.
+			return Head(FString::Printf(TEXT("builder #%d.%s"), Info->LocalSlot, *Info->BuilderPin)) + TEXT(")");
+
 		case EBoundExprKind::Paren:
 		{
 			const FParenExpr* Paren = Expr->As<FParenExpr>();

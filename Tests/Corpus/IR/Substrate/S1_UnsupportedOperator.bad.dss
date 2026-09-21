@@ -1,0 +1,8 @@
+// A Substrate value is no number: `+` and `* scalar` are the two operators it has (DSH5293).
+
+export void M_S1_UnsupportedOperator(inout material m)
+{
+    Substrate A = Substrate.Slab(Roughness = 0.8);
+    Substrate B = Substrate.Slab(Roughness = 0.1);
+    m.FrontMaterial = A - B;
+}

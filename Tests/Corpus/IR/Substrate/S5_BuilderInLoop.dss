@@ -1,0 +1,13 @@
+// A builder declared inside an unrolled loop is a new value on every trip.
+
+export void M_S5_BuilderInLoop(inout material m)
+{
+    Substrate Stack = Substrate.Unlit(EmissiveColor = float3(0, 0, 0));
+    for (int i = 0; i < 3; ++i)
+    {
+        Substrate Sheet = Substrate.Slab();
+        Sheet.Roughness = i * 0.25;
+        Stack = Stack + Sheet * 0.25;
+    }
+    m.FrontMaterial = Stack;
+}

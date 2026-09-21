@@ -1,0 +1,8 @@
+// `Substrate = Native`: the file is Substrate source and asks for a Substrate project, which this run is.
+
+#pragma material(Substrate = Native)
+
+export void M_S4_NativeSubstrateOn(inout material m)
+{
+    m.FrontMaterial = Substrate.Slab(Roughness = 0.4);
+}

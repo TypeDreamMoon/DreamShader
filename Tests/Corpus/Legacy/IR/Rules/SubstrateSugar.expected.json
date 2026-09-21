@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"SubstrateSugar.dsm\"\n\nproduct 0 Material \"M_LiSubstrateSugar\" backend=Graph\n  legacy root \"\"\n  %0 = Parameter(DefaultValue=(0.800000012, 0.400000006, 0.200000003, 1), ParameterName=\"Tint\", SortPriority=32) : float4 @L9:C9 \"Tint\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L17:C54 \"Metal\"\n  %2 = Constant(Value=(1)) : float @L17:C75 \"Metal\"\n  %3 = Constant(Value=(0.35)) : float @L17:C92 \"Metal\"\n  %4 = Reflected[MetalnessToDiffuseAlbedoF0](BaseColor=%1, Metallic=%2) : [DiffuseAlbedo:float3, F0:float3] @L17:C27 \"Metal\"\n  %5 = Reflected[Slab](Roughness=%3, DiffuseAlbedo=%4, F0=%4#1) : Substrate @L17:C27 \"Metal\"\n  %6 = Constant(Value=(0.6, 0.3, 0.1)) : float3 @L18:C65 \"RustS\"\n  %7 = Multiply(%1, %6) : float3 @L18:C54 \"RustS\"\n  %8 = Constant(Value=(0.9)) : float @L18:C98 \"RustS\"\n  %9 = Reflected[MetalnessToDiffuseAlbedoF0](BaseColor=%7) : [DiffuseAlbedo:float3, F0:float3] @L18:C27 \"RustS\"\n  %10 = Reflected[Slab](Roughness=%8, DiffuseAlbedo=%9, F0=%9#1) : Substrate @L18:C27 \"RustS\"\n  %11 = Parameter(DefaultValue=(0.3), ParameterName=\"Rust\", SortPriority=32) : float @L7:C9 \"Rust\"\n  %12 = Saturate(%11) : float @L19:C45 \"Body\"\n  %13 = Reflected[HorizontalMixing](Background=%5, Foreground=%10, Mix=%12) : Substrate @L19:C26 \"Body\"\n  %14 = Constant(Value=(0.1)) : float @L20:C65 \"Clear\"\n  %15 = Constant(Value=(0.04, 0.04, 0.04)) : float3 @L20:C27 \"Clear\"\n  %16 = Reflected[Slab](Roughness=%14, F0=%15) : Substrate @L20:C27 \"Clear\"\n  %17 = Parameter(DefaultValue=(1), ParameterName=\"Coat\", SortPriority=32) : float @L8:C9 \"Coat\"\n  %18 = Reflected[Weight](A=%16, Weight=%17) : Substrate @L13:C46 \"FrontMaterial\"\n  %19 = Constant(Value=(0.01)) : float @L13:C66 \"FrontMaterial\"\n  %20 = Reflected[VerticalLayering](Top=%18, Base=%13, Thickness=%19) : Substrate @L13:C30 \"FrontMaterial\"\n  %21 = MaterialSink(FrontMaterial=%20) @L4:C1\n  sink %21\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiSubstrateSugar"
+		],
+		"nodeCounts": [
+			22
+		]
+	}
+}

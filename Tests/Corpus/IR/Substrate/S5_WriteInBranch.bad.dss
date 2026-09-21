@@ -1,0 +1,14 @@
+// A member written under an `if` the declaration is outside of would be one node in two versions (DSH5298).
+
+uniform bool Wet = false;
+
+export void M_S5_WriteInBranch(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    Paint.Roughness = 0.8;
+    if (Wet)
+    {
+        Paint.Roughness = 0.1;
+    }
+    m.FrontMaterial = Paint;
+}

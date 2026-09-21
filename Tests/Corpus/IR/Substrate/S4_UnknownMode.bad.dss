@@ -1,0 +1,8 @@
+// The three modes are Legacy, Bridge and Native (DSH7232).
+
+#pragma material(Substrate = Sometimes)
+
+export void M_S4_UnknownMode(inout material m)
+{
+    m.Opacity = 1.0;
+}

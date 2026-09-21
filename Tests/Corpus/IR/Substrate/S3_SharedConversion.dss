@@ -1,0 +1,11 @@
+// The conversion nodes are plain reflected nodes, so two slabs that convert the same BaseColor and Metallic
+// share one of them: the dedupe pass sees two equal keys, as it would for any two equal calls.
+
+uniform float3 Albedo = float3(0.8, 0.1, 0.1);
+
+export void M_S3_SharedConversion(inout material m)
+{
+    Substrate Rough = Substrate.Slab(BaseColor = Albedo, Metallic = 1.0, Roughness = 0.9);
+    Substrate Smooth = Substrate.Slab(BaseColor = Albedo, Metallic = 1.0, Roughness = 0.1);
+    m.FrontMaterial = lerp(Rough, Smooth, 0.5);
+}

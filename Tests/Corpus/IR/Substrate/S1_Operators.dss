@@ -1,0 +1,16 @@
+// Sugar S1: the composition nodes as operators. `A + B` is Substrate.Add, `A * w` and `w * A` are
+// Substrate.Weight, and `lerp(A, B, t)` over two Substrate values is Substrate.HorizontalMix. The operands
+// land on the node's own pins, so the graph is the one the named calls make.
+
+uniform float Wetness = 0.25;
+
+export void M_S1_Operators(inout material m)
+{
+    Substrate Dry = Substrate.Slab(DiffuseAlbedo = float3(0.5, 0.4, 0.3), Roughness = 0.8);
+    Substrate Wet = Substrate.Slab(DiffuseAlbedo = float3(0.2, 0.2, 0.2), Roughness = 0.1);
+    Substrate Glow = Substrate.Unlit(EmissiveColor = float3(1, 0.5, 0));
+
+    Substrate Mixed = lerp(Dry, Wet, Wetness);
+    Substrate Lit = Mixed + Glow * 0.5;
+    m.FrontMaterial = Lit + 0.25 * Glow;
+}

@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"S3_SharedConversion.dss\"\n\nproduct 0 Material \"M_S3_SharedConversion\" backend=Graph\n  %0 = Parameter(DefaultValue=(0.8, 0.1, 0.1), ParameterName=\"Albedo\", SortPriority=0) : float4 @L4:C1 \"Albedo\"\n  %1 = Swizzle(%0, Mask=\"xyz\") : float3 @L4:C1 \"Rough\"\n  %2 = Constant(Value=(1)) : float @L8:C69 \"Rough\"\n  %3 = Constant(Value=(0.9)) : float @L8:C86 \"Rough\"\n  %4 = Reflected[MetalnessToDiffuseAlbedoF0](BaseColor=%1, Metallic=%2) : [DiffuseAlbedo:float3, F0:float3] @L8:C23 \"Rough\"\n  %5 = Reflected[Slab](Roughness=%3, DiffuseAlbedo=%4, F0=%4#1) : Substrate @L8:C23 \"Rough\"\n  %6 = Constant(Value=(0.1)) : float @L9:C87 \"Smooth\"\n  %7 = Reflected[Slab](Roughness=%6, DiffuseAlbedo=%4, F0=%4#1) : Substrate @L9:C24 \"Smooth\"\n  %8 = Constant(Value=(0.5)) : float @L10:C43 \"FrontMaterial\"\n  %9 = Reflected[HorizontalMixing](Background=%5, Foreground=%7, Mix=%8) : Substrate @L10:C23 \"FrontMaterial\"\n  %10 = MaterialSink(FrontMaterial=%9) @L6:C1\n  sink %10\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_S3_SharedConversion"
+		],
+		"nodeCounts": [
+			11
+		]
+	}
+}

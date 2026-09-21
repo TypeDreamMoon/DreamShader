@@ -1,0 +1,18 @@
+// Sugar S5: a Substrate local declared as a node call without arguments is a value still being built. A
+// member write connects a pin -- or a virtual argument of S3 -- in any order, and the first use of the value
+// makes the node. The graph is the one `Substrate.Slab(Roughness = ..., BaseColor = ..., ...)` makes.
+
+uniform float3 Albedo = float3(0.8, 0.1, 0.1);
+uniform float Rough = 0.4;
+
+export void M_S5_Builder(inout material m)
+{
+    Substrate Paint = Substrate.Slab();
+    Paint.Roughness = Rough;
+    Paint.BaseColor = Albedo;
+    Paint.Metallic = 1.0;
+    Paint.Haziness = 0.3;
+    Paint.EmissiveColor = Albedo * 0.1;
+
+    m.FrontMaterial = Paint;
+}

@@ -1,0 +1,10 @@
+// There is no `+=` node: a compound assignment over a Substrate value is refused, and the message says what
+// to write instead (DSH5293).
+
+export void M_S1_CompoundAssign(inout material m)
+{
+    Substrate A = Substrate.Slab(Roughness = 0.8);
+    Substrate B = Substrate.Slab(Roughness = 0.1);
+    A += B;
+    m.FrontMaterial = A;
+}

@@ -1,0 +1,14 @@
+// Select parameter-blends its two inputs, and the engine refuses some pairs of unlike BSDFs. Which pairs is
+// the engine's business; the builder says so as a warning (DSH4380) and makes the node.
+
+uniform bool Emissive = false;
+
+export void M_S2_UnlikeKinds(inout material m)
+{
+    Substrate Front = Substrate.Slab(Roughness = 0.5);
+    if (Emissive)
+    {
+        Front = Substrate.Unlit(EmissiveColor = float3(1, 1, 1));
+    }
+    m.FrontMaterial = Front;
+}
