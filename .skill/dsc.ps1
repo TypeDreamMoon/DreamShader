@@ -17,13 +17,23 @@
     exists on disk is dumped as it stands rather than rebuilt; compile the tree first
     (`./dsc.ps1 compile -All -Force`) when the sources have moved.
 
-    `check`, `dump-ir`, `index` and `export-catalog` belong to the 2.0 pipeline and
-    take `.dss` sources only. `check` runs the compiler as far as IR validation and
+    `check`, `dump-ir`, `index` and `export-catalog` belong to the 2.0 pipeline; the
+    first three take every compilable source -- `.dss`, `.dsi`, `.dsm` and `.dsf` (a
+    `.dsh` header is checked through the sources that include it). `check` runs the
+    compiler as far as IR validation and
     writes no asset — it is the CI gate. `check -Shaders` goes further, and costs more:
     it BUILDS AND SAVES the assets (2.0 has no transient one) and compiles their
     shaders, so an HLSL mistake in a `@custom` body fails here rather than in somebody's
     editor a week later. `dump-ir` and `index` are language-service tools, and
     `export-catalog` publishes the builtin node catalog the extension binds `UE.*` against.
+
+    `decompile` writes 2.0 text by default: a `.dss` for a material or a material
+    function, a `.dsi` for a material instance (only the parameters that differ from
+    the parent). `-Format Legacy`, or an `-Out` ending in `.dsm` / `.dsf`, writes the
+    1.x text instead; `-SourceFile` decompiles every asset one source builds into one
+    file. `migrate` rewrites 1.x sources (`.dsm`, `.dsf`, `.dsh`) as `.dss` and moves
+    the old files to Saved/DreamShader/Migrated; `-Check` verifies the rewrite and
+    writes nothing.
 
     On top of the raw commandlet it adds:
       * engine resolution from the .uproject's EngineAssociation (no hard-coded path),
@@ -45,7 +55,22 @@
     ./dsc.ps1 compile -All -Define MOONTOON_LEGACY_TOON=0, SHIP_BUILD -Force
 
 .EXAMPLE
-    ./dsc.ps1 decompile /Game/Materials/M_Steel -Out I:/Work/M_Steel.dsm
+    ./dsc.ps1 decompile /Game/Materials/M_Steel -Out I:/Work/M_Steel.dss
+
+.EXAMPLE
+    ./dsc.ps1 decompile /Game/Materials/MI_Steel_Red
+
+.EXAMPLE
+    ./dsc.ps1 decompile /Game/Materials/M_Steel -Format Legacy -Out I:/Work/M_Steel.dsm
+
+.EXAMPLE
+    ./dsc.ps1 migrate DShader/Materials/M_Foo.dsm -Check
+
+.EXAMPLE
+    ./dsc.ps1 migrate -All
+
+.EXAMPLE
+    ./dsc.ps1 migrate -Root MoonToon -Check
 
 .EXAMPLE
     ./dsc.ps1 dump-graph -All -Out I:/Baseline/before
@@ -65,19 +90,21 @@
 [CmdletBinding()]
 param(
     # compile  — build one source file, or every project source with -All
-    # decompile — export an existing UMaterial / UMaterialFunction back to source
+    # decompile — export an existing UMaterial / UMaterialFunction / material instance back to source
     # dump-graph — write a canonical JSON fingerprint of the graph each source generates
-    # check — 2.0 only: compile a .dss as far as IR validation, writing no asset
-    # dump-ir — 2.0 only: write the lowered IR of a .dss as text (and JSON with -Json)
-    # index — 2.0 only: write the symbol index a language service reads
-    # export-catalog — 2.0 only: write the builtin node catalog as JSON
+    # check — 2.0 pipeline: compile a source as far as IR validation, writing no asset
+    # dump-ir — 2.0 pipeline: write the lowered IR of a source as text (and JSON with -Json)
+    # index — 2.0 pipeline: write the symbol index a language service reads
+    # export-catalog — 2.0 pipeline: write the builtin node catalog as JSON
+    # migrate — rewrite 1.x sources (.dsm, .dsf, .dsh) as .dss
     [Parameter(Mandatory, Position = 0)]
-    [ValidateSet('compile', 'decompile', 'dump-graph', 'check', 'dump-ir', 'index', 'export-catalog')]
+    [ValidateSet('compile', 'decompile', 'dump-graph', 'check', 'dump-ir', 'index', 'export-catalog', 'migrate')]
     [string]$Command,
 
-    # compile / dump-graph: path to a .dsm/.dsf (absolute, or relative to DShader/ then the project).
-    # check / dump-ir / index: the same, for a .dss.
-    # decompile: an object path such as /Game/Materials/M_Steel.
+    # compile / dump-graph / check / dump-ir / index: path to a compilable source -- .dss, .dsi,
+    # .dsm or .dsf (absolute, or relative to DShader/ then the project).
+    # migrate: a 1.x source, .dsm, .dsf or .dsh.
+    # decompile: an object path such as /Game/Materials/M_Steel (a material instance writes a .dsi).
     [Parameter(Position = 1)]
     [string]$Target,
 
@@ -110,7 +137,10 @@ param(
     # commandlet splits the payload on the FIRST `=` only.
     [string[]]$Define,
 
-    # decompile: write the source here instead of <SourceDirectory>/Decompiled/….
+    # decompile: write the source here instead of <SourceDirectory>/Decompiled/…. Under the
+    # default -Format Auto the extension decides: .dsm / .dsf is the 1.x text, anything else 2.0.
+    # migrate: write the .dss files under this directory, mirroring the source tree, instead of
+    # beside each source.
     # dump-graph: the root of the dump tree, instead of <Project>/Saved/DreamShader/GraphBaseline.
     # dump-ir: instead of <Project>/Saved/DreamShader/IR. index: instead of …/Index.
     # export-catalog: the file, instead of <Project>/Saved/DreamShader/Bridge/dreamshader-builtin-catalog.json.
@@ -136,7 +166,37 @@ param(
 
     # check: also write the diagnostics as JSON here (schema dreamshader-diagnostics,
     # version 1, plus the optional `length` field). One file per source under -All.
+    # decompile: the decompile's diagnostics, in the same schema.
     [string]$DiagnosticsOut,
+
+    # decompile: Dss (a .dss, or a .dsi for a material instance), Legacy (the 1.x .dsm / .dsf
+    # text, kept through 2.0.x), or Auto (by the -Out extension; the default).
+    [ValidateSet('Dss', 'Legacy', 'Auto')]
+    [string]$Format,
+
+    # decompile: keep the asset's own object path, writing `/// @name` when the output file
+    # would derive another one.
+    [switch]$KeepAssetPath,
+
+    # decompile: prefer HLSL operators over class-exact `UE.*` calls. The graph may gain
+    # Constant nodes; the shader does not change.
+    [switch]$Readable,
+
+    # decompile: decompile every asset this source builds into one file, instead of naming one asset.
+    [string]$SourceFile,
+
+    # migrate: verify the rewrite (re-parse, compare the IR) and write nothing.
+    [switch]$Check,
+
+    # migrate: report what would be written and write nothing.
+    [switch]$DryRun,
+
+    # migrate: delete the 1.x sources instead of moving them to Saved/DreamShader/Migrated.
+    [switch]$NoBackup,
+
+    # migrate: every 1.x source of ONE source root, by its display name or its plugin's name
+    # (`-Root MoonToon`). `-All` takes the writable roots only, which leaves a plugin's root out.
+    [string]$Root,
 
     # dump-ir: write the JSON form beside the text one.
     [switch]$Json,
@@ -260,14 +320,24 @@ switch ($Command) {
             $commandletArgs += "-Source=$($resolved -replace '\\', '/')"
         }
         else {
-            throw "compile needs a source file or -All."
+            throw "compile needs a source file (.dss, .dsi, .dsm or .dsf) or -All."
         }
         if ($Force) { $commandletArgs += '-Force' }
     }
     'decompile' {
-        if (-not $Target) { throw "decompile needs an asset object path, e.g. /Game/Materials/M_Steel." }
-        $commandletArgs += "-Asset=$Target"
+        if (-not $Target -and -not $SourceFile) {
+            throw "decompile needs an asset object path, e.g. /Game/Materials/M_Steel, or -SourceFile."
+        }
+        if ($Target) { $commandletArgs += "-Asset=$Target" }
+        if ($SourceFile) {
+            $resolved = if (Test-Path -LiteralPath $SourceFile) { (Resolve-Path -LiteralPath $SourceFile).Path } else { $SourceFile }
+            $commandletArgs += "-SourceFile=$($resolved -replace '\\', '/')"
+        }
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
+        if ($Format) { $commandletArgs += "-Format=$Format" }
+        if ($KeepAssetPath) { $commandletArgs += '-KeepAssetPath' }
+        if ($Readable) { $commandletArgs += '-Readable' }
+        if ($DiagnosticsOut) { $commandletArgs += "-DiagnosticsOut=$($DiagnosticsOut -replace '\\', '/')" }
     }
     'dump-graph' {
         # Deliberately the same source selection as compile, down to the -Force pass-through
@@ -298,7 +368,7 @@ switch ($Command) {
             $commandletArgs += "-Source=$($resolved -replace '\\', '/')"
         }
         else {
-            throw "$Command needs a .dss source file or -All."
+            throw "$Command needs a source file (.dss, .dsi, .dsm or .dsf) or -All."
         }
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
         if ($Force) { $commandletArgs += '-Force' }
@@ -312,6 +382,27 @@ switch ($Command) {
     'export-catalog' {
         # No source: the catalog is a property of the engine and the loaded plugins, not of
         # any one file.
+        if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
+    }
+    'migrate' {
+        # The commandlet orders a -All set headers first and migrates a header only when every
+        # file that includes it is migrated too.
+        if ($Root) {
+            $commandletArgs += "-Root=$Root"
+        }
+        elseif ($All) {
+            $commandletArgs += '-All'
+        }
+        elseif ($Target) {
+            $resolved = if (Test-Path -LiteralPath $Target) { (Resolve-Path -LiteralPath $Target).Path } else { $Target }
+            $commandletArgs += "-Source=$($resolved -replace '\\', '/')"
+        }
+        else {
+            throw "migrate needs a 1.x source file (.dsm, .dsf or .dsh), -All, or -Root <name>."
+        }
+        if ($Check) { $commandletArgs += '-Check' }
+        if ($DryRun) { $commandletArgs += '-DryRun' }
+        if ($NoBackup) { $commandletArgs += '-NoBackup' }
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
     }
 }
@@ -417,6 +508,43 @@ if ($generated.Count -gt 0) {
 
     if (-not $CleanNew) {
         Write-Host "  (pass -CleanNew to delete the untracked ones — they shadow the editor's Ephemeral products)" -ForegroundColor DarkGray
+    }
+}
+
+# `migrate` names every source it wrote and where the old file went, one line per file:
+#   Migrated '<source>' to '<output>' (backup '<backup>').    or    ... (no backup).
+#   Checked '<source>': would write '<output>'.                     (-Check / -DryRun)
+if ($Command -eq 'migrate') {
+    $migrated = @()
+    $checked = @()
+    foreach ($line in $dreamLines) {
+        if ($line -match "Migrated '([^']+)' to '([^']+)' \((?:backup '([^']+)'|no backup)\)\.") {
+            $migrated += [pscustomobject]@{ Source = $Matches[1]; Output = $Matches[2]; Backup = $Matches[3] }
+        }
+        elseif ($line -match "Checked '([^']+)': would write '([^']+)'\.") {
+            $checked += [pscustomobject]@{ Source = $Matches[1]; Output = $Matches[2] }
+        }
+    }
+
+    if ($migrated.Count -gt 0) {
+        Write-Host ''
+        Write-Host "Sources written by this run:" -ForegroundColor DarkGray
+        foreach ($entry in $migrated) {
+            Write-Host "  $($entry.Output)" -ForegroundColor Yellow
+            if ($entry.Backup) {
+                Write-Host "    backup of $($entry.Source): $($entry.Backup)" -ForegroundColor DarkGray
+            }
+            else {
+                Write-Host "    $($entry.Source) was deleted (-NoBackup)" -ForegroundColor DarkGray
+            }
+        }
+    }
+    if ($checked.Count -gt 0) {
+        Write-Host ''
+        Write-Host "Checked, nothing written:" -ForegroundColor DarkGray
+        foreach ($entry in $checked) {
+            Write-Host "  $($entry.Source) -> $($entry.Output)" -ForegroundColor DarkGray
+        }
     }
 }
 
