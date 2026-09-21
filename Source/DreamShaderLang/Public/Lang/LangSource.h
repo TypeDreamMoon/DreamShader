@@ -53,6 +53,8 @@ namespace UE::DreamShader::Lang
 		Dsm,
 		/** 1.x material function / layer / layer blend (frozen syntax, second front end). */
 		Dsf,
+		/** 2.0 material instance: one `#pragma instance(...)` plus `uniform` overrides; one UMaterialInstanceConstant. */
+		Dsi,
 		Unknown,
 	};
 

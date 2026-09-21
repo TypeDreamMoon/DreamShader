@@ -38,6 +38,10 @@ namespace UE::DreamShader::Lang
 		{
 			return ELangFileKind::Dsf;
 		}
+		if (Extension.Equals(TEXT("dsi"), ESearchCase::IgnoreCase))
+		{
+			return ELangFileKind::Dsi;
+		}
 
 		return ELangFileKind::Unknown;
 	}
@@ -54,6 +58,8 @@ namespace UE::DreamShader::Lang
 			return TEXT("Dsm");
 		case ELangFileKind::Dsf:
 			return TEXT("Dsf");
+		case ELangFileKind::Dsi:
+			return TEXT("Dsi");
 		case ELangFileKind::Unknown:
 		default:
 			return TEXT("Unknown");
