@@ -63,7 +63,7 @@ the emitted instance.
 6. Build the body — either the `Graph` block, or, when the unit has no `Graph` and no initialized
    output, one whole-surface `Custom` node.
 7. Connect each `Outputs` binding.
-8. Lay the graph out — **skipped in memory-only mode**. See [Graph layout](graph-layout.md).
+8. Lay the graph out, in the project's [Graph Layout Style](graph-layout.md#layout-styles).
 9. Recompile the material.
 
 ## What triggers a compile

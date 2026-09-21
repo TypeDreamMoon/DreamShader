@@ -209,15 +209,12 @@ What happens to a parsed file:
 | Feature | Spelling |
 | :-- | :-- |
 | [Substrate sugar](substrate.md) | `A + B`, `A * w`, `lerp(A, B, t)` over Substrate values; `Substrate.Slab(BaseColor = ..., Metallic = ...)`; a run-time `if` over Substrate values; `Substrate S = Substrate.Slab(); S.Roughness = r;`; `#pragma material(Substrate = Legacy \| Bridge \| Native)` |
-| A layout that reads the source | *Project Settings ▸ DreamShader ▸ Graph Layout Style* — [Blocks, Source Bands or Layered](../generation/graph-layout.md#layout-styles); `dsc dump-layout` draws all three without building anything |
+| A layout that reads the source | *Project Settings ▸ DreamShader ▸ Graph Layout Style* — [Blocks (the default), Source Bands or Layered](../generation/graph-layout.md#layout-styles), or the 1.x `Classic`; `dsc dump-layout` draws all three without building anything |
 | A formatter | [`dsc fmt`](../tools/commandlet.md#fmt) — the printer, with a check that refuses to write a file it cannot vouch for |
 | The generated assets, listed | [`dsc list-generated`](../tools/commandlet.md#list-generated), for [source control](../generation/source-control.md) |
 
 ## What the pipeline does *not* do yet
 
-- **The 1.x layout is still the default.** The three layouts that read the IR — *Blocks*, which boxes the
-  graph by region and statement and joins the boxes with named reroutes, *Source Bands* and *Layered* —
-  are a [project setting](../generation/graph-layout.md#layout-styles).
 - **No Material Layer *stack*.** `@layer` and `@layerblend` produce the two function kinds, but the
   material-level layer stack is a future `#pragma material` key.
 - **No `let` / `auto`, and a node is not a value you can store.** Write the call where its output is

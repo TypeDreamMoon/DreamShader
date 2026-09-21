@@ -100,8 +100,9 @@
   box through the reroute pair in front of the output. `SourceBands` is one band per statement in the
   order of the text; `Layered` is the whole graph in layers by distance from the outputs; those two
   insert nothing. All three obey `#pragma layout` to the unit, box `#pragma region`s with their
-  nesting and are deterministic. `Classic` -- the 1.x layout -- stays the default. `dsc dump-layout`
-  draws the IR styles for any source as SVG (coordinates as JSON with `-Json`) and builds nothing.
+  nesting and are deterministic. `Blocks` is the default; `Classic` -- the 1.x layout -- can still be
+  chosen. `dsc dump-layout` draws the IR styles for any source as SVG (coordinates as JSON with
+  `-Json`) and builds nothing.
   [`Docs/generation/graph-layout.md`](Docs/generation/graph-layout.md#layout-styles).
 
 - **`dsc fmt`.** The language's own printer as a formatter, for `.dss`, `.dsi` and 2.0 headers. It
@@ -130,6 +131,13 @@
   [`Docs/diagnostics/README.md`](Docs/diagnostics/README.md).
 
 ### Changed
+
+- **A generated graph is laid out by `Blocks`.** The graph of a material or a function is rearranged
+  the next time its source is rebuilt: boxes in source order, `DS_<variable>` named reroutes between
+  them where 1.x had `DS_Shared_*`, a constant repeated in every box that reads it. What the material
+  computes does not change, and node positions are not part of the divergence digest, so nothing reads
+  as hand-edited. *Graph Layout Style = Classic* keeps the 1.x arrangement.
+  [`Docs/generation/graph-layout.md`](Docs/generation/graph-layout.md#layout-styles).
 
 - **The compiler is its own module, and the compile interface moved to the runtime module.** Through
   1.9.x `DreamShaderCompiler` was a Runtime module holding only an interface, and the compiler lived

@@ -9,9 +9,17 @@ The pass that assigns editor coordinates and comment boxes to the nodes a compil
 | Runs on | `UMaterial` (including the hidden ThinCustom base) and `UMaterialFunction` |
 | Runs after | the graph is built and the outputs are connected; before the material is recompiled |
 | Source control | the optional [`Layout`](../language/layout.md) section and `#Region` / `#EndRegion` |
-| Produces | node positions, `UMaterialExpressionComment` boxes, `DS_Shared_*` named reroutes |
+| Produces | node positions, `UMaterialExpressionComment` boxes, named reroutes (`DS_<variable>` under `Blocks`, `DS_Shared_*` under `Classic`) |
+
+Which pass that is, is the project's [Graph Layout Style](#layout-styles). `Blocks`, the default, and the
+two other styles computed on the compiler's IR are described under that heading. **When layout runs**,
+**Explicit layout** and the sections after it describe `Classic`, the 1.x pass, which works on the
+finished graph and which a project can still choose.
 
 ## When layout runs
+
+*`Classic` only.* A style computed on the IR has no such guard: it is laid out before a node exists, and
+always runs.
 
 | Condition | Behaviour |
 | :-- | :-- |
@@ -46,12 +54,14 @@ only on the automatic path — an explicit `Layout` section is always honoured, 
 ## Layout styles
 
 *(since 2.0.0)* **Project Settings ▸ DreamShader ▸ Graph Layout Style** chooses what lays a generated
-graph out. The rest of this page describes `Classic`, which is still the default.
+graph out. `Blocks` is the default. A graph takes the chosen style the next time its source is rebuilt;
+node positions are not part of the [divergence digest](divergence.md), so an asset built under another
+style never reads as hand-edited.
 
 | Style | Reads | In short |
 | :-- | :-- | :-- |
-| `Classic` *(default)* | the finished engine graph | the 1.x layout: blocks recovered from the material's outputs, `DS_Shared_*` named reroutes between them |
-| `Blocks` | the compiler's IR | a page of boxes in source order, one per `#pragma region` or run of statements; no wire leaves a box — see below |
+| `Blocks` *(default)* | the compiler's IR | a page of boxes in source order, one per `#pragma region` or run of statements; no wire leaves a box — see below |
+| `Classic` | the finished engine graph | the 1.x layout: blocks recovered from the material's outputs, `DS_Shared_*` named reroutes between them |
 | `SourceBands` | the compiler's IR | one horizontal band per statement of the source, top to bottom in the order of the text; inside a band, a tidy tree that grows leftward from the statement's value |
 | `Layered` | the compiler's IR | the whole graph in layers by distance from the outputs (Sugiyama): crossings reduced by barycentre ordering, rows aligned on the median of their neighbours |
 
