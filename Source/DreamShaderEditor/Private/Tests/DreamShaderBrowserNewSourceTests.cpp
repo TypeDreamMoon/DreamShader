@@ -1,7 +1,8 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The browser's New menu: the three templates under Resources/Templates must render with every
-// placeholder filled and must compile as written, or the first thing a new user makes is broken.
+// The browser's New menu: the templates under Resources/Templates -- the two `.dss` ones and the three 1.x
+// ones -- must render with every placeholder filled and must compile as written, or the first thing a new
+// user makes is broken.
 
 #include "Tests/DreamShaderTestCommon.h"
 
@@ -76,6 +77,62 @@ bool FDreamShaderNewSourceTemplatesTest::RunTest(const FString& Parameters)
 			{
 				TestTrue(TEXT("The block's Name= is the directory relative to the root plus the stem"), Text.Contains(TEXT("Name=\"Tests/Automation/Probe\"")));
 			}
+		}
+	}
+
+	// The two `.dss` templates: the stem is the export's name, and nothing of a 1.x block is left in them.
+	for (const EBrowserSourceKind Kind : { EBrowserSourceKind::Material, EBrowserSourceKind::Function })
+	{
+		FNewSourceRequest Request;
+		Request.Kind = Kind;
+		Request.Language = ENewSourceLanguage::Lang2;
+		Request.Directory = Directory;
+		Request.FileStem = TEXT("Probe");
+		TestEqual(TEXT("A 2.0 material and a 2.0 function are both a .dss"), FString(GetSourceKindExtension(Kind, ENewSourceLanguage::Lang2)), FString(TEXT("dss")));
+
+		FString Text;
+		FString Error;
+		const TCHAR* const What = Kind == EBrowserSourceKind::Material ? TEXT("material") : TEXT("function");
+		if (TestTrue(FString::Printf(TEXT("The .dss %s template renders: %s"), What, *Error), RenderNewSourceTemplate(Request, Text, Error)))
+		{
+			TestFalse(
+				FString::Printf(TEXT("No placeholder left in the .dss %s template"), What),
+				Text.Contains(TEXT("{NAME}")) || Text.Contains(TEXT("{STEM}")) || Text.Contains(TEXT("{FILENAME}")) || Text.Contains(TEXT("{ASSETPATH}")));
+			TestTrue(FString::Printf(TEXT("The .dss %s template says where its asset goes"), What), Text.Contains(TEXT("/Game/Tests/Automation/Probe")));
+			TestTrue(
+				FString::Printf(TEXT("The .dss %s template exports the stem"), What),
+				Text.Contains(Kind == EBrowserSourceKind::Material ? TEXT("export void Probe(inout material m)") : TEXT("export float3 Probe(")));
+			TestFalse(FString::Printf(TEXT("The .dss %s template has no 1.x block in it"), What), Text.Contains(TEXT("Name=")));
+		}
+	}
+
+	// Each `.dss` template compiles, to the asset its header comment names.
+	for (const EBrowserSourceKind Kind : { EBrowserSourceKind::Material, EBrowserSourceKind::Function })
+	{
+		const bool bMaterial = Kind == EBrowserSourceKind::Material;
+		const TCHAR* const What = bMaterial ? TEXT("material") : TEXT("function");
+		const FString Stem = MakeUniqueTestAssetName(bMaterial ? TEXT("M_AutoNewSourceDss") : TEXT("MF_AutoNewSourceDss"));
+
+		FNewSourceRequest Request;
+		Request.Kind = Kind;
+		Request.Language = ENewSourceLanguage::Lang2;
+		Request.Directory = Directory;
+		Request.FileStem = Stem;
+		FString FilePath;
+		FString Error;
+		if (TestTrue(FString::Printf(TEXT("The .dss %s file is created: %s"), What, *Error), CreateNewSourceFile(Request, FilePath, Error)))
+		{
+			Artifacts.SourceFiles.Add(FilePath);
+			TestTrue(FString::Printf(TEXT("The .dss %s file has the .dss extension"), What), FilePath.EndsWith(TEXT(".dss")));
+			const FString ObjectPath = AutomationObjectPathFor(Stem);
+			Artifacts.ObjectPaths.Add(ObjectPath);
+			AddExpectedNewAssetProbeWarnings(*this, ObjectPath);
+			FString Message;
+			TestTrue(FString::Printf(TEXT("The .dss %s template compiles: %s"), What, *Message),
+				::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(FilePath, Message, /*bForce*/ true, /*bEphemeralThinCustom*/ true));
+
+			FString Unused;
+			TestFalse(FString::Printf(TEXT("Creating the same .dss %s again is refused"), What), CreateNewSourceFile(Request, Unused, Error));
 		}
 	}
 
