@@ -175,6 +175,12 @@ namespace UE::DreamShader::Lang
 		const FDeclarator* Decl = nullptr;
 		int32 ArrayCount = 0;
 		FLangSpan Span;
+		/**
+		 * Substrate sugar S5: the catalog entry of the node this local builds, when it was declared as a call without
+		 * arguments (`Substrate S = Substrate.Slab();`); INDEX_NONE for every other local. Until a value is taken from it,
+		 * `S.Pin = x` connects the node's pins.
+		 */
+		int32 SubstrateBuilderClass = INDEX_NONE;
 	};
 
 	struct FBoundFunction
@@ -203,6 +209,8 @@ namespace UE::DreamShader::Lang
 		FString AssetPathOverride;
 		TMap<FString, FString> Settings;
 		IR::EIRBackend Backend = IR::EIRBackend::Graph;
+		/** `#pragma material(Substrate = Legacy | Bridge | Native)` (Substrate sugar S4). */
+		IR::EIRSubstrateMode SubstrateMode = IR::EIRSubstrateMode::Legacy;
 		/** 1.x destination: AssetName may carry folders, AssetRoot is the Root= spelling (empty: the 1.x default root), and the source folder is not mirrored. */
 		bool bLegacyAssetPath = false;
 		FString AssetRoot;
@@ -263,13 +271,23 @@ namespace UE::DreamShader::Lang
 		 * parameters in declaration order.
 		 */
 		FunctionCallOutput,
+		/**
+		 * Substrate sugar S5: `S.Roughness` where S is a builder local (`Substrate S = Substrate.Slab();`). LocalSlot is the
+		 * local, Index the node's catalog entry, BuilderPin the pin -- or the virtual argument of sugar S3 -- and FieldIndex
+		 * the pin's index (INDEX_NONE for a virtual one). As the target of `=` it connects the pin; as a value it is whatever
+		 * was connected, and makes no node.
+		 */
+		SubstrateBuilderPin,
 	};
 	DREAMSHADERLANG_API const TCHAR* LexToString(EBoundExprKind Kind);
 
 	/** How one call argument was matched. */
 	struct FBoundArgument
 	{
-		/** Index into FCallExpr::Arguments. */
+		/**
+		 * Index into FCallExpr::Arguments. On a ReflectedCall that an OPERATOR bound (Substrate sugar S1: `A + B`, `A * w`)
+		 * it counts the operands of the FBinaryExpr instead: 0 is Left, 1 is Right.
+		 */
 		int32 ArgumentIndex = INDEX_NONE;
 		/** ReflectedCall: the pin or property name; FunctionCall: the parameter name; TextureSample: "Texture"/"UV"/"Sampler". */
 		FString Target;
@@ -282,6 +300,12 @@ namespace UE::DreamShader::Lang
 		FString WrittenTarget;
 		/** ReflectedCall: the argument is a literal property (not a pin). */
 		bool bIsProperty = false;
+		/**
+		 * ReflectedCall, Substrate sugar S3: the argument is no pin and no property of the node. `Substrate.Slab(BaseColor =
+		 * ..., Metallic = ...)` names inputs of a conversion node, which the IR builder makes and whose outputs it wires to
+		 * the node's real pins (DiffuseAlbedo, F0). Target is the virtual name; TargetIndex stays INDEX_NONE.
+		 */
+		bool bIsVirtual = false;
 		/**
 		 * ReflectedCall: index into the catalog entry's Inputs or Properties; INDEX_NONE with bIsProperty == false is an input
 		 * a Custom class's call named (L4). FunctionCall: the parameter index; Params.Num() marks a legacy statement call's
@@ -306,6 +330,8 @@ namespace UE::DreamShader::Lang
 		IR::EIROp CoreOp = IR::EIROp::Count;
 		/** Swizzle / IndexConst: canonical lower-case xyzw mask. */
 		FString Swizzle;
+		/** SubstrateBuilderPin: the pin's own name, or the virtual argument's. */
+		FString BuilderPin;
 		/** ReflectedCall / FunctionCall / TextureSample / Constructor / StructConstructor: argument bindings, in argument order. */
 		TArray<FBoundArgument> Args;
 		/** Whether this expression may be assigned to. */

@@ -602,6 +602,55 @@ namespace UE::DreamShader::Lang::Private
 		CurrentFile = OuterFile;
 	}
 
+	void FLangBinder::ResolveSubstrateMode()
+	{
+		ResolvedSubstrateMode = IR::EIRSubstrateMode::Legacy;
+
+		FString Value;
+		if (!Bound.MaterialSettings.RemoveAndCopyValue(FString(TEXT("Substrate")), Value))
+		{
+			return;
+		}
+
+		// As ResolveBackend: the key may have been written in a header.
+		FLangSpan Span;
+		if (const FLangSpan* Found = MaterialSettingSpans.Find(FString(TEXT("Substrate"))))
+		{
+			Span = *Found;
+		}
+		const FString OuterFile = CurrentFile;
+		if (const FString* FoundFile = MaterialSettingFiles.Find(FString(TEXT("Substrate"))))
+		{
+			CurrentFile = *FoundFile;
+		}
+
+		const FString Trimmed = Value.TrimStartAndEnd().TrimQuotes().TrimStartAndEnd();
+		if (Trimmed.Equals(TEXT("Legacy"), ESearchCase::IgnoreCase))
+		{
+			ResolvedSubstrateMode = IR::EIRSubstrateMode::Legacy;
+		}
+		else if (Trimmed.Equals(TEXT("Bridge"), ESearchCase::IgnoreCase))
+		{
+			ResolvedSubstrateMode = IR::EIRSubstrateMode::Bridge;
+		}
+		else if (Trimmed.Equals(TEXT("Native"), ESearchCase::IgnoreCase))
+		{
+			ResolvedSubstrateMode = IR::EIRSubstrateMode::Native;
+		}
+		else
+		{
+			Diagnostics.Error(
+				TEXT("DSH7232"),
+				CurrentFile,
+				Span,
+				FText::Format(
+					LOCTEXT("SubstrateModeUnknown", "'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'."),
+					FText::FromString(Trimmed)));
+		}
+
+		CurrentFile = OuterFile;
+	}
+
 	// ---------------------------------------------------------------------------------------------
 	// `#pragma layout`
 	// ---------------------------------------------------------------------------------------------

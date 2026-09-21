@@ -78,6 +78,7 @@ namespace UE::DreamShader::Lang
 		case EBoundExprKind::Paren:             return TEXT("Paren");
 		case EBoundExprKind::StructConstructor: return TEXT("StructConstructor");
 		case EBoundExprKind::FunctionCallOutput: return TEXT("FunctionCallOutput");
+		case EBoundExprKind::SubstrateBuilderPin: return TEXT("SubstrateBuilderPin");
 		}
 		return TEXT("Unknown");
 	}
@@ -287,6 +288,7 @@ namespace UE::DreamShader::Lang::Private
 		IncludeStack.Pop();
 
 		ResolveBackend();
+		ResolveSubstrateMode();
 		ClassifyFunctions();
 		BuildProducts();
 
@@ -1340,6 +1342,7 @@ namespace UE::DreamShader::Lang::Private
 			Product.Kind = Kind;
 			Product.FunctionIndex = Index;
 			Product.Backend = ResolvedBackend;
+			Product.SubstrateMode = Kind == IR::EIRProductKind::Material ? ResolvedSubstrateMode : IR::EIRSubstrateMode::Legacy;
 			Product.AssetName = Function.Name;
 
 			const FString& NameDirective = Function.Directives.Name;

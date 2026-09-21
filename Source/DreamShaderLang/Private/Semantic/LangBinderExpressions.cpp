@@ -640,6 +640,17 @@ namespace UE::DreamShader::Lang::Private
 			Binding.LocalSlot = LocalSlot;
 			Binding.Type = Local.Type;
 			Binding.bLValue = true;
+			if (Local.SubstrateBuilderClass != INDEX_NONE && !bBindingBuilderObject)
+			{
+				// Substrate sugar S5: the value is taken, so the node is finished. Overwritten whole (`S = T`) it is
+				// finished too, but nobody takes what was built, so there is nothing to ask of it.
+				bool bAlreadySealed = false;
+				SealedBuilderSlots.Add(LocalSlot, &bAlreadySealed);
+				if (!bAlreadySealed && BuilderWriteTarget != &Expr)
+				{
+					CheckSubstrateBuilderSealed(LocalSlot, Expr);
+				}
+			}
 			return Emit(Expr, MoveTemp(Binding));
 		}
 
@@ -969,6 +980,15 @@ namespace UE::DreamShader::Lang::Private
 		if (!Expr.Object)
 		{
 			return Fail(Expr);
+		}
+
+		// Substrate sugar S5: a member of a builder local is a pin of the node it builds.
+		{
+			IR::FIRType BuilderType;
+			if (TryBindSubstrateBuilderMember(Expr, BuilderType))
+			{
+				return BuilderType;
+			}
 		}
 
 		// Legacy rule L3b: `F(args).Out` on an Extern / ExportFunction / Custom function picks one of its outputs (the 1.x
@@ -2130,7 +2150,20 @@ namespace UE::DreamShader::Lang::Private
 			return Fail(Expr);
 		}
 
-		const IR::FIRType OperandType = BindExpr(*Expr.Operand);
+		IR::FIRType OperandType;
+		{
+			// Substrate sugar S5: `++S.Pin` writes the pin it reads.
+			const bool bStep = Expr.Op == EUnaryOp::PreIncrement || Expr.Op == EUnaryOp::PreDecrement
+				|| Expr.Op == EUnaryOp::PostIncrement || Expr.Op == EUnaryOp::PostDecrement;
+			const FExpr* StepTarget = Expr.Operand.Get();
+			while (const FParenExpr* Paren = StepTarget ? StepTarget->As<FParenExpr>() : nullptr)
+			{
+				StepTarget = Paren->Inner.Get();
+			}
+			TGuardValue<const FExpr*> TargetGuard(BuilderWriteTarget, bStep ? StepTarget : BuilderWriteTarget);
+			TGuardValue<bool> ReadsFirstGuard(bBuilderWriteReadsFirst, bStep ? true : bBuilderWriteReadsFirst);
+			OperandType = BindExpr(*Expr.Operand);
+		}
 
 		switch (Expr.Op)
 		{
@@ -2220,6 +2253,16 @@ namespace UE::DreamShader::Lang::Private
 		BindExpr(*Expr.Left);
 		BindExpr(*Expr.Right);
 
+		// Substrate sugar S1: a Substrate value is no number, and the two operators it has are nodes of its own.
+		{
+			const IR::FIRType LeftType = ResolveNodeDefaultOf(*Expr.Left);
+			const IR::FIRType RightType = ResolveNodeDefaultOf(*Expr.Right);
+			if (LeftType.Kind == IR::EIRTypeKind::Substrate || RightType.Kind == IR::EIRTypeKind::Substrate)
+			{
+				return BindSubstrateBinary(Expr, LeftType, RightType);
+			}
+		}
+
 		const IR::FIRCoreOpInfo* Info = IR::FindCoreOpForBinary(Expr.Op);
 		if (!Info)
 		{
@@ -2281,10 +2324,32 @@ namespace UE::DreamShader::Lang::Private
 			}
 		}
 
-		const IR::FIRType TargetType = BindExpr(*Expr.Target);
+		IR::FIRType TargetType;
+		{
+			// Substrate sugar S5: `S.Pin = x` connects the pin, and `S.Pin += x` reads what is connected first.
+			const FExpr* WriteTarget = Expr.Target.Get();
+			while (const FParenExpr* Paren = WriteTarget ? WriteTarget->As<FParenExpr>() : nullptr)
+			{
+				WriteTarget = Paren->Inner.Get();
+			}
+			TGuardValue<const FExpr*> TargetGuard(BuilderWriteTarget, WriteTarget);
+			TGuardValue<bool> ReadsFirstGuard(bBuilderWriteReadsFirst, Expr.Op != EAssignOp::Assign);
+			TargetType = BindExpr(*Expr.Target);
+		}
 		if (!bValueBound)
 		{
 			BindExpr(*Expr.Value);
+		}
+
+		if (Expr.Op != EAssignOp::Assign && TargetType.Kind == IR::EIRTypeKind::Substrate)
+		{
+			// Sugar S1 is two operators between values; there is no `+=` node, and a number's Add takes no Substrate.
+			Diagnostics.Error(
+				TEXT("DSH5293"),
+				CurrentFile,
+				Expr.Span,
+				LOCTEXT("SubstrateCompoundAssign", "A Substrate value has no compound assignment; write 'S = S + T' (Substrate.Add) or 'S = S * w' (Substrate.Weight)."));
+			return Fail(Expr);
 		}
 
 		if (!TargetType.IsError() && !IsLValue(*Expr.Target))
@@ -2321,11 +2386,34 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else
 			{
-				Diagnostics.Error(
-					TEXT("DSH4229"),
-					CurrentFile,
-					Expr.Target->Span,
-					LOCTEXT("AssignToNonLValue", "The left of '=' has to be a variable, a struct field, a material pin or a swizzle of one."));
+				// `S.DiffuseAlbedo.r = 1` on a Substrate value being built (sugar S5): the member is a pin, and a pin takes one
+				// connection. Said in those words -- the general sentence below would send the author looking for a typo.
+				const FExpr* ComponentOf = nullptr;
+				if (const FMemberExpr* Member = Expr.Target->As<FMemberExpr>())
+				{
+					ComponentOf = Member->Object.Get();
+				}
+				else if (const FIndexExpr* Index = Expr.Target->As<FIndexExpr>())
+				{
+					ComponentOf = Index->Object.Get();
+				}
+				const FBoundExpr* ComponentOfBinding = ComponentOf ? Lookup(*ComponentOf) : nullptr;
+				if (ComponentOfBinding && ComponentOfBinding->Kind == EBoundExprKind::SubstrateBuilderPin)
+				{
+					Diagnostics.Error(
+						TEXT("DSH4229"),
+						CurrentFile,
+						Expr.Target->Span,
+						LOCTEXT("AssignToBuilderPinComponent", "A member of a Substrate value is a pin, and a pin is connected whole; build the vector first and assign that."));
+				}
+				else
+				{
+					Diagnostics.Error(
+						TEXT("DSH4229"),
+						CurrentFile,
+						Expr.Target->Span,
+						LOCTEXT("AssignToNonLValue", "The left of '=' has to be a variable, a struct field, a material pin or a swizzle of one."));
+				}
 			}
 			return Fail(Expr);
 		}
@@ -3407,6 +3495,16 @@ namespace UE::DreamShader::Lang::Private
 			return Fail(Expr);
 		}
 
+		// Substrate sugar S1: `lerp` over two Substrate values is a horizontal mix, not a LinearInterpolate.
+		if (Info.Op == IR::EIROp::Lerp)
+		{
+			IR::FIRType MixType;
+			if (TryBindSubstrateLerp(Expr, Operands, ArgumentOfSlot, MixType))
+			{
+				return MixType;
+			}
+		}
+
 		FBoundExpr Binding = BuildCoreOp(Info, Operands, Expr.Span);
 
 		// A core op built from call syntax always carries Args, so the IR builder never has to guess
@@ -4099,7 +4197,22 @@ namespace UE::DreamShader::Lang::Private
 					ReportLegacyCatalogCaseFallback(Name, Catalog.Expressions[CatalogIndex].ShortName, NameSpan);
 				}
 			}
-			if (CatalogIndex == INDEX_NONE)
+			FText GateEngine;
+			if (CatalogIndex == INDEX_NONE
+				&& Namespace.Equals(Namespaces::Substrate, ESearchCase::CaseSensitive)
+				&& TryDescribeSubstrateVersionGate(Name, GateEngine))
+			{
+				// Substrate sugar S7: the node exists, in a newer engine than this one.
+				Diagnostics.Error(
+					TEXT("DSH5294"),
+					CurrentFile,
+					NameSpan,
+					FText::Format(
+						LOCTEXT("SubstrateNodeNeedsNewerEngine", "'Substrate.{0}' is a node Unreal Engine has from {1} on; this engine does not have it."),
+						FText::FromString(Name),
+						GateEngine));
+			}
+			else if (CatalogIndex == INDEX_NONE)
 			{
 				const int32 Close = Catalog.FindExpressionIgnoreCase(Namespace, Name);
 				if (Close != INDEX_NONE)
@@ -4437,6 +4550,13 @@ namespace UE::DreamShader::Lang::Private
 				continue;
 			}
 
+			// Substrate sugar S3: `Substrate.Slab(BaseColor = ..., Metallic = ...)`. No pin of the node -- an input of the
+			// conversion node the IR builder puts in front of it.
+			if (!Argument.Name.IsEmpty() && TryBindSubstrateVirtualArgument(Argument, Index, Class, Target, Binding, bAnyError))
+			{
+				continue;
+			}
+
 			// Legacy rule L21: a 1.x `Properties` default written for a parameter node whose class has no `DefaultValue`
 			// (`StaticComponentMaskParameter P = float4(1, 1, 0, 0)`). 1.x looked the property up, found none and went
 			// on; the front end cannot know the class, so the argument arrives here. It is left unbound -- the builder
@@ -4529,7 +4649,17 @@ namespace UE::DreamShader::Lang::Private
 			bAnyError = true;
 		}
 
-		for (int32 InputIndex = 0; InputIndex < Class.Inputs.Num(); ++InputIndex)
+		if (!CheckSubstrateVirtualArguments(Expr, Class, Binding))
+		{
+			bAnyError = true;
+		}
+
+		// Substrate sugar S5: a node call without arguments that initializes a Substrate local begins a builder, whose
+		// pins are written on the lines below; what is still open when the value is first used is said there.
+		const bool bBeginsBuilder = bBindingBuilderInitializer && Expr.Arguments.Num() == 0
+			&& Class.Namespace.Equals(TEXT("Substrate"), ESearchCase::CaseSensitive);
+
+		for (int32 InputIndex = 0; InputIndex < Class.Inputs.Num() && !bBeginsBuilder; ++InputIndex)
 		{
 			const IR::FCatalogPin& Pin = Class.Inputs[InputIndex];
 			if (!Pin.bRequired || InputBound[InputIndex])

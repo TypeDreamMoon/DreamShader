@@ -91,6 +91,14 @@ namespace UE::DreamShader::Lang::Private
 		Pin,
 	};
 
+	/** One operand of a Substrate sugar: the (already bound) expression, the ordinal the IR builder finds it by, the pin it feeds. */
+	struct FSubstrateSugarOperand
+	{
+		const FExpr* Expr = nullptr;
+		int32 Ordinal = 0;
+		const TCHAR* Pin = nullptr;
+	};
+
 	class FLangBinder
 	{
 	public:
@@ -139,6 +147,8 @@ namespace UE::DreamShader::Lang::Private
 		void BindLayoutPragma(const FPragmaDecl& Decl);
 		/** Takes `Backend` out of MaterialSettings into ResolvedBackend; DSH7201 / DSH7202. */
 		void ResolveBackend();
+		/** Takes `Substrate` out of MaterialSettings into ResolvedSubstrateMode (Substrate sugar S4); DSH7232. */
+		void ResolveSubstrateMode();
 
 		/** `#pragma region` at file scope or in a body: pushes a FIRRegion and returns its index. */
 		int32 OpenRegion(const FString& Title, const FLangSpan& Span, TArray<int32>& Stack);
@@ -193,6 +203,34 @@ namespace UE::DreamShader::Lang::Private
 		 */
 		IR::FIRType BindUserFunctionCall(const FCallExpr& Expr, int32 FunctionIndex, bool bStatement, bool bSelection = false);
 		IR::FIRType BindReflectedCall(const FCallExpr& Expr, const FString& Namespace, const FString& Name, const FLangSpan& NameSpan, const IR::FIRType* Expected, bool bStatement);
+
+		// ------------------------------------------------------ Substrate sugar (LangBinderSubstrate.cpp)
+
+		/** Binds Expr as `Substrate.<NodeName>` with Operands on its pins; Spelling is how a message names the sugar. */
+		IR::FIRType BindSubstrateSugarNode(const FExpr& Expr, const TCHAR* NodeName, const FText& Spelling, const TArray<FSubstrateSugarOperand>& Operands);
+		/** S1: `A + B` and `A * w` where a side is a Substrate value; every other operator over one is DSH5293. Both sides are bound. */
+		IR::FIRType BindSubstrateBinary(const FBinaryExpr& Expr, const IR::FIRType& LeftType, const IR::FIRType& RightType);
+		/** S1: `lerp(A, B, t)` over two Substrate values. False, and nothing done, when neither of the first two is one. */
+		bool TryBindSubstrateLerp(const FCallExpr& Expr, const TArray<const FExpr*>& Slots, const TArray<int32>& ArgumentOfSlot, IR::FIRType& OutType);
+		/** S3: an argument that is no pin of the node but an input of a conversion node in front of it. False when Target is none. */
+		bool TryBindSubstrateVirtualArgument(const FArgument& Argument, int32 ArgumentIndex, const IR::FCatalogExpression& Class, const FString& Target, FBoundExpr& InOutBinding, bool& bInOutAnyError);
+		/** S3: the pairs that parameterize the same pins, and what a virtual argument needs beside it (DSH5295, DSH5296). */
+		bool CheckSubstrateVirtualArguments(const FCallExpr& Expr, const IR::FCatalogExpression& Class, const FBoundExpr& Binding);
+		/**
+		 * S5: `S.Pin` on a builder local. False, and nothing bound, when Expr's object is no builder local. A write seals
+		 * nothing; any other use of `S` does, and a write after that is DSH5297. The member is an lvalue only as the
+		 * target it is being written as: `S.DiffuseAlbedo.r = 1` and `F(out S.Roughness)` have no pin to land on.
+		 */
+		bool TryBindSubstrateBuilderMember(const FMemberExpr& Expr, IR::FIRType& OutType);
+		/** S5: marks the local a builder when its initializer is a Substrate node call without arguments. */
+		void NoteSubstrateBuilderDeclared(int32 Slot, const IR::FIRType& Type, const FExpr& Initializer);
+		/** S5: `S = ...`, or `S` as an `out` argument: the local holds another value now, and has no members any more. */
+		void NoteSubstrateBuilderReassigned(const FExpr& Target);
+		/** S5: what a call checks in one place a builder can only be asked when it is finished: `Haziness` wants a `Roughness`, `Thickness` a `Transmittance` (DSH5296). */
+		void CheckSubstrateBuilderSealed(int32 Slot, const FIdentifierExpr& Use);
+		/** S7: DSH5294, naming the engine version a node arrived with when that is why it is missing. */
+		void ReportMissingSubstrateNode(const TCHAR* NodeName, const FLangSpan& Span, const FText& Spelling);
+		bool TryDescribeSubstrateVersionGate(const FString& NodeName, FText& OutEngine) const;
 		/** `Tex.Sample(UV)` / `Tex.Sample(S, UV)` / `Tex.SampleLevel(UV, L)` (CONTRACT §6.5). */
 		IR::FIRType BindTextureSampleMethod(const FCallExpr& Expr, const FMemberExpr& Callee, const IR::FIRType& TextureType);
 		/** `Texture2DSample(Tex, S, UV)` / `Texture2DSampleLevel(Tex, S, UV, L)`. */
@@ -431,6 +469,34 @@ namespace UE::DreamShader::Lang::Private
 
 		/** `#pragma material(Backend = ...)`, taken out of MaterialSettings. */
 		IR::EIRBackend ResolvedBackend = IR::EIRBackend::Graph;
+		/** `#pragma material(Substrate = ...)`, taken out of MaterialSettings. */
+		IR::EIRSubstrateMode ResolvedSubstrateMode = IR::EIRSubstrateMode::Legacy;
+
+		// Substrate sugar S5, per function body.
+		/** The builder locals a value has been taken from: their node is what it is, and a member write comes too late. */
+		TSet<int32> SealedBuilderSlots;
+		/** What has been written to each builder local, so that a read knows there is something to read. */
+		TMap<int32, TArray<FString>> BuilderMembersWritten;
+		/** The builder locals that were assigned whole (`S = ...`, an `out` argument): what they hold has no members. */
+		TSet<int32> ReassignedBuilderSlots;
+		/** How many `if` arms enclosed each builder's declaration; a write under more of them is DSH5298. */
+		TMap<int32, int32> BuilderDeclBranchDepth;
+		/**
+		 * The target of the assignment, `++` or `--` being bound, parentheses stripped: a builder member that IS this
+		 * expression is a write. By identity, so that `A[S.Pin > 0 ? 0 : 1] = x` reads the pin it mentions.
+		 */
+		const FExpr* BuilderWriteTarget = nullptr;
+		/** ...and the write reads first: `S.Pin += x`, `++S.Pin`. */
+		bool bBuilderWriteReadsFirst = false;
+		/** Set while a builder member binds its own object, which takes no value from the local. */
+		bool bBindingBuilderObject = false;
+		/**
+		 * Set while the initializer of a Substrate local is bound: a node call without arguments there begins a builder,
+		 * and what it leaves open is asked when the value is first used (CheckSubstrateBuilderSealed), not here.
+		 */
+		bool bBindingBuilderInitializer = false;
+		/** How many `if` arms enclose the statement being bound. */
+		int32 BranchDepth = 0;
 		/** Where each MaterialSettings key was written, so a repeat can name the first one. */
 		TMap<FString, FLangSpan> MaterialSettingSpans;
 		/** The file each MaterialSettings key was written in; a header may carry the pragma. */

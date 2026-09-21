@@ -220,6 +220,9 @@ namespace UE::DreamShader::Lang::Private
 		{
 			ParamWrites[Binding->Index] = true;
 		}
+
+		// Substrate sugar S5: a builder that is assigned whole is no builder from here on.
+		NoteSubstrateBuilderReassigned(Target);
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -319,6 +322,13 @@ namespace UE::DreamShader::Lang::Private
 		Scopes.Reset();
 		LocalArrayValues.Reset();
 		LocalWrites.Reset();
+		SealedBuilderSlots.Reset();
+		BuilderMembersWritten.Reset();
+		ReassignedBuilderSlots.Reset();
+		BuilderDeclBranchDepth.Reset();
+		BuilderWriteTarget = nullptr;
+		bBuilderWriteReadsFirst = false;
+		BranchDepth = 0;
 		ParamWrites.Init(false, CurrentFunction->Params.Num());
 		BodyRegionStack.Reset();
 		CurrentCallees.Reset();
@@ -578,7 +588,11 @@ namespace UE::DreamShader::Lang::Private
 				continue;
 			}
 
-			BindExpr(*Declarator.Initializer, &Type);
+			{
+				// Substrate sugar S5: `Substrate S = Substrate.Weight();` leaves every pin open on purpose.
+				TGuardValue<bool> BuilderGuard(bBindingBuilderInitializer, Type.Kind == IR::EIRTypeKind::Substrate);
+				BindExpr(*Declarator.Initializer, &Type);
+			}
 			Convert(
 				*Declarator.Initializer,
 				Type,
@@ -586,6 +600,7 @@ namespace UE::DreamShader::Lang::Private
 				FText::Format(
 					LOCTEXT("LocalInitializer", "The initializer of '{0}'"),
 					FText::FromString(Declarator.Name)));
+			NoteSubstrateBuilderDeclared(Slot, Type, *Declarator.Initializer);
 
 			if (bConstant && !IsConstantExpr(*Declarator.Initializer))
 			{
@@ -630,6 +645,8 @@ namespace UE::DreamShader::Lang::Private
 		{
 			BindCondition(*Stmt.Condition, LOCTEXT("IfCondition", "The condition of an 'if'"));
 		}
+		// Substrate sugar S5 counts the arms: a builder member written in one would be one node in two versions.
+		++BranchDepth;
 		if (Stmt.Then)
 		{
 			BindStmt(*Stmt.Then);
@@ -638,6 +655,7 @@ namespace UE::DreamShader::Lang::Private
 		{
 			BindStmt(*Stmt.Else);
 		}
+		--BranchDepth;
 	}
 
 	void FLangBinder::BindFor(const FForStmt& Stmt)
