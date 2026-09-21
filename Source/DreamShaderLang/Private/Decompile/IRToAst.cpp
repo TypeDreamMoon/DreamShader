@@ -14,6 +14,9 @@
 // which takes a leading mask, and whose default carries the padding the emitter writes for that width, is declared
 // that narrow; anything else is a float4.
 
+// First, as the build tool asks of a .cpp that has a header of its own name.
+#include "Decompile/IRToAst.h"
+
 #include "IRToAstInternal.h"
 
 #include "IR/IRCustomHlsl.h"

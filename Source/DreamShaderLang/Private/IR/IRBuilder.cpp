@@ -13,6 +13,9 @@
 // Every FIRSourceRef file the builder writes goes through StampFile, so an asset
 // never carries the machine's absolute path. Diagnostics keep the absolute path.
 
+// First, as the build tool asks of a .cpp that has a header of its own name.
+#include "IR/IRBuilder.h"
+
 #include "IRBuilderInternal.h"
 
 #include "Containers/Map.h"

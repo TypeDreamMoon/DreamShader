@@ -485,7 +485,7 @@ namespace UE::DreamShader::IR
 					const int32 NodeIndex = Stack.Last();
 					if (States[NodeIndex] == 2)
 					{
-						Stack.Pop(EAllowShrinking::No);
+						Stack.Pop();
 						continue;
 					}
 
@@ -521,7 +521,7 @@ namespace UE::DreamShader::IR
 					}
 					Signatures[NodeIndex] = Signature;
 					States[NodeIndex] = 2;
-					Stack.Pop(EAllowShrinking::No);
+					Stack.Pop();
 				}
 			}
 
