@@ -1,0 +1,4 @@
+// A matrix is no material parameter type.
+#pragma instance(Parent = "M_InstParent")
+
+uniform float3x3 Gain = float3x3(1, 0, 0, 0, 1, 0, 0, 0, 1);

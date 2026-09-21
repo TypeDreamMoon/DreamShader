@@ -1,0 +1,33 @@
+// The parent every instance fixture of this directory is bound against.
+//   Gain       float          read
+//   Steps      int            read
+//   Lit        bool           read (dynamic: a scalar 0/1 parameter)
+//   Tint       float3         read
+//   Full       float4         read
+//   UseWarm    static bool    read
+//   Source     Texture2D      read
+//   Base Color float3 @name   read
+//   Unread     float          declared, read by nothing: never lowered, so the material has no such parameter
+uniform float Gain = 0.5;
+uniform int Steps = 4;
+uniform bool Lit = true;
+uniform float3 Tint = float3(1, 0.5, 0.25);
+uniform float4 Full = float4(0.1, 0.2, 0.3, 0.4);
+/// @static
+uniform bool UseWarm = true;
+uniform Texture2D Source;
+/// @name Base Color
+uniform float3 BaseColour = float3(0.5, 0.5, 0.5);
+uniform float Unread = 1;
+
+export void M_InstParent(inout material m)
+{
+    float3 Colour = float3(0, 0.5, 1);
+    if (UseWarm)
+    {
+        Colour = float3(1, 0.5, 0);
+    }
+    float2 UV = UE.TexCoord(CoordinateIndex = 0);
+    m.EmissiveColor = Colour * Tint * Gain * Steps + Source.Sample(UV).rgb * Full.rgb + BaseColour;
+    m.Opacity = Lit ? Full.a : 0.0;
+}

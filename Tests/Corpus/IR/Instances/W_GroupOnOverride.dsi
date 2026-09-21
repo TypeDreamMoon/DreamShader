@@ -1,0 +1,5 @@
+// Metadata stays on the parent: `@group` on an override has no effect (DSH7262, a warning).
+#pragma instance(Parent = "M_InstParent")
+
+/// @group Look
+uniform float Gain = 2.0;

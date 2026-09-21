@@ -1,0 +1,4 @@
+// An instance that names itself (DSH8263).
+#pragma instance(Parent = "MI_InSelfParent_bad")
+
+uniform float Gain = 2.0;

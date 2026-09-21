@@ -1,0 +1,23 @@
+// The parent of the instance fixtures in this directory. Copied beside each fixture by the runner.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+/// @group Look
+uniform float Gain = 0.5;
+uniform float3 Tint = float3(1, 0.5, 0.25);
+uniform float4 Full = float4(0.1, 0.2, 0.3, 0.4);
+/// @static
+uniform bool UseWarm = true;
+/// @sampler Color
+uniform Texture2D Source;
+
+export void M_InParent(inout material m)
+{
+    float3 Colour = float3(0, 0.5, 1);
+    if (UseWarm)
+    {
+        Colour = float3(1, 0.5, 0);
+    }
+    float2 UV = UE.TextureCoordinate(CoordinateIndex = 0);
+    m.EmissiveColor = Colour * Tint * Gain + Source.Sample(UV).rgb * Full.rgb;
+    m.Opacity = Full.a;
+}

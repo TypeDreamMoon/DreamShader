@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"I_StaticSwitch.dsi\"\n\nproduct 0 MaterialInstance \"I_StaticSwitch\"\n  parent \"M_InstParent\" schema=ir params=9\n  override \"UseWarm\" StaticSwitch bool false\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"I_StaticSwitch"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

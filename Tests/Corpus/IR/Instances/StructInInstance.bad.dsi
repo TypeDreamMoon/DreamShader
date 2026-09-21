@@ -1,0 +1,8 @@
+// An instance declares no types.
+#pragma instance(Parent = "M_InstParent")
+
+struct FPair
+{
+    float A;
+    float B;
+};

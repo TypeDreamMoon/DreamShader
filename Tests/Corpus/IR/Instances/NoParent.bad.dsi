@@ -1,0 +1,4 @@
+// The pragma has to name its parent.
+#pragma instance(BlendMode = Translucent)
+
+uniform float Gain = 2.0;

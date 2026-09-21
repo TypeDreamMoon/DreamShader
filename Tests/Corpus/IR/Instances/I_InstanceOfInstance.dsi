@@ -1,0 +1,4 @@
+// The parent is itself an instance: the schema is the grandparent's, with the parent's overrides laid over its values.
+#pragma instance(Parent = "I_Scalar")
+
+uniform float Gain = 3.0;

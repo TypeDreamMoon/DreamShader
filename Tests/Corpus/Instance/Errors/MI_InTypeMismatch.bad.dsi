@@ -1,0 +1,4 @@
+// End to end: the binder's refusal reaches the compile result (DSH7259).
+#pragma instance(Parent = "M_InErrParent")
+
+uniform float3 Gain = float3(1, 1, 1);

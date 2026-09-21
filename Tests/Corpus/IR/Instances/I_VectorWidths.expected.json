@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"I_VectorWidths.dsi\"\n\nproduct 0 MaterialInstance \"I_VectorWidths\"\n  parent \"M_InstParent\" schema=ir params=9\n  override \"Tint\" Vector float3 (0, 1, 0)\n  override \"Full\" Vector float4 (1, 1, 1, 1)\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"I_VectorWidths"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

@@ -1,0 +1,5 @@
+// A static switch override needs `@static`, as the parent's declaration does.
+#pragma instance(Parent = "M_InstParent")
+
+/// @static
+uniform bool UseWarm = false;

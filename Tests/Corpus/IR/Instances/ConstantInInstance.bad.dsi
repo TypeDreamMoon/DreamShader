@@ -1,0 +1,4 @@
+// Only `uniform` declarations are overrides.
+#pragma instance(Parent = "M_InstParent")
+
+static const float K = 2.0;

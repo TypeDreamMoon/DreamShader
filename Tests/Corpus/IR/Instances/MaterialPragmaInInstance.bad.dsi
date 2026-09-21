@@ -1,0 +1,5 @@
+// `#pragma material` configures a material; an instance has `#pragma instance`.
+#pragma instance(Parent = "M_InstParent")
+#pragma material(BlendMode = Translucent)
+
+uniform float Gain = 2.0;

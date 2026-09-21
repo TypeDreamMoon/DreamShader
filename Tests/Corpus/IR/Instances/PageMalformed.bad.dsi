@@ -1,0 +1,6 @@
+// `@page` takes one whole number.
+#pragma instance(Parent = "/Game/Elsewhere/M_NotHere")
+
+/// @default /Game/Fonts/F_Test
+/// @page two
+uniform Font Glyphs;

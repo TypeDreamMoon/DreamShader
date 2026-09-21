@@ -1,0 +1,5 @@
+// A float3 override of a float3 parameter keeps the parent's alpha; a float4 one sets all four. Golden: Value N=4.
+#pragma instance(Parent = "M_InstParent")
+
+uniform float3 Tint = float3(0, 1, 0);
+uniform float4 Full = float4(1, 1, 1, 1);

@@ -1,0 +1,5 @@
+// `@default None` is an explicit None: the payload's Value is "".
+#pragma instance(Parent = "/Game/Corpus/M_InstParent.M_InstParent")
+
+/// @default None
+uniform Texture2D Source;

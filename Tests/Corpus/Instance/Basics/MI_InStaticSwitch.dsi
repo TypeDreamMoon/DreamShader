@@ -1,0 +1,5 @@
+// A static switch override changes the instance's static permutation.
+#pragma instance(Parent = "M_InParent")
+
+/// @static
+uniform bool UseWarm = false;

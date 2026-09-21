@@ -1,0 +1,7 @@
+// One parameter, once: the identifier and the `@name` spelling are the same parameter.
+#pragma instance(Parent = "M_InstParent")
+
+/// @name Base Color
+uniform float3 First = float3(1, 0, 0);
+/// @name Base Color
+uniform float3 Second = float3(0, 1, 0);

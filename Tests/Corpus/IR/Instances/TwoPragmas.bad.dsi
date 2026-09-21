@@ -1,0 +1,5 @@
+// One `.dsi` is one instance.
+#pragma instance(Parent = "M_InstParent")
+#pragma instance(Parent = "M_InstParent")
+
+uniform float Gain = 2.0;

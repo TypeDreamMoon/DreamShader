@@ -1,0 +1,4 @@
+// A key the table does not know (DSH8249).
+#pragma instance(Parent = "M_InErrParent", NoSuchSetting = 3)
+
+uniform float Gain = 2.0;

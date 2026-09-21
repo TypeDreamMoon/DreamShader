@@ -1,0 +1,4 @@
+// A parent that is not beside the fixture: bound for its shape only, which the binder says once (DSH7263).
+#pragma instance(Parent = "/Game/Elsewhere/M_NotHere")
+
+uniform float Anything = 1.0;

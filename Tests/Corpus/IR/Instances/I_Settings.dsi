@@ -1,0 +1,4 @@
+// Settings in source order, bare and quoted values as written.
+#pragma instance(Parent = "M_InstParent", BlendMode = Translucent, TwoSided = true, OpacityMaskClipValue = 0.25)
+
+uniform float Gain = 1.5;

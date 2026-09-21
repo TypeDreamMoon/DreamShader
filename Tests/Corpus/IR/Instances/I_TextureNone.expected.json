@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"I_TextureNone.dsi\"\n\nproduct 0 MaterialInstance \"I_TextureNone\"\n  parent \"/Game/Corpus/M_InstParent.M_InstParent\" schema=ir params=9\n  override \"Source\" Texture Texture2D None\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"I_TextureNone"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

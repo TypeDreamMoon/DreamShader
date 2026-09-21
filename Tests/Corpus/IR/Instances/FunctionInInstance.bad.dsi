@@ -1,0 +1,7 @@
+// An instance has no code.
+#pragma instance(Parent = "M_InstParent")
+
+float Twice(float x)
+{
+    return x * 2;
+}

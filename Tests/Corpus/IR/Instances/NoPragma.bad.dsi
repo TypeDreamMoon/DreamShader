@@ -1,0 +1,2 @@
+// No `#pragma instance`.
+uniform float Gain = 2.0;

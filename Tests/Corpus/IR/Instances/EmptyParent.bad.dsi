@@ -1,0 +1,4 @@
+// An empty Parent names nothing.
+#pragma instance(Parent = "")
+
+uniform float Gain = 2.0;

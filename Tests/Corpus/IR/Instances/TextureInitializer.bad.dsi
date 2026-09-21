@@ -1,0 +1,4 @@
+// An asset override takes `@default`, never an initializer.
+#pragma instance(Parent = "M_InstParent")
+
+uniform Texture2D Source = 1;

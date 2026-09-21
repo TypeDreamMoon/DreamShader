@@ -1,0 +1,5 @@
+// `@static` means a switch or a component mask.
+#pragma instance(Parent = "M_InstParent")
+
+/// @static
+uniform float Gain = 2.0;

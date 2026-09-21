@@ -1,0 +1,6 @@
+// A `.dsi` has no graph to box: a region pragma is ignored with a warning (DSH7267).
+#pragma instance(Parent = "M_InstParent")
+
+#pragma region Overrides
+uniform float Gain = 2.0;
+#pragma endregion

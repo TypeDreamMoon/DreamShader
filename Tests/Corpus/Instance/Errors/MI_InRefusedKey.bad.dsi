@@ -1,0 +1,4 @@
+// A key the table refuses by name (DSH8251).
+#pragma instance(Parent = "M_InErrParent", bOverride_TwoSided = true)
+
+uniform float Gain = 2.0;

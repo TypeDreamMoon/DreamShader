@@ -1,0 +1,4 @@
+// Names are case-sensitive; the message names the parent's spelling.
+#pragma instance(Parent = "M_InstParent")
+
+uniform float gain = 2.0;

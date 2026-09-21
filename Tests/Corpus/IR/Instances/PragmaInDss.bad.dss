@@ -1,0 +1,7 @@
+// `#pragma instance` belongs in a `.dsi` of its own (DSH7255).
+#pragma instance(Parent = "M_InstParent")
+
+export void M_PragmaInDss(inout material m)
+{
+    m.Opacity = 1;
+}

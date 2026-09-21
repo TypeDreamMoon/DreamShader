@@ -1,0 +1,5 @@
+// A static component mask: `/// @static` on a `bool4`, one bool per channel. Shape-checked without a schema.
+#pragma instance(Parent = "/Game/Elsewhere/M_NotHere")
+
+/// @static
+uniform bool4 Channels = bool4(true, false, false, true);

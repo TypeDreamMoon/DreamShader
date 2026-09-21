@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"I_NameDirective.dsi\"\n\nproduct 0 MaterialInstance \"I_NameDirective\"\n  parent \"M_InstParent\" schema=ir params=9\n  override \"Base Color\" Vector float3 (1, 0, 0) var=BaseColour\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"I_NameDirective"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

@@ -1,0 +1,8 @@
+// The asset kinds beyond textures, shape-checked without a schema: a Font with its page, a runtime virtual texture.
+#pragma instance(Parent = "/Game/Elsewhere/M_NotHere")
+
+/// @default /Game/Fonts/F_Test
+/// @page 2
+uniform Font Glyphs;
+/// @default /Game/VT/RVT_Test
+uniform RuntimeVirtualTexture Ground;

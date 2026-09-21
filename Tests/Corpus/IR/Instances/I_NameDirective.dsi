@@ -1,0 +1,5 @@
+// `@name` gives the engine parameter name; the identifier stays the variable (dump: var=).
+#pragma instance(Parent = "M_InstParent")
+
+/// @name Base Color
+uniform float3 BaseColour = float3(1, 0, 0);

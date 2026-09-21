@@ -1,0 +1,5 @@
+// An override's value is something the compiler can fold.
+#pragma instance(Parent = "M_InstParent")
+
+uniform float Steps2 = 1.0;
+uniform float Gain = Steps2 * 2.0;

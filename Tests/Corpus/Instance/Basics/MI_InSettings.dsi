@@ -1,0 +1,4 @@
+// The key table: BlendMode sets the value AND its override flag on the instance.
+#pragma instance(Parent = "M_InParent", BlendMode = Translucent, TwoSided = true)
+
+uniform float Gain = 1.5;

@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7263"
+	],
+	"ir": "module \"I_AssetKinds.dsi\"\n\nproduct 0 MaterialInstance \"I_AssetKinds\"\n  parent \"/Game/Elsewhere/M_NotHere\" schema=none\n  override \"Glyphs\" Font - \"/Game/Fonts/F_Test\" page=2\n  override \"Ground\" RuntimeVirtualTexture - \"/Game/VT/RVT_Test\"\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"I_AssetKinds"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"I_Settings.dsi\"\n\nproduct 0 MaterialInstance \"I_Settings\"\n  parent \"M_InstParent\" schema=ir params=9\n  setting BlendMode Translucent\n  setting TwoSided true\n  setting OpacityMaskClipValue 0.25\n  override \"Gain\" Scalar float 1.5\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"I_Settings"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

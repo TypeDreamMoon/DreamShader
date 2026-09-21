@@ -1,0 +1,4 @@
+// An instance of an instance: the chain builds parent first.
+#pragma instance(Parent = "MI_InScalarVector")
+
+uniform float Gain = 4.0;

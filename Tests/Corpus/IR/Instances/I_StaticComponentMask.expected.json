@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7263"
+	],
+	"ir": "module \"I_StaticComponentMask.dsi\"\n\nproduct 0 MaterialInstance \"I_StaticComponentMask\"\n  parent \"/Game/Elsewhere/M_NotHere\" schema=none\n  override \"Channels\" StaticComponentMask bool4 (1, 0, 0, 1)\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"I_StaticComponentMask"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

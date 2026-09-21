@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7263"
+	],
+	"ir": "module \"I_NoSchema.dsi\"\n\nproduct 0 MaterialInstance \"I_NoSchema\"\n  parent \"/Game/Elsewhere/M_NotHere\" schema=none\n  override \"Anything\" Scalar float 1\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"I_NoSchema"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

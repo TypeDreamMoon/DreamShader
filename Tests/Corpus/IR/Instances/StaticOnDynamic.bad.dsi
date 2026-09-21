@@ -1,0 +1,5 @@
+// The parent's bool is a run-time scalar; `@static` asks for another parameter kind.
+#pragma instance(Parent = "M_InstParent")
+
+/// @static
+uniform bool Lit = false;

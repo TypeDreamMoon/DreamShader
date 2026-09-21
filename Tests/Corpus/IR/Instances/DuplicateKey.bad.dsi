@@ -1,0 +1,4 @@
+// A key set twice.
+#pragma instance(Parent = "M_InstParent", BlendMode = Translucent, BlendMode = Additive)
+
+uniform float Gain = 2.0;

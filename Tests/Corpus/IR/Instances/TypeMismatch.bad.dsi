@@ -1,0 +1,4 @@
+// `float` against the parent's `float3`.
+#pragma instance(Parent = "M_InstParent")
+
+uniform float Tint = 1.0;

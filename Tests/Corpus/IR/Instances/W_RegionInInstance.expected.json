@@ -1,0 +1,24 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH7267",
+		"DSH7267"
+	],
+	"ir": "module \"W_RegionInInstance.dsi\"\n\nproduct 0 MaterialInstance \"W_RegionInInstance\"\n  parent \"M_InstParent\" schema=ir params=9\n  override \"Gain\" Scalar float 2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"W_RegionInInstance"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

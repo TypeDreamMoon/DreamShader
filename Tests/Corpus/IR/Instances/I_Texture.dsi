@@ -1,0 +1,5 @@
+// A texture override takes an asset through `@default`.
+#pragma instance(Parent = "/Game/Corpus/M_InstParent")
+
+/// @default /Game/Textures/T_Override
+uniform Texture2D Source;

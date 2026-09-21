@@ -1,0 +1,4 @@
+// `#pragma instance` takes Key = Value pairs; the parser refuses a bare word (DSH3202) before the binder's DSH7270 can.
+#pragma instance(Parent = "M_InstParent", Translucent)
+
+uniform float Gain = 2.0;

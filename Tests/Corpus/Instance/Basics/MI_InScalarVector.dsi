@@ -1,0 +1,5 @@
+// A bare-name Parent resolves among the products beside the file; scalar and vector overrides.
+#pragma instance(Parent = "M_InParent")
+
+uniform float Gain = 2.0;
+uniform float3 Tint = float3(0, 1, 0);

@@ -1,0 +1,4 @@
+// A value override needs its value.
+#pragma instance(Parent = "M_InstParent")
+
+uniform float Gain;

@@ -1,0 +1,4 @@
+// Declared by the parent source, read by nothing there: the parent asset has no such parameter.
+#pragma instance(Parent = "M_InstParent")
+
+uniform float Unread = 2.0;

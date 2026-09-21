@@ -1,0 +1,5 @@
+// Nothing in an instance could use an include.
+#pragma instance(Parent = "M_InstParent")
+#include "Shared.dsh"
+
+uniform float Gain = 2.0;

@@ -1,0 +1,4 @@
+// The parent's parameter is static; the override has to say so.
+#pragma instance(Parent = "M_InstParent")
+
+uniform bool UseWarm = false;

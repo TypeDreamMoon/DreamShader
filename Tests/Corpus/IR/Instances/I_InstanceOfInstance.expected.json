@@ -1,0 +1,20 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"ir": "module \"I_InstanceOfInstance.dsi\"\n\nproduct 0 MaterialInstance \"I_InstanceOfInstance\"\n  parent \"I_Scalar\" schema=ir params=9\n  override \"Gain\" Scalar float 3\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"MaterialInstance"
+		],
+		"productNames": [
+			"I_InstanceOfInstance"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

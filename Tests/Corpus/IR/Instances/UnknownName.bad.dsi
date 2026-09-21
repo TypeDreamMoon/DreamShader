@@ -1,0 +1,4 @@
+// Not a parameter of the parent.
+#pragma instance(Parent = "M_InstParent")
+
+uniform float Nonexistent = 1.0;

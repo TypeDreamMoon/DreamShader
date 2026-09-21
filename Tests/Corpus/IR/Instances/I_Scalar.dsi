@@ -1,0 +1,6 @@
+// float, int and dynamic bool overrides: all scalar parameters, each with its declared type.
+#pragma instance(Parent = "M_InstParent")
+
+uniform float Gain = 2.0;
+uniform int Steps = 8;
+uniform bool Lit = false;

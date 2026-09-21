@@ -1,0 +1,9 @@
+// Parent of the refusal fixtures.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+uniform float Gain = 0.5;
+
+export void M_InErrParent(inout material m)
+{
+    m.EmissiveColor = float3(Gain, Gain, Gain);
+}
