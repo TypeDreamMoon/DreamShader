@@ -48,7 +48,7 @@
 
 #include "CoreMinimal.h"
 
-#include "DreamShaderCompilerTools.h"
+#include "Tools/DreamShaderCompilerTools.h"
 #include "Lang/LangDiagnostic.h"
 
 namespace UE::DreamShader::Editor::Compiler

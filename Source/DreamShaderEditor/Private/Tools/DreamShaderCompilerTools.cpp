@@ -13,12 +13,12 @@
 // -- never straight into UE_LOG -- so that .skill/gen-diagnostics.ps1 finds the raise sites by the
 // `.Error(TEXT("DSH...` shape it scans for, exactly as it does for the front end's.
 
-#include "DreamShaderCompilerTools.h"
+#include "Tools/DreamShaderCompilerTools.h"
 
-#include "DreamShaderCatalogManifest.h"
+#include "Tools/DreamShaderCatalogManifest.h"
 #include "DreamShaderCompilerDiagnostics.h"
-#include "DreamShaderCompilerPipeline.h"
-#include "DreamShaderShaderCheck.h"
+#include "DreamShaderCompilePipeline.h"
+#include "Tools/DreamShaderShaderCheck.h"
 
 #include "Commandlet/DreamShaderCommandletRunner.h"
 #include "DreamShaderModule.h"
@@ -232,7 +232,7 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 
 		/**
-		 * True when the path is a `.dss`; raises DSH9035 into the sink otherwise.
+		 * True when the path is a compilable source (`.dss`, `.dsi`, `.dsm`, `.dsf`); raises DSH9035 into the sink otherwise.
 		 *
 		 * NOT DSH9021: that code is already live and documented in
 		 * SourceFiles/DreamShaderAssetRenameSyncService.cpp ("Could not write ... after renaming an
@@ -248,7 +248,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 			const FLangSpan NoSpan;
 			return Diagnostics.Error(TEXT("DSH9035"), NoSpan, FText::Format(
-				LOCTEXT("NotALang2SourceForVerb", "'{0}' is not a 2.0 source, so '{1}' has nothing to do with it; '.dsm' and '.dsf' stay on 'compile'."),
+				LOCTEXT("NotALang2SourceForVerb", "'{0}' is not a compilable DreamShader source (.dss, .dsi, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it."),
 				FText::FromString(SourceFilePath),
 				VerbName));
 		}
@@ -265,14 +265,18 @@ namespace UE::DreamShader::Editor::Compiler
 				continue;
 			}
 
+			// Every extension IsDreamShaderLang2Source accepts; a header is compiled only through a source that includes it.
 			TArray<FString> Found;
-			IFileManager::Get().FindFilesRecursive(
-				Found,
-				*Root.Directory,
-				TEXT("*.dss"),
-				/*Files*/ true,
-				/*Directories*/ false,
-				/*bClearFileNames*/ false);
+			for (const TCHAR* const Pattern : { TEXT("*.dss"), TEXT("*.dsi"), TEXT("*.dsm"), TEXT("*.dsf") })
+			{
+				IFileManager::Get().FindFilesRecursive(
+					Found,
+					*Root.Directory,
+					Pattern,
+					/*Files*/ true,
+					/*Directories*/ false,
+					/*bClearFileNames*/ false);
+			}
 
 			for (const FString& File : Found)
 			{
@@ -348,7 +352,7 @@ namespace UE::DreamShader::Editor::Compiler
 			"it builds and saves the products as compile does, then reports HLSL errors as\n"
 			"stage: shader.\n"
 			"dump-ir, index and export-catalog are language-service and debugging tools.\n"
-			"All four work on `.dss` sources only; `.dsm` and `.dsf` stay on `compile`.");
+			"check, dump-ir and index take any compilable source: .dss, .dsi, .dsm or .dsf.");
 	}
 
 	// -------------------------------------------------------------------------------------- check
@@ -385,7 +389,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 		if (SourceFiles.IsEmpty())
 		{
-			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader check found no `.dss` source files."));
+			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader check found no compilable source files (.dss, .dsi, .dsm, .dsf)."));
 			LogSummary(true, TEXT("DreamShader check: 0 source(s), 0 error(s), 0 warning(s)."));
 			return true;
 		}

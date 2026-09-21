@@ -2,13 +2,13 @@
 //
 // See DreamShaderSourceNavigation.h for what this is and why the table is keyed by expression guid.
 
-#include "DreamShaderSourceNavigation.h"
+#include "Navigation/DreamShaderSourceNavigation.h"
 
-#include "Diagnostics/DreamShaderTextWireUtils.h"
+#include "DreamShaderTextWireUtils.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
 #include "Lang/LangDiagnostic.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderGeneratedAssets.h"
 #include "Workspace/DreamShaderWorkspaceService.h"
 
 #include "CoreGlobals.h"

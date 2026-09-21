@@ -33,15 +33,17 @@
 // PublicDependencyModuleNames -- so no Build.cs change is needed for the includes below. If that
 // ever stops being true, add "TargetPlatform" to DreamShaderEditor.Build.cs.
 
-#include "DreamShaderShaderCheck.h"
+#include "Tools/DreamShaderShaderCheck.h"
 
 // Unit N's parsed `DreamShader.SourceSpans` table. Reused rather than re-parsed here: the guid key
 // format (EGuidFormats::DigitsWithHyphens) and the field names are unit E's choice, and a second
 // reader of that JSON is a second place for them to drift.
-#include "DreamShaderSourceNavigation.h"
+#include "Navigation/DreamShaderSourceNavigation.h"
 
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
+// CustomCodeMarker / TryParseCustomCodeBodyMarker: the grammar of the markers a Custom node's code carries.
+#include "IR/IRCustomHlsl.h"
 
 #include "HAL/CriticalSection.h"
 #include "Interfaces/ITargetPlatform.h"
@@ -227,16 +229,31 @@ namespace UE::DreamShader::Editor::Compiler
 			return nullptr;
 		}
 
+		/** A marker's stamped path as an absolute, normalized one: a relative path is relative to the project directory. */
+		FString ResolveShaderCheckMarkerSourcePath(const FString& StampedPath)
+		{
+			FString AbsolutePath = StampedPath;
+			if (FPaths::IsRelative(AbsolutePath))
+			{
+				AbsolutePath = FPaths::Combine(FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()), StampedPath);
+			}
+			return UE::DreamShader::NormalizeSourceFilePath(AbsolutePath);
+		}
+
 		/**
-		 * Maps a 1-based line of one Custom node's code back to the source it came from, by counting
-		 * lines inside each `// Begin DreamShader source: <path>` ... `// End DreamShader source:`
-		 * block -- the same walk DreamShaderMaterialGeneratorDiagnostics.cpp does over a prepared
-		 * source, and the reason both the preprocessor and the import inliner must conserve lines.
+		 * Maps a 1-based line of one Custom node's code back to the source it came from, by the reading rule of the
+		 * markers IR/IRCustomHlsl.h writes: on `// Begin DreamShader source: <path>` take the file, on
+		 * `// DreamShader custom: <Name> line <N>` set the current source line to N, count every other line, and stop
+		 * at `// End DreamShader source:`. A block without a `custom` line starts at line 1, as a 1.x prepared source
+		 * always did -- the reason the preprocessor and the include inliner must conserve lines.
+		 *
+		 * The marker path is the stamped one (debt B5): project-relative in an asset the pipeline built, so it is
+		 * resolved against the project directory here, the way navigation resolves a span's file.
 		 */
 		bool MapCustomCodeLineToSource(const FString& Code, const int32 CodeLine, FShaderErrorLocation& OutLocation)
 		{
-			static const TCHAR* const BeginMarker = TEXT("// Begin DreamShader source: ");
-			static const TCHAR* const EndMarker = TEXT("// End DreamShader source: ");
+			const TCHAR* const BeginMarker = UE::DreamShader::IR::CustomCodeMarker::BeginPrefix;
+			const TCHAR* const EndMarker = UE::DreamShader::IR::CustomCodeMarker::EndPrefix;
 
 			TArray<FString> Lines;
 			Code.ParseIntoArrayLines(Lines, false);
@@ -258,11 +275,18 @@ namespace UE::DreamShader::Editor::Compiler
 					CurrentSourceLine = 0;
 					continue;
 				}
+				FString MarkedFunctionName;
+				int32 MarkedSourceLine = 0;
+				if (UE::DreamShader::IR::TryParseCustomCodeBodyMarker(Trimmed, MarkedFunctionName, MarkedSourceLine))
+				{
+					CurrentSourceLine = MarkedSourceLine;
+					continue;
+				}
 
 				// A marker line never advances the count: it does not exist in the file it names.
 				if (Index + 1 == CodeLine && !CurrentFile.IsEmpty())
 				{
-					OutLocation.FilePath = CurrentFile;
+					OutLocation.FilePath = ResolveShaderCheckMarkerSourcePath(CurrentFile);
 					OutLocation.Line = FMath::Max(1, CurrentSourceLine);
 					OutLocation.Column = 1;
 					OutLocation.Length = 0;
