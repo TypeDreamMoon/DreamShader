@@ -12,7 +12,7 @@ caller goes through.
 | Export macros | `DREAMSHADERLANG_API`, `DREAMSHADER_API`, `DREAMSHADERCOMPILER_API` |
 | Reflected types in public headers | 2 `UCLASS`, 1 `UENUM` |
 | Delegates | two — `FDreamShaderDefineProviderDelegate`, a `DECLARE_DELEGATE_OneParam` in `DreamShaderDefineResolution.h` *(since 1.9.0; moved out of `DreamShaderDefineTable.h` in 2.0)*, and `FOnDreamShaderSourceGenerated`, a multicast delegate in `DreamShaderCompilerService.h` *(public since 2.0)*. No `DECLARE_EVENT*` and no `DECLARE_DYNAMIC*` |
-| Plugin version | `2.0.0` beta (`"Version": 200`, `IsBetaVersion`) |
+| Plugin version | `2.0.0` (`"Version": 200`) |
 
 ## Modules
 
@@ -30,8 +30,7 @@ first in the descriptor: it is a dependency of the other three and the phase alo
 them. `DreamShaderCompiler` is listed before `DreamShaderEditor` for the same reason, and a caller
 that runs before it has started still gets a compiler: `GetDreamShaderCompiler()` loads the module on
 demand.
-The plugin is `EnabledByDefault` and `CanContainContent`; `IsBetaVersion` is `true` for the 2.0
-line.
+The plugin is `EnabledByDefault` and `CanContainContent`; `IsBetaVersion` is `false`.
 
 ## Public headers
 

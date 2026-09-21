@@ -7,7 +7,7 @@ authoring surface; the assets are build output and can always be regenerated.
 
 | | |
 | :-- | :-- |
-| Version | `2.0.0b` (beta line; last stable `1.9.1`) |
+| Version | `2.0.0` |
 | Engines | Unreal Engine `5.3` – `5.8` (Win64 verified) |
 | Modules | `DreamShaderLang` (Runtime), `DreamShader` (Runtime), `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
 | Source extensions | `.dsm` material · `.dsf` function · `.dsh` header · `.dss` 2.0 compilation unit |

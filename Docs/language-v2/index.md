@@ -24,7 +24,7 @@ source with no side files and no strip step.
 | 1.x extensions | `.dsm` / `.dsf` — read by the legacy front end, built by the same compiler |
 | Modules | [`DreamShaderLang`](../api/lang-module.md) (`Core` only) — both front ends, binder, IR, decompile and migrate · `DreamShaderCompiler` (editor) — pipeline, emitter, assets |
 | Tests | `DreamShader.Lang2.*`, `DreamShader.Compiler2.*` |
-| Status | pre-release (`2.0.0b`): both front ends, binder, IR, passes, validator, emitter, node ↔ source navigation, `.dsi`, the 2.0 decompiler, `dsc migrate`, the Substrate sugar, the IR graph layouts, `dsc fmt` |
+| Status | released in `2.0.0`: both front ends, binder, IR, passes, validator, emitter, node ↔ source navigation, `.dsi`, the 2.0 decompiler, `dsc migrate`, the Substrate sugar, the IR graph layouts, `dsc fmt` |
 
 ## Two short examples
 
