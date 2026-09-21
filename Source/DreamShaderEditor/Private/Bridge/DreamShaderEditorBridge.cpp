@@ -13,6 +13,8 @@
 #include "Decompiler/DreamShaderGraphDecompiler.h"
 // Which decompiler serves which format, for the Export actions and the `decompile` request.
 #include "Tools/DreamShaderDecompileTools.h"
+// ExportDreamShaderBuiltinCatalogManifest: the catalog a language service binds the two node namespaces against.
+#include "Tools/DreamShaderCatalogManifest.h"
 #include "DreamShaderCompilerInterface.h"
 // The reveal-node request handler and its response writer (node <-> source navigation).
 #include "Navigation/DreamShaderSourceNavigation.h"
@@ -829,6 +831,22 @@ namespace UE::DreamShader::Editor::Private
 		// so every define contributed while startup modules were loading is already accounted for by
 		// the materials it just produced, and the first tick does not order a rebuild for them.
 		GenerateAllSources();
+
+		// The builtin catalog a language service binds `UE.*` and `Substrate.*` against (plan section 13.4): pins,
+		// properties, aliases and positional orders, as the binder sees them. Here and not with the manifests above,
+		// because the catalog is reflection over every loaded expression class, and only now is every module loaded;
+		// the sweep just before this has built it, so the export costs a file write.
+		ExportBuiltinCatalogManifest();
+	}
+
+	void FDreamShaderEditorBridge::ExportBuiltinCatalogManifest()
+	{
+		FString WrittenPath;
+		FString WriteError;
+		if (!::UE::DreamShader::Editor::Compiler::ExportDreamShaderBuiltinCatalogManifest(FString(), WrittenPath, WriteError))
+		{
+			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader builtin catalog manifest was not written: %s."), *WriteError);
+		}
 	}
 
 	void FDreamShaderEditorBridge::HandleSettingsPropertyChanged(UObject* Object, FPropertyChangedEvent& Event)
@@ -2957,6 +2975,7 @@ namespace UE::DreamShader::Editor::Private
 		FDreamShaderWorkspaceService::ExportDreamShaderSettingsManifest();
 		FDreamShaderWorkspaceService::ExportSubstrateBuiltinsManifest();
 		FDreamShaderWorkspaceService::ExportPreprocessorDefinesManifest();
+		ExportBuiltinCatalogManifest();
 
 		FString WorkspaceFilePath;
 		FString Error;
