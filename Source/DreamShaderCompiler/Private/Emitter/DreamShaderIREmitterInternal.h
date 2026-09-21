@@ -121,6 +121,13 @@ namespace UE::DreamShader::Editor::Compiler
 		const TMap<FGuid, FString>& GetDecompileNames() const { return DecompileNames; }
 		/** MaterialExpressionGuid -> index into FIRGraph::Regions, for DreamShader.DecompileHints. */
 		const TMap<FGuid, int32>& GetDecompileNodeRegions() const { return DecompileNodeRegions; }
+		/** Per IR node index: the expression whose outputs are the node's. The 2.0 layout places by this. */
+		const TArray<FEmittedNode>& GetEmittedNodes() const { return EmittedNodes; }
+		/**
+		 * Per IR node index: every expression made while that node was emitted, its own included -- a hand-lowered op
+		 * makes a constant or two beside it. The 2.0 layout stacks the others to the left of the node they belong to.
+		 */
+		const TArray<TArray<UMaterialExpression*>>& GetCreatedExpressionsByNode() const { return CreatedByNode; }
 
 		/**
 		 * The expression output an already-emitted IR value became, without raising anything: false when the node was never
@@ -227,6 +234,10 @@ namespace UE::DreamShader::Editor::Compiler
 
 		/** Per IR node index: what it became. Named EmittedNodes, not Nodes, so it can never be misread as the graph's own Nodes array. */
 		TArray<FEmittedNode> EmittedNodes;
+		/** Per IR node index: what CreateExpression made while EmitNode was on that node. */
+		TArray<TArray<UMaterialExpression*>> CreatedByNode;
+		/** The node EmitNode is on; INDEX_NONE outside the walk. */
+		int32 CurrentNodeIndex = INDEX_NONE;
 		TMap<FString, UMaterialExpression*> ExpressionsByVariable;
 		TMap<FString, FString> RegionByVariable;
 		TMap<FString, int32> LayoutOwnerByName;
@@ -246,6 +257,17 @@ namespace UE::DreamShader::Editor::Compiler
 		int32 NextNodeY = -120;
 		int32 ConsumeNodeY() { const int32 Y = NextNodeY; NextNodeY += 180; return Y; }
 	};
+
+	/**
+	 * Places an emitted graph with the engine-free 2.0 layout (IR/IRLayout.h) when the project's Graph Layout Style asks
+	 * for one. False -- and nothing touched -- when the style is Classic, the 1.x layout, which the caller then runs.
+	 * Layout/DreamShaderIRLayoutApply.cpp.
+	 */
+	bool ApplyDreamShaderIRLayout(
+		UMaterial* Material,
+		UMaterialFunction* MaterialFunction,
+		const IR::FIRProduct& Product,
+		const FIREmitter& Emitter);
 
 	// ------------------------------------------------------------------ shared free helpers
 

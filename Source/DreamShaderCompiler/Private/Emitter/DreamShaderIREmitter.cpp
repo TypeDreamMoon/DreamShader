@@ -462,17 +462,21 @@ namespace UE::DreamShader::Editor::Compiler
 				return false;
 			}
 
-			FTextShaderLayout Layout;
-			BuildLayoutFromHints(Product.Graph, Layout);
-			const TMap<FString, UMaterialExpression*>& ExpressionsByVariable = Emitter.GetExpressionsByVariable();
-			const TMap<FString, FString>& RegionByVariable = Emitter.GetRegionByVariable();
-			Private::LayoutGeneratedExpressions(
-				Material,
-				nullptr,
-				&Layout,
-				ExpressionsByVariable.IsEmpty() ? nullptr : &ExpressionsByVariable,
-				RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
-				/*bQuiet*/ false);
+			// The project's Graph Layout Style: one of the styles computed on the IR, or Classic, the 1.x layout.
+			if (!ApplyDreamShaderIRLayout(Material, nullptr, Product, Emitter))
+			{
+				FTextShaderLayout Layout;
+				BuildLayoutFromHints(Product.Graph, Layout);
+				const TMap<FString, UMaterialExpression*>& ExpressionsByVariable = Emitter.GetExpressionsByVariable();
+				const TMap<FString, FString>& RegionByVariable = Emitter.GetRegionByVariable();
+				Private::LayoutGeneratedExpressions(
+					Material,
+					nullptr,
+					&Layout,
+					ExpressionsByVariable.IsEmpty() ? nullptr : &ExpressionsByVariable,
+					RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
+					/*bQuiet*/ false);
+			}
 
 			OutSpans = Emitter.GetSourceSpans();
 			OutDecompileHints = BuildDreamShaderDecompileHintsJson(Product.Graph, Emitter);
@@ -817,17 +821,20 @@ namespace UE::DreamShader::Editor::Compiler
 				return false;
 			}
 
-			FTextShaderLayout Layout;
-			BuildLayoutFromHints(Product.Graph, Layout);
-			const TMap<FString, UMaterialExpression*>& ExpressionsByVariable = Emitter.GetExpressionsByVariable();
-			const TMap<FString, FString>& RegionByVariable = Emitter.GetRegionByVariable();
-			Private::LayoutGeneratedExpressions(
-				nullptr,
-				Function,
-				&Layout,
-				ExpressionsByVariable.IsEmpty() ? nullptr : &ExpressionsByVariable,
-				RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
-				/*bQuiet*/ false);
+			if (!ApplyDreamShaderIRLayout(nullptr, Function, Product, Emitter))
+			{
+				FTextShaderLayout Layout;
+				BuildLayoutFromHints(Product.Graph, Layout);
+				const TMap<FString, UMaterialExpression*>& ExpressionsByVariable = Emitter.GetExpressionsByVariable();
+				const TMap<FString, FString>& RegionByVariable = Emitter.GetRegionByVariable();
+				Private::LayoutGeneratedExpressions(
+					nullptr,
+					Function,
+					&Layout,
+					ExpressionsByVariable.IsEmpty() ? nullptr : &ExpressionsByVariable,
+					RegionByVariable.IsEmpty() ? nullptr : &RegionByVariable,
+					/*bQuiet*/ false);
+			}
 
 			// Before UpdateMaterialFunction, because that reaches ForceRecompileForRendering, which
 			// is one of the two places that REBUILD DependentFunctionExpressionCandidates -- and

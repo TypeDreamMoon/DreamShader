@@ -27,6 +27,20 @@ enum class EDreamShaderDefaultBackend : uint8
 	ThinCustom,
 };
 
+/** How the nodes of a generated graph are placed. Positions are not part of a generated asset's digest, so switching never makes an asset look hand-edited. */
+UENUM()
+enum class EDreamShaderGraphLayoutStyle : uint8
+{
+	/** The 1.x layout: blocks recovered from the material's outputs, named reroutes between blocks. */
+	Classic,
+	/** One box per `#pragma region` or run of statements, packed in source order like words on a page; no wire leaves a box -- a value another box reads travels through a named reroute, and a constant is repeated. Computed on the IR. */
+	Blocks,
+	/** One horizontal band per source statement, in source order; a `#pragma region` is a box around consecutive bands. Computed on the IR, inserts no reroute. */
+	SourceBands,
+	/** One layered drawing of the whole graph. Computed on the IR, inserts no reroute. */
+	Layered,
+};
+
 UCLASS(Config=Engine, DefaultConfig, meta=(DisplayName="DreamShader"))
 class DREAMSHADER_API UDreamShaderSettings : public UDeveloperSettings
 {
@@ -113,6 +127,11 @@ public:
 		meta=(DisplayName="Preprocessor Defines",
 			ToolTip="Preprocessor defines every .dsm/.dsf/.dsh source compiles with -- what its #if / #elif conditions read. The name answers defined(); a value that parses as an integer compares as a number, anything else as a string; an empty value still counts as defined; a name absent from this table evaluates to 0, as in C. Conditions are evaluated at GENERATION time and the losing branch is cut before the parser sees it, so a condition can select a Domain, a ShadingModel or a whole Outputs block -- none of which a StaticSwitch can reach, because they describe what the material IS rather than what it computes. Editing this table rebuilds only the generated assets whose sources actually read a name that changed. Names are case-sensitive and must match [A-Za-z_][A-Za-z0-9_]*. The DS_ prefix is reserved for the read-only builtins; an entry using it is dropped with a log warning rather than failing the compile, since a settings mistake has no source line to report against."))
 	TMap<FString, FString> PreprocessorDefines;
+
+	UPROPERTY(Config, EditAnywhere, Category="Compiler",
+		meta=(DisplayName="Graph Layout Style",
+			ToolTip="How the nodes of a generated graph are placed. Classic is the 1.x layout. The other three are computed on the compiler's IR, before any node exists, and are deterministic. Blocks boxes the graph by region and run of statements, in source order, and lets no wire leave a box: a value another box reads travels through a named reroute, and a constant is repeated where it is read. Source Bands puts one horizontal band per source statement, top to bottom in source order, so the graph reads like the file; Layered draws the whole graph as one layered drawing; those two insert no reroute nodes. Node positions are not part of a generated asset's digest: changing this never makes an asset look hand-edited, and it takes effect the next time a source is rebuilt. `dsc dump-layout` draws the three IR styles of a source as SVG without building anything."))
+	EDreamShaderGraphLayoutStyle GraphLayoutStyle = EDreamShaderGraphLayoutStyle::Classic;
 
 	UPROPERTY(Config, EditAnywhere, Category="Compiler")
 	bool bAutoCompileOnSave = true;

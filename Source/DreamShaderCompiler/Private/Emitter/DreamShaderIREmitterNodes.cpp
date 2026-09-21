@@ -243,6 +243,7 @@ namespace UE::DreamShader::Editor::Compiler
 	{
 		const IR::FIRGraph& Graph = Product.Graph;
 		EmittedNodes.SetNum(Graph.Nodes.Num());
+		CreatedByNode.SetNum(Graph.Nodes.Num());
 		BuildLayoutOwners();
 
 		for (const int32 NodeIndex : Graph.TopologicalOrder())
@@ -256,7 +257,10 @@ namespace UE::DreamShader::Editor::Compiler
 				return false;
 			}
 
-			if (!EmitNode(NodeIndex))
+			CurrentNodeIndex = NodeIndex;
+			const bool bEmitted = EmitNode(NodeIndex);
+			CurrentNodeIndex = INDEX_NONE;
+			if (!bEmitted)
 			{
 				return false;
 			}
@@ -1454,7 +1458,12 @@ namespace UE::DreamShader::Editor::Compiler
 		// UMaterialEditingLibrary::CreateMaterialExpressionEx and picks the material or the function
 		// overload from whichever pointer is set. X is fixed because the layout pass rewrites every
 		// position afterwards; Y only has to keep the pre-layout graph from stacking on one point.
-		return Private::CreateOwnedMaterialExpression(Material, MaterialFunction, ExpressionClass, 0, ConsumeNodeY());
+		UMaterialExpression* Expression = Private::CreateOwnedMaterialExpression(Material, MaterialFunction, ExpressionClass, 0, ConsumeNodeY());
+		if (Expression && CreatedByNode.IsValidIndex(CurrentNodeIndex))
+		{
+			CreatedByNode[CurrentNodeIndex].Add(Expression);
+		}
+		return Expression;
 	}
 
 	void FIREmitter::RegisterNode(const int32 NodeIndex, const IR::FIRNode& Node, UMaterialExpression* Expression)
