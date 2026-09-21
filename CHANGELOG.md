@@ -91,6 +91,12 @@
   is the default and changes nothing. `DS_SUBSTRATE` joins the build key of every material that says
   `Bridge` or `Native`, so switching the project setting rebuilds exactly those.
 
+- **The Material Content Browser makes `.dss` sources.** *New ▾* has a *DreamShaderLang 2.0* section --
+  **Material (.dss)** and **Material function (.dss)** beside **Instance (.dsi)** -- ahead of the 1.x
+  blocks, which stay for a project that has not migrated. The name typed is the `export`'s, and so the
+  asset's; the folder decides where under `/Game` it lands.
+  [`Docs/tools/material-browser.md`](Docs/tools/material-browser.md#new-source).
+
 - **Graph layouts that read the source.** *Project Settings > DreamShader > Graph Layout Style* has
   three styles computed on the compiler's IR rather than on the finished graph. `Blocks` is a page of
   boxes in source order -- one per `#pragma region` or run of statements, a region that holds regions

@@ -59,7 +59,7 @@ next opened.
 | :-- | :-- | :-- |
 | Button | **Refresh** (`F5`) | Rescans the source roots, rebuilds the dependency graph, recomputes every status |
 | Menu | **Compile ▾** | **Compile** (`Ctrl+B`) the selection · **Compile stale** — every source that is stale, never compiled, or failed · **Compile all** (`Ctrl+Shift+B`) — every `.dsm` and `.dsf`, behind a progress dialog |
-| Menu | **New ▾** | **Material (.dsm)** · **Material function (.dsf)** · **Header (.dsh)** — see [New source](#new-source) |
+| Menu | **New ▾** | *DreamShaderLang 2.0:* **Material (.dss)** · **Material function (.dss)** · **Instance (.dsi)** — *1.x blocks:* **Material (.dsm)** · **Material function (.dsf)** · **Header (.dsh)** — see [New source](#new-source) |
 | Search box | (`Ctrl+F` focuses it) | Case-insensitive substring match against the file name, the root name, the source path, the asset path and the status detail — so an error message is searchable, and a plugin's name filters to everything it ships. In Assets mode it matches the asset name |
 | Menu | **View ▾** | **Tiles** — the Sources list as thumbnail tiles · **Sort by** Name / Status / Root / Asset path, **Ascending** · **Show Ephemeral materials** — the global project setting, see [Editor integration](editor-integration.md#show-ephemeral-materials) |
 | Button | *(VSCode icon)* | Writes and opens the DreamShader workspace — identical to *Tools ▸ DreamShader ▸ Open Dream Shader Workspace* |
@@ -260,17 +260,30 @@ mid-session, say.
 
 ## New source
 
-*New ▾* writes a file from the plugin's templates (`Resources/Templates/NewMaterial.dsm`,
-`NewFunction.dsf`, `NewHeader.dsh`) and the bridge's watcher lists and compiles it as it would any
-save. The dialog:
+*New ▾* writes a file from the plugin's templates under `Resources/Templates` and the bridge's watcher
+lists and compiles it as it would any save. The menu has two sections:
+
+| Section | Entry | Template | Writes |
+| :-- | :-- | :-- | :-- |
+| DreamShaderLang 2.0 | **Material (.dss)** *(since 2.0.0)* | `NewMaterial.dss` | two `uniform`s and `export void <Name>(inout material m)` |
+| | **Material function (.dss)** *(since 2.0.0)* | `NewFunction.dss` | `export float3 <Name>(float3 InColor, float Strength = 1.0)` |
+| | **Instance (.dsi)** | `NewInstance.dsi` | `#pragma instance(Parent = …)` — see [Create material instance](#create-material-instance) |
+| 1.x blocks | **Material (.dsm)** | `NewMaterial.dsm` | a `Shader` block |
+| | **Material function (.dsf)** | `NewFunction.dsf` | a `ShaderFunction` block |
+| | **Header (.dsh)** | `NewHeader.dsh` | a header with one `Function` |
+
+The dialog:
 
 | Field | Default |
 | :-- | :-- |
-| **Name** | `M_NewMaterial` / `F_NewFunction` / `Common` — must be an identifier |
+| **Name** | `M_NewMaterial` / `MF_NewFunction` (`.dss`) · `F_NewFunction` (`.dsf`) / `Common` / `MI_NewInstance` — must be an identifier |
 | **Folder** | the source folder the navigation tree points at, or the project's `DShader` root when that folder is a plugin's (plugin sources are read-only) |
 
-The block's `Name=` is the folder's path relative to its root plus the name, so the asset lands
-beside its neighbours' — a file created in `DShader/Materials/` compiles to `/Game/Materials/…`.
+Either way the asset lands beside its neighbours' — a file created in `DShader/Materials/` compiles to
+`/Game/Materials/…`. A 1.x block says so itself: its `Name=` is the folder's path relative to its root
+plus the name. A `.dss` says nothing: the name is its `export`'s, and the folder is where the file is. A
+`.dss` is one kind of product -- one material, or any number of exported functions, each an asset of its
+own -- with helpers that are not exported beside either; the two entries start the two kinds.
 
 | Refusal | Message |
 | :-- | :-- |
@@ -278,7 +291,7 @@ beside its neighbours' — a file created in `DShader/Materials/` compiles to `/
 | outside every writable root | `Choose a folder under the project's DShader root. A plugin's sources are read-only.` |
 | file exists | `'{Path}' already exists.` |
 
-The three templates are compiled by the automation test
+The templates are compiled by the automation test
 `DreamShader.Browser.NewSource.TemplatesRenderAndCompile`, so they cannot rot.
 
 ## Create material instance
