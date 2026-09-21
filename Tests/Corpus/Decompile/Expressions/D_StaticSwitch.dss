@@ -1,0 +1,15 @@
+// A static bool merges through a StaticSwitch; the decompile writes it back as a conditional over the uniform, which
+// builds the same StaticSwitch. Both arms were named `Colour` by their statements, so the second comes back `Colour_2`.
+/// @static
+/// @group Look
+uniform bool UseWarm = true;
+
+export void M_DStaticSwitch(inout material m)
+{
+    float3 Colour = float3(0, 0.5, 1);
+    if (UseWarm)
+    {
+        Colour = float3(1, 0.5, 0);
+    }
+    m.EmissiveColor = Colour;
+}

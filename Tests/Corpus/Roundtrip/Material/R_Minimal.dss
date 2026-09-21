@@ -1,0 +1,10 @@
+// source -> asset -> decompiled text -> asset: the smallest round trip.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+/// @group Look @desc The emissive tint
+uniform float3 Tint = float3(1, 0.2, 0.2);
+
+export void M_RtMinimal(inout material m)
+{
+    m.EmissiveColor = Tint;
+}

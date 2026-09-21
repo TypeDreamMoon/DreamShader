@@ -1,0 +1,18 @@
+// Comment boxes come back as regions, and the regions build the same boxes. The dump does not list boxes, so what this
+// pins is that the region pragmas do not disturb the nodes; DreamShader.Compiler2.Decompile.RegionsRoundTrip looks at the boxes.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+#pragma region Parameters
+uniform float A = 1;
+uniform float B = 2;
+#pragma endregion
+
+export void M_RtRegions(inout material m)
+{
+    #pragma region Maths
+    float Sum = A + B;
+    float Scaled = Sum * 0.5;
+    #pragma endregion
+    m.Opacity = Scaled;
+    m.EmissiveColor = float3(Scaled, Scaled, Scaled);
+}

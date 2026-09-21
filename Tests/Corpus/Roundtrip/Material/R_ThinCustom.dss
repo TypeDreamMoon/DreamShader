@@ -1,0 +1,10 @@
+// The ThinCustom pair is read through its hidden base, and the text says Backend = ThinCustom again.
+#pragma material(Backend = ThinCustom, ShadingModel = Unlit, BlendMode = Opaque)
+
+uniform float4 Tint = float4(1, 0.5, 0.25, 1);
+uniform float Boost = 0.5;
+
+export void M_RtThinCustom(inout material m)
+{
+    m.EmissiveColor = Tint.rgb * Boost;
+}

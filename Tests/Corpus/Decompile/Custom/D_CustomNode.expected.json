@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "/// @custom\nfloat3 Posterise(float3 Colour, float Steps)\n{\n    // kept: this comment is inside the body\n    return floor(Colour * Steps) / Steps;\n}\n\nexport void M_DCustomNode(inout material m)\n{\n    m.EmissiveColor = Posterise(float3(1.0, 0.5, 0.25), 4.0);\n}\n"
+}

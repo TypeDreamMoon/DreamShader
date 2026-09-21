@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "#pragma region Parameters\nuniform float A = 1.0;\nuniform float B = 2.0;\n#pragma endregion\n\nexport void M_DRegions(inout material m)\n{\n    #pragma region Outer\n    float Sum = A + B;\n\n    #pragma region Inner\n    float Scaled = Sum * 2.0;\n    #pragma endregion\n\n    float Final = Scaled + Sum;\n    #pragma endregion\n\n    m.Opacity = Final;\n}\n"
+}

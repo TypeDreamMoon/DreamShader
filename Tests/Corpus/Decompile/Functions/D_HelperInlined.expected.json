@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "export void M_DHelperInlined(inout material m)\n{\n    float2 P = UE.TextureCoordinate(CoordinateIndex = 0) * 2.0 - 1.0;\n\n    m.Opacity = saturate(1.0 - dot(P, P));\n}\n"
+}

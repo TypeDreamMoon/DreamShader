@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "/// @layerblend\nexport void MLB_DBlend(material Bottom, material Top, inout material R)\n{\n    R.BaseColor = Bottom.BaseColor;\n    R.Roughness = Top.Roughness;\n}\n"
+}

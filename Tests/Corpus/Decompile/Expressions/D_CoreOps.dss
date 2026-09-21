@@ -1,0 +1,12 @@
+// Operators and intrinsics come back as operators and intrinsics.
+uniform float3 C = float3(0.2, 0.4, 0.6);
+uniform float T = 0.5;
+
+export void M_DCoreOps(inout material m)
+{
+    float3 Mixed = lerp(C, float3(1, 1, 1), T);
+    float Luma = dot(Mixed, float3(0.299, 0.587, 0.114));
+    m.EmissiveColor = normalize(Mixed) * frac(Luma * 4) - abs(C - 0.5);
+    m.Opacity = saturate(1 - Luma / 2);
+    m.Roughness = max(min(T, 0.9), 0.1);
+}

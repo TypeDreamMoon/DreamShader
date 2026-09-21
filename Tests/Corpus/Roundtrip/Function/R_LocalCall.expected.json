@@ -1,0 +1,4 @@
+{
+	"entryPoint": "roundtrip",
+	"text": "export void MF_RtInner(float4 V, out float3 Head, out float Tail)\n{\n    Head = V.xyz;\n    Tail = V.w;\n}\n\nexport float3 MF_RtOuter(float4 V, float Gain = 2.0)\n{\n    float3 Head;\n    float Tail;\n    MF_RtInner(V, Head, Tail);\n\n    return Head * Tail * Gain;\n}\n\n#pragma layout(Node, Var = Head, X = 1286, Y = -620)\n#pragma layout(Node, Var = Tail, X = 1186, Y = 176)\n#pragma layout(Node, Var = Gain, X = 666, Y = -620)\n#pragma layout(Node, Var = Result, X = 1960, Y = -504)\n"
+}

@@ -1,0 +1,12 @@
+// Reflected calls come back with named arguments in catalog order; a constant on a pin with a Const twin is the
+// twin property, written under the pin's name.
+uniform float3 A = float3(1, 0, 0);
+uniform float3 B = float3(0, 0, 1);
+
+export void M_DNamedArguments(inout material m)
+{
+    float T = UE.Time(Period = 2);
+    float2 UV = UE.TextureCoordinate(CoordinateIndex = 1, UTiling = 2, VTiling = 3);
+    m.EmissiveColor = UE.LinearInterpolate(A = A, B = B, Alpha = 0.25) * T;
+    m.Opacity = UV.x;
+}

@@ -1,0 +1,17 @@
+// Parameter nodes keep name, group, description, slider, sort order and default through the round trip.
+#pragma material(ShadingModel = Unlit, BlendMode = Translucent)
+
+/// @group Glow|Look @desc Multiplied on top
+uniform float4 Tint = float4(1, 0.5, 0.25, 1);
+/// @group Glow|Look @slider 0 4
+uniform float Intensity = 0.7;
+/// @name Base Offset
+uniform float2 Offset = float2(0.25, 0.5);
+/// @sort 90
+uniform float Late = 1;
+
+export void M_RtUniforms(inout material m)
+{
+    m.EmissiveColor = Tint.rgb * Intensity + float3(Offset, Late);
+    m.Opacity = Tint.a;
+}

@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "uniform float3 N = float3(0.0, 0.0, 1.0);\n\nexport void M_DCustomOutput(inout material m)\n{\n    m.Normal = N;\n    UE.ClearCoatNormalCustomOutput(Input = N);\n}\n"
+}

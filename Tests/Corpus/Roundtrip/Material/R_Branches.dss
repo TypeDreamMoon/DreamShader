@@ -1,0 +1,14 @@
+// A dynamic comparison: the If node with its operator form.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+uniform float Mask = 0.6;
+
+export void M_RtBranches(inout material m)
+{
+    float3 Colour = float3(0, 0, 1);
+    if (Mask > 0.5)
+    {
+        Colour = float3(1, 0, 0);
+    }
+    m.EmissiveColor = Colour;
+}

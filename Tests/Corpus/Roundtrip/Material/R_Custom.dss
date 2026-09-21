@@ -1,0 +1,22 @@
+// A Custom node and a helper it calls.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+/// @custom
+float Luma(float3 Colour)
+{
+    return dot(Colour, float3(0.299, 0.587, 0.114));
+}
+
+/// @custom
+float3 Desaturate(float3 Colour, float Amount)
+{
+    float L = Luma(Colour);
+    return lerp(Colour, float3(L, L, L), Amount);
+}
+
+uniform float3 Tint = float3(1, 0.5, 0.25);
+
+export void M_RtCustom(inout material m)
+{
+    m.EmissiveColor = Desaturate(Tint, 0.5);
+}

@@ -1,0 +1,17 @@
+// A dynamic `if` is a Select over a comparison; the conditional operator is the same node.
+// The arms are not 0 and 1 on purpose: `c ? 1.0 : 0.0` builds the very If a bare comparison builds, so it decompiles
+// to the comparison (the same asset, another IR), which this layer's IR compare would call a difference.
+uniform float Mask = 0.6;
+uniform float3 Warm = float3(1, 0.5, 0);
+uniform float3 Cool = float3(0, 0.5, 1);
+
+export void M_DBranches(inout material m)
+{
+    float3 Colour = Cool;
+    if (Mask > 0.5)
+    {
+        Colour = Warm;
+    }
+    m.EmissiveColor = Colour;
+    m.Opacity = Mask < 0.25 ? 0.25 : 0.75;
+}

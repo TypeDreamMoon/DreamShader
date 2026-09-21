@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "uniform float Mask = 0.6;\nuniform float3 Warm = float3(1.0, 0.5, 0.0);\nuniform float3 Cool = float3(0.0, 0.5, 1.0);\n\nexport void M_DBranches(inout material m)\n{\n    m.EmissiveColor = Mask > 0.5 ? Warm : Cool;\n    m.Opacity = Mask < 0.25 ? 0.25 : 0.75;\n}\n"
+}

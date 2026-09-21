@@ -1,0 +1,6 @@
+// A class with several outputs: one node, read through two of its outputs.
+export void M_DNodeOutputs(inout material m)
+{
+    m.EmissiveColor = UE.SceneTexture(SceneTextureId = SceneColor).Color.rgb;
+    m.Opacity = UE.SceneTexture(SceneTextureId = SceneColor).InvSize.x;
+}

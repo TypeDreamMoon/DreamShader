@@ -1,0 +1,6 @@
+// A material layer.
+/// @layer
+export void ML_RtTint(inout material m)
+{
+    m.BaseColor = m.BaseColor * float3(1, 0.5, 0.25);
+}

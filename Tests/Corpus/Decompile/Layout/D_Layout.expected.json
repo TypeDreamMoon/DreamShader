@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "uniform float A = 1.0;\nuniform float B = 2.0;\n\nexport void M_DLayout(inout material m)\n{\n    float Sum = A + B;\n\n    m.Opacity = Sum * Sum;\n}\n\n#pragma layout(Node, Var = Sum, X = 120, Y = -40)\n#pragma layout(Comment, Name = \"Maths\", X = 0, Y = 0, W = 400, H = 200, Color = \"0.1 0.2 0.3 0.4\")\n"
+}

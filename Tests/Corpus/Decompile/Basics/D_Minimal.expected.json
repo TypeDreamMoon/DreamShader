@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "#pragma material(BlendMode = Opaque, ShadingModel = Unlit)\n\n/// The emissive tint\n/// @group Look\nuniform float3 Tint = float3(1.0, 0.2, 0.2);\n\nexport void M_DMinimal(inout material m)\n{\n    m.EmissiveColor = Tint;\n}\n"
+}

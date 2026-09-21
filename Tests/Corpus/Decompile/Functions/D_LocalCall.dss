@@ -1,0 +1,14 @@
+// A call from one export to another of the same file, with `out` arguments: a call statement with declared locals.
+export void MF_DSplit(float4 V, out float3 Head, out float Tail)
+{
+    Head = V.rgb;
+    Tail = V.a;
+}
+
+export float3 MF_DUseSplit(float4 V, float Gain = 2.0)
+{
+    float3 H;
+    float T;
+    MF_DSplit(V, H, T);
+    return H * T * Gain;
+}

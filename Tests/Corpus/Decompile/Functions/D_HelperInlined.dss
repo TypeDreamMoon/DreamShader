@@ -1,0 +1,11 @@
+// A helper is inlined by the build, so it is not in the graph and does not come back: its expression does.
+float Mask(float2 UV)
+{
+    float2 P = UV * 2.0 - 1.0;
+    return saturate(1.0 - dot(P, P));
+}
+
+export void M_DHelperInlined(inout material m)
+{
+    m.Opacity = Mask(UE.TexCoord(CoordinateIndex = 0));
+}

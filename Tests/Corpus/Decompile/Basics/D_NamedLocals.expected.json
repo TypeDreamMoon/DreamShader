@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "uniform float A = 1.0;\nuniform float B = 2.0;\n\nexport void M_DNamedLocals(inout material m)\n{\n    float Sum = A + B;\n    float Twice = Sum * Sum;\n\n    m.Opacity = saturate(Twice - Sum);\n    m.Roughness = A * 0.5;\n}\n"
+}

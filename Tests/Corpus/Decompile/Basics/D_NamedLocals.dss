@@ -1,0 +1,11 @@
+// What gets a name: a value read twice, a value whose statement named it, and nothing else.
+uniform float A = 1;
+uniform float B = 2;
+
+export void M_DNamedLocals(inout material m)
+{
+    float Sum = A + B;
+    float Twice = Sum * Sum;
+    m.Opacity = saturate(Twice - Sum);
+    m.Roughness = A * 0.5;
+}

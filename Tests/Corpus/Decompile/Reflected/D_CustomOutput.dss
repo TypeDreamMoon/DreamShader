@@ -1,0 +1,8 @@
+// A custom-output class is a statement: a root nothing reads.
+uniform float3 N = float3(0, 0, 1);
+
+export void M_DCustomOutput(inout material m)
+{
+    UE.ClearCoatNormalCustomOutput(Input = N);
+    m.Normal = N;
+}

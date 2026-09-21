@@ -1,0 +1,10 @@
+// Swizzles in every shape: a leading mask, a reorder, a single channel, a constructor from parts.
+uniform float4 V = float4(1, 2, 3, 4);
+
+export void M_DSwizzles(inout material m)
+{
+    float3 Head = V.rgb;
+    float2 Swapped = V.yx;
+    m.EmissiveColor = float3(Swapped, V.w) + Head;
+    m.Opacity = V.z;
+}

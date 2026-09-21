@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "export void M_DMaterialIntoPin(inout material m)\n{\n    material Attributes;\n    Attributes.BaseColor = float3(1.0, 0.0, 0.0);\n    Attributes.Roughness = 0.5;\n\n    m.BaseColor = float3(1.0, 0.0, 0.0);\n    m.Roughness = 0.5;\n    m.Opacity = UE.BlendMaterialAttributes(A = Attributes, B = Attributes, Alpha = 0.25).Roughness;\n}\n"
+}

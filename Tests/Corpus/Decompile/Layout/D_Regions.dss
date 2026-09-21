@@ -1,0 +1,17 @@
+// File-level and nested body regions: each comes back as ONE contiguous block.
+#pragma region Parameters
+uniform float A = 1;
+uniform float B = 2;
+#pragma endregion
+
+export void M_DRegions(inout material m)
+{
+    #pragma region Outer
+    float Sum = A + B;
+    #pragma region Inner
+    float Scaled = Sum * 2;
+    #pragma endregion
+    float Final = Scaled + Sum;
+    #pragma endregion
+    m.Opacity = Final;
+}

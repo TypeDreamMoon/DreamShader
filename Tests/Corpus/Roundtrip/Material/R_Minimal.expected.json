@@ -1,0 +1,4 @@
+{
+	"entryPoint": "roundtrip",
+	"text": "#pragma material(ShadingModel = Unlit, Backend = Graph)\n\n/// The emissive tint\n/// @group Look\nuniform float3 Tint = float3(1.0, 0.2, 0.2);\n\nexport void M_RtMinimal(inout material m)\n{\n    m.EmissiveColor = Tint;\n}\n\n#pragma layout(Node, Var = Tint, X = 0, Y = -620)\n"
+}

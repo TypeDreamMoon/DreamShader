@@ -1,0 +1,14 @@
+// A call between two exports of one file stays a call to that function of the file, not an extern to its asset.
+export void MF_RtInner(float4 V, out float3 Head, out float Tail)
+{
+    Head = V.rgb;
+    Tail = V.a;
+}
+
+export float3 MF_RtOuter(float4 V, float Gain = 2.0)
+{
+    float3 H;
+    float T;
+    MF_RtInner(V, H, T);
+    return H * T * Gain;
+}

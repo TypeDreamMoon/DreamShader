@@ -1,0 +1,7 @@
+// A material crossing into a reflected pin is a MakeMaterialAttributes; a field read off the result is a Get.
+export void M_DMaterialIntoPin(inout material m)
+{
+    m.BaseColor = float3(1, 0, 0);
+    m.Roughness = 0.5;
+    m.Opacity = UE.BlendMaterialAttributes(A = m, B = m, Alpha = 0.25).Roughness;
+}

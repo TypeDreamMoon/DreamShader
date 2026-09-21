@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "/// @custom\nvoid SplitColour(float4 V, out float3 Head, out float Tail)\n{\n    Head = V.rgb;\n    Tail = V.a;\n}\n\nexport void M_DCustomOutParams(inout material m)\n{\n    float3 Head;\n    float Tail;\n    SplitColour(float4(1.0, 0.5, 0.25, 0.75), Head, Tail);\n\n    m.EmissiveColor = Head;\n    m.Opacity = Tail;\n}\n"
+}

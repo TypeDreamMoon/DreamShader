@@ -1,0 +1,7 @@
+// The second namespace, and the only producer of a Substrate value.
+uniform float3 Glow = float3(1, 0.5, 0.25);
+
+export void M_DSubstrate(inout material m)
+{
+    m.FrontMaterial = Substrate.Unlit(EmissiveColor = Glow, TransmittanceColor = float3(1, 1, 1));
+}

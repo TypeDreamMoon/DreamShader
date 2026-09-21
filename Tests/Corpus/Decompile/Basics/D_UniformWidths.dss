@@ -1,0 +1,20 @@
+// Every uniform width, a slider, an explicit sort that breaks the dense order, and a texture.
+// A uniform without `@sort` holds its place among the uniforms, so `Source` holds 6. Uniforms come back in priority
+// order, where `Source` stands fifth: `@sort` comes back on it and on `Late`, and on no other.
+uniform float Gain = 0.5;
+/// @slider 0 4
+uniform float Boost = 2;
+uniform float2 Offset = float2(0.25, 0.75);
+uniform float3 Colour = float3(1, 0.5, 0.25);
+uniform float4 Full = float4(0.1, 0.2, 0.3, 0.4);
+/// @sort 70
+uniform float Late = 1;
+/// @sampler Color
+uniform Texture2D Source;
+
+export void M_DUniformWidths(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0) + Offset;
+    m.EmissiveColor = Colour * Gain * Boost + Source.Sample(UV).rgb * Full.rgb;
+    m.Opacity = Full.a * Late;
+}

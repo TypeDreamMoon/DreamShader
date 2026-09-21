@@ -1,0 +1,10 @@
+// One sample read through two channel views, and a sample with a level.
+uniform Texture2D Tex;
+
+export void M_DTextureSample(inout material m)
+{
+    float2 UV = UE.TexCoord(CoordinateIndex = 0);
+    float4 Texel = Tex.Sample(UV);
+    m.EmissiveColor = Texel.rgb + Tex.SampleLevel(UV, 2).rgb;
+    m.Opacity = Texel.a;
+}

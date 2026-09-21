@@ -1,0 +1,4 @@
+{
+	"entryPoint": "roundtrip",
+	"text": "#pragma material(ShadingModel = Unlit, Backend = Graph)\n\n#pragma region Parameters\nuniform float A = 1.0;\nuniform float B = 2.0;\n#pragma endregion\n\nexport void M_RtRegions(inout material m)\n{\n    #pragma region Maths\n    float Sum = A + B;\n    float Scaled = Sum * 0.5;\n    #pragma endregion\n\n    m.EmissiveColor = float3(Scaled, Scaled, Scaled);\n    m.Opacity = Scaled;\n}\n\n#pragma layout(Node, Var = B, X = 0, Y = -444)\n#pragma layout(Node, Var = A, X = 0, Y = -620)\n#pragma layout(Node, Var = Sum, X = 290, Y = -536)\n#pragma layout(Node, Var = Scaled, X = 580, Y = -451)\n"
+}

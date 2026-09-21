@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "/// Scales a UV pair.\n/// @library DreamShader|Tests\n/// @param UV The coordinates to scale.\n/// @param Scale The factor.\nexport float2 MF_DScale(float2 UV, float Scale = 1.0)\n{\n    return UV * Scale;\n}\n\nexport void MF_DSampleTinted(Texture2D Tex, float2 UV, float3 InTint, out float3 RGB, out float Alpha)\n{\n    float4 Texel = Tex.Sample(UV);\n\n    RGB = Texel.xyz * InTint;\n    Alpha = Texel.w;\n}\n"
+}

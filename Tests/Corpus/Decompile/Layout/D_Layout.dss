@@ -1,0 +1,12 @@
+// Layout hints travel by variable name; a comment box keeps its colour.
+uniform float A = 1;
+uniform float B = 2;
+
+#pragma layout(Node, Var = "Sum", X = 120, Y = -40)
+#pragma layout(Comment, Name = "Maths", X = 0, Y = 0, W = 400, H = 200, Color = "0.1 0.2 0.3 0.4")
+
+export void M_DLayout(inout material m)
+{
+    float Sum = A + B;
+    m.Opacity = Sum * Sum;
+}

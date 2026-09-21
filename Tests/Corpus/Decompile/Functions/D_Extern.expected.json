@@ -1,0 +1,8 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH9081"
+	],
+	"text": "/// @asset /Game/Functions/MF_DExternal\nextern float3 MF_DExternal(float3 Colour, float Amount);\n\nexport void M_DExtern(inout material m)\n{\n    m.EmissiveColor = MF_DExternal(float3(1.0, 0.5, 0.25), 2.0);\n}\n"
+}

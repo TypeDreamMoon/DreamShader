@@ -1,0 +1,20 @@
+// A helper (inlined), a reflected node, swizzles and a texture sample.
+#pragma material(ShadingModel = Unlit, BlendMode = Additive)
+
+uniform float4 Tint = float4(1, 1, 1, 1);
+/// @sampler Color
+uniform Texture2D Source;
+
+float GlowMask(float2 UV)
+{
+    float2 P = UV * 2.0 - 1.0;
+    return saturate(1.0 - dot(P, P));
+}
+
+export void M_RtHelperAndSwizzle(inout material m)
+{
+    float2 UV = UE.TextureCoordinate(CoordinateIndex = 0);
+    float4 Texel = Source.Sample(UV);
+    m.EmissiveColor = Texel.rgb * Tint.rgb * GlowMask(UV);
+    m.Opacity = Texel.a;
+}

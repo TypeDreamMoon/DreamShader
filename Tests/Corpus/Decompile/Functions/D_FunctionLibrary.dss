@@ -1,0 +1,17 @@
+// Signatures: a return value named Result, defaults that make inputs optional, `out` parameters after the inputs,
+// descriptions as `@desc` / `@param`.
+/// @library DreamShader|Tests
+/// @desc Scales a UV pair.
+/// @param UV    The coordinates to scale.
+/// @param Scale The factor.
+export float2 MF_DScale(float2 UV, float Scale = 1.0)
+{
+    return UV * Scale;
+}
+
+export void MF_DSampleTinted(Texture2D Tex, float2 UV, float3 InTint, out float3 RGB, out float Alpha)
+{
+    float4 Texel = Tex.Sample(UV);
+    RGB = Texel.rgb * InTint;
+    Alpha = Texel.a;
+}

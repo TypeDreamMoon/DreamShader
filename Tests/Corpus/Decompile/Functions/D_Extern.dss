@@ -1,0 +1,9 @@
+// A call to an asset the file does not make: the `extern` prototype comes back, inferred from the call (DSH9081),
+// because a Core test has no asset to read an interface from.
+/// @asset /Game/Functions/MF_DExternal
+extern float3 MF_DExternal(float3 Colour, float Amount = 1.0);
+
+export void M_DExtern(inout material m)
+{
+    m.EmissiveColor = MF_DExternal(float3(1, 0.5, 0.25), 2.0);
+}

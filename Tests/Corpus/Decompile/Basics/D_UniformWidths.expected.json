@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "uniform float Gain = 0.5;\n\n/// @slider 0.0 4.0\nuniform float Boost = 2.0;\n\nuniform float2 Offset = float2(0.25, 0.75);\nuniform float3 Colour = float3(1.0, 0.5, 0.25);\nuniform float4 Full = float4(0.1, 0.2, 0.3, 0.4);\n\n/// @sort 6\n/// @sampler Color\nuniform Texture2D Source;\n\n/// @sort 70\nuniform float Late = 1.0;\n\nexport void M_DUniformWidths(inout material m)\n{\n    float2 UV = UE.TextureCoordinate(CoordinateIndex = 0) + Offset;\n\n    m.EmissiveColor = Colour * Gain * Boost + Source.Sample(UV).xyz * Full.xyz;\n    m.Opacity = Full.w * Late;\n}\n"
+}

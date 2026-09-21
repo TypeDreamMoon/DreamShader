@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "export void M_DNodeOutputs(inout material m)\n{\n    m.EmissiveColor = UE.SceneTexture(SceneTextureId = SceneColor).Color.xyz;\n    m.Opacity = UE.SceneTexture(SceneTextureId = SceneColor).InvSize.x;\n}\n"
+}

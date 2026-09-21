@@ -1,0 +1,4 @@
+{
+	"entryPoint": "roundtrip",
+	"text": "/// Scales a UV pair.\n/// @library DreamShader|Tests\nexport float2 MF_RtScale(float2 UV, float Scale = 1.0)\n{\n    return UV * Scale;\n}\n\nexport void MF_RtSplit(float4 V, out float3 Head, out float Tail)\n{\n    Head = V.xyz;\n    Tail = V.w;\n}\n\n#pragma layout(Node, Var = UV, X = 20, Y = -620)\n#pragma layout(Node, Var = Scale, X = 0, Y = -340)\n#pragma layout(Node, Var = Result, X = 1304, Y = -480)\n#pragma layout(Node, Var = V, X = 0, Y = -512)\n#pragma layout(Node, Var = Head, X = 1286, Y = -620)\n#pragma layout(Node, Var = Tail, X = 1186, Y = 176)\n"
+}

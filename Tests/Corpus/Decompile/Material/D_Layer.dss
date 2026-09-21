@@ -1,0 +1,6 @@
+// A layer keeps its one `inout material` shape.
+/// @layer
+export void ML_DTint(inout material m)
+{
+    m.BaseColor = m.BaseColor * float3(1, 0.5, 0.25);
+}

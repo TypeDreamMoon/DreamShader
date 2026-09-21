@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "/// @custom\nfloat Luma(float3 Colour)\n{\n    return dot(Colour, float3(0.299, 0.587, 0.114));\n}\n\n/// @custom\nfloat3 Desaturate(float3 Colour, float Amount)\n{\n    float L = Luma(Colour);\n    return lerp(Colour, float3(L, L, L), Amount);\n}\n\nexport void M_DCustomHelpers(inout material m)\n{\n    m.EmissiveColor = Desaturate(float3(1.0, 0.5, 0.25), 0.5);\n}\n"
+}

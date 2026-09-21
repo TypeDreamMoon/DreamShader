@@ -1,0 +1,11 @@
+// The smallest decompile: one uniform, one attribute, the material pragma.
+#pragma material(ShadingModel = Unlit, BlendMode = Opaque)
+
+/// @group Look
+/// @desc The emissive tint
+uniform float3 Tint = float3(1, 0.2, 0.2);
+
+export void M_DMinimal(inout material m)
+{
+    m.EmissiveColor = Tint;
+}

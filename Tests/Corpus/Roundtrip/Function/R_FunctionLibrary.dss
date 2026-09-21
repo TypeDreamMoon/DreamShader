@@ -1,0 +1,13 @@
+// Two exports: one text holding both comes back from the service's SourceFilePath request.
+/// @library DreamShader|Tests
+/// @desc Scales a UV pair.
+export float2 MF_RtScale(float2 UV, float Scale = 1.0)
+{
+    return UV * Scale;
+}
+
+export void MF_RtSplit(float4 V, out float3 Head, out float Tail)
+{
+    Head = V.rgb;
+    Tail = V.a;
+}

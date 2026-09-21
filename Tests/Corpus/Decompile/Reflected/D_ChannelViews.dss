@@ -1,0 +1,6 @@
+// A node whose outputs are channel views of one value.
+export void M_DChannelViews(inout material m)
+{
+    m.EmissiveColor = UE.VertexColorViews().RGB;
+    m.Opacity = UE.VertexColorViews().A;
+}

@@ -1,0 +1,4 @@
+{
+	"entryPoint": "roundtrip",
+	"text": "#pragma material(BlendMode = Translucent, ShadingModel = Unlit, Backend = Graph)\n\n/// Multiplied on top\n/// @group Glow|Look\nuniform float4 Tint = float4(1.0, 0.5, 0.25, 1.0);\n\n/// @group Glow|Look\n/// @slider 0.0 4.0\nuniform float Intensity = 0.7;\n\n/// @name Base Offset\nuniform float2 Offset = float2(0.25, 0.5);\n\n/// @sort 90\nuniform float Late = 1.0;\n\nexport void M_RtUniforms(inout material m)\n{\n    m.EmissiveColor = Tint.xyz * Intensity + float3(Offset, Late);\n    m.Opacity = Tint.w;\n}\n\n#pragma layout(Node, Var = Late, X = 506, Y = 152)\n#pragma layout(Node, Var = Offset, X = 0, Y = -586)\n#pragma layout(Node, Var = Intensity, X = 488, Y = -620)\n#pragma layout(Node, Var = Tint, X = 398, Y = -288)\n"
+}

@@ -1,0 +1,7 @@
+// A blend keeps its inputs, in order, and its result parameter.
+/// @layerblend
+export void MLB_DBlend(material Bottom, material Top, inout material R)
+{
+    R.BaseColor = Bottom.BaseColor;
+    R.Roughness = Top.Roughness;
+}

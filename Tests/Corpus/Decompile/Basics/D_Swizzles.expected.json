@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "uniform float4 V = float4(1.0, 2.0, 3.0, 4.0);\n\nexport void M_DSwizzles(inout material m)\n{\n    float3 Head = V.xyz;\n    float2 Swapped = float2(V.y, V.x);\n\n    m.EmissiveColor = float3(Swapped, V.w) + Head;\n    m.Opacity = V.z;\n}\n"
+}

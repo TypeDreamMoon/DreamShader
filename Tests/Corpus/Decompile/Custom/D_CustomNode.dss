@@ -1,0 +1,12 @@
+// A Custom node's code read back into a `/// @custom` function: the signature from the pins, the body verbatim.
+/// @custom
+float3 Posterise(float3 Colour, float Steps)
+{
+    // kept: this comment is inside the body
+    return floor(Colour * Steps) / Steps;
+}
+
+export void M_DCustomNode(inout material m)
+{
+    m.EmissiveColor = Posterise(float3(1, 0.5, 0.25), 4);
+}

@@ -1,0 +1,5 @@
+{
+	"entryPoint": "decompile",
+	"outcome": "ok",
+	"text": "uniform Texture2D Tex;\n\nexport void M_DTextureSample(inout material m)\n{\n    float2 UV = UE.TextureCoordinate(CoordinateIndex = 0);\n    float4 Texel = Tex.Sample(UV);\n\n    m.EmissiveColor = Texel.xyz + Tex.SampleLevel(UV, 2.0).xyz;\n    m.Opacity = Texel.w;\n}\n"
+}
