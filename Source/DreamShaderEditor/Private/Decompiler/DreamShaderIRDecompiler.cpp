@@ -373,7 +373,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		Lang::RaiseDreamShaderIR(Module, Sink);
+		Lang::RaiseDreamShaderIR(Module, Sink, &Catalog);
 
 		// ----- IR -> AST -> text
 		Lang::FIRToAstOptions AstOptions;

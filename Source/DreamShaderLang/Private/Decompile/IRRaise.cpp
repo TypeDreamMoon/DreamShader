@@ -20,10 +20,18 @@
 //
 // Not raised: Multiply and Max over 0/1 values (`&&`, `||`). They cannot be told from arithmetic, and `a * b`
 // compiles to the same node.
+//
+// The Substrate sugar is read back here too, after everything else and once: Substrate.Add, Weight and
+// HorizontalMixing with nothing set on them become the core ops the writer spells `+`, `*` and `lerp` (sugar S1), and
+// a conversion node that feeds one BSDF and nothing else moves its inputs onto the BSDF under the names the sugar
+// gives them (S3), where the writer's reflected call writes an input that is no pin of the class as the named
+// argument it is. After, so that no arithmetic rule takes `A * -1` for a negation; by engine class, so that the rule
+// is the same whatever the catalog calls the class.
 
 #include "Decompile/IRToAst.h"
 
 #include "IR/IR.h"
+#include "IR/IRCatalog.h"
 #include "IR/IRCoreOps.h"
 #include "IR/IRPasses.h"
 #include "IR/IRTypes.h"
@@ -149,6 +157,21 @@ namespace UE::DreamShader::Lang
 				return true;
 			}
 
+			/** The catalog entry of a Reflected node; null without a catalog, or for any other node. */
+			const IR::FCatalogExpression* ClassOf(const FIRNode& Node) const
+			{
+				return (Catalog && Node.Op == EIROp::Reflected && Catalog->Expressions.IsValidIndex(Node.CatalogIndex))
+					? &Catalog->Expressions[Node.CatalogIndex]
+					: nullptr;
+			}
+
+			/** The node is of this engine class (`MaterialExpressionSubstrateAdd`): the one name every catalog agrees on. */
+			bool IsEngineClass(const FIRNode& Node, const TCHAR* EngineClass) const
+			{
+				const IR::FCatalogExpression* Class = ClassOf(Node);
+				return Class && Class->ClassName.Equals(EngineClass, ESearchCase::CaseSensitive);
+			}
+
 			/** Turns the node into a core op in place; its name, source and region stay. */
 			void RewriteAsCoreOp(const int32 NodeIndex, const EIROp Op, TArray<FIRValue>&& Operands, const FIRType& Type)
 			{
@@ -167,6 +190,8 @@ namespace UE::DreamShader::Lang
 			}
 
 			FIRGraph& Graph;
+			/** Set by whoever has one; the Substrate rules do nothing without it. */
+			const IR::FBuiltinCatalog* Catalog = nullptr;
 
 		private:
 			static bool IsNumber(const IR::FIRPropertyValue& Value, const double Expected)
@@ -575,6 +600,221 @@ namespace UE::DreamShader::Lang
 			return true;
 		}
 
+		// ------------------------------------------------------------------------ the Substrate sugar
+
+		static FIRValue ValueOfPin(const FIRNode& Node, const TCHAR* Pin)
+		{
+			const FIRInput* Input = Node.FindInput(FString(Pin));
+			return Input ? Input->Value : FIRValue::None();
+		}
+
+		/** Every connected input of the node is one of Allowed. */
+		static bool HasOnlyInputs(const FIRNode& Node, const TArray<const TCHAR*>& Allowed)
+		{
+			for (const FIRInput& Input : Node.Inputs)
+			{
+				if (!Input.Value.IsValid())
+				{
+					continue;
+				}
+				bool bAllowed = false;
+				for (const TCHAR* Name : Allowed)
+				{
+					bAllowed = bAllowed || Input.Pin.Equals(Name, ESearchCase::CaseSensitive);
+				}
+				if (!bAllowed)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		static void RemoveInputs(FIRNode& Node, const TArray<const TCHAR*>& Pins)
+		{
+			Node.Inputs.RemoveAll([&Pins](const FIRInput& Input)
+			{
+				for (const TCHAR* Pin : Pins)
+				{
+					if (Input.Pin.Equals(Pin, ESearchCase::CaseSensitive))
+					{
+						return true;
+					}
+				}
+				return false;
+			});
+		}
+
+		/**
+		 * Sugar S3: `Substrate.Slab(BaseColor = c, Metallic = m)` is a MetalnessToDiffuseAlbedoF0 wired into DiffuseAlbedo
+		 * and F0, and so on for Haziness and Transmittance (IRBuilderSubstrate.cpp). Read back when the conversion node
+		 * is exactly that: both of its outputs on the two pins, nothing else reading it, nothing set on it, and -- what
+		 * the binder asks before it takes an argument for a virtual one -- no pin of that name on the BSDF itself.
+		 * `IOR` is not read back: a constant F0 does not say it was an index of refraction.
+		 */
+		static bool TryRaiseSubstrateArguments(FRaiseGraph& Raise, const int32 NodeIndex)
+		{
+			FIRNode& Self = Raise.Graph.Nodes[NodeIndex];
+			const IR::FCatalogExpression* Class = Raise.ClassOf(Self);
+			if (!Class || !Class->Namespace.Equals(TEXT("Substrate"), ESearchCase::CaseSensitive))
+			{
+				return false;
+			}
+			const auto HasPin = [Class](const TCHAR* Pin)
+			{
+				return Class->FindInput(FString(Pin)) != INDEX_NONE;
+			};
+
+			bool bChanged = false;
+
+			// ----- DiffuseAlbedo, F0 <- BaseColor / Metallic / Specular
+			{
+				const FIRValue Diffuse = ValueOfPin(Self, TEXT("DiffuseAlbedo"));
+				const FIRValue F0 = ValueOfPin(Self, TEXT("F0"));
+				const FIRNode* Conversion = Raise.NodeOf(Diffuse);
+				if (Conversion && F0.IsValid() && Diffuse.Node == F0.Node && Diffuse.Output == 0 && F0.Output == 1
+					&& Raise.IsEngineClass(*Conversion, TEXT("MaterialExpressionSubstrateMetalnessToDiffuseAlbedoF0"))
+					&& Conversion->Properties.IsEmpty()
+					&& Raise.FanOutOf(Diffuse) == 2
+					&& HasOnlyInputs(*Conversion, { TEXT("BaseColor"), TEXT("Metallic"), TEXT("Specular") })
+					&& !HasPin(TEXT("BaseColor")) && !HasPin(TEXT("Metallic")) && !HasPin(TEXT("Specular")))
+				{
+					const FIRValue BaseColor = ValueOfPin(*Conversion, TEXT("BaseColor"));
+					const FIRValue Metallic = ValueOfPin(*Conversion, TEXT("Metallic"));
+					const FIRValue Specular = ValueOfPin(*Conversion, TEXT("Specular"));
+					if (BaseColor.IsValid() || Metallic.IsValid() || Specular.IsValid())
+					{
+						RemoveInputs(Self, { TEXT("DiffuseAlbedo"), TEXT("F0") });
+						if (BaseColor.IsValid()) { Self.Inputs.Add({ FString(TEXT("BaseColor")), BaseColor }); }
+						if (Metallic.IsValid()) { Self.Inputs.Add({ FString(TEXT("Metallic")), Metallic }); }
+						if (Specular.IsValid()) { Self.Inputs.Add({ FString(TEXT("Specular")), Specular }); }
+						bChanged = true;
+					}
+				}
+			}
+
+			// ----- SecondRoughness, SecondRoughnessWeight <- Haziness, against the BSDF's own Roughness
+			{
+				const FIRValue Second = ValueOfPin(Self, TEXT("SecondRoughness"));
+				const FIRValue Weight = ValueOfPin(Self, TEXT("SecondRoughnessWeight"));
+				const FIRValue Roughness = ValueOfPin(Self, TEXT("Roughness"));
+				const FIRNode* Conversion = Raise.NodeOf(Second);
+				if (Conversion && Weight.IsValid() && Second.Node == Weight.Node && Second.Output == 0 && Weight.Output == 1
+					&& Raise.IsEngineClass(*Conversion, TEXT("MaterialExpressionSubstrateHazinessToSecondaryRoughness"))
+					&& Conversion->Properties.IsEmpty()
+					&& Raise.FanOutOf(Second) == 2
+					&& HasOnlyInputs(*Conversion, { TEXT("BaseRoughness"), TEXT("Haziness") })
+					&& !HasPin(TEXT("Haziness")))
+				{
+					const FIRValue Haziness = ValueOfPin(*Conversion, TEXT("Haziness"));
+					const FIRValue BaseRoughness = ValueOfPin(*Conversion, TEXT("BaseRoughness"));
+					// The sugar reads the call's own Roughness, and asks for one.
+					if (Haziness.IsValid() && Roughness.IsValid() && BaseRoughness == Roughness)
+					{
+						RemoveInputs(Self, { TEXT("SecondRoughness"), TEXT("SecondRoughnessWeight") });
+						Self.Inputs.Add({ FString(TEXT("Haziness")), Haziness });
+						bChanged = true;
+					}
+				}
+			}
+
+			// ----- SSSMFP <- Transmittance [, Thickness]
+			{
+				const FIRValue Mfp = ValueOfPin(Self, TEXT("SSSMFP"));
+				const FIRNode* Conversion = Raise.NodeOf(Mfp);
+				if (Conversion && Mfp.Output == 0
+					&& Raise.IsEngineClass(*Conversion, TEXT("MaterialExpressionSubstrateTransmittanceToMFP"))
+					&& Conversion->Properties.IsEmpty()
+					&& Raise.FanOutOf(Mfp) == 1
+					&& HasOnlyInputs(*Conversion, { TEXT("TransmittanceColor"), TEXT("Thickness") })
+					&& !HasPin(TEXT("Transmittance")) && !HasPin(TEXT("Thickness")))
+				{
+					const FIRValue Transmittance = ValueOfPin(*Conversion, TEXT("TransmittanceColor"));
+					const FIRValue Thickness = ValueOfPin(*Conversion, TEXT("Thickness"));
+					if (Transmittance.IsValid())
+					{
+						RemoveInputs(Self, { TEXT("SSSMFP") });
+						Self.Inputs.Add({ FString(TEXT("Transmittance")), Transmittance });
+						if (Thickness.IsValid()) { Self.Inputs.Add({ FString(TEXT("Thickness")), Thickness }); }
+						bChanged = true;
+					}
+				}
+			}
+
+			if (bChanged)
+			{
+				Self.DedupeKey.Reset();
+				Raise.Recount();
+			}
+			return bChanged;
+		}
+
+		/**
+		 * Sugar S1: Substrate.Add, Weight and HorizontalMixing with every pin wired and nothing set -- parameter blending
+		 * is a property, and a node that has it keeps its call -- are `A + B`, `A * w` and `lerp(A, B, t)`. Rewritten as
+		 * the core op of that spelling, typed Substrate: the binder sends an operator over a Substrate value back to
+		 * the node (LangBinderSubstrate.cpp), so the text compiles to the node it was read from.
+		 */
+		static bool TryRaiseSubstrateOperator(FRaiseGraph& Raise, const int32 NodeIndex)
+		{
+			const FIRNode& Self = Raise.Graph.Nodes[NodeIndex];
+			if (!Raise.ClassOf(Self) || !Self.Properties.IsEmpty()
+				|| Self.Outputs.Num() != 1 || Self.Outputs[0].Kind != IR::EIRTypeKind::Substrate)
+			{
+				return false;
+			}
+
+			if (Raise.IsEngineClass(Self, TEXT("MaterialExpressionSubstrateAdd")) && HasOnlyInputs(Self, { TEXT("A"), TEXT("B") }))
+			{
+				const FIRValue A = ValueOfPin(Self, TEXT("A"));
+				const FIRValue B = ValueOfPin(Self, TEXT("B"));
+				if (A.IsValid() && B.IsValid())
+				{
+					Raise.RewriteAsCoreOp(NodeIndex, EIROp::Add, { A, B }, FIRType::Substrate());
+					return true;
+				}
+			}
+			else if (Raise.IsEngineClass(Self, TEXT("MaterialExpressionSubstrateWeight")) && HasOnlyInputs(Self, { TEXT("A"), TEXT("Weight") }))
+			{
+				const FIRValue A = ValueOfPin(Self, TEXT("A"));
+				const FIRValue Weight = ValueOfPin(Self, TEXT("Weight"));
+				if (A.IsValid() && Weight.IsValid())
+				{
+					Raise.RewriteAsCoreOp(NodeIndex, EIROp::Multiply, { A, Weight }, FIRType::Substrate());
+					return true;
+				}
+			}
+			else if (Raise.IsEngineClass(Self, TEXT("MaterialExpressionSubstrateHorizontalMixing"))
+				&& HasOnlyInputs(Self, { TEXT("Background"), TEXT("Foreground"), TEXT("Mix") }))
+			{
+				const FIRValue Background = ValueOfPin(Self, TEXT("Background"));
+				const FIRValue Foreground = ValueOfPin(Self, TEXT("Foreground"));
+				const FIRValue Mix = ValueOfPin(Self, TEXT("Mix"));
+				if (Background.IsValid() && Foreground.IsValid() && Mix.IsValid())
+				{
+					Raise.RewriteAsCoreOp(NodeIndex, EIROp::Lerp, { Background, Foreground, Mix }, FIRType::Substrate());
+					return true;
+				}
+			}
+			return false;
+		}
+
+		static bool RaiseSubstrateSugar(FRaiseGraph& Raise)
+		{
+			if (!Raise.Catalog)
+			{
+				return false;
+			}
+			bool bChanged = false;
+			for (int32 NodeIndex = 0; NodeIndex < Raise.Graph.Nodes.Num(); ++NodeIndex)
+			{
+				// The arguments first: they are read off a BSDF, which no operator rule touches.
+				bChanged |= TryRaiseSubstrateArguments(Raise, NodeIndex);
+				bChanged |= TryRaiseSubstrateOperator(Raise, NodeIndex);
+			}
+			return bChanged;
+		}
+
 		static bool RaiseGraphOnce(FRaiseGraph& Raise)
 		{
 			bool bChanged = false;
@@ -595,7 +835,7 @@ namespace UE::DreamShader::Lang
 		}
 	}
 
-	void RaiseDreamShaderIR(IR::FIRModule& Module, FLangDiagnosticSink& Diagnostics)
+	void RaiseDreamShaderIR(IR::FIRModule& Module, FLangDiagnosticSink& Diagnostics, const IR::FBuiltinCatalog* Catalog)
 	{
 		bool bAnyChange = false;
 		for (IR::FIRProduct& Product : Module.Products)
@@ -612,6 +852,10 @@ namespace UE::DreamShader::Lang
 			{
 				bAnyChange = true;
 			}
+
+			// Last, and once: the core ops it makes are typed Substrate, and no rule above is about those.
+			Raise.Catalog = Catalog;
+			bAnyChange |= DecompileRaise::RaiseSubstrateSugar(Raise);
 		}
 
 		if (!bAnyChange)

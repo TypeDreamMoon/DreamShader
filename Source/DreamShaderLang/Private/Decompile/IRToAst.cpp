@@ -1482,7 +1482,10 @@ namespace UE::DreamShader::Lang::DecompileAst
 		}
 
 		const bool bBackend = Options.bEmitBackend || Material->Backend != Options.DefaultBackend;
-		if (Material->Settings.Num() == 0 && !bBackend)
+		// `Substrate = Bridge | Native` (sugar S4) is no setting of the asset: it says how the file is to be read, and a
+		// file that says nothing reads as Legacy.
+		const bool bSubstrateMode = Material->SubstrateMode != IR::EIRSubstrateMode::Legacy;
+		if (Material->Settings.Num() == 0 && !bBackend && !bSubstrateMode)
 		{
 			return;
 		}
@@ -1501,6 +1504,10 @@ namespace UE::DreamShader::Lang::DecompileAst
 		if (bBackend)
 		{
 			AddPragmaArgument(*Pragma, TEXT("Backend"), IR::LexToString(Material->Backend));
+		}
+		if (bSubstrateMode)
+		{
+			AddPragmaArgument(*Pragma, TEXT("Substrate"), IR::LexToString(Material->SubstrateMode));
 		}
 		AddDeclaration(MoveTemp(Pragma), /* bBlankLineBefore */ true);
 	}

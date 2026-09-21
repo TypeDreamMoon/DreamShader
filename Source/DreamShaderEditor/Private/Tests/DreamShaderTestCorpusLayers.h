@@ -494,7 +494,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 
 		// Raise works in place, and the caller still needs what it lowered.
 		UE::DreamShader::IR::FIRModule Working = Module;
-		RaiseDreamShaderIR(Working, Diagnostics);
+		RaiseDreamShaderIR(Working, Diagnostics, &GetDreamShaderTestBuiltinCatalog());
 
 		const TUniquePtr<FModule> Ast = BuildDreamShaderAstFromIR(Working, GetDreamShaderTestBuiltinCatalog(), Options, Diagnostics);
 		if (!Ast.IsValid() || Diagnostics.HasErrors())

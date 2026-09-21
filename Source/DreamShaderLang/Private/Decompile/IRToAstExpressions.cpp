@@ -1015,7 +1015,11 @@ namespace UE::DreamShader::Lang::DecompileAst
 		}
 		const IR::FCatalogExpression& Class = Catalog.Expressions[Node.CatalogIndex];
 
-		TUniquePtr<FCallExpr> Call = MakeCallExpr(MakeNamespaceCallee(Class.Namespace.IsEmpty() ? FString(TEXT("UE")) : Class.Namespace, Class.ShortName));
+		// A Substrate class goes by the name its sources use -- `Substrate.Slab`, the first alias the catalog lists for it --
+		// and not by the reflected one (`SubstrateSlabBSDF`), which is the engine's. Both resolve to the same entry.
+		const bool bSubstrateClass = Class.Namespace.Equals(TEXT("Substrate"), ESearchCase::CaseSensitive);
+		const FString& CalleeName = (bSubstrateClass && Class.Aliases.Num() > 0) ? Class.Aliases[0] : Class.ShortName;
+		TUniquePtr<FCallExpr> Call = MakeCallExpr(MakeNamespaceCallee(Class.Namespace.IsEmpty() ? FString(TEXT("UE")) : Class.Namespace, CalleeName));
 
 		// Pins in the class's own order, every one by name: a positional argument means whatever the catalog's
 		// canonical order says this year.

@@ -91,6 +91,12 @@ namespace UE::DreamShader::Lang
 		const FIRToAstOptions& Options,
 		FLangDiagnosticSink& Diagnostics);
 
-	/** Raises the emitter's lowered shapes back to source-level ones, in place (research-decompiler.md section 3.9). */
-	DREAMSHADERLANG_API void RaiseDreamShaderIR(IR::FIRModule& Module, FLangDiagnosticSink& Diagnostics);
+	/**
+	 * Raises the emitter's lowered shapes back to source-level ones, in place (research-decompiler.md section 3.9).
+	 * With a catalog it also reads the Substrate sugar back: `A + B`, `A * w` and `lerp(A, B, t)` for the three
+	 * composition nodes, and `BaseColor = / Metallic = / Haziness = / Transmittance =` for a conversion node that feeds
+	 * one BSDF and nothing else. Both are graph-exact, like every other rule; the catalog is what says which engine class
+	 * a node is, whatever short name it goes by.
+	 */
+	DREAMSHADERLANG_API void RaiseDreamShaderIR(IR::FIRModule& Module, FLangDiagnosticSink& Diagnostics, const IR::FBuiltinCatalog* Catalog = nullptr);
 }
