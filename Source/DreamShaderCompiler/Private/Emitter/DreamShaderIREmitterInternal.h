@@ -70,6 +70,17 @@ namespace UE::DreamShader::Editor::Compiler
 	{
 		UMaterialExpression* Expression = nullptr;
 		TArray<int32> OutputIndices;
+		/**
+		 * Where set, the expression that publishes a slot instead of Expression, OutputIndices holding ITS output index.
+		 * Substrate sugar S8: BreakMaterialAttributes has no FrontMaterial pin, so a material that came through a pin gives
+		 * its Substrate value through a GetMaterialAttributes beside the Break. Empty for every other node.
+		 */
+		TArray<UMaterialExpression*> SlotExpressions;
+
+		UMaterialExpression* ExpressionOfSlot(const int32 Slot) const
+		{
+			return SlotExpressions.IsValidIndex(Slot) && SlotExpressions[Slot] ? SlotExpressions[Slot] : Expression;
+		}
 	};
 
 	/**
@@ -169,6 +180,8 @@ namespace UE::DreamShader::Editor::Compiler
 		void RegisterNode(int32 NodeIndex, const IR::FIRNode& Node, UMaterialExpression* Expression);
 		/** As RegisterNode, with an explicit IR output slot -> engine output index map. */
 		void RegisterNode(int32 NodeIndex, const IR::FIRNode& Node, UMaterialExpression* Expression, TArray<int32>&& OutputIndices);
+		/** Whether any node of the graph reads this output slot: a slot nobody reads costs no expression. */
+		bool IsSlotRead(int32 NodeIndex, int32 Slot) const;
 		/** Maps the node's OutputNames onto the expression's own outputs by name; the map is identity when a name has no match. */
 		void RegisterNodeWithNamedOutputs(int32 NodeIndex, const IR::FIRNode& Node, UMaterialExpression* Expression);
 		/** Looks up an already-emitted value. Raises DSH8225 and answers false when the walk order was wrong. */

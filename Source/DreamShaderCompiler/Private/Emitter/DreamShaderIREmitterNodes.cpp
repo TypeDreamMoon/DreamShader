@@ -1564,11 +1564,29 @@ namespace UE::DreamShader::Editor::Compiler
 					: FString::FromInt(Value.Output))));
 		}
 
-		OutValue.Expression = Emitted.Expression;
+		OutValue.Expression = Emitted.ExpressionOfSlot(Value.Output);
 		OutValue.OutputIndex = Emitted.OutputIndices.IsValidIndex(Value.Output)
 			? Emitted.OutputIndices[Value.Output]
 			: Value.Output;
 		return true;
+	}
+
+	bool FIREmitter::IsSlotRead(const int32 NodeIndex, const int32 Slot) const
+	{
+		TArray<IR::FIRValue> Values;
+		for (const IR::FIRNode& Reader : Product.Graph.Nodes)
+		{
+			Values.Reset();
+			IR::FIRGraph::CollectInputValues(Reader, Values);
+			for (const IR::FIRValue& Value : Values)
+			{
+				if (Value.Node == NodeIndex && Value.Output == Slot)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	bool FIREmitter::TryGetEmittedValue(const IR::FIRValue Value, FEmittedValue& OutValue) const
@@ -1588,7 +1606,7 @@ namespace UE::DreamShader::Editor::Compiler
 			return false;
 		}
 
-		OutValue.Expression = Emitted.Expression;
+		OutValue.Expression = Emitted.ExpressionOfSlot(Value.Output);
 		OutValue.OutputIndex = EngineIndex;
 		return true;
 	}

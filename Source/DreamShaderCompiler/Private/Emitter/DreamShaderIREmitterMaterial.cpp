@@ -22,6 +22,7 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialAttributeDefinitionMap.h"
 #include "Materials/MaterialExpressionBreakMaterialAttributes.h"
+#include "Materials/MaterialExpressionGetMaterialAttributes.h"
 #include "Materials/MaterialExpressionMakeMaterialAttributes.h"
 #include "Materials/MaterialExpressionSetMaterialAttributes.h"
 
@@ -74,6 +75,18 @@ namespace UE::DreamShader::Editor::Compiler
 			return Fail(TEXT("DSH8214"), Node, LOCTEXT("MakeAttributesFailed", "Failed to create a MakeMaterialAttributes node."));
 		}
 
+		// What Make has no pin for. Its pins are a fixed list of members and the attribute table is longer than it --
+		// FrontMaterial and SurfaceThickness, above all -- while SetMaterialAttributes takes any attribute by its id. So
+		// those are set on top of the Make, and the pair is this node (Substrate sugar S8: a blend's result starts empty,
+		// which makes it a Make, and `R.FrontMaterial = ...` is the first thing a Substrate blend writes).
+		struct FUnpinnedAttribute
+		{
+			const IR::FIRInput* Input = nullptr;
+			EMaterialProperty Property = MP_MAX;
+			FEmittedValue Value;
+		};
+		TArray<FUnpinnedAttribute> Unpinned;
+
 		TArray<FString> PinCandidates;
 		for (const IR::FIRInput& Input : Node.Inputs)
 		{
@@ -105,13 +118,49 @@ namespace UE::DreamShader::Editor::Compiler
 
 			if (!bConnected)
 			{
-				return Fail(TEXT("DSH8212"), Node, FText::Format(
-					LOCTEXT("MakeAttributesNoPin", "MakeMaterialAttributes has no pin for the attribute '{0}'."),
-					FText::FromString(Input.Pin)));
+				// The whole set is not an attribute OF a set, and Set has no pin for it either.
+				if (Property == MP_MaterialAttributes || Property == MP_MAX)
+				{
+					return Fail(TEXT("DSH8212"), Node, FText::Format(
+						LOCTEXT("MakeAttributesNoPin", "MakeMaterialAttributes has no pin for the attribute '{0}'."),
+						FText::FromString(Input.Pin)));
+				}
+				Unpinned.Add({ &Input, Property, Value });
 			}
 		}
 
-		RegisterNode(NodeIndex, Node, Make);
+		if (Unpinned.IsEmpty())
+		{
+			RegisterNode(NodeIndex, Node, Make);
+			return true;
+		}
+
+		auto* Set = Cast<UMaterialExpressionSetMaterialAttributes>(
+			CreateExpression(UMaterialExpressionSetMaterialAttributes::StaticClass(), Node));
+		if (!Set)
+		{
+			return Fail(TEXT("DSH8214"), Node, LOCTEXT("MakeAttributesSetFailed", "Failed to create the SetMaterialAttributes node that carries what MakeMaterialAttributes has no pin for."));
+		}
+		if (!Set->Inputs.IsValidIndex(0))
+		{
+			Set->Inputs.Add(FExpressionInput());
+		}
+		FEmittedValue MadeValue;
+		MadeValue.Expression = Make;
+		ConnectValueToInput(Set->Inputs[0], MadeValue);
+
+		for (const FUnpinnedAttribute& Attribute : Unpinned)
+		{
+			if (!Private::ConnectDreamShaderSetMaterialAttributeInput(Set, Attribute.Property, Attribute.Value.Expression, Attribute.Value.OutputIndex))
+			{
+				return Fail(TEXT("DSH8212"), Node, FText::Format(
+					LOCTEXT("MakeAttributesNoPinNorSet", "MakeMaterialAttributes has no pin for the attribute '{0}', and SetMaterialAttributes could not take it either."),
+					FText::FromString(Attribute.Input->Pin)));
+			}
+		}
+
+		// The Set is the value: whoever reads this node reads the material with everything on it.
+		RegisterNode(NodeIndex, Node, Set);
 		return true;
 	}
 
@@ -260,7 +309,59 @@ namespace UE::DreamShader::Editor::Compiler
 			OutputIndices.Add(Break->Outputs.IsValidIndex(EngineIndex) ? EngineIndex : INDEX_NONE);
 		}
 
+		// Substrate sugar S8. What Break has no pin for and somebody reads -- `Attrs.FrontMaterial`, above all -- comes
+		// from a GetMaterialAttributes on the same material: that node publishes any attribute it is asked for, and it
+		// carries a Substrate value through, which is what lets a layer or a blend work on FrontMaterial. One node for
+		// all such slots, made only when one of them is read.
+		TArray<UMaterialExpression*> SlotExpressions;
+		UMaterialExpressionGetMaterialAttributes* Get = nullptr;
+		for (int32 Slot = 0; Slot < Node.OutputNames.Num(); ++Slot)
+		{
+			if (OutputIndices[Slot] != INDEX_NONE || !IsSlotRead(NodeIndex, Slot))
+			{
+				continue;
+			}
+			EMaterialProperty Property = MP_MAX;
+			if (!Context.Catalog
+				|| !TryResolveMaterialPropertyFromCatalog(*Context.Catalog, Node.OutputNames[Slot], Property)
+				|| Property == MP_MaterialAttributes
+				|| Property == MP_MAX)
+			{
+				continue;
+			}
+
+			if (!Get)
+			{
+				Get = Cast<UMaterialExpressionGetMaterialAttributes>(
+					CreateExpression(UMaterialExpressionGetMaterialAttributes::StaticClass(), Node));
+				if (!Get)
+				{
+					return Fail(TEXT("DSH8214"), Node, LOCTEXT("GetAttributesFailed", "Failed to create a GetMaterialAttributes node."));
+				}
+				ConnectValueToInput(Get->MaterialAttributes, BaseValue);
+				SlotExpressions.Init(nullptr, Node.OutputNames.Num());
+			}
+
+			// What UMaterialExpressionGetMaterialAttributes::CreateOrGetOutputAttribute does, spelled out: that function is
+			// not in every engine this plugin builds against. Output 0 is the material itself, so an attribute's output
+			// index is its place in AttributeGetTypes plus one.
+			const FGuid AttributeId = FMaterialAttributeDefinitionMap::GetID(Property);
+			int32 GetTypesIndex = Get->AttributeGetTypes.IndexOfByKey(AttributeId);
+			if (GetTypesIndex == INDEX_NONE)
+			{
+				GetTypesIndex = Get->AttributeGetTypes.Add(AttributeId);
+				const FString AttributeName = FMaterialAttributeDefinitionMap::GetDisplayNameForMaterial(AttributeId, Get->Material).ToString();
+				Get->Outputs.Add(FExpressionOutput(*AttributeName, 0, 0, 0, 0, 0));
+			}
+			SlotExpressions[Slot] = Get;
+			OutputIndices[Slot] = GetTypesIndex + 1;
+		}
+
 		RegisterNode(NodeIndex, Node, Break, MoveTemp(OutputIndices));
+		if (Get)
+		{
+			EmittedNodes[NodeIndex].SlotExpressions = MoveTemp(SlotExpressions);
+		}
 		return true;
 	}
 
