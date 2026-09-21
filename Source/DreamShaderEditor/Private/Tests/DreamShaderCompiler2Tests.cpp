@@ -17,6 +17,7 @@
 // applies the registered normalisations the live comparison used to apply here.
 
 #include "DreamShaderTestCommon.h"
+#include "DreamShaderTestCorpusLayers.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -45,6 +46,7 @@
 #include "Materials/MaterialExpression.h"
 #include "Materials/MaterialExpressionComment.h"
 #include "Materials/MaterialExpressionComponentMask.h"
+#include "Materials/MaterialExpressionConstant.h"
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialFunctionMaterialLayer.h"
@@ -1197,6 +1199,187 @@ bool FDreamShaderCompiler2RegionsAndDescriptionsTest::RunTest(const FString& Par
 		}
 		TestTrue(TEXT("the function has its boxes"), Boxes >= 1);
 		TestTrue(TEXT("titled after its region"), bFoundMaths);
+	}
+	return true;
+}
+
+// The Blocks layout style on a live graph: the reroutes the layout counts on are made, the constant two boxes share is
+// repeated, no wire runs from one box into another, and what the decompiler reads back is still the source's graph.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCompiler2BlocksLayoutTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Smoke.BlocksLayout",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderCompiler2BlocksLayoutTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	// The project's setting for the length of this test, put back whatever happens.
+	struct FScopedLayoutStyle
+	{
+		EDreamShaderGraphLayoutStyle Saved;
+		explicit FScopedLayoutStyle(const EDreamShaderGraphLayoutStyle Style)
+			: Saved(GetDefault<UDreamShaderSettings>()->GraphLayoutStyle)
+		{
+			GetMutableDefault<UDreamShaderSettings>()->GraphLayoutStyle = Style;
+		}
+		~FScopedLayoutStyle()
+		{
+			GetMutableDefault<UDreamShaderSettings>()->GraphLayoutStyle = Saved;
+		}
+	};
+	FScopedLayoutStyle LayoutStyle(EDreamShaderGraphLayoutStyle::Blocks);
+
+	static const TCHAR* const Source = TEXT(
+		"#pragma material(ShadingModel = Unlit)\n"
+		"\n"
+		"uniform float Gain = 2;\n"
+		"uniform float3 Tint = float3(1, 0.5, 0.25);\n"
+		"\n"
+		"export void M_C2Blocks(inout material m)\n"
+		"{\n"
+		"    #pragma region Base\n"
+		"    float3 Albedo = Tint * 0.5;\n"
+		"    #pragma endregion\n"
+		"    #pragma region Glow\n"
+		"    float3 Lit = Albedo + Gain;\n"
+		"    float Half = Gain * 0.5;\n"
+		"    #pragma endregion\n"
+		"    m.EmissiveColor = Lit * Half;\n"
+		"}\n");
+
+	const FString AssetName = TEXT("M_C2Blocks");
+	FDreamShaderCompile2Fixture Fixture(AssetName, TEXT("Compiler2"));
+	UMaterial* Material = CompileSmokeFixture<UMaterial>(*this, Fixture, Source, AssetName);
+	if (!Material)
+	{
+		return false;
+	}
+
+	// ----- the reroute for the value that crosses, and the constant written twice
+	const UMaterialExpressionNamedRerouteDeclaration* AlbedoDeclaration = nullptr;
+	int32 AlbedoUsages = 0;
+	int32 HalfConstants = 0;
+	for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+	{
+		if (const auto* Declaration = Cast<UMaterialExpressionNamedRerouteDeclaration>(Expression))
+		{
+			if (Declaration->Name == FName(TEXT("DS_Albedo")))
+			{
+				AlbedoDeclaration = Declaration;
+			}
+		}
+		else if (const auto* Constant = Cast<UMaterialExpressionConstant>(Expression))
+		{
+			HalfConstants += FMath::IsNearlyEqual(Constant->R, 0.5f) ? 1 : 0;
+		}
+	}
+	if (TestNotNull(TEXT("Albedo leaves its box through a reroute named after it"), AlbedoDeclaration))
+	{
+		TestTrue(TEXT("...fed by the node that makes it"), AlbedoDeclaration->Input.Expression != nullptr);
+		for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+		{
+			const auto* Usage = Cast<UMaterialExpressionNamedRerouteUsage>(Expression);
+			AlbedoUsages += Usage && Usage->Declaration == AlbedoDeclaration ? 1 : 0;
+		}
+		TestEqual(TEXT("...and read through one usage in the box that reads it"), AlbedoUsages, 1);
+	}
+	TestEqual(TEXT("the 0.5 both boxes use is written in each"), HalfConstants, 2);
+
+	// ----- no wire from one box into another: a box is a generated comment, and a node is in the innermost one around it
+	TArray<const UMaterialExpressionComment*> Boxes;
+	for (const TObjectPtr<UMaterialExpressionComment>& Comment : Material->GetEditorComments())
+	{
+		if (Comment && Comment->Text.StartsWith(TEXT("DreamShader: ")))
+		{
+			Boxes.Add(Comment.Get());
+		}
+	}
+	TestTrue(TEXT("the two regions and the run after them are boxes"), Boxes.Num() >= 3);
+	const auto BoxOf = [&Boxes](const UMaterialExpression* Expression) -> const UMaterialExpressionComment*
+	{
+		const UMaterialExpressionComment* Best = nullptr;
+		for (const UMaterialExpressionComment* Box : Boxes)
+		{
+			const bool bInside = Expression->MaterialExpressionEditorX >= Box->MaterialExpressionEditorX
+				&& Expression->MaterialExpressionEditorY >= Box->MaterialExpressionEditorY
+				&& Expression->MaterialExpressionEditorX < Box->MaterialExpressionEditorX + Box->SizeX
+				&& Expression->MaterialExpressionEditorY < Box->MaterialExpressionEditorY + Box->SizeY;
+			if (bInside && (!Best || Box->SizeX * Box->SizeY < Best->SizeX * Best->SizeY))
+			{
+				Best = Box;
+			}
+		}
+		return Best;
+	};
+	int32 Wires = 0;
+	for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+	{
+		if (!Expression)
+		{
+			continue;
+		}
+		for (int32 InputIndex = 0; ; ++InputIndex)
+		{
+			const FExpressionInput* Input = Expression->GetInput(InputIndex);
+			if (!Input)
+			{
+				break;
+			}
+			if (!Input->Expression)
+			{
+				continue;
+			}
+			++Wires;
+			const UMaterialExpressionComment* From = BoxOf(Input->Expression);
+			const UMaterialExpressionComment* To = BoxOf(Expression);
+			// The usages beside the material's node stand in no box, and neither does what they feed.
+			if (From && To)
+			{
+				TestTrue(FString::Printf(TEXT("a wire into '%s' starts in the same box ('%s' -> '%s')"), *Expression->GetName(), *From->Text, *To->Text), From == To);
+			}
+		}
+	}
+	TestTrue(TEXT("the graph has wires to check"), Wires >= 5);
+
+	// ----- and the decompiler still reads the source's graph: reroutes are looked through, the two constants are one
+	FString LoadError;
+	UObject* Product = LoadDreamShaderDecompileSourceProduct(Fixture.GetSourceFilePath(), LoadError);
+	if (!TestNotNull(FString::Printf(TEXT("the product loads for the decompile (%s)"), *LoadError), Product))
+	{
+		return false;
+	}
+	::UE::DreamShader::Editor::FDreamShaderDecompileRequest Request;
+	Request.Asset = Product;
+	Request.Format = ::UE::DreamShader::Editor::EDreamShaderDecompileFormat::Dss;
+	Request.SourceFilePath = Fixture.GetSourceFilePath();
+	const ::UE::DreamShader::Editor::FDreamShaderDecompileResult Decompiled = RunDreamShaderDecompileRequest(Request);
+	if (!TestTrue(FString::Printf(TEXT("the decompile succeeds (%s)"), *DescribeDreamShaderDecompileFailure(Decompiled)), Decompiled.bSucceeded))
+	{
+		return false;
+	}
+	TestFalse(TEXT("the text names no layout reroute"), Decompiled.SourceText.Contains(TEXT("DS_Albedo")));
+
+	FDreamShaderIRRunOptions RunOptions;
+	FDreamShaderIRRun Original;
+	FDreamShaderIRRun ReadBack;
+	RunDreamShaderIRPipeline(TEXT("M_C2Blocks.dss"), Source, RunOptions, Original);
+	RunDreamShaderIRPipeline(TEXT("M_C2Blocks.dss"), Decompiled.SourceText, RunOptions, ReadBack);
+	if (TestTrue(FString::Printf(TEXT("both texts lower (%s | %s)"), *Original.ErrorText(), *ReadBack.ErrorText()), Original.Succeeded() && ReadBack.Succeeded()))
+	{
+		UE::DreamShader::IR::FIRCompareOptions CompareOptions;
+		FString Difference;
+		const bool bSame = UE::DreamShader::IR::AreDreamShaderIRModulesEquivalent(*Original.Module, *ReadBack.Module, CompareOptions, Difference);
+		TestTrue(FString::Printf(TEXT("the decompiled text is the source's graph (%s)"), *Difference), bSame);
+		if (!bSame)
+		{
+			AddInfo(Decompiled.SourceText);
+		}
 	}
 	return true;
 }
