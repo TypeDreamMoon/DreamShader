@@ -2,20 +2,25 @@
 #include "DreamShaderDiagnostic.h"
 
 #include "Bridge/DreamShaderPreviewWebSocketServer.h"
-#include "DreamShaderCompileService.h"
-#include "Diagnostics/DreamShaderTextWireUtils.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
-// The provenance helpers behind the Revert/Adopt/Detach actions, and the source loader + parser the
-// Adopt action uses to refuse a file that declares more than one asset.
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.h"
-#include "DreamShaderParser.h"
+#include "DreamShaderCompilerInterface.h"
+#include "DreamShaderTextWireUtils.h"
+#include "DreamShaderCompilerService.h"
+// The provenance helpers behind the Revert/Adopt/Detach actions, and product resolution, which the Adopt action
+// uses to refuse a file that declares more than one asset.
+#include "DreamShaderGeneratedAssets.h"
+#include "DreamShaderCompilePipeline.h"
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Decompiler/DreamShaderGraphDecompiler.h"
-#include "Compile/DreamShaderEditorCompileAdapter.h"
+// Which decompiler serves which format, for the Export actions and the `decompile` request.
+#include "Tools/DreamShaderDecompileTools.h"
+#include "DreamShaderCompilerInterface.h"
 // The reveal-node request handler and its response writer (node <-> source navigation).
-#include "Compiler/DreamShaderSourceNavigation.h"
-#include "DependencyGraph/DreamShaderDependencyGraphService.h"
+#include "Navigation/DreamShaderSourceNavigation.h"
+#include "DreamShaderDependencyGraphService.h"
+// CollectInstanceDependents: the `.dsi` sources to rebuild after the source of their parent compiled.
+#include "DreamShaderProductIndex.h"
+// MigrateDreamShaderSource, behind the `migrate` request.
+#include "Commandlet/DreamShaderMigrate.h"
 // GetDreamShaderDefineRevision, polled in Tick so a define change invalidates the generated materials.
 #include "DreamShaderDefineResolution.h"
 #include "DreamShaderModule.h"
@@ -23,7 +28,7 @@
 #include "DreamShaderVersionCompat.h"
 #include "Preview/DreamShaderPreviewRenderer.h"
 #include "Provenance/DreamShaderProvenanceActions.h"
-#include "SourceFiles/DreamShaderSourceFileUtils.h"
+#include "DreamShaderSourceFileUtils.h"
 #include "UI/DreamShaderMaterialBrowser.h"
 #include "VirtualFunction/DreamShaderVirtualFunctionService.h"
 #include "VirtualFunction/DreamShaderVirtualFunctionSyncService.h"
@@ -60,6 +65,7 @@
 #include "Materials/MaterialFunction.h"
 #include "Materials/MaterialFunctionMaterialLayer.h"
 #include "Materials/MaterialFunctionMaterialLayerBlend.h"
+#include "Materials/MaterialInstanceConstant.h"
 #include "MaterialEditorContext.h"
 #include "MaterialShared.h"
 #include "Interfaces/IPluginManager.h"
@@ -263,6 +269,82 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 			Writer->WriteArrayEnd();
+		}
+
+		/**
+		 * Writes `Responses/<RequestId>.json` for a tool request (`decompile`, `migrate`) in the envelope reveal-node answers
+		 * with: `protocol`, `version`, `requestId`, `ok`, `durationMs`, `message`, the request's own fields, then `diagnostics`
+		 * (each with its `length` when the span has one). No id, no response -- RespondTo's rule.
+		 */
+		void WriteDreamShaderToolResponse(
+			const FString& ResponseDirectory,
+			const FString& RequestId,
+			const bool bOk,
+			const FString& Message,
+			const double DurationMs,
+			TFunctionRef<void(const TSharedRef<TJsonWriter<>>&)> WriteFields,
+			const TArray<::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord>& Records)
+		{
+			if (RequestId.IsEmpty())
+			{
+				return;
+			}
+
+			FString Text;
+			const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Text);
+			Writer->WriteObjectStart();
+			Writer->WriteValue(TEXT("protocol"), BridgeProtocolVersion);
+			Writer->WriteValue(TEXT("version"), 1);
+			Writer->WriteValue(TEXT("requestId"), RequestId);
+			Writer->WriteValue(TEXT("ok"), bOk);
+			Writer->WriteValue(TEXT("durationMs"), static_cast<int32>(DurationMs));
+			Writer->WriteValue(TEXT("message"), Message);
+			WriteFields(Writer);
+
+			Writer->WriteArrayStart(TEXT("diagnostics"));
+			for (const ::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord& Lang2Record : Records)
+			{
+				const FDreamShaderDiagnosticRecord& Record = Lang2Record.Record;
+				Writer->WriteObjectStart();
+				Writer->WriteValue(TEXT("file"), Record.FilePath);
+				Writer->WriteValue(TEXT("line"), FMath::Max(1, Record.Line));
+				Writer->WriteValue(TEXT("column"), FMath::Max(1, Record.Column));
+				if (Lang2Record.Length > 0)
+				{
+					Writer->WriteValue(TEXT("length"), Lang2Record.Length);
+				}
+				Writer->WriteValue(TEXT("severity"), Record.Severity);
+				if (!Record.Code.IsEmpty())
+				{
+					Writer->WriteValue(TEXT("code"), Record.Code);
+				}
+				if (!Record.Stage.IsEmpty())
+				{
+					Writer->WriteValue(TEXT("stage"), Record.Stage);
+				}
+				Writer->WriteValue(TEXT("message"), ToInvariantWireString(Record.Message));
+				Writer->WriteObjectEnd();
+			}
+			Writer->WriteArrayEnd();
+
+			Writer->WriteObjectEnd();
+			Writer->Close();
+
+			WriteFileAtomically(FPaths::Combine(ResponseDirectory, RequestId + TEXT(".json")), Text);
+		}
+
+		/**
+		 * A material function's VirtualFunction definition in its 2.0 spelling: the 1.x block the decompiler builds, read back by
+		 * the legacy front end and printed as an `extern` prototype with `/// @asset`.
+		 */
+		bool BuildDreamShaderVirtualFunctionPrototype(const UMaterialFunction* MaterialFunction, FString& OutPrototype, FString& OutError)
+		{
+			FString LegacyDefinition;
+			if (!BuildGraphDecompilerVirtualFunctionDefinition(MaterialFunction, LegacyDefinition, OutError))
+			{
+				return false;
+			}
+			return FDreamShaderVirtualFunctionService::BuildExternPrototype(MaterialFunction, LegacyDefinition, OutPrototype, OutError);
 		}
 
 	}
@@ -844,14 +926,28 @@ namespace UE::DreamShader::Editor::Private
 				continue;
 			}
 
-			FString Message;
+			::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler();
+			if (!Compiler)
+			{
+				// Only while the engine shuts down or in a target without the compiler module; nothing after
+				// this file could compile either.
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader: the compiler module is not available, so the startup sweep stopped."));
+				++FailCount;
+				break;
+			}
+
 			// Never forced. Forcing was free while an Ephemeral product regenerated regardless of its
 			// build key; it stopped being free once an asset that exists on disk started being rebuilt
 			// AND SAVED as one, because this sweep runs on every editor launch -- it would rewrite every
 			// persisted generated asset each time, for rebuilds the key had already ruled out. The key
 			// is what decides, and it now covers the settings a caller might once have forced past.
-			const bool bSuccess = FMaterialGenerator::GenerateAssetsFromFile(
-				NormalizedPath, Message, /*bForce*/ false, /*bAllowEphemeralThinCustom*/ true);
+			::UE::DreamShader::FDreamShaderCompileRequest Request;
+			Request.SourceFilePath = NormalizedPath;
+			Request.bForce = false;
+			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
+			const ::UE::DreamShader::FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);
+			const FString Message = ToInvariantWireString(Result.Message);
+			const bool bSuccess = Result.bSucceeded;
 			if (bSuccess)
 			{
 				++SuccessCount;
@@ -961,6 +1057,46 @@ namespace UE::DreamShader::Editor::Private
 				TEXT("DreamShader queued %d dependent source file(s) for import '%s'."),
 				SourcesToQueue.Num(),
 				*NormalizedImportPath);
+		}
+	}
+
+	void FDreamShaderEditorBridge::QueueDependentInstances(const FString& SourceFilePath)
+	{
+		const FString NormalizedSourcePath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		// The product index lists `.dss` and `.dsi` products; an instance names a `.dsm` product by path, with no index edge to
+		// follow, so nothing else can have dependents here.
+		if (!UE::DreamShader::IsDreamShaderLang2File(NormalizedSourcePath) && !UE::DreamShader::IsDreamShaderInstanceFile(NormalizedSourcePath))
+		{
+			return;
+		}
+
+		TArray<FString> Dependents;
+		::UE::DreamShader::Editor::Compiler::CollectInstanceDependents(NormalizedSourcePath, Dependents);
+
+		// Not forced: binding runs before the build key's skip, so a parent change the child no longer fits is reported
+		// while an unaffected child costs a bind and nothing more.
+		const double Now = FPlatformTime::Seconds();
+		int32 QueuedCount = 0;
+		for (const FString& Dependent : Dependents)
+		{
+			const FString NormalizedDependent = UE::DreamShader::NormalizeSourceFilePath(Dependent);
+			if (NormalizedDependent.Equals(NormalizedSourcePath, ESearchCase::IgnoreCase))
+			{
+				continue;
+			}
+			PendingFiles.Add(NormalizedDependent, Now);
+			++QueuedCount;
+		}
+
+		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+		if (QueuedCount > 0 && Settings && Settings->bVerboseLogs)
+		{
+			UE_LOG(
+				LogDreamShader,
+				Display,
+				TEXT("DreamShader queued %d instance source(s) whose parent '%s' builds."),
+				QueuedCount,
+				*NormalizedSourcePath);
 		}
 	}
 
@@ -1349,12 +1485,21 @@ namespace UE::DreamShader::Editor::Private
 					RevealResult,
 					(FPlatformTime::Seconds() - StartedAt) * 1000.0);
 			}
+			else if (Action.Equals(TEXT("decompile"), ESearchCase::IgnoreCase))
+			{
+				// Answered in the reveal-node envelope, with the written file and the format beside the message.
+				ServeDecompileRequest(RequestId, *RequestObject, StartedAt);
+			}
+			else if (Action.Equals(TEXT("migrate"), ESearchCase::IgnoreCase))
+			{
+				ServeMigrateRequest(RequestId, *RequestObject, StartedAt);
+			}
 			else
 			{
 				// Never silent. A client that asked for something this build does not have
 				// needs to be told so, not left waiting for a response that is never coming.
 				RespondTo(RequestId, false, FString::Printf(
-					TEXT("Unknown action '%s'. This build understands: ping, recompile, cleanGeneratedShaders, previewMaterial, reveal-node."),
+					TEXT("Unknown action '%s'. This build understands: ping, recompile, cleanGeneratedShaders, previewMaterial, reveal-node, decompile, migrate."),
 					*Action));
 			}
 
@@ -1362,6 +1507,193 @@ namespace UE::DreamShader::Editor::Private
 			BusyAction.Reset();
 			PublishStatus();
 		}
+	}
+
+	void FDreamShaderEditorBridge::ServeDecompileRequest(const FString& RequestId, const FJsonObject& Request, const double StartedAtSeconds)
+	{
+		FString AssetPath;
+		FString OutputFilePath;
+		FString FormatText;
+		FString SourceFilePath;
+		bool bKeepAssetPath = false;
+		bool bReadable = false;
+		Request.TryGetStringField(TEXT("asset"), AssetPath);
+		Request.TryGetStringField(TEXT("out"), OutputFilePath);
+		Request.TryGetStringField(TEXT("format"), FormatText);
+		Request.TryGetStringField(TEXT("sourceFile"), SourceFilePath);
+		Request.TryGetBoolField(TEXT("keepAssetPath"), bKeepAssetPath);
+		Request.TryGetBoolField(TEXT("readable"), bReadable);
+		AssetPath.TrimStartAndEndInline();
+		OutputFilePath.TrimStartAndEndInline();
+		SourceFilePath.TrimStartAndEndInline();
+
+		const TArray<::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord> NoRecords;
+		const auto WriteNoFields = [](const TSharedRef<TJsonWriter<>>&) {};
+
+		::UE::DreamShader::Editor::EDreamShaderDecompileFormat Format = ::UE::DreamShader::Editor::EDreamShaderDecompileFormat::Auto;
+		if (!FormatText.IsEmpty() && !TryParseDreamShaderDecompileFormat(FormatText, Format))
+		{
+			WriteDreamShaderToolResponse(
+				GetResponseDirectory(), RequestId, false,
+				FString::Printf(TEXT("decompile takes format 'dss', 'legacy' or 'auto'; got '%s'."), *FormatText),
+				(FPlatformTime::Seconds() - StartedAtSeconds) * 1000.0, WriteNoFields, NoRecords);
+			return;
+		}
+		if (AssetPath.IsEmpty() && SourceFilePath.IsEmpty())
+		{
+			WriteDreamShaderToolResponse(
+				GetResponseDirectory(), RequestId, false,
+				TEXT("decompile needs a non-empty 'asset', or a 'sourceFile' whose assets to decompile."),
+				(FPlatformTime::Seconds() - StartedAtSeconds) * 1000.0, WriteNoFields, NoRecords);
+			return;
+		}
+
+		const FString NormalizedSourceFile = SourceFilePath.IsEmpty() ? FString() : UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		FString LoadedObjectPath;
+		FString LoadError;
+		UObject* const Asset = AssetPath.IsEmpty()
+			? LoadDreamShaderDecompileSourceProduct(NormalizedSourceFile, LoadError)
+			: LoadDreamShaderDecompileAsset(AssetPath, LoadedObjectPath);
+		if (!Asset)
+		{
+			WriteDreamShaderToolResponse(
+				GetResponseDirectory(), RequestId, false,
+				AssetPath.IsEmpty() ? LoadError : FString::Printf(TEXT("DreamShader could not load asset '%s'."), *AssetPath),
+				(FPlatformTime::Seconds() - StartedAtSeconds) * 1000.0, WriteNoFields, NoRecords);
+			return;
+		}
+
+		::UE::DreamShader::Editor::FDreamShaderDecompileRequest DecompileRequest;
+		DecompileRequest.Asset = Asset;
+		DecompileRequest.OutputFilePath = OutputFilePath.IsEmpty() ? FString() : UE::DreamShader::NormalizeSourceFilePath(OutputFilePath);
+		DecompileRequest.Format = Format;
+		DecompileRequest.bKeepAssetPath = bKeepAssetPath;
+		DecompileRequest.SourceFilePath = NormalizedSourceFile;
+		DecompileRequest.bReadable = bReadable;
+		const ::UE::DreamShader::Editor::FDreamShaderDecompileResult Result = RunDreamShaderDecompileRequest(DecompileRequest);
+
+		TArray<::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord> Records;
+		BuildDreamShaderDecompileDiagnosticRecords(Result, Result.OutputFilePath, Records);
+
+		bool bOk = Result.bSucceeded;
+		FString Message;
+		if (bOk)
+		{
+			FString SaveError;
+			bOk = FDecompiledSourceWriter::Save(Result, SaveError);
+			Message = bOk
+				? FString::Printf(TEXT("Decompiled '%s' to '%s'."), *Asset->GetPathName(), *Result.OutputFilePath)
+				: SaveError;
+		}
+		else
+		{
+			Message = DescribeDreamShaderDecompileFailure(Result);
+		}
+
+		const FString OutputFile = bOk ? Result.OutputFilePath : FString();
+		const FString FormatName = LexDreamShaderDecompileFormat(ResolveDreamShaderDecompileFormat(Format, DecompileRequest.OutputFilePath));
+		WriteDreamShaderToolResponse(
+			GetResponseDirectory(), RequestId, bOk, Message,
+			(FPlatformTime::Seconds() - StartedAtSeconds) * 1000.0,
+			[&OutputFile, &FormatName](const TSharedRef<TJsonWriter<>>& Writer)
+			{
+				if (!OutputFile.IsEmpty())
+				{
+					Writer->WriteValue(TEXT("outputFile"), OutputFile);
+				}
+				Writer->WriteValue(TEXT("format"), FormatName);
+			},
+			Records);
+
+		if (bOk)
+		{
+			UE_LOG(LogDreamShader, Display, TEXT("DreamShader decompile request: %s"), *Message);
+		}
+		else
+		{
+			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader decompile request failed: %s"), *Message);
+		}
+		LastResult = FString::Printf(TEXT("%s (%s)"), bOk ? TEXT("ok") : TEXT("failed"), *Message);
+	}
+
+	void FDreamShaderEditorBridge::ServeMigrateRequest(const FString& RequestId, const FJsonObject& Request, const double StartedAtSeconds)
+	{
+		FString SourceFilePath;
+		bool bCheck = false;
+		Request.TryGetStringField(TEXT("source"), SourceFilePath);
+		Request.TryGetBoolField(TEXT("check"), bCheck);
+		SourceFilePath.TrimStartAndEndInline();
+
+		if (SourceFilePath.IsEmpty())
+		{
+			const TArray<::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord> NoRecords;
+			WriteDreamShaderToolResponse(
+				GetResponseDirectory(), RequestId, false,
+				TEXT("migrate needs a non-empty 'source'."),
+				(FPlatformTime::Seconds() - StartedAtSeconds) * 1000.0,
+				[](const TSharedRef<TJsonWriter<>>&) {},
+				NoRecords);
+			return;
+		}
+
+		// One file, exactly as named: the header-set expansion is the commandlet verb's.
+		FDreamShaderMigrateOptions Options;
+		Options.bCheck = bCheck;
+		FDreamShaderMigrateResult Result;
+		const bool bMigrated = MigrateDreamShaderSource(UE::DreamShader::NormalizeSourceFilePath(SourceFilePath), Options, Result);
+		const bool bOk = bMigrated && Result.bSucceeded;
+
+		TArray<::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord> Records;
+		BuildDreamShaderToolDiagnosticRecords(Result.Diagnostics, Result.SourceFilePath.IsEmpty() ? SourceFilePath : Result.SourceFilePath, Records);
+
+		FString Message;
+		if (!bOk)
+		{
+			Message = Result.Error.IsEmpty()
+				? FString::Printf(TEXT("'%s' was not migrated."), *SourceFilePath)
+				: Result.Error;
+		}
+		else if (bCheck)
+		{
+			Message = FString::Printf(TEXT("Checked '%s': would write '%s'."), *Result.SourceFilePath, *Result.OutputFilePath);
+		}
+		else
+		{
+			Message = Result.BackupFilePath.IsEmpty()
+				? FString::Printf(TEXT("Migrated '%s' to '%s' (no backup)."), *Result.SourceFilePath, *Result.OutputFilePath)
+				: FString::Printf(TEXT("Migrated '%s' to '%s' (backup '%s')."), *Result.SourceFilePath, *Result.OutputFilePath, *Result.BackupFilePath);
+			// Built now rather than a debounce later, like every other file a plugin tool rewrote.
+			RequestRebuildAfterSourceRewrite(TArray<FString>{ Result.OutputFilePath });
+		}
+
+		const FString OutputFile = bOk ? Result.OutputFilePath : FString();
+		const FString BackupFile = bOk ? Result.BackupFilePath : FString();
+		WriteDreamShaderToolResponse(
+			GetResponseDirectory(), RequestId, bOk, Message,
+			(FPlatformTime::Seconds() - StartedAtSeconds) * 1000.0,
+			[&OutputFile, &BackupFile, bCheck](const TSharedRef<TJsonWriter<>>& Writer)
+			{
+				if (!OutputFile.IsEmpty())
+				{
+					Writer->WriteValue(TEXT("outputFile"), OutputFile);
+				}
+				if (!BackupFile.IsEmpty())
+				{
+					Writer->WriteValue(TEXT("backupFile"), BackupFile);
+				}
+				Writer->WriteValue(TEXT("check"), bCheck);
+			},
+			Records);
+
+		if (bOk)
+		{
+			UE_LOG(LogDreamShader, Display, TEXT("DreamShader migrate request: %s"), *Message);
+		}
+		else
+		{
+			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader migrate request failed: %s"), *Message);
+		}
+		LastResult = FString::Printf(TEXT("%s (%s)"), bOk ? TEXT("ok") : TEXT("failed"), *Message);
 	}
 
 	void FDreamShaderEditorBridge::ProcessReadyFiles()
@@ -1451,9 +1783,23 @@ namespace UE::DreamShader::Editor::Private
 		BeginDivergenceRound();
 		ON_SCOPE_EXIT { EndDivergenceRound(); };
 
-		UE::DreamShader::Compiler::FDreamShaderCompileService CompileService(UE::DreamShader::Editor::GetEditorCompileAdapter());
-		const UE::DreamShader::Compiler::FDreamShaderCompileResult Result =
-			CompileService.CompileAssets(SourceFilePath, bForce, UE::DreamShader::Compiler::EThinCustomPersistence::Ephemeral);
+		::UE::DreamShader::FDreamShaderCompileResult Result;
+		bool bCompilerRan = false;
+		if (::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler())
+		{
+			// The interactive path: a ThinCustom product stays Ephemeral until something materializes it.
+			::UE::DreamShader::FDreamShaderCompileRequest Request;
+			Request.SourceFilePath = SourceFilePath;
+			Request.bForce = bForce;
+			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
+			Result = Compiler->CompileAssets(Request);
+			bCompilerRan = true;
+		}
+		else
+		{
+			Result.Message = FText::FromString(FString::Printf(
+				TEXT("%s: the DreamShader compiler module is not available, so nothing was compiled."), *SourceFilePath)); /* I18N-EXEMPT: wire form, parsed as a located message */
+		}
 		OutMessage = ToInvariantWireString(Result.Message);
 		if (Result.bSucceeded)
 		{
@@ -1461,11 +1807,35 @@ namespace UE::DreamShader::Editor::Private
 			UpdateDiagnosticsFile();
 			UE_LOG(LogDreamShader, Display, TEXT("%s"), *OutMessage);
 			ResolvePendingResponses(SourceFilePath, true, OutMessage);
+			// Only on success: an instance of a parent that failed would fail the same way, and a cycle never compiles, so
+			// it can never re-queue itself around.
+			QueueDependentInstances(SourceFilePath);
 			return true;
 		}
 
-		TArray<FDreamShaderDiagnosticRecord> Diagnostics =
-			FDreamShaderDiagnosticsStore::BuildGenerateErrorDiagnostics(SourceFilePath, Result.Message);
+		// The compile's own records: each keeps its DSHnnnn code, stage and severity, and one raised in an included
+		// header stays filed against that header. Re-parsing Message is the fallback for a failure the records do not
+		// explain -- no compiler module, or a refusal worded outside the diagnostics -- where the text is all there is.
+		TArray<FDreamShaderDiagnosticRecord> Diagnostics;
+		TArray<::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord> Lang2Records;
+		const bool bHaveLang2Errors = bCompilerRan
+			&& ::UE::DreamShader::Editor::Compiler::GetDreamShaderLastCompileDiagnostics(SourceFilePath, Lang2Records)
+			&& Lang2Records.ContainsByPredicate([](const ::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord& Lang2Record)
+			{
+				return Lang2Record.Record.Severity == TEXT("error");
+			});
+		if (bHaveLang2Errors)
+		{
+			Diagnostics.Reserve(Lang2Records.Num());
+			for (::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord& Lang2Record : Lang2Records)
+			{
+				Diagnostics.Add(MoveTemp(Lang2Record.Record));
+			}
+		}
+		else
+		{
+			Diagnostics = FDreamShaderDiagnosticsStore::BuildGenerateErrorDiagnostics(SourceFilePath, Result.Message);
+		}
 		ClearDiagnosticsForSourceAndDependencies(SourceFilePath);
 		SetDiagnostics(SourceFilePath, MoveTemp(Diagnostics));
 		UpdateDiagnosticsFile();
@@ -2001,6 +2371,17 @@ namespace UE::DreamShader::Editor::Private
 				FNewToolMenuSectionDelegate::CreateSP(AsShared(), &FDreamShaderEditorBridge::PopulateMaterialInstanceAssetMenu));
 		}
 
+		// A plain material instance: what a `.dsi` builds (and a divergence report names the three answers on), or a
+		// hand-made one to export as a `.dsi`. The Content Browser names its asset menus by exact class, so this entry does
+		// not reach the ThinCustom class above; the populate function still checks.
+		if (UToolMenu* InstanceConstantAssetMenu = UE::ContentBrowser::ExtendToolMenu_AssetContextMenu(UMaterialInstanceConstant::StaticClass()))
+		{
+			FToolMenuSection& Section = InstanceConstantAssetMenu->FindOrAddSection(TEXT("GetAssetActions"));
+			Section.AddDynamicEntry(
+				TEXT("DreamShader.MaterialInstanceConstantAssetActions"),
+				FNewToolMenuSectionDelegate::CreateSP(AsShared(), &FDreamShaderEditorBridge::PopulateMaterialInstanceConstantAssetMenu));
+		}
+
 		if (UToolMenu* MaterialEditorToolbar = UToolMenus::Get()->ExtendMenu(TEXT("AssetEditor.MaterialEditor.ToolBar")))
 		{
 			FToolMenuSection& Section = MaterialEditorToolbar->FindOrAddSection(TEXT("DreamShader"));
@@ -2101,6 +2482,60 @@ namespace UE::DreamShader::Editor::Private
 		PopulateProvenanceActions(ProvenanceSection, Instance);
 	}
 
+	void FDreamShaderEditorBridge::PopulateMaterialInstanceConstantAssetMenu(FToolMenuSection& InSection)
+	{
+		const UContentBrowserAssetContextMenuContext* Context = UContentBrowserAssetContextMenuContext::FindContextWithAssets(InSection);
+		if (!Context || Context->SelectedAssets.Num() != 1)
+		{
+			return;
+		}
+
+		UMaterialInstanceConstant* Instance = Cast<UMaterialInstanceConstant>(Context->SelectedAssets[0].GetAsset());
+		if (!Instance || Instance->IsA<UDreamShaderMaterialInstance>())
+		{
+			return;
+		}
+
+		InSection.AddSubMenu(
+			TEXT("DreamShader.MaterialInstanceConstantActions"),
+			LOCTEXT("DreamShaderMaterialInstanceConstantActionsLabel", "DreamShader"),
+			LOCTEXT("DreamShaderMaterialInstanceConstantActionsTooltip", "DreamShader actions for this material instance."),
+			FNewToolMenuDelegate::CreateSP(
+				AsShared(),
+				&FDreamShaderEditorBridge::PopulateMaterialInstanceConstantDreamShaderMenu,
+				TWeakObjectPtr<UMaterialInstanceConstant>(Instance)),
+			false,
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Settings")));
+	}
+
+	void FDreamShaderEditorBridge::PopulateMaterialInstanceConstantDreamShaderMenu(UToolMenu* InMenu, TWeakObjectPtr<UMaterialInstanceConstant> Instance)
+	{
+		if (!InMenu || !Instance.IsValid())
+		{
+			return;
+		}
+
+		{
+			FToolMenuSection& ProvenanceSection = InMenu->AddSection(
+				TEXT("DreamShader.ProvenanceActions"),
+				LOCTEXT("DreamShaderInstanceConstantProvenanceActionsSection", "Generated Asset"));
+			PopulateProvenanceActions(ProvenanceSection, TWeakObjectPtr<UObject>(Instance.Get()));
+		}
+
+		FToolMenuSection& Section = InMenu->AddSection(
+			TEXT("DreamShader.DecompileActions"),
+			LOCTEXT("DreamShaderInstanceConstantDecompileActionsSection", "Decompiler"));
+		Section.AddMenuEntry(
+			TEXT("DreamShader.ExportMaterialInstanceDSI"),
+			LOCTEXT("DreamShaderExportMaterialInstanceDsiLabel", "Export .dsi"),
+			LOCTEXT("DreamShaderExportMaterialInstanceDsiTooltip", "Decompile this material instance into a .dsi source file: its parent, its instance settings and every parameter that differs from the parent."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Save")),
+			FUIAction(FExecuteAction::CreateSP(
+				AsShared(),
+				&FDreamShaderEditorBridge::ExportMaterialInstanceToDreamShaderFile,
+				Instance)));
+	}
+
 	void FDreamShaderEditorBridge::PopulateMaterialEditorToolbar(FToolMenuSection& InSection)
 	{
 		const UMaterialEditorMenuContext* Context = InSection.FindContext<UMaterialEditorMenuContext>();
@@ -2197,6 +2632,30 @@ namespace UE::DreamShader::Editor::Private
 			LOCTEXT("DreamShaderDetachTooltip", "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset."),
 			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Unlink")),
 			FUIAction(FExecuteAction::CreateStatic(&DetachGeneratedAssetFromDreamShader, Asset)));
+
+		// The two answers to a Tweaked ThinCustom instance (CONTRACT section 2.3). Adopt Tweaks needs a writable `.dss`;
+		// Extract Tweaks writes a new `.dsi` beside the source, or under the project root when that folder is read-only.
+		if (State == EDreamShaderDigestState::Tweaked && IsGeneratedInstanceTweaked(AssetObject))
+		{
+			const bool bCanAdoptTweaks = CanAdoptTweaksIntoSourceDefaults(AssetObject);
+			InSection.AddMenuEntry(
+				TEXT("DreamShader.AdoptTweaksIntoSourceDefaults"),
+				LOCTEXT("DreamShaderAdoptTweaksLabel", "Adopt Tweaks as Source Defaults"),
+				bCanAdoptTweaks
+					? LOCTEXT("DreamShaderAdoptTweaksTooltip", "Write this instance's parameter overrides into the .dss as the defaults of its uniforms, then clear them from the instance. The source is backed up first.")
+					: LOCTEXT("DreamShaderAdoptTweaksUnavailableTooltip", "Only a .dss source under a writable root takes tweaks as uniform defaults; use Extract Tweaks to .dsi instead."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Save")),
+				FUIAction(
+					FExecuteAction::CreateStatic(&AdoptTweaksIntoSourceDefaults, Asset),
+					FCanExecuteAction::CreateLambda([bCanAdoptTweaks]() { return bCanAdoptTweaks; })));
+
+			InSection.AddMenuEntry(
+				TEXT("DreamShader.ExtractTweaksToInstanceSource"),
+				LOCTEXT("DreamShaderExtractTweaksLabel", "Extract Tweaks to .dsi"),
+				LOCTEXT("DreamShaderExtractTweaksTooltip", "Write this instance's parameter overrides into a new .dsi whose parent is this material, compile it, and clear the overrides from this instance."),
+				FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("ClassIcon.MaterialInstanceConstant")),
+				FUIAction(FExecuteAction::CreateStatic(&ExtractTweaksToInstanceSource, Asset)));
+		}
 	}
 
 	void FDreamShaderEditorBridge::PopulateMaterialDreamShaderMenu(UToolMenu* InMenu, TWeakObjectPtr<UMaterial> Material)
@@ -2217,13 +2676,22 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("DreamShader.DecompileActions"),
 			LOCTEXT("DreamShaderDecompileActionsSection", "Decompiler"));
 		Section.AddMenuEntry(
-			TEXT("DreamShader.ExportMaterialDSM"),
-			LOCTEXT("DreamShaderExportMaterialDSMLabel", "Export DSM"),
-			LOCTEXT("DreamShaderExportMaterialDSMTooltip", "Export this Material graph to a DreamShader .dsm source file."),
+			TEXT("DreamShader.ExportMaterialDSS"),
+			LOCTEXT("DreamShaderExportMaterialDssLabel", "Export .dss"),
+			LOCTEXT("DreamShaderExportMaterialDssTooltip", "Decompile this Material graph into a 2.0 DreamShader .dss source file."),
 			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Save")),
 			FUIAction(FExecuteAction::CreateSP(
 				AsShared(),
 				&FDreamShaderEditorBridge::ExportMaterialToDreamShaderFile,
+				Material)));
+		Section.AddMenuEntry(
+			TEXT("DreamShader.ExportMaterialLegacyDSM"),
+			LOCTEXT("DreamShaderExportMaterialLegacyLabel", "Export Legacy .dsm"),
+			LOCTEXT("DreamShaderExportMaterialLegacyTooltip", "Decompile this Material graph into a 1.x .dsm source file, with the 1.x decompiler that is kept through 2.0.x."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Save")),
+			FUIAction(FExecuteAction::CreateSP(
+				AsShared(),
+				&FDreamShaderEditorBridge::ExportMaterialToLegacyDreamShaderFile,
 				Material)));
 	}
 
@@ -2245,13 +2713,22 @@ namespace UE::DreamShader::Editor::Private
 			TEXT("DreamShader.DecompileActions"),
 			LOCTEXT("DreamShaderFunctionDecompileActionsSection", "Decompiler"));
 		DecompileSection.AddMenuEntry(
-			TEXT("DreamShader.ExportFunctionDSF"),
-			LOCTEXT("DreamShaderExportFunctionDSFLabel", "Export DSF"),
-			LOCTEXT("DreamShaderExportFunctionDSFTooltip", "Export this Material Function graph to a DreamShader .dsf source file."),
+			TEXT("DreamShader.ExportFunctionDSS"),
+			LOCTEXT("DreamShaderExportFunctionDssLabel", "Export .dss"),
+			LOCTEXT("DreamShaderExportFunctionDssTooltip", "Decompile this Material Function graph into a 2.0 DreamShader .dss source file."),
 			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Save")),
 			FUIAction(FExecuteAction::CreateSP(
 				AsShared(),
 				&FDreamShaderEditorBridge::ExportMaterialFunctionToDreamShaderFile,
+				MaterialFunction)));
+		DecompileSection.AddMenuEntry(
+			TEXT("DreamShader.ExportFunctionLegacyDSF"),
+			LOCTEXT("DreamShaderExportFunctionLegacyLabel", "Export Legacy .dsf"),
+			LOCTEXT("DreamShaderExportFunctionLegacyTooltip", "Decompile this Material Function graph into a 1.x .dsf source file, with the 1.x decompiler that is kept through 2.0.x."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Save")),
+			FUIAction(FExecuteAction::CreateSP(
+				AsShared(),
+				&FDreamShaderEditorBridge::ExportMaterialFunctionToLegacyDreamShaderFile,
 				MaterialFunction)));
 
 		FToolMenuSection& Section = InMenu->AddSection(
@@ -2298,6 +2775,26 @@ namespace UE::DreamShader::Editor::Private
 			FUIAction(FExecuteAction::CreateSP(
 				AsShared(),
 				&FDreamShaderEditorBridge::CreateVirtualFunctionDefinitionFile,
+				MaterialFunction)));
+		// The 2.0 targets: a `.dss` cannot hold a VirtualFunction block, so it calls the function through an `extern`
+		// prototype -- pasted in, or included from a `.dsh` that holds one.
+		Section.AddMenuEntry(
+			TEXT("DreamShader.CopyVirtualFunctionPrototype"),
+			LOCTEXT("DreamShaderCopyVirtualFunctionPrototypeLabel", "Copy extern Prototype (2.0)"),
+			LOCTEXT("DreamShaderCopyVirtualFunctionPrototypeTooltip", "Copy the 2.0 extern prototype of this Material Function, with its /// @asset line, for a .dss or a .dsh."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("GenericCommands.Copy")),
+			FUIAction(FExecuteAction::CreateSP(
+				AsShared(),
+				&FDreamShaderEditorBridge::CopyVirtualFunctionPrototype,
+				MaterialFunction)));
+		Section.AddMenuEntry(
+			TEXT("DreamShader.CreateVirtualFunctionPrototype"),
+			LOCTEXT("DreamShaderCreateVirtualFunctionPrototypeLabel", "Create extern Prototype (2.0)"),
+			LOCTEXT("DreamShaderCreateVirtualFunctionPrototypeTooltip", "Create a .dsh file holding the 2.0 extern prototype of this Material Function, for .dss sources to #include."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), TEXT("Icons.Save")),
+			FUIAction(FExecuteAction::CreateSP(
+				AsShared(),
+				&FDreamShaderEditorBridge::CreateVirtualFunctionPrototypeFile,
 				MaterialFunction)));
 		Section.AddMenuEntry(
 			TEXT("DreamShader.CopyVirtualFunctionCall"),
@@ -2507,76 +3004,101 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::ExportMaterialToDreamShaderFile(TWeakObjectPtr<UMaterial> Material)
 	{
-		UMaterial* MaterialAsset = Material.Get();
-		if (!MaterialAsset)
+		if (!Material.IsValid())
 		{
 			ShowDreamShaderNotification(
 				LOCTEXT("DreamShaderExportMaterialNoAsset", "DreamShader could not find the selected Material."),
 				SNotificationItem::CS_Fail);
 			return;
 		}
+		ExportAssetToDreamShaderFile(Material.Get(), /*bLegacyText*/ false);
+	}
 
-		FDreamShaderDecompileService DecompileService(GetGraphDecompiler());
-		UE::DreamShader::Editor::FDreamShaderDecompileRequest Request;
-		Request.Asset = MaterialAsset;
-		const UE::DreamShader::Editor::FDreamShaderDecompileResult Result = DecompileService.DecompileAsset(Request);
-		if (!Result.bSucceeded)
+	void FDreamShaderEditorBridge::ExportMaterialToLegacyDreamShaderFile(TWeakObjectPtr<UMaterial> Material)
+	{
+		if (!Material.IsValid())
 		{
 			ShowDreamShaderNotification(
-				FText::FromString(FString::Printf(TEXT("DreamShader failed to export DSM: %s"), *Result.Error)),
+				LOCTEXT("DreamShaderExportMaterialNoAsset", "DreamShader could not find the selected Material."),
 				SNotificationItem::CS_Fail);
-			UE_LOG(LogDreamShader, Warning, TEXT("Failed to export Material '%s' to DSM: %s"), *MaterialAsset->GetPathName(), *Result.Error);
 			return;
 		}
-
-		const FString SourceFilePath = Result.OutputFilePath;
-		FString SaveError;
-		if (!FDecompiledSourceWriter::Save(Result, SaveError))
-		{
-			ShowDreamShaderNotification(
-				FText::FromString(SaveError),
-				SNotificationItem::CS_Fail);
-			UE_LOG(LogDreamShader, Warning, TEXT("Failed to write decompiled Material DSM file '%s': %s"), *SourceFilePath, *SaveError);
-			return;
-		}
-
-		if (!FDreamShaderEditorLaunchUtils::LaunchTextFileInPreferredEditor(SourceFilePath))
-		{
-			ShowDreamShaderNotification(
-				FText::FromString(FString::Printf(TEXT("Exported DSM but could not open it: %s"), *SourceFilePath)),
-				SNotificationItem::CS_Fail);
-			UE_LOG(LogDreamShader, Warning, TEXT("Exported DSM '%s' but failed to open it."), *SourceFilePath);
-			return;
-		}
-
-		ShowDreamShaderNotification(
-			FText::FromString(FString::Printf(TEXT("Exported DSM: %s"), *SourceFilePath)),
-			SNotificationItem::CS_Success);
-		UE_LOG(LogDreamShader, Display, TEXT("Exported Material '%s' to DSM '%s'."), *MaterialAsset->GetPathName(), *SourceFilePath);
+		ExportAssetToDreamShaderFile(Material.Get(), /*bLegacyText*/ true);
 	}
 
 	void FDreamShaderEditorBridge::ExportMaterialFunctionToDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
 	{
-		UMaterialFunction* Function = MaterialFunction.Get();
-		if (!Function)
+		if (!MaterialFunction.IsValid())
 		{
 			ShowDreamShaderNotification(
 				LOCTEXT("DreamShaderExportFunctionNoAsset", "DreamShader could not find the selected Material Function."),
 				SNotificationItem::CS_Fail);
 			return;
 		}
+		ExportAssetToDreamShaderFile(MaterialFunction.Get(), /*bLegacyText*/ false);
+	}
 
-		FDreamShaderDecompileService DecompileService(GetGraphDecompiler());
-		UE::DreamShader::Editor::FDreamShaderDecompileRequest Request;
-		Request.Asset = Function;
-		const UE::DreamShader::Editor::FDreamShaderDecompileResult Result = DecompileService.DecompileAsset(Request);
-		if (!Result.bSucceeded)
+	void FDreamShaderEditorBridge::ExportMaterialFunctionToLegacyDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
+	{
+		if (!MaterialFunction.IsValid())
 		{
 			ShowDreamShaderNotification(
-				FText::FromString(FString::Printf(TEXT("DreamShader failed to export DSF: %s"), *Result.Error)),
+				LOCTEXT("DreamShaderExportFunctionNoAsset", "DreamShader could not find the selected Material Function."),
 				SNotificationItem::CS_Fail);
-			UE_LOG(LogDreamShader, Warning, TEXT("Failed to export MaterialFunction '%s' to DSF: %s"), *Function->GetPathName(), *Result.Error);
 			return;
+		}
+		ExportAssetToDreamShaderFile(MaterialFunction.Get(), /*bLegacyText*/ true);
+	}
+
+	void FDreamShaderEditorBridge::ExportMaterialInstanceToDreamShaderFile(TWeakObjectPtr<UMaterialInstanceConstant> Instance)
+	{
+		if (!Instance.IsValid())
+		{
+			ShowDreamShaderNotification(
+				LOCTEXT("DreamShaderExportInstanceNoAsset", "DreamShader could not find the selected material instance."),
+				SNotificationItem::CS_Fail);
+			return;
+		}
+		// A material instance has no 1.x text: it is always the 2.0 `.dsi`.
+		ExportAssetToDreamShaderFile(Instance.Get(), /*bLegacyText*/ false);
+	}
+
+	void FDreamShaderEditorBridge::ExportAssetToDreamShaderFile(UObject* Asset, const bool bLegacyText)
+	{
+		if (!Asset)
+		{
+			return;
+		}
+
+		// No output path: the service picks the asset's default file under the project root's Decompiled/ tree -- a `.dss`,
+		// a `.dsi` for a material instance, or the 1.x `.dsm` / `.dsf` for the Legacy text.
+		::UE::DreamShader::Editor::FDreamShaderDecompileRequest Request;
+		Request.Asset = Asset;
+		Request.Format = bLegacyText
+			? ::UE::DreamShader::Editor::EDreamShaderDecompileFormat::Legacy
+			: ::UE::DreamShader::Editor::EDreamShaderDecompileFormat::Dss;
+		const ::UE::DreamShader::Editor::FDreamShaderDecompileResult Result = RunDreamShaderDecompileRequest(Request);
+		if (!Result.bSucceeded)
+		{
+			const FString Reason = DescribeDreamShaderDecompileFailure(Result);
+			ShowDreamShaderNotification(
+				FText::Format(
+					LOCTEXT("DreamShaderExportFailed", "DreamShader failed to export '{0}': {1}"),
+					FText::FromString(Asset->GetPathName()),
+					FText::FromString(Reason)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to export '%s' to a DreamShader source: %s"), *Asset->GetPathName(), *Reason);
+			return;
+		}
+
+		// What the decompile could not carry over; each line keeps its code for whoever reads the log.
+		for (const ::UE::DreamShader::Lang::FLangDiagnostic& Diagnostic : Result.Diagnostics)
+		{
+			if (Diagnostic.Severity != ::UE::DreamShader::Lang::ELangSeverity::Info)
+			{
+				const FString WireLine = ::UE::DreamShader::Editor::Compiler::FormatLang2DiagnosticWireLine(Diagnostic, Result.OutputFilePath);
+				UE_LOG(LogDreamShader, Warning, TEXT("%s"), *WireLine);
+			}
 		}
 
 		const FString SourceFilePath = Result.OutputFilePath;
@@ -2586,23 +3108,137 @@ namespace UE::DreamShader::Editor::Private
 			ShowDreamShaderNotification(
 				FText::FromString(SaveError),
 				SNotificationItem::CS_Fail);
-			UE_LOG(LogDreamShader, Warning, TEXT("Failed to write decompiled MaterialFunction DSF file '%s': %s"), *SourceFilePath, *SaveError);
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to write decompiled source '%s': %s"), *SourceFilePath, *SaveError);
 			return;
 		}
 
 		if (!FDreamShaderEditorLaunchUtils::LaunchTextFileInPreferredEditor(SourceFilePath))
 		{
 			ShowDreamShaderNotification(
-				FText::FromString(FString::Printf(TEXT("Exported DSF but could not open it: %s"), *SourceFilePath)),
+				FText::Format(
+					LOCTEXT("DreamShaderExportedNotOpened", "Exported '{0}' but could not open it."),
+					FText::FromString(SourceFilePath)),
 				SNotificationItem::CS_Fail);
-			UE_LOG(LogDreamShader, Warning, TEXT("Exported DSF '%s' but failed to open it."), *SourceFilePath);
+			UE_LOG(LogDreamShader, Warning, TEXT("Exported '%s' but failed to open it."), *SourceFilePath);
 			return;
 		}
 
 		ShowDreamShaderNotification(
-			FText::FromString(FString::Printf(TEXT("Exported DSF: %s"), *SourceFilePath)),
+			FText::Format(
+				LOCTEXT("DreamShaderExported", "Exported '{0}'."),
+				FText::FromString(SourceFilePath)),
 			SNotificationItem::CS_Success);
-		UE_LOG(LogDreamShader, Display, TEXT("Exported MaterialFunction '%s' to DSF '%s'."), *Function->GetPathName(), *SourceFilePath);
+		UE_LOG(LogDreamShader, Display, TEXT("Exported '%s' to '%s'."), *Asset->GetPathName(), *SourceFilePath);
+	}
+
+	void FDreamShaderEditorBridge::CopyVirtualFunctionPrototype(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
+	{
+		UMaterialFunction* Function = MaterialFunction.Get();
+		if (!Function)
+		{
+			ShowDreamShaderNotification(
+				LOCTEXT("DreamShaderCopyVirtualFunctionNoAsset", "DreamShader could not find the selected Material Function."),
+				SNotificationItem::CS_Fail);
+			return;
+		}
+
+		FString PrototypeText;
+		FString Error;
+		if (!BuildDreamShaderVirtualFunctionPrototype(Function, PrototypeText, Error))
+		{
+			ShowDreamShaderNotification(
+				FText::Format(
+					LOCTEXT("DreamShaderVirtualFunctionPrototypeFailed", "DreamShader failed to build the extern prototype of '{0}': {1}"),
+					FText::FromString(Function->GetName()),
+					FText::FromString(Error)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to build the extern prototype of '%s': %s"), *Function->GetPathName(), *Error);
+			return;
+		}
+
+		FPlatformApplicationMisc::ClipboardCopy(*PrototypeText);
+		ShowDreamShaderNotification(
+			FText::Format(
+				LOCTEXT("DreamShaderVirtualFunctionPrototypeCopied", "Copied the extern prototype of {0}."),
+				FText::FromString(Function->GetName())),
+			SNotificationItem::CS_Success);
+		UE_LOG(LogDreamShader, Display, TEXT("Copied the extern prototype of '%s'.\n%s"), *Function->GetPathName(), *PrototypeText);
+	}
+
+	void FDreamShaderEditorBridge::CreateVirtualFunctionPrototypeFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
+	{
+		UMaterialFunction* Function = MaterialFunction.Get();
+		if (!Function)
+		{
+			ShowDreamShaderNotification(
+				LOCTEXT("DreamShaderCreateVirtualFunctionNoAsset", "DreamShader could not find the selected Material Function."),
+				SNotificationItem::CS_Fail);
+			return;
+		}
+
+		// Either spelling already written somewhere is the definition: open it rather than write a second one.
+		FDreamShaderVirtualFunctionDefinitionLocation ExistingDefinition;
+		if (FDreamShaderVirtualFunctionSyncService::FindDefinitionForMaterialFunction(Function, ExistingDefinition))
+		{
+			OpenVirtualFunctionDefinitionFile(MaterialFunction);
+			return;
+		}
+
+		FString PrototypeText;
+		FString Error;
+		if (!BuildDreamShaderVirtualFunctionPrototype(Function, PrototypeText, Error))
+		{
+			ShowDreamShaderNotification(
+				FText::Format(
+					LOCTEXT("DreamShaderVirtualFunctionPrototypeFailed", "DreamShader failed to build the extern prototype of '{0}': {1}"),
+					FText::FromString(Function->GetName()),
+					FText::FromString(Error)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to build the extern prototype file of '%s': %s"), *Function->GetPathName(), *Error);
+			return;
+		}
+
+		const FString DefinitionFilePath = FDreamShaderVirtualFunctionService::MakeDefinitionFilePath(Function);
+		const FString DefinitionDirectory = FPaths::GetPath(DefinitionFilePath);
+		if (!IFileManager::Get().MakeDirectory(*DefinitionDirectory, true))
+		{
+			ShowDreamShaderNotification(
+				FText::Format(
+					LOCTEXT("DreamShaderVirtualFunctionPrototypeDirectoryFailed", "DreamShader failed to create directory '{0}'."),
+					FText::FromString(DefinitionDirectory)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to create extern prototype directory '%s'."), *DefinitionDirectory);
+			return;
+		}
+
+		if (!FFileHelper::SaveStringToFile(PrototypeText + TEXT("\n"), *DefinitionFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		{
+			ShowDreamShaderNotification(
+				FText::Format(
+					LOCTEXT("DreamShaderVirtualFunctionPrototypeWriteFailed", "DreamShader failed to write '{0}'."),
+					FText::FromString(DefinitionFilePath)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to write extern prototype file '%s'."), *DefinitionFilePath);
+			return;
+		}
+
+		if (!FDreamShaderEditorLaunchUtils::LaunchTextFileInPreferredEditor(DefinitionFilePath))
+		{
+			ShowDreamShaderNotification(
+				FText::Format(
+					LOCTEXT("DreamShaderVirtualFunctionPrototypeNotOpened", "Created '{0}' but could not open it."),
+					FText::FromString(DefinitionFilePath)),
+				SNotificationItem::CS_Fail);
+			UE_LOG(LogDreamShader, Warning, TEXT("Created extern prototype file '%s' but failed to open it."), *DefinitionFilePath);
+			return;
+		}
+
+		ShowDreamShaderNotification(
+			FText::Format(
+				LOCTEXT("DreamShaderVirtualFunctionPrototypeCreated", "Created '{0}'."),
+				FText::FromString(DefinitionFilePath)),
+			SNotificationItem::CS_Success);
+		UE_LOG(LogDreamShader, Display, TEXT("Created extern prototype file '%s' for '%s'.\n%s"), *DefinitionFilePath, *Function->GetPathName(), *PrototypeText);
 	}
 
 	void FDreamShaderEditorBridge::CopyVirtualFunctionDefinition(TWeakObjectPtr<UMaterialFunction> MaterialFunction)
@@ -2765,12 +3401,22 @@ namespace UE::DreamShader::Editor::Private
 
 		FString CallText;
 		FString Error;
-		if (!FDreamShaderVirtualFunctionService::BuildCallTextFromSignature(
-			ExistingDefinition.FunctionName,
-			ExistingDefinition.Inputs,
-			ExistingDefinition.Outputs,
-			CallText,
-			Error))
+		// A 2.0 prototype is called with plain arguments; a 1.x block keeps the 1.x call with its output selector.
+		const bool bBuiltCall = ExistingDefinition.bExternPrototype
+			? FDreamShaderVirtualFunctionService::BuildExternCallTextFromSignature(
+				ExistingDefinition.FunctionName,
+				ExistingDefinition.Inputs,
+				ExistingDefinition.Outputs,
+				ExistingDefinition.bExternPrototypeReturnsValue,
+				CallText,
+				Error)
+			: FDreamShaderVirtualFunctionService::BuildCallTextFromSignature(
+				ExistingDefinition.FunctionName,
+				ExistingDefinition.Inputs,
+				ExistingDefinition.Outputs,
+				CallText,
+				Error);
+		if (!bBuiltCall)
 		{
 			ShowDreamShaderNotification(
 				FText::FromString(FString::Printf(TEXT("DreamShader failed to build VirtualFunction reference: %s"), *Error)),

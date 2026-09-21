@@ -1,7 +1,7 @@
 #include "Bridge/DreamShaderPreviewWebSocketServer.h"
 
 #include "DreamShaderModule.h"
-#include "Diagnostics/DreamShaderTextWireUtils.h"
+#include "DreamShaderTextWireUtils.h"
 #include "Preview/DreamShaderPreviewRenderer.h"
 #include "Preview/DreamShaderPreviewSession.h"
 

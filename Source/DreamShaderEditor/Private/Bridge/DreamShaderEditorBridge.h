@@ -8,10 +8,12 @@
 
 #include "Containers/Ticker.h"
 
+class FJsonObject;
 class SNotificationItem;
 class UMaterialInterface;
 class UMaterial;
 class UMaterialFunction;
+class UMaterialInstanceConstant;
 class UToolMenu;
 struct FFileChangeData;
 // At global scope on purpose: the member declaration below used to spell it inline as
@@ -61,9 +63,16 @@ namespace UE::DreamShader::Editor::Private
 		/** Flips the global Ephemeral-materials visibility setting and re-announces every such
 		 *  instance to the asset registry. Toasts the new count. */
 		void ToggleShowEphemeralMaterials();
-		/** Decompile a hand-authored asset into a new .dsm / .dsf under the project root. Toasts. */
+		/**
+		 * Decompile a hand-authored asset into a new source under the project root's Decompiled/ tree and open it. Toasts.
+		 * A material and a material function become a 2.0 `.dss`, a material instance a `.dsi`; the Legacy variants write
+		 * the 1.x `.dsm` / `.dsf`, which lives through 2.0.x.
+		 */
 		void ExportMaterialToDreamShaderFile(TWeakObjectPtr<UMaterial> Material);
 		void ExportMaterialFunctionToDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
+		void ExportMaterialInstanceToDreamShaderFile(TWeakObjectPtr<UMaterialInstanceConstant> Instance);
+		void ExportMaterialToLegacyDreamShaderFile(TWeakObjectPtr<UMaterial> Material);
+		void ExportMaterialFunctionToLegacyDreamShaderFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 
 		bool IsBusy() const { return bBusy; }
 		const FString& GetBusyAction() const { return BusyAction; }
@@ -137,6 +146,12 @@ namespace UE::DreamShader::Editor::Private
 		void GenerateAllSources();
 		void QueueSourceFile(const FString& SourceFilePath, bool bForce = false);
 		void QueueDependentSourcesForImport(const FString& ImportFilePath);
+		/**
+		 * After a `.dss` or `.dsi` compiled: queue every `.dsi` whose Parent resolves to one of its products, transitively
+		 * (CollectInstanceDependents), never the source itself. So a renamed or retyped parent parameter surfaces as the
+		 * child's error without a child edit (research-instance section 3.7).
+		 */
+		void QueueDependentInstances(const FString& SourceFilePath);
 		void OnDirectoryChanged(const TArray<FFileChangeData>& FileChanges);
 		bool Tick(float DeltaSeconds);
 		// Separate from Tick() (which only runs every 0.1s -- plenty for polling request/ready
@@ -146,6 +161,13 @@ namespace UE::DreamShader::Editor::Private
 		// WebSocket server can actually deliver up to the 60 FPS ceiling it now supports.
 		bool TickPreview(float DeltaSeconds);
 		void ProcessRequestFiles();
+		/**
+		 * `decompile { asset, out?, format?, sourceFile?, keepAssetPath?, readable? }`: one decompile, written to disk, answered
+		 * in the reveal-node envelope plus `outputFile` and `format`.
+		 */
+		void ServeDecompileRequest(const FString& RequestId, const FJsonObject& Request, double StartedAtSeconds);
+		/** `migrate { source, check? }`: one MigrateDreamShaderSource, answered with `outputFile`, `backupFile` and `check`. */
+		void ServeMigrateRequest(const FString& RequestId, const FJsonObject& Request, double StartedAtSeconds);
 		void ProcessReadyFiles();
 		void ProcessSourceFile(const FString& SourceFilePath);
 		void OnMaterialCompilationFinished(UMaterialInterface* MaterialInterface);
@@ -168,11 +190,19 @@ namespace UE::DreamShader::Editor::Private
 		void PopulateProvenanceActions(FToolMenuSection& InSection, TWeakObjectPtr<UObject> Asset);
 		void PopulateMaterialInstanceAssetMenu(FToolMenuSection& InSection);
 		void PopulateMaterialInstanceDreamShaderMenu(UToolMenu* InMenu, TWeakObjectPtr<UObject> Instance);
+		/** A plain material instance: the provenance answers when a `.dsi` built it, and Export .dsi. Never the ThinCustom class. */
+		void PopulateMaterialInstanceConstantAssetMenu(FToolMenuSection& InSection);
+		void PopulateMaterialInstanceConstantDreamShaderMenu(UToolMenu* InMenu, TWeakObjectPtr<UMaterialInstanceConstant> Instance);
+		/** The body of every Export action: one decompile through the editor's decompile seam, written, opened, toasted. */
+		void ExportAssetToDreamShaderFile(UObject* Asset, bool bLegacyText);
 		void CopyVirtualFunctionDefinition(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CreateVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void OpenVirtualFunctionDefinitionFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CopyVirtualFunctionReference(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CopyVirtualFunctionCall(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
+		/** The 2.0 spelling of Copy / Create definition: an `extern` prototype with `/// @asset`, for a `.dss` or a `.dsh`. */
+		void CopyVirtualFunctionPrototype(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
+		void CreateVirtualFunctionPrototypeFile(TWeakObjectPtr<UMaterialFunction> MaterialFunction);
 		void CleanGeneratedShaderDirectory();
 		void RebuildDependencyGraph();
 		void SyncVirtualFunctionDefinitions();
