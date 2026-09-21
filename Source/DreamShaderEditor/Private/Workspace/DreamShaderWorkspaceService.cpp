@@ -1,6 +1,6 @@
 #include "DreamShaderWorkspaceService.h"
 
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderGeneratedAssets.h"
 #include "DreamShaderDefineResolution.h"
 #include "DreamShaderDefineTable.h"
 #include "DreamShaderDiagnostic.h"
@@ -36,7 +36,7 @@ namespace UE::DreamShader::Editor::Private
 			return FString::Printf(TEXT("\"%s\""), *Escaped);
 		}
 
-		FString GetMaterialExpressionShortName(const UClass* Class)
+		FString GetWorkspaceMaterialExpressionShortName(const UClass* Class)
 		{
 			if (!Class)
 			{
@@ -338,7 +338,7 @@ namespace UE::DreamShader::Editor::Private
 			};
 		}
 
-		int32 GetExpressionOutputComponentCount(const FExpressionOutput& Output)
+		int32 GetWorkspaceExpressionOutputComponentCount(const FExpressionOutput& Output)
 		{
 			const int32 MaskCount =
 				(Output.MaskR ? 1 : 0)
@@ -1436,7 +1436,7 @@ namespace UE::DreamShader::Editor::Private
 				continue;
 			}
 
-			const FString ShortName = GetMaterialExpressionShortName(Class);
+			const FString ShortName = GetWorkspaceMaterialExpressionShortName(Class);
 			if (ShortName.IsEmpty())
 			{
 				continue;
@@ -1500,7 +1500,7 @@ namespace UE::DreamShader::Editor::Private
 				for (int32 OutputIndex = 0; OutputIndex < DefaultExpression->Outputs.Num(); ++OutputIndex)
 				{
 					const FExpressionOutput& Output = DefaultExpression->Outputs[OutputIndex];
-					const int32 ComponentCount = GetExpressionOutputComponentCount(Output);
+					const int32 ComponentCount = GetWorkspaceExpressionOutputComponentCount(Output);
 
 					TSharedRef<FJsonObject> OutputObject = MakeShared<FJsonObject>();
 					OutputObject->SetNumberField(TEXT("index"), OutputIndex);

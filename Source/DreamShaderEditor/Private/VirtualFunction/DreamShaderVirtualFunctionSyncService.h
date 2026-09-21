@@ -21,6 +21,10 @@ namespace UE::DreamShader::Editor::Private
 		int32 EndIndex = INDEX_NONE;
 		int32 Line = 1;
 		int32 Column = 1;
+		/** A 2.0 `extern` prototype with `/// @asset`, not a 1.x VirtualFunction block. Found for navigation; sync does not rewrite it. */
+		bool bExternPrototype = false;
+		/** bExternPrototype only: the prototype returns a value, which Outputs lists first, named Result. */
+		bool bExternPrototypeReturnsValue = false;
 	};
 
 	struct FDreamShaderVirtualFunctionSyncFileResult

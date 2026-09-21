@@ -1,18 +1,13 @@
 #include "Preview/DreamShaderPreviewRenderer.h"
 #include "DreamShaderDiagnostic.h"
 
-#include "DreamShaderCompileService.h"
-#include "DreamShaderDefineResolution.h"
+#include "DreamShaderCompilerInterface.h"
 #include "DreamShaderModule.h"
-#include "DreamShaderParser.h"
-// PreprocessDreamShaderSource / ResolveDreamShaderDefines: the preview must resolve its material
-// under the same define set generation used, or it renders a different asset. See
-// ResolveGeneratedMaterialPath.
-#include "DreamShaderPreprocessor.h"
 #include "DreamShaderSettings.h"
-#include "Compile/DreamShaderEditorCompileAdapter.h"
-#include "DependencyGraph/DreamShaderDependencyGraphService.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderGeneratedAssets.h"
+// ResolveGeneratedAssetProduct: the preview renders the product a compile writes, found by the compile's own product
+// resolution, so the define set, the front end and the destination rules cannot differ from the build's.
+#include "UI/DreamShaderGeneratedAssetPath.h"
 
 #include "AssetCompilingManager.h"
 #include "CanvasTypes.h"
@@ -28,7 +23,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "ObjectTools.h"
-#include "Diagnostics/DreamShaderTextWireUtils.h"
+#include "DreamShaderTextWireUtils.h"
 #include "RenderingThread.h"
 #include "RHI.h"
 #include "RHIGPUReadback.h"
@@ -75,91 +70,6 @@ namespace UE::DreamShader::Editor::Private
 			return FPaths::Combine(
 				FDreamShaderPreviewRenderer::GetPreviewDirectory(),
 				FString::Printf(TEXT("%s-%s.png"), FileStem.IsEmpty() ? TEXT("DreamShaderPreview") : *FileStem, *Hash));
-		}
-
-		bool ResolveGeneratedMaterialPath(const FString& SourceFilePath, FString& OutObjectPath, FString& OutError)
-		{
-			FString SourceText;
-			if (!FFileHelper::LoadFileToString(SourceText, *SourceFilePath))
-			{
-				OutError = FString::Printf(TEXT("Failed to read DreamShader source '%s'."), *SourceFilePath); // I18N-EXEMPT: reaches the wire, see the note above
-				return false;
-			}
-
-			// Conditional compilation runs HERE, in the same order the generator uses: read, preprocess,
-			// then look at imports. `#if` may wrap an `Import` line, so the directives have to be
-			// resolved before the loop below goes looking for imports to drop.
-			//
-			// Preview is a strict consumer of generation's answer -- it looks up the object path this
-			// resolves and renders whatever material is already there -- so resolving under a different
-			// define set than the generator used is worse than failing. `Shader(Name=..., Root=...)` is
-			// itself something a branch can select, so a mismatched cut points the preview at a
-			// different asset (or at nothing) and reports success either way, which is a screenshot of
-			// the wrong material sent to the VSCode and Rider extensions with no error to explain it.
-			{
-				FDreamShaderPreprocessResult PreprocessResult;
-				FDreamShaderTextError PreprocessError;
-				if (!UE::DreamShader::PreprocessDreamShaderSource(
-					SourceText,
-					SourceFilePath,
-					UE::DreamShader::ResolveDreamShaderDefines(),
-					PreprocessResult,
-					PreprocessError))
-				{
-					// ToInvariantWireString, not ToString(): this OutError reaches preview.json and the
-					// preview WebSocket, and ToString() is the LOCALIZED display, so a zh-Hans editor
-					// would put Chinese where the extensions expect English. See the note at the top of
-					// this file -- this is the one error site here whose message starts life as an
-					// FText, which is exactly the case ToInvariantWireString exists for.
-					//
-					// The DSH103x message already reads "<path>(<line>): ...", so it is not prefixed
-					// with the path the way the parse failure below is.
-					OutError = ToInvariantWireString(PreprocessError.Message);
-					return false;
-				}
-
-				SourceText = MoveTemp(PreprocessResult.Text);
-			}
-
-			TArray<FString> Lines;
-			SourceText.ParseIntoArrayLines(Lines, false);
-			SourceText.Reset();
-			for (const FString& Line : Lines)
-			{
-				FString ImportPath;
-				if (FDreamShaderDependencyGraphService::TryExtractImportPathFromLine(Line, ImportPath))
-				{
-					continue;
-				}
-				SourceText += Line;
-				SourceText += TEXT("\n");
-			}
-
-			FTextShaderDefinition Definition;
-			FString ParseError;
-			if (!FTextShaderParser::Parse(SourceText, Definition, ParseError))
-			{
-				OutError = FString::Printf(TEXT("%s: %s"), *SourceFilePath, *ParseError); // I18N-EXEMPT: reaches the wire, see the note above
-				return false;
-			}
-
-			if (Definition.Name.IsEmpty())
-			{
-				OutError = FString::Printf(TEXT("%s: This file does not define a top-level Shader block."), *SourceFilePath); // I18N-EXEMPT: reaches the wire, see the note above
-				return false;
-			}
-
-			// Same default the generator applies, or the preview would look up an object path that
-			// generation never wrote.
-			ApplyDefaultRootFromSourceFile(SourceFilePath, Definition);
-
-			FString PackageName;
-			FString AssetName;
-			FDreamShaderError DestinationError;
-			const bool bResolvedDestination = ResolveDreamShaderAssetDestination(
-				Definition.Name, Definition.Root, PackageName, OutObjectPath, AssetName, DestinationError);
-			OutError = DestinationError.Message;
-			return bResolvedDestination;
 		}
 
 		// Maps the VSCode extension's mesh selector value to the same primitive-shape enum the
@@ -666,27 +576,41 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		if (!UE::DreamShader::IsDreamShaderMaterialFile(SourceFilePath))
+		// The source kinds that build a material or a material instance. A header builds nothing on its own and a
+		// function library no material; a `.dss` that declares no material is refused by the resolution below.
+		if (!UE::DreamShader::IsDreamShaderMaterialFile(SourceFilePath)
+			&& !UE::DreamShader::IsDreamShaderLang2File(SourceFilePath)
+			&& !UE::DreamShader::IsDreamShaderInstanceFile(SourceFilePath))
 		{
-			OutResult.Message = FText::Format(LOCTEXT("PreviewSupportsOnlyDsm", "DreamShader preview only supports .dsm material files: '{0}'."), FText::FromString(SourceFilePath));
+			OutResult.Message = FText::Format(LOCTEXT("PreviewSupportsOnlyMaterialSources", "DreamShader preview renders a material or a material instance, so it takes a .dss, .dsi or .dsm source: '{0}'."), FText::FromString(SourceFilePath));
 			return false;
 		}
 
+		// An FText all the way to OutResult.Message, which the wire serializes through ToInvariantWireString, so the
+		// refusal reaches the extensions in English under any editor culture (see the note at the top of this file).
 		FString ObjectPath;
-		FString ResolveError;
-		if (!ResolveGeneratedMaterialPath(SourceFilePath, ObjectPath, ResolveError))
+		FString SourceHash;
+		FText ResolveError;
+		if (!ResolveGeneratedAssetProduct(SourceFilePath, /*bMaterialOnly*/ true, ObjectPath, SourceHash, ResolveError))
 		{
-			OutResult.Message = FText::FromString(ResolveError);
+			OutResult.Message = ResolveError;
 			return false;
 		}
 		OutResult.AssetPath = ObjectPath;
 
-		UE::DreamShader::Compiler::FDreamShaderCompileService CompileService(UE::DreamShader::Editor::GetEditorCompileAdapter());
-		// Editor materials are always memory-only, so a preview compile is transient (never persists).
-		const UE::DreamShader::Compiler::FDreamShaderCompileResult CompileResult = CompileService.CompileMaterial(
-				SourceFilePath,
-				Request.bForceRecompile,
-				UE::DreamShader::Compiler::EThinCustomPersistence::Ephemeral);
+		::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler();
+		if (!Compiler)
+		{
+			OutResult.Message = FText::Format(LOCTEXT("PreviewCompilerUnavailable", "The DreamShader compiler module is not available, so '{0}' could not be compiled for preview."), FText::FromString(SourceFilePath));
+			return false;
+		}
+
+		// Interactive, so a ThinCustom product stays Ephemeral: a preview never writes a memory-only material to disk.
+		::UE::DreamShader::FDreamShaderCompileRequest CompileRequest;
+		CompileRequest.SourceFilePath = SourceFilePath;
+		CompileRequest.bForce = Request.bForceRecompile;
+		CompileRequest.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Ephemeral;
+		const ::UE::DreamShader::FDreamShaderCompileResult CompileResult = Compiler->CompileMaterial(CompileRequest);
 		if (!CompileResult.bSucceeded)
 		{
 			OutResult.Message = CompileResult.Message;

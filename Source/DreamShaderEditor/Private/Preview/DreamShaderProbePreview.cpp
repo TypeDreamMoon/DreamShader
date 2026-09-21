@@ -2,7 +2,7 @@
 
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
-#include "Preview/DreamShaderGraphDebugInfo.h"
+#include "DreamShaderGraphDebugInfo.h"
 
 #include "MaterialDomain.h"
 #include "MaterialEditor/PreviewMaterial.h"

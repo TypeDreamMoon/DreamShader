@@ -1,8 +1,8 @@
 #include "Bridge/DreamShaderEditorBridge.h"
-#include "Compiler/DreamShaderSourceNavigation.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "Navigation/DreamShaderSourceNavigation.h"
+#include "DreamShaderCompilerService.h"
 #include "SourceFiles/DreamShaderAssetRenameSyncService.h"
-#include "SourceFiles/DreamShaderSourceFileUtils.h"
+#include "DreamShaderSourceFileUtils.h"
 #include "UI/DreamShaderMaterialBrowser.h"
 
 #include "AssetRegistry/IAssetRegistry.h"
@@ -151,8 +151,23 @@ private:
 				continue;
 			}
 
+			// Forced and Materialized: a cook packages what is on disk, so every product must be there and current.
 			FString Message;
-			const bool bSuccess = UE::DreamShader::Editor::FMaterialGenerator::GenerateAssetsFromFile(NormalizedPath, Message, true, false);
+			bool bSuccess = false;
+			if (::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler())
+			{
+				::UE::DreamShader::FDreamShaderCompileRequest Request;
+				Request.SourceFilePath = NormalizedPath;
+				Request.bForce = true;
+				Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Materialized;
+				const ::UE::DreamShader::FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);
+				Message = Result.Message.ToString();
+				bSuccess = Result.bSucceeded;
+			}
+			else
+			{
+				Message = FString::Printf(TEXT("%s: the DreamShader compiler module is not available."), *NormalizedPath); /* I18N-EXEMPT: cook log line */
+			}
 			if (bSuccess)
 			{
 				UE_LOG(LogDreamShader, Display, TEXT("  [Cook] %s"), *Message);

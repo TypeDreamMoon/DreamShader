@@ -2,13 +2,14 @@
 #include "DreamShaderDiagnostic.h"
 
 #include "DreamShaderModule.h"
-#include "DreamShaderParser.h"
 // DreamShaderSourceHasPreprocessorDirectives, for the refusal gate on the rewriting scan below.
 // Deliberately NOT PreprocessDreamShaderSource -- see the comment on EVirtualFunctionScanIntent.
 #include "DreamShaderPreprocessor.h"
-#include "Diagnostics/DreamShaderTextWireUtils.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
-#include "SourceFiles/DreamShaderSourceFileUtils.h"
+// The legacy front end, which reads each VirtualFunction block the scanner below finds.
+#include "Lang/LangParser.h"
+#include "DreamShaderTextWireUtils.h"
+#include "DreamShaderGeneratedAssets.h"
+#include "DreamShaderSourceFileUtils.h"
 
 #include "Materials/MaterialFunction.h"
 #include "Misc/FileHelper.h"
@@ -227,26 +228,144 @@ namespace UE::DreamShader::Editor::Private
 			return Diagnostic;
 		}
 
+		/** One parameter of a VirtualFunction prototype in the shape the sync's callers read: name, optional, default text. */
+		FTextShaderFunctionParameter MakeVirtualFunctionSyncParameter(const UE::DreamShader::Lang::FParam& Param, const FString& BlockText)
+		{
+			FTextShaderFunctionParameter Parameter;
+			// The 2.0 spelling the legacy front end normalizes a 1.x type to (`float3`, `material`); no caller compares it.
+			Parameter.Type = Param.Type.Name;
+			Parameter.Name = Param.Name;
+			Parameter.bOptional = Param.bOptional || Param.Default.IsValid();
+			if (Param.Default.IsValid() && !Param.Default->Span.IsEmpty())
+			{
+				Parameter.bHasDefaultValue = true;
+				Parameter.DefaultValueText = BlockText.Mid(Param.Default->Span.Offset, Param.Default->Span.Length);
+			}
+			return Parameter;
+		}
+
 		bool TryParseVirtualFunctionBlock(
+			const FString& SourceFilePath,
 			const FString& BlockText,
 			FTextShaderVirtualFunctionDefinition& OutFunction,
 			FText& OutError)
 		{
-			FTextShaderDefinition ParsedDefinition;
-			FText ParseError;
-			if (!FTextShaderParser::Parse(BlockText, ParsedDefinition, ParseError))
+			// Declarations rather than a using-directive, so no name of this module's own namespaces can make one ambiguous.
+			using UE::DreamShader::Lang::EParamDirection;
+			using UE::DreamShader::Lang::ELangFrontend;
+			using UE::DreamShader::Lang::FDocDirective;
+			using UE::DreamShader::Lang::FFunctionDecl;
+			using UE::DreamShader::Lang::FLangDiagnostic;
+			using UE::DreamShader::Lang::FLangParseOptions;
+			using UE::DreamShader::Lang::FLangParseResult;
+			using UE::DreamShader::Lang::FLangSourceText;
+			using UE::DreamShader::Lang::FLegacyAssetReference;
+			using UE::DreamShader::Lang::FLegacyBlock;
+			using UE::DreamShader::Lang::FParam;
+			using UE::DreamShader::Lang::ParseDreamShaderLang;
+
+			// The block alone, so every span of the result is an offset into BlockText; the byte splice that rewrites the
+			// file keeps using the scanner's own offsets into the file.
+			FLangParseOptions Options;
+			Options.Frontend = ELangFrontend::Legacy;
+			const FLangParseResult Parsed = ParseDreamShaderLang(FLangSourceText(SourceFilePath, BlockText), Options);
+			if (const FLangDiagnostic* const FirstError = Parsed.Diagnostics.FirstError())
 			{
-				OutError = ParseError;
+				OutError = FirstError->Message;
 				return false;
 			}
 
-			if (ParsedDefinition.VirtualFunctions.Num() != 1)
+			const FLegacyBlock* Block = nullptr;
+			int32 VirtualFunctionCount = 0;
+			if (Parsed.Legacy.IsValid())
 			{
-				OutError = FText::FromString(TEXT("Expected exactly one VirtualFunction block."));
+				for (const FLegacyBlock& Candidate : Parsed.Legacy->Blocks)
+				{
+					if (Candidate.BlockWord.Equals(TEXT("VirtualFunction"), ESearchCase::CaseSensitive))
+					{
+						Block = &Candidate;
+						++VirtualFunctionCount;
+					}
+				}
+			}
+
+			const FFunctionDecl* const Prototype = (VirtualFunctionCount == 1 && Block->Decl) ? Block->Decl->As<FFunctionDecl>() : nullptr;
+			if (!Prototype)
+			{
+				OutError = LOCTEXT("ExpectedOneVirtualFunctionBlock", "Expected exactly one VirtualFunction block.");
 				return false;
 			}
 
-			OutFunction = ParsedDefinition.VirtualFunctions[0];
+			OutFunction = FTextShaderVirtualFunctionDefinition();
+			OutFunction.Name = Block->Name;
+
+			// The `Asset=` reference exactly as written -- `Path(Root, "rel")` or a quoted object path -- which the
+			// caller resolves. The prototype's `/// @asset` carries the same text.
+			for (const FLegacyAssetReference& Reference : Parsed.Legacy->AssetReferences)
+			{
+				if (Reference.Use == FLegacyAssetReference::EUse::VirtualFunctionAsset)
+				{
+					OutFunction.Asset = Reference.Text;
+					break;
+				}
+			}
+			if (OutFunction.Asset.IsEmpty())
+			{
+				if (const FDocDirective* const AssetDirective = Prototype->Doc.Find(TEXT("asset")))
+				{
+					OutFunction.Asset = AssetDirective->Value;
+				}
+			}
+
+			// Inputs and outputs in 1.x declaration order when the front end recorded it -- the order the block lists
+			// them in, and the order a call written against the block passes them. The prototype does not keep that
+			// order: it lists the inputs, then the outputs other than a first one named Result, which became its return value.
+			const auto FindParam = [Prototype](const FString& Name, const bool bOutput) -> const FParam*
+			{
+				return Prototype->Params.FindByPredicate([&Name, bOutput](const FParam& Param)
+				{
+					return (Param.Direction != EParamDirection::In) == bOutput && Param.Name.Equals(Name, ESearchCase::CaseSensitive);
+				});
+			};
+
+			if (Block->InputNames.Num() > 0 || Block->OutputNames.Num() > 0)
+			{
+				for (const FString& InputName : Block->InputNames)
+				{
+					if (const FParam* const Param = FindParam(InputName, /*bOutput*/ false))
+					{
+						OutFunction.Inputs.Add(MakeVirtualFunctionSyncParameter(*Param, BlockText));
+					}
+				}
+				for (int32 OutputIndex = 0; OutputIndex < Block->OutputNames.Num(); ++OutputIndex)
+				{
+					const FString& OutputName = Block->OutputNames[OutputIndex];
+					if (const FParam* const Param = FindParam(OutputName, /*bOutput*/ true))
+					{
+						OutFunction.Outputs.Add(MakeVirtualFunctionSyncParameter(*Param, BlockText));
+					}
+					else if (OutputIndex == 0 && !Prototype->ReturnType.IsVoid())
+					{
+						FTextShaderFunctionParameter& Parameter = OutFunction.Outputs.AddDefaulted_GetRef();
+						Parameter.Type = Prototype->ReturnType.Name;
+						Parameter.Name = OutputName;
+					}
+				}
+			}
+			else
+			{
+				if (!Prototype->ReturnType.IsVoid())
+				{
+					FTextShaderFunctionParameter& Parameter = OutFunction.Outputs.AddDefaulted_GetRef();
+					Parameter.Type = Prototype->ReturnType.Name;
+					Parameter.Name = TEXT("Result");
+				}
+				for (const FParam& Param : Prototype->Params)
+				{
+					(Param.Direction == EParamDirection::In ? OutFunction.Inputs : OutFunction.Outputs)
+						.Add(MakeVirtualFunctionSyncParameter(Param, BlockText));
+				}
+			}
 			return true;
 		}
 
@@ -465,7 +584,7 @@ namespace UE::DreamShader::Editor::Private
 
 				FTextShaderVirtualFunctionDefinition ParsedFunction;
 				FText ParseError;
-				if (!TryParseVirtualFunctionBlock(BlockText, ParsedFunction, ParseError))
+				if (!TryParseVirtualFunctionBlock(SourceFilePath, BlockText, ParsedFunction, ParseError))
 				{
 					if (OutDiagnostics)
 					{
@@ -519,6 +638,103 @@ namespace UE::DreamShader::Editor::Private
 				Index = EndIndex;
 			}
 		}
+
+		/**
+		 * The 2.0 spelling of a VirtualFunction definition: every `extern` prototype of a `.dsh` or a `.dss` whose `/// @asset`
+		 * resolves. For navigation only -- FindDefinitionForMaterialFunction answers them, so the menu offers Open rather than a
+		 * second Create -- and never rewritten by sync, whose byte splice is written for the 1.x block. A 1.x block in a `.dsh`
+		 * parses as a legacy declaration and is skipped here, because CollectDefinitionLocationsFromFile reports it.
+		 */
+		void CollectExternPrototypeLocationsFromFile(
+			const FString& SourceFilePath,
+			TArray<FDreamShaderVirtualFunctionDefinitionLocation>& OutLocations)
+		{
+			// Declarations rather than a using-directive, as in TryParseVirtualFunctionBlock.
+			using UE::DreamShader::Lang::EFunctionLinkage;
+			using UE::DreamShader::Lang::EParamDirection;
+			using UE::DreamShader::Lang::FDeclPtr;
+			using UE::DreamShader::Lang::FDocDirective;
+			using UE::DreamShader::Lang::FFunctionDecl;
+			using UE::DreamShader::Lang::FLangParseOptions;
+			using UE::DreamShader::Lang::FLangParseResult;
+			using UE::DreamShader::Lang::FLangSourceText;
+			using UE::DreamShader::Lang::FLangSpan;
+			using UE::DreamShader::Lang::FParam;
+			using UE::DreamShader::Lang::ParseDreamShaderLang;
+
+			OutLocations.Reset();
+			if (!UE::DreamShader::IsDreamShaderHeaderFile(SourceFilePath) && !UE::DreamShader::IsDreamShaderLang2File(SourceFilePath))
+			{
+				return;
+			}
+
+			FString SourceText;
+			if (!FFileHelper::LoadFileToString(SourceText, *SourceFilePath))
+			{
+				return;
+			}
+			// A parse per file is not free, and this runs over every source whenever a function's menu opens: only a file that
+			// can hold a prototype is parsed.
+			if (!SourceText.Contains(TEXT("extern"), ESearchCase::CaseSensitive) || !SourceText.Contains(TEXT("@asset"), ESearchCase::CaseSensitive))
+			{
+				return;
+			}
+
+			// The raw text, like the 1.x scan: a prototype in a branch this build cut is still where it is written.
+			const FLangParseResult Parsed = ParseDreamShaderLang(FLangSourceText(SourceFilePath, SourceText), FLangParseOptions());
+			if (!Parsed.Module.IsValid())
+			{
+				return;
+			}
+
+			for (const FDeclPtr& Decl : Parsed.Module->Declarations)
+			{
+				const FFunctionDecl* const Prototype = Decl.IsValid() ? Decl->As<FFunctionDecl>() : nullptr;
+				if (!Prototype || Prototype->bLegacy || Prototype->Linkage != EFunctionLinkage::Extern)
+				{
+					continue;
+				}
+
+				const FDocDirective* const AssetDirective = Prototype->Doc.Find(TEXT("asset"));
+				if (!AssetDirective || AssetDirective->Value.TrimStartAndEnd().IsEmpty())
+				{
+					continue;
+				}
+				FString ObjectPath;
+				FDreamShaderError ResolveError;
+				if (!TryResolveDreamShaderAssetReference(AssetDirective->Value, ObjectPath, ResolveError))
+				{
+					continue;
+				}
+
+				const FLangSpan& FirstSpan = Prototype->Doc.IsEmpty() ? Prototype->Span : Prototype->Doc.Span;
+				const int32 StartIndex = FMath::Clamp(FMath::Min(FirstSpan.Offset, Prototype->Span.Offset), 0, SourceText.Len());
+				const int32 EndIndex = FMath::Clamp(Prototype->Span.End(), StartIndex, SourceText.Len());
+
+				FDreamShaderVirtualFunctionDefinitionLocation& Location = OutLocations.AddDefaulted_GetRef();
+				Location.SourceFilePath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+				Location.FunctionName = Prototype->Name;
+				Location.AssetObjectPath = ObjectPath;
+				Location.CurrentText = SourceText.Mid(StartIndex, EndIndex - StartIndex);
+				Location.bExternPrototype = true;
+				Location.bExternPrototypeReturnsValue = !Prototype->ReturnType.IsVoid();
+				if (Location.bExternPrototypeReturnsValue)
+				{
+					FTextShaderFunctionParameter& ReturnValue = Location.Outputs.AddDefaulted_GetRef();
+					ReturnValue.Type = Prototype->ReturnType.Name;
+					ReturnValue.Name = TEXT("Result");
+				}
+				for (const FParam& Param : Prototype->Params)
+				{
+					(Param.Direction == EParamDirection::In ? Location.Inputs : Location.Outputs)
+						.Add(MakeVirtualFunctionSyncParameter(Param, SourceText));
+				}
+				Location.StartIndex = StartIndex;
+				Location.EndIndex = EndIndex;
+				Location.Line = FirstSpan.Line;
+				Location.Column = FirstSpan.Column;
+			}
+		}
 	}
 
 	bool FDreamShaderVirtualFunctionSyncService::FindDefinitionForMaterialFunction(
@@ -546,6 +762,18 @@ namespace UE::DreamShader::Editor::Private
 				if (Location.AssetObjectPath.Equals(TargetObjectPath, ESearchCase::IgnoreCase))
 				{
 					OutLocation = Location;
+					return true;
+				}
+			}
+
+			// The same definition spelled for 2.0, which Create extern Prototype writes.
+			TArray<FDreamShaderVirtualFunctionDefinitionLocation> Prototypes;
+			CollectExternPrototypeLocationsFromFile(SourceFile, Prototypes);
+			for (const FDreamShaderVirtualFunctionDefinitionLocation& Prototype : Prototypes)
+			{
+				if (Prototype.AssetObjectPath.Equals(TargetObjectPath, ESearchCase::IgnoreCase))
+				{
+					OutLocation = Prototype;
 					return true;
 				}
 			}

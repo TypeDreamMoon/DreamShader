@@ -9,8 +9,8 @@
 #include "DreamShaderDiagnostic.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
-#include "SourceFiles/DreamShaderSourceFileUtils.h"
+#include "DreamShaderGeneratedAssets.h"
+#include "DreamShaderSourceFileUtils.h"
 
 #include "AssetRegistry/AssetData.h"
 #include "AssetRegistry/IAssetRegistry.h"

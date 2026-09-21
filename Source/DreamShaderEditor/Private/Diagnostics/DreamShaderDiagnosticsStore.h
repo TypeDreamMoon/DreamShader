@@ -2,33 +2,12 @@
 
 #include "CoreMinimal.h"
 
+// FDreamShaderDiagnosticRecord / FDreamShaderDiagnosticLocation. They live in the compiler module since
+// the M4 relocation, so the compiler can build records without depending on this store.
+#include "DreamShaderDiagnosticRecord.h"
+
 namespace UE::DreamShader::Editor::Private
 {
-	struct FDreamShaderDiagnosticRecord
-	{
-		FString FilePath;
-		FText Message;
-		FText Detail;
-		FString Stage;
-		FString AssetPath;
-		FString ShaderPlatform;
-		FString QualityLevel;
-		FString Code;
-		int32 Line = 1;
-		int32 Column = 1;
-		FString Severity = TEXT("error");
-		FString Source = TEXT("DreamShader");
-		FString OwnerSourceFilePath;
-	};
-
-	struct FDreamShaderDiagnosticLocation
-	{
-		FString FilePath;
-		FText Message;
-		int32 Line = 1;
-		int32 Column = 1;
-	};
-
 	class FDreamShaderDiagnosticsStore
 	{
 	public:

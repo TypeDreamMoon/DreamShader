@@ -42,7 +42,7 @@ public class DreamShaderEditor : ModuleRules
 				"Slate",
 				"SlateCore",
 				"SQLiteCore",
-				// Compiler/DreamShaderShaderCheck.cpp includes Interfaces/ITargetPlatform.h and
+				// Tools/DreamShaderShaderCheck.cpp includes Interfaces/ITargetPlatform.h and
 				// Interfaces/ITargetPlatformManagerModule.h. UnrealEd lists TargetPlatform in its
 				// PublicDependencyModuleNames, so the include path already resolved through it --
 				// named here so a change on the UnrealEd side cannot silently take it away.

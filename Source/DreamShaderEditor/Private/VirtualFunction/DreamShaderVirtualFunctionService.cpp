@@ -1,9 +1,13 @@
 #include "DreamShaderVirtualFunctionService.h"
 
 #include "DreamShaderModule.h"
+// The legacy front end reads the 1.x block back, and the 2.0 printer writes its prototype (BuildExternPrototype).
+#include "Lang/LangParser.h"
+#include "Lang/LangPrinter.h"
 
 #include "HAL/FileManager.h"
 #include "Interfaces/IPluginManager.h"
+#include "Misc/PackageName.h"
 #include "Materials/MaterialExpressionFunctionInput.h"
 #include "Materials/MaterialExpressionFunctionOutput.h"
 #include "Materials/MaterialFunction.h"
@@ -17,7 +21,7 @@ namespace UE::DreamShader::Editor::Private
 {
 	namespace
 	{
-		FString EscapeDreamShaderString(const FString& InText)
+		FString EscapeVirtualFunctionStringLiteral(const FString& InText)
 		{
 			// Same contract as the decompiler helper: the result goes inside a "..." literal, and a raw
 			// newline in a description would split the declaration across lines.
@@ -30,7 +34,7 @@ namespace UE::DreamShader::Editor::Private
 			return Result;
 		}
 
-		FString GetDreamShaderTypeForFunctionInput(const EFunctionInputType InputType)
+		FString GetVirtualFunctionInputTypeSpelling(const EFunctionInputType InputType)
 		{
 			switch (InputType)
 			{
@@ -109,7 +113,7 @@ namespace UE::DreamShader::Editor::Private
 			return bOnlyUnderscores ? TEXT("DreamShaderSymbol") : Result;
 		}
 
-		FString MakeDreamShaderDeclarationName(
+		FString MakeVirtualFunctionDeclarationName(
 			const FString& InName,
 			const TCHAR* FallbackPrefix,
 			const int32 Index,
@@ -133,7 +137,7 @@ namespace UE::DreamShader::Editor::Private
 			const FString& StableDisambiguator,
 			TSet<FString>& InOutUsedNames)
 		{
-			const FString BaseName = MakeDreamShaderDeclarationName(InName, FallbackPrefix, Index, StableDisambiguator);
+			const FString BaseName = MakeVirtualFunctionDeclarationName(InName, FallbackPrefix, Index, StableDisambiguator);
 			FString Candidate = BaseName;
 			int32 Suffix = 2;
 			while (InOutUsedNames.Contains(Candidate))
@@ -144,7 +148,7 @@ namespace UE::DreamShader::Editor::Private
 			return Candidate;
 		}
 
-		FString MakeFunctionParameterMetadataSuffix(
+		FString MakeVirtualFunctionParameterMetadataSuffix(
 			const FString& Description,
 			const int32 SortPriority,
 			const int32 DefaultSortPriority)
@@ -152,7 +156,7 @@ namespace UE::DreamShader::Editor::Private
 			TArray<FString> MetadataEntries;
 			if (!Description.TrimStartAndEnd().IsEmpty())
 			{
-				MetadataEntries.Add(FString::Printf(TEXT("Description=\"%s\";"), *EscapeDreamShaderString(Description.TrimStartAndEnd())));
+				MetadataEntries.Add(FString::Printf(TEXT("Description=\"%s\";"), *EscapeVirtualFunctionStringLiteral(Description.TrimStartAndEnd())));
 			}
 			if (SortPriority != DefaultSortPriority)
 			{
@@ -164,7 +168,7 @@ namespace UE::DreamShader::Editor::Private
 				: FString::Printf(TEXT(" [\n\t\t\t%s\n\t\t]"), *FString::Join(MetadataEntries, TEXT("\n\t\t\t")));
 		}
 
-		FString MakePreviewValueText(const EFunctionInputType InputType, const FVector4f& PreviewValue)
+		FString MakeVirtualFunctionPreviewValueText(const EFunctionInputType InputType, const FVector4f& PreviewValue)
 		{
 			switch (InputType)
 			{
@@ -182,6 +186,14 @@ namespace UE::DreamShader::Editor::Private
 			default:
 				return FString();
 			}
+		}
+
+		// The object a 2.0 `/// @asset` names: the package path when the function is named after its package, else the object path.
+		FString MakeVirtualFunctionAssetPathText(const UMaterialFunction* MaterialFunction)
+		{
+			const FString ObjectPath = MaterialFunction->GetPathName();
+			const FString PackageName = FPackageName::ObjectPathToPackageName(ObjectPath);
+			return FPackageName::GetShortName(PackageName).Equals(MaterialFunction->GetName(), ESearchCase::CaseSensitive) ? PackageName : ObjectPath;
 		}
 
 		bool TryMakeVirtualFunctionAssetLiteral(const UMaterialFunction* MaterialFunction, FString& OutLiteral, FString& OutError)
@@ -205,7 +217,7 @@ namespace UE::DreamShader::Editor::Private
 
 			const auto BuildLiteral = [&OutLiteral](const TCHAR* RootName, const FString& RelativePath)
 			{
-				OutLiteral = FString::Printf(TEXT("Path(%s, \"%s\")"), RootName, *EscapeDreamShaderString(RelativePath));
+				OutLiteral = FString::Printf(TEXT("Path(%s, \"%s\")"), RootName, *EscapeVirtualFunctionStringLiteral(RelativePath));
 			};
 
 			if (PackageName.StartsWith(TEXT("/Game/"), ESearchCase::IgnoreCase))
@@ -258,7 +270,7 @@ namespace UE::DreamShader::Editor::Private
 				OutLiteral = FString::Printf(
 					TEXT("Path(Plugins.%s, \"%s\")"),
 					*BestPluginName,
-					*EscapeDreamShaderString(RelativePath));
+					*EscapeVirtualFunctionStringLiteral(RelativePath));
 				return true;
 			}
 
@@ -300,7 +312,7 @@ namespace UE::DreamShader::Editor::Private
 		TArray<FString> Lines;
 		Lines.Add(FString::Printf(
 			TEXT("VirtualFunction(Name=\"%s\")"),
-			*EscapeDreamShaderString(MakeDreamShaderDeclarationName(
+			*EscapeVirtualFunctionStringLiteral(MakeVirtualFunctionDeclarationName(
 				MaterialFunction->GetName(),
 				TEXT("VirtualFunction"),
 				0,
@@ -310,7 +322,7 @@ namespace UE::DreamShader::Editor::Private
 		Lines.Add(FString::Printf(TEXT("\t\tAsset = %s;"), *AssetLiteral));
 		Lines.Add(FString::Printf(
 			TEXT("\t\tDescription = \"Generated from %s\";"),
-			*EscapeDreamShaderString(MaterialFunction->GetPathName())));
+			*EscapeVirtualFunctionStringLiteral(MaterialFunction->GetPathName())));
 		Lines.Add(TEXT("\t}"));
 		Lines.Add(TEXT(""));
 		Lines.Add(TEXT("\tInputs = {"));
@@ -327,18 +339,18 @@ namespace UE::DreamShader::Editor::Private
 				: FunctionInput_Vector4;
 			const bool bOptional = InputExpression && InputExpression->bUsePreviewValueAsDefault != 0;
 			const FString DefaultText = bOptional && InputExpression
-				? MakePreviewValueText(InputType, InputExpression->PreviewValue)
+				? MakeVirtualFunctionPreviewValueText(InputType, InputExpression->PreviewValue)
 				: FString();
 			const FString DefaultSuffix = DefaultText.IsEmpty()
 				? FString()
 				: FString::Printf(TEXT(" = %s"), *DefaultText);
 			const FString MetadataSuffix = InputExpression
-				? MakeFunctionParameterMetadataSuffix(InputExpression->Description, InputExpression->SortPriority, InputIndex)
+				? MakeVirtualFunctionParameterMetadataSuffix(InputExpression->Description, InputExpression->SortPriority, InputIndex)
 				: FString();
 			Lines.Add(FString::Printf(
 				TEXT("\t\t%s%s %s%s%s;"),
 				bOptional ? TEXT("opt ") : TEXT(""),
-				*GetDreamShaderTypeForFunctionInput(InputType),
+				*GetVirtualFunctionInputTypeSpelling(InputType),
 				*MakeUniqueDreamShaderDeclarationName(
 					InputName,
 					TEXT("Input"),
@@ -360,7 +372,7 @@ namespace UE::DreamShader::Editor::Private
 				? OutputExpression->OutputName.ToString()
 				: Output.Output.OutputName.ToString();
 			const FString MetadataSuffix = OutputExpression
-				? MakeFunctionParameterMetadataSuffix(OutputExpression->Description, OutputExpression->SortPriority, OutputIndex)
+				? MakeVirtualFunctionParameterMetadataSuffix(OutputExpression->Description, OutputExpression->SortPriority, OutputIndex)
 				: FString();
 			Lines.Add(FString::Printf(
 				TEXT("\t\t%s %s%s;"),
@@ -422,7 +434,7 @@ namespace UE::DreamShader::Editor::Private
 
 		OutCallText = FString::Printf(
 			TEXT("%s(%s)"),
-			*MakeDreamShaderDeclarationName(FunctionName, TEXT("VirtualFunction"), 0),
+			*MakeVirtualFunctionDeclarationName(FunctionName, TEXT("VirtualFunction"), 0),
 			*FString::Join(Arguments, TEXT(", ")));
 		return true;
 	}
@@ -462,7 +474,7 @@ namespace UE::DreamShader::Editor::Private
 			Parameter.Name = OutputName;
 		}
 
-		FString FunctionName = MakeDreamShaderDeclarationName(
+		FString FunctionName = MakeVirtualFunctionDeclarationName(
 			MaterialFunction->GetName(),
 			TEXT("VirtualFunction"),
 			0,
@@ -470,12 +482,173 @@ namespace UE::DreamShader::Editor::Private
 		return BuildCallTextFromSignature(FunctionName, Inputs, Outputs, OutCallText, OutError);
 	}
 
+	bool FDreamShaderVirtualFunctionService::BuildExternPrototype(
+		const UMaterialFunction* MaterialFunction,
+		const FString& LegacyDefinition,
+		FString& OutPrototype,
+		FString& OutError)
+	{
+		// Declarations rather than a using-directive, so no name of this module's own namespaces can make one ambiguous.
+		using UE::DreamShader::Lang::EFunctionLinkage;
+		using UE::DreamShader::Lang::ELangFrontend;
+		using UE::DreamShader::Lang::EParamDirection;
+		using UE::DreamShader::Lang::FDeclPtr;
+		using UE::DreamShader::Lang::FDocDirective;
+		using UE::DreamShader::Lang::FFunctionDecl;
+		using UE::DreamShader::Lang::FLangDiagnostic;
+		using UE::DreamShader::Lang::FLangParseOptions;
+		using UE::DreamShader::Lang::FLangParseResult;
+		using UE::DreamShader::Lang::FLangPrintOptions;
+		using UE::DreamShader::Lang::FLangSourceText;
+		using UE::DreamShader::Lang::FParam;
+		using UE::DreamShader::Lang::ParseDreamShaderLang;
+		using UE::DreamShader::Lang::PrintDreamShaderLangDecl;
+
+		if (!MaterialFunction)
+		{
+			OutError = LOCTEXT("NoMaterialFunctionAssetProvided", "No MaterialFunction asset was provided.").ToString();
+			return false;
+		}
+
+		// A `.dsh` path: a VirtualFunction block is a header declaration, which the legacy front end turns into an `extern`.
+		FLangParseOptions ParseOptions;
+		ParseOptions.Frontend = ELangFrontend::Legacy;
+		FLangParseResult Parsed = ParseDreamShaderLang(FLangSourceText(MakeDefinitionFilePath(MaterialFunction), LegacyDefinition), ParseOptions);
+		if (const FLangDiagnostic* const FirstError = Parsed.Diagnostics.FirstError())
+		{
+			OutError = FirstError->Message.ToString();
+			return false;
+		}
+
+		FFunctionDecl* Prototype = nullptr;
+		if (Parsed.Module.IsValid())
+		{
+			for (const FDeclPtr& Decl : Parsed.Module->Declarations)
+			{
+				FFunctionDecl* const Function = Decl.IsValid() ? Decl->As<FFunctionDecl>() : nullptr;
+				if (Function && Function->Linkage == EFunctionLinkage::Extern)
+				{
+					Prototype = Function;
+					break;
+				}
+			}
+		}
+		if (!Prototype)
+		{
+			OutError = LOCTEXT("VirtualFunctionNoPrototype", "The VirtualFunction definition did not read back as an extern prototype.").ToString();
+			return false;
+		}
+
+		// `@asset` by path, the spelling a 2.0 author writes, in place of the 1.x `Path(Root, "...")` reference.
+		const FString AssetPathText = MakeVirtualFunctionAssetPathText(MaterialFunction);
+		bool bHasAssetDirective = false;
+		for (FDocDirective& Directive : Prototype->Doc.Directives)
+		{
+			if (Directive.Key.Equals(TEXT("asset"), ESearchCase::CaseSensitive))
+			{
+				Directive.Value = AssetPathText;
+				bHasAssetDirective = true;
+			}
+		}
+		if (!bHasAssetDirective)
+		{
+			FDocDirective& AssetDirective = Prototype->Doc.Directives.AddDefaulted_GetRef();
+			AssetDirective.Key = TEXT("asset");
+			AssetDirective.Value = AssetPathText;
+		}
+
+		// `@pin` wherever BuildDefinition had to rename an engine pin: a call is wired by pin name, and a renamed pin binds
+		// nothing (research-decompiler section 6.6). The names are rebuilt with the rule BuildDefinition applied.
+		TArray<FFunctionExpressionInput> FunctionInputs;
+		TArray<FFunctionExpressionOutput> FunctionOutputs;
+		MaterialFunction->GetInputsAndOutputs(FunctionInputs, FunctionOutputs);
+		TMap<FString, FString> EngineInputNames;
+		TMap<FString, FString> EngineOutputNames;
+		{
+			TSet<FString> UsedInputNames;
+			for (int32 InputIndex = 0; InputIndex < FunctionInputs.Num(); ++InputIndex)
+			{
+				const FFunctionExpressionInput& Input = FunctionInputs[InputIndex];
+				const FString EngineName = Input.ExpressionInput
+					? Input.ExpressionInput->InputName.ToString()
+					: Input.Input.InputName.ToString();
+				const FString ParameterName = MakeUniqueDreamShaderDeclarationName(
+					EngineName,
+					TEXT("Input"),
+					InputIndex,
+					FString::Printf(TEXT("%s:Input:%d:%s"), *MaterialFunction->GetPathName(), InputIndex, *EngineName),
+					UsedInputNames);
+				EngineInputNames.Add(ParameterName, EngineName);
+			}
+
+			TSet<FString> UsedOutputNames;
+			for (int32 OutputIndex = 0; OutputIndex < FunctionOutputs.Num(); ++OutputIndex)
+			{
+				const FFunctionExpressionOutput& Output = FunctionOutputs[OutputIndex];
+				const FString EngineName = Output.ExpressionOutput
+					? Output.ExpressionOutput->OutputName.ToString()
+					: Output.Output.OutputName.ToString();
+				const FString ParameterName = MakeUniqueDreamShaderDeclarationName(
+					EngineName,
+					TEXT("Output"),
+					OutputIndex,
+					FString::Printf(TEXT("%s:Output:%d:%s"), *MaterialFunction->GetPathName(), OutputIndex, *EngineName),
+					UsedOutputNames);
+				EngineOutputNames.Add(ParameterName, EngineName);
+			}
+		}
+		for (const FParam& Param : Prototype->Params)
+		{
+			const TMap<FString, FString>& EngineNames = Param.Direction == EParamDirection::In ? EngineInputNames : EngineOutputNames;
+			const FString* const EngineName = EngineNames.Find(Param.Name);
+			if (EngineName && !EngineName->Equals(Param.Name, ESearchCase::CaseSensitive))
+			{
+				FDocDirective& PinDirective = Prototype->Doc.Directives.AddDefaulted_GetRef();
+				PinDirective.Key = TEXT("pin");
+				PinDirective.Value = FString::Printf(TEXT("%s %s"), *Param.Name, **EngineName);
+			}
+		}
+
+		FLangPrintOptions PrintOptions;
+		PrintOptions.bPrintTrivia = false;
+		OutPrototype = PrintDreamShaderLangDecl(*Prototype, PrintOptions);
+		return true;
+	}
+
+	bool FDreamShaderVirtualFunctionService::BuildExternCallTextFromSignature(
+		const FString& FunctionName,
+		const TArray<FTextShaderFunctionParameter>& Inputs,
+		const TArray<FTextShaderFunctionParameter>& Outputs,
+		const bool bFirstOutputIsReturnValue,
+		FString& OutCallText,
+		FString& OutError)
+	{
+		if (FunctionName.TrimStartAndEnd().IsEmpty())
+		{
+			OutError = LOCTEXT("VirtualFunctionNameCannotBeEmpty", "VirtualFunction name cannot be empty.").ToString();
+			return false;
+		}
+
+		TArray<FString> Arguments;
+		for (const FTextShaderFunctionParameter& Input : Inputs)
+		{
+			Arguments.Add(Input.Name);
+		}
+		for (int32 OutputIndex = bFirstOutputIsReturnValue ? 1 : 0; OutputIndex < Outputs.Num(); ++OutputIndex)
+		{
+			Arguments.Add(Outputs[OutputIndex].Name);
+		}
+
+		OutCallText = FString::Printf(TEXT("%s(%s)"), *FunctionName, *FString::Join(Arguments, TEXT(", ")));
+		return true;
+	}
+
 	FString FDreamShaderVirtualFunctionService::MakeDefinitionFilePath(const UMaterialFunction* MaterialFunction)
 	{
 		const FString DefinitionDirectory = FPaths::Combine(
 			UE::DreamShader::GetSourceShaderDirectory(),
 			TEXT("VirtualFunctions"));
-		const FString BaseName = MakeDreamShaderDeclarationName(
+		const FString BaseName = MakeVirtualFunctionDeclarationName(
 			MaterialFunction ? MaterialFunction->GetName() : FString(),
 			TEXT("VirtualFunction"),
 			0,
