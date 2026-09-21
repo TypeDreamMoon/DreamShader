@@ -48,8 +48,9 @@ namespace UE::DreamShader::Lang::Private
 		// block; inside a body it documents nothing in M1, so it is a comment like any other and
 		// must not turn into "expected an expression, found a '///' comment". Skipped before the
 		// span starts, so the statement's span covers the statement and not the comment above it.
-		while (Match(ELangTokenKind::DocComment))
+		while (Check(ELangTokenKind::DocComment))
 		{
+			RecordSkippedDocComment(Advance());
 		}
 
 		const int32 StartIndex = GetTokenIndex();
@@ -81,6 +82,12 @@ namespace UE::DreamShader::Lang::Private
 
 		if (Check(ELangTokenKind::Directive))
 		{
+			if (IsLegacyMode())
+			{
+				// A 1.x Graph body spells its regions `#Region "Name"` / `#EndRegion`.
+				return ParseLegacyRegionDirective();
+			}
+
 			// `#pragma region` / `#pragma endregion` are the one `#` line a body may hold: they draw
 			// a comment box around the nodes the statements between them produce, as the 1.x
 			// `#Region` did. Any other `#` line is either a preprocessor line the preprocessor
@@ -479,8 +486,9 @@ namespace UE::DreamShader::Lang::Private
 		{
 			// A `///` line with nothing after it has no statement to introduce; drop it here so the
 			// loop never hands the closing `}` to ParseStatement. Always makes progress.
-			if (Match(ELangTokenKind::DocComment))
+			if (Check(ELangTokenKind::DocComment))
 			{
+				RecordSkippedDocComment(Advance());
 				continue;
 			}
 

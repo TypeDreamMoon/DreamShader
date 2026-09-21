@@ -50,6 +50,12 @@ namespace UE::DreamShader::Lang
 		PlusAssign, MinusAssign, StarAssign, SlashAssign, PercentAssign,
 		AmpersandAssign, PipeAssign, CaretAssign, LessLessAssign, GreaterGreaterAssign,
 
+		/**
+		 * A `//` line comment or a block comment, delimiters included in Text. Emitted only with
+		 * FLangLexOptions::bEmitComments; without it comments are skipped as before.
+		 */
+		Comment,
+
 		/** A character the lexer could not place. Reported as DSH2101; emitted so the parser fails at the right spot. */
 		Unknown,
 	};

@@ -348,6 +348,19 @@ namespace UE::DreamShader::Lang::Private
 
 				Node->Callee = MoveTemp(Result);
 				Node->Span = FLangSpan::Join(CalleeSpan, Previous().Span);
+
+				if (IsLegacyMode())
+				{
+					// Output selectors, shorthands and expanded property calls become their 2.0 shapes as the
+					// call is read, so a `.rgb` after `F(x, OutputIndex = 1)` applies to the selected output.
+					Result = RewriteLegacyCall(LegacyBlock, MoveTemp(Node));
+					if (!Result)
+					{
+						return nullptr;
+					}
+					continue;
+				}
+
 				Result = MoveTemp(Node);
 				continue;
 			}
@@ -433,6 +446,46 @@ namespace UE::DreamShader::Lang::Private
 			break;
 
 		case ELangTokenKind::Identifier:
+			if (IsLegacyMode())
+			{
+				// The 1.x spellings a 2.0 file does not have (research-legacy.md 3.3): `N::F` is the flattened
+				// function `N_F`; `True` and `FALSE` are the bool literals; a type token is classified the 1.x
+				// way; and a bare read of a parameter-node property is its reflected call.
+				if (Peek(1).Kind == ELangTokenKind::Colon && Peek(2).Kind == ELangTokenKind::Colon)
+				{
+					return ParseLegacyQualifiedName();
+				}
+				if (Token.Text.Equals(TEXT("true"), ESearchCase::IgnoreCase) || Token.Text.Equals(TEXT("false"), ESearchCase::IgnoreCase))
+				{
+					TUniquePtr<FLiteralExpr> Node = MakeUnique<FLiteralExpr>();
+					Node->LiteralKind = ELiteralKind::Bool;
+					Node->bBool = Token.Text.Equals(TEXT("true"), ESearchCase::IgnoreCase);
+					Node->Text = Node->bBool ? TEXT("true") : TEXT("false");
+					Node->Span = Token.Span;
+					Advance();
+					return MoveTemp(Node);
+				}
+				if (IsLegacyBuiltinTypeName(Token.Text))
+				{
+					TUniquePtr<FTypeExpr> Node = MakeUnique<FTypeExpr>();
+					if (!ParseType(Node->Type))
+					{
+						return nullptr;
+					}
+					Node->Span = SpanFrom(StartIndex);
+					return MoveTemp(Node);
+				}
+				if (Peek(1).Kind != ELangTokenKind::LeftParen)
+				{
+					const FLangSpan ReadSpan = Token.Span;
+					if (FExprPtr Expanded = TryExpandLegacyPropertyRead(Token.Text, ReadSpan))
+					{
+						Advance();
+						return Expanded;
+					}
+				}
+			}
+
 			if (IsBuiltinTypeName(Token.Text))
 			{
 				// `float3(1, 2, 3)` is a call on a type, and a bare `float3` stays a type node --
@@ -521,6 +574,22 @@ namespace UE::DreamShader::Lang::Private
 				Advance(); // '='
 				bSeenNamedArgument = true;
 			}
+			else if (CheckIdentifier(TEXT("Pin"))
+				&& Peek(1).Kind == ELangTokenKind::LeftBracket
+				&& Peek(2).Kind == ELangTokenKind::IntLiteral
+				&& Peek(3).Kind == ELangTokenKind::RightBracket
+				&& Peek(4).Kind == ELangTokenKind::Assign)
+			{
+				// `Pin[i] = x`: an input by engine index, the form a 1.x `Expression(...).Pin[i] = x` binding
+				// prints as (FArgument::PinIndex). It counts as named for the positional-after-named rule.
+				const FLangSpan PinSpan = Advance().Span;
+				Advance(); // '['
+				Argument.PinIndex = static_cast<int32>(Advance().Integer);
+				Advance(); // ']'
+				Argument.NameSpan = FLangSpan::Join(PinSpan, Previous().Span);
+				Advance(); // '='
+				bSeenNamedArgument = true;
+			}
 
 			FExprPtr Value = ParseExpression();
 			if (!Value)
@@ -528,7 +597,7 @@ namespace UE::DreamShader::Lang::Private
 				return false;
 			}
 
-			if (Argument.Name.IsEmpty() && bSeenNamedArgument)
+			if (Argument.Name.IsEmpty() && Argument.PinIndex == INDEX_NONE && bSeenNamedArgument)
 			{
 				Diagnostics.Error(TEXT("DSH2158"), Value->Span, LOCTEXT("PositionalAfterNamedArgument",
 					"A positional argument cannot follow a named argument; give this argument a name too."));

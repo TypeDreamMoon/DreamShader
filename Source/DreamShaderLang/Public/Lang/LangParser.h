@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Lang/LangAst.h"
 #include "Lang/LangDiagnostic.h"
+#include "Lang/LangLegacy.h"
 #include "Lang/LangSource.h"
 
 namespace UE::DreamShader::Lang
@@ -15,13 +16,15 @@ namespace UE::DreamShader::Lang
 		Auto,
 		/** The 2.0 syntax. */
 		Dss,
-		/** The 1.x syntax (second front end, M4). Not available yet: reports DSH2199. */
+		/** The 1.x syntax (second front end): `.dsm` / `.dsf` files, and the Function / GraphFunction / Namespace / VirtualFunction declarations of a `.dsh`. */
 		Legacy,
 	};
 
 	struct FLangParseOptions
 	{
 		ELangFrontend Frontend = ELangFrontend::Auto;
+		/** Keep comments and blank lines in FModule::Trivia (migrate, dsc fmt, the language service). */
+		bool bKeepTrivia = false;
 	};
 
 	struct FLangParseResult
@@ -29,6 +32,8 @@ namespace UE::DreamShader::Lang
 		/** The tree. Present even after errors, holding whatever declarations parsed cleanly, so a language service can keep working on a broken file. */
 		TUniquePtr<FModule> Module;
 		FLangDiagnosticSink Diagnostics;
+		/** Filled for a parse that used the legacy front end (a .dsm/.dsf, or a .dsh with legacy declarations); pointers refer into Module. */
+		TUniquePtr<FLegacyMigrationInfo> Legacy;
 
 		bool Succeeded() const { return Module.IsValid() && !Diagnostics.HasErrors(); }
 	};

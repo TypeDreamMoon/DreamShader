@@ -70,17 +70,10 @@ namespace UE::DreamShader::Lang::Private
 			return Char >= TEXT('2') && Char <= TEXT('4');
 		}
 
-		/** The four 1.x top-level words the legacy front end (M4) will own. */
+		/** The 1.x top-level words the legacy front end owns (a `.dss` does not take them). */
 		bool IsLegacyDeclarationWord(const FString& Name)
 		{
-			return Name.Equals(TEXT("Function"), ESearchCase::CaseSensitive)
-				|| Name.Equals(TEXT("GraphFunction"), ESearchCase::CaseSensitive)
-				|| Name.Equals(TEXT("Namespace"), ESearchCase::CaseSensitive)
-				|| Name.Equals(TEXT("VirtualFunction"), ESearchCase::CaseSensitive)
-				|| Name.Equals(TEXT("Shader"), ESearchCase::CaseSensitive)
-				|| Name.Equals(TEXT("ShaderFunction"), ESearchCase::CaseSensitive)
-				|| Name.Equals(TEXT("ShaderLayer"), ESearchCase::CaseSensitive)
-				|| Name.Equals(TEXT("ShaderLayerBlend"), ESearchCase::CaseSensitive);
+			return FLangParser::IsLegacyTopLevelWord(Name);
 		}
 
 		// ------------------------------------------------------------------------ doc lines
@@ -364,7 +357,17 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		const FLangToken& Token = Advance();
-		ClassifyTypeName(Token.Text, OutType);
+		if (IsLegacyMode())
+		{
+			// 1.x type tokens (any case, `vec3`, `MaterialAttributes`, `StaticBool`): the 2.0 spelling goes into
+			// Name, so everything downstream and the printer see 2.0 text, and the change is recorded.
+			ClassifyLegacyTypeName(Token.Text, OutType);
+			RecordLegacyRename(FLegacyRename::EKind::TypeSpelling, Token.Text, OutType.Name, Token.Span);
+		}
+		else
+		{
+			ClassifyTypeName(Token.Text, OutType);
+		}
 		OutType.Span = Token.Span;
 		return true;
 	}
@@ -428,6 +431,11 @@ namespace UE::DreamShader::Lang::Private
 		// payload's first character sits at (span end - payload length).
 		const int32 PayloadOffset = LineSpan.End() - Line.Len();
 
+		// Every `///` line adds at least one item (free text when it has no directive, else its
+		// directives), so the next line index is one past the last recorded one. A block filled by
+		// several ParseDocBlock calls keeps counting.
+		const int32 OrderLine = InOutDoc.Order.Num() > 0 ? InOutDoc.Order.Last().Line + 1 : 0;
+
 		int32 FirstDirective = -1;
 		for (int32 Index = 0; Index < Line.Len(); ++Index)
 		{
@@ -438,12 +446,20 @@ namespace UE::DreamShader::Lang::Private
 			}
 		}
 
-		const FString FreeText = (FirstDirective < 0 ? Line : Line.Left(FirstDirective)).TrimStartAndEnd();
+		// The lexer took the one blank after `///` off already; what is left is the line, indentation and all: a
+		// description with a list in it keeps its `  - item` lines. (The whole text is trimmed where it is read.)
+		const FString FreeText = (FirstDirective < 0 ? Line : Line.Left(FirstDirective)).TrimEnd();
 		if (!FreeText.IsEmpty() || FirstDirective < 0)
 		{
 			// A blank `///` line is kept as an empty free-text line: it is a paragraph break in the
 			// description, and dropping it would glue two paragraphs together on the way back out.
 			InOutDoc.FreeText.Add(FreeText);
+
+			FDocItem Item;
+			Item.Kind = FDocItem::EKind::FreeText;
+			Item.Index = InOutDoc.FreeText.Num() - 1;
+			Item.Line = OrderLine;
+			InOutDoc.Order.Add(Item);
 		}
 
 		int32 Index = FirstDirective;
@@ -471,6 +487,12 @@ namespace UE::DreamShader::Lang::Private
 			Directive.Span.Line = LineSpan.Line;
 			Directive.Span.Column = LineSpan.Column + (Directive.Span.Offset - LineSpan.Offset);
 			InOutDoc.Directives.Add(MoveTemp(Directive));
+
+			FDocItem Item;
+			Item.Kind = FDocItem::EKind::Directive;
+			Item.Index = InOutDoc.Directives.Num() - 1;
+			Item.Line = OrderLine;
+			InOutDoc.Order.Add(Item);
 
 			Index = Next;
 		}
@@ -581,7 +603,7 @@ namespace UE::DreamShader::Lang::Private
 
 		if (Name.IsEmpty())
 		{
-			Diagnostics.Error(TEXT("DSH3202"), Span, LOCTEXT("PragmaWithoutName", "'#pragma' needs a name: material, layout, region or endregion."));
+			Diagnostics.Error(TEXT("DSH3202"), Span, LOCTEXT("PragmaWithoutNameWithInstance", "'#pragma' needs a name: material, instance, layout, region or endregion."));
 			return nullptr;
 		}
 
@@ -598,15 +620,19 @@ namespace UE::DreamShader::Lang::Private
 			return Pragma;
 		}
 
+		// `#pragma instance(...)` (a `.dsi` header) reads exactly like `#pragma material(...)`: keys
+		// with values, no positional selector. Which file kinds may carry it is the binder's call.
 		const bool bMaterial = Name.Equals(TEXT("material"), ESearchCase::CaseSensitive);
+		const bool bInstance = Name.Equals(TEXT("instance"), ESearchCase::CaseSensitive);
 		const bool bLayout = Name.Equals(TEXT("layout"), ESearchCase::CaseSensitive);
-		if (!bMaterial && !bLayout)
+		if (!bMaterial && !bInstance && !bLayout)
 		{
 			Pragma->PragmaKind = EPragmaKind::Unknown;
 			Pragma->Text = Arguments;
 			return Pragma;
 		}
-		Pragma->PragmaKind = bMaterial ? EPragmaKind::Material : EPragmaKind::Layout;
+		Pragma->PragmaKind = bMaterial ? EPragmaKind::Material : (bInstance ? EPragmaKind::Instance : EPragmaKind::Layout);
+		const bool bKeyedArgumentsOnly = bMaterial || bInstance;
 
 		// `(` Key = Value {, Key = Value} `)` -- a bare word is positional (`#pragma layout(Node, ...)`).
 		FPragmaScanner Scanner(Arguments);
@@ -667,7 +693,7 @@ namespace UE::DreamShader::Lang::Private
 				}
 				else
 				{
-					if (bMaterial)
+					if (bKeyedArgumentsOnly)
 					{
 						return FailPragma(FText::Format(LOCTEXT("PragmaPositionalInMaterial", "'{0}' needs a value: write '{0} = ...'."), FText::FromString(First)));
 					}
@@ -766,6 +792,7 @@ namespace UE::DreamShader::Lang::Private
 				if (!Field.Doc.IsEmpty())
 				{
 					Diagnostics.Warning(TEXT("DSH3221"), Field.Doc.Span, LOCTEXT("OrphanDocBlockInStruct", "This '///' block is not followed by a field and is ignored."));
+					RecordSkippedDocBlock(Field.Doc);
 				}
 				break;
 			}
@@ -988,14 +1015,15 @@ namespace UE::DreamShader::Lang::Private
 			Storage = EStorageClass::Const;
 		}
 
-		// -- the 1.x words: an honest "not yet" beats "expected a declaration name, found 'float'".
+		// -- the 1.x words: a `.dsh` dispatches them to the legacy front end before this point (ParseModule);
+		// anywhere else they are a 1.x declaration in a 2.0 file.
 		if (Check(ELangTokenKind::Identifier) && IsLegacyDeclarationWord(Current().Text))
 		{
 			Diagnostics.Error(
 				TEXT("DSH3222"),
 				Current().Span,
 				FText::Format(
-					LOCTEXT("LegacyDeclarationNotYet", "'{0}' is a 1.x declaration; the 2.0 front end does not parse it yet. Keep it in a .dsm/.dsf/.dsh compiled by the 1.x front end."),
+					LOCTEXT("LegacyDeclarationInTwoPointZeroFile", "Expected a 2.0 declaration, found the 1.x declaration '{0}'; 1.x declarations belong in a .dsh header or in a .dsm or .dsf file."),
 					FText::FromString(Current().Text)));
 			return nullptr;
 		}
@@ -1060,6 +1088,14 @@ namespace UE::DreamShader::Lang::Private
 						return nullptr;
 					}
 					Function->bOpaqueBody = true;
+
+					// Plan section 11 #19: a `UE.` call in the body is a graph node wired to an input of the Custom node.
+					TArray<FString> ParamNames;
+					for (const FParam& Param : Function->Params)
+					{
+						ParamNames.Add(Param.Name);
+					}
+					LiftCallsOutOfOpaqueBody(*Function, Function->Name, Function->BodySpan.Offset + 1, ParamNames);
 				}
 				else
 				{
@@ -1152,6 +1188,9 @@ namespace UE::DreamShader::Lang::Private
 			Variable->Doc = First.Doc;
 			Variable->Storage = First.Storage;
 			Variable->Type = First.Type;
+			// `uniform float a, b;` -- the printer joins a run of these back into one declaration, and
+			// the instance rewriter refuses to splice one name out of a shared statement (DSH9107).
+			Variable->bSharesDeclarationWithPrevious = true;
 
 			if (!Parser.ExpectIdentifier(Variable->Declarator.Name, Variable->Declarator.NameSpan, TEXT("DSH3205"), LOCTEXT("ExpectedNextDeclarator", "another name after ','")))
 			{
@@ -1206,6 +1245,7 @@ namespace UE::DreamShader::Lang::Private
 			if (!Doc.IsEmpty())
 			{
 				Diagnostics.Warning(TEXT("DSH3221"), Doc.Span, LOCTEXT("OrphanDocBlock", "This '///' block is not followed by a declaration and is ignored."));
+				RecordSkippedDocBlock(Doc);
 			}
 			return nullptr;
 		}

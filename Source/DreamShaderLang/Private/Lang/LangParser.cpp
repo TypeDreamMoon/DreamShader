@@ -250,6 +250,72 @@ namespace UE::DreamShader::Lang::Private
 	}
 
 	// ---------------------------------------------------------------------------------------------
+	// Trivia bookkeeping
+	// ---------------------------------------------------------------------------------------------
+
+	void FLangParser::RecordSkippedDocComment(const FLangToken& Token)
+	{
+		if (!bKeepTrivia || Token.Kind != ELangTokenKind::DocComment || Token.Span.Length <= 0)
+		{
+			return;
+		}
+
+		// The token's Text is the payload after `///`; the comment keeps the line verbatim, so the
+		// printed file carries exactly the characters the author wrote.
+		FLangComment Comment;
+		Comment.Span = Token.Span;
+		Comment.Text = Source.Slice(Token.Span);
+		Comment.bBlock = false;
+		SkippedComments.Add(MoveTemp(Comment));
+	}
+
+	void FLangParser::RecordSkippedDocBlock(const FDocBlock& Doc)
+	{
+		if (!bKeepTrivia || Doc.Span.Length <= 0)
+		{
+			return;
+		}
+
+		// The block's span joins every `///` token it consumed; cut it back into lines. Lines in
+		// between that are ordinary `//` comments were Comment tokens already and are not taken
+		// twice: only a line that starts with exactly three slashes is a doc line.
+		const FString& Text = Source.GetText();
+		const int32 End = FMath::Min(Doc.Span.End(), Text.Len());
+		int32 Offset = FMath::Clamp(Doc.Span.Offset, 0, Text.Len());
+		while (Offset < End)
+		{
+			while (Offset < End && FChar::IsWhitespace(Text[Offset]))
+			{
+				++Offset;
+			}
+			if (Offset >= End)
+			{
+				break;
+			}
+
+			int32 LineEnd = Offset;
+			while (LineEnd < End && Text[LineEnd] != TEXT('\n') && Text[LineEnd] != TEXT('\r'))
+			{
+				++LineEnd;
+			}
+
+			const bool bDocLine = LineEnd - Offset >= 3
+				&& Text[Offset] == TEXT('/') && Text[Offset + 1] == TEXT('/') && Text[Offset + 2] == TEXT('/')
+				&& !(LineEnd - Offset >= 4 && Text[Offset + 3] == TEXT('/'));
+			if (bDocLine)
+			{
+				FLangComment Comment;
+				Comment.Span = Source.MakeSpan(Offset, LineEnd - Offset);
+				Comment.Text = Text.Mid(Offset, LineEnd - Offset);
+				Comment.bBlock = false;
+				SkippedComments.Add(MoveTemp(Comment));
+			}
+
+			Offset = LineEnd;
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------
 	// Recovery
 	// ---------------------------------------------------------------------------------------------
 
@@ -274,6 +340,7 @@ namespace UE::DreamShader::Lang::Private
 				if (Token.Kind == ELangTokenKind::DocComment
 					|| Token.Kind == ELangTokenKind::Directive
 					|| bStructOrImport
+					|| (Token.Kind == ELangTokenKind::Identifier && IsLegacyTopLevelWord(Token.Text))
 					|| LooksLikeDeclarationStart())
 				{
 					return;
@@ -410,6 +477,46 @@ namespace UE::DreamShader::Lang::Private
 		{
 			const int32 StartIndex = Index;
 
+			// A `.dsh` holds both syntaxes, one declaration at a time (research-legacy.md 3.5): past the
+			// `///` block, an exact-case 1.x word hands the declaration to the legacy front end.
+			if (FileKind == ELangFileKind::Dsh)
+			{
+				int32 Ahead = 0;
+				while (Peek(Ahead).Kind == ELangTokenKind::DocComment || Peek(Ahead).Kind == ELangTokenKind::Semicolon)
+				{
+					++Ahead;
+				}
+				const FLangToken& Word = Peek(Ahead);
+				if (Word.Kind == ELangTokenKind::Identifier && IsLegacyTopLevelWord(Word.Text))
+				{
+					FDocBlock Doc;
+					ParseDocBlock(Doc);
+					while (Match(ELangTokenKind::Semicolon))
+					{
+						ParseDocBlock(Doc);
+					}
+
+					TArray<FDeclPtr> LegacyDeclarations;
+					if (!ParseLegacyDeclarationInHeader(MoveTemp(Doc), LegacyDeclarations))
+					{
+						SkipToLegacyTopLevelBoundary();
+					}
+					for (FDeclPtr& LegacyDeclaration : LegacyDeclarations)
+					{
+						if (LegacyDeclaration.IsValid())
+						{
+							Module->Declarations.Add(MoveTemp(LegacyDeclaration));
+						}
+					}
+
+					if (Index == StartIndex)
+					{
+						Advance();
+					}
+					continue;
+				}
+			}
+
 			FDeclPtr Declaration = ParseDeclaration();
 			if (Declaration.IsValid())
 			{
@@ -472,6 +579,459 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		return Expression;
+	}
+}
+
+// -------------------------------------------------------------------------------------------------
+// Trivia: comments and blank lines kept beside the tree (FLangParseOptions::bKeepTrivia)
+// -------------------------------------------------------------------------------------------------
+//
+// The lexer emits Comment tokens only when asked; ParseDreamShaderLang pulls every one of them out of
+// the stream before the parser runs, so no grammar rule ever sees a comment. After the parse, the
+// attach pass hangs each comment on an anchor -- a file-scope declaration, or a statement of a block at
+// any depth (Plan/m4m5/research-decompiler.md section 5.2):
+//
+//   - inside an anchor's span, and not inside a block that anchor holds: that anchor's Trailing when
+//     the comment starts on the anchor's last line, else one of its Leading comments;
+//   - else, on the last line of the anchor that ended just before it: that anchor's Trailing;
+//   - else a Leading comment of the next anchor, unless that anchor lies past the end of the innermost
+//     block around the comment, in which case the block's Inner;
+//   - else FModule::TrailingComments;
+//   - a comment inside an opaque body is part of RawBody already and is not attached a second time.
+//
+// Anchors are compared by source position only, never by where they sit in the tree. The legacy front
+// end gives every node it synthesizes the span of the 1.x construct it came from and then places it
+// where 2.0 wants it (Outputs bindings at the end of the entry body, Properties as file-scope
+// uniforms), so the statements of one body interleave in the source with declarations of the module;
+// comparing positions is what lets a comment travel with the construct it was written next to.
+//
+// Every comment lands somewhere, so the printed file carries the same multiset of comments as the
+// source; `dsc migrate` refuses to write a file for which that is false (DSH9092).
+
+namespace UE::DreamShader::Lang::Private::ParserTrivia
+{
+	/** Moves every Comment token out of the stream, in order, into OutComments. */
+	static void ExtractCommentTokens(TArray<FLangToken>& Tokens, TArray<FLangComment>& OutComments)
+	{
+		int32 Write = 0;
+		for (int32 Read = 0; Read < Tokens.Num(); ++Read)
+		{
+			if (Tokens[Read].Kind == ELangTokenKind::Comment)
+			{
+				FLangComment Comment;
+				Comment.Text = MoveTemp(Tokens[Read].Text);
+				Comment.Span = Tokens[Read].Span;
+				Comment.bBlock = Comment.Text.StartsWith(TEXT("/*"), ESearchCase::CaseSensitive);
+				OutComments.Add(MoveTemp(Comment));
+				continue;
+			}
+			if (Write != Read)
+			{
+				Tokens[Write] = MoveTemp(Tokens[Read]);
+			}
+			++Write;
+		}
+		Tokens.SetNum(Write);
+	}
+
+	class FParserTriviaAttacher
+	{
+	public:
+		FParserTriviaAttacher(const FLangSourceText& InSource, FModule& InModule, const TArray<FLangComment>& InComments)
+			: Source(InSource)
+			, Module(InModule)
+			, Comments(InComments)
+		{
+		}
+
+		void Run()
+		{
+			for (const FDeclPtr& Decl : Module.Declarations)
+			{
+				if (!Decl.IsValid())
+				{
+					continue;
+				}
+				// A declaration starts at its `///` block: a comment between two doc lines, or between
+				// the block and the declaration, belongs to that declaration.
+				int32 Start = Decl->Span.Offset;
+				if (Decl->Doc.Span.Length > 0)
+				{
+					Start = FMath::Min(Start, Decl->Doc.Span.Offset);
+				}
+				AddAnchor(*Decl, Start);
+				GatherInside(*Decl);
+			}
+
+			BuildEndIndex();
+
+			for (const FLangComment& Comment : Comments)
+			{
+				Place(Comment);
+			}
+
+			ComputeBlankLines();
+		}
+
+	private:
+		/** A node trivia can hang on: a file-scope declaration, or a statement of a block at any depth. */
+		struct FAnchor
+		{
+			const FNode* Node = nullptr;
+			int32 Start = 0;
+			int32 End = 0;
+			int32 StartLine = 1;
+			int32 EndLine = 1;
+		};
+
+		/** A block whose braces are in the source: a comment after its last statement is its Inner. */
+		struct FBlockRange
+		{
+			const FNode* Node = nullptr;
+			int32 Start = 0;
+			int32 End = 0;
+			int32 StartLine = 1;
+		};
+
+		int32 LineOf(const int32 Offset) const
+		{
+			int32 Line = 1;
+			int32 Column = 1;
+			Source.GetLineAndColumn(Offset, Line, Column);
+			return Line;
+		}
+
+		bool IsBlankLine(const int32 Line) const
+		{
+			const FString Text = Source.GetLineText(Line);
+			for (const TCHAR Character : Text)
+			{
+				if (!FChar::IsWhitespace(Character))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		int32 CountBlankLines(const int32 AfterLine, const int32 BeforeLine) const
+		{
+			int32 Count = 0;
+			for (int32 Line = FMath::Max(AfterLine + 1, 1); Line < BeforeLine; ++Line)
+			{
+				if (IsBlankLine(Line))
+				{
+					++Count;
+				}
+			}
+			return Count;
+		}
+
+		void AddAnchor(const FNode& Node, const int32 Start)
+		{
+			const int32 End = Node.Span.End();
+			if (End <= Start)
+			{
+				// No span (a hand-built node): nothing can be placed next to it.
+				return;
+			}
+			FAnchor& Anchor = Anchors.AddDefaulted_GetRef();
+			Anchor.Node = &Node;
+			Anchor.Start = Start;
+			Anchor.End = End;
+			Anchor.StartLine = LineOf(Start);
+			Anchor.EndLine = LineOf(End - 1);
+		}
+
+		void GatherBlock(const FBlockStmt& Block)
+		{
+			if (Block.Span.Length > 0)
+			{
+				FBlockRange& Range = Blocks.AddDefaulted_GetRef();
+				Range.Node = &Block;
+				Range.Start = Block.Span.Offset;
+				Range.End = Block.Span.End();
+				Range.StartLine = Block.Span.Line;
+			}
+
+			for (const FStmtPtr& Statement : Block.Statements)
+			{
+				if (Statement.IsValid())
+				{
+					AddAnchor(*Statement, Statement->Span.Offset);
+					GatherInside(*Statement);
+				}
+			}
+		}
+
+		/**
+		 * A branch or loop body. A block is walked; a chained `else if` is walked but not anchored, since
+		 * the printer writes the chain flat and a comment inside it goes to the chain's first `if`; a
+		 * single statement is walked for the blocks it may hold, and is not anchored either, because it
+		 * is printed inside braces the source did not have.
+		 */
+		void GatherBranch(const FStmt* Branch)
+		{
+			if (!Branch)
+			{
+				return;
+			}
+			if (const FBlockStmt* Block = Branch->As<FBlockStmt>())
+			{
+				GatherBlock(*Block);
+				return;
+			}
+			GatherInside(*Branch);
+		}
+
+		void GatherInside(const FNode& Node)
+		{
+			if (const FFunctionDecl* Function = Node.As<FFunctionDecl>())
+			{
+				if (Function->bOpaqueBody && Function->BodySpan.Length > 0)
+				{
+					OpaqueBodies.Add(Function->BodySpan);
+				}
+				if (Function->Body.IsValid())
+				{
+					GatherBlock(*Function->Body);
+				}
+				return;
+			}
+			if (const FBlockStmt* Block = Node.As<FBlockStmt>())
+			{
+				GatherBlock(*Block);
+				return;
+			}
+			if (const FIfStmt* If = Node.As<FIfStmt>())
+			{
+				GatherBranch(If->Then.Get());
+				GatherBranch(If->Else.Get());
+				return;
+			}
+			if (const FForStmt* For = Node.As<FForStmt>())
+			{
+				GatherBranch(For->Body.Get());
+				return;
+			}
+			if (const FWhileStmt* While = Node.As<FWhileStmt>())
+			{
+				GatherBranch(While->Body.Get());
+				return;
+			}
+			if (const FDoWhileStmt* DoWhile = Node.As<FDoWhileStmt>())
+			{
+				GatherBranch(DoWhile->Body.Get());
+			}
+		}
+
+		/** Anchors ordered by End, with the running maximum of their last lines, for the blank-line count. */
+		void BuildEndIndex()
+		{
+			ByEnd.Reserve(Anchors.Num());
+			for (int32 Index = 0; Index < Anchors.Num(); ++Index)
+			{
+				ByEnd.Add(Index);
+			}
+			ByEnd.StableSort([this](const int32 A, const int32 B) { return Anchors[A].End < Anchors[B].End; });
+
+			MaxEndLineByEnd.SetNum(ByEnd.Num());
+			int32 Running = 0;
+			for (int32 Index = 0; Index < ByEnd.Num(); ++Index)
+			{
+				Running = FMath::Max(Running, Anchors[ByEnd[Index]].EndLine);
+				MaxEndLineByEnd[Index] = Running;
+			}
+		}
+
+		/** The last line of everything that ended at or before Offset; 0 when nothing did. */
+		int32 LastEndLineBefore(const int32 Offset) const
+		{
+			int32 Low = 0;
+			int32 High = ByEnd.Num();
+			while (Low < High)
+			{
+				const int32 Mid = Low + (High - Low) / 2;
+				if (Anchors[ByEnd[Mid]].End <= Offset)
+				{
+					Low = Mid + 1;
+				}
+				else
+				{
+					High = Mid;
+				}
+			}
+			return Low > 0 ? MaxEndLineByEnd[Low - 1] : 0;
+		}
+
+		int32 FindSmallestBlockContaining(const int32 Offset) const
+		{
+			int32 Best = INDEX_NONE;
+			for (int32 Index = 0; Index < Blocks.Num(); ++Index)
+			{
+				const FBlockRange& Range = Blocks[Index];
+				if (Offset >= Range.Start && Offset < Range.End
+					&& (Best == INDEX_NONE || (Range.End - Range.Start) < (Blocks[Best].End - Blocks[Best].Start)))
+				{
+					Best = Index;
+				}
+			}
+			return Best;
+		}
+
+		bool HasTrailing(const FNode* Node) const
+		{
+			const FLangTrivia* Trivia = Module.Trivia.Find(Node);
+			return Trivia && Trivia->Trailing.IsSet();
+		}
+
+		void Place(const FLangComment& Comment)
+		{
+			const int32 Offset = Comment.Span.Offset;
+
+			for (const FLangSpan& Body : OpaqueBodies)
+			{
+				if (Offset >= Body.Offset && Offset < Body.End())
+				{
+					// Part of RawBody, printed with it.
+					return;
+				}
+			}
+
+			int32 Containing = INDEX_NONE;
+			int32 Previous = INDEX_NONE;
+			int32 Next = INDEX_NONE;
+			for (int32 Index = 0; Index < Anchors.Num(); ++Index)
+			{
+				const FAnchor& Anchor = Anchors[Index];
+				if (Offset >= Anchor.Start && Offset < Anchor.End)
+				{
+					if (Containing == INDEX_NONE || (Anchor.End - Anchor.Start) < (Anchors[Containing].End - Anchors[Containing].Start))
+					{
+						Containing = Index;
+					}
+				}
+				else if (Anchor.End <= Offset)
+				{
+					if (Previous == INDEX_NONE || Anchor.End > Anchors[Previous].End)
+					{
+						Previous = Index;
+					}
+				}
+				else if (Next == INDEX_NONE || Anchor.Start < Anchors[Next].Start)
+				{
+					Next = Index;
+				}
+			}
+
+			const int32 Block = FindSmallestBlockContaining(Offset);
+
+			// Inside a node, and not inside a block that node holds: the node takes it.
+			if (Containing != INDEX_NONE)
+			{
+				const FAnchor& Anchor = Anchors[Containing];
+				const bool bInsideOwnedBlock = Block != INDEX_NONE
+					&& Blocks[Block].Start >= Anchor.Start
+					&& Blocks[Block].End <= Anchor.End;
+				if (!bInsideOwnedBlock)
+				{
+					if (Comment.Span.Line >= Anchor.EndLine && !HasTrailing(Anchor.Node))
+					{
+						Module.Trivia.FindOrAdd(Anchor.Node).Trailing.Emplace(Comment);
+					}
+					else
+					{
+						Module.Trivia.FindOrAdd(Anchor.Node).Leading.Add(Comment);
+					}
+					return;
+				}
+			}
+
+			if (Previous != INDEX_NONE
+				&& Comment.Span.Line == Anchors[Previous].EndLine
+				&& !HasTrailing(Anchors[Previous].Node))
+			{
+				Module.Trivia.FindOrAdd(Anchors[Previous].Node).Trailing.Emplace(Comment);
+				return;
+			}
+
+			if (Block != INDEX_NONE && (Next == INDEX_NONE || Anchors[Next].Start >= Blocks[Block].End))
+			{
+				Module.Trivia.FindOrAdd(Blocks[Block].Node).Inner.Add(Comment);
+				return;
+			}
+
+			if (Next != INDEX_NONE)
+			{
+				Module.Trivia.FindOrAdd(Anchors[Next].Node).Leading.Add(Comment);
+				return;
+			}
+
+			Module.TrailingComments.Add(Comment);
+		}
+
+		void ComputeBlankLines()
+		{
+			for (const FAnchor& Anchor : Anchors)
+			{
+				int32 FromLine = LastEndLineBefore(Anchor.Start);
+
+				const int32 Block = FindSmallestBlockContaining(Anchor.Start);
+				if (Block != INDEX_NONE)
+				{
+					FromLine = FMath::Max(FromLine, Blocks[Block].StartLine);
+				}
+
+				// Counted up to the node's first printed line: its first Leading comment when it has one. The
+				// printer finds the gaps between those comments and the node from their spans, which it can; the
+				// gap above the comments needs the source text, which only this pass has.
+				int32 TargetLine = Anchor.StartLine;
+				if (const FLangTrivia* Existing = Module.Trivia.Find(Anchor.Node))
+				{
+					if (Existing->Leading.Num() > 0)
+					{
+						TargetLine = FMath::Min(TargetLine, Existing->Leading[0].Span.Line);
+					}
+				}
+
+				const int32 Blank = CountBlankLines(FromLine, TargetLine);
+				if (Blank > 0)
+				{
+					Module.Trivia.FindOrAdd(Anchor.Node).BlankLinesBefore = Blank;
+				}
+			}
+		}
+
+		const FLangSourceText& Source;
+		FModule& Module;
+		const TArray<FLangComment>& Comments;
+		TArray<FAnchor> Anchors;
+		TArray<FBlockRange> Blocks;
+		TArray<FLangSpan> OpaqueBodies;
+		TArray<int32> ByEnd;
+		TArray<int32> MaxEndLineByEnd;
+	};
+
+	/** The one attach pass both front ends run (see the section comment above). */
+	static void AttachDreamShaderTrivia(const FLangSourceText& Source, TArray<FLangComment>&& InComments, FModule& Module)
+	{
+		TArray<FLangComment> Comments = MoveTemp(InComments);
+		Comments.StableSort([](const FLangComment& A, const FLangComment& B) { return A.Span.Offset < B.Span.Offset; });
+
+		// The same line recorded twice (a skipped `///` token and the block it belonged to) is one comment.
+		for (int32 Index = Comments.Num() - 1; Index > 0; --Index)
+		{
+			if (Comments[Index].Span.Offset == Comments[Index - 1].Span.Offset)
+			{
+				Comments.RemoveAt(Index);
+			}
+		}
+
+		Module.Trivia.Reset();
+		Module.TrailingComments.Reset();
+
+		FParserTriviaAttacher Attacher(Source, Module, Comments);
+		Attacher.Run();
 	}
 }
 
@@ -558,31 +1118,26 @@ namespace UE::DreamShader::Lang
 		ELangFrontend Frontend = Options.Frontend;
 		if (Frontend == ELangFrontend::Auto)
 		{
-			// `.dss`, `.dsh` and an unknown/absent extension take the 2.0 front end; only the two
-			// frozen 1.x extensions ask for the legacy one.
+			// The two frozen 1.x extensions take the legacy front end. `.dss`, `.dsi` and an unknown or absent
+			// extension take the 2.0 one; so does a `.dsh`, whose module loop hands each 1.x declaration to
+			// the legacy front end by itself (batch-2 contract, agreement A4).
 			Frontend = (FileKind == ELangFileKind::Dsm || FileKind == ELangFileKind::Dsf)
 				? ELangFrontend::Legacy
 				: ELangFrontend::Dss;
 		}
 
-		if (Frontend == ELangFrontend::Legacy)
-		{
-			// M4 brings the second front end; until then the answer is one honest error rather
-			// than a 2.0 parse of 1.x text, which would fail token by token and explain nothing.
-			Result.Module = MakeUnique<FModule>();
-			Result.Module->FilePath = Source.GetPath();
-			Result.Module->FileKind = FileKind;
-
-			Result.Diagnostics.Error(
-				TEXT("DSH2199"),
-				Source.MakeSpan(0, 0),
-				LOCTEXT("LegacyFrontendUnavailable", "The 1.x front end is not available in this build."));
-			return Result;
-		}
+		const bool bLegacyModule = Frontend == ELangFrontend::Legacy;
 
 		FLangLexOptions LexOptions;
-		LexOptions.bEmitDocComments = true;
+		// 1.x has no doc comments: in a legacy module a `///` line is an ordinary comment.
+		LexOptions.bEmitDocComments = !bLegacyModule;
 		LexOptions.bEmitDirectives = true;
+		// A 1.x Properties default may be the engine's asset shell with no double quotes around it; a `.dsh` may
+		// hold 1.x blocks too.
+		LexOptions.bLexAssetShellQuotes = bLegacyModule || FileKind == ELangFileKind::Dsh;
+		// Comments become tokens only when they are kept; they are taken out of the stream again
+		// before the parser runs, so the grammar is the same either way.
+		LexOptions.bEmitComments = Options.bKeepTrivia;
 
 		// The two stages report into their own sinks so they can be merged once the tree says which
 		// stretches of the file were opaque HLSL (GatherOpaqueBodySpans). A lexing error is recorded
@@ -594,8 +1149,47 @@ namespace UE::DreamShader::Lang
 		TArray<FLangToken> Tokens;
 		LexDreamShaderLang(Source, LexOptions, Tokens, LexicalDiagnostics);
 
+		TArray<FLangComment> Comments;
+		if (Options.bKeepTrivia)
+		{
+			Private::ParserTrivia::ExtractCommentTokens(Tokens, Comments);
+		}
+
 		Private::FLangParser Parser(Source, MoveTemp(Tokens), Frontend, FileKind, ParseDiagnostics);
-		Result.Module = Parser.ParseModule();
+		Parser.SetKeepTrivia(Options.bKeepTrivia);
+
+		// A legacy module always reports what it knows about the 1.x source; a header only when it held a
+		// legacy declaration (checked after the parse).
+		if (bLegacyModule || FileKind == ELangFileKind::Dsh)
+		{
+			Result.Legacy = MakeUnique<FLegacyMigrationInfo>();
+			Parser.SetLegacyInfo(Result.Legacy.Get());
+		}
+
+		Result.Module = bLegacyModule ? Parser.ParseLegacyModule(Result.Legacy.Get()) : Parser.ParseModule();
+
+		if (!bLegacyModule && Result.Legacy.IsValid())
+		{
+			bool bAnyLegacyDeclaration = false;
+			if (Result.Module.IsValid())
+			{
+				for (const FDeclPtr& Declaration : Result.Module->Declarations)
+				{
+					bAnyLegacyDeclaration |= Declaration.IsValid() && Declaration->bLegacy;
+				}
+			}
+			if (!bAnyLegacyDeclaration)
+			{
+				Parser.SetLegacyInfo(nullptr);
+				Result.Legacy.Reset();
+			}
+		}
+
+		if (Options.bKeepTrivia && Result.Module.IsValid())
+		{
+			Comments.Append(Parser.TakeSkippedComments());
+			Private::ParserTrivia::AttachDreamShaderTrivia(Source, MoveTemp(Comments), *Result.Module);
+		}
 
 		TArray<FLangSpan> OpaqueBodies;
 		if (Result.Module.IsValid())

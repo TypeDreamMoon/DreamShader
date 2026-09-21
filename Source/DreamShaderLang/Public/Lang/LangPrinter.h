@@ -15,6 +15,8 @@ namespace UE::DreamShader::Lang
 		FString NewLine = TEXT("\n");
 		/** One blank line between top-level declarations. */
 		bool bBlankLineBetweenDeclarations = true;
+		/** Print FModule::Trivia and FModule::TrailingComments. */
+		bool bPrintTrivia = true;
 	};
 
 	/**
@@ -24,7 +26,8 @@ namespace UE::DreamShader::Lang
 	 * as parse(X). Parentheses are emitted where FParenExpr recorded them and additionally wherever
 	 * precedence requires; `///` blocks are re-emitted one directive per line after the free text;
 	 * an opaque body is written verbatim from RawBody; pragmas and includes keep their spelling.
-	 * Comments other than `///` are not in the tree and are not reproduced.
+	 * Comments and blank lines are reproduced from FModule::Trivia when the parse kept them and Options.bPrintTrivia is
+	 * set (at most one blank line in a row); a module without trivia gets the canonical layout.
 	 */
 	DREAMSHADERLANG_API FString PrintDreamShaderLang(const FModule& Module, const FLangPrintOptions& Options = FLangPrintOptions());
 

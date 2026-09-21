@@ -18,10 +18,14 @@
 //     "what binds tighter" and "where a parenthesis is required" cannot drift apart.
 //   * An opaque body (a `/// @custom` function) is written back verbatim between its braces: not
 //     re-indented, not re-lexed, because it is not DreamShaderLang.
-//   * `///` blocks are normalised to free text first, then one directive per line. The tree keeps
-//     the two in separate arrays, so their original interleaving is not recoverable and printing
-//     them in a fixed order is what makes the round trip converge.
-//   * Comments other than `///` are not in the tree and do not come back.
+//   * `///` blocks come back in their source order when the parser recorded it (FDocBlock::Order:
+//     one `///` line per source line, pieces joined by three spaces); a hand-built block has no
+//     order and prints free text first, then one directive per line.
+//   * Comments and blank lines come back from FModule::Trivia when the parse kept them and
+//     FLangPrintOptions::bPrintTrivia is on: Leading comments above a node, a Trailing comment at the
+//     end of its last line, a block's Inner comments before its `}`, at most one blank line anywhere.
+//     A module with trivia is laid out by it; one without gets the canonical blank line between
+//     declarations. A run of `uniform float a, b;` declarators is joined back into one declaration.
 //
 // The printer raises no diagnostics and is total over any tree it is handed: a null child (what a
 // language service holds after a broken parse) prints as nothing rather than crashing.
@@ -120,6 +124,8 @@ namespace UE::DreamShader::Lang
 			case EPragmaKind::Layout:    return TEXT("layout");
 			case EPragmaKind::Region:    return TEXT("region");
 			case EPragmaKind::EndRegion: return TEXT("endregion");
+			case EPragmaKind::Instance:  return TEXT("instance");
+			case EPragmaKind::Unknown:
 			default:                     return TEXT("");
 			}
 		}
@@ -331,7 +337,13 @@ namespace UE::DreamShader::Lang
 					Result += TEXT(", ");
 				}
 
-				if (!Argument.Name.IsEmpty())
+				if (Argument.PinIndex != INDEX_NONE)
+				{
+					// A 1.x `Expression(...).Pin[i] = x` binding: the input by engine index.
+					Result += FString::Printf(TEXT("Pin[%d] = "), Argument.PinIndex);
+					Result += PrintOperand(Argument.Value.Get(), AssignmentPrecedence);
+				}
+				else if (!Argument.Name.IsEmpty())
 				{
 					Result += Argument.Name;
 					Result += TEXT(" = ");
@@ -493,6 +505,18 @@ namespace UE::DreamShader::Lang
 			FString TakeText() { return MoveTemp(Out); }
 
 		private:
+			// -- trivia (only while printing a whole module that carries it)
+			const FLangTrivia* FindTrivia(const FNode& Node) const;
+			/** Leading comments of Node, with the blank lines between them and before Node recovered from their spans. */
+			void PrintLeadingComments(const FNode& Node, const FDocBlock* Doc, int32 IndentLevel);
+			/** Node's Trailing comment, appended to the line just printed. */
+			void AppendTrailingComment(const FNode& Node);
+			void AppendComment(int32 IndentLevel, const FLangComment& Comment);
+			static int32 CommentEndLine(const FLangComment& Comment);
+			/** `uniform float a = 1, b;`: Declarations[First, End) printed as one declaration. */
+			void PrintVariableRun(const TArray<FDeclPtr>& Declarations, int32 First, int32 End, int32 IndentLevel);
+			static bool SameDocBlock(const FDocBlock& A, const FDocBlock& B);
+
 			void PrintDocBlock(const FDocBlock& Doc, int32 IndentLevel);
 			void PrintVariableDecl(const FVariableDecl& Decl, int32 IndentLevel);
 			void PrintFunctionDecl(const FFunctionDecl& Decl, int32 IndentLevel);
@@ -501,6 +525,8 @@ namespace UE::DreamShader::Lang
 			void PrintPragmaDecl(const FPragmaDecl& Decl, int32 IndentLevel);
 
 			void PrintBlock(const FBlockStmt& Block, int32 IndentLevel);
+			/** PrintStatement without the statement's own trivia. */
+			void PrintStatementBody(const FStmt& Stmt, int32 IndentLevel);
 			/** A loop / branch body, braced even when the tree holds a single statement. */
 			void PrintBody(const FStmt* Body, int32 IndentLevel);
 			void PrintIf(const FIfStmt& Stmt, int32 IndentLevel);
@@ -518,6 +544,8 @@ namespace UE::DreamShader::Lang
 
 			const FLangPrintOptions& Options;
 			FString Out;
+			/** The module being printed when its trivia applies; null for a single node, or with bPrintTrivia off. */
+			const FModule* TriviaModule = nullptr;
 		};
 
 		FString FLangPrinter::MakeIndent(int32 IndentLevel) const
@@ -542,30 +570,235 @@ namespace UE::DreamShader::Lang
 			Out += Options.NewLine;
 		}
 
+		const FLangTrivia* FLangPrinter::FindTrivia(const FNode& Node) const
+		{
+			return TriviaModule ? TriviaModule->Trivia.Find(&Node) : nullptr;
+		}
+
+		int32 FLangPrinter::CommentEndLine(const FLangComment& Comment)
+		{
+			int32 Line = Comment.Span.Line;
+			for (const TCHAR Character : Comment.Text)
+			{
+				if (Character == TEXT('\n'))
+				{
+					++Line;
+				}
+			}
+			return Line;
+		}
+
+		void FLangPrinter::AppendComment(int32 IndentLevel, const FLangComment& Comment)
+		{
+			// Verbatim, except that a block comment's own line breaks follow the printer's.
+			FString Text = Comment.Text.Replace(TEXT("\r\n"), TEXT("\n"));
+			if (!Options.NewLine.Equals(TEXT("\n"), ESearchCase::CaseSensitive))
+			{
+				Text.ReplaceInline(TEXT("\n"), *Options.NewLine, ESearchCase::CaseSensitive);
+			}
+			AppendLine(IndentLevel, Text);
+		}
+
+		void FLangPrinter::PrintLeadingComments(const FNode& Node, const FDocBlock* Doc, int32 IndentLevel)
+		{
+			const FLangTrivia* Trivia = FindTrivia(Node);
+			if (!Trivia || Trivia->Leading.Num() == 0)
+			{
+				return;
+			}
+
+			for (int32 Index = 0; Index < Trivia->Leading.Num(); ++Index)
+			{
+				const FLangComment& Comment = Trivia->Leading[Index];
+				if (Index > 0 && Comment.Span.Line > CommentEndLine(Trivia->Leading[Index - 1]) + 1)
+				{
+					AppendBlankLine();
+				}
+				AppendComment(IndentLevel, Comment);
+			}
+
+			// A blank line under the comments only where the source had one; a node whose span sits above its
+			// comments (a legacy node placed elsewhere) gets none.
+			const int32 NodeLine = (Doc && Doc->Span.Length > 0) ? Doc->Span.Line : Node.Span.Line;
+			if (Node.Span.Length > 0 && NodeLine > CommentEndLine(Trivia->Leading.Last()) + 1)
+			{
+				AppendBlankLine();
+			}
+		}
+
+		void FLangPrinter::AppendTrailingComment(const FNode& Node)
+		{
+			const FLangTrivia* Trivia = FindTrivia(Node);
+			if (!Trivia || !Trivia->Trailing.IsSet())
+			{
+				return;
+			}
+			if (!Options.NewLine.IsEmpty() && Out.EndsWith(Options.NewLine, ESearchCase::CaseSensitive))
+			{
+				Out.LeftChopInline(Options.NewLine.Len());
+			}
+			FString Text = Trivia->Trailing.GetValue().Text.Replace(TEXT("\r\n"), TEXT("\n"));
+			if (!Options.NewLine.Equals(TEXT("\n"), ESearchCase::CaseSensitive))
+			{
+				Text.ReplaceInline(TEXT("\n"), *Options.NewLine, ESearchCase::CaseSensitive);
+			}
+			Out += TEXT(" ");
+			Out += Text;
+			Out += Options.NewLine;
+		}
+
+		bool FLangPrinter::SameDocBlock(const FDocBlock& A, const FDocBlock& B)
+		{
+			if (A.FreeText.Num() != B.FreeText.Num() || A.Directives.Num() != B.Directives.Num())
+			{
+				return false;
+			}
+			for (int32 Index = 0; Index < A.FreeText.Num(); ++Index)
+			{
+				if (!A.FreeText[Index].Equals(B.FreeText[Index], ESearchCase::CaseSensitive))
+				{
+					return false;
+				}
+			}
+			for (int32 Index = 0; Index < A.Directives.Num(); ++Index)
+			{
+				if (!A.Directives[Index].Key.Equals(B.Directives[Index].Key, ESearchCase::CaseSensitive)
+					|| !A.Directives[Index].Value.Equals(B.Directives[Index].Value, ESearchCase::CaseSensitive))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		void FLangPrinter::PrintVariableRun(const TArray<FDeclPtr>& Declarations, int32 First, int32 End, int32 IndentLevel)
+		{
+			const FVariableDecl& Head = static_cast<const FVariableDecl&>(*Declarations[First]);
+
+			// Comments of the later names cannot sit inside the joined line; they go above it, after the
+			// first name's own, so every one of them is still printed.
+			PrintLeadingComments(Head, &Head.Doc, IndentLevel);
+			for (int32 Index = First + 1; Index < End; ++Index)
+			{
+				const FDecl& Member = *Declarations[Index];
+				if (const FLangTrivia* Trivia = FindTrivia(Member))
+				{
+					for (const FLangComment& Comment : Trivia->Leading)
+					{
+						AppendComment(IndentLevel, Comment);
+					}
+					if (Index + 1 < End && Trivia->Trailing.IsSet())
+					{
+						AppendComment(IndentLevel, Trivia->Trailing.GetValue());
+					}
+				}
+			}
+			if (const FLangTrivia* HeadTrivia = FindTrivia(Head))
+			{
+				if (HeadTrivia->Trailing.IsSet())
+				{
+					AppendComment(IndentLevel, HeadTrivia->Trailing.GetValue());
+				}
+			}
+
+			PrintDocBlock(Head.Doc, IndentLevel);
+
+			FString Line = GetStorageSpelling(Head.Storage);
+			Line += PrintType(Head.Type);
+			for (int32 Index = First; Index < End; ++Index)
+			{
+				Line += Index == First ? TEXT(" ") : TEXT(", ");
+				Line += PrintDeclarator(static_cast<const FVariableDecl&>(*Declarations[Index]).Declarator);
+			}
+			Line += TEXT(";");
+			AppendLine(IndentLevel, Line);
+
+			AppendTrailingComment(*Declarations[End - 1]);
+		}
+
 		void FLangPrinter::PrintModule(const FModule& Module)
 		{
+			TriviaModule = Options.bPrintTrivia ? &Module : nullptr;
+			// A module that carries trivia is laid out by it; one that does not gets the canonical layout.
+			const bool bTriviaLayout = TriviaModule && (Module.Trivia.Num() > 0 || Module.TrailingComments.Num() > 0);
+
 			bool bFirst = true;
-			for (const FDeclPtr& Decl : Module.Declarations)
+			for (int32 DeclIndex = 0; DeclIndex < Module.Declarations.Num(); ++DeclIndex)
 			{
+				const FDeclPtr& Decl = Module.Declarations[DeclIndex];
 				if (!Decl)
 				{
 					continue;
 				}
 
-				if (!bFirst && Options.bBlankLineBetweenDeclarations)
+				const FLangTrivia* Trivia = FindTrivia(*Decl);
+				if (!bFirst)
 				{
-					// The blank line goes BEFORE the next declaration's `///` block, which is what
-					// keeps that block glued to the declaration it documents.
-					AppendBlankLine();
+					// The blank line goes BEFORE the next declaration's comments and `///` block, which is
+					// what keeps that block glued to the declaration it documents.
+					const bool bBlank = bTriviaLayout
+						? (Trivia && Trivia->BlankLinesBefore > 0)
+						: Options.bBlankLineBetweenDeclarations;
+					if (bBlank)
+					{
+						AppendBlankLine();
+					}
 				}
 				bFirst = false;
 
+				// `uniform float a, b;` came in as one FVariableDecl per name; print the run as it was written.
+				if (const FVariableDecl* Variable = Decl->As<FVariableDecl>())
+				{
+					int32 RunEnd = DeclIndex + 1;
+					while (RunEnd < Module.Declarations.Num())
+					{
+						const FDecl* Next = Module.Declarations[RunEnd].Get();
+						const FVariableDecl* NextVariable = Next ? Next->As<FVariableDecl>() : nullptr;
+						const bool bJoins = NextVariable
+							&& NextVariable->bSharesDeclarationWithPrevious
+							&& NextVariable->Storage == Variable->Storage
+							&& PrintType(NextVariable->Type).Equals(PrintType(Variable->Type), ESearchCase::CaseSensitive)
+							&& (NextVariable->Doc.IsEmpty() || SameDocBlock(NextVariable->Doc, Variable->Doc));
+						if (!bJoins)
+						{
+							break;
+						}
+						++RunEnd;
+					}
+					if (RunEnd > DeclIndex + 1)
+					{
+						PrintVariableRun(Module.Declarations, DeclIndex, RunEnd, 0);
+						DeclIndex = RunEnd - 1;
+						continue;
+					}
+				}
+
 				PrintDeclaration(*Decl, 0);
 			}
+
+			if (TriviaModule && Module.TrailingComments.Num() > 0)
+			{
+				if (!bFirst)
+				{
+					AppendBlankLine();
+				}
+				for (int32 Index = 0; Index < Module.TrailingComments.Num(); ++Index)
+				{
+					const FLangComment& Comment = Module.TrailingComments[Index];
+					if (Index > 0 && Comment.Span.Line > CommentEndLine(Module.TrailingComments[Index - 1]) + 1)
+					{
+						AppendBlankLine();
+					}
+					AppendComment(0, Comment);
+				}
+			}
+
+			TriviaModule = nullptr;
 		}
 
 		void FLangPrinter::PrintDeclaration(const FDecl& Decl, int32 IndentLevel)
 		{
+			PrintLeadingComments(Decl, &Decl.Doc, IndentLevel);
 			PrintDocBlock(Decl.Doc, IndentLevel);
 
 			switch (Decl.Kind)
@@ -588,18 +821,79 @@ namespace UE::DreamShader::Lang
 			default:
 				break;
 			}
+
+			AppendTrailingComment(Decl);
 		}
 
 		void FLangPrinter::PrintDocBlock(const FDocBlock& Doc, int32 IndentLevel)
 		{
+			if (Doc.Order.Num() > 0)
+			{
+				// The parser's order: one `///` line per source line, the pieces of a line joined by three
+				// spaces. A value runs to the next ` @`, so the line reads back into the same items.
+				TArray<bool> PrintedFreeText;
+				TArray<bool> PrintedDirectives;
+				PrintedFreeText.Init(false, Doc.FreeText.Num());
+				PrintedDirectives.Init(false, Doc.Directives.Num());
+
+				int32 ItemIndex = 0;
+				while (ItemIndex < Doc.Order.Num())
+				{
+					const int32 LineOfItems = Doc.Order[ItemIndex].Line;
+					TArray<FString> Pieces;
+					while (ItemIndex < Doc.Order.Num() && Doc.Order[ItemIndex].Line == LineOfItems)
+					{
+						const FDocItem& Item = Doc.Order[ItemIndex++];
+						if (Item.Kind == FDocItem::EKind::FreeText && Doc.FreeText.IsValidIndex(Item.Index))
+						{
+							PrintedFreeText[Item.Index] = true;
+							const FString Trimmed = Doc.FreeText[Item.Index].TrimEnd();
+							if (!Trimmed.IsEmpty())
+							{
+								Pieces.Add(Trimmed);
+							}
+						}
+						else if (Item.Kind == FDocItem::EKind::Directive && Doc.Directives.IsValidIndex(Item.Index))
+						{
+							PrintedDirectives[Item.Index] = true;
+							const FDocDirective& Directive = Doc.Directives[Item.Index];
+							const FString Value = Directive.Value.TrimStartAndEnd();
+							Pieces.Add(Value.IsEmpty() ? FString(TEXT("@")) + Directive.Key : FString::Printf(TEXT("@%s %s"), *Directive.Key, *Value));
+						}
+					}
+					AppendLine(IndentLevel, Pieces.Num() == 0 ? FString(TEXT("///")) : FString(TEXT("/// ")) + FString::Join(Pieces, TEXT("   ")));
+				}
+
+				// Entries added after the parse (directives a front end synthesized) come last, canonically.
+				for (int32 Index = 0; Index < Doc.FreeText.Num(); ++Index)
+				{
+					if (!PrintedFreeText[Index])
+					{
+						const FString Trimmed = Doc.FreeText[Index].TrimEnd();
+						AppendLine(IndentLevel, Trimmed.IsEmpty() ? FString(TEXT("///")) : FString(TEXT("/// ")) + Trimmed);
+					}
+				}
+				for (int32 Index = 0; Index < Doc.Directives.Num(); ++Index)
+				{
+					if (!PrintedDirectives[Index])
+					{
+						const FDocDirective& Directive = Doc.Directives[Index];
+						const FString Value = Directive.Value.TrimStartAndEnd();
+						AppendLine(IndentLevel, Value.IsEmpty() ? FString(TEXT("/// @")) + Directive.Key : FString::Printf(TEXT("/// @%s %s"), *Directive.Key, *Value));
+					}
+				}
+				return;
+			}
+
 			for (const FString& Text : Doc.FreeText)
 			{
-				// Trimmed on the way out because the parser trims on the way in. An EMPTY entry is
+				// Trimmed at its end on the way out because the parser trims it there on the way in; what it
+				// starts with is the line's own indentation, which both keep. An EMPTY entry is
 				// NOT dropped: the parser records a blank `///` line deliberately, as the paragraph
 				// break of a description, so dropping it here would glue two paragraphs together on
 				// the way back out. A bare `///` -- no trailing space to leave behind -- reads back
 				// as exactly that empty free-text line.
-				const FString Trimmed = Text.TrimStartAndEnd();
+				const FString Trimmed = Text.TrimEnd();
 				AppendLine(IndentLevel, Trimmed.IsEmpty() ? FString(TEXT("///")) : FString(TEXT("/// ")) + Trimmed);
 			}
 
@@ -772,6 +1066,7 @@ namespace UE::DreamShader::Lang
 			{
 			case EPragmaKind::Material:
 			case EPragmaKind::Layout:
+			case EPragmaKind::Instance:
 			{
 				Line += TEXT("(");
 				for (int32 ArgumentIndex = 0; ArgumentIndex < Decl.Arguments.Num(); ++ArgumentIndex)
@@ -840,11 +1135,25 @@ namespace UE::DreamShader::Lang
 		void FLangPrinter::PrintBlock(const FBlockStmt& Block, int32 IndentLevel)
 		{
 			AppendLine(IndentLevel, TEXT("{"));
+			bool bFirst = true;
 			for (const FStmtPtr& Statement : Block.Statements)
 			{
 				if (Statement)
 				{
+					const FLangTrivia* Trivia = FindTrivia(*Statement);
+					if (!bFirst && Trivia && Trivia->BlankLinesBefore > 0)
+					{
+						AppendBlankLine();
+					}
+					bFirst = false;
 					PrintStatement(*Statement, IndentLevel + 1);
+				}
+			}
+			if (const FLangTrivia* BlockTrivia = FindTrivia(Block))
+			{
+				for (const FLangComment& Comment : BlockTrivia->Inner)
+				{
+					AppendComment(IndentLevel + 1, Comment);
 				}
 			}
 			AppendLine(IndentLevel, TEXT("}"));
@@ -901,6 +1210,13 @@ namespace UE::DreamShader::Lang
 		}
 
 		void FLangPrinter::PrintStatement(const FStmt& Stmt, int32 IndentLevel)
+		{
+			PrintLeadingComments(Stmt, nullptr, IndentLevel);
+			PrintStatementBody(Stmt, IndentLevel);
+			AppendTrailingComment(Stmt);
+		}
+
+		void FLangPrinter::PrintStatementBody(const FStmt& Stmt, int32 IndentLevel)
 		{
 			switch (Stmt.Kind)
 			{

@@ -119,6 +119,8 @@ namespace UE::DreamShader::Lang
 		case ELangTokenKind::LessLessAssign:       return TEXT("LessLessAssign");
 		case ELangTokenKind::GreaterGreaterAssign: return TEXT("GreaterGreaterAssign");
 
+		case ELangTokenKind::Comment:              return TEXT("Comment");
+
 		case ELangTokenKind::Unknown:
 		default:                                   return TEXT("Unknown");
 		}
@@ -215,8 +217,8 @@ namespace UE::DreamShader::Lang
 		case ELangTokenKind::GreaterGreaterAssign: return TEXT(">>=");
 
 		default:
-			// EndOfFile, Identifier, Keyword, the literals, DocComment, Directive and Unknown have
-			// no fixed spelling: what they look like is in FLangToken::Text.
+			// EndOfFile, Identifier, Keyword, the literals, DocComment, Directive, Comment and Unknown
+			// have no fixed spelling: what they look like is in FLangToken::Text.
 			return TEXT("");
 		}
 	}

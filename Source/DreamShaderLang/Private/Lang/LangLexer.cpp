@@ -162,14 +162,14 @@ namespace UE::DreamShader::Lang
 			};
 
 			/**
-			 * Cuts a trailing `//` comment off one directive line.
+			 * Where a trailing `//` comment starts on one directive line, or INDEX_NONE.
 			 *
 			 * String-aware on purpose: `#include "/Game/A//B.dsh"` and
 			 * `#pragma material(Name = "http://x")` both carry a `//` that is data, not a comment.
 			 * Only the top level of the line is scanned; escapes inside the string are honoured so
 			 * a `\"` does not close it.
 			 */
-			static FString StripTrailingLineComment(const FString& Line)
+			static int32 FindTrailingLineCommentStart(const FString& Line)
 			{
 				const TCHAR* const Characters = *Line;
 				const int32 Length = Line.Len();
@@ -200,11 +200,29 @@ namespace UE::DreamShader::Lang
 
 					if (Character == TEXT('/') && Index + 1 < Length && Characters[Index + 1] == TEXT('/'))
 					{
-						return Line.Left(Index);
+						return Index;
 					}
 				}
 
-				return Line;
+				return INDEX_NONE;
+			}
+
+			/** Cuts a trailing `//` comment off one directive line (see FindTrailingLineCommentStart). */
+			static FString StripTrailingLineComment(const FString& Line)
+			{
+				const int32 CommentStart = FindTrailingLineCommentStart(Line);
+				return CommentStart == INDEX_NONE ? Line : Line.Left(CommentStart);
+			}
+
+			/** A Comment token over [Start, End): the text verbatim, delimiters included. */
+			static FLangToken MakeCommentToken(const FLangSourceText& Source, const int32 Start, const int32 End, const bool bAtLineStart)
+			{
+				FLangToken Token;
+				Token.Kind = ELangTokenKind::Comment;
+				Token.Span = Source.MakeSpan(Start, End - Start);
+				Token.bAtLineStart = bAtLineStart;
+				Token.Text = Source.GetText().Mid(Start, End - Start);
+				return Token;
 			}
 		}
 	}
@@ -298,6 +316,12 @@ namespace UE::DreamShader::Lang
 
 					OutTokens.Add(MoveTemp(Token));
 				}
+				else if (Options.bEmitComments)
+				{
+					// An ordinary `//` line comment -- and a `///` line when doc comments are not
+					// being emitted, since it is then just a comment -- kept for the trivia pass.
+					OutTokens.Add(MakeCommentToken(Source, CommentStart, LineEnd, bAtLineStart));
+				}
 
 				Index = LineEnd;
 				bAtLineStart = false;
@@ -329,6 +353,13 @@ namespace UE::DreamShader::Lang
 					Diagnostics.Error(TEXT("DSH2102"), Source.MakeSpan(CommentStart, 2),
 						LOCTEXT("UnterminatedBlockComment", "Unterminated block comment; expected a closing '*/'."));
 					Index = Length;
+				}
+
+				if (Options.bEmitComments)
+				{
+					// Emitted even when unterminated: the text to the end of the file is still what the
+					// author wrote, and the trivia pass must not lose it.
+					OutTokens.Add(MakeCommentToken(Source, CommentStart, Index, bAtLineStart));
 				}
 
 				bAtLineStart = false;
@@ -373,9 +404,17 @@ namespace UE::DreamShader::Lang
 					Token.bAtLineStart = true;
 
 					const FString Payload = Text.Mid(DirectiveStart + 1, LineEnd - (DirectiveStart + 1));
-					Token.Text = StripTrailingLineComment(Payload).TrimStartAndEnd();
+					const int32 TrailingCommentStart = FindTrailingLineCommentStart(Payload);
+					Token.Text = (TrailingCommentStart == INDEX_NONE ? Payload : Payload.Left(TrailingCommentStart)).TrimStartAndEnd();
 
 					OutTokens.Add(MoveTemp(Token));
+
+					if (Options.bEmitComments && TrailingCommentStart != INDEX_NONE)
+					{
+						// The directive token's span still covers the whole line (DSH3201 underlines it
+						// all); the comment it no longer carries in Text comes out as its own token.
+						OutTokens.Add(MakeCommentToken(Source, DirectiveStart + 1 + TrailingCommentStart, LineEnd, false));
+					}
 				}
 
 				Index = LineEnd;
@@ -478,6 +517,30 @@ namespace UE::DreamShader::Lang
 				OutTokens.Add(MoveTemp(Token));
 				bAtLineStart = false;
 				continue;
+			}
+
+			// ------------------------------------------------------------------ 1.x asset shells
+			if (Character == TEXT('\'') && Options.bLexAssetShellQuotes)
+			{
+				int32 Close = Index + 1;
+				while (Close < Length && Characters[Close] != TEXT('\'') && !IsLineTerminator(Characters[Close]))
+				{
+					++Close;
+				}
+				// Only a pair on one line. A lone quote falls through to DSH2101 below, as before.
+				if (Close < Length && Characters[Close] == TEXT('\''))
+				{
+					FLangToken Token;
+					Token.Kind = ELangTokenKind::StringLiteral;
+					Token.Span = Source.MakeSpan(Index, Close + 1 - Index);
+					Token.bAtLineStart = bAtLineStart;
+					Token.Text = FString::ConstructFromPtrSize(Characters + Index + 1, Close - Index - 1);
+
+					OutTokens.Add(MoveTemp(Token));
+					Index = Close + 1;
+					bAtLineStart = false;
+					continue;
+				}
 			}
 
 			// ------------------------------------------------------------------ numbers

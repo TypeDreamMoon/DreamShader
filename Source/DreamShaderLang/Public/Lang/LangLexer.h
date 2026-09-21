@@ -15,6 +15,15 @@ namespace UE::DreamShader::Lang
 		bool bEmitDocComments = true;
 		/** Emit `#` lines as Directive tokens. Off, they are skipped. */
 		bool bEmitDirectives = true;
+		/** Emit `//` line comments and block comments as Comment tokens, delimiters included. Off, they are skipped as today. */
+		bool bEmitComments = false;
+		/**
+		 * 1.x sources: `'...'` closed on its own line is one StringLiteral token holding what is between the quotes, so
+		 * the engine's asset shell -- `Texture2D'/Game/T.T'`, written without double quotes as a Properties default --
+		 * lexes as a word and a string instead of failing on the quote (DSH2101). Whoever reads such a value takes the
+		 * source text of the token run, quotes included. Off, `'` is an unexpected character, which is what it is in 2.0.
+		 */
+		bool bLexAssetShellQuotes = false;
 	};
 
 	/**
