@@ -2,7 +2,9 @@
 
 #include "DreamShaderModule.h"
 
-#include "Diagnostics/DreamShaderTextWireUtils.h"
+// FormatLang2DiagnosticWireLine: the located form FDreamShaderDecompileResult::Error carries.
+#include "DreamShaderCompilerDiagnostics.h"
+#include "DreamShaderTextWireUtils.h"
 
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
@@ -11,6 +13,7 @@
 #include "Materials/MaterialFunction.h"
 #include "Materials/MaterialFunctionMaterialLayer.h"
 #include "Materials/MaterialFunctionMaterialLayerBlend.h"
+#include "Materials/MaterialInterface.h"
 
 #define LOCTEXT_NAMESPACE "DreamShader.Decompiler.Service"
 
@@ -103,6 +106,54 @@ namespace UE::DreamShader::Editor::Private
 				CategoryDirectory,
 				RelativePath + Extension));
 		}
+	}
+
+	namespace
+	{
+		/** One service-level error: in the result's list, and as its Error line when it is the first thing that went wrong. */
+		void AddDecompileServiceError(FDreamShaderDecompileResult& Result, const TCHAR* Code, const FText& Message)
+		{
+			UE::DreamShader::Lang::FLangDiagnostic Diagnostic;
+			Diagnostic.Code = Code;
+			Diagnostic.Severity = UE::DreamShader::Lang::ELangSeverity::Error;
+			Diagnostic.Message = Message;
+			Diagnostic.FilePath = Result.OutputFilePath;
+			if (Result.Error.IsEmpty())
+			{
+				Result.Error = ::UE::DreamShader::Editor::Compiler::FormatLang2DiagnosticWireLine(Diagnostic, Result.OutputFilePath);
+			}
+			Result.Diagnostics.Add(MoveTemp(Diagnostic));
+		}
+
+		bool HasDecompileErrorDiagnostic(const FDreamShaderDecompileResult& Result)
+		{
+			return Result.Diagnostics.ContainsByPredicate([](const UE::DreamShader::Lang::FLangDiagnostic& Diagnostic)
+			{
+				return Diagnostic.Severity == UE::DreamShader::Lang::ELangSeverity::Error;
+			});
+		}
+	}
+
+	FString FDecompiledAssetNaming::MakeDssFilePath(const UObject* Asset)
+	{
+		if (const UMaterialFunction* MaterialFunction = Cast<UMaterialFunction>(Asset))
+		{
+			return MakeStableDecompiledSourcePath(
+				MaterialFunction,
+				FString::Printf(TEXT("Decompiled/%s"), GetFunctionCategory(GetFunctionKind(MaterialFunction))), // I18N-EXEMPT
+				TEXT(".dss"));
+		}
+		// A material, or the ThinCustom pair that stands for one.
+		if (const UMaterialInterface* Material = Cast<UMaterialInterface>(Asset))
+		{
+			return MakeStableDecompiledSourcePath(Material, TEXT("Decompiled/Materials"), TEXT(".dss"));
+		}
+		return FString();
+	}
+
+	FString FDecompiledAssetNaming::MakeInstanceFilePath(const UMaterialInterface* Instance)
+	{
+		return MakeStableDecompiledSourcePath(Instance, TEXT("Decompiled/Instances"), TEXT(".dsi"));
 	}
 
 	FString FDecompiledAssetNaming::MakeMaterialFilePath(const UMaterial* Material)
@@ -215,9 +266,72 @@ namespace UE::DreamShader::Editor::Private
 	FDreamShaderDecompileResult FDreamShaderDecompileService::DecompileAsset(const FDreamShaderDecompileRequest& Request)
 	{
 		FDreamShaderDecompileResult Result;
-		if (!Request.Asset)
+		if (!Request.Asset && Request.SourceFilePath.IsEmpty())
 		{
 			Result.Error = ToInvariantWireString(LOCTEXT("NoAssetProvided", "No asset was provided."));
+			return Result;
+		}
+
+		// The extension says which language the file is read as, so text of the other one under it is a file nothing
+		// opens. Auto never gets here from the editor (Tools/DreamShaderDecompileTools.h resolves it), and means "by the
+		// extension" when it does.
+		const FString Extension = FPaths::GetExtension(Request.OutputFilePath, /*bIncludeDot*/ false);
+		const bool bLegacyExtension = Extension.Equals(TEXT("dsm"), ESearchCase::IgnoreCase) || Extension.Equals(TEXT("dsf"), ESearchCase::IgnoreCase);
+		const bool bDssExtension = Extension.Equals(TEXT("dss"), ESearchCase::IgnoreCase) || Extension.Equals(TEXT("dsi"), ESearchCase::IgnoreCase);
+		const EDreamShaderDecompileFormat Format = Request.Format != EDreamShaderDecompileFormat::Auto
+			? Request.Format
+			: (bLegacyExtension ? EDreamShaderDecompileFormat::Legacy : EDreamShaderDecompileFormat::Dss);
+		if ((Format == EDreamShaderDecompileFormat::Legacy && bDssExtension) || (Format == EDreamShaderDecompileFormat::Dss && bLegacyExtension))
+		{
+			Result.OutputFilePath = UE::DreamShader::NormalizeSourceFilePath(Request.OutputFilePath);
+			AddDecompileServiceError(Result, TEXT("DSH9085"), FText::Format(
+				LOCTEXT("DecompileFormatContradictsExtension", "'{0}' ends in '.{1}', which is read as {2} source, and the decompile was asked for {3} text; name the file after the text, or leave the format to the extension."),
+				FText::FromString(Request.OutputFilePath),
+				FText::FromString(Extension),
+				bLegacyExtension ? LOCTEXT("DecompileLegacyLanguage", "1.x") : LOCTEXT("DecompileDssLanguage", "2.0"),
+				Format == EDreamShaderDecompileFormat::Legacy ? LOCTEXT("DecompileLegacyText", "1.x") : LOCTEXT("DecompileDssText", "2.0")));
+			return Result;
+		}
+
+		if (Format == EDreamShaderDecompileFormat::Dss)
+		{
+			FDreamShaderDecompileRequest Resolved = Request;
+			Resolved.Format = Format;
+			if (!Decompiler.DecompileRequest(Resolved, Result))
+			{
+				// The 1.x decompiler behind a 2.0 request: it has no such text to give.
+				Result = FDreamShaderDecompileResult();
+				AddDecompileServiceError(Result, TEXT("DSH9086"), LOCTEXT("DecompilerCannotWriteDss",
+					"The decompile was asked for 2.0 text and was handed the 1.x decompiler, which writes '.dsm' and '.dsf' only; build the service with GetIRDecompiler() for Format = Dss."));
+				return Result;
+			}
+
+			// A failure always says why: a wire line, or an error among the diagnostics.
+			if (Result.bSucceeded && HasDecompileErrorDiagnostic(Result))
+			{
+				Result.bSucceeded = false;
+			}
+			if (!Result.bSucceeded && Result.Error.IsEmpty())
+			{
+				for (const UE::DreamShader::Lang::FLangDiagnostic& Diagnostic : Result.Diagnostics)
+				{
+					if (Diagnostic.Severity == UE::DreamShader::Lang::ELangSeverity::Error)
+					{
+						Result.Error = ::UE::DreamShader::Editor::Compiler::FormatLang2DiagnosticWireLine(Diagnostic, Result.OutputFilePath);
+						break;
+					}
+				}
+				if (Result.Error.IsEmpty())
+				{
+					Result.Error = ToInvariantWireString(LOCTEXT("DecompileDidNotSayWhy", "The decompile failed without reporting why."));
+				}
+			}
+			return Result;
+		}
+
+		if (!Request.Asset)
+		{
+			Result.Error = ToInvariantWireString(LOCTEXT("LegacyDecompileNeedsAsset", "The 1.x decompiler takes one asset at a time; name the asset rather than its source."));
 			return Result;
 		}
 

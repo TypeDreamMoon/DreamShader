@@ -10,8 +10,8 @@
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderSettings.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorCodeShared.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGeneratorPrivate.h"
+#include "DreamShaderMaterialExpressionCompat.h"
+#include "DreamShaderGeneratedAssets.h"
 #include "VirtualFunction/DreamShaderVirtualFunctionService.h"
 
 #include "CoreGlobals.h"

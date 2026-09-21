@@ -5,7 +5,7 @@
 
 #include "DreamShaderGraphDecompilerImpl.h"
 
-#include "Diagnostics/DreamShaderTextWireUtils.h"
+#include "DreamShaderTextWireUtils.h"
 
 #define LOCTEXT_NAMESPACE "DreamShader.Decompiler.Impl"
 
