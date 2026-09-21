@@ -43,6 +43,68 @@ only on the automatic path — an explicit `Layout` section is always honoured, 
 > of one per node, because formatting a per-node progress string costs more than the placement
 > itself.
 
+## Layout styles
+
+*(since 2.0.0)* **Project Settings ▸ DreamShader ▸ Graph Layout Style** chooses what lays a generated
+graph out. The rest of this page describes `Classic`, which is still the default.
+
+| Style | Reads | In short |
+| :-- | :-- | :-- |
+| `Classic` *(default)* | the finished engine graph | the 1.x layout: blocks recovered from the material's outputs, `DS_Shared_*` named reroutes between them |
+| `Blocks` | the compiler's IR | a page of boxes in source order, one per `#pragma region` or run of statements; no wire leaves a box — see below |
+| `SourceBands` | the compiler's IR | one horizontal band per statement of the source, top to bottom in the order of the text; inside a band, a tidy tree that grows leftward from the statement's value |
+| `Layered` | the compiler's IR | the whole graph in layers by distance from the outputs (Sugiyama): crossings reduced by barycentre ordering, rows aligned on the median of their neighbours |
+
+### Blocks
+
+The graph the way a person lays one out by hand: a box per step, the boxes in reading order, and a named
+reroute wherever a value goes from one box to another.
+
+- **A box is a region, or a run of statements.** Consecutive statements of one innermost `#pragma region`
+  (a 1.x `Region`) are one box, titled with the region's name; statements outside every region are cut
+  into runs of at most forty nodes, titled after the first and last variable they define. A region that
+  holds other regions is a box around their boxes, so nested boxes never overlap. A function's outputs
+  are a box of their own, to the right of the page.
+- **Inside a box** the nodes are one small layered drawing, left to right.
+- **No wire leaves a box.** A value another box reads gets a named reroute declaration beside it —
+  `DS_<variable>`, or `DS_Shared_<n>` for a value no variable names — and one usage in every box that
+  reads it. A constant is not rerouted: it is written again where it is read. What drives the material,
+  or a function output, leaves its box through the `DS_<output>` pair that stands in front of every output
+  in any style; the usages stand in a column beside the material's node.
+- **The page** packs the boxes like words in a paragraph — left to right, then the next line — in source
+  order, to a page about 1.8 times wider than tall.
+
+The reroutes and the repeated constants are nodes of the generated graph, as the `DS_Shared_*` reroutes of
+`Classic` are: the decompiler looks through them, and so does the [graph parity comparator](../contributing/testing.md).
+
+### What the IR styles share
+
+- **Columns are distances.** A node's column is its longest path to a root — the material's outputs, a
+  function's outputs, a statement node; in `Blocks`, to whatever nothing else in its box reads — so every
+  wire runs left to right and never backwards.
+- **`#pragma layout` is obeyed to the unit.** A `Node` hint moves the named value's node to the given
+  position and carries the nodes that hang off it; a `Comment` hint is passed through as the box it
+  describes.
+- **`#pragma region` is a box around its nodes**, nested regions inside their parents, each with a ring
+  of padding so that titles do not collide.
+- **`SourceBands` and `Layered` insert no reroute.** A wire that spans six columns or more is a *long
+  edge*: it is counted in the `dump-layout` JSON and left as a wire. `Blocks` is the style that reroutes.
+- **Nodes the IR does not know about are stacked beside their owner**: an IR node can become several
+  engine expressions (a parameter with its mask, a sample with its coordinates), and the extra ones are
+  placed in a column to the left of the one the IR value lives on.
+- **Deterministic.** The same IR gives the same coordinates, on any machine; everything snaps to a
+  16-unit grid.
+
+Look before choosing — this draws every IR style for a source, builds nothing, and takes a second:
+
+```powershell
+./dsc.ps1 dump-layout DShader/Materials/M_Foo.dss        # …/Saved/DreamShader/Layout/**.svg, one per product and style
+./dsc.ps1 dump-layout -All -Style Blocks -Json
+```
+
+Sizes in the picture are estimated from the IR (a node's pins and title); on a real compile the
+engine's own node sizes are used, so spacing differs slightly and arrangement does not.
+
 ## Explicit layout
 
 A `Layout` section pins named variables and declares comment boxes. Full grammar, argument tables and
