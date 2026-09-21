@@ -1850,7 +1850,7 @@ instance is always a plain UMaterialInstanceConstant.
 The IR builder cannot read '{0}' here: the binder typed what it is read from as a material, but that did not lower to one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:383`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:513`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:382`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:512`
 <!-- generated:end DSH4350 -->
 
 **Cause.** The IR builder reached a bound expression whose `EBoundExprKind` it has no case for.
@@ -1880,7 +1880,7 @@ Until then, rewriting the expression in a simpler form usually avoids the kind t
 This module was bound without a builtin catalog, so no 'UE.*' call and no material attribute can be named; run the bind with a catalog, or pass one in FIRBuildOptions.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:121`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1540`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:912`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:420`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:532`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:121`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1539`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:911`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:420`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:532`
 <!-- generated:end DSH4352 -->
 
 **Cause.** Three shapes, told apart by where the message points.
@@ -2037,7 +2037,7 @@ this file, drop `export`: an internal helper takes any type, because it is inlin
 A struct has no graph form; pass one of its fields, or move the whole thing into a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:183`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:533`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:183`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:532`
 <!-- generated:end DSH4365 -->
 
 **Cause.** A struct value reached a place that needs one graph value -- a pin, an operand, a
@@ -2157,7 +2157,7 @@ missing and nothing is reported: the value is the other arm's on every path the 
 '{0}' is a property of {1} and needs a literal; this argument is computed at run time.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1006`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1005`
 <!-- generated:end DSH4373 -->
 
 **Cause.** An argument bound to a *property* of a reflected node is not a literal. A property is
@@ -2231,7 +2231,7 @@ version.
 '{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or give it an initializer where it is declared.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1434`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1433`
 <!-- generated:end DSH4376 -->
 
 **Cause.** A local is read -- or compound-assigned (`x += 1`, `++x`), which reads it first -- at a
@@ -2263,7 +2263,7 @@ reading `v`, or a component of it, before anything was written.
 '{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1450`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1449`
 <!-- generated:end DSH4377 -->
 
 **Cause.** An assignment writes into the material an attribute holds:

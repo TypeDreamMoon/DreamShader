@@ -3056,21 +3056,21 @@
   "key": "AndFailed",
   "src": "Failed to create the Multiply node a logical and lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 785
+  "line": 784
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "AppendArity",
   "src": "An Append node takes two operands; this one has {0}. Three or more parts are chained by the IR builder, not here.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1123
+  "line": 1122
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "AppendFailed",
   "src": "Failed to create an AppendVector node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1137
+  "line": 1136
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3098,7 +3098,7 @@
   "key": "BadNodeIndex",
   "src": "The topological order of '{0}' names node {1}, which the graph does not have.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 254
+  "line": 253
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3133,98 +3133,98 @@
   "key": "BreakAttributesSlotNotPublished",
   "src": "BreakMaterialAttributes does not publish the attribute '{0}', so it cannot be read from a material that came through a pin.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1570
+  "line": 1569
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CollectionParameterMissing",
   "src": "The material parameter collection '{0}' has no parameter called '{1}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 580
+  "line": 579
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CompareArity",
   "src": "A Compare node takes five operands (A, B, greater, equal, less); this one has {0}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1193
+  "line": 1192
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CompareFailed",
   "src": "Failed to create an If node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1211
+  "line": 1210
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CompareLowerFailed",
   "src": "Failed to create the If node a comparison lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 841
+  "line": 840
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ConnectNoExpression",
   "src": "Cannot connect an input on an expression that was not created.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1736
+  "line": 1735
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "Constant2Failed",
   "src": "Failed to create a Constant2Vector node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 371
+  "line": 370
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "Constant3Failed",
   "src": "Failed to create a Constant3Vector node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 383
+  "line": 382
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "Constant4Failed",
   "src": "Failed to create a Constant4Vector node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 398
+  "line": 397
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ConstantFailed",
   "src": "Failed to create a Constant node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 360
+  "line": 359
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ConstantNoValue",
   "src": "A Constant node carries no Value property.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 347
+  "line": 346
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CoreOpClassMissing",
   "src": "The core operation '{0}' maps to expression class '{1}', which this engine does not have.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 667
+  "line": 666
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CoreOpFailed",
   "src": "Failed to create a '{0}' node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 676
+  "line": 675
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CoreOpTooManyOperands",
   "src": "The core operation '{0}' was given {1} operands, but its table names only {2} pins.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 696
+  "line": 695
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3266,28 +3266,28 @@
   "key": "CustomBadAdditionalOutput",
   "src": "'{0}' is not a Custom node additional output; the emitter expects Name:Type.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1404
+  "line": 1403
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CustomBadAdditionalOutputType",
   "src": "'{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1412
+  "line": 1411
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CustomBadOutputType",
   "src": "'{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1371
+  "line": 1370
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "CustomFailed",
   "src": "Failed to create a Custom node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1332
+  "line": 1331
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3385,7 +3385,7 @@
   "key": "FwidthFailed",
   "src": "Failed to create the nodes fwidth lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 907
+  "line": 906
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3490,14 +3490,14 @@
   "key": "MissingOperand",
   "src": "This node needs operand {0}, but it has only {1}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1628
+  "line": 1627
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "NegateFailed",
   "src": "Failed to create the Multiply node a negation lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 744
+  "line": 743
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3511,7 +3511,7 @@
   "key": "NoLowering",
   "src": "The core operation '{0}' has no engine expression class and no lowering in the emitter.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1030
+  "line": 1029
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3532,14 +3532,14 @@
   "key": "NotFailed",
   "src": "Failed to create the Subtract node a logical not lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 764
+  "line": 763
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "OrFailed",
   "src": "Failed to create the Max node a logical or lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 806
+  "line": 805
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3560,49 +3560,49 @@
   "key": "PropertyMissing",
   "src": "'{0}' has no property named '{1}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1770
+  "line": 1769
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "PropertyNotReflected",
   "src": "'{0}' has no property named '{1}', so that value was not written.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1763
+  "line": 1762
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "PropertyWriteFailed",
   "src": "'{0}' could not take '{1}' for its '{2}' property. {3}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1783
+  "line": 1782
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "RcpFailed",
   "src": "Failed to create the Divide node a reciprocal lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 863
+  "line": 862
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ReflectFailed",
   "src": "Failed to create the nodes reflect lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 938
+  "line": 937
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "ReflectedFailed",
   "src": "Failed to create a '{0}' node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 519
+  "line": 518
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "RefractFailed",
   "src": "Failed to create the nodes refract lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 986
+  "line": 985
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3623,7 +3623,7 @@
   "key": "RsqrtFailed",
   "src": "Failed to create the nodes an inverse square root lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 882
+  "line": 881
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3665,14 +3665,14 @@
   "key": "SelectArity",
   "src": "A Select node takes three operands (condition, then, else); this one has {0}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1151
+  "line": 1150
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SelectFailed",
   "src": "Failed to create the If node a select lowers to.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1176
+  "line": 1175
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3742,35 +3742,35 @@
   "key": "StaticSwitchArity",
   "src": "A StaticSwitch node takes three operands (condition, then, else); this one has {0}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1228
+  "line": 1227
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "StaticSwitchFailed",
   "src": "Failed to create a StaticSwitch node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1243
+  "line": 1242
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SwizzleBadMask",
   "src": "'{0}' is not a canonical swizzle mask; the emitter expects a subset of xyzw in order.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1068
+  "line": 1067
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SwizzleFailed",
   "src": "Failed to create a ComponentMask node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1104
+  "line": 1103
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "SwizzleNoMask",
   "src": "A Swizzle node carries no Mask property.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1058
+  "line": 1057
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3798,42 +3798,42 @@
   "key": "TextureSampleArity",
   "src": "A TextureSample node needs a texture in operand 0 and a UV in operand 1; one of them is not set.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1266
+  "line": 1265
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "TextureSampleFailed",
   "src": "Failed to create a TextureSample node.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1280
+  "line": 1279
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "UnhandledOp",
   "src": "The emitter has no rule for the IR operation '{0}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 336
+  "line": 335
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "UnknownAttribute",
   "src": "'{0}' is not a material attribute this engine has.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1813
+  "line": 1812
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "UnknownExpressionClass",
   "src": "'{0}' is not a material expression class this engine has.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 511
+  "line": 510
  },
  {
   "ns": "DreamShader.Emitter",
   "key": "UnknownPin",
   "src": "'{0}' has no input pin named '{1}'.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1742
+  "line": 1741
  },
  {
   "ns": "DreamShader.Emitter",
@@ -3847,7 +3847,7 @@
   "key": "ValueNotEmitted",
   "src": "This node reads node {0}, which has not been emitted; the graph's topological order is inconsistent.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterNodes.cpp",
-  "line": 1555
+  "line": 1554
  },
  {
   "ns": "DreamShader.Emitter",
@@ -4484,7 +4484,7 @@
   "key": "IRBuilderAggregateAsValue",
   "src": "A struct has no graph form here; use one of its fields.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 533
+  "line": 532
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4526,7 +4526,7 @@
   "key": "IRBuilderFieldOfNonMaterial",
   "src": "The IR builder cannot read '{0}' here: the binder typed what it is read from as a material, but that did not lower to one.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 384
+  "line": 383
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4575,14 +4575,14 @@
   "key": "IRBuilderNestedAttributeWrite",
   "src": "'{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 1451
+  "line": 1450
  },
  {
   "ns": "DreamShader.IRBuilder",
   "key": "IRBuilderNoAttributeEntry",
   "src": "The material attribute table has no entry {0}; the module was bound against a different catalog than this build is reading.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 1541
+  "line": 1540
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4603,7 +4603,7 @@
   "key": "IRBuilderNoExpressionEntry",
   "src": "The builtin catalog has no expression entry {0}; the module was bound against a different catalog than this build is reading.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 913
+  "line": 912
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4617,7 +4617,7 @@
   "key": "IRBuilderNoLowering",
   "src": "The IR builder has no lowering for a bound expression of kind {0}.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 514
+  "line": 513
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4659,7 +4659,7 @@
   "key": "IRBuilderPropertyNotLiteral",
   "src": "'{0}' is a property of {1} and needs a literal; this argument is computed at run time.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 1007
+  "line": 1006
  },
  {
   "ns": "DreamShader.IRBuilder",
@@ -4715,7 +4715,7 @@
   "key": "IRBuilderUnsetLocalRead",
   "src": "'{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or give it an initializer where it is declared.",
   "file": "DreamShaderLang\\Private\\IR\\IRBuilderExpressions.cpp",
-  "line": 1435
+  "line": 1434
  },
  {
   "ns": "DreamShader.IRBuilder",
