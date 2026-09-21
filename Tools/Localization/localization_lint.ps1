@@ -249,33 +249,34 @@ function Get-FileAnalysis {
     # Deferred / Allowlisted / Excluded split -- so an inventory that skipped the unlinted files
     # would report a gather count no real gather ever produces, and the baseline comparison would
     # be checking a number against itself. The R1/R2 literal rules below stay scoped.
-    $lineIndex = 0
+    # Matched over the whole text, not line by line: a message long enough to want a line of its own is written
+    #     LOCTEXT("Key",
+    #         "The text ...")
+    # and a per-line scan never saw those -- twenty-one strings had no translation because nothing had listed them.
     $nsLocPattern = 'NSLOCTEXT\(\s*"(?<ns>(?:\\.|[^"\\])*)"\s*,\s*"(?<key>(?:\\.|[^"\\])*)"\s*,\s*"(?<text>(?:\\.|[^"\\])*)"\s*\)'
-    $locPattern = 'LOCTEXT\(\s*"(?<key>(?:\\.|[^"\\])*)"\s*,\s*"(?<text>(?:\\.|[^"\\])*)"\s*\)'
-    foreach ($line in ($text -split "`r?`n")) {
-        $lineIndex++
-        foreach ($m in [regex]::Matches($line, $nsLocPattern)) {
-            $analysis.loctextCount++
-            $analysis.inventoryEntries += [pscustomobject]@{
-                namespace = Convert-CStringLiteral $m.Groups['ns'].Value
-                key = Convert-CStringLiteral $m.Groups['key'].Value
-                text = Convert-CStringLiteral $m.Groups['text'].Value
-                file = $File.FullName
-                line = $lineIndex
-            }
+    $locPattern = '(?<![A-Za-z0-9_])LOCTEXT\(\s*"(?<key>(?:\\.|[^"\\])*)"\s*,\s*"(?<text>(?:\\.|[^"\\])*)"\s*\)'
+    foreach ($m in [regex]::Matches($text, $nsLocPattern)) {
+        $analysis.loctextCount++
+        $analysis.inventoryEntries += [pscustomobject]@{
+            namespace = Convert-CStringLiteral $m.Groups['ns'].Value
+            key = Convert-CStringLiteral $m.Groups['key'].Value
+            text = Convert-CStringLiteral $m.Groups['text'].Value
+            file = $File.FullName
+            line = Get-LineNumber -Text $text -Index $m.Index
         }
-        foreach ($m in [regex]::Matches($line, $locPattern)) {
-            if ($lintable -and [string]::IsNullOrWhiteSpace($analysis.namespaceDefine)) {
-                $analysis.r4R5R6Violations += New-Violation -Rule 'R5' -Severity 'error' -File $File.FullName -Line $lineIndex -Message 'LOCTEXT found without an active LOCTEXT_NAMESPACE define.'
-            }
-            $analysis.loctextCount++
-            $analysis.inventoryEntries += [pscustomobject]@{
-                namespace = $analysis.namespaceDefine
-                key = Convert-CStringLiteral $m.Groups['key'].Value
-                text = Convert-CStringLiteral $m.Groups['text'].Value
-                file = $File.FullName
-                line = $lineIndex
-            }
+    }
+    foreach ($m in [regex]::Matches($text, $locPattern)) {
+        $matchLine = Get-LineNumber -Text $text -Index $m.Index
+        if ($lintable -and [string]::IsNullOrWhiteSpace($analysis.namespaceDefine)) {
+            $analysis.r4R5R6Violations += New-Violation -Rule 'R5' -Severity 'error' -File $File.FullName -Line $matchLine -Message 'LOCTEXT found without an active LOCTEXT_NAMESPACE define.'
+        }
+        $analysis.loctextCount++
+        $analysis.inventoryEntries += [pscustomobject]@{
+            namespace = $analysis.namespaceDefine
+            key = Convert-CStringLiteral $m.Groups['key'].Value
+            text = Convert-CStringLiteral $m.Groups['text'].Value
+            file = $File.FullName
+            line = $matchLine
         }
     }
 
