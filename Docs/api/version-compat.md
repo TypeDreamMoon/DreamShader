@@ -65,12 +65,13 @@ The version arithmetic every other macro is built on. The feature gates that use
 | `DREAMSHADER_MATERIAL_AGGREGATE_HANDLES_SUBSTRATE` | **UE ≥ 5.8** | no — unconditional `#define` | Whether `MaterialValueTypeToMaterialAggregateAttributeType` has a case for `MCT_Substrate`. Below 5.8 it `checkf(false)`s, so the manifest exporter must not make the call for `UMaterialExpressionAggregate` at all. |
 | `DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE` | **UE ≥ 5.7** | no — unconditional `#define` | Whether `UMaterialExpressionScalarParameter` has `ControlType`, `Enumeration` and `EnumerationIndex`. |
 | `DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER` | **UE ≥ 5.7** | no — unconditional `#define` | Which header declares `FMaterialParameterInfo`: `Materials/MaterialParameters.h` from 5.7, `MaterialTypes.h` before it. |
+| `DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS` *(since 2.0.0)* | `1` when the engine's `EMaterialParameterType` has a `ParameterCollection` enumerator, `0` otherwise | **yes** — `#ifndef` guarded (falls back to UE ≥ 5.8), and `DreamShader.Build.cs` sets it as a `PublicDefinition` from that probe | Whether a material instance can override a parameter collection. Asked of the header that declares the enum, because a `case` label cannot ask the type. |
 
-The five `#ifndef`-guarded ones may be pre-defined by a build target — for example to compile the
+The six `#ifndef`-guarded ones may be pre-defined by a build target — for example to compile the
 Substrate paths out on a 5.4+ engine by defining `DREAMSHADER_WITH_SUBSTRATE_BUILTINS=0`, or to force
 a version branch when testing. `DreamShader.Build.cs` uses that to set
-`DREAMSHADER_WITH_MOON_ENGINE`, and is the only `PublicDefinitions` entry in the plugin; no module
-sets `PrivateDefinitions` at all.
+`DREAMSHADER_WITH_MOON_ENGINE` and `DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS`, the only
+`PublicDefinitions` entries in the plugin; no module sets `PrivateDefinitions` at all.
 
 > [!NOTE]
 > `DREAMSHADER_ALLOW_SHRINKING_NO` carries **no behavioural difference**. It exists solely because
@@ -83,6 +84,13 @@ sets `PrivateDefinitions` at all.
 > There are **no** raw `#if ENGINE_MAJOR_VERSION`, `ENGINE_MINOR_VERSION` or `UE_VERSION_NEWER_THAN`
 > tests anywhere in the plugin outside this header. Every version-dependent behaviour goes through
 > these macros, which is what makes the table below exhaustive.
+
+> [!NOTE]
+> *(since 2.0.0)* Where a **member** is younger than the oldest supported engine and nobody can say in which
+> release it arrived, the code asks the type instead of a version: `if constexpr (requires { … })` inside a small
+> template, with a `static_assert` of the same question on the engine where the member is known to exist, so a
+> misspelling cannot read as "this engine does not have it". Those sites are listed under
+> [Asked of the type](#asked-of-the-type).
 
 ## Complete version-gated behaviour
 
@@ -153,6 +161,26 @@ threshold is the same 5.4.
 > [`RunUAT BuildPlugin`](../contributing/index.md#synopsis) sees it — an editor build against one
 > engine never will.
 
+### Asked of the type
+
+*(since 2.0.0)* No version number here: each row is decided by whether the engine's own type has the member.
+
+| Feature | Where the member exists | Where it does not |
+| :-- | :-- | :-- |
+| Re-applying a kept **double vector** override to a ThinCustom instance — `UMaterialInstanceConstant::SetDoubleVectorParameterValueEditorOnly` (absent through 5.6) | set | reported by name as a kind this build cannot express, like a parameter the source dropped |
+| Re-applying a kept **static component mask** override — `SetStaticComponentMaskParameterValueEditorOnly` on the instance (absent through 5.6) | set | reported the same way |
+| Reading an instance's usage-flags override — `FMaterialInstanceBasePropertyOverrides::bOverride_UsageFlags` (absent through 5.6) | named as unsupported by the instance decompiler when set | there is no such override to report |
+| `TextureSample.GatherMode` when the graph importer decides whether a sample is the plain one (absent in 5.5) | compared with the default | nothing to compare |
+
+### `DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS`
+
+*(since 2.0.0)*
+
+| Feature | Where `EMaterialParameterType::ParameterCollection` exists | Where it does not (5.6 and earlier) |
+| :-- | :-- | :-- |
+| A `.dsi` override of a parameter-collection parameter | bound against the parent's schema and written to the instance | the kind is not in the parent's schema, so the override is refused as unknown; building one by hand answers `this engine has no parameter collection parameters.` |
+| The instance decompiler | writes the override | never meets one |
+
 ### UE ≥ 5.7
 
 | Feature | On UE ≥ 5.7 | On UE 5.3 – 5.6 |
@@ -164,6 +192,12 @@ threshold is the same 5.4.
 | Node preview height in the layout pass | `Expression->ShouldShowPreview()` | `!bHidePreviewWindow && !bCollapsed`, the two flags 5.7 composed it from |
 | Decompiler scalar-parameter metadata | `ControlType`, `Enumeration` and `EnumerationIndex` are exported | not exported — the properties do not exist. A source that carries them still parses; there is nothing to write them to |
 | `FMaterialParameterInfo` include | `Materials/MaterialParameters.h` | `MaterialTypes.h`, which 5.7 keeps only as a deprecation stub |
+
+### UE ≥ 5.8
+
+| Feature | On UE ≥ 5.8 | On UE 5.3 – 5.7 |
+| :-- | :-- | :-- |
+| The builtin catalog's material attributes *(since 2.0.0)* | `FMaterialAttributeDefinitionMap::GetAttributeNameToIDList` | that list is private, so the attributes are reached by walking `EMaterialProperty` through the public `GetID` / `GetProperty` / `GetAttributeName`. The same attributes either way; only their order in the exported catalog differs |
 
 ## "Since UE 5.x" summary
 

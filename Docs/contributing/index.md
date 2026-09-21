@@ -196,10 +196,10 @@ The full UAT log of every engine is kept under `<Package>\Logs\<Engine>.log`, pa
 
 | Engine | Status |
 | :-- | :-- |
-| `5.8` | Verified with `RunUAT BuildPlugin` |
-| `5.7` | Verified with `RunUAT BuildPlugin` |
-| `5.6` | Verified with `RunUAT BuildPlugin` |
-| `5.5` | Verified with `RunUAT BuildPlugin` |
+| `5.8` | Verified with `RunUAT BuildPlugin` (`2.0.0`) |
+| `5.7` | Verified with `RunUAT BuildPlugin` through `1.8.0`; not re-run for `2.0.0`, whose gates are written so that 5.7 needs no answer of its own — see [Asked of the type](../api/version-compat.md#asked-of-the-type) |
+| `5.6` | Verified with `RunUAT BuildPlugin` (`2.0.0`) |
+| `5.5` | Verified with `RunUAT BuildPlugin` (`2.0.0`) |
 | `5.4` | Source-compatible; see the toolchain warning below |
 | `5.3` | Source-compatible; see the toolchain warning below |
 

@@ -251,6 +251,16 @@
 
 ### Fixed
 
+- **The plugin builds on its own again, on 5.5, 5.6 and 5.8.** The 2.0 code had only ever been built inside
+  one 5.8 project, where a unity build lends every file its neighbours' includes: `RunUAT BuildPlugin`
+  failed on a stock 5.8 with three missing includes, and on 5.5 and 5.6 with engine members that are
+  younger than those engines -- two of them inherited from `1.9.0`'s kept ThinCustom overrides. A member
+  whose first engine nobody can name is now asked of the type rather than of a version number, a
+  parameter-collection parameter is asked of the engine header by `DreamShader.Build.cs`, and the
+  attribute list that is private before 5.8 is reached through the public lookups. What an older engine
+  cannot do is said by name where it happens.
+  [`Docs/api/version-compat.md`](Docs/api/version-compat.md#asked-of-the-type).
+
 - **A generated layer, blend or attribute function read as hand-edited in an editor of another
   language.** The [divergence](Docs/generation/divergence.md) digest named every input by the engine's
   `GetInputName`, and three nodes answer that with translated text: `BreakMaterialAttributes` (`Attr`),
