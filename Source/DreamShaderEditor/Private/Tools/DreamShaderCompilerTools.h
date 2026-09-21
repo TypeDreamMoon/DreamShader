@@ -62,6 +62,16 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params);
 
+	/**
+	 * `dump-layout <file|-All> [-Style=Blocks|SourceBands|Layered|All] [-Out=<dir>] [-Json]` -- the graph layouts
+	 * computed on the IR, of every product of a source, as an SVG per style, without building an asset. Node sizes are
+	 * the IR's own estimate, so the picture shows the arrangement, not the exact footprint a live node has.
+	 */
+	bool RunDreamShaderDumpLayoutCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
+
 	/** `index <file|-All> [-Out=<dir>]` -- BuildDreamShaderSymbolIndexJson per file (plan §13.4). */
 	bool RunDreamShaderIndexCommandlet(
 		const TArray<FString>& Tokens,

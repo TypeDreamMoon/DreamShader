@@ -89,6 +89,12 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params);
 
+	/** `dump-layout <file|-All> [-Style=Blocks|SourceBands|Layered|All] [-Out=<dir>] [-Json]`. */
+	bool RunDreamShaderDumpLayoutCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params);
+
 	/** `index <file|-All> [-Out=<dir>]`. */
 	bool RunDreamShaderIndexCommandlet(
 		const TArray<FString>& Tokens,

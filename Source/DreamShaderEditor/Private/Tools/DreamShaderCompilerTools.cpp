@@ -23,11 +23,16 @@
 #include "Commandlet/DreamShaderCommandletRunner.h"
 #include "DreamShaderModule.h"
 #include "IR/IRDump.h"
+#include "IR/IRLayout.h"
+#include "Lang/LangFormat.h"
 #include "Semantic/LangBound.h"
 
+#include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 
 #define LOCTEXT_NAMESPACE "DreamShader.Tools"
 
@@ -584,7 +589,152 @@ namespace UE::DreamShader::Editor::Compiler
 		return bAllSucceeded;
 	}
 
-	// -------------------------------------------------------------------------------------- index
+	// ---------------------------------------------------------------------------------- dump-layout
+
+	bool RunDreamShaderDumpLayoutCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		namespace IR = UE::DreamShader::IR;
+
+		TArray<FString> SourceFiles;
+		if (!ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		{
+			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderLang2CommandletUsage());
+			return false;
+		}
+
+		// Every style unless one is named: the point of the verb is to look at them side by side.
+		TArray<IR::EIRLayoutStyle> Styles;
+		const FString StyleParam = GetParam(Tokens, Switches, Params, TEXT("Style"));
+		if (StyleParam.IsEmpty() || StyleParam.Equals(TEXT("All"), ESearchCase::IgnoreCase))
+		{
+			Styles.Add(IR::EIRLayoutStyle::Blocks);
+			Styles.Add(IR::EIRLayoutStyle::SourceBands);
+			Styles.Add(IR::EIRLayoutStyle::Layered);
+		}
+		else
+		{
+			IR::EIRLayoutStyle Style = IR::EIRLayoutStyle::Blocks;
+			if (!IR::TryParseIRLayoutStyle(StyleParam, Style))
+			{
+				FLangDiagnosticSink ToolSink;
+				const FLangSpan NoSpan;
+				ToolSink.Error(TEXT("DSH9041"), NoSpan, FText::Format(
+					LOCTEXT("DumpLayoutBadStyle", "'{0}' is not a layout style; -Style takes Blocks, SourceBands, Layered or All."),
+					FText::FromString(StyleParam)));
+				LogLang2Diagnostics(ToolSink, FString());
+				LogSummary(false, TEXT("DreamShader dump-layout: the -Style selection could not be resolved."));
+				return false;
+			}
+			Styles.Add(Style);
+		}
+
+		const FString OutParam = GetOutParam(Tokens, Switches, Params);
+		const FString OutputDirectory = OutParam.IsEmpty()
+			? DefaultOutputDirectory(TEXT("Layout"))
+			: FPaths::ConvertRelativePathToFull(OutParam);
+		const bool bJson = HasFlag(Tokens, Switches, TEXT("Json"));
+
+		int32 WrittenCount = 0;
+		bool bAllSucceeded = true;
+
+		for (const FString& SourceFile : SourceFiles)
+		{
+			FLangDiagnosticSink FileSink(SourceFile);
+			const FLangSpan NoSpan;
+
+			if (!RequireLang2Source(SourceFile, LOCTEXT("VerbDumpLayout", "dump-layout"), FileSink))
+			{
+				LogLang2Diagnostics(FileSink, SourceFile);
+				bAllSucceeded = false;
+				continue;
+			}
+
+			FDreamShaderLang2PipelineOptions Options;
+			Options.bEmitAssets = false;
+
+			FDreamShaderLang2PipelineResult Result;
+			const bool bPipelineOk = RunDreamShaderLang2Pipeline(SourceFile, Options, Result);
+			LogLang2Diagnostics(Result.Diagnostics, SourceFile);
+			if (!Result.IR.IsValid())
+			{
+				bAllSucceeded = false;
+				continue;
+			}
+			bAllSucceeded = bAllSucceeded && bPipelineOk;
+
+			bool bWroteAll = true;
+			for (const IR::FIRProduct& Product : Result.IR->Products)
+			{
+				// An instance assigns its parent's parameters and has no graph to draw.
+				if (Product.Kind == IR::EIRProductKind::MaterialInstance || Product.Graph.Nodes.Num() == 0)
+				{
+					continue;
+				}
+
+				for (const IR::EIRLayoutStyle Style : Styles)
+				{
+					IR::FIRLayoutOptions LayoutOptions;
+					LayoutOptions.Style = Style;
+					IR::FIRLayoutResult Layout;
+					IR::LayoutDreamShaderIRGraph(Product.Graph, LayoutOptions, Layout);
+
+					// A 1.x product is named with its folder (`Name="MaterialFunctions/MF_X"`), and a slash in a file name is a
+					// directory: the leaf is the name here, as it is the asset's.
+					const FString ProductLeaf = FPaths::MakeValidFileName(FPaths::GetCleanFilename(Product.Name), TEXT('_'));
+					const FString Stem = FString::Printf(TEXT(".%s.%s.layout"), *ProductLeaf, IR::LexToString(Style)); /* I18N-EXEMPT: a file name */
+					const FString Title = FString::Printf( /* I18N-EXEMPT: the caption inside a debugging picture */
+						TEXT("%s -- %s -- %d nodes, %d columns, %d bands"),
+						*Product.Name,
+						IR::LexToString(Style),
+						Product.Graph.Nodes.Num(),
+						Layout.ColumnCount,
+						Layout.BandCount);
+
+					auto WriteOne = [&](const FString& Suffix, const FString& Contents) -> bool
+					{
+						const FString Path = MakeOutputFilePath(OutputDirectory, SourceFile, *Suffix);
+						FString WriteError;
+						if (!WriteToolFile(Path, Contents, WriteError))
+						{
+							FileSink.Error(TEXT("DSH9040"), NoSpan, FText::Format(
+								LOCTEXT("DumpLayoutWriteFailed", "The layout dump could not be written: {0}."),
+								FText::FromString(WriteError)));
+							return false;
+						}
+
+						++WrittenCount;
+						UE_LOG(LogDreamShader, Display, TEXT("Dumped the %s layout of %s (%s) to %s."), IR::LexToString(Style), *Product.Name, *SourceFile, *Path);
+						return true;
+					};
+
+					bWroteAll = WriteOne(Stem + TEXT(".svg"), IR::DumpDreamShaderIRLayoutSvg(Product.Graph, Layout, Title)) && bWroteAll;
+					if (bJson)
+					{
+						bWroteAll = WriteOne(Stem + TEXT(".json"), IR::DumpDreamShaderIRLayoutJson(Product.Graph, Layout, Style)) && bWroteAll;
+					}
+				}
+			}
+
+			if (!bWroteAll)
+			{
+				LogLang2Diagnostics(FileSink, SourceFile);
+				bAllSucceeded = false;
+			}
+		}
+
+		LogSummary(bAllSucceeded, FString::Printf( /* I18N-EXEMPT: machine-readable verdict line */
+			TEXT("DreamShader dump-layout: %d file(s) from %d source(s) to %s."),
+			WrittenCount,
+			SourceFiles.Num(),
+			*OutputDirectory));
+
+		return bAllSucceeded;
+	}
+
+	// ---------------------------------------------------------------------------------------- index
 
 	bool RunDreamShaderIndexCommandlet(
 		const TArray<FString>& Tokens,

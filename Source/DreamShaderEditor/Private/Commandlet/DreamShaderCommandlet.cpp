@@ -69,6 +69,12 @@ int32 UDreamShaderCommandlet::Main(const FString& Params)
 		return UE::DreamShader::Editor::Private::RunDreamShaderDumpIRCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
 	}
 
+	if (Command.Equals(TEXT("dump-layout"), ESearchCase::IgnoreCase)
+		|| Command.Equals(TEXT("dumplayout"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderDumpLayoutCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
 	if (Command.Equals(TEXT("index"), ESearchCase::IgnoreCase))
 	{
 		return UE::DreamShader::Editor::Private::RunDreamShaderIndexCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;

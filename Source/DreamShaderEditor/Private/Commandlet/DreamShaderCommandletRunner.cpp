@@ -587,6 +587,14 @@ namespace UE::DreamShader::Editor::Private
 		return UE::DreamShader::Editor::Compiler::RunDreamShaderDumpIRCommandlet(Tokens, Switches, Params);
 	}
 
+	bool RunDreamShaderDumpLayoutCommandlet(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params)
+	{
+		return UE::DreamShader::Editor::Compiler::RunDreamShaderDumpLayoutCommandlet(Tokens, Switches, Params);
+	}
+
 	bool RunDreamShaderIndexCommandlet(
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
