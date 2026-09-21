@@ -65,8 +65,11 @@ namespace UE::DreamShader::Editor::Compiler
 			{ TEXT("MaterialExpressionSubstrateConvertToDecal"),               TEXT("ConvertToDecal") },
 			{ TEXT("MaterialExpressionSubstrateHorizontalMixing"),             TEXT("HorizontalMix") },
 			{ TEXT("MaterialExpressionSubstrateHorizontalMixing"),             TEXT("HorizontalMixing") },
+			// Substrate sugar S1: the short names the composition nodes are written with.
+			{ TEXT("MaterialExpressionSubstrateHorizontalMixing"),             TEXT("Mix") },
 			{ TEXT("MaterialExpressionSubstrateVerticalLayering"),             TEXT("VerticalLayer") },
 			{ TEXT("MaterialExpressionSubstrateVerticalLayering"),             TEXT("VerticalLayering") },
+			{ TEXT("MaterialExpressionSubstrateVerticalLayering"),             TEXT("Layer") },
 			{ TEXT("MaterialExpressionSubstrateAdd"),                          TEXT("Add") },
 			{ TEXT("MaterialExpressionSubstrateWeight"),                       TEXT("Weight") },
 			{ TEXT("MaterialExpressionSubstrateSelect"),                       TEXT("Select") },
@@ -139,6 +142,13 @@ namespace UE::DreamShader::Editor::Compiler
 			{ TEXT("MaterialExpressionPanner"),            { TEXT("Coordinate"), TEXT("Time"), TEXT("Speed"), nullptr } },
 			{ TEXT("MaterialExpressionComponentMask"),     { TEXT("Input"), nullptr } },
 			{ TEXT("MaterialExpressionTime"),              { TEXT("Period"), nullptr } },
+			// Substrate sugar S1: the five composition nodes, and only those. A BSDF has eighteen pins, and a positional
+			// call of one is a mistake waiting for a pin to be added in the middle; they stay named.
+			{ TEXT("MaterialExpressionSubstrateAdd"),               { TEXT("A"), TEXT("B"), nullptr } },
+			{ TEXT("MaterialExpressionSubstrateWeight"),            { TEXT("A"), TEXT("Weight"), nullptr } },
+			{ TEXT("MaterialExpressionSubstrateHorizontalMixing"),  { TEXT("Background"), TEXT("Foreground"), TEXT("Mix"), nullptr } },
+			{ TEXT("MaterialExpressionSubstrateVerticalLayering"),  { TEXT("Top"), TEXT("Base"), TEXT("Thickness"), nullptr } },
+			{ TEXT("MaterialExpressionSubstrateSelect"),            { TEXT("A"), TEXT("B"), TEXT("SelectValue"), nullptr } },
 		};
 
 		/**
@@ -983,6 +993,23 @@ namespace UE::DreamShader::Editor::Compiler
 					&& !Entry.ShortName.Equals(Alias.Alias, ESearchCase::CaseSensitive))
 				{
 					Entry.Aliases.AddUnique(Alias.Alias);
+				}
+			}
+
+			// Substrate sugar S7: a Substrate class the table above has never heard of -- 5.8's Toon, an engine fork's own
+			// BSDF -- is known by the name the table would have given it: the class name without `MaterialExpressionSubstrate`
+			// in front and `BSDF` behind. After the table, so that where both have a word the table's comes first, and the
+			// first alias is what the decompiler writes.
+			if (Entry.Namespace.Equals(TEXT("Substrate"), ESearchCase::CaseSensitive))
+			{
+				FString Derived = Entry.ClassName;
+				if (Derived.RemoveFromStart(TEXT("MaterialExpressionSubstrate"), ESearchCase::CaseSensitive))
+				{
+					Derived.RemoveFromEnd(TEXT("BSDF"), ESearchCase::CaseSensitive);
+					if (!Derived.IsEmpty() && !Entry.ShortName.Equals(Derived, ESearchCase::CaseSensitive))
+					{
+						Entry.Aliases.AddUnique(Derived);
+					}
 				}
 			}
 			for (const FUECatalogAlias& Alias : UECatalogAliases)
