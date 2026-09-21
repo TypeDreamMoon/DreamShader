@@ -11,6 +11,11 @@
 //
 // Run with -DreamShaderUpdateGolden to (re)write each golden from the actual parse result;
 // review the resulting json/diff by hand before committing.
+//
+// Batch 2 (M4): the 1.x runtime parser and the FMaterialGenerator facade are deleted. The Parse layer
+// runs through the legacy front end, and every compile in the tests goes through the compile facade
+// below (CompileDreamShaderTestAssets / CompileDreamShaderTestMaterial), which asks the registered
+// compiler service.
 
 #pragma once
 
@@ -18,13 +23,17 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "DreamShaderParser.h"
 #include "DreamShaderSettings.h"
 #include "DreamShaderTypes.h"
-#include "MaterialAssetGeneration/DreamShaderMaterialGenerator.h"
+#include "DreamShaderCompilerService.h"
+// IDreamShaderCompiler, GetDreamShaderCompiler, EThinCustomPersistence: the compile facade.
+#include "DreamShaderCompilerInterface.h"
+// ToInvariantWireString: the facade's FString message, in the invariant English a golden can quote.
+#include "DreamShaderTextWireUtils.h"
 
 #include "Lang/LangAst.h"
 #include "Lang/LangDiagnostic.h"
+#include "Lang/LangLegacy.h"
 #include "Lang/LangParser.h"
 #include "Lang/LangPrinter.h"
 #include "Lang/LangSource.h"
@@ -37,6 +46,7 @@
 #include "IR/IRCatalog.h"
 #include "IR/IRCoreOps.h"
 #include "IR/IRDump.h"
+#include "IR/IRInstanceSchema.h"
 #include "IR/IRPasses.h"
 #include "IR/IRTypes.h"
 #include "IR/IRValidator.h"
@@ -125,7 +135,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		return Case;
 	}
 
-	/** Enumerate every .dsm/.dsf/.dsh/.dss fixture under Corpus/<SubDir>. */
+	/** Enumerate every .dsm/.dsf/.dsh/.dss/.dsi fixture under Corpus/<SubDir>. Each runner skips the extensions it does not run. */
 	inline bool LoadDreamShaderCorpusCases(const FString& SubDir, TArray<FCorpusCase>& OutCases)
 	{
 		const FString Root = GetDreamShaderCorpusRoot();
@@ -142,6 +152,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		FM.FindFilesRecursive(Files, *Dir, TEXT("*.dsf"), true, false, false);
 		FM.FindFilesRecursive(Files, *Dir, TEXT("*.dsh"), true, false, false);
 		FM.FindFilesRecursive(Files, *Dir, TEXT("*.dss"), true, false, false);
+		FM.FindFilesRecursive(Files, *Dir, TEXT("*.dsi"), true, false, false);
 		Files.Sort();
 
 		const FString RelativeBase = Dir / TEXT("");
@@ -156,6 +167,132 @@ namespace UE::DreamShader::Editor::Private::Tests
 			OutCases.Add(MoveTemp(Case));
 		}
 		return true;
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// The compile facade (batch 2, M4 relocation)
+	//
+	// The 1.x FMaterialGenerator facade is deleted. Every production caller now asks the registered
+	// compiler -- ::UE::DreamShader::GetDreamShaderCompiler(), implemented by the compiler module's
+	// service -- with an explicit ThinCustom persistence, and the tests do the same through these
+	// helpers. They keep the facade's argument order and its three message shapes, so a call site
+	// changes its name and nothing else:
+	//
+	//   FMaterialGenerator::GenerateAssetsFromFile(Path, Message, bForce, bTransient)
+	//     -> CompileDreamShaderTestAssets(Path, Message, bForce, bEphemeralThinCustom)
+	//
+	// bEphemeralThinCustom asks for EThinCustomPersistence::Ephemeral. Only a ThinCustom product has a
+	// memory-only state: a Graph material and a material function always save, whatever is asked, so a
+	// test that built a Graph material "transient" under 1.x now writes a real asset and needs a scratch
+	// package root (FDreamShaderCompile2Fixture) that cleans it up.
+	//
+	// CompileMaterial and CompileAssets are one compile in the service (CO-report); both are kept so a
+	// call site still says which one it meant.
+	// ---------------------------------------------------------------------------------------------
+
+	/** One compile through the registered compiler. A null compiler answers a failed result that says so. */
+	inline ::UE::DreamShader::FDreamShaderCompileResult CompileDreamShaderTestSource(
+		const FString& SourceFilePath,
+		const bool bMaterialOnly,
+		const bool bForce,
+		const bool bEphemeralThinCustom)
+	{
+		::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler();
+		if (!Compiler)
+		{
+			::UE::DreamShader::FDreamShaderCompileResult Unavailable;
+			Unavailable.bSucceeded = false;
+			Unavailable.Message = FText::FromString(TEXT("No DreamShader compiler is registered: GetDreamShaderCompiler() answered null."));
+			return Unavailable;
+		}
+
+		::UE::DreamShader::FDreamShaderCompileRequest Request;
+		Request.SourceFilePath = SourceFilePath;
+		Request.bForce = bForce;
+		Request.ThinCustomPersistence = bEphemeralThinCustom
+			? ::UE::DreamShader::EThinCustomPersistence::Ephemeral
+			: ::UE::DreamShader::EThinCustomPersistence::Materialized;
+		return bMaterialOnly ? Compiler->CompileMaterial(Request) : Compiler->CompileAssets(Request);
+	}
+
+	/** Every product of the source; the report in its invariant wire form (what the facade's FString overload gave). */
+	inline bool CompileDreamShaderTestAssets(
+		const FString& SourceFilePath,
+		FString& OutMessage,
+		const bool bForce = false,
+		const bool bEphemeralThinCustom = false)
+	{
+		const ::UE::DreamShader::FDreamShaderCompileResult Result =
+			CompileDreamShaderTestSource(SourceFilePath, /*bMaterialOnly*/ false, bForce, bEphemeralThinCustom);
+		OutMessage = ::UE::DreamShader::Editor::Private::ToInvariantWireString(Result.Message);
+		return Result.bSucceeded;
+	}
+
+	/** Every product of the source; the report as the service worded it. */
+	inline bool CompileDreamShaderTestAssets(
+		const FString& SourceFilePath,
+		FText& OutMessage,
+		const bool bForce = false,
+		const bool bEphemeralThinCustom = false)
+	{
+		const ::UE::DreamShader::FDreamShaderCompileResult Result =
+			CompileDreamShaderTestSource(SourceFilePath, /*bMaterialOnly*/ false, bForce, bEphemeralThinCustom);
+		OutMessage = Result.Message;
+		return Result.bSucceeded;
+	}
+
+	/** Every product of the source; the first error's DSHnnnn code beside the report text. */
+	inline bool CompileDreamShaderTestAssets(
+		const FString& SourceFilePath,
+		::UE::DreamShader::FDreamShaderError& OutError,
+		const bool bForce = false,
+		const bool bEphemeralThinCustom = false)
+	{
+		const ::UE::DreamShader::FDreamShaderCompileResult Result =
+			CompileDreamShaderTestSource(SourceFilePath, /*bMaterialOnly*/ false, bForce, bEphemeralThinCustom);
+		OutError.Code = Result.Code;
+		OutError.Message = ::UE::DreamShader::Editor::Private::ToInvariantWireString(Result.Message);
+		return Result.bSucceeded;
+	}
+
+	/** The material route (IDreamShaderCompiler::CompileMaterial); the report in its invariant wire form. */
+	inline bool CompileDreamShaderTestMaterial(
+		const FString& SourceFilePath,
+		FString& OutMessage,
+		const bool bForce = false,
+		const bool bEphemeralThinCustom = false)
+	{
+		const ::UE::DreamShader::FDreamShaderCompileResult Result =
+			CompileDreamShaderTestSource(SourceFilePath, /*bMaterialOnly*/ true, bForce, bEphemeralThinCustom);
+		OutMessage = ::UE::DreamShader::Editor::Private::ToInvariantWireString(Result.Message);
+		return Result.bSucceeded;
+	}
+
+	/** The material route; the report as the service worded it. */
+	inline bool CompileDreamShaderTestMaterial(
+		const FString& SourceFilePath,
+		FText& OutMessage,
+		const bool bForce = false,
+		const bool bEphemeralThinCustom = false)
+	{
+		const ::UE::DreamShader::FDreamShaderCompileResult Result =
+			CompileDreamShaderTestSource(SourceFilePath, /*bMaterialOnly*/ true, bForce, bEphemeralThinCustom);
+		OutMessage = Result.Message;
+		return Result.bSucceeded;
+	}
+
+	/** The material route; the first error's DSHnnnn code beside the report text. */
+	inline bool CompileDreamShaderTestMaterial(
+		const FString& SourceFilePath,
+		::UE::DreamShader::FDreamShaderError& OutError,
+		const bool bForce = false,
+		const bool bEphemeralThinCustom = false)
+	{
+		const ::UE::DreamShader::FDreamShaderCompileResult Result =
+			CompileDreamShaderTestSource(SourceFilePath, /*bMaterialOnly*/ true, bForce, bEphemeralThinCustom);
+		OutError.Code = Result.Code;
+		OutError.Message = ::UE::DreamShader::Editor::Private::ToInvariantWireString(Result.Message);
+		return Result.bSucceeded;
 	}
 
 	/** Decode a golden json into an FCorpusExpectation. Returns false only on malformed json. */
@@ -232,242 +369,13 @@ namespace UE::DreamShader::Editor::Private::Tests
 		return true;
 	}
 
-	/** Serialize a baseline golden from an actual parse result (used by -DreamShaderUpdateGolden). */
-	inline FString BuildDreamShaderGoldenJson(bool bParsed, const FTextShaderDefinition& Definition, const FString& Error)
-	{
-		const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
-		Root->SetStringField(TEXT("entryPoint"), TEXT("parse"));
-		Root->SetStringField(TEXT("outcome"), bParsed ? TEXT("ok") : TEXT("error"));
-
-		if (!bParsed)
-		{
-			TArray<TSharedPtr<FJsonValue>> Errors;
-			Errors.Add(MakeShared<FJsonValueString>(Error));
-			Root->SetArrayField(TEXT("errorContains"), Errors);
-		}
-		else
-		{
-			const TSharedRef<FJsonObject> Def = MakeShared<FJsonObject>();
-			if (!Definition.Name.IsEmpty())
-			{
-				Def->SetStringField(TEXT("name"), Definition.Name);
-			}
-			Def->SetNumberField(TEXT("outputDeclarations"), Definition.OutputDeclarations.Num());
-			Def->SetNumberField(TEXT("outputs"), Definition.Outputs.Num());
-			Def->SetNumberField(TEXT("materialFunctions"), Definition.MaterialFunctions.Num());
-			if (Definition.MaterialFunctions.Num() > 0)
-			{
-				Def->SetStringField(TEXT("materialFunction0Kind"), LexToString(Definition.MaterialFunctions[0].Kind));
-			}
-			Def->SetNumberField(TEXT("virtualFunctions"), Definition.VirtualFunctions.Num());
-			Def->SetBoolField(TEXT("codeNotEmpty"), !Definition.Code.IsEmpty());
-
-			if (Definition.Settings.Num() > 0)
-			{
-				const TSharedRef<FJsonObject> SettingsObject = MakeShared<FJsonObject>();
-				for (const TPair<FString, FString>& Pair : Definition.Settings)
-				{
-					SettingsObject->SetStringField(Pair.Key, Pair.Value);
-				}
-				Def->SetObjectField(TEXT("settings"), SettingsObject);
-			}
-
-			Root->SetObjectField(TEXT("definition"), Def);
-
-			if (Definition.Warnings.Num() > 0)
-			{
-				TArray<TSharedPtr<FJsonValue>> Warnings;
-				for (const FString& Warning : Definition.Warnings)
-				{
-					Warnings.Add(MakeShared<FJsonValueString>(Warning));
-				}
-				Root->SetArrayField(TEXT("warningsContain"), Warnings);
-			}
-		}
-
-		FString Output;
-		const TSharedRef<TJsonWriter<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>> Writer =
-			TJsonWriterFactory<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>::Create(&Output);
-		FJsonSerializer::Serialize(Root, Writer);
-		return Output;
-	}
-
-	/**
-	 * Run one corpus case through FTextShaderParser::Parse and assert it against its golden.
-	 * In -DreamShaderUpdateGolden mode it rewrites the golden instead of asserting.
-	 * Returns false only on a hard I/O failure; semantic mismatches are recorded on Test.
-	 */
-	inline bool RunDreamShaderParseCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case)
-	{
-		FString Source;
-		if (!FFileHelper::LoadFileToString(Source, *Case.SourcePath))
-		{
-			Test.AddError(FString::Printf(TEXT("Cannot read corpus source '%s'."), *Case.SourcePath));
-			return false;
-		}
-
-		FTextShaderDefinition Definition;
-		// Parse through the code-carrying overload and fold the DSHnnnn code into the string the
-		// golden's errorContains is matched against. The code is the stable half of a diagnostic --
-		// the message is free to be reworded and, eventually, translated -- so a negative fixture
-		// should be able to name the code instead of English prose. Purely additive: a golden that
-		// still names a message substring keeps matching.
-		FDreamShaderTextError ParseError;
-		const bool bParsed = FTextShaderParser::Parse(Source, Definition, ParseError);
-		const FString Error = ParseError.HasCode()
-			? FString::Printf(TEXT("%s: %s"), *ParseError.Code, *ParseError.Message.ToString())
-			: ParseError.Message.ToString();
-
-		if (ShouldUpdateDreamShaderGolden())
-		{
-			const FString Json = BuildDreamShaderGoldenJson(bParsed, Definition, Error);
-			if (FFileHelper::SaveStringToFile(Json, *Case.ExpectedPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
-			{
-				Test.AddInfo(FString::Printf(TEXT("Updated golden '%s'."), *Case.ExpectedPath));
-			}
-			else
-			{
-				Test.AddError(FString::Printf(TEXT("Failed to write golden '%s'."), *Case.ExpectedPath));
-			}
-			return true;
-		}
-
-		FCorpusExpectation Expectation;
-		Expectation.bExpectError = Case.bBadByName; // default; json may override
-		if (Case.bHasExpectationFile)
-		{
-			FString JsonText;
-			if (!FFileHelper::LoadFileToString(JsonText, *Case.ExpectedPath))
-			{
-				Test.AddError(FString::Printf(TEXT("Cannot read golden '%s'."), *Case.ExpectedPath));
-				return false;
-			}
-
-			FCorpusExpectation Loaded;
-			Loaded.bExpectError = Case.bBadByName;
-			FString JsonError;
-			if (!ParseDreamShaderExpectation(JsonText, Loaded, JsonError))
-			{
-				Test.AddError(FString::Printf(TEXT("Malformed golden '%s': %s"), *Case.ExpectedPath, *JsonError));
-				return false;
-			}
-			Expectation = MoveTemp(Loaded);
-		}
-
-		if (Expectation.bExpectError)
-		{
-			Test.TestFalse(FString::Printf(TEXT("[%s] parse should FAIL"), *Case.SourcePath), bParsed);
-			for (const FString& Needle : Expectation.ErrorContains)
-			{
-				Test.TestTrue(
-					FString::Printf(TEXT("[%s] error contains '%s' (actual: %s)"), *Case.SourcePath, *Needle, *Error),
-					Error.Contains(Needle, ESearchCase::IgnoreCase));
-			}
-			return true;
-		}
-
-		if (!bParsed)
-		{
-			Test.AddError(FString::Printf(TEXT("[%s] parse should SUCCEED but failed: %s"), *Case.SourcePath, *Error));
-			return false;
-		}
-
-		if (Expectation.bCheckName)
-		{
-			Test.TestEqual(FString::Printf(TEXT("[%s] name"), *Case.SourcePath), Definition.Name, Expectation.Name);
-		}
-		if (Expectation.bCheckOutputDeclarations)
-		{
-			Test.TestEqual(FString::Printf(TEXT("[%s] outputDeclarations"), *Case.SourcePath), Definition.OutputDeclarations.Num(), Expectation.OutputDeclarations);
-		}
-		if (Expectation.bCheckOutputs)
-		{
-			Test.TestEqual(FString::Printf(TEXT("[%s] outputs"), *Case.SourcePath), Definition.Outputs.Num(), Expectation.Outputs);
-		}
-		if (Expectation.bCheckMaterialFunctions)
-		{
-			Test.TestEqual(FString::Printf(TEXT("[%s] materialFunctions"), *Case.SourcePath), Definition.MaterialFunctions.Num(), Expectation.MaterialFunctions);
-		}
-		if (Expectation.bCheckMaterialFunction0Kind && Definition.MaterialFunctions.Num() > 0)
-		{
-			Test.TestEqual(
-				FString::Printf(TEXT("[%s] materialFunction0Kind"), *Case.SourcePath),
-				FString(LexToString(Definition.MaterialFunctions[0].Kind)),
-				Expectation.MaterialFunction0Kind);
-		}
-		if (Expectation.bCheckVirtualFunctions)
-		{
-			Test.TestEqual(FString::Printf(TEXT("[%s] virtualFunctions"), *Case.SourcePath), Definition.VirtualFunctions.Num(), Expectation.VirtualFunctions);
-		}
-		if (Expectation.bCheckCodeNotEmpty)
-		{
-			Test.TestTrue(
-				FString::Printf(TEXT("[%s] codeNotEmpty == %s"), *Case.SourcePath, Expectation.bCodeNotEmpty ? TEXT("true") : TEXT("false")),
-				(!Definition.Code.IsEmpty()) == Expectation.bCodeNotEmpty);
-		}
-		for (const TPair<FString, FString>& Pair : Expectation.Settings)
-		{
-			FString Value;
-			const bool bHas = Definition.TryGetSetting(*Pair.Key, Value);
-			Test.TestTrue(FString::Printf(TEXT("[%s] setting '%s' present"), *Case.SourcePath, *Pair.Key), bHas);
-			if (bHas)
-			{
-				Test.TestEqual(FString::Printf(TEXT("[%s] setting '%s'"), *Case.SourcePath, *Pair.Key), Value, Pair.Value);
-			}
-		}
-		for (const FString& Needle : Expectation.WarningsContain)
-		{
-			Test.TestTrue(
-				FString::Printf(TEXT("[%s] warnings contain '%s'"), *Case.SourcePath, *Needle),
-				Definition.Warnings.ContainsByPredicate([&Needle](const FString& Warning) { return Warning.Contains(Needle, ESearchCase::IgnoreCase); }));
-		}
-
-		return true;
-	}
-
 	// ---------------------------------------------------------------------------------------------
-	// Generate layer: drives the actual material/asset generator (slow; needs editor + asset registry).
-	// Allows Ephemeral so generation builds the graph in memory without writing /Game assets,
-	// which means no asset cleanup is required and no save/metadata side effects occur.
+	// The project's default backend, pinned
+	//
+	// (The Generate layer that lived here drove the 1.x generator. Its fixtures moved to
+	// Tests/Corpus/Legacy/Compile in batch 2 and run through the Compile layer's runner below.)
 	// ---------------------------------------------------------------------------------------------
 
-	/**
-	 * Base for the Generate corpus runner. Generation legitimately logs warnings/errors (e.g. a
-	 * fixture that is supposed to fail will log its parse/generation error); we assert on the
-	 * generator's bool return + OutMessage, so incidental logs must not fail the automation test.
-	 */
-	class FDreamShaderGenerateCorpusTestBase : public FAutomationTestBase
-	{
-	public:
-		FDreamShaderGenerateCorpusTestBase(const FString& InName, bool bInComplexTask)
-			: FAutomationTestBase(InName, bInComplexTask)
-		{
-		}
-
-		virtual bool SuppressLogErrors() override { return true; }
-		virtual bool SuppressLogWarnings() override { return true; }
-	};
-
-	inline FString BuildDreamShaderGenerateGoldenJson(bool bGenerated, const FString& Message)
-	{
-		const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
-		Root->SetStringField(TEXT("entryPoint"), TEXT("generate"));
-		Root->SetStringField(TEXT("outcome"), bGenerated ? TEXT("ok") : TEXT("error"));
-		TArray<TSharedPtr<FJsonValue>> Messages;
-		Messages.Add(MakeShared<FJsonValueString>(Message));
-		Root->SetArrayField(TEXT("messageContains"), Messages);
-
-		FString Output;
-		const TSharedRef<TJsonWriter<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>> Writer =
-			TJsonWriterFactory<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>::Create(&Output);
-		FJsonSerializer::Serialize(Root, Writer);
-		return Output;
-	}
-
-	/**
-	 * Run one corpus case through the material generator (transient) and assert outcome + message.
-	 * .dsm -> GenerateMaterialFromFile, .dsf -> GenerateAssetsFromFile, .dsh -> skipped (no asset).
-	 */
 	// Pins the project DefaultBackend to Graph for a test's duration: tests that assert
 	// graph-backend generation shapes must not be rerouted by a project-level
 	// DefaultBackend=Instance when their fixtures don't declare Backend themselves.
@@ -487,85 +395,50 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 	};
 
-	inline bool RunDreamShaderGenerateCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case)
+	/**
+	 * A compile a test needs to have SUCCEEDED. What the compiler said goes out as an Info line and the error names no
+	 * path: a fixture registers its package path as an expected error (the new-asset probes quote it), and an error line
+	 * that quoted the path too would be swallowed whole -- the test then fails with "no errors were logged".
+	 */
+	inline bool ExpectDreamShaderTestCompile(FAutomationTestBase& Test, const TCHAR* What, const bool bCompiled, const UE::DreamShader::FDreamShaderError& Error)
 	{
-		const FString Extension = Case.Extension.ToLower();
-
-		// The corpus goldens encode GRAPH-backend generation semantics (node shapes, graph-level
-		// type merging).
-		FScopedDreamShaderGraphBackendPin BackendPin;
-
-		FString Message;
-		bool bGenerated = false;
-		if (Extension == TEXT("dsm"))
+		if (!bCompiled)
 		{
-			bGenerated = FMaterialGenerator::GenerateMaterialFromFile(Case.SourcePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
+			Test.AddInfo(FString::Printf(TEXT("%s -- the compiler said: %s: %s"), What, *Error.Code, *Error.Message));
+			Test.AddError(FString::Printf(TEXT("%s: the compile failed; the info line above has what the compiler said."), What));
 		}
-		else if (Extension == TEXT("dsf"))
-		{
-			bGenerated = FMaterialGenerator::GenerateAssetsFromFile(Case.SourcePath, Message, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ true);
-		}
-		else
-		{
-			Test.AddInfo(FString::Printf(TEXT("[%s] is a .dsh header; nothing to generate (skipped)."), *Case.SourcePath));
-			return true;
-		}
-
-		if (ShouldUpdateDreamShaderGolden())
-		{
-			const FString Json = BuildDreamShaderGenerateGoldenJson(bGenerated, Message);
-			if (FFileHelper::SaveStringToFile(Json, *Case.ExpectedPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
-			{
-				Test.AddInfo(FString::Printf(TEXT("Updated golden '%s'."), *Case.ExpectedPath));
-			}
-			else
-			{
-				Test.AddError(FString::Printf(TEXT("Failed to write golden '%s'."), *Case.ExpectedPath));
-			}
-			return true;
-		}
-
-		FCorpusExpectation Expectation;
-		Expectation.bExpectError = Case.bBadByName;
-		if (Case.bHasExpectationFile)
-		{
-			FString JsonText;
-			if (!FFileHelper::LoadFileToString(JsonText, *Case.ExpectedPath))
-			{
-				Test.AddError(FString::Printf(TEXT("Cannot read golden '%s'."), *Case.ExpectedPath));
-				return false;
-			}
-
-			FCorpusExpectation Loaded;
-			Loaded.bExpectError = Case.bBadByName;
-			FString JsonError;
-			if (!ParseDreamShaderExpectation(JsonText, Loaded, JsonError))
-			{
-				Test.AddError(FString::Printf(TEXT("Malformed golden '%s': %s"), *Case.ExpectedPath, *JsonError));
-				return false;
-			}
-			Expectation = MoveTemp(Loaded);
-		}
-
-		if (Expectation.bExpectError)
-		{
-			Test.TestFalse(FString::Printf(TEXT("[%s] generation should FAIL (msg: %s)"), *Case.SourcePath, *Message), bGenerated);
-		}
-		else if (!bGenerated)
-		{
-			Test.AddError(FString::Printf(TEXT("[%s] generation should SUCCEED but failed: %s"), *Case.SourcePath, *Message));
-			return false;
-		}
-
-		for (const FString& Needle : Expectation.ErrorContains)
-		{
-			Test.TestTrue(
-				FString::Printf(TEXT("[%s] message contains '%s' (actual: %s)"), *Case.SourcePath, *Needle, *Message),
-				Message.Contains(Needle, ESearchCase::IgnoreCase));
-		}
-
-		return true;
+		return bCompiled;
 	}
+
+	/** A compile a test needs to have FAILED with Code. Same reason for the Info line. */
+	inline bool ExpectDreamShaderTestRefusal(FAutomationTestBase& Test, const TCHAR* What, const bool bCompiled, const UE::DreamShader::FDreamShaderError& Error, const TCHAR* Code)
+	{
+		const bool bRefused = !bCompiled && (Error.Code.Equals(Code, ESearchCase::CaseSensitive) || Error.Message.Contains(Code, ESearchCase::CaseSensitive));
+		if (!bRefused)
+		{
+			Test.AddInfo(FString::Printf(TEXT("%s -- compiled=%d, the compiler said: %s: %s"), What, bCompiled ? 1 : 0, *Error.Code, *Error.Message));
+			Test.AddError(FString::Printf(TEXT("%s: expected a refusal with %s; the info line above has what happened."), What, Code));
+		}
+		return bRefused;
+	}
+
+	/** The same pin for any backend: a corpus layer names the one its goldens were captured under. */
+	struct FScopedDreamShaderBackendPin
+	{
+		EDreamShaderDefaultBackend SavedDefaultBackend;
+
+		explicit FScopedDreamShaderBackendPin(const EDreamShaderDefaultBackend Backend)
+			: SavedDefaultBackend(GetMutableDefault<UDreamShaderSettings>()->DefaultBackend)
+		{
+			GetMutableDefault<UDreamShaderSettings>()->DefaultBackend = Backend;
+		}
+
+		~FScopedDreamShaderBackendPin()
+		{
+			GetMutableDefault<UDreamShaderSettings>()->DefaultBackend = SavedDefaultBackend;
+		}
+	};
+
 	// ---------------------------------------------------------------------------------------------
 	// Lang layer: the DreamShaderLang 2.0 front end (Tests/Corpus/Lang/**).
 	//
@@ -1049,6 +922,403 @@ namespace UE::DreamShader::Editor::Private::Tests
 		return true;
 	}
 
+	// ---------------------------------------------------------------------------------------------
+	// Parse layer (Tests/Corpus/Parse/**), retargeted in batch 2 (M4) to the legacy front end.
+	//
+	// The 1.x runtime parser (FTextShaderParser) is deleted, so these fixtures are the parse-equivalence
+	// set of research-legacy.md section 7 item 2: the legacy front end has to accept or refuse each one
+	// exactly as the 1.x parser did, and the goldens plus the `.bad.` names record which. The parse is
+	// ParseDreamShaderLang with the Auto front end -- a `.dsm`/`.dsf` goes to the legacy parser, a `.dsh`
+	// declaration by declaration -- which is the parse a compile makes. No preprocessing, as before.
+	//
+	// A `"parse"` golden keeps its schema. `errorContains` names the legacy front end's codes (matched
+	// ignoring case, as the 1.x layer did), and every `definition` field is now read off the AST and
+	// FLegacyMigrationInfo by SummariseDreamShaderLegacyParse; its comments say how each maps to the
+	// FTextShaderDefinition field of the same name.
+	// ---------------------------------------------------------------------------------------------
+
+	/** What a `"parse"` golden's `definition` object talks about, derived from one legacy parse. */
+	struct FLegacyParseSummary
+	{
+		/** FLegacyBlock::Name of the first product block (Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend). */
+		FString Name;
+		/** The arguments of the first `#pragma material` (the Shader's Settings), as written. */
+		TArray<TPair<FString, FString>> Settings;
+		/** The first Shader block's Outputs declarations: FLegacyBlock::OutputNames. */
+		int32 OutputDeclarations = 0;
+		/**
+		 * The first Shader block's Outputs bindings, counted the way FTextShaderDefinition::Outputs counted them:
+		 * one per `Base.X = ...` assignment and one per `Pin[i] = ...` argument of an `Expression(...)` target,
+		 * among the statements of the entry body whose span lies inside the Outputs section.
+		 */
+		int32 Outputs = 0;
+		/** ShaderFunction / ShaderLayer / ShaderLayerBlend blocks. */
+		int32 MaterialFunctions = 0;
+		/** The first of those blocks' FLegacyBlock::BlockWord. */
+		FString MaterialFunction0Kind;
+		/** VirtualFunction blocks. */
+		int32 VirtualFunctions = 0;
+		/** The first product block's Graph section holds anything besides whitespace and its braces. */
+		bool bCodeNotEmpty = false;
+	};
+
+	/** Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend: the 1.x block words that produce an asset. */
+	inline bool IsDreamShaderLegacyProductBlockWord(const FString& Word, bool& bOutFunctionBlock)
+	{
+		bOutFunctionBlock = Word.Equals(TEXT("ShaderFunction"), ESearchCase::IgnoreCase)
+			|| Word.Equals(TEXT("ShaderLayer"), ESearchCase::IgnoreCase)
+			|| Word.Equals(TEXT("ShaderLayerBlend"), ESearchCase::IgnoreCase)
+			|| Word.Equals(TEXT("MaterialLayer"), ESearchCase::IgnoreCase)
+			|| Word.Equals(TEXT("MaterialLayerBlend"), ESearchCase::IgnoreCase);
+		return bOutFunctionBlock || Word.Equals(TEXT("Shader"), ESearchCase::IgnoreCase);
+	}
+
+	/** The section of one legacy block with this name, ignoring case (1.x section names are case-insensitive); null when absent. */
+	inline const UE::DreamShader::Lang::FLegacySection* FindDreamShaderLegacySection(
+		const UE::DreamShader::Lang::FLegacyMigrationInfo& Info,
+		const UE::DreamShader::Lang::FDecl* Block,
+		const TCHAR* SectionName)
+	{
+		for (const UE::DreamShader::Lang::FLegacySection& Section : Info.Sections)
+		{
+			if (Section.Block == Block && Section.Name.Equals(SectionName, ESearchCase::IgnoreCase))
+			{
+				return &Section;
+			}
+		}
+		return nullptr;
+	}
+
+	/** Derive a FLegacyParseSummary from one parse and the text it parsed. */
+	inline FLegacyParseSummary SummariseDreamShaderLegacyParse(
+		const UE::DreamShader::Lang::FLangParseResult& Result,
+		const FString& SourceText)
+	{
+		using namespace UE::DreamShader::Lang;
+
+		FLegacyParseSummary Summary;
+		if (!Result.Module.IsValid())
+		{
+			return Summary;
+		}
+
+		for (const FDeclPtr& Decl : Result.Module->Declarations)
+		{
+			const FPragmaDecl* Pragma = Decl.IsValid() ? Decl->As<FPragmaDecl>() : nullptr;
+			if (Pragma && Pragma->PragmaKind == EPragmaKind::Material)
+			{
+				for (const FPragmaArgument& Argument : Pragma->Arguments)
+				{
+					Summary.Settings.Emplace(Argument.Key, Argument.Value);
+				}
+				break;
+			}
+		}
+
+		if (!Result.Legacy.IsValid())
+		{
+			return Summary;
+		}
+		const FLegacyMigrationInfo& Info = *Result.Legacy;
+
+		const FLegacyBlock* Product = nullptr;
+		const FLegacyBlock* Shader = nullptr;
+		for (const FLegacyBlock& Block : Info.Blocks)
+		{
+			bool bFunctionBlock = false;
+			const bool bProductBlock = IsDreamShaderLegacyProductBlockWord(Block.BlockWord, bFunctionBlock);
+			if (bFunctionBlock)
+			{
+				if (Summary.MaterialFunctions == 0)
+				{
+					Summary.MaterialFunction0Kind = Block.BlockWord;
+				}
+				++Summary.MaterialFunctions;
+			}
+			if (Block.BlockWord.Equals(TEXT("VirtualFunction"), ESearchCase::IgnoreCase))
+			{
+				++Summary.VirtualFunctions;
+			}
+			if (bProductBlock && !Product)
+			{
+				Product = &Block;
+			}
+			if (!bFunctionBlock && bProductBlock && !Shader)
+			{
+				Shader = &Block;
+			}
+		}
+
+		if (Product)
+		{
+			Summary.Name = Product->Name;
+			if (const FLegacySection* Graph = FindDreamShaderLegacySection(Info, Product->Decl, TEXT("Graph")))
+			{
+				const FString Body = SourceText.Mid(Graph->BodySpan.Offset, Graph->BodySpan.Length);
+				for (const TCHAR Character : Body)
+				{
+					if (!FChar::IsWhitespace(Character) && Character != TEXT('{') && Character != TEXT('}'))
+					{
+						Summary.bCodeNotEmpty = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (Shader)
+		{
+			Summary.OutputDeclarations = Shader->OutputNames.Num();
+
+			const FFunctionDecl* Entry = Shader->Decl ? Shader->Decl->As<FFunctionDecl>() : nullptr;
+			const FLegacySection* OutputsSection = FindDreamShaderLegacySection(Info, Shader->Decl, TEXT("Outputs"));
+			if (Entry && Entry->Body.IsValid() && OutputsSection)
+			{
+				for (const FStmtPtr& Statement : Entry->Body->Statements)
+				{
+					if (!Statement.IsValid()
+						|| Statement->Span.Offset < OutputsSection->BodySpan.Offset
+						|| Statement->Span.Offset >= OutputsSection->BodySpan.End())
+					{
+						continue;
+					}
+
+					const FExprStmt* ExpressionStatement = Statement->As<FExprStmt>();
+					if (!ExpressionStatement || !ExpressionStatement->Expression.IsValid())
+					{
+						continue;
+					}
+
+					if (const FAssignExpr* Assign = ExpressionStatement->Expression->As<FAssignExpr>())
+					{
+						const FMemberExpr* Target = Assign->Target.IsValid() ? Assign->Target->As<FMemberExpr>() : nullptr;
+						const FIdentifierExpr* Object = (Target && Target->Object.IsValid()) ? Target->Object->As<FIdentifierExpr>() : nullptr;
+						if (Object && Object->Name.Equals(TEXT("Base"), ESearchCase::CaseSensitive))
+						{
+							++Summary.Outputs;
+						}
+					}
+					else if (const FCallExpr* Call = ExpressionStatement->Expression->As<FCallExpr>())
+					{
+						for (const FArgument& Argument : Call->Arguments)
+						{
+							if (Argument.PinIndex != INDEX_NONE)
+							{
+								++Summary.Outputs;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return Summary;
+	}
+
+	/** Serialize a baseline `parse` golden from an actual legacy parse (used by -DreamShaderUpdateGolden). Codes, never prose. */
+	inline FString BuildDreamShaderGoldenJson(
+		const bool bParsed,
+		const FLegacyParseSummary& Summary,
+		const TArray<FString>& Errors,
+		const TArray<FString>& Warnings)
+	{
+		const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
+		Root->SetStringField(TEXT("entryPoint"), TEXT("parse"));
+		Root->SetStringField(TEXT("outcome"), bParsed ? TEXT("ok") : TEXT("error"));
+
+		if (!bParsed)
+		{
+			TArray<TSharedPtr<FJsonValue>> Values;
+			for (const FString& Error : Errors)
+			{
+				Values.AddUnique(MakeShared<FJsonValueString>(GetDreamShaderLangDiagnosticCode(Error)));
+			}
+			Root->SetArrayField(TEXT("errorContains"), Values);
+		}
+		else
+		{
+			const TSharedRef<FJsonObject> Def = MakeShared<FJsonObject>();
+			if (!Summary.Name.IsEmpty())
+			{
+				Def->SetStringField(TEXT("name"), Summary.Name);
+			}
+			Def->SetNumberField(TEXT("outputDeclarations"), Summary.OutputDeclarations);
+			Def->SetNumberField(TEXT("outputs"), Summary.Outputs);
+			Def->SetNumberField(TEXT("materialFunctions"), Summary.MaterialFunctions);
+			if (Summary.MaterialFunctions > 0)
+			{
+				Def->SetStringField(TEXT("materialFunction0Kind"), Summary.MaterialFunction0Kind);
+			}
+			Def->SetNumberField(TEXT("virtualFunctions"), Summary.VirtualFunctions);
+			Def->SetBoolField(TEXT("codeNotEmpty"), Summary.bCodeNotEmpty);
+
+			if (Summary.Settings.Num() > 0)
+			{
+				const TSharedRef<FJsonObject> SettingsObject = MakeShared<FJsonObject>();
+				for (const TPair<FString, FString>& Pair : Summary.Settings)
+				{
+					SettingsObject->SetStringField(Pair.Key, Pair.Value);
+				}
+				Def->SetObjectField(TEXT("settings"), SettingsObject);
+			}
+
+			Root->SetObjectField(TEXT("definition"), Def);
+
+			if (Warnings.Num() > 0)
+			{
+				TArray<TSharedPtr<FJsonValue>> Values;
+				for (const FString& Warning : Warnings)
+				{
+					Values.Add(MakeShared<FJsonValueString>(GetDreamShaderLangDiagnosticCode(Warning)));
+				}
+				Root->SetArrayField(TEXT("warningsContain"), Values);
+			}
+		}
+
+		FString Output;
+		const TSharedRef<TJsonWriter<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>> Writer =
+			TJsonWriterFactory<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>::Create(&Output);
+		FJsonSerializer::Serialize(Root, Writer);
+		return Output;
+	}
+
+	/**
+	 * Run one Tests/Corpus/Parse fixture through the legacy front end and assert it against its golden.
+	 * In -DreamShaderUpdateGolden mode it rewrites the golden instead of asserting.
+	 * Returns false only on a hard I/O failure; semantic mismatches are recorded on Test.
+	 */
+	inline bool RunDreamShaderParseCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case)
+	{
+		using namespace UE::DreamShader::Lang;
+
+		FString SourceString;
+		if (!FFileHelper::LoadFileToString(SourceString, *Case.SourcePath))
+		{
+			Test.AddError(FString::Printf(TEXT("Cannot read corpus source '%s'."), *Case.SourcePath));
+			return false;
+		}
+
+		const FLangSourceText Source(Case.SourcePath, SourceString);
+		const FLangParseResult Result = ParseDreamShaderLang(Source, FLangParseOptions());
+
+		const TArray<FString> Errors = GatherDreamShaderLangDiagnostics(Result.Diagnostics, ELangSeverity::Error);
+		const TArray<FString> Warnings = GatherDreamShaderLangDiagnostics(Result.Diagnostics, ELangSeverity::Warning);
+		const FString ErrorText = FString::Join(Errors, TEXT(" | "));
+		const FString WarningText = FString::Join(Warnings, TEXT(" | "));
+		const bool bParsed = Result.Succeeded();
+		const FLegacyParseSummary Summary = SummariseDreamShaderLegacyParse(Result, SourceString);
+
+		if (ShouldUpdateDreamShaderGolden())
+		{
+			const FString Json = BuildDreamShaderGoldenJson(bParsed, Summary, Errors, Warnings);
+			if (FFileHelper::SaveStringToFile(Json, *Case.ExpectedPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+			{
+				Test.AddInfo(FString::Printf(TEXT("Updated golden '%s'."), *Case.ExpectedPath));
+			}
+			else
+			{
+				Test.AddError(FString::Printf(TEXT("Failed to write golden '%s'."), *Case.ExpectedPath));
+			}
+			return true;
+		}
+
+		FCorpusExpectation Expectation;
+		Expectation.bExpectError = Case.bBadByName; // default; json may override
+		if (Case.bHasExpectationFile)
+		{
+			FString JsonText;
+			if (!FFileHelper::LoadFileToString(JsonText, *Case.ExpectedPath))
+			{
+				Test.AddError(FString::Printf(TEXT("Cannot read golden '%s'."), *Case.ExpectedPath));
+				return false;
+			}
+
+			FCorpusExpectation Loaded;
+			Loaded.bExpectError = Case.bBadByName;
+			FString JsonError;
+			if (!ParseDreamShaderExpectation(JsonText, Loaded, JsonError))
+			{
+				Test.AddError(FString::Printf(TEXT("Malformed golden '%s': %s"), *Case.ExpectedPath, *JsonError));
+				return false;
+			}
+			Expectation = MoveTemp(Loaded);
+		}
+
+		if (Expectation.bExpectError)
+		{
+			Test.TestFalse(FString::Printf(TEXT("[%s] the legacy front end should REFUSE this source"), *Case.SourcePath), bParsed);
+			for (const FString& Needle : Expectation.ErrorContains)
+			{
+				Test.TestTrue(
+					FString::Printf(TEXT("[%s] an error contains '%s' (actual: %s)"), *Case.SourcePath, *Needle, *ErrorText),
+					Errors.ContainsByPredicate([&Needle](const FString& Line) { return Line.Contains(Needle, ESearchCase::IgnoreCase); }));
+			}
+			return true;
+		}
+
+		if (!bParsed)
+		{
+			Test.AddError(FString::Printf(TEXT("[%s] the legacy front end should ACCEPT this source but reported: %s"), *Case.SourcePath, *ErrorText));
+			return false;
+		}
+
+		if (Expectation.bCheckName)
+		{
+			Test.TestTrue(
+				FString::Printf(TEXT("[%s] name == '%s' (actual '%s')"), *Case.SourcePath, *Expectation.Name, *Summary.Name),
+				Summary.Name.Equals(Expectation.Name, ESearchCase::CaseSensitive));
+		}
+		if (Expectation.bCheckOutputDeclarations)
+		{
+			Test.TestEqual(FString::Printf(TEXT("[%s] outputDeclarations"), *Case.SourcePath), Summary.OutputDeclarations, Expectation.OutputDeclarations);
+		}
+		if (Expectation.bCheckOutputs)
+		{
+			Test.TestEqual(FString::Printf(TEXT("[%s] outputs"), *Case.SourcePath), Summary.Outputs, Expectation.Outputs);
+		}
+		if (Expectation.bCheckMaterialFunctions)
+		{
+			Test.TestEqual(FString::Printf(TEXT("[%s] materialFunctions"), *Case.SourcePath), Summary.MaterialFunctions, Expectation.MaterialFunctions);
+		}
+		if (Expectation.bCheckMaterialFunction0Kind && Summary.MaterialFunctions > 0)
+		{
+			Test.TestEqual(FString::Printf(TEXT("[%s] materialFunction0Kind"), *Case.SourcePath), Summary.MaterialFunction0Kind, Expectation.MaterialFunction0Kind);
+		}
+		if (Expectation.bCheckVirtualFunctions)
+		{
+			Test.TestEqual(FString::Printf(TEXT("[%s] virtualFunctions"), *Case.SourcePath), Summary.VirtualFunctions, Expectation.VirtualFunctions);
+		}
+		if (Expectation.bCheckCodeNotEmpty)
+		{
+			Test.TestTrue(
+				FString::Printf(TEXT("[%s] codeNotEmpty == %s"), *Case.SourcePath, Expectation.bCodeNotEmpty ? TEXT("true") : TEXT("false")),
+				Summary.bCodeNotEmpty == Expectation.bCodeNotEmpty);
+		}
+		for (const TPair<FString, FString>& Pair : Expectation.Settings)
+		{
+			// The key ignores case (1.x setting keys did), the value is exact.
+			const TPair<FString, FString>* Found = Summary.Settings.FindByPredicate([&Pair](const TPair<FString, FString>& Candidate)
+			{
+				return Candidate.Key.Equals(Pair.Key, ESearchCase::IgnoreCase);
+			});
+			Test.TestNotNull(FString::Printf(TEXT("[%s] setting '%s' present"), *Case.SourcePath, *Pair.Key), Found);
+			if (Found)
+			{
+				Test.TestTrue(
+					FString::Printf(TEXT("[%s] setting '%s' == '%s' (actual '%s')"), *Case.SourcePath, *Pair.Key, *Pair.Value, *Found->Value),
+					Found->Value.Equals(Pair.Value, ESearchCase::CaseSensitive));
+			}
+		}
+		for (const FString& Needle : Expectation.WarningsContain)
+		{
+			Test.TestTrue(
+				FString::Printf(TEXT("[%s] a warning contains '%s' (actual: %s)"), *Case.SourcePath, *Needle, *WarningText),
+				Warnings.ContainsByPredicate([&Needle](const FString& Line) { return Line.Contains(Needle, ESearchCase::IgnoreCase); }));
+		}
+
+		return true;
+	}
+
 	// =============================================================================================
 	// IR layer (Tests/Corpus/IR/**) and Compile layer (Tests/Corpus/Compile/**) -- batch 1 (M2+M3).
 	//
@@ -1065,8 +1335,8 @@ namespace UE::DreamShader::Editor::Private::Tests
 	//             builtins MakeDreamShaderTestBuiltinCatalog() declares; everything else is what
 	//             the Compile layer is for.
 	//
-	//   Compile/  FMaterialGenerator::GenerateAssetsFromFile on a `.dss` (the 1.x generator's hook
-	//             routes it into the 2.0 pipeline), golden = the normalised `dump-graph` JSON of
+	//   Compile/  the compiler service's CompileAssets on a `.dss` (CompileDreamShaderTestAssets, the
+	//             test compile facade), golden = the normalised `dump-graph` JSON of
 	//             every asset it produced. Slow: editor, reflection, real /Game packages. Each
 	//             fixture is copied into its OWN directory under the project's DShader root so the
 	//             assets it makes have a package path nothing else writes to, and both the copy and
@@ -1301,6 +1571,159 @@ namespace UE::DreamShader::Editor::Private::Tests
 			Catalog.Expressions.Add(MoveTemp(Expression));
 		}
 
+		// Batch 2: the classes a 1.x source reaches through the legacy front end's rewrites. Appended, so no index of
+		// the classes above moves and no batch 1 golden changes.
+
+		// UE.StaticSwitchParameter -- a PARAMETER class with pins: what a 1.x `StaticSwitchParameter` property expands to
+		// at every call (research-legacy.md section 3.6), and the target of rule L20.
+		{
+			FCatalogExpression Expression;
+			Expression.Namespace = TEXT("UE");
+			Expression.ShortName = TEXT("StaticSwitchParameter");
+			Expression.ClassName = TEXT("MaterialExpressionStaticSwitchParameter");
+			Expression.ClassPathName = TEXT("/Script/Engine.MaterialExpressionStaticSwitchParameter");
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("A"), ECatalogValueType::Numeric, false, nullptr, { TEXT("True") }));
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("B"), ECatalogValueType::Numeric, false, nullptr, { TEXT("False") }));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT(""), ECatalogValueType::Numeric));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(TEXT("ParameterName"), ECatalogValueType::Name, TArray<FString>(), { TEXT("Name") }));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(TEXT("DefaultValue"), ECatalogValueType::Bool, TArray<FString>(), { TEXT("Default") }));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(TEXT("Group"), ECatalogValueType::Name));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(TEXT("SortPriority"), ECatalogValueType::Int));
+			Expression.bIsParameter = true;
+			Catalog.Expressions.Add(MoveTemp(Expression));
+		}
+
+		// UE.Custom -- no pins of its own: a call names the inputs it wants (rule L4), and the validator lets a node of
+		// this class carry inputs the catalog does not list.
+		{
+			FCatalogExpression Expression;
+			Expression.Namespace = TEXT("UE");
+			Expression.ShortName = TEXT("Custom");
+			Expression.ClassName = TEXT("MaterialExpressionCustom");
+			Expression.ClassPathName = TEXT("/Script/Engine.MaterialExpressionCustom");
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT(""), ECatalogValueType::Numeric));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(TEXT("Code"), ECatalogValueType::String));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(TEXT("Description"), ECatalogValueType::String));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(
+				TEXT("OutputType"),
+				ECatalogValueType::Enum,
+				{ TEXT("Float1"), TEXT("Float2"), TEXT("Float3"), TEXT("Float4"), TEXT("MaterialAttributes") }));
+			Catalog.Expressions.Add(MoveTemp(Expression));
+		}
+
+		// UE.DotProduct -- two REQUIRED value pins and no Const twins: where a missing required pin is an error in a
+		// `.dss` (DSH5219) and a warning in a 1.x body (rule L13, DSH5279).
+		{
+			FCatalogExpression Expression;
+			Expression.Namespace = TEXT("UE");
+			Expression.ShortName = TEXT("DotProduct");
+			Expression.ClassName = TEXT("MaterialExpressionDotProduct");
+			Expression.ClassPathName = TEXT("/Script/Engine.MaterialExpressionDotProduct");
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("A"), ECatalogValueType::Numeric, true));
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("B"), ECatalogValueType::Numeric, true));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT(""), ECatalogValueType::Float1));
+			Catalog.Expressions.Add(MoveTemp(Expression));
+		}
+
+		// UE.TextureSample -- what 1.x `SampleTexture2D(Tex, UV)` becomes, with the engine's five channel views plus RGBA
+		// and an enum property for the lenient enumerator rule (L12).
+		{
+			FCatalogExpression Expression;
+			Expression.Namespace = TEXT("UE");
+			Expression.ShortName = TEXT("TextureSample");
+			Expression.ClassName = TEXT("MaterialExpressionTextureSample");
+			Expression.ClassPathName = TEXT("/Script/Engine.MaterialExpressionTextureSample");
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("Coordinates"), ECatalogValueType::Float2, false, nullptr, { TEXT("UVs"), TEXT("UV") }));
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("TextureObject"), ECatalogValueType::Texture, false, nullptr, { TEXT("Tex") }));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT("RGB"), ECatalogValueType::Float3));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT("R"), ECatalogValueType::Float1));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT("G"), ECatalogValueType::Float1));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT("B"), ECatalogValueType::Float1));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT("A"), ECatalogValueType::Float1));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT("RGBA"), ECatalogValueType::Float4));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(
+				TEXT("SamplerType"),
+				ECatalogValueType::Enum,
+				{ TEXT("Color"), TEXT("Grayscale"), TEXT("Alpha"), TEXT("Normal"), TEXT("Masks"), TEXT("LinearColor") }));
+			Catalog.Expressions.Add(MoveTemp(Expression));
+		}
+
+		// UE.TextureObject -- what a constant texture is (`static const Texture2D T`, 1.x `const Texture2D T = Path(...)`):
+		// one Object property for the asset, an enum for how it is sampled, and the texture as its value.
+		{
+			FCatalogExpression Expression;
+			Expression.Namespace = TEXT("UE");
+			Expression.ShortName = TEXT("TextureObject");
+			Expression.ClassName = TEXT("MaterialExpressionTextureObject");
+			Expression.ClassPathName = TEXT("/Script/Engine.MaterialExpressionTextureObject");
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT(""), ECatalogValueType::Texture));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(TEXT("Texture"), ECatalogValueType::Object));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(
+				TEXT("SamplerType"),
+				ECatalogValueType::Enum,
+				{ TEXT("Color"), TEXT("Grayscale"), TEXT("Alpha"), TEXT("Normal"), TEXT("Masks"), TEXT("LinearColor") }));
+			Catalog.Expressions.Add(MoveTemp(Expression));
+		}
+
+		// UE.CameraPositionWS -- one output the engine types exactly (float3), for the 1.x `OutputType` rule: a call that
+		// says `OutputType = "float"` is a float to a 1.x body, whatever the node is.
+		{
+			FCatalogExpression Expression;
+			Expression.Namespace = TEXT("UE");
+			Expression.ShortName = TEXT("CameraPositionWS");
+			Expression.ClassName = TEXT("MaterialExpressionCameraPositionWS");
+			Expression.ClassPathName = TEXT("/Script/Engine.MaterialExpressionCameraPositionWS");
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT(""), ECatalogValueType::Float3));
+			Catalog.Expressions.Add(MoveTemp(Expression));
+		}
+
+		// UE.VertexInterpolator -- a custom-output class that hands its value on through an output, so it is a value.
+		{
+			FCatalogExpression Expression;
+			Expression.Namespace = TEXT("UE");
+			Expression.ShortName = TEXT("VertexInterpolator");
+			Expression.ClassName = TEXT("MaterialExpressionVertexInterpolator");
+			Expression.ClassPathName = TEXT("/Script/Engine.MaterialExpressionVertexInterpolator");
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("Input"), ECatalogValueType::Float4, false, nullptr, { TEXT("VS") }));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT("PS"), ECatalogValueType::Numeric));
+			Expression.bIsCustomOutput = true;
+			Catalog.Expressions.Add(MoveTemp(Expression));
+		}
+
+		// Substrate.MoonToonModifier -- a class whose nodes name their pins after a property (the engine fork's modifier
+		// node): the default node is a Matcap and shows `Color` and `Intensity`; set to OilFilm it shows `Thickness`,
+		// which no catalog read off a default object can list. The pins' own names always resolve.
+		{
+			FCatalogExpression Expression;
+			Expression.Namespace = TEXT("Substrate");
+			Expression.ShortName = TEXT("MoonToonModifier");
+			Expression.ClassName = TEXT("MaterialExpressionMoonToonModifier");
+			Expression.ClassPathName = TEXT("/Script/Engine.MaterialExpressionMoonToonModifier");
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("ChannelRGB"), ECatalogValueType::Float3, false, nullptr, { TEXT("Color") }));
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("ChannelX"), ECatalogValueType::Float1));
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("ChannelW"), ECatalogValueType::Float1, false, nullptr, { TEXT("Intensity") }));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT("Payload"), ECatalogValueType::Float4));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT("Id"), ECatalogValueType::Float1));
+			Expression.Properties.Add(MakeDreamShaderTestProperty(TEXT("Modifier"), ECatalogValueType::Enum, { TEXT("Matcap"), TEXT("OilFilm") }));
+			Expression.bHasInstanceDependentPins = true;
+			Catalog.Expressions.Add(MoveTemp(Expression));
+		}
+
+		// UE.MakeMaterialAttributes -- what a 1.x `MaterialAttributes X;` without an initializer is, and what a 1.x layer's
+		// output starts as when its input has another name: a node of its own, so an attribute read off it is a
+		// GetMaterialAttributes against it and not DSH4370.
+		{
+			FCatalogExpression Expression;
+			Expression.Namespace = TEXT("UE");
+			Expression.ShortName = TEXT("MakeMaterialAttributes");
+			Expression.ClassName = TEXT("MaterialExpressionMakeMaterialAttributes");
+			Expression.ClassPathName = TEXT("/Script/Engine.MaterialExpressionMakeMaterialAttributes");
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("BaseColor"), ECatalogValueType::Float3));
+			Expression.Inputs.Add(MakeDreamShaderTestPin(TEXT("Roughness"), ECatalogValueType::Float1));
+			Expression.Outputs.Add(MakeDreamShaderTestPin(TEXT(""), ECatalogValueType::MaterialAttributes));
+			Catalog.Expressions.Add(MoveTemp(Expression));
+		}
+
 		// The material attribute table -- the seven CONTRACT 6.1/6.2 name, so that an attribute outside it
 		// (`m.Metallic`) is a negative fixture with somewhere to land -- plus the whole-set entry below.
 		Catalog.MaterialAttributes.Add(MakeDreamShaderTestAttribute(TEXT("BaseColor"), TEXT("MP_BaseColor"), FIRType::Float(3)));
@@ -1356,10 +1779,12 @@ namespace UE::DreamShader::Editor::Private::Tests
 		/** Every diagnostic of that severity across every stage, in `DSHnnnn: message` wire form. */
 		TArray<FString> Errors;
 		TArray<FString> Warnings;
+		TArray<FString> Infos;
 
 		bool Succeeded() const { return bValidated && Errors.Num() == 0; }
 		FString ErrorText() const { return FString::Join(Errors, TEXT(" | ")); }
 		FString WarningText() const { return FString::Join(Warnings, TEXT(" | ")); }
+		FString InfoText() const { return FString::Join(Infos, TEXT(" | ")); }
 	};
 
 	/** Options the IR runner takes from a golden (or a unit test) rather than hard-coding. */
@@ -1372,6 +1797,13 @@ namespace UE::DreamShader::Editor::Private::Tests
 		bool bValidate = true;
 		/** Resolves `#include` against this directory first; empty disables includes entirely. */
 		FString IncludeDirectory;
+		/** Keep comments and blank lines (FModule::Trivia) on the MAIN module: what the printer and migrate runners read. */
+		bool bKeepTrivia = false;
+		/** FIRBuildOptions::StampSourcePath (debt B5); unset keeps the paths as given. */
+		TFunction<FString(const FString& File)> StampSourcePath;
+		/** `.dsi` only: what the binder checks the overrides against, and the path the instance product carries. */
+		const UE::DreamShader::IR::FIRParameterSchema* ParentSchema = nullptr;
+		FString ParentObjectPath;
 	};
 
 	/**
@@ -1393,7 +1825,9 @@ namespace UE::DreamShader::Editor::Private::Tests
 
 		const FBuiltinCatalog& Catalog = Options.Catalog ? *Options.Catalog : GetDreamShaderTestBuiltinCatalog();
 
-		Out.Parse = ParseDreamShaderLang(FLangSourceText(SourcePath, SourceText), FLangParseOptions());
+		FLangParseOptions MainParseOptions;
+		MainParseOptions.bKeepTrivia = Options.bKeepTrivia;
+		Out.Parse = ParseDreamShaderLang(FLangSourceText(SourcePath, SourceText), MainParseOptions);
 		Out.bParsed = Out.Parse.Succeeded();
 
 		auto Gather = [&Out](const FLangDiagnosticSink& Sink)
@@ -1406,6 +1840,10 @@ namespace UE::DreamShader::Editor::Private::Tests
 			{
 				Out.Warnings.Add(Line);
 			}
+			for (const FString& Line : GatherDreamShaderLangDiagnostics(Sink, ELangSeverity::Info))
+			{
+				Out.Infos.Add(Line);
+			}
 		};
 
 		Gather(Out.Parse.Diagnostics);
@@ -1416,6 +1854,8 @@ namespace UE::DreamShader::Editor::Private::Tests
 
 		FBindOptions BindOptions;
 		BindOptions.Catalog = &Catalog;
+		BindOptions.ParentSchema = Options.ParentSchema;
+		BindOptions.ParentObjectPath = Options.ParentObjectPath;
 		if (!Options.IncludeDirectory.IsEmpty())
 		{
 			const FString IncludeDirectory = Options.IncludeDirectory;
@@ -1482,6 +1922,9 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 
 		FIRBuildOptions BuildOptions;
+		// The catalog the bind ran against, said out loud as the pipeline says it (the bound module carries it too).
+		BuildOptions.Catalog = &Catalog;
+		BuildOptions.StampSourcePath = Options.StampSourcePath;
 		Out.Module = BuildDreamShaderIR(*Out.Bind.Bound, BuildOptions, Out.Lowering);
 		Out.bBuilt = Out.Module.IsValid() && !Out.Lowering.HasErrors();
 		if (!Out.bBuilt)
@@ -1561,6 +2004,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		bool bExpectError = false;
 		TArray<FString> ErrorContains;
 		TArray<FString> WarningsContain;
+		TArray<FString> InfosContain;
 
 		bool bRunPasses = true;
 		bool bIRPending = false;
@@ -1638,6 +2082,13 @@ namespace UE::DreamShader::Editor::Private::Tests
 				Out.WarningsContain.Add(Value->AsString());
 			}
 		}
+		if (Root->TryGetArrayField(TEXT("infosContain"), Array))
+		{
+			for (const TSharedPtr<FJsonValue>& Value : *Array)
+			{
+				Out.InfosContain.Add(Value->AsString());
+			}
+		}
 
 		bool BoolValue = false;
 		if (Root->TryGetBoolField(TEXT("passes"), BoolValue)) { Out.bRunPasses = BoolValue; }
@@ -1682,10 +2133,10 @@ namespace UE::DreamShader::Editor::Private::Tests
 	 * the same time would silently promote an unreviewed dump to a byte-exact golden. Deleting it is
 	 * a person's job, after reading the diff.
 	 */
-	inline FString BuildDreamShaderIRGoldenJson(const FDreamShaderIRRun& Run, bool bRunPasses, bool bPending = false)
+	inline FString BuildDreamShaderIRGoldenJson(const FDreamShaderIRRun& Run, bool bRunPasses, bool bPending = false, const TCHAR* EntryPoint = TEXT("ir"))
 	{
 		const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
-		Root->SetStringField(TEXT("entryPoint"), TEXT("ir"));
+		Root->SetStringField(TEXT("entryPoint"), EntryPoint);
 		Root->SetStringField(TEXT("outcome"), Run.Succeeded() ? TEXT("ok") : TEXT("error"));
 
 		// Codes only, never prose -- the same rule the lang layer settled on: the code is the
@@ -1707,6 +2158,16 @@ namespace UE::DreamShader::Editor::Private::Tests
 				Values.Add(MakeShared<FJsonValueString>(GetDreamShaderLangDiagnosticCode(Warning)));
 			}
 			Root->SetArrayField(TEXT("warningsContain"), Values);
+		}
+
+		if (Run.Infos.Num() > 0)
+		{
+			TArray<TSharedPtr<FJsonValue>> Values;
+			for (const FString& Info : Run.Infos)
+			{
+				Values.Add(MakeShared<FJsonValueString>(GetDreamShaderLangDiagnosticCode(Info)));
+			}
+			Root->SetArrayField(TEXT("infosContain"), Values);
 		}
 
 		if (!bRunPasses)
@@ -1792,20 +2253,125 @@ namespace UE::DreamShader::Editor::Private::Tests
 		return FString::Printf(TEXT("texts differ in length only (%d vs %d)"), Actual.Len(), Expected.Len());
 	}
 
+
+	/** Which fixtures an IR-shaped corpus layer runs, and what its goldens call themselves. */
+	struct FDreamShaderIRCorpusLayer
+	{
+		const TCHAR* EntryPoint = TEXT("ir");
+		/** Lower case, without the dot. A `dsi` fixture is bound against the sibling its Parent names. */
+		TArray<FString> Extensions = { TEXT("dss"), TEXT("dsi") };
+	};
+
 	/**
-	 * Run one Tests/Corpus/IR fixture and assert it against its golden.
+	 * The schema a `.dsi` fixture binds against: the sibling `<leaf of Parent>.dss` (or `.dsi`, for an instance of an
+	 * instance) taken through the same runner, then BuildParameterSchemaFromIR on its first material or instance
+	 * product. False when the fixture names no parent or no such sibling exists; the fixture then binds without a
+	 * schema, which the binder says with DSH7263.
+	 */
+	inline bool BuildDreamShaderInstanceFixtureSchema(
+		const FString& InstancePath,
+		const FString& InstanceText,
+		UE::DreamShader::IR::FIRParameterSchema& OutSchema,
+		FString& OutParentObjectPath,
+		const int32 Depth = 0)
+	{
+		using namespace UE::DreamShader::Lang;
+		using namespace UE::DreamShader::IR;
+
+		if (Depth > 4)
+		{
+			return false;
+		}
+
+		const FLangParseResult Parsed = ParseDreamShaderLang(FLangSourceText(InstancePath, InstanceText), FLangParseOptions());
+		if (!Parsed.Module.IsValid())
+		{
+			return false;
+		}
+
+		FString Leaf;
+		for (const FDeclPtr& Decl : Parsed.Module->Declarations)
+		{
+			const FPragmaDecl* Pragma = Decl.IsValid() ? Decl->As<FPragmaDecl>() : nullptr;
+			const FPragmaArgument* Parent = (Pragma && Pragma->PragmaKind == EPragmaKind::Instance) ? Pragma->Find(TEXT("Parent")) : nullptr;
+			if (Parent)
+			{
+				Leaf = Parent->Value;
+				break;
+			}
+		}
+
+		// `/Game/X/M_Parent.M_Parent`, `/Game/X/M_Parent` and `M_Parent` all name the sibling `M_Parent`.
+		int32 Separator = INDEX_NONE;
+		if (Leaf.FindLastChar(TEXT('/'), Separator))
+		{
+			Leaf.RightChopInline(Separator + 1);
+		}
+		if (Leaf.FindChar(TEXT('.'), Separator))
+		{
+			Leaf.LeftInline(Separator);
+		}
+		if (Leaf.IsEmpty())
+		{
+			return false;
+		}
+
+		const FString Directory = FPaths::GetPath(InstancePath);
+		for (const TCHAR* Extension : { TEXT("dss"), TEXT("dsi") })
+		{
+			const FString ParentPath = FPaths::Combine(Directory, Leaf + TEXT(".") + Extension);
+			FString ParentText;
+			if (ParentPath.Equals(InstancePath, ESearchCase::IgnoreCase) || !FFileHelper::LoadFileToString(ParentText, *ParentPath))
+			{
+				continue;
+			}
+
+			// Declared before the run that points into it.
+			FIRParameterSchema GrandparentSchema;
+			FDreamShaderIRRunOptions ParentOptions;
+			ParentOptions.IncludeDirectory = Directory;
+			if (FCString::Stricmp(Extension, TEXT("dsi")) == 0
+				&& BuildDreamShaderInstanceFixtureSchema(ParentPath, ParentText, GrandparentSchema, ParentOptions.ParentObjectPath, Depth + 1))
+			{
+				ParentOptions.ParentSchema = &GrandparentSchema;
+			}
+
+			FDreamShaderIRRun ParentRun;
+			RunDreamShaderIRPipeline(ParentPath, ParentText, ParentOptions, ParentRun);
+			if (!ParentRun.Module.IsValid() || !ParentRun.Succeeded())
+			{
+				return false;
+			}
+
+			const int32 ProductIndex = ParentRun.Module->Products.IndexOfByPredicate([](const FIRProduct& Product)
+			{
+				return Product.Kind == EIRProductKind::Material || Product.Kind == EIRProductKind::MaterialInstance;
+			});
+			if (ProductIndex == INDEX_NONE)
+			{
+				return false;
+			}
+
+			// Made up and stable: a corpus directory is not a source root, so nothing resolves a real one.
+			OutParentObjectPath = FString::Printf(TEXT("/Game/Corpus/%s.%s"), *Leaf, *Leaf);
+			return BuildParameterSchemaFromIR(*ParentRun.Module, ProductIndex, ParentRun.Bind.Bound.Get(), OutSchema);
+		}
+		return false;
+	}
+
+	/**
+	 * Run one fixture of an IR-shaped layer (Tests/Corpus/IR, Tests/Corpus/Legacy/IR) and assert it against its golden.
 	 * In -DreamShaderUpdateGolden mode it rewrites the golden instead of asserting.
 	 * Returns false only on a hard I/O failure; mismatches are recorded on Test.
 	 */
-	inline bool RunDreamShaderIRCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case)
+	inline bool RunDreamShaderIRCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case, const FDreamShaderIRCorpusLayer& Layer)
 	{
 		using namespace UE::DreamShader::Lang;
 
-		// `.dsh` headers are included BY a fixture, never run as one -- the same rule the Generate
-		// layer applies, for the same reason: a header produces nothing to assert on.
-		if (!Case.Extension.Equals(TEXT("dss"), ESearchCase::IgnoreCase))
+		// `.dsh` headers are included BY a fixture, never run as one: a header produces nothing to assert on.
+		if (!Layer.Extensions.Contains(Case.Extension.ToLower()))
 		{
-			Test.AddInfo(FString::Printf(TEXT("[%s] is not a .dss compilation unit; the IR layer skips it."), *Case.SourcePath));
+			Test.AddInfo(FString::Printf(TEXT("[%s] is not a compilation unit of the '%s' layer; skipped."), *Case.SourcePath, Layer.EntryPoint));
 			return true;
 		}
 
@@ -1838,11 +2404,11 @@ namespace UE::DreamShader::Editor::Private::Tests
 			Expectation = MoveTemp(Loaded);
 		}
 
-		if (!Expectation.EntryPoint.IsEmpty() && !Expectation.EntryPoint.Equals(TEXT("ir"), ESearchCase::IgnoreCase))
+		if (!Expectation.EntryPoint.IsEmpty() && !Expectation.EntryPoint.Equals(Layer.EntryPoint, ESearchCase::IgnoreCase))
 		{
 			Test.AddError(FString::Printf(
-				TEXT("[%s] golden declares entryPoint '%s'; the IR corpus only runs 'ir' goldens."),
-				*Case.ExpectedPath, *Expectation.EntryPoint));
+				TEXT("[%s] golden declares entryPoint '%s'; this corpus only runs '%s' goldens."),
+				*Case.ExpectedPath, *Expectation.EntryPoint, Layer.EntryPoint));
 			return false;
 		}
 
@@ -1850,12 +2416,20 @@ namespace UE::DreamShader::Editor::Private::Tests
 		Options.bRunPasses = Expectation.bRunPasses;
 		Options.IncludeDirectory = FPaths::GetPath(Case.SourcePath);
 
+		// A `.dsi` binds against its parent's parameters: the sibling its Parent names, lowered first.
+		UE::DreamShader::IR::FIRParameterSchema ParentSchema;
+		if (Case.Extension.Equals(TEXT("dsi"), ESearchCase::IgnoreCase)
+			&& BuildDreamShaderInstanceFixtureSchema(Case.SourcePath, SourceString, ParentSchema, Options.ParentObjectPath))
+		{
+			Options.ParentSchema = &ParentSchema;
+		}
+
 		FDreamShaderIRRun Run;
 		RunDreamShaderIRPipeline(Case.SourcePath, SourceString, Options, Run);
 
 		if (ShouldUpdateDreamShaderGolden())
 		{
-			const FString Json = BuildDreamShaderIRGoldenJson(Run, Expectation.bRunPasses, Expectation.bIRPending);
+			const FString Json = BuildDreamShaderIRGoldenJson(Run, Expectation.bRunPasses, Expectation.bIRPending, Layer.EntryPoint);
 			if (FFileHelper::SaveStringToFile(Json, *Case.ExpectedPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 			{
 				Test.AddInfo(FString::Printf(TEXT("Updated golden '%s'."), *Case.ExpectedPath));
@@ -1891,6 +2465,12 @@ namespace UE::DreamShader::Editor::Private::Tests
 			Test.TestTrue(
 				FString::Printf(TEXT("[%s] a warning contains '%s' (actual: %s)"), *Case.SourcePath, *Needle, *Run.WarningText()),
 				Run.Warnings.ContainsByPredicate([&Needle](const FString& Line) { return Line.Contains(Needle, ESearchCase::CaseSensitive); }));
+		}
+		for (const FString& Needle : Expectation.InfosContain)
+		{
+			Test.TestTrue(
+				FString::Printf(TEXT("[%s] an info contains '%s' (actual: %s)"), *Case.SourcePath, *Needle, *Run.InfoText()),
+				Run.Infos.ContainsByPredicate([&Needle](const FString& Line) { return Line.Contains(Needle, ESearchCase::CaseSensitive); }));
 		}
 
 		if (Expectation.bExpectError)
@@ -1961,6 +2541,12 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 
 		return true;
+	}
+
+	/** The IR layer proper: Tests/Corpus/IR, `.dss` and `.dsi`. */
+	inline bool RunDreamShaderIRCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case)
+	{
+		return RunDreamShaderIRCorpusCase(Test, Case, FDreamShaderIRCorpusLayer());
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -2111,8 +2697,17 @@ namespace UE::DreamShader::Editor::Private::Tests
 	class FDreamShaderCompile2Fixture
 	{
 	public:
-		/** RelativeName is the corpus-relative, extension-free name; it becomes the scratch subtree. */
-		explicit FDreamShaderCompile2Fixture(const FString& InRelativeName, const TCHAR* InScratchArea = TEXT("Compile2"))
+		/**
+		 * RelativeName is the corpus-relative, extension-free name; it becomes the scratch subtree.
+		 *
+		 * Extension is the main source's: `dss` for the Compile corpus, `dsm` / `dsf` for a legacy source. A legacy
+		 * destination follows the block's `Name=` and never the source folder (research-legacy.md L10), so a legacy
+		 * fixture writes `Name="<MakeLegacyAssetName(...)>"` to land under this fixture's package path.
+		 */
+		explicit FDreamShaderCompile2Fixture(
+			const FString& InRelativeName,
+			const TCHAR* InScratchArea = TEXT("Compile2"),
+			const TCHAR* InExtension = TEXT("dss"))
 			: RelativeName(InRelativeName)
 			, ScratchArea(InScratchArea)
 		{
@@ -2123,11 +2718,32 @@ namespace UE::DreamShader::Editor::Private::Tests
 				TEXT("DreamShaderTests"),
 				ScratchArea,
 				Sanitised,
-				FPaths::GetCleanFilename(Sanitised) + TEXT(".dss")));
+				FPaths::GetCleanFilename(Sanitised) + TEXT(".") + InExtension));
 		}
 
 		~FDreamShaderCompile2Fixture()
 		{
+			// Everything under the fixture's package path is the fixture's, whether or not a test tracked it: a product
+			// the compile made under a name the test never asked for would otherwise outlive the run (batch 2: a Graph
+			// material or function always saves, so nothing a fixture compiles is memory-only unless it is ThinCustom).
+			{
+				FAssetRegistryModule& AssetRegistryModule =
+					FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+				TArray<FString> ScanPaths;
+				ScanPaths.Add(PackagePath);
+				AssetRegistryModule.Get().ScanPathsSynchronous(ScanPaths, /*bForceRescan*/ true);
+
+				FARFilter Filter;
+				Filter.PackagePaths.Add(FName(*PackagePath));
+				Filter.bRecursivePaths = true;
+				TArray<FAssetData> Remaining;
+				AssetRegistryModule.Get().GetAssets(Filter, Remaining);
+				for (const FAssetData& AssetData : Remaining)
+				{
+					ProducedObjectPaths.AddUnique(AssetData.GetObjectPathString());
+				}
+			}
+
 			TArray<UObject*> ObjectsToDelete;
 			for (const FString& ObjectPath : ProducedObjectPaths)
 			{
@@ -2147,6 +2763,38 @@ namespace UE::DreamShader::Editor::Private::Tests
 
 		const FString& GetSourceFilePath() const { return SourceFilePath; }
 		const FString& GetPackagePath() const { return PackagePath; }
+
+		/**
+		 * `DreamShaderTests/<Area>/<RelativeName>/<AssetName>`: the `Name=` that lands a legacy block's asset under this
+		 * fixture's package path (with no `Root=`, the project DShader root the source sits in answers `/Game`).
+		 */
+		FString MakeLegacyAssetName(const FString& AssetName) const
+		{
+			// PackagePath always starts with the six characters "/Game/": the constructor wrote it.
+			return PackagePath.RightChop(6) + TEXT("/") + AssetName;
+		}
+
+		/** `<PackagePath>/<AssetName>.<AssetName>`. */
+		FString MakeObjectPath(const FString& AssetName) const
+		{
+			return FString::Printf(TEXT("%s/%s.%s"), *PackagePath, *AssetName, *AssetName);
+		}
+
+		/**
+		 * Writes another file -- a header a source imports, a second source, a decompiled round trip -- into the main
+		 * source's directory. The destructor deletes that directory as a tree, so nothing written here outlives the fixture.
+		 */
+		bool WriteSiblingSource(FAutomationTestBase& Test, const FString& FileName, const FString& SourceText, FString& OutFilePath) const
+		{
+			OutFilePath = UE::DreamShader::NormalizeSourceFilePath(FPaths::Combine(FPaths::GetPath(SourceFilePath), FileName));
+			IFileManager::Get().MakeDirectory(*FPaths::GetPath(OutFilePath), true);
+			if (!FFileHelper::SaveStringToFile(SourceText, *OutFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+			{
+				Test.AddError(FString::Printf(TEXT("Failed to write the fixture file '%s' for '%s'."), *FileName, *RelativeName));
+				return false;
+			}
+			return true;
+		}
 
 		bool WriteSource(FAutomationTestBase& Test, const FString& SourceText) const
 		{
@@ -2242,6 +2890,72 @@ namespace UE::DreamShader::Editor::Private::Tests
 		TArray<FString> ProducedObjectPaths;
 	};
 
+	/**
+	 * Point a 1.x source's product block at another asset path: rewrite the `Name="..."` of its LAST block header and,
+	 * when the header has one, set `Root="Game"`. False when there is no Shader / ShaderFunction / ShaderLayer /
+	 * ShaderLayerBlend header with a quoted `Name`.
+	 *
+	 * A legacy destination follows `Name=` and never the source folder (research-legacy.md L10), so a test that
+	 * compiles a real 1.x source from a scratch directory has to move its Name too, or it writes over the real asset.
+	 * Only the last header is rewritten, which is the product block: a `.dsf` opens with `VirtualFunction(Name = "...")`
+	 * prototypes whose names are call targets, not asset paths. Moved here from DreamShaderCompiler2Tests.cpp
+	 * (RetargetLegacySource) when the parity tests stopped compiling the 1.x twin.
+	 */
+	inline bool RetargetDreamShaderLegacyBlockName(const FString& Source, const FString& AssetPath, FString& OutSource)
+	{
+		const TCHAR* BlockKeywords[] = { TEXT("ShaderLayerBlend("), TEXT("ShaderLayer("), TEXT("ShaderFunction("), TEXT("Shader(") };
+
+		int32 BlockStart = INDEX_NONE;
+		for (const TCHAR* Keyword : BlockKeywords)
+		{
+			const int32 Index = Source.Find(Keyword, ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+			if (Index != INDEX_NONE && Index > BlockStart)
+			{
+				BlockStart = Index;
+			}
+		}
+		if (BlockStart == INDEX_NONE)
+		{
+			return false;
+		}
+
+		const int32 HeaderEnd = Source.Find(TEXT(")"), ESearchCase::CaseSensitive, ESearchDir::FromStart, BlockStart);
+		if (HeaderEnd == INDEX_NONE)
+		{
+			return false;
+		}
+
+		FString Header = Source.Mid(BlockStart, HeaderEnd - BlockStart + 1);
+
+		auto ReplaceKey = [&Header](const TCHAR* Key, const FString& Value) -> bool
+		{
+			const FString Needle = FString::Printf(TEXT("%s=\""), Key);
+			const int32 Start = Header.Find(Needle, ESearchCase::CaseSensitive);
+			if (Start == INDEX_NONE)
+			{
+				return false;
+			}
+			const int32 ValueStart = Start + Needle.Len();
+			const int32 ValueEnd = Header.Find(TEXT("\""), ESearchCase::CaseSensitive, ESearchDir::FromStart, ValueStart);
+			if (ValueEnd == INDEX_NONE)
+			{
+				return false;
+			}
+			Header = Header.Left(ValueStart) + Value + Header.Mid(ValueEnd);
+			return true;
+		};
+
+		if (!ReplaceKey(TEXT("Name"), AssetPath))
+		{
+			return false;
+		}
+		// Root is optional in 1.x; when it is there it has to come back to Game so the retargeted path means what it says.
+		ReplaceKey(TEXT("Root"), TEXT("Game"));
+
+		OutSource = Source.Left(BlockStart) + Header + Source.Mid(HeaderEnd + 1);
+		return true;
+	}
+
 	/** The assets' dumps, concatenated under a stable header, so one string is one golden. */
 	inline FString BuildDreamShaderCompiledGraphDumpText(const TArray<FDreamShaderCompiledAsset>& Assets)
 	{
@@ -2294,6 +3008,8 @@ namespace UE::DreamShader::Editor::Private::Tests
 		bool bGraphPending = false;
 		bool bCheckGraphDump = false;   FString GraphDump;
 		bool bCheckAssets = false;      TArray<FCompileAssetExpectation> Assets;
+		/** `"siblings": ["Shared.dsh"]`: file names beside the fixture that are copied with it. Absent: every `.dsh` there. */
+		TArray<FString> Siblings;
 	};
 
 	inline bool ParseDreamShaderCompileExpectation(const FString& JsonText, FCompileCorpusExpectation& Out, FString& OutError)
@@ -2320,6 +3036,14 @@ namespace UE::DreamShader::Editor::Private::Tests
 			for (const TSharedPtr<FJsonValue>& Value : *Array)
 			{
 				Out.ErrorContains.Add(Value->AsString());
+			}
+		}
+
+		if (Root->TryGetArrayField(TEXT("siblings"), Array))
+		{
+			for (const TSharedPtr<FJsonValue>& Value : *Array)
+			{
+				Out.Siblings.Add(Value->AsString());
 			}
 		}
 
@@ -2360,11 +3084,23 @@ namespace UE::DreamShader::Editor::Private::Tests
 		bool bCompiled,
 		const UE::DreamShader::FDreamShaderError& Error,
 		const TArray<FDreamShaderCompiledAsset>& Assets,
-		bool bPending = false)
+		bool bPending = false,
+		const TArray<FString>* Siblings = nullptr)
 	{
 		const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
 		Root->SetStringField(TEXT("entryPoint"), TEXT("compile"));
 		Root->SetStringField(TEXT("outcome"), bCompiled ? TEXT("ok") : TEXT("error"));
+
+		// What the author wrote, carried back: an update run must not forget which files the fixture needs.
+		if (Siblings && Siblings->Num() > 0)
+		{
+			TArray<TSharedPtr<FJsonValue>> Values;
+			for (const FString& Sibling : *Siblings)
+			{
+				Values.Add(MakeShared<FJsonValueString>(Sibling));
+			}
+			Root->SetArrayField(TEXT("siblings"), Values);
+		}
 
 		if (!bCompiled)
 		{
@@ -2403,19 +3139,118 @@ namespace UE::DreamShader::Editor::Private::Tests
 		return Output;
 	}
 
+	/** Which fixtures a compile-shaped corpus layer runs, where it puts them, and under which default backend. */
+	struct FDreamShaderCompileCorpusLayer
+	{
+		/** Directory under Tests/Corpus. */
+		FString LayerDir = TEXT("Compile");
+		/** Subtree under `DShader/DreamShaderTests` and `/Game/DreamShaderTests` the fixtures are copied into. */
+		FString ScratchArea = TEXT("Compile2");
+		/** Lower case, without the dot. */
+		TArray<FString> Extensions = { TEXT("dss") };
+		/** The backend a fixture gets when it does not name one: what the layer's goldens were captured under. */
+		EDreamShaderDefaultBackend PinnedBackend = EDreamShaderDefaultBackend::Graph;
+	};
+
 	/**
-	 * Run one Tests/Corpus/Compile fixture end to end and assert it against its golden.
+	 * The files a fixture needs beside it: the golden's `siblings` when it lists them, else every `.dsh` of the fixture's
+	 * directory -- and, for a `.dsi`, the `.dss` / `.dsi` its Parent names, which the compile builds first by itself.
+	 */
+	inline void CollectDreamShaderFixtureSiblings(const FCorpusCase& Case, const FString& SourceText, const TArray<FString>& Listed, TArray<FString>& OutFiles)
+	{
+		const FString Directory = FPaths::GetPath(Case.SourcePath);
+		if (Listed.Num() > 0)
+		{
+			for (const FString& Name : Listed)
+			{
+				OutFiles.AddUnique(FPaths::Combine(Directory, Name));
+			}
+			return;
+		}
+
+		TArray<FString> Headers;
+		IFileManager::Get().FindFiles(Headers, *FPaths::Combine(Directory, TEXT("*.dsh")), true, false);
+		for (const FString& Header : Headers)
+		{
+			OutFiles.AddUnique(FPaths::Combine(Directory, Header));
+		}
+
+		if (!Case.Extension.Equals(TEXT("dsi"), ESearchCase::IgnoreCase))
+		{
+			return;
+		}
+
+		// The parent chain, by the same reading of Parent the IR layer uses.
+		FString ChildPath = Case.SourcePath;
+		FString ChildText = SourceText;
+		for (int32 Depth = 0; Depth < 4; ++Depth)
+		{
+			using namespace UE::DreamShader::Lang;
+			const FLangParseResult Parsed = ParseDreamShaderLang(FLangSourceText(ChildPath, ChildText), FLangParseOptions());
+			FString Leaf;
+			if (Parsed.Module.IsValid())
+			{
+				for (const FDeclPtr& Decl : Parsed.Module->Declarations)
+				{
+					const FPragmaDecl* Pragma = Decl.IsValid() ? Decl->As<FPragmaDecl>() : nullptr;
+					const FPragmaArgument* Parent = (Pragma && Pragma->PragmaKind == EPragmaKind::Instance) ? Pragma->Find(TEXT("Parent")) : nullptr;
+					if (Parent)
+					{
+						Leaf = Parent->Value;
+						break;
+					}
+				}
+			}
+			int32 Separator = INDEX_NONE;
+			if (Leaf.FindLastChar(TEXT('/'), Separator))
+			{
+				Leaf.RightChopInline(Separator + 1);
+			}
+			if (Leaf.FindChar(TEXT('.'), Separator))
+			{
+				Leaf.LeftInline(Separator);
+			}
+
+			FString ParentPath;
+			for (const TCHAR* Extension : { TEXT("dss"), TEXT("dsi") })
+			{
+				const FString Candidate = FPaths::Combine(Directory, Leaf + TEXT(".") + Extension);
+				if (!Leaf.IsEmpty() && IFileManager::Get().FileExists(*Candidate))
+				{
+					ParentPath = Candidate;
+					break;
+				}
+			}
+			if (ParentPath.IsEmpty() || OutFiles.Contains(ParentPath))
+			{
+				return;
+			}
+			OutFiles.Add(ParentPath);
+			if (!ParentPath.EndsWith(TEXT(".dsi"), ESearchCase::IgnoreCase) || !FFileHelper::LoadFileToString(ChildText, *ParentPath))
+			{
+				return;
+			}
+			ChildPath = ParentPath;
+		}
+	}
+
+	/**
+	 * Run one fixture of a compile-shaped layer end to end and assert it against its golden.
 	 *
 	 * The fixture is COPIED under the project's DShader root before compiling: the 2.0 pipeline has
 	 * no transient request (the compiler pipeline header says so), the asset destination follows
 	 * the source path, and a corpus directory is not a source root. The copy and every asset it
 	 * produced are deleted by the fixture's destructor whatever happens in between.
+	 *
+	 * A legacy source (`.dsm` / `.dsf`) is the exception to "the destination follows the source path": its block's
+	 * `Name=` decides (research-legacy.md L10), so the copy's last product block is renamed to land under the fixture's
+	 * package path, keeping the fixture's own stem as the asset name.
 	 */
-	inline bool RunDreamShaderCompileCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case)
+	inline bool RunDreamShaderCompileCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case, const FDreamShaderCompileCorpusLayer& Layer)
 	{
-		if (!Case.Extension.Equals(TEXT("dss"), ESearchCase::IgnoreCase))
+		if (!Layer.Extensions.Contains(Case.Extension.ToLower()))
 		{
-			Test.AddInfo(FString::Printf(TEXT("[%s] is not a .dss compilation unit; the Compile layer skips it."), *Case.SourcePath));
+			Test.AddInfo(FString::Printf(TEXT("[%s] is not a compilation unit of the '%s' layer; skipped."), *Case.SourcePath, *Layer.LayerDir));
 			return true;
 		}
 
@@ -2430,16 +3265,17 @@ namespace UE::DreamShader::Editor::Private::Tests
 		// with) fills SourcePath, Extension and the expectation path but NOT RelativeName -- only the
 		// enumerator LoadDreamShaderCorpusCases does that, and RunTest only ever gets the source path
 		// back. Deriving it here is what keeps every fixture in a scratch directory of its own; an
-		// empty name would put all of them in /Game/DreamShaderTests/Compile2 and write every source
-		// to the same `.dss`.
+		// empty name would put all of them in one directory and write every source to the same file.
 		FString RelativeName = Case.RelativeName;
 		if (RelativeName.IsEmpty())
 		{
 			RelativeName = Case.SourcePath;
-			const FString LayerRoot = FPaths::Combine(GetDreamShaderCorpusRoot(), TEXT("Compile")) / TEXT("");
+			const FString LayerRoot = FPaths::Combine(GetDreamShaderCorpusRoot(), Layer.LayerDir) / TEXT("");
 			FPaths::MakePathRelativeTo(RelativeName, *LayerRoot);
 			RelativeName = FPaths::GetBaseFilename(RelativeName, /*bRemovePath*/ false);
 		}
+		// `X.bad` is a file name, not a package name.
+		RelativeName.ReplaceInline(TEXT(".bad"), TEXT("_bad"), ESearchCase::IgnoreCase);
 
 		FCompileCorpusExpectation Expectation;
 		Expectation.bExpectError = Case.bBadByName;
@@ -2466,37 +3302,66 @@ namespace UE::DreamShader::Editor::Private::Tests
 		if (!Expectation.EntryPoint.IsEmpty() && !Expectation.EntryPoint.Equals(TEXT("compile"), ESearchCase::IgnoreCase))
 		{
 			Test.AddError(FString::Printf(
-				TEXT("[%s] golden declares entryPoint '%s'; the Compile corpus only runs 'compile' goldens."),
+				TEXT("[%s] golden declares entryPoint '%s'; the compile-shaped corpora only run 'compile' goldens."),
 				*Case.ExpectedPath, *Expectation.EntryPoint));
 			return false;
 		}
 
-		// The goldens describe GRAPH-backend output unless the fixture itself asks for ThinCustom,
-		// exactly as the Generate layer's do.
-		FScopedDreamShaderGraphBackendPin BackendPin;
+		// The goldens describe the layer's backend unless the fixture itself names one.
+		FScopedDreamShaderBackendPin BackendPin(Layer.PinnedBackend);
 
-		FDreamShaderCompile2Fixture Fixture(RelativeName);
+		FDreamShaderCompile2Fixture Fixture(RelativeName, *Layer.ScratchArea, *Case.Extension.ToLower());
 		// Suppression, not a requirement: the new-asset probe fires for some engine builds and not
 		// others. Never quote the package path in an assertion message below -- the harness would
 		// swallow the failure along with the probe.
 		Test.AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
 		Test.AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);
 
+		const bool bLegacySource = Case.Extension.Equals(TEXT("dsm"), ESearchCase::IgnoreCase) || Case.Extension.Equals(TEXT("dsf"), ESearchCase::IgnoreCase);
+		if (bLegacySource)
+		{
+			FString AssetLeaf = FPaths::GetBaseFilename(Case.SourcePath);
+			AssetLeaf.ReplaceInline(TEXT(".bad"), TEXT(""), ESearchCase::IgnoreCase);
+			FString Retargeted;
+			if (RetargetDreamShaderLegacyBlockName(SourceString, Fixture.MakeLegacyAssetName(AssetLeaf), Retargeted))
+			{
+				SourceString = MoveTemp(Retargeted);
+			}
+			// No product block with a quoted Name: a fixture about exactly that. It fails before it writes anything.
+		}
+
 		if (!Fixture.WriteSource(Test, SourceString))
 		{
 			return false;
 		}
 
+		TArray<FString> Siblings;
+		CollectDreamShaderFixtureSiblings(Case, SourceString, Expectation.Siblings, Siblings);
+		for (const FString& Sibling : Siblings)
+		{
+			FString SiblingText;
+			FString WrittenPath;
+			if (!FFileHelper::LoadFileToString(SiblingText, *Sibling))
+			{
+				Test.AddError(FString::Printf(TEXT("[%s] cannot read the sibling '%s'."), *RelativeName, *Sibling));
+				return false;
+			}
+			if (!Fixture.WriteSiblingSource(Test, FPaths::GetCleanFilename(Sibling), SiblingText, WrittenPath))
+			{
+				return false;
+			}
+		}
+
 		UE::DreamShader::FDreamShaderError Error;
-		const bool bCompiled = FMaterialGenerator::GenerateAssetsFromFile(
-			Fixture.GetSourceFilePath(), Error, /*bForce*/ true, /*bAllowEphemeralThinCustom*/ false);
+		const bool bCompiled = ::UE::DreamShader::Editor::Private::Tests::CompileDreamShaderTestAssets(
+			Fixture.GetSourceFilePath(), Error, /*bForce*/ true, /*bEphemeralThinCustom*/ false);
 
 		TArray<FDreamShaderCompiledAsset> Assets;
 		Fixture.CollectProducedAssets(Assets);
 
 		if (ShouldUpdateDreamShaderGolden())
 		{
-			const FString Json = BuildDreamShaderCompileGoldenJson(bCompiled, Error, Assets, Expectation.bGraphPending);
+			const FString Json = BuildDreamShaderCompileGoldenJson(bCompiled, Error, Assets, Expectation.bGraphPending, &Expectation.Siblings);
 			if (FFileHelper::SaveStringToFile(Json, *Case.ExpectedPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 			{
 				Test.AddInfo(FString::Printf(TEXT("Updated golden '%s'."), *Case.ExpectedPath));
@@ -2518,16 +3383,21 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 		else if (!bCompiled)
 		{
+			// As an Info line: the text quotes the fixture's package path, which is a registered expected error.
+			Test.AddInfo(FString::Printf(TEXT("[%s] the compiler said: %s"), *RelativeName, *ErrorText));
 			Test.AddError(FString::Printf(
-				TEXT("[%s] the compile should SUCCEED but failed: %s"), *RelativeName, *ErrorText));
+				TEXT("[%s] the compile should SUCCEED but failed; the info line above has what the compiler said."), *RelativeName));
 			return false;
 		}
 
 		for (const FString& Needle : Expectation.ErrorContains)
 		{
-			Test.TestTrue(
-				FString::Printf(TEXT("[%s] the error contains '%s' (actual: %s)"), *RelativeName, *Needle, *ErrorText),
-				ErrorText.Contains(Needle, ESearchCase::CaseSensitive));
+			const bool bContains = ErrorText.Contains(Needle, ESearchCase::CaseSensitive);
+			if (!bContains)
+			{
+				Test.AddInfo(FString::Printf(TEXT("[%s] the compiler said: %s"), *RelativeName, *ErrorText));
+			}
+			Test.TestTrue(FString::Printf(TEXT("[%s] the error contains '%s' (the info line above has the actual text)"), *RelativeName, *Needle), bContains);
 		}
 
 		if (Expectation.bExpectError)
@@ -2599,6 +3469,12 @@ namespace UE::DreamShader::Editor::Private::Tests
 		}
 
 		return true;
+	}
+
+	/** The Compile layer proper: Tests/Corpus/Compile, `.dss`, Graph pinned. */
+	inline bool RunDreamShaderCompileCorpusCase(FAutomationTestBase& Test, const FCorpusCase& Case)
+	{
+		return RunDreamShaderCompileCorpusCase(Test, Case, FDreamShaderCompileCorpusLayer());
 	}
 }
 

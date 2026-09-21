@@ -8,12 +8,20 @@
 
 ```
 Corpus/
-├── Parse/              # 1.x 纯解析层 (FTextShaderParser::Parse), 快, 无资产 I/O
+├── Parse/              # 1.x 语法的解析等价集: legacy 前端 (ParseDreamShaderLang, Auto), 快, 无资产 I/O
 │   ├── Lexical/        # 注释 / 字符串转义 / 字面量 / 括号平衡 ...
 │   ├── TopLevel/       # Shader / ShaderFunction / Namespace / VirtualFunction ...
 │   ├── Sections/       # Properties / Settings / Outputs / Inputs / Options / Graph
 │   └── Types/          # float/vec/int/bool 家族 / Texture* / MaterialAttributes / Substrate
-├── Generate/           # 1.x 资产生成层 (FMaterialGenerator, 允许 Ephemeral ThinCustom), 慢, 要编辑器
+├── Parity/             # Compiler2.Parity.* 的 compile 金样本 (无源文件; 源是 Lang/Examples 下的 .dss)
+├── Legacy/             # 1.x 源码走 2.0 管线 (批次 2): legacy 前端是现在唯一读 .dsm/.dsf 的东西
+│   ├── Parse/          # `legacy` 金样本: 1.x 文本 -> legacy 前端(带 trivia) -> 打印出的 2.0 文本 + FLegacyMigrationInfo 计数, 纯 Core
+│   ├── IR/             # `legacy-ir` 金样本: 成文的 1.x 规则 (L2-L19) 一条一个夹具, 手搓 catalog, 纯 Core
+│   └── Compile/        # `compile` 金样本: 原 Generate/ 的夹具; 金样本播种自 09-15 的 1.x 抓取, 所以钉 ThinCustom 而不是 Graph
+├── Decompile/          # `decompile` 金样本: .dss -> IR -> AST -> 打印文本, 且该文本降到等价 IR; 纯 Core (roundtrip-skips.json 在这里)
+├── Migrate/            # `migrate` 金样本: 1.x 文本 -> MigrateDreamShaderLegacyModule -> 2.0 文本; 注释不丢、可编、IR 等价; 纯 Core
+├── Roundtrip/          # `roundtrip` 金样本: .dss -> 资产 -> 反编译服务 -> 文本 -> 资产, 两次 dump 相同; 慢, 要编辑器
+├── Instance/           # `compile` 金样本: .dsi 与它 Parent 指名的兄弟 .dss 一起拷进 scratch 目录再编; 慢, 要编辑器
 └── Lang/               # 2.0 前端 (ParseDreamShaderLang), 主要吃 .dss/.dsh, 纯 Core
     ├── Lexical/        # 注释 / 字符串与转义 / 每种字面量 / 每个运算符 / #pragma 尾注释
     ├── Expressions/    # 优先级 / 命名实参 / 强制转换 / 构造器 / 成员与下标链 / 初始化列表
@@ -36,7 +44,7 @@ Corpus/
 │   ├── Loops/          # 可展开 for / 动态上界负例                            (DSH4360)
 │   ├── Custom/         # @custom 节点与 H 的标记行                            (§6.13)
 │   └── Examples/       # Lang/Examples 三个文件的**副本**（见下方"两处已知的重复"）
-└── Compile/            # 2.0 全链路 (FMaterialGenerator::GenerateAssetsFromFile), 慢, 要编辑器
+└── Compile/            # 2.0 全链路 (测试编译门面 CompileDreamShaderTestAssets → 编译器服务), 慢, 要编辑器
     ├── Material/       # 最小材质 / 内联+swizzle / 静态开关 / ThinCustom / region
     ├── Function/       # 函数库（一个 export 一个资产）/ 纹理函数
     └── Errors/         # 端到端的拒绝（码要走到 1.x wire form）
@@ -44,15 +52,46 @@ Corpus/
 
 | 子树 | 入口点 | runner | 自动化测试名 |
 |---|---|---|---|
-| `Parse/` | `FTextShaderParser::Parse` | `RunDreamShaderParseCorpusCase` | `DreamShader.Lang.Parse.*` |
-| `Generate/` | `FMaterialGenerator::Generate*FromFile`（允许 Ephemeral ThinCustom） | `RunDreamShaderGenerateCorpusCase` | `DreamShader.Lang.Generate.*` |
+| `Parse/` | `ParseDreamShaderLang`（Auto：`.dsm/.dsf` 走 legacy 前端，`.dsh` 逐声明分派；批次 2 起取代已删除的 `FTextShaderParser`） | `RunDreamShaderParseCorpusCase` | `DreamShader.Lang.Parse.*` |
+| `Legacy/Parse/` | `ParseDreamShaderLang`（`bKeepTrivia`）→ `PrintDreamShaderLang`，打印文本再按 2.0 解析一遍 | `RunDreamShaderLegacyParseCorpusCase` | `DreamShader.Lang2.CorpusLegacyParse.*` |
+| `Legacy/IR/` | 与 `IR/` 同一个 runner，入口名 `legacy-ir`，吃 `.dsm/.dsf/.dss` | `RunDreamShaderIRCorpusCase(…, Layer)` | `DreamShader.Lang2.CorpusLegacyIR.*` |
+| `Legacy/Compile/` | 与 `Compile/` 同一个 runner；1.x 块的 `Name=` 被改写到夹具的 scratch 包路径下，资产名取夹具文件名 | `RunDreamShaderCompileCorpusCase(…, Layer)` | `DreamShader.Compiler2.CorpusLegacy.*` |
+| `Decompile/` | `RaiseDreamShaderIR` → `BuildDreamShaderAstFromIR` → 打印 → 再降 IR → `AreDreamShaderIRModulesEquivalent` | `RunDreamShaderDecompileCorpusCase` | `DreamShader.Lang2.CorpusDecompile.*`；同一检查不带文本金样本扫 `IR/`、`Lang/Examples/`、`Compile/`：`DreamShader.Lang2.RoundtripIR.*` |
+| `Migrate/` | legacy 解析+绑定 → `MigrateDreamShaderLegacyModule` → 打印 → 注释不丢 → 按 2.0 编 → IR 等价 | `RunDreamShaderMigrateCorpusCase` | `DreamShader.Lang2.CorpusMigrate.*` |
+| `Roundtrip/` | 编译 → `RunDreamShaderDecompileRequest`（`SourceFilePath` = 整个源的全部产物）→ 另一个 scratch 根再编 → 两份 dump 比对 | `RunDreamShaderRoundtripCorpusCase` | `DreamShader.Compiler2.Roundtrip.Corpus.*` |
+| `Instance/` | 与 `Compile/` 同一个 runner，只跑 `.dsi`；Parent 链上的兄弟文件自动拷贝 | `RunDreamShaderCompileCorpusCase(…, Layer)` | `DreamShader.Compiler2.CorpusInstance.*` |
+| `Parity/` | `CompileDreamShaderTestAssets` 编 `Lang/Examples/` 下的 `.dss`（金样本不在示例旁边，在 `Parity/`） | `RunDreamShaderCompileCorpusCase`（经 `RunParityGoldenPair`） | `DreamShader.Compiler2.Parity.*` |
 | `Lang/` | `ParseDreamShaderLang`（2.0 前端） | `RunDreamShaderLangCorpusCase` | `DreamShader.Lang2.Corpus.*` |
 | `IR/` | `Bind` → `BuildDreamShaderIR` → `RunDreamShaderIRPasses` → `ValidateDreamShaderIR` | `RunDreamShaderIRCorpusCase` | `DreamShader.Lang2.CorpusIR.*` |
-| `Compile/` | `FMaterialGenerator::GenerateAssetsFromFile`（`.dss` 走 2.0 管线） | `RunDreamShaderCompileCorpusCase` | `DreamShader.Compiler2.Corpus.*` |
+| `Compile/` | `CompileDreamShaderTestAssets`（测试编译门面 → 编译器服务 `CompileAssets`；Graph 后端钉住） | `RunDreamShaderCompileCorpusCase` | `DreamShader.Compiler2.Corpus.*` |
 
-三个 runner 都在 `Source/DreamShaderEditor/Private/Tests/DreamShaderTestCommon.h`，各自的
-`IMPLEMENT_COMPLEX_AUTOMATION_TEST` 在同目录的 `DreamShaderCorpus<Layer>Tests.cpp`。
-后续层（`Diagnostics/`、`Roundtrip/` 等）照此平行新增，各配自己的 runner。
+批次 1 的 runner 在 `Source/DreamShaderEditor/Private/Tests/DreamShaderTestCommon.h`，批次 2 新增的文本层与 Roundtrip 层在
+同目录的 `DreamShaderTestCorpusLayers.h`；各自的 `IMPLEMENT_COMPLEX_AUTOMATION_TEST` 在 `DreamShaderCorpus<Layer>Tests.cpp`
+（`Legacy`、`Decompile`、`Instance` 三个文件各管几层）。
+
+### 批次 2 的三个文本层共用一个金样本形状
+
+`Legacy/Parse`、`Decompile`、`Migrate` 都是“出来一段文本，它得和进去的东西一个意思”，所以金样本字段相同：
+
+```json
+{
+  "entryPoint": "legacy",            // legacy | decompile | migrate
+  "outcome": "ok",                   // ok | error
+  "errorContains": ["DSH2241"], "warningsContain": ["DSH2253"], "infosContain": ["DSH5283"],
+  "textPending": true,               // 跳过 text 逐字节比对, 其余照跑; 更新金样本时该标志原样带回, 去掉它是人的事
+  "text": "<打印出的文本>",
+  "roundtrip": false,                // 退出该层的“意思没变”检查 (在夹具第一行注释里写明原因)
+  "comments": false,                 // migrate: 退出注释不丢检查
+  "compareDestinations": false,      // decompile: 产物名可以不同
+  "legacy": { "blocks": 1, "outputSelections": 2, "outputSelectionGroups": 1 },   // legacy: 只断言写出来的键
+  "productNames": { "M_X": "" }      // migrate: 宿主会给每个产物函数的回答 ("" = 不写 @name)
+}
+```
+
+`IR/` 与 `Legacy/IR/` 的金样本多了 `infosContain`；`Compile/` 形状的三层 (`Compile`、`Legacy/Compile`、`Instance`) 多了
+`"siblings": ["Shared.dsh"]`（与夹具一起拷进 scratch 目录的同目录文件；不写则拷同目录全部 `.dsh`，`.dsi` 另加 Parent 链）。
+`IR/Instances/*.dsi` 由 `DreamShader.Lang2.CorpusIR` 跑：runner 先把 Parent 指名的兄弟 `.dss`/`.dsi` 降到 IR，
+`BuildParameterSchemaFromIR` 出 schema，再拿它绑定 `.dsi`；找不到兄弟就无 schema 绑定（DSH7263）。
 
 ## 命名
 
@@ -64,24 +103,31 @@ Corpus/
 
 ## `.expected.json` 字段（全部可选、声明式）
 
+`Parse/` 层的 `parse` 金样本。1.x 的 `FTextShaderParser` 在批次 2 删除，这一层现在是 research-legacy.md §7 第 2 项的
+**解析等价集**：legacy 前端必须像 1.x 一样接受或拒绝每个夹具。字段名没变，含义改为从 AST 与 `FLegacyMigrationInfo`
+读出（`DreamShaderTestCommon.h` 的 `SummariseDreamShaderLegacyParse`）：
+
 ```json
 {
   "entryPoint": "parse",
   "outcome": "ok",                                  // ok | error
-  "errorContains": ["Unterminated block"],          // error 用例: 错误串子串(全部需命中, 大小写不敏感)
-  "warningsContain": ["deprecated"],                // Definition.Warnings 子串
-  "definition": {                                   // outcome=ok 时对 FTextShaderDefinition 的字段断言
-    "name": "DreamMaterials/M_X",
-    "settings": { "Domain": "UI" },                 // 经 TryGetSetting 比对: 键大小写不敏感, 值精确
-    "outputDeclarations": 1,
-    "outputs": 1,
-    "materialFunctions": 1,
-    "materialFunction0Kind": "ShaderFunction",      // ShaderFunction | ShaderLayer | ShaderLayerBlend
-    "virtualFunctions": 0,
-    "codeNotEmpty": true
+  "errorContains": ["DSH3268"],                     // error 用例: 某条 Error 诊断含该子串(全部需命中, 大小写不敏感)
+  "warningsContain": ["DSH2256"],                   // 某条 Warning 诊断含该子串
+  "definition": {                                   // outcome=ok 时的结构断言
+    "name": "DreamMaterials/M_X",                   // 第一个产物块(Shader/ShaderFunction/ShaderLayer/ShaderLayerBlend)的 Name=
+    "settings": { "Domain": "UI" },                 // 第一个 #pragma material 的参数: 键大小写不敏感, 值精确
+    "outputDeclarations": 1,                        // Shader 块 Outputs 段的声明数 (FLegacyBlock::OutputNames)
+    "outputs": 1,                                   // Shader 块 Outputs 段的绑定数: 每个 Base.X = ... 与每个 Pin[i] = ... 各算一个
+    "materialFunctions": 1,                         // ShaderFunction / ShaderLayer / ShaderLayerBlend 块数
+    "materialFunction0Kind": "ShaderFunction",      // 其中第一个块的块词 (FLegacyBlock::BlockWord)
+    "virtualFunctions": 0,                          // VirtualFunction 块数
+    "codeNotEmpty": true                            // 第一个产物块的 Graph 段除花括号与空白外还有内容
   }
 }
 ```
+
+`errorContains` 写 legacy 前端的码：1.x 解析器的 DSH2007 / DSH3133 / DSH3137 随它退役，对应的是 DSH2150 一类的
+EOF 码 / DSH3266 / DSH3268（码表见 `Plan/m4m5/FE-diagnostics.md`）。
 
 ## `lang` 金样本字段（2.0 前端，`Lang/` 子树）
 
@@ -129,8 +175,8 @@ Corpus/
   `Declarations/D_CustomBodyOpaqueToLexer.dss`（体内敌意字符 = 全绿）与
   `Lexical/L_HashNotAtLineStart.bad.dss`（体外同一个 `#` = DSH2106）。
 - `Lang/` 里允许一个 `.dsm`：`Declarations/D_LegacyFrontendDsm.bad.dsm` 钉的是**前端选择**
-  （`Auto` 按扩展名选 legacy，而 legacy 到 M4 才有 ⇒ DSH2199）。它不走 `Parse/` runner：
-  三个 runner 各自只枚举自己那一层目录。
+  （`Auto` 按扩展名选 legacy 前端；批次 2 起它真的在，所以缺属性表的 `Shader M_Legacy` 报 legacy 前端自己的
+  DSH2241，不再是“legacy 不可用”的 DSH2199）。它不走 `Parse/` runner：三个 runner 各自只枚举自己那一层目录。
 
 ## `ir` 金样本字段（2.0 中端，`IR/` 子树）
 
@@ -238,11 +284,13 @@ Corpus/
 | 全链路语料 | `DreamShader.Compiler2.Corpus` | 慢（写 /Game 资产） |
 | 全链路 + 与 1.x 对拍 | `DreamShader.Compiler2` | 慢 |
 
-`DreamShader.Compiler2.Parity.*` 是 plan §8 的对拍 oracle：同一个材质分别走 1.x 的 `.dsm/.dsf`
-孪生文件和 2.0 的 `.dss`，两边都编译、都 dump、都规范化，然后 diff。**diff 就是新管线的 bug，除非
-另行证明。** 两边源文件写法上的差异（1.x 给了 SortPriority、Group 里带空格、描述措辞不同）在测试里
-按**键名**成对剔除，每一条都在调用处写了理由；结构性的东西（节点、连线、类、默认值、材质设置、
-引脚名）一条都不在剔除名单上。
+`DreamShader.Compiler2.Parity.*` 是 plan §8 的对拍 oracle。批次 1 时它把同一个材质分别走 1.x 的 `.dsm/.dsf` 孪生文件和
+2.0 的 `.dss` 两边现编、现 dump、再 diff；批次 2（M4）删除了 1.x 生成器，孪生文件再也编不出来，所以现在每一对只编 2.0
+的 `Lang/Examples/*.dss`，与 `Parity/<名字>.expected.json` 这份 **compile 金样本**比对（先是 `graphPending`）。phase 2
+用 `-DreamShaderUpdateGolden` 填上 `graphDump`，再拿孪生文件冻结的 B2 dump
+（`Saved/DreamShader/GraphBaseline/v2-6c2e0b6-formal`）用 `Tools/Parity/graph_parity.py pair` 结构比对：PD-1 内联掩码、
+PS-1 `Result` 改名这类登记过的差异由比对器的规范化吸收，SortPriority / Group / Description 这类“作者写法不同”的差异在
+报告里逐条过目。**结构性差异（节点、连线、类、默认值、材质设置、引脚名）一条都不放过**，review 通过后才删 pending 标记。
 
 ## 更新金样本
 
