@@ -191,6 +191,7 @@ Generation also looks for that pair while it emits a `Custom` node's code and wa
 | [Regeneration](regeneration.md) | what a rebuild destroys and what survives |
 | [Divergence](divergence.md) | the output digest, and what happens when an asset was edited by hand |
 | [Generated HLSL](generated-hlsl.md) | the `/DreamShaderGenerated/*.ush` helper include |
+| [Source control](source-control.md) | which generated assets have files, the two recipes for versioning them, `dsc list-generated` |
 
 ## Notes
 
