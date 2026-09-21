@@ -361,9 +361,9 @@ namespace UE::DreamShader::Editor::Private
 	TSharedRef<SWidget> SDreamShaderBrowserShell::MakeNewMenu()
 	{
 		FMenuBuilder Menu(true, nullptr);
-		const auto AddKind = [this, &Menu](EBrowserSourceKind Kind, const FText& Label, const FText& Tip)
+		const auto AddKind = [this, &Menu](EBrowserSourceKind Kind, const FText& Label, const FText& Tip, ENewSourceLanguage Language = ENewSourceLanguage::Legacy)
 		{
-			Menu.AddMenuEntry(Label, Tip, FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([this, Kind]()
+			Menu.AddMenuEntry(Label, Tip, FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([this, Kind, Language]()
 			{
 				// Into the folder the navigation tree points at when it is a source folder; the
 				// dialog falls back to the project root otherwise.
@@ -395,13 +395,23 @@ namespace UE::DreamShader::Editor::Private
 						This->Model->RefreshAll();
 						This->ShowSource(CreatedPath);
 					}
-				}, DefaultParent);
+				}, DefaultParent, Language);
 			})));
 		};
+
+		// DreamShaderLang 2.0 first: it is what a new source is written in. The 1.x blocks stay, because a project
+		// that has not migrated adds to what it has.
+		Menu.BeginSection("DreamShaderNewLang2", LOCTEXT("NewSectionLang2", "DreamShaderLang 2.0"));
+		AddKind(EBrowserSourceKind::Material, LOCTEXT("NewMaterialDss", "Material (.dss)"), LOCTEXT("NewMaterialDssTip", "HLSL with declarations: two uniforms and an exported entry that writes base colour and roughness, ready to compile."), ENewSourceLanguage::Lang2);
+		AddKind(EBrowserSourceKind::Function, LOCTEXT("NewFunctionDss", "Material function (.dss)"), LOCTEXT("NewFunctionDssTip", "An exported function with one input, one optional input and a return value. Every export of a .dss is an asset of its own."), ENewSourceLanguage::Lang2);
+		AddKind(EBrowserSourceKind::Instance, LOCTEXT("NewInstance", "Instance (.dsi)"), LOCTEXT("NewInstanceTip", "A material instance source: a #pragma instance naming its parent, and one uniform per parameter to override."));
+		Menu.EndSection();
+
+		Menu.BeginSection("DreamShaderNewLegacy", LOCTEXT("NewSectionLegacy", "1.x blocks"));
 		AddKind(EBrowserSourceKind::Material, LOCTEXT("NewMaterial", "Material (.dsm)"), LOCTEXT("NewMaterialTip", "A Shader block with a base colour and roughness, ready to compile."));
 		AddKind(EBrowserSourceKind::Function, LOCTEXT("NewFunction", "Material function (.dsf)"), LOCTEXT("NewFunctionTip", "A ShaderFunction block with one input, one optional input and one output."));
 		AddKind(EBrowserSourceKind::Header, LOCTEXT("NewHeader", "Header (.dsh)"), LOCTEXT("NewHeaderTip", "A header with one Function, for materials to import."));
-		AddKind(EBrowserSourceKind::Instance, LOCTEXT("NewInstance", "Instance (.dsi)"), LOCTEXT("NewInstanceTip", "A material instance source: a #pragma instance naming its parent, and one uniform per parameter to override."));
+		Menu.EndSection();
 		return Menu.MakeWidget();
 	}
 

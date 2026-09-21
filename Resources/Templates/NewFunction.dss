@@ -1,0 +1,10 @@
+// {FILENAME} -- a DreamShader material function. Compiles to {ASSETPATH}.
+// Every `export` of the file is an asset of its own; a function without `export` is a helper and is inlined.
+
+/// @desc Scales a colour.
+/// @param InColor  The colour to scale.
+/// @param Strength How much of it to keep. A default makes the input optional.
+export float3 {STEM}(float3 InColor, float Strength = 1.0)
+{
+    return InColor * Strength;
+}

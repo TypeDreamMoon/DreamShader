@@ -1,0 +1,15 @@
+// {FILENAME} -- a DreamShader material. Compiles to {ASSETPATH}.
+#pragma material(Domain = Surface, ShadingModel = DefaultLit)
+
+/// @group Surface   @desc The colour of the surface
+uniform float3 BaseColor = float3(0.8, 0.8, 0.8);
+
+/// @group Surface
+uniform float Roughness = 0.5;
+
+// The export is the material: its name is the asset's, and `m` is what the material's pins read.
+export void {STEM}(inout material m)
+{
+    m.BaseColor = BaseColor;
+    m.Roughness = Roughness;
+}

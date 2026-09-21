@@ -28,12 +28,14 @@
 
 namespace UE::DreamShader::Editor::Private
 {
-	const TCHAR* GetSourceKindExtension(EBrowserSourceKind Kind)
+	const TCHAR* GetSourceKindExtension(EBrowserSourceKind Kind, ENewSourceLanguage Language)
 	{
+		const bool bLang2 = Language == ENewSourceLanguage::Lang2;
 		switch (Kind)
 		{
-		case EBrowserSourceKind::Material: return TEXT("dsm");
-		case EBrowserSourceKind::Function: return TEXT("dsf");
+		// One `.dss` holds materials and functions alike: what an `export` is, is its signature's to say.
+		case EBrowserSourceKind::Material: return bLang2 ? TEXT("dss") : TEXT("dsm");
+		case EBrowserSourceKind::Function: return bLang2 ? TEXT("dss") : TEXT("dsf");
 		case EBrowserSourceKind::Header: return TEXT("dsh");
 		case EBrowserSourceKind::Instance: return TEXT("dsi");
 		}
@@ -42,12 +44,13 @@ namespace UE::DreamShader::Editor::Private
 
 	namespace
 	{
-		const TCHAR* GetTemplateFileName(EBrowserSourceKind Kind)
+		const TCHAR* GetTemplateFileName(EBrowserSourceKind Kind, ENewSourceLanguage Language)
 		{
+			const bool bLang2 = Language == ENewSourceLanguage::Lang2;
 			switch (Kind)
 			{
-			case EBrowserSourceKind::Material: return TEXT("NewMaterial.dsm");
-			case EBrowserSourceKind::Function: return TEXT("NewFunction.dsf");
+			case EBrowserSourceKind::Material: return bLang2 ? TEXT("NewMaterial.dss") : TEXT("NewMaterial.dsm");
+			case EBrowserSourceKind::Function: return bLang2 ? TEXT("NewFunction.dss") : TEXT("NewFunction.dsf");
 			case EBrowserSourceKind::Header: return TEXT("NewHeader.dsh");
 			case EBrowserSourceKind::Instance: return TEXT("NewInstance.dsi");
 			}
@@ -108,7 +111,7 @@ namespace UE::DreamShader::Editor::Private
 
 	bool RenderNewSourceTemplate(const FNewSourceRequest& Request, FString& OutText, FString& OutError)
 	{
-		const FString TemplatePath = FPaths::Combine(GetTemplatesDirectory(), GetTemplateFileName(Request.Kind));
+		const FString TemplatePath = FPaths::Combine(GetTemplatesDirectory(), GetTemplateFileName(Request.Kind, Request.Language));
 		if (!FFileHelper::LoadFileToString(OutText, *TemplatePath))
 		{
 			OutError = FText::Format(LOCTEXT("TemplateMissing", "The template '{0}' is missing from the plugin."), FText::FromString(TemplatePath)).ToString();
@@ -116,9 +119,12 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const FString Directory = UE::DreamShader::NormalizeSourceFilePath(Request.Directory);
-		const FString FileName = FString::Printf(TEXT("%s.%s"), *Request.FileStem, GetSourceKindExtension(Request.Kind)); // I18N-EXEMPT: file name
+		const FString FileName = FString::Printf(TEXT("%s.%s"), *Request.FileStem, GetSourceKindExtension(Request.Kind, Request.Language)); // I18N-EXEMPT: file name
+		// A 1.x block says where its asset goes (Name=); a `.dss` export is named by the stem and lands by its file's
+		// folder. Both come to the same /Game path, which is what {ASSETPATH} shows.
 		const FString BlockName = MakeBlockName(Directory, Request.FileStem);
 		OutText.ReplaceInline(TEXT("{NAME}"), *BlockName);
+		OutText.ReplaceInline(TEXT("{STEM}"), *Request.FileStem);
 		OutText.ReplaceInline(TEXT("{FILENAME}"), *FileName);
 		OutText.ReplaceInline(TEXT("{ASSETPATH}"), *(TEXT("/Game/") + BlockName));
 		OutText.ReplaceInline(TEXT("{PARENT}"), *MakeNewSourceParentText(Request.ParentReference));
@@ -145,7 +151,7 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 		const FString FilePath = UE::DreamShader::NormalizeSourceFilePath(
-			Directory / FString::Printf(TEXT("%s.%s"), *Request.FileStem, GetSourceKindExtension(Request.Kind))); // I18N-EXEMPT: file name
+			Directory / FString::Printf(TEXT("%s.%s"), *Request.FileStem, GetSourceKindExtension(Request.Kind, Request.Language))); // I18N-EXEMPT: file name
 		if (IFileManager::Get().FileExists(*FilePath))
 		{
 			OutError = FText::Format(LOCTEXT("NewSourceExists", "'{0}' already exists."), FText::FromString(FilePath)).ToString();
@@ -167,7 +173,12 @@ namespace UE::DreamShader::Editor::Private
 		return true;
 	}
 
-	void OpenNewSourceDialog(EBrowserSourceKind Kind, const FString& DefaultDirectory, TFunction<void(const FString&)> OnCreated, const FString& DefaultParent)
+	void OpenNewSourceDialog(
+		EBrowserSourceKind Kind,
+		const FString& DefaultDirectory,
+		TFunction<void(const FString&)> OnCreated,
+		const FString& DefaultParent,
+		ENewSourceLanguage Language)
 	{
 		// Default into the project root when the caller's directory is not writable (a plugin's).
 		FString StartDirectory = UE::DreamShader::NormalizeSourceFilePath(DefaultDirectory);
@@ -176,13 +187,17 @@ namespace UE::DreamShader::Editor::Private
 			StartDirectory = UE::DreamShader::NormalizeSourceFilePath(UE::DreamShader::GetSourceShaderDirectory());
 		}
 
+		const bool bLang2 = Language == ENewSourceLanguage::Lang2;
 		FText Title;
 		FText DefaultStem;
 		switch (Kind)
 		{
 		case EBrowserSourceKind::Function:
-			Title = LOCTEXT("NewFunctionTitle", "New material function (.dsf)");
-			DefaultStem = INVTEXT("F_NewFunction");
+			Title = bLang2
+				? LOCTEXT("NewFunctionDssTitle", "New material function (.dss)")
+				: LOCTEXT("NewFunctionTitle", "New material function (.dsf)");
+			// In a `.dss` the stem is the export's name and so the asset's, which is a function's usual MF_.
+			DefaultStem = bLang2 ? INVTEXT("MF_NewFunction") : INVTEXT("F_NewFunction");
 			break;
 		case EBrowserSourceKind::Header:
 			Title = LOCTEXT("NewHeaderTitle", "New header (.dsh)");
@@ -193,7 +208,9 @@ namespace UE::DreamShader::Editor::Private
 			DefaultStem = INVTEXT("MI_NewInstance");
 			break;
 		case EBrowserSourceKind::Material:
-			Title = LOCTEXT("NewMaterialTitle", "New material (.dsm)");
+			Title = bLang2
+				? LOCTEXT("NewMaterialDssTitle", "New material (.dss)")
+				: LOCTEXT("NewMaterialTitle", "New material (.dsm)");
 			DefaultStem = INVTEXT("M_NewMaterial");
 			break;
 		}
@@ -209,7 +226,7 @@ namespace UE::DreamShader::Editor::Private
 
 		TSharedRef<SWindow> Window = SNew(SWindow)
 			.Title(Title)
-			.ClientSize(FVector2D(520.0f, bInstance ? 240.0f : 200.0f))
+			.ClientSize(FVector2D(520.0f, bInstance ? 240.0f : (bLang2 ? 220.0f : 200.0f)))
 			.SupportsMinimize(false)
 			.SupportsMaximize(false);
 		const auto CloseWindow = [Window]() { Window->RequestDestroyWindow(); };
@@ -294,7 +311,9 @@ namespace UE::DreamShader::Editor::Private
 					SNew(STextBlock)
 					.Text(bInstance
 						? LOCTEXT("NewSourceInstanceHint", "The file is written from the plugin's template and compiled by the watcher on save. Its asset lands at the folder's /Game path; add one uniform per parameter to override.")
-						: LOCTEXT("NewSourceHint", "The file is written from the plugin's template and compiled by the watcher on save."))
+						: bLang2
+							? LOCTEXT("NewSourceDssHint", "The file is written from the plugin's template and compiled by the watcher on save. The name is the export's, and so the asset's; the folder decides where under /Game it lands.")
+							: LOCTEXT("NewSourceHint", "The file is written from the plugin's template and compiled by the watcher on save."))
 					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 					.AutoWrapText(true)
 				]
@@ -318,10 +337,11 @@ namespace UE::DreamShader::Editor::Private
 						SNew(SButton)
 						.ButtonStyle(&FAppStyle::Get().GetWidgetStyle<FButtonStyle>("PrimaryButton"))
 						.Text(LOCTEXT("NewSourceCreate", "Create"))
-						.OnClicked_Lambda([Kind, StemValue, DirectoryValue, ParentValue, OnCreated, CloseWindow]()
+						.OnClicked_Lambda([Kind, Language, StemValue, DirectoryValue, ParentValue, OnCreated, CloseWindow]()
 						{
 							FNewSourceRequest Request;
 							Request.Kind = Kind;
+							Request.Language = Language;
 							Request.Directory = *DirectoryValue;
 							Request.FileStem = *StemValue;
 							Request.ParentReference = *ParentValue;
