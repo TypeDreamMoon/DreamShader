@@ -969,7 +969,10 @@ namespace UE::DreamShader::Lang::Private
 
 		if (bShader)
 		{
-			if (GraphOpenIndex == INDEX_NONE && OutputsHead.Num() == 0)
+			// A Shader without a Graph is still a material when its Outputs compute something: a declaration with an
+			// initializer, or -- Substrate sugar S6 -- a binding whose right side is an expression of its own
+			// (`Base.FrontMaterial = Substrate.Layer(Coat, Body);`).
+			if (GraphOpenIndex == INDEX_NONE && OutputsHead.Num() == 0 && OutputsTail.Num() == 0)
 			{
 				Diagnostics.Error(
 					TEXT("DSH2255"),
