@@ -111,10 +111,27 @@ namespace UE::DreamShader::Editor::Private
 	bool IsMaterialExpressionInputProperty(const FProperty* Property)
 	{
 		const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
-		return StructProperty
-			&& StructProperty->Struct
-			&& (StructProperty->Struct->GetFName() == NAME_ExpressionInput
-				|| StructProperty->Struct->GetName().Equals(TEXT("MaterialAttributesInput"), ESearchCase::IgnoreCase));
+		if (!StructProperty || !StructProperty->Struct)
+		{
+			return false;
+		}
+		if (StructProperty->Struct->GetName().Equals(TEXT("MaterialAttributesInput"), ESearchCase::IgnoreCase))
+		{
+			return true;
+		}
+
+		// FExpressionInput, and the FMaterialInput family the reflection mirrors beside it: SubstrateShadingModels
+		// declares its ShadingModel pin as an FShadingModelMaterialInput. In C++ each of those is an FExpressionInput
+		// first, so the property's value is one wherever a pin is looked for.
+		static const FName MaterialInputName(TEXT("MaterialInput"));
+		for (const UStruct* Struct = StructProperty->Struct; Struct; Struct = Struct->GetSuperStruct())
+		{
+			if (Struct->GetFName() == NAME_ExpressionInput || Struct->GetFName() == MaterialInputName)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

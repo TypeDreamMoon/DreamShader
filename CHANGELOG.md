@@ -25,6 +25,16 @@
 - **A SetMaterialAttributes pin the catalog does not know is named.** It was dropped without a word,
   where the same pin on a MakeMaterialAttributes said `DSH9072`; now both do.
 
+- **`Substrate.ShadingModels` has its `ShadingModel` pin.** The engine declares it as an
+  `FShadingModelMaterialInput`, the type of the material's own pins, and only `FExpressionInput` and
+  `FMaterialAttributesInput` were taken for pins -- so the catalog listed none, a call could not wire
+  one, the decompiler dropped the wire (`DSH9070`), and `Substrate = Bridge` left a computed shading
+  model (`m.ShadingModel = UE.ShadingModel(...)`) off the node, where the engine's own conversion and
+  [the bridge table](Docs/language-v2/substrate.md) put it. Every pin of that family is a pin now; it is
+  not required, because the node reads its `ShadingModelOverride` when nothing is wired. The 1.x
+  workspace manifest asks the engine for a pin's type by the pin's own index rather than by the order
+  the properties are declared in, which the new pin would have put out of step.
+
 ## 2.0.0 - 2026-09-21
 
 > The 2.0 line. This is a compiler rewrite rather than a feature release: a language front end

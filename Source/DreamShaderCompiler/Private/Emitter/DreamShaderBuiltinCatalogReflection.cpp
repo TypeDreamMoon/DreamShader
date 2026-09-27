@@ -663,6 +663,21 @@ namespace UE::DreamShader::Editor::Compiler
 			return true;
 		}
 
+		/**
+		 * A pin declared as one of the material's own inputs rather than an FExpressionInput: SubstrateShadingModels'
+		 * ShadingModel, an FShadingModelMaterialInput. The node reads a setting of its own when nothing is wired to it
+		 * (ShadingModelOverride), and the engine's IsInputConnectionRequired walks FExpressionInput properties only, so
+		 * its "required" for such a pin is the fall-through, not an answer.
+		 */
+		bool IsMaterialPropertyPin(const FProperty* Property)
+		{
+			const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
+			return StructProperty
+				&& StructProperty->Struct
+				&& StructProperty->Struct->GetFName() != NAME_ExpressionInput
+				&& !StructProperty->Struct->GetName().Equals(TEXT("MaterialAttributesInput"), ESearchCase::IgnoreCase);
+		}
+
 		FString MakeInputPinName(const FProperty* Property, const int32 ArrayIndex)
 		{
 			// One pin per array element for the handful of classes that declare their inputs as C
@@ -792,7 +807,8 @@ namespace UE::DreamShader::Editor::Compiler
 						Pin.bRequired = IsInputRequired(Property)
 							&& (LiveInputIndex.IsEmpty() || LiveIndex != nullptr)
 							&& (LiveIndex == nullptr || DefaultExpression->IsInputConnectionRequired(*LiveIndex))
-							&& !bInputsOptional;
+							&& !bInputsOptional
+							&& !IsMaterialPropertyPin(Property);
 						Pin.Type = IR::ECatalogValueType::Numeric;
 						// Only where the engine itself asks: UMaterialGraphNode::CreateInputPins walks GetInput until
 						// it answers null and queries the type of those pins alone. Past that, the fixed-list overrides

@@ -1456,7 +1456,11 @@ namespace UE::DreamShader::Editor::Private
 
 			TArray<TSharedPtr<FJsonValue>> PropertyValues;
 			TArray<TSharedPtr<FJsonValue>> InputValues;
-			int32 NextInputIndex = 0;
+			// The engine's index of each pin, by address, built the first time a pin is met: GetInput lists a class's pins
+			// in an order of its own (SubstrateShadingModels puts its ShadingModel after a pin declared below it), and a
+			// pin the default node does not show has no index to ask a type by.
+			TMap<const void*, int32> LiveInputIndex;
+			bool bLiveInputIndexBuilt = false;
 			for (TFieldIterator<FProperty> PropertyIt(Class, EFieldIteratorFlags::IncludeSuper); PropertyIt; ++PropertyIt)
 			{
 				FProperty* Property = *PropertyIt;
@@ -1469,15 +1473,30 @@ namespace UE::DreamShader::Editor::Private
 				FString PropertyType = GetReflectedPropertyTypeName(Property);
 				if (bIsInput && DefaultExpression && bCanQueryInputValueTypes)
 				{
+					if (!bLiveInputIndexBuilt)
+					{
+						bLiveInputIndexBuilt = true;
+						for (int32 LiveIndex = 0; LiveIndex < 256; ++LiveIndex)
+						{
+							const FExpressionInput* const Live = DefaultExpression->GetInput(LiveIndex);
+							if (Live == nullptr)
+							{
+								break;
+							}
+							LiveInputIndex.Add(Live, LiveIndex);
+						}
+					}
+					if (const int32* LiveIndex = LiveInputIndex.Find(Property->ContainerPtrToValuePtr<void>(DefaultExpression)))
+					{
 #if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
-					const uint64 ValueTypeMask = static_cast<uint64>(DefaultExpression->GetInputValueType(NextInputIndex));
+						const uint64 ValueTypeMask = static_cast<uint64>(DefaultExpression->GetInputValueType(*LiveIndex));
 #else
-					PRAGMA_DISABLE_DEPRECATION_WARNINGS
-					const uint64 ValueTypeMask = static_cast<uint64>(DefaultExpression->GetInputType(NextInputIndex));
-					PRAGMA_ENABLE_DEPRECATION_WARNINGS
+						PRAGMA_DISABLE_DEPRECATION_WARNINGS
+						const uint64 ValueTypeMask = static_cast<uint64>(DefaultExpression->GetInputType(*LiveIndex));
+						PRAGMA_ENABLE_DEPRECATION_WARNINGS
 #endif
-					PropertyType = GetFriendlyNameForMaterialInputValueType(ValueTypeMask);
-					++NextInputIndex;
+						PropertyType = GetFriendlyNameForMaterialInputValueType(ValueTypeMask);
+					}
 				}
 
 				TSharedRef<FJsonObject> PropertyObject = MakeShared<FJsonObject>();

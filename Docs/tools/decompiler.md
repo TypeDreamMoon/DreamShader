@@ -473,7 +473,6 @@ has to be finished by hand:
 | `MaterialCache` | the attribute pins and the outputs its tag gives it |
 | `LayerStack` *(experimental)* | the layer inputs |
 | `Operator` *(new translator only)* | every input and its constant: all of them live in one array |
-| `SubstrateShadingModels` | the `ShadingModel` pin, whose struct type the catalog does not list as a pin |
 
 A Substrate node is written under the name sources use — `Substrate.Slab(...)`, the first alias the
 catalog lists for the class — rather than the reflected `SubstrateSlabBSDF`; both resolve to the same

@@ -207,6 +207,7 @@ Legacy-style shading-model surface expressed as a Substrate material.
 | `ClearCoatNormal` | numeric | — |
 | `CustomTangent` | numeric | — |
 | `ThinTranslucentSurfaceCoverage` | numeric | — |
+| `ShadingModel` *(since 2.0.1)* | a shading model, `UE.ShadingModel(ShadingModel = …)`; left open, the node's `ShadingModelOverride` applies | — |
 
 Output: Substrate value. Editor completion offers no parameters for this wrapper.
 

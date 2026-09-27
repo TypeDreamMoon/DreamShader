@@ -15,15 +15,23 @@
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Tools/DreamShaderDecompileTools.h"
 
+#include "DreamShaderBuiltinCatalog.h"
+#include "DreamShaderVersionCompat.h"
 #include "Engine/Texture2D.h"
 #include "MaterialEditingLibrary.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialExpressionConstant.h"
 #include "Materials/MaterialExpressionDotProduct.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
+#include "Materials/MaterialExpressionShadingModel.h"
 #include "Materials/MaterialExpressionVectorParameter.h"
 #include "Materials/MaterialExpressionVertexInterpolator.h"
 #include "Materials/MaterialInstanceConstant.h"
+#include "RenderUtils.h"
+
+#if DREAMSHADER_WITH_SUBSTRATE_BUILTINS
+#include "Materials/MaterialExpressionSubstrate.h"
+#endif
 
 // Nodes an engine may not have: without them there is nothing of the kind to decompile.
 #if __has_include("Materials/MaterialExpressionConvert.h")
@@ -733,6 +741,136 @@ bool FDreamShaderDecompile2VertexInterpolatorTest::RunTest(const FString& Parame
 	}
 	return true;
 }
+
+// ---------------------------------------------------------------------------------------------
+// A pin declared as the material's own input type: SubstrateShadingModels' ShadingModel
+// ---------------------------------------------------------------------------------------------
+
+#if DREAMSHADER_WITH_SUBSTRATE_BUILTINS
+namespace UE::DreamShader::Editor::Private::Decompile2Tests
+{
+	/** The SubstrateShadingModels node of a material, and whether a ShadingModel node is wired to its ShadingModel pin. */
+	inline bool ReadsComputedShadingModel(UObject* Asset, bool& bOutHasNode)
+	{
+		bOutHasNode = false;
+		const UMaterial* Material = Cast<UMaterial>(Asset);
+		if (!Material)
+		{
+			return false;
+		}
+		for (const TObjectPtr<UMaterialExpression>& Expression : Material->GetExpressions())
+		{
+			if (const UMaterialExpressionSubstrateShadingModels* Node = Cast<UMaterialExpressionSubstrateShadingModels>(Expression.Get()))
+			{
+				bOutHasNode = true;
+				UMaterialExpression* Source = Node->ShadingModel.GetTracedInput().Expression;
+				return Source && Source->IsA<UMaterialExpressionShadingModel>();
+			}
+		}
+		return false;
+	}
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDecompile2ShadingModelPinTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Decompile.SubstrateShadingModelPin",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// SubstrateShadingModels declares its ShadingModel pin as an FShadingModelMaterialInput, the type of the material's own
+// pin, and the reflection helpers took only FExpressionInput and FMaterialAttributesInput for pins: the catalog listed no
+// such pin, the decompiler dropped its wire (DSH9070), and `Substrate = Bridge` left a computed shading model off the node.
+bool FDreamShaderDecompile2ShadingModelPinTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Decompile2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	// The catalog has the pin, and does not ask for it: unwired, the node reads its ShadingModelOverride.
+	{
+		const UE::DreamShader::IR::FBuiltinCatalog& Catalog = ::UE::DreamShader::Editor::Compiler::GetDreamShaderBuiltinCatalog();
+		const int32 EntryIndex = Catalog.FindExpression(TEXT("Substrate"), TEXT("ShadingModels"));
+		if (TestTrue(TEXT("the catalog lists Substrate.ShadingModels"), Catalog.Expressions.IsValidIndex(EntryIndex)))
+		{
+			const UE::DreamShader::IR::FCatalogExpression& Entry = Catalog.Expressions[EntryIndex];
+			const int32 PinIndex = Entry.FindInput(TEXT("ShadingModel"));
+			if (TestTrue(TEXT("with a ShadingModel pin"), PinIndex != INDEX_NONE))
+			{
+				TestFalse(TEXT("that a call may leave open"), Entry.Inputs[PinIndex].bRequired);
+			}
+		}
+	}
+
+	// A graph that wires it decompiles with the wire.
+	const FName ProbeName = MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), TEXT("M_DcShadingModelPin"));
+	UMaterial* Material = NewObject<UMaterial>(GetTransientPackage(), ProbeName, RF_Transient);
+	if (!TestNotNull(TEXT("the probe material"), Material))
+	{
+		return false;
+	}
+	UMaterialExpressionVectorParameter* Tint = Cast<UMaterialExpressionVectorParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionShadingModel* Model = Cast<UMaterialExpressionShadingModel>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionShadingModel::StaticClass()));
+	UMaterialExpressionSubstrateShadingModels* Surface = Cast<UMaterialExpressionSubstrateShadingModels>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionSubstrateShadingModels::StaticClass()));
+	if (!TestTrue(TEXT("the probe's nodes"), Tint && Model && Surface))
+	{
+		return false;
+	}
+	Tint->ParameterName = TEXT("Tint");
+	Model->ShadingModel = MSM_Subsurface;
+	Surface->BaseColor.Connect(0, Tint);
+	Surface->ShadingModel.Connect(0, Model);
+	Material->GetExpressionInputForProperty(MP_FrontMaterial)->Connect(0, Surface);
+
+	FRequest Request;
+	Request.Asset = Material;
+	Request.Format = EFormat::Dss;
+	const FResult Result = RunDreamShaderDecompileRequest(Request);
+	TestTrue(FString::Printf(TEXT("the probe decompiles (%s)"), *Describe(Result)), Result.bSucceeded);
+	if (!Result.bSucceeded)
+	{
+		return false;
+	}
+	ParsesAs(*this, ProbeName.ToString() + TEXT(".dss"), Result.SourceText);
+	ExpectSnippets(*this, TEXT("the probe"), Result.SourceText, { TEXT("Substrate.ShadingModels("), TEXT("ShadingModel = UE.ShadingModel(") });
+	TestFalse(FString::Printf(TEXT("no wire is dropped: no DSH9070 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9070")));
+
+	// A Substrate material builds where Substrate is on; the pin is wired again there.
+	if (!Substrate::IsSubstrateEnabled())
+	{
+		AddInfo(TEXT("Substrate is off in this project: the rebuild of the probe and `Substrate = Bridge` are not checked."));
+		return true;
+	}
+	{
+		FDreamShaderCompile2Fixture Fixture(ProbeName.ToString(), TEXT("Decompile2"));
+		UObject* Rebuilt = CompileAndLoad(*this, Fixture, Result.SourceText, *ProbeName.ToString());
+		bool bHasNode = false;
+		TestTrue(TEXT("the rebuilt ShadingModels node reads the ShadingModel node"), Rebuilt && ReadsComputedShadingModel(Rebuilt, bHasNode));
+		TestTrue(TEXT("the rebuild has a ShadingModels node"), bHasNode);
+	}
+
+	// `Substrate = Bridge` moves a computed shading model onto the node, as the engine's own conversion does (and keeps it
+	// on the material too).
+	{
+		const FString BridgeName = TEXT("M_DcBridgeShadingModel");
+		FDreamShaderCompile2Fixture Fixture(BridgeName, TEXT("Decompile2"));
+		UObject* Bridged = CompileAndLoad(*this, Fixture, TEXT(
+			"#pragma material(Substrate = Bridge)\n"
+			"export void M_DcBridgeShadingModel(inout material m)\n"
+			"{\n"
+			"    m.BaseColor = float3(0.8, 0.2, 0.2);\n"
+			"    m.ShadingModel = UE.ShadingModel(ShadingModel = Subsurface);\n"
+			"}\n"), *BridgeName);
+		bool bHasNode = false;
+		TestTrue(TEXT("the bridge wires the computed shading model to the node's ShadingModel pin"), Bridged && ReadsComputedShadingModel(Bridged, bHasNode));
+		TestTrue(TEXT("the bridge made a ShadingModels node"), bHasNode);
+	}
+	return true;
+}
+#endif // DREAMSHADER_WITH_SUBSTRATE_BUILTINS
 
 // ---------------------------------------------------------------------------------------------
 // Refusals, and the tools seam's own small functions
