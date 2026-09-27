@@ -1,5 +1,30 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Fixed
+
+- **The 2.0 decompiler reads a Convert node back as what it computes.** A Convert (Make / Break FloatN)
+  keeps its inputs, outputs and the mappings between their channels in arrays, which no call can
+  name, so it came back as `UE.Convert()` with no argument, and a read of its second output as a
+  read of its first: a float4 broken into two float2 pins decompiled to `UE.Convert(), UE.Convert()`.
+  Each output is now written as the channels it is put together from -- `DXY.xy`, `DXY.zw`,
+  `float3(Gain, 0.25, 0.75)` -- and rebuilds as ComponentMask and AppendVector nodes (`DSH9073`). A
+  mapping the engine refuses is named (`DSH9063`).
+
+- **The 2.0 decompiler reads a Switch node back as its branches.** Its cases are an array too, so it
+  came back as `UE.Switch(SwitchValue = ..., Default = ...)` without a single case. It is now the
+  chain the engine builds for it, `0.0 == floor(s) ? a : 1.0 == floor(s) ? b : default`; with nothing
+  wired to SwitchValue, the one input its number picks (`DSH9069`).
+
+- **A material that reads a VertexInterpolator decompiles.** A custom-output node was read back with
+  no output, and the one custom output that hands a value on made the whole module invalid
+  (`DSH9088`). It is `UE.VertexInterpolator(Input = ...)` wherever something reads it; a read of a
+  node that has no output at all is a zero with `DSH9072`, not a failed decompile.
+
+- **A SetMaterialAttributes pin the catalog does not know is named.** It was dropped without a word,
+  where the same pin on a MakeMaterialAttributes said `DSH9072`; now both do.
+
 ## 2.0.0 - 2026-09-21
 
 > The 2.0 line. This is a compiler rewrite rather than a feature release: a language front end

@@ -438,7 +438,12 @@ It is the compiler run backwards: **graph → IR → AST → printer**.
 1. *Import.* Each expression is read back as the IR op the emitter writes for it; anything else is a
    reflected `UE.<Class>(...)` node over the builtin catalog. Inline pin masks become swizzles by
    the emitter's own rule, comment boxes become `#pragma region`s, node positions become
-   `#pragma layout` hints.
+   `#pragma layout` hints. Two classes keep their pins in arrays no call can name, and are read back
+   as what they compute instead: a **Convert** node (Make / Break FloatN) as the channels each output
+   is put together from (`DXY.xy`, `float3(Gain, 0.25, 0.75)`), a **Switch** as the branches the
+   engine makes of it (`0.0 == floor(s) ? a : 1.0 == floor(s) ? b : default`, or the one input the
+   number picks when nothing is wired to SwitchValue). A VertexInterpolator, a custom output that
+   also hands a value on, is that value wherever something reads it.
 2. *Raise.* Nodes nothing reads are pruned, and the shapes the emitter lowers by hand are read back
    (a StaticSwitch over a static bool is an `if` / `?:`, a Set-attributes chain is `m.X = ...`). The
    [Substrate sugar](../language-v2/substrate.md#decompiling) is read back here too, wherever that is
@@ -456,6 +461,19 @@ What the language cannot say is named, never dropped silently: `DSH9060`–`DSH9
 (a missing function asset, a class outside the catalog, a Preview-pin default expression, additional
 defines on a Custom node) and `DSH9075`–`DSH9084` from the writer (a renamed identifier, positions of
 values written inline, an `extern` inferred from its calls).
+
+These engine classes still keep pins or outputs in arrays the text has no spelling for; a node of one
+of them comes back as a reflected call without those wires (`DSH9070`) or that state (`DSH9068`), and
+has to be finished by hand:
+
+| Class | What is lost |
+| :-- | :-- |
+| `LandscapeLayerBlend` | the layers: names, blend types, and their layer and height pins |
+| `LandscapeGrassOutput`, `LandscapePhysicalMaterialOutput`, `PhysicalMaterialOutput` | the per-entry pins and the assets they name |
+| `MaterialCache` | the attribute pins and the outputs its tag gives it |
+| `LayerStack` *(experimental)* | the layer inputs |
+| `Operator` *(new translator only)* | every input and its constant: all of them live in one array |
+| `SubstrateShadingModels` | the `ShadingModel` pin, whose struct type the catalog does not list as a pin |
 
 A Substrate node is written under the name sources use — `Substrate.Slab(...)`, the first alias the
 catalog lists for the class — rather than the reflected `SubstrateSlabBSDF`; both resolve to the same

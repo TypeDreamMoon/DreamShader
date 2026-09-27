@@ -11,6 +11,10 @@
 // with nothing wired to Value is whichever branch its default picks. And an engine GetMaterialAttributes hands its
 // material through on output 0.
 //
+// Two classes keep their pins in arrays, which no call can name, and are read back as what they compute instead: a
+// Convert (Make / Break FloatN) as the channels each output is put together from, a Switch as the chain of branches the
+// engine makes of it.
+//
 // What an expression becomes: the core op the emitter would write the very same
 // expression for -- every operand pin wired, every other property at its default -- and otherwise a Reflected node over
 // the catalog, with the connected pins as inputs and the non-default properties, `Const*` twins of unwired pins always
@@ -73,6 +77,20 @@
 #include "Serialization/JsonSerializer.h"
 #include "UObject/Package.h"
 #include "UObject/UnrealType.h"
+
+// Convert and Switch keep their pins in arrays; an engine without their headers has no such node to read.
+#if __has_include("Materials/MaterialExpressionConvert.h")
+#include "Materials/MaterialExpressionConvert.h"
+#define DREAMSHADER_GRAPH_IMPORT_WITH_CONVERT 1
+#else
+#define DREAMSHADER_GRAPH_IMPORT_WITH_CONVERT 0
+#endif
+#if __has_include("Materials/MaterialExpressionSwitch.h")
+#include "Materials/MaterialExpressionSwitch.h"
+#define DREAMSHADER_GRAPH_IMPORT_WITH_SWITCH 1
+#else
+#define DREAMSHADER_GRAPH_IMPORT_WITH_SWITCH 0
+#endif
 
 #define LOCTEXT_NAMESPACE "DreamShader.Decompiler.GraphImport"
 
@@ -296,6 +314,8 @@ namespace UE::DreamShader::Editor::Private
 			// ----- nodes
 			void BuildNode(UMaterialExpression* Expression);
 			int32 AddNode(FIRNode&& Node, const UMaterialExpression* Expression);
+			/** One of the several nodes an expression is read back as: in the expression's region, with no name or position of its own. */
+			FIRValue AddPartNode(FIRNode&& Node, const UMaterialExpression* Expression);
 			FIRType TypeOf(const FIRValue& Value) const { return Graph.IsValidValue(Value) ? Graph.TypeOf(Value) : FIRType::Error(); }
 			int32 WidthOf(const FIRValue& Value) const { return TypeOf(Value).GraphComponentCount(); }
 
@@ -308,11 +328,15 @@ namespace UE::DreamShader::Editor::Private
 			bool ImportCustom(UMaterialExpression* Expression);
 			bool ImportMaterialAttributes(UMaterialExpression* Expression);
 			bool ImportStructural(UMaterialExpression* Expression);
+			bool ImportConvert(UMaterialExpression* Expression);
+			bool ImportSwitch(UMaterialExpression* Expression);
 			bool ImportTextureSample(UMaterialExpressionTextureSample* Sample, FIRValue Texture, const UMaterialExpression* Owner);
 			bool ImportCoreMath(UMaterialExpression* Expression);
 			void ImportReflected(UMaterialExpression* Expression);
 
 			void AddParameterMetadata(FIRNode& Node, const UMaterialExpression* Expression, const TSet<FName>& Handled);
+			/** The catalog's outputs onto a reflected node that has none yet; how many it has now. */
+			int32 AddCatalogOutputs(int32 NodeIndex, UMaterialExpression* Expression);
 			bool ReadProperty(const UObject* Object, const FProperty* Property, FIRPropertyValue& OutValue) const;
 			bool AreOtherPropertiesDefault(const UMaterialExpression* Expression, const TSet<FName>& Ignored) const;
 			bool CanBeCoreSample(const UMaterialExpressionTextureSample* Sample, bool& bOutHasLevel) const;
@@ -619,16 +643,32 @@ namespace UE::DreamShader::Editor::Private
 			}
 			else if (NodeOp == EIROp::Reflected || NodeOp == EIROp::FunctionCall || NodeOp == EIROp::Custom)
 			{
-				if (OutputIndex >= 0 && OutputIndex < NodeOutputCount)
+				// A custom-output class is read back as a statement, with no output; the one that also hands a value on
+				// (VertexInterpolator's PS) is that value as soon as something reads it, as the builder makes it.
+				int32 OutputCount = NodeOutputCount;
+				if (OutputCount == 0 && NodeOp == EIROp::Reflected)
+				{
+					OutputCount = AddCatalogOutputs(NodeIndex, Expression);
+				}
+
+				if (OutputIndex >= 0 && OutputIndex < OutputCount)
 				{
 					Result.Output = OutputIndex;
 				}
-				else
+				else if (OutputCount > 0)
 				{
 					Warning(TEXT("DSH9072"), FText::Format(
 						LOCTEXT("OutputPastCatalog", "{0} is read through its output {1}, which the node has no slot for; its first output is read instead."),
 						DescribeExpression(Expression),
 						FText::AsNumber(OutputIndex)));
+				}
+				else
+				{
+					Warning(TEXT("DSH9072"), FText::Format(
+						LOCTEXT("OutputOfStatement", "{0} is read through its output {1}, and the catalog lists no output for its class; a zero stands in for that read."),
+						DescribeExpression(Expression),
+						FText::AsNumber(OutputIndex)));
+					Result = MakeZero(1);
 				}
 			}
 			else if (Output && Output->Mask != 0)
@@ -747,6 +787,19 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 			return NodeIndex;
+		}
+
+		FIRValue FGraphImporter::AddPartNode(FIRNode&& Node, const UMaterialExpression* Expression)
+		{
+			// The region AddNode would give it; AssignRegions reads the rest off ExpressionOfNode. No `$n` binding: the
+			// expression's position belongs to none of its parts more than to another.
+			if (const int32* Region = Hints.NodeRegions.Find(Expression->MaterialExpressionGuid))
+			{
+				Node.Region = *Region;
+			}
+			const int32 NodeIndex = Graph.AddNode(MoveTemp(Node));
+			ExpressionOfNode.Add(NodeIndex, Expression);
+			return FIRValue{ NodeIndex, 0 };
 		}
 
 		bool FGraphImporter::ReadProperty(const UObject* Object, const FProperty* Property, FIRPropertyValue& OutValue) const
@@ -1474,8 +1527,17 @@ namespace UE::DreamShader::Editor::Private
 				{
 					const FIRValue Value = Set->Inputs.IsValidIndex(Index + 1) ? ResolveInput(Set->Inputs[Index + 1]) : FIRValue::None();
 					const FString Attribute = FMaterialAttributeDefinitionMap::GetAttributeName(Set->AttributeSetTypes[Index]);
-					if (!Value.IsValid() || Catalog.FindMaterialAttribute(Attribute) == INDEX_NONE)
+					if (!Value.IsValid())
 					{
+						continue;
+					}
+					if (Catalog.FindMaterialAttribute(Attribute) == INDEX_NONE)
+					{
+						// As on a make: a custom attribute has no EMaterialProperty, so no `m.<Attribute>` says it.
+						Warning(TEXT("DSH9072"), FText::Format(
+							LOCTEXT("SetAttributeUnknown", "{0} sets '{1}', which is no material attribute the catalog knows; the connection is dropped."),
+							DescribeExpression(Expression),
+							FText::FromString(Attribute)));
 						continue;
 					}
 					Node.Inputs.Add({ Attribute, Value });
@@ -1690,6 +1752,379 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
+		bool FGraphImporter::ImportConvert(UMaterialExpression* Expression)
+		{
+#if DREAMSHADER_GRAPH_IMPORT_WITH_CONVERT
+			// Its inputs, its outputs and the mappings between their channels are arrays of structs, so no call can say the
+			// node and the reflected one reads back without a single wire. What it computes can be said: per output, what
+			// UMaterialExpressionConvert::Compile builds (and Build, for the new translator) -- each channel masked out of an
+			// input, or a default, appended together.
+			namespace Prop = UE::DreamShader::IR::Prop;
+			UMaterialExpressionConvert* Convert = Cast<UMaterialExpressionConvert>(Expression);
+			if (!Convert)
+			{
+				return false;
+			}
+
+			// MaterialExpressionConvertType::GetComponentCount, without its checkNoEntry: a type this engine does not know
+			// leaves the node to the reflected call and what that one warns.
+			const auto WidthOfType = [](const EMaterialExpressionConvertType Type) -> int32
+			{
+				switch (Type)
+				{
+				case EMaterialExpressionConvertType::Scalar: return 1;
+				case EMaterialExpressionConvertType::Vector2: return 2;
+				case EMaterialExpressionConvertType::Vector3: return 3;
+				case EMaterialExpressionConvertType::Vector4: return 4;
+				default: break;
+				}
+				return 0;
+			};
+			for (const FMaterialExpressionConvertInput& Input : Convert->ConvertInputs)
+			{
+				if (WidthOfType(Input.Type) == 0)
+				{
+					return false;
+				}
+			}
+			for (const FMaterialExpressionConvertOutput& Output : Convert->ConvertOutputs)
+			{
+				if (WidthOfType(Output.Type) == 0)
+				{
+					return false;
+				}
+			}
+
+			// A channel of an output: a channel of the value wired to an input, or a number -- an unwired input's default,
+			// the output's own default, or the zero that stands in for what the engine refuses.
+			struct FChannel
+			{
+				FIRValue Source = FIRValue::None();
+				int32 Index = 0;
+				double Literal = 0.0;
+			};
+
+			// An input is read once, and only when a mapping reads it: the engine compiles it the same way.
+			TArray<TOptional<FIRValue>> InputValues;
+			InputValues.SetNum(Convert->ConvertInputs.Num());
+			const auto InputValue = [this, Convert, &InputValues](const int32 InputIndex) -> FIRValue
+			{
+				if (!InputValues[InputIndex].IsSet())
+				{
+					InputValues[InputIndex] = ResolveInput(Convert->ConvertInputs[InputIndex].ExpressionInput);
+				}
+				return InputValues[InputIndex].GetValue();
+			};
+
+			const auto MakeLiteral = [this, Expression](const double* Components, const int32 Width) -> FIRValue
+			{
+				FIRNode Node;
+				Node.Op = EIROp::Constant;
+				Node.Properties.Add({ FString(Prop::Value), FIRPropertyValue::MakeFloat4(Components, Width) });
+				Node.Outputs.Add(FIRType::Float(Width));
+				return AddPartNode(MoveTemp(Node), Expression);
+			};
+
+			static const TCHAR* const ChannelLetters = TEXT("RGBA");
+			for (int32 OutputIndex = 0; OutputIndex < Convert->ConvertOutputs.Num(); ++OutputIndex)
+			{
+				const FMaterialExpressionConvertOutput& Output = Convert->ConvertOutputs[OutputIndex];
+				const int32 Width = WidthOfType(Output.Type);
+
+				FChannel Channels[4];
+				bool bMapped[4] = { false, false, false, false };
+				// In the node's order: of two mappings onto one channel, the engine keeps the later.
+				for (const FMaterialExpressionConvertMapping& Mapping : Convert->ConvertMappings)
+				{
+					if (Mapping.OutputIndex != OutputIndex)
+					{
+						continue;
+					}
+					if (Mapping.OutputComponentIndex < 0 || Mapping.OutputComponentIndex >= Width
+						|| !Convert->ConvertInputs.IsValidIndex(Mapping.InputIndex)
+						|| Mapping.InputComponentIndex < 0
+						|| Mapping.InputComponentIndex >= WidthOfType(Convert->ConvertInputs[Mapping.InputIndex].Type))
+					{
+						Warning(TEXT("DSH9063"), FText::Format(
+							LOCTEXT("ConvertMappingUnknown", "{0} maps channel {1} of its input {2} onto channel {3} of its output {4}, and the node has no such pin or channel; the engine refuses the mapping, and it is left out."),
+							DescribeExpression(Expression),
+							FText::AsNumber(Mapping.InputComponentIndex),
+							FText::AsNumber(Mapping.InputIndex),
+							FText::AsNumber(Mapping.OutputComponentIndex),
+							FText::AsNumber(OutputIndex)));
+						continue;
+					}
+
+					FChannel& Channel = Channels[Mapping.OutputComponentIndex];
+					Channel = FChannel();
+					bMapped[Mapping.OutputComponentIndex] = true;
+
+					const FIRValue Value = InputValue(Mapping.InputIndex);
+					if (!Value.IsValid())
+					{
+						// Nothing wired: the input is its default, a float4 constant.
+						Channel.Literal = Convert->ConvertInputs[Mapping.InputIndex].DefaultValue.Component(Mapping.InputComponentIndex);
+						continue;
+					}
+
+					const int32 ValueWidth = WidthOf(Value);
+					if (ValueWidth == 1)
+					{
+						// A scalar is each of its channels: the new translator splats it to the input's type, the classic one
+						// reads `.r` of what it only knows as "a float".
+						Channel.Source = Value;
+					}
+					else if (Mapping.InputComponentIndex < ValueWidth)
+					{
+						Channel.Source = Value;
+						Channel.Index = Mapping.InputComponentIndex;
+					}
+					else
+					{
+						Warning(TEXT("DSH9063"), FText::Format(
+							LOCTEXT("ConvertChannelPastValue", "{0} reads channel {1} of its input {2}, which carries a {3}; the new translator reads zero there and the classic one refuses the node, so a zero stands in."),
+							DescribeExpression(Expression),
+							FText::FromString(FString::Chr(ChannelLetters[Mapping.InputComponentIndex])),
+							FText::AsNumber(Mapping.InputIndex),
+							FText::FromString(TypeOf(Value).ToString())));
+					}
+				}
+				for (int32 Index = 0; Index < Width; ++Index)
+				{
+					if (!bMapped[Index])
+					{
+						Channels[Index].Literal = Output.DefaultValue.Component(Index);
+					}
+				}
+
+				const TPair<const UMaterialExpression*, int32> Key(Expression, OutputIndex);
+
+				// Numbers throughout: one constant, which is what `float2(0.5, 1.0)` folds to (FIRBuilder::MakeAppend).
+				bool bAllLiteral = true;
+				double Literals[4] = { 0.0, 0.0, 0.0, 0.0 };
+				for (int32 Index = 0; Index < Width; ++Index)
+				{
+					bAllLiteral = bAllLiteral && !Channels[Index].Source.IsValid();
+					Literals[Index] = Channels[Index].Literal;
+				}
+				if (bAllLiteral)
+				{
+					ForwardedOutputs.Add(Key, MakeLiteral(Literals, Width));
+					continue;
+				}
+
+				// Otherwise the parts of a constructor, chained as the builder chains `float3(v.xy, 0.0)`: a run of ascending
+				// channels of one value is one channel selection -- the value itself when the run is all of it -- and every
+				// number is a part of its own.
+				TArray<FIRValue> Parts;
+				for (int32 Index = 0; Index < Width;)
+				{
+					const FChannel& Head = Channels[Index];
+					if (!Head.Source.IsValid())
+					{
+						const double Literal[4] = { Head.Literal, 0.0, 0.0, 0.0 };
+						Parts.Add(MakeLiteral(Literal, 1));
+						++Index;
+						continue;
+					}
+
+					FString Mask;
+					Mask.AppendChar(SwizzleComponents[Head.Index]);
+					int32 Next = Index + 1;
+					while (Next < Width && Channels[Next].Source == Head.Source && Channels[Next].Index > Channels[Next - 1].Index)
+					{
+						Mask.AppendChar(SwizzleComponents[Channels[Next].Index]);
+						++Next;
+					}
+
+					bool bWhole = Mask.Len() == WidthOf(Head.Source);
+					for (int32 Letter = 0; bWhole && Letter < Mask.Len(); ++Letter)
+					{
+						bWhole = Mask[Letter] == SwizzleComponents[Letter];
+					}
+					if (bWhole)
+					{
+						Parts.Add(Head.Source);
+					}
+					else
+					{
+						FIRNode Node;
+						Node.Op = EIROp::Swizzle;
+						Node.Operands.Add(Head.Source);
+						Node.Properties.Add({ FString(Prop::Mask), FIRPropertyValue::MakeString(Mask) });
+						Node.Outputs.Add(FIRType::Float(Mask.Len()));
+						Parts.Add(AddPartNode(MoveTemp(Node), Expression));
+					}
+					Index = Next;
+				}
+
+				FIRValue Result = Parts[0];
+				for (int32 PartIndex = 1; PartIndex < Parts.Num(); ++PartIndex)
+				{
+					FIRNode Node;
+					Node.Op = EIROp::Append;
+					Node.Operands = { Result, Parts[PartIndex] };
+					Node.Outputs.Add(FIRType::Float(FMath::Min(WidthOf(Result) + WidthOf(Parts[PartIndex]), 4)));
+					Result = AddPartNode(MoveTemp(Node), Expression);
+				}
+				ForwardedOutputs.Add(Key, Result);
+			}
+
+			Info(TEXT("DSH9073"), FText::Format(
+				LOCTEXT("ConvertAsChannels", "{0} is a Convert node, whose pins no call can name; each of its outputs is written as the channels it is made of ('v.xy', 'float3(a, b, 0.0)'), and the rebuilt graph has ComponentMask and AppendVector nodes in its place."),
+				DescribeExpression(Expression)));
+			return true;
+#else
+			(void)Expression;
+			return false;
+#endif
+		}
+
+		bool FGraphImporter::ImportSwitch(UMaterialExpression* Expression)
+		{
+#if DREAMSHADER_GRAPH_IMPORT_WITH_SWITCH
+			// Its cases are an array of structs, so the reflected call reads it back with none, and a Switch without cases
+			// compiles to nothing. What it computes can be said: the chain the new translator builds for it
+			// (UMaterialExpressionSwitch::Build), `floor(s) == i ? case i : ...` from the first case on and the default last,
+			// which is the case the classic translator's sum of steps picks for every finite selector.
+			namespace Prop = UE::DreamShader::IR::Prop;
+			UMaterialExpressionSwitch* Switch = Cast<UMaterialExpressionSwitch>(Expression);
+			if (!Switch || Expression->GetClass() != UMaterialExpressionSwitch::StaticClass())
+			{
+				return false;
+			}
+
+			// A case with nothing wired is refused by both translators: the node stays the reflected call, which says what
+			// it drops.
+			TArray<FIRValue> Cases;
+			for (const FSwitchCustomInput& Case : Switch->Inputs)
+			{
+				const FIRValue Value = ResolveInput(Case.Input);
+				if (!Value.IsValid() || WidthOf(Value) <= 0)
+				{
+					return false;
+				}
+				Cases.Add(Value);
+			}
+
+			const auto MakeNumber = [this, Expression](const double Number) -> FIRValue
+			{
+				const double Components[4] = { Number, 0.0, 0.0, 0.0 };
+				FIRNode Node;
+				Node.Op = EIROp::Constant;
+				Node.Properties.Add({ FString(Prop::Value), FIRPropertyValue::MakeFloat4(Components, 1) });
+				Node.Outputs.Add(FIRType::Float(1));
+				return AddPartNode(MoveTemp(Node), Expression);
+			};
+
+			FIRValue Default = ResolveInput(Switch->Default);
+			if (!Default.IsValid())
+			{
+				Default = MakeNumber(Switch->ConstDefault);
+			}
+
+			// The type the engine casts every branch to: a scalar goes with any width, two other widths with nothing.
+			int32 Width = WidthOf(Default);
+			if (Width <= 0)
+			{
+				return false;
+			}
+			for (const FIRValue& Case : Cases)
+			{
+				const int32 CaseWidth = WidthOf(Case);
+				if (CaseWidth != 1 && Width != 1 && CaseWidth != Width)
+				{
+					return false;
+				}
+				Width = FMath::Max(Width, CaseWidth);
+			}
+			const auto ToCommonType = [this, Expression, Width](const FIRValue Value) -> FIRValue
+			{
+				// A scalar picked where the others are vectors is splatted, as `float3(x)` is.
+				if (Width <= 1 || WidthOf(Value) != 1)
+				{
+					return Value;
+				}
+				FIRNode Node;
+				Node.Op = EIROp::Broadcast;
+				Node.Operands.Add(Value);
+				Node.Outputs.Add(FIRType::Float(Width));
+				return AddPartNode(MoveTemp(Node), Expression);
+			};
+
+			const TPair<const UMaterialExpression*, int32> Key(Expression, 0);
+			const FIRValue Selector = ResolveInput(Switch->SwitchValue);
+			if (Cases.IsEmpty())
+			{
+				// The new translator hands the default on; the classic one has nothing to choose from.
+				ForwardedOutputs.Add(Key, Default);
+				Info(TEXT("DSH9069"), FText::Format(
+					LOCTEXT("SwitchWithoutCases", "{0} has no input besides its default, which is what it hands on; the rebuilt graph has no switch there."),
+					DescribeExpression(Expression)));
+				return true;
+			}
+			if (!Selector.IsValid())
+			{
+				// Nothing wired to SwitchValue: its number picks one input for good, in both translators.
+				const int32 Picked = FMath::FloorToInt(Switch->ConstSwitchValue);
+				const bool bCase = Cases.IsValidIndex(Picked);
+				ForwardedOutputs.Add(Key, ToCommonType(bCase ? Cases[Picked] : Default));
+				Info(TEXT("DSH9069"), FText::Format(
+					LOCTEXT("SwitchFolded", "{0} has nothing wired to SwitchValue, so its value {1} picks {2} and nothing else; the rebuilt graph has no switch there."),
+					DescribeExpression(Expression),
+					FText::AsNumber(Switch->ConstSwitchValue),
+					bCase
+						? FText::Format(LOCTEXT("SwitchFoldedCase", "the input '{0}'"), FText::FromName(Switch->Inputs[Picked].InputName))
+						: LOCTEXT("SwitchFoldedDefault", "the default")));
+				return true;
+			}
+
+			// The first channel of a vector selector (Build), floored, so that each case is one exact comparison.
+			FIRValue Index = Selector;
+			if (WidthOf(Index) > 1)
+			{
+				FIRNode Node;
+				Node.Op = EIROp::Swizzle;
+				Node.Operands.Add(Index);
+				Node.Properties.Add({ FString(Prop::Mask), FIRPropertyValue::MakeString(TEXT("x")) });
+				Node.Outputs.Add(FIRType::Float(1));
+				Index = AddPartNode(MoveTemp(Node), Expression);
+			}
+			FIRNode FloorNode;
+			FloorNode.Op = EIROp::Floor;
+			FloorNode.Operands.Add(Index);
+			FloorNode.Outputs.Add(FIRType::Float(1));
+			const FIRValue Floored = AddPartNode(MoveTemp(FloorNode), Expression);
+
+			// From the last case back, as Build chains them: each case's "else" is everything after it. The number is the
+			// If's A, so that no case is the `c ? a : b` shape RaiseDreamShaderIR reads an If against a Constant 0 B as; and
+			// a case that is what follows it anyway is no branch (FIRBuilder::MakeConditional).
+			FIRValue Result = Default;
+			for (int32 CaseIndex = Cases.Num() - 1; CaseIndex >= 0; --CaseIndex)
+			{
+				if (Cases[CaseIndex] == Result)
+				{
+					continue;
+				}
+				const FIRValue Number = MakeNumber(CaseIndex);
+				FIRNode Node;
+				Node.Op = EIROp::Compare;
+				Node.Operands = { Number, Floored, Result, Cases[CaseIndex], Result };
+				Node.Outputs.Add(FIRType::Float(FMath::Max(WidthOf(Result), WidthOf(Cases[CaseIndex]))));
+				Result = AddPartNode(MoveTemp(Node), Expression);
+			}
+			ForwardedOutputs.Add(Key, ToCommonType(Result));
+
+			Info(TEXT("DSH9073"), FText::Format(
+				LOCTEXT("SwitchAsBranches", "{0} is a Switch node, whose inputs no call can name; it is written as the branches the engine makes of it ('0.0 == floor(s) ? a : ...'), and the rebuilt graph has Floor and If nodes in its place."),
+				DescribeExpression(Expression)));
+			return true;
+#else
+			(void)Expression;
+			return false;
+#endif
+		}
+
 		bool FGraphImporter::ImportCoreMath(UMaterialExpression* Expression)
 		{
 			const EIROp* Op = CoreOpByClass.Find(GetMaterialExpressionShortName(Expression->GetClass()));
@@ -1893,16 +2328,36 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 
+			const int32 NodeIndex = AddNode(MoveTemp(Node), Expression);
+			NodeOfExpression.Add(Expression, NodeIndex);
+			// A custom-output class is a statement until something reads it (ValueOfOutput).
 			if (!Entry.bIsCustomOutput)
 			{
-				for (int32 OutputIndex = 0; OutputIndex < Entry.Outputs.Num(); ++OutputIndex)
-				{
-					Node.Outputs.Add(ResolveOutputType(Expression, OutputIndex, Entry.Outputs[OutputIndex].Type, Node));
-					Node.OutputNames.Add(Entry.Outputs[OutputIndex].Name);
-				}
+				AddCatalogOutputs(NodeIndex, Expression);
+			}
+		}
+
+		int32 FGraphImporter::AddCatalogOutputs(const int32 NodeIndex, UMaterialExpression* Expression)
+		{
+			FIRNode& Node = Graph.Nodes[NodeIndex];
+			if (Node.Outputs.Num() > 0 || !Catalog.Expressions.IsValidIndex(Node.CatalogIndex))
+			{
+				return Node.Outputs.Num();
 			}
 
-			NodeOfExpression.Add(Expression, AddNode(MoveTemp(Node), Expression));
+			// The slot is the engine's output index: the catalog lists a class's outputs off the same array.
+			const UE::DreamShader::IR::FCatalogExpression& Entry = Catalog.Expressions[Node.CatalogIndex];
+			TArray<FIRType> Types;
+			for (int32 OutputIndex = 0; OutputIndex < Entry.Outputs.Num(); ++OutputIndex)
+			{
+				Types.Add(ResolveOutputType(Expression, OutputIndex, Entry.Outputs[OutputIndex].Type, Node));
+			}
+			for (int32 OutputIndex = 0; OutputIndex < Entry.Outputs.Num(); ++OutputIndex)
+			{
+				Node.Outputs.Add(Types[OutputIndex]);
+				Node.OutputNames.Add(Entry.Outputs[OutputIndex].Name);
+			}
+			return Node.Outputs.Num();
 		}
 
 		void FGraphImporter::BuildNode(UMaterialExpression* Expression)
@@ -1920,6 +2375,8 @@ namespace UE::DreamShader::Editor::Private
 				|| ImportCustom(Expression)
 				|| ImportMaterialAttributes(Expression)
 				|| ImportStructural(Expression)
+				|| ImportConvert(Expression)
+				|| ImportSwitch(Expression)
 				|| ImportCoreMath(Expression))
 			{
 				return;

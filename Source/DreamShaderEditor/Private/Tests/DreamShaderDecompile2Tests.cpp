@@ -16,7 +16,28 @@
 #include "Tools/DreamShaderDecompileTools.h"
 
 #include "Engine/Texture2D.h"
+#include "MaterialEditingLibrary.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialExpressionConstant.h"
+#include "Materials/MaterialExpressionDotProduct.h"
+#include "Materials/MaterialExpressionScalarParameter.h"
+#include "Materials/MaterialExpressionVectorParameter.h"
+#include "Materials/MaterialExpressionVertexInterpolator.h"
 #include "Materials/MaterialInstanceConstant.h"
+
+// Nodes an engine may not have: without them there is nothing of the kind to decompile.
+#if __has_include("Materials/MaterialExpressionConvert.h")
+#include "Materials/MaterialExpressionConvert.h"
+#define DREAMSHADER_DECOMPILE2_TESTS_WITH_CONVERT 1
+#else
+#define DREAMSHADER_DECOMPILE2_TESTS_WITH_CONVERT 0
+#endif
+#if __has_include("Materials/MaterialExpressionSwitch.h")
+#include "Materials/MaterialExpressionSwitch.h"
+#define DREAMSHADER_DECOMPILE2_TESTS_WITH_SWITCH 1
+#else
+#define DREAMSHADER_DECOMPILE2_TESTS_WITH_SWITCH 0
+#endif
 
 // This file's own namespace: the module builds as a unity blob.
 namespace UE::DreamShader::Editor::Private::Decompile2Tests
@@ -101,6 +122,15 @@ namespace UE::DreamShader::Editor::Private::Decompile2Tests
 	inline FString MakeMaterialSource(const TCHAR* EntryName)
 	{
 		return FString(GMaterialSource).Replace(TEXT("{NAME}"), EntryName, ESearchCase::CaseSensitive);
+	}
+
+	/** Every needle in the text, each one said on its own. */
+	inline void ExpectSnippets(FAutomationTestBase& Test, const TCHAR* What, const FString& Text, std::initializer_list<const TCHAR*> Needles)
+	{
+		for (const TCHAR* Needle : Needles)
+		{
+			Test.TestTrue(FString::Printf(TEXT("%s: '%s'\n%s"), What, Needle, *Text), Text.Contains(Needle, ESearchCase::CaseSensitive));
+		}
 	}
 }
 
@@ -362,6 +392,344 @@ bool FDreamShaderDecompile2InstanceTest::RunTest(const FString& Parameters)
 		const FResult Refused = RunDreamShaderDecompileRequest(Legacy);
 		TestFalse(TEXT("an instance into a `.dss` is refused"), Refused.bSucceeded);
 		TestTrue(FString::Printf(TEXT("with DSH9085 (%s)"), *Describe(Refused)), HasCode(Refused, TEXT("DSH9085")));
+	}
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// A Convert node (Make / Break FloatN), whose pins no call can name
+// ---------------------------------------------------------------------------------------------
+
+#if DREAMSHADER_DECOMPILE2_TESTS_WITH_CONVERT
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDecompile2ConvertTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Decompile.ConvertNode",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The reflected call read a Convert back as `UE.Convert()`: its inputs live in ConvertInputs, which no call can wire, and
+// the catalog lists the one output the class default has, so a read of the second output became a read of the first.
+// A material that broke a float4 of derivatives into two float2 pins decompiled to `UE.Convert(), UE.Convert()`. What
+// each output computes is said instead, and the text is proved by building it and reading the build back.
+bool FDreamShaderDecompile2ConvertTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Decompile2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	// The probe's name is the entry its text declares, and the product the rebuild makes.
+	const FName ProbeName = MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), TEXT("M_DcConvert"));
+	UMaterial* Material = NewObject<UMaterial>(GetTransientPackage(), ProbeName, RF_Transient);
+	if (!TestNotNull(TEXT("the probe material"), Material))
+	{
+		return false;
+	}
+
+	UMaterialExpressionVectorParameter* Pairs = Cast<UMaterialExpressionVectorParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionScalarParameter* Gain = Cast<UMaterialExpressionScalarParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpressionDotProduct* Dot = Cast<UMaterialExpressionDotProduct>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionDotProduct::StaticClass()));
+	if (!TestNotNull(TEXT("the parameters"), Pairs) || !TestNotNull(TEXT("the parameters"), Gain) || !TestNotNull(TEXT("the dot product"), Dot))
+	{
+		return false;
+	}
+	Pairs->ParameterName = TEXT("DXY");
+	Gain->ParameterName = TEXT("Gain");
+	// VectorParameter's outputs are RGB, R, G, B, A and then RGBA.
+	constexpr int32 RGBA = 5;
+
+	using EConvertType = EMaterialExpressionConvertType;
+	const auto MakeConvert = [this, Material](
+		std::initializer_list<EConvertType> Inputs,
+		std::initializer_list<EConvertType> Outputs,
+		std::initializer_list<FMaterialExpressionConvertMapping> Mappings) -> UMaterialExpressionConvert*
+	{
+		UMaterialExpressionConvert* Convert = Cast<UMaterialExpressionConvert>(
+			UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionConvert::StaticClass()));
+		if (!TestNotNull(TEXT("a Convert node"), Convert))
+		{
+			return nullptr;
+		}
+		for (const EConvertType Type : Inputs)
+		{
+			Convert->ConvertInputs.AddDefaulted_GetRef().Type = Type;
+		}
+		for (const EConvertType Type : Outputs)
+		{
+			Convert->ConvertOutputs.AddDefaulted_GetRef().Type = Type;
+		}
+		Convert->ConvertMappings = Mappings;
+		// The pins follow the arrays only once asked for; a wire to output 1 needs them.
+		Convert->GetOutputs();
+		return Convert;
+	};
+
+	// Mappings are (input, input channel, output, output channel).
+	// The report's shape: a float4 of two derivative pairs broken into its float2 halves.
+	UMaterialExpressionConvert* Break = MakeConvert(
+		{ EConvertType::Vector4 }, { EConvertType::Vector2, EConvertType::Vector2 },
+		{ { 0, 0, 0, 0 }, { 0, 1, 0, 1 }, { 0, 2, 1, 0 }, { 0, 3, 1, 1 } });
+	// A wired scalar, an unwired input's default, and a channel no mapping fills: the output's default.
+	UMaterialExpressionConvert* Make = MakeConvert(
+		{ EConvertType::Scalar, EConvertType::Scalar }, { EConvertType::Vector3 },
+		{ { 0, 0, 0, 0 }, { 1, 0, 0, 1 } });
+	// Channels out of order: selections put together, as `v.wxy` is.
+	UMaterialExpressionConvert* Shuffle = MakeConvert(
+		{ EConvertType::Vector4 }, { EConvertType::Vector3 },
+		{ { 0, 3, 0, 0 }, { 0, 0, 0, 1 }, { 0, 1, 0, 2 } });
+	// A scalar is each of its channels.
+	UMaterialExpressionConvert* Splat = MakeConvert({ EConvertType::Vector3 }, { EConvertType::Scalar }, { { 0, 2, 0, 0 } });
+	// Nothing mapped at all: the output is its default.
+	UMaterialExpressionConvert* Fixed = MakeConvert({}, { EConvertType::Scalar }, {});
+	if (!Break || !Make || !Shuffle || !Splat || !Fixed)
+	{
+		return false;
+	}
+	Make->ConvertInputs[1].DefaultValue = FLinearColor(0.25f, 0.0f, 0.0f, 0.0f);
+	Make->ConvertOutputs[0].DefaultValue = FLinearColor(0.0f, 0.0f, 0.75f, 0.0f);
+	Fixed->ConvertOutputs[0].DefaultValue = FLinearColor(0.375f, 0.0f, 0.0f, 0.0f);
+
+	Break->ConvertInputs[0].ExpressionInput.Connect(RGBA, Pairs);
+	Make->ConvertInputs[0].ExpressionInput.Connect(0, Gain);
+	Shuffle->ConvertInputs[0].ExpressionInput.Connect(RGBA, Pairs);
+	Splat->ConvertInputs[0].ExpressionInput.Connect(0, Gain);
+	Dot->A.Connect(0, Break);
+	Dot->B.Connect(1, Break);
+	Material->GetExpressionInputForProperty(MP_Roughness)->Connect(0, Dot);
+	Material->GetExpressionInputForProperty(MP_EmissiveColor)->Connect(0, Make);
+	Material->GetExpressionInputForProperty(MP_BaseColor)->Connect(0, Shuffle);
+	Material->GetExpressionInputForProperty(MP_Metallic)->Connect(0, Splat);
+	Material->GetExpressionInputForProperty(MP_Specular)->Connect(0, Fixed);
+
+	const auto ExpectConvertRead = [this](const TCHAR* What, const FString& Text)
+	{
+		ExpectSnippets(*this, What, Text, {
+			TEXT("m.Roughness = dot(DXY.xy, DXY.zw);"),
+			TEXT("m.EmissiveColor = float3(Gain, 0.25, 0.75);"),
+			TEXT("m.BaseColor = float3(DXY.w, DXY.xy);"),
+			TEXT("m.Metallic = Gain;"),
+			TEXT("m.Specular = 0.375;") });
+		TestFalse(FString::Printf(TEXT("%s: no reflected Convert\n%s"), What, *Text), Text.Contains(TEXT("UE.Convert")));
+	};
+
+	FRequest Request;
+	Request.Asset = Material;
+	Request.Format = EFormat::Dss;
+	const FResult Result = RunDreamShaderDecompileRequest(Request);
+	TestTrue(FString::Printf(TEXT("the probe decompiles (%s)"), *Describe(Result)), Result.bSucceeded);
+	if (!Result.bSucceeded)
+	{
+		return false;
+	}
+	ParsesAs(*this, ProbeName.ToString() + TEXT(".dss"), Result.SourceText);
+	ExpectConvertRead(TEXT("the probe"), Result.SourceText);
+	TestTrue(FString::Printf(TEXT("the rebuild is said to differ in its nodes: DSH9073 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9073")));
+	TestFalse(FString::Printf(TEXT("no wire is dropped: no DSH9070 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9070")));
+	TestFalse(FString::Printf(TEXT("no output is read as another: no DSH9072 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9072")));
+	TestFalse(FString::Printf(TEXT("nothing is refused: no DSH9063 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9063")));
+
+	// The proof: the text builds, and the build reads back as the same text.
+	FDreamShaderCompile2Fixture Fixture(ProbeName.ToString(), TEXT("Decompile2"));
+	UObject* Rebuilt = CompileAndLoad(*this, Fixture, Result.SourceText, *ProbeName.ToString());
+	if (!Rebuilt)
+	{
+		return false;
+	}
+	FRequest Again;
+	Again.Asset = Rebuilt;
+	Again.Format = EFormat::Dss;
+	const FResult Second = RunDreamShaderDecompileRequest(Again);
+	TestTrue(FString::Printf(TEXT("the rebuild decompiles (%s)"), *Describe(Second)), Second.bSucceeded);
+	if (Second.bSucceeded)
+	{
+		ExpectConvertRead(TEXT("the rebuild"), Second.SourceText);
+	}
+	return true;
+}
+#endif // DREAMSHADER_DECOMPILE2_TESTS_WITH_CONVERT
+
+// ---------------------------------------------------------------------------------------------
+// A Switch node, whose cases no call can name
+// ---------------------------------------------------------------------------------------------
+
+#if DREAMSHADER_DECOMPILE2_TESTS_WITH_SWITCH
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDecompile2SwitchTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Decompile.SwitchNode",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// The cases of a Switch are an array (Inputs), so the reflected call read one back with none -- `UE.Switch(SwitchValue =
+// ..)`, which builds a Switch that has nothing to switch between. It is written as the branches the engine makes of it.
+bool FDreamShaderDecompile2SwitchTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Decompile2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	const FName ProbeName = MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), TEXT("M_DcSwitch"));
+	UMaterial* Material = NewObject<UMaterial>(GetTransientPackage(), ProbeName, RF_Transient);
+	if (!TestNotNull(TEXT("the probe material"), Material))
+	{
+		return false;
+	}
+
+	const auto Create = [Material](UClass* Class) { return UMaterialEditingLibrary::CreateMaterialExpression(Material, Class); };
+	UMaterialExpressionScalarParameter* Index = Cast<UMaterialExpressionScalarParameter>(Create(UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpressionVectorParameter* TintA = Cast<UMaterialExpressionVectorParameter>(Create(UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionVectorParameter* TintB = Cast<UMaterialExpressionVectorParameter>(Create(UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionConstant* Low = Cast<UMaterialExpressionConstant>(Create(UMaterialExpressionConstant::StaticClass()));
+	UMaterialExpressionConstant* High = Cast<UMaterialExpressionConstant>(Create(UMaterialExpressionConstant::StaticClass()));
+	UMaterialExpressionSwitch* Pick = Cast<UMaterialExpressionSwitch>(Create(UMaterialExpressionSwitch::StaticClass()));
+	UMaterialExpressionSwitch* Fixed = Cast<UMaterialExpressionSwitch>(Create(UMaterialExpressionSwitch::StaticClass()));
+	if (!TestTrue(TEXT("the probe's nodes"), Index && TintA && TintB && Low && High && Pick && Fixed))
+	{
+		return false;
+	}
+	Index->ParameterName = TEXT("Index");
+	TintA->ParameterName = TEXT("TintA");
+	TintB->ParameterName = TEXT("TintB");
+	Low->R = 0.25f;
+	High->R = 0.75f;
+
+	// A new Switch comes with one unnamed case, which an unwired graph would leave open (and neither translator compiles).
+	Pick->Inputs.Reset();
+	Fixed->Inputs.Reset();
+	const auto AddCase = [](UMaterialExpressionSwitch* Switch, const TCHAR* Name, UMaterialExpression* From)
+	{
+		FSwitchCustomInput& Case = Switch->Inputs.AddDefaulted_GetRef();
+		Case.InputName = Name;
+		Case.Input.Connect(0, From);
+	};
+
+	// Wired to a parameter: the branches, the default (ConstDefault, a scalar among float3s) last.
+	AddCase(Pick, TEXT("A"), TintA);
+	AddCase(Pick, TEXT("B"), TintB);
+	Pick->SwitchValue.Connect(0, Index);
+	Pick->ConstDefault = 0.5f;
+	Material->GetExpressionInputForProperty(MP_EmissiveColor)->Connect(0, Pick);
+
+	// Nothing wired to SwitchValue: its number picks the case once and for all (floor(1.5) = 1).
+	AddCase(Fixed, TEXT("Low"), Low);
+	AddCase(Fixed, TEXT("High"), High);
+	Fixed->ConstSwitchValue = 1.5f;
+	Material->GetExpressionInputForProperty(MP_Roughness)->Connect(0, Fixed);
+
+	const auto ExpectSwitchRead = [this](const TCHAR* What, const FString& Text)
+	{
+		ExpectSnippets(*this, What, Text, {
+			TEXT("floor(Index)"),
+			TEXT("0.0 == "),
+			TEXT("1.0 == "),
+			TEXT("m.Roughness = 0.75;") });
+		TestFalse(FString::Printf(TEXT("%s: no reflected Switch\n%s"), What, *Text), Text.Contains(TEXT("UE.Switch")));
+	};
+
+	FRequest Request;
+	Request.Asset = Material;
+	Request.Format = EFormat::Dss;
+	const FResult Result = RunDreamShaderDecompileRequest(Request);
+	TestTrue(FString::Printf(TEXT("the probe decompiles (%s)"), *Describe(Result)), Result.bSucceeded);
+	if (!Result.bSucceeded)
+	{
+		return false;
+	}
+	ParsesAs(*this, ProbeName.ToString() + TEXT(".dss"), Result.SourceText);
+	ExpectSwitchRead(TEXT("the probe"), Result.SourceText);
+	TestTrue(FString::Printf(TEXT("the branches are said: DSH9073 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9073")));
+	TestTrue(FString::Printf(TEXT("the fixed pick is said: DSH9069 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9069")));
+	TestFalse(FString::Printf(TEXT("no case is dropped: no DSH9070 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9070")));
+
+	FDreamShaderCompile2Fixture Fixture(ProbeName.ToString(), TEXT("Decompile2"));
+	UObject* Rebuilt = CompileAndLoad(*this, Fixture, Result.SourceText, *ProbeName.ToString());
+	if (!Rebuilt)
+	{
+		return false;
+	}
+	FRequest Again;
+	Again.Asset = Rebuilt;
+	Again.Format = EFormat::Dss;
+	const FResult Second = RunDreamShaderDecompileRequest(Again);
+	TestTrue(FString::Printf(TEXT("the rebuild decompiles (%s)"), *Describe(Second)), Second.bSucceeded);
+	if (Second.bSucceeded)
+	{
+		ExpectSwitchRead(TEXT("the rebuild"), Second.SourceText);
+	}
+	return true;
+}
+#endif // DREAMSHADER_DECOMPILE2_TESTS_WITH_SWITCH
+
+// ---------------------------------------------------------------------------------------------
+// A custom-output class that is also a value: VertexInterpolator
+// ---------------------------------------------------------------------------------------------
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDecompile2VertexInterpolatorTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Decompile.VertexInterpolatorNode",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A custom-output node was read back with no output at all, the shape of `UE.ClearCoatNormalCustomOutput(...);`. A
+// VertexInterpolator is one and hands its value on through its PS pin, so a material that read it did not decompile:
+// the read pointed at an output the node did not have (DSH9088).
+bool FDreamShaderDecompile2VertexInterpolatorTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Decompile2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	const FName ProbeName = MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), TEXT("M_DcInterpolator"));
+	UMaterial* Material = NewObject<UMaterial>(GetTransientPackage(), ProbeName, RF_Transient);
+	if (!TestNotNull(TEXT("the probe material"), Material))
+	{
+		return false;
+	}
+
+	UMaterialExpressionVectorParameter* Tint = Cast<UMaterialExpressionVectorParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionVertexInterpolator* Interpolator = Cast<UMaterialExpressionVertexInterpolator>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVertexInterpolator::StaticClass()));
+	if (!TestTrue(TEXT("the probe's nodes"), Tint && Interpolator))
+	{
+		return false;
+	}
+	Tint->ParameterName = TEXT("Tint");
+	// VectorParameter's output 0 is its RGB.
+	Interpolator->Input.Connect(0, Tint);
+	Material->GetExpressionInputForProperty(MP_EmissiveColor)->Connect(0, Interpolator);
+
+	FRequest Request;
+	Request.Asset = Material;
+	Request.Format = EFormat::Dss;
+	const FResult Result = RunDreamShaderDecompileRequest(Request);
+	TestTrue(FString::Printf(TEXT("the probe decompiles (%s)"), *Describe(Result)), Result.bSucceeded);
+	if (!Result.bSucceeded)
+	{
+		return false;
+	}
+	ParsesAs(*this, ProbeName.ToString() + TEXT(".dss"), Result.SourceText);
+	ExpectSnippets(*this, TEXT("the probe"), Result.SourceText, { TEXT("m.EmissiveColor = UE.VertexInterpolator(") });
+	TestFalse(FString::Printf(TEXT("no output is read as another: no DSH9072 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9072")));
+
+	FDreamShaderCompile2Fixture Fixture(ProbeName.ToString(), TEXT("Decompile2"));
+	UObject* Rebuilt = CompileAndLoad(*this, Fixture, Result.SourceText, *ProbeName.ToString());
+	if (!Rebuilt)
+	{
+		return false;
+	}
+	FRequest Again;
+	Again.Asset = Rebuilt;
+	Again.Format = EFormat::Dss;
+	const FResult Second = RunDreamShaderDecompileRequest(Again);
+	TestTrue(FString::Printf(TEXT("the rebuild decompiles (%s)"), *Describe(Second)), Second.bSucceeded);
+	if (Second.bSucceeded)
+	{
+		ExpectSnippets(*this, TEXT("the rebuild"), Second.SourceText, { TEXT("m.EmissiveColor = UE.VertexInterpolator(") });
 	}
 	return true;
 }
