@@ -1,6 +1,6 @@
 # DreamShader ChangeLog
 
-## Unreleased
+## 2.0.1 - 2026-09-27
 
 ### Fixed
 
