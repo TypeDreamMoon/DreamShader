@@ -163,10 +163,13 @@ threshold is the same 5.4.
 
 ### Asked of the type
 
-*(since 2.0.0)* No version number here: each row is decided by whether the engine's own type has the member.
+*(since 2.0.0)* No version number here: each row is decided by whether the engine's own type has the member --
+or, *(since 2.0.1)*, whether the engine has the node's header at all (`__has_include`).
 
 | Feature | Where the member exists | Where it does not |
 | :-- | :-- | :-- |
+| Reading a **Convert** node (Make / Break FloatN) back as the channels each output is put together from — `Materials/MaterialExpressionConvert.h`, the node of the 5.6 material editor *(since 2.0.1)* | written as swizzles and constructors | no graph can hold one |
+| Reading a **Switch** node back as its branches — `Materials/MaterialExpressionSwitch.h` *(since 2.0.1)* | written as a chain of `==` branches, or as the one input an unwired `SwitchValue` picks | no graph can hold one |
 | Re-applying a kept **double vector** override to a ThinCustom instance — `UMaterialInstanceConstant::SetDoubleVectorParameterValueEditorOnly` (absent through 5.6) | set | reported by name as a kind this build cannot express, like a parameter the source dropped |
 | Re-applying a kept **static component mask** override — `SetStaticComponentMaskParameterValueEditorOnly` on the instance (absent through 5.6) | set | reported the same way |
 | Reading an instance's usage-flags override — `FMaterialInstanceBasePropertyOverrides::bOverride_UsageFlags` (absent through 5.6) | named as unsupported by the instance decompiler when set | there is no such override to report |
