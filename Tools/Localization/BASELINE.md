@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-1588
+1598
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -378,6 +378,9 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Decompiler.GraphImport | CallWithoutFunction | {0} calls a material function that is missing; a zero stands in for every value read from it. |
 | DreamShader.Decompiler.GraphImport | CaptionDropped | '{0}' has the caption '{1}', which source has no directive for; the rebuilt function has none. |
 | DreamShader.Decompiler.GraphImport | ClassNotInCatalog | {0} is of a class the builtin catalog does not list (abstract, deprecated, or from a module loaded after the catalog was built); a zero stands in for every value read from it. |
+| DreamShader.Decompiler.GraphImport | ConvertAsChannels | {0} is a Convert node, whose pins no call can name; each of its outputs is written as the channels it is made of ('v.xy', 'float3(a, b, 0.0)'), and the rebuilt graph has ComponentMask and AppendVector nodes in its place. |
+| DreamShader.Decompiler.GraphImport | ConvertChannelPastValue | {0} reads channel {1} of its input {2}, which carries a {3}; the new translator reads zero there and the classic one refuses the node, so a zero stands in. |
+| DreamShader.Decompiler.GraphImport | ConvertMappingUnknown | {0} maps channel {1} of its input {2} onto channel {3} of its output {4}, and the node has no such pin or channel; the engine refuses the mapping, and it is left out. |
 | DreamShader.Decompiler.GraphImport | CustomDefinesDropped | {0} carries {1} additional define(s), which a '/// @custom' function cannot declare; the rebuilt node has none. Move them into the body as '#define' lines. |
 | DreamShader.Decompiler.GraphImport | DescribeExpression | '{0}' ({1}) of '{2}' |
 | DreamShader.Decompiler.GraphImport | DescribeNoExpression | an expression |
@@ -385,6 +388,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Decompiler.GraphImport | GetAttributesAsBreak | {0} is a GetMaterialAttributes node; reading a material's attributes always rebuilds as a BreakMaterialAttributes. |
 | DreamShader.Decompiler.GraphImport | GraphCycle | {0} reads {1}, which reads it back; the graph has a cycle, and a zero stands in for that read. |
 | DreamShader.Decompiler.GraphImport | MakeAttributeUnknown | {0} sets '{1}', which is no material attribute the catalog knows; the connection is dropped. |
+| DreamShader.Decompiler.GraphImport | OutputOfStatement | {0} is read through its output {1}, and the catalog lists no output for its class; a zero stands in for that read. |
 | DreamShader.Decompiler.GraphImport | OutputPastCatalog | {0} is read through its output {1}, which the node has no slot for; its first output is read instead. |
 | DreamShader.Decompiler.GraphImport | ParameterPropertySkipped | {0} changes '{1}', which a '///' directive cannot carry; the rebuilt parameter has the default. |
 | DreamShader.Decompiler.GraphImport | PinsIgnoredUnderAttributes | '{0}' reads its attributes as one set, so the {1} individual pin(s) that are also wired are ignored, by the engine and here. |
@@ -393,10 +397,16 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Decompiler.GraphImport | RerouteCycle | The reroute {0} feeds itself; the pin that reads it is treated as unconnected. |
 | DreamShader.Decompiler.GraphImport | RerouteDangling | The reroute {0} has nothing wired into it; the pin that reads it is treated as unconnected. |
 | DreamShader.Decompiler.GraphImport | RerouteUsageWithoutDeclaration | The named reroute {0} has no declaration; the pin that reads it is treated as unconnected. |
+| DreamShader.Decompiler.GraphImport | SetAttributeUnknown | {0} sets '{1}', which is no material attribute the catalog knows; the connection is dropped. |
 | DreamShader.Decompiler.GraphImport | StaticSwitchFalseBranch | False |
 | DreamShader.Decompiler.GraphImport | StaticSwitchFolded | {0} has nothing wired to Value, so it is its {1} branch and nothing else; the rebuilt graph has no switch there. |
 | DreamShader.Decompiler.GraphImport | StaticSwitchParameterSplit | {0} is a StaticSwitchParameter, which the language writes as a '/// @static' uniform and a static branch; the rebuilt graph has those two nodes in its place. |
 | DreamShader.Decompiler.GraphImport | StaticSwitchTrueBranch | True |
+| DreamShader.Decompiler.GraphImport | SwitchAsBranches | {0} is a Switch node, whose inputs no call can name; it is written as the branches the engine makes of it ('0.0 == floor(s) ? a : ...'), and the rebuilt graph has Floor and If nodes in its place. |
+| DreamShader.Decompiler.GraphImport | SwitchFolded | {0} has nothing wired to SwitchValue, so its value {1} picks {2} and nothing else; the rebuilt graph has no switch there. |
+| DreamShader.Decompiler.GraphImport | SwitchFoldedCase | the input '{0}' |
+| DreamShader.Decompiler.GraphImport | SwitchFoldedDefault | the default |
+| DreamShader.Decompiler.GraphImport | SwitchWithoutCases | {0} has no input besides its default, which is what it hands on; the rebuilt graph has no switch there. |
 | DreamShader.Decompiler.GraphImport | TextureSampleParameterSplit | {0} is a texture sample parameter, which the language writes as a texture uniform and a sample of it; the rebuilt graph has a TextureObjectParameter and a TextureSample in its place. |
 | DreamShader.Decompiler.GraphImport | UnreachableExpressions | {0} expression(s) of '{1}' feed no output and are not part of the source; a build would prune them all the same. |
 | DreamShader.Decompiler.GraphImport | UnsupportedAsset | '{0}' is neither a material nor a material function, so it has no graph to read. A material instance decompiles to a '.dsi'. |
