@@ -201,7 +201,7 @@ What happens to a parsed file:
 | A layer blend | `/// @layerblend export void B(material Bottom, material Top, inout material Result)` -- two material inputs and a result that **starts empty**; `Bottom` / `Top` (also `Base`) set the pins' blend relevance. |
 | A material layer | `/// @layer export void L(inout material m)` -- the input is optional, as the engine's own layer templates make it. |
 | A required pin left open | a warning (`DSH5219`), not an error: only the material compile knows whether the node reads a default for it. |
-| A pin named per node | for a class whose nodes name their pins after a property (`Substrate.MoonToonModifier`, TextureSample's derivative pins), a name the catalog does not list is looked up on the built node (`DSH5291`, refused there with `DSH8212`). The pin's own property name always resolves. |
+| A pin named per node | for a class whose nodes name their pins after a property (`Substrate.MoonToonModifier`, TextureSample's derivative pins, `UE.LandscapeLayerBlend(Layer_Grass = ...)` after its `Layers`), a name the catalog does not list is looked up on the built node (`DSH5291`, refused there with `DSH8212`). The pin's own property name always resolves. |
 | Unpassed optional inputs | stay unconnected on the call node; the callee's default applies. |
 
 ### Substrate, layout and tooling

@@ -1,5 +1,21 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Fixed
+
+- **The Landscape layer blend, grass output and physical-material output decompile with their
+  pins.** `LandscapeLayerBlend`, `LandscapeGrassOutput` and `LandscapePhysicalMaterialOutput` keep
+  their pins in an array of structs and name each after what the entry holds, so the decompiler
+  dropped every wire (`DSH9070`) and the array with them (`DSH9068`). The array is now written as the
+  text the details panel pastes, without the pins -- `Layers = "((LayerName=\"Grass\"),(LayerName=\"Rock\",BlendType=LB_HeightBlend))"` --
+  and each pin by the name the node shows, in its identifier form: `Layer_Grass = ...`,
+  `Height_Rock = ...`, a grass entry's name, a physical material's. The catalog marks such a class as
+  naming its pins per node, so a `.dss` call takes those names, and the emitter connects them once the
+  array is on the node. A blend is as wide as its widest layer, and a blend of material-attribute
+  layers is a `material`. A pin whose name is empty, a keyword, or one another pin or argument also
+  answers to is still dropped with `DSH9070`.
+
 ## 2.0.1 - 2026-09-27
 
 ### Fixed

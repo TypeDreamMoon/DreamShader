@@ -22,6 +22,7 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialExpressionConstant.h"
 #include "Materials/MaterialExpressionDotProduct.h"
+#include "Materials/MaterialExpressionMakeMaterialAttributes.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionShadingModel.h"
 #include "Materials/MaterialExpressionVectorParameter.h"
@@ -738,6 +739,268 @@ bool FDreamShaderDecompile2VertexInterpolatorTest::RunTest(const FString& Parame
 	if (Second.bSucceeded)
 	{
 		ExpectSnippets(*this, TEXT("the rebuild"), Second.SourceText, { TEXT("m.EmissiveColor = UE.VertexInterpolator(") });
+	}
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Pins kept in an array of the node's own: the Landscape layer blend, grass and physical-material outputs
+// ---------------------------------------------------------------------------------------------
+
+namespace UE::DreamShader::Editor::Private::Decompile2Tests
+{
+	/** A node of an engine class by its script path: this module does not link Landscape. */
+	inline UMaterialExpression* CreateExpressionByPath(UMaterial* Material, const TCHAR* ClassPath)
+	{
+		UClass* Class = FindObject<UClass>(nullptr, ClassPath);
+		return Class ? UMaterialEditingLibrary::CreateMaterialExpression(Material, Class) : nullptr;
+	}
+
+	/** A property set as the details panel would paste it. */
+	inline bool ImportPropertyText(UObject* Object, const TCHAR* PropertyName, const TCHAR* Text)
+	{
+		const FProperty* Property = Object ? Object->GetClass()->FindPropertyByName(PropertyName) : nullptr;
+		return Property && Property->ImportText_InContainer(Text, Object, Object, PPF_None) != nullptr;
+	}
+
+	/** The first node of the class named ClassName in the material Asset is, or builds on. */
+	inline UMaterialExpression* FindExpressionOfClass(UObject* Asset, const TCHAR* ClassName)
+	{
+		UMaterialInterface* Interface = Cast<UMaterialInterface>(Asset);
+		UMaterial* Material = Interface ? Interface->GetMaterial() : nullptr;
+		if (!Material)
+		{
+			return nullptr;
+		}
+		for (UMaterialExpression* Expression : Material->GetExpressions())
+		{
+			if (Expression && Expression->GetClass()->GetName().Equals(ClassName, ESearchCase::CaseSensitive))
+			{
+				return Expression;
+			}
+		}
+		return nullptr;
+	}
+
+	/** How many of the node's pins, by its own count, have something wired to them, and what it calls the pins. */
+	inline int32 CountWiredInputs(UMaterialExpression* Expression, TArray<FString>* OutNames = nullptr)
+	{
+		int32 Wired = 0;
+		for (int32 InputIndex = 0; Expression; ++InputIndex)
+		{
+			FExpressionInput* Input = Expression->GetInput(InputIndex);
+			if (!Input)
+			{
+				break;
+			}
+			Wired += Input->Expression ? 1 : 0;
+			if (OutNames)
+			{
+				OutNames->Add(Expression->GetInputName(InputIndex).ToString());
+			}
+		}
+		return Wired;
+	}
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDecompile2LandscapeNodesTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Decompile.LandscapeNodes",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A LandscapeLayerBlend, a LandscapeGrassOutput and a LandscapePhysicalMaterialOutput keep their pins in an array of
+// structs and name each after what the entry holds: `Layer Grass`, the grass entry's name, the physical material's.
+// Those wires were dropped (DSH9070) and the arrays with them (DSH9068). The array is written back as the text
+// ImportText reads, and each pin by its name, which the emitter finds on the node once the array is on it.
+bool FDreamShaderDecompile2LandscapeNodesTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Decompile2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	const FName ProbeName = MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), TEXT("M_DcLandscape"));
+	UMaterial* Material = NewObject<UMaterial>(GetTransientPackage(), ProbeName, RF_Transient);
+	if (!TestNotNull(TEXT("the probe material"), Material))
+	{
+		return false;
+	}
+
+	// Loaded, so the reference in the array's text finds it both ways.
+	UObject* PhysicalMaterial = LoadObject<UObject>(nullptr, TEXT("/Engine/EngineMaterials/PhysMat_Ice.PhysMat_Ice"));
+	UMaterialExpressionVectorParameter* GrassColor = Cast<UMaterialExpressionVectorParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionVectorParameter* RockColor = Cast<UMaterialExpressionVectorParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionScalarParameter* RockHeight = Cast<UMaterialExpressionScalarParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpressionScalarParameter* Density = Cast<UMaterialExpressionScalarParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpression* Blend = CreateExpressionByPath(Material, TEXT("/Script/Landscape.MaterialExpressionLandscapeLayerBlend"));
+	UMaterialExpression* Grass = CreateExpressionByPath(Material, TEXT("/Script/Landscape.MaterialExpressionLandscapeGrassOutput"));
+	UMaterialExpression* Physical = CreateExpressionByPath(Material, TEXT("/Script/Landscape.MaterialExpressionLandscapePhysicalMaterialOutput"));
+	if (!TestTrue(TEXT("the probe's nodes"), PhysicalMaterial && GrassColor && RockColor && RockHeight && Density && Blend && Grass && Physical))
+	{
+		return false;
+	}
+	GrassColor->ParameterName = TEXT("GrassColor");
+	RockColor->ParameterName = TEXT("RockColor");
+	RockHeight->ParameterName = TEXT("RockHeight");
+	Density->ParameterName = TEXT("Density");
+
+	// Pins, in the node's order: Layer Grass, Layer Rock, Height Rock (a height blend has two).
+	const bool bArraysSet =
+		ImportPropertyText(Blend, TEXT("Layers"), TEXT("((LayerName=\"Grass\"),(LayerName=\"Rock\",BlendType=LB_HeightBlend,PreviewWeight=0.5))"))
+		&& ImportPropertyText(Grass, TEXT("GrassTypes"), TEXT("((Name=\"Meadow\"))"))
+		&& ImportPropertyText(Physical, TEXT("Inputs"), TEXT("((PhysicalMaterial=\"/Engine/EngineMaterials/PhysMat_Ice.PhysMat_Ice\"))"));
+	if (!TestTrue(TEXT("the arrays are set"), bArraysSet)
+		|| !TestTrue(TEXT("the blend has three pins"), Blend->GetInput(2) != nullptr && Blend->GetInput(3) == nullptr))
+	{
+		return false;
+	}
+	// VectorParameter's output 0 is its RGB.
+	Blend->GetInput(0)->Connect(0, GrassColor);
+	Blend->GetInput(1)->Connect(0, RockColor);
+	Blend->GetInput(2)->Connect(0, RockHeight);
+	Grass->GetInput(0)->Connect(0, Density);
+	Physical->GetInput(0)->Connect(0, RockHeight);
+	Material->GetExpressionInputForProperty(MP_BaseColor)->Connect(0, Blend);
+
+	FRequest Request;
+	Request.Asset = Material;
+	Request.Format = EFormat::Dss;
+	const FResult Result = RunDreamShaderDecompileRequest(Request);
+	TestTrue(FString::Printf(TEXT("the probe decompiles (%s)"), *Describe(Result)), Result.bSucceeded);
+	if (!Result.bSucceeded)
+	{
+		return false;
+	}
+	ParsesAs(*this, ProbeName.ToString() + TEXT(".dss"), Result.SourceText);
+	const auto ExpectLandscapeText = [this](const TCHAR* What, const FString& Text)
+	{
+		ExpectSnippets(*this, What, Text, {
+			TEXT("UE.LandscapeLayerBlend("),
+			TEXT("Layer_Grass = "),
+			TEXT("Layer_Rock = "),
+			TEXT("Height_Rock = RockHeight"),
+			TEXT("LayerName=\\\"Rock\\\""),
+			TEXT("BlendType=LB_HeightBlend"),
+			TEXT("UE.LandscapeGrassOutput("),
+			TEXT("Meadow = Density"),
+			TEXT("UE.LandscapePhysicalMaterialOutput("),
+			TEXT("PhysMat_Ice = RockHeight"),
+			TEXT("PhysMat_Ice.PhysMat_Ice"),
+		});
+	};
+	ExpectLandscapeText(TEXT("the probe"), Result.SourceText);
+	TestFalse(FString::Printf(TEXT("no wire is dropped: no DSH9070 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9070")));
+	TestFalse(FString::Printf(TEXT("no array is dropped: no DSH9068 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9068")));
+
+	FDreamShaderCompile2Fixture Fixture(ProbeName.ToString(), TEXT("Decompile2"));
+	UObject* Rebuilt = CompileAndLoad(*this, Fixture, Result.SourceText, *ProbeName.ToString());
+	if (!Rebuilt)
+	{
+		return false;
+	}
+
+	TArray<FString> BlendPins;
+	UMaterialExpression* RebuiltBlend = FindExpressionOfClass(Rebuilt, TEXT("MaterialExpressionLandscapeLayerBlend"));
+	TestEqual(TEXT("the rebuilt blend's three pins are wired"), CountWiredInputs(RebuiltBlend, &BlendPins), 3);
+	TestEqual(TEXT("the rebuilt blend's pins"), FString::Join(BlendPins, TEXT(", ")), FString(TEXT("Layer Grass, Layer Rock, Height Rock")));
+	TestEqual(TEXT("the rebuilt grass output is wired"), CountWiredInputs(FindExpressionOfClass(Rebuilt, TEXT("MaterialExpressionLandscapeGrassOutput"))), 1);
+	TestEqual(TEXT("the rebuilt physical-material output is wired"), CountWiredInputs(FindExpressionOfClass(Rebuilt, TEXT("MaterialExpressionLandscapePhysicalMaterialOutput"))), 1);
+
+	FRequest Again;
+	Again.Asset = Rebuilt;
+	Again.Format = EFormat::Dss;
+	const FResult Second = RunDreamShaderDecompileRequest(Again);
+	TestTrue(FString::Printf(TEXT("the rebuild decompiles (%s)"), *Describe(Second)), Second.bSucceeded);
+	if (Second.bSucceeded)
+	{
+		ExpectLandscapeText(TEXT("the rebuild"), Second.SourceText);
+	}
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDecompile2LandscapeMaterialLayersTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Decompile.LandscapeMaterialLayers",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A layer blend of material-attribute layers is itself material attributes: the engine answers MCT_Unknown for its
+// output, and a float stood in for it, which nothing could assign to the material.
+bool FDreamShaderDecompile2LandscapeMaterialLayersTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Decompile2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	const FName ProbeName = MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), TEXT("M_DcLandscapeLayers"));
+	UMaterial* Material = NewObject<UMaterial>(GetTransientPackage(), ProbeName, RF_Transient);
+	if (!TestNotNull(TEXT("the probe material"), Material))
+	{
+		return false;
+	}
+	Material->bUseMaterialAttributes = true;
+
+	UMaterialExpressionVectorParameter* SandColor = Cast<UMaterialExpressionVectorParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionVectorParameter* SnowColor = Cast<UMaterialExpressionVectorParameter>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionMakeMaterialAttributes* Sand = Cast<UMaterialExpressionMakeMaterialAttributes>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionMakeMaterialAttributes::StaticClass()));
+	UMaterialExpressionMakeMaterialAttributes* Snow = Cast<UMaterialExpressionMakeMaterialAttributes>(
+		UMaterialEditingLibrary::CreateMaterialExpression(Material, UMaterialExpressionMakeMaterialAttributes::StaticClass()));
+	UMaterialExpression* Blend = CreateExpressionByPath(Material, TEXT("/Script/Landscape.MaterialExpressionLandscapeLayerBlend"));
+	if (!TestTrue(TEXT("the probe's nodes"), SandColor && SnowColor && Sand && Snow && Blend))
+	{
+		return false;
+	}
+	SandColor->ParameterName = TEXT("SandColor");
+	SnowColor->ParameterName = TEXT("SnowColor");
+	Sand->BaseColor.Connect(0, SandColor);
+	Snow->BaseColor.Connect(0, SnowColor);
+	if (!TestTrue(TEXT("the layers are set"), ImportPropertyText(Blend, TEXT("Layers"), TEXT("((LayerName=\"Sand\"),(LayerName=\"Snow\"))"))))
+	{
+		return false;
+	}
+	Blend->GetInput(0)->Connect(0, Sand);
+	Blend->GetInput(1)->Connect(0, Snow);
+	Material->GetExpressionInputForProperty(MP_MaterialAttributes)->Connect(0, Blend);
+
+	FRequest Request;
+	Request.Asset = Material;
+	Request.Format = EFormat::Dss;
+	const FResult Result = RunDreamShaderDecompileRequest(Request);
+	TestTrue(FString::Printf(TEXT("the probe decompiles (%s)"), *Describe(Result)), Result.bSucceeded);
+	if (!Result.bSucceeded)
+	{
+		return false;
+	}
+	ParsesAs(*this, ProbeName.ToString() + TEXT(".dss"), Result.SourceText);
+	ExpectSnippets(*this, TEXT("the probe"), Result.SourceText, { TEXT("UE.LandscapeLayerBlend("), TEXT("Layer_Sand = "), TEXT("Layer_Snow = ") });
+
+	FDreamShaderCompile2Fixture Fixture(ProbeName.ToString(), TEXT("Decompile2"));
+	UObject* Rebuilt = CompileAndLoad(*this, Fixture, Result.SourceText, *ProbeName.ToString());
+	if (!Rebuilt)
+	{
+		return false;
+	}
+	UMaterialExpression* RebuiltBlend = FindExpressionOfClass(Rebuilt, TEXT("MaterialExpressionLandscapeLayerBlend"));
+	TestEqual(TEXT("the rebuilt blend's two layers are wired"), CountWiredInputs(RebuiltBlend), 2);
+	TestTrue(TEXT("the rebuilt blend is material attributes"), RebuiltBlend && RebuiltBlend->IsResultMaterialAttributes(0));
+
+	FRequest Again;
+	Again.Asset = Rebuilt;
+	Again.Format = EFormat::Dss;
+	const FResult Second = RunDreamShaderDecompileRequest(Again);
+	TestTrue(FString::Printf(TEXT("the rebuild decompiles (%s)"), *Describe(Second)), Second.bSucceeded);
+	if (Second.bSucceeded)
+	{
+		ExpectSnippets(*this, TEXT("the rebuild"), Second.SourceText, { TEXT("UE.LandscapeLayerBlend("), TEXT("Layer_Sand = "), TEXT("Layer_Snow = ") });
 	}
 	return true;
 }

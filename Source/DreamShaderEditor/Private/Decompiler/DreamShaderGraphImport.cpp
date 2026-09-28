@@ -34,6 +34,7 @@
 #include "IR/IRCatalog.h"
 #include "IR/IRCoreOps.h"
 #include "IR/IRTypes.h"
+#include "Lang/LangToken.h"
 
 #include "Dom/JsonObject.h"
 #include "Engine/Texture.h"
@@ -76,6 +77,7 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "UObject/Package.h"
+#include "UObject/StructOnScope.h"
 #include "UObject/UnrealType.h"
 
 // Convert and Switch keep their pins in arrays; an engine without their headers has no such node to read.
@@ -106,6 +108,7 @@ namespace UE::DreamShader::Editor::Private
 		using UE::DreamShader::IR::FIRPropertyValue;
 		using UE::DreamShader::IR::FIRType;
 		using UE::DreamShader::IR::FIRValue;
+		using UE::DreamShader::Lang::ELangKeyword;
 		using UE::DreamShader::Lang::ETextureKind;
 
 		static const TCHAR* const SwizzleComponents = TEXT("xyzw");
@@ -234,6 +237,60 @@ namespace UE::DreamShader::Editor::Private
 			return Property->ArrayDim <= 1
 				? Property->GetName()
 				: FString::Printf(TEXT("%s[%d]"), *Property->GetName(), ArrayIndex); /* I18N-EXEMPT: pin identifier */
+		}
+
+		/**
+		 * An array property in the spelling ImportText reads back, without the pins its elements carry: LandscapeLayerBlend's
+		 * Layers as `((LayerName="Grass"),(LayerName="Rock",BlendType=LB_HeightBlend))`. A pin points into the graph being
+		 * read; the call wires it by the name the node gives it instead (ImportReflected). A member left as the struct
+		 * declares it is not written. False for an array of pins alone, which has nothing else to say.
+		 */
+		static bool ExportArrayWithoutPins(const FArrayProperty* ArrayProperty, const void* ValuePtr, FString& OutText)
+		{
+			OutText.Reset();
+			if (!ArrayProperty || !ValuePtr || ArrayProperty->ArrayDim != 1 || IsMaterialExpressionInputProperty(ArrayProperty->Inner))
+			{
+				return false;
+			}
+
+			const FStructProperty* ElementProperty = CastField<FStructProperty>(ArrayProperty->Inner);
+			if (!ElementProperty || !ElementProperty->Struct)
+			{
+				ArrayProperty->ExportTextItem_Direct(OutText, ValuePtr, nullptr, nullptr, PPF_Delimited);
+				return !OutText.IsEmpty();
+			}
+
+			const FStructOnScope DefaultElement(ElementProperty->Struct);
+			FScriptArrayHelper Array(ArrayProperty, ValuePtr);
+			TArray<FString> Elements;
+			for (int32 ElementIndex = 0; ElementIndex < Array.Num(); ++ElementIndex)
+			{
+				const uint8* Element = Array.GetRawPtr(ElementIndex);
+				TArray<FString> Members;
+				for (TFieldIterator<FProperty> It(ElementProperty->Struct); It; ++It)
+				{
+					const FProperty* Member = *It;
+					if (Member->HasAnyPropertyFlags(CPF_Deprecated | CPF_Transient | CPF_DuplicateTransient) || IsMaterialExpressionInputProperty(Member))
+					{
+						continue;
+					}
+					for (int32 MemberIndex = 0; MemberIndex < Member->ArrayDim; ++MemberIndex)
+					{
+						if (Member->Identical_InContainer(Element, DefaultElement.GetStructMemory(), MemberIndex))
+						{
+							continue;
+						}
+						FString MemberText;
+						Member->ExportTextItem_Direct(MemberText, Member->ContainerPtrToValuePtr<void>(Element, MemberIndex), nullptr, nullptr, PPF_Delimited);
+						Members.Add(Member->ArrayDim > 1
+							? FString::Printf(TEXT("%s(%d)=%s"), *Member->GetName(), MemberIndex, *MemberText) /* I18N-EXEMPT: ImportText syntax */
+							: FString::Printf(TEXT("%s=%s"), *Member->GetName(), *MemberText)); /* I18N-EXEMPT: ImportText syntax */
+					}
+				}
+				Elements.Add(FString::Printf(TEXT("(%s)"), *FString::Join(Members, TEXT(",")))); /* I18N-EXEMPT: ImportText syntax */
+			}
+			OutText = FString::Printf(TEXT("(%s)"), *FString::Join(Elements, TEXT(","))); /* I18N-EXEMPT: ImportText syntax */
+			return true;
 		}
 
 		// ---------------------------------------------------------------------------------- the importer
@@ -2218,6 +2275,11 @@ namespace UE::DreamShader::Editor::Private
 			{
 				return FromEngine;
 			}
+			// A node that types its output by what it blends (a layer blend of material-attribute layers) says so here.
+			if (Expression->Outputs.IsValidIndex(OutputIndex) && Expression->IsResultMaterialAttributes(OutputIndex))
+			{
+				return FIRType::Material();
+			}
 
 			// "Some float": the width follows the inputs, as the builder types the same call.
 			int32 Widest = 1;
@@ -2252,7 +2314,7 @@ namespace UE::DreamShader::Editor::Private
 
 			// Pins in the order the catalog lists them, which is the order of the class's own input properties.
 			TSet<FName> UnwiredTwins;
-			int32 ReflectedPins = 0;
+			TSet<const FExpressionInput*> ReflectedPins;
 			for (TFieldIterator<FProperty> It(Class, EFieldIteratorFlags::IncludeSuper); It; ++It)
 			{
 				const FProperty* Property = *It;
@@ -2262,10 +2324,10 @@ namespace UE::DreamShader::Editor::Private
 				}
 				for (int32 ArrayIndex = 0; ArrayIndex < Property->ArrayDim; ++ArrayIndex)
 				{
-					++ReflectedPins;
 					const FString PinName = MakeImportPinName(Property, ArrayIndex);
 					const int32 PinIndex = Entry.FindInput(PinName);
 					const FExpressionInput* Input = Property->ContainerPtrToValuePtr<FExpressionInput>(Expression, ArrayIndex);
+					ReflectedPins.Add(Input);
 					const FIRValue Value = Input ? ResolveInput(*Input) : FIRValue::None();
 					if (Value.IsValid() && PinIndex != INDEX_NONE)
 					{
@@ -2278,11 +2340,74 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 
-			// Pins the class keeps in an array of its own (Switch, a layer stack) have no name a call could use.
-			int32 WiredDynamicPins = 0;
-			for (int32 InputIndex = ReflectedPins; FExpressionInput* Input = Expression->GetInput(InputIndex); ++InputIndex)
+			// Pins the class keeps in an array of its own. A class the catalog knows to name its pins per node -- a layer
+			// blend calls one `Layer Grass`, a grass output after its grass entry -- is called with that name, in its
+			// identifier form, and the emitter finds it on the live node once the array is written back (rule L24). A
+			// pin with no name, or one that could be taken for another, has none a call could use (Switch, a layer stack).
+			TArray<FExpressionInput*> LiveInputs;
+			TArray<FString> LiveNames;
+			for (int32 InputIndex = 0; InputIndex < 256; ++InputIndex)
 			{
-				WiredDynamicPins += Input->Expression ? 1 : 0;
+				FExpressionInput* Input = Expression->GetInput(InputIndex);
+				if (!Input)
+				{
+					break;
+				}
+				const FName InputName = Expression->GetInputName(InputIndex);
+				LiveInputs.Add(Input);
+				LiveNames.Add(InputName.IsNone() ? FString() : InputName.ToString().TrimStartAndEnd());
+			}
+			const auto IsCallableLateName = [&Entry, &LiveNames](const FString& Name)
+			{
+				ELangKeyword Keyword = ELangKeyword::None;
+				if (Name.IsEmpty() || (!FChar::IsAlpha(Name[0]) && Name[0] != TCHAR('_')) || UE::DreamShader::Lang::TryGetLangKeyword(Name, Keyword)
+					|| Name.Equals(TEXT("Class"), ESearchCase::IgnoreCase))
+				{
+					return false;
+				}
+				// The binder takes a catalog name first, and the emitter connects the first live pin that answers to it.
+				for (const UE::DreamShader::IR::FCatalogPin& Pin : Entry.Inputs)
+				{
+					if (Pin.Name.Equals(Name, ESearchCase::IgnoreCase) || Pin.Aliases.Contains(Name))
+					{
+						return false;
+					}
+				}
+				for (const UE::DreamShader::IR::FCatalogProperty& Property : Entry.Properties)
+				{
+					if (Property.Name.Equals(Name, ESearchCase::IgnoreCase) || Property.Aliases.Contains(Name))
+					{
+						return false;
+					}
+				}
+				int32 Answering = 0;
+				for (const FString& LiveName : LiveNames)
+				{
+					Answering += (!LiveName.IsEmpty()
+						&& (LiveName.Equals(Name, ESearchCase::IgnoreCase)
+							|| MakeDreamShaderDeclarationName(LiveName, TEXT(""), 0).Equals(Name, ESearchCase::IgnoreCase))) ? 1 : 0;
+				}
+				return Answering == 1;
+			};
+
+			TArray<FString> LateBoundPins;
+			int32 WiredDynamicPins = 0;
+			for (int32 InputIndex = 0; InputIndex < LiveInputs.Num(); ++InputIndex)
+			{
+				const FExpressionInput* Input = LiveInputs[InputIndex];
+				if (ReflectedPins.Contains(Input) || !Input->Expression)
+				{
+					continue;
+				}
+				const FString Name = LiveNames[InputIndex].IsEmpty() ? FString() : MakeDreamShaderDeclarationName(LiveNames[InputIndex], TEXT(""), 0);
+				const FIRValue Value = Entry.bHasInstanceDependentPins && IsCallableLateName(Name) ? ResolveInput(*Input) : FIRValue::None();
+				if (Value.IsValid())
+				{
+					Node.Inputs.Add({ Name, Value });
+					LateBoundPins.Add(Name);
+					continue;
+				}
+				++WiredDynamicPins;
 			}
 			if (WiredDynamicPins > 0)
 			{
@@ -2315,9 +2440,15 @@ namespace UE::DreamShader::Editor::Private
 				}
 
 				FIRPropertyValue Value;
+				FString ArrayText;
 				if (ReadProperty(Expression, Property, Value))
 				{
 					Node.Properties.Add({ Property->GetName(), MoveTemp(Value) });
+				}
+				else if (ExportArrayWithoutPins(CastField<FArrayProperty>(Property), Property->ContainerPtrToValuePtr<void>(Expression), ArrayText))
+				{
+					// A string the literal writer hands to ImportText, the way the property is written back.
+					Node.Properties.Add({ Property->GetName(), FIRPropertyValue::MakeString(ArrayText) });
 				}
 				else
 				{
@@ -2326,6 +2457,10 @@ namespace UE::DreamShader::Editor::Private
 						DescribeExpression(Expression),
 						FText::FromString(Property->GetName())));
 				}
+			}
+			if (LateBoundPins.Num() > 0)
+			{
+				Node.Properties.Add({ FString(UE::DreamShader::IR::Prop::LateBoundPins), FIRPropertyValue::MakeStringList(LateBoundPins) });
 			}
 
 			const int32 NodeIndex = AddNode(MoveTemp(Node), Expression);

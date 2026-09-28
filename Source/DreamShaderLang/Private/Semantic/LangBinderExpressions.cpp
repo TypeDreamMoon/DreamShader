@@ -4612,6 +4612,19 @@ namespace UE::DreamShader::Lang::Private
 					Late.Conversion = IR::EIRConversion::DefaultOutput;
 					SetConversion(*Argument.Value, IR::EIRConversion::DefaultOutput);
 				}
+				else if (!IsLegacyScope())
+				{
+					// Nothing types a pin the catalog does not list, so it fixes no width either: a layer blend is as wide
+					// as its widest layer, and a blend of material-attribute layers is a material.
+					if (UnknownValueType.IsNumeric() && UnknownValueType.Cols == 1 && UnknownValueType.Rows > WidestAnyWidthArgument)
+					{
+						WidestAnyWidthArgument = UnknownValueType.Rows;
+					}
+					else if (UnknownValueType.IsMaterial() || UnknownValueType.Kind == IR::EIRTypeKind::Substrate)
+					{
+						AnyWidthCarried = UnknownValueType;
+					}
+				}
 				Binding.Args.Add(MoveTemp(Late));
 				continue;
 			}

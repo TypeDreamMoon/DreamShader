@@ -934,6 +934,11 @@ namespace UE::DreamShader::IR::Private
 			{
 				OutputType = BoundExpr.Type;
 			}
+			else if (Output.Type == ECatalogValueType::Numeric && Entry.Outputs.Num() == 1 && BoundExpr.Type.IsMaterial())
+			{
+				// What blends material attributes is material attributes: a layer blend of material-attribute layers.
+				OutputType = BoundExpr.Type;
+			}
 			else if (BoundExpr.bLegacyDeclaredType && Entry.Outputs.Num() == 1 && BoundExpr.Type.IsNumeric() && !BoundExpr.Type.IsMatrix())
 			{
 				// A 1.x call typed by its own `OutputType`: the node is as wide as 1.x believed it.

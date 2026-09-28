@@ -678,6 +678,37 @@ namespace UE::DreamShader::Editor::Compiler
 				&& !StructProperty->Struct->GetName().Equals(TEXT("MaterialAttributesInput"), ESearchCase::IgnoreCase);
 		}
 
+		/**
+		 * Whether the class keeps pins in an array of its own -- LandscapeLayerBlend's Layers, LandscapeGrassOutput's
+		 * GrassTypes, LandscapePhysicalMaterialOutput's Inputs -- an editable array of structs with an FExpressionInput in
+		 * them. Such a node names those pins after what the array holds (GetInputName: `Layer Grass`), so which pins it
+		 * has depends on its properties, and a call names them as the node does (rule L24).
+		 */
+		bool HasArrayHeldPins(const UClass* Class)
+		{
+			for (TFieldIterator<FProperty> It(Class, EFieldIteratorFlags::IncludeSuper); It; ++It)
+			{
+				const FArrayProperty* Array = CastField<FArrayProperty>(*It);
+				const FStructProperty* Element = Array ? CastField<FStructProperty>(Array->Inner) : nullptr;
+				if (!Element || !Element->Struct || !IsCatalogProperty(Array))
+				{
+					continue;
+				}
+				if (Private::IsMaterialExpressionInputProperty(Element))
+				{
+					return true;
+				}
+				for (TFieldIterator<FProperty> Member(Element->Struct); Member; ++Member)
+				{
+					if (Private::IsMaterialExpressionInputProperty(*Member))
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
 		FString MakeInputPinName(const FProperty* Property, const int32 ArrayIndex)
 		{
 			// One pin per array element for the handful of classes that declare their inputs as C
@@ -869,7 +900,7 @@ namespace UE::DreamShader::Editor::Compiler
 				}
 				Entry.Properties.Add(MoveTemp(CatalogProperty));
 			}
-			Entry.bHasInstanceDependentPins = bAnyHiddenInput;
+			Entry.bHasInstanceDependentPins = bAnyHiddenInput || HasArrayHeldPins(Class);
 			if (bAnyHiddenInput)
 			{
 				// Which pins a node of this class has depends on its properties, so which of them it cannot do without

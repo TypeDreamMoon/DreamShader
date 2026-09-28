@@ -443,7 +443,12 @@ It is the compiler run backwards: **graph → IR → AST → printer**.
    is put together from (`DXY.xy`, `float3(Gain, 0.25, 0.75)`), a **Switch** as the branches the
    engine makes of it (`0.0 == floor(s) ? a : 1.0 == floor(s) ? b : default`, or the one input the
    number picks when nothing is wired to SwitchValue). A VertexInterpolator, a custom output that
-   also hands a value on, is that value wherever something reads it.
+   also hands a value on, is that value wherever something reads it. A class that keeps its pins in
+   an array of structs and names each after its entry -- **LandscapeLayerBlend**,
+   **LandscapeGrassOutput**, **LandscapePhysicalMaterialOutput**, RenderTrace's PhysicalMaterialOutput
+   of the same shape -- is called with the array as the
+   text the details panel pastes, pins left out, and each pin by the name the node shows in identifier
+   form: `UE.LandscapeLayerBlend(Layer_Grass = g, Height_Rock = h, Layers = "((LayerName=\"Grass\"),...)")`.
 2. *Raise.* Nodes nothing reads are pruned, and the shapes the emitter lowers by hand are read back
    (a StaticSwitch over a static bool is an `if` / `?:`, a Set-attributes chain is `m.X = ...`). The
    [Substrate sugar](../language-v2/substrate.md#decompiling) is read back here too, wherever that is
@@ -468,8 +473,6 @@ has to be finished by hand:
 
 | Class | What is lost |
 | :-- | :-- |
-| `LandscapeLayerBlend` | the layers: names, blend types, and their layer and height pins |
-| `LandscapeGrassOutput`, `LandscapePhysicalMaterialOutput`, `PhysicalMaterialOutput` | the per-entry pins and the assets they name |
 | `MaterialCache` | the attribute pins and the outputs its tag gives it |
 | `LayerStack` *(experimental)* | the layer inputs |
 | `Operator` *(new translator only)* | every input and its constant: all of them live in one array |

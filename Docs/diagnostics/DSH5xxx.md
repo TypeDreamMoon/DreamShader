@@ -152,7 +152,7 @@ accepted with or without its `MaterialExpression` prefix and as a full `/Script/
 '{0}.{1}' has no pin or property called '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4633`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4646`
 <!-- generated:end DSH5213 -->
 
 **Cause.** A named argument to a reflected node matches neither an input pin nor a reflected
@@ -271,7 +271,7 @@ language has no name for, so the class is the one thing it cannot infer.
 '{0}.{1}' leaves its required '{2}' pin unconnected; unless the node reads a default for it, the engine reports it when the material compiles.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4702`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:416`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4715`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:416`
 <!-- generated:end DSH5219 -->
 
 **Cause.** A pin the engine draws as required was left unconnected, and its literal twin was not set
@@ -372,7 +372,7 @@ computed belongs on a pin, not in a property.
 The first argument of a texture sample is the texture, and this is {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4958`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4971`
 <!-- generated:end DSH5230 -->
 
 **Cause.** The first argument of `Texture2DSample` is not a texture.
@@ -390,7 +390,7 @@ The first argument of a texture sample is the texture, and this is {0}.
 The second argument of 'Texture2DSample' is the sampler, and this is {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4974`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4987`
 <!-- generated:end DSH5231 -->
 
 **Cause.** The second argument of `Texture2DSample` is not a sampler.
@@ -772,7 +772,7 @@ takes the short form the catalog lists.
 '{0}.{1}' leaves its required '{2}' pin unconnected, which 1.x allowed and the engine reports when the material compiles.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4686`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:403`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4699`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:403`
 <!-- generated:end DSH5279 -->
 
 **Cause.** Rule L13. A `UE.` node is built in a 1.x body with a pin open that the engine draws as
@@ -1017,9 +1017,12 @@ a `/// @name` for the asset.
 **Cause.** Rule L24. A named argument is not a pin or property the catalog lists for the class. The
 catalog is read off each class's default object, and some nodes name their pins after a property
 (MoonToonModifier shows other pins per modifier, TextureSample shows `CoordinatesDX` only under
-`MipValueMode = Derivative`). The pin is wired by that name on the node once it exists; if the node
+`MipValueMode = Derivative`, a Landscape layer blend calls its pins `Layer Grass` / `Height Rock` after
+its `Layers`). The pin is wired by that name on the node once it exists; if the node
 shows no such pin, the build fails there (DSH8212). In a `.dss` this applies only to classes the
-catalog flags as naming their pins per node; elsewhere an unknown name is DSH5213.
+catalog flags as naming their pins per node; elsewhere an unknown name is DSH5213. In a `.dss`, such a
+pin fixes no width either: a numeric output is as wide as the widest value on one, and a `material`
+on one makes the output a `material`.
 
 **Fix.** Nothing to do if the name is what the node shows. The pin's own property name (`ChannelW`)
 always resolves and does not need the lookup.

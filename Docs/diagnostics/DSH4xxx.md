@@ -174,7 +174,7 @@ only valid on a numeric value of at least three components, and `m.BaseColor` on
 A value of type {0} has no method '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2954`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3070`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3085`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4834`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2954`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3070`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3085`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4847`
 <!-- generated:end DSH4208 -->
 
 **Cause.** A call was written on something that is not callable: a name that is not a function, a
@@ -457,7 +457,7 @@ For a texture, a sampler, a `material` or a `Substrate` value there is no cast a
 '{0}' takes at most {1} arguments.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3414`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3474`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3682`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4878`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4945`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3414`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3474`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3682`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4891`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4958`
 <!-- generated:end DSH4224 -->
 
 **Cause.** A call has more or fewer arguments than the callee takes. For a texture sample the
@@ -477,7 +477,7 @@ on whether it was written.
 A constructor takes its components in order; named arguments belong on 'UE.' nodes and on function calls.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3134`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4846`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3134`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4859`
 <!-- generated:end DSH4225 -->
 
 **Cause.** Named arguments were used where only positional ones are taken: a constructor, a texture
@@ -609,7 +609,7 @@ result would depend on how the graph happened to be built.
 '{0}.{1}' is an output node, not a value: write it as a statement on a line of its own.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4727`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4740`
 <!-- generated:end DSH4231 -->
 
 **Cause.** A node with no value was used as one. Custom-output classes (`ClearCoatBottomNormal`,
@@ -1880,7 +1880,7 @@ Until then, rewriting the expression in a simpler form usually avoids the kind t
 This module was bound without a builtin catalog, so no 'UE.*' call and no material attribute can be named; run the bind with a catalog, or pass one in FIRBuildOptions.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:121`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1539`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:911`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:420`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:532`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:121`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1544`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:911`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:420`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:532`
 <!-- generated:end DSH4352 -->
 
 **Cause.** Three shapes, told apart by where the message points.
@@ -2157,7 +2157,7 @@ missing and nothing is reported: the value is the other arm's on every path the 
 '{0}' is a property of {1} and needs a literal; this argument is computed at run time.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1005`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1010`
 <!-- generated:end DSH4373 -->
 
 **Cause.** An argument bound to a *property* of a reflected node is not a literal. A property is
@@ -2231,7 +2231,7 @@ version.
 '{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or give it an initializer where it is declared.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1433`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1438`
 <!-- generated:end DSH4376 -->
 
 **Cause.** A local is read -- or compound-assigned (`x += 1`, `++x`), which reads it first -- at a
@@ -2263,7 +2263,7 @@ reading `v`, or a component of it, before anything was written.
 '{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1449`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1454`
 <!-- generated:end DSH4377 -->
 
 **Cause.** An assignment writes into the material an attribute holds:
