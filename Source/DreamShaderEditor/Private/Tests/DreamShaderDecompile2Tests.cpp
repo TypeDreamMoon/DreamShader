@@ -22,7 +22,9 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialExpressionConstant.h"
 #include "Materials/MaterialExpressionDotProduct.h"
+#include "Materials/MaterialExpressionLinearInterpolate.h"
 #include "Materials/MaterialExpressionMakeMaterialAttributes.h"
+#include "Materials/MaterialExpressionMultiply.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionShadingModel.h"
 #include "Materials/MaterialExpressionVectorParameter.h"
@@ -140,6 +142,59 @@ namespace UE::DreamShader::Editor::Private::Decompile2Tests
 		{
 			Test.TestTrue(FString::Printf(TEXT("%s: '%s'\n%s"), What, Needle, *Text), Text.Contains(Needle, ESearchCase::CaseSensitive));
 		}
+	}
+
+	/** A node of an engine class by its script path: this module does not link Landscape. */
+	inline UMaterialExpression* CreateExpressionByPath(UMaterial* Material, const TCHAR* ClassPath)
+	{
+		UClass* Class = FindObject<UClass>(nullptr, ClassPath);
+		return Class ? UMaterialEditingLibrary::CreateMaterialExpression(Material, Class) : nullptr;
+	}
+
+	/** A property set as the details panel would paste it. */
+	inline bool ImportPropertyText(UObject* Object, const TCHAR* PropertyName, const TCHAR* Text)
+	{
+		const FProperty* Property = Object ? Object->GetClass()->FindPropertyByName(PropertyName) : nullptr;
+		return Property && Property->ImportText_InContainer(Text, Object, Object, PPF_None) != nullptr;
+	}
+
+	/** The first node of the class named ClassName in the material Asset is, or builds on. */
+	inline UMaterialExpression* FindExpressionOfClass(UObject* Asset, const TCHAR* ClassName)
+	{
+		UMaterialInterface* Interface = Cast<UMaterialInterface>(Asset);
+		UMaterial* Material = Interface ? Interface->GetMaterial() : nullptr;
+		if (!Material)
+		{
+			return nullptr;
+		}
+		for (UMaterialExpression* Expression : Material->GetExpressions())
+		{
+			if (Expression && Expression->GetClass()->GetName().Equals(ClassName, ESearchCase::CaseSensitive))
+			{
+				return Expression;
+			}
+		}
+		return nullptr;
+	}
+
+	/** How many of the node's pins, by its own count, have something wired to them, and what it calls the pins. */
+	inline int32 CountWiredInputs(UMaterialExpression* Expression, TArray<FString>* OutNames = nullptr)
+	{
+		int32 Wired = 0;
+		for (int32 InputIndex = 0; Expression; ++InputIndex)
+		{
+			FExpressionInput* Input = Expression->GetInput(InputIndex);
+			if (!Input)
+			{
+				break;
+			}
+			Wired += Input->Expression ? 1 : 0;
+			if (OutNames)
+			{
+				OutNames->Add(Expression->GetInputName(InputIndex).ToString());
+			}
+		}
+		return Wired;
 	}
 }
 
@@ -572,7 +627,8 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 // The cases of a Switch are an array (Inputs), so the reflected call read one back with none -- `UE.Switch(SwitchValue =
-// ..)`, which builds a Switch that has nothing to switch between. It is written as the branches the engine makes of it.
+// ..)`, which builds a Switch that has nothing to switch between. A case a new Switch adds has no name, which no call can
+// wire; a Switch with such a case is written as the branches the engine makes of it (SwitchNamedCases: the node itself).
 bool FDreamShaderDecompile2SwitchTest::RunTest(const FString& Parameters)
 {
 	using namespace UE::DreamShader::Editor::Private;
@@ -615,16 +671,17 @@ bool FDreamShaderDecompile2SwitchTest::RunTest(const FString& Parameters)
 		Case.Input.Connect(0, From);
 	};
 
-	// Wired to a parameter: the branches, the default (ConstDefault, a scalar among float3s) last.
-	AddCase(Pick, TEXT("A"), TintA);
-	AddCase(Pick, TEXT("B"), TintB);
+	// Wired to a parameter: the branches, the default (ConstDefault, a scalar among float3s) last. Unnamed, as the
+	// details panel adds them.
+	AddCase(Pick, TEXT(""), TintA);
+	AddCase(Pick, TEXT(""), TintB);
 	Pick->SwitchValue.Connect(0, Index);
 	Pick->ConstDefault = 0.5f;
 	Material->GetExpressionInputForProperty(MP_EmissiveColor)->Connect(0, Pick);
 
 	// Nothing wired to SwitchValue: its number picks the case once and for all (floor(1.5) = 1).
-	AddCase(Fixed, TEXT("Low"), Low);
-	AddCase(Fixed, TEXT("High"), High);
+	AddCase(Fixed, TEXT(""), Low);
+	AddCase(Fixed, TEXT(""), High);
 	Fixed->ConstSwitchValue = 1.5f;
 	Material->GetExpressionInputForProperty(MP_Roughness)->Connect(0, Fixed);
 
@@ -667,6 +724,97 @@ bool FDreamShaderDecompile2SwitchTest::RunTest(const FString& Parameters)
 	if (Second.bSucceeded)
 	{
 		ExpectSwitchRead(TEXT("the rebuild"), Second.SourceText);
+	}
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDecompile2SwitchNamedCasesTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Decompile.SwitchNamedCases",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A Switch whose cases are named is written as the node it is: the cases as the array's text, each wire by its case's
+// name, as a Landscape layer blend is. The branch chain rebuilt If nodes where the asset had a Switch.
+bool FDreamShaderDecompile2SwitchNamedCasesTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Decompile2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	const FName ProbeName = MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), TEXT("M_DcSwitchNamed"));
+	UMaterial* Material = NewObject<UMaterial>(GetTransientPackage(), ProbeName, RF_Transient);
+	if (!TestNotNull(TEXT("the probe material"), Material))
+	{
+		return false;
+	}
+
+	const auto Create = [Material](UClass* Class) { return UMaterialEditingLibrary::CreateMaterialExpression(Material, Class); };
+	UMaterialExpressionScalarParameter* Index = Cast<UMaterialExpressionScalarParameter>(Create(UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpressionVectorParameter* Dry = Cast<UMaterialExpressionVectorParameter>(Create(UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionVectorParameter* Wet = Cast<UMaterialExpressionVectorParameter>(Create(UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionSwitch* Pick = Cast<UMaterialExpressionSwitch>(Create(UMaterialExpressionSwitch::StaticClass()));
+	if (!TestTrue(TEXT("the probe's nodes"), Index && Dry && Wet && Pick))
+	{
+		return false;
+	}
+	Index->ParameterName = TEXT("Index");
+	Dry->ParameterName = TEXT("DryTint");
+	Wet->ParameterName = TEXT("WetTint");
+
+	Pick->Inputs.Reset();
+	for (const TPair<const TCHAR*, UMaterialExpression*>& Case : { TPair<const TCHAR*, UMaterialExpression*>(TEXT("Dry"), Dry), TPair<const TCHAR*, UMaterialExpression*>(TEXT("Wet"), Wet) })
+	{
+		FSwitchCustomInput& Added = Pick->Inputs.AddDefaulted_GetRef();
+		Added.InputName = Case.Key;
+		Added.Input.Connect(0, Case.Value);
+	}
+	Pick->SwitchValue.Connect(0, Index);
+	Material->GetExpressionInputForProperty(MP_EmissiveColor)->Connect(0, Pick);
+
+	const auto ExpectSwitchNode = [this](const TCHAR* What, const FString& Text)
+	{
+		ExpectSnippets(*this, What, Text, {
+			TEXT("UE.Switch("),
+			TEXT("SwitchValue = Index"),
+			TEXT("Dry = "),
+			TEXT("Wet = "),
+			TEXT("Inputs = \"((InputName=\\\"Dry\\\"),(InputName=\\\"Wet\\\"))\"") });
+		TestFalse(FString::Printf(TEXT("%s: no branch chain\n%s"), What, *Text), Text.Contains(TEXT("floor(")));
+	};
+
+	FRequest Request;
+	Request.Asset = Material;
+	Request.Format = EFormat::Dss;
+	const FResult Result = RunDreamShaderDecompileRequest(Request);
+	TestTrue(FString::Printf(TEXT("the probe decompiles (%s)"), *Describe(Result)), Result.bSucceeded);
+	if (!Result.bSucceeded)
+	{
+		return false;
+	}
+	ParsesAs(*this, ProbeName.ToString() + TEXT(".dss"), Result.SourceText);
+	ExpectSwitchNode(TEXT("the probe"), Result.SourceText);
+	TestFalse(FString::Printf(TEXT("no case is dropped: no DSH9070 (%s)"), *Describe(Result)), HasCode(Result, TEXT("DSH9070")));
+
+	FDreamShaderCompile2Fixture Fixture(ProbeName.ToString(), TEXT("Decompile2"));
+	UObject* Rebuilt = CompileAndLoad(*this, Fixture, Result.SourceText, *ProbeName.ToString());
+	if (!Rebuilt)
+	{
+		return false;
+	}
+	TArray<FString> CasePins;
+	TestEqual(TEXT("the rebuilt Switch has its three pins wired"), CountWiredInputs(FindExpressionOfClass(Rebuilt, TEXT("MaterialExpressionSwitch")), &CasePins), 3);
+	TestEqual(TEXT("the rebuilt Switch's pins"), FString::Join(CasePins, TEXT(", ")), FString(TEXT("SwitchValue, Default, Dry, Wet")));
+
+	FRequest Again;
+	Again.Asset = Rebuilt;
+	Again.Format = EFormat::Dss;
+	const FResult Second = RunDreamShaderDecompileRequest(Again);
+	TestTrue(FString::Printf(TEXT("the rebuild decompiles (%s)"), *Describe(Second)), Second.bSucceeded);
+	if (Second.bSucceeded)
+	{
+		ExpectSwitchNode(TEXT("the rebuild"), Second.SourceText);
 	}
 	return true;
 }
@@ -746,62 +894,6 @@ bool FDreamShaderDecompile2VertexInterpolatorTest::RunTest(const FString& Parame
 // ---------------------------------------------------------------------------------------------
 // Pins kept in an array of the node's own: the Landscape layer blend, grass and physical-material outputs
 // ---------------------------------------------------------------------------------------------
-
-namespace UE::DreamShader::Editor::Private::Decompile2Tests
-{
-	/** A node of an engine class by its script path: this module does not link Landscape. */
-	inline UMaterialExpression* CreateExpressionByPath(UMaterial* Material, const TCHAR* ClassPath)
-	{
-		UClass* Class = FindObject<UClass>(nullptr, ClassPath);
-		return Class ? UMaterialEditingLibrary::CreateMaterialExpression(Material, Class) : nullptr;
-	}
-
-	/** A property set as the details panel would paste it. */
-	inline bool ImportPropertyText(UObject* Object, const TCHAR* PropertyName, const TCHAR* Text)
-	{
-		const FProperty* Property = Object ? Object->GetClass()->FindPropertyByName(PropertyName) : nullptr;
-		return Property && Property->ImportText_InContainer(Text, Object, Object, PPF_None) != nullptr;
-	}
-
-	/** The first node of the class named ClassName in the material Asset is, or builds on. */
-	inline UMaterialExpression* FindExpressionOfClass(UObject* Asset, const TCHAR* ClassName)
-	{
-		UMaterialInterface* Interface = Cast<UMaterialInterface>(Asset);
-		UMaterial* Material = Interface ? Interface->GetMaterial() : nullptr;
-		if (!Material)
-		{
-			return nullptr;
-		}
-		for (UMaterialExpression* Expression : Material->GetExpressions())
-		{
-			if (Expression && Expression->GetClass()->GetName().Equals(ClassName, ESearchCase::CaseSensitive))
-			{
-				return Expression;
-			}
-		}
-		return nullptr;
-	}
-
-	/** How many of the node's pins, by its own count, have something wired to them, and what it calls the pins. */
-	inline int32 CountWiredInputs(UMaterialExpression* Expression, TArray<FString>* OutNames = nullptr)
-	{
-		int32 Wired = 0;
-		for (int32 InputIndex = 0; Expression; ++InputIndex)
-		{
-			FExpressionInput* Input = Expression->GetInput(InputIndex);
-			if (!Input)
-			{
-				break;
-			}
-			Wired += Input->Expression ? 1 : 0;
-			if (OutNames)
-			{
-				OutNames->Add(Expression->GetInputName(InputIndex).ToString());
-			}
-		}
-		return Wired;
-	}
-}
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderDecompile2LandscapeNodesTest,
@@ -1130,6 +1222,146 @@ bool FDreamShaderDecompile2ShadingModelPinTest::RunTest(const FString& Parameter
 		bool bHasNode = false;
 		TestTrue(TEXT("the bridge wires the computed shading model to the node's ShadingModel pin"), Bridged && ReadsComputedShadingModel(Bridged, bHasNode));
 		TestTrue(TEXT("the bridge made a ShadingModels node"), bHasNode);
+	}
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDecompile2SubstrateNodesByNameTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Decompile.SubstrateNodesByName",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A Transmittance-To-MFP on a slab's SSS MFP came back as `Transmittance = ..., Thickness = ...` on the slab, and a
+// Coverage Weight as `Slab * w` in a local called Multiply: graph-exact, but a search of the text for either node found
+// nothing, and read as a node lost and a node turned into another. Each is the call it is unless the readable form is
+// asked for. And the Lerp's A, which nothing is wired to, is written in its place, not after Alpha.
+bool FDreamShaderDecompile2SubstrateNodesByNameTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Decompile2Tests;
+
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	const FName ProbeName = MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), TEXT("M_DcSubstrateNodes"));
+	UMaterial* Material = NewObject<UMaterial>(GetTransientPackage(), ProbeName, RF_Transient);
+	if (!TestNotNull(TEXT("the probe material"), Material))
+	{
+		return false;
+	}
+	const auto Create = [Material](UClass* Class) { return UMaterialEditingLibrary::CreateMaterialExpression(Material, Class); };
+	UMaterialExpressionVectorParameter* Topcoat = Cast<UMaterialExpressionVectorParameter>(Create(UMaterialExpressionVectorParameter::StaticClass()));
+	UMaterialExpressionScalarParameter* Thickness = Cast<UMaterialExpressionScalarParameter>(Create(UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpressionScalarParameter* Rough = Cast<UMaterialExpressionScalarParameter>(Create(UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpressionScalarParameter* Coat = Cast<UMaterialExpressionScalarParameter>(Create(UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpressionScalarParameter* Mask = Cast<UMaterialExpressionScalarParameter>(Create(UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpressionScalarParameter* UseTopcoat = Cast<UMaterialExpressionScalarParameter>(Create(UMaterialExpressionScalarParameter::StaticClass()));
+	UMaterialExpressionMultiply* Masked = Cast<UMaterialExpressionMultiply>(Create(UMaterialExpressionMultiply::StaticClass()));
+	UMaterialExpressionLinearInterpolate* Lerp = Cast<UMaterialExpressionLinearInterpolate>(Create(UMaterialExpressionLinearInterpolate::StaticClass()));
+	UMaterialExpressionSubstrateTransmittanceToMFP* ToMfp = Cast<UMaterialExpressionSubstrateTransmittanceToMFP>(Create(UMaterialExpressionSubstrateTransmittanceToMFP::StaticClass()));
+	UMaterialExpressionSubstrateSlabBSDF* Slab = Cast<UMaterialExpressionSubstrateSlabBSDF>(Create(UMaterialExpressionSubstrateSlabBSDF::StaticClass()));
+	UMaterialExpressionSubstrateWeight* Weight = Cast<UMaterialExpressionSubstrateWeight>(Create(UMaterialExpressionSubstrateWeight::StaticClass()));
+	if (!TestTrue(TEXT("the probe's nodes"), Topcoat && Thickness && Rough && Coat && Mask && UseTopcoat && Masked && Lerp && ToMfp && Slab && Weight))
+	{
+		return false;
+	}
+	Topcoat->ParameterName = TEXT("Topcoat");
+	Thickness->ParameterName = TEXT("Thickness");
+	Rough->ParameterName = TEXT("Rough");
+	Coat->ParameterName = TEXT("Coat");
+	Mask->ParameterName = TEXT("Mask");
+	UseTopcoat->ParameterName = TEXT("UseTopcoat");
+
+	// VectorParameter's output 0 is its RGB.
+	ToMfp->TransmittanceColor.Connect(0, Topcoat);
+	ToMfp->Thickness.Connect(0, Thickness);
+	Slab->Roughness.Connect(0, Rough);
+	Slab->SSSMFP.Connect(0, ToMfp);
+	Masked->A.Connect(0, Coat);
+	Masked->B.Connect(0, Mask);
+	Lerp->ConstA = 0.0f;
+	Lerp->B.Connect(0, Masked);
+	Lerp->Alpha.Connect(0, UseTopcoat);
+	Weight->A.Connect(0, Slab);
+	Weight->Weight.Connect(0, Lerp);
+	Material->GetExpressionInputForProperty(MP_FrontMaterial)->Connect(0, Weight);
+
+	const auto ExpectNodes = [this](const TCHAR* What, const FString& Text)
+	{
+		ExpectSnippets(*this, What, Text, {
+			TEXT("Substrate.TransmittanceToMFP("),
+			TEXT("TransmittanceColor = "),
+			TEXT("SSSMFP = "),
+			TEXT("Substrate.Weight("),
+			TEXT("UE.LinearInterpolate(A = 0.0, B = ") });
+		TestFalse(FString::Printf(TEXT("%s: no sugar argument on the slab\n%s"), What, *Text), Text.Contains(TEXT("Transmittance = ")));
+	};
+
+	FRequest Request;
+	Request.Asset = Material;
+	Request.Format = EFormat::Dss;
+	const FResult Result = RunDreamShaderDecompileRequest(Request);
+	TestTrue(FString::Printf(TEXT("the probe decompiles (%s)"), *Describe(Result)), Result.bSucceeded);
+	if (!Result.bSucceeded)
+	{
+		return false;
+	}
+	ParsesAs(*this, ProbeName.ToString() + TEXT(".dss"), Result.SourceText);
+	ExpectNodes(TEXT("the probe"), Result.SourceText);
+
+	// The readable form keeps the sugar, which builds the same two nodes.
+	FRequest ReadableRequest = Request;
+	ReadableRequest.bReadable = true;
+	const FResult Readable = RunDreamShaderDecompileRequest(ReadableRequest);
+	TestTrue(FString::Printf(TEXT("the probe decompiles readable (%s)"), *Describe(Readable)), Readable.bSucceeded);
+	ExpectSnippets(*this, TEXT("readable"), Readable.SourceText, { TEXT("Transmittance = "), TEXT("Thickness = Thickness") });
+	TestFalse(FString::Printf(TEXT("readable: the weight is an operator\n%s"), *Readable.SourceText), Readable.SourceText.Contains(TEXT("Substrate.Weight(")));
+	// ...in a local named after the node it is, not after the Multiply it is spelled with.
+	TestTrue(FString::Printf(TEXT("readable: the weight's local says Weight\n%s"), *Readable.SourceText), Readable.SourceText.Contains(TEXT("Substrate SubstrateWeight = ")));
+
+	if (!Substrate::IsSubstrateEnabled())
+	{
+		AddInfo(TEXT("Substrate is off in this project: the rebuilds are not checked."));
+		return true;
+	}
+
+	const auto ExpectRebuiltNodes = [this](const TCHAR* What, UObject* Rebuilt)
+	{
+		const UMaterialExpressionSubstrateSlabBSDF* RebuiltSlab = Cast<UMaterialExpressionSubstrateSlabBSDF>(FindExpressionOfClass(Rebuilt, TEXT("MaterialExpressionSubstrateSlabBSDF")));
+		UMaterialExpression* MfpSource = RebuiltSlab ? RebuiltSlab->SSSMFP.GetTracedInput().Expression : nullptr;
+		TestTrue(FString::Printf(TEXT("%s: the slab's SSS MFP reads a Transmittance-To-MFP"), What), MfpSource && MfpSource->IsA<UMaterialExpressionSubstrateTransmittanceToMFP>());
+		TestEqual(FString::Printf(TEXT("%s: whose two pins are wired"), What), CountWiredInputs(MfpSource), 2);
+		TestEqual(FString::Printf(TEXT("%s: a Coverage Weight with both pins wired"), What),
+			CountWiredInputs(FindExpressionOfClass(Rebuilt, TEXT("MaterialExpressionSubstrateWeight"))), 2);
+	};
+
+	{
+		FDreamShaderCompile2Fixture Fixture(ProbeName.ToString(), TEXT("Decompile2"));
+		UObject* Rebuilt = CompileAndLoad(*this, Fixture, Result.SourceText, *ProbeName.ToString());
+		if (!Rebuilt)
+		{
+			return false;
+		}
+		ExpectRebuiltNodes(TEXT("the rebuild"), Rebuilt);
+		FRequest Again;
+		Again.Asset = Rebuilt;
+		Again.Format = EFormat::Dss;
+		const FResult Second = RunDreamShaderDecompileRequest(Again);
+		TestTrue(FString::Printf(TEXT("the rebuild decompiles (%s)"), *Describe(Second)), Second.bSucceeded);
+		if (Second.bSucceeded)
+		{
+			ExpectNodes(TEXT("the rebuild"), Second.SourceText);
+		}
+	}
+	if (Readable.bSucceeded)
+	{
+		const FString ReadableName = ProbeName.ToString() + TEXT("_Readable");
+		FDreamShaderCompile2Fixture Fixture(ReadableName, TEXT("Decompile2"));
+		UObject* Rebuilt = CompileAndLoad(*this, Fixture, Readable.SourceText.Replace(*ProbeName.ToString(), *ReadableName, ESearchCase::CaseSensitive), *ReadableName);
+		if (Rebuilt)
+		{
+			ExpectRebuiltNodes(TEXT("the readable rebuild"), Rebuilt);
+		}
 	}
 	return true;
 }

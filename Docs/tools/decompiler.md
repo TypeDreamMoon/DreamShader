@@ -442,7 +442,9 @@ It is the compiler run backwards: **graph → IR → AST → printer**.
    as what they compute instead: a **Convert** node (Make / Break FloatN) as the channels each output
    is put together from (`DXY.xy`, `float3(Gain, 0.25, 0.75)`), a **Switch** as the branches the
    engine makes of it (`0.0 == floor(s) ? a : 1.0 == floor(s) ? b : default`, or the one input the
-   number picks when nothing is wired to SwitchValue). A VertexInterpolator, a custom output that
+   number picks when nothing is wired to SwitchValue) -- where a case has no name. A Switch whose wired
+   cases are all named is the Switch itself, as the Landscape nodes below are:
+   `UE.Switch(SwitchValue = s, Dry = a, Wet = b, Inputs = "((InputName=\"Dry\"),(InputName=\"Wet\"))")`. A VertexInterpolator, a custom output that
    also hands a value on, is that value wherever something reads it. A class that keeps its pins in
    an array of structs and names each after its entry -- **LandscapeLayerBlend**,
    **LandscapeGrassOutput**, **LandscapePhysicalMaterialOutput**, RenderTrace's PhysicalMaterialOutput
@@ -450,11 +452,13 @@ It is the compiler run backwards: **graph → IR → AST → printer**.
    text the details panel pastes, pins left out, and each pin by the name the node shows in identifier
    form: `UE.LandscapeLayerBlend(Layer_Grass = g, Height_Rock = h, Layers = "((LayerName=\"Grass\"),...)")`.
 2. *Raise.* Nodes nothing reads are pruned, and the shapes the emitter lowers by hand are read back
-   (a StaticSwitch over a static bool is an `if` / `?:`, a Set-attributes chain is `m.X = ...`). The
-   [Substrate sugar](../language-v2/substrate.md#decompiling) is read back here too, wherever that is
-   graph-exact: `SubstrateAdd` / `SubstrateWeight` / `SubstrateHorizontalMixing` with nothing set on
-   them are `A + B`, `A * w` and `lerp(A, B, t)`, and a conversion node that feeds one BSDF and nothing
-   else becomes `BaseColor = ...` / `Haziness = ...` / `Transmittance = ...` on that BSDF.
+   (a StaticSwitch over a static bool is an `if` / `?:`, a Set-attributes chain is `m.X = ...`). A
+   Substrate node stays the call it is -- `Substrate.Weight(...)`, `SSSMFP = Substrate.TransmittanceToMFP(...).MFP`
+   -- so the text names every node the graph shows. Only the readable form reads the
+   [Substrate sugar](../language-v2/substrate.md#decompiling) back, wherever that is graph-exact:
+   `SubstrateAdd` / `SubstrateWeight` / `SubstrateHorizontalMixing` with nothing set on them are `A + B`,
+   `A * w` and `lerp(A, B, t)`, and a conversion node that feeds one BSDF and nothing else becomes
+   `BaseColor = ...` / `Haziness = ...` / `Transmittance = ...` on that BSDF.
 3. *Write.* Uniforms in display order (`@sort` only where a priority is not the uniform's place), a
    local for a value that is read twice or that a statement named, custom functions recovered from
    their node's code with their helpers, layers and blends in their own signatures, an `extern`

@@ -481,7 +481,8 @@ bool FDreamShaderSubstrateSugarBuilderTest::RunTest(const FString& Parameters)
 }
 
 // ---------------------------------------------------------------------------------------------
-// Read back: the decompiler writes the sugar, and the text builds the graph it was read from
+// Read back: the decompiler names every node, writes the sugar when the readable form is asked for, and either text
+// builds the graph it was read from
 // ---------------------------------------------------------------------------------------------
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -506,11 +507,42 @@ bool FDreamShaderSubstrateSugarReadBackTest::RunTest(const FString& Parameters)
 		return false;
 	}
 
+	// By default every node is the call it is: the sugar names none, and a search of the text for the node the graph
+	// shows -- a Coverage Weight, a Transmittance-To-MFP -- has to find it.
+	{
+		FIRToAstOptions Plain;
+		FLangDiagnosticSink PlainSink(TEXT("Sugar.dss"));
+		FString PlainText;
+		if (TestTrue(TEXT("the module decompiles plain"), UE::DreamShader::Editor::Private::Tests::DecompileDreamShaderIRToText(*Built.Module, Plain, PlainText, PlainSink)))
+		{
+			for (const TCHAR* Needle : { TEXT("Substrate.MetalnessToDiffuseAlbedoF0("), TEXT("Substrate.HazinessToSecondaryRoughness("),
+				TEXT("Substrate.TransmittanceToMFP("), TEXT("SSSMFP = "), TEXT("Substrate.Add("), TEXT("Substrate.Weight("), TEXT("Substrate.HorizontalMix(") })
+			{
+				TestTrue(FString::Printf(TEXT("plain: '%s'\n%s"), Needle, *PlainText), PlainText.Contains(Needle, ESearchCase::CaseSensitive));
+			}
+			// The slab's own pins, each wired to the conversion node: `Haziness` is a pin of the conversion node, not an
+			// argument of the slab.
+			for (const TCHAR* Needle : { TEXT("DiffuseAlbedo = Substrate.MetalnessToDiffuseAlbedoF0("), TEXT("SecondRoughness = Substrate.HazinessToSecondaryRoughness("),
+				TEXT("SSSMFP = Substrate.TransmittanceToMFP(") })
+			{
+				TestTrue(FString::Printf(TEXT("plain, on the slab: '%s'\n%s"), Needle, *PlainText), PlainText.Contains(Needle, ESearchCase::CaseSensitive));
+			}
+
+			FIRRun PlainAgain;
+			Lower(PlainAgain, PlainText);
+			FIRCompareOptions CompareOptions;
+			FString Difference;
+			TestTrue(FString::Printf(TEXT("the plain text builds the graph it was read from (%s | %s)"), *PlainAgain.ErrorText(), *Difference),
+				PlainAgain.Succeeded() && AreDreamShaderIRModulesEquivalent(*Built.Module, *PlainAgain.Module, CompareOptions, Difference));
+		}
+	}
+
 	FIRToAstOptions AstOptions;
+	AstOptions.bReadable = true;
 	FLangDiagnosticSink Sink(TEXT("Sugar.dss"));
 	FString Decompiled;
 	const bool bDecompiled = UE::DreamShader::Editor::Private::Tests::DecompileDreamShaderIRToText(*Built.Module, AstOptions, Decompiled, Sink);
-	if (!TestTrue(TEXT("the module decompiles"), bDecompiled))
+	if (!TestTrue(TEXT("the module decompiles readable"), bDecompiled))
 	{
 		return false;
 	}

@@ -94,7 +94,8 @@ namespace UE::DreamShader::Lang
 	 * With a catalog it also reads the Substrate sugar back: `A + B`, `A * w` and `lerp(A, B, t)` for the three
 	 * composition nodes, and `BaseColor = / Metallic = / Haziness = / Transmittance =` for a conversion node that feeds
 	 * one BSDF and nothing else. Both are graph-exact, like every other rule; the catalog is what says which engine class
-	 * a node is, whatever short name it goes by.
+	 * a node is, whatever short name it goes by. The decompiler passes one for the readable form only (bReadable): the
+	 * sugar names no node, so by default every node is written as the call it is.
 	 */
 	DREAMSHADERLANG_API void RaiseDreamShaderIR(IR::FIRModule& Module, FLangDiagnosticSink& Diagnostics, const IR::FBuiltinCatalog* Catalog = nullptr);
 }

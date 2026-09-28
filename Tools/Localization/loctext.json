@@ -2496,266 +2496,266 @@
   "key": "AttributeOutputUnknown",
   "src": "{0} is read through its output {1}, which is no material attribute the catalog knows; a zero stands in for that read.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 685
+  "line": 695
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "BoolFunctionInput",
   "src": "The input '{0}' of '{1}' is a dynamic bool pin, which the language has no parameter for; it is written as 'bool' and rebuilds as a scalar pin.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1380
+  "line": 1390
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "BreakWithoutMaterial",
   "src": "{0} reads the attributes of no material; a zero stands in for every value read from it.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1633
+  "line": 1643
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "CallWithoutFunction",
   "src": "{0} calls a material function that is missing; a zero stands in for every value read from it.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1409
+  "line": 1419
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "CaptionDropped",
   "src": "'{0}' has the caption '{1}', which source has no directive for; the rebuilt function has none.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2941
+  "line": 3001
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "ClassNotInCatalog",
   "src": "{0} is of a class the builtin catalog does not list (abstract, deprecated, or from a module loaded after the catalog was built); a zero stands in for every value read from it.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2300
+  "line": 2328
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "ConvertAsChannels",
   "src": "{0} is a Convert node, whose pins no call can name; each of its outputs is written as the channels it is made of ('v.xy', 'float3(a, b, 0.0)'), and the rebuilt graph has ComponentMask and AppendVector nodes in its place.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2031
+  "line": 2041
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "ConvertChannelPastValue",
   "src": "{0} reads channel {1} of its input {2}, which carries a {3}; the new translator reads zero there and the classic one refuses the node, so a zero stands in.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1942
+  "line": 1952
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "ConvertMappingUnknown",
   "src": "{0} maps channel {1} of its input {2} onto channel {3} of its output {4}, and the node has no such pin or channel; the engine refuses the mapping, and it is left out.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1906
+  "line": 1916
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "CustomDefinesDropped",
   "src": "{0} carries {1} additional define(s), which a '/// @custom' function cannot declare; the rebuilt node has none. Move them into the body as '#define' lines.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1523
+  "line": 1533
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "DescribeExpression",
   "src": "'{0}' ({1}) of '{2}'",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 443
+  "line": 453
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "DescribeNoExpression",
   "src": "an expression",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 440
+  "line": 450
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "DynamicPinsDropped",
   "src": "{0} has {1} wired input(s) the class does not declare as named pins, so a call cannot connect them; the rebuilt node leaves them unconnected.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2415
+  "line": 2391
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "GetAttributesAsBreak",
   "src": "{0} is a GetMaterialAttributes node; reading a material's attributes always rebuilds as a BreakMaterialAttributes.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1683
+  "line": 1693
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "GraphCycle",
   "src": "{0} reads {1}, which reads it back; the graph has a cycle, and a zero stands in for that read.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 595
+  "line": 605
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "MakeAttributeUnknown",
   "src": "{0} sets '{1}', which is no material attribute the catalog knows; the connection is dropped.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1564
+  "line": 1574
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "OutputOfStatement",
   "src": "{0} is read through its output {1}, and the catalog lists no output for its class; a zero stands in for that read.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 725
+  "line": 735
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "OutputPastCatalog",
   "src": "{0} is read through its output {1}, which the node has no slot for; its first output is read instead.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 718
+  "line": 728
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "ParameterPropertySkipped",
   "src": "{0} changes '{1}', which a '///' directive cannot carry; the rebuilt parameter has the default.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1059
+  "line": 1069
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "PinsIgnoredUnderAttributes",
   "src": "'{0}' reads its attributes as one set, so the {1} individual pin(s) that are also wired are ignored, by the engine and here.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2902
+  "line": 2962
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "PreviewPinConnected",
   "src": "The input '{0}' of '{1}' has its Preview pin wired. Source says that as a default that is an expression ('float {0} = UE.TexCoord(Index = 1).r'), which the decompiler does not write yet; the rebuilt input previews its number.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1387
+  "line": 1397
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "PropertyKindSkipped",
   "src": "{0} changes '{1}', a property of a kind a call argument cannot carry (an array, a map, a delegate); the rebuilt node has the default.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2456
+  "line": 2432
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "RerouteCycle",
   "src": "The reroute {0} feeds itself; the pin that reads it is treated as unconnected.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 501
+  "line": 511
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "RerouteDangling",
   "src": "The reroute {0} has nothing wired into it; the pin that reads it is treated as unconnected.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 515
+  "line": 525
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "RerouteUsageWithoutDeclaration",
   "src": "The named reroute {0} has no declaration; the pin that reads it is treated as unconnected.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 477
+  "line": 487
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "SetAttributeUnknown",
   "src": "{0} sets '{1}', which is no material attribute the catalog knows; the connection is dropped.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1595
+  "line": 1605
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "StaticSwitchFalseBranch",
   "src": "False",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1762
+  "line": 1772
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "StaticSwitchFolded",
   "src": "{0} has nothing wired to Value, so it is its {1} branch and nothing else; the rebuilt graph has no switch there.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1760
+  "line": 1770
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "StaticSwitchParameterSplit",
   "src": "{0} is a StaticSwitchParameter, which the language writes as a '/// @static' uniform and a static branch; the rebuilt graph has those two nodes in its place.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1181
+  "line": 1191
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "StaticSwitchTrueBranch",
   "src": "True",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1762
+  "line": 1772
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "SwitchAsBranches",
-  "src": "{0} is a Switch node, whose inputs no call can name; it is written as the branches the engine makes of it ('0.0 == floor(s) ? a : ...'), and the rebuilt graph has Floor and If nodes in its place.",
+  "src": "{0} is a Switch node with a case that has no name a call can use; it is written as the branches the engine makes of it ('0.0 == floor(s) ? a : ...'), and the rebuilt graph has Floor and If nodes in its place. Name its cases (InputName) to keep the Switch.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2176
+  "line": 2204
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "SwitchFolded",
   "src": "{0} has nothing wired to SwitchValue, so its value {1} picks {2} and nothing else; the rebuilt graph has no switch there.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2130
+  "line": 2158
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "SwitchFoldedCase",
   "src": "the input '{0}'",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2134
+  "line": 2162
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "SwitchFoldedDefault",
   "src": "the default",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2135
+  "line": 2163
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "SwitchWithoutCases",
   "src": "{0} has no input besides its default, which is what it hands on; the rebuilt graph has no switch there.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2119
+  "line": 2147
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "TextureSampleParameterSplit",
   "src": "{0} is a texture sample parameter, which the language writes as a texture uniform and a sample of it; the rebuilt graph has a TextureObjectParameter and a TextureSample in its place.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 1319
+  "line": 1329
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "UnreachableExpressions",
   "src": "{0} expression(s) of '{1}' feed no output and are not part of the source; a build would prune them all the same.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 2811
+  "line": 2871
  },
  {
   "ns": "DreamShader.Decompiler.GraphImport",
   "key": "UnsupportedAsset",
   "src": "'{0}' is neither a material nor a material function, so it has no graph to read. A material instance decompiles to a '.dsi'.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderGraphImport.cpp",
-  "line": 3018
+  "line": 3078
  },
  {
   "ns": "DreamShader.Decompiler.IR",
@@ -2776,14 +2776,14 @@
   "key": "PrintedTextDoesNotParse",
   "src": "The decompiled text does not parse back: {0}: {1}. It is written as it is; this is a defect of the decompiler.",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderIRDecompiler.cpp",
-  "line": 431
+  "line": 433
  },
  {
   "ns": "DreamShader.Decompiler.IR",
   "key": "PrintedTextNoReason",
   "src": "the parser gave no reason",
   "file": "DreamShaderEditor\\Private\\Decompiler\\DreamShaderIRDecompiler.cpp",
-  "line": 433
+  "line": 435
  },
  {
   "ns": "DreamShader.Decompiler.IR",
@@ -9104,77 +9104,77 @@
   "key": "AttributesWithoutMaterial",
   "src": "it reads the attributes of no material",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1625
+  "line": 1661
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallInputUnconnectedSkipped",
   "src": "{0} leaves the required input '{1}' of '{2}' unconnected and nothing can stand in for it; the call is written without it and will not compile as it is.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1473
+  "line": 1509
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallInputUnconnectedZero",
   "src": "{0} leaves the required input '{1}' of '{2}' unconnected; '0.0' is passed for it.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1472
+  "line": 1508
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallInputUndeclared",
   "src": "{0} connects an input '{1}' that '{2}' does not declare; the connection is dropped.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1510
+  "line": 1546
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallOfVoidAsValue",
   "src": "the function it calls returns nothing",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1547
+  "line": 1583
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallOutWithoutLocal",
   "src": "the function it calls has 'out' parameters and the call was taken for a plain value",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1489
+  "line": 1525
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CallWithoutCallee",
   "src": "the function it calls could not be declared",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1543
+  "line": 1579
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CompareAsReflectedCall",
   "src": "{0} is an If whose branches no comparison selects between; it is written as 'UE.If(...)'.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1371
+  "line": 1407
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CoreOpArity",
   "src": "it has the wrong number of operands",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1305
+  "line": 1341
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CoreOpMissingOperand",
   "src": "one of its operands is not connected",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1300
+  "line": 1336
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "CoreOpNoSpelling",
   "src": "the language has no spelling for this operation",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1443
+  "line": 1479
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
@@ -9195,126 +9195,126 @@
   "key": "ReflectedNoCatalogEntry",
   "src": "its class is not in the builtin catalog",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1014
+  "line": 1022
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "ReflectedPropertySkipped",
   "src": "{0} sets '{1}' to a list, which a call has no argument for; the property is left at its default.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1091
+  "line": 1127
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "ReflectedPropertyUnnamed",
   "src": "{0} sets a property '{1}' whose name an argument cannot carry; it is left at its default.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1114
+  "line": 1150
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "ReflectedUnnamedPin",
   "src": "{0} has an input '{1}' that is neither a pin of '{2}.{3}' nor a name an argument can carry; it is left unconnected.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1065
+  "line": 1099
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "SampleWithoutOperands",
   "src": "a texture sample needs its texture and its coordinates",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1236
+  "line": 1272
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "SwizzleWithoutMask",
   "src": "the component mask is missing",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 1315
+  "line": 1351
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeBaseBeforeBuilt",
   "src": "it is read before it was written (the graph has a cycle)",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 914
+  "line": 922
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeBeforeBuilt",
   "src": "it is read before it was written (the graph has a cycle)",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 879
+  "line": 887
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeBeforeDeclared",
   "src": "it is read before the statement that declares it (the graph has a cycle)",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 870
+  "line": 878
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeExtraOutput",
   "src": "a reader names an output past the one this node has in source",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 861
+  "line": 869
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeInvalidValue",
   "src": "a reader names an output the graph does not have",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 825
+  "line": 833
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeMissingOutput",
   "src": "a reader names an output this node does not have",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 903
+  "line": 911
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeStatement",
   "src": "it is a statement and has no value",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 949
+  "line": 957
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeUnboundInput",
   "src": "the function input is not one of the function's parameters",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 842
+  "line": 850
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeUndeclaredOutput",
   "src": "the output a reader names is not one the called function declares",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 942
+  "line": 950
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeUnnamedAttribute",
   "src": "the attribute it reads has no name",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 926
+  "line": 934
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "TakeUnnamedParameter",
   "src": "the parameter node carries no ParameterName",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 853
+  "line": 861
  },
  {
   "ns": "DreamShaderIRToAstExpressions",
   "key": "ValueHasNoSourceForm",
   "src": "{0} cannot be written as source: {1}. '0.0' stands in its place.",
   "file": "DreamShaderLang\\Private\\Decompile\\IRToAstExpressions.cpp",
-  "line": 794
+  "line": 802
  },
  {
   "ns": "DreamShaderIRToAstStatements",

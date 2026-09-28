@@ -402,7 +402,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Decompiler.GraphImport | StaticSwitchFolded | {0} has nothing wired to Value, so it is its {1} branch and nothing else; the rebuilt graph has no switch there. |
 | DreamShader.Decompiler.GraphImport | StaticSwitchParameterSplit | {0} is a StaticSwitchParameter, which the language writes as a '/// @static' uniform and a static branch; the rebuilt graph has those two nodes in its place. |
 | DreamShader.Decompiler.GraphImport | StaticSwitchTrueBranch | True |
-| DreamShader.Decompiler.GraphImport | SwitchAsBranches | {0} is a Switch node, whose inputs no call can name; it is written as the branches the engine makes of it ('0.0 == floor(s) ? a : ...'), and the rebuilt graph has Floor and If nodes in its place. |
+| DreamShader.Decompiler.GraphImport | SwitchAsBranches | {0} is a Switch node with a case that has no name a call can use; it is written as the branches the engine makes of it ('0.0 == floor(s) ? a : ...'), and the rebuilt graph has Floor and If nodes in its place. Name its cases (InputName) to keep the Switch. |
 | DreamShader.Decompiler.GraphImport | SwitchFolded | {0} has nothing wired to SwitchValue, so its value {1} picks {2} and nothing else; the rebuilt graph has no switch there. |
 | DreamShader.Decompiler.GraphImport | SwitchFoldedCase | the input '{0}' |
 | DreamShader.Decompiler.GraphImport | SwitchFoldedDefault | the default |

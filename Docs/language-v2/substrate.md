@@ -3,8 +3,8 @@
 > [DreamShader](../index.md) » [DreamShaderLang 2.0](index.md) » **Substrate sugar**
 
 Shorter spellings for Substrate graphs. Each one is a spelling and nothing else: it binds to a fixed
-pattern of [`Substrate.*`](../builtins/substrate.md) nodes, the graph is the one the long form makes,
-and the decompiler writes the short form back.
+pattern of [`Substrate.*`](../builtins/substrate.md) nodes, and the graph is the one the long form makes.
+The decompiler writes the long form, and the short form when it is asked for the readable one.
 
 | | |
 | :-- | :-- |
@@ -218,13 +218,23 @@ When a sugar needs a node this engine does not have, the message names the engin
 
 ## Decompiling
 
-The decompiler reads the sugar back wherever that is graph-exact, without being asked:
+The decompiler writes every Substrate node as the call it is, under the name sources use —
+`Substrate.Slab`, not the reflected `SubstrateSlabBSDF`. A Coverage Weight is `Substrate.Weight(A = …, Weight = …)`
+and a Transmittance-To-MFP in front of a slab is `SSSMFP = Substrate.TransmittanceToMFP(…).MFP`, so a search
+of the text for a node the graph shows finds it.
+
+The sugar is read back only for the readable form (the commandlet's `-Readable`, the bridge's
+`readable`), and there only where it is graph-exact:
+
+| The graph has | The readable text says |
+| :-- | :-- |
+| `SubstrateAdd` / `SubstrateWeight` / `SubstrateHorizontalMixing` with every pin wired and no property set | `A + B`, `A * w`, `lerp(A, B, t)`, in a local named after the node (`SubstrateWeight`) |
+| a conversion node whose outputs feed one BSDF and nothing else, with nothing set on it | `BaseColor = …`, `Metallic = …`, `Haziness = …`, `Transmittance = …` on that BSDF |
+
+Either form is written for:
 
 | The graph has | The text says |
 | :-- | :-- |
-| `SubstrateAdd` / `SubstrateWeight` / `SubstrateHorizontalMixing` with every pin wired and no property set | `A + B`, `A * w`, `lerp(A, B, t)` |
-| a conversion node whose outputs feed one BSDF and nothing else, with nothing set on it | `BaseColor = …`, `Metallic = …`, `Haziness = …`, `Transmittance = …` on that BSDF |
-| any other Substrate node | `Substrate.<Name>(Pin = …)`, under the name sources use — `Substrate.Slab`, not the reflected `SubstrateSlabBSDF` |
 | a material whose product says `Bridge` or `Native` | `#pragma material(Substrate = …)` |
 
 `IOR` is the one that is not read back: a constant `F0` does not say it was an index of refraction. A

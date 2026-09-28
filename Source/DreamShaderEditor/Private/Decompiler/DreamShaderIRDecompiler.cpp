@@ -373,7 +373,9 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		Lang::RaiseDreamShaderIR(Module, Sink, &Catalog);
+		// The Substrate sugar (`A * w`, `Transmittance = ...` on a slab) only when the readable form is asked for: it is
+		// graph-exact, but it names no node, and a search of the text for the node the graph shows finds nothing.
+		Lang::RaiseDreamShaderIR(Module, Sink, Request.bReadable ? &Catalog : nullptr);
 
 		// ----- IR -> AST -> text
 		Lang::FIRToAstOptions AstOptions;

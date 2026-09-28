@@ -11,9 +11,11 @@
 // with nothing wired to Value is whichever branch its default picks. And an engine GetMaterialAttributes hands its
 // material through on output 0.
 //
-// Two classes keep their pins in arrays, which no call can name, and are read back as what they compute instead: a
-// Convert (Make / Break FloatN) as the channels each output is put together from, a Switch as the chain of branches the
-// engine makes of it.
+// Some classes keep their pins in an array of structs. Where the class names each after its entry -- a Landscape layer
+// blend, grass or physical-material output, a Switch whose cases are named -- the node is the reflected call, with the
+// array as the text ImportText reads and each pin by its name (CollectLatePins). Two are read back as what they compute
+// instead: a Convert (Make / Break FloatN), whose pins have no names, as the channels each output is put together
+// from, and a Switch with an unnamed case as the chain of branches the engine makes of it.
 //
 // What an expression becomes: the core op the emitter would write the very same
 // expression for -- every operand pin wired, every other property at its default -- and otherwise a Reflected node over
@@ -390,6 +392,14 @@ namespace UE::DreamShader::Editor::Private
 			bool ImportTextureSample(UMaterialExpressionTextureSample* Sample, FIRValue Texture, const UMaterialExpression* Owner);
 			bool ImportCoreMath(UMaterialExpression* Expression);
 			void ImportReflected(UMaterialExpression* Expression);
+
+			/** A live pin of a node that no input property declares, and the name a call gives it; empty when it has none. */
+			struct FLatePin
+			{
+				FExpressionInput* Input = nullptr;
+				FString Name;
+			};
+			TArray<FLatePin> CollectLatePins(UMaterialExpression* Expression, const UE::DreamShader::IR::FCatalogExpression& Entry) const;
 
 			void AddParameterMetadata(FIRNode& Node, const UMaterialExpression* Expression, const TSet<FName>& Handled);
 			/** The catalog's outputs onto a reflected node that has none yet; how many it has now. */
@@ -2040,15 +2050,33 @@ namespace UE::DreamShader::Editor::Private
 		bool FGraphImporter::ImportSwitch(UMaterialExpression* Expression)
 		{
 #if DREAMSHADER_GRAPH_IMPORT_WITH_SWITCH
-			// Its cases are an array of structs, so the reflected call reads it back with none, and a Switch without cases
-			// compiles to nothing. What it computes can be said: the chain the new translator builds for it
-			// (UMaterialExpressionSwitch::Build), `floor(s) == i ? case i : ...` from the first case on and the default last,
-			// which is the case the classic translator's sum of steps picks for every finite selector.
+			// Its cases are an array of structs, each named by its InputName. Where every wired case has a name a call can
+			// use, the node is written as itself -- `UE.Switch(SwitchValue = s, Inputs = "((InputName=\"Wet\"))", Wet = w)`,
+			// the reflected call, which writes the array and wires each case by its name (CollectLatePins). A new Switch's
+			// cases have no name, though, and a call cannot wire those. What it computes can be said instead: the chain the
+			// new translator builds for it (UMaterialExpressionSwitch::Build), `floor(s) == i ? case i : ...` from the first
+			// case on and the default last, which is the case the classic translator's sum of steps picks for every finite
+			// selector.
 			namespace Prop = UE::DreamShader::IR::Prop;
 			UMaterialExpressionSwitch* Switch = Cast<UMaterialExpressionSwitch>(Expression);
 			if (!Switch || Expression->GetClass() != UMaterialExpressionSwitch::StaticClass())
 			{
 				return false;
+			}
+			const int32 CatalogIndex = Catalog.FindExpressionByClass(Expression->GetClass()->GetPathName());
+			if (Catalog.Expressions.IsValidIndex(CatalogIndex))
+			{
+				// A Switch with no case at all hands its default on, and is read so below.
+				const TArray<FLatePin> CasePins = CollectLatePins(Expression, Catalog.Expressions[CatalogIndex]);
+				bool bEveryCaseNamed = CasePins.Num() > 0;
+				for (const FLatePin& Late : CasePins)
+				{
+					bEveryCaseNamed &= Late.Input->Expression == nullptr || !Late.Name.IsEmpty();
+				}
+				if (bEveryCaseNamed)
+				{
+					return false;
+				}
 			}
 
 			// A case with nothing wired is refused by both translators: the node stays the reflected call, which says what
@@ -2173,7 +2201,7 @@ namespace UE::DreamShader::Editor::Private
 			ForwardedOutputs.Add(Key, ToCommonType(Result));
 
 			Info(TEXT("DSH9073"), FText::Format(
-				LOCTEXT("SwitchAsBranches", "{0} is a Switch node, whose inputs no call can name; it is written as the branches the engine makes of it ('0.0 == floor(s) ? a : ...'), and the rebuilt graph has Floor and If nodes in its place."),
+				LOCTEXT("SwitchAsBranches", "{0} is a Switch node with a case that has no name a call can use; it is written as the branches the engine makes of it ('0.0 == floor(s) ? a : ...'), and the rebuilt graph has Floor and If nodes in its place. Name its cases (InputName) to keep the Switch."),
 				DescribeExpression(Expression)));
 			return true;
 #else
@@ -2314,7 +2342,6 @@ namespace UE::DreamShader::Editor::Private
 
 			// Pins in the order the catalog lists them, which is the order of the class's own input properties.
 			TSet<FName> UnwiredTwins;
-			TSet<const FExpressionInput*> ReflectedPins;
 			for (TFieldIterator<FProperty> It(Class, EFieldIteratorFlags::IncludeSuper); It; ++It)
 			{
 				const FProperty* Property = *It;
@@ -2327,7 +2354,6 @@ namespace UE::DreamShader::Editor::Private
 					const FString PinName = MakeImportPinName(Property, ArrayIndex);
 					const int32 PinIndex = Entry.FindInput(PinName);
 					const FExpressionInput* Input = Property->ContainerPtrToValuePtr<FExpressionInput>(Expression, ArrayIndex);
-					ReflectedPins.Add(Input);
 					const FIRValue Value = Input ? ResolveInput(*Input) : FIRValue::None();
 					if (Value.IsValid() && PinIndex != INDEX_NONE)
 					{
@@ -2340,71 +2366,21 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 
-			// Pins the class keeps in an array of its own. A class the catalog knows to name its pins per node -- a layer
-			// blend calls one `Layer Grass`, a grass output after its grass entry -- is called with that name, in its
-			// identifier form, and the emitter finds it on the live node once the array is written back (rule L24). A
-			// pin with no name, or one that could be taken for another, has none a call could use (Switch, a layer stack).
-			TArray<FExpressionInput*> LiveInputs;
-			TArray<FString> LiveNames;
-			for (int32 InputIndex = 0; InputIndex < 256; ++InputIndex)
-			{
-				FExpressionInput* Input = Expression->GetInput(InputIndex);
-				if (!Input)
-				{
-					break;
-				}
-				const FName InputName = Expression->GetInputName(InputIndex);
-				LiveInputs.Add(Input);
-				LiveNames.Add(InputName.IsNone() ? FString() : InputName.ToString().TrimStartAndEnd());
-			}
-			const auto IsCallableLateName = [&Entry, &LiveNames](const FString& Name)
-			{
-				ELangKeyword Keyword = ELangKeyword::None;
-				if (Name.IsEmpty() || (!FChar::IsAlpha(Name[0]) && Name[0] != TCHAR('_')) || UE::DreamShader::Lang::TryGetLangKeyword(Name, Keyword)
-					|| Name.Equals(TEXT("Class"), ESearchCase::IgnoreCase))
-				{
-					return false;
-				}
-				// The binder takes a catalog name first, and the emitter connects the first live pin that answers to it.
-				for (const UE::DreamShader::IR::FCatalogPin& Pin : Entry.Inputs)
-				{
-					if (Pin.Name.Equals(Name, ESearchCase::IgnoreCase) || Pin.Aliases.Contains(Name))
-					{
-						return false;
-					}
-				}
-				for (const UE::DreamShader::IR::FCatalogProperty& Property : Entry.Properties)
-				{
-					if (Property.Name.Equals(Name, ESearchCase::IgnoreCase) || Property.Aliases.Contains(Name))
-					{
-						return false;
-					}
-				}
-				int32 Answering = 0;
-				for (const FString& LiveName : LiveNames)
-				{
-					Answering += (!LiveName.IsEmpty()
-						&& (LiveName.Equals(Name, ESearchCase::IgnoreCase)
-							|| MakeDreamShaderDeclarationName(LiveName, TEXT(""), 0).Equals(Name, ESearchCase::IgnoreCase))) ? 1 : 0;
-				}
-				return Answering == 1;
-			};
-
+			// Pins the class keeps in an array of its own, by the name the node gives each (CollectLatePins). One with no name
+			// a call could use cannot be written (a layer stack's, an unnamed Switch case).
 			TArray<FString> LateBoundPins;
 			int32 WiredDynamicPins = 0;
-			for (int32 InputIndex = 0; InputIndex < LiveInputs.Num(); ++InputIndex)
+			for (const FLatePin& Late : CollectLatePins(Expression, Entry))
 			{
-				const FExpressionInput* Input = LiveInputs[InputIndex];
-				if (ReflectedPins.Contains(Input) || !Input->Expression)
+				if (!Late.Input->Expression)
 				{
 					continue;
 				}
-				const FString Name = LiveNames[InputIndex].IsEmpty() ? FString() : MakeDreamShaderDeclarationName(LiveNames[InputIndex], TEXT(""), 0);
-				const FIRValue Value = Entry.bHasInstanceDependentPins && IsCallableLateName(Name) ? ResolveInput(*Input) : FIRValue::None();
+				const FIRValue Value = Late.Name.IsEmpty() ? FIRValue::None() : ResolveInput(*Late.Input);
 				if (Value.IsValid())
 				{
-					Node.Inputs.Add({ Name, Value });
-					LateBoundPins.Add(Name);
+					Node.Inputs.Add({ Late.Name, Value });
+					LateBoundPins.Add(Late.Name);
 					continue;
 				}
 				++WiredDynamicPins;
@@ -2470,6 +2446,90 @@ namespace UE::DreamShader::Editor::Private
 			{
 				AddCatalogOutputs(NodeIndex, Expression);
 			}
+		}
+
+		TArray<FGraphImporter::FLatePin> FGraphImporter::CollectLatePins(UMaterialExpression* Expression, const UE::DreamShader::IR::FCatalogExpression& Entry) const
+		{
+			// A class the catalog knows to name its pins per node -- a layer blend calls one `Layer Grass`, a grass output
+			// and a Switch case after their entry -- is called with that name, in its identifier form, and the emitter finds
+			// it on the live node once the array is written back (rule L24). Only a name the binder and the emitter both
+			// take for this pin and no other: not a keyword, not a pin, property or alias of the class, and answered to by
+			// one live pin alone -- the emitter connects the first that answers, by its display name or its identifier form.
+			TSet<const FExpressionInput*> DeclaredPins;
+			for (TFieldIterator<FProperty> It(Expression->GetClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
+			{
+				const FProperty* Property = *It;
+				if (IsMaterialExpressionInputProperty(Property))
+				{
+					for (int32 ArrayIndex = 0; ArrayIndex < Property->ArrayDim; ++ArrayIndex)
+					{
+						DeclaredPins.Add(Property->ContainerPtrToValuePtr<FExpressionInput>(Expression, ArrayIndex));
+					}
+				}
+			}
+
+			TArray<FExpressionInput*> LiveInputs;
+			TArray<FString> LiveNames;
+			for (int32 InputIndex = 0; InputIndex < 256; ++InputIndex)
+			{
+				FExpressionInput* Input = Expression->GetInput(InputIndex);
+				if (!Input)
+				{
+					break;
+				}
+				const FName InputName = Expression->GetInputName(InputIndex);
+				LiveInputs.Add(Input);
+				LiveNames.Add(InputName.IsNone() ? FString() : InputName.ToString().TrimStartAndEnd());
+			}
+
+			const auto IsCallable = [&Entry, &LiveNames](const FString& Name)
+			{
+				ELangKeyword Keyword = ELangKeyword::None;
+				if (Name.IsEmpty() || (!FChar::IsAlpha(Name[0]) && Name[0] != TCHAR('_')) || UE::DreamShader::Lang::TryGetLangKeyword(Name, Keyword)
+					|| Name.Equals(TEXT("Class"), ESearchCase::IgnoreCase))
+				{
+					return false;
+				}
+				for (const UE::DreamShader::IR::FCatalogPin& Pin : Entry.Inputs)
+				{
+					if (Pin.Name.Equals(Name, ESearchCase::IgnoreCase) || Pin.Aliases.Contains(Name))
+					{
+						return false;
+					}
+				}
+				for (const UE::DreamShader::IR::FCatalogProperty& Property : Entry.Properties)
+				{
+					if (Property.Name.Equals(Name, ESearchCase::IgnoreCase) || Property.Aliases.Contains(Name))
+					{
+						return false;
+					}
+				}
+				int32 Answering = 0;
+				for (const FString& LiveName : LiveNames)
+				{
+					Answering += (!LiveName.IsEmpty()
+						&& (LiveName.Equals(Name, ESearchCase::IgnoreCase)
+							|| MakeDreamShaderDeclarationName(LiveName, TEXT(""), 0).Equals(Name, ESearchCase::IgnoreCase))) ? 1 : 0;
+				}
+				return Answering == 1;
+			};
+
+			TArray<FLatePin> LatePins;
+			for (int32 InputIndex = 0; InputIndex < LiveInputs.Num(); ++InputIndex)
+			{
+				if (DeclaredPins.Contains(LiveInputs[InputIndex]))
+				{
+					continue;
+				}
+				FLatePin& Late = LatePins.AddDefaulted_GetRef();
+				Late.Input = LiveInputs[InputIndex];
+				const FString Name = LiveNames[InputIndex].IsEmpty() ? FString() : MakeDreamShaderDeclarationName(LiveNames[InputIndex], TEXT(""), 0);
+				if (Entry.bHasInstanceDependentPins && IsCallable(Name))
+				{
+					Late.Name = Name;
+				}
+			}
+			return LatePins;
 		}
 
 		int32 FGraphImporter::AddCatalogOutputs(const int32 NodeIndex, UMaterialExpression* Expression)

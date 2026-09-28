@@ -21,7 +21,9 @@
 // Not raised: Multiply and Max over 0/1 values (`&&`, `||`). They cannot be told from arithmetic, and `a * b`
 // compiles to the same node.
 //
-// The Substrate sugar is read back here too, after everything else and once: Substrate.Add, Weight and
+// The Substrate sugar is read back here too, for the readable form only (the decompiler hands the catalog over for
+// that and nothing else: the sugar names no node, and a search of the text for one the graph shows finds nothing),
+// after everything else and once: Substrate.Add, Weight and
 // HorizontalMixing with nothing set on them become the core ops the writer spells `+`, `*` and `lerp` (sugar S1), and
 // a conversion node that feeds one BSDF and nothing else moves its inputs onto the BSDF under the names the sugar
 // gives them (S3), where the writer's reflected call writes an input that is no pin of the class as the named

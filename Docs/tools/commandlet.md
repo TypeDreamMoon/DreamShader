@@ -196,7 +196,7 @@ A message ending in ` (virtual)` indicates a transient asset; the commandlet nev
 | `-Out=<path>` | `-Output=<path>` | string | no | computed | Destination file |
 | `-Format=<Dss\|Legacy\|Auto>` | — | enum | no | `Auto` | `Auto` lets the extension of `-Out` decide: `.dsm` / `.dsf` is 1.x text, anything else 2.0. A format that contradicts the extension is `DSH9085`. |
 | `-KeepAssetPath` | — | flag | no | off | Write `/// @name` with the asset's own path when the output file would otherwise name another |
-| `-Readable` | — | flag | no | off | Prefer HLSL sugar over class-exact node calls (a rebuilt graph may then differ in node classes) |
+| `-Readable` | — | flag | no | off | Prefer HLSL sugar over class-exact node calls (a rebuilt graph may then differ in node classes), and read the [Substrate sugar](../language-v2/substrate.md#decompiling) back (`A * w`, `Transmittance = …`) |
 | `-DiagnosticsOut=<file>` | — | string | no | — | The decompile's diagnostics as JSON (schema `dreamshader-diagnostics`) |
 
 ### Asset path normalization

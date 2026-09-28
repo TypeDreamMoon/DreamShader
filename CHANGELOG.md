@@ -2,7 +2,29 @@
 
 ## Unreleased
 
+### Changed
+
+- **The decompiler writes every Substrate node by name.** A Transmittance-To-MFP on a slab's SSS MFP
+  came back as `Transmittance = ..., Thickness = ...` on the slab, a Coverage Weight as `Slab * w` in a
+  local called `Multiply`, an Add as `+`, a Horizontal Mixing as `lerp`, a Metalness-To-DiffuseAlbedo-F0
+  as `BaseColor = ...`: graph-exact, but a search of the text for the node the graph shows found
+  nothing, and it read as a node lost or turned into another. They are now the calls they are --
+  `SSSMFP = Substrate.TransmittanceToMFP(TransmittanceColor = ..., Thickness = ...).MFP`,
+  `Substrate.Weight(A = ..., Weight = ...)`. The sugar is read back for the readable form only
+  (`-Readable`, the bridge's `readable`), where a Substrate `A * w` is now a local called
+  `SubstrateWeight`. Sources written with the sugar compile as before.
+
 ### Fixed
+
+- **A Switch whose cases are named decompiles as the Switch.** It came back as the chain of branches
+  the engine makes of it, which rebuilt as Floor and If nodes. With every wired case named, it is
+  `UE.Switch(SwitchValue = s, Dry = a, Wet = b, Inputs = "((InputName=\"Dry\"),(InputName=\"Wet\"))")`,
+  the node itself, as a Landscape layer blend is. A Switch with an unnamed case -- a new one's are --
+  is the chain as before, and `DSH9073` now says to name the cases to keep the node.
+
+- **A pin's constant is written in the pin's place.** An unwired pin that reads its `Const*` twin was
+  written after every wired one -- `UE.LinearInterpolate(B = x, Alpha = t, A = 0.0)` -- and read as if
+  A were missing; it is `UE.LinearInterpolate(A = 0.0, B = x, Alpha = t)`.
 
 - **The Landscape layer blend, grass output and physical-material output decompile with their
   pins.** `LandscapeLayerBlend`, `LandscapeGrassOutput` and `LandscapePhysicalMaterialOutput` keep

@@ -766,6 +766,14 @@ namespace UE::DreamShader::Lang::DecompileAst
 				break;
 			default:
 				Base = IR::LexToString(Node.Op);
+				// The readable form's `A * w` over a Substrate value is a Coverage Weight (IRRaise.cpp, sugar S1), not a
+				// Multiply: named as the node is in the plain form, so the local says what the graph has.
+				if (Node.Outputs.Num() == 1 && Node.Outputs[0].Kind == IR::EIRTypeKind::Substrate)
+				{
+					if (Node.Op == EIROp::Add) { Base = TEXT("SubstrateAdd"); }
+					else if (Node.Op == EIROp::Multiply) { Base = TEXT("SubstrateWeight"); }
+					else if (Node.Op == EIROp::Lerp) { Base = TEXT("SubstrateHorizontalMixing"); }
+				}
 				break;
 			}
 		}
@@ -1025,9 +1033,12 @@ namespace UE::DreamShader::Lang::DecompileAst
 		// canonical order says this year.
 		TArray<bool> InputWritten;
 		InputWritten.Init(false, Node.Inputs.Num());
+		TArray<bool> PropertyWritten;
+		PropertyWritten.Init(false, Node.Properties.Num());
 		for (int32 PinIndex = 0; PinIndex < Class.Inputs.Num(); ++PinIndex)
 		{
 			const FString& PinName = Class.Inputs[PinIndex].Name;
+			bool bConnected = false;
 			for (int32 InputIndex = 0; InputIndex < Node.Inputs.Num(); ++InputIndex)
 			{
 				const FIRInput& Input = Node.Inputs[InputIndex];
@@ -1036,6 +1047,7 @@ namespace UE::DreamShader::Lang::DecompileAst
 					continue;
 				}
 				InputWritten[InputIndex] = true;
+				bConnected = true;
 
 				FExprPtr Value = TakeValue(Input.Value);
 				if (CanBeArgumentName(PinName))
@@ -1048,6 +1060,28 @@ namespace UE::DreamShader::Lang::DecompileAst
 					AddPinArgument(*Call, PinIndex, MoveTemp(Value));
 				}
 				break;
+			}
+
+			// The `Const*` twin of a pin nothing is wired to is what the pin reads, and is written on the pin, in the pin's
+			// place: `UE.LinearInterpolate(A = 0.0, B = x, Alpha = t)`, not with A trailing after the rest.
+			const FString& TwinName = Class.Inputs[PinIndex].ConstPropertyName;
+			if (!bConnected && !TwinName.IsEmpty() && CanBeArgumentName(PinName))
+			{
+				for (int32 PropertyIndex = 0; PropertyIndex < Node.Properties.Num(); ++PropertyIndex)
+				{
+					const FIRProperty& Twin = Node.Properties[PropertyIndex];
+					if (PropertyWritten[PropertyIndex] || !Twin.Name.Equals(TwinName, ESearchCase::CaseSensitive))
+					{
+						continue;
+					}
+					const int32 TwinIndex = Class.FindProperty(Twin.Name);
+					if (FExprPtr Value = BuildPropertyValue(Twin.Value, TwinIndex != INDEX_NONE ? Class.Properties[TwinIndex].Type : IR::ECatalogValueType::Unknown))
+					{
+						AddNamedArgument(*Call, PinName, MoveTemp(Value));
+						PropertyWritten[PropertyIndex] = true;
+					}
+					break;
+				}
 			}
 		}
 
@@ -1072,9 +1106,11 @@ namespace UE::DreamShader::Lang::DecompileAst
 			AddNamedArgument(*Call, Input.Pin, TakeValue(Input.Value));
 		}
 
-		for (const FIRProperty& Property : Node.Properties)
+		for (int32 WrittenIndex = 0; WrittenIndex < Node.Properties.Num(); ++WrittenIndex)
 		{
-			if (Property.Name.Equals(IR::Prop::ClassSpecifier, ESearchCase::CaseSensitive)
+			const FIRProperty& Property = Node.Properties[WrittenIndex];
+			if (PropertyWritten[WrittenIndex]
+				|| Property.Name.Equals(IR::Prop::ClassSpecifier, ESearchCase::CaseSensitive)
 				|| Property.Name.Equals(IR::Prop::LateBoundPins, ESearchCase::CaseSensitive)
 				|| Property.Name.Equals(IR::Prop::WrittenPins, ESearchCase::CaseSensitive))
 			{

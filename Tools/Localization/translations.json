@@ -1592,7 +1592,7 @@
  "DreamShader.Decompiler.GraphImport|ConvertMappingUnknown": "{0} 把输入 {2} 的通道 {1} 映射到输出 {4} 的通道 {3}，而节点没有这样的引脚或通道；引擎拒绝这个映射，这里将它略去。",
  "DreamShader.Decompiler.GraphImport|OutputOfStatement": "{0} 通过输出 {1} 被读取，而目录没有为它的类列出任何输出；这次读取以零代替。",
  "DreamShader.Decompiler.GraphImport|SetAttributeUnknown": "{0} 设置了 '{1}'，而它不是目录已知的材质属性；该连接已被丢弃。",
- "DreamShader.Decompiler.GraphImport|SwitchAsBranches": "{0} 是 Switch 节点，它的输入无法用调用来命名；它被写成引擎为它生成的分支链（'0.0 == floor(s) ? a : ...'），重建后的图用 Floor 和 If 节点取代它。",
+ "DreamShader.Decompiler.GraphImport|SwitchAsBranches": "{0} 是 Switch 节点，其中有输入没有可供调用使用的名称；它被写成引擎为它生成的分支链（'0.0 == floor(s) ? a : ...'），重建后的图用 Floor 和 If 节点取代它。给它的各个输入命名（InputName）即可保留 Switch 节点。",
  "DreamShader.Decompiler.GraphImport|SwitchFolded": "{0} 的 SwitchValue 没有连线，所以它的值 {1} 只会选中{2}；重建后的图在那里没有开关。",
  "DreamShader.Decompiler.GraphImport|SwitchFoldedCase": "输入 '{0}'",
  "DreamShader.Decompiler.GraphImport|SwitchFoldedDefault": "默认值",
