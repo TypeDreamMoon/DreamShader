@@ -27,6 +27,11 @@
 			"LoadingPhase": "PostConfigInit"
 		},
 		{
+			"Name": "DreamShaderPass",
+			"Type": "Runtime",
+			"LoadingPhase": "PostConfigInit"
+		},
+		{
 			"Name": "DreamShaderCompiler",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
