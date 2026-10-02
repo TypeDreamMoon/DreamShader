@@ -412,7 +412,7 @@ namespace UE::DreamShader::Editor::Private
 		Menu.BeginSection("DreamShaderNewPipeline", LOCTEXT("NewSectionPipeline", "Custom Pass pipeline (.dsp)"));
 		AddKind(EBrowserSourceKind::Pipeline, LOCTEXT("NewPipelinePostProcess", "Fullscreen post-process chain"), LOCTEXT("NewPipelinePostProcessTip", "A copy grabs the scene at half size and a fullscreen pass blends it back tinted, through a Post Process material written next to it."), ENewSourceLanguage::Lang2, ENewPipelineTemplate::PostProcess);
 		AddKind(EBrowserSourceKind::Pipeline, LOCTEXT("NewPipelineMeshMask", "Mesh mask chain"), LOCTEXT("NewPipelineMeshMaskTip", "A mesh pass draws the objects of a list into a mask, and a fullscreen pass outlines them through walls; both materials are written next to it."), ENewSourceLanguage::Lang2, ENewPipelineTemplate::MeshMask);
-		AddKind(EBrowserSourceKind::Pipeline, LOCTEXT("NewPipelineCompute", "Compute chain"), LOCTEXT("NewPipelineComputeTip", "A compute shader advances a 256 x 256 field every frame, kept from one frame to the next and exported as a render target; the .usf is written under the project's Shaders folder."), ENewSourceLanguage::Lang2, ENewPipelineTemplate::Compute);
+		AddKind(EBrowserSourceKind::Pipeline, LOCTEXT("NewPipelineCompute", "Compute chain"), LOCTEXT("NewPipelineComputeTip", "A compute shader advances a 256 x 256 field every frame, kept from one frame to the next and exported as a render target; the .usf is written next to it."), ENewSourceLanguage::Lang2, ENewPipelineTemplate::Compute);
 		Menu.EndSection();
 
 		Menu.BeginSection("DreamShaderNewLegacy", LOCTEXT("NewSectionLegacy", "1.x blocks"));
