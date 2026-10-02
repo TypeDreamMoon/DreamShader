@@ -3118,18 +3118,31 @@ namespace UE::DreamShader::Lang::Private
 			// of them becomes a `#define` of the slot's registry.
 			const bool bHlsl = IsHlslPass(Pass);
 			TArray<FString> Names;
-			const auto CheckUnique = [this, &Names, &Pass](const FString& Name, const FLangSpan& Span)
+			// A `.usf` pass's names become #defines, which HLSL tells apart by case; a material pass's are matched to the
+			// material's UserSceneTexture inputs and parameters as Unreal names, which ignore it -- `read Mask` and
+			// `read mask` would bind one input twice there.
+			const auto CheckUnique = [this, &Names, &Pass, bHlsl](const FString& Name, const FLangSpan& Span)
 			{
-				if (Names.ContainsByPredicate([&Name](const FString& Earlier) { return Earlier.Equals(Name, ESearchCase::CaseSensitive); }))
+				const FString* Earlier = Names.FindByPredicate([&Name, bHlsl](const FString& Candidate)
+				{
+					return Candidate.Equals(Name, bHlsl ? ESearchCase::CaseSensitive : ESearchCase::IgnoreCase);
+				});
+				if (Earlier)
 				{
 					Diagnostics.Error(
 						TEXT("DSH7319"),
 						File,
 						Span,
-						FText::Format(
-							LOCTEXT("SlotTwice", "'{0}' is bound twice in pass '{1}'; inside a pass every input, output and parameter has a name of its own."),
-							FText::FromString(Name),
-							FText::FromString(Pass.Name)));
+						Earlier->Equals(Name, ESearchCase::CaseSensitive)
+							? FText::Format(
+								LOCTEXT("SlotTwice", "'{0}' is bound twice in pass '{1}'; inside a pass every input, output and parameter has a name of its own."),
+								FText::FromString(Name),
+								FText::FromString(Pass.Name))
+							: FText::Format(
+								LOCTEXT("SlotTwiceCase", "'{0}' and '{1}' differ in case only, and pass '{2}' matches them to its material's inputs and parameters as Unreal names, which ignore case: give them names of their own."),
+								FText::FromString(*Earlier),
+								FText::FromString(Name),
+								FText::FromString(Pass.Name)));
 					return;
 				}
 				Names.Add(Name);
