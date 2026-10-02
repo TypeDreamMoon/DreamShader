@@ -69,9 +69,7 @@ UTextureRenderTarget2D* UMaterialExpressionDreamPassBuffer::ResolveExportTarget(
 	// SceneColor, CustomStencil and the rest live in the frame's render graph only; nothing copies them out.
 	if (UE::DreamPass::IsBuiltinBuffer(InBuffer))
 	{
-		return Fail(FText::Format(
-			LOCTEXT("BuiltinBuffer", "Dream Pass Buffer: '{0}' is a built-in buffer, which only passes can read; a material reads a buffer '{1}' declares with Export = true."),
-			BufferName, PipelineName));
+		return Fail(DescribeBuiltinBufferRead(InBuffer, PipelineName));
 	}
 
 	const FDreamPassBufferDesc* Desc = InPipeline->FindBuffer(InBuffer);
@@ -105,6 +103,13 @@ UTextureRenderTarget2D* UMaterialExpressionDreamPassBuffer::ResolveExportTarget(
 	}
 
 	return Target;
+}
+
+FText UMaterialExpressionDreamPassBuffer::DescribeBuiltinBufferRead(FName InBuffer, const FText& PipelineName)
+{
+	return FText::Format(
+		LOCTEXT("BuiltinBuffer", "Dream Pass Buffer: '{0}' is a built-in buffer, which only passes can read; a material reads a buffer '{1}' declares with Export = true."),
+		FText::FromName(InBuffer), PipelineName);
 }
 
 #if WITH_EDITOR

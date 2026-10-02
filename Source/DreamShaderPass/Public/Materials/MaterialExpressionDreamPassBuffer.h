@@ -59,6 +59,13 @@ public:
 	 */
 	static DREAMSHADERPASS_API UTextureRenderTarget2D* ResolveExportTarget(const UDreamPassPipeline* InPipeline, FName InBuffer, FText* OutProblem = nullptr);
 
+	/**
+	 * ResolveExportTarget's refusal of a built-in buffer (SceneColor, CustomDepth, ...), in its words, for a caller that has
+	 * no pipeline asset to hand it yet -- DreamShader's `.dss` check reading the pipeline's `.dsp` instead -- so that both
+	 * paths say the same thing. PipelineName is the pipeline asset's name.
+	 */
+	static DREAMSHADERPASS_API FText DescribeBuiltinBufferRead(FName InBuffer, const FText& PipelineName);
+
 	// Legacy translator only. There is no Build(MIR::FEmitter&): MIR::FEmitter is not exported
 	// (E/Public/Materials/MaterialIREmitter.h:308), so a material that turns the new translator on gets the base class's
 	// "Unsupported material expression." (E/Private/Materials/MaterialExpressionsToMIR.cpp:332-335). DreamShader refuses

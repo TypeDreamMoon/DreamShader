@@ -64,7 +64,7 @@ namespace UE::DreamPass
 	 * snapshot, and a missing include fails the global shader compile at startup -- which is fatal -- so a Slots folder
 	 * that was not committed, or a merge that kept the registry but not its files, would stop the editor. A section taken
 	 * out leaves its slot to the stub: its pass does nothing until its `.dsp` is compiled again, which writes the snapshot
-	 * and the section back (`dsc pass-registry --rebuild` does every one). Registry.json is the compiler's and stays as it is.
+	 * and the section back (`dsc pass-registry -Rebuild` does every one). Registry.json is the compiler's and stays as it is.
 	 */
 	static void DropSectionsWithMissingSnapshots(bool bCompute)
 	{
@@ -141,7 +141,7 @@ namespace UE::DreamPass
 				*RegistryPath, *FString::Join(Missing, TEXT(", ")));
 			return;
 		}
-		UE_LOG(LogDreamPass, Error, TEXT("DreamShaderPass: %s included snapshots that are not on disk (%s): their slots were taken out so the slot shaders compile, and their passes do nothing until their .dsp files are compiled again (dsc pass-registry --rebuild). Commit DShader/.dreampass/ with your sources."),
+		UE_LOG(LogDreamPass, Error, TEXT("DreamShaderPass: %s included snapshots that are not on disk (%s): their slots were taken out so the slot shaders compile, and their passes do nothing until their .dsp files are compiled again (dsc pass-registry -Rebuild). Commit DShader/.dreampass/ with your sources."),
 			*RegistryPath, *FString::Join(Missing, TEXT(", ")));
 	}
 
