@@ -537,7 +537,7 @@ namespace UE::DreamShader::Editor::Compiler
 					FText::FromString(Target->GetPathName()),
 					Names.IsEmpty()
 						? LOCTEXT("ExportTargetKeptNoDelete", "it could not be deleted here")
-						: FText::Format(LOCTEXT("ExportTargetKeptReferenced", "{0} still reference it"), FText::FromString(FString::Join(Names, TEXT(", "))))));
+						: FText::Format(LOCTEXT("ExportTargetKeptReferenced", "it is still referenced by {0}"), FText::FromString(FString::Join(Names, TEXT(", "))))));
 			}
 		}
 	}
@@ -1186,8 +1186,10 @@ namespace UE::DreamShader::Editor::Compiler
 		FDreamShaderError SaveError;
 		if (!Private::SaveAssetPackages(PackagesToSave, SaveError))
 		{
+			// The pipeline in memory already carries this build's source hash (the metadata above), so in this editor a plain
+			// compile of the same source skips it as current: it is saved by hand, or by a forced compile.
 			return Diagnostics.Error(TEXT("DSH8311"), ProductSpan, FText::Format(
-				LOCTEXT("SavePipelineFailed", "'{0}' was built but could not be saved with its render targets; its slots are already in the registry, and the next compile saves it. {1}"),
+				LOCTEXT("SavePipelineFailedSaveOrForce", "'{0}' was built but could not be saved with its render targets; its slots are already in the registry. In this session the pipeline in memory is current, so a plain compile of its source skips it: save it, or compile the source again with -Force. {1}"),
 				FText::FromString(Pipeline->GetPathName()),
 				WrapAssetError(SaveError)));
 		}

@@ -193,6 +193,19 @@ namespace UE::DreamShader::Editor::Compiler
 				|| Path.StartsWith(TEXT("/Plugin/"), ESearchCase::IgnoreCase)
 				|| Path.StartsWith(TEXT("/ThirdParty/"), ESearchCase::IgnoreCase);
 		}
+
+		/**
+		 * The engine's own headers, which the Entry scan does not read: no pass entry is defined in them, and Common.ush
+		 * alone pulls in a great many files. A plugin's /Plugin/ files may hold one, and are read.
+		 */
+		bool IsEngineHeaderVirtualPath(const FString& Path)
+		{
+			return Path.StartsWith(TEXT("/Engine/"), ESearchCase::IgnoreCase)
+				|| Path.StartsWith(TEXT("/ThirdParty/"), ESearchCase::IgnoreCase);
+		}
+
+		/** ScanDreamPassShaderIncludes, also counting into OutUnquoted (when given) the `#include MACRO` lines it cannot follow. */
+		void ScanIncludes(const FString& StrippedText, TArray<FDreamPassShaderInclude>& OutIncludes, int32* OutUnquoted);
 	}
 
 	FString StripDreamPassShaderComments(const FString& Text)
@@ -271,7 +284,16 @@ namespace UE::DreamShader::Editor::Compiler
 
 	void ScanDreamPassShaderIncludes(const FString& StrippedText, TArray<FDreamPassShaderInclude>& OutIncludes)
 	{
+		DreamPassShaderTextDetail::ScanIncludes(StrippedText, OutIncludes, nullptr);
+	}
+
+	void DreamPassShaderTextDetail::ScanIncludes(const FString& StrippedText, TArray<FDreamPassShaderInclude>& OutIncludes, int32* OutUnquoted)
+	{
 		OutIncludes.Reset();
+		if (OutUnquoted)
+		{
+			*OutUnquoted = 0;
+		}
 
 		TArray<FString> Lines;
 		StrippedText.ParseIntoArrayLines(Lines, /*InCullEmpty*/ false);
@@ -299,7 +321,12 @@ namespace UE::DreamShader::Editor::Compiler
 			const TCHAR Close = Open == TCHAR('<') ? TCHAR('>') : TCHAR('"');
 			if (Open != TCHAR('"') && Open != TCHAR('<'))
 			{
-				// `#include SOME_MACRO`: nothing a text scan can follow, and the slot shader would not track it either.
+				// `#include SOME_MACRO`: nothing a text scan can follow, and the slot shader would not track it either. Counted
+				// for the one caller that has to know what it did not read (CollectDreamPassShaderScanFiles).
+				if (OutUnquoted)
+				{
+					++*OutUnquoted;
+				}
 				continue;
 			}
 
@@ -324,7 +351,7 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 	}
 
-	void ScanDreamPassShaderFunctions(const FString& StrippedText, TMap<FString, FIntVector>& OutComputeEntries, TArray<FString>& OutFunctions)
+	void ScanDreamPassShaderFunctions(const FString& StrippedText, ::UE::DreamShader::Lang::FPipelineComputeEntryMap& OutComputeEntries, TArray<FString>& OutFunctions)
 	{
 		using namespace DreamPassShaderTextDetail;
 
@@ -463,9 +490,10 @@ namespace UE::DreamShader::Editor::Compiler
 					{
 						OutComputeEntries.Add(Name, GroupSize);
 					}
-					else
+					else if (!OutFunctions.ContainsByPredicate([&Name](const FString& Known) { return Known.Equals(Name, ESearchCase::CaseSensitive); }))
 					{
-						OutFunctions.AddUnique(Name);
+						// Not AddUnique: FString's == ignores case, and `blurPS` beside `BlurPS` is another function.
+						OutFunctions.Add(Name);
 					}
 				}
 
@@ -701,6 +729,77 @@ namespace UE::DreamShader::Editor::Compiler
 			File.RelativePath = Common.IsEmpty() ? FPaths::GetCleanFilename(File.FilePath) : File.FilePath.RightChop(Common.Len() + 1);
 		}
 		return true;
+	}
+
+	bool CollectDreamPassShaderScanFiles(const FDreamPassShaderClosure& Closure, TArray<FDreamPassShaderClosureFile>& OutFiles)
+	{
+		using namespace DreamPassShaderTextDetail;
+
+		OutFiles = Closure.Files;
+		// A relative include that names no file is the snapshot's error (DSH8320); here it is text that was not read.
+		bool bComplete = Closure.MissingIncludes.IsEmpty();
+
+		TSet<FString> Visited;
+		for (const FDreamPassShaderClosureFile& File : Closure.Files)
+		{
+			Visited.Add(File.FilePath);
+		}
+
+		// Breadth first over every file read so far: the closure's own, then whatever their virtual includes reach.
+		for (int32 Index = 0; Index < OutFiles.Num(); ++Index)
+		{
+			// Copied out: OutFiles grows below.
+			const FString IncludingFile = OutFiles[Index].FilePath;
+			const bool bClosureFile = Index < Closure.Files.Num();
+
+			TArray<FDreamPassShaderInclude> Includes;
+			int32 Unquoted = 0;
+			ScanIncludes(StripDreamPassShaderComments(OutFiles[Index].Text), Includes, &Unquoted);
+			bComplete &= Unquoted == 0;
+
+			for (const FDreamPassShaderInclude& Include : Includes)
+			{
+				FString Target;
+				if (Include.Path.StartsWith(TEXT("/")))
+				{
+					if (IsEngineHeaderVirtualPath(Include.Path))
+					{
+						continue;
+					}
+					if (!MapDreamPassShaderVirtualPathToFile(Include.Path, Target))
+					{
+						bComplete = false;
+						continue;
+					}
+				}
+				else if (bClosureFile)
+				{
+					// A closure file's relative includes are closure files themselves, or among its missing ones.
+					continue;
+				}
+				else
+				{
+					Target = NormalizeShaderFilePath(FPaths::Combine(FPaths::GetPath(IncludingFile), Include.Path));
+				}
+
+				if (Visited.Contains(Target))
+				{
+					continue;
+				}
+				Visited.Add(Target);
+
+				FString Text;
+				if (!FFileHelper::LoadFileToString(Text, *Target))
+				{
+					bComplete = false;
+					continue;
+				}
+				FDreamPassShaderClosureFile& Read = OutFiles.AddDefaulted_GetRef();
+				Read.FilePath = Target;
+				Read.Text = MoveTemp(Text);
+			}
+		}
+		return bComplete;
 	}
 
 	FString HashDreamPassText(const FString& Text)

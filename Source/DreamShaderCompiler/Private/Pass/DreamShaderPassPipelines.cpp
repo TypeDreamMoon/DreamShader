@@ -351,7 +351,7 @@ namespace UE::DreamShader::Editor::Compiler
 		if (!DescribeDreamPassRegistry(/*bClassify*/ true, Report, LoadError) || !LoadDreamPassRegistry(Registry, LoadError))
 		{
 			return Diagnostics.Error(TEXT("DSH8335"), NoSpan, FText::Format(
-				LOCTEXT("RegistryUnreadableForTool", "The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry --rebuild' replaces a registry that does not parse."),
+				LOCTEXT("RegistryUnreadableForTool", "The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry -Rebuild' replaces a registry that does not parse."),
 				FText::FromString(LoadError)));
 		}
 		const FDreamPassRegistry Previous = Registry;
@@ -392,9 +392,32 @@ namespace UE::DreamShader::Editor::Compiler
 			return true;
 		}
 
+		using namespace DreamShaderPassPipelinesDetail;
+
 		const Lang::FLangSpan NoSpan;
 		const FString Path = GetDreamPassRegistryJsonPath();
 		const FString Aside = Path + TEXT(".unreadable");
+
+		// Asked before the move, as every registry write asks before it touches anything: moved aside and then refused the
+		// empty registry files, the reset would leave no Registry.json beside the registry files it no longer matches.
+		{
+			TArray<FString> FilesToWrite;
+			FilesToWrite.Add(Path);
+			FilesToWrite.Add(Aside);
+			for (const bool bCompute : { true, false })
+			{
+				const FString RegistryFile = ::UE::DreamPass::GetRegistryFilePath(bCompute);
+				if (ReadsDifferently(RegistryFile, BuildDreamPassRegistryShaderText(FDreamPassRegistry(), bCompute)))
+				{
+					FilesToWrite.Add(RegistryFile);
+				}
+			}
+			if (!CheckDreamPassRegistryWritable(FilesToWrite, TArray<FString>(), Diagnostics))
+			{
+				return false;
+			}
+		}
+
 		if (!IFileManager::Get().Move(*Aside, *Path, /*Replace*/ true))
 		{
 			return Diagnostics.Error(TEXT("DSH8336"), NoSpan, FText::Format(
@@ -421,7 +444,7 @@ namespace UE::DreamShader::Editor::Compiler
 		if (!LoadDreamPassRegistry(Registry, LoadError))
 		{
 			return Diagnostics.Error(TEXT("DSH8335"), NoSpan, FText::Format(
-				LOCTEXT("RegistryUnreadableForTool", "The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry --rebuild' replaces a registry that does not parse."),
+				LOCTEXT("RegistryUnreadableForTool", "The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry -Rebuild' replaces a registry that does not parse."),
 				FText::FromString(LoadError)));
 		}
 		const FDreamPassRegistry Previous = Registry;

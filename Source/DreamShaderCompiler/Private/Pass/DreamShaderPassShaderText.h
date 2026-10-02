@@ -14,6 +14,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+// FPipelineComputeEntryMap: compute entries keyed as HLSL names are, case-sensitively.
+#include "Semantic/LangBound.h"
 
 namespace UE::DreamShader::Editor::Compiler
 {
@@ -33,9 +35,10 @@ namespace UE::DreamShader::Editor::Compiler
 	/**
 	 * The functions a comment-stripped text defines at file scope. One with a `[numthreads(x, y, z)]` in front of it whose
 	 * three arguments are integer literals goes into OutComputeEntries with that group size; every other one -- a pixel
-	 * entry, a helper, a compute entry whose group size is spelled with macros -- into OutFunctions.
+	 * entry, a helper, a compute entry whose group size is spelled with macros -- into OutFunctions. Names keep their
+	 * case in both: HLSL tells `BlurCS` from `blurCS`.
 	 */
-	void ScanDreamPassShaderFunctions(const FString& StrippedText, TMap<FString, FIntVector>& OutComputeEntries, TArray<FString>& OutFunctions);
+	void ScanDreamPassShaderFunctions(const FString& StrippedText, ::UE::DreamShader::Lang::FPipelineComputeEntryMap& OutComputeEntries, TArray<FString>& OutFunctions);
 
 	/** `.usf` or `.ush`, case-insensitively: the only extensions a virtual shader path may have (RC/Private/ShaderCore.cpp). */
 	bool IsDreamPassShaderFileExtension(const FString& Path);
@@ -66,7 +69,7 @@ namespace UE::DreamShader::Editor::Compiler
 		FString Text;
 	};
 
-	/** An include the snapshot leaves pointing at a live file: a virtual path that is neither `/Engine/` nor `/Plugin/`. */
+	/** An include the snapshot leaves pointing at a live file: a virtual path under none of `/Engine/`, `/Plugin/` and `/ThirdParty/`. */
 	struct FDreamPassLiveInclude
 	{
 		FString IncludingFile;
@@ -106,6 +109,17 @@ namespace UE::DreamShader::Editor::Compiler
 
 	/** Reads RootFilePath and every file it includes by a relative path. False only when the root cannot be read. */
 	bool CollectDreamPassShaderClosure(const FString& RootFilePath, FDreamPassShaderClosure& OutClosure);
+
+	/**
+	 * The files a pass's Entry may be defined in, for the reference stage's function scan (FPipelineShaderInfo): the
+	 * closure's own, and every file reached through a virtual include that a mapped shader directory resolves -- a
+	 * project's, a plugin's -- and through those files' includes in turn, relative or virtual. Only the scan follows them;
+	 * the snapshot still leaves such includes live (DSH8321). The engine's headers (/Engine/, /ThirdParty/) are not read.
+	 * Each file comes with its path and text, and only the closure's own with a RelativePath. False when an include could
+	 * not be followed -- a virtual path no mapping covers, a relative path that names no file, a file that cannot be read,
+	 * `#include MACRO` -- so that an entry missing from what was read is not taken for missing.
+	 */
+	bool CollectDreamPassShaderScanFiles(const FDreamPassShaderClosure& Closure, TArray<FDreamPassShaderClosureFile>& OutFiles);
 
 	/** SHA-1 of a text as UTF-8, hex: the one hash the slot registry stamps. */
 	FString HashDreamPassText(const FString& Text);

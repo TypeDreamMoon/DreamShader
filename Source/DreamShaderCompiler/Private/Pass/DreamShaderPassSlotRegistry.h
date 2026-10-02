@@ -15,7 +15,7 @@
 // hash, the shader formats it was pre-checked for, the section text). The registry files are rebuilt from it, which is
 // what keeps a slot another pipeline owns intact while this one is compiled. Slots are stable: an existing
 // (pipeline, pass) keeps its slot, a new pass takes the lowest free one, and a pass a pipeline no longer has frees its
-// slot when that pipeline is compiled again (`dsc pass-registry --gc` catches the pipelines whose source is gone).
+// slot when that pipeline is compiled again (`dsc pass-registry -Gc` catches the pipelines whose source is gone).
 //
 // The emit runs it in three steps, so that nothing is written unless every changed slot compiled:
 //   PlanDreamPassSlots      slots, snapshots in memory, sections, which slots changed     writes nothing
@@ -177,14 +177,25 @@ namespace UE::DreamShader::Editor::Compiler
 		bool bRecheckUnchanged,
 		Lang::FLangDiagnosticSink& Diagnostics);
 
-	/** Writes the changed snapshots, deletes the freed slots (an Info each), then Registry.json and the registry files that changed. */
+	/**
+	 * Writes the changed snapshots, deletes the freed slots (an Info each), then Registry.json and the registry files that
+	 * changed -- all of it or, when one of those files cannot be written or deleted, none of it (DSH8326).
+	 */
 	bool CommitDreamPassSlots(FDreamPassSlotPlan& Plan, Lang::FLangDiagnosticSink& Diagnostics);
 
 	/**
 	 * Writes a registry as it stands -- Registry.json and both registry files -- and deletes the slot directories it no
-	 * longer names. What `pass-registry --gc` and `--rebuild` end with.
+	 * longer names. What `pass-registry -Gc` and `-Rebuild` end with. All or nothing, as CommitDreamPassSlots is.
 	 */
 	bool WriteDreamPassRegistry(const FDreamPassRegistry& Registry, const FDreamPassRegistry* Previous, Lang::FLangDiagnosticSink& Diagnostics);
+
+	/**
+	 * Before a registry write touches the disk: whether every file in Files can be written and every directory in
+	 * DeletedDirectories deleted with all it holds. False with DSH8326 naming the first that cannot -- an existing file
+	 * that is read-only, the usual state of a committed file that is not checked out -- and then the caller writes and
+	 * deletes nothing, so that Registry.json, the registry files and the snapshots never disagree.
+	 */
+	bool CheckDreamPassRegistryWritable(const TArray<FString>& Files, const TArray<FString>& DeletedDirectories, Lang::FLangDiagnosticSink& Diagnostics);
 
 	/**
 	 * In the editor (never a commandlet, never without a renderer): flushes the shader file cache and recompiles

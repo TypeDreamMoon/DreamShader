@@ -310,16 +310,26 @@ namespace UE::DreamShader::Editor::Compiler
 #endif
 		}
 
+		/** `DSHnnnn: <message>` of a run's first error, to quote in the message of the source that needed it; empty without one. */
+		FString DescribeFirstError(const Lang::FLangDiagnosticSink& Diagnostics)
+		{
+			const Lang::FLangDiagnostic* First = Diagnostics.FirstError();
+			return First ? Lang::FLangDiagnosticSink::ToWireString(*First) : FString();
+		}
+
 		/**
 		 * Every fact, off the material's source, for a material not built yet (a `check` of a `.dsp` on a fresh checkout):
 		 * the settings through a scratch UMaterial and the very ApplySettings a build uses, the graph facts off the IR of its
-		 * own graph. Nodes inside the functions it calls are not seen; a build reads them off the asset.
+		 * own graph. Nodes inside the functions it calls are not seen; a build reads them off the asset. OutFailure is the
+		 * source's first error when it does not get as far as its IR.
 		 */
-		bool ReadMaterialFactsFromSource(const FString& MaterialSource, const FString& ObjectPath, Lang::FPipelineMaterialInfo& Info)
+		bool ReadMaterialFactsFromSource(const FString& MaterialSource, const FString& ObjectPath, Lang::FPipelineMaterialInfo& Info, FString& OutFailure)
 		{
+			OutFailure.Reset();
 			FDreamShaderLang2PipelineResult Run;
 			if (!RunDreamShaderPipelineToIR(MaterialSource, Run) || !Run.IR.IsValid())
 			{
+				OutFailure = DescribeFirstError(Run.Diagnostics);
 				return false;
 			}
 
@@ -512,9 +522,13 @@ namespace UE::DreamShader::Editor::Compiler
 
 		OutReferences = Lang::FPipelineReferences();
 		OutReferences.bCustomPassAvailable = DREAMSHADER_WITH_CUSTOM_PASS != 0;
-		for (const FName Layer : UDreamPassSettings::Get().LayerNames)
+		// The first MaxLayers names only: the bit of LayerNames[i] is 1 << i, so a name past them is no layer
+		// (UDreamPassSettings::FindLayerIndex). Handed over, it would bind and then fail the emit (DSH8307); left out, the
+		// binder says it is no layer of the project (DSH4412).
+		const TArray<FName>& LayerTable = UDreamPassSettings::Get().LayerNames;
+		for (int32 LayerIndex = 0; LayerIndex < LayerTable.Num() && LayerIndex < UDreamPassSettings::MaxLayers; ++LayerIndex)
 		{
-			OutReferences.LayerNames.Add(Layer.ToString());
+			OutReferences.LayerNames.Add(LayerTable[LayerIndex].ToString());
 		}
 
 		// The layer table maps names to bits: moving one re-targets the pipeline, so the table belongs to its key.
@@ -564,15 +578,19 @@ namespace UE::DreamShader::Editor::Compiler
 
 			Info.ObjectPath = Resolved.ObjectPath;
 
-			const bool bCycle = !Resolved.SourceFile.IsEmpty() && IsInCrossReferenceChain(Resolved.SourceFile);
-			if (bCycle)
+			// The material's source is further up this compile only while it resolves the pipelines whose exports it reads
+			// (the `.dss` stage below): it reads this pipeline's export, directly or through a pipeline that needs this one.
+			// That can be built in no order -- this pipeline needs its material built, and the material needs this pipeline's
+			// asset -- so it is refused here, with what to write instead; the `.dss` side refuses the same cycle as DSH5325.
+			if (!Resolved.SourceFile.IsEmpty() && IsInCrossReferenceChain(Resolved.SourceFile))
 			{
-				Diagnostics.Warning(TEXT("DSH8333"), Span, FText::Format(
-					LOCTEXT("MaterialReferenceCycle", "'{0}' is built by '{1}', which is being compiled already further up this compile (it reads this pipeline's buffers), so the material is checked as it stands on disk."),
+				Diagnostics.Error(TEXT("DSH8333"), Span, FText::Format(
+					LOCTEXT("MaterialReferenceCycleError", "'{0}' is built by '{1}', which reads this pipeline's exported buffer through UE.DreamPassBuffer (directly, or through a pipeline that needs this one), and a pipeline and its pass material that need each other can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers."),
 					FText::FromString(Reference),
 					FText::FromString(FPaths::GetCleanFilename(Resolved.SourceFile))));
+				continue;
 			}
-			else if (bCompileStaleMaterials && !Resolved.SourceFile.IsEmpty())
+			if (bCompileStaleMaterials && !Resolved.SourceFile.IsEmpty())
 			{
 				if (!CompileReferencedSourceIfStale(Resolved.SourceFile, Resolved.ObjectPath, Reference, Span, /*bMaterial*/ true, Diagnostics))
 				{
@@ -595,9 +613,21 @@ namespace UE::DreamShader::Editor::Compiler
 				Info.bFound = true;
 				ReadMaterialFactsFromAsset(*Material, Info);
 			}
-			else if (!Resolved.SourceFile.IsEmpty() && !bCycle)
+			else if (!Resolved.SourceFile.IsEmpty())
 			{
-				Info.bFound = ReadMaterialFactsFromSource(Resolved.SourceFile, Resolved.ObjectPath, Info);
+				FString Failure;
+				Info.bFound = ReadMaterialFactsFromSource(Resolved.SourceFile, Resolved.ObjectPath, Info, Failure);
+				if (!Info.bFound && !Failure.IsEmpty())
+				{
+					// The `.dss` is there and does not compile (in a run that builds nothing, a `check`): said as that, with its
+					// first error, rather than as a material nobody builds (DSH4406).
+					Diagnostics.Error(TEXT("DSH8331"), Span, FText::Format(
+						LOCTEXT("MaterialSourceDoesNotCompile", "The material '{0}' comes from '{1}', which does not compile, so this pipeline has no material to check its pass against. {2}"),
+						FText::FromString(Reference),
+						FText::FromString(FPaths::GetCleanFilename(Resolved.SourceFile)),
+						FText::FromString(Failure)));
+					continue;
+				}
 			}
 
 			// The material's path, the build key it was last built under and the facts checked: any of them moving rebuilds
@@ -621,14 +651,19 @@ namespace UE::DreamShader::Editor::Compiler
 			FString ContentHash = TEXT("-");
 			if (Info.bExists)
 			{
-				// The entry may be defined in a file the shader includes by a relative path: the snapshot takes those along,
-				// so they count as the shader's own.
+				// The entry may be defined in a file the shader includes, by a relative path -- the snapshot takes those along --
+				// or by a virtual one a mapped directory resolves, which the snapshot leaves live but the entry is still in.
+				// What could not be followed keeps an entry that is not found from being called missing (bEntryScanComplete).
 				FDreamPassShaderClosure Closure;
 				if (CollectDreamPassShaderClosure(Info.FilePath, Closure))
 				{
-					for (const FDreamPassShaderClosureFile& File : Closure.Files)
+					TArray<FDreamPassShaderClosureFile> ScanFiles;
+					Info.bEntryScanComplete = CollectDreamPassShaderScanFiles(Closure, ScanFiles);
+					for (const FDreamPassShaderClosureFile& File : ScanFiles)
 					{
-						TMap<FString, FIntVector> ComputeEntries;
+						// Case-sensitively throughout, as HLSL names are: the maps are keyed so (FPipelineComputeEntryMap), and the
+						// list is added to by hand -- AddUnique would take `blurPS` for `BlurPS`.
+						Lang::FPipelineComputeEntryMap ComputeEntries;
 						TArray<FString> Functions;
 						ScanDreamPassShaderFunctions(StripDreamPassShaderComments(File.Text), ComputeEntries, Functions);
 						for (const TPair<FString, FIntVector>& Entry : ComputeEntries)
@@ -640,14 +675,21 @@ namespace UE::DreamShader::Editor::Compiler
 						}
 						for (const FString& Function : Functions)
 						{
-							if (!Info.ComputeEntries.Contains(Function))
+							const bool bKnown = Info.ComputeEntries.Contains(Function)
+								|| Info.Functions.ContainsByPredicate([&Function](const FString& Known) { return Known.Equals(Function, ESearchCase::CaseSensitive); });
+							if (!bKnown)
 							{
-								Info.Functions.AddUnique(Function);
+								Info.Functions.Add(Function);
 							}
 						}
 					}
 					// The snapshot's inputs: an edit of the `.usf`, or of anything it includes, is an edit of the pipeline.
 					ContentHash = Closure.ComputeContentHash();
+				}
+				else
+				{
+					// There and unreadable (locked, say): nothing was scanned, so nothing is called missing.
+					Info.bEntryScanComplete = false;
 				}
 			}
 
@@ -759,7 +801,7 @@ namespace UE::DreamShader::Editor::Compiler
 				if (Reference.IsEmpty())
 				{
 					Diagnostics.Error(TEXT("DSH5315"), Span, LOCTEXT("PassBufferNoPipeline",
-						"UE.DreamPassBuffer names no Pipeline: write the `.dsp`'s name (Pipeline = \"CP_Highlight\") or the pipeline asset's path."));
+						"UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = \"CP_Highlight\") or the pipeline asset's path."));
 					continue;
 				}
 				if (BufferName.IsEmpty() || BufferName.Equals(TEXT("None")))
@@ -810,13 +852,20 @@ namespace UE::DreamShader::Editor::Compiler
 					Entry->SourceFile = FoundPipeline.SourceFile;
 					Entry->bCycle = !Entry->SourceFile.IsEmpty() && IsInCrossReferenceChain(Entry->SourceFile);
 
+					// The pipeline's source is further up this compile only while it resolves its pass materials (the `.dsp` stage
+					// above): this material is one of them, or the material of a pipeline that one needs. A pass material that reads
+					// its own pipeline's export can be built in no order -- compiled first, the pipeline it names is not there yet
+					// (DSH7138); compiled second, the pipeline finds its material missing (DSH4406) -- so it is refused here, in
+					// whichever order the two are compiled, with what to write instead. The `.dsp` side refuses the same cycle as
+					// DSH8333.
 					if (Entry->bCycle)
 					{
-						Diagnostics.Warning(TEXT("DSH5325"), Span, FText::Format(
-							LOCTEXT("PassBufferPipelineCycle", "The pipeline '{0}' is being compiled already further up this compile (this material is one of its pass materials), so its buffer is checked against the pipeline asset as it stands."),
+						Diagnostics.Error(TEXT("DSH5325"), Span, FText::Format(
+							LOCTEXT("PassBufferPipelineCycleError", "The pipeline '{0}' needs this material to be built -- it is one of its pass materials, or the material of a pipeline that one needs -- so this material cannot read its exported buffer: the two can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers."),
 							FText::FromString(Reference)));
+						continue;
 					}
-					else if (bCompileStalePipelines && !Entry->SourceFile.IsEmpty())
+					if (bCompileStalePipelines && !Entry->SourceFile.IsEmpty())
 					{
 						if (!CompileReferencedSourceIfStale(Entry->SourceFile, Entry->ObjectPath, Reference, Span, /*bMaterial*/ false, Diagnostics))
 						{
@@ -835,7 +884,7 @@ namespace UE::DreamShader::Editor::Compiler
 					}
 					Entry->Asset = Cast<UDreamPassPipeline>(Asset);
 
-					if (!Entry->Asset.IsValid() && !Entry->SourceFile.IsEmpty() && !Entry->bCycle)
+					if (!Entry->Asset.IsValid() && !Entry->SourceFile.IsEmpty())
 					{
 						// Not built yet (a `check` on a fresh checkout): the buffers as the `.dsp` declares them.
 						FDreamShaderLang2PipelineResult Run;
@@ -851,9 +900,20 @@ namespace UE::DreamShader::Editor::Compiler
 								}
 							}
 						}
+						if (!Entry->bHasPayload)
+						{
+							// The `.dsp` is there and does not compile: said as that, with its first error. "No .dsp builds it"
+							// (DSH5318) would send the reader looking for a file that exists.
+							Diagnostics.Error(TEXT("DSH5319"), Span, FText::Format(
+								LOCTEXT("PipelineSourceDoesNotCompile", "The pipeline '{0}' comes from '{1}', which does not compile, so the buffer this material reads cannot be checked. {2}"),
+								FText::FromString(Reference),
+								FText::FromString(FPaths::GetCleanFilename(Entry->SourceFile)),
+								FText::FromString(DescribeFirstError(Run.Diagnostics))));
+							continue;
+						}
 					}
 
-					if (!Entry->Asset.IsValid() && !Entry->bHasPayload && !Entry->bCycle)
+					if (!Entry->Asset.IsValid() && !Entry->bHasPayload)
 					{
 						Diagnostics.Error(TEXT("DSH5318"), Span, FText::Format(
 							LOCTEXT("PassBufferPipelineMissing", "The pipeline '{0}' names nothing: no pipeline asset exists at '{1}', and no .dsp under the source roots builds it."),
@@ -891,9 +951,21 @@ namespace UE::DreamShader::Editor::Compiler
 				}
 				else if (Entry->bHasPayload)
 				{
+					// A built-in texture first, as ResolveExportTarget refuses it before it looks at any buffer: in its words and
+					// under its code, so a `check` on a fresh checkout says what a build says.
+					if (::UE::DreamPass::IsBuiltinBuffer(FName(*BufferName)))
+					{
+						Diagnostics.Error(TEXT("DSH5321"), Span, UMaterialExpressionDreamPassBuffer::DescribeBuiltinBufferRead(
+							FName(*BufferName),
+							FText::FromString(FPackageName::ObjectPathToObjectName(Entry->ObjectPath))));
+						continue;
+					}
+
+					// Ignoring case, as an FName compares: the built asset's path above finds the buffer by FName
+					// (ResolveExportTarget, FindBuffer), and a `check` on a fresh checkout has to answer what a build answers.
 					const IR::FIRPassBuffer* Desc = Entry->Payload.Buffers.FindByPredicate([&BufferName](const IR::FIRPassBuffer& Buffer)
 					{
-						return Buffer.Name.Equals(BufferName, ESearchCase::CaseSensitive);
+						return Buffer.Name.Equals(BufferName, ESearchCase::IgnoreCase);
 					});
 					if (!Desc)
 					{

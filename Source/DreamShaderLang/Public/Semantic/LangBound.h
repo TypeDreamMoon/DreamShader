@@ -516,6 +516,21 @@ namespace UE::DreamShader::Lang
 		bool bUsesNewTranslator = false;
 	};
 
+	/**
+	 * Map key functions for an FString key compared as HLSL compares names: case-sensitively. TMap's own for FString ignore
+	 * case, which would take `BlurCS` and `blurCS`, two functions of one shader file, for one.
+	 */
+	template <typename ValueType>
+	struct TCaseSensitiveStringMapKeyFuncs : BaseKeyFuncs<TPair<FString, ValueType>, FString, /*bInAllowDuplicateKeys*/ false>
+	{
+		static FORCEINLINE const FString& GetSetKey(const TPair<FString, ValueType>& Element) { return Element.Key; }
+		static FORCEINLINE bool Matches(const FString& A, const FString& B) { return A.Equals(B, ESearchCase::CaseSensitive); }
+		static FORCEINLINE uint32 GetKeyHash(const FString& Key) { return FCrc::StrCrc32(*Key); }
+	};
+
+	/** A shader file's compute entries -- `[numthreads(x, y, z)]` functions -- by name, case-sensitively, with that group size. */
+	using FPipelineComputeEntryMap = TMap<FString, FIntVector, FDefaultSetAllocator, TCaseSensitiveStringMapKeyFuncs<FIntVector>>;
+
 	/** What the host found for one `.usf` a `.dsp` names (`Shader = "..."`). */
 	struct FPipelineShaderInfo
 	{
@@ -530,10 +545,20 @@ namespace UE::DreamShader::Lang
 		/** The file on disk. */
 		FString FilePath;
 		bool bExists = false;
-		/** Every function the text defines with `[numthreads(x, y, z)]` in front of it, with that group size. */
-		TMap<FString, FIntVector> ComputeEntries;
-		/** Every other function the text defines at file scope. */
+		/**
+		 * Every function the text defines with `[numthreads(x, y, z)]` in front of it, with that group size -- the text being
+		 * the file and every file it includes that the host could follow, by a relative path or a mapped virtual one. Keyed
+		 * case-sensitively, as HLSL names are.
+		 */
+		FPipelineComputeEntryMap ComputeEntries;
+		/** Every other function the text defines at file scope, each spelling once (case-sensitively). */
 		TArray<FString> Functions;
+		/**
+		 * False when the file includes something the host could not read -- a virtual path no mapped directory covers, a
+		 * relative path that names no file, `#include MACRO`: an Entry missing from ComputeEntries and Functions may be
+		 * defined there, so the binder does not call it missing.
+		 */
+		bool bEntryScanComplete = true;
 	};
 
 	/** Everything the host resolved for a `.dsp` before binding it. */
@@ -541,7 +566,10 @@ namespace UE::DreamShader::Lang
 	{
 		TArray<FPipelineMaterialInfo> Materials;
 		TArray<FPipelineShaderInfo> Shaders;
-		/** The project's pass layers (UDreamPassSettings::LayerNames), in bit order. */
+		/**
+		 * The project's pass layers (UDreamPassSettings::LayerNames), in bit order: the first UDreamPassSettings::MaxLayers
+		 * names only, the ones that have a bit -- a name past them is no layer, to the binder as to the runtime.
+		 */
 		TArray<FString> LayerNames;
 		/**
 		 * False on an engine older than 5.8: a `.dsp` still parses and binds, and the emitter refuses it. The host then reads

@@ -2,7 +2,7 @@
 //
 // The Custom Pass half of the compiler as the editor's tools reach it:
 //
-//   the HLSL slot registry     as `dsc pass-registry` lists it, collects its garbage (`--gc`) and rebuilds it (`--rebuild`)
+//   the HLSL slot registry     as `dsc pass-registry` lists it, collects its garbage (`-Gc`) and rebuilds it (`-Rebuild`)
 //   the slot pre-check         as `check -Shaders` runs it for a `.dsp`: every HLSL pass, changed or not
 //   the shader files           a `.dsp` compiles from -- each `Shader = "..."` and what it includes -- which the editor
 //                              bridge watches wherever they are: a pass's `.usf` may live anywhere, next to its `.dsp`
@@ -27,9 +27,9 @@ namespace UE::DreamShader::Editor::Compiler
 		Reserved,
 		/** The snapshot's files are gone (a Slots folder that was not committed); the next compile of its pipeline writes them. */
 		SnapshotMissing,
-		/** No `.dsp` under the source roots builds its pipeline any more. `--gc` frees it. */
+		/** No `.dsp` under the source roots builds its pipeline any more. `-Gc` frees it. */
 		PipelineGone,
-		/** Its pipeline's source no longer runs that pass in HLSL in that table. `--gc` frees it. */
+		/** Its pipeline's source no longer runs that pass in HLSL in that table. `-Gc` frees it. */
 		PassGone,
 		/** Its pipeline's source does not compile far enough to tell. Kept. */
 		Unknown,
@@ -79,14 +79,14 @@ namespace UE::DreamShader::Editor::Compiler
 	DREAMSHADERCOMPILER_API bool DescribeDreamPassRegistry(bool bClassify, FDreamPassRegistryReport& OutReport, FString& OutError);
 
 	/**
-	 * `pass-registry --gc`: frees every PipelineGone and PassGone slot -- its entry, its registry section, its snapshot -- and
+	 * `pass-registry -Gc`: frees every PipelineGone and PassGone slot -- its entry, its registry section, its snapshot -- and
 	 * deletes the slot directories nothing names. Hot reloads the slot shaders in the editor. OutFreed lists what was freed.
 	 * False with diagnostics when Registry.json does not parse or a file cannot be written.
 	 */
 	DREAMSHADERCOMPILER_API bool CollectDreamPassRegistryGarbage(TArray<FDreamPassSlotReport>& OutFreed, Lang::FLangDiagnosticSink& Diagnostics);
 
 	/**
-	 * The first step of `pass-registry --rebuild` when Registry.json does not parse -- a merge conflict left in it: moves it
+	 * The first step of `pass-registry -Rebuild` when Registry.json does not parse -- a merge conflict left in it: moves it
 	 * aside to `Registry.json.unreadable` and writes an empty registry, so the compiles that follow assign every slot afresh.
 	 * True without touching anything when the file parses; OutMovedTo is then empty. False with diagnostics when a file
 	 * cannot be moved or written.
@@ -94,7 +94,7 @@ namespace UE::DreamShader::Editor::Compiler
 	DREAMSHADERCOMPILER_API bool ResetUnreadableDreamPassRegistry(FString& OutMovedTo, Lang::FLangDiagnosticSink& Diagnostics);
 
 	/**
-	 * The last step of `pass-registry --rebuild`, after every `.dsp` was compiled again: writes RegistryCompute.ush and
+	 * The last step of `pass-registry -Rebuild`, after every `.dsp` was compiled again: writes RegistryCompute.ush and
 	 * RegistryPixel.ush from Registry.json as it stands, turning a slot whose snapshot files are missing into a reserved one
 	 * (a registry that includes a missing file fails the global shader compile at the next start), deletes the slot
 	 * directories it does not name, and hot reloads the slot shaders in the editor. OutReserved counts the slots it turned.

@@ -9,6 +9,9 @@
 #include "Interfaces/IPluginManager.h"
 #include "DreamShaderVersionCompat.h"
 
+// CheckGeneratedAssetNotDiverged: a pipeline's divergence refusal names where its answers are.
+#include "DreamPassPipeline.h"
+
 #include "FileHelpers.h"
 #include "Misc/Crc.h"
 #include "Misc/Paths.h"
@@ -392,7 +395,14 @@ namespace UE::DreamShader::Editor::Private
 		// and the source back out of this message to build that notification, because nothing else
 		// survives the trip (the compile result carries no code, and the generator's wrappers replace
 		// DSH8115 with a per-asset-type code). Reword it there too, or the notification stops firing.
-		return FailWith(OutError, TEXT("DSH8115"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). ") TEXT("Use the notification, or right-click the asset > DreamShader, and choose one: Revert to Source, Adopt Into Source, or Detach From DreamShader."), *Asset->GetPathName(), *SourceFile));
+		//
+		// A Custom Pass pipeline has no DreamShader entry in its Content Browser menu: its Revert and Adopt are buttons of its
+		// details panel (DreamShaderEditor, Pass/DreamPassPipelineCustomization.cpp), and all three answers are on its row of
+		// the Material Content Browser. Only the second sentence differs, so the anchor above stays one string.
+		const TCHAR* const WhereTheAnswersAre = Asset->IsA<UDreamPassPipeline>()
+			? TEXT("Use the notification, the Revert to Source and Adopt Into Source buttons of the pipeline's details panel, or its row in the Material Content Browser, and choose one: Revert to Source, Adopt Into Source, or Detach From DreamShader.") /* I18N-EXEMPT: deferred codegen or compatibility path */
+			: TEXT("Use the notification, or right-click the asset > DreamShader, and choose one: Revert to Source, Adopt Into Source, or Detach From DreamShader."); /* I18N-EXEMPT: deferred codegen or compatibility path */
+		return FailWith(OutError, TEXT("DSH8115"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */ TEXT("Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). %s"), *Asset->GetPathName(), *SourceFile, WhereTheAnswersAre));
 	}
 
 	void ApplySourceMetadata(UObject* Asset, const FString& SourceFilePath)

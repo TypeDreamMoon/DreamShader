@@ -66,6 +66,9 @@
 #include "Emitter/DreamShaderIRAssets.h"
 // MakeDreamPassExportTargetPath: the render targets a PassPipeline product keeps beside it.
 #include "Emitter/DreamShaderIREmitterPassPipeline.h"
+// WordDreamShaderPipelineReport: a built pipeline's render targets, one `Generated` line each.
+#include "DreamPassPipeline.h"
+#include "Engine/TextureRenderTarget2D.h"
 // The IR builder, passes and validator.
 #include "IR/IRBuilder.h"
 #include "IR/IRPasses.h"
@@ -1190,6 +1193,23 @@ namespace UE::DreamShader::Editor::Compiler
 					Product ? LexToString(Product->Kind) : TEXT("Asset"),
 					*AssetPath,
 					*Result.SourceFilePath));
+				// A pipeline's build also makes or reuses the render target of every exported buffer, saved beside it in the
+				// same save (Emitter/DreamShaderIREmitterPassPipeline.cpp): one line each, in the same shape, so dsc.ps1 counts
+				// them among the assets the run wrote and -CleanNew can remove them. `RenderTarget`, one word of letters, is
+				// what dsc.ps1's pattern takes for a kind.
+				if (const UDreamPassPipeline* Pipeline = Cast<UDreamPassPipeline>(Result.ProductAssets.IsValidIndex(Slot) ? Result.ProductAssets[Slot].Get() : nullptr))
+				{
+					for (const TPair<FName, TObjectPtr<UTextureRenderTarget2D>>& Export : Pipeline->ExportTargets)
+					{
+						if (const UTextureRenderTarget2D* Target = Export.Value.Get())
+						{
+							Lines.Add(FString::Printf( /* I18N-EXEMPT: wire form, parsed by dsc.ps1 */
+								TEXT("Generated RenderTarget %s from %s."),
+								*Target->GetPathName(),
+								*Result.SourceFilePath));
+						}
+					}
+				}
 				break;
 			}
 		}
