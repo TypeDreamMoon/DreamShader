@@ -11,7 +11,9 @@
 //     resolution when it is the one its first writer infers, Mode, Nanite and Dispatch at what the pass implies, Usage
 //     and Views at their default sets -- by the rules Lang/LangPipelineInternal.h keeps for the binder and for this file
 //     alike, so decompile -> print -> parse -> bind gives the payload back. `Threads` is the one key whose default (the
-//     `.usf`'s [numthreads]) no payload carries: it is written exactly when FIRPass::bThreadsWritten says so.
+//     `.usf`'s [numthreads]) no payload carries: it is written exactly when FIRPass::bThreadsWritten says so. Inline HLSL
+//     (DreamShader_Plan/10) is carried as text: the file's `hlsl` block after the buffers, a pass's after its `param`
+//     lines, each as it was written; `Entry` is left out at a block's default `Main`.
 //     PrintDreamShaderPipeline prints the tree; the text is deterministic.
 //   * RewriteDreamShaderPipelineSource goes the other way, for Adopt: it changes an existing file to state another
 //     payload and never reprints the file. Each change is an edit over the parsed spans -- one key's value, one argument
@@ -21,7 +23,8 @@
 //     bThreadsWritten) count as well: a key the author wrote at its default stays written, also in a declaration that
 //     has to be printed anew.
 //   * CompareDreamShaderPipelines says whether two payloads make the same asset: field by field, numbers at float32,
-//     every value at its effective default; source references and the "was written" flags are not compared.
+//     every value at its effective default; source references and the "was written" flags are not compared, and the
+//     text of inline HLSL is compared with its line terminators as `\n`.
 //
 // The reference collector completes the header: the host resolves what it lists before it binds. The spelling tables
 // are handed out by Semantic/LangBinderPipeline.cpp, beside the binder that reads them.
@@ -591,7 +594,10 @@ namespace UE::DreamShader::Lang
 			}
 			if (Is(TEXT("Entry")))
 			{
-				return Pass.Entry.IsEmpty() ? nullptr : MakePipelineWordOrString(Pass.Entry);
+				// A pass's own block of whole functions runs `Main` unless it says otherwise.
+				const bool bBlockDefault = Pass.HlslSource.Equals(IR::PassHlslSource::Block, ESearchCase::CaseSensitive)
+					&& Pass.Entry.Equals(TEXT("Main"), ESearchCase::CaseSensitive);
+				return (Pass.Entry.IsEmpty() || bBlockDefault) ? nullptr : MakePipelineWordOrString(Pass.Entry);
 			}
 			if (Is(TEXT("Threads")))
 			{
@@ -780,7 +786,40 @@ namespace UE::DreamShader::Lang
 			return Statement;
 		}
 
-		/** `pass Name : kind { settings; reads; writes; params; }` in the canonical order. */
+		/** A pass whose code is its own `hlsl` block (Block or Body): the block, as it was written. */
+		static bool PassHasOwnHlslBlock(const IR::FIRPass& Pass)
+		{
+			return Pass.HlslSource.Equals(IR::PassHlslSource::Block, ESearchCase::CaseSensitive)
+				|| Pass.HlslSource.Equals(IR::PassHlslSource::Body, ESearchCase::CaseSensitive);
+		}
+
+		static TUniquePtr<FPassStmt> MakePipelineHlslStatement(const FString& RawBody)
+		{
+			TUniquePtr<FPassStmt> Statement = MakeUnique<FPassStmt>();
+			Statement->StmtKind = EPassStmtKind::Hlsl;
+			Statement->Name = TEXT("hlsl");
+			Statement->RawBody = RawBody;
+			return Statement;
+		}
+
+		/** Text of inline HLSL as the comparison reads it, and as a rewrite compares it: line terminators as `\n`. */
+		static FString NormalizePipelineHlsl(const FString& Text)
+		{
+			return Text.Replace(TEXT("\r\n"), TEXT("\n"), ESearchCase::CaseSensitive);
+		}
+
+		/** Text of inline HLSL with the line terminators of the file it goes into. */
+		static FString PipelineHlslWithNewLine(const FString& Text, const FString& NewLine)
+		{
+			FString Result = NormalizePipelineHlsl(Text);
+			if (!NewLine.Equals(TEXT("\n"), ESearchCase::CaseSensitive))
+			{
+				Result.ReplaceInline(TEXT("\n"), *NewLine, ESearchCase::CaseSensitive);
+			}
+			return Result;
+		}
+
+		/** `pass Name : kind { settings; reads; writes; params; hlsl { ... } }` in the canonical order. */
 		static TUniquePtr<FPassDecl> BuildPipelinePassDecl(const IR::FIRPassPipeline& Pipeline, const IR::FIRPass& Pass, const bool bKeepWrittenDefaults)
 		{
 			TUniquePtr<FPassDecl> Decl = MakeUnique<FPassDecl>();
@@ -806,6 +845,10 @@ namespace UE::DreamShader::Lang
 			for (const IR::FIRPassParam& Param : Pass.Params)
 			{
 				Decl->Statements.Add(MakePipelineParamStatement(Param));
+			}
+			if (PassHasOwnHlslBlock(Pass))
+			{
+				Decl->Statements.Add(MakePipelineHlslStatement(Pass.InlineHlsl));
 			}
 			return Decl;
 		}
@@ -973,21 +1016,32 @@ namespace UE::DreamShader::Lang
 			}
 			case EPassStmtKind::Param:
 				return FString::Printf(TEXT("param %s = %s;"), *Statement.Name, *PrintPipelineExpr(Statement.Value));
+			case EPassStmtKind::Hlsl:
+				// Lines of its own; a rewrite splices the text between the braces (RewritePipelinePass).
+				return FString::Printf(TEXT("hlsl {%s}"), *Statement.RawBody);
 			case EPassStmtKind::Setting:
 			default:
 				return FString::Printf(TEXT("%s = %s;"), *Statement.Name, *PrintPipelineExpr(Statement.Value));
 			}
 		}
 
-		/** Lines with Indent in front of each, each ending in NewLine. */
+		/**
+		 * Lines with Indent in front of each, each ending in NewLine. An empty line stays and takes no indent: one in an
+		 * `hlsl` block is the author's, and the block's text is written as it was.
+		 */
 		static FString IndentPipelineLines(const FString& Lines, const FString& Indent, const FString& NewLine)
 		{
 			TArray<FString> Parts;
-			Lines.ParseIntoArray(Parts, *NewLine, /* bCullEmpty */ true);
+			Lines.ParseIntoArray(Parts, *NewLine, /* bCullEmpty */ false);
+			// The text's last terminator ends its last line; it does not open one more.
+			if (Parts.Num() > 0 && Parts.Last().IsEmpty())
+			{
+				Parts.Pop();
+			}
 			FString Result;
 			for (const FString& Part : Parts)
 			{
-				Result += Indent + Part + NewLine;
+				Result += (Part.IsEmpty() ? FString() : Indent + Part) + NewLine;
 			}
 			return Result;
 		}
@@ -1629,6 +1683,39 @@ namespace UE::DreamShader::Lang
 					LastBefore = Existing.Last();
 				}
 			}
+
+			// -- the pass's own `hlsl` block: the text between its braces, the block itself when it comes or goes
+			const FPassStmt* ExistingBlock = nullptr;
+			const FPassStmt* LastStatement = nullptr;
+			for (const TUniquePtr<FPassStmt>& Statement : Decl.Statements)
+			{
+				if (Statement && Statement->Span.Length > 0)
+				{
+					LastStatement = Statement.Get();
+					if (Statement->StmtKind == EPassStmtKind::Hlsl && !ExistingBlock)
+					{
+						ExistingBlock = Statement.Get();
+					}
+				}
+			}
+			const bool bHaveBlock = PassHasOwnHlslBlock(Have);
+			const bool bWantBlock = PassHasOwnHlslBlock(Want);
+			if (bWantBlock && ExistingBlock && ExistingBlock->BodySpan.Length >= 2)
+			{
+				if (!bHaveBlock || !NormalizePipelineHlsl(Have.InlineHlsl).Equals(NormalizePipelineHlsl(Want.InlineHlsl), ESearchCase::CaseSensitive))
+				{
+					Edits.Replace(ExistingBlock->BodySpan.Offset + 1, ExistingBlock->BodySpan.Length - 2, PipelineHlslWithNewLine(Want.InlineHlsl, NewLine));
+				}
+			}
+			else if (bWantBlock)
+			{
+				const FString Block = Indent + TEXT("hlsl") + NewLine + Indent + TEXT("{") + PipelineHlslWithNewLine(Want.InlineHlsl, NewLine) + TEXT("}") + NewLine;
+				Edits.Insert(LastStatement ? PipelineLineAfter(Text, LastStatement->Span) : AfterOpenBrace, LastStatement ? NewLine + Block : Block);
+			}
+			else if (ExistingBlock)
+			{
+				Edits.Delete(ExistingBlock->Span.Offset, ExistingBlock->Span.End());
+			}
 		}
 
 		// -----------------------------------------------------------------------------------------
@@ -2034,6 +2121,16 @@ namespace UE::DreamShader::Lang
 				B.ShaderReference.IsEmpty() ? B.ShaderVirtualPath : B.ShaderReference);
 		}
 
+		/** Where an HLSL pass's code is, File when the payload does not say (a payload from before inline HLSL); empty for any other pass. */
+		static FString EffectivePipelineHlslSource(const IR::FIRPass& Pass)
+		{
+			if (IR::PassHlslSource::IsInline(Pass.HlslSource))
+			{
+				return Pass.HlslSource;
+			}
+			return PassHasShader(Pass) ? FString(IR::PassHlslSource::File) : FString();
+		}
+
 		static void ComparePipelinePasses(FPipelineDifferences& Diff, const IR::FIRPass& A, const IR::FIRPass& B)
 		{
 			const FString Where = FString::Printf(TEXT("pass '%s': "), *A.Name);
@@ -2070,6 +2167,12 @@ namespace UE::DreamShader::Lang
 			{
 				ComparePipelineShader(Diff, Where, A, B);
 				Diff.Text(Where, TEXT("the entry"), A.Entry, B.Entry);
+				Diff.Text(Where, TEXT("where the HLSL is"), EffectivePipelineHlslSource(A), EffectivePipelineHlslSource(B));
+				if (PassHasOwnHlslBlock(A) && PassHasOwnHlslBlock(B)
+					&& !NormalizePipelineHlsl(A.InlineHlsl).Equals(NormalizePipelineHlsl(B.InlineHlsl), ESearchCase::CaseSensitive))
+				{
+					Diff.Add(FString::Printf(TEXT("%sthe text of its 'hlsl' block differs"), *Where));
+				}
 			}
 			if (KindIndex == Kind::Compute)
 			{
@@ -2204,9 +2307,25 @@ namespace UE::DreamShader::Lang
 			const bool bBlank = Index == 0 || !Decl->Doc.IsEmpty();
 			AddDecl(MoveTemp(Decl), bBlank);
 		}
+		if (Pipeline.bHasSharedHlsl)
+		{
+			// The shared functions and entries every inline pass below compiles with, as they were written.
+			TUniquePtr<FHlslBlockDecl> Block = MakeUnique<FHlslBlockDecl>();
+			Block->RawBody = Pipeline.SharedHlsl;
+			AddDecl(MoveTemp(Block), true);
+		}
 		for (const IR::FIRPass& Pass : Pipeline.Passes)
 		{
-			AddDecl(BuildPipelinePassDecl(Pipeline, Pass, /* bKeepWrittenDefaults */ false), true);
+			TUniquePtr<FPassDecl> Decl = BuildPipelinePassDecl(Pipeline, Pass, /* bKeepWrittenDefaults */ false);
+			// A blank line between the pass's keys and lines and its `hlsl` block.
+			for (const TUniquePtr<FPassStmt>& Statement : Decl->Statements)
+			{
+				if (Statement->StmtKind == EPassStmtKind::Hlsl && Decl->Statements.Num() > 1)
+				{
+					Module->Trivia.FindOrAdd(static_cast<const FNode*>(Statement.Get())).BlankLinesBefore = 1;
+				}
+			}
+			AddDecl(MoveTemp(Decl), true);
 		}
 		return Module;
 	}
@@ -2337,6 +2456,47 @@ namespace UE::DreamShader::Lang
 				[](const int32) { return true; });
 		}
 
+		// -- the file's `hlsl` block: the text between its braces, the block itself when it comes or goes
+		{
+			const FHlslBlockDecl* Block = nullptr;
+			for (const FDeclPtr& Declaration : Parsed.Declarations)
+			{
+				if (const FHlslBlockDecl* Candidate = Declaration.IsValid() ? Declaration->As<FHlslBlockDecl>() : nullptr)
+				{
+					Block = Candidate;
+					break;
+				}
+			}
+			const bool bChanged = Current.bHasSharedHlsl != Desired.bHasSharedHlsl
+				|| !NormalizePipelineHlsl(Current.SharedHlsl).Equals(NormalizePipelineHlsl(Desired.SharedHlsl), ESearchCase::CaseSensitive);
+			if (bChanged && Block && Block->BodySpan.Length >= 2 && Desired.bHasSharedHlsl)
+			{
+				Edits.Replace(Block->BodySpan.Offset + 1, Block->BodySpan.Length - 2, PipelineHlslWithNewLine(Desired.SharedHlsl, NewLine));
+			}
+			else if (bChanged && Block && !Desired.bHasSharedHlsl)
+			{
+				Edits.DeleteDecl(*Block);
+			}
+			else if (bChanged && !Block && Desired.bHasSharedHlsl)
+			{
+				FHlslBlockDecl Printed;
+				Printed.RawBody = Desired.SharedHlsl;
+				const FString Lines = NewLine + PrintPipelineDecl(Printed, NewLine) + NewLine;
+				if (Anchor)
+				{
+					Edits.InsertAfterDecl(*Anchor, Lines);
+				}
+				else if (FirstDecl)
+				{
+					Edits.InsertBeforeDecl(*FirstDecl, PrintPipelineDecl(Printed, NewLine) + NewLine + NewLine);
+				}
+				else
+				{
+					Edits.Insert(Original.GetText().Len(), Lines);
+				}
+			}
+		}
+
 		// -- passes; their order within an injection point is the frame's
 		{
 			TArray<FString> CurrentNames;
@@ -2387,6 +2547,12 @@ namespace UE::DreamShader::Lang
 		Diff.List(Top, TEXT("Views"), EffectiveViews(A), EffectiveViews(B));
 		Diff.List(Top, TEXT("Requires"), PipelineRequires(A), PipelineRequires(B));
 		Diff.Text(Top, TEXT("Enabled"), A.EnabledParameter, B.EnabledParameter);
+		Diff.Bool(Top, TEXT("the file's 'hlsl' block"), A.bHasSharedHlsl, B.bHasSharedHlsl);
+		if (A.bHasSharedHlsl && B.bHasSharedHlsl
+			&& !NormalizePipelineHlsl(A.SharedHlsl).Equals(NormalizePipelineHlsl(B.SharedHlsl), ESearchCase::CaseSensitive))
+		{
+			Diff.Add(TEXT("the text of the file's 'hlsl' block differs"));
+		}
 
 		Diff.Int(Top, TEXT("the number of parameters"), A.Parameters.Num(), B.Parameters.Num());
 		for (int32 Index = 0; Index < FMath::Min(A.Parameters.Num(), B.Parameters.Num()); ++Index)

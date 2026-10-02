@@ -18,6 +18,7 @@
 // The bare-name rule, read the way a `.dsi`'s Parent is read: one product of that name under the root.
 #include "DreamShaderProductIndex.h"
 // FormatDreamShaderFloatLiteral: the shortest literal of a float, which is what the printer writes.
+#include "Lang/LangHlslText.h"
 #include "Lang/LangInstanceSource.h"
 #include "Lang/LangParser.h"
 #include "Lang/LangPipelineSource.h"
@@ -370,6 +371,36 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 
+			/**
+			 * A pass whose HLSL is in its `.dsp` (DreamShader_Plan/10): where it is, and its own block's text as it was written.
+			 * False, with nothing filled, for a pass whose code is a shader file.
+			 */
+			bool FillInlineHlsl(const EDreamPassHlslSource Source, const FString& Entry, const FString& InlineHlsl, const int32 InlineHlslLine, IR::FIRPass& Out) const
+			{
+				switch (Source)
+				{
+				case EDreamPassHlslSource::Block:
+					Out.HlslSource = IR::PassHlslSource::Block;
+					break;
+				case EDreamPassHlslSource::Body:
+					Out.HlslSource = IR::PassHlslSource::Body;
+					break;
+				case EDreamPassHlslSource::Shared:
+					Out.HlslSource = IR::PassHlslSource::Shared;
+					break;
+				case EDreamPassHlslSource::File:
+				default:
+					return false;
+				}
+				Out.Entry = Entry;
+				if (Source != EDreamPassHlslSource::Shared)
+				{
+					Out.InlineHlsl = InlineHlsl;
+					Out.InlineHlslLine = InlineHlslLine;
+				}
+				return true;
+			}
+
 			void FillFullscreen(const FDreamPassDesc& Pass, IR::FIRPass& Out)
 			{
 				const FDreamPassFullscreenSettings& Settings = Pass.Fullscreen;
@@ -390,6 +421,11 @@ namespace UE::DreamShader::Editor::Private
 					return;
 				}
 
+				if (FillInlineHlsl(Settings.HlslSource, Settings.Entry, Settings.InlineHlsl, Settings.InlineHlslLine, Out))
+				{
+					return;
+				}
+
 				if (bHasShader)
 				{
 					FillShader(Settings.ShaderPath, Settings.Entry, Out);
@@ -404,7 +440,10 @@ namespace UE::DreamShader::Editor::Private
 			void FillCompute(const FDreamPassDesc& Pass, IR::FIRPass& Out)
 			{
 				const FDreamPassComputeSettings& Settings = Pass.Compute;
-				FillShader(Settings.ShaderPath, Settings.Entry, Out);
+				if (!FillInlineHlsl(Settings.HlslSource, Settings.Entry, Settings.InlineHlsl, Settings.InlineHlslLine, Out))
+				{
+					FillShader(Settings.ShaderPath, Settings.Entry, Out);
+				}
 
 				// `Threads` is written only where it differs from what the payload assumes unwritten. A source that left it to
 				// the `.usf`'s [numthreads] built the same numbers, and a rebuild of the text reads them there again.
@@ -413,6 +452,19 @@ namespace UE::DreamShader::Editor::Private
 				Out.ThreadsY = Settings.ThreadGroupSize.Y;
 				Out.ThreadsZ = Settings.ThreadGroupSize.Z;
 				Out.bThreadsWritten = Out.ThreadsX != Unwritten.ThreadsX || Out.ThreadsY != Unwritten.ThreadsY || Out.ThreadsZ != Unwritten.ThreadsZ;
+
+				// An entry in the `.dsp` has its [numthreads] there to read: `Threads` repeats it only when they differ.
+				const bool bOwnBlock = Out.HlslSource.Equals(IR::PassHlslSource::Block, ESearchCase::CaseSensitive);
+				const bool bShared = Out.HlslSource.Equals(IR::PassHlslSource::Shared, ESearchCase::CaseSensitive);
+				if (bOwnBlock || bShared)
+				{
+					const UE::DreamShader::Lang::FHlslTextScan Scan = UE::DreamShader::Lang::ScanHlslText(bShared ? Pipeline.SharedHlsl : Out.InlineHlsl);
+					const UE::DreamShader::Lang::FHlslTopLevelFunction* Function = Scan.FindFunction(Out.Entry);
+					if (Function && Function->bComputeEntry && Function->GroupSize == Settings.ThreadGroupSize)
+					{
+						Out.bThreadsWritten = false;
+					}
+				}
 
 				Out.DispatchMode = PassSpelling::DispatchMode(Settings.DispatchMode);
 				if (Settings.DispatchMode == EDreamPassDispatchMode::Buffer)
@@ -789,6 +841,12 @@ namespace UE::DreamShader::Editor::Private
 			OutPipeline.Views = PassSpelling::FlagNames(PassSpelling::ViewFlags(), Pipeline->Views);
 		}
 		OutPipeline.Requires = PassSpelling::FlagNames(PassSpelling::RequirementFlags(), Pipeline->Requires);
+#if WITH_EDITORONLY_DATA
+		// The file's `hlsl` block, as it was written: what each inline pass's slot was generated from.
+		OutPipeline.bHasSharedHlsl = Pipeline->bHasSharedHlsl;
+		OutPipeline.SharedHlsl = Pipeline->SharedHlsl;
+		OutPipeline.SharedHlslLine = Pipeline->SharedHlslLine;
+#endif
 
 		for (const FDreamPassParameterDesc& Parameter : Pipeline->Parameters)
 		{
