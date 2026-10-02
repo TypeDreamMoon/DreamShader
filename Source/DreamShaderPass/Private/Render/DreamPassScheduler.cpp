@@ -93,6 +93,8 @@ namespace UE::DreamPass
 			}
 			else
 			{
+				// Every executor logs its own reason once; the short form here is what `DreamPass.Dump` shows every frame.
+				State.SkipReasons[OrderIndex] = Execute.SkipReason.IsEmpty() ? TEXT("it could not run; the log says why, once") : MoveTemp(Execute.SkipReason);
 				INC_DWORD_STAT(STAT_DreamPass_PassesFailed);
 			}
 		}

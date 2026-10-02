@@ -73,6 +73,12 @@ namespace UE::DreamPass
 		/** One bit per FViewSnapshot::Order entry: the pass ran. */
 		TBitArray<> Executed;
 
+		/**
+		 * One per FViewSnapshot::Order entry: why a pass that was tried did not run, for `DreamPass.Dump`. Empty for a pass
+		 * that ran or was never tried -- its injection point did not happen in this view.
+		 */
+		TArray<FString> SkipReasons;
+
 		bool bFinished = false;
 
 		bool IsActive() const { return View && Snapshot; }
@@ -110,6 +116,9 @@ namespace UE::DreamPass
 		int32 PipelineIndex;
 		const FSnapshotPass& Pass;
 		int32 OrderIndex;
+
+		/** Set by an executor that returns false, where a short reason helps `DreamPass.Dump`: "its material is still compiling". */
+		FString SkipReason;
 
 		const FSceneView& GetView() const { return *ViewState.View; }
 	};

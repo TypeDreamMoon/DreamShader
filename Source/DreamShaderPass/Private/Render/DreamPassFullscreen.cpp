@@ -57,6 +57,7 @@ namespace UE::DreamPass
 		{
 			WarnOnce(Context.Pipeline.DebugName + TEXT(".") + Pass.Name.ToString() + TEXT(".Compiling"),
 				FString::Printf(TEXT("DreamPass: %s.%s waits for its material to finish compiling (reported once)."), *Context.Pipeline.DebugName, *Pass.Name.ToString()));
+			Context.SkipReason = TEXT("its material is still compiling");
 			return false;
 		}
 		if (Resource->GetMaterialDomain() != MD_PostProcess)

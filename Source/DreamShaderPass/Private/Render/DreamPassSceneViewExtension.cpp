@@ -211,6 +211,7 @@ void FDreamPassSceneViewExtension::PreRenderViewFamily_RenderThread(FRDGBuilder&
 			State.PreviousBuffers[PipelineIndex].Init(nullptr, BufferCount);
 		}
 		State.Executed.Init(false, State.Snapshot->Order.Num());
+		State.SkipReasons.SetNum(State.Snapshot->Order.Num());
 	}
 }
 
@@ -473,7 +474,9 @@ void FDreamPassSceneViewExtension::FinishFamily(FRDGBuilder& GraphBuilder, UE::D
 			const FScheduledPass& Scheduled = State.Snapshot->Order[OrderIndex];
 			const FSnapshotPipeline& Pipeline = State.Snapshot->Pipelines[Scheduled.Pipeline];
 			const FSnapshotPass& Pass = Pipeline.Passes[Scheduled.Pass];
-			Report.SkippedPasses.Add(FString::Printf(TEXT("%s.%s (view %d, %s)"), *Pipeline.DebugName, *Pass.Name.ToString(), State.FamilyViewIndex, LexToString(Pass.Injection)));
+			const FString& Reason = State.SkipReasons.IsValidIndex(OrderIndex) ? State.SkipReasons[OrderIndex] : FString();
+			Report.SkippedPasses.Add(FString::Printf(TEXT("%s.%s (view %d, %s): %s"), *Pipeline.DebugName, *Pass.Name.ToString(), State.FamilyViewIndex, LexToString(Pass.Injection),
+				Reason.IsEmpty() ? TEXT("its injection point did not happen in this view") : *Reason));
 		}
 	}
 

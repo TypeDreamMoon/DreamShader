@@ -1394,6 +1394,7 @@ namespace UE::DreamPass
 			{
 				WarnOnce(Label + TEXT(".Mesh.Compiling"),
 					FString::Printf(TEXT("DreamPass: %s waits for its override material to finish compiling (reported once)."), *Label));
+				Context.SkipReason = TEXT("its override material is still compiling");
 				return false;
 			}
 		}
