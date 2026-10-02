@@ -385,10 +385,15 @@ namespace UE::DreamPass
 
 			FViewSnapshot& ViewSnapshot = Snapshot->Views[ViewIndex];
 			ViewSnapshot.ViewKey = View->GetViewKey();
+			ViewSnapshot.bExportView = Subsystem.TryClaimExportView(*View, Query.ViewKind);
 			ViewSnapshot.Pipelines.SetNum(Resolved.Num());
 			for (int32 PipelineIndex = 0; PipelineIndex < Resolved.Num(); ++PipelineIndex)
 			{
 				Private::BuildPipeline(Subsystem, Resolved[PipelineIndex], ViewSnapshot.Pipelines[PipelineIndex]);
+				if (ViewSnapshot.bExportView)
+				{
+					PrepareExportTargets(ViewSnapshot.Pipelines[PipelineIndex], *Resolved[PipelineIndex].Pipeline, *View);
+				}
 			}
 
 			Private::ScheduleView(ViewSnapshot);

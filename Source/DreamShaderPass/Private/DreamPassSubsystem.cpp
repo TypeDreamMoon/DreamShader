@@ -12,6 +12,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/OutputDevice.h"
+#include "SceneView.h"
 #include "SceneViewExtension.h"
 
 #if DREAMSHADER_WITH_CUSTOM_PASS
@@ -419,6 +420,17 @@ void UDreamPassSubsystem::GatherPrimitiveSelections(TMap<uint32, uint32>& OutLay
 			}
 		}
 	}
+}
+
+bool UDreamPassSubsystem::TryClaimExportView(const FSceneView& View, EDreamPassViewFlags ViewKind)
+{
+	const bool bEligible = (ViewKind == EDreamPassViewFlags::Game && View.PlayerIndex <= 0) || ViewKind == EDreamPassViewFlags::Editor;
+	if (!bEligible || ExportClaimFrame == GFrameCounter)
+	{
+		return false;
+	}
+	ExportClaimFrame = GFrameCounter;
+	return true;
 }
 
 void UDreamPassSubsystem::BeginMaterialFrame()

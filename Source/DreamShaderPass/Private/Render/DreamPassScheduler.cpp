@@ -87,6 +87,7 @@ namespace UE::DreamPass
 			FExecuteContext Execute{ GraphBuilder, Family, State, Context, Pipeline, Scheduled.Pipeline, Pass, OrderIndex };
 			if (ExecutePass(Execute))
 			{
+				AfterPassWrites(Execute);
 				State.Executed[OrderIndex] = true;
 				INC_DWORD_STAT(STAT_DreamPass_PassesRun);
 			}

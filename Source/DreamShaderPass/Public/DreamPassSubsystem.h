@@ -8,6 +8,7 @@
 
 class FDreamPassSceneViewExtension;
 class FOutputDevice;
+class FSceneView;
 class UDreamPassPipeline;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
@@ -216,6 +217,13 @@ public:
 	/** Starts a frame of AcquireMaterialInstance: hands every instance out afresh, drops pools idle for a while. */
 	void BeginMaterialFrame();
 
+	/**
+	 * Whether View is the one that writes exported buffers into their render targets this frame: the first view of
+	 * the frame that is a first local player's game view or an editor viewport. One picture per render target, so
+	 * split screen, a second viewport or a scene capture never overwrite it.
+	 */
+	bool TryClaimExportView(const FSceneView& View, EDreamPassViewFlags ViewKind);
+
 	/** The project settings' global pipelines were edited, or the module asked: loads them again. */
 	void RefreshGlobalPipelines();
 
@@ -249,6 +257,7 @@ private:
 
 	int64 NextHandleId = 1;
 	uint64 MaterialFrame = 0;
+	uint64 ExportClaimFrame = ~uint64(0);
 	FDelegateHandle SettingsChangedHandle;
 
 	TSharedPtr<FDreamPassSceneViewExtension, ESPMode::ThreadSafe> ViewExtension;

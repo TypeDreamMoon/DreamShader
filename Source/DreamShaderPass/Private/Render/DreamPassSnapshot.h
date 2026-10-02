@@ -10,6 +10,7 @@
 class FMaterialRenderProxy;
 class FSceneViewFamily;
 class FTextureRenderTargetResource;
+class UDreamPassPipeline;
 class UDreamPassSubsystem;
 class UMaterialInterface;
 
@@ -170,6 +171,9 @@ namespace UE::DreamPass
 
 	/** What the view offers, for a pipeline's Requires. */
 	EDreamPassRequirementFlags GetViewCapabilities(const FSceneViewFamily& Family, const FSceneView& View);
+
+	/** The export view's half of an exported buffer: sizes its render target and takes its resource. Game thread. */
+	void PrepareExportTargets(FSnapshotPipeline& Pipeline, const UDreamPassPipeline& Asset, const FSceneView& View);
 
 	/**
 	 * Builds the snapshot of one family: resolves the pipelines of every view through the subsystem, sets the
