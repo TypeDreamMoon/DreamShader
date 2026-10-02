@@ -80,6 +80,10 @@ Write-Host "  engine   $Engine"
 $SourceDir = Join-Path $ProjectDir 'DShader\PassDemo'
 New-Item -ItemType Directory -Force -Path $SourceDir | Out-Null
 Copy-Item -Path (Join-Path $PSScriptRoot 'Sources\*') -Destination $SourceDir -Force
+# A shader file an older demo had: its HLSL is in the .dsp now (DreamShader_Plan/10), and a stale copy would only mislead.
+Get-ChildItem -Path (Join-Path $SourceDir '*') -File -Include '*.usf', '*.ush' |
+    Where-Object { -not (Test-Path (Join-Path $PSScriptRoot "Sources\$($_.Name)")) } |
+    Remove-Item -Force
 Write-Host "  sources  $SourceDir"
 
 # ------------------------------------------------------------------------------------------ compile

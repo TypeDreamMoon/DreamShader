@@ -18,13 +18,13 @@ level uses, `Highlight` and `XRay`, are in the template's `Config/DefaultEngine.
 
 | Pipeline | What it exercises | Activated by | What the shot shows |
 | :-- | :-- | :-- | :-- |
-| `CP_Highlight` | a mesh pass by layer with an override material and `Depth = None`, a compute blur, a fullscreen material composite, an export read by an opaque material (`M_DemoGround`) | an unbound volume | an outline around the orange cube, and around the whole blue sphere, half of which is behind the wall |
+| `CP_Highlight` | a mesh pass by layer with an override material and `Depth = None`, a compute blur written as the statements of its entry, a fullscreen material composite, an export read by an opaque material (`M_DemoGround`) | an unbound volume | an outline around the orange cube, and around the whole blue sphere, half of which is behind the wall |
 | `CP_XRay` | a mesh pass by layer and by list with its own depth, a composite against the scene depth | a `UDreamPassComponent` on the camera, `Scope = ViewTarget` | the red cylinder and cone behind the wall as cyan silhouettes; the cone joins list `Enemies` through the API |
 | `CP_Tagged` | a mesh pass by custom stencil in `Mode = Own`: the gold cube's own material writes the data | an unbound volume | moving green stripes on the gold cube |
-| `CP_Scanner` | a pixel HLSL pass at `BeforePostProcess` that reads the scene depth through `View` | an unbound volume with a `PulseColor` override | a magenta ring sweeping out from the camera (cyan without the override) |
-| `CP_Retro` | a pixel HLSL pass at `PostProcess.AfterTonemap`, blended by `DP_Weight` | an unbound volume, `BlendWeight` 0.5 | scanlines, a vignette and colour fringes, at half strength |
-| `CP_UIBackdrop` | a `copy` grab after the tonemapper, a compute downsample, an export read by an unlit material | the API (`AddPipeline`) | the blurred frame on the monitor at the left |
-| `CP_WindField` | a compute pass at `BeginView` on a fixed-size history buffer, an export read in a vertex shader | the project settings, with a `WindDirection` override, from the command line | the grass leaning with the wind; the field itself on the panel at the right |
+| `CP_Scanner` | a pixel HLSL pass at `BeforePostProcess`, written as the statements of its entry, that reads the scene depth through `View` | an unbound volume with a `PulseColor` override | a magenta ring sweeping out from the camera (cyan without the override) |
+| `CP_Retro` | a pixel HLSL pass at `PostProcess.AfterTonemap` whose block holds a whole function (`Main`), blended by `DP_Weight` | an unbound volume, `BlendWeight` 0.5 | scanlines, a vignette and colour fringes, at half strength |
+| `CP_UIBackdrop` | a `copy` grab after the tonemapper, a compute downsample whose entry is in the file's `hlsl` block with a helper, an export read by an unlit material | the API (`AddPipeline`) | the blurred frame on the monitor at the left |
+| `CP_WindField` | a compute pass at `BeginView` on a fixed-size history buffer, its statements under the BeginView `View` guard, an export read in a vertex shader | the project settings, with a `WindDirection` override, from the command line | the grass leaning with the wind; the field itself on the panel at the right |
 
 `TakeShots.py` turns the others off with `r.DreamPass.DisablePipelines` for each shot, shows a buffer with
 `r.DreamPass.Visualize` in three of them, exports two render targets, and prints `DreamPass.Dump` into the game log
