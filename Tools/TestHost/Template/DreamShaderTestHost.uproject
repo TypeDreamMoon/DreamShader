@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.8",
+	"Category": "",
+	"Description": "Minimal host project that builds DreamShader on its own and runs its automation suite, isolated from any working project. Generated from Plugins/DreamShader/Tools/TestHost/Template by New-DreamShaderTestHost.ps1; see Tools/TestHost/README.md.",
+	"Modules": [
+		{
+			"Name": "DreamShaderTestHost",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "DreamShader",
+			"Enabled": true
+		}
+	]
+}
