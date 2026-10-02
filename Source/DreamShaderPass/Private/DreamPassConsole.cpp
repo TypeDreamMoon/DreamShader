@@ -85,7 +85,6 @@ namespace UE::DreamPass
 	}
 
 	static FAutoConsoleCommand CommandDump(
-		ECVF_Default,
 		TEXT("DreamPass.Dump"),
 		TEXT("Lists, for every world, what activates DreamShader Custom Pass pipelines and what the last frame ran or skipped."),
 		FConsoleCommandWithWorldArgsAndOutputDeviceDelegate::CreateStatic(&DumpWorlds));

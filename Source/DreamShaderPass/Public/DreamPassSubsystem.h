@@ -77,7 +77,7 @@ struct FDreamPassResolvedPipeline
 	/** One per Pipeline->Parameters, in that order: defaults with every override blended in. */
 	TArray<FDreamPassParameterValue> Values;
 
-	const FDreamPassParameterValue* FindValue(FName Name) const;
+	DREAMSHADERPASS_API const FDreamPassParameterValue* FindValue(FName Name) const;
 };
 
 /** A handle to a pipeline activated through the API. */

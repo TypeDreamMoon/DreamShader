@@ -379,7 +379,7 @@ FScreenPassTexture FDreamPassSceneViewExtension::PostProcessCallback(FRDGBuilder
 	Context.bSceneColorWritable = true;
 	Context.SceneColor = FScreenPassTexture::CopyFromSlice(GraphBuilder, ChainSlice);
 	Context.SceneViewRect = Context.SceneColor.ViewRect;
-	Context.SceneTextures = Inputs.SceneTextures.SceneTextures;
+	Context.SceneTextures = Inputs.SceneTextures.SceneTextures.GetUniformBuffer();
 	Context.SceneDepth = Context.SceneTextures ? Context.SceneTextures->GetContents()->SceneDepthTexture : nullptr;
 	Context.CustomDepth = Inputs.CustomDepthTexture;
 
