@@ -227,11 +227,19 @@ namespace UE::DreamShader::Lang::Private
 							LOCTEXT("InstanceIgnoresGraphPragma", "'#pragma {0}' boxes or places graph nodes, and a '.dsi' has no graph; the line was ignored."),
 							FText::FromString(Pragma.Name)));
 					break;
+				case EPragmaKind::Pipeline:
+					ReportPipelinePragmaOutsideDsp(Pragma);
+					break;
 				case EPragmaKind::Unknown:
 					break;
 				}
 				break;
 			}
+
+			case ENodeKind::BufferDecl:
+			case ENodeKind::PassDecl:
+				ReportPipelineDeclarationOutsideDsp(*Decl);
+				break;
 
 			case ENodeKind::VariableDecl:
 			{

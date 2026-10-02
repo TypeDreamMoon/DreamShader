@@ -9,6 +9,8 @@
 //                              `region`, the backend
 //   LangBinderExpressions.cpp  every expression kind, conversions, constant folding
 //   LangBinderStatements.cpp   bodies, scopes, control flow, loop trip counts, in-body regions
+//   LangBinderInstance.cpp     instance mode: a `.dsi`
+//   LangBinderPipeline.cpp     pipeline mode: a `.dsp`, its payload and the rules V1-V13
 //   LangSymbolIndex.cpp        BuildDreamShaderSymbolIndexJson
 //
 // Conventions every method follows:
@@ -314,6 +316,20 @@ namespace UE::DreamShader::Lang::Private
 
 		/** `.dsi` only: the `@name` written in the `///` block above `#pragma instance`. */
 		FString InstanceAssetName;
+
+		// ------------------------------------------------- pipeline mode (LangBinderPipeline.cpp)
+
+		/**
+		 * A `.dsp` (FModule::FileKind == Dsp): `#pragma pipeline`, the uniforms and constants, the buffers and the passes,
+		 * the rules V1-V13 of DreamShader_Plan/05 s7 -- the engine facts from FBindOptions::PipelineReferences, skipped
+		 * without them (DSH7360) -- and the one PassPipeline product, whose payload is FBoundModule::Pipeline.Payload.
+		 * Replaces the declare pass and everything after it.
+		 */
+		void BindPipelineModule();
+		/** DSH3311: `#pragma pipeline` in a file that is not a `.dsp`. */
+		void ReportPipelinePragmaOutsideDsp(const FPragmaDecl& Pragma);
+		/** DSH3312: a `buffer` / `pass` declaration reaching the binder of another kind of file (an included `.dsp`, a hand-built tree). */
+		void ReportPipelineDeclarationOutsideDsp(const FDecl& Decl);
 
 		// ------------------------------------------------------- legacy rules (LangBinderLegacy.cpp)
 

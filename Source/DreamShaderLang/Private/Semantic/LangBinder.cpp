@@ -273,6 +273,13 @@ namespace UE::DreamShader::Lang::Private
 			return;
 		}
 
+		// Nor has a `.dsp`: pipeline mode replaces everything below in the same way.
+		if (RootModule.FileKind == ELangFileKind::Dsp)
+		{
+			BindPipelineModule();
+			return;
+		}
+
 		if (Catalog.IsEmpty())
 		{
 			// Not an error: `dsc index` on a file the editor has never opened still wants a symbol
@@ -354,10 +361,18 @@ namespace UE::DreamShader::Lang::Private
 				case EPragmaKind::EndRegion: CloseRegion(Pragma.Span, FileRegions); break;
 				// Only a `.dsi` holds one, and a `.dsi` never reaches the declare pass (BindInstanceModule).
 				case EPragmaKind::Instance:  ReportInstancePragmaOutsideDsi(Pragma); break;
+				// Only a `.dsp` holds one, and a `.dsp` never reaches the declare pass either (BindPipelineModule).
+				case EPragmaKind::Pipeline:  ReportPipelinePragmaOutsideDsp(Pragma); break;
 				case EPragmaKind::Unknown:   break;
 				}
 				break;
 			}
+
+			case ENodeKind::BufferDecl:
+			case ENodeKind::PassDecl:
+				// The parser makes these in a `.dsp` only; one here came in through an `#include` of a `.dsp`.
+				ReportPipelineDeclarationOutsideDsp(*Decl);
+				break;
 
 			case ENodeKind::StructDecl:
 				DeclareStruct(*static_cast<const FStructDecl*>(Decl), File);

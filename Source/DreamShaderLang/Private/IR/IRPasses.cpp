@@ -857,9 +857,9 @@ namespace UE::DreamShader::IR
 	{
 		for (FIRProduct& Product : Module.Products)
 		{
-			if (Product.Kind == EIRProductKind::MaterialInstance)
+			if (Product.Kind == EIRProductKind::MaterialInstance || Product.Kind == EIRProductKind::PassPipeline)
 			{
-				// A `.dsi` product has no graph to pass over.
+				// A `.dsi` or a `.dsp` product has no graph to pass over.
 				continue;
 			}
 

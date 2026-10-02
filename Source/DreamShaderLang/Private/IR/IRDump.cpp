@@ -451,6 +451,431 @@ namespace UE::DreamShader::IR
 			Writer.EndObject();
 		}
 
+		// ---------------------------------------------------------------- pass pipelines (`.dsp`)
+
+		/** `(1, 0.5, 0, 1)`: the first Count of four numbers. */
+		static FString RenderIRDumpNumbers(const double* Values, const int32 Count)
+		{
+			FString Result = TEXT("(");
+			for (int32 Index = 0; Index < Count; ++Index)
+			{
+				Result += Index > 0 ? TEXT(", ") : TEXT("");
+				Result += FormatIRNumber(Values[Index]);
+			}
+			return Result + TEXT(")");
+		}
+
+		/** A pipeline parameter's default or a param constant: `0.5`, `(1, 0, 0, 1)`, `3`, `true`, `"/Game/T"`, `None`. */
+		static FString RenderIRDumpPipelineValue(const FIRPropertyValue& Value)
+		{
+			switch (Value.Kind)
+			{
+			case EIRPropertyKind::Bool:
+				return Value.B ? TEXT("true") : TEXT("false");
+			case EIRPropertyKind::Int:
+				return FString::Printf(TEXT("%lld"), static_cast<long long>(Value.I));
+			case EIRPropertyKind::Float4:
+			{
+				const int32 Count = FMath::Clamp(Value.N, 1, 4);
+				return Count == 1 ? FormatIRNumber(Value.V[0]) : RenderIRDumpNumbers(Value.V, Count);
+			}
+			case EIRPropertyKind::Object:
+				return Value.S.IsEmpty() ? FString(TEXT("None")) : QuoteIRDumpText(Value.S);
+			default:
+				return RenderPropertyValue(Value);
+			}
+		}
+
+		static FString RenderIRDumpPipelineBinding(const FIRPassBinding& Binding)
+		{
+			return FString::Printf(TEXT("%s = %s%s"), *Binding.Slot, *Binding.Buffer, Binding.bPrevious ? TEXT(".Previous") : TEXT(""));
+		}
+
+		static FString RenderIRDumpPipelineParam(const FIRPassParam& Param)
+		{
+			if (Param.SourceKind.Equals(TEXT("Constant"), ESearchCase::CaseSensitive))
+			{
+				return FString::Printf(TEXT("%s = %s %s"), *Param.Target, *Param.ConstantType, *RenderIRDumpPipelineValue(Param.Constant));
+			}
+			const FString Source = Param.SourceKind.Equals(TEXT("Weight"), ESearchCase::CaseSensitive) ? FString(TEXT("Weight")) : Param.Parameter;
+			return FString::Printf(TEXT("%s = %s * %s + %s"), *Param.Target, *Source, *FormatIRNumber(Param.Multiplier), *FormatIRNumber(Param.Offset));
+		}
+
+		/** A filter in its normal form: clauses joined by `|`, the terms of one by `&`. */
+		static FString RenderIRDumpPipelineFilter(const TArray<FIRPassFilterClause>& Filter)
+		{
+			TArray<FString> Clauses;
+			for (const FIRPassFilterClause& Clause : Filter)
+			{
+				TArray<FString> Terms;
+				for (const FIRPassFilterTerm& Term : Clause.AllOf)
+				{
+					if (Term.Kind.Equals(TEXT("Stencil"), ESearchCase::CaseSensitive))
+					{
+						Terms.Add(FString::Printf(TEXT("Stencil(%d, %d)"), Term.StencilValue, Term.StencilMask));
+					}
+					else if (Term.Kind.Equals(TEXT("Layer"), ESearchCase::CaseSensitive))
+					{
+						Terms.Add(FString::Printf(TEXT("Layer(%s)"), *FString::Join(Term.Layers, TEXT(" | "))));
+					}
+					else
+					{
+						Terms.Add(FString::Printf(TEXT("%s(%s)"), *Term.Kind, *Term.List));
+					}
+				}
+				Clauses.Add(FString::Join(Terms, TEXT(" & ")));
+			}
+			return FString::Join(Clauses, TEXT(" | "));
+		}
+
+		/**
+		 * A PassPipeline product as text: no backend and no graph; the pipeline's keys, then one line per parameter and
+		 * buffer, and per pass its keys, its kind's settings and its bindings, every value as the binder settled it.
+		 */
+		static void AppendIRDumpPipelineLines(const FIRProduct& Product, const int32 ProductIndex, TArray<FString>& Lines)
+		{
+			Lines.Add(FString::Printf(TEXT("product %d %s \"%s\""), ProductIndex, LexToString(Product.Kind), *Product.Name));
+			if (!Product.AssetPathOverride.IsEmpty())
+			{
+				Lines.Add(FString::Printf(TEXT("  path \"%s\""), *Product.AssetPathOverride));
+			}
+
+			const FIRPassPipeline& Pipeline = Product.PassPipeline;
+			Lines.Add(FString::Printf(
+				TEXT("  pipeline order=%d injection=%s views=%s requires=%s enabled=%s"),
+				Pipeline.Order,
+				*Pipeline.DefaultInjection,
+				Pipeline.Views.Num() > 0 ? *FString::Join(Pipeline.Views, TEXT("|")) : TEXT("Game|Editor"),
+				Pipeline.Requires.Num() > 0 ? *FString::Join(Pipeline.Requires, TEXT("|")) : TEXT("-"),
+				Pipeline.EnabledParameter.IsEmpty() ? TEXT("-") : *Pipeline.EnabledParameter));
+
+			for (const FIRPassParameter& Parameter : Pipeline.Parameters)
+			{
+				FString Line = FString::Printf(TEXT("  parameter %s %s default=%s"), *QuoteIRDumpText(Parameter.Name), *Parameter.Type, *RenderIRDumpPipelineValue(Parameter.Default));
+				if (!Parameter.Group.IsEmpty())
+				{
+					Line += FString::Printf(TEXT(" group=%s"), *QuoteIRDumpText(Parameter.Group));
+				}
+				if (Parameter.bHasSlider)
+				{
+					Line += FString::Printf(TEXT(" slider=(%s, %s)"), *FormatIRNumber(Parameter.SliderMin), *FormatIRNumber(Parameter.SliderMax));
+				}
+				if (Parameter.SortPriority != 0)
+				{
+					Line += FString::Printf(TEXT(" sort=%d"), Parameter.SortPriority);
+				}
+				if (!Parameter.Description.IsEmpty())
+				{
+					Line += FString::Printf(TEXT(" desc=%s"), *QuoteIRDumpText(Parameter.Description));
+				}
+				Lines.Add(Line);
+			}
+
+			for (const FIRPassBuffer& Buffer : Pipeline.Buffers)
+			{
+				FString Line = FString::Printf(TEXT("  buffer %s %s resolution=%s"), *QuoteIRDumpText(Buffer.Name), *Buffer.Format, *Buffer.Resolution);
+				Line += Buffer.Resolution.Equals(TEXT("Fixed"), ESearchCase::CaseSensitive)
+					? FString::Printf(TEXT(" size=%dx%d"), Buffer.FixedWidth, Buffer.FixedHeight)
+					: FString::Printf(TEXT(" scale=%s"), *FormatIRNumber(Buffer.Scale));
+				if (!Buffer.bResolutionWritten)
+				{
+					Line += TEXT(" (inferred)");
+				}
+				Line += Buffer.bClear ? FString::Printf(TEXT(" clear=%s"), *RenderIRDumpNumbers(Buffer.ClearValue, 4)) : FString(TEXT(" clear=None"));
+				Line += FString::Printf(TEXT(" mips=%d"), Buffer.Mips);
+				if (Buffer.bHistory)
+				{
+					Line += TEXT(" history");
+				}
+				if (Buffer.bExport)
+				{
+					Line += TEXT(" export");
+				}
+				if (!Buffer.Description.IsEmpty())
+				{
+					Line += FString::Printf(TEXT(" desc=%s"), *QuoteIRDumpText(Buffer.Description));
+				}
+				Lines.Add(Line);
+			}
+
+			for (const FIRPass& Pass : Pipeline.Passes)
+			{
+				FString Head = FString::Printf(TEXT("  pass %s %s injection=%s"), *QuoteIRDumpText(Pass.Name), *Pass.Kind, *Pass.Injection);
+				if (!Pass.EnabledParameter.IsEmpty())
+				{
+					Head += FString::Printf(TEXT(" enabled=%s"), *Pass.EnabledParameter);
+				}
+				if (!Pass.Description.IsEmpty())
+				{
+					Head += FString::Printf(TEXT(" desc=%s"), *QuoteIRDumpText(Pass.Description));
+				}
+				Lines.Add(Head);
+
+				if (!Pass.MaterialReference.IsEmpty() || !Pass.MaterialObjectPath.IsEmpty())
+				{
+					Lines.Add(FString::Printf(TEXT("    material %s object=%s"), *QuoteIRDumpText(Pass.MaterialReference), *QuoteIRDumpText(Pass.MaterialObjectPath)));
+				}
+				if (!Pass.ShaderReference.IsEmpty() || !Pass.ShaderVirtualPath.IsEmpty())
+				{
+					// The file on disk is this machine's; the virtual path is what the asset keeps.
+					Lines.Add(FString::Printf(TEXT("    shader %s virtual=%s entry=%s"), *QuoteIRDumpText(Pass.ShaderReference), *QuoteIRDumpText(Pass.ShaderVirtualPath), *Pass.Entry));
+				}
+				if (Pass.Kind.Equals(TEXT("compute"), ESearchCase::CaseSensitive))
+				{
+					FString Line = FString::Printf(TEXT("    threads=(%d, %d, %d)%s"), Pass.ThreadsX, Pass.ThreadsY, Pass.ThreadsZ, Pass.bThreadsWritten ? TEXT("") : TEXT(" (from the shader)"));
+					Line += Pass.DispatchMode.Equals(TEXT("Fixed"), ESearchCase::CaseSensitive)
+						? FString::Printf(TEXT(" dispatch=(%d, %d, %d)"), Pass.DispatchX, Pass.DispatchY, Pass.DispatchZ)
+						: FString::Printf(TEXT(" dispatch=%s * %s"), *Pass.DispatchBuffer, *FormatIRNumber(Pass.DispatchScale));
+					Lines.Add(Line);
+				}
+				if (Pass.Kind.Equals(TEXT("mesh"), ESearchCase::CaseSensitive))
+				{
+					Lines.Add(FString::Printf(TEXT("    filter %s"), *RenderIRDumpPipelineFilter(Pass.Filter)));
+					FString Line = FString::Printf(
+						TEXT("    mesh mode=%s depth=%s%s cull=%s blend=%s usage=%s nanite=%s"),
+						*Pass.MeshMode,
+						*Pass.Depth,
+						Pass.DepthBuffer.IsEmpty() ? TEXT("") : *FString::Printf(TEXT("(%s)"), *Pass.DepthBuffer),
+						*Pass.Cull,
+						*Pass.Blend,
+						Pass.Usage.Num() > 0 ? *FString::Join(Pass.Usage, TEXT("|")) : TEXT("default"),
+						*Pass.Nanite);
+					if (Pass.Nanite.Equals(TEXT("AssignStencil"), ESearchCase::CaseSensitive))
+					{
+						Line += FString::Printf(TEXT(" assign=%d"), Pass.AssignedStencilValue);
+					}
+					if (!Pass.Nanite.Equals(TEXT("Skip"), ESearchCase::CaseSensitive))
+					{
+						Line += FString::Printf(TEXT(" naniteValue=%s"), *RenderIRDumpNumbers(Pass.NaniteValue, 4));
+					}
+					Lines.Add(Line);
+				}
+				if (Pass.Kind.Equals(TEXT("clear"), ESearchCase::CaseSensitive))
+				{
+					Lines.Add(FString::Printf(TEXT("    value=%s"), *RenderIRDumpNumbers(Pass.ClearValue, 4)));
+				}
+				for (const FIRPassBinding& Read : Pass.Reads)
+				{
+					Lines.Add(FString::Printf(TEXT("    read %s"), *RenderIRDumpPipelineBinding(Read)));
+				}
+				for (const FIRPassBinding& Write : Pass.Writes)
+				{
+					Lines.Add(FString::Printf(TEXT("    write %s"), *RenderIRDumpPipelineBinding(Write)));
+				}
+				for (const FIRPassParam& Param : Pass.Params)
+				{
+					Lines.Add(FString::Printf(TEXT("    param %s"), *RenderIRDumpPipelineParam(Param)));
+				}
+			}
+		}
+
+		static void WriteIRDumpPipelineSpanJson(FIRJsonWriter& Writer, const FIRModule& Module, const FIRSourceRef& Source)
+		{
+			Writer.Key(TEXT("span"));
+			Writer.BeginObject();
+			Writer.KeyInt(TEXT("line"), Source.Span.Line);
+			Writer.KeyInt(TEXT("column"), Source.Span.Column);
+			Writer.KeyInt(TEXT("length"), Source.Span.Length);
+			if (IsForeignFile(Module.SourceFilePath, Source.File))
+			{
+				Writer.KeyString(TEXT("file"), CleanFileName(Source.File));
+			}
+			Writer.EndObject();
+		}
+
+		static void WriteIRDumpPipelineBindingsJson(FIRJsonWriter& Writer, const FIRModule& Module, const TCHAR* Key, const TArray<FIRPassBinding>& Bindings)
+		{
+			Writer.Key(Key);
+			Writer.BeginArray();
+			for (const FIRPassBinding& Binding : Bindings)
+			{
+				Writer.BeginObject();
+				Writer.KeyString(TEXT("slot"), Binding.Slot);
+				Writer.KeyString(TEXT("buffer"), Binding.Buffer);
+				Writer.KeyBool(TEXT("previous"), Binding.bPrevious);
+				WriteIRDumpPipelineSpanJson(Writer, Module, Binding.Source);
+				Writer.EndObject();
+			}
+			Writer.EndArray();
+		}
+
+		static void WriteIRDumpNumbersJson(FIRJsonWriter& Writer, const TCHAR* Key, const double* Values, const int32 Count)
+		{
+			Writer.Key(Key);
+			Writer.BeginArray();
+			for (int32 Index = 0; Index < Count; ++Index)
+			{
+				Writer.ValueNumber(Values[Index]);
+			}
+			Writer.EndArray();
+		}
+
+		static void WriteIRDumpPipelineJson(FIRJsonWriter& Writer, const FIRModule& Module, const FIRPassPipeline& Pipeline)
+		{
+			Writer.Key(TEXT("pipeline"));
+			Writer.BeginObject();
+			Writer.KeyInt(TEXT("order"), Pipeline.Order);
+			Writer.KeyString(TEXT("injection"), Pipeline.DefaultInjection);
+			Writer.KeyStringArray(TEXT("views"), Pipeline.Views);
+			Writer.KeyStringArray(TEXT("requires"), Pipeline.Requires);
+			Writer.KeyString(TEXT("enabled"), Pipeline.EnabledParameter);
+
+			Writer.Key(TEXT("parameters"));
+			Writer.BeginArray();
+			for (const FIRPassParameter& Parameter : Pipeline.Parameters)
+			{
+				Writer.BeginObject();
+				Writer.KeyString(TEXT("name"), Parameter.Name);
+				Writer.KeyString(TEXT("type"), Parameter.Type);
+				Writer.KeyString(TEXT("default"), Parameter.Default.ToString());
+				Writer.KeyString(TEXT("group"), Parameter.Group);
+				Writer.KeyString(TEXT("description"), Parameter.Description);
+				if (Parameter.bHasSlider)
+				{
+					Writer.KeyNumber(TEXT("sliderMin"), Parameter.SliderMin);
+					Writer.KeyNumber(TEXT("sliderMax"), Parameter.SliderMax);
+				}
+				Writer.KeyInt(TEXT("sort"), Parameter.SortPriority);
+				WriteIRDumpPipelineSpanJson(Writer, Module, Parameter.Source);
+				Writer.EndObject();
+			}
+			Writer.EndArray();
+
+			Writer.Key(TEXT("buffers"));
+			Writer.BeginArray();
+			for (const FIRPassBuffer& Buffer : Pipeline.Buffers)
+			{
+				Writer.BeginObject();
+				Writer.KeyString(TEXT("name"), Buffer.Name);
+				Writer.KeyString(TEXT("format"), Buffer.Format);
+				Writer.KeyString(TEXT("resolution"), Buffer.Resolution);
+				Writer.KeyBool(TEXT("resolutionWritten"), Buffer.bResolutionWritten);
+				Writer.KeyNumber(TEXT("scale"), Buffer.Scale);
+				Writer.KeyInt(TEXT("width"), Buffer.FixedWidth);
+				Writer.KeyInt(TEXT("height"), Buffer.FixedHeight);
+				Writer.KeyBool(TEXT("clear"), Buffer.bClear);
+				WriteIRDumpNumbersJson(Writer, TEXT("clearValue"), Buffer.ClearValue, 4);
+				Writer.KeyInt(TEXT("mips"), Buffer.Mips);
+				Writer.KeyBool(TEXT("history"), Buffer.bHistory);
+				Writer.KeyBool(TEXT("export"), Buffer.bExport);
+				Writer.KeyString(TEXT("description"), Buffer.Description);
+				WriteIRDumpPipelineSpanJson(Writer, Module, Buffer.Source);
+				Writer.EndObject();
+			}
+			Writer.EndArray();
+
+			Writer.Key(TEXT("passes"));
+			Writer.BeginArray();
+			for (const FIRPass& Pass : Pipeline.Passes)
+			{
+				Writer.BeginObject();
+				Writer.KeyString(TEXT("name"), Pass.Name);
+				Writer.KeyString(TEXT("kind"), Pass.Kind);
+				Writer.KeyString(TEXT("injection"), Pass.Injection);
+				Writer.KeyBool(TEXT("injectionWritten"), Pass.bInjectionWritten);
+				Writer.KeyString(TEXT("enabled"), Pass.EnabledParameter);
+				Writer.KeyString(TEXT("description"), Pass.Description);
+				Writer.KeyString(TEXT("material"), Pass.MaterialReference);
+				Writer.KeyString(TEXT("materialObject"), Pass.MaterialObjectPath);
+				Writer.KeyString(TEXT("shader"), Pass.ShaderReference);
+				Writer.KeyString(TEXT("shaderVirtualPath"), Pass.ShaderVirtualPath);
+				Writer.KeyString(TEXT("entry"), Pass.Entry);
+				if (Pass.Kind.Equals(TEXT("compute"), ESearchCase::CaseSensitive))
+				{
+					Writer.Key(TEXT("threads"));
+					Writer.BeginArray();
+					Writer.ValueInt(Pass.ThreadsX);
+					Writer.ValueInt(Pass.ThreadsY);
+					Writer.ValueInt(Pass.ThreadsZ);
+					Writer.EndArray();
+					Writer.KeyBool(TEXT("threadsWritten"), Pass.bThreadsWritten);
+					Writer.KeyString(TEXT("dispatchMode"), Pass.DispatchMode);
+					Writer.KeyString(TEXT("dispatchBuffer"), Pass.DispatchBuffer);
+					Writer.KeyNumber(TEXT("dispatchScale"), Pass.DispatchScale);
+					Writer.Key(TEXT("dispatchSize"));
+					Writer.BeginArray();
+					Writer.ValueInt(Pass.DispatchX);
+					Writer.ValueInt(Pass.DispatchY);
+					Writer.ValueInt(Pass.DispatchZ);
+					Writer.EndArray();
+				}
+				if (Pass.Kind.Equals(TEXT("mesh"), ESearchCase::CaseSensitive))
+				{
+					Writer.Key(TEXT("filter"));
+					Writer.BeginArray();
+					for (const FIRPassFilterClause& Clause : Pass.Filter)
+					{
+						Writer.BeginArray();
+						for (const FIRPassFilterTerm& Term : Clause.AllOf)
+						{
+							Writer.BeginObject();
+							Writer.KeyString(TEXT("kind"), Term.Kind);
+							if (Term.Kind.Equals(TEXT("Stencil"), ESearchCase::CaseSensitive))
+							{
+								Writer.KeyInt(TEXT("value"), Term.StencilValue);
+								Writer.KeyInt(TEXT("mask"), Term.StencilMask);
+							}
+							else if (Term.Kind.Equals(TEXT("Layer"), ESearchCase::CaseSensitive))
+							{
+								Writer.KeyStringArray(TEXT("layers"), Term.Layers);
+							}
+							else
+							{
+								Writer.KeyString(TEXT("list"), Term.List);
+							}
+							Writer.EndObject();
+						}
+						Writer.EndArray();
+					}
+					Writer.EndArray();
+					Writer.KeyString(TEXT("mode"), Pass.MeshMode);
+					Writer.KeyString(TEXT("depth"), Pass.Depth);
+					Writer.KeyString(TEXT("depthBuffer"), Pass.DepthBuffer);
+					Writer.KeyString(TEXT("cull"), Pass.Cull);
+					Writer.KeyString(TEXT("blend"), Pass.Blend);
+					Writer.KeyStringArray(TEXT("usage"), Pass.Usage);
+					Writer.KeyString(TEXT("nanite"), Pass.Nanite);
+					Writer.KeyInt(TEXT("assignedStencil"), Pass.AssignedStencilValue);
+					WriteIRDumpNumbersJson(Writer, TEXT("naniteValue"), Pass.NaniteValue, 4);
+				}
+				if (Pass.Kind.Equals(TEXT("clear"), ESearchCase::CaseSensitive))
+				{
+					WriteIRDumpNumbersJson(Writer, TEXT("value"), Pass.ClearValue, 4);
+				}
+				WriteIRDumpPipelineBindingsJson(Writer, Module, TEXT("reads"), Pass.Reads);
+				WriteIRDumpPipelineBindingsJson(Writer, Module, TEXT("writes"), Pass.Writes);
+
+				Writer.Key(TEXT("params"));
+				Writer.BeginArray();
+				for (const FIRPassParam& Param : Pass.Params)
+				{
+					Writer.BeginObject();
+					Writer.KeyString(TEXT("target"), Param.Target);
+					Writer.KeyString(TEXT("source"), Param.SourceKind);
+					Writer.KeyString(TEXT("parameter"), Param.Parameter);
+					if (Param.SourceKind.Equals(TEXT("Constant"), ESearchCase::CaseSensitive))
+					{
+						Writer.KeyString(TEXT("constant"), Param.Constant.ToString());
+						Writer.KeyString(TEXT("constantType"), Param.ConstantType);
+					}
+					else
+					{
+						Writer.KeyNumber(TEXT("multiplier"), Param.Multiplier);
+						Writer.KeyNumber(TEXT("offset"), Param.Offset);
+					}
+					WriteIRDumpPipelineSpanJson(Writer, Module, Param.Source);
+					Writer.EndObject();
+				}
+				Writer.EndArray();
+
+				WriteIRDumpPipelineSpanJson(Writer, Module, Pass.Source);
+				Writer.EndObject();
+			}
+			Writer.EndArray();
+
+			Writer.EndObject();
+		}
+
 		static FString RenderIndexList(const TArray<int32>& Indices)
 		{
 			FString Result;
@@ -638,6 +1063,11 @@ namespace UE::DreamShader::IR
 				Private::AppendIRDumpInstanceLines(Product, ProductIndex, Lines);
 				continue;
 			}
+			if (Product.Kind == EIRProductKind::PassPipeline)
+			{
+				Private::AppendIRDumpPipelineLines(Product, ProductIndex, Lines);
+				continue;
+			}
 
 			FString Header = FString::Printf(
 				TEXT("product %d %s \"%s\" backend=%s"),
@@ -803,6 +1233,10 @@ namespace UE::DreamShader::IR
 			if (Product.Kind == EIRProductKind::MaterialInstance)
 			{
 				Private::WriteIRDumpInstanceJson(Writer, Module, Product.Instance);
+			}
+			if (Product.Kind == EIRProductKind::PassPipeline)
+			{
+				Private::WriteIRDumpPipelineJson(Writer, Module, Product.PassPipeline);
 			}
 
 			if (Product.Settings.Num() > 0)

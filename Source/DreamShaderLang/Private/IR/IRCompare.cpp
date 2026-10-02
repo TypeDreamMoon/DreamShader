@@ -7,6 +7,7 @@
 #include "Hash/CityHash.h"
 #include "IR/IRCatalog.h"
 #include "IR/IRCoreOps.h"
+#include "Lang/LangPipelineSource.h"
 
 namespace UE::DreamShader::IR
 {
@@ -726,6 +727,17 @@ namespace UE::DreamShader::IR
 			if (A.Kind == EIRProductKind::MaterialInstance)
 			{
 				return CompareInstances(A.Instance, B.Instance, OutDifference);
+			}
+			if (A.Kind == EIRProductKind::PassPipeline)
+			{
+				// No graph: the payloads, compared the way the `.dsp` round trip compares them.
+				TArray<FString> Differences;
+				if (!Lang::CompareDreamShaderPipelines(A.PassPipeline, B.PassPipeline, &Differences))
+				{
+					OutDifference = Differences.Num() > 0 ? Differences[0] : FString(TEXT("the pipelines differ"));
+					return false;
+				}
+				return true;
 			}
 
 			FGraphView ViewA(A.Graph, Options);

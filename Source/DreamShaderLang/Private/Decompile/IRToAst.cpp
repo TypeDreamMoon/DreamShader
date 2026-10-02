@@ -34,7 +34,7 @@ namespace UE::DreamShader::Lang::DecompileAst
 
 	static bool IsGraphProduct(const FIRProduct& Product)
 	{
-		return Product.Kind != IR::EIRProductKind::MaterialInstance;
+		return Product.Kind != IR::EIRProductKind::MaterialInstance && Product.Kind != IR::EIRProductKind::PassPipeline;
 	}
 
 	static FString FindTextProperty(const FIRNode& Node, const TCHAR* Name)
@@ -1888,6 +1888,11 @@ namespace UE::DreamShader::Lang::DecompileAst
 			case IR::EIRProductKind::MaterialInstance:
 				Error(TEXT("DSH9078"), FText::Format(
 					LOCTEXT("InstanceProduct", "'{0}' is a material instance, which is written as a '.dsi' (PrintDreamShaderInstance), not as part of a '.dss'."),
+					FText::FromString(Product.Name)));
+				break;
+			case IR::EIRProductKind::PassPipeline:
+				Error(TEXT("DSH9078"), FText::Format(
+					LOCTEXT("PipelineProduct", "'{0}' is a Custom Pass pipeline, which is written as a '.dsp' (PrintDreamShaderPipeline), not as part of a '.dss'."),
 					FText::FromString(Product.Name)));
 				break;
 			}

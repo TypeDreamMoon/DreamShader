@@ -1617,6 +1617,20 @@ namespace UE::DreamShader::IR
 					LOCTEXT("InstanceBesideProducts", "This module holds a material instance and {0} other product(s), and a material instance is the only product of its file."),
 					Private::TextFromInt(Module.Products.Num() - 1)));
 		}
+		// And a `.dsp` one pipeline.
+		else if (Module.CountProducts(EIRProductKind::PassPipeline) > 0 && Module.Products.Num() > 1)
+		{
+			const FIRProduct* FirstPipeline = Module.Products.FindByPredicate([](const FIRProduct& Candidate)
+			{
+				return Candidate.Kind == EIRProductKind::PassPipeline;
+			});
+			Context.bValid &= Diagnostics.Error(
+				TEXT("DSH4334"),
+				FirstPipeline ? FirstPipeline->Source.Span : Lang::FLangSpan(),
+				FText::Format(
+					LOCTEXT("PipelineBesideProducts", "This module holds a Custom Pass pipeline and {0} other product(s), and a pipeline is the only product of its file."),
+					Private::TextFromInt(Module.Products.Num() - 1)));
+		}
 
 		for (int32 ProductIndex = 0; ProductIndex < Module.Products.Num(); ++ProductIndex)
 		{
@@ -1655,6 +1669,12 @@ namespace UE::DreamShader::IR
 				// An instance has no graph to structure, walk, order or key; ValidateProductStructure would
 				// judge its empty graph as a function's.
 				Private::ValidateInstanceProduct(Context, Product, ProductIndex);
+				continue;
+			}
+			if (Product.Kind == EIRProductKind::PassPipeline)
+			{
+				// Nor has a pipeline. Its payload is the binder's to check (V1-V13), and the asset class's own
+				// UDreamPassPipeline::Validate holds the runtime to the same rules.
 				continue;
 			}
 

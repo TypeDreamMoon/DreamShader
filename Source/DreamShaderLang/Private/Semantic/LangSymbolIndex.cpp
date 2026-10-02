@@ -15,6 +15,7 @@
 
 #include "IR/IRTypes.h"
 #include "Lang/LangAst.h"
+#include "Lang/LangPipelineSource.h"
 #include "Lang/LangPrinter.h"
 #include "Lang/LangSource.h"
 #include "Semantic/LangBound.h"
@@ -476,6 +477,182 @@ namespace UE::DreamShader::Lang::Private
 			Out += TEXT("  }\n");
 		}
 
+		/** `[ "a", "b" ]` on one line. */
+		void AppendSymbolIndexStringArray(FString& Out, const TArray<FString>& Values)
+		{
+			Out += TEXT("[");
+			for (int32 Index = 0; Index < Values.Num(); ++Index)
+			{
+				Out += Index > 0 ? TEXT(", ") : TEXT(" ");
+				AppendJsonString(Out, Values[Index]);
+			}
+			Out += Values.Num() > 0 ? TEXT(" ]") : TEXT("]");
+		}
+
+		/** One `read` / `write` of a pass in the `pipeline` section. */
+		void AppendSymbolIndexPipelineBindings(FString& Out, const TCHAR* Key, const TArray<IR::FIRPassBinding>& Bindings, const FString& RootFile)
+		{
+			Out += FString::Printf(TEXT("          \"%s\": [\n"), Key);
+			for (int32 Index = 0; Index < Bindings.Num(); ++Index)
+			{
+				const IR::FIRPassBinding& Binding = Bindings[Index];
+				Out += TEXT("            {\n");
+				AppendField(Out, TEXT("              "), TEXT("slot"), Binding.Slot, true);
+				AppendField(Out, TEXT("              "), TEXT("buffer"), Binding.Buffer, true);
+				Out += FString::Printf(TEXT("              \"previous\": %s,\n"), Binding.bPrevious ? TEXT("true") : TEXT("false"));
+				AppendSpan(Out, TEXT("              "), RootFile, Binding.Source.Span);
+				Out += TEXT("\n            }");
+				Out += (Index + 1 < Bindings.Num()) ? TEXT(",\n") : TEXT("\n");
+			}
+			Out += TEXT("          ],\n");
+		}
+
+		/**
+		 * The `pipeline` section of a `.dsp`: the `#pragma pipeline` values as bound (defaults applied), the parameters,
+		 * the buffers and the passes with their bindings and spans, and the spellings an editor completes a key with.
+		 */
+		void AppendSymbolIndexPipelineSection(FString& Out, const FBoundModule& Bound, const FString& RootFile)
+		{
+			const FBoundPipeline& Pipeline = Bound.Pipeline;
+			const IR::FIRPassPipeline& Payload = Pipeline.Payload;
+
+			Out += TEXT("  \"pipeline\": {\n");
+			Out += FString::Printf(TEXT("    \"order\": %d,\n"), Payload.Order);
+			AppendField(Out, TEXT("    "), TEXT("injection"), Payload.DefaultInjection, true);
+			TArray<FString> Views = Payload.Views;
+			if (Views.Num() == 0)
+			{
+				Views = { TEXT("Game"), TEXT("Editor") };
+			}
+			Out += TEXT("    \"views\": ");
+			AppendSymbolIndexStringArray(Out, Views);
+			Out += TEXT(",\n    \"requires\": ");
+			AppendSymbolIndexStringArray(Out, Payload.Requires);
+			Out += TEXT(",\n");
+			AppendField(Out, TEXT("    "), TEXT("enabled"), Payload.EnabledParameter, true);
+			Out += TEXT("    \"pragmaSpan\": {\n");
+			AppendSpan(Out, TEXT("      "), RootFile, Pipeline.Pragma ? Pipeline.Pragma->Span : FLangSpan());
+			Out += TEXT("\n    },\n");
+
+			Out += TEXT("    \"uniforms\": [\n");
+			for (int32 Index = 0; Index < Payload.Parameters.Num(); ++Index)
+			{
+				const IR::FIRPassParameter& Parameter = Payload.Parameters[Index];
+				Out += TEXT("      {\n");
+				AppendField(Out, TEXT("        "), TEXT("name"), Parameter.Name, true);
+				AppendField(Out, TEXT("        "), TEXT("type"), Parameter.Type, true);
+				AppendField(Out, TEXT("        "), TEXT("default"), Parameter.Default.ToString(), true);
+				AppendField(Out, TEXT("        "), TEXT("group"), Parameter.Group, true);
+				AppendField(Out, TEXT("        "), TEXT("desc"), Parameter.Description, true);
+				AppendSpan(Out, TEXT("        "), RootFile, Parameter.Source.Span);
+				Out += TEXT("\n      }");
+				Out += (Index + 1 < Payload.Parameters.Num()) ? TEXT(",\n") : TEXT("\n");
+			}
+			Out += TEXT("    ],\n");
+
+			Out += TEXT("    \"buffers\": [\n");
+			for (int32 Index = 0; Index < Payload.Buffers.Num(); ++Index)
+			{
+				const IR::FIRPassBuffer& Buffer = Payload.Buffers[Index];
+				const FBufferDecl* Decl = Pipeline.BufferDecls.IsValidIndex(Index) ? Pipeline.BufferDecls[Index] : nullptr;
+				Out += TEXT("      {\n");
+				AppendField(Out, TEXT("        "), TEXT("name"), Buffer.Name, true);
+				AppendField(Out, TEXT("        "), TEXT("format"), Buffer.Format, true);
+				AppendField(Out, TEXT("        "), TEXT("resolution"), Buffer.Resolution, true);
+				Out += TEXT("        \"scale\": ") + FString::SanitizeFloat(Buffer.Scale) + TEXT(",\n");
+				Out += FString::Printf(TEXT("        \"size\": [%d, %d],\n"), Buffer.FixedWidth, Buffer.FixedHeight);
+				Out += FString::Printf(TEXT("        \"history\": %s,\n"), Buffer.bHistory ? TEXT("true") : TEXT("false"));
+				Out += FString::Printf(TEXT("        \"export\": %s,\n"), Buffer.bExport ? TEXT("true") : TEXT("false"));
+				AppendField(Out, TEXT("        "), TEXT("desc"), Buffer.Description, true);
+				AppendSpan(Out, TEXT("        "), RootFile, Decl ? Decl->NameSpan : Buffer.Source.Span);
+				Out += TEXT("\n      }");
+				Out += (Index + 1 < Payload.Buffers.Num()) ? TEXT(",\n") : TEXT("\n");
+			}
+			Out += TEXT("    ],\n");
+
+			Out += TEXT("    \"passes\": [\n");
+			for (int32 Index = 0; Index < Payload.Passes.Num(); ++Index)
+			{
+				const IR::FIRPass& Pass = Payload.Passes[Index];
+				const FPassDecl* Decl = Pipeline.PassDecls.IsValidIndex(Index) ? Pipeline.PassDecls[Index] : nullptr;
+				Out += TEXT("      {\n");
+				AppendField(Out, TEXT("        "), TEXT("name"), Pass.Name, true);
+				AppendField(Out, TEXT("        "), TEXT("kind"), Pass.Kind, true);
+				AppendField(Out, TEXT("        "), TEXT("injection"), Pass.Injection, true);
+				AppendField(Out, TEXT("        "), TEXT("enabled"), Pass.EnabledParameter, true);
+				AppendField(Out, TEXT("        "), TEXT("material"), Pass.MaterialReference, true);
+				AppendField(Out, TEXT("        "), TEXT("materialObject"), Pass.MaterialObjectPath, true);
+				AppendField(Out, TEXT("        "), TEXT("shader"), Pass.ShaderReference, true);
+				AppendField(Out, TEXT("        "), TEXT("entry"), Pass.Entry, true);
+				AppendField(Out, TEXT("        "), TEXT("desc"), Pass.Description, true);
+				Out += TEXT("        \"bindings\": {\n");
+				AppendSymbolIndexPipelineBindings(Out, TEXT("reads"), Pass.Reads, RootFile);
+				AppendSymbolIndexPipelineBindings(Out, TEXT("writes"), Pass.Writes, RootFile);
+				Out += TEXT("          \"params\": [\n");
+				for (int32 ParamIndex = 0; ParamIndex < Pass.Params.Num(); ++ParamIndex)
+				{
+					const IR::FIRPassParam& Param = Pass.Params[ParamIndex];
+					Out += TEXT("            {\n");
+					AppendField(Out, TEXT("              "), TEXT("target"), Param.Target, true);
+					AppendField(Out, TEXT("              "), TEXT("source"), Param.SourceKind, true);
+					AppendField(Out, TEXT("              "), TEXT("parameter"), Param.Parameter, true);
+					AppendSpan(Out, TEXT("              "), RootFile, Param.Source.Span);
+					Out += TEXT("\n            }");
+					Out += (ParamIndex + 1 < Pass.Params.Num()) ? TEXT(",\n") : TEXT("\n");
+				}
+				Out += TEXT("          ]\n");
+				Out += TEXT("        },\n");
+				AppendSpan(Out, TEXT("        "), RootFile, Decl ? Decl->NameSpan : Pass.Source.Span);
+				Out += TEXT("\n      }");
+				Out += (Index + 1 < Payload.Passes.Num()) ? TEXT(",\n") : TEXT("\n");
+			}
+			Out += TEXT("    ],\n");
+
+			// The spellings, for completion: what the binder accepts, in the runtime's order.
+			TArray<FString> Injections;
+			for (const TCHAR* Name : GetDreamShaderPassInjectionNames())
+			{
+				Injections.Add(Name);
+			}
+			TArray<FString> Formats;
+			for (const TCHAR* Name : GetDreamShaderPassFormatNames())
+			{
+				Formats.Add(Name);
+			}
+			Out += TEXT("    \"injectionPoints\": ");
+			AppendSymbolIndexStringArray(Out, Injections);
+			Out += TEXT(",\n    \"formats\": ");
+			AppendSymbolIndexStringArray(Out, Formats);
+			Out += TEXT("\n  }\n");
+		}
+
+		/** The names a pass statement mentions that this file may declare: buffers, parameters, constants. */
+		void CollectPassStatementReferences(const FPassStmt& Statement, const FString& File, TArray<FSymbolReferenceGroup>& Groups)
+		{
+			switch (Statement.StmtKind)
+			{
+			case EPassStmtKind::Read:
+			case EPassStmtKind::Write:
+				AddReference(Groups, Statement.Buffer, File, Statement.BufferSpan);
+				break;
+			case EPassStmtKind::Param:
+				CollectExprReferences(Statement.Value.Get(), File, Groups);
+				break;
+			case EPassStmtKind::Setting:
+				// The keys whose values name a declaration: a bool parameter, a buffer, an own depth buffer. The others
+				// are spellings of the language (an injection point, a mode, a filter's layers).
+				if (Statement.Name.Equals(TEXT("Enabled"), ESearchCase::CaseSensitive)
+					|| Statement.Name.Equals(TEXT("Dispatch"), ESearchCase::CaseSensitive)
+					|| Statement.Name.Equals(TEXT("Depth"), ESearchCase::CaseSensitive)
+					|| Statement.Name.Equals(TEXT("Threads"), ESearchCase::CaseSensitive)
+					|| Statement.Name.Equals(TEXT("Value"), ESearchCase::CaseSensitive)
+					|| Statement.Name.Equals(TEXT("NaniteValue"), ESearchCase::CaseSensitive))
+				{
+					CollectExprReferences(Statement.Value.Get(), File, Groups);
+				}
+				break;
+			}
+		}
 	}
 }
 
@@ -552,6 +729,28 @@ namespace UE::DreamShader::Lang
 						for (const FExprPtr& Dimension : Field.ArrayDimensions)
 						{
 							CollectExprReferences(Dimension.Get(), File, References);
+						}
+					}
+					break;
+				}
+
+				case ENodeKind::BufferDecl:
+				{
+					// A value may name a `static const`: `Scale = HalfRes`.
+					for (const FPipelineKeyValue& Argument : static_cast<const FBufferDecl*>(Decl)->Arguments)
+					{
+						CollectExprReferences(Argument.Value.Get(), File, References);
+					}
+					break;
+				}
+
+				case ENodeKind::PassDecl:
+				{
+					for (const TUniquePtr<FPassStmt>& Statement : static_cast<const FPassDecl*>(Decl)->Statements)
+					{
+						if (Statement)
+						{
+							CollectPassStatementReferences(*Statement, File, References);
 						}
 					}
 					break;
@@ -691,6 +890,44 @@ namespace UE::DreamShader::Lang
 			}
 		}
 
+		// A `.dsp`'s buffers and passes: declarations a name in a pass block goes to.
+		for (int32 Index = 0; Index < Bound.Pipeline.BufferDecls.Num(); ++Index)
+		{
+			const FBufferDecl* Decl = Bound.Pipeline.BufferDecls[Index];
+			if (!Decl || !Bound.Pipeline.Payload.Buffers.IsValidIndex(Index))
+			{
+				continue;
+			}
+			const IR::FIRPassBuffer& Buffer = Bound.Pipeline.Payload.Buffers[Index];
+
+			BeginDeclaration();
+			AppendField(Out, TEXT("      "), TEXT("kind"), TEXT("buffer"), true);
+			AppendField(Out, TEXT("      "), TEXT("name"), Buffer.Name, true);
+			AppendField(Out, TEXT("      "), TEXT("signature"), FString::Printf(TEXT("buffer %s : %s"), *Buffer.Name, *Buffer.Format), true);
+			AppendField(Out, TEXT("      "), TEXT("type"), Buffer.Format, true);
+			AppendField(Out, TEXT("      "), TEXT("doc"), Buffer.Description, true);
+			AppendSpan(Out, TEXT("      "), RootFile, Decl->NameSpan);
+			Out += TEXT("\n    }");
+		}
+		for (int32 Index = 0; Index < Bound.Pipeline.PassDecls.Num(); ++Index)
+		{
+			const FPassDecl* Decl = Bound.Pipeline.PassDecls[Index];
+			if (!Decl || !Bound.Pipeline.Payload.Passes.IsValidIndex(Index))
+			{
+				continue;
+			}
+			const IR::FIRPass& Pass = Bound.Pipeline.Payload.Passes[Index];
+
+			BeginDeclaration();
+			AppendField(Out, TEXT("      "), TEXT("kind"), TEXT("pass"), true);
+			AppendField(Out, TEXT("      "), TEXT("name"), Pass.Name, true);
+			AppendField(Out, TEXT("      "), TEXT("signature"), FString::Printf(TEXT("pass %s : %s"), *Pass.Name, *Pass.Kind), true);
+			AppendField(Out, TEXT("      "), TEXT("type"), Pass.Kind, true);
+			AppendField(Out, TEXT("      "), TEXT("doc"), Pass.Description, true);
+			AppendSpan(Out, TEXT("      "), RootFile, Decl->NameSpan);
+			Out += TEXT("\n    }");
+		}
+
 		Out += bFirstDeclaration ? TEXT("") : TEXT("\n");
 		Out += TEXT("  ],\n");
 
@@ -815,6 +1052,11 @@ namespace UE::DreamShader::Lang
 		{
 			Out += TEXT("  ],\n");
 			AppendSymbolIndexInstanceSection(Out, Bound, RootFile);
+		}
+		else if (Bound.Pipeline.bIsPipeline)
+		{
+			Out += TEXT("  ],\n");
+			AppendSymbolIndexPipelineSection(Out, Bound, RootFile);
 		}
 		else
 		{
