@@ -12,6 +12,10 @@
 //   Roundtrip        `.dsp` -> asset -> DecompileDreamPassPipelineToText -> bind: the same payload, no DSH9221-DSH9223
 //   RegistryPrecheck CheckDreamShaderPipelineSlots: a pass that compiles, one that does not (DSH8322 at its file and
 //                    line), a pipeline without HLSL passes (DSH8339); nothing written         [NonNullRHI]
+//   RegistryPrecheckInline
+//                    the same for HLSL in the `.dsp` (DreamShader_Plan/10): every form compiles, an error at its
+//                    `.dsp` line, one in the shared code said once for every pass, the view at BeginView (DSH8318)
+//                                                                                              [NonNullRHI]
 //   Registry         a compile that commits slots: the section text, slot stability across an edit, the slot freed,
 //                    the garbage of a deleted pipeline, an unreadable Registry.json           [NonNullRHI]
 //
@@ -1385,6 +1389,237 @@ bool FDreamShaderCompilerPipelineRegistryPrecheckTest::RunTest(const FString& Pa
 		TestTrue(FString::Printf(TEXT("a pipeline without HLSL passes says there was nothing to check (DSH8339) (%s)"), *Describe(Diagnostics)), HasCode(Diagnostics, TEXT("DSH8339"), Lang::ELangSeverity::Info));
 		TestEqual(TEXT("and checked none"), Checked, 0);
 	}
+	TestTrue(TEXT("a pre-check writes nothing: Registry.json is as it was"), ReadRegistryJson().Equals(RegistryBefore, ESearchCase::CaseSensitive));
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// InlinePrecheck: HLSL written in the `.dsp` (DreamShader_Plan/10) through CheckDreamShaderPipelineSlots, nothing written
+// ---------------------------------------------------------------------------------------------
+
+namespace UE::DreamShader::Editor::Private::CompilerPipelineTests
+{
+	/** The 1-based line of the first occurrence of Marker in Text; INDEX_NONE when it is not there. */
+	inline int32 InlineLineOf(const FString& Text, const TCHAR* Marker)
+	{
+		const int32 Offset = Text.Find(Marker, ESearchCase::CaseSensitive);
+		if (Offset == INDEX_NONE)
+		{
+			return INDEX_NONE;
+		}
+		int32 Line = 1;
+		for (int32 Index = 0; Index < Offset; ++Index)
+		{
+			Line += Text[Index] == TEXT('\n') ? 1 : 0;
+		}
+		return Line;
+	}
+
+	/** Every form at once: a file block with an include, a helper and one entry two passes share; a body form; whole functions. */
+	inline FString MakeInlineGlowPipeline()
+	{
+		return TEXT(
+			"uniform float Gain = 1.0;\n"
+			"\n"
+			"buffer Bright : RGBA16F(Scale = 0.5);\n"
+			"buffer BlurX : RGBA16F(Scale = 0.5);\n"
+			"buffer BlurXY : RGBA16F(Scale = 0.5);\n"
+			"\n"
+			"hlsl\n"
+			"{\n"
+			"    #include \"PL2InlineCommon.ush\"\n"
+			"\n"
+			"    [numthreads(8, 8, 1)]\n"
+			"    void BlurCS(uint3 Id : SV_DispatchThreadID)\n"
+			"    {\n"
+			"        if (any(Id.xy >= DP_DispatchSize.xy))\n"
+			"        {\n"
+			"            return;\n"
+			"        }\n"
+			"        float4 Sum = 0;\n"
+			"        for (int i = -2; i <= 2; ++i)\n"
+			"        {\n"
+			"            const int2 P = clamp(int2(Id.xy) + int2(Axis) * i, int2(0, 0), int2(SourceSize.xy) - 1);\n"
+			"            Sum += PL2Weight(i) * Source.Load(int3(P, 0));\n"
+			"        }\n"
+			"        Result[Id.xy] = Sum * Strength;\n"
+			"    }\n"
+			"}\n"
+			"\n"
+			"pass Extract : fullscreen\n"
+			"{\n"
+			"    Injection = BeforePostProcess;\n"
+			"    read InColor = SceneColor;\n"
+			"    write Out = Bright;\n"
+			"\n"
+			"    hlsl\n"
+			"    {\n"
+			"        Out = float4(max(DreamPassSample(InColor, UV).rgb - 1.0, 0.0), 1.0);\n"
+			"    }\n"
+			"}\n"
+			"\n"
+			"pass BlurH : compute\n"
+			"{\n"
+			"    Injection = BeforePostProcess;\n"
+			"    Entry = BlurCS;\n"
+			"    read Source = Bright;\n"
+			"    write Result = BlurX;\n"
+			"    param Axis = float2(1.0, 0.0);\n"
+			"    param Strength = Gain;\n"
+			"}\n"
+			"\n"
+			"pass BlurV : compute\n"
+			"{\n"
+			"    Injection = BeforePostProcess;\n"
+			"    Entry = BlurCS;\n"
+			"    read Source = BlurX;\n"
+			"    write Result = BlurXY;\n"
+			"    param Axis = float2(0.0, 1.0);\n"
+			"    param Strength = Gain;\n"
+			"}\n"
+			"\n"
+			"pass Composite : fullscreen\n"
+			"{\n"
+			"    Injection = BeforePostProcess;\n"
+			"    read InColor = SceneColor;\n"
+			"    read Glow = BlurXY;\n"
+			"    write Out = SceneColor;\n"
+			"\n"
+			"    hlsl\n"
+			"    {\n"
+			"        void Main(float4 SvPosition : SV_POSITION, out float4 Out : SV_Target0)\n"
+			"        {\n"
+			"            const float2 Pixel = SvPosition.xy - float2(DP_ViewRect.xy);\n"
+			"            const float2 UV = Pixel / float2(DP_ViewRect.zw - DP_ViewRect.xy);\n"
+			"            Out = float4(DreamPassSample(InColor, UV).rgb + DreamPassLoad(Glow, Pixel * 0.5).rgb, 1.0);\n"
+			"        }\n"
+			"    }\n"
+			"}\n");
+	}
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCompilerPipelineInlinePrecheckTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Pipeline.RegistryPrecheckInline",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter | EAutomationTestFlags::NonNullRHI)
+
+bool FDreamShaderCompilerPipelineInlinePrecheckTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::CompilerPipelineTests;
+	using UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2Fixture;
+
+	FDreamShaderCompile2Fixture Fixture(TEXT("Inline/CP_PL2Inline"), ScratchArea(), TEXT("dsp"));
+	AddExpectedError(Fixture.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
+
+	const FString Good = MakeInlineGlowPipeline();
+	const FString Broken = Good.Replace(TEXT("Out = float4(max(DreamPassSample(InColor, UV).rgb - 1.0, 0.0), 1.0);"), TEXT("Out = float4(PL2Nope, 1.0);"));
+	// A broken helper all four passes call: the engine drops code no entry reaches before the shader compiler reads a slot
+	// (r.Shaders.RemoveDeadCode), so one nobody calls compiles, in the .dsp as in a .usf.
+	const FString SharedBroken = Good
+		.Replace(TEXT("    #include \"PL2InlineCommon.ush\"\n"), TEXT("    #include \"PL2InlineCommon.ush\"\n    float PL2Bad(float X) { return X * PL2Missing; }\n"))
+		.Replace(TEXT(".rgb - 1.0, 0.0), 1.0);"), TEXT(".rgb - PL2Bad(1.0), 0.0), 1.0);"))
+		.Replace(TEXT("Result[Id.xy] = Sum * Strength;"), TEXT("Result[Id.xy] = Sum * Strength * PL2Bad(1.0);"))
+		.Replace(TEXT("DreamPassLoad(Glow, Pixel * 0.5).rgb, 1.0);"), TEXT("DreamPassLoad(Glow, Pixel * 0.5).rgb * PL2Bad(1.0), 1.0);"));
+	const FString Early = TEXT(
+		"buffer Mask : R8;\n"
+		"\n"
+		"hlsl\n"
+		"{\n"
+		"    float PL2Exposure()\n"
+		"    {\n"
+		"        return View.PreExposure;\n"
+		"    }\n"
+		"}\n"
+		"\n"
+		"pass Early : compute\n"
+		"{\n"
+		"    Injection = BeginView;\n"
+		"    write Result = Mask;\n"
+		"\n"
+		"    hlsl\n"
+		"    {\n"
+		"        Result[Id.xy] = PL2Exposure();\n"
+		"    }\n"
+		"}\n");
+
+	FString Written;
+	FString BrokenPath;
+	FString SharedPath;
+	FString EarlyPath;
+	if (!Fixture.WriteSource(*this, Good)
+		|| !Fixture.WriteSiblingSource(*this, TEXT("PL2InlineCommon.ush"), TEXT("float PL2Weight(int i)\n{\n    return exp(-float(i * i) * 0.5);\n}\n"), Written)
+		|| !Fixture.WriteSiblingSource(*this, TEXT("CP_PL2InlineBroken.dsp"), Broken, BrokenPath)
+		|| !Fixture.WriteSiblingSource(*this, TEXT("CP_PL2InlineShared.dsp"), SharedBroken, SharedPath)
+		|| !Fixture.WriteSiblingSource(*this, TEXT("CP_PL2InlineEarly.dsp"), Early, EarlyPath))
+	{
+		return false;
+	}
+	Compiler::FDreamShaderProductIndex::Get().Refresh();
+	const FString RegistryBefore = ReadRegistryJson();
+
+	// ---- every form compiles in its slot: the shared entry in two, the body form, the block's Main
+	{
+		Lang::FLangDiagnosticSink Diagnostics;
+		int32 Checked = 0;
+		const bool bOk = Compiler::CheckDreamShaderPipelineSlots(Fixture.GetSourceFilePath(), TArray<FName>(), Diagnostics, Checked);
+		if (HasCode(Diagnostics, TEXT("DSH8325")) || HasCode(Diagnostics, TEXT("DSH8323")))
+		{
+			AddWarning(FString::Printf(TEXT("No shader format or slot shader type to pre-check with here; the inline cases were skipped (%s)."), *Describe(Diagnostics)));
+			return true;
+		}
+		TestTrue(FString::Printf(TEXT("a pipeline whose HLSL is in its .dsp passes the pre-check (%s)"), *Describe(Diagnostics)), bOk);
+		TestEqual(TEXT("four HLSL passes checked"), Checked, 4);
+	}
+
+	// ---- an error in a pass's own block: at the line of the .dsp
+	{
+		Lang::FLangDiagnosticSink Diagnostics;
+		int32 Checked = 0;
+		TestFalse(TEXT("a pass whose block does not compile fails the pre-check"), Compiler::CheckDreamShaderPipelineSlots(BrokenPath, TArray<FName>(), Diagnostics, Checked));
+		const int32 Line = InlineLineOf(Broken, TEXT("PL2Nope"));
+		const bool bAtTheLine = Diagnostics.GetDiagnostics().ContainsByPredicate([Line](const Lang::FLangDiagnostic& Diagnostic)
+		{
+			return Diagnostic.Code.Equals(TEXT("DSH8322"), ESearchCase::CaseSensitive)
+				&& FPaths::GetCleanFilename(Diagnostic.FilePath).Equals(TEXT("CP_PL2InlineBroken.dsp"), ESearchCase::IgnoreCase)
+				&& Diagnostic.Span.Line == Line;
+		});
+		TestTrue(FString::Printf(TEXT("DSH8322 at CP_PL2InlineBroken.dsp:%d (%s)"), Line, *Describe(Diagnostics)), bAtTheLine);
+	}
+
+	// ---- an error in the shared code: said once, at its line, naming every pass it failed
+	{
+		Lang::FLangDiagnosticSink Diagnostics;
+		int32 Checked = 0;
+		TestFalse(TEXT("a file block that does not compile fails the pre-check"), Compiler::CheckDreamShaderPipelineSlots(SharedPath, TArray<FName>(), Diagnostics, Checked));
+		const int32 Line = InlineLineOf(SharedBroken, TEXT("PL2Missing"));
+		int32 AtTheLine = 0;
+		int32 NamingTheFour = 0;
+		for (const Lang::FLangDiagnostic& Diagnostic : Diagnostics.GetDiagnostics())
+		{
+			if (Diagnostic.Code.Equals(TEXT("DSH8322"), ESearchCase::CaseSensitive) && Diagnostic.Span.Line == Line
+				&& FPaths::GetCleanFilename(Diagnostic.FilePath).Equals(TEXT("CP_PL2InlineShared.dsp"), ESearchCase::IgnoreCase))
+			{
+				++AtTheLine;
+				const FString Message = Diagnostic.Message.ToString();
+				NamingTheFour += Message.Contains(TEXT("Extract")) && Message.Contains(TEXT("BlurH")) && Message.Contains(TEXT("BlurV")) && Message.Contains(TEXT("Composite")) ? 1 : 0;
+			}
+		}
+		// Once for the four passes, not once per pass. Once per wording, too: SM5 compiles with FXC and SM6 with DXC here,
+		// and the two say the same error differently.
+		TestTrue(FString::Printf(TEXT("DSH8322 at CP_PL2InlineShared.dsp:%d (%s)"), Line, *Describe(Diagnostics)), AtTheLine >= 1);
+		TestEqual(FString::Printf(TEXT("each naming the four passes it failed (%s)"), *Describe(Diagnostics)), NamingTheFour, AtTheLine);
+	}
+
+	// ---- BeginView: the view reached through a shared function is refused after the compile
+	{
+		Lang::FLangDiagnosticSink Diagnostics;
+		int32 Checked = 0;
+		TestFalse(TEXT("a BeginView pass that reads View through shared code fails the pre-check"), Compiler::CheckDreamShaderPipelineSlots(EarlyPath, TArray<FName>(), Diagnostics, Checked));
+		TestTrue(FString::Printf(TEXT("with DSH8318 (%s)"), *Describe(Diagnostics)), HasCode(Diagnostics, TEXT("DSH8318"), Lang::ELangSeverity::Error));
+	}
+
 	TestTrue(TEXT("a pre-check writes nothing: Registry.json is as it was"), ReadRegistryJson().Equals(RegistryBefore, ESearchCase::CaseSensitive));
 	return true;
 }

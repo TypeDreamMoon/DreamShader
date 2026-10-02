@@ -13,6 +13,9 @@
 //   Compare    CompareDreamShaderPipelines: float32 numbers, normalised descriptions, effective defaults
 //   Rewrite    Adopt's splice into an existing file (RewriteDreamShaderPipelineSource)
 //   PassNodes  UE.DreamPassOutput and UE.DreamPassBuffer in a `.dss`: DSH5300-DSH5303
+//   Inline     HLSL in the `.dsp` (DreamShader_Plan/10): the scanner and the slot roots (Inline.Text), the blocks in the
+//              parser, the preprocessor and `dsc fmt` (Inline.Parse), the payload (Inline.Bind), print, Compare and Adopt
+//              (Inline.RoundTrip); its rules are the Rules cases named Inline.*
 //
 // Every assertion about a diagnostic names its code, never its words. Core only, but for Bind's packing case, which
 // calls into DreamShaderPass. The Rules cases bind against references built here (MakeRuleReferences): the facts a
@@ -24,11 +27,14 @@
 
 #include "DreamPassPipeline.h"
 #include "DreamPassTypes.h"
+#include "DreamShaderDefineTable.h"
+#include "DreamShaderPreprocessor.h"
 #include "IR/IR.h"
 #include "IR/IRCatalog.h"
 #include "Lang/LangAst.h"
 #include "Lang/LangDiagnostic.h"
 #include "Lang/LangFormat.h"
+#include "Lang/LangHlslText.h"
 #include "Lang/LangInstanceSource.h"
 #include "Lang/LangParser.h"
 #include "Lang/LangPipelineSource.h"
@@ -106,9 +112,14 @@ namespace UE::DreamShader::Editor::Private::LangPipelineTests
 	inline int32 CountOccurrences(const FString& Text, const FString& Needle)
 	{
 		int32 Count = 0;
-		for (int32 From = Text.Find(Needle, ESearchCase::CaseSensitive); From != INDEX_NONE; From = Text.Find(Needle, ESearchCase::CaseSensitive, ESearchDir::FromStart, From + Needle.Len()))
+		int32 From = Needle.IsEmpty() ? INDEX_NONE : Text.Find(Needle, ESearchCase::CaseSensitive);
+		while (From != INDEX_NONE)
 		{
 			++Count;
+			// FString::Find clamps a start past the end back onto the last character, so a needle that ends the text
+			// would be found there again for ever: past the end, the search is over.
+			const int32 Next = From + Needle.Len();
+			From = Next < Text.Len() ? Text.Find(Needle, ESearchCase::CaseSensitive, ESearchDir::FromStart, Next) : INDEX_NONE;
 		}
 		return Count;
 	}
@@ -1164,13 +1175,175 @@ pass Draw : mesh
 		Table.Add(TEXT("Fullscreen.DSH7346.ShaderFourWrites"), TEXT("DSH7346"), Clean, Free, MakeManyBindingsSource(TEXT("fullscreen"), false, 1, 4));
 
 		// ------------------------------------------------------------------ V8: what a compute pass is (DSH7315, DSH7317, DSH7346)
-		Table.Add(TEXT("Compute.DSH7315.NoShader"), TEXT("DSH7315"), Raised, Free, TEXT("buffer Mask : R8;\n\npass Blur : compute\n{\n    Entry = BlurCS;\n    write Result = Mask;\n}\n"));
+		Table.Add(TEXT("Compute.DSH7315.NoCode"), TEXT("DSH7315"), Raised, Free, TEXT("buffer Mask : R8;\n\npass Blur : compute\n{\n    write Result = Mask;\n}\n"));
 		Table.Add(TEXT("Compute.DSH7315.NoEntry"), TEXT("DSH7315"), Raised, Free, TEXT("buffer Mask : R8;\n\npass Blur : compute\n{\n    Shader = \"Blur.usf\";\n    write Result = Mask;\n}\n"));
 		Table.Add(TEXT("Compute.DSH7317.WritesNothing"), TEXT("DSH7317"), Raised, Free, TEXT("buffer Mask : R8;\n\npass Blur : compute\n{\n    Shader = \"Blur.usf\";\n    Entry = BlurCS;\n    read Source = Mask;\n}\n"));
 		Table.Add(TEXT("Compute.DSH7346.NineReads"), TEXT("DSH7346"), Raised, Free, MakeManyBindingsSource(TEXT("compute"), false, 9, 1));
 		Table.Add(TEXT("Compute.DSH7346.EightReads"), TEXT("DSH7346"), Clean, Free, MakeManyBindingsSource(TEXT("compute"), false, 8, 1));
 		Table.Add(TEXT("Compute.DSH7346.FiveWrites"), TEXT("DSH7346"), Raised, Free, MakeManyBindingsSource(TEXT("compute"), false, 1, 5));
 		Table.Add(TEXT("Compute.DSH7346.FourWrites"), TEXT("DSH7346"), Clean, Free, MakeManyBindingsSource(TEXT("compute"), false, 1, 4));
+
+		// ------------------------------------------------------------------ inline HLSL (DreamShader_Plan/10): DSH7361-DSH7370, and
+		// DSH4410, DSH4411, DSH4413 and DSH7315 for code that is in the `.dsp`
+		{
+			const FString BodyForm = Dsp(TEXT(R"DSP(
+buffer Mask : R8;
+
+pass Fill : compute
+{
+    write Result = Mask;
+
+    hlsl
+    {
+        Result[Id.xy] = 1;
+    }
+}
+)DSP"));
+			Table.Add(TEXT("Inline.DSH7361.OneBlock"), TEXT("DSH7361"), Clean, Free, BodyForm);
+			Table.Add(TEXT("Inline.DSH7361.TwoBlocks"), TEXT("DSH7361"), Raised, Free, ReplaceOnce(BodyForm, TEXT("    }\n}\n"), TEXT("    }\n\n    hlsl\n    {\n        Result[Id.xy] = 0;\n    }\n}\n")));
+			Table.Add(TEXT("Inline.DSH7364.ShaderAndBlock"), TEXT("DSH7364"), Raised, Free, ReplaceOnce(BodyForm, TEXT("    write Result = Mask;\n"), TEXT("    Shader = \"Fill.usf\";\n    Entry = FillCS;\n    write Result = Mask;\n")));
+			Table.Add(TEXT("Inline.DSH7365.EntryWithBodyForm"), TEXT("DSH7365"), Raised, Free, ReplaceOnce(BodyForm, TEXT("    write Result = Mask;\n"), TEXT("    Entry = FillCS;\n    write Result = Mask;\n")));
+			Table.AddErrorOnLine(TEXT("Inline.DSH7366.IncludeInBodyForm"), TEXT("DSH7366"), Free,
+				ReplaceOnce(BodyForm, TEXT("        Result[Id.xy] = 1;\n"), TEXT("        #include \"Common.ush\"\n        Result[Id.xy] = 1;\n")), TEXT("#include \"Common.ush\""));
+			Table.Add(TEXT("Inline.DSH7370.BlockInClear"), TEXT("DSH7370"), Raised, Free, TEXT("buffer Mask : R8;\n\npass Fill : clear\n{\n    write Mask;\n\n    hlsl\n    {\n    }\n}\n"));
+			Table.Add(TEXT("Inline.DSH7315.NoCode"), TEXT("DSH7315"), Raised, Free, ReplaceOnce(BodyForm, TEXT("\n    hlsl\n    {\n        Result[Id.xy] = 1;\n    }\n"), TEXT("")));
+		}
+		{
+			const FString WholeFunctions = Dsp(TEXT(R"DSP(
+buffer Mask : R8;
+
+pass Fill : compute
+{
+    write Result = Mask;
+
+    hlsl
+    {
+        [numthreads(8, 8, 1)]
+        void FillCS(uint3 Id : SV_DispatchThreadID)
+        {
+            Result[Id.xy] = 1;
+        }
+    }
+}
+)DSP"));
+			Table.Add(TEXT("Inline.DSH4410.BlockWithoutMain"), TEXT("DSH4410"), Raised, Free, WholeFunctions);
+			Table.Add(TEXT("Inline.DSH4410.BlockEntryNamed"), TEXT("DSH4410"), Clean, Free, ReplaceOnce(WholeFunctions, TEXT("    write Result = Mask;\n"), TEXT("    Entry = FillCS;\n    write Result = Mask;\n")));
+			Table.Add(TEXT("Inline.DSH7365.EntryWithWholeFunctions"), TEXT("DSH7365"), Clean, Free, ReplaceOnce(WholeFunctions, TEXT("    write Result = Mask;\n"), TEXT("    Entry = FillCS;\n    write Result = Mask;\n")));
+			Table.Add(TEXT("Inline.DSH4410.MainByDefault"), TEXT("DSH4410"), Clean, Free, ReplaceOnce(WholeFunctions, TEXT("void FillCS("), TEXT("void Main(")));
+			Table.Add(TEXT("Inline.DSH4411.NumThreadsByMacro"), TEXT("DSH4411"), Raised, Free,
+				ReplaceOnce(ReplaceOnce(WholeFunctions, TEXT("[numthreads(8, 8, 1)]"), TEXT("#define GROUP 8\n        [numthreads(GROUP, GROUP, 1)]")), TEXT("void FillCS("), TEXT("void Main(")));
+			Table.Add(TEXT("Inline.DSH4411.NumThreadsByMacroWithThreads"), TEXT("DSH4411"), Clean, Free,
+				ReplaceOnce(ReplaceOnce(ReplaceOnce(WholeFunctions, TEXT("[numthreads(8, 8, 1)]"), TEXT("#define GROUP 8\n        [numthreads(GROUP, GROUP, 1)]")), TEXT("void FillCS("), TEXT("void Main(")),
+					TEXT("    write Result = Mask;\n"), TEXT("    Threads = uint3(8, 8, 1);\n    write Result = Mask;\n")));
+			Table.Add(TEXT("Inline.DSH4413.ThreadsDisagree"), TEXT("DSH4413"), Raised, Free,
+				ReplaceOnce(ReplaceOnce(WholeFunctions, TEXT("void FillCS("), TEXT("void Main(")), TEXT("    write Result = Mask;\n"), TEXT("    Threads = uint3(16, 16, 1);\n    write Result = Mask;\n")));
+			Table.Add(TEXT("Inline.DSH4413.ThreadsAgree"), TEXT("DSH4413"), Clean, Free,
+				ReplaceOnce(ReplaceOnce(WholeFunctions, TEXT("void FillCS("), TEXT("void Main(")), TEXT("    write Result = Mask;\n"), TEXT("    Threads = uint3(8, 8, 1);\n    write Result = Mask;\n")));
+		}
+		Table.Add(TEXT("Inline.DSH4410.ComputeEntryInFullscreen"), TEXT("DSH4410"), Raised, Free, Dsp(TEXT(R"DSP(
+pass Show : fullscreen
+{
+    write Out = SceneColor;
+
+    hlsl
+    {
+        [numthreads(8, 8, 1)]
+        void Main(uint3 Id : SV_DispatchThreadID)
+        {
+        }
+    }
+}
+)DSP")));
+		Table.Add(TEXT("Inline.DSH7370.BlockWithMaterial"), TEXT("DSH7370"), Raised, Free, Dsp(TEXT(R"DSP(
+pass Show : fullscreen
+{
+    Material = "PP_Show";
+    write SceneColor;
+
+    hlsl
+    {
+        Out = 1;
+    }
+}
+)DSP")));
+		{
+			const FString PixelBody = Dsp(TEXT(R"DSP(
+pass Show : fullscreen
+{
+    read Scene = SceneColor;
+    write Out = SceneColor;
+
+    hlsl
+    {
+        Out = DreamPassSample(Scene, UV);
+    }
+}
+)DSP"));
+			Table.Add(TEXT("Inline.DSH7367.OwnNames"), TEXT("DSH7367"), Clean, Free, PixelBody);
+			Table.Add(TEXT("Inline.DSH7367.BodyFormName"), TEXT("DSH7367"), Raised, Free, ReplaceOnce(PixelBody, TEXT("read Scene = SceneColor;"), TEXT("read UV = SceneColor;")));
+			Table.Add(TEXT("Inline.DSH7367.WholeFunctionsName"), TEXT("DSH7367"), Clean, Free, ReplaceOnce(ReplaceOnce(PixelBody, TEXT("read Scene = SceneColor;"), TEXT("read UV = SceneColor;")),
+				TEXT("        Out = DreamPassSample(Scene, UV);\n"),
+				TEXT("        void Main(float4 SvPosition : SV_POSITION, out float4 Out : SV_Target0)\n        {\n            Out = UV.Load(int3(SvPosition.xy, 0));\n        }\n")));
+		}
+		{
+			const FString Shared = Dsp(TEXT(R"DSP(
+uniform float Gain = 1.0;
+
+buffer Mask : R8;
+buffer Soft : R8;
+
+hlsl
+{
+    #include "Common.ush"
+
+    float Twice(float X)
+    {
+        return X * 2.0;
+    }
+
+    [numthreads(8, 8, 1)]
+    void FillCS(uint3 Id : SV_DispatchThreadID)
+    {
+        Result[Id.xy] = Twice(Strength);
+    }
+}
+
+pass Fill : compute
+{
+    Entry = FillCS;
+    write Result = Mask;
+    param Strength = Gain;
+}
+
+pass Again : compute
+{
+    write Result = Soft;
+
+    hlsl
+    {
+        Result[Id.xy] = Twice(0.5);
+    }
+}
+)DSP"));
+			Table.Add(TEXT("Inline.DSH4410.SharedEntry"), TEXT("DSH4410"), Clean, Free, Shared);
+			Table.Add(TEXT("Inline.DSH7366.IncludeInFileBlock"), TEXT("DSH7366"), Clean, Free, Shared);
+			Table.Add(TEXT("Inline.DSH7368.EntryUsesBinding"), TEXT("DSH7368"), Clean, Free, Shared);
+			Table.Add(TEXT("Inline.DSH7369.EntryCalledByNobody"), TEXT("DSH7369"), Clean, Free, Shared);
+			Table.Add(TEXT("Inline.DSH4410.SharedEntryMissing"), TEXT("DSH4410"), Raised, Free, ReplaceOnce(Shared, TEXT("Entry = FillCS;"), TEXT("Entry = OtherCS;")));
+			Table.Add(TEXT("Inline.DSH7362.TwoFileBlocks"), TEXT("DSH7362"), Raised, Free, ReplaceOnce(Shared, TEXT("pass Fill : compute"), TEXT("hlsl\n{\n}\n\npass Fill : compute")));
+			Table.AddErrorOnLine(TEXT("Inline.DSH7368.SharedCodeNamesBinding"), TEXT("DSH7368"), Free,
+				ReplaceOnce(Shared, TEXT("return X * 2.0;"), TEXT("return X * Strength;")), TEXT("return X * Strength;"));
+			Table.AddErrorOnLine(TEXT("Inline.DSH7368.SharedCodeNamesBlockEntry"), TEXT("DSH7368"), Free,
+				ReplaceOnce(ReplaceOnce(Shared, TEXT("return X * 2.0;"), TEXT("return X * Main;")),
+					TEXT("        Result[Id.xy] = Twice(0.5);\n"),
+					TEXT("        [numthreads(8, 8, 1)]\n        void Main(uint3 Id : SV_DispatchThreadID)\n        {\n            Result[Id.xy] = Twice(0.5);\n        }\n")),
+				TEXT("return X * Main;"));
+			Table.AddErrorOnLine(TEXT("Inline.DSH7369.PassBlockCallsEntry"), TEXT("DSH7369"), Free,
+				ReplaceOnce(Shared, TEXT("        Result[Id.xy] = Twice(0.5);\n"), TEXT("        FillCS(Id);\n")), TEXT("FillCS(Id);"));
+			Table.AddErrorOnLine(TEXT("Inline.DSH7369.HelperCallsEntry"), TEXT("DSH7369"), Free,
+				ReplaceOnce(Shared, TEXT("        return X * 2.0;\n"), TEXT("        FillCS(uint3(0, 0, 0));\n        return X * 2.0;\n")), TEXT("FillCS(uint3(0, 0, 0));"));
+			Table.Add(TEXT("Inline.DSH4410.SharedEntryWithoutBlock"), TEXT("DSH4410"), Raised, Free, TEXT("buffer Mask : R8;\n\npass Blur : compute\n{\n    Entry = BlurCS;\n    write Result = Mask;\n}\n"));
+		}
 
 		// ------------------------------------------------------------------ V7: what a mesh pass is (DSH7315, DSH7317)
 		Table.Add(TEXT("MeshShape.DSH7315.NoFilter"), TEXT("DSH7315"), Raised, Free, MeshWith(TEXT("")));
@@ -3064,6 +3237,634 @@ bool FDreamShaderLangPipelinePassNodesTest::RunTest(const FString& Parameters)
 		FSourceBind Run;
 		BindSource(Run, TEXT("M_PL2OldTranslator.dss"), TEXT("#pragma material(bEnableNewHLSLGenerator = false)\n\n") + OneOutput, GetPassNodeCatalog());
 		TestFalse(FString::Printf(TEXT("with the setting off there is no DSH5301 (%s)"), *Run.Describe()), Run.Has(TEXT("DSH5301")));
+	}
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Inline HLSL (DreamShader_Plan/10): the text scanner, the generated slot roots, the blocks in the front end, the payload,
+// and the way back to text
+// ---------------------------------------------------------------------------------------------
+
+namespace UE::DreamShader::Editor::Private::LangPipelineTests
+{
+	/**
+	 * The doc's glow pipeline (DreamShader_Plan/10, 2.2), smaller: a file block with a helper and one entry two passes
+	 * share, a fullscreen pass in the body form, and a compute pass with whole functions of its own.
+	 */
+	inline FString MakeInlineGlowSource()
+	{
+		return Dsp(TEXT(R"DSP(
+#pragma pipeline(Order = 400)
+
+/// @slider 1 8
+uniform float Sigma = 4.0;
+
+static const float2 AlongX = float2(1, 0);
+static const float2 AlongY = float2(0, 1);
+
+buffer Bright : RGBA16F(Scale = 0.5);
+buffer BlurX : RGBA16F(Scale = 0.5);
+buffer BlurXY : RGBA16F(Scale = 0.5);
+buffer Tiles : R16F(Scale = 0.0625);
+
+hlsl
+{
+    // Shared: compiled into every inline pass.
+    float GaussianWeight(int Offset, float Spread)
+    {
+        return exp(-float(Offset * Offset) / (2.0 * Spread * Spread));
+    }
+
+    [numthreads(8, 8, 1)]
+    void BlurCS(uint3 Id : SV_DispatchThreadID)
+    {
+        if (any(Id.xy >= DP_DispatchSize.xy))
+        {
+            return;
+        }
+        float4 Sum = 0;
+        for (int i = -4; i <= 4; ++i)
+        {
+            Sum += GaussianWeight(i, SigmaTexels) * Source.Load(int3(int2(Id.xy) + int2(Axis) * i, 0));
+        }
+        Result[Id.xy] = Sum;
+    }
+}
+
+pass Extract : fullscreen
+{
+    read InColor = SceneColor;
+    write Out = Bright;
+
+    hlsl
+    {
+        const float3 C = DreamPassSample(InColor, UV).rgb;
+        Out = float4(max(C - 1.0, 0.0), 1.0);
+    }
+}
+
+pass BlurH : compute
+{
+    Entry = BlurCS;
+    read Source = Bright;
+    write Result = BlurX;
+    param SigmaTexels = Sigma;
+    param Axis = AlongX;
+}
+
+pass BlurV : compute
+{
+    Entry = BlurCS;
+    read Source = BlurX;
+    write Result = BlurXY;
+    param SigmaTexels = Sigma;
+    param Axis = AlongY;
+}
+
+pass TileLuma : compute
+{
+    Dispatch = Tiles * 16;
+    read InColor = BlurXY;
+    write Result = Tiles;
+
+    hlsl
+    {
+        groupshared float Partial[256];
+
+        [numthreads(16, 16, 1)]
+        void Main(uint3 Id : SV_DispatchThreadID, uint3 Group : SV_GroupID, uint Index : SV_GroupIndex)
+        {
+            Partial[Index] = InColor.Load(int3(Id.xy, 0)).r;
+            GroupMemoryBarrierWithGroupSync();
+            if (Index == 0)
+            {
+                Result[Group.xy] = Partial[0];
+            }
+        }
+    }
+}
+)DSP"));
+	}
+
+	/** The text between the braces of the first `hlsl` block after Marker in Text: what RawBody captures. */
+	inline FString InlineBlockTextAfter(const FString& Text, const TCHAR* Marker)
+	{
+		const int32 At = Text.Find(Marker, ESearchCase::CaseSensitive);
+		const int32 Word = At == INDEX_NONE ? INDEX_NONE : Text.Find(TEXT("hlsl"), ESearchCase::CaseSensitive, ESearchDir::FromStart, At);
+		const int32 Open = Word == INDEX_NONE ? INDEX_NONE : Text.Find(TEXT("{"), ESearchCase::CaseSensitive, ESearchDir::FromStart, Word);
+		if (Open == INDEX_NONE)
+		{
+			return FString();
+		}
+		int32 Depth = 0;
+		for (int32 Index = Open; Index < Text.Len(); ++Index)
+		{
+			Depth += Text[Index] == TEXT('{') ? 1 : (Text[Index] == TEXT('}') ? -1 : 0);
+			if (Depth == 0)
+			{
+				return Text.Mid(Open + 1, Index - Open - 1);
+			}
+		}
+		return FString();
+	}
+
+	/** The 1-based line of the root that holds Marker; INDEX_NONE when none does. */
+	inline int32 FindRootLineOf(const UE::DreamShader::Lang::FHlslInlineRoot& Root, const TCHAR* Marker)
+	{
+		return FindLineOf(Root.Text, Marker);
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderLangPipelineInlineTextTest,
+	"DreamShader.Lang2.Pipeline.Inline.Text",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderLangPipelineInlineTextTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Lang;
+	using namespace UE::DreamShader::Editor::Private::LangPipelineTests;
+
+	// ---- which form a block is (DreamShader_Plan/10 3.3): only its top level counts
+	struct FFormCase
+	{
+		const TCHAR* What;
+		const TCHAR* Text;
+		bool bDeclarations;
+	};
+	const FFormCase FormCases[] =
+	{
+		{ TEXT("a for loop"), TEXT("for (int i = 0; i < 4; ++i)\n{\n    Sum += i;\n}\n"), false },
+		{ TEXT("an if"), TEXT("if (Id.x > 4)\n{\n    return;\n}\n"), false },
+		{ TEXT("an attribute that is not numthreads"), TEXT("[unroll] for (int i = 0; i < 4; ++i) { Sum += i; }\n"), false },
+		{ TEXT("a call in a statement"), TEXT("float3 C = Foo(UV);\nOut = float4(C, 1);\n"), false },
+		{ TEXT("a switch and a do"), TEXT("switch (Mode) { case 0: break; }\ndo { --N; } while (N > 0);\n"), false },
+		{ TEXT("a block of its own"), TEXT("{\n    float A = 1;\n}\n"), false },
+		{ TEXT("a function in a comment"), TEXT("// float Fake() { return 1; }\n/* void Fake2() { } */\nOut = 1;\n"), false },
+		{ TEXT("an include"), TEXT("#include \"/Engine/Private/Common.ush\"\nOut = 1;\n"), false },
+		{ TEXT("a function and a stray statement"), TEXT("float Twice(float X)\n{\n    return X * 2;\n}\nOut = 1;\n"), true },
+		{ TEXT("groupshared"), TEXT("groupshared float Partial[64];\n"), true },
+		{ TEXT("a struct"), TEXT("struct FPair { float A; float B; };\n"), true },
+		{ TEXT("numthreads with macros"), TEXT("[numthreads(GROUP, GROUP, 1)]\nvoid Main(uint3 Id : SV_DispatchThreadID) { }\n"), true },
+	};
+	for (const FFormCase& Case : FormCases)
+	{
+		const FHlslTextScan Scan = ScanHlslText(Case.Text);
+		TestEqual(FString::Printf(TEXT("%s: %s"), Case.What, Case.bDeclarations ? TEXT("whole functions") : TEXT("statements")), Scan.bHasDeclarations, Case.bDeclarations);
+		TestTrue(FString::Printf(TEXT("%s: the braces balance"), Case.What), Scan.bBalanced);
+	}
+
+	// ---- the functions: names, attributes, group sizes, where each starts and ends; both sides of an #if
+	{
+		const FString Text = Lines({
+			TEXT("// helpers"),
+			TEXT("float W(int i) { return exp(-float(i * i)); }"),
+			TEXT(""),
+			TEXT("[numthreads(8, 4, 2)]"),
+			TEXT("void BlurCS(uint3 Id : SV_DispatchThreadID)"),
+			TEXT("{"),
+			TEXT("    if (Id.x > 0) { Out[Id.xy] = W(1); }"),
+			TEXT("}"),
+			TEXT("float4 ShowPS(float4 P : SV_POSITION) : SV_Target0"),
+			TEXT("{"),
+			TEXT("    return 0;"),
+			TEXT("}"),
+			TEXT("#if FEATURE"),
+			TEXT("void Gated() { }"),
+			TEXT("#endif"),
+		});
+		const FHlslTextScan Scan = ScanHlslText(Text);
+		if (TestEqual(TEXT("four functions"), Scan.Functions.Num(), 4))
+		{
+			ExpectString(*this, TEXT("the helper"), Scan.Functions[0].Name, TEXT("W"));
+			TestFalse(TEXT("which is no compute entry"), Scan.Functions[0].bComputeEntry);
+			const FHlslTopLevelFunction& Blur = Scan.Functions[1];
+			ExpectString(*this, TEXT("the compute entry"), Blur.Name, TEXT("BlurCS"));
+			TestTrue(TEXT("with its group size"), Blur.bComputeEntry && Blur.GroupSize == FIntVector(8, 4, 2));
+			TestEqual(TEXT("starting at its attribute"), Blur.DeclarationStart, Text.Find(TEXT("[numthreads")));
+			TestEqual(TEXT("and ending past its closing brace"), Blur.End, Text.Find(TEXT("}\nfloat4 ShowPS")) + 1);
+			ExpectString(*this, TEXT("a semantic after the parameters"), Scan.Functions[2].Name, TEXT("ShowPS"));
+			ExpectString(*this, TEXT("a function under an #if"), Scan.Functions[3].Name, TEXT("Gated"));
+		}
+		TestTrue(TEXT("FindFunction is case-sensitive"), Scan.FindFunction(TEXT("blurcs")) == nullptr && Scan.FindFunction(TEXT("BlurCS")) != nullptr);
+	}
+
+	// ---- includes with their lines; identifiers outside comments and strings, numbers skipped whole
+	{
+		const FHlslTextScan Scan = ScanHlslText(Lines({ TEXT("Out = 1;"), TEXT("  #  include \"A.ush\""), TEXT("// #include \"B.ush\"") }));
+		TestTrue(TEXT("the include on line 2, and not the one in a comment"), Scan.IncludeLines.Num() == 1 && Scan.IncludeLines[0] == 2);
+
+		TArray<FHlslIdentifier> Identifiers;
+		FindHlslIdentifiers(TEXT("a.b + Foo (1) /* c */ \"d\" 2.0f 0x1F // e"), Identifiers);
+		TArray<FString> Names;
+		for (const FHlslIdentifier& Identifier : Identifiers)
+		{
+			Names.Add(Identifier.Name);
+		}
+		ExpectString(*this, TEXT("the identifiers"), FString::Join(Names, TEXT(",")), TEXT("a,b,Foo"));
+		TestTrue(TEXT("Foo is followed by a parenthesis, a is not"), Identifiers.Num() == 3 && Identifiers[2].bFollowedByParenthesis && !Identifiers[0].bFollowedByParenthesis);
+		TestEqual(TEXT("the line of an offset"), GetHlslLineOfOffset(TEXT("a\nb\nc"), 4), 3);
+	}
+
+	// ---- the roots the slots compile (DreamShader_Plan/10 s4)
+	FPipelineBind Run;
+	const FString Source = MakeInlineGlowSource();
+	BindPipeline(Run, Source, TEXT("Glow.dsp"));
+	if (!TestTrue(FString::Printf(TEXT("the glow pipeline binds (%s)"), *Run.Describe()), Run.HasBound() && !Run.HasErrors()))
+	{
+		return true;
+	}
+	const IR::FIRPassPipeline& Payload = Run.Payload();
+	const auto RootOf = [this, &Payload](const TCHAR* PassName, FHlslInlineRoot& OutRoot) -> bool
+	{
+		const int32 Index = Payload.Passes.IndexOfByPredicate([PassName](const IR::FIRPass& Pass) { return Pass.Name.Equals(PassName, ESearchCase::CaseSensitive); });
+		FString Error;
+		return TestTrue(FString::Printf(TEXT("the root of %s is built (%s)"), PassName, *Error), Index != INDEX_NONE && BuildDreamPassInlineHlslRoot(Payload, Index, OutRoot, Error));
+	};
+
+	// An entry of the file's block: the shared code in place, the entry moved after it, every other entry blanked.
+	{
+		FHlslInlineRoot Root;
+		if (RootOf(TEXT("BlurH"), Root))
+		{
+			const int32 HelperLine = FindRootLineOf(Root, TEXT("float GaussianWeight("));
+			const int32 EntryLine = FindRootLineOf(Root, TEXT("void BlurCS("));
+			TestTrue(TEXT("the helper comes before the entry"), HelperLine != INDEX_NONE && EntryLine != INDEX_NONE && HelperLine < EntryLine);
+			TestEqual(TEXT("the entry once: blanked where it was, written after the shared code"), CountOccurrences(Root.Text, TEXT("void BlurCS(")), 1);
+			int32 SourceLine = 0;
+			bool bShared = false;
+			TestTrue(TEXT("a line of the helper maps back to the .dsp"), Root.MapLine(HelperLine, SourceLine, bShared));
+			TestEqual(TEXT("to the helper's line"), SourceLine, FindLineOf(Source, TEXT("float GaussianWeight(")));
+			TestTrue(TEXT("as shared code"), bShared);
+			TestTrue(TEXT("a line of the entry maps back too"), Root.MapLine(EntryLine, SourceLine, bShared));
+			TestEqual(TEXT("to the entry's line"), SourceLine, FindLineOf(Source, TEXT("void BlurCS(")));
+			TestFalse(TEXT("as the pass's own code"), bShared);
+			TestFalse(TEXT("the comment line of the generated header maps nowhere"), Root.MapLine(1, SourceLine, bShared));
+			TestFalse(TEXT("no View guard away from BeginView"), Root.Text.Contains(TEXT("DP_NoViewAtBeginView")));
+		}
+	}
+	// The pass's own block of whole functions: the shared code with every entry blanked, then the block as it is.
+	{
+		FHlslInlineRoot Root;
+		if (RootOf(TEXT("TileLuma"), Root))
+		{
+			TestFalse(TEXT("the shared entry is not in another pass's root"), Root.Text.Contains(TEXT("BlurCS")));
+			TestTrue(TEXT("the helper is"), Root.Text.Contains(TEXT("float GaussianWeight(")));
+			TestTrue(TEXT("and so is the pass's block, as written"), Root.Text.Contains(InlineBlockTextAfter(Source, TEXT("pass TileLuma"))));
+			// The file's block keeps its lines where the entry was: the root line that maps to the entry's is there, and blank.
+			const int32 EntryLine = FindLineOf(Source, TEXT("void BlurCS("));
+			TArray<FString> RootLines;
+			Root.Text.ParseIntoArray(RootLines, TEXT("\n"), /* bCullEmpty */ false);
+			int32 RootLine = INDEX_NONE;
+			for (int32 Line = 1; Line <= RootLines.Num() && RootLine == INDEX_NONE; ++Line)
+			{
+				int32 SourceLine = 0;
+				bool bShared = false;
+				if (Root.MapLine(Line, SourceLine, bShared) && SourceLine == EntryLine && bShared)
+				{
+					RootLine = Line;
+				}
+			}
+			TestTrue(TEXT("the blanked entry's line is still in the root"), RootLine != INDEX_NONE);
+			TestTrue(TEXT("and holds nothing but blanks"), RootLines.IsValidIndex(RootLine - 1) && RootLines[RootLine - 1].TrimStartAndEnd().IsEmpty());
+			TestTrue(TEXT("the pass's own entry follows"), Root.Text.Contains(TEXT("[numthreads(16, 16, 1)]")));
+		}
+	}
+	// The body form: the generated signature, the statements mapped back, the outputs named after the writes.
+	{
+		FHlslInlineRoot Root;
+		if (RootOf(TEXT("Extract"), Root))
+		{
+			TestTrue(TEXT("the pixel signature"), Root.Text.Contains(TEXT("void DreamPassMainPS(float4 SvPosition : SV_POSITION, out float4 Out : SV_Target0)")));
+			TestTrue(TEXT("Pixel and UV"), Root.Text.Contains(TEXT("const float2 Pixel = SvPosition.xy - float2(DP_ViewRect.xy);")) && Root.Text.Contains(TEXT("const float2 UV = Pixel / float2(DP_ViewRect.zw - DP_ViewRect.xy);")));
+			TestTrue(TEXT("the output cleared first"), Root.Text.Contains(TEXT("\tOut = 0;\n")));
+			const int32 Statement = FindRootLineOf(Root, TEXT("Out = float4(max("));
+			int32 SourceLine = 0;
+			bool bShared = false;
+			TestTrue(TEXT("a statement maps back"), Root.MapLine(Statement, SourceLine, bShared) && SourceLine == FindLineOf(Source, TEXT("Out = float4(max(")) && !bShared);
+			TestFalse(TEXT("the signature maps nowhere"), Root.MapLine(FindRootLineOf(Root, TEXT("void DreamPassMainPS(")), SourceLine, bShared));
+		}
+	}
+	// A compute body form at BeginView: its group size from Threads, and the View guard around its own code only.
+	{
+		FPipelineBind Early;
+		const FString EarlySource = Dsp(TEXT(R"DSP(
+buffer Mask : R8;
+
+hlsl
+{
+    float Helper(float X)
+    {
+        return X * View.PreExposure;
+    }
+}
+
+pass Early : compute
+{
+    Injection = BeginView;
+    Threads = uint3(4, 4, 1);
+    write Result = Mask;
+
+    hlsl
+    {
+        Result[Id.xy] = 1;
+    }
+}
+)DSP"));
+		BindPipeline(Early, EarlySource, TEXT("Early.dsp"));
+		FHlslInlineRoot Root;
+		FString Error;
+		if (TestTrue(FString::Printf(TEXT("the BeginView pass binds and its root is built (%s)"), *Early.Describe()), Early.HasBound() && !Early.HasErrors() && BuildDreamPassInlineHlslRoot(Early.Payload(), 0, Root, Error)))
+		{
+			TestTrue(TEXT("the compute signature, with the pass's group size"), Root.Text.Contains(TEXT("[numthreads(4, 4, 1)]\nvoid DreamPassMainCS(uint3 Id : SV_DispatchThreadID, uint3 GroupId : SV_GroupID, uint3 LocalId : SV_GroupThreadID, uint LocalIndex : SV_GroupIndex)")));
+			TestTrue(TEXT("threads past the dispatch return first"), Root.Text.Contains(TEXT("if (any(Id >= DP_DispatchSize.xyz))")));
+			const int32 Helper = FindRootLineOf(Root, TEXT("View.PreExposure"));
+			const int32 Guard = FindRootLineOf(Root, TEXT("#define View DP_NoViewAtBeginView"));
+			const int32 Statement = FindRootLineOf(Root, TEXT("Result[Id.xy] = 1;"));
+			const int32 Unguard = FindRootLineOf(Root, TEXT("#undef View"));
+			TestTrue(TEXT("the guard after the shared code, around the pass's own"), Helper != INDEX_NONE && Helper < Guard && Guard < Statement && Statement < Unguard);
+		}
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderLangPipelineInlineParseTest,
+	"DreamShader.Lang2.Pipeline.Inline.Parse",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderLangPipelineInlineParseTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Lang;
+	using namespace UE::DreamShader::Editor::Private::LangPipelineTests;
+
+	// ---- the two places a block goes, captured verbatim: comments, `#` lines and braces in strings and comments included
+	const FString Text = Lines({
+		TEXT("hlsl"),
+		TEXT("{"),
+		TEXT("    #define HALF 0.5 // a } in a comment"),
+		TEXT("    float Half(float X) { return X * HALF; }"),
+		TEXT("}"),
+		TEXT(""),
+		TEXT("buffer Mask : R8;"),
+		TEXT(""),
+		TEXT("pass Fill : compute"),
+		TEXT("{"),
+		TEXT("    write Result = Mask; // trailing"),
+		TEXT("    hlsl {"),
+		TEXT("#if 1"),
+		TEXT("        Result[Id.xy] = Half(1); /* } */"),
+		TEXT("#endif"),
+		TEXT("    }"),
+		TEXT("}"),
+	});
+	{
+		FLangParseOptions Options;
+		Options.bKeepTrivia = true;
+		const FLangParseResult Parsed = ParseDreamShaderLang(FLangSourceText(TEXT("Blocks.dsp"), Text), Options);
+		if (TestTrue(FString::Printf(TEXT("the blocks parse (%s)"), *DescribeDiagnostics(Parsed.Diagnostics)), Parsed.Succeeded()))
+		{
+			const FModule& Module = *Parsed.Module;
+			TestEqual(TEXT("a block, a buffer, a pass"), Module.Declarations.Num(), 3);
+			const FHlslBlockDecl* Block = Module.Declarations.IsValidIndex(0) ? Module.Declarations[0]->As<FHlslBlockDecl>() : nullptr;
+			if (TestNotNull(TEXT("the file's block"), Block))
+			{
+				ExpectString(*this, TEXT("its text"), Block->RawBody, TEXT("\n    #define HALF 0.5 // a } in a comment\n    float Half(float X) { return X * HALF; }\n"));
+				TestEqual(TEXT("its `{` line"), Block->BodySpan.Line, 2);
+				TestEqual(TEXT("the word's line"), Block->KeywordSpan.Line, 1);
+			}
+			const FPassDecl* Pass = Module.Declarations.IsValidIndex(2) ? Module.Declarations[2]->As<FPassDecl>() : nullptr;
+			if (TestNotNull(TEXT("the pass"), Pass) && TestEqual(TEXT("a write and a block"), Pass->Statements.Num(), 2))
+			{
+				const FPassStmt& Statement = *Pass->Statements[1];
+				TestTrue(TEXT("the pass's block"), Statement.StmtKind == EPassStmtKind::Hlsl);
+				ExpectString(*this, TEXT("its text, the `#` lines in it"), Statement.RawBody, TEXT("\n#if 1\n        Result[Id.xy] = Half(1); /* } */\n#endif\n    "));
+				TestEqual(TEXT("its `{` is on the word's line"), Statement.BodySpan.Line, 12);
+				// A comment in a block is HLSL's, not trivia: only the one after the write is the pass's.
+				const FLangTrivia* WriteTrivia = Module.Trivia.Find(Pass->Statements[0].Get());
+				TestTrue(TEXT("the write keeps its trailing comment"), WriteTrivia && WriteTrivia->Trailing.IsSet());
+				const FLangTrivia* BlockTrivia = Module.Trivia.Find(&Statement);
+				TestTrue(TEXT("the block takes no comment of its own text"), !BlockTrivia || (BlockTrivia->Leading.Num() == 0 && !BlockTrivia->Trailing.IsSet()));
+			}
+			TestFalse(TEXT("no DSH2312 for a `#` line in a block"), HasCode(Parsed.Diagnostics, TEXT("DSH2312")));
+		}
+	}
+
+	// ---- the parse errors: no `{` after the word (DSH2313), a block that never closes (DSH2150); a name elsewhere
+	{
+		const FLangParseResult NoBrace = ParseDreamShaderLang(FLangSourceText(TEXT("NoBrace.dsp"), TEXT("buffer Mask : R8;\npass Fill : compute\n{\n    write Result = Mask;\n    hlsl;\n}\n")), FLangParseOptions());
+		TestTrue(FString::Printf(TEXT("`hlsl;` in a pass is DSH2313 (%s)"), *DescribeDiagnostics(NoBrace.Diagnostics)), HasCode(NoBrace.Diagnostics, TEXT("DSH2313"), ELangSeverity::Error));
+		const FLangParseResult FileNoBrace = ParseDreamShaderLang(FLangSourceText(TEXT("FileNoBrace.dsp"), TEXT("hlsl float X;\n")), FLangParseOptions());
+		TestTrue(FString::Printf(TEXT("`hlsl` at file scope without a block is DSH2313 (%s)"), *DescribeDiagnostics(FileNoBrace.Diagnostics)), HasCode(FileNoBrace.Diagnostics, TEXT("DSH2313"), ELangSeverity::Error));
+		const FLangParseResult Unclosed = ParseDreamShaderLang(FLangSourceText(TEXT("Unclosed.dsp"), TEXT("hlsl\n{\n    float Half(float X) { return X * 0.5;\n")), FLangParseOptions());
+		TestTrue(FString::Printf(TEXT("a block that never closes is DSH2150 (%s)"), *DescribeDiagnostics(Unclosed.Diagnostics)), HasCode(Unclosed.Diagnostics, TEXT("DSH2150"), ELangSeverity::Error));
+		const FLangParseResult Dss = ParseDreamShaderLang(FLangSourceText(TEXT("M_Words.dss"), TEXT("static const float hlsl = 1.0;\n")), FLangParseOptions());
+		TestTrue(FString::Printf(TEXT("in a .dss `hlsl` is a name (%s)"), *DescribeDiagnostics(Dss.Diagnostics)), Dss.Succeeded());
+	}
+
+	// ---- the preprocessor (Pipeline dialect): the `#` lines of a block are the shader compiler's, either opener
+	{
+		UE::DreamShader::FDreamShaderDefineTable Defines;
+		const FString Conditional = Lines({
+			TEXT("#if 0"),
+			TEXT("buffer Gone : R8;"),
+			TEXT("#endif"),
+			TEXT("hlsl"),
+			TEXT("{"),
+			TEXT("#if 0"),
+			TEXT("    float Kept() { return 1; }"),
+			TEXT("#endif"),
+			TEXT("}"),
+			TEXT("pass Fill : compute"),
+			TEXT("{"),
+			TEXT("    hlsl {"),
+			TEXT("#define TWO 2"),
+			TEXT("        Result[Id.xy] = TWO;"),
+			TEXT("    }"),
+			TEXT("}"),
+		});
+		UE::DreamShader::FDreamShaderPreprocessResult Result;
+		UE::DreamShader::FDreamShaderTextError Error;
+		if (TestTrue(FString::Printf(TEXT("the .dsp preprocesses (%s)"), *Error.Message.ToString()),
+			UE::DreamShader::PreprocessDreamShaderSource(Conditional, TEXT("Conditional.dsp"), Defines, Result, Error, UE::DreamShader::EDreamShaderPreprocessDialect::Pipeline)))
+		{
+			TestFalse(TEXT("an #if outside a block is the preprocessor's"), Result.Text.Contains(TEXT("buffer Gone")));
+			TestTrue(TEXT("one inside a block is left as written"), Result.Text.Contains(TEXT("#if 0\n    float Kept() { return 1; }\n#endif")));
+			TestTrue(TEXT("and so is a #define after `hlsl {`"), Result.Text.Contains(TEXT("#define TWO 2")));
+			TestTrue(TEXT("the lines are kept"), CountOccurrences(Result.Text, TEXT("\n")) == CountOccurrences(Conditional, TEXT("\n")));
+		}
+	}
+
+	// ---- `dsc fmt`: the layout around a block is the printer's, the block's text is the author's
+	{
+		const FString Messy = Lines({
+			TEXT("buffer   Mask:R8;"),
+			TEXT("pass Fill:compute{"),
+			TEXT("  write Result=Mask;"),
+			TEXT("  hlsl {"),
+			TEXT("      Result[Id.xy]   =   1;   // as written"),
+			TEXT("  }"),
+			TEXT("}"),
+		});
+		const FString Expected = Lines({
+			TEXT("buffer Mask : R8;"),
+			TEXT(""),
+			TEXT("pass Fill : compute"),
+			TEXT("{"),
+			TEXT("    write Result = Mask;"),
+			TEXT("    hlsl"),
+			TEXT("    {"),
+			TEXT("      Result[Id.xy]   =   1;   // as written"),
+			TEXT("  }"),
+			TEXT("}"),
+		});
+		FString Formatted;
+		FLangDiagnosticSink Diagnostics;
+		const ELangFormatOutcome Outcome = FormatDreamShaderLangSource(FLangSourceText(TEXT("Format.dsp"), Messy), FLangFormatOptions(), Formatted, Diagnostics);
+		ExpectString(*this, TEXT("a .dsp with a block formats"), LexToString(Outcome), LexToString(ELangFormatOutcome::Changed));
+		ExpectText(*this, TEXT("its block as it was"), Formatted, Expected);
+
+		FString Again;
+		FLangDiagnosticSink AgainDiagnostics;
+		ExpectString(*this, TEXT("and formats to itself"), LexToString(FormatDreamShaderLangSource(FLangSourceText(TEXT("Format.dsp"), Expected), FLangFormatOptions(), Again, AgainDiagnostics)), LexToString(ELangFormatOutcome::Unchanged));
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderLangPipelineInlineBindTest,
+	"DreamShader.Lang2.Pipeline.Inline.Bind",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderLangPipelineInlineBindTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Lang;
+	using namespace UE::DreamShader::Editor::Private::LangPipelineTests;
+
+	FPipelineBind Run;
+	const FString Source = MakeInlineGlowSource();
+	BindPipeline(Run, Source, TEXT("Glow.dsp"));
+	if (!TestTrue(FString::Printf(TEXT("the glow pipeline binds (%s)"), *Run.Describe()), Run.HasBound() && !Run.HasErrors()))
+	{
+		return true;
+	}
+	const IR::FIRPassPipeline& Payload = Run.Payload();
+
+	TestTrue(TEXT("the file's block"), Payload.bHasSharedHlsl);
+	ExpectString(*this, TEXT("as written"), Payload.SharedHlsl, InlineBlockTextAfter(Source, TEXT("buffer Tiles")));
+	TestEqual(TEXT("from the line of its `{`"), Payload.SharedHlslLine, FindLineOf(Source, TEXT("hlsl\n{")) + 1);
+
+	if (const IR::FIRPass* Extract = FindPayloadPass(Payload, TEXT("Extract")))
+	{
+		ExpectString(*this, TEXT("a block of statements is the body form"), Extract->HlslSource, IR::PassHlslSource::Body);
+		TestTrue(TEXT("whose entry is the compiler's"), Extract->Entry.IsEmpty());
+		ExpectString(*this, TEXT("its text"), Extract->InlineHlsl, InlineBlockTextAfter(Source, TEXT("pass Extract")));
+		TestEqual(TEXT("its line, the line of its `{`"), Extract->InlineHlslLine, FindLineOf(Source, TEXT("pass Extract")) + 6);
+		TestTrue(TEXT("a pass written inline runs HLSL"), Extract->ShaderReference.IsEmpty() && Extract->MaterialReference.IsEmpty());
+	}
+	for (const TCHAR* Name : { TEXT("BlurH"), TEXT("BlurV") })
+	{
+		if (const IR::FIRPass* Blur = FindPayloadPass(Payload, Name))
+		{
+			ExpectString(*this, FString::Printf(TEXT("%s: `Entry` alone picks from the file's block"), Name), Blur->HlslSource, IR::PassHlslSource::Shared);
+			ExpectString(*this, FString::Printf(TEXT("%s: the entry"), Name), Blur->Entry, TEXT("BlurCS"));
+			TestTrue(FString::Printf(TEXT("%s: its group size from the entry's [numthreads]"), Name), Blur->ThreadsX == 8 && Blur->ThreadsY == 8 && Blur->ThreadsZ == 1 && !Blur->bThreadsWritten);
+			TestTrue(FString::Printf(TEXT("%s: no text of its own"), Name), Blur->InlineHlsl.IsEmpty());
+		}
+	}
+	if (const IR::FIRPass* Tile = FindPayloadPass(Payload, TEXT("TileLuma")))
+	{
+		ExpectString(*this, TEXT("whole functions are the block form"), Tile->HlslSource, IR::PassHlslSource::Block);
+		ExpectString(*this, TEXT("whose entry is Main unless it says"), Tile->Entry, TEXT("Main"));
+		TestTrue(TEXT("its group size from its own [numthreads]"), Tile->ThreadsX == 16 && Tile->ThreadsY == 16 && Tile->ThreadsZ == 1);
+	}
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderLangPipelineInlineRoundTripTest,
+	"DreamShader.Lang2.Pipeline.Inline.RoundTrip",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderLangPipelineInlineRoundTripTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Lang;
+	using namespace UE::DreamShader::Editor::Private::LangPipelineTests;
+
+	FPipelineBind Run;
+	const FString Source = MakeInlineGlowSource();
+	BindPipeline(Run, Source, TEXT("Glow.dsp"));
+	if (!TestTrue(FString::Printf(TEXT("the glow pipeline binds (%s)"), *Run.Describe()), Run.HasBound() && !Run.HasErrors()))
+	{
+		return true;
+	}
+	const IR::FIRPassPipeline& Payload = Run.Payload();
+
+	// ---- payload -> text -> payload: the blocks back where they were, as they were
+	{
+		const FString Printed = PrintDreamShaderPipeline(Payload, TEXT("Glow.dsp"));
+		TestTrue(TEXT("the file's block, verbatim"), Printed.Contains(TEXT("hlsl\n{") + Payload.SharedHlsl + TEXT("}")));
+		TestTrue(TEXT("a pass's block, verbatim"), Printed.Contains(InlineBlockTextAfter(Source, TEXT("pass TileLuma"))));
+		TestFalse(TEXT("`Entry = Main;` is the default and left out"), Printed.Contains(TEXT("Entry = Main;")));
+		TestTrue(TEXT("a shared entry is named"), Printed.Contains(TEXT("Entry = BlurCS;")));
+		TestFalse(TEXT("Threads come from the [numthreads] in the text"), Printed.Contains(TEXT("Threads =")));
+
+		FPipelineBind Again;
+		BindPipeline(Again, Printed, TEXT("Glow.dsp"));
+		if (TestTrue(FString::Printf(TEXT("the printed pipeline binds (%s)"), *Again.Describe()), Again.HasBound() && !Again.HasErrors()))
+		{
+			ExpectSamePipeline(*this, TEXT("and is the same pipeline"), Payload, Again.Payload());
+		}
+	}
+
+	// ---- the comparison sees the text of a block
+	{
+		IR::FIRPassPipeline Changed = Payload;
+		Changed.Passes[0].InlineHlsl += TEXT("// one more line\n");
+		TestFalse(TEXT("another text in a pass's block is another pipeline"), CompareDreamShaderPipelines(Payload, Changed));
+		IR::FIRPassPipeline Crlf = Payload;
+		Crlf.SharedHlsl.ReplaceInline(TEXT("\n"), TEXT("\r\n"));
+		TestTrue(TEXT("other line terminators are the same text"), CompareDreamShaderPipelines(Payload, Crlf));
+	}
+
+	// ---- Adopt: a changed block is spliced between its braces, and nothing else moves
+	{
+		IR::FIRPassPipeline Desired = Payload;
+		const int32 Extract = Desired.Passes.IndexOfByPredicate([](const IR::FIRPass& Pass) { return Pass.Name.Equals(TEXT("Extract"), ESearchCase::CaseSensitive); });
+		if (TestTrue(TEXT("the Extract pass"), Extract != INDEX_NONE))
+		{
+			const FString OldBody = Desired.Passes[Extract].InlineHlsl;
+			const FString NewBody = OldBody.Replace(TEXT("C - 1.0"), TEXT("C - 2.0"));
+			Desired.Passes[Extract].InlineHlsl = NewBody;
+			Desired.SharedHlsl.ReplaceInline(TEXT("(2.0 * Spread * Spread)"), TEXT("(3.0 * Spread * Spread)"));
+
+			TArray<FLangSourceEdit> Edits;
+			FString Rewritten;
+			FLangDiagnosticSink Diagnostics;
+			if (TestTrue(FString::Printf(TEXT("the rewrite succeeds (%s)"), *DescribeDiagnostics(Diagnostics)),
+				RewriteDreamShaderPipelineSource(FLangSourceText(TEXT("Glow.dsp"), Source), *Run.Parse.Module, Run.Module(), Desired, Edits, Rewritten, Diagnostics)))
+			{
+				TestEqual(TEXT("two edits: the two blocks"), Edits.Num(), 2);
+				const FString Expected = Source.Replace(TEXT("C - 1.0"), TEXT("C - 2.0")).Replace(TEXT("(2.0 * Spread * Spread)"), TEXT("(3.0 * Spread * Spread)"));
+				ExpectText(*this, TEXT("the rewritten file"), Rewritten, Expected);
+			}
+		}
+	}
+
+	// ---- Adopt: a block that goes, and one that comes
+	{
+		IR::FIRPassPipeline Desired = Payload;
+		Desired.bHasSharedHlsl = false;
+		Desired.SharedHlsl.Reset();
+		TArray<FLangSourceEdit> Edits;
+		FString Rewritten;
+		FLangDiagnosticSink Diagnostics;
+		if (RewriteDreamShaderPipelineSource(FLangSourceText(TEXT("Glow.dsp"), Source), *Run.Parse.Module, Run.Module(), Desired, Edits, Rewritten, Diagnostics))
+		{
+			TestFalse(TEXT("the file's block is gone"), Rewritten.Contains(TEXT("float GaussianWeight(")));
+			TestTrue(TEXT("the passes are still there"), Rewritten.Contains(TEXT("pass TileLuma : compute")));
+		}
 	}
 	return true;
 }
