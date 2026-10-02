@@ -96,6 +96,11 @@ namespace UE::DreamShader::Editor::Compiler
 	/**
 	 * Compiles the shaders of every UMaterial the run produced and reports the result.
 	 *
+	 * A `.dsp` produces no material: its HLSL passes are pre-checked in their global shader slots instead
+	 * (CheckDreamShaderPipelineSlots, DreamShaderPassPipelines.h) -- every pass, changed or not, for the
+	 * -Platform formats, or for the formats a compile pre-checks when none is given. Its materials are
+	 * checked by the sources that build them.
+	 *
 	 * Compiled must come from a pipeline run with bEmitAssets true. Returns false when any shader
 	 * error was reported or the wait timed out; the diagnostics say which.
 	 *

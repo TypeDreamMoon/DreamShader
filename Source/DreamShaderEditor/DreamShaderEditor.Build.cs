@@ -30,6 +30,10 @@ public class DreamShaderEditor : ModuleRules
 				"DreamShader",
 				"DreamShaderCompiler",
 				"DreamShaderLang",
+				// UDreamPassPipeline and its types: `dsc pass-registry` and the commandlet's `.dsp` verbs read the asset. The
+				// asset classes build on every engine; DREAMSHADER_WITH_CUSTOM_PASS (a public definition of that module) says
+				// whether the renderer half exists.
+				"DreamShaderPass",
 				"Engine",
 				"InputCore",
 				"Json",

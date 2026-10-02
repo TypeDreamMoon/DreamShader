@@ -238,7 +238,7 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 
 		/**
-		 * True when the path is a compilable source (`.dss`, `.dsi`, `.dsm`, `.dsf`); raises DSH9035 into the sink otherwise.
+		 * True when the path is a compilable source (`.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`); raises DSH9035 into the sink otherwise.
 		 *
 		 * NOT DSH9021: that code is already live and documented in
 		 * SourceFiles/DreamShaderAssetRenameSyncService.cpp ("Could not write ... after renaming an
@@ -254,7 +254,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 			const FLangSpan NoSpan;
 			return Diagnostics.Error(TEXT("DSH9035"), NoSpan, FText::Format(
-				LOCTEXT("NotALang2SourceForVerb", "'{0}' is not a compilable DreamShader source (.dss, .dsi, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it."),
+				LOCTEXT("NotALang2SourceForVerb", "'{0}' is not a compilable DreamShader source (.dss, .dsi, .dsp, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it."),
 				FText::FromString(SourceFilePath),
 				VerbName));
 		}
@@ -273,7 +273,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 			// Every extension IsDreamShaderLang2Source accepts; a header is compiled only through a source that includes it.
 			TArray<FString> Found;
-			for (const TCHAR* const Pattern : { TEXT("*.dss"), TEXT("*.dsi"), TEXT("*.dsm"), TEXT("*.dsf") })
+			for (const TCHAR* const Pattern : { TEXT("*.dss"), TEXT("*.dsi"), TEXT("*.dsp"), TEXT("*.dsm"), TEXT("*.dsf") })
 			{
 				IFileManager::Get().FindFilesRecursive(
 					Found,
@@ -378,13 +378,15 @@ namespace UE::DreamShader::Editor::Compiler
 			"check runs the 2.0 pipeline to IR validation and writes no asset. -Shaders is the one\n"
 			"exception: a shader compile needs a real material and 2.0 has no transient asset, so\n"
 			"it builds and saves the products as compile does, then reports HLSL errors as\n"
-			"stage: shader.\n"
+			"stage: shader. On a .dsp, -Shaders pre-checks every HLSL pass in its slot for each\n"
+			"-Platform (default: the formats a compile pre-checks for), changed or not.\n"
 			"dump-ir, index and export-catalog are language-service and debugging tools.\n"
 			"dump-layout draws the 2.0 graph layout of each product as SVG, building nothing.\n"
-			"fmt rewrites 2.0 sources (.dss, .dsi, a .dsh without 1.x declarations) in the printer's layout; -All takes the\n"
+			"fmt rewrites 2.0 sources (.dss, .dsi, .dsp, a .dsh without 1.x declarations) in the printer's layout; -All takes the\n"
 			"writable source roots, -Check writes nothing and fails when a file would change.\n"
-			"list-generated names every asset the sources build, for a .gitignore or a P4 typemap; nothing is built.\n"
-			"check, dump-ir, dump-layout, index and list-generated take any compilable source: .dss, .dsi, .dsm or .dsf.");
+			"list-generated names every asset the sources build -- a .dsp's export render targets included -- for a\n"
+			".gitignore or a P4 typemap; nothing is built.\n"
+			"check, dump-ir, dump-layout, index and list-generated take any compilable source: .dss, .dsi, .dsp, .dsm or .dsf.");
 	}
 
 	// -------------------------------------------------------------------------------------- check
@@ -421,7 +423,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 		if (SourceFiles.IsEmpty())
 		{
-			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader check found no compilable source files (.dss, .dsi, .dsm, .dsf)."));
+			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader check found no compilable source files (.dss, .dsi, .dsp, .dsm, .dsf)."));
 			LogSummary(true, TEXT("DreamShader check: 0 source(s), 0 error(s), 0 warning(s)."));
 			return true;
 		}
@@ -857,7 +859,7 @@ namespace UE::DreamShader::Editor::Compiler
 				}
 
 				TArray<FString> Found;
-				for (const TCHAR* const Pattern : { TEXT("*.dss"), TEXT("*.dsi"), TEXT("*.dsh") })
+				for (const TCHAR* const Pattern : { TEXT("*.dss"), TEXT("*.dsi"), TEXT("*.dsp"), TEXT("*.dsh") })
 				{
 					IFileManager::Get().FindFilesRecursive(Found, *Root.Directory, Pattern, /*Files*/ true, /*Directories*/ false, /*bClearFileNames*/ false);
 				}
@@ -1114,6 +1116,29 @@ namespace UE::DreamShader::Editor::Compiler
 				if (!Record.bPersistent && !bIncludeEphemeral)
 				{
 					continue;
+				}
+
+				// A pipeline saves the render targets of its exported buffers beside it, in the same save.
+				for (const FString& TargetPath : Product.ExportTargetObjectPaths)
+				{
+					FGeneratedAssetRecord Target;
+					Target.SourceFile = SourceFile;
+					Target.Kind = TEXT("PassExportTarget");
+					Target.Backend = Record.Backend;
+					Target.PackageName = FPackageName::ObjectPathToPackageName(TargetPath);
+					Target.ObjectPath = TargetPath;
+					FString TargetFilename;
+					if (FPackageName::TryConvertLongPackageNameToFilename(Target.PackageName, TargetFilename, FPackageName::GetAssetPackageExtension()))
+					{
+						Target.FilePath = FPaths::ConvertRelativePathToFull(TargetFilename);
+						FPaths::NormalizeFilename(Target.FilePath);
+						Target.bOnDisk = IFileManager::Get().FileExists(*Target.FilePath);
+						if (Target.FilePath.StartsWith(ProjectDirectory, ESearchCase::IgnoreCase))
+						{
+							Target.ProjectRelativePath = Target.FilePath.RightChop(ProjectDirectory.Len());
+						}
+					}
+					Records.Add(MoveTemp(Target));
 				}
 				Records.Add(MoveTemp(Record));
 			}

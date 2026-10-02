@@ -3,6 +3,8 @@
 #include "Commandlet/DreamShaderCommandletRunner.h"
 // RunDreamShaderMigrateCommandlet: the `migrate` verb, owned by the decompiler unit.
 #include "Commandlet/DreamShaderMigrate.h"
+// RunDreamShaderPassRegistryCommandlet: the Custom Pass slot registry.
+#include "Commandlet/DreamShaderPassRegistryCommandlet.h"
 #include "DreamShaderModule.h"
 
 UDreamShaderCommandlet::UDreamShaderCommandlet()
@@ -108,6 +110,12 @@ int32 UDreamShaderCommandlet::Main(const FString& Params)
 	if (Command.Equals(TEXT("migrate"), ESearchCase::IgnoreCase))
 	{
 		return UE::DreamShader::Editor::Private::RunDreamShaderMigrateCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
+	}
+
+	if (Command.Equals(TEXT("pass-registry"), ESearchCase::IgnoreCase)
+		|| Command.Equals(TEXT("passregistry"), ESearchCase::IgnoreCase))
+	{
+		return UE::DreamShader::Editor::Private::RunDreamShaderPassRegistryCommandlet(Tokens, Switches, ParamValues) ? 0 : 1;
 	}
 
 	UE_LOG(LogDreamShader, Error, TEXT("Unknown DreamShader command '%s'.\n%s"), *Command, UE::DreamShader::Editor::Private::GetDreamShaderCommandletUsage());

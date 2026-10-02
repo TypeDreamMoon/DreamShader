@@ -19,7 +19,7 @@
 namespace UE::DreamShader::Editor::Compiler
 {
 	/**
-	 * Every compilable source -- `.dss`, `.dsi`, `.dsm`, `.dsf` -- under every source root, minus the `Packages`
+	 * Every compilable source -- `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf` -- under every source root, minus the `Packages`
 	 * trees, sorted. The `.dsh` headers FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles also yields
 	 * are left out: a header is checked, dumped and indexed through a source that includes it.
 	 */
@@ -86,7 +86,7 @@ namespace UE::DreamShader::Editor::Compiler
 		const TMap<FString, FString>& Params);
 
 	/**
-	 * `fmt <file|-All> [-Check] [-Out=<dir>]` -- FormatDreamShaderLangSource over 2.0 sources (`.dss`, `.dsi`, and a
+	 * `fmt <file|-All> [-Check] [-Out=<dir>]` -- FormatDreamShaderLangSource over 2.0 sources (`.dss`, `.dsi`, `.dsp`, and a
 	 * `.dsh` with no 1.x declarations), rewriting each in place. `-All` takes the writable source roots only, as
 	 * `migrate -All` does: a plugin ships its sources as they are. `-Check` writes nothing and fails when a file would
 	 * change, which is the CI form; `-Out` writes the formatted copies under a directory instead of over the sources.

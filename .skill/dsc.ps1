@@ -18,8 +18,8 @@
     (`./dsc.ps1 compile -All -Force`) when the sources have moved.
 
     `check`, `dump-ir`, `index` and `export-catalog` belong to the 2.0 pipeline; the
-    first three take every compilable source -- `.dss`, `.dsi`, `.dsm` and `.dsf` (a
-    `.dsh` header is checked through the sources that include it). `check` runs the
+    first three take every compilable source -- `.dss`, `.dsi`, `.dsp`, `.dsm` and `.dsf`
+    (a `.dsh` header is checked through the sources that include it). `check` runs the
     compiler as far as IR validation and
     writes no asset — it is the CI gate. `check -Shaders` goes further, and costs more:
     it BUILDS AND SAVES the assets (2.0 has no transient one) and compiles their
@@ -31,8 +31,8 @@
     Blocks, Source Bands and Layered before choosing a Graph Layout Style in the project
     settings.
 
-    `fmt` rewrites 2.0 sources -- `.dss`, `.dsi`, and a `.dsh` that has no 1.x declarations
-    left -- in the printer's layout, in place. It refuses to write a file it cannot vouch
+    `fmt` rewrites 2.0 sources -- `.dss`, `.dsi`, `.dsp`, and a `.dsh` that has no 1.x
+    declarations left -- in the printer's layout, in place. It refuses to write a file it cannot vouch
     for (the formatted text has to parse to the same declarations with every comment), it
     leaves a file that uses `#if` alone, and `-All` takes the project's own source root only:
     a plugin ships its sources as they are. `fmt -Check` writes nothing and fails when a file
@@ -44,11 +44,19 @@
 
     `decompile` writes 2.0 text by default: a `.dss` for a material or a material
     function, a `.dsi` for a material instance (only the parameters that differ from
-    the parent). `-Format Legacy`, or an `-Out` ending in `.dsm` / `.dsf`, writes the
-    1.x text instead; `-SourceFile` decompiles every asset one source builds into one
+    the parent), a `.dsp` for a Custom Pass pipeline. `-Format Legacy`, or an `-Out`
+    ending in `.dsm` / `.dsf`, writes the 1.x text instead; `-SourceFile` decompiles every asset one source builds into one
     file. `migrate` rewrites 1.x sources (`.dsm`, `.dsf`, `.dsh`) as `.dss` and moves
     the old files to Saved/DreamShader/Migrated; `-Check` verifies the rewrite and
     writes nothing.
+
+    `pass-registry` lists the Custom Pass HLSL slots (`<source root>/.dreampass`) and what
+    each one is -- Live, Reserved, SnapshotMissing, PipelineGone, PassGone or Unknown --
+    writing nothing. `-Gc` frees the PipelineGone and PassGone slots. `-Rebuild` compiles
+    every `.dsp` again, frees the garbage and rewrites the registry files from
+    Registry.json; a Registry.json that does not parse (a merge conflict left in it) is
+    moved aside first and every slot assigned afresh. The registry and its Slots folder
+    are committed files: every editor and every cook builds the global shaders from them.
 
     On top of the raw commandlet it adds:
       * engine resolution from the .uproject's EngineAssociation (no hard-coded path),
@@ -102,6 +110,15 @@
 .EXAMPLE
     ./dsc.ps1 dump-layout DShader/Materials/M_Toon.dss -Out I:/Work/Layout
 
+.EXAMPLE
+    ./dsc.ps1 pass-registry
+
+.EXAMPLE
+    ./dsc.ps1 pass-registry -Gc
+
+.EXAMPLE
+    ./dsc.ps1 pass-registry -Rebuild
+
 .NOTES
     Written for and verified against UE 5.8 (source build) + DreamShader 1.5.1 on Win64.
 #>
@@ -118,12 +135,13 @@ param(
     # migrate — rewrite 1.x sources (.dsm, .dsf, .dsh) as .dss
     # fmt — rewrite 2.0 sources in the printer's layout (-Check: report, write nothing)
     # list-generated — name every asset the sources build, for a .gitignore or a P4 typemap
+    # pass-registry — list the Custom Pass HLSL slots (-Gc: free the dead ones, -Rebuild: rebuild the registry)
     [Parameter(Mandatory, Position = 0)]
-    [ValidateSet('compile', 'decompile', 'dump-graph', 'check', 'dump-ir', 'dump-layout', 'index', 'export-catalog', 'migrate', 'fmt', 'list-generated')]
+    [ValidateSet('compile', 'decompile', 'dump-graph', 'check', 'dump-ir', 'dump-layout', 'index', 'export-catalog', 'migrate', 'fmt', 'list-generated', 'pass-registry')]
     [string]$Command,
 
     # compile / dump-graph / check / dump-ir / index: path to a compilable source -- .dss, .dsi,
-    # .dsm or .dsf (absolute, or relative to DShader/ then the project).
+    # .dsp, .dsm or .dsf (absolute, or relative to DShader/ then the project).
     # migrate: a 1.x source, .dsm, .dsf or .dsh.
     # decompile: an object path such as /Game/Materials/M_Steel (a material instance writes a .dsi).
     [Parameter(Position = 1)]
@@ -243,6 +261,15 @@ param(
     # for testing the cook-target half on a machine with no GPU — see the note below.
     [switch]$NullRhi,
 
+    # pass-registry: free the slots of pipelines no .dsp builds any more and of passes a
+    # pipeline no longer runs in HLSL. A slot whose .dsp does not compile is kept.
+    [switch]$Gc,
+
+    # pass-registry: compile every .dsp again, free the garbage and rewrite the registry
+    # files from Registry.json (one that does not parse is moved aside and every slot
+    # assigned afresh). Writes assets, as compile does.
+    [switch]$Rebuild,
+
     # The .uproject. Defaults to the nearest one at or above the target / working directory.
     [string]$Project,
 
@@ -358,7 +385,7 @@ switch ($Command) {
             $commandletArgs += "-Source=$($resolved -replace '\\', '/')"
         }
         else {
-            throw "compile needs a source file (.dss, .dsi, .dsm or .dsf) or -All."
+            throw "compile needs a source file (.dss, .dsi, .dsp, .dsm or .dsf) or -All."
         }
         if ($Force) { $commandletArgs += '-Force' }
     }
@@ -406,7 +433,7 @@ switch ($Command) {
             $commandletArgs += "-Source=$($resolved -replace '\\', '/')"
         }
         else {
-            throw "$Command needs a source file (.dss, .dsi, .dsm or .dsf) or -All."
+            throw "$Command needs a source file (.dss, .dsi, .dsp, .dsm or .dsf) or -All."
         }
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
         if ($Force) { $commandletArgs += '-Force' }
@@ -422,6 +449,12 @@ switch ($Command) {
         # No source: the catalog is a property of the engine and the loaded plugins, not of
         # any one file.
         if ($Out) { $commandletArgs += "-Out=$($Out -replace '\\', '/')" }
+    }
+    'pass-registry' {
+        # No source either: the registry is the project's. -Rebuild includes the collection,
+        # so -Gc beside it adds nothing.
+        if ($Rebuild) { $commandletArgs += '-Rebuild' }
+        elseif ($Gc) { $commandletArgs += '-Gc' }
     }
     { $_ -in @('fmt', 'list-generated') } {
         if ($All) {
