@@ -140,6 +140,9 @@ namespace UE::DreamPass
 	 */
 	FScreenPassRenderTarget ResolveWrite(FExecuteContext& Context, const FDreamPassBufferBinding& Binding);
 
+	/** Whether a write binding targets what the point carries: the scene colour, or the translucency at TranslucencyAfterDOF. */
+	bool IsSceneColorWrite(const FExecuteContext& Context, const FDreamPassBufferBinding& Binding);
+
 	/** A pass's result for SceneColor: copied back into the scene colour, or handed on along the post-process chain. */
 	void CommitSceneColor(FExecuteContext& Context, const FScreenPassTexture& Result);
 

@@ -319,6 +319,11 @@ namespace UE::DreamPass
 		return FScreenPassRenderTarget(Texture, FIntRect(FIntPoint::ZeroValue, Texture->Desc.Extent), ERenderTargetLoadAction::ELoad);
 	}
 
+	bool IsSceneColorWrite(const FExecuteContext& Context, const FDreamPassBufferBinding& Binding)
+	{
+		return Binding.Buffer == Private::GetChainBufferName(Context.Injection);
+	}
+
 	void CommitSceneColor(FExecuteContext& Context, const FScreenPassTexture& Result)
 	{
 		FInjectionContext& Injection = Context.Injection;
