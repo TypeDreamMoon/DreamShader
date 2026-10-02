@@ -98,7 +98,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH2257](DSH2xxx.md#dsh2257) | error | Expected '`{' to open the '{0}' block, found {1}. |
 | [DSH2258](DSH2xxx.md#dsh2258) | warning | The section '{0}' is written twice; the later one wins, as it did in 1.x. |
 | [DSH2300](DSH2xxx.md#dsh2300) | error | Expected '`{' to open the block of pass '{0}', found {1}. |
-| [DSH2301](DSH2xxx.md#dsh2301) | error | Expected a setting ('Key = Value;') or a 'read', 'write' or 'param' line in a pass block, found {0}. |
+| [DSH2301](DSH2xxx.md#dsh2301) | error | Expected a setting ('Key = Value;'), a 'read', 'write' or 'param' line or an 'hlsl' block in a pass block, ... |
 | [DSH2302](DSH2xxx.md#dsh2302) | error | Expected '=' after the key '{0}', found {1}. |
 | [DSH2303](DSH2xxx.md#dsh2303) | error | Expected ';' at the end of the pass statement, found {1}. |
 | [DSH2304](DSH2xxx.md#dsh2304) | error | Expected a buffer after '{0}', found {1}. |
@@ -109,7 +109,8 @@ which stays authoritative until every raise site is tagged.
 | [DSH2309](DSH2xxx.md#dsh2309) | error | Expected '=' after '{0}', found {1}. |
 | [DSH2310](DSH2xxx.md#dsh2310) | error | Expected ',' or ')' in the arguments of buffer '{0}', found {1}. |
 | [DSH2311](DSH2xxx.md#dsh2311) | error | Expected ';' after the declaration of buffer '{0}', found {1}. |
-| [DSH2312](DSH2xxx.md#dsh2312) | error | The line '#{0}' cannot appear inside a pass block; a pass holds settings and 'read', 'write' and 'param' li... |
+| [DSH2312](DSH2xxx.md#dsh2312) | error | The line '#{0}' cannot appear inside a pass block; a pass holds settings, 'read', 'write' and 'param' lines... |
+| [DSH2313](DSH2xxx.md#dsh2313) | error | Expected '{' after 'hlsl' to open a block of HLSL, found {1}. |
 | [DSH2314](DSH2xxx.md#dsh2314) | error | Expected '`}' to close pass '{0}' before the next declaration, found {1}. |
 | [DSH3200](DSH3xxx.md#dsh3200) | error | Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'. |
 | [DSH3201](DSH3xxx.md#dsh3201) | error | Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#... |
@@ -168,7 +169,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH3305](DSH3xxx.md#dsh3305) | error | Expected a pass kind: fullscreen, compute, mesh, clear or copy, found {1}. |
 | [DSH3310](DSH3xxx.md#dsh3310) | error | 'buffer {0}' declares a buffer of a Custom Pass pipeline, which only a '.dsp' file holds; move it into the ... |
 | [DSH3311](DSH3xxx.md#dsh3311) | error | '#pragma pipeline' configures a Custom Pass pipeline and belongs in a '.dsp' file of its own, and this line... |
-| [DSH3312](DSH3xxx.md#dsh3312) | error | '{0} {1}' is a declaration of a Custom Pass pipeline, which only a '.dsp' file holds, and '{2}' is not one;... |
+| [DSH3312](DSH3xxx.md#dsh3312) | error | An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only a '.dsp' file holds, and '{... |
 | [DSH3313](DSH3xxx.md#dsh3313) | error | '#pragma pipeline' is written a second time, and one '.dsp' is one pipeline; the line {0} already configure... |
 | [DSH3314](DSH3xxx.md#dsh3314) | error | '#pragma material' configures a material, and a '.dsp' is configured by '#pragma pipeline(...)'; the materi... |
 | [DSH3315](DSH3xxx.md#dsh3315) | warning | '#pragma {0}' boxes or places graph nodes, and a '.dsp' has no graph; the line was ignored. |
@@ -524,7 +525,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH7312](DSH7xxx.md#dsh7312) | error | '{0}' is set twice in pass '{1}'; it was already set on line {2}. |
 | [DSH7313](DSH7xxx.md#dsh7313) | error | (built at runtime) |
 | [DSH7314](DSH7xxx.md#dsh7314) | error | A filter joins its terms with '\|' (either) and '&' (both), and nothing else. |
-| [DSH7315](DSH7xxx.md#dsh7315) | error | Fullscreen pass '{0}' needs 'Material = "..."' (a Post Process material) or 'Shader = "<file>.usf"' with 'E... |
+| [DSH7315](DSH7xxx.md#dsh7315) | error | Mesh pass '{0}' needs 'Filter = ...' to say which primitives it draws: 'Stencil(1)', 'Layer(Name)', 'List(N... |
 | [DSH7316](DSH7xxx.md#dsh7316) | error | Fullscreen pass '{0}' draws a 'Material' or runs a 'Shader', and it names both. |
 | [DSH7317](DSH7xxx.md#dsh7317) | error | A fullscreen material pass writes exactly one buffer, as 'write Buffer;', and '{0}' writes {1}. |
 | [DSH7318](DSH7xxx.md#dsh7318) | error | '{0}.Previous' is last frame's contents, which nothing writes any more; write '{0}'. |
@@ -565,6 +566,15 @@ which stays authoritative until every raise site is tagged.
 | [DSH7357](DSH7xxx.md#dsh7357) | warning | No pass reads buffer '{0}' and it is not exported, so writing it is wasted work; read it, export it, or rem... |
 | [DSH7359](DSH7xxx.md#dsh7359) | warning | 'Mode = Own' draws every primitive with its own material, so the 'Material' of mesh pass '{0}' is never used. |
 | [DSH7360](DSH7xxx.md#dsh7360) | info | The materials, shader files and pass layers this pipeline names are not available here, so they were taken ... |
+| [DSH7361](DSH7xxx.md#dsh7361) | error | Pass '{0}' holds a second 'hlsl' block, and the code of a pass is one block; the one on line {1} is it. |
+| [DSH7362](DSH7xxx.md#dsh7362) | error | This file already has an 'hlsl' block, on line {0}, and a '.dsp' has one: write every shared function and e... |
+| [DSH7364](DSH7xxx.md#dsh7364) | error | Pass '{0}' runs the shader file '{1}' and holds an 'hlsl' block as well, and the code of a pass is in one p... |
+| [DSH7365](DSH7xxx.md#dsh7365) | error | The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function the compiler writes, so 'E... |
+| [DSH7366](DSH7xxx.md#dsh7366) | error | '#include' cannot stand among the statements of a function, and the 'hlsl' block of pass '{0}' holds the st... |
+| [DSH7367](DSH7xxx.md#dsh7367) | error | '{0}' is a name of pass '{1}', and its 'hlsl' block holds the statements of a function the compiler writes,... |
+| [DSH7368](DSH7xxx.md#dsh7368) | error | '{0}' is in the shared code of the file's 'hlsl' block, and is the entry of pass '{1}' as well, which the p... |
+| [DSH7369](DSH7xxx.md#dsh7369) | error | '{0}' is the entry of pass '{1}' in the file's 'hlsl' block, and is called here; an entry is compiled only ... |
+| [DSH7370](DSH7xxx.md#dsh7370) | error | A {0} pass runs no HLSL of its own, so pass '{1}' cannot hold an 'hlsl' block. |
 | [DSH8088](DSH8xxx.md#dsh8088) | error | %s contains an invalid folder segment. |
 | [DSH8089](DSH8xxx.md#dsh8089) | error | DreamShader Root '%s' references project plugin '%s', but no enabled plugin with that name was found. |
 | [DSH8090](DSH8xxx.md#dsh8090) | error | DreamShader Root '%s' must reference a project plugin under '%s'. |
@@ -699,7 +709,8 @@ which stays authoritative until every raise site is tagged.
 | [DSH8315](DSH8xxx.md#dsh8315) | error | The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose ... |
 | [DSH8316](DSH8xxx.md#dsh8316) | error | Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the sl... |
 | [DSH8317](DSH8xxx.md#dsh8317) | error | Pass '{0}' cannot be mapped onto its HLSL slot: {1} |
-| [DSH8319](DSH8xxx.md#dsh8319) | error | The shader '{0}' of pass '{1}' could not be read, so there is nothing to snapshot into its slot. |
+| [DSH8318](DSH8xxx.md#dsh8318) | error | [{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'Vi... |
+| [DSH8319](DSH8xxx.md#dsh8319) | error | The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the ... |
 | [DSH8320](DSH8xxx.md#dsh8320) | error | '{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built. |
 | [DSH8321](DSH8xxx.md#dsh8321) | warning | '{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{... |
 | [DSH8322](DSH8xxx.md#dsh8322) | error | [{0}] pass '{1}' does not compile in its HLSL slot: {2} |

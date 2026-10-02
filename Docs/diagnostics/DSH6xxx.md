@@ -14,7 +14,7 @@
 '{0}' is a second material entry; '{1}' above it is already the entry, and one file makes one material.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1215`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1216`
 <!-- generated:end DSH6200 -->
 
 **Cause.** Two exported functions in one file have the signature `void (inout material)`. That
@@ -35,7 +35,7 @@ a material — an internal function with that signature is not an entry.
 '{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both. Move it to its own file, or drop 'export' to make it a helper.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1308`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1309`
 <!-- generated:end DSH6201 -->
 
 **Cause.** A file has a material entry **and** exported functions, layers or layer blends. One file
@@ -55,7 +55,7 @@ helpers that are inlined into the material.
 'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1143`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1144`
 <!-- generated:end DSH6202 -->
 
 **Cause.** An `extern` prototype has no `/// @asset` above it, so there is nothing for it to bind
@@ -74,7 +74,7 @@ to.
 '@layer' makes '{0}' a material layer asset, so it has to be 'export'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1157`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1185`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1158`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1186`
 <!-- generated:end DSH6203 -->
 
 **Cause.** `@layer` or `@layerblend` on a function that is not `export`. Both directives name an
@@ -93,7 +93,7 @@ asset the file produces, and only an exported function produces one.
 A '@layer' function is written 'export void {0}(inout material m)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1167`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1168`
 <!-- generated:end DSH6204 -->
 
 **Cause.** A `@layer` function does not have the signature `void Name(inout material m)`.
@@ -112,7 +112,7 @@ modifies it in place.
 A '@layerblend' function is written 'export void {0}(material Base, material Top, ..., inout material Result)': at least one 'material' input and a final 'inout material'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1195`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1196`
 <!-- generated:end DSH6205 -->
 
 **Cause.** A `@layerblend` function does not have the shape
@@ -132,7 +132,7 @@ other parameter an input, and a final `inout material`.
 '{0}' is a builtin operation and cannot be redeclared; rename the function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:836`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:837`
 <!-- generated:end DSH6206 -->
 
 **Cause.** A function is declared with the name of a builtin operation (`dot`, `lerp`, `saturate`,
@@ -171,7 +171,7 @@ functions this file may call — a layer is applied by the material that uses it
 '{0}' has no body; a prototype has to be 'extern' and carry '/// @asset'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1244`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1245`
 <!-- generated:end DSH6209 -->
 
 **Cause.** A function has no body and is not `extern`. Normally the parser catches this first
@@ -190,7 +190,7 @@ functions this file may call — a layer is applied by the material that uses it
 '{0}' is '@custom', so '{1}' becomes an input pin of a Custom node, and a Custom node cannot take a material; pass the fields it needs instead.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1264`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1265`
 <!-- generated:end DSH6210 -->
 
 **Cause.** A `/// @custom` function takes a `material` as an input (`material m` or
@@ -1108,7 +1108,7 @@ number or a texture.
 '{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node, so the graph would never end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1472`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1473`
 <!-- generated:end DSH6330 -->
 
 **Cause.** A function reaches itself through a call lifted out of its body: the lifted `UE.` call's

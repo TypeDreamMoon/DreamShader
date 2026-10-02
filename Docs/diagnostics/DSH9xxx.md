@@ -299,7 +299,7 @@ an undeclared identifier here rather than a node.
 DreamShader failed to create graph dump directory '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1868`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1888`
 <!-- generated:end DSH9030 -->
 
 **Cause.** `dump-graph` could not create the folder the dump belongs in. The dump tree mirrors the source tree -- `<Out>/<root>/<source path>.<asset>.graph.json` -- so one folder is created per source subdirectory, and this is that `MakeDirectory` failing: a `-Out` under a drive that does not exist, a folder the process cannot write to, or a *file* sitting where the dump needs a directory
@@ -319,7 +319,7 @@ DreamShader failed to create graph dump directory '%s'.
 DreamShader failed to write graph dump '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1879`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1899`
 <!-- generated:end DSH9031 -->
 
 **Cause.** the folder was there but the JSON could not be written into it. Almost always the file is open in another program, or read-only because a previous capture was committed to version control and checked out read-only
@@ -339,7 +339,7 @@ DreamShader failed to write graph dump '%s'.
 DreamShader could not work out which assets '%s' builds, so there is no graph to dump.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1772`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1781`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1820`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1792`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1801`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1840`
 <!-- generated:end DSH9032 -->
 
 **Cause.** the file was read and preprocessed, but it does not resolve to an asset to dump: either the parse failed, or the source declares no `Shader`, `ShaderFunction`, `ShaderLayer` or `ShaderLayerBlend` block at all. A `.dsh` header never reaches this point, but a `.dsm` that only declares `Function` or `VirtualFunction` bodies does -- those generate a `.ush` include or nothing, not a graph, so there is nothing for a fingerprint to describe
@@ -359,7 +359,7 @@ DreamShader could not work out which assets '%s' builds, so there is no graph to
 DreamShader could not resolve generated asset '%s' from '%s' after generation.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1844`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1864`
 <!-- generated:end DSH9033 -->
 
 **Cause.** generation reported success, but the asset it should have produced could not be loaded back from the object path the source names. The usual cause is that the asset already exists on disk, `dump-graph`'s write guard refused to rebuild it, *and* it failed to load -- a broken or missing package behind a path the source still claims
@@ -379,7 +379,7 @@ DreamShader could not resolve generated asset '%s' from '%s' after generation.
 DreamShader cannot dump '%s': %s is not a Material, MaterialFunction, material instance or pass pipeline.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1856`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderGraphDump.cpp:1876`
 <!-- generated:end DSH9034 -->
 
 **Cause.** the object at the source's asset path is not a class the dump covers -- not a `UMaterial`, not a `UMaterialFunction` (or layer / layer blend), and not a `UDreamShaderMaterialInstance`. Something else is squatting on the path the source resolves to; generation itself refuses to overwrite a foreign asset (`DSH8102` / `DSH8103` and friends)
@@ -489,7 +489,7 @@ platforms supports.
 %s: DSH9039: the DreamShader 2.0 pipeline failed without raising a diagnostic.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1148`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1151`
 <!-- generated:end DSH9039 -->
 
 **Cause.** Internal invariant. The 2.0 pipeline returned failure without putting a single error in
@@ -1587,7 +1587,7 @@ is lost; the message names the first parse error.
 '{0}' fails conditional compilation ({1}: {2}), and a source with '#if' lines is not migrated in any case.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:102`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:113`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:104`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:115`
 <!-- generated:end DSH9090 -->
 
 **Cause.** The source uses `#if` conditional compilation (or fails it). A migration would only see
@@ -1626,7 +1626,7 @@ migrate again.
 {0} comment(s) of '{1}' would not be in the migrated file ({2}), so nothing was written; this is a fault of the migration, not of the source.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:617`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:619`
 <!-- generated:end DSH9092 -->
 
 **Cause.** A comment of the 1.x file would be missing from the migrated text. Every rewrite is
@@ -1646,7 +1646,7 @@ quotes the comments.
 '{0}' has no 1.x declaration left; there is nothing to migrate.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:556`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:558`
 <!-- generated:end DSH9093 -->
 
 **Cause.** The file is a `.dsh` that holds 2.0 declarations only. There is nothing left to migrate.
@@ -1686,7 +1686,7 @@ build reports.
 '{0}' is not a 1.x source; migrate takes '.dsm', '.dsf' and '.dsh' files.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:522`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:530`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:524`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:532`
 <!-- generated:end DSH9095 -->
 
 **Cause.** `dsc migrate` was given a file that is not a 1.x source, or that cannot be read.
@@ -1704,7 +1704,7 @@ build reports.
 The migrated text of '{0}' does not build as 2.0 source ({1}), so nothing was written; the text is in '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:634`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:636`
 <!-- generated:end DSH9097 -->
 
 **Cause.** The rewritten text was parsed, bound and lowered as 2.0 source before being written, and
@@ -1726,7 +1726,7 @@ in the 1.x source and migrate again.
 The migrated text of '{0}' does not build the graph the 1.x file builds: {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:668`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:683`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:670`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:685`
 <!-- generated:end DSH9098 -->
 
 **Cause.** The migrated text builds, and its IR is not equivalent to the 1.x file's: either the
@@ -1749,7 +1749,7 @@ a path difference, add the `/// @name` the message gives.
 '{0}' already exists and is not written over; move it away, or migrate into another folder with -Out.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:144`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:563`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:711`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:727`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:739`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:757`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:146`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:565`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:713`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:729`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:741`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:759`
 <!-- generated:end DSH9099 -->
 
 **Cause.** The migration could not read, write or replace a file: the builtin catalog is empty
@@ -1904,7 +1904,7 @@ value survives.
 Expected '{0}' to be declared alone to rewrite its value, found it in a declaration shared with other names; split the declaration first.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:602`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1173`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:602`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1227`
 <!-- generated:end DSH9107 -->
 
 **Cause.** An editor action has to rewrite one override's value in a `.dsi`, and that name shares
@@ -1924,7 +1924,7 @@ time.
 Expected every change to this file to touch its own stretch of text, found an edit at line {0} that overlaps another or runs past the end; the file was left unchanged.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:742`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1096`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:742`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1150`
 <!-- generated:end DSH9108 -->
 
 **Cause.** Two text edits computed for one `.dsi` overlap, or one runs past the end of the file. The
@@ -1943,7 +1943,7 @@ file is left as it was. Internal error of the instance source rewriter.
 Expected a '#pragma instance(...)' line in this .dsi file, found none; the file was left unchanged.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1048`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1060`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:893`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:2236`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1048`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1060`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:893`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:2355`
 <!-- generated:end DSH9109 -->
 
 **Cause.** An editor action that rewrites a source in place found nothing to anchor its edit on: a
@@ -2194,7 +2194,7 @@ request's output path — has another extension. (`-Format=Legacy`, or an `-Out`
 The pass '{0}' has neither a material nor a shader, so the text names neither, and it does not build until one is given.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:399`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:435`
 <!-- generated:end DSH9211 -->
 
 **Cause.** A fullscreen pass of the pipeline has neither a material nor a shader — the material it named
@@ -2216,7 +2216,7 @@ adopt again — or, after a decompile, write `Material` (or `Shader` and `Entry`
 The pass '{0}' has both a material, '{1}', and a shader, '{2}'; a fullscreen pass names one of the two, and the text keeps the material, which is what the pass draws.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:382`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:413`
 <!-- generated:end DSH9212 -->
 
 **Cause.** A fullscreen pass of the pipeline has both a material and a shader, which only an edit in its
@@ -2236,7 +2236,7 @@ and leaves the shader out. Adopt refuses the pipeline rather than drop the shade
 A layer filter of the pass '{0}' kept no spelling of its layers, so they are written as the project's layer table names its bits today: {1}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:482`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:534`
 <!-- generated:end DSH9214 -->
 
 **Cause.** Informational. A `Layer(...)` filter term of a mesh pass holds layer bits and none of the
@@ -2257,7 +2257,7 @@ the same bits name other layers now.
 A layer filter of the pass '{0}' selects layer bit(s) {1}, which the project's layer table has no name for; the text cannot say them and leaves them out.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:489`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:541`
 <!-- generated:end DSH9215 -->
 
 **Cause.** A `Layer(...)` filter term of a mesh pass selects layer bits that the project's layer table
@@ -2280,7 +2280,7 @@ then decompile or adopt again.
 '{0}' runs in no kind of view, which a '.dsp' cannot say; the text leaves 'Views' out, and a rebuild runs in {1}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:782`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:834`
 <!-- generated:end DSH9216 -->
 
 **Cause.** The pipeline runs in no kind of view: its `Views` is empty, which only an edit in its details
@@ -2303,7 +2303,7 @@ decompile or adopt again.
 The pass '{0}' checks its override material for no usage flag at all, which a '.dsp' cannot say; the text leaves 'Usage' out, and a rebuild checks the default set ({1}).
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:532`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:584`
 <!-- generated:end DSH9217 -->
 
 **Cause.** A mesh pass checks its override material for no usage flag at all: its `Usage` is empty, which
@@ -2325,7 +2325,7 @@ else), then decompile or adopt again.
 The parameter '{0}' defaults to '{1}', which is not a 2D texture. A '.dsp' declares every texture parameter 'Texture2D', and the text does so here too, keeping this default; it builds as it is.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:229`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:230`
 <!-- generated:end DSH9218 -->
 
 **Cause.** A texture parameter of the pipeline defaults to a texture that is not 2D — a cube, a volume,
@@ -2347,7 +2347,7 @@ default, so the pipeline rebuilt from it keeps this one.
 The pass '{0}' binds '{1}' to a texture constant, which a 'param' cannot state; the binding is left out of the text.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:332`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:333`
 <!-- generated:end DSH9219 -->
 
 **Cause.** A pass binds a `param` to a texture constant, which only an edit in its details panel makes.
@@ -2368,7 +2368,7 @@ in the details panel or in the text; then decompile or adopt again.
 The pass '{0}' tests against its own depth but names no Depth32 buffer for it; the text writes 'Own()' empty, and it does not build until one is named.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:521`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:573`
 <!-- generated:end DSH9220 -->
 
 **Cause.** A mesh pass tests against its own depth (`Depth = Own`) but names no `Depth32` buffer for it,
@@ -2389,7 +2389,7 @@ choose `TestScene` or `None`; then decompile or adopt again.
 The decompiled pipeline does not parse back: {0}: {1}. It is written as it is; this is a defect of the decompiler.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:893`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:951`
 <!-- generated:end DSH9221 -->
 
 **Cause.** The `.dsp` text the decompiler printed does not parse back; the message names the first parse
@@ -2408,7 +2408,7 @@ error. The file is written anyway, so nothing is lost. A defect of the decompile
 The decompiled pipeline parses but does not bind back into a pipeline: {0}: {1}. It is written as it is; either the asset breaks a rule a '.dsp' is checked against (an edit by hand can), or this is a defect of the decompiler.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:909`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:967`
 <!-- generated:end DSH9222 -->
 
 **Cause.** The printed text parses, and binding it — without the engine: references taken as written,
@@ -2432,7 +2432,7 @@ details panel, or the text; if the pipeline was never edited by hand, report it 
 The decompiled pipeline reads back as a different pipeline ({0} difference(s); the first: {1}). It is written as it is; this is a defect of the decompiler or the printer.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:923`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:981`
 <!-- generated:end DSH9223 -->
 
 **Cause.** The printed text parses and binds, and the pipeline it binds to differs from the asset — the
@@ -2453,7 +2453,7 @@ the printer; the file is written as it is.
 A '.dsp' names its pipeline after its file and has no '/// @name', so '{0}' builds '{1}' where it is written, not '{2}'; move the file to where the pipeline's source belongs to keep its path.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:852`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:910`
 <!-- generated:end DSH9224 -->
 
 **Cause.** `-KeepAssetPath` asked to keep the pipeline where it is, and a `.dsp` cannot say where its
@@ -2475,7 +2475,7 @@ usually where the pipeline's own `.dsp` was. Compiled where it is, it builds a s
 There is no pass pipeline to decompile.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:769`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:863`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:821`, `Source/DreamShaderEditor/Private/Decompiler/DreamShaderPipelineDecompiler.cpp:921`
 <!-- generated:end DSH9225 -->
 
 **Cause.** Internal. The pipeline decompiler was handed no pipeline at all, or the payload it read could

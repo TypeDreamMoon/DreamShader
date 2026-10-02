@@ -989,7 +989,7 @@ migrate` writes it.
 The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:862`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:863`
 <!-- generated:end DSH5290 -->
 
 **Cause.** Rule L23. A block builds an asset named like a function this file can call (a
@@ -1322,7 +1322,7 @@ UE.DreamPassOutput(Output0 = Mask, Output1 = Id);
 UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = "CP_Highlight") or the pipeline asset's path.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:803`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:824`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:820`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:841`
 <!-- generated:end DSH5315 -->
 
 **Cause.** `UE.DreamPassBuffer` does not say which pipeline it reads. Two messages: the call has no
@@ -1347,7 +1347,7 @@ float Glow = UE.DreamPassBuffer(Pipeline = "CP_Highlight", Buffer = "Blurred").r
 No pipeline named '{0}' is built by a .dsp under '{1}'; write the pipeline asset's path, or check the name.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:833`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:850`
 <!-- generated:end DSH5316 -->
 
 **Cause.** `Pipeline` is a bare name, and no `.dsp` under the source root of this `.dss` builds a
@@ -1368,7 +1368,7 @@ no `.dsp` builds, is named by its asset path: `Pipeline = "/Game/Passes/CP_Highl
 '{0}' names more than one pipeline under this source root ({1}); write the pipeline asset's path instead.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:841`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:858`
 <!-- generated:end DSH5317 -->
 
 **Cause.** `Pipeline` is a bare name, and more than one `.dsp` under this source root builds a
@@ -1387,7 +1387,7 @@ pipeline of that name -- two files of one name in different folders. The message
 The pipeline '{0}' names nothing: no pipeline asset exists at '{1}', and no .dsp under the source roots builds it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:918`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:935`
 <!-- generated:end DSH5318 -->
 
 **Cause.** The reference resolved to an object path where no pipeline asset exists, and no `.dsp`
@@ -1409,7 +1409,7 @@ in place of the missing asset, and one that fails is DSH5319, with its first err
 The pipeline '{0}' comes from '{1}', which failed to compile, so the buffer this material reads cannot be checked. {2}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:483`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:907`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:483`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:924`
 <!-- generated:end DSH5319 -->
 
 **Cause.** The pipeline comes from a `.dsp` that does not compile, so the buffer this material reads
@@ -1458,7 +1458,7 @@ it fails.
 (built at runtime)
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:942`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:958`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:959`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:975`
 <!-- generated:end DSH5321 -->
 
 **Cause.** The node's own rule refuses the buffer -- in the words the material editor would use.
@@ -1494,7 +1494,7 @@ material.
 The pipeline '{0}' declares no buffer '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:972`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:980`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:989`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:997`
 <!-- generated:end DSH5322 -->
 
 **Cause.** The pipeline has not been built yet, so its `.dsp` was read in its place (a `dsc check` on a
@@ -1520,7 +1520,7 @@ buffer Blurred : R8(Scale = 0.5, Export = true);
 Buffer '{1}' of the pipeline '{0}' is {2}, which a material cannot sample. Export a float or normalized buffer instead.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:988`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:1005`
 <!-- generated:end DSH5323 -->
 
 **Cause.** The pipeline has not been built yet, its `.dsp` was read in its place, and the exported
@@ -1542,7 +1542,7 @@ not read here (DSH5319).
 UE.DreamPassBuffer names no Buffer of '{0}': write the exported buffer's name (Buffer = "Blurred").
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:809`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:826`
 <!-- generated:end DSH5324 -->
 
 **Cause.** `UE.DreamPassBuffer` names its pipeline and no buffer of it: `Buffer` is missing, empty or
@@ -1561,7 +1561,7 @@ UE.DreamPassBuffer names no Buffer of '{0}': write the exported buffer's name (B
 The pipeline '{0}' needs this material to be built -- it is one of its pass materials, or the material of a pipeline that one needs -- so this material cannot read its exported buffer: the two can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:863`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:880`
 <!-- generated:end DSH5325 -->
 
 **Cause.** This material reads, through `UE.DreamPassBuffer`, an exported buffer of a pipeline that
@@ -1604,7 +1604,7 @@ through another pipeline, break it at one of its `UE.DreamPassBuffer` reads the 
 '{0}' is a {1}, not a DreamShader pass pipeline.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:879`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:896`
 <!-- generated:end DSH5326 -->
 
 **Cause.** `Pipeline` names an asset that exists and is not a pass pipeline: a material, a texture --

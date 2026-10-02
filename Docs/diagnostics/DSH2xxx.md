@@ -1313,7 +1313,7 @@ silently; this front end does the same and says so.
 Expected '`{' to open the block of pass '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:199`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:240`
 <!-- generated:end DSH2300 -->
 
 **Cause.** The head of a pass, `pass <Name> : <kind>`, is not followed by the `{` that opens its
@@ -1347,10 +1347,10 @@ and go away with it.
 **Message**
 
 ```
-Expected a setting ('Key = Value;') or a 'read', 'write' or 'param' line in a pass block, found {0}.
+Expected a setting ('Key = Value;'), a 'read', 'write' or 'param' line or an 'hlsl' block in a pass block, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:293`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:334`
 <!-- generated:end DSH2301 -->
 
 **Cause.** A statement in a pass block starts with something no statement starts with. A pass holds
@@ -1386,7 +1386,7 @@ pass Blur : compute
 Expected '=' after the key '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:389`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:447`
 <!-- generated:end DSH2302 -->
 
 **Cause.** A pass statement starts with a name that is not a binding word, so it is read as a
@@ -1417,7 +1417,7 @@ from the pipeline is a file-scope `uniform` or `static const`, handed in with
 Expected ';' at the end of the pass statement, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:400`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:458`
 <!-- generated:end DSH2303 -->
 
 **Cause.** A complete pass statement is not followed by `;`. Most often the `;` is missing at the end
@@ -1442,7 +1442,7 @@ one shows only once this is fixed.
 Expected a buffer after '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:316`, `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:326`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:374`, `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:384`
 <!-- generated:end DSH2304 -->
 
 **Cause.** A `read` or `write` binding has no buffer where one belongs. `read` and `write` at the
@@ -1467,7 +1467,7 @@ pass is the buffer's own, leave it out: `read Mask;`.
 '{0}.{1}': the one thing a buffer has after '.' is 'Previous', last frame's contents of a 'History = true' buffer.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:344`, `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:350`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:402`, `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:408`
 <!-- generated:end DSH2305 -->
 
 **Cause.** A `read` or `write` binding has a `.` after its buffer, and what follows is not `Previous`
@@ -1492,7 +1492,7 @@ declare `Wind` with `History = true` (DSH4415 otherwise). Only a `read` may name
 Expected a parameter name after 'param', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:368`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:426`
 <!-- generated:end DSH2306 -->
 
 **Cause.** `param` is not followed by the name of the value inside the pass -- the material
@@ -1514,7 +1514,7 @@ the pass's: a parameter of the pass's material, or the macro its `.usf` reads.
 Expected '=' after 'param {0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:372`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:430`
 <!-- generated:end DSH2307 -->
 
 **Cause.** A `param` binding names its target and then has no `=`: `param Radius OutlineWidth;`,
@@ -1535,7 +1535,7 @@ a `uniform`, a `static const`, a literal or `DreamPassWeight`, times and plus co
 Expected a key such as 'Scale' in the arguments of buffer '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:127`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:147`
 <!-- generated:end DSH2308 -->
 
 **Cause.** A buffer's argument list has something other than a key where an argument starts: a value
@@ -1562,7 +1562,7 @@ The keys are `Scale`, `Size`, `Resolution`, `Clear`, `Mips`, `History` and `Expo
 Expected '=' after '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:131`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:151`
 <!-- generated:end DSH2309 -->
 
 **Cause.** A key in a buffer's argument list is not followed by `=`: a key written alone as if it
@@ -1583,7 +1583,7 @@ bare flags.
 Expected ',' or ')' in the arguments of buffer '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:151`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:171`
 <!-- generated:end DSH2310 -->
 
 **Cause.** A `Key = Value` in a buffer's argument list is followed by neither `,` nor `)`: two
@@ -1604,7 +1604,7 @@ or a list that is never closed (`R8(Clear = 0;`).
 Expected ';' after the declaration of buffer '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:164`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:184`
 <!-- generated:end DSH2311 -->
 
 **Cause.** A buffer declaration does not end with `;` after its format or its argument list. Usually
@@ -1628,10 +1628,10 @@ buffer Edge : R8;
 **Message**
 
 ```
-The line '#{0}' cannot appear inside a pass block; a pass holds settings and 'read', 'write' and 'param' lines.
+The line '#{0}' cannot appear inside a pass block; a pass holds settings, 'read', 'write' and 'param' lines and an 'hlsl' block, where HLSL's own '#' lines go.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:281`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:322`
 <!-- generated:end DSH2312 -->
 
 **Cause.** A `#pragma` or `#include` line stands inside a pass's braces. The preprocessor's own
@@ -1643,7 +1643,29 @@ it is parsed as usual, so a mistake in it is reported in the same run.
 
 **Fix.** Move a `#pragma pipeline(...)` to file scope, above the passes. Drop `#pragma region`: a
 `.dsp` ignores it at file scope too (DSH3315), and `//` comments group lines as well. An `#include`
-belongs in the `.usf` the pass runs; a `.dsp` includes nothing (DSH3314).
+belongs in the HLSL the pass runs: its `hlsl` block, or its `.usf`. Inside an `hlsl` block every `#` line is
+HLSL's, passed to the shader compiler as written.
+
+## DSH2313
+
+<!-- generated:begin DSH2313 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '{' after 'hlsl' to open a block of HLSL, found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:979`
+<!-- generated:end DSH2313 -->
+
+**Cause.** In a `.dsp`, `hlsl` opens a block of HLSL -- a pass's code, or the file's shared code -- and the next
+thing after it is not a `{`. Wherever a declaration or a pass statement starts in a `.dsp`, `hlsl` is that word and
+nothing else, so it is no name there.
+
+**Fix.** Write the block: `hlsl { ... }`, the `{` on the same line or the next. Outside a `.dsp` `hlsl` is an
+ordinary name.
 
 ## DSH2314
 
@@ -1656,7 +1678,7 @@ belongs in the `.usf` the pass runs; a `.dsp` includes nothing (DSH3314).
 Expected '`}' to close pass '{0}' before the next declaration, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:228`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:269`
 <!-- generated:end DSH2314 -->
 
 **Cause.** A pass block is not closed, and a `buffer` or `pass` declaration starts a line inside it.
