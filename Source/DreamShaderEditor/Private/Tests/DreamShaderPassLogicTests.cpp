@@ -280,7 +280,7 @@ bool FDreamShaderPassPipelineValidateTest::RunTest(const FString& Parameters)
 	};
 
 	ExpectInvalid(TEXT("a read of an undeclared buffer"), [](UDreamPassPipeline& P) { P.Passes[0].Reads[0].Buffer = TEXT("Nowhere"); });
-	ExpectInvalid(TEXT("a buffer declared twice"), [](UDreamPassPipeline& P) { P.Buffers.Add(P.Buffers[0]); });
+	ExpectInvalid(TEXT("a buffer declared twice"), [](UDreamPassPipeline& P) { const FDreamPassBufferDesc Copy = P.Buffers[0]; P.Buffers.Add(Copy); });
 	ExpectInvalid(TEXT("a buffer named like a built-in one"), [](UDreamPassPipeline& P) { P.Buffers[0].Name = UE::DreamPass::BuiltinBuffers::SceneDepth; });
 	ExpectInvalid(TEXT("'.Previous' of a buffer without history"), [](UDreamPassPipeline& P) { P.Passes[0].Reads.Add(MakeBinding(TEXT("Old"), TEXT("Grab"), true)); });
 	ExpectInvalid(TEXT("a fullscreen pass with nothing to draw"), [](UDreamPassPipeline& P) { P.Passes[0].Kind = EDreamPassKind::Fullscreen; });
