@@ -5583,231 +5583,231 @@
   "key": "CreatePipelineFailed",
   "src": "The pass pipeline for '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 978
+  "line": 983
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "ExportFormatRefused",
   "src": "Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read an exported buffer as a float texture, which an integer or a depth buffer cannot be. Export a float or normalized buffer, or drop Export.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 658
+  "line": 659
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "ExportTargetDeleted",
   "src": "'{0}' was deleted: its buffer is no longer exported.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 524
+  "line": 525
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "ExportTargetFailed",
   "src": "The render target of the exported buffer '{0}' could not be created or reused. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 1083
+  "line": 1088
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "ExportTargetKept",
   "src": "'{0}' was left in place although its buffer is no longer exported: {1}. Delete it by hand once nothing reads it.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 536
+  "line": 537
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "ExportTargetKeptNoDelete",
   "src": "it could not be deleted here",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 539
+  "line": 540
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "ExportTargetKeptReferenced",
   "src": "it is still referenced by {0}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 540
+  "line": 541
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "LayerUnknown",
   "src": "Pass '{0}' selects the layer '{1}', which is not one of the project's pass layers (Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names).",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 797
+  "line": 798
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "NeedsCustomPass",
   "src": "'{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 942
+  "line": 943
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "ParameterDefaultFailed",
   "src": "The default of '{0}' could not be applied: {1}.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 613
+  "line": 614
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "PassMaterialMissing",
   "src": "The material '{0}' of pass '{1}' does not load; compile the source that builds it, or correct the Material key.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 731
+  "line": 732
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "PayloadUnmapped",
   "src": "'{1}' is not a {0} the Custom Pass runtime knows; the pipeline was not built. This is a compiler gap: the binder should have refused it.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 558
+  "line": 559
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "PipelineDestinationFailed",
   "src": "'{0}' does not resolve to a valid asset path. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 952
+  "line": 953
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "PipelineEmitCancelled",
   "src": "Building '{0}' was cancelled; the pipeline, its slots and its render targets are as they were before this compile.",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 1104
+  "line": 1109
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "SavePipelineFailedSaveOrForce",
   "src": "'{0}' was built but could not be saved with its render targets; its slots are already in the registry. In this session the pipeline in memory is current, so a plain compile of its source skips it: save it, or compile the source again with -Force. {1}",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 1192
+  "line": 1197
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatBlend",
   "src": "blend mode",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 829
+  "line": 830
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatConstantType",
   "src": "param constant type",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 717
+  "line": 718
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatCull",
   "src": "cull mode",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 825
+  "line": 826
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatDepth",
   "src": "depth mode",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 820
+  "line": 821
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatDispatch",
   "src": "dispatch mode",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 763
+  "line": 764
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatFilter",
   "src": "filter term",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 780
+  "line": 781
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatFormat",
   "src": "buffer format",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 634
+  "line": 635
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatInjection",
   "src": "injection point",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 567
+  "line": 568
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatKind",
   "src": "pass kind",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 674
+  "line": 675
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatMeshMode",
   "src": "mesh mode",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 816
+  "line": 817
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatNanite",
   "src": "Nanite policy",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 848
+  "line": 849
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatParamSource",
   "src": "param source",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 706
+  "line": 707
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatParameterType",
   "src": "parameter type",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 606
+  "line": 607
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatPassInjection",
   "src": "injection point",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 680
+  "line": 681
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatRequirement",
   "src": "requirement",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 589
+  "line": 590
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatResolution",
   "src": "buffer resolution",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 638
+  "line": 639
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatUsage",
   "src": "mesh usage",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 839
+  "line": 840
  },
  {
   "ns": "DreamShader.Emitter.PassPipeline",
   "key": "WhatView",
   "src": "view kind",
   "file": "DreamShaderCompiler\\Private\\Emitter\\DreamShaderIREmitterPassPipeline.cpp",
-  "line": 576
+  "line": 577
  },
  {
   "ns": "DreamShader.Format",
@@ -9517,63 +9517,63 @@
   "key": "ComputeSlotWord",
   "src": "Compute",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassPipelines.cpp",
-  "line": 462
+  "line": 463
  },
  {
   "ns": "DreamShader.Pass.Pipelines",
   "key": "PixelSlotWord",
   "src": "Pixel",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassPipelines.cpp",
-  "line": 462
+  "line": 463
  },
  {
   "ns": "DreamShader.Pass.Pipelines",
   "key": "RegistryMoveAsideFailed",
   "src": "The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was reset. Another process holding one of the two files open is the usual reason; a read-only one is reported before this.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassPipelines.cpp",
-  "line": 424
+  "line": 425
  },
  {
   "ns": "DreamShader.Pass.Pipelines",
   "key": "RegistryUnreadableForTool",
   "src": "The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry -Rebuild' replaces a registry that does not parse.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassPipelines.cpp",
-  "line": 354
+  "line": 355
  },
  {
   "ns": "DreamShader.Pass.Pipelines",
   "key": "SlotCheckNeedsCustomPass",
   "src": "HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to pre-check them for.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassPipelines.cpp",
-  "line": 500
+  "line": 501
  },
  {
   "ns": "DreamShader.Pass.Pipelines",
   "key": "SlotCheckNoDestination",
   "src": "'{0}' does not resolve to an asset path ({1}), so its HLSL slots could not be pre-checked.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassPipelines.cpp",
-  "line": 532
+  "line": 533
  },
  {
   "ns": "DreamShader.Pass.Pipelines",
   "key": "SlotCheckNoIR",
   "src": "'{0}' did not get as far as its pipeline, so its HLSL slots could not be pre-checked.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassPipelines.cpp",
-  "line": 513
+  "line": 514
  },
  {
   "ns": "DreamShader.Pass.Pipelines",
   "key": "SlotCheckNothing",
   "src": "'{0}' has no HLSL pass, so there is no slot to pre-check; its materials are checked by the sources that build them.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassPipelines.cpp",
-  "line": 555
+  "line": 559
  },
  {
   "ns": "DreamShader.Pass.Pipelines",
   "key": "SnapshotMissingReserved",
   "src": "{0} slot {1} ({2}, pass '{3}') names snapshot files that are not on disk, so it is now reserved and compiles to the empty stub: a registry that includes a missing file fails the global shader compile. Compile '{4}' to give the pass its snapshot back, and commit the Slots folder with the registry.",
   "file": "DreamShaderCompiler\\Private\\Pass\\DreamShaderPassPipelines.cpp",
-  "line": 461
+  "line": 462
  },
  {
   "ns": "DreamShader.Pass.Settings",
