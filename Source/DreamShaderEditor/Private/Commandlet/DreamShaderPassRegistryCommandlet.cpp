@@ -130,8 +130,10 @@ namespace UE::DreamShader::Editor::Private
 					{
 						break;
 					}
+					// At startup the DreamShaderPass module takes such a section out of the registry file (DreamShaderPassModule.cpp,
+					// DropSectionsWithMissingSnapshots); only a registry file it cannot rewrite leaves the global shaders failing.
 					Sink.Warning(TEXT("DSH9208"), NoSpan, FText::Format(
-						LOCTEXT("SnapshotMissing", "The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the registry file includes it: the global shaders fail to compile at the next start. Compile '{4}', or run 'dsc pass-registry --rebuild'; commit the Slots folder with the registry."),
+						LOCTEXT("SnapshotMissingDroppedAtStart", "The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the registry file includes it: the next start takes the slot's section out of the registry file, and the pass does nothing until its source is compiled again -- unless the registry file is read-only, and then the global shaders fail to compile, which is fatal. Compile '{4}', or run 'dsc pass-registry -Rebuild'; commit the Slots folder with the registry."),
 						TableWord(Slot.bCompute),
 						FText::AsNumber(Slot.Slot),
 						FText::FromString(Slot.Pass),
@@ -181,7 +183,7 @@ namespace UE::DreamShader::Editor::Private
 			if (!::UE::DreamShader::Editor::Compiler::DescribeDreamPassRegistry(/*bClassify*/ true, Report, LoadError))
 			{
 				Sink.Error(TEXT("DSH9200"), NoSpan, FText::Format(
-					LOCTEXT("RegistryUnreadable", "The Custom Pass slot registry cannot be read: {0}. 'dsc pass-registry --rebuild' moves it aside and gives every HLSL pass a slot again."),
+					LOCTEXT("RegistryUnreadable", "The Custom Pass slot registry cannot be read: {0}. 'dsc pass-registry -Rebuild' moves it aside and gives every HLSL pass a slot again."),
 					FText::FromString(LoadError)));
 				::UE::DreamShader::Editor::Compiler::LogLang2Diagnostics(Sink, FString());
 				LogPassRegistrySummary(false, TEXT("DreamShader pass-registry: the registry could not be read.")); /* I18N-EXEMPT: machine-readable verdict line */
@@ -198,7 +200,7 @@ namespace UE::DreamShader::Editor::Private
 			int32 Garbage = 0;
 			CountTables(Report, Compute, Pixel, Garbage);
 			LogPassRegistrySummary(true, FString::Printf( /* I18N-EXEMPT: machine-readable verdict line */
-				TEXT("DreamShader pass-registry: %d of %d compute slot(s), %d of %d pixel slot(s) taken; %d to collect with --gc."),
+				TEXT("DreamShader pass-registry: %d of %d compute slot(s), %d of %d pixel slot(s) taken; %d to collect with -Gc."),
 				Compute,
 				Report.ComputeSlotCount,
 				Pixel,
@@ -246,7 +248,7 @@ namespace UE::DreamShader::Editor::Private
 			int32 Freed = 0;
 			const bool bOk = CollectGarbage(/*bWarnMissingSnapshots*/ true, Sink, Freed);
 			::UE::DreamShader::Editor::Compiler::LogLang2Diagnostics(Sink, FString());
-			LogPassRegistrySummary(bOk, FString::Printf(TEXT("DreamShader pass-registry --gc: %d slot(s) freed."), Freed)); /* I18N-EXEMPT: machine-readable verdict line */
+			LogPassRegistrySummary(bOk, FString::Printf(TEXT("DreamShader pass-registry -Gc: %d slot(s) freed."), Freed)); /* I18N-EXEMPT: machine-readable verdict line */
 			return bOk;
 		}
 
@@ -354,7 +356,7 @@ namespace UE::DreamShader::Editor::Private
 			if (!::UE::DreamShader::Editor::Compiler::ResetUnreadableDreamPassRegistry(MovedTo, Sink))
 			{
 				::UE::DreamShader::Editor::Compiler::LogLang2Diagnostics(Sink, FString());
-				LogPassRegistrySummary(false, TEXT("DreamShader pass-registry --rebuild: the unreadable registry could not be reset.")); /* I18N-EXEMPT: machine-readable verdict line */
+				LogPassRegistrySummary(false, TEXT("DreamShader pass-registry -Rebuild: the unreadable registry could not be reset.")); /* I18N-EXEMPT: machine-readable verdict line */
 				return false;
 			}
 			if (!MovedTo.IsEmpty())
@@ -436,7 +438,7 @@ namespace UE::DreamShader::Editor::Private
 
 			::UE::DreamShader::Editor::Compiler::LogLang2Diagnostics(Sink, FString());
 			LogPassRegistrySummary(bOk, FString::Printf( /* I18N-EXEMPT: machine-readable verdict line */
-				TEXT("DreamShader pass-registry --rebuild: %d .dsp compiled, %d failed, %d slot(s) freed, %d slot(s) reserved for a missing snapshot."),
+				TEXT("DreamShader pass-registry -Rebuild: %d .dsp compiled, %d failed, %d slot(s) freed, %d slot(s) reserved for a missing snapshot."),
 				Compiled,
 				Failed.Num(),
 				Freed,

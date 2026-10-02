@@ -1389,7 +1389,7 @@ namespace UE::DreamShader::Editor::Private
 						Bridge->UpdateDiagnosticsFile();
 						if (UE::DreamShader::IsDreamShaderPipelineFile(SourceFile))
 						{
-							// Its slots stay in the registry until `dsc pass-registry --gc` collects them.
+							// Its slots stay in the registry until `dsc pass-registry -Gc` collects them.
 							Bridge->RefreshPassShaderWatchers();
 						}
 					}

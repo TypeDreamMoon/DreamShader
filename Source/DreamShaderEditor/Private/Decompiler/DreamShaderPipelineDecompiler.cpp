@@ -227,7 +227,7 @@ namespace UE::DreamShader::Editor::Private
 					if (Texture && Texture->GetMaterialType() != MCT_Texture2D)
 					{
 						Diagnostics.Warning(TEXT("DSH9218"), FLangSpan(), FText::Format(
-							LOCTEXT("TextureDefaultNot2D", "The parameter '{0}' defaults to '{1}', which is not a 2D texture; a '.dsp' declares every texture parameter 'Texture2D', so the text may not build until the default is one."),
+							LOCTEXT("TextureDefaultNot2DKept", "The parameter '{0}' defaults to '{1}', which is not a 2D texture. A '.dsp' declares every texture parameter 'Texture2D', and the text does so here too, keeping this default; it builds as it is."),
 							FText::FromString(Out.Name),
 							FText::FromString(Texture->GetPathName())));
 					}

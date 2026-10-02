@@ -1637,11 +1637,13 @@ namespace UE::DreamShader::Editor::Private
 		RootObject->SetArrayField(TEXT("builtinBuffers"), MakeStringValuesJson(BuiltinBuffers));
 		RootObject->SetStringField(TEXT("weightParameter"), UE::DreamPass::WeightParameterName.ToString());
 
-		// The project's half: the names `Layer(...)` takes, in bit order. A name not in the table is an error (V1).
+		// The project's half: the names `Layer(...)` takes, in bit order. A name not in the table is an error (V1). The first
+		// MaxLayers only, as the compiler hands the binder (DSH4412): a name past them has no bit.
 		TArray<FString> LayerNames;
-		for (const FName Layer : UDreamPassSettings::Get().LayerNames)
+		const TArray<FName>& LayerTable = UDreamPassSettings::Get().LayerNames;
+		for (int32 LayerIndex = 0; LayerIndex < LayerTable.Num() && LayerIndex < UDreamPassSettings::MaxLayers; ++LayerIndex)
 		{
-			LayerNames.Add(Layer.ToString());
+			LayerNames.Add(LayerTable[LayerIndex].ToString());
 		}
 		RootObject->SetArrayField(TEXT("layerNames"), MakeStringValuesJson(LayerNames));
 
