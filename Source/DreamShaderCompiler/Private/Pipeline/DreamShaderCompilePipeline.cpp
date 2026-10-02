@@ -129,9 +129,12 @@ namespace UE::DreamShader::Editor::Compiler
 			// Both languages' opaque-body triggers: the front end decides per declaration which one a header uses.
 			return UE::DreamShader::EDreamShaderPreprocessDialect::Mixed;
 
+		case Lang::ELangFileKind::Dsp:
+			// Lang2, and its `hlsl { }` blocks are opaque: their `#if` is the shader compiler's.
+			return UE::DreamShader::EDreamShaderPreprocessDialect::Pipeline;
+
 		case Lang::ELangFileKind::Dss:
 		case Lang::ELangFileKind::Dsi:
-		case Lang::ELangFileKind::Dsp:
 		case Lang::ELangFileKind::Unknown:
 			return UE::DreamShader::EDreamShaderPreprocessDialect::Lang2;
 		}

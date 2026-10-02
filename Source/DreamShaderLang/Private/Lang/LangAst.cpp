@@ -51,6 +51,7 @@ namespace UE::DreamShader::Lang
 		case ENodeKind::PragmaDecl:          return TEXT("PragmaDecl");
 		case ENodeKind::BufferDecl:          return TEXT("BufferDecl");
 		case ENodeKind::PassDecl:            return TEXT("PassDecl");
+		case ENodeKind::HlslBlockDecl:       return TEXT("HlslBlockDecl");
 		}
 
 		return TEXT("Unknown");

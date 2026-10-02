@@ -373,6 +373,7 @@ namespace UE::DreamShader::Lang::Private
 
 			case ENodeKind::BufferDecl:
 			case ENodeKind::PassDecl:
+			case ENodeKind::HlslBlockDecl:
 				// The parser makes these in a `.dsp` only; one here came in through an `#include` of a `.dsp`.
 				ReportPipelineDeclarationOutsideDsp(*Decl);
 				break;

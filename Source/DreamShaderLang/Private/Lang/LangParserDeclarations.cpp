@@ -970,20 +970,27 @@ namespace UE::DreamShader::Lang::Private
 		}
 	}
 
-	bool FLangParser::CaptureRawBody(FString& OutRaw, FLangSpan& OutSpan)
+	bool FLangParser::CaptureRawBody(FString& OutRaw, FLangSpan& OutSpan, const ERawBodyKind Kind)
 	{
+		const bool bHlsl = Kind == ERawBodyKind::Hlsl;
 		if (!Check(ELangTokenKind::LeftBrace))
 		{
-			return Expect(ELangTokenKind::LeftBrace, TEXT("DSH3206"), LOCTEXT("ExpectedBodyOpen", "'{' to open the function body"));
+			return bHlsl
+				? Expect(ELangTokenKind::LeftBrace, TEXT("DSH2313"), LOCTEXT("ExpectedHlslBlockOpen", "'{' after 'hlsl' to open a block of HLSL"))
+				: Expect(ELangTokenKind::LeftBrace, TEXT("DSH3206"), LOCTEXT("ExpectedBodyOpen", "'{' to open the function body"));
 		}
 
 		const FLangToken& Open = Advance();
+		const int32 OpenLine = Open.Span.Line;
 		int32 Depth = 1;
 		while (Depth > 0)
 		{
 			if (AtEnd())
 			{
-				return FailAtEnd(LOCTEXT("WhileParsingRawBody", "a function body"));
+				// The block runs to the end of the file, so its end says nothing; where it opened does.
+				return bHlsl
+					? FailAtEnd(FText::Format(LOCTEXT("WhileParsingHlslBlock", "the 'hlsl' block opened on line {0}, which nothing closes"), FText::AsNumber(OpenLine, &FNumberFormattingOptions::DefaultNoGrouping())))
+					: FailAtEnd(LOCTEXT("WhileParsingRawBody", "a function body"));
 			}
 			const FLangToken& Token = Advance();
 			if (Token.Kind == ELangTokenKind::LeftBrace)
@@ -1356,8 +1363,12 @@ namespace UE::DreamShader::Lang::Private
 			break;
 
 		case ELangTokenKind::Identifier:
-			// `buffer` and `pass` are declaration words of a `.dsp` and of nothing else: in every other file they are
-			// identifiers like any other (IsAtPipelineDeclarationWord asks the file kind).
+			// `buffer`, `pass` and `hlsl` are declaration words of a `.dsp` and of nothing else: in every other file they
+			// are identifiers like any other (IsAtPipelineDeclarationWord and IsAtHlslBlockWord ask the file kind).
+			if (IsAtHlslBlockWord())
+			{
+				return ParseHlslBlockDecl(MoveTemp(Doc));
+			}
 			if (IsAtPipelineDeclarationWord())
 			{
 				return Token.Text.Equals(TEXT("buffer"), ESearchCase::CaseSensitive)

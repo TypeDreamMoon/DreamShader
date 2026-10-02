@@ -803,7 +803,20 @@ namespace UE::DreamShader::Lang::Private::ParserTrivia
 					if (Statement.IsValid())
 					{
 						AddAnchor(*Statement, Statement->Span.Offset);
+						// An `hlsl` block's comments are HLSL's, part of RawBody.
+						if (Statement->StmtKind == EPassStmtKind::Hlsl && Statement->BodySpan.Length > 0)
+						{
+							OpaqueBodies.Add(Statement->BodySpan);
+						}
 					}
+				}
+				return;
+			}
+			if (const FHlslBlockDecl* HlslBlock = Node.As<FHlslBlockDecl>())
+			{
+				if (HlslBlock->BodySpan.Length > 0)
+				{
+					OpaqueBodies.Add(HlslBlock->BodySpan);
 				}
 				return;
 			}
@@ -1061,12 +1074,12 @@ namespace UE::DreamShader::Lang
 	namespace
 	{
 		/**
-		 * The spans of a module's `/// @custom` bodies, braces included.
+		 * The spans of a module's `/// @custom` bodies and `.dsp` `hlsl` blocks, braces included.
 		 *
-		 * A `@custom` body is opaque HLSL. The parser lexes it only far enough to find the brace
-		 * that closes it and then slices the text straight out of the source, so what the lexer
-		 * made of the characters in between was never used for anything. Its complaints about them
-		 * -- a `@` in a macro, a `$`, a `'`, a `#` that is not the first thing on its line -- are
+		 * A `@custom` body is opaque HLSL, and so is an `hlsl` block. The parser lexes it only far enough
+		 * to find the brace that closes it and then slices the text straight out of the source, so what
+		 * the lexer made of the characters in between was never used for anything. Its complaints about
+		 * them -- a `@` in a macro, a `$`, a `'`, a `#` that is not the first thing on its line -- are
 		 * therefore not facts about the program: they are this front end objecting to a language
 		 * that is not its own. `dsc check --shaders` is what gets to complain about that text.
 		 */
@@ -1079,6 +1092,24 @@ namespace UE::DreamShader::Lang
 				if (Function.bOpaqueBody && Function.BodySpan.Length > 0)
 				{
 					Spans.Add(Function.BodySpan);
+				}
+			});
+			Module.ForEachDecl(ENodeKind::HlslBlockDecl, [&Spans](const FDecl& Decl)
+			{
+				const FHlslBlockDecl& Block = static_cast<const FHlslBlockDecl&>(Decl);
+				if (Block.BodySpan.Length > 0)
+				{
+					Spans.Add(Block.BodySpan);
+				}
+			});
+			Module.ForEachDecl(ENodeKind::PassDecl, [&Spans](const FDecl& Decl)
+			{
+				for (const TUniquePtr<FPassStmt>& Statement : static_cast<const FPassDecl&>(Decl).Statements)
+				{
+					if (Statement.IsValid() && Statement->StmtKind == EPassStmtKind::Hlsl && Statement->BodySpan.Length > 0)
+					{
+						Spans.Add(Statement->BodySpan);
+					}
 				}
 			});
 			return Spans;

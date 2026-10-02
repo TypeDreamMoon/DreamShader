@@ -531,6 +531,12 @@ namespace UE::DreamShader::Lang
 			void PrintBufferDecl(const FBufferDecl& Decl, int32 IndentLevel);
 			/** `.dsp`: `pass Name : kind`, the block, each statement with its own comments, the block's inner comments. */
 			void PrintPassDecl(const FPassDecl& Decl, int32 IndentLevel);
+			void PrintHlslBlockDecl(const FHlslBlockDecl& Decl, int32 IndentLevel);
+			/**
+			 * `{`, the captured text, `}`: an opaque body or block, never re-indented. Byte for byte, or with its line breaks
+			 * written as the printer's (bPrinterNewLines): an `hlsl` block may come from another file, a decompiled asset's.
+			 */
+			void AppendRawBody(int32 IndentLevel, const FString& RawBody, bool bPrinterNewLines = false);
 			/** One pass statement as its line, `;` included. */
 			static FString PrintPassStatementText(const FPassStmt& Statement);
 
@@ -834,6 +840,9 @@ namespace UE::DreamShader::Lang
 			case ENodeKind::PassDecl:
 				PrintPassDecl(static_cast<const FPassDecl&>(Decl), IndentLevel);
 				break;
+			case ENodeKind::HlslBlockDecl:
+				PrintHlslBlockDecl(static_cast<const FHlslBlockDecl&>(Decl), IndentLevel);
+				break;
 			default:
 				break;
 			}
@@ -999,18 +1008,41 @@ namespace UE::DreamShader::Lang
 
 			if (Decl.bOpaqueBody)
 			{
-				// A `/// @custom` body is HLSL handed to the shader compiler, not DreamShaderLang:
-				// braces back around the captured text, byte for byte, no re-indentation. RawBody
-				// carries its own line terminators, which is why this bypasses AppendLine.
-				Out += MakeIndent(FMath::Max(IndentLevel, 0));
-				Out += TEXT("{");
-				Out += Decl.RawBody;
-				Out += TEXT("}");
-				Out += Options.NewLine;
+				// A `/// @custom` body is HLSL handed to the shader compiler, not DreamShaderLang.
+				AppendRawBody(IndentLevel, Decl.RawBody);
 				return;
 			}
 
 			PrintBlock(*Decl.Body, IndentLevel);
+		}
+
+		void FLangPrinter::AppendRawBody(int32 IndentLevel, const FString& RawBody, const bool bPrinterNewLines)
+		{
+			// Braces back around the captured text, no re-indentation. RawBody carries its own line breaks,
+			// which is why this bypasses AppendLine. A `@custom` body keeps them byte for byte; an `hlsl` block
+			// writes them with the printer's terminator, as a comment is written, so a block from another file
+			// does not mix two kinds into this one.
+			FString Body = RawBody;
+			if (bPrinterNewLines)
+			{
+				Body.ReplaceInline(TEXT("\r\n"), TEXT("\n"), ESearchCase::CaseSensitive);
+				if (!Options.NewLine.Equals(TEXT("\n"), ESearchCase::CaseSensitive))
+				{
+					Body.ReplaceInline(TEXT("\n"), *Options.NewLine, ESearchCase::CaseSensitive);
+				}
+			}
+			Out += MakeIndent(FMath::Max(IndentLevel, 0));
+			Out += TEXT("{");
+			Out += Body;
+			Out += TEXT("}");
+			Out += Options.NewLine;
+		}
+
+		void FLangPrinter::PrintHlslBlockDecl(const FHlslBlockDecl& Decl, int32 IndentLevel)
+		{
+			// HLSL for the shader compiler, as a `@custom` body is: the word on its own line, the block verbatim.
+			AppendLine(IndentLevel, TEXT("hlsl"));
+			AppendRawBody(IndentLevel, Decl.RawBody, /* bPrinterNewLines */ true);
 		}
 
 		void FLangPrinter::PrintStructDecl(const FStructDecl& Decl, int32 IndentLevel)
@@ -1167,6 +1199,10 @@ namespace UE::DreamShader::Lang
 			case EPassStmtKind::Param:
 				return FString::Printf(TEXT("param %s = %s;"), *Statement.Name, *PrintOperand(Statement.Value.Get(), AssignmentPrecedence));
 
+			// More than one line; PrintPassDecl writes the block after this, its first (AppendRawBody).
+			case EPassStmtKind::Hlsl:
+				return TEXT("hlsl");
+
 			case EPassStmtKind::Setting:
 			default:
 				return FString::Printf(TEXT("%s = %s;"), *Statement.Name, *PrintOperand(Statement.Value.Get(), AssignmentPrecedence));
@@ -1194,6 +1230,11 @@ namespace UE::DreamShader::Lang
 
 				PrintLeadingComments(*Statement, nullptr, IndentLevel + 1);
 				AppendLine(IndentLevel + 1, PrintPassStatementText(*Statement));
+				if (Statement->StmtKind == EPassStmtKind::Hlsl)
+				{
+					// The pass's HLSL, verbatim, as a file-level block is.
+					AppendRawBody(IndentLevel + 1, Statement->RawBody, /* bPrinterNewLines */ true);
+				}
 				AppendTrailingComment(*Statement);
 			}
 

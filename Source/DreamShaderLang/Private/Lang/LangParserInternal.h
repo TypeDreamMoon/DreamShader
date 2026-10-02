@@ -154,12 +154,21 @@ namespace UE::DreamShader::Lang::Private
 		bool ParseType(FTypeRef& OutType);
 		/** Zero or more `[expr]` / `[]` after a declarator name. */
 		bool ParseArrayDimensions(TArray<FExprPtr>& OutDimensions);
+		/** What CaptureRawBody is capturing, for its two messages. */
+		enum class ERawBodyKind : uint8
+		{
+			/** A `/// @custom` function's body. */
+			Function,
+			/** A `.dsp`'s `hlsl { }` block, at file scope or in a pass. */
+			Hlsl,
+		};
 		/**
 		 * At a `{`: captures the text between the braces verbatim (string- and comment-aware brace
 		 * matching over the TOKENS, so a `}` inside a string or a comment does not end the body) and
-		 * consumes through the closing `}`. OutSpan covers both braces.
+		 * consumes through the closing `}`. OutSpan covers both braces. Kind Hlsl expects the `{` right
+		 * after an `hlsl` word (DSH2313), which is the token before the cursor.
 		 */
-		bool CaptureRawBody(FString& OutRaw, FLangSpan& OutSpan);
+		bool CaptureRawBody(FString& OutRaw, FLangSpan& OutSpan, ERawBodyKind Kind = ERawBodyKind::Function);
 		/** Fills Category / Scalar / Texture / Rows / Cols from a spelling. Unknown names become Named. */
 		static void ClassifyTypeName(const FString& Name, FTypeRef& InOutType);
 		static bool IsBuiltinTypeName(const FString& Name);
@@ -174,6 +183,10 @@ namespace UE::DreamShader::Lang::Private
 
 		/** In a `.dsp` (and outside the 1.x front end), at the identifier `buffer` or `pass` at declaration start. */
 		bool IsAtPipelineDeclarationWord() const;
+		/** In a `.dsp` (and outside the 1.x front end), at the identifier `hlsl`: the start of an inline HLSL block. */
+		bool IsAtHlslBlockWord() const;
+		/** `.dsp`, at `hlsl` at file scope: `hlsl { ... }`, the text between the braces verbatim. Null after reporting. */
+		FDeclPtr ParseHlslBlockDecl(FDocBlock&& Doc);
 		/** `.dsp`, at `buffer`: `buffer Name : Format[(Key = Value, ...)];`. Null after reporting. */
 		FDeclPtr ParseBufferDecl(FDocBlock&& Doc);
 		/** `.dsp`, at `pass`: `pass Name : kind { ... }`. A statement that fails is skipped; the block still parses. Null after reporting. */

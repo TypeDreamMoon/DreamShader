@@ -222,6 +222,8 @@ namespace UE::DreamShader::Lang
 		BufferDecl,
 		/** `.dsp` only: `pass Name : kind { ... }`. */
 		PassDecl,
+		/** `.dsp` only: `hlsl { ... }` at file scope, the HLSL the file's inline passes share. */
+		HlslBlockDecl,
 	};
 
 	DREAMSHADERLANG_API const TCHAR* LexToString(ENodeKind Kind);
@@ -876,6 +878,8 @@ namespace UE::DreamShader::Lang
 		Write,
 		/** `param Target = Expression;` */
 		Param,
+		/** `hlsl { ... }`: the pass's own HLSL, captured verbatim (FPassStmt::RawBody). */
+		Hlsl,
 	};
 
 	/** `.dsp` only: one statement of a `pass` block. */
@@ -899,6 +903,12 @@ namespace UE::DreamShader::Lang
 		bool bPrevious = false;
 		/** `.Previous`, the dot included; empty when absent. */
 		FLangSpan PreviousSpan;
+		/**
+		 * Hlsl: the text between the braces, verbatim and exclusive of them -- HLSL for the shader compiler, never parsed as
+		 * DreamShaderLang; BodySpan covers the braces. Name is `hlsl` and NameSpan the word.
+		 */
+		FString RawBody;
+		FLangSpan BodySpan;
 	};
 
 	/** `.dsp` only: `pass Name : kind { statements }`. */
@@ -915,6 +925,22 @@ namespace UE::DreamShader::Lang
 		/** In source order. A statement that failed to parse is absent; the rest of the block still is here. */
 		TArray<TUniquePtr<FPassStmt>> Statements;
 		/** `{` to `}` inclusive. Comments after the last statement are this node's FLangTrivia::Inner. */
+		FLangSpan BodySpan;
+	};
+
+	/**
+	 * `.dsp` only: `hlsl { ... }` at file scope -- HLSL every inline pass of the file is compiled with (its shared functions),
+	 * and the entries that passes name with `Entry = X;` alone. Captured verbatim, as a `/// @custom` body is.
+	 */
+	struct FHlslBlockDecl final : FDecl
+	{
+		static constexpr ENodeKind StaticKind = ENodeKind::HlslBlockDecl;
+		FHlslBlockDecl() : FDecl(StaticKind) {}
+
+		/** The word `hlsl`. */
+		FLangSpan KeywordSpan;
+		/** The text between the braces, verbatim and exclusive of them; BodySpan covers the braces. */
+		FString RawBody;
 		FLangSpan BodySpan;
 	};
 

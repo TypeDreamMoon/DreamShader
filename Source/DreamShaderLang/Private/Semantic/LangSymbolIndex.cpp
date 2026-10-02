@@ -638,6 +638,9 @@ namespace UE::DreamShader::Lang::Private
 			case EPassStmtKind::Param:
 				CollectExprReferences(Statement.Value.Get(), File, Groups);
 				break;
+			case EPassStmtKind::Hlsl:
+				// HLSL, whose names are the shader compiler's.
+				break;
 			case EPassStmtKind::Setting:
 				// The keys whose values name a declaration: a bool parameter, a buffer, an own depth buffer. The others
 				// are spellings of the language (an injection point, a mode, a filter's layers).

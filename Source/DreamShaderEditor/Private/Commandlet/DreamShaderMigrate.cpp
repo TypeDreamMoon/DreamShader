@@ -68,6 +68,8 @@ namespace UE::DreamShader::Editor::Private
 				return ::UE::DreamShader::EDreamShaderPreprocessDialect::Legacy;
 			case Lang::ELangFileKind::Dsh:
 				return ::UE::DreamShader::EDreamShaderPreprocessDialect::Mixed;
+			case Lang::ELangFileKind::Dsp:
+				return ::UE::DreamShader::EDreamShaderPreprocessDialect::Pipeline;
 			default:
 				return ::UE::DreamShader::EDreamShaderPreprocessDialect::Lang2;
 			}

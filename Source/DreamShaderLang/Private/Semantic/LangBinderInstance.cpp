@@ -238,6 +238,7 @@ namespace UE::DreamShader::Lang::Private
 
 			case ENodeKind::BufferDecl:
 			case ENodeKind::PassDecl:
+			case ENodeKind::HlslBlockDecl:
 				ReportPipelineDeclarationOutsideDsp(*Decl);
 				break;
 

@@ -1,23 +1,27 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The `.dsp` half of the 2.0 parser: the two declarations a Custom Pass pipeline adds to the language,
+// The `.dsp` half of the 2.0 parser: the declarations a Custom Pass pipeline adds to the language,
 //
 //   buffer <Name> : <Format>[(<Key> = <Value>, ...)];
-//   pass <Name> : <kind> { <Key> = <Value>; read [<Slot> =] <Buffer>[.Previous]; write [<Slot> =] <Buffer>; param <P> = <E>; }
+//   pass <Name> : <kind> { <Key> = <Value>; read [<Slot> =] <Buffer>[.Previous]; write [<Slot> =] <Buffer>; param <P> = <E>; hlsl { ... } }
+//   hlsl { ... }
 //
 // and nothing else -- `#pragma pipeline` is read with the other pragmas (LangParserDeclarations.cpp), `uniform`
-// and `static const` are the ordinary declarations, values are the ordinary expression grammar.
+// and `static const` are the ordinary declarations, values are the ordinary expression grammar. An `hlsl` block, in a
+// pass or at file scope, is HLSL for the shader compiler (DreamShader_Plan/10): captured verbatim as a `/// @custom`
+// body is, braces matched over the tokens, and never parsed; what it holds is the binder's to judge.
 //
-// `buffer` and `pass` are keywords only at the start of a declaration in a `.dsp`, and `read`, `write` and `param`
-// only at the start of a statement in a pass block -- always there, whatever follows, since no pass has a setting by
-// those names: `read;` is a binding that names no buffer (DSH2304), not a setting without '=' (DSH2302). The lexer
-// knows none of them, so a `.dss` that names a variable `buffer` or a parameter `pass` reads exactly as it did. Outside
-// a `.dsp` the one thing this unit does is put a better message on text that was always a syntax error (DSH3310).
+// `buffer`, `pass` and `hlsl` are keywords only at the start of a declaration in a `.dsp`, and `read`, `write`, `param`
+// and `hlsl` only at the start of a statement in a pass block -- always there, whatever follows, since no pass has a
+// setting by those names: `read;` is a binding that names no buffer (DSH2304), not a setting without '=' (DSH2302). The
+// lexer knows none of them, so a `.dss` that names a variable `buffer` or a parameter `pass` reads exactly as it did.
+// Outside a `.dsp` the one thing this unit does is put a better message on text that was always a syntax error (DSH3310).
 //
 // Recovery follows ParseBlock: a statement that fails costs that statement, the block keeps parsing, and a pass whose
 // `}` is missing ends where the next `buffer` / `pass` declaration starts on a line of its own.
 //
-// Diagnostics owned by this unit: DSH2300-DSH2312 and DSH2314 (pass blocks, bindings, buffer argument lists),
+// Diagnostics owned by this unit: DSH2300-DSH2314 (pass blocks, bindings, buffer argument lists, the `{` of an `hlsl`
+// block -- DSH2313, raised for us by CaptureRawBody),
 // DSH3300-DSH3305 (the declaration heads) and DSH3310 (a `.dsp` declaration in another kind of file). DSH2150 is
 // raised for us by FailAtEnd; `#pragma pipeline` is DSH3202's, with the other pragmas (LangParserDeclarations.cpp).
 
@@ -52,6 +56,12 @@ namespace UE::DreamShader::Lang::Private
 				|| Text.Equals(TEXT("write"), ESearchCase::CaseSensitive)
 				|| Text.Equals(TEXT("param"), ESearchCase::CaseSensitive);
 		}
+
+		/** `hlsl`: the word that opens a block of inline HLSL, at file scope or at the start of a pass statement. */
+		static bool IsHlslBlockWordText(const FString& Text)
+		{
+			return Text.Equals(TEXT("hlsl"), ESearchCase::CaseSensitive);
+		}
 	}
 
 	bool FLangParser::IsAtPipelineDeclarationWord() const
@@ -62,6 +72,16 @@ namespace UE::DreamShader::Lang::Private
 		}
 		const FLangToken& Token = Current();
 		return Token.Kind == ELangTokenKind::Identifier && LangParserPipelinePrivate::IsPipelineDeclarationWordText(Token.Text);
+	}
+
+	bool FLangParser::IsAtHlslBlockWord() const
+	{
+		if (FileKind != ELangFileKind::Dsp || IsLegacyMode())
+		{
+			return false;
+		}
+		const FLangToken& Token = Current();
+		return Token.Kind == ELangTokenKind::Identifier && LangParserPipelinePrivate::IsHlslBlockWordText(Token.Text);
 	}
 
 	bool FLangParser::ReportPipelineDeclarationOutsideDsp(const FTypeRef& Type, const FString& Name, const FLangSpan& NameSpan)
@@ -168,6 +188,27 @@ namespace UE::DreamShader::Lang::Private
 
 		Buffer->Span = SpanFrom(StartIndex);
 		return Buffer;
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// hlsl
+	// ---------------------------------------------------------------------------------------------
+
+	FDeclPtr FLangParser::ParseHlslBlockDecl(FDocBlock&& Doc)
+	{
+		const int32 StartIndex = GetTokenIndex();
+		const FLangToken& Word = Advance(); // hlsl
+
+		TUniquePtr<FHlslBlockDecl> Block = MakeUnique<FHlslBlockDecl>();
+		Block->Doc = MoveTemp(Doc);
+		Block->KeywordSpan = Word.Span;
+		if (!CaptureRawBody(Block->RawBody, Block->BodySpan, ERawBodyKind::Hlsl))
+		{
+			return nullptr;
+		}
+
+		Block->Span = SpanFrom(StartIndex);
+		return Block;
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -282,7 +323,7 @@ namespace UE::DreamShader::Lang::Private
 				TEXT("DSH2312"),
 				First.Span,
 				FText::Format(
-					LOCTEXT("DirectiveInsidePass", "The line '#{0}' cannot appear inside a pass block; a pass holds settings and 'read', 'write' and 'param' lines."),
+					LOCTEXT("DirectiveInsidePass", "The line '#{0}' cannot appear inside a pass block; a pass holds settings, 'read', 'write' and 'param' lines and an 'hlsl' block, where HLSL's own '#' lines go."),
 					FText::FromString(First.Text)));
 			Advance();
 			return nullptr;
@@ -294,13 +335,30 @@ namespace UE::DreamShader::Lang::Private
 				TEXT("DSH2301"),
 				First.Span,
 				FText::Format(
-					LOCTEXT("ExpectedPassStatement", "Expected a setting ('Key = Value;') or a 'read', 'write' or 'param' line in a pass block, found {0}."),
+					LOCTEXT("ExpectedPassStatement", "Expected a setting ('Key = Value;'), a 'read', 'write' or 'param' line or an 'hlsl' block in a pass block, found {0}."),
 					DescribeToken(First)));
 			return nullptr;
 		}
 
 		TUniquePtr<FPassStmt> Statement = MakeUnique<FPassStmt>();
 		const FString Word = First.Text;
+
+		if (LangParserPipelinePrivate::IsHlslBlockWordText(Word))
+		{
+			// `hlsl { ... }`: the pass's own HLSL, verbatim. A block, so no `;` follows it; and its `#` lines are HLSL's,
+			// consumed with the rest of the block, so DSH2312 is not said about them.
+			Statement->StmtKind = EPassStmtKind::Hlsl;
+			Statement->Name = Word;
+			Statement->NameSpan = First.Span;
+			Advance(); // hlsl
+			if (!CaptureRawBody(Statement->RawBody, Statement->BodySpan, ERawBodyKind::Hlsl))
+			{
+				return nullptr;
+			}
+			Statement->Span = SpanFrom(StartIndex);
+			return Statement;
+		}
+
 		// A binding whatever follows the word: no pass key is spelled read, write or param (LangPipelineInternal.h, the key
 		// tables), so `read;` or `param = 3;` is a binding missing its name -- DSH2304 / DSH2306 below -- and never a setting.
 		const bool bBindingWord = LangParserPipelinePrivate::IsPassBindingWordText(Word);
