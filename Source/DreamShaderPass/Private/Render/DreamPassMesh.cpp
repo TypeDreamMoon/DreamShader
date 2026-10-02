@@ -1388,9 +1388,9 @@ namespace UE::DreamPass
 		if (Rules.OverrideProxy)
 		{
 			// While the override compiles, every primitive drawn with it would be skipped as if its usage flag were off;
-			// the pass waits instead, as a fullscreen pass waits for its material.
-			const FMaterial* OverrideMaterial = Rules.OverrideProxy->GetMaterialNoFallback(View.GetFeatureLevel());
-			if (!OverrideMaterial || !OverrideMaterial->IsRenderingThreadShaderMapComplete())
+			// the pass waits instead, as a fullscreen pass waits for its material. No primitive draws with the override,
+			// so this asking is also what starts its compile.
+			if (!IsMaterialReadyToDraw(*Rules.OverrideProxy, View.GetFeatureLevel()))
 			{
 				WarnOnce(Label + TEXT(".Mesh.Compiling"),
 					FString::Printf(TEXT("DreamPass: %s waits for its override material to finish compiling (reported once)."), *Label));

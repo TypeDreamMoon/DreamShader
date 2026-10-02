@@ -11,6 +11,7 @@
 #include "ScreenPass.h"
 
 class FDreamPassSceneViewExtension;
+class FMaterialRenderProxy;
 struct FPostProcessMaterialInputs;
 
 /**
@@ -163,6 +164,12 @@ namespace UE::DreamPass
 	bool ExecuteMeshPass(FExecuteContext& Context);
 	bool ExecuteClearPass(FExecuteContext& Context);
 	bool ExecuteCopyPass(FExecuteContext& Context);
+
+	/**
+	 * Whether a material a pass draws with has every shader of its map at FeatureLevel, asked the way the engine asks
+	 * (Render/DreamPassFullscreen.cpp). False while it compiles -- and the asking starts the compile in the editor.
+	 */
+	bool IsMaterialReadyToDraw(const FMaterialRenderProxy& Proxy, ERHIFeatureLevel::Type FeatureLevel);
 
 	// --- debugging (Render/DreamPassVisualize.cpp) --------------------------------------------------------------
 

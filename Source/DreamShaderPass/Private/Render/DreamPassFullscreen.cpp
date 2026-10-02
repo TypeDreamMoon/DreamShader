@@ -27,6 +27,18 @@ namespace UE::DreamPass
 		}
 	}
 
+	bool IsMaterialReadyToDraw(const FMaterialRenderProxy& Proxy, ERHIFeatureLevel::Type FeatureLevel)
+	{
+		// In the editor a material's shader map compiles on demand: its jobs are submitted when
+		// FMaterialRenderProxy::GetMaterialWithFallback meets the map incomplete (E/Private/Materials/MaterialRenderProxy.cpp:
+		// 870-893). A material only a pass draws with -- an override, a pass's post-process material -- is met by no primitive
+		// and no post-process volume, so asking GetMaterialNoFallback alone would wait for a compile nothing ever starts.
+		// A fallback answer means not yet; it is assigned only when the chain is walked.
+		const FMaterialRenderProxy* Fallback = nullptr;
+		Proxy.GetMaterialWithFallback(FeatureLevel, Fallback);
+		return Fallback == nullptr;
+	}
+
 	bool ExecuteFullscreenMaterialPass(FExecuteContext& Context)
 	{
 		const FSnapshotPass& Pass = Context.Pass;
@@ -36,11 +48,12 @@ namespace UE::DreamPass
 
 		const UMaterialInterface* Material = Pass.Material;
 		const FMaterialRenderProxy* Proxy = Material ? Material->GetRenderProxy() : nullptr;
-		const FMaterial* Resource = Proxy ? Proxy->GetMaterialNoFallback(View.GetFeatureLevel()) : nullptr;
+		const bool bReady = Proxy && IsMaterialReadyToDraw(*Proxy, View.GetFeatureLevel());
+		const FMaterial* Resource = bReady ? Proxy->GetMaterialNoFallback(View.GetFeatureLevel()) : nullptr;
 
 		// While a material compiles, the engine's pass would quietly draw the default post-process material in its
 		// place (R/Private/PostProcess/PostProcessMaterial.cpp, GetMaterialInfo); the pass waits instead.
-		if (!Resource || !Resource->IsRenderingThreadShaderMapComplete())
+		if (!Resource)
 		{
 			WarnOnce(Context.Pipeline.DebugName + TEXT(".") + Pass.Name.ToString() + TEXT(".Compiling"),
 				FString::Printf(TEXT("DreamPass: %s.%s waits for its material to finish compiling (reported once)."), *Context.Pipeline.DebugName, *Pass.Name.ToString()));
