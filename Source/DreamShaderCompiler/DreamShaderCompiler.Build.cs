@@ -27,14 +27,25 @@ public class DreamShaderCompiler : ModuleRules
 		// JSON), MaterialEditor (MaterialEditingLibrary.h), Projects (Interfaces/IPluginManager.h) and
 		// UnrealEd (Editor.h, Factories/MaterialFactoryNew.h, ObjectTools.h, FileHelpers.h, MaterialGraph/*).
 		// UnrealEd also keeps the shared PCH these files compiled with inside DreamShaderEditor.
+		//
+		// The `.dsp` half (Custom Pass pipelines): DreamShaderPass for the asset a `.dsp` compiles to, its
+		// settings and its slot paths (DREAMSHADER_WITH_CUSTOM_PASS is a public define of it); RenderCore, RHI and
+		// TargetPlatform for the HLSL slots -- the shader source mappings (AllShaderSourceDirectoryMappings), the
+		// pre-check's in-process compile (ShaderCompilerCore.h: PreprocessShader / CompileShader), the global shader
+		// types it finds by name, the shader platforms (RHIStrings.h, RHIGlobals.h) and the targeted shader formats
+		// (Interfaces/ITargetPlatformManagerModule.h). Private: no public header of this module names them.
 		PrivateDependencyModuleNames.AddRange(
 			new[]
 			{
 				"AssetRegistry",
 				"AssetTools",
+				"DreamShaderPass",
 				"Json",
 				"MaterialEditor",
 				"Projects",
+				"RenderCore",
+				"RHI",
+				"TargetPlatform",
 				"UnrealEd"
 			});
 	}
