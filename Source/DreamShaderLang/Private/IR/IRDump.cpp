@@ -528,6 +528,17 @@ namespace UE::DreamShader::IR
 			return FString::Join(Clauses, TEXT(" | "));
 		}
 
+		/** The lines a text spans: one more than its line feeds. */
+		static int32 CountIRDumpTextLines(const FString& Text)
+		{
+			int32 Count = 1;
+			for (const TCHAR Character : Text)
+			{
+				Count += Character == TEXT('\n') ? 1 : 0;
+			}
+			return Count;
+		}
+
 		/**
 		 * A PassPipeline product as text: no backend and no graph; the pipeline's keys, then one line per parameter and
 		 * buffer, and per pass its keys, its kind's settings and its bindings, every value as the binder settled it.
@@ -548,6 +559,11 @@ namespace UE::DreamShader::IR
 				Pipeline.Views.Num() > 0 ? *FString::Join(Pipeline.Views, TEXT("|")) : TEXT("Game|Editor"),
 				Pipeline.Requires.Num() > 0 ? *FString::Join(Pipeline.Requires, TEXT("|")) : TEXT("-"),
 				Pipeline.EnabledParameter.IsEmpty() ? TEXT("-") : *Pipeline.EnabledParameter));
+			if (Pipeline.bHasSharedHlsl)
+			{
+				// The file's `hlsl` block: where its text starts in the `.dsp`, and how long it is.
+				Lines.Add(FString::Printf(TEXT("  hlsl line=%d lines=%d"), Pipeline.SharedHlslLine, CountIRDumpTextLines(Pipeline.SharedHlsl)));
+			}
 
 			for (const FIRPassParameter& Parameter : Pipeline.Parameters)
 			{
@@ -619,6 +635,13 @@ namespace UE::DreamShader::IR
 				{
 					// The file on disk is this machine's; the virtual path is what the asset keeps.
 					Lines.Add(FString::Printf(TEXT("    shader %s virtual=%s entry=%s"), *QuoteIRDumpText(Pass.ShaderReference), *QuoteIRDumpText(Pass.ShaderVirtualPath), *Pass.Entry));
+				}
+				if (PassHlslSource::IsInline(Pass.HlslSource))
+				{
+					// HLSL in the `.dsp`: an entry of the file's block, or the pass's own block from the line of its `{`.
+					Lines.Add(Pass.HlslSource.Equals(PassHlslSource::Shared, ESearchCase::CaseSensitive)
+						? FString::Printf(TEXT("    hlsl Shared entry=%s"), *Pass.Entry)
+						: FString::Printf(TEXT("    hlsl %s line=%d lines=%d entry=%s"), *Pass.HlslSource, Pass.InlineHlslLine, CountIRDumpTextLines(Pass.InlineHlsl), Pass.Entry.IsEmpty() ? TEXT("-") : *Pass.Entry));
 				}
 				if (Pass.Kind.Equals(TEXT("compute"), ESearchCase::CaseSensitive))
 				{
@@ -719,6 +742,10 @@ namespace UE::DreamShader::IR
 			Writer.KeyStringArray(TEXT("views"), Pipeline.Views);
 			Writer.KeyStringArray(TEXT("requires"), Pipeline.Requires);
 			Writer.KeyString(TEXT("enabled"), Pipeline.EnabledParameter);
+			if (Pipeline.bHasSharedHlsl)
+			{
+				Writer.KeyInt(TEXT("sharedHlslLine"), Pipeline.SharedHlslLine);
+			}
 
 			Writer.Key(TEXT("parameters"));
 			Writer.BeginArray();
@@ -780,6 +807,11 @@ namespace UE::DreamShader::IR
 				Writer.KeyString(TEXT("shader"), Pass.ShaderReference);
 				Writer.KeyString(TEXT("shaderVirtualPath"), Pass.ShaderVirtualPath);
 				Writer.KeyString(TEXT("entry"), Pass.Entry);
+				if (PassHlslSource::IsInline(Pass.HlslSource))
+				{
+					Writer.KeyString(TEXT("hlslSource"), Pass.HlslSource);
+					Writer.KeyInt(TEXT("hlslLine"), Pass.InlineHlslLine);
+				}
 				if (Pass.Kind.Equals(TEXT("compute"), ESearchCase::CaseSensitive))
 				{
 					Writer.Key(TEXT("threads"));

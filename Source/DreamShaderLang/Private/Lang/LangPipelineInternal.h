@@ -426,11 +426,15 @@ namespace UE::DreamShader::Lang::Private::PipelineVocabulary
 		return Pass.Writes.Num() > 0 ? Pass.Writes[0].Buffer : FString();
 	}
 
-	/** A pass whose code is a `.usf`: compute, or fullscreen with `Shader =`. Its bindings are HLSL names. */
+	/**
+	 * A pass whose code is HLSL: compute, or fullscreen without a material -- with `Shader =`, or with its code in the `.dsp`
+	 * (FIRPass::HlslSource, DreamShader_Plan/10). Its bindings are HLSL names.
+	 */
 	inline bool IsHlslPass(const IR::FIRPass& Pass)
 	{
 		return Pass.Kind.Equals(PassKinds[Kind::Compute], ESearchCase::CaseSensitive)
-			|| (Pass.Kind.Equals(PassKinds[Kind::Fullscreen], ESearchCase::CaseSensitive) && PassHasShader(Pass) && !PassHasMaterial(Pass));
+			|| (Pass.Kind.Equals(PassKinds[Kind::Fullscreen], ESearchCase::CaseSensitive) && !PassHasMaterial(Pass)
+				&& (PassHasShader(Pass) || IR::PassHlslSource::IsInline(Pass.HlslSource)));
 	}
 
 	/**

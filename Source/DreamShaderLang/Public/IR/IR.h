@@ -532,6 +532,18 @@ namespace UE::DreamShader::IR
 		FString ShaderFilePath;
 		FString Entry;
 
+		/**
+		 * fullscreen and compute, the HLSL ones: where the code comes from (IR::PassHlslSource). File: `Shader = "..."`.
+		 * Block: the pass's own `hlsl { }` holding declarations, Entry one of its functions (`Main` when not written). Body:
+		 * its own `hlsl { }` holding the statements of the entry, whose signature the compiler writes; Entry empty. Shared:
+		 * `Entry = X;` alone, X a function of the file's `hlsl { }`. Empty for every other pass.
+		 */
+		FString HlslSource;
+		/** Block and Body: the text between the braces of the pass's `hlsl { }`, verbatim. */
+		FString InlineHlsl;
+		/** Block and Body: the line of that block's `{` in the `.dsp`, which is the line InlineHlsl starts on. */
+		int32 InlineHlslLine = 0;
+
 		/** compute: `Threads`, from the source's [numthreads] when not written. */
 		int32 ThreadsX = 8;
 		int32 ThreadsY = 8;
@@ -583,7 +595,32 @@ namespace UE::DreamShader::IR
 		TArray<FIRPassParameter> Parameters;
 		TArray<FIRPassBuffer> Buffers;
 		TArray<FIRPass> Passes;
+
+		/**
+		 * The file's `hlsl { }` block: whether the file has one, the text between its braces verbatim, and the line of its
+		 * `{`. Its shared functions are compiled with every inline pass; its entries only with the passes that name them.
+		 */
+		bool bHasSharedHlsl = false;
+		FString SharedHlsl;
+		int32 SharedHlslLine = 0;
 	};
+
+	/** The spellings of FIRPass::HlslSource. */
+	namespace PassHlslSource
+	{
+		inline const TCHAR* const File = TEXT("File");
+		inline const TCHAR* const Block = TEXT("Block");
+		inline const TCHAR* const Body = TEXT("Body");
+		inline const TCHAR* const Shared = TEXT("Shared");
+
+		/** Block, Body or Shared: the code is in the `.dsp`. */
+		inline bool IsInline(const FString& Source)
+		{
+			return Source.Equals(Block, ESearchCase::CaseSensitive)
+				|| Source.Equals(Body, ESearchCase::CaseSensitive)
+				|| Source.Equals(Shared, ESearchCase::CaseSensitive);
+		}
+	}
 
 	struct FIRProduct
 	{

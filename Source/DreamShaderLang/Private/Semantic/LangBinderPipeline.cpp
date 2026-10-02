@@ -25,18 +25,29 @@
 // buffer formats) are handed out here (GetDreamShaderPassInjectionNames / GetDreamShaderPassFormatNames).
 //
 // Diagnostics owned by this file: DSH3311-DSH3317 (what a `.dsp` holds, and `#pragma pipeline` or a pipeline declaration
-// outside one), DSH4400-DSH4408, DSH4410-DSH4415 (names and references) and DSH7300-DSH7322, DSH7325-DSH7347,
-// DSH7350-DSH7357, DSH7359, DSH7360 (the rules V1-V13). DSH4409 is not used: a pass's `.usf` may live
-// anywhere (the engine compiles a snapshot of it under /DreamPassUser), so "not under a mapped directory" is no error.
+// outside one), DSH4400-DSH4408, DSH4410-DSH4415 (names and references), DSH7300-DSH7322, DSH7325-DSH7347,
+// DSH7350-DSH7357, DSH7359, DSH7360 (the rules V1-V13) and DSH7361, DSH7362, DSH7364-DSH7370 (inline HLSL). DSH4409 is
+// not used: a pass's `.usf` may live anywhere (the engine compiles a snapshot of it under /DreamPassUser), so "not under a
+// mapped directory" is no error.
 //
 // A fullscreen pass with `Shader =` always runs in the pixel slot (FDreamPassPS), whatever its output count, and a
 // compute pass in the compute slot: both have the slot limits (8 inputs, 4 outputs, 16 parameter vectors). Only a
 // fullscreen pass with `Material =` has the post-process material's 5 input slots (DreamShader_Plan/09, deviation table).
+//
+// A pass's HLSL may be in the `.dsp` itself (DreamShader_Plan/10): its own `hlsl { }` block, holding whole functions
+// (Block; the entry is `Main` unless `Entry` names another) or the statements of the entry (Body; the compiler writes the
+// function around them); or `Entry = X;` alone, X a function of the file's one `hlsl { }` block (Shared). The blocks are
+// read with the character scanner of Lang/LangHlslText.h -- which form a block is, its functions, their `[numthreads]` --
+// and what would break a slot the compiler builds from them is refused here: the shared code of the file's block naming
+// what a pass's slot #defines (it is compiled into every inline pass's slot), an entry called from anywhere (it is in its
+// own passes' slots only), a binding taking a name of the body form. The rest of the text is the shader compiler's, at the
+// pre-check, which reports into the `.dsp`.
 
 #include "LangBinderInternal.h"
 
 #include "Lang/LangPipelineInternal.h"
 #include "Lang/LangPipelineSource.h"
+#include "Lang/LangHlslText.h"
 
 #include "IR/IR.h"
 #include "IR/IRTypes.h"
@@ -277,6 +288,102 @@ namespace UE::DreamShader::Lang::Private
 			return Count;
 		}
 
+		// ------------------------------------------------------------------------------ inline HLSL text
+
+		/** Offset into the text of an `hlsl` block as a span of the `.dsp`: the text starts right after the block's `{`. */
+		static FLangSpan SpanInHlslBlock(const FLangSpan& BodySpan, const FString& RawBody, const int32 Offset, const int32 Length)
+		{
+			FLangSpan Span;
+			Span.Offset = BodySpan.Offset + 1 + Offset;
+			Span.Length = FMath::Max(Length, 1);
+			Span.Line = BodySpan.Line;
+			Span.Column = BodySpan.Column + 1;
+			const int32 Last = FMath::Clamp(Offset, 0, RawBody.Len());
+			for (int32 Index = 0; Index < Last; ++Index)
+			{
+				if (RawBody[Index] == TCHAR('\n'))
+				{
+					++Span.Line;
+					Span.Column = 1;
+				}
+				else
+				{
+					++Span.Column;
+				}
+			}
+			return Span;
+		}
+
+		/** A 1-based line of an `hlsl` block's text as a span of the `.dsp`: its first character that is not blank, to its end. */
+		static FLangSpan SpanOfHlslBlockLine(const FLangSpan& BodySpan, const FString& RawBody, const int32 Line)
+		{
+			int32 Start = 0;
+			int32 Current = 1;
+			while (Current < Line && Start < RawBody.Len())
+			{
+				if (RawBody[Start++] == TCHAR('\n'))
+				{
+					++Current;
+				}
+			}
+			while (Start < RawBody.Len() && (RawBody[Start] == TCHAR(' ') || RawBody[Start] == TCHAR('\t')))
+			{
+				++Start;
+			}
+			int32 End = Start;
+			while (End < RawBody.Len() && RawBody[End] != TCHAR('\n') && RawBody[End] != TCHAR('\r'))
+			{
+				++End;
+			}
+			return SpanInHlslBlock(BodySpan, RawBody, Start, End - Start);
+		}
+
+		/**
+		 * One name the slot's registry #defines for a pass (DreamShaderCompiler, Pass/DreamShaderPassSlotRegistry.cpp,
+		 * BuildSlotSection): a read as itself, <Name>Size and <Name>UVRect, a compute write as itself and <Name>Size, a pixel
+		 * write as <Name>Size, a param as itself, and the Entry, renamed to the slot's entry point.
+		 */
+		struct FSlotDefinedName
+		{
+			FString Name;
+			/** What the pass wrote that defines it: `read Source`, `param Radius`, empty for the Entry. */
+			FString Binding;
+		};
+
+		static void CollectSlotDefinedNames(const IR::FIRPass& Pass, TArray<FSlotDefinedName>& OutNames)
+		{
+			const bool bCompute = Pass.Kind.Equals(PassKinds[Kind::Compute], ESearchCase::CaseSensitive);
+			for (const IR::FIRPassBinding& Binding : Pass.Reads)
+			{
+				const FString Written = FString::Printf(TEXT("read %s"), *Binding.Slot);
+				OutNames.Add({ Binding.Slot, Written });
+				OutNames.Add({ Binding.Slot + TEXT("Size"), Written });
+				OutNames.Add({ Binding.Slot + TEXT("UVRect"), Written });
+			}
+			for (const IR::FIRPassBinding& Binding : Pass.Writes)
+			{
+				const FString Written = FString::Printf(TEXT("write %s"), *Binding.Slot);
+				if (bCompute)
+				{
+					OutNames.Add({ Binding.Slot, Written });
+				}
+				OutNames.Add({ Binding.Slot + TEXT("Size"), Written });
+			}
+			for (const IR::FIRPassParam& Param : Pass.Params)
+			{
+				OutNames.Add({ Param.Target, FString::Printf(TEXT("param %s"), *Param.Target) });
+			}
+			if (!Pass.Entry.IsEmpty())
+			{
+				OutNames.Add({ Pass.Entry, FString() });
+			}
+		}
+
+		static bool ContainsExactly(const TArray<FString>& Names, const FString& Name)
+		{
+			return Names.ContainsByPredicate([&Name](const FString& Candidate) { return Candidate.Equals(Name, ESearchCase::CaseSensitive); });
+		}
+
 		/** Where a value of one pass is: its source, scaled and offset (or the plain constant). */
 		struct FPipelineParamForm
 		{
@@ -297,6 +404,8 @@ namespace UE::DreamShader::Lang::Private
 		struct FPipelinePassKeys
 		{
 			TArray<TPair<FString, const FPassStmt*>> Written;
+			/** The pass's `hlsl { }` block; null without one. */
+			const FPassStmt* Hlsl = nullptr;
 
 			const FPassStmt* Find(const TCHAR* Key) const
 			{
@@ -422,6 +531,16 @@ namespace UE::DreamShader::Lang::Private
 			void CheckPassAgainstReferences(IR::FIRPass& Pass, int32 KindIndex, const FPassDecl& Decl, const FPipelinePassKeys& Keys);
 			void ApplyBufferDefaults();
 
+			// -- inline HLSL (DreamShader_Plan/10)
+			void DeclareHlslBlock(const FHlslBlockDecl& Decl);
+			void BindPassHlsl(const IR::FIRPass& Pass, const FPassStmt& Statement, FPipelinePassKeys& Keys);
+			/** A fullscreen pass without a material, or a compute pass: where its code is (FIRPass::HlslSource), and that it is there. */
+			void ResolveHlslSource(IR::FIRPass& Pass, int32 KindIndex, const FPipelinePassKeys& Keys, const FLangSpan& NameSpan);
+			/** A Block or Shared pass's Entry in the scan of its block: defined there, and of the kind and group size the pass runs. */
+			void CheckInlineEntry(IR::FIRPass& Pass, int32 KindIndex, const FHlslTextScan& Scan, bool bShared, bool bEntryWritten, const FPipelinePassKeys& Keys, const FLangSpan& NameSpan);
+			/** After every pass: the shared code of the file's block against every inline pass's slot, and the calls of entries. */
+			void CheckSharedHlsl();
+
 			// -- across passes
 			void CheckFrame();
 			void CheckPassAtInjection(const IR::FIRPass& Pass, int32 PassIndex, int32 KindIndex, int32 InjectionIndex);
@@ -472,6 +591,10 @@ namespace UE::DreamShader::Lang::Private
 			/** Parallel to Payload.Passes. */
 			TArray<FPipelinePassKeys> PassKeys;
 			TArray<int32> PassKindIndices;
+
+			/** The file's `hlsl { }` block, and the scan of its text; null and empty without one. */
+			const FHlslBlockDecl* SharedHlslDecl = nullptr;
+			FHlslTextScan SharedScan;
 		};
 
 		// ------------------------------------------------------------------------------------- run
@@ -507,6 +630,9 @@ namespace UE::DreamShader::Lang::Private
 				case ENodeKind::PassDecl:
 					PassDecls.Add(static_cast<const FPassDecl*>(Decl));
 					break;
+				case ENodeKind::HlslBlockDecl:
+					DeclareHlslBlock(*static_cast<const FHlslBlockDecl*>(Decl));
+					break;
 				case ENodeKind::FunctionDecl:
 				case ENodeKind::StructDecl:
 				case ENodeKind::IncludeDecl:
@@ -527,6 +653,8 @@ namespace UE::DreamShader::Lang::Private
 			BindPragma();
 			BindBuffers();
 			BindPasses();
+			// Every pass bound: the file block's shared code is compiled into the slot of each one whose HLSL is inline.
+			CheckSharedHlsl();
 			ApplyBufferDefaults();
 			CheckFrame();
 			CheckBufferLifetimes();
@@ -611,7 +739,7 @@ namespace UE::DreamShader::Lang::Private
 					File,
 					Function->NameSpan,
 					FText::Format(
-						LOCTEXT("PipelineHoldsFunction", "A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations, and '{0}' is a function; write it in a '.dss' or a '.dsh', or in the '.usf' of a pass."),
+						LOCTEXT("PipelineHoldsFunction", "A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations and an 'hlsl' block, and '{0}' is a function outside it; an HLSL function goes in an 'hlsl { }' block, the file's or a pass's, and a DreamShaderLang one in a '.dss' or a '.dsh'."),
 						FText::FromString(Function->Name)));
 			}
 			else if (const FStructDecl* Struct = Decl.As<FStructDecl>())
@@ -621,7 +749,7 @@ namespace UE::DreamShader::Lang::Private
 					File,
 					Struct->NameSpan,
 					FText::Format(
-						LOCTEXT("PipelineHoldsStruct", "A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations, and 'struct {0}' declares a type; write it in a '.dsh'."),
+						LOCTEXT("PipelineHoldsStruct", "A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations and an 'hlsl' block, and 'struct {0}' declares a type outside it; an HLSL struct goes in an 'hlsl { }' block, and a DreamShaderLang one in a '.dsh'."),
 						FText::FromString(Struct->Name)));
 			}
 			else if (const FIncludeDecl* Include = Decl.As<FIncludeDecl>())
@@ -631,7 +759,7 @@ namespace UE::DreamShader::Lang::Private
 					File,
 					Include->PathSpan,
 					FText::Format(
-						LOCTEXT("PipelineHoldsInclude", "A '.dsp' includes nothing, and has no code that could use '{0}'; remove the include."),
+						LOCTEXT("PipelineHoldsInclude", "A '.dsp' includes no DreamShaderLang, and has no code that could use '{0}'; remove the include. A shader file the HLSL of a pass needs is included inside its 'hlsl { }' block."),
 						FText::FromString(Include->Path)));
 			}
 		}
@@ -1746,6 +1874,9 @@ namespace UE::DreamShader::Lang::Private
 				case EPassStmtKind::Param:
 					BindPassParam(Pass, *Statement);
 					break;
+				case EPassStmtKind::Hlsl:
+					BindPassHlsl(Pass, *Statement, Keys);
+					break;
 				}
 			}
 
@@ -2793,6 +2924,19 @@ namespace UE::DreamShader::Lang::Private
 				return nullptr;
 			};
 
+			// An `hlsl` block is the code of a pass that runs HLSL: compute, or fullscreen without a material (said below).
+			if (Keys.Hlsl && KindIndex != Kind::Fullscreen && KindIndex != Kind::Compute)
+			{
+				Diagnostics.Error(
+					TEXT("DSH7370"),
+					File,
+					Keys.Hlsl->NameSpan,
+					FText::Format(
+						LOCTEXT("HlslBlockInKind", "A {0} pass runs no HLSL of its own, so pass '{1}' cannot hold an 'hlsl' block."),
+						FText::FromString(PassKinds[KindIndex]),
+						FText::FromString(Pass.Name)));
+			}
+
 			switch (KindIndex)
 			{
 			case Kind::Fullscreen:
@@ -2809,25 +2953,20 @@ namespace UE::DreamShader::Lang::Private
 							LOCTEXT("FullscreenMaterialAndShader", "Fullscreen pass '{0}' draws a 'Material' or runs a 'Shader', and it names both."),
 							FText::FromString(Pass.Name)));
 				}
-				else if (!bMaterial && !bShader)
+				else if (bMaterial && Keys.Hlsl)
 				{
 					Diagnostics.Error(
-						TEXT("DSH7315"),
+						TEXT("DSH7370"),
 						File,
-						NameSpan,
+						Keys.Hlsl->NameSpan,
 						FText::Format(
-							LOCTEXT("FullscreenNothing", "Fullscreen pass '{0}' needs 'Material = \"...\"' (a Post Process material) or 'Shader = \"<file>.usf\"' with 'Entry'."),
+							LOCTEXT("HlslBlockWithMaterial", "Fullscreen pass '{0}' draws a material, and an 'hlsl' block is the code of a pass that runs HLSL of its own; remove the block, or 'Material' to run it."),
 							FText::FromString(Pass.Name)));
 				}
-				if (bShader && Pass.Entry.IsEmpty())
+				if (!bMaterial)
 				{
-					Diagnostics.Error(
-						TEXT("DSH7315"),
-						File,
-						Keys.SpanOf(TEXT("Shader"), NameSpan),
-						FText::Format(
-							LOCTEXT("ShaderNeedsEntry", "Pass '{0}' runs a shader file, and needs 'Entry = <function>' naming the function in it."),
-							FText::FromString(Pass.Name)));
+					// The pass runs HLSL: where its code is, and that it is somewhere (DSH7315 when it is nowhere).
+					ResolveHlslSource(Pass, KindIndex, Keys, NameSpan);
 				}
 				if (bMaterial && !Pass.Entry.IsEmpty())
 				{
@@ -2877,7 +3016,7 @@ namespace UE::DreamShader::Lang::Private
 								FText::AsNumber(MaxSlotInputs)));
 					}
 				}
-				else if (bShader)
+				else if (IsHlslPass(Pass))
 				{
 					if (Pass.Writes.Num() == 0)
 					{
@@ -2910,26 +3049,7 @@ namespace UE::DreamShader::Lang::Private
 
 			case Kind::Compute:
 			{
-				if (Pass.ShaderReference.IsEmpty())
-				{
-					Diagnostics.Error(
-						TEXT("DSH7315"),
-						File,
-						NameSpan,
-						FText::Format(
-							LOCTEXT("ComputeNoShader", "Compute pass '{0}' needs 'Shader = \"<file>.usf\"' and 'Entry = <function>'."),
-							FText::FromString(Pass.Name)));
-				}
-				else if (Pass.Entry.IsEmpty())
-				{
-					Diagnostics.Error(
-						TEXT("DSH7315"),
-						File,
-						Keys.SpanOf(TEXT("Shader"), NameSpan),
-						FText::Format(
-							LOCTEXT("ComputeNoEntry", "Compute pass '{0}' needs 'Entry = <function>' naming its '[numthreads]' function."),
-							FText::FromString(Pass.Name)));
-				}
+				ResolveHlslSource(Pass, KindIndex, Keys, NameSpan);
 				if (Pass.Writes.Num() == 0)
 				{
 					Diagnostics.Error(
@@ -3233,6 +3353,41 @@ namespace UE::DreamShader::Lang::Private
 				for (const IR::FIRPassParam& Param : Pass.Params)
 				{
 					CheckReserved(Param.Target, Param.Source.Span);
+				}
+
+				// The body form's own names (DreamShader_Plan/10 3.2), the parameters and locals of the function the compiler
+				// writes around the block: a binding of one of them would be a #define over it.
+				if (Pass.HlslSource.Equals(IR::PassHlslSource::Body, ESearchCase::CaseSensitive))
+				{
+					const TConstArrayView<const TCHAR*> BodyNames = GetDreamPassBodyFormNames(KindIndex == Kind::Compute);
+					const FString NameList = JoinNames(BodyNames);
+					const auto CheckBodyName = [this, &Pass, BodyNames, &NameList](const FString& Name, const FLangSpan& Span)
+					{
+						if (HasName(BodyNames, Name))
+						{
+							Diagnostics.Error(
+								TEXT("DSH7367"),
+								File,
+								Span,
+								FText::Format(
+									LOCTEXT("BodyFormName", "'{0}' is a name of pass '{1}', and its 'hlsl' block holds the statements of a function the compiler writes, which names its own values {2}; rename the binding."),
+									FText::FromString(Name),
+									FText::FromString(Pass.Name),
+									FText::FromString(NameList)));
+						}
+					};
+					for (const IR::FIRPassBinding& Binding : Pass.Reads)
+					{
+						CheckBodyName(Binding.Slot, Binding.Source.Span);
+					}
+					for (const IR::FIRPassBinding& Binding : Pass.Writes)
+					{
+						CheckBodyName(Binding.Slot, Binding.Source.Span);
+					}
+					for (const IR::FIRPassParam& Param : Pass.Params)
+					{
+						CheckBodyName(Param.Target, Param.Source.Span);
+					}
 				}
 
 				const FString MainEntry = KindIndex == Kind::Compute ? FString(TEXT("DreamPassMainCS")) : FString(TEXT("DreamPassMainPS"));
@@ -3691,6 +3846,387 @@ namespace UE::DreamShader::Lang::Private
 						}
 					}
 				}
+			}
+		}
+
+		// ------------------------------------------------------------------------------ inline HLSL
+
+		void FPipelineBinder::DeclareHlslBlock(const FHlslBlockDecl& Decl)
+		{
+			if (SharedHlslDecl)
+			{
+				Diagnostics.Error(
+					TEXT("DSH7362"),
+					File,
+					Decl.KeywordSpan,
+					FText::Format(
+						LOCTEXT("SecondFileHlslBlock", "This file already has an 'hlsl' block, on line {0}, and a '.dsp' has one: write every shared function and entry in it."),
+						FText::AsNumber(SharedHlslDecl->KeywordSpan.Line)));
+				return;
+			}
+			// A `///` block above it documents nothing; its words are the author's, its directives have no effect.
+			ReportDirectivesWithoutEffect(Decl.Doc, {}, LOCTEXT("WhereHlslBlock", "the file's 'hlsl' block"), /* bAfterBindDirectives */ false);
+
+			SharedHlslDecl = &Decl;
+			SharedScan = ScanHlslText(Decl.RawBody);
+			Payload.bHasSharedHlsl = true;
+			Payload.SharedHlsl = Decl.RawBody;
+			Payload.SharedHlslLine = Decl.BodySpan.Line;
+		}
+
+		void FPipelineBinder::BindPassHlsl(const IR::FIRPass& Pass, const FPassStmt& Statement, FPipelinePassKeys& Keys)
+		{
+			if (Keys.Hlsl)
+			{
+				Diagnostics.Error(
+					TEXT("DSH7361"),
+					File,
+					Statement.NameSpan,
+					FText::Format(
+						LOCTEXT("SecondPassHlslBlock", "Pass '{0}' holds a second 'hlsl' block, and the code of a pass is one block; the one on line {1} is it."),
+						FText::FromString(Pass.Name),
+						FText::AsNumber(Keys.Hlsl->NameSpan.Line)));
+				return;
+			}
+			Keys.Hlsl = &Statement;
+		}
+
+		void FPipelineBinder::ResolveHlslSource(IR::FIRPass& Pass, const int32 KindIndex, const FPipelinePassKeys& Keys, const FLangSpan& NameSpan)
+		{
+			const bool bCompute = KindIndex == Kind::Compute;
+			const FPassStmt* Block = Keys.Hlsl;
+			const FPassStmt* EntryKey = Keys.Find(TEXT("Entry"));
+
+			// ---- a shader file
+			if (!Pass.ShaderReference.IsEmpty())
+			{
+				Pass.HlslSource = IR::PassHlslSource::File;
+				if (Block)
+				{
+					Diagnostics.Error(
+						TEXT("DSH7364"),
+						File,
+						Block->NameSpan,
+						FText::Format(
+							LOCTEXT("ShaderAndHlslBlock", "Pass '{0}' runs the shader file '{1}' and holds an 'hlsl' block as well, and the code of a pass is in one place: remove 'Shader' to run the block, or the block to run the file."),
+							FText::FromString(Pass.Name),
+							FText::FromString(Pass.ShaderReference)));
+				}
+				if (Pass.Entry.IsEmpty())
+				{
+					Diagnostics.Error(
+						TEXT("DSH7315"),
+						File,
+						Keys.SpanOf(TEXT("Shader"), NameSpan),
+						bCompute
+							? FText::Format(
+								LOCTEXT("ComputeNoEntry", "Compute pass '{0}' needs 'Entry = <function>' naming its '[numthreads]' function."),
+								FText::FromString(Pass.Name))
+							: FText::Format(
+								LOCTEXT("ShaderNeedsEntry", "Pass '{0}' runs a shader file, and needs 'Entry = <function>' naming the function in it."),
+								FText::FromString(Pass.Name)));
+				}
+				return;
+			}
+
+			// ---- its own block
+			if (Block)
+			{
+				Pass.InlineHlsl = Block->RawBody;
+				Pass.InlineHlslLine = Block->BodySpan.Line;
+				const FHlslTextScan Scan = ScanHlslText(Block->RawBody);
+				if (!Scan.bHasDeclarations)
+				{
+					// The statements of the entry: the compiler writes the function, whose name the slot's own entry point is.
+					Pass.HlslSource = IR::PassHlslSource::Body;
+					if (EntryKey)
+					{
+						Diagnostics.Error(
+							TEXT("DSH7365"),
+							File,
+							EntryKey->Span,
+							FText::Format(
+								LOCTEXT("EntryWithBodyForm", "The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function the compiler writes, so 'Entry' has no function to name; remove it, or write whole functions in the block: '{1}'."),
+								FText::FromString(Pass.Name),
+								FText::FromString(bCompute
+									? TEXT("[numthreads(8, 8, 1)] void Main(uint3 Id : SV_DispatchThreadID) { ... }")
+									: TEXT("void Main(float4 SvPosition : SV_POSITION, out float4 Out : SV_Target0) { ... }"))));
+						Pass.Entry.Reset();
+					}
+					for (const int32 IncludeLine : Scan.IncludeLines)
+					{
+						Diagnostics.Error(
+							TEXT("DSH7366"),
+							File,
+							SpanOfHlslBlockLine(Block->BodySpan, Block->RawBody, IncludeLine),
+							FText::Format(
+								LOCTEXT("IncludeInBodyForm", "'#include' cannot stand among the statements of a function, and the 'hlsl' block of pass '{0}' holds the statements of its entry; include the file in the file's 'hlsl' block, or write whole functions in the pass's block."),
+								FText::FromString(Pass.Name)));
+					}
+					return;
+				}
+
+				Pass.HlslSource = IR::PassHlslSource::Block;
+				const bool bEntryWritten = !Pass.Entry.IsEmpty();
+				if (!bEntryWritten)
+				{
+					Pass.Entry = TEXT("Main");
+				}
+				CheckInlineEntry(Pass, KindIndex, Scan, /* bShared */ false, bEntryWritten, Keys, NameSpan);
+				return;
+			}
+
+			// ---- an entry of the file's block
+			if (!Pass.Entry.IsEmpty())
+			{
+				Pass.HlslSource = IR::PassHlslSource::Shared;
+				if (!SharedHlslDecl)
+				{
+					Diagnostics.Error(
+						TEXT("DSH4410"),
+						File,
+						Keys.SpanOf(TEXT("Entry"), NameSpan),
+						FText::Format(
+							LOCTEXT("SharedEntryWithoutBlock", "Pass '{0}' has no 'Shader' and no 'hlsl' block of its own, so 'Entry = {1}' names a function of the file's 'hlsl' block, and this '.dsp' has none; write the function in an 'hlsl { }' block at file scope, write the pass's code in an 'hlsl' block of its own, or give it 'Shader = \"<file>.usf\"'."),
+							FText::FromString(Pass.Name),
+							FText::FromString(Pass.Entry)));
+					return;
+				}
+				CheckInlineEntry(Pass, KindIndex, SharedScan, /* bShared */ true, /* bEntryWritten */ true, Keys, NameSpan);
+				return;
+			}
+
+			// ---- nowhere
+			Diagnostics.Error(
+				TEXT("DSH7315"),
+				File,
+				NameSpan,
+				bCompute
+					? FText::Format(
+						LOCTEXT("ComputeNoShader", "Compute pass '{0}' needs code to run: 'Shader = \"<file>.usf\"' with 'Entry = <function>', an 'hlsl { }' block of its own, or 'Entry' naming a function of the file's 'hlsl { }' block."),
+						FText::FromString(Pass.Name))
+					: FText::Format(
+						LOCTEXT("FullscreenNothing", "Fullscreen pass '{0}' needs code to run: 'Material = \"...\"' (a Post Process material), 'Shader = \"<file>.usf\"' with 'Entry', an 'hlsl { }' block of its own, or 'Entry' naming a function of the file's 'hlsl { }' block."),
+						FText::FromString(Pass.Name)));
+		}
+
+		void FPipelineBinder::CheckInlineEntry(IR::FIRPass& Pass, const int32 KindIndex, const FHlslTextScan& Scan, const bool bShared, const bool bEntryWritten, const FPipelinePassKeys& Keys, const FLangSpan& NameSpan)
+		{
+			const FLangSpan EntrySpan = bEntryWritten ? Keys.SpanOf(TEXT("Entry"), NameSpan) : (Keys.Hlsl ? Keys.Hlsl->NameSpan : NameSpan);
+			const FHlslTopLevelFunction* Function = Scan.FindFunction(Pass.Entry);
+			if (!Function)
+			{
+				Diagnostics.Error(
+					TEXT("DSH4410"),
+					File,
+					EntrySpan,
+					bShared
+						? FText::Format(
+							LOCTEXT("SharedEntryNotFound", "The file's 'hlsl' block does not define a function '{1}', which pass '{0}' names as its 'Entry'."),
+							FText::FromString(Pass.Name),
+							FText::FromString(Pass.Entry))
+						: bEntryWritten
+							? FText::Format(
+								LOCTEXT("BlockEntryNotFound", "The 'hlsl' block of pass '{0}' does not define a function '{1}', which 'Entry' names; the entry is a function of the block itself."),
+								FText::FromString(Pass.Name),
+								FText::FromString(Pass.Entry))
+							: FText::Format(
+								LOCTEXT("BlockMainNotFound", "The 'hlsl' block of pass '{0}' holds whole functions, and none is 'Main', the entry of a block when the pass writes no 'Entry'; name the entry function 'Main', or write 'Entry = <function>;'."),
+								FText::FromString(Pass.Name)));
+				return;
+			}
+
+			if (KindIndex == Kind::Compute)
+			{
+				if (Function->bComputeEntry)
+				{
+					if (!Pass.bThreadsWritten)
+					{
+						Pass.ThreadsX = Function->GroupSize.X;
+						Pass.ThreadsY = Function->GroupSize.Y;
+						Pass.ThreadsZ = Function->GroupSize.Z;
+					}
+					else if (Pass.ThreadsX != Function->GroupSize.X || Pass.ThreadsY != Function->GroupSize.Y || Pass.ThreadsZ != Function->GroupSize.Z)
+					{
+						// The dispatch is sized from Threads, the groups from [numthreads]: two answers mean a wrong dispatch.
+						Diagnostics.Error(
+							TEXT("DSH4413"),
+							File,
+							Keys.SpanOf(TEXT("Threads"), EntrySpan),
+							FText::Format(
+								LOCTEXT("InlineThreadsDisagree", "'Threads = uint3({0}, {1}, {2})' disagrees with the '[numthreads({3}, {4}, {5})]' in front of '{6}' in the '.dsp', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers."),
+								FText::AsNumber(Pass.ThreadsX), FText::AsNumber(Pass.ThreadsY), FText::AsNumber(Pass.ThreadsZ),
+								FText::AsNumber(Function->GroupSize.X), FText::AsNumber(Function->GroupSize.Y), FText::AsNumber(Function->GroupSize.Z),
+								FText::FromString(Pass.Entry)));
+					}
+				}
+				else if (!Pass.bThreadsWritten)
+				{
+					Diagnostics.Error(
+						TEXT("DSH4411"),
+						File,
+						EntrySpan,
+						FText::Format(
+							LOCTEXT("InlineEntryNoNumThreads", "'{0}' has no '[numthreads(x, y, z)]' in front of it that the compiler can read -- three whole numbers; write them so, or write 'Threads = uint3(x, y, z)' in pass '{1}'."),
+							FText::FromString(Pass.Entry),
+							FText::FromString(Pass.Name)));
+				}
+			}
+			else if (Function->bComputeEntry)
+			{
+				// A fullscreen pass runs its entry as the pixel shader of its slot (FDreamPassPS).
+				Diagnostics.Error(
+					TEXT("DSH4410"),
+					File,
+					EntrySpan,
+					FText::Format(
+						LOCTEXT("InlineEntryIsComputeShader", "'{0}' is a compute shader entry ('[numthreads]' is in front of it), and fullscreen pass '{1}' runs its entry as a pixel shader; name the pixel shader function, or make the pass 'compute'."),
+						FText::FromString(Pass.Entry),
+						FText::FromString(Pass.Name)));
+			}
+		}
+
+		void FPipelineBinder::CheckSharedHlsl()
+		{
+			// The entries of the file's block: what a Shared pass names. Exact spellings, as HLSL tells names apart.
+			TArray<FString> SharedEntries;
+			TArray<const IR::FIRPass*> SharedEntryPasses;
+			for (const IR::FIRPass& Pass : Payload.Passes)
+			{
+				if (Pass.HlslSource.Equals(IR::PassHlslSource::Shared, ESearchCase::CaseSensitive) && !Pass.Entry.IsEmpty() && !ContainsExactly(SharedEntries, Pass.Entry))
+				{
+					SharedEntries.Add(Pass.Entry);
+					SharedEntryPasses.Add(&Pass);
+				}
+			}
+			const auto FirstPassNaming = [&SharedEntries, &SharedEntryPasses](const FString& Entry) -> const IR::FIRPass*
+			{
+				for (int32 Index = 0; Index < SharedEntries.Num(); ++Index)
+				{
+					if (SharedEntries[Index].Equals(Entry, ESearchCase::CaseSensitive))
+					{
+						return SharedEntryPasses[Index];
+					}
+				}
+				return nullptr;
+			};
+			const auto ReportEntryCall = [this, &FirstPassNaming](const FHlslIdentifier& Identifier, const FLangSpan& Span)
+			{
+				const IR::FIRPass* Owner = FirstPassNaming(Identifier.Name);
+				Diagnostics.Error(
+					TEXT("DSH7369"),
+					File,
+					Span,
+					FText::Format(
+						LOCTEXT("SharedEntryCalled", "'{0}' is the entry of pass '{1}' in the file's 'hlsl' block, and is called here; an entry is compiled only into the slots of the passes that name it, so nothing else can call it. Move what it shares into a function of its own in the block, and call that."),
+						FText::FromString(Identifier.Name),
+						FText::FromString(Owner ? Owner->Name : FString())));
+			};
+
+			// ---- the passes' own blocks: none may call an entry of the file's block.
+			if (SharedEntries.Num() > 0)
+			{
+				for (int32 PassIndex = 0; PassIndex < Payload.Passes.Num() && PassIndex < PassKeys.Num(); ++PassIndex)
+				{
+					const FPassStmt* Block = PassKeys[PassIndex].Hlsl;
+					if (!Block || !IR::PassHlslSource::IsInline(Payload.Passes[PassIndex].HlslSource))
+					{
+						continue;
+					}
+					TArray<FHlslIdentifier> Identifiers;
+					FindHlslIdentifiers(Block->RawBody, Identifiers);
+					for (const FHlslIdentifier& Identifier : Identifiers)
+					{
+						if (Identifier.bFollowedByParenthesis && ContainsExactly(SharedEntries, Identifier.Name))
+						{
+							ReportEntryCall(Identifier, SpanInHlslBlock(Block->BodySpan, Block->RawBody, Identifier.Offset, Identifier.Name.Len()));
+						}
+					}
+				}
+			}
+
+			if (!SharedHlslDecl)
+			{
+				return;
+			}
+			const FString& Text = SharedHlslDecl->RawBody;
+
+			// What the slot of each inline pass #defines: the shared code is compiled into all of them, after the definitions.
+			struct FDefinedBy
+			{
+				FSlotDefinedName Name;
+				const IR::FIRPass* Pass = nullptr;
+			};
+			TArray<FDefinedBy> Defined;
+			for (const IR::FIRPass& Pass : Payload.Passes)
+			{
+				if (!IR::PassHlslSource::IsInline(Pass.HlslSource))
+				{
+					continue;
+				}
+				TArray<FSlotDefinedName> Names;
+				CollectSlotDefinedNames(Pass, Names);
+				for (FSlotDefinedName& Name : Names)
+				{
+					Defined.Add({ MoveTemp(Name), &Pass });
+				}
+			}
+
+			TArray<FHlslIdentifier> Identifiers;
+			FindHlslIdentifiers(Text, Identifiers);
+			TArray<FString> Reported;
+			for (const FHlslIdentifier& Identifier : Identifiers)
+			{
+				// The entry function the identifier is in, if it is in one.
+				const FHlslTopLevelFunction* InEntry = nullptr;
+				for (const FHlslTopLevelFunction& Function : SharedScan.Functions)
+				{
+					if (Identifier.Offset >= Function.DeclarationStart && Identifier.Offset < Function.End && ContainsExactly(SharedEntries, Function.Name))
+					{
+						InEntry = &Function;
+						break;
+					}
+				}
+				const FLangSpan Span = SpanInHlslBlock(SharedHlslDecl->BodySpan, Text, Identifier.Offset, Identifier.Name.Len());
+
+				if (ContainsExactly(SharedEntries, Identifier.Name) && Identifier.bFollowedByParenthesis)
+				{
+					// An entry's own name where it is defined; anything else followed by `(` is a call.
+					if (!(InEntry && InEntry->Name.Equals(Identifier.Name, ESearchCase::CaseSensitive)))
+					{
+						ReportEntryCall(Identifier, Span);
+					}
+					continue;
+				}
+				if (InEntry)
+				{
+					// An entry is compiled into its own passes' slots, where their names are what it is meant to use.
+					continue;
+				}
+
+				const FDefinedBy* Clash = Defined.FindByPredicate([&Identifier](const FDefinedBy& Candidate)
+				{
+					return Candidate.Name.Name.Equals(Identifier.Name, ESearchCase::CaseSensitive);
+				});
+				if (!Clash || ContainsExactly(Reported, Identifier.Name))
+				{
+					continue;
+				}
+				Reported.Add(Identifier.Name);
+				Diagnostics.Error(
+					TEXT("DSH7368"),
+					File,
+					Span,
+					Clash->Name.Binding.IsEmpty()
+						? FText::Format(
+							LOCTEXT("SharedCodeNamesEntry", "'{0}' is in the shared code of the file's 'hlsl' block, and is the entry of pass '{1}' as well, which the pass's slot renames to the slot's entry point with a #define; the shared code is compiled into that slot, after it. Rename it in the block."),
+							FText::FromString(Identifier.Name),
+							FText::FromString(Clash->Pass->Name))
+						: FText::Format(
+							LOCTEXT("SharedCodeNamesBinding", "'{0}' is in the shared code of the file's 'hlsl' block, and pass '{1}' defines it in its HLSL slot ('{2}'); the shared code is compiled into the slot of every pass whose HLSL is in the '.dsp', after those #defines. Rename it in the block: only an entry, compiled into the slots of the passes that name it, uses a pass's names."),
+							FText::FromString(Identifier.Name),
+							FText::FromString(Clash->Pass->Name),
+							FText::FromString(Clash->Name.Binding)));
 			}
 		}
 
@@ -4285,6 +4821,18 @@ namespace UE::DreamShader::Lang::Private
 
 	void FLangBinder::ReportPipelineDeclarationOutsideDsp(const FDecl& Decl)
 	{
+		if (const FHlslBlockDecl* Block = Decl.As<FHlslBlockDecl>())
+		{
+			Diagnostics.Error(
+				TEXT("DSH3312"),
+				CurrentFile,
+				Block->KeywordSpan,
+				FText::Format(
+					LOCTEXT("HlslBlockOutsideDsp", "An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only a '.dsp' file holds, and '{0}' is not one; a pipeline cannot be included."),
+					FText::FromString(FPaths::GetCleanFilename(RootModule.FilePath))));
+			return;
+		}
+
 		FString Word = TEXT("buffer");
 		FString Name;
 		FLangSpan Span = Decl.Span;
