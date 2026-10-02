@@ -1909,7 +1909,7 @@ namespace UE::DreamShader::Lang
 		 * A number as the comparison reads it: the shortest text of its float32, with -0 and +0 one value -- `Gain * -1.0`
 		 * folds to an offset of -0 and `0.0 - Gain` to +0, and the asset makes the same pass of either.
 		 */
-		static FString PipelineNumberText(const double Value)
+		static FString PipelineComparedNumberText(const double Value)
 		{
 			return FormatDreamShaderFloatLiteral(Value == 0.0 ? 0.0 : Value);
 		}
@@ -1949,7 +1949,7 @@ namespace UE::DreamShader::Lang
 			for (int32 Index = 0; Index < Width; ++Index)
 			{
 				Result += Index > 0 ? TEXT(", ") : TEXT("");
-				Result += PipelineNumberText(Channels[Index]);
+				Result += PipelineComparedNumberText(Channels[Index]);
 			}
 			return Result;
 		}
@@ -1982,7 +1982,7 @@ namespace UE::DreamShader::Lang
 				return FString::Printf(TEXT("%s = %s(%s)"), *Param.Target, *Type, *PipelineValueText(Param.Constant, Type));
 			}
 			const FString Source = Param.SourceKind.Equals(TEXT("Weight"), ESearchCase::CaseSensitive) ? FString(WeightParameterName) : Param.Parameter;
-			return FString::Printf(TEXT("%s = %s * %s + %s"), *Param.Target, *Source, *PipelineNumberText(Param.Multiplier), *PipelineNumberText(Param.Offset));
+			return FString::Printf(TEXT("%s = %s * %s + %s"), *Param.Target, *Source, *PipelineComparedNumberText(Param.Multiplier), *PipelineComparedNumberText(Param.Offset));
 		}
 
 		static FString PipelineFilterText(const TArray<IR::FIRPassFilterClause>& Filter)
