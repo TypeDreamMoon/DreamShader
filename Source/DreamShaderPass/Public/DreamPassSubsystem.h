@@ -7,6 +7,7 @@
 #include "DreamPassSubsystem.generated.h"
 
 class FDreamPassSceneViewExtension;
+class FOutputDevice;
 class UDreamPassPipeline;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
@@ -217,6 +218,9 @@ public:
 
 	/** The project settings' global pipelines were edited, or the module asked: loads them again. */
 	void RefreshGlobalPipelines();
+
+	/** `DreamPass.Dump`: every source, list and layer of this world, and what the last frame ran. */
+	void DumpState(FOutputDevice& Ar) const;
 
 private:
 	struct FSourceEntry

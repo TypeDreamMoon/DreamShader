@@ -1,5 +1,6 @@
 #include "DreamPassSubsystem.h"
 
+#include "DreamPassConsole.h"
 #include "DreamPassPipeline.h"
 #include "DreamPassSettings.h"
 #include "DreamShaderPassModule.h"
@@ -10,6 +11,12 @@
 #include "Engine/World.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
+#include "Misc/OutputDevice.h"
+#include "SceneViewExtension.h"
+
+#if DREAMSHADER_WITH_CUSTOM_PASS
+#include "Render/DreamPassSceneViewExtension.h"
+#endif
 
 namespace UE::DreamPass::Private
 {
@@ -48,6 +55,12 @@ void UDreamPassSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 #if WITH_EDITOR
 	SettingsChangedHandle = GetMutableDefault<UDreamPassSettings>()->OnSettingChanged().AddUObject(this, &UDreamPassSubsystem::OnSettingsChanged);
 #endif
+
+#if DREAMSHADER_WITH_CUSTOM_PASS
+	// One extension per world: FWorldSceneViewExtension is active for the views of this world only, so a PIE world and
+	// the editor world beside it never run each other's pipelines.
+	ViewExtension = FSceneViewExtensions::NewExtension<FDreamPassSceneViewExtension>(GetWorld(), this);
+#endif
 }
 
 void UDreamPassSubsystem::Deinitialize()
@@ -66,6 +79,9 @@ void UDreamPassSubsystem::Deinitialize()
 	PrimitiveLayers.Reset();
 	GlobalPipelines.Reset();
 	MaterialPools.Reset();
+
+	// A family being rendered holds a reference of its own; the extension goes when the last of those is done.
+	ViewExtension.Reset();
 
 	Super::Deinitialize();
 }
@@ -314,7 +330,7 @@ void UDreamPassSubsystem::ResolveView(const FDreamPassViewQuery& View, TArray<FD
 	for (const FDreamPassActivation& Activation : Activations)
 	{
 		UDreamPassPipeline* Pipeline = Activation.Pipeline;
-		if (!Pipeline || Activation.Weight <= 0.0f)
+		if (!Pipeline || Activation.Weight <= 0.0f || UE::DreamPass::IsPipelineDisabledByConsole(Pipeline->GetName()))
 		{
 			continue;
 		}
@@ -447,4 +463,57 @@ UMaterialInstanceDynamic* UDreamPassSubsystem::AcquireMaterialInstance(UMaterial
 		Pool->Instances.Add(UMaterialInstanceDynamic::Create(Base, this));
 	}
 	return Pool->Instances[Pool->Used++];
+}
+
+void UDreamPassSubsystem::DumpState(FOutputDevice& Ar) const
+{
+	const UWorld* World = GetWorld();
+	Ar.Logf(TEXT("DreamPass: world %s (world type %d)"), World ? *World->GetName() : TEXT("?"), World ? int32(World->WorldType.GetValue()) : -1);
+	Ar.Logf(TEXT("  enabled: settings %s, r.DreamPass.Enable %s"),
+		UDreamPassSettings::Get().bEnabled ? TEXT("on") : TEXT("off"),
+		UE::DreamPass::IsEnabledByConsole() ? TEXT("on") : TEXT("off"));
+
+	const TArray<FDreamPassGlobalPipeline>& Globals = UDreamPassSettings::Get().GlobalPipelines;
+	for (int32 Index = 0; Index < Globals.Num(); ++Index)
+	{
+		const UDreamPassPipeline* Loaded = GlobalPipelines.IsValidIndex(Index) ? GlobalPipelines[Index].Get() : nullptr;
+		Ar.Logf(TEXT("  global %s: %s, priority %.2f, %d override(s)%s"),
+			*Globals[Index].Pipeline.ToString(),
+			Globals[Index].bEnabled ? TEXT("enabled") : TEXT("disabled"),
+			Globals[Index].Priority,
+			Globals[Index].Overrides.Num(),
+			Globals[Index].bEnabled && !Loaded ? TEXT(" -- NOT LOADED") : TEXT(""));
+	}
+
+	for (const TPair<int64, FDreamPassApiActivation>& Pair : ApiActivations)
+	{
+		Ar.Logf(TEXT("  api #%lld %s: priority %.2f, weight %.2f, player %d, %d override(s)"),
+			Pair.Key,
+			Pair.Value.Pipeline ? *Pair.Value.Pipeline->GetName() : TEXT("None"),
+			Pair.Value.Priority, Pair.Value.Weight, Pair.Value.PlayerIndex, Pair.Value.Overrides.Num());
+	}
+
+	for (const FSourceEntry& Entry : Sources)
+	{
+		Ar.Logf(TEXT("  source %s"), Entry.Object.IsValid() ? *Entry.Object->GetPathName() : TEXT("(gone)"));
+	}
+
+	for (const TPair<FName, TArray<TWeakObjectPtr<UPrimitiveComponent>>>& Pair : Lists)
+	{
+		Ar.Logf(TEXT("  list %s: %d primitive(s)"), *Pair.Key.ToString(), Pair.Value.Num());
+	}
+	Ar.Logf(TEXT("  %d primitive(s) have pass layers"), PrimitiveLayers.Num());
+
+#if DREAMSHADER_WITH_CUSTOM_PASS
+	if (ViewExtension.IsValid())
+	{
+		const FDreamPassSceneViewExtension::FFrameReport Report = ViewExtension->GetLastReport();
+		Ar.Logf(TEXT("  last frame %llu: %d view(s) with passes, %d pass(es) run, %d skipped"),
+			Report.Frame, Report.ViewsWithPasses, Report.PassesRun, Report.PassesSkipped);
+		for (const FString& Skipped : Report.SkippedPasses)
+		{
+			Ar.Logf(TEXT("    skipped %s"), *Skipped);
+		}
+	}
+#endif
 }

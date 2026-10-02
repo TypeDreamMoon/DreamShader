@@ -274,4 +274,106 @@ void UDreamPassPipeline::PostEditChangeProperty(FPropertyChangedEvent& PropertyC
 }
 #endif
 
+namespace UE::DreamPass
+{
+	EDreamPassParameterType GetParamBindingType(const UDreamPassPipeline& Pipeline, const FDreamPassParamBinding& Binding)
+	{
+		switch (Binding.Source)
+		{
+		case EDreamPassParamSource::Parameter:
+			if (const FDreamPassParameterDesc* Desc = Pipeline.FindParameter(Binding.Parameter))
+			{
+				return Desc->Default.Type;
+			}
+			return EDreamPassParameterType::Float;
+		case EDreamPassParamSource::Constant:
+			return Binding.Constant.Type;
+		default:
+			return EDreamPassParameterType::Float;
+		}
+	}
+
+	bool LayoutSlotParameters(TConstArrayView<FName> Names, TConstArrayView<EDreamPassParameterType> Types, TArray<FDreamPassSlotParamLocation>& OutLocations)
+	{
+		OutLocations.Reset();
+		if (Names.Num() != Types.Num())
+		{
+			return false;
+		}
+
+		// Four bits per vector, one per component in use.
+		uint8 UsedMask[MaxSlotParamVectors] = {};
+
+		for (int32 Index = 0; Index < Types.Num(); ++Index)
+		{
+			int32 Width = 0;
+			switch (Types[Index])
+			{
+			case EDreamPassParameterType::Float:
+			case EDreamPassParameterType::Int:
+			case EDreamPassParameterType::Bool:   Width = 1; break;
+			case EDreamPassParameterType::Float2: Width = 2; break;
+			case EDreamPassParameterType::Float3: Width = 3; break;
+			case EDreamPassParameterType::Float4: Width = 4; break;
+			default: return false;
+			}
+
+			int32 FoundVector = INDEX_NONE;
+			int32 FoundComponent = 0;
+			for (int32 Vector = 0; Vector < MaxSlotParamVectors && FoundVector == INDEX_NONE; ++Vector)
+			{
+				const uint8 Mask = UsedMask[Vector];
+				if (Width >= 3)
+				{
+					if (Mask == 0)
+					{
+						FoundVector = Vector;
+						FoundComponent = 0;
+					}
+				}
+				else if (Width == 2)
+				{
+					if ((Mask & 0x3) == 0)
+					{
+						FoundVector = Vector;
+						FoundComponent = 0;
+					}
+					else if ((Mask & 0xC) == 0)
+					{
+						FoundVector = Vector;
+						FoundComponent = 2;
+					}
+				}
+				else
+				{
+					for (int32 Component = 0; Component < 4; ++Component)
+					{
+						if ((Mask & (1 << Component)) == 0)
+						{
+							FoundVector = Vector;
+							FoundComponent = Component;
+							break;
+						}
+					}
+				}
+			}
+
+			if (FoundVector == INDEX_NONE)
+			{
+				return false;
+			}
+
+			UsedMask[FoundVector] |= uint8(((1 << Width) - 1) << FoundComponent);
+
+			FDreamPassSlotParamLocation& Location = OutLocations.AddDefaulted_GetRef();
+			Location.Name = Names[Index];
+			Location.Type = Types[Index];
+			Location.Vector = FoundVector;
+			Location.Component = FoundComponent;
+			Location.Width = Width;
+		}
+		return true;
+	}
+}
+
 #undef LOCTEXT_NAMESPACE

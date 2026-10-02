@@ -11,6 +11,33 @@ class UTextureRenderTarget2D;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDreamPassPipelineChanged, UDreamPassPipeline*);
 
+/** Where one `param` of an HLSL slot pass lives in the slot's DP_Params[] block. */
+struct FDreamPassSlotParamLocation
+{
+	FName Name;
+	EDreamPassParameterType Type = EDreamPassParameterType::Float;
+	/** Index into DP_Params. */
+	int32 Vector = 0;
+	/** First component, 0..3. */
+	int32 Component = 0;
+	/** 1..4. */
+	int32 Width = 1;
+};
+
+namespace UE::DreamPass
+{
+	/** The type a `param` binding produces: its parameter's, its constant's, or Float for the weight. */
+	DREAMSHADERPASS_API EDreamPassParameterType GetParamBindingType(const UDreamPassPipeline& Pipeline, const FDreamPassParamBinding& Binding);
+
+	/**
+	 * Lays the `param` bindings of an HLSL pass out in the slot's float4 block, in declaration order: a float4 takes a
+	 * vector of its own, a float3 the xyz of the next vector, a float2 the xy or zw half that is free, a float, an int
+	 * or a bool the next free component. The compiler writes the registry from this and the runtime packs values with
+	 * it, so the two cannot disagree. False when the block (MaxSlotParamVectors) is too small or a texture is bound.
+	 */
+	DREAMSHADERPASS_API bool LayoutSlotParameters(TConstArrayView<FName> Names, TConstArrayView<EDreamPassParameterType> Types, TArray<FDreamPassSlotParamLocation>& OutLocations);
+}
+
 /**
  * A Custom Pass pipeline: named buffers, an ordered list of passes each with its own injection point, and the
  * parameters an activation can override. What a `.dsp` source compiles to, and what it decompiles from.

@@ -8,6 +8,10 @@
 #include "Misc/Paths.h"
 #include "ShaderCore.h"
 
+#if DREAMSHADER_WITH_CUSTOM_PASS
+#include "Render/DreamPassSceneViewExtension.h"
+#endif
+
 DEFINE_LOG_CATEGORY(LogDreamPass);
 
 namespace UE::DreamPass
@@ -99,6 +103,9 @@ void FDreamShaderPassModule::StartupModule()
 
 void FDreamShaderPassModule::ShutdownModule()
 {
+#if DREAMSHADER_WITH_CUSTOM_PASS
+	FDreamPassSceneViewExtension::RemovePostOpaqueHandler();
+#endif
 }
 
 IMPLEMENT_MODULE(FDreamShaderPassModule, DreamShaderPass);
