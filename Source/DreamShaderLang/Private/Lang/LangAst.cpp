@@ -41,6 +41,7 @@ namespace UE::DreamShader::Lang
 		case ENodeKind::DiscardStmt:         return TEXT("DiscardStmt");
 		case ENodeKind::EmptyStmt:           return TEXT("EmptyStmt");
 		case ENodeKind::PragmaStmt:          return TEXT("PragmaStmt");
+		case ENodeKind::PassStmt:            return TEXT("PassStmt");
 
 		// declarations
 		case ENodeKind::VariableDecl:        return TEXT("VariableDecl");
@@ -48,6 +49,8 @@ namespace UE::DreamShader::Lang
 		case ENodeKind::StructDecl:          return TEXT("StructDecl");
 		case ENodeKind::IncludeDecl:         return TEXT("IncludeDecl");
 		case ENodeKind::PragmaDecl:          return TEXT("PragmaDecl");
+		case ENodeKind::BufferDecl:          return TEXT("BufferDecl");
+		case ENodeKind::PassDecl:            return TEXT("PassDecl");
 		}
 
 		return TEXT("Unknown");

@@ -1,12 +1,13 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
-// The recursive-descent parser for DreamShaderLang 2.0, split across three translation units
-// that share this one class:
+// The recursive-descent parser for DreamShaderLang 2.0, split across the translation units that
+// share this one class:
 //
 //   LangParser.cpp              entry points, the token cursor, recovery, the module loop
 //   LangParserDeclarations.cpp  file-scope declarations, types, `///` blocks, `#pragma`, `#include`, raw bodies
 //   LangParserStatements.cpp    statements and blocks
 //   LangParserExpressions.cpp   expressions (precedence climbing over LangOperators.h)
+//   LangParserPipeline.cpp      the `.dsp` declarations: `buffer`, `pass` and the statements of a pass block
 //
 // Conventions every method follows:
 //   - A parse method that returns a pointer returns null on failure AFTER having reported the
@@ -168,6 +169,23 @@ namespace UE::DreamShader::Lang::Private
 		 * call, `Foo x;` and `Foo x = ...;` are declarations. Used by the statement parser too.
 		 */
 		bool LooksLikeDeclarationStart() const;
+
+		// ------------------------------------------------------ pipelines (LangParserPipeline.cpp)
+
+		/** In a `.dsp` (and outside the 1.x front end), at the identifier `buffer` or `pass` at declaration start. */
+		bool IsAtPipelineDeclarationWord() const;
+		/** `.dsp`, at `buffer`: `buffer Name : Format[(Key = Value, ...)];`. Null after reporting. */
+		FDeclPtr ParseBufferDecl(FDocBlock&& Doc);
+		/** `.dsp`, at `pass`: `pass Name : kind { ... }`. A statement that fails is skipped; the block still parses. Null after reporting. */
+		FDeclPtr ParsePassDecl(FDocBlock&& Doc);
+		/** One statement of a pass block, through its `;`. Null after reporting. */
+		TUniquePtr<FPassStmt> ParsePassStatement();
+		/**
+		 * Outside a `.dsp`: the declaration being read is `buffer Name :` or `pass Name :`, which only a `.dsp` holds.
+		 * Reports DSH3310 and returns true then (the caller gives up on the declaration); false, silently, otherwise.
+		 * Every text it fires on was a syntax error before `.dsp` existed, so no `.dss` parses differently for it.
+		 */
+		bool ReportPipelineDeclarationOutsideDsp(const FTypeRef& Type, const FString& Name, const FLangSpan& NameSpan);
 
 		// -------------------------------------------------- statements (LangParserStatements.cpp)
 

@@ -209,6 +209,8 @@ namespace UE::DreamShader::Lang
 		DiscardStmt,
 		EmptyStmt,
 		PragmaStmt,
+		/** `.dsp` only: one statement of a `pass` block (FPassStmt). Not an FStmt: no function body holds one. */
+		PassStmt,
 
 		// declarations
 		VariableDecl,
@@ -216,6 +218,10 @@ namespace UE::DreamShader::Lang
 		StructDecl,
 		IncludeDecl,
 		PragmaDecl,
+		/** `.dsp` only: `buffer Name : Format(...);`. */
+		BufferDecl,
+		/** `.dsp` only: `pass Name : kind { ... }`. */
+		PassDecl,
 	};
 
 	DREAMSHADERLANG_API const TCHAR* LexToString(ENodeKind Kind);
@@ -603,6 +609,11 @@ namespace UE::DreamShader::Lang
 		EndRegion,
 		/** `#pragma instance(Parent = "...", Key = Value, ...)` -- `.dsi` only; arguments parsed like `material`. */
 		Instance,
+		/**
+		 * `#pragma pipeline(Order = 100, Views = Game | Editor, Injection = PostProcess.AfterDOF)` -- `.dsp` only; keyed
+		 * arguments like `material`, and a value may also be a dotted name or a `|` list of words (FPragmaArgument::Value).
+		 */
+		Pipeline,
 		/** Any other `#pragma`; kept for the printer, ignored by everything else. */
 		Unknown,
 	};
@@ -778,7 +789,11 @@ namespace UE::DreamShader::Lang
 		bool bImportSpelling = false;
 	};
 
-	/** One `Key = Value` of a pragma. Value is the raw spelling; a quoted string has its quotes removed and bQuoted set. */
+	/**
+	 * One `Key = Value` of a pragma. Value is the raw spelling; a quoted string has its quotes removed and bQuoted set.
+	 * `#pragma pipeline` alone also reads a dotted name (`PostProcess.AfterDOF`, kept as written) and a list of words
+	 * joined by `|`, which is kept with one space around each bar (`Game | Editor`) whatever spacing the line had.
+	 */
 	struct FPragmaArgument
 	{
 		/** Empty for a positional argument (the `Node` / `Comment` selector of `#pragma layout`). */
@@ -814,6 +829,96 @@ namespace UE::DreamShader::Lang
 	};
 
 	// ------------------------------------------------------------------------------------------
+	// Custom Pass pipelines (`.dsp`)
+	// ------------------------------------------------------------------------------------------
+	//
+	// `buffer` and `pass` are declaration words in a `.dsp` only, and `read`, `write` and `param` only at the start
+	// of a statement inside a `pass` block; the lexer knows none of them, so a `.dss` lexes and parses as it always
+	// did. Keys and values are syntax, as everywhere else in the tree: `Injection = PostProcess.AfterDOF` is a
+	// member expression, `Filter = Layer(A | B) & Stencil(1)` a binary expression over calls, `Clear = None` an
+	// identifier. What they mean is the binder's (Semantic/LangBinderPipeline.cpp).
+
+	/** `Key = Value` in a `buffer` argument list. */
+	struct FPipelineKeyValue
+	{
+		FString Key;
+		FLangSpan KeySpan;
+		FExprPtr Value;
+		/** `Key = Value`, without the separator after it. */
+		FLangSpan Span;
+	};
+
+	/** `.dsp` only: `buffer Name : Format[(Key = Value, ...)];`. */
+	struct FBufferDecl final : FDecl
+	{
+		static constexpr ENodeKind StaticKind = ENodeKind::BufferDecl;
+		FBufferDecl() : FDecl(StaticKind) {}
+
+		FString Name;
+		FLangSpan NameSpan;
+		/** As written (`R8`, `RGBA16F`, `Depth32`); the binder judges the spelling. */
+		FString Format;
+		FLangSpan FormatSpan;
+		/** The source wrote the parentheses, also when nothing is between them: `R8()` prints back as written. */
+		bool bHasArgumentList = false;
+		TArray<FPipelineKeyValue> Arguments;
+		/** `(` to `)` inclusive; empty without an argument list. */
+		FLangSpan ArgumentListSpan;
+	};
+
+	enum class EPassStmtKind : uint8
+	{
+		/** `Key = Value;`: a setting (keys are capitalised by convention). */
+		Setting,
+		/** `read [Slot =] Buffer[.Previous];` */
+		Read,
+		/** `write [Slot =] Buffer;` */
+		Write,
+		/** `param Target = Expression;` */
+		Param,
+	};
+
+	/** `.dsp` only: one statement of a `pass` block. */
+	struct FPassStmt final : FNode
+	{
+		static constexpr ENodeKind StaticKind = ENodeKind::PassStmt;
+		FPassStmt() : FNode(StaticKind) {}
+
+		EPassStmtKind StmtKind = EPassStmtKind::Setting;
+		/**
+		 * Setting: the key. Read / Write: the name inside the pass -- empty when the source wrote `read B;`, which
+		 * binds the buffer under its own name. Param: the target parameter.
+		 */
+		FString Name;
+		FLangSpan NameSpan;
+		/** Setting / Param: the value. Null for Read / Write. */
+		FExprPtr Value;
+		/** Read / Write: the buffer as written, and whether `.Previous` follows it. */
+		FString Buffer;
+		FLangSpan BufferSpan;
+		bool bPrevious = false;
+		/** `.Previous`, the dot included; empty when absent. */
+		FLangSpan PreviousSpan;
+	};
+
+	/** `.dsp` only: `pass Name : kind { statements }`. */
+	struct FPassDecl final : FDecl
+	{
+		static constexpr ENodeKind StaticKind = ENodeKind::PassDecl;
+		FPassDecl() : FDecl(StaticKind) {}
+
+		FString Name;
+		FLangSpan NameSpan;
+		/** As written: `fullscreen`, `compute`, `mesh`, `clear`, `copy`; the binder judges the spelling. */
+		FString PassKind;
+		FLangSpan PassKindSpan;
+		/** In source order. A statement that failed to parse is absent; the rest of the block still is here. */
+		TArray<TUniquePtr<FPassStmt>> Statements;
+		/** `{` to `}` inclusive. Comments after the last statement are this node's FLangTrivia::Inner. */
+		FLangSpan BodySpan;
+	};
+
+	// ------------------------------------------------------------------------------------------
 	// Module
 	// ------------------------------------------------------------------------------------------
 
@@ -843,7 +948,7 @@ namespace UE::DreamShader::Lang
 		int32 BlankLinesBefore = 0;
 		/** A comment that starts on the node's last line, after it. */
 		TOptional<FLangComment> Trailing;
-		/** Blocks only: comments after the last statement, before the closing brace. */
+		/** Blocks and `.dsp` pass declarations only: comments after the last statement, before the closing brace. */
 		TArray<FLangComment> Inner;
 	};
 

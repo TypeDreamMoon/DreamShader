@@ -26,6 +26,11 @@ namespace UE::DreamShader
 	 *   DSH8xxx  asset generation and saving
 	 *   DSH9xxx  tools -- commandlet, VirtualFunction sync, and internal invariants (DSH99xx)
 	 *
+	 * Custom Pass (`.dsp`) codes sit in the same stages: DSH2300-2349 syntax, DSH3300-3349 declarations,
+	 * DSH4400-4449 names and references, DSH5300-5329 the pass nodes in a `.dss`, DSH7300-7379 the
+	 * pipeline checks, DSH8300-8339 emission and the HLSL slot registry, DSH9200-9209 `dsc pass-registry`,
+	 * DSH9210-9229 pipeline decompile and Adopt.
+	 *
 	 * An empty Code means the site has not been tagged yet. That is a deliberate state, not a bug:
 	 * the migration tags stage by stage, and an untagged message must keep working and must not
 	 * inherit a neighbour's code. Every assignment path below therefore clears the code unless it

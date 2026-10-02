@@ -20,7 +20,8 @@ namespace UE::DreamShader::Lang
 	};
 
 	/**
-	 * Prints a module back as `.dss` text.
+	 * Prints a module back as `.dss` text -- or `.dsi` / `.dsp` text, whose trees are made of the same nodes plus, for a
+	 * `.dsp`, `buffer` and `pass` declarations.
 	 *
 	 * The contract is structural fidelity, not textual: parse(print(parse(X))) yields the same tree
 	 * as parse(X). Parentheses are emitted where FParenExpr recorded them and additionally wherever
