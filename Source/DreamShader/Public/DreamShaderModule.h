@@ -72,7 +72,9 @@ namespace UE::DreamShader
 	DREAMSHADER_API bool IsDreamShaderLang2File(const FString& InPath);
 	/** `.dsi` -- a 2.0 material instance: one `#pragma instance(...)` plus uniform overrides of its parent. */
 	DREAMSHADER_API bool IsDreamShaderInstanceFile(const FString& InPath);
-	/** Any of the five: `.dsm`, `.dsh`, `.dsf`, `.dss`, `.dsi`. */
+	/** `.dsp` -- a Custom Pass pipeline: buffers and passes, one UDreamPassPipeline (the DreamShaderPass module). */
+	DREAMSHADER_API bool IsDreamShaderPipelineFile(const FString& InPath);
+	/** Any of the six: `.dsm`, `.dsh`, `.dsf`, `.dss`, `.dsi`, `.dsp`. */
 	DREAMSHADER_API bool IsDreamShaderSourceFile(const FString& InPath);
 }
 

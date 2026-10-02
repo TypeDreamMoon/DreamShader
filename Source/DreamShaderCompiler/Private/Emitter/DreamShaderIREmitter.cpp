@@ -17,9 +17,12 @@
 //   commit                       -- the old graph is finally expendable; nothing below can fail
 //   recompile / save / publish
 //
-// Diagnostics: DSH8200-8289.
+// Diagnostics: DSH8200-8289. A `.dsp`'s PassPipeline product is emitted by Emitter/DreamShaderIREmitterPassPipeline.cpp
+// (DSH8300-8314), through the same gates: the two wrappers at the end of the anonymous namespace below hand them over.
 
 #include "DreamShaderIREmitter.h"
+
+#include "Emitter/DreamShaderIREmitterPassPipeline.h"
 
 #include "Emitter/DreamShaderIRAssets.h"
 #include "Emitter/DreamShaderIREmitterInternal.h"
@@ -1225,6 +1228,23 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 	}
 
+	bool CheckDreamShaderIRRebuildPreconditions(
+		UObject* Asset,
+		const FIREmitContext& Context,
+		const IR::FIRProduct& Product,
+		const bool bAllowHashSkip,
+		const bool bWouldPersist,
+		Lang::FLangDiagnosticSink& Diagnostics,
+		bool& bOutSkip)
+	{
+		return CheckRebuildPreconditions(Asset, Context, Product, bAllowHashSkip, bWouldPersist, Diagnostics, bOutSkip);
+	}
+
+	bool WouldDreamShaderIRBuildPersist(UObject* Asset, bool& bOutSaveToDisk)
+	{
+		return WouldBuildPersist(Asset, bOutSaveToDisk);
+	}
+
 	bool EmitDreamShaderIRProduct(
 		const IR::FIRModule& Module,
 		const int32 ProductIndex,
@@ -1282,6 +1302,9 @@ namespace UE::DreamShader::Editor::Compiler
 
 		case IR::EIRProductKind::MaterialInstance:
 			return EmitMaterialInstanceProduct(Product, Definition, Context, OutAsset, Diagnostics);
+
+		case IR::EIRProductKind::PassPipeline:
+			return EmitPassPipelineProduct(Product, Definition, Context, OutAsset, Diagnostics);
 
 		default:
 			break;

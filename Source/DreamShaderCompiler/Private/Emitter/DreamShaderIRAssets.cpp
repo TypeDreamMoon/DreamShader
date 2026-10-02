@@ -166,9 +166,10 @@ namespace UE::DreamShader::Editor::Compiler
 			break;
 		case IR::EIRProductKind::Material:
 		case IR::EIRProductKind::MaterialFunction:
-		// An instance never reaches this adapter (EmitDreamShaderIRProduct sends it to the instance emitter); named so the
-		// switch covers the enum.
+		// An instance and a pass pipeline never reach this adapter (EmitDreamShaderIRProduct sends each to its own
+		// emitter); named so the switch covers the enum.
 		case IR::EIRProductKind::MaterialInstance:
+		case IR::EIRProductKind::PassPipeline:
 		default:
 			OutDefinition.Kind = ETextShaderMaterialFunctionKind::ShaderFunction;
 			break;

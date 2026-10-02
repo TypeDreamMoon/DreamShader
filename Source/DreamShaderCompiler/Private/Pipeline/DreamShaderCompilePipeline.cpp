@@ -16,9 +16,13 @@
 //   validate        IR               ValidateDreamShaderIR
 //   emit            emitter          EmitDreamShaderIRProduct, once per product, in dependency order
 //
-// One pipeline for every compilable kind since the compiler relocation: `.dss` and `.dsi` take the
+// One pipeline for every compilable kind since the compiler relocation: `.dss`, `.dsi` and `.dsp` take the
 // 2.0 front end, `.dsm` and `.dsf` the legacy one, and a `.dsh` included by any of them is parsed declaration by
-// declaration. The parser's Auto front end makes that choice from the path; this file makes the matching choice of
+// declaration.
+//
+// Two stages cross between sources, each beside the `.dsi` parent stage it is modelled on
+// (Pipeline/DreamShaderPipelineReferences.h): a `.dsp` resolves its materials and shader files before the bind, and a
+// `.dss` resolves the pipelines its UE.DreamPassBuffer nodes read after the lower. What each resolved joins the build key. The parser's Auto front end makes that choice from the path; this file makes the matching choice of
 // preprocessor dialect, here and in the include resolver, and everything after the parse is one chain.
 //
 // Two things this file deliberately does NOT do, both of which look like omissions until you look at what does them:
@@ -45,6 +49,8 @@
 
 // `.dsi`: parent resolution through the product index, and the parameter schema's two producers.
 #include "DreamShaderInstanceSchema.h"
+// `.dsp`: its materials and shader files before the bind; `.dss`: the pipelines its UE.DreamPassBuffer nodes read.
+#include "Pipeline/DreamShaderPipelineReferences.h"
 #include "DreamShaderProductIndex.h"
 #include "IR/IRInstanceSchema.h"
 #include "Materials/MaterialInterface.h"
@@ -58,6 +64,8 @@
 // FIREmitContext, EmitDreamShaderIRProduct; ResolveIRProductObjectPath for product resolution.
 #include "DreamShaderIREmitter.h"
 #include "Emitter/DreamShaderIRAssets.h"
+// MakeDreamPassExportTargetPath: the render targets a PassPipeline product keeps beside it.
+#include "Emitter/DreamShaderIREmitterPassPipeline.h"
 // The IR builder, passes and validator.
 #include "IR/IRBuilder.h"
 #include "IR/IRPasses.h"
@@ -93,6 +101,7 @@ namespace UE::DreamShader::Editor::Compiler
 		{
 		case Lang::ELangFileKind::Dss:
 		case Lang::ELangFileKind::Dsi:
+		case Lang::ELangFileKind::Dsp:
 		case Lang::ELangFileKind::Dsm:
 		case Lang::ELangFileKind::Dsf:
 			return true;
@@ -119,6 +128,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 		case Lang::ELangFileKind::Dss:
 		case Lang::ELangFileKind::Dsi:
+		case Lang::ELangFileKind::Dsp:
 		case Lang::ELangFileKind::Unknown:
 			return UE::DreamShader::EDreamShaderPreprocessDialect::Lang2;
 		}
@@ -563,7 +573,7 @@ namespace UE::DreamShader::Editor::Compiler
 			if (!IsDreamShaderLang2Source(SourceFilePath))
 			{
 				OutResult.Diagnostics.Error(TEXT("DSH8296"), FileSpan, FText::Format(
-					LOCTEXT("NotACompilableSource", "'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it."),
+					LOCTEXT("NotACompilableSource", "'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it."),
 					FText::FromString(SourceFilePath)));
 				return false;
 			}
@@ -722,6 +732,30 @@ namespace UE::DreamShader::Editor::Compiler
 				}
 			}
 
+			// ------------------------------------------------------------- pipeline references (.dsp)
+
+			// The `.dsi` parent stage's sibling: every material and shader file the passes name, resolved and read before the
+			// bind checks the passes against them. A material missing or older than its source is compiled first, in an
+			// emitting run only. What was resolved joins the build key below.
+			const bool bIsPipelineSource = GetLangFileKindFromPath(SourceFilePath) == ELangFileKind::Dsp;
+			FString PipelineReferenceKeyText;
+			if (bIsPipelineSource)
+			{
+				OutResult.PipelineReferences = MakeUnique<FPipelineReferences>();
+				ResolveDreamShaderPipelineReferencesForPipeline(
+					*OutResult.Module,
+					*OutResult.Source,
+					SourceFilePath,
+					Stop == EDreamShaderPipelineStop::AfterEmit,
+					*OutResult.PipelineReferences,
+					PipelineReferenceKeyText,
+					OutResult.Diagnostics);
+				if (OutResult.Diagnostics.HasErrors())
+				{
+					return false;
+				}
+			}
+
 			// ---------------------------------------------------------------------------- bind
 
 			if (EnterFrameAndCheckCancel(FText::Format(
@@ -748,6 +782,8 @@ namespace UE::DreamShader::Editor::Compiler
 			// `.dsi` only: what the binder checks the overrides against (null: shape checks only, DSH7263).
 			BindOptions.ParentSchema = OutResult.ParentSchema.Get();
 			BindOptions.ParentObjectPath = OutResult.ParentObjectPath;
+			// `.dsp` only: the materials, shader files and layers resolved above (null for every other kind).
+			BindOptions.PipelineReferences = OutResult.PipelineReferences.Get();
 
 			FLangBindResult BindResult = BindDreamShaderLang(*OutResult.Module, BindOptions);
 			const bool bBound = BindResult.Succeeded();
@@ -789,16 +825,26 @@ namespace UE::DreamShader::Editor::Compiler
 			// The build key covers the headers' CONTENT, not merely their paths: editing a `.dsh` must invalidate every
 			// asset built from a source that includes it, and the source's own text does not change when the header
 			// does. Headers first, then the file, matching the order the 1.x inliner emitted them in.
+			//
+			// Kept past this block: a `.dss` that reads a pipeline's buffers folds what it checked into the key after the
+			// lower, where those reads are first known.
+			FString BuildKeyDigestText;
 			{
-				FString DigestText = OutResult.Includes->GetIncludedSourceDigestText();
-				DigestText += MakeDigestBlock(SourceFilePath, PreprocessResult.Text);
+				BuildKeyDigestText = OutResult.Includes->GetIncludedSourceDigestText();
+				BuildKeyDigestText += MakeDigestBlock(SourceFilePath, PreprocessResult.Text);
 				if (bIsInstanceSource)
 				{
 					// The resolved parent is part of an instance's build key -- a bare-name Parent can re-resolve with no text
 					// change -- and the parent's schema deliberately is not.
-					DigestText += FString::Printf(TEXT("Parent=%s\n"), *OutResult.ParentObjectPath); /* I18N-EXEMPT: build-key material, never displayed */
+					BuildKeyDigestText += FString::Printf(TEXT("Parent=%s\n"), *OutResult.ParentObjectPath); /* I18N-EXEMPT: build-key material, never displayed */
 				}
-				OutResult.SourceHash = Private::BuildSourceHash(DigestText, OutResult.TouchedDefines);
+				if (bIsPipelineSource)
+				{
+					// The referenced materials' paths, build keys and checked facts, the snapshot inputs of every shader file,
+					// and the layer table: a `.dsp` whose text did not change still has to rebuild when any of them moves.
+					BuildKeyDigestText += PipelineReferenceKeyText;
+				}
+				OutResult.SourceHash = Private::BuildSourceHash(BuildKeyDigestText, OutResult.TouchedDefines);
 			}
 
 			if (!bBound)
@@ -841,9 +887,43 @@ namespace UE::DreamShader::Editor::Compiler
 					}
 				}
 			}
+			if (bIsPipelineSource && OutResult.IR.IsValid() && OutResult.PipelineReferences.IsValid())
+			{
+				// The emitter reads the payload alone: every resolved path goes into it.
+				FillDreamShaderPipelinePayloadReferences(*OutResult.IR, *OutResult.PipelineReferences);
+			}
 			if (!OutResult.IR.IsValid() || OutResult.Diagnostics.HasErrors())
 			{
 				return false;
+			}
+
+			// ------------------------------------------------------------- pass buffer reads (.dss)
+
+			// Before the AfterLower stop on purpose: product resolution has to compute the same key a build stamps, and the
+			// pipelines a `.dss` reads are part of it. The references as written are kept first, for the product index.
+			if (GetLangFileKindFromPath(SourceFilePath) == ELangFileKind::Dss)
+			{
+				CollectDreamShaderPassBufferPipelineReferences(*OutResult.IR, Catalog, OutResult.PassPipelineReferences);
+				if (OutResult.PassPipelineReferences.Num() > 0)
+				{
+					FString PassBufferKeyText;
+					ResolveDreamShaderPassBufferReads(
+						*OutResult.IR,
+						Catalog,
+						*OutResult.Source,
+						SourceFilePath,
+						Stop == EDreamShaderPipelineStop::AfterEmit,
+						PassBufferKeyText,
+						OutResult.Diagnostics);
+					if (!PassBufferKeyText.IsEmpty())
+					{
+						OutResult.SourceHash = Private::BuildSourceHash(BuildKeyDigestText + PassBufferKeyText, OutResult.TouchedDefines);
+					}
+					if (OutResult.Diagnostics.HasErrors())
+					{
+						return false;
+					}
+				}
 			}
 
 			if (Stop == EDreamShaderPipelineStop::AfterLower)
@@ -952,6 +1032,13 @@ namespace UE::DreamShader::Editor::Compiler
 			OutResult);
 	}
 
+	bool RunDreamShaderPipelineToIR(const FString& SourceFilePath, FDreamShaderLang2PipelineResult& OutResult)
+	{
+		FDreamShaderLang2PipelineOptions Options;
+		Options.bEmitAssets = false;
+		return RunDreamShaderPipelineStages(SourceFilePath, Options, EDreamShaderPipelineStop::AfterLower, /*bShowProgress*/ false, OutResult);
+	}
+
 	bool ResolveDreamShaderProductDestination(
 		const UE::DreamShader::IR::FIRProduct& Product,
 		const FString& SourceFilePath,
@@ -986,6 +1073,7 @@ namespace UE::DreamShader::Editor::Compiler
 		OutResult.IncludePaths = Run.IncludePaths;
 		OutResult.TouchedDefines = Run.TouchedDefines;
 		OutResult.bSourceHadPreprocessorDirectives = Run.bSourceHadPreprocessorDirectives;
+		OutResult.PassPipelineReferences = Run.PassPipelineReferences;
 		OutResult.Products.Reset();
 
 		bool bResolved = bLowered;
@@ -1014,6 +1102,17 @@ namespace UE::DreamShader::Editor::Compiler
 							? FString::Printf(TEXT("%s: %s"), *DestinationError.Code, *DestinationError.Message) /* I18N-EXEMPT: quotes an asset-layer message verbatim */
 							: DestinationError.Message)));
 					bResolved = false;
+				}
+				else if (Product.Kind == IR::EIRProductKind::PassPipeline)
+				{
+					// The emitter's own naming: a list of generated assets that left these out would un-ignore them.
+					for (const IR::FIRPassBuffer& Buffer : Product.PassPipeline.Buffers)
+					{
+						if (Buffer.bExport && IsDreamPassExportableBufferFormat(Buffer.Format))
+						{
+							Resolved.ExportTargetObjectPaths.Add(MakeDreamPassExportTargetPath(Resolved.PackageName, AssetLeafName, Buffer.Name));
+						}
+					}
 				}
 			}
 		}

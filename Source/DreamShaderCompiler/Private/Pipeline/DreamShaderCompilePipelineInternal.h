@@ -15,10 +15,18 @@ namespace UE::DreamShader::Editor::Compiler
 {
 	/**
 	 * The preprocessor dialect a file is read in, by its kind: `.dsm` / `.dsf` Legacy, `.dsh` Mixed,
-	 * `.dss` / `.dsi` Lang2. The pipeline asks it for the compiled file and the include resolver for every header, so a
-	 * header is read the same way whichever kind of source includes it.
+	 * `.dss` / `.dsi` / `.dsp` Lang2. The pipeline asks it for the compiled file and the include resolver for every header,
+	 * so a header is read the same way whichever kind of source includes it.
 	 */
 	UE::DreamShader::EDreamShaderPreprocessDialect GetDreamShaderPreprocessDialectForFile(const FString& FilePath);
+
+	/**
+	 * The front half of a run -- read, preprocess, parse, the reference stages, bind, lower -- with no passes, no emit and
+	 * no progress dialog: what ResolveDreamShaderSourceProducts runs, with the run handed back. For a stage that needs
+	 * another source's IR or build key before that source is built (a `.dsp` reading the facts of a material nobody
+	 * compiled yet, a `.dss` checking the buffers of a pipeline). False when the source does not get as far as its IR.
+	 */
+	bool RunDreamShaderPipelineToIR(const FString& SourceFilePath, FDreamShaderLang2PipelineResult& OutResult);
 
 	/**
 	 * Words a finished pipeline run as a compile report, in the shape FDreamShaderCompileResult::Message

@@ -480,6 +480,37 @@ namespace UE::DreamShader::Editor::Private
 					Edges.AddUnique(ParentSource);
 				}
 			}
+
+			// A `.dsp` depends on the sources that build its passes' materials: the binder checks a pass against the
+			// material as it is built (its inputs, its UE.DreamPassOutput pins), so the material comes first.
+			if (UE::DreamShader::IsDreamShaderPipelineFile(SourceFile))
+			{
+				TArray<FString> MaterialSources;
+				::UE::DreamShader::Editor::Compiler::FindPipelineMaterialSourceFiles(SourceFile, MaterialSources);
+				for (const FString& MaterialSource : MaterialSources)
+				{
+					if (MaterialSource != SourceFile && Batch.Contains(MaterialSource))
+					{
+						Edges.AddUnique(MaterialSource);
+					}
+				}
+			}
+
+			// A `.dss` that reads a pipeline's exported buffer (UE.DreamPassBuffer) depends on that `.dsp`: the material
+			// lists the buffer's render target among its textures, and the pipeline is what makes the render target. A mesh
+			// pass whose material reads its own pipeline's buffer is a cycle; the walk below leaves it in visiting order.
+			if (UE::DreamShader::IsDreamShaderLang2File(SourceFile))
+			{
+				TArray<FString> PipelineSources;
+				::UE::DreamShader::Editor::Compiler::FindPassBufferPipelineSourceFiles(SourceFile, PipelineSources);
+				for (const FString& PipelineSource : PipelineSources)
+				{
+					if (PipelineSource != SourceFile && Batch.Contains(PipelineSource))
+					{
+						Edges.AddUnique(PipelineSource);
+					}
+				}
+			}
 		}
 
 		// Depth-first post-order: a file is emitted only once everything it imports has been. Files in a
