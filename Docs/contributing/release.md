@@ -78,15 +78,16 @@ The staging directory is `<RUNNER_TEMP>/DreamShaderRelease/DreamShader/`, and it
 `artifacts/DreamShader-<slug>.zip`. The archive's single top-level entry is the folder `DreamShader`,
 which is what the install instructions tell users to drop into `Plugins/`.
 
-Ten items are copied. A missing item is skipped rather than failing the release, but it now emits a
-`::warning::` annotation on the run summary — silence is how three of them stayed out of every
-archive up to `1.5.0` without anyone noticing.
+Eleven items are copied. A missing item is skipped rather than failing the release, but it now
+emits a `::warning::` annotation on the run summary — silence is how three of them stayed out of
+every archive up to `1.5.0` without anyone noticing.
 
 | Shipped | |
 | :-- | :-- |
 | `Source/` | |
 | `Resources/` | |
 | `Shaders/` | *(since 1.5.1)* `DreamShaderBuiltins.ush`, so `/Plugin/DreamShader/…` resolves in an archive install |
+| `Content/` | *(since 2.0.3)* `Localization/DreamShader/` — the `.locmeta` and the `zh-Hans` `.locres` — so the descriptor's `LocalizationTargets` entry has a translation to load in an archive install |
 | `Docs/` | |
 | `.skill/` | *(since 1.5.1)* the agent skill set and its driver |
 | `DreamShader.uplugin` | |
@@ -100,6 +101,7 @@ Everything else in the repository is absent:
 | Not shipped | Consequence for an archive install |
 | :-- | :-- |
 | `Tests/` | The fixture corpus is absent; the two data-driven runners enumerate zero sub-tests |
+| `Tools/` | The localization and parity scripts are absent: the built `.locres` ships, the chain that rebuilds it does not |
 | `Config/` | `FilterPlugin.ini` is absent. It only holds the stock commented template and declares no packaged files |
 | `Images/` | README artwork is missing, so the readme's images do not render locally |
 | `.github/` | The workflow itself is not redistributed |
@@ -110,6 +112,15 @@ Everything else in the repository is absent:
 > `/Plugin/DreamShader/...` had no file to read in an install made from the release zip. Installs
 > from those archives still need `Shaders/DreamShaderBuiltins.ush` copied in by hand. See
 > [HLSL library](../builtins/hlsl-library.md).
+
+> [!NOTE]
+> From `1.6.0`, the first version with a `zh-Hans` translation, up to and including `2.0.2`, the
+> archive shipped no `Content/` folder. It was never on the list, so no warning flagged it either.
+> In an install made from one of those zips the descriptor's `LocalizationTargets` entry finds
+> nothing to load, and DreamShader's editor text stays English even in a `zh-Hans` editor. Copying
+> `Content/Localization/` in by hand from the repository at the matching tag fixes it. Since `2.0.3`
+> the workflow copies `Content/` whole, as `BuildPlugin` does, so anything added under it later
+> ships too. See [Localization](index.md#localization).
 
 > [!NOTE]
 > The archive ships no `Binaries/`, so the plugin is compiled by the consuming project. That

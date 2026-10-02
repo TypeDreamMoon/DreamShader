@@ -99,10 +99,14 @@ jobs:
           New-Item -ItemType Directory -Path $PluginRoot -Force | Out-Null
           New-Item -ItemType Directory -Path $ArtifactRoot -Force | Out-Null
 
+          # Content/ carries Localization/DreamShader/ -- the .locmeta and the zh-Hans .locres the
+          # descriptor's LocalizationTargets entry loads from <Plugin>/Content/Localization/. It is copied
+          # whole, as BuildPlugin copies it, so that path is the same in an archive install.
           $Items = @(
             'Source',
             'Resources',
             'Shaders',
+            'Content',
             'Docs',
             '.skill',
             'DreamShader.uplugin',

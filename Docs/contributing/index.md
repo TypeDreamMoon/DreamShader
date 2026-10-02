@@ -37,18 +37,19 @@ One engine proves nothing about the others, so run the whole matrix with
 | :-- | :-- | :-- |
 | `Source/` | The three C++ modules | yes |
 | `Docs/` | This manual | yes |
+| `.skill/` | The agent skill set, its `dsc.ps1` driver, and [`build-plugin.ps1`](#the-engine-matrix) | yes *(since 1.5.1)* |
 | `Resources/` | `Icon128.png`, the plugin icon | yes |
 | `DreamShader.uplugin` | Plugin descriptor | yes |
 | `README.md` | English readme | yes |
+| `README.zh-CN.md` | Chinese readme | yes *(since 1.5.1)* |
 | `CHANGELOG.md` | Version history; the release workflow reads its `## <VersionName>` section | yes |
 | `LICENSE` | MIT | yes |
-| `Content/Localization/DreamShader/` | `.locmeta` plus one `.locres` per culture; loaded through the `LocalizationTargets` entry in the descriptor | yes |
-| `Shaders/` | `DreamShaderBuiltins.ush`, mounted at `/Plugin/DreamShader` | **no** |
+| `Content/Localization/DreamShader/` | `.locmeta` plus one `.locres` per culture; loaded through the `LocalizationTargets` entry in the descriptor | yes *(since 2.0.3)* |
+| `Shaders/` | `DreamShaderBuiltins.ush`, mounted at `/Plugin/DreamShader` | yes *(since 1.5.1)* |
 | `Tests/Corpus/` | Data-driven fixtures and `.expected.json` goldens | **no** |
 | `Tools/Localization/` | `localization_lint.ps1` and the gather baseline it emits | **no** |
 | `Config/` | `FilterPlugin.ini` — the stock commented template; it declares no extra packaged files | **no** |
 | `Images/` | Readme artwork | **no** |
-| `README.zh-CN.md` | Chinese readme | **no** |
 | `.github/workflows/release.yml` | The only workflow in the repository | **no** |
 | `Binaries/`, `Intermediate/` | Build output; git-ignored | **no** |
 
@@ -159,7 +160,7 @@ Everything is under `Private/`; nothing is exported.
 | Iterate on the plugin inside a project | Build the host project's editor target normally. The plugin is `EnabledByDefault`. |
 | Validate the plugin standalone, exactly as the consumer sees it | `RunUAT BuildPlugin`, as in the [Synopsis](#synopsis). |
 | Prove an engine-version gate on every supported engine | [`.skill/build-plugin.ps1`](#the-engine-matrix). |
-| Reproduce the release archive | Stage the seven shipped items by hand, or push a tag and let the [release workflow](release.md) do it. |
+| Reproduce the release archive | Stage the eleven [shipped items](release.md#archive-contents) by hand, or push a tag and let the [release workflow](release.md) do it. |
 
 `BuildPlugin` compiles all four modules against the target engine and fails on the first UBT or UHT
 error. It is the check that matters when adding an engine-version gate, because the project build
