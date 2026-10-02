@@ -18,6 +18,9 @@ and the wind field; the post-process template is a soft glow of its own.
 | [UI frosted glass](#ui-frosted-glass) | a `copy` grab and a compute downsample inside the post-process chain, exported for UMG |
 | [X-ray](#x-ray) | a mesh pass by layer and list with its own depth, composited against the scene depth |
 | [Wind field](#wind-field) | a compute pass at `BeginView` on a fixed-size history buffer, exported for a foliage material's WPO and for Niagara |
+| [Scanner pulse](#scanner-pulse) | a pixel HLSL pass at `BeforePostProcess` that reads the scene depth through `View` |
+| [Old CRT](#old-crt) | a pixel HLSL pass at `PostProcess.AfterTonemap`, blended by the pipeline's weight |
+| [Tagged objects](#tagged-objects) | a mesh pass by custom stencil that draws with each object's own material |
 
 ## Highlight outline
 
@@ -328,6 +331,213 @@ Notes:
 - `read Previous = Wind.Previous` and `write Result = Wind` are two textures — last frame's and this frame's.
 - Every editor viewport advances its own history; only one writes the exported render target.
 - Niagara: point a Texture Sample data interface at the asset `CP_WindField_Wind`.
+
+## Scanner pulse
+
+A ring of light sweeps out from the camera over the opaque scene every few seconds and leaves a fading trail: a
+pixel HLSL pass that reads the scene depth through the view uniform buffer.
+
+```hlsl
+// DShader/Passes/CP_Scanner.dsp
+#pragma pipeline(Order = 300)
+
+/// @group Look
+uniform float4 PulseColor = float4(0.1, 0.9, 1.0, 1.0);
+/// @group Look   @slider 100 5000
+uniform float  Speed = 1500.0;
+/// @group Look   @slider 10 400
+uniform float  Width = 150.0;
+/// @slider 500 10000
+uniform float  Range = 4000.0;
+
+pass Pulse : fullscreen
+{
+    Injection = BeforePostProcess;
+    Shader    = "Scanner.usf";
+    Entry     = PulsePS;
+    read  InColor = SceneColor;
+    write Out     = SceneColor;
+    param PulseTint  = PulseColor;
+    param PulseSpeed = Speed;
+    param PulseWidth = Width;
+    param PulseRange = Range;
+}
+```
+
+```hlsl
+// DShader/Passes/Scanner.usf
+void PulsePS(float4 SvPosition : SV_POSITION, out float4 OutColor0 : SV_Target0)
+{
+    const float2 ViewSize   = float2(DP_ViewRect.zw - DP_ViewRect.xy);
+    const float2 ViewportUV = (SvPosition.xy - float2(DP_ViewRect.xy)) / ViewSize;
+    const float3 Scene      = InColor.SampleLevel(DP_PointClamp, DreamPassInputUV(0, ViewportUV), 0).rgb;
+
+    // The scene depth at this pixel, and from it the distance from the camera along the view ray.
+    const float2 BufferUV  = (View.ViewRectMin.xy + ViewportUV * View.ViewSizeAndInvSize.xy) * View.BufferSizeAndInvSize.zw;
+    const float  Depth     = CalcSceneDepth(BufferUV);
+    const float2 ScreenPos = ViewportUVToScreenPos(ViewportUV);
+    const float3 Position  = mul(float4(ScreenPos * Depth, Depth, 1), View.ScreenToTranslatedWorld).xyz;
+    const float  Distance  = length(Position - View.TranslatedWorldCameraOrigin);
+
+    const float Front  = frac(DP_Time.x * PulseSpeed / PulseRange) * PulseRange;
+    const float Behind = Front - Distance;
+    const float Trail  = Behind > 0.0 ? exp(-Behind / (PulseWidth * 3.0)) * 0.35 : 0.0;
+    const float Edge   = saturate(1.0 - abs(Behind) / PulseWidth);
+    const float Fade   = 1.0 - saturate(Front / PulseRange);
+
+    const float Amount = (Trail + Edge * Edge) * Fade * PulseTint.a * DP_Weight;
+    OutColor0 = float4(Scene + PulseTint.rgb * Amount, 1.0);
+}
+```
+
+Notes:
+
+- A pixel pass's `write` gives only a size (`OutSize`); the colour is `SV_Target0`. Reading `SceneColor` while
+  writing it is fine: the pass draws into a scratch texture that is copied back.
+- `View` and `CalcSceneDepth` work from `BeforeBasePass` on. The depth is sampled at the scene textures' UV of the
+  view rect (`View.ViewRectMin`, `View.BufferSizeAndInvSize`), the colour through `DreamPassInputUV`.
+- Binding names become macros, so they are `PulseTint` and `PulseSpeed`, not `Color` or `Speed` alone, which
+  engine headers use.
+- The added light is in pre-exposed scene colour, so it looks the same at any exposure. A volume that overrides
+  `PulseColor` changes the ring's colour for the views inside it.
+
+## Old CRT
+
+Colour fringes toward the edges, scanlines and a vignette on the tonemapped picture, blended in by the
+pipeline's weight.
+
+```hlsl
+// DShader/Passes/CP_Retro.dsp
+#pragma pipeline(Order = 950, Requires = PostProcess)
+
+/// @slider 0 1
+uniform float Scanlines = 0.35;
+/// @slider 0 8
+uniform float Fringe = 3.0;
+/// @slider 0 1
+uniform float Vignette = 0.6;
+
+pass Crt : fullscreen
+{
+    Injection = PostProcess.AfterTonemap;
+    Shader    = "Retro.usf";
+    Entry     = CrtPS;
+    read  InColor = SceneColor;
+    write Out     = SceneColor;
+    param ScanlineAmount = Scanlines;
+    param FringePixels   = Fringe;
+    param VignetteAmount = Vignette;
+}
+```
+
+```hlsl
+// DShader/Passes/Retro.usf
+void CrtPS(float4 SvPosition : SV_POSITION, out float4 OutColor0 : SV_Target0)
+{
+    const float2 ViewSize   = float2(DP_ViewRect.zw - DP_ViewRect.xy);
+    const float2 ViewportUV = (SvPosition.xy - float2(DP_ViewRect.xy)) / ViewSize;
+    const float2 Centered   = ViewportUV - 0.5;
+
+    const float3 Original = InColor.SampleLevel(DP_LinearClamp, DreamPassInputUV(0, ViewportUV), 0).rgb;
+
+    // Red a little outward, blue a little inward, by up to FringePixels at the corners.
+    const float2 Shift = Centered * 2.0 * FringePixels / ViewSize;
+    float3 Crt;
+    Crt.r = InColor.SampleLevel(DP_LinearClamp, DreamPassInputUV(0, ViewportUV + Shift), 0).r;
+    Crt.g = Original.g;
+    Crt.b = InColor.SampleLevel(DP_LinearClamp, DreamPassInputUV(0, ViewportUV - Shift), 0).b;
+
+    // Every other row darker, and the corners darker still.
+    Crt *= 1.0 - ScanlineAmount * fmod(floor(SvPosition.y), 2.0);
+    Crt *= 1.0 - VignetteAmount * saturate(dot(Centered, Centered) * 2.5);
+
+    OutColor0 = float4(lerp(Original, Crt, DP_Weight), 1.0);
+}
+```
+
+Notes:
+
+- `PostProcess.AfterTonemap` is after the upscaler: `DP_ViewRect` is the output rect and a texel is a screen
+  pixel, so every other row is exactly every other row on screen.
+- `DP_Weight` is the pipeline's weight in the view: a volume with `BlendWeight = 0.5`, or one the camera is
+  fading out of, gives half the effect.
+- `Requires = PostProcess`: in a view without post processing the pipeline is off.
+
+## Tagged objects
+
+Objects the game tags with custom stencil 5 glow with moving stripes that their own material writes: a mesh
+pass by stencil in `Mode = Own`, then a material composite.
+
+```hlsl
+// DShader/Passes/CP_Tagged.dsp
+#pragma pipeline(Order = 150, Requires = CustomStencil)
+
+uniform float4 TagColor = float4(0.2, 1.0, 0.3, 1.0);
+
+/// @desc r = the stripe, g = covered.
+buffer Tag : RGBA16F(Clear = 0);
+
+pass DrawTagged : mesh
+{
+    Injection = AfterOpaque;
+    Filter    = Stencil(5);
+    Mode      = Own;
+    write Output0 = Tag;
+}
+
+pass Composite : fullscreen
+{
+    Injection = BeforePostProcess;
+    Material  = "PP_TaggedComposite";
+    read  Tag;
+    write SceneColor;
+    param Tint = TagColor;
+}
+```
+
+```hlsl
+// DShader/Passes/M_DemoTagged.dss
+uniform float3 BaseTint = float3(0.9, 0.7, 0.2);
+uniform float  StripeSize = 40.0;
+uniform float  StripeSpeed = 0.5;
+
+export void M_DemoTagged(inout material m)
+{
+    m.BaseColor = BaseTint;
+    m.Roughness = 0.35;
+    m.Metallic = 1.0;
+    float3 P = UE.WorldPosition();
+    float Stripe = step(0.5, frac((P.x + P.y + P.z) / StripeSize + UE.Time() * StripeSpeed));
+    UE.DreamPassOutput(Output0 = float4(Stripe, 1.0, 0.0, 1.0));
+}
+```
+
+```hlsl
+// DShader/Passes/PP_TaggedComposite.dss
+#pragma material(Domain = PostProcess, BlendableLocation = SceneColorAfterDOF)
+
+uniform float4 Tint = float4(0.2, 1.0, 0.3, 1.0);
+uniform float  DreamPassWeight = 1.0;
+
+export void PP_TaggedComposite(inout material m)
+{
+    float2 UV    = UE.ScreenPosition().ViewportUV;
+    float3 Scene = UE.SceneTexture(SceneTextureId = PostProcessInput0, Coordinates = UV).Color.rgb;
+    float4 Tag   = UE.UserSceneTexture(UserSceneTexture = "Tag", Coordinates = UV).Color;
+    float  Amount = (Tag.g * 0.25 + Tag.r * 0.75) * Tint.a * DreamPassWeight;
+    m.EmissiveColor = lerp(Scene, Tint.rgb, Amount);
+}
+```
+
+Notes:
+
+- `Mode = Own` draws each selected object with its own material and reads that material's
+  `UE.DreamPassOutput`: per-object data without an override. In the base pass the node does nothing.
+- `Filter = Stencil(5)` selects by the custom stencil, which needs `r.CustomDepth=3` and, on the object, *Render
+  CustomDepth Pass* with *CustomDepth Stencil Value* 5. `Requires = CustomStencil` keeps the whole pipeline off in
+  a view without one.
+- For a stencil filter, Nanite members default to `Nanite = StencilMask`: their pixels are filled from the custom
+  stencil with `NaniteValue` rather than drawn with their material.
 
 ## See also
 
