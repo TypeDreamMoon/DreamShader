@@ -385,7 +385,13 @@ namespace UE::DreamPass
 
 			FViewSnapshot& ViewSnapshot = Snapshot->Views[ViewIndex];
 			ViewSnapshot.ViewKey = View->GetViewKey();
-			ViewSnapshot.bExportView = Subsystem.TryClaimExportView(*View, Query.ViewKind);
+			// Only a view with something to export claims the export, so a view whose pipelines export nothing cannot keep
+			// the one that does from writing its render targets this frame.
+			const bool bHasExports = Resolved.ContainsByPredicate([](const FDreamPassResolvedPipeline& Pipeline)
+			{
+				return Pipeline.Pipeline->Buffers.ContainsByPredicate([](const FDreamPassBufferDesc& Buffer) { return Buffer.bExport; });
+			});
+			ViewSnapshot.bExportView = bHasExports && Subsystem.TryClaimExportView(*View, Query.ViewKind);
 			ViewSnapshot.Pipelines.SetNum(Resolved.Num());
 			for (int32 PipelineIndex = 0; PipelineIndex < Resolved.Num(); ++PipelineIndex)
 			{
