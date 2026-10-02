@@ -769,6 +769,18 @@ namespace UE::DreamShader::Editor::Compiler
 				continue;
 			}
 
+#if !DREAMSHADER_WITH_CUSTOM_PASS
+			// The Custom Pass nodes (UE.DreamPassBuffer, UE.DreamPassOutput) exist on every engine -- UHT cannot gate a
+			// UCLASS behind DREAMSHADER_WITH_CUSTOM_PASS -- but below 5.8 they compile to a material error. Left out of
+			// the catalog there, so a `.dss` that names one is told at bind time that it needs UE 5.8 (the binder's version
+			// gate fires on a node the catalog does not have) instead of building a material that cannot compile.
+			if (Class->GetPathName().Equals(TEXT("/Script/DreamShaderPass.MaterialExpressionDreamPassBuffer"), ESearchCase::IgnoreCase)
+				|| Class->GetPathName().Equals(TEXT("/Script/DreamShaderPass.MaterialExpressionDreamPassOutput"), ESearchCase::IgnoreCase))
+			{
+				continue;
+			}
+#endif
+
 			const FString ShortName = GetMaterialExpressionCatalogShortName(Class);
 			if (ShortName.IsEmpty())
 			{

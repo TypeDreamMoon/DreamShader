@@ -313,6 +313,9 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		DetectRecursion();
+
+		// Where the Custom Pass nodes ended up, now that every body and the call graph are known.
+		CheckPassNodeUses();
 	}
 
 	// ---------------------------------------------------------------------------------------------
