@@ -25,6 +25,7 @@ function name fails at step 3.
 | Where does the asset land? | `Shader(Name="UI/M_Panel")` → `/Game/UI/M_Panel`. `Root="Plugin.X"` for a content plugin |
 | Node graph, or one HLSL node? | `Settings { Backend = "Graph"; }` for a graph an artist can open; omit for the default thin-custom material |
 | Which surface? | `Domain` `ShadingModel` `BlendMode` — see [`Docs/settings/material-enums.md`](../../Docs/settings/material-enums.md) |
+| A render pass of your own, not a material? | a `.dsp` Custom Pass pipeline (UE 5.8 only), which this skill does not write: start from [`Docs/language-v2/passes.md`](../../Docs/language-v2/passes.md) and [`Docs/examples/custom-pass.md`](../../Docs/examples/custom-pass.md). It compiles with the same `dsc.ps1 compile`; its pass materials are ordinary `.dss` sources |
 
 Write it under the project's `DShader/` tree — `DShader/Materials/` for `.dsm`,
 `DShader/Functions/` for `.dsf`, `DShader/Shared/` for `.dsh`.

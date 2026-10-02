@@ -14,7 +14,7 @@
 A material has no '{0}' pin; did you mean '{1}'? Attribute names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1071`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1082`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1075`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1086`
 <!-- generated:end DSH5200 -->
 
 **Cause.** `m.<Name>` names no material pin. The table comes from the engine, so the message can
@@ -36,7 +36,7 @@ case-insensitively and 2.0 does not.
 This Custom node declares no output called '{0}'; its outputs are '{1}'. An output is declared by 'AdditionalOutputs'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1164`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1218`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1424`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1825`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1168`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1222`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1428`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1829`
 <!-- generated:end DSH5201 -->
 
 **Cause.** Three shapes, one code — all say "this node's outputs need naming". The message lists
@@ -73,7 +73,7 @@ is listed under the channels it keeps.
 The builtin catalog is empty, so no 'UE.' expression and no material attribute can be resolved; export it with 'dsc export-catalog'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:280`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:287`
 <!-- generated:end DSH5202 -->
 
 **Cause.** The binder was given an empty builtin catalog, so no `UE.` node and no material pin can
@@ -94,7 +94,7 @@ file is affected — the symbol index is still produced.
 '{0}.{1}' is not a node; did you mean '{0}.{2}'? Node names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4220`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4232`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4241`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4253`
 <!-- generated:end DSH5210 -->
 
 **Cause.** `UE.X` / `Substrate.X` names no class this engine has. Node names are **case-sensitive**;
@@ -114,7 +114,7 @@ a case-only match is suggested.
 '{0}.{1}' is a node and has to be called: write '{0}.{1}(...)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1014`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1018`
 <!-- generated:end DSH5211 -->
 
 **Cause.** `UE.X` was written without an argument list. A node is made by calling it, even when it
@@ -133,7 +133,7 @@ takes nothing.
 '{0}' is not a material expression class this engine has.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4169`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4175`
 <!-- generated:end DSH5212 -->
 
 **Cause.** The `Class` argument does not name a material expression class. The class name is
@@ -152,7 +152,7 @@ accepted with or without its `MaterialExpression` prefix and as a full `/Script/
 '{0}.{1}' has no pin or property called '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4646`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4670`
 <!-- generated:end DSH5213 -->
 
 **Cause.** A named argument to a reflected node matches neither an input pin nor a reflected
@@ -173,7 +173,7 @@ it usually has a `Const`-prefixed property name — `ConstA` beside the `A` pin.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1932`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1936`
 <!-- generated:end DSH5214 -->
 
 **Cause.** A value does not fit the pin it feeds: the wrong width, or a kind the pin does not take
@@ -194,7 +194,7 @@ whatever arrives.
 '{0}' is not a value of '{1}' on '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4031`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4037`
 <!-- generated:end DSH5215 -->
 
 **Cause.** The value of an enumerated property is not one of that enum's values. A case-only match
@@ -214,7 +214,7 @@ is suggested.
 'Substrate.' already names the node, so it takes no 'Class' argument.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4141`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4147`
 <!-- generated:end DSH5216 -->
 
 **Cause.** A `Class` argument was given to a `Substrate.` call. The `Substrate.` prefix already
@@ -233,7 +233,7 @@ names the class.
 'Class' takes the expression class as a quoted string.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4149`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4155`
 <!-- generated:end DSH5217 -->
 
 **Cause.** The `Class` argument is not a literal the binder can read. It accepts a quoted string, a
@@ -252,7 +252,7 @@ bare identifier and a dotted name.
 'UE.Expression' reaches a node this language has no name for, so it needs 'Class = "MaterialExpressionName"'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4182`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4188`
 <!-- generated:end DSH5218 -->
 
 **Cause.** `UE.Expression(...)` without `Class`. `Expression` is the escape hatch for a node the
@@ -271,7 +271,7 @@ language has no name for, so the class is the one thing it cannot infer.
 '{0}.{1}' leaves its required '{2}' pin unconnected; unless the node reads a default for it, the engine reports it when the material compiles.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4715`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:416`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4739`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:416`
 <!-- generated:end DSH5219 -->
 
 **Cause.** A pin the engine draws as required was left unconnected, and its literal twin was not set
@@ -296,7 +296,7 @@ real `missing input`.
 '{0}.{1}' takes named arguments: write 'Pin = value'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4348`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4372`
 <!-- generated:end DSH5220 -->
 
 **Cause.** A positional argument was given to a node that has no canonical argument order. Most
@@ -315,7 +315,7 @@ reflected classes are named-only — the pin order an engine class happens to ha
 '{0}.{1}' takes {2} arguments in order; name the rest.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4365`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4389`
 <!-- generated:end DSH5221 -->
 
 **Cause.** More positional arguments than the node's canonical order defines.
@@ -333,7 +333,7 @@ reflected classes are named-only — the pin order an engine class happens to ha
 '{0}' is abstract and cannot be made into a node.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4260`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4281`
 <!-- generated:end DSH5223 -->
 
 **Cause.** The class is abstract and cannot be instantiated.
@@ -351,7 +351,7 @@ reflected classes are named-only — the pin order an engine class happens to ha
 '{0}' is an enumerated property; write one of its values, as in 'SamplerType = Normal'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3991`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4062`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4104`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3997`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4068`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4110`
 <!-- generated:end DSH5224 -->
 
 **Cause.** A literal property was given something that is not a literal: an expression the binder
@@ -372,7 +372,7 @@ computed belongs on a pin, not in a property.
 The first argument of a texture sample is the texture, and this is {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4971`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4995`
 <!-- generated:end DSH5230 -->
 
 **Cause.** The first argument of `Texture2DSample` is not a texture.
@@ -390,7 +390,7 @@ The first argument of a texture sample is the texture, and this is {0}.
 The second argument of 'Texture2DSample' is the sampler, and this is {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4987`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:5011`
 <!-- generated:end DSH5231 -->
 
 **Cause.** The second argument of `Texture2DSample` is not a sampler.
@@ -732,7 +732,7 @@ when case is ignored. 1.x looked these up ignoring case.
 '{0}' is the GLSL spelling of '{1}'; a 1.x source may use it and it is read as '{1}', and a '.dss' writes '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2989`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2993`
 <!-- generated:end DSH5277 -->
 
 **Cause.** Rule L2. A GLSL function or type spelling is used in a 1.x source (`mix`, `fract`, `mod`,
@@ -751,7 +751,7 @@ when case is ignored. 1.x looked these up ignoring case.
 '{0}' is not spelled like a value of '{1}', and 1.x matched enumerators loosely, so this is '{2}'; a '.dss' writes '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4017`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4023`
 <!-- generated:end DSH5278 -->
 
 **Cause.** Rule L12. An enum value is written the engine's way (`PPI_SceneColor`,
@@ -772,7 +772,7 @@ takes the short form the catalog lists.
 '{0}.{1}' leaves its required '{2}' pin unconnected, which 1.x allowed and the engine reports when the material compiles.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4699`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:403`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4723`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:403`
 <!-- generated:end DSH5279 -->
 
 **Cause.** Rule L13. A `UE.` node is built in a 1.x body with a pin open that the engine draws as
@@ -813,7 +813,7 @@ function.
 An output is selected by a whole number the compiler knows, and this index is computed.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1542`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1577`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1546`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1581`
 <!-- generated:end DSH5281 -->
 
 **Cause.** `node[k]` reads output `k` of a node, and `k` is not a constant the compiler can
@@ -832,7 +832,7 @@ evaluate. Which wire is connected cannot depend on a run-time value.
 This Custom node declares {0} output(s), counted from 0, and this selects output {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1588`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1608`, `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:611`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1592`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1612`, `Source/DreamShaderLang/Private/Semantic/LangBinderLegacy.cpp:611`
 <!-- generated:end DSH5282 -->
 
 **Cause.** An output index is past the outputs the node or function declares. Outputs count from 0;
@@ -871,7 +871,7 @@ same.
 '{0}' becomes an input of the custom node, which carries a number or a texture, and this argument is {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4539`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4563`
 <!-- generated:end DSH5284 -->
 
 **Cause.** An argument of a `Custom` node call is a value a Custom node input cannot carry: a
@@ -890,7 +890,7 @@ material, a Substrate value, a sampler. A Custom input takes a number or a textu
 '{0}.{1}' has {2} input pin(s), counted from 0, and this argument connects pin {3}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4323`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4347`
 <!-- generated:end DSH5285 -->
 
 **Cause.** `Pin[k] = value` names an input pin by its engine index, and the class has fewer pins
@@ -909,7 +909,7 @@ than that.
 'Pin[{0}] = ...' connects a node's input pin by its engine index, and only a 'UE.' or 'Substrate.' node call has one; pass this argument by name or by position.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2894`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2898`
 <!-- generated:end DSH5286 -->
 
 **Cause.** `Pin[k] = value` is used on a call that is no `UE.` / `Substrate.` node: a user function,
@@ -928,7 +928,7 @@ an intrinsic, a constructor. Only a reflected node has engine pin indices.
 '{0}' has more than one output and is read as its first, '{1}', which is what 1.x did; a '.dss' names the output.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1807`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1811`
 <!-- generated:end DSH5287 -->
 
 **Cause.** Rule L3c. A node with several outputs is used as a value in a 1.x body without saying
@@ -948,7 +948,7 @@ which output. 1.x read the first one; so does this front end, and it says which 
 '{0}.{1}' has no 'DefaultValue', so the default written for this parameter is dropped, as 1.x dropped it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4566`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4590`
 <!-- generated:end DSH5288 -->
 
 **Cause.** A 1.x property is a parameter node without a `DefaultValue` property (a collection
@@ -967,7 +967,7 @@ parameter, for one) and has a default written after `=`. 1.x dropped it.
 {0} expects {1}, and this is {2}: its leading components are taken, which is what 1.x did; a '.dss' writes the swizzle.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1870`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1874`
 <!-- generated:end DSH5289 -->
 
 **Cause.** Rule L22. A value is wider than the place it goes -- a `float4` parameter assigned to a
@@ -989,7 +989,7 @@ migrate` writes it.
 The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:844`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:862`
 <!-- generated:end DSH5290 -->
 
 **Cause.** Rule L23. A block builds an asset named like a function this file can call (a
@@ -1011,7 +1011,7 @@ a `/// @name` for the asset.
 '{0}.{1}' lists no pin called '{2}'; it is connected by that name once the node exists, because a node may name its pins after its properties.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4595`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4619`
 <!-- generated:end DSH5291 -->
 
 **Cause.** Rule L24. A named argument is not a pin or property the catalog lists for the class. The
@@ -1038,7 +1038,7 @@ always resolves and does not need the lookup.
 '{0}' is not declared, and as in 1.x this assignment declares it, as a local of type {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2315`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2319`
 <!-- generated:end DSH5292 -->
 
 **Cause.** Rule L26. `x = value;` in a 1.x body assigns to a name declared nowhere. 1.x declared the
@@ -1058,7 +1058,7 @@ is an error.
 A Substrate value has no compound assignment; write 'S = S + T' (Substrate.Add) or 'S = S * w' (Substrate.Weight).
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2347`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:274`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:302`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2351`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:274`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:302`
 <!-- generated:end DSH5293 -->
 
 **Cause.** An operator that Substrate values do not have. They take `A + B` (`Substrate.Add`), `A *
@@ -1081,7 +1081,7 @@ mixing, and `A = A + B;` instead of `A += B;`.
 'Substrate.{0}' is a node Unreal Engine has from {1} on; this engine does not have it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4206`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:148`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:161`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4213`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:148`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:161`
 <!-- generated:end DSH5294 -->
 
 **Cause.** A piece of Substrate sugar needs a node this engine does not have. Three messages: a
@@ -1204,4 +1204,413 @@ wrote it.
 
 **Fix.** Check the pin's name against the node (`dsc export-catalog`, or hover in the editor
 extension), and assign a member before reading it.
+
+## DSH5300
+
+<!-- generated:begin DSH5300 -->
+**Severity** error
+
+**Message**
+
+```
+'UE.{0}' needs {1}, and this engine's node catalog does not have it.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4227`
+<!-- generated:end DSH5300 -->
+
+**Cause.** `UE.DreamPassOutput`, `UE.DreamPassBuffer` or the engine's `UE.UserSceneTexture` is
+called, and the node catalog this file is bound against does not have the class. The two Custom
+Pass nodes are listed on Unreal Engine 5.8 and later only: below it their classes still exist, but
+they compile to a material error, so the catalog leaves them out and the call is refused here rather
+than built into a material that cannot compile. `UE.UserSceneTexture` came with 5.6. A catalog
+exported with `dsc export-catalog` from such an engine gives the same answer.
+
+**Fix.** Build with an engine that has the node. A source that has to build on an older engine as
+well guards the call:
+
+```hlsl
+#if DS_ENGINE_MAJOR > 5 || (DS_ENGINE_MAJOR == 5 && DS_ENGINE_MINOR >= 8)
+    UE.DreamPassOutput(Output0 = float4(1, 0, 0, 0));
+#endif
+```
+
+## DSH5301
+
+<!-- generated:begin DSH5301 -->
+**Severity** error
+
+**Message**
+
+```
+Material '{0}' asks for the new material translator ('bEnableNewHLSLGenerator = true'), and uses {1} (line {2}), which only the classic translator compiles; remove the setting.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp:251`
+<!-- generated:end DSH5301 -->
+
+**Cause.** The material sets `bEnableNewHLSLGenerator = true` in its `#pragma material`, and its
+graph holds a `UE.DreamPassOutput` or `UE.DreamPassBuffer` node, written in the entry or in a helper
+the entry inlines. Neither node implements the new material translator, so the material would not
+compile. The message stands on the setting and gives the line of the first node.
+
+**Fix.** Remove `bEnableNewHLSLGenerator` from the `#pragma material`, or set it to `false`. A
+material that needs the new translator cannot use the Custom Pass nodes.
+
+## DSH5302
+
+<!-- generated:begin DSH5302 -->
+**Severity** warning
+
+**Message**
+
+```
+UE.DreamPassOutput does nothing in '{0}', a {1}: the engine compiles custom outputs from a material's own graph only, and only there does the node give the material its DreamPass shader tag. A material using '{0}' writes no pass outputs, and a mesh pass in 'Mode = Own' does not draw it; write UE.DreamPassOutput in the material itself.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp:271`
+<!-- generated:end DSH5302 -->
+
+**Cause.** `UE.DreamPassOutput` is called in a material function, a material layer or a layer blend
+(an `export`ed function, or one marked `@layer` / `@layerblend`), directly or through a helper it
+inlines. The engine compiles custom outputs from a material's own graph only, so in a function the
+node writes nothing and does not give the calling material the DreamPass shader tag: a material that
+has the node only there is not drawn by a mesh pass in `Mode = Own`, and has no outputs for a mesh
+pass that names it as its `Material` (DSH7340). It is a warning because the function itself still
+builds.
+
+**Fix.** Write the node in the material: in its entry, or in a plain helper the entry calls, which is
+inlined into the material's graph. Let the function return the values the outputs need, and pass
+them to `UE.DreamPassOutput` there.
+
+## DSH5303
+
+<!-- generated:begin DSH5303 -->
+**Severity** error
+
+**Message**
+
+```
+Material '{0}' gets a second UE.DreamPassOutput node here (the first is on line {1}), and a material compiles one custom output of a class; write all four outputs in one call. A call inside a loop, or in a helper called twice, makes more than one node.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPassNodes.cpp:235`
+<!-- generated:end DSH5303 -->
+
+**Cause.** One material's graph would get two `UE.DreamPassOutput` nodes, and a material compiles one
+custom output of a class -- the engine would fail it. Two calls make two nodes. So does one call
+inside a loop, which unrolls into more than one, and one call in a helper the material calls twice
+(or from a loop), because a helper is inlined at every call. The message stands at the second node
+and gives the line of the first.
+
+**Fix.** Compute the values first, then write the node once, with every output it fills:
+
+```hlsl
+float4 Mask = ...;
+float  Id   = ...;
+UE.DreamPassOutput(Output0 = Mask, Output1 = Id);
+```
+
+## DSH5315
+
+<!-- generated:begin DSH5315 -->
+**Severity** error
+
+**Message**
+
+```
+UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = "CP_Highlight") or the pipeline asset's path.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:803`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:824`
+<!-- generated:end DSH5315 -->
+
+**Cause.** `UE.DreamPassBuffer` does not say which pipeline it reads. Two messages: the call has no
+`Pipeline` argument, or an empty one; or `Pipeline` is written as a path -- `/Game/...`, `Path(...)`,
+a pasted `Class'/Game/...'` reference -- that does not resolve to an object path, and the message
+quotes why (a malformed `Path(...)`, a pasted reference of another class than a pipeline).
+
+**Fix.** Name the pipeline by the name of the `.dsp` that builds it, or by the pipeline asset's path:
+
+```hlsl
+float Glow = UE.DreamPassBuffer(Pipeline = "CP_Highlight", Buffer = "Blurred").r;
+```
+
+## DSH5316
+
+<!-- generated:begin DSH5316 -->
+**Severity** error
+
+**Message**
+
+```
+No pipeline named '{0}' is built by a .dsp under '{1}'; write the pipeline asset's path, or check the name.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:833`
+<!-- generated:end DSH5316 -->
+
+**Cause.** `Pipeline` is a bare name, and no `.dsp` under the source root of this `.dss` builds a
+pipeline of that name. A bare name is looked up the way a `.dsi`'s `Parent` is: among the products of
+the same source root. A pipeline is named after its `.dsp` file.
+
+**Fix.** Check the name against the `.dsp`'s file name. A pipeline under another source root, or one
+no `.dsp` builds, is named by its asset path: `Pipeline = "/Game/Passes/CP_Highlight"`.
+
+## DSH5317
+
+<!-- generated:begin DSH5317 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' names more than one pipeline under this source root ({1}); write the pipeline asset's path instead.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:841`
+<!-- generated:end DSH5317 -->
+
+**Cause.** `Pipeline` is a bare name, and more than one `.dsp` under this source root builds a
+pipeline of that name -- two files of one name in different folders. The message lists them.
+
+**Fix.** Write the asset path of the one you mean, or rename one of the files.
+
+## DSH5318
+
+<!-- generated:begin DSH5318 -->
+**Severity** error
+
+**Message**
+
+```
+The pipeline '{0}' names nothing: no pipeline asset exists at '{1}', and no .dsp under the source roots builds it.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:918`
+<!-- generated:end DSH5318 -->
+
+**Cause.** The reference resolved to an object path where no pipeline asset exists, and no `.dsp`
+under the source roots builds the pipeline, so nothing can stand in for it. Usually the path names
+nothing: a typo, or an asset that was moved or renamed. A pipeline that a `.dsp` builds is not this
+error, even when the `.dsp` does not compile: a `dsc check`, which builds nothing, reads that `.dsp`
+in place of the missing asset, and one that fails is DSH5319, with its first error.
+
+**Fix.** Correct the path, or name the pipeline by its `.dsp`'s bare name.
+
+## DSH5319
+
+<!-- generated:begin DSH5319 -->
+**Severity** error
+
+**Message**
+
+```
+The pipeline '{0}' comes from '{1}', which failed to compile, so the buffer this material reads cannot be checked. {2}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:483`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:907`
+<!-- generated:end DSH5319 -->
+
+**Cause.** The pipeline comes from a `.dsp` that does not compile, so the buffer this material reads
+cannot be checked. Two messages, one per kind of run:
+
+- a run that builds assets found the pipeline asset missing or older than its `.dsp`, built the
+  `.dsp` first (DSH5320 says so), and that compile failed (`... which failed to compile ...`);
+- a run that builds nothing -- a `dsc check` -- found no pipeline asset and read the `.dsp` in its
+  place, and the `.dsp` does not compile (`... which does not compile ...`).
+
+The message ends with the `.dsp`'s first error. When that error is DSH8333, the pipeline and this
+material need each other: the cycle DSH5325 describes, met from the material's side.
+
+**Fix.** Fix the `.dsp` -- compile it on its own to see all its diagnostics -- then compile the
+material again. For DSH8333, change the read as DSH5325 says.
+
+## DSH5320
+
+<!-- generated:begin DSH5320 -->
+**Severity** info
+
+**Message**
+
+```
+The pipeline '{0}' was missing or older than its source, so '{1}' was compiled first.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:463`
+<!-- generated:end DSH5320 -->
+
+**Cause.** The pipeline this material reads was missing or older than its `.dsp`, so the compile
+built the `.dsp` first, the way a `.dsi`'s parent is built first. Only a run that builds assets does
+this; a `dsc check` leaves the pipeline as it is. Said before that compile runs; DSH5319 follows if
+it fails.
+
+**Fix.** Nothing to fix.
+
+## DSH5321
+
+<!-- generated:begin DSH5321 -->
+**Severity** error
+
+**Message**
+
+```
+(built at runtime)
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:942`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:958`
+<!-- generated:end DSH5321 -->
+
+**Cause.** The node's own rule refuses the buffer -- in the words the material editor would use.
+With the pipeline asset there, the message says which:
+
+- `Buffer` names a built-in texture (`SceneColor`, `CustomDepth`, ...), which lives in the frame's
+  render graph only; nothing copies it out.
+- The pipeline has no buffer of that name.
+- The buffer is not exported.
+- The buffer is `Depth32` or an integer format, which a material cannot sample.
+- The buffer is exported and the asset has no render target for it.
+
+A built-in texture is this error from both paths: when the pipeline has not been built yet and its
+`.dsp` is read in its place (a `dsc check` on a fresh checkout), it is refused before any buffer is
+looked up, in the same words, so a check says what a build says. The `.dsp` path's other refusals
+have codes of their own (DSH5322, DSH5323).
+
+A `dsc check` reads the pipeline asset as it is on disk, so a buffer added or exported in the `.dsp`
+since its last compile is not there yet.
+
+**Fix.** Name a buffer the pipeline declares with `Export = true`, in a float or normalized format.
+When the `.dsp` already says so, compile it -- that also makes a missing render target -- then the
+material.
+
+## DSH5322
+
+<!-- generated:begin DSH5322 -->
+**Severity** error
+
+**Message**
+
+```
+The pipeline '{0}' declares no buffer '{1}'.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:972`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:980`
+<!-- generated:end DSH5322 -->
+
+**Cause.** The pipeline has not been built yet, so its `.dsp` was read in its place (a `dsc check` on a
+fresh checkout), and the buffer does not fit. Two messages: the `.dsp` declares no buffer of that
+name -- compared ignoring case, as the built asset compares it -- or the buffer is not
+`Export = true`. A built-in texture does not end here: it is refused first, as DSH5321, in the
+node's own words.
+
+**Fix.** Name a buffer the `.dsp` declares, and declare it with `Export = true`:
+
+```hlsl
+buffer Blurred : R8(Scale = 0.5, Export = true);
+```
+
+## DSH5323
+
+<!-- generated:begin DSH5323 -->
+**Severity** error
+
+**Message**
+
+```
+Buffer '{1}' of the pipeline '{0}' is {2}, which a material cannot sample. Export a float or normalized buffer instead.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:988`
+<!-- generated:end DSH5323 -->
+
+**Cause.** The pipeline has not been built yet, its `.dsp` was read in its place, and the exported
+buffer is `Depth32`, `R32U` or `RG32U`. A material declares the texture as a float `Texture2D` and
+samples it with a filtering sampler, which none of these formats allows. This is a backstop: the
+`.dsp` itself refuses such an export first (DSH7355, DSH7321), and a `.dsp` that does not compile is
+not read here (DSH5319).
+
+**Fix.** Export a float or normalized format -- `R8`, `RG16F`, `R32F` -- instead.
+
+## DSH5324
+
+<!-- generated:begin DSH5324 -->
+**Severity** error
+
+**Message**
+
+```
+UE.DreamPassBuffer names no Buffer of '{0}': write the exported buffer's name (Buffer = "Blurred").
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:809`
+<!-- generated:end DSH5324 -->
+
+**Cause.** `UE.DreamPassBuffer` names its pipeline and no buffer of it: `Buffer` is missing, empty or
+`None`.
+
+**Fix.** Write the exported buffer's name: `Buffer = "Blurred"`.
+
+## DSH5325
+
+<!-- generated:begin DSH5325 -->
+**Severity** error
+
+**Message**
+
+```
+The pipeline '{0}' needs this material to be built -- it is one of its pass materials, or the material of a pipeline that one needs -- so this material cannot read its exported buffer: the two can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:863`
+<!-- generated:end DSH5325 -->
+
+**Cause.** This material reads, through `UE.DreamPassBuffer`, an exported buffer of a pipeline that
+needs the material built: the pipeline draws it as one of its pass materials, or one of its pass
+materials reads a pipeline that draws it. The two can be built in no order -- compiled first, the
+material has no pipeline asset to read; compiled second, the pipeline has no material to draw
+(DSH4406) -- so the pair can never bootstrap, and the read is refused. It is raised when the
+material is compiled or read from inside the pipeline's compile, which builds a missing or stale
+pass material first; the `.dsp` then reports its material as failing (DSH8331). Met from the
+material's side, the same cycle is the `.dsp`'s DSH8333, which the material reports as DSH5319.
+
+**Fix.** Inside its own pipeline, read the buffer itself rather than its exported copy: bind it with
+`read` in the pass that draws this material, and in the material sample it as a `UE.UserSceneTexture`
+input of that name instead of calling `UE.DreamPassBuffer`:
+
+```hlsl
+// in the .dsp
+pass Composite : fullscreen
+{
+    ...
+    read Blurred;
+}
+
+// in the material
+float Halo = UE.UserSceneTexture(UserSceneTexture = "Blurred", Coordinates = UV).Color.r;
+```
+
+A mesh pass's material cannot read its own pipeline's buffers at all: sample the buffer in a
+fullscreen pass of the pipeline, or in a material the pipeline does not draw. When the loop runs
+through another pipeline, break it at one of its `UE.DreamPassBuffer` reads the same way.
+
+## DSH5326
+
+<!-- generated:begin DSH5326 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a {1}, not a DreamShader pass pipeline.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:879`
+<!-- generated:end DSH5326 -->
+
+**Cause.** `Pipeline` names an asset that exists and is not a pass pipeline: a material, a texture --
+often the render target an exported buffer becomes, `CP_Highlight_Blurred`, picked instead of the
+pipeline `CP_Highlight`. The message names its class.
+
+**Fix.** Point `Pipeline` at the pipeline asset, or at its `.dsp`'s bare name, and name the buffer
+with `Buffer`.
 

@@ -1,6 +1,6 @@
 ---
 name: dream-shader-diagnose
-description: Resolve a DreamShader compile error or warning — look the message up by pipeline stage, explain the cause, and fix the source. Use when a .dsm / .dsf fails to build, when a LogDreamShader error needs explaining, or when a DreamShader material silently comes out wrong.
+description: Resolve a DreamShader compile error or warning — look the message up by pipeline stage, explain the cause, and fix the source. Use when a .dsm / .dsf / .dss / .dsi / .dsp fails to build, when a LogDreamShader error needs explaining, or when a DreamShader material silently comes out wrong.
 ---
 
 # dream-shader-diagnose `<message>`
@@ -41,6 +41,7 @@ pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/Materials/M_Sample
 | `Generated …`, `Skipped …`, save/package failures | **Asset generation and saving** | [`Docs/generation/index.md`](../../Docs/generation/index.md) |
 | the usage banner, `Unknown DreamShader command` | **Commandlet** | [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md) |
 | `VirtualFunction` drift against a real asset | **VirtualFunction sync** | [`Docs/language/virtual-function.md`](../../Docs/language/virtual-function.md) |
+| Custom Pass *(since 2.1.0)*: a `.dsp`, an HLSL pass, the slot registry, `UE.DreamPassBuffer` / `UE.DreamPassOutput` — `DSH2300`–`2349`, `DSH3300`–`3349`, `DSH4400`–`4449`, `DSH5300`–`5329`, `DSH7300`–`7379`, `DSH8300`–`8339`, `DSH9200`–`9229` | the code's page under [`Docs/diagnostics/`](../../Docs/diagnostics/index.md) | [`Docs/language-v2/passes.md`](../../Docs/language-v2/passes.md), [`Docs/runtime/hlsl.md`](../../Docs/runtime/hlsl.md), [`Docs/builtins/dream-pass.md`](../../Docs/builtins/dream-pass.md), [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md#pass-registry) |
 
 **3 — Fix the source, recompile, confirm exit `0`.** Then check the message is gone rather than
 replaced: a compile stops at the **first** failing `Graph` statement, so fixing one error routinely

@@ -114,6 +114,7 @@ positionally. Everything on the generic and `Substrate.*` paths rejects them wit
 | [Transform bases](transform.md) | The basis vocabularies for `UE.TransformVector` and `UE.TransformPosition` |
 | [Substrate](substrate.md) | The `Substrate.*` node catalogue and its UE 5.4 gate |
 | [HLSL library](hlsl-library.md) | `Shaders/DreamShaderBuiltins.ush` |
+| [Custom Pass nodes](dream-pass.md) | `UE.DreamPassOutput` and `UE.DreamPassBuffer`, reflected expressions of the DreamShaderPass module (UE 5.8) |
 
 ## Notes
 
@@ -176,6 +177,7 @@ Shader(Name="Docs/M_Surfaces")
 - [`UE.Expression`](ue-expression.md) — the generic reflected escape hatch
 - [`OutputType`](output-type.md) — the token table shared by all the surfaces
 - [Substrate](substrate.md) — the `Substrate.*` sibling namespace
+- [Custom Pass nodes](dream-pass.md) — the two expressions a `.dsp` pipeline's materials use
 - [Math builtins](math.md) — the scalar/vector math set
 - [Calls](../graph/calls.md) — call syntax, named arguments and out arguments
 - [Name resolution](../graph/name-resolution.md) — the lookup order a callee goes through

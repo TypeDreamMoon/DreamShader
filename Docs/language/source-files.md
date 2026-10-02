@@ -138,14 +138,26 @@ result is normalized to a full path.
 
 | Scan | Extensions | Excluded | Used for |
 | :-- | :-- | :-- | :-- |
-| All source files | `.dsm`, `.dsf`, `.dsh` | everything under any root's packages directory | dependency graph, workspace generation, editor file lists (result sorted) |
-| Generatable files | `.dsm`, `.dsf` | `.dsm` files under any root's packages directory | batch compile / generate-all |
+| All source files | `.dsm`, `.dsf`, `.dsh`; on the 2.0 line also `.dss`, `.dsi` and *(since 2.1.0)* `.dsp` | everything under any root's packages directory | dependency graph, workspace generation, editor file lists (result sorted) |
+| Generatable files | `.dsm`, `.dsf`; on the 2.0 line also `.dss`, `.dsi` and *(since 2.1.0)* `.dsp` — never `.dsh` | `.dsm` files under any root's packages directory | batch compile / generate-all |
 
 > [!NOTE]
 > The two exclusions are not symmetric. The all-sources scan drops **every** file under a packages
 > directory; the generatable scan drops only package **`.dsm`** files. A `.dsf` shipped inside
 > `DShader/Packages` is therefore still picked up as a generatable file and will produce function
-> assets on a generate-all.
+> assets on a generate-all — and on the 2.0 line so is a `.dss`, a `.dsi` or a `.dsp` there.
+
+*(since 2.0.0)* The command-line verbs that name their files with `-All` use scans of their own:
+
+| `-All` of | Extensions | Excluded |
+| :-- | :-- | :-- |
+| `compile` | the all-sources scan without `.dsh`, every `.dsf` first | everything under any root's packages directory |
+| `check`, `dump-ir`, `dump-layout`, `index`, `list-generated` | `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf` | everything under any root's packages directory |
+| `fmt` | `.dss`, `.dsi`, `.dsp`, `.dsh` | everything under any root's packages directory, and every root that is not writable — a plugin's sources are formatted only when named |
+
+The 2.0 kinds are described under [DreamShaderLang 2.0](../language-v2/index.md):
+[`.dsi`](../language-v2/instances.md) material instances and *(UE 5.8)*
+[`.dsp`](../language-v2/passes.md) Custom Pass pipelines.
 
 | Directory | Default | Project setting |
 | :-- | :-- | :-- |

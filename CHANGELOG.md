@@ -1,5 +1,24 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Added
+
+- **Custom Pass: render passes of your own, written as `.dsp` pipelines (UE 5.8).** A `.dsp` file declares
+  named buffers and an ordered list of passes, each at the injection point of the renderer it chooses -- from
+  `BeginView` before anything is drawn, through `AfterBasePass`, `AfterOpaque` and `BeforePostProcess`, to the
+  points inside the post-process chain and `EndOfView` -- and compiles to a `UDreamPassPipeline` asset, which
+  decompiles back to `.dsp`. A pass is a fullscreen Post Process material (written in a `.dss`, reading the
+  pass's buffers through `UE.UserSceneTexture`), fullscreen or compute HLSL from your project (in global shader
+  slots, built from snapshots that passed a pre-check, so a typo in a `.usf` never takes an editor down), a mesh
+  pass that draws the primitives a stencil value, a pass layer or a named list selects with an override material
+  or with their own (`UE.DreamPassOutput`), or a clear or a copy. Buffers can keep their history across frames,
+  and an exported buffer is a render target ordinary materials (`UE.DreamPassBuffer`), Blueprints, UMG and
+  Niagara read. Pipelines are activated by the project settings, `ADreamPassVolume`, `UDreamPassComponent` or
+  the Blueprint / C++ API, which blend their parameter overrides as post-process volumes do. The new runtime
+  module `DreamShaderPass` builds on every supported engine and runs passes on 5.8 and later. See
+  [Custom Pass pipelines](Docs/language-v2/passes.md) and [Custom Pass runtime](Docs/runtime/index.md).
+
 ## 2.0.2 - 2026-10-02
 
 ### Changed

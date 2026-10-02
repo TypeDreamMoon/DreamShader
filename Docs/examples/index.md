@@ -43,6 +43,8 @@ substituted**; a bare `…` stands for a value the message fills in at runtime, 
 | [14](#14-layout-placement-and-region) | `Layout` and `#Region` | [`Layout`](../language/layout.md) |
 | [15](#15-runtime-virtual-texture-sampling-and-writing) | Runtime Virtual Texture | [`UE.Expression`](../builtins/ue-expression.md), [output bindings](../language/output-bindings.md) |
 
+Custom Pass pipelines (`.dsp`, UE 5.8) have a page of their own: [Custom Pass examples](custom-pass.md).
+
 ---
 
 ## 1. Minimal unlit material
@@ -1081,6 +1083,7 @@ editor, the commandlet writes **persistent** assets.
 - [DreamShaderLang](../language/index.md) — the declaration grammar, block by block
 - [Graph language](../graph/index.md) — the statement and expression language inside `Graph`
 - [Builtins](../builtins/index.md) — `UE.*`, `Substrate.*`, math, and the HLSL library
+- [Custom Pass examples](custom-pass.md) — four `.dsp` pipelines with their materials and shaders
 - [Parameters](../parameters/index.md) — every parameter token, metadata key and `Path` root
 - [Settings](../settings/index.md) — per-file and project-wide configuration
 - [Generation](../generation/index.md) — how a source file becomes an asset

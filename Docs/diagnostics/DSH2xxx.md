@@ -942,7 +942,7 @@ after the `0` and read `x1F` as a name, so the value was silently 0.
 Expected a top-level Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend, Function, GraphFunction, Namespace, VirtualFunction or import, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:476`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:478`
 <!-- generated:end DSH2240 -->
 
 **Cause.** Something other than a 1.x block opens a declaration at the top of a `.dsm` / `.dsf`
@@ -963,7 +963,7 @@ stray token or an unclosed block above this line.
 Expected '(' with the block's attributes, such as '(Name = "M_Example")', found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:525`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:527`
 <!-- generated:end DSH2241 -->
 
 **Cause.** A block word is not followed by its attribute list. Every 1.x block says at least its
@@ -982,7 +982,7 @@ name there.
 Expected a 'Name = "..."' attribute on '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:731`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:733`
 <!-- generated:end DSH2242 -->
 
 **Cause.** The block has an attribute list and no `Name` in it. The name is the asset the block
@@ -1001,7 +1001,7 @@ builds (or, for a VirtualFunction, the name calls use).
 Expected an attribute name such as 'Name', found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:544`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:553`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:564`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:610`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:546`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:555`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:566`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:612`
 <!-- generated:end DSH2243 -->
 
 **Cause.** The attribute list of a block is not `Key = value` pairs separated by commas: a key is
@@ -1020,7 +1020,7 @@ missing, the `=` is, or the value is not a string, a word or a number.
 The attribute '{0}' is written twice; the later value wins, as it did in 1.x.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:592`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:594`
 <!-- generated:end DSH2244 -->
 
 **Cause.** One attribute is written twice in a block's attribute list. 1.x kept the later value, and
@@ -1039,7 +1039,7 @@ so does this front end; the warning is there because the first value is dead tex
 Expected a Shader section (Properties, Settings, Outputs, Graph or Layout), found '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2474`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:931`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2476`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:933`
 <!-- generated:end DSH2245 -->
 
 **Cause.** A word that is no section opens a line inside a block. A Shader has `Properties`,
@@ -1059,7 +1059,7 @@ a VirtualFunction has `Options`, `Inputs` and `Outputs`.
 Expected 'Graph' as the body section of '{0}', found 'Code', which 1.x accepted only inside a Function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:923`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:925`
 <!-- generated:end DSH2246 -->
 
 **Cause.** A Shader or ShaderFunction block has a `Code` section. 1.x read `Code` only inside a
@@ -1078,7 +1078,7 @@ Expected 'Graph' as the body section of '{0}', found 'Code', which 1.x accepted 
 Expected no body in the VirtualFunction '{0}', which declares an existing asset, found the section '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2466`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2468`
 <!-- generated:end DSH2247 -->
 
 **Cause.** A VirtualFunction has a `Graph` or `Code` section. A VirtualFunction declares the
@@ -1098,7 +1098,7 @@ asset.
 Expected a 1.x block in a '.{0}' file, found {1}, which is 2.0 syntax; 2.0 declarations belong in a .dss file or a .dsh header.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:467`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:469`
 <!-- generated:end DSH2248 -->
 
 **Cause.** 2.0 syntax (a `uniform`, an `export` function, a `#pragma`) stands in a `.dsm` or `.dsf`
@@ -1118,7 +1118,7 @@ file, which is read by the 1.x front end only.
 Expected only Function, GraphFunction, Namespace and VirtualFunction blocks in a '.dsh' header, found the asset block '{0}', which belongs in a .dsm or .dsf file.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:490`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:687`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:492`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:689`
 <!-- generated:end DSH2249 -->
 
 **Cause.** A `.dsh` header holds a block that builds an asset (`Shader`, `ShaderFunction`, a layer).
@@ -1138,7 +1138,7 @@ the header.
 Expected one Shader block in a file, found a second one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:715`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:717`
 <!-- generated:end DSH2250 -->
 
 **Cause.** A file holds two `Shader` blocks. A material source is one material.
@@ -1156,7 +1156,7 @@ Expected one Shader block in a file, found a second one.
 '{0}' is the old spelling of '{1}'; it still reads the same.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:705`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:707`
 <!-- generated:end DSH2251 -->
 
 **Cause.** A block word of an earlier 1.x release is used (`MaterialLayer` for `ShaderLayer`,
@@ -1175,7 +1175,7 @@ Expected one Shader block in a file, found a second one.
 Expected a double-quoted path after 'import', found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:378`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:390`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:407`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:380`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:392`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:409`
 <!-- generated:end DSH2252 -->
 
 **Cause.** An `import` line the front end does not read. Three cases: `import` is not followed by a
@@ -1198,7 +1198,7 @@ root. A header that lives in another root has to be reached through a package or
 '{0}' is read as 'import'; write it in lower case.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:369`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:371`
 <!-- generated:end DSH2253 -->
 
 **Cause.** `Import` (or another casing) is used for `import`. 1.x matched the word loosely.
@@ -1216,7 +1216,7 @@ root. A header that lives in another root has to be reached through a package or
 Expected a top-level Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend, Function, GraphFunction, Namespace or VirtualFunction block in this 1.x file, found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:307`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:309`
 <!-- generated:end DSH2254 -->
 
 **Cause.** The file has no block at all: it is empty, everything in it is commented out, or an `#if`
@@ -1236,7 +1236,7 @@ removed it.
 Expected a Graph section in the Shader '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:977`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:979`
 <!-- generated:end DSH2255 -->
 
 **Cause.** A Shader has no `Graph` section, so there is nothing to build.
@@ -1254,7 +1254,7 @@ Expected a Graph section in the Shader '{0}', found none.
 The Shader '{0}' has no Outputs section, so nothing its Graph computes reaches the material.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:984`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:986`
 <!-- generated:end DSH2256 -->
 
 **Cause.** A Shader has a Graph and no `Outputs` section, so no value reaches a material attribute.
@@ -1273,7 +1273,7 @@ The material builds, with nothing wired to it.
 Expected '`{' to open the '{0}' block, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2270`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2384`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2423`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2440`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:744`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:817`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:834`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2272`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2386`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2425`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2442`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:746`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:819`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:836`
 <!-- generated:end DSH2257 -->
 
 **Cause.** A block is not opened where one has to be: the attribute list of a `Shader`,
@@ -1294,11 +1294,376 @@ followed by `{`.
 The section '{0}' is written twice; the later one wins, as it did in 1.x.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:897`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:911`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:899`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:913`
 <!-- generated:end DSH2258 -->
 
 **Cause.** One section is written twice in a block. 1.x kept the later one and dropped the first
 silently; this front end does the same and says so.
 
 **Fix.** Merge the two sections into one.
+
+## DSH2300
+
+<!-- generated:begin DSH2300 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '`{' to open the block of pass '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:199`
+<!-- generated:end DSH2300 -->
+
+**Cause.** The head of a pass, `pass <Name> : <kind>`, is not followed by the `{` that opens its
+block. A pass has no argument list -- its settings are statements inside the braces, unlike a
+buffer's `(Key = Value)` list -- so `pass Blur : compute(Injection = AfterOpaque)` is this error, at
+the `(`. Other shapes: a `;` or a second word after the kind (`pass Blur : compute fullscreen`), and a
+`{` left out altogether, when the message names the first setting of the block.
+
+**Fix.** Open the block right after the kind, on the same line or the next, with every setting
+inside it:
+
+```hlsl
+pass Blur : compute
+{
+    Injection = AfterOpaque;
+    Shader    = "BoxBlur.usf";
+    Entry     = BlurCS;
+    write Result = Blurred;
+}
+```
+
+Without the `{`, the lines of the block are read as file-scope declarations and its `}` as a stray
+one, so more errors follow (DSH3205, DSH3222 for a `Shader =` line, DSH3200); they are this mistake
+and go away with it.
+
+## DSH2301
+
+<!-- generated:begin DSH2301 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a setting ('Key = Value;') or a 'read', 'write' or 'param' line in a pass block, found {0}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:293`
+<!-- generated:end DSH2301 -->
+
+**Cause.** A statement in a pass block starts with something no statement starts with. A pass holds
+settings (`Key = Value;`) and `read`, `write` and `param` lines, all of which start with a name;
+this is a keyword, a number, a string or a punctuation mark instead. Typical shapes: HLSL habits
+such as `in Source = Mask;` or `out Result = Blurred;` (`in` and `out` are keywords), a `uniform`
+or `static const` declaration written inside the pass, a value without its key (`"M_Mask";`), and a
+doubled `;` -- a pass block has no empty statement. A `uniform` line can also mean that the `}` of
+the pass above it is missing.
+
+**Fix.** Write the line as a setting or a binding -- `read Source = Mask;`,
+`write Result = Blurred;`, `Material = "M_Mask";` -- and delete a stray `;`. Declarations go at file
+scope, above the passes, and a pass takes their values with `param`:
+
+```hlsl
+uniform float BlurRadius = 3.0;
+
+pass Blur : compute
+{
+    ...
+    param Radius = BlurRadius;
+}
+```
+
+## DSH2302
+
+<!-- generated:begin DSH2302 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '=' after the key '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:389`
+<!-- generated:end DSH2302 -->
+
+**Cause.** A pass statement starts with a name that is not a binding word, so it is read as a
+setting, `Key = Value;`, and the `=` is not there. The usual shapes:
+
+- a missing or mistyped `=`: `Injection AfterOpaque;`, `Injection: AfterOpaque;`,
+  `Material("M_Mask");`;
+- a binding word in the wrong case: `Read Mask;`, `Write SceneColor;` -- `read`, `write` and
+  `param` are lower case, setting keys start with a capital;
+- a buffer with no binding word: `Mask;` for `read Mask;`;
+- a declaration inside the block: `float Radius = 2;`.
+
+`read`, `write` and `param` themselves always start a binding, whatever follows them, so a binding
+word with no name after it (`read;`, `read "Mask";`, `param = 3;`) is DSH2304 or DSH2306, not this.
+
+**Fix.** Give a setting its `=`, and a binding its lower-case word and a name. A value the pass needs
+from the pipeline is a file-scope `uniform` or `static const`, handed in with
+`param Radius = BlurRadius;`.
+
+## DSH2303
+
+<!-- generated:begin DSH2303 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ';' at the end of the pass statement, found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:400`
+<!-- generated:end DSH2303 -->
+
+**Cause.** A complete pass statement is not followed by `;`. Most often the `;` is missing at the end
+of a line, and the message points at the first token of the next one -- the mistake is on the line
+above. Other shapes: two bindings in one statement (`read A, B;`), something after the buffer
+(`read Source = Mask[0];`, `read Mask.Previous.r;`), and two settings joined by a comma
+(`Shader = "Blur.usf", Entry = BlurCS;`).
+
+**Fix.** End every setting and binding with `;`, and bind one buffer per statement:
+`read A; read B;`, not `read A, B;`. A channel is picked in the shader or the material, not in the
+binding. When the `;` was missing, recovery skipped the next statement as well, so a mistake in that
+one shows only once this is fixed.
+
+## DSH2304
+
+<!-- generated:begin DSH2304 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a buffer after '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:316`, `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:326`
+<!-- generated:end DSH2304 -->
+
+**Cause.** A `read` or `write` binding has no buffer where one belongs. `read` and `write` at the
+start of a statement always begin a binding, whatever follows them, so the word with no name after
+it -- `read;`, `write;`, `read "Mask";` -- is this error, as `Expected a buffer after 'read', ...`.
+So is a binding that names its slot and `=` and then no buffer -- `read Source = "Mask";`,
+`read Source = ;`, `write Result = (Blurred);` -- as `Expected a buffer after 'read Source =', ...`.
+A buffer is a bare name -- a buffer of this pipeline or a built-in texture such as `SceneColor` --
+never a string or an expression.
+
+**Fix.** Name the buffer: `read Source = Mask;`, `write Result = Blurred;`. When the name inside the
+pass is the buffer's own, leave it out: `read Mask;`.
+
+## DSH2305
+
+<!-- generated:begin DSH2305 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}.{1}': the one thing a buffer has after '.' is 'Previous', last frame's contents of a 'History = true' buffer.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:344`, `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:350`
+<!-- generated:end DSH2305 -->
+
+**Cause.** A `read` or `write` binding has a `.` after its buffer, and what follows is not `Previous`
+spelt exactly so: `read Mask.previous;`, `read Blurred.r;` (a channel), `read Wind.Last;`. A buffer
+has no members and no swizzles; `.Previous` -- last frame's contents of a `History = true` buffer --
+is the one thing a binding can name after it. A `.` with no name after it is this code too, as
+`Expected 'Previous' after '.', found ...`.
+
+**Fix.** Bind the buffer itself and take the channel where it is sampled: `read Blurred;`, then `.r`
+in the shader or the material. For last frame's contents write `read Prev = Wind.Previous;` and
+declare `Wind` with `History = true` (DSH4415 otherwise). Only a `read` may name `.Previous`; a
+`write` of one is DSH7318.
+
+## DSH2306
+
+<!-- generated:begin DSH2306 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a parameter name after 'param', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:368`
+<!-- generated:end DSH2306 -->
+
+**Cause.** `param` is not followed by the name of the value inside the pass -- the material
+parameter or the HLSL name it sets. `param` at the start of a statement always begins a binding,
+whatever follows it, so the name left out (`param = 3;`), nothing after the word (`param;`) and a
+quoted name (`param "Radius" = 3;`) are all this error; none of them is read as a setting.
+
+**Fix.** Write `param <Name> = <expression>;`, as in `param Radius = OutlineWidth * 2;`. The name is
+the pass's: a parameter of the pass's material, or the macro its `.usf` reads.
+
+## DSH2307
+
+<!-- generated:begin DSH2307 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '=' after 'param {0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:372`
+<!-- generated:end DSH2307 -->
+
+**Cause.** A `param` binding names its target and then has no `=`: `param Radius OutlineWidth;`,
+`param Radius: OutlineWidth;`, `param Radius(OutlineWidth);` or `param Radius == OutlineWidth;`.
+
+**Fix.** Write `param <Name> = <expression>;`. The expression is computed on the CPU once per view:
+a `uniform`, a `static const`, a literal or `DreamPassWeight`, times and plus constants, as in
+`param Radius = OutlineWidth * 2 + 1;`.
+
+## DSH2308
+
+<!-- generated:begin DSH2308 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a key such as 'Scale' in the arguments of buffer '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:127`
+<!-- generated:end DSH2308 -->
+
+**Cause.** A buffer's argument list has something other than a key where an argument starts: a value
+without its key (`R8(0)` for a clear value), a quoted key (`R8("Clear" = 0)`), a trailing comma
+(`R8(Clear = 0, )`), or a vector written without its constructor, whose second number then stands
+where a key should (`Size = 256, 256`).
+
+**Fix.** Name every argument and give vectors their constructor:
+
+```hlsl
+buffer Wind : RG16F(Size = int2(256, 256), History = true, Clear = 0);
+```
+
+The keys are `Scale`, `Size`, `Resolution`, `Clear`, `Mips`, `History` and `Export`.
+
+## DSH2309
+
+<!-- generated:begin DSH2309 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '=' after '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:131`
+<!-- generated:end DSH2309 -->
+
+**Cause.** A key in a buffer's argument list is not followed by `=`: a key written alone as if it
+were a flag (`R8(History)`, `RGBA16F(Export, Scale = 0.5)`), or a `:` where the `=` goes
+(`R8(Clear: 0)`).
+
+**Fix.** Give every key its value: `History = true`, `Export = true`, `Clear = 0`. A buffer has no
+bare flags.
+
+## DSH2310
+
+<!-- generated:begin DSH2310 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ',' or ')' in the arguments of buffer '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:151`
+<!-- generated:end DSH2310 -->
+
+**Cause.** A `Key = Value` in a buffer's argument list is followed by neither `,` nor `)`: two
+arguments without a comma between them (`R8(Clear = 0 Scale = 0.5)`), a `;` used as the separator,
+or a list that is never closed (`R8(Clear = 0;`).
+
+**Fix.** Separate the arguments with `,` and close the list before the `;`:
+`buffer Mask : R8(Clear = 0, Scale = 0.5);`.
+
+## DSH2311
+
+<!-- generated:begin DSH2311 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ';' after the declaration of buffer '{0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:164`
+<!-- generated:end DSH2311 -->
+
+**Cause.** A buffer declaration does not end with `;` after its format or its argument list. Usually
+the `;` is missing and the message points at the next declaration; other shapes are arguments
+without their parentheses (`buffer Mask : R8 Clear = 0;`), two buffers in one declaration
+(`buffer Mask : R8, Edge : R8;`), and braces where the argument list goes
+(`buffer Mask : R8 { Clear = 0; }`).
+
+**Fix.** One buffer per declaration, its arguments in parentheses, a `;` at the end:
+
+```hlsl
+buffer Mask : R8(Clear = 0);
+buffer Edge : R8;
+```
+
+## DSH2312
+
+<!-- generated:begin DSH2312 -->
+**Severity** error
+
+**Message**
+
+```
+The line '#{0}' cannot appear inside a pass block; a pass holds settings and 'read', 'write' and 'param' lines.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:281`
+<!-- generated:end DSH2312 -->
+
+**Cause.** A `#pragma` or `#include` line stands inside a pass's braces. The preprocessor's own
+lines -- `#if`, `#ifdef`, `#else`, `#endif`, `#define` -- are resolved before the parser runs and may
+stand there, but `#pragma` and `#include` are file-scope declarations and reach the parser as written:
+`#pragma region` around a group of settings, a `#pragma pipeline(...)` that slipped into the first
+pass, an `#include` meant for the pass's shader. The error costs only that line: the statement after
+it is parsed as usual, so a mistake in it is reported in the same run.
+
+**Fix.** Move a `#pragma pipeline(...)` to file scope, above the passes. Drop `#pragma region`: a
+`.dsp` ignores it at file scope too (DSH3315), and `//` comments group lines as well. An `#include`
+belongs in the `.usf` the pass runs; a `.dsp` includes nothing (DSH3314).
+
+## DSH2314
+
+<!-- generated:begin DSH2314 -->
+**Severity** error
+
+**Message**
+
+```
+Expected '`}' to close pass '{0}' before the next declaration, found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:228`
+<!-- generated:end DSH2314 -->
+
+**Cause.** A pass block is not closed, and a `buffer` or `pass` declaration starts a line inside it.
+The parser ends the open pass there, with the statements read so far, so the declaration below still
+parses. The same missing `}` reads differently when something else comes next: at the end of the
+file it is DSH2150, before a `uniform` or `static const` line DSH2301, before a `#pragma` line
+DSH2312.
+
+**Fix.** Add the `}` that closes the pass above the line the message points at.
 

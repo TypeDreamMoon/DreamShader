@@ -14,7 +14,7 @@
 Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1284`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1373`
 <!-- generated:end DSH3200 -->
 
 **Cause.** The parser reached a token at file scope that cannot begin anything: a stray `)`, `}`,
@@ -38,7 +38,7 @@ mistake seen from further down.
 Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:586`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:648`
 <!-- generated:end DSH3201 -->
 
 **Cause.** A `#` line other than `#pragma` or `#include` (`#if`, `#define`, `#endif`, `#error`…)
@@ -58,10 +58,10 @@ body every `#` line is kept verbatim and never reaches this check.
 **Message**
 
 ```
-'#pragma' needs a name: material, instance, layout, region or endregion.
+'#pragma' needs a name: material, instance, pipeline, layout, region or endregion.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:606`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:651`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:668`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:717`
 <!-- generated:end DSH3202 -->
 
 **Cause.** A `#pragma` line is not in the shape the parser reads:
@@ -90,7 +90,7 @@ and ignored by the compiler.
 '#include' needs a quoted path: #include "/Game/Shared/Common.dsh".
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:565`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:734`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:627`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:807`
 <!-- generated:end DSH3203 -->
 
 **Cause.** `#include` was not followed by a `"path"` in double quotes, or `import` was not followed
@@ -114,7 +114,7 @@ needs the trailing `;`; `#include` must not have one. Both spellings produce the
 Expected a type name, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:353`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:415`
 <!-- generated:end DSH3204 -->
 
 **Cause.** A type name was expected and something else was found: `uniform = 1;` (type missing),
@@ -135,7 +135,7 @@ a keyword used as a type (`struct` inside a parameter list).
 Expected a name after 'struct', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1040`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1195`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:769`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:804`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:863`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1113`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1276`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:842`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:877`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:936`
 <!-- generated:end DSH3205 -->
 
 **Cause.** A name was expected and the token there is not an identifier. Raised for the name of a
@@ -156,7 +156,7 @@ generated material-function input pin are called.
 Expected '`{' or ';' after the parameter list of '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1122`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:904`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1203`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:977`
 <!-- generated:end DSH3206 -->
 
 **Cause.** After a function's parameter list the parser found neither `{` nor `;`. Usually a stray
@@ -176,7 +176,7 @@ token between `)` and `{` (`float f() const {`, `float f() 5`), or a missing `{`
 '{0}' is 'extern' and binds to an existing asset, so it cannot have a body; write a prototype ending in ';'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1076`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1157`
 <!-- generated:end DSH3207 -->
 
 **Cause.** An `extern` function has a body. `extern` means "bind this name to an existing
@@ -198,7 +198,7 @@ the declarations after it still parse.
 '{0}' has no body. Only an 'extern' prototype may end in ';'; a function you define needs '`{...`}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1113`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1194`
 <!-- generated:end DSH3208 -->
 
 **Cause.** A function that is not `extern` ends in `;` instead of a body. A 2.0 source file does
@@ -262,7 +262,7 @@ that is meant to be an expression and is not.
 '{0}' cannot be combined with the keywords before it; a declaration is 'uniform', 'static const', 'static', 'const', 'extern' or 'export', not a mix.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1050`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1136`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:990`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1063`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1131`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1217`
 <!-- generated:end DSH3213 -->
 
 **Cause.** The declaration's prefix keywords do not go together, or go with the wrong kind of
@@ -291,7 +291,7 @@ constant shared by several materials is `static const`; a value the material ins
 Parameter '{0}' is 'out' and cannot have a default value; only inputs are optional.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:882`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:955`
 <!-- generated:end DSH3214 -->
 
 **Cause.** An `out` parameter has a default value: `out float Alpha = 1.0`. An output is written by
@@ -312,7 +312,7 @@ parameters cannot have defaults either.
 Expected ']' to close the array dimension, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:391`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:453`
 <!-- generated:end DSH3215 -->
 
 **Cause.** An array dimension was opened with `[` and not closed: `float Weights[4;`,
@@ -332,7 +332,7 @@ Expected ']' to close the array dimension, found {1}.
 Expected ';' after the import path, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1172`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1219`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:748`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:812`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:821`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1253`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1300`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:821`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:885`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:894`
 <!-- generated:end DSH3216 -->
 
 **Cause.** A declaration is missing its `;`: after a variable and its initializer, after
@@ -354,7 +354,7 @@ The most common form is the missing `;` after `struct X { ... }` — HLSL and C 
 Expected '{' after the struct name, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:773`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:846`
 <!-- generated:end DSH3217 -->
 
 **Cause.** `struct Name` was not followed by `{`. Usually a forward declaration (`struct X;`),
@@ -374,7 +374,7 @@ the file, so a struct may be declared after the function that uses it.
 Expected ')' to close the parameter list, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:896`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:969`
 <!-- generated:end DSH3218 -->
 
 **Cause.** A parameter list was not closed with `)`. Either the `)` is missing, or a parameter is
@@ -395,7 +395,7 @@ are already read-only in the generated graph.
 A '@' in a '///' line must be followed by a directive name; the text is kept as description.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:515`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:577`
 <!-- generated:end DSH3220 -->
 
 **Cause.** *(warning)* A `///` line has a `@` at a directive position (start of the text or after a
@@ -419,7 +419,7 @@ and `@desc` are the same key.
 This '///' block is not followed by a field and is ignored.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1247`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:794`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1328`, `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:867`
 <!-- generated:end DSH3221 -->
 
 **Cause.** *(warning)* A `///` block is not attached to anything: it sits at the end of the file
@@ -441,7 +441,7 @@ so a file-header comment written as `///` above the first `#pragma` is not orpha
 Expected a 2.0 declaration, found the 1.x declaration '{0}'; 1.x declarations belong in a .dsh header or in a .dsm or .dsf file.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1022`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:1095`
 <!-- generated:end DSH3222 -->
 
 **Cause.** A 1.x declaration word — `Function`, `GraphFunction`, `Namespace`, `VirtualFunction`,
@@ -719,7 +719,7 @@ The setting '{0}' is written twice; the later value wins, as it did in 1.x.
 '{0}' is not a setting of '{1}'; 1.x ignored it and so does this front end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1130`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1132`
 <!-- generated:end DSH3263 -->
 
 **Cause.** The setting is not one the block's kind has (a material setting in a ShaderFunction, a
@@ -739,7 +739,7 @@ misspelt function setting). 1.x ignored what it did not know, so the source buil
 'UserExposedCaption' has no 2.0 spelling and is not applied; its value is kept for migration.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1118`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1120`
 <!-- generated:end DSH3264 -->
 
 **Cause.** `UserExposedCaption` is set on a function. 2.0 has no directive for it, so the asset is
@@ -759,7 +759,7 @@ migrating.
 Expected 'true' or 'false' for 'ExposeToLibrary', found '{0}'; 1.x ignored the setting and so does this front end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1104`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1106`
 <!-- generated:end DSH3265 -->
 
 **Cause.** `ExposeToLibrary` is neither `true` nor `false`. 1.x ignored such a value and left the
@@ -987,7 +987,7 @@ Expected 'Color' to be a vector literal such as '(0.1, 0.16, 0.22, 0.35)', found
 The layer input '{0}' becomes the 'inout material' parameter named after the output '{1}', so the input pin changes its name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1183`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1185`
 <!-- generated:end DSH3277 -->
 
 **Cause.** A 1.x layer names its MaterialAttributes input one thing and its output another. A 2.0
@@ -1010,11 +1010,347 @@ once.
 Expected a MaterialAttributes output on '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1153`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1155`
 <!-- generated:end DSH3278 -->
 
 **Cause.** A `ShaderLayer` or `ShaderLayerBlend` has no output of type `MaterialAttributes`. The
 layer stack reads exactly one such output from a layer or a blend.
 
 **Fix.** Declare it in `Outputs`: `MaterialAttributes Result;`.
+
+## DSH3300
+
+<!-- generated:begin DSH3300 -->
+**Severity** error
+
+**Message**
+
+```
+Expected the buffer's name after 'buffer', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:102`
+<!-- generated:end DSH3300 -->
+
+**Cause.** `buffer` starts a declaration of a `.dsp` and no name follows it: the name is missing
+(`buffer : R8;`), quoted (`buffer "Mask" : R8;`), or a keyword of the language (`buffer in : R8;`).
+
+**Fix.** Write `buffer <Name> : <Format>;` with a plain identifier: `buffer Mask : R8;`. The name is
+what passes bind (case-sensitively), what `r.DreamPass.Visualize <Pipeline>.<Buffer>` takes, and,
+for an exported buffer, part of its render target's name, `<Pipeline>_<Buffer>`.
+
+## DSH3301
+
+<!-- generated:begin DSH3301 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ':' and a format after 'buffer {0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:106`
+<!-- generated:end DSH3301 -->
+
+**Cause.** A buffer's name is not followed by `:` and its format: the format is missing
+(`buffer Mask;`), the `:` is (`buffer Mask R8;`, `buffer Mask = R8;`), the argument list comes
+before the format (`buffer Mask(Clear = 0) : R8;`), or two names share one declaration
+(`buffer Mask, Edge : R8;`).
+
+**Fix.** Declare each buffer on its own, the format first and the arguments, if any, after it:
+
+```hlsl
+buffer Mask : R8(Clear = 0);
+buffer Edge : R8;
+```
+
+## DSH3302
+
+<!-- generated:begin DSH3302 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a buffer format such as 'R8' or 'RGBA16F', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:110`
+<!-- generated:end DSH3302 -->
+
+**Cause.** The `:` after a buffer's name is not followed by a format word: the format is missing
+(`buffer Mask : ;`, `buffer Mask : (Clear = 0);`) or quoted (`buffer Mask : "R8";`). Any name
+parses here; one that is not a format (`RGBA16`, `rgba16f`) is the binder's DSH7305.
+
+**Fix.** Write the format without quotes: `R8`, `RG8`, `RGBA8`, `R16F`, `RG16F`, `RGBA16F`, `R32F`,
+`RG32F`, `RGBA32F`, or `Depth32` for a mesh pass's own depth. `R32U` and `RG32U` are reserved: no
+pass reads or writes an integer buffer yet (DSH7321), and an id fits `R32F` exactly up to 16777216.
+
+## DSH3303
+
+<!-- generated:begin DSH3303 -->
+**Severity** error
+
+**Message**
+
+```
+Expected the pass's name after 'pass', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:185`
+<!-- generated:end DSH3303 -->
+
+**Cause.** `pass` starts a declaration of a `.dsp` and no name follows it: `pass : mesh { ... }`,
+`pass "DrawMask" : mesh { ... }`, or a keyword where the name goes.
+
+**Fix.** Name the pass with a plain identifier: `pass DrawMask : mesh { ... }`. GPU captures and
+Insights show the pass as `<Pipeline>.<Pass>`, so each name is used once in a pipeline (DSH4401).
+
+## DSH3304
+
+<!-- generated:begin DSH3304 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ':' and a pass kind after 'pass {0}', found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:189`
+<!-- generated:end DSH3304 -->
+
+**Cause.** A pass's name is not followed by `:` and its kind: the kind is missing
+(`pass Blur { ... }`), the `:` is (`pass Blur compute { ... }`), or the kind is written as an
+argument (`pass Blur(compute) { ... }`).
+
+**Fix.** Write `pass <Name> : <kind>` before the block: `pass Blur : compute { ... }`. The kinds are
+`fullscreen`, `compute`, `mesh`, `clear` and `copy`.
+
+## DSH3305
+
+<!-- generated:begin DSH3305 -->
+**Severity** error
+
+**Message**
+
+```
+Expected a pass kind: fullscreen, compute, mesh, clear or copy, found {1}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:193`
+<!-- generated:end DSH3305 -->
+
+**Cause.** The `:` after a pass's name is not followed by a kind: it is missing
+(`pass Blur : { ... }`) or quoted (`pass Blur : "compute" { ... }`). Any name parses here; one that
+is not a kind (`Compute`, `postprocess`) is the binder's DSH7304.
+
+**Fix.** Write the kind without quotes, in lower case: `fullscreen` (a Post Process material, or a
+`.usf` run as a pixel shader), `compute` (a `.usf` compute shader), `mesh` (selected primitives drawn
+again), `clear` or `copy`.
+
+## DSH3310
+
+<!-- generated:begin DSH3310 -->
+**Severity** error
+
+**Message**
+
+```
+'buffer {0}' declares a buffer of a Custom Pass pipeline, which only a '.dsp' file holds; move it into the pipeline's '.dsp'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserPipeline.cpp:79`
+<!-- generated:end DSH3310 -->
+
+**Cause.** A `.dss`, `.dsh` or `.dsi` declares `buffer <Name> : ...` or `pass <Name> : ...` (the
+message then says `'pass ...' declares a pass`). Buffers and passes belong to a Custom Pass pipeline,
+and `buffer` and `pass` are declaration words in a `.dsp` only; anywhere else they are ordinary names
+and this text was always a syntax error -- the message now says where it belongs. A variable merely
+called `buffer` or `pass` is fine: it is the `:` after the name that makes this a pipeline
+declaration.
+
+**Fix.** Move the declaration into the pipeline's `.dsp`. A material does not declare the buffers it
+reads: one a fullscreen pass draws reads them through `UE.UserSceneTexture`, which the pass's `read`
+lines bind, and any other material reads an exported buffer with
+`UE.DreamPassBuffer(Pipeline = "...", Buffer = "...")`.
+
+## DSH3311
+
+<!-- generated:begin DSH3311 -->
+**Severity** error
+
+**Message**
+
+```
+'#pragma pipeline' configures a Custom Pass pipeline and belongs in a '.dsp' file of its own, and this line is in '{0}'; move it, with the pipeline's buffers and passes, into a '.dsp'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4277`
+<!-- generated:end DSH3311 -->
+
+**Cause.** `#pragma pipeline(...)` stands in a `.dss`, a `.dsh` or a `.dsi` -- the message names the
+file. A Custom Pass pipeline is a source file of its own: a `.dsp` holds the pragma with the
+pipeline's parameters, buffers and passes, and becomes one `UDreamPassPipeline` named after the file.
+
+**Fix.** Move the pragma, with the buffers and passes it configures, into a `.dsp`; **New Source** in
+the material browser offers three pipeline templates to start from. The materials the passes draw
+stay in their `.dss` files, with their `#pragma material(...)`.
+
+## DSH3312
+
+<!-- generated:begin DSH3312 -->
+**Severity** error
+
+**Message**
+
+```
+'{0} {1}' is a declaration of a Custom Pass pipeline, which only a '.dsp' file holds, and '{2}' is not one; a pipeline cannot be included.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4302`
+<!-- generated:end DSH3312 -->
+
+**Cause.** A `buffer` or `pass` declaration reached the binder of a `.dss` or `.dsh` -- that is, a
+`.dsp` was included. The parser makes these declarations in a `.dsp` only (elsewhere the text is
+DSH3310), so the one way here is a host whose include resolver parses a `.dsp`; the resolver of the
+editor and `dsc` refuses to include anything but a `.dsh` or a `.dss` (DSH8295) before this can
+happen. It is reported in the `.dsp`, once per buffer and pass, and names the file being compiled.
+
+**Fix.** Remove the include. A pipeline is not shared by inclusion: a material reads its results
+through `UE.DreamPassBuffer` (an exported buffer), or through the `read` and `param` lines of the
+pass that draws it.
+
+## DSH3313
+
+<!-- generated:begin DSH3313 -->
+**Severity** error
+
+**Message**
+
+```
+'#pragma pipeline' is written a second time, and one '.dsp' is one pipeline; the line {0} already configures it.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:563`
+<!-- generated:end DSH3313 -->
+
+**Cause.** A `.dsp` has a second `#pragma pipeline(...)`. The first one configures the pipeline;
+this one is refused whole, and none of its keys are merged into the first.
+
+**Fix.** Merge the keys into one pragma, as in
+`#pragma pipeline(Order = 100, Views = Game | Editor | SceneCapture)`. Two pipelines that should run
+on their own are two `.dsp` files.
+
+## DSH3314
+
+<!-- generated:begin DSH3314 -->
+**Severity** error
+
+**Message**
+
+```
+'#pragma material' configures a material, and a '.dsp' is configured by '#pragma pipeline(...)'; the material a pass draws with is a '.dss' of its own.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:576`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:609`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:619`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:629`
+<!-- generated:end DSH3314 -->
+
+**Cause.** A `.dsp` holds a declaration only a material source can use. A pipeline holds
+`#pragma pipeline`, `uniform`, `static const`, `buffer` and `pass` declarations; four other kinds
+are this error, each with its own message:
+
+- `#pragma material(...)` -- settings of a material, which belong to the `.dss` of the material a
+  pass draws;
+- a function -- a `.dsp` has no code: an HLSL pass's code is its `.usf`, a material's is its `.dss`,
+  and a `param` value is folded from the pipeline's parameters;
+- a `struct`;
+- an `#include` or `import` -- nothing in a `.dsp` could use what it declares.
+
+**Fix.** Move each where it belongs: material settings into the `#pragma material(...)` of the
+material's `.dss`, a function into a `.dss` or `.dsh` (graph code) or the pass's `.usf` (HLSL), a
+`struct` into a `.dsh`; remove the include. The pipeline's own settings are the keys of
+`#pragma pipeline(...)`: `Order`, `Injection`, `Views`, `Requires` and `Enabled`.
+
+## DSH3315
+
+<!-- generated:begin DSH3315 -->
+**Severity** warning
+
+**Message**
+
+```
+'#pragma {0}' boxes or places graph nodes, and a '.dsp' has no graph; the line was ignored.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:590`
+<!-- generated:end DSH3315 -->
+
+**Cause.** `#pragma layout`, `#pragma region` or `#pragma endregion` stands in a `.dsp`. In a `.dss`
+these place generated nodes and box them in comments; a pipeline generates no graph, so the line is
+ignored and the pipeline builds as if it were not there.
+
+**Fix.** Delete it. To group the declarations of a long `.dsp`, use `//` comments, which survive
+`dsc fmt` and Adopt; to group parameters in the details panel, use `/// @group` on the `uniform`s.
+
+## DSH3316
+
+<!-- generated:begin DSH3316 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a file-scope variable of a '.dsp', which is a 'uniform' (a parameter an activation may override) or a 'static const' (a compile-time value).
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:694`
+<!-- generated:end DSH3316 -->
+
+**Cause.** A file-scope variable of a `.dsp` is declared without `uniform` or `static const`:
+`float Radius = 2.0;`, `static float Scale = 0.5;`. A pipeline has two kinds of value: parameters,
+which an activation -- a volume, a component, the project settings, Blueprint -- may override, and
+constants, folded where they are used (a plain `const` is taken as one). A plain variable is neither.
+The declaration is dropped, so a `param` or `Enabled` that names it is DSH4404 as well.
+
+**Fix.** Write `uniform` when an activation should be able to change the value, `static const` when
+it is fixed:
+
+```hlsl
+/// @group Blur   @slider 1 8
+uniform float BlurRadius = 3.0;
+static const float HalfRes = 0.5;
+```
+
+## DSH3317
+
+<!-- generated:begin DSH3317 -->
+**Severity** warning
+
+**Message**
+
+```
+'@{0}' has no effect on {1} in a '.dsp'; remove it.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:661`
+<!-- generated:end DSH3317 -->
+
+**Cause.** A `///` directive above a declaration of a `.dsp` means nothing to a pipeline. What each
+declaration takes:
+
+| Above | Directives |
+| :-- | :-- |
+| a `uniform` | `@group`, `@desc`, `@slider`, `@sort`; `@default` on a `Texture2D` |
+| a `static const`, a `buffer`, a `pass` | `@desc` |
+| `#pragma pipeline` | none; its `///` block documents the file |
+
+On a `uniform` or `static const` the warning is for `@name`, `@sampler`, `@static` and `@page`, which
+mean something for the parameter of a material or an instance, and for keys the language does not
+define, which a `.dss` hands to the parameter node by their engine name -- a pipeline parameter is no
+node. The language's other directives in the wrong place are DSH7224, in any file.
+
+**Fix.** Remove the directive. Plain text in a `///` block is never warned about: above a parameter,
+a buffer or a pass it is the description, as `@desc` would be.
 

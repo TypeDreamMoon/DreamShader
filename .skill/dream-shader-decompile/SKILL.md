@@ -1,13 +1,14 @@
 ---
 name: dream-shader-decompile
-description: Export an existing Unreal material, material function, layer, layer blend or material instance back into DreamShaderLang source headlessly, so a hand-built material graph can be migrated to a text source file. Use when asked to decompile, export, reverse, convert, or migrate a material / material function / material layer / material instance asset to .dss or .dsi (or, with -Format Legacy, to .dsm / .dsf).
+description: Export an existing Unreal material, material function, layer, layer blend, material instance or Custom Pass pipeline back into DreamShaderLang source headlessly, so a hand-built material graph or pipeline can be migrated to a text source file. Use when asked to decompile, export, reverse, convert, or migrate a material / material function / material layer / material instance / pass pipeline asset to .dss, .dsi or .dsp (or, with -Format Legacy, a material or function to .dsm / .dsf).
 ---
 
 # dream-shader-decompile `<asset>`
 
 Read an existing asset's node graph and write the DreamShaderLang source that builds it. Since 2.0
-the default output is **2.0 text** — a `.dss`, or a `.dsi` for a material instance — written
-by the compiler run backwards (graph → IR → AST → printer). The 1.x exporter that writes `.dsm` /
+the default output is **2.0 text** — a `.dss`, a `.dsi` for a material instance, or *(since 2.1.0)*
+a `.dsp` for a Custom Pass pipeline — written by the compiler run backwards (graph → IR → AST →
+printer; a pipeline has no graph, so its fields are read back into the payload a `.dsp` binds to). The 1.x exporter that writes `.dsm` /
 `.dsf` is still there behind `-Format Legacy`.
 
 This is the front half of a migration; the back half is
@@ -41,7 +42,7 @@ dsc: OK (exit 0)
 | `-Out <file>` | where to write. Its extension picks the format when `-Format` is absent: `.dsm` / `.dsf` is 1.x text, anything else 2.0. |
 | `-Format Dss\|Legacy\|Auto` | `Auto` is the default. A format that contradicts the extension — or a `.dss` for an instance — is `DSH9085`. |
 | `-SourceFile <source>` | instead of an asset: decompile **every asset that source builds** into one file. Build the source first (`DSH9087`). |
-| `-KeepAssetPath` | write `/// @name <the asset's own path>` wherever the output file's place would name another asset, so a rebuild **takes over the original**. |
+| `-KeepAssetPath` | write `/// @name <the asset's own path>` wherever the output file's place would name another asset, so a rebuild **takes over the original**. A `.dsp` has no `/// @name`: a pipeline keeps its path only when the file is written where its source belongs, and anywhere else is `DSH9224` (warning). |
 | `-Readable` | prefer HLSL sugar over class-exact node calls. Easier to read; a rebuilt graph may then differ in node classes. |
 | `-DiagnosticsOut <file>` | the decompile's diagnostics as JSON, written whether or not it succeeded. |
 
@@ -54,9 +55,10 @@ Without `-Out` the destination is computed from the asset's package path:
 | `UMaterialFunctionMaterialLayer` | `DShader/Decompiled/Layers/<package path>` | `.dss` |
 | `UMaterialFunctionMaterialLayerBlend` | `DShader/Decompiled/LayerBlends/<package path>` | `.dss` |
 | `UMaterialInstanceConstant` | `DShader/Decompiled/Instances/<package path>` | `.dsi` |
+| `UDreamPassPipeline` *(since 2.1.0)* | `DShader/Decompiled/Pipelines/<package path>` | `.dsp` |
 
 So `/Game/Materials/Metal/M_Steel` → `DShader/Decompiled/Materials/Game/Materials/Metal/M_Steel.dss`.
-With `-Format Legacy` the same places get `.dsm` / `.dsf`, and an instance is refused.
+With `-Format Legacy` the same places get `.dsm` / `.dsf`, and an instance or a pipeline is refused.
 
 ## What comes out
 
@@ -86,12 +88,18 @@ export void M_Steel(inout material m)
   `#pragma instance` keys it overrides, and only the parameters that **differ from the parent**.
 - A DreamShader thin-custom pair (hidden `MB_DreamThinBase_*` base + instance) is decompiled as the
   one material it is, with `Backend = ThinCustom` — pass the instance.
+- A Custom Pass pipeline comes out as a [`.dsp`](../../Docs/language-v2/passes.md): `#pragma pipeline`,
+  the uniforms, the buffers and the passes in the asset's order, every key that would read back as its
+  default left out. What the text cannot say the way the asset has it is `DSH9211`–`DSH9220`; the text is
+  then parsed and bound again and compared with the asset (`DSH9221`–`DSH9223`, warnings — the file is
+  written either way). [`Docs/tools/decompiler.md`](../../Docs/tools/decompiler.md#pipelines-dsp) has
+  the details.
 
 ## After the export — do this, in order
 
 1. **Read the `// Warning: DSHnnnn: …` lines** under the `// Decompiled by DreamShader from …`
-   header. Each names something the language cannot state (`DSH9060`–`DSH9084`). They are the
-   migration work list; [`Docs/diagnostics/DSH9xxx.md`](../../Docs/diagnostics/DSH9xxx.md) says what
+   header. Each names something the language cannot state (`DSH9060`–`DSH9084`; for a pipeline
+   `DSH9211`–`DSH9220`). They are the migration work list; [`Docs/diagnostics/DSH9xxx.md`](../../Docs/diagnostics/DSH9xxx.md) says what
    each one means and what to do about it.
 2. **Compile it as-is**, to establish that the export is at least buildable:
    ```bash
@@ -120,6 +128,10 @@ export void M_Steel(inout material m)
 - **An instance decompile writes overrides only.** A parameter the instance sets to the parent's own
   value is not an override and is left out; layer-only parameters and overrides the language cannot
   state are named (`DSH9101`, `DSH9104`, `DSH9105`).
+- **A decompiled `.dsp` with HLSL passes takes registry slots when compiled.** Its pipeline is a new
+  asset under `Decompiled/…`, and each `compute` pass or `fullscreen` pass with `Shader =` gets a slot
+  of its own in the project's committed `.dreampass/` registry. Delete the file afterwards and run
+  `dsc.ps1 pass-registry -Gc` to free them.
 - **In Git Bash, a leading-slash asset path is mangled.** `/LGUI/Materials/X` becomes
   `C:/Program Files/Git/LGUI/Materials/X` and the asset "cannot be loaded". Run decompiles from
   PowerShell.
@@ -139,7 +151,9 @@ export void M_Steel(inout material m)
 | :-- | :-- |
 | `DreamShader could not load asset '…'.` | the object path is wrong, or the plugin/mount point is not loaded. Check the path in the Content Browser's *Copy Reference* |
 | `DSH9085` | the format and the output file disagree: `-Format Dss` with `-Out x.dsm`, or a material instance with anything but a `.dsi` |
-| `DSH9086` | the asset is not a material, function, layer, blend or material instance |
+| `DSH9086` | the asset is not a material, function, layer, blend, material instance or pass pipeline |
+| `DSH9210` | a pass pipeline with an `-Out` that does not end in `.dsp` |
+| `DSH9221` / `DSH9222` / `DSH9223` | warnings, a pipeline only: the `.dsp` text did not parse again, did not bind into a pipeline, or reads back as a different pipeline (the first difference is named). The file is written either way. `DSH9221` and `DSH9223` are decompiler defects — report them with the asset; `DSH9222` can also mean the asset breaks a rule a `.dsp` is checked against, which a hand edit can do |
 | `DSH9087` | `-SourceFile`: the source does not resolve to its products, or a product has not been built yet |
 | `DSH9088` / `DSH9089` | the graph did not read into a valid module / the printed text does not parse back. Both are decompiler defects — report them with the asset |
 | `MaterialFunction '…' does not expose any outputs.` | `-Format Legacy`: the function declares no outputs; nothing to export |
@@ -149,6 +163,7 @@ export void M_Steel(inout material m)
 
 - [`Docs/tools/decompiler.md`](../../Docs/tools/decompiler.md) — both decompilers, and what each reproduces
 - [`Docs/language-v2/instances.md`](../../Docs/language-v2/instances.md) — the `.dsi` an instance decompiles to
+- [`Docs/language-v2/passes.md`](../../Docs/language-v2/passes.md) — the `.dsp` a pass pipeline decompiles to
 - [`Docs/tools/migrate.md`](../../Docs/tools/migrate.md) — `dsc migrate`, for 1.x *sources* rather than assets
 - [`dream-shader-optimize`](../dream-shader-optimize/SKILL.md) — the required next step
 - [`dream-shader-verify`](../dream-shader-verify/SKILL.md) — the compile gate

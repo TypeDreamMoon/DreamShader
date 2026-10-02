@@ -9,7 +9,7 @@ and decompiles existing material assets back into source files.
 | :-- | :-- |
 | Kind | `UCommandlet` subclass — `UDreamShaderCommandlet`, in the `DreamShaderEditor` module |
 | Invocation | `-run=DreamShader` (equivalently `-run=DreamShaderCommandlet`) |
-| Commands | `compile`, `generate`, `decompile`, `export`, `dump-graph` *(since 1.9.0)*; `migrate`, `check`, `dump-ir`, `dump-layout`, `index`, `export-catalog`, `fmt`, `list-generated` *(2.0)* |
+| Commands | `compile`, `generate`, `decompile`, `export`, `dump-graph` *(since 1.9.0)*; `migrate`, `check`, `dump-ir`, `dump-layout`, `index`, `export-catalog`, `fmt`, `list-generated` *(2.0)*; `pass-registry` *(2.1.0)* |
 | Exit codes | `0` success, `1` failure |
 | Log category | `LogDreamShader` |
 
@@ -19,7 +19,8 @@ and decompiles existing material assets back into source files.
 UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 
 <command> ::= { compile | generate | decompile | export | migrate | dump-graph
-              | check | dump-ir | dump-layout | index | export-catalog | fmt | list-generated }
+              | check | dump-ir | dump-layout | index | export-catalog | fmt | list-generated
+              | pass-registry }
 
 -run=DreamShader { compile | generate } { -Source=<path> | -File=<path> | -All } [-Force]
                                         [-Define=<NAME>[=<value>]]…
@@ -40,12 +41,14 @@ UnrealEditor-Cmd.exe <project>.uproject -run=DreamShader <command> [<option>…]
 -run=DreamShader fmt { -Source=<path> | -All } [-Check] [-Out=<dir>]
 -run=DreamShader list-generated { -Source=<path> | -All } [-As={ Packages | Files | GitIgnore | Json }]
                                         [-Out=<file>] [-IncludeEphemeral]
+-run=DreamShader pass-registry [-Gc | -Rebuild]
 ```
 
 `compile`, `dump-graph`, `check`, `dump-ir`, `dump-layout`, `index` and `list-generated` take **every
-compilable source**: `.dss`, `.dsi`, `.dsm` and `.dsf`. There is one compiler; a 1.x source is read by
-the legacy front end and a `.dsh` header is compiled through the sources that include it. `fmt` takes
-2.0 text — `.dss`, `.dsi`, and a `.dsh` that has no 1.x declarations left.
+compilable source**: `.dss`, `.dsi`, `.dsp`, `.dsm` and `.dsf`. There is one compiler; a 1.x source is
+read by the legacy front end and a `.dsh` header is compiled through the sources that include it. `fmt`
+takes 2.0 text — `.dss`, `.dsi`, `.dsp`, and a `.dsh` that has no 1.x declarations left. What each verb
+does with a [Custom Pass pipeline](../language-v2/passes.md) is in [`.dsp` sources](#dsp-sources).
 
 Commandlet flags declared by the class: `IsClient = false`, `IsEditor = true`, `IsServer = false`,
 `LogToConsole = true`.
@@ -60,7 +63,7 @@ is trimmed.
 | :-- | :-- | :-- |
 | `compile` | — | Compile one source file or every project source into assets |
 | `generate` | `compile` | Identical; alternate spelling |
-| `decompile` | — | Export a material, function, layer, blend or material instance to a source file: 2.0 text by default (`.dss`, or `.dsi` for an instance), 1.x text with `-Format=Legacy` or an `-Out` ending in `.dsm` / `.dsf` — see [Decompiler](decompiler.md) |
+| `decompile` | — | Export a material, function, layer, blend or material instance to a source file: 2.0 text by default (`.dss`, or `.dsi` for an instance), 1.x text with `-Format=Legacy` or an `-Out` ending in `.dsm` / `.dsf` — see [Decompiler](decompiler.md). A Custom Pass pipeline is written as a `.dsp`, and has no 1.x text *(2.1.0)* |
 | `export` | `decompile` | Identical; alternate spelling |
 | `migrate` *(2.0)* | — | Rewrite 1.x sources as `.dss`, proving each rewrite first — see [Migrate](migrate.md) |
 | `check` *(2.0)* | — | Compile as far as IR validation and write no asset; `-Shaders` builds the products and reports HLSL errors against source lines |
@@ -70,6 +73,7 @@ is trimmed.
 | `export-catalog` *(2.0)* | — | Write the builtin node catalog as JSON, so tools can bind `UE.*` without an editor. The editor writes the same file once it has loaded. |
 | `fmt` *(2.0)* | `format` | Rewrite 2.0 sources in the printer's layout; `-Check` reports and writes nothing — see [`fmt`](#fmt) |
 | `list-generated` *(2.0)* | — | Name every asset the sources build, building none — see [`list-generated`](#list-generated) |
+| `pass-registry` *(2.1.0)* | `passregistry` | List the Custom Pass HLSL slots and what each one is; `-Gc` frees the dead ones, `-Rebuild` rebuilds the registry — see [`pass-registry`](#pass-registry) |
 | `dump-graph` *(since 1.9.0)* | — | Write a canonical JSON fingerprint of the graph each source generates |
 | `dumpgraph` | `dump-graph` | Identical; the hyphen is optional |
 
@@ -114,14 +118,16 @@ directory second.
 
 | Step | Rule |
 | :-- | :-- |
-| 1 | Recursively collect `*.dsm`, `*.dsh`, `*.dsf` under `<SourceDirectory>` |
-| 2 | Drop **everything** under `<SourceDirectory>/Packages` |
+| 1 | Recursively collect `*.dsm`, `*.dsh`, `*.dsf`, `*.dss`, `*.dsi` and `*.dsp` under every [source root](../language/source-files.md#source-roots) — `<SourceDirectory>`, and the `DShader` folder of every plugin that has one |
+| 2 | Drop **everything** under each root's `Packages` folder |
 | 3 | Drop `.dsh` headers — they generate no assets and are inlined by their dependents |
-| 4 | Sort: `.dsf` function files first (rank 0), then `.dsm` materials (rank 1); ties broken by case-insensitive path comparison |
+| 4 | Sort: `.dsf` function files first (rank 0), then every other kind (rank 1); ties broken by case-insensitive path comparison |
 
 Step 4 is a guarantee, not an accident: function assets referenced by a material must exist before
 that material is generated, and the two-rank sort provides that within a single run. Step 2 has a
 sharp edge for `.dsf` files that live in packages; see [Packages](packages.md#source-file-enumeration).
+A `.dsp` needs no rank of its own *(2.1.0)*: a material one of its passes names that is missing or older
+than its source is compiled first by the `.dsp`'s own compile.
 
 ### `-Define` *(since 1.9.0)*
 
@@ -163,8 +169,8 @@ engine cannot compile at all.
 ### Per-file guard
 
 Each file in the compile list is checked before compiling: a path that is not a DreamShader source,
-or that *is* a `.dsh` header, logs `DreamShader compile requires a .dsm or .dsf file: {Path}`, marks
-the whole run failed, and the loop **continues** with the remaining files. One bad file therefore
+or that *is* a `.dsh` header, logs `DreamShader compile requires a .dss, .dsi, .dsp, .dsm or .dsf file: {Path}`,
+marks the whole run failed, and the loop **continues** with the remaining files. One bad file therefore
 does not prevent the rest from compiling, but the process still exits `1`.
 
 ### Result messages
@@ -177,6 +183,8 @@ one file produces several assets, the messages are joined with newlines.
 | `Generated {Kind} {AssetPath} from {SourceFile}.` | a `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` asset generated; `{Kind}` is the block keyword |
 | `Generated {AssetPath} from {SourceFile}.` | material generated (Graph backend) |
 | `Generated DreamShader thin-custom material {AssetPath} from {SourceFile}.` | material generated (ThinCustom backend) |
+| `Generated PassPipeline {ObjectPath} from {SourceFile}.` | a `.dsp` built *(2.1.0)*. A line for each render target of its exported buffers follows |
+| `Generated RenderTarget {ObjectPath} from {SourceFile}.` | the render target of an exported buffer, made or reused by its pipeline's build and saved with it *(2.1.0)* |
 | `Skipped {AssetPath} from {SourceFile}; source hash is unchanged (build key {BuildKey}).` | hash match — pass `-Force` to regenerate |
 | `Generated DreamShader helper include '{Path}' from {SourceFile}.` | the file produced only a generated `.ush` |
 | `DreamShader file '{Path}' contains VirtualFunction declarations only; no assets were generated.` | success, nothing to write |
@@ -217,6 +225,7 @@ the raw (quote-stripped) input is retried unchanged.
 | `UMaterialFunction` | `.dsf` | `<SourceDirectory>/Decompiled/Functions/<package path>.dsf` |
 | `UMaterialFunctionMaterialLayer` | `.dsf` | `<SourceDirectory>/Decompiled/Layers/<package path>.dsf` |
 | `UMaterialFunctionMaterialLayerBlend` | `.dsf` | `<SourceDirectory>/Decompiled/LayerBlends/<package path>.dsf` |
+| `UDreamPassPipeline` *(2.1.0)* | `.dsp` — 2.0 text only: `-Format=Legacy`, or an `-Out` ending in `.dsm` / `.dsf`, is refused, and an `-Out` with any extension but `.dsp` is [`DSH9210`](../diagnostics/DSH9xxx.md) | `<SourceDirectory>/Decompiled/Pipelines/<package path>.dsp` |
 | anything else | — | error |
 
 Path segments are sanitized: control characters and `< > : " / \ | ? *` become `_`; an empty folder
@@ -287,8 +296,8 @@ One file per **asset**, not per source: a `.dsf` declaring three `ShaderFunction
 | `plugin` | The plugin's `VersionName` |
 | `source` | `{ root, path }` — the source root's name and the path relative to it |
 | `asset` | The generated asset's object path |
-| `kind` | `Material` / `MaterialFunction` / `MaterialLayer` / `MaterialLayerBlend` / `ThinCustomInstance` |
-| `backend` | `Graph`, or `ThinCustom` for an instance material |
+| `kind` | `Material` / `MaterialFunction` / `MaterialLayer` / `MaterialLayerBlend` / `ThinCustomInstance` / `MaterialInstance` / `PassPipeline` *(2.1.0)* |
+| `backend` | `Graph`, or `ThinCustom` for an instance material; absent for a material instance and a pass pipeline |
 | `nodes` | Every expression in the graph, in canonical order (below) |
 | `properties` | *(materials)* connected material property → `{ from, output, mask }`, keyed by `EMaterialProperty` enumerator name |
 | `settings` | The curated `Settings` set — `Domain`, `ShadingModel`, `BlendMode`, the usage/render bools and `MaterialDecalResponse` for a material; `Usage`, `Description`, `bExposeToLibrary`, `LibraryCategories` for a function |
@@ -299,6 +308,24 @@ For a ThinCustom instance the `nodes`, `properties` and `settings` describe the 
 material** the instance parents to, which is where the graph actually lives. The base's own object
 path is deliberately absent: it is a transient object in the editor and a subobject of the instance on
 disk, so the string differs between two captures of an identical graph.
+
+### A pipeline's dump
+
+*(since 2.1.0)* A `.dsp` product has no graph, so its dump is the `UDreamPassPipeline` as the runtime
+reads it, every enumeration spelled the way the `.dsp` spells it. The run's line says `nodes` but counts
+the passes. The render targets of its exported buffers get no file of their own.
+
+| Key | Meaning |
+| :-- | :-- |
+| `pipeline` | `order`, `defaultInjection`, `views`, `requires`, `enabled` (the bool parameter, or `null`) |
+| `parameters` | in declaration order: `name`, `default` (`type` and `value`), `group`, `description`, `slider` (`[min, max]` or `null`), `sortPriority` |
+| `buffers` | in declaration order: `name`, `format`, `resolution`, `size` for a fixed-size buffer or `scale` otherwise, `clear` (four floats, or `null` for `Clear = None`), `mips`, `history`, `export`, `exportTarget` (the render target's object path, or `null`), `description` |
+| `passes` | in declaration order — execution order within an injection point: `name`, `kind`, `injection`, `enabled`, `reads` / `writes` (`slot`, `buffer`, `previous`), `params` (`target`, `source`, and the constant, or the parameter with `multiplier` and `offset`), `description`, and `settings` — only the keys of the pass's own kind, slot numbers included |
+| `slots` | every HLSL pass again: `pass`, `kind` (`compute` or `pixel`), `slot` — the number a rebuild of another pipeline can move |
+
+The write guard covers the slot registry too: a pipeline with no file behind it is built in memory with
+the slots the registry already records for it (`-1` where it records none), and neither the registry
+nor a snapshot is written.
 
 Each node is `{ id, class, props, inputs }`, plus `reroute` on a named-reroute usage. `id` is `n0`,
 `n1`, … — positional, never an engine identifier. `class` is the expression class's full path name.
@@ -430,11 +457,160 @@ written from; [Source control](../generation/source-control.md) has the recipes.
 | `-Out=<file>` | the log | write the list here. A script should always pass it: the log is for reading. |
 | `-IncludeEphemeral` | off | also list a ThinCustom material that is memory-only right now; it has no file, so it is left out of a list ignore rules are written from |
 
+A `.dsp` contributes two kinds of row *(2.1.0)*: its pipeline (kind `PassPipeline`) and the render target
+of every exported buffer of a float or normalized format (kind `PassExportTarget`, `<Pipeline>_<Buffer>`
+in the pipeline's folder). The slot registry and snapshots under `<DShader>/.dreampass/` are sources, not
+generated assets, and are not listed — see [Source control](../generation/source-control.md#notes).
+
 A source that does not compile still contributes the products that were established before the
 failure, and the run ends `RESULT=FAILED` — a list is never silently short. Assets outside the project
 directory (an engine-level plugin's content) have no project-relative path; `Files` and `GitIgnore`
 say how many were left out ([`DSH9049`](../diagnostics/DSH9xxx.md)). An unknown `-As` is `DSH9048`; a
 list that cannot be written is `DSH9047`.
+
+## `.dsp` sources
+
+*(since 2.1.0)* A [Custom Pass pipeline](../language-v2/passes.md) is a compilable source like the others,
+with one product — a `UDreamPassPipeline` — and no graph. What each verb does with one:
+
+| Verb | On a `.dsp` |
+| :-- | :-- |
+| `compile` | Builds the pipeline and the render target of every exported buffer, and gives each HLSL pass its slot: planned, [pre-checked](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine), its snapshot and the registry written under `<DShader>/.dreampass/` (see [`pass-registry`](#pass-registry)). A material one of its passes names that is missing or older than its source is compiled first. A commandlet recompiles no shader; the next editor start compiles the changed registry. Below UE 5.8 the compile is refused, `DSH8300` |
+| `check` | Reads every material and `.usf` the passes name and makes every check the binder makes. Compiles nothing first, builds nothing, and compiles no HLSL |
+| `check -Shaders` | Builds and saves the pipeline as `compile` does, then pre-checks every HLSL pass in its slot — see [Shader check of a pipeline](#shader-check-of-a-pipeline) |
+| `dump-ir` | The product as text: the pipeline's keys, one line per parameter and buffer, and per pass its keys, its kind's settings and its bindings, as the binder settled them — `(inferred)` marks a buffer resolution the source did not write, `(from the shader)` a group size read off `[numthreads]`. `-Json` adds the JSON form |
+| `dump-layout` | Writes nothing for it: a pipeline has no graph to lay out. Not an error |
+| `index` | The symbol index, with a `pipeline` section: the `#pragma pipeline` values as bound, the uniforms, the buffers and the passes with their bindings and spans, and the injection-point and format spellings an editor completes from |
+| `fmt` | The printer's layout, with the same guarantees as for a `.dss`; `-All` includes the `.dsp` files of the writable source roots |
+| `list-generated` | The pipeline and the render targets of its exported buffers — see [`list-generated`](#list-generated) |
+| `dump-graph` | One JSON for the pipeline — see [A pipeline's dump](#a-pipelines-dump) |
+| `decompile` | The way back: `-Asset` naming a pipeline, or `-SourceFile` naming a `.dsp`, writes a `.dsp` — see [Decompiler](decompiler.md#pipelines-dsp) |
+
+### Shader check of a pipeline
+
+`check -Shaders` on a `.dsp` compiles no material: a pipeline has none, and the materials its passes name
+are checked by the sources that build them. What can fail to compile is an HLSL pass, and that is
+pre-checked in its global shader slot instead — the pre-check a compile runs, with three differences:
+
+- **Every HLSL pass, changed or not.** A compile pre-checks only the passes whose snapshot changed. The
+  check plans the slots against the registry as it stands — a pass that has a slot keeps it, a new one is
+  checked in the slot it would take — and commits nothing of that plan.
+- **The `-Platform` formats**, when the run names any: `SM6` is `PCD3D_SM6`, `SM5` `PCD3D_SM5`, `ES3_1`
+  `PCD3D_ES3_1`, `VULKAN_SM6`, `VULKAN_SM5` and `METAL_SM5` the `SF_` formats, and any other token is
+  taken as a shader format name. A token that names no shader format this machine can compile — a
+  target-platform name such as `Windows` among them — is not pre-checked, with
+  [`DSH8324`](../diagnostics/DSH8xxx.md) saying so. Without `-Platform`, the
+  formats a compile pre-checks for: those of the active feature levels and every format the active target
+  platforms target, with [`DSH8324`](../diagnostics/DSH8xxx.md) for one this machine has no compiler for.
+  `-Quality` and `-Timeout` do not apply to slots.
+- **Its errors count as shader errors** in the summary line. A compile error is `DSH8322`, at the line of
+  the `.usf` that caused it; a `.dsp` with no HLSL pass reports `DSH8339` (info) and passes.
+
+## `pass-registry`
+
+*(since 2.1.0)* The Custom Pass HLSL slot registry from the command line. Every HLSL pass of every `.dsp`
+— a `compute` pass, or a `fullscreen` pass with `Shader =` — runs in one **slot** of the global shaders
+`FDreamPassCS` and `FDreamPassPS`, and the files that map slots to passes are committed with the sources
+([HLSL passes](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)):
+
+```text
+<DShader>/.dreampass/
+├─ Registry.json          the record the other files are written from
+├─ RegistryCompute.ush    one section per compute slot; what FDreamPassCS includes
+├─ RegistryPixel.ush      the same for FDreamPassPS
+└─ Slots/C00/, P03/, …    one snapshot per slot that has one
+```
+
+There is one registry per project, under the project's *Source Directory*; a plugin's `.dsp` takes its
+slots in it like any other. `Registry.json` (schema `dreamshader-pass-registry`, version `1`) holds two
+arrays, `compute` and `pixel`, with one entry per slot: `slot`, `pipeline` (the object path), `pass`,
+`kind` (`compute` or `fullscreen`), `source` (the `.dsp`, project-relative), `shader` (project-relative),
+`entry`, `hash`, `formats`, `files` (the snapshot's, relative to the slot directory) and `section` (the
+text of the slot in its registry file).
+
+Compiles keep the registry current on their own. The verb is for what a compile cannot see: a `.dsp`
+that was deleted or renamed, a merge that broke `Registry.json`, a checkout that lost snapshot files.
+
+| Option | Effect |
+| :-- | :-- |
+| *(none)* | Lists every slot and what it is. Writes nothing |
+| `-Gc` | Frees every `PipelineGone` and `PassGone` slot |
+| `-Rebuild` | Moves an unreadable `Registry.json` aside, compiles every `.dsp` again, frees the garbage and rewrites the registry files. `-Gc` beside it adds nothing |
+
+The options follow the [argument rules](#argument-syntax): `-Gc`, `--gc` and `-Gc=true` are one switch,
+and `-Rebuild` wins when both are given. The `dsc.ps1` switches are `-Gc` and `-Rebuild`; from a
+PowerShell prompt, `./dsc.ps1 pass-registry --gc` is not the switch — PowerShell binds `--gc` to the
+script's positional target, which this verb ignores, and the run only lists.
+
+### The listing
+
+```text
+LogDreamShader: Display: DreamShader pass-registry: C:/Projects/MyGame/DShader/.dreampass/Registry.json
+LogDreamShader: Display:   C00  Live             /Game/Passes/CP_Highlight.CP_Highlight  pass 'Blur'  DShader/Passes/BoxBlur.usf : BlurCS  [PCD3D_SM5, PCD3D_SM6]
+LogDreamShader: Display:   C01  PipelineGone     /Game/Passes/CP_Old.CP_Old  pass 'Simulate'  DShader/Passes/Old.usf : MainCS  [PCD3D_SM6]
+LogDreamShader: Display: DreamShader pass-registry: 2 of 32 compute slot(s), 0 of 16 pixel slot(s) taken; 1 to collect with -Gc. RESULT=OK
+```
+
+One line per slot, the compute table first, each in slot order:
+
+| Column | |
+| :-- | :-- |
+| `C07` / `P03` | the table — compute or pixel — and the slot number: the slot directory's name |
+| state | below |
+| pipeline | the `UDreamPassPipeline`'s object path |
+| `pass '<Name>'` | the pass |
+| `<shader> : <entry>` | the shader file, project-relative, and the entry; `-` for one the record does not have |
+| `[<formats>]` | the shader formats the snapshot passed its pre-check for. A format the project targets since is one the snapshot was never checked for |
+
+| State | Meaning | `-Gc` |
+| :-- | :-- | :-- |
+| `Live` | its pipeline's `.dsp` runs that pass in HLSL in that table, and the snapshot is on disk | keeps it |
+| `Reserved` | recorded without a snapshot that passed a pre-check: the slot compiles to the empty stub, and its pass does nothing until its `.dsp` compiles again | keeps it |
+| `SnapshotMissing` | the snapshot's files are not on disk — a `Slots` folder that was not committed. The next compile of its `.dsp` writes them; until then a process that loads the DreamShaderPass module takes the slot's section out of the registry file at startup, logged as an error, so the global shaders still compile. `DSH9208` | keeps it |
+| `PipelineGone` | no `.dsp` under the source roots builds its pipeline any more. When the pipeline asset still exists, `DSH9201` warns that its pass still points at the slot: once the slot is freed and given to another pass, that pass's shader is what the old asset would run | **frees it** |
+| `PassGone` | its pipeline's `.dsp` compiles, and no longer runs that pass in HLSL in that table | **frees it** |
+| `Unknown` | its pipeline's `.dsp` does not compile far enough to tell. `DSH9209` | keeps it |
+
+To tell `Live` from `PipelineGone`, `PassGone` and `Unknown`, the listing runs the front end of every
+`.dsp` that owns a slot; nothing is built or written. A slot is garbage only on positive evidence — no
+source builds its pipeline, or its pipeline's source compiles and has no such pass — so a source that
+does not compile keeps every slot it has.
+
+### `-Gc`
+
+Frees every `PipelineGone` and `PassGone` slot — its entry in `Registry.json`, its section in the registry
+file, its snapshot — and deletes every slot directory nothing names. Each freed slot is an info,
+`DSH9202`, after the listing's warnings. Nothing is recompiled in the commandlet; the next editor start
+compiles the changed registry.
+
+```text
+LogDreamShader: Display: DreamShader pass-registry -Gc: 1 slot(s) freed. RESULT=OK
+```
+
+Run it after deleting or renaming a `.dsp`: its slots stay taken until they are collected, and a compile
+that finds every slot of a table taken (`DSH8316`) names this verb.
+
+### `-Rebuild`
+
+| Step | |
+| :-- | :-- |
+| 1 | A `Registry.json` that does not parse — a merge conflict left in it is the usual reason — is moved aside to `Registry.json.unreadable` (`DSH9203`), and an empty registry is written so the compiles below assign every slot afresh. One that parses is left as it is |
+| 2 | Every `.dsp` under the source roots, `Packages` folders excluded, is compiled in path order, forced, as `compile -Force` would: each plans its slots against the registry and writes the snapshots it is missing. One that fails is `DSH9204` and keeps the slots it had; with no `.dsp` at all the step is `DSH9206` (info) |
+| 3 | The garbage is collected, as `-Gc` does, without its missing-snapshot warnings |
+| 4 | `RegistryCompute.ush` and `RegistryPixel.ush` are written from `Registry.json` as it stands. A slot whose snapshot files are still missing becomes reserved (`DSH8337`), because a registry that includes a missing file fails the global shader compile. Every slot directory nothing names is deleted |
+| 5 | For every `.dsp` that failed, each HLSL pass of its existing pipeline asset is checked against the registry: a slot the registry now gives to another pass, or leaves free, is `DSH9205` — until its source compiles, that pass runs whatever the slot holds |
+
+```text
+LogDreamShader: Display: DreamShader pass-registry -Rebuild: 4 .dsp compiled, 0 failed, 1 slot(s) freed, 0 slot(s) reserved for a missing snapshot. RESULT=OK
+```
+
+It builds and saves the pipelines, as `compile` does. Run it after a merge conflict in `Registry.json` —
+a compile refuses to write over a registry that does not parse (`DSH8315`), and so does `-Gc`
+(`DSH8335`) — after a checkout that lost snapshot files, or whenever the listing and the sources
+disagree. Commit the whole `.dreampass/` folder with the result.
+
+A registry file that cannot be written is `DSH8326`, and one that cannot be moved aside `DSH8336`; a file
+that is read-only because it is not checked out is the usual reason for both.
 
 ## Argument syntax
 
@@ -488,6 +664,10 @@ A flag may be written bare or with a value. The value is lowercased before match
 | `0` | `dump-graph -All` resolved an **empty** source list — logged `Warning`, treated as success |
 | `1` | `dump-graph` with none of `-Source` / `-File` / `-All` |
 | `1` | any per-file guard failure, generation failure or dump-write failure during `dump-graph` |
+| `0` | `pass-registry` listed the registry — whatever the listing found; its warnings do not fail the run *(2.1.0)* |
+| `1` | `pass-registry` could not read `Registry.json` (`DSH9200`) |
+| `1` | `pass-registry -Gc` could not read `Registry.json` (`DSH8335`) or write a registry file (`DSH8326`) |
+| `1` | `pass-registry -Rebuild`: the unreadable `Registry.json` could not be moved aside (`DSH8336`), a `.dsp` did not compile (`DSH9204`), or collecting or rewriting failed |
 
 ## Notes
 
@@ -508,6 +688,10 @@ A flag may be written bare or with a value. The value is lowercased before match
   `DreamShader cook generation failed for {Count} source file(s); aborting the cook. See the [Cook] Failed entries above.`
 - `-Force` bypasses the source-hash skip only; it does not delete anything. See
   [Caching](../generation/caching.md).
+- **A `.dsp` compile writes outside `Content/`** *(2.1.0)*: the HLSL slot registry and its snapshots under
+  `<DShader>/.dreampass/`, which are sources to commit — see [Source control](../generation/source-control.md#notes).
+  A commandlet writes them and recompiles no shader; an editor recompiles the slot shaders as soon as they
+  change.
 - Adding `-NoDreamShaderEditorBridge` to a non-commandlet automation run (for example
   `-ExecCmds="Automation RunTests …"`) suppresses the bridge there too.
 
@@ -521,7 +705,7 @@ Runtime substitutions are shown as `{Placeholder}`. All messages go to `LogDream
 | `Unknown DreamShader command '{Command}'.` + the usage banner | Error | command is not `compile` / `generate` / `decompile` / `export` |
 | *(the usage banner)* | Error | `compile` with neither `-Source` / `-File` nor `-All` |
 | `DreamShader commandlet found no source files to compile.` | **Warning** | the resolved source list is empty; the run still exits `0` |
-| `DreamShader compile requires a .dsm or .dsf file: {Path}` | Error | the file is not a DreamShader source, or is a `.dsh` header |
+| `DreamShader compile requires a .dss, .dsi, .dsp, .dsm or .dsf file: {Path}` | Error | the file is not a DreamShader source, or is a `.dsh` header |
 | *(the compile result message)* | Display / Error | per-file outcome; see [Result messages](#result-messages) |
 | *(the usage banner)* | Error | `decompile` without `-Asset` |
 | `DreamShader could not load asset '{AssetPath}'.` | Error | the asset failed to load under both the normalized and the raw path |
@@ -533,11 +717,17 @@ Runtime substitutions are shown as `{Placeholder}`. All messages go to `LogDream
 | `DreamShader failed to write decompiled source '{Path}'.` | Error | the file could not be written |
 | `DreamShader decompiled '{LoadPath}' to '{OutputPath}'.` | Display | success |
 | `DreamShader commandlet found no source files to dump.` | **Warning** | `dump-graph` resolved an empty source list; the run still exits `0` |
-| `DreamShader dump-graph requires a .dsm or .dsf file: {Path}` | Error | the file is not a DreamShader source, or is a `.dsh` header |
+| `DreamShader dump-graph requires a .dss, .dsi, .dsp, .dsm or .dsf file: {Path}` | Error | the file is not a DreamShader source, or is a `.dsh` header |
 | `DreamShader failed to dump '{Path}': {Error}` | Error | generation or the dump failed; see [`DSH9030`–`DSH9034`](../diagnostics/DSH9xxx.md) |
 | `Dumped {Kind} {AssetPath} ({N} nodes) to {File}.` | Display | one asset dumped; ` (read from disk; not regenerated)` is appended when the asset already had a file |
 | `DreamShader dump-graph wrote {N} graph dump(s) from {M} source file(s) to {Directory}.` | Display | end-of-run summary |
 | `{N} of them already exist on disk, so dump-graph read them as they stand instead of rebuilding them (it never writes an asset). Run 'compile -All -Force' first if those sources have changed since.` | **Warning** | see [It never writes an asset](#it-never-writes-an-asset) |
+| `DreamShader pass-registry: {Registry.json path}` | Display | the head of a listing *(2.1.0)* |
+| `DreamShader pass-registry: {N} of {M} compute slot(s), {N} of {M} pixel slot(s) taken; {N} to collect with -Gc. RESULT=OK` | Display | the end of a listing |
+| `DreamShader pass-registry: the registry could not be read. RESULT=FAILED` | Error | after `DSH9200` |
+| `DreamShader pass-registry -Gc: {N} slot(s) freed. RESULT={OK\|FAILED}` | Display / Error | the end of `-Gc` |
+| `DreamShader pass-registry -Rebuild: {N} .dsp compiled, {N} failed, {N} slot(s) freed, {N} slot(s) reserved for a missing snapshot. RESULT={OK\|FAILED}` | Display / Error | the end of `-Rebuild` |
+| `DreamShader pass-registry -Rebuild: the unreadable registry could not be reset. RESULT=FAILED` | Error | after `DSH8336` |
 
 The usage banner, verbatim:
 
@@ -545,9 +735,34 @@ The usage banner, verbatim:
 Usage:
   -run=DreamShader compile -Source="C:/Project/DShader/File.dsm" [-Force] [-Define=NAME=VALUE ...]
   -run=DreamShader compile -All [-Force] [-Define=NAME=VALUE ...]
-  -run=DreamShader decompile -Asset="/Game/Path/Asset.Asset" [-Out="C:/Project/DShader/Decompiled/File.dsm"]
+  -run=DreamShader decompile { -Asset="/Game/Path/Asset.Asset" | -SourceFile="C:/Project/DShader/File.dss" } [-Out=<file>] [-Format=Dss|Legacy|Auto] [-KeepAssetPath] [-Readable] [-DiagnosticsOut=<file>]
+  -run=DreamShader migrate { -Source="C:/Project/DShader/File.dsm" | -All | -Root=<source root> } [-Check] [-DryRun] [-Out=<dir>] [-NoBackup]
   -run=DreamShader dump-graph { -Source="C:/Project/DShader/File.dsm" | -All } [-Out="C:/Project/Saved/DreamShader/GraphBaseline"]
-Supported asset types: Material -> .dsm, MaterialFunction -> .dsf.
+  -run=DreamShader check { -Source="C:/Project/DShader/File.dss" | -All } [-Shaders] [-Platform=SM6,SM5] [-Quality=High] [-Timeout=120] [-DiagnosticsOut=<file>]
+  -run=DreamShader dump-ir { -Source="C:/Project/DShader/File.dss" | -All } [-Out=<dir>] [-Json]
+  -run=DreamShader dump-layout { -Source="C:/Project/DShader/File.dss" | -All } [-Style=Blocks|SourceBands|Layered|All] [-Out=<dir>] [-Json]
+  -run=DreamShader index { -Source="C:/Project/DShader/File.dss" | -All } [-Out=<dir>]
+  -run=DreamShader export-catalog [-Out=<file>]
+  -run=DreamShader fmt { -Source="C:/Project/DShader/File.dss" | -All } [-Check] [-Out=<dir>]
+  -run=DreamShader list-generated { -Source="C:/Project/DShader/File.dss" | -All } [-As=Packages|Files|GitIgnore|Json] [-Out=<file>] [-IncludeEphemeral]
+  -run=DreamShader pass-registry [-Gc | -Rebuild]
+decompile writes 2.0 text by default -- a .dss for a Material or MaterialFunction, a .dsi for a
+MaterialInstanceConstant, a .dsp for a DreamPassPipeline; -Format=Legacy, or an -Out ending in .dsm
+or .dsf, writes the 1.x text (a DreamPassPipeline has none).
+-SourceFile decompiles every asset that source builds into one file; -KeepAssetPath keeps each asset's own path.
+migrate rewrites 1.x sources (.dsm, .dsf, .dsh) as .dss; -Check verifies the rewrite and writes nothing.
+-All takes the writable source roots; -Root names one root, a plugin's included, by its name or its plugin's.
+fmt rewrites 2.0 sources in the printer's layout (-All: the writable roots); -Check writes nothing and fails
+when a file would change. list-generated names every asset the sources build, building nothing.
+compile, dump-graph, check, dump-ir and index take any compilable source -- .dss, .dsi,
+.dsp, .dsm or .dsf; a .dsh header is compiled through the sources that include it.
+pass-registry lists the Custom Pass HLSL slots and what each is (Live, Reserved, SnapshotMissing,
+PipelineGone, PassGone, Unknown), writing nothing; -Gc frees the PipelineGone and PassGone ones;
+-Rebuild compiles every .dsp again, frees the garbage and rewrites the registry files from
+Registry.json -- a Registry.json that does not parse is moved aside and every slot assigned afresh.
+check writes no asset at all; -Shaders is the exception -- a shader
+compile needs a real material, so it builds and saves the products the way compile
+does, then reports HLSL errors as stage: shader.
 dump-graph is a developer tool: it writes one canonical JSON per generated asset and
 never writes an asset itself. Compile the tree first if its sources have changed.
 -Define (short form -D) may be repeated; -Define=NAME with no value is a bare marker that
@@ -617,6 +832,16 @@ shape matters, because `dump-graph` will not rebuild an asset that already exist
 git diff --no-index -- I:/Baseline/before I:/Baseline/after
 ```
 
+After a merge that conflicted in `DShader/.dreampass/Registry.json`, rebuild the slot registry from the
+sources, then list it:
+
+```powershell
+& $UnrealEditorCmd $Project -run=DreamShader pass-registry -Rebuild `
+  -unattended -nopause -nosplash -stdout -log
+& $UnrealEditorCmd $Project -run=DreamShader pass-registry `
+  -unattended -nopause -nosplash -stdout -log
+```
+
 Console output of a successful two-file `-All` run:
 
 ```text
@@ -636,6 +861,8 @@ LogDreamShader: Display: Generated DreamShader thin-custom material /Game/Materi
 - [Decompiler](decompiler.md) — the export the `decompile` command drives
 - [Packages](packages.md) — why `DShader/Packages` is skipped by `-All`
 - [Source files](../language/source-files.md) — `.dsm` / `.dsf` / `.dsh` roles
+- [Custom Pass pipelines — `.dsp`](../language-v2/passes.md) — the source `pass-registry` keeps the slots of
+- [HLSL passes](../runtime/hlsl.md) — slots, snapshots and the pre-check
 - [Project settings](../settings/project.md) — `SourceDirectory`, which path resolution depends on
 - [Testing](../contributing/testing.md) — running the automation suite headlessly
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

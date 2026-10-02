@@ -192,8 +192,30 @@ the `+Key=((…))` form:
 +PreprocessorDefines=(("MOONTOON_LEGACY_TOON", "1"))
 ```
 
+## DreamShader Custom Pass
+
+A second settings object sits beside this one: `UDreamPassSettings`, in the `DreamShaderPass` runtime
+module, at *Project Settings ▸ DreamPlugin ▸ DreamShader Custom Pass*. It is saved to the same
+`DefaultEngine.ini`, section `[/Script/DreamShaderPass.DreamPassSettings]`, and configures the
+[Custom Pass runtime](../runtime/index.md). It exists on every engine; below UE 5.8 nothing reads it.
+
+| Category | Config property | Type | Default | Effect |
+| :-- | :-- | :-- | :-- | :-- |
+| Runtime | `bEnabled` | `bool` | `true` | Off: no pipeline runs anywhere, whatever activates it. `r.DreamPass.Enable 0` does the same for one session. |
+| Pipelines | `GlobalPipelines` | array of `FDreamPassGlobalPipeline` — `Pipeline`, `bEnabled`, `Priority`, `Overrides` | empty | Pipelines that apply to every view of every world, at weight 1. Loaded when a world starts, and again when the list is edited. |
+| Layers | `LayerNames` | array of `FName`, at most 32 | empty | The pass layers: a `UDreamPassLayerComponent` gives primitives some of them, and a mesh pass's `Filter = Layer(Name)` selects the primitives that have one. The order is the bit order — renaming a layer is safe; moving one re-targets every compiled pipeline that names it until those pipelines are compiled again. |
+
+```ini
+[/Script/DreamShaderPass.DreamPassSettings]
+bEnabled=True
++GlobalPipelines=(Pipeline="/Game/Effects/CP_Wind.CP_Wind",bEnabled=True,Priority=0.000000)
++LayerNames=Highlight
++LayerNames=XRay
+```
+
 ## See also
 
+- [Custom Pass runtime](../runtime/index.md) — what `GlobalPipelines` and the layers feed
 - [Settings](index.md) — the per-file `Settings` section this page's defaults interact with
 - [Preprocessor](../language/preprocessor.md) — what *Preprocessor Defines* feeds, and the four other tiers
 - [Backend](backend.md) — how *Default Compiler Backend* is overridden per file

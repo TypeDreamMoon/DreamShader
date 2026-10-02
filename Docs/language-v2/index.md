@@ -20,10 +20,10 @@ source with no side files and no strip step.
 
 | | |
 | :-- | :-- |
-| Extensions | `.dss` — a 2.0 compilation unit · `.dsi` — a [material instance](instances.md) · `.dsh` — a shared header, which may hold both dialects |
+| Extensions | `.dss` — a 2.0 compilation unit · `.dsi` — a [material instance](instances.md) · `.dsp` — a [Custom Pass pipeline](passes.md) (UE 5.8) · `.dsh` — a shared header, which may hold both dialects |
 | 1.x extensions | `.dsm` / `.dsf` — read by the legacy front end, built by the same compiler |
-| Modules | [`DreamShaderLang`](../api/lang-module.md) (`Core` only) — both front ends, binder, IR, decompile and migrate · `DreamShaderCompiler` (editor) — pipeline, emitter, assets |
-| Tests | `DreamShader.Lang2.*`, `DreamShader.Compiler2.*` |
+| Modules | [`DreamShaderLang`](../api/lang-module.md) (`Core` only) — both front ends, binder, IR, decompile and migrate · `DreamShaderCompiler` (editor) — pipeline, emitter, assets · [`DreamShaderPass`](../api/pass-module.md) (runtime) — the pipeline asset and its render passes |
+| Tests | `DreamShader.Lang2.*`, `DreamShader.Compiler2.*`, `DreamShader.Pass.*` |
 | Status | released in `2.0.0`: both front ends, binder, IR, passes, validator, emitter, node ↔ source navigation, `.dsi`, the 2.0 decompiler, `dsc migrate`, the Substrate sugar, the IR graph layouts, `dsc fmt` |
 
 ## Two short examples
@@ -185,8 +185,11 @@ What happens to a parsed file:
   builds what it always built while a `.dss` stays strict. Silent 1.x behaviour that was never
   documented is an error with a message that says what 1.x did (`DSH2200`–`DSH2222`).
 - **Material instances** as [`.dsi`](instances.md) sources, checked against their parent's parameters.
-- **The way back.** `dsc decompile` reads a material, function, layer, blend or instance into the IR
-  and prints 2.0 text ([decompiler](../tools/decompiler.md)); [`dsc migrate`](../tools/migrate.md)
+- **Custom Pass pipelines** as [`.dsp`](passes.md) sources (UE 5.8): buffers and the passes that fill
+  them — fullscreen, mesh, compute — at the injection points they name, checked against the materials
+  and HLSL files they use, built into a `UDreamPassPipeline` asset.
+- **The way back.** `dsc decompile` reads a material, function, layer, blend, instance or pipeline into
+  the IR and prints 2.0 text ([decompiler](../tools/decompiler.md)); [`dsc migrate`](../tools/migrate.md)
   rewrites 1.x sources as `.dss`. Both are proved by compiling the text they wrote and comparing IRs.
 - **Comments survive a rewrite.** The parser keeps `//` and `/* */` comments as trivia on the
   declaration or statement they stand by, and the printer writes them back.
@@ -246,24 +249,32 @@ the contract; the wording is not.
 | `DSH2101`–`DSH2119` | the lexer. Allocated today: `2101` unknown character · `2102` unterminated block comment · `2103` unterminated string · `2104` unknown escape · `2105` malformed number · `2106` a `#` that is not the first thing on its line |
 | `DSH2150`–`DSH2189` | expressions and statements. Allocated today: `2150`–`2155`, `2157`–`2165` |
 | `DSH2200`–`DSH2269` | the legacy front end: 1.x Graph statements (`2200`–`2222`) and top-level blocks (`2240`–`2258`) |
+| `DSH2300`–`DSH2349` | `.dsp` syntax: `buffer` and `pass` declarations, pass bodies, bindings |
 | `DSH3200`–`DSH3249` | declarations, types, `#` directives, `///` blocks. Allocated today: `3200`–`3208`, `3210`, `3211`, `3213`–`3218`, `3220`–`3222` |
 | `DSH3250`–`DSH3299` | the legacy front end's sections: Properties, Settings, Outputs, Inputs, Layout |
+| `DSH3300`–`DSH3349` | `.dsp` declarations: `#pragma pipeline`, buffer and pass keys, `.dsp`-only declarations elsewhere |
 | `DSH4200`–`DSH4299` | the binder — names, types, expressions, statements, loops, regions |
 | `DSH4300`–`DSH4349` | the IR validator |
 | `DSH4350`–`DSH4399` | lowering refusals — matrices, unprovable loops, `discard` in a branch, an attribute read before it is written |
+| `DSH4400`–`DSH4449` | `.dsp` names and references: buffers, materials, HLSL files, entries, layers |
 | `DSH5200`–`DSH5249` | reflected `UE.*` calls, the expression catalog, material attributes |
 | `DSH5250`–`DSH5292` | 1.x call spellings (`5250`–`5265`) and the numbered legacy rules (`5275`–`5292`) |
+| `DSH5300`–`DSH5329` | the Custom Pass material nodes in a `.dss`: the engine gate and where they may stand (`5300`–`5314`), the pipeline and buffer a `UE.DreamPassBuffer` names (`5315`–`5329`) |
 | `DSH6200`–`DSH6219` | function kinds, the entry, `export` / `extern` |
 | `DSH6220`–`DSH6249` | helper inlining |
 | `DSH6250`–`DSH6299` | `/// @custom` HLSL |
 | `DSH6300`–`DSH6330` | 1.x `Function` / `GraphFunction` / `Namespace` / `VirtualFunction`, and calls lifted out of a verbatim body |
 | `DSH7200`–`DSH7249` | uniforms, `///` directives, `#pragma material` |
 | `DSH7250`–`DSH7270` | `.dsi`: `#pragma instance` and overrides |
+| `DSH7300`–`DSH7379` | `.dsp` checks: pass kind against injection point, buffer reads and writes in frame order, bindings against the material or HLSL file, limits |
 | `DSH8200`–`DSH8299` | the emitter, asset creation and the pipeline driver (`8240`–`8265`: material instances) |
+| `DSH8300`–`DSH8339` | Custom Pass emission: the pipeline asset, exported render targets, HLSL slots, the slot registry, snapshots, the pre-check |
 | `DSH9020`–`DSH9059` | the tools (`check`, `dump-ir`, `index`, `export-catalog`) and node ↔ source navigation |
 | `DSH9060`–`DSH9089` | the decompiler: graph import (`9060`–`9074`), IR to source (`9075`–`9084`), the service (`9085`–`9089`) |
 | `DSH9090`–`DSH9099` | `dsc migrate` |
 | `DSH9100`–`DSH9109` | `.dsi` read-back and the instance source rewriter |
+| `DSH9200`–`DSH9209` | `dsc pass-registry` |
+| `DSH9210`–`DSH9229` | pipeline decompile, its re-parse check, and Adopt Into Source for a pipeline |
 
 See the [diagnostics index](../diagnostics/index.md) for cause and fix per code.
 
@@ -304,6 +315,7 @@ no C++, no recompile. The golden schema is documented in
 
 - [Substrate sugar](substrate.md) — operators, legacy parameters on a slab, values built member by member, `Substrate =`
 - [Material instances](instances.md) — `.dsi`
+- [Custom Pass pipelines](passes.md) — `.dsp`, and the [runtime](../runtime/index.md) that runs them
 - [`DreamShaderLang` C++ API](../api/lang-module.md) — the module, its headers and entry points
 - [Language reference (1.x)](../language/index.md) — the syntax that ships today
 - [Preprocessor](../language/preprocessor.md) — `#if` and the define table, shared by both syntaxes

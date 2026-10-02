@@ -32,6 +32,7 @@ under `Saved/DreamShader/Bridge/`.
 ├─ material-expressions.json   outbound reflected UMaterialExpression catalogue
 ├─ settings.json               outbound enum alias tables
 ├─ substrate-builtins.json     outbound Substrate builtin catalogue
+├─ pass-keys.json              outbound the .dsp vocabulary, for completion (since 2.1.0)
 ├─ dreamshader-builtin-catalog.json  outbound the 2.0 binder's node catalog (since 2.0.0)
 ├─ preview.json                outbound one-shot preview result
 └─ Preview/                    outbound rendered PNGs
@@ -310,6 +311,60 @@ The VS Code extension answers Go to Definition, Find References, Hover, the Outl
 Rename for `.dss` sources from these files, and completes `UE.` / `Substrate.` from
 `dreamshader-builtin-catalog.json` — the binder's own table of node classes, pins, properties, aliases
 and positional orders.
+
+The index of a `.dsp` *(since 2.1.0)* has a `pipeline` section as well: the `#pragma pipeline` values as
+bound, the uniforms, the buffers and the passes with their bindings and spans, and the injection-point and
+format spellings. The rest of the `.dsp` vocabulary is in [`pass-keys.json`](workspace.md#pass-keysjson).
+
+## Custom Pass shader files
+
+*(since 2.1.0)* An HLSL pass of a [`.dsp`](../language-v2/passes.md) compiles from a `.usf` that may live
+anywhere: next to the `.dsp` is the usual place, but neither a source root nor a mapped shader directory is
+required, because the engine only ever compiles a snapshot of the file
+([HLSL passes](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)). The source-directory watcher acts
+on DreamShader sources only, so the shader files have watches of their own.
+
+| | |
+| :-- | :-- |
+| Watched | every directory holding a file some `.dsp` compiles from: each `Shader = "..."` file, everything it includes by a relative path — a file such an include names that does not exist yet as well, since creating it changes the pass — and the file behind every include by a virtual path that is neither `/Engine/` nor `/Plugin/` |
+| How | one watch per directory, without its subtree. A directory that does not exist is not watched |
+| Files acted on | `.usf` and `.ush` |
+| Refreshed | after every compile of a `.dsp`, whether it succeeded or not, and when a `.dsp` is removed. The compiles the startup scan queues are what register the first ones |
+| Gate | *Auto Compile On Save*, as for a source save |
+
+A change to one of those files queues every `.dsp` whose HLSL passes compile from it, **not forced**: the
+`.dsp`'s [build key](../generation/caching.md#custom-pass-pipelines) holds the text of every file its
+passes compile from, so a save that changed none of it — an unrelated header in the same folder — is
+skipped on its key. A watcher that lost track (a rescan) queues every `.dsp`.
+
+A compile of the `.dsp` then takes each HLSL pass whose snapshot changed through these steps; one whose
+snapshot did not change is left as it is.
+
+| Step | |
+| :-- | :-- |
+| 1 | **Pre-check.** The pass's slot is compiled in memory with the new snapshot, for the shader formats of the active feature levels and every format the project's active target platforms target. An error is `DSH8322` at the `.usf` line that caused it, filed like any other compile error; **nothing is written**, and the previous version of the pass keeps running |
+| 2 | **Snapshot.** The file, with everything it includes by a relative path, is copied into `<DShader>/.dreampass/Slots/<C\|P><NN>/`, and `Registry.json` and the registry file of that table are rewritten |
+| 3 | **Hot reload.** The pipeline asset is updated, the slot shader types `FDreamPassCS` / `FDreamPassPS` are recompiled synchronously for every active feature level — the next frame runs the new code — and the asset is saved |
+
+A `.dsp` that is deleted logs `DreamShader source removed, existing generated assets were left
+untouched: {Path}`, like any source. Its slots stay in the registry until
+[`dsc pass-registry -Gc`](commandlet.md#pass-registry) collects them.
+
+### Dependents
+
+A `.dsp` and the `.dss` sources around it name each other, so a successful compile queues the other side,
+unforced: binding runs before the build key's skip, so a dependent the change broke reports its error,
+and one it did not touch costs a bind.
+
+| After a successful compile of | The bridge queues | When |
+| :-- | :-- | :-- |
+| a `.dss` or a `.dsi` | every `.dsp` one of whose passes names a product of it as its `Material` | the compile wrote an asset — its report has a `Generated …` line |
+| a `.dsp` | every `.dss` whose `UE.DreamPassBuffer` reads the pipeline — its exports may have changed | the compile wrote an asset |
+| a `.dss` or a `.dsi` | every `.dsi` whose `Parent` is one of its products, and theirs in turn | always |
+
+A drained batch is sorted so that a `.dsp` compiles after the sources that build its materials, and a
+`.dss` that reads a pipeline's buffer after that `.dsp`. With *Verbose Logs* on, each queueing logs
+`DreamShader queued {N} instance source(s), {N} pipeline source(s) and {N} pass-buffer reader(s) after '{Source}' compiled.`
 
 ## WebSocket server
 
@@ -611,6 +666,7 @@ Everything the bridge writes, and who reads it.
 | `material-expressions.json` | outbound | no |
 | `settings.json` | outbound | no |
 | `substrate-builtins.json` | outbound | no |
+| `pass-keys.json` *(since 2.1.0)* | outbound | no — see [Workspace](workspace.md#pass-keysjson) |
 | `dreamshader-builtin-catalog.json` | outbound | no — also written by `dsc export-catalog`, and on *Open DreamShader Workspace* |
 | `preview.json` | outbound | no |
 | `../Index/<root>/<source>.index.json` | outbound | no — the [symbol index](#symbol-index) of a source, beside the bridge directory rather than in it |
@@ -759,6 +815,10 @@ User-defined alias entries are emitted before built-in ones, and a built-in alia
 form a user alias already claimed is dropped. Aliases are sorted within each kind. Material
 expressions are sorted by `name`.
 
+`pass-keys.json` *(since 2.1.0)* is written right after `settings.json`, at the same moments, because the
+pass layers it lists are a project setting too. Schema `DreamShader.PassKeys`, version `1`; it has no
+`bridge.db` table. Its contents are on [Workspace](workspace.md#pass-keysjson).
+
 > [!NOTE]
 > Below UE 5.4 `substrate-builtins.json` carries an empty `builtins` array, `"supported": false` and
 > `"unsupportedReason": "Substrate builtins require Unreal Engine 5.4 or newer."`, and the
@@ -878,6 +938,8 @@ Note the `frameRate` repeated on the control message: omitting it would drop the
 - [Editor integration](editor-integration.md) — the menu commands the request actions mirror
 - [VirtualFunction tools](virtual-function-tools.md) — the sync pass that produces `virtualFunctionSync` diagnostics
 - [Packages](packages.md) — which files a full rescan actually queues
+- [HLSL passes](../runtime/hlsl.md) — the pre-check, the snapshots and the slots a `.usf` save goes through
+- [Commandlet](commandlet.md#pass-registry) — `pass-registry`, for the slots of a deleted `.dsp`
 - [Project settings](../settings/project.md) — `SaveDebounceSeconds`, `bAutoCompileOnSave`, `GeneratedShaderDirectory`
 - [Material enums](../settings/material-enums.md) — the alias tables exported to `settings.json`
 - [Substrate builtins](../builtins/substrate.md) — the catalogue exported to `substrate-builtins.json`

@@ -21,10 +21,10 @@ save to, and load from, JSON.
 | Type / loading phase | `Runtime` / `PostConfigInit` |
 | Dependencies | **`Core` only** |
 | Export macro | `DREAMSHADERLANG_API` |
-| Public headers | 27: 4 at the module root + 9 under `Lang/` + 1 under `Semantic/` + 11 under `IR/` + 1 under `Decompile/` + 1 under `Migrate/` |
+| Public headers | 30: 4 at the module root + 11 under `Lang/` + 1 under `Semantic/` + 12 under `IR/` + 1 under `Decompile/` + 1 under `Migrate/` |
 | Namespaces | `UE::DreamShader::Lang` (2.0 front end and binder) · `UE::DreamShader::IR` (the graph IR and the builtin catalog) · `UE::DreamShader` (preprocessor, define table, `FDreamShaderError`) |
 | Reflected types | **none** — no `UCLASS`, no `USTRUCT`, no `UENUM` |
-| Status | new in `2.0`: the lexer, the 2.0 parser and the printer; the binder, the IR, its builder, passes and validator, and the custom-HLSL builder; the legacy front end, `.dsi` sources, comment trivia, the IR comparator, IR → source, and the migrator |
+| Status | new in `2.0`: the lexer, the 2.0 parser and the printer; the binder, the IR, its builder, passes and validator, and the custom-HLSL builder; the legacy front end, `.dsi` sources, comment trivia, the IR comparator, IR → source, and the migrator. `.dsp` pipelines *(since 2.1.0)* |
 
 ## The Core-only rule
 
@@ -57,15 +57,17 @@ Everything here is in `UE::DreamShader::Lang`. Include paths keep the `Lang/` pr
 
 | Header | Purpose |
 | :-- | :-- |
-| `Lang/LangSource.h` | `FLangSpan` (offset + length + resolved 1-based line/column), `ELangFileKind`, `GetLangFileKindFromPath`, and `FLangSourceText` — one source text with its line table, the thing every span points into. |
+| `Lang/LangSource.h` | `FLangSpan` (offset + length + resolved 1-based line/column), `ELangFileKind` (`Dss`, `Dsh`, `Dsm`, `Dsf`, `Dsi`, `Dsp` *(since 2.1.0)*, `Unknown`), `GetLangFileKindFromPath`, and `FLangSourceText` — one source text with its line table, the thing every span points into. |
 | `Lang/LangDiagnostic.h` | `ELangSeverity`, `FLangDiagnostic` (a `DSHnnnn` code, a severity, an `FText` message, a span, a file path) and `FLangDiagnosticSink`, which collects them for one run. `FLangDiagnosticSink::ToWireString` renders `DSHnnnn: message` in the invariant (source) form for logs, JSON and test goldens. |
 | `Lang/LangToken.h` | `ELangTokenKind`, `ELangKeyword`, `FLangToken`, `TryGetLangKeyword`, `GetLangTokenSpelling`. Type names are **not** keywords: `float3`, `Texture2D`, `material` and user struct names all reach the parser as identifiers. |
 | `Lang/LangLexer.h` | `LexDreamShaderLang` and `FLangLexOptions`. One lexer serves both syntaxes. |
-| `Lang/LangAst.h` | The tree both front ends produce: `FTypeRef`, `FDocBlock`/`FDocDirective`, `ENodeKind`, the expression / statement / declaration node structs, and `FModule`. Ownership is `TUniquePtr` down the tree; sub-kinds are told apart with `As<T>()` — no RTTI, no visitors. |
+| `Lang/LangAst.h` | The tree both front ends produce: `FTypeRef`, `FDocBlock`/`FDocDirective`, `ENodeKind`, the expression / statement / declaration node structs, and `FModule`. Ownership is `TUniquePtr` down the tree; sub-kinds are told apart with `As<T>()` — no RTTI, no visitors. A `.dsp` adds `FBufferDecl`, `FPassDecl` with its `FPassStmt`s (`EPassStmtKind`), `FPipelineKeyValue` and `EPragmaKind::Pipeline` *(since 2.1.0)*; their keys and values are ordinary expressions, and what they mean is the binder's. |
 | `Lang/LangParser.h` | `ParseDreamShaderLang`, `ParseDreamShaderLangExpression`, `ELangFrontend`, `FLangParseOptions` (`Frontend`, `bKeepTrivia`), `FLangParseResult` (`Module`, `Diagnostics`, and `Legacy` for a 1.x source). |
 | `Lang/LangPrinter.h` | `PrintDreamShaderLang` and the per-node overloads (`PrintDreamShaderLangExpr`, …), plus `FLangPrintOptions`. |
 | `Lang/LangLegacy.h` | `FLegacyMigrationInfo` — what a 1.x text said, beside the AST it became: `FLegacyBlock`, `FLegacySection`, `FLegacyParameterDeclaration`, `FLegacyAssetReference`, `FLegacyOutputSelection`, `FLegacyRename`, the synthesized initializers and directives. The binder reads it to apply the 1.x rules; the migrator reads it to write them out. |
 | `Lang/LangInstanceSource.h` | `.dsi` text: `BuildDreamShaderInstanceModule` / `PrintDreamShaderInstance` (an `IR::FIRInstance` → tree → text), `RewriteDreamShaderInstanceSource` and `RewriteDreamShaderUniformDefaults` (value-by-value edits of an existing file, as `FLangSourceEdit`s, so comments and order survive), `FormatDreamShaderFloatLiteral`, `MakeDreamShaderIdentifier`. |
+| `Lang/LangPipelineSource.h` *(since 2.1.0)* | `.dsp` text without the compiler: `CollectDreamShaderPipelineReferences` (every `Material = "..."` and `Shader = "..."` of a parsed `.dsp`, once each, in source order — what the host resolves before the bind), `BuildDreamShaderPipelineModule` / `PrintDreamShaderPipeline` (an `IR::FIRPassPipeline` → tree → text, defaults left out: the decompiler's text), `RewriteDreamShaderPipelineSource` (Adopt: edits that make an existing file state a payload, touching only the declarations and keys that differ), `CompareDreamShaderPipelines` (structural equality of two payloads, source references ignored, one line per difference), and `GetDreamShaderPassInjectionNames` / `GetDreamShaderPassFormatNames` — the canonical spellings, in the order of the runtime's enums. |
+| `Lang/LangFormat.h` | `dsc fmt` without the editor: `FormatDreamShaderLangSource`, `FLangFormatOptions` and `ELangFormatOutcome` (`Unchanged`, `Changed`, `Skipped`, `Failed`) — the printer over a parse that kept its trivia, refusing to write a file it cannot vouch for. |
 
 ### `Semantic/` — the binder
 
@@ -75,7 +77,7 @@ catalog, and the file's products decided.
 
 | Header | Purpose |
 | :-- | :-- |
-| `Semantic/LangBound.h` | `BindDreamShaderLang`, `FBindOptions`, `FLangBindResult`, and `FBoundModule` — the AST plus side tables keyed by `const FNode*`: `FBoundStruct`, `FBoundGlobal`, `FBoundFunction` (with `EBoundFunctionKind`: entry, helper, export, extern, custom), `FBoundProduct`, `FBoundExpr` (`EBoundExprKind`), `FBoundDirectives` and the `Directive::` key names, the region tree, the resolved include paths, and the catalog the module was bound against. Also `BuildDreamShaderSymbolIndexJson` — the language service's symbol index, schema `dreamshader-symbol-index` version 1. |
+| `Semantic/LangBound.h` | `BindDreamShaderLang`, `FBindOptions`, `FLangBindResult`, and `FBoundModule` — the AST plus side tables keyed by `const FNode*`: `FBoundStruct`, `FBoundGlobal`, `FBoundFunction` (with `EBoundFunctionKind`: entry, helper, export, extern, custom), `FBoundProduct`, `FBoundExpr` (`EBoundExprKind`), `FBoundDirectives` and the `Directive::` key names, the region tree, the resolved include paths, and the catalog the module was bound against. Also `BuildDreamShaderSymbolIndexJson` — the language service's symbol index, schema `dreamshader-symbol-index` version 1. For a `.dsp` *(since 2.1.0)*: `FBoundModule::Pipeline`, an `FBoundPipeline` (the canonical payload with every default applied, and the declaration each part came from), and what the host resolves before the bind — `FPipelineReferences` with one `FPipelineMaterialInfo` per material, one `FPipelineShaderInfo` per `.usf`, the project's pass layers and `bCustomPassAvailable` — passed as `FBindOptions::PipelineReferences`. |
 
 A bound module **keeps pointers into the `FModule` it bound and into whatever the include resolver
 returned**; both have to outlive it. Nothing downstream of the builder does — an `FIRModule` points
@@ -83,7 +85,7 @@ back at neither.
 
 ### `IR/` — the graph IR
 
-`UE::DreamShader::IR`, eleven headers. The IR is the material graph before it is a material graph:
+`UE::DreamShader::IR`, twelve headers. The IR is the material graph before it is a material graph:
 nodes, operands, properties and products, with no engine type anywhere in it. Include paths keep the
 `IR/` prefix.
 
@@ -92,7 +94,7 @@ nodes, operands, properties and products, with no engine type anywhere in it. In
 | `IR/IRTypes.h` | `EIRTypeKind`, `FIRType` (kind + component count + texture kind + struct index), `TypeFromBuiltinRef`, `EIRConversion` and `ClassifyConversion` — the one place a "does this value fit that pin" question is answered. |
 | `IR/IRCoreOps.h` | `EIROp`, `EIRTypingRule`, `FIRCoreOpInfo` and the lookups (`GetCoreOpInfo`, `FindCoreOpByHlslName`, `FindCoreOpByGlslAlias`, `FindCoreOpForBinary`, `FindCoreOpForUnary`, `IsCoreMathOp`). One table holds each core op's arity, typing rule, engine class and pin names; the binder reads the typing, the builder builds from it, the emitter reads the class and pins. |
 | `IR/IRCatalog.h` | `FBuiltinCatalog` and its JSON schema: `FCatalogExpression` (class, pins, properties, outputs, aliases, `bIsCustomOutput`), `FCatalogPin`, `FCatalogProperty`, `FCatalogMaterialAttribute`, `ECatalogValueType`, `LoadBuiltinCatalogFromJson` / `SaveBuiltinCatalogToJson`, `TypeFromCatalogValueType`. **The only channel through which engine knowledge reaches this module.** |
-| `IR/IR.h` | `FIRValue`, `FIRInput`, `FIRProperty` / `FIRPropertyValue` (`EIRPropertyKind`), the `Prop::` property-name constants, `FIRSourceRef`, `FIRNode`, `FIRRegion`, `FIRLayoutHint`, `FIRGraph`, `FIRProduct` (`EIRProductKind`, `EIRBackend`) and `FIRModule`. |
+| `IR/IR.h` | `FIRValue`, `FIRInput`, `FIRProperty` / `FIRPropertyValue` (`EIRPropertyKind`), the `Prop::` property-name constants, `FIRSourceRef`, `FIRNode`, `FIRRegion`, `FIRLayoutHint`, `FIRGraph`, `FIRProduct` (`EIRProductKind`, `EIRBackend`) and `FIRModule`. A `.dsp`'s product is `EIRProductKind::PassPipeline` *(since 2.1.0)*: an empty graph, and `FIRProduct::PassPipeline` — an `FIRPassPipeline` of `FIRPassParameter`s, `FIRPassBuffer`s and `FIRPass`es (with `FIRPassBinding`, `FIRPassParam`, `FIRPassFilterClause` / `FIRPassFilterTerm`), every enumerated value a string in its `.dsp` spelling. The passes and the validator's graph checks skip it (a pipeline must be the only product of its module, `DSH4334`); the comparator compares the payloads. |
 | `IR/IRBuilder.h` | `FIRBuildOptions` (`MaxUnrolledIterations`, `MaxInlineDepth`, `bKeepDebugNames`, an optional `Catalog` override) and `BuildDreamShaderIR`. |
 | `IR/IRPasses.h` | `FIRPassOptions` (`bFoldConstants`, `bDedupe`, `bPrune`) and `RunDreamShaderIRPasses`. |
 | `IR/IRValidator.h` | `ValidateDreamShaderIR` — one lowered module against the IR's own rules and against the catalog. An empty catalog skips the checks that need engine knowledge rather than failing them, so a hand-built graph can be validated in a unit test. |
@@ -100,6 +102,7 @@ nodes, operands, properties and products, with no engine type anywhere in it. In
 | `IR/IRCompare.h` | `AreDreamShaderIRModulesEquivalent` and `FIRCompareOptions` — two modules compared from their roots, with the first difference in words, followed down to the deepest node that differs. What "the decompiled text means the same" and "the migrated text builds the same graph" are measured with. The options say which differences are one asset written two ways: debug names, regions, Custom-code markers and spacing, a constant against its `Const*` twin, an identity swizzle. |
 | `IR/IRInstanceSchema.h` | `BuildParameterSchemaFromIR` — the parameter schema a `.dsi` binds against, taken from its parent's IR (the editor side builds the same schema from an asset). |
 | `IR/IRCustomHlsl.h` | `FCustomNodeCode` (`Code`, `IncludeFilePaths`, `InlinedFunctions`), `BuildDreamShaderCustomNodeCode`, and the `CustomCodeMarker` grammar with `TryParseCustomCodeBodyMarker` — the line markers a Custom node's body carries, which `dsc check -Shaders` maps shader-compile errors back through. |
+| `IR/IRLayout.h` | Graph layout before any node exists: `EIRLayoutStyle` (`Blocks`, `SourceBands`, `Layered`) with `TryParseIRLayoutStyle`, `FIRLayoutOptions`, `FIRLayoutResult` and its parts, `LayoutDreamShaderIRGraph`, `FindDreamShaderIRLayoutOwner`, the engine-free size estimates, and `DumpDreamShaderIRLayoutSvg` / `…Json` (schema `dreamshader-ir-layout` version 1, what `dsc dump-layout` writes). Deterministic, and it never changes the graph. |
 
 > The IR holds **no source positions in its identity**: `FIRSourceRef` rides on a node for tooling
 > (the asset's `DreamShader.SourceSpans` table, node ↔ source navigation) and is never part of a
@@ -157,6 +160,10 @@ validator, two dumps, a printer, and one call for parsing a single expression on
 | `RaiseDreamShaderIR(Module, Diagnostics)` → `BuildDreamShaderAstFromIR(Module, Catalog, Options, Diagnostics)` | `Decompile/IRToAst.h` | An `FIRModule` → an `FModule` that lowers back to an equivalent IR. What the language cannot say is a diagnostic (`DSH9075`–`DSH9084`), never a silent drop. |
 | `MigrateDreamShaderLegacyModule(Module, Legacy, Bound, Options, Diagnostics)` | `Migrate/LangMigrate.h` | Rewrites a 1.x module in place. `Bound` was bound against `Module` and is only read; **its node pointers are stale once this returns**. False after an error: the module is then not worth printing. |
 | `PrintDreamShaderInstance(Instance, FilePath, AssetPathOverride)` | `Lang/LangInstanceSource.h` | The `.dsi` text for an instance payload: optional `/// @name`, `#pragma instance(...)`, one `uniform` per override. |
+| `CollectDreamShaderPipelineReferences(Module, OutMaterials, OutShaders)` *(since 2.1.0)* | `Lang/LangPipelineSource.h` | Every `Material = "..."` and `Shader = "..."` of a parsed `.dsp`, once each, in source order. The host resolves them into an `FPipelineReferences` and binds with it as `FBindOptions::PipelineReferences`; without one the bind is an engine-free check — references taken as written, every check that needs an engine fact skipped, and an info (`DSH7360`) that says so. The product is the payload of `FBoundModule::Pipeline`, named after the file; `BuildDreamShaderIR` copies it into `FIRProduct::PassPipeline` and lowers nothing. |
+| `PrintDreamShaderPipeline(Pipeline, FilePath, Options)` *(since 2.1.0)* | `Lang/LangPipelineSource.h` | The `.dsp` text for a pipeline payload — `#pragma pipeline`, uniforms, buffers, passes, in the payload's order, defaults left out. What the decompiler writes. |
+| `RewriteDreamShaderPipelineSource(Original, Parsed, Bound, Desired, OutEdits, OutText, Diagnostics)` *(since 2.1.0)* | `Lang/LangPipelineSource.h` | Adopt for a `.dsp`: span edits that make an existing file state `Desired`, touching only what differs, so comments and order survive. False, with `OutText` left as the original, for a file that is not a bound `.dsp` (`DSH9109`), a declaration shared with other names that would have to change (`DSH9107`) or overlapping edits (`DSH9108`). |
+| `CompareDreamShaderPipelines(A, B, OutDifferences)` *(since 2.1.0)* | `Lang/LangPipelineSource.h` | Structural equality of two payloads, source references ignored, one line per difference — what the `.dsp` → asset → `.dsp` round trip and `AreDreamShaderIRModulesEquivalent` measure a pipeline with. |
 
 ```cpp
 // MyTooling.Build.cs:  PrivateDependencyModuleNames.AddRange(new[] { "Core", "DreamShaderLang" });
@@ -195,6 +202,7 @@ extension carried by `FLangSourceText::GetPath()`:
 | `.dss` | `Dss` | 2.0 |
 | `.dsi` | `Dsi` | 2.0 — a material instance: a `#pragma instance` and `uniform` overrides, nothing else |
 | `.dsh` | `Dsh` | decided **per declaration**: a shared header may hold both syntaxes while a project migrates. `export` and asset blocks are rejected |
+| `.dsp` *(since 2.1.0)* | `Dsp` | 2.0 — a Custom Pass pipeline: `#pragma pipeline`, `uniform` and `static const` declarations, `buffer` and `pass`. `buffer` and `pass` are declaration words in a `.dsp` only (`DSH3310` elsewhere); a function, a struct or an `#include` in a `.dsp` is `DSH3314` |
 | `.dsm` | `Dsm` | legacy |
 | `.dsf` | `Dsf` | legacy |
 
@@ -250,7 +258,9 @@ message text.**
 | `DSH2150`–`DSH2189` | expressions and statements (allocated: `2150`–`2155`, `2157`–`2165`) | `2150` unexpected end of file · `2158` positional argument after a named one · `2160` unsupported statement (`switch`, and a `#` line inside a body) · `2162` an initializer list used as an expression |
 | `DSH2199` | front-end selection | retired when the legacy front end arrived |
 | `DSH2200`–`DSH2258` | the legacy front end — blocks, attribute lists, `import`, Graph statements | `2200` an operator 1.x silently truncated at · `2248` 2.0 syntax in a `.dsm` / `.dsf` · `2249` an asset block in a `.dsh` · `2252` an `import` the include resolver does not read |
+| `DSH2300`–`DSH2349` | `.dsp` syntax — `buffer` and `pass` declarations, pass bodies, bindings | |
 | `DSH3250`–`DSH3278` | the legacy front end — `Properties`, `Settings`, `Outputs`, `Inputs`, `Layout` sections | |
+| `DSH3300`–`DSH3349` | `.dsp` declarations — `#pragma pipeline`, buffer and pass keys, `.dsp`-only declarations in another source | |
 | `DSH6300`–`DSH6330` | the legacy front end and binder — `Function` / `GraphFunction`, lifted `UE.` calls | `6326` a lifted call reads a body local |
 | `DSH3200`–`DSH3249` | declarations, types, directives, doc blocks (allocated: `3200`–`3208`, `3210`, `3211`, `3213`–`3218`, `3220`–`3222`) | `3201` stray preprocessor directive · `3203` `#include` / `import` without a **double-quoted** path · `3204` expected a type name · `3208` function without a body · `3213` bad storage/linkage combination · `3220` malformed `@` directive (**warning**) · `3221` orphan `///` block (**warning**) · `3222` a 1.x declaration word |
 
@@ -262,14 +272,19 @@ same sink, with their own ranges:
 | `DSH4200`–`DSH4299` | the binder — names, types, expressions, statements, loops, regions |
 | `DSH4300`–`DSH4349` | the IR validator |
 | `DSH4350`–`DSH4399` | lowering refusals — a matrix that survives folding, a loop with no provable trip count, `discard` inside a branch, a material attribute read before it is written |
+| `DSH4400`–`DSH4449` | `.dsp` names and references — buffers, materials, HLSL files, entries, layers |
 | `DSH5200`–`DSH5299` | reflected calls, the catalog, material attributes |
+| `DSH5300`–`DSH5314` | the Custom Pass material nodes in a `.dss` — the engine gate, where they may stand, the new translator |
 | `DSH6200`–`DSH6219` | function kinds, the entry, `export` / `extern` |
 | `DSH6220`–`DSH6249` | helper inlining |
 | `DSH6250`–`DSH6299` | `/// @custom` HLSL |
 | `DSH7200`–`DSH7249` | uniforms, `///` directives, `#pragma material` |
 | `DSH7250`–`DSH7270` | `.dsi`: `#pragma instance`, overrides against the parent's schema |
+| `DSH7300`–`DSH7379` | `.dsp` checks (`V1`–`V13`): pass kind against injection point, buffer use in frame order, bindings against the material or HLSL file, limits |
 | `DSH5250`–`DSH5292` | the documented 1.x rules (`L1`–`L26`), each one a diagnostic where it rewrites or drops something |
+| `DSH9042`–`DSH9044` | the formatter: a 1.x file and a file with preprocessor lines are skipped (info), a formatted text that fails its own check is refused |
 | `DSH9075`–`DSH9084` | IR → source: what the writer renamed, could not place, or left at a default |
+| `DSH9107`–`DSH9109` | the in-place rewrites of a `.dsi` and, *since 2.1.0*, a `.dsp` (Adopt): a shared declaration, overlapping edits, the wrong kind of file |
 | `DSH9091`, `DSH9094` | the migrator (the host's proofs around it, in the editor module, are the rest of `DSH9090`–`DSH9099`) |
 
 `DSH1030`–`DSH1042` (the preprocessor's own codes) moved into this module with the preprocessor and
@@ -325,7 +340,8 @@ Alongside the corpus, each front-end unit has its own focused test file
 ## See also
 
 - [What the 2.0 pipeline does](../language-v2/index.md) — the language surface and the pipeline's limits, from the author's side
-- [C++ API index](index.md) — the other three modules
+- [C++ API index](index.md) — the other four modules
+- [Custom Pass pipelines](../language-v2/passes.md) — the `.dsp` language, from the author's side
 - [Preprocessor](../language/preprocessor.md) — `#if` and the define table, documented from the language side
 - [Diagnostics index](../diagnostics/index.md) — every `DSHnnnn` with cause and fix
 - [Testing](../contributing/testing.md) — the automation suite and the fixture corpus

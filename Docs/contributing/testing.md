@@ -9,7 +9,7 @@ enumerate at run time.
 | :-- | :-- |
 | Declared in | `Source/DreamShaderEditor/Private/Tests/` — 37 translation units, all inside `#if WITH_DEV_AUTOMATION_TESTS` |
 | Kind | Unreal automation tests |
-| Flags | `EAutomationTestFlags::EditorContext \| EAutomationTestFlags::EngineFilter` — identical on all 261 declarations |
+| Flags | `EAutomationTestFlags::EditorContext \| EAutomationTestFlags::EngineFilter` on every declaration; the Custom Pass render, lifecycle and slot-registry tests add `NonNullRHI` |
 | Corpus root | `<Plugin>/Tests/Corpus` |
 | Editor UI | *Tools ▸ Session Frontend ▸ Automation*, filtered on a test-name prefix |
 
@@ -71,6 +71,11 @@ fixtures that belong to other layers, which is why the runnable count is not "si
 | `DreamShader.DumpGraph.*` *(since 1.9.0)* | The canonical graph dump — see [Graph baseline](#graph-baseline-since-190) | slow; editor |
 | `DreamShader.Roundtrip.*` | Decompile → regenerate fidelity | slow; editor; two of them also need a real RHI |
 | `DreamShader.Render.*` | Pixel parity | needs a real RHI |
+| `DreamShader.Lang2.Pipeline.*` | `.dsp`: parse, print, `fmt`, bind, every rule's code, compare, Adopt's rewrite, the pass nodes in a `.dss` | fast; `Core` only, hand-made engine facts |
+| `DreamShader.Lang2.Corpus.Pipeline.*` · `DreamShader.Lang2.CorpusIR.Pipeline.*` | The `.dsp` fixtures of `Tests/Corpus/Lang/Pipeline` and `Tests/Corpus/IR/Pipeline` | fast; no asset I/O |
+| `DreamShader.Compiler2.Pipeline.*` | `.dsp` to a `UDreamPassPipeline`: fields, render targets, dependencies, round trip; the slot registry and its pre-check | slow; editor; `Registry` and `RegistryPrecheck` need a real RHI and back up `<DShader>/.dreampass` first |
+| `DreamShader.Pass.Logic.*` | The Custom Pass runtime without rendering: spellings, parameter blending, slot packing, the asset's checks, which pipelines apply to a view, sources | fast |
+| `DreamShader.Pass.Render.*` · `DreamShader.Pass.Lifecycle.*` | Custom Pass passes rendered into a scene capture and read back pixel by pixel; edits, removals and world teardown mid-frame | `NonNullRHI`: skipped under `-nullrhi`, run in the RHI gate below |
 
 The split the source records: the fast `DreamShader.Lang.*` and `DreamShader.Lang2.*` layers gate
 pull requests, the slow `DreamShader.Compiler*` and `DreamShader.Gen.*` layers run nightly. The whole
@@ -93,13 +98,25 @@ suite takes about a minute and a half headlessly.
 | 1.x-era end-to-end tests | `DreamShader.Compiler.` |
 | Decompile round trips | `DreamShader.Roundtrip` |
 | Graph dump determinism | `DreamShader.DumpGraph` |
+| Custom Pass, no renderer | `DreamShader.Lang2.Pipeline+DreamShader.Compiler2.Pipeline+DreamShader.Pass.Logic` |
+| Custom Pass, rendered (UE 5.8, real RHI — see below) | `DreamShader.Pass.Render+DreamShader.Pass.Lifecycle+DreamShader.Compiler2.Pipeline.Registry` |
 | Everything | `DreamShader` |
+
+The Custom Pass render tests need a rendering device but no window: run them as a gate of their own,
+without `-nullrhi`, with `-RenderOffscreen -d3d12`:
+
+```powershell
+& "<EngineDir>\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" --% "<ProjectDir>\<Project>.uproject" -ExecCmds="Automation RunTests DreamShader.Pass.Render+DreamShader.Pass.Lifecycle; Quit" -RenderOffscreen -d3d12 -unattended -nopause -nosplash -NoDreamShaderEditorBridge -log
+```
+
+`Tools/Tests/Invoke-DreamShaderTests.ps1` runs both gates on the standalone host project
+(`Tools/TestHost`): the `Suite` preset under `-nullrhi`, the `Rhi` preset offscreen.
 
 ### Command-line switches
 
 | Switch | Effect on the suite |
 | :-- | :-- |
-| `-nullrhi` | No rendering device. `DreamShader.Render.ThinCustomVsGraphParity` and `DreamShader.Roundtrip.MTestToonRenderParity` self-skip. Every other test still runs. |
+| `-nullrhi` | No rendering device. `DreamShader.Render.ThinCustomVsGraphParity` and `DreamShader.Roundtrip.MTestToonRenderParity` self-skip; the `NonNullRHI` tests (Custom Pass render, lifecycle, slot registry) are not run at all. Every other test still runs. |
 | `-DreamShaderUpdateGolden` | Every corpus runner **rewrites** each `.expected.json` from the actual result instead of asserting it. See [Regenerating goldens](#regenerating-goldens). |
 | `-NoDreamShaderEditorBridge` | Skips creating the editor bridge and the Material Content Browser: no directory watcher, no Ephemeral generation pass at startup, no WebSocket listener on `127.0.0.1:17864`. Useful when a run must not compete with the bridge for the same sources. |
 | `-unattended -nopause -nosplash` | Standard headless flags; no modal dialogs, no splash, no keypress on exit. |

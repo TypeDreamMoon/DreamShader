@@ -16,6 +16,15 @@ Full reference: [`Docs/index.md`](../../Docs/index.md) · online at <https://sha
 | `.dsf` | `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend`, plus helpers. **No `Shader`.** | the function assets |
 | `.dsh` | `Function` / `GraphFunction` / `Namespace` / `VirtualFunction` only | nothing — consumed through `import` |
 
+The 2.x plugin adds three kinds that this page does not teach (`.dss` and `.dsi` since 2.0.0, `.dsp`
+since 2.1.0); `dsc` builds them like the ones above:
+
+| Extension | Holds | Generates |
+| :-- | :-- | :-- |
+| `.dss` | DreamShaderLang 2.0: HLSL with declarations, `///` doc blocks, `#pragma material` | materials and functions — [`Docs/language-v2/index.md`](../../Docs/language-v2/index.md) |
+| `.dsi` | `#pragma instance(Parent = "...")` and `uniform` overrides | one material instance — [`Docs/language-v2/instances.md`](../../Docs/language-v2/instances.md) |
+| `.dsp` | `#pragma pipeline`, `uniform`, `buffer` and `pass` declarations | one Custom Pass pipeline and a render target per exported buffer, on UE 5.8 only — [`Docs/language-v2/passes.md`](../../Docs/language-v2/passes.md) |
+
 The kind check is a **case-insensitive substring scan of the file text**, run before parsing. A
 `.dsh` containing the literal text `Shader(` anywhere — including inside a comment or a string — is
 rejected. Write `Shader (` with a space if you must mention it.

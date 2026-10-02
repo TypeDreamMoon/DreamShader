@@ -533,10 +533,10 @@ Failed to create material function '%s'.
 **Message**
 
 ```
-Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). 
+Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). %s
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:395`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:405`
 <!-- generated:end DSH8115 -->
 
 **Cause.** the asset no longer matches the output digest stamped at its last generation -- somebody edited it by hand, and a rebuild would destroy that work
@@ -556,7 +556,7 @@ Asset '%s' was edited by hand since DreamShader generated it from '%s', so it wa
 Generated DreamShader asset '%s' could not be saved.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:445`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:455`
 <!-- generated:end DSH8116 -->
 
 **Cause.** A generated asset could not be written to disk: the `.uasset` is read-only or checked in,
@@ -576,7 +576,7 @@ exists in memory only.
 Generated DreamShader asset packages could not be saved.%s
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:475`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:485`
 <!-- generated:end DSH8117 -->
 
 **Cause.** Saving the batch of generated packages failed; the list after the message names each
@@ -876,7 +876,7 @@ refuses, a doubled `/`, or no asset name.
 DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch that was taken -- adopting it would write that one branch back over the file and delete the rest. Move the change into the matching branch of the source by hand, or use DreamShader > Detach first if this asset should stop being generated from it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:454`, `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:653`, `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:918`
+**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:1132`, `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:497`, `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:696`, `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:875`
 <!-- generated:end DSH8149 -->
 
 **Cause.** **Adopt Into Source** was asked to rewrite a source that uses conditional compilation (`#if` / `#ifdef` / `#ifndef`). Adopt rebuilds the source text from the asset, and the asset only ever holds the branch that was taken -- so adopting would write that one branch back over the file and silently delete every other branch
@@ -916,7 +916,7 @@ rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material 
 '{0}' does not resolve to a valid asset path. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1264`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1010`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1284`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1101`
 <!-- generated:end DSH8200 -->
 
 **Cause.** The product's asset name, or the `/// @name /Game/...` path override, does not resolve
@@ -941,7 +941,7 @@ mount, so it needs no `/Game` prefix at all.
 The material for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:525`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:528`
 <!-- generated:end DSH8201 -->
 
 **Cause.** The destination for a material product exists and is not a `UMaterial`, or it exists on
@@ -963,7 +963,7 @@ move or delete the existing asset, then compile again.
 The material function for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:746`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:749`
 <!-- generated:end DSH8202 -->
 
 **Cause.** As DSH8201, for a material function product — with one extra way to fail: the asset at
@@ -985,7 +985,7 @@ every material that calls the function holds a typed reference to it.
 The ThinCustom instance for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:601`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:604`
 <!-- generated:end DSH8203 -->
 
 **Cause.** As DSH8201, for the `UDreamShaderMaterialInstance` a ThinCustom material becomes.
@@ -1005,7 +1005,7 @@ material or pin the backend back with `#pragma material(Backend = "Graph")`.
 The emitter needs the builtin catalog the front end was bound against, but the emit context carries none.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1250`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1270`
 <!-- generated:end DSH8204 -->
 
 **Cause.** `EmitDreamShaderIRProduct` was called with no `FIREmitContext::Catalog`, or with an
@@ -1028,7 +1028,7 @@ before any compile and has no sink to raise into, so it has no code).
 Product index {0} does not exist in this module, which has {1}.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1239`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:252`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1259`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:252`
 <!-- generated:end DSH8205 -->
 
 **Cause.** An internal inconsistency: the product index is out of range for the module, or the
@@ -1048,7 +1048,7 @@ shows the graph the emitter was handed.
 '{0}' is open in an asset editor, so it was not rebuilt. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:387`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:390`
 <!-- generated:end DSH8206 -->
 
 **Cause.** The asset is open in an asset editor. An open editor does not edit the asset itself: it
@@ -1070,7 +1070,7 @@ would pop a save prompt in the middle of a compile-on-save.
 '{0}' no longer holds what DreamShader generated into it, so it was not rebuilt. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:397`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:400`
 <!-- generated:end DSH8207 -->
 
 **Cause.** The asset no longer holds what DreamShader last generated into it — somebody edited the
@@ -1094,7 +1094,7 @@ is for.
 '{0}' could not be snapshotted before rebuilding it, so a failed rebuild will not be rolled back.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:441`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:796`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:444`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:799`
 <!-- generated:end DSH8208 -->
 
 **Cause.** The atomic rollback could not take a snapshot of the asset before the rebuild started,
@@ -1116,7 +1116,7 @@ from scratch.
 '{0}' was left alone: another editor owns writing this project's generated assets to disk.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:362`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:365`
 <!-- generated:end DSH8209 -->
 
 **Cause.** Another editor holds this project's DreamShader bridge ownership lock, and only that
@@ -1253,7 +1253,7 @@ the material that calls the function and pass the value in as a function input.
 A material setting on '{0}' was refused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:457`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:460`
 <!-- generated:end DSH8215 -->
 
 **Cause.** A `#pragma material(...)` key is not a settable property path on `UMaterial`, or its
@@ -1546,7 +1546,7 @@ A matrix or a user struct cannot be a function input; pass its components separa
 '{0}' was built but could not be saved. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1213`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:568`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:717`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:872`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1216`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:571`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:720`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:875`
 <!-- generated:end DSH8229 -->
 
 **Cause.** The asset was built successfully but its package could not be written to disk — read-only
@@ -1566,7 +1566,7 @@ built in memory, so the next compile will save it without rebuilding.
 Cannot create a ThinCustom base material without an instance.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:296`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:313`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:640`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:297`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:314`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:340`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:643`
 <!-- generated:end DSH8230 -->
 
 **Cause.** The hidden base `UMaterial` a ThinCustom instance parents to could not be created as a
@@ -1587,7 +1587,7 @@ a fresh pair is created.
 '{0}' has a product kind the emitter does not know how to materialize.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1290`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1313`
 <!-- generated:end DSH8232 -->
 
 **Cause.** The product kind has no asset shape the emitter knows how to build. Internal.
@@ -1664,7 +1664,7 @@ earlier, by name. Report it with the source file.
 '{0}' was left alone: its source hash is unchanged since it was last built.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:374`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:377`
 <!-- generated:end DSH8237 -->
 
 **Cause.** The asset this product compiles to already carries the source hash of this build: the
@@ -1688,7 +1688,7 @@ reaches the divergence gate instead (DSH8207).
 The material instance for '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1027`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1030`
 <!-- generated:end DSH8240 -->
 
 **Cause.** The instance asset of a `.dsi` could not be created or reused; the sentence after it is
@@ -1707,7 +1707,7 @@ the reason (DSH8241, DSH8242 or DSH8253 in words).
 Asset '%s' already exists as a '%s'; a .dsi builds a plain MaterialInstanceConstant. Rename the instance file or move the existing asset.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:251`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:252`
 <!-- generated:end DSH8241 -->
 
 **Cause.** An asset of another class already sits where the `.dsi` would build its instance -- a
@@ -1726,7 +1726,7 @@ material, or a ThinCustom instance of a `.dss` with the same name.
 Asset '%s' already exists and was not generated by DreamShader. Rename the instance file or move/delete the existing asset before building it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:260`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:261`
 <!-- generated:end DSH8242 -->
 
 **Cause.** A material instance already sits at the target path and was not generated by DreamShader.
@@ -1745,7 +1745,7 @@ Into Source* / `dsc decompile`.
 The parent '{0}' of '{1}' does not load; compile the source that builds it, or correct the Parent key.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1054`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1079`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1057`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1082`
 <!-- generated:end DSH8243 -->
 
 **Cause.** The parent named by `Parent = ...` could not be loaded, or it exists only in memory -- a
@@ -1767,7 +1767,7 @@ message carries the save error: free the package file it names.
 '{0}' was memory-only, so it was saved to disk first: '{1}' parents to it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1087`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1090`
 <!-- generated:end DSH8244 -->
 
 **Cause.** The parent was built into memory only (an Ephemeral build) and an instance on disk cannot
@@ -1786,7 +1786,7 @@ point at an object that is not. The parent was saved first.
 '{0}' cannot parent to '{1}': that parent already descends from this instance.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1098`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1101`
 <!-- generated:end DSH8245 -->
 
 **Cause.** `Parent` names an instance that itself descends from this one, so the parent chain would
@@ -1805,7 +1805,7 @@ be a loop.
 The parent asset '{0}' has no parameter {1} of the kind this instance overrides; the asset is older than its source. Compile the parent source first.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1120`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1123`
 <!-- generated:end DSH8246 -->
 
 **Cause.** The parent asset on disk lacks a parameter the instance overrides, although the parent's
@@ -1824,7 +1824,7 @@ source declares it: the parent asset is older than its source.
 The engine dropped '{0}' as the parent of '{1}' while applying the static overrides; that parent does not allow them.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1190`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1193`
 <!-- generated:end DSH8247 -->
 
 **Cause.** Applying the static switch overrides made the engine clear the instance's parent. It does
@@ -1845,7 +1845,7 @@ its parent's shaders.
 The parent '{0}' exists only in memory and no DreamShader source builds it, so '{1}' cannot be saved against it; save the parent first.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1067`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1070`
 <!-- generated:end DSH8248 -->
 
 **Cause.** The parent exists only in memory and no DreamShader source builds it (a material created
@@ -1929,7 +1929,7 @@ points to.
 The override of '{0}' could not be applied: {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1138`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1141`
 <!-- generated:end DSH8252 -->
 
 **Cause.** One override could not be written into the instance; the reason follows. Usually the
@@ -1948,7 +1948,7 @@ asset a texture-like override names does not load or is of the wrong class.
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:272`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:279`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:273`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:280`
 <!-- generated:end DSH8253 -->
 
 **Cause.** The instance's package, or the `UMaterialInstanceConstant` in it, could not be created:
@@ -1989,7 +1989,7 @@ collection.
 The parent '{0}' comes from '{1}', which does not compile, so the parameters this instance overrides cannot be checked; compile that source to see why.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:482`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:514`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:387`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:416`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:495`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:527`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:584`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:613`
 <!-- generated:end DSH8260 -->
 
 **Cause.** The parent of a `.dsi` cannot be used. It is built by a DreamShader source that does not
@@ -2010,7 +2010,7 @@ source under the source roots builds it.
 No material or instance named '{0}' is built by a source under '{1}'; write the parent's asset path, or check the name.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:452`
+**Raised by** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:649`
 <!-- generated:end DSH8261 -->
 
 **Cause.** `Parent` is a bare name, and no source under this file's source root builds a material or
@@ -2029,7 +2029,7 @@ instance of that name.
 '{0}' names more than one product under '{1}' ({2}); write the parent's asset path instead.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:466`
+**Raised by** `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:663`
 <!-- generated:end DSH8262 -->
 
 **Cause.** `Parent` is a bare name that more than one source under the root builds.
@@ -2047,7 +2047,7 @@ instance of that name.
 '{0}' is its own ancestor: following Parent from it comes back to it ({1}).
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:426`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:398`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:446`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:439`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:595`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:643`
 <!-- generated:end DSH8263 -->
 
 **Cause.** An instance is its own ancestor: `Parent` names the instance itself, by path or by name,
@@ -2066,7 +2066,7 @@ or following `Parent` from it leads back to it (the message lists the chain).
 '{0}' was missing or older than its source, so '{1}' was compiled first.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:503`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:516`
 <!-- generated:end DSH8264 -->
 
 **Cause.** The parent's asset was missing or older than its source when the instance was compiled,
@@ -2085,7 +2085,7 @@ so the parent was compiled first.
 The Parent chain above '{0}' is more than {1} instances deep; a chain that long is almost always a mistake in a Parent key.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:434`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:447`
 <!-- generated:end DSH8265 -->
 
 **Cause.** The chain of `Parent` keys above this instance is deeper than the compiler follows. Real
@@ -2143,7 +2143,7 @@ follows.
 '{0}' could not be read.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:622`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:635`
 <!-- generated:end DSH8290 -->
 
 **Cause.** The compiler could not open the `.dss` it was asked to compile. The path was normalised
@@ -2167,7 +2167,7 @@ on Windows a text editor holding an exclusive lock is enough to cause this.
 '{0}' failed conditional compilation: {1}: {2}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:644`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:227`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:657`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:227`
 <!-- generated:end DSH8291 -->
 
 **Cause.** The conditional-compilation preprocessor refused the file. The message carries the
@@ -2281,10 +2281,10 @@ with a different grammar, and an include of one would be parsed as 2.0 text and 
 **Message**
 
 ```
-'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it.
+'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:565`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:578`
 <!-- generated:end DSH8296 -->
 
 **Cause.** The 2.0 pipeline was handed a file whose extension is not `.dss`. `.dsh` answers this too,
@@ -2305,7 +2305,7 @@ them to the 1.x generator.
 The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:737`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:774`
 <!-- generated:end DSH8297 -->
 
 **Cause.** The builtin expression catalog — every `UE.*` node, its pins, its properties and the
@@ -2333,7 +2333,7 @@ cached copy and `InvalidateDreamShaderBuiltinCatalog`.
 Building '{0}' was cancelled; the asset is as it was before this compile.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:313`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:604`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1103`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:617`
 <!-- generated:end DSH8298 -->
 
 **Cause.** The user pressed Cancel on the compile's progress dialog. Nothing was written: the emit
@@ -2354,7 +2354,7 @@ engine's own queue and is not cancelled by this.
 The exported functions {0} call one another in a cycle, so there is no order in which they can be built; an exported function may call another only in one direction.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:896`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:979`
 <!-- generated:end DSH8299 -->
 
 **Cause.** Two or more exported functions of one file call one another, directly or through others.
@@ -2368,4 +2368,868 @@ The message names every product in the cycle.
 (no `export`) is inlined at its call site and takes part in no dependency at all, so making the
 inner one a helper removes the edge. If both really must be assets, factor the shared part into a
 third function that neither calls back into.
+
+## DSH8300
+
+<!-- generated:begin DSH8300 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:941`
+<!-- generated:end DSH8300 -->
+
+**Cause.** A `.dsp` was compiled on an engine older than Unreal Engine 5.8. The DreamShaderPass module
+builds there with its asset types only (`DREAMSHADER_WITH_CUSTOM_PASS` is `0`): no runtime runs a
+pipeline and no global shader holds an HLSL pass, so the emitter stops before it creates or touches
+anything. The front half still runs — the file parses, formats and binds, with the checks that need the
+runtime skipped (DSH7360) — so `check` passes where `compile` cannot.
+
+**Fix.** Build the pipeline on Unreal Engine 5.8 or later. Nothing needs undoing on the older engine: no
+pipeline, render target, slot or snapshot was written.
+
+## DSH8301
+
+<!-- generated:begin DSH8301 -->
+**Severity** error
+
+**Message**
+
+```
+Failed to create package '%s'.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:340`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:345`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:951`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:977`
+<!-- generated:end DSH8301 -->
+
+**Cause.** The pipeline asset could not be made at the path its `.dsp` resolves to. The message
+`The pass pipeline for '…' could not be created or reused.` is followed by the reason with its own code:
+DSH8301 again, `Failed to create package '…'` or `Failed to create the pass pipeline '…'`, when
+`CreatePackage` or `NewObject` refused the path, which is rare; or DSH8302 / DSH8303 when something
+already sits there. A third form, `'…' does not resolve to a valid asset path`, is the destination
+check, which a compile makes first and reports as DSH8200.
+
+**Fix.** Act on the inner reason. For a package that cannot be created, check where the `.dsp` lies: a
+`.dsp` has no `/// @name`, so its folder under the source root gives the package path and its file name
+the asset's.
+
+## DSH8302
+
+<!-- generated:begin DSH8302 -->
+**Severity** error
+
+**Message**
+
+```
+Asset '%s' already exists as a '%s'; a .dsp builds a DreamPassPipeline. Rename the .dsp or move the existing asset.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:323`
+<!-- generated:end DSH8302 -->
+
+**Cause.** An asset of another class already sits where the `.dsp` would build its pipeline — a
+material of the same name in the same folder, for instance. A `.dsp` names its pipeline after its file.
+Quoted inside DSH8301's message.
+
+**Fix.** Rename the `.dsp` (its file name is the pipeline's name) or move the existing asset.
+
+## DSH8303
+
+<!-- generated:begin DSH8303 -->
+**Severity** error
+
+**Message**
+
+```
+Asset '%s' already exists and was not generated by DreamShader. Rename the .dsp or move/delete the existing asset before building it.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:330`
+<!-- generated:end DSH8303 -->
+
+**Cause.** A `UDreamPassPipeline` is saved at the pipeline's path without DreamShader's source stamp: one
+made by hand, or one detached from DreamShader. The ownership guard never takes over an asset it did not
+generate. Quoted inside DSH8301's message.
+
+**Fix.** Rename the `.dsp`, or move or delete the existing pipeline, and compile again. To carry a
+hand-made pipeline's settings into the `.dsp` first, decompile it (`./dsc.ps1 decompile <asset path>`)
+and copy what you need.
+
+## DSH8304
+
+<!-- generated:begin DSH8304 -->
+**Severity** error
+
+**Message**
+
+```
+'{1}' is not a {0} the Custom Pass runtime knows; the pipeline was not built. This is a compiler gap: the binder should have refused it.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:557`
+<!-- generated:end DSH8304 -->
+
+**Cause.** A value of the pipeline reached the emitter in a spelling the DreamShaderPass runtime has no
+enumerator for; the message names the kind of value (an injection point, a view kind, a buffer format, a
+pass kind, a mesh pass's mode, depth, cull, blend, usage or Nanite policy, a param's source or constant
+type) and the spelling. The binder checks every one of these first, so the two disagree and the file is
+not at fault. Nothing was built.
+
+**Fix.** Report it with the `.dsp`. Until it is fixed, write the value as
+[Custom Pass pipelines](../language-v2/passes.md) spells it.
+
+## DSH8305
+
+<!-- generated:begin DSH8305 -->
+**Severity** error
+
+**Message**
+
+```
+The material '{0}' of pass '{1}' does not load; compile the source that builds it, or correct the Material key.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:730`
+<!-- generated:end DSH8305 -->
+
+**Cause.** When the pipeline was put together, the material a fullscreen or mesh pass names did not load
+from the object path its `Material` resolved to. The checks before the build found it, and a compile
+builds a material that is missing or older than its source first (DSH8332), so the asset went missing in
+between: deleted, renamed without a redirector, or a package that no longer loads.
+
+**Fix.** Compile the source that builds the material, or correct the `Material` key (a bare name, or the
+material's object path), then compile the `.dsp` again.
+
+## DSH8306
+
+<!-- generated:begin DSH8306 -->
+**Severity** error
+
+**Message**
+
+```
+The default of '{0}' could not be applied: {1}.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:612`
+<!-- generated:end DSH8306 -->
+
+**Cause.** The `/// @default` of a `Texture2D` uniform could not be written into the pipeline: the
+reference does not resolve to an asset path (the reason follows, one of DSH8118-DSH8132 in words), or no
+texture loads from the path it resolves to. The binder takes the default as written, so this is the
+first time it is loaded.
+
+**Fix.** Correct the path — *Copy Reference* in the Content Browser gives one that always resolves — or
+write `/// @default None` (or no `@default`) for a parameter without a texture.
+
+## DSH8307
+
+<!-- generated:begin DSH8307 -->
+**Severity** error
+
+**Message**
+
+```
+Pass '{0}' selects the layer '{1}', which is not one of the project's pass layers (Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names).
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:796`
+<!-- generated:end DSH8307 -->
+
+**Cause.** A mesh pass's `Filter = Layer(...)` names a layer that has no bit when the pipeline is built.
+The binder accepts any name the project's layer table lists (an unlisted one is DSH4412), but only the
+first 32 entries of the table have a bit, so a name listed after the 32nd is refused here. Nothing was
+built.
+
+**Fix.** Move the layer into the first 32 entries of Project Settings ▸ DreamPlugin ▸ DreamShader Custom
+Pass ▸ Layer Names, or select one that is. Moving a layer re-targets every compiled pipeline that names
+it until that pipeline is compiled again.
+
+## DSH8308
+
+<!-- generated:begin DSH8308 -->
+**Severity** error
+
+**Message**
+
+```
+Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read an exported buffer as a float texture, which an integer or a depth buffer cannot be. Export a float or normalized buffer, or drop Export.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:657`
+<!-- generated:end DSH8308 -->
+
+**Cause.** A buffer declared `Export = true` has an integer or depth format (`R32U`, `RG32U`, `Depth32`).
+An exported buffer becomes a render target that materials, Blueprints and UMG sample as a float texture,
+which neither can be. The binder refuses the same declaration first (DSH7355); this is the emitter's own
+check as it maps the format onto a render target format.
+
+**Fix.** Export a float or normalized buffer, or drop `Export`. An id fits `R32F` exactly up to
+16777216.
+
+## DSH8309
+
+<!-- generated:begin DSH8309 -->
+**Severity** error
+
+**Message**
+
+```
+The render target of the exported buffer '{0}' could not be created or reused. {1}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1082`
+<!-- generated:end DSH8309 -->
+
+**Cause.** The render target of an exported buffer — `<Pipeline>_<Buffer>`, in the pipeline's folder —
+could not be created or taken over; the sentence after it is the reason, with its code (DSH8313 or
+DSH8314). Render targets are found or made before anything is written, so the pipeline, the slot
+registry and the snapshots are as they were.
+
+**Fix.** Act on that reason.
+
+## DSH8310
+
+<!-- generated:begin DSH8310 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' was left in place although its buffer is no longer exported: {1}. Delete it by hand once nothing reads it.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:535`
+<!-- generated:end DSH8310 -->
+
+**Cause.** A buffer the pipeline used to export is no longer exported — its `Export` dropped, the buffer
+renamed or removed — so its render target was to be deleted once the pipeline was saved without it. It
+was kept: something else still references it (the message lists the packages, typically a material
+whose `UE.DreamPassBuffer` reads that buffer), or, with nobody listed, the delete was refused in this
+process. The pipeline itself built and saved.
+
+**Fix.** Point whatever reads the buffer at one the pipeline still exports and rebuild it, then delete
+the render target in the Content Browser. If the export was dropped by mistake, put `Export = true` back:
+the next compile takes the same render target over again, and its readers stay valid.
+
+## DSH8311
+
+<!-- generated:begin DSH8311 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' was built but could not be saved with its render targets; its slots are already in the registry. In this session the pipeline in memory is current, so a plain compile of its source skips it: save it, or compile the source again with -Force. {1}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1191`
+<!-- generated:end DSH8311 -->
+
+**Cause.** The pipeline was built and its render targets configured, and saving the packages failed — a
+file that is read-only because it is not checked out, or a path that no longer exists; the asset
+layer's reason follows. Everything before the save stands: the slot registry and the snapshots are
+written, and in the editor the slot shaders were recompiled and the pipeline in memory already runs the
+new version.
+
+**Fix.** Make the packages writable. In a new process — a commandlet, the next editor session —
+compiling the `.dsp` rebuilds and saves it. In the same editor session the pipeline in memory already
+carries the new source hash, so a plain compile skips it (DSH8237) and saves nothing: save it
+(File ▸ Save All), or compile the source again with `-Force` (or Recompile).
+
+## DSH8312
+
+<!-- generated:begin DSH8312 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' was deleted: its buffer is no longer exported.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:523`
+<!-- generated:end DSH8312 -->
+
+**Cause.** Informational. A buffer the pipeline used to export is no longer exported, and nothing but the
+pipeline referenced its render target, so the render target was deleted once the pipeline was saved
+without it.
+
+**Fix.** Nothing. If you commit generated assets, commit the deletion with the pipeline.
+
+## DSH8313
+
+<!-- generated:begin DSH8313 -->
+**Severity** error
+
+**Message**
+
+```
+Asset '%s' already exists as a '%s'; an exported buffer needs a TextureRenderTarget2D there. Move the existing asset or rename the buffer.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:371`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:378`
+<!-- generated:end DSH8313 -->
+
+**Cause.** Something other than this pipeline's render target sits where an exported buffer's render
+target goes (`<Pipeline>_<Buffer>`, next to the pipeline): an asset of another class, or a
+`TextureRenderTarget2D` without DreamShader's source stamp — one made by hand, which is never taken over.
+Quoted inside DSH8309's message.
+
+**Fix.** Move or rename the existing asset, or rename the buffer.
+
+## DSH8314
+
+<!-- generated:begin DSH8314 -->
+**Severity** error
+
+**Message**
+
+```
+Failed to create package '%s'.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:388`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:393`
+<!-- generated:end DSH8314 -->
+
+**Cause.** The package of an exported buffer's render target, or the `TextureRenderTarget2D` in it, could
+not be created: `CreatePackage` or `NewObject` failed for the path the message names. Rare; quoted
+inside DSH8309's message.
+
+**Fix.** Check that path — the pipeline's folder and `<Pipeline>_<Buffer>` — for something the engine
+refuses in a package name.
+
+## DSH8315
+
+<!-- generated:begin DSH8315 -->
+**Severity** error
+
+**Message**
+
+```
+The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:859`
+<!-- generated:end DSH8315 -->
+
+**Cause.** Every `.dsp` compile reads the project's slot registry, `<DShader>/.dreampass/Registry.json` —
+to give its HLSL passes their slots and to free the slots of passes it dropped — and the file exists but
+cannot be used: it cannot be opened, it is not valid JSON (a merge conflict left in it is the usual
+reason), or an entry has no slot number, pipeline or pass. Writing over it would lose every slot it
+records, so nothing was written.
+
+**Fix.** Take either side of the conflict and compile the `.dsp` files again — never merge the JSON by
+hand — or run `./dsc.ps1 pass-registry -Rebuild`, which moves the file aside and gives every HLSL pass a
+slot again ([`pass-registry`](../tools/commandlet.md#pass-registry)).
+
+## DSH8316
+
+<!-- generated:begin DSH8316 -->
+**Severity** error
+
+**Message**
+
+```
+Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the slots of pipelines whose source is gone, or raise {3} in the project's Target.cs.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:942`
+<!-- generated:end DSH8316 -->
+
+**Cause.** A new HLSL pass needs a slot — a `compute` pass one of the compute table, a `fullscreen` pass
+with `Shader =` one of the pixel table — and every slot of that table is taken in the project's registry
+(32 compute and 16 pixel by default). A pass a pipeline drops frees its slot when that pipeline compiles
+again; the slots of a `.dsp` that was deleted or renamed stay taken until they are collected.
+
+**Fix.** `./dsc.ps1 pass-registry` lists the slots and counts the garbage; `./dsc.ps1 pass-registry -Gc`
+frees it. Otherwise merge passes, or raise `DREAMSHADER_PASS_COMPUTE_SLOTS` /
+`DREAMSHADER_PASS_PIXEL_SLOTS` with `GlobalDefinitions` in the project's Target.cs files, editor and
+game alike, and rebuild: every slot is compiled for every platform, used or not.
+
+## DSH8317
+
+<!-- generated:begin DSH8317 -->
+**Severity** error
+
+**Message**
+
+```
+Pass '{0}' cannot be mapped onto its HLSL slot: {1}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:990`
+<!-- generated:end DSH8317 -->
+
+**Cause.** The pass's bindings cannot be written as its slot's section — the `#define`s that map them
+onto the slot's fixed parameters; the reason follows. A name that is not an identifier or starts with
+`DP_`; a name defined twice (a `read` also defines `<Name>Size` and `<Name>UVRect`, a `write`
+`<Name>Size`, and the `Entry` — and `View` at `BeginView` — are names in the slot too); more than 8
+reads or 4 writes; params that do not fit the slot's 16 `float4`, or a texture among them. The binder
+refuses each of these first (DSH7319, DSH7347), so the two disagree.
+
+**Fix.** Rename or reduce the bindings as the reason says, and report it with the `.dsp`: the binder
+should have refused the pass.
+
+## DSH8319
+
+<!-- generated:begin DSH8319 -->
+**Severity** error
+
+**Message**
+
+```
+The shader '{0}' of pass '{1}' could not be read, so there is nothing to snapshot into its slot.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:961`
+<!-- generated:end DSH8319 -->
+
+**Cause.** The `.usf` a pass names in `Shader =` could not be read when its snapshot was built. The
+binder found the file (a missing one is DSH4408), so it went missing or became unreadable in between:
+deleted or moved, locked by another program, or not readable by this process.
+
+**Fix.** Check that the file is where the reference says — relative to the `.dsp`'s folder, or a virtual
+path — and readable, then compile the `.dsp` again.
+
+## DSH8320
+
+<!-- generated:begin DSH8320 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:971`
+<!-- generated:end DSH8320 -->
+
+**Cause.** The pass's `.usf`, or a file it includes, has an `#include "<relative path>"` that names no
+file relative to the file that holds it. A slot's snapshot copies every file included by a relative
+path, so each has to exist. The scan is textual and does not evaluate `#if`: an include inside a branch
+that is never compiled counts too. Reported at the line of the include.
+
+**Fix.** Correct the path, create the file, or remove the include. A `//` comment takes it out of the
+scan; an `#if 0` around it does not.
+
+## DSH8321
+
+<!-- generated:begin DSH8321 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{1}' keeps including the live file: an edit of it later reaches the global shaders without a pre-check. Include it by a relative path to have it copied into the snapshot.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:980`
+<!-- generated:end DSH8321 -->
+
+**Cause.** The pass's `.usf`, or a file it includes, includes a file by a virtual path outside
+`/Engine/`, `/Plugin/` and `/ThirdParty/` — a project shader directory such as `/Project/...`. A
+snapshot copies only what is included by a relative path, so this include keeps pointing at the live
+file. Its text is part of the slot's hash, and the pipeline's next compile pre-checks an edit of it; an
+editor start or a cook before that compiles the global shaders with the file as it is then, unchecked —
+and a global shader that fails to compile is fatal.
+
+**Fix.** Include the file by a path relative to the file that includes it, so that it is copied into the
+snapshot. Keep virtual paths for shader code under `/Engine/`, `/Plugin/` and `/ThirdParty/`.
+
+## DSH8322
+
+<!-- generated:begin DSH8322 -->
+**Severity** error
+
+**Message**
+
+```
+[{0}] pass '{1}' does not compile in its HLSL slot: {2}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1231`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1239`
+<!-- generated:end DSH8322 -->
+
+**Cause.** The pre-check compiled the pass in its slot for the shader format in brackets, and the shader
+compiler refused it; the rest of the message is the compiler's own. An error in the `.usf`, or in a file
+of its snapshot, is reported at that file's line and column. One elsewhere — the slot's section, the
+slot shader, an engine header (whose path the message then keeps) — is reported at the pass, with the
+note that a binding name may clash: each binding is a `#define` made before the file is included.
+Nothing was written: the asset, the registry and the snapshots are as they were, and the previous
+version of the pass keeps running.
+
+One false refusal is known: a uniform buffer no slot shader referenced before is declared for the real
+compile but not for the pre-check, which then reports it as undeclared.
+
+**Fix.** Fix the line the error points at and save; the editor recompiles the pipelines that use the
+file, and `./dsc.ps1 check <file>.dsp -Shaders` pre-checks every HLSL pass again. For an error at the
+pass, rename the binding that collides (`InMask`, not `Texture`). Report the uniform-buffer case: it is a
+limit of the pre-check, not a mistake in the file.
+
+## DSH8323
+
+<!-- generated:begin DSH8323 -->
+**Severity** error
+
+**Message**
+
+```
+The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1181`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1263`
+<!-- generated:end DSH8323 -->
+
+**Cause.** The pre-check needs the slot shaders as the DreamShaderPass module registers them — the global
+shader types `FDreamPassCS` / `FDreamPassPS`, whose `DreamPassCompute.usf` / `DreamPassPixel.usf`
+include the registry — and the type is not registered in this process, or its source cannot be read or
+no longer includes the registry file. The DreamShaderPass module did not load, or it and the compiler
+come from different builds of the plugin. Nothing was written. Below Unreal Engine 5.8 the same code
+says that HLSL slots need 5.8; a compile and `check -Shaders` stop at DSH8300 before that.
+
+**Fix.** Rebuild or reinstall the plugin whole, so that the DreamShaderPass module, its `Shaders` folder
+and the compiler match, and restart the editor.
+
+## DSH8324
+
+<!-- generated:begin DSH8324 -->
+**Severity** warning
+
+**Message**
+
+```
+The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots were not pre-checked for it; a cook for that platform compiles them unchecked.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1130`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1152`
+<!-- generated:end DSH8324 -->
+
+**Cause.** A pre-check compiles a changed slot for every format the project renders and cooks with —
+those of the active feature levels, and every format the active target platforms target — and this
+machine has no shader compiler for this one (its platform's SDK or shader format is not installed). The
+slots were checked for the others; a cook for that platform compiles them unchecked, and a global shader
+that fails to compile there fails the cook.
+
+`check -Shaders -Platform <format>` raises it too, for a format it was asked for that this machine has no
+compiler for (`The shader format <format> was asked for, ...`). The slots are not checked for that
+format, and when no other format was asked for, they are not checked at all: the warning keeps a check
+that never ran from reading as one that passed.
+
+**Fix.** Pre-check on a machine that has the compiler — `./dsc.ps1 check <file>.dsp -Shaders -Platform
+<format>` — or install it here. `./dsc.ps1 pass-registry` lists, per slot, the formats its snapshot
+passed.
+
+## DSH8325
+
+<!-- generated:begin DSH8325 -->
+**Severity** error
+
+**Message**
+
+```
+There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1136`
+<!-- generated:end DSH8325 -->
+
+**Cause.** A slot had to be pre-checked and no shader format was there to compile it with: the process
+renders nothing — `-nullrhi`, which `dsc.ps1` passes to every verb but `check -Shaders` — so no feature
+level gives one, and none of the active target platforms has a format this machine can compile. A slot
+that never compiled must not reach the global shaders, so nothing was written.
+
+**Fix.** Compile the `.dsp` in the editor, or with `./dsc.ps1 check <file>.dsp -Shaders`, which runs
+without `-nullrhi` and builds the pipeline as `compile` does.
+
+## DSH8326
+
+<!-- generated:begin DSH8326 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1335`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1354`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1533`
+<!-- generated:end DSH8326 -->
+
+**Cause.** A file of the slot registry cannot be written or deleted — a snapshot file under `Slots/`,
+`Registry.json`, `RegistryCompute.ush` or `RegistryPixel.ush` — by a `.dsp` compile or by
+`pass-registry -Gc` / `-Rebuild`. They are committed files; one that is read-only because it is not
+checked out is the usual reason. A compile, `-Gc` and each step of `-Rebuild` check every file they
+would write or delete before they touch any, so the message above means nothing was changed: no
+snapshot written, no slot deleted, no registry file rewritten. The shorter message, `'<file>' could not be written. ...`, is a write that
+failed after that check passed — the file was locked or changed in between — and can leave the step
+half done: a compile writes its changed snapshots before the registry files, and `-Gc` deletes the
+snapshots of the slots it frees before them.
+
+**Fix.** Make the whole `.dreampass/` folder writable (check it out) and repeat the step: compile the
+`.dsp` again, or run the `pass-registry` verb again. After the shorter message, do it before the editor
+restarts or a cook runs. When that write was `RegistryCompute.ush` or `RegistryPixel.ush`, after
+`Registry.json` was written, compiling the `.dsp` again repairs it too: a compile compares both registry
+files with `Registry.json` and rewrites one that differs, whatever else it changes.
+
+## DSH8327
+
+<!-- generated:begin DSH8327 -->
+**Severity** info
+
+**Message**
+
+```
+{0} slot {1} of pass '{2}' was freed: the pipeline no longer runs that pass in HLSL there.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassSlotRegistry.cpp:1411`
+<!-- generated:end DSH8327 -->
+
+**Cause.** Informational. A `.dsp` compile freed a slot its pipeline held: the pass was removed or
+renamed, moved to the other table (a `compute` pass made a `fullscreen` one, or the reverse), or no
+longer runs HLSL (it draws a `Material` now). Its entry and its section are gone, and so is its snapshot
+unless a pass of the same compile took the slot again.
+
+**Fix.** Nothing. Commit the changed `.dreampass/` folder with the `.dsp`.
+
+## DSH8330
+
+<!-- generated:begin DSH8330 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' names more than one material under this source root ({1}); write the material's asset path instead.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:564`
+<!-- generated:end DSH8330 -->
+
+**Cause.** A pass's `Material = "<Name>"` is a bare name, and more than one source under the `.dsp`'s
+source root builds a material or material instance of that name — a `.dss` and a `.dsi`, or two `.dss`
+in different folders; the message lists them.
+
+**Fix.** Write the material's object path instead (`/Game/FX/PP_Outline`); *Copy Reference* in the
+Content Browser gives one.
+
+## DSH8331
+
+<!-- generated:begin DSH8331 -->
+**Severity** error
+
+**Message**
+
+```
+The material '{0}' comes from '{1}', which failed to compile, so this pipeline has no material to check its pass against. {2}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:477`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:624`
+<!-- generated:end DSH8331 -->
+
+**Cause.** A material a pass names is built by a `.dss` (or a `.dsi`) under the source roots, and that
+source does not compile. Two messages, one per kind of run:
+
+- a run that builds assets found the material's asset missing or older than its source, compiled that
+  source first (DSH8332), and the compile failed (`... which failed to compile ...`);
+- a run that builds nothing — a `check` — found no material asset and read the material's facts from
+  its source, which does not compile (`... which does not compile ...`). It is said as that, rather
+  than as a material nobody builds (DSH4406).
+
+The pipeline has no material to check the pass against and is not built; the message ends with the
+source's first error. When that error is DSH5325, the material reads this pipeline's exported buffer:
+the two need each other (DSH8333).
+
+**Fix.** Compile the material's source on its own (`./dsc.ps1 compile <file>.dss`) and fix what it
+reports, then compile the `.dsp`. For DSH5325, change the read as DSH8333 says.
+
+## DSH8332
+
+<!-- generated:begin DSH8332 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' was missing or older than its source, so '{1}' was compiled first.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:456`
+<!-- generated:end DSH8332 -->
+
+**Cause.** Informational. A material a pass names was missing or older than the source that builds it,
+so that source was compiled before the pipeline — the rule a `.dsi` applies to its parent (DSH8264).
+Only a run that builds assets does this; `check` reads the material's facts from its source instead.
+
+**Fix.** Nothing to fix. When that compile fails, DSH8331 follows.
+
+## DSH8333
+
+<!-- generated:begin DSH8333 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is built by '{1}', which reads this pipeline's exported buffer through UE.DreamPassBuffer (directly, or through a pipeline that needs this one), and a pipeline and its pass material that need each other can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:587`
+<!-- generated:end DSH8333 -->
+
+**Cause.** A pass of this pipeline draws a material that reads the pipeline's exported buffer through
+`UE.DreamPassBuffer` — directly, or through another pipeline that needs this one. The pipeline cannot
+be built without its material, and the material cannot be built without the pipeline's asset, so the
+two can be built in no order and never bootstrap; the `.dsp` does not compile. It is raised when this
+`.dsp` is compiled or read from inside that material's compile, which builds a missing or stale
+pipeline first (DSH5320); the material then reports the pipeline as failing (DSH5319). Met from the
+pipeline's side, the same cycle is the material's DSH5325, which the pipeline reports as DSH8331.
+
+**Fix.** Inside its own pipeline, read the buffer itself rather than its exported copy: bind it with
+`read` in the pass that draws the material, and in the material sample it as a `UE.UserSceneTexture`
+input of that name in place of the `UE.DreamPassBuffer` call — `read Blurred;` in the pass,
+`UE.UserSceneTexture(UserSceneTexture = "Blurred", Coordinates = UV)` in the material. A mesh pass's
+material cannot read its own pipeline's buffers at all: the usual loop is a mesh pass whose override
+material samples the same pipeline's exported buffer, and sampling it in a fullscreen pass of the
+pipeline, or in a material the pipeline does not draw, avoids it.
+
+## DSH8334
+
+<!-- generated:begin DSH8334 -->
+**Severity** error
+
+**Message**
+
+```
+The material '{0}' does not resolve to an asset path. {1}
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:557`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderPipelineReferences.cpp:604`
+<!-- generated:end DSH8334 -->
+
+**Cause.** A pass's `Material` cannot be used as written. Either it is spelled as a path (`/…`,
+`Path(...)` or `Class'…'`) that does not resolve to an asset path — the reason follows, with its code —
+or it resolves to an asset that is not a material or a material instance; the message then names its
+class.
+
+**Fix.** Write the material's object path, or the bare name of a material a `.dss` under the same source
+root builds. *Copy Reference* in the Content Browser gives a path that always resolves.
+
+## DSH8335
+
+<!-- generated:begin DSH8335 -->
+**Severity** error
+
+**Message**
+
+```
+The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry -Rebuild' replaces a registry that does not parse.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:353`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:446`
+<!-- generated:end DSH8335 -->
+
+**Cause.** `pass-registry -Gc`, or the last two steps of `-Rebuild` (collecting the garbage, rewriting
+the registry files), could not read `Registry.json`: it cannot be opened, it is not valid JSON — a merge
+conflict left in it is the usual reason — or an entry has no slot number, pipeline or pass. Nothing was
+changed. `-Rebuild` replaces an unreadable file before it compiles anything, so from `-Rebuild` this
+means another process changed or locked the file while it ran.
+
+**Fix.** Run `./dsc.ps1 pass-registry -Rebuild`. If it came from `-Rebuild`, close whatever else holds
+or writes the file — an editor compiling a `.dsp` — and run it again.
+
+## DSH8336
+
+<!-- generated:begin DSH8336 -->
+**Severity** error
+
+**Message**
+
+```
+The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was reset. Another process holding one of the two files open is the usual reason; a read-only one is reported before this.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:423`
+<!-- generated:end DSH8336 -->
+
+**Cause.** `pass-registry -Rebuild` found `Registry.json` unreadable (the message says why) and could not
+move it aside to `Registry.json.unreadable`, so it reset nothing and stopped. A read-only `Registry.json`
+or `Registry.json.unreadable` is reported before the move, as [`DSH8326`](#dsh8326); what is left is a
+move that fails for another reason, most often another process holding one of the two files open.
+
+**Fix.** Close what holds the file — an editor, a diff tool, a sync in progress — and run
+`./dsc.ps1 pass-registry -Rebuild` again.
+
+## DSH8337
+
+<!-- generated:begin DSH8337 -->
+**Severity** warning
+
+**Message**
+
+```
+{0} slot {1} ({2}, pass '{3}') names snapshot files that are not on disk, so it is now reserved and compiles to the empty stub: a registry that includes a missing file fails the global shader compile. Compile '{4}' to give the pass its snapshot back, and commit the Slots folder with the registry.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:460`
+<!-- generated:end DSH8337 -->
+
+**Cause.** At the end of `pass-registry -Rebuild`, `Registry.json` still records a snapshot for this slot
+and its files are not under `Slots/`: the `.dsp` that owns the slot did not compile in this rebuild
+(DSH9204), so nothing wrote them. A registry file that includes a missing file fails the global shader
+compile, so the slot was made a reserved one — it compiles to the empty stub, and its pass does nothing.
+
+**Fix.** Fix the `.dsp` the message names and compile it: that writes the snapshot and gives the slot
+its section back. Commit the `Slots` folder with the registry.
+
+## DSH8338
+
+<!-- generated:begin DSH8338 -->
+**Severity** error
+
+**Message**
+
+```
+HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to pre-check them for.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:500`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:512`, `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:531`
+<!-- generated:end DSH8338 -->
+
+**Cause.** `check -Shaders` on a `.dsp` could not get as far as pre-checking its HLSL passes; the message
+says which of three things stopped it. The engine is older than Unreal Engine 5.8 and has no slots to
+check against — though the build that `check -Shaders` runs first stops at DSH8300 there. Or the file,
+read again for the check after it built, did not reach its pipeline and said nothing about why. Or the
+pipeline's asset path does not resolve (the reason is in the parentheses).
+
+**Fix.** For the first, check on Unreal Engine 5.8 or later. The other two need the file to fail the
+second reading after it passed the first: run the check again, and report it with the file if it
+repeats.
+
+## DSH8339
+
+<!-- generated:begin DSH8339 -->
+**Severity** info
+
+**Message**
+
+```
+'{0}' has no HLSL pass, so there is no slot to pre-check; its materials are checked by the sources that build them.
+```
+
+**Raised by** `Source/DreamShaderCompiler/Private/Pass/DreamShaderPassPipelines.cpp:554`
+<!-- generated:end DSH8339 -->
+
+**Cause.** Informational. `check -Shaders` ran on a `.dsp` with no HLSL pass — no `compute` pass and no
+`fullscreen` pass with `Shader =` — so there is no slot to pre-check. Its passes draw materials, whose
+shaders belong to the sources that build them.
+
+**Fix.** Nothing. To check those shaders, run `./dsc.ps1 check <file>.dss -Shaders` on the materials'
+sources.
 

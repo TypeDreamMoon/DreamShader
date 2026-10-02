@@ -2,7 +2,7 @@
 
 > [DreamShader](../index.md) » [Tools](index.md) » **Workspace and editor extensions**
 
-A generated VSCode workspace file that maps the three DreamShaderLang file extensions onto the
+A generated VSCode workspace file that maps the six DreamShaderLang file extensions onto the
 `dreamshaderlang` language id, and the editor command that writes it and launches an external editor
 on it.
 
@@ -38,6 +38,9 @@ Unreal's JSON writer (tab indentation):
 	],
 	"settings": {
 		"files.associations": {
+			"*.dss": "dreamshaderlang",
+			"*.dsi": "dreamshaderlang",
+			"*.dsp": "dreamshaderlang",
 			"*.dsm": "dreamshaderlang",
 			"*.dsh": "dreamshaderlang",
 			"*.dsf": "dreamshaderlang"
@@ -60,9 +63,14 @@ Every key the writer emits. There are no others, and nothing is conditional.
 | :-- | :-- | :-- |
 | `folders[0].name` | `DreamShader Source` | Display name of the single workspace folder. |
 | `folders[0].path` | `.` | The folder containing the workspace file, i.e. `<SourceDirectory>` itself. |
+| `settings["files.associations"]["*.dss"]` | `dreamshaderlang` | Language id for 2.0 compilation units *(since 2.1.0)*. |
+| `settings["files.associations"]["*.dsi"]` | `dreamshaderlang` | Language id for material instance sources *(since 2.1.0)*. |
+| `settings["files.associations"]["*.dsp"]` | `dreamshaderlang` | Language id for Custom Pass pipelines *(since 2.1.0)*. Without it a `.dsp` is claimed by whatever else knows the extension. |
 | `settings["files.associations"]["*.dsm"]` | `dreamshaderlang` | Language id for material sources. |
 | `settings["files.associations"]["*.dsh"]` | `dreamshaderlang` | Language id for headers. |
 | `settings["files.associations"]["*.dsf"]` | `dreamshaderlang` | Language id for function sources *(since 1.3.5)*. |
+
+One language id for all six; the extension tells the kinds apart by the file extension.
 
 > [!WARNING]
 > The file is rewritten from scratch on **every** invocation of *Open Dream Shader Workspace*. The
@@ -78,7 +86,7 @@ The command performs four steps, in this order:
 | Step | Action | On failure |
 | :-- | :-- | :-- |
 | 1 | Re-export `material-expressions.json` | logged, command continues |
-| 2 | Re-export `settings.json` | logged, command continues |
+| 2 | Re-export `settings.json`, and [`pass-keys.json`](#pass-keysjson) right after it *(since 2.1.0)* | logged, command continues |
 | 3 | Re-export `substrate-builtins.json` | logged, command continues |
 | 4 | Write `DreamShader.code-workspace` | toast + warning, command **aborts** |
 | 5 | Launch an editor on the workspace file (fallback chain below) | toast + warning |
@@ -195,8 +203,35 @@ the loopback WebSocket endpoint. The full schemas are on [Editor bridge](bridge.
 | `material-expressions.json` | editor → extension | Reflected `UMaterialExpression` catalogue for `UE.Expression` completion *(since 1.2.10)*. |
 | `settings.json` | editor → extension | `ShadingModel` / `BlendMode` / `MaterialDomain` alias tables. |
 | `substrate-builtins.json` | editor → extension | `Substrate.*` builtin catalogue with snippets; `supported: false` below UE 5.4. |
+| `pass-keys.json` | editor → extension | What a `.dsp` may say, for completion; `supported: false` below UE 5.8 — [below](#pass-keysjson) *(since 2.1.0)*. |
 | `preview.json` + `Preview/*.png` | editor → extension | Result manifest and image for a one-shot preview. |
 | `ws://127.0.0.1:17864` | bidirectional | Streaming preview with orbit control; see [WebSocket protocol](bridge.md#websocket-server). |
+
+### `pass-keys.json`
+
+*(since 2.1.0)* The vocabulary of a [`.dsp`](../language-v2/passes.md), for an editor's completion:
+`<Project>/Saved/DreamShader/Bridge/pass-keys.json`, schema `DreamShader.PassKeys`, version `1`, with a
+`generatedAt` timestamp. It is written with `settings.json` — at bridge startup and on *Open Dream Shader
+Workspace* — because the layer names it ends with are a project setting. It has no `bridge.db` table.
+
+| Key | Contents |
+| :-- | :-- |
+| `supported` | `true` on UE 5.8 and later. Below, `false` with `unsupportedReason`: `Custom Pass pipelines run on Unreal Engine 5.8 and later.` — a `.dsp` still parses and binds there, and nothing runs it |
+| `injectionPoints` | every injection point in the order a frame reaches it: `name`, `order`, `postProcess`, and `resolution` (`Render` or `Output`) |
+| `pipelineKeys` | the `#pragma pipeline` keys: `Order`, `Injection`, `Views`, `Requires`, `Enabled` |
+| `bufferFormats` · `bufferKeys` · `bufferResolutions` | `R8` … `Depth32`; `Scale`, `Size`, `Resolution`, `Clear`, `Mips`, `History`, `Export`; `Render`, `Output` |
+| `passKinds` | `fullscreen`, `compute`, `mesh`, `clear`, `copy`, each with its own `keys` and a `detail` |
+| `commonPassKeys` | `Injection` and `Enabled`, which every kind takes |
+| `bindingStatements` | `read`, `write`, `param` |
+| `filterKinds` | `Stencil`, `Layer`, `List`, each with the `snippet` an editor inserts (`Stencil(${1:1})`) |
+| `meshModes` · `depthModes` · `cullModes` · `blendModes` · `nanitePolicies` · `meshUsages` · `viewFlags` · `requirementFlags` · `parameterTypes` | the spellings each of those values takes |
+| `builtinBuffers` | `SceneColor`, `SceneDepth`, `CustomDepth`, `CustomStencil`, `GBufferA` … `GBufferF`, `Velocity`, `Translucency` |
+| `weightParameter` | `DreamPassWeight` |
+| `layerNames` | the project's pass layers, in bit order — the names `Layer(...)` takes |
+
+Every key entry is `name`, `value` (the kind of value, which names the list it is completed from — `injection`
+for `injectionPoints`, …), `default` (what leaving the key out means), `required` (true when there is no
+default) and `detail`.
 
 ## Example
 
@@ -206,6 +241,7 @@ Running *Tools ▸ DreamShader ▸ Open Dream Shader Workspace (VSCode)* on a de
 <Project>/DShader/DreamShader.code-workspace                    rewritten
 <Project>/Saved/DreamShader/Bridge/material-expressions.json    rewritten
 <Project>/Saved/DreamShader/Bridge/settings.json                rewritten
+<Project>/Saved/DreamShader/Bridge/pass-keys.json               rewritten (since 2.1.0)
 <Project>/Saved/DreamShader/Bridge/substrate-builtins.json      rewritten
 <Project>/Saved/DreamShader/Bridge/bridge.db                    tables replaced
 ```
@@ -232,4 +268,5 @@ With *Open In New Window* turned off, the same line carries the extra flag:
 - [Decompiler](decompiler.md) — *Export DSM* / *Export DSF* and the post-export open
 - [Project settings](../settings/project.md) — `SourceDirectory` and `bOpenInNewWindow`
 - [Source files](../language/source-files.md) — what `.dsm`, `.dsh` and `.dsf` may each contain
+- [Custom Pass pipelines — `.dsp`](../language-v2/passes.md) — the language `pass-keys.json` describes
 - [Release](../contributing/release.md) — how extension assets are attached to a plugin release

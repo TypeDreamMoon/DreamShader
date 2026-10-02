@@ -6,7 +6,7 @@ What to commit, what to ignore, and how to keep a team on one answer.
 
 | | |
 | :-- | :-- |
-| Always commit | every `.dss`, `.dsi`, `.dsh`, `.dsm` and `.dsf` — the sources are the material |
+| Always commit | every `.dss`, `.dsi`, `.dsp`, `.dsh`, `.dsm` and `.dsf` — the sources are the material — and `DShader/.dreampass/` when a `.dsp` has an HLSL pass |
 | Never commit | `Intermediate/DreamShader/`, `Saved/DreamShader/` |
 | Your choice | the generated `.uasset` files — this page is about that choice |
 | Tool | [`dsc list-generated`](../tools/commandlet.md#list-generated) — every asset the sources build, without building any |
@@ -22,6 +22,8 @@ generated `.uasset` outside a cook. Since `2.0.0` that is only true of one kind 
 | `Graph`-backend material | `.dss` / `.dsm` | **always** — every successful generation saves it |
 | material function, layer, layer blend | `.dss` / `.dsf` | **always** |
 | material instance | `.dsi` | **always** |
+| Custom Pass pipeline (`UDreamPassPipeline`) | `.dsp` | **always** |
+| an exported buffer's render target (`<Pipeline>_<Buffer>`) | `.dsp` | **always** |
 | `ThinCustom`-backend material | `.dss` / `.dsm` | only once [Materialized](ephemeral.md); **Ephemeral** by default, and then it has no file at all |
 
 A `UMaterial` and a `UMaterialFunction` are stock engine classes with no way to stay out of asset
@@ -70,7 +72,7 @@ relative `-Out` is taken from the directory `dsc.ps1` was started in. What the l
 | Field (`Json`) | Meaning |
 | :-- | :-- |
 | `source` | the source file that declares the product |
-| `kind` | `Material`, `MaterialFunction`, `MaterialLayer`, `MaterialLayerBlend`, `MaterialInstance` |
+| `kind` | `Material`, `MaterialFunction`, `MaterialLayer`, `MaterialLayerBlend`, `MaterialInstance`; for a `.dsp`, `PassPipeline` and, per exported buffer, `PassExportTarget` — its render target *(since 2.1.0)* |
 | `backend` | `ThinCustom` for a material on that backend; `Graph` for everything else — a function, a layer, a blend and an instance are built the one way, whatever backend their file names |
 | `package` / `objectPath` | `/Game/FX/M_Glow` / `/Game/FX/M_Glow.M_Glow` |
 | `file` / `projectRelativeFile` | where that package is, or would be, on disk |
@@ -184,6 +186,13 @@ decide about.
 
 ## Notes
 
+- **`DShader/.dreampass/` is source, under either recipe.** It holds the snapshots of the `.usf` files
+  the `.dsp` pipelines' HLSL passes use, and the slot registry the global shaders are built from
+  ([HLSL passes](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)). Those shaders are compiled from
+  the snapshots, never from the files being edited, so the snapshots are what a teammate's editor and
+  the cook run: a checkout without them runs the empty stub of every slot until its `.dsp` files are
+  compiled again. Commit the folder with the `.dsp` and `.usf` change that produced it; a conflict in
+  it is resolved by taking either side and compiling the `.dsp` files again, never by hand.
 - **`Intermediate/DreamShader/GeneratedShaders/*.ush`** is rebuilt by every compile and must never be
   committed; Unreal's stock ignore rules already cover `Intermediate/`.
 - **`Saved/DreamShader/`** holds dumps, indices, backups of migrated sources and the bridge's state.

@@ -11,7 +11,7 @@ imports and what inherits from it — and the actions that follow from each of t
 | Kind | nomad tab, registered by the `DreamShaderEditor` module |
 | Tab id | `DreamShaderMaterialBrowser` |
 | Display name | **Material Content Browser** |
-| Modes | **Sources** (the `.dsm` / `.dsf` / `.dsh` tree) · **Assets** (the project's materials) |
+| Modes | **Sources** (the source tree: `.dss` / `.dsi` / `.dsp` and the 1.x `.dsm` / `.dsf` / `.dsh`) · **Assets** (the project's materials) |
 | Since | `1.5.0` |
 
 ## Opening it
@@ -59,7 +59,7 @@ next opened.
 | :-- | :-- | :-- |
 | Button | **Refresh** (`F5`) | Rescans the source roots, rebuilds the dependency graph, recomputes every status |
 | Menu | **Compile ▾** | **Compile** (`Ctrl+B`) the selection · **Compile stale** — every source that is stale, never compiled, or failed · **Compile all** (`Ctrl+Shift+B`) — every `.dsm` and `.dsf`, behind a progress dialog |
-| Menu | **New ▾** | *DreamShaderLang 2.0:* **Material (.dss)** · **Material function (.dss)** · **Instance (.dsi)** — *1.x blocks:* **Material (.dsm)** · **Material function (.dsf)** · **Header (.dsh)** — see [New source](#new-source) |
+| Menu | **New ▾** | *DreamShaderLang 2.0:* **Material (.dss)** · **Material function (.dss)** · **Instance (.dsi)** — *Custom Pass pipeline (.dsp):* **Fullscreen post-process chain** · **Mesh mask chain** · **Compute chain** — *1.x blocks:* **Material (.dsm)** · **Material function (.dsf)** · **Header (.dsh)** — see [New source](#new-source) |
 | Search box | (`Ctrl+F` focuses it) | Case-insensitive substring match against the file name, the root name, the source path, the asset path and the status detail — so an error message is searchable, and a plugin's name filters to everything it ships. In Assets mode it matches the asset name |
 | Menu | **View ▾** | **Tiles** — the Sources list as thumbnail tiles · **Sort by** Name / Status / Root / Asset path, **Ascending** · **Show Ephemeral materials** — the global project setting, see [Editor integration](editor-integration.md#show-ephemeral-materials) |
 | Button | *(VSCode icon)* | Writes and opens the DreamShader workspace — identical to *Tools ▸ DreamShader ▸ Open Dream Shader Workspace* |
@@ -95,6 +95,7 @@ shows entries that are either.
 | **Edited by hand** | generated assets whose contents no longer match the last generation ([Divergence](../generation/divergence.md)) |
 | **In memory** | materials that exist only in memory |
 | **Hide functions** | drops every `.dsf` and `.dsh` |
+| **Hide pipelines** *(since 2.1.0)* | drops every `.dsp` — the Custom Pass pipelines — and its pipeline |
 | **Hide unmanaged** | drops the materials DreamShader does not manage |
 
 The status-bar counts are the same filters: clicking a count turns it on alone, clicking it again
@@ -109,17 +110,35 @@ columns or — *View ▸ Tiles* — a grid of thumbnails. Multi-selection; right
 | Column | Content |
 | :-- | :-- |
 | *(glyph)* | the status glyph, tooltip = the status detail |
-| **Name** | the file name, tooltip = the absolute path |
+| **Name** | the file name, tooltip = the absolute path; a `.dsp` row carries the [pipeline badge](#pipelines) in front of it |
 | **Root** | *Project*, or the owning plugin |
-| **Status** | the status label; for `.dsf` / `.dsh`: `function · used by N material(s)` |
+| **Status** | the status label; for `.dsf` / `.dsh`: `function · used by N material(s)`; for a `.dsp`: `pass pipeline · <status label>` |
 | **Asset** | the package path the source compiles into |
 
 ### Listed files
 
-**`.dsm`, `.dsf` and `.dsh`** found recursively under every source root, excluding each root's
-`Packages` folder — plus, under the *Sources* header and the *Not managed by DreamShader* node, the
-[unmanaged materials](#unmanaged-materials). Selection survives a Refresh: entries are re-selected
-by path.
+**`.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf` and `.dsh`** found recursively under every source root,
+excluding each root's `Packages` folder — plus, under the *Sources* header and the *Not managed by
+DreamShader* node, the [unmanaged materials](#unmanaged-materials). Selection survives a Refresh:
+entries are re-selected by path.
+
+### Pipelines
+
+*(since 2.1.0)* A `.dsp` is listed like a material source — its status is its pipeline's, resolved and
+judged by the same rules — but its asset is a `UDreamPassPipeline`, the one kind of product in this tab
+that is not a material, and the rows say so:
+
+| | |
+| :-- | :-- |
+| Badge | the post-process volume class icon in front of the name, tooltip "A Custom Pass pipeline source (.dsp)." In the tile view, a pipeline not compiled yet shows the post-process volume thumbnail where a material shows its status glyph |
+| Status | `pass pipeline · up to date`, `pass pipeline · stale`, `pass pipeline · not compiled`, … |
+| Double-click, **Open** | opens the pipeline in its asset editor, whose [details panel](editor-integration.md#pass-pipeline-details-panel) groups its passes by injection point and shows its slots, buffers and render targets; before the first compile, the source |
+| **Create instance** | not offered: a pipeline has nothing to instance |
+| Preview | none; the inspector's tile reads `pass pipeline` |
+| Filter | **Hide pipelines**, under the tree |
+
+A pipeline is listed through its `.dsp` alone: a `UDreamPassPipeline` that no scanned source builds is
+not an [unmanaged](#unmanaged-materials) row, and neither are the render targets of its exported buffers.
 
 ### Unmanaged materials
 
@@ -208,6 +227,13 @@ inheritance.
 | **Inheritance** | The parent chain, root first, each row a link that re-targets the panel |
 | **Child instances (N)** | Loaded instances whose parent this is, plus — from the asset registry's referencers — saved instances nobody has loaded this session, marked *(not loaded)*; clicking one loads it |
 
+For a `.dsp` *(since 2.1.0)* the inspector has no preview and no **Create instance**. **Open** opens the
+pipeline in its [details panel](editor-integration.md#pass-pipeline-details-panel), and the info rows begin
+with **Pipeline** — `{N} pass(es), {N} buffer(s), {N} parameter(s); order {N}` — in place of Base, Domain
+and Blend mode. The **Provenance** section offers the same three answers as for a material: a pipeline
+edited in its details panel is [adopted](../generation/divergence.md#a-custom-pass-pipeline) into its
+`.dsp` value by value.
+
 The digest states the **Provenance** row and section spell out:
 
 | State | Reads |
@@ -236,8 +262,8 @@ Right-click in either list. Commands act on the selection; most take the first s
 
 | Section | Entries |
 | :-- | :-- |
-| **Open** | **Open material** (`Enter`) · **Open source** (`Ctrl+Enter`, at the first error when there is one) · **Reveal in Content Browser** |
-| **Build** | **Compile** · **Create instance** · **Materialize** (shown for memory-only assets; acts on every memory-only entry in the selection) |
+| **Open** | **Open material** (`Enter`; for a `.dsp`, the pipeline in its details panel) · **Open source** (`Ctrl+Enter`, at the first error when there is one) · **Reveal in Content Browser** |
+| **Build** | **Compile** · **Create instance** (not for a `.dsp`) · **Materialize** (shown for memory-only assets; acts on every memory-only entry in the selection) |
 | **Generated asset** | **Revert to Source** (acts on every generated entry in the selection, confirming each) · **Adopt Into Source** · **Detach From DreamShader** — only when the asset carries DreamShader's stamp |
 | **Decompiler** | **Export DSM / DSF** — only for a hand-authored material or function |
 | **Copy** | **Copy source path** · **Copy asset path** |
@@ -261,23 +287,44 @@ mid-session, say.
 ## New source
 
 *New ▾* writes a file from the plugin's templates under `Resources/Templates` and the bridge's watcher
-lists and compiles it as it would any save. The menu has two sections:
+lists and compiles it as it would any save. The menu has three sections:
 
 | Section | Entry | Template | Writes |
 | :-- | :-- | :-- | :-- |
 | DreamShaderLang 2.0 | **Material (.dss)** *(since 2.0.0)* | `NewMaterial.dss` | two `uniform`s and `export void <Name>(inout material m)` |
 | | **Material function (.dss)** *(since 2.0.0)* | `NewFunction.dss` | `export float3 <Name>(float3 InColor, float Strength = 1.0)` |
 | | **Instance (.dsi)** | `NewInstance.dsi` | `#pragma instance(Parent = …)` — see [Create material instance](#create-material-instance) |
+| Custom Pass pipeline (.dsp) *(since 2.1.0)* | **Fullscreen post-process chain** | `NewPipelinePostProcess.dsp` | a `copy` grabs the lit scene into a half-size buffer and a `fullscreen` pass blends it back over the scene, tinted, both at `BeforePostProcess` |
+| | **Mesh mask chain** | `NewPipelineMeshMask.dsp` | a `mesh` pass draws the objects of the list `<Base>` into a mask without a depth test, and a `fullscreen` pass lights the pixels around the mask: an outline through walls |
+| | **Compute chain** | `NewPipelineCompute.dsp` | a `compute` pass at `BeginView` advances a 256 × 256 wind field kept from frame to frame (`History = true`) and exported as the render target `<Name>_Wind` |
 | 1.x blocks | **Material (.dsm)** | `NewMaterial.dsm` | a `Shader` block |
 | | **Material function (.dsf)** | `NewFunction.dsf` | a `ShaderFunction` block |
 | | **Header (.dsh)** | `NewHeader.dsh` | a header with one `Function` |
+
+A pipeline names the materials and the shader its passes draw, so each pipeline template writes those
+too, next to the `.dsp`, and the `.dsp` builds as soon as it lands. `<Base>` is the name without its
+`CP_` prefix (`CP_Outline` gives `Outline`); a name without the prefix is used as it is.
+
+| Template | Also writes, beside the `.dsp` |
+| :-- | :-- |
+| Fullscreen post-process chain | `PP_<Base>.dss` — the Post Process material of the `fullscreen` pass, reading the copy through `UE.UserSceneTexture` |
+| Mesh mask chain | `M_<Base>Mask.dss` — the override material of the `mesh` pass, with `UE.DreamPassOutput` — and `PP_<Base>Composite.dss`, the Post Process material of the outline |
+| Compute chain | `<Base>.usf` — the compute shader, named in the `.dsp` by a path relative to it |
+
+The companions are written first, so the watcher finds the materials the `.dsp` names when it compiles
+the pipeline; and all of them or none — a write that fails takes back the files written before it. A
+pipeline runs only where something activates it: the global pipelines of *Project Settings ▸ DreamPlugin
+▸ DreamShader Custom Pass*, a Dream Pass Volume, a component, or the API — see
+[Custom Pass runtime](../runtime/index.md#what-makes-a-pipeline-apply).
 
 The dialog:
 
 | Field | Default |
 | :-- | :-- |
-| **Name** | `M_NewMaterial` / `MF_NewFunction` (`.dss`) · `F_NewFunction` (`.dsf`) / `Common` / `MI_NewInstance` — must be an identifier |
+| **Name** | `M_NewMaterial` / `MF_NewFunction` (`.dss`) · `F_NewFunction` (`.dsf`) / `Common` / `MI_NewInstance` / `CP_SoftGlow`, `CP_Outline`, `CP_WindField` (the three pipeline templates) — must be an identifier |
 | **Folder** | the source folder the navigation tree points at, or the project's `DShader` root when that folder is a plugin's (plugin sources are read-only) |
+
+For a pipeline the dialog also says which files the template writes besides the `.dsp`.
 
 Either way the asset lands beside its neighbours' — a file created in `DShader/Materials/` compiles to
 `/Game/Materials/…`. A 1.x block says so itself: its `Name=` is the folder's path relative to its root
@@ -290,9 +337,11 @@ own -- with helpers that are not exported beside either; the two entries start t
 | not an identifier | `The name must be an identifier: letters, digits and underscores, not starting with a digit.` |
 | outside every writable root | `Choose a folder under the project's DShader root. A plugin's sources are read-only.` |
 | file exists | `'{Path}' already exists.` |
+| a file a pipeline template writes besides the `.dsp` exists | `'{Path}' already exists, and the template writes it for '{Pipeline}'; choose another name.` |
 
 The templates are compiled by the automation test
-`DreamShader.Browser.NewSource.TemplatesRenderAndCompile`, so they cannot rot.
+`DreamShader.Browser.NewSource.TemplatesRenderAndCompile`, so they cannot rot. The pipeline templates
+are not among the ones it covers.
 
 ## Create material instance
 
@@ -390,7 +439,8 @@ A source tree and what Sources mode shows for it:
 
 ## See also
 
-- [Editor integration](editor-integration.md) — the menu entries that open this tab
+- [Editor integration](editor-integration.md) — the menu entries that open this tab, and the [details panel](editor-integration.md#pass-pipeline-details-panel) a pipeline opens in
+- [Custom Pass pipelines — `.dsp`](../language-v2/passes.md) — what the pipeline templates are written in
 - [Preview](preview.md) — the renderer behind the inspector's preview
 - [Divergence](../generation/divergence.md) — Revert, Adopt, Detach
 - [Decompiler](decompiler.md) — Export DSM / DSF

@@ -94,6 +94,32 @@ input and save both files, and which one won used to depend on the iteration ord
 file map. A cycle is left for the import loader to reject with `DreamShader import cycle detected
 at '{File}'.`
 
+## Custom Pass pipelines
+
+*(since 2.1.0)* A [`.dsp`](../language-v2/passes.md) is keyed like any 2.0 source — its preprocessed text,
+the defines it read, and every setting and version above — plus what its compile read outside the file,
+because a pipeline whose text did not change still has to be rebuilt when one of those moves:
+
+| Folded into a `.dsp`'s key | Moves when |
+| :-- | :-- |
+| the project's pass layer names, in bit order | a layer is added, removed, renamed or moved in *Project Settings ▸ DreamShader Custom Pass*: a `Layer(...)` filter is compiled to bits |
+| whether the engine has the Custom Pass runtime | the project opens on an engine on the other side of 5.8 |
+| per `Material = "..."`: the reference as written, the object path it resolved to, the build key that material was last built under (its `DreamShader.SourceHash`), and the facts the passes were checked against — its domain and blendable location, `bDisablePreExposureScale`, the `UE.UserSceneTexture` names it reads, the post-process inputs its `SceneTexture` nodes take, its `UE.DreamPassOutput` and which pins are connected, its usage flags, whether it asks for the new translator | the material is rebuilt from a changed source, appears, or changes one of those facts |
+| per `Shader = "..."`: the reference, its virtual path, and a hash of the snapshot's inputs — the text and relative path of the file and of everything it includes by a relative path, and the text behind every include by a virtual path that is neither `/Engine/` nor `/Plugin/` | the `.usf`, or anything it includes, is edited |
+
+That is what lets the [bridge](../tools/bridge.md#custom-pass-shader-files) queue a `.dsp` unforced on every
+`.usf` save and after every rebuild of a material it names: a change that moves none of these is skipped.
+The shader formats a slot is pre-checked for are not in the key.
+
+A matching key is not enough to skip a pipeline: the slot registry must also still hold every HLSL pass
+of it, in the slot the asset records, with a snapshot that passed a pre-check and its files on disk, and
+every exported buffer must have its render target. A registry somebody deleted, or a merge that lost a
+slot, is rebuilt by the next compile rather than hidden behind an unchanged key.
+
+A `.dss` that reads an exported buffer through [`UE.DreamPassBuffer`](../builtins/dream-pass.md#uedreampassbuffer)
+folds in, per node, the pipeline's object path, the buffer, whether it is exported, its format and the
+render target's path, so a `.dsp` that changes the export rebuilds the material.
+
 ## Where the metadata lives
 
 Two keys are written into the generated asset's **package metadata**, keyed by the asset object.
@@ -114,6 +140,8 @@ Which assets get stamped, and when:
 | the hidden `MB_DreamThinBase_*` base | persist mode only |
 | `UMaterial` (Graph backend) | **always** *(since the release after 1.8.0; before it, persist mode only)* |
 | `UMaterialFunction` / layer / layer blend | **always** *(same)* |
+| `UDreamPassPipeline` *(2.1.0)* | **always** — the hash only on a build that may write to disk. A pipeline built in memory because writing is refused (another editor owns writes, or `dump-graph`'s guard) is stamped with the path alone, so no later compile skips on it |
+| an exported buffer's render target *(2.1.0)* | the path alone, never a hash — it would move with every edit of the `.dsp` — and `DreamShader.PassPipeline`, the object path of the pipeline it belongs to |
 
 > [!NOTE]
 > Until 1.8.0 a memory-only Graph material or function was stamped with the source **path** only,
@@ -152,6 +180,7 @@ Per asset kind:
 | ThinCustom material | after the instance is created or reused, **before** the hidden base is created | — | `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` |
 | `Graph`-backend material | after the material is created or reused | — | `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` |
 | Material function | after the function asset is created or reused | the asset's material-function usage must already match the one the block requires | *silent* — the asset path is returned with no message |
+| `UDreamPassPipeline` *(2.1.0)* | after the pipeline is reused, before its HLSL slots are planned | the slot registry holds every HLSL pass of the pipeline in the slot the asset records, with a snapshot that passed a pre-check and its files on disk, and every exported buffer has its render target — see [Custom Pass pipelines](#custom-pass-pipelines) | `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` |
 
 Placing the ThinCustom check before the base is created is what makes a skip cheap: no base
 material, no ownership check, no graph teardown.
@@ -174,6 +203,9 @@ material, no ownership check, no graph teardown.
 | *Materialize*, and child-instance creation | yes |
 | Cook | yes |
 | Commandlet `-run=DreamShader` | only with [`-Force`](../tools/commandlet.md#compile--generate); otherwise it reports `Skipped {AssetPath} from {SourceFile}; source hash is unchanged (build key {BuildKey}).` |
+| A `.usf` / `.ush` save, through the bridge *(2.1.0)* | no — the `.dsp`s that compile from the file are queued, and their key covers its text |
+| A `.dsp` or a material it names compiled, through the bridge's dependents queue *(2.1.0)* | no |
+| `dsc pass-registry -Rebuild` *(2.1.0)* | yes, every `.dsp` |
 
 There is no way to clear the stored hash from the source language. To force a rebuild without a
 force-capable entry point, either change the source text (any change, including whitespace), or
@@ -249,4 +281,5 @@ DreamShader.SourceHash   9f2c41ab
 - [`UDreamShaderMaterialInstance`](../api/material-instance.md) — `SourceFilePath` and `SourceHash`
 - [Generated HLSL](generated-hlsl.md) — the include's separate, path-based hash
 - [Commandlet](../tools/commandlet.md) — headless compiles and forcing
+- [HLSL passes](../runtime/hlsl.md) — the snapshots whose inputs a `.dsp`'s key covers
 - [Project settings](../settings/project.md) — auto-compile and debounce

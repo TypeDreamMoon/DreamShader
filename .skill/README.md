@@ -68,16 +68,18 @@ compiler as a `.dss`, through the legacy front end. The driver has more verbs th
 
 | Verb | Does |
 | :-- | :-- |
-| `check <file>` \| `-All` | compiles as far as IR validation and writes **no asset** — the fast gate. `-Shaders` builds the products and reports HLSL errors against source lines |
+| `check <file>` \| `-All` | compiles as far as IR validation and writes **no asset** — the fast gate. `-Shaders` builds the products and reports HLSL errors against source lines — for a `.dsp`, by pre-checking every HLSL pass in its slot |
 | `migrate <file>` \| `-All` \| `-Root <name>` | rewrites 1.x sources as `.dss`, proving each rewrite first; `-Check` writes nothing — [`Docs/tools/migrate.md`](../Docs/tools/migrate.md) |
-| `decompile <asset>` | 2.0 text by default; a material instance comes out as a [`.dsi`](../Docs/language-v2/instances.md) |
+| `decompile <asset>` | 2.0 text by default; a material instance comes out as a [`.dsi`](../Docs/language-v2/instances.md), a Custom Pass pipeline as a [`.dsp`](../Docs/language-v2/passes.md) |
 | `dump-ir`, `index`, `export-catalog` | language-service tools: the lowered IR, the symbol index, the builtin node catalog |
 | `dump-layout <file>` \| `-All` | draws the IR graph layouts — `Blocks`, `SourceBands`, `Layered` — of every product as SVG, building nothing; `-Style` names one, `-Json` adds the coordinates |
-| `fmt <file>` \| `-All` | rewrites 2.0 sources (`.dss`, `.dsi`, 2.0 headers) in the printer's layout, refusing any file it cannot vouch for; `-Check` writes nothing and fails when a file would change |
+| `fmt <file>` \| `-All` | rewrites 2.0 sources (`.dss`, `.dsi`, `.dsp`, 2.0 headers) in the printer's layout, refusing any file it cannot vouch for; `-Check` writes nothing and fails when a file would change |
 | `list-generated <file>` \| `-All` | names every asset the sources build, building none: `-ListAs Packages \| Files \| GitIgnore \| Json`, `-Out <file>` — [`Docs/generation/source-control.md`](../Docs/generation/source-control.md) |
+| `pass-registry` | lists the Custom Pass HLSL slots in `<source root>/.dreampass` and the state of each, writing nothing; `-Gc` frees the slots of pipelines and passes that are gone; `-Rebuild` compiles every `.dsp` again, frees what `-Gc` would, and rewrites the registry files — [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md#pass-registry) |
 
 `compile`, `check`, `dump-ir`, `dump-layout`, `index`, `list-generated` and `dump-graph` take every
-compilable source: `.dss`, `.dsi`, `.dsm`, `.dsf`. The 2.0 language itself:
+compilable source: `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`. A `.dsp` — a Custom Pass pipeline,
+[`Docs/language-v2/passes.md`](../Docs/language-v2/passes.md) — builds on UE 5.8 only. The 2.0 language itself:
 [`Docs/language-v2/index.md`](../Docs/language-v2/index.md); its Substrate sugar — operators, legacy
 parameters on a slab, values built member by member — works in 1.x sources too:
 [`Docs/language-v2/substrate.md`](../Docs/language-v2/substrate.md).
@@ -89,7 +91,7 @@ parameters on a slab, values built member by member — works in 1.x sources too
 | Engine resolution | from the `.uproject`'s `EngineAssociation`, via the registry — no hard-coded path |
 | Project discovery | walks up from the target file, then the working directory |
 | Log de-duplication | every `LogDreamShader` line is emitted twice, once raw and once re-wrapped through `LogInit` |
-| Asset accounting | classifies everything the run wrote as `NEW (untracked)` or `TRACKED AND MODIFIED`, the latter with its `git checkout --` command |
+| Asset accounting | classifies everything the run wrote as `NEW (untracked)` or `TRACKED AND MODIFIED`, the latter with its `git checkout --` command. It counts what the log reports as `Generated …`: a `.dsp`'s pipeline asset is counted, the render targets of its exported buffers are not — they log no such line, so `-CleanNew` leaves them — and the files a `.dsp` writes under `.dreampass/` are sources to commit, not assets |
 | Cleanup | `-CleanNew` removes only the untracked ones and prunes the folders they leave behind |
 
 > [!IMPORTANT]

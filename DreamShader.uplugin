@@ -3,7 +3,7 @@
 	"Version": 202,
 	"VersionName": "2.0.2",
 	"FriendlyName": "DreamShader",
-	"Description": "Author Unreal materials, material functions and material instances as text: DreamShaderLang .dss / .dsi sources, and the 1.x .dsm / .dsf / .dsh, compile to standard UMaterial, UMaterialFunction and UMaterialInstanceConstant assets.",
+	"Description": "Author Unreal materials, material functions and material instances as text: DreamShaderLang .dss / .dsi sources, and the 1.x .dsm / .dsf / .dsh, compile to standard UMaterial, UMaterialFunction and UMaterialInstanceConstant assets. On UE 5.8, .dsp sources add render passes of your own (Custom Pass).",
 	"Category": "DreamPlugin",
 	"CreatedBy": "TypeDreamMoon",
 	"CreatedByURL": "https://github.com/TypeDreamMoon",
