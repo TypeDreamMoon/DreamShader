@@ -335,25 +335,37 @@ FScreenPassTexture FDreamPassSceneViewExtension::PostProcessCallback(FRDGBuilder
 {
 	using namespace UE::DreamPass;
 
-	FFamilyState* Family = FindFamilyState(GraphBuilder);
-	const int32 ViewIndex = Family ? Family->FindViewIndex(View) : INDEX_NONE;
-	if (ViewIndex == INDEX_NONE)
-	{
-		return Inputs.ReturnUntouchedSceneColorForPostProcessing(GraphBuilder);
-	}
-
 	// What the chain carries at this point: the separate translucency at TranslucencyAfterDOF, the scene colour
 	// everywhere else (R/Private/PostProcess/PostProcessing.cpp:383-410, 1024-1038).
 	const EPostProcessMaterialInput ChainInput = Injection == EDreamPassInjection::PostProcessTranslucencyAfterDOF
 		? EPostProcessMaterialInput::SeparateTranslucency
 		: EPostProcessMaterialInput::SceneColor;
+	const FScreenPassTextureSlice ChainSlice = Inputs.GetInput(ChainInput);
+
+	// Handing the chain back what it gave: the scene colour through the engine's helper (which also honours the
+	// override output), the translucency as it came.
+	auto ReturnUntouched = [&]() -> FScreenPassTexture
+	{
+		if (ChainInput == EPostProcessMaterialInput::SceneColor)
+		{
+			return Inputs.ReturnUntouchedSceneColorForPostProcessing(GraphBuilder);
+		}
+		return ChainSlice.IsValid() ? FScreenPassTexture::CopyFromSlice(GraphBuilder, ChainSlice) : FScreenPassTexture();
+	};
+
+	FFamilyState* Family = FindFamilyState(GraphBuilder);
+	const int32 ViewIndex = Family ? Family->FindViewIndex(View) : INDEX_NONE;
+	if (ViewIndex == INDEX_NONE || !ChainSlice.IsValid())
+	{
+		return ReturnUntouched();
+	}
 
 	FInjectionContext Context;
 	Context.Injection = Injection;
 	Context.PostProcessInputs = &Inputs;
 	Context.bPostProcessChain = true;
 	Context.bSceneColorWritable = true;
-	Context.SceneColor = FScreenPassTexture::CopyFromSlice(GraphBuilder, Inputs.GetInput(ChainInput));
+	Context.SceneColor = FScreenPassTexture::CopyFromSlice(GraphBuilder, ChainSlice);
 	Context.SceneViewRect = Context.SceneColor.ViewRect;
 	Context.SceneTextures = Inputs.SceneTextures.SceneTextures;
 	Context.SceneDepth = Context.SceneTextures ? Context.SceneTextures->GetContents()->SceneDepthTexture : nullptr;
@@ -364,7 +376,7 @@ FScreenPassTexture FDreamPassSceneViewExtension::PostProcessCallback(FRDGBuilder
 
 	if (Context.SceneColor.Texture == Untouched.Texture)
 	{
-		return Inputs.ReturnUntouchedSceneColorForPostProcessing(GraphBuilder);
+		return ReturnUntouched();
 	}
 
 	// The last pass of the chain receives the view family texture as its override output and must write it
