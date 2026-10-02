@@ -418,6 +418,7 @@ void FDreamPassSceneViewExtension::PostRenderView_RenderThread(FRDGBuilder& Grap
 
 	if (State.IsActive())
 	{
+		AddVisualizePass(GraphBuilder, *Family, State, InView);
 		FinishViewBuffers(GraphBuilder, *Family, State);
 	}
 	State.bFinished = true;

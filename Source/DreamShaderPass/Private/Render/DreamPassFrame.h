@@ -164,6 +164,11 @@ namespace UE::DreamPass
 	bool ExecuteClearPass(FExecuteContext& Context);
 	bool ExecuteCopyPass(FExecuteContext& Context);
 
+	// --- debugging (Render/DreamPassVisualize.cpp) --------------------------------------------------------------
+
+	/** r.DreamPass.Visualize: draws the named buffer of the view's pipeline into the corner of the view family texture. */
+	void AddVisualizePass(FRDGBuilder& GraphBuilder, FFamilyState& Family, FViewState& ViewState, const FSceneView& View);
+
 	// --- scheduling (Render/DreamPassScheduler.cpp) -------------------------------------------------------------
 
 	/** The family state of the graph being built, or null when no pipeline applies to its family. */
