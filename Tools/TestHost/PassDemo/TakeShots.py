@@ -28,19 +28,24 @@ with open(SUMMARY, 'w', encoding='utf-8') as f:
 
 ALL = ['CP_Highlight', 'CP_XRay', 'CP_Tagged', 'CP_Scanner', 'CP_Retro', 'CP_UIBackdrop', 'CP_WindField']
 
-# name, the pipelines that run, r.DreamPass.Visualize, seconds to settle before the shot
+# CP_Scanner's pulse: its front is at frac(world time * Speed / Range) * Range from the camera (Scanner.usf), with the
+# pipeline's default Speed and Range -- the level's volume overrides the colour only. A shot of it waits for a phase.
+SCANNER_SPEED = 1500.0
+SCANNER_RANGE = 4000.0
+
+# name, the pipelines that run, r.DreamPass.Visualize, seconds to settle before the shot, CP_Scanner phase to wait for
 SCENARIOS = [
-    ('00_none', [], '', 1.0),
-    ('01_highlight', ['CP_Highlight'], '', 1.5),
-    ('02_xray', ['CP_XRay'], '', 1.0),
-    ('03_tagged', ['CP_Tagged'], '', 1.0),
-    ('04_scanner_a', ['CP_Scanner'], '', 0.5),
-    ('05_scanner_b', ['CP_Scanner'], '', 0.9),
-    ('06_retro', ['CP_Retro'], '', 1.0),
-    ('07_backdrop', ['CP_UIBackdrop'], 'CP_UIBackdrop.Quarter', 1.0),
-    ('08_wind', ['CP_WindField'], 'CP_WindField.Wind', 1.5),
-    ('09_highlight_mask', ['CP_Highlight'], 'CP_Highlight.Mask', 1.0),
-    ('10_all', ALL, '', 1.5),
+    ('00_none', [], '', 1.0, None),
+    ('01_highlight', ['CP_Highlight'], '', 1.5, None),
+    ('02_xray', ['CP_XRay'], '', 1.0, None),
+    ('03_tagged', ['CP_Tagged'], '', 1.0, None),
+    ('04_scanner_near', ['CP_Scanner'], '', 0.5, 0.27),
+    ('05_scanner_far', ['CP_Scanner'], '', 0.5, 0.45),
+    ('06_retro', ['CP_Retro'], '', 1.0, None),
+    ('07_backdrop', ['CP_UIBackdrop'], 'CP_UIBackdrop.Quarter', 1.0, None),
+    ('08_wind', ['CP_WindField'], 'CP_WindField.Wind', 1.5, None),
+    ('09_highlight_mask', ['CP_Highlight'], 'CP_Highlight.Mask', 1.0, None),
+    ('10_all', ALL, '', 1.5, 0.27),
 ]
 
 state = {'phase': 'find', 'ticks': 0, 'world': None, 'wait_until': 0.0, 'index': 0, 'shot': None,
@@ -84,8 +89,14 @@ def setup():
     log('list Enemies: %d primitive(s)' % len(listed))
 
 
+def scanner_phase():
+    seconds = unreal.GameplayStatics.get_time_seconds(state['world'])
+    cycles = seconds * SCANNER_SPEED / SCANNER_RANGE
+    return cycles - int(cycles)
+
+
 def start_scenario():
-    _, enabled, visualize, settle = SCENARIOS[state['index']]
+    _, enabled, visualize, settle, _ = SCENARIOS[state['index']]
     disabled = [p for p in ALL if p not in enabled]
     # A console variable set to nothing only prints its value: 'None' disables no pipeline, and a visualize target that
     # names no running pipeline draws nothing.
@@ -150,6 +161,11 @@ def on_tick(delta):
             start_scenario()
         elif phase == 'settle':
             if now() < state['wait_until']:
+                return
+            # The shot lands a frame or two after the request: a window of 4% of the period (about 0.1 s) is wide
+            # enough for a slow frame rate and narrow enough to put the ring where it was meant to be.
+            target = SCENARIOS[state['index']][4]
+            if target is not None and not (target <= scanner_phase() < target + 0.04):
                 return
             take_shot()
         elif phase == 'shooting':
