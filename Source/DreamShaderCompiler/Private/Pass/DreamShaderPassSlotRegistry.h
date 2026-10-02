@@ -2,12 +2,14 @@
 //
 // The HLSL pass slots, compiler side.
 //
-// A `.dsp` pass written in HLSL -- `compute`, or `fullscreen` with `Shader =` -- runs in one permutation ("slot") of
+// A `.dsp` pass written in HLSL -- `compute`, or `fullscreen` without a material -- runs in one permutation ("slot") of
 // the global shaders FDreamPassCS / FDreamPassPS (DreamShaderPass, Render/DreamPassGlobalShaders.cpp). Those shaders
 // include a registry this file writes, `<user shader directory>/RegistryCompute.ush` and `RegistryPixel.ush`, and the
 // registry gives each slot its pass: `#if DP_SLOT == 7`, the pass's names #defined onto the fixed parameters of
 // Shaders/Pass/DreamPass.ush, the entry renamed, and an `#include` of the pass's SNAPSHOT -- a copy of its `.usf`, and
-// of every file that includes by a relative path, taken the moment it passed the pre-check. Never the live file: a
+// of every file that includes by a relative path, taken the moment it passed the pre-check. A pass whose HLSL is in its
+// `.dsp` (DreamShader_Plan/10) has a generated root instead of the `.usf`: the file's `hlsl` block with the other passes'
+// entries blanked, then the pass's own code (Lang/LangHlslText.h, BuildDreamPassInlineHlslRoot). Never the live file: a
 // global shader that fails to compile is fatal (a retry box, then an exit), and the registry is committed, so a typo
 // saved in a `.usf` must never reach a teammate's editor or a cook.
 //
@@ -29,6 +31,7 @@
 #include "CoreMinimal.h"
 
 #include "Lang/LangDiagnostic.h"
+#include "Lang/LangHlslText.h"
 #include "Pass/DreamShaderPassShaderText.h"
 
 class UDreamPassPipeline;
@@ -110,6 +113,16 @@ namespace UE::DreamShader::Editor::Compiler
 		/** Where messages about this pass go: the pass's span in the `.dsp`. */
 		Lang::FLangSpan Span;
 
+		/**
+		 * The pass's HLSL is in its `.dsp`: the snapshot's root is generated -- Inline.Text, with the map of its lines back to
+		 * the `.dsp` that the pre-check reports through -- and ShaderFilePath is the `.dsp`. Entry is the slot's own entry
+		 * point for a body form, whose function the root names so. At BeginView the root guards the pass's own code against
+		 * `View` itself (the section does not), and the pre-check refuses a slot that binds the view through shared code.
+		 */
+		bool bInline = false;
+		Lang::FHlslInlineRoot Inline;
+		bool bAtBeginView = false;
+
 		// --- filled by PlanDreamPassSlots ---
 		int32 Slot = INDEX_NONE;
 		FDreamPassShaderClosure Closure;
@@ -118,6 +131,8 @@ namespace UE::DreamShader::Editor::Compiler
 		FString SectionTail;
 		/** The included file, relative to the slot directory. */
 		FString IncludeRelativePath;
+		/** Inline: where the generated root sits, `<.dsp folder>/<pipeline>.<pass>.usf` -- no file is there. */
+		FString InlineRootFile;
 		/** The section as the registry file will hold it. */
 		FString Section;
 		FString Hash;

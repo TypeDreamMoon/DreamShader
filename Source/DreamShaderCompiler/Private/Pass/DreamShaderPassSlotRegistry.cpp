@@ -2,7 +2,7 @@
 //
 // See DreamShaderPassSlotRegistry.h.
 //
-// Diagnostics owned by this file: DSH8315-DSH8329.
+// Diagnostics owned by this file: DSH8315-DSH8329 (DSH8318: an inline pass at BeginView whose slot binds `View`).
 //
 // THE PRE-CHECK, and why it is built the way it is (DreamShader_Plan/04 section 3, SP-3).
 //
@@ -33,6 +33,15 @@
 // warned about); an include of a live user path is compiled as it is now and can change later; and a uniform buffer
 // that no slot shader referenced before is declared for the real compile (UpdateReferencedUniformBufferNames runs
 // before it) but not for the pre-check, which then refuses a valid shader -- the safe direction.
+//
+// A pass whose HLSL is in its `.dsp` (DreamShader_Plan/10) has a generated root, which the snapshot holds as it was
+// generated -- no `#line` in it, so a comment added above the block moves no snapshot and recompiles no global shader.
+// The pre-check maps a line of that root back to the `.dsp` through the root's own line map (FHlslInlineRoot::MapLine):
+// a deviation from the `#line` the design proposed, with the same result and one text for the check and the commit. An
+// error in the file block's shared code fails every inline pass that reaches it alike, and is said once with the passes it
+// failed (DSH8322); the engine drops code no entry reaches before the shader compiler reads a slot (r.Shaders.RemoveDeadCode).
+// At BeginView the root's View guard covers the pass's own code only, so a slot whose compiled parameters still name
+// `View` reached it through shared code: refused (DSH8318).
 
 #include "Pass/DreamShaderPassSlotRegistry.h"
 
@@ -266,8 +275,10 @@ namespace UE::DreamShader::Editor::Compiler
 				return false;
 			}
 
-			// At BeginView the view uniform buffer does not exist yet; a use of `View` is an undeclared name, not a crash.
-			if (Pass.Injection == EDreamPassInjection::BeginView && !Define(TEXT("View"), TEXT("DP_NoViewAtBeginView")))
+			// At BeginView the view uniform buffer does not exist yet; a use of `View` is an undeclared name, not a crash. An
+			// inline root guards its pass's code itself, after the shared code of its `.dsp`, which other passes may use with
+			// a view (the pre-check checks what the slot binds instead).
+			if (!Candidate.bInline && Pass.Injection == EDreamPassInjection::BeginView && !Define(TEXT("View"), TEXT("DP_NoViewAtBeginView")))
 			{
 				return false;
 			}
@@ -524,6 +535,10 @@ namespace UE::DreamShader::Editor::Compiler
 			FString Message;
 			/** The error is in the user's file (or a file of the snapshot), not in the slot's generated text. */
 			bool bInUserFile = false;
+			/** Inline: in the shared code of the `.dsp`'s file block, which every inline pass compiles. */
+			bool bShared = false;
+			/** Inline, at BeginView: the slot compiled, and binds the view uniform buffer (DSH8318). */
+			bool bViewAtBeginView = false;
 		};
 
 		/**
@@ -617,6 +632,21 @@ namespace UE::DreamShader::Editor::Compiler
 					const FString Relative = ErrorPath.RightChop(SlotDirectory.Len() + 1);
 					if (const FDreamPassShaderClosureFile* File = Candidate.Closure.FindByRelativePath(Relative))
 					{
+						if (Candidate.bInline && File == Candidate.Closure.GetRoot())
+						{
+							// The generated root: its line in the `.dsp`, or none for a line the compiler wrote (a body form's
+							// signature), which the pass's declaration answers for.
+							int32 SourceLine = 1;
+							bool bShared = false;
+							if (Candidate.Inline.MapLine(Out.Line, SourceLine, bShared))
+							{
+								Out.File = Candidate.ShaderFilePath;
+								Out.Line = SourceLine;
+								Out.bInUserFile = true;
+								Out.bShared = bShared;
+							}
+							continue;
+						}
 						Out.File = File->FilePath;
 						Out.bInUserFile = true;
 						continue;
@@ -628,6 +658,14 @@ namespace UE::DreamShader::Editor::Compiler
 				{
 					Out.Message = FString::Printf(TEXT("%s(%d): %s"), *ErrorPath, Out.Line, *Out.Message); /* I18N-EXEMPT: quotes a shader compiler message */
 				}
+			}
+
+			// Inline at BeginView: the guard in the root covers the pass's own code, not the shared functions it may call.
+			if (bSucceeded && Candidate.bInline && Candidate.bAtBeginView && Job->Output.ParameterMap.ContainsParameterAllocation(TEXT("View")))
+			{
+				FPrecheckError& Out = OutErrors.AddDefaulted_GetRef();
+				Out.bViewAtBeginView = true;
+				return false;
 			}
 
 			return bSucceeded;
@@ -956,7 +994,22 @@ namespace UE::DreamShader::Editor::Compiler
 		for (FDreamPassSlotCandidate& Candidate : OutPlan.Candidates)
 		{
 			// ---- the snapshot, in memory
-			if (Candidate.ShaderFilePath.IsEmpty() || !CollectDreamPassShaderClosure(Candidate.ShaderFilePath, Candidate.Closure))
+			if (Candidate.bInline)
+			{
+				// Generated beside the `.dsp`, so that the block's relative includes are the `.dsp` folder's; no file is there.
+				Candidate.ShaderFilePath = PipelineSourceFile;
+				Candidate.ShaderReference = FString::Printf(TEXT("%s (inline HLSL)"), *FPaths::GetCleanFilename(PipelineSourceFile)); /* I18N-EXEMPT: HLSL comment */
+				Candidate.InlineRootFile = FPaths::Combine(FPaths::GetPath(PipelineSourceFile), FString::Printf(TEXT("%s.%s.usf"), *OutPlan.PipelineName, *Candidate.PassName)); /* I18N-EXEMPT: file name */
+				if (Candidate.Inline.Text.IsEmpty())
+				{
+					bOk = Diagnostics.Error(TEXT("DSH8319"), Candidate.Span, FText::Format(
+						LOCTEXT("SnapshotInlineRootMissing", "The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the file's 'hlsl' block); there is nothing to snapshot."),
+						FText::FromString(Candidate.PassName)));
+					continue;
+				}
+				CollectDreamPassShaderClosureFromText(Candidate.InlineRootFile, Candidate.Inline.Text, Candidate.Closure);
+			}
+			else if (Candidate.ShaderFilePath.IsEmpty() || !CollectDreamPassShaderClosure(Candidate.ShaderFilePath, Candidate.Closure))
 			{
 				bOk = Diagnostics.Error(TEXT("DSH8319"), Candidate.Span, FText::Format(
 					LOCTEXT("SnapshotRootUnreadable", "The shader '{0}' of pass '{1}' could not be read, so there is nothing to snapshot into its slot."),
@@ -964,20 +1017,37 @@ namespace UE::DreamShader::Editor::Compiler
 					FText::FromString(Candidate.PassName)));
 				continue;
 			}
+			// An include of the generated root is a line of the `.dsp`.
+			const auto WhereIncluded = [&Candidate](const FString& IncludingFile, const int32 Line, FString& OutFile, Lang::FLangSpan& OutSpan)
+			{
+				OutFile = IncludingFile;
+				OutSpan = Lang::FLangSpan();
+				OutSpan.Line = Line;
+				bool bShared = false;
+				int32 SourceLine = 1;
+				if (Candidate.bInline && IncludingFile.Equals(Candidate.Closure.RootFilePath, ESearchCase::IgnoreCase)
+					&& Candidate.Inline.MapLine(Line, SourceLine, bShared))
+				{
+					OutFile = Candidate.ShaderFilePath;
+					OutSpan.Line = SourceLine;
+				}
+			};
 			for (const FDreamPassMissingInclude& Missing : Candidate.Closure.MissingIncludes)
 			{
+				FString IncludingFile;
 				Lang::FLangSpan Span;
-				Span.Line = Missing.Line;
-				bOk = Diagnostics.Error(TEXT("DSH8320"), Missing.IncludingFile, Span, FText::Format(
+				WhereIncluded(Missing.IncludingFile, Missing.Line, IncludingFile, Span);
+				bOk = Diagnostics.Error(TEXT("DSH8320"), IncludingFile, Span, FText::Format(
 					LOCTEXT("SnapshotIncludeMissing", "'{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built."),
 					FText::FromString(Missing.Path),
 					FText::FromString(Candidate.PassName)));
 			}
 			for (const FDreamPassLiveInclude& Live : Candidate.Closure.LiveIncludes)
 			{
+				FString IncludingFile;
 				Lang::FLangSpan Span;
-				Span.Line = Live.Line;
-				Diagnostics.Warning(TEXT("DSH8321"), Live.IncludingFile, Span, FText::Format(
+				WhereIncluded(Live.IncludingFile, Live.Line, IncludingFile, Span);
+				Diagnostics.Warning(TEXT("DSH8321"), IncludingFile, Span, FText::Format(
 					LOCTEXT("SnapshotLiveIncludeNotEngine", "'{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{1}' keeps including the live file: an edit of it later reaches the global shaders without a pre-check. Include it by a relative path to have it copied into the snapshot."),
 					FText::FromString(Live.VirtualPath),
 					FText::FromString(Candidate.PassName)));
@@ -1026,7 +1096,8 @@ namespace UE::DreamShader::Editor::Compiler
 			Entry->Kind = Candidate.bCompute ? TEXT("compute") : TEXT("fullscreen");
 			Entry->Source = ProjectRelativeSource;
 			// The file, project-relative: the reference as written is relative to its `.dsp`, and a file outside every mapped
-			// directory -- which a pass may name, since only the snapshot is ever compiled -- has no virtual path.
+			// directory -- which a pass may name, since only the snapshot is ever compiled -- has no virtual path. Inline HLSL
+			// is in the `.dsp` itself (ShaderFilePath).
 			Entry->Shader = Candidate.ShaderFilePath.IsEmpty() ? Candidate.ShaderReference : Private::MakeProjectRelativeSourcePath(Candidate.ShaderFilePath);
 			Entry->Entry = Candidate.Entry;
 			Entry->Hash = Candidate.Hash;
@@ -1162,6 +1233,17 @@ namespace UE::DreamShader::Editor::Compiler
 
 		ITargetPlatformManagerModule& Manager = GetTargetPlatformManagerRef();
 
+		// An error in the shared code of the `.dsp`'s file block fails every inline pass that calls it, for every format: said once.
+		struct FSharedError
+		{
+			int32 Line = 1;
+			int32 Column = 1;
+			FString Message;
+			TArray<FString> Formats;
+			TArray<FString> Passes;
+		};
+		TArray<FSharedError> SharedErrors;
+
 		bool bOk = true;
 		for (const bool bCompute : { true, false })
 		{
@@ -1223,6 +1305,31 @@ namespace UE::DreamShader::Editor::Compiler
 					}
 					for (const FPrecheckError& Error : Errors)
 					{
+						if (Error.bViewAtBeginView)
+						{
+							Diagnostics.Error(TEXT("DSH8318"), Candidate.Span, FText::Format(
+								LOCTEXT("PrecheckViewAtBeginView", "[{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'View' all the same: a function of the file's 'hlsl' block that the pass calls reads it. Give that function what it needs as a parameter, or move the pass to a later injection point."),
+								FText::FromName(Format),
+								FText::FromString(Candidate.PassName)));
+							continue;
+						}
+						if (Error.bShared)
+						{
+							FSharedError* Same = SharedErrors.FindByPredicate([&Error](const FSharedError& Known)
+							{
+								return Known.Line == Error.Line && Known.Column == Error.Column && Known.Message.Equals(Error.Message, ESearchCase::CaseSensitive);
+							});
+							if (!Same)
+							{
+								Same = &SharedErrors.AddDefaulted_GetRef();
+								Same->Line = Error.Line;
+								Same->Column = Error.Column;
+								Same->Message = Error.Message;
+							}
+							Same->Formats.AddUnique(Format.ToString());
+							Same->Passes.AddUnique(Candidate.PassName);
+							continue;
+						}
 						if (Error.bInUserFile)
 						{
 							Lang::FLangSpan Span;
@@ -1255,6 +1362,18 @@ namespace UE::DreamShader::Editor::Compiler
 					}
 				}
 			}
+		}
+
+		for (const FSharedError& Error : SharedErrors)
+		{
+			Lang::FLangSpan Span;
+			Span.Line = Error.Line;
+			Span.Column = Error.Column;
+			Diagnostics.Error(TEXT("DSH8322"), Plan.PipelineSourceFile, Span, FText::Format(
+				LOCTEXT("PrecheckErrorInSharedHlsl", "[{0}] the file's 'hlsl' block does not compile in the HLSL slots of {1}: {2}"),
+				FText::FromString(FString::Join(Error.Formats, TEXT(", "))),
+				FText::FromString(FString::Join(Error.Passes, TEXT(", "))),
+				FText::FromString(Error.Message)));
 		}
 		return bOk;
 #else
@@ -1616,7 +1735,7 @@ namespace UE::DreamShader::Editor::Compiler
 				bCompute = true;
 				Slot = Pass.Compute.Slot;
 			}
-			else if (Pass.Kind == EDreamPassKind::Fullscreen && !Pass.Fullscreen.Material && !Pass.Fullscreen.ShaderPath.IsEmpty())
+			else if (Pass.Kind == EDreamPassKind::Fullscreen && Pass.Fullscreen.RunsHlsl())
 			{
 				Slot = Pass.Fullscreen.PixelSlot;
 			}

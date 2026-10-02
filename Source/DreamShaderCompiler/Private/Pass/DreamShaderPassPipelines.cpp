@@ -64,7 +64,8 @@ namespace UE::DreamShader::Editor::Compiler
 				bOutCompute = true;
 				return true;
 			}
-			if (Pass.Kind.Equals(TEXT("fullscreen"), ESearchCase::CaseSensitive) && Pass.MaterialReference.IsEmpty() && !Pass.ShaderReference.IsEmpty())
+			if (Pass.Kind.Equals(TEXT("fullscreen"), ESearchCase::CaseSensitive) && Pass.MaterialReference.IsEmpty()
+				&& (!Pass.ShaderReference.IsEmpty() || IR::PassHlslSource::IsInline(Pass.HlslSource)))
 			{
 				bOutCompute = false;
 				return true;

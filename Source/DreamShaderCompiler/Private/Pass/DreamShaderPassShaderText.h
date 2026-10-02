@@ -111,6 +111,21 @@ namespace UE::DreamShader::Editor::Compiler
 	bool CollectDreamPassShaderClosure(const FString& RootFilePath, FDreamPassShaderClosure& OutClosure);
 
 	/**
+	 * The same for a root that is no file: the generated root of an inline pass's slot (DreamShader_Plan/10), whose text is
+	 * RootText and whose place is RootFilePath -- beside the `.dsp`, so that its relative includes are the `.dsp` folder's.
+	 * The root is not read; what it includes is. Always true.
+	 */
+	bool CollectDreamPassShaderClosureFromText(const FString& RootFilePath, const FString& RootText, FDreamPassShaderClosure& OutClosure);
+
+	/**
+	 * The files the inline HLSL of a `.dsp` includes -- every `hlsl { }` of Module -- each once: by a path relative to the
+	 * `.dsp`'s folder, or by a virtual one outside /Engine/, /Plugin/ and /ThirdParty/ that a mapped directory resolves. The
+	 * roots of what the inline passes' snapshots copy or keep live: the build key hashes their closures, and the product
+	 * index and the editor's watch follow them as they follow a `Shader =` file.
+	 */
+	void CollectDreamPassInlineHlslIncludeFiles(const ::UE::DreamShader::Lang::FModule& Module, const FString& PipelineSourceFile, TArray<FString>& OutFiles);
+
+	/**
 	 * The files a pass's Entry may be defined in, for the reference stage's function scan (FPipelineShaderInfo): the
 	 * closure's own, and every file reached through a virtual include that a mapped shader directory resolves -- a
 	 * project's, a plugin's -- and through those files' includes in turn, relative or virtual. Only the scan follows them;

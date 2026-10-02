@@ -912,12 +912,13 @@ namespace UE::DreamShader::Editor::Compiler
 			const FDreamPassDesc& Pass = Staged.Passes[Index];
 			const IR::FIRPass& IRPass = Payload.Passes[Index];
 
+			const bool bInline = IR::PassHlslSource::IsInline(IRPass.HlslSource);
 			bool bCompute = false;
 			if (Pass.Kind == EDreamPassKind::Compute)
 			{
 				bCompute = true;
 			}
-			else if (!(Pass.Kind == EDreamPassKind::Fullscreen && !Pass.Fullscreen.Material && !IRPass.ShaderReference.IsEmpty()))
+			else if (!(Pass.Kind == EDreamPassKind::Fullscreen && !Pass.Fullscreen.Material && (!IRPass.ShaderReference.IsEmpty() || bInline)))
 			{
 				continue;
 			}
@@ -931,6 +932,23 @@ namespace UE::DreamShader::Editor::Compiler
 			Candidate.ShaderFilePath = IRPass.ShaderFilePath;
 			Candidate.Entry = IRPass.Entry;
 			Candidate.Span = IRPass.Source.Span;
+			if (bInline)
+			{
+				// The root the slot compiles, generated from the `.dsp`'s text; its file and folder are the planner's
+				// (PlanDreamPassSlots). A root that cannot be built leaves the text empty, which the planner reports.
+				Candidate.bInline = true;
+				Candidate.bAtBeginView = IRPass.Injection.Equals(TEXT("BeginView"), ESearchCase::CaseSensitive);
+				FString RootError;
+				if (!Lang::BuildDreamPassInlineHlslRoot(Payload, Index, Candidate.Inline, RootError))
+				{
+					Candidate.Inline = Lang::FHlslInlineRoot();
+				}
+				// A body form's function is the slot's own entry point already; nothing to rename.
+				if (Candidate.Entry.IsEmpty())
+				{
+					Candidate.Entry = Lang::GetDreamPassMainEntryName(bCompute);
+				}
+			}
 		}
 	}
 

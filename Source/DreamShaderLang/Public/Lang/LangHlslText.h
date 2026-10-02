@@ -1,7 +1,7 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // Reading HLSL text, for the inline HLSL of a `.dsp` (DreamShader_Plan/10): what a block holds at its top level, where
-// each of its functions is, which identifiers it uses.
+// each of its functions is, which identifiers it uses -- and the root file an inline pass's HLSL slot compiles.
 //
 // A `.dsp` may write a pass's HLSL in the file itself:
 //
@@ -20,6 +20,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+namespace UE::DreamShader::IR
+{
+	struct FIRPassPipeline;
+}
 
 namespace UE::DreamShader::Lang
 {
@@ -93,4 +98,41 @@ namespace UE::DreamShader::Lang
 	 * compute pass; SvPosition, Pixel and UV for a fullscreen one -- whose outputs are named after its writes besides.
 	 */
 	DREAMSHADERLANG_API TConstArrayView<const TCHAR*> GetDreamPassBodyFormNames(bool bCompute);
+
+	/** One run of lines of a generated slot root that came from the `.dsp`. */
+	struct FHlslRootLineRun
+	{
+		/** 1-based, in the root. */
+		int32 FirstRootLine = 1;
+		int32 LineCount = 0;
+		/** 1-based, in the `.dsp`. */
+		int32 FirstSourceLine = 1;
+		/** From the file-level `hlsl { }`, which every inline pass compiles; false for the pass's own code. */
+		bool bShared = false;
+	};
+
+	/** The root file an inline pass's HLSL slot compiles, and where each of its lines came from. */
+	struct DREAMSHADERLANG_API FHlslInlineRoot
+	{
+		FString Text;
+		TArray<FHlslRootLineRun> Runs;
+
+		/** The `.dsp` line a line of Text came from; false for a line the compiler wrote (a body-form signature, the View guard). */
+		bool MapLine(int32 RootLine, int32& OutSourceLine, bool& bOutShared) const;
+	};
+
+	/**
+	 * Builds the root of the slot of Pipeline.Passes[PassIndex], an inline pass (HlslSource Block, Body or Shared), as
+	 * DreamShader_Plan/10 section 4 lays it out:
+	 *
+	 *     the file's hlsl block, every function a Shared pass names as its Entry blanked to spaces (lines kept)
+	 *     #define View DP_NoViewAtBeginView                     (a pass at BeginView only)
+	 *     this pass's code: its Shared entry, moved here; its own block; or its statements inside the generated function
+	 *     #undef View                                          (a pass at BeginView only)
+	 *
+	 * The entry keeps its own name; the slot's registry section renames it to the slot's entry point, as it does for a
+	 * shader file. False with OutError when the pass is not inline or its Shared entry is not in the file's block -- both
+	 * refused by the binder already.
+	 */
+	DREAMSHADERLANG_API bool BuildDreamPassInlineHlslRoot(const IR::FIRPassPipeline& Pipeline, int32 PassIndex, FHlslInlineRoot& OutRoot, FString& OutError);
 }

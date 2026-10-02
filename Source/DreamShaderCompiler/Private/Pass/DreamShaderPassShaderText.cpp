@@ -206,6 +206,9 @@ namespace UE::DreamShader::Editor::Compiler
 
 		/** ScanDreamPassShaderIncludes, also counting into OutUnquoted (when given) the `#include MACRO` lines it cannot follow. */
 		void ScanIncludes(const FString& StrippedText, TArray<FDreamPassShaderInclude>& OutIncludes, int32* OutUnquoted);
+
+		/** CollectDreamPassShaderClosure, with the root's text given (RootText) rather than read from RootFilePath. */
+		bool CollectClosure(const FString& RootFilePath, const FString* RootText, FDreamPassShaderClosure& OutClosure);
 	}
 
 	FString StripDreamPassShaderComments(const FString& Text)
@@ -642,6 +645,63 @@ namespace UE::DreamShader::Editor::Compiler
 
 	bool CollectDreamPassShaderClosure(const FString& RootFilePath, FDreamPassShaderClosure& OutClosure)
 	{
+		return DreamPassShaderTextDetail::CollectClosure(RootFilePath, nullptr, OutClosure);
+	}
+
+	bool CollectDreamPassShaderClosureFromText(const FString& RootFilePath, const FString& RootText, FDreamPassShaderClosure& OutClosure)
+	{
+		return DreamPassShaderTextDetail::CollectClosure(RootFilePath, &RootText, OutClosure);
+	}
+
+	void CollectDreamPassInlineHlslIncludeFiles(const ::UE::DreamShader::Lang::FModule& Module, const FString& PipelineSourceFile, TArray<FString>& OutFiles)
+	{
+		using namespace DreamPassShaderTextDetail;
+		namespace Lang = ::UE::DreamShader::Lang;
+
+		OutFiles.Reset();
+		TArray<const FString*> Texts;
+		Module.ForEachDecl(Lang::ENodeKind::HlslBlockDecl, [&Texts](const Lang::FDecl& Decl)
+		{
+			Texts.Add(&static_cast<const Lang::FHlslBlockDecl&>(Decl).RawBody);
+		});
+		Module.ForEachDecl(Lang::ENodeKind::PassDecl, [&Texts](const Lang::FDecl& Decl)
+		{
+			for (const TUniquePtr<Lang::FPassStmt>& Statement : static_cast<const Lang::FPassDecl&>(Decl).Statements)
+			{
+				if (Statement.IsValid() && Statement->StmtKind == Lang::EPassStmtKind::Hlsl)
+				{
+					Texts.Add(&Statement->RawBody);
+				}
+			}
+		});
+
+		const FString Directory = FPaths::GetPath(PipelineSourceFile);
+		for (const FString* Text : Texts)
+		{
+			TArray<FDreamPassShaderInclude> Includes;
+			ScanIncludes(StripDreamPassShaderComments(*Text), Includes, nullptr);
+			for (const FDreamPassShaderInclude& Include : Includes)
+			{
+				FString File;
+				if (Include.Path.StartsWith(TEXT("/")))
+				{
+					if (IsEngineOrPluginVirtualPath(Include.Path) || !MapDreamPassShaderVirtualPathToFile(Include.Path, File))
+					{
+						continue;
+					}
+				}
+				else
+				{
+					File = NormalizeShaderFilePath(FPaths::Combine(Directory, Include.Path));
+				}
+				// Paths compare ignoring case here, as the file system does.
+				OutFiles.AddUnique(File);
+			}
+		}
+	}
+
+	bool DreamPassShaderTextDetail::CollectClosure(const FString& RootFilePath, const FString* RootText, FDreamPassShaderClosure& OutClosure)
+	{
 		using namespace DreamPassShaderTextDetail;
 
 		OutClosure = FDreamPassShaderClosure();
@@ -662,10 +722,16 @@ namespace UE::DreamShader::Editor::Compiler
 			}
 			Visited.Add(File);
 
+			// The root comes first; given as text, it is not read.
+			const bool bRoot = OutClosure.Files.IsEmpty();
 			FString Text;
-			if (!FFileHelper::LoadFileToString(Text, *File))
+			if (bRoot && RootText)
 			{
-				if (OutClosure.Files.IsEmpty())
+				Text = *RootText;
+			}
+			else if (!FFileHelper::LoadFileToString(Text, *File))
+			{
+				if (bRoot)
 				{
 					return false;
 				}

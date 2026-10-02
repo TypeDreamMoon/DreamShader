@@ -228,6 +228,13 @@ namespace UE::DreamShader::Editor::Compiler
 						Record.ShaderFiles.AddUnique(FilePath);
 					}
 				}
+				// What the inline HLSL includes is a shader file of the pipeline as well: an edit of it rebuilds it.
+				TArray<FString> InlineIncludes;
+				CollectDreamPassInlineHlslIncludeFiles(*Parsed.Module, SourceFilePath, InlineIncludes);
+				for (const FString& FilePath : InlineIncludes)
+				{
+					Record.ShaderFiles.AddUnique(FilePath);
+				}
 			}
 		}
 

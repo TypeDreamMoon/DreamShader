@@ -699,6 +699,23 @@ namespace UE::DreamShader::Editor::Compiler
 				*Info.VirtualPath,
 				*ContentHash);
 		}
+
+		// ----------------------------------------------------------------------------------- inline HLSL's includes
+		// The `.dsp`'s text is in the key, and the HLSL in it with it; what that HLSL includes is not, and an edit of it is an
+		// edit of an inline pass's snapshot. Keyed by the path from the `.dsp`'s folder, so that the key is every machine's.
+		TArray<FString> InlineIncludes;
+		CollectDreamPassInlineHlslIncludeFiles(Module, SourceFilePath, InlineIncludes);
+		for (const FString& File : InlineIncludes)
+		{
+			FDreamPassShaderClosure Closure;
+			const FString ContentHash = CollectDreamPassShaderClosure(File, Closure) ? Closure.ComputeContentHash() : FString(TEXT("-"));
+			FString Relative = File;
+			FPaths::MakePathRelativeTo(Relative, *(FPaths::GetPath(SourceFilePath) + TEXT("/")));
+			OutBuildKeyText += FString::Printf(
+				TEXT("HlslInclude=%s|%s\n"), /* I18N-EXEMPT: build-key material, never displayed */
+				*Relative,
+				*ContentHash);
+		}
 	}
 
 	void FillDreamShaderPipelinePayloadReferences(IR::FIRModule& Module, const Lang::FPipelineReferences& References)
