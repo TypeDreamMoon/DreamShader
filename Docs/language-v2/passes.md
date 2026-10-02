@@ -40,12 +40,26 @@ pass DrawMask : mesh
 pass Blur : compute
 {
     Injection = AfterOpaque;
-    Shader    = "Passes/BoxBlur.usf";
-    Entry     = BlurCS;
     Dispatch  = Blurred;
     read  Source = Mask;
     write Result = Blurred;
     param Radius = OutlineWidth;
+
+    hlsl
+    {
+        // The statements of the entry: Id is this thread's texel, and the threads past the dispatch returned already.
+        const float2 UV = (Id.xy + 0.5) * ResultSize.zw;
+        const int R = (int)Radius;
+        float Sum = 0;
+        for (int y = -R; y <= R; ++y)
+        {
+            for (int x = -R; x <= R; ++x)
+            {
+                Sum += Source.SampleLevel(DP_LinearClamp, UV + float2(x, y) * SourceSize.zw, 0).r;
+            }
+        }
+        Result[DP_ViewRect.xy + Id.xy] = Sum / ((2 * R + 1) * (2 * R + 1));
+    }
 }
 
 pass Composite : fullscreen
@@ -61,8 +75,10 @@ pass Composite : fullscreen
 
 The materials are ordinary `.dss` files: a `#pragma material(Domain = PostProcess, ...)` material reads
 the pass's buffers through `UE.UserSceneTexture`, and a mesh pass's material writes its outputs through
-`UE.DreamPassOutput`. See [Custom Pass material nodes](../builtins/dream-pass.md). Four complete
-examples, with their `.dss` and `.usf`, are in [Custom Pass examples](../examples/custom-pass.md).
+`UE.DreamPassOutput`. See [Custom Pass material nodes](../builtins/dream-pass.md). An HLSL pass's code is
+written in the `.dsp` itself, as `Blur`'s is, or in a `.usf` the pass names with `Shader =` — see
+[HLSL passes](../runtime/hlsl.md). Complete examples, with their `.dss`, are in
+[Custom Pass examples](../examples/custom-pass.md).
 
 ## The file
 
@@ -72,10 +88,14 @@ examples, with their `.dss` and `.usf`, are in [Custom Pass examples](../example
 | `uniform` | `uniform <type> <Name> [= <value>];` | a parameter activations can override: `float`–`float4`, `int`, `bool`, `Texture2D` (with `/// @default <asset>`). `///` takes `@group`, `@desc`, `@slider`, `@sort` |
 | `static const` | `static const <type> <Name> = <value>;` | a constant, folded where it is used |
 | `buffer` | `buffer <Name> : <Format>[(<Key> = <Value>, ...)];` | [Buffers](#buffers) |
+| `hlsl` | `hlsl { <HLSL> }`, at most one | HLSL every pass whose code is in the `.dsp` is compiled with — shared functions — and entries a pass picks with `Entry = <function>;`. See [HLSL passes](../runtime/hlsl.md#the-files-hlsl-block) |
 | `pass` | `pass <Name> : <kind> { ... }` | [Passes](#passes); they run in declaration order within an injection point |
 
-`buffer` and `pass` are keywords in a `.dsp` only, and `read`, `write`, `param` inside a pass only, so a
-`.dss` reads exactly as before. A `.dsp` has no functions and, for now, no `#include`. Comments survive
+`buffer`, `pass` and `hlsl` are keywords in a `.dsp` only, and `read`, `write`, `param` and `hlsl` inside a
+pass only, so a `.dss` reads exactly as before. A `.dsp` has no DreamShaderLang functions and no
+`#include` of its own: HLSL functions, and the files they include, go in an `hlsl` block. The text of an
+`hlsl` block is HLSL for the shader compiler, kept as it is written — comments, blank lines, `#if`,
+`#define` and `#include` included; DreamShader's own preprocessor does not touch it. Comments survive
 `dsc fmt` and Adopt.
 
 ## Pipeline keys
@@ -143,17 +163,19 @@ pass <Name> : <kind>
     read  [<name in the pass> =] <buffer>[.Previous];
     write [<name in the pass> =] <buffer>;
     param <name in the pass> = <expression>;
+    hlsl { <HLSL> }
 }
 ```
 
 Keys start with a capital letter, bindings with `read`, `write` or `param`. `read Mask;` is
-`read Mask = Mask;`.
+`read Mask = Mask;`. `hlsl { ... }` — at most one, with no `;` after it — is the code of an HLSL pass, written
+in the pass; see [HLSL passes](../runtime/hlsl.md).
 
 | Kind | Keys | `read X = B` | `write Y = B` | `param P = E` |
 | :-- | :-- | :-- | :-- | :-- |
 | `fullscreen` with `Material` | `Material` | the material's `UE.UserSceneTexture` named X | exactly one: `write B;` | the material parameter P |
-| `fullscreen` with `Shader` | `Shader`, `Entry` | the HLSL name X | up to four, SV_Target0..3 in order | the HLSL name P |
-| `compute` | `Shader`, `Entry`, `Threads`, `Dispatch` | the HLSL name X | up to four UAVs | the HLSL name P |
+| `fullscreen` with HLSL | `Shader`, `Entry`, or an `hlsl` block | the HLSL name X | up to four, SV_Target0..3 in order | the HLSL name P |
+| `compute` | `Shader`, `Entry`, `Threads`, `Dispatch`, or an `hlsl` block | the HLSL name X | up to four UAVs | the HLSL name P |
 | `mesh` | `Filter`, `Material`, `Mode`, `Depth`, `Cull`, `Blend`, `Usage`, `Nanite`, `NaniteValue` | — | `Output0`…`Output3`: the outputs of `UE.DreamPassOutput` | the override material's parameter P |
 | `clear` | `Value` | — | one | — |
 | `copy` | — | one, the source | one, the target | — |
@@ -174,14 +196,18 @@ not read `PostProcessInput0` itself can bind five buffers, otherwise four. A mat
 buffer rather than the scene colour must set `bDisablePreExposureScale = true` in its
 `#pragma material`, or exposure scales what it reads and writes.
 
-`Shader = "<file>.usf"` with `Entry = <function>` runs HLSL in a pixel shader slot instead. See
-[HLSL passes](../runtime/hlsl.md).
+Without a `Material`, the pass runs HLSL in a pixel shader slot instead: an `hlsl { ... }` block of its
+own, `Entry = <function>` naming a function of the file's `hlsl` block, or `Shader = "<file>.usf"` with
+`Entry`. See [HLSL passes](../runtime/hlsl.md).
 
 ### `compute`
 
-`Shader` and `Entry` name a function with `[numthreads(x, y, z)]` in front of it; `Threads = uint3(...)`
-is needed only when the group size is a macro. `Dispatch` is `<buffer>` (one thread per texel),
-`<buffer> * <scale>` / `<buffer> / <n>`, or `uint3(x, y, z)`. See [HLSL passes](../runtime/hlsl.md).
+The code is an `hlsl { ... }` block of the pass's own, an `Entry` of the file's `hlsl` block, or a `.usf`
+(`Shader` and `Entry`). An entry is a function with `[numthreads(x, y, z)]` in front of it;
+`Threads = uint3(...)` is needed only when the group size is a macro — and for a block that holds only the
+statements of the entry, whose group size is `Threads` (`uint3(8, 8, 1)` when it is not written).
+`Dispatch` is `<buffer>` (one thread per texel), `<buffer> * <scale>` / `<buffer> / <n>`, or
+`uint3(x, y, z)`. See [HLSL passes](../runtime/hlsl.md).
 
 ### `mesh`
 
@@ -223,8 +249,9 @@ scaled and converted otherwise — `copy` of `SceneColor` into a half-size buffe
 A `Material` is, as a `.dsi`'s `Parent` is, either a **bare name** — the material of a `.dss`, or the
 instance of a `.dsi`, under the same source root, compiled first when it is missing or older than its
 source — or an **object path** to any material. A `Shader` is a path relative to the `.dsp`'s folder —
-next to the `.dsp` is the usual place — or a virtual path such as `/Project/Passes/Blur.usf`. The file needs no mapped shader directory: what the engine
-compiles is a snapshot of it ([HLSL passes](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)).
+next to the `.dsp` is the usual place — or a virtual path such as `/Project/Passes/Blur.usf`; so is an
+`#include` in an `hlsl` block. The file needs no mapped shader directory: what the engine compiles is a
+snapshot of it ([HLSL passes](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine)).
 
 ## What the compiler checks
 
@@ -234,7 +261,9 @@ written there; that no buffer is read before every write in frame order (`Clear 
 reads and writes one buffer (`B.Previous` and `B` are two); that a fullscreen material reads the names
 its `read`s bind, and no more than it has slots for; that a mesh pass's material has `UE.DreamPassOutput`
 with the outputs it writes connected, and the usage flags it needs; that an HLSL file exists, its `Entry`
-does, and its bindings fit the slot (8 inputs, 4 outputs, 64 scalars of parameters); that a pass writing
+does, and its bindings fit the slot (8 inputs, 4 outputs, 64 scalars of parameters); that HLSL written in
+the `.dsp` is in one place per pass, that its form and entry are what the pass runs, and that the file's
+`hlsl` block names nothing a pass's slot defines and calls no entry; that a pass writing
 the scene colour runs at the scene colour's resolution; that an exported buffer is not a depth or integer
 buffer. The codes are `DSH2300`–`DSH2349`, `DSH3300`–`DSH3349`, `DSH4400`–`DSH4449`, `DSH7300`–`DSH7379`,
 `DSH8300`–`DSH8339` — see the [diagnostics index](../diagnostics/index.md).

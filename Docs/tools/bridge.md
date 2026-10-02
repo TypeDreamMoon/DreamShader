@@ -326,7 +326,7 @@ on DreamShader sources only, so the shader files have watches of their own.
 
 | | |
 | :-- | :-- |
-| Watched | every directory holding a file some `.dsp` compiles from: each `Shader = "..."` file, everything it includes by a relative path — a file such an include names that does not exist yet as well, since creating it changes the pass — and the file behind every include by a virtual path that is neither `/Engine/` nor `/Plugin/` |
+| Watched | every directory holding a file some `.dsp` compiles from: each `Shader = "..."` file and each file an `hlsl` block of the `.dsp` includes, everything they include by a relative path — a file such an include names that does not exist yet as well, since creating it changes the pass — and the file behind every include by a virtual path that is neither `/Engine/` nor `/Plugin/` |
 | How | one watch per directory, without its subtree. A directory that does not exist is not watched |
 | Files acted on | `.usf` and `.ush` |
 | Refreshed | after every compile of a `.dsp`, whether it succeeded or not, and when a `.dsp` is removed. The compiles the startup scan queues are what register the first ones |

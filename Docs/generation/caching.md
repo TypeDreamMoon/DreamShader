@@ -106,6 +106,7 @@ because a pipeline whose text did not change still has to be rebuilt when one of
 | whether the engine has the Custom Pass runtime | the project opens on an engine on the other side of 5.8 |
 | per `Material = "..."`: the reference as written, the object path it resolved to, the build key that material was last built under (its `DreamShader.SourceHash`), and the facts the passes were checked against — its domain and blendable location, `bDisablePreExposureScale`, the `UE.UserSceneTexture` names it reads, the post-process inputs its `SceneTexture` nodes take, its `UE.DreamPassOutput` and which pins are connected, its usage flags, whether it asks for the new translator | the material is rebuilt from a changed source, appears, or changes one of those facts |
 | per `Shader = "..."`: the reference, its virtual path, and a hash of the snapshot's inputs — the text and relative path of the file and of everything it includes by a relative path, and the text behind every include by a virtual path that is neither `/Engine/` nor `/Plugin/` | the `.usf`, or anything it includes, is edited |
+| per file an `hlsl` block includes: its path from the `.dsp`'s folder and the same hash of its inputs — the HLSL written in the `.dsp` is in the key already, as the `.dsp`'s text | the included file, or anything it includes, is edited |
 
 That is what lets the [bridge](../tools/bridge.md#custom-pass-shader-files) queue a `.dsp` unforced on every
 `.usf` save and after every rebuild of a material it names: a change that moves none of these is skipped.

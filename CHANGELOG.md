@@ -9,15 +9,26 @@
   `BeginView` before anything is drawn, through `AfterBasePass`, `AfterOpaque` and `BeforePostProcess`, to the
   points inside the post-process chain and `EndOfView` -- and compiles to a `UDreamPassPipeline` asset, which
   decompiles back to `.dsp`. A pass is a fullscreen Post Process material (written in a `.dss`, reading the
-  pass's buffers through `UE.UserSceneTexture`), fullscreen or compute HLSL from your project (in global shader
-  slots, built from snapshots that passed a pre-check, so a typo in a `.usf` never takes an editor down), a mesh
-  pass that draws the primitives a stencil value, a pass layer or a named list selects with an override material
-  or with their own (`UE.DreamPassOutput`), or a clear or a copy. Buffers can keep their history across frames,
-  and an exported buffer is a render target ordinary materials (`UE.DreamPassBuffer`), Blueprints, UMG and
-  Niagara read. Pipelines are activated by the project settings, `ADreamPassVolume`, `UDreamPassComponent` or
-  the Blueprint / C++ API, which blend their parameter overrides as post-process volumes do. The new runtime
-  module `DreamShaderPass` builds on every supported engine and runs passes on 5.8 and later. See
-  [Custom Pass pipelines](Docs/language-v2/passes.md) and [Custom Pass runtime](Docs/runtime/index.md).
+  pass's buffers through `UE.UserSceneTexture`), fullscreen or compute HLSL written in the `.dsp` or in a `.usf`
+  of your project (in global shader slots, built from snapshots that passed a pre-check, so a typo in a shader
+  never takes an editor down), a mesh pass that draws the primitives a stencil value, a pass layer or a named list
+  selects with an override material or with their own (`UE.DreamPassOutput`), or a clear or a copy. Buffers can
+  keep their history across frames, and an exported buffer is a render target ordinary materials
+  (`UE.DreamPassBuffer`), Blueprints, UMG and Niagara read. Pipelines are activated by the project settings,
+  `ADreamPassVolume`, `UDreamPassComponent` or the Blueprint / C++ API, which blend their parameter overrides as
+  post-process volumes do. The new runtime module `DreamShaderPass` builds on every supported engine and runs
+  passes on 5.8 and later. See [Custom Pass pipelines](Docs/language-v2/passes.md) and [Custom Pass
+  runtime](Docs/runtime/index.md).
+- **A pass's HLSL can be written in its `.dsp`.** An `hlsl { }` block in the pass holds whole functions -- what a
+  `.usf` holds, with `Main` the entry unless `Entry` names another -- or just the statements of the entry, whose
+  function the compiler writes, giving them `Id`, `GroupId`, `LocalId`, `LocalIndex` (compute) or `SvPosition`,
+  `Pixel`, `UV` and an output named after each `write` (fullscreen). The file's one `hlsl { }` block holds code every
+  such pass is compiled with, and entries a pass picks with `Entry = X;` alone, so two passes can run one entry with
+  their own bindings. `Shader = "<file>.usf"` stays for large or shared shaders. A pre-check error is reported at its
+  line of the `.dsp`, one in the shared code once for every pass it fails; the binder refuses shared code that
+  names a pass's binding (they are `#define`s) and calls of an entry. Decompile and Adopt write the blocks back as
+  they were written, and `DreamPass.ush` gains `DreamPassSample`, `DreamPassLoad` and `DreamPassSceneUV`. See
+  [HLSL passes](Docs/runtime/hlsl.md).
 
 ## 2.0.2 - 2026-10-02
 

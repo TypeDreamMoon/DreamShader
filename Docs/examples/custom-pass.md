@@ -2,24 +2,25 @@
 
 > [DreamShader](../index.md) » [Examples](index.md) » **Custom Pass examples**
 
-Complete pipelines, each with the `.dss` materials and `.usf` shaders it uses. Every one of them runs in the test
-host's demo level, built from these sources and rendered in a game viewport (`Tools/TestHost/PassDemo`). Two of the
+Complete pipelines, each with the `.dss` materials it uses; the HLSL of their HLSL passes is written in the `.dsp`
+itself, in the three ways [HLSL passes](../runtime/hlsl.md#where-the-code-is) describes. Every one of them runs in the
+test host's demo level, built from these sources and rendered in a game viewport (`Tools/TestHost/PassDemo`). Two of the
 material browser's **New Source** pipeline templates are cut-down versions of them — the mesh mask of the outline,
 and the wind field; the post-process template is a soft glow of its own.
 
 | | |
 | :-- | :-- |
 | Engine | UE `5.8` and later |
-| Assumed source root | `<Project>/DShader`; each pipeline's materials and shaders next to it, in `DShader/Passes/` |
+| Assumed source root | `<Project>/DShader`; each pipeline's materials next to it, in `DShader/Passes/` |
 
 | Example | What it shows |
 | :-- | :-- |
-| [Highlight outline](#highlight-outline) | a mesh pass by layer with an override material, a compute blur, a fullscreen material composite, an exported buffer |
-| [UI frosted glass](#ui-frosted-glass) | a `copy` grab and a compute downsample inside the post-process chain, exported for UMG |
+| [Highlight outline](#highlight-outline) | a mesh pass by layer with an override material, a compute blur written as the statements of its entry, a fullscreen material composite, an exported buffer |
+| [UI frosted glass](#ui-frosted-glass) | a `copy` grab and a compute downsample inside the post-process chain, its entry in the file's `hlsl` block with a helper; exported for UMG |
 | [X-ray](#x-ray) | a mesh pass by layer and list with its own depth, composited against the scene depth |
 | [Wind field](#wind-field) | a compute pass at `BeginView` on a fixed-size history buffer, exported for a foliage material's WPO and for Niagara |
-| [Scanner pulse](#scanner-pulse) | a pixel HLSL pass at `BeforePostProcess` that reads the scene depth through `View` |
-| [Old CRT](#old-crt) | a pixel HLSL pass at `PostProcess.AfterTonemap`, blended by the pipeline's weight |
+| [Scanner pulse](#scanner-pulse) | a pixel HLSL pass at `BeforePostProcess`, the statements of its entry, that reads the scene depth through `View` |
+| [Old CRT](#old-crt) | a pixel HLSL pass at `PostProcess.AfterTonemap` whose block holds a whole function, blended by the pipeline's weight |
 | [Tagged objects](#tagged-objects) | a mesh pass by custom stencil that draws with each object's own material |
 
 ## Highlight outline
@@ -52,15 +53,30 @@ pass DrawMask : mesh
     write Output0 = Mask;
 }
 
+/// @desc A (2R+1)^2 box over the mask, into the half-size Blurred.
 pass Blur : compute
 {
     Injection = AfterOpaque;
-    Shader    = "BoxBlur.usf";
-    Entry     = BlurCS;
     Dispatch  = Blurred;
     read  Source = Mask;
     write Result = Blurred;
     param Radius = OutlineWidth;
+
+    hlsl
+    {
+        // The statements of the entry: Id is this thread's texel; the threads past the dispatch returned already.
+        const float2 UV = (Id.xy + 0.5) * ResultSize.zw;
+        const int R = (int)Radius;
+        float Sum = 0;
+        for (int y = -R; y <= R; ++y)
+        {
+            for (int x = -R; x <= R; ++x)
+            {
+                Sum += Source.SampleLevel(DP_LinearClamp, UV + float2(x, y) * SourceSize.zw, 0).r;
+            }
+        }
+        Result[DP_ViewRect.xy + Id.xy] = Sum / ((2 * R + 1) * (2 * R + 1));
+    }
 }
 
 pass Composite : fullscreen
@@ -104,29 +120,6 @@ export void PP_OutlineComposite(inout material m)
 ```
 
 ```hlsl
-// DShader/Passes/BoxBlur.usf
-[numthreads(8, 8, 1)]
-void BlurCS(uint3 Id : SV_DispatchThreadID)
-{
-    if (any(Id.xy >= DP_DispatchSize.xy))
-    {
-        return;
-    }
-    const float2 UV = (Id.xy + 0.5) * ResultSize.zw;
-    const int R = (int)Radius;
-    float Sum = 0;
-    for (int y = -R; y <= R; ++y)
-    {
-        for (int x = -R; x <= R; ++x)
-        {
-            Sum += Source.SampleLevel(DP_LinearClamp, UV + float2(x, y) * SourceSize.zw, 0).r;
-        }
-    }
-    Result[DP_ViewRect.xy + Id.xy] = Sum / ((2 * R + 1) * (2 * R + 1));
-}
-```
-
-```hlsl
 // In the ground's material: read the exported buffer
 float Glow = UE.DreamPassBuffer(Pipeline = "CP_Highlight", Buffer = "Blurred").r;
 m.EmissiveColor += Glow * float3(1.0, 0.6, 0.0) * 0.5;
@@ -154,6 +147,34 @@ uniform float BlurRadius = 6.0;
 buffer Half    : RGBA8(Scale = 0.5,  Resolution = Output);
 buffer Quarter : RGBA8(Scale = 0.25, Resolution = Output, Export = true);
 
+hlsl
+{
+    // Shared code: the direction of tap Index of Count on a circle. It may use no pass's names; the entry below may.
+    float2 CircleTap(int Index, int Count)
+    {
+        const float Angle = Index * 6.2831853 / Count;
+        return float2(cos(Angle), sin(Angle));
+    }
+
+    // Twelve taps on a circle of Radius texels of Half, into Quarter.
+    [numthreads(8, 8, 1)]
+    void DownCS(uint3 Id : SV_DispatchThreadID)
+    {
+        if (any(Id.xy >= DP_DispatchSize.xy))
+        {
+            return;
+        }
+        const float2 UV = (Id.xy + 0.5) * ResultSize.zw;
+        float4 Sum = 0;
+        [unroll] for (int i = 0; i < 12; ++i)
+        {
+            Sum += Source.SampleLevel(DP_LinearClamp, UV + CircleTap(i, 12) * Radius * SourceSize.zw, 0);
+        }
+        // The picture after the tonemapper has no alpha (it reads 0); UMG multiplies by it, so write 1.
+        Result[Id.xy] = float4(Sum.rgb / 12.0, 1.0);
+    }
+}
+
 pass Grab : copy
 {
     Injection = PostProcess.AfterTonemap;
@@ -164,7 +185,6 @@ pass Grab : copy
 pass Down : compute
 {
     Injection = PostProcess.AfterTonemap;
-    Shader    = "Downsample.usf";
     Entry     = DownCS;
     Dispatch  = Quarter;
     read  Source = Half;
@@ -173,32 +193,14 @@ pass Down : compute
 }
 ```
 
-```hlsl
-// DShader/Passes/Downsample.usf
-[numthreads(8, 8, 1)]
-void DownCS(uint3 Id : SV_DispatchThreadID)
-{
-    if (any(Id.xy >= DP_DispatchSize.xy))
-    {
-        return;
-    }
-    const float2 UV = (Id.xy + 0.5) * ResultSize.zw;
-    float4 Sum = 0;
-    [unroll] for (int i = 0; i < 12; ++i)
-    {
-        const float2 Offset = float2(cos(i * 0.5236), sin(i * 0.5236)) * Radius * SourceSize.zw;
-        Sum += Source.SampleLevel(DP_LinearClamp, UV + Offset, 0);
-    }
-    // The picture after the tonemapper has no alpha (it reads 0); UMG multiplies by it, so write 1.
-    Result[Id.xy] = float4(Sum.rgb / 12.0, 1.0);
-}
-```
-
 Notes:
 
 - A pass on the post-process chain that does not write the scene colour leaves the chain as it was.
 - The tonemapped picture's alpha is 0, and `Grab` copies it as it is; `DownCS` writes 1, or a UMG image of
   `Quarter` would be invisible.
+- `DownCS` is an entry of the file's `hlsl` block: `Entry = DownCS;` alone picks it. A second pass naming it would
+  run the same code with its own bindings; `CircleTap` is shared code, compiled for every pass whose HLSL is in the
+  file.
 - The export is for UI, which draws after the scene. A glass panel in the world that sampled it at its own place on
   screen would see itself in the grab.
 - `Requires = PostProcess`: in a view without post processing the whole pipeline is off, not half of it.
@@ -288,32 +290,23 @@ uniform float  Gust = 0.5;
 /// @desc xy = the wind vector; tiles world XY every 50 m.
 buffer Wind : RG16F(Size = int2(256, 256), History = true, Export = true, Clear = 0);
 
+/// @desc Last frame's field advected along the wind and pulled toward a gusty target.
 pass Simulate : compute
 {
     Injection = BeginView;
-    Shader    = "WindField.usf";
-    Entry     = WindCS;
     Dispatch  = Wind;
     read  Previous = Wind.Previous;
     write Result   = Wind;
     param Direction = WindDirection;
     param Strength  = Gust;
-}
-```
 
-```hlsl
-// DShader/Passes/WindField.usf
-[numthreads(8, 8, 1)]
-void WindCS(uint3 Id : SV_DispatchThreadID)
-{
-    if (any(Id.xy >= DP_DispatchSize.xy))
+    hlsl
     {
-        return;
+        const float2 UV   = (Id.xy + 0.5) * ResultSize.zw;
+        const float2 Prev = Previous.SampleLevel(DP_LinearClamp, UV - Direction * 0.002, 0).xy;
+        const float  N    = frac(sin(dot(UV + DP_Time.x * 0.05, float2(12.9898, 78.233))) * 43758.5453);
+        Result[Id.xy] = float4(lerp(Prev, Direction * (1.0 + (N - 0.5) * Strength), 0.05), 0, 0);
     }
-    const float2 UV   = (Id.xy + 0.5) * ResultSize.zw;
-    const float2 Prev = Previous.SampleLevel(DP_LinearClamp, UV - Direction * 0.002, 0).xy;
-    const float  N    = frac(sin(dot(UV + DP_Time.x * 0.05, float2(12.9898, 78.233))) * 43758.5453);
-    Result[Id.xy] = float4(lerp(Prev, Direction * (1.0 + (N - 0.5) * Strength), 0.05), 0, 0);
 }
 ```
 
@@ -327,7 +320,8 @@ m.WorldPositionOffset = float3(Wind * UE.VertexColor().r * 20.0, 0);
 
 Notes:
 
-- At `BeginView` there is no view uniform buffer yet: the shader uses `DP_Time` rather than `View.GameTime`.
+- At `BeginView` there is no view uniform buffer yet: the code uses `DP_Time` rather than `View.GameTime`, and a
+  `View` in it would be a compile error at its line.
 - `read Previous = Wind.Previous` and `write Result = Wind` are two textures — last frame's and this frame's.
 - Every editor viewport advances its own history; only one writes the exported render target.
 - Niagara: point a Texture Sample data interface at the asset `CP_WindField_Wind`.
@@ -353,49 +347,45 @@ uniform float  Range = 4000.0;
 pass Pulse : fullscreen
 {
     Injection = BeforePostProcess;
-    Shader    = "Scanner.usf";
-    Entry     = PulsePS;
     read  InColor = SceneColor;
     write Out     = SceneColor;
     param PulseTint  = PulseColor;
     param PulseSpeed = Speed;
     param PulseWidth = Width;
     param PulseRange = Range;
-}
-```
 
-```hlsl
-// DShader/Passes/Scanner.usf
-void PulsePS(float4 SvPosition : SV_POSITION, out float4 OutColor0 : SV_Target0)
-{
-    const float2 ViewSize   = float2(DP_ViewRect.zw - DP_ViewRect.xy);
-    const float2 ViewportUV = (SvPosition.xy - float2(DP_ViewRect.xy)) / ViewSize;
-    const float3 Scene      = InColor.SampleLevel(DP_PointClamp, DreamPassInputUV(0, ViewportUV), 0).rgb;
+    hlsl
+    {
+        const float3 Scene = DreamPassSample(InColor, UV).rgb;
 
-    // The scene depth at this pixel, and from it the distance from the camera along the view ray.
-    const float2 BufferUV  = (View.ViewRectMin.xy + ViewportUV * View.ViewSizeAndInvSize.xy) * View.BufferSizeAndInvSize.zw;
-    const float  Depth     = CalcSceneDepth(BufferUV);
-    const float2 ScreenPos = ViewportUVToScreenPos(ViewportUV);
-    const float3 Position  = mul(float4(ScreenPos * Depth, Depth, 1), View.ScreenToTranslatedWorld).xyz;
-    const float  Distance  = length(Position - View.TranslatedWorldCameraOrigin);
+        // The scene depth at this pixel, and from it the distance from the camera along the view ray.
+        const float  Depth     = CalcSceneDepth(DreamPassSceneUV(UV));
+        const float2 ScreenPos = ViewportUVToScreenPos(UV);
+        const float3 Position  = mul(float4(ScreenPos * Depth, Depth, 1), View.ScreenToTranslatedWorld).xyz;
+        const float  Distance  = length(Position - View.TranslatedWorldCameraOrigin);
 
-    const float Front  = frac(DP_Time.x * PulseSpeed / PulseRange) * PulseRange;
-    const float Behind = Front - Distance;
-    const float Trail  = Behind > 0.0 ? exp(-Behind / (PulseWidth * 3.0)) * 0.35 : 0.0;
-    const float Edge   = saturate(1.0 - abs(Behind) / PulseWidth);
-    const float Fade   = 1.0 - saturate(Front / PulseRange);
+        // The front is at the distance a pulse has travelled; every pixel it has passed gets the trail, the pixels at
+        // the front the bright edge.
+        const float Front  = frac(DP_Time.x * PulseSpeed / PulseRange) * PulseRange;
+        const float Behind = Front - Distance;
+        const float Trail  = Behind > 0.0 ? exp(-Behind / (PulseWidth * 3.0)) * 0.35 : 0.0;
+        const float Edge   = saturate(1.0 - abs(Behind) / PulseWidth);
+        const float Fade   = 1.0 - saturate(Front / PulseRange);
 
-    const float Amount = (Trail + Edge * Edge) * Fade * PulseTint.a * DP_Weight;
-    OutColor0 = float4(Scene + PulseTint.rgb * Amount, 1.0);
+        const float Amount = (Trail + Edge * Edge) * Fade * PulseTint.a * DP_Weight;
+        Out = float4(Scene + PulseTint.rgb * Amount, 1.0);
+    }
 }
 ```
 
 Notes:
 
-- A pixel pass's `write` gives only a size (`OutSize`); the colour is `SV_Target0`. Reading `SceneColor` while
-  writing it is fine: the pass draws into a scratch texture that is copied back.
-- `View` and `CalcSceneDepth` work from `BeforeBasePass` on. The depth is sampled at the scene textures' UV of the
-  view rect (`View.ViewRectMin`, `View.BufferSizeAndInvSize`), the colour through `DreamPassInputUV`.
+- The block holds the statements of the entry: `UV` is the pixel's place in the view, and `Out`, the pass's one
+  write, is its `SV_Target0`, cleared to 0 before the statements run. Reading `SceneColor` while writing it is
+  fine: the pass draws into a scratch texture that is copied back.
+- `View` and `CalcSceneDepth` work from `BeforeBasePass` on. `DreamPassSceneUV(UV)` is the scene textures' UV of
+  the pixel (through `View.ViewRectMin` and `View.BufferSizeAndInvSize`); `DreamPassSample(InColor, UV)` the colour
+  inside the view's picture.
 - Binding names become macros, so they are `PulseTint` and `PulseSpeed`, not `Color` or `Speed` alone, which
   engine headers use.
 - The added light is in pre-exposed scene colour, so it looks the same at any exposure. A volume that overrides
@@ -420,43 +410,44 @@ uniform float Vignette = 0.6;
 pass Crt : fullscreen
 {
     Injection = PostProcess.AfterTonemap;
-    Shader    = "Retro.usf";
-    Entry     = CrtPS;
     read  InColor = SceneColor;
     write Out     = SceneColor;
     param ScanlineAmount = Scanlines;
     param FringePixels   = Fringe;
     param VignetteAmount = Vignette;
-}
-```
 
-```hlsl
-// DShader/Passes/Retro.usf
-void CrtPS(float4 SvPosition : SV_POSITION, out float4 OutColor0 : SV_Target0)
-{
-    const float2 ViewSize   = float2(DP_ViewRect.zw - DP_ViewRect.xy);
-    const float2 ViewportUV = (SvPosition.xy - float2(DP_ViewRect.xy)) / ViewSize;
-    const float2 Centered   = ViewportUV - 0.5;
+    hlsl
+    {
+        // A whole function, the entry by its name: Main.
+        void Main(float4 SvPosition : SV_POSITION, out float4 OutColor0 : SV_Target0)
+        {
+            const float2 ViewSize   = float2(DP_ViewRect.zw - DP_ViewRect.xy);
+            const float2 ViewportUV = (SvPosition.xy - float2(DP_ViewRect.xy)) / ViewSize;
+            const float2 Centered   = ViewportUV - 0.5;
 
-    const float3 Original = InColor.SampleLevel(DP_LinearClamp, DreamPassInputUV(0, ViewportUV), 0).rgb;
+            const float3 Original = DreamPassSample(InColor, ViewportUV).rgb;
 
-    // Red a little outward, blue a little inward, by up to FringePixels at the corners.
-    const float2 Shift = Centered * 2.0 * FringePixels / ViewSize;
-    float3 Crt;
-    Crt.r = InColor.SampleLevel(DP_LinearClamp, DreamPassInputUV(0, ViewportUV + Shift), 0).r;
-    Crt.g = Original.g;
-    Crt.b = InColor.SampleLevel(DP_LinearClamp, DreamPassInputUV(0, ViewportUV - Shift), 0).b;
+            // Red a little outward, blue a little inward, by up to FringePixels at the corners.
+            const float2 Shift = Centered * 2.0 * FringePixels / ViewSize;
+            float3 Crt;
+            Crt.r = DreamPassSample(InColor, ViewportUV + Shift).r;
+            Crt.g = Original.g;
+            Crt.b = DreamPassSample(InColor, ViewportUV - Shift).b;
 
-    // Every other row darker, and the corners darker still.
-    Crt *= 1.0 - ScanlineAmount * fmod(floor(SvPosition.y), 2.0);
-    Crt *= 1.0 - VignetteAmount * saturate(dot(Centered, Centered) * 2.5);
+            // Every other row darker, and the corners darker still.
+            Crt *= 1.0 - ScanlineAmount * fmod(floor(SvPosition.y), 2.0);
+            Crt *= 1.0 - VignetteAmount * saturate(dot(Centered, Centered) * 2.5);
 
-    OutColor0 = float4(lerp(Original, Crt, DP_Weight), 1.0);
+            OutColor0 = float4(lerp(Original, Crt, DP_Weight), 1.0);
+        }
+    }
 }
 ```
 
 Notes:
 
+- A block that holds whole functions is what a `.usf` holds; the one that runs is `Main` unless the pass names
+  another with `Entry`. A pixel pass's `write` gives only a size (`OutSize`) there; the colour is `SV_Target0`.
 - `PostProcess.AfterTonemap` is after the upscaler: `DP_ViewRect` is the output rect and a texel is a screen
   pixel, so every other row is exactly every other row on screen.
 - `DP_Weight` is the pipeline's weight in the view: a volume with `BlendWeight = 0.5`, or one the camera is

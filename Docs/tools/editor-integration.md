@@ -165,6 +165,7 @@ Another pipeline's passes at the same point run before or after these by `Order`
 | bindings | `read …    write …    param …`, in the pass's own order |
 | slot | an HLSL pass only: `compute shader slot C03` or `pixel shader slot P01`. In orange: *no compute shader slot yet: compile the source to give the pass one*, or *…, whose snapshot is missing: compile the source*. In red: a slot number this build does not have, with the count it has |
 | **Open `<file>.usf`** | an HLSL pass whose shader path resolves to a file: opens it in your preferred editor |
+| **Open `<file>.dsp` at line `<n>`** | an HLSL pass whose code is in its `.dsp`: opens the `.dsp` at the pass's `hlsl` block, or at its entry in the file's block |
 | *The runtime skips this pass: see Problems above.* | a pass that fails validation |
 
 ### Buffers

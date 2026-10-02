@@ -157,7 +157,10 @@ activation's `Overrides` is a view into storage the source owns, valid for the c
 The compiled pipeline. Its fields mirror the `.dsp` — `Order`, `DefaultInjection`, `Views`, `Requires`,
 `EnabledParameter`, `Parameters`, `Buffers`, `Passes`, the exported render targets — and `SourceFilePath` and
 `SourceHash` say which source built it. Edit the `.dsp`, not the asset: a compile overwrites it, and an edit made
-in the details panel is a [divergence](../generation/divergence.md) to adopt or discard.
+in the details panel is a [divergence](../generation/divergence.md) to adopt or discard. A pass's HLSL written in the
+`.dsp` is kept in the editor's data only -- `HlslSource` on the pass says where its code is, `InlineHlsl` and
+`InlineHlslLine` hold its own `hlsl` block, and the pipeline's `SharedHlsl` the file's -- for the way back to text:
+what runs is the slot's snapshot, and a cook carries no HLSL text.
 
 | Member | |
 | :-- | :-- |
