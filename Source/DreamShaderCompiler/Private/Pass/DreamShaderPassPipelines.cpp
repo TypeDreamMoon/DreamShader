@@ -32,6 +32,7 @@
 #include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
 #include "UObject/Package.h"
+#include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectGlobals.h"
 
 #define LOCTEXT_NAMESPACE "DreamShader.Pass.Pipelines"
@@ -535,11 +536,14 @@ namespace UE::DreamShader::Editor::Compiler
 				continue;
 			}
 
-			// The emitter's own staging, onto a transient pipeline nobody keeps.
-			UDreamPassPipeline* Staged = NewObject<UDreamPassPipeline>(GetTransientPackage(), NAME_None, RF_Transient);
+			// The emitter's own staging, onto a transient pipeline nobody else keeps -- held strongly, as the emitter holds its own,
+			// so nothing that collects garbage while the slots are checked can take it away.
+			TStrongObjectPtr<UDreamPassPipeline> StagedHolder(NewObject<UDreamPassPipeline>(GetTransientPackage(), NAME_None, RF_Transient));
+			UDreamPassPipeline* Staged = StagedHolder.Get();
 			ON_SCOPE_EXIT
 			{
 				Staged->MarkAsGarbage();
+				StagedHolder.Reset();
 			};
 			if (!BuildDreamPassPipelineFromPayload(Product, *Staged, Diagnostics))
 			{

@@ -37,6 +37,7 @@
 #include "Misc/ScopeExit.h"
 #include "ObjectTools.h"
 #include "UObject/Package.h"
+#include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectGlobals.h"
 
 #define LOCTEXT_NAMESPACE "DreamShader.Emitter.PassPipeline"
@@ -955,13 +956,17 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 
 		// ---- stage: the whole pipeline onto a transient copy, before anything touches the asset
-		UDreamPassPipeline* Staged = NewObject<UDreamPassPipeline>(GetTransientPackage(), NAME_None, RF_Transient);
+		// Held strongly for the whole emit: deleting a stale render target goes through ObjectTools, which collects garbage,
+		// and an unreferenced transient object does not survive that (the editor crashed reading it at the scope exit).
+		TStrongObjectPtr<UDreamPassPipeline> StagedHolder(NewObject<UDreamPassPipeline>(GetTransientPackage(), NAME_None, RF_Transient));
+		UDreamPassPipeline* Staged = StagedHolder.Get();
 		ON_SCOPE_EXIT
 		{
-			if (Staged)
+			if (UDreamPassPipeline* StagedObject = StagedHolder.Get())
 			{
-				Staged->MarkAsGarbage();
+				StagedObject->MarkAsGarbage();
 			}
+			StagedHolder.Reset();
 		};
 		if (!BuildDreamPassPipelineFromPayload(Product, *Staged, Diagnostics))
 		{
