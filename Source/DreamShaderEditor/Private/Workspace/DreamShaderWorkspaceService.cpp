@@ -1444,14 +1444,14 @@ namespace UE::DreamShader::Editor::Private
 		const FPassKeyManifestEntry GFullscreenKeys[] = // I18N-EXEMPT: machine-readable manifest
 		{
 			{ TEXT("Material"), TEXT("material"),   TEXT(""), TEXT("A Post Process material: a bare name built by a .dss under the same root, or an object path. Excludes Shader.") },
-			{ TEXT("Shader"),   TEXT("shader"),     TEXT(""), TEXT("A .usf, relative to the .dsp or a virtual path; runs in a pixel shader slot. Excludes Material.") },
-			{ TEXT("Entry"),    TEXT("identifier"), TEXT(""), TEXT("The shader's entry function. Required with Shader.") },
+			{ TEXT("Shader"),   TEXT("shader"),     TEXT(""), TEXT("A .usf, relative to the .dsp or a virtual path; runs in a pixel shader slot. Excludes Material and an hlsl block.") },
+			{ TEXT("Entry"),    TEXT("identifier"), TEXT(""), TEXT("The entry function: the Shader file's (required with it), the pass's hlsl block's (Main when not written), or alone a function of the file's hlsl block.") },
 		};
 
 		const FPassKeyManifestEntry GComputeKeys[] = // I18N-EXEMPT: machine-readable manifest
 		{
-			{ TEXT("Shader"),   TEXT("shader"),     TEXT(""),                     TEXT("A .usf, relative to the .dsp or a virtual path; runs in a compute shader slot.") },
-			{ TEXT("Entry"),    TEXT("identifier"), TEXT(""),                     TEXT("The shader's entry function.") },
+			{ TEXT("Shader"),   TEXT("shader"),     TEXT(""),                     TEXT("A .usf, relative to the .dsp or a virtual path; runs in a compute shader slot. Excludes an hlsl block.") },
+			{ TEXT("Entry"),    TEXT("identifier"), TEXT(""),                     TEXT("The entry function: the Shader file's (required with it), the pass's hlsl block's (Main when not written), or alone a function of the file's hlsl block.") },
 			{ TEXT("Threads"),  TEXT("uint3"),      TEXT("the entry's [numthreads]"), TEXT("uint3(x, y, z): the thread group size.") },
 			{ TEXT("Dispatch"), TEXT("dispatch"),   TEXT("the first write"),      TEXT("A buffer (one thread per texel), Buffer / n, Buffer * n, or uint3(x, y, z).") },
 		};

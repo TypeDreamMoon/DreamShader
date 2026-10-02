@@ -76,7 +76,7 @@ namespace UE::DreamShader::Editor::Private
 			const TCHAR* Extension = TEXT("");
 		};
 
-		/** The materials and the shader the passes of each template name, which the `.dsp` would not build without. */
+		/** The materials the passes of each template name, which the `.dsp` would not build without. A shader is in the `.dsp`. */
 		TArray<FPipelineCompanionSpec> GetPipelineCompanionSpecs(const ENewPipelineTemplate Template)
 		{
 			switch (Template)
@@ -87,9 +87,8 @@ namespace UE::DreamShader::Editor::Private
 					{ TEXT("NewPipelineMeshMask_Composite.dss"), TEXT("PP_{BASE}Composite"), TEXT("dss") },
 				};
 			case ENewPipelineTemplate::Compute:
-				return {
-					{ TEXT("NewPipelineCompute.usf"), TEXT("{BASE}"), TEXT("usf") },
-				};
+				// Its compute shader is the pass's `hlsl` block: one file.
+				return {};
 			case ENewPipelineTemplate::PostProcess:
 				break;
 			}
@@ -420,7 +419,7 @@ namespace UE::DreamShader::Editor::Private
 				PipelineHint = LOCTEXT("NewPipelineMeshMaskHint", "Written with M_<name>Mask.dss and PP_<name>Composite.dss next to it, the two materials its passes draw (<name> is the name without CP_). The objects it outlines are those added to the list of that name (UDreamPassSubsystem::AddToList).");
 				break;
 			case ENewPipelineTemplate::Compute:
-				PipelineHint = LOCTEXT("NewPipelineComputeHint", "Written with <name>.usf next to it, the compute shader its pass runs (<name> is the name without CP_). The field it writes is exported as a render target any material can read.");
+				PipelineHint = LOCTEXT("NewPipelineComputeHint", "One file: the compute shader its pass runs is written in the pass's hlsl block. The field it writes is exported as a render target any material can read.");
 				break;
 			case ENewPipelineTemplate::PostProcess:
 				PipelineHint = LOCTEXT("NewPipelinePostProcessHint", "Written with PP_<name>.dss next to it, the Post Process material its fullscreen pass draws (<name> is the name without CP_).");

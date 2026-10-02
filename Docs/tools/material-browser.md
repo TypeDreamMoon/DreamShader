@@ -301,15 +301,16 @@ lists and compiles it as it would any save. The menu has three sections:
 | | **Material function (.dsf)** | `NewFunction.dsf` | a `ShaderFunction` block |
 | | **Header (.dsh)** | `NewHeader.dsh` | a header with one `Function` |
 
-A pipeline names the materials and the shader its passes draw, so each pipeline template writes those
-too, next to the `.dsp`, and the `.dsp` builds as soon as it lands. `<Base>` is the name without its
-`CP_` prefix (`CP_Outline` gives `Outline`); a name without the prefix is used as it is.
+A pipeline names the materials its passes draw, so each pipeline template writes those too, next to the
+`.dsp`, and the `.dsp` builds as soon as it lands; a shader is written in the `.dsp` itself. `<Base>` is
+the name without its `CP_` prefix (`CP_Outline` gives `Outline`); a name without the prefix is used as it
+is.
 
 | Template | Also writes, beside the `.dsp` |
 | :-- | :-- |
 | Fullscreen post-process chain | `PP_<Base>.dss` — the Post Process material of the `fullscreen` pass, reading the copy through `UE.UserSceneTexture` |
 | Mesh mask chain | `M_<Base>Mask.dss` — the override material of the `mesh` pass, with `UE.DreamPassOutput` — and `PP_<Base>Composite.dss`, the Post Process material of the outline |
-| Compute chain | `<Base>.usf` — the compute shader, named in the `.dsp` by a path relative to it |
+| Compute chain | nothing: the compute shader is the pass's `hlsl` block ([HLSL passes](../runtime/hlsl.md)) |
 
 The companions are written first, so the watcher finds the materials the `.dsp` names when it compiles
 the pipeline; and all of them or none — a write that fails takes back the files written before it. A
