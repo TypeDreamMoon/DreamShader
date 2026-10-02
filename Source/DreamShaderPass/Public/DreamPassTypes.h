@@ -669,8 +669,11 @@ namespace UE::DreamPass
 	/** Number of UE.DreamPassOutput outputs, and so of a mesh pass's colour targets. */
 	inline constexpr int32 MaxMeshOutputs = 4;
 
-	/** Inputs a fullscreen material pass can bind besides SceneColor: the post-process material input slots 1..4. */
-	inline constexpr int32 MaxMaterialInputs = 4;
+	/**
+	 * The post-process material input slots a fullscreen material pass's buffers go into (kPostProcessMaterialInputCountMax):
+	 * from slot 0 up, skipping each slot the material's own SceneTexture nodes read -- five when it reads no PostProcessInput.
+	 */
+	inline constexpr int32 MaxMaterialInputs = 5;
 
 	/** The fixed parameter block of the HLSL slots (Shaders/Pass/DreamPass.ush). */
 	inline constexpr int32 MaxSlotInputs = 8;
