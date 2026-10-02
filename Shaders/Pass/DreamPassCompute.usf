@@ -1,0 +1,21 @@
+// DreamShader Custom Pass -- the compute shader slots (FDreamPassCS, one permutation per DP_SLOT).
+//
+// What a slot runs comes from the registry the compiler writes: for a slot a pass was given it defines
+// DP_SLOT_DEFINED, maps the pass's names onto DreamPass.ush, renames the pass's entry to DreamPassMainCS and includes
+// the pass's source -- a snapshot taken when the source passed its pre-check, never the file being edited. Every
+// other slot compiles to the empty entry below, so the permutation list is the same in every build, which cooked
+// builds require (a missing global shader permutation is fatal at startup).
+
+#define DP_COMPUTE 1
+
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/SceneTexturesCommon.ush"
+#include "/Plugin/DreamShader/Pass/DreamPass.ush"
+#include "/DreamPassUser/RegistryCompute.ush"
+
+#ifndef DP_SLOT_DEFINED
+[numthreads(1, 1, 1)]
+void DreamPassMainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+}
+#endif
