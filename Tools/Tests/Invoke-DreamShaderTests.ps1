@@ -12,7 +12,8 @@
       Suite   every DreamShader test, -nullrhi. The tests that need a real RHI fail here and are reported
               as expected (see $ExpectedUnderNullRhi), not as failures.
       Fast    the Core-only layers and the Custom Pass logic tests, -nullrhi. Seconds, no assets.
-      Rhi     the tests that render -- Custom Pass render and lifecycle, pixel parity, preview probes --
+      Rhi     the tests that need a renderer -- Custom Pass render and lifecycle, the HLSL slot registry and its
+              pre-check, pixel parity, preview probes --
               with a real RHI (-RenderOffscreen, D3D12, no window).
 
     The report lands in <host>/Saved/DreamShaderTests/<preset>-<stamp>/ (index.json from the engine, the
@@ -59,7 +60,7 @@ $ExpectedMissingContent = @(
 $Presets = @{
     Suite = @{ Filter = 'DreamShader'; Rhi = $false }
     Fast  = @{ Filter = 'DreamShader.Lang+DreamShader.Lang2+DreamShader.Pass.Logic'; Rhi = $false }
-    Rhi   = @{ Filter = 'DreamShader.Pass.Render+DreamShader.Pass.Lifecycle+DreamShader.Render+DreamShader.Preview'; Rhi = $true }
+    Rhi   = @{ Filter = 'DreamShader.Pass.Render+DreamShader.Pass.Lifecycle+DreamShader.Compiler2.Pipeline.Registry+DreamShader.Render+DreamShader.Preview'; Rhi = $true }
 }
 
 # ------------------------------------------------------------------------------------------ inputs
