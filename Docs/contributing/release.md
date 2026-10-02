@@ -53,9 +53,9 @@ first, commit, then tag.
 | 6 | On a tag push, the pushed tag must equal the derived tag. On a manual run, a non-empty `version` input must equal the slug. |
 | 7 | Export `DREAMSHADER_VERSION`, `DREAMSHADER_BASE`, `DREAMSHADER_SLUG`, `DREAMSHADER_TAG` and `DREAMSHADER_PRERELEASE` for the later steps. |
 
-For the current descriptor — `VersionName` `2.0.1`, `IsBetaVersion` `false`, `Version` `201` —
-this yields base `2.0.1`, slug `2.0.1`, tag `v2.0.1`, pre-release `false`, and the archive
-`DreamShader-2.0.1.zip`.
+For the current descriptor — `VersionName` `2.0.2`, `IsBetaVersion` `false`, `Version` `202` —
+this yields base `2.0.2`, slug `2.0.2`, tag `v2.0.2`, pre-release `false`, and the archive
+`DreamShader-2.0.2.zip`.
 
 > [!NOTE]
 > `Version` (the integer, `180`) is never read by the workflow. It is the descriptor's own numeric

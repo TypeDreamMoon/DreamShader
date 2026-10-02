@@ -9,7 +9,7 @@ lives.
 | :-- | :-- |
 | Repository | <https://github.com/TypeDreamMoon/DreamShader> |
 | Kind | contributor reference |
-| Plugin version | `2.0.1` — descriptor `Version` `201`, `IsBetaVersion` `false` |
+| Plugin version | `2.0.2` — descriptor `Version` `202`, `IsBetaVersion` `false` |
 | Engines | Unreal Engine `5.3` – `5.8`, Win64 verified |
 | License | MIT |
 
@@ -196,10 +196,10 @@ The full UAT log of every engine is kept under `<Package>\Logs\<Engine>.log`, pa
 
 | Engine | Status |
 | :-- | :-- |
-| `5.8` | Verified with `RunUAT BuildPlugin` (`2.0.1`) |
-| `5.7` | Verified with `RunUAT BuildPlugin` through `1.8.0`; not re-run for `2.0.0` or `2.0.1`, whose gates are written so that 5.7 needs no answer of its own — see [Asked of the type](../api/version-compat.md#asked-of-the-type) |
-| `5.6` | Verified with `RunUAT BuildPlugin` (`2.0.0`); not re-run for `2.0.1`, whose two new engine headers are asked for with `__has_include` — see [Asked of the type](../api/version-compat.md#asked-of-the-type) |
-| `5.5` | Verified with `RunUAT BuildPlugin` (`2.0.0`); not re-run for `2.0.1`, whose two new engine headers are asked for with `__has_include` — see [Asked of the type](../api/version-compat.md#asked-of-the-type) |
+| `5.8` | Verified with `RunUAT BuildPlugin` (`2.0.2`) |
+| `5.7` | Verified with `RunUAT BuildPlugin` through `1.8.0`; not re-run for `2.0.0`, `2.0.1` or `2.0.2`, whose gates are written so that 5.7 needs no answer of its own — see [Asked of the type](../api/version-compat.md#asked-of-the-type) |
+| `5.6` | Verified with `RunUAT BuildPlugin` (`2.0.0`); not re-run for `2.0.1` or `2.0.2`. `2.0.1`'s two new engine headers are asked for with `__has_include`, and `2.0.2` adds no engine-version gate — see [Asked of the type](../api/version-compat.md#asked-of-the-type) |
+| `5.5` | Verified with `RunUAT BuildPlugin` (`2.0.0`); not re-run for `2.0.1` or `2.0.2`. `2.0.1`'s two new engine headers are asked for with `__has_include`, and `2.0.2` adds no engine-version gate — see [Asked of the type](../api/version-compat.md#asked-of-the-type) |
 | `5.4` | Source-compatible; see the toolchain warning below |
 | `5.3` | Source-compatible; see the toolchain warning below |
 

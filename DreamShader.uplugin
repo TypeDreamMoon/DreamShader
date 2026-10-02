@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
-	"Version": 201,
-	"VersionName": "2.0.1",
+	"Version": 202,
+	"VersionName": "2.0.2",
 	"FriendlyName": "DreamShader",
 	"Description": "Author Unreal materials, material functions and material instances as text: DreamShaderLang .dss / .dsi sources, and the 1.x .dsm / .dsf / .dsh, compile to standard UMaterial, UMaterialFunction and UMaterialInstanceConstant assets.",
 	"Category": "DreamPlugin",
