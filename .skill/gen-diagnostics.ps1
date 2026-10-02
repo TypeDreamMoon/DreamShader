@@ -70,7 +70,13 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
     # RaiseGenerationWarning(TEXT("DSHnnnn"), ...) is advisory and joins the result's `Warnings:`
     # block (since 1.9.0: DSH9011, DSH9012, DSH8155). A code raised through both keeps the first
     # severity it was seen with, which the site order below makes 'error'.
-    $messageTail = '(.{0,500}?)(?:LOCTEXT\(\s*"[A-Za-z0-9_]+"\s*,\s*"((?:[^"\\]|\\.)*)"\)|TEXT\("((?:[^"\\]|\\.)*)"\)|;)'
+    #
+    # A TEXT("...") that is the argument of SpanOf( is not a message: the `.dsp` binder places a
+    # diagnostic at the line that set a key, Keys.SpanOf(TEXT("Entry"), Fallback), between the code
+    # and the message. The lookbehind skips it, and the scan goes on to the message after it; no
+    # other site has a TEXT( right after `SpanOf(`, so nothing else extracts differently.
+    $plainText = '(?<!SpanOf\(\s*)TEXT\("((?:[^"\\]|\\.)*)"\)'
+    $messageTail = '(.{0,500}?)(?:LOCTEXT\(\s*"[A-Za-z0-9_]+"\s*,\s*"((?:[^"\\]|\\.)*)"\)|' + $plainText + '|;)'
     $raiseSites = @(
         @{ Severity = 'error';   Pattern = 'FailWith\(\s*\w+\s*,\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
         @{ Severity = 'warning'; Pattern = 'RaiseGenerationWarning\(\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
@@ -100,7 +106,7 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Include '*.cpp', '*.h'
         @{ Severity = 'error';   Pattern = 'AddDecompileServiceError\(\s*\w+\s*,\s*TEXT\("(DSH\d{4})"\)' + $messageTail }
         # ... and one diagnostic is filled in field by field: `Warning.Code = TEXT("DSHnnnn");` with the
         # message a few lines further down, past that statement's own `;`.
-        @{ Severity = 'warning'; Pattern = 'Warning\.Code\s*=\s*TEXT\("(DSH\d{4})"\)\s*;(.{0,600}?)(?:LOCTEXT\(\s*"[A-Za-z0-9_]+"\s*,\s*"((?:[^"\\]|\\.)*)"\)|TEXT\("((?:[^"\\]|\\.)*)"\))' }
+        @{ Severity = 'warning'; Pattern = 'Warning\.Code\s*=\s*TEXT\("(DSH\d{4})"\)\s*;(.{0,600}?)(?:LOCTEXT\(\s*"[A-Za-z0-9_]+"\s*,\s*"((?:[^"\\]|\\.)*)"\)|' + $plainText + ')' }
         # ... and through the parser's cursor helpers, which supply the "Expected X, found Y." frame
         # and take only the X fragment at the site:
         #   Expect(Kind, TEXT("DSHnnnn"), LOCTEXT("Key", "';' after the field"))
