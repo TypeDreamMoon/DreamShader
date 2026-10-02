@@ -1,0 +1,13 @@
+// WindField.usf -- CP_WindField's step: last frame's field advected along the wind and pulled toward a gusty target.
+[numthreads(8, 8, 1)]
+void WindCS(uint3 Id : SV_DispatchThreadID)
+{
+    if (any(Id.xy >= DP_DispatchSize.xy))
+    {
+        return;
+    }
+    const float2 UV   = (Id.xy + 0.5) * ResultSize.zw;
+    const float2 Prev = Previous.SampleLevel(DP_LinearClamp, UV - Direction * 0.002, 0).xy;
+    const float  N    = frac(sin(dot(UV + DP_Time.x * 0.05, float2(12.9898, 78.233))) * 43758.5453);
+    Result[Id.xy] = float4(lerp(Prev, Direction * (1.0 + (N - 0.5) * Strength), 0.05), 0, 0);
+}

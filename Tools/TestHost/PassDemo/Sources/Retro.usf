@@ -1,0 +1,22 @@
+// Retro.usf -- CP_Retro's CRT, on the tonemapped picture at output resolution.
+void CrtPS(float4 SvPosition : SV_POSITION, out float4 OutColor0 : SV_Target0)
+{
+    const float2 ViewSize   = float2(DP_ViewRect.zw - DP_ViewRect.xy);
+    const float2 ViewportUV = (SvPosition.xy - float2(DP_ViewRect.xy)) / ViewSize;
+    const float2 Centered   = ViewportUV - 0.5;
+
+    const float3 Original = InColor.SampleLevel(DP_LinearClamp, DreamPassInputUV(0, ViewportUV), 0).rgb;
+
+    // Red a little outward, blue a little inward, by up to FringePixels at the corners.
+    const float2 Shift = Centered * 2.0 * FringePixels / ViewSize;
+    float3 Crt;
+    Crt.r = InColor.SampleLevel(DP_LinearClamp, DreamPassInputUV(0, ViewportUV + Shift), 0).r;
+    Crt.g = Original.g;
+    Crt.b = InColor.SampleLevel(DP_LinearClamp, DreamPassInputUV(0, ViewportUV - Shift), 0).b;
+
+    // Every other row darker, and the corners darker still.
+    Crt *= 1.0 - ScanlineAmount * fmod(floor(SvPosition.y), 2.0);
+    Crt *= 1.0 - VignetteAmount * saturate(dot(Centered, Centered) * 2.5);
+
+    OutColor0 = float4(lerp(Original, Crt, DP_Weight), 1.0);
+}

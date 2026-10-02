@@ -1,0 +1,11 @@
+// M_DemoWindView.dss -- CP_WindField's field shown on a panel: x in red, y in green, 0 at mid grey.
+#pragma material(ShadingModel = Unlit)
+
+uniform float Brightness = 1.0;
+
+export void M_DemoWindView(inout material m)
+{
+    float2 UV = UE.TexCoord(Index = 0);
+    float2 Wind = UE.DreamPassBuffer(Pipeline = "CP_WindField", Buffer = "Wind", Coordinates = UV).rg;
+    m.EmissiveColor = float3(Wind * 0.5 + 0.5, 0.25) * Brightness;
+}

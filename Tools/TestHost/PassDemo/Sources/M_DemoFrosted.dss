@@ -1,0 +1,17 @@
+// M_DemoFrosted.dss -- a monitor in the world showing CP_UIBackdrop's export: the frame after tonemapping, downsampled
+// and blurred, read by an ordinary material through UE.DreamPassBuffer at the panel's own UVs. (The export is for UI,
+// which draws after the scene; a world-space glass that sampled it at its screen position would see itself.)
+#pragma material(ShadingModel = Unlit)
+
+uniform float3 Tint = float3(0.9, 0.95, 1.0);
+uniform float  Gain = 0.9;
+uniform float  FrameWidth = 0.02;
+
+export void M_DemoFrosted(inout material m)
+{
+    float2 UV = UE.TexCoord(Index = 0);
+    float3 Back = UE.DreamPassBuffer(Pipeline = "CP_UIBackdrop", Buffer = "Quarter", Coordinates = UV).rgb;
+    float2 Edge = min(UV, 1.0 - UV);
+    float Frame = step(min(Edge.x, Edge.y), FrameWidth);
+    m.EmissiveColor = lerp(Back * Tint * Gain, float3(1.0, 1.0, 1.0), Frame);
+}

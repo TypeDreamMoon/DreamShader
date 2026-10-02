@@ -1,0 +1,14 @@
+// PP_XRayComposite.dss -- CP_XRay's composite: tint where the object is farther than what the scene shows.
+#pragma material(Domain = PostProcess, BlendableLocation = SceneColorAfterDOF)
+
+uniform float4 Tint = float4(0.2, 0.8, 1.0, 0.6);
+
+export void PP_XRayComposite(inout material m)
+{
+    float2 UV     = UE.ScreenPosition().ViewportUV;
+    float3 Scene  = UE.SceneTexture(SceneTextureId = PostProcessInput0, Coordinates = UV).Color.rgb;
+    float  Depth  = UE.SceneTexture(SceneTextureId = SceneDepth,        Coordinates = UV).Color.r;
+    float2 Sil    = UE.UserSceneTexture(UserSceneTexture = "Silhouette", Coordinates = UV).Color.rg;
+    float  Hidden = Sil.r * step(Depth + 1.0, Sil.g);
+    m.EmissiveColor = lerp(Scene, Tint.rgb, Hidden * Tint.a);
+}

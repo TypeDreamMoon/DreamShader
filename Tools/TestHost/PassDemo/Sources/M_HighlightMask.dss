@@ -1,0 +1,8 @@
+// M_HighlightMask.dss -- CP_Highlight's override material: 1 wherever a highlighted object is.
+#pragma material(ShadingModel = Unlit, bUsedWithSkeletalMesh = true, bUsedWithInstancedStaticMeshes = true)
+
+export void M_HighlightMask(inout material m)
+{
+    m.EmissiveColor = float3(0, 0, 0);
+    UE.DreamPassOutput(Output0 = float4(1, 0, 0, 0));
+}

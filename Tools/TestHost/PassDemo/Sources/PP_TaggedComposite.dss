@@ -1,0 +1,14 @@
+// PP_TaggedComposite.dss -- CP_Tagged's composite: a soft tint over the whole object, bright stripes on top.
+#pragma material(Domain = PostProcess, BlendableLocation = SceneColorAfterDOF)
+
+uniform float4 Tint = float4(0.2, 1.0, 0.3, 1.0);
+uniform float  DreamPassWeight = 1.0;
+
+export void PP_TaggedComposite(inout material m)
+{
+    float2 UV    = UE.ScreenPosition().ViewportUV;
+    float3 Scene = UE.SceneTexture(SceneTextureId = PostProcessInput0, Coordinates = UV).Color.rgb;
+    float4 Tag   = UE.UserSceneTexture(UserSceneTexture = "Tag", Coordinates = UV).Color;
+    float  Amount = (Tag.g * 0.25 + Tag.r * 0.75) * Tint.a * DreamPassWeight;
+    m.EmissiveColor = lerp(Scene, Tint.rgb, Amount);
+}

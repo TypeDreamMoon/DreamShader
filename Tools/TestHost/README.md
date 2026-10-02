@@ -74,6 +74,9 @@ pwsh -NoProfile -File <host>\Plugins\DreamShader\Tools\Tests\Invoke-DreamShaderT
 engine before 5.8 would, with the Custom Pass renderer compiled out; the next build without it puts the
 renderer back.
 
+`PassDemo/Build-PassDemo.ps1 -Shots` builds a level with seven Custom Pass pipelines and renders each in a game
+window; see [PassDemo/README.md](PassDemo/README.md).
+
 The editor target uses the **shared** build environment: the engine's own modules are linked as they are,
 and only the host module and the plugin are compiled. Never build the game target casually: a game target
 is monolithic and compiles its own copy of every engine module it uses.

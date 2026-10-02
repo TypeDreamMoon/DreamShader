@@ -1,0 +1,4 @@
+// MI_DemoRed.dsi -- the enemies behind the wall.
+#pragma instance(Parent = "M_DemoSurface")
+
+uniform float3 BaseTint = float3(0.8, 0.06, 0.05);

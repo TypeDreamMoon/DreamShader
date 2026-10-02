@@ -1,0 +1,15 @@
+// M_DemoTagged.dss -- a gold surface that also writes CP_Tagged's data: CP_Tagged's mesh pass draws the tagged objects
+// with their own material (Mode = Own), and this is that material's UE.DreamPassOutput -- moving diagonal stripes.
+uniform float3 BaseTint = float3(0.9, 0.7, 0.2);
+uniform float  StripeSize = 40.0;
+uniform float  StripeSpeed = 0.5;
+
+export void M_DemoTagged(inout material m)
+{
+    m.BaseColor = BaseTint;
+    m.Roughness = 0.35;
+    m.Metallic = 1.0;
+    float3 P = UE.WorldPosition();
+    float Stripe = step(0.5, frac((P.x + P.y + P.z) / StripeSize + UE.Time() * StripeSpeed));
+    UE.DreamPassOutput(Output0 = float4(Stripe, 1.0, 0.0, 1.0));
+}

@@ -1,0 +1,4 @@
+// MI_DemoOrange.dsi -- the highlighted cube.
+#pragma instance(Parent = "M_DemoSurface")
+
+uniform float3 BaseTint = float3(0.9, 0.35, 0.08);

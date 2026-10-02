@@ -1,0 +1,14 @@
+// M_DemoFoliage.dss -- grass blades bent by CP_WindField's exported field, sampled in the vertex shader.
+uniform float3 BaseTint = float3(0.2, 0.55, 0.12);
+uniform float  Bend = 40.0;
+uniform float  BladeHeight = 150.0;
+
+export void M_DemoFoliage(inout material m)
+{
+    m.BaseColor = BaseTint;
+    m.Roughness = 0.6;
+    float3 P = UE.WorldPosition();
+    float Height = saturate(P.z / BladeHeight);
+    float2 Wind = UE.DreamPassBuffer(Pipeline = "CP_WindField", Buffer = "Wind", Coordinates = P.xy / 5000.0).rg;
+    m.WorldPositionOffset = float3(Wind * Height * Bend, 0.0);
+}

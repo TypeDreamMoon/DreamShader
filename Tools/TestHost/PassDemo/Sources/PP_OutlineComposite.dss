@@ -1,0 +1,15 @@
+// PP_OutlineComposite.dss -- CP_Highlight's composite: the blurred mask outside the sharp one is the outline.
+#pragma material(Domain = PostProcess, BlendableLocation = SceneColorAfterDOF)
+
+uniform float4 Color = float4(1, 0.6, 0, 1);
+uniform float  DreamPassWeight = 1.0;
+
+export void PP_OutlineComposite(inout material m)
+{
+    float2 UV     = UE.ScreenPosition().ViewportUV;
+    float3 Scene  = UE.SceneTexture(SceneTextureId = PostProcessInput0, Coordinates = UV).Color.rgb;
+    float  Inside = UE.UserSceneTexture(UserSceneTexture = "Mask",    Coordinates = UV).Color.r;
+    float  Halo   = UE.UserSceneTexture(UserSceneTexture = "Blurred", Coordinates = UV).Color.r;
+    float  Edge   = saturate(Halo * 4.0) * (1.0 - Inside);
+    m.EmissiveColor = lerp(Scene, Color.rgb, Edge * Color.a * DreamPassWeight);
+}

@@ -1,0 +1,24 @@
+// Scanner.usf -- CP_Scanner's pulse. The front is at the distance a pulse has travelled from the camera; every pixel
+// the front has passed gets the trail, the pixels at the front the bright edge.
+void PulsePS(float4 SvPosition : SV_POSITION, out float4 OutColor0 : SV_Target0)
+{
+    const float2 ViewSize   = float2(DP_ViewRect.zw - DP_ViewRect.xy);
+    const float2 ViewportUV = (SvPosition.xy - float2(DP_ViewRect.xy)) / ViewSize;
+    const float3 Scene      = InColor.SampleLevel(DP_PointClamp, DreamPassInputUV(0, ViewportUV), 0).rgb;
+
+    // The scene depth at this pixel, and from it the distance from the camera along the view ray.
+    const float2 BufferUV  = (View.ViewRectMin.xy + ViewportUV * View.ViewSizeAndInvSize.xy) * View.BufferSizeAndInvSize.zw;
+    const float  Depth     = CalcSceneDepth(BufferUV);
+    const float2 ScreenPos = ViewportUVToScreenPos(ViewportUV);
+    const float3 Position  = mul(float4(ScreenPos * Depth, Depth, 1), View.ScreenToTranslatedWorld).xyz;
+    const float  Distance  = length(Position - View.TranslatedWorldCameraOrigin);
+
+    const float Front  = frac(DP_Time.x * PulseSpeed / PulseRange) * PulseRange;
+    const float Behind = Front - Distance;
+    const float Trail  = Behind > 0.0 ? exp(-Behind / (PulseWidth * 3.0)) * 0.35 : 0.0;
+    const float Edge   = saturate(1.0 - abs(Behind) / PulseWidth);
+    const float Fade   = 1.0 - saturate(Front / PulseRange);
+
+    const float Amount = (Trail + Edge * Edge) * Fade * PulseTint.a * DP_Weight;
+    OutColor0 = float4(Scene + PulseTint.rgb * Amount, 1.0);
+}

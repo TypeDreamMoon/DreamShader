@@ -1,0 +1,11 @@
+// M_DemoSurface.dss -- the demo's plain lit surface; the MI_Demo*.dsi instances colour it.
+uniform float3 BaseTint = float3(0.8, 0.8, 0.8);
+uniform float  Rough = 0.5;
+uniform float  Metal = 0.0;
+
+export void M_DemoSurface(inout material m)
+{
+    m.BaseColor = BaseTint;
+    m.Roughness = Rough;
+    m.Metallic = Metal;
+}

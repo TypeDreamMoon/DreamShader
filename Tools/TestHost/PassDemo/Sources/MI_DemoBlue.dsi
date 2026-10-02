@@ -1,0 +1,5 @@
+// MI_DemoBlue.dsi -- the highlighted sphere at the wall.
+#pragma instance(Parent = "M_DemoSurface")
+
+uniform float3 BaseTint = float3(0.1, 0.3, 0.9);
+uniform float Rough = 0.3;

@@ -1,0 +1,5 @@
+// MI_DemoWall.dsi -- the wall.
+#pragma instance(Parent = "M_DemoSurface")
+
+uniform float3 BaseTint = float3(0.55, 0.52, 0.48);
+uniform float Rough = 0.85;
