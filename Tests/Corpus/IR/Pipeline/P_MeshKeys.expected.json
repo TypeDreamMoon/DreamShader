@@ -1,0 +1,25 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH7357"
+	],
+	"infosContain": [
+		"DSH7360"
+	],
+	"ir": "module \"P_MeshKeys.dsp\"\n\nproduct 0 PassPipeline \"P_MeshKeys\"\n  pipeline order=0 injection=BeforePostProcess views=Game|Editor requires=- enabled=-\n  buffer \"Depth\" Depth32 resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  buffer \"Data\" RG16F resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  pass \"Draw\" mesh injection=BeforeBasePass\n    material \"M_Data\" object=\"\"\n    filter Layer(Highlight)\n    mesh mode=OwnOrOverride depth=Own(Depth) cull=Front blend=AlphaBlend usage=StaticMesh|SplineMesh|GeometryCache nanite=AssignStencil assign=200 naniteValue=(0.5, 0.25, 0, 1)\n    write Output1 = Data\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_MeshKeys"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

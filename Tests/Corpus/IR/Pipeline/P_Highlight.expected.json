@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7354",
+		"DSH7360"
+	],
+	"ir": "module \"P_Highlight.dsp\"\n\nproduct 0 PassPipeline \"P_Highlight\"\n  pipeline order=100 injection=BeforePostProcess views=Game|Editor requires=- enabled=-\n  parameter \"OutlineColor\" float4 default=(1, 0.6, 0, 1) group=\"Look\"\n  parameter \"OutlineWidth\" float default=3 group=\"Look\" slider=(1, 8)\n  buffer \"Mask\" R8 resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1 desc=\"What the objects cover.\"\n  buffer \"Blurred\" R8 resolution=Render scale=0.5 (inferred) clear=(0, 0, 0, 0) mips=1 export desc=\"The blurred mask; the ground material reads it too.\"\n  pass \"DrawMask\" mesh injection=AfterOpaque desc=\"No depth test: the outline shows through walls.\"\n    material \"M_HighlightMask\" object=\"\"\n    filter Layer(Highlight)\n    mesh mode=Override depth=None cull=Auto blend=Replace usage=default nanite=Skip\n    write Output0 = Mask\n  pass \"Blur\" compute injection=AfterOpaque\n    shader \"BoxBlur.usf\" virtual=\"\" entry=BlurCS\n    threads=(8, 8, 1) (from the shader) dispatch=Blurred * 1\n    read Source = Mask\n    write Result = Blurred\n    param Radius = OutlineWidth * 1 + 0\n  pass \"Composite\" fullscreen injection=BeforePostProcess\n    material \"PP_OutlineComposite\" object=\"\"\n    read Mask = Mask\n    read Blurred = Blurred\n    write SceneColor = SceneColor\n    param Color = OutlineColor * 1 + 0\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_Highlight"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

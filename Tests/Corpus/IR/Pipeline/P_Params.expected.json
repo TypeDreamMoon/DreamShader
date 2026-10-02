@@ -1,0 +1,25 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH7357"
+	],
+	"infosContain": [
+		"DSH7360"
+	],
+	"ir": "module \"P_Params.dsp\"\n\nproduct 0 PassPipeline \"P_Params\"\n  pipeline order=0 injection=BeforePostProcess views=Game|Editor requires=- enabled=-\n  parameter \"Width\" float default=2\n  parameter \"Tint\" float4 default=(1, 0.5, 0.25, 1)\n  parameter \"Taps\" int default=4\n  buffer \"Out\" RGBA16F resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  pass \"Blur\" compute injection=BeforePostProcess\n    shader \"Blur.usf\" virtual=\"\" entry=MainCS\n    threads=(8, 8, 1) (from the shader) dispatch=Out * 1\n    write Result = Out\n    param A = Width * 2 + 1\n    param B = Width * 0.25 + -0.25\n    param C = Width * -1 + 0\n    param D = Width * -1 + 1\n    param E = Weight * 0.5 + 0\n    param F = float 6\n    param G = float3 (1, 0.5, 0.25)\n    param H = int 7\n    param I = bool true\n    param J = Tint * 1 + 0\n    param K = Taps * 1 + 1\n    param L = Width * 2 + 0\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_Params"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

@@ -1,0 +1,22 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7360"
+	],
+	"ir": "module \"P_Dispatch.dsp\"\n\nproduct 0 PassPipeline \"P_Dispatch\"\n  pipeline order=0 injection=BeforePostProcess views=Game|Editor requires=- enabled=-\n  buffer \"Big\" RGBA16F resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  buffer \"Small\" RGBA16F resolution=Render scale=0.5 (inferred) clear=(0, 0, 0, 0) mips=1\n  pass \"Fill\" compute injection=BeforePostProcess\n    shader \"/Project/Passes/Fill.usf\" virtual=\"/Project/Passes/Fill.usf\" entry=FillCS\n    threads=(4, 4, 4) dispatch=(64, 32, 2)\n    write Result = Big\n  pass \"Halved\" compute injection=BeforePostProcess\n    shader \"Down.usf\" virtual=\"\" entry=DownCS\n    threads=(8, 8, 1) (from the shader) dispatch=Big * 0.5\n    read Source = Big\n    write Result = Small\n  pass \"Scaled\" compute injection=BeforePostProcess\n    shader \"Down.usf\" virtual=\"\" entry=UpCS\n    threads=(16, 4, 1) dispatch=Small * 0.25\n    read Source = Small\n    write Result = Big\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_Dispatch"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

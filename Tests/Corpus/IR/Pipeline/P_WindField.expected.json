@@ -1,0 +1,22 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7360"
+	],
+	"ir": "module \"P_WindField.dsp\"\n\nproduct 0 PassPipeline \"P_WindField\"\n  pipeline order=0 injection=BeforePostProcess views=Game|Editor requires=- enabled=-\n  parameter \"WindDirection\" float2 default=(1, 0)\n  parameter \"Gust\" float default=0.5 slider=(0, 2)\n  buffer \"Wind\" RG16F resolution=Fixed size=256x256 clear=(0, 0, 0, 0) mips=1 history export desc=\"xy = the wind vector; tiles world XY every 50 m.\"\n  pass \"Simulate\" compute injection=BeginView\n    shader \"WindField.usf\" virtual=\"\" entry=WindCS\n    threads=(8, 8, 1) (from the shader) dispatch=Wind * 1\n    read Previous = Wind.Previous\n    write Result = Wind\n    param Direction = WindDirection * 1 + 0\n    param Strength = Gust * 1 + 0\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_WindField"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

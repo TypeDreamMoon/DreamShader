@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7354",
+		"DSH7360"
+	],
+	"ir": "module \"P_ClearCopy.dsp\"\n\nproduct 0 PassPipeline \"P_ClearCopy\"\n  pipeline order=0 injection=BeforePostProcess views=Game|Editor requires=- enabled=-\n  buffer \"Field\" RGBA16F resolution=Render scale=1 (inferred) clear=None mips=1 history\n  buffer \"Grey\" R16F resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  buffer \"Spot\" RGBA8 resolution=Render scale=1 (inferred) clear=(1, 0.5, 0.25, 0) mips=1 export\n  pass \"Fill\" clear injection=AfterOpaque\n    value=(0.5, 0.5, 0.5, 0.5)\n    write Grey = Grey\n  pass \"Mark\" clear injection=AfterOpaque\n    value=(1, 0, 0, 1)\n    write Field = Field\n  pass \"Keep\" copy injection=BeforePostProcess\n    read Field = Field.Previous\n    write Spot = Spot\n  pass \"Show\" copy injection=BeforePostProcess\n    read Grey = Grey\n    write SceneColor = SceneColor\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_ClearCopy"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

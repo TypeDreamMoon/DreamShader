@@ -1,0 +1,25 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH7357"
+	],
+	"infosContain": [
+		"DSH7360"
+	],
+	"ir": "module \"P_Filters.dsp\"\n\nproduct 0 PassPipeline \"P_Filters\"\n  pipeline order=0 injection=BeforePostProcess views=Game|Editor requires=- enabled=-\n  buffer \"Mask\" R8 resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  pass \"ByStencil\" mesh injection=AfterOpaque\n    filter Stencil(4, 15) | Stencil(8, 255)\n    mesh mode=Own depth=TestScene cull=Auto blend=Replace usage=default nanite=StencilMask naniteValue=(1, 0, 0, 0)\n    write Output0 = Mask\n  pass \"ByLayer\" mesh injection=AfterOpaque\n    filter Layer(A | B) & Stencil(1, 255) | List(Enemies) & Stencil(1, 255)\n    mesh mode=Own depth=TestScene cull=Auto blend=Replace usage=default nanite=StencilMask naniteValue=(1, 0, 0, 0)\n    write Output0 = Mask\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_Filters"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}
