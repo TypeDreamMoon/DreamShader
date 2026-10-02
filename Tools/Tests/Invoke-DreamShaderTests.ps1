@@ -16,6 +16,12 @@
               pre-check, pixel parity, preview probes --
               with a real RHI (-RenderOffscreen, D3D12, no window).
 
+    -WithoutCustomPass builds the plugin the way an engine before 5.8 builds it -- the Custom Pass asset types
+    without the renderer half -- so one 5.8 machine tests both sides of DREAMSHADER_WITH_CUSTOM_PASS. The
+    next build without it puts the renderer back; nothing else needs resetting. Before running, the script
+    reads which of the two the binaries are and stops if that is not the one asked for (say, -NoBuild after
+    a build of the other kind).
+
     The report lands in <host>/Saved/DreamShaderTests/<preset>-<stamp>/ (index.json from the engine, the
     editor log, and summary.txt). The exit code is the number of unexpected failures, capped at 100;
     a run that produced no report exits 101.
@@ -25,6 +31,9 @@
 
 .EXAMPLE
     pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Rhi -NoBuild -Filter DreamShader.Pass.Render.Highlight
+
+.EXAMPLE
+    pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Fast -WithoutCustomPass
 #>
 [CmdletBinding()]
 param(
@@ -39,6 +48,9 @@ param(
     [string]$Engine,
 
     [switch]$NoBuild,
+
+    # Builds with -ProjectDefine:DREAMSHADER_FORCE_NO_CUSTOM_PASS: DREAMSHADER_WITH_CUSTOM_PASS is 0 on any engine.
+    [switch]$WithoutCustomPass,
 
     # Extra arguments for the editor, e.g. -DreamShaderUpdateGolden.
     [string[]]$ExtraArguments = @()
@@ -88,7 +100,6 @@ $RunFilter = if ([string]::IsNullOrWhiteSpace($Filter)) { $Settings.Filter } els
 
 $Stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $ReportDir = Join-Path $ProjectDir "Saved\DreamShaderTests\$Preset-$Stamp"
-New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
 $LogPath = Join-Path $ReportDir 'Editor.log'
 
 Write-Host "DreamShader tests -- $Preset"
@@ -101,13 +112,47 @@ Write-Host "  report   $ReportDir"
 if (-not $NoBuild)
 {
     $BuildBat = Join-Path $Engine 'Engine\Build\BatchFiles\Build.bat'
+    $BuildArguments = @("${ProjectName}Editor", 'Win64', 'Development', "-Project=$Project", '-WaitMutex', '-NoHotReloadFromIDE', '-NoEngineChanges')
+    if ($WithoutCustomPass) { $BuildArguments += '-ProjectDefine:DREAMSHADER_FORCE_NO_CUSTOM_PASS' }
     $Started = Get-Date
-    & $BuildBat "${ProjectName}Editor" Win64 Development "-Project=$Project" -WaitMutex -NoHotReloadFromIDE -NoEngineChanges
+    & $BuildBat @BuildArguments
     if ($LASTEXITCODE -ne 0) { throw "Build failed (exit $LASTEXITCODE)." }
     Write-Host ("  built in {0:N0} s" -f ((Get-Date) - $Started).TotalSeconds)
 }
 
+# ------------------------------------------------------------------------------------- custom pass
+# Which side of DREAMSHADER_WITH_CUSTOM_PASS the binaries about to run are on, read from the definitions UBT wrote
+# for DreamShaderPass rather than assumed from this run's switches: -NoBuild runs whatever the last build left.
+$CustomPassBuilt = $null
+$Uplugin = Get-ChildItem -Path (Join-Path $ProjectDir 'Plugins') -Filter 'DreamShader.uplugin' -Recurse -Depth 3 -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+if ($Uplugin)
+{
+    $Header = @('Intermediate\Build\Win64\x64\UnrealEditor\Development', 'Intermediate\Build\Win64\UnrealEditor\Development') |
+        ForEach-Object { Join-Path $Uplugin.DirectoryName "$_\DreamShaderPass\Definitions.DreamShaderPass.h" } |
+        Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($Header)
+    {
+        $Match = Select-String -Path $Header -Pattern '^#define DREAMSHADER_WITH_CUSTOM_PASS (\d)' | Select-Object -First 1
+        if ($Match) { $CustomPassBuilt = $Match.Matches[0].Groups[1].Value -eq '1' }
+    }
+}
+$Version = Get-Content (Join-Path $Engine 'Engine\Build\Build.version') -Raw | ConvertFrom-Json
+$EngineHasCustomPass = $Version.MajorVersion -gt 5 -or ($Version.MajorVersion -eq 5 -and $Version.MinorVersion -ge 8)
+
+if ($WithoutCustomPass -and $CustomPassBuilt -eq $true)
+{
+    throw 'DreamShaderPass was built with the Custom Pass renderer, not -WithoutCustomPass; run without -NoBuild.'
+}
+if (-not $WithoutCustomPass -and $CustomPassBuilt -eq $false -and $EngineHasCustomPass)
+{
+    throw 'DreamShaderPass was built -WithoutCustomPass; run without -NoBuild to build the Custom Pass renderer back in.'
+}
+$CustomPassState = if ($null -eq $CustomPassBuilt) { 'unknown' } elseif ($CustomPassBuilt) { 'compiled in' } else { 'compiled out' }
+Write-Host "  custom pass  $CustomPassState"
+
 # --------------------------------------------------------------------------------------------- run
+New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
 $EditorCmd = Join-Path $Engine 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
 $Arguments = @(
     "`"$Project`"",
@@ -163,6 +208,7 @@ foreach ($Test in $Index.tests)
 }
 
 $Lines.Insert(0, ("{0}: {1} passed, {2} failed, {3} expected failures" -f $Preset, $Passed, $Unexpected.Count, $ExpectedFailed.Count))
+if ($CustomPassBuilt -eq $false) { $Lines.Insert(1, 'custom pass compiled out') }
 foreach ($Name in $ExpectedFailed) { $Lines.Add("expected: $Name") }
 
 $Lines | Set-Content -Path (Join-Path $ReportDir 'summary.txt') -Encoding utf8

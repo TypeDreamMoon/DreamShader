@@ -106,17 +106,19 @@ header probes. The plugin's only other definitions are `DREAMSHADER_WITH_CUSTOM_
 from the engine being built against and adds it to the module's `PublicDefinitions`:
 
 ```csharp
-bool bWithCustomPass = Target.Version.MajorVersion > 5
-    || (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion >= 8);
+bool bForcedOff = Target.ProjectDefinitions.Any(Definition =>
+    Definition == "DREAMSHADER_FORCE_NO_CUSTOM_PASS" || Definition == "DREAMSHADER_FORCE_NO_CUSTOM_PASS=1");
+bool bWithCustomPass = !bForcedOff
+    && (Target.Version.MajorVersion > 5 || (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion >= 8));
 PublicDefinitions.Add("DREAMSHADER_WITH_CUSTOM_PASS=" + (bWithCustomPass ? "1" : "0"));
 ```
 
 | | |
 | :-- | :-- |
 | Defined by | `DreamShaderPass.Build.cs` — **not** `DreamShaderVersionCompat.h`, which neither defines nor mentions it |
-| Value | `1` on UE ≥ 5.8, `0` below. Always defined where it is visible, so test it with `#if`, not `#ifdef` |
+| Value | `1` on UE ≥ 5.8, `0` below or when forced off. Always defined where it is visible, so test it with `#if`, not `#ifdef` |
 | Visible in | `DreamShaderPass` and the modules that depend on it: in the plugin, `DreamShaderCompiler` and `DreamShaderEditor`, which ask it rather than test the version again. `DreamShaderLang` and `DreamShader` do not depend on `DreamShaderPass` and do not have it |
-| Overridable | no — a definition the rules file sets unconditionally, with no `#ifndef` guard to pre-empt |
+| Overridable | down only, from the UBT command line: `-ProjectDefine:DREAMSHADER_FORCE_NO_CUSTOM_PASS` builds `0` on any engine, which is how a 5.8 machine compiles and tests the other side ([Testing](../contributing/testing.md#both-sides-of-the-custom-pass-gate)). Nothing makes it `1` below 5.8, and code cannot pre-empt it: the rules file sets it with no `#ifndef` guard |
 | Also decides | the `Renderer/Internal` include path of `DreamShaderPass` (for `FPostProcessingInputs`), added at `1` only |
 
 The module builds on every engine. Every reflected type in it is plain data, so pipelines, the

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using UnrealBuildTool;
 
 // The Custom Pass runtime: the pipeline asset a `.dsp` compiles to, the subsystem that decides which pipelines
@@ -15,8 +16,15 @@ public class DreamShaderPass : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		bool bWithCustomPass = Target.Version.MajorVersion > 5
-			|| (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion >= 8);
+		// -ProjectDefine:DREAMSHADER_FORCE_NO_CUSTOM_PASS on the UBT command line builds what an older engine builds --
+		// the asset types without the renderer half -- on any engine: how a machine with 5.8 alone compiles the other
+		// side of every gate. A command line change invalidates UBT's makefile, so switching needs nothing else. An
+		// environment variable would not: UBT keeps the rules it evaluated last until a rules file changes, and 5.8
+		// loads the makefile even under -NoUBTMakefiles.
+		bool bForcedOff = Target.ProjectDefinitions.Any(Definition =>
+			Definition == "DREAMSHADER_FORCE_NO_CUSTOM_PASS" || Definition == "DREAMSHADER_FORCE_NO_CUSTOM_PASS=1");
+		bool bWithCustomPass = !bForcedOff
+			&& (Target.Version.MajorVersion > 5 || (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion >= 8));
 		PublicDefinitions.Add("DREAMSHADER_WITH_CUSTOM_PASS=" + (bWithCustomPass ? "1" : "0"));
 
 		PublicDependencyModuleNames.AddRange(

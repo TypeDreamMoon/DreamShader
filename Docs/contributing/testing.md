@@ -112,6 +112,28 @@ without `-nullrhi`, with `-RenderOffscreen -d3d12`:
 `Tools/Tests/Invoke-DreamShaderTests.ps1` runs both gates on the standalone host project
 (`Tools/TestHost`): the `Suite` preset under `-nullrhi`, the `Rhi` preset offscreen.
 
+### Both sides of the Custom Pass gate
+
+Below UE 5.8, [`DREAMSHADER_WITH_CUSTOM_PASS`](../api/version-compat.md#dreamshader_with_custom_pass)
+is `0` and the plugin builds without the renderer half of Custom Pass. A 5.8 machine builds that side
+too when UBT is given `-ProjectDefine:DREAMSHADER_FORCE_NO_CUSTOM_PASS`, which the test script's
+`-WithoutCustomPass` passes:
+
+```powershell
+pwsh -NoProfile -File Tools\Tests\Invoke-DreamShaderTests.ps1 -Preset Suite -WithoutCustomPass -Filter DreamShader.Lang2.Pipeline+DreamShader.Compiler2.Pipeline+DreamShader.Pass.Logic
+```
+
+At `0` the pipeline tests that build assets are compiled out and
+`DreamShader.Compiler2.Pipeline.NeedsCustomPass` is compiled in: a `.dsp` build reports `DSH8300` and
+writes nothing. The render and lifecycle tests are compiled out with the renderer.
+
+The next build without the switch puts the renderer back by itself: a changed UBT command line
+invalidates UBT's makefile, so the rules are evaluated again. An environment variable read by a
+rules file would not be seen — UBT keeps the rules it evaluated last until a rules file changes, and
+on 5.8 it loads its makefile even under `-NoUBTMakefiles`. Before running, the script reads which side
+the binaries are on from the definitions UBT wrote for `DreamShaderPass`, and stops when it is not the
+one asked for, as after `-NoBuild` following a build of the other kind.
+
 ### Command-line switches
 
 | Switch | Effect on the suite |

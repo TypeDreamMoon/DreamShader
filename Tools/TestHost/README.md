@@ -70,7 +70,9 @@ pwsh -NoProfile -File <host>\Plugins\DreamShader\Tools\Tests\Invoke-DreamShaderT
 `Invoke-DreamShaderTests.ps1` builds the editor target itself unless `-NoBuild`, and has three presets:
 `Suite` (everything, `-nullrhi`), `Fast` (the Core-only layers and the Custom Pass logic tests) and `Rhi`
 (everything that renders, with a real RHI and no window). Reports land in
-`<host>/Saved/DreamShaderTests/<preset>-<stamp>/`.
+`<host>/Saved/DreamShaderTests/<preset>-<stamp>/`. `-WithoutCustomPass` builds and runs the plugin as an
+engine before 5.8 would, with the Custom Pass renderer compiled out; the next build without it puts the
+renderer back.
 
 The editor target uses the **shared** build environment: the engine's own modules are linked as they are,
 and only the host module and the plugin are compiled. Never build the game target casually: a game target

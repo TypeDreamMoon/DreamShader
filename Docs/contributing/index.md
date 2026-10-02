@@ -268,8 +268,9 @@ there are no raw `ENGINE_MAJOR_VERSION` or `UE_VERSION_NEWER_THAN` uses anywhere
 you add version-dependent code, add it there and use `DREAMSHADER_UE_VERSION_AT_LEAST(Major, Minor)`
 or `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`. The one exception is Custom Pass: `DreamShaderPass.Build.cs`
 tests `Target.Version` and defines `DREAMSHADER_WITH_CUSTOM_PASS`, and code that depends on
-`DreamShaderPass` tests that definition with `#if` instead of the version. The complete list of
-currently gated behaviour is on [Version compatibility](../api/version-compat.md).
+`DreamShaderPass` tests that definition with `#if` instead of the version. Both sides compile and
+test on a 5.8 machine: see [Both sides of the Custom Pass gate](testing.md#both-sides-of-the-custom-pass-gate).
+The complete list of currently gated behaviour is on [Version compatibility](../api/version-compat.md).
 
 ## Localization
 

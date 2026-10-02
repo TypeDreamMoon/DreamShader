@@ -36,7 +36,8 @@ page is the module's C++ and Blueprint surface; what the passes do at run time i
 ## `DREAMSHADER_WITH_CUSTOM_PASS`
 
 A public definition of the module, set by `DreamShaderPass.Build.cs` from the target engine: `1` on 5.8 and
-later, `0` below. Every module that depends on this one reads the same answer.
+later, `0` below — or on any engine built with `-ProjectDefine:DREAMSHADER_FORCE_NO_CUSTOM_PASS`, for testing.
+Every module that depends on this one reads the same answer.
 
 - **Reflected types exist on every engine** — the asset, the settings, the subsystem, the volume and the
   components compile anywhere, so a project that opens on an older engine still loads and saves them.
