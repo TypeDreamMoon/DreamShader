@@ -12,6 +12,11 @@ activation here:
   CP_UIBackdrop  the API, at run time (TakeShots.py); the monitor panel shows its export
   CP_WindField   the project settings, from the command line (Build-PassDemo.ps1); the grass and the wind panel read
                  its export
+  CP_LivingWall  unbound volume    the wall's material (M_DemoLivingWall) reads its export
+  CP_Shockwave, CP_Comic, CP_Matrix, CP_GodRays
+                 the API, at run time (TakeShots.py), so that the level opened in the editor shows none of them. The
+                 colonnade behind the wall is hidden in game: TakeShots.py shows it, and lowers the sun behind it, for
+                 CP_GodRays
 
 Lines starting with [PassDemo] go to the log. An error raises, which fails the commandlet.
 """
@@ -97,7 +102,7 @@ sky.light_component.set_editor_property('real_time_capture', True)
 
 # The floor and the wall.
 mesh_actor('Ground', PLANE, DEMO + 'M_DemoGround', (0.0, 0.0, 0.0), (60.0, 60.0, 1.0))
-mesh_actor('Wall', CUBE, DEMO + 'MI_DemoWall', (250.0, 150.0, 150.0), (0.3, 7.0, 3.0))
+mesh_actor('Wall', CUBE, DEMO + 'M_DemoLivingWall', (250.0, 150.0, 150.0), (0.3, 7.0, 3.0))
 
 # CP_Highlight: one in front, one straddling the wall's left edge, whose outline shows through the wall.
 hero = mesh_actor('HighlightCube', CUBE, DEMO + 'MI_DemoOrange', (-50.0, -250.0, 50.0), rotation=(0.0, 0.0, 25.0))
@@ -130,6 +135,16 @@ mesh_actor('WindPanel', PLANE, DEMO + 'M_DemoWindView', (350.0, 700.0, 180.0), (
 # CP_UIBackdrop: a monitor showing the export.
 mesh_actor('BackdropMonitor', PLANE, DEMO + 'M_DemoFrosted', (150.0, -560.0, 190.0), (2.0, 2.0, 1.0), rotation=(0.0, 90.0, 0.0))
 
+# CP_GodRays: a colonnade far behind the wall, for a low sun to shine through. Hidden in game until TakeShots.py
+# shows it; the tag finds it there.
+for i in range(9):
+    column = mesh_actor('Column_%d' % i, CYLINDER, DEMO + 'MI_DemoWall', (1700.0, -600.0 + 150.0 * i, 450.0), (0.5, 0.5, 9.0))
+    column.set_editor_property('tags', ['GodRayColonnade'])
+    column.set_actor_hidden_in_game(True)
+lintel = mesh_actor('Lintel', CUBE, DEMO + 'MI_DemoWall', (1700.0, 0.0, 925.0), (0.7, 13.0, 0.5))
+lintel.set_editor_property('tags', ['GodRayColonnade'])
+lintel.set_actor_hidden_in_game(True)
+
 # The default pawn spawns behind the camera, out of its view.
 spawn(unreal.PlayerStart, (-1200.0, 0.0, 120.0), label='PlayerStart')
 
@@ -145,6 +160,7 @@ volume('Volume_Tagged', 'CP_Tagged', (0.0, 100.0, 50.0))
 magenta = unreal.DreamPassBlueprintLibrary.make_color_value(unreal.LinearColor(1.0, 0.25, 0.85, 1.0))
 volume('Volume_Scanner', 'CP_Scanner', (0.0, 200.0, 50.0), overrides=[unreal.DreamPassParameterOverride(name='PulseColor', value=magenta)])
 volume('Volume_Retro', 'CP_Retro', (0.0, 300.0, 50.0), weight=0.5)
+volume('Volume_LivingWall', 'CP_LivingWall', (0.0, 400.0, 50.0))
 
 if not unreal.EditorLoadingAndSavingUtils.save_map(world, MAP_PATH):
     raise RuntimeError('could not save ' + MAP_PATH)

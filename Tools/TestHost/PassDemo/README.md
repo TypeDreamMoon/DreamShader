@@ -1,7 +1,8 @@
 # Custom Pass demo level
 
-Seven Custom Pass pipelines on one level of the test host, each activated the way a project would activate it,
-and a script that renders the level in a game window and takes a screenshot of every pipeline on its own. The
+Twelve Custom Pass pipelines on one level of the test host, each activated the way a project would activate it,
+and a script that renders the level in a game window and takes a screenshot of every pipeline on its own -- of the
+five showcase pipelines also bursts of frames, for animations. The
 automation suite renders passes into 64x64 scene captures it builds in C++; this is the other half: `.dsp` sources
 compiled by DreamShader, materials loaded from disk, a real game viewport, real exports read by real materials.
 
@@ -26,9 +27,21 @@ level uses, `Highlight` and `XRay`, are in the template's `Config/DefaultEngine.
 | `CP_UIBackdrop` | a `copy` grab after the tonemapper, a compute downsample whose entry is in the file's `hlsl` block with a helper, an export read by an unlit material | the API (`AddPipeline`) | the blurred frame on the monitor at the left |
 | `CP_WindField` | a compute pass at `BeginView` on a fixed-size history buffer, its statements under the BeginView `View` guard, an export read in a vertex shader | the project settings, with a `WindDirection` override, from the command line | the grass leaning with the wind; the field itself on the panel at the right |
 
+The showcase: effects for the eye, each written with HLSL in its `.dsp`.
+
+| Pipeline | What it exercises | Activated by | What the shot shows |
+| :-- | :-- | :-- | :-- |
+| `CP_LivingWall` | a Gray-Scott reaction-diffusion field: four compute passes at `BeginView` running one entry of the file's `hlsl` block, each with its own buffers, the entry doing four steps in `groupshared` memory; a history buffer, ping-pong buffers, an export read by the wall's material (`M_DemoLivingWall`) | an unbound volume | a glowing maze grown over the wall from ten spores; with the pipeline off, the plain wall |
+| `CP_Shockwave` | a pixel pass whose statements reconstruct the surface from the depth: a sphere that bends the picture behind its front with a colour split, and an HDR ring on the surfaces it crosses, for the bloom; `Radius` driven from script with `SetFloatParameter` | the API | the blast at radius 360 around the cubes and up the wall; the burst grows it to 1340 |
+| `CP_Comic` | a depth and colour edge pass before post processing into an `RG8` buffer of ink and sky, read after the tonemapper by a pass that posterizes, prints halftone dots and inks; shared HSV helpers in the file's block | the API | the scene as a comic book page |
+| `CP_Matrix` | an outline pass before post processing and a rain of procedural glyphs (strokes of a sixteen-segment display) after the tonemapper, lit by the scene's outlines and brightness | the API | the scene as falling code; the burst runs at 6% time |
+| `CP_GodRays` | two half-resolution compute passes -- the sky around the sun, then 64 taps toward it -- and an additive composite; the sun found from `View.AtmosphereLightDirection` with a shared helper | the API | light shafts through a colonnade, with the sun lowered behind the wall (`16_sunset` is the same frame without them) |
+
 `TakeShots.py` turns the others off with `r.DreamPass.DisablePipelines` for each shot, shows a buffer with
 `r.DreamPass.Visualize` in three of them, exports two render targets, and prints `DreamPass.Dump` into the game log
-at the end. `r.CustomDepth` is set to 3 for `CP_Tagged`: the host does not set it.
+at the end. `r.CustomDepth` is set to 3 for `CP_Tagged`: the host does not set it. A scenario may have hooks -- the
+shockwave's radius, the frame rate the living wall grows at, the world time the rain falls in, the sunset with its
+colonnade -- and a burst, whose frames land in `Shots/frames/`.
 
 ## Things the shots also show
 

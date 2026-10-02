@@ -3,17 +3,19 @@
     Builds the Custom Pass demo level in the DreamShader test host and, with -Shots, renders it in a game window.
 
 .DESCRIPTION
-    Seven pipelines on one level, each activated the way a project would: the four of Docs/examples/custom-pass.md
-    (highlight outline, X-ray, UI backdrop, wind field) and three more (a scanner pulse and an old CRT in HLSL, and a
-    stencil-selected mesh pass that draws with each object's own material). See README.md beside this script.
+    Twelve pipelines on one level, each activated the way a project would: the four of Docs/examples/custom-pass.md
+    (highlight outline, X-ray, UI backdrop, wind field), three more (a scanner pulse and an old CRT in HLSL, and a
+    stencil-selected mesh pass that draws with each object's own material), and a showcase of five (a reaction-
+    diffusion wall, a shockwave, a comic page, digital rain, god rays). See README.md beside this script.
 
       1. Sources/ is copied into <host>/DShader/PassDemo.
       2. `-run=DreamShader compile -All` builds every source of the host: the demo's pipelines, materials and
          instances, and the HLSL pre-check of its slots. Unchanged sources are skipped.
       3. BuildLevel.py builds /Game/PassDemo/L_PassDemo in a Python commandlet.
       4. With -Shots, the level runs in -game with TakeShots.py, which takes one screenshot per pipeline on its own
-         and one of all of them into <host>/Saved/PassDemo/Shots. CP_WindField is activated from the project
-         settings there, by -ini on the command line, with the wind blowing sideways so the grass visibly bends.
+         and one of all of them into <host>/Saved/PassDemo/Shots, and bursts of frames of three of the showcase into
+         Shots/frames. CP_WindField is activated from the project settings there, by -ini on the command line, with
+         the wind blowing sideways so the grass visibly bends.
 
     The host must be built (Tools/Tests/Invoke-DreamShaderTests.ps1 builds it) and no editor may have it open. The
     pass layers Highlight and XRay come from the template's Config/DefaultEngine.ini. Logs land in
