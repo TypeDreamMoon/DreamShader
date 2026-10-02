@@ -135,6 +135,49 @@ namespace UE::DreamPass
 			return FVector4f(X, Y, 1.0f / X, 1.0f / Y);
 		}
 
+		/**
+		 * The scene textures of an injection point that has none of its own: placeholders. The engine's placeholder
+		 * (CreateSceneTextureUniformBuffer without scene textures) is made from the graph's system textures, which the
+		 * renderer creates only after BeginView (FRDGSystemTextures::Create in FDeferredShadingSceneRenderer::Render, after
+		 * the PreRenderView_RenderThread calls of FSceneRenderer -- R/Private/DeferredShadingRenderer.cpp:2097,
+		 * R/Private/SceneRendering.cpp:4303); asking for it at BeginView asserts, and creating the system textures here
+		 * would make the renderer's own Create assert instead. So until they exist, the same placeholders are registered
+		 * from the global pooled textures (R/Private/SceneTextures.cpp:1124-1140): black colour and GBuffer, mid-grey
+		 * GBufferF, white ambient occlusion, the dummy depth and stencil.
+		 */
+		static TRDGUniformBufferRef<FSceneTextureUniformParameters> CreatePlaceholderSceneTextures(FRDGBuilder& GraphBuilder, ERHIFeatureLevel::Type FeatureLevel)
+		{
+			if (FRDGSystemTextures::IsValid(GraphBuilder))
+			{
+				return CreateSceneTextureUniformBuffer(GraphBuilder, nullptr, FeatureLevel, ESceneTextureSetupMode::None);
+			}
+
+			const auto Register = [&GraphBuilder](const TRefCountPtr<IPooledRenderTarget>& Target, const TCHAR* Name)
+			{
+				return GraphBuilder.RegisterExternalTexture(Target, Name, ERDGTextureFlags::SkipTracking);
+			};
+			const FRDGTextureRef Black = Register(GSystemTextures.BlackDummy, TEXT("BlackDummy"));
+			const FRDGTextureRef Depth = Register(GSystemTextures.DepthDummy, TEXT("DepthDummy"));
+
+			FSceneTextureUniformParameters* Parameters = GraphBuilder.AllocParameters<FSceneTextureUniformParameters>();
+			Parameters->PointClampSampler = TStaticSamplerState<SF_Point>::GetRHI();
+			Parameters->SceneColorTexture = Black;
+			Parameters->SceneDepthTexture = Depth;
+			Parameters->ScenePartialDepthTexture = Depth;
+			Parameters->GBufferATexture = Black;
+			Parameters->GBufferBTexture = Black;
+			Parameters->GBufferCTexture = Black;
+			Parameters->GBufferDTexture = Black;
+			Parameters->GBufferETexture = Black;
+			Parameters->GBufferFTexture = Register(GSystemTextures.MidGreyDummy, TEXT("MidGreyDummy"));
+			Parameters->GBufferVelocityTexture = Black;
+			Parameters->GBufferSGGXTexture = Black;
+			Parameters->ScreenSpaceAOTexture = Register(GSystemTextures.WhiteDummy, TEXT("WhiteDummy"));
+			Parameters->CustomDepthTexture = Depth;
+			Parameters->CustomStencilTexture = GraphBuilder.CreateSRV(FRDGTextureSRVDesc::Create(Register(GSystemTextures.StencilDummy, TEXT("StencilDummy"))));
+			return GraphBuilder.CreateUniformBuffer(Parameters);
+		}
+
 		/** What every slot binds: inputs, outputs' sizes, parameters, weight, time, the view and the scene textures. */
 		static void FillSlotParameters(FExecuteContext& Context, FDreamPassSlotParameters& Parameters, TConstArrayView<FScreenPassTexture> Inputs, TConstArrayView<FScreenPassRenderTarget> Outputs)
 		{
@@ -147,7 +190,7 @@ namespace UE::DreamPass
 			Parameters.View = View.ViewUniformBuffer;
 			Parameters.SceneTextures = Context.Injection.SceneTextures
 				? Context.Injection.SceneTextures
-				: CreateSceneTextureUniformBuffer(GraphBuilder, nullptr, View.GetFeatureLevel(), ESceneTextureSetupMode::None);
+				: CreatePlaceholderSceneTextures(GraphBuilder, View.GetFeatureLevel());
 
 			FRDGTextureRef Black = GSystemTextures.GetBlackDummy(GraphBuilder);
 			for (int32 Index = 0; Index < MaxSlotInputs; ++Index)
