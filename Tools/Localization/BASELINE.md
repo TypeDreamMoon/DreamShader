@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-1598
+2086
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -232,6 +232,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Expressions | TooManyArguments | '{0}' takes {1} arguments and more were given. |
 | DreamShader.Binder.Expressions | TooManyPositional | '{0}.{1}' takes {2} arguments in order; name the rest. |
 | DreamShader.Binder.Expressions | TypeAsValue | '{0}' is a type, not a value; write '{0}(...)' to construct one. |
+| DreamShader.Binder.Expressions | UENodeNeedsNewerEngine | 'UE.{0}' needs {1}, and this engine's node catalog does not have it. |
 | DreamShader.Binder.Expressions | UnaryUnsupported | This operator has no graph form. |
 | DreamShader.Binder.Expressions | UnknownAttribute | A material has no '{0}' pin. |
 | DreamShader.Binder.Expressions | UnknownAttributeDidYouMean | A material has no '{0}' pin; did you mean '{1}'? Attribute names are case-sensitive. |
@@ -301,6 +302,223 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Legacy | LegacySelectNoOutputs | '{0}' has no output to select, and this call selects '{1}'. |
 | DreamShader.Binder.Legacy | LegacySelectOrdinalRange | '{0}' has {1} output(s), counted from 0 with the return value first, and this call selects output {2}. |
 | DreamShader.Binder.Legacy | LegacySelectUnknownOutput | '{0}' has no output called '{1}'; its outputs are {2}. |
+| DreamShader.Binder.PassNodes | GateCustomPass | Unreal Engine {0} or later and DreamShader's Custom Pass module (DreamShaderPass) |
+| DreamShader.Binder.PassNodes | GateEngine | Unreal Engine {0} or later |
+| DreamShader.Binder.PassNodes | KindFunction | material function |
+| DreamShader.Binder.PassNodes | KindLayer | material layer |
+| DreamShader.Binder.PassNodes | KindLayerBlend | material layer blend |
+| DreamShader.Binder.PassNodes | PassNodeNewTranslator | Material '{0}' asks for the new material translator ('bEnableNewHLSLGenerator = true'), and uses {1} (line {2}), which only the classic translator compiles; remove the setting. |
+| DreamShader.Binder.PassNodes | PassOutputInFunction | UE.DreamPassOutput does nothing in '{0}', a {1}: the engine compiles custom outputs from a material's own graph only, and only there does the node give the material its DreamPass shader tag. A material using '{0}' writes no pass outputs, and a mesh pass in 'Mode = Own' does not draw it; write UE.DreamPassOutput in the material itself. |
+| DreamShader.Binder.PassNodes | TwoPassOutputs | Material '{0}' gets a second UE.DreamPassOutput node here (the first is on line {1}), and a material compiles one custom output of a class; write all four outputs in one call. A call inside a loop, or in a helper called twice, makes more than one node. |
+| DreamShader.Binder.Pipeline | AfterTonemap | after |
+| DreamShader.Binder.Pipeline | AssignStencilRange | 'AssignStencil' takes a stencil value from 1 to 255. |
+| DreamShader.Binder.Pipeline | AssignStencilShape | 'Nanite = AssignStencil(n)' takes one stencil value, 1 to 255. |
+| DreamShader.Binder.Pipeline | BeforeTonemap | before |
+| DreamShader.Binder.Pipeline | BlendableLocation | '{0}' is compiled for BlendableLocation {1}, and pass '{2}' runs it at {3}, {4} tonemapping, so its colours are in another space than it expects; use {5}. |
+| DreamShader.Binder.Pipeline | BufferBuiltinName | '{0}' is a built-in texture a pass binds without declaring it, and cannot be declared as a buffer. |
+| DreamShader.Binder.Pipeline | BufferKeyTwice | '{0}' is set twice for buffer '{1}'; it was already set on line {2}. |
+| DreamShader.Binder.Pipeline | BufferNameCaseClash | Buffer '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps buffer names as Unreal names, which compare ignoring case, so the two would be one buffer there. Rename one. |
+| DreamShader.Binder.Pipeline | BufferNameTaken | '{0}' already names a parameter or a constant of this pipeline; a buffer shares one namespace with them. |
+| DreamShader.Binder.Pipeline | BufferNeverRead | No pass reads buffer '{0}' and it is not exported, so writing it is wasted work; read it, export it, or remove it. |
+| DreamShader.Binder.Pipeline | BufferNeverWritten | No pass writes buffer '{0}', so whoever reads it reads its 'Clear' value. |
+| DreamShader.Binder.Pipeline | BufferSizeAndScale | 'Size' gives buffer '{0}' a fixed size, so '{1}' has nothing to say; remove one of them. |
+| DreamShader.Binder.Pipeline | BufferTwice | Buffer '{0}' is declared twice; the declaration on line {1} already makes it. |
+| DreamShader.Binder.Pipeline | BuiltinNotWritable | '{0}' is the renderer's and pass '{1}' cannot write it at {2}; write a buffer of the pipeline instead. |
+| DreamShader.Binder.Pipeline | BuiltinNotWritableSceneColorTranslucency | 'SceneColor' is read-only at PostProcess.TranslucencyAfterDOF, where pass '{1}' runs: the post-process chain carries the translucency there, so write 'Translucency', or write the scene colour at another point. |
+| DreamShader.Binder.Pipeline | BuiltinNotWritableTranslucency | 'Translucency' is written at PostProcess.TranslucencyAfterDOF only, and pass '{1}' runs at {2}; elsewhere on the chain it is read-only. |
+| DreamShader.Binder.Pipeline | BuiltinNotYet | '{0}' does not exist yet at {2}, where pass '{1}' runs; it exists from {3} on. |
+| DreamShader.Binder.Pipeline | BuiltinPrevious | '{0}.Previous': a built-in texture keeps no history. |
+| DreamShader.Binder.Pipeline | ClearShape | Clear pass '{0}' writes one buffer and reads none: 'write Buffer;' and 'Value = ...;'. |
+| DreamShader.Binder.Pipeline | ComputeNoEntry | Compute pass '{0}' needs 'Entry = <function>' naming its '[numthreads]' function. |
+| DreamShader.Binder.Pipeline | ComputeNoShader | Compute pass '{0}' needs 'Shader = "<file>.usf"' and 'Entry = <function>'. |
+| DreamShader.Binder.Pipeline | ComputeNoWrite | Compute pass '{0}' writes nothing; a compute pass writes at least one buffer, 'write Result = Buffer;'. |
+| DreamShader.Binder.Pipeline | ComputeTooMany | Compute pass '{0}' reads {1} and writes {2} buffers, and a compute slot has {3} inputs and {4} outputs. |
+| DreamShader.Binder.Pipeline | CopyShape | Copy pass '{0}' reads one buffer and writes one: 'read Source;' and 'write Target;'. |
+| DreamShader.Binder.Pipeline | CustomDepthAfterBasePass | '{0}' exists at AfterBasePass only when r.CustomDepth.Order draws custom depth before the base pass; where it does not, pass '{1}' reads a cleared placeholder. From AfterOpaque on it always exists. |
+| DreamShader.Binder.Pipeline | CustomStencilNotBindable | 'CustomStencil' is the stencil half of the custom depth texture, which no pass can bind as a texture of its own, and pass '{0}' {1} it; read it through the scene textures instead: a SceneTexture node in the material, CalcSceneCustomStencil in a '.usf'. |
+| DreamShader.Binder.Pipeline | CustomStencilReads | reads |
+| DreamShader.Binder.Pipeline | CustomStencilWrites | writes |
+| DreamShader.Binder.Pipeline | DepthBoundMeshOrClear | '{0}' is a Depth32 buffer, which a mesh pass tests against as 'Depth = Own({0})' and a clear pass resets ('write {0};', with 'Value' the depth); a {2} pass cannot '{1}' it. |
+| DreamShader.Binder.Pipeline | DepthOwnBuiltin | 'Depth = Own({0})' tests against a depth of this pipeline's own, and '{0}' is a built-in texture; declare 'buffer MyDepth : Depth32;', or write 'Depth = TestScene'. |
+| DreamShader.Binder.Pipeline | DepthOwnNotDepth | 'Depth = Own({0})' needs a Depth32 buffer, and '{0}' is {1}. |
+| DreamShader.Binder.Pipeline | DepthOwnShape | 'Depth = Own(Buffer)' takes one Depth32 buffer of this pipeline. |
+| DreamShader.Binder.Pipeline | DispatchFactor | 'Dispatch = Buffer / n' and 'Buffer * n' take a positive n. |
+| DreamShader.Binder.Pipeline | DispatchSizeRange | A fixed 'Dispatch' is at least one thread in each direction. |
+| DreamShader.Binder.Pipeline | EnabledFalse | 'Enabled' is false, so this would never run, and a pipeline asset has no switch that is always off; drive it with a 'uniform bool', or comment the declaration out. |
+| DreamShader.Binder.Pipeline | EnabledNotBool | '{0}' is a '{1}', and 'Enabled' takes a 'uniform bool' or 'true'. |
+| DreamShader.Binder.Pipeline | EnabledUnknown | '{0}' is not a 'uniform' or 'static const' of this pipeline; 'Enabled' takes a 'uniform bool' or 'true'. |
+| DreamShader.Binder.Pipeline | EnabledUnknownDidYouMean | '{0}' is not a 'uniform' or 'static const' of this pipeline; did you mean '{1}'? Names are case-sensitive. |
+| DreamShader.Binder.Pipeline | EntryIsComputeShader | '{1}' in '{0}' is a compute shader entry ('[numthreads]' is in front of it), and fullscreen pass '{2}' runs its Entry as a pixel shader; name the pixel shader function, or make the pass 'compute'. |
+| DreamShader.Binder.Pipeline | EntryNoNumThreads | '{0}' in '{1}' has no '[numthreads(x, y, z)]' the compiler can read; write 'Threads = uint3(x, y, z)' in the pass. |
+| DreamShader.Binder.Pipeline | EntryNotFound | '{0}' does not define a function '{1}'. |
+| DreamShader.Binder.Pipeline | EntryNotFound2 | '{0}' does not define a function '{1}'. |
+| DreamShader.Binder.Pipeline | EntryNotName | 'Entry' takes the name of the function in the shader file: 'Entry = BlurCS;'. |
+| DreamShader.Binder.Pipeline | EntryUnreadNumThreads | '{0}' is not in what the compiler could read of '{1}', which includes a file it cannot follow, so its '[numthreads(x, y, z)]' is unknown; write 'Threads = uint3(x, y, z)' in the pass. |
+| DreamShader.Binder.Pipeline | EntryWithMaterial | 'Entry' names a function of a shader file, and fullscreen pass '{0}' draws a material. |
+| DreamShader.Binder.Pipeline | ExportFormat | Buffer '{0}' is exported, and an exported buffer becomes a render target asset that materials sample, which a '{1}' buffer cannot be; export a float format. |
+| DreamShader.Binder.Pipeline | ExportLateFrame | Buffer '{0}' is exported and last written at {1}: opaque and translucent materials that sample it see the previous frame's contents, UI sees this frame's. |
+| DreamShader.Binder.Pipeline | ExportMidFrame | Buffer '{0}' is exported and last written at {1}: opaque materials that sample it see the previous frame's contents, translucent and post-process materials and UI see this frame's. |
+| DreamShader.Binder.Pipeline | FilterNamedArgument | '{0}(...)' takes its arguments by position. |
+| DreamShader.Binder.Pipeline | FilterOperator | A filter joins its terms with '\|' (either) and '&' (both), and nothing else. |
+| DreamShader.Binder.Pipeline | FilterTermShape | A filter term is 'Stencil(value)', 'Stencil(value, mask)', 'Layer(Name \| ...)' or 'List(Name)'. |
+| DreamShader.Binder.Pipeline | FilterUnknownTerm | '{0}' is not a filter term; a mesh pass selects by 'Stencil(...)', 'Layer(...)' and 'List(...)'. |
+| DreamShader.Binder.Pipeline | FullscreenDomain | '{0}' is a {1} material, and a fullscreen pass draws a Post Process one: '#pragma material(Domain = PostProcess)'. |
+| DreamShader.Binder.Pipeline | FullscreenMaterialAndShader | Fullscreen pass '{0}' draws a 'Material' or runs a 'Shader', and it names both. |
+| DreamShader.Binder.Pipeline | FullscreenMaterialNoFreeSlots | '{0}' takes {1} of the {2} post-process input slots with its SceneTexture nodes, which leaves {4} for its UserSceneTexture inputs, and it has {5}; read fewer buffers in it, or write pass '{3}' as a '.usf' pass. |
+| DreamShader.Binder.Pipeline | FullscreenMaterialOneWrite | A fullscreen material pass writes exactly one buffer, as 'write Buffer;', and '{0}' writes {1}. |
+| DreamShader.Binder.Pipeline | FullscreenMaterialTooEarly | A fullscreen material pass needs the scene textures, which do not exist yet at {0}; run '{1}' at AfterBasePass or later. |
+| DreamShader.Binder.Pipeline | FullscreenMaterialTooManyReads | Fullscreen material pass '{0}' reads {1} buffers, and a post-process material has {2} input slots, shared with its own SceneTexture nodes; split the pass in two, or write it with 'Shader =' (a '.usf' pass reads up to {3}). |
+| DreamShader.Binder.Pipeline | FullscreenMaterialUnverified | A fullscreen material pass at {0} has not been verified on this engine yet; BeforePostProcess is the point it is known to work at. |
+| DreamShader.Binder.Pipeline | FullscreenMaterialWriteSlot | A material has one output and no name for it; write 'write {0};'. |
+| DreamShader.Binder.Pipeline | FullscreenNothing | Fullscreen pass '{0}' needs 'Material = "..."' (a Post Process material) or 'Shader = "<file>.usf"' with 'Entry'. |
+| DreamShader.Binder.Pipeline | FullscreenShaderBeforeBasePass | At BeforeBasePass only scene depth exists: the other scene textures pass '{0}' could read are placeholders. |
+| DreamShader.Binder.Pipeline | FullscreenShaderBeginViewNoView | At BeginView neither the scene textures nor the view uniform buffer exist yet: the SceneTextures pass '{0}' sees are placeholders, a use of 'View' in its '.usf' does not compile, and DP_Time gives the time. |
+| DreamShader.Binder.Pipeline | FullscreenShaderNoWrite | Fullscreen pass '{0}' writes nothing; a pass draws into at least one buffer, 'write Result = Buffer;'. |
+| DreamShader.Binder.Pipeline | FullscreenShaderTooMany | Fullscreen pass '{0}' reads {1} and writes {2} buffers, and the pixel slot a '.usf' pass runs in has {3} inputs and {4} outputs. |
+| DreamShader.Binder.Pipeline | InjectionNotName | 'Injection' takes the name of an injection point, written without quotes: 'Injection = PostProcess.AfterDOF;'. |
+| DreamShader.Binder.Pipeline | InputUnbound | '{0}' reads the UserSceneTexture '{1}', and pass '{2}' binds nothing to it, so it samples black; add 'read {1} = <Buffer>;'. |
+| DreamShader.Binder.Pipeline | IntegerFormatUnsupported | '{0}' is an integer format, which no pass can read or write yet: HLSL passes see float4 textures, and materials and mesh passes write floats. Use 'R32F' or 'RG32F' (an id is exact up to 16777216). |
+| DreamShader.Binder.Pipeline | LayerShape | 'Layer' takes pass layer names joined by '\|': 'Layer(Highlight)', 'Layer(Enemies \| Allies)'. |
+| DreamShader.Binder.Pipeline | ListShape | 'List' takes one list name: 'List(Enemies)'. |
+| DreamShader.Binder.Pipeline | MaterialNotFound | No material '{0}' was found: a bare name is the material a '.dss' under the same source root builds, an object path any material or material instance. |
+| DreamShader.Binder.Pipeline | MaterialNotString | 'Material' takes the material as a quoted name or object path: 'Material = "PP_Composite";'. |
+| DreamShader.Binder.Pipeline | MeshAfterUpscaleCopied | At {0} the view is upscaled and scene depth is still at render resolution; mesh pass '{1}' tests against it, or against a copy of it brought into the pixels of outputs of another size, so its depth test is only as fine as the render resolution. |
+| DreamShader.Binder.Pipeline | MeshAtBeginView | A mesh pass draws primitives against a view that has no depth yet at BeginView; run '{0}' at BeforeBasePass or later. |
+| DreamShader.Binder.Pipeline | MeshAtEndOfView | At EndOfView the view is at output resolution and has no depth to draw primitives against; run mesh pass '{0}' earlier. |
+| DreamShader.Binder.Pipeline | MeshBeforeBasePassTestScene | At BeforeBasePass scene depth holds what the depth prepass drew, which may not be everything; mesh pass '{0}' is meant to run there with 'Depth = None' or 'Depth = Own(...)'. |
+| DreamShader.Binder.Pipeline | MeshDomain | '{0}' is a {1} material, and a mesh pass draws primitives with a Surface one. |
+| DreamShader.Binder.Pipeline | MeshModeNeedsMaterial | 'Mode = {0}' draws with the pass's own material, and mesh pass '{1}' names none; add 'Material = "..."', or write 'Mode = Own'. |
+| DreamShader.Binder.Pipeline | MeshNewTranslator | '{0}' asks for the new material translator, which UE.DreamPassOutput does not support; remove 'bEnableNewHLSLGenerator' from it. |
+| DreamShader.Binder.Pipeline | MeshNoFilter | Mesh pass '{0}' needs 'Filter = ...' to say which primitives it draws: 'Stencil(1)', 'Layer(Name)', 'List(Name)'. |
+| DreamShader.Binder.Pipeline | MeshNoPassOutput | '{0}' has no UE.DreamPassOutput in its graph, so a mesh pass has nothing to write; add 'UE.DreamPassOutput(Output0 = ...);' to the material. |
+| DreamShader.Binder.Pipeline | MeshOutputNotConnected | '{0}' leaves Output{1} of its UE.DreamPassOutput unconnected, so '{2}' would receive nothing. |
+| DreamShader.Binder.Pipeline | MeshOwnDepthSceneTargets | Mesh pass '{0}' writes '{1}', a texture of the scene, and tests against its own depth '{2}', which is bound from its corner: in a view that does not start at the corner of the scene's textures -- the second view of split screen, the right eye in stereo -- the depth does not reach the view's pixels, and the runtime skips the pass there. |
+| DreamShader.Binder.Pipeline | MeshOwnDepthSmaller | Mesh pass '{0}' tests against its own depth '{1}', which is {2}, and its outputs are {3}; an own depth is bound as it is, so it must be at least their size: give it their resolution and a scale no smaller than theirs, or a fixed size no smaller than theirs. |
+| DreamShader.Binder.Pipeline | MeshOwnIgnoresMaterial | 'Mode = Own' draws every primitive with its own material, so the 'Material' of mesh pass '{0}' is never used. |
+| DreamShader.Binder.Pipeline | MeshOwnParams | Mesh pass '{0}' draws every primitive with its own material, so its 'param' lines reach no material. |
+| DreamShader.Binder.Pipeline | MeshReads | Mesh pass '{0}' cannot read a buffer: a mesh pass binds no input, and its material samples what it needs itself. |
+| DreamShader.Binder.Pipeline | MeshSceneAndOwnTargets | Mesh pass '{0}' writes '{1}', a texture of the scene, together with '{2}', a buffer of the pipeline. A mesh pass draws all its targets through one viewport, so they have to be one size holding the view at one place; the scene's textures are usually larger than the view they hold (rounded up, and in the editor grown to the largest view so far) while a buffer is the view's size, and the runtime skips the pass whenever the two differ. Write them in two mesh passes. |
+| DreamShader.Binder.Pipeline | MeshSizesDiffer | The outputs of mesh pass '{0}' are drawn together and have one size: '{1}' is {2}, and '{3}' is {4}. |
+| DreamShader.Binder.Pipeline | MeshUsage | Mesh pass '{0}' draws {1} primitives, and '{2}' is not compiled for them; give the material its usage flag ('#pragma material({3} = true)' in its '.dss'), or leave {1} out of 'Usage'. |
+| DreamShader.Binder.Pipeline | MeshWriteInteger | Mesh pass '{0}' writes '{1}', a {2} buffer, and a mesh pass writes the float4 outputs of UE.DreamPassOutput, which an integer target would take as raw bits; write a float buffer. |
+| DreamShader.Binder.Pipeline | MeshWrites | Mesh pass '{0}' writes {1} buffers, and a mesh pass writes one to four, 'write Output0 = Buffer;' for each output of UE.DreamPassOutput it fills. |
+| DreamShader.Binder.Pipeline | MeshWriteSlot | A mesh pass names the output of UE.DreamPassOutput each write takes: 'write Output0 = {0};' (Output0 to Output3). |
+| DreamShader.Binder.Pipeline | MipsRange | 'Mips' of buffer '{0}' is {1}, and a buffer has 1 to 14 mips. |
+| DreamShader.Binder.Pipeline | Numbers | numbers |
+| DreamShader.Binder.Pipeline | Numbers2 | numbers |
+| DreamShader.Binder.Pipeline | ParameterNameCaseClash | The parameter '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps parameter names as Unreal names, which compare ignoring case, so the two would be one parameter there. Rename one. |
+| DreamShader.Binder.Pipeline | ParamNotAffine | A 'param' over a parameter or 'DreamPassWeight' keeps the shape 'Source * a + b', with a and b numbers the compiler can fold; this expression has another shape. Compute it in the shader or the material instead. |
+| DreamShader.Binder.Pipeline | ParamNotFoldable | A 'param' is a parameter of the pipeline (times a number, plus a number), 'DreamPassWeight' (the same), or a value the compiler can fold, and this is none of them. |
+| DreamShader.Binder.Pipeline | ParamOperandNotScalar | What scales or offsets a parameter in a 'param' is one number the compiler can fold; a vector, or a value known only at run time, has no place in the asset's 'Source * a + b'. |
+| DreamShader.Binder.Pipeline | ParamScaledNotNumber | '{0}' is a {1}, which is passed on as it is; only a number can be scaled or offset. |
+| DreamShader.Binder.Pipeline | ParamUnknownName | '{0}' is not a 'uniform' or 'static const' of this pipeline, nor 'DreamPassWeight'. |
+| DreamShader.Binder.Pipeline | ParamUnknownNameDidYouMean | '{0}' is not a 'uniform' or 'static const' of this pipeline; did you mean '{1}'? Names are case-sensitive. |
+| DreamShader.Binder.Pipeline | PassEnabledNotName | 'Enabled' takes the name of a 'uniform bool', or 'true'. |
+| DreamShader.Binder.Pipeline | PassKeyOfOtherKind | '{0}' is a key of {1} passes, and '{2}' is a {3} pass. |
+| DreamShader.Binder.Pipeline | PassKeyTwice | '{0}' is set twice in pass '{1}'; it was already set on line {2}. |
+| DreamShader.Binder.Pipeline | PassNameCaseClash | Pass '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps pass names as Unreal names, which compare ignoring case, so the two would be one pass there. Rename one. |
+| DreamShader.Binder.Pipeline | PassTwice | A pass named '{0}' is already declared on line {1}; RDG events and stats are named after passes, so each name is used once. |
+| DreamShader.Binder.Pipeline | PipelineArray | '{0}' is an array, and a pipeline has no array parameters or constants; declare one per element. |
+| DreamShader.Binder.Pipeline | PipelineConstantNoInitializer | '{0}' is a compile-time constant and must be initialised where it is declared. |
+| DreamShader.Binder.Pipeline | PipelineConstantType | '{0}' is declared '{1}', and a pipeline constant is a number or a bool of one to four components. |
+| DreamShader.Binder.Pipeline | PipelineDeclarationOutsideDsp | '{0} {1}' is a declaration of a Custom Pass pipeline, which only a '.dsp' file holds, and '{2}' is not one; a pipeline cannot be included. |
+| DreamShader.Binder.Pipeline | PipelineDefaultNotConstant | The default of '{0}' is written into the pipeline asset, so it has to be a value the compiler can fold: a literal, a 'static const', or arithmetic over those. |
+| DreamShader.Binder.Pipeline | PipelineDirectiveNoEffect | '@{0}' has no effect on {1} in a '.dsp'; remove it. |
+| DreamShader.Binder.Pipeline | PipelineEnabledNotName | 'Enabled' takes the name of a 'uniform bool' or 'true', and '{0}' is neither. |
+| DreamShader.Binder.Pipeline | PipelineFlagsQuoted | '{0}' takes names written without quotes and joined by '\|', such as '{0} = {1}', and "{2}" is a quoted string. |
+| DreamShader.Binder.Pipeline | PipelineFlagUnknown | '{0}' is not one of the '{1}' a pipeline knows: {2}. |
+| DreamShader.Binder.Pipeline | PipelineFlagUnknownDidYouMean | '{0}' is not one of the '{1}' a pipeline knows; did you mean '{2}'? |
+| DreamShader.Binder.Pipeline | PipelineHoldsFunction | A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations, and '{0}' is a function; write it in a '.dss' or a '.dsh', or in the '.usf' of a pass. |
+| DreamShader.Binder.Pipeline | PipelineHoldsInclude | A '.dsp' includes nothing, and has no code that could use '{0}'; remove the include. |
+| DreamShader.Binder.Pipeline | PipelineHoldsMaterialPragma | '#pragma material' configures a material, and a '.dsp' is configured by '#pragma pipeline(...)'; the material a pass draws with is a '.dss' of its own. |
+| DreamShader.Binder.Pipeline | PipelineHoldsStruct | A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations, and 'struct {0}' declares a type; write it in a '.dsh'. |
+| DreamShader.Binder.Pipeline | PipelineIgnoresGraphPragma | '#pragma {0}' boxes or places graph nodes, and a '.dsp' has no graph; the line was ignored. |
+| DreamShader.Binder.Pipeline | PipelineNoCustomPassFacts | This engine has no Custom Pass runtime (it needs Unreal Engine 5.8 or later), so what the passes' materials offer them -- UserSceneTexture inputs, UE.DreamPassOutput pins, usage flags, the pre-exposure and translator settings -- was not read and not checked; the pipeline is not built on this engine. |
+| DreamShader.Binder.Pipeline | PipelineNoReferences | The materials, shader files and pass layers this pipeline names are not available here, so they were taken as written and the checks that need them were skipped; compile the pipeline in the editor to have them checked. |
+| DreamShader.Binder.Pipeline | PipelineNoViews | 'Views' names no view, so the pipeline would run nowhere. |
+| DreamShader.Binder.Pipeline | PipelineOrderNotInteger | 'Order' takes a whole number, the order among pipelines at one injection point (smaller first), and '{0}' is not one. |
+| DreamShader.Binder.Pipeline | PipelineParameterType | '{0}' is declared '{1}', and a pipeline parameter is a float, float2, float3, float4, int, bool or Texture2D. |
+| DreamShader.Binder.Pipeline | PipelinePragmaDuplicateKey | '{0}' is set twice by '#pragma pipeline'; it was already set on line {1}. |
+| DreamShader.Binder.Pipeline | PipelinePragmaOutsideDsp | '#pragma pipeline' configures a Custom Pass pipeline and belongs in a '.dsp' file of its own, and this line is in '{0}'; move it, with the pipeline's buffers and passes, into a '.dsp'. |
+| DreamShader.Binder.Pipeline | PipelinePragmaUnknownKey | '{0}' is not a key of '#pragma pipeline'; the keys are {1}. |
+| DreamShader.Binder.Pipeline | PipelinePragmaUnknownKeyDidYouMean | '{0}' is not a key of '#pragma pipeline'; did you mean '{1}'? Keys are case-sensitive. |
+| DreamShader.Binder.Pipeline | PipelineSecondPragma | '#pragma pipeline' is written a second time, and one '.dsp' is one pipeline; the line {0} already configures it. |
+| DreamShader.Binder.Pipeline | PipelineTextureInitializer | '{0}' is a texture parameter, which takes an asset rather than a value; write '/// @default /Game/...' above it instead of an initializer. |
+| DreamShader.Binder.Pipeline | PipelineVariableStorage | '{0}' is a file-scope variable of a '.dsp', which is a 'uniform' (a parameter an activation may override) or a 'static const' (a compile-time value). |
+| DreamShader.Binder.Pipeline | PipelineWeightDeclared | 'DreamPassWeight' is the pipeline's weight in a view, which every pass can read as 'param P = DreamPassWeight'; it cannot be declared. |
+| DreamShader.Binder.Pipeline | PreExposure | Pass '{0}' writes a data buffer, and '{1}' scales what it reads and writes by the exposure; give it '#pragma material(bDisablePreExposureScale = true)'. |
+| DreamShader.Binder.Pipeline | PreviousWithoutHistory | '{0}.Previous' reads last frame's '{0}', and '{0}' keeps none; declare it with 'History = true'. |
+| DreamShader.Binder.Pipeline | ReadAndWrite | Pass '{0}' reads and writes '{1}', and one pass cannot have one texture as its input and its output; write another buffer, or read '{1}.Previous' of a 'History = true' buffer. |
+| DreamShader.Binder.Pipeline | ReadBeforeWrite | Pass '{0}' reads '{1}' before '{2}' writes it in the frame, so it reads the buffer's 'Clear' value; move the reader after the writer, or read '{1}.Previous'. |
+| DreamShader.Binder.Pipeline | ReadBeforeWriteNoClear | Pass '{0}' reads '{1}' before '{2}' writes it, and '{1}' is 'Clear = None', so what it reads is undefined; move the reader after the writer, or give the buffer a 'Clear' value. |
+| DreamShader.Binder.Pipeline | ReadNeverWrittenNoClear | Pass '{0}' reads '{1}', which no pass writes, and '{1}' is 'Clear = None', so what it reads is undefined. |
+| DreamShader.Binder.Pipeline | ReadNotAnInput | '{0}' reads no UserSceneTexture of '{1}': its inputs are {2}. |
+| DreamShader.Binder.Pipeline | Reads | reads |
+| DreamShader.Binder.Pipeline | ResolutionFixed | A fixed size is written 'Size = int2(width, height)', not 'Resolution = Fixed'. |
+| DreamShader.Binder.Pipeline | RuntimeValue | value known only at run time |
+| DreamShader.Binder.Pipeline | RuntimeValue2 | value known only at run time |
+| DreamShader.Binder.Pipeline | ScaleRange | 'Scale' of buffer '{0}' is {1}, and a scale is between 0.0625 and 4. |
+| DreamShader.Binder.Pipeline | SceneColorAfterBasePass | At AfterBasePass scene colour holds the emissive light only; nothing is lit yet, so pass '{0}' {1} that. |
+| DreamShader.Binder.Pipeline | SceneColorResolution | Pass '{0}' writes scene colour, which is {1} at {2}, and '{3}' with it, which is {4}; targets drawn together have one size. |
+| DreamShader.Binder.Pipeline | ShaderExtension | '{0}' is not a '.usf' or '.ush' file; the engine compiles shader files of those two kinds only. |
+| DreamShader.Binder.Pipeline | ShaderNeedsEntry | Pass '{0}' runs a shader file, and needs 'Entry = <function>' naming the function in it. |
+| DreamShader.Binder.Pipeline | ShaderNotFound | The shader file '{0}' does not exist; a path starting with '/' is a virtual shader path, and any other is read from the folder of this '.dsp'. |
+| DreamShader.Binder.Pipeline | ShaderNotString | 'Shader' takes the shader file as a quoted path: 'Shader = "Passes/Blur.usf";'. |
+| DreamShader.Binder.Pipeline | SizeRange | 'Size' of buffer '{0}' is {1} x {2}, and each side is between 1 and 16384. |
+| DreamShader.Binder.Pipeline | SlotNameDerived | '{0}' is a name of pass '{1}' in its HLSL slot twice: the slot's registry names a read's size and UV rect <Name>Size and <Name>UVRect, and a write's size <Name>Size, beside the names the pass binds; rename one of them. |
+| DreamShader.Binder.Pipeline | SlotNameEntry | '{0}' is a name of pass '{1}' in its HLSL slot, and so is its entry point: the slot's registry renames the Entry to the slot's own entry function with a #define of that name; rename the binding. |
+| DreamShader.Binder.Pipeline | SlotNameReserved | '{0}' is a name of pass '{1}' in its HLSL slot, and names starting with DP_ are the slot's own parameters (DreamPass.ush); rename the binding. |
+| DreamShader.Binder.Pipeline | SlotNameView | '{0}' is a name of pass '{1}' in its HLSL slot, and at BeginView the slot's registry defines 'View' itself, so that a use of the view uniform buffer, which does not exist yet there, fails to compile; rename the binding. |
+| DreamShader.Binder.Pipeline | SlotParamsTooMany | The parameters of pass '{0}' do not fit the {1} float4 of a shader slot, packed in order (a float4 takes a vector of its own, a float3 three components, a float2 a half, a scalar one); pass fewer, or pack them yourself. |
+| DreamShader.Binder.Pipeline | SlotTextureParamMaterial | '{0}' is a {1}, and the parameter block of a shader slot holds numbers only, so no texture parameter reaches a '.usf' pass. A material takes one through 'param': draw this pass with a material ('Material = ...'), or let a fullscreen material pass that takes the texture by 'param' write it into a buffer this pass reads. |
+| DreamShader.Binder.Pipeline | SlotTwice | '{0}' is bound twice in pass '{1}'; inside a pass every input, output and parameter has a name of its own. |
+| DreamShader.Binder.Pipeline | SlotTwiceCase | '{0}' and '{1}' differ in case only, and pass '{2}' matches them to its material's inputs and parameters as Unreal names, which ignore case: give them names of their own. |
+| DreamShader.Binder.Pipeline | StencilArity | 'Stencil' takes the stencil value and, optionally, the mask it is compared under: 'Stencil(1)', 'Stencil(4, 0x0F)'. |
+| DreamShader.Binder.Pipeline | StencilMaskWithoutStencil | 'Nanite = StencilMask' writes where CustomStencil matches the filter's 'Stencil(...)', and the filter of '{0}' has none; use 'AssignStencil(n)' for layers and lists. |
+| DreamShader.Binder.Pipeline | StencilRange | A stencil value and its mask are 0 to 255. |
+| DreamShader.Binder.Pipeline | ThreadsDisagree | 'Threads = uint3({0}, {1}, {2})' disagrees with '[numthreads({3}, {4}, {5})]' of '{6}', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers. |
+| DreamShader.Binder.Pipeline | ThreadsRange | 'Threads' is a thread group of at least 1 in each direction, at most 64 in z and at most 1024 threads in all. |
+| DreamShader.Binder.Pipeline | TonemapperWritesNothing | Pass '{0}' replaces the tonemapper, which makes the frame's final colour, and writes no 'SceneColor'; add 'write SceneColor;'. |
+| DreamShader.Binder.Pipeline | TranslucencyOnlyThere | 'Translucency' exists on the post-process chain only (PostProcess.*), and pass '{1}' runs at {2}. |
+| DreamShader.Binder.Pipeline | TwoTonemappers | Pass '{0}' replaces the tonemapper, and so does '{1}'; one view runs one tonemapper, so a pipeline replaces it at most once. |
+| DreamShader.Binder.Pipeline | UnknownBuffer | '{0}' is neither a buffer of this pipeline nor a built-in texture; declare it with 'buffer {0} : <Format>;'. |
+| DreamShader.Binder.Pipeline | UnknownBufferDidYouMean | '{0}' is neither a buffer of this pipeline nor a built-in texture; did you mean '{1}'? Names are case-sensitive. |
+| DreamShader.Binder.Pipeline | UnknownBufferKey | '{0}' is not a key of a buffer; the keys are {1}. |
+| DreamShader.Binder.Pipeline | UnknownBufferKeyDidYouMean | '{0}' is not a key of a buffer; did you mean '{1}'? Keys are case-sensitive. |
+| DreamShader.Binder.Pipeline | UnknownFormat | '{0}' is not a buffer format; the formats are {1}. |
+| DreamShader.Binder.Pipeline | UnknownFormatDidYouMean | '{0}' is not a buffer format; did you mean '{1}'? Formats are case-sensitive. |
+| DreamShader.Binder.Pipeline | UnknownInjection | '{0}' is not an injection point; the points are {1}. |
+| DreamShader.Binder.Pipeline | UnknownInjectionDidYouMean | '{0}' is not an injection point; did you mean '{1}'? |
+| DreamShader.Binder.Pipeline | UnknownLayerDidYouMean | '{0}' is not a pass layer of this project; did you mean '{1}'? |
+| DreamShader.Binder.Pipeline | UnknownLayerFirstNames | '{0}' is not a pass layer of this project; the layers are the first {1} names of Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names. |
+| DreamShader.Binder.Pipeline | UnknownPassKey | '{0}' is not a key of a {1} pass; its keys are {2}. |
+| DreamShader.Binder.Pipeline | UnknownPassKeyDidYouMean | '{0}' is not a key of a {1} pass; did you mean '{2}'? Keys are case-sensitive. |
+| DreamShader.Binder.Pipeline | UnknownPassKind | '{0}' is not a pass kind; a pass is {1}. |
+| DreamShader.Binder.Pipeline | UnknownPassKindDidYouMean | '{0}' is not a pass kind; did you mean '{1}'? Kinds are written in lower case. |
+| DreamShader.Binder.Pipeline | UsageShape | 'Usage' takes vertex factory kinds joined by '\|': {0}. |
+| DreamShader.Binder.Pipeline | UsageUnknown | '{0}' is not a mesh usage; the usages are {1}. |
+| DreamShader.Binder.Pipeline | UsageUnknownDidYouMean | '{0}' is not a mesh usage; did you mean '{1}'? |
+| DreamShader.Binder.Pipeline | UseAfterTonemapping | 'BlendableLocation = SceneColorAfterTonemapping' |
+| DreamShader.Binder.Pipeline | UseBeforeTonemapping | 'BlendableLocation = SceneColorAfterDOF' or 'SceneColorBeforeDOF' |
+| DreamShader.Binder.Pipeline | UtilityParams | A {0} pass has no shader or material to give a 'param' to. |
+| DreamShader.Binder.Pipeline | ValueNotBool | '{0}' takes 'true' or 'false'. |
+| DreamShader.Binder.Pipeline | ValueNotInteger | '{0}' takes a whole number the compiler can fold, and this is a {1}. |
+| DreamShader.Binder.Pipeline | ValueNotNumber | '{0}' takes a number the compiler can fold, and this is a {1}. |
+| DreamShader.Binder.Pipeline | ValueNotVector | '{0}' takes {1} the compiler can fold, and this is a {2}. |
+| DreamShader.Binder.Pipeline | ValueNotWord | '{0}' takes one of {1}, written without quotes. |
+| DreamShader.Binder.Pipeline | ValueUnknownWord | '{0}' is not a value of '{1}'; it takes {2}. |
+| DreamShader.Binder.Pipeline | ValueUnknownWordDidYouMean | '{0}' is not a value of '{1}'; did you mean '{2}'? |
+| DreamShader.Binder.Pipeline | VectorOfN | {0} {1} |
+| DreamShader.Binder.Pipeline | VectorOfRange | {0} to {1} {2} |
+| DreamShader.Binder.Pipeline | WhereBuffer | a buffer |
+| DreamShader.Binder.Pipeline | WherePass | a pass |
+| DreamShader.Binder.Pipeline | WherePipelineConstant | a constant |
+| DreamShader.Binder.Pipeline | WherePipelineParameter | a pipeline parameter |
+| DreamShader.Binder.Pipeline | WherePipelinePragma | '#pragma pipeline' |
+| DreamShader.Binder.Pipeline | WholeNumbers | whole numbers |
+| DreamShader.Binder.Pipeline | WholeNumbers2 | whole numbers |
+| DreamShader.Binder.Pipeline | WritePrevious | '{0}.Previous' is last frame's contents, which nothing writes any more; write '{0}'. |
+| DreamShader.Binder.Pipeline | WritesInto | writes into |
 | DreamShader.Binder.Statements | BreakOutsideLoop | 'break' leaves a loop, and this one is not inside a 'for', 'while' or 'do'. |
 | DreamShader.Binder.Statements | ConditionNotScalar | {0} has to be a single true-or-false value, and this is {1}. |
 | DreamShader.Binder.Statements | ConstantNotConstant | '{0}' is a compile-time constant, and this initializer is not one; a constant is built from literals and other constants. |
@@ -440,11 +658,29 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Decompiler.Instance | UnsupportedInstanceState | '{0}' overrides '{1}', which '#pragma instance' has no key for; the rebuilt instance has the parent's. |
 | DreamShader.Decompiler.IR | ImportedModuleInvalid | The graph of '{0}' did not read into a valid module; the errors above say where. This is a defect of the decompiler, not of the asset. |
 | DreamShader.Decompiler.IR | InstanceNeedsDsi | '{0}' is a material instance, which decompiles to a '.dsi', and '{1}' is not one. |
+| DreamShader.Decompiler.IR | PipelineNeedsDsp | '{0}' is a pass pipeline, which decompiles to a '.dsp', and '{1}' is not one. |
 | DreamShader.Decompiler.IR | PrintedTextDoesNotParse | The decompiled text does not parse back: {0}: {1}. It is written as it is; this is a defect of the decompiler. |
 | DreamShader.Decompiler.IR | PrintedTextNoReason | the parser gave no reason |
-| DreamShader.Decompiler.IR | SourceProductMissing | '{0}' builds '{1}', and that asset does not exist or is not a material or a material function; build the source first. |
+| DreamShader.Decompiler.IR | SourceProductMissingAny | '{0}' builds '{1}', and that asset does not exist or is of no kind a decompile reads; build the source first. |
 | DreamShader.Decompiler.IR | SourceProductsUnresolved | '{0}' does not resolve to the assets it builds, so there is nothing to decompile for it. |
-| DreamShader.Decompiler.IR | UnsupportedAssetClass | '{0}' is a {1}, which no DreamShader source describes; a decompile takes a material, a material function, layer or blend, or a material instance. |
+| DreamShader.Decompiler.IR | UnsupportedAssetClassWithPipeline | '{0}' is a {1}, which no DreamShader source describes; a decompile takes a material, a material function, layer or blend, a material instance, or a pass pipeline. |
+| DreamShader.Decompiler.Pipeline | FullscreenMaterialAndShader | The pass '{0}' has both a material, '{1}', and a shader, '{2}'; a fullscreen pass names one of the two, and the text keeps the material, which is what the pass draws. |
+| DreamShader.Decompiler.Pipeline | FullscreenNothing | The pass '{0}' has neither a material nor a shader, so the text names neither, and it does not build until one is given. |
+| DreamShader.Decompiler.Pipeline | LayerBitsUnnamed | A layer filter of the pass '{0}' selects layer bit(s) {1}, which the project's layer table has no name for; the text cannot say them and leaves them out. |
+| DreamShader.Decompiler.Pipeline | LayerNamesFromTable | A layer filter of the pass '{0}' kept no spelling of its layers, so they are written as the project's layer table names its bits today: {1}. |
+| DreamShader.Decompiler.Pipeline | MeshUsageEmpty | The pass '{0}' checks its override material for no usage flag at all, which a '.dsp' cannot say; the text leaves 'Usage' out, and a rebuild checks the default set ({1}). |
+| DreamShader.Decompiler.Pipeline | NoPipeline | There is no pass pipeline to decompile. |
+| DreamShader.Decompiler.Pipeline | OwnDepthWithoutBuffer | The pass '{0}' tests against its own depth but names no Depth32 buffer for it; the text writes 'Own()' empty, and it does not build until one is named. |
+| DreamShader.Decompiler.Pipeline | PipelinePathNotKept | A '.dsp' names its pipeline after its file and has no '/// @name', so '{0}' builds '{1}' where it is written, not '{2}'; move the file to where the pipeline's source belongs to keep its path. |
+| DreamShader.Decompiler.Pipeline | PipelineTextDiffers | The decompiled pipeline reads back as a different pipeline ({0} difference(s); the first: {1}). It is written as it is; this is a defect of the decompiler or the printer. |
+| DreamShader.Decompiler.Pipeline | PipelineTextDoesNotBindEither | The decompiled pipeline parses but does not bind back into a pipeline: {0}: {1}. It is written as it is; either the asset breaks a rule a '.dsp' is checked against (an edit by hand can), or this is a defect of the decompiler. |
+| DreamShader.Decompiler.Pipeline | PipelineTextDoesNotParse | The decompiled pipeline does not parse back: {0}: {1}. It is written as it is; this is a defect of the decompiler. |
+| DreamShader.Decompiler.Pipeline | PipelineTextNoParseReason | the parser gave no reason |
+| DreamShader.Decompiler.Pipeline | PipelineTextNoProduct | the text builds no pipeline |
+| DreamShader.Decompiler.Pipeline | PipelineTreeNotBuilt | The text of '{0}' could not be laid out; this is a defect of the decompiler, not of the asset. |
+| DreamShader.Decompiler.Pipeline | TextureConstantParam | The pass '{0}' binds '{1}' to a texture constant, which a 'param' cannot state; the binding is left out of the text. |
+| DreamShader.Decompiler.Pipeline | TextureDefaultNot2DKept | The parameter '{0}' defaults to '{1}', which is not a 2D texture. A '.dsp' declares every texture parameter 'Texture2D', and the text does so here too, keeping this default; it builds as it is. |
+| DreamShader.Decompiler.Pipeline | ViewsEmpty | '{0}' runs in no kind of view, which a '.dsp' cannot say; the text leaves 'Views' out, and a rebuild runs in {1}. |
 | DreamShader.Decompiler.Service | DecompileDidNotProduceSourceText | Decompile did not produce source text. |
 | DreamShader.Decompiler.Service | DecompileDidNotSayWhy | The decompile failed without reporting why. |
 | DreamShader.Decompiler.Service | DecompileDssLanguage | 2.0 |
@@ -577,6 +813,39 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Emitter | UnknownProductKind | '{0}' has a product kind the emitter does not know how to materialize. |
 | DreamShader.Emitter | ValueNotEmitted | This node reads node {0}, which has not been emitted; the graph's topological order is inconsistent. |
 | DreamShader.Emitter | VectorParamFailed | Failed to create a VectorParameter node. |
+| DreamShader.Emitter.PassPipeline | CreatePipelineFailed | The pass pipeline for '{0}' could not be created or reused. {1} |
+| DreamShader.Emitter.PassPipeline | ExportFormatRefused | Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read an exported buffer as a float texture, which an integer or a depth buffer cannot be. Export a float or normalized buffer, or drop Export. |
+| DreamShader.Emitter.PassPipeline | ExportTargetDeleted | '{0}' was deleted: its buffer is no longer exported. |
+| DreamShader.Emitter.PassPipeline | ExportTargetFailed | The render target of the exported buffer '{0}' could not be created or reused. {1} |
+| DreamShader.Emitter.PassPipeline | ExportTargetKept | '{0}' was left in place although its buffer is no longer exported: {1}. Delete it by hand once nothing reads it. |
+| DreamShader.Emitter.PassPipeline | ExportTargetKeptNoDelete | it could not be deleted here |
+| DreamShader.Emitter.PassPipeline | ExportTargetKeptReferenced | it is still referenced by {0} |
+| DreamShader.Emitter.PassPipeline | LayerUnknown | Pass '{0}' selects the layer '{1}', which is not one of the project's pass layers (Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names). |
+| DreamShader.Emitter.PassPipeline | NeedsCustomPass | '{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built. |
+| DreamShader.Emitter.PassPipeline | ParameterDefaultFailed | The default of '{0}' could not be applied: {1}. |
+| DreamShader.Emitter.PassPipeline | PassMaterialMissing | The material '{0}' of pass '{1}' does not load; compile the source that builds it, or correct the Material key. |
+| DreamShader.Emitter.PassPipeline | PayloadUnmapped | '{1}' is not a {0} the Custom Pass runtime knows; the pipeline was not built. This is a compiler gap: the binder should have refused it. |
+| DreamShader.Emitter.PassPipeline | PipelineDestinationFailed | '{0}' does not resolve to a valid asset path. {1} |
+| DreamShader.Emitter.PassPipeline | PipelineEmitCancelled | Building '{0}' was cancelled; the pipeline, its slots and its render targets are as they were before this compile. |
+| DreamShader.Emitter.PassPipeline | SavePipelineFailedSaveOrForce | '{0}' was built but could not be saved with its render targets; its slots are already in the registry. In this session the pipeline in memory is current, so a plain compile of its source skips it: save it, or compile the source again with -Force. {1} |
+| DreamShader.Emitter.PassPipeline | WhatBlend | blend mode |
+| DreamShader.Emitter.PassPipeline | WhatConstantType | param constant type |
+| DreamShader.Emitter.PassPipeline | WhatCull | cull mode |
+| DreamShader.Emitter.PassPipeline | WhatDepth | depth mode |
+| DreamShader.Emitter.PassPipeline | WhatDispatch | dispatch mode |
+| DreamShader.Emitter.PassPipeline | WhatFilter | filter term |
+| DreamShader.Emitter.PassPipeline | WhatFormat | buffer format |
+| DreamShader.Emitter.PassPipeline | WhatInjection | injection point |
+| DreamShader.Emitter.PassPipeline | WhatKind | pass kind |
+| DreamShader.Emitter.PassPipeline | WhatMeshMode | mesh mode |
+| DreamShader.Emitter.PassPipeline | WhatNanite | Nanite policy |
+| DreamShader.Emitter.PassPipeline | WhatParameterType | parameter type |
+| DreamShader.Emitter.PassPipeline | WhatParamSource | param source |
+| DreamShader.Emitter.PassPipeline | WhatPassInjection | injection point |
+| DreamShader.Emitter.PassPipeline | WhatRequirement | requirement |
+| DreamShader.Emitter.PassPipeline | WhatResolution | buffer resolution |
+| DreamShader.Emitter.PassPipeline | WhatUsage | mesh usage |
+| DreamShader.Emitter.PassPipeline | WhatView | view kind |
 | DreamShader.Format | FormatCheckComment | the comment '{0}' is not in it |
 | DreamShader.Format | FormatCheckFailed | The formatted text of '{0}' failed its own check -- {1} -- so nothing was written. This is a fault of the formatter, not of the file. |
 | DreamShader.Format | FormatCheckParse | it does not parse ({0}) |
@@ -640,6 +909,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.IR.Validator | OperandReadsStatement | Node {0} reads {1} from node {2}, which is a statement and produces no value. |
 | DreamShader.IR.Validator | OutputNamesNotParallel | Node {0} has {1} output name(s) for {2} output(s); the two lists are either parallel or the names are omitted. |
 | DreamShader.IR.Validator | PartialDedupeKeys | Product {0} has dedupe keys on {1} of its {2} nodes; the key is either computed for the whole graph or for none of it. |
+| DreamShader.IR.Validator | PipelineBesideProducts | This module holds a Custom Pass pipeline and {0} other product(s), and a pipeline is the only product of its file. |
 | DreamShader.IR.Validator | ProductNoName | Product {0} has no name; the asset name comes from the exported function or from '/// @name'. |
 | DreamShader.IR.Validator | ReflectedClassMismatch | Node {0} names class '{1}' but its catalog entry is '{2}'; the two must agree. |
 | DreamShader.IR.Validator | ReflectedNoCatalogIndex | Node {0} is a reflected node with catalog index {1}, which is not an entry of the builtin catalog. |
@@ -749,10 +1019,11 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.Declarations | PragmaExpectedOpen | expected '(' after the pragma name. |
 | DreamShader.Lang.Declarations | PragmaExpectedSeparator | expected ',' or ')'. |
 | DreamShader.Lang.Declarations | PragmaExpectedValue | expected a value after '{0} ='. |
+| DreamShader.Lang.Declarations | PragmaPipelineValueTail | the value of '{0}' has a '.' or a '\|' with no name after it; write 'Views = Game \| Editor' or 'Injection = PostProcess.AfterDOF'. |
 | DreamShader.Lang.Declarations | PragmaPositionalInMaterial | '{0}' needs a value: write '{0} = ...'. |
 | DreamShader.Lang.Declarations | PragmaQuotedKey | a key cannot be a quoted string. |
 | DreamShader.Lang.Declarations | PragmaTrailingText | unexpected text after ')'. |
-| DreamShader.Lang.Declarations | PragmaWithoutNameWithInstance | '#pragma' needs a name: material, instance, layout, region or endregion. |
+| DreamShader.Lang.Declarations | PragmaWithoutNameWithPipeline | '#pragma' needs a name: material, instance, pipeline, layout, region or endregion. |
 | DreamShader.Lang.Declarations | StorageOnFunction | '{0}' is a function; 'uniform', 'static' and 'const' apply to variables only. |
 | DreamShader.Lang.Declarations | StrayDirective | Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first. |
 | DreamShader.Lang.Declarations | UnexpectedAtFileScope | Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'. |
@@ -972,6 +1243,34 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.Parser | TrailingTokenAfterExpression | Expected the end of the expression, found {0}. |
 | DreamShader.Lang.Parser | UnexpectedEndOfFile | Unexpected end of file while parsing {0}. |
 | DreamShader.Lang.Parser | WhileParsingABlock | a block |
+| DreamShader.Lang.Pipeline | BufferOutsideDsp | 'buffer {0}' declares a buffer of a Custom Pass pipeline, which only a '.dsp' file holds; move it into the pipeline's '.dsp'. |
+| DreamShader.Lang.Pipeline | DirectiveInsidePass | The line '#{0}' cannot appear inside a pass block; a pass holds settings and 'read', 'write' and 'param' lines. |
+| DreamShader.Lang.Pipeline | ExpectedBindingBuffer | a buffer after '{0}' |
+| DreamShader.Lang.Pipeline | ExpectedBindingBufferAfterSlot | a buffer after '{0} {1} =' |
+| DreamShader.Lang.Pipeline | ExpectedBufferArgumentSeparator | Expected ',' or ')' in the arguments of buffer '{0}', found {1}. |
+| DreamShader.Lang.Pipeline | ExpectedBufferColon | ':' and a format after 'buffer {0}' |
+| DreamShader.Lang.Pipeline | ExpectedBufferFormat | a buffer format such as 'R8' or 'RGBA16F' |
+| DreamShader.Lang.Pipeline | ExpectedBufferKey | a key such as 'Scale' in the arguments of buffer '{0}' |
+| DreamShader.Lang.Pipeline | ExpectedBufferKeyAssign | '=' after '{0}' |
+| DreamShader.Lang.Pipeline | ExpectedBufferName | the buffer's name after 'buffer' |
+| DreamShader.Lang.Pipeline | ExpectedBufferSemicolon | ';' after the declaration of buffer '{0}' |
+| DreamShader.Lang.Pipeline | ExpectedParamAssign | '=' after 'param {0}' |
+| DreamShader.Lang.Pipeline | ExpectedParamName | a parameter name after 'param' |
+| DreamShader.Lang.Pipeline | ExpectedPassColon | ':' and a pass kind after 'pass {0}' |
+| DreamShader.Lang.Pipeline | ExpectedPassKind | a pass kind: fullscreen, compute, mesh, clear or copy |
+| DreamShader.Lang.Pipeline | ExpectedPassName | the pass's name after 'pass' |
+| DreamShader.Lang.Pipeline | ExpectedPassOpen | '`{' to open the block of pass '{0}' |
+| DreamShader.Lang.Pipeline | ExpectedPassStatement | Expected a setting ('Key = Value;') or a 'read', 'write' or 'param' line in a pass block, found {0}. |
+| DreamShader.Lang.Pipeline | ExpectedPassStatementSemicolon | ';' at the end of the pass statement |
+| DreamShader.Lang.Pipeline | ExpectedPrevious | 'Previous' after '.' |
+| DreamShader.Lang.Pipeline | ExpectedSettingAssign | '=' after the key '{0}' |
+| DreamShader.Lang.Pipeline | OnlyPrevious | '{0}.{1}': the one thing a buffer has after '.' is 'Previous', last frame's contents of a 'History = true' buffer. |
+| DreamShader.Lang.Pipeline | PassMissingClose | Expected '`}' to close pass '{0}' before the next declaration, found {1}. |
+| DreamShader.Lang.Pipeline | PassOutsideDsp | 'pass {0}' declares a pass of a Custom Pass pipeline, which only a '.dsp' file holds; move it into the pipeline's '.dsp'. |
+| DreamShader.Lang.Pipeline | WhileParsingPass | pass '{0}' |
+| DreamShader.Lang.PipelineSource | NotAPipeline | Expected a '.dsp' file bound as a pipeline to rewrite, found another kind of file; the file was left unchanged. |
+| DreamShader.Lang.PipelineSource | PipelineOverlappingEdits | Expected every change to this pipeline to touch its own stretch of text, found an edit at line {0} that overlaps another or runs past the end; the file was left unchanged. |
+| DreamShader.Lang.PipelineSource | PipelineSharedStatement | Expected '{0}' to be declared alone to rewrite or remove it, found it in a declaration shared with other names; split the declaration first. |
 | DreamShader.Lang.Statements | BlockLeftBrace | '{' to open a block |
 | DreamShader.Lang.Statements | BreakSemicolon | ';' after 'break' |
 | DreamShader.Lang.Statements | ContinueSemicolon | ';' after 'continue' |
@@ -1034,6 +1333,138 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Navigation | SpanTableBadRow | The DreamShader.SourceSpans entry '{Key}' of '{Asset}' is not an object with file/line/col and was skipped; that node cannot be navigated to. |
 | DreamShader.Navigation | SpanTableBadSpan | The DreamShader.SourceSpans entry '{Key}' of '{Asset}' names no file or a line below 1 and was skipped; that node cannot be navigated to. |
 | DreamShader.Navigation | SpanTableNotJson | The DreamShader.SourceSpans metadata of '{Asset}' is not a JSON object, so no node on it can be mapped back to a source line; rebuild the asset from its source. |
+| DreamShader.Pass.BufferNode | BuiltinBuffer | Dream Pass Buffer: '{0}' is a built-in buffer, which only passes can read; a material reads a buffer '{1}' declares with Export = true. |
+| DreamShader.Pass.BufferNode | Keywords | dream pass custom pass buffer export exported render target dreamshader |
+| DreamShader.Pass.BufferNode | MenuCategory | DreamShader |
+| DreamShader.Pass.BufferNode | NeedsEngine | Dream Pass Buffer needs Unreal Engine 5.8 or later. |
+| DreamShader.Pass.BufferNode | NoBuffer | Dream Pass Buffer: no Buffer of '{0}' is set. |
+| DreamShader.Pass.BufferNode | NoPipeline | Dream Pass Buffer: no Pipeline is set. |
+| DreamShader.Pass.BufferNode | NoTarget | Dream Pass Buffer: buffer '{0}' of '{1}' is exported but the pipeline has no render target for it. Compile the .dsp again. |
+| DreamShader.Pass.BufferNode | NotExported | Dream Pass Buffer: buffer '{0}' of '{1}' is not exported. Declare it with Export = true in the .dsp. |
+| DreamShader.Pass.BufferNode | NotSampleable | Dream Pass Buffer: buffer '{0}' of '{1}' is {2}, which a material cannot sample. Export a float or normalized buffer instead. |
+| DreamShader.Pass.BufferNode | StaleTextureList | Dream Pass Buffer: the render target of '{0}.{1}' is newer than this material's list of textures. Recompile the material, or the .dss it is built from. |
+| DreamShader.Pass.BufferNode | UnknownBuffer | Dream Pass Buffer: '{1}' has no buffer '{0}'. |
+| DreamShader.Pass.OutputNode | Keywords | dream pass custom pass mesh pass output dreamshader |
+| DreamShader.Pass.OutputNode | MenuCategory | DreamShader |
+| DreamShader.Pass.OutputNode | NeedsEngine | Dream Pass Output needs Unreal Engine 5.8 or later. |
+| DreamShader.Pass.OutputNode | NotANumber | Dream Pass Output: {0} takes a float1 to float4 value; a Substrate BSDF, material attributes or a texture cannot be written to a buffer. |
+| DreamShader.Pass.Pipeline | BindingNoBuffer | a binding names no buffer. |
+| DreamShader.Pass.Pipeline | BufferName | Buffer '{0}': the name is empty, taken twice, or a built-in one. |
+| DreamShader.Pass.Pipeline | BuiltinPrevious | '{0}.Previous': a built-in buffer has no history. |
+| DreamShader.Pass.Pipeline | ClearOneWrite | a clear writes exactly one buffer. |
+| DreamShader.Pass.Pipeline | ComputeDispatchBuffer | it dispatches over a buffer it does not name. |
+| DreamShader.Pass.Pipeline | ComputeNoWrite | a compute pass writes at least one buffer. |
+| DreamShader.Pass.Pipeline | ComputeSlot | it has no compute shader slot. |
+| DreamShader.Pass.Pipeline | ComputeTooMany | it binds more buffers than a compute shader slot has. |
+| DreamShader.Pass.Pipeline | CopyOneEach | a copy reads one buffer and writes one. |
+| DreamShader.Pass.Pipeline | EnabledParameter | '{0}' is not a Bool parameter. |
+| DreamShader.Pass.Pipeline | ExportTarget | Buffer '{0}' is exported but has no render target. |
+| DreamShader.Pass.Pipeline | FullscreenBoth | it has both a material and a pixel shader slot; a pass is one or the other. |
+| DreamShader.Pass.Pipeline | FullscreenNothing | it has neither a material nor a pixel shader slot. |
+| DreamShader.Pass.Pipeline | FullscreenOneWrite | a material pass writes exactly one buffer. |
+| DreamShader.Pass.Pipeline | FullscreenTooManyWrites | it writes more buffers than a pixel shader slot has outputs. |
+| DreamShader.Pass.Pipeline | MeshDepthBuffer | Depth = Own names no Depth32 buffer. |
+| DreamShader.Pass.Pipeline | MeshNoFilter | a mesh pass selects nothing. |
+| DreamShader.Pass.Pipeline | MeshNoMaterial | Override and OwnOrOverride need a material. |
+| DreamShader.Pass.Pipeline | MeshWrites | a mesh pass writes one to four buffers. |
+| DreamShader.Pass.Pipeline | ParameterName | Parameter '{0}': the name is empty or taken twice. |
+| DreamShader.Pass.Pipeline | PassName | Pass '{0}': the name is empty or taken twice. |
+| DreamShader.Pass.Pipeline | PassProblem | Pass '{0}': {1} |
+| DreamShader.Pass.Pipeline | PixelSlotRange | its pixel shader slot is out of range. |
+| DreamShader.Pass.Pipeline | PreviousWithoutHistory | '{0}.Previous': the buffer keeps no history. |
+| DreamShader.Pass.Pipeline | UnknownBuffer | '{0}' is not a buffer of this pipeline. |
+| DreamShader.Pass.Pipeline | UnknownParameter | '{0}' is not a parameter of this pipeline. |
+| DreamShader.Pass.Pipeline | WritePrevious | a write cannot target '.Previous'. |
+| DreamShader.Pass.Pipelines | ComputeSlotWord | Compute |
+| DreamShader.Pass.Pipelines | PixelSlotWord | Pixel |
+| DreamShader.Pass.Pipelines | RegistryMoveAsideFailed | The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was reset. A file that is read-only because it is not checked out is the usual reason. |
+| DreamShader.Pass.Pipelines | RegistryUnreadableForTool | The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry -Rebuild' replaces a registry that does not parse. |
+| DreamShader.Pass.Pipelines | SlotCheckNeedsCustomPass | HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to pre-check them for. |
+| DreamShader.Pass.Pipelines | SlotCheckNoDestination | '{0}' does not resolve to an asset path ({1}), so its HLSL slots could not be pre-checked. |
+| DreamShader.Pass.Pipelines | SlotCheckNoIR | '{0}' did not get as far as its pipeline, so its HLSL slots could not be pre-checked. |
+| DreamShader.Pass.Pipelines | SlotCheckNothing | '{0}' has no HLSL pass, so there is no slot to pre-check; its materials are checked by the sources that build them. |
+| DreamShader.Pass.Pipelines | SnapshotMissingReserved | {0} slot {1} ({2}, pass '{3}') names snapshot files that are not on disk, so it is now reserved and compiles to the empty stub: a registry that includes a missing file fails the global shader compile. Compile '{4}' to give the pass its snapshot back, and commit the Slots folder with the registry. |
+| DreamShader.Pass.Settings | SectionDescription | Pipelines that run in every world, and the names of the layers mesh passes select by. |
+| DreamShader.Pass.Settings | SectionText | DreamShader Custom Pass |
+| DreamShader.Pass.Slots | ComputeSlotWord | compute |
+| DreamShader.Pass.Slots | ComputeTypeWord | compute |
+| DreamShader.Pass.Slots | ComputeWord | Compute |
+| DreamShader.Pass.Slots | PixelSlotWord | pixel |
+| DreamShader.Pass.Slots | PixelTypeWord | pixel |
+| DreamShader.Pass.Slots | PixelWord | Pixel |
+| DreamShader.Pass.Slots | PrecheckErrorInFile | [{0}] pass '{1}' does not compile in its HLSL slot: {2} |
+| DreamShader.Pass.Slots | PrecheckErrorInSlot | [{0}] pass '{1}' does not compile in its HLSL slot: {2} (a name this pass binds may clash with one the slot shader or the snapshot uses) |
+| DreamShader.Pass.Slots | PrecheckFormatUnavailable | The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots were not pre-checked for it; a cook for that platform compiles them unchecked. |
+| DreamShader.Pass.Slots | PrecheckNoCustomPass | HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to compile them for. |
+| DreamShader.Pass.Slots | PrecheckNoFormat | There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders. |
+| DreamShader.Pass.Slots | PrecheckNoShaderType | The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written. |
+| DreamShader.Pass.Slots | PrecheckRequestedFormatUnavailable | The shader format {0} was asked for, and this machine has no shader compiler for it, so the HLSL slots were not pre-checked for it. |
+| DreamShader.Pass.Slots | RegistryNotWritable | '{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again. |
+| DreamShader.Pass.Slots | RegistryUnreadable | The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'. |
+| DreamShader.Pass.Slots | RegistryWriteFailed | '{0}' could not be written. The slot registry is a committed file: a file that is read-only because it is not checked out is the usual reason. |
+| DreamShader.Pass.Slots | SlotFreed | {0} slot {1} of pass '{2}' was freed: the pipeline no longer runs that pass in HLSL there. |
+| DreamShader.Pass.Slots | SlotNameInvalid | '{0}' cannot name something in an HLSL slot: a slot name has to be an identifier, and one starting with DP_ would hide one of the slot's fixed parameters. |
+| DreamShader.Pass.Slots | SlotNameTwice | '{0}' would be defined twice in the pass's HLSL slot: every read, write and param needs its own name, and the slot also names a read's size and UV rect <Name>Size and <Name>UVRect, and a write's size <Name>Size, which must not meet another name either. |
+| DreamShader.Pass.Slots | SlotParamLayout | The pass's params do not fit an HLSL slot: {0} float4 vectors hold every param, a float4 takes one of its own, and a texture cannot be a param of a slot. |
+| DreamShader.Pass.Slots | SlotSectionFailed | Pass '{0}' cannot be mapped onto its HLSL slot: {1} |
+| DreamShader.Pass.Slots | SlotsUsedUp | Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the slots of pipelines whose source is gone, or raise {3} in the project's Target.cs. |
+| DreamShader.Pass.Slots | SlotTooManyReads | The pass reads {0} buffers; an HLSL slot has {1} inputs. |
+| DreamShader.Pass.Slots | SlotTooManyWrites | The pass writes {0} buffers; an HLSL slot has {1} outputs. |
+| DreamShader.Pass.Slots | SlotWriteFailed | '{0}' could not be written. The slot registry and its snapshots are committed files: a file that is read-only because it is not checked out is the usual reason. |
+| DreamShader.Pass.Slots | SnapshotIncludeMissing | '{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built. |
+| DreamShader.Pass.Slots | SnapshotLiveIncludeNotEngine | '{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{1}' keeps including the live file: an edit of it later reaches the global shaders without a pre-check. Include it by a relative path to have it copied into the snapshot. |
+| DreamShader.Pass.Slots | SnapshotRootUnreadable | The shader '{0}' of pass '{1}' could not be read, so there is nothing to snapshot into its slot. |
+| DreamShader.PassEditor.PipelineDetails | AdoptButton | Adopt Into Source |
+| DreamShader.PassEditor.PipelineDetails | AdoptReadOnlyTip | This pipeline's source ships with a plugin and is read-only, or it is not found; adopt is not available. |
+| DreamShader.PassEditor.PipelineDetails | AdoptTip | Write the edits made here back into the .dsp: only the declarations and keys whose values changed are rewritten, so its comments and order are kept. The file is backed up first. |
+| DreamShader.PassEditor.PipelineDetails | BuffersCategory | Buffers |
+| DreamShader.PassEditor.PipelineDetails | ComputeSlotKind | compute shader slot |
+| DreamShader.PassEditor.PipelineDetails | EngineRowFilter | Engine |
+| DreamShader.PassEditor.PipelineDetails | EngineTooOld | Custom Pass runs on Unreal Engine 5.8 and later. This engine loads and saves the pipeline, and runs none of it. |
+| DreamShader.PassEditor.PipelineDetails | ExportTarget | exported to {0} |
+| DreamShader.PassEditor.PipelineDetails | ExportTargetMissing | exported, but its render target does not exist yet: compile the source |
+| DreamShader.PassEditor.PipelineDetails | ExportTargetTip | {0}: show it in the Content Browser. |
+| DreamShader.PassEditor.PipelineDetails | FrameCategory | Passes in Frame Order |
+| DreamShader.PassEditor.PipelineDetails | InjectionGroup | {0} ({1}) |
+| DreamShader.PassEditor.PipelineDetails | NoBuffers | This pipeline declares no buffer: its passes use the built-in ones only. |
+| DreamShader.PassEditor.PipelineDetails | NoBuffersFilter | Buffers |
+| DreamShader.PassEditor.PipelineDetails | NoPasses | This pipeline has no pass. |
+| DreamShader.PassEditor.PipelineDetails | NoPassesFilter | Passes |
+| DreamShader.PassEditor.PipelineDetails | OpenShader | Open {0} |
+| DreamShader.PassEditor.PipelineDetails | OpenSourceButton | Open Source |
+| DreamShader.PassEditor.PipelineDetails | OpenSourceTip | Open the .dsp this pipeline is built from in your preferred editor. |
+| DreamShader.PassEditor.PipelineDetails | OverviewCategory | Pipeline Overview |
+| DreamShader.PassEditor.PipelineDetails | PassSkipped | The runtime skips this pass: see Problems above. |
+| DreamShader.PassEditor.PipelineDetails | PixelSlotKind | pixel shader slot |
+| DreamShader.PassEditor.PipelineDetails | ProblemsRowFilter | Problems |
+| DreamShader.PassEditor.PipelineDetails | ProblemsRowName | Problems |
+| DreamShader.PassEditor.PipelineDetails | RevertButton | Revert to Source |
+| DreamShader.PassEditor.PipelineDetails | RevertTip | Rebuild this pipeline from its .dsp, discarding every edit made here. The source file is not modified. |
+| DreamShader.PassEditor.PipelineDetails | SlotNone | no {0} yet: compile the source to give the pass one |
+| DreamShader.PassEditor.PipelineDetails | SlotNoSnapshot | {0} {1}, whose snapshot is missing: compile the source |
+| DreamShader.PassEditor.PipelineDetails | SlotOutOfRange | {0} {1}, which this build does not have (it has {2}) |
+| DreamShader.PassEditor.PipelineDetails | SlotReady | {0} {1} |
+| DreamShader.PassEditor.PipelineDetails | SourceNone | not built from a .dsp |
+| DreamShader.PassEditor.PipelineDetails | SourceRowFilter | Source |
+| DreamShader.PassEditor.PipelineDetails | SourceRowName | Source |
+| DreamShader.PassEditor.PipelineDetails | SummaryFormat | Order {0}, in views {1}, requiring {2}: {3} pass(es), {4} buffer(s), {5} parameter(s). |
+| DreamShader.PassEditor.PipelineDetails | SummaryRowFilter | Runs |
+| DreamShader.PassEditor.PipelineDetails | SummaryRowName | Runs |
+| DreamShader.PassRegistryCommandlet | CollectedPassGone | '{0}' no longer runs pass '{1}' in HLSL there. |
+| DreamShader.PassRegistryCommandlet | CollectedPipelineGone | no .dsp builds '{0}' any more. |
+| DreamShader.PassRegistryCommandlet | ComputeWord | compute |
+| DreamShader.PassRegistryCommandlet | NoPipelines | No .dsp under the source roots; the registry is rewritten from Registry.json as it stands. |
+| DreamShader.PassRegistryCommandlet | PipelineAssetOrphaned | No .dsp builds '{0}' any more, but the asset is still there and its pass '{1}' points at {2} slot {3}. Delete the asset or restore its source: once the slot is collected and given to another pass, that pass's shader is what this one would run. |
+| DreamShader.PassRegistryCommandlet | PixelWord | pixel |
+| DreamShader.PassRegistryCommandlet | RebuildCompileFailed | '{0}' did not compile, so its pipeline keeps the slots it had: {1} |
+| DreamShader.PassRegistryCommandlet | RegistryReset | Registry.json did not parse and was moved aside to '{0}'; the compiles that follow give every HLSL pass a slot afresh. |
+| DreamShader.PassRegistryCommandlet | RegistryUnreadable | The Custom Pass slot registry cannot be read: {0}. 'dsc pass-registry -Rebuild' moves it aside and gives every HLSL pass a slot again. |
+| DreamShader.PassRegistryCommandlet | SlotCollected | {0} slot {1} was freed: {2} |
+| DreamShader.PassRegistryCommandlet | SlotUnknown | '{0}' does not compile far enough to tell whether it still runs pass '{1}' in {2} slot {3}, so the slot is kept. Fix the source and compile it. |
+| DreamShader.PassRegistryCommandlet | SnapshotMissingDroppedAtStart | The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the registry file includes it: the next start takes the slot's section out of the registry file, and the pass does nothing until its source is compiled again -- unless the registry file is read-only, and then the global shaders fail to compile, which is fatal. Compile '{4}', or run 'dsc pass-registry -Rebuild'; commit the Slots folder with the registry. |
+| DreamShader.PassRegistryCommandlet | StaleSlot | Pass '{1}' of '{0}' points at {2} slot {3}, which the registry {4}. Its source '{5}' did not compile, so the asset was not updated: fix the source and compile it, or that pass runs whatever the slot holds. |
+| DreamShader.PassRegistryCommandlet | StaleSlotFree | leaves free |
+| DreamShader.PassRegistryCommandlet | StaleSlotTaken | gives to pass '{0}' of '{1}' |
 | DreamShader.Pipeline | CatalogEmpty | The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded. |
 | DreamShader.Pipeline | CompileCancelled | Compiling '{0}' was cancelled; nothing was written. |
 | DreamShader.Pipeline | CompilingLang2Source | Compiling DreamShader source '{0}'... |
@@ -1050,7 +1481,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pipeline | Lang2Parsing | Parsing '{0}'... |
 | DreamShader.Pipeline | Lang2Reading | Reading '{0}'... |
 | DreamShader.Pipeline | Lang2Validating | Validating the IR of '{0}'... |
-| DreamShader.Pipeline | NotACompilableSource | '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it. |
+| DreamShader.Pipeline | NotACompilableSource | '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it. |
 | DreamShader.Pipeline | ParentCompiledFirst | '{0}' was missing or older than its source, so '{1}' was compiled first. |
 | DreamShader.Pipeline | ParentCompileFailed | The parent source '{0}' failed to compile, so this instance has no parent to build against. {1} |
 | DreamShader.Pipeline | ParentSourceDoesNotBuild | The parent '{0}' comes from '{1}', which does not compile, so the parameters this instance overrides cannot be checked; compile that source to see why. |
@@ -1058,6 +1489,27 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pipeline | ResolveDestinationFailed | '{0}' does not resolve to a valid asset path. {1} |
 | DreamShader.Pipeline | SourcePreprocessFailed | '{0}' failed conditional compilation: {1}: {2} |
 | DreamShader.Pipeline | SourceUnreadable | '{0}' could not be read. |
+| DreamShader.Pipeline.References | MaterialCompiledFirst | '{0}' was missing or older than its source, so '{1}' was compiled first. |
+| DreamShader.Pipeline.References | MaterialCompileFailed | The material '{0}' comes from '{1}', which failed to compile, so this pipeline has no material to check its pass against. {2} |
+| DreamShader.Pipeline.References | MaterialReferenceAmbiguous | '{0}' names more than one material under this source root ({1}); write the material's asset path instead. |
+| DreamShader.Pipeline.References | MaterialReferenceCycleError | '{0}' is built by '{1}', which reads this pipeline's exported buffer through UE.DreamPassBuffer (directly, or through a pipeline that needs this one), and a pipeline and its pass material that need each other can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers. |
+| DreamShader.Pipeline.References | MaterialReferenceMalformed | The material '{0}' does not resolve to an asset path. {1} |
+| DreamShader.Pipeline.References | MaterialReferenceNotMaterial | '{0}' is a {1}, not a material or a material instance. |
+| DreamShader.Pipeline.References | MaterialSourceDoesNotCompile | The material '{0}' comes from '{1}', which does not compile, so this pipeline has no material to check its pass against. {2} |
+| DreamShader.Pipeline.References | PassBufferNoBuffer | UE.DreamPassBuffer names no Buffer of '{0}': write the exported buffer's name (Buffer = "Blurred"). |
+| DreamShader.Pipeline.References | PassBufferNoPipeline | UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = "CP_Highlight") or the pipeline asset's path. |
+| DreamShader.Pipeline.References | PassBufferNotExportedInSource | Buffer '{1}' of the pipeline '{0}' is not exported. Declare it with Export = true in the .dsp. |
+| DreamShader.Pipeline.References | PassBufferNotPipeline | '{0}' is a {1}, not a DreamShader pass pipeline. |
+| DreamShader.Pipeline.References | PassBufferNotSampleable | Buffer '{1}' of the pipeline '{0}' is {2}, which a material cannot sample. Export a float or normalized buffer instead. |
+| DreamShader.Pipeline.References | PassBufferPipelineAmbiguous | '{0}' names more than one pipeline under this source root ({1}); write the pipeline asset's path instead. |
+| DreamShader.Pipeline.References | PassBufferPipelineCycleError | The pipeline '{0}' needs this material to be built -- it is one of its pass materials, or the material of a pipeline that one needs -- so this material cannot read its exported buffer: the two can be built in no order. Inside its own pipeline a pass binds the buffer with 'read' -- a fullscreen material reads it as a UserSceneTexture input -- rather than the exported copy; a mesh pass's material cannot read its own pipeline's buffers. |
+| DreamShader.Pipeline.References | PassBufferPipelineMalformed | The pipeline '{0}' does not resolve to an asset path. {1} |
+| DreamShader.Pipeline.References | PassBufferPipelineMissing | The pipeline '{0}' names nothing: no pipeline asset exists at '{1}', and no .dsp under the source roots builds it. |
+| DreamShader.Pipeline.References | PassBufferPipelineNotFound | No pipeline named '{0}' is built by a .dsp under '{1}'; write the pipeline asset's path, or check the name. |
+| DreamShader.Pipeline.References | PassBufferUnknownInSource | The pipeline '{0}' declares no buffer '{1}'. |
+| DreamShader.Pipeline.References | PipelineCompiledFirst | The pipeline '{0}' was missing or older than its source, so '{1}' was compiled first. |
+| DreamShader.Pipeline.References | PipelineCompileFailed | The pipeline '{0}' comes from '{1}', which failed to compile, so the buffer this material reads cannot be checked. {2} |
+| DreamShader.Pipeline.References | PipelineSourceDoesNotCompile | The pipeline '{0}' comes from '{1}', which does not compile, so the buffer this material reads cannot be checked. {2} |
 | DreamShader.Preprocessor | BranchAfterElse | {0}({1}): '#{2}' after the '#else' on line {3}, which already closed this chain. |
 | DreamShader.Preprocessor | ConditionalNestingTooDeep | {0}({1}): '#{2}' nesting is deeper than the limit of {3}. |
 | DreamShader.Preprocessor | InvalidDefineName | {0}({1}): '#{2}' needs a name made of letters, digits and underscores and not starting with a digit; got '{3}'. |
@@ -1117,7 +1569,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Tools | ListGeneratedUnknownFormat | '-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json. |
 | DreamShader.Tools | ListGeneratedWriteFailed | The list of generated assets could not be written: {0}. |
 | DreamShader.Tools | NoMaterialToCheck | '{0}' produced no material, so there are no shaders to compile; a function library is checked by the material that calls it. |
-| DreamShader.Tools | NotALang2SourceForVerb | '{0}' is not a compilable DreamShader source (.dss, .dsi, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it. |
+| DreamShader.Tools | NotALang2SourceForVerb | '{0}' is not a compilable DreamShader source (.dss, .dsi, .dsp, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it. |
 | DreamShader.Tools | ShaderCompileError | [{0} / {1}] {2} |
 | DreamShader.Tools | ShaderCompileTimedOut | Shader compilation for '{0}' did not finish within {1} seconds per material. A compile that never finishes is usually a dynamic loop or a texture read whose mip cannot be resolved in a divergent branch; move it into a '@custom' body with an explicit SampleLevel. |
 | DreamShader.Tools | ShaderErrorsUnreadable | Shader errors cannot be read in this configuration: '-nullrhi' switches the rendering shader maps off, and no cook target platform matched the requested platforms. Re-run without '-nullrhi', or pass a '-Platform=' an active target platform supports. |
@@ -1158,6 +1610,16 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderAdoptNoBackup | none |
 | DreamShaderEditorBridge | DreamShaderAdoptNoProducts | '{0}' declares no asset any more, so '{1}' cannot be adopted into it. |
 | DreamShaderEditorBridge | DreamShaderAdoptOpenInEditor | '{0}' is open in an asset editor, whose copy a decompile cannot see, so nothing was adopted; save and close the editor, then adopt again. |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineConditionalSource | DSH8149: '{0}' uses conditional compilation, so the settings of '{1}' cannot be spliced into it without deleting the branches this build did not take; move the change into the source by hand. |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineConfirm | Write the settings, parameters, buffers and passes of '{0}' back into '{1}'?\n\nThe existing file is copied to '{2}' first. Only the declarations and keys whose values changed are rewritten, so comments and the order of the file are kept. |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineNoProduct | DSH9228: '{0}' builds no pass pipeline any more, so '{1}' has nothing to be spliced into. |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineNotDsp | DSH9227: '{0}' is not a .dsp pipeline file, so the settings of '{1}' cannot be spliced into it. |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineNotPipeline | DSH9226: '{0}' is built from the pipeline file '{1}' but is not a pass pipeline, so nothing was adopted. |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineResult | Wrote the settings of '{0}' into '{1}' ({2} edit(s), backup: '{3}'). {4} |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineRewriteRefused | The settings of '{0}' could not be spliced into '{1}', so nothing was written. |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineUnbound | '{0}' does not check, so the settings of '{1}' cannot be spliced into it; fix the file first. |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineUnchanged | '{0}' already states every setting of '{1}', so only the pipeline was rebuilt. {2} |
+| DreamShaderEditorBridge | DreamShaderAdoptPipelineUnreadable | '{0}' could not be read, so nothing was adopted. |
 | DreamShaderEditorBridge | DreamShaderAdoptResult | Adopted '{0}' into '{1}' (backup: '{2}'). {3} |
 | DreamShaderEditorBridge | DreamShaderAdoptTooltip | Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it. |
 | DreamShaderEditorBridge | DreamShaderAdoptTweakedInstance | '{0}' still matches its source and only carries parameter overrides, so there is nothing to adopt; use DreamShader > Adopt Tweaks as Source Defaults or Extract Tweaks to .dsi instead. |
@@ -1261,6 +1723,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderEditorBridge | DreamShaderProvenanceInstanceDecompileNoReason | the decompiler gave no reason |
 | DreamShaderEditorBridge | DreamShaderProvenanceInstanceDecompileRefused | '{0}' holds state a .dsi cannot state, so nothing was written: {1} |
 | DreamShaderEditorBridge | DreamShaderProvenanceNoAsset | DreamShader could not find the selected asset. |
+| DreamShaderEditorBridge | DreamShaderProvenancePipelineDecompileNoReason | the decompiler gave no reason |
+| DreamShaderEditorBridge | DreamShaderProvenancePipelineDecompileRefused | '{0}' holds state a .dsp cannot state, so nothing was written: {1} |
 | DreamShaderEditorBridge | DreamShaderProvenanceWriteFailed | Could not write '{0}'. |
 | DreamShaderEditorBridge | DreamShaderRecompileLabel | Recompile DSM |
 | DreamShaderEditorBridge | DreamShaderRecompileSharedLabel | Recompile DSM |
@@ -1314,6 +1778,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderIRToAst | LayoutHintsDropped | {0} node position(s) of '{1}' belong to values the source writes inline, and a position is kept by variable name; those nodes are placed by the layout pass when the file is built. |
 | DreamShaderIRToAst | OutputUnconnected | The output '{0}' of '{1}' is not connected to anything; nothing is written to it. |
 | DreamShaderIRToAst | OutputWithoutParam | The output '{0}' of '{1}' did not become a parameter; nothing is written to it. |
+| DreamShaderIRToAst | PipelineProduct | '{0}' is a Custom Pass pipeline, which is written as a '.dsp' (PrintDreamShaderPipeline), not as part of a '.dss'. |
 | DreamShaderIRToAst | UniformDisagrees | The parameter '{0}' appears more than once and its nodes do not agree on its default, group or kind; the uniform is written from the first one, in '{1}'. |
 | DreamShaderIRToAst | UniformRenamed | The uniform '{0}' is written as '{1}': the name is already taken in this file. |
 | DreamShaderIRToAstExpressions | AttributesWithoutMaterial | it reads the attributes of no material |
@@ -1481,11 +1946,25 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | NewMenu | New |
 | DreamShaderMaterialBrowser | NewMenuTip | Create a new source file from a template, in the selected folder. |
 | DreamShaderMaterialBrowser | NewObjectFailed | Failed to create the material instance object. |
+| DreamShaderMaterialBrowser | NewPipelineCompute | Compute chain |
+| DreamShaderMaterialBrowser | NewPipelineComputeHint | Written with <name>.usf next to it, the compute shader its pass runs (<name> is the name without CP_). The field it writes is exported as a render target any material can read. |
+| DreamShaderMaterialBrowser | NewPipelineComputeTip | A compute shader advances a 256 x 256 field every frame, kept from one frame to the next and exported as a render target; the .usf is written next to it. |
+| DreamShaderMaterialBrowser | NewPipelineComputeTitle | New compute chain (.dsp) |
+| DreamShaderMaterialBrowser | NewPipelineMeshMask | Mesh mask chain |
+| DreamShaderMaterialBrowser | NewPipelineMeshMaskHint | Written with M_<name>Mask.dss and PP_<name>Composite.dss next to it, the two materials its passes draw (<name> is the name without CP_). The objects it outlines are those added to the list of that name (UDreamPassSubsystem::AddToList). |
+| DreamShaderMaterialBrowser | NewPipelineMeshMaskTip | A mesh pass draws the objects of a list into a mask, and a fullscreen pass outlines them through walls; both materials are written next to it. |
+| DreamShaderMaterialBrowser | NewPipelineMeshMaskTitle | New mesh mask chain (.dsp) |
+| DreamShaderMaterialBrowser | NewPipelinePostProcess | Fullscreen post-process chain |
+| DreamShaderMaterialBrowser | NewPipelinePostProcessHint | Written with PP_<name>.dss next to it, the Post Process material its fullscreen pass draws (<name> is the name without CP_). |
+| DreamShaderMaterialBrowser | NewPipelinePostProcessTip | A copy grabs the scene at half size and a fullscreen pass blends it back tinted, through a Post Process material written next to it. |
+| DreamShaderMaterialBrowser | NewPipelinePostProcessTitle | New fullscreen post-process chain (.dsp) |
 | DreamShaderMaterialBrowser | NewSectionLang2 | DreamShaderLang 2.0 |
 | DreamShaderMaterialBrowser | NewSectionLegacy | 1.x blocks |
+| DreamShaderMaterialBrowser | NewSectionPipeline | Custom Pass pipeline (.dsp) |
 | DreamShaderMaterialBrowser | NewSourceBadName | The name must be an identifier: letters, digits and underscores, not starting with a digit. |
 | DreamShaderMaterialBrowser | NewSourceBrowse | Browse... |
 | DreamShaderMaterialBrowser | NewSourceCancel | Cancel |
+| DreamShaderMaterialBrowser | NewSourceCompanionExists | '{0}' already exists, and the template writes it for '{1}'; choose another name. |
 | DreamShaderMaterialBrowser | NewSourceCreate | Create |
 | DreamShaderMaterialBrowser | NewSourceCreated | Created {0} |
 | DreamShaderMaterialBrowser | NewSourceDssHint | The file is written from the plugin's template and compiled by the watcher on save. The name is the export's, and so the asset's; the folder decides where under /Game it lands. |
@@ -1498,6 +1977,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | NewSourceParentHint | /Game/Materials/M_Base, or the name of a product |
 | DreamShaderMaterialBrowser | NewSourceParentLabel | Parent |
 | DreamShaderMaterialBrowser | NewSourcePickFolder | Choose a source folder |
+| DreamShaderMaterialBrowser | NewSourcePipelineHint | The file is written from the plugin's template and compiled by the watcher on save. Its pipeline lands at the folder's /Game path, and runs where something activates it: the global pipelines of Project Settings > DreamShader Custom Pass, or a Dream Pass Volume. |
 | DreamShaderMaterialBrowser | NewSourceReadOnly | Choose a folder under the project's DShader root. A plugin's sources are read-only. |
 | DreamShaderMaterialBrowser | NewSourceWriteFailed | Could not write '{0}'. |
 | DreamShaderMaterialBrowser | NoChildrenAnywhere | No child instances. |
@@ -1518,7 +1998,12 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | PCompTip | Force-recompile this source (in memory). |
 | DreamShaderMaterialBrowser | PickFolderTitle | Choose a destination folder |
 | DreamShaderMaterialBrowser | PInstTipDsi | Write a .dsi instance of this material and compile it (an ordinary material instance when DreamShader did not generate the material). |
+| DreamShaderMaterialBrowser | PipelineBadgeTip | A Custom Pass pipeline source (.dsp). |
+| DreamShaderMaterialBrowser | PipelineRow | Pipeline |
+| DreamShaderMaterialBrowser | PipelineRowFmt | {0} pass(es), {1} buffer(s), {2} parameter(s); order {3} |
+| DreamShaderMaterialBrowser | PipelineState | pass pipeline · {0} |
 | DreamShaderMaterialBrowser | POpenMatTip | Open the generated material asset. |
+| DreamShaderMaterialBrowser | POpenPipelineTip | Open the generated pass pipeline in its details panel: its passes by injection point, its buffers and their render targets. |
 | DreamShaderMaterialBrowser | POpenSrc | Open source |
 | DreamShaderMaterialBrowser | POpenSrcTipAny | Open the source file in your preferred editor. |
 | DreamShaderMaterialBrowser | PreviewDragHint | drag to orbit |
@@ -1526,6 +2011,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | PreviewMeshLabel | Mesh |
 | DreamShaderMaterialBrowser | PreviewMeshTip | The shape the preview renders the material on. |
 | DreamShaderMaterialBrowser | PreviewNoMaterial | not compiled yet |
+| DreamShaderMaterialBrowser | PreviewPipeline | pass pipeline |
 | DreamShaderMaterialBrowser | PreviewRendering | rendering… |
 | DreamShaderMaterialBrowser | ProvenanceDiverged | edited by hand since the last build |
 | DreamShaderMaterialBrowser | ProvenanceExplainDiverged | The asset was edited by hand since it was generated, so a rebuild is refused to protect those edits. Decide which copy is the truth. |
@@ -1548,6 +2034,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | QFErrorsTip | Sources whose last compile failed, or that could not be read. |
 | DreamShaderMaterialBrowser | QFHideLibraries | Hide functions |
 | DreamShaderMaterialBrowser | QFHideLibrariesTip | Drop every .dsf and .dsh from the list. |
+| DreamShaderMaterialBrowser | QFHidePipelines | Hide pipelines |
+| DreamShaderMaterialBrowser | QFHidePipelinesTip | Drop every .dsp, the Custom Pass pipelines, from the list. |
 | DreamShaderMaterialBrowser | QFHideUnmanaged | Hide unmanaged |
 | DreamShaderMaterialBrowser | QFHideUnmanagedTip | Drop the materials DreamShader does not manage from the list. |
 | DreamShaderMaterialBrowser | QFStale | Stale |
@@ -1616,7 +2104,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderVirtualFunctionSyncService | UpdateSourceFileFailed | DreamShader failed to update VirtualFunction source file '{0}'. |
 
 ## Deferred diagnostics inventory
-Deferred files: 17
+Deferred files: 19
 Runtime FText::FromString/FText::FromName / FString::Printf literal call sites in deferred diagnostics: 0
 Use -IncludeDeferred to lint MaterialAssetGeneration/ and Decompiler/ in the next phase.
 
