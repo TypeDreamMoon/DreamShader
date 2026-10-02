@@ -10,9 +10,18 @@ class FDreamPassSceneViewExtension;
 class FOutputDevice;
 class FSceneView;
 class UDreamPassPipeline;
+class UDreamPassSubsystem;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
 class UPrimitiveComponent;
+
+namespace UE::DreamPass
+{
+	struct FFamilySnapshot;
+
+	/** Render/DreamPassMesh.cpp: `Nanite = AssignStencil`, once per family snapshot. Game thread; 5.8 only. */
+	void UpdateNaniteStencilAssignments(UDreamPassSubsystem& Subsystem, const FFamilySnapshot& Snapshot);
+}
 
 /** What the subsystem asks about a view when it decides which pipelines apply to it. Game thread data only. */
 struct FDreamPassViewQuery
@@ -187,6 +196,12 @@ public:
 
 	uint32 GetPrimitiveLayers(const UPrimitiveComponent* Primitive) const;
 
+	/** Every registered primitive whose pass layers share a bit with LayerMask. Game thread. */
+	void ForEachPrimitiveInLayers(uint32 LayerMask, TFunctionRef<void(UPrimitiveComponent&)> Visit) const;
+
+	/** Every registered primitive of a named list. Game thread. */
+	void ForEachPrimitiveInList(FName List, TFunctionRef<void(UPrimitiveComponent&)> Visit) const;
+
 	// --- sources ---------------------------------------------------------------------------------------------
 
 	/** A volume or component registers itself while it is registered with the world. */
@@ -241,6 +256,26 @@ private:
 	void OnSettingsChanged(UObject* Settings, struct FPropertyChangedEvent& Event);
 	void PruneStaleEntries();
 
+	friend void UE::DreamPass::UpdateNaniteStencilAssignments(UDreamPassSubsystem& Subsystem, const UE::DreamPass::FFamilySnapshot& Snapshot);
+
+	/** A Nanite primitive `Nanite = AssignStencil` gave custom depth and a stencil value: what it had, and when a pass last asked. */
+	struct FNaniteStencilAssignment
+	{
+		bool bOriginalRenderCustomDepth = false;
+		int32 OriginalStencilValue = 0;
+		int32 Value = 0;
+		uint64 LastRequestFrame = 0;
+	};
+
+	/** Gives Primitive custom depth and Value for this frame; false when a pass already gave it another value this frame. */
+	bool RequestNaniteStencil(UPrimitiveComponent& Primitive, int32 Value);
+
+	/** Gives the assigned primitives back what they had: those no pass asked for this frame, or all of them. */
+	void ReleaseNaniteStencils(bool bAll);
+
+	/** FCoreDelegates::OnEndFrame: releases the assignments no pass asks for any more. */
+	void OnEndFrame();
+
 	/** The global pipelines of the project settings, loaded; parallel to the settings' array. */
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UDreamPassPipeline>> GlobalPipelines;
@@ -259,6 +294,9 @@ private:
 	uint64 MaterialFrame = 0;
 	uint64 ExportClaimFrame = ~uint64(0);
 	FDelegateHandle SettingsChangedHandle;
+
+	TMap<TWeakObjectPtr<UPrimitiveComponent>, FNaniteStencilAssignment> NaniteStencilAssignments;
+	FDelegateHandle EndFrameHandle;
 
 	TSharedPtr<FDreamPassSceneViewExtension, ESPMode::ThreadSafe> ViewExtension;
 };

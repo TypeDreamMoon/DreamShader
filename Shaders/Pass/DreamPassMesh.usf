@@ -1,0 +1,107 @@
+// DreamShader Custom Pass -- the mesh pass's material shaders, FDreamMeshPassVS / FDreamMeshPassPS
+// (Source/DreamShaderPass/Private/Render/DreamPassMesh.cpp).
+//
+// They compile only for Surface materials that carry UE.DreamPassOutput: that node gives its material the DreamPass
+// shader tag the shader types gate on. The pixel shader evaluates the material as the base pass would -- masked
+// clipping and LOD dithering included -- and writes the node's Output0..Output3 to SV_Target0..3. An output the
+// material leaves unconnected writes 0.
+//
+// Precedent: RenderTrace's PhysicalMaterialSampler.usf, a plugin custom output read by a plugin mesh material shader.
+
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Generated/Material.ush"
+#include "/Engine/Generated/VertexFactory.ush"
+
+struct FDreamMeshPassVSToPS
+{
+	FVertexFactoryInterpolantsVSToPS FactoryInterpolants;
+	INVARIANT_OUTPUT float4 Position : SV_POSITION;
+};
+
+#if VERTEXSHADER
+
+void MainVS(
+	FVertexFactoryInput Input,
+	out FDreamMeshPassVSToPS Output)
+{
+	ResolvedView = ResolveView();
+
+	FVertexFactoryIntermediates VFIntermediates = GetVertexFactoryIntermediates(Input);
+	float4 WorldPosition = VertexFactoryGetWorldPosition(Input, VFIntermediates);
+
+	half3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, VFIntermediates);
+	FMaterialVertexParameters VertexParameters = GetMaterialVertexParameters(Input, VFIntermediates, WorldPosition.xyz, TangentToLocal);
+	Output.FactoryInterpolants = VertexFactoryGetInterpolantsVSToPS(Input, VFIntermediates, VertexParameters);
+
+	// The position is computed with the same instructions as the depth prepass (DepthOnlyVertexShader.usf), the world
+	// position offset isolated and the clip position marked invariant, so that a pass testing against the scene depth
+	// lands on the depth the prepass wrote rather than fighting it.
+	{
+		WorldPosition.xyz += GetMaterialWorldPositionOffset(VertexParameters);
+		ApplyMaterialFirstPersonTransform(VertexParameters, WorldPosition.xyz);
+	}
+	{
+		float4 RasterizedWorldPosition = VertexFactoryGetRasterizedWorldPosition(Input, VFIntermediates, WorldPosition);
+		Output.Position = INVARIANT(mul(RasterizedWorldPosition, ResolvedView.TranslatedWorldToClip));
+	}
+}
+
+#elif PIXELSHADER
+
+/**
+ * From the pixels of the pass's targets to the view's pixels in the scene textures: xy scale, zw bias. The identity
+ * when the pass draws into the view's own rect of the scene textures; otherwise -- an own buffer of the second view in
+ * split screen, a buffer at another resolution -- it puts the pixel back where the material expects it, so the
+ * screen position, the pixel's world position and the LOD dither pattern are the view's.
+ */
+float4 DreamPassSvPositionScaleBias;
+
+// UE.DreamPassOutput casts what it outputs to float4; these keep a material compiled before it did, or a narrower
+// output, from failing to compile here.
+float4 DreamPassToFloat4(float Value)  { return float4(Value, 0.0f, 0.0f, 0.0f); }
+float4 DreamPassToFloat4(float2 Value) { return float4(Value, 0.0f, 0.0f); }
+float4 DreamPassToFloat4(float3 Value) { return float4(Value, 0.0f); }
+float4 DreamPassToFloat4(float4 Value) { return Value; }
+
+void MainPS(
+	FDreamMeshPassVSToPS Interpolants
+	OPTIONAL_IsFrontFace,
+	out float4 OutTarget0 : SV_Target0,
+	out float4 OutTarget1 : SV_Target1,
+	out float4 OutTarget2 : SV_Target2,
+	out float4 OutTarget3 : SV_Target3)
+{
+	ResolvedView = ResolveView();
+
+	float4 SvPosition = Interpolants.Position;
+	SvPosition.xy = SvPosition.xy * DreamPassSvPositionScaleBias.xy + DreamPassSvPositionScaleBias.zw;
+
+	FMaterialPixelParameters MaterialParameters = GetMaterialPixelParameters(Interpolants.FactoryInterpolants, SvPosition);
+	FPixelMaterialInputs PixelMaterialInputs;
+	CalcMaterialParameters(MaterialParameters, PixelMaterialInputs, SvPosition, bIsFrontFace);
+
+	// Opacity mask and dithered LOD transitions, exactly as the base pass clips them.
+	GetMaterialCoverageAndClipping(MaterialParameters, PixelMaterialInputs);
+
+	OutTarget0 = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	OutTarget1 = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	OutTarget2 = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	OutTarget3 = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	// The translator defines HAVE_<Function><Index> for every output the material connects
+	// (E/Private/Materials/HLSLMaterialTranslator.cpp, FHLSLMaterialTranslator::CustomOutput).
+#if HAVE_GetDreamPassOutput0
+	OutTarget0 = DreamPassToFloat4(GetDreamPassOutput0(MaterialParameters));
+#endif
+#if HAVE_GetDreamPassOutput1
+	OutTarget1 = DreamPassToFloat4(GetDreamPassOutput1(MaterialParameters));
+#endif
+#if HAVE_GetDreamPassOutput2
+	OutTarget2 = DreamPassToFloat4(GetDreamPassOutput2(MaterialParameters));
+#endif
+#if HAVE_GetDreamPassOutput3
+	OutTarget3 = DreamPassToFloat4(GetDreamPassOutput3(MaterialParameters));
+#endif
+}
+
+#endif

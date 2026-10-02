@@ -1,0 +1,86 @@
+// DreamShader Custom Pass -- the fullscreen helpers of the mesh pass (Source/DreamShaderPass/Private/Render/DreamPassMesh.cpp).
+//
+// StencilMaskPS (FDreamMeshPassStencilMaskPS): the Nanite policies StencilMask and AssignStencil. A Nanite primitive
+// has no mesh batch a pass could draw again, so the pass's outputs receive a constant -- the pass's NaniteValue --
+// wherever the custom stencil holds a value the pass's filter selects. The custom depth is the depth of that
+// pixel, so it is tested like a drawn mesh would be.
+//
+// CopyDepthPS (FDreamMeshPassCopyDepthPS): a `Depth = TestScene` pass whose targets do not share the scene depth's
+// pixels -- an own buffer of the second view in split screen, a buffer at another resolution -- tests against a copy
+// of the scene depth brought into the targets' pixels instead.
+//
+// Both read the scene textures at the pixel of the view that corresponds to the target pixel: SV_Position.xy times
+// TargetToSourceScaleBias.xy plus .zw, clamped into the view's rect [SourceMin, SourceMax).
+
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/SceneTexturesCommon.ush"
+
+#ifndef DREAMPASS_OUTPUT_DEPTH
+#define DREAMPASS_OUTPUT_DEPTH 0
+#endif
+
+float4 TargetToSourceScaleBias;
+int2 SourceMin;
+int2 SourceMax;
+
+int2 DreamPassSourcePixel(float2 TargetPosition)
+{
+	const int2 Pixel = int2(floor(TargetPosition * TargetToSourceScaleBias.xy + TargetToSourceScaleBias.zw));
+	return clamp(Pixel, SourceMin, SourceMax - int2(1, 1));
+}
+
+/** What the pass writes to every output where a selected Nanite primitive is. */
+float4 FillValue;
+
+/** Bit s of the 256: custom stencil value s is selected. Word w = s / 32 is StencilMatch[w / 4][w % 4]. */
+uint4 StencilMatch[2];
+
+bool DreamPassIsStencilSelected(uint Stencil)
+{
+	const uint Word = StencilMatch[Stencil >> 7u][(Stencil >> 5u) & 3u];
+	return ((Word >> (Stencil & 31u)) & 1u) != 0u;
+}
+
+void StencilMaskPS(
+	float4 SvPosition : SV_POSITION,
+	out float4 OutTarget0 : SV_Target0,
+	out float4 OutTarget1 : SV_Target1,
+	out float4 OutTarget2 : SV_Target2,
+	out float4 OutTarget3 : SV_Target3
+#if DREAMPASS_OUTPUT_DEPTH
+	, out float OutDepth : SV_Depth
+#endif
+	)
+{
+	const int2 Pixel = DreamPassSourcePixel(SvPosition.xy);
+
+	// The custom stencil is read through its shader resource view whether it shares the custom depth texture or Nanite
+	// wrote it into a texture of its own (bSeparateCustomStencil, R/Private/Nanite/NaniteComposition.cpp,
+	// FinalizeCustomDepthStencil): the scene textures uniform buffer points at whichever exists, and both keep the
+	// value in the component CalcSceneCustomStencil reads.
+	const float CustomDeviceZ = SceneTexturesStruct.CustomDepthTexture.Load(int3(Pixel, 0)).r;
+	const uint Stencil = CalcSceneCustomStencil(uint2(Pixel)) & 0xFFu;
+
+	// Reverse Z: a custom depth of 0 is the far plane, a pixel no primitive rendered custom depth into.
+	if (CustomDeviceZ <= 0.0f || !DreamPassIsStencilSelected(Stencil))
+	{
+		discard;
+	}
+
+	OutTarget0 = FillValue;
+	OutTarget1 = FillValue;
+	OutTarget2 = FillValue;
+	OutTarget3 = FillValue;
+#if DREAMPASS_OUTPUT_DEPTH
+	OutDepth = CustomDeviceZ;
+#endif
+}
+
+Texture2D SourceDepth;
+
+void CopyDepthPS(
+	float4 SvPosition : SV_POSITION,
+	out float OutDepth : SV_Depth)
+{
+	OutDepth = SourceDepth.Load(int3(DreamPassSourcePixel(SvPosition.xy), 0)).r;
+}

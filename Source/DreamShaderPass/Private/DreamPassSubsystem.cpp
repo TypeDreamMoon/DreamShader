@@ -11,6 +11,7 @@
 #include "Engine/World.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
+#include "Misc/CoreDelegates.h"
 #include "Misc/OutputDevice.h"
 #include "SceneView.h"
 #include "SceneViewExtension.h"
@@ -57,6 +58,8 @@ void UDreamPassSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	SettingsChangedHandle = GetMutableDefault<UDreamPassSettings>()->OnSettingChanged().AddUObject(this, &UDreamPassSubsystem::OnSettingsChanged);
 #endif
 
+	EndFrameHandle = FCoreDelegates::OnEndFrame.AddUObject(this, &UDreamPassSubsystem::OnEndFrame);
+
 #if DREAMSHADER_WITH_CUSTOM_PASS
 	// One extension per world: FWorldSceneViewExtension is active for the views of this world only, so a PIE world and
 	// the editor world beside it never run each other's pipelines.
@@ -73,6 +76,10 @@ void UDreamPassSubsystem::Deinitialize()
 		SettingsChangedHandle.Reset();
 	}
 #endif
+
+	FCoreDelegates::OnEndFrame.Remove(EndFrameHandle);
+	EndFrameHandle.Reset();
+	ReleaseNaniteStencils(true);
 
 	ApiActivations.Reset();
 	Sources.Reset();
@@ -215,6 +222,32 @@ uint32 UDreamPassSubsystem::GetPrimitiveLayers(const UPrimitiveComponent* Primit
 	return Mask ? *Mask : 0;
 }
 
+void UDreamPassSubsystem::ForEachPrimitiveInLayers(uint32 LayerMask, TFunctionRef<void(UPrimitiveComponent&)> Visit) const
+{
+	for (const TPair<TWeakObjectPtr<UPrimitiveComponent>, uint32>& Pair : PrimitiveLayers)
+	{
+		UPrimitiveComponent* Primitive = Pair.Key.Get();
+		if (Primitive && (Pair.Value & LayerMask) != 0)
+		{
+			Visit(*Primitive);
+		}
+	}
+}
+
+void UDreamPassSubsystem::ForEachPrimitiveInList(FName List, TFunctionRef<void(UPrimitiveComponent&)> Visit) const
+{
+	if (const TArray<TWeakObjectPtr<UPrimitiveComponent>>* Members = Lists.Find(List))
+	{
+		for (const TWeakObjectPtr<UPrimitiveComponent>& Member : *Members)
+		{
+			if (UPrimitiveComponent* Primitive = Member.Get())
+			{
+				Visit(*Primitive);
+			}
+		}
+	}
+}
+
 void UDreamPassSubsystem::RegisterSource(UObject* Object, IDreamPassActivationSource* Source)
 {
 	if (!Object || !Source)
@@ -255,6 +288,71 @@ void UDreamPassSubsystem::PruneStaleEntries()
 		{
 			It.RemoveCurrent();
 		}
+	}
+}
+
+bool UDreamPassSubsystem::RequestNaniteStencil(UPrimitiveComponent& Primitive, int32 Value)
+{
+	FNaniteStencilAssignment* Assignment = NaniteStencilAssignments.Find(MakeWeakObjectPtr(&Primitive));
+	if (!Assignment)
+	{
+		Assignment = &NaniteStencilAssignments.Add(MakeWeakObjectPtr(&Primitive));
+		Assignment->bOriginalRenderCustomDepth = Primitive.bRenderCustomDepth != 0;
+		Assignment->OriginalStencilValue = Primitive.CustomDepthStencilValue;
+	}
+	else if (Assignment->LastRequestFrame == GFrameCounter && Assignment->Value != Value)
+	{
+		return false;
+	}
+
+	Assignment->Value = Value;
+	Assignment->LastRequestFrame = GFrameCounter;
+
+	// Both setters return at once when the value is already there, so asking every frame costs nothing after the first.
+	// Turning custom depth on recreates the primitive's proxy, which the next frame renders.
+	Primitive.SetRenderCustomDepth(true);
+	Primitive.SetCustomDepthStencilValue(Value);
+	return true;
+}
+
+void UDreamPassSubsystem::ReleaseNaniteStencils(bool bAll)
+{
+	for (auto It = NaniteStencilAssignments.CreateIterator(); It; ++It)
+	{
+		const FNaniteStencilAssignment& Assignment = It.Value();
+		if (!bAll && Assignment.LastRequestFrame == GFrameCounter)
+		{
+			continue;
+		}
+		if (UPrimitiveComponent* Primitive = It.Key().Get())
+		{
+			Primitive->SetCustomDepthStencilValue(Assignment.OriginalStencilValue);
+			Primitive->SetRenderCustomDepth(Assignment.bOriginalRenderCustomDepth);
+		}
+		It.RemoveCurrent();
+	}
+}
+
+void UDreamPassSubsystem::OnEndFrame()
+{
+	if (NaniteStencilAssignments.IsEmpty())
+	{
+		return;
+	}
+
+	// Nothing can ask any more.
+	if (!HasAnyActivation() || !UE::DreamPass::IsEnabledByConsole())
+	{
+		ReleaseNaniteStencils(true);
+		return;
+	}
+
+	// BuildFamilySnapshot begins every family it sets up with BeginMaterialFrame. When this frame rendered with the
+	// extension at all, every pass that still wants a primitive asked for it during the frame, and the rest go back.
+	// When nothing rendered -- a minimised window, an editor viewport that is not real-time -- what was asked last stays.
+	if (MaterialFrame == GFrameCounter)
+	{
+		ReleaseNaniteStencils(false);
 	}
 }
 

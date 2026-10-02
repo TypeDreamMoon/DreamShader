@@ -5,6 +5,7 @@
 #include "DreamPassPipeline.h"
 #include "DreamPassSubsystem.h"
 #include "DreamShaderPassModule.h"
+#include "Render/DreamPassMesh.h"
 
 #include "CoreGlobals.h"
 #include "Engine/Texture.h"
@@ -413,6 +414,7 @@ namespace UE::DreamPass
 		}
 
 		Subsystem.GatherPrimitiveSelections(Snapshot->LayersByPrimitiveId, Snapshot->ListMembers);
+		UpdateNaniteStencilAssignments(Subsystem, *Snapshot);
 		Snapshot->bCustomStencilWritten = EnumHasAnyFlags(GetViewCapabilities(Family, *Family.Views[0]), EDreamPassRequirementFlags::CustomStencil);
 		return Snapshot;
 	}
