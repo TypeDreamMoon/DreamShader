@@ -338,6 +338,24 @@ namespace UE::DreamShader::Lang::Private
 				return SameFloat(Scale, Other.Scale);
 			}
 
+			/**
+			 * Whether a texture of this size is never smaller than one of Other's. Only sizes of one kind compare before the
+			 * frame -- two fixed sizes, two scales of one resolution; Render against Output, or a fixed size against one that
+			 * follows the view, depends on the view and does not count.
+			 */
+			bool Covers(const FPipelineSizeClass& Other) const
+			{
+				if (!Resolution.Equals(Other.Resolution, ESearchCase::CaseSensitive))
+				{
+					return false;
+				}
+				if (Resolution.Equals(ResolutionFixed, ESearchCase::CaseSensitive))
+				{
+					return Width >= Other.Width && Height >= Other.Height;
+				}
+				return SameFloat(Scale, Other.Scale) || Scale > Other.Scale;
+			}
+
 			FString Describe() const
 			{
 				if (Resolution.Equals(ResolutionFixed, ESearchCase::CaseSensitive))
@@ -697,6 +715,29 @@ namespace UE::DreamShader::Lang::Private
 			{
 				return;
 			}
+			// A `uniform` becomes a parameter of the asset, named by an FName, which compares ignoring case
+			// (UDreamPassPipeline::FindParameter, Validate): two that differ in case only would be one parameter there. A
+			// `static const` is folded away and never reaches the asset, so only two uniforms can clash this way.
+			if (bUniform)
+			{
+				const FBoundGlobal* SameName = Bound.Globals.FindByPredicate([&Declarator](const FBoundGlobal& Other)
+				{
+					return Other.bIsParameter && Other.Name.Equals(Declarator.Name, ESearchCase::IgnoreCase);
+				});
+				if (SameName)
+				{
+					Diagnostics.Error(
+						TEXT("DSH4210"),
+						File,
+						Declarator.NameSpan,
+						FText::Format(
+							LOCTEXT("ParameterNameCaseClash", "The parameter '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps parameter names as Unreal names, which compare ignoring case, so the two would be one parameter there. Rename one."),
+							FText::FromString(Declarator.Name),
+							FText::FromString(SameName->Name),
+							FText::AsNumber(SameName->Decl ? SameName->Decl->Span.Line : 0)));
+					return;
+				}
+			}
 
 			FBoundGlobal Global;
 			Global.Name = Declarator.Name;
@@ -1023,12 +1064,33 @@ namespace UE::DreamShader::Lang::Private
 				{
 					const bool bViews = Key.Equals(TEXT("Views"), ESearchCase::CaseSensitive);
 					const TConstArrayView<const TCHAR*> Names = bViews ? MakeArrayView(ViewNames) : MakeArrayView(RequirementNames);
+
+					// `Views = ""` is the one way to write no view at all: the parser reads an unquoted value only as a word. Said
+					// before the split, which is no help here -- on 5.8 an empty string splits into one empty word (ParseTokens),
+					// which would read as an unknown view.
+					if (bViews && Value.IsEmpty())
+					{
+						ReportBadValue(EPipelineValueSite::Pragma, Argument.Span, LOCTEXT("PipelineNoViews", "'Views' names no view, so the pipeline would run nowhere."));
+						continue;
+					}
+					// Any other quoted value is a string, not names, and is refused as a quoted 'Order' or 'Enabled' is: dropping it
+					// would leave the pipeline on its default views or requirements in silence.
+					if (Argument.bQuoted)
+					{
+						ReportBadValue(EPipelineValueSite::Pragma, Argument.Span, FText::Format(
+							LOCTEXT("PipelineFlagsQuoted", "'{0}' takes names written without quotes and joined by '|', such as '{0} = {1}', and \"{2}\" is a quoted string."),
+							FText::FromString(Key),
+							FText::FromString(bViews ? TEXT("Game | SceneCapture") : TEXT("PostProcess | CustomStencil")),
+							FText::FromString(Value)));
+						continue;
+					}
+
 					TArray<FString> Words;
 					SplitPragmaBarList(Value, Words);
 
 					TArray<bool> Set;
 					Set.Init(false, Names.Num());
-					bool bAllKnown = !Argument.bQuoted;
+					bool bAllKnown = true;
 					for (const FString& Word : Words)
 					{
 						const int32 Index = FindName(Names, Word);
@@ -1058,11 +1120,7 @@ namespace UE::DreamShader::Lang::Private
 					}
 					if (bViews)
 					{
-						if (Canonical.Num() == 0)
-						{
-							ReportBadValue(EPipelineValueSite::Pragma, Argument.Span, LOCTEXT("PipelineNoViews", "'Views' names no view, so the pipeline would run nowhere."));
-							continue;
-						}
+						// Never empty here: an unquoted value is at least one word, and every word was a known one.
 						// Game | Editor is the default, and the payload says so by saying nothing.
 						const bool bDefault = Canonical.Num() == static_cast<int32>(UE_ARRAY_COUNT(DefaultViews))
 							&& Canonical[0].Equals(DefaultViews[0], ESearchCase::CaseSensitive)
@@ -1358,6 +1416,21 @@ namespace UE::DreamShader::Lang::Private
 						FText::AsNumber(Payload.Buffers[Existing].Source.Span.Line)));
 				return;
 			}
+			// The asset keeps buffer names as FNames, which compare ignoring case (UDreamPassPipeline::FindBuffer, Validate): two
+			// names that differ in case only would be one buffer there, and the runtime would refuse the pipeline's passes.
+			if (const IR::FIRPassBuffer* SameName = Payload.Buffers.FindByPredicate([&Decl](const IR::FIRPassBuffer& Buffer) { return Buffer.Name.Equals(Decl.Name, ESearchCase::IgnoreCase); }))
+			{
+				Diagnostics.Error(
+					TEXT("DSH4400"),
+					File,
+					Decl.NameSpan,
+					FText::Format(
+						LOCTEXT("BufferNameCaseClash", "Buffer '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps buffer names as Unreal names, which compare ignoring case, so the two would be one buffer there. Rename one."),
+						FText::FromString(Decl.Name),
+						FText::FromString(SameName->Name),
+						FText::AsNumber(SameName->Source.Span.Line)));
+				return;
+			}
 			if (Bound.FindGlobal(Decl.Name) != INDEX_NONE || Decl.Name.Equals(WeightParameterName, ESearchCase::CaseSensitive))
 			{
 				Diagnostics.Error(
@@ -1611,6 +1684,20 @@ namespace UE::DreamShader::Lang::Private
 							LOCTEXT("PassTwice", "A pass named '{0}' is already declared on line {1}; RDG events and stats are named after passes, so each name is used once."),
 							FText::FromString(Decl->Name),
 							FText::AsNumber(Payload.Passes[Existing].Source.Span.Line)));
+					continue;
+				}
+				// As for buffers: the asset keeps pass names as FNames (UDreamPassPipeline::FindPassIndex, Validate).
+				if (const IR::FIRPass* SameName = Payload.Passes.FindByPredicate([Decl](const IR::FIRPass& Pass) { return Pass.Name.Equals(Decl->Name, ESearchCase::IgnoreCase); }))
+				{
+					Diagnostics.Error(
+						TEXT("DSH4401"),
+						File,
+						Decl->NameSpan,
+						FText::Format(
+							LOCTEXT("PassNameCaseClash", "Pass '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps pass names as Unreal names, which compare ignoring case, so the two would be one pass there. Rename one."),
+							FText::FromString(Decl->Name),
+							FText::FromString(SameName->Name),
+							FText::AsNumber(SameName->Source.Span.Line)));
 					continue;
 				}
 
@@ -2292,16 +2379,21 @@ namespace UE::DreamShader::Lang::Private
 				}
 			}
 
-			if (Declared && IsDepthFormat(Declared->Format))
+			// A Depth32 buffer is a mesh pass's own depth, and the one other pass that may touch it is a `clear`, whose Value is
+			// then the depth (DreamShaderPass, Render/DreamPassUtilityPasses.cpp, ExecuteClearPass). Nothing samples or draws
+			// into it as a colour.
+			const bool bClearWrite = bWrite && Pass.Kind.Equals(PassKinds[Kind::Clear], ESearchCase::CaseSensitive);
+			if (Declared && IsDepthFormat(Declared->Format) && !bClearWrite)
 			{
 				Diagnostics.Error(
 					TEXT("DSH7330"),
 					File,
 					Statement.BufferSpan,
 					FText::Format(
-						LOCTEXT("DepthBound", "'{0}' is a Depth32 buffer, which a mesh pass tests against as 'Depth = Own({0})' and nothing binds by '{1}'."),
+						LOCTEXT("DepthBoundMeshOrClear", "'{0}' is a Depth32 buffer, which a mesh pass tests against as 'Depth = Own({0})' and a clear pass resets ('write {0};', with 'Value' the depth); a {2} pass cannot '{1}' it."),
 						FText::FromString(Statement.Buffer),
-						FText::FromString(bWrite ? TEXT("write") : TEXT("read"))));
+						FText::FromString(bWrite ? TEXT("write") : TEXT("read")),
+						FText::FromString(Pass.Kind)));
 			}
 
 			(bWrite ? Pass.Writes : Pass.Reads).Add(MoveTemp(Binding));
@@ -2724,7 +2816,7 @@ namespace UE::DreamShader::Lang::Private
 						File,
 						NameSpan,
 						FText::Format(
-							LOCTEXT("FullscreenNothing", "Fullscreen pass '{0}' needs 'Material = \"...\"' (a Post Process material) or 'Shader = \"....usf\"' with 'Entry'."),
+							LOCTEXT("FullscreenNothing", "Fullscreen pass '{0}' needs 'Material = \"...\"' (a Post Process material) or 'Shader = \"<file>.usf\"' with 'Entry'."),
 							FText::FromString(Pass.Name)));
 				}
 				if (bShader && Pass.Entry.IsEmpty())
@@ -2825,7 +2917,7 @@ namespace UE::DreamShader::Lang::Private
 						File,
 						NameSpan,
 						FText::Format(
-							LOCTEXT("ComputeNoShader", "Compute pass '{0}' needs 'Shader = \"....usf\"' and 'Entry = <function>'."),
+							LOCTEXT("ComputeNoShader", "Compute pass '{0}' needs 'Shader = \"<file>.usf\"' and 'Entry = <function>'."),
 							FText::FromString(Pass.Name)));
 				}
 				else if (Pass.Entry.IsEmpty())
@@ -2927,7 +3019,7 @@ namespace UE::DreamShader::Lang::Private
 						File,
 						Pass.Reads[0].Source.Span,
 						FText::Format(
-							LOCTEXT("MeshReads", "Mesh pass '{0}' reads nothing: its material samples what it needs itself."),
+							LOCTEXT("MeshReads", "Mesh pass '{0}' cannot read a buffer: a mesh pass binds no input, and its material samples what it needs itself."),
 							FText::FromString(Pass.Name)));
 				}
 				if (Pass.Writes.Num() == 0 || Pass.Writes.Num() > MaxMeshOutputs)
@@ -3191,12 +3283,14 @@ namespace UE::DreamShader::Lang::Private
 					const int32 Width = SlotWidthOfType(Type);
 					if (Width == 0)
 					{
+						// `read` binds a pipeline buffer or a built-in texture, never a parameter: a texture parameter reaches a
+						// material only, through its texture parameter (Render/DreamPassSnapshot.cpp, ApplyMaterialParameter).
 						Diagnostics.Error(
 							TEXT("DSH7347"),
 							File,
 							Param.Source.Span,
 							FText::Format(
-								LOCTEXT("SlotTextureParam", "'{0}' is a {1}, and the parameter block of a shader slot holds numbers only; read the texture as a buffer ('read'), or draw the pass with a material."),
+								LOCTEXT("SlotTextureParamMaterial", "'{0}' is a {1}, and the parameter block of a shader slot holds numbers only, so no texture parameter reaches a '.usf' pass. A material takes one through 'param': draw this pass with a material ('Material = ...'), or let a fullscreen material pass that takes the texture by 'param' write it into a buffer this pass reads."),
 								FText::FromString(Param.Target),
 								FText::FromString(Type)));
 						Widths.Reset();
@@ -3228,7 +3322,8 @@ namespace UE::DreamShader::Lang::Private
 			// failed on facts that were never read; the emitter refuses the pipeline anyway.
 			const bool bPassFacts = References->bCustomPassAvailable;
 
-			// Layers are the project's (D-7).
+			// Layers are the project's (D-7): the first MaxPassLayers names of its table, the only ones that have a bit -- the
+			// host hands over no others (FPipelineReferences::LayerNames).
 			for (const IR::FIRPassFilterClause& Clause : Pass.Filter)
 			{
 				for (const IR::FIRPassFilterTerm& Term : Clause.AllOf)
@@ -3245,7 +3340,7 @@ namespace UE::DreamShader::Lang::Private
 							File,
 							Keys.SpanOf(TEXT("Filter"), NameSpan),
 							Suggestion.IsEmpty()
-								? FText::Format(LOCTEXT("UnknownLayer", "'{0}' is not a pass layer of this project; layers are named in the project settings (Dream Pass, Layer Names)."), FText::FromString(Layer))
+								? FText::Format(LOCTEXT("UnknownLayerFirstNames", "'{0}' is not a pass layer of this project; the layers are the first {1} names of Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names."), FText::FromString(Layer), FText::AsNumber(MaxPassLayers))
 								: FText::Format(LOCTEXT("UnknownLayerDidYouMean", "'{0}' is not a pass layer of this project; did you mean '{1}'?"), FText::FromString(Layer), FText::FromString(Suggestion)));
 					}
 				}
@@ -3485,16 +3580,9 @@ namespace UE::DreamShader::Lang::Private
 
 					if (!Pass.Entry.IsEmpty())
 					{
-						// HLSL names are case-sensitive, and an FString key or element compares ignoring case: looked up by hand.
-						const FIntVector* Threads = nullptr;
-						for (const TPair<FString, FIntVector>& Entry : Info->ComputeEntries)
-						{
-							if (Entry.Key.Equals(Pass.Entry, ESearchCase::CaseSensitive))
-							{
-								Threads = &Entry.Value;
-								break;
-							}
-						}
+						// HLSL names are case-sensitive: the entry map is keyed so (FPipelineComputeEntryMap), and the plain list of
+						// the other functions is searched by hand, an FString element comparing ignoring case.
+						const FIntVector* Threads = Info->ComputeEntries.Find(Pass.Entry);
 						const bool bFunction = Info->Functions.ContainsByPredicate([&Pass](const FString& Function)
 						{
 							return Function.Equals(Pass.Entry, ESearchCase::CaseSensitive);
@@ -3537,7 +3625,7 @@ namespace UE::DreamShader::Lang::Private
 											FText::FromString(Pass.ShaderReference)));
 								}
 							}
-							else
+							else if (Info->bEntryScanComplete)
 							{
 								Diagnostics.Error(
 									TEXT("DSH4410"),
@@ -3548,8 +3636,36 @@ namespace UE::DreamShader::Lang::Private
 										FText::FromString(Pass.ShaderReference),
 										FText::FromString(Pass.Entry)));
 							}
+							else if (!Pass.bThreadsWritten)
+							{
+								// Not in what the host could read, and the file includes what it could not (bEntryScanComplete): the
+								// entry may well be there, so it is not called missing -- but its group size is unknown, and the
+								// dispatch is counted in groups of it.
+								Diagnostics.Error(
+									TEXT("DSH4411"),
+									File,
+									Keys.SpanOf(TEXT("Entry"), ShaderSpan),
+									FText::Format(
+										LOCTEXT("EntryUnreadNumThreads", "'{0}' is not in what the compiler could read of '{1}', which includes a file it cannot follow, so its '[numthreads(x, y, z)]' is unknown; write 'Threads = uint3(x, y, z)' in the pass."),
+										FText::FromString(Pass.Entry),
+										FText::FromString(Pass.ShaderReference)));
+							}
 						}
-						else if (!Threads && !bFunction)
+						else if (Threads)
+						{
+							// A fullscreen pass runs its Entry as the pixel shader of its slot (FDreamPassPS, renamed DreamPassMainPS by
+							// the registry): a function with `[numthreads]` in front of it is a compute shader's entry.
+							Diagnostics.Error(
+								TEXT("DSH4410"),
+								File,
+								Keys.SpanOf(TEXT("Entry"), ShaderSpan),
+								FText::Format(
+									LOCTEXT("EntryIsComputeShader", "'{1}' in '{0}' is a compute shader entry ('[numthreads]' is in front of it), and fullscreen pass '{2}' runs its Entry as a pixel shader; name the pixel shader function, or make the pass 'compute'."),
+									FText::FromString(Pass.ShaderReference),
+									FText::FromString(Pass.Entry),
+									FText::FromString(Pass.Name)));
+						}
+						else if (!bFunction && Info->bEntryScanComplete)
 						{
 							Diagnostics.Error(
 								TEXT("DSH4410"),
@@ -3716,6 +3832,9 @@ namespace UE::DreamShader::Lang::Private
 			const FLangSpan Span = Keys.SpanOf(TEXT("Injection"), Pipeline.PassDecls[PassIndex]->NameSpan);
 			const bool bFullscreenMaterial = KindIndex == Kind::Fullscreen && !Pass.MaterialReference.IsEmpty();
 			const bool bFullscreenShader = KindIndex == Kind::Fullscreen && !bFullscreenMaterial;
+			// Either kind of HLSL pass runs in a slot, and every slot is handed the same View, SceneTextures and DP_Time
+			// wherever it runs (DreamShaderPass, Render/DreamPassGlobalShaders.cpp, FillSlotParameters).
+			const bool bSlotPass = bFullscreenShader || KindIndex == Kind::Compute;
 			const bool bTestScene = Pass.Depth.Equals(TEXT("TestScene"), ESearchCase::CaseSensitive);
 
 			// V2: the matrix of DreamShader_Plan/03 s2.
@@ -3749,20 +3868,23 @@ namespace UE::DreamShader::Lang::Private
 					File,
 					Span,
 					FText::Format(
-						LOCTEXT("FullscreenMaterialUnverified", "A fullscreen material pass at {0} has not been verified on this engine yet (DreamShader_Plan SP-2); BeforePostProcess is the point it is known to work at."),
+						LOCTEXT("FullscreenMaterialUnverified", "A fullscreen material pass at {0} has not been verified on this engine yet; BeforePostProcess is the point it is known to work at."),
 						FText::FromString(Pass.Injection)));
 			}
-			else if (bFullscreenShader && InjectionIndex == Injection::BeginView)
+			else if (bSlotPass && InjectionIndex == Injection::BeginView)
 			{
+				// The view uniform buffer is created after BeginView, so the slot's registry defines `View` as a name that does
+				// not exist for a pass there (Pass/DreamShaderPassSlotRegistry.cpp, BuildSlotSection): a use is a compile error,
+				// not a placeholder. DP_Time stands in for the timing values (Shaders/Pass/DreamPass.ush).
 				Diagnostics.Info(
 					TEXT("DSH7326"),
 					File,
 					Span,
 					FText::Format(
-						LOCTEXT("FullscreenShaderBeginView", "At BeginView no scene texture exists yet: the View and SceneTextures parameters pass '{0}' sees are placeholders."),
+						LOCTEXT("FullscreenShaderBeginViewNoView", "At BeginView neither the scene textures nor the view uniform buffer exist yet: the SceneTextures pass '{0}' sees are placeholders, a use of 'View' in its '.usf' does not compile, and DP_Time gives the time."),
 						FText::FromString(Pass.Name)));
 			}
-			else if (bFullscreenShader && InjectionIndex == Injection::BeforeBasePass)
+			else if (bSlotPass && InjectionIndex == Injection::BeforeBasePass)
 			{
 				Diagnostics.Info(
 					TEXT("DSH7326"),
@@ -3784,12 +3906,13 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else if (KindIndex == Kind::Mesh && IsPostProcessInjection(InjectionIndex) && IsOutputResolutionInjection(InjectionIndex) && bTestScene)
 			{
+				// Outputs of any size are drawn (V7 below): the runtime brings the scene depth into their pixels, point-sampled.
 				Diagnostics.Info(
 					TEXT("DSH7326"),
 					File,
 					Span,
 					FText::Format(
-						LOCTEXT("MeshAfterUpscale", "At {0} the view is upscaled and scene depth is still at render resolution; mesh pass '{1}' tests against it at that size, and its outputs have to be upscaled by whoever reads them."),
+						LOCTEXT("MeshAfterUpscaleCopied", "At {0} the view is upscaled and scene depth is still at render resolution; mesh pass '{1}' tests against it, or against a copy of it brought into the pixels of outputs of another size, so its depth test is only as fine as the render resolution."),
 						FText::FromString(Pass.Injection),
 						FText::FromString(Pass.Name)));
 			}
@@ -3804,16 +3927,19 @@ namespace UE::DreamShader::Lang::Private
 				CheckBuiltinBinding(Pass, Write, /* bWrite */ true, InjectionIndex);
 			}
 
-			// V5: one texture is not read and written by one pass; last frame's and this frame's are two. A fullscreen pass
-			// writing scene colour draws into a copy (02 s8.4), so it may read scene colour as well.
+			// V5: one texture is not read and written by one pass; last frame's and this frame's are two. A pass of any kind
+			// that writes the chain's colour -- scene colour, or the translucency at PostProcess.TranslucencyAfterDOF -- draws
+			// into a scratch texture that is brought back afterwards (02 s8.4; DreamShaderPass, Render/DreamPassBuffers.cpp,
+			// ResolveWrite / CommitSceneColor), so it may read that colour as well: a fullscreen or compute pass, or a copy.
+			const TCHAR* const ChainName = InjectionIndex == Injection::PostProcessTranslucencyAfterDOF ? TEXT("Translucency") : SceneColorName;
 			for (const IR::FIRPassBinding& Read : Pass.Reads)
 			{
 				if (Read.bPrevious)
 				{
 					continue;
 				}
-				const bool bSceneColorCopy = KindIndex == Kind::Fullscreen && Read.Buffer.Equals(SceneColorName, ESearchCase::CaseSensitive);
-				if (!bSceneColorCopy && PassWritesBuffer(Pass, Read.Buffer))
+				const bool bChainColorCopy = Read.Buffer.Equals(SceneColorName, ESearchCase::CaseSensitive) || Read.Buffer.Equals(ChainName, ESearchCase::CaseSensitive);
+				if (!bChainColorCopy && PassWritesBuffer(Pass, Read.Buffer))
 				{
 					Diagnostics.Error(
 						TEXT("DSH7333"),
@@ -3826,56 +3952,91 @@ namespace UE::DreamShader::Lang::Private
 				}
 			}
 
-			// V7: a mesh pass's targets are one size -- and SceneDepth's, when it tests against it, or its own depth's.
+			// V7: a mesh pass's targets are drawn together, so they are one size (DreamShaderPass, Render/DreamPassMesh.cpp,
+			// ResolveTargets). Its depth asks less of them, and only what the runtime cannot do is refused: `Depth = TestScene`
+			// fits targets of any size -- where they do not hold the view at the scene depth's pixels, the runtime tests against
+			// a copy of it brought into theirs (ResolveDepth, AddCopyDepthPass) -- and an own depth is bound as it is, so it
+			// must not be smaller than the targets (ResolveDepth skips the pass when it is).
 			if (KindIndex == Kind::Mesh && Pass.Writes.Num() > 0)
 			{
+				// The scene's own targets -- scene colour (through its scratch copy), the chain's translucency, the GBuffer at
+				// AfterBasePass -- are the scene textures' size, which the renderer rounds up to a multiple of 8 and, in the
+				// editor, grows to the largest view so far (Renderer/Private/SceneTextures.cpp), with the view somewhere inside
+				// them; a buffer of the pipeline is exactly the view's size. ResolveTargets skips a mesh pass whose targets differ
+				// in size or in where they hold the view, and the two meet only by chance -- so they are not mixed.
+				const IR::FIRPassBinding* SceneTarget = Pass.Writes.FindByPredicate([](const IR::FIRPassBinding& Write) { return IsBuiltinBuffer(Write.Buffer); });
+				const IR::FIRPassBinding* OwnTarget = Pass.Writes.FindByPredicate([this](const IR::FIRPassBinding& Write) { return FindPayloadBuffer(Write.Buffer) != nullptr; });
 				const FPipelineSizeClass First = SizeClassOf(Pass.Writes[0].Buffer, InjectionIndex);
-				for (int32 Index = 1; Index < Pass.Writes.Num(); ++Index)
-				{
-					const FPipelineSizeClass Other = SizeClassOf(Pass.Writes[Index].Buffer, InjectionIndex);
-					if (!(Other == First))
-					{
-						Diagnostics.Error(
-							TEXT("DSH7343"),
-							File,
-							Pass.Writes[Index].Source.Span,
-							FText::Format(
-								LOCTEXT("MeshSizesDiffer", "The outputs of mesh pass '{0}' are drawn together and have one size: '{1}' is {2}, and '{3}' is {4}."),
-								FText::FromString(Pass.Name),
-								FText::FromString(Pass.Writes[0].Buffer),
-								FText::FromString(First.Describe()),
-								FText::FromString(Pass.Writes[Index].Buffer),
-								FText::FromString(Other.Describe())));
-					}
-				}
-				FPipelineSizeClass Depth;
-				bool bHasDepth = false;
-				if (bTestScene)
-				{
-					Depth = SizeClassOf(SceneDepthName, InjectionIndex);
-					bHasDepth = true;
-				}
-				else if (Pass.Depth.Equals(TEXT("Own"), ESearchCase::CaseSensitive) && FindPayloadBuffer(Pass.DepthBuffer))
-				{
-					Depth = SizeClassOf(Pass.DepthBuffer, InjectionIndex);
-					bHasDepth = true;
-				}
-				if (bHasDepth && !(Depth == First))
+				if (SceneTarget && OwnTarget)
 				{
 					Diagnostics.Error(
 						TEXT("DSH7343"),
 						File,
-						Keys.SpanOf(TEXT("Depth"), Pass.Writes[0].Source.Span),
+						OwnTarget->Source.Span,
 						FText::Format(
-							LOCTEXT("MeshDepthSize", "Mesh pass '{0}' tests against a depth of {1}, and its outputs are {2}; give them the depth's size."),
+							LOCTEXT("MeshSceneAndOwnTargets", "Mesh pass '{0}' writes '{1}', a texture of the scene, together with '{2}', a buffer of the pipeline. A mesh pass draws all its targets through one viewport, so they have to be one size holding the view at one place; the scene's textures are usually larger than the view they hold (rounded up, and in the editor grown to the largest view so far) while a buffer is the view's size, and the runtime skips the pass whenever the two differ. Write them in two mesh passes."),
 							FText::FromString(Pass.Name),
-							FText::FromString(Depth.Describe()),
-							FText::FromString(First.Describe())));
+							FText::FromString(SceneTarget->Buffer),
+							FText::FromString(OwnTarget->Buffer)));
+				}
+				else
+				{
+					for (int32 Index = 1; Index < Pass.Writes.Num(); ++Index)
+					{
+						const FPipelineSizeClass Other = SizeClassOf(Pass.Writes[Index].Buffer, InjectionIndex);
+						if (!(Other == First))
+						{
+							Diagnostics.Error(
+								TEXT("DSH7343"),
+								File,
+								Pass.Writes[Index].Source.Span,
+								FText::Format(
+									LOCTEXT("MeshSizesDiffer", "The outputs of mesh pass '{0}' are drawn together and have one size: '{1}' is {2}, and '{3}' is {4}."),
+									FText::FromString(Pass.Name),
+									FText::FromString(Pass.Writes[0].Buffer),
+									FText::FromString(First.Describe()),
+									FText::FromString(Pass.Writes[Index].Buffer),
+									FText::FromString(Other.Describe())));
+						}
+					}
+				}
+				// An own depth beside the scene's textures works while the view starts at their corner, which is the usual case,
+				// and is skipped where it does not (ResolveDepth: the depth, the view's size, does not reach the view's pixels).
+				if (SceneTarget && Pass.Depth.Equals(TEXT("Own"), ESearchCase::CaseSensitive) && FindPayloadBuffer(Pass.DepthBuffer))
+				{
+					Diagnostics.Info(
+						TEXT("DSH7326"),
+						File,
+						Keys.SpanOf(TEXT("Depth"), SceneTarget->Source.Span),
+						FText::Format(
+							LOCTEXT("MeshOwnDepthSceneTargets", "Mesh pass '{0}' writes '{1}', a texture of the scene, and tests against its own depth '{2}', which is bound from its corner: in a view that does not start at the corner of the scene's textures -- the second view of split screen, the right eye in stereo -- the depth does not reach the view's pixels, and the runtime skips the pass there."),
+							FText::FromString(Pass.Name),
+							FText::FromString(SceneTarget->Buffer),
+							FText::FromString(Pass.DepthBuffer)));
+				}
+				if (Pass.Depth.Equals(TEXT("Own"), ESearchCase::CaseSensitive) && FindPayloadBuffer(Pass.DepthBuffer))
+				{
+					const FPipelineSizeClass Depth = SizeClassOf(Pass.DepthBuffer, InjectionIndex);
+					if (!Depth.Covers(First))
+					{
+						Diagnostics.Error(
+							TEXT("DSH7343"),
+							File,
+							Keys.SpanOf(TEXT("Depth"), Pass.Writes[0].Source.Span),
+							FText::Format(
+								LOCTEXT("MeshOwnDepthSmaller", "Mesh pass '{0}' tests against its own depth '{1}', which is {2}, and its outputs are {3}; an own depth is bound as it is, so it must be at least their size: give it their resolution and a scale no smaller than theirs, or a fixed size no smaller than theirs."),
+								FText::FromString(Pass.Name),
+								FText::FromString(Pass.DepthBuffer),
+								FText::FromString(Depth.Describe()),
+								FText::FromString(First.Describe())));
+					}
 				}
 			}
 
-			// V9: whatever a pass writes beside scene colour is drawn with it, at scene colour's size at this point.
-			const bool bDrawsTargets = KindIndex == Kind::Mesh || (bFullscreenShader && Pass.Writes.Num() > 1);
+			// V9: whatever a pass writes beside scene colour is drawn with it, at scene colour's size at this point. A mesh pass
+			// is held to more by V7 above -- no buffer of the pipeline beside the scene's textures at all -- so only the pixel
+			// slot's outputs are left to compare here.
+			const bool bDrawsTargets = bFullscreenShader && Pass.Writes.Num() > 1;
 			if (bDrawsTargets && PassWritesBuffer(Pass, SceneColorName))
 			{
 				const FPipelineSizeClass SceneColor = SizeClassOf(SceneColorName, InjectionIndex);

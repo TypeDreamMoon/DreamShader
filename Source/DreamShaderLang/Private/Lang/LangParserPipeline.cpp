@@ -9,9 +9,10 @@
 // and `static const` are the ordinary declarations, values are the ordinary expression grammar.
 //
 // `buffer` and `pass` are keywords only at the start of a declaration in a `.dsp`, and `read`, `write` and `param`
-// only at the start of a statement in a pass block, when a name follows. The lexer knows none of them, so a `.dss`
-// that names a variable `buffer` or a parameter `pass` reads exactly as it did. Outside a `.dsp` the one thing this
-// unit does is put a better message on text that was always a syntax error (DSH3310).
+// only at the start of a statement in a pass block -- always there, whatever follows, since no pass has a setting by
+// those names: `read;` is a binding that names no buffer (DSH2304), not a setting without '=' (DSH2302). The lexer
+// knows none of them, so a `.dss` that names a variable `buffer` or a parameter `pass` reads exactly as it did. Outside
+// a `.dsp` the one thing this unit does is put a better message on text that was always a syntax error (DSH3310).
 //
 // Recovery follows ParseBlock: a statement that fails costs that statement, the block keeps parsing, and a pass whose
 // `}` is missing ends where the next `buffer` / `pass` declaration starts on a line of its own.
@@ -235,10 +236,18 @@ namespace UE::DreamShader::Lang::Private
 			}
 
 			const int32 BeforeIndex = GetTokenIndex();
+			const bool bDirective = Check(ELangTokenKind::Directive);
 			TUniquePtr<FPassStmt> Statement = ParsePassStatement();
 			if (Statement)
 			{
 				Pass->Statements.Add(MoveTemp(Statement));
+				continue;
+			}
+
+			// A `#` line is one token, which ParsePassStatement reported (DSH2312) and consumed: the next statement starts
+			// right after it. Skipping to the next `;` would swallow that statement too.
+			if (bDirective && GetTokenIndex() > BeforeIndex)
+			{
 				continue;
 			}
 
@@ -292,7 +301,9 @@ namespace UE::DreamShader::Lang::Private
 
 		TUniquePtr<FPassStmt> Statement = MakeUnique<FPassStmt>();
 		const FString Word = First.Text;
-		const bool bBindingWord = LangParserPipelinePrivate::IsPassBindingWordText(Word) && Peek(1).Kind == ELangTokenKind::Identifier;
+		// A binding whatever follows the word: no pass key is spelled read, write or param (LangPipelineInternal.h, the key
+		// tables), so `read;` or `param = 3;` is a binding missing its name -- DSH2304 / DSH2306 below -- and never a setting.
+		const bool bBindingWord = LangParserPipelinePrivate::IsPassBindingWordText(Word);
 
 		if (bBindingWord && (Word.Equals(TEXT("read"), ESearchCase::CaseSensitive) || Word.Equals(TEXT("write"), ESearchCase::CaseSensitive)))
 		{
