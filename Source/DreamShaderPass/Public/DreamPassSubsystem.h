@@ -14,6 +14,7 @@ class UDreamPassSubsystem;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
 class UPrimitiveComponent;
+class UTextureRenderTarget2D;
 
 namespace UE::DreamPass
 {
@@ -239,6 +240,16 @@ public:
 	 */
 	bool TryClaimExportView(const FSceneView& View, EDreamPassViewFlags ViewKind);
 
+	/** Render setup, game thread: a view is being set up. Notes when one that could claim the export (above) rendered. */
+	void NoteViewForExport(const FSceneView& View, EDreamPassViewFlags ViewKind);
+
+	/**
+	 * Render setup, game thread: the export view fills Target this frame. A target the export view stops filling --
+	 * its pipeline removed, disabled or faded out there -- is cleared to ClearValue at the end of the first frame the
+	 * export view renders without it, so the materials that read it do not keep showing its last picture.
+	 */
+	void NoteExportTarget(UTextureRenderTarget2D* Target, const FLinearColor& ClearValue);
+
 	/** The project settings' global pipelines were edited, or the module asked: loads them again. */
 	void RefreshGlobalPipelines();
 
@@ -273,8 +284,19 @@ private:
 	/** Gives the assigned primitives back what they had: those no pass asked for this frame, or all of them. */
 	void ReleaseNaniteStencils(bool bAll);
 
-	/** FCoreDelegates::OnEndFrame: releases the assignments no pass asks for any more. */
+	/** FCoreDelegates::OnEndFrame: releases the assignments no pass asks for any more, clears the exports nothing fills. */
 	void OnEndFrame();
+
+	/** An exported buffer's render target the export view filled, what it clears to, and the last frame it was filled. */
+	struct FExportTarget
+	{
+		TWeakObjectPtr<UTextureRenderTarget2D> Target;
+		FLinearColor ClearValue = FLinearColor::Transparent;
+		uint64 LastFrame = 0;
+	};
+
+	/** Clears the export targets the export view did not fill this frame, or all of them, and forgets them. */
+	void ReleaseExportTargets(bool bAll);
 
 	/** The global pipelines of the project settings, loaded; parallel to the settings' array. */
 	UPROPERTY(Transient)
@@ -296,6 +318,10 @@ private:
 	FDelegateHandle SettingsChangedHandle;
 
 	TMap<TWeakObjectPtr<UPrimitiveComponent>, FNaniteStencilAssignment> NaniteStencilAssignments;
+
+	TArray<FExportTarget> ExportTargets;
+	/** The last frame a view that could claim the export was set up for rendering. */
+	uint64 ExportViewFrame = ~uint64(0);
 	FDelegateHandle EndFrameHandle;
 
 	TSharedPtr<FDreamPassSceneViewExtension, ESPMode::ThreadSafe> ViewExtension;

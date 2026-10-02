@@ -3,6 +3,7 @@
 #if DREAMSHADER_WITH_CUSTOM_PASS
 
 #include "DreamPassPipeline.h"
+#include "DreamPassSubsystem.h"
 #include "DreamShaderPassModule.h"
 
 #include "Engine/TextureRenderTarget2D.h"
@@ -21,7 +22,7 @@
  */
 namespace UE::DreamPass
 {
-	void PrepareExportTargets(FSnapshotPipeline& Pipeline, const UDreamPassPipeline& Asset, const FSceneView& View)
+	void PrepareExportTargets(UDreamPassSubsystem& Subsystem, FSnapshotPipeline& Pipeline, const UDreamPassPipeline& Asset, const FSceneView& View)
 	{
 		for (FSnapshotBuffer& Buffer : Pipeline.Buffers)
 		{
@@ -56,6 +57,7 @@ namespace UE::DreamPass
 				Target->ResizeTarget(uint32(Size.X), uint32(Size.Y));
 			}
 			Buffer.ExportResource = Target->GameThread_GetRenderTargetResource();
+			Subsystem.NoteExportTarget(Target, Buffer.Desc.bClear ? Buffer.Desc.ClearValue : FLinearColor::Transparent);
 		}
 	}
 

@@ -374,6 +374,9 @@ namespace UE::DreamPass
 			{
 				continue;
 			}
+			// Before anything decides whether pipelines apply: a view that could claim the export rendered, which is when
+			// an export it did not fill this frame is cleared (UDreamPassSubsystem::NoteExportTarget).
+			Subsystem.NoteViewForExport(*View, Query.ViewKind);
 			Query.ViewLocation = View->ViewMatrices.GetViewOrigin();
 			Query.PlayerIndex = View->PlayerIndex;
 			Query.ViewActorUniqueId = View->ViewActor.ActorUniqueId;
@@ -400,7 +403,7 @@ namespace UE::DreamPass
 				Private::BuildPipeline(Subsystem, Resolved[PipelineIndex], ViewSnapshot.Pipelines[PipelineIndex]);
 				if (ViewSnapshot.bExportView)
 				{
-					PrepareExportTargets(ViewSnapshot.Pipelines[PipelineIndex], *Resolved[PipelineIndex].Pipeline, *View);
+					PrepareExportTargets(Subsystem, ViewSnapshot.Pipelines[PipelineIndex], *Resolved[PipelineIndex].Pipeline, *View);
 				}
 			}
 

@@ -6,15 +6,19 @@
 #include "DreamShaderPassModule.h"
 
 #include "Algo/StableSort.h"
+#include "ClearQuad.h"
 #include "Components/PrimitiveComponent.h"
 #include "CoreGlobals.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/CoreDelegates.h"
 #include "Misc/OutputDevice.h"
+#include "RenderingThread.h"
 #include "SceneView.h"
 #include "SceneViewExtension.h"
+#include "TextureResource.h"
 
 #if DREAMSHADER_WITH_CUSTOM_PASS
 #include "Render/DreamPassSceneViewExtension.h"
@@ -80,6 +84,9 @@ void UDreamPassSubsystem::Deinitialize()
 	FCoreDelegates::OnEndFrame.Remove(EndFrameHandle);
 	EndFrameHandle.Reset();
 	ReleaseNaniteStencils(true);
+	// The render targets are assets every world shares: what this world last wrote would stay in them, and show in the
+	// editor's viewports once a PIE session ends.
+	ReleaseExportTargets(true);
 
 	ApiActivations.Reset();
 	Sources.Reset();
@@ -335,6 +342,22 @@ void UDreamPassSubsystem::ReleaseNaniteStencils(bool bAll)
 
 void UDreamPassSubsystem::OnEndFrame()
 {
+	// Nothing can fill an export any more: all of them go back to their clear values. Otherwise, when a view that could
+	// claim the export rendered this frame, every export still filled was noted during it; one that was not belongs to a
+	// pipeline that stopped running there. A frame that rendered no such view -- a minimised window, an editor viewport
+	// that is not real-time -- keeps them all.
+	if (!ExportTargets.IsEmpty())
+	{
+		if (!HasAnyActivation() || !UE::DreamPass::IsEnabledByConsole())
+		{
+			ReleaseExportTargets(true);
+		}
+		else if (ExportViewFrame == GFrameCounter)
+		{
+			ReleaseExportTargets(false);
+		}
+	}
+
 	if (NaniteStencilAssignments.IsEmpty())
 	{
 		return;
@@ -520,15 +543,90 @@ void UDreamPassSubsystem::GatherPrimitiveSelections(TMap<uint32, uint32>& OutLay
 	}
 }
 
+/**
+ * Clears Target to Color after the render commands queued so far: UKismetRenderingLibrary::ClearRenderTarget2D
+ * (E/Private/KismetRenderingLibrary.cpp:55-76) without the world it asks for, which a world being torn down may no
+ * longer give. The resource outlives the command: releasing it is a render command too, queued after this one.
+ */
+static void ClearExportTarget(UTextureRenderTarget2D& Target, const FLinearColor& Color)
+{
+	FTextureRenderTargetResource* Resource = Target.GameThread_GetRenderTargetResource();
+	if (!Resource)
+	{
+		return;
+	}
+	ENQUEUE_RENDER_COMMAND(DreamPassClearExport)([Resource, Color](FRHICommandListImmediate& RHICmdList)
+	{
+		FRHITexture* Texture = Resource->GetRenderTargetTexture();
+		if (!Texture)
+		{
+			return;
+		}
+		RHICmdList.Transition(FRHITransitionInfo(Texture, ERHIAccess::Unknown, ERHIAccess::RTV));
+		FRHIRenderPassInfo PassInfo(Texture, ERenderTargetActions::DontLoad_Store);
+		RHICmdList.BeginRenderPass(PassInfo, TEXT("DreamPassClearExport"));
+		DrawClearQuad(RHICmdList, Color);
+		RHICmdList.EndRenderPass();
+		RHICmdList.Transition(FRHITransitionInfo(Texture, ERHIAccess::RTV, ERHIAccess::SRVMask));
+	});
+}
+
+static bool CanClaimExport(const FSceneView& View, EDreamPassViewFlags ViewKind)
+{
+	return (ViewKind == EDreamPassViewFlags::Game && View.PlayerIndex <= 0) || ViewKind == EDreamPassViewFlags::Editor;
+}
+
 bool UDreamPassSubsystem::TryClaimExportView(const FSceneView& View, EDreamPassViewFlags ViewKind)
 {
-	const bool bEligible = (ViewKind == EDreamPassViewFlags::Game && View.PlayerIndex <= 0) || ViewKind == EDreamPassViewFlags::Editor;
-	if (!bEligible || ExportClaimFrame == GFrameCounter)
+	if (!CanClaimExport(View, ViewKind) || ExportClaimFrame == GFrameCounter)
 	{
 		return false;
 	}
 	ExportClaimFrame = GFrameCounter;
 	return true;
+}
+
+void UDreamPassSubsystem::NoteViewForExport(const FSceneView& View, EDreamPassViewFlags ViewKind)
+{
+	if (CanClaimExport(View, ViewKind))
+	{
+		ExportViewFrame = GFrameCounter;
+	}
+}
+
+void UDreamPassSubsystem::NoteExportTarget(UTextureRenderTarget2D* Target, const FLinearColor& ClearValue)
+{
+	if (!Target)
+	{
+		return;
+	}
+	FExportTarget* Entry = ExportTargets.FindByPredicate([Target](const FExportTarget& Candidate) { return Candidate.Target.Get() == Target; });
+	if (!Entry)
+	{
+		Entry = &ExportTargets.AddDefaulted_GetRef();
+		Entry->Target = Target;
+	}
+	Entry->ClearValue = ClearValue;
+	Entry->LastFrame = GFrameCounter;
+}
+
+void UDreamPassSubsystem::ReleaseExportTargets(bool bAll)
+{
+	for (int32 Index = ExportTargets.Num() - 1; Index >= 0; --Index)
+	{
+		const FExportTarget& Entry = ExportTargets[Index];
+		if (!bAll && Entry.LastFrame == GFrameCounter)
+		{
+			continue;
+		}
+		// Queued after this frame's rendering, so the frame that still filled it is not cut short.
+		UTextureRenderTarget2D* Target = Entry.Target.Get();
+		if (Target && !IsEngineExitRequested())
+		{
+			ClearExportTarget(*Target, Entry.ClearValue);
+		}
+		ExportTargets.RemoveAtSwap(Index);
+	}
 }
 
 void UDreamPassSubsystem::BeginMaterialFrame()
