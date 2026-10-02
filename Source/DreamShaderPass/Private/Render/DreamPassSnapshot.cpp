@@ -2,6 +2,7 @@
 
 #if DREAMSHADER_WITH_CUSTOM_PASS
 
+#include "DreamPassConsole.h"
 #include "DreamPassPipeline.h"
 #include "DreamPassSubsystem.h"
 #include "DreamShaderPassModule.h"
@@ -416,6 +417,7 @@ namespace UE::DreamPass
 		Subsystem.GatherPrimitiveSelections(Snapshot->LayersByPrimitiveId, Snapshot->ListMembers);
 		UpdateNaniteStencilAssignments(Subsystem, *Snapshot);
 		Snapshot->bCustomStencilWritten = EnumHasAnyFlags(GetViewCapabilities(Family, *Family.Views[0]), EDreamPassRequirementFlags::CustomStencil);
+		Snapshot->VisualizeTarget = GetVisualizeTarget();
 		return Snapshot;
 	}
 }

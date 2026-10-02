@@ -145,6 +145,9 @@ namespace UE::DreamPass
 		/** r.CustomDepth == 3 when the frame was set up, so CustomStencil holds values. */
 		bool bCustomStencilWritten = false;
 
+		/** r.DreamPass.Visualize when the frame was set up: `<Pipeline>.<Buffer>`, empty for none. */
+		FString VisualizeTarget;
+
 		uint64 FrameNumber = 0;
 
 		const FViewSnapshot* FindView(int32 FamilyViewIndex) const

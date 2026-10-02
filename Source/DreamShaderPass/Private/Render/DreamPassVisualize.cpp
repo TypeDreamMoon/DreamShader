@@ -2,8 +2,6 @@
 
 #if DREAMSHADER_WITH_CUSTOM_PASS
 
-#include "DreamPassConsole.h"
-
 #include "RHIStaticStates.h"
 #include "SceneView.h"
 #include "ScreenPass.h"
@@ -59,8 +57,8 @@ namespace UE::DreamPass
 	void AddVisualizePass(FRDGBuilder& GraphBuilder, FFamilyState& Family, FViewState& ViewState, const FSceneView& View)
 	{
 		// Every view that runs a pipeline comes through here every frame: while the variable is empty, which it nearly always
-		// is, one read of it is all this costs.
-		const FString Target = GetVisualizeTarget_RenderThread();
+		// is, one look at the family's copy of it is all this costs.
+		const FString Target = Family.Snapshot.IsValid() ? Family.Snapshot->VisualizeTarget : FString();
 		if (Target.IsEmpty() || !ViewState.Snapshot || !View.Family || !View.Family->RenderTarget)
 		{
 			return;

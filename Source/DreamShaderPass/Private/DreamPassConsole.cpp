@@ -23,11 +23,13 @@ namespace UE::DreamPass
 		TEXT("Comma-separated DreamShader Custom Pass pipeline asset names that do not run, e.g. CP_Highlight,CP_XRay."),
 		ECVF_Default);
 
+	// A string variable cannot be ECVF_RenderThreadSafe (FConsoleManager::RegisterConsoleVariable asserts it): it is read
+	// on the game thread, into each family's snapshot, which is how the render thread's visualize pass sees it.
 	static TAutoConsoleVariable<FString> CVarVisualize(
 		TEXT("r.DreamPass.Visualize"),
 		TEXT(""),
 		TEXT("<Pipeline>.<Buffer>: draws that buffer of that pipeline in the lower left corner of every view that runs it, e.g. CP_Highlight.Blurred. Empty: off."),
-		ECVF_RenderThreadSafe);
+		ECVF_Default);
 
 	bool IsEnabledByConsole()
 	{
@@ -53,9 +55,9 @@ namespace UE::DreamPass
 		return false;
 	}
 
-	FString GetVisualizeTarget_RenderThread()
+	FString GetVisualizeTarget()
 	{
-		return CVarVisualize.GetValueOnRenderThread();
+		return CVarVisualize.GetValueOnGameThread();
 	}
 
 	static void DumpWorlds(const TArray<FString>& Args, UWorld* InWorld, FOutputDevice& Ar)
