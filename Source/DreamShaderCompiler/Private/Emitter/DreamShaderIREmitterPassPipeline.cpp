@@ -480,6 +480,29 @@ namespace UE::DreamShader::Editor::Compiler
 			To.Parameters = From.Parameters;
 			To.Buffers = From.Buffers;
 			To.Passes = From.Passes;
+#if WITH_EDITORONLY_DATA
+			To.bHasSharedHlsl = From.bHasSharedHlsl;
+			To.SharedHlsl = From.SharedHlsl;
+			To.SharedHlslLine = From.SharedHlslLine;
+#endif
+		}
+
+		/** IR::PassHlslSource as the asset spells it; File for every pass whose code is no inline HLSL. */
+		EDreamPassHlslSource ToAssetHlslSource(const FString& Source)
+		{
+			if (Source.Equals(IR::PassHlslSource::Block, ESearchCase::CaseSensitive))
+			{
+				return EDreamPassHlslSource::Block;
+			}
+			if (Source.Equals(IR::PassHlslSource::Body, ESearchCase::CaseSensitive))
+			{
+				return EDreamPassHlslSource::Body;
+			}
+			if (Source.Equals(IR::PassHlslSource::Shared, ESearchCase::CaseSensitive))
+			{
+				return EDreamPassHlslSource::Shared;
+			}
+			return EDreamPassHlslSource::File;
 		}
 
 		/**
@@ -594,6 +617,12 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 		Target.Requires = int32(Requires);
 		Target.EnabledParameter = Payload.EnabledParameter.IsEmpty() ? NAME_None : FName(*Payload.EnabledParameter);
+#if WITH_EDITORONLY_DATA
+		// The text, for the way back (decompile, Adopt): what runs is each slot's snapshot.
+		Target.bHasSharedHlsl = Payload.bHasSharedHlsl;
+		Target.SharedHlsl = Payload.SharedHlsl;
+		Target.SharedHlslLine = Payload.SharedHlslLine;
+#endif
 
 		// ------------------------------------------------------------------------------------------------ parameters
 		Target.Parameters.Reset();
@@ -747,10 +776,15 @@ namespace UE::DreamShader::Editor::Compiler
 				{
 					// An HLSL fullscreen pass runs in an FDreamPassPS slot, whatever its output count: no wrapper material. The
 					// path is kept as the `.dsp` writes it -- relative to its folder, or virtual -- which is what the decompiler
-					// writes back; the slot compiles the snapshot, never this file.
+					// writes back; the slot compiles the snapshot, never this file. Inline HLSL keeps its text instead.
 					Desc.Fullscreen.ShaderPath = Pass.ShaderReference;
 					Desc.Fullscreen.Entry = Pass.Entry;
 					Desc.Fullscreen.PixelSlot = INDEX_NONE;
+					Desc.Fullscreen.HlslSource = ToAssetHlslSource(Pass.HlslSource);
+#if WITH_EDITORONLY_DATA
+					Desc.Fullscreen.InlineHlsl = Pass.InlineHlsl;
+					Desc.Fullscreen.InlineHlslLine = Pass.InlineHlslLine;
+#endif
 				}
 				break;
 
@@ -758,6 +792,11 @@ namespace UE::DreamShader::Editor::Compiler
 				Desc.Compute.ShaderPath = Pass.ShaderReference;
 				Desc.Compute.Entry = Pass.Entry;
 				Desc.Compute.Slot = INDEX_NONE;
+				Desc.Compute.HlslSource = ToAssetHlslSource(Pass.HlslSource);
+#if WITH_EDITORONLY_DATA
+				Desc.Compute.InlineHlsl = Pass.InlineHlsl;
+				Desc.Compute.InlineHlslLine = Pass.InlineHlslLine;
+#endif
 				Desc.Compute.ThreadGroupSize = FIntVector(FMath::Max(Pass.ThreadsX, 1), FMath::Max(Pass.ThreadsY, 1), FMath::Max(Pass.ThreadsZ, 1));
 				if (!TryParseSpelling(Pass.DispatchMode, DispatchSpellings, Desc.Compute.DispatchMode))
 				{

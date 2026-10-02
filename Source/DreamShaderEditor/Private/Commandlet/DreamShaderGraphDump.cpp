@@ -1286,6 +1286,19 @@ namespace UE::DreamShader::Editor::Private
 			return Clauses;
 		}
 
+		/** Where an HLSL pass's code is (EDreamPassHlslSource): File, Block, Body, Shared. */
+		const TCHAR* HlslSourceText(const EDreamPassHlslSource Source)
+		{
+			switch (Source)
+			{
+			case EDreamPassHlslSource::Block:  return TEXT("Block");
+			case EDreamPassHlslSource::Body:   return TEXT("Body");
+			case EDreamPassHlslSource::Shared: return TEXT("Shared");
+			case EDreamPassHlslSource::File:
+			default:                           return TEXT("File");
+			}
+		}
+
 		FDumpJsonRef MakePassJson(const FDreamPassDesc& Pass)
 		{
 			namespace PassSpelling = UE::DreamShader::Editor::Private::PassSpelling;
@@ -1309,6 +1322,8 @@ namespace UE::DreamShader::Editor::Private
 				Settings->Set(TEXT("material"), Fullscreen.Material ? FDumpJson::String(Fullscreen.Material->GetPathName()) : FDumpJson::Null());
 				Settings->Set(TEXT("shader"), FDumpJson::String(Fullscreen.ShaderPath));
 				Settings->Set(TEXT("entry"), FDumpJson::String(Fullscreen.Entry));
+				Settings->Set(TEXT("hlslSource"), FDumpJson::String(HlslSourceText(Fullscreen.HlslSource)));
+				Settings->Set(TEXT("inlineLine"), FDumpJson::Int(Fullscreen.InlineHlslLine));
 				Settings->Set(TEXT("pixelSlot"), FDumpJson::Int(Fullscreen.PixelSlot));
 				break;
 			}
@@ -1317,6 +1332,8 @@ namespace UE::DreamShader::Editor::Private
 				const FDreamPassComputeSettings& Compute = Pass.Compute;
 				Settings->Set(TEXT("shader"), FDumpJson::String(Compute.ShaderPath));
 				Settings->Set(TEXT("entry"), FDumpJson::String(Compute.Entry));
+				Settings->Set(TEXT("hlslSource"), FDumpJson::String(HlslSourceText(Compute.HlslSource)));
+				Settings->Set(TEXT("inlineLine"), FDumpJson::Int(Compute.InlineHlslLine));
 				Settings->Set(TEXT("slot"), FDumpJson::Int(Compute.Slot));
 				const FDumpJsonRef Threads = FDumpJson::Array();
 				Threads->Add(FDumpJson::Int(Compute.ThreadGroupSize.X));
@@ -1430,6 +1447,9 @@ namespace UE::DreamShader::Editor::Private
 				Buffers->Add(Object);
 			}
 			Root->Set(TEXT("buffers"), Buffers);
+			// The file's `hlsl` block: whether there is one, and the line of its `{` in the `.dsp`.
+			Root->Set(TEXT("sharedHlsl"), FDumpJson::Bool(Pipeline.bHasSharedHlsl));
+			Root->Set(TEXT("sharedHlslLine"), FDumpJson::Int(Pipeline.SharedHlslLine));
 
 			const FDumpJsonRef Passes = FDumpJson::Array();
 			const FDumpJsonRef Slots = FDumpJson::Array();
@@ -1438,7 +1458,7 @@ namespace UE::DreamShader::Editor::Private
 				Passes->Add(MakePassJson(Pass));
 
 				const bool bComputeSlot = Pass.Kind == EDreamPassKind::Compute;
-				const bool bPixelSlot = Pass.Kind == EDreamPassKind::Fullscreen && !Pass.Fullscreen.Material && !Pass.Fullscreen.ShaderPath.IsEmpty();
+				const bool bPixelSlot = Pass.Kind == EDreamPassKind::Fullscreen && Pass.Fullscreen.RunsHlsl();
 				if (bComputeSlot || bPixelSlot)
 				{
 					const FDumpJsonRef Slot = FDumpJson::Object();

@@ -93,6 +93,24 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Source")
 	FString SourceHash;
 
+#if WITH_EDITORONLY_DATA
+	/** The `.dsp` has a file-level `hlsl { }` block (it may be empty). */
+	UPROPERTY(VisibleAnywhere, Category = "Source")
+	bool bHasSharedHlsl = false;
+
+	/**
+	 * That block: the text between its braces, verbatim. Its shared functions are compiled with every inline pass, its
+	 * entries with the passes that name them (EDreamPassHlslSource::Shared). Kept for the way back to text; what runs is
+	 * each slot's snapshot.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Source", meta = (MultiLine = true))
+	FString SharedHlsl;
+
+	/** The line of the block's `{` in the `.dsp`. */
+	UPROPERTY()
+	int32 SharedHlslLine = 0;
+#endif
+
 public:
 	const FDreamPassBufferDesc* FindBuffer(FName Name) const;
 	const FDreamPassParameterDesc* FindParameter(FName Name) const;

@@ -15,6 +15,7 @@
 // The slot counts and the slot directories a snapshot lives in.
 #include "DreamShaderPassModule.h"
 // FormatDreamShaderFloatLiteral: numbers read the way the `.dsp` writes them.
+#include "Lang/LangHlslText.h"
 #include "Lang/LangInstanceSource.h"
 #include "Pass/DreamPassSpellings.h"
 #include "Provenance/DreamShaderProvenanceActions.h"
@@ -159,7 +160,7 @@ namespace UE::DreamShader::Editor::Private
 			return Clauses.IsEmpty() ? FString(TEXT("-")) : FString::Join(Clauses, TEXT(" | "));
 		}
 
-		/** An HLSL pass's slot: a compute pass, or a fullscreen pass with a shader and no material. False for every other pass. */
+		/** An HLSL pass's slot: a compute pass, or a fullscreen pass with HLSL and no material. False for every other pass. */
 		bool GetHlslSlot(const FDreamPassDesc& Pass, bool& bOutCompute, int32& OutSlot)
 		{
 			if (Pass.Kind == EDreamPassKind::Compute)
@@ -168,13 +169,67 @@ namespace UE::DreamShader::Editor::Private
 				OutSlot = Pass.Compute.Slot;
 				return true;
 			}
-			if (Pass.Kind == EDreamPassKind::Fullscreen && !Pass.Fullscreen.Material && !Pass.Fullscreen.ShaderPath.IsEmpty())
+			if (Pass.Kind == EDreamPassKind::Fullscreen && Pass.Fullscreen.RunsHlsl())
 			{
 				bOutCompute = false;
 				OutSlot = Pass.Fullscreen.PixelSlot;
 				return true;
 			}
 			return false;
+		}
+
+		/**
+		 * Where an HLSL pass's code is in its `.dsp` when it is written there (DreamShader_Plan/10): the line of its own `hlsl`
+		 * block, or of its entry in the file's block. 0 for a shader file.
+		 */
+		int32 GetInlineHlslLine(const UDreamPassPipeline& Pipeline, const FDreamPassDesc& Pass)
+		{
+			namespace Lang = UE::DreamShader::Lang;
+			const bool bCompute = Pass.Kind == EDreamPassKind::Compute;
+			if (!bCompute && Pass.Kind != EDreamPassKind::Fullscreen)
+			{
+				return 0;
+			}
+			switch (bCompute ? Pass.Compute.HlslSource : Pass.Fullscreen.HlslSource)
+			{
+			case EDreamPassHlslSource::Block:
+			case EDreamPassHlslSource::Body:
+				return FMath::Max(bCompute ? Pass.Compute.InlineHlslLine : Pass.Fullscreen.InlineHlslLine, 1);
+			case EDreamPassHlslSource::Shared:
+			{
+				const Lang::FHlslTextScan Scan = Lang::ScanHlslText(Pipeline.SharedHlsl);
+				const Lang::FHlslTopLevelFunction* Function = Scan.FindFunction(bCompute ? Pass.Compute.Entry : Pass.Fullscreen.Entry);
+				const int32 Offset = Function ? Lang::GetHlslLineOfOffset(Pipeline.SharedHlsl, Function->NameOffset) - 1 : 0;
+				return FMath::Max(Pipeline.SharedHlslLine + Offset, 1);
+			}
+			case EDreamPassHlslSource::File:
+			default:
+				return 0;
+			}
+		}
+
+		/** The keys an inline pass's code is written with: its `hlsl` block, or the `Entry` it picks from the file's. False for a shader file. */
+		bool AddInlineHlslKeys(const EDreamPassHlslSource Source, const FString& Entry, TArray<FString>& Keys)
+		{
+			switch (Source)
+			{
+			case EDreamPassHlslSource::Block:
+				if (!Entry.Equals(TEXT("Main"), ESearchCase::CaseSensitive))
+				{
+					Keys.Add(FString::Printf(TEXT("Entry = %s"), *Entry)); // I18N-EXEMPT: .dsp syntax
+				}
+				Keys.Add(TEXT("hlsl { ... }")); // I18N-EXEMPT: .dsp syntax
+				return true;
+			case EDreamPassHlslSource::Body:
+				Keys.Add(TEXT("hlsl { ... }")); // I18N-EXEMPT: .dsp syntax
+				return true;
+			case EDreamPassHlslSource::Shared:
+				Keys.Add(FString::Printf(TEXT("Entry = %s"), *Entry)); // I18N-EXEMPT: .dsp syntax
+				return true;
+			case EDreamPassHlslSource::File:
+			default:
+				return false;
+			}
 		}
 
 		const FString& GetShaderPath(const FDreamPassDesc& Pass)
@@ -193,7 +248,10 @@ namespace UE::DreamShader::Editor::Private
 				{
 					Keys.Add(FString::Printf(TEXT("Material = \"%s\""), *Pass.Fullscreen.Material->GetName())); // I18N-EXEMPT: .dsp syntax
 				}
-				if (!Pass.Fullscreen.ShaderPath.IsEmpty())
+				else if (AddInlineHlslKeys(Pass.Fullscreen.HlslSource, Pass.Fullscreen.Entry, Keys))
+				{
+				}
+				else if (!Pass.Fullscreen.ShaderPath.IsEmpty())
 				{
 					Keys.Add(FString::Printf(TEXT("Shader = \"%s\""), *Pass.Fullscreen.ShaderPath)); // I18N-EXEMPT: .dsp syntax
 					Keys.Add(FString::Printf(TEXT("Entry = %s"), *Pass.Fullscreen.Entry)); // I18N-EXEMPT: .dsp syntax
@@ -203,8 +261,11 @@ namespace UE::DreamShader::Editor::Private
 			case EDreamPassKind::Compute:
 			{
 				const FDreamPassComputeSettings& Compute = Pass.Compute;
-				Keys.Add(FString::Printf(TEXT("Shader = \"%s\""), *Compute.ShaderPath)); // I18N-EXEMPT: .dsp syntax
-				Keys.Add(FString::Printf(TEXT("Entry = %s"), *Compute.Entry)); // I18N-EXEMPT: .dsp syntax
+				if (!AddInlineHlslKeys(Compute.HlslSource, Compute.Entry, Keys))
+				{
+					Keys.Add(FString::Printf(TEXT("Shader = \"%s\""), *Compute.ShaderPath)); // I18N-EXEMPT: .dsp syntax
+					Keys.Add(FString::Printf(TEXT("Entry = %s"), *Compute.Entry)); // I18N-EXEMPT: .dsp syntax
+				}
 				Keys.Add(FString::Printf(TEXT("Threads = uint3(%d, %d, %d)"), Compute.ThreadGroupSize.X, Compute.ThreadGroupSize.Y, Compute.ThreadGroupSize.Z)); // I18N-EXEMPT: .dsp syntax
 				if (Compute.DispatchMode == EDreamPassDispatchMode::Buffer)
 				{
@@ -661,6 +722,11 @@ namespace UE::DreamShader::Editor::Private
 
 		const TWeakObjectPtr<UDreamPassPipeline> Weak = WeakPipeline;
 
+		// The `.dsp`, made absolute: where a pass whose HLSL is written in it opens.
+		FString DspFile;
+		FString DspError;
+		const bool bHasDsp = TryResolveGeneratedAssetSourceFile(&Pipeline, DspFile, DspError);
+
 		// The order the frame reaches them in (EDreamPassInjection's), and declaration order inside one point -- which is the
 		// order they run in. Another pipeline's passes at the same point run before or after these by Order.
 		for (int32 InjectionIndex = 0; InjectionIndex < int32(EDreamPassInjection::Count); ++InjectionIndex)
@@ -691,11 +757,12 @@ namespace UE::DreamShader::Editor::Private
 				const FDreamPassDesc& Pass = Pipeline.Passes[PassIndex];
 				const PipelineDetails::FSlotStatus Slot = PipelineDetails::DescribeSlot(Pass);
 
-				// The `.usf` behind an HLSL pass, when its virtual path maps to a file.
+				// The `.usf` behind an HLSL pass, when its virtual path maps to a file; or the line of the `.dsp` its HLSL is on.
 				bool bCompute = false;
 				int32 SlotIndex = INDEX_NONE;
 				const bool bHlsl = PipelineDetails::GetHlslSlot(Pass, bCompute, SlotIndex);
-				const FString ShaderFile = bHlsl ? ResolveDreamPassShaderSourceFile(PipelineDetails::GetShaderPath(Pass), Pipeline.SourceFilePath) : FString();
+				const int32 InlineLine = bHlsl ? PipelineDetails::GetInlineHlslLine(Pipeline, Pass) : 0;
+				const FString ShaderFile = (bHlsl && InlineLine == 0) ? ResolveDreamPassShaderSourceFile(PipelineDetails::GetShaderPath(Pass), Pipeline.SourceFilePath) : FString();
 
 				TSharedRef<SVerticalBox> Value = SNew(SVerticalBox)
 					+ SVerticalBox::Slot().AutoHeight().Padding(0.0f, 2.0f, 0.0f, 0.0f)
@@ -733,6 +800,16 @@ namespace UE::DreamShader::Editor::Private
 							FText::Format(LOCTEXT("OpenShader", "Open {0}"), FText::FromString(FPaths::GetCleanFilename(ShaderFile))),
 							FText::FromString(ShaderFile),
 							[ShaderFile]() { FDreamShaderEditorLaunchUtils::LaunchTextFileInPreferredEditor(ShaderFile); })
+					];
+				}
+				if (InlineLine > 0 && bHasDsp)
+				{
+					Value->AddSlot().AutoHeight()
+					[
+						PipelineDetails::MakeLinkButton(
+							FText::Format(LOCTEXT("OpenInlineHlsl", "Open {0} at line {1}"), FText::FromString(FPaths::GetCleanFilename(DspFile)), FText::AsNumber(InlineLine)),
+							FText::FromString(DspFile),
+							[DspFile, InlineLine]() { FDreamShaderEditorLaunchUtils::LaunchTextFileInPreferredEditor(DspFile, InlineLine); })
 					];
 				}
 				Value->AddSlot().AutoHeight()

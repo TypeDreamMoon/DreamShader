@@ -447,6 +447,20 @@ enum class EDreamPassMeshUsageFlags : uint8
 };
 ENUM_CLASS_FLAGS(EDreamPassMeshUsageFlags);
 
+/** Where an HLSL pass's code comes from in its `.dsp`. What runs is always the slot's snapshot (the compiler's). */
+UENUM(BlueprintType)
+enum class EDreamPassHlslSource : uint8
+{
+	/** A shader file the `.dsp` names: `Shader = "..."` (ShaderPath). */
+	File,
+	/** The pass's own `hlsl { }` holding declarations; Entry is one of its functions. */
+	Block,
+	/** The pass's own `hlsl { }` holding the statements of the entry; the compiler writes the function around them. */
+	Body,
+	/** `Entry = X;` alone: X is a function of the `.dsp`'s file-level `hlsl { }` (UDreamPassPipeline::SharedHlsl). */
+	Shared,
+};
+
 USTRUCT(BlueprintType)
 struct DREAMSHADERPASS_API FDreamPassFullscreenSettings
 {
@@ -472,6 +486,23 @@ struct DREAMSHADERPASS_API FDreamPassFullscreenSettings
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fullscreen")
 	int32 PixelSlot = INDEX_NONE;
+
+	/** An HLSL pass: where its code is. Meaningless for a material pass. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fullscreen")
+	EDreamPassHlslSource HlslSource = EDreamPassHlslSource::File;
+
+#if WITH_EDITORONLY_DATA
+	/** Block and Body: the text between the braces of the pass's `hlsl { }`, verbatim. Kept for the way back to text. */
+	UPROPERTY(EditAnywhere, Category = "Fullscreen", meta = (MultiLine = true))
+	FString InlineHlsl;
+
+	/** Block and Body: the line of that `{` in the `.dsp`. */
+	UPROPERTY()
+	int32 InlineHlslLine = 0;
+#endif
+
+	/** Whether the pass runs HLSL in a pixel slot -- a shader file or inline code -- rather than a material. */
+	bool RunsHlsl() const { return !Material && (!ShaderPath.IsEmpty() || HlslSource != EDreamPassHlslSource::File); }
 };
 
 UENUM(BlueprintType)
@@ -498,6 +529,20 @@ struct DREAMSHADERPASS_API FDreamPassComputeSettings
 	/** The FDreamPassCS slot the compiler gave this shader. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Compute")
 	int32 Slot = INDEX_NONE;
+
+	/** Where the pass's code is. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Compute")
+	EDreamPassHlslSource HlslSource = EDreamPassHlslSource::File;
+
+#if WITH_EDITORONLY_DATA
+	/** Block and Body: the text between the braces of the pass's `hlsl { }`, verbatim. Kept for the way back to text. */
+	UPROPERTY(EditAnywhere, Category = "Compute", meta = (MultiLine = true))
+	FString InlineHlsl;
+
+	/** Block and Body: the line of that `{` in the `.dsp`. */
+	UPROPERTY()
+	int32 InlineHlslLine = 0;
+#endif
 
 	/** `[numthreads(x, y, z)]`, read from the source or written as `Threads = uint3(...)`. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Compute")
