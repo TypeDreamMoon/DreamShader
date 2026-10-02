@@ -13,6 +13,7 @@
 
 #include "AssetRegistry/IAssetRegistry.h"
 #include "AssetThumbnail.h"
+#include "DreamPassPipeline.h"
 #include "DreamShaderMaterialInstance.h"
 #include "Materials/MaterialFunction.h"
 #include "Misc/PackageName.h"
@@ -235,7 +236,11 @@ namespace UE::DreamShader::Editor::Private
 				.VAlign(VAlign_Center)
 				[
 					SNew(STextBlock)
-					.Text(Entry->IsLibrary() ? LOCTEXT("PreviewFunction", "function library") : LOCTEXT("PreviewNoMaterial", "not compiled yet"))
+					.Text(Entry->IsLibrary()
+						? LOCTEXT("PreviewFunction", "function library")
+						: (Entry->IsPipeline() && Entry->Asset.IsSet())
+							? LOCTEXT("PreviewPipeline", "pass pipeline")
+							: LOCTEXT("PreviewNoMaterial", "not compiled yet"))
 					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 					.AutoWrapText(true)
 					.Justification(ETextJustify::Center)
@@ -368,7 +373,7 @@ namespace UE::DreamShader::Editor::Private
 		const bool bHasSource = Entry->Source.IsSet();
 		const bool bEphemeral = Entry->Asset.IsSet() && Entry->Asset->Storage == EBrowserStorage::Ephemeral;
 
-		if (!Entry->IsLibrary())
+		if (!Entry->IsLibrary() && !Entry->IsPipeline())
 		{
 			ActionBox->AddSlot()[ MakeActionButton(
 				LOCTEXT("CreateInstanceBtn", "Create instance"),
@@ -394,6 +399,13 @@ namespace UE::DreamShader::Editor::Private
 			ActionBox->AddSlot()[ MakeActionButton(
 				LOCTEXT("OpenBtn", "Open"),
 				LOCTEXT("POpenMatTip", "Open the generated material asset."),
+				[EntryRef]() { FDreamShaderBrowserActions::OpenMaterial(*EntryRef); }) ];
+		}
+		else if (Entry->IsPipeline() && Entry->Asset.IsSet())
+		{
+			ActionBox->AddSlot()[ MakeActionButton(
+				LOCTEXT("OpenBtn", "Open"),
+				LOCTEXT("POpenPipelineTip", "Open the generated pass pipeline in its details panel: its passes by injection point, its buffers and their render targets."),
 				[EntryRef]() { FDreamShaderBrowserActions::OpenMaterial(*EntryRef); }) ];
 		}
 		if (Material && bEphemeral)
@@ -438,6 +450,18 @@ namespace UE::DreamShader::Editor::Private
 			Rows->AddSlot().AutoHeight()[ MakeInfoRow(LOCTEXT("Base", "Base"), Base ? FText::FromString(Base->GetName()) : LOCTEXT("BaseNone", "-")) ];
 			Rows->AddSlot().AutoHeight()[ MakeInfoRow(LOCTEXT("Domain", "Domain"), Base ? EnumText(StaticEnum<EMaterialDomain>(), static_cast<int64>(Base->MaterialDomain.GetValue())) : FText::GetEmpty()) ];
 			Rows->AddSlot().AutoHeight()[ MakeInfoRow(LOCTEXT("Blend", "Blend mode"), Base ? EnumText(StaticEnum<EBlendMode>(), static_cast<int64>(Base->BlendMode.GetValue())) : FText::GetEmpty()) ];
+		}
+		else if (const UDreamPassPipeline* Pipeline = Entry->IsPipeline() && Entry->Asset.IsSet() ? Entry->ResolvePipeline() : nullptr)
+		{
+			// The pipeline in one line; its details panel has the rest.
+			Rows->AddSlot().AutoHeight()[ MakeInfoRow(
+				LOCTEXT("PipelineRow", "Pipeline"),
+				FText::Format(
+					LOCTEXT("PipelineRowFmt", "{0} pass(es), {1} buffer(s), {2} parameter(s); order {3}"),
+					FText::AsNumber(Pipeline->Passes.Num()),
+					FText::AsNumber(Pipeline->Buffers.Num()),
+					FText::AsNumber(Pipeline->Parameters.Num()),
+					FText::AsNumber(Pipeline->Order))) ];
 		}
 
 		if (Entry->Source.IsSet())

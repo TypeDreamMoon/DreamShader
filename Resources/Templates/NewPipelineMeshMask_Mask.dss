@@ -1,0 +1,10 @@
+// {FILENAME} -- the material the DrawMask pass of {PIPELINE} draws the selected objects with. Compiles to {ASSETPATH}.
+// UE.DreamPassOutput is what a mesh pass writes: its Output0 is the pass's `write Output0 = ...`. The usage flags are
+// the kinds of mesh the pass may draw with this material; the pass checks them.
+#pragma material(ShadingModel = Unlit, bUsedWithSkeletalMesh = true, bUsedWithInstancedStaticMeshes = true)
+
+export void {STEM}(inout material m)
+{
+    m.EmissiveColor = float3(0, 0, 0);
+    UE.DreamPassOutput(Output0 = float4(1, 0, 0, 0));
+}

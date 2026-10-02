@@ -22,8 +22,8 @@ namespace UE::DreamShader::Editor::Private
 		UI_COMMAND(Refresh, "Refresh", "Rescan the source roots and recompute every status.", EUserInterfaceActionType::Button, FInputChord(EKeys::F5));
 		UI_COMMAND(CompileSelected, "Compile", "Force-recompile the selected sources (in memory).", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control, EKeys::B));
 		UI_COMMAND(CompileStale, "Compile stale", "Recompile every source whose generated asset is stale or missing.", EUserInterfaceActionType::Button, FInputChord());
-		UI_COMMAND(CompileAll, "Compile all", "Force-recompile every compilable source -- .dss, .dsi, .dsm and .dsf (in memory).", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::B));
-		UI_COMMAND(OpenMaterial, "Open material", "Open the generated material in its asset editor.", EUserInterfaceActionType::Button, FInputChord(EKeys::Enter));
+		UI_COMMAND(CompileAll, "Compile all", "Force-recompile every compilable source -- .dss, .dsi, .dsp, .dsm and .dsf (in memory).", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::B));
+		UI_COMMAND(OpenMaterial, "Open material", "Open the generated material in its asset editor, or a pass pipeline in its details panel.", EUserInterfaceActionType::Button, FInputChord(EKeys::Enter));
 		UI_COMMAND(OpenSource, "Open source", "Open the source file in your preferred text editor, at the first error when there is one.", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control, EKeys::Enter));
 		UI_COMMAND(CreateInstance, "Create instance", "Write a .dsi material instance source of this material and compile it; for a material DreamShader did not generate, create an ordinary material instance.", EUserInterfaceActionType::Button, FInputChord());
 		UI_COMMAND(Materialize, "Materialize", "Write this memory-only material (and its base) to disk.", EUserInterfaceActionType::Button, FInputChord());

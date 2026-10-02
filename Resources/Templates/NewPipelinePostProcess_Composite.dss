@@ -1,0 +1,16 @@
+// {FILENAME} -- the Post Process material the Composite pass of {PIPELINE} draws. Compiles to {ASSETPATH}.
+// The pass binds each of its `read` buffers to the UserSceneTexture of the same name, and each `param` to the uniform
+// of that name. Every pass sets DreamPassWeight: the pipeline's weight in the view, which a volume blends in and out.
+#pragma material(Domain = PostProcess, BlendableLocation = SceneColorAfterDOF)
+
+uniform float4 Tint = float4(1.0, 0.85, 0.6, 1.0);
+uniform float  Strength = 0.35;
+uniform float  DreamPassWeight = 1.0;
+
+export void {STEM}(inout material m)
+{
+    float2 UV    = UE.ScreenPosition().ViewportUV;
+    float3 Scene = UE.SceneTexture(SceneTextureId = PostProcessInput0, Coordinates = UV).Color.rgb;
+    float3 Soft  = UE.UserSceneTexture(UserSceneTexture = "Half", Coordinates = UV, bFiltered = true).Color.rgb;
+    m.EmissiveColor = lerp(Scene, Soft * Tint.rgb, saturate(Strength * Tint.a * DreamPassWeight));
+}

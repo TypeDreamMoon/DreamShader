@@ -6,6 +6,9 @@
 #include "Decompiler/DreamShaderDecompileService.h"
 #include "Decompiler/DreamShaderGraphImport.h"
 #include "Decompiler/DreamShaderInstanceDecompiler.h"
+// DecompileDreamPassPipelineToText: a UDreamPassPipeline comes back as `.dsp` text.
+#include "Decompiler/DreamShaderPipelineDecompiler.h"
+#include "DreamPassPipeline.h"
 #include "DreamShaderBuiltinCatalog.h"
 #include "DreamShaderCompilePipeline.h"
 #include "DreamShaderCompilerDiagnostics.h"
@@ -195,6 +198,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		void DecompileInstance(const FDreamShaderDecompileRequest& Request, UMaterialInstanceConstant* Instance, FDreamShaderDecompileResult& OutResult);
+		void DecompilePipeline(const FDreamShaderDecompileRequest& Request, UDreamPassPipeline* Pipeline, FDreamShaderDecompileResult& OutResult);
 	};
 
 	void FDreamShaderIRDecompiler::DecompileInstance(const FDreamShaderDecompileRequest& Request, UMaterialInstanceConstant* Instance, FDreamShaderDecompileResult& OutResult)
@@ -221,6 +225,46 @@ namespace UE::DreamShader::Editor::Private
 		UE::DreamShader::Lang::FLangDiagnosticSink Sink(OutResult.OutputFilePath);
 		FString Text;
 		const bool bDecompiled = DecompileMaterialInstanceToText(Instance, Options, Text, Sink);
+		IRDecompile::AppendSink(OutResult, Sink);
+		if (!bDecompiled || Sink.HasErrors())
+		{
+			IRDecompile::FailFromSink(OutResult, Sink);
+			return;
+		}
+
+		OutResult.SourceText = MoveTemp(Text);
+		OutResult.bSucceeded = true;
+	}
+
+	void FDreamShaderIRDecompiler::DecompilePipeline(const FDreamShaderDecompileRequest& Request, UDreamPassPipeline* Pipeline, FDreamShaderDecompileResult& OutResult)
+	{
+		OutResult.OutputFilePath = Request.OutputFilePath.IsEmpty()
+			? FDecompiledAssetNaming::MakePipelineFilePath(Pipeline)
+			: UE::DreamShader::NormalizeSourceFilePath(Request.OutputFilePath);
+
+		if (!UE::DreamShader::IsDreamShaderPipelineFile(OutResult.OutputFilePath))
+		{
+			IRDecompile::Fail(OutResult, TEXT("DSH9210"), FText::Format(
+				LOCTEXT("PipelineNeedsDsp", "'{0}' is a pass pipeline, which decompiles to a '.dsp', and '{1}' is not one."),
+				FText::FromString(Pipeline->GetPathName()),
+				FText::FromString(OutResult.OutputFilePath)));
+			return;
+		}
+
+		// Bare material names where the target's root builds them, the way `dsc decompile` writes a `.dsi`'s Parent. The
+		// text is checked against the asset before it is handed back (the re-parse check, DSH9221-9223).
+		FPipelineDecompileOptions Options;
+		Options.TargetSourceFilePath = OutResult.OutputFilePath;
+		Options.bPreferBareMaterialNames = true;
+		Options.bKeepAssetPath = Request.bKeepAssetPath;
+		if (Request.SourceFilePath.IsEmpty())
+		{
+			Options.HeaderComments.Add(FString::Printf(TEXT("Decompiled by DreamShader from %s"), *Pipeline->GetPathName())); // I18N-EXEMPT: a comment in a source file
+		}
+
+		UE::DreamShader::Lang::FLangDiagnosticSink Sink(OutResult.OutputFilePath);
+		FString Text;
+		const bool bDecompiled = DecompileDreamPassPipelineToText(Pipeline, Options, Text, Sink);
 		IRDecompile::AppendSink(OutResult, Sink);
 		if (!bDecompiled || Sink.HasErrors())
 		{
@@ -268,12 +312,21 @@ namespace UE::DreamShader::Editor::Private
 						return true;
 					}
 				}
+				if (UDreamPassPipeline* Pipeline = Cast<UDreamPassPipeline>(Asset))
+				{
+					if (Product.Kind == IR::EIRProductKind::PassPipeline)
+					{
+						// A `.dsp`: one product, its own text.
+						DecompilePipeline(Request, Pipeline, OutResult);
+						return true;
+					}
+				}
 
 				IRDecompile::FSubject Subject;
 				if (!Asset || !IRDecompile::MakeSubject(Asset, Subject))
 				{
 					IRDecompile::Fail(OutResult, TEXT("DSH9087"), FText::Format(
-						LOCTEXT("SourceProductMissing", "'{0}' builds '{1}', and that asset does not exist or is not a material or a material function; build the source first."),
+						LOCTEXT("SourceProductMissingAny", "'{0}' builds '{1}', and that asset does not exist or is of no kind a decompile reads; build the source first."),
 						FText::FromString(Request.SourceFilePath),
 						FText::FromString(Product.ObjectPath)));
 					return true;
@@ -291,12 +344,17 @@ namespace UE::DreamShader::Editor::Private
 					return true;
 				}
 			}
+			if (UDreamPassPipeline* Pipeline = Cast<UDreamPassPipeline>(Request.Asset))
+			{
+				DecompilePipeline(Request, Pipeline, OutResult);
+				return true;
+			}
 
 			IRDecompile::FSubject Subject;
 			if (!IRDecompile::MakeSubject(Request.Asset, Subject))
 			{
 				IRDecompile::Fail(OutResult, TEXT("DSH9086"), FText::Format(
-					LOCTEXT("UnsupportedAssetClass", "'{0}' is a {1}, which no DreamShader source describes; a decompile takes a material, a material function, layer or blend, or a material instance."),
+					LOCTEXT("UnsupportedAssetClassWithPipeline", "'{0}' is a {1}, which no DreamShader source describes; a decompile takes a material, a material function, layer or blend, a material instance, or a pass pipeline."),
 					FText::FromString(Request.Asset ? Request.Asset->GetPathName() : FString(TEXT("<null>"))),
 					FText::FromString(Request.Asset ? Request.Asset->GetClass()->GetName() : FString(TEXT("null object")))));
 				return true;

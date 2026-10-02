@@ -156,6 +156,11 @@ namespace UE::DreamShader::Editor::Private
 		return MakeStableDecompiledSourcePath(Instance, TEXT("Decompiled/Instances"), TEXT(".dsi"));
 	}
 
+	FString FDecompiledAssetNaming::MakePipelineFilePath(const UObject* Pipeline)
+	{
+		return MakeStableDecompiledSourcePath(Pipeline, TEXT("Decompiled/Pipelines"), TEXT(".dsp"));
+	}
+
 	FString FDecompiledAssetNaming::MakeMaterialFilePath(const UMaterial* Material)
 	{
 		return MakeStableDecompiledSourcePath(Material, TEXT("Decompiled/Materials"), TEXT(".dsm"));
@@ -277,7 +282,10 @@ namespace UE::DreamShader::Editor::Private
 		// extension" when it does.
 		const FString Extension = FPaths::GetExtension(Request.OutputFilePath, /*bIncludeDot*/ false);
 		const bool bLegacyExtension = Extension.Equals(TEXT("dsm"), ESearchCase::IgnoreCase) || Extension.Equals(TEXT("dsf"), ESearchCase::IgnoreCase);
-		const bool bDssExtension = Extension.Equals(TEXT("dss"), ESearchCase::IgnoreCase) || Extension.Equals(TEXT("dsi"), ESearchCase::IgnoreCase);
+		// The 2.0 family: a material or function, an instance, a Custom Pass pipeline.
+		const bool bDssExtension = Extension.Equals(TEXT("dss"), ESearchCase::IgnoreCase)
+			|| Extension.Equals(TEXT("dsi"), ESearchCase::IgnoreCase)
+			|| Extension.Equals(TEXT("dsp"), ESearchCase::IgnoreCase);
 		const EDreamShaderDecompileFormat Format = Request.Format != EDreamShaderDecompileFormat::Auto
 			? Request.Format
 			: (bLegacyExtension ? EDreamShaderDecompileFormat::Legacy : EDreamShaderDecompileFormat::Dss);

@@ -34,6 +34,13 @@
 #include "DreamShaderGeneratedAssets.h"
 #include "DreamShaderCompilePipeline.h"
 
+// A `.dsp` product: the pipeline asset, and the `.dsp` spelling of its enumerations.
+#include "DreamPassPipeline.h"
+#include "DreamPassTypes.h"
+#include "Pass/DreamPassSpellings.h"
+
+#include "Engine/Texture.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "HAL/FileManager.h"
 #include "Interfaces/IPluginManager.h"
 #include "Materials/Material.h"
@@ -1130,6 +1137,324 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		// -----------------------------------------------------------------------------------------
+		// Pass pipelines
+		//
+		// A `.dsp` product has no graph. Its dump is the pipeline as the runtime reads it: every
+		// enumeration spelled the way the `.dsp` spells it (Pass/DreamPassSpellings.h), arrays in
+		// declaration order -- for passes that is execution order inside an injection point -- and
+		// only the settings of each pass's own kind, so a value the runtime never reads cannot make
+		// two captures differ. The slots are listed again on their own: they are what a rebuild of
+		// another pipeline can move.
+		// -----------------------------------------------------------------------------------------
+
+		FDumpJsonRef MakeNameJson(const FName Name)
+		{
+			return Name.IsNone() ? FDumpJson::Null() : FDumpJson::String(Name.ToString());
+		}
+
+		FDumpJsonRef MakeFloatsJson(std::initializer_list<double> Values)
+		{
+			const FDumpJsonRef Array = FDumpJson::Array();
+			for (const double Value : Values)
+			{
+				Array->Add(FDumpJson::Double(Value));
+			}
+			return Array;
+		}
+
+		FDumpJsonRef MakeStringsJson(const TArray<FString>& Strings)
+		{
+			const FDumpJsonRef Array = FDumpJson::Array();
+			for (const FString& String : Strings)
+			{
+				Array->Add(FDumpJson::String(String));
+			}
+			return Array;
+		}
+
+		FDumpJsonRef MakePassValueJson(const FDreamPassParameterValue& Value)
+		{
+			namespace PassSpelling = UE::DreamShader::Editor::Private::PassSpelling;
+
+			const FDumpJsonRef Object = FDumpJson::Object();
+			Object->Set(TEXT("type"), FDumpJson::String(PassSpelling::ParameterType(Value.Type)));
+			switch (Value.Type)
+			{
+			case EDreamPassParameterType::Int:
+				Object->Set(TEXT("value"), FDumpJson::Int(Value.Int));
+				break;
+			case EDreamPassParameterType::Bool:
+				Object->Set(TEXT("value"), FDumpJson::Bool(Value.Bool));
+				break;
+			case EDreamPassParameterType::Texture:
+				Object->Set(TEXT("value"), Value.Texture ? FDumpJson::String(Value.Texture->GetPathName()) : FDumpJson::Null());
+				break;
+			default:
+			{
+				const FDumpJsonRef Channels = FDumpJson::Array();
+				for (int32 Channel = 0; Channel < PassSpelling::ParameterWidth(Value.Type); ++Channel)
+				{
+					Channels->Add(FDumpJson::Double(Value.Vector[Channel]));
+				}
+				Object->Set(TEXT("value"), Channels);
+				break;
+			}
+			}
+			return Object;
+		}
+
+		FDumpJsonRef MakePassBindingsJson(const TArray<FDreamPassBufferBinding>& Bindings)
+		{
+			const FDumpJsonRef Array = FDumpJson::Array();
+			for (const FDreamPassBufferBinding& Binding : Bindings)
+			{
+				const FDumpJsonRef Object = FDumpJson::Object();
+				Object->Set(TEXT("slot"), MakeNameJson(Binding.Slot));
+				Object->Set(TEXT("buffer"), MakeNameJson(Binding.Buffer));
+				Object->Set(TEXT("previous"), FDumpJson::Bool(Binding.bPrevious));
+				Array->Add(Object);
+			}
+			return Array;
+		}
+
+		FDumpJsonRef MakePassParamsJson(const TArray<FDreamPassParamBinding>& Params)
+		{
+			namespace PassSpelling = UE::DreamShader::Editor::Private::PassSpelling;
+
+			const FDumpJsonRef Array = FDumpJson::Array();
+			for (const FDreamPassParamBinding& Param : Params)
+			{
+				const FDumpJsonRef Object = FDumpJson::Object();
+				Object->Set(TEXT("target"), MakeNameJson(Param.Target));
+				Object->Set(TEXT("source"), FDumpJson::String(PassSpelling::ParamSource(Param.Source)));
+				if (Param.Source == EDreamPassParamSource::Constant)
+				{
+					Object->Set(TEXT("constant"), MakePassValueJson(Param.Constant));
+				}
+				else
+				{
+					if (Param.Source == EDreamPassParamSource::Parameter)
+					{
+						Object->Set(TEXT("parameter"), MakeNameJson(Param.Parameter));
+					}
+					Object->Set(TEXT("multiplier"), FDumpJson::Double(Param.Multiplier));
+					Object->Set(TEXT("offset"), FDumpJson::Double(Param.Offset));
+				}
+				Array->Add(Object);
+			}
+			return Array;
+		}
+
+		FDumpJsonRef MakePassFilterJson(const FDreamPassMeshFilter& Filter)
+		{
+			namespace PassSpelling = UE::DreamShader::Editor::Private::PassSpelling;
+
+			// Any clause, each all of its terms: the disjunctive normal form the runtime evaluates.
+			const FDumpJsonRef Clauses = FDumpJson::Array();
+			for (const FDreamPassFilterClause& Clause : Filter.AnyOf)
+			{
+				const FDumpJsonRef Terms = FDumpJson::Array();
+				for (const FDreamPassFilterTerm& Term : Clause.AllOf)
+				{
+					const FDumpJsonRef Object = FDumpJson::Object();
+					Object->Set(TEXT("kind"), FDumpJson::String(PassSpelling::FilterKind(Term.Kind)));
+					switch (Term.Kind)
+					{
+					case EDreamPassFilterKind::Stencil:
+						Object->Set(TEXT("value"), FDumpJson::Int(Term.StencilValue));
+						Object->Set(TEXT("mask"), FDumpJson::Int(Term.StencilMask));
+						break;
+					case EDreamPassFilterKind::Layer:
+					{
+						TArray<FString> Names;
+						for (const FName Layer : Term.LayerNames)
+						{
+							Names.Add(Layer.ToString());
+						}
+						Object->Set(TEXT("layers"), MakeStringsJson(Names));
+						Object->Set(TEXT("layerMask"), FDumpJson::UInt(static_cast<uint32>(Term.LayerMask)));
+						break;
+					}
+					case EDreamPassFilterKind::List:
+						Object->Set(TEXT("list"), MakeNameJson(Term.ListName));
+						break;
+					}
+					Terms->Add(Object);
+				}
+				Clauses->Add(Terms);
+			}
+			return Clauses;
+		}
+
+		FDumpJsonRef MakePassJson(const FDreamPassDesc& Pass)
+		{
+			namespace PassSpelling = UE::DreamShader::Editor::Private::PassSpelling;
+
+			const FDumpJsonRef Object = FDumpJson::Object();
+			Object->Set(TEXT("name"), MakeNameJson(Pass.Name));
+			Object->Set(TEXT("kind"), FDumpJson::String(PassSpelling::Kind(Pass.Kind)));
+			Object->Set(TEXT("injection"), FDumpJson::String(UE::DreamPass::LexToString(Pass.Injection)));
+			Object->Set(TEXT("enabled"), MakeNameJson(Pass.EnabledParameter));
+			Object->Set(TEXT("reads"), MakePassBindingsJson(Pass.Reads));
+			Object->Set(TEXT("writes"), MakePassBindingsJson(Pass.Writes));
+			Object->Set(TEXT("params"), MakePassParamsJson(Pass.Params));
+			Object->Set(TEXT("description"), FDumpJson::String(Pass.Description));
+
+			const FDumpJsonRef Settings = FDumpJson::Object();
+			switch (Pass.Kind)
+			{
+			case EDreamPassKind::Fullscreen:
+			{
+				const FDreamPassFullscreenSettings& Fullscreen = Pass.Fullscreen;
+				Settings->Set(TEXT("material"), Fullscreen.Material ? FDumpJson::String(Fullscreen.Material->GetPathName()) : FDumpJson::Null());
+				Settings->Set(TEXT("shader"), FDumpJson::String(Fullscreen.ShaderPath));
+				Settings->Set(TEXT("entry"), FDumpJson::String(Fullscreen.Entry));
+				Settings->Set(TEXT("pixelSlot"), FDumpJson::Int(Fullscreen.PixelSlot));
+				break;
+			}
+			case EDreamPassKind::Compute:
+			{
+				const FDreamPassComputeSettings& Compute = Pass.Compute;
+				Settings->Set(TEXT("shader"), FDumpJson::String(Compute.ShaderPath));
+				Settings->Set(TEXT("entry"), FDumpJson::String(Compute.Entry));
+				Settings->Set(TEXT("slot"), FDumpJson::Int(Compute.Slot));
+				const FDumpJsonRef Threads = FDumpJson::Array();
+				Threads->Add(FDumpJson::Int(Compute.ThreadGroupSize.X));
+				Threads->Add(FDumpJson::Int(Compute.ThreadGroupSize.Y));
+				Threads->Add(FDumpJson::Int(Compute.ThreadGroupSize.Z));
+				Settings->Set(TEXT("threads"), Threads);
+				Settings->Set(TEXT("dispatchMode"), FDumpJson::String(PassSpelling::DispatchMode(Compute.DispatchMode)));
+				if (Compute.DispatchMode == EDreamPassDispatchMode::Buffer)
+				{
+					Settings->Set(TEXT("dispatchBuffer"), MakeNameJson(Compute.DispatchBuffer));
+					Settings->Set(TEXT("dispatchScale"), FDumpJson::Double(Compute.DispatchScale));
+				}
+				else
+				{
+					const FDumpJsonRef Size = FDumpJson::Array();
+					Size->Add(FDumpJson::Int(Compute.DispatchSize.X));
+					Size->Add(FDumpJson::Int(Compute.DispatchSize.Y));
+					Size->Add(FDumpJson::Int(Compute.DispatchSize.Z));
+					Settings->Set(TEXT("dispatchSize"), Size);
+				}
+				break;
+			}
+			case EDreamPassKind::Mesh:
+			{
+				const FDreamPassMeshSettings& Mesh = Pass.Mesh;
+				Settings->Set(TEXT("filter"), MakePassFilterJson(Mesh.Filter));
+				Settings->Set(TEXT("material"), Mesh.OverrideMaterial ? FDumpJson::String(Mesh.OverrideMaterial->GetPathName()) : FDumpJson::Null());
+				Settings->Set(TEXT("mode"), FDumpJson::String(PassSpelling::MeshMode(Mesh.Mode)));
+				Settings->Set(TEXT("depth"), FDumpJson::String(PassSpelling::Depth(Mesh.Depth)));
+				if (Mesh.Depth == EDreamPassDepthMode::Own)
+				{
+					Settings->Set(TEXT("depthBuffer"), MakeNameJson(Mesh.DepthBuffer));
+				}
+				Settings->Set(TEXT("cull"), FDumpJson::String(PassSpelling::Cull(Mesh.Cull)));
+				Settings->Set(TEXT("blend"), FDumpJson::String(PassSpelling::Blend(Mesh.Blend)));
+				Settings->Set(TEXT("usage"), MakeStringsJson(PassSpelling::FlagNames(PassSpelling::MeshUsageFlags(), Mesh.Usage)));
+				Settings->Set(TEXT("nanite"), FDumpJson::String(PassSpelling::Nanite(Mesh.Nanite)));
+				if (Mesh.Nanite != EDreamPassNanitePolicy::Skip)
+				{
+					Settings->Set(TEXT("naniteValue"), MakeFloatsJson({ Mesh.NaniteValue.R, Mesh.NaniteValue.G, Mesh.NaniteValue.B, Mesh.NaniteValue.A }));
+				}
+				if (Mesh.Nanite == EDreamPassNanitePolicy::AssignStencil)
+				{
+					Settings->Set(TEXT("assignedStencilValue"), FDumpJson::Int(Mesh.AssignedStencilValue));
+				}
+				break;
+			}
+			case EDreamPassKind::Clear:
+				Settings->Set(TEXT("value"), MakeFloatsJson({ Pass.Clear.Value.R, Pass.Clear.Value.G, Pass.Clear.Value.B, Pass.Clear.Value.A }));
+				break;
+			case EDreamPassKind::Copy:
+				break;
+			}
+			Object->Set(TEXT("settings"), Settings);
+			return Object;
+		}
+
+		void AppendPassPipelineSections(const UDreamPassPipeline& Pipeline, const FDumpJsonRef& Root, int32& OutPassCount)
+		{
+			namespace PassSpelling = UE::DreamShader::Editor::Private::PassSpelling;
+
+			const FDumpJsonRef Header = FDumpJson::Object();
+			Header->Set(TEXT("order"), FDumpJson::Int(Pipeline.Order));
+			Header->Set(TEXT("defaultInjection"), FDumpJson::String(UE::DreamPass::LexToString(Pipeline.DefaultInjection)));
+			Header->Set(TEXT("views"), MakeStringsJson(PassSpelling::FlagNames(PassSpelling::ViewFlags(), Pipeline.Views)));
+			Header->Set(TEXT("requires"), MakeStringsJson(PassSpelling::FlagNames(PassSpelling::RequirementFlags(), Pipeline.Requires)));
+			Header->Set(TEXT("enabled"), MakeNameJson(Pipeline.EnabledParameter));
+			Root->Set(TEXT("pipeline"), Header);
+
+			const FDumpJsonRef Parameters = FDumpJson::Array();
+			for (const FDreamPassParameterDesc& Parameter : Pipeline.Parameters)
+			{
+				const FDumpJsonRef Object = FDumpJson::Object();
+				Object->Set(TEXT("name"), MakeNameJson(Parameter.Name));
+				Object->Set(TEXT("default"), MakePassValueJson(Parameter.Default));
+				Object->Set(TEXT("group"), FDumpJson::String(Parameter.Group));
+				Object->Set(TEXT("description"), FDumpJson::String(Parameter.Description));
+				Object->Set(TEXT("slider"), Parameter.bHasSlider ? MakeFloatsJson({ Parameter.SliderMin, Parameter.SliderMax }) : FDumpJson::Null());
+				Object->Set(TEXT("sortPriority"), FDumpJson::Int(Parameter.SortPriority));
+				Parameters->Add(Object);
+			}
+			Root->Set(TEXT("parameters"), Parameters);
+
+			const FDumpJsonRef Buffers = FDumpJson::Array();
+			for (const FDreamPassBufferDesc& Buffer : Pipeline.Buffers)
+			{
+				const FDumpJsonRef Object = FDumpJson::Object();
+				Object->Set(TEXT("name"), MakeNameJson(Buffer.Name));
+				Object->Set(TEXT("format"), FDumpJson::String(UE::DreamPass::LexToString(Buffer.Format)));
+				Object->Set(TEXT("resolution"), FDumpJson::String(PassSpelling::Resolution(Buffer.Resolution)));
+				if (Buffer.Resolution == EDreamPassBufferResolution::Fixed)
+				{
+					const FDumpJsonRef Size = FDumpJson::Array();
+					Size->Add(FDumpJson::Int(Buffer.FixedSize.X));
+					Size->Add(FDumpJson::Int(Buffer.FixedSize.Y));
+					Object->Set(TEXT("size"), Size);
+				}
+				else
+				{
+					Object->Set(TEXT("scale"), FDumpJson::Double(Buffer.Scale));
+				}
+				Object->Set(TEXT("clear"), Buffer.bClear
+					? MakeFloatsJson({ Buffer.ClearValue.R, Buffer.ClearValue.G, Buffer.ClearValue.B, Buffer.ClearValue.A })
+					: FDumpJson::Null());
+				Object->Set(TEXT("mips"), FDumpJson::Int(Buffer.Mips));
+				Object->Set(TEXT("history"), FDumpJson::Bool(Buffer.bHistory));
+				Object->Set(TEXT("export"), FDumpJson::Bool(Buffer.bExport));
+				const UTextureRenderTarget2D* const Target = Pipeline.GetExportTarget(Buffer.Name);
+				Object->Set(TEXT("exportTarget"), Target ? FDumpJson::String(Target->GetPathName()) : FDumpJson::Null());
+				Object->Set(TEXT("description"), FDumpJson::String(Buffer.Description));
+				Buffers->Add(Object);
+			}
+			Root->Set(TEXT("buffers"), Buffers);
+
+			const FDumpJsonRef Passes = FDumpJson::Array();
+			const FDumpJsonRef Slots = FDumpJson::Array();
+			for (const FDreamPassDesc& Pass : Pipeline.Passes)
+			{
+				Passes->Add(MakePassJson(Pass));
+
+				const bool bComputeSlot = Pass.Kind == EDreamPassKind::Compute;
+				const bool bPixelSlot = Pass.Kind == EDreamPassKind::Fullscreen && !Pass.Fullscreen.Material && !Pass.Fullscreen.ShaderPath.IsEmpty();
+				if (bComputeSlot || bPixelSlot)
+				{
+					const FDumpJsonRef Slot = FDumpJson::Object();
+					Slot->Set(TEXT("pass"), MakeNameJson(Pass.Name));
+					Slot->Set(TEXT("kind"), FDumpJson::String(bComputeSlot ? TEXT("compute") : TEXT("pixel")));
+					Slot->Set(TEXT("slot"), FDumpJson::Int(bComputeSlot ? Pass.Compute.Slot : Pass.Fullscreen.PixelSlot));
+					Slots->Add(Slot);
+				}
+			}
+			Root->Set(TEXT("passes"), Passes);
+			Root->Set(TEXT("slots"), Slots);
+
+			OutPassCount = Passes->Num();
+		}
+
+		// -----------------------------------------------------------------------------------------
 		// Source location and file naming
 		// -----------------------------------------------------------------------------------------
 
@@ -1371,6 +1696,12 @@ namespace UE::DreamShader::Editor::Private
 			Root->Set(TEXT("backend"), FDumpJson::String(TEXT("Graph")));
 			AppendFunctionGraphSections(MaterialFunction, Root, NodeCount);
 		}
+		else if (const UDreamPassPipeline* const Pipeline = Cast<UDreamPassPipeline>(Asset))
+		{
+			// A `.dsp` product: no graph and so no backend. The pipeline is the dump, and its passes stand for the nodes.
+			Root->Set(TEXT("kind"), FDumpJson::String(TEXT("PassPipeline")));
+			AppendPassPipelineSections(*Pipeline, Root, NodeCount);
+		}
 		else
 		{
 			return FString();
@@ -1392,6 +1723,10 @@ namespace UE::DreamShader::Editor::Private
 		/** The `Kind` string of one dumped asset: the `kind` BuildDreamShaderGraphDumpJson writes for it. */
 		FString ClassifyDumpedAsset(UObject* Asset)
 		{
+			if (Asset->IsA<UDreamPassPipeline>())
+			{
+				return TEXT("PassPipeline");
+			}
 			if (Asset->IsA<UDreamShaderMaterialInstance>())
 			{
 				return TEXT("ThinCustomInstance");
@@ -1425,7 +1760,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString NormalizedSource = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
 
 		// The assets a source compiles to, resolved by the compile's own front half -- the front end its extension
-		// picks, the binder, the IR builder and the destination rules -- for a `.dss`, `.dsi`, `.dsm` and `.dsf` alike.
+		// picks, the binder, the IR builder and the destination rules -- for a `.dss`, `.dsi`, `.dsp`, `.dsm` and `.dsf` alike.
 		// Reading them off the compile's success MESSAGE instead would mean parsing prose, and the message is empty for
 		// the assets the write guard refuses.
 		UE::DreamShader::Editor::Compiler::FDreamShaderProductResolution Resolution;
@@ -1519,7 +1854,7 @@ namespace UE::DreamShader::Editor::Private
 			if (Json.IsEmpty())
 			{
 				FailWith(OutError, TEXT("DSH9034"), FString::Printf( /* I18N-EXEMPT: deferred codegen or compatibility path */
-					TEXT("DreamShader cannot dump '%s': %s is not a Material, MaterialFunction or material instance."),
+					TEXT("DreamShader cannot dump '%s': %s is not a Material, MaterialFunction, material instance or pass pipeline."),
 					*Target.ObjectPath,
 					*Asset->GetClass()->GetName()));
 				bSucceeded = false;

@@ -9,6 +9,7 @@
 #include "UI/Model/DreamShaderBrowserModel.h"
 #include "Workspace/DreamShaderWorkspaceService.h"
 
+#include "DreamPassPipeline.h"
 #include "Editor.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Materials/MaterialInterface.h"
@@ -131,16 +132,21 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderBrowserActions::OpenMaterial(const FBrowserEntry& Entry)
 	{
-		UMaterialInterface* Material = Entry.ResolveMaterial();
-		if (Material && GEditor)
+		// A `.dsp`'s asset is a pass pipeline, whose editor is its details panel.
+		UObject* Asset = Entry.ResolveMaterial();
+		if (!Asset)
 		{
-			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Material);
+			Asset = Entry.ResolvePipeline();
+		}
+		if (Asset && GEditor)
+		{
+			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(Asset);
 		}
 	}
 
 	void FDreamShaderBrowserActions::CreateInstance(FDreamShaderBrowserModel& Model, const TSharedPtr<FBrowserEntry>& Entry)
 	{
-		if (!Entry.IsValid() || Entry->IsLibrary())
+		if (!Entry.IsValid() || Entry->IsLibrary() || Entry->IsPipeline())
 		{
 			return;
 		}

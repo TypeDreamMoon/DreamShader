@@ -118,6 +118,7 @@ namespace UE::DreamShader::Editor::Private
 		SharedState->Filter.bDivergedOnly = Settings->bDivergedOnly;
 		SharedState->Filter.bEphemeralOnly = Settings->bEphemeralOnly;
 		SharedState->Filter.bHideLibraries = Settings->bHideLibraries;
+		SharedState->Filter.bHidePipelines = Settings->bHidePipelines;
 		SharedState->Filter.bHideUnmanaged = Settings->bHideUnmanaged;
 		SharedState->Filter.SourceDirectoryScope = SharedState->Scope.Mode == EDreamShaderBrowserViewMode::Sources ? SharedState->Scope.SourceDirectory : FString();
 
@@ -361,9 +362,9 @@ namespace UE::DreamShader::Editor::Private
 	TSharedRef<SWidget> SDreamShaderBrowserShell::MakeNewMenu()
 	{
 		FMenuBuilder Menu(true, nullptr);
-		const auto AddKind = [this, &Menu](EBrowserSourceKind Kind, const FText& Label, const FText& Tip, ENewSourceLanguage Language = ENewSourceLanguage::Legacy)
+		const auto AddKind = [this, &Menu](EBrowserSourceKind Kind, const FText& Label, const FText& Tip, ENewSourceLanguage Language = ENewSourceLanguage::Legacy, ENewPipelineTemplate PipelineTemplate = ENewPipelineTemplate::PostProcess)
 		{
-			Menu.AddMenuEntry(Label, Tip, FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([this, Kind, Language]()
+			Menu.AddMenuEntry(Label, Tip, FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([this, Kind, Language, PipelineTemplate]()
 			{
 				// Into the folder the navigation tree points at when it is a source folder; the
 				// dialog falls back to the project root otherwise.
@@ -395,7 +396,7 @@ namespace UE::DreamShader::Editor::Private
 						This->Model->RefreshAll();
 						This->ShowSource(CreatedPath);
 					}
-				}, DefaultParent, Language);
+				}, DefaultParent, Language, PipelineTemplate);
 			})));
 		};
 
@@ -405,6 +406,13 @@ namespace UE::DreamShader::Editor::Private
 		AddKind(EBrowserSourceKind::Material, LOCTEXT("NewMaterialDss", "Material (.dss)"), LOCTEXT("NewMaterialDssTip", "HLSL with declarations: two uniforms and an exported entry that writes base colour and roughness, ready to compile."), ENewSourceLanguage::Lang2);
 		AddKind(EBrowserSourceKind::Function, LOCTEXT("NewFunctionDss", "Material function (.dss)"), LOCTEXT("NewFunctionDssTip", "An exported function with one input, one optional input and a return value. Every export of a .dss is an asset of its own."), ENewSourceLanguage::Lang2);
 		AddKind(EBrowserSourceKind::Instance, LOCTEXT("NewInstance", "Instance (.dsi)"), LOCTEXT("NewInstanceTip", "A material instance source: a #pragma instance naming its parent, and one uniform per parameter to override."));
+		Menu.EndSection();
+
+		// The three chains of a Custom Pass pipeline, each with the materials or the shader its passes name, so it builds as written.
+		Menu.BeginSection("DreamShaderNewPipeline", LOCTEXT("NewSectionPipeline", "Custom Pass pipeline (.dsp)"));
+		AddKind(EBrowserSourceKind::Pipeline, LOCTEXT("NewPipelinePostProcess", "Fullscreen post-process chain"), LOCTEXT("NewPipelinePostProcessTip", "A copy grabs the scene at half size and a fullscreen pass blends it back tinted, through a Post Process material written next to it."), ENewSourceLanguage::Lang2, ENewPipelineTemplate::PostProcess);
+		AddKind(EBrowserSourceKind::Pipeline, LOCTEXT("NewPipelineMeshMask", "Mesh mask chain"), LOCTEXT("NewPipelineMeshMaskTip", "A mesh pass draws the objects of a list into a mask, and a fullscreen pass outlines them through walls; both materials are written next to it."), ENewSourceLanguage::Lang2, ENewPipelineTemplate::MeshMask);
+		AddKind(EBrowserSourceKind::Pipeline, LOCTEXT("NewPipelineCompute", "Compute chain"), LOCTEXT("NewPipelineComputeTip", "A compute shader advances a 256 x 256 field every frame, kept from one frame to the next and exported as a render target; the .usf is written under the project's Shaders folder."), ENewSourceLanguage::Lang2, ENewPipelineTemplate::Compute);
 		Menu.EndSection();
 
 		Menu.BeginSection("DreamShaderNewLegacy", LOCTEXT("NewSectionLegacy", "1.x blocks"));
@@ -718,8 +726,8 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return;
 		}
-		// Double-click opens the material when there is one, else the source.
-		if (Entry->ResolveMaterial())
+		// Double-click opens the material when there is one -- or the pipeline, in its details panel -- else the source.
+		if (Entry->ResolveMaterial() || Entry->ResolvePipeline())
 		{
 			FDreamShaderBrowserActions::OpenMaterial(*Entry);
 		}
@@ -739,6 +747,7 @@ namespace UE::DreamShader::Editor::Private
 		Settings->bDivergedOnly = SharedState->Filter.bDivergedOnly;
 		Settings->bEphemeralOnly = SharedState->Filter.bEphemeralOnly;
 		Settings->bHideLibraries = SharedState->Filter.bHideLibraries;
+		Settings->bHidePipelines = SharedState->Filter.bHidePipelines;
 		Settings->bHideUnmanaged = SharedState->Filter.bHideUnmanaged;
 		Settings->bTileView = SourcesView.IsValid() && SourcesView->IsTileView();
 		// Splitter fractions: read back off the children's allotted widths.
@@ -887,7 +896,8 @@ namespace UE::DreamShader::Editor::Private
 			FCanExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::HasSelectionWithSource));
 		CommandList->MapAction(Commands.CreateInstance,
 			FExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::ExecuteCreateInstance),
-			FCanExecuteAction::CreateLambda([this]() { const TSharedPtr<FBrowserEntry> E = FirstSelected(); return E.IsValid() && !E->IsLibrary(); }));
+			// A pipeline is no material, and has nothing to instance.
+			FCanExecuteAction::CreateLambda([this]() { const TSharedPtr<FBrowserEntry> E = FirstSelected(); return E.IsValid() && !E->IsLibrary() && !E->IsPipeline(); }));
 		CommandList->MapAction(Commands.Materialize,
 			FExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::ExecuteMaterialize),
 			FCanExecuteAction::CreateSP(this, &SDreamShaderBrowserShell::HasSelectionEphemeral),

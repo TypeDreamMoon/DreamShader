@@ -1,9 +1,9 @@
 // Copyright (c) 2026 TypeDreamMoon. All rights reserved.
 //
 // The Material Content Browser's unit of display: one entry per thing the browser can show, with a
-// source half (a .dss/.dsi/.dsm/.dsf/.dsh on disk) and an asset half (a UMaterialInterface / UMaterialFunction
-// in the project), either of which may be absent. A source that has never been compiled has no asset
-// half; a hand-authored material DreamShader never generated has no source half; a generated material
+// source half (a .dss/.dsi/.dsp/.dsm/.dsf/.dsh on disk) and an asset half (a UMaterialInterface / UMaterialFunction
+// / UDreamPassPipeline in the project), either of which may be absent. A source that has never been compiled has no
+// asset half; a hand-authored material DreamShader never generated has no source half; a generated material
 // has both, joined through the DreamShader.SourceFile stamp. The inspector renders whichever halves are
 // present, which is what lets one panel serve the source-centric and the asset-centric views alike.
 
@@ -14,6 +14,7 @@
 #include "Diagnostics/DreamShaderDiagnosticsStore.h"
 #include "DreamShaderGeneratedAssetDigest.h"
 
+class UDreamPassPipeline;
 class UMaterialInterface;
 class UObject;
 
@@ -25,6 +26,7 @@ namespace UE::DreamShader::Editor::Private
 		Function, // .dsf
 		Header,   // .dsh
 		Instance, // .dsi: one material instance, compiled like a material (never a library)
+		Pipeline, // .dsp: one Custom Pass pipeline (UDreamPassPipeline), compiled like a material; no material to preview
 	};
 
 	// The source half's compile status. Library kinds (.dsf / .dsh) carry `Library`; the other values
@@ -66,6 +68,7 @@ namespace UE::DreamShader::Editor::Private
 		TArray<FString> Imports;
 
 		bool IsLibrary() const { return Kind == EBrowserSourceKind::Function || Kind == EBrowserSourceKind::Header; }
+		bool IsPipeline() const { return Kind == EBrowserSourceKind::Pipeline; }
 	};
 
 	struct FBrowserAssetInfo
@@ -93,12 +96,16 @@ namespace UE::DreamShader::Editor::Private
 
 		FString GetDisplayName() const;
 		bool IsLibrary() const { return Source.IsSet() && Source->IsLibrary(); }
+		// A `.dsp` and the pass pipeline it builds: an asset with a details panel, and no material to preview or instance.
+		bool IsPipeline() const { return Source.IsSet() && Source->IsPipeline(); }
 		// A material in the project that no scanned source generates: hand-authored, or an orphan whose
 		// source is gone. Listed so the browser covers every material, not only DreamShader's.
 		bool IsUnmanaged() const { return !Source.IsSet() && Asset.IsSet(); }
 		FString GetObjectPath() const;
-		// Loads (or finds) the material this entry stands for. Null for libraries and for sources
+		// Loads (or finds) the material this entry stands for. Null for libraries, for pipelines and for sources
 		// that have not been compiled.
 		UMaterialInterface* ResolveMaterial() const;
+		// Loads (or finds) the pass pipeline a `.dsp` entry stands for. Null for every other kind and before the first compile.
+		UDreamPassPipeline* ResolvePipeline() const;
 	};
 }

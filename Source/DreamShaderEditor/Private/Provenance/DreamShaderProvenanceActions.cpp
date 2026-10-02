@@ -13,6 +13,8 @@
 //
 // Every action is a UI shell (confirm, close editors, toast) around a headless core (the header says
 // what each core does); the automation tests drive the cores.
+//
+// Diagnostics owned by this file: DSH9103 (a `.dsi`'s Parent), DSH9226-DSH9228 (a `.dsp` Adopt); DSH8149 is shared.
 
 #include "Provenance/DreamShaderProvenanceActions.h"
 
@@ -22,6 +24,9 @@
 #include "Decompiler/DreamShaderDecompileService.h"
 // DecompileMaterialInstance: the overrides a `.dsi` Adopt and the two tweak actions write back.
 #include "Decompiler/DreamShaderInstanceDecompiler.h"
+// DecompileDreamPassPipeline, KeepEquivalentPipelineSpellings, FindPipelineWriteBackBlocker: a `.dsp` Adopt.
+#include "Decompiler/DreamShaderPipelineDecompiler.h"
+#include "DreamPassPipeline.h"
 #include "DreamShaderTextWireUtils.h"
 #include "DreamShaderDiagnostic.h"
 #include "DreamShaderModule.h"
@@ -33,6 +38,8 @@
 #include "DreamShaderCompilerDiagnostics.h"
 // RewriteDreamShaderInstanceSource, RewriteDreamShaderUniformDefaults, PrintDreamShaderInstance.
 #include "Lang/LangInstanceSource.h"
+// RewriteDreamShaderPipelineSource.
+#include "Lang/LangPipelineSource.h"
 #include "Tools/DreamShaderDecompileTools.h"
 
 #include "Editor.h"
@@ -152,6 +159,23 @@ namespace UE::DreamShader::Editor::Private
 					Fatal
 						? FText::FromString(::UE::DreamShader::Editor::Compiler::FormatLang2DiagnosticWireLine(*Fatal, FallbackFilePath))
 						: LOCTEXT("DreamShaderProvenanceInstanceDecompileNoReason", "the decompiler gave no reason")));
+		}
+
+		/** The refusal for a pipeline decompile that failed or met state a `.dsp` cannot state (FindPipelineWriteBackBlocker). */
+		FDreamShaderProvenanceOutcome MakeProvenancePipelineDecompileRefusal(
+			const ::UE::DreamShader::Lang::FLangDiagnosticSink& Sink,
+			const UObject* Pipeline,
+			const FString& FallbackFilePath)
+		{
+			const ::UE::DreamShader::Lang::FLangDiagnostic* const Blocker = FindPipelineWriteBackBlocker(Sink);
+			return MakeProvenanceRefusal(
+				Blocker ? Blocker->Code : FString(),
+				FText::Format(
+					LOCTEXT("DreamShaderProvenancePipelineDecompileRefused", "'{0}' holds state a .dsp cannot state, so nothing was written: {1}"),
+					FText::FromString(Pipeline ? Pipeline->GetPathName() : FString()),
+					Blocker
+						? FText::FromString(::UE::DreamShader::Editor::Compiler::FormatLang2DiagnosticWireLine(*Blocker, FallbackFilePath))
+						: LOCTEXT("DreamShaderProvenancePipelineDecompileNoReason", "the decompiler gave no reason")));
 		}
 
 		/** The Parent spelling a hand-written `.dsi` uses: the package path when the object is named after its package, else the object path. */
@@ -423,6 +447,25 @@ namespace UE::DreamShader::Editor::Private
 					FText::FromString(SourceFilePath)));
 			}
 			return AdoptInstanceIntoSource(Instance, SourceFilePath, bWriteBackup);
+		}
+
+		if (::UE::DreamShader::IsDreamShaderPipelineFile(SourceFilePath))
+		{
+			// A `.dsp` builds one UDreamPassPipeline, and adopts like a `.dsi`: a splice, never a reprint.
+			UDreamPassPipeline* const Pipeline = Cast<UDreamPassPipeline>(Asset);
+			if (!Pipeline)
+			{
+				FDreamShaderTextError KindError;
+				FailWith(
+					KindError,
+					TEXT("DSH9226"),
+					FText::Format(
+						LOCTEXT("DreamShaderAdoptPipelineNotPipeline", "DSH9226: '{0}' is built from the pipeline file '{1}' but is not a pass pipeline, so nothing was adopted."),
+						FText::FromString(Asset->GetPathName()),
+						FText::FromString(SourceFilePath)));
+				return MakeProvenanceRefusal(KindError.Code, KindError.Message);
+			}
+			return AdoptPipelineIntoSource(Pipeline, SourceFilePath, bWriteBackup);
 		}
 
 		// Conditional compilation and Adopt are mutually exclusive, and this is where that is decided.
@@ -790,6 +833,168 @@ namespace UE::DreamShader::Editor::Private
 		return Outcome;
 	}
 
+	FDreamShaderProvenanceOutcome AdoptPipelineIntoSource(UDreamPassPipeline* Pipeline, const FString& InSourceFilePath, const bool bWriteBackup)
+	{
+		namespace IR = ::UE::DreamShader::IR;
+		namespace Lang = ::UE::DreamShader::Lang;
+
+		if (!Pipeline)
+		{
+			return MakeProvenanceRefusal(FString(), LOCTEXT("DreamShaderProvenanceNoAsset", "DreamShader could not find the selected asset."));
+		}
+
+		const FString SourceFilePath = ::UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
+		if (!::UE::DreamShader::IsDreamShaderPipelineFile(SourceFilePath))
+		{
+			FDreamShaderTextError KindError;
+			FailWith(
+				KindError,
+				TEXT("DSH9227"),
+				FText::Format(
+					LOCTEXT("DreamShaderAdoptPipelineNotDsp", "DSH9227: '{0}' is not a .dsp pipeline file, so the settings of '{1}' cannot be spliced into it."),
+					FText::FromString(SourceFilePath),
+					FText::FromString(Pipeline->GetPathName())));
+			return MakeProvenanceRefusal(KindError.Code, KindError.Message);
+		}
+
+		// The compile's own front half, stopped after validation: the parsed tree and the bound module the splice reads, with
+		// the file's references resolved the way a build resolves them. It compiles nothing, the materials it names included.
+		FString RawText;
+		::UE::DreamShader::Editor::Compiler::FDreamShaderLang2PipelineResult Run;
+		if (!RunProvenanceSourceCheck(SourceFilePath, RawText, Run))
+		{
+			return MakeProvenanceRefusal(FString(), FText::Format(
+				LOCTEXT("DreamShaderAdoptPipelineUnreadable", "'{0}' could not be read, so nothing was adopted."),
+				FText::FromString(SourceFilePath)));
+		}
+
+		// Every span of the tree addresses the text the parser saw; with a directive in the file that is the preprocessed one.
+		if (!IsProvenanceSpliceTextExact(RawText, Run))
+		{
+			FDreamShaderTextError ConditionalError;
+			FailWith(
+				ConditionalError,
+				TEXT("DSH8149"),
+				FText::Format(
+					LOCTEXT("DreamShaderAdoptPipelineConditionalSource", "DSH8149: '{0}' uses conditional compilation, so the settings of '{1}' cannot be spliced into it without deleting the branches this build did not take; move the change into the source by hand."),
+					FText::FromString(SourceFilePath),
+					FText::FromString(Pipeline->GetPathName())));
+			return MakeProvenanceRefusal(ConditionalError.Code, ConditionalError.Message);
+		}
+
+		// A material that no longer resolves, a shader that is gone, a name the binder refuses: the file states nothing a
+		// rewrite could be checked against.
+		if (!Run.bSucceeded || !Run.Module.IsValid() || !Run.Bound.IsValid() || !Run.IR.IsValid())
+		{
+			return MakeProvenanceRefusalFromSink(
+				Run.Diagnostics,
+				SourceFilePath,
+				FText::Format(
+					LOCTEXT("DreamShaderAdoptPipelineUnbound", "'{0}' does not check, so the settings of '{1}' cannot be spliced into it; fix the file first."),
+					FText::FromString(SourceFilePath),
+					FText::FromString(Pipeline->GetPathName())));
+		}
+
+		const IR::FIRProduct* const Product = Run.IR->Products.FindByPredicate([](const IR::FIRProduct& Candidate)
+		{
+			return Candidate.Kind == IR::EIRProductKind::PassPipeline;
+		});
+		if (!Product)
+		{
+			FDreamShaderTextError ProductError;
+			FailWith(
+				ProductError,
+				TEXT("DSH9228"),
+				FText::Format(
+					LOCTEXT("DreamShaderAdoptPipelineNoProduct", "DSH9228: '{0}' builds no pass pipeline any more, so '{1}' has nothing to be spliced into."),
+					FText::FromString(SourceFilePath),
+					FText::FromString(Pipeline->GetPathName())));
+			return MakeProvenanceRefusal(ProductError.Code, ProductError.Message);
+		}
+
+		if (IsGeneratedAssetOpenInEditor(Pipeline))
+		{
+			return MakeProvenanceRefusal(FString(), FText::Format(
+				LOCTEXT("DreamShaderAdoptOpenInEditor", "'{0}' is open in an asset editor, whose copy a decompile cannot see, so nothing was adopted; save and close the editor, then adopt again."),
+				FText::FromString(Pipeline->GetPathName())));
+		}
+
+		// The asset as it stands. A material picked anew in the details panel is written by its bare name where the file's
+		// root builds it; every value the panel left alone takes the file's spelling back below.
+		FPipelineDecompileOptions DecompileOptions;
+		DecompileOptions.TargetSourceFilePath = SourceFilePath;
+		DecompileOptions.bPreferBareMaterialNames = true;
+		IR::FIRPassPipeline Desired;
+		Lang::FLangDiagnosticSink DecompileDiagnostics(SourceFilePath);
+		const bool bDecompiled = DecompileDreamPassPipeline(Pipeline, DecompileOptions, Desired, DecompileDiagnostics);
+		if (!bDecompiled || FindPipelineWriteBackBlocker(DecompileDiagnostics))
+		{
+			return MakeProvenancePipelineDecompileRefusal(DecompileDiagnostics, Pipeline, SourceFilePath);
+		}
+
+		// An unchanged reference keeps the author's spelling, an unchanged float the author's literal or the expression it
+		// was folded from, an unchanged flag set its written form: the rewrite then sees only what the panel changed.
+		KeepEquivalentPipelineSpellings(Product->PassPipeline, Desired);
+
+		TArray<Lang::FLangSourceEdit> Edits;
+		FString NewText;
+		Lang::FLangDiagnosticSink RewriteDiagnostics(SourceFilePath);
+		const bool bRewritten = Lang::RewriteDreamShaderPipelineSource(*Run.Source, *Run.Module, *Run.Bound, Desired, Edits, NewText, RewriteDiagnostics);
+		if (!bRewritten || RewriteDiagnostics.HasErrors())
+		{
+			return MakeProvenanceRefusalFromSink(
+				RewriteDiagnostics,
+				SourceFilePath,
+				FText::Format(
+					LOCTEXT("DreamShaderAdoptPipelineRewriteRefused", "The settings of '{0}' could not be spliced into '{1}', so nothing was written."),
+					FText::FromString(Pipeline->GetPathName()),
+					FText::FromString(SourceFilePath)));
+		}
+
+		FDreamShaderProvenanceOutcome Outcome;
+		const bool bChanged = !NewText.Equals(RawText, ESearchCase::CaseSensitive);
+		if (bChanged)
+		{
+			if (bWriteBackup && !BackUpProvenanceSourceFile(SourceFilePath, Outcome.BackupFilePath))
+			{
+				return MakeProvenanceRefusal(FString(), FText::Format(
+					LOCTEXT("DreamShaderAdoptBackupFailed", "Could not back up '{0}' to '{1}'; nothing was written."),
+					FText::FromString(SourceFilePath),
+					FText::FromString(Outcome.BackupFilePath)));
+			}
+			if (!FFileHelper::SaveStringToFile(NewText, *SourceFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+			{
+				return MakeProvenanceRefusal(FString(), FText::Format(
+					LOCTEXT("DreamShaderProvenanceWriteFailed", "Could not write '{0}'."),
+					FText::FromString(SourceFilePath)));
+			}
+			Outcome.WrittenFiles.Add(SourceFilePath);
+		}
+		Outcome.bSucceeded = true;
+
+		// Rebuilt even when the text did not change: the pipeline is still diverged from the previous build's digest, and a
+		// rebuild inside the revert scope is what makes the two agree again. A pipeline always saves.
+		{
+			FScopedDreamShaderRevertDiverged RevertScope;
+			Outcome.bCompiled = CompileSourceForProvenance(SourceFilePath, /*bAllowEphemeralThinCustom*/ false, Outcome.CompileMessage);
+		}
+
+		Outcome.Message = bChanged
+			? FText::Format(
+				LOCTEXT("DreamShaderAdoptPipelineResult", "Wrote the settings of '{0}' into '{1}' ({2} edit(s), backup: '{3}'). {4}"),
+				FText::FromString(Pipeline->GetPathName()),
+				FText::FromString(SourceFilePath),
+				FText::AsNumber(Edits.Num()),
+				Outcome.BackupFilePath.IsEmpty() ? LOCTEXT("DreamShaderAdoptNoBackup", "none") : FText::FromString(Outcome.BackupFilePath),
+				FText::FromString(Outcome.CompileMessage))
+			: FText::Format(
+				LOCTEXT("DreamShaderAdoptPipelineUnchanged", "'{0}' already states every setting of '{1}', so only the pipeline was rebuilt. {2}"),
+				FText::FromString(SourceFilePath),
+				FText::FromString(Pipeline->GetPathName()),
+				FText::FromString(Outcome.CompileMessage));
+		return Outcome;
+	}
+
 	void AdoptGeneratedAssetIntoSource(TWeakObjectPtr<UObject> Asset)
 	{
 		UObject* AssetObject = Asset.Get();
@@ -802,6 +1007,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const bool bInstanceSource = ::UE::DreamShader::IsDreamShaderInstanceFile(SourceFilePath);
+		const bool bPipelineSource = ::UE::DreamShader::IsDreamShaderPipelineFile(SourceFilePath);
 		const bool bMigration = ::UE::DreamShader::IsDreamShaderMaterialFile(SourceFilePath) || ::UE::DreamShader::IsDreamShaderFunctionFile(SourceFilePath);
 
 		// The dialog wants to say how many assets are rewritten. When the source does not get that far -- a directive, an
@@ -816,6 +1022,14 @@ namespace UE::DreamShader::Editor::Private
 		{
 			ConfirmText = FText::Format(
 				LOCTEXT("DreamShaderAdoptInstanceConfirm", "Write the parameter overrides and instance settings of '{0}' back into '{1}'?\n\nThe existing file is copied to '{2}' first. Only the declarations whose values changed are rewritten, so comments and the order of the file are kept."),
+				FText::FromString(AssetObject->GetPathName()),
+				FText::FromString(SourceFilePath),
+				FText::FromString(SourceFilePath + TEXT(".bak")));
+		}
+		else if (bPipelineSource)
+		{
+			ConfirmText = FText::Format(
+				LOCTEXT("DreamShaderAdoptPipelineConfirm", "Write the settings, parameters, buffers and passes of '{0}' back into '{1}'?\n\nThe existing file is copied to '{2}' first. Only the declarations and keys whose values changed are rewritten, so comments and the order of the file are kept."),
 				FText::FromString(AssetObject->GetPathName()),
 				FText::FromString(SourceFilePath),
 				FText::FromString(SourceFilePath + TEXT(".bak")));

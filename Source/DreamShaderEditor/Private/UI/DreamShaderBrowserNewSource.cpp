@@ -38,23 +38,64 @@ namespace UE::DreamShader::Editor::Private
 		case EBrowserSourceKind::Function: return bLang2 ? TEXT("dss") : TEXT("dsf");
 		case EBrowserSourceKind::Header: return TEXT("dsh");
 		case EBrowserSourceKind::Instance: return TEXT("dsi");
+		case EBrowserSourceKind::Pipeline: return TEXT("dsp");
 		}
 		return TEXT("dsm");
 	}
 
 	namespace
 	{
-		const TCHAR* GetTemplateFileName(EBrowserSourceKind Kind, ENewSourceLanguage Language)
+		const TCHAR* GetTemplateFileName(const FNewSourceRequest& Request)
 		{
-			const bool bLang2 = Language == ENewSourceLanguage::Lang2;
-			switch (Kind)
+			const bool bLang2 = Request.Language == ENewSourceLanguage::Lang2;
+			switch (Request.Kind)
 			{
 			case EBrowserSourceKind::Material: return bLang2 ? TEXT("NewMaterial.dss") : TEXT("NewMaterial.dsm");
 			case EBrowserSourceKind::Function: return bLang2 ? TEXT("NewFunction.dss") : TEXT("NewFunction.dsf");
 			case EBrowserSourceKind::Header: return TEXT("NewHeader.dsh");
 			case EBrowserSourceKind::Instance: return TEXT("NewInstance.dsi");
+			case EBrowserSourceKind::Pipeline:
+				switch (Request.PipelineTemplate)
+				{
+				case ENewPipelineTemplate::MeshMask: return TEXT("NewPipelineMeshMask.dsp");
+				case ENewPipelineTemplate::Compute: return TEXT("NewPipelineCompute.dsp");
+				case ENewPipelineTemplate::PostProcess: return TEXT("NewPipelinePostProcess.dsp");
+				}
+				return TEXT("NewPipelinePostProcess.dsp");
 			}
 			return TEXT("NewMaterial.dsm");
+		}
+
+		/** One file a pipeline template writes besides its `.dsp`. */
+		struct FPipelineCompanionSpec
+		{
+			/** Under Resources/Templates. */
+			const TCHAR* TemplateFileName = TEXT("");
+			/** The file's stem; {BASE} is the pipeline's stem without `CP_`. */
+			const TCHAR* StemPattern = TEXT("");
+			const TCHAR* Extension = TEXT("");
+		};
+
+		/** The materials and the shader the passes of each template name, which the `.dsp` would not build without. */
+		TArray<FPipelineCompanionSpec> GetPipelineCompanionSpecs(const ENewPipelineTemplate Template)
+		{
+			switch (Template)
+			{
+			case ENewPipelineTemplate::MeshMask:
+				return {
+					{ TEXT("NewPipelineMeshMask_Mask.dss"), TEXT("M_{BASE}Mask"), TEXT("dss") },
+					{ TEXT("NewPipelineMeshMask_Composite.dss"), TEXT("PP_{BASE}Composite"), TEXT("dss") },
+				};
+			case ENewPipelineTemplate::Compute:
+				return {
+					{ TEXT("NewPipelineCompute.usf"), TEXT("{BASE}"), TEXT("usf") },
+				};
+			case ENewPipelineTemplate::PostProcess:
+				break;
+			}
+			return {
+				{ TEXT("NewPipelinePostProcess_Composite.dss"), TEXT("PP_{BASE}"), TEXT("dss") },
+			};
 		}
 
 		FString GetTemplatesDirectory()
@@ -107,27 +148,119 @@ namespace UE::DreamShader::Editor::Private
 			Text.ReplaceInline(TEXT("\""), TEXT(""));
 			return Text;
 		}
+
+		// What a pipeline's companions are named after: `CP_Glow` makes `PP_Glow`, a stem without the prefix stands as it is.
+		FString MakePipelineBase(const FString& Stem)
+		{
+			FString Base = Stem;
+			if (Base.StartsWith(TEXT("CP_"), ESearchCase::CaseSensitive))
+			{
+				Base.RightChopInline(3);
+			}
+			return IsValidStem(Base) ? Base : Stem;
+		}
+
+		// Every placeholder a template may hold, for one file.
+		struct FTemplateValues
+		{
+			FString Name;
+			FString Stem;
+			FString FileName;
+			FString AssetPath;
+			FString Parent;
+			FString Base;
+			FString Pipeline;
+			FString ShaderPath;
+		};
+
+		// The values every file of one request shares: its parent, and what a pipeline's files say about each other.
+		FTemplateValues MakeSharedTemplateValues(const FNewSourceRequest& Request)
+		{
+			FTemplateValues Values;
+			Values.Parent = MakeNewSourceParentText(Request.ParentReference);
+			Values.Base = MakePipelineBase(Request.FileStem);
+			Values.Pipeline = FString::Printf(TEXT("%s.%s"), *Request.FileStem, GetSourceKindExtension(Request.Kind, Request.Language)); // I18N-EXEMPT: file name
+			// Next to the `.dsp`, named relative to it: the engine compiles a snapshot of the file under the mapped
+			// /DreamPassUser directory, never the file itself, so where it sits is the author's choice.
+			Values.ShaderPath = FString::Printf(TEXT("%s.usf"), *Values.Base); // I18N-EXEMPT: file name
+			return Values;
+		}
+
+		void ApplyTemplateValues(FString& Text, const FTemplateValues& Values)
+		{
+			Text.ReplaceInline(TEXT("{NAME}"), *Values.Name);
+			Text.ReplaceInline(TEXT("{STEM}"), *Values.Stem);
+			Text.ReplaceInline(TEXT("{FILENAME}"), *Values.FileName);
+			Text.ReplaceInline(TEXT("{ASSETPATH}"), *Values.AssetPath);
+			Text.ReplaceInline(TEXT("{PARENT}"), *Values.Parent);
+			Text.ReplaceInline(TEXT("{BASE}"), *Values.Base);
+			Text.ReplaceInline(TEXT("{PIPELINE}"), *Values.Pipeline);
+			Text.ReplaceInline(TEXT("{SHADERPATH}"), *Values.ShaderPath);
+		}
+
+		bool LoadNewSourceTemplate(const TCHAR* TemplateFileName, FString& OutText, FString& OutError)
+		{
+			const FString TemplatePath = FPaths::Combine(GetTemplatesDirectory(), TemplateFileName);
+			if (!FFileHelper::LoadFileToString(OutText, *TemplatePath))
+			{
+				OutError = FText::Format(LOCTEXT("TemplateMissing", "The template '{0}' is missing from the plugin."), FText::FromString(TemplatePath)).ToString();
+				return false;
+			}
+			return true;
+		}
 	}
 
 	bool RenderNewSourceTemplate(const FNewSourceRequest& Request, FString& OutText, FString& OutError)
 	{
-		const FString TemplatePath = FPaths::Combine(GetTemplatesDirectory(), GetTemplateFileName(Request.Kind, Request.Language));
-		if (!FFileHelper::LoadFileToString(OutText, *TemplatePath))
+		if (!LoadNewSourceTemplate(GetTemplateFileName(Request), OutText, OutError))
 		{
-			OutError = FText::Format(LOCTEXT("TemplateMissing", "The template '{0}' is missing from the plugin."), FText::FromString(TemplatePath)).ToString();
 			return false;
 		}
 
 		const FString Directory = UE::DreamShader::NormalizeSourceFilePath(Request.Directory);
-		const FString FileName = FString::Printf(TEXT("%s.%s"), *Request.FileStem, GetSourceKindExtension(Request.Kind, Request.Language)); // I18N-EXEMPT: file name
 		// A 1.x block says where its asset goes (Name=); a `.dss` export is named by the stem and lands by its file's
 		// folder. Both come to the same /Game path, which is what {ASSETPATH} shows.
-		const FString BlockName = MakeBlockName(Directory, Request.FileStem);
-		OutText.ReplaceInline(TEXT("{NAME}"), *BlockName);
-		OutText.ReplaceInline(TEXT("{STEM}"), *Request.FileStem);
-		OutText.ReplaceInline(TEXT("{FILENAME}"), *FileName);
-		OutText.ReplaceInline(TEXT("{ASSETPATH}"), *(TEXT("/Game/") + BlockName));
-		OutText.ReplaceInline(TEXT("{PARENT}"), *MakeNewSourceParentText(Request.ParentReference));
+		FTemplateValues Values = MakeSharedTemplateValues(Request);
+		Values.Name = MakeBlockName(Directory, Request.FileStem);
+		Values.Stem = Request.FileStem;
+		Values.FileName = FString::Printf(TEXT("%s.%s"), *Request.FileStem, GetSourceKindExtension(Request.Kind, Request.Language)); // I18N-EXEMPT: file name
+		Values.AssetPath = TEXT("/Game/") + Values.Name;
+		ApplyTemplateValues(OutText, Values);
+		return true;
+	}
+
+	bool RenderNewSourceCompanions(const FNewSourceRequest& Request, TArray<FNewSourceCompanion>& OutCompanions, FString& OutError)
+	{
+		OutCompanions.Reset();
+		if (Request.Kind != EBrowserSourceKind::Pipeline)
+		{
+			return true;
+		}
+
+		const FString Directory = UE::DreamShader::NormalizeSourceFilePath(Request.Directory);
+		const FTemplateValues Shared = MakeSharedTemplateValues(Request);
+		for (const FPipelineCompanionSpec& Spec : GetPipelineCompanionSpecs(Request.PipelineTemplate))
+		{
+			FString Text;
+			if (!LoadNewSourceTemplate(Spec.TemplateFileName, Text, OutError))
+			{
+				OutCompanions.Reset();
+				return false;
+			}
+
+			FTemplateValues Values = Shared;
+			Values.Stem = Spec.StemPattern;
+			Values.Stem.ReplaceInline(TEXT("{BASE}"), *Shared.Base);
+			Values.FileName = FString::Printf(TEXT("%s.%s"), *Values.Stem, Spec.Extension); // I18N-EXEMPT: file name
+			// Every companion sits next to the pipeline; a material lands by its folder in /Game as the pipeline does.
+			Values.Name = MakeBlockName(Directory, Values.Stem);
+			Values.AssetPath = TEXT("/Game/") + Values.Name;
+			ApplyTemplateValues(Text, Values);
+
+			FNewSourceCompanion& Companion = OutCompanions.AddDefaulted_GetRef();
+			Companion.FilePath = UE::DreamShader::NormalizeSourceFilePath(FPaths::Combine(Directory, Values.FileName));
+			Companion.Text = MoveTemp(Text);
+		}
 		return true;
 	}
 
@@ -163,9 +296,50 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return false;
 		}
+
+		// A pipeline's materials and shader: all of them or none, and never over a file that is there already.
+		TArray<FNewSourceCompanion> Companions;
+		if (!RenderNewSourceCompanions(Request, Companions, OutError))
+		{
+			return false;
+		}
+		for (const FNewSourceCompanion& Companion : Companions)
+		{
+			if (IFileManager::Get().FileExists(*Companion.FilePath))
+			{
+				OutError = FText::Format(
+					LOCTEXT("NewSourceCompanionExists", "'{0}' already exists, and the template writes it for '{1}'; choose another name."),
+					FText::FromString(Companion.FilePath),
+					FText::FromString(FilePath)).ToString();
+				return false;
+			}
+		}
+
+		// The companions first: the watcher may compile the pipeline as soon as it lands, and its material references
+		// resolve to sources that are there.
+		TArray<FString> Written;
+		for (const FNewSourceCompanion& Companion : Companions)
+		{
+			IFileManager::Get().MakeDirectory(*FPaths::GetPath(Companion.FilePath), true);
+			if (!FFileHelper::SaveStringToFile(Companion.Text, *Companion.FilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+			{
+				for (const FString& Undo : Written)
+				{
+					IFileManager::Get().Delete(*Undo);
+				}
+				OutError = FText::Format(LOCTEXT("NewSourceWriteFailed", "Could not write '{0}'."), FText::FromString(Companion.FilePath)).ToString();
+				return false;
+			}
+			Written.Add(Companion.FilePath);
+		}
+
 		IFileManager::Get().MakeDirectory(*Directory, true);
 		if (!FFileHelper::SaveStringToFile(Text, *FilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 		{
+			for (const FString& Undo : Written)
+			{
+				IFileManager::Get().Delete(*Undo);
+			}
 			OutError = FText::Format(LOCTEXT("NewSourceWriteFailed", "Could not write '{0}'."), FText::FromString(FilePath)).ToString();
 			return false;
 		}
@@ -178,7 +352,8 @@ namespace UE::DreamShader::Editor::Private
 		const FString& DefaultDirectory,
 		TFunction<void(const FString&)> OnCreated,
 		const FString& DefaultParent,
-		ENewSourceLanguage Language)
+		ENewSourceLanguage Language,
+		ENewPipelineTemplate PipelineTemplate)
 	{
 		// Default into the project root when the caller's directory is not writable (a plugin's).
 		FString StartDirectory = UE::DreamShader::NormalizeSourceFilePath(DefaultDirectory);
@@ -192,6 +367,24 @@ namespace UE::DreamShader::Editor::Private
 		FText DefaultStem;
 		switch (Kind)
 		{
+		case EBrowserSourceKind::Pipeline:
+			// The `CP_` the companions drop from their names; the rest says which chain it is.
+			switch (PipelineTemplate)
+			{
+			case ENewPipelineTemplate::MeshMask:
+				Title = LOCTEXT("NewPipelineMeshMaskTitle", "New mesh mask chain (.dsp)");
+				DefaultStem = INVTEXT("CP_Outline");
+				break;
+			case ENewPipelineTemplate::Compute:
+				Title = LOCTEXT("NewPipelineComputeTitle", "New compute chain (.dsp)");
+				DefaultStem = INVTEXT("CP_WindField");
+				break;
+			case ENewPipelineTemplate::PostProcess:
+				Title = LOCTEXT("NewPipelinePostProcessTitle", "New fullscreen post-process chain (.dsp)");
+				DefaultStem = INVTEXT("CP_SoftGlow");
+				break;
+			}
+			break;
 		case EBrowserSourceKind::Function:
 			Title = bLang2
 				? LOCTEXT("NewFunctionDssTitle", "New material function (.dss)")
@@ -215,6 +408,25 @@ namespace UE::DreamShader::Editor::Private
 			break;
 		}
 		const bool bInstance = Kind == EBrowserSourceKind::Instance;
+		const bool bPipeline = Kind == EBrowserSourceKind::Pipeline;
+
+		// What a pipeline template writes besides its `.dsp`.
+		FText PipelineHint;
+		if (bPipeline)
+		{
+			switch (PipelineTemplate)
+			{
+			case ENewPipelineTemplate::MeshMask:
+				PipelineHint = LOCTEXT("NewPipelineMeshMaskHint", "Written with M_<name>Mask.dss and PP_<name>Composite.dss next to it, the two materials its passes draw (<name> is the name without CP_). The objects it outlines are those added to the list of that name (UDreamPassSubsystem::AddToList).");
+				break;
+			case ENewPipelineTemplate::Compute:
+				PipelineHint = LOCTEXT("NewPipelineComputeHint", "Written with <name>.usf next to it, the compute shader its pass runs (<name> is the name without CP_). The field it writes is exported as a render target any material can read.");
+				break;
+			case ENewPipelineTemplate::PostProcess:
+				PipelineHint = LOCTEXT("NewPipelinePostProcessHint", "Written with PP_<name>.dss next to it, the Post Process material its fullscreen pass draws (<name> is the name without CP_).");
+				break;
+			}
+		}
 
 		TSharedRef<FString> StemValue = MakeShared<FString>(DefaultStem.ToString());
 		TSharedRef<FString> DirectoryValue = MakeShared<FString>(StartDirectory);
@@ -226,7 +438,7 @@ namespace UE::DreamShader::Editor::Private
 
 		TSharedRef<SWindow> Window = SNew(SWindow)
 			.Title(Title)
-			.ClientSize(FVector2D(520.0f, bInstance ? 240.0f : (bLang2 ? 220.0f : 200.0f)))
+			.ClientSize(FVector2D(520.0f, bPipeline ? 280.0f : (bInstance ? 240.0f : (bLang2 ? 220.0f : 200.0f))))
 			.SupportsMinimize(false)
 			.SupportsMaximize(false);
 		const auto CloseWindow = [Window]() { Window->RequestDestroyWindow(); };
@@ -309,11 +521,22 @@ namespace UE::DreamShader::Editor::Private
 				+ SVerticalBox::Slot().AutoHeight().Padding(4.0f, 6.0f, 4.0f, 0.0f)
 				[
 					SNew(STextBlock)
-					.Text(bInstance
+					.Text(bPipeline
+						? LOCTEXT("NewSourcePipelineHint", "The file is written from the plugin's template and compiled by the watcher on save. Its pipeline lands at the folder's /Game path, and runs where something activates it: the global pipelines of Project Settings > DreamShader Custom Pass, or a Dream Pass Volume.")
+						: bInstance
 						? LOCTEXT("NewSourceInstanceHint", "The file is written from the plugin's template and compiled by the watcher on save. Its asset lands at the folder's /Game path; add one uniform per parameter to override.")
 						: bLang2
 							? LOCTEXT("NewSourceDssHint", "The file is written from the plugin's template and compiled by the watcher on save. The name is the export's, and so the asset's; the folder decides where under /Game it lands.")
 							: LOCTEXT("NewSourceHint", "The file is written from the plugin's template and compiled by the watcher on save."))
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+					.AutoWrapText(true)
+				]
+
+				+ SVerticalBox::Slot().AutoHeight().Padding(4.0f, 4.0f, 4.0f, 0.0f)
+				[
+					SNew(STextBlock)
+					.Visibility(bPipeline ? EVisibility::Visible : EVisibility::Collapsed)
+					.Text(PipelineHint)
 					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 					.AutoWrapText(true)
 				]
@@ -337,7 +560,7 @@ namespace UE::DreamShader::Editor::Private
 						SNew(SButton)
 						.ButtonStyle(&FAppStyle::Get().GetWidgetStyle<FButtonStyle>("PrimaryButton"))
 						.Text(LOCTEXT("NewSourceCreate", "Create"))
-						.OnClicked_Lambda([Kind, Language, StemValue, DirectoryValue, ParentValue, OnCreated, CloseWindow]()
+						.OnClicked_Lambda([Kind, Language, PipelineTemplate, StemValue, DirectoryValue, ParentValue, OnCreated, CloseWindow]()
 						{
 							FNewSourceRequest Request;
 							Request.Kind = Kind;
@@ -345,6 +568,7 @@ namespace UE::DreamShader::Editor::Private
 							Request.Directory = *DirectoryValue;
 							Request.FileStem = *StemValue;
 							Request.ParentReference = *ParentValue;
+							Request.PipelineTemplate = PipelineTemplate;
 							FString FilePath;
 							FString Error;
 							if (CreateNewSourceFile(Request, FilePath, Error))

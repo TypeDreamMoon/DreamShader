@@ -1,0 +1,21 @@
+// {FILENAME} -- the compute shader of the Simulate pass of {PIPELINE}.
+// The pass's names are defined for this file by the slot registry the compiler writes: Previous and Result are its
+// `read` and `write` textures, PreviousSize and ResultSize their sizes (xy in texels, zw one over them), Direction and
+// Strength its `param`s. Saving the file pre-checks it; an error is reported with its line, and the last version that
+// compiled keeps running. BeginView comes before the view's uniform buffer exists: DP_Time stands in for View's time.
+#include "/Plugin/DreamShader/Pass/DreamPass.ush"
+
+[numthreads(8, 8, 1)]
+void MainCS(uint3 Id : SV_DispatchThreadID)
+{
+    if (any(Id.xy >= DP_DispatchSize.xy))
+    {
+        return;
+    }
+
+    const float2 UV     = (Id.xy + 0.5) * ResultSize.zw;
+    const float2 Upwind = Previous.SampleLevel(DP_LinearClamp, UV - Direction * 0.002, 0).xy;
+    const float  Noise  = frac(sin(dot(UV + DP_Time.x * 0.05, float2(12.9898, 78.233))) * 43758.5453);
+    const float2 Target = Direction * (1.0 + (Noise - 0.5) * Strength);
+    Result[Id.xy] = float4(lerp(Upwind, Target, 0.05), 0, 0);
+}

@@ -31,13 +31,13 @@ namespace UE::DreamShader::Editor::Private
 		/** `/Game/Path/Asset.Asset`. */
 		FString ObjectPath;
 
-		/** `Material` / `MaterialFunction` / `MaterialLayer` / `MaterialLayerBlend` / `ThinCustomInstance` / `MaterialInstance`. */
+		/** `Material` / `MaterialFunction` / `MaterialLayer` / `MaterialLayerBlend` / `ThinCustomInstance` / `MaterialInstance` / `PassPipeline`. */
 		FString Kind;
 
 		/** Absolute path of the `.graph.json` that was written. */
 		FString OutputFilePath;
 
-		/** Nodes in the dump -- the whole graph, not just the reachable part. */
+		/** Nodes in the dump -- the whole graph, not just the reachable part. A pass pipeline has no graph: its passes. */
 		int32 NodeCount = 0;
 
 		/**
@@ -82,10 +82,14 @@ namespace UE::DreamShader::Editor::Private
 	 * case-sensitively at every level, LF line endings and a trailing newline. Returns an empty
 	 * string for an asset class the dump does not cover.
 	 *
+	 * A UDreamPassPipeline (a `.dsp` product) has no graph; its dump is the pipeline itself -- the
+	 * header keys, the parameters, the buffers with their export targets, the passes in declaration
+	 * order with the settings of their kind, and the HLSL slots the passes were given.
+	 *
 	 * SourceFilePath is recorded in the `source` object (root name + path relative to that root) and
 	 * is otherwise unused, so a test can pass an empty string. OutNodeCount, when given, receives the
 	 * length of the `nodes` array -- the summary line wants it and re-parsing the JSON to get it back
-	 * would be the only other way.
+	 * would be the only other way. For a pipeline it receives the length of `passes`.
 	 */
 	FString BuildDreamShaderGraphDumpJson(UObject* Asset, const FString& SourceFilePath, int32* OutNodeCount = nullptr);
 
@@ -96,7 +100,7 @@ namespace UE::DreamShader::Editor::Private
 		const FString& ObjectPath);
 
 	/**
-	 * Compiles one source of any kind (`.dss`, `.dsi`, `.dsm`, `.dsf`) and writes one JSON file per asset it produces.
+	 * Compiles one source of any kind (`.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`) and writes one JSON file per asset it produces.
 	 *
 	 * Callers must already hold an FScopedDreamShaderGraphDumpWriteGuard: this function does not
 	 * install one, because a `-All` run needs a single guard around the whole sweep rather than one

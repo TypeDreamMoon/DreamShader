@@ -64,7 +64,9 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		// The 1.x extensions are the only thing that still asks for the 1.x text; 2.0 is the default for everything else,
-		// an instance's `.dsi` included.
+		// an instance's `.dsi` and a pipeline's `.dsp` included. A pipeline has no 1.x text at all, so a `.dsp` -- or a
+		// pipeline asset with no output file, which the IR decompiler names Decompiled/Pipelines/<package>.dsp
+		// (FDecompiledAssetNaming::MakePipelineFilePath) -- always lands here.
 		const FString Extension = FPaths::GetExtension(OutputFilePath, /*bIncludeDot*/ false);
 		const bool bLegacyExtension = Extension.Equals(TEXT("dsm"), ESearchCase::IgnoreCase)
 			|| Extension.Equals(TEXT("dsf"), ESearchCase::IgnoreCase);

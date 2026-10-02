@@ -6,6 +6,7 @@
 #include "UObject/WeakObjectPtr.h"
 
 class UObject;
+class UDreamPassPipeline;
 class UMaterialInstance;
 class UMaterialInstanceConstant;
 
@@ -16,8 +17,8 @@ namespace UE::DreamShader::Editor::Private
 	 * DreamShader last wrote into it. Each one decides which copy is the truth: Revert says the source
 	 * is and rebuilds over the asset, Adopt says the asset is and rewrites the source from it, Detach
 	 * says neither and takes the asset out of DreamShader's hands for good. All three take UObject
-	 * because they are offered on materials, material functions, the ThinCustom instance and a `.dsi`
-	 * material instance alike.
+	 * because they are offered on materials, material functions, the ThinCustom instance, a `.dsi`
+	 * material instance and a `.dsp` pass pipeline alike.
 	 *
 	 * Each one confirms with a dialog, closes (and afterwards reopens) any asset editor on the asset,
 	 * toasts its result, and compiles through the bridge so the diagnostics store follows. See
@@ -26,7 +27,9 @@ namespace UE::DreamShader::Editor::Private
 	 * Adopt by the stamped source's kind:
 	 *   `.dss`         every product of the file is decompiled back into it as one module (a backup first);
 	 *   `.dsm`/`.dsf`  a migration: the product is decompiled to `<stem>.dss` beside it, and the 1.x file moves to `.bak`;
-	 *   `.dsi`         the instance's overrides are spliced into the file (AdoptInstanceIntoSource), comments kept.
+	 *   `.dsi`         the instance's overrides are spliced into the file (AdoptInstanceIntoSource), comments kept;
+	 *   `.dsp`         the pipeline's settings, parameters, buffers and passes are spliced into the file
+	 *                  (AdoptPipelineIntoSource), comments kept.
 	 */
 	void RevertGeneratedAssetToSource(TWeakObjectPtr<UObject> Asset);
 	void AdoptGeneratedAssetIntoSource(TWeakObjectPtr<UObject> Asset);
@@ -83,7 +86,8 @@ namespace UE::DreamShader::Editor::Private
 	};
 
 	/**
-	 * Adopt over the source Asset was generated from (`.dss`, `.dsm`, `.dsf`; a `.dsi` goes to AdoptInstanceIntoSource).
+	 * Adopt over the source Asset was generated from (`.dss`, `.dsm`, `.dsf`; a `.dsi` goes to AdoptInstanceIntoSource, a
+	 * `.dsp` to AdoptPipelineIntoSource -- DSH9226 when the asset built from it is not a pass pipeline).
 	 * Refuses a source with preprocessor directives (DSH8149), a source that does not resolve, a Tweaked ThinCustom
 	 * instance, and a migration whose `.dss` already exists. bWriteBackup copies the `.dss` to `.bak` before writing; for
 	 * a migration it moves the 1.x file to `.bak`, and without it the 1.x file is deleted.
@@ -97,6 +101,18 @@ namespace UE::DreamShader::Editor::Private
 	 * the file's Parent no longer resolves; refused for state a `.dsi` cannot state (layer or blend overrides, UsageFlags).
 	 */
 	FDreamShaderProvenanceOutcome AdoptInstanceIntoSource(UMaterialInstanceConstant* Instance, const FString& SourceFilePath, bool bWriteBackup);
+
+	/**
+	 * Adopt of a `.dsp`: the pipeline -- edited in its details panel, as a pipeline is -- is decompiled
+	 * (DecompileDreamPassPipeline), every value it holds unchanged takes the file's own spelling back
+	 * (KeepEquivalentPipelineSpellings), and what is left is spliced into the file by RewriteDreamShaderPipelineSource:
+	 * only the declarations and keys whose values changed are touched, so `//` comments, the order of the file and the
+	 * `static const` a folded value came from survive. The pipeline is rebuilt inside the revert scope. Refused for a file
+	 * with preprocessor directives (DSH8149), a file that is not a `.dsp` (DSH9227), does not check, or builds no pipeline
+	 * (DSH9228), and for a pipeline holding what a `.dsp` cannot state (the decompiler's codes FindPipelineWriteBackBlocker
+	 * names).
+	 */
+	FDreamShaderProvenanceOutcome AdoptPipelineIntoSource(UDreamPassPipeline* Pipeline, const FString& SourceFilePath, bool bWriteBackup);
 
 	/**
 	 * Adopt Tweaks: the Tweaked instance's overrides become the initializers / `@default` values of the `.dss` uniforms

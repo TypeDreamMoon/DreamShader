@@ -7,7 +7,7 @@
 // always did. The 2.0 one (GetIRDecompiler, Format = Dss: graph -> IR -> AST -> printer) answers a whole request
 // itself through DecompileRequest, because a request can be more than one asset -- every product of a source, in one
 // module -- and because it has diagnostics to hand back. A plain material instance is neither's: Format = Dss writes
-// its `.dsi` through the instance decompiler.
+// its `.dsi` through the instance decompiler, and a Custom Pass pipeline its `.dsp` through the pipeline decompiler.
 //
 // Every editor caller goes through Tools/DreamShaderDecompileTools.h, which picks the decompiler for the format.
 // Diagnostics: DSH9085-9089.
@@ -36,7 +36,7 @@ namespace UE::DreamShader::Editor
 	{
 		/** By the output file's extension: `.dsm` / `.dsf` -> Legacy; anything else, or no output file -> Dss. */
 		Auto,
-		/** 2.0 text: `.dss` for a material, function, layer or blend; `.dsi` for a material instance. */
+		/** 2.0 text: `.dss` for a material, function, layer or blend; `.dsi` for a material instance; `.dsp` for a pass pipeline. */
 		Dss,
 		/** The 1.x text decompiler, unchanged (`.dsm` / `.dsf`); lives through 2.0.x. */
 		Legacy,
@@ -100,6 +100,8 @@ namespace UE::DreamShader::Editor::Private
 		static FString MakeDssFilePath(const UObject* Asset);
 		/** `Decompiled/Instances/<package path>.dsi`. */
 		static FString MakeInstanceFilePath(const UMaterialInterface* Instance);
+		/** `Decompiled/Pipelines/<package path>.dsp`: where a UDreamPassPipeline decompiles to when no file is named. */
+		static FString MakePipelineFilePath(const UObject* Pipeline);
 		static const TCHAR* GetFunctionCategory(EDreamShaderDecompiledFunctionKind FunctionKind);
 		static EDreamShaderDecompiledFunctionKind GetFunctionKind(const UMaterialFunction* MaterialFunction);
 		static FString MakeAssetName(const UObject* Asset, const TCHAR* Category);

@@ -1,0 +1,22 @@
+// {FILENAME} -- the Post Process material the Composite pass of {PIPELINE} draws. Compiles to {ASSETPATH}.
+// It reads the mask through the UserSceneTexture the pass binds it to ("Mask") and lights the pixels just outside it,
+// Width texels out. Every pass sets DreamPassWeight: the pipeline's weight in the view.
+#pragma material(Domain = PostProcess, BlendableLocation = SceneColorAfterDOF)
+
+uniform float4 Color = float4(1.0, 0.6, 0.0, 1.0);
+uniform float  Width = 2.0;
+uniform float  DreamPassWeight = 1.0;
+
+export void {STEM}(inout material m)
+{
+    float2 UV     = UE.ScreenPosition().ViewportUV;
+    float3 Scene  = UE.SceneTexture(SceneTextureId = PostProcessInput0, Coordinates = UV).Color.rgb;
+    float2 Step   = UE.UserSceneTexture(UserSceneTexture = "Mask", Coordinates = UV).InvSize * Width;
+    float  Inside = UE.UserSceneTexture(UserSceneTexture = "Mask", Coordinates = UV).Color.r;
+    float  Right  = UE.UserSceneTexture(UserSceneTexture = "Mask", Coordinates = UV + float2(Step.x, 0)).Color.r;
+    float  Left   = UE.UserSceneTexture(UserSceneTexture = "Mask", Coordinates = UV - float2(Step.x, 0)).Color.r;
+    float  Down   = UE.UserSceneTexture(UserSceneTexture = "Mask", Coordinates = UV + float2(0, Step.y)).Color.r;
+    float  Up     = UE.UserSceneTexture(UserSceneTexture = "Mask", Coordinates = UV - float2(0, Step.y)).Color.r;
+    float  Edge   = saturate(max(max(Right, Left), max(Down, Up)) - Inside);
+    m.EmissiveColor = lerp(Scene, Color.rgb, Edge * Color.a * DreamPassWeight);
+}

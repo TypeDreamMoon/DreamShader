@@ -1,5 +1,7 @@
 #include "DreamShaderWorkspaceService.h"
 
+#include "DreamPassSettings.h"
+#include "DreamPassTypes.h"
 #include "DreamShaderGeneratedAssets.h"
 #include "DreamShaderDefineResolution.h"
 #include "DreamShaderDefineTable.h"
@@ -9,6 +11,7 @@
 #include "DreamShaderPreprocessor.h"
 #include "DreamShaderSettings.h"
 #include "DreamShaderVersionCompat.h"
+#include "Pass/DreamPassSpellings.h"
 
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
@@ -1089,6 +1092,11 @@ namespace UE::DreamShader::Editor::Private
 		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/preprocessor-defines.json"));
 	}
 
+	FString FDreamShaderWorkspaceService::GetPassKeysManifestFilePath()
+	{
+		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/pass-keys.json"));
+	}
+
 	FString FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath()
 	{
 		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/bridge.db"));
@@ -1387,6 +1395,268 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		WriteSettingsMappingsToBridgeDatabase(MappingEntries);
+
+		// The `.dsp` vocabulary travels with the settings: its layer names are a project setting, and every moment the
+		// settings are exported at is one an editor wants both at.
+		ExportPassKeysManifest();
+	}
+
+	namespace
+	{
+		/** One key a `.dsp` declaration takes, for completion: what it is called, what it takes, what leaving it out means. */
+		struct FPassKeyManifestEntry
+		{
+			const TCHAR* Name = TEXT("");
+			/** The value's kind, which names the list the extension completes it from (`injection` -> injectionPoints, ...). */
+			const TCHAR* Value = TEXT("");
+			/** What the key is when the source leaves it out; empty when it has to be written. */
+			const TCHAR* Default = TEXT("");
+			const TCHAR* Detail = TEXT("");
+		};
+
+		// DreamShader_Plan/05 §3-5, in the order the printer writes keys. Machine-readable, so English and untranslated.
+		const FPassKeyManifestEntry GPipelineKeys[] = // I18N-EXEMPT: machine-readable manifest
+		{
+			{ TEXT("Order"),     TEXT("int"),             TEXT("0"),                 TEXT("Pipelines with passes at one injection point run in ascending Order.") },
+			{ TEXT("Injection"), TEXT("injection"),       TEXT("BeforePostProcess"), TEXT("The injection point of a pass that names none.") },
+			{ TEXT("Views"),     TEXT("viewFlags"),       TEXT("Game | Editor"),     TEXT("The kinds of view the pipeline runs in, joined with |.") },
+			{ TEXT("Requires"),  TEXT("requirementFlags"), TEXT(""),                 TEXT("What a view must offer for the pipeline to run in it at all, joined with |.") },
+			{ TEXT("Enabled"),   TEXT("boolParameter"),   TEXT("true"),              TEXT("A bool uniform, or a constant: the whole pipeline is off where it is false.") },
+		};
+
+		const FPassKeyManifestEntry GBufferKeys[] = // I18N-EXEMPT: machine-readable manifest
+		{
+			{ TEXT("Scale"),      TEXT("float"),            TEXT("1.0"),                   TEXT("Relative to Resolution. Excludes Size.") },
+			{ TEXT("Size"),       TEXT("int2"),             TEXT(""),                      TEXT("int2(w, h): a fixed size, independent of the view. Excludes Scale.") },
+			{ TEXT("Resolution"), TEXT("bufferResolution"), TEXT("the first writer's"),    TEXT("Render (before temporal upscaling) or Output (after).") },
+			{ TEXT("Clear"),      TEXT("clear"),            TEXT("0"),                     TEXT("A scalar, a float4(...), or None: not cleared, so a read before every write is an error.") },
+			{ TEXT("Mips"),       TEXT("int"),              TEXT("1"),                     TEXT("The number of mips.") },
+			{ TEXT("History"),    TEXT("bool"),             TEXT("false"),                 TEXT("Kept from one frame to the next; <Name>.Previous reads last frame's.") },
+			{ TEXT("Export"),     TEXT("bool"),             TEXT("false"),                 TEXT("Copied into the render target <Pipeline>_<Name>, for ordinary materials, Blueprints, UMG and Niagara.") },
+		};
+
+		const FPassKeyManifestEntry GCommonPassKeys[] = // I18N-EXEMPT: machine-readable manifest
+		{
+			{ TEXT("Injection"), TEXT("injection"),     TEXT("the pipeline's"), TEXT("Where in the frame the pass runs.") },
+			{ TEXT("Enabled"),   TEXT("boolParameter"), TEXT("true"),           TEXT("A bool uniform, or a constant: the pass is skipped where it is false.") },
+		};
+
+		const FPassKeyManifestEntry GFullscreenKeys[] = // I18N-EXEMPT: machine-readable manifest
+		{
+			{ TEXT("Material"), TEXT("material"),   TEXT(""), TEXT("A Post Process material: a bare name built by a .dss under the same root, or an object path. Excludes Shader.") },
+			{ TEXT("Shader"),   TEXT("shader"),     TEXT(""), TEXT("A .usf, relative to the .dsp or a virtual path; runs in a pixel shader slot. Excludes Material.") },
+			{ TEXT("Entry"),    TEXT("identifier"), TEXT(""), TEXT("The shader's entry function. Required with Shader.") },
+		};
+
+		const FPassKeyManifestEntry GComputeKeys[] = // I18N-EXEMPT: machine-readable manifest
+		{
+			{ TEXT("Shader"),   TEXT("shader"),     TEXT(""),                     TEXT("A .usf, relative to the .dsp or a virtual path; runs in a compute shader slot.") },
+			{ TEXT("Entry"),    TEXT("identifier"), TEXT(""),                     TEXT("The shader's entry function.") },
+			{ TEXT("Threads"),  TEXT("uint3"),      TEXT("the entry's [numthreads]"), TEXT("uint3(x, y, z): the thread group size.") },
+			{ TEXT("Dispatch"), TEXT("dispatch"),   TEXT("the first write"),      TEXT("A buffer (one thread per texel), Buffer / n, Buffer * n, or uint3(x, y, z).") },
+		};
+
+		const FPassKeyManifestEntry GMeshKeys[] = // I18N-EXEMPT: machine-readable manifest
+		{
+			{ TEXT("Filter"),      TEXT("filter"),     TEXT(""),                                                TEXT("Stencil(v[, mask]), Layer(name | ...), List(name), combined with | and &.") },
+			{ TEXT("Material"),    TEXT("material"),   TEXT("none: every primitive draws with its own"),        TEXT("The override material, with UE.DreamPassOutput. Needed by Mode = Override and OwnOrOverride.") },
+			{ TEXT("Mode"),        TEXT("meshMode"),   TEXT("Override with a Material, Own without"),           TEXT("Whose material draws the selected primitives.") },
+			{ TEXT("Depth"),       TEXT("depthMode"),  TEXT("TestScene"),                                       TEXT("TestScene, None, or Own(buffer) with a Depth32 buffer.") },
+			{ TEXT("Cull"),        TEXT("cullMode"),   TEXT("Auto"),                                            TEXT("Auto follows the primitive and its own material.") },
+			{ TEXT("Blend"),       TEXT("blendMode"),  TEXT("Replace"),                                         TEXT("How the pass's outputs combine with what the buffers hold.") },
+			{ TEXT("Usage"),       TEXT("meshUsages"), TEXT("StaticMesh | InstancedStaticMeshes | SkeletalMesh"), TEXT("The vertex factories the override material needs usage flags for.") },
+			{ TEXT("Nanite"),      TEXT("nanitePolicy"), TEXT("StencilMask with a Stencil filter, Skip otherwise"), TEXT("Skip, StencilMask, or AssignStencil(bits).") },
+			{ TEXT("NaniteValue"), TEXT("float4"),     TEXT("float4(1, 0, 0, 0)"),                              TEXT("What StencilMask writes where a Nanite primitive is.") },
+		};
+
+		const FPassKeyManifestEntry GClearKeys[] = // I18N-EXEMPT: machine-readable manifest
+		{
+			{ TEXT("Value"), TEXT("clear"), TEXT("0"), TEXT("A scalar or a float4(...).") },
+		};
+
+		const FPassKeyManifestEntry GBindingStatements[] = // I18N-EXEMPT: machine-readable manifest
+		{
+			{ TEXT("read"),  TEXT("binding"),    TEXT(""), TEXT("read [Name =] Buffer[.Previous]; -- what the pass reads, under the name its material or shader knows it by.") },
+			{ TEXT("write"), TEXT("binding"),    TEXT(""), TEXT("write [Name =] Buffer; -- what the pass writes; Output0..3 in a mesh pass.") },
+			{ TEXT("param"), TEXT("expression"), TEXT(""), TEXT("param Name = Expression; -- a uniform, a static const, a literal, DreamPassWeight, or simple arithmetic on them.") },
+		};
+
+		/** One call-form value (`Stencil(v)`, `Own(Buffer)`) with the snippet an editor inserts for it. */
+		struct FPassSnippetManifestEntry
+		{
+			const TCHAR* Name = TEXT("");
+			const TCHAR* Snippet = TEXT("");
+			const TCHAR* Detail = TEXT("");
+		};
+
+		const FPassSnippetManifestEntry GFilterTerms[] = // I18N-EXEMPT: machine-readable manifest
+		{
+			{ TEXT("Stencil"), TEXT("Stencil(${1:1})"),       TEXT("Primitives whose CustomStencil matches the value, under the mask when one is given.") },
+			{ TEXT("Layer"),   TEXT("Layer(${1:Name})"),      TEXT("Primitives with one of the layers (a layer component); the names are the project's layer table.") },
+			{ TEXT("List"),    TEXT("List(${1:Name})"),       TEXT("Primitives registered under the list's name (UDreamPassSubsystem::AddToList).") },
+		};
+
+		TSharedRef<FJsonObject> MakePassKeyJson(const FPassKeyManifestEntry& Entry)
+		{
+			TSharedRef<FJsonObject> Object = MakeShared<FJsonObject>();
+			Object->SetStringField(TEXT("name"), Entry.Name);
+			Object->SetStringField(TEXT("value"), Entry.Value);
+			Object->SetStringField(TEXT("default"), Entry.Default);
+			Object->SetBoolField(TEXT("required"), FCString::Strlen(Entry.Default) == 0);
+			Object->SetStringField(TEXT("detail"), Entry.Detail);
+			return Object;
+		}
+
+		TArray<TSharedPtr<FJsonValue>> MakePassKeysJson(TConstArrayView<FPassKeyManifestEntry> Entries)
+		{
+			TArray<TSharedPtr<FJsonValue>> Values;
+			for (const FPassKeyManifestEntry& Entry : Entries)
+			{
+				Values.Add(MakeShared<FJsonValueObject>(MakePassKeyJson(Entry)));
+			}
+			return Values;
+		}
+
+		TArray<TSharedPtr<FJsonValue>> MakeStringValuesJson(TConstArrayView<const TCHAR*> Names)
+		{
+			TArray<TSharedPtr<FJsonValue>> Values;
+			for (const TCHAR* Name : Names)
+			{
+				Values.Add(MakeShared<FJsonValueString>(Name));
+			}
+			return Values;
+		}
+
+		TArray<TSharedPtr<FJsonValue>> MakeStringValuesJson(const TArray<FString>& Names)
+		{
+			TArray<TSharedPtr<FJsonValue>> Values;
+			for (const FString& Name : Names)
+			{
+				Values.Add(MakeShared<FJsonValueString>(Name));
+			}
+			return Values;
+		}
+	}
+
+	void FDreamShaderWorkspaceService::ExportPassKeysManifest()
+	{
+		namespace PassSpelling = UE::DreamShader::Editor::Private::PassSpelling;
+
+		const FString ManifestPath = GetPassKeysManifestFilePath();
+		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
+
+		TSharedRef<FJsonObject> RootObject = MakeShared<FJsonObject>();
+		RootObject->SetStringField(TEXT("schema"), TEXT("DreamShader.PassKeys"));
+		RootObject->SetNumberField(TEXT("version"), 1);
+		RootObject->SetStringField(TEXT("generatedAt"), FDateTime::UtcNow().ToIso8601());
+#if DREAMSHADER_WITH_CUSTOM_PASS
+		RootObject->SetBoolField(TEXT("supported"), true);
+#else
+		// The language is the same everywhere -- a `.dsp` parses and binds -- but nothing runs it on this engine.
+		RootObject->SetBoolField(TEXT("supported"), false);
+		RootObject->SetStringField(TEXT("unsupportedReason"), TEXT("Custom Pass pipelines run on Unreal Engine 5.8 and later."));
+#endif
+
+		// The injection points in the order a frame reaches them, the spelling the runtime and the binder share.
+		TArray<TSharedPtr<FJsonValue>> InjectionValues;
+		for (int32 Index = 0; Index < int32(EDreamPassInjection::Count); ++Index)
+		{
+			const EDreamPassInjection Injection = static_cast<EDreamPassInjection>(Index);
+			TSharedRef<FJsonObject> Object = MakeShared<FJsonObject>();
+			Object->SetStringField(TEXT("name"), UE::DreamPass::LexToString(Injection));
+			Object->SetNumberField(TEXT("order"), UE::DreamPass::GetInjectionOrder(Injection));
+			Object->SetBoolField(TEXT("postProcess"), UE::DreamPass::IsPostProcessInjection(Injection));
+			Object->SetStringField(TEXT("resolution"), UE::DreamPass::IsOutputResolutionInjection(Injection) ? TEXT("Output") : TEXT("Render"));
+			InjectionValues.Add(MakeShared<FJsonValueObject>(Object));
+		}
+		RootObject->SetArrayField(TEXT("injectionPoints"), InjectionValues);
+
+		RootObject->SetArrayField(TEXT("pipelineKeys"), MakePassKeysJson(GPipelineKeys));
+
+		TArray<const TCHAR*> FormatNames;
+		for (int32 Index = 0; Index <= int32(EDreamPassBufferFormat::Depth32); ++Index)
+		{
+			FormatNames.Add(UE::DreamPass::LexToString(static_cast<EDreamPassBufferFormat>(Index)));
+		}
+		RootObject->SetArrayField(TEXT("bufferFormats"), MakeStringValuesJson(FormatNames));
+		RootObject->SetArrayField(TEXT("bufferKeys"), MakePassKeysJson(GBufferKeys));
+		// Fixed is what `Size` makes, never something `Resolution` says.
+		RootObject->SetArrayField(TEXT("bufferResolutions"), MakeStringValuesJson(TArray<FString>{ TEXT("Render"), TEXT("Output") }));
+
+		// Every kind with its own keys; the common keys apply to all of them.
+		const auto MakeKind = [](const TCHAR* Kind, TArray<TSharedPtr<FJsonValue>> Keys, const TCHAR* Detail)
+		{
+			TSharedRef<FJsonObject> Object = MakeShared<FJsonObject>();
+			Object->SetStringField(TEXT("name"), Kind);
+			Object->SetArrayField(TEXT("keys"), Keys);
+			Object->SetStringField(TEXT("detail"), Detail);
+			return MakeShared<FJsonValueObject>(Object);
+		};
+		TArray<TSharedPtr<FJsonValue>> KindValues;
+		KindValues.Add(MakeKind(PassSpelling::Kind(EDreamPassKind::Fullscreen), MakePassKeysJson(GFullscreenKeys), TEXT("A Post Process material, or a .usf pixel shader, drawn over the view."))); // I18N-EXEMPT: machine-readable manifest
+		KindValues.Add(MakeKind(PassSpelling::Kind(EDreamPassKind::Compute), MakePassKeysJson(GComputeKeys), TEXT("A .usf compute shader."))); // I18N-EXEMPT: machine-readable manifest
+		KindValues.Add(MakeKind(PassSpelling::Kind(EDreamPassKind::Mesh), MakePassKeysJson(GMeshKeys), TEXT("Selected primitives drawn again, with an override material or their own."))); // I18N-EXEMPT: machine-readable manifest
+		KindValues.Add(MakeKind(PassSpelling::Kind(EDreamPassKind::Clear), MakePassKeysJson(GClearKeys), TEXT("One buffer cleared to a value: one write."))); // I18N-EXEMPT: machine-readable manifest
+		KindValues.Add(MakeKind(PassSpelling::Kind(EDreamPassKind::Copy), TArray<TSharedPtr<FJsonValue>>(), TEXT("One texture copied, or drawn scaled, into another: one read, one write."))); // I18N-EXEMPT: machine-readable manifest
+		RootObject->SetArrayField(TEXT("passKinds"), KindValues);
+		RootObject->SetArrayField(TEXT("commonPassKeys"), MakePassKeysJson(GCommonPassKeys));
+		RootObject->SetArrayField(TEXT("bindingStatements"), MakePassKeysJson(GBindingStatements));
+
+		TArray<TSharedPtr<FJsonValue>> FilterValues;
+		for (const FPassSnippetManifestEntry& Term : GFilterTerms)
+		{
+			TSharedRef<FJsonObject> Object = MakeShared<FJsonObject>();
+			Object->SetStringField(TEXT("name"), Term.Name);
+			Object->SetStringField(TEXT("snippet"), Term.Snippet);
+			Object->SetStringField(TEXT("detail"), Term.Detail);
+			FilterValues.Add(MakeShared<FJsonValueObject>(Object));
+		}
+		RootObject->SetArrayField(TEXT("filterKinds"), FilterValues);
+
+		RootObject->SetArrayField(TEXT("meshModes"), MakeStringValuesJson(PassSpelling::AllMeshModes()));
+		RootObject->SetArrayField(TEXT("depthModes"), MakeStringValuesJson(PassSpelling::AllDepthModes()));
+		RootObject->SetArrayField(TEXT("cullModes"), MakeStringValuesJson(PassSpelling::AllCullModes()));
+		RootObject->SetArrayField(TEXT("blendModes"), MakeStringValuesJson(PassSpelling::AllBlendModes()));
+		RootObject->SetArrayField(TEXT("nanitePolicies"), MakeStringValuesJson(PassSpelling::AllNanitePolicies()));
+		RootObject->SetArrayField(TEXT("meshUsages"), MakeStringValuesJson(PassSpelling::AllFlagNames(PassSpelling::MeshUsageFlags())));
+		RootObject->SetArrayField(TEXT("viewFlags"), MakeStringValuesJson(PassSpelling::AllFlagNames(PassSpelling::ViewFlags())));
+		RootObject->SetArrayField(TEXT("requirementFlags"), MakeStringValuesJson(PassSpelling::AllFlagNames(PassSpelling::RequirementFlags())));
+		RootObject->SetArrayField(TEXT("parameterTypes"), MakeStringValuesJson(PassSpelling::AllParameterTypes()));
+
+		TArray<FString> BuiltinBuffers;
+		{
+			namespace Builtin = UE::DreamPass::BuiltinBuffers;
+			for (const FName Name : {
+					Builtin::SceneColor, Builtin::SceneDepth, Builtin::CustomDepth, Builtin::CustomStencil,
+					Builtin::GBufferA, Builtin::GBufferB, Builtin::GBufferC, Builtin::GBufferD, Builtin::GBufferE, Builtin::GBufferF,
+					Builtin::Velocity, Builtin::Translucency })
+			{
+				BuiltinBuffers.Add(Name.ToString());
+			}
+		}
+		RootObject->SetArrayField(TEXT("builtinBuffers"), MakeStringValuesJson(BuiltinBuffers));
+		RootObject->SetStringField(TEXT("weightParameter"), UE::DreamPass::WeightParameterName.ToString());
+
+		// The project's half: the names `Layer(...)` takes, in bit order. A name not in the table is an error (V1).
+		TArray<FString> LayerNames;
+		for (const FName Layer : UDreamPassSettings::Get().LayerNames)
+		{
+			LayerNames.Add(Layer.ToString());
+		}
+		RootObject->SetArrayField(TEXT("layerNames"), MakeStringValuesJson(LayerNames));
+
+		FString ManifestText;
+		const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ManifestText);
+		FJsonSerializer::Serialize(RootObject, Writer);
+
+		if (FFileHelper::SaveStringToFile(ManifestText, *ManifestPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		{
+			UE_LOG(LogDreamShader, Display, TEXT("Wrote DreamShader pass keys manifest: %s"), *ManifestPath);
+		}
+		else
+		{
+			UE_LOG(LogDreamShader, Warning, TEXT("Failed to write DreamShader pass keys manifest: %s"), *ManifestPath);
+		}
 	}
 
 	// Whether it is safe to ask this expression class's CDO for its input value types.
@@ -1631,6 +1901,12 @@ namespace UE::DreamShader::Editor::Private
 		Writer->WriteArrayEnd();
 		Writer->WriteObjectStart(TEXT("settings"));
 		Writer->WriteObjectStart(TEXT("files.associations"));
+		// Every kind of source, the 2.0 ones included: without these a `.dss`, `.dsi` or `.dsp` opens as plain text, and
+		// `.dsp` would be claimed by whatever else knows it. One language id; the VS Code extension tells the kinds apart
+		// by their file extension.
+		Writer->WriteValue(TEXT("*.dss"), TEXT("dreamshaderlang"));
+		Writer->WriteValue(TEXT("*.dsi"), TEXT("dreamshaderlang"));
+		Writer->WriteValue(TEXT("*.dsp"), TEXT("dreamshaderlang"));
 		Writer->WriteValue(TEXT("*.dsm"), TEXT("dreamshaderlang"));
 		Writer->WriteValue(TEXT("*.dsh"), TEXT("dreamshaderlang"));
 		Writer->WriteValue(TEXT("*.dsf"), TEXT("dreamshaderlang"));
