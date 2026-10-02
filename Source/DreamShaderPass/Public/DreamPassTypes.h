@@ -452,22 +452,24 @@ struct DREAMSHADERPASS_API FDreamPassFullscreenSettings
 {
 	GENERATED_BODY()
 
-	/** A Post Process material: written in a `.dss`, or generated around a `.usf` (bWrapsShader). */
+	/** The Post Process material a material pass draws (`Material =`). Null for an HLSL pass. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fullscreen")
 	TObjectPtr<UMaterialInterface> Material = nullptr;
 
-	/** The `.usf` this pass was written in, as a virtual shader path. Empty for a material pass. */
+	/**
+	 * An HLSL pass's `.usf` as its `.dsp` names it: relative to the `.dsp`'s folder, or a virtual shader path. Kept for the
+	 * way back to text and for the editor; what runs is the slot's snapshot of the file. Empty for a material pass.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fullscreen")
 	FString ShaderPath;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fullscreen")
 	FString Entry;
 
-	/** Material is the Post Process material the compiler generated around ShaderPath. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fullscreen")
-	bool bWrapsShader = false;
-
-	/** A `.usf` with more than one output runs in this FDreamPassPS slot instead of through a material. INDEX_NONE otherwise. */
+	/**
+	 * The FDreamPassPS slot the compiler gave an HLSL pass, whatever its output count: a `.usf` always runs in a pixel
+	 * shader slot, never through a material. INDEX_NONE for a material pass.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fullscreen")
 	int32 PixelSlot = INDEX_NONE;
 };
@@ -486,6 +488,7 @@ struct DREAMSHADERPASS_API FDreamPassComputeSettings
 {
 	GENERATED_BODY()
 
+	/** The `.usf` as the `.dsp` names it: relative to the `.dsp`'s folder, or a virtual shader path. What runs is the slot's snapshot. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Compute")
 	FString ShaderPath;
 

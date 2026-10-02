@@ -91,6 +91,10 @@ namespace UE::DreamPass::Private
 			{
 				Problem(LOCTEXT("FullscreenNothing", "it has neither a material nor a pixel shader slot."));
 			}
+			if (Pass.Fullscreen.Material && Pass.Fullscreen.PixelSlot != INDEX_NONE)
+			{
+				Problem(LOCTEXT("FullscreenBoth", "it has both a material and a pixel shader slot; a pass is one or the other."));
+			}
 			if (Pass.Fullscreen.PixelSlot != INDEX_NONE && (Pass.Fullscreen.PixelSlot < 0 || Pass.Fullscreen.PixelSlot >= GetPixelSlotCount()))
 			{
 				Problem(LOCTEXT("PixelSlotRange", "its pixel shader slot is out of range."));
