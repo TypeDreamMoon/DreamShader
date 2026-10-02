@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2086
+2112
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -315,6 +315,9 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | AssignStencilShape | 'Nanite = AssignStencil(n)' takes one stencil value, 1 to 255. |
 | DreamShader.Binder.Pipeline | BeforeTonemap | before |
 | DreamShader.Binder.Pipeline | BlendableLocation | '{0}' is compiled for BlendableLocation {1}, and pass '{2}' runs it at {3}, {4} tonemapping, so its colours are in another space than it expects; use {5}. |
+| DreamShader.Binder.Pipeline | BlockEntryNotFound | The 'hlsl' block of pass '{0}' does not define a function '{1}', which 'Entry' names; the entry is a function of the block itself. |
+| DreamShader.Binder.Pipeline | BlockMainNotFound | The 'hlsl' block of pass '{0}' holds whole functions, and none is 'Main', the entry of a block when the pass writes no 'Entry'; name the entry function 'Main', or write 'Entry = <function>;'. |
+| DreamShader.Binder.Pipeline | BodyFormName | '{0}' is a name of pass '{1}', and its 'hlsl' block holds the statements of a function the compiler writes, which names its own values {2}; rename the binding. |
 | DreamShader.Binder.Pipeline | BufferBuiltinName | '{0}' is a built-in texture a pass binds without declaring it, and cannot be declared as a buffer. |
 | DreamShader.Binder.Pipeline | BufferKeyTwice | '{0}' is set twice for buffer '{1}'; it was already set on line {2}. |
 | DreamShader.Binder.Pipeline | BufferNameCaseClash | Buffer '{0}' differs from '{1}', declared on line {2}, in case only; the pipeline asset keeps buffer names as Unreal names, which compare ignoring case, so the two would be one buffer there. Rename one. |
@@ -330,7 +333,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | BuiltinPrevious | '{0}.Previous': a built-in texture keeps no history. |
 | DreamShader.Binder.Pipeline | ClearShape | Clear pass '{0}' writes one buffer and reads none: 'write Buffer;' and 'Value = ...;'. |
 | DreamShader.Binder.Pipeline | ComputeNoEntry | Compute pass '{0}' needs 'Entry = <function>' naming its '[numthreads]' function. |
-| DreamShader.Binder.Pipeline | ComputeNoShader | Compute pass '{0}' needs 'Shader = "<file>.usf"' and 'Entry = <function>'. |
+| DreamShader.Binder.Pipeline | ComputeNoShader | Compute pass '{0}' needs code to run: 'Shader = "<file>.usf"' with 'Entry = <function>', an 'hlsl { }' block of its own, or 'Entry' naming a function of the file's 'hlsl { }' block. |
 | DreamShader.Binder.Pipeline | ComputeNoWrite | Compute pass '{0}' writes nothing; a compute pass writes at least one buffer, 'write Result = Buffer;'. |
 | DreamShader.Binder.Pipeline | ComputeTooMany | Compute pass '{0}' reads {1} and writes {2} buffers, and a compute slot has {3} inputs and {4} outputs. |
 | DreamShader.Binder.Pipeline | CopyShape | Copy pass '{0}' reads one buffer and writes one: 'read Source;' and 'write Target;'. |
@@ -354,6 +357,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | EntryNotFound2 | '{0}' does not define a function '{1}'. |
 | DreamShader.Binder.Pipeline | EntryNotName | 'Entry' takes the name of the function in the shader file: 'Entry = BlurCS;'. |
 | DreamShader.Binder.Pipeline | EntryUnreadNumThreads | '{0}' is not in what the compiler could read of '{1}', which includes a file it cannot follow, so its '[numthreads(x, y, z)]' is unknown; write 'Threads = uint3(x, y, z)' in the pass. |
+| DreamShader.Binder.Pipeline | EntryWithBodyForm | The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function the compiler writes, so 'Entry' has no function to name; remove it, or write whole functions in the block: '{1}'. |
 | DreamShader.Binder.Pipeline | EntryWithMaterial | 'Entry' names a function of a shader file, and fullscreen pass '{0}' draws a material. |
 | DreamShader.Binder.Pipeline | ExportFormat | Buffer '{0}' is exported, and an exported buffer becomes a render target asset that materials sample, which a '{1}' buffer cannot be; export a float format. |
 | DreamShader.Binder.Pipeline | ExportLateFrame | Buffer '{0}' is exported and last written at {1}: opaque and translucent materials that sample it see the previous frame's contents, UI sees this frame's. |
@@ -370,12 +374,19 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | FullscreenMaterialTooManyReads | Fullscreen material pass '{0}' reads {1} buffers, and a post-process material has {2} input slots, shared with its own SceneTexture nodes; split the pass in two, or write it with 'Shader =' (a '.usf' pass reads up to {3}). |
 | DreamShader.Binder.Pipeline | FullscreenMaterialUnverified | A fullscreen material pass at {0} has not been verified on this engine yet; BeforePostProcess is the point it is known to work at. |
 | DreamShader.Binder.Pipeline | FullscreenMaterialWriteSlot | A material has one output and no name for it; write 'write {0};'. |
-| DreamShader.Binder.Pipeline | FullscreenNothing | Fullscreen pass '{0}' needs 'Material = "..."' (a Post Process material) or 'Shader = "<file>.usf"' with 'Entry'. |
+| DreamShader.Binder.Pipeline | FullscreenNothing | Fullscreen pass '{0}' needs code to run: 'Material = "..."' (a Post Process material), 'Shader = "<file>.usf"' with 'Entry', an 'hlsl { }' block of its own, or 'Entry' naming a function of the file's 'hlsl { }' block. |
 | DreamShader.Binder.Pipeline | FullscreenShaderBeforeBasePass | At BeforeBasePass only scene depth exists: the other scene textures pass '{0}' could read are placeholders. |
 | DreamShader.Binder.Pipeline | FullscreenShaderBeginViewNoView | At BeginView neither the scene textures nor the view uniform buffer exist yet: the SceneTextures pass '{0}' sees are placeholders, a use of 'View' in its '.usf' does not compile, and DP_Time gives the time. |
 | DreamShader.Binder.Pipeline | FullscreenShaderNoWrite | Fullscreen pass '{0}' writes nothing; a pass draws into at least one buffer, 'write Result = Buffer;'. |
 | DreamShader.Binder.Pipeline | FullscreenShaderTooMany | Fullscreen pass '{0}' reads {1} and writes {2} buffers, and the pixel slot a '.usf' pass runs in has {3} inputs and {4} outputs. |
+| DreamShader.Binder.Pipeline | HlslBlockInKind | A {0} pass runs no HLSL of its own, so pass '{1}' cannot hold an 'hlsl' block. |
+| DreamShader.Binder.Pipeline | HlslBlockOutsideDsp | An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only a '.dsp' file holds, and '{0}' is not one; a pipeline cannot be included. |
+| DreamShader.Binder.Pipeline | HlslBlockWithMaterial | Fullscreen pass '{0}' draws a material, and an 'hlsl' block is the code of a pass that runs HLSL of its own; remove the block, or 'Material' to run it. |
+| DreamShader.Binder.Pipeline | IncludeInBodyForm | '#include' cannot stand among the statements of a function, and the 'hlsl' block of pass '{0}' holds the statements of its entry; include the file in the file's 'hlsl' block, or write whole functions in the pass's block. |
 | DreamShader.Binder.Pipeline | InjectionNotName | 'Injection' takes the name of an injection point, written without quotes: 'Injection = PostProcess.AfterDOF;'. |
+| DreamShader.Binder.Pipeline | InlineEntryIsComputeShader | '{0}' is a compute shader entry ('[numthreads]' is in front of it), and fullscreen pass '{1}' runs its entry as a pixel shader; name the pixel shader function, or make the pass 'compute'. |
+| DreamShader.Binder.Pipeline | InlineEntryNoNumThreads | '{0}' has no '[numthreads(x, y, z)]' in front of it that the compiler can read -- three whole numbers; write them so, or write 'Threads = uint3(x, y, z)' in pass '{1}'. |
+| DreamShader.Binder.Pipeline | InlineThreadsDisagree | 'Threads = uint3({0}, {1}, {2})' disagrees with the '[numthreads({3}, {4}, {5})]' in front of '{6}' in the '.dsp', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers. |
 | DreamShader.Binder.Pipeline | InputUnbound | '{0}' reads the UserSceneTexture '{1}', and pass '{2}' binds nothing to it, so it samples black; add 'read {1} = <Buffer>;'. |
 | DreamShader.Binder.Pipeline | IntegerFormatUnsupported | '{0}' is an integer format, which no pass can read or write yet: HLSL passes see float4 textures, and materials and mesh passes write floats. Use 'R32F' or 'RG32F' (an id is exact up to 16777216). |
 | DreamShader.Binder.Pipeline | LayerShape | 'Layer' takes pass layer names joined by '\|': 'Layer(Highlight)', 'Layer(Enemies \| Allies)'. |
@@ -428,10 +439,10 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | PipelineFlagsQuoted | '{0}' takes names written without quotes and joined by '\|', such as '{0} = {1}', and "{2}" is a quoted string. |
 | DreamShader.Binder.Pipeline | PipelineFlagUnknown | '{0}' is not one of the '{1}' a pipeline knows: {2}. |
 | DreamShader.Binder.Pipeline | PipelineFlagUnknownDidYouMean | '{0}' is not one of the '{1}' a pipeline knows; did you mean '{2}'? |
-| DreamShader.Binder.Pipeline | PipelineHoldsFunction | A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations, and '{0}' is a function; write it in a '.dss' or a '.dsh', or in the '.usf' of a pass. |
-| DreamShader.Binder.Pipeline | PipelineHoldsInclude | A '.dsp' includes nothing, and has no code that could use '{0}'; remove the include. |
+| DreamShader.Binder.Pipeline | PipelineHoldsFunction | A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations and an 'hlsl' block, and '{0}' is a function outside it; an HLSL function goes in an 'hlsl { }' block, the file's or a pass's, and a DreamShaderLang one in a '.dss' or a '.dsh'. |
+| DreamShader.Binder.Pipeline | PipelineHoldsInclude | A '.dsp' includes no DreamShaderLang, and has no code that could use '{0}'; remove the include. A shader file the HLSL of a pass needs is included inside its 'hlsl { }' block. |
 | DreamShader.Binder.Pipeline | PipelineHoldsMaterialPragma | '#pragma material' configures a material, and a '.dsp' is configured by '#pragma pipeline(...)'; the material a pass draws with is a '.dss' of its own. |
-| DreamShader.Binder.Pipeline | PipelineHoldsStruct | A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations, and 'struct {0}' declares a type; write it in a '.dsh'. |
+| DreamShader.Binder.Pipeline | PipelineHoldsStruct | A '.dsp' holds '#pragma pipeline', 'uniform', 'static const', 'buffer' and 'pass' declarations and an 'hlsl' block, and 'struct {0}' declares a type outside it; an HLSL struct goes in an 'hlsl { }' block, and a DreamShaderLang one in a '.dsh'. |
 | DreamShader.Binder.Pipeline | PipelineIgnoresGraphPragma | '#pragma {0}' boxes or places graph nodes, and a '.dsp' has no graph; the line was ignored. |
 | DreamShader.Binder.Pipeline | PipelineNoCustomPassFacts | This engine has no Custom Pass runtime (it needs Unreal Engine 5.8 or later), so what the passes' materials offer them -- UserSceneTexture inputs, UE.DreamPassOutput pins, usage flags, the pre-exposure and translator settings -- was not read and not checked; the pipeline is not built on this engine. |
 | DreamShader.Binder.Pipeline | PipelineNoReferences | The materials, shader files and pass layers this pipeline names are not available here, so they were taken as written and the checks that need them were skipped; compile the pipeline in the editor to have them checked. |
@@ -460,10 +471,18 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | ScaleRange | 'Scale' of buffer '{0}' is {1}, and a scale is between 0.0625 and 4. |
 | DreamShader.Binder.Pipeline | SceneColorAfterBasePass | At AfterBasePass scene colour holds the emissive light only; nothing is lit yet, so pass '{0}' {1} that. |
 | DreamShader.Binder.Pipeline | SceneColorResolution | Pass '{0}' writes scene colour, which is {1} at {2}, and '{3}' with it, which is {4}; targets drawn together have one size. |
+| DreamShader.Binder.Pipeline | SecondFileHlslBlock | This file already has an 'hlsl' block, on line {0}, and a '.dsp' has one: write every shared function and entry in it. |
+| DreamShader.Binder.Pipeline | SecondPassHlslBlock | Pass '{0}' holds a second 'hlsl' block, and the code of a pass is one block; the one on line {1} is it. |
+| DreamShader.Binder.Pipeline | ShaderAndHlslBlock | Pass '{0}' runs the shader file '{1}' and holds an 'hlsl' block as well, and the code of a pass is in one place: remove 'Shader' to run the block, or the block to run the file. |
 | DreamShader.Binder.Pipeline | ShaderExtension | '{0}' is not a '.usf' or '.ush' file; the engine compiles shader files of those two kinds only. |
 | DreamShader.Binder.Pipeline | ShaderNeedsEntry | Pass '{0}' runs a shader file, and needs 'Entry = <function>' naming the function in it. |
 | DreamShader.Binder.Pipeline | ShaderNotFound | The shader file '{0}' does not exist; a path starting with '/' is a virtual shader path, and any other is read from the folder of this '.dsp'. |
 | DreamShader.Binder.Pipeline | ShaderNotString | 'Shader' takes the shader file as a quoted path: 'Shader = "Passes/Blur.usf";'. |
+| DreamShader.Binder.Pipeline | SharedCodeNamesBinding | '{0}' is in the shared code of the file's 'hlsl' block, and pass '{1}' defines it in its HLSL slot ('{2}'); the shared code is compiled into the slot of every pass whose HLSL is in the '.dsp', after those #defines. Rename it in the block: only an entry, compiled into the slots of the passes that name it, uses a pass's names. |
+| DreamShader.Binder.Pipeline | SharedCodeNamesEntry | '{0}' is in the shared code of the file's 'hlsl' block, and is the entry of pass '{1}' as well, which the pass's slot renames to the slot's entry point with a #define; the shared code is compiled into that slot, after it. Rename it in the block. |
+| DreamShader.Binder.Pipeline | SharedEntryCalled | '{0}' is the entry of pass '{1}' in the file's 'hlsl' block, and is called here; an entry is compiled only into the slots of the passes that name it, so nothing else can call it. Move what it shares into a function of its own in the block, and call that. |
+| DreamShader.Binder.Pipeline | SharedEntryNotFound | The file's 'hlsl' block does not define a function '{1}', which pass '{0}' names as its 'Entry'. |
+| DreamShader.Binder.Pipeline | SharedEntryWithoutBlock | Pass '{0}' has no 'Shader' and no 'hlsl' block of its own, so 'Entry = {1}' names a function of the file's 'hlsl' block, and this '.dsp' has none; write the function in an 'hlsl { }' block at file scope, write the pass's code in an 'hlsl' block of its own, or give it 'Shader = "<file>.usf"'. |
 | DreamShader.Binder.Pipeline | SizeRange | 'Size' of buffer '{0}' is {1} x {2}, and each side is between 1 and 16384. |
 | DreamShader.Binder.Pipeline | SlotNameDerived | '{0}' is a name of pass '{1}' in its HLSL slot twice: the slot's registry names a read's size and UV rect <Name>Size and <Name>UVRect, and a write's size <Name>Size, beside the names the pass binds; rename one of them. |
 | DreamShader.Binder.Pipeline | SlotNameEntry | '{0}' is a name of pass '{1}' in its HLSL slot, and so is its entry point: the slot's registry renames the Entry to the slot's own entry function with a #define of that name; rename the binding. |
@@ -511,6 +530,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Pipeline | VectorOfN | {0} {1} |
 | DreamShader.Binder.Pipeline | VectorOfRange | {0} to {1} {2} |
 | DreamShader.Binder.Pipeline | WhereBuffer | a buffer |
+| DreamShader.Binder.Pipeline | WhereHlslBlock | the file's 'hlsl' block |
 | DreamShader.Binder.Pipeline | WherePass | a pass |
 | DreamShader.Binder.Pipeline | WherePipelineConstant | a constant |
 | DreamShader.Binder.Pipeline | WherePipelineParameter | a pipeline parameter |
@@ -994,6 +1014,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.Declarations | ExpectedBodyOrSemicolon | Expected '`{' or ';' after the parameter list of '{0}', found {1}. |
 | DreamShader.Lang.Declarations | ExpectedDeclarationName | a declaration name |
 | DreamShader.Lang.Declarations | ExpectedFieldName | a field name |
+| DreamShader.Lang.Declarations | ExpectedHlslBlockOpen | '{' after 'hlsl' to open a block of HLSL |
 | DreamShader.Lang.Declarations | ExpectedNextDeclarator | another name after ',' |
 | DreamShader.Lang.Declarations | ExpectedParameterListClose | ')' to close the parameter list |
 | DreamShader.Lang.Declarations | ExpectedParameterName | a parameter name |
@@ -1027,6 +1048,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.Declarations | StorageOnFunction | '{0}' is a function; 'uniform', 'static' and 'const' apply to variables only. |
 | DreamShader.Lang.Declarations | StrayDirective | Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#define' lines must be resolved by the preprocessor first. |
 | DreamShader.Lang.Declarations | UnexpectedAtFileScope | Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'. |
+| DreamShader.Lang.Declarations | WhileParsingHlslBlock | the 'hlsl' block opened on line {0}, which nothing closes |
 | DreamShader.Lang.Declarations | WhileParsingRawBody | a function body |
 | DreamShader.Lang.Declarations | WhileParsingStruct | struct '{0}' |
 | DreamShader.Lang.Expressions | ArgumentsRightParen | ')' to close an argument list |
@@ -1244,7 +1266,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.Parser | UnexpectedEndOfFile | Unexpected end of file while parsing {0}. |
 | DreamShader.Lang.Parser | WhileParsingABlock | a block |
 | DreamShader.Lang.Pipeline | BufferOutsideDsp | 'buffer {0}' declares a buffer of a Custom Pass pipeline, which only a '.dsp' file holds; move it into the pipeline's '.dsp'. |
-| DreamShader.Lang.Pipeline | DirectiveInsidePass | The line '#{0}' cannot appear inside a pass block; a pass holds settings and 'read', 'write' and 'param' lines. |
+| DreamShader.Lang.Pipeline | DirectiveInsidePass | The line '#{0}' cannot appear inside a pass block; a pass holds settings, 'read', 'write' and 'param' lines and an 'hlsl' block, where HLSL's own '#' lines go. |
 | DreamShader.Lang.Pipeline | ExpectedBindingBuffer | a buffer after '{0}' |
 | DreamShader.Lang.Pipeline | ExpectedBindingBufferAfterSlot | a buffer after '{0} {1} =' |
 | DreamShader.Lang.Pipeline | ExpectedBufferArgumentSeparator | Expected ',' or ')' in the arguments of buffer '{0}', found {1}. |
@@ -1260,7 +1282,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.Pipeline | ExpectedPassKind | a pass kind: fullscreen, compute, mesh, clear or copy |
 | DreamShader.Lang.Pipeline | ExpectedPassName | the pass's name after 'pass' |
 | DreamShader.Lang.Pipeline | ExpectedPassOpen | '`{' to open the block of pass '{0}' |
-| DreamShader.Lang.Pipeline | ExpectedPassStatement | Expected a setting ('Key = Value;') or a 'read', 'write' or 'param' line in a pass block, found {0}. |
+| DreamShader.Lang.Pipeline | ExpectedPassStatement | Expected a setting ('Key = Value;'), a 'read', 'write' or 'param' line or an 'hlsl' block in a pass block, found {0}. |
 | DreamShader.Lang.Pipeline | ExpectedPassStatementSemicolon | ';' at the end of the pass statement |
 | DreamShader.Lang.Pipeline | ExpectedPrevious | 'Previous' after '.' |
 | DreamShader.Lang.Pipeline | ExpectedSettingAssign | '=' after the key '{0}' |
@@ -1377,7 +1399,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pass.Pipeline | WritePrevious | a write cannot target '.Previous'. |
 | DreamShader.Pass.Pipelines | ComputeSlotWord | Compute |
 | DreamShader.Pass.Pipelines | PixelSlotWord | Pixel |
-| DreamShader.Pass.Pipelines | RegistryMoveAsideFailed | The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was reset. A file that is read-only because it is not checked out is the usual reason. |
+| DreamShader.Pass.Pipelines | RegistryMoveAsideFailed | The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was reset. Another process holding one of the two files open is the usual reason; a read-only one is reported before this. |
 | DreamShader.Pass.Pipelines | RegistryUnreadableForTool | The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry -Rebuild' replaces a registry that does not parse. |
 | DreamShader.Pass.Pipelines | SlotCheckNeedsCustomPass | HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to pre-check them for. |
 | DreamShader.Pass.Pipelines | SlotCheckNoDestination | '{0}' does not resolve to an asset path ({1}), so its HLSL slots could not be pre-checked. |
@@ -1393,12 +1415,14 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pass.Slots | PixelTypeWord | pixel |
 | DreamShader.Pass.Slots | PixelWord | Pixel |
 | DreamShader.Pass.Slots | PrecheckErrorInFile | [{0}] pass '{1}' does not compile in its HLSL slot: {2} |
+| DreamShader.Pass.Slots | PrecheckErrorInSharedHlsl | [{0}] the file's 'hlsl' block does not compile in the HLSL slots of {1}: {2} |
 | DreamShader.Pass.Slots | PrecheckErrorInSlot | [{0}] pass '{1}' does not compile in its HLSL slot: {2} (a name this pass binds may clash with one the slot shader or the snapshot uses) |
 | DreamShader.Pass.Slots | PrecheckFormatUnavailable | The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots were not pre-checked for it; a cook for that platform compiles them unchecked. |
 | DreamShader.Pass.Slots | PrecheckNoCustomPass | HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to compile them for. |
 | DreamShader.Pass.Slots | PrecheckNoFormat | There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform has a shader compiler on this machine. Nothing was written, because a slot that never compiled must not reach the global shaders. |
 | DreamShader.Pass.Slots | PrecheckNoShaderType | The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no longer includes '{2}'. The DreamShaderPass module is out of step with this compiler; nothing was written. |
 | DreamShader.Pass.Slots | PrecheckRequestedFormatUnavailable | The shader format {0} was asked for, and this machine has no shader compiler for it, so the HLSL slots were not pre-checked for it. |
+| DreamShader.Pass.Slots | PrecheckViewAtBeginView | [{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'View' all the same: a function of the file's 'hlsl' block that the pass calls reads it. Give that function what it needs as a parameter, or move the pass to a later injection point. |
 | DreamShader.Pass.Slots | RegistryNotWritable | '{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no slot deleted, no registry file rewritten. The registry and its snapshots are committed files; a file that is read-only because it is not checked out is the usual reason. Check out the whole .dreampass folder and try again. |
 | DreamShader.Pass.Slots | RegistryUnreadable | The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose every slot it records; fix the file, or run 'dsc pass-registry -Rebuild'. |
 | DreamShader.Pass.Slots | RegistryWriteFailed | '{0}' could not be written. The slot registry is a committed file: a file that is read-only because it is not checked out is the usual reason. |
@@ -1412,6 +1436,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pass.Slots | SlotTooManyWrites | The pass writes {0} buffers; an HLSL slot has {1} outputs. |
 | DreamShader.Pass.Slots | SlotWriteFailed | '{0}' could not be written. The slot registry and its snapshots are committed files: a file that is read-only because it is not checked out is the usual reason. |
 | DreamShader.Pass.Slots | SnapshotIncludeMissing | '{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built. |
+| DreamShader.Pass.Slots | SnapshotInlineRootMissing | The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the file's 'hlsl' block); there is nothing to snapshot. |
 | DreamShader.Pass.Slots | SnapshotLiveIncludeNotEngine | '{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{1}' keeps including the live file: an edit of it later reaches the global shaders without a pre-check. Include it by a relative path to have it copied into the snapshot. |
 | DreamShader.Pass.Slots | SnapshotRootUnreadable | The shader '{0}' of pass '{1}' could not be read, so there is nothing to snapshot into its slot. |
 | DreamShader.PassEditor.PipelineDetails | AdoptButton | Adopt Into Source |
@@ -1430,6 +1455,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.PassEditor.PipelineDetails | NoBuffersFilter | Buffers |
 | DreamShader.PassEditor.PipelineDetails | NoPasses | This pipeline has no pass. |
 | DreamShader.PassEditor.PipelineDetails | NoPassesFilter | Passes |
+| DreamShader.PassEditor.PipelineDetails | OpenInlineHlsl | Open {0} at line {1} |
 | DreamShader.PassEditor.PipelineDetails | OpenShader | Open {0} |
 | DreamShader.PassEditor.PipelineDetails | OpenSourceButton | Open Source |
 | DreamShader.PassEditor.PipelineDetails | OpenSourceTip | Open the .dsp this pipeline is built from in your preferred editor. |
@@ -1947,8 +1973,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShaderMaterialBrowser | NewMenuTip | Create a new source file from a template, in the selected folder. |
 | DreamShaderMaterialBrowser | NewObjectFailed | Failed to create the material instance object. |
 | DreamShaderMaterialBrowser | NewPipelineCompute | Compute chain |
-| DreamShaderMaterialBrowser | NewPipelineComputeHint | Written with <name>.usf next to it, the compute shader its pass runs (<name> is the name without CP_). The field it writes is exported as a render target any material can read. |
-| DreamShaderMaterialBrowser | NewPipelineComputeTip | A compute shader advances a 256 x 256 field every frame, kept from one frame to the next and exported as a render target; the .usf is written next to it. |
+| DreamShaderMaterialBrowser | NewPipelineComputeHint | One file: the compute shader its pass runs is written in the pass's hlsl block. The field it writes is exported as a render target any material can read. |
+| DreamShaderMaterialBrowser | NewPipelineComputeTip | A compute shader advances a 256 x 256 field every frame, kept from one frame to the next and exported as a render target; the shader is written in the .dsp. |
 | DreamShaderMaterialBrowser | NewPipelineComputeTitle | New compute chain (.dsp) |
 | DreamShaderMaterialBrowser | NewPipelineMeshMask | Mesh mask chain |
 | DreamShaderMaterialBrowser | NewPipelineMeshMaskHint | Written with M_<name>Mask.dss and PP_<name>Composite.dss next to it, the two materials its passes draw (<name> is the name without CP_). The objects it outlines are those added to the list of that name (UDreamPassSubsystem::AddToList). |
