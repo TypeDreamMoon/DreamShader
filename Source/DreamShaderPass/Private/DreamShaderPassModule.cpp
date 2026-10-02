@@ -59,6 +59,92 @@ namespace UE::DreamPass
 			bCompute ? TEXT("compute") : TEXT("pixel"));
 	}
 
+	/**
+	 * Takes out of one registry every slot section whose snapshot is not on disk. The registry includes each live slot's
+	 * snapshot, and a missing include fails the global shader compile at startup -- which is fatal -- so a Slots folder
+	 * that was not committed, or a merge that kept the registry but not its files, would stop the editor. A section taken
+	 * out leaves its slot to the stub: its pass does nothing until its `.dsp` is compiled again, which writes the snapshot
+	 * and the section back (`dsc pass-registry --rebuild` does every one). Registry.json is the compiler's and stays as it is.
+	 */
+	static void DropSectionsWithMissingSnapshots(bool bCompute)
+	{
+		const FString RegistryPath = GetRegistryFilePath(bCompute);
+		FString Text;
+		if (!FFileHelper::LoadFileToString(Text, *RegistryPath))
+		{
+			return;
+		}
+
+		TArray<FString> Lines;
+		Text.ParseIntoArrayLines(Lines, /*bCullEmpty*/ false);
+
+		// A section, as the compiler writes it: `#if DP_SLOT == N`, defines, one `#include "/DreamPassUser/Slots/..."`,
+		// undefs, `#endif` -- never a nested #if, the snapshot being a file of its own.
+		const FString UserPrefix = GetUserShaderVirtualDirectory() + TEXT("/");
+		TArray<FString> Kept;
+		TArray<FString> Section;
+		TArray<FString> Missing;
+		bool bInSection = false;
+		bool bSectionMissing = false;
+		for (const FString& Line : Lines)
+		{
+			const FString Trimmed = Line.TrimStartAndEnd();
+			if (!bInSection && Trimmed.StartsWith(TEXT("#if DP_SLOT")))
+			{
+				bInSection = true;
+				bSectionMissing = false;
+				Section.Reset();
+			}
+			if (!bInSection)
+			{
+				Kept.Add(Line);
+				continue;
+			}
+
+			Section.Add(Line);
+			int32 FirstQuote = INDEX_NONE;
+			int32 LastQuote = INDEX_NONE;
+			if (Trimmed.StartsWith(TEXT("#include")) && Trimmed.FindChar(TCHAR('"'), FirstQuote) && Trimmed.FindLastChar(TCHAR('"'), LastQuote) && LastQuote > FirstQuote)
+			{
+				const FString IncludePath = Trimmed.Mid(FirstQuote + 1, LastQuote - FirstQuote - 1);
+				if (IncludePath.StartsWith(UserPrefix)
+					&& !IFileManager::Get().FileExists(*FPaths::Combine(GetUserShaderDirectory(), IncludePath.RightChop(UserPrefix.Len()))))
+				{
+					bSectionMissing = true;
+					Missing.Add(IncludePath);
+				}
+			}
+			if (Trimmed.StartsWith(TEXT("#endif")))
+			{
+				bInSection = false;
+				if (!bSectionMissing)
+				{
+					Kept.Append(Section);
+				}
+			}
+		}
+		// A section the file ends inside is left as it was: not ours to guess at.
+		if (bInSection)
+		{
+			Kept.Append(Section);
+		}
+
+		if (Missing.IsEmpty())
+		{
+			return;
+		}
+
+		const FString Rewritten = FString::Join(Kept, TEXT("\n")) + TEXT("\n");
+		if (!FFileHelper::SaveStringToFile(Rewritten, *RegistryPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
+		{
+			UE_LOG(LogDreamPass, Error, TEXT("DreamShaderPass: %s includes snapshots that are not on disk (%s), and could not be rewritten without them; the slot shaders will fail to compile. Restore DShader/.dreampass/Slots, or delete the registry files to start over."),
+				*RegistryPath, *FString::Join(Missing, TEXT(", ")));
+			return;
+		}
+		UE_LOG(LogDreamPass, Error, TEXT("DreamShaderPass: %s included snapshots that are not on disk (%s): their slots were taken out so the slot shaders compile, and their passes do nothing until their .dsp files are compiled again (dsc pass-registry --rebuild). Commit DShader/.dreampass/ with your sources."),
+			*RegistryPath, *FString::Join(Missing, TEXT(", ")));
+	}
+
 	static void EnsureUserShaderDirectory()
 	{
 		IFileManager& FileManager = IFileManager::Get();
@@ -74,6 +160,10 @@ namespace UE::DreamPass
 			if (!FileManager.FileExists(*RegistryPath))
 			{
 				FFileHelper::SaveStringToFile(MakeEmptyRegistryText(bCompute), *RegistryPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+			}
+			else
+			{
+				DropSectionsWithMissingSnapshots(bCompute);
 			}
 		}
 	}
