@@ -2,10 +2,10 @@
 
 > [DreamShader](../index.md) » [Examples](index.md) » **Custom Pass examples**
 
-Four complete pipelines, each with the `.dss` materials and `.usf` shaders it uses. The render tests
-(`DreamShader.Pass.Render.*`) build these. Two of the material browser's **New Source** pipeline templates are
-cut-down versions of them — the mesh mask of the outline, and the wind field; the post-process template is a
-soft glow of its own.
+Complete pipelines, each with the `.dss` materials and `.usf` shaders it uses. Every one of them runs in the test
+host's demo level, built from these sources and rendered in a game viewport (`Tools/TestHost/PassDemo`). Two of the
+material browser's **New Source** pipeline templates are cut-down versions of them — the mesh mask of the outline,
+and the wind field; the post-process template is a soft glow of its own.
 
 | | |
 | :-- | :-- |
@@ -186,13 +186,18 @@ void DownCS(uint3 Id : SV_DispatchThreadID)
         const float2 Offset = float2(cos(i * 0.5236), sin(i * 0.5236)) * Radius * SourceSize.zw;
         Sum += Source.SampleLevel(DP_LinearClamp, UV + Offset, 0);
     }
-    Result[Id.xy] = Sum / 12.0;
+    // The picture after the tonemapper has no alpha (it reads 0); UMG multiplies by it, so write 1.
+    Result[Id.xy] = float4(Sum.rgb / 12.0, 1.0);
 }
 ```
 
 Notes:
 
 - A pass on the post-process chain that does not write the scene colour leaves the chain as it was.
+- The tonemapped picture's alpha is 0, and `Grab` copies it as it is; `DownCS` writes 1, or a UMG image of
+  `Quarter` would be invisible.
+- The export is for UI, which draws after the scene. A glass panel in the world that sampled it at its own place on
+  screen would see itself in the grab.
 - `Requires = PostProcess`: in a view without post processing the whole pipeline is off, not half of it.
 - UMG renders after the scene, so it reads this frame's `Quarter`. In split screen only the first player's view
   writes the exported buffer.
@@ -232,7 +237,7 @@ pass Composite : fullscreen
 
 ```hlsl
 // DShader/Passes/M_XRayDepth.dss
-#pragma material(ShadingModel = Unlit, bUsedWithSkeletalMesh = true)
+#pragma material(ShadingModel = Unlit, bUsedWithSkeletalMesh = true, bUsedWithInstancedStaticMeshes = true)
 
 export void M_XRayDepth(inout material m)
 {

@@ -94,6 +94,15 @@ render target like any other (`UDreamPassBlueprintLibrary::GetExportTarget`).
 | `AfterBasePass`, `AfterOpaque` | **last frame** | this frame | this frame |
 | `BeforePostProcess` and later | **last frame** | **last frame** | this frame |
 
+- **When nothing fills it any more**, it is cleared to the buffer's `Clear` value (0 for `Clear = None`): at the
+  end of the first frame that view renders without the pipeline -- removed, disabled, faded out of the view -- and
+  at once when no pipeline can run in the world at all or the world ends. A frame without such a view, a minimised
+  window or an editor viewport that is not real-time, leaves it as it is. So a material that reads it does not keep
+  showing the last picture of an effect that is off.
+- **Alpha**: the picture at `PostProcess.AfterTonemap` and later has an alpha of 0, and a `copy` of it keeps that.
+  UMG multiplies an image by its texture's alpha, so the pass that fills an export meant for UMG writes 1 there --
+  the [UI frosted glass](../examples/custom-pass.md#ui-frosted-glass) example does.
+
 ## Which views run pipelines
 
 | View | Kind for `Views` |
