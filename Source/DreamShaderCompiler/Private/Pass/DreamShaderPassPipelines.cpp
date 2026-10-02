@@ -421,7 +421,7 @@ namespace UE::DreamShader::Editor::Compiler
 		if (!IFileManager::Get().Move(*Aside, *Path, /*Replace*/ true))
 		{
 			return Diagnostics.Error(TEXT("DSH8336"), NoSpan, FText::Format(
-				LOCTEXT("RegistryMoveAsideFailed", "The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was reset. A file that is read-only because it is not checked out is the usual reason."),
+				LOCTEXT("RegistryMoveAsideFailed", "The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was reset. Another process holding one of the two files open is the usual reason; a read-only one is reported before this."),
 				FText::FromString(LoadError),
 				FText::FromString(Aside)));
 		}
