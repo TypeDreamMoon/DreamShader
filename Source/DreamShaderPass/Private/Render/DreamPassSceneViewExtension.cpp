@@ -80,6 +80,18 @@ FDreamPassSceneViewExtension::FDreamPassSceneViewExtension(const FAutoRegister& 
 
 FDreamPassSceneViewExtension::~FDreamPassSceneViewExtension()
 {
+	// The history textures are the render thread's: pooled render targets are referenced and released there only. The
+	// last reference to the extension goes on the game thread when the subsystem deinitializes with no family in flight,
+	// or on the render thread when a family being rendered held it; from the game thread the store is handed over, and
+	// emptied after every command queued before it (02 §7.2).
+	if (!History.IsEmpty() && !IsInRenderingThread())
+	{
+		ENQUEUE_RENDER_COMMAND(DreamPassReleaseHistory)(
+			[History = MoveTemp(History)](FRHICommandListImmediate&) mutable
+			{
+				History.Empty();
+			});
+	}
 }
 
 void FDreamPassSceneViewExtension::EnsurePostOpaqueHandler()

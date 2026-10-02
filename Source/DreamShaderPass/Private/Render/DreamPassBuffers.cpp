@@ -163,7 +163,7 @@ namespace UE::DreamPass
 			if (ViewKey == 0)
 			{
 				WarnOnce(Context.Pipeline.DebugName + TEXT(".") + Desc.Name.ToString() + TEXT(".NoViewState"),
-					FString::Printf(TEXT("DreamPass: %s.%s keeps history, but a view without a view state (a scene capture without bCaptureEveryFrame, a thumbnail) has none; '.Previous' reads black there."),
+					FString::Printf(TEXT("DreamPass: %s.%s keeps history, but a view without a view state (a scene capture with neither bCaptureEveryFrame nor bAlwaysPersistRenderingState, a thumbnail) has none; '.Previous' reads black there."),
 						*Context.Pipeline.DebugName, *Desc.Name.ToString()));
 			}
 			else if (FDreamPassSceneViewExtension::FHistoryEntry* Entry = Context.Family.Extension->FindHistory({ ViewKey, Context.Pipeline.Identity, Desc.Name }))

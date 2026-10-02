@@ -96,7 +96,7 @@ enum class EDreamPassViewFlags : uint8
 	Game = 1 << 0,
 	/** Editor perspective and orthographic viewports. Never hit-proxy views. */
 	Editor = 1 << 1,
-	/** Scene captures, 2D and cube, whose capture source resolves the scene. */
+	/** Scene captures, 2D and cube, whatever their capture source; `Requires = SceneResolve` leaves out those that do not resolve the scene. */
 	SceneCapture = 1 << 2,
 	PlanarReflection = 1 << 3,
 	ReflectionCapture = 1 << 4,
