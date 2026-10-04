@@ -79,6 +79,9 @@
   generated asset it was given. It names them by their project-relative path now, like
   `DreamShader.SourceFile`. The key format is `DSK4`, so every asset rebuilds once after upgrading. See
   [Caching](Docs/generation/caching.md).
+- **Every corpus fixture runs.** A fixture and a header with one base name made one test name, and only the
+  first file registered ran: `Legacy/IR/Rules/GraphFunctionHoist.dsm` sat behind its own `.dsh`. The fixture keeps
+  the name and the header's test is `GraphFunctionHoist_dsh`.
 - **`dsc.ps1` prints a compile's report whole.** A report is one log message of many lines -- every `Generated`
   line, then `Warnings:` and the warnings, or every error -- and the engine prefixes only its first line, so the
   driver showed the first line and dropped the rest: warnings, every error after the first, and every product

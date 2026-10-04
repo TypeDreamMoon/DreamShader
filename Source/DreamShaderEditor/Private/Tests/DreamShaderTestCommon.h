@@ -169,6 +169,40 @@ namespace UE::DreamShader::Editor::Private::Tests
 
 			OutCases.Add(MoveTemp(Case));
 		}
+
+		// One name is one test, so of a fixture and a header that share a base name only the first registered ran: the
+		// Legacy/IR fixture GraphFunctionHoist.dsm sat behind its own GraphFunctionHoist.dsh. A compilation unit keeps the
+		// plain name and every other file of its group gets its extension after a `_` (`GraphFunctionHoist_dsh`), so each
+		// one runs -- and two files a layer reads both of, which then share one golden, fail where they can be seen. Not
+		// after a `.`: the automation tree reads a dot as a level, and a test cannot also be the group of another.
+		TMap<FString, TArray<int32>> Groups;
+		for (int32 Index = 0; Index < OutCases.Num(); ++Index)
+		{
+			Groups.FindOrAdd(OutCases[Index].RelativeName).Add(Index);
+		}
+		for (const TPair<FString, TArray<int32>>& Group : Groups)
+		{
+			if (Group.Value.Num() < 2)
+			{
+				continue;
+			}
+			int32 Keeper = Group.Value[0];
+			for (const int32 Index : Group.Value)
+			{
+				if (!OutCases[Index].Extension.Equals(TEXT("dsh"), ESearchCase::IgnoreCase))
+				{
+					Keeper = Index;
+					break;
+				}
+			}
+			for (const int32 Index : Group.Value)
+			{
+				if (Index != Keeper)
+				{
+					OutCases[Index].RelativeName += TEXT("_") + OutCases[Index].Extension.ToLower();
+				}
+			}
+		}
 		return true;
 	}
 

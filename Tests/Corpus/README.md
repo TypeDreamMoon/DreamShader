@@ -102,6 +102,7 @@ Parse / Lang / IR / Compile 各层的 runner 在 `Source/DreamShaderEditor/Priva
 | `<前缀>_<名字>.<ext>` | 正例。前缀编码层级：`Parse/` 用 `L_`/`T_`/`S_`/`Ty_`，`Lang/` 用 `L_`（Lexical）/`E_`（Expressions）/`S_`（Statements）/`D_`（Declarations），`Examples/` 直接用资产名 `M_*`/`MF_*`。 |
 | `<名字>.bad.<ext>` | 负例。runner 见 `.bad.` 默认期望 **解析失败**（即使没有 json）。 |
 | `<同名>.expected.json` | 可选金样本。缺失时用默认期望（正例=解析成功，`.bad.`=解析失败）。 |
+| 同目录同名的夹具与头文件（`X.dsm` + `X.dsh`） | 两个都注册成测试：夹具叫 `X`，头文件叫 `X_dsh`（不用 `.`：自动化树把点读成一层）。但两者共用 `X.expected.json`，在两个都读的层里会互相冲突，所以新头文件最好另起名字（如 `XLib.dsh`）。 |
 
 ## `.expected.json` 字段（全部可选、声明式）
 
