@@ -36,7 +36,7 @@ case-insensitively and 2.0 does not.
 This Custom node declares no output called '{0}'; its outputs are '{1}'. An output is declared by 'AdditionalOutputs'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1168`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1222`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1428`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1829`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1168`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1222`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1428`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1831`
 <!-- generated:end DSH5201 -->
 
 **Cause.** Three shapes, one code — all say "this node's outputs need naming". The message lists
@@ -94,7 +94,7 @@ file is affected — the symbol index is still produced.
 '{0}.{1}' is not a node; did you mean '{0}.{2}'? Node names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4264`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4276`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4266`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4278`
 <!-- generated:end DSH5210 -->
 
 **Cause.** `UE.X` / `Substrate.X` names no class this engine has. Node names are **case-sensitive**;
@@ -133,7 +133,7 @@ takes nothing.
 '{0}' is not a material expression class this engine has.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4198`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4200`
 <!-- generated:end DSH5212 -->
 
 **Cause.** The `Class` argument does not name a material expression class. The class name is
@@ -152,7 +152,7 @@ accepted with or without its `MaterialExpression` prefix and as a full `/Script/
 '{0}.{1}' has no pin or property called '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4693`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4704`
 <!-- generated:end DSH5213 -->
 
 **Cause.** A named argument to a reflected node matches neither an input pin nor a reflected
@@ -173,7 +173,7 @@ it usually has a `Const`-prefixed property name — `ConstA` beside the `A` pin.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1936`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1938`
 <!-- generated:end DSH5214 -->
 
 **Cause.** A value does not fit the pin it feeds: the wrong width, or a kind the pin does not take
@@ -194,7 +194,7 @@ whatever arrives.
 '{0}' is not a value of '{1}' on '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4060`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4062`
 <!-- generated:end DSH5215 -->
 
 **Cause.** The value of an enumerated property is not one of that enum's values. A case-only match
@@ -214,7 +214,7 @@ is suggested.
 'Substrate.' already names the node, so it takes no 'Class' argument.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4170`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4172`
 <!-- generated:end DSH5216 -->
 
 **Cause.** A `Class` argument was given to a `Substrate.` call. The `Substrate.` prefix already
@@ -233,7 +233,7 @@ names the class.
 'Class' takes the expression class as a quoted string.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4178`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4180`
 <!-- generated:end DSH5217 -->
 
 **Cause.** The `Class` argument is not a literal the binder can read. It accepts a quoted string, a
@@ -252,7 +252,7 @@ bare identifier and a dotted name.
 'UE.Expression' reaches a node this language has no name for, so it needs 'Class = "MaterialExpressionName"'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4211`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4213`
 <!-- generated:end DSH5218 -->
 
 **Cause.** `UE.Expression(...)` without `Class`. `Expression` is the escape hatch for a node the
@@ -271,7 +271,7 @@ language has no name for, so the class is the one thing it cannot infer.
 '{0}.{1}' leaves its required '{2}' pin unconnected; unless the node reads a default for it, the engine reports it when the material compiles.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4762`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:416`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4773`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:416`
 <!-- generated:end DSH5219 -->
 
 **Cause.** A pin the engine draws as required was left unconnected, and its literal twin was not set
@@ -296,7 +296,7 @@ real `missing input`.
 '{0}.{1}' takes named arguments: write 'Pin = value'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4395`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4397`
 <!-- generated:end DSH5220 -->
 
 **Cause.** A positional argument was given to a node that has no canonical argument order. Most
@@ -315,7 +315,7 @@ reflected classes are named-only — the pin order an engine class happens to ha
 '{0}.{1}' takes {2} arguments in order; name the rest.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4412`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4414`
 <!-- generated:end DSH5221 -->
 
 **Cause.** More positional arguments than the node's canonical order defines.
@@ -333,7 +333,7 @@ reflected classes are named-only — the pin order an engine class happens to ha
 '{0}' is abstract and cannot be made into a node.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4304`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4306`
 <!-- generated:end DSH5223 -->
 
 **Cause.** The class is abstract and cannot be instantiated.
@@ -351,7 +351,7 @@ reflected classes are named-only — the pin order an engine class happens to ha
 '{0}' is an enumerated property; write one of its values, as in 'SamplerType = Normal'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4020`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4091`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4133`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4022`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4093`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4135`
 <!-- generated:end DSH5224 -->
 
 **Cause.** A literal property was given something that is not a literal: an expression the binder
@@ -372,7 +372,7 @@ computed belongs on a pin, not in a property.
 The first argument of a texture sample is the texture, and this is {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:5018`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:5029`
 <!-- generated:end DSH5230 -->
 
 **Cause.** The first argument of `Texture2DSample` is not a texture.
@@ -390,7 +390,7 @@ The first argument of a texture sample is the texture, and this is {0}.
 The second argument of 'Texture2DSample' is the sampler, and this is {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:5034`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:5045`
 <!-- generated:end DSH5231 -->
 
 **Cause.** The second argument of `Texture2DSample` is not a sampler.
@@ -732,7 +732,7 @@ when case is ignored. 1.x looked these up ignoring case.
 '{0}' is the GLSL spelling of '{1}'; a 1.x source may use it and it is read as '{1}', and a '.dss' writes '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3016`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3018`
 <!-- generated:end DSH5277 -->
 
 **Cause.** Rule L2. A GLSL function or type spelling is used in a 1.x source (`mix`, `fract`, `mod`,
@@ -751,7 +751,7 @@ when case is ignored. 1.x looked these up ignoring case.
 '{0}' is the 1.x name of the '{1}' space of '{2}'; a '.dss' writes '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1483`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4046`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyExpressions.cpp:1483`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4048`
 <!-- generated:end DSH5278 -->
 
 **Cause.** Rule L12. An enum value is written the engine's way (`PPI_SceneColor`,
@@ -774,7 +774,7 @@ the front end writes as the engine's -- see [Transform builtins](../builtins/tra
 '{0}.{1}' leaves its required '{2}' pin unconnected, which 1.x allowed and the engine reports when the material compiles.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4746`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:403`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4757`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:403`
 <!-- generated:end DSH5279 -->
 
 **Cause.** Rule L13. A `UE.` node is built in a 1.x body with a pin open that the engine draws as
@@ -874,7 +874,7 @@ same.
 '{0}' becomes an input of the custom node, which carries a number or a texture, and this argument is {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4586`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4597`
 <!-- generated:end DSH5284 -->
 
 **Cause.** An argument of a `Custom` node call is a value a Custom node input cannot carry: a
@@ -893,7 +893,7 @@ material, a Substrate value, a sampler. A Custom input takes a number or a textu
 '{0}.{1}' has {2} input pin(s), counted from 0, and this argument connects pin {3}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4370`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4372`
 <!-- generated:end DSH5285 -->
 
 **Cause.** `Pin[k] = value` names an input pin by its engine index, and the class has fewer pins
@@ -912,7 +912,7 @@ than that.
 'Pin[{0}] = ...' connects a node's input pin by its engine index, and only a 'UE.' or 'Substrate.' node call has one; pass this argument by name or by position.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2921`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2923`
 <!-- generated:end DSH5286 -->
 
 **Cause.** `Pin[k] = value` is used on a call that is no `UE.` / `Substrate.` node: a user function,
@@ -931,11 +931,14 @@ an intrinsic, a constructor. Only a reflected node has engine pin indices.
 '{0}' has more than one output and is read as its first, '{1}', which is what 1.x did; a '.dss' names the output.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1811`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1813`
 <!-- generated:end DSH5287 -->
 
 **Cause.** Rule L3c. A node with several outputs is used as a value in a 1.x body without saying
-which output. 1.x read the first one; so does this front end, and it says which that is.
+which output. 1.x read the first one; so does this front end, and it says which that is. It does so
+where the catalog gives that output no width, and wherever the node is passed straight to a pin
+(`UE.TransformPosition(UE.WorldPosition(), ...)` takes `XYZ`), because 1.x connected it there as it
+was and the pin took what it uses *(2.0.0 – 2.1.0 refused the pin case with `DSH5201`)*.
 
 **Fix.** Nothing has to change. A `.dss` names the output (`UE.ScreenPosition().ViewportUV`), and
 `dsc migrate` writes it.
@@ -951,7 +954,7 @@ which output. 1.x read the first one; so does this front end, and it says which 
 '{0}.{1}' has no 'DefaultValue', so the default written for this parameter is dropped, as 1.x dropped it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4613`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4624`
 <!-- generated:end DSH5288 -->
 
 **Cause.** A 1.x property is a parameter node without a `DefaultValue` property (a collection
@@ -970,7 +973,7 @@ parameter, for one) and has a default written after `=`. 1.x dropped it.
 {0} expects {1}, and this is {2}: its leading components are taken, which is what 1.x did; a '.dss' writes the swizzle.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1874`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1876`
 <!-- generated:end DSH5289 -->
 
 **Cause.** Rule L22. A value is wider than the place it goes -- a `float4` parameter assigned to a
@@ -1014,7 +1017,7 @@ a `/// @name` for the asset.
 '{0}.{1}' lists no pin called '{2}'; it is connected by that name once the node exists, because a node may name its pins after its properties.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4642`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4653`
 <!-- generated:end DSH5291 -->
 
 **Cause.** Rule L24. A named argument is not a pin or property the catalog lists for the class. The
@@ -1041,7 +1044,7 @@ always resolves and does not need the lookup.
 '{0}' is not declared, and as in 1.x this assignment declares it, as a local of type {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2342`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2344`
 <!-- generated:end DSH5292 -->
 
 **Cause.** Rule L26. `x = value;` in a 1.x body assigns to a name declared nowhere. 1.x declared the
@@ -1061,7 +1064,7 @@ is an error.
 A Substrate value has no compound assignment; write 'S = S + T' (Substrate.Add) or 'S = S * w' (Substrate.Weight).
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2374`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:274`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:302`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2376`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:274`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:302`
 <!-- generated:end DSH5293 -->
 
 **Cause.** An operator that Substrate values do not have. They take `A + B` (`Substrate.Add`), `A *
@@ -1084,7 +1087,7 @@ mixing, and `A = A + B;` instead of `A += B;`.
 'Substrate.{0}' is a node Unreal Engine has from {1} on; this engine does not have it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4236`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:148`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:161`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4238`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:148`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:161`
 <!-- generated:end DSH5294 -->
 
 **Cause.** A piece of Substrate sugar needs a node this engine does not have. Three messages: a
@@ -1219,7 +1222,7 @@ extension), and assign a member before reading it.
 'UE.{0}' needs {1}, and this engine's node catalog does not have it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4250`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4252`
 <!-- generated:end DSH5300 -->
 
 **Cause.** `UE.DreamPassOutput`, `UE.DreamPassBuffer` or the engine's `UE.UserSceneTexture` is

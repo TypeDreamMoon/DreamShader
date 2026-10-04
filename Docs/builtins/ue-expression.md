@@ -264,7 +264,7 @@ The value of a call, by what the catalog says of the class:
 | :-- | :-- | :-- |
 | 1 | has no output (a custom-output class) | none — the call is a statement; used as a value it is [`DSH4231`](../diagnostics/DSH4xxx.md#dsh4231) |
 | 2 | is `Custom` | the type `OutputType` gives; with `AdditionalOutputs`, a node whose outputs are named |
-| 3 | has several outputs | a node: name one, or use it where its first output — or the whole value its channel outputs make up — fits exactly. In a 1.x source a first output of no fixed width is read as that output ([`DSH5287`](../diagnostics/DSH5xxx.md#dsh5287)); otherwise `DSH5201` |
+| 3 | has several outputs | a node: name one, or use it where its first output — or the whole value its channel outputs make up — fits exactly. In a 1.x source a first output of no fixed width is read as that output ([`DSH5287`](../diagnostics/DSH5xxx.md#dsh5287)), and so is the first output of any node passed straight to a pin *(2.0.0 – 2.1.0: `DSH5201`)*; otherwise `DSH5201` |
 | 4 | has one output of a known type | that type |
 | 5 | has one output the engine does not type | as wide as the widest number on a pin the engine does not type either — or the Substrate or material value such a pin carries — else as wide as the place it is read into |
 

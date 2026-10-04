@@ -1,0 +1,7 @@
+// A node with several outputs passed straight to a pin names the output in a `.dss`, whatever the pin takes
+// (DSH5201); only a 1.x body reads it as its first output (rule L3c).
+
+export void M_NodeIntoPin(inout material m)
+{
+    m.EmissiveColor = UE.Lerp(A = UE.SceneTexture(SceneTextureId = PostProcessInput0), B = 0.0, Alpha = 0.5).rgb;
+}

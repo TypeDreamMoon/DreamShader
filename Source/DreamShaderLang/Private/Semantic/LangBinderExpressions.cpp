@@ -1800,13 +1800,15 @@ namespace UE::DreamShader::Lang::Private
 			// Legacy rule L3c: 1.x read a node with several outputs as its FIRST one wherever a value was wanted
 			// (`float2 vp = UE.ScreenPosition();`), and never asked how wide that output was. Taken where the catalog
 			// does not know the width either (a Numeric output, which is what the engine says for every unmasked one):
-			// the declared type of what it feeds is then the only width there is, as for a single-output node. An
-			// output the catalog does type keeps the exact-fit rule above.
+			// the declared type of what it feeds is then the only width there is, as for a single-output node. And at a
+			// node's pin whatever output 0 is (`UE.TransformPosition(UE.WorldPosition(), ...)`): 1.x connected it as it
+			// was, and the pin took what it uses, as it does for any value there (L22). Elsewhere an output the catalog
+			// does type keeps the exact-fit rule above.
 			if (IsLegacyScope() && Class != nullptr && Class->Outputs.Num() > 1 && To.IsNumeric() && To.Cols == 1)
 			{
 				bool bAnyWidth = false;
-				IR::TypeFromCatalogValueType(Class->Outputs[0].Type, &bAnyWidth);
-				if (bAnyWidth)
+				const IR::FIRType FirstOutput = IR::TypeFromCatalogValueType(Class->Outputs[0].Type, &bAnyWidth);
+				if (bAnyWidth || (Site == EConversionSite::Pin && FirstOutput.IsNumeric() && FirstOutput.Cols == 1))
 				{
 					Diagnostics.Info(
 						TEXT("DSH5287"),
@@ -4506,6 +4508,15 @@ namespace UE::DreamShader::Lang::Private
 						if (Bound_.Conversion == IR::EIRConversion::None)
 						{
 							bAnyError = true;
+						}
+						// Legacy rule L3c at an unconstrained pin: what arrives is the node's first output, as wide as it is.
+						if (bAnyWidth && Bound_.Conversion == IR::EIRConversion::DefaultOutput)
+						{
+							const IR::FIRType FirstOutput = ResolveNodeDefaultOf(*Argument.Value);
+							if (FirstOutput.IsNumeric() && FirstOutput.Cols == 1 && FirstOutput.Rows > WidestAnyWidthArgument)
+							{
+								WidestAnyWidthArgument = FirstOutput.Rows;
+							}
 						}
 					}
 

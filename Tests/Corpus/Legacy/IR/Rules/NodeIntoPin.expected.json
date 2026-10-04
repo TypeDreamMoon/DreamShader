@@ -1,0 +1,23 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH5287"
+	],
+	"ir": "module \"NodeIntoPin.dsm\"\n\nproduct 0 Material \"M_LiNodeIntoPin\" backend=Graph\n  legacy root \"\"\n  %0 = Reflected[TextureCoordinate](CoordinateIndex=0) : float2 @L15:C21 \"uv\"\n  %1 = TextureParameter(ParameterName=\"Source\", SortPriority=32) : Texture2D @L6:C9 \"Source\"\n  %2 = Reflected[TextureSample](TextureObject=%1, Coordinates=%0, ClassSpecifier=\"TextureSample\") : [RGB:float3, R:float, G:float, B:float, A:float, RGBA:float4] @L16:C34 \"Faded\"\n  %3 = Constant(Value=(0)) : float @L16:C114 \"Faded\"\n  %4 = Constant(Value=(0.5)) : float @L16:C127 \"Faded\"\n  %5 = Reflected[LinearInterpolate](A=%2, B=%3, Alpha=%4) : float3 @L16:C22 \"Faded\"\n  %6 = MaterialSink(EmissiveColor=%5) @L3:C1\n  sink %6\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiNodeIntoPin"
+		],
+		"nodeCounts": [
+			7
+		]
+	}
+}

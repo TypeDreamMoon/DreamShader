@@ -62,7 +62,7 @@ a diagnostic on the 1.x source, so `dsc check` on a `.dsm` shows what a migratio
 | `VirtualFunction` | `/// @asset` + `extern` prototype | |
 | `mix`, `fract`, `mod`, `vec3` | `lerp`, `frac`, `fmod`, `float3` | L2 (`DSH5277`) |
 | `F(a).Out`, `F(a, Output = "Out")`, `[k]` on a function | one call statement with a local per output, shared by equal calls | L3b |
-| `x = UE.Node()` with several outputs | `x = UE.Node().FirstOutput` | L3c (`DSH5287`) |
+| `x = UE.Node()`, or `UE.Node()` straight into a pin, with several outputs | `UE.Node().FirstOutput` | L3c (`DSH5287`) |
 | `F(a, b, R, O)` with `R` the return value | `R = F(a, b, O)`; an undeclared receiver is declared | L5 (`DSH5283`) |
 | `opt float S;` | `float S = 0.0` | L7 |
 | `SAMPLERTYPE_Normal`, `PPI_SceneColor` | `Normal`, `SceneColor` | L12 (`DSH5278`) |

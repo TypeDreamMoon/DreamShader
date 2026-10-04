@@ -63,7 +63,7 @@ The rules are tested in this exact order; the first that matches decides the out
 | 3 | **Widening from a scalar** — a scalar into a wider number | broadcast: the scalar is wired where the value is read, and the material node replicates it *(since 2.0.0)* | none; one `ConstantNVector` when the scalar is constant |
 | 4 | A narrower vector into a node's pin (2 into a `float3` pin, …) | taken as it is: what a node does with fewer components is the node's business | none |
 | 5 | **Narrowing**, in a 1.x source — a wider vector into a narrower place | its leading components (`r`, `rg`, `rgb`), said by the info [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) *(since 2.0.0)* | a `ComponentMask`, or the output pin the source node has for exactly those channels; none at a node's pin |
-| 6 | A node with several outputs into a number | its default output, when that output's type fits; in a 1.x source, a node whose first output the catalog gives no width is read as that output (info [`DSH5287`](../diagnostics/DSH5xxx.md#dsh5287)); otherwise [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201) | none |
+| 6 | A node with several outputs into a number | its default output, when that output's type fits; in a 1.x source, a node whose first output the catalog gives no width is read as that output, and at a node's pin any node is (info [`DSH5287`](../diagnostics/DSH5xxx.md#dsh5287); *2.0.0 – 2.1.0 refused the second*); otherwise [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201) | none |
 | 7 | Anything else | rejected with the site's code | — |
 
 Rule 7 covers widening a value that is **not** a scalar — input 2 into a 3 or a 4, input 3 into a 4,

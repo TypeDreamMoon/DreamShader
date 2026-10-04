@@ -349,13 +349,13 @@ schema and every runner; this section is the map.
 | :-- | --: | :-- | :-- |
 | `Parse/` | 36 | a 1.x text is accepted or refused by the legacy front end exactly as 1.x did | `Core` |
 | `Lang/` | 72 | one `ParseDreamShaderLang`, structural counts, print → parse → print is byte-identical | `Core` |
-| `IR/` | 151 | bind → build → passes → validate; the golden is the IR dump | `Core`, hand-made catalog |
+| `IR/` | 167 | bind → build → passes → validate; the golden is the IR dump | `Core`, hand-made catalog |
 | `Legacy/Parse/` | 121 | 1.x text → legacy front end (with trivia) → the 2.0 text it prints, which has to parse as 2.0 | `Core` |
-| `Legacy/IR/` | 53 | one fixture per documented 1.x rule (L2–L27), and the Substrate sugar as 1.x spells it | `Core`, hand-made catalog |
+| `Legacy/IR/` | 54 | one fixture per documented 1.x rule (L2–L27), and the Substrate sugar as 1.x spells it | `Core`, hand-made catalog |
 | `Decompile/` | 25 | `.dss` → IR → AST → text, and that text lowers to an equivalent IR | `Core`, hand-made catalog |
-| `Migrate/` | 21 | 1.x text → migrator → 2.0 text: no comment lost, it builds, the IR is equivalent | `Core`, hand-made catalog |
+| `Migrate/` | 22 | 1.x text → migrator → 2.0 text: no comment lost, it builds, the IR is equivalent | `Core`, hand-made catalog |
 | `Compile/` | 12 | the whole pipeline into assets; the golden holds the graph dump | editor |
-| `Legacy/Compile/` | 11 | the same for 1.x sources | editor |
+| `Legacy/Compile/` | 12 | the same for 1.x sources | editor |
 | `Instance/` | 10 | a `.dsi` with the sibling `.dss` its `Parent` names | editor |
 | `Roundtrip/` | 11 | `.dss` → asset → decompile service → text → asset; both dumps equal | editor |
 | `Parity/` | — | goldens only: 1.x graph captures the `Lang/Examples` sources have to reproduce | editor |

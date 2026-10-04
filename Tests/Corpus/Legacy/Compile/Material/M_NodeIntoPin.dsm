@@ -1,0 +1,10 @@
+// A node with several outputs passed straight to a pin is its first output, as 1.x connected it:
+// WorldPosition's XYZ into TransformPosition's Input.
+Shader(Name="DreamShaderTests/Generate/M_NodeIntoPin", Root="Game")
+{
+    Settings { Domain = "Surface"; ShadingModel = "Unlit"; BlendMode = "Opaque"; }
+    Outputs { vec3 Color; Base.EmissiveColor = Color; }
+    Graph {
+        Color = UE.TransformPosition(UE.WorldPosition(), Source = "World", Destination = "View");
+    }
+}

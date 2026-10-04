@@ -620,28 +620,28 @@
   "key": "AbstractClass",
   "src": "'{0}' is abstract and cannot be made into a node.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4309
+  "line": 4311
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArgumentOf",
   "src": "The '{0}' argument of '{1}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3862
+  "line": 3864
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArgumentTwice",
   "src": "'{0}' is given twice in this call to '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3790
+  "line": 3792
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArrayElement",
   "src": "This array element",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2869
+  "line": 2871
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -662,14 +662,14 @@
   "key": "ArrayInitializerCount",
   "src": "This array has {0} elements and its initializer has {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2843
+  "line": 2845
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ArrayNeedsList",
   "src": "An array is initialised with a list, as in '= { 1.0, 2.0 }'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2832
+  "line": 2834
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -683,70 +683,70 @@
   "key": "AssignToBuilderPinComponent",
   "src": "A member of a Substrate value is a pin, and a pin is connected whole; build the vector first and assign that.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2434
+  "line": 2436
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "AssignToGlobal",
   "src": "A 'uniform' is an input and a 'static const' is a constant; neither can be assigned to. Copy it into a local first.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2393
+  "line": 2395
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "AssignToInParam",
   "src": "An 'in' parameter is a function input pin and cannot be written to; declare it 'out' or 'inout', or copy it into a local.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2401
+  "line": 2403
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "AssignToNonLValue",
   "src": "The left of '=' has to be a variable, a struct field, a material pin or a swizzle of one.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2442
+  "line": 2444
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "AssignmentTarget",
   "src": "This assignment",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2480
+  "line": 2482
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "BitwiseAssignUnsupported",
   "src": "'{0}=' has no graph form; the graph carries floats, not bit patterns.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2460
+  "line": 2462
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "BitwiseNotUnsupported",
   "src": "'~' has no graph form; the graph has no integers to complement. Move the code into a '/// @custom' function.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2220
+  "line": 2222
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "BitwiseUnsupported",
   "src": "'{0}' has no graph form; the graph carries floats, not bit patterns. Move the code into a '/// @custom' function.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2301
+  "line": 2303
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CallToProduct",
   "src": "'{0}' is a {1} asset, not a function this file may call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3581
+  "line": 3583
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CalleeNotCallable",
   "src": "This is not something that can be called; a call names a function, a builtin, a type or 'UE.'/'Substrate.' followed by a node.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3116
+  "line": 3118
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -760,28 +760,28 @@
   "key": "CastFromNonNumeric",
   "src": "A value of type {0} cannot be cast to {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2617
+  "line": 2619
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CastNarrows",
   "src": "A cast from {0} to {1} drops components; write the swizzle that says which, such as '.xyz'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2632
+  "line": 2634
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CastOperand",
   "src": "This cast",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2638
+  "line": 2640
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CastToNonNumeric",
   "src": "A cast to {0} has no meaning here; only numbers and bools can be cast.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2605
+  "line": 2607
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -795,133 +795,133 @@
   "key": "ClassNotLiteral",
   "src": "'Class' takes the expression class as a quoted string.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4182
+  "line": 4184
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalBranches",
   "src": "The two halves of '?:' are {0} and {1}; they have to make one value.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2544
+  "line": 2546
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalCondition",
   "src": "The condition of '?:' has to be a single true-or-false value, and this is {0}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2513
+  "line": 2515
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalConditionWhat",
   "src": "The condition of '?:'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2518
+  "line": 2520
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalFalse",
   "src": "The 'else' half of '?:'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2551
+  "line": 2553
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConditionalTrue",
   "src": "The 'then' half of '?:'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2550
+  "line": 2552
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorArgumentType",
   "src": "A constructor takes numbers, and this is {0}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3209
+  "line": 3211
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorComponent",
   "src": "This constructor component",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3268
+  "line": 3270
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorCount",
   "src": "{0} needs {1} components and these arguments supply {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3241
+  "line": 3243
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorMatrixArgument",
   "src": "A matrix cannot be a constructor component.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3220
+  "line": 3222
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorNamedArguments",
   "src": "A constructor takes its components in order; named arguments belong on 'UE.' nodes and on function calls.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3165
+  "line": 3167
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ConstructorNoArguments",
   "src": "{0}() has no components; write the value, as in 'float3(0.0)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3175
+  "line": 3177
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpArgumentTwice",
   "src": "The '{0}' argument of '{1}' is given twice.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3460
+  "line": 3462
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpArityExact",
   "src": "'{0}' takes {1} arguments and {2} were given.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3507
+  "line": 3509
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpArityRange",
   "src": "'{0}' takes between {1} and {2} arguments, and {3} were given.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3512
+  "line": 3514
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpMissingArgument",
   "src": "'{0}' is missing its '{1}' argument.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3488
+  "line": 3490
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpNoPins",
   "src": "'{0}' takes its arguments in order and has no argument called '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3426
+  "line": 3428
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpNoSuchPin",
   "src": "'{0}' has no argument called '{1}'; its arguments are {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3430
+  "line": 3432
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "CoreOpTooManyArguments",
   "src": "'{0}' takes at most {1} arguments.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3446
+  "line": 3448
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -935,140 +935,140 @@
   "key": "CustomOutputAsValue",
   "src": "'{0}.{1}' is an output node, not a value: write it as a statement on a line of its own.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4792
+  "line": 4803
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "DynamicInputTwice",
   "src": "'{0}' is connected twice in this call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4565
+  "line": 4576
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "DynamicInputType",
   "src": "'{0}' becomes an input of the custom node, which carries a number or a texture, and this argument is {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4591
+  "line": 4602
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "EnumNotSpelling",
   "src": "'{0}' is an enumerated property; write one of its values, as in 'SamplerType = Normal'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4025
+  "line": 4027
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ExpressionNeedsClass",
   "src": "'UE.Expression' reaches a node this language has no name for, so it needs 'Class = \"MaterialExpressionName\"'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4215
+  "line": 4217
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "GlslAlias",
   "src": "'{0}' is the GLSL spelling; this language is HLSL, so write '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3035
+  "line": 3037
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "HyperbolicUnsupported",
   "src": "The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it in a '/// @custom' body, where the shader compiler has it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3365
+  "line": 3367
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "IncrementNeedsLValue",
   "src": "'++' and '--' write back into what they read, so they need a variable.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2234
+  "line": 2236
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "InitializerElement",
   "src": "This initializer element",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2778
+  "line": 2780
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "InitializerListBadTarget",
   "src": "A value of type {0} cannot be written as an initializer list.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2749
+  "line": 2751
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "InitializerListCount",
   "src": "{0} needs {1} components and this list supplies {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2810
+  "line": 2812
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "InitializerListNoTarget",
   "src": "An initializer list only has a meaning against a declared type; it cannot stand on its own.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2681
+  "line": 2683
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "IntegerDivide",
   "src": "Both sides of this '/' are integers, and the material graph has no integer division; write 'float(a) / b' for the fraction, or 'floor(float(a) / b)' for the whole part.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2053
+  "line": 2055
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyDefaultDropped",
   "src": "'{0}.{1}' has no 'DefaultValue', so the default written for this parameter is dropped, as 1.x dropped it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4618
+  "line": 4629
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyDefaultOutput",
   "src": "'{0}' has more than one output and is read as its first, '{1}', which is what 1.x did; a '.dss' names the output.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1816
+  "line": 1818
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyEnumerator",
   "src": "'{0}' is not spelled like a value of '{1}', and 1.x matched enumerators loosely, so this is '{2}'; a '.dss' writes '{2}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4051
+  "line": 4053
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyGlslAlias",
   "src": "'{0}' is the GLSL spelling of '{1}'; a 1.x source may use it and it is read as '{1}', and a '.dss' writes '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3021
+  "line": 3023
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyImplicitLocal",
   "src": "'{0}' is not declared, and as in 1.x this assignment declares it, as a local of type {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2347
+  "line": 2349
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyLateBoundPin",
   "src": "'{0}.{1}' lists no pin called '{2}'; it is connected by that name once the node exists, because a node may name its pins after its properties.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4647
+  "line": 4658
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "LegacyRequiredPin",
   "src": "'{0}.{1}' leaves its required '{2}' pin unconnected, which 1.x allowed and the engine reports when the material compiles.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4751
+  "line": 4762
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1082,7 +1082,7 @@
   "key": "LegacyTruncation",
   "src": "{0} expects {1}, and this is {2}: its leading components are taken, which is what 1.x did; a '.dss' writes the swizzle.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1879
+  "line": 1881
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1096,14 +1096,14 @@
   "key": "MissingArgument",
   "src": "'{0}' needs an argument for '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3842
+  "line": 3844
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NamedOnly",
   "src": "'{0}.{1}' takes named arguments: write 'Pin = value'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4400
+  "line": 4402
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1117,7 +1117,7 @@
   "key": "NoConversion",
   "src": "{0} expects {1}, and this is {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1908
+  "line": 1910
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1131,56 +1131,56 @@
   "key": "NoSuchMethod",
   "src": "A value of type {0} has no method '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2986
+  "line": 2988
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchParameter",
   "src": "'{0}' has no parameter called '{1}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3769
+  "line": 3771
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchParameterDidYouMean",
   "src": "'{0}' has no parameter called '{1}'; did you mean '{2}'?",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3773
+  "line": 3775
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchPinOrProperty",
   "src": "'{0}.{1}' has no pin or property called '{2}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4699
+  "line": 4710
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchPinOrPropertyDidYouMean",
   "src": "'{0}.{1}' has no pin or property called '{2}'; did you mean '{3}'?",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4704
+  "line": 4715
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NoSuchTextureMethod",
   "src": "A texture has no '{0}' method; it has 'Sample' and 'SampleLevel'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4899
+  "line": 4910
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NodeNeedsNamedOutput",
   "src": "{0} expects {1}, and '{2}' has more than one output; name the one you mean: {3}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1839
+  "line": 1841
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "NodeNeedsOutput",
   "src": "{0} expects {1}, and this node has more than one output; name the one you mean.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 1835
+  "line": 1837
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1201,91 +1201,91 @@
   "key": "NotConstructible",
   "src": "A value of type {0} cannot be constructed; it comes from a declaration or a node.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3154
+  "line": 3156
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OpNotCallable",
   "src": "'{0}' is not an operation this language spells as a call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2105
+  "line": 2107
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OperandNotNumeric",
   "src": "'{0}' works on numbers, and this is {1}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2001
+  "line": 2003
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OperandOf",
   "src": "'{0}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2122
+  "line": 2124
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OutArgumentNotLValue",
   "src": "'{0}' is an out parameter of '{1}', so its argument has to be a variable.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3874
+  "line": 3876
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "OutArgumentType",
   "src": "'{0}' writes back {1}, and this variable is {2}; an out argument has to match exactly.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3903
+  "line": 3905
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PinArgumentNotReflectedCall",
   "src": "'Pin[{0}] = ...' connects a node's input pin by its engine index, and only a 'UE.' or 'Substrate.' node call has one; pass this argument by name or by position.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2926
+  "line": 2928
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PinIndexOutOfRange",
   "src": "'{0}.{1}' has {2} input pin(s), counted from 0, and this argument connects pin {3}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4375
+  "line": 4377
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PinOf",
   "src": "The '{0}' pin of '{1}.{2}'",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4502
+  "line": 4504
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PinTwice",
   "src": "'{0}' is connected twice in this call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4457
+  "line": 4459
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PropertyNotConstant",
   "src": "'{0}' is written into the node itself, not connected to it, so its value has to be known at compile time.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4138
+  "line": 4140
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PropertyNotSpelling",
   "src": "'{0}' takes a name or an asset path; write it as a quoted string.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4096
+  "line": 4098
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "PropertyTwice",
   "src": "'{0}' is set twice in this call.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4527
+  "line": 4538
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1299,91 +1299,91 @@
   "key": "RequiredPin",
   "src": "'{0}.{1}' leaves its required '{2}' pin unconnected; unless the node reads a default for it, the engine reports it when the material compiles.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4768
+  "line": 4779
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "RequiredPinOrConst",
   "src": "'{0}.{1}' leaves its required '{2}' pin unconnected and '{3}' unset; unless the node reads a default for it, the engine reports it when the material compiles.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4773
+  "line": 4784
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ResultReceiverNotLValue",
   "src": "'{0}' hands its return value to the argument in this place, so the argument has to be a variable.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3930
+  "line": 3932
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "ResultReceiverType",
   "src": "'{0}' returns {1}, and the variable receiving it is {2}; a receiver has to match exactly.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3948
+  "line": 3950
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleArity",
   "src": "'Sample' is written 'Tex.Sample(UV)' or 'Tex.Sample(Sampler, UV)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4944
+  "line": 4955
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleLevelArgument",
   "src": "The mip level of a texture sample",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4981
+  "line": 4992
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleLevelArgument2",
   "src": "The mip level of a texture sample",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 5070
+  "line": 5081
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleLevelArity",
   "src": "'SampleLevel' is written 'Tex.SampleLevel(UV, Level)' or 'Tex.SampleLevel(Sampler, UV, Level)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4943
+  "line": 4954
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleNamedArguments",
   "src": "A texture sample takes its arguments in order: an optional sampler, the coordinates, and for 'SampleLevel' the mip level.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4910
+  "line": 4921
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleNotSampler",
   "src": "The second argument of 'Texture2DSample' is the sampler, and this is {0}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 5039
+  "line": 5050
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleNotTexture",
   "src": "The first argument of a texture sample is the texture, and this is {0}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 5023
+  "line": 5034
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleUV",
   "src": "The coordinates of a texture sample",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4972
+  "line": 4983
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SampleUV2",
   "src": "The coordinates of a texture sample",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 5062
+  "line": 5073
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1397,49 +1397,49 @@
   "key": "StructConstructorCount",
   "src": "'{0}' has {1} fields and this call supplies {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3313
+  "line": 3315
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "StructField2",
   "src": "This struct field",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2727
+  "line": 2729
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "StructFieldArgument",
   "src": "This struct field",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3336
+  "line": 3338
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "StructInitializerCount",
   "src": "'{0}' has {1} fields and this list has {2}.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2705
+  "line": 2707
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SubstrateClass",
   "src": "'Substrate.' already names the node, so it takes no 'Class' argument.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4174
+  "line": 4176
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SubstrateCompoundAssign",
   "src": "A Substrate value has no compound assignment; write 'S = S + T' (Substrate.Add) or 'S = S * w' (Substrate.Weight).",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2378
+  "line": 2380
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "SubstrateNodeNeedsNewerEngine",
   "src": "'Substrate.{0}' is a node Unreal Engine has from {1} on; this engine does not have it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4241
+  "line": 4243
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1474,21 +1474,21 @@
   "key": "SwizzleRepeatTarget",
   "src": "'.{0}' names one component twice, so this assignment would write it twice with no order between the two; assign each component on its own line.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2411
+  "line": 2413
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "Texture2DSampleArity",
   "src": "'Texture2DSample' is written 'Texture2DSample(Tex, TexSampler, UV)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 5011
+  "line": 5022
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "Texture2DSampleLevelArity",
   "src": "'Texture2DSampleLevel' is written 'Texture2DSampleLevel(Tex, TexSampler, UV, Level)'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 5010
+  "line": 5021
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1502,14 +1502,14 @@
   "key": "TooManyArguments",
   "src": "'{0}' takes {1} arguments and more were given.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3716
+  "line": 3718
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "TooManyPositional",
   "src": "'{0}.{1}' takes {2} arguments in order; name the rest.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4417
+  "line": 4419
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1523,14 +1523,14 @@
   "key": "UENodeNeedsNewerEngine",
   "src": "'UE.{0}' needs {1}, and this engine's node catalog does not have it.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4255
+  "line": 4257
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnaryUnsupported",
   "src": "This operator has no graph form.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 2263
+  "line": 2265
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1551,21 +1551,21 @@
   "key": "UnknownCallee",
   "src": "'{0}' is not a function, a builtin or a struct.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3103
+  "line": 3105
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownCalleeDidYouMean",
   "src": "'{0}' is not declared; did you mean '{1}'? Names are case-sensitive.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3106
+  "line": 3108
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownClass",
   "src": "'{0}' is not a material expression class this engine has.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4203
+  "line": 4205
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1579,14 +1579,14 @@
   "key": "UnknownEnumerator",
   "src": "'{0}' is not a value of '{1}' on '{2}'.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4066
+  "line": 4068
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownEnumeratorDidYouMean",
   "src": "'{0}' is not a value of '{1}'; did you mean '{2}'?",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4071
+  "line": 4073
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1642,14 +1642,14 @@
   "key": "UnknownReflected",
   "src": "'{0}.{1}' is not a node this engine has; 'UE.Expression(Class = \"...\")' reaches one the language has no name for.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4281
+  "line": 4283
  },
  {
   "ns": "DreamShader.Binder.Expressions",
   "key": "UnknownReflectedDidYouMean",
   "src": "'{0}.{1}' is not a node; did you mean '{0}.{2}'? Node names are case-sensitive.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 4269
+  "line": 4271
  },
  {
   "ns": "DreamShader.Binder.Expressions",
@@ -1670,7 +1670,7 @@
   "key": "VoidCallAsValue",
   "src": "'{0}' returns nothing, so its call has no value; its results come back through its out parameters.",
   "file": "DreamShaderLang\\Private\\Semantic\\LangBinderExpressions.cpp",
-  "line": 3977
+  "line": 3979
  },
  {
   "ns": "DreamShader.Binder.Instance",

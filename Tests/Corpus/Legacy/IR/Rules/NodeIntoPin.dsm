@@ -1,0 +1,19 @@
+// Rule L3c at a pin: a node with several outputs passed straight to a pin is its first output, whatever its width,
+// as 1.x connected it (DSH5287); an unconstrained pin takes that output as wide as it is.
+Shader(Name="M_LiNodeIntoPin")
+{
+    Properties = {
+        TextureObjectParameter Source;
+    }
+
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        float2 uv = UE.TexCoord(Index = 0);
+        vec3 Faded = UE.Lerp(A = UE.Expression(Class="TextureSample", TextureObject=Source, Coordinates=uv), B = 0.0, Alpha = 0.5);
+        Color = Faded;
+    }
+}

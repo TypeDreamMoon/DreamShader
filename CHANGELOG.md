@@ -79,6 +79,11 @@
   generated asset it was given. It names them by their project-relative path now, like
   `DreamShader.SourceFile`. The key format is `DSK4`, so every asset rebuilds once after upgrading. See
   [Caching](Docs/generation/caching.md).
+- **A node with several outputs passed straight to a pin is its first output in a 1.x body.**
+  `UE.TransformPosition(UE.WorldPosition(), ...)` was `DSH5201`: legacy rule L3c read a node as its first output
+  only where the catalog gives that output no width. 1.x connected output 0 to any pin, and so does the front end
+  now, with the info `DSH5287`; `dsc migrate` writes the output's name (`UE.WorldPosition().XYZ`). A `.dss` still
+  names the output.
 - **Every corpus fixture runs.** A fixture and a header with one base name made one test name, and only the
   first file registered ran: `Legacy/IR/Rules/GraphFunctionHoist.dsm` sat behind its own `.dsh`. The fixture keeps
   the name and the header's test is `GraphFunctionHoist_dsh`.

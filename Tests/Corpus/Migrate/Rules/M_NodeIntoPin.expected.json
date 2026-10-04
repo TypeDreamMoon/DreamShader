@@ -1,0 +1,8 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH5287"
+	],
+	"text": "// Rule L3c at a pin: a node with several outputs passed straight to a pin is written with the output 1.x took.\n\n/// @sort 32\nuniform Texture2D Source;\n\n/// @name DreamShaderTests/Migrate/M_MgNodeIntoPin\nexport void M_MgNodeIntoPin(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float2 uv = UE.TexCoord(Index = 0);\n    float3 Faded = UE.Lerp(A = UE.TextureSample(TextureObject = Source, Coordinates = uv).RGB, B = 0.0, Alpha = 0.5);\n    Color = Faded;\n    Base.EmissiveColor = Color;\n}\n"
+}

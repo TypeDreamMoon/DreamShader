@@ -64,7 +64,9 @@ engine (`dsc export-catalog` writes it out):
 - a node with several outputs is read by naming one (`UE.ScreenPosition().ViewportUV`), or used
   whole where its first output — or the value its channel outputs make up (`float4 VC =
   UE.VertexColor();`) — fits exactly. In a 1.x source, a node whose first output has no fixed width
-  is read as that output ([`DSH5287`](../diagnostics/DSH5xxx.md#dsh5287)).
+  is read as that output ([`DSH5287`](../diagnostics/DSH5xxx.md#dsh5287)), and so is any node passed
+  straight to a pin — `UE.TransformPosition(UE.WorldPosition(), …)` takes `XYZ`, as 1.x connected it
+  *(2.0.0 – 2.1.0 refused one whose first output has a fixed width with [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201))*.
 
 None of these builtins produces a texture object, a `MaterialAttributes` value or a Substrate value.
 See [Conversions](../graph/conversions.md).
