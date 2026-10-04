@@ -1,0 +1,18 @@
+// M_DemoLivingWall.dss -- the wall, overgrown by CP_LivingWall's reaction-diffusion field: where the coral (V) is, the
+// plaster darkens and glows. With the pipeline off its export is cleared to the bare field, and the wall is the plain
+// one of M_DemoSurface.
+uniform float3 BaseTint = float3(0.55, 0.52, 0.48);
+uniform float  Rough = 0.85;
+uniform float3 GlowDeep = float3(0.05, 0.25, 1.0);
+uniform float3 GlowBright = float3(0.1, 1.0, 0.7);
+uniform float  GlowStrength = 3.5;
+
+export void M_DemoLivingWall(inout material m)
+{
+    float2 UV = UE.TexCoord(Index = 0);
+    float V = UE.DreamPassBuffer(Pipeline = "CP_LivingWall", Buffer = "Field", Coordinates = UV).g;
+    float Coral = smoothstep(0.08, 0.3, V);
+    m.BaseColor = lerp(BaseTint, BaseTint * 0.12, Coral);
+    m.Roughness = lerp(Rough, 0.35, Coral);
+    m.EmissiveColor = lerp(GlowDeep, GlowBright, smoothstep(0.2, 0.4, V)) * Coral * GlowStrength;
+}

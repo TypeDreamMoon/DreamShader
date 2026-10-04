@@ -493,6 +493,7 @@ namespace UE::DreamShader::IR
 		case EIRProductKind::MaterialLayer:      return TEXT("MaterialLayer");
 		case EIRProductKind::MaterialLayerBlend: return TEXT("MaterialLayerBlend");
 		case EIRProductKind::MaterialInstance:   return TEXT("MaterialInstance");
+		case EIRProductKind::PassPipeline:       return TEXT("PassPipeline");
 		}
 
 		return TEXT("Material");

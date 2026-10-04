@@ -11,6 +11,7 @@
 #include "Styling/AppStyle.h"
 #include "Styling/SlateTypes.h"
 #include "ThumbnailRendering/ThumbnailManager.h"
+#include "Widgets/Images/SImage.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
@@ -69,6 +70,10 @@ namespace UE::DreamShader::Editor::Private
 			{
 				return FText::Format(LOCTEXT("FunctionUsedBy", "function · used by {0} material(s)"), FText::AsNumber(Entry.Source->Dependents.Num()));
 			}
+			if (Entry.Source->IsPipeline())
+			{
+				return FText::Format(LOCTEXT("PipelineState", "pass pipeline · {0}"), GetBrowserStatusVisual(Entry.Source->Status).Label);
+			}
 			return GetBrowserStatusVisual(Entry.Source->Status).Label;
 		}
 
@@ -115,9 +120,23 @@ namespace UE::DreamShader::Editor::Private
 				}
 				if (ColumnId == ColumnName)
 				{
+					// A pipeline's badge in front of its name: the one row kind whose asset is not a material.
+					const FSlateBrush* const Badge = GetBrowserSourceKindBadge(*Entry);
 					return SNew(SBox).VAlign(VAlign_Center).Padding(4.0f, 0.0f)
 					[
-						SNew(STextBlock).Text(FText::FromString(Entry->GetDisplayName())).ToolTipText(NameTip)
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.0f, 0.0f, 4.0f, 0.0f)
+						[
+							SNew(SImage)
+							.Visibility(Badge ? EVisibility::Visible : EVisibility::Collapsed)
+							.Image(Badge)
+							.ColorAndOpacity(FSlateColor::UseForeground())
+							.ToolTipText(LOCTEXT("PipelineBadgeTip", "A Custom Pass pipeline source (.dsp)."))
+						]
+						+ SHorizontalBox::Slot().FillWidth(1.0f).VAlign(VAlign_Center)
+						[
+							SNew(STextBlock).Text(FText::FromString(Entry->GetDisplayName())).ToolTipText(NameTip)
+						]
 					];
 				}
 				if (ColumnId == ColumnRoot)
@@ -380,6 +399,20 @@ namespace UE::DreamShader::Editor::Private
 			// the shared pool renders (and caches) the thumbnail on demand.
 			TSharedRef<FAssetThumbnail> Thumbnail = MakeShared<FAssetThumbnail>(Item->Asset->AssetData, 96, 96, UThumbnailManager::Get().GetSharedThumbnailPool());
 			ThumbWidget = Thumbnail->MakeThumbnailWidget();
+		}
+		else if (const FSlateBrush* const Badge = GetBrowserSourceKindTileBadge(*Item))
+		{
+			// A pipeline not compiled yet: its kind, where a material would show its status glyph.
+			ThumbWidget = SNew(SBorder)
+				.BorderImage(FAppStyle::Get().GetBrush("Brushes.Header"))
+				.HAlign(HAlign_Center)
+				.VAlign(VAlign_Center)
+				[
+					SNew(SBox).WidthOverride(64.0f).HeightOverride(64.0f)
+					[
+						SNew(SImage).Image(Badge).ColorAndOpacity(FSlateColor::UseForeground())
+					]
+				];
 		}
 		else
 		{

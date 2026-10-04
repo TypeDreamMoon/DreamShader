@@ -12,6 +12,9 @@
 #include "DreamShaderSourceFileUtils.h"
 #include "Emitter/DreamShaderIRAssets.h"
 #include "Lang/LangParser.h"
+// `.dsp`: the material and shader references of a parsed pipeline, and where a shader reference lands.
+#include "Lang/LangPipelineSource.h"
+#include "Pass/DreamShaderPassShaderText.h"
 #include "Pipeline/DreamShaderCompilePipelineInternal.h"
 
 #include "HAL/FileManager.h"
@@ -30,7 +33,7 @@ namespace UE::DreamShader::Editor::Compiler
 		bool IsDreamShaderIndexedSource(const FString& Path)
 		{
 			const Lang::ELangFileKind Kind = Lang::GetLangFileKindFromPath(Path);
-			return Kind == Lang::ELangFileKind::Dss || Kind == Lang::ELangFileKind::Dsi;
+			return Kind == Lang::ELangFileKind::Dss || Kind == Lang::ELangFileKind::Dsi || Kind == Lang::ELangFileKind::Dsp;
 		}
 
 		/** A Parent written as a path rather than as a bare product name. */
@@ -163,6 +166,75 @@ namespace UE::DreamShader::Editor::Compiler
 				Record.ProductName = GetDreamShaderObjectName(Product.ObjectPath);
 				Record.ObjectPath = Product.ObjectPath;
 				Record.Kind = Product.Kind;
+				// The source reads the buffers as a whole, whichever of its products the node sits in.
+				Record.PassPipelineReferences = Resolution.PassPipelineReferences;
+			}
+		}
+
+		/**
+		 * A `.dsp`, parse only: its one product, named by the binder's rule (the file stem), and its material and shader
+		 * references as written. Resolving a `.dsp` would need its materials, which is what the index is for.
+		 */
+		void IndexDreamShaderPipelineSource(const FString& SourceFilePath, TArray<FDreamShaderProductRecord>& OutRecords)
+		{
+			FString RawText;
+			if (!FFileHelper::LoadFileToString(RawText, *SourceFilePath))
+			{
+				return;
+			}
+
+			const UE::DreamShader::FDreamShaderDefineTable Defines = UE::DreamShader::ResolveDreamShaderDefines();
+			UE::DreamShader::FDreamShaderPreprocessResult Preprocessed;
+			UE::DreamShader::FDreamShaderTextError PreprocessError;
+			if (!UE::DreamShader::PreprocessDreamShaderSource(RawText, SourceFilePath, Defines, Preprocessed, PreprocessError, GetDreamShaderPreprocessDialectForFile(SourceFilePath)))
+			{
+				return;
+			}
+
+			const Lang::FLangSourceText Text(SourceFilePath, Preprocessed.Text);
+			const Lang::FLangParseResult Parsed = Lang::ParseDreamShaderLang(Text);
+
+			IR::FIRProduct Product;
+			Product.Kind = IR::EIRProductKind::PassPipeline;
+			Product.Name = FPaths::GetBaseFilename(SourceFilePath);
+
+			FString PackageName;
+			FString ObjectPath;
+			FString LeafName;
+			FDreamShaderError DestinationError;
+			if (!ResolveIRProductObjectPath(Product, SourceFilePath, PackageName, ObjectPath, LeafName, DestinationError))
+			{
+				return;
+			}
+
+			FDreamShaderProductRecord& Record = OutRecords.AddDefaulted_GetRef();
+			Record.SourceFilePath = SourceFilePath;
+			Record.ProductName = GetDreamShaderObjectName(ObjectPath);
+			Record.ObjectPath = ObjectPath;
+			Record.Kind = IR::EIRProductKind::PassPipeline;
+
+			// A file that does not parse still names its references where the parser got to them.
+			if (Parsed.Module.IsValid())
+			{
+				TArray<FString> ShaderReferences;
+				Lang::CollectDreamShaderPipelineReferences(*Parsed.Module, Record.MaterialReferences, ShaderReferences);
+				for (const FString& Reference : ShaderReferences)
+				{
+					FString VirtualPath;
+					FString FilePath;
+					ResolveDreamPassShaderReference(Reference, SourceFilePath, VirtualPath, FilePath);
+					if (!FilePath.IsEmpty())
+					{
+						Record.ShaderFiles.AddUnique(FilePath);
+					}
+				}
+				// What the inline HLSL includes is a shader file of the pipeline as well: an edit of it rebuilds it.
+				TArray<FString> InlineIncludes;
+				CollectDreamPassInlineHlslIncludeFiles(*Parsed.Module, SourceFilePath, InlineIncludes);
+				for (const FString& FilePath : InlineIncludes)
+				{
+					Record.ShaderFiles.AddUnique(FilePath);
+				}
 			}
 		}
 
@@ -176,9 +248,72 @@ namespace UE::DreamShader::Editor::Compiler
 			case IR::EIRProductKind::MaterialFunction:
 			case IR::EIRProductKind::MaterialLayer:
 			case IR::EIRProductKind::MaterialLayerBlend:
+			case IR::EIRProductKind::PassPipeline:
 				return false;
 			}
 			return false;
+		}
+
+		/** The product a `.dsp`'s `Material = "..."` names, with no diagnostics: a material or an instance, by the `.dsi` Parent rule. */
+		const FDreamShaderProductRecord* ResolveDreamShaderPipelineMaterialQuietly(const FDreamShaderProductIndex& Index, const FDreamShaderProductRecord& Pipeline, const FString& InReference)
+		{
+			const FString Reference = InReference.TrimStartAndEnd();
+			if (Reference.IsEmpty())
+			{
+				return nullptr;
+			}
+
+			if (IsDreamShaderParentPathSpelling(Reference))
+			{
+				FString ObjectPath;
+				FDreamShaderError Error;
+				if (!Private::TryResolveDreamShaderAssetReference(Reference, ObjectPath, Error, UMaterialInterface::StaticClass()))
+				{
+					return nullptr;
+				}
+				const FDreamShaderProductRecord* Material = Index.FindByObjectPath(ObjectPath);
+				return Material && CanDreamShaderProductBeInstanced(Material->Kind) ? Material : nullptr;
+			}
+
+			const UE::DreamShader::FDreamShaderSourceRoot* Root = UE::DreamShader::FindSourceRootForFile(Pipeline.SourceFilePath);
+			TArray<const FDreamShaderProductRecord*> Matches;
+			Index.FindByName(Root ? Root->Directory : FString(), Reference, Matches);
+			Matches.RemoveAll([](const FDreamShaderProductRecord* Candidate)
+			{
+				return !CanDreamShaderProductBeInstanced(Candidate->Kind);
+			});
+			return Matches.Num() == 1 ? Matches[0] : nullptr;
+		}
+
+		/** The `.dsp` product a `.dss`'s `UE.DreamPassBuffer(Pipeline = "...")` names, with no diagnostics. */
+		const FDreamShaderProductRecord* ResolveDreamShaderPassPipelineQuietly(const FDreamShaderProductIndex& Index, const FDreamShaderProductRecord& Reader, const FString& InReference)
+		{
+			const FString Reference = InReference.TrimStartAndEnd();
+			if (Reference.IsEmpty())
+			{
+				return nullptr;
+			}
+
+			if (IsDreamShaderParentPathSpelling(Reference))
+			{
+				FString ObjectPath;
+				FDreamShaderError Error;
+				if (!Private::TryResolveDreamShaderAssetReference(Reference, ObjectPath, Error))
+				{
+					return nullptr;
+				}
+				const FDreamShaderProductRecord* Pipeline = Index.FindByObjectPath(ObjectPath);
+				return Pipeline && Pipeline->Kind == IR::EIRProductKind::PassPipeline ? Pipeline : nullptr;
+			}
+
+			const UE::DreamShader::FDreamShaderSourceRoot* Root = UE::DreamShader::FindSourceRootForFile(Reader.SourceFilePath);
+			TArray<const FDreamShaderProductRecord*> Matches;
+			Index.FindByName(Root ? Root->Directory : FString(), Reference, Matches);
+			Matches.RemoveAll([](const FDreamShaderProductRecord* Candidate)
+			{
+				return Candidate->Kind != IR::EIRProductKind::PassPipeline;
+			});
+			return Matches.Num() == 1 ? Matches[0] : nullptr;
 		}
 
 		/** The parent of an instance record, with no diagnostics: the dependency edges and the dependents query. */
@@ -254,13 +389,17 @@ namespace UE::DreamShader::Editor::Compiler
 			FIndexedFile& Entry = Files.FindOrAdd(Source);
 			Entry.Timestamp = Timestamp;
 			Entry.Records.Reset();
-			if (Lang::GetLangFileKindFromPath(Source) == Lang::ELangFileKind::Dsi)
+			switch (Lang::GetLangFileKindFromPath(Source))
 			{
+			case Lang::ELangFileKind::Dsi:
 				IndexDreamShaderInstanceSource(Source, Entry.Records);
-			}
-			else
-			{
+				break;
+			case Lang::ELangFileKind::Dsp:
+				IndexDreamShaderPipelineSource(Source, Entry.Records);
+				break;
+			default:
 				IndexDreamShaderLang2Source(Source, Entry.Records);
+				break;
 			}
 		}
 
@@ -340,6 +479,71 @@ namespace UE::DreamShader::Editor::Compiler
 				}
 				const FDreamShaderProductRecord* Parent = ResolveDreamShaderInstanceParentQuietly(*this, Record);
 				if (Parent && Parent->SourceFilePath.Equals(NormalizedParentSource, ESearchCase::IgnoreCase))
+				{
+					OutRecords.Add(&Record);
+				}
+			}
+		}
+	}
+
+	void FDreamShaderProductIndex::FindPipelinesUsingSource(const FString& MaterialSourceFile, TArray<const FDreamShaderProductRecord*>& OutRecords) const
+	{
+		using namespace DreamShaderProductIndexDetail;
+
+		OutRecords.Reset();
+		const FString NormalizedMaterialSource = UE::DreamShader::NormalizeSourceFilePath(MaterialSourceFile);
+		for (const TPair<FString, FIndexedFile>& Pair : Files)
+		{
+			for (const FDreamShaderProductRecord& Record : Pair.Value.Records)
+			{
+				if (Record.Kind != IR::EIRProductKind::PassPipeline)
+				{
+					continue;
+				}
+				for (const FString& Reference : Record.MaterialReferences)
+				{
+					const FDreamShaderProductRecord* Material = ResolveDreamShaderPipelineMaterialQuietly(*this, Record, Reference);
+					if (Material && Material->SourceFilePath.Equals(NormalizedMaterialSource, ESearchCase::IgnoreCase))
+					{
+						OutRecords.AddUnique(&Record);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	void FDreamShaderProductIndex::FindPassBufferReadersOfSource(const FString& PipelineSourceFile, TArray<const FDreamShaderProductRecord*>& OutRecords) const
+	{
+		using namespace DreamShaderProductIndexDetail;
+
+		OutRecords.Reset();
+		const FString NormalizedPipelineSource = UE::DreamShader::NormalizeSourceFilePath(PipelineSourceFile);
+		for (const TPair<FString, FIndexedFile>& Pair : Files)
+		{
+			for (const FDreamShaderProductRecord& Record : Pair.Value.Records)
+			{
+				for (const FString& Reference : Record.PassPipelineReferences)
+				{
+					const FDreamShaderProductRecord* Pipeline = ResolveDreamShaderPassPipelineQuietly(*this, Record, Reference);
+					if (Pipeline && Pipeline->SourceFilePath.Equals(NormalizedPipelineSource, ESearchCase::IgnoreCase))
+					{
+						OutRecords.AddUnique(&Record);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	void FDreamShaderProductIndex::FindPipelines(TArray<const FDreamShaderProductRecord*>& OutRecords) const
+	{
+		OutRecords.Reset();
+		for (const TPair<FString, FIndexedFile>& Pair : Files)
+		{
+			for (const FDreamShaderProductRecord& Record : Pair.Value.Records)
+			{
+				if (Record.Kind == IR::EIRProductKind::PassPipeline)
 				{
 					OutRecords.Add(&Record);
 				}
@@ -504,6 +708,94 @@ namespace UE::DreamShader::Editor::Compiler
 				Visited.Add(Instance->SourceFilePath);
 				OutInstanceSourceFiles.Add(Instance->SourceFilePath);
 				Pending.Add(Instance->SourceFilePath);
+			}
+		}
+	}
+
+	void CollectPipelineDependents(const FString& SourceFilePath, TArray<FString>& OutPipelineSourceFiles)
+	{
+		OutPipelineSourceFiles.Reset();
+
+		FDreamShaderProductIndex& Index = FDreamShaderProductIndex::Get();
+		Index.Refresh();
+
+		const FString Start = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		TArray<const FDreamShaderProductRecord*> Pipelines;
+		Index.FindPipelinesUsingSource(Start, Pipelines);
+		for (const FDreamShaderProductRecord* Pipeline : Pipelines)
+		{
+			if (!Pipeline->SourceFilePath.Equals(Start, ESearchCase::IgnoreCase))
+			{
+				OutPipelineSourceFiles.AddUnique(Pipeline->SourceFilePath);
+			}
+		}
+	}
+
+	void CollectPassBufferDependents(const FString& PipelineSourceFile, TArray<FString>& OutSourceFiles)
+	{
+		OutSourceFiles.Reset();
+
+		FDreamShaderProductIndex& Index = FDreamShaderProductIndex::Get();
+		Index.Refresh();
+
+		const FString Start = UE::DreamShader::NormalizeSourceFilePath(PipelineSourceFile);
+		TArray<const FDreamShaderProductRecord*> Readers;
+		Index.FindPassBufferReadersOfSource(Start, Readers);
+		for (const FDreamShaderProductRecord* Reader : Readers)
+		{
+			if (!Reader->SourceFilePath.Equals(Start, ESearchCase::IgnoreCase))
+			{
+				OutSourceFiles.AddUnique(Reader->SourceFilePath);
+			}
+		}
+	}
+
+	void FindPipelineMaterialSourceFiles(const FString& PipelineSourceFile, TArray<FString>& OutSourceFiles)
+	{
+		using namespace DreamShaderProductIndexDetail;
+
+		OutSourceFiles.Reset();
+
+		FDreamShaderProductIndex& Index = FDreamShaderProductIndex::Get();
+		Index.Refresh();
+
+		TArray<const FDreamShaderProductRecord*> Records;
+		Index.FindBySource(PipelineSourceFile, Records);
+		for (const FDreamShaderProductRecord* Record : Records)
+		{
+			if (Record->Kind != IR::EIRProductKind::PassPipeline)
+			{
+				continue;
+			}
+			for (const FString& Reference : Record->MaterialReferences)
+			{
+				if (const FDreamShaderProductRecord* Material = ResolveDreamShaderPipelineMaterialQuietly(Index, *Record, Reference))
+				{
+					OutSourceFiles.AddUnique(Material->SourceFilePath);
+				}
+			}
+		}
+	}
+
+	void FindPassBufferPipelineSourceFiles(const FString& SourceFilePath, TArray<FString>& OutPipelineSourceFiles)
+	{
+		using namespace DreamShaderProductIndexDetail;
+
+		OutPipelineSourceFiles.Reset();
+
+		FDreamShaderProductIndex& Index = FDreamShaderProductIndex::Get();
+		Index.Refresh();
+
+		TArray<const FDreamShaderProductRecord*> Records;
+		Index.FindBySource(SourceFilePath, Records);
+		for (const FDreamShaderProductRecord* Record : Records)
+		{
+			for (const FString& Reference : Record->PassPipelineReferences)
+			{
+				if (const FDreamShaderProductRecord* Pipeline = ResolveDreamShaderPassPipelineQuietly(Index, *Record, Reference))
+				{
+					OutPipelineSourceFiles.AddUnique(Pipeline->SourceFilePath);
+				}
 			}
 		}
 	}

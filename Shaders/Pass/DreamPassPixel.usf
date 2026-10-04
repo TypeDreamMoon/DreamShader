@@ -1,0 +1,19 @@
+// DreamShader Custom Pass -- the pixel shader slots (FDreamPassPS, one permutation per DP_SLOT), drawn as a fullscreen
+// triangle over the first output's view rect. A pass writes SV_Target0..3 in the order of its `write` bindings.
+//
+// As for the compute slots (DreamPassCompute.usf): the registry maps a pass into its slot from a pre-checked
+// snapshot, and every other slot compiles to the empty entry below.
+
+#define DP_COMPUTE 0
+
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/SceneTexturesCommon.ush"
+#include "/Plugin/DreamShader/Pass/DreamPass.ush"
+#include "/DreamPassUser/RegistryPixel.ush"
+
+#ifndef DP_SLOT_DEFINED
+void DreamPassMainPS(float4 SvPosition : SV_POSITION, out float4 OutColor0 : SV_Target0)
+{
+	OutColor0 = 0;
+}
+#endif

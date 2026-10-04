@@ -2,7 +2,7 @@
 
 > [DreamShader](../index.md) » [C++ API](index.md) » **DreamShaderModule.h**
 
-The runtime module entry point, the plugin's log category, and the ten path, identifier and
+The runtime module entry point, the plugin's log category, and the path, identifier and
 file-classification helpers every other module builds on.
 
 Defined in header `DreamShaderModule.h`.
@@ -35,6 +35,9 @@ namespace UE::DreamShader
     DREAMSHADER_API bool IsDreamShaderMaterialFile(const FString& InPath);
     DREAMSHADER_API bool IsDreamShaderHeaderFile(const FString& InPath);
     DREAMSHADER_API bool IsDreamShaderFunctionFile(const FString& InPath);
+    DREAMSHADER_API bool IsDreamShaderLang2File(const FString& InPath);
+    DREAMSHADER_API bool IsDreamShaderInstanceFile(const FString& InPath);
+    DREAMSHADER_API bool IsDreamShaderPipelineFile(const FString& InPath);
     DREAMSHADER_API bool IsDreamShaderSourceFile(const FString& InPath);
 }
 
@@ -177,6 +180,9 @@ the same shading model.
 DREAMSHADER_API bool IsDreamShaderMaterialFile(const FString& InPath);
 DREAMSHADER_API bool IsDreamShaderHeaderFile(const FString& InPath);
 DREAMSHADER_API bool IsDreamShaderFunctionFile(const FString& InPath);
+DREAMSHADER_API bool IsDreamShaderLang2File(const FString& InPath);
+DREAMSHADER_API bool IsDreamShaderInstanceFile(const FString& InPath);
+DREAMSHADER_API bool IsDreamShaderPipelineFile(const FString& InPath);
 DREAMSHADER_API bool IsDreamShaderSourceFile(const FString& InPath);
 ```
 
@@ -185,12 +191,17 @@ DREAMSHADER_API bool IsDreamShaderSourceFile(const FString& InPath);
 | `IsDreamShaderMaterialFile` | `.dsm` |
 | `IsDreamShaderHeaderFile` | `.dsh` |
 | `IsDreamShaderFunctionFile` | `.dsf` |
-| `IsDreamShaderSourceFile` | `.dsm`, `.dsh` **or** `.dsf` |
+| `IsDreamShaderLang2File` | `.dss` — a 2.0 compilation unit |
+| `IsDreamShaderInstanceFile` | `.dsi` — a 2.0 material instance |
+| `IsDreamShaderPipelineFile` *(since 2.1.0)* | `.dsp` — a [Custom Pass pipeline](../language-v2/passes.md) |
+| `IsDreamShaderSourceFile` | any of the six: `.dsm`, `.dsh`, `.dsf`, `.dss`, `.dsi` **or** `.dsp` *(`.dsp` since 2.1.0)* |
 
-All four compare the result of `FPaths::GetExtension(InPath, /*bIncludeDot*/ true)` with
-`ESearchCase::IgnoreCase`, so **extension matching is case-insensitive**: `Foo.DSM` classifies as a
-material file. Only the extension is examined — the file need not exist and its contents are never
-read. Pure; any thread.
+`IsDreamShaderSourceFile` is the one predicate everything that scans, watches or lists sources asks — the
+startup scan, the source-directory watcher, `compile -All`, the Material Content Browser — so a `.dsp` is a
+source to all of them; only the compiler tells the kinds apart. All seven compare the result of
+`FPaths::GetExtension(InPath, /*bIncludeDot*/ true)` with `ESearchCase::IgnoreCase`, so **extension
+matching is case-insensitive**: `Foo.DSM` classifies as a material file. Only the extension is examined —
+the file need not exist and its contents are never read. Pure; any thread.
 
 ## `FDreamShaderModule`
 

@@ -113,8 +113,8 @@ namespace UE::DreamShader::IR::Private
 		OutModule.SourceFilePath = SourceFile;
 		OutModule.Includes = BoundModule.IncludePaths;
 
-		// A `.dsi` names no `UE.*` node and no attribute, so it needs no catalog.
-		if (!Catalog && !BoundModule.Instance.bIsInstance)
+		// A `.dsi` and a `.dsp` name no `UE.*` node and no attribute, so neither needs a catalog.
+		if (!Catalog && !BoundModule.Instance.bIsInstance && !BoundModule.Pipeline.bIsPipeline)
 		{
 			// Said once, at the top of the file, rather than at every `UE.*` call and every material
 			// attribute below: one missing catalog is one problem, not fifty.
@@ -156,6 +156,12 @@ namespace UE::DreamShader::IR::Private
 		{
 			// A `.dsi`: no graph at all -- not even the file's regions and layout hints.
 			BuildInstanceProduct(BoundProduct, OutProduct);
+			return;
+		}
+		if (BoundProduct.Kind == EIRProductKind::PassPipeline)
+		{
+			// A `.dsp`: no graph either; the binder built the payload.
+			BuildPipelineProduct(BoundProduct, OutProduct);
 			return;
 		}
 

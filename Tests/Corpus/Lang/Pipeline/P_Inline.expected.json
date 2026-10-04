@@ -1,0 +1,8 @@
+{
+	"entryPoint": "lang",
+	"outcome": "ok",
+	"module": {
+		"declarations": 7,
+		"roundtrip": true
+	}
+}

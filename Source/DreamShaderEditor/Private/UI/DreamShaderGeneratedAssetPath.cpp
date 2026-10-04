@@ -51,6 +51,14 @@ namespace UE::DreamShader::Editor::Private
 				return Candidate.Kind == UE::DreamShader::IR::EIRProductKind::MaterialInstance;
 			});
 		}
+		if (!Product && !bMaterialOnly)
+		{
+			// A `.dsp`: its one pipeline, which is the asset the browser shows for it -- and never a material to preview.
+			Product = Resolution.Products.FindByPredicate([](const FDreamShaderResolvedProduct& Candidate)
+			{
+				return Candidate.Kind == UE::DreamShader::IR::EIRProductKind::PassPipeline;
+			});
+		}
 		if (!Product && !bMaterialOnly && Resolution.Products.Num() > 0)
 		{
 			Product = &Resolution.Products[0];

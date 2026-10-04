@@ -201,6 +201,32 @@ When an asset already exists at the resolved path, the class must match:
 | `Shader` — `Graph` | the existing object must be a `UMaterial` |
 | `Shader` — `ThinCustom` | the existing object must be a `UDreamShaderMaterialInstance` |
 
+## Custom Pass pipelines
+
+*(since 2.1.0)* A [`.dsp`](../language-v2/passes.md) has no `Name=`, no `Root=` and no `/// @name`. Its one
+product, a `UDreamPassPipeline`, is named after the file and placed by the 2.0 default: the file's folder
+relative to its [source root](../language/source-files.md#source-roots), under `/Game` — or under the
+plugin's mount point for a file under a plugin's source root, by the same
+[plugin source root default](#the-plugin-source-root-default) and with the same fallback to `/Game`. The
+render target of every exported buffer lands in the pipeline's folder, named
+`<Pipeline>_<Buffer>` through `SanitizeObjectName`.
+
+| Source file | Pipeline | Render target of an exported buffer `Mask` |
+| :-- | :-- | :-- |
+| `<Project>/DShader/Passes/CP_Highlight.dsp` | `/Game/Passes/CP_Highlight` | `/Game/Passes/CP_Highlight_Mask` |
+| `<Project>/DShader/CP_Wind.dsp` | `/Game/CP_Wind` | `/Game/CP_Wind_Mask` |
+| `Plugins/MoonToon/DShader/Passes/CP_Toon.dsp` | `/MoonToon/Passes/CP_Toon` | `/MoonToon/Passes/CP_Toon_Mask` |
+
+| At the path | Refused when |
+| :-- | :-- |
+| the pipeline's | the object there is not a `UDreamPassPipeline` (`DSH8302`), or it is a saved asset DreamShader did not generate (`DSH8303`) |
+| a render target's | the object there is not a `UTextureRenderTarget2D`, or it is a saved render target DreamShader did not make (`DSH8313`) |
+
+The only way to choose where a pipeline lands is where the `.dsp` lives, which is also why a decompiled
+`.dsp` cannot keep its asset's path from elsewhere (`DSH9224`). Moving or renaming the file builds a new
+pipeline at the new path; the old one, and its render targets, are left where they are, and its HLSL slots
+stay taken until [`dsc pass-registry -Gc`](../tools/commandlet.md#pass-registry) collects them.
+
 ## On-disk mapping
 
 | Package root | On-disk directory |
@@ -286,4 +312,5 @@ on disk                          <Project>/Plugins/MoonToon/Content/Mat/Test.uas
 - [Caching](caching.md) — the provenance metadata that marks an asset as DreamShader-generated
 - [Path(Root, "…")](../parameters/path.md) — the *other* path grammar, for referencing existing assets
 - [Backend](../settings/backend.md) — which class a `Shader` produces
+- [Custom Pass pipelines — `.dsp`](../language-v2/passes.md) — a source whose asset is named after its file
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

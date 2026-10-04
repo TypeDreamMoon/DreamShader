@@ -10,11 +10,11 @@ engine; this module is where a `UObject` is first touched.
 | | |
 | :-- | :-- |
 | Module | `DreamShaderCompiler` (**Editor**, `Default` loading phase) |
-| Public headers | 19 — the ones a caller meets are listed [below](#public-headers) |
+| Public headers | 20 — the ones a caller meets are listed [below](#public-headers) |
 | Namespace | `UE::DreamShader::Editor::Compiler` · `UE::DreamShader::Editor` (the generated-notice delegate) · global scope (module class) |
 | Export macro | `DREAMSHADERCOMPILER_API` |
 | Public dependencies | `Core`, `CoreUObject`, `DreamShader`, `DreamShaderLang`, `Engine` |
-| Private dependencies | `AssetRegistry`, `AssetTools`, `Json`, `MaterialEditor`, `Projects`, `UnrealEd` |
+| Private dependencies | `AssetRegistry`, `AssetTools`, `DreamShaderPass`, `Json`, `MaterialEditor`, `Projects`, `RenderCore`, `RHI`, `TargetPlatform`, `UnrealEd` |
 | Reflection | none |
 
 > [!IMPORTANT]
@@ -74,7 +74,7 @@ namespace here would be hidden from exactly the callers that use it most.
 
 | Member | Type | Default | Meaning |
 | :-- | :-- | :-- | :-- |
-| `SourceFilePath` | `FString` | `""` | A `.dss`, `.dsi`, `.dsm` or `.dsf`; the compiler normalizes it, so a relative path is accepted. A `.dsh` header is not a compile unit. |
+| `SourceFilePath` | `FString` | `""` | A `.dss`, `.dsi`, `.dsp`, `.dsm` or `.dsf`; the compiler normalizes it, so a relative path is accepted. A `.dsh` header is not a compile unit. |
 | `bForce` | `bool` | `false` | Rebuild even when a product's stamped build key says its asset is current. With `false`, such a product is left untouched and the call **succeeds** with a `Skipped …` line. |
 | `ThinCustomPersistence` | `EThinCustomPersistence` | `Materialized` | Which state a ThinCustom product this compile touches should end in. **Ignored by the Graph, function and instance products**, which always save. |
 
@@ -100,7 +100,7 @@ severity and span — are not in the result; ask
 
 | Method | Contract |
 | :-- | :-- |
-| `CompileAssets` | Every product of the source: its material and every exported function, layer and blend — or, for a `.dsi`, the one material instance (building a stale parent first). |
+| `CompileAssets` | Every product of the source: its material and every exported function, layer and blend — or, for a `.dsi`, the one material instance (building a stale parent first); for a `.dsp` *(since 2.1.0)*, the pipeline with the render targets of its exported buffers and its HLSL slots (building any stale material its passes name first). |
 | `CompileMaterial` | The source's material product only: the preview's route. |
 
 ### `GetDreamShaderCompiler()`
@@ -122,7 +122,8 @@ module *can* register a replacement — there is no chaining and no arbitration,
 | `DreamShaderCompilePipeline.h` | `IsDreamShaderLang2Source`, `CompileDreamShaderLang2File`, `RunDreamShaderLang2Pipeline` with its options and result, `ResolveDreamShaderSourceProducts`, `ResolveDreamShaderProductDestination`, `ResolveDreamShaderLegacyTextureTypes` |
 | `DreamShaderIREmitter.h` | `FIREmitContext`, `EmitDreamShaderIRProduct` — one finished `IR::FIRProduct` in, one saved asset out; the source-span and decompile-hint writers |
 | `DreamShaderBuiltinCatalog.h` | `GetDreamShaderBuiltinCatalog`, `InvalidateDreamShaderBuiltinCatalog`, `BuildBuiltinCatalogFromReflection` — the `IR::FBuiltinCatalog` the binder and the emitter share |
-| `DreamShaderProductIndex.h` | `FDreamShaderProductIndex` — which source builds which asset; `ResolveInstanceParent`, `CollectInstanceDependents`, `FindInstanceParentSourceFile` for `.dsi` files |
+| `DreamShaderProductIndex.h` | `FDreamShaderProductIndex` — which source builds which asset, over the `.dss`, `.dsi` and `.dsp` files of every root; `ResolveInstanceParent`, `CollectInstanceDependents`, `FindInstanceParentSourceFile` for `.dsi` files; *(since 2.1.0)* the `.dsp` edges: `CollectPipelineDependents` (the `.dsp` sources to rebuild after a material source), `CollectPassBufferDependents` (the `.dss` sources that read a pipeline's buffers), `FindPipelineMaterialSourceFiles` and `FindPassBufferPipelineSourceFiles` (the dependency sort's two edges), and on the index `FindPipelines`, `FindPipelinesUsingSource`, `FindPassBufferReadersOfSource`. A `.dsp` record carries its `MaterialReferences` and `ShaderFiles`, a `.dss` record its `PassPipelineReferences` |
+| `DreamShaderPassPipelines.h` *(since 2.1.0)* | the Custom Pass half as the editor's tools reach it: the HLSL slot registry, the slot pre-check, the shader files a `.dsp` compiles from — [below](#dreamshaderpasspipelinesh) |
 | `DreamShaderInstanceSchema.h` · `DreamShaderInstanceSettings.h` | the parameter schema of a parent asset (`BuildParameterSchemaFromAsset`), and the `#pragma instance` keys (`ApplyInstanceSettings`, `ReadInstanceSettings`, `GetInstanceSettingKeys`) |
 | `DreamShaderCompilerDiagnostics.h` · `DreamShaderDiagnosticRecord.h` | the wire line (`FormatLang2DiagnosticWireLine`), the diagnostics JSON, and the record the bridge's store files |
 | `DreamShaderCompilerIncludes.h` | `FDreamShaderIncludeResolver` — `#include` resolution over the source roots and packages |
@@ -169,11 +170,39 @@ the same driver with its intermediate products handed back instead of dropped.
 
 | Call | Use |
 | :-- | :-- |
-| `IsDreamShaderLang2Source(Path)` | True for every file the pipeline compiles on its own: `.dss` and `.dsi` through the 2.0 front end, `.dsm` and `.dsf` through the legacy one. A `.dsh` answers false. (The name is older than that: once only `.dss` answered true.) |
+| `IsDreamShaderLang2Source(Path)` | True for every file the pipeline compiles on its own: `.dss`, `.dsi` and `.dsp` through the 2.0 front end, `.dsm` and `.dsf` through the legacy one. A `.dsh` answers false. (The name is older than that: once only `.dss` answered true.) |
 | `CompileDreamShaderLang2File(Path, bForce, OutError)` | The service's `CompileAssets` with a `Materialized` request, spelled with an `FDreamShaderError` for callers that want the code and the text apart. |
-| `RunDreamShaderLang2Pipeline(Path, Options, OutResult)` | The whole run. `Options.bEmitAssets = false` stops after IR validation — that is `dsc check`. The result owns the parsed module, the bound module and the IR, **in a load-bearing member order** (the bound module points into the parsed ones); it keeps whatever the run got as far as, so a language service gets an AST from a false return. |
-| `ResolveDreamShaderSourceProducts(Path, OutResult)` | Which assets a source builds, and under which build key, **without building them**: front end, binder and IR builder, then the emitter's own destination rules. Creates, loads and saves nothing and opens no progress dialog — the Material Content Browser calls it for every source it lists. |
+| `RunDreamShaderLang2Pipeline(Path, Options, OutResult)` | The whole run. `Options.bEmitAssets = false` stops after IR validation — that is `dsc check`. The result owns the parsed module, the bound module and the IR, **in a load-bearing member order** (the bound module points into the parsed ones); it keeps whatever the run got as far as, so a language service gets an AST from a false return. *(Since 2.1.0)* it also owns, for a `.dsp`, the `PipelineReferences` the host resolved before the bind — declared before `Bound`, which may point into it — and records, for a `.dss`, the `PassPipelineReferences` of its `UE.DreamPassBuffer` nodes, as written. |
+| `ResolveDreamShaderSourceProducts(Path, OutResult)` | Which assets a source builds, and under which build key, **without building them**: front end, binder and IR builder, then the emitter's own destination rules. Builds and saves nothing and opens no progress dialog — the Material Content Browser calls it for every source it lists. It does read the assets a source's cross-source references name, loading them when they are not loaded: a `.dsi`'s parent that no source builds and, *(since 2.1.0)*, the materials a `.dsp`'s passes name and the pipeline a `.dss` reads an exported buffer of. A `PassPipeline` product lists in `ExportTargetObjectPaths` the render target the emitter keeps beside the pipeline for each exported buffer, in buffer order — generated assets as much as the pipeline is, which is how `dsc list-generated` names them. |
 | `ResolveDreamShaderProductDestination(Product, Path, …)` | Where one product would land if `Path` declared it. The decompiler asks this before it writes a file, to find out whether the text needs a `/// @name` to keep the asset where it is. |
+
+## `DreamShaderPassPipelines.h`
+
+*(since 2.1.0)* The Custom Pass half of the compiler as the editor's tools reach it: the HLSL slot registry
+as [`dsc pass-registry`](../tools/commandlet.md#pass-registry) lists, collects and rebuilds it; the slot
+pre-check as `check -Shaders` runs it on a `.dsp`; and the shader files a `.dsp` compiles from, which the
+[bridge](../tools/bridge.md#custom-pass-shader-files) watches. Nothing here builds an asset. Game thread
+only. Everything is in `UE::DreamShader::Editor::Compiler`.
+
+| Declaration | |
+| :-- | :-- |
+| `EDreamPassSlotState` | `Live`, `Reserved`, `SnapshotMissing`, `PipelineGone`, `PassGone`, `Unknown` — what one slot is ([the listing](../tools/commandlet.md#the-listing)) |
+| `LexDreamPassSlotState(State)` | the state's name. Deliberately not a `LexToString` overload: one declared in this namespace would hide the engine's from every unqualified call in it |
+| `FDreamPassSlotReport` | one slot as `Registry.json` records it and as it was judged: `bCompute`, `Slot`, `Pipeline` (object path), `Pass`, `Source` (the `.dsp`, project-relative), `Shader` (project-relative), `Entry`, `Hash`, `Formats` (the shader formats its snapshot passed the pre-check for), `State`, and `bPipelineAssetExists` for a `PipelineGone` slot whose asset is still there |
+| `FDreamPassRegistryReport` | `RegistryJsonPath`, `ComputeSlotCount`, `PixelSlotCount`, and `Slots` — compute slots first, then pixel ones, each in slot order |
+| `DescribeDreamPassRegistry(bClassify, OutReport, OutError)` | reads `Registry.json` and judges every slot. With `bClassify` it runs the front end of every `.dsp` that owns a slot — nothing built or written — to tell `Live` from `PipelineGone`, `PassGone` and `Unknown`; without it a slot is `Live`, `Reserved` or `SnapshotMissing`. False, with `OutError`, when `Registry.json` does not parse |
+| `CollectDreamPassRegistryGarbage(OutFreed, Diagnostics)` | `pass-registry -Gc`: frees every `PipelineGone` and `PassGone` slot — its entry, its registry section, its snapshot — deletes the slot directories nothing names, and recompiles the slot shaders in the editor. False with diagnostics when `Registry.json` does not parse or a file cannot be written |
+| `ResetUnreadableDreamPassRegistry(OutMovedTo, Diagnostics)` | the first step of `-Rebuild`: moves a `Registry.json` that does not parse aside to `Registry.json.unreadable` and writes an empty registry. True without touching anything when the file parses; `OutMovedTo` is then empty |
+| `RewriteDreamPassRegistryFiles(OutReserved, Diagnostics)` | the last step of `-Rebuild`: writes `RegistryCompute.ush` and `RegistryPixel.ush` from `Registry.json`, turning a slot whose snapshot files are missing into a reserved one, deletes the slot directories it does not name, and recompiles the slot shaders in the editor. `OutReserved` counts the slots it turned |
+| `CheckDreamShaderPipelineSlots(SourceFile, Formats, Diagnostics, OutPassesChecked)` | `check -Shaders` on a `.dsp`: runs it to IR, stages each pipeline, plans its slots against the registry as it stands, and pre-checks every HLSL pass, changed or not, for `Formats` — empty: the formats a compile pre-checks for. Builds no asset and writes nothing. `OutPassesChecked` counts the HLSL passes. Below UE 5.8, `DSH8338` |
+| `IsDreamShaderPassShaderFile(Path)` | `.usf` or `.ush`, case-insensitively |
+| `CollectDreamShaderPipelineShaderFiles(PipelineSourceFile, OutShaderFiles)` | every file the HLSL passes of one `.dsp` compile from: each `Shader = "..."` file, everything it includes by a relative path — a file such an include names that does not exist yet as well — and the files behind the user virtual includes its snapshot keeps live. Absolute, normalized, each once |
+| `FindDreamShaderPipelinesUsingShaderFile(ShaderFile, OutPipelineSourceFiles)` | the `.dsp` sources one of whose HLSL passes compiles from that file |
+| `CollectDreamShaderPipelineShaderDirectories(OutDirectories)` | every directory holding a file some `.dsp` compiles from — what the bridge watches |
+
+The registry itself — the files under `<DShader>/.dreampass/`, how a slot is planned, pre-checked and
+committed — is private to the module; its paths and slot counts are public in the runtime module
+([`DreamShaderPassModule.h`](pass-module.md#the-hlsl-slot-registry)).
 
 ## Thread and context requirements
 
@@ -184,6 +213,9 @@ the same driver with its intermediate products handed back instead of dropped.
   short delay; Cancel is reported as `bCancelled`, distinct from a failure.
 - The calls are **synchronous**. There is no async variant, no future, and no completion callback
   other than `OnDreamShaderSourceGenerated`.
+- *(Since 2.1.0)* A `.dsp` compile writes outside its package as well: the HLSL slot registry and its
+  snapshots under `<DShader>/.dreampass/`. In an editor that renders it then recompiles the slot shaders
+  synchronously; a commandlet does not.
 
 ## Result messages
 
@@ -192,11 +224,13 @@ the same driver with its intermediate products handed back instead of dropped.
 
 ### Success
 
-One line per product, in emit order:
+One line per product, in emit order, and after a built pipeline's line one per render target of its
+exported buffers:
 
 | Line | Condition |
 | :-- | :-- |
-| `Generated {Kind} {ObjectPath} from {File}.` | the product was built. `{Kind}` is `Material`, `MaterialFunction`, `MaterialLayer`, `MaterialLayerBlend` or `MaterialInstance` |
+| `Generated {Kind} {ObjectPath} from {File}.` | the product was built. `{Kind}` is `Material`, `MaterialFunction`, `MaterialLayer`, `MaterialLayerBlend`, `MaterialInstance` or *(since 2.1.0)* `PassPipeline` |
+| `Generated RenderTarget {ObjectPath} from {File}.` | *(since 2.1.0)* the render target of one of a built pipeline's exported buffers, made or reused by that build and saved beside it, so that `dsc.ps1` counts it among the assets the run wrote |
 | `Skipped {ObjectPath} from {File}; source hash is unchanged (build key {BuildKey}).` | `bForce == false` and the asset's stamped build key still matches |
 | `Skipped {ObjectPath}; another editor owns this project's DreamShader bridge, and only that one writes generated assets to disk.` | a second editor on the same project |
 | `Compiled {File}; it declares no material and no exported function, so no asset was written.` | a source with no product |
@@ -206,11 +240,15 @@ One line per product, in emit order:
 
 The first error as `<file>(<line>,<column>): DSHnnnn: <message>`, then every other diagnostic on its
 own line. `Code` holds that first `DSHnnnn`. The codes are catalogued under
-[Diagnostics](../diagnostics/index.md); the emitter's own are `DSH8200`–`DSH8289`.
+[Diagnostics](../diagnostics/index.md); the emitter's own are `DSH8200`–`DSH8289`, and Custom Pass
+emission's — the pipeline, its render targets, the HLSL slots and their pre-check — `DSH8300`–`DSH8339`
+*(since 2.1.0)*.
 
 The build key behind the `Skipped` line covers the preprocessed text of the file **and of every
-header**, the defines the preprocessor read, and — for a `.dsi` — the parent's object path. See
-[Caching](../generation/caching.md).
+header**, the defines the preprocessor read, and — for a `.dsi` — the parent's object path; for a `.dsp`,
+the materials its passes name with the build keys they were built under, the snapshot inputs of its shader
+files, and the pass layer table; for a `.dss` that reads an exported buffer, that buffer's export. See
+[Caching](../generation/caching.md#custom-pass-pipelines).
 
 ## Example
 
@@ -286,3 +324,4 @@ bool Check(const FString& InPath)
 - [Commandlet](../tools/commandlet.md) — `-run=DreamShader`, the persisting caller
 - [Editor bridge](../tools/bridge.md) — the memory-only caller and the JSON diagnostics
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [`DreamShaderPass`](pass-module.md) — the runtime module a `.dsp` compiles for

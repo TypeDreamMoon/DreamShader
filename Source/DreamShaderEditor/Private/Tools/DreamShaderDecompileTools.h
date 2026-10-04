@@ -29,7 +29,8 @@ namespace UE::DreamShader::Editor::Private
 
 	/**
 	 * Auto made concrete. An output file ending in `.dsm` or `.dsf` asks for the 1.x text; anything else -- `.dss`, `.dsi`,
-	 * or no output file at all -- for the 2.0 text. Dss and Legacy come back unchanged.
+	 * `.dsp`, or no output file at all -- for the 2.0 text, which is the only text a pass pipeline has. Dss and Legacy come
+	 * back unchanged.
 	 */
 	::UE::DreamShader::Editor::EDreamShaderDecompileFormat ResolveDreamShaderDecompileFormat(
 		::UE::DreamShader::Editor::EDreamShaderDecompileFormat Format,

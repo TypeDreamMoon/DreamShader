@@ -26,6 +26,9 @@
 //     end of its last line, a block's Inner comments before its `}`, at most one blank line anywhere.
 //     A module with trivia is laid out by it; one without gets the canonical blank line between
 //     declarations. A run of `uniform float a, b;` declarators is joined back into one declaration.
+//   * A `.dsp`'s `buffer` is one line, its arguments in source order; a `pass` is its head, the block, one statement
+//     per line in source order with its own comments, and the block's trailing comments before the `}`. Which keys
+//     a pass writes, and in which order, is the tree's: the canonical order is BuildDreamShaderPipelineModule's.
 //
 // The printer raises no diagnostics and is total over any tree it is handed: a null child (what a
 // language service holds after a broken parse) prints as nothing rather than crashing.
@@ -125,6 +128,7 @@ namespace UE::DreamShader::Lang
 			case EPragmaKind::Region:    return TEXT("region");
 			case EPragmaKind::EndRegion: return TEXT("endregion");
 			case EPragmaKind::Instance:  return TEXT("instance");
+			case EPragmaKind::Pipeline:  return TEXT("pipeline");
 			case EPragmaKind::Unknown:
 			default:                     return TEXT("");
 			}
@@ -523,6 +527,18 @@ namespace UE::DreamShader::Lang
 			void PrintStructDecl(const FStructDecl& Decl, int32 IndentLevel);
 			void PrintIncludeDecl(const FIncludeDecl& Decl, int32 IndentLevel);
 			void PrintPragmaDecl(const FPragmaDecl& Decl, int32 IndentLevel);
+			/** `.dsp`: `buffer Name : Format(Key = Value, ...);`. */
+			void PrintBufferDecl(const FBufferDecl& Decl, int32 IndentLevel);
+			/** `.dsp`: `pass Name : kind`, the block, each statement with its own comments, the block's inner comments. */
+			void PrintPassDecl(const FPassDecl& Decl, int32 IndentLevel);
+			void PrintHlslBlockDecl(const FHlslBlockDecl& Decl, int32 IndentLevel);
+			/**
+			 * `{`, the captured text, `}`: an opaque body or block, never re-indented. Byte for byte, or with its line breaks
+			 * written as the printer's (bPrinterNewLines): an `hlsl` block may come from another file, a decompiled asset's.
+			 */
+			void AppendRawBody(int32 IndentLevel, const FString& RawBody, bool bPrinterNewLines = false);
+			/** One pass statement as its line, `;` included. */
+			static FString PrintPassStatementText(const FPassStmt& Statement);
 
 			void PrintBlock(const FBlockStmt& Block, int32 IndentLevel);
 			/** PrintStatement without the statement's own trivia. */
@@ -818,6 +834,15 @@ namespace UE::DreamShader::Lang
 			case ENodeKind::PragmaDecl:
 				PrintPragmaDecl(static_cast<const FPragmaDecl&>(Decl), IndentLevel);
 				break;
+			case ENodeKind::BufferDecl:
+				PrintBufferDecl(static_cast<const FBufferDecl&>(Decl), IndentLevel);
+				break;
+			case ENodeKind::PassDecl:
+				PrintPassDecl(static_cast<const FPassDecl&>(Decl), IndentLevel);
+				break;
+			case ENodeKind::HlslBlockDecl:
+				PrintHlslBlockDecl(static_cast<const FHlslBlockDecl&>(Decl), IndentLevel);
+				break;
 			default:
 				break;
 			}
@@ -983,18 +1008,41 @@ namespace UE::DreamShader::Lang
 
 			if (Decl.bOpaqueBody)
 			{
-				// A `/// @custom` body is HLSL handed to the shader compiler, not DreamShaderLang:
-				// braces back around the captured text, byte for byte, no re-indentation. RawBody
-				// carries its own line terminators, which is why this bypasses AppendLine.
-				Out += MakeIndent(FMath::Max(IndentLevel, 0));
-				Out += TEXT("{");
-				Out += Decl.RawBody;
-				Out += TEXT("}");
-				Out += Options.NewLine;
+				// A `/// @custom` body is HLSL handed to the shader compiler, not DreamShaderLang.
+				AppendRawBody(IndentLevel, Decl.RawBody);
 				return;
 			}
 
 			PrintBlock(*Decl.Body, IndentLevel);
+		}
+
+		void FLangPrinter::AppendRawBody(int32 IndentLevel, const FString& RawBody, const bool bPrinterNewLines)
+		{
+			// Braces back around the captured text, no re-indentation. RawBody carries its own line breaks,
+			// which is why this bypasses AppendLine. A `@custom` body keeps them byte for byte; an `hlsl` block
+			// writes them with the printer's terminator, as a comment is written, so a block from another file
+			// does not mix two kinds into this one.
+			FString Body = RawBody;
+			if (bPrinterNewLines)
+			{
+				Body.ReplaceInline(TEXT("\r\n"), TEXT("\n"), ESearchCase::CaseSensitive);
+				if (!Options.NewLine.Equals(TEXT("\n"), ESearchCase::CaseSensitive))
+				{
+					Body.ReplaceInline(TEXT("\n"), *Options.NewLine, ESearchCase::CaseSensitive);
+				}
+			}
+			Out += MakeIndent(FMath::Max(IndentLevel, 0));
+			Out += TEXT("{");
+			Out += Body;
+			Out += TEXT("}");
+			Out += Options.NewLine;
+		}
+
+		void FLangPrinter::PrintHlslBlockDecl(const FHlslBlockDecl& Decl, int32 IndentLevel)
+		{
+			// HLSL for the shader compiler, as a `@custom` body is: the word on its own line, the block verbatim.
+			AppendLine(IndentLevel, TEXT("hlsl"));
+			AppendRawBody(IndentLevel, Decl.RawBody, /* bPrinterNewLines */ true);
 		}
 
 		void FLangPrinter::PrintStructDecl(const FStructDecl& Decl, int32 IndentLevel)
@@ -1067,6 +1115,7 @@ namespace UE::DreamShader::Lang
 			case EPragmaKind::Material:
 			case EPragmaKind::Layout:
 			case EPragmaKind::Instance:
+			case EPragmaKind::Pipeline:
 			{
 				Line += TEXT("(");
 				for (int32 ArgumentIndex = 0; ArgumentIndex < Decl.Arguments.Num(); ++ArgumentIndex)
@@ -1098,6 +1147,106 @@ namespace UE::DreamShader::Lang
 			}
 
 			AppendLine(IndentLevel, Line);
+		}
+
+		void FLangPrinter::PrintBufferDecl(const FBufferDecl& Decl, int32 IndentLevel)
+		{
+			FString Line = FString::Printf(TEXT("buffer %s : %s"), *Decl.Name, *Decl.Format);
+			if (Decl.bHasArgumentList || Decl.Arguments.Num() > 0)
+			{
+				Line += TEXT("(");
+				for (int32 Index = 0; Index < Decl.Arguments.Num(); ++Index)
+				{
+					const FPipelineKeyValue& Argument = Decl.Arguments[Index];
+					if (Index > 0)
+					{
+						Line += TEXT(", ");
+					}
+					Line += Argument.Key;
+					Line += TEXT(" = ");
+					// Read back by the full expression grammar (ParseBufferDecl), so nothing in it needs parentheses.
+					Line += PrintOperand(Argument.Value.Get(), AssignmentPrecedence);
+				}
+				Line += TEXT(")");
+			}
+			Line += TEXT(";");
+			AppendLine(IndentLevel, Line);
+		}
+
+		FString FLangPrinter::PrintPassStatementText(const FPassStmt& Statement)
+		{
+			switch (Statement.StmtKind)
+			{
+			case EPassStmtKind::Read:
+			case EPassStmtKind::Write:
+			{
+				FString Text = Statement.StmtKind == EPassStmtKind::Read ? FString(TEXT("read ")) : FString(TEXT("write "));
+				if (!Statement.Name.IsEmpty())
+				{
+					Text += Statement.Name;
+					Text += TEXT(" = ");
+				}
+				Text += Statement.Buffer;
+				if (Statement.bPrevious)
+				{
+					Text += TEXT(".Previous");
+				}
+				Text += TEXT(";");
+				return Text;
+			}
+
+			// A value is read back by the full expression grammar (ParsePassStatement), so nothing in it needs parentheses.
+			case EPassStmtKind::Param:
+				return FString::Printf(TEXT("param %s = %s;"), *Statement.Name, *PrintOperand(Statement.Value.Get(), AssignmentPrecedence));
+
+			// More than one line; PrintPassDecl writes the block after this, its first (AppendRawBody).
+			case EPassStmtKind::Hlsl:
+				return TEXT("hlsl");
+
+			case EPassStmtKind::Setting:
+			default:
+				return FString::Printf(TEXT("%s = %s;"), *Statement.Name, *PrintOperand(Statement.Value.Get(), AssignmentPrecedence));
+			}
+		}
+
+		void FLangPrinter::PrintPassDecl(const FPassDecl& Decl, int32 IndentLevel)
+		{
+			AppendLine(IndentLevel, FString::Printf(TEXT("pass %s : %s"), *Decl.Name, *Decl.PassKind));
+			AppendLine(IndentLevel, TEXT("{"));
+
+			bool bFirst = true;
+			for (const TUniquePtr<FPassStmt>& Statement : Decl.Statements)
+			{
+				if (!Statement)
+				{
+					continue;
+				}
+				const FLangTrivia* Trivia = FindTrivia(*Statement);
+				if (!bFirst && Trivia && Trivia->BlankLinesBefore > 0)
+				{
+					AppendBlankLine();
+				}
+				bFirst = false;
+
+				PrintLeadingComments(*Statement, nullptr, IndentLevel + 1);
+				AppendLine(IndentLevel + 1, PrintPassStatementText(*Statement));
+				if (Statement->StmtKind == EPassStmtKind::Hlsl)
+				{
+					// The pass's HLSL, verbatim, as a file-level block is.
+					AppendRawBody(IndentLevel + 1, Statement->RawBody, /* bPrinterNewLines */ true);
+				}
+				AppendTrailingComment(*Statement);
+			}
+
+			// The pass is its own block: what follows the last statement is the declaration's Inner.
+			if (const FLangTrivia* DeclTrivia = FindTrivia(Decl))
+			{
+				for (const FLangComment& Comment : DeclTrivia->Inner)
+				{
+					AppendComment(IndentLevel + 1, Comment);
+				}
+			}
+			AppendLine(IndentLevel, TEXT("}"));
 		}
 
 		FString FLangPrinter::PrintVarDeclFragment(const FVarDeclStmt& Stmt)

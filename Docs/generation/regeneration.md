@@ -6,7 +6,7 @@ What happens to an already-generated asset when its source file is compiled agai
 
 | | |
 | :-- | :-- |
-| Applies to | every generated `UMaterial`, `UDreamShaderMaterialInstance`, `UMaterialFunction`, `UMaterialFunctionMaterialLayer`, `UMaterialFunctionMaterialLayerBlend` |
+| Applies to | every generated `UMaterial`, `UDreamShaderMaterialInstance`, `UMaterialFunction`, `UMaterialFunctionMaterialLayer`, `UMaterialFunctionMaterialLayerBlend`. A `UDreamPassPipeline` and its render targets have no graph and are rebuilt differently *(since 2.1.0)* — see [Custom Pass pipelines](#custom-pass-pipelines) |
 | Triggered by | any compile that is not skipped by the source hash — see [Caching](caching.md) |
 | Effect | the generated graph is torn down and rebuilt from source |
 
@@ -255,6 +255,34 @@ Material functions have no render state; their asset-level fields are reapplied 
 | `LibraryCategories` | `LibraryCategoriesText` — comma-separated, entries trimmed, empties dropped | cleared |
 
 The material-function usage is also re-stamped from the block kind on every regeneration.
+
+## Custom Pass pipelines
+
+*(since 2.1.0)* A pipeline has no graph to tear down. Its rebuild writes, onto the same object, the data
+its [`.dsp`](../language-v2/passes.md) owns — the order, the default injection point, the views, the
+requirements, the enabled parameter, the parameters, the buffers and the passes — then its export render
+targets and its source stamps, and tells the runtime, which runs the new pipeline from the next frame.
+
+| | |
+| :-- | :-- |
+| Gates | the ones above, in the same order: another editor owns writes (skipped), the [build key](caching.md#custom-pass-pipelines) (skipped), open in an asset editor (`DSH8206`), [divergence](divergence.md#a-custom-pass-pipeline) (`DSH8207`) |
+| Ownership | refused at a path holding another class (`DSH8302`), or a saved pipeline DreamShader did not generate (`DSH8303`) |
+| Atomic | everything is staged before the first write: the pipeline's data onto a transient copy, the HLSL slots planned and [pre-checked](../runtime/hlsl.md#how-the-hlsl-gets-into-the-engine) in memory, every render target found or made in memory. A pre-check that fails, or a cancel before the writes (`DSH8298`), leaves the asset, the slot registry and the snapshots exactly as they were, and the previous version keeps running |
+| Writes, in order | the snapshots and the registry files; the render targets' settings; the pipeline's data; in the editor, the slot shaders recompiled synchronously; the stamps; one save of the pipeline with every render target it touched |
+| A save that fails | `DSH8311`. The slots are in the registry already; the next compile saves the asset |
+
+### Render targets
+
+Every buffer with `Export = true` has a `UTextureRenderTarget2D` in the pipeline's folder,
+[`<Pipeline>_<Buffer>`](asset-paths.md#custom-pass-pipelines).
+
+| | |
+| :-- | :-- |
+| Reused | in place: a material that reads the buffer lists that very object among its textures, so it is never replaced. Its settings are rewritten only when one of them changed |
+| Settings | the render target format of the buffer's format; `Clamp` addressing for a buffer sized from the view, `Wrap` for a fixed-size one; the buffer's `Clear` as the clear colour (transparent black for `Clear = None`); linear gamma; no automatic mips. A new one is 64 × 64 until the runtime sizes it from the view; a fixed-size buffer's is set to its `Size` |
+| Ownership | a path holding another class, or a saved render target DreamShader did not make, is refused (`DSH8313`) before anything is written |
+| Stamps | `DreamShader.SourceFile` — the path alone — and `DreamShader.PassPipeline`, the pipeline's object path |
+| No longer exported | a buffer removed, renamed or no longer `Export = true` loses its render target once the pipeline has been saved without it (`DSH8312`, info). One that something else still references — a material with `UE.DreamPassBuffer` on the old buffer — is kept, with `DSH8310` naming the referencers; delete it by hand once nothing reads it |
 
 ## Notes
 

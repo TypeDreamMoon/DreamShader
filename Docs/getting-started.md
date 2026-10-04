@@ -19,7 +19,7 @@ This page takes a project from "plugin copied in" to "a material generated from 
 | | |
 | :-- | :-- |
 | Engines | Unreal Engine `5.3` – `5.8`, Win64 verified |
-| Modules loaded | `DreamShader`, `DreamShaderCompiler` (runtime) and `DreamShaderEditor` (editor) |
+| Modules loaded | `DreamShaderLang`, `DreamShader`, `DreamShaderPass` (runtime) and `DreamShaderCompiler`, `DreamShaderEditor` (editor) |
 
 ## Create the source directory
 
@@ -112,6 +112,7 @@ Look the message up in the [diagnostics index](diagnostics/index.md).
 | [Graph language](graph/index.md) | What you can write inside `Graph = { … }` — and what you cannot |
 | [`import`](language/import.md) | Sharing helpers across files |
 | [Editor tools](tools/index.md) | Browser, decompiler, VSCode workspace, headless commandlet |
+| [Custom Pass pipelines](language-v2/passes.md) | *(UE 5.8, since 2.1.0)* Render passes of your own from a `.dsp` source — fullscreen, compute and mesh passes, run by the [Custom Pass runtime](runtime/index.md) |
 | [Project settings](settings/project.md) | Every setting and its default |
 
 ## See also

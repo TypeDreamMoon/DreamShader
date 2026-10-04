@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7354",
+		"DSH7360"
+	],
+	"ir": "module \"P_Defaults.dsp\"\n\nproduct 0 PassPipeline \"P_Defaults\"\n  pipeline order=0 injection=PostProcess.AfterTonemap views=Game|Editor requires=- enabled=-\n  buffer \"Late\" RGBA8 resolution=Output scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  buffer \"Early\" RGBA8 resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  buffer \"Both\" RGBA8 resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1 export\n  pass \"Second\" copy injection=PostProcess.AfterTonemap\n    read SceneColor = SceneColor\n    write Late = Late\n  pass \"Third\" copy injection=PostProcess.AfterTonemap\n    read Late = Late\n    write Both = Both\n  pass \"First\" copy injection=AfterOpaque\n    read SceneColor = SceneColor\n    write Early = Early\n  pass \"Fourth\" copy injection=BeforePostProcess\n    read Early = Early\n    write Both = Both\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_Defaults"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

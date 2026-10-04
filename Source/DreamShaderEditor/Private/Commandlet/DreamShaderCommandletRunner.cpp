@@ -40,15 +40,21 @@ namespace UE::DreamShader::Editor::Private
 			"  -run=DreamShader export-catalog [-Out=<file>]\n"
 			"  -run=DreamShader fmt { -Source=\"C:/Project/DShader/File.dss\" | -All } [-Check] [-Out=<dir>]\n"
 			"  -run=DreamShader list-generated { -Source=\"C:/Project/DShader/File.dss\" | -All } [-As=Packages|Files|GitIgnore|Json] [-Out=<file>] [-IncludeEphemeral]\n"
+			"  -run=DreamShader pass-registry [-Gc | -Rebuild]\n"
 			"decompile writes 2.0 text by default -- a .dss for a Material or MaterialFunction, a .dsi for a\n"
-			"MaterialInstanceConstant; -Format=Legacy, or an -Out ending in .dsm or .dsf, writes the 1.x text.\n"
+			"MaterialInstanceConstant, a .dsp for a DreamPassPipeline; -Format=Legacy, or an -Out ending in .dsm\n"
+			"or .dsf, writes the 1.x text (a DreamPassPipeline has none).\n"
 			"-SourceFile decompiles every asset that source builds into one file; -KeepAssetPath keeps each asset's own path.\n"
 			"migrate rewrites 1.x sources (.dsm, .dsf, .dsh) as .dss; -Check verifies the rewrite and writes nothing.\n"
 			"-All takes the writable source roots; -Root names one root, a plugin's included, by its name or its plugin's.\n"
 			"fmt rewrites 2.0 sources in the printer's layout (-All: the writable roots); -Check writes nothing and fails\n"
 			"when a file would change. list-generated names every asset the sources build, building nothing.\n"
 			"compile, dump-graph, check, dump-ir and index take any compilable source -- .dss, .dsi,\n"
-			".dsm or .dsf; a .dsh header is compiled through the sources that include it.\n"
+			".dsp, .dsm or .dsf; a .dsh header is compiled through the sources that include it.\n"
+			"pass-registry lists the Custom Pass HLSL slots and what each is (Live, Reserved, SnapshotMissing,\n"
+			"PipelineGone, PassGone, Unknown), writing nothing; -Gc frees the PipelineGone and PassGone ones;\n"
+			"-Rebuild compiles every .dsp again, frees the garbage and rewrites the registry files from\n"
+			"Registry.json -- a Registry.json that does not parse is moved aside and every slot assigned afresh.\n"
 			"check writes no asset at all; -Shaders is the exception -- a shader\n"
 			"compile needs a real material, so it builds and saves the products the way compile\n"
 			"does, then reports HLSL errors as stage: shader.\n"
@@ -454,7 +460,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			if (!UE::DreamShader::IsDreamShaderSourceFile(SourceFile) || UE::DreamShader::IsDreamShaderHeaderFile(SourceFile))
 			{
-				UE_LOG(LogDreamShader, Error, TEXT("DreamShader compile requires a .dss, .dsi, .dsm or .dsf file: %s"), *SourceFile);
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader compile requires a .dss, .dsi, .dsp, .dsm or .dsf file: %s"), *SourceFile);
 				bSucceeded = false;
 				continue;
 			}
@@ -518,7 +524,7 @@ namespace UE::DreamShader::Editor::Private
 			// must not stop a -All sweep, but the run still has to exit non-zero.
 			if (!UE::DreamShader::IsDreamShaderSourceFile(SourceFile) || UE::DreamShader::IsDreamShaderHeaderFile(SourceFile))
 			{
-				UE_LOG(LogDreamShader, Error, TEXT("DreamShader dump-graph requires a .dss, .dsi, .dsm or .dsf file: %s"), *SourceFile);
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader dump-graph requires a .dss, .dsi, .dsp, .dsm or .dsf file: %s"), *SourceFile);
 				bSucceeded = false;
 				continue;
 			}

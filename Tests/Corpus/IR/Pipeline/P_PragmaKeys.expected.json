@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7354",
+		"DSH7360"
+	],
+	"ir": "module \"P_PragmaKeys.dsp\"\n\nproduct 0 PassPipeline \"P_PragmaKeys\"\n  pipeline order=-3 injection=PostProcess.AfterDOF views=Game|SceneCapture requires=PostProcess|CustomStencil enabled=On\n  parameter \"On\" bool default=true\n  parameter \"Strong\" bool default=false group=\"Switches\" sort=4\n  buffer \"Tone\" RGBA16F resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1 export\n  pass \"Grade\" copy injection=PostProcess.AfterDOF enabled=Strong\n    read SceneColor = SceneColor\n    write Tone = Tone\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_PragmaKeys"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

@@ -251,6 +251,26 @@ EOF 码 / DSH3266 / DSH3268。
 - `graphPending` 同 `irPending`：先钉 outcome / 码 / 资产清单，第一次跑通后再 `-DreamShaderUpdateGolden`
   填 dump、review diff、删标记。
 
+## Custom Pass 管线（`.dsp`，`Lang/Pipeline/` 与 `IR/Pipeline/`）
+
+`.dsp` 夹具只进两层：`Lang/Pipeline/`（`lang` 金样本：parse、打印往返、`module` 计数）和 `IR/Pipeline/`
+（`ir` 金样本：绑定后的 `PassPipeline` 载荷）。`Compile/` 不收 `.dsp`：管线资产、导出的渲染目标、HLSL 槽注册表
+要编辑器、真材质和着色器编译，由 `DreamShader.Compiler2.Pipeline.*`（`DreamShaderCompilerPipelineTests.cpp`，
+scratch 区 `Pipeline2`）覆盖；规则 V1-V13 的每个 DSH 码一正一反写在 `DreamShader.Lang2.Pipeline.Rules`
+（`DreamShaderLangPipelineTests.cpp`），不进语料。
+
+- 前缀一律 `P_`（Pipeline），一个夹具一个特性。负例 `P_<名字>.bad.dsp`，金样本只写 `errorContains` 的那一个码；
+  `.dss` 里写 `buffer` / `pass` 声明的负例（DSH3310）也放 `Lang/Pipeline/`，扩展名照旧 `.bad.dss`。
+- `IR/Pipeline/` 的 `.dsp` **不带引擎事实绑定**（`FBindOptions::PipelineReferences` 为空）：材质、`.usf`、层名
+  照写原样收下，绑定器用 info DSH7360 说一次“没查”。所以这些金样本的 `infosContain` 总有 `DSH7360`，
+  也不会出现要查引擎的码（DSH7334-DSH7345、DSH4406-DSH4413）。要查的放单元测试，用手搓的引用表。
+- `ir` 文本是载荷的 dump，没有图：`sinks` 为 `0`，`nodeCounts` 为 `[0]`，`productKinds` 为 `["PassPipeline"]`。
+- 不写依赖整数缓冲（`R32U` / `RG32U`）能用的正例：它们现在一律是 DSH7321。
+- `P_Highlight.dsp`、`P_WindField.dsp` 两层各一份，声明逐字节相同、只有开头的注释不同（同 `Examples/` 的情况）：
+  一份钉 parse / 打印，一份钉载荷。改了一边记得改另一边。
+- 反编译扫 `IR/` 的 `RoundtripIR` 把 `.dsp` 当 info 跳过：管线的往返（`.dsp` → 资产 → 文本 → 载荷）要真资产，
+  在 `DreamShader.Compiler2.Pipeline.Roundtrip`。
+
 ## 两处已知的重复
 
 - `IR/Examples/` 下的三个 `.dss` 是 `Lang/Examples/` 的**逐字节副本**。三个 runner 各自只枚举自己

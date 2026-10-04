@@ -149,12 +149,30 @@ namespace UE::DreamShader::Editor::Private
 		void QueueSourceFile(const FString& SourceFilePath, bool bForce = false);
 		void QueueDependentSourcesForImport(const FString& ImportFilePath);
 		/**
-		 * After a `.dss` or `.dsi` compiled: queue every `.dsi` whose Parent resolves to one of its products, transitively
-		 * (CollectInstanceDependents), never the source itself. So a renamed or retyped parent parameter surfaces as the
-		 * child's error without a child edit.
+		 * After a source compiled, the sources that read what it builds, never the source itself:
+		 *
+		 *   a `.dss` or `.dsi`   every `.dsi` whose Parent resolves to one of its products, transitively
+		 *                        (CollectInstanceDependents), so a renamed or retyped parent parameter surfaces as the
+		 *                        child's error without a child edit; and every `.dsp` one of whose passes names one of its
+		 *                        products as its material (CollectPipelineDependents)
+		 *   a `.dsp`             every `.dss` whose UE.DreamPassBuffer reads its buffers (CollectPassBufferDependents): its
+		 *                        exports may have moved
+		 *
+		 * The two pipeline edges only when bBuiltSomething -- the compile wrote an asset rather than skipping on an unchanged
+		 * build key: a skip changed nothing the other side reads, and a `.dss` that both reads a pipeline's buffer and is
+		 * one of its pass materials would otherwise bounce between the two for ever.
 		 */
-		void QueueDependentInstances(const FString& SourceFilePath);
+		void QueueDependents(const FString& SourceFilePath, bool bBuiltSomething);
 		void OnDirectoryChanged(const TArray<FFileChangeData>& FileChanges);
+		/**
+		 * The `.usf` / `.ush` side of the `.dsp` sources: one watch per directory holding a file some `.dsp`'s HLSL pass
+		 * compiles from (CollectDreamShaderPipelineShaderDirectories), wherever it is -- mapped or not, under a source root
+		 * or not. Refreshed after every `.dsp` compile, failed ones included: a pass whose `.usf` failed its pre-check is
+		 * exactly the one whose next `.usf` save must recompile it.
+		 */
+		void RefreshPassShaderWatchers();
+		/** A `.usf` / `.ush` changed: queue every `.dsp` that compiles from it (FindDreamShaderPipelinesUsingShaderFile). */
+		void OnPassShaderDirectoryChanged(const TArray<FFileChangeData>& FileChanges);
 		bool Tick(float DeltaSeconds);
 		// Separate from Tick() (which only runs every 0.1s -- plenty for polling request/ready
 		// files on disk, but far too slow for streamed preview frames: it hard-caps deliverable
@@ -259,6 +277,8 @@ namespace UE::DreamShader::Editor::Private
 		TMap<FString, TSet<FString>> HeaderDependentsByFile;
 		/** One registration per source root, keyed by the watched directory. */
 		TMap<FString, FDelegateHandle> DirectoryWatcherHandles;
+		/** One registration per directory holding a `.dsp` pass's shader files, keyed by the directory (RefreshPassShaderWatchers). */
+		TMap<FString, FDelegateHandle> PassShaderWatcherHandles;
 		FTSTicker::FDelegateHandle TickerHandle;
 		FTSTicker::FDelegateHandle PreviewTickerHandle;
 		FDelegateHandle MaterialCompilationFinishedHandle;

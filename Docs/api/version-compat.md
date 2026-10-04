@@ -2,8 +2,10 @@
 
 > [DreamShader](../index.md) » [C++ API](index.md) » **DreamShaderVersionCompat.h**
 
-Twelve preprocessor macros that gate every engine-version-dependent behaviour in the plugin. This
-page is the source of truth for every *(since UE 5.x)* marker in the manual.
+Twelve preprocessor macros that gate every engine-version-dependent behaviour in the plugin — and,
+outside the header, one module definition: the Custom Pass gate,
+[`DREAMSHADER_WITH_CUSTOM_PASS`](#dreamshader_with_custom_pass). This page is the source of truth
+for every *(since UE 5.x)* marker in the manual.
 
 Defined in header `DreamShaderVersionCompat.h`.
 
@@ -70,8 +72,12 @@ The version arithmetic every other macro is built on. The feature gates that use
 The six `#ifndef`-guarded ones may be pre-defined by a build target — for example to compile the
 Substrate paths out on a 5.4+ engine by defining `DREAMSHADER_WITH_SUBSTRATE_BUILTINS=0`, or to force
 a version branch when testing. `DreamShader.Build.cs` uses that to set
-`DREAMSHADER_WITH_MOON_ENGINE` and `DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS`, the only
-`PublicDefinitions` entries in the plugin; no module sets `PrivateDefinitions` at all.
+`DREAMSHADER_WITH_MOON_ENGINE` and `DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS` from their
+header probes. The plugin's only other definitions are `DREAMSHADER_WITH_CUSTOM_PASS`, a
+`PublicDefinitions` entry of `DreamShaderPass.Build.cs` that this header does not define
+([below](#dreamshader_with_custom_pass)), and `MOON_ENGINE=1`, a `PrivateDefinitions` entry that
+`DreamShaderEditor.Build.cs` adds when the engine's `SceneTypes.h` declares
+`MP_MoonEncodedAttribute0` and that no source file reads.
 
 > [!NOTE]
 > `DREAMSHADER_ALLOW_SHRINKING_NO` carries **no behavioural difference**. It exists solely because
@@ -82,8 +88,10 @@ a version branch when testing. `DreamShader.Build.cs` uses that to set
 
 > [!NOTE]
 > There are **no** raw `#if ENGINE_MAJOR_VERSION`, `ENGINE_MINOR_VERSION` or `UE_VERSION_NEWER_THAN`
-> tests anywhere in the plugin outside this header. Every version-dependent behaviour goes through
-> these macros, which is what makes the table below exhaustive.
+> tests anywhere in the plugin outside this header. The one version test outside it is not C++:
+> `DreamShaderPass.Build.cs` reads `Target.Version` to set
+> [`DREAMSHADER_WITH_CUSTOM_PASS`](#dreamshader_with_custom_pass). Every version-dependent behaviour
+> goes through these macros or that definition, which is what makes the table below exhaustive.
 
 > [!NOTE]
 > *(since 2.0.0)* Where a **member** is younger than the oldest supported engine and nobody can say in which
@@ -91,6 +99,32 @@ a version branch when testing. `DreamShader.Build.cs` uses that to set
 > template, with a `static_assert` of the same question on the engine where the member is known to exist, so a
 > misspelling cannot read as "this engine does not have it". Those sites are listed under
 > [Asked of the type](#asked-of-the-type).
+
+## `DREAMSHADER_WITH_CUSTOM_PASS`
+
+*(since 2.1.0)* The Custom Pass gate is not in this header. `DreamShaderPass.Build.cs` computes it
+from the engine being built against and adds it to the module's `PublicDefinitions`:
+
+```csharp
+bool bForcedOff = Target.ProjectDefinitions.Any(Definition =>
+    Definition == "DREAMSHADER_FORCE_NO_CUSTOM_PASS" || Definition == "DREAMSHADER_FORCE_NO_CUSTOM_PASS=1");
+bool bWithCustomPass = !bForcedOff
+    && (Target.Version.MajorVersion > 5 || (Target.Version.MajorVersion == 5 && Target.Version.MinorVersion >= 8));
+PublicDefinitions.Add("DREAMSHADER_WITH_CUSTOM_PASS=" + (bWithCustomPass ? "1" : "0"));
+```
+
+| | |
+| :-- | :-- |
+| Defined by | `DreamShaderPass.Build.cs` — **not** `DreamShaderVersionCompat.h`, which neither defines nor mentions it |
+| Value | `1` on UE ≥ 5.8, `0` below or when forced off. Always defined where it is visible, so test it with `#if`, not `#ifdef` |
+| Visible in | `DreamShaderPass` and the modules that depend on it: in the plugin, `DreamShaderCompiler` and `DreamShaderEditor`, which ask it rather than test the version again. `DreamShaderLang` and `DreamShader` do not depend on `DreamShaderPass` and do not have it |
+| Overridable | down only, from the UBT command line: `-ProjectDefine:DREAMSHADER_FORCE_NO_CUSTOM_PASS` builds `0` on any engine, which is how a 5.8 machine compiles and tests the other side ([Testing](../contributing/testing.md#both-sides-of-the-custom-pass-gate)). Nothing makes it `1` below 5.8, and code cannot pre-empt it: the rules file sets it with no `#ifndef` guard |
+| Also decides | the `Renderer/Internal` include path of `DreamShaderPass` (for `FPostProcessingInputs`), added at `1` only |
+
+The module builds on every engine. Every reflected type in it is plain data, so pipelines, the
+settings, the components and the volume load and save on any supported engine; below 5.8 nothing
+renders them. What `0` compiles out, module by module, is under
+[UE ≥ 5.8 — `DREAMSHADER_WITH_CUSTOM_PASS`](#ue--58--dreamshader_with_custom_pass).
 
 ## Complete version-gated behaviour
 
@@ -202,6 +236,28 @@ or, *(since 2.0.1)*, whether the engine has the node's header at all (`__has_inc
 | :-- | :-- | :-- |
 | The builtin catalog's material attributes *(since 2.0.0)* | `FMaterialAttributeDefinitionMap::GetAttributeNameToIDList` | that list is private, so the attributes are reached by walking `EMaterialProperty` through the public `GetID` / `GetProperty` / `GetAttributeName`. The same attributes either way; only their order in the exported catalog differs |
 
+### UE ≥ 5.8 — `DREAMSHADER_WITH_CUSTOM_PASS`
+
+*(since 2.1.0)* Custom Pass as a whole. The language does not change: a `.dsp` parses and binds on
+every engine, and so does a `.dss` — what changes is what the engine side can build and run.
+
+| Module | Feature | On UE ≥ 5.8 | On UE 5.3 – 5.7 |
+| :-- | :-- | :-- | :-- |
+| `DreamShaderPass` | Module startup | maps `/DreamPassUser` to the project source root's `.dreampass/` folder, creating `Slots/` and the two registry `.ush` files when missing and dropping registry sections whose snapshot is missing; the mapping is skipped in a cooked build | logs `DreamShaderPass: Custom Pass needs Unreal Engine 5.8 or later; this build has the asset types only.` and does nothing else |
+| `DreamShaderPass` | The renderer half — everything under `Private/Render/` | compiled in: the scene view extension (one per world, made by `UDreamPassSubsystem`), the slot global shaders `FDreamPassCS` / `FDreamPassPS`, the mesh pass shaders, buffers, exports, the buffer visualization and the `stat DreamPass` group | compiled out. The subsystem still keeps pipelines, activations, lists and layers, but no view extension exists, so no pass runs |
+| `DreamShaderPass` | `DreamPass.Dump` | ends each world with the last frame's report: views with passes, passes run, passes skipped | the same listing without the frame report |
+| `DreamShaderPass` | `r.DreamPass.Enable`, `r.DreamPass.DisablePipelines`, `r.DreamPass.Visualize` | registered | registered; with nothing rendering, there is nothing for them to change |
+| `DreamShaderPass` | `UMaterialExpressionDreamPassBuffer` / `…Output` (`UE.DreamPassBuffer`, `UE.DreamPassOutput`) | compile as documented | the classes exist — UHT cannot gate a `UCLASS` — but `Compile` returns `Dream Pass Buffer needs Unreal Engine 5.8 or later.` / `Dream Pass Output needs Unreal Engine 5.8 or later.`, and most of their overrides — pin value types, the referenced texture, the shader tag, `IsAllowedIn` — are compiled out |
+| `DreamShaderCompiler` | The builtin catalog | lists both nodes | leaves both out, so a `.dss` that calls one fails when it is bound: `DSH5300` `'UE.{Name}' needs Unreal Engine 5.8 or later and DreamShader's Custom Pass module (DreamShaderPass), and this engine's node catalog does not have it.` |
+| `DreamShaderCompiler` | Building a `.dsp` | the pipeline and its export render targets are written | `DSH8300` `'{Name}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.` |
+| `DreamShaderCompiler` | What a pass's material is checked against | domain, blendable location, `UserSceneTexture` inputs, `UE.DreamPassOutput` pins, usage flags, pre-exposure and translator settings | domain and blendable location only (`FPipelineReferences::bCustomPassAvailable` is false), with the info `DSH7360` saying the rest was not checked; the [build key](../generation/caching.md#custom-pass-pipelines) carries `CustomPass=0` |
+| `DreamShaderCompiler` | HLSL slot pre-check | compiles each changed slot for the shader formats of the active feature levels and of the target platforms | `DSH8323` `HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to compile them for.` |
+| `DreamShaderCompiler` | `dsc check -Shaders` on a `.dsp` | pre-checks its slots | `DSH8338` `HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to pre-check them for.` |
+| `DreamShaderCompiler` | Hot reload of the slot shaders after a registry commit | in the editor, never in a commandlet | none |
+| `DreamShaderEditor` | [Pipeline details panel](../tools/editor-integration.md#pass-pipeline-details-panel) | as documented | one more row in Pipeline Overview: `Custom Pass runs on Unreal Engine 5.8 and later. This engine loads and saves the pipeline, and runs none of it.` |
+| `DreamShaderEditor` | [`pass-keys.json`](../tools/workspace.md#pass-keysjson) | `supported: true` | `supported: false` and `unsupportedReason: "Custom Pass pipelines run on Unreal Engine 5.8 and later."`; the keys, injection points and formats are written either way |
+| `DreamShaderEditor` | The render automation tests (`DreamShaderPassRenderTests.cpp`) | compiled in | compiled out |
+
 ## "Since UE 5.x" summary
 
 | Version | Features that require it |
@@ -210,8 +266,10 @@ or, *(since 2.0.1)*, whether the engine has the node's header at all (`__has_inc
 | **5.5** | `periodicworld` transform basis · `UE.TransformPosition(PeriodicWorldTileSize=…)` · `ObjectPositionWS` resolved directly · `CountInputs` |
 | **5.6** | `firstperson` / `firstpersontranslatedworld` transform bases · `UE.TransformPosition(FirstPersonInterpolationAlpha=…)` · plugin-mount validation for `Root=` and `Path(...)` · `TextureSample.GatherMode` round-trip · `FMetaData&`, `GetInputValueType`, `RebuildOutputs`, `ScreenPosition` resolved directly · six unexported expression classes resolved by `StaticClass()` rather than by path (no behaviour difference) |
 | **5.7** | `Group` / `SortPriority` on collection parameters · `BlendInputRelevance` on layer-blend inputs · MPC `ExpressionGUID` repair · per-platform × per-quality material-resource diagnostics · scalar-parameter `ControlType` / `Enumeration` / `EnumerationIndex` round-trip · node preview height from `ShouldShowPreview()` |
+| **5.8** | Custom Pass *(since 2.1.0)* — building and running `.dsp` pipelines, HLSL slots, the `UE.DreamPassBuffer` / `UE.DreamPassOutput` nodes ([`DREAMSHADER_WITH_CUSTOM_PASS`](#dreamshader_with_custom_pass)) |
 
-Everything not listed above works identically on every engine from 5.3 to 5.8.
+Everything not listed above works identically on every engine from 5.3 to 5.8. A `.dsp` is the one
+source that parses and binds everywhere and builds on 5.8 only.
 
 ## Notes
 
@@ -290,4 +348,6 @@ Shader(Name="Materials/M_Portable")
 - [`Path(...)`](../parameters/path.md) — plugin roots and the 5.6 mount check
 - [Asset paths](../generation/asset-paths.md) — `Root="Plugin.X"` and the 5.6 mount check
 - [Decompiler](../tools/decompiler.md) — the version-gated round-trip properties
+- [`DreamShaderPass`](pass-module.md) — the module whose rules file defines `DREAMSHADER_WITH_CUSTOM_PASS`
+- [Custom Pass runtime](../runtime/index.md) — what runs on 5.8
 - [Diagnostics index](../diagnostics/index.md) — the three explicit version-requirement errors

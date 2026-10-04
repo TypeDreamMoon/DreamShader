@@ -86,7 +86,7 @@ archive up to `1.5.0` without anyone noticing.
 | :-- | :-- |
 | `Source/` | |
 | `Resources/` | |
-| `Shaders/` | *(since 1.5.1)* `DreamShaderBuiltins.ush`, so `/Plugin/DreamShader/…` resolves in an archive install |
+| `Shaders/` | *(since 1.5.1)* `DreamShaderBuiltins.ush`, so `/Plugin/DreamShader/…` resolves in an archive install; the Custom Pass shaders under `Pass/`, without which the `DreamShaderPass` module's global and mesh-pass shaders do not compile |
 | `Docs/` | |
 | `.skill/` | *(since 1.5.1)* the agent skill set and its driver |
 | `DreamShader.uplugin` | |

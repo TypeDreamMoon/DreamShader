@@ -48,7 +48,7 @@ namespace UE::DreamShader::Editor::Compiler
 	// ------------------------------------------------------------------------ the thin entry
 
 	/**
-	 * True for every file the pipeline compiles on its own: `.dss` and `.dsi` through the 2.0 front end, `.dsm`
+	 * True for every file the pipeline compiles on its own: `.dss`, `.dsi` and `.dsp` through the 2.0 front end, `.dsm`
 	 * and `.dsf` through the legacy one (the name is older than that: once only `.dss` answered true). A `.dsh` header
 	 * answers false: it is compiled only as part of the source that includes it.
 	 */
@@ -126,6 +126,12 @@ namespace UE::DreamShader::Editor::Compiler
 		/** `.dsi` only: the parent's resolved object path. Part of the build key; the schema is not. */
 		FString ParentObjectPath;
 
+		/**
+		 * `.dss` only: the `Pipeline = "..."` of every UE.DreamPassBuffer the source reads, as written. The product index's
+		 * `.dss` -> `.dsp` edge: a `.dsp` that changes its exports rebuilds the sources that read them.
+		 */
+		TArray<FString> PassPipelineReferences;
+
 		// --- owned state, in destruction-safe order; see the struct comment ---
 		TUniquePtr<UE::DreamShader::FDreamShaderDefineTable> Defines;
 		TUniquePtr<UE::DreamShader::Lang::FLangSourceText> Source;
@@ -133,6 +139,11 @@ namespace UE::DreamShader::Editor::Compiler
 		TUniquePtr<FDreamShaderIncludeResolver> Includes;
 		/** `.dsi` only: the schema the instance was bound against. FBoundModule::ParentSchema points into it, so it is declared before Bound. */
 		TUniquePtr<UE::DreamShader::IR::FIRParameterSchema> ParentSchema;
+		/**
+		 * `.dsp` only: the materials, shader files and layers the host resolved before the bind (FBindOptions::PipelineReferences).
+		 * Declared before Bound for the same reason ParentSchema is: the bound module may keep pointers into it.
+		 */
+		TUniquePtr<UE::DreamShader::Lang::FPipelineReferences> PipelineReferences;
 		TUniquePtr<UE::DreamShader::Lang::FBoundModule> Bound;
 		TUniquePtr<UE::DreamShader::IR::FIRModule> IR;
 	};
@@ -173,6 +184,12 @@ namespace UE::DreamShader::Editor::Compiler
 
 		/** `/Game/FX/M_Glow.M_Glow`. What FindObject / LoadObject take, and where the emitted asset lands. */
 		FString ObjectPath;
+
+		/**
+		 * PassPipeline only: the object path of the render target the emitter keeps beside the pipeline for each exported
+		 * buffer (`/Game/FX/P_Blur_Bloom.P_Blur_Bloom`), in buffer order. Generated assets as much as the pipeline is.
+		 */
+		TArray<FString> ExportTargetObjectPaths;
 	};
 
 	/** Everything ResolveDreamShaderSourceProducts found out about one source. */
@@ -201,6 +218,9 @@ namespace UE::DreamShader::Editor::Compiler
 
 		/** True when the file or any header carried a preprocessor directive, taken or not (the Adopt gate). */
 		bool bSourceHadPreprocessorDirectives = false;
+
+		/** `.dss` only: the `Pipeline = "..."` of every UE.DreamPassBuffer it reads, as written (FDreamShaderLang2PipelineResult). */
+		TArray<FString> PassPipelineReferences;
 
 		/** In FIRModule::Products order, which is declaration order and NOT emit order. */
 		TArray<FDreamShaderResolvedProduct> Products;

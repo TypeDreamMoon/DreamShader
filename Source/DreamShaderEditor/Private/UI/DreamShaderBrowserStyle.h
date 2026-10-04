@@ -8,7 +8,10 @@
 #include "CoreMinimal.h"
 #include "Internationalization/Text.h"
 #include "Math/Color.h"
+#include "Styling/AppStyle.h"
 #include "UI/Model/DreamShaderBrowserEntry.h"
+
+struct FSlateBrush;
 
 namespace UE::DreamShader::Editor::Private
 {
@@ -84,5 +87,18 @@ namespace UE::DreamShader::Editor::Private
 	inline bool IsBrowserErrorStatus(EBrowserSourceStatus Status)
 	{
 		return Status == EBrowserSourceStatus::Error || Status == EBrowserSourceStatus::Unresolved;
+	}
+
+	// The badge a row carries for its source's kind. Only a `.dsp` has one: the browser is a material browser, and a
+	// pipeline is the one kind of source in it whose asset is not a material. Null for every other entry.
+	inline const FSlateBrush* GetBrowserSourceKindBadge(const FBrowserEntry& Entry)
+	{
+		return Entry.IsPipeline() ? FAppStyle::Get().GetBrush("ClassIcon.PostProcessVolume") : nullptr;
+	}
+
+	// The same badge at the size a tile shows in place of a thumbnail.
+	inline const FSlateBrush* GetBrowserSourceKindTileBadge(const FBrowserEntry& Entry)
+	{
+		return Entry.IsPipeline() ? FAppStyle::Get().GetBrush("ClassThumbnail.PostProcessVolume") : nullptr;
 	}
 }

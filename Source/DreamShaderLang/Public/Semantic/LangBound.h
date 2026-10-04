@@ -397,6 +397,35 @@ namespace UE::DreamShader::Lang
 		TArray<FBoundInstanceOverride> Overrides;
 	};
 
+	// ------------------------------------------------------------------------ pipelines (.dsp)
+
+	struct FPipelineReferences;
+
+	/**
+	 * A `.dsp`, bound: the payload of its one PassPipeline product, canonical and with every default applied, plus where
+	 * each part of it was written. The IR builder copies Payload into FIRProduct::PassPipeline (stamping its files);
+	 * the decompiler's re-parse check and Adopt read the declarations back through the parallel arrays.
+	 */
+	struct DREAMSHADERLANG_API FBoundPipeline
+	{
+		bool bIsPipeline = false;
+		/** The `#pragma pipeline` line; null when the file has none (every pipeline key at its default). */
+		const FPragmaDecl* Pragma = nullptr;
+		/** What the PassPipeline product carries (IR.h). Built even when the file has errors, as far as it got. */
+		IR::FIRPassPipeline Payload;
+		/** Parallel to Payload.Parameters: the FBoundModule::Globals entry each came from. */
+		TArray<int32> ParameterGlobals;
+		/** Parallel to Payload.Buffers and Payload.Passes: the declaration each came from. */
+		TArray<const FBufferDecl*> BufferDecls;
+		TArray<const FPassDecl*> PassDecls;
+		/** What the engine-dependent checks were made against; null in an engine-free check. Owned by the caller. */
+		const FPipelineReferences* References = nullptr;
+
+		int32 FindBuffer(const FString& Name) const;
+		int32 FindPass(const FString& Name) const;
+		int32 FindParameter(const FString& Name) const;
+	};
+
 	// ------------------------------------------------------------------------------ module
 
 	struct DREAMSHADERLANG_API FBoundModule
@@ -434,6 +463,8 @@ namespace UE::DreamShader::Lang
 		FBoundInstance Instance;
 		/** `.dsi` only: the schema bound against; owned by the caller, must outlive this. Null when unchecked. */
 		const IR::FIRParameterSchema* ParentSchema = nullptr;
+		/** `.dsp` only. */
+		FBoundPipeline Pipeline;
 
 		const FBoundExpr* Find(const FExpr& Expr) const { return Expressions.Find(&Expr); }
 		const FBoundExpr& Get(const FExpr& Expr) const;
@@ -452,6 +483,113 @@ namespace UE::DreamShader::Lang
 	 */
 	using FLangIncludeResolver = TFunction<const FModule*(const FString& IncludePath, const FString& FromFile, FLangDiagnosticSink& Diagnostics)>;
 
+	/**
+	 * What the host found for one material a `.dsp` names (`Material = "..."`): the engine facts the binder checks a
+	 * pass against (V6, V7 in DreamShader_Plan/05). Plain data, so the binder stays engine-free.
+	 */
+	struct FPipelineMaterialInfo
+	{
+		/** The reference as written. */
+		FString Reference;
+		/** Empty when nothing was found. */
+		FString ObjectPath;
+		bool bFound = false;
+		/** MaterialDomain without its prefix: Surface, PostProcess, ... */
+		FString Domain;
+		/** Post-process materials: BlendableLocation without its prefix (SceneColorAfterDOF, SceneColorAfterTonemapping, ...). */
+		FString BlendableLocation;
+		bool bDisablePreExposureScale = false;
+		/**
+		 * The UserSceneTexture names the material reads, in the order its shader map lists them, as a pass binds them: an
+		 * instance's UserSceneTextureOverrides applied, which is the name the runtime matches a `read` against.
+		 */
+		TArray<FString> UserSceneTextureInputs;
+		/** Bit i: a SceneTexture node reads PostProcessInput i (that input slot is taken). */
+		uint32 PostProcessInputsUsed = 0;
+		/** The material has a UE.DreamPassOutput node at the top level of its graph. */
+		bool bHasPassOutput = false;
+		/** Bit i: Output<i> of that node is connected. */
+		uint32 PassOutputsConnected = 0;
+		/** The mesh usage flags the material has, as EDreamPassMeshUsageFlags spellings (StaticMesh, SkeletalMesh, ...). */
+		TArray<FString> Usages;
+		/** The material asks for the new material translator, which the pass nodes do not support. */
+		bool bUsesNewTranslator = false;
+	};
+
+	/**
+	 * Map key functions for an FString key compared as HLSL compares names: case-sensitively. TMap's own for FString ignore
+	 * case, which would take `BlurCS` and `blurCS`, two functions of one shader file, for one.
+	 */
+	template <typename ValueType>
+	struct TCaseSensitiveStringMapKeyFuncs : BaseKeyFuncs<TPair<FString, ValueType>, FString, /*bInAllowDuplicateKeys*/ false>
+	{
+		static FORCEINLINE const FString& GetSetKey(const TPair<FString, ValueType>& Element) { return Element.Key; }
+		static FORCEINLINE bool Matches(const FString& A, const FString& B) { return A.Equals(B, ESearchCase::CaseSensitive); }
+		static FORCEINLINE uint32 GetKeyHash(const FString& Key) { return FCrc::StrCrc32(*Key); }
+	};
+
+	/** A shader file's compute entries -- `[numthreads(x, y, z)]` functions -- by name, case-sensitively, with that group size. */
+	using FPipelineComputeEntryMap = TMap<FString, FIntVector, FDefaultSetAllocator, TCaseSensitiveStringMapKeyFuncs<FIntVector>>;
+
+	/** What the host found for one `.usf` a `.dsp` names (`Shader = "..."`). */
+	struct FPipelineShaderInfo
+	{
+		/** The reference as written. */
+		FString Reference;
+		/**
+		 * The virtual shader path (`/Project/Passes/Blur.usf`) when the host has one -- the reference itself when it starts
+		 * with `/`; empty is no error. The file may live anywhere: the engine compiles a snapshot of it under the mapped
+		 * /DreamPassUser directory, never the original. A reference without a leading `/` is relative to the `.dsp`'s folder.
+		 */
+		FString VirtualPath;
+		/** The file on disk. */
+		FString FilePath;
+		bool bExists = false;
+		/**
+		 * Every function the text defines with `[numthreads(x, y, z)]` in front of it, with that group size -- the text being
+		 * the file and every file it includes that the host could follow, by a relative path or a mapped virtual one. Keyed
+		 * case-sensitively, as HLSL names are.
+		 */
+		FPipelineComputeEntryMap ComputeEntries;
+		/** Every other function the text defines at file scope, each spelling once (case-sensitively). */
+		TArray<FString> Functions;
+		/**
+		 * False when the file includes something the host could not read -- a virtual path no mapped directory covers, a
+		 * relative path that names no file, `#include MACRO`: an Entry missing from ComputeEntries and Functions may be
+		 * defined there, so the binder does not call it missing.
+		 */
+		bool bEntryScanComplete = true;
+	};
+
+	/** Everything the host resolved for a `.dsp` before binding it. */
+	struct FPipelineReferences
+	{
+		TArray<FPipelineMaterialInfo> Materials;
+		TArray<FPipelineShaderInfo> Shaders;
+		/**
+		 * The project's pass layers (UDreamPassSettings::LayerNames), in bit order: the first UDreamPassSettings::MaxLayers
+		 * names only, the ones that have a bit -- a name past them is no layer, to the binder as to the runtime.
+		 */
+		TArray<FString> LayerNames;
+		/**
+		 * False on an engine older than 5.8: a `.dsp` still parses and binds, and the emitter refuses it. The host then reads
+		 * a material's domain and blendable location only, and the binder skips the checks that need what only the Custom
+		 * Pass runtime gives (UserSceneTexture inputs, UE.DreamPassOutput pins, usage flags, pre-exposure, translator).
+		 */
+		bool bCustomPassAvailable = true;
+
+		/** By the reference exactly as written: the collector keeps two spellings apart (CollectDreamShaderPipelineReferences). */
+		const FPipelineMaterialInfo* FindMaterial(const FString& Reference) const
+		{
+			return Materials.FindByPredicate([&Reference](const FPipelineMaterialInfo& Info) { return Info.Reference.Equals(Reference, ESearchCase::CaseSensitive); });
+		}
+
+		const FPipelineShaderInfo* FindShader(const FString& Reference) const
+		{
+			return Shaders.FindByPredicate([&Reference](const FPipelineShaderInfo& Info) { return Info.Reference.Equals(Reference, ESearchCase::CaseSensitive); });
+		}
+	};
+
 	struct FBindOptions
 	{
 		/** Required. An empty catalog binds nothing that names a builtin. */
@@ -468,6 +606,11 @@ namespace UE::DreamShader::Lang
 		const IR::FIRParameterSchema* ParentSchema = nullptr;
 		/** `.dsi` only: the resolved parent object path, carried into FIRInstance::ParentObjectPath. */
 		FString ParentObjectPath;
+		/**
+		 * `.dsp` only: the materials, shader files and layers the host resolved. Null = an engine-free check: the
+		 * references are taken as written and every check that needs an engine fact is skipped.
+		 */
+		const FPipelineReferences* PipelineReferences = nullptr;
 	};
 
 	struct FLangBindResult

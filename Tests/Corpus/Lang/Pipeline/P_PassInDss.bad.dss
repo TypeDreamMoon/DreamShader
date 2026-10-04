@@ -1,0 +1,10 @@
+// A 'pass' declaration belongs in a .dsp; in a .dss it says so.
+pass Fill : clear
+{
+    write Mask;
+}
+
+export void M_PassInDss(inout material m)
+{
+    m.EmissiveColor = float3(1.0, 0.0, 0.0);
+}

@@ -349,6 +349,8 @@ namespace UE::DreamShader::IR::Private
 		void BuildFunctionProduct(const FBoundFunction& Function);
 		/** A `.dsi` (IRBuilderInstance.cpp): the FIRInstance payload from FBoundModule::Instance and ParentSchema; the graph stays empty. */
 		void BuildInstanceProduct(const FBoundProduct& BoundProduct, FIRProduct& OutProduct);
+		/** A `.dsp` (IRBuilderPipeline.cpp): the FIRPassPipeline payload the binder built, its files stamped; the graph stays empty. */
+		void BuildPipelineProduct(const FBoundProduct& BoundProduct, FIRProduct& OutProduct);
 		/** The FunctionInput node for one parameter, plus the slot value it seeds. */
 		FLoweredValue MakeFunctionInput(const FBoundFunction& Function, int32 ParamIndex, int32 SortPriority);
 		/**

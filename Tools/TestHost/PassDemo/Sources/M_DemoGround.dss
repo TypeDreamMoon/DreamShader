@@ -1,0 +1,18 @@
+// M_DemoGround.dss -- the demo floor: a grey checker that glows under CP_Highlight's objects (an ordinary material
+// reading an exported buffer through UE.DreamPassBuffer).
+uniform float3 TileA = float3(0.30, 0.30, 0.32);
+uniform float3 TileB = float3(0.16, 0.16, 0.18);
+uniform float  TileSize = 200.0;
+uniform float3 GlowColor = float3(1.0, 0.6, 0.0);
+uniform float  GlowStrength = 2.0;
+
+export void M_DemoGround(inout material m)
+{
+    float3 WorldPos = UE.WorldPosition();
+    float2 Cell = floor(WorldPos.xy / TileSize);
+    float Checker = fmod(abs(Cell.x + Cell.y), 2.0);
+    m.BaseColor = lerp(TileA, TileB, Checker);
+    m.Roughness = 0.7;
+    float Glow = UE.DreamPassBuffer(Pipeline = "CP_Highlight", Buffer = "Blurred").r;
+    m.EmissiveColor = GlowColor * Glow * GlowStrength;
+}

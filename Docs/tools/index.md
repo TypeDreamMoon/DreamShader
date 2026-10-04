@@ -20,17 +20,17 @@ module is editor-only, and the runtime `DreamShader` module carries no UI.
 
 | Page | Covers |
 | :-- | :-- |
-| [Editor integration](editor-integration.md) | every menu entry, toolbar button, context-menu action and tab spawner, with labels, tooltips, icons and effects |
-| [Material Content Browser](material-browser.md) | the docked browser tab: sources and assets side by side with status, diagnostics, provenance, dependencies and inheritance; live preview; the instance factory and *Materialize* |
+| [Editor integration](editor-integration.md) | every menu entry, toolbar button, context-menu action and tab spawner, with labels, tooltips, icons and effects; the details panel of a Custom Pass pipeline *(2.1.0)* |
+| [Material Content Browser](material-browser.md) | the docked browser tab: sources and assets side by side with status, diagnostics, provenance, dependencies and inheritance; live preview; the instance factory and *Materialize*; `.dsp` pipelines and their *New* templates *(2.1.0)* |
 | [Preview](preview.md) | the thumbnail renderer, the streaming WebSocket preview, the mesh set and the limits |
-| [Decompiler](decompiler.md) | exporting an existing material, function, layer, blend or instance back to source: `.dss` / `.dsi` (2.0, the default) or `.dsm` / `.dsf` |
+| [Decompiler](decompiler.md) | exporting an existing material, function, layer, blend or instance back to source: `.dss` / `.dsi` (2.0, the default) or `.dsm` / `.dsf`; a Custom Pass pipeline to `.dsp` *(2.1.0)* |
 | [Migrate](migrate.md) | `dsc migrate`: 1.x sources rewritten as `.dss`, each rewrite proved before it is written *(2.0)* |
 | [VirtualFunction tools](virtual-function-tools.md) | the conditional VirtualFunction context menu and the startup sync service |
 | [Asset rename sync](asset-rename-sync.md) | following a renamed or moved asset into the `.dsm` / `.dsf` / `.dsh` files that reference it *(since 1.9.0)* |
-| [Workspace](workspace.md) | the generated `DreamShader.code-workspace`, VSCode discovery and launch, the exported manifests |
+| [Workspace](workspace.md) | the generated `DreamShader.code-workspace`, VSCode discovery and launch, the exported manifests — `pass-keys.json` among them *(2.1.0)* |
 | [Packages](packages.md) | `DShader/Packages`: what the plugin implements and what it does not |
-| [Commandlet](commandlet.md) | `-run=DreamShader` — headless compile, decompile, migrate, check and the IR tools |
-| [Bridge](bridge.md) | request files, the diagnostics sinks, `bridge.db`, the WebSocket protocol |
+| [Commandlet](commandlet.md) | `-run=DreamShader` — headless compile, decompile, migrate, check and the IR tools; the Custom Pass slot registry, `pass-registry` *(2.1.0)* |
+| [Bridge](bridge.md) | request files, the diagnostics sinks, `bridge.db`, the WebSocket protocol; the watches on Custom Pass shader files *(2.1.0)* |
 
 ## Which side implements what
 
@@ -47,6 +47,7 @@ labelled as such.
 | Preview camera control, pitch clamping, frame acknowledgement | editor extension | the plugin applies no pitch clamp of its own |
 | Decompiler | Unreal plugin | [Decompiler](decompiler.md) |
 | `.dsm` / `.dsh` / `.dsf` syntax highlighting, completion, hovers | editor extension | fed by the manifests the plugin exports — [Workspace](workspace.md) |
+| `.dsp` highlighting and completion | editor extension | the plugin exports `pass-keys.json` and the symbol index for it — [Workspace](workspace.md#pass-keysjson) *(2.1.0)* |
 | `DreamShader.code-workspace` file | Unreal plugin | rewritten on every *Open Dream Shader Workspace* |
 | Package manifest (`dreamshader.package.json`), lock file, install/update commands | editor extension | **no plugin C++ reads either file** — [Packages](packages.md) |
 | `DShader/Packages` directory creation, import resolution, auto-compile exclusion | Unreal plugin | [Packages](packages.md) |
@@ -62,12 +63,14 @@ everything below it.
 | # | Step | Skipped when |
 | :-- | :-- | :-- |
 | 1 | If running a commandlet: install the cook hook when `-run=` contains `Cook` and `-cookworker` is absent, then stop | — |
+| 1a | Register the [pass pipeline details panel](editor-integration.md#pass-pipeline-details-panel) *(since 2.1.0)* | a commandlet (step 1 stopped) |
 | 2 | Bail out entirely | `-NoDreamShaderEditorBridge` is on the command line |
 | 3 | Create and start the editor bridge | as above |
 | 4 | Register the Material Content Browser nomad tab and its menu entries | as above |
 | 5 | Subscribe the [asset rename sync service](asset-rename-sync.md) to `OnAssetRenamed` *(since 1.9.0)* | as above, and when the asset registry is unavailable |
 
-The bridge's own startup then resets `bridge.db`, exports the three manifests, runs the
+The bridge's own startup then resets `bridge.db`, exports the manifests (`pass-keys.json` with
+`settings.json` *(since 2.1.0)*), runs the
 [VirtualFunction sync service](virtual-function-tools.md#startup-sync-service), queues a full scan,
 opens the [preview WebSocket server](preview.md#streaming-preview) on port `17864`, registers the
 source-directory watcher, and installs the menus.

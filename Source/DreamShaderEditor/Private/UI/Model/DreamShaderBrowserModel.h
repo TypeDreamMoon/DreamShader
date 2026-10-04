@@ -27,6 +27,8 @@ namespace UE::DreamShader::Editor::Private
 		bool bDivergedOnly = false;
 		bool bEphemeralOnly = false;
 		bool bHideLibraries = false;
+		// Drop every `.dsp` (and the pass pipeline it builds) from the list.
+		bool bHidePipelines = false;
 		bool bHideUnmanaged = false;
 		// Absolute, normalized source directory; only sources under it pass. Empty = everything,
 		// unmanaged assets included. UnmanagedScope = only the unmanaged assets.

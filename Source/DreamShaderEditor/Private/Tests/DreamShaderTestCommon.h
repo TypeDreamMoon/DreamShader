@@ -134,7 +134,10 @@ namespace UE::DreamShader::Editor::Private::Tests
 		return Case;
 	}
 
-	/** Enumerate every .dsm/.dsf/.dsh/.dss/.dsi fixture under Corpus/<SubDir>. Each runner skips the extensions it does not run. */
+	/**
+	 * Enumerate every .dsm/.dsf/.dsh/.dss/.dsi/.dsp fixture under Corpus/<SubDir>. Each runner skips the extensions it does
+	 * not run (a `.dsp` -- a Custom Pass pipeline -- is run by the Lang and IR layers only).
+	 */
 	inline bool LoadDreamShaderCorpusCases(const FString& SubDir, TArray<FCorpusCase>& OutCases)
 	{
 		const FString Root = GetDreamShaderCorpusRoot();
@@ -152,6 +155,7 @@ namespace UE::DreamShader::Editor::Private::Tests
 		FM.FindFilesRecursive(Files, *Dir, TEXT("*.dsh"), true, false, false);
 		FM.FindFilesRecursive(Files, *Dir, TEXT("*.dss"), true, false, false);
 		FM.FindFilesRecursive(Files, *Dir, TEXT("*.dsi"), true, false, false);
+		FM.FindFilesRecursive(Files, *Dir, TEXT("*.dsp"), true, false, false);
 		Files.Sort();
 
 		const FString RelativeBase = Dir / TEXT("");
@@ -2376,8 +2380,12 @@ namespace UE::DreamShader::Editor::Private::Tests
 	struct FDreamShaderIRCorpusLayer
 	{
 		const TCHAR* EntryPoint = TEXT("ir");
-		/** Lower case, without the dot. A `dsi` fixture is bound against the sibling its Parent names. */
-		TArray<FString> Extensions = { TEXT("dss"), TEXT("dsi") };
+		/**
+		 * Lower case, without the dot. A `dsi` fixture is bound against the sibling its Parent names. A `dsp` (a Custom Pass
+		 * pipeline) is bound engine-free -- no FPipelineReferences, which the binder says with the info DSH7360 -- and its
+		 * golden pins the PassPipeline payload as the dump prints it.
+		 */
+		TArray<FString> Extensions = { TEXT("dss"), TEXT("dsi"), TEXT("dsp") };
 	};
 
 	/**

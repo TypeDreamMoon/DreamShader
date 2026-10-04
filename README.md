@@ -50,7 +50,8 @@
 </table>
 
 > [!TIP]
-> Keep every source file — `.dss`, `.dsi`, `.dsh`, `.dsm`, `.dsf` — in version control. The generated
+> Keep every source file — `.dss`, `.dsi`, `.dsp`, `.dsh`, `.dsm`, `.dsf` — in version control, and with
+> Custom Pass the snapshots in `DShader/.dreampass/` too. The generated
 > Unreal assets can always be rebuilt from source; whether to version them as well is a choice with two
 > workable answers, and [Source control](Docs/generation/source-control.md) has both.
 
@@ -274,9 +275,17 @@ while compiling older engine headers, before plugin code is reached.
 Releasing is documented on [Release](Docs/contributing/release.md); building the plugin from source
 on [Contributing](Docs/contributing/index.md).
 
+## Custom Pass
+
+On Unreal Engine 5.8, a [`.dsp` pipeline](Docs/language-v2/passes.md) adds render passes of your own without
+touching the engine: a mask of selected objects, a blur, a screen-space effect, a compute shader writing a data
+texture. Its passes run at the injection points they choose — before the base pass, after the opaque lighting,
+before or inside the post-process chain — as Post Process materials, project HLSL, or selected meshes drawn
+again; their buffers can be read by any material. See [Custom Pass runtime](Docs/runtime/index.md) and the
+[examples](Docs/examples/custom-pass.md).
+
 ## Roadmap
 
-- Custom full-screen render pass support.
 - More complete VSCode semantic diagnostics.
 - Deeper Material Layer Stack and Layer Instance workflow support.
 - Deeper Moon Engine integration — reference: <https://zhuanlan.zhihu.com/p/21979494450>

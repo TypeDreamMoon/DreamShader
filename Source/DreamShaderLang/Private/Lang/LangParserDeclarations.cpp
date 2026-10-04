@@ -222,6 +222,68 @@ namespace UE::DreamShader::Lang::Private
 
 				return false;
 			}
+
+			/** The rest of a dotted name after a word: `.AfterDOF` of `PostProcess.AfterDOF`. False when a `.` has no word after it. */
+			bool ReadDottedTail(FString& InOutWord)
+			{
+				while (!AtEnd() && Text[Index] == TEXT('.'))
+				{
+					if (Index + 1 >= Text.Len() || !IsDocIdentifierStart(Text[Index + 1]))
+					{
+						return false;
+					}
+					InOutWord.AppendChar(TEXT('.'));
+					++Index;
+					while (!AtEnd() && IsDocIdentifierChar(Text[Index]))
+					{
+						InOutWord.AppendChar(Text[Index]);
+						++Index;
+					}
+				}
+				return true;
+			}
+
+			/**
+			 * `#pragma pipeline` only, after ReadValue read a word: its dotted tail, and more words joined by `|`
+			 * (`Game | Editor`), kept as one value with one space around each bar. False when a `.` or a `|` is not
+			 * followed by a word.
+			 */
+			bool ReadPipelineValueTail(FString& InOutValue)
+			{
+				if (!ReadDottedTail(InOutValue))
+				{
+					return false;
+				}
+				for (;;)
+				{
+					const int32 BeforeBar = Index;
+					SkipWhitespace();
+					if (Peek() != TEXT('|'))
+					{
+						// Whatever follows (`,` or `)`) is the caller's; the blanks before it are skipped there again.
+						Index = BeforeBar;
+						return true;
+					}
+					++Index;
+					SkipWhitespace();
+					if (AtEnd() || !IsDocIdentifierStart(Text[Index]))
+					{
+						return false;
+					}
+					FString Word;
+					while (!AtEnd() && IsDocIdentifierChar(Text[Index]))
+					{
+						Word.AppendChar(Text[Index]);
+						++Index;
+					}
+					if (!ReadDottedTail(Word))
+					{
+						return false;
+					}
+					InOutValue += TEXT(" | ");
+					InOutValue += Word;
+				}
+			}
 		};
 
 		/** Splits `name` and `rest` of a `#pragma` payload: `material(...)` -> ("material", "(...)"). */
@@ -603,7 +665,7 @@ namespace UE::DreamShader::Lang::Private
 
 		if (Name.IsEmpty())
 		{
-			Diagnostics.Error(TEXT("DSH3202"), Span, LOCTEXT("PragmaWithoutNameWithInstance", "'#pragma' needs a name: material, instance, layout, region or endregion."));
+			Diagnostics.Error(TEXT("DSH3202"), Span, LOCTEXT("PragmaWithoutNameWithPipeline", "'#pragma' needs a name: material, instance, pipeline, layout, region or endregion."));
 			return nullptr;
 		}
 
@@ -620,19 +682,23 @@ namespace UE::DreamShader::Lang::Private
 			return Pragma;
 		}
 
-		// `#pragma instance(...)` (a `.dsi` header) reads exactly like `#pragma material(...)`: keys
-		// with values, no positional selector. Which file kinds may carry it is the binder's call.
+		// `#pragma instance(...)` (a `.dsi` header) and `#pragma pipeline(...)` (a `.dsp` header) read exactly like
+		// `#pragma material(...)`: keys with values, no positional selector -- a pipeline value may be a dotted name
+		// or a `|` list as well. Which file kinds may carry either is the binder's call.
 		const bool bMaterial = Name.Equals(TEXT("material"), ESearchCase::CaseSensitive);
 		const bool bInstance = Name.Equals(TEXT("instance"), ESearchCase::CaseSensitive);
+		const bool bPipeline = Name.Equals(TEXT("pipeline"), ESearchCase::CaseSensitive);
 		const bool bLayout = Name.Equals(TEXT("layout"), ESearchCase::CaseSensitive);
-		if (!bMaterial && !bInstance && !bLayout)
+		if (!bMaterial && !bInstance && !bPipeline && !bLayout)
 		{
 			Pragma->PragmaKind = EPragmaKind::Unknown;
 			Pragma->Text = Arguments;
 			return Pragma;
 		}
-		Pragma->PragmaKind = bMaterial ? EPragmaKind::Material : (bInstance ? EPragmaKind::Instance : EPragmaKind::Layout);
-		const bool bKeyedArgumentsOnly = bMaterial || bInstance;
+		Pragma->PragmaKind = bMaterial
+			? EPragmaKind::Material
+			: (bInstance ? EPragmaKind::Instance : (bPipeline ? EPragmaKind::Pipeline : EPragmaKind::Layout));
+		const bool bKeyedArgumentsOnly = bMaterial || bInstance || bPipeline;
 
 		// `(` Key = Value {, Key = Value} `)` -- a bare word is positional (`#pragma layout(Node, ...)`).
 		FPragmaScanner Scanner(Arguments);
@@ -685,6 +751,13 @@ namespace UE::DreamShader::Lang::Private
 					if (!Scanner.ReadValue(Value, bValueQuoted, ValueStart))
 					{
 						return FailPragma(FText::Format(LOCTEXT("PragmaExpectedValue", "expected a value after '{0} ='."), FText::FromString(First)));
+					}
+					if (bPipeline && !bValueQuoted && Value.Len() > 0 && IsDocIdentifierStart(Value[0])
+						&& !Scanner.ReadPipelineValueTail(Value))
+					{
+						return FailPragma(FText::Format(
+							LOCTEXT("PragmaPipelineValueTail", "the value of '{0}' has a '.' or a '|' with no name after it; write 'Views = Game | Editor' or 'Injection = PostProcess.AfterDOF'."),
+							FText::FromString(First)));
 					}
 					Argument.Key = First;
 					Argument.Value = Value;
@@ -897,20 +970,27 @@ namespace UE::DreamShader::Lang::Private
 		}
 	}
 
-	bool FLangParser::CaptureRawBody(FString& OutRaw, FLangSpan& OutSpan)
+	bool FLangParser::CaptureRawBody(FString& OutRaw, FLangSpan& OutSpan, const ERawBodyKind Kind)
 	{
+		const bool bHlsl = Kind == ERawBodyKind::Hlsl;
 		if (!Check(ELangTokenKind::LeftBrace))
 		{
-			return Expect(ELangTokenKind::LeftBrace, TEXT("DSH3206"), LOCTEXT("ExpectedBodyOpen", "'{' to open the function body"));
+			return bHlsl
+				? Expect(ELangTokenKind::LeftBrace, TEXT("DSH2313"), LOCTEXT("ExpectedHlslBlockOpen", "'{' after 'hlsl' to open a block of HLSL"))
+				: Expect(ELangTokenKind::LeftBrace, TEXT("DSH3206"), LOCTEXT("ExpectedBodyOpen", "'{' to open the function body"));
 		}
 
 		const FLangToken& Open = Advance();
+		const int32 OpenLine = Open.Span.Line;
 		int32 Depth = 1;
 		while (Depth > 0)
 		{
 			if (AtEnd())
 			{
-				return FailAtEnd(LOCTEXT("WhileParsingRawBody", "a function body"));
+				// The block runs to the end of the file, so its end says nothing; where it opened does.
+				return bHlsl
+					? FailAtEnd(FText::Format(LOCTEXT("WhileParsingHlslBlock", "the 'hlsl' block opened on line {0}, which nothing closes"), FText::AsNumber(OpenLine, &FNumberFormattingOptions::DefaultNoGrouping())))
+					: FailAtEnd(LOCTEXT("WhileParsingRawBody", "a function body"));
 			}
 			const FLangToken& Token = Advance();
 			if (Token.Kind == ELangTokenKind::LeftBrace)
@@ -1038,6 +1118,14 @@ namespace UE::DreamShader::Lang::Private
 		FString Name;
 		FLangSpan NameSpan;
 		if (!ExpectIdentifier(Name, NameSpan, TEXT("DSH3205"), LOCTEXT("ExpectedDeclarationName", "a declaration name")))
+		{
+			return nullptr;
+		}
+
+		// `buffer Name :` and `pass Name :` are `.dsp` declarations. Outside a `.dsp` that text was always a syntax
+		// error at the `:`; it is now one that says where the declaration belongs (DSH3310), and nothing else changes.
+		if (Storage == EStorageClass::None && Linkage == EFunctionLinkage::Internal
+			&& ReportPipelineDeclarationOutsideDsp(Type, Name, NameSpan))
 		{
 			return nullptr;
 		}
@@ -1275,6 +1363,18 @@ namespace UE::DreamShader::Lang::Private
 			break;
 
 		case ELangTokenKind::Identifier:
+			// `buffer`, `pass` and `hlsl` are declaration words of a `.dsp` and of nothing else: in every other file they
+			// are identifiers like any other (IsAtPipelineDeclarationWord and IsAtHlslBlockWord ask the file kind).
+			if (IsAtHlslBlockWord())
+			{
+				return ParseHlslBlockDecl(MoveTemp(Doc));
+			}
+			if (IsAtPipelineDeclarationWord())
+			{
+				return Token.Text.Equals(TEXT("buffer"), ESearchCase::CaseSensitive)
+					? ParseBufferDecl(MoveTemp(Doc))
+					: ParsePassDecl(MoveTemp(Doc));
+			}
 			return ParseFunctionOrVariableDecl(MoveTemp(Doc));
 
 		default:

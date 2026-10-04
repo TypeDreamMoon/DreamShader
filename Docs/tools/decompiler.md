@@ -17,7 +17,9 @@ equivalent DreamShaderLang source file.
 > and is kept behind `-Format=Legacy`. The **2.0 decompiler** is the default: it reads the
 > asset's graph into the compiler's own IR and prints a `.dss` — or a [`.dsi`](../language-v2/instances.md)
 > for a material instance — and its output is *proved*: the text is compiled again and the two IRs are
-> compared. See [The 2.0 decompiler](#the-20-decompiler) at the end of this page.
+> compared. A Custom Pass pipeline, which has no graph, comes back as a [`.dsp`](../language-v2/passes.md),
+> read back and compared with the asset *(since 2.1.0)*. See [The 2.0 decompiler](#the-20-decompiler) at
+> the end of this page.
 
 > [!NOTE]
 > Treat the 1.x decompiler as a **migration starting point**, not a round-trip guarantee. It reproduces
@@ -488,6 +490,63 @@ class.
 A plain `UMaterialInstanceConstant` is written as a `.dsi`: the parent, the `#pragma instance` keys
 it overrides, and the parameters that differ from the parent.
 
+### Pipelines (`.dsp`)
+
+*(since 2.1.0)* A `UDreamPassPipeline` has no graph to import. Its fields are read back into the payload a
+[`.dsp`](../language-v2/passes.md) binds to — the mapping the emitter applies, run the other way — and the
+printer writes that payload as a `.dsp`: `#pragma pipeline`, the uniforms, the buffers and the passes, in
+the asset's order, with every key left out that would read back as the default.
+
+```powershell
+./dsc.ps1 decompile /Game/Passes/CP_Highlight                # DShader/Decompiled/Pipelines/Game/Passes/CP_Highlight.dsp
+./dsc.ps1 decompile -SourceFile DShader/Passes/CP_Highlight.dsp
+./dsc.ps1 decompile /Game/Passes/CP_Highlight -Out I:/Work/CP_Highlight.dsp
+```
+
+| Route | |
+| :-- | :-- |
+| `dsc decompile -Asset=<pipeline>` | the pipeline; text headed `// Decompiled by DreamShader from <object path>` |
+| `dsc decompile -SourceFile=<file>.dsp` | the pipeline that `.dsp` builds, without the header line. Compile the source first: before that there is no asset to read |
+| the bridge's `decompile` request | the same decompile, for an editor extension |
+| *Adopt Into Source* | the same reading, spliced into the `.dsp` the pipeline came from instead of printed — see [Divergence](../generation/divergence.md#a-custom-pass-pipeline) |
+
+There is no Content Browser or Material Content Browser entry that decompiles a pipeline.
+
+| Output | |
+| :-- | :-- |
+| Default path | `<SourceDirectory>/Decompiled/Pipelines/<package path>.dsp`, by the same segment rules as the other kinds |
+| `-Out` | must end in `.dsp`; any other extension is [`DSH9210`](../diagnostics/DSH9xxx.md). `-Format=Legacy`, or an `-Out` ending in `.dsm` / `.dsf`, hands the pipeline to the 1.x decompiler, which refuses it: a pipeline has no 1.x text |
+| `-KeepAssetPath` | a `.dsp` names its pipeline after its file and has no `/// @name`, so the path is kept only by writing the file where the pipeline's source belongs; anywhere else is `DSH9224` (warning), naming where the text would build |
+| `-Readable` | no effect |
+| `Material = "…"` | the material's bare name when the products under the output file's source root include exactly one material or instance of that name, it is this one, and a `.dss` builds it; otherwise its package name, or its object path for an asset not named after its package |
+| `Shader = "…"` | a virtual path as the asset holds it; a path relative to the `.dsp` the pipeline was built from is rewritten relative to the output file's folder |
+| Layers | a `Layer(...)` filter keeps the names the compiler stored beside the layer bits. Bits with no stored names — a hand edit — are read through today's layer table (`DSH9214`, info) |
+
+What the text cannot say the way the asset has it is a warning, written at the head of the file as a
+`// Warning: DSHnnnn: …` line in English, and raised as a diagnostic:
+
+| Code | The asset holds | The text |
+| :-- | :-- | :-- |
+| `DSH9211` | a fullscreen pass with neither a material nor a shader | names neither, and does not build until one is given |
+| `DSH9212` | a fullscreen pass with both | keeps the material, which is what the pass draws |
+| `DSH9215` | layer bits the project's layer table has no name for | leaves them out |
+| `DSH9216` | a pipeline that runs in no kind of view | leaves `Views` out, so a rebuild runs in `Game \| Editor` |
+| `DSH9217` | a mesh pass that checks no usage flag | leaves `Usage` out, so a rebuild checks the default set |
+| `DSH9218` | a texture parameter whose default is not a 2D texture | declares it `Texture2D`; it may not build until the default is one |
+| `DSH9219` | a `param` bound to a texture constant | leaves the binding out |
+| `DSH9220` | a mesh pass with its own depth and no buffer for it | writes `Own()` empty; it does not build until a `Depth32` buffer is named |
+
+A fixed-size buffer's `Scale`, which the asset may still hold, is not written: `Size` excludes it.
+
+**The re-parse check.** Before the text is handed back it is parsed again and bound without the engine —
+the references taken as written, and every check that needs the project skipped — and the payload it
+binds to is compared with the asset's, the facts only the engine knows (what a reference resolves to, a
+`.usf`'s `[numthreads]`) taken from the asset where the text spells the reference the same way. A text that
+does not parse is `DSH9221`; one that does not bind into a pipeline is `DSH9222` — the asset breaks a rule a
+`.dsp` is checked against, which a hand edit can do, or the decompiler is at fault; one that reads back as a
+different pipeline is `DSH9223`, naming the first difference. All three are warnings: the file is written
+as it is, and they are not copied into its head.
+
 ## See also
 
 - [Editor integration](editor-integration.md) — the *Export DSM* / *Export DSF* menu entries
@@ -502,3 +561,5 @@ it overrides, and the parameters that differ from the parent.
 - [Graph layout](../generation/graph-layout.md) — what happens when no `Layout` block is present
 - [Project settings](../settings/project.md) — *Export Decompiled Layout* and *Source Directory*
 - [Substrate builtins](../builtins/substrate.md) — the UE 5.4 gate behind `Base.FrontMaterial`
+- [Custom Pass pipelines — `.dsp`](../language-v2/passes.md) — the text a pipeline decompiles to
+- [Divergence](../generation/divergence.md#a-custom-pass-pipeline) — Adopt Into Source for a pipeline edited in its details panel

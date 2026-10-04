@@ -19,8 +19,11 @@
 // The reveal-node request handler and its response writer (node <-> source navigation).
 #include "Navigation/DreamShaderSourceNavigation.h"
 #include "DreamShaderDependencyGraphService.h"
-// CollectInstanceDependents: the `.dsi` sources to rebuild after the source of their parent compiled.
+// CollectInstanceDependents / CollectPipelineDependents / CollectPassBufferDependents: the sources to rebuild after one
+// they read from compiled.
 #include "DreamShaderProductIndex.h"
+// The shader files a `.dsp`'s HLSL passes compile from, and the `.dsp` sources a changed `.usf` belongs to.
+#include "DreamShaderPassPipelines.h"
 // MigrateDreamShaderSource, behind the `migrate` request.
 #include "Commandlet/DreamShaderMigrate.h"
 // GetDreamShaderDefineRevision, polled in Tick so a define change invalidates the generated materials.
@@ -800,6 +803,22 @@ namespace UE::DreamShader::Editor::Private
 			DirectoryWatcherHandles.Reset();
 		}
 
+		if (!PassShaderWatcherHandles.IsEmpty())
+		{
+			if (FDirectoryWatcherModule* DirectoryWatcherModule = FModuleManager::GetModulePtr<FDirectoryWatcherModule>(TEXT("DirectoryWatcher")))
+			{
+				if (IDirectoryWatcher* DirectoryWatcher = DirectoryWatcherModule->Get())
+				{
+					for (const TPair<FString, FDelegateHandle>& Watch : PassShaderWatcherHandles)
+					{
+						DirectoryWatcher->UnregisterDirectoryChangedCallback_Handle(Watch.Key, Watch.Value);
+					}
+				}
+			}
+
+			PassShaderWatcherHandles.Reset();
+		}
+
 		PendingFiles.Reset();
 		ForcedPendingFiles.Reset();
 		DiagnosticsStore.Reset();
@@ -1078,44 +1097,188 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	void FDreamShaderEditorBridge::QueueDependentInstances(const FString& SourceFilePath)
+	void FDreamShaderEditorBridge::QueueDependents(const FString& SourceFilePath, const bool bBuiltSomething)
 	{
 		const FString NormalizedSourcePath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
-		// The product index lists `.dss` and `.dsi` products; an instance names a `.dsm` product by path, with no index edge to
-		// follow, so nothing else can have dependents here.
-		if (!UE::DreamShader::IsDreamShaderLang2File(NormalizedSourcePath) && !UE::DreamShader::IsDreamShaderInstanceFile(NormalizedSourcePath))
+		// The product index lists `.dss`, `.dsi` and `.dsp` products; an instance or a pipeline names a `.dsm` product by
+		// path, with no index edge to follow, so nothing else can have dependents here.
+		const bool bPipelineSource = UE::DreamShader::IsDreamShaderPipelineFile(NormalizedSourcePath);
+		const bool bMaterialSource = UE::DreamShader::IsDreamShaderLang2File(NormalizedSourcePath) || UE::DreamShader::IsDreamShaderInstanceFile(NormalizedSourcePath);
+		if (bPipelineSource)
+		{
+			RefreshPassShaderWatchers();
+		}
+		if (!bPipelineSource && !bMaterialSource)
 		{
 			return;
 		}
 
-		TArray<FString> Dependents;
-		::UE::DreamShader::Editor::Compiler::CollectInstanceDependents(NormalizedSourcePath, Dependents);
-
-		// Not forced: binding runs before the build key's skip, so a parent change the child no longer fits is reported
-		// while an unaffected child costs a bind and nothing more.
-		const double Now = FPlatformTime::Seconds();
-		int32 QueuedCount = 0;
-		for (const FString& Dependent : Dependents)
+		TArray<FString> InstanceDependents;
+		TArray<FString> PipelineDependents;
+		TArray<FString> PassBufferReaders;
+		if (bMaterialSource)
 		{
-			const FString NormalizedDependent = UE::DreamShader::NormalizeSourceFilePath(Dependent);
-			if (NormalizedDependent.Equals(NormalizedSourcePath, ESearchCase::IgnoreCase))
+			::UE::DreamShader::Editor::Compiler::CollectInstanceDependents(NormalizedSourcePath, InstanceDependents);
+			if (bBuiltSomething)
 			{
-				continue;
+				::UE::DreamShader::Editor::Compiler::CollectPipelineDependents(NormalizedSourcePath, PipelineDependents);
 			}
-			PendingFiles.Add(NormalizedDependent, Now);
-			++QueuedCount;
+		}
+		else if (bBuiltSomething)
+		{
+			::UE::DreamShader::Editor::Compiler::CollectPassBufferDependents(NormalizedSourcePath, PassBufferReaders);
 		}
 
+		// Not forced: binding runs before the build key's skip, so a change the dependent no longer fits is reported while
+		// an unaffected one costs a bind and nothing more.
+		const double Now = FPlatformTime::Seconds();
+		auto Queue = [this, &NormalizedSourcePath, Now](const TArray<FString>& Dependents) -> int32
+		{
+			int32 Queued = 0;
+			for (const FString& Dependent : Dependents)
+			{
+				const FString NormalizedDependent = UE::DreamShader::NormalizeSourceFilePath(Dependent);
+				if (NormalizedDependent.Equals(NormalizedSourcePath, ESearchCase::IgnoreCase))
+				{
+					continue;
+				}
+				PendingFiles.Add(NormalizedDependent, Now);
+				++Queued;
+			}
+			return Queued;
+		};
+		const int32 InstanceCount = Queue(InstanceDependents);
+		const int32 PipelineCount = Queue(PipelineDependents);
+		const int32 ReaderCount = Queue(PassBufferReaders);
+
 		const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
-		if (QueuedCount > 0 && Settings && Settings->bVerboseLogs)
+		if (Settings && Settings->bVerboseLogs && InstanceCount + PipelineCount + ReaderCount > 0)
 		{
 			UE_LOG(
 				LogDreamShader,
 				Display,
-				TEXT("DreamShader queued %d instance source(s) whose parent '%s' builds."),
-				QueuedCount,
+				TEXT("DreamShader queued %d instance source(s), %d pipeline source(s) and %d pass-buffer reader(s) after '%s' compiled."),
+				InstanceCount,
+				PipelineCount,
+				ReaderCount,
 				*NormalizedSourcePath);
 		}
+	}
+
+	void FDreamShaderEditorBridge::RefreshPassShaderWatchers()
+	{
+		if (bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
+		{
+			return;
+		}
+
+		FDirectoryWatcherModule* DirectoryWatcherModule = FModuleManager::GetModulePtr<FDirectoryWatcherModule>(TEXT("DirectoryWatcher"));
+		IDirectoryWatcher* DirectoryWatcher = DirectoryWatcherModule ? DirectoryWatcherModule->Get() : nullptr;
+		if (!DirectoryWatcher)
+		{
+			return;
+		}
+
+		TArray<FString> Directories;
+		::UE::DreamShader::Editor::Compiler::CollectDreamShaderPipelineShaderDirectories(Directories);
+		// A directory that does not exist cannot be watched; the `.dsp` that names a file in it is compiled again when the
+		// file appears through its own save, and this runs after that compile.
+		Directories.RemoveAll([](const FString& Directory)
+		{
+			return !IFileManager::Get().DirectoryExists(*Directory);
+		});
+
+		for (auto It = PassShaderWatcherHandles.CreateIterator(); It; ++It)
+		{
+			const FString& Watched = It.Key();
+			if (!Directories.ContainsByPredicate([&Watched](const FString& Directory) { return Directory.Equals(Watched, ESearchCase::IgnoreCase); }))
+			{
+				DirectoryWatcher->UnregisterDirectoryChangedCallback_Handle(Watched, It.Value());
+				It.RemoveCurrent();
+			}
+		}
+
+		for (const FString& Directory : Directories)
+		{
+			if (PassShaderWatcherHandles.Contains(Directory))
+			{
+				continue;
+			}
+			// Not the subtree: every directory a closure file lives in is watched on its own, and a `.usf` next to a `.dsp`
+			// at the top of a large tree must not watch all of it.
+			FDelegateHandle Handle;
+			if (DirectoryWatcher->RegisterDirectoryChangedCallback_Handle(
+					Directory,
+					IDirectoryWatcher::FDirectoryChanged::CreateSP(AsShared(), &FDreamShaderEditorBridge::OnPassShaderDirectoryChanged),
+					Handle,
+					IDirectoryWatcher::WatchOptions::IgnoreChangesInSubtree))
+			{
+				PassShaderWatcherHandles.Add(Directory, Handle);
+			}
+		}
+	}
+
+	void FDreamShaderEditorBridge::OnPassShaderDirectoryChanged(const TArray<FFileChangeData>& FileChanges)
+	{
+		TArray<FFileChangeData> ChangesCopy = FileChanges;
+		TWeakPtr<FDreamShaderEditorBridge, ESPMode::ThreadSafe> WeakBridge = AsWeak();
+		AsyncTask(ENamedThreads::GameThread, [WeakBridge, Changes = MoveTemp(ChangesCopy)]()
+		{
+			TSharedPtr<FDreamShaderEditorBridge, ESPMode::ThreadSafe> Bridge = WeakBridge.Pin();
+			if (!Bridge.IsValid() || Bridge->bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
+			{
+				return;
+			}
+
+			// The same gate as a source save: a `.usf` edit is an edit of the pipelines that compile from it.
+			const UDreamShaderSettings* Settings = GetDefault<UDreamShaderSettings>();
+			if (Settings && !Settings->bAutoCompileOnSave)
+			{
+				return;
+			}
+
+			TArray<FString> Pipelines;
+			bool bRescan = false;
+			for (const FFileChangeData& FileChange : Changes)
+			{
+				if (FileChange.Action == FFileChangeData::FCA_RescanRequired)
+				{
+					bRescan = true;
+					continue;
+				}
+				if (!::UE::DreamShader::Editor::Compiler::IsDreamShaderPassShaderFile(FileChange.Filename))
+				{
+					continue;
+				}
+				TArray<FString> Using;
+				::UE::DreamShader::Editor::Compiler::FindDreamShaderPipelinesUsingShaderFile(FileChange.Filename, Using);
+				for (const FString& Pipeline : Using)
+				{
+					Pipelines.AddUnique(Pipeline);
+				}
+			}
+
+			if (bRescan)
+			{
+				// The watcher lost track: every `.dsp`, unforced -- the ones whose shaders did not change skip on their key.
+				TArray<FString> Sources;
+				FDreamShaderSourceFileUtils::FindProjectMaterialSourceFiles(Sources);
+				for (const FString& Source : Sources)
+				{
+					if (UE::DreamShader::IsDreamShaderPipelineFile(Source))
+					{
+						Pipelines.AddUnique(Source);
+					}
+				}
+			}
+
+			// Not forced: the `.dsp`'s build key holds the text of every file its passes compile from, so an edit that
+			// changed nothing of it -- a save of an unrelated header in the same folder -- skips.
+			for (const FString& Pipeline : Pipelines)
+			{
+				Bridge->QueueSourceFile(Pipeline);
+			}
+		});
 	}
 
 	void FDreamShaderEditorBridge::OnDirectoryChanged(const TArray<FFileChangeData>& FileChanges)
@@ -1224,6 +1387,11 @@ namespace UE::DreamShader::Editor::Private
 						Bridge->ClearDiagnosticsForSourceAndDependencies(SourceFile);
 						Bridge->RebuildDependencyGraph();
 						Bridge->UpdateDiagnosticsFile();
+						if (UE::DreamShader::IsDreamShaderPipelineFile(SourceFile))
+						{
+							// Its slots stay in the registry until `dsc pass-registry -Gc` collects them.
+							Bridge->RefreshPassShaderWatchers();
+						}
 					}
 					UE_LOG(LogDreamShader, Display, TEXT("DreamShader source removed, existing generated assets were left untouched: %s"), *FileChange.Filename);
 				}
@@ -1826,9 +1994,23 @@ namespace UE::DreamShader::Editor::Private
 			UE_LOG(LogDreamShader, Display, TEXT("%s"), *OutMessage);
 			ResolvePendingResponses(SourceFilePath, true, OutMessage);
 			// Only on success: an instance of a parent that failed would fail the same way, and a cycle never compiles, so
-			// it can never re-queue itself around.
-			QueueDependentInstances(SourceFilePath);
+			// it can never re-queue itself around. The pipeline edges also need something to have been built: the report
+			// has a `Generated ...` line for every asset the compile wrote, and only `Skipped ...` ones when it wrote none.
+			TArray<FString> ReportLines;
+			OutMessage.ParseIntoArrayLines(ReportLines, /*bCullEmpty*/ true);
+			const bool bBuiltSomething = ReportLines.ContainsByPredicate([](const FString& Line)
+			{
+				return Line.TrimStart().StartsWith(TEXT("Generated "), ESearchCase::CaseSensitive);
+			});
+			QueueDependents(SourceFilePath, bBuiltSomething);
 			return true;
+		}
+
+		// A `.dsp` that failed -- a `.usf` that did not pass its pre-check, most often -- still has its shader files watched,
+		// so the save that fixes one compiles it again.
+		if (UE::DreamShader::IsDreamShaderPipelineFile(SourceFilePath))
+		{
+			RefreshPassShaderWatchers();
 		}
 
 		// The compile's own records: each keeps its DSHnnnn code, stage and severity, and one raised in an included

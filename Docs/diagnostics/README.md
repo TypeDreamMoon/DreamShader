@@ -97,9 +97,24 @@ which stays authoritative until every raise site is tagged.
 | [DSH2256](DSH2xxx.md#dsh2256) | warning | The Shader '{0}' has no Outputs section, so nothing its Graph computes reaches the material. |
 | [DSH2257](DSH2xxx.md#dsh2257) | error | Expected '`{' to open the '{0}' block, found {1}. |
 | [DSH2258](DSH2xxx.md#dsh2258) | warning | The section '{0}' is written twice; the later one wins, as it did in 1.x. |
+| [DSH2300](DSH2xxx.md#dsh2300) | error | Expected '`{' to open the block of pass '{0}', found {1}. |
+| [DSH2301](DSH2xxx.md#dsh2301) | error | Expected a setting ('Key = Value;'), a 'read', 'write' or 'param' line or an 'hlsl' block in a pass block, ... |
+| [DSH2302](DSH2xxx.md#dsh2302) | error | Expected '=' after the key '{0}', found {1}. |
+| [DSH2303](DSH2xxx.md#dsh2303) | error | Expected ';' at the end of the pass statement, found {1}. |
+| [DSH2304](DSH2xxx.md#dsh2304) | error | Expected a buffer after '{0}', found {1}. |
+| [DSH2305](DSH2xxx.md#dsh2305) | error | '{0}.{1}': the one thing a buffer has after '.' is 'Previous', last frame's contents of a 'History = true' ... |
+| [DSH2306](DSH2xxx.md#dsh2306) | error | Expected a parameter name after 'param', found {1}. |
+| [DSH2307](DSH2xxx.md#dsh2307) | error | Expected '=' after 'param {0}', found {1}. |
+| [DSH2308](DSH2xxx.md#dsh2308) | error | Expected a key such as 'Scale' in the arguments of buffer '{0}', found {1}. |
+| [DSH2309](DSH2xxx.md#dsh2309) | error | Expected '=' after '{0}', found {1}. |
+| [DSH2310](DSH2xxx.md#dsh2310) | error | Expected ',' or ')' in the arguments of buffer '{0}', found {1}. |
+| [DSH2311](DSH2xxx.md#dsh2311) | error | Expected ';' after the declaration of buffer '{0}', found {1}. |
+| [DSH2312](DSH2xxx.md#dsh2312) | error | The line '#{0}' cannot appear inside a pass block; a pass holds settings, 'read', 'write' and 'param' lines... |
+| [DSH2313](DSH2xxx.md#dsh2313) | error | Expected '{' after 'hlsl' to open a block of HLSL, found {1}. |
+| [DSH2314](DSH2xxx.md#dsh2314) | error | Expected '`}' to close pass '{0}' before the next declaration, found {1}. |
 | [DSH3200](DSH3xxx.md#dsh3200) | error | Unexpected {0} at file scope; expected a declaration, '#pragma', '#include' or 'import'. |
 | [DSH3201](DSH3xxx.md#dsh3201) | error | Preprocessor directive '#{0}' reached the parser; only '#pragma' and '#include' belong here, and '#if' / '#... |
-| [DSH3202](DSH3xxx.md#dsh3202) | error | '#pragma' needs a name: material, instance, layout, region or endregion. |
+| [DSH3202](DSH3xxx.md#dsh3202) | error | '#pragma' needs a name: material, instance, pipeline, layout, region or endregion. |
 | [DSH3203](DSH3xxx.md#dsh3203) | error | '#include' needs a quoted path: #include "/Game/Shared/Common.dsh". |
 | [DSH3204](DSH3xxx.md#dsh3204) | error | Expected a type name, found {0}. |
 | [DSH3205](DSH3xxx.md#dsh3205) | error | Expected a name after 'struct', found {1}. |
@@ -146,6 +161,20 @@ which stays authoritative until every raise site is tagged.
 | [DSH3276](DSH3xxx.md#dsh3276) | error | Expected 'Color' to be a vector literal such as '(0.1, 0.16, 0.22, 0.35)', found '{0}'. |
 | [DSH3277](DSH3xxx.md#dsh3277) | warning | The layer input '{0}' becomes the 'inout material' parameter named after the output '{1}', so the input pin... |
 | [DSH3278](DSH3xxx.md#dsh3278) | error | Expected a MaterialAttributes output on '{0}', found none. |
+| [DSH3300](DSH3xxx.md#dsh3300) | error | Expected the buffer's name after 'buffer', found {1}. |
+| [DSH3301](DSH3xxx.md#dsh3301) | error | Expected ':' and a format after 'buffer {0}', found {1}. |
+| [DSH3302](DSH3xxx.md#dsh3302) | error | Expected a buffer format such as 'R8' or 'RGBA16F', found {1}. |
+| [DSH3303](DSH3xxx.md#dsh3303) | error | Expected the pass's name after 'pass', found {1}. |
+| [DSH3304](DSH3xxx.md#dsh3304) | error | Expected ':' and a pass kind after 'pass {0}', found {1}. |
+| [DSH3305](DSH3xxx.md#dsh3305) | error | Expected a pass kind: fullscreen, compute, mesh, clear or copy, found {1}. |
+| [DSH3310](DSH3xxx.md#dsh3310) | error | 'buffer {0}' declares a buffer of a Custom Pass pipeline, which only a '.dsp' file holds; move it into the ... |
+| [DSH3311](DSH3xxx.md#dsh3311) | error | '#pragma pipeline' configures a Custom Pass pipeline and belongs in a '.dsp' file of its own, and this line... |
+| [DSH3312](DSH3xxx.md#dsh3312) | error | An 'hlsl' block at file scope is the HLSL of a Custom Pass pipeline, which only a '.dsp' file holds, and '{... |
+| [DSH3313](DSH3xxx.md#dsh3313) | error | '#pragma pipeline' is written a second time, and one '.dsp' is one pipeline; the line {0} already configure... |
+| [DSH3314](DSH3xxx.md#dsh3314) | error | '#pragma material' configures a material, and a '.dsp' is configured by '#pragma pipeline(...)'; the materi... |
+| [DSH3315](DSH3xxx.md#dsh3315) | warning | '#pragma {0}' boxes or places graph nodes, and a '.dsp' has no graph; the line was ignored. |
+| [DSH3316](DSH3xxx.md#dsh3316) | error | '{0}' is a file-scope variable of a '.dsp', which is a 'uniform' (a parameter an activation may override) o... |
+| [DSH3317](DSH3xxx.md#dsh3317) | warning | '@{0}' has no effect on {1} in a '.dsp'; remove it. |
 | [DSH4200](DSH4xxx.md#dsh4200) | error | '{0}' is not declared; did you mean '{1}'? Names are case-sensitive. |
 | [DSH4201](DSH4xxx.md#dsh4201) | error | '{0}' is not a type; did you mean '{1}'? Type names are case-sensitive. |
 | [DSH4202](DSH4xxx.md#dsh4202) | error | A string has no value in an expression; it is only ever the value of a reflected property, as in 'UE.Expres... |
@@ -257,6 +286,21 @@ which stays authoritative until every raise site is tagged.
 | [DSH4382](DSH4xxx.md#dsh4382) | error | This material drives FrontMaterial and says 'Substrate = Native', and Substrate is off in this project; the... |
 | [DSH4383](DSH4xxx.md#dsh4383) | error | '{0}' is not the Substrate value being built any more when a loop comes round to '{0}.{1}': an earlier trip... |
 | [DSH4390](DSH4xxx.md#dsh4390) | info | '{0}' is declared but nothing reads it, so it is not in the generated material. |
+| [DSH4400](DSH4xxx.md#dsh4400) | error | Buffer '{0}' is declared twice; the declaration on line {1} already makes it. |
+| [DSH4401](DSH4xxx.md#dsh4401) | error | A pass named '{0}' is already declared on line {1}; RDG events and stats are named after passes, so each na... |
+| [DSH4402](DSH4xxx.md#dsh4402) | error | '{0}' is a built-in texture a pass binds without declaring it, and cannot be declared as a buffer. |
+| [DSH4403](DSH4xxx.md#dsh4403) | error | '{0}' is neither a buffer of this pipeline nor a built-in texture; declare it with 'buffer {0} : <Format>;'. |
+| [DSH4404](DSH4xxx.md#dsh4404) | error | '{0}' is not a 'uniform' or 'static const' of this pipeline; 'Enabled' takes a 'uniform bool' or 'true'. |
+| [DSH4405](DSH4xxx.md#dsh4405) | error | '{0}' is a '{1}', and 'Enabled' takes a 'uniform bool' or 'true'. |
+| [DSH4406](DSH4xxx.md#dsh4406) | error | No material '{0}' was found: a bare name is the material a '.dss' under the same source root builds, an obj... |
+| [DSH4407](DSH4xxx.md#dsh4407) | error | '{0}' is not a '.usf' or '.ush' file; the engine compiles shader files of those two kinds only. |
+| [DSH4408](DSH4xxx.md#dsh4408) | error | The shader file '{0}' does not exist; a path starting with '/' is a virtual shader path, and any other is r... |
+| [DSH4410](DSH4xxx.md#dsh4410) | error | '{0}' does not define a function '{1}'. |
+| [DSH4411](DSH4xxx.md#dsh4411) | error | '{0}' in '{1}' has no '[numthreads(x, y, z)]' the compiler can read; write 'Threads = uint3(x, y, z)' in th... |
+| [DSH4412](DSH4xxx.md#dsh4412) | error | '{0}' is not a pass layer of this project; the layers are the first {1} names of Project Settings > DreamPl... |
+| [DSH4413](DSH4xxx.md#dsh4413) | error | 'Threads = uint3({0}, {1}, {2})' disagrees with '[numthreads({3}, {4}, {5})]' of '{6}', and the dispatch wo... |
+| [DSH4414](DSH4xxx.md#dsh4414) | error | 'DreamPassWeight' is the pipeline's weight in a view, which every pass can read as 'param P = DreamPassWeig... |
+| [DSH4415](DSH4xxx.md#dsh4415) | error | '{0}.Previous': a built-in texture keeps no history. |
 | [DSH5200](DSH5xxx.md#dsh5200) | error | A material has no '{0}' pin; did you mean '{1}'? Attribute names are case-sensitive. |
 | [DSH5201](DSH5xxx.md#dsh5201) | error | This Custom node declares no output called '{0}'; its outputs are '{1}'. An output is declared by 'Addition... |
 | [DSH5202](DSH5xxx.md#dsh5202) | warning | The builtin catalog is empty, so no 'UE.' expression and no material attribute can be resolved; export it w... |
@@ -316,6 +360,22 @@ which stays authoritative until every raise site is tagged.
 | [DSH5297](DSH5xxx.md#dsh5297) | error | '{0}' has been assigned a whole Substrate value since it was declared, and that value has no members; build... |
 | [DSH5298](DSH5xxx.md#dsh5298) | error | A member of the Substrate value '{0}' cannot be written inside an 'if': that would be one node in two versi... |
 | [DSH5299](DSH5xxx.md#dsh5299) | error | '{0}' builds a '{1}.{2}', which has no pin called '{3}'. |
+| [DSH5300](DSH5xxx.md#dsh5300) | error | 'UE.{0}' needs {1}, and this engine's node catalog does not have it. |
+| [DSH5301](DSH5xxx.md#dsh5301) | error | Material '{0}' asks for the new material translator ('bEnableNewHLSLGenerator = true'), and uses {1} (line ... |
+| [DSH5302](DSH5xxx.md#dsh5302) | warning | UE.DreamPassOutput does nothing in '{0}', a {1}: the engine compiles custom outputs from a material's own g... |
+| [DSH5303](DSH5xxx.md#dsh5303) | error | Material '{0}' gets a second UE.DreamPassOutput node here (the first is on line {1}), and a material compil... |
+| [DSH5315](DSH5xxx.md#dsh5315) | error | UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = "CP_Highlight") or the pipel... |
+| [DSH5316](DSH5xxx.md#dsh5316) | error | No pipeline named '{0}' is built by a .dsp under '{1}'; write the pipeline asset's path, or check the name. |
+| [DSH5317](DSH5xxx.md#dsh5317) | error | '{0}' names more than one pipeline under this source root ({1}); write the pipeline asset's path instead. |
+| [DSH5318](DSH5xxx.md#dsh5318) | error | The pipeline '{0}' names nothing: no pipeline asset exists at '{1}', and no .dsp under the source roots bui... |
+| [DSH5319](DSH5xxx.md#dsh5319) | error | The pipeline '{0}' comes from '{1}', which failed to compile, so the buffer this material reads cannot be c... |
+| [DSH5320](DSH5xxx.md#dsh5320) | info | The pipeline '{0}' was missing or older than its source, so '{1}' was compiled first. |
+| [DSH5321](DSH5xxx.md#dsh5321) | error | (built at runtime) |
+| [DSH5322](DSH5xxx.md#dsh5322) | error | The pipeline '{0}' declares no buffer '{1}'. |
+| [DSH5323](DSH5xxx.md#dsh5323) | error | Buffer '{1}' of the pipeline '{0}' is {2}, which a material cannot sample. Export a float or normalized buf... |
+| [DSH5324](DSH5xxx.md#dsh5324) | error | UE.DreamPassBuffer names no Buffer of '{0}': write the exported buffer's name (Buffer = "Blurred"). |
+| [DSH5325](DSH5xxx.md#dsh5325) | error | The pipeline '{0}' needs this material to be built -- it is one of its pass materials, or the material of a... |
+| [DSH5326](DSH5xxx.md#dsh5326) | error | '{0}' is a {1}, not a DreamShader pass pipeline. |
 | [DSH6200](DSH6xxx.md#dsh6200) | error | '{0}' is a second material entry; '{1}' above it is already the entry, and one file makes one material. |
 | [DSH6201](DSH6xxx.md#dsh6201) | error | '{0}' is exported from a file whose entry is '{1}'; a file makes a material or it makes functions, not both... |
 | [DSH6202](DSH6xxx.md#dsh6202) | error | 'extern {0}' has nothing to bind to; add '/// @asset /Game/.../MF_Name' above it. |
@@ -450,6 +510,71 @@ which stays authoritative until every raise site is tagged.
 | [DSH7268](DSH7xxx.md#dsh7268) | error | '{0}' exists in the parent only as a layer or blend parameter, and a '.dsi' overrides global parameters only. |
 | [DSH7269](DSH7xxx.md#dsh7269) | error | '{0}' is an array, and an instance override assigns one parameter; override each element's parameter on its... |
 | [DSH7270](DSH7xxx.md#dsh7270) | error | '#pragma instance' takes 'Key = Value' pairs, and '{0}' has no key. |
+| [DSH7300](DSH7xxx.md#dsh7300) | error | '{0}' is not a key of '#pragma pipeline'; the keys are {1}. |
+| [DSH7301](DSH7xxx.md#dsh7301) | error | '{0}' is set twice by '#pragma pipeline'; it was already set on line {1}. |
+| [DSH7302](DSH7xxx.md#dsh7302) | error | (built at runtime) |
+| [DSH7303](DSH7xxx.md#dsh7303) | error | '{0}' is not an injection point; the points are {1}. |
+| [DSH7304](DSH7xxx.md#dsh7304) | error | '{0}' is not a pass kind; a pass is {1}. |
+| [DSH7305](DSH7xxx.md#dsh7305) | error | '{0}' is not a buffer format; the formats are {1}. |
+| [DSH7306](DSH7xxx.md#dsh7306) | error | '{0}' is not a key of a buffer; the keys are {1}. |
+| [DSH7307](DSH7xxx.md#dsh7307) | error | '{0}' is set twice for buffer '{1}'; it was already set on line {2}. |
+| [DSH7308](DSH7xxx.md#dsh7308) | error | (built at runtime) |
+| [DSH7309](DSH7xxx.md#dsh7309) | error | 'Size' gives buffer '{0}' a fixed size, so '{1}' has nothing to say; remove one of them. |
+| [DSH7310](DSH7xxx.md#dsh7310) | error | '{0}' is not a key of a {1} pass; its keys are {2}. |
+| [DSH7311](DSH7xxx.md#dsh7311) | error | '{0}' is a key of {1} passes, and '{2}' is a {3} pass. |
+| [DSH7312](DSH7xxx.md#dsh7312) | error | '{0}' is set twice in pass '{1}'; it was already set on line {2}. |
+| [DSH7313](DSH7xxx.md#dsh7313) | error | (built at runtime) |
+| [DSH7314](DSH7xxx.md#dsh7314) | error | A filter joins its terms with '\|' (either) and '&' (both), and nothing else. |
+| [DSH7315](DSH7xxx.md#dsh7315) | error | Mesh pass '{0}' needs 'Filter = ...' to say which primitives it draws: 'Stencil(1)', 'Layer(Name)', 'List(N... |
+| [DSH7316](DSH7xxx.md#dsh7316) | error | Fullscreen pass '{0}' draws a 'Material' or runs a 'Shader', and it names both. |
+| [DSH7317](DSH7xxx.md#dsh7317) | error | A fullscreen material pass writes exactly one buffer, as 'write Buffer;', and '{0}' writes {1}. |
+| [DSH7318](DSH7xxx.md#dsh7318) | error | '{0}.Previous' is last frame's contents, which nothing writes any more; write '{0}'. |
+| [DSH7319](DSH7xxx.md#dsh7319) | error | '{0}' is bound twice in pass '{1}'; inside a pass every input, output and parameter has a name of its own. |
+| [DSH7320](DSH7xxx.md#dsh7320) | error | '{0}' is an array, and a pipeline has no array parameters or constants; declare one per element. |
+| [DSH7321](DSH7xxx.md#dsh7321) | error | '{0}' is an integer format, which no pass can read or write yet: HLSL passes see float4 textures, and mater... |
+| [DSH7322](DSH7xxx.md#dsh7322) | error | 'Enabled' is false, so this would never run, and a pipeline asset has no switch that is always off; drive i... |
+| [DSH7325](DSH7xxx.md#dsh7325) | error | A fullscreen material pass needs the scene textures, which do not exist yet at {0}; run '{1}' at AfterBaseP... |
+| [DSH7326](DSH7xxx.md#dsh7326) | info | At AfterBasePass scene colour holds the emissive light only; nothing is lit yet, so pass '{0}' {1} that. |
+| [DSH7327](DSH7xxx.md#dsh7327) | error | 'CustomStencil' is the stencil half of the custom depth texture, which no pass can bind as a texture of its... |
+| [DSH7328](DSH7xxx.md#dsh7328) | error | (built at runtime) |
+| [DSH7329](DSH7xxx.md#dsh7329) | info | '{0}' exists at AfterBasePass only when r.CustomDepth.Order draws custom depth before the base pass; where ... |
+| [DSH7330](DSH7xxx.md#dsh7330) | error | 'Depth = Own({0})' tests against a depth of this pipeline's own, and '{0}' is a built-in texture; declare '... |
+| [DSH7331](DSH7xxx.md#dsh7331) | error | Pass '{0}' reads '{1}', which no pass writes, and '{1}' is 'Clear = None', so what it reads is undefined. |
+| [DSH7332](DSH7xxx.md#dsh7332) | warning | Pass '{0}' reads '{1}' before '{2}' writes it in the frame, so it reads the buffer's 'Clear' value; move th... |
+| [DSH7333](DSH7xxx.md#dsh7333) | error | Pass '{0}' reads and writes '{1}', and one pass cannot have one texture as its input and its output; write ... |
+| [DSH7334](DSH7xxx.md#dsh7334) | error | '{0}' reads no UserSceneTexture of '{1}': its inputs are {2}. |
+| [DSH7335](DSH7xxx.md#dsh7335) | warning | '{0}' reads the UserSceneTexture '{1}', and pass '{2}' binds nothing to it, so it samples black; add 'read ... |
+| [DSH7336](DSH7xxx.md#dsh7336) | error | Fullscreen material pass '{0}' reads {1} buffers, and a post-process material has {2} input slots, shared w... |
+| [DSH7337](DSH7xxx.md#dsh7337) | error | '{0}' is a {1} material, and a fullscreen pass draws a Post Process one: '#pragma material(Domain = PostPro... |
+| [DSH7338](DSH7xxx.md#dsh7338) | error | Pass '{0}' writes a data buffer, and '{1}' scales what it reads and writes by the exposure; give it '#pragm... |
+| [DSH7339](DSH7xxx.md#dsh7339) | warning | '{0}' is compiled for BlendableLocation {1}, and pass '{2}' runs it at {3}, {4} tonemapping, so its colours... |
+| [DSH7340](DSH7xxx.md#dsh7340) | error | '{0}' has no UE.DreamPassOutput in its graph, so a mesh pass has nothing to write; add 'UE.DreamPassOutput(... |
+| [DSH7341](DSH7xxx.md#dsh7341) | error | '{0}' leaves Output{1} of its UE.DreamPassOutput unconnected, so '{2}' would receive nothing. |
+| [DSH7342](DSH7xxx.md#dsh7342) | error | Mesh pass '{0}' draws {1} primitives, and '{2}' is not compiled for them; give the material its usage flag ... |
+| [DSH7343](DSH7xxx.md#dsh7343) | error | Mesh pass '{0}' writes '{1}', a texture of the scene, together with '{2}', a buffer of the pipeline. A mesh... |
+| [DSH7344](DSH7xxx.md#dsh7344) | error | '{0}' is a {1} material, and a mesh pass draws primitives with a Surface one. |
+| [DSH7345](DSH7xxx.md#dsh7345) | error | '{0}' asks for the new material translator, which UE.DreamPassOutput does not support; remove 'bEnableNewHL... |
+| [DSH7346](DSH7xxx.md#dsh7346) | error | Fullscreen pass '{0}' reads {1} and writes {2} buffers, and the pixel slot a '.usf' pass runs in has {3} in... |
+| [DSH7347](DSH7xxx.md#dsh7347) | error | '{0}' is a {1}, and the parameter block of a shader slot holds numbers only, so no texture parameter reache... |
+| [DSH7350](DSH7xxx.md#dsh7350) | error | Pass '{0}' writes scene colour, which is {1} at {2}, and '{3}' with it, which is {4}; targets drawn togethe... |
+| [DSH7351](DSH7xxx.md#dsh7351) | error | Pass '{0}' replaces the tonemapper, and so does '{1}'; one view runs one tonemapper, so a pipeline replaces... |
+| [DSH7352](DSH7xxx.md#dsh7352) | error | A 'param' is a parameter of the pipeline (times a number, plus a number), 'DreamPassWeight' (the same), or ... |
+| [DSH7353](DSH7xxx.md#dsh7353) | error | What scales or offsets a parameter in a 'param' is one number the compiler can fold; a vector, or a value k... |
+| [DSH7354](DSH7xxx.md#dsh7354) | info | Buffer '{0}' is exported and last written at {1}: opaque and translucent materials that sample it see the p... |
+| [DSH7355](DSH7xxx.md#dsh7355) | error | Buffer '{0}' is exported, and an exported buffer becomes a render target asset that materials sample, which... |
+| [DSH7356](DSH7xxx.md#dsh7356) | warning | No pass writes buffer '{0}', so whoever reads it reads its 'Clear' value. |
+| [DSH7357](DSH7xxx.md#dsh7357) | warning | No pass reads buffer '{0}' and it is not exported, so writing it is wasted work; read it, export it, or rem... |
+| [DSH7359](DSH7xxx.md#dsh7359) | warning | 'Mode = Own' draws every primitive with its own material, so the 'Material' of mesh pass '{0}' is never used. |
+| [DSH7360](DSH7xxx.md#dsh7360) | info | The materials, shader files and pass layers this pipeline names are not available here, so they were taken ... |
+| [DSH7361](DSH7xxx.md#dsh7361) | error | Pass '{0}' holds a second 'hlsl' block, and the code of a pass is one block; the one on line {1} is it. |
+| [DSH7362](DSH7xxx.md#dsh7362) | error | This file already has an 'hlsl' block, on line {0}, and a '.dsp' has one: write every shared function and e... |
+| [DSH7364](DSH7xxx.md#dsh7364) | error | Pass '{0}' runs the shader file '{1}' and holds an 'hlsl' block as well, and the code of a pass is in one p... |
+| [DSH7365](DSH7xxx.md#dsh7365) | error | The 'hlsl' block of pass '{0}' holds the statements of its entry, whose function the compiler writes, so 'E... |
+| [DSH7366](DSH7xxx.md#dsh7366) | error | '#include' cannot stand among the statements of a function, and the 'hlsl' block of pass '{0}' holds the st... |
+| [DSH7367](DSH7xxx.md#dsh7367) | error | '{0}' is a name of pass '{1}', and its 'hlsl' block holds the statements of a function the compiler writes,... |
+| [DSH7368](DSH7xxx.md#dsh7368) | error | '{0}' is in the shared code of the file's 'hlsl' block, and is the entry of pass '{1}' as well, which the p... |
+| [DSH7369](DSH7xxx.md#dsh7369) | error | '{0}' is the entry of pass '{1}' in the file's 'hlsl' block, and is called here; an entry is compiled only ... |
+| [DSH7370](DSH7xxx.md#dsh7370) | error | A {0} pass runs no HLSL of its own, so pass '{1}' cannot hold an 'hlsl' block. |
 | [DSH8088](DSH8xxx.md#dsh8088) | error | %s contains an invalid folder segment. |
 | [DSH8089](DSH8xxx.md#dsh8089) | error | DreamShader Root '%s' references project plugin '%s', but no enabled plugin with that name was found. |
 | [DSH8090](DSH8xxx.md#dsh8090) | error | DreamShader Root '%s' must reference a project plugin under '%s'. |
@@ -562,10 +687,48 @@ which stays authoritative until every raise site is tagged.
 | [DSH8293](DSH8xxx.md#dsh8293) | error | '{0}', included from '{1}', resolved but could not be read. |
 | [DSH8294](DSH8xxx.md#dsh8294) | error | '{0}', included from '{1}', could not be parsed; its own errors are above. |
 | [DSH8295](DSH8xxx.md#dsh8295) | error | '{0}' is not a DreamShader header; an include names a '.dsh' (or a '.dss'), not a '{1}' file. |
-| [DSH8296](DSH8xxx.md#dsh8296) | error | '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsm' and '.dsf' files, an... |
+| [DSH8296](DSH8xxx.md#dsh8296) | error | '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' f... |
 | [DSH8297](DSH8xxx.md#dsh8297) | error | The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflectio... |
 | [DSH8298](DSH8xxx.md#dsh8298) | error | Building '{0}' was cancelled; the asset is as it was before this compile. |
 | [DSH8299](DSH8xxx.md#dsh8299) | error | The exported functions {0} call one another in a cycle, so there is no order in which they can be built; an... |
+| [DSH8300](DSH8xxx.md#dsh8300) | error | '{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPas... |
+| [DSH8301](DSH8xxx.md#dsh8301) | error | Failed to create package '%s'. |
+| [DSH8302](DSH8xxx.md#dsh8302) | error | Asset '%s' already exists as a '%s'; a .dsp builds a DreamPassPipeline. Rename the .dsp or move the existin... |
+| [DSH8303](DSH8xxx.md#dsh8303) | error | Asset '%s' already exists and was not generated by DreamShader. Rename the .dsp or move/delete the existing... |
+| [DSH8304](DSH8xxx.md#dsh8304) | error | '{1}' is not a {0} the Custom Pass runtime knows; the pipeline was not built. This is a compiler gap: the b... |
+| [DSH8305](DSH8xxx.md#dsh8305) | error | The material '{0}' of pass '{1}' does not load; compile the source that builds it, or correct the Material ... |
+| [DSH8306](DSH8xxx.md#dsh8306) | error | The default of '{0}' could not be applied: {1}. |
+| [DSH8307](DSH8xxx.md#dsh8307) | error | Pass '{0}' selects the layer '{1}', which is not one of the project's pass layers (Project Settings > Dream... |
+| [DSH8308](DSH8xxx.md#dsh8308) | error | Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read an exported buffer as a floa... |
+| [DSH8309](DSH8xxx.md#dsh8309) | error | The render target of the exported buffer '{0}' could not be created or reused. {1} |
+| [DSH8310](DSH8xxx.md#dsh8310) | warning | '{0}' was left in place although its buffer is no longer exported: {1}. Delete it by hand once nothing read... |
+| [DSH8311](DSH8xxx.md#dsh8311) | error | '{0}' was built but could not be saved with its render targets; its slots are already in the registry. In t... |
+| [DSH8312](DSH8xxx.md#dsh8312) | info | '{0}' was deleted: its buffer is no longer exported. |
+| [DSH8313](DSH8xxx.md#dsh8313) | error | Asset '%s' already exists as a '%s'; an exported buffer needs a TextureRenderTarget2D there. Move the exist... |
+| [DSH8314](DSH8xxx.md#dsh8314) | error | Failed to create package '%s'. |
+| [DSH8315](DSH8xxx.md#dsh8315) | error | The Custom Pass slot registry cannot be read: {0}. Nothing was written, because writing over it would lose ... |
+| [DSH8316](DSH8xxx.md#dsh8316) | error | Pass '{0}' needs a {1} slot and all {2} are taken. Merge passes, run 'dsc pass-registry -Gc' to free the sl... |
+| [DSH8317](DSH8xxx.md#dsh8317) | error | Pass '{0}' cannot be mapped onto its HLSL slot: {1} |
+| [DSH8318](DSH8xxx.md#dsh8318) | error | [{0}] pass '{1}' runs at BeginView, where the view uniform buffer does not exist yet, and its slot uses 'Vi... |
+| [DSH8319](DSH8xxx.md#dsh8319) | error | The HLSL that pass '{0}' has in its '.dsp' could not be put together for its slot (its entry is not in the ... |
+| [DSH8320](DSH8xxx.md#dsh8320) | error | '{0}' is included by a relative path and names no file, so the snapshot of pass '{1}' cannot be built. |
+| [DSH8321](DSH8xxx.md#dsh8321) | warning | '{0}' is included by a virtual path outside /Engine/, /Plugin/ and /ThirdParty/, so the snapshot of pass '{... |
+| [DSH8322](DSH8xxx.md#dsh8322) | error | [{0}] pass '{1}' does not compile in its HLSL slot: {2} |
+| [DSH8323](DSH8xxx.md#dsh8323) | error | The {0} slot shader cannot be pre-checked: the global shader type {1} is not registered, or its source no l... |
+| [DSH8324](DSH8xxx.md#dsh8324) | warning | The project targets the shader format {0}, which this machine has no shader compiler for, so the HLSL slots... |
+| [DSH8325](DSH8xxx.md#dsh8325) | error | There is no shader format to pre-check the HLSL slots with: no active feature level and no target platform ... |
+| [DSH8326](DSH8xxx.md#dsh8326) | error | '{0}' cannot be written or deleted, so nothing of the slot registry was changed: no snapshot written, no sl... |
+| [DSH8327](DSH8xxx.md#dsh8327) | info | {0} slot {1} of pass '{2}' was freed: the pipeline no longer runs that pass in HLSL there. |
+| [DSH8330](DSH8xxx.md#dsh8330) | error | '{0}' names more than one material under this source root ({1}); write the material's asset path instead. |
+| [DSH8331](DSH8xxx.md#dsh8331) | error | The material '{0}' comes from '{1}', which failed to compile, so this pipeline has no material to check its... |
+| [DSH8332](DSH8xxx.md#dsh8332) | info | '{0}' was missing or older than its source, so '{1}' was compiled first. |
+| [DSH8333](DSH8xxx.md#dsh8333) | error | '{0}' is built by '{1}', which reads this pipeline's exported buffer through UE.DreamPassBuffer (directly, ... |
+| [DSH8334](DSH8xxx.md#dsh8334) | error | The material '{0}' does not resolve to an asset path. {1} |
+| [DSH8335](DSH8xxx.md#dsh8335) | error | The Custom Pass slot registry cannot be read: {0}. Nothing was changed; 'dsc pass-registry -Rebuild' replac... |
+| [DSH8336](DSH8xxx.md#dsh8336) | error | The Custom Pass slot registry cannot be read ({0}) and could not be moved aside to '{1}', so nothing was re... |
+| [DSH8337](DSH8xxx.md#dsh8337) | warning | {0} slot {1} ({2}, pass '{3}') names snapshot files that are not on disk, so it is now reserved and compile... |
+| [DSH8338](DSH8xxx.md#dsh8338) | error | HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to pre-check them for. |
+| [DSH8339](DSH8xxx.md#dsh8339) | info | '{0}' has no HLSL pass, so there is no slot to pre-check; its materials are checked by the sources that bui... |
 | [DSH9001](DSH9xxx.md#dsh9001) | error | DSH9001: '{0}' uses conditional compilation, and VirtualFunction sync rewrites a source in place at byte of... |
 | [DSH9011](DSH9xxx.md#dsh9011) | warning | Compiling shaders for '%s' took %.0f seconds. A stall of this length is almost always a Custom node whose l... |
 | [DSH9012](DSH9xxx.md#dsh9012) | warning | '%s' loops on the input '%s' and samples with '%s', which takes its mip level from screen-space derivatives... |
@@ -583,8 +746,8 @@ which stays authoritative until every raise site is tagged.
 | [DSH9031](DSH9xxx.md#dsh9031) | error | DreamShader failed to write graph dump '%s'. |
 | [DSH9032](DSH9xxx.md#dsh9032) | error | DreamShader could not work out which assets '%s' builds, so there is no graph to dump. |
 | [DSH9033](DSH9xxx.md#dsh9033) | error | DreamShader could not resolve generated asset '%s' from '%s' after generation. |
-| [DSH9034](DSH9xxx.md#dsh9034) | error | DreamShader cannot dump '%s': %s is not a Material, MaterialFunction or material instance. |
-| [DSH9035](DSH9xxx.md#dsh9035) | error | '{0}' is not a compilable DreamShader source (.dss, .dsi, .dsm or .dsf), so '{1}' has nothing to do with it... |
+| [DSH9034](DSH9xxx.md#dsh9034) | error | DreamShader cannot dump '%s': %s is not a Material, MaterialFunction, material instance or pass pipeline. |
+| [DSH9035](DSH9xxx.md#dsh9035) | error | '{0}' is not a compilable DreamShader source (.dss, .dsi, .dsp, .dsm or .dsf), so '{1}' has nothing to do w... |
 | [DSH9036](DSH9xxx.md#dsh9036) | error | The diagnostics JSON could not be written: {0}. |
 | [DSH9037](DSH9xxx.md#dsh9037) | info | '{0}' produced no material, so there are no shaders to compile; a function library is checked by the materi... |
 | [DSH9038](DSH9xxx.md#dsh9038) | warning | Shader errors cannot be read in this configuration: '-nullrhi' switches the rendering shader maps off, and ... |
@@ -658,4 +821,31 @@ which stays authoritative until every raise site is tagged.
 | [DSH9107](DSH9xxx.md#dsh9107) | error | Expected '{0}' to be declared alone to rewrite its value, found it in a declaration shared with other names... |
 | [DSH9108](DSH9xxx.md#dsh9108) | error | Expected every change to this file to touch its own stretch of text, found an edit at line {0} that overlap... |
 | [DSH9109](DSH9xxx.md#dsh9109) | error | Expected a '#pragma instance(...)' line in this .dsi file, found none; the file was left unchanged. |
+| [DSH9200](DSH9xxx.md#dsh9200) | error | The Custom Pass slot registry cannot be read: {0}. 'dsc pass-registry -Rebuild' moves it aside and gives ev... |
+| [DSH9201](DSH9xxx.md#dsh9201) | warning | No .dsp builds '{0}' any more, but the asset is still there and its pass '{1}' points at {2} slot {3}. Dele... |
+| [DSH9202](DSH9xxx.md#dsh9202) | info | {0} slot {1} was freed: {2} |
+| [DSH9203](DSH9xxx.md#dsh9203) | warning | Registry.json did not parse and was moved aside to '{0}'; the compiles that follow give every HLSL pass a s... |
+| [DSH9204](DSH9xxx.md#dsh9204) | error | '{0}' did not compile, so its pipeline keeps the slots it had: {1} |
+| [DSH9205](DSH9xxx.md#dsh9205) | warning | Pass '{1}' of '{0}' points at {2} slot {3}, which the registry {4}. Its source '{5}' did not compile, so th... |
+| [DSH9206](DSH9xxx.md#dsh9206) | info | No .dsp under the source roots; the registry is rewritten from Registry.json as it stands. |
+| [DSH9208](DSH9xxx.md#dsh9208) | warning | The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the registry file includes it: the n... |
+| [DSH9209](DSH9xxx.md#dsh9209) | warning | '{0}' does not compile far enough to tell whether it still runs pass '{1}' in {2} slot {3}, so the slot is ... |
+| [DSH9210](DSH9xxx.md#dsh9210) | error | '{0}' is a pass pipeline, which decompiles to a '.dsp', and '{1}' is not one. |
+| [DSH9211](DSH9xxx.md#dsh9211) | warning | The pass '{0}' has neither a material nor a shader, so the text names neither, and it does not build until ... |
+| [DSH9212](DSH9xxx.md#dsh9212) | warning | The pass '{0}' has both a material, '{1}', and a shader, '{2}'; a fullscreen pass names one of the two, and... |
+| [DSH9214](DSH9xxx.md#dsh9214) | info | A layer filter of the pass '{0}' kept no spelling of its layers, so they are written as the project's layer... |
+| [DSH9215](DSH9xxx.md#dsh9215) | warning | A layer filter of the pass '{0}' selects layer bit(s) {1}, which the project's layer table has no name for;... |
+| [DSH9216](DSH9xxx.md#dsh9216) | warning | '{0}' runs in no kind of view, which a '.dsp' cannot say; the text leaves 'Views' out, and a rebuild runs i... |
+| [DSH9217](DSH9xxx.md#dsh9217) | warning | The pass '{0}' checks its override material for no usage flag at all, which a '.dsp' cannot say; the text l... |
+| [DSH9218](DSH9xxx.md#dsh9218) | warning | The parameter '{0}' defaults to '{1}', which is not a 2D texture. A '.dsp' declares every texture parameter... |
+| [DSH9219](DSH9xxx.md#dsh9219) | warning | The pass '{0}' binds '{1}' to a texture constant, which a 'param' cannot state; the binding is left out of ... |
+| [DSH9220](DSH9xxx.md#dsh9220) | warning | The pass '{0}' tests against its own depth but names no Depth32 buffer for it; the text writes 'Own()' empt... |
+| [DSH9221](DSH9xxx.md#dsh9221) | warning | The decompiled pipeline does not parse back: {0}: {1}. It is written as it is; this is a defect of the deco... |
+| [DSH9222](DSH9xxx.md#dsh9222) | warning | The decompiled pipeline parses but does not bind back into a pipeline: {0}: {1}. It is written as it is; ei... |
+| [DSH9223](DSH9xxx.md#dsh9223) | warning | The decompiled pipeline reads back as a different pipeline ({0} difference(s); the first: {1}). It is writt... |
+| [DSH9224](DSH9xxx.md#dsh9224) | warning | A '.dsp' names its pipeline after its file and has no '/// @name', so '{0}' builds '{1}' where it is writte... |
+| [DSH9225](DSH9xxx.md#dsh9225) | error | There is no pass pipeline to decompile. |
+| [DSH9226](DSH9xxx.md#dsh9226) | error | DSH9226: '{0}' is built from the pipeline file '{1}' but is not a pass pipeline, so nothing was adopted. |
+| [DSH9227](DSH9xxx.md#dsh9227) | error | DSH9227: '{0}' is not a .dsp pipeline file, so the settings of '{1}' cannot be spliced into it. |
+| [DSH9228](DSH9xxx.md#dsh9228) | error | DSH9228: '{0}' builds no pass pipeline any more, so '{1}' has nothing to be spliced into. |
 

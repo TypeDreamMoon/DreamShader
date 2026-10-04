@@ -18,6 +18,10 @@
 // The legacy rules hook in where they apply -- L2, L3a, L3b, L4, L5, L8,
 // L12, L13 and L19 -- and their helpers live in LangBinderLegacy.cpp. Codes raised here for them: DSH5277, DSH5278,
 // DSH5279, DSH5281, DSH5282, DSH5284 and DSH5285.
+//
+// So do the Custom Pass nodes (LangBinderPassNodes.cpp): DSH5300 is raised here, for a `UE.` node this engine's catalog
+// lacks and the version table there names; the calls of those nodes and of user functions are recorded here for the
+// checks it makes once every body is bound.
 
 #include "LangBinderInternal.h"
 
@@ -3560,6 +3564,8 @@ namespace UE::DreamShader::Lang::Private
 		// Recorded whatever happens next: the call graph is what DetectRecursion() closes over, and
 		// a call that fails to type is still a call.
 		CurrentCallees.Add(FunctionIndex);
+		// Each call on its own, too: an inlined helper's Custom Pass nodes are its caller's, once per call (CheckPassNodeUses).
+		NotePassNodeCallSite(FunctionIndex, Expr.Span);
 
 		// The legacy call rules. In a 1.x body a call to an Extern,
 		// ExportFunction or Custom function reads the way 1.x read it:
@@ -4198,6 +4204,7 @@ namespace UE::DreamShader::Lang::Private
 				}
 			}
 			FText GateEngine;
+			FText GateRequirement;
 			if (CatalogIndex == INDEX_NONE
 				&& Namespace.Equals(Namespaces::Substrate, ESearchCase::CaseSensitive)
 				&& TryDescribeSubstrateVersionGate(Name, GateEngine))
@@ -4211,6 +4218,20 @@ namespace UE::DreamShader::Lang::Private
 						LOCTEXT("SubstrateNodeNeedsNewerEngine", "'Substrate.{0}' is a node Unreal Engine has from {1} on; this engine does not have it."),
 						FText::FromString(Name),
 						GateEngine));
+			}
+			else if (CatalogIndex == INDEX_NONE
+				&& Namespace.Equals(Namespaces::UE, ESearchCase::CaseSensitive)
+				&& TryDescribeUENodeVersionGate(Name, GateRequirement))
+			{
+				// The node exists, in a newer engine or with the Custom Pass module (LangBinderPassNodes.cpp keeps the table).
+				Diagnostics.Error(
+					TEXT("DSH5300"),
+					CurrentFile,
+					NameSpan,
+					FText::Format(
+						LOCTEXT("UENodeNeedsNewerEngine", "'UE.{0}' needs {1}, and this engine's node catalog does not have it."),
+						FText::FromString(Name),
+						GateRequirement));
 			}
 			else if (CatalogIndex == INDEX_NONE)
 			{
@@ -4265,6 +4286,9 @@ namespace UE::DreamShader::Lang::Private
 					LOCTEXT("AbstractClass", "'{0}' is abstract and cannot be made into a node."),
 					FText::FromString(Class.ClassName)));
 		}
+
+		// The Custom Pass nodes are counted per material once every body is bound (CheckPassNodeUses).
+		NotePassNodeUse(Class, Expr.Span);
 
 		FBoundExpr Binding;
 		Binding.Kind = EBoundExprKind::ReflectedCall;

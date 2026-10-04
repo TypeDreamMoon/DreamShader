@@ -1,0 +1,86 @@
+// DreamShader Custom Pass -- the fixed parameters of every HLSL pass slot.
+//
+// A `.dsp` pass written in HLSL (`compute`, or `fullscreen` without a material -- in a shader file or in the `.dsp`'s
+// `hlsl { }` blocks) runs in one permutation ("slot") of the global shaders FDreamPassCS / FDreamPassPS. Every slot has
+// the parameters below; the registry the compiler writes (/DreamPassUser/RegistryCompute.ush, /DreamPassUser/
+// RegistryPixel.ush) gives each pass's own names to them with #define before it includes the pass's source, so a pass reads:
+//
+//     read  Source = Mask;        ->  Source        is DP_Input0, SourceSize is DP_InputSize[0], SourceUVRect is DP_InputUVRect[0]
+//     write Result = Blurred;     ->  Result        is DP_Output0 (compute), ResultSize is DP_OutputSize[0]
+//     param Radius = BlurRadius;  ->  Radius        is a component of DP_Params[]
+//
+// in the order the bindings are written. A pixel pass's outputs are SV_Target0..3 in `write` order.
+//
+// Writing to an output: own buffers start at (0, 0); the scene colour of a view starts at DP_ViewRect.xy (split
+// screen puts several views in one texture), so `Result[DP_ViewRect.xy + Id.xy]` is right for both.
+//
+// At BeginView the view uniform buffer does not exist yet (the renderer creates it after that point): the registry
+// turns `View` into an undeclared name for a pass there -- for one whose HLSL is in its `.dsp`, the generated root does,
+// around the pass's own code -- so a use is a compile error, and DP_Time stands in for the timing values.
+
+#pragma once
+
+/** The textures `read` binds, in order; an unbound one is black. */
+Texture2D<float4> DP_Input0;
+Texture2D<float4> DP_Input1;
+Texture2D<float4> DP_Input2;
+Texture2D<float4> DP_Input3;
+Texture2D<float4> DP_Input4;
+Texture2D<float4> DP_Input5;
+Texture2D<float4> DP_Input6;
+Texture2D<float4> DP_Input7;
+
+/** xy: the size of input i's texture in texels; zw: one over it. */
+float4 DP_InputSize[8];
+
+/** xy: the UV of the top left of input i's picture inside its texture; zw: of its bottom right. (0, 0, 1, 1) for an own buffer. */
+float4 DP_InputUVRect[8];
+
+SamplerState DP_PointClamp;
+SamplerState DP_LinearClamp;
+
+#if DP_COMPUTE
+/** The textures `write` binds, in order. */
+RWTexture2D<float4> DP_Output0;
+RWTexture2D<float4> DP_Output1;
+RWTexture2D<float4> DP_Output2;
+RWTexture2D<float4> DP_Output3;
+#endif
+
+/** xy: the size of output j's texture; zw: one over it. */
+float4 DP_OutputSize[4];
+
+/** The `param` values, packed as the registry's #defines read them. */
+float4 DP_Params[16];
+
+/** The pipeline's weight in this view (0..1]: what its activations blend to. */
+float DP_Weight;
+
+/** The rect of output 0 that belongs to this view: min.xy, max.xy, in texels. */
+int4 DP_ViewRect;
+
+/** Compute: the number of threads asked for (a dispatch rounds up to whole groups -- return early past it). */
+uint4 DP_DispatchSize;
+
+/** x: world time, y: world delta time, z: real time, all in seconds; w: the frame number. */
+float4 DP_Time;
+
+/** UV inside input i's picture, from a UV in [0, 1] over that picture. */
+float2 DreamPassInputUV(uint InputIndex, float2 PictureUV)
+{
+	const float4 Rect = DP_InputUVRect[InputIndex];
+	return lerp(Rect.xy, Rect.zw, PictureUV);
+}
+
+// The helpers of a pass's own code, by a `read`'s name (DreamShader_Plan/10 s6). Macros, not functions: `Name##UVRect`
+// spells the names the registry defines for a binding, and the `View` of DreamPassSceneUV is expanded in the pass's code,
+// where the BeginView guard applies.
+
+/** A `read`, sampled at a UV over the view (0..1) -- inside its picture, the scene colour's part of a split screen too. */
+#define DreamPassSample(Name, UV) Name.SampleLevel(DP_LinearClamp, lerp(Name##UVRect.xy, Name##UVRect.zw, (UV)), 0)
+
+/** A texel of a `read`, at a pixel of the view counted from its top left (the body form's `Pixel`). */
+#define DreamPassLoad(Name, Pixel) Name.Load(int3(int2(Pixel) + int2(Name##UVRect.xy * Name##Size.xy), 0))
+
+/** A UV over the view as a UV of the scene textures, for CalcSceneDepth and the other scene texture functions; not at BeginView. */
+#define DreamPassSceneUV(UV) ((View.ViewRectMin.xy + (UV) * View.ViewSizeAndInvSize.xy) * View.BufferSizeAndInvSize.zw)

@@ -842,7 +842,7 @@ namespace UE::DreamShader::Lang
 		bool bAnyChange = false;
 		for (IR::FIRProduct& Product : Module.Products)
 		{
-			if (Product.Kind == IR::EIRProductKind::MaterialInstance)
+			if (Product.Kind == IR::EIRProductKind::MaterialInstance || Product.Kind == IR::EIRProductKind::PassPipeline)
 			{
 				continue;
 			}

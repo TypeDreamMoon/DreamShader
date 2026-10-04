@@ -14,7 +14,7 @@
 '{0}' is not declared; did you mean '{1}'? Names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:752`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:763`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:756`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:767`
 <!-- generated:end DSH4200 -->
 
 **Cause.** An identifier does not name a local, a parameter or a file-scope declaration that is
@@ -37,7 +37,7 @@ the bottom of the file declares nothing for the code above it.
 '{0}' is not a type; did you mean '{1}'? Type names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:538`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:549`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:563`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:685`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:942`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:544`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:557`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:568`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:582`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:704`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:961`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:544`
 <!-- generated:end DSH4201 -->
 
 **Cause.** A type spelling is neither a builtin (`float3`, `Texture2D`, `material`, `Substrate`, …)
@@ -58,7 +58,7 @@ comes from a header, check that the header is included above this line.
 A string has no value in an expression; it is only ever the value of a reflected property, as in 'UE.Expression(Class = "...")'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:620`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:624`
 <!-- generated:end DSH4202 -->
 
 **Cause.** A quoted string reached an expression. The language has no string values: a string is
@@ -78,7 +78,7 @@ only ever the value of a reflected literal property, as in `UE.Expression(Class 
 '{0}' is a namespace, not a value; write '{0}.SomeNode(...)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:712`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:716`
 <!-- generated:end DSH4203 -->
 
 **Cause.** `UE` or `Substrate` was used as if it were a variable. They are namespaces; the only
@@ -98,7 +98,7 @@ it — a declared `UE` wins over the namespace, and the reflected call is then w
 '{0}' is a type, not a value; write '{0}(...)' to construct one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:507`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:511`
 <!-- generated:end DSH4204 -->
 
 **Cause.** A type name appears where a value is expected: `float3;`, `x = float3`, `f(float3)`.
@@ -116,7 +116,7 @@ it — a declared `UE` wins over the namespace, and the reflected call is then w
 '{0}' has no field called '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1120`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1124`
 <!-- generated:end DSH4205 -->
 
 **Cause.** A `struct` value was asked for a field it does not have. The message names the struct and
@@ -135,7 +135,7 @@ suggests a field that differs only in case, when there is one.
 '{0}' on a texture is a call: write 'Tex.{0}(UV)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1259`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1263`
 <!-- generated:end DSH4206 -->
 
 **Cause.** `Tex.Sample` (or `Tex.SampleLevel`) appears without its argument list. A texture's
@@ -154,7 +154,7 @@ methods are calls; there is no value to take from the method itself.
 A value of type {0} has no member '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1269`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1273`
 <!-- generated:end DSH4207 -->
 
 **Cause.** A member access was written on a value whose type has no members of that kind: a swizzle
@@ -174,7 +174,7 @@ only valid on a numeric value of at least three components, and `m.BaseColor` on
 A value of type {0} has no method '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2954`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3070`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3085`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4847`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2958`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3074`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3089`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4871`
 <!-- generated:end DSH4208 -->
 
 **Cause.** A call was written on something that is not callable: a name that is not a function, a
@@ -195,13 +195,19 @@ reach an engine node through `UE.Expression(Class = "…")`.
 '{0}' is already declared in this file; one name declares one thing.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:460`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:470`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:479`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:489`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:857`
 <!-- generated:end DSH4210 -->
 
 **Cause.** One name is declared twice. Structs, file-scope variables and functions share one
 namespace, because a struct's constructor and a function call are spelled the same way. When the
 two declarations are in different files the message names both — the usual cause is a header
 declaring a name the file also declares, or two headers declaring it.
+
+In a `.dsp` it is also raised for two `uniform`s whose names differ only in case
+(`The parameter 'radius' differs from 'Radius', declared on line 3, in case only; ...`): the pipeline
+asset keeps parameter names as Unreal names, which compare ignoring case, so the two would be one
+parameter there. A `static const` is folded away and never reaches the asset, so it is not compared
+this way.
 
 **Fix.** Rename one of them. There is no overloading: two functions of one name are this error even
 when their parameter lists differ.
@@ -217,7 +223,7 @@ when their parameter lists differ.
 Including '{0}' from '{1}' closes a cycle; a header may not include itself, directly or through another header.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:423`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:442`
 <!-- generated:end DSH4211 -->
 
 **Cause.** Following an `#include` / `import` leads back to a file already being read. The message
@@ -237,7 +243,7 @@ header both of them include; DreamShaderLang has no include guards to make a cyc
 '{0}' cannot be read: this front end was started without an include resolver, so nothing a header declares is visible.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:387`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:406`
 <!-- generated:end DSH4212 -->
 
 **Cause.** The file has an `#include` / `import` and this front end was started without an include
@@ -258,7 +264,7 @@ every name the header would have declared to be `DSH4200` as well.
 '{0}' is declared twice in struct '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:666`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:685`
 <!-- generated:end DSH4213 -->
 
 **Cause.** A `struct` declares two fields with the same name.
@@ -276,7 +282,7 @@ every name the header would have declared to be `DSH4200` as well.
 '{0}' is declared twice in the parameter list of '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:919`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:938`
 <!-- generated:end DSH4214 -->
 
 **Cause.** A parameter list declares one name twice.
@@ -294,7 +300,7 @@ every name the header would have declared to be `DSH4200` as well.
 The '{0}' argument of '{1}' is given twice.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3428`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3756`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4405`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4475`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4513`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:697`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3432`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3762`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4429`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4499`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4537`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:697`
 <!-- generated:end DSH4215 -->
 
 **Cause.** One argument slot is filled twice in a call: the same parameter named twice, a named
@@ -315,7 +321,7 @@ named argument that names one of those parameters is the duplicate.
 '{0}' takes its arguments in order and has no argument called '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3393`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3734`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3397`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3740`
 <!-- generated:end DSH4216 -->
 
 **Cause.** A named argument names nothing in the callee: no parameter of that function, or no pin
@@ -335,7 +341,7 @@ a function's parameters.
 '{0}' is missing its '{1}' argument.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3456`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3808`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3460`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3814`
 <!-- generated:end DSH4217 -->
 
 **Cause.** A call leaves a parameter with no argument and no default, or a builtin without one of
@@ -355,7 +361,7 @@ function's input optional.
 '{0}' writes back {1}, and this variable is {2}; an out argument has to match exactly.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3869`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3914`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3875`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3920`
 <!-- generated:end DSH4218 -->
 
 **Cause.** An argument passed to an `out` / `inout` parameter is a variable of a different type.
@@ -397,7 +403,7 @@ fine — they are not visible to each other and each gets its own slot.
 {0}() has no components; write the value, as in 'float3(0.0)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3143`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3147`
 <!-- generated:end DSH4221 -->
 
 **Cause.** A constructor was written with no arguments: `float3()`.
@@ -416,7 +422,7 @@ time.
 '{0}' has {1} fields and this list has {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2673`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2778`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2811`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3209`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3281`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2677`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2782`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2815`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3213`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3285`
 <!-- generated:end DSH4222 -->
 
 **Cause.** The pieces do not add up: a constructor whose arguments' components do not total the
@@ -437,7 +443,7 @@ write `v4.xyz`. The one exception is a single scalar, which broadcasts to any wi
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1910`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2573`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2585`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2600`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3122`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1914`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2577`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2589`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2604`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3126`
 <!-- generated:end DSH4223 -->
 
 **Cause.** A cast the graph cannot carry: to or from a type that is not a number or a bool, or a
@@ -457,7 +463,7 @@ For a texture, a sampler, a `material` or a `Substrate` value there is no cast a
 '{0}' takes at most {1} arguments.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3414`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3474`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3682`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4891`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4958`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3418`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3478`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3688`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4915`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4982`
 <!-- generated:end DSH4224 -->
 
 **Cause.** A call has more or fewer arguments than the callee takes. For a texture sample the
@@ -477,7 +483,7 @@ on whether it was written.
 A constructor takes its components in order; named arguments belong on 'UE.' nodes and on function calls.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3134`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4859`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3138`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4883`
 <!-- generated:end DSH4225 -->
 
 **Cause.** Named arguments were used where only positional ones are taken: a constructor, a texture
@@ -497,7 +503,7 @@ or a property, and on calls to declared functions, where they match a parameter.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1944`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1992`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2512`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3177`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3189`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1948`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1996`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2516`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3181`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3193`
 <!-- generated:end DSH4226 -->
 
 **Cause.** An operand does not fit where it is used. The two common shapes are a width that does not
@@ -518,7 +524,7 @@ width, so `v3 * 2.0` is fine and `v3 * v2` is not.
 '{0}' is not an operation this language spells as a call.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2073`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2189`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2232`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2269`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2428`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2077`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2193`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2236`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2273`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2432`
 <!-- generated:end DSH4227 -->
 
 **Cause.** An operator with no graph form: `&`, `|`, `^`, `<<`, `>>`, `~` and their assignment
@@ -538,7 +544,7 @@ HLSL the shader compiler sees whole.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1899`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1903`
 <!-- generated:end DSH4228 -->
 
 **Cause.** A value does not fit where it is being stored: the right of an `=`, an initializer, a
@@ -558,7 +564,7 @@ parameter default or a `return`. The message names both types.
 A 'uniform' is an input and a 'static const' is a constant; neither can be assigned to. Copy it into a local first.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2362`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2403`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2411`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2366`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2407`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2415`
 <!-- generated:end DSH4229 -->
 
 **Cause.** The left side of an assignment cannot be assigned to. Three messages: it is a `uniform`
@@ -581,7 +587,7 @@ first and assign the whole member. Otherwise assign to a named variable.
 '.{0}' is not a swizzle; a swizzle is one to four of 'xyzw' or 'rgba'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1286`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1305`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1321`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1341`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1708`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2379`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1290`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1309`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1325`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1345`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1712`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2383`
 <!-- generated:end DSH4230 -->
 
 **Cause.** One of five things:
@@ -609,7 +615,7 @@ result would depend on how the graph happened to be built.
 '{0}.{1}' is an output node, not a value: write it as a statement on a line of its own.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4740`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4764`
 <!-- generated:end DSH4231 -->
 
 **Cause.** A node with no value was used as one. Custom-output classes (`ClearCoatBottomNormal`,
@@ -629,7 +635,7 @@ than producing something to read, and a class with no output pins is the same ca
 A component index must be a compile-time constant; write a swizzle such as '.z', or select with 'lerp'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1699`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1703`
 <!-- generated:end DSH4233 -->
 
 **Cause.** `v[i]` with an index the binder cannot evaluate. A component index becomes a swizzle,
@@ -648,7 +654,7 @@ and a swizzle is fixed when the graph is built.
 A value of type {0} cannot be indexed.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1735`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1739`
 <!-- generated:end DSH4234 -->
 
 **Cause.** `[...]` was written on a value that is neither an array, a vector nor a matrix.
@@ -666,7 +672,7 @@ A value of type {0} cannot be indexed.
 '++' and '--' write back into what they read, so they need a variable.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2203`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2207`
 <!-- generated:end DSH4235 -->
 
 **Cause.** `++` or `--` was applied to something that is not a variable. They read and write back,
@@ -685,7 +691,7 @@ so they need somewhere to write.
 An 'in' parameter is a function input pin and cannot be written to; declare it 'out' or 'inout', or copy it into a local.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2370`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2374`
 <!-- generated:end DSH4236 -->
 
 **Cause.** An `in` parameter was assigned to. In a graph an input parameter is a function input pin,
@@ -705,7 +711,7 @@ local and modify that.
 An initializer list only has a meaning against a declared type; it cannot stand on its own.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2650`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2717`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2801`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2654`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2721`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2805`
 <!-- generated:end DSH4237 -->
 
 **Cause.** An initializer list appears where nothing says what it should become — or a target that
@@ -726,7 +732,7 @@ is not a list.
 '{0}' returns nothing, so its call has no value; its results come back through its out parameters.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3943`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3949`
 <!-- generated:end DSH4238 -->
 
 **Cause.** A call to a function that returns `void` was used as a value.
@@ -745,7 +751,7 @@ parameters, which the caller declares as variables and reads after the call.
 '{0}' is an out parameter of '{1}', so its argument has to be a variable.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3840`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3896`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3846`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3902`
 <!-- generated:end DSH4239 -->
 
 **Cause.** The argument passed to an `out` / `inout` parameter is not a variable, so there is
@@ -784,7 +790,7 @@ body, so a region opened in a header cannot be closed by the file that included 
 A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:585`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:604`
 <!-- generated:end DSH4241 -->
 
 **Cause.** A declaration has more than one `[n]`. The graph has no arrays at all; the one dimension
@@ -803,7 +809,7 @@ that is supported exists only so a `static const` table can be indexed at compil
 An array index must be a compile-time constant: the graph has no arrays, so every element is read at compile time.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1634`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1643`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1671`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1638`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1647`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1675`
 <!-- generated:end DSH4242 -->
 
 **Cause.** An array element could not be resolved at compile time: a non-constant index, an index
@@ -825,7 +831,7 @@ function.
 Both sides of this '/' are integers, and the material graph has no integer division; write 'float(a) / b' for the fraction, or 'floor(float(a) / b)' for the whole part.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2022`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2026`
 <!-- generated:end DSH4243 -->
 
 **Cause.** Both operands of a `/` are integers. HLSL would divide them as integers and drop the
@@ -846,7 +852,7 @@ whole part.
 A matrix row cannot be read: the graph has no matrices. Move the code into a '/// @custom' function, where the matrix is an input.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1686`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1690`
 <!-- generated:end DSH4244 -->
 
 **Cause.** A row of a matrix was read (`M[1]`). A matrix has no graph value; it exists only as a
@@ -865,7 +871,7 @@ A matrix row cannot be read: the graph has no matrices. Move the code into a '//
 An unsized array needs an initializer list to take its length from.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:604`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:627`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:637`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:623`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:646`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:656`
 <!-- generated:end DSH4245 -->
 
 **Cause.** An array size is not an integer literal between 1 and 4096, or an unsized `[]` has no
@@ -885,7 +891,7 @@ expression — even a constant one — cannot be used.
 The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it in a '/// @custom' body, where the shader compiler has it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3333`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3337`
 <!-- generated:end DSH4246 -->
 
 **Cause.** `sinh`, `cosh` or `tanh` was called. The core table carries all three so a `/// @custom`
@@ -908,7 +914,7 @@ terms of `exp` explicitly is also fine — the point is that the file, not the e
 '{0}' is the GLSL spelling; this language is HLSL, so write '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3003`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3007`
 <!-- generated:end DSH4250 -->
 
 **Cause.** A GLSL spelling was used: `mix`, `fract`, `mod`. 1.x silently rewrote these to their
@@ -949,7 +955,7 @@ the intent obvious to the next reader.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1921`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2481`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:628`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1925`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2485`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:628`
 <!-- generated:end DSH4260 -->
 
 **Cause.** The condition of an `if`, a `for`, a `while`, a `do` or a `?:` is not a single
@@ -1644,7 +1650,7 @@ array is missing it — re-export the manifest.
 Product {0} has no name; the asset name comes from the exported function or from '/// @name'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1627`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1640`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1641`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1654`
 <!-- generated:end DSH4326 -->
 
 **Cause.** A product has an empty `Name`, or two products of one file would be called the same
@@ -1811,7 +1817,7 @@ this means the two saw different schemas.
 This module holds a material instance and {0} other product(s), and a material instance is the only product of its file.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1613`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1613`, `Source/DreamShaderLang/Private/IR/IRValidator.cpp:1627`
 <!-- generated:end DSH4334 -->
 
 **Cause.** A module holds a material instance together with other products. A `.dsi` is one instance
@@ -2130,7 +2136,7 @@ MaterialAttributes, check that the `extern` prototype declares that parameter `m
 '{0}' is assigned in only one arm of this 'if' and has no value before it; assign it in both arms, or give it a value before the 'if'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:616`, `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:640`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:622`, `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:646`
 <!-- generated:end DSH4372 -->
 
 **Cause.** A variable or a material attribute is assigned in one arm of an `if` and not in the
@@ -2180,7 +2186,7 @@ takes an expression.
 This builds a {0}-component value, but a material graph carries at most four components.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1112`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1118`
 <!-- generated:end DSH4374 -->
 
 **Cause.** A constructor, a swizzle or a coercion asked for more than four components:
@@ -2289,7 +2295,7 @@ attribute, the same as one component of a local.
 A branch chooses between two {0} values or between two numbers, and this one has one of each.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1494`, `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1512`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1500`, `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1518`
 <!-- generated:end DSH4378 -->
 
 **Cause.** A branch over Substrate values that cannot be built. Two messages: one side of the branch
@@ -2311,7 +2317,7 @@ values with `lerp()`.
 A branch can only choose between numbers, bools and static Substrate values, and these are {0} objects, which no material graph node switches; sample each texture first and branch on the samples.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1483`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1489`
 <!-- generated:end DSH4379 -->
 
 **Cause.** A branch leaves a texture object or a sampler in a variable, with a different one on each
@@ -2331,7 +2337,7 @@ the taken side ends up in the shader.
 This branch becomes a 'Substrate.Select', which parameter-blends its two inputs; they are a '{0}' and a '{1}', and the engine may refuse to blend unlike BSDFs.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1527`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1533`
 <!-- generated:end DSH4380 -->
 
 **Cause.** A run-time `if` or `?:` chooses between two Substrate values of unlike kinds -- a slab on
@@ -2439,4 +2445,424 @@ it also fires for a uniform that is only read by code that itself turned out to 
 note that a parameter that feeds nothing does nothing: the instance would show a knob with no
 effect, which is why it is not generated. If it is read only inside `#if` text that is currently
 off, the message is expected.
+
+## DSH4400
+
+<!-- generated:begin DSH4400 -->
+**Severity** error
+
+**Message**
+
+```
+Buffer '{0}' is declared twice; the declaration on line {1} already makes it.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1537`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1551`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1564`
+<!-- generated:end DSH4400 -->
+
+**Cause.** A buffer is declared under a name that is taken. Three messages:
+
+- the same name was declared as a buffer before; the first declaration stands and this one is
+  dropped;
+- the name differs from a buffer declared before in case only
+  (`Buffer 'mask' differs from 'Mask', declared on line 2, in case only; ...`): names are
+  case-sensitive in the source, but the pipeline asset keeps buffer names as Unreal names, which
+  compare ignoring case, so the two would be one buffer there. The first declaration stands;
+- the name is a `uniform` or `static const` of the pipeline, or `DreamPassWeight`
+  (`'Mask' already names a parameter or a constant of this pipeline; ...`): buffers, parameters and
+  constants share one namespace, and the buffer is the one refused, wherever it stands in the file.
+
+A refused declaration makes nothing: a binding of the same name binds the first buffer; a binding of
+a refused case-only spelling, or of a name a parameter has, is DSH4403.
+
+**Fix.** Rename one of the two, or merge two declarations of one buffer -- their arguments go in one
+list: `buffer Mask : R8(Clear = 0, Scale = 0.5);`.
+
+## DSH4401
+
+<!-- generated:begin DSH4401 -->
+**Severity** error
+
+**Message**
+
+```
+A pass named '{0}' is already declared on line {1}; RDG events and stats are named after passes, so each name is used once.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1807`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1820`
+<!-- generated:end DSH4401 -->
+
+**Cause.** Two passes of one pipeline have the same name, or names that differ in case only
+(`Pass 'blur' differs from 'Blur', declared on line 7, in case only; ...`): the pipeline asset keeps
+pass names as Unreal names, which compare ignoring case, so `Blur` and `blur` would be one pass
+there. The runtime names a pass's GPU event and its stats after it, `<Pipeline>.<Pass>`, so a name
+has to point at one pass. The second pass is skipped whole: nothing in it is checked or built until
+it is renamed.
+
+**Fix.** Rename one of them, preferably after what it does: `BlurH` and `BlurV` rather than two
+`Blur`s.
+
+## DSH4402
+
+<!-- generated:begin DSH4402 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a built-in texture a pass binds without declaring it, and cannot be declared as a buffer.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1526`
+<!-- generated:end DSH4402 -->
+
+**Cause.** A `buffer` declaration uses the name of a built-in texture: `SceneColor`, `SceneDepth`,
+`CustomDepth`, `CustomStencil`, `GBufferA` to `GBufferF`, `Velocity` or `Translucency`. A pass binds
+those by name without declaring them, so a buffer of the same name could not be told apart from the
+renderer's texture. The declaration is dropped, and a binding of the name still binds the built-in.
+
+**Fix.** Give the buffer a name of its own. For a copy of a built-in texture, declare the buffer and
+fill it with a `copy` pass (`read SceneColor; write Grab;`); for a mesh pass's private depth, declare
+`buffer MaskDepth : Depth32;` and write `Depth = Own(MaskDepth);`.
+
+## DSH4403
+
+<!-- generated:begin DSH4403 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is neither a buffer of this pipeline nor a built-in texture; declare it with 'buffer {0} : <Format>;'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1505`
+<!-- generated:end DSH4403 -->
+
+**Cause.** A pass names a buffer that does not exist: in a `read` or `write` binding, in
+`Dispatch = <Buffer>` (or `<Buffer> / n`, `<Buffer> * n`), or in `Depth = Own(<Buffer>)`. Names are
+case-sensitive; when a declared buffer or a built-in texture differs only in case, the message
+suggests it (`read sceneColor;`). A pass binds the pipeline's own buffers and the built-in textures
+only: a `Texture2D` parameter, or another pipeline's buffer, is no buffer here. A buffer whose
+declaration was refused (DSH4400) is not declared either, so its bindings land here too.
+
+**Fix.** Declare the buffer -- `buffer Blurred : R8(Scale = 0.5);` -- or correct the name. To hand a
+texture parameter to a pass, draw the pass with a material and give it to the material with `param`.
+
+## DSH4404
+
+<!-- generated:begin DSH4404 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is not a 'uniform' or 'static const' of this pipeline; 'Enabled' takes a 'uniform bool' or 'true'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1052`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2604`
+<!-- generated:end DSH4404 -->
+
+**Cause.** A name in a pipeline value is not declared. Two places raise it:
+
+- `Enabled = <Name>`, in `#pragma pipeline(...)` or in a pass, names neither a `uniform` nor a
+  `static const`. `true` and `false` are lower case: `Enabled = True` is a name.
+- a `param` expression uses a name that is not a `uniform`, a `static const` or `DreamPassWeight`
+  (`'Radius' is not a 'uniform' or 'static const' of this pipeline, nor 'DreamPassWeight'.`): a
+  misspelt parameter, a buffer (`param Size = Mask;`), a name only the pass's shader or material
+  knows.
+
+A variable refused by DSH3316 is not declared either. When a declared name differs only in case, the
+message suggests it.
+
+**Fix.** Correct the name, or declare the value at file scope: a `uniform bool` for `Enabled`, a
+`uniform` or `static const` for a `param`. A buffer reaches a pass through `read`, which in an HLSL
+pass also defines its size as `<Name>Size`.
+
+## DSH4405
+
+<!-- generated:begin DSH4405 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is a '{1}', and 'Enabled' takes a 'uniform bool' or 'true'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:1066`
+<!-- generated:end DSH4405 -->
+
+**Cause.** `Enabled`, in `#pragma pipeline(...)` or in a pass, names a declared value that is not one
+`bool`: a `uniform float`, an `int`, a vector. A pipeline or a pass is switched by a bool alone.
+
+**Fix.** Declare a `uniform bool` and name it:
+
+```hlsl
+#pragma pipeline(Enabled = bShowOutline)
+
+uniform bool bShowOutline = true;
+```
+
+A pipeline needs no `Enabled` to fade out: it does not run at weight 0, and every pass receives the
+weight (`DreamPassWeight` in a material, `DP_Weight` in a `.usf`).
+
+## DSH4406
+
+<!-- generated:begin DSH4406 -->
+**Severity** error
+
+**Message**
+
+```
+No material '{0}' was found: a bare name is the material a '.dss' under the same source root builds, an object path any material or material instance.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3526`
+<!-- generated:end DSH4406 -->
+
+**Cause.** The `Material` of a fullscreen or mesh pass resolves to nothing. A bare name
+(`"PP_Outline"`) is looked up among the products of the DreamShader sources under the `.dsp`'s source
+root -- the material a `.dss` exports, or a `.dsi` -- spelt exactly, case included; a material
+function does not count. An object path (`"/Game/FX/PP_Outline.PP_Outline"`) has to name an asset
+that exists, or one a source under the source roots builds. The check needs the host to look the
+material up, which a compile in the editor or through `dsc` does; without that it is skipped
+(DSH7360).
+
+**Fix.** Check the name against the `export` that builds the material, or write the object path,
+which is what a material outside this source root needs -- a hand-made one, or one another plugin's
+sources build. A bare name that several sources build is DSH8330.
+
+## DSH4407
+
+<!-- generated:begin DSH4407 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is not a '.usf' or '.ush' file; the engine compiles shader files of those two kinds only.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2022`
+<!-- generated:end DSH4407 -->
+
+**Cause.** `Shader =` names a file whose extension is not `.usf` or `.ush` (in any case): none at all
+(`"Passes/Blur"`), `.hlsl`, or a DreamShader source (`"PP_Blur.dss"`). The engine's shader compiler
+reads only those two kinds of file.
+
+**Fix.** Give the shader file a `.usf` extension and write it in the path:
+`Shader = "BoxBlur.usf";`. A material is not a shader file: a fullscreen pass draws a `.dss` with
+`Material = "..."`.
+
+## DSH4408
+
+<!-- generated:begin DSH4408 -->
+**Severity** error
+
+**Message**
+
+```
+The shader file '{0}' does not exist; a path starting with '/' is a virtual shader path, and any other is read from the folder of this '.dsp'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3731`
+<!-- generated:end DSH4408 -->
+
+**Cause.** The file `Shader =` names does not exist. A path that does not start with `/` is relative
+to the folder of the `.dsp` -- `"BoxBlur.usf"` sits next to it, `"../Shared/Blur.usf"` one folder
+up; a path that starts with `/` is a virtual shader path, which resolves only through a directory the
+engine maps (`/Engine/...`, `/Plugin/<Name>/...`, or a mapping a module adds with
+`AddShaderSourceDirectoryMapping`). Checked where DSH4406 is.
+
+**Fix.** Correct the path or move the file. Next to the `.dsp` is the usual place, and it needs no
+mapped directory: the engine compiles a snapshot of the file, never the original. Use a virtual path
+only for a shader that already lives in a mapped directory.
+
+## DSH4410
+
+<!-- generated:begin DSH4410 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' does not define a function '{1}'.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3798`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3826`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3838`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3985`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4019`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4078`
+<!-- generated:end DSH4410 -->
+
+**Cause.** The `Entry` of an HLSL pass does not name a function the pass can run. Two messages:
+
+- `'<file>' does not define a function '<Entry>'.` -- no function of that name is defined in what the
+  check reads: the `.usf`, every file it includes by a relative path, and every file it includes by a
+  virtual path a mapped shader directory resolves (`/Project/...`, a plugin's `/Plugin/...`), each
+  followed through its own includes in turn. The engine's own headers (`/Engine/`, `/ThirdParty/`)
+  are not read. Comments and `#` lines are skipped, a function counts when it has a body, and names
+  are case-sensitive. When the file includes something the check cannot follow -- a virtual path no
+  mapped directory covers, a relative path that names no file, `#include MACRO` -- an entry it did
+  not find is not reported, since it may be in what was not read; a compute pass then needs
+  `Threads` (DSH4411).
+- `'<Entry>' in '<file>' is a compute shader entry ...` -- a `fullscreen` pass names a function with
+  `[numthreads(...)]` in front of it. A fullscreen pass runs its `Entry` as the pixel shader of its
+  slot, and a compute shader's entry is not one.
+
+For HLSL written in the `.dsp` the same is checked against the text of the block, with no file to read:
+
+- `The 'hlsl' block of pass '<Pass>' does not define a function '<Entry>' ...` -- the pass's own block holds whole
+  functions, and none has the name `Entry` gives; or, with no `Entry`, none is `Main`, the entry of a block by
+  default. The entry is a function of the block itself, not of a file the block includes;
+- `The file's 'hlsl' block does not define a function '<Entry>' ...`, and `... names a function of the file's 'hlsl'
+  block, and this '.dsp' has none` -- a pass with no `Shader` and no block of its own runs the entry of the file's
+  block that `Entry` names;
+- `'<Entry>' is a compute shader entry ...` -- as above, for a fullscreen pass.
+
+Checked where DSH4406 is, once the file is found; for code in the `.dsp`, whenever the pipeline binds.
+
+**Fix.** Spell `Entry` as the function is spelt in the HLSL -- `Entry = BlurCS;` -- and define the
+function in the `.usf` or in a file it includes; for code in the `.dsp`, in the block it is looked for in -- the
+pass's own, or the file's when the pass has neither `Shader` nor a block. A fullscreen pass names its pixel shader function,
+the one that returns `SV_Target0`; to run a `[numthreads]` function, make the pass `compute`.
+
+## DSH4411
+
+<!-- generated:begin DSH4411 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' in '{1}' has no '[numthreads(x, y, z)]' the compiler can read; write 'Threads = uint3(x, y, z)' in the pass.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3786`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3812`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4065`
+<!-- generated:end DSH4411 -->
+
+**Cause.** A compute pass's `Entry` has a thread group size the compiler cannot read, and the pass
+gives no `Threads` to say it. The dispatch is counted in groups of that size. Two messages:
+
+- `'<Entry>' in '<file>' has no '[numthreads(x, y, z)]' ...` -- the function is there, but there is
+  no `[numthreads(...)]` in front of it, or its three values are not plain whole numbers -- typically
+  a macro, `[numthreads(THREADGROUP_SIZE, THREADGROUP_SIZE, 1)]`.
+- `'<Entry>' is not in what the compiler could read of '<file>', which includes a file it cannot
+  follow ...` -- the function was not found, and the file includes something the check cannot read
+  (DSH4410 lists what), so the function may be defined there, with a group size nobody read.
+- `'<Entry>' has no '[numthreads(x, y, z)]' in front of it ...` -- the same as the first, for an entry written in
+  the `.dsp`.
+
+**Fix.** Write the group size as numbers in the shader -- `[numthreads(8, 8, 1)]` -- or keep the
+macro and give the same size in the pass: `Threads = uint3(8, 8, 1);`. For the second message, give
+`Threads` as well, or include the file by a path the compiler can follow.
+
+## DSH4412
+
+<!-- generated:begin DSH4412 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' is not a pass layer of this project; the layers are the first {1} names of Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3506`
+<!-- generated:end DSH4412 -->
+
+**Cause.** A mesh pass's `Filter` selects by `Layer(...)` a name the project does not have. Pass
+layers are the project's: the first 32 names of the **Layer Names** list of Project Settings ▸
+DreamPlugin ▸ DreamShader Custom Pass, which the message names; only those have a bit, so a name
+further down the list is no layer either. The name is compared case-sensitively, and when a layer
+differs from it only in case the message suggests that one instead
+(`'<Layer>' is not a pass layer of this project; did you mean '<Name>'?`). There is one error per
+unknown name, at the `Filter` line. Checked where DSH4406 is.
+
+**Fix.** Add the layer to that list, within its first 32 names, or correct the name. The list's
+order is the layers' bit order, so add new names at the end: moving one re-targets every compiled
+pipeline that names it until that pipeline compiles again. `List(Name)` is not checked here -- a list
+is filled at run time by `UDreamPassSubsystem::AddToList`.
+
+## DSH4413
+
+<!-- generated:begin DSH4413 -->
+**Severity** error
+
+**Message**
+
+```
+'Threads = uint3({0}, {1}, {2})' disagrees with '[numthreads({3}, {4}, {5})]' of '{6}', and the dispatch would be sized for groups the shader does not have; leave 'Threads' out, or write the same numbers.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:3771`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:4052`
+<!-- generated:end DSH4413 -->
+
+**Cause.** A compute pass writes `Threads = uint3(...)`, and the `[numthreads(...)]` of its entry,
+which the compiler can read -- in the `.usf`, or in the `.dsp` when the entry is written there -- says other
+numbers (the message gives both). The number of groups is
+worked out from `Threads` while the shader runs groups of `[numthreads]`, so the pass would cover
+too much or too little of its buffer. `Threads = uint2(x, y)` counts as `z = 1`.
+
+**Fix.** Leave `Threads` out: the group size is read from `[numthreads]`. `Threads` is for an entry
+whose group size is a macro (DSH4411), and then it states the size the macro gives.
+
+## DSH4414
+
+<!-- generated:begin DSH4414 -->
+**Severity** error
+
+**Message**
+
+```
+'DreamPassWeight' is the pipeline's weight in a view, which every pass can read as 'param P = DreamPassWeight'; it cannot be declared.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:834`
+<!-- generated:end DSH4414 -->
+
+**Cause.** A `uniform` or `static const` of a `.dsp` is called `DreamPassWeight`. The name is the
+pipeline's weight in the view -- the largest weight of its activations, which is how a volume's fade
+reaches the effect -- and the runtime supplies it. The declaration is dropped. A buffer of that name
+is DSH4400.
+
+**Fix.** Rename the declaration. The weight needs none: every pass receives it, a material as its
+scalar parameter `DreamPassWeight` and a `.usf` as `DP_Weight`, and
+`param Fade = DreamPassWeight * 0.5;` hands it on under another name, scaled.
+
+## DSH4415
+
+<!-- generated:begin DSH4415 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}.Previous': a built-in texture keeps no history.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2493`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:2503`
+<!-- generated:end DSH4415 -->
+
+**Cause.** A `read` names `.Previous`, last frame's contents, of a texture that keeps none. Two
+messages:
+
+- a built-in texture, as in `read SceneColor.Previous;` -- the renderer's textures hold this frame
+  only;
+- a buffer of the pipeline declared without `History = true`
+  (`'Mask.Previous' reads last frame's 'Mask', and 'Mask' keeps none; ...`).
+
+**Fix.** For a buffer, add `History = true` to its declaration. For a built-in texture, keep a copy
+of your own with a history and read that copy's `.Previous`:
+
+```hlsl
+buffer LastColor : RGBA16F(History = true);
+
+pass Keep : copy
+{
+    Injection = BeforePostProcess;
+    read  SceneColor;
+    write LastColor;
+}
+```
+
+A pass then reads last frame's picture with `read Prev = LastColor.Previous;`.
 

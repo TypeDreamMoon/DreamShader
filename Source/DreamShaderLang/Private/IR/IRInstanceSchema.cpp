@@ -289,7 +289,8 @@ namespace UE::DreamShader::IR
 		case EIRProductKind::MaterialFunction:
 		case EIRProductKind::MaterialLayer:
 		case EIRProductKind::MaterialLayerBlend:
-			// Nothing instances a function, a layer or a blend.
+		case EIRProductKind::PassPipeline:
+			// Nothing instances a function, a layer, a blend or a pipeline.
 			return false;
 		}
 

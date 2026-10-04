@@ -1,0 +1,23 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7354",
+		"DSH7360"
+	],
+	"ir": "module \"P_Descriptions.dsp\"\n\nproduct 0 PassPipeline \"P_Descriptions\"\n  pipeline order=0 injection=BeforePostProcess views=Game|Editor requires=- enabled=-\n  parameter \"Noise\" Texture2D default=None desc=\"The noise the grade reads.\\nTwo lines of it.\"\n  parameter \"Fallback\" Texture2D default=\"/Engine/EngineResources/DefaultTexture\"\n  buffer \"Mood\" RGBA8 resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1 export desc=\"Free text above a buffer.\"\n  pass \"Grade\" copy injection=BeforePostProcess desc=\"A pass described by its directive.\"\n    read SceneColor = SceneColor\n    write Mood = Mood\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_Descriptions"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

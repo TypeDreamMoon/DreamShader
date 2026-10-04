@@ -41,6 +41,8 @@
 #include "Navigation/DreamShaderSourceNavigation.h"
 
 #include "DreamShaderModule.h"
+// CheckDreamShaderPipelineSlots: a `.dsp`'s HLSL passes, which compile in global shader slots rather than in a material.
+#include "DreamShaderPassPipelines.h"
 #include "DreamShaderVersionCompat.h"
 // CustomCodeMarker / TryParseCustomCodeBodyMarker: the grammar of the markers a Custom node's code carries.
 #include "IR/IRCustomHlsl.h"
@@ -518,6 +520,29 @@ namespace UE::DreamShader::Editor::Compiler
 			// Num means "the project's current scalability level" to GetMaterialResource, which is
 			// what an editor shows and therefore the right default for a gate.
 			Qualities.Add(EMaterialQualityLevel::Num);
+		}
+
+		// ------------------------------------------------------------- a `.dsp`: its HLSL slots
+
+		// A pipeline is no material. What can fail to compile in it is an HLSL pass, which runs in a slot of a global
+		// shader and has a pre-check of its own -- the one every compile of the `.dsp` runs for the passes it changed. Here
+		// it runs for every pass: for the -Platform formats when given, else for the formats a compile checks (the active
+		// feature levels and every format the target platforms cook).
+		if (::UE::DreamShader::IsDreamShaderPipelineFile(Compiled.SourceFilePath))
+		{
+			TArray<FName> SlotFormats;
+			if (!Options.PlatformTokens.IsEmpty())
+			{
+				for (const FResolvedShaderTarget& Target : Targets)
+				{
+					SlotFormats.AddUnique(Target.ShaderFormat);
+				}
+			}
+			const int32 ErrorsBefore = Diagnostics.NumErrors();
+			int32 PassesChecked = 0;
+			const bool bSlotsCompiled = CheckDreamShaderPipelineSlots(Compiled.SourceFilePath, SlotFormats, Diagnostics, PassesChecked);
+			OutStats.ShaderErrorsReported += Diagnostics.NumErrors() - ErrorsBefore;
+			return bSlotsCompiled;
 		}
 
 		// ------------------------------------------------------------------ collect the materials

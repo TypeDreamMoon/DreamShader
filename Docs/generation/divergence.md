@@ -7,7 +7,7 @@ and the three ways to resolve it.
 
 | | |
 | :-- | :-- |
-| Applies to | every generated `UMaterial`, `UDreamShaderMaterialInstance`, `UMaterialFunction`, `UMaterialFunctionMaterialLayer`, `UMaterialFunctionMaterialLayerBlend` |
+| Applies to | every generated `UMaterial`, `UDreamShaderMaterialInstance`, `UMaterialFunction`, `UMaterialFunctionMaterialLayer`, `UMaterialFunctionMaterialLayerBlend`; a `UDreamPassPipeline` *(since 2.1.0)* — see [A Custom Pass pipeline](#a-custom-pass-pipeline) |
 | Stored in | the generated asset's package metadata, key `DreamShader.OutputDigest` |
 | Checked | immediately before a rebuild clears the asset, and never after |
 | Since | `1.8.0` |
@@ -265,6 +265,50 @@ asset that DreamShader will never rebuild. This is the "stop managing this" answ
 Afterwards the asset is `Foreign`, so compiling the source that used to own it fails with the
 ownership guard until you rename or move one of the two. Save the asset to keep the change — the
 detach only edits it in memory.
+
+## A Custom Pass pipeline
+
+*(since 2.1.0)* A `UDreamPassPipeline` has no graph, and is meant to be tuned by hand: its
+[details panel](../tools/editor-integration.md#pass-pipeline-details-panel) edits it, and the next frame
+runs the edit. It is guarded like every other generated asset, and Adopt is how the tuning reaches its
+`.dsp`.
+
+| | |
+| :-- | :-- |
+| Digest | every property of the asset but its two source stamps (`SourceFilePath`, `SourceHash`), each whole, as exported text: the order, the default injection point, the views, the requirements, the enabled parameter, the parameters, the buffers, the passes with their slots, and the export render targets. The schema tag fingerprints the pipeline class and every struct its content reaches, so a plugin update that adds a field reads as `Unstamped` once rather than as a hand edit |
+| A hand edit | any change in the details panel — a value, a pass added, moved or removed — reads `Diverged`. The panel's **Source** row shows the state as it changes |
+| The gate | the next compile of the changed `.dsp` is refused, with the [notification](#what-you-see-since-190) and its answers. Nothing is written: not the asset, not the slot registry, not a snapshot, not a render target |
+| The answers | **Revert to Source**, **Adopt Into Source** and **Detach** on the notification, and in the [Material Content Browser](../tools/material-browser.md#pipelines) — its *Provenance* section and its context menu; the first two are also buttons on the details panel. A pipeline has no Content Browser context-menu entry |
+
+### Adopting into a `.dsp`
+
+A `.dsp` is never reprinted: Adopt splices the asset's values into the file, as it does for a `.dsi`.
+
+1. The file is read and checked as a compile would, stopping before anything is built.
+2. The asset is [decompiled](../tools/decompiler.md#pipelines-dsp) into the payload a `.dsp` binds to.
+3. Every value the asset still holds unchanged takes the file's own spelling back: a material or a shader
+   that resolves to the same asset or file keeps the reference as written, a number equal at the precision
+   the asset keeps (a `float`) keeps the literal or the expression it was folded from — a `static const`
+   included — a flag set with the same bits keeps its written form, and a key written although it states
+   the default stays written. Parameters, buffers and passes are matched by name, bindings by position.
+4. Only the declarations and keys whose values differ are rewritten, so `//` comments and the order of the
+   file survive. When anything changes, the file is copied to `<file>.bak` first.
+5. The pipeline is rebuilt from the file, past the divergence gate, and saved.
+
+When the file already states every value, nothing is written and the pipeline is only rebuilt.
+
+| Refused when | Code |
+| :-- | :-- |
+| the file uses [preprocessor directives](../language/preprocessor.md) — a splice addresses the file's bytes, and the parser read the preprocessed text | `DSH8149` |
+| the source the asset is stamped with is not a `.dsp` | `DSH9227` |
+| the asset built from a `.dsp` is not a pass pipeline | `DSH9226` |
+| the file does not check — a material it names no longer resolves, a shader file is gone — so there is nothing to check a rewrite against | the file's own diagnostics |
+| the file builds no pipeline any more | `DSH9228` |
+| the asset holds what a `.dsp` cannot state: a fullscreen pass with neither or both of a material and a shader, layer bits the layer table has no name for, no view at all, a mesh pass that checks no usage flag, a texture constant in a `param`, an own depth without its buffer | `DSH9211`, `DSH9212`, `DSH9215`, `DSH9216`, `DSH9217`, `DSH9219`, `DSH9220` |
+| the source ships with a plugin | — the action is disabled |
+
+Like every Adopt, the editor's asks first, and closes and then reopens an asset editor open on the
+pipeline.
 
 ## Notes
 

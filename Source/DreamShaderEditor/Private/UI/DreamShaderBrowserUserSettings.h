@@ -10,7 +10,7 @@
 UENUM()
 enum class EDreamShaderBrowserViewMode : uint8
 {
-	Sources, // the .dsm/.dsf/.dsh tree, with compile status
+	Sources, // the source tree (.dss/.dsi/.dsp and the 1.x kinds), with compile status
 	Assets,  // the project's materials, through the engine asset picker
 };
 
@@ -61,6 +61,10 @@ public:
 
 	UPROPERTY(Config)
 	bool bHideLibraries = false;
+
+	/** The quick filter that drops every `.dsp` from the list. */
+	UPROPERTY(Config)
+	bool bHidePipelines = false;
 
 	UPROPERTY(Config)
 	bool bHideUnmanaged = false;

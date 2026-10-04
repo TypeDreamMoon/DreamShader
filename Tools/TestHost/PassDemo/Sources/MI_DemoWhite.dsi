@@ -1,0 +1,4 @@
+// MI_DemoWhite.dsi -- the plain props.
+#pragma instance(Parent = "M_DemoSurface")
+
+uniform float3 BaseTint = float3(0.85, 0.85, 0.85);

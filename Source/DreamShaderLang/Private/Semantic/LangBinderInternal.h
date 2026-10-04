@@ -9,6 +9,9 @@
 //                              `region`, the backend
 //   LangBinderExpressions.cpp  every expression kind, conversions, constant folding
 //   LangBinderStatements.cpp   bodies, scopes, control flow, loop trip counts, in-body regions
+//   LangBinderInstance.cpp     instance mode: a `.dsi`
+//   LangBinderPipeline.cpp     pipeline mode: a `.dsp`, its payload and the rules V1-V13
+//   LangBinderPassNodes.cpp    the Custom Pass nodes in a `.dss`: the `UE` version gate and where the nodes may be
 //   LangSymbolIndex.cpp        BuildDreamShaderSymbolIndexJson
 //
 // Conventions every method follows:
@@ -97,6 +100,29 @@ namespace UE::DreamShader::Lang::Private
 		const FExpr* Expr = nullptr;
 		int32 Ordinal = 0;
 		const TCHAR* Pin = nullptr;
+	};
+
+	/** One call of a Custom Pass node class in a `.dss` body (LangBinderPassNodes.cpp): where, in what, and how often. */
+	struct FBinderPassNodeUse
+	{
+		/** `UE.DreamPassOutput` (true) or `UE.DreamPassBuffer` (false). */
+		bool bOutput = true;
+		/** The function whose body holds the call; INDEX_NONE outside one. */
+		int32 FunctionIndex = INDEX_NONE;
+		FString File;
+		FLangSpan Span;
+		/** A loop encloses the call: unrolled, it makes one node per iteration. */
+		bool bInLoop = false;
+	};
+
+	/** One call of a user function from a body: what CheckPassNodeUses counts inlined helpers by. */
+	struct FBinderPassNodeCallSite
+	{
+		int32 Caller = INDEX_NONE;
+		int32 Callee = INDEX_NONE;
+		FString File;
+		FLangSpan Span;
+		bool bInLoop = false;
 	};
 
 	class FLangBinder
@@ -314,6 +340,40 @@ namespace UE::DreamShader::Lang::Private
 
 		/** `.dsi` only: the `@name` written in the `///` block above `#pragma instance`. */
 		FString InstanceAssetName;
+
+		// ------------------------------------------------- pipeline mode (LangBinderPipeline.cpp)
+
+		/**
+		 * A `.dsp` (FModule::FileKind == Dsp): `#pragma pipeline`, the uniforms and constants, the buffers and the passes,
+		 * the rules V1-V13 of DreamShader_Plan/05 s7 -- the engine facts from FBindOptions::PipelineReferences, skipped
+		 * without them (DSH7360) -- and the one PassPipeline product, whose payload is FBoundModule::Pipeline.Payload.
+		 * Replaces the declare pass and everything after it.
+		 */
+		void BindPipelineModule();
+		/** DSH3311: `#pragma pipeline` in a file that is not a `.dsp`. */
+		void ReportPipelinePragmaOutsideDsp(const FPragmaDecl& Pragma);
+		/** DSH3312: a `buffer` / `pass` declaration reaching the binder of another kind of file (an included `.dsp`, a hand-built tree). */
+		void ReportPipelineDeclarationOutsideDsp(const FDecl& Decl);
+
+		// ------------------------------------- the Custom Pass nodes in a `.dss` (LangBinderPassNodes.cpp)
+
+		/**
+		 * The `UE.` nodes that exist only from some engine version (and, for the Custom Pass nodes, the DreamShaderPass
+		 * module) on: what DSH5300 says the node needs when the catalog does not have it. False for every other name.
+		 */
+		bool TryDescribeUENodeVersionGate(const FString& NodeName, FText& OutRequirement) const;
+		/** Records a call of `UE.DreamPassOutput` / `UE.DreamPassBuffer`, for CheckPassNodeUses; any other class is ignored. */
+		void NotePassNodeUse(const IR::FCatalogExpression& Class, const FLangSpan& Span);
+		/** Records one call of a user function from the body being bound, for CheckPassNodeUses' count of inlined helpers. */
+		void NotePassNodeCallSite(int32 CalleeIndex, const FLangSpan& Span);
+		/**
+		 * After every body is bound: DSH5301 (a material that asks for the new translator uses a pass node), DSH5302
+		 * (`UE.DreamPassOutput` in a material function, layer or blend, where the engine never collects it) and DSH5303
+		 * (more than one `UE.DreamPassOutput` node in one material).
+		 */
+		void CheckPassNodeUses();
+		TArray<FBinderPassNodeUse> PassNodeUses;
+		TArray<FBinderPassNodeCallSite> PassNodeCallSites;
 
 		// ------------------------------------------------------- legacy rules (LangBinderLegacy.cpp)
 

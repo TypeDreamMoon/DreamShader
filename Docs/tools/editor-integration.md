@@ -3,8 +3,8 @@
 > [DreamShader](../index.md) » [Tools](index.md) » **Editor integration**
 
 Every place DreamShader attaches itself to the Unreal editor UI: the Tools menu, the Level Editor
-toolbar, the Content Browser asset context menus, the Material Editor toolbar, the Window menu, and
-the notifications it raises on its own.
+toolbar, the Content Browser asset context menus, the Material Editor toolbar, the Window menu, the
+details panel of a Custom Pass pipeline, and the notifications it raises on its own.
 
 | | |
 | :-- | :-- |
@@ -76,6 +76,11 @@ All entries are added into the stock `GetAssetActions` section of the per-class 
 Menu names in Unreal are keyed on the exact class, so the instance entry is registered twice — once
 for the stock class and once for the DreamShader subclass.
 
+A `UDreamPassPipeline` *(since 2.1.0)* gets no DreamShader entry here. Its *Open Source*, *Revert to
+Source* and *Adopt Into Source* are on its [details panel](#pass-pipeline-details-panel), its source is in
+the [Material Content Browser](material-browser.md#pipelines), and it decompiles with
+[`dsc decompile`](decompiler.md#pipelines-dsp).
+
 | Entry | Label | Tooltip | Icon | Effect |
 | :-- | :-- | :-- | :-- | :-- |
 | `DreamShader.CreateInstance` | **Create DreamShader instance** *(since 1.5.0)* | "Create a material instance that shares this material's compiled shader map." | `ClassIcon.MaterialInstanceConstant` | Opens the [Create material instance](material-browser.md#create-material-instance) dialog. Requires the selection to cast to `UMaterialInterface` |
@@ -124,6 +129,59 @@ table is on [VirtualFunction tools](virtual-function-tools.md#context-menu).
 | 3 | For a `UMaterial`: combo button `DreamShader.MaterialToolbarMenu`, label **DreamShader**, tooltip "DreamShader actions for this Material.", icon `Icons.Settings`, content = the [Material submenu](#material-submenu) |
 | 4 | For a `UMaterialFunction`: combo button `DreamShader.MaterialFunctionToolbarMenu`, label **DreamShader**, tooltip "DreamShader actions for this Material Function.", icon `Icons.Settings`, content = the [Material Function submenu](#material-function-submenu) |
 | 5 | Neither found ⇒ nothing is added to the toolbar |
+
+## Pass pipeline details panel
+
+*(since 2.1.0)* The details panel of a `UDreamPassPipeline` — the asset a [`.dsp`](../language-v2/passes.md)
+compiles to — with three categories above the pipeline's own properties that read the asset the way a
+frame runs it. The properties stay, and stay editable: the panel is where a pipeline is tuned, and
+*Adopt Into Source* writes the tuning back into its `.dsp`.
+
+| | |
+| :-- | :-- |
+| Registered by | `DreamShaderEditor` at module startup: a detail customization of the class `DreamPassPipeline`, through the PropertyEditor module |
+| Present | in every editor process, **with or without** `-NoDreamShaderEditorBridge`, because it reads the asset alone; never in a commandlet |
+| Shown | for one selected pipeline: opening the asset — a double-click, or *Open* in the [Material Content Browser](material-browser.md#pipelines) — or any details view of it. Several selected keep the default layout, whose rows edit them all |
+| Engines | every engine the asset types build on. Below UE 5.8 the overview has one more row: *Custom Pass runs on Unreal Engine 5.8 and later. This engine loads and saves the pipeline, and runs none of it.* |
+
+### Pipeline Overview
+
+| Row | Shows |
+| :-- | :-- |
+| **Source** | the `.dsp` the pipeline was built from, absolute, resolved from its `DreamShader.SourceFile` stamp (*not built from a .dsp* when it has none), and under it the pipeline's [provenance](../generation/divergence.md#states), worked out again after every change. Three buttons: **Open Source** opens the `.dsp` in your preferred editor; **Revert to Source** rebuilds the pipeline from it, discarding every edit made here, and leaves the file alone; **Adopt Into Source** writes the edits back into the `.dsp`, value by value — see [Divergence](../generation/divergence.md#a-custom-pass-pipeline). Adopt is disabled, with the reason in its tooltip, when the source ships with a plugin or is not found |
+| **Runs** | `Order {N}, in views {Views}, requiring {Requires}: {N} pass(es), {N} buffer(s), {N} parameter(s).` |
+| **Problems** | only while `UDreamPassPipeline::Validate` fails — after a hand edit that breaks a rule the runtime relies on — one line per problem. The runtime skips every pass that fails, with a warning |
+
+### Passes in Frame Order
+
+One group per injection point the pipeline uses, in the order a frame reaches them, titled
+`<injection point> (<number of passes>)`, with its passes in declaration order — the order they run in.
+Another pipeline's passes at the same point run before or after these by `Order`. Each pass:
+
+| Line | |
+| :-- | :-- |
+| the name | in bold; its tooltip is the pass's `/// @desc` |
+| settings | the kind and its keys as the `.dsp` spells them, e.g. `compute    Shader = "BoxBlur.usf"    Entry = BlurCS    Threads = uint3(8, 8, 1)    Dispatch = Blurred` |
+| bindings | `read …    write …    param …`, in the pass's own order |
+| slot | an HLSL pass only: `compute shader slot C03` or `pixel shader slot P01`. In orange: *no compute shader slot yet: compile the source to give the pass one*, or *…, whose snapshot is missing: compile the source*. In red: a slot number this build does not have, with the count it has |
+| **Open `<file>.usf`** | an HLSL pass whose shader path resolves to a file: opens it in your preferred editor |
+| **Open `<file>.dsp` at line `<n>`** | an HLSL pass whose code is in its `.dsp`: opens the `.dsp` at the pass's `hlsl` block, or at its entry in the file's block |
+| *The runtime skips this pass: see Problems above.* | a pass that fails validation |
+
+### Buffers
+
+One row per declared buffer, its tooltip the buffer's `/// @desc`: the format and the keys as the `.dsp`
+spells them (`R8    Resolution = Render    Scale = 0.5    Clear = 0    Export = true`). An exported buffer
+adds a link, **exported to `<render target>`**, that shows the render target in the Content Browser — or,
+before the first compile, *exported, but its render target does not exist yet: compile the source*.
+
+### Edits
+
+The rows read the asset live, so a value edited in the properties below shows above at once. Adding,
+removing or renaming a pass or a buffer, moving a pass to another injection point, and changing a slot, a
+shader path or an export rebuild the panel. An edit takes effect on the next frame and makes the pipeline
+[diverge](../generation/divergence.md#a-custom-pass-pipeline) from what its `.dsp` built: until it is
+reverted or adopted, a rebuild of the changed `.dsp` refuses to overwrite it.
 
 ## Notifications
 
@@ -246,6 +304,7 @@ accepted spelling. When present, `StartupModule` returns before creating anythin
 | The editor bridge — file watcher and auto-compile-on-save, the debounce queue, the diagnostics store and all three of its sinks, `bridge.db`, the request-file poller, the VirtualFunction startup sync, the Ephemeral generation of all sources at post-engine-init, the settings watcher | The runtime `DreamShader` module — parser, generator, settings object, `UDreamShaderMaterialInstance` |
 | The preview WebSocket server on port `17864`, and the whole preview renderer | The `-run=DreamShader` [commandlet](commandlet.md), which never uses the bridge |
 | Every menu, toolbar and context-menu entry on this page | Assets already generated and saved on disk |
+| The `.usf` / `.ush` watches of the Custom Pass shader files | The [pass pipeline details panel](#pass-pipeline-details-panel) *(since 2.1.0)* |
 | The Material Content Browser tab registration — the tab cannot be opened at all | |
 | The three exported manifests, and `DreamShader.code-workspace` regeneration | |
 
@@ -350,3 +409,4 @@ node navigation, so they carry no span table and need a `-Force` rebuild.
 - [Project settings](../settings/project.md) — every setting these commands read or write
 - [Ephemeral materials](../generation/ephemeral.md) — why persisted assets shadow generated ones
 - [Generated HLSL](../generation/generated-hlsl.md) — what *Clean Generated Shaders* deletes
+- [Divergence](../generation/divergence.md#a-custom-pass-pipeline) — Revert and Adopt for a pipeline edited in its details panel

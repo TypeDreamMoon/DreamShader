@@ -2,15 +2,17 @@
 
 DreamShader compiles **DreamShaderLang** source files — `.dsm`, `.dsf`, `.dsh` and, on the 2.0 line,
 `.dss` — into standard Unreal Engine material assets: `UMaterial`, `UMaterialFunction`,
-`UMaterialFunctionMaterialLayer`, and `UMaterialFunctionMaterialLayerBlend`. Source files are the
-authoring surface; the assets are build output and can always be regenerated.
+`UMaterialFunctionMaterialLayer`, and `UMaterialFunctionMaterialLayerBlend` — and, on Unreal Engine 5.8,
+`.dsp` [Custom Pass](#custom-pass) pipelines into `UDreamPassPipeline` assets that add render passes of
+your own. Source files are the authoring surface; the assets are build output and can always be
+regenerated.
 
 | | |
 | :-- | :-- |
 | Version | `2.0.2` |
-| Engines | Unreal Engine `5.3` – `5.8` (Win64 verified) |
-| Modules | `DreamShaderLang` (Runtime), `DreamShader` (Runtime), `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
-| Source extensions | `.dsm` material · `.dsf` function · `.dsh` header · `.dss` 2.0 compilation unit |
+| Engines | Unreal Engine `5.3` – `5.8` (Win64 verified); Custom Pass needs `5.8` |
+| Modules | `DreamShaderLang` (Runtime), `DreamShader` (Runtime), `DreamShaderPass` (Runtime), `DreamShaderCompiler` (Editor), `DreamShaderEditor` (Editor) |
+| Source extensions | `.dsm` material · `.dsf` function · `.dsh` header · `.dss` 2.0 compilation unit · `.dsi` material instance · `.dsp` Custom Pass pipeline |
 | Project settings | *Project Settings ▸ DreamPlugin ▸ Dream Shader* |
 | License | MIT |
 
@@ -96,6 +98,7 @@ The statement and expression language inside `Graph = { ... }`, which materialis
 | [Math builtins](builtins/math.md) | `lerp`, `saturate`, `frac`, … |
 | [Transform builtins](builtins/transform.md) | `UE.TransformVector` / `UE.TransformPosition` bases |
 | [`Substrate.*`](builtins/substrate.md) | Substrate nodes (UE 5.4+) |
+| [Custom Pass nodes](builtins/dream-pass.md) | `UE.DreamPassOutput`, `UE.DreamPassBuffer` (UE 5.8) |
 | [`DreamShaderBuiltins.ush`](builtins/hlsl-library.md) | Shipped HLSL helper header |
 
 ### [Parameters](parameters/index.md)
@@ -108,6 +111,22 @@ The statement and expression language inside `Graph = { ... }`, which materialis
 | [`SamplerType`](parameters/sampler-type.md) | Texture sampler configuration |
 | [Using parameters in `Graph`](parameters/graph-usage.md) | Value reads and pin call forms |
 | [`Path(...)`](parameters/path.md) | Asset references |
+
+---
+
+## Custom Pass
+
+Render passes of your own on Unreal Engine 5.8, without changing the engine: masks and custom buffers,
+screen-space effects, compute shaders writing data textures.
+
+| | |
+| :-- | :-- |
+| [Pipelines — `.dsp`](language-v2/passes.md) | Buffers, passes, injection points, bindings, mesh selection, what the compiler checks |
+| [Runtime](runtime/index.md) | What makes a pipeline apply, when passes run, built-in and exported buffers, views, debugging, limits |
+| [HLSL passes](runtime/hlsl.md) | The fixed parameters, slots, snapshots and the pre-check |
+| [Material nodes](builtins/dream-pass.md) | `UE.DreamPassOutput` for mesh passes, `UE.DreamPassBuffer` to read an exported buffer |
+| [Examples](examples/custom-pass.md) | Highlight outline, UI frosted glass, X-ray, wind field |
+| [`DreamShaderPass`](api/pass-module.md) | The module's C++ and Blueprint API |
 
 ---
 
@@ -146,7 +165,7 @@ The statement and expression language inside `Graph = { ... }`, which materialis
 | [Editor integration](tools/editor-integration.md) | Menus, toolbar, context menus |
 | [Material Content Browser](tools/material-browser.md) | Browse, filter, instance, materialize |
 | [Preview](tools/preview.md) | Thumbnail and streaming preview |
-| [Decompiler](tools/decompiler.md) | Export existing materials to `.dsm` / `.dsf` |
+| [Decompiler](tools/decompiler.md) | Export existing materials, instances and Custom Pass pipelines to source |
 | [VirtualFunction tools](tools/virtual-function-tools.md) | Declare and sync existing functions |
 | [Workspace and editor extensions](tools/workspace.md) | VSCode workspace, VSCode and Rider plugins |
 | [Packages](tools/packages.md) | `DShader/Packages` shared libraries |
@@ -164,6 +183,7 @@ The statement and expression language inside `Graph = { ... }`, which materialis
 | [`DreamShaderMaterialInstance.h`](api/material-instance.md) | The generated instance class |
 | [`DreamShaderVersionCompat.h`](api/version-compat.md) | Engine-version macros |
 | [`DreamShaderCompiler`](api/compiler-module.md) | Compiler interfaces and service |
+| [`DreamShaderPass`](api/pass-module.md) | Custom Pass: the pipeline asset, settings, subsystem, volume and components |
 
 ---
 

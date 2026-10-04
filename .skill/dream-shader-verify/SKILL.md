@@ -1,6 +1,6 @@
 ---
 name: dream-shader-verify
-description: Compile DreamShaderLang sources headlessly to check they build — one file or the whole DShader tree — without opening the Unreal editor. Use when asked to verify, validate, build, compile, test, or CI-gate .dsm / .dsf / DreamShader sources, or to check whether a material still generates.
+description: Compile DreamShaderLang sources headlessly to check they build — one file or the whole DShader tree — without opening the Unreal editor. Use when asked to verify, validate, build, compile, test, or CI-gate .dsm / .dsf / .dss / .dsi / .dsp / DreamShader sources, or to check whether a material still generates.
 ---
 
 # dream-shader-verify `<file>` | `-All`
@@ -49,7 +49,7 @@ than compiling everything, so batch edits rather than looping per file.
 | Argument | Effect |
 | :-- | :-- |
 | *(positional)* | the source file — absolute, or relative to the working directory |
-| `-All` | every project source. `.dsf` function files build before `.dsm` materials, so a material's dependencies exist first |
+| `-All` | every project source — `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`, nothing under `Packages/`. `.dsf` function files build first, so a material's dependencies exist; the rest follow in path order |
 | `-Force` | bypass the source-hash skip. Without it an unchanged file logs `Skipped … source hash is unchanged.` and proves nothing |
 | `-CleanNew` | delete the `.uasset` files this run wrote, **but only those git reports untracked**, then prune the emptied folders |
 | `-Project` | the `.uproject`. Defaults to the nearest one at or above the target, then the working directory |
@@ -104,6 +104,11 @@ whether the new bytes should be kept.
   single-file compiles while iterating, and reserve `-All` for a deliberate CI gate.
 - **A compile stops at the first failing `Graph` statement.** Three seeded errors reported one. Fix,
   recompile, repeat — do not expect a full error list.
+- **A `.dsp` writes more than its asset.** A Custom Pass pipeline builds on UE 5.8 only (`DSH8300`
+  below that). Besides the pipeline it writes a render target per exported buffer, which logs no
+  `Generated …` line, so `-CleanNew` neither lists nor deletes it; and an HLSL pass writes the
+  project's `.dreampass/` slot registry and snapshots, which are committed source files — see
+  [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md#pass-registry).
 - **`compile -All` on an empty source list exits `0`**, logging
   `DreamShader commandlet found no source files to compile.` at Warning. A green run does not prove
   anything was compiled — check the `Generated …` lines.
@@ -129,7 +134,7 @@ whether the new bytes should be kept.
 | `UnrealEditor-Cmd.exe not found at …` | the engine root is wrong — it must be the directory *containing* `Engine/` |
 | `dsc: FAILED (exit 1)` with no `LogDreamShader` line | re-run with `-Raw`; the failure was before DreamShader got control |
 | `Skipped … source hash is unchanged.` | add `-Force` |
-| `DreamShader compile requires a .dsm or .dsf file: …` | you pointed at a `.dsh`. Headers generate nothing — compile the dependent file |
+| `DreamShader compile requires a .dss, .dsi, .dsp, .dsm or .dsf file: …` | you pointed at a `.dsh` (or any other file). Headers generate nothing — compile the dependent file |
 | asset paths appear outside `/Game` | the driver cannot map them to `Content/`; clean by hand |
 
 ## See also

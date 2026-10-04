@@ -17,6 +17,8 @@
 #include "DreamShaderModule.h"
 #include "DreamShaderVersionCompat.h"
 
+#include "DreamPassPipeline.h"
+
 #include "Materials/Material.h"
 #include "Materials/MaterialExpression.h"
 #include "Materials/MaterialFunction.h"
@@ -384,9 +386,82 @@ namespace UE::DreamShader::Editor::Private
 			InOutText += TEXT("}\n");
 		}
 
+		// Whether a property is part of a pass pipeline's content: what BuildPassPipelineDigestText writes, and so what the
+		// layout of a pipeline type lists. The two source stamps are the compiler's bookkeeping, not content.
+		bool IsPassPipelineDigestProperty(const FProperty* Property)
+		{
+			if (!Property || Property->HasAnyPropertyFlags(CPF_Transient | CPF_Deprecated))
+			{
+				return false;
+			}
+			const FName Name = Property->GetFName();
+			return Name != GET_MEMBER_NAME_CHECKED(UDreamPassPipeline, SourceFilePath)
+				&& Name != GET_MEMBER_NAME_CHECKED(UDreamPassPipeline, SourceHash);
+		}
+
+		// The layout of the pipeline class or of one of its structs: every content property, depth unbounded -- the whole
+		// value of each goes into the digest as exported text, so a field added anywhere below it changes that text.
+		void AppendPassPipelineLayout(const UStruct* Struct, FString& InOutText)
+		{
+			TArray<FString> Lines;
+			for (TFieldIterator<FProperty> It(Struct, EFieldIteratorFlags::IncludeSuper); It; ++It)
+			{
+				if (IsPassPipelineDigestProperty(*It))
+				{
+					Lines.Add(FString::Printf(TEXT("%s:%s"), *It->GetName(), *It->GetCPPType()));
+				}
+			}
+			Lines.Sort();
+			InOutText += Struct->GetPathName();
+			InOutText += TEXT("{");
+			InOutText += FString::Join(Lines, TEXT(","));
+			InOutText += TEXT("}\n");
+		}
+
+		// Every struct a pass pipeline's content reaches, by path, each once.
+		void CollectPassPipelineStructPathNames(const FProperty* Property, TArray<FString>& InOutPathNames);
+
+		void CollectPassPipelineStructPathNames(const UStruct* Struct, TArray<FString>& InOutPathNames)
+		{
+			for (TFieldIterator<FProperty> It(Struct, EFieldIteratorFlags::IncludeSuper); It; ++It)
+			{
+				if (IsPassPipelineDigestProperty(*It))
+				{
+					CollectPassPipelineStructPathNames(*It, InOutPathNames);
+				}
+			}
+		}
+
+		void CollectPassPipelineStructPathNames(const FProperty* Property, TArray<FString>& InOutPathNames)
+		{
+			if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
+			{
+				const FString PathName = StructProperty->Struct->GetPathName();
+				if (!InOutPathNames.Contains(PathName))
+				{
+					InOutPathNames.Add(PathName);
+					CollectPassPipelineStructPathNames(StructProperty->Struct, InOutPathNames);
+				}
+			}
+			else if (const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
+			{
+				CollectPassPipelineStructPathNames(ArrayProperty->Inner, InOutPathNames);
+			}
+			else if (const FSetProperty* SetProperty = CastField<FSetProperty>(Property))
+			{
+				CollectPassPipelineStructPathNames(SetProperty->ElementProp, InOutPathNames);
+			}
+			else if (const FMapProperty* MapProperty = CastField<FMapProperty>(Property))
+			{
+				CollectPassPipelineStructPathNames(MapProperty->KeyProp, InOutPathNames);
+				CollectPassPipelineStructPathNames(MapProperty->ValueProp, InOutPathNames);
+			}
+		}
+
 		// The layout text of a list of classes named by path, in the order given. A name that no longer
 		// resolves to a class is written as such rather than skipped: a class the engine dropped is a
-		// schema change too, and the tag must move for it.
+		// schema change too, and the tag must move for it. A pass pipeline's list names its class and
+		// the structs its content reaches, which are laid out in full (AppendPassPipelineLayout).
 		FString BuildClassLayoutTextForNames(const TArray<FString>& ClassPathNames)
 		{
 			FString Text;
@@ -394,7 +469,18 @@ namespace UE::DreamShader::Editor::Private
 			{
 				if (const UClass* Class = FindObject<UClass>(nullptr, *ClassPathName))
 				{
-					AppendClassLayout(Class, Text);
+					if (Class->IsChildOf(UDreamPassPipeline::StaticClass()))
+					{
+						AppendPassPipelineLayout(Class, Text);
+					}
+					else
+					{
+						AppendClassLayout(Class, Text);
+					}
+				}
+				else if (const UScriptStruct* Struct = FindObject<UScriptStruct>(nullptr, *ClassPathName))
+				{
+					AppendPassPipelineLayout(Struct, Text);
 				}
 				else
 				{
@@ -421,6 +507,13 @@ namespace UE::DreamShader::Editor::Private
 			Expressions = MaterialFunction->GetExpressions();
 		}
 		TArray<FString> ClassPathNames;
+		if (const UDreamPassPipeline* Pipeline = Cast<UDreamPassPipeline>(Asset))
+		{
+			// No graph: the types the content is made of. A plugin update that adds a field to a pass struct retires the
+			// stamps as Unstamped instead of reporting every pipeline as hand-edited.
+			ClassPathNames.Add(Pipeline->GetClass()->GetPathName());
+			CollectPassPipelineStructPathNames(Pipeline->GetClass(), ClassPathNames);
+		}
 		for (const TObjectPtr<UMaterialExpression>& Expression : Expressions)
 		{
 			if (Expression)
@@ -634,6 +727,40 @@ namespace UE::DreamShader::Editor::Private
 		return Text;
 	}
 
+	FString BuildPassPipelineDigestText(UDreamPassPipeline* Pipeline)
+	{
+		if (!Pipeline)
+		{
+			return FString();
+		}
+
+		// Each property whole, as its exported text: nested structs and the object paths of materials, textures and the
+		// export targets included. Sorted by name, as the expression walk sorts. The source stamps stay out: they are the
+		// compiler's, and the source hash moves with every edit of the `.dsp`.
+		TArray<TPair<FString, FString>> Values;
+		for (TFieldIterator<FProperty> It(Pipeline->GetClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
+		{
+			if (!IsPassPipelineDigestProperty(*It))
+			{
+				continue;
+			}
+			FString Value;
+			It->ExportTextItem_Direct(Value, It->ContainerPtrToValuePtr<void>(Pipeline), nullptr, nullptr, PPF_None);
+			Values.Emplace(It->GetName(), MoveTemp(Value));
+		}
+		Values.Sort([](const TPair<FString, FString>& Left, const TPair<FString, FString>& Right)
+		{
+			return Left.Key.Compare(Right.Key, ESearchCase::CaseSensitive) < 0;
+		});
+
+		FString Text = TEXT("KIND PassPipeline\n");
+		for (const TPair<FString, FString>& Value : Values)
+		{
+			Text += FString::Printf(TEXT("PROP %s=%s\n"), *Value.Key, *Value.Value);
+		}
+		return Text;
+	}
+
 	FString BuildOutputDigestText(UObject* Asset)
 	{
 		// Instance first: UDreamShaderMaterialInstance is a UMaterialInstance, never a UMaterial, but
@@ -649,6 +776,10 @@ namespace UE::DreamShader::Editor::Private
 		if (UMaterialFunction* MaterialFunction = Cast<UMaterialFunction>(Asset))
 		{
 			return BuildMaterialFunctionDigestText(MaterialFunction);
+		}
+		if (UDreamPassPipeline* Pipeline = Cast<UDreamPassPipeline>(Asset))
+		{
+			return BuildPassPipelineDigestText(Pipeline);
 		}
 		return FString();
 	}

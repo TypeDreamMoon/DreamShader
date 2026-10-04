@@ -10,7 +10,9 @@
 //   PrintDreamShaderLang                                                    the text
 //
 // It answers a whole request (IDreamShaderDecompiler::DecompileRequest): one asset, or every product of a source in
-// one module; a plain material instance goes to the instance decompiler and comes back as `.dsi` text.
+// one module; a plain material instance goes to the instance decompiler and comes back as `.dsi` text, and a
+// UDreamPassPipeline to the pipeline decompiler (Decompiler/DreamShaderPipelineDecompiler.h) and comes back as `.dsp`
+// text, checked by reading it back. Diagnostics: DSH9210 (a pipeline asked for in another file kind).
 
 #pragma once
 

@@ -1,0 +1,15 @@
+// In a .dss the words of a pipeline are ordinary names: a parameter called `pass`, a constant called `buffer`, a
+// helper whose parameters are `read` and `write`, and a local called `param`.
+uniform float pass = 0.5;
+static const float buffer = 2.0;
+
+float Mix(float read, float write)
+{
+    float param = read * write;
+    return param;
+}
+
+export void M_DssWords(inout material m)
+{
+    m.EmissiveColor = float3(Mix(pass, buffer), 0.0, 0.0);
+}

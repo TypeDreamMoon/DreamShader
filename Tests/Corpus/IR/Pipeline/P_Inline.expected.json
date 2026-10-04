@@ -1,0 +1,25 @@
+{
+	"entryPoint": "ir",
+	"outcome": "ok",
+	"infosContain": [
+		"DSH7360"
+	],
+	"warningsContain": [
+		"DSH7357"
+	],
+	"ir": "module \"P_Inline.dsp\"\n\nproduct 0 PassPipeline \"P_Inline\"\n  pipeline order=0 injection=BeforePostProcess views=Game|Editor requires=- enabled=-\n  hlsl line=6 lines=7\n  buffer \"Mask\" R8 resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  buffer \"Soft\" R8 resolution=Render scale=1 (inferred) clear=(0, 0, 0, 0) mips=1\n  pass \"Fill\" compute injection=BeforePostProcess\n    hlsl Shared entry=FillCS\n    threads=(8, 8, 1) (from the shader) dispatch=Mask * 1\n    write Result = Mask\n  pass \"Again\" compute injection=BeforePostProcess\n    hlsl Body line=26 lines=3 entry=-\n    threads=(8, 8, 1) (from the shader) dispatch=Soft * 1\n    read Source = Mask\n    write Result = Soft\n",
+	"module": {
+		"products": 1,
+		"includes": 0,
+		"sinks": 0,
+		"productKinds": [
+			"PassPipeline"
+		],
+		"productNames": [
+			"P_Inline"
+		],
+		"nodeCounts": [
+			0
+		]
+	}
+}

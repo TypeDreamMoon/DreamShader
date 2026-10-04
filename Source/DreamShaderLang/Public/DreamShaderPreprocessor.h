@@ -89,6 +89,11 @@ namespace UE::DreamShader
 		Lang2,
 		/** A `.dsh`: both opaque-body triggers (`Function`/`GraphFunction` tokens and `/// @custom`), with `#pragma`, `#include` and `#Region` passed through. */
 		Mixed,
+		/**
+		 * A `.dsp`: Lang2, and an `hlsl { }` block is opaque as well -- the inline HLSL of a Custom Pass pipeline, whose `#if`
+		 * and `#define` are the shader compiler's (DreamShader_Plan/10). Only here: in any other file `hlsl` is a name.
+		 */
+		Pipeline,
 	};
 
 	/**

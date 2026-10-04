@@ -28,7 +28,7 @@ namespace UE::DreamShader::Editor::Private
 		// Open the entry's source file in the preferred text editor, at a line/column when given.
 		static void OpenSource(const FBrowserEntry& Entry, int32 Line = 1, int32 Column = 1);
 
-		// Open the entry's material in its asset editor.
+		// Open the entry's material in its asset editor -- or, for a `.dsp`, its pass pipeline in the details panel.
 		static void OpenMaterial(const FBrowserEntry& Entry);
 
 		// Open the create-instance dialog on the entry's material, compiling it first if it has

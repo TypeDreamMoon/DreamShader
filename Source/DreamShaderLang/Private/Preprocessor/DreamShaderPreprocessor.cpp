@@ -249,6 +249,14 @@ namespace UE::DreamShader
 			bool bPassPragmaAndInclude = false;
 			/** The body being sought was announced by `/// @custom`, so a `;` before any `{` ends the declaration. */
 			bool bOpenedByCustomDoc = false;
+			/** Pipeline: the word `hlsl` followed by `{` opens an opaque body. */
+			bool bHlslWordOpensBody = false;
+			/**
+			 * The region was opened by `hlsl`: the next character that is not white space or a comment must be its `{`, or
+			 * the word was a name; and inside it a `#` line's braces are not counted -- the parser's lexer makes such a line
+			 * one token, and the two must agree on where the block ends.
+			 */
+			bool bOpenedByHlslWord = false;
 
 			void SetDialect(const EDreamShaderPreprocessDialect InDialect)
 			{
@@ -270,6 +278,12 @@ namespace UE::DreamShader
 					bCustomDocOpensBody = true;
 					bFunctionTokenOpensBody = true;
 					bPassPragmaAndInclude = true;
+					break;
+				case EDreamShaderPreprocessDialect::Pipeline:
+					bCustomDocOpensBody = true;
+					bFunctionTokenOpensBody = false;
+					bPassPragmaAndInclude = true;
+					bHlslWordOpensBody = true;
 					break;
 				}
 			}
@@ -306,6 +320,12 @@ namespace UE::DreamShader
 						bLineIsHashShaped = InLine[Probe] == TCHAR('#');
 						break;
 					}
+				}
+
+				// Inside an `hlsl { }` block a `#` line is one token to the parser, braces and all; skipped whole here too.
+				if (bOpenedByHlslWord && State == EState::InsideBody && bLineIsHashShaped)
+				{
+					return;
 				}
 
 				// String and character state are per-line: neither literal may span a line in HLSL or in
@@ -361,6 +381,20 @@ namespace UE::DreamShader
 						}
 					}
 
+					if (bOpenedByHlslWord && State == EState::SeekingBody && !FChar::IsWhitespace(Character))
+					{
+						// `hlsl` is a block only with its `{` next; anything else made it a name, and this character is
+						// ordinary source again.
+						if (Character == TCHAR('{'))
+						{
+							++BraceDepth;
+							State = EState::InsideBody;
+							continue;
+						}
+						State = EState::Outside;
+						bOpenedByHlslWord = false;
+					}
+
 					if (Character == TCHAR('"'))
 					{
 						bInString = true;
@@ -401,6 +435,14 @@ namespace UE::DreamShader
 								State = EState::SeekingBody;
 								BraceDepth = 0;
 								bOpenedByCustomDoc = false;
+								bOpenedByHlslWord = false;
+							}
+							else if (bHlslWordOpensBody && !bLineIsHashShaped && Token.Equals(TEXT("hlsl"), ESearchCase::CaseSensitive))
+							{
+								State = EState::SeekingBody;
+								BraceDepth = 0;
+								bOpenedByCustomDoc = false;
+								bOpenedByHlslWord = true;
 							}
 						}
 
@@ -431,6 +473,7 @@ namespace UE::DreamShader
 						{
 							State = EState::Outside;
 							BraceDepth = 0;
+							bOpenedByHlslWord = false;
 						}
 					}
 				}

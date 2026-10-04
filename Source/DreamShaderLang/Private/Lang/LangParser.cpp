@@ -786,6 +786,40 @@ namespace UE::DreamShader::Lang::Private::ParserTrivia
 
 		void GatherInside(const FNode& Node)
 		{
+			if (const FPassDecl* Pass = Node.As<FPassDecl>())
+			{
+				// A `.dsp` pass block: its statements are anchors like a body's, and the declaration itself is the
+				// block a comment after the last statement belongs to (its Inner).
+				if (Pass->BodySpan.Length > 0)
+				{
+					FBlockRange& Range = Blocks.AddDefaulted_GetRef();
+					Range.Node = Pass;
+					Range.Start = Pass->BodySpan.Offset;
+					Range.End = Pass->BodySpan.End();
+					Range.StartLine = Pass->BodySpan.Line;
+				}
+				for (const TUniquePtr<FPassStmt>& Statement : Pass->Statements)
+				{
+					if (Statement.IsValid())
+					{
+						AddAnchor(*Statement, Statement->Span.Offset);
+						// An `hlsl` block's comments are HLSL's, part of RawBody.
+						if (Statement->StmtKind == EPassStmtKind::Hlsl && Statement->BodySpan.Length > 0)
+						{
+							OpaqueBodies.Add(Statement->BodySpan);
+						}
+					}
+				}
+				return;
+			}
+			if (const FHlslBlockDecl* HlslBlock = Node.As<FHlslBlockDecl>())
+			{
+				if (HlslBlock->BodySpan.Length > 0)
+				{
+					OpaqueBodies.Add(HlslBlock->BodySpan);
+				}
+				return;
+			}
 			if (const FFunctionDecl* Function = Node.As<FFunctionDecl>())
 			{
 				if (Function->bOpaqueBody && Function->BodySpan.Length > 0)
@@ -1040,12 +1074,12 @@ namespace UE::DreamShader::Lang
 	namespace
 	{
 		/**
-		 * The spans of a module's `/// @custom` bodies, braces included.
+		 * The spans of a module's `/// @custom` bodies and `.dsp` `hlsl` blocks, braces included.
 		 *
-		 * A `@custom` body is opaque HLSL. The parser lexes it only far enough to find the brace
-		 * that closes it and then slices the text straight out of the source, so what the lexer
-		 * made of the characters in between was never used for anything. Its complaints about them
-		 * -- a `@` in a macro, a `$`, a `'`, a `#` that is not the first thing on its line -- are
+		 * A `@custom` body is opaque HLSL, and so is an `hlsl` block. The parser lexes it only far enough
+		 * to find the brace that closes it and then slices the text straight out of the source, so what
+		 * the lexer made of the characters in between was never used for anything. Its complaints about
+		 * them -- a `@` in a macro, a `$`, a `'`, a `#` that is not the first thing on its line -- are
 		 * therefore not facts about the program: they are this front end objecting to a language
 		 * that is not its own. `dsc check --shaders` is what gets to complain about that text.
 		 */
@@ -1058,6 +1092,24 @@ namespace UE::DreamShader::Lang
 				if (Function.bOpaqueBody && Function.BodySpan.Length > 0)
 				{
 					Spans.Add(Function.BodySpan);
+				}
+			});
+			Module.ForEachDecl(ENodeKind::HlslBlockDecl, [&Spans](const FDecl& Decl)
+			{
+				const FHlslBlockDecl& Block = static_cast<const FHlslBlockDecl&>(Decl);
+				if (Block.BodySpan.Length > 0)
+				{
+					Spans.Add(Block.BodySpan);
+				}
+			});
+			Module.ForEachDecl(ENodeKind::PassDecl, [&Spans](const FDecl& Decl)
+			{
+				for (const TUniquePtr<FPassStmt>& Statement : static_cast<const FPassDecl&>(Decl).Statements)
+				{
+					if (Statement.IsValid() && Statement->StmtKind == EPassStmtKind::Hlsl && Statement->BodySpan.Length > 0)
+					{
+						Spans.Add(Statement->BodySpan);
+					}
 				}
 			});
 			return Spans;
@@ -1118,12 +1170,25 @@ namespace UE::DreamShader::Lang
 		ELangFrontend Frontend = Options.Frontend;
 		if (Frontend == ELangFrontend::Auto)
 		{
-			// The two frozen 1.x extensions take the legacy front end. `.dss`, `.dsi` and an unknown or absent
-			// extension take the 2.0 one; so does a `.dsh`, whose module loop hands each 1.x declaration to
-			// the legacy front end by itself.
-			Frontend = (FileKind == ELangFileKind::Dsm || FileKind == ELangFileKind::Dsf)
-				? ELangFrontend::Legacy
-				: ELangFrontend::Dss;
+			// The two frozen 1.x extensions take the legacy front end. `.dss`, `.dsi`, `.dsp` and an unknown or
+			// absent extension take the 2.0 one -- a `.dsp` with its `buffer` / `pass` declarations, which the 2.0
+			// module loop reads only in a `.dsp` (ParseDeclaration); so does a `.dsh`, whose module loop hands each
+			// 1.x declaration to the legacy front end by itself.
+			switch (FileKind)
+			{
+			case ELangFileKind::Dsm:
+			case ELangFileKind::Dsf:
+				Frontend = ELangFrontend::Legacy;
+				break;
+			case ELangFileKind::Dss:
+			case ELangFileKind::Dsh:
+			case ELangFileKind::Dsi:
+			case ELangFileKind::Dsp:
+			case ELangFileKind::Unknown:
+			default:
+				Frontend = ELangFrontend::Dss;
+				break;
+			}
 		}
 
 		const bool bLegacyModule = Frontend == ELangFrontend::Legacy;

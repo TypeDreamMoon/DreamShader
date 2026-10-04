@@ -16,6 +16,7 @@
 
 #include "CoreMinimal.h"
 
+class UDreamPassPipeline;
 class UMaterial;
 class UMaterialFunction;
 class UMaterialInstance;
@@ -68,6 +69,10 @@ namespace UE::DreamShader::Editor::Private
 	DREAMSHADERCOMPILER_API FString BuildMaterialDigestText(UMaterial* Material);
 	DREAMSHADERCOMPILER_API FString BuildMaterialFunctionDigestText(UMaterialFunction* MaterialFunction);
 	DREAMSHADERCOMPILER_API FString BuildMaterialInstanceDigestText(UMaterialInstance* Instance);
+	// A `.dsp`'s UDreamPassPipeline: every property it holds but the two source stamps, each as its exported text.
+	// Written out rather than walked like an expression's properties: the walk's depth bound stops above a mesh pass's
+	// filter terms, and dropping them would let a hand edit of a filter through unnoticed.
+	DREAMSHADERCOMPILER_API FString BuildPassPipelineDigestText(UDreamPassPipeline* Pipeline);
 
 	// "<schema>:<crc32>" -- what gets stamped into DreamShader.OutputDigest. Empty when the asset
 	// class is not covered, which callers must treat as "cannot judge" rather than "diverged".

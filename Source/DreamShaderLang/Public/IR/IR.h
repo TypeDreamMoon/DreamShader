@@ -278,6 +278,8 @@ namespace UE::DreamShader::IR
 		MaterialLayerBlend,
 		/** A `.dsi`: one UMaterialInstanceConstant. Graph is empty; Instance carries the assignments. */
 		MaterialInstance,
+		/** A `.dsp`: one UDreamPassPipeline (the DreamShaderPass module). Graph is empty; PassPipeline carries it. */
+		PassPipeline,
 	};
 	DREAMSHADERLANG_API const TCHAR* LexToString(EIRProductKind Kind);
 
@@ -414,6 +416,212 @@ namespace UE::DreamShader::IR
 		FIRParameterSchema ParentSchema;
 	};
 
+	// ---------------------------------------------------------------------- pass pipelines (.dsp)
+	//
+	// The payload of a PassPipeline product: a Custom Pass pipeline as plain data. Every enumerated value is a string
+	// in its canonical `.dsp` spelling ("BeforePostProcess", "RGBA16F", "mesh", "TestScene"); the binder checks and
+	// canonicalizes them, the emitter maps them onto the DreamShaderPass enums, the decompiler maps those back, and
+	// the printer writes them as they are. Core-only, like the rest of the IR.
+
+	/** One `uniform` of a `.dsp`: a parameter activations can override. */
+	struct FIRPassParameter
+	{
+		FString Name;
+		/** float, float2, float3, float4, int, bool, Texture2D. */
+		FString Type;
+		/** Float4 (N = width) for the float types, Int, Bool, Object for a texture ("" = none). */
+		FIRPropertyValue Default;
+		FString Group;
+		FString Description;
+		bool bHasSlider = false;
+		double SliderMin = 0.0;
+		double SliderMax = 1.0;
+		int32 SortPriority = 0;
+		FIRSourceRef Source;
+	};
+
+	/** One `buffer` of a `.dsp`. */
+	struct FIRPassBuffer
+	{
+		FString Name;
+		/** R8 RG8 RGBA8 R16F RG16F RGBA16F R32F RG32F RGBA32F R32U RG32U Depth32. */
+		FString Format;
+		/** Render, Output or Fixed. */
+		FString Resolution = TEXT("Render");
+		/** True when the source wrote `Resolution = ...`; otherwise the binder inferred it from the first writer. */
+		bool bResolutionWritten = false;
+		double Scale = 1.0;
+		int32 FixedWidth = 0;
+		int32 FixedHeight = 0;
+		/** `Clear = None` is false. */
+		bool bClear = true;
+		double ClearValue[4] = { 0.0, 0.0, 0.0, 0.0 };
+		int32 Mips = 1;
+		bool bHistory = false;
+		bool bExport = false;
+		FString Description;
+		FIRSourceRef Source;
+	};
+
+	/** `read X = B;` / `write Y = B;`. */
+	struct FIRPassBinding
+	{
+		/** The name inside the pass; equals Buffer when the source wrote `read B;`. */
+		FString Slot;
+		FString Buffer;
+		/** `B.Previous`. */
+		bool bPrevious = false;
+		FIRSourceRef Source;
+	};
+
+	/** `param P = E;`, folded: a parameter times Multiplier plus Offset, a constant, or the pipeline weight. */
+	struct FIRPassParam
+	{
+		FString Target;
+		/** Parameter, Constant or Weight. */
+		FString SourceKind = TEXT("Parameter");
+		FString Parameter;
+		/** For a Constant: float types as Float4 (N = width), Int, Bool. */
+		FIRPropertyValue Constant;
+		/** float, float2, float3, float4, int, bool: the type of Constant. */
+		FString ConstantType;
+		double Multiplier = 1.0;
+		double Offset = 0.0;
+		FIRSourceRef Source;
+	};
+
+	/** One term of a mesh pass filter: `Stencil(v[, mask])`, `Layer(a | b)` or `List(name)`. */
+	struct FIRPassFilterTerm
+	{
+		/** Stencil, Layer or List. */
+		FString Kind;
+		int32 StencilValue = 1;
+		int32 StencilMask = 255;
+		/** Layer names as written; the emitter turns them into the project's layer bits. */
+		TArray<FString> Layers;
+		FString List;
+	};
+
+	/** Terms joined by `&`. */
+	struct FIRPassFilterClause
+	{
+		TArray<FIRPassFilterTerm> AllOf;
+	};
+
+	/** One `pass` of a `.dsp`. Only the fields of its Kind mean anything. */
+	struct FIRPass
+	{
+		FString Name;
+		/** fullscreen, compute, mesh, clear, copy. */
+		FString Kind;
+		/** Canonical injection point spelling; the pipeline's default when the source wrote none. */
+		FString Injection;
+		bool bInjectionWritten = false;
+		FString EnabledParameter;
+		TArray<FIRPassBinding> Reads;
+		TArray<FIRPassBinding> Writes;
+		TArray<FIRPassParam> Params;
+
+		/** fullscreen and mesh: `Material = "..."` as written, and the object path the host resolved it to. */
+		FString MaterialReference;
+		FString MaterialObjectPath;
+
+		/** fullscreen and compute: `Shader = "..."` as written, its virtual path, the file on disk, and `Entry`. */
+		FString ShaderReference;
+		FString ShaderVirtualPath;
+		FString ShaderFilePath;
+		FString Entry;
+
+		/**
+		 * fullscreen and compute, the HLSL ones: where the code comes from (IR::PassHlslSource). File: `Shader = "..."`.
+		 * Block: the pass's own `hlsl { }` holding declarations, Entry one of its functions (`Main` when not written). Body:
+		 * its own `hlsl { }` holding the statements of the entry, whose signature the compiler writes; Entry empty. Shared:
+		 * `Entry = X;` alone, X a function of the file's `hlsl { }`. Empty for every other pass.
+		 */
+		FString HlslSource;
+		/** Block and Body: the text between the braces of the pass's `hlsl { }`, verbatim. */
+		FString InlineHlsl;
+		/** Block and Body: the line of that block's `{` in the `.dsp`, which is the line InlineHlsl starts on. */
+		int32 InlineHlslLine = 0;
+
+		/** compute: `Threads`, from the source's [numthreads] when not written. */
+		int32 ThreadsX = 8;
+		int32 ThreadsY = 8;
+		int32 ThreadsZ = 1;
+		bool bThreadsWritten = false;
+		/** compute: Buffer (DispatchBuffer times DispatchScale) or Fixed (DispatchX/Y/Z). */
+		FString DispatchMode = TEXT("Buffer");
+		FString DispatchBuffer;
+		double DispatchScale = 1.0;
+		int32 DispatchX = 1;
+		int32 DispatchY = 1;
+		int32 DispatchZ = 1;
+
+		/** mesh. */
+		TArray<FIRPassFilterClause> Filter;
+		/** Override, Own, OwnOrOverride. */
+		FString MeshMode;
+		/** TestScene, None, Own. */
+		FString Depth = TEXT("TestScene");
+		FString DepthBuffer;
+		/** Auto, Back, Front, None. */
+		FString Cull = TEXT("Auto");
+		/** Replace, Add, Max, Min, AlphaBlend. */
+		FString Blend = TEXT("Replace");
+		/** StaticMesh, InstancedStaticMeshes, SkeletalMesh, Landscape, SplineMesh, GeometryCache; empty = the default set. */
+		TArray<FString> Usage;
+		/** Skip, StencilMask, AssignStencil. */
+		FString Nanite = TEXT("Skip");
+		int32 AssignedStencilValue = 255;
+		double NaniteValue[4] = { 1.0, 0.0, 0.0, 0.0 };
+
+		/** clear: `Value`. */
+		double ClearValue[4] = { 0.0, 0.0, 0.0, 0.0 };
+
+		FString Description;
+		FIRSourceRef Source;
+	};
+
+	/** The payload of a PassPipeline product. */
+	struct FIRPassPipeline
+	{
+		int32 Order = 0;
+		FString DefaultInjection = TEXT("BeforePostProcess");
+		/** Game, Editor, SceneCapture, PlanarReflection, ReflectionCapture, Thumbnail; empty = Game | Editor. */
+		TArray<FString> Views;
+		/** PostProcess, SceneResolve, CustomStencil. */
+		TArray<FString> Requires;
+		FString EnabledParameter;
+		TArray<FIRPassParameter> Parameters;
+		TArray<FIRPassBuffer> Buffers;
+		TArray<FIRPass> Passes;
+
+		/**
+		 * The file's `hlsl { }` block: whether the file has one, the text between its braces verbatim, and the line of its
+		 * `{`. Its shared functions are compiled with every inline pass; its entries only with the passes that name them.
+		 */
+		bool bHasSharedHlsl = false;
+		FString SharedHlsl;
+		int32 SharedHlslLine = 0;
+	};
+
+	/** The spellings of FIRPass::HlslSource. */
+	namespace PassHlslSource
+	{
+		inline const TCHAR* const File = TEXT("File");
+		inline const TCHAR* const Block = TEXT("Block");
+		inline const TCHAR* const Body = TEXT("Body");
+		inline const TCHAR* const Shared = TEXT("Shared");
+
+		/** Block, Body or Shared: the code is in the `.dsp`. */
+		inline bool IsInline(const FString& Source)
+		{
+			return Source.Equals(Block, ESearchCase::CaseSensitive)
+				|| Source.Equals(Body, ESearchCase::CaseSensitive)
+				|| Source.Equals(Shared, ESearchCase::CaseSensitive);
+		}
+	}
+
 	struct FIRProduct
 	{
 		EIRProductKind Kind = EIRProductKind::Material;
@@ -440,6 +648,8 @@ namespace UE::DreamShader::IR
 		FString AssetRoot;
 		/** MaterialInstance only. */
 		FIRInstance Instance;
+		/** PassPipeline only. */
+		FIRPassPipeline PassPipeline;
 	};
 
 	struct DREAMSHADERLANG_API FIRModule

@@ -142,6 +142,8 @@ namespace UE::DreamShader::Lang::Private
 			case ELangFileKind::Dsm: return TEXT("dsm");
 			case ELangFileKind::Dsf: return TEXT("dsf");
 			case ELangFileKind::Dsi: return TEXT("dsi");
+			// A `.dsp` never reaches the legacy front end (ParseDreamShaderLang picks the 2.0 one); named for completeness.
+			case ELangFileKind::Dsp: return TEXT("dsp");
 			case ELangFileKind::Unknown: return TEXT("dsm");
 			}
 			return TEXT("dsm");

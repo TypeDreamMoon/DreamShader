@@ -73,10 +73,12 @@ namespace UE::DreamShader::Editor::Compiler
 		}
 
 		// The ranges are the 2.0 allocation plus the 1.x one that predates it. Written as explicit
-		// bands rather than as `Number / 1000` because two of them are split inside one thousand:
-		// DSH4200-4299 is the binder while DSH4300-4399 is the IR, and DSH6200-6219 is the binder
-		// while DSH6220-6299 is lowering and custom HLSL.
+		// bands rather than as `Number / 1000` because three of them are split inside one thousand:
+		// DSH4200-4299 is the binder while DSH4300-4399 is the IR, DSH6200-6219 is the binder
+		// while DSH6220-6299 is lowering and custom HLSL, and of the `.dsp` declarations
+		// (DSH3300-3349) the parser raises up to DSH3310 and the binder the rest.
 		if (Number < 2000) { return TEXT("preprocess"); }
+		if (Number >= 3311 && Number < 3350) { return TEXT("bind"); }   // DSH3311-3349: what the binder refuses in a `.dsp`
 		if (Number < 4000) { return TEXT("parse"); }
 		if (Number < 4300) { return TEXT("bind"); }
 		if (Number < 4400) { return TEXT("ir"); }

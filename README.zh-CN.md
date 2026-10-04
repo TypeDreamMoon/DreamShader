@@ -49,7 +49,8 @@
 </table>
 
 > [!TIP]
-> 把所有 `.dsm`、`.dsf`、`.dsh` 文件纳入版本管理。生成的 Unreal 资产随时可以从源文件重建，不需要提交。
+> 把所有源文件——`.dss`、`.dsi`、`.dsp`、`.dsh`、`.dsm`、`.dsf`——纳入版本管理；用到 Custom Pass 时，`DShader/.dreampass/`
+> 里的快照也要提交。生成的 Unreal 资产随时可以从源文件重建，不需要提交。
 
 > [!NOTE]
 > **2.0 beta 线**上，两种语法由同一个编译器构建：下面展示的 1.x 语法照常可用；与它并列的是一套
@@ -256,9 +257,15 @@ Windows 上 UE `5.3` 和 `5.4` 可能需要 MSVC `14.38` 工具链——更新�
 
 发版流程见 [Release](Docs/contributing/release.md)，从源码构建插件见 [Contributing](Docs/contributing/index.md)。
 
+## Custom Pass
+
+在 Unreal Engine 5.8 上，[`.dsp` 管线](Docs/language-v2/passes.md) 不改引擎就能加入自己的渲染 Pass：选中物体的遮罩、
+模糊、屏幕空间效果、写数据纹理的 Compute 着色器。每个 Pass 在自己选的注入点运行——BasePass 之前、不透明光照之后、
+后处理之前或后处理链中——形式可以是后处理材质、项目里的 HLSL，或把选中的网格重画一遍；它的缓冲任何材质都能读取。
+见 [Custom Pass 运行时](Docs/runtime/index.md) 和 [示例](Docs/examples/custom-pass.md)。
+
 ## 路线图
 
-- 支持自定义全屏渲染 Pass。
 - 更完整的 VSCode 语义诊断。
 - 更深入的 Material Layer Stack 与 Layer Instance 工作流支持。
 - 更深入的 Moon Engine 集成——参考：<https://zhuanlan.zhihu.com/p/21979494450>

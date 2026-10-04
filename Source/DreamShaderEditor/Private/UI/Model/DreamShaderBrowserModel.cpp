@@ -13,6 +13,7 @@
 #include "UI/DreamShaderGeneratedAssetPath.h"
 
 #include "AssetRegistry/IAssetRegistry.h"
+#include "DreamPassPipeline.h"
 #include "HAL/FileManager.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialFunctionInterface.h"
@@ -59,7 +60,9 @@ namespace UE::DreamShader::Editor::Private
 
 	UMaterialInterface* FBrowserEntry::ResolveMaterial() const
 	{
-		if (IsLibrary())
+		// A pipeline's object path names no material, and a typed load of it would log a class mismatch every time the
+		// inspector asks.
+		if (IsLibrary() || IsPipeline())
 		{
 			return nullptr;
 		}
@@ -75,6 +78,27 @@ namespace UE::DreamShader::Editor::Private
 			return Found;
 		}
 		return LoadObject<UMaterialInterface>(nullptr, *ObjectPath);
+	}
+
+	UDreamPassPipeline* FBrowserEntry::ResolvePipeline() const
+	{
+		if (!IsPipeline())
+		{
+			return nullptr;
+		}
+		const FString ObjectPath = GetObjectPath();
+		if (ObjectPath.IsEmpty())
+		{
+			return nullptr;
+		}
+		if (UDreamPassPipeline* Found = FindObject<UDreamPassPipeline>(nullptr, *ObjectPath))
+		{
+			return Found;
+		}
+		// Only an asset on disk is loaded: before the first compile there is nothing at the path, and a load would say so in the log.
+		return FPackageName::DoesPackageExist(FPackageName::ObjectPathToPackageName(ObjectPath))
+			? LoadObject<UDreamPassPipeline>(nullptr, *ObjectPath)
+			: nullptr;
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -110,6 +134,10 @@ namespace UE::DreamShader::Editor::Private
 	bool FBrowserFilter::Matches(const FBrowserEntry& Entry) const
 	{
 		if (bHideLibraries && Entry.IsLibrary())
+		{
+			return false;
+		}
+		if (bHidePipelines && Entry.IsPipeline())
 		{
 			return false;
 		}
@@ -287,11 +315,12 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderBrowserModel::MarkAssetDirty(const FAssetData& AssetData)
 	{
-		// The registry announces every asset in the project; only materials and functions can be ours,
+		// The registry announces every asset in the project; only materials, functions and pass pipelines can be ours,
 		// and only one the scan resolved to matters.
 		const UClass* AssetClass = AssetData.GetClass();
+		const bool bPipeline = AssetClass && AssetClass->IsChildOf(UDreamPassPipeline::StaticClass());
 		if (!AssetClass
-			|| !(AssetClass->IsChildOf(UMaterialInterface::StaticClass()) || AssetClass->IsChildOf(UMaterialFunctionInterface::StaticClass())))
+			|| !(bPipeline || AssetClass->IsChildOf(UMaterialInterface::StaticClass()) || AssetClass->IsChildOf(UMaterialFunctionInterface::StaticClass())))
 		{
 			return;
 		}
@@ -302,6 +331,11 @@ namespace UE::DreamShader::Editor::Private
 				MarkSourceDirty(Entry->Key);
 				return;
 			}
+		}
+		if (bPipeline)
+		{
+			// A pipeline is listed through its `.dsp` alone: there is no unmanaged row for one to add or drop.
+			return;
 		}
 		// An unmanaged material appeared or went away: only a rescan adds or drops its row.
 		bRescanPending = true;
@@ -420,6 +454,11 @@ namespace UE::DreamShader::Editor::Private
 			{
 				// Its status is its instance product's, resolved like a material's (ResolveGeneratedAssetProduct).
 				Source.Kind = EBrowserSourceKind::Instance;
+			}
+			else if (UE::DreamShader::IsDreamShaderPipelineFile(Source.FilePath))
+			{
+				// Its status is its pipeline product's, resolved the same way; without this a `.dsp` would list as a material.
+				Source.Kind = EBrowserSourceKind::Pipeline;
 			}
 			else
 			{

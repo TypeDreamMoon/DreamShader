@@ -1,5 +1,6 @@
 #include "Bridge/DreamShaderEditorBridge.h"
 #include "Navigation/DreamShaderSourceNavigation.h"
+#include "Pass/DreamPassPipelineCustomization.h"
 #include "DreamShaderCompilerService.h"
 #include "SourceFiles/DreamShaderAssetRenameSyncService.h"
 #include "DreamShaderSourceFileUtils.h"
@@ -61,6 +62,9 @@ public:
 			return;
 		}
 
+		// The details panel of a pass pipeline reads the asset alone, so it is there with or without the bridge.
+		UE::DreamShader::Editor::Private::FDreamPassPipelineCustomization::Register();
+
 		if (ShouldSkipDreamShaderEditorBridge())
 		{
 			return;
@@ -93,6 +97,8 @@ public:
 		UE::DreamShader::Editor::Private::FDreamShaderSourceNavigationMenu::Unregister();
 
 		UE::DreamShader::Editor::Private::FDreamShaderMaterialBrowser::Unregister();
+
+		UE::DreamShader::Editor::Private::FDreamPassPipelineCustomization::Unregister();
 
 		if (Bridge)
 		{

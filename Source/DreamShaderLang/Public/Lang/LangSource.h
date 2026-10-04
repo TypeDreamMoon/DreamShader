@@ -55,10 +55,15 @@ namespace UE::DreamShader::Lang
 		Dsf,
 		/** 2.0 material instance: one `#pragma instance(...)` plus `uniform` overrides; one UMaterialInstanceConstant. */
 		Dsi,
+		/**
+		 * Custom Pass pipeline: `#pragma pipeline(...)`, `uniform` / `static const`, `buffer` and `pass` declarations; one
+		 * UDreamPassPipeline. The 2.0 front end with two declaration words of its own (LangParserPipeline.cpp).
+		 */
+		Dsp,
 		Unknown,
 	};
 
-	/** `.dss` / `.dsh` / `.dsm` / `.dsf`, case-insensitively; anything else is Unknown. */
+	/** `.dss` / `.dsh` / `.dsm` / `.dsf` / `.dsi` / `.dsp`, case-insensitively; anything else is Unknown. */
 	DREAMSHADERLANG_API ELangFileKind GetLangFileKindFromPath(const FString& Path);
 	DREAMSHADERLANG_API const TCHAR* LexToString(ELangFileKind Kind);
 

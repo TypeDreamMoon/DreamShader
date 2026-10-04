@@ -1,0 +1,8 @@
+// M_XRayDepth.dss -- CP_XRay's override material: covered, and the depth the object is at.
+#pragma material(ShadingModel = Unlit, bUsedWithSkeletalMesh = true, bUsedWithInstancedStaticMeshes = true)
+
+export void M_XRayDepth(inout material m)
+{
+    m.EmissiveColor = float3(0, 0, 0);
+    UE.DreamPassOutput(Output0 = float4(1, UE.PixelDepth(), 0, 0));
+}
