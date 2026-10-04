@@ -1,5 +1,19 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Fixed
+
+- **A generated material instance is not a hand edit after it is reloaded.** Regeneration writes each parameter
+  override with an empty `ExpressionGUID`, and UE fills it in from the parent's expression when the package next
+  loads -- for every override, texture, scalar and vector alike. The output digest exported the override rows
+  whole, so a `.dsi` instance's digest changed on its first reload: it read as `Diverged`, the next compile refused
+  it (`DSH8207` / `DSH8115`) and the cook stopped on it. The digest leaves the GUID out now, and every other field of
+  an override still counts, so a changed value or texture is still a hand edit. The text is what earlier versions
+  hashed whenever the GUID was empty, so the format stays `DSD4`: no generated asset reads as `Unstamped`, and an
+  instance a reload already marked `Diverged` reads `Generated` again. See [Divergence](Docs/generation/divergence.md).
+  Thanks to [@Yu2erer](https://github.com/Yu2erer) — PR [#38](https://github.com/TypeDreamMoon/DreamShader/pull/38).
+
 ## 2.1.1 - 2026-10-04
 
 ### Changed
