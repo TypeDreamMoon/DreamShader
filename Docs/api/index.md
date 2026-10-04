@@ -12,7 +12,7 @@ caller goes through.
 | Export macros | `DREAMSHADERLANG_API`, `DREAMSHADER_API`, `DREAMSHADERPASS_API`, `DREAMSHADERCOMPILER_API` |
 | Reflected types in public headers | `DreamShader`: 2 `UCLASS`, 2 `UENUM` · `DreamShaderPass` *(since 2.1.0)*: 9 `UCLASS`, 18 `USTRUCT`, 17 `UENUM` |
 | Delegates | three — `FDreamShaderDefineProviderDelegate`, a `DECLARE_DELEGATE_OneParam` in `DreamShaderDefineResolution.h` *(since 1.9.0; moved out of `DreamShaderDefineTable.h` in 2.0)*; `FOnDreamShaderSourceGenerated`, a multicast delegate in `DreamShaderCompilerService.h` *(public since 2.0)*; and `FOnDreamPassPipelineChanged`, a `DECLARE_MULTICAST_DELEGATE_OneParam` in `DreamPassPipeline.h` *(since 2.1.0)*. No `DECLARE_EVENT*` and no `DECLARE_DYNAMIC*` |
-| Plugin version | `2.1.0` (`"Version": 210`) |
+| Plugin version | `2.1.1` (`"Version": 211`) |
 
 ## Modules
 

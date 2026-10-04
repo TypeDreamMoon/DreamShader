@@ -9,7 +9,7 @@ regenerated.
 
 | | |
 | :-- | :-- |
-| Version | `2.1.0` |
+| Version | `2.1.1` |
 | Engines | Unreal Engine `5.3` – `5.8` (Win64 verified); Custom Pass needs `5.8` |
 | Modules | `DreamShaderLang` (Runtime), `DreamShader` (Runtime), `DreamShaderPass` (Runtime), `DreamShaderCompiler` (Editor), `DreamShaderEditor` (Editor) |
 | Source extensions | `.dsm` material · `.dsf` function · `.dsh` header · `.dss` 2.0 compilation unit · `.dsi` material instance · `.dsp` Custom Pass pipeline |

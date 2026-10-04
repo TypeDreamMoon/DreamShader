@@ -15,7 +15,7 @@
       </p>
       <p>
         <img alt="Unreal Engine 5.3-5.8" src="https://img.shields.io/badge/Unreal%20Engine-5.3--5.8-313131" />
-        <img alt="Version 2.1.0" src="https://img.shields.io/badge/version-2.1.0-blue" />
+        <img alt="Version 2.1.1" src="https://img.shields.io/badge/version-2.1.1-blue" />
         <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-green" />
       </p>
       <p>
@@ -263,7 +263,7 @@ while compiling older engine headers, before plugin code is reached.
 
 | | |
 | :-- | :-- |
-| Version | `2.1.0` |
+| Version | `2.1.1` |
 | Language | `DreamShaderLang` |
 | Unreal Engine | `5.3` – `5.8` |
 | Modules | `DreamShaderLang`, `DreamShader`, `DreamShaderPass` (Runtime), `DreamShaderCompiler`, `DreamShaderEditor` (Editor) |
