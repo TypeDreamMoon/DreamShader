@@ -274,3 +274,13 @@ Windows 上 UE `5.3` 和 `5.4` 可能需要 MSVC `14.38` 工具链——更新�
 
 DreamShader 以 [MIT 许可证](LICENSE)发布。Bug 报告和功能建议请提
 [issue](https://github.com/TypeDreamMoon/DreamShader/issues/new)。
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=typedreammoon%2Fdreamshader&type=date&releases=&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=typedreammoon/dreamshader&type=date&theme=dark&legend=bottom-right" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=typedreammoon/dreamshader&type=date&legend=bottom-right" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=typedreammoon/dreamshader&type=date&legend=bottom-right" />
+ </picture>
+</a>

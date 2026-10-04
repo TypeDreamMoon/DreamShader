@@ -294,3 +294,13 @@ again; their buffers can be read by any material. See [Custom Pass runtime](Docs
 
 DreamShader is released under the [MIT license](LICENSE). For bug reports and feature requests, open
 an [issue](https://github.com/TypeDreamMoon/DreamShader/issues/new).
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=typedreammoon%2Fdreamshader&type=date&releases=&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=typedreammoon/dreamshader&type=date&theme=dark&legend=bottom-right" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=typedreammoon/dreamshader&type=date&legend=bottom-right" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=typedreammoon/dreamshader&type=date&legend=bottom-right" />
+ </picture>
+</a>
