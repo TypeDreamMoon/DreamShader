@@ -2,6 +2,11 @@
 
 #include "CoreMinimal.h"
 
+namespace UE::DreamShader::Lang
+{
+	class FLangDiagnosticSink;
+}
+
 namespace UE::DreamShader::Editor::Private
 {
 	const TCHAR* GetDreamShaderCommandletUsage();
@@ -15,6 +20,30 @@ namespace UE::DreamShader::Editor::Private
 		const TMap<FString, FString>& Params,
 		const FString& Name,
 		FString& OutValue);
+
+	/**
+	 * Whether the boolean flag Name is on: `-Name` alone, or `-Name=` true / 1 / yes / on (off for false / 0 / no / off),
+	 * case-insensitively. Any other value, an empty one included, raises DSH9110 into Diagnostics and reads as off -- a
+	 * value that says neither is not guessed at, and a verb that finds an error there runs nothing.
+	 *
+	 * Every verb reads its flags through this one function, Params included, because UCommandlet::ParseCommandLine MOVES
+	 * each `-X=Y` out of the switch list into that map: `-Force=true` is never in Switches, and a check of the switches
+	 * alone reads it as absent. Searched in TryGetCommandletParam's order -- the map, the switches, the bare tokens -- and
+	 * the first that names the flag decides.
+	 */
+	bool HasCommandletFlag(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params,
+		const FString& Name,
+		::UE::DreamShader::Lang::FLangDiagnosticSink& Diagnostics);
+
+	/**
+	 * Logs what HasCommandletFlag raised into FlagSink, a `DSH9110: ...` Error line each, and returns whether there was
+	 * any: a verb that gets true back runs nothing. The lines carry no location -- a flag is on the command line, not in
+	 * a file, and LogLang2Diagnostics would print an empty path as the process's working directory.
+	 */
+	bool LogCommandletFlagErrors(const ::UE::DreamShader::Lang::FLangDiagnosticSink& FlagSink);
 
 	/**
 	 * Reads every `-Define=NAME=VALUE` (short form `-D=NAME=VALUE`) off a commandlet command line and
@@ -37,14 +66,16 @@ namespace UE::DreamShader::Editor::Private
 	 * sources a project has: a baseline that covered a different set than the compiler does would
 	 * report a missing dump as a parity difference.
 	 *
-	 * Returns false when none of the three was given, which is the usage-banner case. An empty list
-	 * with a true return is the legitimate "this project has no sources" answer.
+	 * Returns false when none of the three was given, which is the usage-banner case -- or when `-All` has a value that is
+	 * not a boolean, which is DSH9110 in Diagnostics; a caller asks the sink first. An empty list with a true return is the
+	 * legitimate "this project has no sources" answer.
 	 */
 	bool ResolveDreamShaderCommandletSourceFiles(
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params,
-		TArray<FString>& OutSourceFiles);
+		TArray<FString>& OutSourceFiles,
+		::UE::DreamShader::Lang::FLangDiagnosticSink& Diagnostics);
 
 	bool RunDreamShaderCompileCommandlet(
 		const TArray<FString>& Tokens,

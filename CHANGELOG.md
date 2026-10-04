@@ -28,6 +28,13 @@
   shader errors, and keeps those shader errors through a compile that does not rebuild the material. A
   `recompile` response carries that compile's records, each with its own file, an imported header's included;
   it carried only those filed against the compiled file.
+- **A commandlet flag written with a value is read, and `migrate -Check=true` no longer writes.** The engine's
+  parser moves every `-Name=value` out of the switch list into a parameter map, and every verb looked for its
+  flags in the switch list only, so `-Force=true`, `-Check=1` or `-DryRun=yes` read as absent, with no message:
+  `migrate -Source=X -Check=true` migrated the file, and `fmt -Check=true` rewrote it. One rule now serves
+  every verb: `true`, `1`, `yes`, `on` are on, `false`, `0`, `no`, `off` are off, and any other value -- an
+  empty `-Force=` included -- is `DSH9110`, after which the command does nothing and exits `1`. The commandlet
+  page used to say an unrecognised value meant on. See [Boolean flags](Docs/tools/commandlet.md#boolean-flags).
 - **`dsc.ps1` prints a compile's report whole.** A report is one log message of many lines -- every `Generated`
   line, then `Warnings:` and the warnings, or every error -- and the engine prefixes only its first line, so the
   driver showed the first line and dropped the rest: warnings, every error after the first, and every product

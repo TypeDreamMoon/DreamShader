@@ -29,14 +29,16 @@ namespace UE::DreamShader::Editor::Compiler
 	 * The `-Source` / `-File` / `-All` triple for the 2.0 verbs, resolved the way `compile` resolves
 	 * it, over every compilable source.
 	 *
-	 * Returns false when none of the three was given -- the usage-banner case. An empty list with a
-	 * true return is the legitimate "this project has no 2.0 sources yet" answer.
+	 * Returns false when none of the three was given -- the usage-banner case -- or when `-All` has a
+	 * value that is not a boolean, which is DSH9110 in Diagnostics; a caller asks the sink first. An
+	 * empty list with a true return is the legitimate "this project has no 2.0 sources yet" answer.
 	 */
 	bool ResolveDreamShaderLang2CommandletSourceFiles(
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params,
-		TArray<FString>& OutSourceFiles);
+		TArray<FString>& OutSourceFiles,
+		::UE::DreamShader::Lang::FLangDiagnosticSink& Diagnostics);
 
 	/** The usage lines for the four 2.0 verbs, appended to the commandlet's own banner. */
 	const TCHAR* GetDreamShaderLang2CommandletUsage();

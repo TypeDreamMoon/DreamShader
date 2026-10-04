@@ -420,24 +420,6 @@ namespace UE::DreamShader::Editor::Private
 
 		// ---------------------------------------------------------------------------- commandlet
 
-		static bool HasFlag(const TArray<FString>& Tokens, const TArray<FString>& Switches, const TCHAR* Name)
-		{
-			const auto Matches = [Name](const FString& Text)
-			{
-				FString Key;
-				FString Value;
-				if (TrySplitCommandletAssignment(Text, Key, Value))
-				{
-					// `-Check=false` is a way to say no.
-					return Key.Equals(Name, ESearchCase::IgnoreCase)
-						&& !Value.Equals(TEXT("false"), ESearchCase::IgnoreCase)
-						&& !Value.Equals(TEXT("0"), ESearchCase::CaseSensitive);
-				}
-				return NormalizeCommandletKey(Text).Equals(Name, ESearchCase::IgnoreCase);
-			};
-			return Switches.ContainsByPredicate(Matches) || Tokens.ContainsByPredicate(Matches);
-		}
-
 		/** A relative `-Source`: under the project's source folder first, then under the project, as `compile` reads it. */
 		static FString ResolveSourceArgument(const FString& Argument)
 		{
@@ -769,10 +751,18 @@ namespace UE::DreamShader::Editor::Private
 	{
 		using namespace MigratePrivate;
 
+		// Every flag before any file: a `-Check` that is not read is a migration that writes.
+		Lang::FLangDiagnosticSink FlagSink;
 		FDreamShaderMigrateOptions Options;
-		Options.bCheck = HasFlag(Tokens, Switches, TEXT("Check"));
-		Options.bDryRun = HasFlag(Tokens, Switches, TEXT("DryRun"));
-		Options.bNoBackup = HasFlag(Tokens, Switches, TEXT("NoBackup"));
+		Options.bCheck = HasCommandletFlag(Tokens, Switches, Params, TEXT("Check"), FlagSink);
+		Options.bDryRun = HasCommandletFlag(Tokens, Switches, Params, TEXT("DryRun"), FlagSink);
+		Options.bNoBackup = HasCommandletFlag(Tokens, Switches, Params, TEXT("NoBackup"), FlagSink);
+		const bool bAll = HasCommandletFlag(Tokens, Switches, Params, TEXT("All"), FlagSink);
+		if (LogCommandletFlagErrors(FlagSink))
+		{
+			return false;
+		}
+
 		FString OutputDirectory;
 		if (TryGetCommandletParam(Tokens, Switches, Params, TEXT("Out"), OutputDirectory)
 			|| TryGetCommandletParam(Tokens, Switches, Params, TEXT("Output"), OutputDirectory))
@@ -830,7 +820,7 @@ namespace UE::DreamShader::Editor::Private
 				}
 			}
 		}
-		else if (HasFlag(Tokens, Switches, TEXT("All")) || bHasRoot)
+		else if (bAll || bHasRoot)
 		{
 			RootName = NormalizeCommandletValue(RootName);
 			TArray<FString> ProjectFiles;

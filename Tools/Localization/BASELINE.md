@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2113
+2114
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -589,6 +589,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Substrate | VirtualThicknessAlone | '{0}.{1}': 'Thickness' is how deep 'Transmittance' is measured, and this call gives no 'Transmittance'. |
 | DreamShader.Binder.Substrate | VirtualTwice | '{0}' is given twice in this call. |
 | DreamShader.CommandletRunner | DecompileDiagnosticsOutFailed | The diagnostics JSON could not be written: {0}. |
+| DreamShader.CommandletRunner | FlagValueNotBoolean | '-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone is on; the command did nothing. |
 | DreamShader.CustomHlsl | CustomBadFunctionIndex | Custom node code was asked for function {0}, but the bound module has {1}. |
 | DreamShader.CustomHlsl | CustomCallArity | '{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise. |
 | DreamShader.CustomHlsl | CustomCallCycle | The '@custom' functions {0} call each other in a cycle; HLSL has no recursion, so their bodies cannot be embedded in a custom node. |

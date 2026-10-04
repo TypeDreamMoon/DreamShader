@@ -12,7 +12,9 @@
 #include "DreamShaderDependencyGraphService.h"
 #include "Diagnostics/DreamShaderDiagnosticsStore.h"
 #include "DreamShaderTextWireUtils.h"
+#include "Lang/LangDiagnostic.h"
 
+#include "Commandlets/Commandlet.h"
 #include "Internationalization/Culture.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
@@ -292,24 +294,123 @@ bool FDreamShaderCommandletArgParsingTest::RunTest(const FString& Parameters)
 		TestFalse(TEXT("no equals -> no split"), TrySplitCommandletAssignment(TEXT("Force"), Key, Value));
 	}
 
-	// TryGetCommandletParam searches Params, then Switches, then Tokens.
+	// The lists come from the parse UDreamShaderCommandlet::Main makes, never by hand: a hand-built switch list can hold
+	// `Force=true`, which the engine never leaves there, and a lookup that reads only that list passes against it.
 	{
-		TArray<FString> Tokens = { TEXT("Mode=compile") };
-		TArray<FString> Switches = { TEXT("-Force=true") };
+		TArray<FString> Tokens;
+		TArray<FString> Switches;
 		TMap<FString, FString> Params;
-		Params.Add(TEXT("Source"), TEXT("C:/x.dsm"));
+		UCommandlet::ParseCommandLine(TEXT("compile Mode=compile -Source=\"C:/x.dsm\" -Force=true -All"), Tokens, Switches, Params);
+
+		// What the engine does with them, and the reason every lookup takes Params.
+		TestEqual(TEXT("the verb is the first token"), Tokens.IsEmpty() ? FString() : Tokens[0], FString(TEXT("compile")));
+		TestTrue(TEXT("a bare switch stays in the switch list"), Switches.Contains(TEXT("All")));
+		TestFalse(TEXT("an assigned switch leaves the switch list"), Switches.ContainsByPredicate([](const FString& Switch)
+		{
+			return Switch.StartsWith(TEXT("Force"), ESearchCase::IgnoreCase);
+		}));
+		TestEqual(TEXT("and lands in the map"), Params.FindRef(TEXT("Force")), FString(TEXT("true")));
 
 		FString Value;
-		TestTrue(TEXT("param from map"), TryGetCommandletParam(Tokens, Switches, Params, TEXT("Source"), Value));
-		TestEqual(TEXT("map value"), Value, FString(TEXT("C:/x.dsm")));
+		TestTrue(TEXT("param from the map"), TryGetCommandletParam(Tokens, Switches, Params, TEXT("Source"), Value));
+		TestEqual(TEXT("map value, quotes stripped"), Value, FString(TEXT("C:/x.dsm")));
 
-		TestTrue(TEXT("param from switch"), TryGetCommandletParam(Tokens, Switches, Params, TEXT("Force"), Value));
-		TestEqual(TEXT("switch value"), Value, FString(TEXT("true")));
-
-		TestTrue(TEXT("param from token"), TryGetCommandletParam(Tokens, Switches, Params, TEXT("Mode"), Value));
+		TestTrue(TEXT("param from a dashless token"), TryGetCommandletParam(Tokens, Switches, Params, TEXT("Mode"), Value));
 		TestEqual(TEXT("token value"), Value, FString(TEXT("compile")));
 
 		TestFalse(TEXT("missing param"), TryGetCommandletParam(Tokens, Switches, Params, TEXT("Nope"), Value));
+
+		UE::DreamShader::Lang::FLangDiagnosticSink Sink;
+		TestTrue(TEXT("an assigned flag is read from the map"), HasCommandletFlag(Tokens, Switches, Params, TEXT("Force"), Sink));
+		TestTrue(TEXT("a bare flag is read from the switches"), HasCommandletFlag(Tokens, Switches, Params, TEXT("All"), Sink));
+		TestFalse(TEXT("an absent flag is off"), HasCommandletFlag(Tokens, Switches, Params, TEXT("Check"), Sink));
+		TestEqual(TEXT("and none of the three is an error"), Sink.Num(), 0);
+	}
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCommandletFlagValuesTest,
+	"DreamShader.Commandlet.Args.FlagValues",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderCommandletFlagValuesTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+
+	enum class EExpect : uint8 { Off, On, Error };
+	struct FCase
+	{
+		const TCHAR* CommandLine;
+		EExpect Expect;
+	};
+
+	// Docs/tools/commandlet.md "Boolean flags", row by row, as a command line reaches Main.
+	const FCase Cases[] = {
+		{ TEXT("compile -All"), EExpect::Off },
+		{ TEXT("compile -Force"), EExpect::On },
+		{ TEXT("compile --force"), EExpect::On },
+		{ TEXT("compile -Force=1"), EExpect::On },
+		{ TEXT("compile -Force=true"), EExpect::On },
+		{ TEXT("compile -force=TRUE"), EExpect::On },
+		{ TEXT("compile -Force=yes"), EExpect::On },
+		{ TEXT("compile -Force=On"), EExpect::On },
+		{ TEXT("compile -Force=\"true\""), EExpect::On },
+		{ TEXT("compile Force=true"), EExpect::On },
+		{ TEXT("compile -Force=0"), EExpect::Off },
+		{ TEXT("compile -Force=false"), EExpect::Off },
+		{ TEXT("compile -Force=No"), EExpect::Off },
+		{ TEXT("compile -Force=OFF"), EExpect::Off },
+		{ TEXT("compile --Force=0"), EExpect::Off },
+		{ TEXT("compile Force=false"), EExpect::Off },
+		{ TEXT("compile -Force=banana"), EExpect::Error },
+		{ TEXT("compile -Force=disable"), EExpect::Error },
+		{ TEXT("compile -Force=2"), EExpect::Error },
+		{ TEXT("compile -Force="), EExpect::Error },
+		{ TEXT("compile -Force=\"\""), EExpect::Error },
+		{ TEXT("compile Force=never"), EExpect::Error },
+		// Another switch whose name starts the same is not this flag, and its value is not looked at.
+		{ TEXT("compile -Forced=banana"), EExpect::Off },
+	};
+
+	for (const FCase& Case : Cases)
+	{
+		TArray<FString> Tokens;
+		TArray<FString> Switches;
+		TMap<FString, FString> Params;
+		UCommandlet::ParseCommandLine(Case.CommandLine, Tokens, Switches, Params);
+
+		UE::DreamShader::Lang::FLangDiagnosticSink Sink;
+		const bool bOn = HasCommandletFlag(Tokens, Switches, Params, TEXT("Force"), Sink);
+		TestTrue(FString::Printf(TEXT("'%s': -Force is %s"), Case.CommandLine, Case.Expect == EExpect::On ? TEXT("on") : TEXT("off")), bOn == (Case.Expect == EExpect::On));
+		TestEqual(FString::Printf(TEXT("'%s': errors raised"), Case.CommandLine), Sink.NumErrors(), Case.Expect == EExpect::Error ? 1 : 0);
+
+		if (Case.Expect == EExpect::Error && Sink.FirstError())
+		{
+			const FString Wire = UE::DreamShader::Lang::FLangDiagnosticSink::ToWireString(*Sink.FirstError());
+			TestEqual(FString::Printf(TEXT("'%s': the code"), Case.CommandLine), Sink.FirstError()->Code, FString(TEXT("DSH9110")));
+			TestTrue(FString::Printf(TEXT("'%s': the message quotes the flag as read (%s)"), Case.CommandLine, *Wire), Wire.StartsWith(TEXT("DSH9110: '-Force=")));
+		}
+	}
+
+	// The value is quoted back as written, so the user sees which flag said what.
+	{
+		TArray<FString> Tokens;
+		TArray<FString> Switches;
+		TMap<FString, FString> Params;
+		UCommandlet::ParseCommandLine(TEXT("migrate -All -Check=banana -DryRun=0"), Tokens, Switches, Params);
+
+		UE::DreamShader::Lang::FLangDiagnosticSink Sink;
+		TestFalse(TEXT("-Check=banana is off"), HasCommandletFlag(Tokens, Switches, Params, TEXT("Check"), Sink));
+		TestFalse(TEXT("-DryRun=0 is off"), HasCommandletFlag(Tokens, Switches, Params, TEXT("DryRun"), Sink));
+		TestTrue(TEXT("-All is on"), HasCommandletFlag(Tokens, Switches, Params, TEXT("All"), Sink));
+		TestEqual(TEXT("one error, for -Check"), Sink.NumErrors(), 1);
+		if (Sink.FirstError())
+		{
+			const FString Wire = UE::DreamShader::Lang::FLangDiagnosticSink::ToWireString(*Sink.FirstError());
+			TestTrue(FString::Printf(TEXT("it names -Check=banana (%s)"), *Wire), Wire.Contains(TEXT("'-Check=banana'")));
+		}
 	}
 
 	return true;

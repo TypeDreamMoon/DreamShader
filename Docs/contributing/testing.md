@@ -237,7 +237,7 @@ generates from it, asserts against the generated asset, and deletes both on the 
 | `DreamShader.Lang.ParameterExpressions.GroupScope` | `Group("X") { … }` stamps the group; loose properties stay ungrouped and unsorted; auto `SortPriority` is a global counter with step 10 from 0; an explicit `SortPriority` wins and consumes no counter slot; `Slider(0, 1)` expands to exactly two reflected properties |
 | `DreamShader.Lang.ParameterExpressions.NestedGroupScope` | Nested groups compose with `\|` — `Group("Surface") { Group("SS") { … } }` yields `Surface\|SS`; a literal `Group("Manual\|Literal")` passes through unchanged |
 
-### `DreamShaderPureFunctionTests.cpp` — 5 declarations
+### `DreamShaderPureFunctionTests.cpp` — 6 declarations
 
 No editor, world or asset dependency; these run in milliseconds.
 
@@ -247,7 +247,8 @@ No editor, world or asset dependency; these run in milliseconds.
 | `DreamShader.Lang.Diagnostics.BuildGenerateDiagnostics` | `BuildGenerateErrorDiagnostics` line splitting |
 | `DreamShader.Lang.Import.ExtractImportPath` | `TryExtractImportPathFromLine`: quoting rules, comment rejection, trailing-junk rejection |
 | `DreamShader.Lang.Import.NormalizeSpecifier` | `NormalizeImportSpecifier`: extensionless specifiers gain `.dsh`, backslashes and leading `./` are stripped |
-| `DreamShader.Commandlet.Args.SplitAndGet` | Commandlet key/value normalization and the `Params → Switches → Tokens` search order |
+| `DreamShader.Commandlet.Args.SplitAndGet` | Commandlet key/value normalization and the `Params → Switches → Tokens` search order, on lists from `UCommandlet::ParseCommandLine` |
+| `DreamShader.Commandlet.Args.FlagValues` | `HasCommandletFlag`: the [Boolean flags](../tools/commandlet.md#boolean-flags) table row by row, `DSH9110` for any other value |
 
 ### Corpus runners — 13 declarations
 

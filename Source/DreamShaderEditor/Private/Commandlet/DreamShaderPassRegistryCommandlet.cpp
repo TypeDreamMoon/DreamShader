@@ -42,27 +42,6 @@ namespace UE::DreamShader::Editor::Private
 		using ::UE::DreamShader::Lang::FLangDiagnosticSink;
 		using ::UE::DreamShader::Lang::FLangSpan;
 
-		/** `-Gc`, `--gc`, `-Gc=true`: the runner's flag rule (its HasCommandletFlag is file-static there). */
-		bool HasPassRegistryFlag(const TArray<FString>& Tokens, const TArray<FString>& Switches, const TCHAR* Name)
-		{
-			auto Matches = [Name](const FString& Text) -> bool
-			{
-				FString Key;
-				FString Value;
-				if (!TrySplitCommandletAssignment(Text, Key, Value))
-				{
-					return NormalizeCommandletKey(Text).Equals(Name, ESearchCase::IgnoreCase);
-				}
-				if (!Key.Equals(Name, ESearchCase::IgnoreCase))
-				{
-					return false;
-				}
-				const FString Lower = Value.ToLower();
-				return !(Lower == TEXT("0") || Lower == TEXT("false") || Lower == TEXT("no") || Lower == TEXT("off"));
-			};
-			return Switches.ContainsByPredicate(Matches) || Tokens.ContainsByPredicate(Matches);
-		}
-
 		void LogPassRegistrySummary(const bool bSucceeded, const FString& Line)
 		{
 			const FString Full = FString::Printf(TEXT("%s RESULT=%s"), *Line, bSucceeded ? TEXT("OK") : TEXT("FAILED")); /* I18N-EXEMPT: machine-readable verdict line */
@@ -453,15 +432,24 @@ namespace UE::DreamShader::Editor::Private
 		const TMap<FString, FString>& Params)
 	{
 		using namespace DreamShaderPassRegistryCommandletDetail;
-		(void)Params;
+
+		// Both flags read before either acts: `-Gc=banana` beside `-Rebuild` is as wrong as it is alone.
+		FLangDiagnosticSink FlagSink;
+		const bool bRebuild = HasCommandletFlag(Tokens, Switches, Params, TEXT("Rebuild"), FlagSink);
+		const bool bGc = HasCommandletFlag(Tokens, Switches, Params, TEXT("Gc"), FlagSink);
+		if (LogCommandletFlagErrors(FlagSink))
+		{
+			LogPassRegistrySummary(false, TEXT("DreamShader pass-registry: a flag's value is neither on nor off, so nothing was run.")); /* I18N-EXEMPT: machine-readable verdict line */
+			return false;
+		}
 
 		FLangDiagnosticSink Sink;
-		if (HasPassRegistryFlag(Tokens, Switches, TEXT("Rebuild")))
+		if (bRebuild)
 		{
 			// The rebuild collects the garbage as its third step; -Gc beside it adds nothing.
 			return RunRebuild(Sink);
 		}
-		if (HasPassRegistryFlag(Tokens, Switches, TEXT("Gc")))
+		if (bGc)
 		{
 			return RunGc(Sink);
 		}

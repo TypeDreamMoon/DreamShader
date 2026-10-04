@@ -4008,7 +4008,14 @@
   "key": "DecompileDiagnosticsOutFailed",
   "src": "The diagnostics JSON could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderCommandletRunner.cpp",
-  "line": 745
+  "line": 804
+ },
+ {
+  "ns": "DreamShader.CommandletRunner",
+  "key": "FlagValueNotBoolean",
+  "src": "'-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone is on; the command did nothing.",
+  "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderCommandletRunner.cpp",
+  "line": 228
  },
  {
   "ns": "DreamShader.CustomHlsl",
@@ -9132,7 +9139,7 @@
   "key": "AssetMoves",
   "src": "'{0}' builds '{1}', and its migrated text would build '{2}': a new asset, with the old one left behind. Give the declaration a '/// @name {1}'.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 686
+  "line": 668
  },
  {
   "ns": "DreamShader.Migrate",
@@ -9146,7 +9153,7 @@
   "key": "CommentsLost",
   "src": "{0} comment(s) of '{1}' would not be in the migrated file ({2}), so nothing was written; this is a fault of the migration, not of the source.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 620
+  "line": 602
  },
  {
   "ns": "DreamShader.Migrate",
@@ -9160,49 +9167,49 @@
   "key": "GraphDiffers",
   "src": "The migrated text of '{0}' does not build the graph the 1.x file builds: {1}",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 671
+  "line": 653
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "MigratedTextFails",
   "src": "The migrated text of '{0}' does not build as 2.0 source ({1}), so nothing was written; the text is in '{2}'.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 637
+  "line": 619
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "NotLegacySource",
   "src": "'{0}' is not a 1.x source; migrate takes '.dsm', '.dsf' and '.dsh' files.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 525
+  "line": 507
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "NothingToMigrate",
   "src": "'{0}' has no 1.x declaration left; there is nothing to migrate.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 559
+  "line": 541
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "OutputExists",
   "src": "'{0}' already exists and is not written over; move it away, or migrate into another folder with -Out.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 566
+  "line": 548
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "OutputUnmovable",
   "src": "'{0}' could not be written.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 760
+  "line": 742
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "OutputUnwritable",
   "src": "'{0}' could not be written.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 714
+  "line": 696
  },
  {
   "ns": "DreamShader.Migrate",
@@ -9216,21 +9223,21 @@
   "key": "SourceUndeletable",
   "src": "'{0}' could not be deleted, so '{1}' was not written: the two would declare the same assets.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 730
+  "line": 712
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "SourceUnmovable",
   "src": "'{0}' could not be moved to '{1}', so '{2}' was not written: the two would declare the same assets.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 742
+  "line": 724
  },
  {
   "ns": "DreamShader.Migrate",
   "key": "SourceUnreadable",
   "src": "'{0}' could not be read.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderMigrate.cpp",
-  "line": 533
+  "line": 515
  },
  {
   "ns": "DreamShader.Navigation",
@@ -10231,105 +10238,105 @@
   "key": "CollectedPassGone",
   "src": "'{0}' no longer runs pass '{1}' in HLSL there.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 240
+  "line": 219
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "CollectedPipelineGone",
   "src": "no .dsp builds '{0}' any more.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 239
+  "line": 218
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "ComputeWord",
   "src": "compute",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 81
+  "line": 60
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "NoPipelines",
   "src": "No .dsp under the source roots; the registry is rewritten from Registry.json as it stands.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 384
+  "line": 363
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "PipelineAssetOrphaned",
   "src": "No .dsp builds '{0}' any more, but the asset is still there and its pass '{1}' points at {2} slot {3}. Delete the asset or restore its source: once the slot is collected and given to another pass, that pass's shader is what this one would run.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 120
+  "line": 99
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "PixelWord",
   "src": "pixel",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 81
+  "line": 60
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "RebuildCompileFailed",
   "src": "'{0}' did not compile, so its pipeline keeps the slots it had: {1}",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 417
+  "line": 396
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "RegistryReset",
   "src": "Registry.json did not parse and was moved aside to '{0}'; the compiles that follow give every HLSL pass a slot afresh.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 365
+  "line": 344
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "RegistryUnreadable",
   "src": "The Custom Pass slot registry cannot be read: {0}. 'dsc pass-registry -Rebuild' moves it aside and gives every HLSL pass a slot again.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 186
+  "line": 165
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "SlotCollected",
   "src": "{0} slot {1} was freed: {2}",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 235
+  "line": 214
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "SlotUnknown",
   "src": "'{0}' does not compile far enough to tell whether it still runs pass '{1}' in {2} slot {3}, so the slot is kept. Fix the source and compile it.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 146
+  "line": 125
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "SnapshotMissingDroppedAtStart",
   "src": "The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the registry file includes it: the next start takes the slot's section out of the registry file, and the pass does nothing until its source is compiled again -- unless the registry file is read-only, and then the global shaders fail to compile, which is fatal. Compile '{4}', or run 'dsc pass-registry -Rebuild'; commit the Slots folder with the registry.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 136
+  "line": 115
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "StaleSlot",
   "src": "Pass '{1}' of '{0}' points at {2} slot {3}, which the registry {4}. Its source '{5}' did not compile, so the asset was not updated: fix the source and compile it, or that pass runs whatever the slot holds.",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 336
+  "line": 315
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "StaleSlotFree",
   "src": "leaves free",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 343
+  "line": 322
  },
  {
   "ns": "DreamShader.PassRegistryCommandlet",
   "key": "StaleSlotTaken",
   "src": "gives to pass '{0}' of '{1}'",
   "file": "DreamShaderEditor\\Private\\Commandlet\\DreamShaderPassRegistryCommandlet.cpp",
-  "line": 342
+  "line": 321
  },
  {
   "ns": "DreamShader.Pipeline",
@@ -10966,91 +10973,91 @@
   "key": "DiagnosticsOutFailed",
   "src": "The diagnostics JSON could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 509
+  "line": 474
  },
  {
   "ns": "DreamShader.Tools",
   "key": "DumpIRWriteFailed",
   "src": "The IR dump could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 589
+  "line": 560
  },
  {
   "ns": "DreamShader.Tools",
   "key": "DumpLayoutBadStyle",
   "src": "'{0}' is not a layout style; -Style takes Blocks, SourceBands, Layered or All.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 654
+  "line": 632
  },
  {
   "ns": "DreamShader.Tools",
   "key": "DumpLayoutWriteFailed",
   "src": "The layout dump could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 732
+  "line": 709
  },
  {
   "ns": "DreamShader.Tools",
   "key": "ExportCatalogEmpty",
   "src": "The builtin catalog came back empty, so '{0}' describes no expression at all. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 1279
+  "line": 1277
  },
  {
   "ns": "DreamShader.Tools",
   "key": "ExportCatalogWriteFailed",
   "src": "The builtin catalog manifest could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 1265
+  "line": 1263
  },
  {
   "ns": "DreamShader.Tools",
   "key": "FormatCheckWouldChange",
   "src": "'{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 958
+  "line": 950
  },
  {
   "ns": "DreamShader.Tools",
   "key": "FormatReadFailed",
   "src": "'{0}' could not be read, so it was not formatted.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 924
+  "line": 916
  },
  {
   "ns": "DreamShader.Tools",
   "key": "FormatWriteFailed",
   "src": "The formatted text of '{0}' could not be written: {1}. A file that is read-only -- checked in, not checked out -- is the usual reason.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 968
+  "line": 960
  },
  {
   "ns": "DreamShader.Tools",
   "key": "IndexWriteFailed",
   "src": "The symbol index could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 823
+  "line": 806
  },
  {
   "ns": "DreamShader.Tools",
   "key": "ListGeneratedOutsideProject",
   "src": "{0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no project-relative path; '-As=Packages' or '-As=Json' lists them.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 1213
+  "line": 1211
  },
  {
   "ns": "DreamShader.Tools",
   "key": "ListGeneratedUnknownFormat",
   "src": "'-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 1054
+  "line": 1053
  },
  {
   "ns": "DreamShader.Tools",
   "key": "ListGeneratedWriteFailed",
   "src": "The list of generated assets could not be written: {0}.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 1225
+  "line": 1223
  },
  {
   "ns": "DreamShader.Tools",
@@ -11064,7 +11071,7 @@
   "key": "NotALang2SourceForVerb",
   "src": "'{0}' is not a compilable DreamShader source (.dss, .dsi, .dsp, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it.",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 257
+  "line": 215
  },
  {
   "ns": "DreamShader.Tools",
@@ -11106,35 +11113,35 @@
   "key": "VerbCheck",
   "src": "check",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 455
+  "line": 420
  },
  {
   "ns": "DreamShader.Tools",
   "key": "VerbDumpIR",
   "src": "dump-ir",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 559
+  "line": 530
  },
  {
   "ns": "DreamShader.Tools",
   "key": "VerbDumpLayout",
   "src": "dump-layout",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 677
+  "line": 654
  },
  {
   "ns": "DreamShader.Tools",
   "key": "VerbIndex",
   "src": "index",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 793
+  "line": 776
  },
  {
   "ns": "DreamShader.Tools",
   "key": "VerbListGenerated",
   "src": "list-generated",
   "file": "DreamShaderEditor\\Private\\Tools\\DreamShaderCompilerTools.cpp",
-  "line": 1071
+  "line": 1069
  },
  {
   "ns": "DreamShader.VirtualFunction",
@@ -14690,35 +14697,35 @@
   "key": "WireUtils.Float",
   "src": "value {0}",
   "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
-  "line": 177
+  "line": 179
  },
  {
   "ns": "DreamShaderTests",
   "key": "WireUtils.Inner",
   "src": "inner {0}",
   "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
-  "line": 163
+  "line": 165
  },
  {
   "ns": "DreamShaderTests",
   "key": "WireUtils.Ordered",
   "src": "Unsupported swizzle {0} at line {1}.",
   "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
-  "line": 146
+  "line": 148
  },
  {
   "ns": "DreamShaderTests",
   "key": "WireUtils.Outer",
   "src": "outer [{0}] end",
   "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
-  "line": 166
+  "line": 168
  },
  {
   "ns": "DreamShaderTests",
   "key": "WireUtils.Plain",
   "src": "Generation aborted.",
   "file": "DreamShaderEditor\\Private\\Tests\\DreamShaderPureFunctionTests.cpp",
-  "line": 131
+  "line": 133
  },
  {
   "ns": "DreamShaderVirtualFunctionSyncService",

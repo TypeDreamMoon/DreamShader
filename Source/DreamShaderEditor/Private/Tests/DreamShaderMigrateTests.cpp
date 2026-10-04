@@ -14,8 +14,11 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Commandlet/DreamShaderCommandlet.h"
 #include "Commandlet/DreamShaderMigrate.h"
 #include "Migrate/LangMigrate.h"
+
+#include "Misc/OutputDeviceRedirector.h"
 
 // This file's own namespace: the module builds as a unity blob.
 namespace UE::DreamShader::Editor::Private::MigrateTests
@@ -680,6 +683,85 @@ bool FDreamShaderMigrateSourceFilesTest::RunTest(const FString& Parameters)
 		TestTrue(TEXT("-Out: the source stays"), FileManager.FileExists(*Fixture.GetSourceFilePath()));
 		TestTrue(TEXT("-Out: the source is its own backup"), Result.BackupFilePath.Equals(Result.SourceFilePath, ESearchCase::IgnoreCase));
 		FileManager.DeleteDirectory(*OutDirectory, false, true);
+	}
+	return true;
+}
+
+namespace UE::DreamShader::Editor::Private::MigrateTests
+{
+	/** Every line logged while it lives; the test base suppresses logged errors, so they are read back here. */
+	class FCapturedLog : public FOutputDevice
+	{
+	public:
+		FCapturedLog() { GLog->AddOutputDevice(this); }
+		virtual ~FCapturedLog() override { GLog->RemoveOutputDevice(this); }
+
+		using FOutputDevice::Serialize;
+		virtual void Serialize(const TCHAR* Line, ELogVerbosity::Type Verbosity, const FName& Category) override
+		{
+			Lines.Add(Line);
+		}
+
+		/** How many lines start with Prefix. */
+		int32 Count(const TCHAR* Prefix)
+		{
+			GLog->FlushThreadedLogs();
+			return Lines.FilterByPredicate([Prefix](const FString& Line) { return Line.StartsWith(Prefix); }).Num();
+		}
+
+	private:
+		TArray<FString> Lines;
+	};
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderMigrateCommandletFlagsTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Migrate.CommandletFlags",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderMigrateCommandletFlagsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::MigrateTests;
+
+	// Through the commandlet's own Main, so each flag arrives where the engine's parse puts it: `-Check=true` in the
+	// param map, not in the switch list. A `-Check` that is not read is a migration that writes.
+	FDreamShaderCompile2Fixture Fixture(TEXT("M_MtFlags"), TEXT("Migrate2"), TEXT("dsm"));
+	if (!Fixture.WriteSource(*this, MakeLegacyMaterial(Fixture, TEXT("M_MtFlags"))))
+	{
+		return false;
+	}
+
+	IFileManager& FileManager = IFileManager::Get();
+	const FString Output = FPaths::ChangeExtension(Fixture.GetSourceFilePath(), TEXT("dss"));
+	UDreamShaderCommandlet* const Commandlet = NewObject<UDreamShaderCommandlet>();
+	const auto Run = [&Fixture, Commandlet](const TCHAR* Flags)
+	{
+		return Commandlet->Main(FString::Printf(TEXT("migrate -Source=\"%s\" %s"), *Fixture.GetSourceFilePath(), Flags));
+	};
+	const auto ExpectUntouched = [this, &FileManager, &Fixture, &Output](const TCHAR* Flags)
+	{
+		TestFalse(FString::Printf(TEXT("%s: no `.dss` was written"), Flags), FileManager.FileExists(*Output));
+		TestTrue(FString::Printf(TEXT("%s: the source is where it was"), Flags), FileManager.FileExists(*Fixture.GetSourceFilePath()));
+	};
+
+	for (const TCHAR* const Flags : { TEXT("-Check=true"), TEXT("-Check=1"), TEXT("-DryRun=yes"), TEXT("-Check=false -DryRun=On") })
+	{
+		TestEqual(FString::Printf(TEXT("%s: the check exits 0"), Flags), Run(Flags), 0);
+		ExpectUntouched(Flags);
+	}
+
+	// A value that says neither: DSH9110, and the run does nothing -- no migration, and no check either.
+	for (const TCHAR* const Flags : { TEXT("-Check=banana"), TEXT("-NoBackup=") })
+	{
+		FCapturedLog Log;
+		TestEqual(FString::Printf(TEXT("%s: the run exits 1"), Flags), Run(Flags), 1);
+		// Unlocated: a flag is on the command line, and no file is to blame for it.
+		TestEqual(FString::Printf(TEXT("%s: DSH9110 is logged once, with no location"), Flags), Log.Count(TEXT("DSH9110: '-")), 1);
+		TestEqual(FString::Printf(TEXT("%s: no file was looked at"), Flags), Log.Count(TEXT("Checked '")), 0);
+		ExpectUntouched(Flags);
 	}
 	return true;
 }

@@ -102,8 +102,9 @@ too; for those, a rewrite is expected.)
   from the engine log.
 - **A green `compile -All` can have built nothing**: an empty source list logs
   `DreamShader commandlet found no source files to compile.` at Warning and exits `0`. Look for `Generated …`.
-- **Write flags bare.** `-Force=true` or `-Check=true` straight to the commandlet is not read at all — the flag
-  stays off, with no message. The driver always passes them bare; this bites hand-written command lines.
+- **A flag's value is on or off, or the run does nothing.** Straight to the commandlet, `-Force` and `-Force=true`
+  (`1`, `yes`, `on`) are on and `-Force=false` (`0`, `no`, `off`) is off; any other value, an empty one
+  included, is `DSH9110` and the command exits `1` without touching a file. The driver passes flags bare.
 - **The first bare token after `-run=DreamShader` is the verb**, unconditionally — `-run=DreamShader Source=X
   compile` runs a verb called `Source=X`.
 - **The editor bridge never runs inside a commandlet**: no `diagnostics.json`, no squiggles in VS Code. The log is

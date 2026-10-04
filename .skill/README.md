@@ -163,8 +163,8 @@ committed, everyone runs `sync-skills.ps1` once.
   binder's errors behind it; fixing it can bring out more.
 - **The editor bridge never runs inside a commandlet** — no watcher, no WebSocket on 17864, no
   `diagnostics.json`. A headless run's diagnostics are in the log, which the driver prints.
-- **Write commandlet flags bare** when calling it by hand: `-Force=true` is not read at all. The driver always
-  writes them bare.
+- **A commandlet flag is bare, or `=true` / `=false`** when calling it by hand (also `1`/`0`, `yes`/`no`,
+  `on`/`off`). Any other value is `DSH9110`, and the command does nothing. The driver always writes flags bare.
 
 ## See also
 

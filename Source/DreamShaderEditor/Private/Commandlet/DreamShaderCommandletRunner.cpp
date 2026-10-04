@@ -61,7 +61,9 @@ namespace UE::DreamShader::Editor::Private
 			"dump-graph is a developer tool: it writes one canonical JSON per generated asset and\n"
 			"never writes an asset itself. Compile the tree first if its sources have changed.\n"
 			"-Define (short form -D) may be repeated; -Define=NAME with no value is a bare marker that\n"
-			"defined(NAME) sees. Names starting with DS_ are reserved for the built-in constants.");
+			"defined(NAME) sees. Names starting with DS_ are reserved for the built-in constants.\n"
+			"A flag is written bare (-Force) or with true/false, 1/0, yes/no or on/off (-Force=false);\n"
+			"any other value is an error (DSH9110), and the command does nothing.");
 	}
 
 	FString NormalizeCommandletValue(FString Value)
@@ -136,6 +138,106 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		return false;
+	}
+
+	namespace
+	{
+		/** The words a flag's value may be. False for any other, an empty value included: it says neither on nor off. */
+		bool TryParseCommandletBool(const FString& Text, bool& bOutValue)
+		{
+			const FString Normalized = NormalizeCommandletValue(Text).ToLower();
+			if (Normalized == TEXT("1")
+				|| Normalized == TEXT("true")
+				|| Normalized == TEXT("yes")
+				|| Normalized == TEXT("on"))
+			{
+				bOutValue = true;
+				return true;
+			}
+
+			if (Normalized == TEXT("0")
+				|| Normalized == TEXT("false")
+				|| Normalized == TEXT("no")
+				|| Normalized == TEXT("off"))
+			{
+				bOutValue = false;
+				return true;
+			}
+
+			return false;
+		}
+	}
+
+	bool HasCommandletFlag(
+		const TArray<FString>& Tokens,
+		const TArray<FString>& Switches,
+		const TMap<FString, FString>& Params,
+		const FString& Name,
+		::UE::DreamShader::Lang::FLangDiagnosticSink& Diagnostics)
+	{
+		bool bNamed = false;
+		bool bHasValue = false;
+		FString Value;
+
+		// The map first: it is where the engine put every `-Name=value`.
+		for (const TPair<FString, FString>& Param : Params)
+		{
+			if (NormalizeCommandletKey(Param.Key).Equals(Name, ESearchCase::IgnoreCase))
+			{
+				bNamed = true;
+				bHasValue = true;
+				Value = NormalizeCommandletValue(Param.Value);
+				break;
+			}
+		}
+
+		// Then the switches and the bare tokens: `-Name`, `Name`, and a dashless `Name=value`, which is a token.
+		for (const TArray<FString>* const List : { &Switches, &Tokens })
+		{
+			for (int32 Index = 0; !bNamed && Index < List->Num(); ++Index)
+			{
+				const FString& Text = (*List)[Index];
+				FString Key;
+				FString Written;
+				const bool bAssigned = TrySplitCommandletAssignment(Text, Key, Written);
+				if ((bAssigned ? Key : NormalizeCommandletKey(Text)).Equals(Name, ESearchCase::IgnoreCase))
+				{
+					bNamed = true;
+					bHasValue = bAssigned;
+					Value = MoveTemp(Written);
+				}
+			}
+		}
+
+		if (!bNamed)
+		{
+			return false;
+		}
+		if (!bHasValue)
+		{
+			return true;
+		}
+
+		bool bOn = false;
+		if (TryParseCommandletBool(Value, bOn))
+		{
+			return bOn;
+		}
+
+		Diagnostics.Error(TEXT("DSH9110"), ::UE::DreamShader::Lang::FLangSpan(), FText::Format(
+			LOCTEXT("FlagValueNotBoolean", "'-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone is on; the command did nothing."),
+			FText::FromString(Name),
+			FText::FromString(Value)));
+		return false;
+	}
+
+	bool LogCommandletFlagErrors(const ::UE::DreamShader::Lang::FLangDiagnosticSink& FlagSink)
+	{
+		for (const ::UE::DreamShader::Lang::FLangDiagnostic& Diagnostic : FlagSink.GetDiagnostics())
+		{
+			UE_LOG(LogDreamShader, Error, TEXT("%s"), *::UE::DreamShader::Lang::FLangDiagnosticSink::ToWireString(Diagnostic));
+		}
+		return FlagSink.HasErrors();
 	}
 
 	int32 ApplyDreamShaderCommandletDefines(const FString& CommandLine)
@@ -269,70 +371,6 @@ namespace UE::DreamShader::Editor::Private
 
 	namespace
 	{
-		bool TryParseCommandletBool(const FString& Text, bool& OutValue)
-		{
-			const FString Normalized = NormalizeCommandletValue(Text).ToLower();
-			if (Normalized.IsEmpty()
-				|| Normalized == TEXT("1")
-				|| Normalized == TEXT("true")
-				|| Normalized == TEXT("yes")
-				|| Normalized == TEXT("on"))
-			{
-				OutValue = true;
-				return true;
-			}
-
-			if (Normalized == TEXT("0")
-				|| Normalized == TEXT("false")
-				|| Normalized == TEXT("no")
-				|| Normalized == TEXT("off"))
-			{
-				OutValue = false;
-				return true;
-			}
-
-			return false;
-		}
-
-		bool HasCommandletFlag(const TArray<FString>& Tokens, const TArray<FString>& Switches, const FString& Name)
-		{
-			for (const FString& Switch : Switches)
-			{
-				FString Key;
-				FString Value;
-				const bool bHasValue = TrySplitCommandletAssignment(Switch, Key, Value);
-				if (!bHasValue)
-				{
-					Key = NormalizeCommandletKey(Switch);
-				}
-
-				if (Key.Equals(Name, ESearchCase::IgnoreCase))
-				{
-					bool bParsedValue = true;
-					return !bHasValue || !TryParseCommandletBool(Value, bParsedValue) || bParsedValue;
-				}
-			}
-
-			for (const FString& Token : Tokens)
-			{
-				FString Key;
-				FString Value;
-				const bool bHasValue = TrySplitCommandletAssignment(Token, Key, Value);
-				if (!bHasValue)
-				{
-					Key = NormalizeCommandletKey(Token);
-				}
-
-				if (Key.Equals(Name, ESearchCase::IgnoreCase))
-				{
-					bool bParsedValue = true;
-					return !bHasValue || !TryParseCommandletBool(Value, bParsedValue) || bParsedValue;
-				}
-			}
-
-			return false;
-		}
-
 		FString ResolveCommandletSourceFilePath(const FString& InSourceFilePath)
 		{
 			FString SourceFilePath = NormalizeCommandletValue(InSourceFilePath);
@@ -394,7 +432,8 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params,
-		TArray<FString>& OutSourceFiles)
+		TArray<FString>& OutSourceFiles,
+		::UE::DreamShader::Lang::FLangDiagnosticSink& Diagnostics)
 	{
 		FString SourceFilePath;
 		if (TryGetCommandletParam(Tokens, Switches, Params, TEXT("Source"), SourceFilePath)
@@ -404,7 +443,7 @@ namespace UE::DreamShader::Editor::Private
 			return true;
 		}
 
-		if (!HasCommandletFlag(Tokens, Switches, TEXT("All")))
+		if (!HasCommandletFlag(Tokens, Switches, Params, TEXT("All"), Diagnostics))
 		{
 			return false;
 		}
@@ -433,10 +472,16 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params)
 	{
-		const bool bForce = HasCommandletFlag(Tokens, Switches, TEXT("Force"));
+		::UE::DreamShader::Lang::FLangDiagnosticSink FlagSink;
+		const bool bForce = HasCommandletFlag(Tokens, Switches, Params, TEXT("Force"), FlagSink);
 
 		TArray<FString> SourceFiles;
-		if (!ResolveDreamShaderCommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		const bool bSelected = ResolveDreamShaderCommandletSourceFiles(Tokens, Switches, Params, SourceFiles, FlagSink);
+		if (LogCommandletFlagErrors(FlagSink))
+		{
+			return false;
+		}
+		if (!bSelected)
 		{
 			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderCommandletUsage());
 			return false;
@@ -490,8 +535,14 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params)
 	{
+		::UE::DreamShader::Lang::FLangDiagnosticSink FlagSink;
 		TArray<FString> SourceFiles;
-		if (!ResolveDreamShaderCommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		const bool bSelected = ResolveDreamShaderCommandletSourceFiles(Tokens, Switches, Params, SourceFiles, FlagSink);
+		if (LogCommandletFlagErrors(FlagSink))
+		{
+			return false;
+		}
+		if (!bSelected)
 		{
 			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderCommandletUsage());
 			return false;
@@ -643,6 +694,14 @@ namespace UE::DreamShader::Editor::Private
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params)
 	{
+		::UE::DreamShader::Lang::FLangDiagnosticSink FlagSink;
+		const bool bKeepAssetPath = HasCommandletFlag(Tokens, Switches, Params, TEXT("KeepAssetPath"), FlagSink);
+		const bool bReadable = HasCommandletFlag(Tokens, Switches, Params, TEXT("Readable"), FlagSink);
+		if (LogCommandletFlagErrors(FlagSink))
+		{
+			return false;
+		}
+
 		FString AssetPath;
 		FString SourceFilePath;
 		const bool bHasAsset = TryGetCommandletParam(Tokens, Switches, Params, TEXT("Asset"), AssetPath);
@@ -702,9 +761,9 @@ namespace UE::DreamShader::Editor::Private
 		Request.Asset = Asset;
 		Request.OutputFilePath = OutputPath;
 		Request.Format = Format;
-		Request.bKeepAssetPath = HasCommandletFlag(Tokens, Switches, TEXT("KeepAssetPath"));
+		Request.bKeepAssetPath = bKeepAssetPath;
 		Request.SourceFilePath = bHasSourceFile ? SourceFilePath : FString();
-		Request.bReadable = HasCommandletFlag(Tokens, Switches, TEXT("Readable"));
+		Request.bReadable = bReadable;
 		const ::UE::DreamShader::Editor::FDreamShaderDecompileResult Result = RunDreamShaderDecompileRequest(Request);
 		const FString DiagnosticsFile = !Result.OutputFilePath.IsEmpty()
 			? Result.OutputFilePath

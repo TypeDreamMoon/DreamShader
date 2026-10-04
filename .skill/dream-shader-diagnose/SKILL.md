@@ -65,7 +65,7 @@ along.
 | a material reads a Custom Pass buffer one frame late | the buffer's last writer runs after the base pass — `DSH7354` (info) says so; see [`reference/dsp.md`](../reference/dsp.md) |
 | the editor shows a stale material | a headless `compile` left a `.uasset` that now wins over the in-memory product. Delete it, or *Tools ▸ DreamShader ▸ Make Ephemeral* |
 | `compile -All` was green but nothing changed | an empty source list is a Warning and exits `0`; or every file was skipped as unchanged — add `-Force` |
-| a commandlet flag did nothing | a flag written with a value (`-Force=true`) is not read at all. Write it bare |
+| a commandlet run did nothing and logged `DSH9110` | a flag's value is neither on nor off (`-Force=banana`, an empty `-Force=`). Write it bare, or `=true` / `=false` (also `1`/`0`, `yes`/`no`, `on`/`off`) |
 | VS Code lost a header's squiggles after another material compiled | compiling a file clears the diagnostics filed under every header it includes — including the ones another material put there. Compile the other material again |
 
 ## Where diagnostics live

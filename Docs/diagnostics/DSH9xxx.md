@@ -114,7 +114,7 @@ Could not write '%s' after renaming an asset it references; the file as it was i
 The IR dump could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:588`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:559`
 <!-- generated:end DSH9022 -->
 
 **Cause.** `dump-ir` could not create its output directory or write the dump file. The message says
@@ -136,7 +136,7 @@ looks wrong.
 The symbol index could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:822`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:805`
 <!-- generated:end DSH9023 -->
 
 **Cause.** `index` could not create its output directory or write the index file. The default
@@ -155,7 +155,7 @@ directory is `<Project>/Saved/DreamShader/Index`.
 The builtin catalog manifest could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1264`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1262`
 <!-- generated:end DSH9024 -->
 
 **Cause.** `export-catalog` could not create its directory or write the manifest. The default path is
@@ -176,7 +176,7 @@ lock or at a read-only `Saved/`.
 The builtin catalog came back empty, so '{0}' describes no expression at all. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1278`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1276`
 <!-- generated:end DSH9025 -->
 
 **Cause.** The manifest was written and describes no expression at all. A language service that binds
@@ -399,7 +399,7 @@ DreamShader cannot dump '%s': %s is not a Material, MaterialFunction, material i
 '{0}' is not a compilable DreamShader source (.dss, .dsi, .dsp, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:256`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:214`
 <!-- generated:end DSH9035 -->
 
 **Cause.** `check`, `dump-ir` or `index` was given a file that is not a `.dss`. These three verbs
@@ -422,7 +422,7 @@ Note that `-All` never produces this: it enumerates `.dss` files only. It is alw
 The diagnostics JSON could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:744`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:508`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:803`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:473`
 <!-- generated:end DSH9036 -->
 
 **Cause.** `-DiagnosticsOut=` was given and the JSON could not be written. With one source the path
@@ -511,7 +511,7 @@ whatever the pipeline produced even when it failed.
 The layout dump could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:731`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:708`
 <!-- generated:end DSH9040 -->
 
 **Cause.** `dsc dump-layout` could not write one of its files -- the SVG, or the JSON beside it
@@ -530,7 +530,7 @@ under `-Json`. The message carries the file system's reason.
 '{0}' is not a layout style; -Style takes Blocks, SourceBands, Layered or All.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:653`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:631`
 <!-- generated:end DSH9041 -->
 
 **Cause.** `dsc dump-layout -Style` was given something other than `Blocks`, `SourceBands`, `Layered`
@@ -611,7 +611,7 @@ when formatted again. Nothing was written. This is a fault of the formatter, nev
 '{0}' could not be read, so it was not formatted.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:923`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:967`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:915`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:959`
 <!-- generated:end DSH9045 -->
 
 **Cause.** `dsc fmt` could not read a source, or could not write the formatted text back. A file
@@ -631,7 +631,7 @@ second.
 '{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:957`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:949`
 <!-- generated:end DSH9046 -->
 
 **Cause.** `dsc fmt -Check` found a file that `fmt` would rewrite. `-Check` writes nothing and fails
@@ -650,7 +650,7 @@ the run, which is the form for CI.
 The list of generated assets could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1224`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1222`
 <!-- generated:end DSH9047 -->
 
 **Cause.** `dsc list-generated -Out` could not write the list. The message carries the file system's
@@ -670,7 +670,7 @@ reason.
 '-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1053`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1052`
 <!-- generated:end DSH9048 -->
 
 **Cause.** `dsc list-generated -As` (`-ListAs` in `dsc.ps1`) was given something other than the four
@@ -690,7 +690,7 @@ ignore block, `Json` for everything.
 {0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no project-relative path; '-As=Packages' or '-As=Json' lists them.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1212`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1210`
 <!-- generated:end DSH9049 -->
 
 **Cause.** Some generated assets lie outside the project directory -- the content of a plugin
@@ -1626,7 +1626,7 @@ migrate again.
 {0} comment(s) of '{1}' would not be in the migrated file ({2}), so nothing was written; this is a fault of the migration, not of the source.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:619`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:601`
 <!-- generated:end DSH9092 -->
 
 **Cause.** A comment of the 1.x file would be missing from the migrated text. Every rewrite is
@@ -1646,7 +1646,7 @@ quotes the comments.
 '{0}' has no 1.x declaration left; there is nothing to migrate.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:558`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:540`
 <!-- generated:end DSH9093 -->
 
 **Cause.** The file is a `.dsh` that holds 2.0 declarations only. There is nothing left to migrate.
@@ -1686,7 +1686,7 @@ build reports.
 '{0}' is not a 1.x source; migrate takes '.dsm', '.dsf' and '.dsh' files.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:524`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:532`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:506`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:514`
 <!-- generated:end DSH9095 -->
 
 **Cause.** `dsc migrate` was given a file that is not a 1.x source, or that cannot be read.
@@ -1704,7 +1704,7 @@ build reports.
 The migrated text of '{0}' does not build as 2.0 source ({1}), so nothing was written; the text is in '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:636`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:618`
 <!-- generated:end DSH9097 -->
 
 **Cause.** The rewritten text was parsed, bound and lowered as 2.0 source before being written, and
@@ -1726,7 +1726,7 @@ in the 1.x source and migrate again.
 The migrated text of '{0}' does not build the graph the 1.x file builds: {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:670`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:685`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:652`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:667`
 <!-- generated:end DSH9098 -->
 
 **Cause.** The migrated text builds, and its IR is not equivalent to the 1.x file's: either the
@@ -1749,7 +1749,7 @@ a path difference, add the `/// @name` the message gives.
 '{0}' already exists and is not written over; move it away, or migrate into another folder with -Out.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:146`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:565`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:713`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:729`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:741`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:759`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:146`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:547`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:695`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:711`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:723`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:741`
 <!-- generated:end DSH9099 -->
 
 **Cause.** The migration could not read, write or replace a file: the builtin catalog is empty
@@ -1954,6 +1954,33 @@ default of its parent's uniform -- no `uniform` of that parameter name declared 
 **Fix.** Add the pragma (`#pragma instance(Parent = "...")`), or declare the uniform in the file the
 action targets, and repeat the action.
 
+## DSH9110
+
+<!-- generated:begin DSH9110 -->
+**Severity** error
+
+**Message**
+
+```
+'-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone is on; the command did nothing.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:227`
+<!-- generated:end DSH9110 -->
+
+**Cause.** a boolean flag of a commandlet verb -- `-Force`, `-All`, `-Check`, `-DryRun`, `-NoBackup`, `-Shaders`,
+`-Json`, `-IncludeEphemeral`, `-KeepAssetPath`, `-Readable`, `-Gc` or `-Rebuild` -- was written with a value that is
+neither on (`true`, `1`, `yes`, `on`) nor off (`false`, `0`, `no`, `off`), in any case. An empty value counts as
+neither: `-Force=` is usually a script variable that was never set. Nothing guesses what was meant. A verb reads all
+of its flags before it touches a file, and on this error it runs nothing and exits `1`. In 2.1.0 and earlier a flag
+written with any value read as absent, so `migrate -Check=true` migrated and `fmt -Check=true` rewrote.
+
+**Fix.** write the flag bare to turn it on (`-Force`), or with one of the eight words; leave it out, or write
+`=false`, to keep it off. Only the flags a verb reads are checked: one it does not take is ignored, whatever its
+value.
+
+**See** [Commandlet — Boolean flags](../tools/commandlet.md#boolean-flags)
+
 ## DSH9200
 
 <!-- generated:begin DSH9200 -->
@@ -1965,7 +1992,7 @@ action targets, and repeat the action.
 The Custom Pass slot registry cannot be read: {0}. 'dsc pass-registry -Rebuild' moves it aside and gives every HLSL pass a slot again.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:185`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:164`
 <!-- generated:end DSH9200 -->
 
 **Cause.** `pass-registry` could not read `Registry.json` to list it: the file cannot be opened, it is
@@ -1989,7 +2016,7 @@ and compiling the `.dsp` files again works too; never merge the JSON by hand. Se
 No .dsp builds '{0}' any more, but the asset is still there and its pass '{1}' points at {2} slot {3}. Delete the asset or restore its source: once the slot is collected and given to another pass, that pass's shader is what this one would run.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:119`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:98`
 <!-- generated:end DSH9201 -->
 
 **Cause.** No `.dsp` under the source roots builds this slot's pipeline any more — the `.dsp` was deleted
@@ -2013,7 +2040,7 @@ the asset under the old one is the orphan.
 {0} slot {1} was freed: {2}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:234`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:213`
 <!-- generated:end DSH9202 -->
 
 **Cause.** Informational. `pass-registry -Gc`, or the collection step of `-Rebuild`, freed a slot: no
@@ -2034,7 +2061,7 @@ deleted. A commandlet recompiles no shader; the next editor start compiles the c
 Registry.json did not parse and was moved aside to '{0}'; the compiles that follow give every HLSL pass a slot afresh.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:364`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:343`
 <!-- generated:end DSH9203 -->
 
 **Cause.** `pass-registry -Rebuild` found a `Registry.json` that does not parse — a merge conflict left
@@ -2057,7 +2084,7 @@ was, then delete it rather than commit it.
 '{0}' did not compile, so its pipeline keeps the slots it had: {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:416`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:395`
 <!-- generated:end DSH9204 -->
 
 **Cause.** `pass-registry -Rebuild` compiles every `.dsp` under the source roots, forced, and this one
@@ -2080,7 +2107,7 @@ at a slot it no longer owns, and DSH8337 each of its slots left without a snapsh
 Pass '{1}' of '{0}' points at {2} slot {3}, which the registry {4}. Its source '{5}' did not compile, so the asset was not updated: fix the source and compile it, or that pass runs whatever the slot holds.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:335`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:314`
 <!-- generated:end DSH9205 -->
 
 **Cause.** After `pass-registry -Rebuild`, a pipeline whose `.dsp` failed in the rebuild (DSH9204) has a
@@ -2103,7 +2130,7 @@ and writes it into the asset. Until then `r.DreamPass.DisablePipelines` keeps th
 No .dsp under the source roots; the registry is rewritten from Registry.json as it stands.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:384`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:363`
 <!-- generated:end DSH9206 -->
 
 **Cause.** Informational. `pass-registry -Rebuild` found no `.dsp` under the source roots (`Packages`
@@ -2125,7 +2152,7 @@ registry files are rewritten from `Registry.json`.
 The snapshot of {0} slot {1} (pass '{2}' of '{3}') is not on disk, and the registry file includes it: the next start takes the slot's section out of the registry file, and the pass does nothing until its source is compiled again -- unless the registry file is read-only, and then the global shaders fail to compile, which is fatal. Compile '{4}', or run 'dsc pass-registry -Rebuild'; commit the Slots folder with the registry.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:135`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:114`
 <!-- generated:end DSH9208 -->
 
 **Cause.** `Registry.json` records a snapshot for this slot and its files are not under
@@ -2151,7 +2178,7 @@ If the registry files are read-only, check them out before the editor next start
 '{0}' does not compile far enough to tell whether it still runs pass '{1}' in {2} slot {3}, so the slot is kept. Fix the source and compile it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:145`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderPassRegistryCommandlet.cpp:124`
 <!-- generated:end DSH9209 -->
 
 **Cause.** The `.dsp` that owns this slot does not compile far enough to tell whether it still runs the

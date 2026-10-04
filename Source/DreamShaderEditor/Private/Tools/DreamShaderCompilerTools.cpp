@@ -46,61 +46,6 @@ namespace UE::DreamShader::Editor::Compiler
 
 	namespace
 	{
-		/**
-		 * `-Flag` / `-Flag=true` / `-Flag=0`.
-		 *
-		 * A copy of the commandlet runner's HasCommandletFlag, which is file-static there. Copied
-		 * rather than exported because exporting it would be a change to a shared file beyond "add
-		 * the verbs", and the alternative -- a verb whose `-Shaders` parsed differently from the
-		 * `-Force` next to it -- is worse than fifteen duplicated lines.
-		 */
-		bool HasFlag(const TArray<FString>& Tokens, const TArray<FString>& Switches, const FString& Name)
-		{
-			auto Matches = [&Name](const FString& Text, bool& bOutValue) -> bool
-			{
-				FString Key;
-				FString Value;
-				const bool bHasValue = Private::TrySplitCommandletAssignment(Text, Key, Value);
-				if (!bHasValue)
-				{
-					Key = Private::NormalizeCommandletKey(Text);
-				}
-
-				if (!Key.Equals(Name, ESearchCase::IgnoreCase))
-				{
-					return false;
-				}
-
-				bOutValue = true;
-				if (bHasValue)
-				{
-					const FString Normalized = Value.ToLower();
-					if (Normalized == TEXT("0") || Normalized == TEXT("false") || Normalized == TEXT("no") || Normalized == TEXT("off"))
-					{
-						bOutValue = false;
-					}
-				}
-				return true;
-			};
-
-			bool bValue = false;
-			for (const FString& Switch : Switches)
-			{
-				if (Matches(Switch, bValue))
-				{
-					return bValue;
-				}
-			}
-			for (const FString& Token : Tokens)
-			{
-				if (Matches(Token, bValue))
-				{
-					return bValue;
-				}
-			}
-			return false;
-		}
-
 		FString GetParam(
 			const TArray<FString>& Tokens,
 			const TArray<FString>& Switches,
@@ -237,6 +182,19 @@ namespace UE::DreamShader::Editor::Compiler
 			}
 		}
 
+		/** Logs the errors reading the flags raised (DSH9110) and the verb's FAILED line. True when there were any: the verb then runs nothing. */
+		bool ReportFlagErrors(const FLangDiagnosticSink& FlagSink, const TCHAR* Verb)
+		{
+			if (!Private::LogCommandletFlagErrors(FlagSink))
+			{
+				return false;
+			}
+			LogSummary(false, FString::Printf( /* I18N-EXEMPT: machine-readable verdict line */
+				TEXT("DreamShader %s: a flag's value is neither on nor off, so nothing was run."),
+				Verb));
+			return true;
+		}
+
 		/**
 		 * True when the path is a compilable source (`.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`); raises DSH9035 into the sink otherwise.
 		 *
@@ -346,7 +304,8 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Tokens,
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params,
-		TArray<FString>& OutSourceFiles)
+		TArray<FString>& OutSourceFiles,
+		FLangDiagnosticSink& Diagnostics)
 	{
 		FString Explicit;
 		if (TryGetExplicitSourceFile(Tokens, Switches, Params, Explicit))
@@ -355,7 +314,7 @@ namespace UE::DreamShader::Editor::Compiler
 			return true;
 		}
 
-		if (!HasFlag(Tokens, Switches, TEXT("All")))
+		if (!Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("All"), Diagnostics))
 		{
 			return false;
 		}
@@ -396,15 +355,21 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params)
 	{
+		FLangDiagnosticSink FlagSink;
 		TArray<FString> SourceFiles;
-		if (!ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		const bool bSelected = ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles, FlagSink);
+		const bool bShaders = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("Shaders"), FlagSink);
+		const bool bForce = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("Force"), FlagSink);
+		if (ReportFlagErrors(FlagSink, TEXT("check")))
+		{
+			return false;
+		}
+		if (!bSelected)
 		{
 			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderLang2CommandletUsage());
 			return false;
 		}
 
-		const bool bShaders = HasFlag(Tokens, Switches, TEXT("Shaders"));
-		const bool bForce = HasFlag(Tokens, Switches, TEXT("Force"));
 		const FString DiagnosticsOut = GetParam(Tokens, Switches, Params, TEXT("DiagnosticsOut"));
 
 		FLangDiagnosticSink ToolSink;
@@ -535,8 +500,15 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params)
 	{
+		FLangDiagnosticSink FlagSink;
 		TArray<FString> SourceFiles;
-		if (!ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		const bool bSelected = ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles, FlagSink);
+		const bool bJson = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("Json"), FlagSink);
+		if (ReportFlagErrors(FlagSink, TEXT("dump-ir")))
+		{
+			return false;
+		}
+		if (!bSelected)
 		{
 			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderLang2CommandletUsage());
 			return false;
@@ -546,7 +518,6 @@ namespace UE::DreamShader::Editor::Compiler
 		const FString OutputDirectory = OutParam.IsEmpty()
 			? DefaultOutputDirectory(TEXT("IR"))
 			: FPaths::ConvertRelativePathToFull(OutParam);
-		const bool bJson = HasFlag(Tokens, Switches, TEXT("Json"));
 
 		int32 WrittenCount = 0;
 		bool bAllSucceeded = true;
@@ -627,8 +598,15 @@ namespace UE::DreamShader::Editor::Compiler
 	{
 		namespace IR = UE::DreamShader::IR;
 
+		FLangDiagnosticSink FlagSink;
 		TArray<FString> SourceFiles;
-		if (!ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		const bool bSelected = ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles, FlagSink);
+		const bool bJson = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("Json"), FlagSink);
+		if (ReportFlagErrors(FlagSink, TEXT("dump-layout")))
+		{
+			return false;
+		}
+		if (!bSelected)
 		{
 			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderLang2CommandletUsage());
 			return false;
@@ -664,7 +642,6 @@ namespace UE::DreamShader::Editor::Compiler
 		const FString OutputDirectory = OutParam.IsEmpty()
 			? DefaultOutputDirectory(TEXT("Layout"))
 			: FPaths::ConvertRelativePathToFull(OutParam);
-		const bool bJson = HasFlag(Tokens, Switches, TEXT("Json"));
 
 		int32 WrittenCount = 0;
 		bool bAllSucceeded = true;
@@ -770,8 +747,14 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params)
 	{
+		FLangDiagnosticSink FlagSink;
 		TArray<FString> SourceFiles;
-		if (!ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		const bool bSelected = ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles, FlagSink);
+		if (ReportFlagErrors(FlagSink, TEXT("index")))
+		{
+			return false;
+		}
+		if (!bSelected)
 		{
 			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderLang2CommandletUsage());
 			return false;
@@ -887,13 +870,23 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params)
 	{
-		TArray<FString> SourceFiles;
+		// The flags before anything else: `-Check` is what keeps this verb from rewriting the files.
+		FLangDiagnosticSink FlagSink;
 		FString Explicit;
-		if (TryGetExplicitSourceFile(Tokens, Switches, Params, Explicit))
+		const bool bExplicit = TryGetExplicitSourceFile(Tokens, Switches, Params, Explicit);
+		const bool bAll = !bExplicit && Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("All"), FlagSink);
+		const bool bCheck = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("Check"), FlagSink);
+		if (ReportFlagErrors(FlagSink, TEXT("fmt")))
+		{
+			return false;
+		}
+
+		TArray<FString> SourceFiles;
+		if (bExplicit)
 		{
 			SourceFiles.Add(MoveTemp(Explicit));
 		}
-		else if (HasFlag(Tokens, Switches, TEXT("All")))
+		else if (bAll)
 		{
 			FindProjectDreamShaderFormatSources(SourceFiles);
 		}
@@ -903,7 +896,6 @@ namespace UE::DreamShader::Editor::Compiler
 			return false;
 		}
 
-		const bool bCheck = HasFlag(Tokens, Switches, TEXT("Check"));
 		const FString OutParam = GetOutParam(Tokens, Switches, Params);
 		const FString OutputDirectory = OutParam.IsEmpty() ? FString() : FPaths::ConvertRelativePathToFull(OutParam);
 
@@ -1036,8 +1028,15 @@ namespace UE::DreamShader::Editor::Compiler
 		const TArray<FString>& Switches,
 		const TMap<FString, FString>& Params)
 	{
+		FLangDiagnosticSink FlagSink;
 		TArray<FString> SourceFiles;
-		if (!ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles))
+		const bool bSelected = ResolveDreamShaderLang2CommandletSourceFiles(Tokens, Switches, Params, SourceFiles, FlagSink);
+		const bool bIncludeEphemeral = Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("IncludeEphemeral"), FlagSink);
+		if (ReportFlagErrors(FlagSink, TEXT("list-generated")))
+		{
+			return false;
+		}
+		if (!bSelected)
 		{
 			UE_LOG(LogDreamShader, Error, TEXT("%s"), GetDreamShaderLang2CommandletUsage());
 			return false;
@@ -1057,7 +1056,6 @@ namespace UE::DreamShader::Editor::Compiler
 			LogSummary(false, TEXT("DreamShader list-generated: nothing was listed."));
 			return false;
 		}
-		const bool bIncludeEphemeral = HasFlag(Tokens, Switches, TEXT("IncludeEphemeral"));
 
 		FString ProjectDirectory = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
 		FPaths::NormalizeDirectoryName(ProjectDirectory);

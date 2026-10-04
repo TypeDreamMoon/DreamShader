@@ -822,6 +822,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH9107](DSH9xxx.md#dsh9107) | error | Expected '{0}' to be declared alone to rewrite its value, found it in a declaration shared with other names... |
 | [DSH9108](DSH9xxx.md#dsh9108) | error | Expected every change to this file to touch its own stretch of text, found an edit at line {0} that overlap... |
 | [DSH9109](DSH9xxx.md#dsh9109) | error | Expected a '#pragma instance(...)' line in this .dsi file, found none; the file was left unchanged. |
+| [DSH9110](DSH9xxx.md#dsh9110) | error | '-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone... |
 | [DSH9200](DSH9xxx.md#dsh9200) | error | The Custom Pass slot registry cannot be read: {0}. 'dsc pass-registry -Rebuild' moves it aside and gives ev... |
 | [DSH9201](DSH9xxx.md#dsh9201) | warning | No .dsp builds '{0}' any more, but the asset is still there and its pass '{1}' points at {2} slot {3}. Dele... |
 | [DSH9202](DSH9xxx.md#dsh9202) | info | {0} slot {1} was freed: {2} |

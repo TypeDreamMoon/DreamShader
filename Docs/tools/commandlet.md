@@ -614,7 +614,8 @@ that is read-only because it is not checked out is the usual reason for both.
 
 ## Argument syntax
 
-Shared by every command. Pinned by the automation test `DreamShader.Commandlet.Args.SplitAndGet`.
+Shared by every command. Pinned by the automation tests `DreamShader.Commandlet.Args.SplitAndGet` and
+`DreamShader.Commandlet.Args.FlagValues`.
 
 | Rule | Behaviour |
 | :-- | :-- |
@@ -629,26 +630,32 @@ Shared by every command. Pinned by the automation test `DreamShader.Commandlet.A
 
 ### Boolean flags
 
-A flag may be written bare or with a value. The value is lowercased before matching.
+A flag may be written bare or with a value. The value is matched case-insensitively, after the
+value normalization above.
 
 | Written as | Result |
 | :-- | :-- |
 | `-Force` | on |
-| `-Force=` | on *(empty value)* |
-| `-Force=1` | on |
-| `-Force=true` | on |
-| `-Force=yes` | on |
-| `-Force=on` | on |
-| `-Force=0` | off |
-| `-Force=false` | off |
-| `-Force=no` | off |
-| `-Force=off` | off |
-| `-Force=<anything else>` | **on** |
+| `-Force=1`, `-Force=true`, `-Force=yes`, `-Force=on` | on |
+| `-Force=0`, `-Force=false`, `-Force=no`, `-Force=off` | off |
+| *(not written)* | off |
+| `-Force=<anything else>`, an empty `-Force=` included | **error** [`DSH9110`](../diagnostics/DSH9xxx.md#dsh9110) |
 
-> [!WARNING]
-> An unrecognized boolean value evaluates to **on**, not off and not an error. `-Force=banana`,
-> `-Force=disable` and `-All=never` all enable the flag. There is no diagnostic. Use the literals in
-> the table above.
+An error is not a guess at what was meant. The command logs `DSH9110`, does nothing at all and
+exits `1`: `migrate -Check=banana` neither checks nor writes, and `-All=never` selects nothing.
+Every command reads all of its flags before it touches a file.
+
+The engine's parser moves every `-Name=value` out of the switch list into the parameter map before
+the command sees it, so a flag is looked up in the same order as a value: the map, then the
+switches, then the bare tokens (a dashless `Force=true` is a token). A flag a command does not take
+is ignored, like any other unknown switch: `dump-graph -Force=banana` runs, because `dump-graph`
+never reads `-Force`.
+
+> [!NOTE]
+> In 2.1.0 and earlier a flag written with any value was read as **absent**: the lookup searched
+> the switch list only, where the engine never leaves `-Name=value`. `-Force=true` did not force,
+> and `migrate -Source=X -Check=true` wrote the migration. This page used to say the opposite —
+> that an unrecognized value meant on.
 
 ## Exit codes
 
@@ -668,6 +675,7 @@ A flag may be written bare or with a value. The value is lowercased before match
 | `1` | `pass-registry` could not read `Registry.json` (`DSH9200`) |
 | `1` | `pass-registry -Gc` could not read `Registry.json` (`DSH8335`) or write a registry file (`DSH8326`) |
 | `1` | `pass-registry -Rebuild`: the unreadable `Registry.json` could not be moved aside (`DSH8336`), a `.dsp` did not compile (`DSH9204`), or collecting or rewriting failed |
+| `1` | any command: a flag it reads has a value that is neither on nor off (`DSH9110`); nothing was run — see [Boolean flags](#boolean-flags) |
 
 ## Notes
 
@@ -728,6 +736,8 @@ Runtime substitutions are shown as `{Placeholder}`. All messages go to `LogDream
 | `DreamShader pass-registry -Gc: {N} slot(s) freed. RESULT={OK\|FAILED}` | Display / Error | the end of `-Gc` |
 | `DreamShader pass-registry -Rebuild: {N} .dsp compiled, {N} failed, {N} slot(s) freed, {N} slot(s) reserved for a missing snapshot. RESULT={OK\|FAILED}` | Display / Error | the end of `-Rebuild` |
 | `DreamShader pass-registry -Rebuild: the unreadable registry could not be reset. RESULT=FAILED` | Error | after `DSH8336` |
+| `DSH9110: '-{Flag}={Value}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{Flag}' alone is on; the command did nothing.` | Error | any command: a flag it reads has another value, an empty one included; see [Boolean flags](#boolean-flags) |
+| `DreamShader {verb}: a flag's value is neither on nor off, so nothing was run. RESULT=FAILED` | Error | after `DSH9110`, from `check`, `dump-ir`, `dump-layout`, `index`, `fmt`, `list-generated` and `pass-registry` |
 
 The usage banner, verbatim:
 
@@ -767,6 +777,8 @@ dump-graph is a developer tool: it writes one canonical JSON per generated asset
 never writes an asset itself. Compile the tree first if its sources have changed.
 -Define (short form -D) may be repeated; -Define=NAME with no value is a bare marker that
 defined(NAME) sees. Names starting with DS_ are reserved for the built-in constants.
+A flag is written bare (-Force) or with true/false, 1/0, yes/no or on/off (-Force=false);
+any other value is an error (DSH9110), and the command does nothing.
 ```
 
 ## Example
