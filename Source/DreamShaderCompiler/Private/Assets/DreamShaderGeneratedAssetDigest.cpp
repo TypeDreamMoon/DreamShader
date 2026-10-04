@@ -25,7 +25,6 @@
 #include "Materials/MaterialInstance.h"
 #include "Misc/Crc.h"
 #include "UObject/Package.h"
-#include "UObject/StructOnScope.h"
 #include "UObject/TextProperty.h"
 #include "UObject/UnrealType.h"
 
@@ -45,36 +44,38 @@ namespace UE::DreamShader::Editor::Private
 		// DSD4: an input is named by GetDreamShaderStableInputName. Break, Get and SetMaterialAttributes name their inputs
 		// with translated text, so a DSD3 digest of a graph that has one depended on the language of the editor that
 		// stamped it, and a team with editors in two languages saw each other's layers and blends as hand-edited.
-		// DSD5: an instance parameter's ExpressionGUID is left out. Regeneration writes the override with an empty GUID and
-		// UE resolves it against the parent's expression when the package next loads, so a DSD4 digest of a texture
-		// instance changed on its first reload and the instance read as hand-edited -- and the cook refused it.
-		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD5");
+		// An instance parameter's ExpressionGUID is left out without a new tag (ExportInstanceParameterValues): every DSD4
+		// stamp was written with the GUID empty, and the text with it cleared is that text byte for byte.
+		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD4");
 
-		// One override array as digest text, each row exported from a copy with its ExpressionGUID cleared. The GUID is the
-		// engine's link to the parent expression, not a value anyone sets; the name, value and every other field still count.
+		// One override array as digest text, exported from a copy with every row's ExpressionGUID cleared. Regeneration
+		// writes each override with an empty GUID (UMaterialInstance's setters invalidate it) and UE resolves it against
+		// the parent's expression when the package next loads -- every override array, not only textures -- so the
+		// instance read as hand-edited after its first reload, and the next compile and the cook refused it. The GUID is
+		// the engine's link to the parent expression, not a value anyone sets; the name, value and every other field
+		// still count. Exported the way the whole array always was: each row against the struct's defaults, so a
+		// cleared GUID is left out exactly as an empty one was, and no stamp written before this needs retiring.
 		FString ExportInstanceParameterValues(const FArrayProperty* ArrayProperty, const void* ValuePtr)
 		{
+			FString Value;
 			const FStructProperty* Element = CastField<FStructProperty>(ArrayProperty->Inner);
 			const FStructProperty* Guid = Element ? FindFProperty<FStructProperty>(Element->Struct, TEXT("ExpressionGUID")) : nullptr;
 			if (!Guid || Guid->Struct != TBaseStructure<FGuid>::Get())
 			{
-				FString Value;
 				ArrayProperty->ExportTextItem_Direct(Value, ValuePtr, nullptr, nullptr, PPF_None);
 				return Value;
 			}
 
-			FScriptArrayHelper Array(ArrayProperty, ValuePtr);
-			TArray<FString> Values;
+			void* Rows = ArrayProperty->AllocateAndInitializeValue();
+			ArrayProperty->CopyCompleteValue(Rows, ValuePtr);
+			FScriptArrayHelper Array(ArrayProperty, Rows);
 			for (int32 Index = 0; Index < Array.Num(); ++Index)
 			{
-				FStructOnScope Copy(Element->Struct);
-				Element->Struct->CopyScriptStruct(Copy.GetStructMemory(), Array.GetRawPtr(Index));
-				Guid->ClearValue_InContainer(Copy.GetStructMemory());
-				FString Value;
-				Element->ExportTextItem_Direct(Value, Copy.GetStructMemory(), nullptr, nullptr, PPF_None);
-				Values.Add(MoveTemp(Value));
+				Guid->ClearValue_InContainer(Array.GetRawPtr(Index));
 			}
-			return Values.IsEmpty() ? FString() : TEXT("(") + FString::Join(Values, TEXT(",")) + TEXT(")");
+			ArrayProperty->ExportTextItem_Direct(Value, Rows, nullptr, nullptr, PPF_None);
+			ArrayProperty->DestroyAndFreeValue(Rows);
+			return Value;
 		}
 
 		// Node properties a user is free to change without meaning anything by it. Node coordinates are

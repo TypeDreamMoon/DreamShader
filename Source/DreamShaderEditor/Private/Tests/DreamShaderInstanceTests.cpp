@@ -274,8 +274,9 @@ bool FDreamShaderInstanceDependentsTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-// A texture override is written with an empty ExpressionGUID and UE fills it in when the package loads. That must not
-// read as a hand edit (a cook would refuse the instance), while a changed texture still must.
+// An override is written with an empty ExpressionGUID and UE fills it in when the package loads -- a texture, a scalar
+// and a vector alike. That must not read as a hand edit (a cook would refuse the instance), while a changed texture
+// still must; and the digest text keeps its DSD4 shape, so the stamps written before the fix stay comparable.
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderInstanceSaveReloadTest,
 	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
@@ -292,7 +293,9 @@ bool FDreamShaderInstanceSaveReloadTest::RunTest(const FString& Parameters)
 	if (!WriteInstanceFixture(*this, Fixture, TEXT("M_InReloadParent"), TEXT(
 		"#pragma instance(Parent = \"M_InReloadParent\")\n"
 		"/// @default /Engine/EngineResources/DefaultTexture\n"
-		"uniform Texture2D Albedo;\n")))
+		"uniform Texture2D Albedo;\n"
+		"uniform float Gain = 2.0;\n"
+		"uniform float3 Tint = float3(0, 1, 0);\n")))
 	{
 		return false;
 	}
@@ -301,8 +304,10 @@ bool FDreamShaderInstanceSaveReloadTest::RunTest(const FString& Parameters)
 		"#pragma material(Backend = Graph, ShadingModel = Unlit)\n"
 		"/// @default /Engine/EngineResources/WhiteSquareTexture\n"
 		"uniform Texture2D Albedo;\n"
+		"uniform float Gain = 1.0;\n"
+		"uniform float3 Tint = float3(1, 1, 1);\n"
 		"export void M_InReloadParent(inout material m)\n"
-		"{ m.EmissiveColor = Albedo.Sample(UE.TextureCoordinate()).rgb; }\n"), ParentPath))
+		"{ m.EmissiveColor = Albedo.Sample(UE.TextureCoordinate()).rgb * Tint * Gain; }\n"), ParentPath))
 	{
 		return false;
 	}
@@ -320,6 +325,7 @@ bool FDreamShaderInstanceSaveReloadTest::RunTest(const FString& Parameters)
 		return false;
 	}
 	const FString Before = BuildOutputDigestText(Instance);
+	TestFalse(TEXT("an empty ExpressionGUID is left out of the digest text, as DSD4 left it"), Before.Contains(TEXT("ExpressionGUID")));
 
 	FText ReloadError;
 	if (!TestTrue(TEXT("reload the saved instance through UE"), UPackageTools::ReloadPackages(
@@ -331,6 +337,15 @@ bool FDreamShaderInstanceSaveReloadTest::RunTest(const FString& Parameters)
 	if (!TestNotNull(TEXT("reloaded instance"), Instance))
 	{
 		return false;
+	}
+	const bool bOneOfEach = TestEqual(TEXT("one texture override after the reload"), Instance->TextureParameterValues.Num(), 1)
+		& TestEqual(TEXT("one scalar override after the reload"), Instance->ScalarParameterValues.Num(), 1)
+		& TestEqual(TEXT("one vector override after the reload"), Instance->VectorParameterValues.Num(), 1);
+	if (bOneOfEach)
+	{
+		TestTrue(TEXT("UE resolved the texture override's ExpressionGUID on load"), Instance->TextureParameterValues[0].ExpressionGUID.IsValid());
+		TestTrue(TEXT("UE resolved the scalar override's ExpressionGUID on load"), Instance->ScalarParameterValues[0].ExpressionGUID.IsValid());
+		TestTrue(TEXT("UE resolved the vector override's ExpressionGUID on load"), Instance->VectorParameterValues[0].ExpressionGUID.IsValid());
 	}
 	TestEqualSensitive(TEXT("save/reload preserves the generated content digest"), BuildOutputDigestText(Instance), Before);
 	TestTrue(TEXT("engine reload is not a hand edit"), ClassifyGeneratedAsset(Instance) == EDreamShaderDigestState::Generated);
