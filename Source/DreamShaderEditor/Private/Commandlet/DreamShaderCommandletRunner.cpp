@@ -233,10 +233,7 @@ namespace UE::DreamShader::Editor::Private
 
 	bool LogCommandletFlagErrors(const ::UE::DreamShader::Lang::FLangDiagnosticSink& FlagSink)
 	{
-		for (const ::UE::DreamShader::Lang::FLangDiagnostic& Diagnostic : FlagSink.GetDiagnostics())
-		{
-			UE_LOG(LogDreamShader, Error, TEXT("%s"), *::UE::DreamShader::Lang::FLangDiagnosticSink::ToWireString(Diagnostic));
-		}
+		::UE::DreamShader::Editor::Compiler::LogLang2Diagnostics(FlagSink, FString());
 		return FlagSink.HasErrors();
 	}
 

@@ -9,6 +9,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Commandlet/DreamShaderCommandletRunner.h"
+#include "DreamShaderCompilerDiagnostics.h"
 #include "DreamShaderDependencyGraphService.h"
 #include "Diagnostics/DreamShaderDiagnosticsStore.h"
 #include "DreamShaderTextWireUtils.h"
@@ -187,6 +188,44 @@ bool FDreamShaderTextWireUtilsTest::RunTest(const FString& Parameters)
 
 	AssertWireInvariance(TEXT("en-US"));
 	AssertWireInvariance(TEXT("zh-Hans"));
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDiagnosticsNoFileTest,
+	"DreamShader.Lang.Diagnostics.NoFile",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderDiagnosticsNoFileTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Compiler;
+
+	// A diagnostic of no file -- a commandlet's argument error -- with no path to fall back on either. The empty path
+	// used to be made absolute, into the engine's Binaries directory, and printed as its location.
+	UE::DreamShader::Lang::FLangDiagnosticSink Sink;
+	Sink.Error(TEXT("DSH9041"), UE::DreamShader::Lang::FLangSpan(), FText::FromString(TEXT("probe")));
+
+	TArray<FLang2DiagnosticRecord> Records;
+	BuildLang2DiagnosticRecords(Sink, FString(), Records);
+	TestEqual(TEXT("one record"), Records.Num(), 1);
+	if (Records.Num() == 1)
+	{
+		TestTrue(TEXT("the record names no file, so the store files it under the compiled source"), Records[0].Record.FilePath.IsEmpty());
+		TestEqual(TEXT("its detail is the diagnostic alone"), Records[0].Record.Detail.ToString(), FString(TEXT("DSH9041: probe")));
+	}
+
+	UE::DreamShader::FDreamShaderError Error;
+	TestTrue(TEXT("the compile error is built"), BuildLang2CompileError(Sink, FString(), Error));
+	TestEqual(TEXT("its message is the diagnostic alone"), Error.Message, FString(TEXT("DSH9041: probe")));
+
+	// A path still locates it.
+	BuildLang2DiagnosticRecords(Sink, TEXT("C:/Probe/M_Probe.dss"), Records);
+	if (Records.Num() == 1)
+	{
+		const FString Detail = Records[0].Record.Detail.ToString();
+		TestTrue(FString::Printf(TEXT("a path locates it (%s)"), *Detail), Detail.EndsWith(TEXT("M_Probe.dss(1,1): DSH9041: probe")));
+	}
 
 	return true;
 }

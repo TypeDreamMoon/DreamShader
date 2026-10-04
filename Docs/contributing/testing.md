@@ -237,7 +237,7 @@ generates from it, asserts against the generated asset, and deletes both on the 
 | `DreamShader.Lang.ParameterExpressions.GroupScope` | `Group("X") { … }` stamps the group; loose properties stay ungrouped and unsorted; auto `SortPriority` is a global counter with step 10 from 0; an explicit `SortPriority` wins and consumes no counter slot; `Slider(0, 1)` expands to exactly two reflected properties |
 | `DreamShader.Lang.ParameterExpressions.NestedGroupScope` | Nested groups compose with `\|` — `Group("Surface") { Group("SS") { … } }` yields `Surface\|SS`; a literal `Group("Manual\|Literal")` passes through unchanged |
 
-### `DreamShaderPureFunctionTests.cpp` — 6 declarations
+### `DreamShaderPureFunctionTests.cpp` — 8 declarations
 
 No editor, world or asset dependency; these run in milliseconds.
 
@@ -245,6 +245,8 @@ No editor, world or asset dependency; these run in milliseconds.
 | :-- | :-- |
 | `DreamShader.Lang.Diagnostics.ParseErrorLocation` | `TryParseErrorLocation`, including clamping line/column to `>= 1` and rejecting non-numeric coordinates |
 | `DreamShader.Lang.Diagnostics.BuildGenerateDiagnostics` | `BuildGenerateErrorDiagnostics` line splitting |
+| `DreamShader.Lang.Diagnostics.TextWireUtils` | The diagnostics wire text is the same under the `en-US` and `zh-Hans` editor cultures |
+| `DreamShader.Lang.Diagnostics.NoFile` | A diagnostic of no file, reported with an empty path, carries no location: no made-up file in its record or its compile error |
 | `DreamShader.Lang.Import.ExtractImportPath` | `TryExtractImportPathFromLine`: quoting rules, comment rejection, trailing-junk rejection |
 | `DreamShader.Lang.Import.NormalizeSpecifier` | `NormalizeImportSpecifier`: extensionless specifiers gain `.dsh`, backslashes and leading `./` are stripped |
 | `DreamShader.Commandlet.Args.SplitAndGet` | Commandlet key/value normalization and the `Params → Switches → Tokens` search order, on lists from `UCommandlet::ParseCommandLine` |

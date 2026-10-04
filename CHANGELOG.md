@@ -46,6 +46,11 @@
   every verb: `true`, `1`, `yes`, `on` are on, `false`, `0`, `no`, `off` are off, and any other value -- an
   empty `-Force=` included -- is `DSH9110`, after which the command does nothing and exits `1`. The commandlet
   page used to say an unrecognised value meant on. See [Boolean flags](Docs/tools/commandlet.md#boolean-flags).
+- **A commandlet error that belongs to no file is logged without a made-up location.** An argument error --
+  `dump-layout -Style=Bogus` (`DSH9041`), `list-generated -As=Bogus` (`DSH9048`), an unknown `check -Platform`,
+  a `pass-registry` failure -- was printed as `../../../Engine/Binaries/Win64/(1,1): DSHnnnn: ...`: the empty
+  path was made absolute, into the engine's Binaries directory, and shown as the place of the mistake. It is
+  `DSHnnnn: ...` now.
 - **`dsc.ps1` prints a compile's report whole.** A report is one log message of many lines -- every `Generated`
   line, then `Warnings:` and the warnings, or every error -- and the engine prefixes only its first line, so the
   driver showed the first line and dropped the rest: warnings, every error after the first, and every product

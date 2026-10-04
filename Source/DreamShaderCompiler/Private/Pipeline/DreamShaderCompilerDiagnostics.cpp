@@ -47,6 +47,16 @@ namespace UE::DreamShader::Editor::Compiler
 
 			return FCString::Atoi(*Digits);
 		}
+
+		/**
+		 * NormalizeSourceFilePath, except that no path stays no path. Normalizing makes a path absolute, so an empty one
+		 * became the engine's Binaries directory, and FormatLang2DiagnosticWireLine printed that as the location of a
+		 * diagnostic that belongs to no file -- a commandlet's argument error read `../../../Engine/Binaries/Win64/(1,1):`.
+		 */
+		FString NormalizeFallbackPath(const FString& SourceFilePath)
+		{
+			return SourceFilePath.IsEmpty() ? FString() : UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		}
 	}
 
 	const TCHAR* Lang2SeverityWireName(const ELangSeverity Severity)
@@ -115,7 +125,7 @@ namespace UE::DreamShader::Editor::Compiler
 		const FString& SourceFilePath,
 		TArray<FLang2DiagnosticRecord>& OutRecords)
 	{
-		const FString NormalizedSource = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		const FString NormalizedSource = NormalizeFallbackPath(SourceFilePath);
 
 		OutRecords.Reset();
 		OutRecords.Reserve(Sink.Num());
@@ -158,7 +168,7 @@ namespace UE::DreamShader::Editor::Compiler
 			return false;
 		}
 
-		const FString NormalizedSource = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		const FString NormalizedSource = NormalizeFallbackPath(SourceFilePath);
 
 		TArray<FString> Lines;
 		Lines.Add(FormatLang2DiagnosticWireLine(*First, NormalizedSource));
@@ -187,7 +197,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 	FString BuildLang2DiagnosticsWireJson(const FString& SourceFilePath, const TArray<FLang2DiagnosticRecord>& Records)
 	{
-		const FString NormalizedSource = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		const FString NormalizedSource = NormalizeFallbackPath(SourceFilePath);
 
 		// Grouped by the record's own file, so a diagnostic raised in an included header appears
 		// under that header rather than under the file that included it -- the same bucketing the
@@ -302,7 +312,7 @@ namespace UE::DreamShader::Editor::Compiler
 
 	void LogLang2Diagnostics(const FLangDiagnosticSink& Sink, const FString& SourceFilePath)
 	{
-		const FString NormalizedSource = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		const FString NormalizedSource = NormalizeFallbackPath(SourceFilePath);
 
 		for (const FLangDiagnostic& Diagnostic : Sink.GetDiagnostics())
 		{

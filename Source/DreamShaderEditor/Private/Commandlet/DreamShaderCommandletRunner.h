@@ -40,8 +40,8 @@ namespace UE::DreamShader::Editor::Private
 
 	/**
 	 * Logs what HasCommandletFlag raised into FlagSink, a `DSH9110: ...` Error line each, and returns whether there was
-	 * any: a verb that gets true back runs nothing. The lines carry no location -- a flag is on the command line, not in
-	 * a file, and LogLang2Diagnostics would print an empty path as the process's working directory.
+	 * any: a verb that gets true back runs nothing. The lines carry no location: a flag is on the command line, not in
+	 * a file.
 	 */
 	bool LogCommandletFlagErrors(const ::UE::DreamShader::Lang::FLangDiagnosticSink& FlagSink);
 
