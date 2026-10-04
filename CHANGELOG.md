@@ -33,6 +33,15 @@
   `.dsi` with `dreamshader-dss` and `.dsp` with `dreamshader-dsp`, the language ids of the VS Code extension (2.1.0
   for `.dsp`), next to the 1.x sources' `dreamshaderlang`. See [Workspace](Docs/tools/workspace.md).
 
+### Fixed
+
+- **A successful compile's warnings reach the editor extension.** The bridge cleared a file's diagnostics when it
+  compiled, so a warning -- DSH7233, a metadata key the engine does not know -- was only in the log. A successful
+  compile now files its warnings in `diagnostics.json`, with their codes, severity and positions, as a failed
+  compile files its errors. (The error of [dreamshader-language-support#2](https://github.com/TypeDreamMoon/dreamshader-language-support/issues/2),
+  an unquoted asset path reported at 1:1 by the 1.x generator, is DSH2151 at the path since 2.0.0.) See
+  [Editor bridge](Docs/tools/bridge.md#diagnosticsjson).
+
 ## 2.0.2 - 2026-10-02
 
 ### Changed
