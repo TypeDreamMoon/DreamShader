@@ -1990,6 +1990,22 @@ namespace UE::DreamShader::Editor::Private
 		if (Result.bSucceeded)
 		{
 			ClearDiagnosticsForSourceAndDependencies(SourceFilePath);
+			// A compile that succeeded may still have warned -- a metadata key the engine does not know, a slider range on
+			// a vector. Its records go where a failed compile's do, each with its code, severity and span, so a client shows
+			// the warning at the line that raised it instead of the log alone holding it.
+			TArray<::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord> WarningRecords;
+			if (bCompilerRan
+				&& ::UE::DreamShader::Editor::Compiler::GetDreamShaderLastCompileDiagnostics(SourceFilePath, WarningRecords)
+				&& !WarningRecords.IsEmpty())
+			{
+				TArray<FDreamShaderDiagnosticRecord> Warnings;
+				Warnings.Reserve(WarningRecords.Num());
+				for (::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord& WarningRecord : WarningRecords)
+				{
+					Warnings.Add(MoveTemp(WarningRecord.Record));
+				}
+				SetDiagnostics(SourceFilePath, MoveTemp(Warnings));
+			}
 			UpdateDiagnosticsFile();
 			UE_LOG(LogDreamShader, Display, TEXT("%s"), *OutMessage);
 			ResolvePendingResponses(SourceFilePath, true, OutMessage);

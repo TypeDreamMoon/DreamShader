@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2112
+2113
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -85,6 +85,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Directives | RegionNotClosedUnnamed | This '#pragma region' is never closed; add a '#pragma endregion'. |
 | DreamShader.Binder.Directives | SamplerEmpty | '@sampler' needs a sampler type after it, such as 'Color', 'Normal' or 'LinearColor'. |
 | DreamShader.Binder.Directives | SliderMalformed | '@slider' takes two numbers, a minimum and a maximum; '{0}' is not that. |
+| DreamShader.Binder.Directives | SliderNotScalar | A slider range ('@slider', or 'Slider(min, max)' in a 1.x property) is for a scalar parameter; this one is '{0}', which has no slider, so the range is ignored. |
 | DreamShader.Binder.Directives | SliderRange | '@slider' needs its minimum below its maximum. |
 | DreamShader.Binder.Directives | SortMalformed | '@sort' takes one whole number; '{0}' is not that. |
 | DreamShader.Binder.Directives | StaticNeedsParam | '@static' on a function is written '@static <ParameterName>'. |

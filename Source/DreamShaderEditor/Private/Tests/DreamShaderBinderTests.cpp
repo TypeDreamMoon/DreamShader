@@ -798,6 +798,7 @@ bool FDreamShaderLang2BinderDirectivesTest::RunTest(const FString& Parameters)
 		"\n"
 		"/// @desc An explicit description wins over the free text.\n"
 		"/// Some free text.\n"
+		"/// @slider 0 4\n"
 		"uniform float Gain = 1;\n"
 		"\n"
 		"/// @library MoonToon|Shared\n"
@@ -820,9 +821,9 @@ bool FDreamShaderLang2BinderDirectivesTest::RunTest(const FString& Parameters)
 		const FBoundDirectives& Directives = Bound.Globals[TintIndex].Directives;
 		TestEqualSensitive(TEXT("@group"), Directives.Group, FString(TEXT("Look|Colour")));
 		TestEqualSensitive(TEXT("@name"), Directives.Name, FString(TEXT("TintColour")));
-		TestTrue(TEXT("@slider was seen"), Directives.bHasSlider);
-		TestEqual(TEXT("@slider min"), Directives.SliderMin, 0.0);
-		TestEqual(TEXT("@slider max"), Directives.SliderMax, 4.0);
+		// A float4 has no slider: the range is dropped, with DSH7233 (the scalar Gain below keeps its own).
+		TestFalse(TEXT("@slider is dropped on a float4"), Directives.bHasSlider);
+		TestTrue(TEXT("with DSH7233"), Case.Warnings().ContainsByPredicate([](const FString& Line) { return Line.StartsWith(TEXT("DSH7233:")); }));
 		TestTrue(TEXT("@sort was seen"), Directives.bHasSort);
 		TestEqual(TEXT("@sort"), Directives.Sort, 20);
 
@@ -844,6 +845,9 @@ bool FDreamShaderLang2BinderDirectivesTest::RunTest(const FString& Parameters)
 			TEXT("@desc wins over the free text"),
 			Bound.Globals[GainIndex].Directives.Desc,
 			FString(TEXT("An explicit description wins over the free text.")));
+		TestTrue(TEXT("@slider was seen"), Bound.Globals[GainIndex].Directives.bHasSlider);
+		TestEqual(TEXT("@slider min"), Bound.Globals[GainIndex].Directives.SliderMin, 0.0);
+		TestEqual(TEXT("@slider max"), Bound.Globals[GainIndex].Directives.SliderMax, 4.0);
 	}
 
 	const int32 FunctionIndex = Bound.FindFunction(TEXT("MF_Case"));

@@ -489,6 +489,7 @@ which stays authoritative until every raise site is tagged.
 | [DSH7230](DSH7xxx.md#dsh7230) | warning | '#pragma layout' expects a whole number for '{0}'; '{1}' was ignored. |
 | [DSH7231](DSH7xxx.md#dsh7231) | error | '@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}. |
 | [DSH7232](DSH7xxx.md#dsh7232) | error | 'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'. |
+| [DSH7233](DSH7xxx.md#dsh7233) | warning | A slider range ('@slider', or 'Slider(min, max)' in a 1.x property) is for a scalar parameter; this one is ... |
 | [DSH7250](DSH7xxx.md#dsh7250) | error | A '.dsi' needs one '#pragma instance(Parent = "...")' naming the material it is an instance of, and this fi... |
 | [DSH7251](DSH7xxx.md#dsh7251) | error | '#pragma instance' is written a second time, and one '.dsi' is one material instance; the line {0} already ... |
 | [DSH7252](DSH7xxx.md#dsh7252) | error | 'Parent' in '#pragma instance' names the material this is an instance of, and it is empty. |

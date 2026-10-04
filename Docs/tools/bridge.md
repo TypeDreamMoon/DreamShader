@@ -685,32 +685,35 @@ Diagnostic object fields. Optional fields are omitted entirely when empty.
 | :-- | :-- | :-- | :-- |
 | `message` | string | always | the diagnostic text |
 | `detail` | string | when non-empty | the raw underlying line |
-| `stage` | string | when non-empty | `generate`, `materialCompile` or `virtualFunctionSync` |
+| `stage` | string | when non-empty | a compile's record: `preprocess`, `parse`, `bind`, `ir`, `generate`, `tools` or `compile`, from its code's range; otherwise `generate`, `materialCompile` or `virtualFunctionSync` |
 | `assetPath` | string | when non-empty | object path of the asset involved |
 | `shaderPlatform` | string | when non-empty | material-compile diagnostics only |
 | `qualityLevel` | string | when non-empty | material-compile diagnostics only |
-| `code` | string | when non-empty | `generate-error`, `material-compile` or `virtual-function-sync` |
+| `code` | string | when non-empty | a compile's record: its `DSHnnnn` code; otherwise `generate-error`, `material-compile` or `virtual-function-sync` |
 | `line` | number | always | 1-based, defaults to `1` |
 | `column` | number | always | 1-based, defaults to `1` |
-| `severity` | string | always | `error` |
-| `source` | string | always | `DreamShader`, `DreamShader Generate`, `DreamShader Material Compile` or `DreamShader VirtualFunction` |
+| `severity` | string | always | `error`, `warning` or `info` |
+| `source` | string | always | `DreamShader Lang2`, `DreamShader`, `DreamShader Generate`, `DreamShader Material Compile` or `DreamShader VirtualFunction` |
 
 > [!NOTE]
-> `severity` is always the literal `error`. The plugin never emits a warning, information or hint
-> diagnostic through this file — parse warnings are appended to compile messages instead. A client
-> that filters on severity should treat a missing or unknown value as an error.
+> A compile files its own records -- each with its `DSHnnnn` code, severity and position: a failed compile
+> all of them, a successful one its warnings and notes *(since 2.1.0; before, a successful compile cleared
+> the file's diagnostics and its warnings were only in the log)*. A client that filters on severity should
+> treat a missing or unknown value as an error.
 
-Stage, code and source always travel together:
+Stage, code and source travel together:
 
 | `stage` | `code` | `source` | Produced by |
 | :-- | :-- | :-- | :-- |
-| `generate` | `generate-error` | `DreamShader Generate` | a failed compile of a source file |
+| from the code | `DSHnnnn` | `DreamShader Lang2` | a compile of a source file: every record of a failed one, the warnings of a successful one |
+| `generate` | `generate-error` | `DreamShader Generate` | a failed compile whose records do not explain it -- no compiler module, or a refusal worded outside the diagnostics |
 | `materialCompile` | `material-compile` | `DreamShader Material Compile` | shader-compile errors on a generated material |
 | `virtualFunctionSync` | `virtual-function-sync` | `DreamShader VirtualFunction` | the startup `VirtualFunction` declaration scan |
 
-Locations are recovered from messages of the form `<path>(<line>,<column>): <message>`. Line and
-column must both be numeric and are clamped to `1` or greater; a line with no parseable location is
-reported at `1,1` with the leading `"<source path>: "` prefix stripped.
+A compile's record carries its own line and column. For `generate-error`, locations are recovered from
+messages of the form `<path>(<line>,<column>): <message>`. Line and column must both be numeric and are
+clamped to `1` or greater; a line with no parseable location is reported at `1,1` with the leading
+`"<source path>: "` prefix stripped.
 
 Material-compile diagnostics carry a display message of the form
 `[{ShaderPlatform} / {QualityLevel}] {Message}` and are deduplicated on source, platform, quality,

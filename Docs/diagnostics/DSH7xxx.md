@@ -676,7 +676,7 @@ Invalid reflected property target.
 '{0}' is set twice by '#pragma material'; it was already set on line {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:516`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:529`
 <!-- generated:end DSH7200 -->
 
 **Cause.** One `#pragma material` key is set twice, possibly on two different lines — the lines are
@@ -695,7 +695,7 @@ merged into one settings table. Keys are compared without regard to case, as the
 'Backend' has no value; write 'Backend = Graph' or 'Backend = ThinCustom'. An empty value meant Graph in 1.x and means nothing now.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:564`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:577`
 <!-- generated:end DSH7201 -->
 
 **Cause.** `Backend` was given an empty value. 1.x read `Backend = ""` as `Graph`, which silently
@@ -716,7 +716,7 @@ default.
 'Backend = {0}' is not a backend; the backends are 'Graph' and 'ThinCustom'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:593`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:606`
 <!-- generated:end DSH7202 -->
 
 **Cause.** `Backend` names something that is not a backend.
@@ -756,7 +756,7 @@ have.
 'Backend = Instance' is the old spelling of 'Backend = ThinCustom'; write the new one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:585`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:598`
 <!-- generated:end DSH7204 -->
 
 **Cause.** `Backend = Instance` — the 1.x deprecation-window spelling of `ThinCustom`.
@@ -774,7 +774,7 @@ have.
 '#pragma material' takes 'Key = Value' pairs; '{0}' has no key.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:500`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:513`
 <!-- generated:end DSH7205 -->
 
 **Cause.** `#pragma material` was given something without a key.
@@ -891,7 +891,7 @@ leave the declaration itself as plain legal HLSL.
 '@layer' and '@layerblend' make two different assets; a function is one or the other.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:468`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:481`
 <!-- generated:end DSH7215 -->
 
 **Cause.** One function carries both `@layer` and `@layerblend`. They select two different asset
@@ -948,7 +948,7 @@ a texture for a table that has to be read at run time.
 '@sort' takes one whole number; '{0}' is not that.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:222`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:235`
 <!-- generated:end DSH7221 -->
 
 **Cause.** `@sort` is not one whole number.
@@ -966,7 +966,7 @@ a texture for a table that has to be read at run time.
 '@sampler' needs a sampler type after it, such as 'Color', 'Normal' or 'LinearColor'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:258`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:271`
 <!-- generated:end DSH7222 -->
 
 **Cause.** `@sampler` has no value.
@@ -1044,7 +1044,7 @@ parameter was renamed and the comment was not.
 '@custom {0}' is not a modifier this language knows; the only one is 'selfcontained'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:432`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:445`
 <!-- generated:end DSH7226 -->
 
 **Cause.** `@custom` is followed by a word that is not a modifier it knows.
@@ -1062,7 +1062,7 @@ parameter was renamed and the comment was not.
 '@{0}' needs a value after it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:152`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:290`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:329`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:356`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:361`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:471`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:152`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:303`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:342`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:369`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:361`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:471`
 <!-- generated:end DSH7227 -->
 
 **Cause.** A directive that needs a value has none: `@name`, `@asset`, `@library`, `@default`, or
@@ -1102,7 +1102,7 @@ block **directly above** the declaration.
 '@{0}' is written twice in this block; the last one wins.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:122`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:376`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:122`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:389`
 <!-- generated:end DSH7229 -->
 
 **Cause.** One key appears twice in one `///` block. The last one wins.
@@ -1121,7 +1121,7 @@ reports this.
 '#pragma layout' expects a whole number for '{0}'; '{1}' was ignored.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:667`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:687`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:749`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:760`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:772`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:783`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:800`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:680`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:700`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:762`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:773`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:785`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:796`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:813`
 <!-- generated:end DSH7230 -->
 
 **Cause.** A `#pragma layout(...)` line could not be read: no `Node`/`Comment` selector, an unknown
@@ -1162,7 +1162,7 @@ whose value picks a shader permutation -- and the parameter named is not a `bool
 'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:642`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:655`
 <!-- generated:end DSH7232 -->
 
 **Cause.** `#pragma material(Substrate = ...)` (or the `Substrate` setting of a 1.x `Shader`) names
@@ -1171,6 +1171,28 @@ something other than the three modes.
 **Fix.** Write `Legacy` (the default: built as written, the engine converts), `Bridge` (the legacy
 attributes become one `Substrate.ShadingModels` node in a Substrate project) or `Native` (the source
 is Substrate source).
+
+## DSH7233
+
+<!-- generated:begin DSH7233 -->
+**Severity** warning
+
+**Message**
+
+```
+A slider range ('@slider', or 'Slider(min, max)' in a 1.x property) is for a scalar parameter; this one is '{0}', which has no slider, so the range is ignored.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:210`
+<!-- generated:end DSH7233 -->
+
+**Cause.** A slider range -- `/// @slider min max` on a `uniform`, or `Slider(min, max)` in the metadata of a 1.x
+property -- sits on a parameter that is not a scalar: a vector (`float3`, `vec3`, `float4`), a texture, or a `bool`
+(a static switch). The range is the `SliderMin` / `SliderMax` of a ScalarParameter, and none of those parameters has a
+slider, so it has nowhere to go and is dropped. The compile goes on.
+
+**Fix.** Remove the range, or put it on a scalar `float`, `half` or `int` parameter -- for a colour that should stay
+in a range, one scalar per channel, or a scalar that scales the colour.
 
 ## DSH7250
 
