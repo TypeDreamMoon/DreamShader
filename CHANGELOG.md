@@ -29,6 +29,9 @@
   names a pass's binding (they are `#define`s) and calls of an entry. Decompile and Adopt write the blocks back as
   they were written, and `DreamPass.ush` gains `DreamPassSample`, `DreamPassLoad` and `DreamPassSceneUV`. See
   [HLSL passes](Docs/runtime/hlsl.md).
+- **The generated VS Code workspace knows the 2.0 sources.** *Open Dream Shader Workspace* associates `.dss` and
+  `.dsi` with `dreamshader-dss` and `.dsp` with `dreamshader-dsp`, the language ids of the VS Code extension (2.1.0
+  for `.dsp`), next to the 1.x sources' `dreamshaderlang`. See [Workspace](Docs/tools/workspace.md).
 
 ## 2.0.2 - 2026-10-02
 

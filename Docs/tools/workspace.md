@@ -2,9 +2,9 @@
 
 > [DreamShader](../index.md) » [Tools](index.md) » **Workspace and editor extensions**
 
-A generated VSCode workspace file that maps the six DreamShaderLang file extensions onto the
-`dreamshaderlang` language id, and the editor command that writes it and launches an external editor
-on it.
+A generated VSCode workspace file that maps the six DreamShaderLang file extensions onto the language
+ids of the [VS Code extension](https://github.com/TypeDreamMoon/dreamshader-language-support), and the
+editor command that writes it and launches an external editor on it.
 
 | | |
 | :-- | :-- |
@@ -38,9 +38,9 @@ Unreal's JSON writer (tab indentation):
 	],
 	"settings": {
 		"files.associations": {
-			"*.dss": "dreamshaderlang",
-			"*.dsi": "dreamshaderlang",
-			"*.dsp": "dreamshaderlang",
+			"*.dss": "dreamshader-dss",
+			"*.dsi": "dreamshader-dss",
+			"*.dsp": "dreamshader-dsp",
 			"*.dsm": "dreamshaderlang",
 			"*.dsh": "dreamshaderlang",
 			"*.dsf": "dreamshaderlang"
@@ -63,14 +63,18 @@ Every key the writer emits. There are no others, and nothing is conditional.
 | :-- | :-- | :-- |
 | `folders[0].name` | `DreamShader Source` | Display name of the single workspace folder. |
 | `folders[0].path` | `.` | The folder containing the workspace file, i.e. `<SourceDirectory>` itself. |
-| `settings["files.associations"]["*.dss"]` | `dreamshaderlang` | Language id for 2.0 compilation units *(since 2.1.0)*. |
-| `settings["files.associations"]["*.dsi"]` | `dreamshaderlang` | Language id for material instance sources *(since 2.1.0)*. |
-| `settings["files.associations"]["*.dsp"]` | `dreamshaderlang` | Language id for Custom Pass pipelines *(since 2.1.0)*. Without it a `.dsp` is claimed by whatever else knows the extension. |
+| `settings["files.associations"]["*.dss"]` | `dreamshader-dss` | Language id for 2.0 compilation units *(since 2.1.0)*. |
+| `settings["files.associations"]["*.dsi"]` | `dreamshader-dss` | Language id for material instance sources *(since 2.1.0)*. |
+| `settings["files.associations"]["*.dsp"]` | `dreamshader-dsp` | Language id for Custom Pass pipelines *(since 2.1.0)*. Without it a `.dsp` is claimed by whatever else knows the extension -- the Faust language and old Visual C++ projects use it too. |
 | `settings["files.associations"]["*.dsm"]` | `dreamshaderlang` | Language id for material sources. |
 | `settings["files.associations"]["*.dsh"]` | `dreamshaderlang` | Language id for headers. |
 | `settings["files.associations"]["*.dsf"]` | `dreamshaderlang` | Language id for function sources *(since 1.3.5)*. |
 
-One language id for all six; the extension tells the kinds apart by the file extension.
+Three language ids, the ones the extension registers: `dreamshaderlang` for the 1.x sources and headers,
+`dreamshader-dss` for 2.0 sources, `dreamshader-dsp` for pipelines (extension 2.1.0 and later). A workspace
+association overrides the extension's own mapping of an extension to a language, so the two have to agree: with
+`dreamshaderlang` for a `.dss`, VS Code would give it the 1.x grammar and language server. Settings scoped to a
+language -- `"[dreamshader-dss]": { ... }` -- use the same ids.
 
 > [!WARNING]
 > The file is rewritten from scratch on **every** invocation of *Open Dream Shader Workspace*. The

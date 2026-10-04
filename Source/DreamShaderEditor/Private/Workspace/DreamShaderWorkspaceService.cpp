@@ -1903,12 +1903,13 @@ namespace UE::DreamShader::Editor::Private
 		Writer->WriteArrayEnd();
 		Writer->WriteObjectStart(TEXT("settings"));
 		Writer->WriteObjectStart(TEXT("files.associations"));
-		// Every kind of source, the 2.0 ones included: without these a `.dss`, `.dsi` or `.dsp` opens as plain text, and
-		// `.dsp` would be claimed by whatever else knows it. One language id; the VS Code extension tells the kinds apart
-		// by their file extension.
-		Writer->WriteValue(TEXT("*.dss"), TEXT("dreamshaderlang"));
-		Writer->WriteValue(TEXT("*.dsi"), TEXT("dreamshaderlang"));
-		Writer->WriteValue(TEXT("*.dsp"), TEXT("dreamshaderlang"));
+		// Every kind of source, each under the language id the VS Code extension registers it with: 1.x sources and
+		// headers are `dreamshaderlang`, 2.0 sources `dreamshader-dss`, pipelines `dreamshader-dsp`. A workspace
+		// association overrides the extension's own, so naming one id for all of them would give a `.dss` the 1.x
+		// grammar and language server. Without the `.dsp` entry the extension is claimed by whatever else knows it.
+		Writer->WriteValue(TEXT("*.dss"), TEXT("dreamshader-dss"));
+		Writer->WriteValue(TEXT("*.dsi"), TEXT("dreamshader-dss"));
+		Writer->WriteValue(TEXT("*.dsp"), TEXT("dreamshader-dsp"));
 		Writer->WriteValue(TEXT("*.dsm"), TEXT("dreamshaderlang"));
 		Writer->WriteValue(TEXT("*.dsh"), TEXT("dreamshaderlang"));
 		Writer->WriteValue(TEXT("*.dsf"), TEXT("dreamshaderlang"));
