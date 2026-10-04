@@ -1,3 +1,4 @@
+#Requires -Version 7.0
 <#
 .SYNOPSIS
     Standalone `RunUAT BuildPlugin` matrix for DreamShader, one engine per run.
@@ -153,8 +154,10 @@ if (-not $Package) {
 }
 $Package = [System.IO.Path]::GetFullPath($Package)
 
-# UAT stages into -Package and refuses a directory inside the plugin it is copying.
-if ($Package.StartsWith($pluginDir, [StringComparison]::OrdinalIgnoreCase)) {
+# UAT stages into -Package and refuses a directory inside the plugin it is copying. A sibling whose name
+# merely starts the same (DreamShaderOut beside DreamShader) is fine.
+if ($Package.Equals($pluginDir, [StringComparison]::OrdinalIgnoreCase) -or
+    $Package.StartsWith($pluginDir.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
     throw "-Package '$Package' is inside the plugin tree. Pick a directory outside '$pluginDir'."
 }
 
@@ -214,7 +217,8 @@ foreach ($engineRoot in $Engine) {
         "-TargetPlatforms=$TargetPlatforms"
     )
     if (-not $NoRocket) { $uatArguments += '-Rocket' }
-    if ($ExtraArguments) { $uatArguments += $ExtraArguments }
+    # Under `pwsh -File` a list arrives as one comma-separated string, as -Engine does; split it the same way.
+    if ($ExtraArguments) { $uatArguments += @($ExtraArguments | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim().Trim('"', "'") } | Where-Object { $_ }) }
 
     $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     $captured = [System.Collections.Generic.List[string]]::new()
@@ -236,6 +240,13 @@ foreach ($engineRoot in $Engine) {
     $diagnostics = @($captured | Where-Object { $_ -match $diagnostic } | Select-Object -Unique)
 
     $status = if ($exit -eq 0) { 'PASS' } else { "FAIL($exit)" }
+    # UBT refuses to run beside another UBT that holds its global mutex, and UAT names that exit code 10
+    # Error_SDKNotFound. BuildPlugin cannot pass -WaitMutex; close the other build (an editor's Live Coding,
+    # an IDE build) and run again.
+    if ($exit -ne 0 -and ($captured -match 'A conflicting instance of .+ is already running')) {
+        $status = 'BLOCKED'
+        $diagnostics = @('Another UnrealBuildTool holds the global mutex (UAT reports it as Error_SDKNotFound). Close the other build and run again.') + $diagnostics
+    }
     $colour = if ($exit -eq 0) { 'Green' } else { 'Red' }
     Write-Host "  $status in $([int]$stopwatch.Elapsed.TotalSeconds)s -- log: $logFile" -ForegroundColor $colour
 

@@ -1,3 +1,4 @@
+#Requires -Version 7.0
 <#
 .SYNOPSIS
     Regenerates the machine-written half of Docs/diagnostics/.
@@ -19,6 +20,10 @@
 
     Re-run it after adding a diagnostic. `-Check` makes it a gate instead: exit 1 if the pages are
     out of date, which is how CI notices a new code that nobody documented.
+
+    Prose is never dropped. When a code loses its last raise site -- renumbered or retired -- its
+    hand-written section moves to a `Retired codes` block at the end of its page, where a code that
+    comes back takes it up again, and the run names it so somebody decides what it becomes.
 
 .EXAMPLE
     ./gen-diagnostics.ps1
@@ -165,26 +170,51 @@ Write-Host "Found $($found.Count) diagnostic code(s)." -ForegroundColor DarkGray
 
 # ---------------------------------------------------------------- merge and emit
 
-function Convert-ToCrlf {
+function Convert-ToLf {
     param([string]$Text)
-    return ($Text -replace "`r`n", "`n") -replace "`n", "`r`n"
+    return $Text -replace "`r`n", "`n"
+}
+
+function Write-Page {
+    <#
+        Compares with line endings normalized, and writes in the ending the existing file has (CRLF for a new
+        one), so a checkout with either ending is not reported as drift forever. Returns whether the page
+        differs.
+    #>
+    param([string]$Path, [string]$Text, [string]$Label)
+
+    $existing = if (Test-Path -LiteralPath $Path) { [System.IO.File]::ReadAllText($Path) } else { $null }
+    $lf = Convert-ToLf $Text
+    if ($null -ne $existing -and (Convert-ToLf $existing) -ceq $lf) { return $false }
+    if (-not $Check) {
+        $eol = if ($null -ne $existing -and -not $existing.Contains("`r`n")) { "`n" } else { "`r`n" }
+        [System.IO.File]::WriteAllText($Path, ($lf -replace "`n", $eol))
+        Write-Host "  wrote $Label" -ForegroundColor Gray
+    }
+    return $true
 }
 
 function Get-HandWrittenSections {
     param([string]$Path)
 
     # Maps code -> everything the human wrote under that code's heading, i.e. what follows the
-    # generated:end marker up to the next heading.
+    # generated:end marker up to the next heading -- or, for a retired code, its retired marker.
     $sections = @{}
     if (-not (Test-Path -LiteralPath $Path)) { return $sections }
 
     $content = [System.IO.File]::ReadAllText($Path)
-    $pattern = '<!-- generated:end (DSH\d{4}) -->\r?\n(.*?)(?=\r?\n## DSH|\Z)'
+    $pattern = '<!-- generated:end (DSH\d{4}) -->\r?\n(.*?)(?=\r?\n## |\Z)'
     foreach ($match in [regex]::Matches($content, $pattern, 'Singleline')) {
         # Trim both ends, not just the tail: the writer puts a blank line after the marker, so
         # keeping the leading newline would make each run add one more and the file would never
         # converge -- which turns -Check into a permanent false alarm.
         $sections[$match.Groups[1].Value] = $match.Groups[2].Value.Trim()
+    }
+    $retired = '<!-- retired (DSH\d{4}) -->\r?\n(.*?)(?=\r?\n### DSH|\r?\n## |\Z)'
+    foreach ($match in [regex]::Matches($content, $retired, 'Singleline')) {
+        if (-not $sections.ContainsKey($match.Groups[1].Value)) {
+            $sections[$match.Groups[1].Value] = $match.Groups[2].Value.Trim()
+        }
     }
     return $sections
 }
@@ -201,6 +231,7 @@ if (-not $Check) {
 
 $drift = @()
 $indexRows = @()
+$retiredCodes = @()
 
 foreach ($rangeKey in $ranges.Keys) {
     $codes = $found.Values |
@@ -252,20 +283,28 @@ foreach ($rangeKey in $ranges.Keys) {
         }
     }
 
-    # AppendLine emits CRLF but the placeholder here-string and any carried-over prose may hold bare
-    # LFs. Left mixed, the file's endings depend on which codes happen to be documented, and -Check
-    # reports drift forever. Normalize once, at the boundary.
-    $rendered = Convert-ToCrlf $builder.ToString()
-    $existing = if (Test-Path -LiteralPath $pagePath) { [System.IO.File]::ReadAllText($pagePath) } else { '' }
+    # Prose whose code no source raises any more is kept, at the end of the page, never dropped.
+    $live = @($codes.Code)
+    $orphans = @($handWritten.Keys | Where-Object { $_ -notin $live -and $handWritten[$_] -notmatch 'Not written yet' } | Sort-Object)
+    if ($orphans.Count -gt 0) {
+        [void]$builder.AppendLine('## Retired codes')
+        [void]$builder.AppendLine()
+        [void]$builder.AppendLine('> No raise site in the source has these codes any more. Their prose is kept so a renumbered code can')
+        [void]$builder.AppendLine('> take it back; delete a section once nothing needs it.')
+        [void]$builder.AppendLine()
+        foreach ($code in $orphans) {
+            [void]$builder.AppendLine("### $code")
+            [void]$builder.AppendLine()
+            [void]$builder.AppendLine("<!-- retired $code -->")
+            [void]$builder.AppendLine($handWritten[$code])
+            [void]$builder.AppendLine()
+        }
+        $retiredCodes += $orphans
+    }
 
-    if ($rendered -ne $existing) {
-        if ($Check) {
-            $drift += "DSH$($rangeKey)xxx.md"
-        }
-        else {
-            [System.IO.File]::WriteAllText($pagePath, $rendered)
-            Write-Host "  wrote DSH$($rangeKey)xxx.md ($($codes.Count) code(s))" -ForegroundColor Gray
-        }
+    # AppendLine and the here-string disagree on line endings; Write-Page normalizes at the boundary.
+    if (Write-Page -Path $pagePath -Text $builder.ToString() -Label "DSH$($rangeKey)xxx.md ($($codes.Count) code(s))") {
+        $drift += "DSH$($rangeKey)xxx.md"
     }
 }
 
@@ -304,18 +343,16 @@ foreach ($row in $indexRows | Sort-Object Code) {
 [void]$index.AppendLine()
 
 $indexPath = Join-Path $docsRoot 'README.md'
-$renderedIndex = Convert-ToCrlf $index.ToString()
-$existingIndex = if (Test-Path -LiteralPath $indexPath) { [System.IO.File]::ReadAllText($indexPath) } else { '' }
-
-if ($renderedIndex -ne $existingIndex) {
-    if ($Check) { $drift += 'README.md' }
-    else {
-        [System.IO.File]::WriteAllText($indexPath, $renderedIndex)
-        Write-Host '  wrote README.md' -ForegroundColor Gray
-    }
+if (Write-Page -Path $indexPath -Text $index.ToString() -Label 'README.md') {
+    $drift += 'README.md'
 }
 
 # ---------------------------------------------------------------- verdict
+
+if ($retiredCodes.Count -gt 0) {
+    Write-Host "$($retiredCodes.Count) code(s) have prose but no raise site; it is kept under 'Retired codes':" -ForegroundColor Yellow
+    Write-Host "  $(($retiredCodes | Sort-Object) -join ', ')" -ForegroundColor DarkYellow
+}
 
 $missing = @($indexRows | Where-Object { $_.Undocumented })
 if ($missing.Count -gt 0) {
