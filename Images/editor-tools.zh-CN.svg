@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" role="img" aria-labelledby="t d">
+<title id="t">DreamShader 与你的工具</title>
+<desc id="d">代码编辑器通过 DreamShader bridge 连接 Unreal 编辑器；无界面的 commandlet 为 CI 和 AI 代理运行同一个编译器；三者都基于 DShader/ 源文件工作。</desc>
+<style>
+:root{--bg:#ffffff;--panel:#f6f8fa;--chip:#eaeef2;--line:#d0d7de;--text:#1f2328;--muted:#59636e;
+--teal:#0b7f72;--violet:#6e44d8;--blue:#0a64c8;--amber:#a95a00}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--panel:#161b22;--chip:#222a35;--line:#30363d;
+--text:#e6edf3;--muted:#8d96a0;--teal:#2dd4bf;--violet:#a78bfa;--blue:#58a6ff;--amber:#f2a93b}}
+text{font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;fill:var(--text)}
+.mono{font-family:ui-monospace, 'Cascadia Code', SFMono-Regular, Consolas, Menlo, 'Liberation Mono', monospace}
+.muted{fill:var(--muted)}
+.b{font-weight:600}
+.frame{fill:var(--bg);stroke:var(--line)}
+.panel{fill:var(--panel);stroke:var(--line)}
+.chip{fill:var(--chip)}
+.rule{stroke:var(--line);fill:none}
+.wire{stroke:var(--muted);fill:none;stroke-width:1.5}
+.head{fill:var(--muted)}
+.dash{stroke-dasharray:5 4}
+.ink{fill:var(--bg)}
+.cm{fill:var(--muted)}
+.f-teal{fill:var(--teal)}.s-teal{stroke:var(--teal);fill:none;stroke-width:1.5}.tint-teal{fill:var(--teal);fill-opacity:.11;stroke:var(--teal);stroke-opacity:.55}.w-teal{stroke:var(--teal);fill:none;stroke-width:1.5}.h-teal{fill:var(--teal)}
+.f-violet{fill:var(--violet)}.s-violet{stroke:var(--violet);fill:none;stroke-width:1.5}.tint-violet{fill:var(--violet);fill-opacity:.11;stroke:var(--violet);stroke-opacity:.55}.w-violet{stroke:var(--violet);fill:none;stroke-width:1.5}.h-violet{fill:var(--violet)}
+.f-blue{fill:var(--blue)}.s-blue{stroke:var(--blue);fill:none;stroke-width:1.5}.tint-blue{fill:var(--blue);fill-opacity:.11;stroke:var(--blue);stroke-opacity:.55}.w-blue{stroke:var(--blue);fill:none;stroke-width:1.5}.h-blue{fill:var(--blue)}
+.f-amber{fill:var(--amber)}.s-amber{stroke:var(--amber);fill:none;stroke-width:1.5}.tint-amber{fill:var(--amber);fill-opacity:.11;stroke:var(--amber);stroke-opacity:.55}.w-amber{stroke:var(--amber);fill:none;stroke-width:1.5}.h-amber{fill:var(--amber)}
+.kw{fill:var(--violet)}.ty{fill:var(--teal)}.st{fill:var(--amber)}.dc{fill:var(--muted)}
+</style>
+<rect x="0.5" y="0.5" width="1199" height="599" rx="16" class="frame"/>
+<text x="40" y="58" font-size="26" class="b">DreamShader 与你的工具</text>
+<text x="40" y="88" font-size="15" class="muted">编辑器负责生成和预览；代码编辑器通过 bridge 与它通信；CI 和 AI 代理不开编辑器，运行同一个编译器。</text>
+<rect x="40" y="136" width="300" height="318" rx="12" class="panel"/>
+<rect x="58" y="156" width="4" height="34" rx="2" class="f-blue"/>
+<text x="72" y="172" font-size="17" class="b">代码编辑器</text>
+<text x="72" y="191" font-size="12.5" class="muted">VS Code · Rider</text>
+<line x1="56" y1="208" x2="324" y2="208" class="rule"/>
+<rect x="450" y="136" width="300" height="318" rx="12" class="panel"/>
+<rect x="468" y="156" width="4" height="34" rx="2" class="f-violet"/>
+<text x="482" y="172" font-size="17" class="b">Unreal 编辑器</text>
+<text x="482" y="191" font-size="12.5" class="muted">装有 DreamShader</text>
+<line x1="466" y1="208" x2="734" y2="208" class="rule"/>
+<rect x="860" y="136" width="300" height="318" rx="12" class="panel"/>
+<rect x="878" y="156" width="4" height="34" rx="2" class="f-teal"/>
+<text x="892" y="172" font-size="17" class="b">无界面</text>
+<text x="892" y="191" font-size="12.5" class="muted">不需要编辑器和 bridge</text>
+<line x1="876" y1="208" x2="1144" y2="208" class="rule"/>
+<text x="60" y="236" font-size="14.5" class="b">VS Code</text>
+<text x="60" y="258" font-size="12.5" class="muted">语法高亮、补全、悬停、跳转定义、查找引用、</text>
+<text x="60" y="276" font-size="12.5" class="muted">诊断、材质预览</text>
+<text x="60" y="310" font-size="14.5" class="b">Rider</text>
+<text x="60" y="332" font-size="12.5" class="muted">语法与 PSI 解析、补全、导航、诊断、语义高</text>
+<text x="60" y="350" font-size="12.5" class="muted">亮、内联提示</text>
+<text x="60" y="418" font-size="11.5" class="mono muted">ws://127.0.0.1:17864</text>
+<text x="60" y="436" font-size="11.5" class="mono muted">Saved/DreamShader/Bridge/</text>
+<circle cx="476" cy="231" r="4" class="f-violet"/>
+<text x="490" y="236" font-size="14" class="b">Material Content Browser</text>
+<text x="490" y="256" font-size="12.5" class="muted">状态、诊断、来源追踪、预览</text>
+<circle cx="476" cy="285" r="4" class="f-violet"/>
+<text x="490" y="290" font-size="14" class="b">源文件监视</text>
+<text x="490" y="310" font-size="12.5" class="muted">保存 → 重新生成受影响的资源</text>
+<circle cx="476" cy="339" r="4" class="f-violet"/>
+<text x="490" y="344" font-size="14" class="b">反编译器</text>
+<text x="490" y="364" font-size="12.5" class="muted">资源 → .dss · .dsi · .dsp</text>
+<circle cx="476" cy="393" r="4" class="f-violet"/>
+<text x="490" y="398" font-size="14" class="b">材质编辑器</text>
+<text x="490" y="418" font-size="12.5" class="muted">节点 → Open Source Line</text>
+<rect x="880" y="226" width="67.24" height="22" rx="11" class="chip"/>
+<text x="913.62" y="241.32" font-size="12" class="muted mono" text-anchor="middle">compile</text>
+<rect x="953.24" y="226" width="52.6" height="22" rx="11" class="chip"/>
+<text x="979.54" y="241.32" font-size="12" class="muted mono" text-anchor="middle">check</text>
+<rect x="1011.84" y="226" width="81.88" height="22" rx="11" class="chip"/>
+<text x="1052.78" y="241.32" font-size="12" class="muted mono" text-anchor="middle">decompile</text>
+<rect x="880" y="256" width="67.24" height="22" rx="11" class="chip"/>
+<text x="913.62" y="271.32" font-size="12" class="muted mono" text-anchor="middle">migrate</text>
+<rect x="953.24" y="256" width="37.96" height="22" rx="11" class="chip"/>
+<text x="972.22" y="271.32" font-size="12" class="muted mono" text-anchor="middle">fmt</text>
+<rect x="997.2" y="256" width="118.48" height="22" rx="11" class="chip"/>
+<text x="1056.44" y="271.32" font-size="12" class="muted mono" text-anchor="middle">list-generated</text>
+<rect x="880" y="286" width="111.16" height="22" rx="11" class="chip"/>
+<text x="935.58" y="301.32" font-size="12" class="muted mono" text-anchor="middle">pass-registry</text>
+<rect x="997.16" y="286" width="67.24" height="22" rx="11" class="chip"/>
+<text x="1030.78" y="301.32" font-size="12" class="muted mono" text-anchor="middle">dump-ir</text>
+<text x="880" y="342" font-size="14" class="b">CI</text>
+<text x="880" y="362" font-size="12.5" class="muted">退出码非零即判定失败</text>
+<text x="880" y="392" font-size="14" class="b">AI 代理</text>
+<text x="880" y="412" font-size="12.5" class="muted">.skill/ 里的驱动脚本和 skill</text>
+<path class="wire" d="M343,268 L440.75,268"/>
+<path class="head" d="M446,268 L438.5,263.875 L438.5,272.125 Z"/>
+<path class="wire" d="M446,312 L348.25,312"/>
+<path class="head" d="M343,312 L350.5,316.125 L350.5,307.875 Z"/>
+<rect x="368.5" y="279" width="52" height="22" rx="11" class="chip"/>
+<text x="394.5" y="294.32" font-size="12" class="b" text-anchor="middle">bridge</text>
+<text x="394.5" y="258" font-size="11.5" class="muted" text-anchor="middle">请求</text>
+<text x="394.5" y="333" font-size="11.5" class="muted" text-anchor="middle">诊断</text>
+<rect x="40" y="506" width="1120" height="50" rx="12" class="tint-teal"/>
+<text x="60" y="537" font-size="14" xml:space="preserve"><tspan class="b mono">DShader/</tspan><tspan class="muted">   源文件 — .dss .dsi .dsp .dsh .dsm .dsf</tspan></text>
+<rect x="987.7" y="520" width="156.3" height="22" rx="11" class="chip"/>
+<text x="1065.85" y="535.14" font-size="11.5" class="muted mono" text-anchor="middle">Packages/@scope/name</text>
+<path class="wire" d="M190,456 L190,498.45"/>
+<path class="head" d="M190,503 L193.575,496.5 L186.425,496.5 Z"/>
+<text x="200" y="484" font-size="12" class="muted">编辑</text>
+<path class="wire" d="M600,456 L600,498.45"/>
+<path class="head" d="M600,503 L603.575,496.5 L596.425,496.5 Z"/>
+<text x="610" y="484" font-size="12" class="muted">监视 · 生成</text>
+<path class="wire" d="M1010,456 L1010,498.45"/>
+<path class="head" d="M1010,503 L1013.58,496.5 L1006.42,496.5 Z"/>
+<text x="1020" y="484" font-size="12" class="muted">生成</text>
+</svg>

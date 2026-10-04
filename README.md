@@ -98,7 +98,7 @@ the Content Browser, because the source file is what you edit. Cooking materiali
 automatically, and you can materialise one by hand from the Material Content Browser.
 
 <p align="center">
-  <img alt="DreamShader workflow overview" src="./Images/workflow-overview.png" />
+  <img alt="DreamShader workflow overview" src="./Images/workflow-overview.svg" />
 </p>
 
 ## Quick start
@@ -128,7 +128,7 @@ Settings live under *Project Settings ▸ DreamPlugin ▸ Dream Shader*; every k
 ## What it generates
 
 <p align="center">
-  <img alt="DreamShader language model" src="./Images/language-model.png" />
+  <img alt="DreamShader language model" src="./Images/language-model.svg" />
 </p>
 
 | Block | Produces | Reference |
@@ -173,7 +173,7 @@ The full reference lives in [`Docs/`](Docs/index.md), and is published at
 ## Editor and tooling
 
 <p align="center">
-  <img alt="DreamShader editor tools" src="./Images/editor-tools.png" />
+  <img alt="DreamShader editor tools" src="./Images/editor-tools.svg" />
 </p>
 
 | | |

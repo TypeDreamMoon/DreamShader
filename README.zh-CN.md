@@ -92,7 +92,7 @@ Shader(Name="DreamMaterials/M_Minimal")
 Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某个材质实体化。
 
 <p align="center">
-  <img alt="DreamShader workflow overview" src="./Images/workflow-overview.png" />
+  <img alt="DreamShader 工作流程" src="./Images/workflow-overview.zh-CN.svg" />
 </p>
 
 ## 快速开始
@@ -120,7 +120,7 @@ Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某�
 ## 能生成什么
 
 <p align="center">
-  <img alt="DreamShader language model" src="./Images/language-model.png" />
+  <img alt="DreamShader 语言模型" src="./Images/language-model.zh-CN.svg" />
 </p>
 
 | 块 | 产物 | 参考 |
@@ -161,7 +161,7 @@ Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某�
 ## 编辑器与工具链
 
 <p align="center">
-  <img alt="DreamShader editor tools" src="./Images/editor-tools.png" />
+  <img alt="DreamShader 编辑器工具" src="./Images/editor-tools.zh-CN.svg" />
 </p>
 
 | | |

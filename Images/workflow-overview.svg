@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="604" viewBox="0 0 1200 604" role="img" aria-labelledby="t d">
+<title id="t">From a source file to a material</title>
+<desc id="d">Source files under DShader/ are compiled on save by one compiler with two front ends into materials, functions, instances and Custom Pass pipelines; diagnostics come back with a line and a code.</desc>
+<style>
+:root{--bg:#ffffff;--panel:#f6f8fa;--chip:#eaeef2;--line:#d0d7de;--text:#1f2328;--muted:#59636e;
+--teal:#0b7f72;--violet:#6e44d8;--blue:#0a64c8;--amber:#a95a00}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--panel:#161b22;--chip:#222a35;--line:#30363d;
+--text:#e6edf3;--muted:#8d96a0;--teal:#2dd4bf;--violet:#a78bfa;--blue:#58a6ff;--amber:#f2a93b}}
+text{font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;fill:var(--text)}
+.mono{font-family:ui-monospace, 'Cascadia Code', SFMono-Regular, Consolas, Menlo, 'Liberation Mono', monospace}
+.muted{fill:var(--muted)}
+.b{font-weight:600}
+.frame{fill:var(--bg);stroke:var(--line)}
+.panel{fill:var(--panel);stroke:var(--line)}
+.chip{fill:var(--chip)}
+.rule{stroke:var(--line);fill:none}
+.wire{stroke:var(--muted);fill:none;stroke-width:1.5}
+.head{fill:var(--muted)}
+.dash{stroke-dasharray:5 4}
+.ink{fill:var(--bg)}
+.cm{fill:var(--muted)}
+.f-teal{fill:var(--teal)}.s-teal{stroke:var(--teal);fill:none;stroke-width:1.5}.tint-teal{fill:var(--teal);fill-opacity:.11;stroke:var(--teal);stroke-opacity:.55}.w-teal{stroke:var(--teal);fill:none;stroke-width:1.5}.h-teal{fill:var(--teal)}
+.f-violet{fill:var(--violet)}.s-violet{stroke:var(--violet);fill:none;stroke-width:1.5}.tint-violet{fill:var(--violet);fill-opacity:.11;stroke:var(--violet);stroke-opacity:.55}.w-violet{stroke:var(--violet);fill:none;stroke-width:1.5}.h-violet{fill:var(--violet)}
+.f-blue{fill:var(--blue)}.s-blue{stroke:var(--blue);fill:none;stroke-width:1.5}.tint-blue{fill:var(--blue);fill-opacity:.11;stroke:var(--blue);stroke-opacity:.55}.w-blue{stroke:var(--blue);fill:none;stroke-width:1.5}.h-blue{fill:var(--blue)}
+.f-amber{fill:var(--amber)}.s-amber{stroke:var(--amber);fill:none;stroke-width:1.5}.tint-amber{fill:var(--amber);fill-opacity:.11;stroke:var(--amber);stroke-opacity:.55}.w-amber{stroke:var(--amber);fill:none;stroke-width:1.5}.h-amber{fill:var(--amber)}
+.kw{fill:var(--violet)}.ty{fill:var(--teal)}.st{fill:var(--amber)}.dc{fill:var(--muted)}
+</style>
+<rect x="0.5" y="0.5" width="1199" height="603" rx="16" class="frame"/>
+<text x="40" y="58" font-size="26" class="b">From a source file to a material</text>
+<text x="40" y="88" font-size="15" class="muted">Save a file, and DreamShader rebuilds everything it describes. The source is what you edit; the assets are build output.</text>
+<circle cx="51" cy="128" r="11" class="f-teal"/>
+<text x="51" y="132.5" font-size="13" class="ink b" text-anchor="middle">1</text>
+<text x="70" y="133" font-size="13" class="b muted" letter-spacing="1.2">YOU WRITE</text>
+<rect x="40" y="150" width="330" height="352" rx="12" class="panel"/>
+<circle cx="446" cy="128" r="11" class="f-violet"/>
+<text x="446" y="132.5" font-size="13" class="ink b" text-anchor="middle">2</text>
+<text x="465" y="133" font-size="13" class="b muted" letter-spacing="1.2">ONE COMPILER</text>
+<rect x="435" y="150" width="330" height="352" rx="12" class="panel"/>
+<circle cx="841" cy="128" r="11" class="f-amber"/>
+<text x="841" y="132.5" font-size="13" class="ink b" text-anchor="middle">3</text>
+<text x="860" y="133" font-size="13" class="b muted" letter-spacing="1.2">UNREAL GETS</text>
+<rect x="830" y="150" width="330" height="352" rx="12" class="panel"/>
+<path class="s-teal" d="M60,172 h7 l3,3 h11 v12 h-21 z"/>
+<text x="90" y="186" font-size="15" class="mono b">DShader/</text>
+<line x1="56" y1="200" x2="354" y2="200" class="rule"/>
+<circle cx="64" cy="225" r="4" class="f-teal"/>
+<text x="78" y="230" font-size="14" class="mono" xml:space="preserve"><tspan class="muted">Materials/</tspan>M_Panel<tspan class="f-teal">.dss</tspan></text>
+<rect x="320.82" y="214" width="31.18" height="21" rx="10.5" class="chip"/>
+<text x="336.41" y="228.46" font-size="11" class="muted" text-anchor="middle">2.0</text>
+<circle cx="64" cy="261" r="4" class="f-blue"/>
+<text x="78" y="266" font-size="14" class="mono" xml:space="preserve"><tspan class="muted">Materials/</tspan>MI_Red<tspan class="f-blue">.dsi</tspan></text>
+<rect x="291.12" y="250" width="60.88" height="21" rx="10.5" class="chip"/>
+<text x="321.56" y="264.46" font-size="11" class="muted" text-anchor="middle">instance</text>
+<circle cx="64" cy="297" r="4" class="f-teal"/>
+<text x="78" y="302" font-size="14" class="mono" xml:space="preserve"><tspan class="muted">Functions/</tspan>MF_Noise<tspan class="f-teal">.dss</tspan></text>
+<rect x="320.82" y="286" width="31.18" height="21" rx="10.5" class="chip"/>
+<text x="336.41" y="300.46" font-size="11" class="muted" text-anchor="middle">2.0</text>
+<circle cx="64" cy="333" r="4" class="f-amber"/>
+<text x="78" y="338" font-size="14" class="mono" xml:space="preserve"><tspan class="muted">Passes/</tspan>CP_Outline<tspan class="f-amber">.dsp</tspan></text>
+<rect x="303" y="322" width="49" height="21" rx="10.5" class="chip"/>
+<text x="327.5" y="336.46" font-size="11" class="muted" text-anchor="middle">UE 5.8</text>
+<circle cx="64" cy="369" r="4" class="head"/>
+<text x="78" y="374" font-size="14" class="mono" xml:space="preserve"><tspan class="muted">Shared/</tspan>Common<tspan class="muted">.dsh</tspan></text>
+<rect x="300.36" y="358" width="51.64" height="21" rx="10.5" class="chip"/>
+<text x="326.18" y="372.46" font-size="11" class="muted" text-anchor="middle">header</text>
+<circle cx="64" cy="405" r="4" class="f-violet"/>
+<text x="78" y="410" font-size="14" class="mono" xml:space="preserve"><tspan class="muted">Legacy/</tspan>M_Old<tspan class="f-violet">.dsm</tspan></text>
+<rect x="320.82" y="394" width="31.18" height="21" rx="10.5" class="chip"/>
+<text x="336.41" y="408.46" font-size="11" class="muted" text-anchor="middle">1.x</text>
+<line x1="56" y1="440" x2="354" y2="440" class="rule"/>
+<text x="60" y="466" font-size="13" class="muted">Sources go in version control;</text>
+<text x="60" y="484.46" font-size="13" class="muted">the assets can always be rebuilt.</text>
+<path class="wire" d="M374,300 L425.75,300"/>
+<path class="head" d="M431,300 L423.5,295.875 L423.5,304.125 Z"/>
+<text x="402.5" y="290" font-size="12.5" class="b" text-anchor="middle">save</text>
+<text x="402.5" y="320" font-size="11.5" class="muted" text-anchor="middle">0.25 s</text>
+<rect x="451" y="168" width="145" height="56" rx="8" class="tint-teal"/>
+<text x="463" y="191" font-size="13" class="b">2.0 parser</text>
+<text x="463" y="211" font-size="12" class="mono muted">.dss .dsi .dsp</text>
+<rect x="604" y="168" width="145" height="56" rx="8" class="tint-violet"/>
+<text x="616" y="191" font-size="13" class="b">legacy front end</text>
+<text x="616" y="211" font-size="12" class="mono muted">.dsm .dsf</text>
+<path class="wire" d="M523.5,224 V234 Q523.5,240 529.5,240 H670.5 Q676.5,240 676.5,234 V224"/>
+<path class="wire" d="M600,240 L600,256.75"/>
+<path class="head" d="M600,262 L604.125,254.5 L595.875,254.5 Z"/>
+<rect x="455" y="264" width="290" height="34" rx="17" class="chip"/>
+<text x="600" y="286" font-size="13.5" text-anchor="middle" xml:space="preserve"><tspan class="b">bind</tspan><tspan class="muted">   names · types · calls</tspan></text>
+<path class="wire" d="M600,298 L600,306.15"/>
+<path class="head" d="M600,310 L603.025,304.5 L596.975,304.5 Z"/>
+<rect x="455" y="310" width="290" height="34" rx="17" class="chip"/>
+<text x="600" y="332" font-size="13.5" text-anchor="middle" xml:space="preserve"><tspan class="b">lower</tspan><tspan class="muted">   to a graph IR</tspan></text>
+<path class="wire" d="M600,344 L600,352.15"/>
+<path class="head" d="M600,356 L603.025,350.5 L596.975,350.5 Z"/>
+<rect x="455" y="356" width="290" height="34" rx="17" class="chip"/>
+<text x="600" y="378" font-size="13.5" text-anchor="middle" xml:space="preserve"><tspan class="b">passes</tspan><tspan class="muted">   fold · dedupe · prune</tspan></text>
+<path class="wire" d="M600,390 L600,398.15"/>
+<path class="head" d="M600,402 L603.025,396.5 L596.975,396.5 Z"/>
+<rect x="455" y="402" width="290" height="34" rx="17" class="chip"/>
+<text x="600" y="424" font-size="13.5" text-anchor="middle" xml:space="preserve"><tspan class="b">validate</tspan><tspan class="muted">   before any asset</tspan></text>
+<path class="wire" d="M600,436 L600,444.15"/>
+<path class="head" d="M600,448 L603.025,442.5 L596.975,442.5 Z"/>
+<rect x="455" y="448" width="290" height="34" rx="17" class="tint-violet"/>
+<text x="600" y="470" font-size="13.5" text-anchor="middle" xml:space="preserve"><tspan class="b">emit</tspan><tspan class="muted">   assets · HLSL · targets</tspan></text>
+<path class="wire" d="M769,300 L820.75,300"/>
+<path class="head" d="M826,300 L818.5,295.875 L818.5,304.125 Z"/>
+<rect x="846" y="166" width="298" height="74" rx="8" class="tint-teal" stroke-dasharray="5 4"/>
+<text x="860" y="190" font-size="14" class="b">Material — ThinCustom, the default</text>
+<text x="860" y="211" font-size="12.5" class="muted">In memory (Ephemeral) until a cook or</text>
+<text x="860" y="229" font-size="12.5" class="muted">Materialize writes it to disk.</text>
+<rect x="846" y="248" width="298" height="74" rx="8" class="tint-violet"/>
+<text x="860" y="272" font-size="14" class="b">Functions · layers · Graph materials</text>
+<text x="860" y="293" font-size="12.5" class="muted">Saved as .uasset on every successful build;</text>
+<text x="860" y="311" font-size="12.5" class="muted">layer blends too.</text>
+<rect x="846" y="330" width="298" height="74" rx="8" class="tint-blue"/>
+<text x="860" y="354" font-size="14" class="b">Material instances</text>
+<text x="860" y="375" font-size="12.5" class="muted">From a .dsi, checked against the parent</text>
+<text x="860" y="393" font-size="12.5" class="muted">material's parameters.</text>
+<rect x="846" y="412" width="298" height="74" rx="8" class="tint-amber"/>
+<text x="860" y="436" font-size="14" class="b">Custom Pass pipeline · UE 5.8</text>
+<text x="860" y="457" font-size="12.5" class="muted">A UDreamPassPipeline, plus a render target</text>
+<text x="860" y="475" font-size="12.5" class="muted">per exported buffer.</text>
+<path class="wire dash" d="M600,502 L600,548 Q600,558 590,558 L215,558 Q205,558 205,548 L205,511.25"/>
+<path class="head" d="M205,506 L200.875,513.5 L209.125,513.5 Z"/>
+<rect x="281.04" y="547" width="242.92" height="22" rx="11" class="panel"/>
+<text x="402.5" y="562.32" font-size="12" class=" mono" text-anchor="middle">file(line,col): DSHnnnn message</text>
+<text x="618" y="563" font-size="13" class="muted">shown in the Material Content Browser, VS Code and Rider</text>
+</svg>

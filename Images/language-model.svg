@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="866" viewBox="0 0 1200 866" role="img" aria-labelledby="t d">
+<title id="t">Two spellings, one compiler</title>
+<desc id="d">A table pairing each 1.x DreamShaderLang block with its 2.0 spelling and the Unreal asset or graph element both of them build.</desc>
+<style>
+:root{--bg:#ffffff;--panel:#f6f8fa;--chip:#eaeef2;--line:#d0d7de;--text:#1f2328;--muted:#59636e;
+--teal:#0b7f72;--violet:#6e44d8;--blue:#0a64c8;--amber:#a95a00}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--panel:#161b22;--chip:#222a35;--line:#30363d;
+--text:#e6edf3;--muted:#8d96a0;--teal:#2dd4bf;--violet:#a78bfa;--blue:#58a6ff;--amber:#f2a93b}}
+text{font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;fill:var(--text)}
+.mono{font-family:ui-monospace, 'Cascadia Code', SFMono-Regular, Consolas, Menlo, 'Liberation Mono', monospace}
+.muted{fill:var(--muted)}
+.b{font-weight:600}
+.frame{fill:var(--bg);stroke:var(--line)}
+.panel{fill:var(--panel);stroke:var(--line)}
+.chip{fill:var(--chip)}
+.rule{stroke:var(--line);fill:none}
+.wire{stroke:var(--muted);fill:none;stroke-width:1.5}
+.head{fill:var(--muted)}
+.dash{stroke-dasharray:5 4}
+.ink{fill:var(--bg)}
+.cm{fill:var(--muted)}
+.f-teal{fill:var(--teal)}.s-teal{stroke:var(--teal);fill:none;stroke-width:1.5}.tint-teal{fill:var(--teal);fill-opacity:.11;stroke:var(--teal);stroke-opacity:.55}.w-teal{stroke:var(--teal);fill:none;stroke-width:1.5}.h-teal{fill:var(--teal)}
+.f-violet{fill:var(--violet)}.s-violet{stroke:var(--violet);fill:none;stroke-width:1.5}.tint-violet{fill:var(--violet);fill-opacity:.11;stroke:var(--violet);stroke-opacity:.55}.w-violet{stroke:var(--violet);fill:none;stroke-width:1.5}.h-violet{fill:var(--violet)}
+.f-blue{fill:var(--blue)}.s-blue{stroke:var(--blue);fill:none;stroke-width:1.5}.tint-blue{fill:var(--blue);fill-opacity:.11;stroke:var(--blue);stroke-opacity:.55}.w-blue{stroke:var(--blue);fill:none;stroke-width:1.5}.h-blue{fill:var(--blue)}
+.f-amber{fill:var(--amber)}.s-amber{stroke:var(--amber);fill:none;stroke-width:1.5}.tint-amber{fill:var(--amber);fill-opacity:.11;stroke:var(--amber);stroke-opacity:.55}.w-amber{stroke:var(--amber);fill:none;stroke-width:1.5}.h-amber{fill:var(--amber)}
+.kw{fill:var(--violet)}.ty{fill:var(--teal)}.st{fill:var(--amber)}.dc{fill:var(--muted)}
+</style>
+<rect x="0.5" y="0.5" width="1199" height="865" rx="16" class="frame"/>
+<text x="40" y="58" font-size="26" class="b">Two spellings, one compiler</text>
+<text x="40" y="88" font-size="15" class="muted">Every 1.x block has a 2.0 spelling that builds the same thing, and 2.0 adds instances and Custom Pass pipelines. Both front ends feed one pipeline, so both</text>
+<text x="40" y="109.3" font-size="15" class="muted">get the same checks.</text>
+<rect x="40" y="134" width="145.68" height="26" rx="13" class="tint-violet"/>
+<text x="112.84" y="151.68" font-size="13" class="b" text-anchor="middle">1.x  ·  .dsm .dsf .dsh</text>
+<rect x="1019" y="134" width="141" height="26" rx="13" class="tint-teal"/>
+<text x="1089.5" y="151.68" font-size="13" class="b" text-anchor="middle">2.0  ·  .dss .dsi .dsp</text>
+<text x="600" y="152" font-size="13" class="muted" text-anchor="middle">builds</text>
+<text x="40" y="188" font-size="12" class="b muted" letter-spacing="1.3">ASSETS</text>
+<rect x="40" y="200" width="420" height="40" rx="8" class="panel"/>
+<text x="56" y="225" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">Shader</tspan>(Name = <tspan class="st">"…"</tspan>) { … }</text>
+<path class="w-violet" d="M462,220 L482.45,220"/>
+<path class="h-violet" d="M487,220 L480.5,216.425 L480.5,223.575 Z"/>
+<rect x="490" y="200" width="220" height="40" rx="20" class="tint-blue"/>
+<text x="600" y="225" font-size="13.5" class="b" text-anchor="middle">Material</text>
+<rect x="740" y="200" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="225" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">export void </tspan>M(<tspan class="kw">inout </tspan><tspan class="ty">material</tspan> m)</text>
+<path class="w-teal" d="M738,220 L717.55,220"/>
+<path class="h-teal" d="M713,220 L719.5,223.575 L719.5,216.425 Z"/>
+<rect x="40" y="248" width="420" height="40" rx="8" class="panel"/>
+<text x="56" y="273" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">ShaderFunction</tspan>(Name = <tspan class="st">"…"</tspan>) { … }</text>
+<path class="w-violet" d="M462,268 L482.45,268"/>
+<path class="h-violet" d="M487,268 L480.5,264.425 L480.5,271.575 Z"/>
+<rect x="490" y="248" width="220" height="40" rx="20" class="tint-blue"/>
+<text x="600" y="273" font-size="13.5" class="b" text-anchor="middle">Material Function</text>
+<rect x="740" y="248" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="273" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">export </tspan><tspan class="ty">float3</tspan> F(<tspan class="ty">float2</tspan> UV) { … }</text>
+<path class="w-teal" d="M738,268 L717.55,268"/>
+<path class="h-teal" d="M713,268 L719.5,271.575 L719.5,264.425 Z"/>
+<rect x="40" y="296" width="420" height="40" rx="8" class="panel"/>
+<text x="56" y="321" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">ShaderLayer</tspan>(Name = <tspan class="st">"…"</tspan>) { … }</text>
+<path class="w-violet" d="M462,316 L482.45,316"/>
+<path class="h-violet" d="M487,316 L480.5,312.425 L480.5,319.575 Z"/>
+<rect x="490" y="296" width="220" height="40" rx="20" class="tint-blue"/>
+<text x="600" y="321" font-size="13.5" class="b" text-anchor="middle">Material Layer</text>
+<rect x="740" y="296" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="321" font-size="13" class="mono" xml:space="preserve"><tspan class="dc">/// @layer  </tspan><tspan class="kw">export void </tspan>L(<tspan class="kw">inout </tspan><tspan class="ty">material</tspan> m)</text>
+<path class="w-teal" d="M738,316 L717.55,316"/>
+<path class="h-teal" d="M713,316 L719.5,319.575 L719.5,312.425 Z"/>
+<rect x="40" y="344" width="420" height="40" rx="8" class="panel"/>
+<text x="56" y="369" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">ShaderLayerBlend</tspan>(Name = <tspan class="st">"…"</tspan>) { … }</text>
+<path class="w-violet" d="M462,364 L482.45,364"/>
+<path class="h-violet" d="M487,364 L480.5,360.425 L480.5,367.575 Z"/>
+<rect x="490" y="344" width="220" height="40" rx="20" class="tint-blue"/>
+<text x="600" y="369" font-size="13.5" class="b" text-anchor="middle">Layer Blend</text>
+<rect x="740" y="344" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="369" font-size="13" class="mono" xml:space="preserve"><tspan class="dc">/// @layerblend  </tspan><tspan class="kw">export void </tspan>B(…)</text>
+<path class="w-teal" d="M738,364 L717.55,364"/>
+<path class="h-teal" d="M713,364 L719.5,367.575 L719.5,360.425 Z"/>
+<rect x="40" y="392" width="420" height="40" rx="8" class="rule dash"/>
+<text x="56" y="417" font-size="13" class="muted">no 1.x form</text>
+<rect x="490" y="392" width="220" height="40" rx="20" class="tint-blue"/>
+<text x="600" y="417" font-size="13.5" class="b" text-anchor="middle">Material Instance</text>
+<rect x="740" y="392" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="417" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">#pragma </tspan>instance(Parent = <tspan class="st">"/Game/M_Panel"</tspan>)</text>
+<rect x="1107.16" y="401" width="42.84" height="22" rx="11" class="chip"/>
+<text x="1128.58" y="415.96" font-size="11" class="muted mono" text-anchor="middle">.dsi</text>
+<path class="w-teal" d="M738,412 L717.55,412"/>
+<path class="h-teal" d="M713,412 L719.5,415.575 L719.5,408.425 Z"/>
+<rect x="40" y="440" width="420" height="40" rx="8" class="rule dash"/>
+<text x="56" y="465" font-size="13" class="muted">no 1.x form</text>
+<rect x="490" y="440" width="220" height="40" rx="20" class="tint-blue"/>
+<text x="600" y="465" font-size="13.5" class="b" text-anchor="middle">Custom Pass pipeline</text>
+<rect x="740" y="440" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="465" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">#pragma </tspan>pipeline  <tspan class="kw">buffer</tspan> …  <tspan class="kw">pass</tspan> …</text>
+<rect x="1046.77" y="449" width="103.23" height="22" rx="11" class="chip"/>
+<text x="1098.38" y="463.96" font-size="11" class="muted mono" text-anchor="middle">.dsp · UE 5.8</text>
+<path class="w-teal" d="M738,460 L717.55,460"/>
+<path class="h-teal" d="M713,460 L719.5,463.575 L719.5,456.425 Z"/>
+<text x="40" y="502" font-size="12" class="b muted" letter-spacing="1.3">INSIDE A GRAPH</text>
+<rect x="40" y="514" width="420" height="40" rx="8" class="panel"/>
+<text x="56" y="539" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">Properties</tspan> = { <tspan class="ty">float4</tspan> Tint = …; }</text>
+<path class="w-violet" d="M462,534 L482.45,534"/>
+<path class="h-violet" d="M487,534 L480.5,530.425 L480.5,537.575 Z"/>
+<rect x="490" y="514" width="220" height="40" rx="20" class="tint-amber"/>
+<text x="600" y="539" font-size="13.5" class="b" text-anchor="middle">parameter nodes</text>
+<rect x="740" y="514" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="539" font-size="13" class="mono" xml:space="preserve"><tspan class="dc">/// @group Look  </tspan><tspan class="kw">uniform </tspan><tspan class="ty">float4</tspan> Tint = …;</text>
+<path class="w-teal" d="M738,534 L717.55,534"/>
+<path class="h-teal" d="M713,534 L719.5,537.575 L719.5,530.425 Z"/>
+<rect x="40" y="562" width="420" height="40" rx="8" class="panel"/>
+<text x="56" y="587" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">Settings</tspan> = { ShadingModel = <tspan class="st">"Unlit"</tspan>; }</text>
+<path class="w-violet" d="M462,582 L482.45,582"/>
+<path class="h-violet" d="M487,582 L480.5,578.425 L480.5,585.575 Z"/>
+<rect x="490" y="562" width="220" height="40" rx="20" class="tint-amber"/>
+<text x="600" y="587" font-size="13.5" class="b" text-anchor="middle">material settings</text>
+<rect x="740" y="562" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="587" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">#pragma </tspan>material(ShadingModel = Unlit)</text>
+<path class="w-teal" d="M738,582 L717.55,582"/>
+<path class="h-teal" d="M713,582 L719.5,585.575 L719.5,578.425 Z"/>
+<rect x="40" y="610" width="420" height="40" rx="8" class="panel"/>
+<text x="56" y="635" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">Function</tspan> F(…)  /  <tspan class="kw">GraphFunction</tspan> G(…)</text>
+<path class="w-violet" d="M462,630 L482.45,630"/>
+<path class="h-violet" d="M487,630 L480.5,626.425 L480.5,633.575 Z"/>
+<rect x="490" y="610" width="220" height="40" rx="20" class="tint-amber"/>
+<text x="600" y="635" font-size="13.5" class="b" text-anchor="middle">a Custom HLSL node</text>
+<rect x="740" y="610" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="635" font-size="13" class="mono" xml:space="preserve"><tspan class="dc">/// @custom  </tspan><tspan class="ty">float</tspan> F(…) { … }</text>
+<path class="w-teal" d="M738,630 L717.55,630"/>
+<path class="h-teal" d="M713,630 L719.5,633.575 L719.5,626.425 Z"/>
+<rect x="40" y="658" width="420" height="40" rx="8" class="panel"/>
+<text x="56" y="683" font-size="13" class="mono" xml:space="preserve"><tspan class="kw">VirtualFunction</tspan>(Name = <tspan class="st">"…"</tspan>)</text>
+<path class="w-violet" d="M462,678 L482.45,678"/>
+<path class="h-violet" d="M487,678 L480.5,674.425 L480.5,681.575 Z"/>
+<rect x="490" y="658" width="220" height="40" rx="20" class="tint-amber"/>
+<text x="600" y="683" font-size="13.5" class="b" text-anchor="middle">a call to an existing asset</text>
+<rect x="740" y="658" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="683" font-size="13" class="mono" xml:space="preserve"><tspan class="dc">/// @asset /Game/MF_X  </tspan><tspan class="kw">extern </tspan><tspan class="ty">float</tspan> MF_X(…);</text>
+<path class="w-teal" d="M738,678 L717.55,678"/>
+<path class="h-teal" d="M713,678 L719.5,681.575 L719.5,674.425 Z"/>
+<rect x="40" y="706" width="420" height="40" rx="8" class="rule dash"/>
+<text x="56" y="731" font-size="13" class="muted">no 1.x form</text>
+<rect x="490" y="706" width="220" height="40" rx="20" class="tint-amber"/>
+<text x="600" y="731" font-size="13.5" class="b" text-anchor="middle">nodes, inlined per call</text>
+<rect x="740" y="706" width="420" height="40" rx="8" class="panel"/>
+<text x="756" y="731" font-size="13" class="mono" xml:space="preserve"><tspan class="ty">float</tspan> Wave(<tspan class="ty">float</tspan> X) { … }</text>
+<rect x="1101" y="715" width="49" height="22" rx="11" class="chip"/>
+<text x="1125.5" y="729.96" font-size="11" class="muted" text-anchor="middle">helper</text>
+<path class="w-teal" d="M738,726 L717.55,726"/>
+<path class="h-teal" d="M713,726 L719.5,729.575 L719.5,722.425 Z"/>
+<line x1="40" y1="772" x2="1160" y2="772" class="rule"/>
+<rect x="40" y="790" width="99.875" height="22" rx="11" class="chip"/>
+<text x="89.9375" y="805.5" font-size="12.5" class="b mono" text-anchor="middle">dsc migrate</text>
+<text x="151.875" y="806" font-size="13.5" class="muted">rewrites 1.x sources as .dss, and proves each rewrite builds the same graph before writing it</text>
+<rect x="40" y="820" width="115.125" height="22" rx="11" class="chip"/>
+<text x="97.5625" y="835.5" font-size="12.5" class="b mono" text-anchor="middle">dsc decompile</text>
+<text x="167.125" y="836" font-size="13.5" class="muted">writes the right-hand column from an existing asset</text>
+</svg>
