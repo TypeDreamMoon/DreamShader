@@ -2,155 +2,137 @@
 
 > [DreamShader](../Docs/index.md) » **Agent skills**
 
-Five skills that let an agent author, migrate and verify DreamShaderLang sources without opening the
-Unreal editor, and the driver they all call. The driver is the deliverable; each `SKILL.md` is its
-man page for one task.
-
-[`build-plugin.ps1`](build-plugin.ps1) sits alongside them and answers a different question — not
-"does this source compile" but "does the *plugin* still build on every engine it claims to support".
-It is not a skill and `sync-skills.ps1` does not publish it.
+Six skills that let an agent write, migrate, decompile and verify DreamShader sources without opening the
+Unreal editor, and the driver they all call. The driver is the deliverable; each `SKILL.md` is its man page
+for one task, and each reference page condenses a language to what an author needs.
 
 | | |
 | :-- | :-- |
 | Source of truth | `Plugins/DreamShader/.skill/` — edit here |
 | Published to | `<project>/.claude/skills/` by [`sync-skills.ps1`](sync-skills.ps1); that is where Claude Code finds them |
-| Driver | [`dsc.ps1`](dsc.ps1) — wraps `UnrealEditor-Cmd.exe … -run=DreamShader` |
-| Engines | Unreal Engine `5.3` – `5.8`, Win64. Verified against a **5.8 source build** |
-| Plugin | DreamShader `1.8.0`, compiled — `Binaries/Win64/UnrealEditor-DreamShaderEditor.dll` must exist |
-| Shell | PowerShell 7 (`pwsh`) |
+| Driver | [`dsc.ps1`](dsc.ps1) — wraps `UnrealEditor-Cmd.exe <project> -run=DreamShader …` |
+| Engines | Unreal Engine `5.3` – `5.8`, Win64; Custom Pass (`.dsp`) needs `5.8` |
+| Plugin | DreamShader `2.1.0`, compiled — the commandlet lives in the `DreamShaderEditor` module |
+| Shell | PowerShell 7 (`pwsh`); every script says `#Requires -Version 7.0` |
 
 ## Skills
 
 | Skill | Argument | Does |
 | :-- | :-- | :-- |
-| [`dream-shader-create`](dream-shader-create/SKILL.md) | `<description>` | writes a new material or function from plain language, then compiles it to prove it builds |
-| [`dream-shader-optimize`](dream-shader-optimize/SKILL.md) | `<file>` | dedupes, renames, retargets and restores lost state in a decompiled source |
-| [`dream-shader-decompile`](dream-shader-decompile/SKILL.md) | `<asset>` | exports an existing material, function, layer, blend or material instance back to source — `.dss` / `.dsi` by default, `.dsm` / `.dsf` with `-Format Legacy` |
-| [`dream-shader-verify`](dream-shader-verify/SKILL.md) | `<file>` \| `-All` | compiles headlessly; exit `0` / `1` |
-| [`dream-shader-diagnose`](dream-shader-diagnose/SKILL.md) | `<message>` | routes a diagnostic to its pipeline stage, explains it, fixes it |
+| [`dream-shader-create`](dream-shader-create/SKILL.md) | `<description>` | writes a new material, function, instance or Custom Pass pipeline from plain language — `.dss` / `.dsi` / `.dsp` — then checks and compiles it |
+| [`dream-shader-verify`](dream-shader-verify/SKILL.md) | `<file>` \| `-All` | `check` (writes nothing), `compile`, `check -Shaders`; exit `0` / `1` with every diagnostic |
+| [`dream-shader-diagnose`](dream-shader-diagnose/SKILL.md) | `<message>` | routes a `DSHnnnn` code to its page, explains it, fixes it — and the failures that have no message |
+| [`dream-shader-decompile`](dream-shader-decompile/SKILL.md) | `<asset>` | exports a material, function, layer, blend, instance or pipeline back to source — `.dss` / `.dsi` / `.dsp`, or `.dsm` / `.dsf` with `-Format Legacy` |
+| [`dream-shader-optimize`](dream-shader-optimize/SKILL.md) | `<file>` | turns a decompiled or migrated source into a hand-written one, and proves the graph unchanged with `dump-graph` |
+| [`dream-shader-migrate`](dream-shader-migrate/SKILL.md) | `<file>` \| `-All` | rewrites 1.x `.dsm` / `.dsf` / `.dsh` as 2.0 with `dsc migrate`, which proves each rewrite before writing it |
 
-[`reference/dreamshaderlang.md`](reference/dreamshaderlang.md) holds the grammar subset an author
-actually needs — file kinds, the `Shader` block, types, the 29 math builtins, the reserved-name and
-identifier-rewrite traps. `create` and `optimize` both read it before writing a line.
+| Reference | For |
+| :-- | :-- |
+| [`reference/dss.md`](reference/dss.md) | the 2.0 language — `.dss` materials and functions, `.dsi` instances: the entry, `uniform`s and their `///` tags, `#pragma material`, `UE.*` calls, `/// @custom`, the traps and their codes |
+| [`reference/dsp.md`](reference/dsp.md) | Custom Pass pipelines — buffers, passes, injection points, HLSL passes, the materials a pipeline uses, the traps |
+| [`reference/legacy.md`](reference/legacy.md) | reading and maintaining 1.x `.dsm` / `.dsf` / `.dsh`, as the legacy front end builds them today |
 
 ### Routes
 
 ```text
-new material        dream-shader-create ──► dream-shader-verify
+new source          dream-shader-create ──► dream-shader-verify
 existing asset      dream-shader-decompile ──► dream-shader-optimize ──► dream-shader-verify
+1.x sources         dream-shader-migrate ──► dream-shader-optimize (when it should read hand-written)
 stuck               dream-shader-diagnose
 ```
 
 ## Quick start
 
 ```powershell
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/Materials/M_Panel.dsm -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew
 ```
 
-Run it from anywhere inside the project. The driver walks up for the `.uproject`, resolves the
-engine from its `EngineAssociation`, prints only the `LogDreamShader` lines plus a verdict, and
-exits with the commandlet's own code.
-
-| Flag | Effect |
-| :-- | :-- |
-| `-All` | every project source; `.dsf` function files build before `.dsm` materials |
-| `-Force` | bypass the source-hash skip — without it an unchanged file logs `Skipped …` and proves nothing |
-| `-CleanNew` | delete the `.uasset` files this run wrote, **only** those git reports untracked, then prune the emptied folders |
-| `-Project` / `-Engine` | override the discovery; `UE_ENGINE_ROOT` works too |
-| `-Raw` | the whole engine log instead of just the DreamShader lines |
-
-Full flag surface and troubleshooting: [`dream-shader-verify`](dream-shader-verify/SKILL.md).
-
-### The 2.0 verbs
-
-The skills above were written for 1.x sources and still work: a `.dsm` / `.dsf` is built by the same
-compiler as a `.dss`, through the legacy front end. The driver has more verbs than the skills use:
+Run it from anywhere inside the project. The driver walks up for the `.uproject`, resolves the engine from its
+`EngineAssociation`, prints the DreamShader messages and a verdict, and exits with the commandlet's own code.
 
 | Verb | Does |
 | :-- | :-- |
-| `check <file>` \| `-All` | compiles as far as IR validation and writes **no asset** — the fast gate. `-Shaders` builds the products and reports HLSL errors against source lines — for a `.dsp`, by pre-checking every HLSL pass in its slot |
+| `check <file>` \| `-All` | compiles as far as IR validation and writes **no asset** — the fast gate. `-Shaders` builds the products and compiles their shaders, reporting HLSL errors against source lines — for a `.dsp`, by pre-checking every HLSL pass in its slot |
+| `compile <file>` \| `-All` | builds the assets. `-Force` bypasses the source-hash skip; `-CleanNew` deletes what the run created |
+| `decompile <asset>` | 2.0 text by default: `.dss`, a `.dsi` for a material instance, a `.dsp` for a pipeline — [`Docs/tools/decompiler.md`](../Docs/tools/decompiler.md) |
 | `migrate <file>` \| `-All` \| `-Root <name>` | rewrites 1.x sources as `.dss`, proving each rewrite first; `-Check` writes nothing — [`Docs/tools/migrate.md`](../Docs/tools/migrate.md) |
-| `decompile <asset>` | 2.0 text by default; a material instance comes out as a [`.dsi`](../Docs/language-v2/instances.md), a Custom Pass pipeline as a [`.dsp`](../Docs/language-v2/passes.md) |
+| `dump-graph <file>` \| `-All` | a canonical JSON of each generated graph, writing no asset — two captures diff with `git diff --no-index` |
 | `dump-ir`, `index`, `export-catalog` | language-service tools: the lowered IR, the symbol index, the builtin node catalog |
-| `dump-layout <file>` \| `-All` | draws the IR graph layouts — `Blocks`, `SourceBands`, `Layered` — of every product as SVG, building nothing; `-Style` names one, `-Json` adds the coordinates |
-| `fmt <file>` \| `-All` | rewrites 2.0 sources (`.dss`, `.dsi`, `.dsp`, 2.0 headers) in the printer's layout, refusing any file it cannot vouch for; `-Check` writes nothing and fails when a file would change |
-| `list-generated <file>` \| `-All` | names every asset the sources build, building none: `-ListAs Packages \| Files \| GitIgnore \| Json`, `-Out <file>` — [`Docs/generation/source-control.md`](../Docs/generation/source-control.md) |
-| `pass-registry` | lists the Custom Pass HLSL slots in `<source root>/.dreampass` and the state of each, writing nothing; `-Gc` frees the slots of pipelines and passes that are gone; `-Rebuild` compiles every `.dsp` again, frees what `-Gc` would, and rewrites the registry files — [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md#pass-registry) |
+| `dump-layout <file>` \| `-All` | draws the IR graph layouts — `Blocks`, `SourceBands`, `Layered` — as SVG, building nothing |
+| `fmt <file>` \| `-All` | rewrites 2.0 sources in the printer's layout, refusing any file it cannot vouch for; `-Check` writes nothing |
+| `list-generated <file>` \| `-All` | names every asset the sources build, building none: `-ListAs Packages \| Files \| GitIgnore \| Json` — [`Docs/generation/source-control.md`](../Docs/generation/source-control.md) |
+| `pass-registry` | lists the Custom Pass HLSL slots in `DShader/.dreampass`; `-Gc` frees the dead ones; `-Rebuild` compiles every `.dsp` again and rewrites the registry — [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md#pass-registry) |
 
-`compile`, `check`, `dump-ir`, `dump-layout`, `index`, `list-generated` and `dump-graph` take every
-compilable source: `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`. A `.dsp` — a Custom Pass pipeline,
-[`Docs/language-v2/passes.md`](../Docs/language-v2/passes.md) — builds on UE 5.8 only. The 2.0 language itself:
-[`Docs/language-v2/index.md`](../Docs/language-v2/index.md); its Substrate sugar — operators, legacy
-parameters on a slab, values built member by member — works in 1.x sources too:
-[`Docs/language-v2/substrate.md`](../Docs/language-v2/substrate.md).
+Every verb that takes a source takes all five compilable kinds: `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`. The full
+flag surface: [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md); the skills' view of it:
+[`dream-shader-verify`](dream-shader-verify/SKILL.md).
 
 ## What the driver adds over the raw commandlet
 
 | | |
 | :-- | :-- |
 | Engine resolution | from the `.uproject`'s `EngineAssociation`, via the registry — no hard-coded path |
-| Project discovery | walks up from the target file, then the working directory |
-| Log de-duplication | every `LogDreamShader` line is emitted twice, once raw and once re-wrapped through `LogInit` |
-| Asset accounting | classifies everything the run wrote as `NEW (untracked)` or `TRACKED AND MODIFIED`, the latter with its `git checkout --` command. It counts what the log reports as `Generated …`: a `.dsp`'s pipeline asset is counted, the render targets of its exported buffers are not — they log no such line, so `-CleanNew` leaves them — and the files a `.dsp` writes under `.dreampass/` are sources to commit, not assets |
-| Cleanup | `-CleanNew` removes only the untracked ones and prunes the folders they leave behind |
+| Project discovery | walks up from the target file (or `-SourceFile`), then the working directory |
+| Whole messages | a compile's report is one multi-line log message — every `Generated` line, then `Warnings:` and the warnings, or every error — and the engine prefixes only its first line. The driver keeps each message whole, and drops the engine's end-of-run summary that repeats them |
+| Asset accounting | records every `.uasset` under the Content folders of the project and its plugins before the run, and reports what the run created (`NEW`) and rewrote — the latter classified by git where the file is in a repository, with the restore command for a tracked one. It works in a project that is not a repository, and it counts what no log line names: a `.dsp`'s render targets, `check -Shaders`' assets |
+| Cleanup | `-CleanNew` deletes only what the run created, and prunes the folders it leaves empty |
+| Registry report | after a run that can touch them, the files under `DShader/.dreampass` that changed — sources to commit with the `.dsp` |
+| Paths and lists | a relative `-Out` / `-DiagnosticsOut` is the working directory's, not the engine's Binaries folder; `-Define A=1,B` is split into one `-Define=` per item |
 
 > [!IMPORTANT]
-> **The commandlet writes real `.uasset` files; the interactive editor does not.** DreamShader
-> generates materials in memory by design — the source file is the authoring surface, and no asset
-> appears in the Content Browser. A headless compile persists them, and those files then *shadow*
-> Ephemeral generation on the next editor load.
->
-> `-CleanNew` is the answer, and it is why the driver consults git rather than guessing. Keep it on
-> while iterating.
+> **The commandlet writes real `.uasset` files; the interactive editor, for a ThinCustom material, does not.**
+> DreamShader keeps a ThinCustom product (the project default) in memory in the editor — the source file is the
+> authoring surface. A file a headless compile left on disk wins over that on the next load. Keep `-CleanNew` on
+> while iterating; `check` writes nothing at all.
 
 > [!WARNING]
-> **`compile -All` overwrites tracked assets.** Any `.dsm` whose `Name=` targets a path that already
-> holds a committed `.uasset` rewrites it, and `-CleanNew` will not delete those — it reports them
-> in red. Verified on this project: `-All` rewrites
-> `Content/UI/Cards/Materials/M_TZM_CardFoil_Holographic.uasset`. Prefer single-file compiles while
-> working; reserve `-All` for a deliberate gate.
+> **`compile -All` overwrites assets you may not own.** It builds every source of every source root — the
+> project's and **each enabled plugin's** `DShader/` — into those `Content/` folders, and `-CleanNew` never
+> deletes what existed before: a rewritten tracked asset is reported in red, with its restore command. Compile
+> single files while working; keep `-All` for `check`.
 
 ## Cost
 
-Editor boot dominates. Measured on this project, a single-file compile and a whole-tree `-All` over
-six sources **both took ≈24 s**. Compiling one file is not meaningfully cheaper than compiling
-everything, so batch edits rather than looping per file.
+Engine boot dominates: every run takes tens of seconds before DreamShader gets control, and one file costs about
+what a whole tree does. Batch edits, then run once.
 
 ## Publishing
 
-Claude Code auto-loads skills from `.claude/skills/`, searching the directory tree at and *above*
-where the agent is working. `.skill/` is not on that path, so publish it:
+Claude Code auto-loads skills from `.claude/skills/`, searching the directory tree at and *above* where the agent
+is working. `.skill/` is not on that path, so publish it:
 
 ```powershell
 pwsh -File Plugins/DreamShader/.skill/sync-skills.ps1
 ```
 
-A symlink or junction is not enough — the link *text* has to change. Each `SKILL.md` is written for
-`.skill/<skill>/`, so two path families are rewritten against the destination:
+A symlink or junction is not enough — the link *text* has to change. Each file is written for `.skill/`, so three
+path families are rewritten against the destination:
 
 | Written in `.skill/` | Published as |
 | :-- | :-- |
-| `](../../Docs/…)` | the real relative path to `Plugins/DreamShader/Docs` |
-| `pwsh -File Plugins/DreamShader/.skill/dsc.ps1` | the driver, relative to wherever you now stand |
-
-Both are computed, so a standalone plugin checkout publishes correctly too:
-`sync-skills.ps1 -Target .claude/skills` there rewrites `Docs` to `../../../Docs` and the driver to
-`.skill/dsc.ps1`.
+| `](../../Docs/…)` | the real relative path to the plugin's `Docs/` |
+| `](../reference/…)` | `](../dream-shader-reference/…)` — `reference/` is published under a name of its own, so another plugin's `reference/` never collides with it |
+| `Plugins/DreamShader/` | the plugin's real path from the project root — `Plugins/Dream/DreamShader/` for a plugin in a group folder — the driver invocation included |
 
 | Flag | Effect |
 | :-- | :-- |
 | *(none)* | publish to the host project — the nearest `.uproject` above the plugin |
-| `-Target <dir>` | publish to a specific `.claude/skills` |
-| `-Check` | compare without writing; exit `1` on drift, so it works as a pre-commit gate |
-| `-Prune` | remove published `dream-shader-*` directories this run did not write — after a rename or deletion |
+| `-Target <dir>` | publish to a specific `.claude/skills`, absolute or relative |
+| `-Check` | compare without writing; exit `1` on drift — a stale file, a missing one, or a published one whose source is gone |
+| `-Prune` | remove what this run did not write: `dream-shader-*` directories and files whose source is gone, and the `reference/` files an older version published |
 
-Published files carry an HTML comment under the frontmatter marking them as generated. The
-comparison accounts for it, so editing a published copy shows up as drift.
+Published Markdown carries an HTML comment under the frontmatter marking it as generated; editing a published copy
+shows up as drift. Whether `.claude/skills/` is committed is the host project's choice: committed, a teammate gets
+the skills from the clone (under a `.gitignore` that excludes `.claude/*`, negate `!.claude/skills/`); not
+committed, everyone runs `sync-skills.ps1` once.
 
-> [!NOTE]
-> `.claude/skills/` is committed in this repo — `.gitignore` excludes `.claude/*` and negates
-> `!.claude/skills/`, because git never descends into an excluded *directory*. A teammate gets the
-> skills from the clone; re-run `sync-skills.ps1` after editing `.skill/`.
+## The other scripts
+
+| Script | Does |
+| :-- | :-- |
+| [`build-plugin.ps1`](build-plugin.ps1) | `RunUAT BuildPlugin` across a list of engines — does the *plugin* still build on every engine it claims. Reports `BLOCKED` when another UnrealBuildTool holds the build mutex. Not a skill; not published |
+| [`gen-diagnostics.ps1`](gen-diagnostics.ps1) | regenerates the machine-written half of `Docs/diagnostics/` from the raise sites in `Source/`; `-Check` is the CI gate. Hand-written prose is never dropped — a code that loses its raise site keeps it under *Retired codes* |
 
 ## Layout
 
@@ -158,32 +140,36 @@ comparison accounts for it, so editing a published copy shows up as drift.
 .skill/
 ├─ README.md                        this page
 ├─ dsc.ps1                          the driver — wraps -run=DreamShader
-├─ build-plugin.ps1                 RunUAT BuildPlugin across a list of engines
 ├─ sync-skills.ps1                  publishes into .claude/skills, rewriting paths
+├─ build-plugin.ps1                 RunUAT BuildPlugin across a list of engines
+├─ gen-diagnostics.ps1              Docs/diagnostics/ from the source
 ├─ reference/
-│  └─ dreamshaderlang.md            the grammar subset an author needs
+│  ├─ dss.md                        the 2.0 language, for .dss and .dsi
+│  ├─ dsp.md                        Custom Pass pipelines
+│  └─ legacy.md                     the 1.x language, as built today
 ├─ dream-shader-create/SKILL.md
-├─ dream-shader-optimize/SKILL.md
-├─ dream-shader-decompile/SKILL.md
 ├─ dream-shader-verify/SKILL.md
-└─ dream-shader-diagnose/SKILL.md
+├─ dream-shader-diagnose/SKILL.md
+├─ dream-shader-decompile/SKILL.md
+├─ dream-shader-optimize/SKILL.md
+└─ dream-shader-migrate/SKILL.md
 ```
 
 ## Notes
 
-- **Use PowerShell, not Git Bash, for anything taking an asset path.** Git Bash rewrites a
-  leading-slash path such as `/LGUI/Materials/X` into `C:/Program Files/Git/LGUI/Materials/X`, and
-  the asset "cannot be loaded".
-- **A compile stops at the first failing `Graph` statement.** A file with three mistakes reports
-  one. Fix, recompile, repeat.
-- **The editor bridge never runs inside a commandlet** — no source watcher, no auto-compile-on-save,
-  no WebSocket on 17864, no `diagnostics.json`, no `bridge.db`. A headless run cannot be diagnosed
-  from the bridge artifacts; the messages exist only in the log.
+- **Use PowerShell, not Git Bash, for anything taking an asset path.** Git Bash rewrites a leading-slash path
+  such as `/Game/Materials/X` into `C:/Program Files/Git/Game/Materials/X`, and the asset "cannot be loaded".
+- **A stage reports all of its errors at once.** The pipeline stops between stages, so a syntax error hides the
+  binder's errors behind it; fixing it can bring out more.
+- **The editor bridge never runs inside a commandlet** — no watcher, no WebSocket on 17864, no
+  `diagnostics.json`. A headless run's diagnostics are in the log, which the driver prints.
+- **Write commandlet flags bare** when calling it by hand: `-Force=true` is not read at all. The driver always
+  writes them bare.
 
 ## See also
 
 - [`Docs/contributing/index.md`](../Docs/contributing/index.md#the-engine-matrix) — `build-plugin.ps1`, and why 5.3 / 5.4 fail on a recent MSVC
-- [`Docs/index.md`](../Docs/index.md) — the plugin's own reference manual
 - [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md) — the full flag surface behind the driver
-- [`Docs/diagnostics/index.md`](../Docs/diagnostics/index.md) — every message, by stage
+- [`Docs/diagnostics/README.md`](../Docs/diagnostics/README.md) — every code
+- [`Docs/language-v2/index.md`](../Docs/language-v2/index.md) — the 2.0 language
 - <https://shader.toolchain.64hz.cn/docs> — the same reference, published, zh + en

@@ -31,7 +31,7 @@
           <img alt="Issues" src="https://img.shields.io/github/issues/TypeDreamMoon/DreamShader" />
         </a>
         <a href=".skill/README.md">
-          <img alt="Agent skills" src="https://img.shields.io/badge/Agent%20skills-5-8A2BE2" />
+          <img alt="Agent skills" src="https://img.shields.io/badge/Agent%20skills-6-8A2BE2" />
         </a>
         <a href="https://github.com/TypeDreamMoon/dreamshader-language-support/releases">
           <img alt="VSCode Extension" src="https://img.shields.io/badge/VSCode-DreamShaderLang-007ACC" />
@@ -53,7 +53,7 @@
 > 里的快照也要提交。生成的 Unreal 资产随时可以从源文件重建，不需要提交。
 
 > [!NOTE]
-> **2.0 beta 线**上，两种语法由同一个编译器构建：下面展示的 1.x 语法照常可用；与它并列的是一套
+> **自 2.0 起**，两种语法由同一个编译器构建：下面展示的 1.x 语法照常可用；与它并列的是一套
 > HLSL 形态的新语法 —— [`.dss`](Docs/language-v2/index.md) 源文件、[`.dsi`](Docs/language-v2/instances.md)
 > 材质实例、能写出这两种文件的反编译器，以及 [`dsc migrate`](Docs/tools/migrate.md)：它把 1.x 文件改写成
 > 2.0，并在落盘之前先证明改写后的文本构建出同一张图。
@@ -167,7 +167,7 @@ Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某�
 | | |
 | :-- | :-- |
 | **[Material Content Browser](Docs/tools/material-browser.md)** | *Tools ▸ DreamShader*。源文件和工程材质在同一个页签里：逐文件编译状态、每条诊断都能跳到行、手改检测配 Revert / Adopt / Detach、导入与被引用关系、继承链、可拖拽的实时预览、一键建实例、新建文件模板。跟着监视器走，永远不过期 |
-| **[反编译器](Docs/tools/decompiler.md)** | 右键 `Material` / `Material Function` ▸ *DreamShader ▸ Export DSM/DSF*。定位是迁移起点——常见节点转成 graph 文本，其余回退到 `UE.Expression(…)`，保证结构仍可重新生成 |
+| **[反编译器](Docs/tools/decompiler.md)** | 右键 `Material`、`Material Function` 或材质实例 ▸ *DreamShader ▸ Export .dss* / *Export .dsi*（`dsc decompile` 还能导出 Custom Pass 管线）。2.0 文本落盘前会重新解析一遍，无法表达的内容会在文件开头逐条列出；*Export Legacy .dsm / .dsf* 写出 1.x 文本 |
 | **[Package](Docs/tools/packages.md)** | 安装在 `DShader/Packages/@scope/name/` 下的可复用 `.dsh` 库，用 `import "@typedreammoon/dream-noise/Library/Noise.dsh";` 引入 |
 | **[Workspace](Docs/tools/workspace.md)** | 生成的 `DShader/DreamShader.code-workspace`，可从编辑器工具栏用 VSCode 打开 |
 | **[Commandlet](Docs/tools/commandlet.md)** | `-run=DreamShader compile \| decompile`——供 CI 使用的无头生成 |
@@ -182,23 +182,25 @@ Cook 时会自动落盘，也可以在 Material Content Browser 里手动把某�
 ## AI 支持
 
 DreamShaderLang 是文本格式，编码 agent 本来就能写——前提是它能**验证自己写的东西**。
-[`.skill/`](.skill/README.md) 提供的就是闭合这个环的工具：一个无头驱动脚本，加五个
+[`.skill/`](.skill/README.md) 提供的就是闭合这个环的工具：一个无头驱动脚本，加六个
 [Claude Code](https://claude.com/claude-code) 技能格式的 skill。
 
 | 技能 | 参数 | 作用 |
 | :-- | :-- | :-- |
-| [`dream-shader-create`](.skill/dream-shader-create/SKILL.md) | `<描述>` | 从自然语言描述写出材质或函数，并编译验证它确实能生成 |
-| [`dream-shader-optimize`](.skill/dream-shader-optimize/SKILL.md) | `<文件>` | 对反编译产物去重、重命名、改回原资产路径，并补上丢失的状态 |
-| [`dream-shader-decompile`](.skill/dream-shader-decompile/SKILL.md) | `<资产>` | 把已有的 `UMaterial` / `UMaterialFunction` 导出成源文件 |
-| [`dream-shader-verify`](.skill/dream-shader-verify/SKILL.md) | `<文件>` \| `-All` | 无头编译，exit `0` / `1` |
-| [`dream-shader-diagnose`](.skill/dream-shader-diagnose/SKILL.md) | `<诊断信息>` | 把诊断路由到对应的编译阶段，解释成因并修掉 |
+| [`dream-shader-create`](.skill/dream-shader-create/SKILL.md) | `<描述>` | 从自然语言描述写出材质、函数、材质实例或 Custom Pass 管线，并检查、编译验证它确实能生成 |
+| [`dream-shader-verify`](.skill/dream-shader-verify/SKILL.md) | `<文件>` \| `-All` | `check`（不写任何东西）、`compile`、`check -Shaders`；exit `0` / `1`，并列出全部诊断 |
+| [`dream-shader-diagnose`](.skill/dream-shader-diagnose/SKILL.md) | `<诊断信息>` | 按 `DSHnnnn` 代码找到对应页面，解释成因并修掉 |
+| [`dream-shader-decompile`](.skill/dream-shader-decompile/SKILL.md) | `<资产>` | 把已有的材质、函数、层、材质实例或管线导出成 `.dss` / `.dsi` / `.dsp` |
+| [`dream-shader-optimize`](.skill/dream-shader-optimize/SKILL.md) | `<文件>` | 把反编译或迁移出来的源文件整理成手写的样子，并证明生成的图没变 |
+| [`dream-shader-migrate`](.skill/dream-shader-migrate/SKILL.md) | `<文件>` \| `-All` | 用 `dsc migrate` 把 1.x 源文件改写成 `.dss`，每个改写在落盘前先证明 |
 
 `dsc.ps1` 包装了 [commandlet](Docs/tools/commandlet.md)：从 `.uproject` 的 `EngineAssociation`
-解析引擎、向上走找到项目、只打印 `LogDreamShader` 那几行；并且——因为无头编译会真的写 `.uasset`，
-而编辑器里是内存生成——它会把本次写盘的资产逐个对照 git 分类，避免临时探针资产变成未跟踪的垃圾留在仓库里。
+解析引擎、向上走找到项目、打印 DreamShader 的消息（多行报告保持完整）；并且——因为无头编译会真的写
+`.uasset`，而编辑器里是内存生成——它会列出本次运行新建和改写的每个资产，`-CleanNew` 只删除本次新建的那些。
 
 ```powershell
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/Materials/M_Panel.dsm -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew
 ```
 
 把技能发布到 `.claude/skills/`，之后 agent 在项目任意位置都能按名字加载：
@@ -210,9 +212,9 @@ pwsh -File Plugins/DreamShader/.skill/sync-skills.ps1
 > [!NOTE]
 > 只有「自动加载」这一步是 Claude Code 专有的。驱动就是一个普通的 PowerShell 脚本，每个 `SKILL.md`
 > 也只是普通 Markdown——任何 agent，或者人，都可以照着读、照着跑。
-> [`.skill/reference/dreamshaderlang.md`](.skill/reference/dreamshaderlang.md) 把写材质真正要用的语法
-> 浓缩成一页，包括那些只在编译期才暴露的坑：29 个会静默遮蔽用户代码的保留数学 builtin、`Function`
-> 函数体内按整词生效的 GLSL 标识符改写，以及根本不存在的矩阵类型。
+> [`.skill/reference/`](.skill/reference/dss.md) 把作者真正要用的内容浓缩成三页：[`dss.md`](.skill/reference/dss.md)
+> 讲材质和材质实例，[`dsp.md`](.skill/reference/dsp.md) 讲 Custom Pass 管线，[`legacy.md`](.skill/reference/legacy.md)
+> 讲 1.x 源文件，每个坑都附上它报出的诊断代码。
 
 ## 版本兼容
 
@@ -247,7 +249,7 @@ Windows 上 UE `5.3` 和 `5.4` 可能需要 MSVC `14.38` 工具链——更新�
 | 版本 | `2.1.0` |
 | 语言 | `DreamShaderLang` |
 | Unreal Engine | `5.3` – `5.8` |
-| 模块 | `DreamShader`、`DreamShaderCompiler`（Runtime），`DreamShaderEditor`（Editor） |
+| 模块 | `DreamShaderLang`、`DreamShader`、`DreamShaderPass`（Runtime），`DreamShaderCompiler`、`DreamShaderEditor`（Editor） |
 | 作者 | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |
 | 文档 | <https://shader.toolchain.64hz.cn/> |

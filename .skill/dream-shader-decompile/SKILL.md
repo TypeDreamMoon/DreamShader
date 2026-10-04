@@ -27,13 +27,13 @@ pwsh -File Plugins/DreamShader/.skill/dsc.ps1 decompile /Game/Materials/MI_Steel
 ```
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 decompile /LGUI/Materials/LexUI_RectBlock -Out I:/Work/LexUI_RectBlock.dss -KeepAssetPath
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 decompile /MyPlugin/Materials/M_RectBlock -Out D:/Work/M_RectBlock.dss -KeepAssetPath
 ```
 
 Exit `0` writes the file and logs where, and in which format:
 
 ```text
-LogDreamShader: Display: DreamShader decompiled '/Game/Materials/M_Steel.M_Steel' to '…/M_Steel.dss' (Dss).
+LogDreamShader: Display: DreamShader decompiled '/Game/Materials/M_Steel.M_Steel' to '…/M_Steel.dss' (dss).
 dsc: OK (exit 0)
 ```
 
@@ -87,7 +87,8 @@ export void M_Steel(inout material m)
 - A material instance comes out as a [`.dsi`](../../Docs/language-v2/instances.md): its parent, the
   `#pragma instance` keys it overrides, and only the parameters that **differ from the parent**.
 - A DreamShader thin-custom pair (hidden `MB_DreamThinBase_*` base + instance) is decompiled as the
-  one material it is, with `Backend = ThinCustom` — pass the instance.
+  one material it is — pass the instance. `Backend = ThinCustom` is written only where it is not the project
+  default anyway, or with `-SourceFile` / `-KeepAssetPath`.
 - A Custom Pass pipeline comes out as a [`.dsp`](../../Docs/language-v2/passes.md): `#pragma pipeline`,
   the uniforms, the buffers and the passes in the asset's order, every key that would read back as its
   default left out. What the text cannot say the way the asset has it is `DSH9211`–`DSH9220`; the text is
@@ -98,8 +99,9 @@ export void M_Steel(inout material m)
 ## After the export — do this, in order
 
 1. **Read the `// Warning: DSHnnnn: …` lines** under the `// Decompiled by DreamShader from …`
-   header. Each names something the language cannot state (`DSH9060`–`DSH9084`; for a pipeline
-   `DSH9211`–`DSH9220`). They are the migration work list; [`Docs/diagnostics/DSH9xxx.md`](../../Docs/diagnostics/DSH9xxx.md) says what
+   header. Each names something the text cannot state the way the asset has it (warnings of
+   `DSH9060`–`DSH9084`; for a pipeline `DSH9211`–`DSH9220`) — the notes of those ranges stay in the log. They
+   are the migration work list; [`Docs/diagnostics/DSH9xxx.md`](../../Docs/diagnostics/DSH9xxx.md) says what
    each one means and what to do about it.
 2. **Compile it as-is**, to establish that the export is at least buildable:
    ```bash
@@ -116,7 +118,8 @@ export void M_Steel(inout material m)
 ## Gotchas
 
 - **The 2.0 output is proved, the 1.x output is not.** A 2.0 decompile is parsed again before it is
-  written (`DSH9089` if that fails — a decompiler defect, not an asset problem), and the round-trip
+  written (`DSH9089`, a warning, if that fails — the file is written anyway, and it is a decompiler defect,
+  not an asset problem), and the round-trip
   suite compiles decompiled text and compares IRs. The 1.x exporter stays "a migration starting
   point"; read
   [`Docs/tools/decompiler.md`](../../Docs/tools/decompiler.md#known-round-trip-gaps) before trusting
@@ -140,8 +143,8 @@ export void M_Steel(inout material m)
   work.
 - **Layout export is a project setting** (*Export Decompiled Layout*, default on). With it off you
   lose node positions and the regenerated graph is auto-laid-out. Regions are emitted regardless.
-- Comment boxes whose text begins with `DreamShader: ` are generated markers and are deliberately
-  not re-emitted.
+- Comment boxes whose text begins with `DreamShader: ` are DreamShader's own markers: the 2.0 decompiler
+  strips the prefix and keeps a box that encloses nodes as a `#pragma region`; the 1.x exporter drops them.
 - `-Format Legacy` only: struct-, array-, map- and set-valued node properties are dropped silently,
   and material instances are rejected outright.
 
@@ -155,7 +158,8 @@ export void M_Steel(inout material m)
 | `DSH9210` | a pass pipeline with an `-Out` that does not end in `.dsp` |
 | `DSH9221` / `DSH9222` / `DSH9223` | warnings, a pipeline only: the `.dsp` text did not parse again, did not bind into a pipeline, or reads back as a different pipeline (the first difference is named). The file is written either way. `DSH9221` and `DSH9223` are decompiler defects — report them with the asset; `DSH9222` can also mean the asset breaks a rule a `.dsp` is checked against, which a hand edit can do |
 | `DSH9087` | `-SourceFile`: the source does not resolve to its products, or a product has not been built yet |
-| `DSH9088` / `DSH9089` | the graph did not read into a valid module / the printed text does not parse back. Both are decompiler defects — report them with the asset |
+| `DSH9088` | the graph did not read into a valid module — a decompiler defect; report it with the asset |
+| `DSH9089` | warning: the printed text does not parse back. The file is written; report it with the asset |
 | `MaterialFunction '…' does not expose any outputs.` | `-Format Legacy`: the function declares no outputs; nothing to export |
 | exports, but the graph is full of `UE.<Class>(…)` | expected for nodes the language has no sugar for. `-Readable` trades class-exactness for readability |
 

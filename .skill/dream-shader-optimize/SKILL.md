@@ -1,211 +1,137 @@
 ---
 name: dream-shader-optimize
-description: Clean up a decompiled DreamShaderLang source — deduplicate repeated subexpressions, rename machine-generated variables, retarget the asset path, and restore state the decompiler drops — then recompile to prove the result still builds. Use when asked to optimize, clean up, tidy, refactor, or make readable a .dss, .dsm or .dsf produced by the DreamShader decompiler.
+description: Clean up a machine-written DreamShader source — a decompiled or migrated .dss (or a 1.x .dsm / .dsf export) — into one a person would have written, without changing what it builds, and prove the graph is unchanged. Use when asked to optimize, clean up, tidy, refactor or make readable a source produced by the DreamShader decompiler or by dsc migrate.
 ---
 
 # dream-shader-optimize `<file>`
 
-A decompiled source compiles, but it is machine-shaped. This skill turns it into a source file a
-human would have written — without changing what the material renders.
-
-**Which decompiler wrote the file decides how much there is to do.**
-
-| | 2.0 text — `.dss` (the default) | 1.x text — `.dsm` / `.dsf` (`-Format Legacy`) |
-| :-- | :-- | :-- |
-| round trip | proved: the text is parsed again, and the round-trip suite compares IRs | **a migration starting point, not a guarantee** |
-| names | a value read once is written inline; a local that has to exist keeps the name its statement gave it (a graph DreamShader built) or takes one from its node (`Sample`, `Combined`, `Multiply_2`) | `Multiply_7`, `DS_Shared_3`, every node a variable |
-| duplicated subexpressions | none: a value read twice gets one local | yes — pass 4.2 |
-| what the text cannot say | named at the head of the file, `// Warning: DSHnnnn: …` | partly named, partly **dropped silently** — pass 4.6 |
-| asset it rebuilds | a new one where the file is, unless `-KeepAssetPath` wrote `/// @name` | a second copy under `Decompiled/…` — pass 4.1 |
-
-For a `.dss`, the work is: read the `// Warning:` lines and resolve each
-([`Docs/diagnostics/DSH9xxx.md`](../../Docs/diagnostics/DSH9xxx.md)), rename what deserves a better
-name (a renamed local must be renamed in its `#pragma layout(Node, Var = …)` line too), swap
-class-exact `UE.<Class>(…)` calls for HLSL where the rule below allows it — or decompile again with
-`-Readable`, which does that for you — and retarget: move the file to the place that names the
-original asset, or give the export `/// @name <asset path>`. Then recompile (steps 2 and 4 below
-are the same for both formats). **The passes in section 4 are written for the 1.x text.**
+A decompiled or migrated source builds the right graph, but it reads like a machine wrote it. This skill turns
+it into the file a person would have written — and proves, node for node, that the graph did not change.
 
 Paths below are relative to the plugin root, `Plugins/DreamShader/`.
 
 ## The rule
 
-**Behaviour must not change.** Deduplicating a repeated expression, renaming a variable and
-collapsing an alias are safe. Reordering `lerp` arguments, folding `pow(x, 2)` into `x * x`, or
-dropping a `saturate` are not — they are rewrites, and they belong in a separate, explicitly
-requested change.
+**Behaviour must not change.** Renaming a local, inlining a value read once, naming a value read twice,
+moving repeated logic into a helper, swapping a class-exact node call for the HLSL that builds the same node —
+safe. Reordering `lerp` arguments, folding `pow(x, 2)` into `x * x`, dropping a `saturate`, renaming a
+parameter — not: those are changes, and they belong in a separate, explicitly requested edit.
 
 ## Do this
 
-**1 — Read the file and the header warnings.** Every `// Warning:` line under
-`// Decompiled from …` names something the exporter could not reproduce. They are the work list.
-Also read [`reference/dreamshaderlang.md`](../reference/dreamshaderlang.md).
+**1 — Read the file, its header warnings and the language.** Every `// Warning: DSHnnnn: …` line under
+`// Decompiled by DreamShader from …` names something the text cannot state the way the asset has it; they
+are the work list ([`Docs/diagnostics/DSH9xxx.md`](../../Docs/diagnostics/DSH9xxx.md)). Read
+[`reference/dss.md`](../reference/dss.md).
 
-**2 — Establish the baseline.** Compile it *before* touching it, so a later failure is yours:
+**A `.dsm` / `.dsf` from `-Format Legacy`?** Do not clean 1.x text by hand. Decompile the asset again as 2.0
+(the default) — or `dsc migrate` the file ([`dream-shader-migrate`](../dream-shader-migrate/SKILL.md)) — and
+optimize the `.dss`. The 2.0 text starts far cleaner: a value read once is already inline, one read twice
+already has one local, literals are exact.
+
+**2 — Capture the graph before touching anything.** `dump-graph` generates the source in memory and writes a
+canonical JSON of each asset's graph — node classes, properties, connections, pin order; no coordinates, no
+GUIDs. It writes no asset:
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/Decompiled/Materials/X.dsm -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 dump-graph DShader/Decompiled/Materials/Game/M_Steel.dss -Out Saved/Optimize/before
 ```
 
-**3 — Apply the passes below**, in order.
+If an asset of that path already exists on disk, `dump-graph` reads it as it stands instead of generating it
+(the run says so). A fresh decompile under `Decompiled/` has none.
 
-**4 — Recompile.** Same command. Exit `0`, and the same `Generated …` asset path as the baseline.
+**3 — Apply the passes below.** Then `check` it.
 
-**5 — Report** what changed, and — separately — anything you found that the decompiler *lost* and
-you could not recover from the source alone. That list is for the human; it needs the original
-asset open.
+**4 — Prove nothing changed.**
+
+```bash
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 dump-graph DShader/Decompiled/Materials/Game/M_Steel.dss -Out Saved/Optimize/after
+git diff --no-index -- Saved/Optimize/before Saved/Optimize/after
+```
+
+Every hunk is a behavioural difference. The only acceptable ones are those the user asked for, and the
+`Constant` nodes a `-Readable` decompile adds (the shader is the same). Anything else: undo that pass.
+
+**5 — Retarget, last.** Move the file to the place that names the original asset, or give its `export` a
+`/// @name /Game/Materials/Metal/M_Steel` — the step that makes this source authoritative. Then
+`compile -Force -CleanNew` once; delete nothing until the rebuilt asset has been looked at in the editor.
+
+**6 — Report** what changed, the dump diff verdict, and — separately — every header warning you could not
+resolve from the source alone. That list is for the human; it needs the original asset open.
 
 ## The passes
 
-### 4.1 Retarget the asset
+### Resolve the header warnings
 
-The emitted name always points into `Decompiled/`, so recompiling creates a **second** asset and
-leaves the original untouched:
+Each `// Warning:` is something the asset has and the text could not say. Some are fixed in the source (a
+function asset that moved: correct the `/// @asset` path); some only in the original asset (re-assign it, decompile
+again); some are accepted with the user (a node property the language cannot state). Delete a warning line only
+once it is resolved or accepted.
 
-```c
-Shader(Name="Decompiled/Materials/Game/DreamShaderSkillProbe/M_SkillProbe")   // before
-Shader(Name="DreamShaderSkillProbe/M_SkillProbe")                            // after — takes over /Game/…
-```
+### Rename what deserves a name
 
-Only do this once the source is trusted; it is the step that makes the source authoritative.
-`Root="Plugin.LGUI"` targets a content plugin — see
-[`Docs/generation/asset-paths.md`](../../Docs/generation/asset-paths.md).
+Locals named after their node (`Multiply_2`, `Sample`, `Combined`) become what the value *is*: `scanline`,
+`bandPhase`, `edgeFalloff`.
 
-### 4.2 Hoist duplicated subexpressions
+- A renamed local must be renamed in its `#pragma layout(Node, Var = …)` line too, or that position is orphaned.
+- **A `uniform`'s name is the parameter's name.** Renaming it renames the parameter, and every material instance
+  that overrides it silently loses the override. Keep the name — or rename with `/// @name <the old name>` above
+  it, which keeps the parameter.
+- An `export` function's name is the asset's name: renaming it moves the asset unless `/// @name` keeps it.
 
-The exporter shares *some* nodes into `DS_Shared_N` temporaries and re-emits others inline. Both
-appear in the same file. From a real round trip:
+### Prefer HLSL to class-exact node calls
 
-```c
-// before — the same TextureCoordinate node emitted twice, and pow(saturate(…), 3.0) twice
-float2 MaterialExpressionTextureCoordinate_0 = UE.Expression(Class="TextureCoordinate", OutputType="float2");
-float2 DS_Shared_0 = MaterialExpressionTextureCoordinate_0;
-…
-float Multiply_4 = ((UE.Expression(Class="TextureCoordinate", OutputType="float2")).g * LineCount);
-float Multiply_2 = (pow(saturate(Subtract_2), 3.0) * 1.6);
-float DS_Shared_2 = pow(saturate(Subtract_2), 3.0);
-```
+`UE.Multiply(A = x, B = y)` is `x * y`; `UE.LinearInterpolate(A = a, B = b, Alpha = t)` is `lerp(a, b, t)`. Write
+the HLSL where it builds the same node, and keep `UE.<Class>(…)` where the language has no spelling for it. Or
+decompile again with `-Readable`, which does this throughout (the graph may gain `Constant` nodes; the shader does
+not change).
 
-```c
-// after
-float2 uv   = UE.TexCoord(Index=0);
-float  glow = pow(saturate(edgeFalloff), 3.0);
-```
+### Factor repeated logic
 
-### 4.3 Replace `UE.Expression` with its curated wrapper
+Logic written out twice becomes a helper (`float3 Tint(float3 C, float K) { … }`, no linkage keyword). A helper is
+inlined at each call, and two identical calls are one node, so the graph does not grow.
 
-`UE.Expression` is the generic fallback. Where a real builtin exists, use it — it is checked,
-readable, and does not depend on a class-name string:
+### Keep the layout
 
-| Fallback the decompiler emitted | Write instead |
-| :-- | :-- |
-| `UE.Expression(Class="TextureCoordinate", OutputType="float2")` | `UE.TexCoord(Index=0)` |
-| `UE.Expression(Class="VertexColor", OutputType="float4")` | `UE.VertexColor()` |
-| `UE.Expression(Class="ScreenPosition", …)` | `UE.ScreenPosition()` |
+`#pragma layout(…)` lines are the node positions of the original graph and `#pragma region` its comment boxes.
+They change no behaviour, and without them a large graph comes back auto-laid-out. Keep them.
 
-Check [`Docs/builtins/ue.md`](../../Docs/builtins/ue.md) before assuming a wrapper exists — keep
-`UE.Expression` when it does not. Mind the arguments: `UE.Expression(Class="TextureCoordinate")`
-with no `CoordinateIndex` means index 0, so `UE.TexCoord(Index=0)` is the equivalent, not
-`UE.TexCoord()` with some other default.
+### Leave the numbers alone
 
-### 4.4 Rename machine identifiers
+The 2.0 decompiler writes the shortest decimal that reads back as the same float, so `6.2831855` *is* the value
+the asset holds. "Restoring" `6.2831853` changes nothing; rounding to `6.28` changes the material.
 
-`Multiply_7`, `Subtract_2`, `Add_1`, `DS_Shared_3`, `MaterialExpressionTextureCoordinate_0` are
-node class names with a counter. Rename to what the value *is*: `scanline`, `bandPhase`,
-`edgeFalloff`, `panelTint`.
+## A 1.x export, if the user insists on keeping it
 
-> **A renamed `Graph` variable must be renamed in `Layout` too.** `Node(Var="Multiply_7", …)`
-> refers to the variable by name; leaving the old spelling behind orphans that position. Rename
-> both, or drop the entry.
+The 1.x exporter (`-Format Legacy`) is a migration starting point, not a guarantee. What to know about its text:
 
-### 4.5 Collapse pointless aliases
+- `Settings` always starts with `Domain`, `ShadingModel` and `BlendMode`, whether or not they were set. `Backend` is
+  never written, so the file rebuilds on the project default — add `Backend = "Graph";` if the graph must stay a
+  plain material.
+- `ShadingModel = "Substrate"` is forced when a `Base.FrontMaterial` was decompiled. Do not "correct" it.
+- Struct-, array-, map- and set-valued node properties are **dropped silently**. A `MaterialFunctionCall` with no
+  function becomes `0.0`, and a graph cycle a default literal — both with a warning.
+- Literals are rounded to six decimals (`6.2831853` → `6.283185`): restore recognisable constants.
+- `DS_Shared_N` names are DreamShader's own reroute nodes, carried over from a graph DreamShader built.
+- `ParameterName="…"` means the identifier had to differ from the parameter: renaming the identifier is safe,
+  deleting `ParameterName` is not.
+- It rebuilds into a second asset under `Decompiled/…` until `Shader(Name=…)` is retargeted.
 
-```c
-float4 DS_Shared_3      = Tint;              // then only ever used as DS_Shared_3.a
-float3 DS_EmissiveColor_0 = Multiply_3;
-EmissiveColor           = DS_EmissiveColor_0;
-```
-becomes
-```c
-EmissiveColor = panelColour;
-Opacity       = mask * Tint.a;
-```
-
-### 4.6 Restore what the exporter never emitted
-
-None of this is recoverable from the decompiled text — it needs the original asset. Check each,
-and list what you could not confirm.
-
-| Lost | Where it belongs |
-| :-- | :-- |
-| `Backend` | `Settings` — the exporter never writes it, so the file rebuilds on the default backend. Add `Backend = "Graph";` if the graph must stay editable |
-| `UMaterial` properties outside the blessed set — `OpacityMaskClipValue`, `NumCustomizedUVs`, translucency lighting mode, displacement, Nanite override | `Settings`; they resolve by reflection. [`Docs/settings/material.md`](../../Docs/settings/material.md) |
-| Material-function settings — `Description`, `ExposeToLibrary`, `LibraryCategories`, `UserExposedCaption` | a `Settings` block in the `.dsf`. [`Docs/settings/function.md`](../../Docs/settings/function.md) |
-| **Struct-, array-, map- and set-valued node properties** | dropped **silently** from a fallback `UE.Expression`, with no per-property warning. Re-add the argument, or set it on the asset after generation |
-| Node comment text (`Desc`) and pin `SortPriority` | re-apply by hand |
-
-### 4.7 Check the numbers
-
-Emitted literals are rounded. A real round trip turned `6.2831853` into `6.283185`. Where a
-constant is recognisable — τ, π, a colour, a tiling count — restore the exact value.
-
-### 4.8 Keep `Layout`
-
-Do not delete it to "tidy up". Without a `Layout` block a large regenerated graph skips automatic
-layout and comes back visually unordered. Comment boxes prefixed `DreamShader: ` are generated
-markers and are correctly absent.
-
-## What the passes are worth
-
-Measured on a real round trip — a 45-line hand-written `.dsm`, generated, decompiled, then
-optimized back:
-
-| | Decompiled | After the passes |
-| :-- | --: | --: |
-| `Graph` statements | 21 | 8 |
-| distinct variables | 19, all machine-named | 6, all semantic |
-| `UE.Expression` fallbacks | 2 (the same node, twice) | 0 — one `UE.TexCoord(Index=0)` |
-| duplicated subexpressions | 2 | 0 |
-| asset it rebuilds | a second copy under `/Game/Decompiled/…` | the original `/Game/DreamShaderSkillProbe/M_SkillProbe` |
-
-Both versions compile — `dsc: OK (exit 0)` — and generate the same asset path once retargeted. That
-equivalence is the acceptance test: **if the optimized file generates a different asset path, or
-fails to compile, the pass was wrong.**
-
-## Known round-trip gaps you cannot fix in the source
-
-Read these before promising a clean migration — full table in
+The full table of what each decompiler reproduces:
 [`Docs/tools/decompiler.md`](../../Docs/tools/decompiler.md#known-round-trip-gaps).
-
-- A `MaterialFunctionCall` **with no assigned function becomes `0.0`** — the branch is silently
-  constant-folded. Re-assign it in the original asset and re-export.
-- A `MaterialFunctionCall` on a **layer or layer blend** falls back to `UE.Expression`; export the
-  layer separately and call it.
-- **Graph cycles emit a default literal.** The cyclic branch became a constant. Break the cycle in
-  the original.
-- An **append wider than four components** was masked down — components were dropped. Check the
-  emitted swizzle.
-- **Material instances are rejected outright** by the 1.x exporter. Decompile them as 2.0 text
-  instead: an instance comes out as a [`.dsi`](../../Docs/language-v2/instances.md).
-- `GatherMode` round-trips only on UE 5.6+; `bHasPixelAnimation`, `Base.FrontMaterial` and the
-  `Substrate` shading-model spelling only on UE 5.4+.
 
 ## Gotchas
 
-- **The exporter's `Settings` block always starts with `Domain`, `ShadingModel` and `BlendMode`,
-  emitted unconditionally** — their presence is not evidence they were non-default.
-- **A decompiled Substrate material has `ShadingModel = "Substrate"` forced**, because a Substrate
-  material's own shading-model enum does not describe its surface. Do not "correct" it.
-- `Properties` come out in the exporter's order, not the authored order. Re-sorting them is safe;
-  changing `SortPriority` is not — that is the material instance's UI order.
-- A `ParameterName="…"` metadata entry means the DreamShaderLang identifier had to differ from the
-  asset's real parameter name. **Renaming the identifier is safe; deleting `ParameterName` is not**
-  — it would rebind the parameter and break every existing material instance.
-- Re-running the decompiler overwrites your cleaned file. Move it out of `Decompiled/` once you
-  own it.
+- **Re-running the decompiler overwrites the cleaned file.** Move it out of `Decompiled/` once you own it.
+- **`@sort` is the material instance's parameter order.** Reordering the `uniform` lines is free; changing a
+  `@sort` value changes what an artist sees.
+- **A material instance decompiles to a `.dsi` of overrides only** — there is little to optimize, and its
+  `uniform` names must match the parent's exactly.
+- **`dump-graph` boots the editor too.** Capture before, apply every pass, capture after — two runs, not one per
+  pass.
 
 ## See also
 
 - [`dream-shader-decompile`](../dream-shader-decompile/SKILL.md) — producing the input
-- [`dream-shader-verify`](../dream-shader-verify/SKILL.md) — the compile gate
-- [`dream-shader-diagnose`](../dream-shader-diagnose/SKILL.md) — resolving a message
+- [`dream-shader-verify`](../dream-shader-verify/SKILL.md) — `check` and `compile`
+- [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md#dump-graph-since-190) — `dump-graph` and diffing two captures

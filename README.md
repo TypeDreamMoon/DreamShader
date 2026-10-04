@@ -32,7 +32,7 @@
           <img alt="Issues" src="https://img.shields.io/github/issues/TypeDreamMoon/DreamShader" />
         </a>
         <a href=".skill/README.md">
-          <img alt="Agent skills" src="https://img.shields.io/badge/Agent%20skills-5-8A2BE2" />
+          <img alt="Agent skills" src="https://img.shields.io/badge/Agent%20skills-6-8A2BE2" />
         </a>
         <a href="https://github.com/TypeDreamMoon/dreamshader-language-support/releases">
           <img alt="VSCode Extension" src="https://img.shields.io/badge/VSCode-DreamShaderLang-007ACC" />
@@ -56,7 +56,7 @@
 > workable answers, and [Source control](Docs/generation/source-control.md) has both.
 
 > [!NOTE]
-> **On the 2.0 beta line** one compiler builds both syntaxes: the 1.x language shown below keeps
+> **Since 2.0** one compiler builds both syntaxes: the 1.x language shown below keeps
 > working unchanged, and beside it there is an HLSL-shaped one — [`.dss`](Docs/language-v2/index.md)
 > sources, [`.dsi`](Docs/language-v2/instances.md) material instances, a decompiler that writes them,
 > and [`dsc migrate`](Docs/tools/migrate.md), which rewrites a 1.x file and proves the rewrite builds
@@ -179,7 +179,7 @@ The full reference lives in [`Docs/`](Docs/index.md), and is published at
 | | |
 | :-- | :-- |
 | **[Material Content Browser](Docs/tools/material-browser.md)** | *Tools ▸ DreamShader*. Your sources and the project's materials in one tab: per-file compile status, every diagnostic with a jump to the line, hand-edit detection with Revert / Adopt / Detach, imports and dependents, the inheritance chain, a live orbiting preview, instance creation, and templates for new files. Follows the watcher, so it is never stale |
-| **[Decompiler](Docs/tools/decompiler.md)** | right-click a `Material` or `Material Function` ▸ *DreamShader ▸ Export DSM/DSF*. A migration starting point — common nodes become graph text, the rest falls back to `UE.Expression(…)` so the structure stays regeneratable |
+| **[Decompiler](Docs/tools/decompiler.md)** | right-click a `Material`, `Material Function` or material instance ▸ *DreamShader ▸ Export .dss* / *Export .dsi* (or `dsc decompile`, which also takes a Custom Pass pipeline). The 2.0 text is parsed again before it is written, and what it cannot state is named at the top of the file; *Export Legacy .dsm / .dsf* writes 1.x text |
 | **[Packages](Docs/tools/packages.md)** | reusable `.dsh` libraries under `DShader/Packages/@scope/name/`, imported as `import "@typedreammoon/dream-noise/Library/Noise.dsh";` |
 | **[Workspace](Docs/tools/workspace.md)** | the generated `DShader/DreamShader.code-workspace`, opened in VSCode from the editor toolbar |
 | **[Commandlet](Docs/tools/commandlet.md)** | `-run=DreamShader compile \| decompile` — headless generation for CI |
@@ -195,24 +195,26 @@ The full reference lives in [`Docs/`](Docs/index.md), and is published at
 
 DreamShaderLang is a text format, so a coding agent can author it — but only if it can *check its
 own work*. [`.skill/`](.skill/README.md) ships the harness that closes that loop: a headless driver
-plus five skills, in the [Claude Code](https://claude.com/claude-code) skill format.
+plus six skills, in the [Claude Code](https://claude.com/claude-code) skill format.
 
 | Skill | Argument | Does |
 | :-- | :-- | :-- |
-| [`dream-shader-create`](.skill/dream-shader-create/SKILL.md) | `<description>` | writes a new material or function from plain language, then compiles it to prove it builds |
-| [`dream-shader-optimize`](.skill/dream-shader-optimize/SKILL.md) | `<file>` | dedupes, renames, retargets and restores lost state in a decompiled source |
-| [`dream-shader-decompile`](.skill/dream-shader-decompile/SKILL.md) | `<asset>` | exports an existing `UMaterial` / `UMaterialFunction` back to source |
-| [`dream-shader-verify`](.skill/dream-shader-verify/SKILL.md) | `<file>` \| `-All` | compiles headlessly; exit `0` / `1` |
-| [`dream-shader-diagnose`](.skill/dream-shader-diagnose/SKILL.md) | `<message>` | routes a diagnostic to its pipeline stage, explains it, fixes it |
+| [`dream-shader-create`](.skill/dream-shader-create/SKILL.md) | `<description>` | writes a new material, function, instance or Custom Pass pipeline from plain language, then checks and compiles it |
+| [`dream-shader-verify`](.skill/dream-shader-verify/SKILL.md) | `<file>` \| `-All` | `check` (writes nothing), `compile`, `check -Shaders`; exit `0` / `1` with every diagnostic |
+| [`dream-shader-diagnose`](.skill/dream-shader-diagnose/SKILL.md) | `<message>` | routes a `DSHnnnn` code to its page, explains it, fixes it |
+| [`dream-shader-decompile`](.skill/dream-shader-decompile/SKILL.md) | `<asset>` | exports a material, function, layer, instance or pipeline back to `.dss` / `.dsi` / `.dsp` |
+| [`dream-shader-optimize`](.skill/dream-shader-optimize/SKILL.md) | `<file>` | makes a decompiled or migrated source read hand-written, and proves the graph unchanged |
+| [`dream-shader-migrate`](.skill/dream-shader-migrate/SKILL.md) | `<file>` \| `-All` | rewrites 1.x sources as `.dss` with `dsc migrate`, proving each rewrite first |
 
 `dsc.ps1` wraps the [commandlet](Docs/tools/commandlet.md): it resolves the engine from the
-`.uproject`'s `EngineAssociation`, finds the project by walking up, prints only the `LogDreamShader`
-lines, and — because a headless compile writes real `.uasset` files where the editor generates in
-memory — classifies everything the run wrote against git so a probe asset never survives as
-untracked clutter.
+`.uproject`'s `EngineAssociation`, finds the project by walking up, prints the DreamShader messages —
+each multi-line report whole — and, because a headless compile writes real `.uasset` files where the
+editor keeps them in memory, reports every asset the run created or rewrote, so `-CleanNew` can delete
+exactly the ones it created.
 
 ```powershell
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/Materials/M_Panel.dsm -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew
 ```
 
 Publish the skills into `.claude/skills/` once, and an agent working anywhere in the project loads
@@ -225,10 +227,10 @@ pwsh -File Plugins/DreamShader/.skill/sync-skills.ps1
 > [!NOTE]
 > Only the auto-loading is Claude Code specific. The driver is a plain PowerShell script and each
 > `SKILL.md` is plain Markdown, so any agent — or any human — can read the instructions and run the
-> same commands. [`.skill/reference/dreamshaderlang.md`](.skill/reference/dreamshaderlang.md)
-> condenses the grammar an author actually needs, including the traps that only surface at compile
-> time: the 29 reserved math builtins that shadow user code silently, the whole-identifier GLSL
-> rewrite inside `Function` bodies, and the absent matrix types.
+> same commands. [`.skill/reference/`](.skill/reference/dss.md) condenses what an author actually
+> needs — [`dss.md`](.skill/reference/dss.md) for materials and instances, [`dsp.md`](.skill/reference/dsp.md)
+> for Custom Pass pipelines, [`legacy.md`](.skill/reference/legacy.md) for 1.x sources — with the traps
+> and the code each one is reported as.
 
 ## Compatibility
 
@@ -264,7 +266,7 @@ while compiling older engine headers, before plugin code is reached.
 | Version | `2.1.0` |
 | Language | `DreamShaderLang` |
 | Unreal Engine | `5.3` – `5.8` |
-| Modules | `DreamShader`, `DreamShaderCompiler` (Runtime), `DreamShaderEditor` (Editor) |
+| Modules | `DreamShaderLang`, `DreamShader`, `DreamShaderPass` (Runtime), `DreamShaderCompiler`, `DreamShaderEditor` (Editor) |
 | Author | TypeDreamMoon |
 | GitHub | <https://github.com/TypeDreamMoon> |
 | Docs | <https://shader.toolchain.64hz.cn/> |

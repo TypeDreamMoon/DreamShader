@@ -1,5 +1,45 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Changed
+
+- **The agent skills write 2.0 sources, and there is a sixth.** `dream-shader-create` writes a `.dss`, a `.dsi`
+  or a `.dsp` (a `.dsm` only to match a 1.x project), checks it with `check` and builds it with `compile`;
+  `dream-shader-migrate` drives `dsc migrate`; `dream-shader-optimize` cleans 2.0 text and proves the graph
+  unchanged with two `dump-graph` captures. The one-page grammar became three references -- `dss.md`, `dsp.md`
+  and `legacy.md` -- and every claim the skills made about the 1.x generator, which 2.0 replaced, is gone or
+  corrected: a stage reports all of its errors, a function named like a builtin is DSH6206, the compiler checks
+  component counts, a `.dsh` is checked by tokens, diagnostics carry their severity. See
+  [Agent skills](.skill/README.md).
+- **The README diagrams are drawings of the product, not decoration.** The workflow, the 1.x / 2.0 spellings
+  side by side, and the editor with its tools -- SVG, in English and Chinese, following the reader's light or
+  dark theme, written by `Tools/Images/readme_images.py`.
+
+### Fixed
+
+- **`dsc.ps1` prints a compile's report whole.** A report is one log message of many lines -- every `Generated`
+  line, then `Warnings:` and the warnings, or every error -- and the engine prefixes only its first line, so the
+  driver showed the first line and dropped the rest: warnings, every error after the first, and every product
+  after the first, which `-CleanNew` then missed. It reads the log as messages now.
+- **`dsc.ps1 -CleanNew` deletes what the run created, in any project.** It asked git, so in a project that is not
+  a repository nothing was ever deleted, and in one that is, any untracked asset was. The driver now records the
+  `.uasset` files of the project's and its plugins' Content folders before the run and deletes only the new
+  ones; git classifies the rewritten ones. This also counts what no log line names (`check -Shaders`' assets),
+  maps a plugin's mount point to its Content folder, and lists the `.dreampass` registry files a run changed.
+  A relative `-Out` / `-DiagnosticsOut` is the working directory's rather than the engine's Binaries folder, and
+  `-Define A=1,B` is split into its items under `pwsh -File`.
+- **`sync-skills.ps1` cannot break another plugin's skills.** `reference/` is published as
+  `dream-shader-reference/`, so another plugin's `-Prune` no longer deletes it; a published file whose source is
+  gone is drift for `-Check` and removed by `-Prune`; a plugin under `Plugins/<Group>/` gets its real path in
+  every published line, and a relative `-Target` works.
+- **`gen-diagnostics.ps1` never drops hand-written prose.** A code that loses its last raise site keeps its Cause
+  and Fix under *Retired codes* on its page instead of losing them silently, and a page checked out with LF
+  endings is no longer drift.
+- **`build-plugin.ps1` names the UBT mutex.** A build refused because another UnrealBuildTool holds its global
+  mutex -- which UAT reports as `Error_SDKNotFound` -- is `BLOCKED`, with what to do.
+- **The diagnostics index states the severities a record has** since 2.1.0, instead of "always error".
+
 ## 2.1.0 - 2026-10-04
 
 ### Added

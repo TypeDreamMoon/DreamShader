@@ -1,145 +1,131 @@
 ---
 name: dream-shader-verify
-description: Compile DreamShaderLang sources headlessly to check they build — one file or the whole DShader tree — without opening the Unreal editor. Use when asked to verify, validate, build, compile, test, or CI-gate .dsm / .dsf / .dss / .dsi / .dsp / DreamShader sources, or to check whether a material still generates.
+description: Check and compile DreamShader sources headlessly — one file or the whole DShader tree — without opening the Unreal editor, and read back every diagnostic with its file, line and code. Use when asked to verify, validate, check, build, compile, test or CI-gate .dss / .dsi / .dsp / .dsm / .dsf sources, or to find out whether a material still builds.
 ---
 
 # dream-shader-verify `<file>` | `-All`
 
-The compile gate. Wraps `UnrealEditor-Cmd.exe -run=DreamShader compile` so a check is one command
-and one exit code. This is the harness the other DreamShader skills call.
+The gate every other DreamShader skill ends with. The driver, `.skill/dsc.ps1`, wraps
+`UnrealEditor-Cmd.exe <project> -run=DreamShader <verb>` so a check is one command and one exit code.
 
 Paths below are relative to the plugin root, `Plugins/DreamShader/`.
 
-## Prefer the `dream` MCP server when it is connected
+## Three levels
 
-If the `dream` MCP server is available, call `dream_build` instead of the script below,
-`dream_diagnostics` to read the editor's standing findings, and `dream_preview` to actually **look
-at** the material.
-
-Through a running editor it uses the bridge, which this script never does: a compile comes back in
-a few hundred milliseconds instead of roughly 24 s of engine boot, with a real per-request result
-and the file/line diagnostics attached. It also sidesteps the whole problem this page describes
-below — the editor generates **in memory**, so no `.uasset` is written and nothing shadows anything.
-When no editor is running it runs this same script, `-CleanNew` and all.
-
-`dream_preview` is the one thing neither path can otherwise give you: it renders the material and
-hands the image back, so a wrong-looking result is visible rather than inferred. There is no
-headless equivalent — the commandlet runs `-nullrhi`.
-
-Fall back to the script when the server is not connected, and for `decompile` and `optimize`, which
-it deliberately does not wrap.
-
-## Run it
+| Verb | Goes as far as | Writes | Use it |
+| :-- | :-- | :-- | :-- |
+| `check` | parse, bind, lower, validate — everything before an asset | **nothing** | first, and after every edit: the fast gate |
+| `compile` | the asset | the `.uasset` files (and a `.dsp`'s render targets and registry files) | to prove the file builds |
+| `check -Shaders` | the asset **and its shaders**, for the project's shader formats | the assets, as `compile` does | for a `/// @custom` body or a `.dsp` with HLSL passes — the only thing that compiles that HLSL |
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/Materials/M_Panel.dsm -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/UI/M_Panel.dss -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/Passes/CP_Outline.dsp -Shaders -CleanNew
 ```
 
-```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile -All -Force -CleanNew
-```
+Exit `0` success, `1` failure — the commandlet's own codes. Run from anywhere inside the project: the driver
+walks up for the `.uproject` and resolves the engine from its `EngineAssociation`.
 
-Exit `0` success, exit `1` failure — the commandlet's own codes. Run it from anywhere inside the
-project.
-
-Editor boot dominates the cost: measured on this project, the single-file compile above and the
-`-All` run over six sources both took **≈24 s**. Compiling one file is not meaningfully cheaper
-than compiling everything, so batch edits rather than looping per file.
+**Every run boots the editor** — tens of seconds before DreamShader gets control. One run over many files costs
+about what one file does, so batch: edit everything, then `check -All` once.
 
 | Argument | Effect |
 | :-- | :-- |
-| *(positional)* | the source file — absolute, or relative to the working directory |
-| `-All` | every project source — `.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`, nothing under `Packages/`. `.dsf` function files build first, so a material's dependencies exist; the rest follow in path order |
-| `-Force` | bypass the source-hash skip. Without it an unchanged file logs `Skipped … source hash is unchanged.` and proves nothing |
-| `-CleanNew` | delete the `.uasset` files this run wrote, **but only those git reports untracked**, then prune the emptied folders |
-| `-Project` | the `.uproject`. Defaults to the nearest one at or above the target, then the working directory |
-| `-Engine` | engine root. Defaults to the `EngineAssociation` lookup; `UE_ENGINE_ROOT` also works |
-| `-Raw` | print the whole engine log instead of just the `LogDreamShader` lines |
+| *(positional)* | the source — absolute, or relative to the working directory. `.dss .dsi .dsp .dsm .dsf`; a `.dsh` is checked through the files that include it |
+| `-All` | every source of every source root — the project's `DShader/` **and each enabled plugin's** — except `Packages/`. `compile` builds `.dsf` first, the rest in path order |
+| `-Force` | `compile` / `check -Shaders`: rebuild even when the source hash is unchanged. Without it an unchanged file logs `Skipped … source hash is unchanged …` and proves nothing |
+| `-CleanNew` | delete the `.uasset` files this run created (they were not on disk before it), then prune the emptied folders |
+| `-DiagnosticsOut <file>` | `check`: the diagnostics as JSON as well |
+| `-Platform SM6,SM5` / `-Quality High` / `-Timeout 120` | `check -Shaders`: which formats and quality levels, and how long one material may take |
+| `-Project` / `-Engine` | override the discovery; `UE_ENGINE_ROOT` works too |
+| `-Raw` | the whole engine log instead of the DreamShader messages |
 
 ## What you get back
 
 ```text
-dsc: compile  project=TallyZeroMoment.uproject  engine=F:/UnrealEngine/UE_Moon
-LogDreamShader: Display: Generated /Game/DreamShaderSkillProbe/M_SkillProbe.M_SkillProbe from …/M_SkillProbe.dsm.
+dsc: compile  project=MyProject.uproject  engine=C:\Program Files\Epic Games\UE_5.8
+LogDreamShader: Display: Generated Material /Game/UI/M_Panel.M_Panel from …/DShader/UI/M_Panel.dss.
+Warnings:
+…/DShader/UI/M_Panel.dss(13,20): DSH7233: A slider range ('@slider', …) is for a scalar parameter; this one is 'float3', which has no slider, so the range is ignored.
 
 Assets written to disk by this run:
-  Content/DreamShaderSkillProbe/M_SkillProbe.uasset  [NEW (untracked)]
+  Content/UI/M_Panel.uasset  [NEW]
     deleted (-CleanNew)
 
 dsc: OK (exit 0)
 ```
 
-A failure names the file, line and column:
+A failure lists **every** error of the stage that failed, each with its position and code:
 
 ```text
-LogDreamShader: Error: …/M_SkillProbeBroken.dsm(22,9): Failed to evaluate Graph assignment for 'bad'. Unknown Graph function 'saturte'.
+LogDreamShader: Error: …/M_Broken.dss(7,16): DSH4200: 'Tin' is not declared in this scope.
+LogDreamShader: Error: …/M_Broken.dss(8,15): DSH4208: 'saturte' is not a function, a builtin or a struct.
+LogDreamShader: Error: …/M_Broken.dss(9,16): DSH4250: 'mix' is the GLSL spelling; this language is HLSL, so write 'lerp'.
+LogDreamShader: Error: DreamShader check: 1 source(s), 3 error(s), 0 warning(s). RESULT=FAILED
 dsc: FAILED (exit 1)
 ```
 
-## The thing to understand about this command
+The pipeline stops between stages — parse, bind, lower, validate, emit — not at the first error: fix them all,
+then run again. A syntax error can hide the binder's errors behind it, so a second run may find more.
 
-**The commandlet writes real `.uasset` files. The interactive editor does not.** Inside the editor
-DreamShader generates materials in memory, deliberately — the source file is the authoring surface,
-and no `.uasset` appears in the Content Browser. A commandlet run persists them, and those files
-then **shadow** the editor's Ephemeral products on the next load (logged as a warning).
+## The thing to understand about `compile`
 
-So a verification run leaves the project subtly different from how it started. `-CleanNew` is the
-answer: it deletes exactly the assets that git says are untracked, prunes the folders they leave
-behind, and refuses to touch anything tracked. Assets that were already tracked and got overwritten
-are reported in red, with the restore command:
+**The commandlet writes real `.uasset` files. The interactive editor, for a ThinCustom material (the project
+default), does not:** it keeps the product in memory (Ephemeral), and the source is the authoring surface. A
+file a headless run left on disk then wins: the editor rebuilds that material on disk instead of in memory
+(it logs so, and *Tools ▸ DreamShader ▸ Make Ephemeral* undoes it).
+
+So `-CleanNew`: the driver records every `.uasset` under the Content folders of the project and its plugins
+before the run, and deletes only the ones that were not there before. An asset that existed and was rewritten
+is never deleted; when git tracks it, it is reported in red with the command that restores it:
 
 ```text
-  Content/UI/Cards/Materials/M_TZM_CardFoil_Holographic.uasset  [TRACKED AND MODIFIED]
-    restore with: git -C "I:\UnrealProject_58\TallyZeroMoment" checkout -- "Content/…"
+  Content/UI/Cards/M_Foil.uasset  [TRACKED AND MODIFIED]
+    restore with: git -C "D:\Work\MyProject" checkout -- "Content/UI/Cards/M_Foil.uasset"
 ```
 
-That is not a bug in the driver — the source genuinely regenerated the asset, and only you know
-whether the new bytes should be kept.
+That is not a driver bug: the source genuinely regenerated the asset, and only the user knows whether the new
+bytes should be kept. (A Graph-backend material and a material function are saved on every build in the editor
+too; for those, a rewrite is expected.)
 
 ## Gotchas
 
-- **`-All` overwrites tracked assets.** Any `.dsm` whose `Name=` targets a path that already holds a
-  committed `.uasset` rewrites it. `-CleanNew` will *not* delete those; it reports them. Verified on
-  this project: `-All` rewrote `Content/UI/Cards/Materials/M_TZM_CardFoil_Holographic.uasset`. Use
-  single-file compiles while iterating, and reserve `-All` for a deliberate CI gate.
-- **A compile stops at the first failing `Graph` statement.** Three seeded errors reported one. Fix,
-  recompile, repeat — do not expect a full error list.
-- **A `.dsp` writes more than its asset.** A Custom Pass pipeline builds on UE 5.8 only (`DSH8300`
-  below that). Besides the pipeline it writes a render target per exported buffer, which logs no
-  `Generated …` line, so `-CleanNew` neither lists nor deletes it; and an HLSL pass writes the
-  project's `.dreampass/` slot registry and snapshots, which are committed source files — see
-  [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md#pass-registry).
-- **`compile -All` on an empty source list exits `0`**, logging
-  `DreamShader commandlet found no source files to compile.` at Warning. A green run does not prove
-  anything was compiled — check the `Generated …` lines.
-- **The first bare token is taken as the command name, unconditionally.** Writing an option without
-  its dash first (`-run=DreamShader Source=X compile`) consumes `Source=X` as the command. The
-  driver always emits the command first, but this bites hand-rolled invocations.
-- **An unrecognised boolean value means *on*.** `-Force=banana`, `-Force=disable` and `-All=never`
-  all enable the flag, with no diagnostic. Use bare flags.
-- **The editor bridge never runs inside a commandlet** — no source watcher, no auto-compile-on-save,
-  no WebSocket on 17864, no `diagnostics.json`, no `bridge.db`. What you get is the compile result
-  and nothing else.
-- **Every `LogDreamShader` line is emitted twice**, once raw and once re-wrapped through `LogInit`.
-  The driver de-duplicates; raw `-run=` output does not.
-- `-nullrhi` keeps the run off the GPU. Drop it (edit the driver) only when something needs real
-  shader compilation, such as reading back material compile errors.
+- **`-All` covers the plugins' sources too.** Every enabled plugin with a `DShader/` folder is a source root, so
+  `compile -All` rebuilds its materials into its own `Content/` — files another repository owns. Compile single
+  files while iterating; keep `-All` for `check`, or for a deliberate gate.
+- **A `.dsp` builds on UE 5.8+ only** (`DSH8300` below that). Besides the pipeline it writes a render target per
+  exported buffer, and an HLSL pass rewrites the project's `DShader/.dreampass/` registry and snapshots — source
+  files to commit, which the driver lists after the run.
+- **`check -Shaders` saves assets**, because 2.0 has no transient asset; the driver reports them like
+  `compile`'s. It drives the cook-target shader compilers (a commandlet does not render), so its HLSL errors come
+  from the engine log.
+- **A green `compile -All` can have built nothing**: an empty source list logs
+  `DreamShader commandlet found no source files to compile.` at Warning and exits `0`. Look for `Generated …`.
+- **Write flags bare.** `-Force=true` or `-Check=true` straight to the commandlet is not read at all — the flag
+  stays off, with no message. The driver always passes them bare; this bites hand-written command lines.
+- **The first bare token after `-run=DreamShader` is the verb**, unconditionally — `-run=DreamShader Source=X
+  compile` runs a verb called `Source=X`.
+- **The editor bridge never runs inside a commandlet**: no `diagnostics.json`, no squiggles in VS Code. The log is
+  where a headless run's diagnostics are — and the driver prints them, each report whole.
+- **Use PowerShell, not Git Bash**, for an asset path: Git Bash rewrites `/Game/X` into
+  `C:/Program Files/Git/Game/X`.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 | :-- | :-- |
-| `EngineAssociation '{…}' is not registered.` | pass `-Engine <root>` or set `UE_ENGINE_ROOT`. Source builds register a GUID under `HKCU:\SOFTWARE\Epic Games\Unreal Engine\Builds` |
+| `EngineAssociation '…' is not registered.` | pass `-Engine <root>` or set `UE_ENGINE_ROOT` |
 | `Could not find a .uproject at or above …` | pass `-Project` |
-| `UnrealEditor-Cmd.exe not found at …` | the engine root is wrong — it must be the directory *containing* `Engine/` |
-| `dsc: FAILED (exit 1)` with no `LogDreamShader` line | re-run with `-Raw`; the failure was before DreamShader got control |
-| `Skipped … source hash is unchanged.` | add `-Force` |
-| `DreamShader compile requires a .dss, .dsi, .dsp, .dsm or .dsf file: …` | you pointed at a `.dsh` (or any other file). Headers generate nothing — compile the dependent file |
-| asset paths appear outside `/Game` | the driver cannot map them to `Content/`; clean by hand |
+| `UnrealEditor-Cmd.exe not found at …` | the engine root is wrong — it is the directory *containing* `Engine/` |
+| `dsc: FAILED (exit 1)` with no `LogDreamShader` line | re-run with `-Raw`; the failure was before DreamShader got control (a missing module, a crash at boot) |
+| `Skipped … source hash is unchanged …` | add `-Force` |
+| `DreamShader compile requires a .dss, .dsi, .dsp, .dsm or .dsf file: …` | you pointed at a `.dsh` or another file. A header builds nothing — compile a file that includes it |
+| `… (mount '/X/' is not the project or one of its plugins …)` | the asset went to an engine or external mount; find and clean it by hand |
 
 ## See also
 
-- [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md) — the full flag surface behind the driver
-- [`Docs/generation/ephemeral.md`](../../Docs/generation/ephemeral.md) — the two ThinCustom states
+- [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md) — every verb and flag behind the driver
+- [`Docs/generation/ephemeral.md`](../../Docs/generation/ephemeral.md) — Ephemeral and Materialized
 - [`Docs/generation/caching.md`](../../Docs/generation/caching.md) — the hash skip `-Force` bypasses
-- [`dream-shader-diagnose`](../dream-shader-diagnose/SKILL.md) — resolving a message
+- [`dream-shader-diagnose`](../dream-shader-diagnose/SKILL.md) — resolving a code

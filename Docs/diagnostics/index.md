@@ -11,7 +11,7 @@ diagnostics and are documented on their tool pages instead.
 | :-- | :-- |
 | Produced by | `DreamShader` (parser, runtime module) and `DreamShaderEditor` (generator, bridge, tools) |
 | Log category | `LogDreamShader` |
-| Severity | every stored diagnostic is `error` — the store has no warning, info or hint level |
+| Severity | `error`, `warning` or `info` — a compile's records keep their own *(since 2.1.0)*; every other stored diagnostic is `error` |
 | Bridge artifacts | `<Project>/Saved/DreamShader/Bridge/diagnostics.json`, `.../Bridge/diagnostics/`, `.../Bridge/bridge.db` |
 
 ## Where diagnostics appear
@@ -40,16 +40,14 @@ another material's diagnostics for the same header. See [Bridge](../tools/bridge
 
 ## Severity
 
-`FDreamShaderDiagnosticRecord::Severity` defaults to `"error"` and is never assigned any other value
-anywhere in the plugin. Consequences worth knowing:
+A compile files its own records with the severity each was raised at -- a failed compile all of them, a
+successful one its warnings and notes *(since 2.1.0; before, every stored diagnostic was `error` and a
+successful compile's warnings reached the Output Log only)*. The records the compile does not explain --
+`generate-error`, `material-compile`, `virtual-function-sync` -- are `error`. The field and its values are
+on [Bridge](../tools/bridge.md).
 
-- Parse **warnings** (deprecated spellings, the missing-`Outputs` warning) never enter the store. They
-  are appended to the compile result message and surface in the Output Log only.
-- Log-only warnings (`UE_LOG(LogDreamShader, Warning, …)`) likewise never enter the store.
-- An extension that colours diagnostics by severity will paint every DreamShader entry as an error.
-
-The Gen page nevertheless tolerates a missing or non-`error` severity by filtering rather than
-failing, so a future severity level would not break it.
+Log-only warnings (`UE_LOG(LogDreamShader, Warning, …)`) that are not a compile's records never enter the
+store. The Gen page tolerates a missing or unknown severity by filtering rather than failing.
 
 ## Message locations
 

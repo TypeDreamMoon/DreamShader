@@ -1,96 +1,87 @@
 ---
 name: dream-shader-diagnose
-description: Resolve a DreamShader compile error or warning — look the message up by pipeline stage, explain the cause, and fix the source. Use when a .dsm / .dsf / .dss / .dsi / .dsp fails to build, when a LogDreamShader error needs explaining, or when a DreamShader material silently comes out wrong.
+description: Resolve a DreamShader compile error or warning — look its DSH code up, explain the cause, and fix the source — or find out why a DreamShader material silently comes out wrong. Use when a .dss / .dsi / .dsp / .dsm / .dsf fails to build, when a LogDreamShader message or a DSHnnnn code needs explaining, or when a material or pass looks wrong with no message at all.
 ---
 
 # dream-shader-diagnose `<message>`
 
-Turn a `LogDreamShader` message into a fix. Every message the parser, generator, commandlet and
-VirtualFunction sync can emit is catalogued in
-[`Docs/diagnostics/index.md`](../../Docs/diagnostics/index.md) — 1000 lines, grouped by the stage
-that produced it. This skill is the routing table into it.
+Turn a DreamShader message into a fix. Every message the compiler raises carries a stable code, `DSHnnnn`, and
+every code has a page with its cause and fix. This skill is the route to that page, and what to do when there is
+no message.
 
 Paths below are relative to the plugin root, `Plugins/DreamShader/`.
 
 ## Do this
 
-**1 — Get the exact message.** Positioned diagnostics are MSVC-style, `file(line,col): message`:
+**1 — Get the exact message.** A diagnostic is `file(line,col): DSHnnnn: message`:
 
 ```text
-I:/Project/DShader/Materials/M_Sample.dsm(37,9): Unknown Graph identifier 'Tin'.
+C:/Project/DShader/UI/M_Panel.dss(7,16): DSH4200: 'Tin' is not declared in this scope.
 ```
 
-If you only have "it doesn't work", reproduce it:
+If all you have is "it doesn't work", reproduce it — `check` writes nothing and reports every diagnostic of the
+file at once:
 
 ```bash
-pwsh -File Plugins/DreamShader/.skill/dsc.ps1 compile DShader/Materials/M_Sample.dsm -Force -CleanNew
+pwsh -File Plugins/DreamShader/.skill/dsc.ps1 check DShader/UI/M_Panel.dss
 ```
 
-**2 — Route by stage.** Jump to the section of
-[`Docs/diagnostics/index.md`](../../Docs/diagnostics/index.md) that owns it:
+**2 — Open the code's page.** The leading digit is the stage; the page is
+`Docs/diagnostics/DSH<digit>xxx.md`, anchored at the code, and
+[`Docs/diagnostics/README.md`](../../Docs/diagnostics/README.md) lists every code with its message.
 
-| Message shape | Section | Deep reference |
+| Code | Stage | Page |
 | :-- | :-- | :-- |
-| tokens, block structure, unterminated anything | **Parse** | [`Docs/language/lexical.md`](../../Docs/language/lexical.md) |
-| a `Properties` / `Inputs` / `Outputs` / `Settings` entry | **Sections and declarations** | [`Docs/language/index.md`](../../Docs/language/index.md) |
-| `Failed to evaluate Graph assignment for 'x'`, `Unknown Graph identifier`, type mismatches | **Graph statements and expressions** | [`Docs/graph/index.md`](../../Docs/graph/index.md) |
-| `Math function '…' expects…`, `Unknown Graph function`, `UE.*`, `Substrate.*` | **Builtins** | [`Docs/builtins/math.md`](../../Docs/builtins/math.md), [`ue.md`](../../Docs/builtins/ue.md) |
-| `DreamShader Function '…' input '…' uses unsupported type`, generated `.ush` failures | **Functions and HLSL codegen** | [`Docs/language/function.md`](../../Docs/language/function.md) |
-| `Unsupported property type`, parameter nodes, sampler types | **Properties and parameters** | [`Docs/parameters/index.md`](../../Docs/parameters/index.md) |
-| a `Settings` key or enum string | **Settings** | [`Docs/settings/material-enums.md`](../../Docs/settings/material-enums.md) |
-| `Generated …`, `Skipped …`, save/package failures | **Asset generation and saving** | [`Docs/generation/index.md`](../../Docs/generation/index.md) |
-| the usage banner, `Unknown DreamShader command` | **Commandlet** | [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md) |
-| `VirtualFunction` drift against a real asset | **VirtualFunction sync** | [`Docs/language/virtual-function.md`](../../Docs/language/virtual-function.md) |
-| Custom Pass *(since 2.1.0)*: a `.dsp`, an HLSL pass, the slot registry, `UE.DreamPassBuffer` / `UE.DreamPassOutput` — `DSH2300`–`2349`, `DSH3300`–`3349`, `DSH4400`–`4449`, `DSH5300`–`5329`, `DSH7300`–`7379`, `DSH8300`–`8339`, `DSH9200`–`9229` | the code's page under [`Docs/diagnostics/`](../../Docs/diagnostics/index.md) | [`Docs/language-v2/passes.md`](../../Docs/language-v2/passes.md), [`Docs/runtime/hlsl.md`](../../Docs/runtime/hlsl.md), [`Docs/builtins/dream-pass.md`](../../Docs/builtins/dream-pass.md), [`Docs/tools/commandlet.md`](../../Docs/tools/commandlet.md#pass-registry) |
+| `DSH1xxx` | the preprocessor (`#if`), source files, asset references | [`DSH1xxx.md`](../../Docs/diagnostics/DSH1xxx.md) |
+| `DSH2xxx` | lexer and syntax; 1.x `Graph` statements and blocks (`22xx`); `.dsp` syntax (`23xx`) | [`DSH2xxx.md`](../../Docs/diagnostics/DSH2xxx.md) |
+| `DSH3xxx` | declarations, `#` directives, `///` blocks; 1.x sections (`325x`+); `.dsp` declarations (`33xx`) | [`DSH3xxx.md`](../../Docs/diagnostics/DSH3xxx.md) |
+| `DSH4xxx` | the binder — names, types, calls (`42xx`); the IR validator (`43xx`); what the graph cannot express — matrices, loops (`435x`); `.dsp` names (`44xx`) | [`DSH4xxx.md`](../../Docs/diagnostics/DSH4xxx.md) |
+| `DSH5xxx` | `UE.*` nodes, math, Substrate; 1.x call spellings and the numbered legacy rules (`5250`–`5292`); Custom Pass material nodes (`53xx`) | [`DSH5xxx.md`](../../Docs/diagnostics/DSH5xxx.md) |
+| `DSH6xxx` | functions: entries, `export` / `extern`, helper inlining, `/// @custom` HLSL, 1.x `Function` blocks | [`DSH6xxx.md`](../../Docs/diagnostics/DSH6xxx.md) |
+| `DSH7xxx` | uniforms, `///` tags, `#pragma material`; `.dsi` overrides (`725x`); `.dsp` checks — kinds, injection points, buffers in frame order (`73xx`) | [`DSH7xxx.md`](../../Docs/diagnostics/DSH7xxx.md) |
+| `DSH8xxx` | the emitter and asset creation; material instances (`824x`–`826x`); Custom Pass emission, HLSL slots and the pre-check (`83xx`) | [`DSH8xxx.md`](../../Docs/diagnostics/DSH8xxx.md) |
+| `DSH9xxx` | the tools: `check`, the decompiler (`906x`–`908x`), `migrate` (`909x`), `.dsi` read-back (`910x`), `pass-registry` (`920x`), pipeline decompile (`921x`–`922x`) | [`DSH9xxx.md`](../../Docs/diagnostics/DSH9xxx.md) |
 
-**3 — Fix the source, recompile, confirm exit `0`.** Then check the message is gone rather than
-replaced: a compile stops at the **first** failing `Graph` statement, so fixing one error routinely
-reveals the next.
+The finer ranges are tabled in [`Docs/language-v2/index.md` § Diagnostics](../../Docs/language-v2/index.md#diagnostics).
+For the language rule behind a code: [`reference/dss.md`](../reference/dss.md), [`reference/dsp.md`](../reference/dsp.md)
+or [`reference/legacy.md`](../reference/legacy.md).
+
+A message **without** a code comes from outside the compiler — the commandlet's own arguments, the engine's
+material compile, the VirtualFunction sync — and [`Docs/diagnostics/index.md`](../../Docs/diagnostics/index.md)
+catalogues those. Most of that page is the 1.x generator's catalogue, kept for reference; a message you find only
+there is from an old version.
+
+**3 — Fix the source, check again, confirm exit `0`.** A stage reports all of its errors at once, but a syntax
+error stops the file before the binder runs — so fixing the syntax can bring out binder errors that were there all
+along.
 
 ## When there is no message
 
-The hardest DreamShader failures are the silent ones. Read
-[`Docs/diagnostics/index.md` § Silent behaviour](../../Docs/diagnostics/index.md) first — that
-section exists precisely for this. The recurring causes:
-
 | Symptom | Cause |
 | :-- | :-- |
-| a `Function` / property is never called, and nothing is reported | its name collides with one of the **29 reserved math builtins** (`lerp` `dot` `pow` `min` `max` `clamp` `abs` `saturate` `sin` `cos` `floor` `ceil` `frac` `fract` `sqrt` `normalize` `fmod` `mod` `mix` `step` `smoothstep` `length` `cross` `asin` `acos` `atan` `atan2` `reflect` `refract`) or a constructor name. The builtin wins at the call site, silently |
-| a helper inside a `Function` body behaves as a different function | the body identifier rewrite renamed it — `Mix`→`lerp`, `Mod`→`fmod`, `Fract`→`frac`, `Vec3`→`float3`, `Mat4`→`float4x4`, whole-identifier and case-insensitive |
-| a shader compile error from Unreal that names no DreamShader line | math builtins do **not** check component counts. `dot(float3Value, floatValue)` passes DreamShader and fails inside Unreal's translator |
-| a `UE.Expression` node comes back at its class default | struct-, array-, map- and set-valued properties are dropped with no per-property warning |
-| a commandlet flag did the opposite of what you meant | an unrecognised boolean value evaluates to **on**. `-Force=disable` enables it |
-| `compile -All` was green but built nothing | an empty source list is a Warning, and still exits `0` |
-| the editor shows a stale material | a previous commandlet run left a real `.uasset` on disk that shadows the Ephemeral product. Delete it, or use *Tools ▸ DreamShader ▸ Make Ephemeral* |
+| a 1.x `Function` body behaves as if a name meant something else | inside a 1.x `Function` / `GraphFunction` body, `mix` `fract` `mod` `vec2..4` `mat2..4` (and `ivec`/`uvec`/`bvec`) are rewritten as whole identifiers, case-insensitively — a local named `Mix` becomes `lerp`. Silently. A `.dss` has no such rewrite |
+| a `/// @custom` body or a `.dsp`'s HLSL is wrong, and `check` passed | `check` does not compile HLSL. `check -Shaders` does — and even it skips code no entry reaches: an uncalled helper is never compiled |
+| one HLSL error is reported twice, in two wordings | the pre-check compiles for each shader format the project targets (SM5 with FXC, SM6 with DXC); one mistake |
+| a material reads a Custom Pass buffer one frame late | the buffer's last writer runs after the base pass — `DSH7354` (info) says so; see [`reference/dsp.md`](../reference/dsp.md) |
+| the editor shows a stale material | a headless `compile` left a `.uasset` that now wins over the in-memory product. Delete it, or *Tools ▸ DreamShader ▸ Make Ephemeral* |
+| `compile -All` was green but nothing changed | an empty source list is a Warning and exits `0`; or every file was skipped as unchanged — add `-Force` |
+| a commandlet flag did nothing | a flag written with a value (`-Force=true`) is not read at all. Write it bare |
+| VS Code lost a header's squiggles after another material compiled | compiling a file clears the diagnostics filed under every header it includes — including the ones another material put there. Compile the other material again |
 
 ## Where diagnostics live
 
 | Surface | Contents |
 | :-- | :-- |
-| Output Log / commandlet stdout | the raw message; the **only** surface that shows success too |
-| Material Content Browser ▸ Dream Shader Gen | the per-file list, read from `diagnostics.json` |
-| `Saved/DreamShader/Bridge/diagnostics.json` + `diagnostics/` shards + `bridge.db` | what the VSCode and Rider extensions render as squiggles |
+| Output Log / `dsc.ps1` output | every message, success included. The only surface a headless run has |
+| Material Content Browser | per-file status and diagnostics, live from the editor |
+| `Saved/DreamShader/Bridge/diagnostics.json`, `diagnostics/` shards, `bridge.db` | what the VS Code and Rider extensions show: each record with its `code`, `severity` (`error`, `warning` or `info`), file, line and column. A failed compile files all its records, a successful one its warnings and notes *(since 2.1.0)* |
 
-> **None of the bridge artifacts are written by a commandlet.** `-run=DreamShader` produces log
-> messages and nothing else, so a headless run cannot be diagnosed from `diagnostics.json`.
-
-Every stored diagnostic has severity `error` — the store has no warning level. Parse *warnings*
-(deprecated spellings, the missing-`Outputs` warning) never enter the store at all; they are
-appended to the compile result message and appear only in the log. An extension that colours by
-severity paints every DreamShader entry red.
-
-## Gotchas
-
-- Diagnostics are owned by the file that produced them. Recompiling `A.dsm` clears exactly what
-  `A.dsm` produced — including records attributed to an imported `.dsh` — without disturbing another
-  material's diagnostics for the same header.
-- A message that names a `.dsh` line came from whichever `.dsm`/`.dsf` imported it; the header is
-  never an entry point.
-- `Skipped … source hash is unchanged.` is not a success message about your edit — it means nothing
-  was compiled. Add `-Force`.
+**None of the bridge files are written by a commandlet**, so a headless run cannot be read from
+`diagnostics.json` — read the log. A message that names a `.dsh` line came from a file that includes it: a header
+is never compiled on its own.
 
 ## See also
 
-- [`Docs/diagnostics/index.md`](../../Docs/diagnostics/index.md) — the full catalogue
+- [`Docs/diagnostics/README.md`](../../Docs/diagnostics/README.md) — every code
 - [`Docs/tools/bridge.md`](../../Docs/tools/bridge.md) — how the extensions receive diagnostics
-- [`dream-shader-verify`](../dream-shader-verify/SKILL.md) — reproducing the failure headlessly
+- [`dream-shader-verify`](../dream-shader-verify/SKILL.md) — reproducing it headlessly
