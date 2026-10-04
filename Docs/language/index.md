@@ -149,9 +149,9 @@ The statement and expression language inside `Graph = { … }`.
 ## Notes
 
 - **The same token can be read two ways.** `1.0f` is one float token everywhere. A `Properties`
-  default reads its text — a sign, digits, one `.`, an optional `f` — so `float Strength = 1.0f;` is
-  fine, and `float Strength = 1e3;` is [`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254); a `Graph`
-  expression reads the token itself, exponent and all. See
+  default reads its text — a sign, digits, one `.`, an exponent, an optional `f` — so
+  `float Strength = 1.0f;` and `float Strength = 1e3;` are fine, and `float Strength = 0x1F;` is
+  [`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254); a `Graph` expression reads the token itself. See
   [Numeric literals](lexical.md#numeric-literals).
 - **The preprocessor is not part of either grammar.** Eight lowercase directives — `#if`, `#ifdef`,
   `#ifndef`, `#elif`, `#else`, `#endif`, `#define`, `#undef` — are evaluated over the raw text before

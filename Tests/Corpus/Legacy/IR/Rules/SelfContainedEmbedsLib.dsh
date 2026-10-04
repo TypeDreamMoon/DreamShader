@@ -1,0 +1,10 @@
+// The header of SelfContainedEmbeds.dsm (named apart from it: a fixture and a header of one name are one test).
+Function LiHalf(in float value, out float result) {
+    result = value * 0.5;
+}
+
+Function SelfContained LiQuarter(in float value, out float result) {
+    float halved;
+    LiHalf(value, halved);
+    LiHalf(halved, result);
+}

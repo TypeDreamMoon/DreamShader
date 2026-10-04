@@ -20,6 +20,7 @@
 //   F(a, default, c)                      -> F(a, C = c), the input left out                       (rule L25)
 //   an out target nobody declared         -> declared in front of the call                         (rule L5)
 //   x = value with x declared nowhere     -> T x = value                                           (rule L26)
+//   7 / 2, integers 1.x divided as floats -> float(7) / 2                                          (rule L27)
 //   SamplerType = SAMPLERTYPE_Normal      -> the catalog's spelling                                (rule L12)
 //   a name in the wrong case              -> the declaration's spelling                            (rule L19)
 //   a block named like a callable function -> the block's function renamed, `X_Asset`              (rule L23)

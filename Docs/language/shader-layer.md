@@ -7,7 +7,7 @@ Two top-level blocks that declare Unreal's material-layer function assets: a lay
 
 | | |
 | :-- | :-- |
-| Declared in | `.dsf`, or a `.dsm` without a `Shader` — beside a `Shader` either one is [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201), in a `.dsh` [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) (see [Source files](source-files.md#how-the-restriction-is-enforced)) |
+| Declared in | `.dsf` or `.dsm`, beside a `Shader` too; in a `.dsh` either one is [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) (see [Source files](source-files.md#how-the-restriction-is-enforced)) |
 | Kind | top-level block |
 | Generates | `UMaterialFunctionMaterialLayer` (`ShaderLayer`) / `UMaterialFunctionMaterialLayerBlend` (`ShaderLayerBlend`) |
 | Multiplicity | any number per file |
@@ -58,8 +58,9 @@ case-insensitively.
 
 Attribute keys are matched case-insensitively. Values may be quoted or bare; a bare value runs to the
 next `,` or `)` outside parentheses. A key written twice is a warning
-([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins. *(since 2.0.0)* A trailing
-comma before `)` is [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243). See
+([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins. A trailing comma
+before `)` is accepted, as in 1.x *(2.0.0 – 2.1.0 refused it with
+[`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243))*. See
 [Asset paths](../generation/asset-paths.md).
 
 ## Sections
@@ -165,9 +166,9 @@ actually typed.
 
 ## Notes
 
-- **A file makes a material or function assets, not both** *(since 2.0.0)*. A layer or blend beside a
-  `Shader` is `DSH6201`. Without a `Shader`, one compile of a `.dsm` or `.dsf` generates every layer,
-  blend and `ShaderFunction` it declares. See [Source files](source-files.md).
+- **One compile of a file builds every asset it declares**: every layer, blend and `ShaderFunction`
+  of a `.dsm` or `.dsf`, and the `Shader` of a `.dsm` *(2.0.0 – 2.1.0 refused a `Shader` beside a layer
+  or blend with `DSH6201`)*. See [Source files](source-files.md).
 - **The file-kind restriction is a parse, decided per block** *(since 2.0.0)*. A `.dsh` holding any of
   the four spellings is `DSH2249`; a comment or a string that mentions `ShaderLayer(` is fine.
 - The consumer of a layer or blend is Unreal's material layer stack on a material or material
@@ -189,7 +190,6 @@ parse-time codes of the shared body parser — attributes, sections, parameter s
 | `DSH3277` | the layer's `MaterialAttributes` input is renamed after the output (warning) |
 | `DSH6204` | a `ShaderLayer` with any other input or output |
 | `DSH6205` | a `ShaderLayerBlend` without a `MaterialAttributes` input, or with another output |
-| `DSH6201` | the file also has a `Shader` |
 | `DSH6208` | a `Graph` calls a layer or blend |
 | `DSH8110` | an asset of an incompatible class is at the target path |
 

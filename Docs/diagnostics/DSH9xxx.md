@@ -489,7 +489,7 @@ platforms supports.
 %s: DSH9039: the DreamShader 2.0 pipeline failed without raising a diagnostic.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1151`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1152`
 <!-- generated:end DSH9039 -->
 
 **Cause.** Internal invariant. The 2.0 pipeline returned failure without putting a single error in
@@ -1664,7 +1664,7 @@ quotes the comments.
 '{0}' keeps its '/// @root', the 1.x spelling of where its asset goes, because the place the new file would put it could not be worked out; check the asset path the first build reports.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:1624`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:386`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:432`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:557`
+**Raised by** `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:1636`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:386`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:432`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:557`
 <!-- generated:end DSH9094 -->
 
 **Cause.** The migrated text differs from the 1.x source in a way the migrator could not avoid and

@@ -71,6 +71,8 @@ a diagnostic on the 1.x source, so `dsc check` on a `.dsm` shows what a migratio
 | a block named like a function it can call | the block's function is `X_Asset`, `/// @name` keeps the asset | L23 (`DSH5290`) |
 | `F(a, default, c)` | `F(a, C = c)` | L25 |
 | `x = value;` with `x` declared nowhere | `T x = value;` | L26 (`DSH5292`) |
+| `7 / 2`, a `/` between integers 1.x divided as floats | `float(7) / 2` | L27 |
+| `UE.TransformPosition(P)` with no `Destination` | `UE.TransformPosition(P, Destination = World)`, the destination 1.x wrote | |
 | `Description = "a\r\nb"` | the doc block's free text, one `///` line per line | |
 | a property without `SortPriority` | `/// @sort 32`, the priority 1.x left it at | |
 | `Backend = "Instance"` / `""` | `ThinCustom` / `Graph` | |

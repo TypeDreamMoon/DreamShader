@@ -603,6 +603,11 @@ namespace UE::DreamShader::Lang::Private
 
 			if (Match(ELangTokenKind::Comma))
 			{
+				// 1.x looked for ')' before each name, so a comma may end the list: `Shader(Name = "M_X",)`.
+				if (Match(ELangTokenKind::RightParen))
+				{
+					return true;
+				}
 				continue;
 			}
 			if (Match(ELangTokenKind::RightParen))
@@ -718,6 +723,16 @@ namespace UE::DreamShader::Lang::Private
 				TEXT("DSH2250"),
 				WordToken.Span,
 				LOCTEXT("SecondShader", "Expected one Shader block in a file, found a second one."));
+		}
+		if (bShader && FileKind == ELangFileKind::Dsf)
+		{
+			// 1.x refused it too (".dsf files cannot define top-level Shader blocks"), when it generated the file.
+			Diagnostics.Error(
+				TEXT("DSH2259"),
+				WordToken.Span,
+				LOCTEXT("ShaderInFunctionFile", "Expected ShaderFunction, ShaderLayer and ShaderLayerBlend blocks in a '.dsf' file, found a Shader block, which belongs in a .dsm file."));
+			LegacyParser::SkipLegacyBlockRemainder(*this);
+			return true;
 		}
 
 		TArray<FPragmaArgument> Attributes;
@@ -1855,7 +1870,10 @@ namespace UE::DreamShader::Lang::Private
 		LegacyRenameDecl = Function.Get();
 
 		// -- `SelfContained` / `Inline`
-		bool bSelfContained = false;
+		// 1.x embedded a SelfContained function -- and the functions it calls -- in each caller's Custom node rather than
+		// reaching it through the generated include. 2.0 has no include: every `@custom` node embeds what it calls, which
+		// is what SelfContained asked for, so the modifier is read and changes nothing. It must NOT become `@custom
+		// selfcontained`, which in 2.0 means the opposite: embed nothing (DSH6264).
 		if (Check(ELangTokenKind::Identifier)
 			&& (Current().Text.Equals(TEXT("SelfContained"), ESearchCase::IgnoreCase) || Current().Text.Equals(TEXT("Inline"), ESearchCase::IgnoreCase)))
 		{
@@ -1882,13 +1900,12 @@ namespace UE::DreamShader::Lang::Private
 			}
 			else
 			{
-				bSelfContained = true;
 				if (Modifier.Text.Equals(TEXT("Inline"), ESearchCase::IgnoreCase))
 				{
 					Diagnostics.Warning(
 						TEXT("DSH6306"),
 						Modifier.Span,
-						LOCTEXT("InlineModifier", "'Inline' is the old spelling of 'SelfContained'; the function becomes '@custom selfcontained'."));
+						LOCTEXT("InlineModifier", "'Inline' is the old spelling of 'SelfContained', and both read the same: the function's node embeds the functions it calls."));
 				}
 				Advance();
 			}
@@ -2107,7 +2124,7 @@ namespace UE::DreamShader::Lang::Private
 		Function->RawBody = Normalized;
 		Function->BodySpan = BodySpan;
 		Function->Span = SpanFrom(StartIndex);
-		LegacyParser::AddLegacyBlockDirective(LegacyInfo, *Function, TEXT("custom"), bSelfContained ? FString(TEXT("selfcontained")) : FString());
+		LegacyParser::AddLegacyBlockDirective(LegacyInfo, *Function, TEXT("custom"), FString());
 
 		// -- GraphFunction: every `UE.*` call becomes a Custom input, its text kept in RawBody at a recorded offset
 		if (bGraph)

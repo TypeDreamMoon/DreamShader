@@ -1,0 +1,14 @@
+// Rule L27: a division 1.x made of two integer-typed values is written with `float(...)` on its left side.
+Shader(Name="DreamShaderTests/Migrate/M_MgIntegerDivide")
+{
+    Outputs = {
+        float Alpha;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        int Seven = 7;
+        float Quotient = 7 / 2;
+        Alpha = Quotient + Seven / 2;
+    }
+}

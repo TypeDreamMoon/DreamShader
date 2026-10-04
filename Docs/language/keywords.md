@@ -96,7 +96,7 @@ it. Sections may appear in any order and may repeat: `Properties`, `Inputs` and 
 | `opt` *(since 1.2.3)* | before the type in an `Inputs` declaration | marks the function input optional in Unreal; recognized when a type and a name follow it | [Inputs / Outputs](inputs-outputs.md) |
 | `in` | before a `Function` / `GraphFunction` parameter type | input parameter; the default when a parameter has only two words | [Function](function.md) |
 | `out` | before a `Function` / `GraphFunction` parameter type | output parameter; at least one is required unless a return type is declared, and none may stand beside one ([`DSH6305`](../diagnostics/DSH6xxx.md#dsh6305), [`DSH6304`](../diagnostics/DSH6xxx.md#dsh6304)) | [Function](function.md) |
-| `SelfContained` | after `Function` | emits the body as a self-contained function; **not accepted on `GraphFunction`** ([`DSH6307`](../diagnostics/DSH6xxx.md#dsh6307)) | [Function](function.md) |
+| `SelfContained` | after `Function` | read and ignored: every `Function` node already embeds what its body calls, which is what it asked 1.x for; **not accepted on `GraphFunction`** ([`DSH6307`](../diagnostics/DSH6xxx.md#dsh6307)) | [Function](function.md) |
 | `Inline` | after `Function` | exact alias of `SelfContained`, with the warning [`DSH6306`](../diagnostics/DSH6xxx.md#dsh6306) *(since 2.0.0)* | [Function](function.md) |
 
 `in` and `out` are the only accepted qualifiers on a function parameter, in any case; anything else is

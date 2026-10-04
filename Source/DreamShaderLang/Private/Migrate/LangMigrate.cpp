@@ -1080,6 +1080,8 @@ namespace UE::DreamShader::Lang
 			const int32 CatalogIndex = bNameFirstOutput ? Binding->Type.CatalogIndex : INDEX_NONE;
 			// Set with Truncate, and with Identity at a node's pin, where 1.x connected the wider value as it was.
 			const int32 TruncateWidth = Binding ? Binding->LegacyTruncateWidth : 0;
+			const bool bFloatDivide = Binding && Binding->bLegacyFloatDivide;
+			const int32 FloatDivideWidth = bFloatDivide ? FMath::Clamp(TruncateWidth >= 1 ? TruncateWidth : Binding->Type.Rows, 1, 4) : 1;
 
 			VisitExprSlotInner(Slot, bIsStatementExpression);
 
@@ -1101,6 +1103,16 @@ namespace UE::DreamShader::Lang
 			{
 				const FLangSpan Span = Slot->Span;
 				Slot = DecompileAst::MakeMemberExpr(MoveTemp(Slot), LeadingSwizzle(TruncateWidth));
+				Slot->Span = Span;
+			}
+
+			// Rule L27: `7 / 2` was a float division in 1.x, and a `.dss` divides integers as integers: `float(7) / 2`.
+			if (bFloatDivide && Slot)
+			{
+				const FLangSpan Span = Slot->Span;
+				TArray<FExprPtr> Parts;
+				Parts.Add(MoveTemp(Slot));
+				Slot = DecompileAst::MakeConstructorExpr(DecompileAst::MakeValueTypeRef(IR::FIRType::Float(FloatDivideWidth), false), MoveTemp(Parts));
 				Slot->Span = Span;
 			}
 		}

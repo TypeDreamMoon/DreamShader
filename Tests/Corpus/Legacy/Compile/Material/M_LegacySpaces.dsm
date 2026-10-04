@@ -1,0 +1,14 @@
+// Transform spaces by their 1.x names, TransformPosition's World destination when none is written,
+// TranslatedWorldPosition at CameraRelative, and UE.CollectionParam in a Graph -- each as 1.x built it.
+Shader(Name="DreamShaderTests/Generate/M_LegacySpaces", Root="Game")
+{
+    Settings { Domain = "Surface"; ShadingModel = "Unlit"; BlendMode = "Opaque"; }
+    Outputs { vec3 Color; Base.EmissiveColor = Color; }
+    Graph {
+        vec3 Camera = UE.TranslatedWorldPosition();
+        vec3 Placed = UE.TransformPosition(Camera, Source = "CameraRelativeWorld");
+        vec3 Direction = UE.TransformVector(Placed, Source = "AbsoluteWorld", Destination = "Particle");
+        vec4 Fov = UE.CollectionParam(Asset = Path(Engine, "ArtTools/RenderToTexture/Materials/MPC_R2T"), Parameter = "OrthoFOV");
+        Color = Direction * Fov.r;
+    }
+}

@@ -1,0 +1,23 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"ShaderBesideFunction.dsm\"\n\nproduct 0 MaterialFunction \"Functions/MF_LiBeside\" backend=Graph\n  legacy root \"\"\n  %0 = FunctionInput(InputName=\"InColor\", InputType=\"Vector3\", IsOptional=false, SortPriority=0) : float3 @L3:C1 \"InColor\"\n  %1 = Constant(Value=(0.5)) : float @L14:C28 \"Result\"\n  %2 = Multiply(%0, %1) : float3 @L14:C18 \"Result\"\n  %3 = FunctionOutput(%2, OutputName=\"Result\", SortPriority=0) @L3:C1 \"Result\"\n  inputs %0\n  outputs %3\n\nproduct 1 Material \"M_LiBeside\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(1, 0.5, 0.25)) : float3 @L26:C29 \"Color\"\n  %1 = FunctionCall[MF_LiBeside](InColor=%0, FunctionPath=\"\", LocalFunction=0) : [Result:float3] @L26:C17 \"Color\"\n  %2 = MaterialSink(EmissiveColor=%1) @L18:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 2,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"MaterialFunction",
+			"Material"
+		],
+		"productNames": [
+			"Functions/MF_LiBeside",
+			"M_LiBeside"
+		],
+		"nodeCounts": [
+			4,
+			3
+		]
+	}
+}

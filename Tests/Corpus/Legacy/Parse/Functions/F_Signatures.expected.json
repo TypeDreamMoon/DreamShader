@@ -17,5 +17,5 @@
 		"legacyDeclarations": 3,
 		"outputSelectionGroups": 0
 	},
-	"text": "// Function shapes: `out` parameters, a return type, SelfContained; GLSL type and intrinsic spellings inside bodies\n// are rewritten, each recorded as a rename.\n/// @custom\nvoid Remap01(float value, out float result)\n{\r\n    result = saturate(value * 0.5 + 0.5);\r\n}\n\n/// @custom\nfloat Luma(float3 color)\n{ return dot(color, float3(0.299, 0.587, 0.114)); }\n\n/// @custom selfcontained\nvoid Blend(float3 a, float3 b, float t, out float3 result)\n{\r\n    result = lerp(a, b, frac(t));\r\n}\n"
+	"text": "// Function shapes: `out` parameters, a return type, SelfContained; GLSL type and intrinsic spellings inside bodies\n// are rewritten, each recorded as a rename.\n/// @custom\nvoid Remap01(float value, out float result)\n{\r\n    result = saturate(value * 0.5 + 0.5);\r\n}\n\n/// @custom\nfloat Luma(float3 color)\n{ return dot(color, float3(0.299, 0.587, 0.114)); }\n\n/// @custom\nvoid Blend(float3 a, float3 b, float t, out float3 result)\n{\r\n    result = lerp(a, b, frac(t));\r\n}\n"
 }

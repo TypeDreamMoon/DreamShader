@@ -182,14 +182,11 @@ A namespace-qualified call inside a body works *(since 2.0.0)*: the body normali
 and embedded like any other call. Through 1.x it called an undefined `Common_Remap01` and the shader
 failed to compile.
 
-> [!WARNING]
-> **`SelfContained` means the opposite of what it meant in 1.x.** `Function SelfContained Name(…)`
-> (and its spelling `Function Inline Name(…)`, [`DSH6306`](../diagnostics/DSH6xxx.md#dsh6306)) becomes
-> `/// @custom selfcontained`: the node's code is its own body and nothing else. A `Function` it calls
-> is **not** embedded, and each such call is [`DSH6264`](../diagnostics/DSH6xxx.md#dsh6264) — the
-> shader compiler then has to find that symbol in one of the body's own includes. Through 1.x the
-> modifier asked for the closure to be embedded; since 2.0.0 every node embeds it without being asked.
-> A `SelfContained` function that calls no other `Function` builds as before.
+`SelfContained` (and its old spelling `Inline`, [`DSH6306`](../diagnostics/DSH6xxx.md#dsh6306)) asked
+1.x for the closure to be embedded; every node embeds it now without being asked, so the modifier
+changes nothing and the function is a plain `/// @custom`. *(2.0.0 – 2.1.0 read it as
+`/// @custom selfcontained`, which embeds nothing: a `Function` it called was left for the shader
+compiler, [`DSH6264`](../diagnostics/DSH6xxx.md#dsh6264).)*
 
 ## Diagnostics
 
@@ -197,7 +194,6 @@ failed to compile.
 | :-- | :-- |
 | `DSH4210` | two `Function`s with the same name in the file and the headers it imports — including a namespaced one and a top-level one that flatten to the same name |
 | `DSH6260` | the `Function`s a node embeds call each other in a cycle |
-| `DSH6264` | *(warning)* a `SelfContained` `Function` calls another `Function`, which is not embedded |
 | [`DSH6259`](../diagnostics/DSH6xxx.md#dsh6259) | *(warning)* a body calls a name that differs from a `Function` only in case; the call is left as written |
 | [`DSH6261`](../diagnostics/DSH6xxx.md#dsh6261) | a body calls a function that is not a `Function` or `GraphFunction`, such as a `ShaderFunction` |
 | [`DSH6327`](../diagnostics/DSH6xxx.md#dsh6327) | a body calls a `GraphFunction` whose `UE.*` calls were lifted into inputs of its own node |

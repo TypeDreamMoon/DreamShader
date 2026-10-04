@@ -17,8 +17,8 @@ tree the 2.0 parser builds — so they get the same binder, the same checks and 
 
 | Extension | Holds | Builds |
 | :-- | :-- | :-- |
-| `.dsm` | **one** `Shader` block (`DSH2250` for a second), plus helper blocks (`Function`, `GraphFunction`, `Namespace`, `VirtualFunction`) | the material — a `ShaderFunction` or layer beside the `Shader` is `DSH6201`: a file makes a material or function assets, not both |
-| `.dsf` | `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend`, plus helpers; no `Shader` | the function assets |
+| `.dsm` | **one** `Shader` block (`DSH2250` for a second), plus helper blocks (`Function`, `GraphFunction`, `Namespace`, `VirtualFunction`), and `ShaderFunction` / layer blocks beside it | the material, and an asset for each function or layer block, as 1.x built them |
+| `.dsf` | `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend`, plus helpers; no `Shader` (`DSH2259`) | the function assets |
 | `.dsh` | `Function` / `GraphFunction` / `Namespace` / `VirtualFunction`, and 2.0 declarations side by side | nothing — included by `import` |
 
 A `.dsh` naming an asset block is `DSH2249`. The check reads tokens, so a comment or a string that mentions
@@ -86,6 +86,8 @@ values (`DSH4361`; a `mat3` property is `DSH3252`).
   constructors, `UE.*` / `Substrate.*`, texture methods, builtins, user functions. A property call beats a
   builtin, a builtin beats a user function.
 - A misspelled name is `DSH4208` / `DSH4200`, with "did you mean" for a case-only match.
+- **`/` divides as floats**, as 1.x did: `7 / 2` is 3.5. Only `int(7) / int(2)` — two integer constructor calls —
+  is `DSH4243`. A `.dss` refuses every `/` between integers; `dsc migrate` writes `float(7) / 2`.
 
 ## 4. Reusable code
 
@@ -103,9 +105,9 @@ values (`DSH4361`; a `mat3` property is `DSH3252`).
   strings excepted. A local named `Mix` or `Mod` becomes something else. `Graph` blocks are not rewritten.
 - `#include "/Plugin/X/Y.ush"` lines at the start of a `Function` body are hoisted onto the Custom node's include
   list, so a header that defines functions works there.
-- **`Function SelfContained` / `Inline` means the opposite in 2.0.** It becomes `@custom selfcontained`, which
-  embeds nothing: a call from that body to another `Function` is left to the shader compiler (`DSH6264`), where
-  1.x embedded it. A plain `Function` embeds what it calls; drop the modifier.
+- **`Function SelfContained` / `Inline` changes nothing.** Every `Function` node embeds the functions its body
+  calls, which is what the modifier asked 1.x for; it is a plain `@custom`, never `@custom selfcontained` (which
+  in a `.dss` embeds nothing, `DSH6264`). `Inline` warns `DSH6306`.
 
 ## 5. What 1.x gives you that 2.0 spells differently
 

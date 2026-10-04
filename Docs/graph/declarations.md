@@ -48,8 +48,8 @@ Every row is matched case-insensitively (`Float3`, `VEC3`, `materialattributes`)
 token *(since 2.0.0)*: `float 3` and `Material Attributes` are no longer read as types.
 `vec*`, `ivec*`, `uvec*` and `bvec*` read as `float*`, `int*`, `uint*` and `bool*`.
 
-`int`, `uint`, `bool` and `half` are kinds of their own to the compiler — a `/` between two integers
-is [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243), a condition is a `bool` — and every one of them is
+`int`, `uint`, `bool` and `half` are kinds of their own to the compiler — a `/` between two integer
+constructors is [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243), a condition is a `bool` — and every one of them is
 a float in the generated graph. See [Type tokens](../language/types.md). The matrix spellings
 (`mat3`, `float3x3`) resolve, but the graph has no matrix values:
 [`DSH4361`](../diagnostics/DSH4xxx.md#dsh4361).

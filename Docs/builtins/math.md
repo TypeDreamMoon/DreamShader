@@ -95,7 +95,7 @@ These apply identically to every builtin above, in a 1.x source and a `.dss` ali
 | 4 | Every argument is a number (or a bool, read as 0 / 1) — a texture object, a `MaterialAttributes` value or a `Substrate` value is not | [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226) |
 | 5 | Component counts **are** checked *(since 2.0.0)*: the widest operand sets the width, a scalar broadcasts to it, a narrower vector does not widen | `DSH4226` |
 | 6 | `cross`, `reflect` and `refract` take `float3` operands | a narrower vector is `DSH4226`; a wider one is cut to three in a 1.x source with the note [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) — what 1.x did — and is `DSH4226` in a `.dss` |
-| 7 | Two integer operands of `/` are refused — the graph has no integer division | [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) |
+| 7 | Two integer constructor calls as the operands of `/` are refused — the graph has no integer division; any other `/` is a float division, `7 / 2` included | [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) |
 
 Through 1.9.x none of rules 4 – 6 was a compile check: `dot(vec3Value, vec2Value)` was accepted
 without a word and failed later, in Unreal's own material translation.

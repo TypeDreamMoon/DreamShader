@@ -1,0 +1,17 @@
+// A SelfContained function's Custom node embeds the functions it calls, as 1.x embedded them; it is `@custom`, never
+// `@custom selfcontained`, which in 2.0 embeds nothing (DSH6264).
+import "SelfContainedEmbedsLib.dsh";
+
+Shader(Name="M_LiSelfContained")
+{
+    Outputs = {
+        float Alpha;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        float Result;
+        LiQuarter(0.8, Result);
+        Alpha = Result;
+    }
+}

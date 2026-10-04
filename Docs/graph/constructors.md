@@ -105,11 +105,10 @@ value of them can be constructed: `Texture2D(…)` is [`DSH4223`](../diagnostics
 The integer names are `int`, `int1..4`, `ivec2..4`, `uint`, `uint1..4` and `uvec2..4`. Their result is
 an `int` or `uint` value to the compiler.
 
-The kind does exactly one thing: `/` is refused when **both** operands are integers
-([`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243)). It performs no truncation, no rounding, and no
-range clamping — an integer constructor produces the same float-valued graph as its `float`
-counterpart, and `int(7.9)` is 7.9. An integer literal such as `7` is an integer too *(since 2.0.0)*.
-See [Integer division](expressions.md#integer-division).
+The kind does exactly one thing: `/` is refused when **both** operands are integer constructor calls
+([`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243)), as in 1.x. It performs no truncation, no rounding,
+and no range clamping — an integer constructor produces the same float-valued graph as its `float`
+counterpart, and `int(7.9)` is 7.9. See [Integer division](expressions.md#integer-division).
 
 The kind comes from the constructor's own name, so wrapping in a non-integer constructor clears it:
 `float(int(7))` is a float.

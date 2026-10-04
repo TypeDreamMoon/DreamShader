@@ -112,6 +112,7 @@ namespace UE::DreamShader::Editor::Compiler
 			{ TEXT("MaterialExpressionLinearInterpolate"),  TEXT("Lerp") },
 			{ TEXT("MaterialExpressionComponentMask"),      TEXT("Mask") },
 			{ TEXT("MaterialExpressionMaterialFunctionCall"), TEXT("FunctionCall") },
+			{ TEXT("MaterialExpressionCollectionParameter"), TEXT("CollectionParam") },
 		};
 
 		/**

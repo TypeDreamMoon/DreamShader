@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"IntegerLiteralDivide.dsm\"\n\nproduct 0 Material \"M_LiIntegerLiteralDivide\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(10.5)) : float @L15:C17 \"Alpha\"\n  %1 = MaterialSink(Opacity=%0) @L3:C1\n  sink %1\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 0,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiIntegerLiteralDivide"
+		],
+		"nodeCounts": [
+			2
+		]
+	}
+}

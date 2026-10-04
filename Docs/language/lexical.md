@@ -189,7 +189,7 @@ What is not accepted is [`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254) for a def
 | `float Strength = 1abc;` | — | `DSH2105` and `DSH3254` *(since 2.0.0; 1.x read `1.0`)* |
 | `float Strength = abc;` | — | `DSH3254` |
 | `float Strength = 0x1F;` | — | `DSH3254` |
-| `float Strength = 1e3;` | — | `DSH3254` — a scalar default takes no exponent |
+| `float Strength = 1e3;` | `1000.0` | none *(2.0.0 – 2.1.0: `DSH3254`)* |
 
 The vector-literal form is deliberately loose, as in 1.x. The first `(` and the **last** `)` delimit
 the components, and **the text before `(` is ignored entirely** — `float3(1,0,0)`, `vec3(1,0,0)`,

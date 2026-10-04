@@ -91,7 +91,7 @@ Rules:
 | Does `3u` produce an integer? | Yes, a `uint` *(since 2.0.0)*. |
 | Does `int x = 7;` produce an integer? | Yes: `x` is an `int` variable *(since 2.0.0)*. Its value in the graph is the float 7. |
 | What makes a value an integer? | An integer literal, an `int` / `uint` declaration, or an integer [constructor](constructors.md#integer-constructors). |
-| What does the integer kind do? | One thing: `/` is refused when both operands are integers ([`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243)). So `7 / 2` is an error *(since 2.0.0; 1.x evaluated it to 3.5)*; write `7.0 / 2`. See [Integer division](expressions.md#integer-division). |
+| What does the integer kind do? | In a 1.x `Graph`, nothing you can see: `7 / 2` is 3.5, as in 1.x *(2.0.0 – 2.1.0 refused it with [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243))*, and only `int(7) / int(2)` is refused. In a `.dss` the same `7 / 2` is `DSH4243`, so [`dsc migrate`](../tools/migrate.md) writes `float(7) / 2`. See [Integer division](expressions.md#integer-division). |
 | Is there integer arithmetic or truncation? | No. `int x = 7.9;` holds 7.9, and `7.0 / 2` is 3.5 in the material graph. |
 
 ## String literals
@@ -170,7 +170,7 @@ float      On      = TRUE;     // any case; a bool used as a number is 1
 | :-- | :-- |
 | `DSH2105` | A malformed number: a second `.`, an exponent without digits, a float and an integer suffix together, an integer suffix on a fraction, letters glued to the end. |
 | `DSH2222` | A hexadecimal literal in a 1.x `Graph`. |
-| `DSH4243` | `/` between two integers — two integer literals included. |
+| `DSH4243` | `/` between two integer constructor calls. Two integer literals are a float division. |
 | `DSH2103` | A string literal with no closing `"` on its line. |
 | `DSH2104` | An unknown escape in a string literal. |
 | `DSH4202` | A string literal where a value is wanted. |

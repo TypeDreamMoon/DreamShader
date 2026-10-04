@@ -127,7 +127,10 @@ namespace UE::DreamShader::Editor::Private
 		// DSK3: the key now folds in the preprocessor defines the source read. A DSK2 stamp was computed
 		// from post-cut text with no record of WHY it was cut, so an asset generated before this could
 		// not be told apart from the same asset generated under a different define set.
-		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK3");
+		// DSK4: the source digest names each file by its project-relative path, not its absolute one, so the key no
+		// longer depends on where the project is checked out; and 1.x sources build what 1.x built again (SelfContained,
+		// TransformPosition's World destination, `7 / 2`), which an asset stamped DSK3 may not have.
+		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK4");
 
 		FString GetDreamShaderPluginVersion()
 		{

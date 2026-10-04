@@ -157,9 +157,10 @@ Consequences:
 - `int x = 7.9;` stores 7.9. Use `floor(…)` if truncation is wanted.
 - `bool b = 0.5;` stores 0.5. There is no conversion to 0 or 1.
 - Assigning a `float4` to an `int3` narrows exactly like `float4` → `float3` (`DSH5289`).
-- The kind matters in one place: `/` between two integers is
-  [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243). An integer literal (`7`), an `int` variable and an
-  integer [constructor](constructors.md#integer-constructors) all count *(since 2.0.0)*. See
+- The kind matters in one place: `/` between two integer
+  [constructor](constructors.md#integer-constructors) calls is
+  [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243). With an integer literal (`7`) or an `int` variable
+  on either side it is a float division, as in 1.x. See
   [Integer division](expressions.md#integer-division).
 
 ## Authoritative component counts

@@ -224,8 +224,7 @@ namespace UE::DreamShader::Lang::Private
 			return Result;
 		}
 
-		/** A decimal number as 1.x `LexTryParseString<double>` reads it: optional sign, digits, one dot, an exponent. */
-		static bool LegacyAst_TryParseNumber(const FString& Text, double& OutValue, bool& bOutIsInteger)
+		bool TryParseLegacyNumber(const FString& Text, double& OutValue, bool& bOutIsInteger)
 		{
 			const FString Trimmed = Text.TrimStartAndEnd();
 			if (Trimmed.IsEmpty())
@@ -289,7 +288,7 @@ namespace UE::DreamShader::Lang::Private
 
 			double Number = 0.0;
 			bool bInteger = false;
-			if (LegacyAst_TryParseNumber(Trimmed, Number, bInteger))
+			if (TryParseLegacyNumber(Trimmed, Number, bInteger))
 			{
 				if (bInteger)
 				{
@@ -339,7 +338,7 @@ namespace UE::DreamShader::Lang::Private
 			{
 				const FString Part = Parts[Index].TrimStartAndEnd();
 				bool bInteger = false;
-				if (!LegacyAst_TryParseNumber(Part, Parsed[Index], bInteger))
+				if (!TryParseLegacyNumber(Part, Parsed[Index], bInteger))
 				{
 					if (Part.Equals(TEXT("true"), ESearchCase::IgnoreCase))
 					{
@@ -664,6 +663,33 @@ namespace UE::DreamShader::Lang::Private
 				}
 			}
 			return false;
+		}
+
+		/**
+		 * The engine's name for a transform space 1.x also knew by another (TryResolveVectorTransformBasis and
+		 * TryResolvePositionTransformBasis, which compared trimmed lower-case text); null for every other spelling,
+		 * which the binder matches like any enumerator.
+		 */
+		static const TCHAR* FindLegacyTransformBasisAlias(const FString& Written, const bool bPosition)
+		{
+			const FString Key = Written.TrimStartAndEnd().ToLower();
+			if (Key == TEXT("absoluteworld"))
+			{
+				return TEXT("World");
+			}
+			if (Key == TEXT("particle") || Key == TEXT("instanceparticle"))
+			{
+				return TEXT("Instance");
+			}
+			if (bPosition && Key == TEXT("camerarelativeworld"))
+			{
+				return TEXT("TranslatedWorld");
+			}
+			if (bPosition && Key == TEXT("firstperson"))
+			{
+				return TEXT("FirstPersonTranslatedWorld");
+			}
+			return nullptr;
 		}
 
 		static bool IsLegacyTextureSampleParameterType(const FString& NodeType)
@@ -1409,7 +1435,8 @@ namespace UE::DreamShader::Lang::Private
 				{
 					Callee->Member = TEXT("WorldPosition");
 				}
-				Call->Arguments.Add(LegacyAst::MakeNamedArgument(TEXT("WorldPositionShaderOffset"), LegacyAst::MakeIdentifier(TEXT("WPT_CameraRelative"), CallSpan), CallSpan));
+				// The catalog's spelling: `WPT_CameraRelative` would match too, but loosely, and warn (DSH5278) at every use.
+				Call->Arguments.Add(LegacyAst::MakeNamedArgument(TEXT("WorldPositionShaderOffset"), LegacyAst::MakeIdentifier(TEXT("CameraRelative"), CallSpan), CallSpan));
 				Result = MoveTemp(Call);
 			}
 			else
@@ -1432,6 +1459,45 @@ namespace UE::DreamShader::Lang::Private
 					{
 						// 1.x set bOverride_Period whenever it saw a Period.
 						Call->Arguments.Add(LegacyAst::MakeNamedArgument(TEXT("bOverride_Period"), LegacyAst::MakeBoolLiteral(true, CallSpan), CallSpan));
+					}
+
+					const bool bTransformPosition = Name.Equals(TEXT("TransformPosition"), ESearchCase::IgnoreCase);
+					if (bTransformPosition || Name.Equals(TEXT("TransformVector"), ESearchCase::IgnoreCase))
+					{
+						// A space 1.x knew by a name of its own is written as the engine's name for it.
+						for (FArgument& Argument : Call->Arguments)
+						{
+							FString Written;
+							const bool bBasis = Argument.Name.Equals(TEXT("Source"), ESearchCase::IgnoreCase)
+								|| Argument.Name.Equals(TEXT("Destination"), ESearchCase::IgnoreCase);
+							if (!bBasis || !LegacyExpressions::TryGetLegacyLiteralText(Argument.Value.Get(), Written))
+							{
+								continue;
+							}
+							const TCHAR* EngineName = LegacyExpressions::FindLegacyTransformBasisAlias(Written, bTransformPosition);
+							if (!EngineName)
+							{
+								continue;
+							}
+							const FLangSpan ValueSpan = Argument.Value->Span;
+							Diagnostics.Warning(
+								TEXT("DSH5278"),
+								ValueSpan,
+								FText::Format(
+									LOCTEXT("LegacyTransformSpace", "'{0}' is the 1.x name of the '{1}' space of '{2}'; a '.dss' writes '{1}'."),
+									FText::FromString(Written),
+									FText::FromString(EngineName),
+									FText::FromString(CalleeText)));
+							Argument.Value = Argument.Value->Is<FLiteralExpr>()
+								? LegacyAst::MakeStringLiteral(EngineName, ValueSpan)
+								: LegacyAst::MakeIdentifier(EngineName, ValueSpan);
+						}
+
+						// 1.x's TransformPosition went to World unless told otherwise; the engine's node goes to Local.
+						if (bTransformPosition && LegacyExpressions::FindLegacyArgument(*Call, TEXT("Destination")) == INDEX_NONE)
+						{
+							Call->Arguments.Add(LegacyAst::MakeNamedArgument(TEXT("Destination"), LegacyAst::MakeIdentifier(TEXT("World"), CallSpan), CallSpan));
+						}
 					}
 				}
 

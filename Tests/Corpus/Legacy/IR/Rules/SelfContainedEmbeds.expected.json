@@ -1,0 +1,20 @@
+{
+	"entryPoint": "legacy-ir",
+	"outcome": "ok",
+	"ir": "module \"SelfContainedEmbeds.dsm\"\ninclude \"SelfContainedEmbedsLib.dsh\"\n\nproduct 0 Material \"M_LiSelfContained\" backend=Graph\n  legacy root \"\"\n  %0 = Constant(Value=(0.8)) : float @L14:C19\n  %1 = Custom[LiQuarter](value=%0, Code=\"struct generated_wrapper_LiQuarter_18BB4373\\n{\\n\\tfloat DreamShaderFn_LiHalf(float value)\\n\\t{\\n\\t\\tfloat result = (float)0;\\n// Begin DreamShader source: <corpus>/Legacy/IR/Rules/SelfContainedEmbedsLib.dsh\\n// DreamShader custom: LiHalf line 2\\n\\n    result = value * 0.5;\\n// End DreamShader source: <corpus>/Legacy/IR/Rules/SelfContainedEmbedsLib.dsh\\n\\t\\treturn result;\\n\\t}\\n\\n};\\ngenerated_wrapper_LiQuarter_18BB4373 __ds_wrapper_18BB4373;\\n\\nfloat result = (float)0;\\n// Begin DreamShader source: <corpus>/Legacy/IR/Rules/SelfContainedEmbedsLib.dsh\\n// DreamShader custom: LiQuarter line 6\\n\\n    float halved;\\n    __ds_wrapper_18BB4373.DreamShaderFn_LiHalf(value, halved);\\n    __ds_wrapper_18BB4373.DreamShaderFn_LiHalf(halved, result);\\n// End DreamShader source: <corpus>/Legacy/IR/Rules/SelfContainedEmbedsLib.dsh\\nreturn result;\\n\", Description=\"LiQuarter\", OutputType=\"Float1\") : [result:float] @L14:C9\n  %2 = MaterialSink(Opacity=%1) @L5:C1\n  sink %2\n",
+	"module":
+	{
+		"products": 1,
+		"includes": 1,
+		"sinks": 1,
+		"productKinds": [
+			"Material"
+		],
+		"productNames": [
+			"M_LiSelfContained"
+		],
+		"nodeCounts": [
+			3
+		]
+	}
+}

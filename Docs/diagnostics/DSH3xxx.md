@@ -466,7 +466,7 @@ whole block is skipped during recovery so the rest of the file still reports its
 Expected a property type and a name, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1044`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:721`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:733`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:775`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1042`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:719`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:731`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:773`
 <!-- generated:end DSH3250 -->
 
 **Cause.** A line of a `Properties` section does not start with a type and a name. Each property is
@@ -486,7 +486,7 @@ Expected a property type and a name, found {0}.
 Expected a property type after 'const', found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:676`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:674`
 <!-- generated:end DSH3251 -->
 
 **Cause.** `const` is not followed by a property type.
@@ -504,7 +504,7 @@ Expected a property type after 'const', found {0}.
 Expected a property type such as 'float', 'float4', 'Texture2D' or 'ScalarParameter', found '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:841`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:839`
 <!-- generated:end DSH3252 -->
 
 **Cause.** The word in type position is not a type a 1.x property can have: not an HLSL value type,
@@ -525,7 +525,7 @@ property type is matched ignoring case, as 1.x matched it, so it is the word its
 Expected a property type with a 2.0 spelling, found '{0}{1}', which has none; move this material to a .dss file and write the node with UE.Expression.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:853`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:851`
 <!-- generated:end DSH3253 -->
 
 **Cause.** The property is a node class 1.x could declare and 2.0 has no declaration for, or `const`
@@ -546,7 +546,7 @@ a `.dss` file and write the node where it is used, as `UE.<Class>(...)`.
 Expected a default value after '{0} =', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:755`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:871`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:913`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:937`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:753`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:869`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:911`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:935`
 <!-- generated:end DSH3254 -->
 
 **Cause.** A property has `=` and nothing the front end can read as a default after it. A default is
@@ -566,7 +566,7 @@ quoted object path, a Content Browser reference), or a `UE.*` node for a builtin
 Expected ']' to close the metadata block, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:188`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:201`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:255`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:275`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:186`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:199`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:253`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:273`
 <!-- generated:end DSH3255 -->
 
 **Cause.** A metadata block `[ ... ]` after a property or parameter is not closed, or an entry in it
@@ -585,7 +585,7 @@ is not `Key = value;`.
 Expected the metadata key '{0}' once, found it again.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:309`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:307`
 <!-- generated:end DSH3256 -->
 
 **Cause.** One metadata key is written twice in the same `[ ... ]` block.
@@ -603,7 +603,7 @@ Expected the metadata key '{0}' once, found it again.
 Expected 'Slider(min, max)' with two numbers, found '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:238`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:301`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:236`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:299`
 <!-- generated:end DSH3257 -->
 
 **Cause.** `Slider` does not have the form `Slider(min, max)` with two numbers, or the range is
@@ -623,7 +623,7 @@ metadata block.
 Expected 'SortPriority' to be a whole number, found '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1799`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:475`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1797`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:473`
 <!-- generated:end DSH3258 -->
 
 **Cause.** `SortPriority` (or its short form `Sort`) is not a whole number. The engine sorts
@@ -642,7 +642,7 @@ parameters by an integer.
 Expected ')' to close the arguments of 'UE.{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:705`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:819`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:703`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:817`
 <!-- generated:end DSH3259 -->
 
 **Cause.** A builtin property (`float3 Cam = UE.CameraPositionWS();`) opens the argument list of its
@@ -663,7 +663,7 @@ instead of inside the parentheses.
 Expected a name inside 'Group("...")', found an empty string.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:637`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:635`
 <!-- generated:end DSH3260 -->
 
 **Cause.** `Group("") { ... }` has an empty name. The members of such a block take the name as their
@@ -682,7 +682,7 @@ parameter group.
 Expected a setting name such as 'BlendMode', found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1112`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1137`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1149`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1163`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1110`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1135`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1147`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1161`
 <!-- generated:end DSH3261 -->
 
 **Cause.** A line of a `Settings` section does not start with a setting name. Each setting is
@@ -701,7 +701,7 @@ Expected a setting name such as 'BlendMode', found {0}.
 The setting '{0}' is written twice; the later value wins, as it did in 1.x.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1183`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1181`
 <!-- generated:end DSH3262 -->
 
 **Cause.** One setting is written twice. 1.x kept the later value, and so does this front end.
@@ -719,7 +719,7 @@ The setting '{0}' is written twice; the later value wins, as it did in 1.x.
 '{0}' is not a setting of '{1}'; 1.x ignored it and so does this front end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1132`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1147`
 <!-- generated:end DSH3263 -->
 
 **Cause.** The setting is not one the block's kind has (a material setting in a ShaderFunction, a
@@ -739,7 +739,7 @@ misspelt function setting). 1.x ignored what it did not know, so the source buil
 'UserExposedCaption' has no 2.0 spelling and is not applied; its value is kept for migration.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1120`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1135`
 <!-- generated:end DSH3264 -->
 
 **Cause.** `UserExposedCaption` is set on a function. 2.0 has no directive for it and the compiler
@@ -760,7 +760,7 @@ migrating.
 Expected 'true' or 'false' for 'ExposeToLibrary', found '{0}'; 1.x ignored the setting and so does this front end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1106`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1121`
 <!-- generated:end DSH3265 -->
 
 **Cause.** `ExposeToLibrary` is neither `true` nor `false`. 1.x ignored such a value and left the
@@ -779,7 +779,7 @@ function where it was.
 Expected ';' after the output declaration '{0}', found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1204`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1324`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1629`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1202`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1322`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1627`
 <!-- generated:end DSH3266 -->
 
 **Cause.** An `Outputs` section is not what the front end reads: the section is not opened with `{`,
@@ -799,7 +799,7 @@ a declaration has no `;` after it, or a line is neither an output declaration, `
 Expected 'Pin[<index>] = <source>' for an Expression(...) output target, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1232`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1417`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1427`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1439`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1450`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1466`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1495`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1561`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1230`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1415`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1425`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1437`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1448`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1464`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1493`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1559`
 <!-- generated:end DSH3267 -->
 
 **Cause.** An `Outputs` binding to a custom-output node is not of the form `Expression(Class =
@@ -818,7 +818,7 @@ Expected 'Pin[<index>] = <source>' for an Expression(...) output target, found {
 Expected each pin of Expression(Class = "{0}") to be bound once, found Pin[{1}] bound again.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1608`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1606`
 <!-- generated:end DSH3268 -->
 
 **Cause.** The block form of an `Expression(...)` output target binds one pin twice.
@@ -836,7 +836,7 @@ Expected each pin of Expression(Class = "{0}") to be bound once, found Pin[{1}] 
 Expected at least one 'Pin[<index>] = <source>;' in the Expression(...) block, found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1551`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1549`
 <!-- generated:end DSH3269 -->
 
 **Cause.** The block form of an `Expression(...)` output target has no pin binding in it, so the
@@ -855,7 +855,7 @@ node would be built with nothing wired.
 Expected a source after 'Pin[{0}] =', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1248`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1304`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1369`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1246`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1302`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1367`
 <!-- generated:end DSH3270 -->
 
 **Cause.** An `=` in an `Outputs` section has nothing after it: `Pin[<index>] =`, `Base.<Attribute>
@@ -874,7 +874,7 @@ Expected a source after 'Pin[{0}] =', found none.
 Expected a parameter type and name such as 'float Amount', found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1661`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1696`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1732`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1758`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1659`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1694`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1730`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1756`
 <!-- generated:end DSH3271 -->
 
 **Cause.** A line of an `Inputs` or `Outputs` section of a function is not `[opt] <Type> <Name> [=
@@ -893,7 +893,7 @@ default] [ [metadata] ];`.
 'opt' on the output '{0}' means nothing; 1.x ignored it and so does this front end.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1772`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1770`
 <!-- generated:end DSH3272 -->
 
 **Cause.** `opt` stands on an output. Only an input can be optional; 1.x read the word and did
@@ -912,7 +912,7 @@ nothing with it.
 A default on the output '{0}' means nothing; 1.x ignored it, so it is dropped.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1780`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1778`
 <!-- generated:end DSH3273 -->
 
 **Cause.** An output has a default. An output is what the Graph assigns; 1.x read the default and
@@ -931,7 +931,7 @@ dropped it.
 Expected 'Node(...)' or 'Comment(...)' in the Layout section, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1840`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1865`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1886`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1896`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1908`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1924`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1940`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1959`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1838`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1863`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1884`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1894`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1906`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1922`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1938`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1957`
 <!-- generated:end DSH3274 -->
 
 **Cause.** A `Layout` section holds something other than `Node(...)` and `Comment(...)` entries.
@@ -950,7 +950,7 @@ Expected 'Node(...)' or 'Comment(...)' in the Layout section, found {0}.
 Expected the argument '{0}' in '{1}(...)', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2000`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2012`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:1998`, `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2010`
 <!-- generated:end DSH3275 -->
 
 **Cause.** A `Node(...)` or `Comment(...)` entry lacks an argument it cannot do without -- `Var`,
@@ -970,7 +970,7 @@ whole number.
 Expected 'Color' to be a vector literal such as '(0.1, 0.16, 0.22, 0.35)', found '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2038`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacySections.cpp:2036`
 <!-- generated:end DSH3276 -->
 
 **Cause.** The `Color` of a `Comment(...)` is not four numbers in parentheses.
@@ -988,7 +988,7 @@ Expected 'Color' to be a vector literal such as '(0.1, 0.16, 0.22, 0.35)', found
 The layer input '{0}' becomes the 'inout material' parameter named after the output '{1}', so the input pin changes its name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1185`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1200`
 <!-- generated:end DSH3277 -->
 
 **Cause.** A 1.x layer names its MaterialAttributes input one thing and its output another. A 2.0
@@ -1011,7 +1011,7 @@ once.
 Expected a MaterialAttributes output on '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1155`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1170`
 <!-- generated:end DSH3278 -->
 
 **Cause.** A `ShaderLayer` or `ShaderLayerBlend` has no output of type `MaterialAttributes`. The

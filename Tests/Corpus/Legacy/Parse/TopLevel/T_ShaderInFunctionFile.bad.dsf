@@ -1,0 +1,12 @@
+// A Shader block belongs in a .dsm; 1.x refused one in a .dsf too (DSH2259).
+Shader(Name="M_LpShaderInDsf")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = vec3(1.0, 0.5, 0.25);
+    }
+}

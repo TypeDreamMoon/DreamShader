@@ -16,7 +16,7 @@ Corpus/
 ├── Parity/             # Compiler2.Parity.* 的 compile 金样本 (无源文件; 源是 Lang/Examples 下的 .dss)
 ├── Legacy/             # 1.x 源码走 2.0 管线: legacy 前端是现在唯一读 .dsm/.dsf 的东西
 │   ├── Parse/          # `legacy` 金样本: 1.x 文本 -> legacy 前端(带 trivia) -> 打印出的 2.0 文本 + FLegacyMigrationInfo 计数, 纯 Core
-│   ├── IR/             # `legacy-ir` 金样本: 成文的 1.x 规则 (L2-L19) 一条一个夹具, 手搓 catalog, 纯 Core
+│   ├── IR/             # `legacy-ir` 金样本: 成文的 1.x 规则 (L2-L27) 一条一个夹具, 手搓 catalog, 纯 Core
 │   └── Compile/        # `compile` 金样本: 原 Generate/ 的夹具; 金样本播种自 09-15 的 1.x 抓取, 所以钉 ThinCustom 而不是 Graph
 ├── Decompile/          # `decompile` 金样本: .dss -> IR -> AST -> 打印文本, 且该文本降到等价 IR; 纯 Core (roundtrip-skips.json 在这里)
 ├── Migrate/            # `migrate` 金样本: 1.x 文本 -> MigrateDreamShaderLegacyModule -> 2.0 文本; 注释不丢、可编、IR 等价; 纯 Core

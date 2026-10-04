@@ -281,7 +281,7 @@ same sink, with their own ranges:
 | `DSH7200`–`DSH7249` | uniforms, `///` directives, `#pragma material` |
 | `DSH7250`–`DSH7270` | `.dsi`: `#pragma instance`, overrides against the parent's schema |
 | `DSH7300`–`DSH7379` | `.dsp` checks (`V1`–`V13`): pass kind against injection point, buffer use in frame order, bindings against the material or HLSL file, limits |
-| `DSH5250`–`DSH5292` | the documented 1.x rules (`L1`–`L26`), each one a diagnostic where it rewrites or drops something |
+| `DSH5250`–`DSH5292` | the documented 1.x rules (`L1`–`L27`), each one a diagnostic where it rewrites or drops something |
 | `DSH9042`–`DSH9044` | the formatter: a 1.x file and a file with preprocessor lines are skipped (info), a formatted text that fails its own check is refused |
 | `DSH9075`–`DSH9084` | IR → source: what the writer renamed, could not place, or left at a default |
 | `DSH9107`–`DSH9109` | the in-place rewrites of a `.dsi` and, *since 2.1.0*, a `.dsp` (Adopt): a shared declaration, overlapping edits, the wrong kind of file |

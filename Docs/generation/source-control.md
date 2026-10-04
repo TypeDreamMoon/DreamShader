@@ -166,11 +166,12 @@ out byte-identical. The key also covers the plugin version, the engine version a
 read — so **upgrading DreamShader or the engine regenerates everything**. Do that in a commit of its
 own, with nothing else in it; the diff is large, binary, and expected.
 
-> [!WARNING]
-> The key names each source and header by its **absolute** path, so it matches only in a checkout at
-> the same location as the one that built the committed assets. Run the check there — a CI agent that
-> checks out somewhere else rebuilds and re-saves every asset, so the check above proves nothing
-> there. See [Caching](caching.md#what-is-hashed).
+> [!NOTE]
+> The key names each source and header by its path relative to the project directory, so a CI agent
+> that checks out somewhere else gets the same keys and the check holds there too. Through 2.1.0 the
+> key named them by their **absolute** path, and such an agent rebuilt and re-saved every asset; the
+> first compile after upgrading rebuilds everything once (build key format `DSK4`). See
+> [Caching](caching.md#what-is-hashed).
 
 **Costs.** Binary churn in history, and merge conflicts that are resolved by recompiling, never by
 picking a side: take either version, run `compile` on the source, commit the result.

@@ -1,0 +1,5 @@
+{
+	"entryPoint": "migrate",
+	"outcome": "ok",
+	"text": "// Rule L27: a division 1.x made of two integer-typed values is written with `float(...)` on its left side.\n/// @name DreamShaderTests/Migrate/M_MgIntegerDivide\nexport void M_MgIntegerDivide(inout material Base)\n{\n    float Alpha = 0;\n    int Seven = 7;\n    float Quotient = float(7) / 2;\n    Alpha = Quotient + float(Seven) / 2;\n    Base.Opacity = Alpha;\n}\n"
+}

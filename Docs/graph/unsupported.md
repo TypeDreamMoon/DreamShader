@@ -156,7 +156,7 @@ exactly first and then ignoring case, with a warning ([`DSH5275`](../diagnostics
 | Arrays and indexing | `DSH2213`, `DSH2202` | [swizzles](swizzle.md) for channels; `Texture2DArray` sampling for layers |
 | `inout` parameters | a 1.x function has `in` and `out` only: [`DSH6302`](../diagnostics/DSH6xxx.md#dsh6302) | pass an `in` and an `out` |
 | Function declarations inside `Graph` | `DSH2154` | top-level `Function` / `GraphFunction` |
-| Integer arithmetic | absent — `int`, `uint`, `bool` and `half` are floats in the graph; a `/` between two integers is [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) | see [Expressions](expressions.md#integer-division) |
+| Integer arithmetic | absent — `int`, `uint`, `bool` and `half` are floats in the graph; a `/` between two integer constructors is [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) | see [Expressions](expressions.md#integer-division) |
 | Hex, octal and binary literals | `DSH2222` for hex | decimal literals; see [Literals](literals.md) |
 | String values | `DSH4202` outside named `UE.*` arguments | — |
 | Ternary conditional | `DSH2200` | `if` / `else`, `lerp`, `StaticSwitchParameter` |
@@ -196,7 +196,7 @@ exactly first and then ignoring case, with a warning ([`DSH5275`](../diagnostics
 | `DSH2222` | a hexadecimal literal |
 | `DSH2246` | a `Code` section in a `Shader` or function block |
 | `DSH4202` | a string used as a value |
-| `DSH4243` | both operands of `/` are integers |
+| `DSH4243` | both operands of `/` are integer constructor calls |
 | `DSH4361` | a matrix value |
 | `DSH6302` | an `inout` parameter on a 1.x function |
 

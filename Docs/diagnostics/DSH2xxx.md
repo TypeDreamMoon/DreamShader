@@ -984,7 +984,7 @@ name there.
 Expected a 'Name = "..."' attribute on '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:733`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:748`
 <!-- generated:end DSH2242 -->
 
 **Cause.** The block has an attribute list and no `Name` in it. The name is the asset the block
@@ -1003,11 +1003,12 @@ builds (or, for a VirtualFunction, the name calls use).
 Expected an attribute name such as 'Name', found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:546`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:555`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:566`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:612`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:546`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:555`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:566`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:617`
 <!-- generated:end DSH2243 -->
 
 **Cause.** The attribute list of a block is not `Key = value` pairs separated by commas: a key is
-missing, the `=` is, or the value is not a string, a word or a number.
+missing, the `=` is, or the value is not a string, a word or a number. A comma right before the `)` is
+fine, as it was in 1.x; two commas in a row are not.
 
 **Fix.** Write each attribute as `Key = "value"`.
 
@@ -1041,7 +1042,7 @@ so does this front end; the warning is there because the first value is dead tex
 Expected a Shader section (Properties, Settings, Outputs, Graph or Layout), found '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2476`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:933`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2493`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:948`
 <!-- generated:end DSH2245 -->
 
 **Cause.** A word that is no section opens a line inside a block. A Shader has `Properties`,
@@ -1063,7 +1064,7 @@ that are wrong — and that the section before it is closed.
 Expected 'Graph' as the body section of '{0}', found 'Code', which 1.x accepted only inside a Function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:925`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:940`
 <!-- generated:end DSH2246 -->
 
 **Cause.** A Shader or ShaderFunction block has a `Code` section. 1.x read `Code` only inside a
@@ -1082,7 +1083,7 @@ Expected 'Graph' as the body section of '{0}', found 'Code', which 1.x accepted 
 Expected no body in the VirtualFunction '{0}', which declares an existing asset, found the section '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2468`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2485`
 <!-- generated:end DSH2247 -->
 
 **Cause.** A VirtualFunction has a `Graph` or `Code` section. A VirtualFunction declares the
@@ -1122,7 +1123,7 @@ file, which is read by the 1.x front end only.
 Expected only Function, GraphFunction, Namespace and VirtualFunction blocks in a '.dsh' header, found the asset block '{0}', which belongs in a .dsm or .dsf file.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:492`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:689`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:492`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:694`
 <!-- generated:end DSH2249 -->
 
 **Cause.** A `.dsh` header holds a block that builds an asset (`Shader`, `ShaderFunction`, a layer).
@@ -1142,7 +1143,7 @@ the header.
 Expected one Shader block in a file, found a second one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:717`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:722`
 <!-- generated:end DSH2250 -->
 
 **Cause.** A file holds two `Shader` blocks. A material source is one material.
@@ -1160,7 +1161,7 @@ Expected one Shader block in a file, found a second one.
 '{0}' is the old spelling of '{1}'; it still reads the same.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:707`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:712`
 <!-- generated:end DSH2251 -->
 
 **Cause.** A block word of an earlier 1.x release is used (`MaterialLayer` for `ShaderLayer`,
@@ -1242,7 +1243,7 @@ removed it.
 Expected a Graph section in the Shader '{0}', found none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:979`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:994`
 <!-- generated:end DSH2255 -->
 
 **Cause.** A Shader has no `Graph` section and nothing in its `Outputs` section either, so there is
@@ -1262,7 +1263,7 @@ an initialized declaration, or a binding whose right side is an expression.
 The Shader '{0}' has no Outputs section, so nothing its Graph computes reaches the material.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:986`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1001`
 <!-- generated:end DSH2256 -->
 
 **Cause.** A Shader has a Graph and no `Outputs` section, so no value reaches a material attribute.
@@ -1281,7 +1282,7 @@ The material builds, with nothing wired to it.
 Expected '`{' to open the '{0}' block, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2272`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2386`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2425`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2442`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:746`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:819`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:836`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2289`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2403`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2442`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2459`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:761`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:834`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:851`
 <!-- generated:end DSH2257 -->
 
 **Cause.** A block is not opened where one has to be: the attribute list of a `Shader`,
@@ -1302,13 +1303,34 @@ followed by `{`.
 The section '{0}' is written twice; the later one wins, as it did in 1.x.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:899`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:913`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:914`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:928`
 <!-- generated:end DSH2258 -->
 
 **Cause.** One section is written twice in a block. 1.x kept the later one and dropped the first
 silently; this front end does the same and says so.
 
 **Fix.** Merge the two sections into one.
+
+## DSH2259
+
+<!-- generated:begin DSH2259 -->
+**Severity** error
+
+**Message**
+
+```
+Expected ShaderFunction, ShaderLayer and ShaderLayerBlend blocks in a '.dsf' file, found a Shader block, which belongs in a .dsm file.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:730`
+<!-- generated:end DSH2259 -->
+
+**Cause.** A `.dsf` holds a `Shader` block. A `.dsf` builds function assets -- `ShaderFunction`,
+`ShaderLayer`, `ShaderLayerBlend` -- and a material belongs in a `.dsm`. 1.x refused it too, when it
+generated the file. The block is skipped; the rest of the file is still read.
+
+**Fix.** Move the `Shader` block into a `.dsm`. A `.dsm` may keep `ShaderFunction` and layer blocks
+beside its `Shader`, so moving the whole file to `.dsm` works as well.
 
 ## DSH2300
 

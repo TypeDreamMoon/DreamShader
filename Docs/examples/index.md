@@ -331,11 +331,9 @@ Shader(Name="Materials/M_Tinted")
 - `Function` bodies are HLSL, not `Graph` statements: `dot`, `saturate` and `float3(…)` here are
   HLSL intrinsics. GLSL spellings are rewritten inside those bodies, case-insensitively and without a
   diagnostic (`vec3`→`float3`, `mix`→`lerp`, `fract`→`frac`, `mod`→`fmod`).
-- *(since 2.0.0)* `SelfContained` means the body embeds no other `Function`: a call it makes is left
-  to the shader compiler, with the warning [`DSH6264`](../diagnostics/DSH6xxx.md#dsh6264), while a
-  plain `Function` embeds every `Function` it calls (1.x embedded them only in a `SelfContained`
-  body). `Remap01` calls none, so the modifier changes nothing here. `Inline` is its old spelling,
-  with the warning [`DSH6306`](../diagnostics/DSH6xxx.md#dsh6306); on a `GraphFunction` either one is
+- *(since 2.0.0)* Every `Function` node embeds the `Function`s its body calls, which 1.x did only for
+  a `SelfContained` one, so `SelfContained` changes nothing. `Inline` is its old spelling, with the
+  warning [`DSH6306`](../diagnostics/DSH6xxx.md#dsh6306); on a `GraphFunction` either one is
   [`DSH6307`](../diagnostics/DSH6xxx.md#dsh6307).
 - *(since 2.0.0)* A namespace-qualified call inside another `Function` or `GraphFunction` body works:
   body normalisation flattens `Common::ApplyTint` to `Common_ApplyTint`, which is the function's own
@@ -381,7 +379,7 @@ float Common_Luma(float3 color)
     return dot(color, float3(0.299, 0.587, 0.114));
 }
 
-/// @custom selfcontained
+/// @custom
 void Remap01(float value, out float result)
 {
     result = saturate(value * 0.5 + 0.5);
@@ -862,10 +860,10 @@ export void M_Substrate(inout material m)
 ## 9. `ShaderFunction` in a `.dsf`, called from a material
 
 A `.dsf` declares function assets — `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend` — beside
-helper blocks (`Function`, `GraphFunction`, `Namespace`, `VirtualFunction`). A file makes a material
-or function assets, never both ([`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201)), and only a `.dsh`
-can be imported, so a material reaches the generated function as it reaches any existing asset:
-through a `VirtualFunction` *(since 2.0.0)*.
+helper blocks (`Function`, `GraphFunction`, `Namespace`, `VirtualFunction`). Only a `.dsh` can be
+imported, so a material in another file reaches the generated function as it reaches any existing
+asset: through a `VirtualFunction` *(since 2.0.0)*. A material in the same `.dsm` as the function
+calls it by name.
 
 ```c
 // DShader/Functions/F_Tint.dsf

@@ -354,6 +354,11 @@ namespace UE::DreamShader::Lang
 		 */
 		int32 LegacyTruncateWidth = 0;
 		/**
+		 * Legacy rule L27: the left side of a `/` between integers that 1.x divided as floats, because it typed every
+		 * number literal float (`7 / 2` is 3.5). The CoreOp is a float division; the migrator writes `float(7) / 2`.
+		 */
+		bool bLegacyFloatDivide = false;
+		/**
 		 * ReflectedCall in a 1.x body: Type is what the call's `OutputType` said and not what the catalog says, which is how
 		 * 1.x typed it. The node carries that width too, so that nothing downstream corrects what 1.x never corrected.
 		 */

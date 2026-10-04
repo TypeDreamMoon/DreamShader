@@ -1,0 +1,17 @@
+// Rule L27: 1.x typed every number literal float, so `7 / 2` and an `int` local by a literal over 2 are float
+// divisions, 3.5; only two integer constructors, `int(7) / int(2)`, are refused (DSH4243).
+Shader(Name="M_LiIntegerLiteralDivide")
+{
+    Outputs = {
+        float Alpha;
+        Base.Opacity = Alpha;
+    }
+
+    Graph = {
+        int Seven = 7;
+        float Quotient = 7 / 2;
+        float Mixed = Seven / 2;
+        float Constructed = int(7) / 2;
+        Alpha = Quotient + Mixed + Constructed;
+    }
+}

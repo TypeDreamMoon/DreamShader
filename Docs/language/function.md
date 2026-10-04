@@ -12,8 +12,8 @@ every call site becomes one `UMaterialExpressionCustom` node whose code is that 
 | Generates | no asset and no file. Each call site is one Custom node; its code holds the body and every other `Function` the body calls *(since 2.0.0: no `.ush` include is written)* |
 | Multiplicity | any number per file; one name declares one thing |
 
-The legacy front end reads a `Function` as a `/// @custom` function of the [2.0 language](../language-v2/index.md)
-(`/// @custom selfcontained` with the modifier); [`dsc migrate`](../tools/migrate.md) writes it that way.
+The legacy front end reads a `Function` as a `/// @custom` function of the [2.0 language](../language-v2/index.md),
+with the `SelfContained` modifier or without it; [`dsc migrate`](../tools/migrate.md) writes it that way.
 
 ## Synopsis
 
@@ -60,8 +60,8 @@ The rule is mechanical: after one identifier, a `(` makes it the name; another i
 
 | Modifier | Accepted on | Effect |
 | :-- | :-- | :-- |
-| `SelfContained` | `Function` only | the body is taken exactly as written: no other `Function` it calls is embedded into its node — see [below](#inline--selfcontained-mode) |
-| `Inline` | `Function` only | the old spelling of `SelfContained`: same effect, plus a warning ([`DSH6306`](../diagnostics/DSH6xxx.md#dsh6306)) |
+| `SelfContained` | `Function` only | none: every `Function` node embeds the functions its body calls, which is what the modifier asked for in 1.x — see [below](#inline--selfcontained-mode) |
+| `Inline` | `Function` only | the old spelling of `SelfContained`: the same, plus a warning ([`DSH6306`](../diagnostics/DSH6xxx.md#dsh6306)) |
 
 Both spellings are case-insensitive. On a [`GraphFunction`](graph-function.md) either one is
 [`DSH6307`](../diagnostics/DSH6xxx.md#dsh6307) *(since 2.0.0; 1.x read the word as a return type)*.
@@ -268,26 +268,26 @@ The node's title (its `Description`) is the function's name — `Ns::Fn` for a m
 
 ## `Inline` / `SelfContained` mode
 
-*(since 2.0.0)* Every call site's node holds the function's own body and, **by default**, every other
-`Function` that body calls, transitively, as members of the `generated_wrapper_*` struct — HLSL has no
-nested functions, and a Custom node's code is a function body. 1.x did this only for a
-`SelfContained` function and otherwise referenced its shared include.
+*(since 2.0.0)* Every call site's node holds the function's own body and every other `Function` that
+body calls, transitively, as members of the `generated_wrapper_*` struct — HLSL has no nested
+functions, and a Custom node's code is a function body. 1.x did this only for a `SelfContained`
+function and otherwise referenced its shared include; 2.0 has no shared include, so every function
+gets what `SelfContained` asked for, and the modifier is read and changes nothing. *(2.0.0 – 2.1.0
+read it as `/// @custom selfcontained`, which embeds nothing, and left each call it made for the
+shader compiler.)*
 
-`SelfContained` (and `Inline`) now means: the body is taken exactly as written, and nothing is
-embedded into it. A call it makes to another `Function` is left as text with a warning
-([`DSH6264`](../diagnostics/DSH6xxx.md#dsh6264)); it compiles only if one of the body's own
-`#include`s defines that name.
+| Aspect | Every `Function`, with `Inline` / `SelfContained` or without |
+| :-- | :-- |
+| Where the body lives | in the code of every node that calls it, and as a wrapper member in every node whose body calls it |
+| Other `Function`s its body calls | embedded, a callee before its caller |
+| `IncludeFilePaths` | the leading includes of the body and of every embedded function |
+| A call from the node's body to an embedded function | `__ds_wrapper_<CRC>.DreamShaderFn_<Name>(…)` |
+| Sibling calls inside the wrapper | plain `DreamShaderFn_*`, with no `this.` qualifier |
+| Recursion | [`DSH6260`](../diagnostics/DSH6xxx.md#dsh6260) |
 
-| Aspect | Default | `Inline` / `SelfContained` |
-| :-- | :-- | :-- |
-| Where the body lives | in the code of every node that calls it, and as a wrapper member in every node whose body calls it | same |
-| Other `Function`s its body calls | embedded, a callee before its caller | not embedded — `DSH6264` |
-| `IncludeFilePaths` | the leading includes of the body and of every embedded function | the body's own |
-| A call from the node's body to an embedded function | `__ds_wrapper_<CRC>.DreamShaderFn_<Name>(…)` | — |
-| Sibling calls inside the wrapper | plain `DreamShaderFn_*`, with no `this.` qualifier | — |
-| Recursion | [`DSH6260`](../diagnostics/DSH6xxx.md#dsh6260) | nothing is followed |
-
-Both CRC32 values hash the calling function's name. A call from a body to something that is not a
+Both CRC32 values hash the calling function's name. A `.dss` that wants a body taken exactly as
+written, with nothing embedded, writes `/// @custom selfcontained`; a 1.x `Function` has no
+spelling for that. A call from a body to something that is not a
 `Function` — a `ShaderFunction` or a `VirtualFunction` — is
 [`DSH6261`](../diagnostics/DSH6xxx.md#dsh6261); to a [`GraphFunction`](graph-function.md) with lifted
 `UE.*` calls, [`DSH6327`](../diagnostics/DSH6xxx.md#dsh6327). A call that matches a function only in
@@ -373,7 +373,6 @@ code is raised; the code's page has the message.
 | `DSH6261` | the body calls a function that is not a `Function` |
 | `DSH6262` | a call to a texture-taking function passes the wrong number of arguments |
 | `DSH6263` | a texture argument of such a call is not a plain name |
-| `DSH6264` | a `SelfContained` body calls another `Function` (warning) |
 | `DSH6327` | the body calls a `GraphFunction` with lifted `UE.*` calls |
 
 ### Call time

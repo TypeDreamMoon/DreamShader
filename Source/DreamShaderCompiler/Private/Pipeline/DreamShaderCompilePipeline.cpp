@@ -147,13 +147,14 @@ namespace UE::DreamShader::Editor::Compiler
 		/** The 1.x `// Begin/End DreamShader source:` wrapper, for the build-key digest only. */
 		FString MakeDigestBlock(const FString& FilePath, const FString& Text)
 		{
-			// The ABSOLUTE path, as the 1.x prepared-source digest hashed it
-			// (MaterialAssetGeneration/DreamShaderMaterialGeneratorSourceLoading.cpp): the build key is compared on
-			// this machine only, and keeping its input identical keeps a migrated source's key comparable.
+			// The project-relative path, as the asset's DreamShader.SourceFile stamp spells it. 1.x hashed the absolute
+			// one, so the key of every asset changed with the folder the project was checked out to, and a second
+			// checkout -- a build machine, a teammate -- regenerated everything it had been given (DSK4).
+			const FString KeyPath = UE::DreamShader::Editor::Private::MakeProjectRelativeSourcePath(FilePath);
 			FString Block;
-			Block += FString::Printf(TEXT("// Begin DreamShader source: %s\n"), *FilePath); /* I18N-EXEMPT: build-key material, never displayed */
+			Block += FString::Printf(TEXT("// Begin DreamShader source: %s\n"), *KeyPath); /* I18N-EXEMPT: build-key material, never displayed */
 			Block += Text;
-			Block += FString::Printf(TEXT("\n// End DreamShader source: %s\n\n"), *FilePath); /* I18N-EXEMPT: build-key material, never displayed */
+			Block += FString::Printf(TEXT("\n// End DreamShader source: %s\n\n"), *KeyPath); /* I18N-EXEMPT: build-key material, never displayed */
 			return Block;
 		}
 

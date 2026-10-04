@@ -2019,8 +2019,31 @@ namespace UE::DreamShader::Lang::Private
 		}
 
 		// The graph has no integer divide: `int(7) / int(2)` would build a float Divide and come out 3.5 where HLSL
-		// says 3. 1.x refused it (DSH4063) rather than emit the wrong number, and so does this front end, for every
-		// source. One float operand makes it a float division, which is what the graph has.
+		// says 3. 1.x refused it (DSH4063) rather than emit the wrong number, and so does this front end. One float
+		// operand makes it a float division, which is what the graph has.
+		//
+		// Legacy rule L27: 1.x typed every number literal float and refused only a division of two integer constructors,
+		// so in a 1.x body `7 / 2` -- or an `int` local by a literal -- is the float division it was, 3.5. The migrator
+		// writes `float(7) / 2`.
+		if (Info.Op == IR::EIROp::Divide && (Kind == IR::EIRTypeKind::Int || Kind == IR::EIRTypeKind::UInt) && IsLegacyScope())
+		{
+			auto IsIntegerConstructor = [this](const FExpr* Operand)
+			{
+				const FCallExpr* Call = Operand ? Operand->As<FCallExpr>() : nullptr;
+				const IR::FIRType Type = Operand ? TypeOf(*Operand) : IR::FIRType::Error();
+				return Call && Call->Callee && Call->Callee->Is<FTypeExpr>()
+					&& (Type.Kind == IR::EIRTypeKind::Int || Type.Kind == IR::EIRTypeKind::UInt);
+			};
+			const bool bTwoConstructors = Operands.Num() == 2 && IsIntegerConstructor(Operands[0]) && IsIntegerConstructor(Operands[1]);
+			if (!bTwoConstructors)
+			{
+				Kind = IR::EIRTypeKind::Float;
+				if (FBoundExpr* LeftBinding = (Operands.Num() > 0 && Operands[0]) ? Bound.Expressions.Find(Operands[0]) : nullptr)
+				{
+					LeftBinding->bLegacyFloatDivide = true;
+				}
+			}
+		}
 		if (Info.Op == IR::EIROp::Divide && (Kind == IR::EIRTypeKind::Int || Kind == IR::EIRTypeKind::UInt))
 		{
 			Diagnostics.Error(

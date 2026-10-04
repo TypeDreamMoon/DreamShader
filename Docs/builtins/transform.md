@@ -16,8 +16,9 @@ A basis is a value of the engine's enum, written without its prefix: `"World"`, 
 `World`. In a `.dss` it is matched exactly. In a 1.x source case, spaces, `_` and `-` are ignored and
 the enum's prefix or scope may be written, with the warning
 [`DSH5278`](../diagnostics/DSH5xxx.md#dsh5278): `"world"`, `" WORLD "` and `TRANSFORMSOURCE_World` are
-`World`. A value the enum does not have is [`DSH5215`](../diagnostics/DSH5xxx.md#dsh5215) *(since
-2.0.0; 1.x had a vocabulary of its own — the spellings that were not the enum's are gone)*.
+`World`. The names 1.x had of its own — `AbsoluteWorld`, `Particle`, and for a position
+`CameraRelativeWorld` and `FirstPerson` — are written as the engine's, with the same warning (below).
+Any other value the enum does not have is [`DSH5215`](../diagnostics/DSH5xxx.md#dsh5215).
 
 ---
 
@@ -71,9 +72,10 @@ The same six spellings, values of the destination enum.
 | `Instance` | `TRANSFORM_Instance` |
 
 > [!NOTE]
-> 1.x also took `AbsoluteWorld` for `World`, and `Particle` and `InstanceParticle` for `Instance`.
-> None is a value of the engine's enum, and each is `DSH5215` *(since 2.0.0)*. The engine's own
-> `ParticleWorld` value is hidden, and the catalog leaves it out.
+> A 1.x source may also write `AbsoluteWorld` for `World`, and `Particle` or `InstanceParticle` for
+> `Instance`, in either list, in any case: the front end writes the engine's name, with the warning
+> `DSH5278` *(2.0.0 – 2.1.0 refused each with `DSH5215`)*. The engine's own `ParticleWorld` value is
+> hidden, and the catalog leaves it out.
 
 ---
 
@@ -97,14 +99,15 @@ UE.TransformPosition ( { <expression> | Input = <expression> }
 | :-- | :-- | :-- | :-- | :-- |
 | **`Input`** | yes | expression | — | wired to the node's `Input` pin. May be given positionally as argument 0. |
 | `Source` | no | enum value | `Local` — the node's | sets `TransformSourceType` |
-| `Destination` | no | enum value | the node's: `Local` on UE 5.8 | sets `TransformType` |
+| `Destination` | no | enum value | `World`, as in 1.x — not the node's `Local` | sets `TransformType` |
 | `PeriodicWorldTileSize` | no | expression | pin left unconnected | wired to the node's pin of that name, where the engine's class has it; meaningful with the `PeriodicWorld` basis |
 | `FirstPersonInterpolationAlpha` | no | expression | pin left unconnected | wired to the node's pin of that name, where the engine's class has it; meaningful with the `FirstPersonTranslatedWorld` basis |
 
 > [!IMPORTANT]
-> 1.x defaulted `Destination` to `World`. The front end writes no default *(since 2.0.0)*: a call
-> without `Destination` gets the node's own, which is `Local` on UE 5.8 — a transform that changes
-> nothing. Write `Destination` out.
+> The node's own `Destination` is `Local`. 1.x wrote `World`, and so does the front end: a call
+> without `Destination` goes to world space, and [`dsc migrate`](../tools/migrate.md) writes
+> `Destination = World` out, because a `.dss` call gets the node's `Local`. *(2.0.0 – 2.1.0 wrote no
+> default, and such a call was a transform that changed nothing.)*
 
 ### Basis names
 
@@ -121,9 +124,10 @@ One enum serves both `Source` and `Destination`.
 | `Camera` | `TRANSFORMPOSSOURCE_Camera` |
 | `Instance` | `TRANSFORMPOSSOURCE_Instance` |
 
-1.x also took `AbsoluteWorld` (`World`), `CameraRelativeWorld` (`TranslatedWorld`), `FirstPerson`
-(`FirstPersonTranslatedWorld`), `Particle` and `InstanceParticle` (`Instance`). Each is `DSH5215`
-*(since 2.0.0)*; the engine's own `Particle` value is hidden and left out of the catalog. The engine
+A 1.x source may also write `AbsoluteWorld` (`World`), `CameraRelativeWorld` (`TranslatedWorld`),
+`FirstPerson` (`FirstPersonTranslatedWorld`), `Particle` and `InstanceParticle` (`Instance`), in any
+case: the front end writes the engine's name, with the warning `DSH5278` *(2.0.0 – 2.1.0 refused each
+with `DSH5215`)*. The engine's own `Particle` value is hidden and left out of the catalog. The engine
 marks `FirstPersonTranslatedWorld` as no valid *Source*; DreamShader does not check that.
 
 > [!WARNING]
@@ -167,7 +171,7 @@ marks `FirstPersonTranslatedWorld` as no valid *Source*; DreamShader does not ch
 | [`DSH5279`](../diagnostics/DSH5xxx.md#dsh5279) (warning) | no `Input`, by name or at position 0: the required pin is left unconnected *(since 2.0.0: 1.x refused the call)* |
 | `DSH5254` (warning) | an argument other than the ones documented, or a positional argument past position 0, is dropped |
 | `DSH5215` | a basis is no value of the running engine's enum |
-| `DSH5278` (warning) | a basis is spelled the 1.x way — another case, the prefix, spaces |
+| `DSH5278` (warning) | a basis is spelled the 1.x way — another case, the prefix, spaces, or a name only 1.x had, such as `AbsoluteWorld` |
 | [`DSH5224`](../diagnostics/DSH5xxx.md#dsh5224) | `Source` or `Destination` is neither a quoted string nor a word |
 | `DSH5276` (warning) | an argument name matches only ignoring case |
 | `DSH5291` (info), `DSH8212` | an optional pin the running engine's class does not have |

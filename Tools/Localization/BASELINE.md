@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2114
+2116
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -1075,6 +1075,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.LegacyExpressions | CustomOutputType | Expected 'OutputType' of a Custom expression to be float1 to float4 or MaterialAttributes, found '{0}'. |
 | DreamShader.Lang.LegacyExpressions | IgnoredNamedArgument | '{0}' is not an argument '{1}' reads; 1.x ignored it, so it is dropped. |
 | DreamShader.Lang.LegacyExpressions | IgnoredPositionalArgument | '{0}' takes no positional argument here; 1.x ignored it, so it is dropped. |
+| DreamShader.Lang.LegacyExpressions | LegacyTransformSpace | '{0}' is the 1.x name of the '{1}' space of '{2}'; a '.dss' writes '{1}'. |
 | DreamShader.Lang.LegacyExpressions | OutputIndexNotInteger | Expected 'OutputIndex' to be a whole number of zero or more, found '{0}'. |
 | DreamShader.Lang.LegacyExpressions | OutputNotName | Expected 'Output' to name an output with a quoted name or an identifier, found '{0}'. |
 | DreamShader.Lang.LegacyExpressions | PinCallPositional | Expected every argument of the parameter call '{0}' to name an input pin, found a positional argument. |
@@ -1114,7 +1115,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.LegacyParser | ImportNotHeader | Expected an import of a '.dsh' header, found '{0}'; a material or function file is compiled on its own, not included. |
 | DreamShader.Lang.LegacyParser | ImportPath | Expected a double-quoted path after 'import', found {0}. |
 | DreamShader.Lang.LegacyParser | ImportQualified | Expected an import path inside this file's own source root, found the root-qualified '{0}', which the 2.0 include resolver does not read. |
-| DreamShader.Lang.LegacyParser | InlineModifier | 'Inline' is the old spelling of 'SelfContained'; the function becomes '@custom selfcontained'. |
+| DreamShader.Lang.LegacyParser | InlineModifier | 'Inline' is the old spelling of 'SelfContained', and both read the same: the function's node embeds the functions it calls. |
 | DreamShader.Lang.LegacyParser | LayerInputRenamed | The layer input '{0}' becomes the 'inout material' parameter named after the output '{1}', so the input pin changes its name. |
 | DreamShader.Lang.LegacyParser | LayerWithoutMaterial | Expected a MaterialAttributes output on '{0}', found none. |
 | DreamShader.Lang.LegacyParser | LayoutRepeated | The section '{0}' is written twice; the later one wins, as it did in 1.x. |
@@ -1133,6 +1134,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.LegacyParser | SecondShader | Expected one Shader block in a file, found a second one. |
 | DreamShader.Lang.LegacyParser | SectionName | Expected a section name such as 'Properties' or 'Graph' in '{0}', found {1}. |
 | DreamShader.Lang.LegacyParser | SectionOpen | Expected '`{' after the section name '{0}', found {1}. |
+| DreamShader.Lang.LegacyParser | ShaderInFunctionFile | Expected ShaderFunction, ShaderLayer and ShaderLayerBlend blocks in a '.dsf' file, found a Shader block, which belongs in a .dsm file. |
 | DreamShader.Lang.LegacyParser | ShaderWithoutGraph | Expected a Graph section in the Shader '{0}', found none. |
 | DreamShader.Lang.LegacyParser | ShaderWithoutOutputs | The Shader '{0}' has no Outputs section, so nothing its Graph computes reaches the material. |
 | DreamShader.Lang.LegacyParser | SubstrateNotHoisted | A 'Substrate.' call in the body of '{0}' is not lifted into a node, because no custom node input carries a Substrate value; it reaches the shader compiler as text. |

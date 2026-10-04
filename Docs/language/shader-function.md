@@ -7,7 +7,7 @@ pins, its function-local parameter nodes, and the node graph that connects them.
 
 | | |
 | :-- | :-- |
-| Declared in | `.dsf`, or a `.dsm` without a `Shader` — beside a `Shader` it is [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201), in a `.dsh` [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) (see [Source files](source-files.md#how-the-restriction-is-enforced)) |
+| Declared in | `.dsf` or `.dsm`, beside a `Shader` too; in a `.dsh` it is [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) (see [Source files](source-files.md#how-the-restriction-is-enforced)) |
 | Kind | top-level block |
 | Generates | `UMaterialFunction` with `EMaterialFunctionUsage::Default` |
 | Multiplicity | any number per file |
@@ -48,8 +48,9 @@ case-insensitively. See [Lexical elements](lexical.md#case-sensitivity).
 
 Attribute keys are matched case-insensitively (`name=` works). Values may be quoted or bare; a bare
 value runs to the next `,` or `)` outside parentheses. A key written twice is a warning
-([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins. *(since 2.0.0)* A trailing
-comma before `)` is [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243). A missing or empty `Name` is
+([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins. A trailing comma
+before `)` is accepted, as in 1.x *(2.0.0 – 2.1.0 refused it with
+[`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243))*. A missing or empty `Name` is
 [`DSH2242`](../diagnostics/DSH2xxx.md#dsh2242).
 
 Full `Name` / `Root` grammar, the accepted root spellings, and the resulting on-disk path are
@@ -227,9 +228,10 @@ block's function is declared under another one (`<Leaf>_Asset`, with
 [`DSH5290`](../diagnostics/DSH5xxx.md#dsh5290)), the asset keeps its name, and the call reaches the
 other function.
 
-*(since 2.0.0)* A `Shader` cannot call a `ShaderFunction` of its own file, because the two cannot
-share a file (`DSH6201`), and an asset block cannot be imported (`DSH2249`). Any other file — a
-material included — reaches the generated asset through a [`VirtualFunction`](virtual-function.md).
+A `Shader` calls a `ShaderFunction` of its own `.dsm` by name, like any function of the file; the
+function's asset is built first. *(2.0.0 – 2.1.0 refused the two in one file with
+[`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201).)* An asset block cannot be imported (`DSH2249`), so any
+other file reaches the generated asset through a [`VirtualFunction`](virtual-function.md).
 
 ```c
 // ShaderFunction(Name="Functions/F_Tint") declared elsewhere in the same .dsf:
@@ -242,11 +244,12 @@ Argument rules, `default` arguments and the named-argument form are specified in
 
 ## Notes
 
-- **A file makes a material or function assets, not both** *(since 2.0.0; through 1.9.x one compile
-  of a `.dsm` built both)*. A `ShaderFunction` beside a `Shader` is `DSH6201`. A file without a
-  `Shader` may declare any number of `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend`,
-  `VirtualFunction`, `Function`, `GraphFunction` and `Namespace` blocks; one compile generates all of
-  its assets. See [Source files](source-files.md).
+- **One compile of a file builds every asset it declares.** A `.dsm` or `.dsf` may declare any number
+  of `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend`, `VirtualFunction`, `Function`,
+  `GraphFunction` and `Namespace` blocks, and a `.dsm` one `Shader` beside them *(2.0.0 – 2.1.0
+  refused a `Shader` beside a function or layer with `DSH6201`)*. A `.dss` makes a material or
+  function assets, not both, so [`dsc migrate`](../tools/migrate.md) wants the functions moved to a
+  `.dsf` first. See [Source files](source-files.md).
 - **The file-kind restriction is a parse, decided per block** *(since 2.0.0)*. A `.dsh` holding a
   `ShaderFunction` block is `DSH2249`; a comment or a string that mentions `ShaderFunction(` is fine.
 - A file that declares only functions needs no `Shader` block; each built function adds a
@@ -269,7 +272,7 @@ Each code carries the line and column of the construct; the code's page has the 
 | :-- | :-- |
 | `DSH2249` | the block is in a `.dsh` header |
 | [`DSH2241`](../diagnostics/DSH2xxx.md#dsh2241) | no `(` after `ShaderFunction` |
-| `DSH2243` | a malformed attribute list, a trailing comma included |
+| `DSH2243` | a malformed attribute list |
 | `DSH2244` | an attribute written twice (warning) |
 | `DSH2242` | no `Name`, or an empty one |
 | [`DSH2257`](../diagnostics/DSH2xxx.md#dsh2257) | no `{` after the header, or a section without its name or its `{` |
@@ -297,7 +300,6 @@ Errors inside `Properties`, `Graph` and `Layout` are listed on [Properties](prop
 | `DSH4315` | the function has no output |
 | `DSH4364` | an input type no function pin carries |
 | `DSH5290` | the block's name is taken by a function the file can call, so its function is renamed (info) |
-| `DSH6201` | the file also has a `Shader` |
 
 ### Emit time
 

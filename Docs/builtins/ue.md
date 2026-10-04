@@ -305,9 +305,10 @@ UE.TranslatedWorldPosition()
 | `UMaterialExpressionWorldPosition` with the camera-relative shader-offset mode forced | as [`UE.WorldPosition`](#ueworldposition) | none |
 
 Equivalent to `GetTranslatedWorldPosition(Parameters)` in HLSL. The front end rewrites the call to
-`UE.WorldPosition` with `WorldPositionShaderOffset` set to the camera-relative mode, after dropping
-any argument with `DSH5254`; the node's default mode is *absolute* world position, which is the only
-difference from [`UE.WorldPosition`](#ueworldposition). The catalog has no class of this name.
+`UE.WorldPosition(WorldPositionShaderOffset = CameraRelative)`, after dropping any argument with
+`DSH5254`; the node's default mode is *absolute* world position, which is the only difference from
+[`UE.WorldPosition`](#ueworldposition). The catalog has no class of this name. *(2.0.0 – 2.1.0 wrote
+the value as `WPT_CameraRelative`, which matched, but with the warning `DSH5278` at every call.)*
 
 ### UE.ObjectPosition
 
@@ -443,9 +444,10 @@ Node `UMaterialExpressionTransform`; output `float3`.
 
 A basis is a value of the engine's enum, written without its prefix — `Tangent`, `Local`, `World`,
 `View`, `Camera`, `Instance` — and, in a 1.x source, also with its prefix (`TRANSFORMSOURCE_World`)
-or in another case, with the warning [`DSH5278`](../diagnostics/DSH5xxx.md#dsh5278). The 1.x
-spellings that are no value of the enum — `AbsoluteWorld`, `Particle`, `InstanceParticle` — are
-[`DSH5215`](../diagnostics/DSH5xxx.md#dsh5215) *(since 2.0.0)*, which names the property that failed —
+or in another case, with the warning [`DSH5278`](../diagnostics/DSH5xxx.md#dsh5278). The names 1.x
+had of its own are written as the engine's, with the same warning: `AbsoluteWorld` is `World`,
+`Particle` and `InstanceParticle` are `Instance` *(2.0.0 – 2.1.0 refused them with `DSH5215`)*. Any
+other value is [`DSH5215`](../diagnostics/DSH5xxx.md#dsh5215), which names the property that failed —
 `TransformSourceType` for `Source`, `TransformType` for `Destination`. Full basis reference:
 [Transform bases](transform.md).
 
@@ -460,7 +462,7 @@ UE.TransformPosition({ Input = <expr> | <expr> } [, Source = <basis>] [, Destina
 | :-- | :-- | :-- | :-- |
 | **`Input`** | input pin; may be given positionally at index 0 | — | **yes** |
 | `Source` | enum value — the property `TransformSourceType` | `Local` (the node's) | no |
-| `Destination` | enum value — the property `TransformType` | the node's: `Local` on UE 5.8 | no |
+| `Destination` | enum value — the property `TransformType` | `World`, as in 1.x | no |
 | `PeriodicWorldTileSize` | input pin, where the engine's class has it | unconnected | no |
 | `FirstPersonInterpolationAlpha` | input pin, where the engine's class has it | unconnected | no |
 
@@ -469,9 +471,10 @@ Node `UMaterialExpressionTransformPosition`; output `float3`.
 A basis is a value of the engine's enum, written without its prefix — `Local`, `World`,
 `TranslatedWorld`, `View`, `Camera`, `Instance`, and on the engines that have them `PeriodicWorld`
 and `FirstPersonTranslatedWorld` — and, in a 1.x source, also with its prefix or in another case
-(`DSH5278`). `AbsoluteWorld`, `CameraRelativeWorld`, `FirstPerson`, `Particle` and
-`InstanceParticle` are `DSH5215` *(since 2.0.0)*, and so is a value the running engine's enum does
-not have.
+(`DSH5278`). The 1.x names are written as the engine's, with the same warning: `AbsoluteWorld` is
+`World`, `CameraRelativeWorld` is `TranslatedWorld`, `FirstPerson` is `FirstPersonTranslatedWorld`,
+`Particle` and `InstanceParticle` are `Instance` *(2.0.0 – 2.1.0 refused them with `DSH5215`)*. A value
+the running engine's enum does not have is `DSH5215`.
 
 > [!WARNING]
 > **The two optional pins follow the engine.** On an engine whose class lacks a pin, the argument is
@@ -481,14 +484,15 @@ not have.
 > silently and refused `FirstPersonInterpolationAlpha` with an error of its own)*.
 
 > [!NOTE]
-> 1.x defaulted `Destination` to `World`. The front end writes no default *(since 2.0.0)*: a call
-> without `Destination` gets the node's own, which is `Local` on UE 5.8. Write `Destination` out.
+> The node's own `Destination` is `Local`; 1.x wrote `World`, and the front end writes it too, so a
+> call without `Destination` still goes to world space and [`dsc migrate`](../tools/migrate.md) writes
+> `Destination = World` out. *(2.0.0 – 2.1.0 wrote nothing, and such a call went to `Local`.)*
 
 ## Special-cased builtins
 
 `UE.StaticSwitchParameter` and `UE.SceneTexture` are rewritten by the legacy front end into
-`UE.Expression` calls before the binder sees them. `UE.CollectionParam` is not: in a `Graph` body only
-the engine's name, `UE.CollectionParameter`, resolves.
+`UE.Expression` calls before the binder sees them. `UE.CollectionParam` is not: the catalog knows it
+as a second name of `UE.CollectionParameter`.
 
 ### UE.StaticSwitchParameter
 
@@ -537,9 +541,9 @@ UE.CollectionParameter(Collection = Path(<root>, "<asset>"), Parameter = "<name>
                        [, Group = "<text>"] [, SortPriority = <int>] [, Desc = "<text>"])
 ```
 
-In a `Graph` body `UE.CollectionParam` is [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210)
-*(since 2.0.0)*: the catalog knows the class by its engine name, `UE.CollectionParameter`, only. The
-[declaration form](#properties-declaration-form) still takes both spellings.
+`UE.CollectionParam` and the engine's name, `UE.CollectionParameter`, are one class, in a `Graph`
+body and in the [declaration form](#properties-declaration-form). *(2.0.0 – 2.1.0 refused
+`UE.CollectionParam` in a `Graph` body with [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210).)*
 
 | Argument | Aliases | Kind | Default | Required |
 | :-- | :-- | :-- | :-- | :-- |
@@ -694,7 +698,7 @@ Every code is listed with its message and its full description on its page in
 | [`DSH5254`](../diagnostics/DSH5xxx.md#dsh5254) (warning) | an argument one of the 27 names does not read — unknown, misspelled or positional — is dropped |
 | [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276) (warning) | in a 1.x source, a builtin, argument or output name matches only when case is ignored |
 | [`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200) | the namespace is not spelled `UE` |
-| [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210) | the name after `UE.` is no class of the running engine — `UE.CollectionParam` among them |
+| [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210) | the name after `UE.` is no class of the running engine |
 | [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213) | an argument that passed the filter names no pin or property of the class |
 | [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291) (info) | in a 1.x source, such an argument carries a value, and is kept for the built node to name as a pin |
 | [`DSH5224`](../diagnostics/DSH5xxx.md#dsh5224) | a property is given something that is not a constant, or a text property something that is neither a quoted string nor a word |
@@ -724,7 +728,6 @@ Every code is listed with its message and its full description on its page in
 
 | Code | Raised when |
 | :-- | :-- |
-| `DSH5210` | the call is spelled `UE.CollectionParam` |
 | `DSH5213` | `Description`, or `Group` on an engine whose class has none |
 | `DSH5291` / `DSH8212` | `SortPriority` on an engine whose class has none |
 | `DSH5224` | `Parameter` is neither a quoted string nor a word |

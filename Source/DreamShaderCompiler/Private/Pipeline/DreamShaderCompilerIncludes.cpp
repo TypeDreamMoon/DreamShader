@@ -6,6 +6,7 @@
 
 #include "DreamShaderDependencyGraphService.h"
 #include "DreamShaderDiagnostic.h"
+#include "DreamShaderGeneratedAssets.h"
 #include "DreamShaderModule.h"
 #include "DreamShaderPreprocessor.h"
 #include "Lang/LangParser.h"
@@ -263,10 +264,12 @@ namespace UE::DreamShader::Editor::Compiler
 
 		// The markers are the 1.x ones on purpose. Nothing parses this text -- it exists only to be
 		// hashed -- but the diagnostics mapper and the shader-error mapper both read blocks in this
-		// shape, so writing a second shape here would be a second thing to keep in step.
-		IncludedSourceDigestText += FString::Printf(TEXT("// Begin DreamShader source: %s\n"), *ResolvedPath); /* I18N-EXEMPT: build-key material, never displayed */
+		// shape, so writing a second shape here would be a second thing to keep in step. The path is project-relative,
+		// like the root file's (MakeDigestBlock): the key must not depend on where the project is checked out.
+		const FString KeyPath = UE::DreamShader::Editor::Private::MakeProjectRelativeSourcePath(ResolvedPath);
+		IncludedSourceDigestText += FString::Printf(TEXT("// Begin DreamShader source: %s\n"), *KeyPath); /* I18N-EXEMPT: build-key material, never displayed */
 		IncludedSourceDigestText += PreprocessResult.Text;
-		IncludedSourceDigestText += FString::Printf(TEXT("\n// End DreamShader source: %s\n\n"), *ResolvedPath); /* I18N-EXEMPT: build-key material, never displayed */
+		IncludedSourceDigestText += FString::Printf(TEXT("\n// End DreamShader source: %s\n\n"), *KeyPath); /* I18N-EXEMPT: build-key material, never displayed */
 
 		ResolvedIncludePaths.AddUnique(ResolvedPath);
 		SourceTexts.Add(MoveTemp(Source));

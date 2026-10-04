@@ -20,5 +20,5 @@
 		"legacyDeclarations": 1,
 		"outputSelectionGroups": 0
 	},
-	"text": "// `Inline` is the old spelling of `SelfContained` (DSH6306).\n/// @custom selfcontained\nvoid Half(float value, out float result)\n{\r\n    result = value * 0.5;\r\n}\n"
+	"text": "// `Inline` is the old spelling of `SelfContained` (DSH6306).\n/// @custom\nvoid Half(float value, out float result)\n{\r\n    result = value * 0.5;\r\n}\n"
 }

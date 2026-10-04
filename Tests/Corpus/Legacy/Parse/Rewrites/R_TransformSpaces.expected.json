@@ -1,0 +1,24 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"warningsContain": [
+		"DSH5278"
+	],
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 2,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 1,
+		"renames": 5,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 1,
+		"outputSelectionGroups": 0
+	},
+	"text": "// The transform spaces 1.x knew by names of its own are written as the engine's (DSH5278 each); a TransformPosition\n// with no Destination goes to World, as in 1.x; TranslatedWorldPosition is WorldPosition at CameraRelative.\n/// @name M_LpTransformSpaces\nexport void M_LpTransformSpaces(inout material Base)\n{\n    float3 Color = float3(0, 0, 0);\n    float3 Camera = UE.WorldPosition(WorldPositionShaderOffset = CameraRelative);\n    float3 Placed = UE.TransformPosition(Camera, Source = \"TranslatedWorld\", Destination = World);\n    float3 Person = UE.TransformPosition(Placed, Source = World, Destination = \"FirstPersonTranslatedWorld\");\n    float3 Direction = UE.TransformVector(Placed, Source = \"World\", Destination = \"Instance\");\n    Color = Person + Direction;\n    Base.EmissiveColor = Color;\n}\n"
+}

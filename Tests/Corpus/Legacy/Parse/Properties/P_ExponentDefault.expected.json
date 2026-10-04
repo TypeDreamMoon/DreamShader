@@ -1,0 +1,21 @@
+{
+	"entryPoint": "legacy",
+	"outcome": "ok",
+	"legacy":
+	{
+		"hasLegacyInfo": 1,
+		"blocks": 1,
+		"sections": 3,
+		"parameterDeclarations": 0,
+		"assetReferences": 0,
+		"outputSelections": 0,
+		"synthesizedInitializers": 1,
+		"synthesizedDirectives": 3,
+		"renames": 0,
+		"namespaceFlatten": 0,
+		"hoistedCalls": 0,
+		"legacyDeclarations": 4,
+		"outputSelectionGroups": 0
+	},
+	"text": "/// @slider 0 2.5E+3\n/// @sort 32\nuniform float Range = 1e3;\n/// @sort 32\nuniform float Falloff = 2.5e-1f;\nstatic const float Bias = -1.5e2;\n// A scalar default or slider bound written with an exponent is a number, as 1.x read it.\n/// @name M_LpExponent\nexport void M_LpExponent(inout material Base)\n{\n    float Alpha = 0;\n    Alpha = Range * Falloff + Bias;\n    Base.Opacity = Alpha;\n}\n"
+}

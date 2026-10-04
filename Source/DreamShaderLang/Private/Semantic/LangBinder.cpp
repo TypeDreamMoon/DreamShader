@@ -1289,13 +1289,15 @@ namespace UE::DreamShader::Lang::Private
 			}
 		}
 
-		// One file, one product kind.
+		// One file, one product kind. Not for 1.x blocks: a .dsm built its Shader and the ShaderFunction or layer blocks
+		// beside it, each into its own asset, and still does.
 		if (EntryIndex != INDEX_NONE)
 		{
+			const bool bLegacyEntry = Bound.Functions[EntryIndex].Decl && Bound.Functions[EntryIndex].Decl->bLegacy;
 			for (int32 Index = 0; Index < Bound.Functions.Num(); ++Index)
 			{
 				const FBoundFunction& Function = Bound.Functions[Index];
-				if (Index == EntryIndex)
+				if (Index == EntryIndex || (bLegacyEntry && Function.Decl && Function.Decl->bLegacy))
 				{
 					continue;
 				}

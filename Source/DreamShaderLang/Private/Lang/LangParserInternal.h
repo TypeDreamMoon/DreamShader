@@ -403,6 +403,8 @@ namespace UE::DreamShader::Lang::Private
 		FExprPtr MakeMember(FExprPtr Object, const FString& Member, const FLangSpan& Span);
 		/** 1.x `SanitizeIdentifier`: every non-`[A-Za-z0-9_]` to `_`, runs of `_` collapsed, a digit start prefixed. */
 		FString SanitizeIdentifier(const FString& Text);
+		/** A decimal number as 1.x `LexTryParseString<double>` reads it: optional sign, digits, one dot, an exponent, a trailing `f`. */
+		bool TryParseLegacyNumber(const FString& Text, double& OutValue, bool& bOutIsInteger);
 		/** The literal a 1.x metadata or setting value spelled, from its text as written: `"..."` a string, a number, `true`/`false` a bool, a word an identifier, anything else the raw text as a string. */
 		FExprPtr MakeValueExpressionFromText(const FString& WrittenText, const FLangSpan& Span);
 		/** `Text` without surrounding quotes, 1.x escapes resolved (`\n \r \t \" \\`); unquoted text is only trimmed. */

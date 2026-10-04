@@ -1,0 +1,28 @@
+// A .dsm builds its Shader and the ShaderFunction beside it, each into its own asset, as in 1.x; the Shader's call
+// reaches the function's product in the same file.
+ShaderFunction(Name="Functions/MF_LiBeside")
+{
+    Inputs = {
+        vec3 InColor;
+    }
+
+    Outputs = {
+        vec3 Result;
+    }
+
+    Graph = {
+        Result = InColor * 0.5;
+    }
+}
+
+Shader(Name="M_LiBeside")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        Color = MF_LiBeside(vec3(1.0, 0.5, 0.25));
+    }
+}

@@ -51,11 +51,11 @@ of that name, and HLSL spells a scalar that way.
 float A = 0.5;      float B = -2;      float C = 2.5f;      float D = true;
 ```
 
-The value is a number — an optional sign, digits with at most one `.`, an optional trailing `f` — or
-`true` / `false` (any case), which are `1.0` and `0.0`. Anything else is
-[`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254), and that includes an exponent: `float C = 1e3;` is
-refused *(since 2.0.0)*. A number glued to letters, such as `1abc`, is not even one token: it is
-[`DSH2105`](../diagnostics/DSH2xxx.md#dsh2105) *(since 2.0.0; 1.x read it as `1.0`)*.
+The value is a number — an optional sign, digits with at most one `.`, an optional exponent
+(`1e3`, `2.5E-1`), an optional trailing `f` — or `true` / `false` (any case), which are `1.0` and
+`0.0`. Anything else is [`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254) *(2.0.0 – 2.1.0 refused an
+exponent too, which 1.x read)*. A number glued to letters, such as `1abc`, is not even one token: it
+is [`DSH2105`](../diagnostics/DSH2xxx.md#dsh2105) *(since 2.0.0; 1.x read it as `1.0`)*.
 
 With no `= <default>` the default is `0`.
 

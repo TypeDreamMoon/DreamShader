@@ -51,6 +51,34 @@
   a `pass-registry` failure -- was printed as `../../../Engine/Binaries/Win64/(1,1): DSHnnnn: ...`: the empty
   path was made absolute, into the engine's Binaries directory, and shown as the place of the mistake. It is
   `DSHnnnn: ...` now.
+- **A 1.x `Function SelfContained` embeds the functions it calls again.** The modifier asked 1.x to embed a
+  function's callees in its Custom node; 2.0 does that for every function, yet the legacy front end turned the
+  modifier into `@custom selfcontained`, which in 2.0 embeds nothing, so each call such a body made was left for
+  the shader compiler (`DSH6264`) and failed. `SelfContained` and its old spelling `Inline` now read as a plain
+  `@custom`; `Inline` still warns (`DSH6306`), with a message that says so.
+- **The 1.x `UE.*` spellings build what 1.x built.** `UE.CollectionParam` in a `Graph` was `DSH5210`; it is
+  the catalog's second name of `UE.CollectionParameter` now. The transform spaces only 1.x had --
+  `AbsoluteWorld`, `CameraRelativeWorld`, `FirstPerson`, `Particle`, `InstanceParticle` -- were `DSH5215`; the
+  front end writes the engine's names for them, with the warning `DSH5278`. `UE.TransformPosition` without a
+  `Destination` went to the node's own `Local`, a transform that changed nothing; it goes to `World`, as 1.x
+  wrote, and `dsc migrate` writes `Destination = World` out. `UE.TranslatedWorldPosition` no longer warns
+  `DSH5278` at every call. See [Transform builtins](Docs/builtins/transform.md).
+- **1.x text that 1.x read is read again.** A comma before the `)` of a block's attribute list
+  (`Shader(Name = "M_X",)`) was `DSH2243`, and a `Properties` default or slider bound with an exponent
+  (`float C = 1e3;`) was `DSH3254`.
+- **`7 / 2` in a 1.x `Graph` is 3.5 again.** 1.x typed every number literal float and refused only a division
+  of two integer constructors (`int(7) / int(2)`); since 2.0.0 any two integers were `DSH4243`. A `/` in a 1.x
+  body is now the float division 1.x made unless both sides are integer constructor calls (legacy rule L27),
+  and `dsc migrate` writes it as `float(7) / 2`. See [Integer division](Docs/graph/expressions.md#integer-division).
+- **A `.dsm` builds its `Shader` and the function and layer blocks beside it; a `.dsf` refuses a `Shader`.** 1.x
+  built them all from one `.dsm`; 2.0 refused the pair with `DSH6201`, the rule for a `.dss`. The material calls
+  such a function by name, and its asset is built first. And a `Shader` block in a `.dsf`, which 1.x refused, built a material; it is
+  `DSH2259` now. See [Source files](Docs/language/source-files.md).
+- **A build key no longer depends on where the project is checked out.** The digest named every source and
+  header by its absolute path, so a second checkout -- a teammate, a CI agent -- rebuilt and re-saved every
+  generated asset it was given. It names them by their project-relative path now, like
+  `DreamShader.SourceFile`. The key format is `DSK4`, so every asset rebuilds once after upgrading. See
+  [Caching](Docs/generation/caching.md).
 - **`dsc.ps1` prints a compile's report whole.** A report is one log message of many lines -- every `Generated`
   line, then `Warnings:` and the warnings, or every error -- and the engine prefixes only its first line, so the
   driver showed the first line and dropped the rest: warnings, every error after the first, and every product

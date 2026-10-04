@@ -45,7 +45,8 @@ A `.dss` writes the same material as `#pragma material(...)`, `uniform`s and one
 Attribute keys are matched case-insensitively (`name=` works). Values may be quoted or bare; a bare
 value ends at the first `,` or `)`. A duplicate key keeps the later value, with the warning
 [`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244) *(since 2.0.0; silent before)*. A trailing comma before
-`)` is [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243) *(since 2.0.0; 1.x accepted it)*.
+`)` is accepted, as in 1.x *(2.0.0 – 2.1.0 refused it with
+[`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243))*.
 
 Full `Name` / `Root` grammar, the accepted root spellings, and the resulting on-disk path are
 specified in [Asset paths](../generation/asset-paths.md).
@@ -143,10 +144,10 @@ The backend comes from `Settings = { Backend = "…"; }` if present, otherwise f
 - **`Shader()` with no attributes is [`DSH2242`](../diagnostics/DSH2xxx.md#dsh2242)**, the missing
   `Name`.
 - `Shader` may share a `.dsm` with `VirtualFunction`, `Function`, `GraphFunction` and `Namespace`
-  blocks, which are helpers of the material. A `ShaderFunction`, `ShaderLayer` or `ShaderLayerBlend`
-  beside it is [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) *(since 2.0.0; through 1.9.x one compile
-  of the file built them all)*: a file makes a material or function assets. Give the function a `.dsf`
-  of its own.
+  blocks, which are helpers of the material, and with `ShaderFunction`, `ShaderLayer` and
+  `ShaderLayerBlend` blocks: one compile of the file builds them all, each into its own asset, and the
+  material may call such a function by name *(2.0.0 – 2.1.0 refused it with [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201))*. A `Shader`
+  in a `.dsf` is [`DSH2259`](../diagnostics/DSH2xxx.md#dsh2259).
 - A `.dsm` that declares no `Shader` block is still compilable — it simply produces whatever function
   assets it does declare.
 - Binding `Base.MaterialAttributes` turns on *Use Material Attributes* on the material. See
@@ -162,7 +163,7 @@ Every stage reports all of its errors, each at its own line and column *(since 2
 | :-- | :-- |
 | [`DSH2241`](../diagnostics/DSH2xxx.md#dsh2241) | `Shader` is not followed by its attribute list |
 | [`DSH2242`](../diagnostics/DSH2xxx.md#dsh2242) | the attribute list has no `Name`, or an empty one |
-| [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243) | a malformed attribute list — a missing key, `=` or value, a missing `,` or `)`, a trailing `,` |
+| [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243) | a malformed attribute list — a missing key, `=` or value, a missing `,` or `)` |
 | [`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244) | *(warning)* an attribute written twice |
 | [`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250) | a second `Shader` block in the file |
 | [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) | a `Shader` block in a `.dsh` |
@@ -178,7 +179,6 @@ Every stage reports all of its errors, each at its own line and column *(since 2
 
 | Code | Raised when |
 | :-- | :-- |
-| [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) | a `ShaderFunction` or layer in the same file as the `Shader` |
 | [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210) | a property, a function or another name declared twice |
 | [`DSH7202`](../diagnostics/DSH7xxx.md#dsh7202) | `Settings = { Backend = … }` names no backend; `Instance` is read as `ThinCustom` with the warning [`DSH7204`](../diagnostics/DSH7xxx.md#dsh7204) |
 | [`DSH8200`](../diagnostics/DSH8xxx.md#dsh8200) | `Name` / `Root` do not resolve to a valid asset path |

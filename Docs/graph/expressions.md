@@ -91,7 +91,7 @@ The binder applies these tests to both operands of `+ - * /`:
 | 1 | Both operands are numbers or bools — not a texture, a sampler or a `MaterialAttributes` value | [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226) |
 | 2 | A `Substrate` operand: `+` between two `Substrate` values and `*` by a scalar build `Substrate.Add` / `Substrate.Weight` *(since 2.0.0; 1.x refused both)*; any other operator | [`DSH5293`](../diagnostics/DSH5xxx.md#dsh5293) |
 | 3 | The widths agree: the result is as wide as the widest operand, a scalar operand spreads to that width, and a narrower vector does not | `DSH4226` |
-| 4 | For `/`: not both operands integers | [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) — see [Integer division](#integer-division) |
+| 4 | For `/`: not both operands integer constructors | [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) — see [Integer division](#integer-division) |
 
 An operator never narrows an operand: `float3 * float4` is `DSH4226`, so that channels are never
 dropped silently. *(since 2.0.0)* nor does it widen one: 1.x widened an operand to the width of an
@@ -126,22 +126,24 @@ arithmetic over constants. See [Constructors](constructors.md#constant-folding).
 ## Integer division
 
 `/` is the only operator with an extra type rule:
-[`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) when **both** operands are integers. A material graph
-has no integer division, so the compiler refuses to pick between HLSL's truncating answer and the
-graph's fractional one.
+[`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) when **both** operands are integer constructor calls
+(`int`, `int2..4`, `ivec2..4`, `uint`, `uint2..4`, `uvec2..4`). A material graph has no integer
+division, so the compiler refuses to pick between HLSL's truncating answer and the graph's fractional
+one.
 
-*(since 2.0.0)* an operand is an integer whatever made it one: an integer literal (`7`), an `int` /
-`uint` variable or property, or an integer constructor (`int`, `int2..4`, `ivec2..4`, `uint`,
-`uint2..4`, `uvec2..4`). 1.x refused only a division of two integer-constructor calls.
+Every other `/` is the graph's float division, as in 1.x, which typed every number literal float —
+even where both sides are integers to the compiler: an integer literal (`7`), an `int` / `uint`
+variable or property (legacy rule L27). [`dsc migrate`](../tools/migrate.md) writes such a division
+as `float(7) / 2`, because a `.dss` refuses every `/` between integers.
 
 | Expression | Result |
 | :-- | :-- |
 | `int(7) / int(2)` | `DSH4243` |
-| `int(7) / 2` | `DSH4243` — `2` is an integer literal *(since 2.0.0)* |
-| `7 / 2` | `DSH4243` *(since 2.0.0)*; write `7.0 / 2` |
-| `7.0 / 2` | allowed — a float `Divide` producing `3.5` |
-| `float(int(7)) / int(2)` | allowed — one operand is a float |
-| `int a = 7; int b = 2; a / b` | `DSH4243` *(since 2.0.0)* — the `int` declarations make both integers |
+| `int(7) / 2` | `3.5` *(2.0.0 – 2.1.0 refused it with `DSH4243`)* |
+| `7 / 2` | `3.5` *(2.0.0 – 2.1.0 refused it with `DSH4243`)* |
+| `7.0 / 2` | `3.5` |
+| `float(int(7)) / int(2)` | `3.5` — one operand is a float |
+| `int a = 7; int b = 2; a / b` | `3.5` *(2.0.0 – 2.1.0 refused it with `DSH4243`)* |
 
 > [!NOTE]
 > `int`, `uint`, `bool` and `half` are kinds of their own to the compiler, and this rule is what the
@@ -198,7 +200,7 @@ inside a larger expression, which 1.x read as `-(-a)`. Write `a = a + 1;` instea
 | `DSH2205` | a compound assignment |
 | `DSH2207` | `++` or `--` |
 | `DSH4226` | an operand is not a number, or the widths do not agree |
-| `DSH4243` | both operands of `/` are integers |
+| `DSH4243` | both operands of `/` are integer constructor calls |
 | `DSH5293` | an operator a `Substrate` value does not have |
 | [`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200) | an operand name is not declared |
 | [`DSH4202`](../diagnostics/DSH4xxx.md#dsh4202) | a string used as a value |

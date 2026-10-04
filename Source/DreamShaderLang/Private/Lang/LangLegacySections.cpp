@@ -152,12 +152,10 @@ namespace UE::DreamShader::Lang::Private
 			{
 				return true;
 			}
-			FString Number = Trimmed;
-			if (Number.EndsWith(TEXT("f"), ESearchCase::IgnoreCase))
-			{
-				Number.LeftChopInline(1);
-			}
-			return !Number.IsEmpty() && FCString::IsNumeric(*Number);
+			// The number reading every other 1.x value goes through, so `1e3` and `2.5f` are numbers here too.
+			double Value = 0.0;
+			bool bInteger = false;
+			return LegacyAst::TryParseLegacyNumber(Trimmed, Value, bInteger);
 		}
 
 		// -----------------------------------------------------------------------------------------

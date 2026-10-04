@@ -17,11 +17,11 @@ source skip regeneration entirely.
 
 ```text
 digest text    := for each imported header, in the order the include resolver first read it:
-                    "// Begin DreamShader source: <absolute path>\n" <preprocessed header>
-                    "\n// End DreamShader source: <absolute path>\n\n"
+                    "// Begin DreamShader source: <project-relative path>\n" <preprocessed header>
+                    "\n// End DreamShader source: <project-relative path>\n\n"
                   then the same block for the file itself
                   (a `.dsi` adds its resolved parent, a `.dsp` what it references)
-build key      := "DSK3|Plugin=<version>|Engine=<major>.<minor>|" <settings> "Defines=<read defines>|"
+build key      := "DSK4|Plugin=<version>|Engine=<major>.<minor>|" <settings> "Defines=<read defines>|"
                   "\n--\n" <digest text>
 build key      ->  CRC32  ->  "%08x"  ->  DreamShader.SourceHash   e.g. "9f2c41ab"
 source path    ->  project-relative, forward slashes  ->  DreamShader.SourceFile
@@ -39,7 +39,7 @@ including its `import` lines. A header that two imports reach is hashed once.
 | :-- | :-- |
 | edit `M_Foo.dsm` | `M_Foo.dsm` |
 | edit `Common.dsh`, imported by `M_Foo.dsm` and `M_Bar.dsm` | both `M_Foo.dsm` and `M_Bar.dsm` |
-| move the project to another directory | **every** source — the blocks name each file by its absolute path. The stored `DreamShader.SourceFile` is project-relative and still matches |
+| move the project to another directory, or check it out somewhere else | nothing — the blocks name each file by its path relative to the project directory, as `DreamShader.SourceFile` does *(2.0.0 – 2.1.0 named it by its absolute path, and every source rebuilt)*. A source outside the project directory is still named by its absolute path |
 | rename the source file | the stored path no longer matches, so nothing is skipped |
 | reformat whitespace or edit a comment | the hash — the text is compared byte for byte, not semantically |
 | change **Default Compiler Backend** | **every** source *(since 1.8.0)* |
@@ -58,7 +58,7 @@ check answer "still current" about an asset that is not:
 | the preprocessed text of the file and of every header it imports | the compile's actual input — which is why a changed `.dsh` needs nothing else here |
 | [Default Compiler Backend](../settings/project.md) | decides whether a `Shader` block becomes a `UMaterial` or a thin instance |
 | the mapping tables | decide what a `Settings` key resolves to |
-| plugin version, plus a hand-bumped format tag — `DSK3` *(since 1.9.0)* | upgrading the generator invalidates what the old one wrote |
+| plugin version, plus a hand-bumped format tag — `DSK4` *(`DSK3` 1.9.0 – 2.1.0)* | upgrading the generator invalidates what the old one wrote. `DSK4` came with the project-relative paths, and with the 1.x sources building what 1.x built again, so every asset rebuilds once after the upgrade |
 | engine version | what is generable moves with it (Substrate, for one) |
 | the [preprocessor defines this source read](../language/preprocessor.md#rebuilds) *(since 1.9.0)* | they decide which branches of the source were compiled at all |
 
@@ -143,9 +143,10 @@ Two keys are written into the generated asset's **package metadata**, keyed by t
 
 Storing the *project-relative* path is deliberate: a checkout on another machine, or a moved project
 directory, still recognizes its generated assets as its own — the [ownership
-guard](regeneration.md#ownership-guard) and *Make Ephemeral* read this key. The hash does not travel
-as well: the build key names each file by its absolute path, so a checkout at another location
-rebuilds every asset once.
+guard](regeneration.md#ownership-guard) and *Make Ephemeral* read this key. The hash travels with it:
+the build key names each file by the same project-relative path, so a checkout at another location
+skips what is current *(2.0.0 – 2.1.0 used the absolute path there, and such a checkout rebuilt every
+asset once)*.
 
 Which assets get stamped, and when:
 

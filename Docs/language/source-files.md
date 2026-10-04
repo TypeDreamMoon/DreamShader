@@ -39,12 +39,12 @@ top-level blocks each may contain.
 
 | Top-level block | `.dsm` | `.dsf` | `.dsh` | Reference |
 | :-- | :-- | :-- | :-- | :-- |
-| `Shader` | one | not by convention — see below | no | [Shader](shader.md) |
-| `ShaderFunction` | only without a `Shader` | yes | no | [ShaderFunction](shader-function.md) |
-| `ShaderLayer` | only without a `Shader` | yes | no | [ShaderLayer](shader-layer.md) |
-| `ShaderLayerBlend` | only without a `Shader` | yes | no | [ShaderLayerBlend](shader-layer.md) |
-| `MaterialLayer` *(deprecated in 1.3.0)* | only without a `Shader` | yes | no | [ShaderLayer](shader-layer.md) |
-| `MaterialLayerBlend` *(deprecated in 1.3.0)* | only without a `Shader` | yes | no | [ShaderLayer](shader-layer.md) |
+| `Shader` | one | no — [`DSH2259`](../diagnostics/DSH2xxx.md#dsh2259) | no | [Shader](shader.md) |
+| `ShaderFunction` | yes | yes | no | [ShaderFunction](shader-function.md) |
+| `ShaderLayer` | yes | yes | no | [ShaderLayer](shader-layer.md) |
+| `ShaderLayerBlend` | yes | yes | no | [ShaderLayerBlend](shader-layer.md) |
+| `MaterialLayer` *(deprecated in 1.3.0)* | yes | yes | no | [ShaderLayer](shader-layer.md) |
+| `MaterialLayerBlend` *(deprecated in 1.3.0)* | yes | yes | no | [ShaderLayer](shader-layer.md) |
 | `VirtualFunction` | yes | yes | yes | [VirtualFunction](virtual-function.md) |
 | `Namespace` | yes | yes | yes | [Namespace](namespace.md) |
 | `Function` | yes | yes | yes | [Function](function.md) |
@@ -52,11 +52,11 @@ top-level blocks each may contain.
 | `import` of a `.dsh` | yes | yes | yes | [`import`](import.md) |
 | 2.0 declarations (`uniform`, `export`, `#pragma`, …) | no | no | yes | [DreamShaderLang 2.0](../language-v2/index.md) |
 
-A 1.x file is one kind of product *(since 2.0.0)*: a material, or function assets. A `Shader` block
-is the material's entry, and a `ShaderFunction` or layer beside it in the same file is
-[`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) — through 1.9.x a `.dsm` built both. Give each function
-asset a `.dsf` of its own, and reach it from the material through a
-[`VirtualFunction`](virtual-function.md).
+A `.dsm` builds its `Shader` and every `ShaderFunction` or layer block beside it, each into its own
+asset, as 1.x did; the material may call such a function by name *(2.0.0 – 2.1.0 refused it with [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201))*.
+A `.dss` makes a material or function assets, not both
+([`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201)), so [`dsc migrate`](../tools/migrate.md) cannot
+rewrite such a file as one `.dss`: give each function a `.dsf` of its own first.
 
 ## How the restriction is enforced
 
@@ -69,7 +69,7 @@ one file.
 | a `.dsm` / `.dsf` holds 1.x blocks only — a `uniform`, an `export`, a `#pragma` is 2.0 syntax | the legacy front end | [`DSH2248`](../diagnostics/DSH2xxx.md#dsh2248) |
 | a `.dss` holds 2.0 declarations only — a 1.x block word there | the 2.0 parser | [`DSH3222`](../diagnostics/DSH3xxx.md#dsh3222) |
 | one `Shader` block per file | the legacy front end | [`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250) |
-| a material, or function assets — not both from one file | the binder | [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) |
+| a `.dsf` holds no `Shader` block | the legacy front end, at the block word | [`DSH2259`](../diagnostics/DSH2xxx.md#dsh2259) |
 | a `.dsm` / `.dsf` declares at least one block | the legacy front end | [`DSH2254`](../diagnostics/DSH2xxx.md#dsh2254) |
 | an `import` names a `.dsh` | the legacy front end | [`DSH2252`](../diagnostics/DSH2xxx.md#dsh2252) |
 
@@ -80,10 +80,9 @@ a time. A comment or a string that mentions `Shader(` is just a comment or a str
 > **Through 1.9.x** the rule was a case-insensitive **substring scan** of each file's text, after its
 > `import` lines were removed: a `.dsh` was refused for containing `Shader(`, `ShaderFunction(`, … —
 > in a comment or a string too — and a `.dsf` for containing `Shader(`, while `Shader (` with a space
-> slipped past. Nothing scans text any more. The `.dsf` half of that rule has no counterpart: a
-> `Shader` block in a `.dsf` is not refused, and the file then builds a material like a `.dsm`. Keep
-> to the convention — `.dsm` for a material, `.dsf` for function assets. See
-> [the retired parser page](../api/parser.md).
+> slipped past. Nothing scans text any more: the front end reads the block word, so a `.dsf` with a
+> `Shader` block is `DSH2259` however it is spaced *(2.0.0 – 2.1.0 did not refuse it, and the file
+> built a material like a `.dsm`)*. See [the retired parser page](../api/parser.md).
 
 ## Source roots
 
@@ -198,7 +197,7 @@ a header holds no asset block.
 | [`DSH2248`](../diagnostics/DSH2xxx.md#dsh2248) | a `.dsm` / `.dsf` holds 2.0 syntax |
 | [`DSH3222`](../diagnostics/DSH3xxx.md#dsh3222) | a `.dss` holds a 1.x block |
 | [`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250) | a second `Shader` block in one file |
-| [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) | a `Shader` and a `ShaderFunction` / layer in one file |
+| [`DSH2259`](../diagnostics/DSH2xxx.md#dsh2259) | a `.dsf` holds a `Shader` block |
 | [`DSH2254`](../diagnostics/DSH2xxx.md#dsh2254) | a `.dsm` / `.dsf` declares no block at all |
 | [`DSH2252`](../diagnostics/DSH2xxx.md#dsh2252) | an `import` the include resolver does not read — see [`import`](import.md#diagnostics) |
 | [`DSH8296`](../diagnostics/DSH8xxx.md#dsh8296) | a file that is not a source the compiler builds — a `.dsh`, or another extension — was asked to compile |

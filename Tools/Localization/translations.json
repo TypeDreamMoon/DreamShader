@@ -1162,7 +1162,7 @@
  "DreamShader.Lang.LegacyParser|ImportNotHeader": "期望 import 的是 '.dsh' 头文件，但遇到了 '{0}'；材质文件或函数文件是单独编译的，不能被包含。",
  "DreamShader.Lang.LegacyParser|ImportPath": "期望 'import' 之后是双引号括起的路径，但遇到了 {0}。",
  "DreamShader.Lang.LegacyParser|ImportQualified": "期望 import 路径位于此文件自己的源根之内，但遇到了带根限定的 '{0}'，2.0 的 include 解析器不读取这种写法。",
- "DreamShader.Lang.LegacyParser|InlineModifier": "'Inline' 是 'SelfContained' 的旧写法；该函数会成为 '@custom selfcontained'。",
+ "DreamShader.Lang.LegacyParser|InlineModifier": "'Inline' 是 'SelfContained' 的旧写法，两者读法相同：函数的节点会嵌入它所调用的函数。",
  "DreamShader.Lang.LegacyParser|LayerInputRenamed": "层输入 '{0}' 会成为以输出 '{1}' 命名的 'inout material' 参数，因此输入引脚的名称会改变。",
  "DreamShader.Lang.LegacyParser|LayerWithoutMaterial": "期望 '{0}' 上有一个 MaterialAttributes 输出，但没有找到。",
  "DreamShader.Lang.LegacyParser|LayoutRepeated": "段 '{0}' 写了两次；与 1.x 一样，以后写的为准。",
@@ -2112,5 +2112,7 @@
  "DreamShader.Pass.Slots|SnapshotInlineRootMissing": "无法为 Pass '{0}' 拼出它写在 '.dsp' 中的 HLSL（它的入口不在文件级 'hlsl' 块中），因此没有可存入其槽位快照的内容。",
  "DreamShader.PassEditor.PipelineDetails|OpenInlineHlsl": "打开 {0} 的第 {1} 行",
  "DreamShader.Binder.Directives|SliderNotScalar": "滑条范围（'@slider'，或 1.x 属性里的 'Slider(min, max)'）只用于标量参数；这个参数是 '{0}'，没有滑条，所以忽略这个范围。",
- "DreamShader.CommandletRunner|FlagValueNotBoolean": "'-{0}={1}' 既不表示开也不表示关。开关参数接受 true、1、yes 或 on，以及 false、0、no 或 off，单独写 '-{0}' 即为开；命令未执行任何操作。"
+ "DreamShader.CommandletRunner|FlagValueNotBoolean": "'-{0}={1}' 既不表示开也不表示关。开关参数接受 true、1、yes 或 on，以及 false、0、no 或 off，单独写 '-{0}' 即为开；命令未执行任何操作。",
+ "DreamShader.Lang.LegacyExpressions|LegacyTransformSpace": "'{0}' 是 '{2}' 的 '{1}' 空间在 1.x 中的名称；'.dss' 中要写 '{1}'。",
+ "DreamShader.Lang.LegacyParser|ShaderInFunctionFile": "期望 '.dsf' 文件中是 ShaderFunction、ShaderLayer 和 ShaderLayerBlend 块，但遇到了 Shader 块，它应放在 .dsm 文件中。"
 }

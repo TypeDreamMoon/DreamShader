@@ -46,7 +46,7 @@ case-insensitively.
 Attribute keys are matched case-insensitively. There is **no `Root` attribute** — the package root is
 part of the asset reference itself. Unrecognized attribute keys are parsed and silently ignored; a key
 written twice is a warning ([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins.
-*(since 2.0.0)* A trailing comma before `)` is [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243).
+A trailing comma before `)` is accepted, as in 1.x *(2.0.0 – 2.1.0 refused it with [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243))*.
 
 *(since 2.0.0)* An unquoted attribute value runs to the next `,` or `)` **outside parentheses**, so
 `Asset = Path(Game, "F/X")` works in the header as well as in `Options`. (1.x cut the value at the
@@ -205,7 +205,7 @@ Each code carries the line and column of the construct; the code's page has the 
 | Code | Raised when |
 | :-- | :-- |
 | [`DSH2241`](../diagnostics/DSH2xxx.md#dsh2241) | no `(` after `VirtualFunction` |
-| `DSH2243` | a malformed attribute list, a trailing comma included |
+| `DSH2243` | a malformed attribute list |
 | `DSH2244` | an attribute written twice (warning) |
 | `DSH6311` | no `Name`, or one that is not an identifier |
 | [`DSH2257`](../diagnostics/DSH2xxx.md#dsh2257) | no `{` after the header, or a section without its name or its `{` |

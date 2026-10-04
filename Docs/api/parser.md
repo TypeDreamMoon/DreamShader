@@ -43,7 +43,7 @@ project migrates.
 
 The legacy front end keeps 1.x's **documented** leniencies and drops its undocumented silent ones:
 what 1.x accepted without a word and then built something other than what the text said is now a
-diagnostic. The rules are catalogued as `L1`–`L26`; each one that rewrites or drops something says so
+diagnostic. The rules are catalogued as `L1`–`L27`; each one that rewrites or drops something says so
 with a code (`DSH5254`, `DSH5275`–`DSH5292`, …), and [`dsc migrate`](../tools/migrate.md) writes the
 same rules out as explicit 2.0 text.
 

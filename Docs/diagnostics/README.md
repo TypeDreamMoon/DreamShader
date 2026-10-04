@@ -97,6 +97,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH2256](DSH2xxx.md#dsh2256) | warning | The Shader '{0}' has no Outputs section, so nothing its Graph computes reaches the material. |
 | [DSH2257](DSH2xxx.md#dsh2257) | error | Expected '`{' to open the '{0}' block, found {1}. |
 | [DSH2258](DSH2xxx.md#dsh2258) | warning | The section '{0}' is written twice; the later one wins, as it did in 1.x. |
+| [DSH2259](DSH2xxx.md#dsh2259) | error | Expected ShaderFunction, ShaderLayer and ShaderLayerBlend blocks in a '.dsf' file, found a Shader block, wh... |
 | [DSH2300](DSH2xxx.md#dsh2300) | error | Expected '`{' to open the block of pass '{0}', found {1}. |
 | [DSH2301](DSH2xxx.md#dsh2301) | error | Expected a setting ('Key = Value;'), a 'read', 'write' or 'param' line or an 'hlsl' block in a pass block, ... |
 | [DSH2302](DSH2xxx.md#dsh2302) | error | Expected '=' after the key '{0}', found {1}. |
@@ -338,7 +339,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH5275](DSH5xxx.md#dsh5275) | warning | '{0}' matches '{1}' only in case; a 1.x source is read ignoring case, so this is '{1}', and a '.dss' needs ... |
 | [DSH5276](DSH5xxx.md#dsh5276) | warning | '{0}' matches the engine name '{1}' only in case; 1.x matched engine names ignoring case, so this is '{1}',... |
 | [DSH5277](DSH5xxx.md#dsh5277) | warning | '{0}' is the GLSL spelling of '{1}'; a 1.x source may use it and it is read as '{1}', and a '.dss' writes '... |
-| [DSH5278](DSH5xxx.md#dsh5278) | warning | '{0}' is not spelled like a value of '{1}', and 1.x matched enumerators loosely, so this is '{2}'; a '.dss'... |
+| [DSH5278](DSH5xxx.md#dsh5278) | warning | '{0}' is the 1.x name of the '{1}' space of '{2}'; a '.dss' writes '{1}'. |
 | [DSH5279](DSH5xxx.md#dsh5279) | warning | '{0}.{1}' leaves its required '{2}' pin unconnected, which 1.x allowed and the engine reports when the mate... |
 | [DSH5280](DSH5xxx.md#dsh5280) | error | '{0}' has no output to select, and this call selects '{1}'. |
 | [DSH5281](DSH5xxx.md#dsh5281) | error | An output is selected by a whole number the compiler knows, and this index is computed. |
@@ -412,7 +413,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH6303](DSH6xxx.md#dsh6303) | error | Expected a parameter name other than '__return', which 1.x reserved, in '{0}'. |
 | [DSH6304](DSH6xxx.md#dsh6304) | error | Expected either a return type or 'out' parameters on '{0}', found both. |
 | [DSH6305](DSH6xxx.md#dsh6305) | error | Expected '{0}' to return a value or to have at least one 'out' parameter, found neither. |
-| [DSH6306](DSH6xxx.md#dsh6306) | warning | 'Inline' is the old spelling of 'SelfContained'; the function becomes '@custom selfcontained'. |
+| [DSH6306](DSH6xxx.md#dsh6306) | warning | 'Inline' is the old spelling of 'SelfContained', and both read the same: the function's node embeds the fun... |
 | [DSH6307](DSH6xxx.md#dsh6307) | error | Expected a return type or a name after 'GraphFunction', found the modifier '{0}', which only a Function takes. |
 | [DSH6308](DSH6xxx.md#dsh6308) | error | Expected a value after 'return' in '{0}', which returns '{1}', found a bare 'return;'. |
 | [DSH6309](DSH6xxx.md#dsh6309) | error | Expected a 'Name = "..."' attribute with a name on 'Namespace', found none. |

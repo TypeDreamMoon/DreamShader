@@ -1,0 +1,17 @@
+// The transform spaces 1.x knew by names of its own are written as the engine's (DSH5278 each); a TransformPosition
+// with no Destination goes to World, as in 1.x; TranslatedWorldPosition is WorldPosition at CameraRelative.
+Shader(Name="M_LpTransformSpaces")
+{
+    Outputs = {
+        vec3 Color;
+        Base.EmissiveColor = Color;
+    }
+
+    Graph = {
+        vec3 Camera = UE.TranslatedWorldPosition();
+        vec3 Placed = UE.TransformPosition(Camera, Source = "CameraRelativeWorld");
+        vec3 Person = UE.TransformPosition(Placed, Source = AbsoluteWorld, Destination = "FirstPerson");
+        vec3 Direction = UE.TransformVector(Placed, Source = "absoluteworld", Destination = "InstanceParticle");
+        Color = Person + Direction;
+    }
+}

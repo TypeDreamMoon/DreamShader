@@ -160,7 +160,7 @@ The common messages of the 1.x parser and generator, and what reports the same c
 | `MaterialLayer is deprecated; use ShaderLayer instead.` · `MaterialLayerBlend is deprecated; …` | the warning [`DSH2251`](DSH2xxx.md#dsh2251) |
 | `Only one top-level Shader block is currently supported.` | [`DSH2250`](DSH2xxx.md#dsh2250) — per **file** now; it spanned the import closure |
 | `DreamShader header '{File}' may only declare …` | [`DSH2249`](DSH2xxx.md#dsh2249), decided per declaration: a comment that mentions `Shader(` is fine |
-| `DreamShader function file '{File}' may only declare …` · `{File}: .dsf files cannot define top-level Shader blocks.` | no counterpart; a file that makes a material and function assets is [`DSH6201`](DSH6xxx.md#dsh6201) — see [Source files](../language/source-files.md#how-the-restriction-is-enforced) |
+| `DreamShader function file '{File}' may only declare …` · `{File}: .dsf files cannot define top-level Shader blocks.` | [`DSH2259`](DSH2xxx.md#dsh2259) — see [Source files](../language/source-files.md#how-the-restriction-is-enforced) |
 | `A top-level Shader, Function, … block was not found.` | [`DSH2254`](DSH2xxx.md#dsh2254) |
 | `Unexpected token near index {Index}.` | [`DSH2240`](DSH2xxx.md#dsh2240); 2.0 syntax in a `.dsm` / `.dsf` is [`DSH2248`](DSH2xxx.md#dsh2248) |
 | `Expected '{' near index {Index}.` · `Expected ',' or ')' near index {Index}.` · `Expected identifier near index {Index}.` · `Expected value near index {Index}.` | [`DSH2257`](DSH2xxx.md#dsh2257) · [`DSH2243`](DSH2xxx.md#dsh2243) |
