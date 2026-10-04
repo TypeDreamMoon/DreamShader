@@ -11295,7 +11295,7 @@
   "key": "DreamShaderAdoptLabel",
   "src": "Adopt Into Source",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2840
+  "line": 2841
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -11428,7 +11428,7 @@
   "key": "DreamShaderAdoptTooltip",
   "src": "Rewrite the DreamShader source file from this asset's current contents, so your hand edits become the source of truth. The previous source is backed up alongside it.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2841
+  "line": 2842
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -11442,21 +11442,21 @@
   "key": "DreamShaderAdoptTweaksLabel",
   "src": "Adopt Tweaks as Source Defaults",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2859
+  "line": 2860
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderAdoptTweaksTooltip",
   "src": "Write this instance's parameter overrides into the .dss as the defaults of its uniforms, then clear them from the instance. The source is backed up first.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2861
+  "line": 2862
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderAdoptTweaksUnavailableTooltip",
   "src": "Only a .dss source under a writable root takes tweaks as uniform defaults; use Extract Tweaks to .dsi instead.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2862
+  "line": 2863
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -11470,133 +11470,133 @@
   "key": "DreamShaderCleanGeneratedShadersLabel",
   "src": "Clean Generated Shaders",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2491
+  "line": 2492
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCleanGeneratedShadersTooltip",
   "src": "Delete Intermediate/DreamShader/GeneratedShaders and queue a full DreamShader recompile.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2492
+  "line": 2493
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionCallLabel",
   "src": "CopyVirtualFunctionCall",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3017
+  "line": 3018
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionCallNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3670
+  "line": 3671
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionCallTooltip",
   "src": "Copy a DreamShader Graph call example for this VirtualFunction.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3018
+  "line": 3019
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionLabel",
   "src": "CopyVirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2979
+  "line": 2980
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3357
+  "line": 3358
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionPrototypeLabel",
   "src": "Copy extern Prototype (2.0)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2999
+  "line": 3000
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionPrototypeTooltip",
   "src": "Copy the 2.0 extern prototype of this Material Function, with its /// @asset line, for a .dss or a .dsh.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3000
+  "line": 3001
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionReferenceLabel",
   "src": "Copy Virtual Function Reference",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2967
+  "line": 2968
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionReferenceNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3604
+  "line": 3605
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionReferenceTooltip",
   "src": "Copy a DreamShader Graph call that references this existing VirtualFunction.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2968
+  "line": 2969
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCopyVirtualFunctionTooltip",
   "src": "Copy a complete DreamShader VirtualFunction declaration for this Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2980
+  "line": 2981
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionLabel",
   "src": "CreateVirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2988
+  "line": 2989
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3391
+  "line": 3392
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionPrototypeLabel",
   "src": "Create extern Prototype (2.0)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3008
+  "line": 3009
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionPrototypeTooltip",
   "src": "Create a .dsh file holding the 2.0 extern prototype of this Material Function, for .dss sources to #include.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3009
+  "line": 3010
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderCreateVirtualFunctionTooltip",
   "src": "Create a .dsh file containing the VirtualFunction declaration.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2989
+  "line": 2990
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderDecompileActionsSection",
   "src": "Decompiler",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2893
+  "line": 2894
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -11610,7 +11610,7 @@
   "key": "DreamShaderDetachLabel",
   "src": "Detach From DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2847
+  "line": 2848
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -11638,7 +11638,7 @@
   "key": "DreamShaderDetachTooltip",
   "src": "Keep this asset exactly as it is and stop DreamShader from ever rebuilding it. It becomes an ordinary hand-authored asset.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2848
+  "line": 2849
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -11771,350 +11771,350 @@
   "key": "DreamShaderEphemeralMaterialsHidden",
   "src": "Hidden {0} Ephemeral material(s) from the Content Browser and asset pickers.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3125
+  "line": 3126
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderEphemeralMaterialsShown",
   "src": "Showing {0} Ephemeral material(s) in the Content Browser and asset pickers.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3124
+  "line": 3125
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderEphemeralShadowed",
   "src": "{0} previously generated asset(s) are still saved on disk and shadow the Ephemeral materials. Run Tools > DreamShader > Make Ephemeral to remove them.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 914
+  "line": 916
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFailed",
   "src": "DreamShader failed to export '{0}': {1}",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3303
+  "line": 3304
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionDssLabel",
   "src": "Export .dss",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2933
+  "line": 2934
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionDssTooltip",
   "src": "Decompile this Material Function graph into a 2.0 DreamShader .dss source file.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2934
+  "line": 2935
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionLegacyLabel",
   "src": "Export Legacy .dsf",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2942
+  "line": 2943
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionLegacyTooltip",
   "src": "Decompile this Material Function graph into a 1.x .dsf source file, with the 1.x decompiler that is kept through 2.0.x.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2943
+  "line": 2944
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3251
+  "line": 3252
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportInstanceNoAsset",
   "src": "DreamShader could not find the selected material instance.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3275
+  "line": 3276
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialDssLabel",
   "src": "Export .dss",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2896
+  "line": 2897
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialDssTooltip",
   "src": "Decompile this Material graph into a 2.0 DreamShader .dss source file.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2897
+  "line": 2898
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialInstanceDsiLabel",
   "src": "Export .dsi",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2746
+  "line": 2747
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialInstanceDsiTooltip",
   "src": "Decompile this material instance into a .dsi source file: its parent, its instance settings and every parameter that differs from the parent.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2747
+  "line": 2748
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialLegacyLabel",
   "src": "Export Legacy .dsm",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2905
+  "line": 2906
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialLegacyTooltip",
   "src": "Decompile this Material graph into a 1.x .dsm source file, with the 1.x decompiler that is kept through 2.0.x.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2906
+  "line": 2907
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportMaterialNoAsset",
   "src": "DreamShader could not find the selected Material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3227
+  "line": 3228
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExported",
   "src": "Exported '{0}'.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3345
+  "line": 3346
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExportedNotOpened",
   "src": "Exported '{0}' but could not open it.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3336
+  "line": 3337
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExtractTweaksLabel",
   "src": "Extract Tweaks to .dsi",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2870
+  "line": 2871
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderExtractTweaksTooltip",
   "src": "Write this instance's parameter overrides into a new .dsi whose parent is this material, compile it, and clear the overrides from this instance.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2871
+  "line": 2872
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderFunctionDecompileActionsSection",
   "src": "Decompiler",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2930
+  "line": 2931
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderFunctionProvenanceActionsSection",
   "src": "Generated Asset",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2924
+  "line": 2925
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderInstanceConstantDecompileActionsSection",
   "src": "Decompiler",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2743
+  "line": 2744
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderInstanceConstantProvenanceActionsSection",
   "src": "Generated Asset",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2737
+  "line": 2738
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderInstanceProvenanceActionsSection",
   "src": "Generated Asset",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2697
+  "line": 2698
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMakeEphemeralLabel",
   "src": "Make Ephemeral",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2497
+  "line": 2498
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMakeEphemeralNoneFound",
   "src": "No Materialized DreamShader ThinCustom products found.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3141
+  "line": 3142
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMakeEphemeralResult",
   "src": "Made {0} of {1} Materialized product(s) Ephemeral.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3159
+  "line": 3160
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMakeEphemeralTooltip",
   "src": "Delete the packages of Materialized ThinCustom products so they go back to being Ephemeral. Shows a confirmation with the full list; source files are untouched and the products are rebuilt in memory. Graph materials and material functions are not listed -- they have no Ephemeral state.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2498
+  "line": 2499
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2626
+  "line": 2627
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialActionsTooltip",
   "src": "DreamShader actions for this Material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2627
+  "line": 2628
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2652
+  "line": 2653
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionActionsTooltip",
   "src": "DreamShader actions for this Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2653
+  "line": 2654
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionToolbarMenuLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2811
+  "line": 2812
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialFunctionToolbarMenuTooltip",
   "src": "DreamShader actions for this Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2812
+  "line": 2813
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialInstanceActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2678
+  "line": 2679
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialInstanceActionsTooltip",
   "src": "DreamShader actions for this generated material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2679
+  "line": 2680
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialInstanceConstantActionsLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2717
+  "line": 2718
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialInstanceConstantActionsTooltip",
   "src": "DreamShader actions for this material instance.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2718
+  "line": 2719
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialToolbarMenuLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2793
+  "line": 2794
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderMaterialToolbarMenuTooltip",
   "src": "DreamShader actions for this Material.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2794
+  "line": 2795
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenVirtualFunctionLabel",
   "src": "OpenVirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2958
+  "line": 2959
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenVirtualFunctionNoAsset",
   "src": "DreamShader could not find the selected Material Function.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3560
+  "line": 3561
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenVirtualFunctionTooltip",
   "src": "Open the existing DreamShader VirtualFunction definition in VSCode.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2959
+  "line": 2960
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceLabel",
   "src": "Open Dream Shader Workspace (VSCode)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2516
+  "line": 2517
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceSharedLabel",
   "src": "DreamShader Workspace",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2531
+  "line": 2532
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceToolbarTooltip",
   "src": "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2532
+  "line": 2533
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderOpenWorkspaceTooltip",
   "src": "Open the configured DreamShader source workspace in VSCode, or Notepad if VSCode is unavailable.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2517
+  "line": 2518
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderProvenanceActionsSection",
   "src": "Generated Asset",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2887
+  "line": 2888
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -12163,28 +12163,28 @@
   "key": "DreamShaderRecompileLabel",
   "src": "Recompile DSM",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2479
+  "line": 2480
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileSharedLabel",
   "src": "Recompile DSM",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2537
+  "line": 2538
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileSharedTooltip",
   "src": "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2538
+  "line": 2539
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRecompileTooltip",
   "src": "Recompile all DreamShader .dsm and .dsf source files and refresh diagnostics. Asks first.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2480
+  "line": 2481
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -12198,42 +12198,42 @@
   "key": "DreamShaderRevertDivergedLabel",
   "src": "Revert to Source (discards your edits)",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2832
+  "line": 2833
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRevertLabel",
   "src": "Revert to Source",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2833
+  "line": 2834
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderRevertTooltip",
   "src": "Rebuild this asset from the DreamShader source it was generated from, discarding every hand edit in it. The source file is not modified.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2834
+  "line": 2835
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderSharedSectionLabel",
   "src": "DreamShader",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2528
+  "line": 2529
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderToggleShowEphemeralMaterialsLabel",
   "src": "Show Ephemeral Materials",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2503
+  "line": 2504
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderToggleShowEphemeralMaterialsTooltip",
   "src": "Show Ephemeral ThinCustom/Instance-backend DreamShader materials in the Content Browser and asset pickers — needed when picking one as a material instance Parent or referencing it from a detail panel. Graph-backend materials are plain UMaterials with no Ephemeral state, so this toggle does not affect them. While shown, an explicit Save on one would materialize it to disk (the shadow warning and Make Ephemeral cover recovery).",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2504
+  "line": 2505
  },
  {
   "ns": "DreamShaderEditorBridge",
@@ -12359,63 +12359,63 @@
   "key": "DreamShaderVirtualFunctionActionsSection",
   "src": "VirtualFunction",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2952
+  "line": 2953
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeCopied",
   "src": "Copied the extern prototype of {0}.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3379
+  "line": 3380
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeCreated",
   "src": "Created '{0}'.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3455
+  "line": 3456
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeDirectoryFailed",
   "src": "DreamShader failed to create directory '{0}'.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3424
+  "line": 3425
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeFailed",
   "src": "DreamShader failed to build the extern prototype of '{0}': {1}",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3368
+  "line": 3369
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeNotOpened",
   "src": "Created '{0}' but could not open it.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3446
+  "line": 3447
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamShaderVirtualFunctionPrototypeWriteFailed",
   "src": "DreamShader failed to write '{0}'.",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 3435
+  "line": 3436
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamToolsComboLabel",
   "src": "Dream",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2443
+  "line": 2444
  },
  {
   "ns": "DreamShaderEditorBridge",
   "key": "DreamToolsComboTooltip",
   "src": "Dream-family language tools: open a source workspace in VSCode, or rebuild a whole source tree (DreamShader / DreamFX / DreamUI).",
   "file": "DreamShaderEditor\\Private\\Bridge\\DreamShaderEditorBridge.cpp",
-  "line": 2444
+  "line": 2445
  },
  {
   "ns": "DreamShaderEditorBridge",

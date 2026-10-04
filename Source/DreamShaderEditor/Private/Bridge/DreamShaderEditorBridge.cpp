@@ -246,10 +246,9 @@ namespace UE::DreamShader::Editor::Private
 					// fails at the .dsh's position, and attributing it to the .dsm would send
 					// the author to the wrong file.
 					//
-					// `FilePath` is often empty, because the store keys records by source and
-					// only fills this in when a diagnostic belongs to a *different* file than
-					// the one being compiled. Writing that empty string through would hand the
-					// client a location it cannot open, so the compiled file stands in.
+					// A compile's records carry the file each is filed against. A caller's
+					// own records may leave it empty; writing that empty string through would
+					// hand the client a location it cannot open, so the compiled file stands in.
 					Writer->WriteValue(TEXT("file"),
 						Record.FilePath.IsEmpty() ? FallbackFilePath : Record.FilePath);
 					Writer->WriteValue(TEXT("line"), FMath::Max(1, Record.Line));
@@ -608,7 +607,10 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const double Now = FPlatformTime::Seconds();
-		const TArray<FDreamShaderDiagnosticRecord>* Diagnostics = DiagnosticsStore.FindDiagnostics(Key);
+		// What this source's compile filed, wherever: an error it raised in an imported header is part of its answer.
+		// Not the records filed against the source file, which hold its material's shader-compile errors as well.
+		const TArray<FDreamShaderDiagnosticRecord>* Diagnostics =
+			DiagnosticsStore.FindOwnedDiagnostics(Key, EDreamShaderDiagnosticsProducer::Compile);
 		for (const FPendingResponse& Pending : Waiting)
 		{
 			// Measured from acceptance, not from the start of the compile: the debounce wait
@@ -1372,9 +1374,10 @@ namespace UE::DreamShader::Editor::Private
 						{
 							Bridge->PendingFiles.Remove(SourceFile);
 							Bridge->ForcedPendingFiles.Remove(SourceFile);
-							Bridge->ClearDiagnosticsForSourceAndDependencies(SourceFile);
-							Bridge->UpdateDiagnosticsFile();
 						}
+						// The file owns nothing any more; the dependents queued above refile what they filed against it.
+						Bridge->ClearDiagnostics(SourceFile);
+						Bridge->UpdateDiagnosticsFile();
 					}
 					else if (FDreamShaderSourceFileUtils::IsPackageMaterialFile(FileChange.Filename))
 					{
@@ -1384,7 +1387,7 @@ namespace UE::DreamShader::Editor::Private
 					{
 						Bridge->PendingFiles.Remove(SourceFile);
 						Bridge->ForcedPendingFiles.Remove(SourceFile);
-						Bridge->ClearDiagnosticsForSourceAndDependencies(SourceFile);
+						Bridge->ClearDiagnostics(SourceFile);
 						Bridge->RebuildDependencyGraph();
 						Bridge->UpdateDiagnosticsFile();
 						if (UE::DreamShader::IsDreamShaderPipelineFile(SourceFile))
@@ -1989,23 +1992,21 @@ namespace UE::DreamShader::Editor::Private
 		OutMessage = ToInvariantWireString(Result.Message);
 		if (Result.bSucceeded)
 		{
-			ClearDiagnosticsForSourceAndDependencies(SourceFilePath);
 			// A compile that succeeded may still have warned -- a metadata key the engine does not know, a slider range on
 			// a vector. Its records go where a failed compile's do, each with its code, severity and span, so a client shows
-			// the warning at the line that raised it instead of the log alone holding it.
+			// the warning at the line that raised it instead of the log alone holding it. None clears the last compile's.
+			TArray<FDreamShaderDiagnosticRecord> Warnings;
 			TArray<::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord> WarningRecords;
 			if (bCompilerRan
-				&& ::UE::DreamShader::Editor::Compiler::GetDreamShaderLastCompileDiagnostics(SourceFilePath, WarningRecords)
-				&& !WarningRecords.IsEmpty())
+				&& ::UE::DreamShader::Editor::Compiler::GetDreamShaderLastCompileDiagnostics(SourceFilePath, WarningRecords))
 			{
-				TArray<FDreamShaderDiagnosticRecord> Warnings;
 				Warnings.Reserve(WarningRecords.Num());
 				for (::UE::DreamShader::Editor::Compiler::FLang2DiagnosticRecord& WarningRecord : WarningRecords)
 				{
 					Warnings.Add(MoveTemp(WarningRecord.Record));
 				}
-				SetDiagnostics(SourceFilePath, MoveTemp(Warnings));
 			}
+			SetCompileDiagnostics(SourceFilePath, MoveTemp(Warnings));
 			UpdateDiagnosticsFile();
 			UE_LOG(LogDreamShader, Display, TEXT("%s"), *OutMessage);
 			ResolvePendingResponses(SourceFilePath, true, OutMessage);
@@ -2052,11 +2053,10 @@ namespace UE::DreamShader::Editor::Private
 		{
 			Diagnostics = FDreamShaderDiagnosticsStore::BuildGenerateErrorDiagnostics(SourceFilePath, Result.Message);
 		}
-		ClearDiagnosticsForSourceAndDependencies(SourceFilePath);
-		SetDiagnostics(SourceFilePath, MoveTemp(Diagnostics));
+		SetCompileDiagnostics(SourceFilePath, MoveTemp(Diagnostics));
 		UpdateDiagnosticsFile();
 		UE_LOG(LogDreamShader, Error, TEXT("%s"), *OutMessage);
-		// After SetDiagnostics, so the response carries this compile's findings rather than
+		// After SetCompileDiagnostics, so the response carries this compile's findings rather than
 		// whatever the store held before it ran.
 		ResolvePendingResponses(SourceFilePath, false, OutMessage);
 		// Last, and after the log line: a refused rebuild is the one failure the user cannot act on
@@ -2395,7 +2395,8 @@ namespace UE::DreamShader::Editor::Private
 			}
 		}
 
-		SetDiagnostics(SourceFilePath, MoveTemp(Diagnostics));
+		// This material's shader errors only: the warnings of the compile that generated it, filed ticks ago, stand.
+		SetDiagnostics(SourceFilePath, EDreamShaderDiagnosticsProducer::MaterialCompile, MoveTemp(Diagnostics), MaterialAssetPath);
 		UpdateDiagnosticsFile();
 	}
 
@@ -3768,17 +3769,10 @@ namespace UE::DreamShader::Editor::Private
 					*FileResult.SourceFilePath);
 			}
 
-			if (FileResult.Diagnostics.IsEmpty())
-			{
-				if (FileResult.DefinitionCount > 0)
-				{
-					ClearDiagnostics(FileResult.SourceFilePath);
-				}
-			}
-			else
-			{
-				SetDiagnostics(FileResult.SourceFilePath, MoveTemp(FileResult.Diagnostics));
-			}
+			SetDiagnostics(
+				FileResult.SourceFilePath,
+				EDreamShaderDiagnosticsProducer::VirtualFunctionSync,
+				MoveTemp(FileResult.Diagnostics));
 		}
 
 		if (SyncResult.ScannedDefinitionCount > 0 || SyncResult.UpdatedDefinitionCount > 0 || SyncResult.ErrorCount > 0)
@@ -3793,27 +3787,36 @@ namespace UE::DreamShader::Editor::Private
 		}
 	}
 
-	void FDreamShaderEditorBridge::SetDiagnostics(const FString& SourceFilePath, TArray<FDreamShaderDiagnosticRecord>&& Diagnostics)
+	void FDreamShaderEditorBridge::SetDiagnostics(
+		const FString& SourceFilePath,
+		const EDreamShaderDiagnosticsProducer Producer,
+		TArray<FDreamShaderDiagnosticRecord>&& Diagnostics,
+		const FString& Scope)
 	{
-		DiagnosticsStore.SetDiagnostics(SourceFilePath, MoveTemp(Diagnostics));
+		DiagnosticsStore.SetDiagnostics(SourceFilePath, Producer, MoveTemp(Diagnostics), Scope);
 	}
 
-	void FDreamShaderEditorBridge::ClearDiagnostics(const FString& SourceFilePath)
+	void FDreamShaderEditorBridge::SetCompileDiagnostics(const FString& SourceFilePath, TArray<FDreamShaderDiagnosticRecord>&& Diagnostics)
 	{
-		DiagnosticsStore.ClearDiagnostics(SourceFilePath);
-	}
+		// Replaces what this source's last compile filed, against the source and against the headers it imports, and
+		// nothing another source filed: recompiling A leaves B's records for a header both import alone.
+		SetDiagnostics(SourceFilePath, EDreamShaderDiagnosticsProducer::Compile, MoveTemp(Diagnostics));
 
-	void FDreamShaderEditorBridge::ClearDiagnosticsForSourceAndDependencies(const FString& SourceFilePath)
-	{
-		ClearDiagnostics(SourceFilePath);
-
+		// The compile has just read the source and every header it imports again, VirtualFunction declarations included,
+		// which retires what the startup scan said about them. The scan runs once, so nothing else would.
+		SetDiagnostics(SourceFilePath, EDreamShaderDiagnosticsProducer::VirtualFunctionSync, {});
 		TSet<FString> Dependencies;
 		TSet<FString> VisitedFiles;
 		FDreamShaderDependencyGraphService::CollectHeaderDependenciesRecursive(SourceFilePath, Dependencies, VisitedFiles);
 		for (const FString& HeaderFile : Dependencies)
 		{
-			ClearDiagnostics(HeaderFile);
+			SetDiagnostics(HeaderFile, EDreamShaderDiagnosticsProducer::VirtualFunctionSync, {});
 		}
+	}
+
+	void FDreamShaderEditorBridge::ClearDiagnostics(const FString& SourceFilePath)
+	{
+		DiagnosticsStore.ClearDiagnostics(SourceFilePath);
 	}
 
 	void FDreamShaderEditorBridge::UpdateDiagnosticsFile()

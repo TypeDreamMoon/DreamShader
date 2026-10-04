@@ -86,70 +86,105 @@ namespace UE::DreamShader::Editor::Private
 			FileObject->SetArrayField(TEXT("diagnostics"), DiagnosticValues);
 			return FileObject;
 		}
-
-		void RemoveDiagnosticsOwnedBySource(
-			TMap<FString, TArray<FDreamShaderDiagnosticRecord>>& InOutDiagnosticsByFile,
-			const FString& OwnerSourceFilePath)
-		{
-			TArray<FString> EmptyFiles;
-			for (TPair<FString, TArray<FDreamShaderDiagnosticRecord>>& Pair : InOutDiagnosticsByFile)
-			{
-				Pair.Value.RemoveAll([&OwnerSourceFilePath](const FDreamShaderDiagnosticRecord& Diagnostic)
-				{
-					return Diagnostic.OwnerSourceFilePath.Equals(OwnerSourceFilePath, ESearchCase::IgnoreCase);
-				});
-
-				if (Pair.Value.IsEmpty())
-				{
-					EmptyFiles.Add(Pair.Key);
-				}
-			}
-
-			for (const FString& EmptyFile : EmptyFiles)
-			{
-				InOutDiagnosticsByFile.Remove(EmptyFile);
-			}
-		}
 	}
 
 	void FDreamShaderDiagnosticsStore::Reset()
 	{
+		DiagnosticsByOwner.Reset();
 		DiagnosticsByFile.Reset();
 	}
 
 	void FDreamShaderDiagnosticsStore::SetDiagnostics(
 		const FString& SourceFilePath,
-		TArray<FDreamShaderDiagnosticRecord>&& Diagnostics)
+		const EDreamShaderDiagnosticsProducer Producer,
+		TArray<FDreamShaderDiagnosticRecord>&& Diagnostics,
+		const FString& Scope)
 	{
 		const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
-		RemoveDiagnosticsOwnedBySource(DiagnosticsByFile, NormalizedPath);
+		const FOwner Owner{ NormalizedPath, Producer, Scope };
 		if (Diagnostics.IsEmpty())
 		{
+			if (DiagnosticsByOwner.Remove(Owner) > 0)
+			{
+				RebuildDiagnosticsByFile();
+			}
 			return;
 		}
 
 		for (FDreamShaderDiagnosticRecord& Diagnostic : Diagnostics)
 		{
-			const FString DiagnosticFilePath = Diagnostic.FilePath.IsEmpty()
+			Diagnostic.FilePath = Diagnostic.FilePath.IsEmpty()
 				? NormalizedPath
 				: UE::DreamShader::NormalizeSourceFilePath(Diagnostic.FilePath);
-			Diagnostic.FilePath.Reset();
 			Diagnostic.OwnerSourceFilePath = NormalizedPath;
-			DiagnosticsByFile.FindOrAdd(DiagnosticFilePath).Add(MoveTemp(Diagnostic));
 		}
+		DiagnosticsByOwner.Add(Owner, MoveTemp(Diagnostics));
+		RebuildDiagnosticsByFile();
 	}
 
 	void FDreamShaderDiagnosticsStore::ClearDiagnostics(const FString& SourceFilePath)
 	{
 		const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
-		DiagnosticsByFile.Remove(NormalizedPath);
-		RemoveDiagnosticsOwnedBySource(DiagnosticsByFile, NormalizedPath);
+		for (auto It = DiagnosticsByOwner.CreateIterator(); It; ++It)
+		{
+			if (It.Key().SourceFilePath == NormalizedPath)
+			{
+				It.RemoveCurrent();
+				continue;
+			}
+
+			It.Value().RemoveAll([&NormalizedPath](const FDreamShaderDiagnosticRecord& Diagnostic)
+			{
+				return Diagnostic.FilePath == NormalizedPath;
+			});
+			if (It.Value().IsEmpty())
+			{
+				It.RemoveCurrent();
+			}
+		}
+		RebuildDiagnosticsByFile();
 	}
 
-	const TArray<FDreamShaderDiagnosticRecord>* FDreamShaderDiagnosticsStore::FindDiagnostics(const FString& SourceFilePath) const
+	const TArray<FDreamShaderDiagnosticRecord>* FDreamShaderDiagnosticsStore::FindDiagnostics(const FString& FilePath) const
 	{
-		const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFilePath);
+		const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(FilePath);
 		return DiagnosticsByFile.Find(NormalizedPath);
+	}
+
+	const TArray<FDreamShaderDiagnosticRecord>* FDreamShaderDiagnosticsStore::FindOwnedDiagnostics(
+		const FString& SourceFilePath,
+		const EDreamShaderDiagnosticsProducer Producer,
+		const FString& Scope) const
+	{
+		return DiagnosticsByOwner.Find(FOwner{ UE::DreamShader::NormalizeSourceFilePath(SourceFilePath), Producer, Scope });
+	}
+
+	void FDreamShaderDiagnosticsStore::RebuildDiagnosticsByFile()
+	{
+		// A file's records are listed compile first, then shader compile, then the VirtualFunction scan, and by source
+		// within each: a stable order for the wire files, and the compile's first error is the one the browser shows.
+		DiagnosticsByOwner.KeySort([](const FOwner& A, const FOwner& B)
+		{
+			if (A.Producer != B.Producer)
+			{
+				return A.Producer < B.Producer;
+			}
+			if (A.SourceFilePath != B.SourceFilePath)
+			{
+				return A.SourceFilePath < B.SourceFilePath;
+			}
+			return A.Scope < B.Scope;
+		});
+
+		DiagnosticsByFile.Reset();
+		for (const TPair<FOwner, TArray<FDreamShaderDiagnosticRecord>>& Pair : DiagnosticsByOwner)
+		{
+			for (const FDreamShaderDiagnosticRecord& Diagnostic : Pair.Value)
+			{
+				TArray<FDreamShaderDiagnosticRecord>& FileDiagnostics = DiagnosticsByFile.FindOrAdd(Diagnostic.FilePath);
+				FileDiagnostics.Add_GetRef(Diagnostic).FilePath.Reset();
+			}
+		}
 	}
 
 	void FDreamShaderDiagnosticsStore::WriteToFile(const FString& OutputFilePath) const

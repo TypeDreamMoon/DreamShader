@@ -18,6 +18,16 @@
 
 ### Fixed
 
+- **Recompiling one material leaves another's diagnostics for a shared header alone.** Every bridge compile first
+  cleared the source and every header it imports, and clearing a header deleted what every material had filed
+  against it: compiling `A.dsm` wiped `B.dsm`'s error in a `.dsh` both import until `B` compiled again. A record
+  now belongs to the source whose run filed it and to that run -- the compile, one generated material's shader
+  compile, the startup VirtualFunction scan -- and a run replaces only what it filed before, as
+  [Diagnostics](Docs/diagnostics/index.md) said all along. The same rule keeps a successful compile's warnings
+  (since 2.1.0) once its material's shaders finish compiling, which replaced every record of the source with the
+  shader errors, and keeps those shader errors through a compile that does not rebuild the material. A
+  `recompile` response carries that compile's records, each with its own file, an imported header's included;
+  it carried only those filed against the compiled file.
 - **`dsc.ps1` prints a compile's report whole.** A report is one log message of many lines -- every `Generated`
   line, then `Warnings:` and the warnings, or every error -- and the engine prefixes only its first line, so the
   driver showed the first line and dropped the rest: warnings, every error after the first, and every product

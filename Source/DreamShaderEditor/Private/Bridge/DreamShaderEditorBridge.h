@@ -226,9 +226,15 @@ namespace UE::DreamShader::Editor::Private
 		void CleanGeneratedShaderDirectory();
 		void RebuildDependencyGraph();
 		void SyncVirtualFunctionDefinitions();
-		void SetDiagnostics(const FString& SourceFilePath, TArray<FDreamShaderDiagnosticRecord>&& Diagnostics);
+		void SetDiagnostics(
+			const FString& SourceFilePath,
+			EDreamShaderDiagnosticsProducer Producer,
+			TArray<FDreamShaderDiagnosticRecord>&& Diagnostics,
+			const FString& Scope = FString());
+		/** A compile's records, replacing what this source's last compile filed. See the definition. */
+		void SetCompileDiagnostics(const FString& SourceFilePath, TArray<FDreamShaderDiagnosticRecord>&& Diagnostics);
+		/** The file was deleted: FDreamShaderDiagnosticsStore::ClearDiagnostics. */
 		void ClearDiagnostics(const FString& SourceFilePath);
-		void ClearDiagnosticsForSourceAndDependencies(const FString& SourceFilePath);
 		void UpdateDiagnosticsFile();
 
 		/**
