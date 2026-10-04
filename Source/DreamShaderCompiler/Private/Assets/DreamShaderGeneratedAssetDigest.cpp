@@ -25,6 +25,7 @@
 #include "Materials/MaterialInstance.h"
 #include "Misc/Crc.h"
 #include "UObject/Package.h"
+#include "UObject/StructOnScope.h"
 #include "UObject/TextProperty.h"
 #include "UObject/UnrealType.h"
 
@@ -44,7 +45,37 @@ namespace UE::DreamShader::Editor::Private
 		// DSD4: an input is named by GetDreamShaderStableInputName. Break, Get and SetMaterialAttributes name their inputs
 		// with translated text, so a DSD3 digest of a graph that has one depended on the language of the editor that
 		// stamped it, and a team with editors in two languages saw each other's layers and blends as hand-edited.
-		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD4");
+		// DSD5: an instance parameter's ExpressionGUID is left out. Regeneration writes the override with an empty GUID and
+		// UE resolves it against the parent's expression when the package next loads, so a DSD4 digest of a texture
+		// instance changed on its first reload and the instance read as hand-edited -- and the cook refused it.
+		constexpr const TCHAR* DigestFormatVersion = TEXT("DSD5");
+
+		// One override array as digest text, each row exported from a copy with its ExpressionGUID cleared. The GUID is the
+		// engine's link to the parent expression, not a value anyone sets; the name, value and every other field still count.
+		FString ExportInstanceParameterValues(const FArrayProperty* ArrayProperty, const void* ValuePtr)
+		{
+			const FStructProperty* Element = CastField<FStructProperty>(ArrayProperty->Inner);
+			const FStructProperty* Guid = Element ? FindFProperty<FStructProperty>(Element->Struct, TEXT("ExpressionGUID")) : nullptr;
+			if (!Guid || Guid->Struct != TBaseStructure<FGuid>::Get())
+			{
+				FString Value;
+				ArrayProperty->ExportTextItem_Direct(Value, ValuePtr, nullptr, nullptr, PPF_None);
+				return Value;
+			}
+
+			FScriptArrayHelper Array(ArrayProperty, ValuePtr);
+			TArray<FString> Values;
+			for (int32 Index = 0; Index < Array.Num(); ++Index)
+			{
+				FStructOnScope Copy(Element->Struct);
+				Element->Struct->CopyScriptStruct(Copy.GetStructMemory(), Array.GetRawPtr(Index));
+				Guid->ClearValue_InContainer(Copy.GetStructMemory());
+				FString Value;
+				Element->ExportTextItem_Direct(Value, Copy.GetStructMemory(), nullptr, nullptr, PPF_None);
+				Values.Add(MoveTemp(Value));
+			}
+			return Values.IsEmpty() ? FString() : TEXT("(") + FString::Join(Values, TEXT(",")) + TEXT(")");
+		}
 
 		// Node properties a user is free to change without meaning anything by it. Node coordinates are
 		// the important entry: regeneration reassigns them from the Layout section anyway (they are
@@ -646,8 +677,8 @@ namespace UE::DreamShader::Editor::Private
 			// Every override array in one reflection sweep rather than a hand-written list: the set grows
 			// between engine versions (texture collections, sparse volume textures), and a missed array
 			// would be a parameter a user can tune and silently lose. Regeneration calls
-			// ClearParameterValuesEditorOnly, so on a freshly generated instance every one of these is
-			// empty -- any content at all is somebody's hand edit.
+			// ClearParameterValuesEditorOnly and reapplies the source's overrides, so on a freshly generated instance these
+			// hold exactly what the source wrote -- anything more is somebody's hand edit.
 			TArray<TPair<FString, FString>> ParameterValues;
 			for (TFieldIterator<FProperty> It(Instance->GetClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
 			{
@@ -665,8 +696,7 @@ namespace UE::DreamShader::Editor::Private
 					continue;
 				}
 
-				FString Value;
-				Property->ExportTextItem_Direct(Value, ValuePtr, nullptr, nullptr, PPF_None);
+				FString Value = ExportInstanceParameterValues(CastFieldChecked<FArrayProperty>(Property), ValuePtr);
 				ParameterValues.Emplace(Property->GetName(), MoveTemp(Value));
 			}
 

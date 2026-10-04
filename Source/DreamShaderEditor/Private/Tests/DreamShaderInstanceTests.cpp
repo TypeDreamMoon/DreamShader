@@ -18,6 +18,7 @@
 
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceConstant.h"
+#include "PackageTools.h"
 
 // This file's own namespace: the module builds as a unity blob.
 namespace UE::DreamShader::Editor::Private::InstanceTests
@@ -270,6 +271,83 @@ bool FDreamShaderInstanceDependentsTest::RunTest(const FString& Parameters)
 		TestFalse(TEXT("the child no longer fits its parent"), Compile(Fixture, ChildError));
 		TestTrue(FString::Printf(TEXT("and says DSH7259 (%s: %s)"), *ChildError.Code, *ChildError.Message), ChildError.Code == TEXT("DSH7259") || ChildError.Message.Contains(TEXT("DSH7259")));
 	}
+	return true;
+}
+
+// A texture override is written with an empty ExpressionGUID and UE fills it in when the package loads. That must not
+// read as a hand edit (a cook would refuse the instance), while a changed texture still must.
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderInstanceSaveReloadTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Instance.SaveReload",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderInstanceSaveReloadTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::InstanceTests;
+	FScopedDreamShaderGraphBackendPin BackendPin;
+
+	FDreamShaderCompile2Fixture Fixture(TEXT("MI_InReload"), TEXT("Instance2"), TEXT("dsi"));
+	if (!WriteInstanceFixture(*this, Fixture, TEXT("M_InReloadParent"), TEXT(
+		"#pragma instance(Parent = \"M_InReloadParent\")\n"
+		"/// @default /Engine/EngineResources/DefaultTexture\n"
+		"uniform Texture2D Albedo;\n")))
+	{
+		return false;
+	}
+	FString ParentPath;
+	if (!Fixture.WriteSiblingSource(*this, TEXT("M_InReloadParent.dss"), TEXT(
+		"#pragma material(Backend = Graph, ShadingModel = Unlit)\n"
+		"/// @default /Engine/EngineResources/WhiteSquareTexture\n"
+		"uniform Texture2D Albedo;\n"
+		"export void M_InReloadParent(inout material m)\n"
+		"{ m.EmissiveColor = Albedo.Sample(UE.TextureCoordinate()).rgb; }\n"), ParentPath))
+	{
+		return false;
+	}
+
+	UE::DreamShader::FDreamShaderError Error;
+	if (!ExpectDreamShaderTestCompile(*this, TEXT("the texture instance compiles"), Compile(Fixture, Error), Error))
+	{
+		return false;
+	}
+	const FString ObjectPath = Fixture.MakeObjectPath(TEXT("MI_InReload"));
+	Fixture.TrackObjectPath(ObjectPath);
+	UMaterialInstanceConstant* Instance = LoadObject<UMaterialInstanceConstant>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("generated instance"), Instance))
+	{
+		return false;
+	}
+	const FString Before = BuildOutputDigestText(Instance);
+
+	FText ReloadError;
+	if (!TestTrue(TEXT("reload the saved instance through UE"), UPackageTools::ReloadPackages(
+		{ Instance->GetOutermost() }, ReloadError, EReloadPackagesInteractionMode::AssumePositive)))
+	{
+		return false;
+	}
+	Instance = LoadObject<UMaterialInstanceConstant>(nullptr, *ObjectPath);
+	if (!TestNotNull(TEXT("reloaded instance"), Instance))
+	{
+		return false;
+	}
+	TestEqualSensitive(TEXT("save/reload preserves the generated content digest"), BuildOutputDigestText(Instance), Before);
+	TestTrue(TEXT("engine reload is not a hand edit"), ClassifyGeneratedAsset(Instance) == EDreamShaderDigestState::Generated);
+
+	UE::DreamShader::FDreamShaderError Again;
+	ExpectDreamShaderTestCompile(*this, TEXT("the reloaded instance can be regenerated"), Compile(Fixture, Again), Again);
+	const FString Generated = BuildOutputDigestText(Instance);
+	if (!TestEqual(TEXT("one source texture override"), Instance->TextureParameterValues.Num(), 1))
+	{
+		return false;
+	}
+
+	Instance->TextureParameterValues[0].ExpressionGUID = FGuid::NewGuid();
+	TestTrue(TEXT("resolved parameter identity is not content"), ClassifyGeneratedAsset(Instance) == EDreamShaderDigestState::Generated);
+	Instance->TextureParameterValues[0].ParameterValue = LoadObject<UTexture>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture"));
+	TestTrue(TEXT("a changed texture is still a hand edit"), ClassifyGeneratedAsset(Instance) == EDreamShaderDigestState::Diverged);
+	TestNotEqual(TEXT("the changed texture changes the digest"), BuildOutputDigestText(Instance), Generated);
 	return true;
 }
 
