@@ -125,7 +125,9 @@ second-guess.
 
 ## What a refusal looks like
 
-Generation fails with the asset exactly as you left it — not cleared, not half-built:
+Generation fails with the asset exactly as you left it — not cleared, not half-built. The compile
+reports [`DSH8207`](../diagnostics/DSH8xxx.md#dsh8207), whose message carries the asset layer's
+[`DSH8115`](../diagnostics/DSH8xxx.md#dsh8115) text:
 
 ```text
 Asset '/Game/Materials/M_Emissive.M_Emissive' was edited by hand since DreamShader generated it from
@@ -149,14 +151,14 @@ atomicity stops a rebuild that *fails* from leaving the asset in pieces. Neither
 case.
 
 > [!IMPORTANT]
-> `-Force` does **not** get past this. `bForce` answers "is the source hash stale", and the editor
-> asserts it for every file in its own startup sweep — honouring it here would have left the gate
-> dead in the mode the editor spends all its time in. Only the **Revert** action overrides a
-> divergence, because only a person can make that call.
+> `-Force` does **not** get past this. `bForce` only means "ignore the source hash", and *Recompile
+> DSM*, the Material Content Browser's Compile, *Materialize* and the cook all set it — honouring it
+> here would leave the gate dead exactly when a whole project is rebuilt. Only the **Revert** action
+> overrides a divergence, because only a person can make that call.
 
-A rebuild is only ever attempted when the source moved. An unchanged source is skipped by the source
-hash long before the gate, so hand-editing an asset and leaving its source alone reports nothing at
-all — nothing is in danger.
+An unforced compile of an unchanged source is skipped by the source hash before the gate is asked, so
+hand-editing an asset and leaving its source alone reports nothing until the source changes or a
+forced compile reaches the asset — until then nothing is in danger.
 
 ## What you see *(since 1.9.0)*
 

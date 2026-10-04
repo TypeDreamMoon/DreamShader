@@ -675,9 +675,9 @@ Expected a declaration, an assignment, a call or 'if' in a 1.x Graph body, found
 **Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:227`
 <!-- generated:end DSH2208 -->
 
-**Cause.** A statement 1.x never had opens this line of a Graph body: `for`, `while`, `return`,
-`switch`, `break` and the like. A 1.x Graph body is declarations, assignments, calls and `if` /
-`else`.
+**Cause.** A statement 1.x never had opens this line of a Graph body: `for`, `while`, `do`,
+`return`, `break`, `continue` or `discard`. A 1.x Graph body is declarations, assignments, calls and
+`if` / `else`. (`switch` is refused one step earlier, by the parser, as `DSH2160`.)
 
 **Fix.** Move loops and early exits into a `Function` (HLSL), or migrate the file and write them in
 the `.dss`.
@@ -792,9 +792,10 @@ Expected an expression as a 1.x Graph initializer, found an initializer list; us
 **Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:522`
 <!-- generated:end DSH2214 -->
 
-**Cause.** A braced list stands where 1.x did not read one. 1.x accepted `T x = {a, b, c};` as the
-constructor `T(a, b, c)` and `T x = {};` as zero, in a declaration, where the type is written next
-to it; in an assignment or as an argument the list has no type to construct.
+**Cause.** A braced list stands where 1.x did not read one: inside another list. 1.x accepted
+`T x = {a, b, c};` as the constructor `T(a, b, c)` and `T x = {};` as zero, in a declaration, where
+the type is written next to it; a list nested in that list has no type to construct. (A list as the
+value of an assignment or as an argument is refused earlier, by the parser, as `DSH2162`.)
 
 **Fix.** Write the constructor: `float3(a, b, c)`.
 
@@ -812,9 +813,8 @@ Expected an initializer on the 1.x Graph variable '{0}' of type '{1}', found non
 **Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyStatements.cpp:1165`
 <!-- generated:end DSH2215 -->
 
-**Cause.** A 1.x Graph variable has no initializer and a type 1.x had no zero for (a texture, a
-Substrate value, a sampler, a user type). Numbers started as zero and a `MaterialAttributes` as an
-empty set; nothing else had a default.
+**Cause.** A 1.x Graph variable has no initializer and a type 1.x had no zero for: a texture, a
+Substrate value or a sampler. Numbers start as zero and a `MaterialAttributes` as an empty set.
 
 **Fix.** Give the variable an initializer.
 
@@ -888,8 +888,10 @@ Expected '#Region' or '#EndRegion' as the only '#' line in a 1.x Graph body, fou
 <!-- generated:end DSH2219 -->
 
 **Cause.** A `#` line other than `#Region` / `#EndRegion` stands inside a 1.x Graph body.
-Conditional compilation (`#if` ...) is resolved before the parser runs; anything that reaches it
-here is a directive 1.x did not have, such as `#pragma` or `#include`.
+Conditional compilation (`#if` ...) is resolved before the parser runs. In a `.dsm` / `.dsf` the
+preprocessor refuses a directive it does not know before the parser sees it (`DSH1035`); this code
+is what a 1.x Graph body in a `.dsh` gets, where `#pragma` and `#include` pass the preprocessor
+because the header may hold 2.0 declarations too.
 
 **Fix.** Move `import` lines to the top of the file; `#pragma` belongs in a `.dss` file.
 
@@ -1043,10 +1045,12 @@ Expected a Shader section (Properties, Settings, Outputs, Graph or Layout), foun
 <!-- generated:end DSH2245 -->
 
 **Cause.** A word that is no section opens a line inside a block. A Shader has `Properties`,
-`Settings`, `Outputs`, `Graph` and `Layout`; a ShaderFunction has `Inputs` instead of `Properties`;
-a VirtualFunction has `Options`, `Inputs` and `Outputs`.
+`Settings`, `Outputs`, `Graph` and `Layout`; a ShaderFunction, layer or blend has `Inputs` as well, and
+takes `Results` for `Outputs`; a VirtualFunction has `Options`, `Inputs` and `Outputs`. `Code` is
+`DSH2246`.
 
-**Fix.** Check the spelling (sections are case-sensitive) and that the section before it is closed.
+**Fix.** Check the spelling — section names are matched ignoring case, as in 1.x, so it is the letters
+that are wrong — and that the section before it is closed.
 
 ## DSH2246
 
@@ -1179,13 +1183,15 @@ Expected a double-quoted path after 'import', found {0}.
 <!-- generated:end DSH2252 -->
 
 **Cause.** An `import` line the front end does not read. Three cases: `import` is not followed by a
-double-quoted path (1.x also let it stand in single quotes); the path names a file that is no `.dsh`
-header -- a material or function file is compiled on its own, never included; or the path is
-root-qualified (`Project:Shared/Common.dsh`, `Plugin.X:...`), which the 2.0 include resolver, shared
-by both front ends, does not read.
+quoted path (`"..."`, or `'...'` on one line, which a 1.x file and a `.dsh` still take); the path names
+a `.dsf` or a `.dsm` -- a material or function file is compiled on its own, never included; or the
+path is root-qualified (`Project:Shared/Common.dsh`, `Plugin.X:...`), the 1.6.0 form, which an
+`import` no longer takes.
 
 **Fix.** Write `import "Shared/Common.dsh";` with a path relative to this file or to its own source
-root. A header that lives in another root has to be reached through a package or copied.
+root. A header that lives in another root is reached with a `/`-anchored path, `import
+"/Shared/Common.dsh";`, which looks in this file's root first and then in every other root -- or by
+copying it, or through a package. See [import](../language/import.md#resolution).
 
 ## DSH2253
 
@@ -1239,7 +1245,9 @@ Expected a Graph section in the Shader '{0}', found none.
 **Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:979`
 <!-- generated:end DSH2255 -->
 
-**Cause.** A Shader has no `Graph` section, so there is nothing to build.
+**Cause.** A Shader has no `Graph` section and nothing in its `Outputs` section either, so there is
+nothing to build. Without a `Graph`, the `Outputs` statements have to compute the values themselves:
+an initialized declaration, or a binding whose right side is an expression.
 
 **Fix.** Add `Graph = { ... }`.
 

@@ -12,6 +12,10 @@ declaration stands for.
 | Generates | nothing — a `VirtualFunction` declares an asset, it does not create one |
 | Since | `1.2.0` |
 
+In 2.0 the same declaration is an `extern` prototype with `/// @asset` — see
+[DreamShaderLang 2.0](../language-v2/index.md); [`dsc migrate`](../tools/migrate.md) rewrites a
+`VirtualFunction` that way.
+
 ## Synopsis
 
 ```c
@@ -29,23 +33,21 @@ asset-reference := Path( <root> , "<relative-path>" )
                  | <absolute-object-path>
 ```
 
-`Options` and `Settings` are accepted interchangeably as the section keyword; both parse into the
-same map. Section names are matched case-insensitively, the `=` before `{ … }` is optional
-*(since 1.5.0)*, and a repeated section merges into the same map.
+`Options` and `Settings` are accepted interchangeably as the section keyword; both read into the same
+list. Section names are matched case-insensitively, the `=` before `{ … }` is optional
+*(since 1.5.0)*, and a repeated section merges into the same list.
 
 ## Keys
 
 | Key | Required | Value | Effect |
 | :-- | :-- | :-- | :-- |
 | **`Asset`** | yes, unless `VirtualFunction(Asset="…")` was given | asset reference | The `UMaterialFunction` a `Graph` call to this name resolves to. |
-| *any other key* | — | any | **Parsed, stored, and never read.** |
-
-`Asset` is the only key the compiler consumes. There is no diagnostic for an unrecognized key.
+| `Description` | no | string | Kept as the declaration's description. |
+| *any other key* | — | any | **Read and ignored**, with no diagnostic. |
 
 > [!NOTE]
 > The [VirtualFunction sync service](../tools/virtual-function-tools.md) writes a `Description` key
-> alongside `Asset` when it generates or refreshes a declaration. That key is round-tripped by the
-> tooling but has no effect on compilation.
+> alongside `Asset` when it generates or refreshes a declaration.
 
 ### Precedence
 
@@ -67,28 +69,24 @@ Identical to the [`Settings`](../settings/index.md) grammar.
 
 | Rule | Detail |
 | :-- | :-- |
-| Statement form | `<Key> = <Value> ;` |
-| Split point | the first `=` that is outside `()`, `[]` and `"…"`, so `Asset = Path(Game, "A/B")` splits on the outer `=` |
-| Key normalization | trimmed, then lower-cased. Nothing else — spaces, `_` and `-` are **not** removed |
-| Value handling | one surrounding `"…"` pair is stripped and unescaped |
-| Duplicate key | the later statement silently **overwrites** the earlier one |
-| Comments | stripped from the section body before statements are split |
+| Statement form | `<Key> = <Value> ;` — a key that is not a word, a missing `=` or a missing value is [`DSH3261`](../diagnostics/DSH3xxx.md#dsh3261) |
+| Value | every token up to the `;` outside brackets, so `Asset = Path(Game, "A/B")` is one value |
+| Key matching | case-insensitive; the key is kept as written |
+| Value handling | a single quoted string is its text, escapes resolved; anything else is the text of its tokens |
+| Duplicate key | the later statement wins, with the warning [`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262) *(since 2.0.0; 1.x overwrote silently)* |
+| Comments | allowed between any two tokens |
 
-> [!WARNING]
-> A `Settings`/`Options` value is trimmed on both sides of the `=`, but the text **inside** a quoted
-> value survives the quote stripping untouched — unlike a `Layout` argument, which is trimmed again
-> after unquoting. `Asset = "  /Game/MF/F_X  ";` stores the surrounding spaces, while
-> `Asset =   /Game/MF/F_X  ;` stores `/Game/MF/F_X`. The asset-reference resolver trims the stored
-> value again before resolving it, so `Asset` itself tolerates both.
+The asset reference is trimmed before it is used, so `Asset = "  /Game/MF/F_X  ";` and
+`Asset = /Game/MF/F_X;` name the same asset.
 
-String escapes recognized in a quoted value are `\n`, `\r`, `\t`, `\"` and `\\`; any other `\X`
-yields the literal `X`.
+String escapes recognized in a quoted value are `\n`, `\r`, `\t`, `\"`, `\\` and `\0`; any other `\X`
+is [`DSH2104`](../diagnostics/DSH2xxx.md#dsh2104) *(since 2.0.0; 1.x yielded the literal `X`)*.
 
 ## Asset reference resolution
 
-The parser stores the raw text. The reference is resolved **when the `VirtualFunction` is called from
-a `Graph`**, using the general asset-reference resolver — not the texture-default resolver. Accepted
-root spellings:
+The front end keeps the reference as written, and the compiler resolves it **when a `Graph` call to
+the `VirtualFunction` is built**, using the general asset-reference resolver — not the
+texture-default resolver. Accepted root spellings:
 
 | Root | Resolves to |
 | :-- | :-- |
@@ -103,21 +101,18 @@ absolute object path. The full grammar, both resolvers and every root diagnostic
 [`Path(...)`](../parameters/path.md).
 
 > [!WARNING]
-> An unresolvable `Asset` is **not** diagnosed at parse time or at generation time — only at the
-> moment a `Graph` statement calls the function, as
-> `VirtualFunction '{Name}' asset reference is invalid: {Detail}`. A `VirtualFunction` that nothing
-> calls compiles with a broken `Asset` and produces no message.
+> An unresolvable `Asset` is **not** diagnosed when the file is read or bound — only when a `Graph`
+> call to the function is built: [`DSH8270`](../diagnostics/DSH8xxx.md#dsh8270) for a reference that
+> does not resolve, [`DSH8219`](../diagnostics/DSH8xxx.md#dsh8219) for an asset that does not load. A
+> `VirtualFunction` that nothing calls compiles with a broken `Asset` and produces no message.
 
 ## Post-parse rules
 
-The two `Name` rules are checked before the block body is parsed; the other two immediately after.
-
-| Rule | Diagnostic |
+| Rule | Code |
 | :-- | :-- |
-| a `Name` attribute is present | `VirtualFunction(Name="...") is required.` |
-| `Name` is non-empty after trimming | `VirtualFunction name cannot be empty.` |
-| an asset is available from the attribute or from `Options.Asset` | `VirtualFunction '{Name}' must provide Options = { Asset = Path(...); }.` |
-| at least one output is declared | `VirtualFunction '{Name}' must declare at least one output.` |
+| a `Name` attribute is present, non-empty after trimming, and an identifier | [`DSH6311`](../diagnostics/DSH6xxx.md#dsh6311) |
+| an asset is available from the attribute or from `Options.Asset` | [`DSH6312`](../diagnostics/DSH6xxx.md#dsh6312) |
+| at least one output is declared | [`DSH6313`](../diagnostics/DSH6xxx.md#dsh6313) |
 
 ## Sections accepted alongside `Options`
 
@@ -129,42 +124,37 @@ The two `Name` rules are checked before the block body is parsed; the other two 
 | `Properties` | **alias for `Inputs`** |
 | `Outputs` | typed parameters |
 | `Results` | alias for `Outputs` |
-| `Graph` | **hard error** |
-| `Code` | **hard error** |
-| `Layout` | unknown section |
-
-`Graph` and `Code` both report
-`VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections.`
-Any other name reports `Unknown VirtualFunction section '{Section}'.`
+| `Graph` | **error** — [`DSH2247`](../diagnostics/DSH2xxx.md#dsh2247) |
+| `Code` | **error** — `DSH2247` |
+| `Layout`, any other name | **error** — [`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245) |
 
 ## Notes
 
 - A `VirtualFunction`'s `Inputs` and `Outputs` describe the *existing* asset's interface. They are
   what a `Graph` call is checked against; they do not create pins. Getting them out of step with the
-  asset produces call-site errors, not declaration errors.
-- `.dsh` files may contain `VirtualFunction` blocks and nothing else that generates assets. A file
-  holding only `VirtualFunction` declarations compiles successfully with
-  `DreamShader file '{File}' contains VirtualFunction declarations only; no assets were generated.`
-- The `Options` map is preserved verbatim, so tooling can round-trip additional keys through a
-  declaration without the compiler rejecting them.
+  asset produces errors where the call is built — [`DSH8220`](../diagnostics/DSH8xxx.md#dsh8220) for
+  an input the asset does not have, [`DSH8221`](../diagnostics/DSH8xxx.md#dsh8221) for an output —
+  not declaration errors.
+- `.dsh` files may contain `VirtualFunction` blocks and nothing else that generates assets. A `.dsm`
+  or `.dsf` whose only blocks are `VirtualFunction`s builds no asset.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this section.
+Every diagnostic carries the line and column of the statement it is about.
 
-| Message | Stage | Cause |
+| Code | Stage | Raised when |
 | :-- | :-- | :-- |
-| `Invalid setting declaration '{Statement}'.` | parse | a statement with no top-level `=` |
-| `Invalid empty setting key in '{Statement}'.` | parse | the key side of the split is empty |
-| `VirtualFunction(Name="...") is required.` | parse | no `Name` attribute on the block |
-| `VirtualFunction name cannot be empty.` | parse | `Name` is empty after trimming |
-| `VirtualFunction '{Name}' must provide Options = { Asset = Path(...); }.` | parse | no asset from the attribute or from `Options` |
-| `VirtualFunction '{Name}' must declare at least one output.` | parse | empty `Outputs` / `Results` |
-| `VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections.` | parse | a `Graph` or `Code` section in the block |
-| `Unknown VirtualFunction section '{Section}'.` | parse | an unrecognized section name |
-| `VirtualFunction '{Name}' asset reference is invalid: {Detail}` | graph build | the `Asset` value did not resolve at a call site |
+| `DSH3261` | parse | a statement that is not `Key = Value` |
+| `DSH3262` | parse | warning: a key written twice; the later value wins |
+| `DSH6311` | parse | no `Name`, an empty one, or one that is not an identifier |
+| `DSH6312` | parse | no asset from the attribute or from `Options` |
+| `DSH6313` | parse | no output declared |
+| `DSH2247` | parse | a `Graph` or `Code` section in the block |
+| `DSH2245` | parse | any other unknown section name |
+| `DSH8270`, `DSH8219` | building a call | the `Asset` value does not resolve, or does not load |
+| `DSH8220`, `DSH8221` | building a call | the declared interface names an input or output the asset does not have |
 
-The complete cross-stage list is in the [diagnostics index](../diagnostics/index.md).
+The complete list is in the [diagnostics index](../diagnostics/index.md).
 
 ## Example
 
@@ -187,7 +177,7 @@ VirtualFunction(Name="BufferWriter")
 }
 ```
 
-Calling it from a `Shader` in the same parse unit:
+Calling it from a `Shader` in the same file, or in a file that imports it:
 
 ```c
 Graph = {
@@ -206,9 +196,10 @@ Asset  Path(Game, "MaterialFunctions/F_BufferWriter")
 
 - [VirtualFunction](virtual-function.md) — the block `Options` belongs to
 - [Inputs / Outputs / Results](inputs-outputs.md) — the interface sections of a `VirtualFunction`
-- [Settings](../settings/index.md) — the identical statement grammar and key normalization
+- [Settings](../settings/index.md) — the identical statement grammar
 - [`Path(...)`](../parameters/path.md) — every root spelling and both resolvers
 - [Calls](../graph/calls.md) — calling a `VirtualFunction` from `Graph`
 - [VirtualFunction tools](../tools/virtual-function-tools.md) — the editor actions and the sync service
 - [Source files](source-files.md) — which block kinds `.dsh` / `.dsf` / `.dsm` may hold
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [DreamShaderLang 2.0](../language-v2/index.md) — `/// @asset` and `extern`, the `.dss` spelling
+- [Diagnostics index](../diagnostics/index.md) — every code

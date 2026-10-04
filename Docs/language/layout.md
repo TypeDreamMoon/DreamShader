@@ -3,7 +3,7 @@
 > [DreamShader](../index.md) » [DreamShaderLang](index.md) » **Layout**
 
 A section that pins generated node positions and declares comment boxes in the generated material
-graph, replacing the automatic layout pass.
+graph.
 
 | | |
 | :-- | :-- |
@@ -11,6 +11,14 @@ graph, replacing the automatic layout pass.
 | Kind | section |
 | Generates | node positions, and one `UMaterialExpressionComment` per `Comment` statement |
 | Not accepted in | `VirtualFunction` |
+
+*(since 2.0.0)* Which pass reads the section is the project's
+[Graph Layout Style](../generation/graph-layout.md#layout-styles). `Blocks`, the default, and the other
+styles computed on the compiler's IR obey every `Node` and `Comment` statement on top of their own
+placement. `Classic`, the 1.x layout, uses the section the 1.x way, which is what
+[Explicit layout versus automatic layout](#explicit-layout-versus-automatic-layout) describes. A
+`.dss` writes the same statements as `#pragma layout(Node, …)` / `#pragma layout(Comment, …)` — see
+[DreamShaderLang 2.0](../language-v2/index.md#declarations).
 
 ## Synopsis
 
@@ -24,8 +32,8 @@ Layout [=]
 }
 ```
 
-Statements are `;`-separated calls. Both statement names and all argument keys are matched
-case-insensitively. The `=` before the `{ … }` block is optional *(since 1.5.0)*.
+Statements are calls, each optionally followed by `;`. Both statement names and all argument keys are
+matched case-insensitively. The `=` before the `{ … }` block is optional *(since 1.5.0)*.
 
 ## `Node`
 
@@ -37,12 +45,12 @@ Pins one already-generated expression to an exact position.
 | **`X`** | yes | integer | — |
 | **`Y`** | yes | integer | — |
 
-`Var` names a value recorded during graph construction. Three kinds of name are recorded:
+`Var` names a value of the source. Three kinds of name are recorded:
 
 | Name kind | Recorded when |
 | :-- | :-- |
 | a `Graph` statement's target variable | the statement produced a node — declared locals and assigned output variables alike |
-| a [`Properties`](properties.md) declaration name | the graph actually read that property (property nodes are created lazily) |
+| a [`Properties`](properties.md) declaration name | the graph actually read that property |
 | an `Inputs` / `Outputs` declaration name | only in `ShaderFunction`, `ShaderLayer` and `ShaderLayerBlend`, where each one becomes a `FunctionInput` / `FunctionOutput` node |
 
 Both `MaterialExpressionEditorX/Y` and the editor graph node's `NodePosX/Y` are written, so the
@@ -56,24 +64,24 @@ position survives opening the material.
 
 Creates a comment box at an exact rectangle.
 
-| Argument | Required | Type | Struct default | Effect |
-| :-- | :-- | :-- | :-- | :-- |
-| **`Name`** | yes | text | — | Box title. Emitted as `DreamShader: <Name>` — see [Notes](#notes). |
-| **`X`** | yes | integer | `0` | Left edge. |
-| **`Y`** | yes | integer | `0` | Top edge. |
-| **`W`** | yes | integer | `420` | Width, clamped to a minimum of `120`. |
-| **`H`** | yes | integer | `240` | Height, clamped to a minimum of `80`. |
-| `Color` | no | `float4` literal | `float4(0.10, 0.16, 0.22, 0.35)` | Box colour. |
+| Argument | Required | Type | Effect |
+| :-- | :-- | :-- | :-- |
+| **`Name`** | yes | text | Box title — see [Notes](#notes). |
+| **`X`** | yes | integer | Left edge. |
+| **`Y`** | yes | integer | Top edge. |
+| **`W`** | yes | integer | Width; at least `120` under `Classic`, `64` under the IR styles. |
+| **`H`** | yes | integer | Height; at least `80` under `Classic`, `64` under the IR styles. |
+| `Color` | no | `float4` literal | Box colour; without it the layout's own default. |
 
 > [!WARNING]
-> `W` and `H` carry struct defaults but are nonetheless **required arguments**. `Comment(Name="X",
-> X=0, Y=0)` fails with `Layout argument 'W' must be an integer.` — the integer arguments report a
-> missing value and a malformed one with the same message. The struct defaults are observable only for
-> comment boxes the automatic layout pass constructs, never for source-declared ones.
+> `W` and `H` are **required arguments**. `Comment(Name="X", X=0, Y=0)` is
+> [`DSH3275`](../diagnostics/DSH3xxx.md#dsh3275), which reports a missing value and a malformed one
+> alike.
 
 The `Color` literal follows the general vector-literal grammar: the token before `(` is ignored, so
 `float4(…)`, `vec4(…)` and `(…)` all parse. One component splats to `(x, x, x, 1)`, two give
-`(x, y, 0, 0)`, three give `(x, y, z, 1)`, and components past the fourth are parsed and discarded.
+`(x, y, 0, 0)`, three give `(x, y, z, 1)`, and components past the fourth are ignored. Anything else
+is [`DSH3276`](../diagnostics/DSH3xxx.md#dsh3276).
 
 Generated comment boxes always use `FontSize = 24` and group mode, so dragging the box moves the
 nodes it encloses.
@@ -82,38 +90,41 @@ nodes it encloses.
 
 | Rule | Detail |
 | :-- | :-- |
-| Statement shape | `<Name>( <key> = <value> [, <key> = <value> ]… )` — text after the closing `)` is an error |
-| Statement name | must be a valid identifier, matched case-insensitively against `Node` and `Comment` |
-| Key normalization | trimmed, then lower-cased |
-| Value handling | one surrounding `"…"` pair is stripped and unescaped, then the value is trimmed |
-| Duplicate key | rejected with a diagnostic — unlike `Settings`, where the later key wins |
-| Empty key or value | rejected |
-| Comments | stripped from the section body before statements are split |
+| Statement shape | `<Name>( <key> = <value> [, <key> = <value> ]… )` — anything else is [`DSH3274`](../diagnostics/DSH3xxx.md#dsh3274) |
+| Statement name | an identifier, matched case-insensitively against `Node` and `Comment`; any other name is `DSH3274` |
+| Key matching | case-insensitive |
+| Value handling | a single quoted string is its text; anything else is the text of its tokens, which a whole-number argument must read as an optional sign and digits |
+| Duplicate key | `DSH3274` — unlike `Settings`, where the later key wins |
+| Empty value | `DSH3274` |
+| Missing or empty required argument, non-integer coordinate | `DSH3275` |
+| Comments | allowed between any two tokens |
+
+An argument that is neither required nor `Color` is passed on to the layout, which ignores it with
+the warning [`DSH7230`](../diagnostics/DSH7xxx.md#dsh7230); so is a `Color` on a `Node`.
 
 ## Coordinate space
 
 Positions are Unreal material-graph editor coordinates: **X increases to the right, Y increases
 downward**, and the units are the same ones the editor's node positions use.
 
-The constants the automatic layout pass uses are a useful frame of reference when hand-placing nodes:
+A few `Classic` constants are a useful frame of reference when hand-placing nodes:
 
 | Landmark | X |
 | :-- | :-- |
-| generated property / parameter nodes | `-800` |
-| `FunctionInput` nodes | `-800` |
-| inline literal constants | `-1120` |
-| one automatic layout column | `420` wide, laid out leftwards from the output column |
-| output-binding reroute usages | `720` |
-| `FunctionOutput` nodes | `900` |
-| the automatic layout's output column | `900` |
-| `Expression( … ).Pin[i]` output-target nodes | `1200` |
+| the output column: the widest node next to the material, and `FunctionOutput` nodes | `900` |
+| output-binding reroute usages, as constructed | `720` |
+| the material root | `520` right of the graph's bounds |
 
-Vertical stride is `220` for property nodes and automatic layout rows, `180` for function inputs and
-outputs. Negative X is "upstream"; the material root node sits to the right of everything else.
+Columns grow leftwards from the output column, so negative X is "upstream" and the material root node
+sits to the right of everything else. The full table, and the IR styles' own spacing, are on
+[Graph layout](../generation/graph-layout.md#layout-constants). *(since 2.0.0)* The 1.x per-kind
+construction positions (`-800` for property nodes, `1200` for `Expression( … )` targets, …) are gone:
+every node is created in one column and the layout places it.
 
 ## Explicit layout versus automatic layout
 
-A `Layout` block does not merely add to the automatic pass — it **replaces** the ranking algorithm.
+Under `Classic`, a `Layout` block does not merely add to the automatic pass — it **replaces** the
+ranking algorithm.
 
 | Condition | Result |
 | :-- | :-- |
@@ -127,21 +138,23 @@ dependency, `360` left of a known consumer, or `360` right of a known dependency
 fan-out for coincident slots. Anything still unplaced goes into a fallback column to the left of
 everything positioned.
 
-> [!WARNING]
-> **Layout always runs (since `2.0.0`).** Auto-compile-on-save, the Gen page
-> buttons and the live preview all generate in memory, so a `Layout` block has no visible effect
-> there — the nodes keep whatever positions the construction pass produced. Positions appear only in
-> a persisted asset: at cook, through the commandlet, or after an explicit *Materialize*. See
-> [Ephemeral materials](../generation/ephemeral.md).
+Under the IR styles a pinned node is moved to its position, and the nodes its style placed around it
+move with it.
 
 > [!NOTE]
-> A second `Layout` section **resets** the first rather than appending. Only the last `Layout` block
-> in a block body has any effect. Every other section in DreamShaderLang either appends or merges.
+> **Layout always runs** *(since 2.0.0)*, for an Ephemeral material as much as for a saved one; the
+> one opt-out is the `Classic` style's large-graph guard. See
+> [Graph layout](../generation/graph-layout.md#when-layout-runs).
+
+> [!NOTE]
+> A second `Layout` section **replaces** the first rather than appending, with the warning
+> [`DSH2258`](../diagnostics/DSH2xxx.md#dsh2258) *(since 2.0.0)*. Only the last `Layout` block in a
+> block body has any effect.
 
 ## `#Region` / `#EndRegion`
 
 Region directives live in **`Graph` body text**, not in `Layout`. They name a span of graph
-statements; the layout pass turns each distinct region name into a comment-box block.
+statements; the layout turns each region into a comment box.
 
 ```c
 Graph = {
@@ -158,77 +171,68 @@ Graph = {
 
 | Rule | Detail |
 | :-- | :-- |
-| Recognition | the trimmed line must start with `#Region` / `#EndRegion`, matched case-insensitively, followed by end of line, whitespace, or `"` |
-| Name | the rest of the line, unquoted and trimmed; required on `#Region` |
-| Nesting | regions nest — the parser keeps a stack |
-| Span | `StartLine` is the line **after** `#Region`; `EndLine` is the line **before** `#EndRegion`, floored at `StartLine` |
-| Line numbering | directive lines are replaced by an equal-length run of spaces, so diagnostics keep their real line and column |
+| Recognition | a `#` line whose word right after the `#` is `Region` or `EndRegion`, matched case-insensitively. Another `#` line in a `.dsm` / `.dsf` is refused by the [preprocessor](preprocessor.md#what-is-not-a-directive) first (`DSH1035`); one that reaches a 1.x `Graph` body, as `#pragma` can in a `.dsh`, is [`DSH2219`](../diagnostics/DSH2xxx.md#dsh2219) |
+| Name | the rest of the line, unquoted and trimmed; required on `#Region` — [`DSH2216`](../diagnostics/DSH2xxx.md#dsh2216) |
+| Nesting | regions nest; an `#EndRegion` with none open is [`DSH2217`](../diagnostics/DSH2xxx.md#dsh2217), a region still open at the end of the body [`DSH2218`](../diagnostics/DSH2xxx.md#dsh2218) |
+| Positions | a directive is a token like any other, so every diagnostic keeps its real line and column |
 
-A statement inside a region tags the variable it produces with the region name. On the automatic
-layout path each region becomes one comment box; on the explicit path region names contribute the
-block boundaries used to decide where cross-block reroutes are inserted.
+Under `Blocks` a region is a box of its own, and a region that holds regions is a box around their
+boxes. Under `Classic`, a statement inside a region tags the variable it produces with the region
+name; on the automatic path each region becomes one comment box, and on the explicit path region
+names contribute the block boundaries used to decide where cross-block reroutes are inserted.
 
 > [!NOTE]
 > The [preprocessor](preprocessor.md) sees every `#` line before the parser does *(since 1.9.0)*, and
 > it names `region` / `endregion` explicitly as lines to pass through — in any case, exactly as
-> matched here. So `#Region`, `#region` and `#REGION` all still reach the generator unchanged, and
-> region directives are unaffected by conditional compilation.
+> matched here. So `#Region`, `#region` and `#REGION` all reach the parser unchanged, and region
+> directives are unaffected by conditional compilation.
 
 > [!NOTE]
 > `#Region` names and `Layout` `Comment` names are independent. Declaring a `Comment` whose rectangle
-> happens to contain a region's nodes does not merge the two — containment is what assigns a node to a
-> comment block on the explicit path.
+> happens to contain a region's nodes does not merge the two.
 
 ## Notes
 
-- **Comment text is always prefixed with `DreamShader: `.** A `Comment(Name="Sampling", …)` produces
-  a box reading `DreamShader: Sampling`. That prefix is also the marker used at teardown: on
-  regeneration, comment boxes whose text starts with `DreamShader: ` are deleted and rebuilt, and
-  comment boxes that do not carry the prefix **survive**. A hand-authored comment box is the only
-  hand edit that survives regeneration. See [Regeneration](../generation/regeneration.md).
-- A `Comment` whose `Name` is empty or whitespace after unquoting is rejected at parse time with
-  `Layout argument 'Name' is required.`, so no box is ever created for one.
-- The [decompiler](../tools/decompiler.md) emits `Layout` blocks in exactly this format, so a
-  material can be exported, edited and regenerated with its positions intact. Emission is controlled
-  by the **Export Decompiled Layout** project setting, default on. See
-  [Project settings](../settings/project.md).
-- The automatic layout pass gives up on very large graphs — at or above 1200 expressions it logs
+- **Comment titles.** Under `Classic` every box is titled `DreamShader: <Name>`, so
+  `Comment(Name="Sampling", …)` reads `DreamShader: Sampling`. Under the IR styles a `Comment` keeps
+  its title as written, and the boxes the style makes for regions and blocks carry the prefix. The
+  prefix marks a box as the compiler's own; see [Regeneration](../generation/regeneration.md).
+- A `Comment` whose `Name` is empty or whitespace is `DSH3275`, so no box is ever created for one.
+- The [decompiler](../tools/decompiler.md) writes positions and free comment boxes back as
+  `#pragma layout` lines, or as a `Layout` block with `-Format Legacy`, so a material can be exported,
+  edited and regenerated with its positions intact. Emission is controlled by the **Export Decompiled
+  Layout** project setting, default on. See [Project settings](../settings/project.md).
+- The `Classic` automatic layout gives up on very large graphs — at or above 1200 expressions it logs
   `Skipping automatic layout for large DreamShader graph ({Count} nodes). Existing generated positions will be used.`
   and leaves construction-time positions in place. A `Layout` block is the way to control those
   graphs. See [Graph layout](../generation/graph-layout.md).
-- `Layout` is not accepted inside a `VirtualFunction`; that block generates no graph.
+- `Layout` is not accepted inside a `VirtualFunction`
+  ([`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245)); that block generates no graph.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this section. All of these are parse-time
-errors.
+Every diagnostic carries the line and column of the statement or directive it is about.
 
 ### `Layout` statements
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Invalid Layout statement '{Statement}'.` | no balanced `( … )` |
-| `Unexpected text after Layout statement '{Statement}'.` | trailing text after the closing `)` |
-| `Invalid Layout statement name in '{Statement}'.` | the text before `(` is not an identifier |
-| `Layout argument '{Argument}' must use Key=Value syntax.` | a positional argument |
-| `Invalid Layout argument '{Argument}'.` | empty key or empty value |
-| `Layout argument '{Key}' is declared more than once.` | duplicate argument key |
-| `Layout argument '{Name}' is required.` | a required text argument is missing or blank |
-| `Layout argument '{Name}' must be an integer.` | a required integer argument is missing or not an integer |
-| `Invalid Layout Node statement '{Statement}'. {Detail}` | wrapper around the two messages above, for `Node` |
-| `Invalid Layout Comment statement '{Statement}'. {Detail}` | wrapper around the two messages above, for `Comment` |
-| `Layout Comment Color must be a float4 literal in '{Statement}'.` | `Color` is not a vector literal |
-| `Unknown Layout statement '{Name}'.` | a call name other than `Node` or `Comment` |
+| `DSH3274` | the section is not opened with `{`; a statement that is not `<Name>( … )`; an argument that is not `Key = Value`; a key written twice; an unclosed `(`; a name other than `Node` or `Comment` |
+| `DSH3275` | a required argument is missing or empty, or a coordinate is not a whole number |
+| `DSH3276` | `Color` is not a vector literal |
+| `DSH2258` | warning: a second `Layout` section |
+| `DSH7230` | warning: an argument the layout has no use for, ignored |
 
 ### `#Region` directives
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Graph #Region on line {Line} must include a name.` | `#Region` with nothing after it |
-| `Graph #EndRegion on line {Line} has no matching #Region.` | unbalanced `#EndRegion` |
-| `Graph #Region '{Name}' is missing #EndRegion.` | a region still open at the end of the `Graph` body |
+| `DSH2216` | `#Region` with no name |
+| `DSH2217` | `#EndRegion` with no `#Region` open |
+| `DSH2218` | a region still open at the end of the `Graph` body |
+| `DSH2219` | another `#` line that reaches a `Graph` body |
 
-The complete cross-stage list is in the [diagnostics index](../diagnostics/index.md).
+The complete list is in the [diagnostics index](../diagnostics/index.md).
 
 ## Example
 
@@ -263,7 +267,7 @@ Shader(Name="Materials/M_Layout", Root="Game")
 }
 ```
 
-Generated graph:
+Generated graph, under `Classic`:
 
 ```text
 Comment      "DreamShader: Emissive"   at (-1300, -260)  size 1100 x 520
@@ -271,10 +275,8 @@ Tint         VectorParameter           at (-1200, -160)
 Intensity    ScalarParameter           at (-1200,   60)
 Boosted      Multiply                  at ( -800, -160)
 Color        Add                       at ( -400,  -60)
-DS_Color_<n> NamedReroute              positioned by propagation
+DS_EmissiveColor_<n>  NamedReroute     positioned by propagation
 ```
-
-Nothing is written to disk unless the material is persisted — see the transient-mode warning above.
 
 ## See also
 
@@ -285,9 +287,9 @@ Nothing is written to disk unless the material is persisted — see the transien
 - [Declarations](../graph/declarations.md) — which statements register a nameable variable
 - [Properties](properties.md) — property names are also valid `Node` `Var` targets
 - [Output bindings](output-bindings.md) — the reroute pairs created for each binding
-- [Graph layout](../generation/graph-layout.md) — the automatic pass, its blocks, constants and limits
+- [Graph layout](../generation/graph-layout.md) — the layout styles, their blocks, constants and limits
 - [Regeneration](../generation/regeneration.md) — the `DreamShader: ` comment prefix rule
-- [Ephemeral materials](../generation/ephemeral.md) — why layout is skipped for memory-only materials
-- [Decompiler](../tools/decompiler.md) — round-tripping `Layout` out of an existing material
+- [Ephemeral materials](../generation/ephemeral.md) — materials that live only in memory
+- [Decompiler](../tools/decompiler.md) — round-tripping positions out of an existing material
 - [Project settings](../settings/project.md) — **Export Decompiled Layout**
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code

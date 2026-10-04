@@ -3,7 +3,7 @@
 > [DreamShader](../index.md) » [Graph](index.md) » **Statements**
 
 The complete set of statement forms a `Graph` body may contain, the rules that terminate them, and
-the order in which the parser decides which form a given piece of text is.
+how the parser decides which form a given statement is.
 
 | | |
 | :-- | :-- |
@@ -15,10 +15,11 @@ the order in which the parser decides which form a given piece of text is.
 
 ```c
 graph-statement :=
-      [ <type> ] <name> [ = <expression> ] ;                      // declaration / assignment
+      <type> <name> [ = <expression> ] ;                          // declaration
     | <type> <name> [ = <init> ] , <name> [ = <init> ] … ;        // comma declarators
-    | <name> = { <expression> , … } ;                             // brace initializer
-    | <name> . <member> = { <expression> | { <expression> , … } } ;
+    | <type> <name> = { <expression> , … } ;                      // brace initializer
+    | <name> = <expression> ;                                     // assignment
+    | <name> . <member> = <expression> ;                          // member write
     | <call-expression> ;                                         // statement-form call
     | if ( <condition> ) { <graph-statement> … }
       [ else { <graph-statement> … } | else if ( … ) { … } … ]
@@ -32,192 +33,178 @@ graph-statement :=
 | 2 | Declaration + expression initializer | `float3 c = A * K;` | `;` | [Declarations](declarations.md) |
 | 3 | Declaration + brace initializer | `vec4 v = {rgb, 1.0};` | `;` | [Declarations](declarations.md) |
 | 4 | Assignment to an existing or output variable | `Color = Tint;` | `;` | [below](#assignment) |
-| 5 | Assignment + brace initializer | `Color = {r, g, b};` | `;` | [below](#assignment) |
+| 5 | Assignment + brace initializer | `Color = {r, g, b};` | — | **refused** — [`DSH2162`](../diagnostics/DSH2xxx.md#dsh2162) *(since 2.0.0)*; write `Color = float3(r, g, b);` |
 | 6 | `MaterialAttributes` member write | `Attrs.BaseColor = Tint;` | `;` | [MaterialAttributes](material-attributes.md) |
-| 7 | Member write + brace initializer | `Attrs.BaseColor = {1, 0, 0};` | `;` | [MaterialAttributes](material-attributes.md) |
+| 7 | Member write + brace initializer | `Attrs.BaseColor = {1, 0, 0};` | — | **refused** — `DSH2162` *(since 2.0.0)*; write a constructor |
 | 8 | Comma-separated declarators | `float a = 1, b, c = 3;` | `;` | [Declarations](declarations.md) |
 | 9 | Statement-form call | `F_Split(Src, OutA, OutB);` | `;` | [Calls](calls.md) |
-| 10 | `if` / `else` / `else if` | `if (m > .5) { … } else { … }` | **none** — brace matched | [if / else](if.md) |
+| 10 | `if` / `else` / `else if` | `if (m > .5) { … } else { … }` | **none** — ends at its last `}` | [if / else](if.md) |
 
-Form 8 expands to one statement per declarator; all of them share the type token of the **first**
-declarator and all of them report the **same** source line and column.
+Form 8 expands to one variable per declarator; all of them share the type token of the **first**
+declarator, and each reports its own source line and column.
 
 ## Termination and splitting
 
+A `Graph` body is read by the 2.0 statement parser, token by token *(since 2.0.0)*; it is no longer
+split as text at `;`.
+
 | Rule | Behaviour |
 | :-- | :-- |
-| Separator | `;` at top level only. Parenthesis, brace, bracket depth and string state are all tracked, so a `;` inside `( )`, `{ }`, `[ ]` or `"…"` does not split. |
-| Repeated `;` | runs of `;` collapse; empty statements are dropped without a diagnostic |
-| Trailing `;` | the **final** statement of a body may omit its `;` |
-| `if` statements | detected *before* the `;` scan and delimited by brace matching, so an `if` needs no `;` and a `;` inside its body does not split it |
-| Leading whitespace | skipped; every statement records a 1-based line and column relative to the block |
-| Nested bodies | `if` / `else` bodies are parsed by the same splitter, so **every** form above is legal inside a branch, including nested `if` |
+| Separator | every statement except `if` ends with `;`; a missing one is [`DSH2154`](../diagnostics/DSH2xxx.md#dsh2154), reported at the first token after the statement |
+| Repeated `;` | each extra `;` is an empty statement and is dropped without a diagnostic |
+| Final `;` | **required** on the last statement of a body too: `DSH2154` *(since 2.0.0)* |
+| `if` statements | end with the `}` of their last body, so an `if` needs no `;` |
+| Positions | every statement and expression carries its own line and column |
+| Nested bodies | `if` / `else` bodies are blocks of the same grammar, so **every** form above is legal inside a branch, including nested `if` |
 
 ```c
 Graph = {
-    float a = 1.0;;;             // the empty statements between ; are dropped
-    if (a > 0.5) { a = 0.0; }    // no ; needed; the inner ; does not split the if
-    float b = a * 2.0            // final statement, ; omitted
+    float a = 1.0;;;             // the empty statements are dropped
+    if (a > 0.5) { a = 0.0; }    // no ; after the }
+    float b = a * 2.0;           // the final statement needs its ; (DSH2154 without it)
 }
 ```
 
+A statement that fails to parse is skipped up to the next `;` at its own nesting level, and the
+parser carries on with the next statement; every error of the body is reported in one build.
+
 ## Classification order
 
-Given one statement's text, the parser decides its form in this order. The first rule that matches
-wins.
+The parser decides a statement's form from its first tokens. The first rule that matches wins.
 
-| Order | Test | Result |
+| Order | Statement starts with | Result |
 | --: | :-- | :-- |
-| 1 | starts with the keyword `if` (**case-sensitive**, identifier-bounded) | form 10 |
-| 2 | splitting on top-level `,` yields more than one segment **and** the first segment, minus its `= …`, splits into a type and a name | form 8 |
-| 3 | no top-level `=`, and the text splits into a type and a name | form 1 |
-| 4 | no top-level `=`, and it does not | form 9 (expression statement) |
-| 5 | has a top-level `=`, and the left side splits into a type and a name | form 2, or form 3 when the right side is `{ … }` |
-| 6 | has a top-level `=`, and the left side does not | form 4/5, or form 6/7 when the target contains a `.` |
-
-"Splits into a type and a name" means: split at the **last** top-level whitespace character, tracking
-`( )` depth and string state; both halves must be non-empty. This is why `UE.Panner(Speed = 0.1) P;`
-is a declaration — the space inside the argument list is not at top level.
+| 1 | the keyword `if` (**case-sensitive**) | form 10 |
+| 2 | `for`, `while`, `do`, `return`, `break`, `continue`, `discard` | parsed, then refused: [`DSH2208`](../diagnostics/DSH2xxx.md#dsh2208) |
+| 3 | `switch`, `case`, `default` | [`DSH2160`](../diagnostics/DSH2xxx.md#dsh2160) |
+| 4 | `{` | a bare block: [`DSH2220`](../diagnostics/DSH2xxx.md#dsh2220) |
+| 5 | `;` | an empty statement |
+| 6 | a `#Region` / `#EndRegion` line | a region; see [Layout](../language/layout.md) |
+| 7 | two names in a row (`float3 c`), optionally after `static` / `const` | a declaration: forms 1–3 and 8. A storage keyword is [`DSH2212`](../diagnostics/DSH2xxx.md#dsh2212) |
+| 8 | anything else | an expression: an assignment (forms 4–7), a call (form 9), or [`DSH2211`](../diagnostics/DSH2xxx.md#dsh2211) for a value nothing receives |
 
 > [!WARNING]
-> The keyword probe in rule 1 is case-sensitive and is the **only** case-sensitive construct in the
-> statement grammar. `If (x) { … }` is not an `if` statement: it falls through to rule 3, splits into
-> type `If (x)` / name `{ … }`, and fails with `Unsupported Graph variable type 'If (x)'.`
+> Keywords are case-sensitive. `If (x) { … }` is not an `if` statement: `If` is a name, `If (x)` a
+> call, and the `{` where the call statement's `;` belongs is `DSH2154`. See
+> [Unsupported constructs](unsupported.md#wrong-case-keywords).
 
 > [!NOTE]
-> The name half of rules 3 and 5 is only required to be **non-empty** — it is not validated as an
-> identifier. `float3 A.B = x;` is therefore a declaration of a variable literally named `A.B`, not a
-> member write; member writes are only reachable through rule 6, which requires the left side to
-> *not* split into a type and a name. Declarators after the first in form 8 **are** identifier-checked.
+> A declared name is one identifier. `float3 A.B = x;` is `DSH2154` at the `.` *(since 2.0.0)*; 1.x
+> declared a variable literally named `A.B`. Member writes have no type in front: `Attrs.BaseColor = x;`.
 
 ## Assignment
 
-Forms 4 and 5. The target is the left side of the top-level `=`, taken verbatim after trimming.
+Forms 4 and 6. The target is a name or `name.member`; anything else — a swizzle of a member, an
+index, a call — is [`DSH2206`](../diagnostics/DSH2xxx.md#dsh2206).
 
 ```c
 <target> = <expression> ;
-<target> = { <expression> , … } ;
 ```
 
 The target is resolved in this order:
 
 | Order | Target names | Behaviour |
 | --: | :-- | :-- |
-| 1 | a name containing a `.` that splits into two non-empty halves | `MaterialAttributes` member write — see [MaterialAttributes](material-attributes.md) |
-| 2 | an existing `Graph` value | the value is coerced to the **existing** binding's shape: component count, texture flag, texture type, Substrate flag |
-| 3 | an `Outputs` declaration of the enclosing block | the value is coerced to the **declared** type |
-| 4 | nothing yet | a new variable is created carrying the value's own shape — no type token needed |
+| 1 | `name.member` | `MaterialAttributes` member write — see [MaterialAttributes](material-attributes.md) |
+| 2 | a Graph variable, an `Outputs` declaration of a `Shader`, or an output of a function block | the value is converted to the variable's declared type |
+| 3 | a property | [`DSH4229`](../diagnostics/DSH4xxx.md#dsh4229): a property is an input; copy it into a variable first |
+| 4 | nothing | declared here, with the value's type — legacy rule L26, said by the info [`DSH5292`](../diagnostics/DSH5xxx.md#dsh5292) |
 
-Lookup in rules 2 and 3 is **case-insensitive**: an exact match is tried first, then a
-case-insensitive scan. See [Name resolution](name-resolution.md).
+A name is looked up exactly first, then ignoring case; a unique match in another case is taken with
+the warning [`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275). See [Name resolution](name-resolution.md).
 
 Rule 4 means an undeclared name on the left of `=` is not an error:
 
 ```c
 Graph = {
-    vec3 Base = Tint * 2.0;
-    Scratch   = Base.rgb;    // legal: creates 'Scratch' as a 3-component value
-    Color     = Scratch;     // 'Color' is an Outputs declaration -> coerced to its type
+    vec3 Boost = Tint * 2.0;
+    Scratch    = Boost;      // DSH5292: declares 'Scratch' as a float3
+    Color      = Scratch;    // 'Color' is an Outputs declaration -> converted to its type
 }
 ```
 
-Coercion at rules 2 and 3 **silently narrows** a wider value to the target width by prefixing an
-`r` / `rg` / `rgb` mask, and splats a scalar up to the target width. It never widens a 2-component
-value to 3. See [Conversions](conversions.md).
+The conversion at rule 2 takes the **leading components** of a wider value, with the info
+[`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) (legacy rule L22), and spreads a scalar across a
+wider target. It never widens a 2-component value to 3: that, and any other value that does not fit,
+is [`DSH4228`](../diagnostics/DSH4xxx.md#dsh4228). See [Conversions](conversions.md).
 
 ### Brace-initializer assignment
 
-A right-hand side whose trimmed text is at least two characters long and starts with `{` and ends
-with `}` is a brace initializer. It is re-serialised as `<TargetType>(<inner>)` and evaluated as a
-constructor call, so it obeys every constructor rule — including "no named arguments" and the
-single-scalar splat. `{}` produces the target type's default value.
-
-The target type comes from, in order: the declared type token; the attribute's type for a member
-write; the existing variable's component count; the matching `Outputs` declaration. Texture and
-`Substrate` targets are rejected outright. Details and the full resolution table are on
-[Declarations](declarations.md); the constructor rules are on [Constructors](constructors.md).
+A brace list is read only as the initializer of a declaration. On the right of an assignment or a
+member write it is [`DSH2162`](../diagnostics/DSH2xxx.md#dsh2162) *(since 2.0.0)*; write the
+constructor instead: `Color = float3(r, g, b);`. The declaration form and its rules are on
+[Declarations](declarations.md#brace-initializers); the constructor rules are on
+[Constructors](constructors.md).
 
 ## Expression statements
 
-Form 9. A statement that is neither a declaration nor an assignment is evaluated as an expression,
-and is accepted only when it is a **call**:
+Form 9. A statement that is neither a declaration nor an assignment must be a **call**; any other
+expression is `DSH2211`.
 
-| Requirement | Diagnostic when unmet |
-| :-- | :-- |
-| the expression is a call | `Graph expression statements currently support only Function calls with explicit out arguments.` |
-| the callee flattens to a name | `Graph expression statements must call a named Function.` |
-| the name resolves to exactly one `Function`, `GraphFunction`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend` or `VirtualFunction` | `Graph expression statement '{Text}' is unsupported. Only DreamShader Function, GraphFunction, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction calls may use statement syntax.` |
-| exactly one, not several | `Graph expression statement '{Text}' is ambiguous because multiple callable definitions exist.` |
-
-In statement form the arguments are the declared inputs followed by **one plain variable name per
-output**, in declaration order. Statement calls are positional-only for every callee kind. Full
-argument rules, out-target constraints and the value-call form are on [Calls](calls.md).
+In statement form a function's outputs are received by the trailing arguments, one plain variable
+name per output, in declaration order. Full argument rules, out-target constraints and the
+value-call form are on [Calls](calls.md).
 
 Statement-form multi-output `ShaderFunction` / `VirtualFunction` calls are available
 *(since 1.3.5)*; single-output `Function` / `GraphFunction` value calls *(since 1.3.1)*.
 
 ## Synthesized statements
 
-Every `Outputs` declaration of the enclosing block that carries a default value is turned into a
-declaration statement and **prepended** before the first statement of the `Graph` body. These
-statements have no source location; their diagnostics therefore carry no usable line number.
+Every `Outputs` declaration of a `Shader` becomes a variable declared at the top of the material's
+body, before the first statement of the `Graph` *(since 2.0.0)*. It is initialized with its own
+initializer when it has one, and otherwise with a zero of its type (an empty attribute set for
+`MaterialAttributes`); a texture or `Substrate` output without an initializer starts without a
+value. These declarations carry the position of the `Outputs` line they came from.
 
-| Message | Cause |
+A top-level `Graph` declaration of an output's name (same case) does not declare a second variable:
+with an initializer it becomes an assignment to the output, and without one it is dropped.
+
+| Code | Raised when |
 | :-- | :-- |
-| `Output declaration initializer requires a type and name.` | the synthesized declaration had a blank type or name |
-| `Output declaration '{Name}' has an empty initializer.` | the `Outputs` default value text was empty |
+| [`DSH3270`](../diagnostics/DSH3xxx.md#dsh3270) | an `Outputs` declaration has `=` and nothing after it |
+| [`DSH3266`](../diagnostics/DSH3xxx.md#dsh3266) | an `Outputs` declaration is followed by neither `;` nor the section's closing `}` |
 
-This is also what makes `Graph = { }` legal for a `Shader`: the initialized output declaration is the
-body. See [Shader](../language/shader.md).
+A `Shader` whose `Outputs` section declares or binds anything needs no `Graph` section; one with
+neither is [`DSH2255`](../diagnostics/DSH2xxx.md#dsh2255). See [Shader](../language/shader.md).
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this table.
-
-### Statement wrapping
-
-| Message | Cause |
-| :-- | :-- |
-| `In Graph statement '{Text}': {Detail}` | any parse failure inside a statement; `{Detail}` is the inner message |
-| `In Graph statement '{Text}': '{Declarator}' is not a valid declarator in a comma-separated declaration.` | a declarator after the first is not a bare identifier |
-| `In Graph if body: {Detail}` / `In Graph else body: {Detail}` | a failure inside a branch body |
+Every diagnostic is reported as `<file>(<line>,<column>): DSHnnnn: <message>`, at the construct
+itself, including inside an `if` body.
 
 ### Parse time
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Unexpected token '{Token}' in Graph expression.` | tokens remain after a complete expression, or a non-primary token appears where a value was expected |
-| `Expected token type {Code} in Graph expression near '{Text}'.` | a `,` or `)` is missing from a call argument list |
-| `Expected member name after '.'.` | `.` is not followed by an identifier |
-| `Expected function name after '::'.` | `::` is not followed by an identifier |
-| `Empty Graph expression.` | the expression text was empty |
-| `Invalid numeric literal '{Text}'.` | a number token that converts to zero while containing a character no spelling of zero can contain — in practice an underflowing exponent such as `1e-9999`. A token with a trailing remainder (`0.5.5`) converts to its valid prefix instead — see [Literals](literals.md) |
+| `DSH2154` | a statement does not end with `;` — including the last one of a body |
+| [`DSH2151`](../diagnostics/DSH2xxx.md#dsh2151) | an expression was expected and something else was found, e.g. `= 5;` |
+| [`DSH2152`](../diagnostics/DSH2xxx.md#dsh2152) | a `)` is missing from a call or a parenthesized expression |
+| [`DSH2161`](../diagnostics/DSH2xxx.md#dsh2161) | `.` is not followed by a name |
+| [`DSH5260`](../diagnostics/DSH5xxx.md#dsh5260) | `::` is not followed by a name |
+| [`DSH2163`](../diagnostics/DSH2xxx.md#dsh2163) | a declarator after `,` is not a name |
+| [`DSH2105`](../diagnostics/DSH2xxx.md#dsh2105) | a malformed number, such as `0.5.5` — see [Literals](literals.md) |
+| `DSH2160` | `switch`, `case`, `default` |
+| `DSH2162` | a brace list used as a value (forms 5 and 7) |
+| `DSH2200`–`DSH2222` | a construct 1.x did not have — see [Unsupported constructs](unsupported.md) |
 
-### Build time
+### Bind and build time
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Encountered an invalid empty Graph statement.` | a statement with no expression, no declaration and no brace initializer |
-| `Encountered a Graph assignment without a target variable.` | the left side of `=` was empty, e.g. `= 5;` |
-| `Failed to evaluate Graph assignment for '{Name}'. {Detail}` | the right-hand side failed to evaluate |
-| `Failed to assign Graph member '{Name}'. {Detail}` | a member write failed |
-| `MaterialAttributes member assignment '{Target}' requires a value.` | form 6 with no right-hand side |
-| `Graph variable '{Name}' is declared more than once.` | redeclaration; the check is case-insensitive |
-| `Graph variable '{Name}' was previously assigned an incompatible value. {Detail}` | assignment rule 2 could not coerce |
-| `Graph output variable '{Name}' was assigned an incompatible value. {Detail}` | assignment rule 3 could not coerce |
-| `Graph builder is not initialized.` | internal guard; the builder was run without a target material |
-
-Progress text emitted while the statements run:
-`Building DreamShader graph nodes ({N} statements)...`,
-`Evaluating DreamShader graph statement {I} of {N}...`,
-`Evaluating DreamShader graph statement {I} of {N}: '{Name}'...`. For bodies with more than 512
-statements only every 64th statement updates the text.
+| `DSH2206` | the left of `=` is not a name or `name.member` |
+| [`DSH4220`](../diagnostics/DSH4xxx.md#dsh4220) | a name is declared twice in one block, or a branch declares a name of the enclosing body |
+| `DSH4228` | the value of an assignment or initializer does not fit the target's type |
+| `DSH4229` | the target is a property |
+| `DSH5289` | *info:* a wider value was cut to the target's leading components |
+| `DSH5292` | *info:* an assignment declared its undeclared target |
+| `DSH5275` | *warning:* a name matched a declaration only ignoring case |
+| [`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200) | a name matches no declaration at all |
 
 The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
 
 ## Example
 
-Every statement form in one body:
+Every accepted statement form in one body:
 
 ```c
 ShaderFunction(Name="Functions/F_AllForms")
@@ -227,14 +214,14 @@ ShaderFunction(Name="Functions/F_AllForms")
     Outputs    = { MaterialAttributes Attrs; vec3 Debug; }
 
     Graph = {
-        MaterialAttributes Attrs;              //    the Outputs declaration does not create it
+        MaterialAttributes Attrs;              //    names the output: no second variable
         float3 c;                              // 1  declaration, no initializer
         float3 scaled = Tint * K;              // 2  declaration + expression
         vec4   packed = {scaled, 1.0};         // 3  declaration + brace initializer
         c = packed.rgb;                        // 4  assignment
-        Debug = {0.0, 0.0, 0.0};               // 5  assignment + brace initializer
+        Debug = float3(0.0, 0.0, 0.0);         //    (form 5 is refused: write the constructor)
         Attrs.BaseColor = c;                   // 6  member write
-        Attrs.Roughness = {0.35};              // 7  member write + brace initializer
+        Attrs.Roughness = 0.35;                //    (form 7 is refused: write the value)
         float a = 1, b, d = 3;                 // 8  comma declarators
 
         if (K > 1.0) {                         // 10 if / else
@@ -251,12 +238,12 @@ ShaderFunction(Name="Functions/F_AllForms")
 - [Graph](index.md) — the evaluation model and the section grammar
 - [Declarations](declarations.md) — type tokens, defaults, comma declarators, brace initializers, scope
 - [Expressions](expressions.md) — operators, precedence, associativity
-- [if / else](if.md) — condition splitting, the truth table, branch merging
+- [if / else](if.md) — the condition, the truth table, branch merging
 - [Calls](calls.md) — value-form and statement-form calls, out targets, named arguments
 - [MaterialAttributes](material-attributes.md) — member reads and writes
-- [Conversions](conversions.md) — what "coerced to the existing shape" does
+- [Conversions](conversions.md) — what "converted to the declared type" does
 - [Name resolution](name-resolution.md) — how a bare identifier is looked up
-- [Unsupported constructs](unsupported.md) — `for`, `while`, `return`, `+=`, ternary, and their real messages
+- [Unsupported constructs](unsupported.md) — `for`, `while`, `return`, `+=`, ternary, and their codes
 - [Node reuse](node-reuse.md) — why two identical statements can produce one node
 - [Output bindings](../language/output-bindings.md) — `Outputs` declarations and their initializers
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code, by stage

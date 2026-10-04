@@ -24,9 +24,14 @@ ShaderFunction(Name = "<name-path>" [, Root = "<root>"]) { … }
              | <folder> [/ <folder>] …
 ```
 
-`Name` is **required**; a missing one fails with `Shader(Name="...") is required.` (or
-`{Kind}(Name="...") is required.` for the function blocks). `Root` is optional and defaults to the
-empty string. Attribute keys are matched case-insensitively, so `name=` and `ROOT=` both resolve.
+`Name` is **required**: a block without one, or with one that is empty, is
+[`DSH2242`](../diagnostics/DSH2xxx.md#dsh2242). `Root` is optional and defaults to the empty string.
+Attribute keys are matched case-insensitively, so `name=` and `ROOT=` both resolve.
+
+*(since 2.0.0)* A 1.x block keeps exactly this destination (legacy rule L10): its `Name=` is never
+placed under the source file's folder, as the name of a `.dss` product is. A destination that does not
+resolve fails the product with [`DSH8200`](../diagnostics/DSH8xxx.md#dsh8200), whose message quotes the
+asset layer's code and text — see [Diagnostics](#diagnostics).
 
 ## Resolution order
 
@@ -82,12 +87,13 @@ its `Shader` block to the default and pin one `ShaderFunction` to `/Game`.
 > [!NOTE]
 > The default is skipped, and the block falls back to `/Game`, when the owning plugin cannot host
 > generated content — it is not a project plugin under `<Project>/Plugins`, is disabled, declares no
-> `CanContainContent`, has no `Content` directory, or is unmounted. A `Warning` naming the plugin and
-> the reason is logged to `LogDreamShader` on compile. An unresolvable inferred `Root` is never
-> emitted as an error, because the author never wrote one.
+> `CanContainContent`, has no `Content` directory, or is unmounted. *(since 2.0.0)* The fallback is
+> silent: nothing is logged. An unresolvable inferred `Root` is never emitted as an error, because
+> the author never wrote one.
 
-The default is applied wherever a source file becomes an asset path — generation, the *DreamShader
-Gen* page's target column, and the preview renderer — so all three name the same asset.
+The default is applied in the one place a product becomes an asset path, so the compile, product
+resolution (the Material Content Browser, `dsc list-generated`) and the preview renderer all name the
+same asset.
 
 ### Branch — `Game`
 
@@ -135,9 +141,9 @@ A `Root` that begins with `/` and is not one of the forms above is taken verbati
 | `/MyMount/Sub` | `Test` | `/MyMount/Sub/Test` |
 | `/Engine` | `Test` | `/Engine/Test` |
 
-The first segment must survive `SanitizeObjectName` unchanged, otherwise
-`DreamShader Root '{Root}' has an invalid package root.` The mount point itself is not checked for
-existence here — an unmounted root fails later, at the `IsValidObjectPath` gate.
+The first segment must survive `SanitizeObjectName` unchanged, otherwise the destination fails with
+[`DSH8097`](../diagnostics/DSH8xxx.md#dsh8097). The mount point itself is not checked for existence
+here — an unmounted root fails later, at the `IsValidObjectPath` gate.
 
 ### Branch — bare relative path
 
@@ -155,17 +161,17 @@ The difference between this branch and the previous one is exactly the leading s
 ## Plugin-root requirements
 
 Both plugin forms resolve through the same validator. Every gate below must pass, in this order;
-each has its own message.
+each has its own code, which the product's `DSH8200` quotes.
 
-| # | Requirement | Message when it fails |
+| # | Requirement | Code when it fails |
 | :-- | :-- | :-- |
-| 1 | The plugin name is non-empty and unchanged by `SanitizeObjectName` | `DreamShader Root '{Root}' has an invalid plugin name.` |
-| 2 | A plugin with that name is known to the plugin manager | `DreamShader Root '{Root}' references project plugin '{Plugin}', but no enabled plugin with that name was found.` |
-| 3 | It is a **project** plugin, and its base directory is under the project's `Plugins` directory | `DreamShader Root '{Root}' must reference a project plugin under '{PluginsDir}'.` |
-| 4 | It is enabled | `DreamShader Root '{Root}' references project plugin '{Plugin}', but the plugin is not enabled.` |
-| 5 | It can contain content | `DreamShader Root '{Root}' references project plugin '{Plugin}', but the plugin cannot contain content.` |
-| 6 | Its `Content` directory exists on disk | `DreamShader Root '{Root}' references project plugin '{Plugin}', but its Content directory does not exist: '{ContentDir}'.` |
-| 7 | Its content is mounted *(UE 5.6+ only)* | `DreamShader Root '{Root}' references project plugin '{Plugin}', but the plugin content is not mounted.` |
+| 1 | The plugin name is non-empty and unchanged by `SanitizeObjectName` | [`DSH8095`](../diagnostics/DSH8xxx.md#dsh8095) (`Plugin.X`), [`DSH8096`](../diagnostics/DSH8xxx.md#dsh8096) (`Plugin/X`) |
+| 2 | A plugin with that name is known to the plugin manager | [`DSH8089`](../diagnostics/DSH8xxx.md#dsh8089) |
+| 3 | It is a **project** plugin, and its base directory is under the project's `Plugins` directory | [`DSH8090`](../diagnostics/DSH8xxx.md#dsh8090) |
+| 4 | It is enabled | [`DSH8091`](../diagnostics/DSH8xxx.md#dsh8091) |
+| 5 | It can contain content | [`DSH8092`](../diagnostics/DSH8xxx.md#dsh8092) |
+| 6 | Its `Content` directory exists on disk | [`DSH8093`](../diagnostics/DSH8xxx.md#dsh8093) |
+| 7 | Its content is mounted *(UE 5.6+ only)* | [`DSH8094`](../diagnostics/DSH8xxx.md#dsh8094) |
 
 Gate 7 does not exist on UE 5.3 – 5.5; on those engines an unmounted plugin is caught later by the
 object-path validation instead.
@@ -235,15 +241,17 @@ stay taken until [`dsc pass-registry -Gc`](../tools/commandlet.md#pass-registry)
 | `/<PluginName>/…` | `<Project>/Plugins/<PluginName>/Content/…` |
 | `/<MountRoot>/…` | wherever that mount is registered |
 
-The file is `<directory>/<Leaf>.uasset`. It is written only in persist mode — see
-[Ephemeral materials](ephemeral.md).
+The file is `<directory>/<Leaf>.uasset`. A `Graph`-backend material and every function, layer and
+blend asset are saved by every build that may write; a ThinCustom product only once it is
+Materialized — see [Ephemeral materials](ephemeral.md).
 
 ## Notes
 
 - **`Name` may contain folders; `Root` is only a prefix.** `Name="A/B/C"` under `Root="Game"` yields
   `/Game/A/B/C`, and the asset is named `C`.
-- **A duplicate attribute key silently overwrites the earlier one.** `Shader(Name="A", Name="B")`
-  resolves to `B` with no diagnostic.
+- **A duplicate attribute key overwrites the earlier one.** `Shader(Name="A", Name="B")` resolves to
+  `B`, with the warning [`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244) *(since 2.0.0; silent through
+  1.x)*.
 - Every segment is sanitized independently. Characters `SanitizeObjectName` rejects are replaced, so
   `Name="My Mat"` resolves to a leaf named `My_Mat` without a diagnostic.
 - Empty segments are dropped: `Name="A//B"` is `A/B`, and `Root="Game//Sub"` is `/Game/Sub`.
@@ -253,32 +261,30 @@ The file is `<directory>/<Leaf>.uasset`. It is written only in persist mode — 
 
 ## Diagnostics
 
-Runtime substitutions are rendered as `{Placeholder}` throughout this page.
+The asset layer's codes reach the compile result inside the emitter's: a destination that does not
+resolve is [`DSH8200`](../diagnostics/DSH8xxx.md#dsh8200), an asset that cannot be created or reused
+is `DSH8201` (`Graph` material), `DSH8203` (ThinCustom instance) or `DSH8202` (function, layer,
+blend), and each message quotes the code below.
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Shader(Name="...") is required.` | a `Shader` header with no `Name` |
-| `{Kind}(Name="...") is required.` | a `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` header with no `Name` |
-| `DreamShader asset name must resolve to a non-empty asset path.` | `Name` is empty after trimming and slash-stripping |
-| `DreamShader asset name '{Name}' produced an invalid asset name.` | the leaf segment is empty after sanitization |
-| `DreamShader asset name '{Name}' contains an invalid folder segment.` | a non-empty folder segment of `Name` sanitized away to nothing |
-| `DreamShader asset path '{Path}' is not a valid Unreal object path.` | the assembled path failed `IsValidObjectPath` and the engine reported no reason of its own |
-| `DreamShader Root '{Root}' contains an invalid folder segment.` | a non-empty folder segment of `Root` sanitized away to nothing |
-| `DreamShader Root '{Root}' has an invalid plugin name.` | plugin name empty, or altered by sanitization |
-| `DreamShader Root '{Root}' has an invalid package root.` | explicit mount root altered by sanitization |
-| `DreamShader Root '{Root}' references project plugin '{Plugin}', but no enabled plugin with that name was found.` | unknown plugin |
-| `DreamShader Root '{Root}' must reference a project plugin under '{PluginsDir}'.` | engine plugin, or a plugin outside `<Project>/Plugins` |
-| `DreamShader Root '{Root}' references project plugin '{Plugin}', but the plugin is not enabled.` | disabled plugin |
-| `DreamShader Root '{Root}' references project plugin '{Plugin}', but the plugin cannot contain content.` | code-only plugin |
-| `DreamShader Root '{Root}' references project plugin '{Plugin}', but its Content directory does not exist: '{ContentDir}'.` | missing `Content` folder |
-| `DreamShader Root '{Root}' references project plugin '{Plugin}', but the plugin content is not mounted.` | unmounted plugin *(UE 5.6+)* |
-| `Failed to create package '{Package}'.` | package creation failed |
-| `Asset '{ObjectPath}' already exists and is not a Material.` | `Graph` backend, wrong class at the path |
-| `Asset '{ObjectPath}' already exists and is not a DreamShader instance material. Delete it (or remove Backend="Instance") before switching backends.` | ThinCustom backend, wrong class at the path |
-| `Asset '{ObjectPath}' already exists and is not a MaterialFunction asset.` | function kind, wrong class at the path |
-| `Asset '{ObjectPath}' already exists as '{ActualClass}', but {Kind} generation requires '{ExpectedClass}'. Delete or move the existing asset and regenerate it.` | function kind, wrong material-function subclass |
-| `Asset '{ObjectPath}' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.` | ownership guard on a material — see [Regeneration](regeneration.md#ownership-guard) |
-| `Asset '{ObjectPath}' already exists and was not generated by DreamShader. Rename your function or move/delete the existing asset before regenerating.` | ownership guard on a material function |
+| `DSH2242` | a `Shader` / `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` header has no `Name`, or an empty one |
+| `DSH2244` | *(warning)* an attribute key is written twice; the later value wins |
+| [`DSH8098`](../diagnostics/DSH8xxx.md#dsh8098), `DSH8099` | `Name` is empty after trimming and slash-stripping |
+| [`DSH8100`](../diagnostics/DSH8xxx.md#dsh8100) | the leaf segment is empty after sanitization |
+| [`DSH8088`](../diagnostics/DSH8xxx.md#dsh8088) | a non-empty folder segment of `Name` or of `Root` sanitizes away to nothing |
+| — | the assembled path fails `IsValidObjectPath`; `DSH8200` quotes the engine's reason, or says the path is not a valid object path, with no code of its own |
+| `DSH8095`, `DSH8096` | plugin name empty, or altered by sanitization |
+| `DSH8097` | explicit mount root altered by sanitization |
+| `DSH8089`–`DSH8094` | a plugin gate — see [Plugin-root requirements](#plugin-root-requirements) |
+| [`DSH8104`](../diagnostics/DSH8xxx.md#dsh8104), `DSH8108`, `DSH8113` | package creation failed (material, instance, function) |
+| [`DSH8105`](../diagnostics/DSH8xxx.md#dsh8105), `DSH8109`, `DSH8114` | object creation failed (material, instance, function) |
+| [`DSH8102`](../diagnostics/DSH8xxx.md#dsh8102) | `Graph` backend, wrong class at the path |
+| [`DSH8106`](../diagnostics/DSH8xxx.md#dsh8106) | ThinCustom backend, wrong class at the path |
+| [`DSH8111`](../diagnostics/DSH8xxx.md#dsh8111) | function kind, an object that is not a material function at the path |
+| [`DSH8110`](../diagnostics/DSH8xxx.md#dsh8110) | function kind, wrong material-function subclass |
+| [`DSH8103`](../diagnostics/DSH8xxx.md#dsh8103), [`DSH8107`](../diagnostics/DSH8xxx.md#dsh8107) | ownership guard on a material (`Graph`, ThinCustom) — see [Regeneration](regeneration.md#ownership-guard) |
+| [`DSH8112`](../diagnostics/DSH8xxx.md#dsh8112) | ownership guard on a material function |
 
 ## Example
 

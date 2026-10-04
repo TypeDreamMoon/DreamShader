@@ -10,13 +10,16 @@ signature — so that a `Graph` can call it. It generates nothing.
 | Declared in | `.dsm`, `.dsh` and `.dsf` — all three file kinds accept it |
 | Kind | top-level block |
 | Generates | nothing — the asset must already exist |
-| Multiplicity | any number per parse unit |
+| Multiplicity | any number per file; one name declares one thing |
 | Since | `1.2.0` |
+
+The legacy front end reads a `VirtualFunction` as a 2.0 `extern` prototype carrying `/// @asset`; see
+[the 2.0 language](../language-v2/index.md) and [`dsc migrate`](../tools/migrate.md).
 
 ## Synopsis
 
 ```c
-VirtualFunction(Name = "<call-name>" [, Asset = "<asset-reference>"] [,])
+VirtualFunction(Name = "<call-name>" [, Asset = <asset-reference>])
 {
     [{ Options | Settings }   [=] { Asset = <asset-reference> ; … }]
     [{ Inputs | Properties }  [=] { <parameter-declaration> ; … }]
@@ -37,18 +40,20 @@ case-insensitively.
 
 | Attribute | Required | Value | Effect |
 | :-- | :-- | :-- | :-- |
-| **`Name`** | yes | string | The name the block is called by in a `Graph`. Trimmed; must be non-empty. Not an asset path — nothing is created. |
-| `Asset` | no | string | The asset reference. Takes precedence over `Options.Asset`; the `Options` value is consulted only when this is absent or blank after trimming. |
+| **`Name`** | yes | string | The name the block is called by in a `Graph`. Trimmed; must be an identifier ([`DSH6311`](../diagnostics/DSH6xxx.md#dsh6311)). Not an asset path — nothing is created. |
+| `Asset` | no | asset reference | Takes precedence over `Options.Asset`; the `Options` value is consulted only when this is absent or blank after trimming. |
 
 Attribute keys are matched case-insensitively. There is **no `Root` attribute** — the package root is
-part of the asset reference itself. Unrecognized attribute keys are parsed and silently ignored, and
-a duplicate key silently overwrites the earlier one.
+part of the asset reference itself. Unrecognized attribute keys are parsed and silently ignored; a key
+written twice is a warning ([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins.
+*(since 2.0.0)* A trailing comma before `)` is [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243).
 
-> [!WARNING]
-> An unquoted attribute value ends at the first `,` or `)`. `Asset=Path(Game, "F/X")` in the header
-> therefore truncates to `Path(Game` and the parse fails with `Expected identifier near index {Index}.`
-> Put `Path(...)` forms in `Options` — `Options = { Asset = Path(Game, "F/X"); }` — or quote the whole
-> literal and escape the inner quotes.
+*(since 2.0.0)* An unquoted attribute value runs to the next `,` or `)` **outside parentheses**, so
+`Asset = Path(Game, "F/X")` works in the header as well as in `Options`. (1.x cut the value at the
+first `,` and failed the parse.)
+
+*(since 2.0.0)* `Name` is an identifier. A `/` in it — which 1.x accepted, making only the last
+segment callable — is `DSH6311`.
 
 ## Sections
 
@@ -58,28 +63,24 @@ a duplicate key silently overwrites the earlier one.
 | `Properties` | yes — **alias for `Inputs`**, no warning | appends | [Inputs / Outputs / Results](inputs-outputs.md) |
 | `Outputs` | yes | appends | [Inputs / Outputs / Results](inputs-outputs.md) |
 | `Results` | yes — alias for `Outputs`, no warning | appends | [Inputs / Outputs / Results](inputs-outputs.md) |
-| `Options` | yes | merges; last key wins | [Options](options.md) |
-| `Settings` | yes — alias for `Options`, no warning | merges; last key wins | [Options](options.md) |
-| `Graph` | **no** — hard error | — | — |
-| `Code` | **no** — hard error | — | — |
-| `Layout` | no — unknown section | — | — |
-
-Both `Graph` and `Code` share one diagnostic:
-`VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections.`
-Any other section name reports `Unknown VirtualFunction section '{Section}'.`
+| `Options` | yes | merges; a key written twice is a warning ([`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262)) and the later value wins | [Options](options.md) |
+| `Settings` | yes — alias for `Options`, no warning | merges, as `Options` | [Options](options.md) |
+| `Graph` | **no** — [`DSH2247`](../diagnostics/DSH2xxx.md#dsh2247) | — | — |
+| `Code` | **no** — `DSH2247` | — | — |
+| anything else, `Layout` included | **no** — [`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245) | — | — |
 
 > [!NOTE]
 > **Inside a `VirtualFunction`, and only here, `Properties` means `Inputs`.** The statements in it are
-> parsed with the typed-parameter grammar (`[opt] <type> <name> [= <default>] [[ … ]] ;`) and appended
+> read with the typed-parameter grammar (`[opt] <type> <name> [= <default>] [[ … ]] ;`) and appended
 > to the block's input list. In a [`Shader`](shader.md), a [`ShaderFunction`](shader-function.md) or a
 > [`ShaderLayer`](shader-layer.md), the same keyword declares parameter and `const` **nodes** with a
 > different grammar. A declaration such as `const float X = 1;` that is legal in those blocks is not a
-> valid `VirtualFunction` `Properties` statement — `const float` becomes the type token and generation
-> fails with `VirtualFunction '{Name}' input 'X' uses unsupported type 'const float'.`
+> valid `VirtualFunction` `Properties` statement: `const` is a keyword, not a type, so the statement is
+> [`DSH3271`](../diagnostics/DSH3xxx.md#dsh3271).
 
 ## The asset reference
 
-The value is stored verbatim at parse time; nothing checks it until a `Graph` actually calls the
+The value is stored as written at parse time; nothing checks it until the emitter builds a call to the
 block. Leading and trailing whitespace is trimmed, one enclosing pair of `"` is stripped and
 unescaped, and `\` is rewritten to `/` in the path.
 
@@ -96,37 +97,38 @@ unescaped, and `\` is rewritten to `/` in the path.
 | `"/Game/Folder/Asset"` | a bare quoted absolute path, no `Path(...)` wrapper |
 | `/Game/Folder/Asset` | a bare unquoted absolute path |
 | `/Game/Folder/Asset.Asset` | a full Unreal object path |
+| `"MaterialFunction'/Game/Folder/Asset.Asset'"` | the engine's *Copy Reference* form, quoted; a class that is not a material function is [`DSH1045`](../diagnostics/DSH1xxx.md#dsh1045) |
 
 Rules that apply to every form:
 
 - Root names and the two `Path(...)` arguments are matched case-insensitively, and each argument may
   be quoted or bare.
 - A path that already starts with `/` is used verbatim; the root argument, if any, is ignored.
-- A path that does **not** start with `/` requires a root — otherwise
-  `Relative asset Path(...) references require a root such as Game, Engine, or Plugin.PluginName.`
-- When the resolved path carries no `.ObjectName` suffix, the leaf name is appended automatically, so
-  `/Game/F/X` becomes `/Game/F/X.X`.
+- A path that does **not** start with `/` requires a root
+  ([`DSH8123`](../diagnostics/DSH8xxx.md#dsh8123)).
+- When the resolved path carries no `.ObjectName` suffix, the leaf name is appended, so `/Game/F/X`
+  becomes `/Game/F/X.X`.
 - A plugin root must name a project plugin that is enabled, can contain content, has an existing
-  `Content` directory and — on UE 5.6 and newer — is mounted. Each failure has its own message; see
-  [Path](../parameters/path.md).
+  `Content` directory and — on UE 5.6 and newer — is mounted. Each failure has its own code
+  (`DSH8118`–`DSH8122`, `DSH8124`); see [Path](../parameters/path.md).
 
-`Path(...)` here is the same resolver used by `UE.CollectionParam` and by reflected asset-valued
-properties. It is **not** the resolver used by texture-property defaults, which has its own message
-set; both are catalogued in [Path](../parameters/path.md).
+A reference that does not resolve is reported as
+[`DSH8270`](../diagnostics/DSH8xxx.md#dsh8270), whose message carries the resolver's own code
+(`DSH8118`–`DSH8132`, `DSH1045`).
 
 ## `Options` keys
 
 `Options` (and its alias `Settings`) uses the ordinary settings grammar: `<Key> = <Value> ;`, keys
-trimmed and lower-cased, values unquoted, later duplicates silently overwriting earlier ones.
+compared ignoring case, a quoted value unquoted.
 
-| Key | Read by the compiler | Effect |
+| Key | Read | Effect |
 | :-- | :-- | :-- |
 | `Asset` | yes | the asset reference, used when the header `Asset=` attribute is absent or blank |
-| any other key | **no** | parsed, stored on the definition, never read |
+| `Description` | yes | kept as the declaration's description *(since 2.0.0)*, which is what `dsc migrate` writes above the `extern`; it changes nothing in a build |
+| any other key | **no** | parsed and ignored, without a diagnostic |
 
-`Description` is the key the editor's VirtualFunction tooling writes into generated declarations. It
-is documentation for the reader only — the compiler ignores it, as it ignores every key other than
-`Asset`. See [Options](options.md).
+`Description` is the key the editor's VirtualFunction tooling writes into generated declarations. See
+[Options](options.md).
 
 ## Inputs and outputs
 
@@ -134,21 +136,23 @@ The declared parameters describe the **existing asset's** interface; they do not
 They serve three purposes: they let the call site be type-checked, they name the pins, and they fix
 the order of a statement call's arguments.
 
-The accepted type tokens are the same set a [`ShaderFunction`](shader-function.md#parameter-types)
-accepts, and the same `opt` rule applies: `opt` marks an input the caller may omit or pass `default`
-for. Defaults and `[ … ]` metadata parse here as well, but there is no node to write them to — a
-`VirtualFunction` never touches the asset it points at.
+The accepted type tokens and the parameter grammar are a [`ShaderFunction`'s](shader-function.md#parameter-types),
+and the same `opt` rule applies: `opt` — or *(since 2.0.0)* a default value — marks an input the caller
+may leave out. Defaults and `[ … ]` metadata parse here as well, but nothing is written anywhere: a
+`VirtualFunction` never touches the asset it points at, and an input a call does not pass is left
+unconnected on the call node, so the asset's own default applies. An output named exactly `Result`
+that comes first is the call's return value.
 
-At call time each declared input is matched to a pin on the loaded `UMaterialFunction` by name
-(case-insensitive); if no pin has that name, the pin at the same index is used. A declaration that
-matches neither reports
-`VirtualFunction '{Name}' input '{Input}' does not exist on MaterialFunction asset '{ObjectPath}'.`
+At emit time each input a call passes is matched to a pin on the loaded `UMaterialFunction` by name —
+exactly, then ignoring case — and failing both by the input's position among the declared inputs.
+Outputs are matched the same way. An input or output that matches nothing is
+[`DSH8220`](../diagnostics/DSH8xxx.md#dsh8220) / [`DSH8221`](../diagnostics/DSH8xxx.md#dsh8221).
 
 ## Calling a VirtualFunction
 
-The callee name is matched case-insensitively against the full `Name` and against its last
-`/`-separated segment. Only the leaf form is spellable in an expression, because `/` lexes as the
-division operator.
+The callee name is the `Name` attribute. *(since 2.0.0)* It matches exactly; a call that matches it
+only in case resolves when the match is unique, with
+[`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275).
 
 ```c
 // VirtualFunction(Name="BufferWriter") declared in an imported .dsh:
@@ -156,108 +160,93 @@ vec3 Written = BufferWriter(Color, Alpha);        // single-output call as a val
 BufferWriter(Color, Alpha, OutResult);            // statement call: inputs, then one target per output  (since 1.3.5)
 ```
 
-Expression calls accept positional or named arguments (`BufferWriter(Color = Tint)`) but not a mix.
-An expression call to a multi-output block selects which output it evaluates to with a named
-`Output=` / `OutputName=` / `OutputIndex=` argument; `Output`/`OutputName` and `OutputIndex` cannot
-be combined, which reports
-`VirtualFunction '{Name}' cannot use OutputName/Output together with OutputIndex.`
+Expression calls accept positional or named arguments (`BufferWriter(Color = Tint)`). An expression
+call to a multi-output block selects which output it evaluates to with a named `Output=` /
+`OutputName=` / `OutputIndex=` argument; `Output`/`OutputName` and `OutputIndex` together are
+[`DSH5252`](../diagnostics/DSH5xxx.md#dsh5252).
 
-Statement calls are positional only, and the trailing arguments — one per declared output — must be
-plain variable names; each writes its output into that name, replacing any earlier value bound to it.
-Full argument rules, including the `default` sentinel for `opt` inputs, are in
+A statement call passes the inputs, then one receiver per declared output, each of which must be a
+variable; each writes its output into that name, replacing any earlier value bound to it. Full
+argument rules, including the `default` sentinel for `opt` inputs, are in
 [Calls](../graph/calls.md).
 
 > [!NOTE]
-> Three `VirtualFunction` names are intercepted before the asset is loaded:
-> `BreakOutFloat2Components`, `BreakOutFloat3Components` and `BreakOutFloat4Components`. An
-> **expression** call to one of them that names an output — by channel name (`Output="G"`), by index
-> (`OutputIndex=1`), or by an output whose declared name is a single `R`/`G`/`B`/`A` or `X`/`Y`/`Z`/`W`
-> letter — compiles to a swizzle on the input instead of a `MaterialFunctionCall` node, and the asset
-> is never loaded. Anything the interception does not recognize falls through to the normal call path.
+> Three names are intercepted before anything is looked up: `BreakOutFloat2Components`,
+> `BreakOutFloat3Components` and `BreakOutFloat4Components` (any case). An **expression** call to one
+> of them whose first argument is positional and that selects a channel — `Output="G"` (one of
+> `R`/`G`/`B`/`A`/`X`/`Y`/`Z`/`W`), `Output="1"`, or `OutputIndex=1` — inside the vector's width
+> compiles to a swizzle on that argument instead of a `MaterialFunctionCall` node, and no asset is
+> loaded. Anything the interception does not recognize falls through to the normal call path.
 > Statement calls are not intercepted.
 
 ## Notes
 
-- **Nothing is generated, and nothing is validated at parse time.** A `VirtualFunction` whose asset
-  does not exist parses cleanly and only fails when a `Graph` calls it. A file that declares only
-  `VirtualFunction` blocks compiles successfully with the message
-  `DreamShader file '{File}' contains VirtualFunction declarations only; no assets were generated.`
+- **Nothing is generated, and nothing is checked against the asset before it is called.** A
+  `VirtualFunction` whose asset does not exist builds cleanly until a `Graph` calls it; then the
+  emitter reports [`DSH8219`](../diagnostics/DSH8xxx.md#dsh8219). A file that declares only
+  `VirtualFunction` blocks is accepted and produces nothing.
 - A `VirtualFunction` is normally kept in a `.dsh` and imported where it is needed, which is what the
   editor's *Create VirtualFunction* action does — it writes a declaration under
   `DShader/VirtualFunctions`. See [VirtualFunction tools](../tools/virtual-function-tools.md).
-- `Name` is a call name, not an asset path. It may contain `/`, but only its last segment is usable
-  in a `Graph` expression.
 - The header `Asset=` attribute wins over `Options.Asset`; the `Options` entry is only consulted when
   the attribute is missing or blank after trimming.
-- Because `import` inlines every file into one text before parsing, a `VirtualFunction` declared in
-  an imported `.dsh` is visible to the importing file's `Graph` blocks. See [import](import.md).
-- Two `VirtualFunction` blocks with the same leaf name in one parse unit are both kept; the first
-  match in declaration order wins at every call site.
+- A header is parsed on its own and its declarations are declared into the importing file, so a
+  `VirtualFunction` declared in an imported `.dsh` is visible to the importing file's `Graph` blocks.
+  See [import](import.md).
+- Two `VirtualFunction` blocks with the same name are [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210)
+  *(since 2.0.0; 1.x kept both and called the first)*.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this section.
+Each code carries the line and column of the construct; the code's page has the message.
 
 ### Parse time
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `VirtualFunction(Name="...") is required.` | the header has no `Name` attribute |
-| `VirtualFunction name cannot be empty.` | `Name` is empty after trimming |
-| `VirtualFunction '{Name}' must provide Options = { Asset = Path(...); }.` | no asset reference in the header and none under `Options.Asset` |
-| `VirtualFunction '{Name}' must declare at least one output.` | no `Outputs` / `Results` entry |
-| `VirtualFunction declares an existing MaterialFunction asset and does not support Graph or Code sections.` | a `Graph` or `Code` section was used |
-| `Unknown VirtualFunction section '{Section}'.` | a section other than `Inputs`, `Properties`, `Outputs`, `Results`, `Options`, `Settings`, `Graph`, `Code` |
-| `Invalid typed declaration '{Statement}'.` | a parameter statement with no space between type and name, an empty left side, or a name that is not an identifier |
-| `Invalid setting declaration '{Statement}'.` | an `Options` statement with no top-level `=` |
-| `Invalid empty setting key in '{Statement}'.` | an `Options` statement whose key is empty |
-| `Expected identifier near index {Index}.` | a malformed header attribute — including an unquoted `Path(Root, "…")` value |
-| `Expected '{' near index {Index}.` | the body block is missing |
-| `Unterminated block.` | the body `{` is never closed |
+| [`DSH2241`](../diagnostics/DSH2xxx.md#dsh2241) | no `(` after `VirtualFunction` |
+| `DSH2243` | a malformed attribute list, a trailing comma included |
+| `DSH2244` | an attribute written twice (warning) |
+| `DSH6311` | no `Name`, or one that is not an identifier |
+| [`DSH2257`](../diagnostics/DSH2xxx.md#dsh2257) | no `{` after the header, or a section without its name or its `{` |
+| `DSH2247` | a `Graph` or `Code` section |
+| `DSH2245` | any other unknown section |
+| `DSH3271` | a parameter statement that is not `[opt] <type> <name> [= <default>] [[ … ]] ;` |
+| [`DSH3272`](../diagnostics/DSH3xxx.md#dsh3272) / [`DSH3273`](../diagnostics/DSH3xxx.md#dsh3273) | `opt` / a default on an output (warnings; ignored) |
+| [`DSH3255`](../diagnostics/DSH3xxx.md#dsh3255)–[`DSH3258`](../diagnostics/DSH3xxx.md#dsh3258) | a malformed `[ … ]` metadata block |
+| [`DSH3261`](../diagnostics/DSH3xxx.md#dsh3261) | an `Options` statement without a key, an `=` or a value |
+| `DSH3262` | an `Options` key written twice (warning) |
+| [`DSH6312`](../diagnostics/DSH6xxx.md#dsh6312) | no asset reference in the header and none under `Options.Asset` |
+| [`DSH6313`](../diagnostics/DSH6xxx.md#dsh6313) | no `Outputs` / `Results` entry |
+| [`DSH2150`](../diagnostics/DSH2xxx.md#dsh2150) | the body is never closed |
 
-### Call time — asset resolution
+### Binding and call time
 
-These fire when a `Graph` calls the block, not when it is declared. The resolver's own message is
-wrapped as `VirtualFunction '{Name}' asset reference is invalid: {Detail}`.
-
-| Message ( `{Detail}` ) | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Asset reference cannot be empty.` | the stored reference is blank |
-| `Asset Path(...) reference is missing a closing ')'.` | text begins with `Path(` but does not end with `)` |
-| `Asset Path(...) contains an unterminated string literal.` | an unbalanced `"` inside the argument list |
-| `Asset Path(...) expects either 1 argument (/Game/... path) or 2 arguments (Game\|Engine\|Plugin.PluginName, asset path).` | zero, or three or more, arguments |
-| `Asset reference requires a non-empty path.` | the path argument is empty |
-| `Relative asset Path(...) references require a root such as Game, Engine, or Plugin.PluginName.` | a relative path with no root argument |
-| `Unsupported asset Path root '{Root}'. Use Game, Engine, or Plugin.PluginName.` | an unrecognized root segment |
-| `Asset Path root '{Root}' has an invalid plugin name.` | the plugin name is empty or does not survive sanitization |
-| `Asset Path root '{Root}' references plugin '{Plugin}', but no enabled plugin with that name was found.` | unknown plugin |
-| `Asset Path root '{Root}' references plugin '{Plugin}', but the plugin is not enabled.` | disabled plugin |
-| `Asset Path root '{Root}' references plugin '{Plugin}', but the plugin cannot contain content.` | code-only plugin |
-| `Asset Path root '{Root}' references plugin '{Plugin}', but its Content directory does not exist: '{Dir}'.` | missing content directory |
-| `Asset Path root '{Root}' references plugin '{Plugin}', but the plugin content is not mounted.` *(since UE 5.6)* | unmounted plugin content |
-| `Invalid asset path '{Path}'.` | the resolved path has no `/` or ends with one |
-| *(the engine's own `IsValidObjectPath` text)* | the resolved path is not a valid Unreal object path |
+| [`DSH4201`](../diagnostics/DSH4xxx.md#dsh4201) | a type token names no type |
+| [`DSH4214`](../diagnostics/DSH4xxx.md#dsh4214) | two parameters share a name |
+| `DSH4210` | the name is declared twice |
+| `DSH5252` | `Output`/`OutputName` and `OutputIndex` on one call |
+| [`DSH5250`](../diagnostics/DSH5xxx.md#dsh5250) / [`DSH5251`](../diagnostics/DSH5xxx.md#dsh5251) | an `OutputIndex` that is not a whole number / an `Output` that is not a name |
 
-### Call time — interface
+The diagnostics for argument counts, named arguments, missing inputs and receivers are shared with
+every other call and are listed in [Calls](../graph/calls.md) and
+[`Function` § Call time](function.md#call-time).
 
-| Message | Cause |
+### Emit time — asset resolution and interface
+
+These fire when the emitter builds a call, not when the block is declared.
+
+| Code | Raised when |
 | :-- | :-- |
-| `VirtualFunction '{Name}' could not load MaterialFunction asset '{ObjectPath}'.` | the path resolved but no `UMaterialFunction` is there |
-| `VirtualFunction '{Name}' must declare at least one output.` | reached with an empty output list |
-| `VirtualFunction '{Name}' input '{Input}' does not exist on MaterialFunction asset '{ObjectPath}'.` | no input pin matches by name and no pin exists at that index |
-| `VirtualFunction '{Name}' output '{Output}' does not exist on MaterialFunction asset '{ObjectPath}'.` | no output pin matches by name and no pin exists at that index |
-| `VirtualFunction '{Name}' cannot use OutputName/Output together with OutputIndex.` | both output-selector arguments on one expression call |
-| `VirtualFunction '{Name}' input '{Input}' uses unsupported type '{Type}'.` | type token outside the parameter-type table |
-| `VirtualFunction '{Name}' input '{Input}' uses Substrate, which requires Unreal Engine 5.4 or newer.` | `Substrate` parameter on UE 5.3 |
-| `VirtualFunction '{Name}' output '{Output}' uses unsupported type '{Type}'.` | type token outside the parameter-type table |
-| `VirtualFunction '{Name}' output '{Output}' uses Substrate, which requires Unreal Engine 5.4 or newer.` | `Substrate` parameter on UE 5.3 |
-| `Failed to create a MaterialFunctionCall node for '{Name}'.` | the call node could not be created |
-| `Failed to assign material function '{Name}' to the generated call node.` | the loaded asset was rejected by the call node |
+| `DSH8270` | the asset reference does not resolve; the message carries the resolver's code (`DSH8118`–`DSH8132`, `DSH1045`) |
+| `DSH8219` | no `UMaterialFunction` loads from the resolved path, or the call node refuses it |
+| `DSH8220` | a passed input matches no pin |
+| `DSH8221` | an output matches no pin |
+| [`DSH8214`](../diagnostics/DSH8xxx.md#dsh8214) | the `MaterialFunctionCall` node could not be created |
 
-The diagnostics for argument counts, mixed positional/named arguments, missing required inputs and
-output-target names are shared with every other call form and are listed in
-[Calls](../graph/calls.md). The complete cross-stage list lives in the
-[diagnostics index](../diagnostics/index.md).
+The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
 
 ## Example
 
@@ -317,7 +306,7 @@ VF_BufferWriter.dsh  ->  no asset generated
 M_Buffered.dsm       ->  /Game/Materials/M_Buffered
                          contains one MaterialFunctionCall node bound to
                          /Game/MaterialFunctions/F_BufferWriter.F_BufferWriter
-                         Exposure is left unconnected (declared opt)
+                         Exposure is left unconnected (optional, not passed)
 ```
 
 ## See also
@@ -330,6 +319,6 @@ M_Buffered.dsm       ->  /Game/Materials/M_Buffered
 - [Source files](source-files.md) — which block kinds each of `.dsm` / `.dsh` / `.dsf` may contain
 - [import](import.md) — how a `.dsh` declaration reaches the file that calls it
 - [Calls](../graph/calls.md) — argument forms, `default`, statement vs expression calls
-- [Path](../parameters/path.md) — every accepted `Path(...)` spelling and both resolvers
+- [Path](../parameters/path.md) — every accepted `Path(...)` spelling
 - [VirtualFunction tools](../tools/virtual-function-tools.md) — creating, opening and refreshing declarations from the editor
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code, by stage

@@ -34,18 +34,23 @@ No other entry is offered — in particular there is no *Create*, because one al
 | :-- | :-- | :-- | :-- | :-- |
 | `DreamShader.CopyVirtualFunction` | **CopyVirtualFunction** | "Copy a complete DreamShader VirtualFunction declaration for this Material Function." | `GenericCommands.Copy` | Copies the whole declaration to the clipboard |
 | `DreamShader.CreateVirtualFunction` | **CreateVirtualFunction** | "Create a .dsh file containing the VirtualFunction declaration." | `Icons.Save` | Writes the declaration to a new `.dsh` and opens it |
+| `DreamShader.CopyVirtualFunctionPrototype` | **Copy extern Prototype (2.0)** *(since 2.0.0)* | "Copy the 2.0 extern prototype of this Material Function, with its /// @asset line, for a .dss or a .dsh." | `GenericCommands.Copy` | Copies the `.dss` spelling of the declaration — see [Editor integration](editor-integration.md) |
+| `DreamShader.CreateVirtualFunctionPrototype` | **Create extern Prototype (2.0)** *(since 2.0.0)* | "Create a .dsh file holding the 2.0 extern prototype of this Material Function, for .dss sources to #include." | `Icons.Save` | Writes that prototype to a new `.dsh` and opens it |
 | `DreamShader.CopyVirtualFunctionCall` | **CopyVirtualFunctionCall** | "Copy a DreamShader Graph call example for this VirtualFunction." | `GenericCommands.Copy` | Copies a call example to the clipboard |
 
 The match is on the declaration's resolved asset object path, compared case-insensitively; the first
-match wins. Because the lookup reads the files, a declaration written by hand a moment ago is found
-immediately — nothing is cached from startup.
+match wins. Two spellings count as a declaration: a 1.x `VirtualFunction` block in any source, and
+*(since 2.0.0)* an `extern` prototype with a `/// @asset` line in a `.dsh` or `.dss`. Because the
+lookup reads the files, a declaration written by hand a moment ago is found immediately — nothing is
+cached from startup.
 
 > [!WARNING]
-> The lookup **re-enumerates and re-lexes every `.dsm`, `.dsh` and `.dsf`** outside
-> `DShader/Packages`, from disk, on every right-click of a Material Function asset. The cost scales
-> with the number of project source files and is paid before the context menu appears. There is no
-> cache and no way to disable it short of `-NoDreamShaderEditorBridge`, which removes the menu
-> entirely.
+> The lookup **re-enumerates and re-reads every source** (`.dsm`, `.dsh`, `.dsf`, `.dss`, `.dsi`,
+> `.dsp`) under every source root, outside each root's `Packages` folder, from disk, on every
+> right-click of a Material Function asset; a `.dsh` or `.dss` that mentions both `extern` and
+> `@asset` is also parsed. The cost scales with the number of source files and is paid before the
+> context menu appears. There is no cache and no way to disable it short of
+> `-NoDreamShaderEditorBridge`, which removes the menu entirely.
 
 ## Actions
 
@@ -62,7 +67,8 @@ Runtime substitutions are shown as `{Placeholder}` throughout this page.
 > [!NOTE]
 > **CreateVirtualFunction on an asset that already has a declaration silently redirects to
 > OpenVirtualFunction.** It never writes a duplicate file. The toast you get is
-> `Opened VirtualFunction definition: {File}`, not a "created" message.
+> `Opened VirtualFunction definition: {File}`, not a "created" message. *Create extern Prototype*
+> does the same when either spelling exists.
 
 ## Where the file is written
 
@@ -196,8 +202,10 @@ Inside emitted string literals, `\`, `"`, carriage return, line feed and tab are
 | `MaterialFunction '{Name}' does not have a valid package path.` | the asset has no package to build a literal from |
 | `MaterialFunction '{Name}' does not expose any outputs.` | the declaration builder found no outputs |
 
-The copied text is a template. Replace the placeholder argument names with real `Graph` values, and
-change `OutputIndex` when you want a different output. See [Calls](../graph/calls.md).
+The copied text is a template for 1.x text. Replace the placeholder argument names with real `Graph`
+values, and change `OutputIndex` when you want a different output. See [Calls](../graph/calls.md).
+`default` as an argument is a legacy rule (L25): 1.x text only, and
+[`dsc migrate`](migrate.md#what-the-rewrite-does) rewrites it to named arguments.
 
 ## Startup sync service
 
@@ -211,17 +219,18 @@ in the project, rebuilds it from the live asset, and writes the file back when t
 
 | Aspect | Behaviour |
 | :-- | :-- |
-| Scanned files | every `.dsm`, `.dsh` and `.dsf` under the source directory, excluding `DShader/Packages` |
+| Scanned files | every source under the **writable** source roots — the project's own; plugin roots are skipped — excluding each root's `Packages` folder |
 | Refused files | any source containing [preprocessor directives](../language/preprocessor.md) — `DSH9001` *(since 1.9.0)* |
 | Keyword matching | the bare word `VirtualFunction`, matched **case-sensitively**, with identifier-boundary checks |
 | Skipped regions | quoted strings with `\` escapes, `//` line comments and `/* */` block comments |
 | Block extraction | a balanced `( … )` followed by a balanced `{ … }`; an optional trailing `;` is absorbed into the block's range |
-| Validation | each extracted block is re-parsed and must yield **exactly one** `VirtualFunction`, whose `Options.Asset` must resolve |
+| Validation | each extracted block is parsed on its own by the legacy front end *(since 2.0.0; the 1.x parser before)* and must yield **exactly one** `VirtualFunction`, whose `Options.Asset` must resolve |
+| Not synced | a 2.0 `extern` prototype with `/// @asset`: the lookup finds it, sync never rewrites it *(since 2.0.0)* |
 | Comparison | on normalized text — CRLF and CR become LF, then the whole text is trimmed — so line-ending and surrounding-whitespace differences never trigger a rewrite |
 | Rewrite order | replacements are applied back to front, by descending start offset, so earlier offsets stay valid |
 | Write-back | the whole file, UTF-8 without BOM |
 
-Because the scanner is a hand-rolled lexer rather than the full parser, it finds declarations
+Because the scanner is a hand-rolled lexer rather than the front end, it finds declarations
 anywhere a file may legally hold one — including inside a `.dsm` alongside a `Shader` block.
 
 ### Conditional sources are refused *(since 1.9.0)*
@@ -253,7 +262,7 @@ startup** across every writable source in the project.
 ### Sync diagnostics
 
 Every message below is recorded with stage `virtualFunctionSync`, code `virtual-function-sync`,
-source `DreamShader VirtualFunction`, and severity `error` — the only severity the plugin produces.
+source `DreamShader VirtualFunction`, and severity `error` — the only severity the sync produces.
 They reach `diagnostics.json`, the sharded `diagnostics/` directory and `bridge.db`.
 
 | Message | Cause |
@@ -261,7 +270,7 @@ They reach `diagnostics.json`, the sharded `diagnostics/` directory and `bridge.
 | `DreamShader could not read VirtualFunction source file '{File}'.` | the file could not be read; reported at line 1, column 1 |
 | `VirtualFunction attributes are missing a closing ')'.` | the attribute list is unbalanced |
 | `VirtualFunction body is missing a closing '}'.` | the body braces are unbalanced |
-| `VirtualFunction declaration is invalid: {ParserError}` | the extracted block did not parse, or did not contain exactly one `VirtualFunction` |
+| `VirtualFunction declaration is invalid: {ParserError}` | the extracted block did not parse — `{ParserError}` is the message of the legacy front end's first error, without its code — or did not contain exactly one `VirtualFunction` |
 | `VirtualFunction '{Name}' asset reference is invalid: {Error}` | `Options.Asset` could not be resolved; the raw literal is recorded as the asset path |
 | `VirtualFunction '{Name}' references missing MaterialFunction '{Path}'.` | the asset path resolved but the object failed to load |
 | `VirtualFunction '{Name}' could not be refreshed from MaterialFunction '{Path}': {Error}` | the declaration builder failed for the live asset |

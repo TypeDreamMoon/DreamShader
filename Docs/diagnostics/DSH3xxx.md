@@ -511,8 +511,8 @@ Expected a property type such as 'float', 'float4', 'Texture2D' or 'ScalarParame
 not a texture type, and not one of the parameter node classes 1.x knew by name.
 
 **Fix.** Use a value type (`float` ... `float4`, `vec*`), a texture type, or a parameter class such
-as `ScalarParameter`, `VectorParameter`, `TextureObjectParameter`, `StaticSwitchParameter`. Types
-are case-sensitive.
+as `ScalarParameter`, `VectorParameter`, `TextureObjectParameter`, `StaticSwitchParameter`. A 1.x
+property type is matched ignoring case, as 1.x matched it, so it is the word itself that is wrong.
 
 ## DSH3253
 
@@ -742,8 +742,9 @@ misspelt function setting). 1.x ignored what it did not know, so the source buil
 **Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1120`
 <!-- generated:end DSH3264 -->
 
-**Cause.** `UserExposedCaption` is set on a function. 2.0 has no directive for it, so the asset is
-built without it; the value is kept in the migration record.
+**Cause.** `UserExposedCaption` is set on a function. 2.0 has no directive for it and the compiler
+does not write it: a new asset has no caption, and an asset an earlier build captioned keeps the one it
+has. The value is kept in the migration record.
 
 **Fix.** Nothing to do for the build. If the caption matters, set it on the asset by hand after
 migrating.

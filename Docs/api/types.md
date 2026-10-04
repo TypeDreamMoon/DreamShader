@@ -156,6 +156,13 @@ inline const TCHAR* LexToString(const ETextShaderMaterialFunctionKind Kind);
 
 ## Structures
 
+> [!NOTE]
+> The **Meaning** columns below say what the 1.x parser stored in each member and how the 1.x
+> generator read it. Since 2.0.0 no parse fills these structs; the few users left are named in the
+> introduction and under [Notes](#notes). The parse-time checks, warnings and source mapping
+> mentioned here belonged to the retired parser: a 1.x source is now diagnosed by the legacy front
+> end, with `DSHnnnn` codes that carry the line and column of the construct.
+
 ### `FTextShaderMetadata`
 
 Declaration metadata attached to a property or a function parameter.
@@ -179,7 +186,7 @@ struct FTextShaderMetadata
 | `Description` | `FString` | `""` | Tooltip / description text. |
 | `ReflectedProperties` | `TMap<FString, FString>` | empty | Arbitrary reflected `UPROPERTY` name → literal-text pairs from the `[ … ]` block. **Keys are normalized with `NormalizeSettingKey`**, i.e. trimmed and lower-cased. |
 
-Keys the parser consumes itself, rather than putting them in `ReflectedProperties`: `Group` /
+Keys the 1.x parser consumed itself, rather than putting them in `ReflectedProperties`: `Group` /
 `Category`, `Description`, `SortPriority` / `Sort`, and the `SliderMin` / `SliderMax` pair produced
 by `Slider(min, max)`. See [Metadata block](../parameters/metadata.md).
 
@@ -227,9 +234,12 @@ struct FTextShaderPropertyDefinition
 | `Metadata` | `FTextShaderMetadata` | default-constructed | The `[ … ]` block. |
 
 Tokens such as `TextureObjectParameter` map to a single Unreal node class that can hold any texture
-dimension. For those, `bHasExplicitTextureType` stays `false`, `TextureType` stays at its `Texture2D`
-default, and the generator infers the real dimension from the assigned default asset rather than
-rejecting it. Explicit tokens still validate strictly.
+dimension. For those, `bHasExplicitTextureType` stayed `false`, `TextureType` stayed at its
+`Texture2D` default, and the 1.x generator inferred the real dimension from the assigned default
+asset rather than rejecting it. Since 2.0.0 the 1.x check of the class written in a texture default
+against its property is made on the source before binding:
+[`DSH1043`](../diagnostics/DSH1xxx.md#dsh1043) for a class that is not a texture,
+[`DSH1044`](../diagnostics/DSH1xxx.md#dsh1044) for a texture class of another dimension.
 
 ### `FTextShaderOutputBinding`
 
@@ -256,9 +266,9 @@ struct FTextShaderOutputBinding
 | `MaterialProperty` | `FString` | `""` | The material property name, e.g. `Base.BaseColor`. Used when `TargetKind == MaterialProperty`. |
 | `ExpressionClass` | `FString` | `""` | Target expression class when `TargetKind == ExpressionInput`. |
 | `ExpressionArguments` | `TMap<FString, FString>` | empty | Constructor arguments for that expression, as raw text. |
-| `ExpressionPinIndex` | `int32` | `INDEX_NONE` | Target input-pin index. Rejected at parse time if negative or unparseable. |
-| `TargetText` | `FString` | `""` | Raw left-hand-side source text, reproduced verbatim in diagnostics. |
-| `SourceText` | `FString` | `""` | Raw right-hand-side source text — the expression the generator evaluates. |
+| `ExpressionPinIndex` | `int32` | `INDEX_NONE` | Target input-pin index. 1.x rejected a negative or unparseable one at parse time. |
+| `TargetText` | `FString` | `""` | Raw left-hand-side source text, which 1.x reproduced verbatim in diagnostics. |
+| `SourceText` | `FString` | `""` | Raw right-hand-side source text — the expression the 1.x generator evaluated. |
 
 ### `FTextShaderVariableDeclaration`
 
@@ -401,6 +411,7 @@ struct FTextShaderFunctionDefinition
     TArray<FTextShaderFunctionParameter> Inputs;
     TArray<FTextShaderFunctionParameter> Results;
     FString HLSL;
+    TArray<FString> IncludePaths;
 };
 ```
 
@@ -411,6 +422,7 @@ struct FTextShaderFunctionDefinition
 | `Inputs` | `TArray<FTextShaderFunctionParameter>` | empty | `in` parameters — including the ones whose qualifier was implicit. |
 | `Results` | `TArray<FTextShaderFunctionParameter>` | empty | `out` parameters, **plus** the synthetic `__return` parameter when the declaration carried a return type. |
 | `HLSL` | `FString` | `""` | The normalized body text. |
+| `IncludePaths` | `TArray<FString>` | empty | The `#include` lines at the very top of the body, stripped from `HLSL`: hoisted to the top of the generated `.ush` for a plain `Function`, onto the Custom node's include list for an embedded body. Virtual shader paths, quotes removed. |
 
 ### `FTextShaderMaterialFunctionDefinition`
 
@@ -444,10 +456,10 @@ struct FTextShaderMaterialFunctionDefinition
 | `Outputs` | `TArray<FTextShaderFunctionParameter>` | empty | The `Outputs` section. |
 | `Settings` | `TMap<FString, FString>` | empty | The `Settings` section. **Keys are lower-cased** by `NormalizeSettingKey`. |
 | `Code` | `FString` | `""` | The `Graph` block body. |
-| `CodeStartIndex` | `int32` | `INDEX_NONE` | Character offset of that body in the prepared source, used to map graph diagnostics back to a file, line and column. |
+| `CodeStartIndex` | `int32` | `INDEX_NONE` | Character offset of that body in the prepared source, from which 1.x worked out the line of a graph diagnostic. Nothing reads it since 2.0.0. |
 | `GraphRegions` | `TArray<FTextShaderGraphRegion>` | empty | `#Region` spans. |
 | `Layout` | `FTextShaderLayout` | default-constructed | The `Layout` section. |
-| `HLSL` | `FString` | `""` | See the note below — never populated by the parser. |
+| `HLSL` | `FString` | `""` | Never populated by the 1.x parser. |
 
 ### `FTextShaderVirtualFunctionDefinition`
 
@@ -466,10 +478,10 @@ struct FTextShaderVirtualFunctionDefinition
 
 | Member | Type | Default | Meaning |
 | :-- | :-- | :-- | :-- |
-| `Name` | `FString` | `""` | The name callable from `Graph`. **Required** — an empty or whitespace-only name fails the parse. |
-| `Asset` | `FString` | `""` | Resolved object path of the target `UMaterialFunction`. **Required**, from the `Asset=` attribute or `Options.Asset`. |
+| `Name` | `FString` | `""` | The name callable from `Graph`. **Required**; without one the legacy front end reports [`DSH6311`](../diagnostics/DSH6xxx.md#dsh6311). |
+| `Asset` | `FString` | `""` | Resolved object path of the target `UMaterialFunction`. **Required**, from the `Asset=` attribute or `Options.Asset`; without one, [`DSH6312`](../diagnostics/DSH6xxx.md#dsh6312). |
 | `Inputs` | `TArray<FTextShaderFunctionParameter>` | empty | Declared inputs. `Properties` is accepted as a synonym for this section. |
-| `Outputs` | `TArray<FTextShaderFunctionParameter>` | empty | Declared outputs. **Must be non-empty.** |
+| `Outputs` | `TArray<FTextShaderFunctionParameter>` | empty | Declared outputs. **Must be non-empty**; otherwise [`DSH6313`](../diagnostics/DSH6xxx.md#dsh6313). |
 | `Options` | `TMap<FString, FString>` | empty | The `Options` section. **Keys are lower-cased** by `NormalizeSettingKey`. |
 
 ### `FTextShaderDefinition`
@@ -508,17 +520,17 @@ struct FTextShaderDefinition
 | `Properties` | `TArray<FTextShaderPropertyDefinition>` | empty | The `Shader`'s `Properties` section. |
 | `Settings` | `TMap<FString, FString>` | empty | The `Shader`'s `Settings` section. **Keys are lower-cased.** |
 | `OutputDeclarations` | `TArray<FTextShaderVariableDeclaration>` | empty | Output-variable declarations. |
-| `Outputs` | `TArray<FTextShaderOutputBinding>` | empty | Output bindings. An empty array produces a parse **warning** and a generation **error**. |
+| `Outputs` | `TArray<FTextShaderOutputBinding>` | empty | Output bindings. In 1.x an empty array produced a parse warning and a generation error; since 2.0.0 a `Shader` with no `Outputs` section is warning [`DSH2256`](../diagnostics/DSH2xxx.md#dsh2256). |
 | `Code` | `FString` | `""` | The `Graph` block body. |
-| `CodeStartIndex` | `int32` | `INDEX_NONE` | Character offset of that body in the prepared source, for source-mapped diagnostics. |
+| `CodeStartIndex` | `int32` | `INDEX_NONE` | Character offset of that body in the prepared source, from which 1.x worked out the line of a graph diagnostic. Nothing reads it since 2.0.0. |
 | `GraphRegions` | `TArray<FTextShaderGraphRegion>` | empty | `#Region` spans. |
 | `Layout` | `FTextShaderLayout` | default-constructed | The `Layout` section. |
-| `HLSL` | `FString` | `""` | See the note below — never populated by the parser. |
+| `HLSL` | `FString` | `""` | Never populated by the 1.x parser. |
 | `Functions` | `TArray<FTextShaderFunctionDefinition>` | empty | `Function` blocks. |
 | `GraphFunctions` | `TArray<FTextShaderFunctionDefinition>` | empty | `GraphFunction` blocks. |
 | `MaterialFunctions` | `TArray<FTextShaderMaterialFunctionDefinition>` | empty | `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` blocks, in declaration order. |
 | `VirtualFunctions` | `TArray<FTextShaderVirtualFunctionDefinition>` | empty | `VirtualFunction` blocks. |
-| `Warnings` | `TArray<FString>` | empty | Non-fatal diagnostics collected during the parse. Never causes `Parse` to return `false`. |
+| `Warnings` | `TArray<FString>` | empty | Non-fatal diagnostics the 1.x parse collected; they never made `Parse` return `false`. Never filled since 2.0.0. |
 
 #### `TryGetSetting`
 
@@ -583,13 +595,18 @@ its keys normalized this way before storage. Read those maps directly only throu
   `FTextShaderDefinition` (and the kind, name, root and settings of an
   `FTextShaderMaterialFunctionDefinition`) and nothing else: properties, outputs, graph code and
   layout travel as IR. Do not expect a definition obtained from the compiler to describe the source.
+  Outside a definition, the `Classic` graph layout fills an `FTextShaderLayout` from the IR's layout
+  hints, and the VirtualFunction tools fill `FTextShaderVirtualFunctionDefinition` /
+  `FTextShaderFunctionParameter` from a declaration they parse with the legacy front end.
 - The structs have no reflection, no `Serialize`, and no `operator==`. They are not
   network-replicated, not saveable, and not comparable without writing a comparison yourself.
-- Type tokens arrive already normalized. `vec3` becomes `float3`, `mat4` becomes `float4x4`, and so
-  on for all fifteen GLSL aliases, before anything lands in a `Type` field. See
+- The 1.x parser normalized type tokens before anything landed in a `Type` field: `vec3` became
+  `float3`, `mat4` became `float4x4`, and so on. Since 2.0.0 a GLSL spelling in 1.x text is read as
+  its HLSL type with [`DSH5277`](../diagnostics/DSH5xxx.md#dsh5277). See
   [Types](../language/types.md).
-- Container order is source order. `MaterialFunctions` is generated front to back, which is why a
-  `Shader` can call a `ShaderFunction` declared beside it in the same file.
+- Container order was source order, and 1.x generated `MaterialFunctions` front to back. Since
+  2.0.0 the assets of one file are built in call order — a function another one calls is built
+  first — and functions that call each other in a cycle are [`DSH8299`](../diagnostics/DSH8xxx.md#dsh8299).
 - Every struct is copyable and movable with the compiler-generated operations. Copies are deep —
   the members are `FString`, `TArray` and `TMap` values, not pointers.
 
@@ -629,12 +646,17 @@ void Describe(const FTextShaderDefinition& Definition)
 }
 ```
 
-For the source in [Generation](../generation/index.md#example) this prints:
+For the source in [Generation](../generation/index.md#example), as the 1.x parser filled the
+definition, this printed:
 
 ```text
 LogDreamShader: Shader 'Materials/M_Emissive' (Root='', Backend=<project default>): 1 propert(ies), 1 binding(s)
 LogDreamShader:   ShaderFunction 'Functions/F_Tint'
 ```
+
+A definition the 2.0 compiler builds carries only `Name`, `Root` and `Settings` — and `Settings`
+never holds `Backend`, which the binder takes out onto the IR product — so it prints
+`Backend=<project default>`, both counts are `0` and nothing else is listed.
 
 ## See also
 

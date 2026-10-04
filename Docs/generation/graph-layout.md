@@ -47,9 +47,8 @@ only on the automatic path — an explicit `Layout` section is always honoured, 
 > it. The only remaining opt-out is the large-graph guard above. See
 > [Ephemeral materials](ephemeral.md) and [Project settings](../settings/project.md).
 >
-> On an interactive compile the pass runs *quiet*: it reports one slow-task frame per block instead
-> of one per node, because formatting a per-node progress string costs more than the placement
-> itself.
+> *(since 2.0.0)* The pass reports one slow-task frame per node on every compile. Through 1.x an
+> interactive compile ran it *quiet*, one frame per block; the 2.0 emitter does not use that mode.
 
 ## Layout styles
 
@@ -329,9 +328,9 @@ Removing those usages from the computation blocks first is what keeps the per-pr
 | Large-graph threshold | `1200` | automatic-layout bail-out |
 
 > [!NOTE]
-> These constants are not part of the stable surface. The generated-asset layout may change before
-> the stable 1.5.0 release; nothing in a `.dsm` depends on them except through a `Layout` section,
-> which pins absolute coordinates and is unaffected.
+> These constants are not part of the stable surface. The generated-asset layout may change in any
+> release; nothing in a `.dsm` depends on them except through a `Layout` section, which pins absolute
+> coordinates and is unaffected.
 
 ## `Output:` block titles
 
@@ -352,23 +351,16 @@ accepted alias). Stock UE 5.3 – 5.8 does not.
 ## Construction-time positions
 
 These are the coordinates nodes carry when layout is skipped — a graph of fewer than two nodes, or
-1200 or more nodes with no `Layout` section. Note the shape: X comes from a small fixed table and Y just steps down per node, so a
-skipped graph is one tall column with wires across it, not a bad layout.
+1200 or more nodes with no `Layout` section, under `Classic`. Note the shape: X is fixed and Y just
+steps down per node, so a skipped graph is one tall column with wires across it, not a bad layout.
 
 | Node | X | First Y | Y step |
 | :-- | :-- | :-- | :-- |
-| whole-surface `Custom` node (material) | `120` | `0` | — |
-| whole-surface `Custom` node (material function) | `120` | `0` | — |
-| `MakeMaterialAttributes` seed (material) | `120` | `200` | `+220` |
-| `MakeMaterialAttributes` seed (material function) | `120` | `260` | `+220` |
-| property / parameter node — material `Custom` path | per node | `-300` | `+220` |
-| property node — material-function `Custom` path | per node | `-620` | `+220` |
-| property node — `Graph` path | per node | `-620` | `+220` |
-| general `Graph` node | per node | `-120` | `+180` |
-| `FunctionInput` | `-800` | `-260` | `+180` |
-| `FunctionOutput` | `900` | `-120` | `+180` |
-| `Expression(…)` output-target node | `1200` | `200` | `+220` |
-| scalar / vector literal constant | `-1120` | from the caller | — |
+| every node the emitter creates, in the order it creates them | `0` | `-120` | `+180` |
+
+*(since 2.0.0)* The 1.x table of per-kind positions — the whole-surface `Custom` node, the
+`MakeMaterialAttributes` seed, property nodes, `FunctionInput` / `FunctionOutput` — went with the 1.x
+generator: the emitter places every node it creates the same way, and the layout pass rewrites them.
 
 Every `Outputs` binding also creates a named-reroute pair at construction time: the declaration at
 `source.X + 420`, `source.Y`, and the usage at `X = 720`, `Y = -120 + max(routeIndex, 0) * 180`. The
@@ -378,19 +370,21 @@ a blank route name falls back to `DS_Output`.
 ## Notes
 
 - `#Region "Name"` / `#EndRegion` in a `Graph` block do not move anything by themselves — they name
-  blocks for the automatic path. Regions nest, and directive lines are blanked out so reported line
-  numbers stay correct. Grammar and diagnostics are on the [Layout](../language/layout.md) page.
+  blocks for the automatic path, and boxes for the IR styles. Regions nest; a `#Region` without a
+  name is [`DSH2216`](../diagnostics/DSH2xxx.md#dsh2216), and an unbalanced pair
+  [`DSH2217`](../diagnostics/DSH2xxx.md#dsh2217) / [`DSH2218`](../diagnostics/DSH2xxx.md#dsh2218).
+  Grammar is on the [Layout](../language/layout.md) page.
 - A `Layout` section with only `Node(Var=…)` entries that match nothing, and no `Comment(…)`, does
   **not** engage the explicit path — the automatic path runs instead.
-- A second `Layout` section in the same block replaces the first entirely.
+- A second `Layout` section in the same block replaces the first entirely, with the warning
+  [`DSH2258`](../diagnostics/DSH2xxx.md#dsh2258) *(since 2.0.0)*.
 - Layout positions are not preserved across regeneration. A `Layout` section is the only way to make
   a node's position stable. See [Regeneration](regeneration.md).
 - The [decompiler](../tools/decompiler.md) emits a `Layout` section in exactly the parse format, so a
   hand-arranged material can be exported and re-imported with its arrangement intact. This is
   controlled by the **Export Decompiled Layout** project setting, default on.
 - Automatic layout reports a slow task titled `Laying out DreamShader material graph...`, with one
-  frame per node reading `Positioning node {N} of {Total}...`. On an interactive compile it reports
-  one untitled frame per *block* instead.
+  frame per node reading `Positioning node {N} of {Total}...`.
 
 ## Example
 
@@ -450,7 +444,7 @@ node     Color                             at (-600, -120), exactly
 
 - [Layout](../language/layout.md) — `Node` / `Comment` grammar, arguments, and parse diagnostics
 - [Regeneration](regeneration.md) — why positions are not preserved, and which comments survive
-- [Ephemeral materials](ephemeral.md) — why interactive compiles produce unlaid-out graphs
+- [Ephemeral materials](ephemeral.md) — the two ThinCustom states; layout runs in both
 - [Graph](../graph/index.md) — the statements that create the nodes being placed
 - [Node reuse](../graph/node-reuse.md) — why repeated subexpressions become one node to place
 - [Output bindings](../language/output-bindings.md) — the bindings that create the output reroutes

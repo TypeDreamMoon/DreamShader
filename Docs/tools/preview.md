@@ -2,13 +2,13 @@
 
 > [DreamShader](../index.md) » [Tools](index.md) » **Preview**
 
-The editor-side renderer that compiles a `.dsm` in memory and renders its material to a PNG, either
+The editor-side renderer that compiles a material source and renders its material to a PNG, either
 once or as a stream of frames.
 
 | | |
 | :-- | :-- |
 | Implemented in | the `DreamShaderEditor` module |
-| Accepts | `.dsm` only |
+| Accepts | a source that builds a material or a material instance: `.dss`, `.dsi` or `.dsm` *(`.dss` and `.dsi` since 2.0.0)* |
 | Produces | streamed frames over the WebSocket; PNG files under `<Project>/Saved/DreamShader/Bridge/Preview/` plus a `preview.json` manifest on the file/`png` paths |
 | Transports | bridge request files (one-shot) · WebSocket on `127.0.0.1:17864` (one-shot or streaming) |
 | Streaming since | `1.5.0`; raw RGBA8 frames and Graph breakpoints since `1.7.0` |
@@ -26,13 +26,14 @@ stall that thread.
 
 ## Breakpoints (probe preview)
 
-*Since `1.7.0`.* A breakpoint set on a `Graph` line (F9 in the DreamShaderLang VS Code extension)
-previews the **value bound at that line** on the mesh, instead of the finished material — the text
-analogue of the Material Editor's right-click **Start Previewing Node**.
+*Since `1.7.0`.* A breakpoint set on a line of the material's code — a `Graph` line in a `.dsm`, a
+statement of the material's body in a `.dss` *(since 2.0.0)* — (F9 in the DreamShaderLang VS Code
+extension) previews the **value bound at that line** on the mesh, instead of the finished material —
+the text analogue of the Material Editor's right-click **Start Previewing Node**.
 
 | Aspect | Behaviour |
 | :-- | :-- |
-| Selection | one probe at a time — the topmost enabled breakpoint in the active `.dsm` |
+| Selection | one probe at a time — the topmost enabled breakpoint in the active source |
 | Line snapping | a breakpoint on a blank/comment line snaps forward to the next line that binds a value |
 | What is shown | the bound value routed into an unlit Emissive preview (or MaterialAttributes / Substrate when the value is one of those); a texture object is sampled with default coordinates |
 | Set before compile | remembered as *pending* and attaches on the next generation |
@@ -60,14 +61,15 @@ see [Bridge » Message types](bridge.md#message-types).
 > can show the previous or default shader until the compile lands; a later frame corrects it. The
 > one-shot path always waits, which is why it is slower and can block the editor briefly.
 
-The Dream Shader Gen page in the [Material Content Browser](material-browser.md#preview-pane) uses
-neither path — its image is a plain 160×160 engine asset thumbnail of the already-generated material.
+The inspector of the [Material Content Browser](material-browser.md#inspector) renders through this
+renderer too: a 224×224 preview, asynchronous, re-rendered on every compile. The 1.x *Dream Shader
+Gen* page and its static asset thumbnail are gone.
 
 ## Request fields
 
 | Field | Type | Default | Notes |
 | :-- | :-- | :-- | :-- |
-| **`sourceFile`** | string | — | must be an existing `.dsm` |
+| **`sourceFile`** | string | — | must be an existing `.dss`, `.dsi` or `.dsm` |
 | `width` | integer | `512` | clamped to `[64, 2048]` |
 | `height` | integer | `512` | clamped to `[64, 2048]` |
 | `mesh` | string | `sphere` | see [Meshes](#meshes) |
@@ -140,9 +142,12 @@ drag-to-orbit viewport write. One is created lazily if the material has none.
 The scene's material interface is deliberately **not** cleared after a frame is submitted; clearing
 it would race with render commands still in flight.
 
-The material is always compiled **transiently**: an editor preview never writes an asset. The result
-is typed as a material *interface* on purpose, because the default `ThinCustom` backend produces a
-thin material instance rather than a `UMaterial`.
+The source is compiled as an interactive compile is: a `ThinCustom` product **Ephemeral**, so the
+preview never writes it to disk; a `Graph`-backend material and a `.dsi` instance are ordinary assets,
+saved as any compile saves them *(since 2.0.0)*. An unchanged source is skipped by the build key
+unless the request forces it. The result is typed as a material *interface* on purpose, because the
+default `ThinCustom` backend produces a thin material instance rather than a `UMaterial`, and a `.dsi`
+a material instance.
 
 ## Output
 
@@ -219,15 +224,18 @@ Checked in this order; the first failure is the reported message.
 | Message | Cause |
 | :-- | :-- |
 | `DreamShader source '{File}' does not exist.` | empty path, or the file is missing |
-| `DreamShader preview only supports .dsm material files: '{File}'.` | the path is a `.dsh` or `.dsf` |
-| `Failed to read DreamShader source '{File}'.` | the file could not be read |
-| `{File}: {ParserError}` | the source did not parse |
-| `{File}: This file does not define a top-level Shader block.` | the parse produced no `Shader` |
-| *(the compile result message)* | generation failed |
-| `Generated material '{ObjectPath}' could not be loaded.` | generation succeeded but the object did not load |
+| `DreamShader preview renders a material or a material instance, so it takes a .dss, .dsi or .dsm source: '{File}'.` | the path is a `.dsf`, `.dsh`, `.dsp` or anything else *(since 2.0.0)* |
+| `<file>(<line>,<col>): DSHnnnn: <message>` | resolving what the source builds failed; the first error, as a compile reports it |
+| `{File}: the source could not be resolved to the assets it builds.` | the same, with no error to show |
+| `{File}: this file builds no material or material instance.` | e.g. a `.dss` of exported functions only |
+| `The DreamShader compiler module is not available, so '{File}' could not be compiled for preview.` | the `DreamShaderCompiler` module is not loaded |
+| *(the compile result message)* | the compile failed — its diagnostics, see [Commandlet » Result messages](commandlet.md#result-messages) |
+| `Generated material '{ObjectPath}' could not be loaded.` | the compile succeeded but the object did not load |
 | `Compiled preview material for {ObjectPath}.` | success; any compile message is appended |
 
-`import` lines are stripped before parsing, exactly as on the Gen page.
+The source is resolved by the compile's own front half — preprocessor, front end, binder, `import`
+headers parsed on their own — so a preview and a compile cannot disagree about which asset a file
+builds. The 1.x preview stripped `import` lines and ran the 1.x parser *(before 2.0.0)*.
 
 ### Rendering
 
@@ -263,7 +271,8 @@ message is `Invalid DreamShader preview request JSON.`
 
 ## Limits
 
-- **`.dsm` only.** A `.dsf` or `.dsh` cannot be previewed at all; there is no function preview.
+- **Material sources only** — `.dss`, `.dsi`, `.dsm`. A `.dsf`, `.dsh` or `.dsp` cannot be previewed
+  at all; there is no function preview.
 - Size is clamped to `[64, 2048]` in both dimensions.
 - Motion blur, anti-aliasing and dynamic screen percentage are off, so a preview will not match a
   viewport capture pixel for pixel.
@@ -311,10 +320,10 @@ Resulting `<Project>/Saved/DreamShader/Bridge/preview.json`:
 ## See also
 
 - [Bridge](bridge.md) — the request-file protocol and the full WebSocket message schema
-- [Material Content Browser](material-browser.md) — the Gen page's static thumbnail, which this is not
+- [Material Content Browser](material-browser.md) — the inspector's live preview, drawn by this renderer
 - [Editor integration](editor-integration.md) — `-NoDreamShaderEditorBridge`, which disables the server
-- [Ephemeral materials](../generation/ephemeral.md) — why a preview compile never writes an asset
+- [Ephemeral materials](../generation/ephemeral.md) — why a preview compile does not write a ThinCustom material
 - [Backend](../settings/backend.md) — why the previewed object may be an instance rather than a `UMaterial`
-- [Source files](../language/source-files.md) — why only `.dsm` can produce a material
+- [Source files](../language/source-files.md) — which sources build a material
 - [Workspace](workspace.md) — the editor extension that drives the streaming client
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage

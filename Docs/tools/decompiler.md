@@ -32,10 +32,14 @@ equivalent DreamShaderLang source file.
 
 | Route | Where | Produces |
 | :-- | :-- | :-- |
-| Content Browser | right-click a `UMaterial` ▸ *DreamShader* ▸ **Export DSM** | `.dsm` |
-| Content Browser | right-click a `UMaterialFunction`, `UMaterialFunctionMaterialLayer` or `UMaterialFunctionMaterialLayerBlend` ▸ *DreamShader* ▸ **Export DSF** | `.dsf` |
-| Material Editor | the **DreamShader** toolbar combo button ▸ **Export DSM** / **Export DSF** | as above |
-| Commandlet | `-run=DreamShader decompile -Asset=<object path> [-Out=<file>]` | as above |
+| Content Browser | right-click a `UMaterial` ▸ *DreamShader* ▸ **Export Legacy .dsm** *(**Export DSM** before 2.0.0)* | `.dsm` |
+| Content Browser | right-click a `UMaterialFunction`, `UMaterialFunctionMaterialLayer` or `UMaterialFunctionMaterialLayerBlend` ▸ *DreamShader* ▸ **Export Legacy .dsf** *(**Export DSF** before 2.0.0)* | `.dsf` |
+| Material Editor | the **DreamShader** toolbar combo button ▸ **Export Legacy .dsm** / **Export Legacy .dsf** | as above |
+| Commandlet | `-run=DreamShader decompile -Asset=<object path> -Format=Legacy [-Out=<file>]`, or an `-Out` ending in `.dsm` / `.dsf` | as above |
+
+Without `-Format=Legacy` (or a `.dsm` / `.dsf` `-Out`), the commandlet runs the
+[2.0 decompiler](#the-20-decompiler) *(since 2.0.0)*; the **Export .dss** entry beside each legacy
+one does the same from the editor.
 
 Both editor routes require **exactly one** selected asset, write the file, and then open it in your
 preferred editor. See [Editor integration](editor-integration.md#content-browser-context-menus) and
@@ -149,7 +153,7 @@ it states that intent in the syntax instead of leaving it to N repeated argument
 decompiled to the statement form before 1.9.0 still decompiles to it byte for byte.
 
 `Class=` carries the **reflected** class name (`MaterialExpressionThinTranslucentMaterialOutput`, no
-`U` prefix), which is what the generator's class resolution expects.
+`U` prefix), which is a spelling `Expression(Class=…)` resolves.
 
 > [!WARNING]
 > Output-target nodes are de-duplicated by class plus argument list, so a material holding **two**
@@ -275,8 +279,8 @@ Names are compared after normalization, so `bTwoSided` and `Two Sided` collide.
 > compile, or keep the node as `UE.Expression` and add the missing arguments yourself.
 
 `OutputType` is always emitted, resolved from the real output index. When a named output selector
-(`Output=` / `OutputName=`) is present, `OutputIndex` is suppressed, because the generator rejects a
-call that carries both. Calls with more than three arguments, or longer than 120 characters, are
+(`Output=` / `OutputName=`) is present, `OutputIndex` is suppressed, because a call that carries both
+is [`DSH5252`](../diagnostics/DSH5xxx.md#dsh5252). Calls with more than three arguments, or longer than 120 characters, are
 emitted across multiple lines.
 
 ## Layout export
@@ -338,16 +342,18 @@ do not fail the export.
 
 ### Editor toasts
 
+The same toasts for every *Export* entry, the 2.0 ones included *(since 2.0.0)*:
+
 | Toast | Cause |
 | :-- | :-- |
 | `DreamShader could not find the selected Material.` / `…Material Function.` | the asset was unloaded between right-click and click |
-| `DreamShader failed to export DSM: {Error}` / `DreamShader failed to export DSF: {Error}` | the decompile failed |
+| `DreamShader failed to export '{Asset}': {Reason}` | the decompile failed |
 | *(the raw write error)* | the file could not be saved |
-| `Exported DSM but could not open it: {File}` | written, but the editor could not be launched |
-| `Exported DSM: {File}` / `Exported DSF: {File}` | success |
+| `Exported '{File}' but could not open it.` | written, but the editor could not be launched |
+| `Exported '{File}'.` | success |
 
-Logs: `Exported Material '{Asset}' to DSM '{File}'.` at Display, and
-`Failed to export Material '{Asset}' to DSM: {Error}` at Warning.
+Logs: `Exported '{Asset}' to '{File}'.` at Display, and
+`Failed to export '{Asset}' to a DreamShader source: {Reason}` at Warning.
 
 ## Known round-trip gaps
 
@@ -365,12 +371,12 @@ Verified behaviour of 1.5.0. Each row is something the exported file will not re
 | A `MaterialFunctionCall` with no assigned function becomes `0.0` | the branch is silently constant-folded | re-assign the function in the original asset and re-export |
 | Cycles emit a default literal | the cyclic branch evaluates to a constant | break the cycle in the original graph |
 | An append wider than four components is masked down | components are dropped | check the emitted swizzle |
-| Material **instances** are not supported | `UMaterialInstanceConstant` is rejected outright | export the parent `UMaterial`, then re-create the instance |
+| Material **instances** are not supported by the 1.x decompiler | `UMaterialInstanceConstant` is rejected outright | use the [2.0 decompiler](#the-20-decompiler), which writes a `.dsi` |
 | Texture-sample `GatherMode` round-trips only on UE 5.6 and newer | on older engines the property is omitted | none |
 | `bHasPixelAnimation` is in the emitted flag set only on UE 5.4 and newer | on older engines the flag is omitted | none |
 | `Base.FrontMaterial` and the `Substrate` shading-model spelling exist only on UE 5.4 and newer | a Substrate material cannot be exported meaningfully below 5.4 | none |
 | The generated `Name=` points into `Decompiled/…` | recompiling creates a second asset rather than replacing the original | edit `Name=` / `Root=` once the source is trusted |
-| Large graphs skip automatic layout at generation time | a big regenerated graph can come back visually unordered when no `Layout` block is present | keep layout export on — see [Graph layout](../generation/graph-layout.md) |
+| Under the `Classic` graph layout style, large graphs skip automatic layout | a regenerated graph of 1200 or more nodes can come back visually unordered when no `Layout` block is present; the IR styles (`Blocks`, the default since 2.0.0) always lay out | keep layout export on, or use an IR style — see [Graph layout](../generation/graph-layout.md#when-layout-runs) |
 
 ## Example
 
@@ -378,13 +384,13 @@ Export `/Game/Materials/M_Steel` headlessly, then inspect the result:
 
 ```powershell
 & "$Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "I:\Project\Project.uproject" `
-    -run=DreamShader decompile -Asset="/Game/Materials/M_Steel" `
+    -run=DreamShader decompile -Asset="/Game/Materials/M_Steel" -Format=Legacy `
     -unattended -nopause -nosplash -stdout -log
 ```
 
 ```text
 DreamShader decompiled '/Game/Materials/M_Steel.M_Steel' to
-'I:/Project/DShader/Decompiled/Materials/Game/Materials/M_Steel.dsm'.
+'I:/Project/DShader/Decompiled/Materials/Game/Materials/M_Steel.dsm' (legacy).
 ```
 
 The written file:
@@ -549,7 +555,7 @@ as it is, and they are not copied into its head.
 
 ## See also
 
-- [Editor integration](editor-integration.md) — the *Export DSM* / *Export DSF* menu entries
+- [Editor integration](editor-integration.md) — the *Export .dss* and *Export Legacy .dsm* / *.dsf* menu entries
 - [Commandlet](commandlet.md) — `-run=DreamShader decompile`, `-Asset` and `-Out`
 - [UE.Expression](../builtins/ue-expression.md) — the generic call the fallback emits
 - [Layout](../language/layout.md) — `Node` and `Comment` directives, and `#Region`

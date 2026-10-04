@@ -2,14 +2,14 @@
 
 > [DreamShader](../index.md) » **Parameters**
 
-A parameter is a `Properties` declaration that becomes one named `UMaterialExpression` node in the
+A parameter is a `Properties` declaration that becomes a named `UMaterialExpression` node in the
 generated asset — a material parameter an instance can override, a constant, or a builtin input node.
 
 | | |
 | :-- | :-- |
 | Declared in | `.dsm`, `.dsf` — the `Properties` section of a `Shader`, `ShaderFunction`, `ShaderLayer` or `ShaderLayerBlend` |
 | Kind | parameter type catalogue |
-| Generates | exactly one node per declaration, positioned at X = -800 (a `const` scalar or vector literal node at X = -1120) with a Y stride of 220 |
+| Generates | one node per property a body reads; a property nothing reads makes none ([`DSH4390`](../diagnostics/DSH4xxx.md#dsh4390), info). A parameter node type that is expanded at its uses (see [Parameter node tokens](parameter-nodes.md#the-22-tokens)) makes one node per distinct use. Node positions come from the [graph layout](../generation/graph-layout.md). |
 | Since | `1.2.3` (explicit `*Parameter` tokens), `1.2.6` (`const`), `1.5.0` (`Group(…) { … }`, `Slider(…)`) |
 
 ## Synopsis
@@ -27,6 +27,11 @@ The enclosing section grammar — where `Properties` may appear, the optional `=
 [Properties (section)](../language/properties.md). This section documents only what may stand in the
 `<type-token>`, `<default-value>` and `<metadata-entry>` slots.
 
+Since 2.0.0 a 1.x source is read by the legacy front end, which turns each property into what the
+2.0 language writes for it: a `uniform`, a `static const`, or a parameter node built where it is read.
+The `.dss` spelling is in [The 2.0 language](../language-v2/index.md); `dsc migrate` writes it for you
+([Migrate](../tools/migrate.md)).
+
 ## The four kinds of type token
 
 | Kind | Count | Example | Node generated | Reference |
@@ -34,20 +39,21 @@ The enclosing section grammar — where `Properties` may appear, the optional `=
 | Compact scalar | 7 | `float Strength = 1.0;` | `UMaterialExpressionScalarParameter` | [Compact type tokens](compact-types.md#scalar-tokens) |
 | Compact vector | 27 | `vec3 Tint = vec3(1, 1, 1);` | `UMaterialExpressionVectorParameter` | [Compact type tokens](compact-types.md#vector-tokens) |
 | Compact texture | 5 | `Texture2D Base = Path(Game, "T_X");` | `UMaterialExpressionTextureObjectParameter` | [Compact type tokens](compact-types.md#texture-tokens) |
-| Explicit `*Parameter` node | 22 | `TextureSampleParameter2D Tex;` | the named `UMaterialExpression` subclass | [Parameter node tokens](parameter-nodes.md) |
+| Explicit `*Parameter` node | 22, of which 15 build | `TextureSampleParameter2D Tex;` | the named `UMaterialExpression` subclass | [Parameter node tokens](parameter-nodes.md) |
 | `UE.<Name>` builtin | — | `UE.TexCoord(Index = 0) UV;` | the builtin's node, or a reflected class | [UE builtins](../builtins/ue.md) |
 
-Every token is matched **case-insensitively**. A token that matches none of the above fails with
-`Unsupported property type '{Token}'.`
+Every token is matched **case-insensitively**. A token that matches none of the above is
+[`DSH3252`](../diagnostics/DSH3xxx.md#dsh3252); one of the seven parameter node types that have no
+2.0 spelling is [`DSH3253`](../diagnostics/DSH3xxx.md#dsh3253) *(since 2.0.0)*.
 
 ## Which form to use
 
 | Goal | Write | Why |
 | :-- | :-- | :-- |
 | A float the artist can tweak on an instance | `float`, `half`, `int`, `uint`, `bool` (or `ScalarParameter`) | All seven compact scalar tokens and `ScalarParameter` produce the identical `ScalarParameter` node |
-| A colour or 2/3/4-component parameter | `float2` … `bvec4` | The declared component count controls which output the `Graph` reads (`R` / `RG` / `RGB` / `RGBA`) |
+| A colour or 2/3/4-component parameter | `float2` … `bvec4` | The declared component count controls which output the `Graph` reads (`RG` / `RGB` / `RGBA`) |
 | A four-component parameter that must always read as RGBA | `VectorParameter` | Fixed at 4 components regardless of how it is used |
-| A texture the shader samples itself | `Texture2D` / `TextureCube` / `Texture2DArray` / `Texture3D` / `VolumeTexture` | Produces a texture *object* parameter, dimension-checked against the asset |
+| A texture the shader samples itself | `Texture2D` / `TextureCube` / `Texture2DArray` / `Texture3D` / `VolumeTexture` | Produces a texture *object* parameter of that dimension |
 | A texture with a sampler node and configurable sampling | `TextureSampleParameter2D` and friends | Owns `Coordinates` and mip pins; accepts `SamplerType` / `MipValueMode` metadata |
 | A texture object with no fixed dimension | `TextureObjectParameter` | Takes its dimension from the assigned default asset *(since 1.6.0)* |
 | A compile-time branch | `StaticSwitchParameter` | Must be used in the call form `N(True = …, False = …)` |
@@ -57,9 +63,10 @@ Every token is matched **case-insensitively**. A token that matches none of the 
 | Any other `UMaterialExpression` class | `UE.<Class>(OutputType = "float4", … )` | Generic reflected construction — see [UE.Expression](../builtins/ue-expression.md) |
 
 > [!NOTE]
-> `const` is legal **only** with the 39 compact tokens. `const` combined with any `*Parameter` token or
-> any `UE.*` declaration is rejected at generation with
-> `Const property '{Name}' must use a plain scalar, vector, or texture type instead of a parameter node or UE builtin declaration.`
+> `const` is legal with the 39 compact tokens and, *(since 2.0.0)*, with `ScalarParameter`,
+> `VectorParameter` and `TextureObjectParameter`, which then build the same constant as `const float`,
+> `const float4` and `const Texture2D`. On any other `*Parameter` token it is `DSH3253`. On a `UE.*`
+> declaration the `const` is ignored *(since 2.0.0)*.
 
 ## Pages
 
@@ -68,25 +75,29 @@ Every token is matched **case-insensitively**. A token that matches none of the 
 | [Compact type tokens](compact-types.md) | All 39 compact tokens, the node each generates, default-value grammar, and the tokens that are *not* valid in `Properties` |
 | [Parameter node tokens](parameter-nodes.md) | All 22 explicit `*Parameter` tokens, their generated classes, per-type default and metadata slots |
 | [Metadata block](metadata.md) | `[ Key = Value ; … ]`, `Slider(min, max)`, `ParameterName`, and the reflected-UPROPERTY passthrough |
-| [SamplerType](sampler-type.md) | Every `SamplerType` value and spelling, `SamplerSource`, and how the texture dimension is validated or inferred |
-| [Using parameters in Graph](graph-usage.md) | Value reads, component selection, and the pin call form — with the exhaustive pin table |
-| [Path(…) asset references](path.md) | Every root spelling, the two resolvers, and both error sets |
+| [SamplerType](sampler-type.md) | Every `SamplerType` value and spelling, `SamplerSource`, and how the texture dimension is checked or inferred |
+| [Using parameters in Graph](graph-usage.md) | Value reads, component selection, and the pin call form — with the pin table |
+| [Path(…) asset references](path.md) | Every root spelling, the resolver, and its diagnostics |
 
 ## Notes
 
-- **A default value is optional for every type.** With no `= <default>` the node keeps its engine
-  default: `0.0` for a scalar parameter, `(1, 1, 1, 1)` for a vector parameter, an engine placeholder
-  texture for a texture parameter. The one exception is a `Texture2DArray`-typed compact declaration,
-  for which no engine fallback asset exists.
-- **A property name is only required to be non-empty.** Unlike an
-  [`Inputs` parameter](../language/inputs-outputs.md), a property name is never validated as an
-  identifier, so `float 1Bad = 0;` parses. It is then unreachable from `Graph`, where names are looked
-  up as identifiers.
-- **Property names must be unique ignoring case** within a `Shader`; inside a material function a
-  property may not collide with an input name either.
-- **Declaration order does not constrain reads.** Nodes are created lazily on first reference, so a
-  `Graph` may read a property declared later in the block. Only a `UE.*` argument that references
-  another property requires that property to exist in the same `Properties` list.
+- **A default value is optional for every type.** With no `= <default>`, a scalar is `0`, a vector is
+  `0` in every channel (alpha `1` for a 2- or 3-component token), and a texture is the engine's default
+  texture of its dimension *(since 2.0.0; 1.x left a vector at the node's own default)*. A
+  `Texture2DArray` has no engine default: its node keeps the class's 2D default texture, with no
+  diagnostic *(since 2.0.0)*. Assign an array asset.
+- **A property name is an identifier** *(since 2.0.0)*. `float 1Bad = 0;` is
+  [`DSH2105`](../diagnostics/DSH2xxx.md#dsh2105) (a malformed number) and
+  [`DSH3250`](../diagnostics/DSH3xxx.md#dsh3250).
+- **A property that becomes a declaration is declared at file scope** *(since 2.0.0)*. Two properties
+  of one name — in one block, or in two blocks of the same file — are
+  [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210). Names are compared exactly. The 1.x rule that a
+  function's property may not share a name with one of its inputs has no 2.0 check.
+- **Declaration order does not constrain reads.** A `Graph` may read a property declared further down
+  the block. The exception is a `UE.*` property: it is a local declared at the head of each body that
+  reads it, in `Properties` order, so an argument naming another `UE.*` property needs that one earlier
+  in the list and read by the same body; otherwise the name is not declared
+  ([`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200)).
 - **`Properties` means something else inside a `VirtualFunction`**: there it is a synonym for `Inputs`
   and takes the typed-parameter grammar, not this one. See
   [VirtualFunction](../language/virtual-function.md).
@@ -95,21 +106,21 @@ Every token is matched **case-insensitively**. A token that matches none of the 
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this page.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Invalid property declaration '{Statement}'.` | no top-level whitespace separating the type token from the name |
-| `Missing property name in declaration '{Statement}'.` | the name token is empty |
-| `Missing property type after const in declaration '{Statement}'.` | `const` with nothing after it |
-| `Unsupported property type '{Token}'.` | the type token matches no compact token, no `*Parameter` token and does not start with `UE.` |
-| `Metadata must follow a declaration.` | the statement is only a `[ … ]` block |
-| `{File}: Property '{Name}' is declared more than once. Property names must be unique.` | two declarations whose names are equal ignoring case |
-| `{Kind} '{Function}' property '{Name}' conflicts with another property or input name.` | in a material function, a property name collides with another property or an input |
-| `Failed to create a parameter node for property '{Name}'.` | the parameter path returned no node and no more specific message |
-| `Const property '{Name}' must use a plain scalar, vector, or texture type instead of a parameter node or UE builtin declaration.` | `const` applied to a `*Parameter` token or a `UE.*` declaration |
+| [`DSH3250`](../diagnostics/DSH3xxx.md#dsh3250) | the statement does not start with a type and a name, the name is missing, or no `;` follows the property; a statement that is only a `[ … ]` block lands here too |
+| [`DSH3251`](../diagnostics/DSH3xxx.md#dsh3251) | `const` with no type after it |
+| `DSH3252` | the type token is no compact token, no `*Parameter` token and does not start with `UE.` |
+| `DSH3253` | a `*Parameter` token with no 2.0 spelling, or `const` on a `*Parameter` token that cannot be a constant |
+| [`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254) | `=` with no default after it, or a default the token cannot take |
+| [`DSH3259`](../diagnostics/DSH3xxx.md#dsh3259) | a `UE.*` declaration with an unclosed `(`, or a default after its name |
+| [`DSH3260`](../diagnostics/DSH3xxx.md#dsh3260) | `Group("") { … }` |
+| `DSH4210` | two properties of one name in one file |
+| [`DSH8214`](../diagnostics/DSH8xxx.md#dsh8214) | the emitter could not create a parameter node (internal) |
 
-The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
+Metadata, default-value and asset-reference diagnostics are on [Metadata](metadata.md#diagnostics),
+[Compact type tokens](compact-types.md#diagnostics) and [Path(…)](path.md#diagnostics). The complete
+list lives in the [diagnostics index](../diagnostics/index.md).
 
 ## Example
 
@@ -174,4 +185,5 @@ TextureCoordinate     UV                CoordinateIndex=0
 - [UE builtins](../builtins/ue.md) — the complete `UE.*` catalogue
 - [UE.Expression](../builtins/ue-expression.md) — generic reflected node construction
 - [Graph](../graph/index.md) — the language that consumes these parameters
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [The 2.0 language](../language-v2/index.md) — `uniform`, `static const` and `///` directives
+- [Diagnostics index](../diagnostics/index.md) — every code

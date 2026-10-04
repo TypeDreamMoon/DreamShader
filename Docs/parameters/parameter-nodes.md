@@ -18,51 +18,51 @@ declaration generates that exact node instead of the compact scalar / vector / t
 <parameter-node-token> <name> [ = <default> ] [ [ <metadata> ] ] ;
 ```
 
-Tokens are matched **case-insensitively**, but the spelling the author typed is what is used to
-resolve the expression class, so any casing works. The set is closed: exactly the 22 tokens below.
-`const` is never legal with any of them.
+Tokens are matched **case-insensitively**. The set is closed: exactly the 22 tokens below.
+`const` is legal only with `ScalarParameter`, `VectorParameter` and `TextureObjectParameter`
+*(since 2.0.0)*; on any other token it is [`DSH3253`](../diagnostics/DSH3xxx.md#dsh3253).
 
 ## The 22 tokens
 
-`ScalarParameter`, `VectorParameter` and `TextureObjectParameter` take dedicated construction paths;
-every other token resolves its class by name, trying `<Token>`, `U<Token>`, `MaterialExpression<Token>`
-and `UMaterialExpression<Token>` in that order against every non-abstract `UMaterialExpression`
-subclass, case-insensitively.
+*(since 2.0.0)* Each token takes one of three 2.0 forms:
 
-| # | Token | Type | Components | Generated class | `= default` accepts | `Graph` call form |
-| :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| 1 | `ScalarParameter` | Scalar | 1 | `UMaterialExpressionScalarParameter` | scalar literal | — |
-| 2 | `StaticBoolParameter` | Scalar | 1 | `UMaterialExpressionStaticBoolParameter` | `true` / `false` only | — |
-| 3 | `StaticSwitchParameter` | Scalar | 1 | `UMaterialExpressionStaticSwitchParameter` | `true` / `false` only | **required** — `N(True = …, False = …)` |
-| 4 | `VectorParameter` | Vector | 4 | `UMaterialExpressionVectorParameter` | vector literal | — |
-| 5 | `DoubleVectorParameter` | Vector | 4 | `UMaterialExpressionDoubleVectorParameter` | vector literal | — |
-| 6 | `ChannelMaskParameter` | Vector | **1** | `UMaterialExpressionChannelMaskParameter` | vector literal | `N(Input = …)` |
-| 7 | `StaticComponentMaskParameter` | Vector | 4 | `UMaterialExpressionStaticComponentMaskParameter` | vector literal | `N(Input = …)` |
-| 8 | `CurveAtlasRowParameter` | Vector | **3** | `UMaterialExpressionCurveAtlasRowParameter` | vector literal — only `.R` is written | — (see the warning below) |
-| 9 | `DynamicParameter` | Vector | 4 | `UMaterialExpressionDynamicParameter` | vector literal | — |
-| 10 | `FontSampleParameter` | Vector | 4 | `UMaterialExpressionFontSampleParameter` | vector literal — **discarded** | — |
-| 11 | `SpriteTextureSampler` | Vector | 4 | `UMaterialExpressionSpriteTextureSampler` (Paper2D) | vector literal **only** | — |
-| 12 | `TextureObjectParameter` | Texture | 0 | `UMaterialExpressionTextureObjectParameter` | `Path(…)` / bare quoted path | — |
-| 13 | `TextureCollectionParameter` | Texture | 0 | `UMaterialExpressionTextureCollectionParameter` | `Path(…)` / bare quoted path | — |
-| 14 | `SparseVolumeTextureObjectParameter` | Texture | 0 | `UMaterialExpressionSparseVolumeTextureObjectParameter` | `Path(…)` / bare quoted path | — |
-| 15 | `TextureSampleParameter2D` | Vector | 4 | `UMaterialExpressionTextureSampleParameter2D` | `Path(…)` / bare quoted path | `N(Coordinates = …)` |
-| 16 | `TextureSampleParameter2DArray` | Vector | 4 | `UMaterialExpressionTextureSampleParameter2DArray` | `Path(…)` / bare quoted path | `N(Coordinates = …)` |
-| 17 | `TextureSampleParameterCube` | Vector | 4 | `UMaterialExpressionTextureSampleParameterCube` | `Path(…)` / bare quoted path | `N(Coordinates = …)` |
-| 18 | `TextureSampleParameterCubeArray` | Vector | 4 | `UMaterialExpressionTextureSampleParameterCubeArray` | `Path(…)` / bare quoted path | `N(Coordinates = …)` |
-| 19 | `TextureSampleParameterVolume` | Vector | 4 | `UMaterialExpressionTextureSampleParameterVolume` | `Path(…)` / bare quoted path | `N(Coordinates = …)` |
-| 20 | `TextureSampleParameterSubUV` | Vector | 4 | `UMaterialExpressionTextureSampleParameterSubUV` | `Path(…)` / bare quoted path | `N(Coordinates = …)` |
-| 21 | `RuntimeVirtualTextureSampleParameter` | Vector | 4 | `UMaterialExpressionRuntimeVirtualTextureSampleParameter` | `Path(…)` / bare quoted path | `N(Coordinates = …)` |
-| 22 | `SparseVolumeTextureSampleParameter` | Vector | 4 | `UMaterialExpressionSparseVolumeTextureSampleParameter` | `Path(…)` / bare quoted path | `N(Coordinates = …, TextureObject = …)` |
+- **a declaration** — `ScalarParameter`, `StaticBoolParameter`, `VectorParameter` and
+  `TextureObjectParameter` are the `uniform` a compact token would make (`float`, a `/// @static`
+  `bool`, `float4`, `Texture2D`), with one parameter node however often it is read;
+- **expanded at each use** — the other eleven that build are no declaration: every read or call of the
+  property is a reflected `UE.Expression(Class = "<Token>", ParameterName = …, …)` call carrying the
+  default and the metadata, and identical uses share one node;
+- **no 2.0 spelling** — seven tokens are `DSH3253`. Move such a material to a `.dss` and build the node
+  with [`UE.Expression`](../builtins/ue-expression.md).
 
-`Type` is the DreamShader property type, not the Unreal pin type. `Texture` means "asset-valued": the
-node carries an asset and produces no numeric output. The `Graph` call form is summarised here; the
-exhaustive pin table, including the pins that only appear under certain metadata, is in
-[Using parameters in Graph](graph-usage.md#pin-names-by-parameter-type).
+| # | Token | 2.0 form | Generated class | `= default` accepts | `Graph` use |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| 1 | `ScalarParameter` | declaration | `UMaterialExpressionScalarParameter` | scalar literal | value |
+| 2 | `StaticBoolParameter` | declaration | `UMaterialExpressionStaticBoolParameter` | `true` / `false` only | value |
+| 3 | `StaticSwitchParameter` | expanded | `UMaterialExpressionStaticSwitchParameter` | `true` / `false` only | **call only** — `N(True = …, False = …)` |
+| 4 | `VectorParameter` | declaration | `UMaterialExpressionVectorParameter` | vector literal | value, 4 components |
+| 5 | `DoubleVectorParameter` | `DSH3253` | — | — | — |
+| 6 | `ChannelMaskParameter` | expanded | `UMaterialExpressionChannelMaskParameter` | vector literal | `N(Input = …)`, **1** component |
+| 7 | `StaticComponentMaskParameter` | expanded | `UMaterialExpressionStaticComponentMaskParameter` | none — see below | `N(Input = …)` |
+| 8 | `CurveAtlasRowParameter` | `DSH3253` | — | — | — |
+| 9 | `DynamicParameter` | `DSH3253` | — | — | — |
+| 10 | `FontSampleParameter` | `DSH3253` | — | — | — |
+| 11 | `SpriteTextureSampler` | `DSH3253` | — | — | — |
+| 12 | `TextureObjectParameter` | declaration | `UMaterialExpressionTextureObjectParameter` | asset reference | value (texture) |
+| 13 | `TextureCollectionParameter` | `DSH3253` | — | — | — |
+| 14 | `SparseVolumeTextureObjectParameter` | `DSH3253` | — | — | — |
+| 15 | `TextureSampleParameter2D` | expanded | `UMaterialExpressionTextureSampleParameter2D` | asset reference | `N(Coordinates = …)`, read as `RGBA` |
+| 16 | `TextureSampleParameter2DArray` | expanded | `UMaterialExpressionTextureSampleParameter2DArray` | asset reference | as 15 |
+| 17 | `TextureSampleParameterCube` | expanded | `UMaterialExpressionTextureSampleParameterCube` | asset reference | as 15 |
+| 18 | `TextureSampleParameterCubeArray` | expanded | `UMaterialExpressionTextureSampleParameterCubeArray` | asset reference | as 15 |
+| 19 | `TextureSampleParameterVolume` | expanded | `UMaterialExpressionTextureSampleParameterVolume` | asset reference | as 15 |
+| 20 | `TextureSampleParameterSubUV` | expanded | `UMaterialExpressionTextureSampleParameterSubUV` | asset reference | as 15 |
+| 21 | `RuntimeVirtualTextureSampleParameter` | expanded | `UMaterialExpressionRuntimeVirtualTextureSampleParameter` | none — see below | `N(Coordinates = …)`, several outputs |
+| 22 | `SparseVolumeTextureSampleParameter` | expanded | `UMaterialExpressionSparseVolumeTextureSampleParameter` | none — see below | `N(Coordinates = …)`, several outputs |
 
-> [!NOTE]
-> `ChannelMaskParameter` reads as a **1-component** value in `Graph` and `CurveAtlasRowParameter` as a
-> **3-component** value, even though both generate 4-channel-looking nodes. Declare the receiving
-> variable accordingly.
+The class of an expanded token is looked up in the engine's node catalog; a class this engine does not
+have is [`DSH5212`](../diagnostics/DSH5xxx.md#dsh5212). The `Graph` use is summarised here; the pin
+table is in [Using parameters in Graph](graph-usage.md#pin-names-by-parameter-type).
 
 ## Type-specific metadata slots
 
@@ -76,152 +76,120 @@ slots that matter in practice:
 | `StaticBoolParameter` | — |
 | `StaticSwitchParameter` | — |
 | `VectorParameter` | `UseCustomPrimitiveData` (binds `bUseCustomPrimitiveData`), `PrimitiveDataIndex`, `ChannelNames` |
-| `DoubleVectorParameter` | — |
 | `ChannelMaskParameter` | `MaskChannel` (enum `EChannelMaskParameterColor`) |
 | `StaticComponentMaskParameter` | `DefaultR`, `DefaultG`, `DefaultB`, `DefaultA` (booleans) |
-| `CurveAtlasRowParameter` | `Curve`, `Atlas` |
-| `DynamicParameter` | `ParameterIndex` (0–3) |
-| `FontSampleParameter` | `Font`, `FontTexturePage` |
-| `SpriteTextureSampler` | `Texture`, `SamplerType`, `bSampleAdditionalTextures`, `AdditionalSlotIndex`, `SlotDisplayName` |
 | `TextureObjectParameter` | `Texture`, `SamplerType`, `IsDefaultMeshpaintTexture` |
-| `TextureCollectionParameter` | `TextureCollection` |
-| `SparseVolumeTextureObjectParameter` | `SparseVolumeTexture` |
 | `TextureSampleParameter2D` … `TextureSampleParameterSubUV` (tokens 15–20) | `Texture`, `SamplerType`, `SamplerSource`, `MipValueMode`, `GatherMode` *(since UE 5.6)*, `AutomaticViewMipBias`, `ConstCoordinate`, `ConstMipValue`, `IsDefaultMeshpaintTexture`; `TextureSampleParameterSubUV` adds `bBlend` |
 | `RuntimeVirtualTextureSampleParameter` | `VirtualTexture`, `MaterialType`, `bSinglePhysicalSpace`, `bAdaptive`, `MipValueMode`, `TextureAddressMode` |
 | `SparseVolumeTextureSampleParameter` | `SparseVolumeTexture`, `MipValueMode`, `SamplerSource`, `ConstMipValue` |
 
 Boolean UPROPERTYs are matched with the leading `b` optional, so `[bBlend=true]` and `[Blend=true]`
-both bind `bBlend`. The value grammar for each property type is in
-[Metadata](metadata.md#reflected-property-passthrough).
+both bind `bBlend`. How a key the class does not have is reported depends on the form: a warning on a
+declaration, an error on an expanded token — see [Metadata](metadata.md#reflected-property-passthrough).
 
 ## Which default parser a token uses
 
-The `= <default>` branch is chosen by the **token family**, not by what the generated node can
-actually store.
-
-| Branch | Tokens | Accepts |
+| Tokens | Accepts | Otherwise |
 | :-- | :-- | :-- |
-| Scalar | `ScalarParameter`, `StaticBoolParameter`, `StaticSwitchParameter` | a scalar literal; the two static tokens accept **only** `true` / `false` |
-| Vector | `VectorParameter`, `DoubleVectorParameter`, `ChannelMaskParameter`, `StaticComponentMaskParameter`, `DynamicParameter`, `FontSampleParameter`, `CurveAtlasRowParameter`, `SpriteTextureSampler` | a vector literal, per [Compact type tokens](compact-types.md#vector-default-grammar) |
-| Texture object | `TextureObjectParameter`, `TextureCollectionParameter`, `SparseVolumeTextureObjectParameter` | a [`Path(…)`](path.md) asset reference |
-| Texture sample | the eight `TextureSampleParameter*` / `RuntimeVirtualTextureSampleParameter` / `SparseVolumeTextureSampleParameter` tokens (15–22) | a [`Path(…)`](path.md) asset reference |
+| `ScalarParameter` | a scalar literal, per [Compact type tokens](compact-types.md#scalar-default-grammar) | [`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254) |
+| `StaticBoolParameter`, `StaticSwitchParameter` | `true` / `false` only | `DSH3254` |
+| `VectorParameter`, `ChannelMaskParameter` | a vector literal, per [Compact type tokens](compact-types.md#vector-default-grammar) | `DSH3254` on `VectorParameter`; on `ChannelMaskParameter` an unreadable literal is dropped with no diagnostic |
+| `TextureObjectParameter` | a [`Path(…)`](path.md) asset reference | resolved when the material is built: [`DSH8271`](../diagnostics/DSH8xxx.md#dsh8271) / [`DSH8218`](../diagnostics/DSH8xxx.md#dsh8218) |
+| Texture-sample tokens 15–20 | a [`Path(…)`](path.md) asset reference | resolved when the material is built: [`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213), quoting the resolver's code |
+| `StaticComponentMaskParameter` | nothing — the class has no `DefaultValue` | the default is dropped with [`DSH5288`](../diagnostics/DSH5xxx.md#dsh5288); write `[DefaultR = true; …]` |
+| `RuntimeVirtualTextureSampleParameter`, `SparseVolumeTextureSampleParameter` | nothing | the default is dropped with **no diagnostic** *(since 2.0.0)* |
 
 > [!WARNING]
-> **`FontSampleParameter`, `CurveAtlasRowParameter` and `SpriteTextureSampler` cannot take `= Path(…)`.**
-> They sit in the vector branch, so `SpriteTextureSampler S = Path(Game, "T_X");` fails with
-> `Invalid vector default value 'Path(Game,"T_X")' for property 'S'.` Bind their assets through
-> metadata instead — `[Texture=Path(…)]`, `[Font=Path(…)]`, `[Curve=Path(…); Atlas=Path(…)]`.
+> **A `RuntimeVirtualTextureSampleParameter` or `SparseVolumeTextureSampleParameter` default is
+> ignored.** `= Path(…)` on either token reaches no property of the node, and nothing says so. Bind
+> the asset through metadata instead — `[VirtualTexture = Path(…)]`, `[SparseVolumeTexture = Path(…)]`.
 
 ### What the default is written to
 
 | Situation | Result |
 | :-- | :-- |
-| No `= <default>` | nothing is written; the node keeps its engine default |
-| Class has no `DefaultValue` UPROPERTY | the parsed default is **silently discarded** — this is `FontSampleParameter` |
-| Class has a scalar (`float` / `double`) `DefaultValue` but the token is vector-classified | only `VectorDefaultValue.R` is written — this is `CurveAtlasRowParameter`, whose `DefaultValue` is a curve row position |
-| Token is `StaticBoolParameter` / `StaticSwitchParameter` | the literal string `true` or `false` is written |
-| Any other Scalar-typed token | the value is written as a sanitized float string |
-| Vector-typed token | written as `(R=…,G=…,B=…,A=…)`, retried as `(X=…,Y=…,Z=…,W=…)` if the first form is rejected |
-| Texture-classified token, or any token with an asset path | the first present slot of `Texture` → `TextureObject` → `SparseVolumeTexture` → `VirtualTexture` → `TextureCollection` → `Font` is written |
-
-If none of those six asset slots exists on the class, generation fails with
-`'{Class}' does not expose a texture/asset property for property '{Name}'.`
+| No `= <default>` | nothing is written; an expanded node keeps its engine default, a declaration the default of its compact twin (see [Compact type tokens](compact-types.md)) |
+| A declaration token | the default of the `uniform`, exactly as for its compact twin |
+| `StaticSwitchParameter` | `DefaultValue = true` or `false` |
+| `ChannelMaskParameter` | `DefaultValue` = the four values of the literal |
+| Texture-sample tokens 15–20 | the node's `Texture` property. An asset that resolves and does not load is written as nothing, with no diagnostic, and the node then takes the engine's default texture |
 
 ## Texture-dimension inference
 
-The eight texture-sample tokens declare an explicit dimension, inferred from the token spelling by
-substring test, in this order:
+A texture-sample token fixes a dimension by the suffix after `TextureSampleParameter`:
 
-| Order | Token contains (case-insensitive) | Texture type |
-| :-- | :-- | :-- |
-| 1 | `Cube` | `TextureCube` |
-| 2 | `Array` | `Texture2DArray` |
-| 3 | `Volume` | `VolumeTexture` |
-| 4 | none of the above | `Texture2D` |
-
-| Token | Inferred texture type |
+| Token | Dimension |
 | :-- | :-- |
 | `TextureSampleParameter2D` | `Texture2D` |
 | `TextureSampleParameter2DArray` | `Texture2DArray` |
 | `TextureSampleParameterCube` | `TextureCube` |
-| `TextureSampleParameterCubeArray` | **`TextureCube`** |
+| `TextureSampleParameterCubeArray` | none — any texture |
 | `TextureSampleParameterVolume` | `VolumeTexture` |
 | `TextureSampleParameterSubUV` | `Texture2D` |
-| `RuntimeVirtualTextureSampleParameter` | `Texture2D` |
-| `SparseVolumeTextureSampleParameter` | `VolumeTexture` |
+| `RuntimeVirtualTextureSampleParameter` | not judged |
+| `SparseVolumeTextureSampleParameter` | not judged |
 
-> [!NOTE]
-> `TextureSampleParameterCubeArray` contains both `Cube` and `Array`; `Cube` is tested first, so the
-> token is classified as `TextureCube` rather than as a cube array. This has no observable effect,
-> because the inferred dimension of a sample token is never used for validation (below) and the
-> generated class is the correct `UMaterialExpressionTextureSampleParameterCubeArray`.
+*(since 2.0.0)* The suffix is compared whole, so `TextureSampleParameterCubeArray` is no longer taken
+for a cube. The dimension is used for one thing only: judging the class a `Class'…'` default names.
 
-The three texture-object tokens (12–14) deliberately declare **no** dimension: the effective dimension
-is taken from the assigned default asset at generation time. That is what lets
-`TextureObjectParameter` accept a cube, an array or a volume texture *(since 1.6.0)*.
+`TextureObjectParameter` declares **no** dimension: it takes the dimension of the asset its default
+loads — a cube, a 2D array or a volume, else `Texture2D` — which is what lets it accept any of them
+*(since 1.6.0)*.
 
 ### Dimension validation asymmetry
 
-| Token family | Asset dimension checked against the declaration? |
+| Token family | What is checked |
 | :-- | :-- |
-| Compact `Texture2D` / `TextureCube` / `Texture2DArray` / `Texture3D` / `VolumeTexture` | **yes** |
-| `TextureObjectParameter` | yes, but the expected type is inferred from the asset, so it can never fail |
-| `TextureCollectionParameter`, `SparseVolumeTextureObjectParameter` | **no** |
-| All eight texture-sample tokens (15–22) | **no** |
+| Compact `Texture2D` / `TextureCube` / `Texture2DArray` / `Texture3D` / `VolumeTexture` | the `Class'…'` shell: another dimension is [`DSH1044`](../diagnostics/DSH1xxx.md#dsh1044), a non-texture class [`DSH1043`](../diagnostics/DSH1xxx.md#dsh1043). The loaded asset is not checked *(since 2.0.0)* |
+| `TextureObjectParameter` | the shell's "not a texture" half only (`DSH1043`) |
+| Texture-sample tokens 15–17, 19, 20 | the shell, as for a compact token |
+| `TextureSampleParameterCubeArray` | the shell's "not a texture" half only |
+| `RuntimeVirtualTextureSampleParameter`, `SparseVolumeTextureSampleParameter` | nothing; their default is not read |
 
 > [!WARNING]
-> A `TextureSampleParameterCube` assigned a plain 2D texture generates without a DreamShader
-> diagnostic. Every token in the "no" rows above is constructed through the generic reflected path,
-> which has no dimension check, so the mismatch surfaces later as an Unreal shader-compile error on
-> the material. Assign the right dimension, or use the compact token if you want the check.
+> A `TextureSampleParameterCube` assigned a plain 2D texture by its plain object path generates
+> without a DreamShader diagnostic; only a `Texture2D'…'` shell gives the mismatch away
+> (`DSH1044`). The mismatch otherwise surfaces later as an Unreal shader-compile error on the
+> material. Assign the right dimension.
 
 ## Notes
 
-- **A default value is optional for every one of the 22 tokens.** The parse+generate test matrix
-  covers each token, and `ScalarParameter`, `VectorParameter` and `TextureObjectParameter` are covered
-  twice — once with and once without an inline default.
-- **A sampler parameter with no texture still compiles.** When the generated node derives from
-  `UMaterialExpressionTextureBase` and its `Texture` slot is null, `SetDefaultTexture()` is called for
-  `UMaterialExpressionTextureSampleParameter` subclasses, then `AutoSetSampleType()` runs
-  unconditionally. Without that, a default-less sampler parameter would fail with *Missing input
-  Texture*. The rescue does **not** apply to the runtime-virtual-texture, sparse-volume, font or curve
-  atlas nodes — those still need their asset bound.
-- **Metadata is applied last**, after `AutoSetSampleType()`, so an explicit `[SamplerType=…]` always
-  wins over the inferred value. See [SamplerType](sampler-type.md).
-- `SpriteTextureSampler` lives in the **Paper2D** plugin. With Paper2D disabled the class cannot be
-  resolved and generation fails with
-  `Could not resolve MaterialExpression class for parameter type 'SpriteTextureSampler'.`
-- `DynamicParameter` is not a `UMaterialExpressionParameter`. It has no `Group`, `SortPriority`, `Desc`
-  or `ParameterName` UPROPERTY: the first three are skipped with a warning, and `[ParameterName="…"]`
-  is a hard error. Its parameter name is written to `ParamNames[0]` instead. See
-  [Metadata](metadata.md#organization-fields-that-are-not-reflected).
-- `StaticSwitchParameter` cannot be read as a value. A bare reference fails with
-  `Unknown Graph identifier '{Name}'.`; it must be called. See
+- **A default value is optional for every token that has a 2.0 form.** The test
+  `DreamShader.Lang.ParameterExpressions.ParseAll` covers each of the 15, covers `ScalarParameter`,
+  `VectorParameter` and `TextureObjectParameter` with and without an inline default, and checks that
+  each of the seven others is `DSH3253`.
+- **A sampler parameter with no texture still compiles.** When an expanded node derives from
+  `UMaterialExpressionTextureBase` and its `Texture` is null, `SetDefaultTexture()` is called for a
+  `UMaterialExpressionTextureSampleParameter` subclass. Without that, a default-less sampler parameter
+  would fail with *Missing input Texture*. The runtime-virtual-texture and sparse-volume nodes are not
+  such subclasses and still need their asset bound.
+- **An explicit `SamplerType` always wins.** `AutoSetSampleType()` runs only on a node whose source
+  gives no `SamplerType`. See [SamplerType](sampler-type.md).
+- `StaticSwitchParameter` cannot be read as a value. A bare reference is not a declared name
+  ([`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200)); it must be called. See
   [Using parameters in Graph](graph-usage.md#staticswitchparameter).
-- `CurveAtlasRowParameter`'s `InputTime` pin is **not** reachable from `Graph` — see the diagnostics
-  note in [Using parameters in Graph](graph-usage.md#types-that-look-callable-but-are-not).
+- **A `Group(…)` scope does not stamp an expanded token** *(since 2.0.0)*: such a member gets no
+  group and no automatic `SortPriority` from the scope, and does not use up a counter slot. Write
+  `Group` / `SortPriority` in its own metadata block. See
+  [Metadata](metadata.md#group-scopes-and-the-sortpriority-counter).
 - The [decompiler](../tools/decompiler.md) emits `SamplerType` and the texture-sample metadata keys
   explicitly on every export, even at their defaults, so a decompile → recompile round trip is stable.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this table.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Invalid boolean default value '{Text}' for property '{Name}'.` | a non-`true`/`false` default on `StaticBoolParameter` or `StaticSwitchParameter` |
-| `Invalid scalar default value '{Text}' for property '{Name}'.` | an unparsable scalar default on `ScalarParameter` |
-| `Invalid vector default value '{Text}' for property '{Name}'.` | an unparsable vector default on any vector-branch token — including a `Path(…)` written on `FontSampleParameter`, `CurveAtlasRowParameter` or `SpriteTextureSampler` |
-| `Invalid texture default value '{Text}' for property '{Name}'. {Inner}` | a texture-object token's `Path(…)` failed to resolve |
-| `Invalid texture sample default value '{Text}' for property '{Name}'. {Inner}` | a texture-sample token's `Path(…)` failed to resolve |
-| `Could not resolve MaterialExpression class for parameter type '{Token}'.` | no `UMaterialExpression` subclass matched the token under any of the four name spellings |
-| `Failed to create a '{Token}' node for property '{Name}'.` | the resolved class could not be instantiated; the message quotes the declared token, not the class it resolved to |
-| `'{Class}' does not expose a ParameterName property.` | the class has no `ParameterName` UPROPERTY and is not `DynamicParameter` |
-| `'{Class}' does not expose a texture/asset property for property '{Name}'.` | an asset default was given but none of the six asset slots exists on the class |
-| `property '{Name}': {Inner}` | wrapper applied to any default-value or metadata failure on this property |
-| `Const property '{Name}' must use a plain scalar, vector, or texture type instead of a parameter node or UE builtin declaration.` | `const` applied to any of the 22 tokens |
+| `DSH3253` | one of the seven tokens with no 2.0 form, or `const` on a token other than `ScalarParameter`, `VectorParameter`, `TextureObjectParameter` |
+| `DSH3254` | a non-`true`/`false` default on `StaticBoolParameter` or `StaticSwitchParameter`, an unparsable default on `ScalarParameter` or `VectorParameter` |
+| `DSH5288` | a default on `StaticComponentMaskParameter`, which has no `DefaultValue` (warning; the default is dropped) |
+| `DSH5212` | the engine has no class for an expanded token |
+| `DSH1043` / `DSH1044` | a `Class'…'` default names a non-texture / a texture of another dimension |
+| `DSH8271` / `DSH8218` | a `TextureObjectParameter` default does not resolve / does not load |
+| `DSH8213` | an expanded node cannot take a value: a texture-sample default that does not resolve, a metadata value of the wrong type |
+| [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213) | an expanded token's metadata key is neither a pin nor a property of its class |
+| [`DSH8210`](../diagnostics/DSH8xxx.md#dsh8210) | a declaration token's metadata key is no property of its class (warning; the value is not written) |
 
-The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
+The complete list lives in the [diagnostics index](../diagnostics/index.md).
 
 ## Example
 
@@ -273,20 +241,24 @@ Shader(Name="Docs/M_ParameterNodes")
 Generated nodes:
 
 ```text
-TextureSampleParameter2D      BaseTex    Group="Surface" SortPriority=0  SamplerType=LinearColor
-ScalarParameter               Roughness  Group="Surface" SortPriority=10 SliderMin=0 SliderMax=1
-VectorParameter               Tint       Group="Surface" SortPriority=20
-ChannelMaskParameter          Pick       Group="Masks"   SortPriority=30 MaskChannel=Red
-StaticComponentMaskParameter  Keep       Group="Masks"   SortPriority=40
+TextureSampleParameter2D      BaseTex    SamplerType=LinearColor
+ScalarParameter               Roughness  Group="Surface" SortPriority=0  SliderMin=0 SliderMax=1
+VectorParameter               Tint       Group="Surface" SortPriority=10
+ChannelMaskParameter          Pick       MaskChannel=Red
+StaticComponentMaskParameter  Keep
 StaticSwitchParameter         UseDetail  Group="Switches"
 TextureCoordinate             UV         CoordinateIndex=0
 ```
 
+`BaseTex`, `Pick` and `Keep` are expanded tokens, so their `Group(…)` scopes do not stamp them and
+`Roughness` takes counter slot 0. `Keep`'s `float4` default is dropped with `DSH5288`: write
+`[DefaultR = true; DefaultG = true]` for that mask.
+
 ## See also
 
 - [Parameters](index.md) — the hub and the decision table
-- [Compact type tokens](compact-types.md) — the 39 built-in tokens and the dimension check they do get
-- [Metadata block](metadata.md) — how `[Curve=…]`, `[MaskChannel=…]` and every other key is written
+- [Compact type tokens](compact-types.md) — the 39 built-in tokens and the checks they get
+- [Metadata block](metadata.md) — how `[MaskChannel=…]` and every other key is written
 - [SamplerType](sampler-type.md) — every sampler-type value, and `SamplerSource`
 - [Path(…)](path.md) — the asset-reference grammar these defaults use
 - [Using parameters in Graph](graph-usage.md) — reads, the pin call form, and `StaticSwitchParameter`

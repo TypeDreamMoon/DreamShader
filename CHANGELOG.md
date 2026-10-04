@@ -15,6 +15,17 @@
 - **The README diagrams are drawings of the product, not decoration.** The workflow, the 1.x / 2.0 spellings
   side by side, and the editor with its tools -- SVG, in English and Chinese, following the reader's light or
   dark theme, written by `Tools/Images/readme_images.py`.
+- **The 1.x pages describe the compiler that builds 1.x sources.** Since 2.0.0 a `.dsm`, `.dsf` or `.dsh` is read
+  by the legacy front end and built by the 2.0 compiler, yet the language, graph, builtin, parameter, settings,
+  generation and tool pages still quoted the deleted 1.x generator -- some 1,500 messages that exist nowhere in
+  Source -- and described what it did: `import` pasted in as text, one `Shader` per import closure, a substring scan
+  deciding what a `.dsh` may hold, a named argument on a math builtin reported as an arity error, component counts
+  left unchecked, an expression silently cut short at `%` or `&&`, positions as `near index` offsets. Each page now
+  names the `DSHnnnn` code that reports the condition and says what happens today, with *(since 2.0.0)* where 1.x
+  behaved otherwise. [Diagnostics](Docs/diagnostics/index.md) is no longer a catalogue of 1.x strings: it says where
+  diagnostics appear and how to read one, and maps the common 1.x messages to their codes. *Getting started* and
+  the examples show the `.dss` form beside the 1.x one, and *Editor integration* lists the menus as they are --
+  *Export .dss*, *Export Legacy .dsm*, the *Dream* toolbar combo, the *Generated Asset* actions.
 
 ### Fixed
 

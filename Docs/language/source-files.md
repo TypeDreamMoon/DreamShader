@@ -11,88 +11,79 @@ top-level blocks each may contain.
 | Kind | translation unit |
 | Extensions | `.dsm` material · `.dsf` function *(since 1.3.5)* · `.dsh` header |
 | Discovered under | `<Project>/DShader` by default, plus every enabled plugin's `DShader`; configurable |
-| Enforced by | the editor source loader, before parsing |
+| Enforced by | the legacy front end (what a `.dsh` may hold, one `Shader` per file) and the binder (one kind of product per file) *(since 2.0.0)* |
 
 ## Synopsis
 
 ```c
 // <name>.dsm — Dream Shader Material
-[ import "<specifier>" ; ]…
-[ Shader( Name = "…" [, Root = "…"] ) { … } ]          // at most one per translation unit
-[ <any function, layer, virtual-function or namespace block> ]…
+[ import "<header>.dsh" ; ]…
+[ Shader( Name = "…" [, Root = "…"] ) { … } ]          // at most one per file
+[ { VirtualFunction | Namespace | Function | GraphFunction } … ]…
 ```
 
 ```c
 // <name>.dsf — Dream Shader Function
-[ import "<specifier>" ; ]…
+[ import "<header>.dsh" ; ]…
 [ { ShaderFunction | ShaderLayer | ShaderLayerBlend }( Name = "…" [, Root = "…"] ) { … } ]…
 [ { VirtualFunction | Namespace | Function | GraphFunction } … ]…
 ```
 
 ```c
 // <name>.dsh — Dream Shader Header
-[ import "<specifier>" ; ]…
-[ { VirtualFunction | Namespace | Function | GraphFunction } … ]…
+[ import "<header>.dsh" ; ]…
+[ { VirtualFunction | Namespace | Function | GraphFunction } … ]…     // and 2.0 declarations, side by side
 ```
 
 ## What each kind may contain
 
 | Top-level block | `.dsm` | `.dsf` | `.dsh` | Reference |
 | :-- | :-- | :-- | :-- | :-- |
-| `Shader` | yes | no | no | [Shader](shader.md) |
-| `ShaderFunction` | yes | yes | no | [ShaderFunction](shader-function.md) |
-| `ShaderLayer` | yes | yes | no | [ShaderLayer](shader-layer.md) |
-| `ShaderLayerBlend` | yes | yes | no | [ShaderLayerBlend](shader-layer.md) |
-| `MaterialLayer` *(deprecated in 1.3.0)* | yes | yes | no | [ShaderLayer](shader-layer.md) |
-| `MaterialLayerBlend` *(deprecated in 1.3.0)* | yes | yes | no | [ShaderLayer](shader-layer.md) |
+| `Shader` | one | not by convention — see below | no | [Shader](shader.md) |
+| `ShaderFunction` | only without a `Shader` | yes | no | [ShaderFunction](shader-function.md) |
+| `ShaderLayer` | only without a `Shader` | yes | no | [ShaderLayer](shader-layer.md) |
+| `ShaderLayerBlend` | only without a `Shader` | yes | no | [ShaderLayerBlend](shader-layer.md) |
+| `MaterialLayer` *(deprecated in 1.3.0)* | only without a `Shader` | yes | no | [ShaderLayer](shader-layer.md) |
+| `MaterialLayerBlend` *(deprecated in 1.3.0)* | only without a `Shader` | yes | no | [ShaderLayer](shader-layer.md) |
 | `VirtualFunction` | yes | yes | yes | [VirtualFunction](virtual-function.md) |
 | `Namespace` | yes | yes | yes | [Namespace](namespace.md) |
 | `Function` | yes | yes | yes | [Function](function.md) |
 | `GraphFunction` | yes | yes | yes | [GraphFunction](graph-function.md) |
-| `import` | yes | yes | yes | [`import`](import.md) |
+| `import` of a `.dsh` | yes | yes | yes | [`import`](import.md) |
+| 2.0 declarations (`uniform`, `export`, `#pragma`, …) | no | no | yes | [DreamShaderLang 2.0](../language-v2/index.md) |
 
-`.dsm` has no content restriction at all: the table's `.dsm` column is what the grammar accepts, not
-a separate check.
+A 1.x file is one kind of product *(since 2.0.0)*: a material, or function assets. A `Shader` block
+is the material's entry, and a `ShaderFunction` or layer beside it in the same file is
+[`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) — through 1.9.x a `.dsm` built both. Give each function
+asset a `.dsf` of its own, and reach it from the material through a
+[`VirtualFunction`](virtual-function.md).
 
 ## How the restriction is enforced
 
-The restriction is **not** a parse. After a file's `import` lines have been removed and before the
-declaration parser runs, the loader scans that file's remaining text for literal substrings, all
-compared case-insensitively.
+*(since 2.0.0)* By the parser, one declaration at a time, and by the binder over the declarations of
+one file.
 
-| File kind | Rejected when the text contains | Message |
+| Rule | Checked by | Code |
 | :-- | :-- | :-- |
-| `.dsh` | `Shader(` **or** `ShaderFunction(` **or** `ShaderLayer(` **or** `ShaderLayerBlend(` **or** `MaterialLayer(` **or** `MaterialLayerBlend(` | `DreamShader header '{Path}' may only declare Function/Namespace/GraphFunction/VirtualFunction blocks and imports.` |
-| `.dsf` | `Shader(` | `DreamShader function file '{Path}' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks.` |
-| `.dsm` | — | — |
+| a `.dsh` holds no asset block (`Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend` or an old spelling of a layer) | the legacy front end, at the block word | [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) |
+| a `.dsm` / `.dsf` holds 1.x blocks only — a `uniform`, an `export`, a `#pragma` is 2.0 syntax | the legacy front end | [`DSH2248`](../diagnostics/DSH2xxx.md#dsh2248) |
+| a `.dss` holds 2.0 declarations only — a 1.x block word there | the 2.0 parser | [`DSH3222`](../diagnostics/DSH3xxx.md#dsh3222) |
+| one `Shader` block per file | the legacy front end | [`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250) |
+| a material, or function assets — not both from one file | the binder | [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) |
+| a `.dsm` / `.dsf` declares at least one block | the legacy front end | [`DSH2254`](../diagnostics/DSH2xxx.md#dsh2254) |
+| an `import` names a `.dsh` | the legacy front end | [`DSH2252`](../diagnostics/DSH2xxx.md#dsh2252) |
 
-`ShaderFunction(` does not contain the substring `Shader(`, which is exactly why a single needle is
-enough for `.dsf` while `.dsh` needs six. Likewise `MaterialLayerBlend(` does not contain
-`MaterialLayer(`, so both spellings are listed.
-
-> [!WARNING]
-> Because this is a substring scan, the forbidden text is rejected wherever it appears — inside a
-> line comment, inside a block comment, or inside a string literal. A `.dsh` containing the comment
-> `// see Shader(Name="…")` or the literal `"Shader("` is rejected with the message above.
->
-> The converse also holds. `Shader (` with a space before the parenthesis contains no forbidden
-> substring and passes the scan; the declaration parser then accepts it, because it consumes the
-> keyword and the `(` as separate tokens. A user-chosen block name that ends in the same characters,
-> such as `MyShader(`, contains `Shader(` and trips the `.dsf` rule.
+A `.dsh` may hold 1.x blocks and 2.0 declarations side by side, so a project can migrate one file at
+a time. A comment or a string that mentions `Shader(` is just a comment or a string.
 
 > [!NOTE]
-> The scan applies to each file's **own** text. When file A imports file B, B is checked against B's
-> extension rule and A against A's. A `.dsh` that imports a `.dsf` full of `ShaderFunction(` blocks
-> therefore passes, and the imported blocks are compiled as part of the translation unit. The kind
-> rules constrain what you write in a file, not what its import closure ends up containing.
-
-> [!IMPORTANT]
-> **Changed in 2.0.** The substring scan above is how the 1.x loader decided, and it retired with the
-> 1.x parser. The legacy front end decides **per declaration**: an asset block (`Shader`,
-> `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend`) in a `.dsh` header is `DSH2249`, raised at
-> the block word. A comment or a string that merely contains `Shader(` no longer trips anything, and
-> `Shader (` with a space no longer slips past. 2.0 syntax in a `.dsm` / `.dsf` is `DSH2248`; in a
-> `.dsh` both dialects may stand side by side. See [the retired parser page](../api/parser.md).
+> **Through 1.9.x** the rule was a case-insensitive **substring scan** of each file's text, after its
+> `import` lines were removed: a `.dsh` was refused for containing `Shader(`, `ShaderFunction(`, … —
+> in a comment or a string too — and a `.dsf` for containing `Shader(`, while `Shader (` with a space
+> slipped past. Nothing scans text any more. The `.dsf` half of that rule has no counterpart: a
+> `Shader` block in a `.dsf` is not refused, and the file then builds a material like a `.dsm`. Keep
+> to the convention — `.dsm` for a material, `.dsf` for function assets. See
+> [the retired parser page](../api/parser.md).
 
 ## Source roots
 
@@ -123,8 +114,9 @@ plugin's sources exactly as it does for the project's.
 
 > [!NOTE]
 > The root list is cached. A `DShader` folder created while the editor is open appears when
-> *DreamShader Gen ▸ Refresh* is pressed; its **watch**, registered once at startup, attaches on the
-> next editor start, so that root's *Auto Compile On Save* begins working then.
+> **Refresh** (`F5`) is pressed in the [Material Content Browser](../tools/material-browser.md); its
+> **watch**, registered once at startup, attaches on the next editor start, so that root's *Auto
+> Compile On Save* begins working then.
 
 A file under a plugin root that declares no `Root=` defaults to **that plugin's mount point** rather
 than to `/Game` — a `.dsm` in `Plugins/MoonToon/DShader` generates into `/MoonToon` with no attribute
@@ -176,43 +168,43 @@ is never created, only discovered. See [Project settings](../settings/project.md
 
 | Kind | Compiled as | Produces |
 | :-- | :-- | :-- |
-| `.dsm` | material entry point | the `UMaterial` (or thin instance) of its `Shader` block, plus every function asset it declares |
+| `.dsm` | material entry point | the `UMaterial` (or ThinCustom instance) of its `Shader` block |
 | `.dsf` | asset entry point | the function assets it declares |
-| `.dsh` | not an entry point | nothing; a header is consumed through [`import`](import.md) |
+| `.dsh` | not an entry point | nothing; a header is read through the [`import`](import.md) of the file that names it, and compiling one on its own is [`DSH8296`](../diagnostics/DSH8xxx.md#dsh8296) |
 
 A `.dsm` with no `Shader` block is still compilable — it produces whatever function assets it does
-declare.
+declare. A compile builds what its own file declares, and never what a header it imports declares:
+a header holds no asset block.
 
 ## Notes
 
 - **Extensions are compared case-insensitively.** `M_Water.DSM` is a material file.
-- **At most one `Shader` per translation unit.** Imports are inlined into a single text before
-  parsing, so the limit spans the whole transitive import closure, not the individual file. A second
-  `Shader` fails with `Only one top-level Shader block is currently supported.`
+- **At most one `Shader` per file** ([`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250)). Through 1.9.x
+  imports were inlined into one text before parsing, so the limit spanned the whole import closure;
+  since 2.0.0 a header is read on its own and cannot hold a `Shader` at all, so an import never adds
+  one.
 - A `.dsh` is the natural home for `VirtualFunction` declarations; the editor's *Create Virtual
   Function* action writes one under `DShader/VirtualFunctions`. See
   [VirtualFunction tools](../tools/virtual-function-tools.md).
-- Nothing prevents a `.dsf` or `.dsh` from being imported by any other kind; extension only decides
-  the default extension of an unsuffixed import specifier and the content rule applied to the file
-  itself.
+- Only a `.dsh` can be imported *(since 2.0.0)*. An `import` of a `.dsf` or a `.dsm` is
+  [`DSH2252`](../diagnostics/DSH2xxx.md#dsh2252): a material or function file is compiled on its own,
+  and its assets are reached from another file through a [`VirtualFunction`](virtual-function.md).
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this table.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `DreamShader header '{Path}' may only declare Function/Namespace/GraphFunction/VirtualFunction blocks and imports.` | a `.dsh` whose text contains one of the six forbidden substrings |
-| `DreamShader function file '{Path}' may only declare imports, Function/Namespace/GraphFunction/VirtualFunction blocks, and ShaderFunction/ShaderLayer/ShaderLayerBlend blocks.` | a `.dsf` whose text contains `Shader(` |
-| `DreamShader could not read '{Path}'.` | the file exists in the dependency graph but could not be loaded |
-| `DreamShader import '{Specifier}' referenced from '{Path}' could not be resolved.` | see [`import`](import.md) |
-| `DreamShader import '{Specifier}' referenced from '{Path}' names source root '{Qualifier}', which is not a DreamShader source root.` | see [`import`](import.md#crossing-a-root-deliberately) |
-| `DreamShader import cycle detected at '{Path}'.` | see [`import`](import.md) |
-| `A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found.` | the translation unit declares no top-level block |
-| `Only one top-level Shader block is currently supported.` | a second `Shader` block anywhere in the import closure |
+| [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) | a `.dsh` holds an asset block |
+| [`DSH2248`](../diagnostics/DSH2xxx.md#dsh2248) | a `.dsm` / `.dsf` holds 2.0 syntax |
+| [`DSH3222`](../diagnostics/DSH3xxx.md#dsh3222) | a `.dss` holds a 1.x block |
+| [`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250) | a second `Shader` block in one file |
+| [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) | a `Shader` and a `ShaderFunction` / layer in one file |
+| [`DSH2254`](../diagnostics/DSH2xxx.md#dsh2254) | a `.dsm` / `.dsf` declares no block at all |
+| [`DSH2252`](../diagnostics/DSH2xxx.md#dsh2252) | an `import` the include resolver does not read — see [`import`](import.md#diagnostics) |
+| [`DSH8296`](../diagnostics/DSH8xxx.md#dsh8296) | a file that is not a source the compiler builds — a `.dsh`, or another extension — was asked to compile |
 
-Generation-stage messages about the wrong file kind reaching a generator are listed on
-[Shader](shader.md#diagnostics) and in the [diagnostics index](../diagnostics/index.md).
+The codes of an `import` that cannot be resolved, read or parsed, and of a cycle, are on
+[`import`](import.md#diagnostics). Every code: [diagnostics](../diagnostics/README.md).
 
 ## Example
 
@@ -242,7 +234,7 @@ Namespace(Name="Common")
 ```
 
 ```c
-// DShader/Functions/F_Tint.dsf — function file: may declare ShaderFunction
+// DShader/Functions/F_Tint.dsf — function file: declares ShaderFunction blocks
 import "Shared/Common.dsh";
 
 ShaderFunction(Name="Functions/F_Tint")
@@ -257,14 +249,14 @@ ShaderFunction(Name="Functions/F_Tint")
     }
 
     Graph = {
-        OutColor = InColor * Strength;
+        OutColor = Common::ApplyTint(InColor, vec3(1.0, 0.9, 0.8)) * Strength;
     }
 }
 ```
 
 ```c
-// DShader/Materials/M_Water.dsm — material file: may declare Shader
-import "Functions/F_Tint.dsf";
+// DShader/Materials/M_Water.dsm — material file: one Shader block
+import "Shared/Common.dsh";
 
 Shader(Name="Materials/M_Water")
 {
@@ -274,25 +266,26 @@ Shader(Name="Materials/M_Water")
     }
 
     Graph = {
-        Color = vec3(0.1, 0.3, 0.6);
+        Color = Common::ApplyTint(vec3(0.1, 0.3, 0.6), vec3(1.0, 0.9, 0.8));
     }
 }
 ```
 
-Compiling `M_Water.dsm` produces both assets:
+Each source builds its own asset; the header builds nothing and is read by both:
 
 ```text
-/Game/Materials/M_Water        UMaterial
-/Game/Functions/F_Tint         UMaterialFunction
+M_Water.dsm   ->  /Game/Materials/M_Water        UMaterial
+F_Tint.dsf    ->  /Game/Functions/F_Tint         UMaterialFunction
+Common.dsh    ->  (nothing)
 ```
 
 ## See also
 
-- [`import`](import.md) — how the files above are assembled into one translation unit
+- [`import`](import.md) — how a header is found, read and declared into the file that imports it
 - [Shader](shader.md) — the `.dsm`-only top-level block
 - [ShaderFunction](shader-function.md) — the block a `.dsf` normally holds
 - [VirtualFunction](virtual-function.md) — declaring an existing asset from a `.dsh`
-- [Lexical elements](lexical.md) — comments and strings, which the kind scan does not understand
+- [Lexical elements](lexical.md) — comments and strings
 - [Packages](../tools/packages.md) — `DShader/Packages` and the `@scope/name` layout
 - [Project settings](../settings/project.md) — *Source Directory* and *Generated Shader Directory*
 - [Commandlet](../tools/commandlet.md) — compiling files headlessly

@@ -27,20 +27,25 @@ ShaderFunction(Name = "<asset-path>")
 ```
 
 The same section is accepted, with the same four keys, in `ShaderLayer`, `ShaderLayerBlend` and their
-deprecated `MaterialLayer` / `MaterialLayerBlend` spellings.
+deprecated `MaterialLayer` / `MaterialLayerBlend` spellings. In 2.0 the keys are the `/// @desc` and
+`/// @library` directives of the exported function — see [The 2.0 language](../language-v2/index.md).
 
 ## Keys
 
-Keys are matched after trimming and lowercasing, so `description`, `Description` and `DESCRIPTION` are
-the same key. Spaces, underscores and hyphens are **not** folded here — `Expose_To_Library` is not
-`ExposeToLibrary`.
+Keys are matched ignoring case, so `description`, `Description` and `DESCRIPTION` are the same key.
+Underscores are **not** folded here — `Expose_To_Library` is not `ExposeToLibrary`.
 
 | Key | Sets | Value grammar | Value when the key is absent |
 | :-- | :-- | :-- | :-- |
 | **`Description`** | `UMaterialFunction::Description` | free text | cleared to the empty string |
-| **`UserExposedCaption`** | `UMaterialFunction::UserExposedCaption` | free text | cleared to the empty string |
-| **`ExposeToLibrary`** | `UMaterialFunction::bExposeToLibrary` | `true` / `false`, case-insensitive | `false` |
-| **`LibraryCategories`** | `UMaterialFunction::LibraryCategoriesText` | a comma-separated list; each entry is trimmed and empty entries are dropped | the category list is cleared |
+| **`UserExposedCaption`** | nothing *(since 2.0.0)*: [`DSH3264`](../diagnostics/DSH3xxx.md#dsh3264) warns that it is not applied, and the asset's caption is left as it is | free text | — |
+| **`ExposeToLibrary`** | `UMaterialFunction::bExposeToLibrary`, together with `LibraryCategories` | `true` / `false`, case-insensitive; any other value is a [`DSH3265`](../diagnostics/DSH3xxx.md#dsh3265) warning and the setting is ignored | `false` |
+| **`LibraryCategories`** | `UMaterialFunction::LibraryCategoriesText`, together with `ExposeToLibrary` | a comma-separated list; each entry is trimmed and empty entries are dropped | the category list is cleared |
+
+*(since 2.0.0)* `ExposeToLibrary` and `LibraryCategories` act as one setting, the 2.0
+`/// @library <categories>`: the function is exposed, under those categories, when `ExposeToLibrary`
+is `true` **and** `LibraryCategories` is not empty. `ExposeToLibrary = true;` alone leaves the function
+out of the library, and `LibraryCategories` without `ExposeToLibrary = true;` is dropped.
 
 `LibraryCategories` clears the list before parsing, so the setting always replaces the asset's
 categories rather than appending to them. `LibraryCategories = "A,,  B ,";` yields exactly `A` and
@@ -52,15 +57,15 @@ Quotes are optional on every value, as everywhere in a `Settings` block:
 > [!NOTE]
 > **Every key here is reset when the key is absent.** Omitting `ExposeToLibrary` sets it to `false`;
 > omitting `Description` empties it. A property edited by hand on the generated asset is discarded on
-> the next regeneration. There is no "leave it alone" state — see
+> the next regeneration — except the caption, which 2.0 does not write at all. See
 > [Regeneration](../generation/regeneration.md).
 
 > [!WARNING]
-> **Any other key is ignored, silently.** There is no validation pass over a material function's
-> `Settings` map: only these four names are looked up, and everything else is dropped with no error
-> and no warning. In particular `Backend`, `Domain`, `ShadingModel`, `BlendMode`, `TwoSided` and
-> every other [`Shader` setting](material.md) do **nothing** in a `ShaderFunction` block. Misspelling
-> one of the four keys — `Descriptions`, `Expose_To_Library`, `LibraryCategory` — is equally silent.
+> **Any other key is ignored**, with a [`DSH3263`](../diagnostics/DSH3xxx.md#dsh3263) warning
+> *(since 2.0.0; 1.x said nothing)*. Only these four names are looked up: `Backend`, `Domain`,
+> `ShadingModel`, `BlendMode`, `TwoSided` and every other [`Shader` setting](material.md) do
+> **nothing** in a `ShaderFunction` block, and a misspelling of one of the four — `Descriptions`,
+> `Expose_To_Library`, `LibraryCategory` — is the same warning.
 
 > [!WARNING]
 > The [decompiler](../tools/decompiler.md) does not emit a `Settings` block when exporting a
@@ -69,17 +74,16 @@ Quotes are optional on every value, as everywhere in a `Settings` block:
 
 ## Related validation
 
-These checks run in the same pass and are the diagnostics a `Settings` mistake is most often confused
-with. `{Kind}` is `ShaderFunction`, `ShaderLayer` or `ShaderLayerBlend` depending on the block.
+These checks are the diagnostics a `Settings` mistake is most often confused with.
 
-| Rule | Applies to |
+| Rule | Code |
 | :-- | :-- |
-| At least one output must be declared | all three block kinds |
-| A `Graph` (or legacy `Code`) body must be present | all three block kinds |
-| Property and input names must be unique, ignoring case | all three block kinds |
-| Exactly one `MaterialAttributes` output | `ShaderLayer`, `ShaderLayerBlend` |
-| At most one `MaterialAttributes` input | `ShaderLayer` |
-| Exactly two `MaterialAttributes` inputs | `ShaderLayerBlend` |
+| A material function produces at least one output | [`DSH4315`](../diagnostics/DSH4xxx.md#dsh4315) |
+| A `ShaderLayer` or `ShaderLayerBlend` has a `MaterialAttributes` output | [`DSH3278`](../diagnostics/DSH3xxx.md#dsh3278) |
+| A `ShaderLayer` has that material as its only input and output | [`DSH6204`](../diagnostics/DSH6xxx.md#dsh6204) |
+| A `ShaderLayerBlend` has, besides the material output, inputs only — at least one of them `MaterialAttributes` | [`DSH6205`](../diagnostics/DSH6xxx.md#dsh6205) |
+| The body section is `Graph`, not `Code` | [`DSH2246`](../diagnostics/DSH2xxx.md#dsh2246) |
+| Two properties of the file do not share a name | [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210) |
 
 The generated asset's usage follows the block kind: `ShaderFunction` produces an ordinary material
 function, `ShaderLayer` a material-layer function, `ShaderLayerBlend` a layer-blend function.
@@ -92,25 +96,26 @@ function, `ShaderLayer` a material-layer function, `ShaderLayerBlend` a layer-bl
 - [`Function`](../language/function.md) and [`GraphFunction`](../language/graph-function.md) blocks
   have no `Settings` section at all; their only sections are `Inputs` / `Properties`,
   `Outputs` / `Results` and `Code` / `Graph`.
-- Multiple `Settings` sections in one block merge into a single map, last key wins, exactly as in a
-  `Shader` block. See [Settings](index.md#how-a-statement-is-parsed).
-- `ExposeToLibrary = true;` is what makes the function appear in the Material palette's function
-  library; `LibraryCategories` decides where in that palette it sits.
+- Multiple `Settings` sections in one block merge, last key wins, with a
+  [`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262) warning, exactly as in a `Shader` block. See
+  [Settings](index.md#how-a-statement-is-parsed).
+- `ExposeToLibrary = true;` with a `LibraryCategories` is what makes the function appear in the
+  Material palette's function library; the categories decide where in that palette it sits.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}`.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `{Kind} '{Name}': ExposeToLibrary must be true or false.` | the `ExposeToLibrary` value is not a boolean literal |
-| `{Kind} '{Name}' must declare at least one output.` | the block declares no `Outputs` |
-| `{Kind} '{Name}' must provide a Graph block.` | the block has no graph body |
-| `{Kind} '{Name}' property '{Property}' conflicts with another property or input name.` | a `Properties` entry collides with another property or an input, ignoring case |
-| `Unknown material function section '{Section}'.` | a section name other than the recognized ones |
+| `DSH3265` | the `ExposeToLibrary` value is not a boolean literal (warning; the setting is ignored) |
+| `DSH3264` | `UserExposedCaption` is set (warning; not applied) |
+| `DSH3263` | a key other than the four (warning; ignored) |
+| `DSH3262` | a key written twice (warning; the later value wins) |
+| `DSH4315` | the block produces no output |
+| `DSH3278` | a layer or blend has no `MaterialAttributes` output |
+| `DSH6204` / `DSH6205` | a layer's / a blend's parameters do not fit its kind |
+| [`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245) | a section name other than the recognized ones |
 
-`Description`, `UserExposedCaption` and `LibraryCategories` have no failure mode: any text is
-accepted.
+`Description` and `LibraryCategories` have no failure mode: any text is accepted.
 
 ## Example
 
@@ -144,10 +149,11 @@ Generated asset:
 ```text
 package  /Game/Functions/F_Tint                     UMaterialFunction
   Description           = "Multiplies a colour by a tint."
-  UserExposedCaption    = "Tint"
   bExposeToLibrary      = true
   LibraryCategoriesText = ["DreamShader", "Color"]
 ```
+
+`UserExposedCaption` is reported with `DSH3264` and not applied.
 
 ## See also
 
@@ -160,4 +166,4 @@ package  /Game/Functions/F_Tint                     UMaterialFunction
 - [Inputs / Outputs / Results](../language/inputs-outputs.md) — the parameter sections a function declares
 - [Decompiler](../tools/decompiler.md) — the material-function round-trip gap
 - [Regeneration](../generation/regeneration.md) — what a rebuild resets
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code

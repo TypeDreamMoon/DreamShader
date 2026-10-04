@@ -9,7 +9,7 @@ four arithmetic operators, evaluated into `UMaterialExpression` nodes.
 | :-- | :-- |
 | Declared in | `.dsm`, `.dsf` — inside a `Graph { … }` body, an `Outputs` binding expression, or an `Outputs` declaration default |
 | Kind | expression grammar |
-| Generates | `UMaterialExpressionAdd`, `UMaterialExpressionSubtract`, `UMaterialExpressionMultiply`, `UMaterialExpressionDivide` — one node per binary operator that is not served from the reuse cache |
+| Generates | `UMaterialExpressionAdd`, `UMaterialExpressionSubtract`, `UMaterialExpressionMultiply`, `UMaterialExpressionDivide` — one node per binary operator; identical ones are merged (see [Notes](#notes)) |
 
 ## Synopsis
 
@@ -27,79 +27,76 @@ four arithmetic operators, evaluated into `UMaterialExpression` nodes.
 `( ) , . :: = + - * /` are literal DreamShaderLang punctuation. `[ … ]`, `{ a | b }` and `…` are
 meta-notation and are never typed.
 
+This is the 1.x grammar. The legacy front end parses an expression with the 2.0 grammar, which is a
+superset, and refuses everything outside the grammar above with a code *(since 2.0.0)* — see
+[Operators that do not exist](#operators-that-do-not-exist).
+
 ## Precedence and associativity
 
-Highest binding first. The parser implements exactly these four levels.
+Highest binding first.
 
 | Level | Operators | Arity | Associativity | Notes |
 | :-- | :-- | :-- | :-- | :-- |
 | 1 | `f(…)` call, `.member`, `::name` | postfix | left | Chains freely: `A::F(x).rgb.b` |
-| 2 | `+` `-` | unary, prefix | right | Recursive: `--x` parses and is legal |
+| 2 | `+` `-` | unary, prefix | right | Recursive: `- -x` parses and is legal. `--x` without the space is the decrement operator, [`DSH2207`](../diagnostics/DSH2xxx.md#dsh2207) |
 | 3 | `*` `/` | binary | left | `a / b / c` is `(a / b) / c` |
 | 4 | `+` `-` | binary | left | `a - b - c` is `(a - b) - c` |
 | — | `( … )` grouping | — | — | Overrides the levels above |
 
 ## Operators that do not exist
 
-The expression grammar has no other operators. None of the following are implemented at expression
-level:
+The 1.x expression grammar has no other operators. Each of the following parses, and is then refused:
 
-| Category | Spellings absent from the grammar |
-| :-- | :-- |
-| Modulo | `%` — use the `fmod` / `mod` builtin |
-| Comparison | `==` `!=` `<` `>` `<=` `>=` — legal **only** in an `if` condition |
-| Logical | `&&` `\|\|` `!` |
-| Bitwise / shift | `&` `\|` `^` `~` `<<` `>>` |
-| Conditional | `? :` |
-| Increment / decrement | `++` `--` |
-| Compound assignment | `+=` `-=` `*=` `/=` |
-| Assignment inside an expression | `=` (outside a named call argument) |
-| Indexing | `[ ]` — use a [swizzle](swizzle.md) |
-| Comma operator | `,` (outside a call argument list) |
-| Matrix types / operators | none exist; see [Constructors](constructors.md#notes) |
+| Category | Spellings | Code |
+| :-- | :-- | :-- |
+| Modulo | `%` — use the `fmod` builtin | [`DSH2201`](../diagnostics/DSH2xxx.md#dsh2201) |
+| Comparison | `==` `!=` `<` `>` `<=` `>=` — legal **only** in an `if` condition | [`DSH2200`](../diagnostics/DSH2xxx.md#dsh2200) |
+| Logical | `&&` `\|\|` `!` | `DSH2200` |
+| Bitwise / shift | `&` `\|` `^` `~` `<<` `>>` | `DSH2201` |
+| Conditional | `? :` | `DSH2200` |
+| Increment / decrement | `++` `--` | `DSH2207` |
+| Compound assignment | `+=` `-=` `*=` `/=` and the rest | [`DSH2205`](../diagnostics/DSH2xxx.md#dsh2205) |
+| Assignment inside an expression | `=` (outside a named call argument) | [`DSH2204`](../diagnostics/DSH2xxx.md#dsh2204) |
+| Indexing | `[ ]` — use a [swizzle](swizzle.md) | [`DSH2202`](../diagnostics/DSH2xxx.md#dsh2202) |
+| Cast | `(float3)x` — use a constructor | [`DSH2203`](../diagnostics/DSH2xxx.md#dsh2203) |
+| Comma operator | `,` (outside a call argument list) | none of its own: the statement ends there, so what follows is usually [`DSH2154`](../diagnostics/DSH2xxx.md#dsh2154) |
+| Matrix types / operators | none exist; see [Constructors](constructors.md#notes) | [`DSH4361`](../diagnostics/DSH4xxx.md#dsh4361) for a matrix value |
 
-Their failure modes differ, and several of them fail *silently*. The complete catalogue with the exact
-observable behaviour of each is in [Unsupported constructs](unsupported.md).
+The full catalogue, with what to write instead, is in [Unsupported constructs](unsupported.md).
 
 > [!WARNING]
-> **Unknown characters terminate an expression silently.** The tokenizer maps every character it does
-> not recognise to the end-of-input token — that is `%`, `!`, `<`, `>`, `&`, `|`, `^`, `~`, `?`, `[`,
-> `]`, `{`, `}`, `;`, `#`, `@`, `$`, `'`, the backtick, and a lone `:` — and the parser accepts an
-> expression that is followed by end-of-input. Anything after the first unknown character is therefore
-> **discarded without a diagnostic**:
+> **1.x truncated these silently.** Its tokenizer mapped every character it did not know (`%`, `!`,
+> `<`, `>`, `&`, `|`, `^`, `~`, `?`, `[`, …) to the end of the input, so the parser kept the expression
+> before it and dropped the rest without a message. *(since 2.0.0)* the whole expression is read and
+> the operator is refused:
 >
-> | Written | Actually compiled |
-> | :-- | :-- |
-> | `a % b` | `a` |
-> | `a && b` | `a` |
-> | `a ? b : c` | `a` |
-> | `v[0]` | `v` |
-> | `a << 2` | `a` |
+> | Written | 1.x built | Code now |
+> | :-- | :-- | :-- |
+> | `a % b` | `a` | `DSH2201` |
+> | `a && b` | `a` | `DSH2200` |
+> | `a ? b : c` | `a` | `DSH2200` |
+> | `v[0]` | `v` | `DSH2202` |
+> | `a << 2` | `a` | `DSH2201` |
 >
-> Two contexts do report it. In *leading* position the unknown character is rejected with
-> `Unexpected token '{Text}' in Graph expression.` (so `!x` errors), and inside parentheses the
-> missing `)` is rejected with `Expected token type {TypeId} in Graph expression near '{Text}'.` (so
-> `(a % b)` errors while `a % b` does not). Wrapping a suspect expression in parentheses is the
-> reliable way to make truncation visible.
+> A character that is no token at all (`@`, `$`, a backtick) is
+> [`DSH2101`](../diagnostics/DSH2xxx.md#dsh2101). Parenthesising a suspect expression is no longer
+> needed to make a truncation visible.
 
 ## Operand rules
 
-`CreateBinaryOperatorNode` applies these tests in order to both operands of `+ - * /`.
+The binder applies these tests to both operands of `+ - * /`:
 
-| # | Test | Outcome when it fails |
+| # | Test | Code when it fails |
 | :-- | :-- | :-- |
-| 1 | Neither operand is a texture object | `Arithmetic operators cannot be applied to texture values.` |
-| 2 | Neither operand is a `MaterialAttributes` value | `Arithmetic operators cannot be applied to MaterialAttributes values.` |
-| 3 | Neither operand is a `Substrate` value | `Arithmetic operators cannot be applied to Substrate values.` |
-| 4 | Component counts are equal, **or** either operand is a scalar (1 component) | one rescue attempt (rule 5), then rule 6 |
-| 5 | Rescue: if exactly one operand carries an authoritative component count, the other may be widened to it | rescue skipped |
-| 6 | Compatibility re-tested | `Operator '{Op}' requires matching vector sizes or a scalar/vector pair, got {Left} and {Right} component(s).` |
+| 1 | Both operands are numbers or bools — not a texture, a sampler or a `MaterialAttributes` value | [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226) |
+| 2 | A `Substrate` operand: `+` between two `Substrate` values and `*` by a scalar build `Substrate.Add` / `Substrate.Weight` *(since 2.0.0; 1.x refused both)*; any other operator | [`DSH5293`](../diagnostics/DSH5xxx.md#dsh5293) |
+| 3 | The widths agree: the result is as wide as the widest operand, a scalar operand spreads to that width, and a narrower vector does not | `DSH4226` |
+| 4 | For `/`: not both operands integers | [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) — see [Integer division](#integer-division) |
 
-Rule 5 in full: the widened operand must be the one **without** an authoritative count, the
-authoritative count must be greater than zero, and the other operand's count must be **less than or
-equal to** the authoritative count. Narrowing is never attempted here — dropping channels at an
-operator is deliberately refused so the size error surfaces instead. See
-[Conversions](conversions.md#authoritative-component-counts).
+An operator never narrows an operand: `float3 * float4` is `DSH4226`, so that channels are never
+dropped silently. *(since 2.0.0)* nor does it widen one: 1.x widened an operand to the width of an
+"authoritative" value in some cases; operands are typed now, and the scalar spread is the only way
+two widths meet. See [Conversions](conversions.md).
 
 There is no separate scalar-promotion step: a scalar operand is passed to the material node as-is and
 Unreal replicates it, so `A * K` with `A` a `vec3` and `K` a `float` produces a single `Multiply`
@@ -110,129 +107,104 @@ node, not an `AppendVector` splat.
 | Property | Value |
 | :-- | :-- |
 | Node | `Add` / `Subtract` / `Multiply` / `Divide` (per operator) |
-| Component count | `max(left, right)` after rule 5 |
-| Authoritative component count | set when **either** operand had one |
-| Input channel mask | cleared — the result is a full-width value |
-| Integer marker | **not** propagated; the result of any operator is non-integer |
+| Width | the widest operand's |
+| Kind | the operands' kinds promoted as in HLSL — an `int` with a `float` is a `float`; in the graph every value is a float |
+| All-constant operands | folded into one `Constant` node by the constant-folding pass *(since 2.0.0)* |
 
 ## Unary operators
 
 | Form | Lowering | Node cost | Result |
 | :-- | :-- | :-- | :-- |
-| `+x` | identity | no node | `x` unchanged, all flags preserved |
-| `-x` | `Multiply(x, Constant(-1))` | one `Multiply`, plus one `Constant` (shared with every other `-1` in the graph) | component count of `x` |
+| `+x` | identity | no node | `x` unchanged |
+| `-x` | `Multiply(x, Constant(-1))` | one `Multiply` and one `Constant` holding `-1` | the type of `x` |
 
-Any other unary operator token cannot reach evaluation through the grammar; the defensive message is
-`Unsupported unary operator '{Operator}'.`
+`!x` is `DSH2200`, `~x` is `DSH2201`, `++x` and `--x` are `DSH2207`.
 
-`-2.0` is *not* folded into a negative literal by the expression evaluator: it becomes
-`Constant(2.0) * Constant(-1)`. Inside a **constructor argument** it is folded, because constant
-folding accepts a leading `+`/`-` on a literal — `vec3(-1.0, 0.0, 1.0)` emits a single
-`Constant3Vector`. See [Constructors](constructors.md#constant-folding).
+A negated constant is folded: `-2.0` becomes one `Constant` holding `-2` *(since 2.0.0)*, as does any
+arithmetic over constants. See [Constructors](constructors.md#constant-folding).
 
 ## Integer division
 
-`/` is the only operator with an extra type rule.
+`/` is the only operator with an extra type rule:
+[`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) when **both** operands are integers. A material graph
+has no integer division, so the compiler refuses to pick between HLSL's truncating answer and the
+graph's fractional one.
 
-```text
-Integer division is not supported by the material graph; use float() or floor(a/b).
-```
-
-It fires when **both** operands carry the integer marker. That marker is set by exactly one thing: a
-direct call to an integer constructor (`int`, `int2..4`, `ivec2..4`, `uint`, `uint2..4`, `uvec2..4`).
-It is not set by literals, by variables, by suffixed literals such as `3u`, or by the result of any
-operator.
+*(since 2.0.0)* an operand is an integer whatever made it one: an integer literal (`7`), an `int` /
+`uint` variable or property, or an integer constructor (`int`, `int2..4`, `ivec2..4`, `uint`,
+`uint2..4`, `uvec2..4`). 1.x refused only a division of two integer-constructor calls.
 
 | Expression | Result |
 | :-- | :-- |
-| `int(7) / int(2)` | error |
-| `int(7) / 2` | allowed — `2` is a literal and carries no integer marker |
-| `7 / 2` | allowed — a float `Divide` producing `3.5` |
-| `float(int(7)) / int(2)` | allowed — every constructor call assigns the marker from its own name, so `float(…)` clears it |
-| `int a = int(7); int b = int(2); a / b` | error — the marker travels with the variable |
-| `int a = 7; int b = 2; a / b` | allowed — the `int` *declaration type* does not set the marker; only an `int(…)` *call* does |
+| `int(7) / int(2)` | `DSH4243` |
+| `int(7) / 2` | `DSH4243` — `2` is an integer literal *(since 2.0.0)* |
+| `7 / 2` | `DSH4243` *(since 2.0.0)*; write `7.0 / 2` |
+| `7.0 / 2` | allowed — a float `Divide` producing `3.5` |
+| `float(int(7)) / int(2)` | allowed — one operand is a float |
+| `int a = 7; int b = 2; a / b` | `DSH4243` *(since 2.0.0)* — the `int` declarations make both integers |
 
 > [!NOTE]
-> The marker exists solely to reject this case. `int`, `uint`, `bool` and `half` type tokens are
-> otherwise indistinguishable from `float` in the generated graph — there is no integer arithmetic and
-> no truncation. See [Conversions](conversions.md#float-int-and-bool).
+> `int`, `uint`, `bool` and `half` are kinds of their own to the compiler, and this rule is what the
+> difference is for. In the generated graph every one of them is a float — there is no integer
+> arithmetic and no truncation. See [Conversions](conversions.md).
 
 ## Compound assignment
 
-`+= -= *= /=` are not operators. A statement containing one is classified by the ordinary
-declaration/assignment splitter, and the result depends on **whitespace**.
+`+= -= *= /=` are not 1.x operators. *(since 2.0.0)* each is
+[`DSH2205`](../diagnostics/DSH2xxx.md#dsh2205), whatever the spacing.
 
-| Written | How it is classified | Observable behaviour |
+| Written | 1.x read it as | Code now |
 | :-- | :-- | :-- |
-| `a += b;` | first top-level `=` splits the statement; the left side `a +` splits on its last whitespace into type `a`, name `+` | error: `Unsupported Graph variable type 'a' for '+'.` |
-| `a -= b;` | same, name `-` | error: `Unsupported Graph variable type 'a' for '-'.` |
-| `a *= b;` | same, name `*` | error: `Unsupported Graph variable type 'a' for '*'.` |
-| `a /= b;` | same, name `/` | error: `Unsupported Graph variable type 'a' for '/'.` |
-| `a+=b;` | the left side `a+` contains no whitespace, so it is not a declaration | **no error** — a new Graph variable literally named `a+` is created and assigned `b`; `a` is unchanged |
-| `a += b ;` | as the spaced form | error |
+| `a += b;` | a declaration of a variable `+` of type `a` | `DSH2205` |
+| `a+=b;` | an assignment to a new variable named `a+`; `a` unchanged, no message | `DSH2205` |
 
-> [!WARNING]
-> The spaceless forms `a+=b`, `a-=b`, `a*=b`, `a/=b` compile without any diagnostic and have no effect
-> on `a`. Write the expansion instead: `a = a + b;`.
+Write the expansion instead: `a = a + b;`.
 
 ## Increment and decrement
 
-`++` and `--` are not operators either. There is no postfix operator, so the tokens are read as two
-consecutive `+` or `-` signs and the statement fails while the expression is still being parsed —
-before it can be classified as a statement.
-
-| Written | How it parses | Observable behaviour |
-| :-- | :-- | :-- |
-| `a++;` | `a` `+` `+` `<end>` — the second `+` is taken as a unary sign whose operand is the end of input | error: `Unexpected token '' in Graph expression.` |
-| `a--;` | `a` `-` `-` `<end>`, same shape | error: `Unexpected token '' in Graph expression.` |
-| `++a;` | parses as `+(+a)`, a unary expression, which is not a call | error: `Graph expression statements currently support only Function calls with explicit out arguments.` |
-| `--a;` | parses as `-(-a)`, likewise not a call | error: `Graph expression statements currently support only Function calls with explicit out arguments.` |
-
-> [!NOTE]
-> The empty quotes in `Unexpected token '' in Graph expression.` are not a formatting fault: the
-> reported token is the end-of-input token, whose text is empty.
-
-Used inside a larger expression the prefix forms do parse — `x = --a;` is `-(-a)`, which generates
-two `Multiply` nodes and yields `a` unchanged. Write `a = a + 1;` instead.
+`++` and `--` are not 1.x operators. *(since 2.0.0)* every form is
+[`DSH2207`](../diagnostics/DSH2xxx.md#dsh2207): `a++;`, `a--;`, `++a;`, `--a;`, and `x = --a;`
+inside a larger expression, which 1.x read as `-(-a)`. Write `a = a + 1;` instead.
 
 ## Notes
 
-- Every operand is evaluated exactly once per distinct value; textually identical subexpressions over
-  identical operand values collapse to a single node. `A + B` written twice yields one `Add`. See
+- Identical subexpressions are merged after lowering: the deduplication pass keeps one node for every
+  set of nodes with the same operation and the same operands in the same order, so `A + B` written
+  twice yields one `Add`, while `B + A` is a second one. Constants are merged the same way. See
   [Node reuse](node-reuse.md).
 - Grouping parentheses generate nothing; they only affect parse order.
 - A call may be swizzled directly: `UE.TexCoord().x` is a postfix chain of a call followed by a member
-  access. See [Swizzle](swizzle.md#swizzling-a-call-result).
-- `::` is the namespace separator in a callee path and is only valid before an identifier; it is not a
-  general operator. See [Name resolution](name-resolution.md).
+  access. See [Swizzle](swizzle.md).
+- `::` is the namespace separator in a callee path: `N::F` names the function `F` of
+  `Namespace(Name="N")`. It must be followed by a name ([`DSH5260`](../diagnostics/DSH5xxx.md#dsh5260)).
+  See [Name resolution](name-resolution.md).
 - Named call arguments (`Coordinates = uv`) are part of the argument grammar, not an assignment
-  operator. Argument names are matched case-insensitively and ignore surrounding whitespace. See
-  [Calls](calls.md).
+  operator. See [Calls](calls.md).
 
 ## Diagnostics
 
-Format specifiers are rendered as `{Placeholder}` throughout this page; the compiler emits the
-substituted text.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Unexpected token '{Text}' in Graph expression.` | A non-primary token in primary position (`!x`, `= b`), or a leftover real token after a complete expression (`a == b`). Not emitted for unknown characters in trailing position. |
-| `Expected token type {TypeId} in Graph expression near '{Text}'.` | A `)` or `,` was required and not found — most often an unknown character inside a parenthesised expression or an argument list. |
-| `Expected member name after '.'.` | `.` not followed by an identifier. |
-| `Expected function name after '::'.` | `::` not followed by an identifier. |
-| `Empty Graph expression.` | The expression text is empty after trimming. |
-| `Unsupported Graph expression kind.` | Defensive guard for an expression node the evaluator does not handle. |
-| `Unsupported unary operator '{Operator}'.` | Defensive guard; unreachable through the grammar. |
-| `Arithmetic operators cannot be applied to texture values.` | A texture object used as an operand of `+ - * /`. |
-| `Arithmetic operators cannot be applied to MaterialAttributes values.` | A `MaterialAttributes` value used as an operand. |
-| `Arithmetic operators cannot be applied to Substrate values.` | A `Substrate` value used as an operand. |
-| `Operator '{Op}' requires matching vector sizes or a scalar/vector pair, got {Left} and {Right} component(s).` | Operand widths differ, neither is a scalar, and the authoritative-count rescue did not apply. |
-| `Integer division is not supported by the material graph; use float() or floor(a/b).` | Both operands of `/` came from integer constructors. |
-| `Unsupported or failed binary operator '{Operator}'.` | The operator is not one of `+ - * /`, or the material node could not be created. |
-| `Unknown Graph identifier '{Name}'.` | An operand name is neither a Graph variable, a declared property, nor `true`/`false`. |
-| `Unsupported Graph variable type '{Type}' for '{Name}'.` | Compound-assignment form with whitespace, or any other statement whose left side splits into an unrecognised type token and a name. |
-| `Graph expression statements currently support only Function calls with explicit out arguments.` | `++a;`, `break;`, or any bare expression statement that parses but is not a call. |
-| `Unexpected token '' in Graph expression.` | The expression ended while an operand was still expected — `a++;`, `a--;`, or a trailing operator. The quoted token is the empty end-of-input token. |
+| [`DSH2151`](../diagnostics/DSH2xxx.md#dsh2151) | an operand was expected and something else was found, e.g. `x = ;` or `a * )` |
+| [`DSH2152`](../diagnostics/DSH2xxx.md#dsh2152) | a `)` is missing from a call or a parenthesized expression; also a missing `,` between arguments |
+| [`DSH2161`](../diagnostics/DSH2xxx.md#dsh2161) | `.` is not followed by a name |
+| `DSH5260` | `::` is not followed by a name |
+| `DSH2101` | a character that is no token |
+| `DSH2200` | a comparison, a logical operator or `?:` outside an `if` condition |
+| `DSH2201` | `%`, a shift or a bitwise operator |
+| `DSH2202` | `[ ]` |
+| `DSH2203` | a C-style cast |
+| `DSH2204` | an assignment inside an expression |
+| `DSH2205` | a compound assignment |
+| `DSH2207` | `++` or `--` |
+| `DSH4226` | an operand is not a number, or the widths do not agree |
+| `DSH4243` | both operands of `/` are integers |
+| `DSH5293` | an operator a `Substrate` value does not have |
+| [`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200) | an operand name is not declared |
+| [`DSH4202`](../diagnostics/DSH4xxx.md#dsh4202) | a string used as a value |
+| [`DSH2211`](../diagnostics/DSH2xxx.md#dsh2211) | an expression statement that is not a call or an assignment, e.g. `a + b;` |
+
+The complete list lives in the [diagnostics index](../diagnostics/index.md).
 
 ## Example
 
@@ -257,7 +229,7 @@ Shader(Name="Docs/M_Expressions")
 }
 ```
 
-Generated nodes (grouped by the reuse cache):
+Generated nodes:
 
 ```text
 VectorParameter A, VectorParameter B             (property nodes)
@@ -273,11 +245,11 @@ Add / Subtract / Add chain, Multiply(..., 0.25), Add(..., Neg)
 ## See also
 
 - [Statements](statements.md) — the statement forms an expression can appear in
-- [Unsupported constructs](unsupported.md) — every rejected and every silently-truncated construct
+- [Unsupported constructs](unsupported.md) — every refused construct and its code
 - [Literals](literals.md) — numeric, string and boolean literal forms
 - [Constructors](constructors.md) — `float3(…)`, `vec4(…)` and the integer constructors
 - [Swizzle](swizzle.md) — `.rgb`, `.bgr`, channel masks
-- [Conversions](conversions.md) — widening, narrowing and authoritative component counts
+- [Conversions](conversions.md) — widening, narrowing and kinds
 - [`if` / `else`](if.md) — the only place comparison operators are accepted
 - [Calls](calls.md) — call syntax, named arguments, out arguments
 - [Name resolution](name-resolution.md) — how an identifier or callee is looked up

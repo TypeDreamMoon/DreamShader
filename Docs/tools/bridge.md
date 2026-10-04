@@ -142,7 +142,7 @@ and **rename** it into `Requests/` so it appears atomically.
 | `action` | Required fields | Effect | Answered |
 | :-- | :-- | :-- | :-- |
 | `ping` | — | Nothing. Confirms the bridge is serving | immediately |
-| `recompile` | `scope: "all"` | Rebuild the dependency graph and queue every project `.dsm` / `.dsf` for compilation, **forced** past the source-hash skip | immediately, as **queued** — see below |
+| `recompile` | `scope: "all"` | Rebuild the dependency graph and queue every source of every root — `.dsm`, `.dsf`, `.dss`, `.dsi`, `.dsp`, except a `.dsm` under a root's `Packages` — for compilation, **forced** past the build-key skip | immediately, as **queued** — see below |
 | `recompile` | `scope: "file"`, `sourceFile` | Queue one file into the debounce queue, **forced** past the source-hash skip | **when that compile finishes** |
 | `cleanGeneratedShaders` | — | Delete the generated `*.ush` includes, then queue a full rescan | immediately |
 | `previewMaterial` | `sourceFile` | Render one preview synchronously and write `preview.json` | immediately, with the render result |
@@ -245,7 +245,7 @@ directory. Point DreamShaderSettings.GeneratedShaderDirectory back under Interme
 | Field | Type | Default | Constraint |
 | :-- | :-- | :-- | :-- |
 | `action` | string | — | `"previewMaterial"` |
-| `sourceFile` | string | `""` | must exist and be a `.dsm` |
+| `sourceFile` | string | `""` | must exist and be a `.dss`, `.dsi` or `.dsm` — a source that builds a material or a material instance |
 | `mesh` | string | `""` → `sphere` | see [Meshes](#meshes) |
 | `width` | number | `512` | rounded, clamped to `[64, 2048]` |
 | `height` | number | `512` | rounded, clamped to `[64, 2048]` |
@@ -459,7 +459,7 @@ Frame-flag bits:
 
 | Direction | `type` | Purpose |
 | :-- | :-- | :-- |
-| client → editor | `previewMaterial` | Start a preview session for a `.dsm` |
+| client → editor | `previewMaterial` | Start a preview session for a `.dss`, `.dsi` or `.dsm` |
 | client → editor | `previewControl` | Adjust an existing session |
 | client → editor | `setProbe` | Attach a breakpoint-style probe to a Graph line |
 | client → editor | `clearProbe` | Detach the active probe |
@@ -482,7 +482,7 @@ Unparsable JSON gets an immediate reply:
 | Field | Type | Default | Constraint / effect |
 | :-- | :-- | :-- | :-- |
 | `type` or `action` | string | — | must equal `previewMaterial` |
-| `sourceFile` | string | `""` | must exist and be a `.dsm` |
+| `sourceFile` | string | `""` | must exist and be a `.dss`, `.dsi` or `.dsm` — a source that builds a material or a material instance |
 | `mesh` | string | `""` → `sphere` | see [Meshes](#meshes) |
 | `width` | number | `512` | rounded, clamped to `[64, 2048]` |
 | `height` | number | `512` | rounded, clamped to `[64, 2048]` |
@@ -660,7 +660,7 @@ Everything the bridge writes, and who reads it.
 | `Responses/<requestId>.json` | outbound | no — the client deletes its own |
 | `status.json` | outbound | no |
 | `owner.lock` | internal | yes — every editor reads it to find out whether it is the one serving this project |
-| `diagnostics.json` | outbound | yes — the Material Content Browser's Gen page reads it directly |
+| `diagnostics.json` | outbound | no — the [Material Content Browser](material-browser.md) reads the same records from the bridge's diagnostics store in memory, so it never waits for a file write |
 | `diagnostics/index.json`, `diagnostics/<md5>.json` | outbound | no |
 | `bridge.db` | outbound | **no** |
 | `material-expressions.json` | outbound | no |
@@ -937,7 +937,7 @@ Note the `frameRate` repeated on the control message: omitting it would drop the
 - [Workspace and editor extensions](workspace.md) — the workspace file and the extensions that drive this protocol
 - [Commandlet](commandlet.md) — the headless path, where the bridge never starts
 - [Preview](preview.md) — the renderer behind `previewMaterial`, and its limits
-- [Material Content Browser](material-browser.md) — the Gen page, which reads `diagnostics.json`
+- [Material Content Browser](material-browser.md) — the tab that shows each source's diagnostics, read from the store
 - [Editor integration](editor-integration.md) — the menu commands the request actions mirror
 - [VirtualFunction tools](virtual-function-tools.md) — the sync pass that produces `virtualFunctionSync` diagnostics
 - [Packages](packages.md) — which files a full rescan actually queues
@@ -947,4 +947,4 @@ Note the `frameRate` repeated on the control message: omitting it would drop the
 - [Material enums](../settings/material-enums.md) — the alias tables exported to `settings.json`
 - [Substrate builtins](../builtins/substrate.md) — the catalogue exported to `substrate-builtins.json`
 - [UE.Expression](../builtins/ue-expression.md) — the reflection surface `material-expressions.json` describes
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics](../diagnostics/index.md) — where diagnostics appear and how to read them; [every code](../diagnostics/README.md)

@@ -86,7 +86,7 @@ the failure, and the run ends `RESULT=FAILED`, so a list is never silently short
 > [!NOTE]
 > `-ListAs Files` and `GitIgnore` write paths relative to the project directory. A generated asset
 > outside it — the content of an **engine**-level plugin — has no such path; the run says how many
-> were left out ([`DSH9049`](../diagnostics/DSH9xxx.md)) and `Packages` or `Json` lists them.
+> were left out ([`DSH9049`](../diagnostics/DSH9xxx.md#dsh9049)) and `Packages` or `Json` lists them.
 
 ## Recipe A — sources in, assets out
 
@@ -112,8 +112,9 @@ $tail = if ($to -ge 0) { @($lines | Select-Object -Skip ($to + 1)) } else { @() 
 ```
 
 Simpler, when the project keeps generated assets in folders of their own — and
-[asset paths](asset-paths.md) make that easy, since a product lands under its source's folder — is one
-line per folder: `/Content/DreamShader/`. Use the list to check that the folders hold nothing else.
+[asset paths](asset-paths.md) make that easy, since a `.dss` product lands under its source's folder
+and a 1.x block where its `Name=` / `Root=` say — is one line per folder: `/Content/DreamShader/`. Use
+the list to check that the folders hold nothing else.
 
 **Perforce.** Add the same paths to `.p4ignore`; nothing else is needed, because the files are never
 added.
@@ -165,6 +166,12 @@ out byte-identical. The key also covers the plugin version, the engine version a
 read — so **upgrading DreamShader or the engine regenerates everything**. Do that in a commit of its
 own, with nothing else in it; the diff is large, binary, and expected.
 
+> [!WARNING]
+> The key names each source and header by its **absolute** path, so it matches only in a checkout at
+> the same location as the one that built the committed assets. Run the check there — a CI agent that
+> checks out somewhere else rebuilds and re-saves every asset, so the check above proves nothing
+> there. See [Caching](caching.md#what-is-hashed).
+
 **Costs.** Binary churn in history, and merge conflicts that are resolved by recompiling, never by
 picking a side: take either version, run `compile` on the source, commit the result.
 
@@ -193,8 +200,9 @@ decide about.
   the cook run: a checkout without them runs the empty stub of every slot until its `.dsp` files are
   compiled again. Commit the folder with the `.dsp` and `.usf` change that produced it; a conflict in
   it is resolved by taking either side and compiling the `.dsp` files again, never by hand.
-- **`Intermediate/DreamShader/GeneratedShaders/*.ush`** is rebuilt by every compile and must never be
-  committed; Unreal's stock ignore rules already cover `Intermediate/`.
+- **`Intermediate/DreamShader/GeneratedShaders/*.ush`** is what 1.x wrote for `Function` blocks; no
+  compile writes there since 2.0.0 ([Generated HLSL](generated-hlsl.md#location)). Never commit it;
+  Unreal's stock ignore rules already cover `Intermediate/`.
 - **`Saved/DreamShader/`** holds dumps, indices, backups of migrated sources and the bridge's state.
   Stock ignore rules cover `Saved/` too; `Saved/DreamShader/Migrated/` is the one folder worth a look
   before a clean, since it is where [`dsc migrate`](../tools/migrate.md) moves the 1.x originals.

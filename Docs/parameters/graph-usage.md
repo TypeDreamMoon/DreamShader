@@ -9,7 +9,7 @@ call that wires the generated node's input pins.
 | :-- | :-- |
 | Declared in | `.dsm`, `.dsf` — inside a `Graph { … }` body, an `Outputs` binding, or an `Outputs` declaration default |
 | Kind | expression form |
-| Generates | nothing new — the property's node is created on first use and then reused |
+| Generates | a declaration's one node; for a token expanded at its uses, one node per distinct use |
 | Since | `1.2.3` (`StaticSwitchParameter` calls); `1.4.1` (input-pin call form) |
 
 ## Synopsis
@@ -20,37 +20,49 @@ call that wires the generated node's input pins.
 <name> ( <pin> = <expression> [ , <pin> = <expression> ] … )   // pin call form
 ```
 
-The pin call form has no positional variant: every argument must be named.
+The pin call form has no positional variant: every argument must be named
+([`DSH5259`](../diagnostics/DSH5xxx.md#dsh5259)).
 
 ## Value reads
 
-A bare identifier is resolved in this order: an already-bound `Graph` variable, then a property, then
-the literals `true` / `false`. Property lookup is **case-insensitive**, and inside a material function
-the function's own `Properties` are searched before the enclosing `Shader`'s.
+A property is one of two things *(since 2.0.0)* — see
+[Parameter node tokens](parameter-nodes.md#the-22-tokens):
 
-| Property kind | Node output the read targets |
+- a **declaration** (every compact token, `ScalarParameter`, `StaticBoolParameter`, `VectorParameter`,
+  `TextureObjectParameter`): a file-scope `uniform` or `static const`, one node however often it is
+  read;
+- a token **expanded at each use** (`StaticSwitchParameter`, the two masks, the texture-sample
+  tokens): every read or call builds the node there, and uses that are written the same way share one
+  node.
+
+A property name is looked up ignoring case, as in 1.x; a read of a declaration that matches only in
+case is [`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275). A `Graph` variable of the same name hides a
+declaration for the rest of the body ([`DSH4251`](../diagnostics/DSH4xxx.md#dsh4251), warning).
+
+| Property kind | What a read is |
 | :-- | :-- |
-| Any scalar property | output 0 — the named-output remap applies to vector-typed properties only |
-| Vector, 1 component (`ChannelMaskParameter`) | output named `R`, else output 0 |
-| Vector, 2 components | output named `RG`, else output 0 |
-| Vector, 3 components | output named `RGB`, else output 0 |
-| Vector, 4 components | output named `RGBA`, else output 0 |
-| Any `const` property | output 0 — the named-output remap is skipped entirely |
-| Any texture property | output 0; the value reports **0** components and is marked as a texture object |
+| A scalar declaration | the `ScalarParameter`'s value |
+| A 2- or 3-component vector declaration | the `VectorParameter`'s `RG` / `RGB` output |
+| A 4-component vector declaration, `VectorParameter` | the `RGBA` output |
+| A `const` declaration | the constant node's whole value |
+| A texture declaration | a texture object |
+| `ChannelMaskParameter` | its one output, **1** component |
+| `StaticComponentMaskParameter` | its output, as wide as its input |
+| A texture-sample token (15–20) | the sample's `RGBA` output, 4 components |
+| `RuntimeVirtualTextureSampleParameter`, `SparseVolumeTextureSampleParameter` | a node with several outputs |
+| `StaticSwitchParameter` | not a value — see [below](#staticswitchparameter) |
 
 The component count that drives this table is the one the declaration produced, so `vec2 P` reads `RG`
-while `VectorParameter P` reads `RGBA`. `ChannelMaskParameter` reads as **1** component and
-`CurveAtlasRowParameter` as **3**, despite generating four-channel-looking nodes.
+while `VectorParameter P` reads `RGBA`.
 
-Reads are lazy and cached:
-
-- The node is created the first time the property is referenced, so **declaration order does not
-  matter** for reads. A `Graph` may reference a property declared further down the block.
-- Every reference to the same property returns the same node. A property used ten times generates one
-  node. See [Node reuse](../graph/node-reuse.md).
-- The one ordering constraint is a `UE.*` declaration whose argument references another property:
-  that referent must exist in the same `Properties` list. A cycle fails with
-  `Property '{Name}' has a recursive UE builtin dependency.`
+- **Declaration order does not matter** for reads. A `Graph` may reference a property declared further
+  down the block: the `Graph` is read after every other section.
+- A declaration is declared at **file scope** *(since 2.0.0)*: any block of the file can read it.
+  A token expanded at its uses belongs to its own block.
+- A property nothing reads builds no node ([`DSH4390`](../diagnostics/DSH4xxx.md#dsh4390), info).
+- A `UE.*` property is a local declared at the head of each body that reads it, in `Properties` order.
+  An argument naming another `UE.*` property needs that one earlier in the list and read by the same
+  body; otherwise the name is not declared ([`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200)).
 
 A swizzle applies to the read value, not to the node: `Tint.rgb`, `Sample.a`, `UV.yx`. See
 [Swizzle](../graph/swizzle.md).
@@ -62,19 +74,27 @@ vec4 S = BaseTex(Coordinates = UV);
 vec4 M = Keep(Input = S);
 ```
 
-The node is materialised exactly as a bare read would materialise it — same cache, so a later bare
-reference to the same property shares the configured node — and then each named argument is matched
-against the node's input pins. Matching trims and lower-cases both the argument name and the engine's
-pin name; nothing else is stripped, so a pin name containing a space or punctuation can never be
-matched by an argument identifier.
+The call builds the property's node at this use, with the default and metadata of its declaration, and
+wires each named argument to an input pin. *(since 2.0.0)* The node belongs to the call: two calls with
+the same arguments share one node, but a bare read of the same property elsewhere is a node of its
+own, without the wiring — 1.x cached one node per property and kept the first call's connections for
+every later read.
 
-Argument values are ordinary expressions and must be numeric: passing a texture object,
-a `MaterialAttributes` value or a `Substrate` value fails with
-`Parameter '{Name}' input '{Arg}' must be a numeric value.`
+Each argument name is matched against the class's input pins as the engine catalog lists them, then
+against its properties; a match only ignoring case is [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276).
+In a 1.x source, a name the catalog does not list but whose value is a number is taken for a pin named
+after the node's settings ([`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291), info): the emitter connects
+it to the live node's pin of that display name — or of the display name with every character an
+identifier cannot hold turned into `_` — or refuses it ([`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212)).
+Any other unknown name is [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213).
+
+Argument values are ordinary expressions, converted to the pin's type; one that does not convert is
+[`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214). An output selector (`Output = …`, `OutputIndex = …`) on
+the call is [`DSH5265`](../diagnostics/DSH5xxx.md#dsh5265).
 
 ### Eligible parameter types
 
-Exactly ten tokens are routed to the pin-wiring evaluator:
+The call form is for the tokens expanded at their uses:
 
 ```text
 ChannelMaskParameter                  TextureSampleParameterCubeArray
@@ -84,60 +104,39 @@ TextureSampleParameter2DArray         RuntimeVirtualTextureSampleParameter
 TextureSampleParameterCube            SparseVolumeTextureSampleParameter
 ```
 
-`StaticSwitchParameter` has its own call form, described [below](#staticswitchparameter). Every other
-property — every compact token and the remaining eleven `*Parameter` tokens — is not routed here at
-all: a call on one of them falls through to the function-call dispatcher and fails as an unknown
-function.
+`StaticSwitchParameter` has its own call form, described [below](#staticswitchparameter). A call on a
+declaration — every compact token, `ScalarParameter`, `StaticBoolParameter`, `VectorParameter`,
+`TextureObjectParameter` — is [`DSH4208`](../diagnostics/DSH4xxx.md#dsh4208): it names no function.
 
 ### Pin names by parameter type
 
-Pin names come from the engine node at generation time, so what is reachable depends on the node
-**and** on metadata applied before the call — metadata is applied when the node is created, which is
-before any pin is wired.
+The catalog lists a pin under the engine's C++ name for it, with the display name in identifier form
+as an alias where the two differ. *(since 2.0.0)* Every pin is reachable that way — 1.x matched display
+names only, and those with a space or parentheses could not be written.
 
-| Parameter type | Callable | Always available | Available only under metadata | Exposed by the engine but unreachable |
-| :-- | :-- | :-- | :-- | :-- |
-| `ChannelMaskParameter` | yes | `Input` | — | — |
-| `StaticComponentMaskParameter` | yes | `Input` | — | — |
-| `TextureSampleParameter2D` | yes | `Coordinates` | `MipLevel` with `[MipValueMode="MipLevel"]`; `MipBias` with `[MipValueMode="MipBias"]` | the two derivative pins under `[MipValueMode="Derivative"]`, and the automatic-view-mip-bias pin |
-| `TextureSampleParameter2DArray` | yes | `Coordinates` | as above | as above |
-| `TextureSampleParameterCube` | yes | `Coordinates` | as above | as above |
-| `TextureSampleParameterCubeArray` | yes | `Coordinates` | as above | as above |
-| `TextureSampleParameterVolume` | yes | `Coordinates` | as above | as above |
-| `TextureSampleParameterSubUV` | yes | `Coordinates` | as above | as above |
-| `RuntimeVirtualTextureSampleParameter` | yes | `Coordinates` | — | the world-position pin and all four derivative / mip pins, which the engine renames according to the node's own settings |
-| `SparseVolumeTextureSampleParameter` | yes | `Coordinates`, `TextureObject` | `MipLevel` with `[MipValueMode="MipLevel"]`; `MipBias` with `[MipValueMode="MipBias"]` | the two derivative pins under `[MipValueMode="Derivative"]` |
-| `StaticSwitchParameter` | **separate form** | `True` / `A`, `False` / `B` | — | — |
-| `ScalarParameter`, `StaticBoolParameter`, `VectorParameter`, `DoubleVectorParameter`, `CurveAtlasRowParameter`, `DynamicParameter`, `FontSampleParameter`, `SpriteTextureSampler`, `TextureObjectParameter`, `TextureCollectionParameter`, `SparseVolumeTextureObjectParameter` | no | — | — | — |
-| Every compact scalar, vector and texture token | no | — | — | — |
+| Parameter type | Pins the catalog lists | Display names a 1.x call can still use (`DSH5291`) |
+| :-- | :-- | :-- |
+| `ChannelMaskParameter` | `Input` | — |
+| `StaticComponentMaskParameter` | `Input` | — |
+| `TextureSampleParameter2D` … `TextureSampleParameterSubUV` | `Coordinates`, `TextureObject`, `MipValue`, `CoordinatesDX`, `CoordinatesDY`, `AutomaticViewMipBiasValue` (alias `Apply_View_MipBias`) | `MipLevel` under `[MipValueMode="MipLevel"]`, `MipBias` under `[MipValueMode="MipBias"]`, `DDX_UVs_` / `DDY_UVs_` under `[MipValueMode="Derivative"]` |
+| `RuntimeVirtualTextureSampleParameter` | `Coordinates`, `WorldPosition` (alias `World_Position`), `MipValue`, `DDX`, `DDY` | the names the node shows for its settings |
+| `SparseVolumeTextureSampleParameter` | `Coordinates`, `TextureObject`, `MipValue`, `CoordinatesDX`, `CoordinatesDY` | — |
+| `StaticSwitchParameter` | **separate form**: `A` (alias `True`), `B` (alias `False`) | — |
+| Every declaration | no call | — |
 
 > [!WARNING]
-> **Several engine pin names cannot be written as an argument.** A DreamShaderLang argument name is an
-> identifier, and matching only trims and lower-cases, so any pin whose engine name contains a space or
-> parentheses is unreachable. The names in question are `Apply View MipBias`, `DDX(UVs)`, `DDY(UVs)` on
-> texture-sample nodes, and `World Position`, `Translated World Position`, `Mip Level`, `Mip Bias`,
-> `DDX (UV)`, `DDX (World)`, `DDY (UV)`, `DDY (World)` on the runtime-virtual-texture node. There is no
-> workaround through the call form; set the corresponding value with metadata
-> (`[ConstCoordinate=…]`, `[ConstMipValue=…]`, `[AutomaticViewMipBias=…]`) or build the node explicitly
-> with [`UE.Expression`](../builtins/ue-expression.md).
-
-> [!WARNING]
-> **`TextureObject` is not a pin on a texture-sample *parameter* node.** Unreal's
-> `UMaterialExpressionTextureSampleParameter` constructor clears `bShowTextureInputPin`, so
-> `Tex(TextureObject = SomeTexture)` fails with
-> `Parameter 'Tex' (TextureSampleParameter2D) has no input pin named 'TextureObject'. Asset slots (Texture/Curve/Font/...) are set via [TextureObject=Path(...)] metadata, not call arguments.`
-> `SparseVolumeTextureSampleParameter` is the exception — it does expose that pin.
+> **Leave `TextureObject` unwired on a texture-sample *parameter* node.** Unreal's
+> `UMaterialExpressionTextureSampleParameter` constructor clears `bShowTextureInputPin`, and a loaded
+> asset drops any connection to the hidden pin. Set the asset with the default or with
+> `[Texture=Path(…)]`. `SparseVolumeTextureSampleParameter` is the exception — it does expose that pin.
 
 ### Types that look callable but are not
 
 | Token | Why the call fails |
 | :-- | :-- |
-| `CurveAtlasRowParameter` | The node has an `InputTime` pin, but the token is not in the eligible list, so `C(InputTime = t)` is never routed to the pin evaluator and fails as an unknown function |
-| `FontSampleParameter` | Not in the eligible list; bind `Font` and `FontTexturePage` with metadata |
-| `SpriteTextureSampler` | Not in the eligible list; bind `Texture` with metadata |
-| `TextureObjectParameter` | A texture object has no input pins; read it as a value and feed it to a sampler |
-| `TextureCollectionParameter`, `SparseVolumeTextureObjectParameter` | Object parameters, same as above |
-| `ScalarParameter`, `VectorParameter`, compact tokens | No input pins to wire |
+| `CurveAtlasRowParameter`, `FontSampleParameter`, `SpriteTextureSampler`, `TextureCollectionParameter`, `SparseVolumeTextureObjectParameter` | The token has no 2.0 form at all ([`DSH3253`](../diagnostics/DSH3xxx.md#dsh3253)) |
+| `TextureObjectParameter`, compact texture tokens | A texture object has no input pins; read it as a value and feed it to a sampler (a call is `DSH4208`) |
+| `ScalarParameter`, `VectorParameter`, `StaticBoolParameter`, compact tokens | No input pins to wire (a call is `DSH4208`) |
 
 ## StaticSwitchParameter
 
@@ -152,77 +151,63 @@ vec3 E = UseDetail(DetailColor, BaseColor);          // positional, in that orde
 | true branch | `True=`, else `A=`, else the first positional argument |
 | false branch | `False=`, else `B=`, else the second positional argument |
 
-Both branches are required. Rules on the two branch values:
+Both branches are required ([`DSH5258`](../diagnostics/DSH5xxx.md#dsh5258)); any other argument is
+dropped with a [`DSH5254`](../diagnostics/DSH5xxx.md#dsh5254) warning, and an output selector is
+`DSH5265`.
 
-| Rule | Message when violated |
-| :-- | :-- |
-| Neither branch may be a texture object | `StaticSwitchParameter '{Name}' cannot switch Texture object values.` |
-| The branches may not mix `Substrate` with numeric (two `Substrate` branches are fine) | `StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.` |
-| The branches may not mix `MaterialAttributes` with numeric | `StaticSwitchParameter '{Name}' cannot mix MaterialAttributes and numeric branches.` |
-| Both branches must have the same component count | `StaticSwitchParameter '{Name}' branches must have the same component count, got {Left} and {Right}.` |
+The branches are wired to the node's `A` and `B` pins, which take any width. The result is as wide as
+the wider branch, or the material or Substrate value a branch carries. *(since 2.0.0)* The 1.x checks
+on the branches — no texture object, no `Substrate` or `MaterialAttributes` mixed with a number, equal
+component counts — are not made as such: a branch the pin cannot take is `DSH5214`.
 
-The result has the branches' component count. The node's `DefaultValue` is the declaration's default
-(`true` or `false`; `false` when there is none), an `ExpressionGUID` is minted if the node has none,
-and on a `UMaterial` the material's static-parameter set is updated to match.
+The node's `DefaultValue` is the declaration's default (`true` or `false`; the node's own `false` when
+there is none), and the switch is registered as a static parameter of the material.
 
 > [!WARNING]
-> A `StaticSwitchParameter` **cannot be read as a value**. A bare `UseDetail` — or `UseDetail.r` —
-> fails with `Unknown Graph identifier 'UseDetail'.` because the property-value path refuses this
-> token. It must be called.
+> A `StaticSwitchParameter` **cannot be read as a value**. A bare `UseDetail` — or `UseDetail.r` — is
+> no declared name ([`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200)). It must be called.
 
 ## Other surfaces
 
-- **`UE.*` properties** are read exactly like any other property: `UE.TexCoord(Index = 0) UV;` in
-  `Properties`, then `UV` in `Graph`. Their arguments are resolved at node-creation time, not at read
-  time. See [UE builtins](../builtins/ue.md).
+- **`UE.*` properties** are read like any other property: `UE.TexCoord(Index = 0) UV;` in
+  `Properties`, then `UV` in `Graph`. Each becomes a local at the head of the body that reads it, built
+  once there. See [UE builtins](../builtins/ue.md).
 - **The anonymous switch builtin.** `UE.StaticSwitchParameter(Name = …, Default = …, Group = …,
-  Description = …, SortPriority = …)` synthesises a property on the fly and runs the same evaluator, so
-  a static switch does not have to be declared in `Properties` first.
-- **The ThinCustom / HLSL backend.** When the shader body is compiled into an Unreal `Custom` node
-  rather than a node graph, every property whose identifier textually appears in the prepared code
-  becomes a `Custom` node input named after the property, wired from the same preferred output
-  (`R` / `RG` / `RGB` / `RGBA`) that a graph read would use. Properties whose names do not appear in
-  the code are skipped entirely. See [Backend](../settings/backend.md) and
-  [Generated HLSL](../generation/generated-hlsl.md).
+  Description = …, SortPriority = …)` builds the same node in place, so a static switch does not have
+  to be declared in `Properties` first. `ParameterName` may stand for `Name` and `DefaultValue` for
+  `Default`; the branches are given as above. No name is
+  [`DSH5257`](../diagnostics/DSH5xxx.md#dsh5257), a default that is not `true` / `false`
+  [`DSH5263`](../diagnostics/DSH5xxx.md#dsh5263), a non-integer `SortPriority`
+  [`DSH5264`](../diagnostics/DSH5xxx.md#dsh5264); any other argument is dropped with `DSH5254`.
+- **The ThinCustom backend** builds the same node graph as `Graph`, on the hidden base material, so a
+  property reaches it exactly as described above. See [Backend](../settings/backend.md).
 
 ## Notes
 
-- Property nodes are laid out at X = -800 with a Y stride of 220; a `StaticSwitchParameter` node is
-  placed at X = 520. Constants land at X = -1120 — both the ones created for inline call arguments and
-  the `Constant` / `Constant2Vector` / `Constant3Vector` / `Constant4Vector` node a `const` scalar or
-  vector property generates. See [Graph layout](../generation/graph-layout.md).
-- A name that matches both a `Graph` variable and a property resolves to the variable — the variable
-  binding is checked first. See [Name resolution](../graph/name-resolution.md).
-- Wiring a pin mutates the shared node. Because the node is cached by property name, a property
-  configured once with `Tex(Coordinates = UV)` keeps that connection for every later bare reference to
-  `Tex` in the same graph.
+- Node positions come from the [graph layout](../generation/graph-layout.md) the project selects
+  (*Graph Layout Style*), not from fixed coordinates *(since 2.0.0)*.
+- A name that matches both a `Graph` variable and a declaration resolves to the variable, with
+  `DSH4251`. See [Name resolution](../graph/name-resolution.md).
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this table.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Unknown Graph identifier '{Name}'.` | the name is neither a `Graph` variable, nor a resolvable property, nor `true` / `false` — including any bare read of a `StaticSwitchParameter` |
-| `Property '{Name}': {Inner}` | the property's node could not be created |
-| `Property '{Name}' has a recursive UE builtin dependency.` | a `UE.*` property argument chain refers back to itself |
-| `Could not resolve parameter '{Name}' for configuration.` | the call form could not look the property up |
-| `Parameter '{Name}' did not produce an expression node.` | the property resolved but generated no node |
-| `Parameter '{Name}' must be called with named arguments wiring its input pins (e.g. {Name}(Coordinates=...) or {Name}(Input=...)).` | a positional argument in the pin call form |
-| `Parameter '{Name}' ({Token}) has no input pin named '{Arg}'. Asset slots (Texture/Curve/Font/...) are set via [{Arg}=Path(...)] metadata, not call arguments.` | the argument name matched no pin on the node as currently configured |
-| `Parameter '{Name}' input '{Arg}': {Inner}` | the argument's own expression failed to evaluate |
-| `Parameter '{Name}' input '{Arg}' must be a numeric value.` | a texture object, `MaterialAttributes` or `Substrate` value passed to a pin |
-| `StaticSwitchParameter '{Name}' requires True=... and False=... inputs.` | one or both branches missing |
-| `StaticSwitchParameter '{Name}' True input: {Inner}` | the true branch failed to evaluate |
-| `StaticSwitchParameter '{Name}' False input: {Inner}` | the false branch failed to evaluate |
-| `StaticSwitchParameter '{Name}' cannot switch Texture object values.` | a branch is a texture object |
-| `StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.` | one branch is a `Substrate` value and the other is not |
-| `StaticSwitchParameter '{Name}' cannot mix MaterialAttributes and numeric branches.` | one branch is `MaterialAttributes`, the other is not |
-| `StaticSwitchParameter '{Name}' branches must have the same component count, got {Left} and {Right}.` | mismatched branch widths |
-| `StaticSwitchParameter '{Name}': {Inner}` | metadata application failed on the switch node |
-| `Failed to create StaticSwitchParameter node '{Name}'.` | node construction failed |
+| `DSH4200` | a bare read of a `StaticSwitchParameter`, or a name that is no variable and no property |
+| `DSH4208` | a call on a property that is a declaration |
+| `DSH5259` | a positional argument in the pin call form |
+| `DSH5265` | `Output` / `OutputIndex` on a parameter or static-switch call |
+| `DSH5213` | an argument that names neither a pin nor a property of the class |
+| `DSH5291` | an argument that names a pin the catalog does not list (info; connected on the live node) |
+| `DSH8212` | the live node has no pin of that name either |
+| `DSH5276` | an argument that matches a pin or property only ignoring case (warning) |
+| `DSH5214` | an argument the pin's type cannot take |
+| `DSH5258` | a static switch called without both branches |
+| `DSH5254` | an argument a static switch does not read (warning; dropped) |
+| `DSH5257` / `DSH5263` / `DSH5264` | `UE.StaticSwitchParameter` without a name / with a non-boolean default / with a non-integer sort priority |
+| `DSH4251` | a `Graph` variable hides a declaration (warning) |
 
-The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
+The complete list lives in the [diagnostics index](../diagnostics/index.md).
 
 ## Example
 
@@ -237,7 +222,7 @@ Shader(Name="Docs/M_GraphUsage")
         ];
 
         ChannelMaskParameter         Pick = float4(1, 0, 0, 0);
-        StaticComponentMaskParameter Keep = float4(1, 1, 1, 0);
+        StaticComponentMaskParameter Keep [DefaultR = true; DefaultG = true; DefaultB = true];
 
         StaticSwitchParameter UseDetail = true;
 
@@ -258,13 +243,13 @@ Shader(Name="Docs/M_GraphUsage")
     }
 
     Graph = {
-        vec4  Base   = BaseTex(Coordinates = UV);           // Coordinates pin
+        vec4  Albedo = BaseTex(Coordinates = UV);           // Coordinates pin
         vec4  High   = HeightTex(Coordinates = UV,
-                                 MipLevel    = 2.0);        // MipLevel exists because of the metadata
-        vec4  Masked = Keep(Input = Base);                  // Input pin, 4 components out
+                                 MipValue    = 2.0);        // the mip level, as MipValueMode says
+        vec4  Masked = Keep(Input = Albedo);                // Input pin, 4 components out
         float Chan   = Pick(Input = High);                  // Input pin, 1 component out
 
-        vec3 Plain    = Base.rgb * Tint;                    // bare read + swizzle, reuses the node
+        vec3 Plain    = Albedo.rgb * Tint;                  // a variable read + swizzle
         vec3 Detailed = Masked.rgb * Detail;
 
         Color = UseDetail(True = Detailed, False = Plain);
@@ -277,14 +262,19 @@ Generated nodes:
 
 ```text
 TextureSampleParameter2D  BaseTex     Coordinates <- TextureCoordinate UV
-TextureSampleParameter2D  HeightTex   MipValueMode=TMVM_MipLevel, Coordinates <- UV, MipLevel <- Constant(2)
-StaticComponentMaskParameter Keep     Input <- BaseTex
+TextureSampleParameter2D  HeightTex   MipValueMode=TMVM_MipLevel, Coordinates <- UV, MipValue <- Constant(2)
+StaticComponentMaskParameter Keep     DefaultR/G/B=true, Input <- BaseTex
 ChannelMaskParameter      Pick        Input <- HeightTex
 TextureCoordinate         UV          CoordinateIndex=0   (one node, shared by both samplers)
 VectorParameter           Tint        read through RGB
-ScalarParameter           Detail      read through R
+ScalarParameter           Detail
 StaticSwitchParameter     UseDetail   True <- Multiply(Keep.rgb, Detail), False <- Multiply(BaseTex.rgb, Tint)
 ```
+
+`MipLevel = 2.0`, the pin's display name under this `MipValueMode`, reaches the same pin with
+`DSH5291`. *(since 2.0.0)* A `Graph` variable may not be called `Base` in a `Shader`: that is the
+material the `Outputs` bind, and a local of that name is
+[`DSH4220`](../diagnostics/DSH4xxx.md#dsh4220).
 
 ## See also
 
@@ -296,8 +286,8 @@ StaticSwitchParameter     UseDetail   True <- Multiply(Keep.rgb, Detail), False 
 - [Calls](../graph/calls.md) — the general call grammar and named-argument rules
 - [Swizzle](../graph/swizzle.md) — `.rgb`, `.a` and channel masks on a read value
 - [Conversions](../graph/conversions.md) — component-count compatibility
-- [Node reuse](../graph/node-reuse.md) — why one property equals one node
+- [Node reuse](../graph/node-reuse.md) — when two uses share one node
 - [Name resolution](../graph/name-resolution.md) — variable-before-property lookup order
-- [MaterialAttributes](../graph/material-attributes.md) — the value kind a static switch may not mix
+- [MaterialAttributes](../graph/material-attributes.md) — the value kind a branch may carry
 - [UE builtins](../builtins/ue.md) — `UE.*` properties and the anonymous static-switch builtin
-- [Generated HLSL](../generation/generated-hlsl.md) — how properties reach a `Custom` node
+- [Backend](../settings/backend.md) — what the two backends build

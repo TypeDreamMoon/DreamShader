@@ -7,16 +7,20 @@ Two top-level blocks that declare Unreal's material-layer function assets: a lay
 
 | | |
 | :-- | :-- |
-| Declared in | `.dsm` and `.dsf` — a `.dsh` containing `ShaderLayer(`, `ShaderLayerBlend(`, `MaterialLayer(` or `MaterialLayerBlend(` is rejected before parsing |
+| Declared in | `.dsf`, or a `.dsm` without a `Shader` — beside a `Shader` either one is [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201), in a `.dsh` [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) (see [Source files](source-files.md#how-the-restriction-is-enforced)) |
 | Kind | top-level block |
 | Generates | `UMaterialFunctionMaterialLayer` (`ShaderLayer`) / `UMaterialFunctionMaterialLayerBlend` (`ShaderLayerBlend`) |
-| Multiplicity | any number per parse unit |
+| Multiplicity | any number per file |
 | Since | `1.3.0` |
+
+The legacy front end reads a `ShaderLayer` as a 2.0 `/// @layer export void L(inout material m)` and a
+`ShaderLayerBlend` as `/// @layerblend export void B(material …, inout material Result)`; see
+[the 2.0 language](../language-v2/index.md) and [`dsc migrate`](../tools/migrate.md).
 
 ## Synopsis
 
 ```c
-ShaderLayer(Name = "<asset-path>" [, Root = "<root>"] [,])
+ShaderLayer(Name = "<asset-path>" [, Root = "<root>"])
 {
     [Properties            [=] { <property-declaration> ; … }]
     [Inputs                [=] { MaterialAttributes <name> ; }]
@@ -28,7 +32,7 @@ ShaderLayer(Name = "<asset-path>" [, Root = "<root>"] [,])
 ```
 
 ```c
-ShaderLayerBlend(Name = "<asset-path>" [, Root = "<root>"] [,])
+ShaderLayerBlend(Name = "<asset-path>" [, Root = "<root>"])
 {
     [Properties            [=] { <property-declaration> ; … }]
     Inputs                 [=] { MaterialAttributes <name> ; MaterialAttributes <name> ; }
@@ -42,9 +46,8 @@ ShaderLayerBlend(Name = "<asset-path>" [, Root = "<root>"] [,])
 The `=` between a section name and its `{ … }` block is optional sugar *(since 1.5.0)*; a `;` after a
 section's closing `}` is optional. Sections may appear in any order and may be repeated.
 
-Both keywords are matched **case-sensitively**; section names are matched case-insensitively.
-`ShaderLayerBlend` is attempted before `ShaderLayer`, and the keyword matcher requires a
-non-alphanumeric character after the keyword, so `ShaderLayerBlend` never matches as `ShaderLayer`.
+Both keywords are matched **case-sensitively**, as whole words; section names are matched
+case-insensitively.
 
 ## Header attributes
 
@@ -53,51 +56,57 @@ non-alphanumeric character after the keyword, so `ShaderLayerBlend` never matche
 | **`Name`** | yes | string | The asset's logical path. The last `/`-separated segment is the asset name; preceding segments become folders. |
 | `Root` | no | string | The package root the folders hang off. Defaults to `/Game` when absent or empty. |
 
-Attribute keys are matched case-insensitively. Values may be quoted or bare; a bare value ends at the
-first `,` or `)`. A trailing comma before `)` is accepted. A duplicate key silently overwrites the
-earlier one. See [Asset paths](../generation/asset-paths.md).
+Attribute keys are matched case-insensitively. Values may be quoted or bare; a bare value runs to the
+next `,` or `)` outside parentheses. A key written twice is a warning
+([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins. *(since 2.0.0)* A trailing
+comma before `)` is [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243). See
+[Asset paths](../generation/asset-paths.md).
 
 ## Sections
 
-Both blocks share the [`ShaderFunction`](shader-function.md) body parser, so the section table is
-identical.
+Both blocks share the [`ShaderFunction`](shader-function.md#sections) body parser, so the section
+table is identical.
 
 | Section | Accepted | Repeat behaviour | Reference |
 | :-- | :-- | :-- | :-- |
 | `Properties` | yes — function-local parameter, `const` and `UE.*` nodes; this is where layer controls belong | appends | [Properties](properties.md) |
-| `Inputs` | yes — arity-constrained, see below | appends | [Inputs / Outputs / Results](inputs-outputs.md) |
-| `Outputs` | yes — exactly one `MaterialAttributes` output | appends | [Inputs / Outputs / Results](inputs-outputs.md) |
+| `Inputs` | yes — constrained, see below | appends | [Inputs / Outputs / Results](inputs-outputs.md) |
+| `Outputs` | yes — one `MaterialAttributes` output | appends | [Inputs / Outputs / Results](inputs-outputs.md) |
 | `Results` | yes — alias for `Outputs`, no warning | appends | [Inputs / Outputs / Results](inputs-outputs.md) |
-| `Settings` | yes — the same four keys a `ShaderFunction` honours | merges; last key wins | [Function settings](../settings/function.md) |
-| `Graph` | yes — **required** | overwrites the previous body | [Graph](../graph/index.md) |
-| `Layout` | yes | **resets** — a second `Layout` discards the first | [Layout](layout.md) |
-| `Code` | **no** — hard error | — | — |
-| `Options` | no — unknown section | — | — |
+| `Settings` | yes — the keys a `ShaderFunction` honours | merges; a key written twice is a warning ([`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262)) | [Function settings](../settings/function.md) |
+| `Graph` | yes | the later one wins, with a warning ([`DSH2258`](../diagnostics/DSH2xxx.md#dsh2258)) | [Graph](../graph/index.md) |
+| `Layout` | yes | the later one replaces the earlier, with `DSH2258` | [Layout](layout.md) |
+| `Code` | **no** — [`DSH2246`](../diagnostics/DSH2xxx.md#dsh2246) | — | — |
+| anything else, `Options` included | **no** — [`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245) | — | — |
 
-## Interface arity rules
+## Interface rules
 
-These are the only rules that distinguish a layer or blend from a plain
-[`ShaderFunction`](shader-function.md). They are evaluated at generation time, in the order listed.
+These are the rules that distinguish a layer or blend from a plain
+[`ShaderFunction`](shader-function.md). *(since 2.0.0)* They are the 2.0 signature rules of `@layer`
+and `@layerblend`, checked when the file is bound.
 
-| # | Applies to | Rule | Diagnostic |
+| # | Applies to | Rule | Code |
 | :-- | :-- | :-- | :-- |
-| 1 | both | at least one output must be declared | `{Kind} '{Function}' must declare at least one output.` |
-| 2 | both | **exactly one** output, and its type must be `MaterialAttributes` | `{Kind} '{Function}' must declare exactly one MaterialAttributes output.` |
-| 3 | `ShaderLayer` | **at most one** input, and every declared input must be `MaterialAttributes` | `ShaderLayer '{Function}' must declare at most one input, and it must be MaterialAttributes. Use Properties for layer controls.` |
-| 4 | `ShaderLayerBlend` | **exactly two** inputs, both `MaterialAttributes` | `ShaderLayerBlend '{Function}' must declare exactly two inputs, both MaterialAttributes. Use Properties for blend controls.` |
-| 5 | both | a `Graph` section is required | `{Kind} '{Function}' must provide a Graph block.` |
+| 1 | both | a `MaterialAttributes` output is declared | [`DSH3278`](../diagnostics/DSH3xxx.md#dsh3278) |
+| 2 | `ShaderLayer` | the material is all there is: any input that is not `MaterialAttributes`, and any output besides the material, breaks the signature | [`DSH6204`](../diagnostics/DSH6xxx.md#dsh6204) |
+| 3 | `ShaderLayerBlend` | at least one `MaterialAttributes` input, and no output besides the material | [`DSH6205`](../diagnostics/DSH6xxx.md#dsh6205) |
 
-`{Kind}` renders as `ShaderLayer` or `ShaderLayerBlend`. Rule 3 permits a layer with **zero** inputs;
-rule 4 does not permit a blend with one or three.
+A layer's material flows through it: *(since 2.0.0)* the layer always has exactly one
+`MaterialAttributes` input, named after its output — also when the 1.x block declared no input at
+all. A 1.x `MaterialAttributes` input with another name becomes that input, and the pin changes its
+name with a warning ([`DSH3277`](../diagnostics/DSH3xxx.md#dsh3277)); the body still reads it under
+its 1.x name. The input is optional only when the 1.x input was declared `opt`.
 
-`MaterialAttributes` is compared after removing every space and ignoring case, so `Material
-Attributes` also satisfies these rules. Any other type token in `Inputs` or `Outputs` fails these
-rules rather than the type resolver.
+A blend's output starts empty, and each of its inputs is a pin of its own. The binder takes any number
+of `MaterialAttributes` inputs from one up; the engine's layer stack blends exactly two.
+
+`MaterialAttributes` is one word, matched ignoring case; `Material Attributes` with a space is
+[`DSH3271`](../diagnostics/DSH3xxx.md#dsh3271) *(since 2.0.0)*. A missing `Graph` is not reported.
 
 > [!NOTE]
-> Scalars, vectors and textures cannot be layer or blend inputs — the arity rules reject them. Expose
-> them through `Properties` instead: they become parameter nodes inside the generated function and
-> appear on the layer stack's parameter panel. The two diagnostics say so explicitly.
+> Scalars, vectors and textures cannot be layer inputs — rule 2 rejects them. Expose them through
+> `Properties` instead: they become parameter nodes inside the generated function and appear on the
+> layer stack's parameter panel. Do the same for blend controls.
 
 ## Blend input relevance *(since UE 5.7)*
 
@@ -109,13 +118,11 @@ and `-`, then compared case-insensitively.
 | :-- | :-- |
 | `Top`, `TopLayer` | `Top` |
 | `Bottom`, `BottomLayer`, `Base`, `BaseLayer` | `Bottom` |
-| the engine's `TopMaterialBlendInputName` (compared against the raw, un-normalized name) | `Top` |
-| the engine's `BottomMaterialBlendInputName` (compared against the raw, un-normalized name) | `Bottom` |
-| anything else — first `MaterialAttributes` input | `Bottom` |
-| anything else — second `MaterialAttributes` input | `Top` |
+| anything else — the first `MaterialAttributes` input | `Bottom` |
+| anything else — a later `MaterialAttributes` input | `Top` |
 
-Inputs of a `ShaderLayer`, and any non-`MaterialAttributes` input, resolve to `General`. On UE 5.3 –
-5.6 the property does not exist and nothing is written.
+Inputs of a `ShaderLayer`, and any non-`MaterialAttributes` input, get no relevance and keep the
+engine's `General`. On UE 5.3 – 5.6 the property does not exist and nothing is written.
 
 ## Generated asset
 
@@ -130,103 +137,69 @@ Inputs of a `ShaderLayer`, and any non-`MaterialAttributes` input, resolve to `G
 When an asset already exists at the target path it is reused if it **is a** subclass of the expected
 class; the exact-class rule that applies to [`ShaderFunction`](shader-function.md) is relaxed here.
 Switching a block between `ShaderFunction` and `ShaderLayer` without moving or deleting the existing
-asset therefore fails with
-`Asset '{ObjectPath}' already exists as '{Class}', but {Kind} generation requires '{ExpectedClass}'. Delete or move the existing asset and regenerate it.`
+asset therefore fails with [`DSH8110`](../diagnostics/DSH8xxx.md#dsh8110).
 
-Everything else about generation — the four honoured `Settings` keys, lazy property-node creation,
-input/output `Id` preservation across regeneration, construction-time node positions, the source-hash
-skip, and what a regeneration destroys — is identical to
-[`ShaderFunction`](shader-function.md#generated-asset).
+Everything else about generation — the honoured `Settings` keys, lazy property-node creation,
+input/output `Id` preservation across regeneration, the source-hash skip, and what stops a rebuild —
+is identical to [`ShaderFunction`](shader-function.md#generated-asset).
 
-The single `MaterialAttributes` output is pre-seeded with a `MakeMaterialAttributes` node, which is
-what makes member writes such as `Attrs.BaseColor = …;` legal in the `Graph`. See
-[MaterialAttributes](../graph/material-attributes.md).
+A blend's `MaterialAttributes` output starts as an empty material. A layer's starts as the material
+that came in through its input — or empty, when the 1.x input had another name (see
+[Interface rules](#interface-rules)). Either way member writes such as `Attrs.BaseColor = …;` are
+legal in the `Graph`. See [MaterialAttributes](../graph/material-attributes.md).
 
 ## Deprecated spellings
 
 > [!WARNING]
 > `MaterialLayer(...)` and `MaterialLayerBlend(...)` are **deprecated since 1.3.0**. Both still parse
-> and generate exactly the same assets as their modern spellings, and both push a parse warning that
-> is appended to the compile message:
->
-> - `MaterialLayer is deprecated; use ShaderLayer instead.`
-> - `MaterialLayerBlend is deprecated; use ShaderLayerBlend instead.`
->
-> The warnings do not fail the parse. Use `ShaderLayer` / `ShaderLayerBlend` in new code.
+> and generate exactly the same assets as their modern spellings, and each is a warning
+> ([`DSH2251`](../diagnostics/DSH2xxx.md#dsh2251)). Use `ShaderLayer` / `ShaderLayerBlend` in new code.
 
 | Deprecated spelling | Replacement | Behaves as |
 | :-- | :-- | :-- |
-| `MaterialLayer(Name = …)` | `ShaderLayer(Name = …)` | identical: same sections, same arity rules, same asset |
+| `MaterialLayer(Name = …)` | `ShaderLayer(Name = …)` | identical: same sections, same rules, same asset |
 | `MaterialLayerBlend(Name = …)` | `ShaderLayerBlend(Name = …)` | identical |
 
-Two consequences of the aliasing:
-
-- A missing `Name` reports the spelling the author actually typed:
-  `MaterialLayer(Name="...") is required.`
-- Every other diagnostic reports the **modern** kind name. A `MaterialLayer` block with two inputs
-  fails with `ShaderLayer '{Function}' must declare at most one input, …`, never `MaterialLayer …`.
+A missing `Name` ([`DSH2242`](../diagnostics/DSH2xxx.md#dsh2242)) names the spelling the author
+actually typed.
 
 ## Notes
 
-- **Layer blocks may share a file with anything except a second `Shader`.** One compile of a `.dsm`
-  or `.dsf` generates every layer, blend, `ShaderFunction`, `VirtualFunction`, `Function`,
-  `GraphFunction` and `Namespace` block it declares, plus the `Shader` if there is one.
-- **The file-kind restriction is a substring scan, not a parse.** All four spellings —
-  `ShaderLayer(`, `ShaderLayerBlend(`, `MaterialLayer(`, `MaterialLayerBlend(` — are on the `.dsh`
-  reject list, including occurrences inside comments and string literals. A `.dsf` only rejects
-  `Shader(`, so layer blocks are welcome there. See [Source files](source-files.md).
-- A layer or blend can be called like any other material function from a `Graph` in the same parse
-  unit, but the usual consumer is Unreal's material layer stack on a material or material instance.
-- The `Code` section is rejected outright; use `Graph`.
+- **A file makes a material or function assets, not both** *(since 2.0.0)*. A layer or blend beside a
+  `Shader` is `DSH6201`. Without a `Shader`, one compile of a `.dsm` or `.dsf` generates every layer,
+  blend and `ShaderFunction` it declares. See [Source files](source-files.md).
+- **The file-kind restriction is a parse, decided per block** *(since 2.0.0)*. A `.dsh` holding any of
+  the four spellings is `DSH2249`; a comment or a string that mentions `ShaderLayer(` is fine.
+- The consumer of a layer or blend is Unreal's material layer stack on a material or material
+  instance. *(since 2.0.0)* Neither can be called from a `Graph`:
+  [`DSH6208`](../diagnostics/DSH6xxx.md#dsh6208).
+- The `Code` section is rejected outright (`DSH2246`); use `Graph`.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this section. `{Kind}` is always
-`ShaderLayer` or `ShaderLayerBlend` — the deprecated spellings never appear in a diagnostic.
+Each code carries the line and column of the construct; the code's page has the message. The
+parse-time codes of the shared body parser — attributes, sections, parameter statements, metadata,
+`Settings` — are listed on [`ShaderFunction` § Diagnostics](shader-function.md#diagnostics).
 
-### Parse time
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `ShaderLayer(Name="...") is required.` | a `ShaderLayer` header with no `Name` attribute |
-| `ShaderLayerBlend(Name="...") is required.` | a `ShaderLayerBlend` header with no `Name` attribute |
-| `MaterialLayer(Name="...") is required.` | the deprecated spelling with no `Name` attribute |
-| `MaterialLayerBlend(Name="...") is required.` | the deprecated spelling with no `Name` attribute |
-| `Unknown material function section '{Section}'.` | a section other than `Properties`, `Inputs`, `Outputs`, `Results`, `Settings`, `Graph`, `Layout`, `Code` |
-| `ShaderFunction, ShaderLayer, and ShaderLayerBlend graph sections now use Graph = { ... }. Function Code = { ... } is still supported.` | a `Code` section was used |
-| `Invalid typed declaration '{Statement}'.` | an `Inputs`/`Outputs`/`Results` statement with no space between type and name, an empty left side, or a name that is not an identifier |
-| `Expected '{' near index {Index}.` | the body block is missing |
-| `Unterminated block.` | the body `{` is never closed |
+| `DSH2251` | `MaterialLayer` or `MaterialLayerBlend` (warning) |
+| `DSH2242` | no `Name`, or an empty one |
+| `DSH3278` | no `MaterialAttributes` output |
+| `DSH3277` | the layer's `MaterialAttributes` input is renamed after the output (warning) |
+| `DSH6204` | a `ShaderLayer` with any other input or output |
+| `DSH6205` | a `ShaderLayerBlend` without a `MaterialAttributes` input, or with another output |
+| `DSH6201` | the file also has a `Shader` |
+| `DSH6208` | a `Graph` calls a layer or blend |
+| `DSH8110` | an asset of an incompatible class is at the target path |
 
-### Parse-time warnings
+The emit-time codes for the asset itself — [`DSH8111`](../diagnostics/DSH8xxx.md#dsh8111),
+[`DSH8112`](../diagnostics/DSH8xxx.md#dsh8112), [`DSH8114`](../diagnostics/DSH8xxx.md#dsh8114),
+[`DSH8206`](../diagnostics/DSH8xxx.md#dsh8206), [`DSH8207`](../diagnostics/DSH8xxx.md#dsh8207) — are
+a `ShaderFunction`'s.
 
-| Message | Cause |
-| :-- | :-- |
-| `MaterialLayer is deprecated; use ShaderLayer instead.` | the deprecated block spelling |
-| `MaterialLayerBlend is deprecated; use ShaderLayerBlend instead.` | the deprecated block spelling |
-
-### Generation time
-
-| Message | Cause |
-| :-- | :-- |
-| `{Kind} '{Function}' must declare at least one output.` | no `Outputs` / `Results` entry |
-| `{Kind} '{Function}' must declare exactly one MaterialAttributes output.` | more than one output, or an output that is not `MaterialAttributes` |
-| `ShaderLayer '{Function}' must declare at most one input, and it must be MaterialAttributes. Use Properties for layer controls.` | two or more inputs, or any non-`MaterialAttributes` input |
-| `ShaderLayerBlend '{Function}' must declare exactly two inputs, both MaterialAttributes. Use Properties for blend controls.` | an input count other than two, or any non-`MaterialAttributes` input |
-| `{Kind} '{Function}' must provide a Graph block.` | no `Graph` section |
-| `{Kind} '{Function}' property '{Name}' conflicts with another property or input name.` | duplicate property name, or a property that shadows an input |
-| `{Kind} '{Function}' output '{Name}' was never assigned an expression.` | the `Graph` never writes the output |
-| `{Kind} '{Function}' output '{Name}' does not match its declared type '{Type}'.` | the assigned value is not a `MaterialAttributes` value |
-| `{Kind} '{Function}' output '{Name}': {Detail}` | the output's `MakeMaterialAttributes` seed failed |
-| `{Kind} '{Function}' failed to create input '{Name}'.` | the `FunctionInput` node could not be created |
-| `{Kind} '{Function}' failed to create output '{Name}'.` | the `FunctionOutput` node could not be created |
-| `{Kind} '{Function}': ExposeToLibrary must be true or false.` | `Settings = { ExposeToLibrary = … }` is not a boolean literal |
-| `Asset '{ObjectPath}' already exists as '{Class}', but {Kind} generation requires '{ExpectedClass}'. Delete or move the existing asset and regenerate it.` | the target path holds an asset of an incompatible class |
-| `Asset '{ObjectPath}' already exists and is not a MaterialFunction asset.` | the target path holds an unrelated object |
-| `Asset '{ObjectPath}' already exists and was not generated by DreamShader. Rename your function or move/delete the existing asset before regenerating.` | ownership guard: a saved asset at the target path lacks DreamShader provenance metadata |
-| `Failed to create material function '{ObjectPath}'.` | the asset object could not be created |
-
-On success the compile message contains `Generated {Kind} {AssetPath} from {SourceFile}.`
+On success the compile output has a `Generated <Kind> <AssetPath> from <SourceFile>.` line, `<Kind>`
+being `MaterialLayer` or `MaterialLayerBlend`.
 
 The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
 
@@ -282,6 +255,8 @@ Generated assets:
 package     /Game/Layers/L_Rust
 object path /Game/Layers/L_Rust.L_Rust
 class       UMaterialFunctionMaterialLayer        (usage: MaterialLayer)
+            in  Attrs   MaterialAttributes   (the material the layer is applied to; required, no `opt` input in the source)
+            out Attrs   MaterialAttributes
 
 package     /Game/Layers/LB_Wear
 object path /Game/Layers/LB_Wear.LB_Wear
@@ -305,4 +280,4 @@ parameters  WearAmount  ScalarParameter, slider 0..1
 - [Function settings](../settings/function.md) — the keys a material-function `Settings` honours
 - [Asset paths](../generation/asset-paths.md) — `Name=` + `Root=` → package path
 - [Regeneration](../generation/regeneration.md) — what survives a rebuild and what does not
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code, by stage

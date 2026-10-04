@@ -48,7 +48,7 @@ fixtures that belong to other layers, which is why the runnable count is not "si
 | `DreamShader.Lang.Parse.*` | Data-driven parse corpus | fast; no asset I/O |
 | `DreamShader.Lang.Diagnostics.*` | Pure diagnostic helpers | milliseconds; no editor state |
 | `DreamShader.Lang.Import.*` | Pure import-specifier helpers | milliseconds; no editor state |
-| `DreamShader.Lang.ParameterExpressions.*` | Parser `Properties` surface | fast; parser only |
+| `DreamShader.Lang.ParameterExpressions.*` | The 1.x `Properties` surface, through the legacy front end | fast; parser only |
 | `DreamShader.Commandlet.Args.*` | Commandlet argument parsing | milliseconds; pure |
 | `DreamShader.Commandlet.Compile.*` | Commandlet runner smoke test | slow; editor; writes a real `/Game` asset |
 | `DreamShader.Compiler.Parser.*` | 1.x sources through the compiler, end to end | slow; editor |
@@ -149,7 +149,7 @@ one asked for, as after `-NoBuild` following a build of the other kind.
 > `return true`. A `-nullrhi` run therefore shows `DreamShader.Render.ThinCustomVsGraphParity` and
 > `DreamShader.Roundtrip.MTestToonRenderParity` green **without having compared a single pixel**, and
 > a run on UE 5.3 shows `DreamShader.Compiler.Generate.SubstrateMaterial` green without having
-> generated a Substrate material. To prove render parity, run without `-nullrhi` and read the info
+> compiled a Substrate material. To prove render parity, run without `-nullrhi` and read the info
 > lines in the log.
 
 ### Skip conditions
@@ -158,7 +158,7 @@ Every condition under which a test returns success without asserting anything.
 
 | Test | Condition | Message |
 | :-- | :-- | :-- |
-| `DreamShader.Compiler.Generate.SubstrateMaterial` | `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` is 0 — UE < 5.4 | `DreamShader Substrate builtins are not available for this Unreal Engine version; skipping generation test.` |
+| `DreamShader.Compiler.Generate.SubstrateMaterial` | `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` is 0 — UE < 5.4 | `DreamShader Substrate builtins are not available for this Unreal Engine version; skipping the compile test.` |
 | `DreamShader.Render.ThinCustomVsGraphParity` | `GUsingNullRHI` or `!FApp::CanEverRender()` | `Skipping ThinCustom-vs-Graph render parity: no usable RHI (-nullrhi). Run without -nullrhi for the full pixel comparison.` |
 | `DreamShader.Roundtrip.MTestToonRenderParity` | `GUsingNullRHI` or `!FApp::CanEverRender()` | `Skipping M_Test_Toon round-trip render parity: no usable RHI (run without -nullrhi).` |
 | `DreamShader.Roundtrip.MTestToonRenderParity` | the project asset it round-trips is absent | `Skipping M_Test_Toon round-trip: '{ObjectPath}' is not present in this project.` |
@@ -412,9 +412,9 @@ of a golden nobody has reviewed yet — removing the flag is the reviewer's act,
 
 | Field | Type | Layer | Meaning |
 | :-- | :-- | :-- | :-- |
-| `entryPoint` | string | — | **Informational only.** Never read by the decoder. The golden writers emit `"parse"` or `"generate"` |
+| `entryPoint` | string | — | **Informational only** in a `Parse/` golden: its decoder never reads it. The `Parse/` writer emits `"parse"` |
 | `outcome` | string | all | `"error"`, compared case-insensitively, expects failure; **any other value, including `"ok"`, expects success**. Overrides the `.bad.` filename default |
-| `errorContains` | string[] | all | Every substring must appear in some error diagnostic, compared case-insensitively — in practice the `DSHnnnn` code |
+| `errorContains` | string[] | all | Checked when failure is expected: every substring must appear in some error diagnostic, compared case-insensitively — in practice the `DSHnnnn` code. `messageContains`, the 1.x Generate layer's spelling, is read into the same list |
 | `warningsContain` | string[] | all | Each substring must be found in some warning diagnostic, case-insensitively |
 | `definition.name` | string | Parse | The `Name=` of the first product block |
 | `definition.settings` | object | Parse | String → string. Asserted through `TryGetSetting`: **key case-insensitive, value exact**; every listed key must be present |
@@ -471,11 +471,11 @@ Assertion and infrastructure messages the runners emit. Runtime substitutions ar
 
 | Message | Layer | Cause |
 | :-- | :-- | :-- |
-| `[{Case}] parse should FAIL` | Parse | the fixture parsed successfully but was expected to fail |
-| `[{Case}] parse should SUCCEED but failed: {Error}` | Parse | the fixture failed to parse but was expected to succeed |
-| `[{Case}] error contains '{Substring}' (actual: {Error})` | Parse | an `errorContains` entry was not found |
-| `[{Case}] warnings contain '{Substring}'` | Parse | a `warningsContain` entry matched no warning |
-| `[{Case}] name` | Parse | `definition.name` mismatch |
+| `[{Case}] the legacy front end should REFUSE this source` | Parse | the fixture was accepted but was expected to fail *(since 2.0.0)* |
+| `[{Case}] the legacy front end should ACCEPT this source but reported: {Error}` | Parse | the fixture was refused but was expected to succeed *(since 2.0.0)* |
+| `[{Case}] an error contains '{Substring}' (actual: {Error})` | Parse | an `errorContains` entry was not found |
+| `[{Case}] a warning contains '{Substring}' (actual: {Warnings})` | Parse | a `warningsContain` entry matched no warning |
+| `[{Case}] name == '{Expected}' (actual '{Actual}')` | Parse | `definition.name` mismatch |
 | `[{Case}] outputDeclarations` | Parse | `definition.outputDeclarations` mismatch |
 | `[{Case}] outputs` | Parse | `definition.outputs` mismatch |
 | `[{Case}] materialFunctions` | Parse | `definition.materialFunctions` mismatch |
@@ -483,18 +483,18 @@ Assertion and infrastructure messages the runners emit. Runtime substitutions ar
 | `[{Case}] virtualFunctions` | Parse | `definition.virtualFunctions` mismatch |
 | `[{Case}] codeNotEmpty == {Value}` | Parse | `definition.codeNotEmpty` mismatch |
 | `[{Case}] setting '{Key}' present` | Parse | a key from `definition.settings` is absent |
-| `[{Case}] setting '{Key}'` | Parse | that key's value differs |
-| `[{Case}] generation should FAIL (msg: {Message})` | Generate | generation succeeded but was expected to fail |
-| `[{Case}] generation should SUCCEED but failed: {Message}` | Generate | generation failed but was expected to succeed |
-| `[{Case}] message contains '{Substring}' (actual: {Message})` | Generate | a `messageContains` entry was not found |
-| `Cannot read corpus source '{Path}'.` | both | the fixture file could not be read |
-| `Cannot read golden '{Path}'.` | both | the `.expected.json` exists but could not be read |
-| `Malformed golden '{Path}': invalid JSON` | both | the golden is not valid JSON |
-| `Updated golden '{Path}'.` | both | `-DreamShaderUpdateGolden` wrote the golden |
-| `Failed to write golden '{Path}'.` | both | `-DreamShaderUpdateGolden` could not write it |
-| `DreamShader parse corpus test invoked without a source path.` | Parse runner | the sub-test was launched with an empty command parameter |
-| `DreamShader generate corpus test invoked without a source path.` | Generate runner | the sub-test was launched with an empty command parameter |
+| `[{Case}] setting '{Key}' == '{Expected}' (actual '{Actual}')` | Parse | that key's value differs |
+| `Cannot read corpus source '{Path}'.` | all | the fixture file could not be read |
+| `Cannot read golden '{Path}'.` | all | the `.expected.json` exists but could not be read |
+| `Malformed golden '{Path}': {Reason}` | all | the golden is not valid JSON (`invalid JSON`) or does not decode |
+| `Updated golden '{Path}'.` | all | `-DreamShaderUpdateGolden` wrote the golden |
+| `Failed to write golden '{Path}'.` | all | `-DreamShaderUpdateGolden` could not write it |
+| `DreamShader {layer} corpus test invoked without a source path.` | every runner | the sub-test was launched with an empty command parameter; `{layer}` is `parse`, `lang`, `IR`, `legacy parse`, `legacy IR`, `legacy compile`, `compile`, `instance`, `decompile`, `migrate` or `roundtrip` (`DreamShader RoundtripIR test …` for that runner) |
 | `Failed to write DreamShader automation source file '{Path}'.` | harness | a test could not write its temporary source |
+
+The 1.x Generate runner and its `generation should …` messages are gone *(since 2.0.0)*: its fixtures
+are `Legacy/Compile/`, compiled through the 2.0 pipeline. The other layers' assertion messages are in
+their runners and in [`Tests/Corpus/README.md`](../../Tests/Corpus/README.md).
 
 ## Example
 
@@ -517,14 +517,15 @@ Shader(Name="DreamShaderTests/Corpus/M_Second")
 }
 ```
 
-It ships **without** a golden, so the `.bad.` stem alone asserts "the parse must fail" — the message
-is not checked. Adding `T_TwoShaders.bad.expected.json` alongside it would also pin the wording:
+The `.bad.` stem alone would assert "the parse must fail". Its golden,
+`T_TwoShaders.bad.expected.json`, also pins the code the legacy front end raises for a second `Shader`
+block, [`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250):
 
 ```json
 {
 	"entryPoint": "parse",
 	"outcome": "error",
-	"errorContains": ["Only one top-level Shader block is currently supported."]
+	"errorContains": ["DSH2250"]
 }
 ```
 
@@ -548,7 +549,7 @@ DreamShader.Lang.Parse.TopLevel.T_TwoShaders.bad
 - [Editor bridge](../tools/bridge.md) — what `-NoDreamShaderEditorBridge` turns off
 - [Preview](../tools/preview.md) — the renderer the parity tests drive
 - [Backend](../settings/backend.md) — `Graph` vs `ThinCustom`, the axis the parity cases compare
-- [Project settings](../settings/project.md) — `DefaultBackend`, which the Generate runner pins to `Graph`
+- [Project settings](../settings/project.md) — `DefaultBackend`, which the `Compile/` runner pins to `Graph`
 - [`DreamShaderLang`](../api/lang-module.md) — `ParseDreamShaderLang` and every other entry point the text layers call
 - [Diagnostics index](../diagnostics/index.md) — the messages fixtures assert against
 - [Version compatibility](../api/version-compat.md) — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` and the UE 5.4 skip

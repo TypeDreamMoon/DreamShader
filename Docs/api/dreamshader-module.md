@@ -26,6 +26,22 @@ DREAMSHADER_API DECLARE_LOG_CATEGORY_EXTERN(LogDreamShader, Log, All);
 
 namespace UE::DreamShader
 {
+    struct FDreamShaderSourceRoot
+    {
+        FString Directory;          // absolute, normalized, no trailing slash
+        FString PackagesDirectory;  // <Directory>/Packages
+        FString DisplayName;        // "Project", or the owning plugin's name
+        FString PluginName;         // empty for the project root
+        bool bIsProjectRoot = false;
+        bool bWritable = false;     // true for the project root only
+    };
+
+    DREAMSHADER_API const TArray<FDreamShaderSourceRoot>& GetSourceShaderRoots();
+    DREAMSHADER_API const FDreamShaderSourceRoot* FindSourceRootForFile(const FString& InPath);
+    DREAMSHADER_API bool IsWritableSourceFilePath(const FString& InPath);
+    DREAMSHADER_API void RefreshSourceShaderRoots();
+    DREAMSHADER_API bool IsPathUnderSourceDirectory(const FString& InPath, const FString& InDirectory);
+
     DREAMSHADER_API FString GetSourceShaderDirectory();
     DREAMSHADER_API FString GetPackageShaderDirectory();
     DREAMSHADER_API FString GetGeneratedShaderDirectory();
@@ -57,11 +73,11 @@ public:
 | Default runtime verbosity | `Log` |
 | Compile-time maximum verbosity | `All` |
 | Defined in | `DreamShader` (Runtime) |
-| Used by | `DreamShader`, `DreamShaderCompiler` and `DreamShaderEditor` — the editor module includes this header solely for the category. **Not** `DreamShaderLang`: it depends on `Core` alone and never logs, it reports through `FLangDiagnosticSink` instead |
+| Used by | `DreamShader`, `DreamShaderCompiler` and `DreamShaderEditor`. **Not** `DreamShaderLang`: it depends on `Core` alone and never logs, it reports through `FLangDiagnosticSink` instead. **Not** `DreamShaderPass`, which has its own `LogDreamPass` |
 
-Every message the plugin emits — parse failures surfaced to the log, generation results, cook
-progress, bridge and SQLite warnings — goes through this one category. Raise it from a config file
-or the console:
+Every message the compiler and the editor log — diagnostics surfaced to the log, generation results,
+cook progress, bridge and SQLite warnings — goes through this one category. Raise it from a config
+file or the console:
 
 ```text
 [Core.Log]
@@ -79,8 +95,8 @@ FString GetGeneratedShaderVirtualDirectory();
 
 | Function | Returns | Value when the setting is unset |
 | :-- | :-- | :-- |
-| `GetSourceShaderDirectory()` | The absolute, normalized source root — `UDreamShaderSettings::SourceDirectory.Path` resolved against the project directory | `<Project>/DShader` |
-| `GetPackageShaderDirectory()` | `<source root>/Packages`, always derived from `GetSourceShaderDirectory()`; there is no separate setting | `<Project>/DShader/Packages` |
+| `GetSourceShaderDirectory()` | The absolute, normalized **project** source root — `UDreamShaderSettings::SourceDirectory.Path` resolved against the project directory. The target of every editor-side write; plugin roots are under [Source roots](#source-roots) | `<Project>/DShader` |
+| `GetPackageShaderDirectory()` | `<source root>/Packages` of the project root, always derived from `GetSourceShaderDirectory()`; there is no separate setting | `<Project>/DShader/Packages` |
 | `GetGeneratedShaderDirectory()` | The real directory currently registered for the virtual mount `/DreamShaderGenerated`; **only when no such mapping exists** does it fall back to the configured `GeneratedShaderDirectory` | `<Project>/Intermediate/DreamShader/GeneratedShaders` |
 | `GetGeneratedShaderVirtualDirectory()` | The compile-time constant `TEXT("/DreamShaderGenerated")` | n/a |
 
@@ -97,19 +113,48 @@ initialized **or** when the settings object is currently readable — that is,
 `UObjectInitialized() && !GExitPurge && !IsEngineExitRequested()`. Once the UObject system is live
 this condition is always true, so the settings are re-read on **every** call and a mid-session change
 in Project Settings takes effect immediately. Before UObjects exist, and during exit purge, the
-getters return the hard-coded defaults without touching `GetDefault<UDreamShaderSettings>()`.
+getters do not touch `GetDefault<UDreamShaderSettings>()`: they read `SourceDirectory` and
+`GeneratedShaderDirectory` straight from `[/Script/DreamShader.DreamShaderSettings]` in the engine
+ini — the values the settings object will load — and fall back to the defaults when a key is absent.
+The module starts at `PostConfigInit`, before the settings object can exist, which is why.
 
 > [!WARNING]
 > `GetGeneratedShaderDirectory()` is not simply the *Generated Shader Directory* setting.
 > `StartupModule` registers the `/DreamShaderGenerated` mapping only if it is absent, and never
 > re-points it. Changing the setting mid-session therefore changes where `StartupModule` *would*
 > have mounted, and changes the internal cached value, but `GetGeneratedShaderDirectory()` keeps
-> returning the directory that was mounted at startup. Restart the editor to move the generated
-> `.ush` output. See [Generated HLSL](../generation/generated-hlsl.md).
+> returning the directory that was mounted at startup. Restart the editor to move the mount. See
+> [Generated HLSL](../generation/generated-hlsl.md).
 
 > [!NOTE]
 > The cache is a plain static with no lock. Treat all four functions as game-thread APIs even
 > though nothing in them is intrinsically thread-affine.
+
+## Source roots
+
+*(since 1.6.0)*
+
+```cpp
+const TArray<FDreamShaderSourceRoot>& GetSourceShaderRoots();
+const FDreamShaderSourceRoot* FindSourceRootForFile(const FString& InPath);
+bool IsWritableSourceFilePath(const FString& InPath);
+void RefreshSourceShaderRoots();
+bool IsPathUnderSourceDirectory(const FString& InPath, const FString& InDirectory);
+```
+
+A source root is one directory tree sources are discovered under, and the unit of import
+resolution: a file's imports resolve against its own root and that root's `Packages` folder only.
+
+| Function | Behaviour |
+| :-- | :-- |
+| `GetSourceShaderRoots()` | The project root first, then — when *Scan Plugin Source Directories* is on — one root per enabled plugin that has a `DShader` folder. A plugin root that overlaps an earlier root (one contains the other) is dropped with a `LogDreamShader` warning. Cached; rebuilt when the project source directory or the scan toggle changes. The reference is invalidated by the next rebuild, so use it on the game thread and do not keep it |
+| `FindSourceRootForFile(InPath)` | The root that contains `InPath`, or `nullptr` when it is under none |
+| `IsWritableSourceFilePath(InPath)` | `false` for a file under a plugin root; `true` under the project root **and** for a path under no root (an ad-hoc source named explicitly, such as a commandlet `-Source`) |
+| `RefreshSourceShaderRoots()` | Drops the cache. Needed only when plugins mount or unmount mid-session |
+| `IsPathUnderSourceDirectory(InPath, InDirectory)` | `true` when the path is the directory itself or below it; both are normalized with `NormalizeSourceFilePath` and compared case-insensitively |
+
+Only the project root is writable: editor features that rewrite sources in place (VirtualFunction
+sync, [asset rename sync](../tools/asset-rename-sync.md)) never touch a plugin root.
 
 ## `SanitizeIdentifier`
 
@@ -142,8 +187,12 @@ engine state; callable from any thread.
 > preserved — `Ünlit` becomes `_nlit`, not `Ünlit`. Use ASCII identifiers in namespace and function
 > names.
 
-Callers inside the plugin: namespace-qualified identifier rewriting in the parser, transient
-ThinCustom base-material naming in the generator, and the VirtualFunction service.
+Callers inside the plugin: the transient ThinCustom base-material name in the emitter
+(`MB_DreamThinBase_<package>`), the output named-reroute names (`DS_<Name>_<Index>`), and the
+`MI_<Name>` stem of a new instance's `.dsi` file in the instance factory and the provenance actions.
+`DreamShaderLang` cannot
+link this module, so the legacy front end (flattening `A::B` to `A_B`) and the custom-HLSL builder
+(`DreamShaderFn_<Name>`) each keep a copy of the same rule *(since 2.0.0)*.
 
 ## `NormalizeSourceFilePath`
 
@@ -154,7 +203,7 @@ DREAMSHADER_API FString NormalizeSourceFilePath(const FString& InPath);
 Applies `FPaths::ConvertRelativePathToFull`, then `FPaths::NormalizeFilename`, then
 `FPaths::MakeStandardFilename`. The result is an absolute path with `/` separators.
 
-This is **the** canonical key for a source file. The bridge, the diagnostics store, the generator and
+This is **the** canonical key for a source file. The bridge, the diagnostics store, the compiler and
 the commandlet all normalize before comparing paths, so a path produced by this function compares
 equal to the one the plugin stores internally.
 
@@ -220,7 +269,9 @@ no accessors; obtain it, if you need to at all, with
 
 ### `StartupModule()`
 
-Runs on the game thread at module-load time and performs five side effects in order.
+Runs on the game thread when the module loads, in the `PostConfigInit` phase — before any material
+loads, so that a material whose cached include paths name `/DreamShaderGenerated` finds the mapping
+registered. It performs five side effects in order.
 
 | # | Action | Notes |
 | :-- | :-- | :-- |
@@ -230,9 +281,10 @@ Runs on the game thread at module-load time and performs five side effects in or
 | 4 | If `/DreamShaderGenerated` is absent from `AllShaderSourceDirectoryMappings()`, map it to the configured generated-shader directory | never re-points an existing mapping |
 | 5 | If the `DreamShader` plugin is found through `IPluginManager` and `/Plugin/DreamShader` is absent from the mappings, map it to `<PluginBaseDir>/Shaders` | never re-points an existing mapping |
 
-The plugin's `Shaders/` folder holds exactly one file, `DreamShaderBuiltins.ush`, which becomes
-addressable as `/Plugin/DreamShader/DreamShaderBuiltins.ush`. See
-[`DreamShaderBuiltins.ush`](../builtins/hlsl-library.md).
+The plugin's `Shaders/` folder holds `DreamShaderBuiltins.ush`, addressable as
+`/Plugin/DreamShader/DreamShaderBuiltins.ush` (see
+[`DreamShaderBuiltins.ush`](../builtins/hlsl-library.md)), and, *(since 2.1.0)*, the Custom Pass
+shaders under `Pass/` (`/Plugin/DreamShader/Pass/…`).
 
 Steps 1–3 mean the source and package directories exist from the first editor launch, whether or not
 the user has authored anything.
@@ -249,13 +301,14 @@ Empty.
 ## Notes
 
 - `DreamShaderVersionCompat.h` is included by this header, so anything that includes
-  `DreamShaderModule.h` also gets the six version macros. See
+  `DreamShaderModule.h` also gets the thirteen version macros. See
   [`DreamShaderVersionCompat.h`](version-compat.md).
 - None of the free functions logs, throws or asserts. Failures are expressed as a fallback value —
   the default path, `DreamShaderSymbol`, or `false`.
-- The module declares no delegates, so there is no notification when a compile finishes. Editor code
-  observes results through the bridge's diagnostics files instead. See
-  [Editor bridge](../tools/bridge.md).
+- This header declares no delegates. The notification that a compile finished is
+  `OnDreamShaderSourceGenerated` in the `DreamShaderCompiler` module — see
+  [Compiler module](compiler-module.md); tools outside the editor read the bridge's diagnostics
+  files instead — see [Editor bridge](../tools/bridge.md).
 
 ## Example
 
@@ -291,9 +344,9 @@ Typical output with default settings:
 LogDreamShader: Found 3 DreamShader source(s) under I:/Project/DShader
 ```
 
-The generated `.ush` helper include written by a compile of any of those files lands under
-`GetGeneratedShaderDirectory()` and is referenced from generated Custom nodes as
-`/DreamShaderGenerated/<Name>_<hash>.ush`.
+A compile writes no helper include *(since 2.0.0)*: an HLSL function becomes the code of a Custom
+node, with the HLSL functions it calls embedded in that code. The `/DreamShaderGenerated` mapping is still registered at startup, and
+*Clean Generated Shaders* still empties `GetGeneratedShaderDirectory()` of `*.ush` files.
 
 ## See also
 

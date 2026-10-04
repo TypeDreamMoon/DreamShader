@@ -7,15 +7,15 @@ its output bindings, and the node graph that feeds them.
 
 | | |
 | :-- | :-- |
-| Declared in | `.dsm` only — a `.dsh` or `.dsf` containing the text `Shader(` is rejected before parsing |
+| Declared in | `.dsm` — a `.dsh` holding one is [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) (see [Source files](source-files.md#how-the-restriction-is-enforced)) |
 | Kind | top-level block |
 | Generates | `UMaterial` (Graph backend) or `UDreamShaderMaterialInstance` + a hidden `UMaterial` base (ThinCustom backend) |
-| Multiplicity | at most one per parse unit (see [Notes](#notes)) |
+| Multiplicity | at most one per file (see [Notes](#notes)) |
 
 ## Synopsis
 
 ```c
-Shader(Name = "<asset-path>" [, Root = "<root>"] [,])
+Shader(Name = "<asset-path>" [, Root = "<root>"])
 {
     [Properties [=] { <property-declaration> ; … }]
     [Settings   [=] { <key> = <value> ; … }]
@@ -31,6 +31,10 @@ section's closing `}` is optional. Sections may appear in any order and may be r
 The keyword `Shader` is matched **case-sensitively**; section names are matched
 case-insensitively. See [Lexical elements](lexical.md#case-sensitivity).
 
+A `.dss` writes the same material as `#pragma material(...)`, `uniform`s and one
+`export void <Name>(inout material m)` — see [DreamShaderLang 2.0](../language-v2/index.md);
+[`dsc migrate`](../tools/migrate.md) rewrites a `.dsm` that way.
+
 ## Header attributes
 
 | Attribute | Required | Value | Effect |
@@ -39,8 +43,9 @@ case-insensitively. See [Lexical elements](lexical.md#case-sensitivity).
 | `Root` | no | string | The package root the folders hang off. Defaults to `/Game` when absent or empty. |
 
 Attribute keys are matched case-insensitively (`name=` works). Values may be quoted or bare; a bare
-value ends at the first `,` or `)`. A trailing comma before `)` is accepted. A duplicate key silently
-overwrites the earlier one — there is no diagnostic.
+value ends at the first `,` or `)`. A duplicate key keeps the later value, with the warning
+[`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244) *(since 2.0.0; silent before)*. A trailing comma before
+`)` is [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243) *(since 2.0.0; 1.x accepted it)*.
 
 Full `Name` / `Root` grammar, the accepted root spellings, and the resulting on-disk path are
 specified in [Asset paths](../generation/asset-paths.md).
@@ -50,14 +55,14 @@ specified in [Asset paths](../generation/asset-paths.md).
 | Section | Accepted | Repeat behaviour | Reference |
 | :-- | :-- | :-- | :-- |
 | `Properties` | yes | appends | [Properties](properties.md) |
-| `Settings` | yes | merges; last key wins | [Shader settings](../settings/material.md) |
+| `Settings` | yes | merges; last key wins, a key written twice is the warning [`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262) | [Shader settings](../settings/material.md) |
 | `Outputs` | yes | appends | [Output bindings](output-bindings.md) |
-| `Graph` | yes | overwrites the previous body | [Graph](../graph/index.md) |
-| `Layout` | yes | **resets** — a second `Layout` discards the first | [Layout](layout.md) |
-| `Code` | **no** — hard error | — | — |
-| `Inputs` | no — unknown section | — | — |
-| `Results` | no — unknown section | — | — |
-| `Options` | no — unknown section | — | — |
+| `Graph` | yes | the later body wins, with the warning [`DSH2258`](../diagnostics/DSH2xxx.md#dsh2258) | [Graph](../graph/index.md) |
+| `Layout` | yes | **resets** — a second `Layout` discards the first, with the warning `DSH2258` | [Layout](layout.md) |
+| `Code` | **no** — [`DSH2246`](../diagnostics/DSH2xxx.md#dsh2246) | — | — |
+| `Inputs` | no — unknown section, [`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245) | — | — |
+| `Results` | no — unknown section, `DSH2245` | — | — |
+| `Options` | no — unknown section, `DSH2245` | — | — |
 
 `Properties` in a `Shader` declares parameter, `const` and `UE.*` builtin nodes. This is *not* the
 same grammar `Properties` gets inside a [`VirtualFunction`](virtual-function.md), where it is a
@@ -74,13 +79,16 @@ synonym for `Inputs`.
 | `<target> = <variable> ;` | output binding — `Base.<Property>` or `Expression( … ).Pin[<i>]` |
 | `Expression( … ) { Pin[<i>] = <variable> ; … }` | [block form](output-bindings.md#block-form) — several pins on one terminal node *(since 1.9.0)* |
 
-The rule that governs whether `Graph` is required is evaluated after the whole parse unit is read:
+The rule that governs whether `Graph` is required is evaluated after the whole block is read:
 
-- A `Graph` block is required **unless** at least one output declaration carries an initializer.
-  Otherwise the parse fails with `Shader must provide a Graph block.`
-- An empty `Graph = { }` is therefore legal exactly when some output is initialized in `Outputs`.
-- Bindings are what actually connect the material. A `Shader` with no bindings parses with a warning
-  and then fails at generation with `<file>: Outputs block is required.`
+- A `Shader` with no `Graph` section and an empty `Outputs` is
+  [`DSH2255`](../diagnostics/DSH2xxx.md#dsh2255). Without a `Graph`, the `Outputs` statements have to
+  compute the values themselves — an output declaration with an initializer, or *(since 2.0.0)* a
+  binding whose right side is an expression, such as `Base.FrontMaterial = Substrate.Layer(Coat, Body);`.
+- An empty `Graph = { }` is legal.
+- Bindings are what actually connect the material. A `Shader` with no `Outputs` section is the warning
+  [`DSH2256`](../diagnostics/DSH2xxx.md#dsh2256): the material builds, with nothing wired to it
+  *(since 2.0.0; through 1.9.x generation then failed)*.
 
 ```c
 // Legal: no Graph body needed, the output declaration carries its own initializer.
@@ -112,10 +120,10 @@ The backend comes from `Settings = { Backend = "…"; }` if present, otherwise f
 [Project settings](../settings/project.md).
 
 > [!NOTE]
-> The interactive editor never writes a per-material `.uasset`. Auto-compile-on-save, the Gen page
-> buttons, and the live preview all generate **in memory**. Assets reach disk only at cook, through
-> the [commandlet](../tools/commandlet.md), or through an explicit *Materialize* action. See
-> [Ephemeral materials](../generation/ephemeral.md).
+> A `Graph`-backend `UMaterial` is an ordinary asset and is saved on every successful build *(since
+> 2.0.0)*. A `ThinCustom` product stays **Ephemeral** — in memory, no package on disk — until a cook, an
+> explicit *Materialize*, or a child instance gives it one, and once it has a package it stays on
+> disk. See [Ephemeral materials](../generation/ephemeral.md).
 
 > [!WARNING]
 > Regeneration clears the target graph. Node positions not pinned by [`Layout`](layout.md), added
@@ -127,71 +135,60 @@ The backend comes from `Settings = { Backend = "…"; }` if present, otherwise f
 
 ## Notes
 
-- **At most one `Shader` per parse unit.** Because `import` directives are inlined into a single text
-  before parsing, "one `Shader`" is enforced across the whole transitive import closure, not per
-  file. A second `Shader` keyword fails with
-  `Only one top-level Shader block is currently supported.`
-- **The file-kind restriction is a substring scan, not a parse.** A `.dsh` is rejected if its text
-  contains `Shader(`, `ShaderFunction(`, `ShaderLayer(`, `ShaderLayerBlend(`, `MaterialLayer(` or
-  `MaterialLayerBlend(` anywhere — including inside a comment or a string literal. A `.dsf` is
-  rejected if it contains `Shader(`. Note that `ShaderFunction(` does not contain the substring
-  `Shader(`, which is what lets a `.dsf` hold function blocks. See
-  [Source files](source-files.md).
-- **`Shader()` with no attributes parses, then fails.** The empty attribute list is syntactically
-  valid; the missing `Name` is what produces the error.
-- `Shader` may share a `.dsm` with any number of `ShaderFunction`, `ShaderLayer`,
-  `ShaderLayerBlend`, `VirtualFunction`, `Function`, `GraphFunction` and `Namespace` blocks. All of
-  them are generated by one compile of that file.
+- **At most one `Shader` per file** ([`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250)). Through 1.9.x
+  imports were inlined into one text before parsing, so the rule spanned the import closure; a header
+  is read on its own now and cannot hold a `Shader` ([`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249)),
+  so an [`import`](import.md) never adds one. The `.dsh` check reads tokens, not text: a comment that
+  mentions `Shader(` is fine. See [Source files](source-files.md#how-the-restriction-is-enforced).
+- **`Shader()` with no attributes is [`DSH2242`](../diagnostics/DSH2xxx.md#dsh2242)**, the missing
+  `Name`.
+- `Shader` may share a `.dsm` with `VirtualFunction`, `Function`, `GraphFunction` and `Namespace`
+  blocks, which are helpers of the material. A `ShaderFunction`, `ShaderLayer` or `ShaderLayerBlend`
+  beside it is [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) *(since 2.0.0; through 1.9.x one compile
+  of the file built them all)*: a file makes a material or function assets. Give the function a `.dsf`
+  of its own.
 - A `.dsm` that declares no `Shader` block is still compilable — it simply produces whatever function
   assets it does declare.
-- Binding `Base.MaterialAttributes` auto-enables *Use Material Attributes* on the material.
-  Binding `Base.FrontMaterial` force-sets the shading model to Substrate and requires UE 5.4+.
-  The two cannot be used by the same `Shader`.
+- Binding `Base.MaterialAttributes` turns on *Use Material Attributes* on the material. See
+  [Output bindings](output-bindings.md) for `Base.FrontMaterial` and the other targets.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this table.
+Every stage reports all of its errors, each at its own line and column *(since 2.0.0)*.
 
 ### Parse time
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Shader(Name="...") is required.` | the header has no `Name` attribute |
-| `Only one top-level Shader block is currently supported.` | a second `Shader` block in the parse unit (import closure included) |
-| `Shader must provide a Graph block.` | no `Graph` section and no initialized output declaration |
-| `Unknown shader section '{Section}'.` | a section name other than `Properties`, `Settings`, `Outputs`, `Graph`, `Layout`, `Code` |
-| `Shader graph sections now use Graph = { ... }. Function Code = { ... } is still supported.` | a `Code` section was used |
-| `Expected '{' near index {Index}.` | the body block is missing |
-| `Unterminated block.` | the body `{` is never closed |
-| `Expected ',' or ')' near index {Index}.` | malformed attribute list |
+| [`DSH2241`](../diagnostics/DSH2xxx.md#dsh2241) | `Shader` is not followed by its attribute list |
+| [`DSH2242`](../diagnostics/DSH2xxx.md#dsh2242) | the attribute list has no `Name`, or an empty one |
+| [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243) | a malformed attribute list — a missing key, `=` or value, a missing `,` or `)`, a trailing `,` |
+| [`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244) | *(warning)* an attribute written twice |
+| [`DSH2250`](../diagnostics/DSH2xxx.md#dsh2250) | a second `Shader` block in the file |
+| [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249) | a `Shader` block in a `.dsh` |
+| [`DSH2257`](../diagnostics/DSH2xxx.md#dsh2257) | the body `{`, a section name, or a section's `{` is missing |
+| [`DSH2245`](../diagnostics/DSH2xxx.md#dsh2245) | a section other than `Properties`, `Settings`, `Outputs`, `Graph` and `Layout` |
+| [`DSH2246`](../diagnostics/DSH2xxx.md#dsh2246) | a `Code` section |
+| [`DSH2258`](../diagnostics/DSH2xxx.md#dsh2258) | *(warning)* a `Graph` or `Layout` section written twice |
+| [`DSH2255`](../diagnostics/DSH2xxx.md#dsh2255) | no `Graph` section, and an empty `Outputs` |
+| [`DSH2256`](../diagnostics/DSH2xxx.md#dsh2256) | *(warning)* no `Outputs` section |
+| [`DSH2150`](../diagnostics/DSH2xxx.md#dsh2150) | the file ends inside the block |
 
-### Parse-time warnings
+### Bind and generation time
 
-Warnings do not fail the parse; they are appended to the compile message.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `No Outputs block was provided. Generation requires explicit material property bindings.` | the `Shader` declared no output bindings |
+| [`DSH6201`](../diagnostics/DSH6xxx.md#dsh6201) | a `ShaderFunction` or layer in the same file as the `Shader` |
+| [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210) | a property, a function or another name declared twice |
+| [`DSH7202`](../diagnostics/DSH7xxx.md#dsh7202) | `Settings = { Backend = … }` names no backend; `Instance` is read as `ThinCustom` with the warning [`DSH7204`](../diagnostics/DSH7xxx.md#dsh7204) |
+| [`DSH8200`](../diagnostics/DSH8xxx.md#dsh8200) | `Name` / `Root` do not resolve to a valid asset path |
+| [`DSH8201`](../diagnostics/DSH8xxx.md#dsh8201) | the material could not be created or reused — the target path holds another class, or an asset DreamShader did not generate; the reason is appended |
+| [`DSH8203`](../diagnostics/DSH8xxx.md#dsh8203) | the same, for a ThinCustom instance |
+| [`DSH8206`](../diagnostics/DSH8xxx.md#dsh8206) | the asset is open in an asset editor, so it was not rebuilt |
+| [`DSH8207`](../diagnostics/DSH8xxx.md#dsh8207) | the asset was edited by hand since it was generated, so it was not rebuilt; the reason it carries is the `DSH8115` text — see [Divergence](../generation/divergence.md) |
 
-### Generation time
-
-| Message | Cause |
-| :-- | :-- |
-| `{File}: This file does not define a top-level Shader block.` | material generation was asked for a file with no `Shader` |
-| `{File}: Outputs block is required.` | the `Shader` declared no output bindings |
-| `{File}: .dsf files cannot define top-level Shader blocks.` | a `Shader` block reached the compiler from a `.dsf` |
-| `DreamShader source '{File}' cannot generate a material asset directly.` | material generation was requested for a `.dsh` or `.dsf` |
-| `{File}: Property '{Name}' is declared more than once. Property names must be unique.` | two `Properties` entries with names equal ignoring case |
-| `{File}: Base.FrontMaterial and Base.MaterialAttributes cannot be used by the same Shader.` | both bindings present |
-| `{File}: Base.FrontMaterial requires ShadingModel="Substrate" or no explicit ShadingModel setting.` | conflicting explicit shading model |
-| `{File}: Graph blocks do not support binding Outputs to the reserved name 'return'.` | `return` bound in a `Shader` that has a `Graph` block |
-| `Unsupported Backend '{Value}'. Supported values: Graph, Instance, ThinCustom.` | `Settings = { Backend = … }` value not recognized |
-| `Asset '{ObjectPath}' already exists and is not a Material.` | the target path holds a different UClass |
-| `Asset '{ObjectPath}' already exists and is not a DreamShader instance material. Delete it (or remove Backend="Instance") before switching backends.` | ThinCustom backend, target path holds a non-DreamShader object |
-| `Asset '{ObjectPath}' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.` | ownership guard: a saved asset at the target path lacks DreamShader provenance metadata |
-| `DreamShader asset name must resolve to a non-empty asset path.` | `Name` is empty after trimming and slash-stripping |
-
-The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
+The messages of `Properties`, `Settings`, `Outputs` and `Graph` are on their own pages. Every code:
+[diagnostics](../diagnostics/README.md).
 
 ## Example
 
@@ -239,7 +236,7 @@ Generated asset:
 ```text
 package     /Game/Materials/M_Emissive
 object path /Game/Materials/M_Emissive.M_Emissive
-on disk     <Project>/Content/Materials/M_Emissive.uasset      (persist mode only)
+on disk     <Project>/Content/Materials/M_Emissive.uasset      (once Materialized, or under the Graph backend)
 ```
 
 > [!NOTE]
@@ -252,6 +249,7 @@ on disk     <Project>/Content/Materials/M_Emissive.uasset      (persist mode onl
 ## See also
 
 - [Source files](source-files.md) — which block kinds each of `.dsm` / `.dsh` / `.dsf` may contain
+- [DreamShaderLang 2.0](../language-v2/index.md) — the `.dss` form of a material
 - [Properties](properties.md) — the `Properties` section grammar
 - [Inputs / Outputs / Results](inputs-outputs.md) — typed-parameter sections (functions only)
 - [Output bindings](output-bindings.md) — the full `Base.*` target catalogue and `Expression(…).Pin[i]`
@@ -263,4 +261,4 @@ on disk     <Project>/Content/Materials/M_Emissive.uasset      (persist mode onl
 - [Ephemeral materials](../generation/ephemeral.md) — memory-only generation and materializing to disk
 - [Regeneration](../generation/regeneration.md) — what survives a rebuild and what does not
 - [ShaderFunction](shader-function.md) — the reusable `UMaterialFunction` block
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics](../diagnostics/README.md) — every code

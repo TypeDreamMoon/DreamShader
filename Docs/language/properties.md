@@ -9,8 +9,12 @@ generates into its material graph.
 | :-- | :-- |
 | Declared in | `.dsm`, `.dsf` — inside `Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend` |
 | Kind | section |
-| Generates | one `UMaterialExpression` per declaration that the graph actually reads |
+| Generates | the nodes of the declarations that the graph actually reads |
 | Aliased | inside a `VirtualFunction`, `Properties` is a **synonym for `Inputs`** — see [Notes](#notes) |
+
+In 2.0 a property is a `uniform` (or a `static const`) with its metadata in `///` lines — see
+[DreamShaderLang 2.0](../language-v2/index.md); [`dsc migrate`](../tools/migrate.md) rewrites a section
+that way.
 
 ## Synopsis
 
@@ -33,43 +37,44 @@ DreamShaderLang punctuation**; the outer pair is the meta-syntax for "optional".
 metadata block therefore looks like `float Roughness = 0.5 [Group="Surface"];`.
 
 The `=` between the section name and its `{ … }` block is optional sugar *(since 1.5.0)*. The section
-name is matched case-insensitively. A `;` after the section's closing `}` is optional.
+name is matched case-insensitively. A `;` after the section's closing `}` is optional, and so is the
+`;` of the last declaration before it.
 
 ## Declaration members
 
 | Member | Required | Form | Description |
 | :-- | :-- | :-- | :-- |
-| `const` | no | keyword | Generates a constant node instead of a parameter node. Case-insensitive; must be followed by whitespace or be the entire type token. *(since 1.2.6)* |
+| `const` | no | keyword | Generates a constant node instead of a parameter node. Any case. *(since 1.2.6)* |
 | **`<type-token>`** | yes | token | Selects the generated node class and the default-value grammar. See [Type tokens](#type-tokens). |
-| **`<name>`** | yes | text | The identifier the `Graph` reads, and — unless `[ParameterName=…]` overrides it — the material parameter name. |
+| **`<name>`** | yes | identifier | The identifier the `Graph` reads, and — unless `[ParameterName=…]` overrides it — the material parameter name. |
 | `= <default>` | no | literal | Initial value. The accepted literal grammar is chosen by the type token, not by the shape of the literal. |
 | `[ <metadata> ]` | no | block | Group, sort priority, description, slider bounds, and arbitrary reflected `UMaterialExpression` properties. See [Metadata](../parameters/metadata.md). |
 
 ### Parse order
 
-A statement is decomposed in this fixed order, which is what makes type tokens containing spaces and
-parentheses work:
+*(since 2.0.0)* A declaration is read token by token, left to right:
 
-| Step | Operation | Consequence |
+| Step | Reads | When it is missing or wrong |
 | :-- | :-- | :-- |
-| 1 | A trailing `[ … ]` block is peeled off the end | The statement must **end** with `]` for metadata to be recognized at all |
-| 2 | Split at the first `=` that is outside `()`, `[]` and `"…"` | The presence of that `=` is the only thing that sets "has a default value" |
-| 3 | Split the left side at the **last** top-level whitespace | Type is everything before, name is everything after |
-| 4 | `const` is stripped from the **front of the type token** | `const` is detected after the type/name split, not before |
+| 1 | an optional `const` | — |
+| 2 | the type: one word, or `UE.<Function>` with its `( … )` argument list | [`DSH3250`](../diagnostics/DSH3xxx.md#dsh3250); after `const`, [`DSH3251`](../diagnostics/DSH3xxx.md#dsh3251) |
+| 3 | the name: one identifier | `DSH3250` |
+| 4 | after `=`, the default: every token up to a `[` or `;` outside brackets | [`DSH3254`](../diagnostics/DSH3xxx.md#dsh3254) when nothing follows the `=` |
+| 5 | an optional `[ … ]` metadata block | [`DSH3255`](../diagnostics/DSH3xxx.md#dsh3255) |
+| 6 | `;`, or the `}` that closes the section or group | `DSH3250` |
 
-Because step 3 is parenthesis-aware and accepts any whitespace character, a `UE.*` builtin type with
-a spaced argument list splits correctly:
+Whitespace of any kind separates the words, so a tab between type and name is fine, and a `UE.*`
+builtin type with a spaced argument list reads as one type:
 
 ```c
 UE.TexCoord(Index = 0) UV;      // type = UE.TexCoord(Index = 0), name = UV
 ```
 
-> [!WARNING]
-> The property name is only checked for being **non-empty**. It is not validated as an identifier.
-> `Properties { float 1Bad = 0; }` parses without a diagnostic; the declaration is simply
-> unreachable from `Graph`, whose name resolution requires a real identifier. Contrast
-> [`Inputs` / `Outputs`](inputs-outputs.md), where the name **must** match
-> `[A-Za-z_][A-Za-z0-9_]*`.
+> [!NOTE]
+> *(since 2.0.0)* The name must be an identifier. 1.x checked only that it was non-empty, so
+> `Properties { float 1Bad = 0; }` parsed and was unreachable; now `1Bad` is a malformed number
+> ([`DSH2105`](../diagnostics/DSH2xxx.md#dsh2105)) and the declaration is `DSH3250`. A keyword such as
+> `in` or `out` cannot be a name either.
 
 ## Type tokens
 
@@ -78,26 +83,29 @@ their own pages:
 
 | Family | Tokens | Generated node | Reference |
 | :-- | :-- | :-- | :-- |
-| Compact scalar | `float` `float1` `half` `half1` `int` `uint` `bool` — 7 tokens | `UMaterialExpressionScalarParameter` | [Compact types](../parameters/compact-types.md) |
-| Compact vector | `float2..4` `half2..4` `vec2..4` `int2..4` `uint2..4` `bool2..4` `ivec2..4` `uvec2..4` `bvec2..4` — 27 tokens | `UMaterialExpressionVectorParameter` | [Compact types](../parameters/compact-types.md) |
+| Compact scalar | `float` `half` `double` `int` `uint` `bool`, and each with a `1` suffix (`float1` …) | `UMaterialExpressionScalarParameter` | [Compact types](../parameters/compact-types.md) |
+| Compact vector | `float2..4` `half2..4` `double2..4` `int2..4` `uint2..4` `bool2..4` `vec2..4` `ivec2..4` `uvec2..4` `bvec2..4` | `UMaterialExpressionVectorParameter` | [Compact types](../parameters/compact-types.md) |
 | Compact texture | `Texture2D` `TextureCube` `Texture2DArray` `Texture3D` `VolumeTexture` — 5 tokens | `UMaterialExpressionTextureObjectParameter` | [Compact types](../parameters/compact-types.md) |
 | Explicit parameter node | 22 `*Parameter` / sampler tokens | the named `UMaterialExpression` subclass | [Parameter nodes](../parameters/parameter-nodes.md) |
 | `UE.<Function>[( … )]` | any builtin name, with an argument list | the builtin's node, or a reflected node when `OutputType=` is given | [UE builtins](../builtins/ue.md), [`UE.Expression`](../builtins/ue-expression.md) |
 
-Anything else fails with `Unsupported property type '{Type}'.`
+Anything else is [`DSH3252`](../diagnostics/DSH3xxx.md#dsh3252). Of the 22 explicit tokens, seven have
+no 2.0 form and are [`DSH3253`](../diagnostics/DSH3xxx.md#dsh3253) *(since 2.0.0)*:
+`DoubleVectorParameter`, `TextureCollectionParameter`, `CurveAtlasRowParameter`, `DynamicParameter`,
+`FontSampleParameter`, `SpriteTextureSampler`, `SparseVolumeTextureObjectParameter`. Of the others,
+`ScalarParameter`, `VectorParameter`, `StaticBoolParameter` and `TextureObjectParameter` declare a
+parameter like the compact tokens do; the remaining eleven become a node at every read of the
+property, as in 1.x.
 
 > [!NOTE]
 > The `Properties` token set is **not** the same as the `Inputs` / `Outputs` token set.
-> `MaterialAttributes`, `Substrate`, `SamplerState` and `StaticBool` are valid parameter types but
-> are **not** valid `Properties` types. `Scalar`, `Color`, `Vector`, `mat2`, `mat3` and `mat4` are
-> valid nowhere. The per-context validity matrix is on [Types](types.md).
+> `MaterialAttributes`, `Substrate` and `SamplerState` are valid parameter types but are **not** valid
+> `Properties` types; neither are the matrix spellings. `StaticBool` is read as `bool` here
+> *(since 2.0.0)*, so it declares a dynamic bool parameter; a static switch parameter is
+> `StaticBoolParameter`. The per-context validity matrix is on [Types](types.md).
 
-An inline `= <default>` is rejected on a `UE.*` builtin property — its arguments go inside the
-parentheses instead:
-
-```
-UE builtin property '{Name}' does not support inline defaults. Put arguments inside UE.{Function}(...).
-```
+An inline `= <default>` on a `UE.*` builtin property is
+[`DSH3259`](../diagnostics/DSH3xxx.md#dsh3259) — its arguments go inside the parentheses instead.
 
 ### Texture defaults
 
@@ -115,7 +123,10 @@ The last form is what **Copy Reference** puts on the clipboard, in either the
 `/Script/Engine.Texture2D'…'` or the older `Texture2D'…'` spelling, and it may be pasted bare, in
 quotes, or as the path argument of `Path(…)`. The class in front of the quotes is checked against the
 declared texture type: pasting a `Texture2D'…'` into a `TextureSampleParameterVolume` is refused by
-name rather than left to fail at load. See [`Path(…)`](../parameters/path.md).
+name ([`DSH1044`](../diagnostics/DSH1xxx.md#dsh1044); a class that is no texture at all is
+[`DSH1043`](../diagnostics/DSH1xxx.md#dsh1043)) rather than left to fail at load. A reference that does
+not resolve is [`DSH8271`](../diagnostics/DSH8xxx.md#dsh8271), and one that resolves to nothing
+loadable [`DSH8218`](../diagnostics/DSH8xxx.md#dsh8218). See [`Path(…)`](../parameters/path.md).
 
 ## `const` properties
 
@@ -127,19 +138,21 @@ does not appear in the parameter list of an instance.
 | Declared type | Generated node |
 | :-- | :-- |
 | scalar | `UMaterialExpressionConstant` |
-| vector, `ComponentCount == 2` | `UMaterialExpressionConstant2Vector` |
-| vector, `ComponentCount == 3` | `UMaterialExpressionConstant3Vector` (alpha forced to `1.0`) |
-| vector, any other count | `UMaterialExpressionConstant4Vector` |
+| vector, 2 components | `UMaterialExpressionConstant2Vector` |
+| vector, 3 components | `UMaterialExpressionConstant3Vector` |
+| vector, 4 components | `UMaterialExpressionConstant4Vector` |
 | texture | `UMaterialExpressionTextureObject` |
 
 Rules:
 
-- `const` is legal **only** with the compact scalar, vector and texture tokens. `const` in front of
-  an explicit parameter-node token or a `UE.*` builtin is a generation error.
-- A `const` texture with no default falls back to the engine default asset for its dimension
-  (`Texture2D`, `TextureCube` and `VolumeTexture` have one; `Texture2DArray` does not and therefore
-  requires an explicit `= Path(…)`).
-- Metadata still applies to a `const` declaration, so `[Desc="…"]` works on a constant node.
+- `const` is legal with the compact scalar, vector and texture tokens, and *(since 2.0.0)* with
+  `ScalarParameter`, `VectorParameter` and `TextureObjectParameter`, which read as those. With any
+  other parameter-node token it is `DSH3253`.
+- A `const` without a default is zero. A `const` texture without a default is a `TextureObject` node
+  with no texture of its own written *(since 2.0.0)*: 1.x fell back to the engine's default asset for
+  the dimension, and refused `Texture2DArray`.
+- A constant's value is the compiler's: an expression that combines it with other constants may fold
+  into one constant node.
 - **A `const` vector reads as its whole node output (index 0)** in `Graph`, whereas a non-`const`
   vector parameter reads through the named output matching its component count (`R`, `RG`, `RGB`,
   `RGBA`). See [Reading parameters in Graph](../parameters/graph-usage.md).
@@ -173,14 +186,14 @@ Properties {
 | Rule | Detail |
 | :-- | :-- |
 | Keyword | `Group`, matched case-insensitively |
-| Argument list | must be a balanced `( … )` immediately after the keyword |
-| Argument | the trimmed inner text **must start with a `"`**; the name is then unquoted |
-| Name | must be non-empty after unquoting and trimming |
-| Body | `{ … }`; the walker is brace-, paren-, bracket- and string-aware |
-| Terminator | a single `;` immediately after the closing `}` is consumed silently |
+| Argument list | `(` immediately after the keyword, holding exactly one double-quoted string, then `)` |
+| Name | the string, trimmed; it must be non-empty — [`DSH3260`](../diagnostics/DSH3xxx.md#dsh3260) |
+| Body | `{ … }` |
+| Terminator | a single `;` after the closing `}` is optional |
 
 `Group(…)` is the **only** construct that may open a `{` inside `Properties`. Any other `{` is a
-diagnostic.
+diagnostic (`DSH3250`), and a group whose `}` is missing runs on to the end of the file
+([`DSH2150`](../diagnostics/DSH2xxx.md#dsh2150)).
 
 ### Nesting and `|` composition
 
@@ -248,9 +261,8 @@ Properties {
 > a fresh counter starting at `0` in the second section, so two groups in two sections can end up
 > with overlapping sort priorities.
 
-When no group scope and no explicit metadata supply a value, **no `SortPriority` is written at all**:
-the parsed metadata carries `32` but it is only applied when the declaration actually set one, so the
-generated node keeps its own class default (`32` on Unreal's parameter nodes).
+When no group scope and no explicit metadata supply a value, a parameter gets `32`, the engine's own
+default for parameter nodes — what 1.x left it at.
 
 ## Metadata
 
@@ -260,101 +272,80 @@ The trailing `[ … ]` block is shared with the typed-parameter sections. Its re
 | :-- | :-- | :-- |
 | `Group` | `Category` | string |
 | `Description` | `Desc`, `Tooltip` | string |
-| `SortPriority` | `Sort` | integer |
-| `Slider(min, max)` | — | shorthand with no `=`; expands to `SliderMin` + `SliderMax` |
+| `SortPriority` | `Sort` | whole number — [`DSH3258`](../diagnostics/DSH3xxx.md#dsh3258) otherwise |
+| `Slider(min, max)` | — | shorthand with no `=`; the same range as `SliderMin` + `SliderMax` — [`DSH3257`](../diagnostics/DSH3xxx.md#dsh3257) when malformed or given twice |
 | `ParameterName` | — | string; overrides the material parameter name |
+| `SamplerType` | — | a sampler type; a `SAMPLERTYPE_` prefix is dropped |
 | *anything else* | — | written to the same-named reflected `UMaterialExpression` property |
 
-Entries are separated by `;` or `,`. Full grammar, the reflection rules, the enum-value spellings and
-every diagnostic are on [Metadata](../parameters/metadata.md).
+Entries are separated by `;` or `,`, and keys are matched ignoring case: a key written twice is
+[`DSH3256`](../diagnostics/DSH3xxx.md#dsh3256). A slider range on anything but a scalar parameter is
+ignored with the warning [`DSH7233`](../diagnostics/DSH7xxx.md#dsh7233). Full grammar, the reflection
+rules and the enum-value spellings are on [Metadata](../parameters/metadata.md).
 
 ## Ordering and repetition
 
-- Statements are `;`-terminated. The splitter tracks `()`, `[]`, `{}` and `"…"`, so a `Group` body and
-  a bracketed metadata block never split a statement in the wrong place.
-- Comments are stripped from the section body before statements are split.
+- Statements are `;`-terminated. The reader tracks `()`, `[]` and `{}`, and a string is one token, so
+  a `Group` body and a bracketed metadata block never split a statement in the wrong place.
+- Comments may stand anywhere between tokens.
 - Sections may appear **in any order** inside a block, and a repeated `Properties` section
   **appends** to the previous one. There is no "declared twice" diagnostic at the section level.
-- **Declaration order does not affect name resolution in `Graph`.** Property nodes are created
-  lazily on first read and cached by name, so a property referenced *N* times creates exactly one
-  node and a property never referenced creates none.
-- Declaration order *does* determine the auto-`SortPriority` counter and the vertical order of the
-  generated nodes.
-- A `UE.*` argument that references another property resolves against the same `Properties` list
-  regardless of position, but a reference cycle is rejected with
-  `Property '{Name}' has a recursive UE builtin dependency.`
-
-Name-uniqueness rules are enforced at generation, not at parse:
-
-| Scope | Rule |
-| :-- | :-- |
-| `Shader` | property names must be unique **ignoring case** |
-| `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` | a property name may not collide with a property **or an input** name |
+- **Declaration order does not affect name resolution in `Graph`**: the `Graph` is read after every
+  other section of the block, so a property declared below it is still visible. A parameter is built
+  where the graph first reads it and shared by every later read, and a property nothing reads
+  produces no node. The eleven parameter-node tokens without a parameter form are the exception: each
+  read is its own node, as in 1.x.
+- Declaration order *does* determine the auto-`SortPriority` counter.
+- A `UE.*` property becomes a value at the head of the `Graph` body that reads it, built only when the
+  body reads it, in declaration order.
+- A name declared twice in one file is [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210). The check
+  compares names exactly *(since 2.0.0)*; 1.x compared them ignoring case.
 
 ## Notes
 
 - **`Properties` means something different inside a `VirtualFunction`.** There it is an alias for
-  [`Inputs`](inputs-outputs.md) and gets the typed-parameter grammar (`opt`, identifier-validated
-  names, literal-space splitting) instead of the declaration grammar on this page. See
-  [VirtualFunction](virtual-function.md).
-- Property nodes are created at graph X `-800`, stepping Y by `220` per property. Those positions are
-  what a `Layout` block or the automatic layout pass then rearranges; see
-  [Layout](layout.md) and [Graph layout](../generation/graph-layout.md).
-- When a `Shader` compiles to a whole-surface `Custom` node instead of a `Graph`, only properties
-  whose identifier textually appears in the prepared HLSL become `Custom` node inputs. Unreferenced
-  properties are skipped entirely.
-- Every declaration's metadata is *also* stored verbatim under its lower-cased key and applied by
-  reflection, including the four "known" keys. A key that is not a reflected property on the
-  generated node class is a hard error — except `Group`, `SortPriority` and `Desc`, which are skipped
-  with a log warning when the class does not expose them.
+  [`Inputs`](inputs-outputs.md) and gets the typed-parameter grammar (`opt`, no `const`, no node
+  tokens) instead of the declaration grammar on this page. See [VirtualFunction](virtual-function.md).
+- Where the property nodes land is the [graph layout](../generation/graph-layout.md)'s business; a
+  [`Layout`](layout.md) section can pin them.
+- *(since 2.0.0)* Every metadata key the table above does not name is written to the node by
+  reflection. On a parameter a key the node class does not have is the warning
+  [`DSH8210`](../diagnostics/DSH8xxx.md#dsh8210) and the value is not written — 1.x refused it, except
+  for `Group`, `SortPriority` and `Desc`; a value the property cannot take is
+  [`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213). On one of the eleven parameter-node tokens without a
+  parameter form the keys are arguments of the node, and an unknown one is
+  [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213) — or, when its value is a number, the info
+  [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291) followed by [`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212)
+  once the built node has no such pin.
 - Regeneration destroys hand edits to the generated nodes. See
   [Regeneration](../generation/regeneration.md).
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this section. In the
-`Unexpected '{'` message below, only `{Statement}` is a substitution — the other braces are literal
-message text.
+Every diagnostic carries the line and column of the declaration it is about.
 
-### Parse time
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Invalid property declaration '{Statement}'.` | no top-level whitespace separating the type token from the name |
-| `Missing property name in declaration '{Statement}'.` | the name side of the split is empty |
-| `Missing property type after const in declaration '{Statement}'.` | `const` with nothing after it |
-| `Unsupported property type '{Type}'.` | the type token matches no compact token, no parameter-node token and no `UE.` prefix |
-| `Metadata must follow a declaration.` | the statement is nothing but a `[ … ]` block |
-| `Invalid scalar default value '{Value}' for property '{Name}'.` | a scalar token's default is neither numeric nor `true`/`false` |
-| `Invalid vector default value '{Value}' for property '{Name}'.` | a vector token's default is not a `name(a, b, c, d)` literal |
-| `Invalid boolean default value '{Value}' for property '{Name}'.` | `StaticBoolParameter` / `StaticSwitchParameter` given a non-boolean default |
-| `Invalid texture default value '{Value}' for property '{Name}'. {Detail}` | a texture token's default is not a resolvable asset reference |
-| `Invalid texture sample default value '{Value}' for property '{Name}'. {Detail}` | same, for the `TextureSampleParameter*` family |
-| `UE builtin property '{Name}' does not support inline defaults. Put arguments inside UE.{Function}(...).` | `= …` written after a `UE.*` type token |
-| `Unexpected '{' in Properties near '{Statement}'. Only Group("Name") { ... } may open a brace here.` | a `{` that is not a `Group` scope head |
-| `Group(...) requires a non-empty name.` | `Group("")` |
-| `Unterminated Group("{Name}") { ... } block.` | the scope's `{` is never closed |
-| `Metadata entry '{Entry}' must use Key=Value syntax.` | a metadata entry with no top-level `=` that is not `Slider(…)` |
-| `Metadata key '{Key}' is declared more than once.` | duplicate metadata key after normalization |
-| `Metadata SortPriority value '{Value}' is not an integer.` | non-integer sort priority |
+| `DSH3250` | the section is not opened with `{`; a statement has no type and name; the declaration does not end with `;`; a `{` that is not a `Group` scope |
+| `DSH3251` | `const` with no type after it |
+| `DSH3252` | the type is neither a compact token, a parameter-node token nor `UE.*` |
+| `DSH3253` | a parameter-node token with no 2.0 form, or `const` before a parameter-node token that cannot be a constant |
+| `DSH3254` | nothing after `=`, or a default the type cannot read: a scalar that is not a number or `true` / `false`, a vector that is not a `name(a, b, c, d)` literal, a static switch that is not `true` / `false` |
+| `DSH3255` | a metadata block that is not closed, or an entry that is not `Key = Value` |
+| `DSH3256` | a metadata key written twice |
+| `DSH3257` | a malformed `Slider(…)`, or a slider range given twice |
+| `DSH3258` | a `SortPriority` that is not a whole number |
+| `DSH3259` | an unclosed `UE.*` argument list, or a default written after a `UE.*` property |
+| `DSH3260` | `Group("")` |
+| `DSH2150` | the file ends inside the section or a group |
+| `DSH1043`, `DSH1044` | a texture default whose `Class'…'` shell is not a texture, or not the declared texture type |
+| `DSH4210` | a name declared twice |
+| `DSH7233` | warning: a slider range on a parameter that has no slider |
+| `DSH8210` | warning: a metadata key the parameter node does not have |
+| `DSH8213` | a metadata value the node property cannot take |
+| `DSH8218`, `DSH8271` | a texture default that does not load, or does not resolve |
 
-### Generation time
-
-| Message | Cause |
-| :-- | :-- |
-| `{File}: Property '{Name}' is declared more than once. Property names must be unique.` | two `Shader` properties whose names are equal ignoring case |
-| `{Kind} '{Function}' property '{Name}' conflicts with another property or input name.` | a material-function property collides with another property or an input |
-| `Const property '{Name}' must use a plain scalar, vector, or texture type instead of a parameter node or UE builtin declaration.` | `const` in front of a parameter-node token or a `UE.*` builtin |
-| `Const texture property '{Name}' could not load asset '{Path}'.` | explicit `const` texture default that does not load |
-| `Const texture property '{Name}' could not load default {Label} asset '{Path}'.` | the engine fallback texture for the dimension did not load |
-| `Const texture property '{Name}' with type Texture2DArray requires an explicit default asset.` | `const Texture2DArray` with no default — no engine fallback exists |
-| `Failed to create a texture object node for const property '{Name}'.` | node construction failed |
-| `Failed to create a const node for property '{Name}'.` | node construction failed |
-| `Failed to create a parameter node for property '{Name}'.` | the parameter path returned no node and no message |
-| `Property '{Name}' has a recursive UE builtin dependency.` | `UE.*` argument reference cycle between properties |
-| `property '{Name}': {Detail}` | prefix applied to any metadata or default-value failure on that property |
-
-The complete cross-stage list is in the [diagnostics index](../diagnostics/index.md).
+The complete list is in the [diagnostics index](../diagnostics/index.md).
 
 ## Example
 
@@ -429,4 +420,5 @@ UV          -> UMaterialExpressionTextureCoordinate  ungrouped, not auto-sorted
 - [UE builtins](../builtins/ue.md) — every `UE.*` name accepted as a property type
 - [Output bindings](output-bindings.md) — connecting graph values to material properties
 - [Layout](layout.md) — pinning the generated node positions
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [DreamShaderLang 2.0](../language-v2/index.md) — `uniform`s and `///` metadata, the `.dss` spelling
+- [Diagnostics index](../diagnostics/index.md) — every code

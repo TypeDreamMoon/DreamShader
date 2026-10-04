@@ -43,7 +43,7 @@ The tab is registered only when the editor bridge starts. Launching the editor w
 │ Quick filters│                                   │ Imports / Used by        │
 │ ☐ Errors …   │                                   │ Inheritance · Children   │
 ├──────────────┴──────────────────────────────────┴──────────────────────────┤
-│ 14 sources · 9 ok · 3 stale · 1 errors · 1 edited by hand · 5 in memory │ bridge: idle │
+│ 14 sources · 9 ok · 3 stale · 1 errors · 1 edited by hand · 5 Ephemeral │ bridge: idle │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -58,7 +58,7 @@ next opened.
 | Control | Label | Effect |
 | :-- | :-- | :-- |
 | Button | **Refresh** (`F5`) | Rescans the source roots, rebuilds the dependency graph, recomputes every status |
-| Menu | **Compile ▾** | **Compile** (`Ctrl+B`) the selection · **Compile stale** — every source that is stale, never compiled, or failed · **Compile all** (`Ctrl+Shift+B`) — every `.dsm` and `.dsf`, behind a progress dialog |
+| Menu | **Compile ▾** | **Compile** (`Ctrl+B`) the selection · **Compile stale** — every source that is stale, never compiled, or failed · **Compile all** (`Ctrl+Shift+B`) — every listed source but a `.dsh` (`.dss`, `.dsi`, `.dsp`, `.dsm`, `.dsf`), behind a progress dialog |
 | Menu | **New ▾** | *DreamShaderLang 2.0:* **Material (.dss)** · **Material function (.dss)** · **Instance (.dsi)** — *Custom Pass pipeline (.dsp):* **Fullscreen post-process chain** · **Mesh mask chain** · **Compute chain** — *1.x blocks:* **Material (.dsm)** · **Material function (.dsf)** · **Header (.dsh)** — see [New source](#new-source) |
 | Search box | (`Ctrl+F` focuses it) | Case-insensitive substring match against the file name, the root name, the source path, the asset path and the status detail — so an error message is searchable, and a plugin's name filters to everything it ships. In Assets mode it matches the asset name |
 | Menu | **View ▾** | **Tiles** — the Sources list as thumbnail tiles · **Sort by** Name / Status / Root / Asset path, **Ascending** · **Show Ephemeral materials** — the global project setting, see [Editor integration](editor-integration.md#show-ephemeral-materials) |
@@ -93,7 +93,7 @@ shows entries that are either.
 | **Errors** | sources whose last compile failed, or that could not be read or parsed |
 | **Stale** | sources that changed since their asset was generated |
 | **Edited by hand** | generated assets whose contents no longer match the last generation ([Divergence](../generation/divergence.md)) |
-| **In memory** | materials that exist only in memory |
+| **Ephemeral** | materials that have not been written to disk |
 | **Hide functions** | drops every `.dsf` and `.dsh` |
 | **Hide pipelines** *(since 2.1.0)* | drops every `.dsp` — the Custom Pass pipelines — and its pipeline |
 | **Hide unmanaged** | drops the materials DreamShader does not manage |
@@ -159,8 +159,8 @@ inspector reads its real provenance (an orphan generated asset turns out `Unstam
 | **Asset** | the package path |
 
 The status-bar count **not managed** jumps to the node rather than toggling a filter. The thin
-backend's hidden `MB_DreamThinBase_*` base is never listed. *Export DSM / DSF* on one of these is
-how it comes under DreamShader's management.
+backend's hidden `MB_DreamThinBase_*` base is never listed. *Export .dss* on one of these (a `.dsi`
+for a plain material instance) is how it comes under DreamShader's management.
 
 ### Status values
 
@@ -172,21 +172,26 @@ how it comes under DreamShader's management.
 | `NotCompiled` | `○` grey | **not compiled** | No object at the resolved object path. Detail: `No generated asset at {ObjectPath}` |
 | `Error` | `▲` red | **compile error** | A compile failed, from this tab or per the bridge's diagnostics |
 | `Library` | `◆` blue | **function / header** | A `.dsf` or `.dsh` |
-| `Unresolved` | `▲` red | **unresolved** | The source could not be read, could not be parsed, or declares no top-level block |
+| `Unresolved` | `▲` red | **unresolved** | What the source builds could not be worked out: it has an error (the detail is the first one, `<file>(<line>,<col>): DSHnnnn: <message>`), or it declares no material, instance or exported function |
 
-Status computation per `.dsm`:
+Status computation for every source but a `.dsf` / `.dsh` *(since 2.0.0)*:
 
 | # | Step | Failure |
 | :-- | :-- | :-- |
-| 1 | Resolve the generated asset's object path from `Name=` and `Root=` (imports stripped first) | ⇒ `unresolved` |
+| 1 | Resolve the products the source builds with the compile's own front half — defines, front end by extension, binder, IR builder, destination rules — and take the object path of its material (else its instance, else its pipeline, else its first product) and its build key | ⇒ `unresolved` |
 | 2 | Look the object up **without loading it** | ⇒ `not compiled` |
-| 3 | Load the prepared source, with `import` directives inlined | ⇒ `unresolved` |
-| 4 | Hash it and compare against the asset's stamped source file and hash | match ⇒ `up to date` |
-| 5 | No stamped hash and the asset is not on disk | ⇒ `compiled in memory` |
-| 6 | otherwise | ⇒ `stale` |
+| 3 | Compare the asset's stamped source file and build key with the resolved ones | match ⇒ `up to date` |
+| 4 | No stamped key and the asset is not on disk | ⇒ `compiled, Ephemeral` |
+| 5 | otherwise | ⇒ `stale` |
 
-Then the bridge's diagnostics are overlaid: any `error` record for the file makes it `compile
-error`, with the first record as the detail. All records stay on the entry for the inspector.
+The build key covers what a compile stamps — the preprocessed file and every header it includes, the
+defines they read, a `.dsi`'s parent — so a current asset reads **up to date** and a rebuild always
+makes a stale one current. 1.x resolved `Name=` / `Root=` from text with the imports stripped and
+hashed the source with them inlined; that recipe answered nothing for a `.dss` and is gone.
+
+Then the bridge's diagnostics are overlaid, read live from its store: any `error` record for the
+file makes it `compile error`, with the first error record as the detail
+(`L{line}:{col} {message}`). All records stay on the entry for the inspector.
 
 > [!NOTE]
 > Step 2 does not load, so a material that exists on disk but has not been loaded this session
@@ -200,9 +205,9 @@ engine widget on purpose: thumbnails, drag-to-viewport, the column view and the 
 settings all come with it.
 
 The shared filters apply here too, and are answered **without loading anything**: a scanned
-source's asset is judged by its entry, and *In memory* is read off the registry's package flags. A
-hand-authored material that DreamShader never generated passes no status filter except *In
-memory*.
+source's asset is judged by its entry, and *Ephemeral* is read off the registry's package flags. A
+hand-authored material that DreamShader never generated passes no status filter except
+*Ephemeral*.
 
 Double-click opens the asset. Right-click gives the same [context menu](#context-menu).
 
@@ -221,7 +226,7 @@ inheritance.
 | **Actions** | **Create instance** · **Compile** · **Open** · **Materialize** (memory-only assets) · **Open source** |
 | **Info rows** | **Base** · **Domain** · **Blend mode** · **Root** · **Source** (a link: shows the file in Sources mode) · **Asset** (a link: shows the asset in Assets mode) · **Storage** · **Provenance** |
 | **Diagnostics (N)** | Every record the bridge holds for the file: `[DSHnnnn] L{line}:{col} message`, each a link that opens the file in your editor at that line — into the imported header when the record points there. A failure this tab pinned itself shows its message alone |
-| **Provenance** | The digest state with a one-line explanation, then the answers: **Revert to Source** · **Adopt Into Source** · **Detach**; or, for a material DreamShader never generated, **Export DSM** / **Export DSF**. See [Divergence](../generation/divergence.md). *Adopt* is disabled, with the reason, when the source ships with a plugin |
+| **Provenance** | The digest state with a one-line explanation, then the answers: **Revert to Source** · **Adopt Into Source** · **Detach**; or, for a material DreamShader never generated, **Export .dss** (a material or material function) / **Export .dsi** (a plain material instance) *(since 2.0.0; **Export DSM** / **Export DSF** before)*. See [Divergence](../generation/divergence.md). *Adopt* is disabled, with the reason, when the source ships with a plugin |
 | **Imports (N)** | For a material: every header and function it imports, transitively — links into the Sources list |
 | **Used by (N)** | For a header or function: every material that imports it — links |
 | **Inheritance** | The parent chain, root first, each row a link that re-targets the panel |
@@ -249,8 +254,8 @@ and does not need finding.
 
 ## Status bar
 
-`{N} sources` · the counts of **ok** (up to date or compiled in memory), **stale**, **errors**,
-**edited by hand** and **in memory**, each a one-click filter · **not managed**, which jumps to that
+`{N} sources` · the counts of **ok** (up to date, or compiled, Ephemeral), **stale**, **errors**,
+**edited by hand** and **Ephemeral**, each a one-click filter · **not managed**, which jumps to that
 node · the bridge's state: `bridge: idle`,
 `bridge: {action}` while it compiles, `bridge: idle (another editor owns writes)` when a second
 editor on the same project holds the write lock, or `bridge: off`. The tooltip is the bridge's last
@@ -265,7 +270,7 @@ Right-click in either list. Commands act on the selection; most take the first s
 | **Open** | **Open material** (`Enter`; for a `.dsp`, the pipeline in its details panel) · **Open source** (`Ctrl+Enter`, at the first error when there is one) · **Reveal in Content Browser** |
 | **Build** | **Compile** · **Create instance** (not for a `.dsp`) · **Materialize** (shown for memory-only assets; acts on every memory-only entry in the selection) |
 | **Generated asset** | **Revert to Source** (acts on every generated entry in the selection, confirming each) · **Adopt Into Source** · **Detach From DreamShader** — only when the asset carries DreamShader's stamp |
-| **Decompiler** | **Export DSM / DSF** — only for a hand-authored material or function |
+| **Decompiler** | **Export .dss** — only for a hand-authored material or function (a `.dss`) or plain material instance (a `.dsi`) |
 | **Copy** | **Copy source path** · **Copy asset path** |
 
 ## Following the editor
@@ -430,8 +435,8 @@ A source tree and what Sources mode shows for it:
 ```text
 <Project>/DShader/
     Materials/M_Emissive.dsm        ● up to date          /Game/Materials
-    Materials/M_Toon.dsm            ◐ compiled in memory  /Game/Materials
-    Materials/M_Broken.dsm          ▲ compile error       [DSH2104] L12:9 Unknown identifier 'Tin'.
+    Materials/M_Toon.dss            ● up to date          /Game/Materials
+    Materials/M_Broken.dsm          ▲ compile error       L12:9 'Tin' is not declared in this scope.
     Materials/M_New.dsm             ○ not compiled        No generated asset at /Game/Materials/M_New.M_New
     Lib/Noise.dsf                   ◆ function · used by 2 material(s)
     Lib/Common.dsh                  ◆ function · used by 3 material(s)
@@ -444,7 +449,7 @@ A source tree and what Sources mode shows for it:
 - [Custom Pass pipelines — `.dsp`](../language-v2/passes.md) — what the pipeline templates are written in
 - [Preview](preview.md) — the renderer behind the inspector's preview
 - [Divergence](../generation/divergence.md) — Revert, Adopt, Detach
-- [Decompiler](decompiler.md) — Export DSM / DSF
+- [Decompiler](decompiler.md) — Export .dss / .dsi
 - [Ephemeral materials](../generation/ephemeral.md) — memory-only generation, the hidden base, materializing
 - [Caching](../generation/caching.md) — the source hash behind **up to date** and **stale**
 - [Asset paths](../generation/asset-paths.md) — how `Name=` and `Root=` resolve to the object path

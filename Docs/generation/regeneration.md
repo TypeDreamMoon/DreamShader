@@ -36,40 +36,47 @@ What happens to an already-generated asset when its source file is compiled agai
 
 ## Sequence
 
-0. **Refuse if the asset is open in an asset editor**, then **refuse if it has diverged** — both
-   before anything below runs, and before any of it is reversible. See
-   [Open in an asset editor](#open-in-an-asset-editor) and [Divergence](divergence.md).
+0. **Skip if another editor owns writing** this project's generated assets
+   ([`DSH8209`](../diagnostics/DSH8xxx.md#dsh8209)) or **if the source hash is current**
+   ([`DSH8237`](../diagnostics/DSH8xxx.md#dsh8237)); then **refuse if the asset is open in an asset
+   editor**, then **refuse if it has diverged** — all before anything below runs, and before any of it
+   is reversible. See [Open in an asset editor](#open-in-an-asset-editor) and
+   [Divergence](divergence.md).
 1. `Modify()` the target object.
 2. **Clear the generated comments** — every `UMaterialExpressionComment` whose text starts with the
-   literal `DreamShader: `.
-3. **Null every material property input**, from the first to the last material-property slot.
-4. **Delete every expression** in the graph.
-5. **Reset the material to defaults** — see [Reset properties](#reset-properties). Material functions
-   skip this step.
-6. Apply `Settings`.
-7. Rebuild: `Properties` nodes, the `Graph` body or the whole-surface `Custom` node, the `Outputs`
-   bindings.
-8. Lay out — [skipped in memory-only mode](graph-layout.md#when-layout-runs).
+   literal `DreamShader: `. A material function's pin GUIDs are read off it next.
+3. **Detach the graph**: snapshot the asset, null every material property input, and empty the
+   expression collection — the old nodes are kept alive, not destroyed. A material also has its editor
+   parameter cache emptied. When the snapshot cannot be taken the rebuild goes ahead unguarded, with the
+   warning [`DSH8208`](../diagnostics/DSH8xxx.md#dsh8208).
+4. **Reset the material to defaults** — see [Reset properties](#reset-properties). A material function
+   gets its usage, description and library fields instead.
+5. Apply `Settings` (a material).
+6. Emit the graph: parameters, the `Graph` statements, one Custom node per `Function` call, the
+   `Outputs` bindings.
+7. Lay out, in the project's [Graph Layout Style](graph-layout.md#layout-styles) — on every build
+   *(since 2.0.0)*.
+8. **Commit**: the detached nodes are destroyed now.
 9. Recompile.
 
-Step 4 has two strategies. Below 1200 expressions each node is deleted individually through the
-material editing library, in up to 64 outer passes, reporting
-`Deleting old Material node '{Name}'...`. At 1200 or more the whole expression collection is
-un-rooted and marked as garbage in one pass. The material path also resets the material's editor
-parameter cache; the material-function path does not.
+*(since 2.0.0)* There is one teardown path. The 1.x one deleted the old nodes one by one below 1200
+expressions, and in one sweep above; detaching the graph as a unit makes the per-node deletion — whose
+link scan is quadratic — pointless.
 
-**A rebuild is atomic.** Steps 1-9 either all take effect or none of them do: the old graph is
+**A rebuild is atomic.** Steps 1-8 either all take effect or none of them do: the old graph is
 detached rather than destroyed, and a failure at any point puts it back — nodes, connections, render
 state, material-function usage and pin GUIDs alike — before the compile returns. The asset a failed
 compile leaves behind is the asset it started with.
 
-That matters because not every failure is caught up front. The whole-file parse, the `Settings`
-validation and the `Outputs` validation are gates that run **before** the asset is touched at all,
-but a `Graph` block is compiled one statement at a time by the graph builder, which runs at step 7 —
-after the teardown. Until `1.8.0` such a failure left the asset **emptied**, which was bad for a
-material and much worse for a material function, whose call sites read their pins from the live
-asset: one bad `.dsf` took every material that called it down with it, with no undo (generated assets
-are deliberately not `RF_Transactional`).
+That matters because not every failure is caught up front. *(since 2.0.0)* The parse, the binder, the
+lowering and the IR validator all run **before** the asset is touched at all, but the emit still has
+ways to fail after the teardown: a setting the material refuses
+([`DSH8215`](../diagnostics/DSH8xxx.md#dsh8215)), a node, pin or property the engine does not have
+(`DSH8210`–`DSH8228`), a cancel ([`DSH8298`](../diagnostics/DSH8xxx.md#dsh8298)). Until `1.8.0` such a
+failure left the asset **emptied**, which was bad for a material and much worse for a material
+function, whose call sites read their pins from the live asset: one bad `.dsf` took every material
+that called it down with it, with no undo (generated assets are deliberately not
+`RF_Transactional`).
 
 > [!NOTE]
 > The one thing a rollback does not restore is the `DreamShader: ` comment boxes, which are deleted
@@ -79,7 +86,8 @@ are deliberately not `RF_Transactional`).
 
 ## What survives
 
-Exactly one hand edit survives: a comment box whose text does not carry the DreamShader prefix.
+Exactly one hand edit to the graph survives: a comment box whose text does not carry the DreamShader
+prefix.
 
 | | |
 | :-- | :-- |
@@ -138,7 +146,9 @@ The Material Content Browser's instance-creation action produces exactly such a 
 
 ## Open in an asset editor
 
-A rebuild is refused outright while the asset is open in an asset editor:
+A rebuild is refused outright while the asset is open in an asset editor. The compile reports
+[`DSH8206`](../diagnostics/DSH8xxx.md#dsh8206), whose message carries the asset layer's
+[`DSH8101`](../diagnostics/DSH8xxx.md#dsh8101) text:
 
 ```text
 Asset '{ObjectPath}' is open in an asset editor, so it was NOT rebuilt. An open editor works on its
@@ -184,10 +194,12 @@ DreamShader refuses to overwrite an asset it did not generate.
 | Applies to | every backend and every block kind *(the ThinCustom instance path since `1.8.0`)* |
 | Result | generation fails; the existing asset is untouched |
 
-| Message | Raised for |
+| Code | Raised for |
 | :-- | :-- |
-| `Asset '{ObjectPath}' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.` | a material |
-| `Asset '{ObjectPath}' already exists and was not generated by DreamShader. Rename your function or move/delete the existing asset before regenerating.` | a material function |
+| [`DSH8103`](../diagnostics/DSH8xxx.md#dsh8103), inside `DSH8201` | a `Graph`-backend material |
+| [`DSH8107`](../diagnostics/DSH8xxx.md#dsh8107), inside `DSH8203` | a ThinCustom instance |
+| [`DSH8112`](../diagnostics/DSH8xxx.md#dsh8112), inside `DSH8202` | a material function, layer or blend |
+| [`DSH8242`](../diagnostics/DSH8xxx.md#dsh8242), inside `DSH8240` | a `.dsi` material instance |
 
 ### Where the guard does not apply
 
@@ -196,12 +208,10 @@ protect, so the check does not run. That gap is covered from the other side —
 [divergence](divergence.md) applies in memory too, because the source path is stamped there as well.
 
 A wrong-class asset at the target path is refused by a class check instead, before the ownership
-question is asked at all:
-
-```text
-Asset '{ObjectPath}' already exists and is not a DreamShader instance material. Delete it (or remove
-Backend="Instance") before switching backends.
-```
+question is asked at all: [`DSH8102`](../diagnostics/DSH8xxx.md#dsh8102) for a `Graph` material,
+[`DSH8106`](../diagnostics/DSH8xxx.md#dsh8106) for a ThinCustom instance — the usual case after the
+backend of a source was switched — and `DSH8110` / `DSH8111` for a function kind. See
+[Asset paths](asset-paths.md#diagnostics).
 
 > [!NOTE]
 > Before `1.8.0` the ThinCustom instance path checked only that class, not provenance — so generating
@@ -250,8 +260,8 @@ Material functions have no render state; their asset-level fields are reapplied 
 | Source setting | Field | When absent |
 | :-- | :-- | :-- |
 | `Description` | `Description` | cleared |
-| `UserExposedCaption` | `UserExposedCaption` | cleared |
-| `ExposeToLibrary` | `bExposeToLibrary` | set to `false` |
+| `UserExposedCaption` | not applied *(since 2.0.0)*: the setting is [`DSH3264`](../diagnostics/DSH3xxx.md#dsh3264), and the field keeps what it holds | — |
+| `ExposeToLibrary` | `bExposeToLibrary` — on only when `LibraryCategories` is given too *(since 2.0.0)* | set to `false` |
 | `LibraryCategories` | `LibraryCategoriesText` — comma-separated, entries trimmed, empties dropped | cleared |
 
 The material-function usage is also re-stamped from the block kind on every regeneration.
@@ -302,21 +312,21 @@ Every buffer with `Export = true` has a `UTextureRenderTarget2D` in the pipeline
 
 ## Diagnostics
 
-Runtime substitutions are rendered as `{Placeholder}`.
+The asset layer's codes reach the compile result inside the emitter's, which quote them.
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Asset '{ObjectPath}' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.` | ownership guard, material |
-| `Asset '{ObjectPath}' already exists and was not generated by DreamShader. Rename your function or move/delete the existing asset before regenerating.` | ownership guard, material function |
-| `Asset '{ObjectPath}' already exists and is not a Material.` | `Graph` backend, non-`UMaterial` at the path |
-| `Asset '{ObjectPath}' already exists and is not a DreamShader instance material. Delete it (or remove Backend="Instance") before switching backends.` | ThinCustom backend, wrong class at the path |
-| `Asset '{ObjectPath}' already exists and is not a MaterialFunction asset.` | function kind, wrong class at the path |
-| `Asset '{ObjectPath}' already exists as '{ActualClass}', but {Kind} generation requires '{ExpectedClass}'. Delete or move the existing asset and regenerate it.` | function kind, wrong material-function subclass |
-| `Generated DreamShader asset '{Path}' could not be saved.` | the package save failed after a successful rebuild |
-| `Generated DreamShader asset packages could not be saved.` | the paired instance + base save failed |
-| `'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. Run Tools > DreamShader > Make Ephemeral to make it Ephemeral again.` | log; a compile landed on an asset with a file behind it, so it took the Materialized path — see [Ephemeral materials](ephemeral.md#when-the-asset-already-exists-on-disk) |
-| `Asset '{ObjectPath}' was edited by hand since DreamShader generated it from '{SourceFile}', so it was NOT rebuilt (rebuilding would destroy those edits). ...` | the [divergence](divergence.md) gate, which also raises a [notification](divergence.md#what-you-see-since-190) *(since 1.9.0)* |
-| `Asset '{ObjectPath}' is open in an asset editor, so it was NOT rebuilt. ...` | the [open-editor gate](#open-in-an-asset-editor) |
+| `DSH8103`, `DSH8107`, `DSH8112`, `DSH8242` | the [ownership guard](#ownership-guard) refused a saved asset DreamShader did not generate |
+| `DSH8102`, `DSH8106`, `DSH8110`, `DSH8111` | a wrong class at the path — see [Asset paths](asset-paths.md#diagnostics) |
+| [`DSH8229`](../diagnostics/DSH8xxx.md#dsh8229) | the package save failed after a successful rebuild; it carries [`DSH8116`](../diagnostics/DSH8xxx.md#dsh8116), or [`DSH8117`](../diagnostics/DSH8xxx.md#dsh8117) for a ThinCustom instance saved with its base |
+| `DSH8207` | the [divergence](divergence.md) gate, which also raises a [notification](divergence.md#what-you-see-since-190) *(since 1.9.0)* |
+| `DSH8206` | the [open-editor gate](#open-in-an-asset-editor) |
+| `DSH8208` | *(warning)* the asset could not be snapshotted, so a failed rebuild will not be rolled back |
+| `DSH8155` | *(warning)* a ThinCustom rebuild dropped parameter overrides the source no longer declares |
+
+A compile that lands on an asset with a file behind it takes the Materialized path and logs
+`'{ObjectPath}' exists as a saved asset, so it is rebuilt and saved on disk rather than in memory. …` —
+see [Ephemeral materials](ephemeral.md#when-the-asset-already-exists-on-disk).
 
 ## Example
 
@@ -334,16 +344,17 @@ Shader(Name="Docs/M_Regen")
 }
 ```
 
-Hand-edit the generated asset, then save the `.dsm` again:
+Hand-edit the generated asset, then choose **Revert to Source** — a plain recompile is refused by the
+[divergence](divergence.md) gate:
 
 ```text
 before regeneration                              after regeneration
 -----------------------------------------------  --------------------------------------------
-comment "DreamShader: Output: EmissiveColor"     recreated
+comment "DreamShader: …" (a generated box)       recreated
 comment "Reviewed 2026-07-30"                    KEPT — no DreamShader: prefix
 extra Multiply node wired in by hand             deleted
 Two Sided ticked in the material editor          reset to false (not declared in Settings)
-Intensity override = 5.0 on the instance         cleared, back to the source default 2.0
+Intensity override = 5.0 on the instance         KEPT — restored by name after the rebuild
 Color node dragged to (900, 400)                 back to (-400, 0), pinned by Layout
 ```
 

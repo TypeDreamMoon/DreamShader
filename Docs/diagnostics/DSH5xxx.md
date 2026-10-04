@@ -776,7 +776,8 @@ takes the short form the catalog lists.
 <!-- generated:end DSH5279 -->
 
 **Cause.** Rule L13. A `UE.` node is built in a 1.x body with a pin open that the engine draws as
-required. 1.x never checked, and many such sources compile because the node reads a default. In a
+required. 1.x checked this only for a few of its hand-registered builtins (the `Input` of a transform
+was one), and many such sources compile because the node reads a default. In a
 `.dss` the same thing is DSH5219, also a warning.
 
 **Fix.** Wire the pin if the material fails to compile with 'missing input'; otherwise nothing has

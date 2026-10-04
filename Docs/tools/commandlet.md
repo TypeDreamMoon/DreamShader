@@ -120,7 +120,7 @@ directory second.
 | :-- | :-- |
 | 1 | Recursively collect `*.dsm`, `*.dsh`, `*.dsf`, `*.dss`, `*.dsi` and `*.dsp` under every [source root](../language/source-files.md#source-roots) — `<SourceDirectory>`, and the `DShader` folder of every plugin that has one |
 | 2 | Drop **everything** under each root's `Packages` folder |
-| 3 | Drop `.dsh` headers — they generate no assets and are inlined by their dependents |
+| 3 | Drop `.dsh` headers — they generate no assets and are compiled through the sources that include them |
 | 4 | Sort: `.dsf` function files first (rank 0), then every other kind (rank 1); ties broken by case-insensitive path comparison |
 
 Step 4 is a guarantee, not an accident: function assets referenced by a material must exist before
@@ -180,20 +180,16 @@ one file produces several assets, the messages are joined with newlines.
 
 | Message | Outcome |
 | :-- | :-- |
-| `Generated {Kind} {AssetPath} from {SourceFile}.` | a `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` asset generated; `{Kind}` is the block keyword |
-| `Generated {AssetPath} from {SourceFile}.` | material generated (Graph backend) |
-| `Generated DreamShader thin-custom material {AssetPath} from {SourceFile}.` | material generated (ThinCustom backend) |
-| `Generated PassPipeline {ObjectPath} from {SourceFile}.` | a `.dsp` built *(2.1.0)*. A line for each render target of its exported buffers follows |
-| `Generated RenderTarget {ObjectPath} from {SourceFile}.` | the render target of an exported buffer, made or reused by its pipeline's build and saved with it *(2.1.0)* |
+| `Generated {Kind} {AssetPath} from {SourceFile}.` | one product built. `{Kind}` is `Material`, `MaterialFunction`, `MaterialLayer`, `MaterialLayerBlend`, `MaterialInstance` or `PassPipeline` *(2.1.0)* — for every source language and both backends; a ThinCustom material is `Material` with the instance's path *(since 2.0.0)* |
+| `Generated RenderTarget {ObjectPath} from {SourceFile}.` | the render target of an exported buffer, made or reused by its pipeline's build and saved with it *(2.1.0)*; follows its pipeline's line |
 | `Skipped {AssetPath} from {SourceFile}; source hash is unchanged (build key {BuildKey}).` | hash match — pass `-Force` to regenerate |
-| `Generated DreamShader helper include '{Path}' from {SourceFile}.` | the file produced only a generated `.ush` |
-| `DreamShader file '{Path}' contains VirtualFunction declarations only; no assets were generated.` | success, nothing to write |
-| `DreamShader file '{Path}' contains GraphFunction declarations only; no assets were generated.` | success, nothing to write |
-| `DreamShader file '{Path}' did not contain any material, ShaderFunction, ShaderLayer, or ShaderLayerBlend assets to generate.` | **failure** |
-| `DreamShader header '{Path}' does not generate assets directly. Recompile dependent .dsm or .dsf files instead.` | **failure** — a `.dsh` reached the generator |
-| `{Path}: .dsf files cannot define top-level Shader blocks.` | **failure** |
+| `Compiled {SourceFile}; it declares no material and no exported function, so no asset was written.` | success, nothing to write — a file of helpers, `VirtualFunction` or `GraphFunction` declarations only *(since 2.0.0)* |
+| `Warnings:` followed by one diagnostic per line | appended to a success message when the compile raised warnings |
+| one diagnostic per line, `<file>(<line>,<col>): DSHnnnn: <message>` | **failure**: the first error first, then the other errors, warnings and infos. See [Diagnostics](../diagnostics/index.md) |
 
-A message ending in ` (virtual)` indicates a transient asset; the commandlet never produces those.
+The 1.x result lines — a separate thin-custom wording, a helper-include line, the "no assets to
+generate" and `.dsh` failures, the ` (virtual)` suffix — are not written since 2.0.0. A file with no
+product succeeds; a `.dsh` never reaches the compiler, because the per-file guard above stops it.
 
 ## `decompile` / `export`
 
@@ -221,10 +217,11 @@ the raw (quote-stripped) input is retried unchanged.
 
 | Class | Emits | Default destination |
 | :-- | :-- | :-- |
-| `UMaterial` | `.dsm` | `<SourceDirectory>/Decompiled/Materials/<package path>.dsm` |
-| `UMaterialFunction` | `.dsf` | `<SourceDirectory>/Decompiled/Functions/<package path>.dsf` |
-| `UMaterialFunctionMaterialLayer` | `.dsf` | `<SourceDirectory>/Decompiled/Layers/<package path>.dsf` |
-| `UMaterialFunctionMaterialLayerBlend` | `.dsf` | `<SourceDirectory>/Decompiled/LayerBlends/<package path>.dsf` |
+| `UMaterial` | `.dss`; `.dsm` with `-Format=Legacy` | `<SourceDirectory>/Decompiled/Materials/<package path>.dss` (`.dsm`) |
+| `UMaterialFunction` | `.dss`; `.dsf` with `-Format=Legacy` | `<SourceDirectory>/Decompiled/Functions/<package path>.dss` (`.dsf`) |
+| `UMaterialFunctionMaterialLayer` | `.dss`; `.dsf` with `-Format=Legacy` | `<SourceDirectory>/Decompiled/Layers/<package path>.dss` (`.dsf`) |
+| `UMaterialFunctionMaterialLayerBlend` | `.dss`; `.dsf` with `-Format=Legacy` | `<SourceDirectory>/Decompiled/LayerBlends/<package path>.dss` (`.dsf`) |
+| `UMaterialInstanceConstant` *(2.0)* | `.dsi` — 2.0 text only. A generated ThinCustom instance is the material it stands for, and comes back as a `.dss` under `Materials/` | `<SourceDirectory>/Decompiled/Instances/<package path>.dsi` |
 | `UDreamPassPipeline` *(2.1.0)* | `.dsp` — 2.0 text only: `-Format=Legacy`, or an `-Out` ending in `.dsm` / `.dsf`, is refused, and an `-Out` with any extension but `.dsp` is [`DSH9210`](../diagnostics/DSH9xxx.md) | `<SourceDirectory>/Decompiled/Pipelines/<package path>.dsp` |
 | anything else | — | error |
 
@@ -259,7 +256,7 @@ different set of sources than the compiler does would report a missing file as a
 ### It never writes an asset
 
 A baseline capture over a project must not be a rebuild-and-save of every generated `.uasset` just to
-read them back. `dump-graph` therefore runs with the generator's write ownership switched off for the
+read them back. `dump-graph` therefore runs with the compiler's write ownership switched off for the
 whole sweep, which makes generation refuse — *before* the old graph is torn down — any asset that
 would persist.
 
@@ -684,10 +681,11 @@ never reads `-Force`.
   auto-compile-on-save, no WebSocket server on port 17864, no `diagnostics.json` writer, no
   `bridge.db`, and no menu registration. The only exception is the cook commandlet, which installs a
   post-engine-init hook. See [Editor bridge](bridge.md).
-- **The commandlet writes real packages.** Compilation runs with the transient flag off, so
-  `/Game/...` `.uasset` files are created and saved on disk. The interactive editor does the
-  opposite: every compile there is memory-only. This is the intended way to materialize a whole
-  project's sources in CI. See [Ephemeral materials](../generation/ephemeral.md).
+- **The commandlet writes real packages.** `compile` asks for every ThinCustom product
+  Materialized, so `/Game/...` `.uasset` files are created and saved on disk. The interactive editor
+  builds a ThinCustom product Ephemeral (memory-only) unless it is already saved; a `Graph`
+  material and a material function are saved to disk by both. This is the intended way to
+  materialize a whole project's sources in CI. See [Ephemeral materials](../generation/ephemeral.md).
 - Because assets are persisted, a commandlet run can leave assets on disk that shadow the editor's
   Ephemeral materials. *Tools ▸ DreamShader ▸ Make Ephemeral* removes them.
 - Cooking is a separate commandlet. On the cook **director** only (a process whose `-run=` contains
@@ -710,20 +708,22 @@ Runtime substitutions are shown as `{Placeholder}`. All messages go to `LogDream
 | Message | Severity | Cause |
 | :-- | :-- | :-- |
 | *(the usage banner)* | Error | no command token and no `Command=` value |
-| `Unknown DreamShader command '{Command}'.` + the usage banner | Error | command is not `compile` / `generate` / `decompile` / `export` |
+| `Unknown DreamShader command '{Command}'.` + the usage banner | Error | the command is none of the spellings under [Commands](#commands) |
 | *(the usage banner)* | Error | `compile` with neither `-Source` / `-File` nor `-All` |
 | `DreamShader commandlet found no source files to compile.` | **Warning** | the resolved source list is empty; the run still exits `0` |
 | `DreamShader compile requires a .dss, .dsi, .dsp, .dsm or .dsf file: {Path}` | Error | the file is not a DreamShader source, or is a `.dsh` header |
 | *(the compile result message)* | Display / Error | per-file outcome; see [Result messages](#result-messages) |
-| *(the usage banner)* | Error | `decompile` without `-Asset` |
+| *(the usage banner)* | Error | `decompile` with neither `-Asset` nor `-SourceFile` |
+| `DreamShader decompile: -Format takes Dss, Legacy or Auto; got '{Value}'.` | Error | an unknown `-Format` |
 | `DreamShader could not load asset '{AssetPath}'.` | Error | the asset failed to load under both the normalized and the raw path |
+| `DreamShader decompile: {Error}` | Error | the `-SourceFile` source does not resolve, or nothing it builds exists yet — compile it first |
 | `DreamShader failed to decompile '{LoadPath}': {Error}` | Error | the decompiler reported failure |
-| `DreamShader decompile supports Material and MaterialFunction assets only: {AssetPath}` | Error | unsupported asset class (surfaced through the message above) |
+| `DreamShader decompile supports Material and MaterialFunction assets only: {AssetPath}` | Error | unsupported asset class for `-Format=Legacy` (surfaced through the message above); the 2.0 decompiler answers [`DSH9086`](../diagnostics/DSH9xxx.md#dsh9086) |
 | `Decompile did not produce source text.` | Error | decompiler failed with no error text |
 | `DreamShader failed to resolve an output file path.` | Error | the destination path resolved empty |
 | `DreamShader failed to create output directory '{Directory}'.` | Error | the destination directory could not be created |
 | `DreamShader failed to write decompiled source '{Path}'.` | Error | the file could not be written |
-| `DreamShader decompiled '{LoadPath}' to '{OutputPath}'.` | Display | success |
+| `DreamShader decompiled '{LoadPath}' to '{OutputPath}' ({Format}).` | Display | success; `{Format}` is `dss` or `legacy` |
 | `DreamShader commandlet found no source files to dump.` | **Warning** | `dump-graph` resolved an empty source list; the run still exits `0` |
 | `DreamShader dump-graph requires a .dss, .dsi, .dsp, .dsm or .dsf file: {Path}` | Error | the file is not a DreamShader source, or is a `.dsh` header |
 | `DreamShader failed to dump '{Path}': {Error}` | Error | generation or the dump failed; see [`DSH9030`–`DSH9034`](../diagnostics/DSH9xxx.md) |
@@ -857,8 +857,8 @@ sources, then list it:
 Console output of a successful two-file `-All` run:
 
 ```text
-LogDreamShader: Display: Generated ShaderFunction /Game/Functions/MF_Noise from C:/Projects/MyGame/DShader/Functions/MF_Noise.dsf.
-LogDreamShader: Display: Generated DreamShader thin-custom material /Game/Materials/M_Sample from C:/Projects/MyGame/DShader/Materials/M_Sample.dsm.
+LogDreamShader: Display: Generated MaterialFunction /Game/Functions/MF_Noise.MF_Noise from C:/Projects/MyGame/DShader/Functions/MF_Noise.dsf.
+LogDreamShader: Display: Generated Material /Game/Materials/M_Sample.M_Sample from C:/Projects/MyGame/DShader/Materials/M_Sample.dsm.
 ```
 
 ## See also

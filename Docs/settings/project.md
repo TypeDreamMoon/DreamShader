@@ -38,13 +38,13 @@ Every configurable property, grouped by the category it appears under in the pan
 | Paths | Generated Shader Directory | `GeneratedShaderDirectory` | `FDirectoryPath` | `Intermediate/DreamShader/GeneratedShaders` | Where the generated `.ush` include is written and the virtual shader directory is mapped. Empty falls back to the default. |
 | Paths | **Scan Plugin Source Directories** | `bScanPluginSourceDirectories` | `bool` | `true` | When on, every enabled plugin that has a `DShader` folder contributes a source root of its own. Off leaves the project's *Source Directory* as the only root. |
 | Compiler | **Preprocessor Defines** *(since 1.9.0)* | `PreprocessorDefines` | `TMap<FString, FString>` | *empty* | Names visible to [`#if`](../language/preprocessor.md) in every source the project compiles. Keys are **case-sensitive**; an empty value is a bare marker, true to `#if` and to `defined()`. A key beginning with `DS_` is dropped with a warning — that prefix is reserved for the builtins. Editing the map rebuilds the sources that read a changed name. |
-| Compiler | **Default Compiler Backend** | `DefaultBackend` | `EDreamShaderDefaultBackend` | `ThinCustom` | Backend for a source file that does not set `Settings = { Backend = … }`. Changing it regenerates every source file in memory. |
+| Compiler | **Default Compiler Backend** | `DefaultBackend` | `EDreamShaderDefaultBackend` | `ThinCustom` | Backend for a source file that does not set `Settings = { Backend = … }`. Changing it rebuilds every source whose build key it changes; one it does not affect is skipped. |
 | Compiler | **Graph Layout Style** *(since 2.0.0)* | `GraphLayoutStyle` | `EDreamShaderGraphLayoutStyle` | `Blocks` | What lays a generated graph out: one of the three layouts that read the compiler's IR — `Blocks` (a page of boxes in source order, named reroutes between them; the default), `SourceBands` (one band per source statement) and `Layered` (the whole graph in layers) — or `Classic`, the 1.x layout. See [Graph layout](../generation/graph-layout.md#layout-styles); `dsc dump-layout` draws the three IR styles without building anything. Not part of the build key: a layout moves nodes, not what they compute. A source is therefore re-laid when it is next **rebuilt** -- an unchanged one is skipped as usual, so *Recompile* it (or `compile -Force`) to see an existing graph in the new style. |
-| Compiler | **Show Ephemeral Materials** | `bShowEphemeralMaterials` | `bool` | `false` | When off, memory-only DreamShader instances report themselves as non-assets and disappear from the Content Browser, asset-registry enumeration and save pickers. Read live, on every query. |
+| Compiler | **Show Ephemeral Materials** | `bShowEphemeralMaterials` | `bool` | `false` | When off, memory-only DreamShader instances report themselves as non-assets and disappear from the Content Browser, asset-registry enumeration and save pickers. Applies to the `ThinCustom` backend only: a `Graph` material is a plain `UMaterial` with no Ephemeral state and is always visible. Read live, on every query. |
 | Compiler | Auto Compile On Save | `bAutoCompileOnSave` | `bool` | `true` | When off, the source-directory watcher ignores file changes entirely. |
 | Compiler | Save Debounce Seconds | `SaveDebounceSeconds` | `float` | `0.25` | Quiet period after a file change before compiling. Clamped to `[0.05, 10.0]`; the slider stops at `2.0`. Falls back to `0.25` when the settings object is unavailable. |
 | Compiler | Verbose Logs | `bVerboseLogs` | `bool` | `false` | Adds `Display`-level logging of the dependent-file compile queue. |
-| Decompiler | Export Decompiled Layout | `bExportDecompiledLayout` | `bool` | `true` | When on, a decompiled `.dsm` carries a `Layout = { … }` section reproducing node positions. |
+| Decompiler | Export Decompiled Layout | `bExportDecompiledLayout` | `bool` | `true` | When on, a decompiled source keeps the node positions: a legacy `.dsm` carries a `Layout = { … }` section, and a `.dss` from the 2.0 decompiler `#pragma layout` lines *(since 2.0.0)*. |
 | Editor | Open In New Window | `bOpenInNewWindow` | `bool` | `true` | When off, the VSCode launch command gets `--reuse-window`. |
 | Editor | **Material Instance Subfolder** | `InstanceSubfolder` | `FString` | `Instances` | Subfolder, relative to the parent material's folder, where the Material Content Browser creates new instances. Empty creates them alongside the parent. The asset is named `MI_<ParentName>`, uniquified. |
 | Editor | **Sync Source References On Asset Rename** *(since 1.9.0)* | `bSyncSourceReferencesOnAssetRename` | `bool` | `true` | When on, renaming or moving an asset rewrites the `.dsm` / `.dsf` / `.dsh` files that reference it, backing each one up to `<file>.bak` first. Project sources only — plugin roots are never touched. See [Asset rename sync](../tools/asset-rename-sync.md). Read live, so turning it off takes effect on the next rename. |
@@ -77,14 +77,17 @@ Full behaviour, including how a per-file `Backend` setting overrides this, is on
 
 > How DreamShader materializes a source file that does not specify `Settings = { Backend = "..." }`.
 > ThinCustom (the default) builds the material graph on a hidden per-material base and emits a
-> lightweight, memory-only material instance of it -- full feature surface, no visible per-material
+> lightweight, Ephemeral material instance of it -- full feature surface, no visible per-material
 > asset. Graph builds a visible UMaterial node graph. Instance is a deprecated alias for ThinCustom.
 
 *Show Ephemeral Materials*:
 
-> When enabled, the memory-only DreamShader materials appear in the Content Browser like unsaved
-> assets. Disabled by default: the source files are the intended authoring surface, and hiding the
-> materials also prevents accidental Save actions from materializing them to disk.
+> Applies to the ThinCustom/Instance backend only -- it is the only one with an Ephemeral state,
+> which it hides via UDreamShaderMaterialInstance::IsAsset. When enabled, Ephemeral materials appear
+> in the Content Browser like unsaved assets. Disabled by default: the source files are the intended
+> authoring surface, and hiding the materials also prevents accidental Save actions from
+> materializing them to disk. Graph-backend materials are plain UMaterials with no way to opt out of
+> asset enumeration, so they are always visible and this setting does not affect them.
 
 *Material Instance Subfolder*:
 
@@ -140,7 +143,7 @@ The complete built-in tables are on [Material enums](material-enums.md).
 | Setting | Also reachable from |
 | :-- | :-- |
 | `bShowEphemeralMaterials` | *Tools ▸ DreamShader ▸ Show Ephemeral Materials*, and the Project page of the [Material Content Browser](../tools/material-browser.md). Both write the ini and re-broadcast asset creation/removal for every memory-only instance. |
-| `DefaultBackend` | Changing it in the panel triggers an immediate regeneration of every source file, plus a notification when persisted generated assets shadow the result. |
+| `DefaultBackend`, the three mapping maps, `PreprocessorDefines` | Changing one in the panel rebuilds the project's sources at once and logs `DreamShader setting '{Setting}' changed; regenerating all source files.` Each of them is part of the build key, so a source the change does not affect is skipped. A notification follows when persisted generated assets shadow the result. |
 | `SourceDirectory`, `GeneratedShaderDirectory` | Consumed by the module's directory helpers; see [Generated HLSL](../generation/generated-hlsl.md) and [Packages](../tools/packages.md). |
 | `bSyncSourceReferencesOnAssetRename` | Read on every asset rename by the [asset rename sync service](../tools/asset-rename-sync.md), and again when the coalesced batch is flushed. There is no menu entry for it. |
 | `PreprocessorDefines` | One of five tiers that make up the define table a compile sees, and the lowest-precedence one that a person edits. C++ registration and providers outrank it, and `-Define=` on the [commandlet](../tools/commandlet.md) outranks those; only the builtin `DS_` names outrank everything. See [Preprocessor ▸ Where defines come from](../language/preprocessor.md#where-defines-come-from). |

@@ -28,9 +28,10 @@ already exists. The mapping is unconditional — it does not depend on any proje
 choice or engine version — so `/Plugin/DreamShader/DreamShaderBuiltins.ush` always resolves for the
 engine's shader preprocessor.
 
-This is a separate mapping from the one used for generated code. Per-source generated helper
-includes live under the *generated shader virtual directory* and are named
-`<SanitizedBaseName>_<hash>.ush`; see [Generated HLSL](../generation/generated-hlsl.md).
+This is a separate mapping from the *generated shader virtual directory*, `/DreamShaderGenerated`,
+which the module also registers. Since 2.0.0 DreamShader writes no per-source helper `.ush` there: the
+HLSL of a `Function` is embedded in the code of its Custom node. See
+[Generated HLSL](../generation/generated-hlsl.md).
 
 <a id="reachability"></a>
 
@@ -41,7 +42,7 @@ Nothing in the plugin emits an include for this header, and nothing in the plugi
 
 | Path | Includes this header? |
 | :-- | :-- |
-| The generated per-source helper `.ush` added to a `Custom` node's include list | no — it contains only the `DreamShaderFn_*` definitions produced from `Function` blocks |
+| A `Custom` node made from a `Function` block | no — the body is the node's code, other `Function`s it calls are embedded as `DreamShaderFn_*` members of a generated wrapper struct, and the node's include list holds only the `#include` lines at the head of the body *(since 2.0.0; 1.x wrote a per-source helper `.ush`)* |
 | The `Graph` backend | no — it emits material nodes, not HLSL |
 | The `ThinCustom` backend | no |
 | A hand-written `#include` in a [`Function`](../language/function.md) HLSL body | yes — the virtual path resolves |
@@ -95,19 +96,21 @@ The `WSDemote` calls lower the engine's large-world-coordinate vectors to `float
 The header's comment notes that the DSL used to write the unprefixed spellings
 `SampleTexture2D` / `SampleTexture2DLod` / `SampleTexture2DBias` and have the generator lower them to
 these macros. No such rewrite is performed today. `SampleTexture2D` is still a reserved name in a
-`Graph` block, where it desugars to a `TextureSample` node — see [`UE.*` catalogue](ue.md) — but the
-`Lod` and `Bias` spellings have no `Graph` equivalent.
+`Graph` block, where it desugars to a `TextureSample` node — see
+[`UE.Expression`](ue-expression.md#sampletexture2d) — but the `Lod` and `Bias` spellings have no
+`Graph` equivalent.
 
 ## Notes
 
 > [!NOTE]
 > **Put the `#include` first.** An `#include` written at the top of a `Function` body (only
-> whitespace and comments before it) is hoisted out of the function to file scope — see
+> whitespace and comments before it) is taken out of the body and put on the Custom node's include
+> list, which the engine includes outside the generated function — see
 > [Function ▸ Includes](../language/function.md#includes) — so the header's function definitions
-> compile normally. An `#include` that comes *after* a statement is left where it is and lands
-> inside the generated `DreamShaderFn_*` definition; there the 22 macros still work (a `#define` is
-> legal anywhere) but the three function definitions (`DS_TexCoord`, `DS_VertexColor`, `DS_Panner`)
-> are not legal inside another function body.
+> compile normally. An `#include` that comes *after* a statement, or after any other `#` line, stays
+> in the body, which the engine pastes inside a function; there the 22 macros still work (a
+> `#define` is legal anywhere) but the three function definitions (`DS_TexCoord`, `DS_VertexColor`,
+> `DS_Panner`) are not legal inside another function body.
 
 > [!WARNING]
 > **`DS_TexCoord` and `DS_VertexColor` depend on translator side effects that nothing arranges any

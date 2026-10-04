@@ -13,7 +13,7 @@ Only two things move a product between them:
 
 | Transition | Triggered by |
 | :-- | :-- |
-| **Materialize** | an explicit *Materialize* action, a cook, or creating a child material instance of the product |
+| **Materialize** | an explicit *Materialize* action, a cook, the commandlet, creating a child material instance of the product, or compiling a `.dsi` whose parent it is ([`DSH8244`](../diagnostics/DSH8xxx.md#dsh8244), [`DSH8264`](../diagnostics/DSH8xxx.md#dsh8264)) |
 | **Make Ephemeral** | *Tools ▸ DreamShader ▸ Make Ephemeral*, which deletes the package on disk |
 
 And one rule decides everything else: **a product that has a package on disk stays on disk.** Storage
@@ -63,13 +63,15 @@ Two overrides give the class its behaviour:
 
 | State | Base object name | Outer | Object flags |
 | :-- | :-- | :-- | :-- |
-| Ephemeral | `MB_DreamThinBase_<sanitized Name>` | the transient package | `RF_Public`, `RF_Standalone`, `RF_Transient` |
+| Ephemeral | `MB_DreamThinBase_<sanitized package>` | the transient package | `RF_Public`, `RF_Standalone`, `RF_Transient` |
 | Materialized | `MB_DreamThinBase_<instance leaf name>` | **the instance object itself** | `RF_Public`, `RF_Standalone` |
 
-`<sanitized Name>` is the block's whole logical `Name` with every character outside `[A-Za-z0-9_]`
-replaced by `_` and runs of underscores collapsed, so `Shader(Name="Mat/Test")` yields
-`MB_DreamThinBase_Mat_Test`. Sanitization is not cosmetic: a `/` inside an `FName` reads as a
-subobject separator, which would break base reuse and leak a fresh base on every regeneration.
+`<sanitized package>` is the instance's package name with every character outside `[A-Za-z0-9_]`
+replaced by `_` and runs of underscores collapsed, so the instance `/Game/Mat/Test` has the base
+`MB_DreamThinBase__Game_Mat_Test` *(since 2.0.0; 1.x sanitized the block's `Name`)*, so two instances
+that share a leaf name in different folders never share a base. Sanitization is not cosmetic: a `/`
+inside an `FName` reads as a subobject separator, which would break base reuse and leak a fresh base
+on every regeneration.
 
 When Materialized the base is a subobject of the instance, so it serializes **into the instance's own
 package** as a plain export. One asset, one `.uasset`, no `MB_DreamThinBase_*` sibling in the Content
@@ -117,9 +119,9 @@ Hidden {Count} Ephemeral material(s) from the Content Browser and asset pickers.
 ```
 
 > [!NOTE]
-> The pre-2.0 config key was `bShowEphemeralMaterials`. A project that set it is
-> migrated on load — the old key is read once and folded into the new one — so an existing
-> `DefaultEngine.ini` keeps working and does not silently revert to the default.
+> The pre-2.0 config key was `bShowInMemoryMaterialsInContentBrowser`. A project that set it is
+> migrated on load — the old key is read once and folded into `bShowEphemeralMaterials` — so an
+> existing `DefaultEngine.ini` keeps working and does not silently revert to the default.
 
 > [!WARNING]
 > While the toggle is on, an Ephemeral material is a normal-looking tile, and an explicit **Save**
@@ -135,7 +137,7 @@ named at the top of this page.
 
 | Surface | Action |
 | :-- | :-- |
-| Material Content Browser, Gen page | the **Materialize** button — *"Write this memory-only material (and its base) to disk."* (the button's own wording) |
+| [Material Content Browser](../tools/material-browser.md#inspector), inspector | the **Materialize** button — *"Write this memory-only material (and its base) to disk."* (the button's own wording) |
 | Content Browser context menu | the DreamShader materialize action |
 | Implicit | creating a child material instance of an Ephemeral parent Materializes the parent first |
 
@@ -187,17 +189,19 @@ A consequence worth knowing: **the startup sweep no longer forces**. Forcing was
 Ephemeral product regenerated regardless of its source hash; it stopped being free once a disk-backed
 asset started being saved, because every launch would then rewrite every persisted generated asset.
 Startup now respects the [source-hash skip](caching.md), so an up-to-date saved asset is left alone.
-Changing the **Default Compiler Backend** still forces, because the hash cannot see that setting.
+Changing the **Default Compiler Backend** does not force either: the [build
+key](caching.md#it-is-a-build-key-not-just-a-source-hash) covers that setting, so every asset it affects
+fails the skip on its own.
 
 Two tools address the persisted assets themselves:
 
 | Command | Effect |
 | :-- | :-- |
 | *Tools ▸ DreamShader ▸ Make Ephemeral* | deletes the packages of **Materialized ThinCustom products** that carry DreamShader provenance metadata, with a confirmation listing every one, then rebuilds them Ephemeral. Hand-authored assets are never touched, and Graph materials and material functions are not listed — they have no Ephemeral state to return to. Empty case: `No Materialized DreamShader ThinCustom products found.` |
-| *Tools ▸ DreamShader ▸ Clean Generated Shaders* | deletes every `*.ush` under the generated-shader directory and queues a full recompile — see [Generated HLSL](generated-hlsl.md) |
+| *Tools ▸ DreamShader ▸ Clean Generated Shaders* | deletes every `*.ush` under the generated-shader directory and queues a full forced recompile. No compile writes there since 2.0.0 — see [Generated HLSL](generated-hlsl.md#location) |
 
-Changing the **Default Compiler Backend** setting regenerates every source and then warns if any
-saved generated assets remain:
+Changing the **Default Compiler Backend** setting — or a mapping table, or the preprocessor defines —
+regenerates every source, unforced, and then warns if any saved generated assets remain:
 
 ```text
 {Count} previously generated asset(s) are still saved on disk and shadow the Ephemeral materials.
@@ -266,7 +270,7 @@ CDO is loaded at startup, for instance — were never affected by this.
   undo/redo without desynchronizing the shader map.
 - Nothing here changes the source-hash short circuit; a compile skips work when the hash is
   unchanged, whichever backend produced the asset. *Recompile DSM* and *Clean Generated
-  Shaders* force past it, so a cleaned shader directory is always refilled.
+  Shaders* force past it.
 
 ## Example
 
@@ -285,7 +289,7 @@ Saving that file in the editor produces an Ephemeral product:
 ```text
 package        /Game/Materials/M_Emissive          (PKG_NewlyCreated, not dirty, not on disk)
   object       M_Emissive                          UDreamShaderMaterialInstance
-    subobject  MB_DreamThinBase_Materials_M_Emissive   UMaterial, holds the node graph
+  transient    MB_DreamThinBase__Game_Materials_M_Emissive   UMaterial, holds the node graph
 ```
 
 After *Materialize*:

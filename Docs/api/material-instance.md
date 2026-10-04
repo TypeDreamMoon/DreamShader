@@ -53,8 +53,8 @@ and material properties, enumerated natively by the engine.
 
 | Property | Type | Specifiers | Written with | Meaning |
 | :-- | :-- | :-- | :-- | :-- |
-| `SourceFilePath` | `FString` | `VisibleAnywhere`, `Category="DreamShader"` | the **absolute normalized** source path, as produced by [`NormalizeSourceFilePath`](dreamshader-module.md#normalizesourcefilepath) | The `.dsm` this instance was generated from. Read back by the instance factory and shown in the details panel. |
-| `SourceHash` | `FString` | `VisibleAnywhere`, `Category="DreamShader"` | an 8-hex-digit CRC32 of the prepared source text, formatted `%08x` | Informational. See the warning below. |
+| `SourceFilePath` | `FString` | `VisibleAnywhere`, `Category="DreamShader"` | the **absolute normalized** source path, as produced by [`NormalizeSourceFilePath`](dreamshader-module.md#normalizesourcefilepath) | The source this instance was generated from. Read back by the instance factory and the compiler service, and shown in the details panel. |
+| `SourceHash` | `FString` | `VisibleAnywhere`, `Category="DreamShader"` | an 8-hex-digit CRC32 of the **build key**, formatted `%08x`: the preprocessed source and the headers it includes, plus the plugin and engine versions, the settings that change what is built and the defines the source read ([Caching](../generation/caching.md#it-is-a-build-key-not-just-a-source-hash)) | Informational. See the warning below. |
 
 Both are read-only in the details panel — `VisibleAnywhere`, not `EditAnywhere` — and neither is
 `Config` or `Transient`.
@@ -118,7 +118,7 @@ and behaves like any other asset.
 
 ## Role in the ThinCustom result
 
-One ThinCustom compile produces **one package** containing:
+A Materialized ThinCustom compile produces **one package** containing:
 
 ```text
 /Game/Materials/M_Emissive                      UDreamShaderMaterialInstance   (the addressable asset)
@@ -126,28 +126,38 @@ One ThinCustom compile produces **one package** containing:
        └─ the generated node graph, parameters, settings, output bindings
 ```
 
+An Ephemeral one keeps the hidden base out of that package: it is a transient `UMaterial` in the
+transient package, named `MB_DreamThinBase_` plus the instance's package path run through
+[`SanitizeIdentifier`](dreamshader-module.md#sanitizeidentifier) (`MB_DreamThinBase__Game_Materials_M_Emissive`),
+so two instances with the same leaf name in different folders never share a base. See
+[Ephemeral materials](../generation/ephemeral.md).
+
 | Concern | Lives on |
 | :-- | :-- |
 | Node graph, `Properties` nodes, output bindings, `Settings` (shading model, blend mode, domain, flags) | the hidden base `UMaterial` |
 | Asset identity, package, the addressable object path | the `UDreamShaderMaterialInstance` |
 | The static-permutation shader map | the instance, as chain root |
-| Parameter overrides authored by hand | the instance — **destroyed on regeneration** |
+| Parameter overrides authored by hand | the instance — read off before a rebuild and written back after it, by name and kind *(since 1.9.0)* |
 
 > [!WARNING]
-> Regeneration under the ThinCustom backend clears the hidden base's graph and every parameter
-> override on the generated instance. Create a **child** instance if you need overrides that
-> survive a rebuild. See [Regeneration](../generation/regeneration.md).
+> Regeneration under the ThinCustom backend rebuilds the hidden base's graph and clears the
+> instance's parameter values; the overrides are captured first and restored afterwards by name. An
+> override whose parameter was renamed or removed in the source is dropped, and reported once as
+> [`DSH8155`](../diagnostics/DSH8xxx.md#dsh8155). Create a **child** instance for values a rebuild
+> must never touch. See [Regeneration](../generation/regeneration.md#parameter-overrides-on-a-generated-instance).
 
 The instance is created with
 `NewObject<UDreamShaderMaterialInstance>(InstancePackage, FName(*AssetName), RF_Public | RF_Standalone)`,
-or reused in place when an instance of this class already occupies the target path. A non-DreamShader
-object at that path is refused rather than replaced.
+or reused in place when an instance of this class already occupies the target path. Any other object
+at that path is refused rather than replaced ([`DSH8106`](../diagnostics/DSH8xxx.md#dsh8106)), and so
+is a saved instance of this class that carries no DreamShader source metadata
+([`DSH8107`](../diagnostics/DSH8xxx.md#dsh8107)).
 
 ## Notes
 
 - `ClassGroup = DreamShader` places the class in its own group in class pickers. There is no
   `BlueprintType`, no `Blueprintable`, and no factory registered for manual creation — the class is
-  only ever instantiated by the generator.
+  only ever instantiated by the compiler's asset factory.
 - The class ships in the **Runtime** module, not the editor module, because a cooked build must be
   able to load the instances that cooking materialized.
 - Neither override consults the source properties. `SourceFilePath` and `SourceHash` are inert with

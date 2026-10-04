@@ -794,11 +794,14 @@ no value for the graph to read.
 **Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:1888`
 <!-- generated:end DSH6306 -->
 
-**Cause.** `Function Inline` is used. In 1.x `Inline` is an exact synonym of `SelfContained` -- the
-function's HLSL is embedded into each caller's Custom node instead of being referenced through the
-include -- and 2.0 keeps one spelling.
+**Cause.** `Function Inline` is used. In 1.x `Inline` is an exact synonym of `SelfContained`, and 2.0
+keeps one spelling. Both become `@custom selfcontained`, which in 2.0 means the opposite of what 1.x
+meant: 1.x embedded the functions a `SelfContained` body calls into its Custom node, while 2.0 embeds
+them into every Custom node by default, and `selfcontained` embeds **nothing** — a call from such a
+body to another `Function` is left to the shader compiler (`DSH6264`).
 
-**Fix.** Write `Function SelfContained`. Migrated files say `/// @custom selfcontained`.
+**Fix.** Drop the modifier: `Function Name(...)` already gets what 1.x `SelfContained` / `Inline` gave
+it. Keep it only for a body whose calls really resolve through its own `#include`s.
 
 ## DSH6307
 

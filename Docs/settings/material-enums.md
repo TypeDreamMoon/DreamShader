@@ -73,11 +73,11 @@ Reflected from `EMaterialShadingModel`, prefix `MSM_` stripped.
 `substrate`.
 
 Excluded: `MSM_NUM`, `MSM_MAX` and — deliberately — **`MSM_FromMaterialExpression`**. Writing
-`ShadingModel = "FromMaterialExpression";` is an error, not a way to drive the shading model from the
+`ShadingModel = "FromMaterialExpression";` is an error (`DSH7129`), not a way to drive the shading model from the
 graph.
 
-On UE 5.3, `ShadingModel = "Substrate";` and `ShadingModel = "Strata";` are rejected with a dedicated
-message rather than the generic "unsupported" one. See [Diagnostics](#diagnostics) and
+On UE 5.3, `ShadingModel = "Substrate";` and `ShadingModel = "Strata";` are rejected with a code of their own
+(`DSH7128`) rather than the generic "unsupported" one. See [Diagnostics](#diagnostics) and
 [Substrate builtins](../builtins/substrate.md).
 
 ## BlendMode
@@ -187,16 +187,16 @@ matter.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}`.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Unsupported ShadingModel '{Value}'.` | the value matched no project mapping and no built-in alias, or matched an entry mapped to `MSM_MAX` |
-| `ShadingModel="Substrate" requires Unreal Engine 5.4 or newer.` | the value trims and case-folds to `Substrate` or `Strata` on UE 5.3 |
-| `Unsupported BlendMode/RenderType '{Value}'.` | no match for the `BlendMode` / `RenderType` value |
-| `Unsupported MaterialDomain '{Value}'.` | no match for the `MaterialDomain` / `Domain` value |
+| [`DSH7129`](../diagnostics/DSH7xxx.md#dsh7129) | the `ShadingModel` value matched no project mapping and no built-in alias, or matched an entry mapped to `MSM_MAX` |
+| [`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128) | the `ShadingModel` value trims and case-folds to `Substrate` or `Strata` on UE 5.3 |
+| [`DSH7127`](../diagnostics/DSH7xxx.md#dsh7127) | no match for the `BlendMode` / `RenderType` value |
+| [`DSH7130`](../diagnostics/DSH7xxx.md#dsh7130) | no match for the `MaterialDomain` / `Domain` value |
 
-All three are raised during validation, before anything is written to the material.
+All four are raised while the settings are validated, before any of them is applied, and reach you
+inside [`DSH8215`](../diagnostics/DSH8xxx.md#dsh8215), which names the material; the rebuild is rolled
+back.
 
 ## Example
 
@@ -243,4 +243,4 @@ BlendMode      = BLEND_AlphaComposite
 - [Output bindings](../language/output-bindings.md) — `Base.FrontMaterial` and the forced Substrate model
 - [Decompiler](../tools/decompiler.md) — the canonical spellings written back out
 - [Workspace](../tools/workspace.md) — the exported `settings.json` completion manifest
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code

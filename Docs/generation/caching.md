@@ -8,7 +8,7 @@ source skip regeneration entirely.
 | | |
 | :-- | :-- |
 | Kind | generation optimization |
-| Hashed text | the **prepared** source — the file with every `import` recursively inlined |
+| Hashed text | the **preprocessed** text of the file and of every `.dsh` it imports, plus the context that compiles it |
 | Algorithm | `FCrc::StrCrc32`, formatted `%08x` — eight lowercase hex digits |
 | Stored in | the generated asset's package metadata, keyed by the asset object |
 | Bypassed by | the `bForce` flag on the generation entry points |
@@ -16,22 +16,30 @@ source skip regeneration entirely.
 ## Synopsis
 
 ```text
-prepared text  ->  CRC32  ->  "%08x"  ->  DreamShader.SourceHash   e.g. "9f2c41ab"
+digest text    := for each imported header, in the order the include resolver first read it:
+                    "// Begin DreamShader source: <absolute path>\n" <preprocessed header>
+                    "\n// End DreamShader source: <absolute path>\n\n"
+                  then the same block for the file itself
+                  (a `.dsi` adds its resolved parent, a `.dsp` what it references)
+build key      := "DSK3|Plugin=<version>|Engine=<major>.<minor>|" <settings> "Defines=<read defines>|"
+                  "\n--\n" <digest text>
+build key      ->  CRC32  ->  "%08x"  ->  DreamShader.SourceHash   e.g. "9f2c41ab"
 source path    ->  project-relative, forward slashes  ->  DreamShader.SourceFile
 ```
 
 ## What is hashed
 
-The hash covers the text the parser actually sees, **after** import inlining — not the bytes of the
-file on disk. That text is the concatenation of the file and its whole transitive `import` closure,
-with each import line blanked out and each included file bracketed by
-`// Begin DreamShader source: <path>` / `// End DreamShader source: <path>` markers.
+The hash covers the text the compile actually reads, **after** preprocessing — not the bytes of the
+file on disk. *(since 2.0.0)* Nothing is inlined into the parse any more: each imported `.dsh` is
+preprocessed and parsed on its own, and the build key hashes each header's text in its own
+`// Begin DreamShader source: <path>` / `// End DreamShader source: <path>` block, then the file's,
+including its `import` lines. A header that two imports reach is hashed once.
 
 | Change | Changes the hash of |
 | :-- | :-- |
 | edit `M_Foo.dsm` | `M_Foo.dsm` |
 | edit `Common.dsh`, imported by `M_Foo.dsm` and `M_Bar.dsm` | both `M_Foo.dsm` and `M_Bar.dsm` |
-| move the project to another directory | nothing — the stored path is project-relative |
+| move the project to another directory | **every** source — the blocks name each file by its absolute path. The stored `DreamShader.SourceFile` is project-relative and still matches |
 | rename the source file | the stored path no longer matches, so nothing is skipped |
 | reformat whitespace or edit a comment | the hash — the text is compared byte for byte, not semantically |
 | change **Default Compiler Backend** | **every** source *(since 1.8.0)* |
@@ -47,7 +55,7 @@ check answer "still current" about an asset that is not:
 
 | Input | Why it is in the key |
 | :-- | :-- |
-| the prepared source text | the compile's actual input, imports already inlined — which is why a changed `.dsh` or a called `.dsf` needs nothing else here |
+| the preprocessed text of the file and of every header it imports | the compile's actual input — which is why a changed `.dsh` needs nothing else here |
 | [Default Compiler Backend](../settings/project.md) | decides whether a `Shader` block becomes a `UMaterial` or a thin instance |
 | the mapping tables | decide what a `Settings` key resolves to |
 | plugin version, plus a hand-bumped format tag — `DSK3` *(since 1.9.0)* | upgrading the generator invalidates what the old one wrote |
@@ -78,21 +86,24 @@ reuse the other's cached asset.
 > per asset, once, and is the intended effect.
 
 > [!NOTE]
-> Editing a `.dsh` invalidates every dependent `.dsm` and `.dsf`, but a header never generates
-> anything by itself — saving it fails with `DreamShader header '{File}' does not generate assets
-> directly. Recompile dependent .dsm or .dsf files instead.` The dependents are only rebuilt when
-> they are themselves compiled: on their own save, or through *Generate all Ephemeral materials*
-> (editor startup and every change to a setting the build key covers), the Material
-> Content Browser's Compile button, the [commandlet](../tools/commandlet.md), or a cook.
+> Editing a `.dsh` invalidates every source that imports it, but a header never generates anything
+> by itself: handed to the compiler directly it is [`DSH8296`](../diagnostics/DSH8xxx.md#dsh8296).
+> With **Auto Compile On Save** on, saving a header queues every source that imports it, directly or
+> through another header, and those compiles find their keys moved. Otherwise the dependents are
+> rebuilt when they are themselves compiled: on their own save, by the startup sweep or the sweep
+> after a change to a setting the build key covers, the Material Content Browser's Compile button,
+> the [commandlet](../tools/commandlet.md), or a cook.
 
-When a batch contains both a function and something that calls it, the batch is **ordered so
-that dependencies compile first** *(since 1.8.0)*. This is not a nicety: a `.dsm` that calls a
-`ShaderFunction` binds its call node against the live `UMaterialFunction` asset —
-`SetMaterialFunction` reads the pins off the object, not off the source — so compiling the caller
-first binds it against the *previous* version of that function's interface. Rename a function
-input and save both files, and which one won used to depend on the iteration order of the pending
-file map. A cycle is left for the import loader to reject with `DreamShader import cycle detected
-at '{File}'.`
+When a batch contains both a file and one it depends on — a header it imports, the parent of a
+`.dsi`, a material a `.dsp` names — the batch is **ordered so that dependencies compile first**
+*(since 1.8.0)*. This is not a nicety: a material that calls a `ShaderFunction` binds its call node
+against the live `UMaterialFunction` asset — the emitter reads the pins off the object, not off the
+source — so compiling the caller first binds it against the *previous* version of that function's
+interface. Inside one file the emitter keeps the same order, building a function another product of
+the file calls before the caller; two that call each other are
+[`DSH8299`](../diagnostics/DSH8xxx.md#dsh8299). Files in an import cycle are left in the order the
+walk reached them; the compile rejects the cycle itself with
+[`DSH4211`](../diagnostics/DSH4xxx.md#dsh4211).
 
 ## Custom Pass pipelines
 
@@ -131,16 +142,20 @@ Two keys are written into the generated asset's **package metadata**, keyed by t
 | `DreamShader.SourceHash` | the eight-hex-digit CRC32. Written only when non-empty. |
 
 Storing the *project-relative* path is deliberate: a checkout on another machine, or a moved project
-directory, still recognizes its own generated assets instead of regenerating everything.
+directory, still recognizes its generated assets as its own — the [ownership
+guard](regeneration.md#ownership-guard) and *Make Ephemeral* read this key. The hash does not travel
+as well: the build key names each file by its absolute path, so a checkout at another location
+rebuilds every asset once.
 
 Which assets get stamped, and when:
 
 | Asset | Stamped |
 | :-- | :-- |
-| `UDreamShaderMaterialInstance` (ThinCustom) | **always** — memory-only and persisted alike |
-| the hidden `MB_DreamThinBase_*` base | persist mode only |
+| `UDreamShaderMaterialInstance` (ThinCustom) | **always** — Ephemeral and Materialized alike |
+| the hidden `MB_DreamThinBase_*` base | Materialized only |
 | `UMaterial` (Graph backend) | **always** *(since the release after 1.8.0; before it, persist mode only)* |
 | `UMaterialFunction` / layer / layer blend | **always** *(same)* |
+| a `.dsi`'s `UMaterialInstanceConstant` | **always** |
 | `UDreamPassPipeline` *(2.1.0)* | **always** — the hash only on a build that may write to disk. A pipeline built in memory because writing is refused (another editor owns writes, or `dump-graph`'s guard) is stamped with the path alone, so no later compile skips on it |
 | an exported buffer's render target *(2.1.0)* | the path alone, never a hash — it would move with every edit of the `.dsp` — and `DreamShader.PassPipeline`, the object path of the pipeline it belongs to |
 
@@ -174,14 +189,19 @@ The short circuit fires only when **all** of the following hold:
 | 4 | the stored source path equals the project-relative path of the source being compiled, **ignoring case** |
 | 5 | the stored `DreamShader.SourceHash` equals the new hash, **case-sensitively** |
 
+A skip is reported as the info [`DSH8237`](../diagnostics/DSH8xxx.md#dsh8237), and the product's result
+line reads `Skipped {ObjectPath} from {File}; source hash is unchanged (build key {BuildKey}).` Before
+the hash is compared, a build that would write to disk is skipped when another editor owns writing
+this project's generated assets ([`DSH8209`](../diagnostics/DSH8xxx.md#dsh8209)).
+
 Per asset kind:
 
-| Asset | Skip point | Extra condition | Message |
+| Asset | Skip point | Extra condition | Result line |
 | :-- | :-- | :-- | :-- |
-| ThinCustom material | after the instance is created or reused, **before** the hidden base is created | — | `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` |
-| `Graph`-backend material | after the material is created or reused | — | `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` |
-| Material function | after the function asset is created or reused | the asset's material-function usage must already match the one the block requires | *silent* — the asset path is returned with no message |
-| `UDreamPassPipeline` *(2.1.0)* | after the pipeline is reused, before its HLSL slots are planned | the slot registry holds every HLSL pass of the pipeline in the slot the asset records, with a snapshot that passed a pre-check and its files on disk, and every exported buffer has its render target — see [Custom Pass pipelines](#custom-pass-pipelines) | `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` |
+| ThinCustom material | after the instance is created or reused, **before** the hidden base is created | — | `Skipped …` |
+| `Graph`-backend material | after the material is created or reused | — | `Skipped …` |
+| Material function | after the function asset is created or reused | the asset's material-function usage must already match the one the block requires | `Skipped …` *(since 2.0.0; through 1.x a function's skip was silent)* |
+| `UDreamPassPipeline` *(2.1.0)* | after the pipeline is reused, before its HLSL slots are planned | the slot registry holds every HLSL pass of the pipeline in the slot the asset records, with a snapshot that passed a pre-check and its files on disk, and every exported buffer has its render target — see [Custom Pass pipelines](#custom-pass-pipelines) | `Skipped …` |
 
 Placing the ThinCustom check before the base is created is what makes a skip cheap: no base
 material, no ownership check, no graph teardown.
@@ -196,14 +216,14 @@ material, no ownership check, no graph teardown.
 | :-- | :-- |
 | Auto-compile on save | **no** — the hash short circuit is active |
 | The startup sweep (`GenerateAllSources`) | **no** — see [Ephemeral materials](ephemeral.md#when-the-asset-already-exists-on-disk) |
-| *Generate all Ephemeral materials* (backend-setting change) | yes |
+| The same sweep after a change to the backend, a mapping table or the preprocessor defines | **no** — the key covers each of them, so only what they affect is rebuilt |
 | *Tools ▸ DreamShader ▸ Recompile DSM*, *Clean Generated Shaders* | yes — queued through the bridge as forced |
 | Bridge `recompile` request (`scope: "file"` / `"all"`) | yes — an explicit request means "rebuild" |
 | Material Content Browser Compile / thumbnail refresh | yes |
-| Live preview render | yes |
+| Live preview render | through the bridge's `previewMaterial`, yes; through the preview WebSocket, only when the request sets `force` |
 | *Materialize*, and child-instance creation | yes |
 | Cook | yes |
-| Commandlet `-run=DreamShader` | only with [`-Force`](../tools/commandlet.md#compile--generate); otherwise it reports `Skipped {AssetPath} from {SourceFile}; source hash is unchanged (build key {BuildKey}).` |
+| Commandlet `-run=DreamShader` | only with [`-Force`](../tools/commandlet.md#compile--generate); otherwise it reports `Skipped {ObjectPath} from {SourceFile}; source hash is unchanged (build key {BuildKey}).` |
 | A `.usf` / `.ush` save, through the bridge *(2.1.0)* | no — the `.dsp`s that compile from the file are queued, and their key covers its text |
 | A `.dsp` or a material it names compiled, through the bridge's dependents queue *(2.1.0)* | no |
 | `dsc pass-registry -Rebuild` *(2.1.0)* | yes, every `.dsp` |
@@ -216,24 +236,25 @@ delete the generated asset.
 
 - The hash is a CRC32, not a cryptographic digest. It detects edits; it is not a security or
   integrity mechanism.
-- The generated `.ush` helper include is **not** covered by this short circuit. It is rewritten on
-  every compile of a unit that declares `Function` blocks, and its file name embeds a hash of the
-  *source path*, not of the source text. See [Generated HLSL](generated-hlsl.md).
+- There is no generated `.ush` include to keep in step *(since 2.0.0)*: a `Function`'s HLSL is
+  written into the Custom node of each call, inside the asset, and an unchanged source skips it with
+  everything else. See [Generated HLSL](generated-hlsl.md).
 - The comparison is per asset. One source file that declares a material and three functions stores
   the same hash on four assets, and each is skipped independently.
 - On UE 5.6 and newer the package metadata is accessed through the engine's value-typed metadata
   API; earlier engines use the object-typed one. The stored keys and values are identical.
-- Nothing writes a generation timestamp. `DreamShader.SourceFile` and `DreamShader.SourceHash` are
-  the only two keys DreamShader ever sets.
+- Nothing writes a generation timestamp. Besides these two keys a build stamps
+  `DreamShader.OutputDigest` and `DreamShader.OutputDigestClasses` ([Divergence](divergence.md)),
+  `DreamShader.SourceSpans` and `DreamShader.DecompileHints` on an asset with a graph, and
+  `DreamShader.PassPipeline` on a pipeline's render target. None of them takes part in the skip.
 
 ## Diagnostics
 
-Runtime substitutions are rendered as `{Placeholder}`.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Skipped {AssetPath} from {File}; source hash is unchanged (build key {BuildKey}).` | the short circuit fired for a material |
-| `DreamShader header '{File}' does not generate assets directly. Recompile dependent .dsm or .dsf files instead.` | a `.dsh` was compiled directly |
+| `DSH8237` | *(info)* the short circuit skipped a product; the result line reads `Skipped …` |
+| `DSH8209` | *(info)* another editor owns writing this project's generated assets, so a build that would write to disk was skipped |
+| `DSH8296` | a `.dsh` was handed to the compiler directly |
 
 ## Example
 
@@ -258,10 +279,10 @@ Shader(Name="Materials/M_Ramp")
 Observed sequence:
 
 ```text
-save M_Ramp.dsm      Generated DreamShader thin-custom material /Game/Materials/M_Ramp from ...M_Ramp.dsm.
-save M_Ramp.dsm      Skipped /Game/Materials/M_Ramp from ...M_Ramp.dsm; source hash is unchanged (build key …).
-edit Common.dsh      (saving the header itself generates nothing)
-save M_Ramp.dsm      Generated DreamShader thin-custom material /Game/Materials/M_Ramp from ...M_Ramp.dsm.
+save M_Ramp.dsm      Generated Material /Game/Materials/M_Ramp.M_Ramp from ...M_Ramp.dsm.
+save M_Ramp.dsm      Skipped /Game/Materials/M_Ramp.M_Ramp from ...M_Ramp.dsm; source hash is unchanged (build key …).
+save Common.dsh      (the header builds nothing; it queues M_Ramp.dsm, whose key moved)
+                     Generated Material /Game/Materials/M_Ramp.M_Ramp from ...M_Ramp.dsm.
 ```
 
 Metadata on the generated instance:
@@ -274,13 +295,13 @@ DreamShader.SourceHash   9f2c41ab
 ## See also
 
 - [Generation](index.md) — where the hash is computed in the pipeline
-- [import](../language/import.md) — how the prepared text is assembled
+- [import](../language/import.md) — how an imported header is read
 - [Preprocessor](../language/preprocessor.md) — the defines the key folds in, and why only the ones that were read
 - [Regeneration](regeneration.md) — the ownership guard built on `DreamShader.SourceFile`
 - [Divergence](divergence.md) — the OTHER fingerprint: what the asset holds, not what the source said
 - [Ephemeral materials](ephemeral.md) — which assets are stamped in which mode
 - [`UDreamShaderMaterialInstance`](../api/material-instance.md) — `SourceFilePath` and `SourceHash`
-- [Generated HLSL](generated-hlsl.md) — the include's separate, path-based hash
+- [Generated HLSL](generated-hlsl.md) — the Custom-node code, and the 1.x include it replaced
 - [Commandlet](../tools/commandlet.md) — headless compiles and forcing
 - [HLSL passes](../runtime/hlsl.md) — the snapshots whose inputs a `.dsp`'s key covers
 - [Project settings](../settings/project.md) — auto-compile and debounce

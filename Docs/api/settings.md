@@ -2,8 +2,8 @@
 
 > [DreamShader](../index.md) » [C++ API](index.md) » **DreamShaderSettings.h**
 
-The project-settings object, the default-backend enumeration, and the name-to-engine-enum resolvers
-that back every `ShadingModel`, `BlendMode` and `Domain` value spelling.
+The project-settings object, the default-backend and graph-layout enumerations, and the
+name-to-engine-enum resolvers that back every `ShadingModel`, `BlendMode` and `Domain` value spelling.
 
 Defined in header `DreamShaderSettings.h`.
 
@@ -13,7 +13,7 @@ Defined in header `DreamShaderSettings.h`.
 | Include | `#include "DreamShaderSettings.h"` |
 | Namespace | global scope |
 | Export macro | `DREAMSHADER_API` on `UDreamShaderSettings` |
-| Reflection | 1 `UENUM`, 1 `UCLASS` with 13 `UPROPERTY`s |
+| Reflection | 2 `UENUM`s, 1 `UCLASS` with 17 `UPROPERTY`s |
 | Pulls in | `CoreMinimal.h`, `Engine/DeveloperSettings.h`, `Engine/EngineTypes.h`, `MaterialDomain.h` *(since 1.3.6)* |
 
 ## `EDreamShaderDefaultBackend`
@@ -36,25 +36,53 @@ enum class EDreamShaderDefaultBackend : uint8
 | `ThinCustom` | `2` | Build the graph on a hidden per-material base `UMaterial` and emit a lightweight material instance of it. **The default.** |
 
 > [!WARNING]
-> `Instance` resolves silently. A project configured with `DefaultBackend = Instance`, or a source
-> file with `Backend = "Instance"`, produces exactly the same asset as `ThinCustom` with no warning
-> and no log line. The only indication is the tooltip and this documentation.
+> A project configured with `DefaultBackend = Instance` produces exactly the same asset as
+> `ThinCustom` with no warning and no log line; the only indication is the tooltip and this
+> documentation. A source file that writes `Backend = "Instance"` is told so: it builds `ThinCustom`
+> with warning [`DSH7204`](../diagnostics/DSH7xxx.md#dsh7204) *(since 2.0.0)*.
 
-### Resolution at generation time
+### Resolution at compile time
+
+The project setting is mapped by the compile pipeline (`Instance` and `ThinCustom` to `ThinCustom`,
+`Graph` to `Graph`) and handed to the binder, which applies a per-file `Backend` on top of it.
 
 | `Settings = { Backend = … }` | `DefaultBackend` | Resolved backend |
 | :-- | :-- | :-- |
 | *(absent)* | `Instance` | `ThinCustom` |
 | *(absent)* | `ThinCustom` | `ThinCustom` |
 | *(absent)* | `Graph` | `Graph` |
-| `"Instance"` | *(any)* | `ThinCustom` |
+| `"Instance"` | *(any)* | `ThinCustom`, warning `DSH7204` *(since 2.0.0)* |
 | `"ThinCustom"` | *(any)* | `ThinCustom` |
 | `"Graph"` | *(any)* | `Graph` |
-| `""` (empty string) | *(any)* | `Graph` |
-| anything else | *(any)* | error: `Unsupported Backend '{Value}'. Supported values: Graph, Instance, ThinCustom.` |
+| `""` (empty string) | *(any)* | error [`DSH7201`](../diagnostics/DSH7xxx.md#dsh7201) *(since 2.0.0; 1.x took it as `Graph`)* |
+| anything else | *(any)* | error [`DSH7202`](../diagnostics/DSH7xxx.md#dsh7202) |
 
-The `Backend` value is compared case-insensitively with surrounding quotes trimmed. See
-[Backend](../settings/backend.md).
+The `Backend` value is compared case-insensitively with surrounding whitespace and quotes trimmed.
+See [Backend](../settings/backend.md).
+
+## `EDreamShaderGraphLayoutStyle` *(since 2.0.0)*
+
+```cpp
+/** How the nodes of a generated graph are placed. */
+UENUM()
+enum class EDreamShaderGraphLayoutStyle : uint8
+{
+    Classic,
+    Blocks,
+    SourceBands,
+    Layered,
+};
+```
+
+| Enumerator | Value | Meaning |
+| :-- | :-- | :-- |
+| `Classic` | `0` | The 1.x layout, computed on the finished graph. |
+| `Blocks` | `1` | One box per `#pragma region` or run of statements, in source order; named reroutes between boxes. **The default.** |
+| `SourceBands` | `2` | One horizontal band per source statement; inserts no reroute. |
+| `Layered` | `3` | One layered drawing of the whole graph; inserts no reroute. |
+
+The three non-`Classic` styles are computed on the compiler's IR. Node positions are not part of a
+generated asset's digest. See [Graph layout](../generation/graph-layout.md).
 
 ## `UDreamShaderSettings`
 
@@ -73,6 +101,7 @@ public:
 #if WITH_EDITOR
     virtual FText GetSectionText() const override;
     virtual FText GetSectionDescription() const override;
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
     bool TryResolveShadingModel(const FString& InName, EMaterialShadingModel& OutShadingModel) const;
@@ -84,7 +113,9 @@ public:
     static void BuildDefaultBlendModeMappings(TMap<FString, TEnumAsByte<EBlendMode>>& OutMappings);
     static void BuildDefaultMaterialDomainMappings(TMap<FString, TEnumAsByte<EMaterialDomain>>& OutMappings);
 
-    // 13 UPROPERTYs — see below.
+    virtual void PostInitProperties() override;
+
+    // 17 UPROPERTYs — see below.
 
 private:
     static FString NormalizeShadingModelKey(const FString& InName);
@@ -98,7 +129,7 @@ default object *is* the live configured instance. There is no subsystem and no g
 
 ### Panel location
 
-All five overrides are inline and return constants.
+All five panel overrides are inline and return constants.
 
 | Override | Returns | Availability |
 | :-- | :-- | :-- |
@@ -138,23 +169,28 @@ Every `UPROPERTY` is `Config, EditAnywhere`.
 | `MaterialDomainMappings` | `TMap<FString, TEnumAsByte<EMaterialDomain>>` | `Mappings` | *empty* | — |
 | `SourceDirectory` | `FDirectoryPath` | `Paths` | `DShader` | `RelativeToGameDir` |
 | `GeneratedShaderDirectory` | `FDirectoryPath` | `Paths` | `Intermediate/DreamShader/GeneratedShaders` | `RelativeToGameDir` |
+| `bScanPluginSourceDirectories` | `bool` | `Paths` | `true` | `DisplayName="Scan Plugin Source Directories"`, `ToolTip` |
 | `DefaultBackend` | `EDreamShaderDefaultBackend` | `Compiler` | `ThinCustom` | `DisplayName="Default Compiler Backend"`, `ToolTip` |
 | `bShowEphemeralMaterials` | `bool` | `Compiler` | `false` | `DisplayName="Show Ephemeral Materials"`, `ToolTip` |
+| `PreprocessorDefines` | `TMap<FString, FString>` | `Compiler` | *empty* | `DisplayName="Preprocessor Defines"`, `ToolTip` |
+| `GraphLayoutStyle` | `EDreamShaderGraphLayoutStyle` | `Compiler` | `Blocks` | `DisplayName="Graph Layout Style"`, `ToolTip` |
 | `bAutoCompileOnSave` | `bool` | `Compiler` | `true` | — |
 | `SaveDebounceSeconds` | `float` | `Compiler` | `0.25f` | `ClampMin="0.05"`, `ClampMax="10.0"`, `UIMin="0.05"`, `UIMax="2.0"` |
 | `bVerboseLogs` | `bool` | `Compiler` | `false` | — |
 | `bExportDecompiledLayout` | `bool` | `Decompiler` | `true` | — |
 | `bOpenInNewWindow` | `bool` | `Editor` | `true` | — |
 | `InstanceSubfolder` | `FString` | `Editor` | `TEXT("Instances")` | `DisplayName="Material Instance Subfolder"`, `ToolTip` |
+| `bSyncSourceReferencesOnAssetRename` | `bool` | `Editor` | `true` | `DisplayName="Sync Source References On Asset Rename"`, `ToolTip` |
 
 What each property *does* is on [Project settings](../settings/project.md); this page documents the
 declaration.
 
 > [!NOTE]
-> There is deliberately **no persistence on/off toggle**. The header records the reason: DreamShader
-> always generates in the editor's memory — source files are the authoring surface, and the editor
-> never writes per-material `.uasset` files — and materializes to disk during cooking.
-> `DefaultBackend` is the single compiler knob. See [Ephemeral materials](../generation/ephemeral.md).
+> There is deliberately **no persistence on/off toggle**. The header records the reason: `ThinCustom`
+> products are Ephemeral by default in the editor — source files are the authoring surface — and
+> materialize on an explicit action, a cook, or when a child instance is created. `Graph` materials
+> and material functions have no Ephemeral state at all. `DefaultBackend` is the single compiler
+> knob. See [Ephemeral materials](../generation/ephemeral.md).
 
 ## `NormalizeMappingKey`
 
@@ -351,8 +387,11 @@ The user-facing catalogue, including which spellings are recommended, is on
   plugin itself gates by version is `Strata`.
 - `TEnumAsByte<T>` is used throughout because `TMap` value types in a `UPROPERTY` must be reflectable
   and these engine enums are not `enum class`.
-- The class has no `PostEditChangeProperty` override. Reacting to a settings change is done by the
-  editor module's own panel hooks, not by the settings object.
+- `PostEditChangeProperty` (editor only) reacts to one property: an edit of `PreprocessorDefines`
+  bumps the define revision, before `Super` broadcasts the change. Every other settings change is
+  handled by the editor module's own panel hooks.
+- `PostInitProperties` folds the pre-2.0 config key `bShowInMemoryMaterialsInContentBrowser` into
+  `bShowEphemeralMaterials` when only the old key is present *(since 2.0.0)*.
 - `MaterialDomain.h` is included by this header *(since 1.3.6)*, so a translation unit that includes
   `DreamShaderSettings.h` gets `EMaterialDomain` without adding an include of its own.
 

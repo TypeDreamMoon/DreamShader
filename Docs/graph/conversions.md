@@ -2,291 +2,211 @@
 
 > [DreamShader](../index.md) » [Graph](index.md) » **Conversions**
 
-The single coercion routine that adapts a `Graph` value to an expected shape, and the
-authoritative-component-count rule that decides when a declared width is honoured.
+The rules that adapt a `Graph` value to the type of the place it goes, and what they cost in nodes.
 
 | | |
 | :-- | :-- |
 | Declared in | `.dsm`, `.dsf` — applies to every typed site inside a `Graph { … }` body and to `Outputs` bindings |
 | Kind | implicit conversion rules |
-| Generates | `UMaterialExpressionAppendVector` × (N−1) when widening a scalar; **nothing** when narrowing (a channel mask is used) or when the widths already match |
+| Generates | **nothing** for a change of number kind or a scalar broadcast; a `UMaterialExpressionComponentMask` when a 1.x source cuts a wider value down; nothing when the types already match |
+
+*(since 2.0.0)* A 1.x `Graph` body is bound by the 2.0 binder, and every value has a **type**: a
+number of 1 to 4 components of one kind (`float`, `half`, `double`, `int`, `uint`, `bool`), a texture
+of one texture type, `SamplerState`, `MaterialAttributes` or `Substrate`. A conversion is the binder
+comparing a value's type with the type of the place it goes. What a 1.x source may do and a `.dss`
+may not — cut a wider value down — is legacy rule L22, and it says so.
 
 ## Synopsis
 
-Conversion is not written by the author; it is applied automatically wherever a value meets an
-expected shape.
+Conversion is not written by the author; it is applied automatically wherever a value meets a typed
+place.
 
 ```text
-coerce( <value>, <expected-shape> ) -> <value> | <error>
+convert( <value>, <place type> ) -> <value> | <error>
 
-<expected-shape> := MaterialAttributes
-                  | Substrate
-                  | Texture( { Texture2D | TextureCube | Texture2DArray | VolumeTexture } )
-                  | Numeric( { 1 | 2 | 3 | 4 } )
+<type> := MaterialAttributes
+        | Substrate
+        | SamplerState
+        | Texture( { Texture2D | TextureCube | Texture2DArray | Texture3D | VolumeTexture } )
+        | Number( { float | half | double | int | uint | bool }, { 1 | 2 | 3 | 4 } )
 ```
-
-A value's own shape is one of the same four kinds, plus two markers that ride along with it: the
-**authoritative component count** flag and the **integer** flag.
 
 ## Where conversion applies
 
-| # | Site | Expected shape taken from |
-| :-- | :-- | :-- |
-| 1 | Declaration with an initializer — `float3 c = A;` | the declared type token, **unless the authoritative escape hatch fires** |
-| 2 | Assignment to an existing Graph variable — `c = A;` | the existing value's shape (component count, texture flag, texture dimension, Substrate flag) |
-| 3 | Assignment to a name that matches an `Outputs` declaration — `Color = A;` | the output's declared type |
-| 4 | `MaterialAttributes` member write — `Attrs.BaseColor = A;` | the attribute's own component count |
-| 5 | Function / `GraphFunction` / `ShaderFunction` / `VirtualFunction` input argument | the input's declared type |
-| 6 | `if` branch merge — both branch values are coerced to the merged shape | the pre-branch value, else the `Outputs` declaration, else the two branches must already agree |
-| 7 | Binary-operator rescue | the authoritative operand's count — **widening only** |
-| 8 | `Outputs` binding expression | the bound output's declared type |
+| # | Site | Type taken from | Code when nothing fits |
+| :-- | :-- | :-- | :-- |
+| 1 | Declaration with an initializer — `float3 c = A;` | the declared type | [`DSH4228`](../diagnostics/DSH4xxx.md#dsh4228) |
+| 2 | Assignment to a Graph variable — `c = A;` | the variable's declared type | `DSH4228` |
+| 3 | Assignment to a name that matches an `Outputs` declaration — `Color = A;` | the output's declared type | `DSH4228` |
+| 4 | `MaterialAttributes` member write — `Attrs.BaseColor = A;` | the attribute's own type | `DSH4228` |
+| 5 | Function / `GraphFunction` / `ShaderFunction` / `VirtualFunction` input argument | the input's declared type | [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226) |
+| 6 | A `UE.*` / `Substrate.*` pin, the coordinates of a texture sample | the pin's type in the engine catalog | [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214) |
+| 7 | An `if` condition | one true-or-false value | [`DSH4260`](../diagnostics/DSH4xxx.md#dsh4260) |
+| 8 | An `Outputs` binding of a `Shader` — `Base.EmissiveColor = Color;` | the material attribute's type | `DSH4228`, and never a cut (see [Narrowing](#narrowing)) |
+| 9 | Operands of `+ - * /` | the widest operand: a scalar spreads to it, nothing else changes width | `DSH4226` |
 
-Assignment to a name that is neither an existing variable nor an `Outputs` declaration performs **no**
-conversion at all: the new variable is created with the value's own shape.
+An assignment to a name that matches nothing declared, in any case, declares it with the value's own
+type (legacy rule L26, info [`DSH5292`](../diagnostics/DSH5xxx.md#dsh5292)); there is nothing to
+convert to.
+
+An `if` that assigns a variable in both branches merges two values of the variable's declared type, so
+the merge itself converts nothing *(since 2.0.0)*; see [`if` / `else`](if.md).
 
 ## Rule order
 
 The rules are tested in this exact order; the first that matches decides the outcome.
 
-| # | Condition | Behaviour | Message on failure |
+| # | Value → place | Behaviour | Nodes |
 | :-- | :-- | :-- | :-- |
-| 1 | Expected is `MaterialAttributes` | input must be a `MaterialAttributes` value; passes through unchanged | `Expected a MaterialAttributes value.` |
-| 2 | Expected is `Substrate` | input must be a `Substrate` value; passes through unchanged | `Expected a Substrate value.` |
-| 3 | Expected is a texture | input must be a texture object | `Expected a texture object value.` |
-| 3a | Expected is a texture and input is a texture | the texture **dimension** must be identical; passes through unchanged | `Expected a texture object value with a matching texture type.` |
-| 4 | Input is `MaterialAttributes`, expected is numeric | rejected | `MaterialAttributes values cannot be assigned to numeric outputs.` |
-| 5 | Input is `Substrate`, expected is numeric | rejected | `Substrate values cannot be assigned to numeric outputs.` |
-| 6 | Input is a texture object, expected is numeric | rejected | `Texture objects cannot be assigned to numeric outputs.` |
-| 7 | Component counts are equal | passes through **unchanged**, every flag preserved | — |
-| 8 | **Narrowing** — expected ≥ 1 and input count > expected | a leading sequential swizzle (`r`, `rg`, `rgb`) is applied; **silent**, no node created | — |
-| 9 | **Widening from a scalar** — expected > 1 and input count = 1 | the value is replicated `expected` times through `AppendVector` | — |
-| 10 | Anything else | rejected | `Expected {Expected} component(s) but got {Actual}.` |
+| 1 | The same type | passes through **unchanged** | none |
+| 2 | A number of the same width and another kind (`int` → `float`, `float` → `bool`, …) | the kind changes; the value in the graph does not | none |
+| 3 | **Widening from a scalar** — a scalar into a wider number | broadcast: the scalar is wired where the value is read, and the material node replicates it *(since 2.0.0)* | none; one `ConstantNVector` when the scalar is constant |
+| 4 | A narrower vector into a node's pin (2 into a `float3` pin, …) | taken as it is: what a node does with fewer components is the node's business | none |
+| 5 | **Narrowing**, in a 1.x source — a wider vector into a narrower place | its leading components (`r`, `rg`, `rgb`), said by the info [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) *(since 2.0.0)* | a `ComponentMask`, or the output pin the source node has for exactly those channels; none at a node's pin |
+| 6 | A node with several outputs into a number | its default output, when that output's type fits; in a 1.x source, a node whose first output the catalog gives no width is read as that output (info [`DSH5287`](../diagnostics/DSH5xxx.md#dsh5287)); otherwise [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201) | none |
+| 7 | Anything else | rejected with the site's code | — |
 
-Rule 10 is reachable only for widening a value that is **not** a scalar: input 2 → expected 3 or 4,
-and input 3 → expected 4.
+Rule 7 covers widening a value that is **not** a scalar — input 2 into a 3 or a 4, input 3 into a 4,
+anywhere but a node's pin — and every change of type family.
 
 ### Numeric conversion matrix
 
-Input width down the side, expected width across the top.
+Input width down the side, expected width across the top, in a 1.x source. At a node's pin the two
+errors in the matrix are accepted (rule 4), and a cut makes no node.
 
 | input \ expected | 1 | 2 | 3 | 4 |
 | :-- | :-- | :-- | :-- | :-- |
-| **1** | unchanged | splat, 1 `AppendVector` | splat, 2 `AppendVector` | splat, 3 `AppendVector` |
-| **2** | `.r`, no node | unchanged | **error** | **error** |
-| **3** | `.r`, no node | `.rg`, no node | unchanged | **error** |
-| **4** | `.r`, no node | `.rg`, no node | `.rgb`, no node | unchanged |
+| **1** | unchanged | broadcast, no node | broadcast, no node | broadcast, no node |
+| **2** | `.r`, `DSH5289` | unchanged | **error** | **error** |
+| **3** | `.r`, `DSH5289` | `.rg`, `DSH5289` | unchanged | **error** |
+| **4** | `.r`, `DSH5289` | `.rg`, `DSH5289` | `.rgb`, `DSH5289` | unchanged |
 
 ### Kind conversion matrix
 
-| expected \ input | numeric | MaterialAttributes | Substrate | texture object |
-| :-- | :-- | :-- | :-- | :-- |
-| **MaterialAttributes** | `Expected a MaterialAttributes value.` | pass | `Expected a MaterialAttributes value.` | `Expected a MaterialAttributes value.` |
-| **Substrate** | `Expected a Substrate value.` | `Expected a Substrate value.` | pass | `Expected a Substrate value.` |
-| **Texture(T)** | `Expected a texture object value.` | `Expected a texture object value.` | `Expected a texture object value.` | pass if the dimension is `T`, else `Expected a texture object value with a matching texture type.` |
-| **Numeric(N)** | numeric matrix above | `MaterialAttributes values cannot be assigned to numeric outputs.` | `Substrate values cannot be assigned to numeric outputs.` | `Texture objects cannot be assigned to numeric outputs.` |
+"error" is the code of the site (see the first table).
 
-The four texture dimensions are distinct expected shapes. `Texture2D` and `SamplerState` both mean
-`Texture2D`; `Texture3D` and `VolumeTexture` both mean `VolumeTexture`; `TextureCube` and
-`Texture2DArray` stand alone. A `TextureCube` never converts to a `Texture2D`.
+| expected \ input | number | MaterialAttributes | Substrate | texture |
+| :-- | :-- | :-- | :-- | :-- |
+| **MaterialAttributes** | error | pass | error | error |
+| **Substrate** | error | error | pass | error |
+| **Texture(T)** | error | error | error | pass if the texture type is `T`; a pin that takes any texture takes any |
+| **Number(N)** | numeric matrix above | error | error | error |
+
+A texture converts only to its own texture type: `Texture2D`, `TextureCube`, `Texture2DArray`,
+`Texture3D` and `VolumeTexture` are five types, and `SamplerState` is a type of its own, not a
+texture *(since 2.0.0)*. A `TextureCube` never converts to a `Texture2D`.
 
 ## Narrowing
 
-Narrowing is **silent** — there is no warning and no node cost, because it is implemented as a leading
-sequential [swizzle](swizzle.md), which lives on the connection rather than in the graph.
+In a 1.x source a value wider than its place keeps its leading components (legacy rule L22). The cut
+is no longer silent *(since 2.0.0)*: each one is the info `DSH5289`, so `dsc check` on the source
+lists them, and `dsc migrate` writes the swizzle. It costs what the swizzle costs: a
+`ComponentMask`, unless the source node has an output pin for exactly those leading channels — see
+[Swizzle](swizzle.md).
 
 ```c
 vec4  Src   = vec4(0.1, 0.2, 0.3, 0.4);
-float3 Rgb  = Src;      // silently becomes Src.rgb — channel A is dropped
-float  R    = Src;      // silently becomes Src.r
+float3 Rgb  = Src;      // Src.rgb — DSH5289; channel A is dropped
+float  R    = Src;      // Src.r   — DSH5289
 ```
 
-> [!WARNING]
-> An over-wide initializer or an over-wide value assigned to a narrower output is not diagnosed. If a
-> channel disappears from a generated material, check every assignment whose right-hand side is wider
-> than its target. Writing the swizzle explicitly (`float3 Rgb = Src.rgb;`) documents the intent and
-> behaves identically.
+Writing the swizzle explicitly (`float3 Rgb = Src.rgb;`) documents the intent, builds the same node
+and makes the info go away.
 
-Narrowing applies **only** at the conversion sites listed above. It is deliberately **not** applied:
+Narrowing applies **only** at sites 1–7 above. It is deliberately **not** applied:
 
 | Context | Behaviour instead |
 | :-- | :-- |
-| Binary operator operands | refused — the size-mismatch error fires (see below) |
-| Constructor arguments | refused — `Constructor '{Name}' expects {N} total components but got {Total}.` |
-| Swizzle bounds | refused — a swizzle can never exceed the base width |
+| Binary operator operands | refused — `DSH4226` |
+| Constructor arguments | refused — [`DSH4222`](../diagnostics/DSH4xxx.md#dsh4222) |
+| Swizzle bounds | refused — [`DSH4230`](../diagnostics/DSH4xxx.md#dsh4230): a swizzle can never exceed the base width |
+| An `Outputs` binding of a `Shader` (`Base.Opacity = Color4;`) | refused — `DSH4228`, the one place 1.x refused to cut too |
+| A `.dss` source | refused with the site's code |
 
 ## Widening
 
-The **only** widening rule is scalar splat. A 1-component value is replicated to fill the expected
-width through `AppendVector` nodes.
+The **only** widening rule is scalar broadcast. A 1-component value meets a wider place without a node:
+the scalar itself is connected wherever the value is read, and the material node it reaches
+replicates it *(since 2.0.0; 1.x built an `AppendVector` chain)*. A constant scalar is folded into a
+`ConstantNVector`.
 
 ```c
 float  K   = 0.5;
-vec3   All = K;         // becomes AppendVector(AppendVector(K, K), K)
+vec3   All = K;         // no node: K is connected wherever All is read
 ```
 
-There is **no** zero-fill and **no** partial widening. `float3 v = SomeFloat2;` is
-`Expected 3 component(s) but got 2.` Use a constructor to say what the extra channels contain:
-`float3 v = float3(SomeFloat2, 0.0);`
+There is **no** zero-fill and **no** partial widening. `float3 v = SomeFloat2;` is `DSH4228`. Use a
+constructor to say what the extra channels contain: `float3 v = float3(SomeFloat2, 0.0);`. The one
+place a narrower vector is accepted is a node's pin (rule 4).
 
 ## Float, int and bool
 
-There are no numeric-representation conversions in the graph language at all.
+The compiler knows the kind of every number *(since 2.0.0)*; the generated graph does not, because
+every value in a material graph is a float. A change of kind therefore changes nothing in the graph.
 
 | Token family | What it means for conversion |
 | :-- | :-- |
-| `float`, `float1..4`, `half`, `half1..4`, `vec2..4` | 1 / 2 / 3 / 4 components |
-| `int`, `int2..4`, `ivec2..4` | the same 1 / 2 / 3 / 4 components — no truncation, no rounding |
-| `uint`, `uint2..4`, `uvec2..4` | the same — no range clamping, no sign handling |
-| `bool`, `bool2..4`, `bvec2..4` | the same — no normalisation to 0/1 |
-| `StaticBool`, `StaticBoolParameter` | 1 component; carries no marker of its own, so every rule on this page treats it as a scalar |
+| `float`, `float1..4`, `half`, `half1..4`, `vec2..4` | 1 / 2 / 3 / 4 components of kind `float` or `half` |
+| `int`, `int2..4`, `ivec2..4` | the same 1 / 2 / 3 / 4 components of kind `int` — no truncation, no rounding |
+| `uint`, `uint2..4`, `uvec2..4` | kind `uint` — no range clamping, no sign handling |
+| `bool`, `bool2..4`, `bvec2..4` | kind `bool` — no normalisation to 0/1 |
+| `StaticBool`, `StaticBoolParameter` | read as `bool`, 1 component |
 
 Consequences:
 
 - `int x = 7.9;` stores 7.9. Use `floor(…)` if truncation is wanted.
 - `bool b = 0.5;` stores 0.5. There is no conversion to 0 or 1.
-- Assigning a `float4` to an `int3` narrows exactly like `float4` → `float3`.
-- The **only** observable difference between an integer and a float value is the integer marker set by
-  an integer [constructor](constructors.md#integer-constructors) call, and its only effect is to
-  reject `/` when both operands carry it. See
+- Assigning a `float4` to an `int3` narrows exactly like `float4` → `float3` (`DSH5289`).
+- The kind matters in one place: `/` between two integers is
+  [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243). An integer literal (`7`), an `int` variable and an
+  integer [constructor](constructors.md#integer-constructors) all count *(since 2.0.0)*. See
   [Integer division](expressions.md#integer-division).
 
 ## Authoritative component counts
 
-A value carries an **authoritative component count** when its width is known from the engine rather
-than inferred from a declaration. The flag changes two things: whether an operator will rescue a size
-mismatch, and whether a declared width is honoured at all.
+*(since 2.0.0)* There are none. 1.x let some values — a constant-folded constructor, `dot`, the
+`UE.*` builtins of a known-width table — carry an "authoritative" width that overrode a declaration
+and steered operators. Every value now has the width of its type:
 
-### Which values are authoritative
-
-| Source | Authoritative |
+| Value | Width |
 | :-- | :-- |
-| A constant-folded constructor — `vec3(0.5)`, `float4(1,0,0,1)` | **yes** — the only path where a constructor originates the flag |
-| A `UE.*` builtin whose node class is in the known-width table below | **yes** |
-| The `dot` math builtin | **yes**, 1 component |
-| Any other math builtin — `lerp`/`mix`, `min`, `max`, `pow`, `clamp`, `fmod`/`mod`, and the unary set | inherits: `lerp`/`min`/`max` take the logical OR of their two value operands, the rest inherit from their first operand |
-| A bare numeric literal, e.g. `0.5` | no |
-| A declared `Properties` parameter of any width | no |
-| A non-folded constructor — `vec3(K)`, `float4(rgb, A)` | inherits: the logical OR of its arguments' flags |
-| A swizzle | inherits from the base value |
-| The result of `+ - * /` | inherits: the logical OR of the two operands' flags |
-| A narrowed or widened value produced by rule 8 or rule 9 | inherits from the input value |
-| A variable | whatever the value assigned to it carried |
+| A variable | the width it is declared with — always honoured |
+| A literal | 1 |
+| A constructor, folded or not | its type's |
+| A builtin | its operands' widest, or what the builtin returns (`dot`, `length`, `distance`: 1) |
+| A `UE.*` / `Substrate.*` node output | what the engine catalog gives that output; an output the engine gives no width follows the node's widest input, or, when no input is wider than a scalar, the place the value goes |
+| A swizzle | its number of channels |
 
-### Known-width builtin nodes
-
-Matched by expression class; these are the node classes the generator can assign a trustworthy output
-width to. Names are the `UMaterialExpression` class names behind the corresponding
-[`UE.*` builtins](../builtins/ue.md).
-
-| Components | Node classes |
-| :-- | :-- |
-| 1 | `MaterialExpressionPixelDepth`, `MaterialExpressionTwoSidedSign`, `MaterialExpressionArctangent2Fast`, `MaterialExpressionLength`, `MaterialExpressionMaterialXLuminance` |
-| 2 | `TextureCoordinate`, `Panner`, `ScreenPosition`, `Rotator`, `MaterialExpressionSceneTexelSize` |
-| 3 | `WorldPosition`, `ObjectPositionWS`, `CameraVectorWS`, `VertexNormalWS`, `VertexTangentWS`, `Transform`, `TransformPosition`, `MaterialExpressionSkyAtmosphereLightDirection`, `MaterialExpressionPixelNormalWS`, `MaterialExpressionCrossProduct` |
-
-Every other node's output width is unknown to the generator, so values produced from it are
-non-authoritative.
-
-### Effect 1 — the operator rescue
-
-When `+ - * /` receives two operands whose widths are incompatible (unequal, and neither is a scalar),
-one rescue is attempted before the error:
-
-| Requirement | Detail |
-| :-- | :-- |
-| Exactly one operand is authoritative | if both or neither are, no rescue |
-| The authoritative width is greater than zero | — |
-| The other operand's width is **≤** the authoritative width | strictly enforced |
-| The other operand is then widened to the authoritative width | rule 9 only, i.e. only from a scalar |
-
-The rescue **never narrows**. Narrowing at an operator would silently drop channels, so the
-size-mismatch error is raised instead:
-
-```text
-Operator '{Op}' requires matching vector sizes or a scalar/vector pair, got {Left} and {Right} component(s).
-```
-
-This is why `UE.CameraVectorWS() * Tint` fails when `Tint` is a `VectorParameter`: the builtin is an
-authoritative 3, the parameter is a non-authoritative 4, and 4 > 3 blocks the rescue.
-
-### Effect 2 — a declared width can be ignored
-
-> [!WARNING]
-> When a declaration's initializer carries an authoritative component count that **differs** from the
-> declared type's width, the value is stored **as-is, uncoerced, with no diagnostic**. The declared
-> width is effectively ignored.
-
-The escape hatch fires when **all** of these hold:
-
-| # | Condition |
-| :-- | :-- |
-| 1 | The statement is a declaration with an initializer |
-| 2 | The initializer value has an authoritative component count |
-| 3 | The initializer value is plain numeric — not a texture, not `MaterialAttributes`, not `Substrate` |
-| 4 | The declared type is plain numeric — not a texture, not `Substrate`, and its component count is greater than 0 |
-| 5 | The two component counts differ |
-
-```c
-float2 dir = UE.CameraVectorWS();   // stored as a 3-component value; float2 is ignored, no error
-float3 ok  = UE.CameraVectorWS();   // widths agree, normal path
-```
-
-The mismatch is not lost — it resurfaces at the first place the value is used with a width that
-matters (an operator, an output binding, a function argument), where the message names the real widths
-rather than the declared one. The rationale is that silently truncating an engine-known width is worse
-than reporting the problem one step later.
-
-The escape hatch applies to **declarations only**. Assignment to an existing variable (site 2) and
-assignment to an output name (site 3) always coerce, so both will narrow silently even when the value
-is authoritative.
-
-### Effect 3 — branch merging
-
-The authoritative flag and the integer flag are **not** compared when deciding whether an `if` branch
-changed a value. Two values that differ only in those flags are treated as identical and the name is
-not merged. See [`if` / `else`](if.md).
+So `float2 dir = UE.CameraVectorWS();` is a `float2` — the leading two components, `DSH5289` — where
+1.x stored three. Two operands of different widths meet only through the scalar broadcast; anything
+else is `DSH4226` (site 9), and an operator never widens or narrows an operand on its own.
 
 ## Notes
 
-- Conversion never changes the *kind* of a value. There is no path from numeric to
-  `MaterialAttributes`, texture or `Substrate`, or between texture dimensions.
-- A conversion that passes through (rules 1, 2, 3a, 7) preserves every flag on the value, including
-  the integer marker and any pending channel mask.
-- `Substrate` shapes require UE 5.4 or newer; on an older engine the type token does not resolve at
-  all and the declaration fails before conversion with
-  `Graph variable '{Name}' uses Substrate, which requires Unreal Engine 5.4 or newer.`
-- Declaring a texture or `Substrate` variable without an initializer is rejected —
-  `Graph variable type '{Type}' requires an explicit initializer.` — because there is no default value
-  to convert. Scalars and vectors default to zero. See [Declarations](declarations.md).
-- The `Outputs` declaration is re-checked after the whole graph is built; a final mismatch reports
-  `{Shader}: Graph output '{Name}' does not match its declared type.`
+- Conversion never turns a number into a `MaterialAttributes`, texture or `Substrate` value, or one
+  texture type into another.
+- Declaring a texture, `SamplerState` or `Substrate` variable without an initializer is
+  [`DSH2215`](../diagnostics/DSH2xxx.md#dsh2215), because there is no default value to start from.
+  Scalars and vectors start at zero. See [Declarations](declarations.md).
+- An `Outputs` declaration is an ordinary variable of its declared type: each assignment to it is
+  checked where it is written, not once after the graph is built.
+- A `MaterialAttributes` value that reaches a pin or a function input that does not carry one is
+  [`DSH4371`](../diagnostics/DSH4xxx.md#dsh4371), when the graph is built.
 
 ## Diagnostics
 
-Format specifiers are rendered as `{Placeholder}` throughout this page; the compiler emits the
-substituted text. The coercion routine produces the short messages in the first group; the calling
-site prefixes them with the second group's wrapper.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Expected {Expected} component(s) but got {Actual}.` | Widening a 2- or 3-component value to a wider target. |
-| `Expected a MaterialAttributes value.` | A numeric, texture or `Substrate` value where `MaterialAttributes` was expected. |
-| `Expected a Substrate value.` | Anything other than a `Substrate` value where `Substrate` was expected. |
-| `Expected a texture object value.` | A non-texture value where a texture was expected. |
-| `Expected a texture object value with a matching texture type.` | A texture of the wrong dimension — for example a `TextureCube` where `Texture2D` was expected. |
-| `MaterialAttributes values cannot be assigned to numeric outputs.` | A `MaterialAttributes` value assigned to a scalar or vector target. |
-| `Substrate values cannot be assigned to numeric outputs.` | A `Substrate` value assigned to a scalar or vector target. |
-| `Texture objects cannot be assigned to numeric outputs.` | A texture object assigned to a scalar or vector target. |
-
-| Wrapper | Site |
-| :-- | :-- |
-| `Graph variable '{Name}' is declared as '{Type}' but assigned an incompatible value. {Detail}` | Declaration with an initializer (site 1). |
-| `Graph variable '{Name}' was previously assigned an incompatible value. {Detail}` | Assignment to an existing variable (site 2). |
-| `Graph output variable '{Name}' was assigned an incompatible value. {Detail}` | Assignment to an `Outputs` name (site 3). |
-| `MaterialAttributes member '{Member}' expects {Count} component(s). {Detail}` | Attribute member write (site 4). |
-| `Graph if branches assign incompatible values to '{Name}'. {Detail}` | Branch merge (site 6). |
-| `In output expression '{Text}': {Detail}` | `Outputs` binding expression (site 8). |
-| `Operator '{Op}' requires matching vector sizes or a scalar/vector pair, got {Left} and {Right} component(s).` | Operator size mismatch after the rescue attempt (site 7). |
+| `DSH4228` | A value does not fit the variable, output or attribute it is stored in (sites 1–4 and 8). |
+| `DSH4226` | An argument or an operand does not fit (sites 5 and 9). |
+| `DSH5214` | A value does not fit a node's pin (site 6). |
+| `DSH4260` | A condition is not one true-or-false value (site 7). |
+| `DSH5289` | *(info)* A wider value is cut to its leading components (rule 5). |
+| `DSH5287` | *(info)* A node with several outputs is read as its first (rule 6). |
+| `DSH5201` | A node with several outputs is used as a value without naming one, and its default output does not fit. |
+| `DSH5292` | *(info)* An assignment declares a name declared nowhere. |
+| `DSH2215` | A texture, sampler or `Substrate` variable has no initializer. |
+| `DSH4371` | A `MaterialAttributes` value reaches a pin or input that does not carry one. |
 
 ## Example
 
@@ -306,30 +226,28 @@ Shader(Name="Docs/M_Conversions", Root="Game")
     }
 
     Graph {
-        float3 dir   = UE.CameraVectorWS();  // authoritative 3
-        float3 tinted = Tint;                // silent narrowing: Tint.rgb
-        float3 lit    = K;                   // scalar splat: 2 AppendVector nodes
+        float3 dir    = UE.CameraVectorWS();  // a float3 output
+        float3 tinted = Tint;                 // narrowing: Tint.rgb, info DSH5289
+        float3 lit    = K;                    // scalar broadcast: no node
         Color = dir * tinted + lit;
     }
 }
 ```
 
-Replacing the third statement with `Color = dir * Tint;` fails, because the non-authoritative
-4-component parameter cannot be narrowed to meet the authoritative 3-component builtin:
-
-```text
-Operator '*' requires matching vector sizes or a scalar/vector pair, got 3 and 4 component(s).
-```
+Replacing the last statement with `Color = dir * Tint;` fails with `DSH4226`: the `float4` parameter
+makes the product four components wide, and an operator does not widen the `float3` operand to
+match.
 
 ## See also
 
 - [Expressions](expressions.md) — operator operand rules and the integer-division check
 - [Constructors](constructors.md) — the explicit way to change a value's width
-- [Swizzle](swizzle.md) — the explicit way to narrow, and the mechanism narrowing uses
+- [Swizzle](swizzle.md) — the explicit way to narrow, and the node a narrowing costs
 - [Declarations](declarations.md) — declared type tokens, default values, redeclaration
-- [`if` / `else`](if.md) — branch merging and the shapes it demands
-- [MaterialAttributes](material-attributes.md) — per-attribute component counts
-- [Calls](calls.md) — argument coercion against declared input types
+- [`if` / `else`](if.md) — branch merging and the types it demands
+- [MaterialAttributes](material-attributes.md) — per-attribute types
+- [Calls](calls.md) — argument conversion against declared input types
 - [Types](../language/types.md) — the complete type-token catalogue
-- [`UE.*` builtins](../builtins/ue.md) — which builtins have a known output width
-- [Diagnostics index](../diagnostics/index.md) — every message by pipeline stage
+- [`UE.*` builtins](../builtins/ue.md) — the output types of the builtins
+- [`dsc migrate`](../tools/migrate.md) — rule L22 and the swizzle it writes
+- [Diagnostics index](../diagnostics/index.md) — every code by pipeline stage

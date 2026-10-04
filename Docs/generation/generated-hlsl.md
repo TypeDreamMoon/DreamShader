@@ -2,98 +2,85 @@
 
 > [DreamShader](../index.md) » [Generation](index.md) » **Generated HLSL**
 
-The `.ush` helper include a compile writes for the `Function` blocks in a translation unit, and the
-code shapes that reference it.
+The HLSL a compile writes for the `Function` blocks of a source. *(since 2.0.0)* It is written into the
+Custom node each call makes; no `.ush` include is generated.
 
 | | |
 | :-- | :-- |
-| Written when | the parse unit declares at least one [`Function`](../language/function.md) block |
-| Virtual path | `/DreamShaderGenerated/<basename>_<hash>.ush` |
-| Real path | `<Project>/Intermediate/DreamShader/GeneratedShaders/<basename>_<hash>.ush` (default) |
-| Encoding | UTF-8, no BOM |
-| Contains | one HLSL function per `Function` block. **Never** `GraphFunction` blocks. |
+| Written when | a `Graph` calls a [`Function`](../language/function.md) — one Custom node per call |
+| Written to | the Custom node's `Code`; its `IncludeFilePaths` carry only the `#include` lines hoisted out of the bodies |
+| Contains | the called function's body, verbatim, and every `Function` that body calls, embedded in a wrapper struct |
+| Through 1.x | one `/DreamShaderGenerated/<basename>_<hash>.ush` per source, holding every `Function`, which each node included |
+
+A 1.x `Function` is read by the legacy front end as a `/// @custom` function, the 2.0 form of a Custom
+node with a verbatim body — see [`/// @custom` bodies](../language-v2/index.md#-custom-bodies). A
+[`GraphFunction`](../language/graph-function.md) is one too, with its `UE.*` calls lifted out into
+graph nodes wired to extra inputs.
 
 ## Synopsis
 
 ```text
-<file name>    := <SanitizeIdentifier(source basename)> _ <path-hash as %08x> .ush
-<virtual path> := /DreamShaderGenerated/ <file name>
-<real path>    := <GeneratedShaderDirectory> / <file name>
-<path-hash>    := CRC32( source path, made relative to the project directory )
-<symbol>       := DreamShaderFn_ <SanitizeIdentifier(Function name)>
+<node code>     := [ <wrapper> ] <body block>
+<wrapper>       := struct <wrapper type> { <helper definition> … }; <wrapper type> <wrapper var>;
+<wrapper type>  := generated_wrapper_ <SanitizeIdentifier(function)> _ <CRC32(function) as %08X>
+<wrapper var>   := __ds_wrapper_ <CRC32(function) as %08X>
+<helper symbol> := DreamShaderFn_ <SanitizeIdentifier(helper name)>
+<body block>    := [ <first out> declared ] <begin marker> <custom marker> <body> <end marker> [ return … ]
 ```
+
+`function` is the name of the `Function` the node is built for. The wrapper is written only when its
+body calls another `Function`.
 
 ## Location
 
-| Item | Value |
-| :-- | :-- |
-| Virtual shader directory | `/DreamShaderGenerated`, registered as a shader source directory mapping when the module starts |
-| Real directory | the **Generated Shader Directory** project setting, category `Paths`, relative to the project directory |
-| Real directory default | `Intermediate/DreamShader/GeneratedShaders` |
-| File name | the source file's base name, sanitized, then `_`, then the path hash in **lowercase** hex |
+*(since 2.0.0)* There is no file to locate: the code lives in the node, inside the asset, and is
+derived from the source the [build key](caching.md) hashes, so an unchanged source skips it like
+everything else.
 
-The contents are disposable. *Tools ▸ DreamShader ▸ Clean Generated Shaders* deletes every `*.ush`
-under the directory — recursively, one file at a time, never the directory itself — and queues a full
-recompile.
+The virtual directory `/DreamShaderGenerated` is still mapped to the **Generated Shader Directory**
+project setting (category `Paths`, default `Intermediate/DreamShader/GeneratedShaders`) when the module
+starts, and *Tools ▸ DreamShader ▸ Clean Generated Shaders* still deletes every `*.ush` under it —
+recursively, one file at a time, never the directory itself — and queues a full forced recompile. No
+compile writes there any more; a file found there was written by a 1.x build. A material saved by a
+1.x build may still have Custom nodes that include one; rebuilding the material replaces them with
+nodes that carry their own code.
 
-### The identity hash
-
-The hash in the file name is a CRC32 of the **source file's path**, made relative to the project
-directory. A source outside the project falls back to its absolute path.
-
-| Property | Consequence |
-| :-- | :-- |
-| It hashes the *path*, not the *text* | editing a `Function` body rewrites the same file; it never accumulates stale variants |
-| The path is project-relative | the file name and the header guard are identical on every machine and in a shared DDC *(since 1.5.0)* |
-| Two source files with the same base name in different folders | different hashes, so different files — no collision |
-| No timestamp is embedded | rebuilds are byte-identical when the source is unchanged |
-
-> [!NOTE]
-> This hash is unrelated to the source hash used for the regeneration short circuit. That one hashes
-> the prepared source *text* and lives in package metadata — see [Caching](caching.md). The include
-> is rewritten on **every** compile of a unit that declares `Function` blocks; it has no short
-> circuit of its own.
-
-## File layout
+## Node code layout
 
 ```hlsl
-// Auto-generated by DreamShader.
-// Changes will be overwritten the next time the source file is saved.
+struct generated_wrapper_<Name>_<HASH>             // only when the body calls other Functions
+{
+	<helper definition>
 
-#ifndef DREAMSHADER_GENERATED_<BASENAME>_<HASH>
-#define DREAMSHADER_GENERATED_<BASENAME>_<HASH>
+	<helper definition>
 
-#include "<hoisted include 0>"          // leading #include lines of Function bodies, first-seen order
-#include "<hoisted include 1>"
+};
+generated_wrapper_<Name>_<HASH> __ds_wrapper_<HASH>;
 
-<definition of Function 0>
-
-<definition of Function 1>
-
-…
-#endif // DREAMSHADER_GENERATED_<BASENAME>_<HASH>
+<T> <first out> = (<T>)0;                           // only when the first result is an `out` parameter
+// Begin DreamShader source: <project-relative path of the file that declares the function>
+// DreamShader custom: <Name> line <N>
+<body, verbatim>
+// End DreamShader source: <same path>
+return <first out>;                                 // only when the body needs one, see below
 ```
 
-`<BASENAME>` is the sanitized base name upper-cased. `<HASH>` is the same path hash as the file name
-but in **uppercase** hex — the file name uses lowercase, the guard uppercase.
-
-The `#include` lines are the directives written at the top of `Function` bodies, hoisted out of them
-(see [Function ▸ Includes](../language/function.md#includes)); a unit whose functions declare none
-emits no such line. When a function is *embedded* into a Custom node instead of being reached through
-this file, its hoisted includes are added to that node's `IncludeFilePaths` ahead of everything else.
-
-Functions are emitted in declaration order across the whole import closure. `GraphFunction` blocks
-are never emitted: they become Custom nodes with hoisted inputs instead. See
-[GraphFunction](../language/graph-function.md).
+| Element | Rule |
+| :-- | :-- |
+| body | the text between the braces, after the 1.x [body normalisation](../language/function.md#body-normalisation). It is never re-indented, and no rewrite adds or removes a line, so a shader-compile error maps back to its source line; `<N>` is the line of the body's opening brace |
+| path | project-relative, so the code — and with it the shader key — is the same on every machine. A function declared in an imported `.dsh` names the header |
+| first result | the declared return type, or the first `out` parameter of a function that has none (legacy rule L9): that one is the node's primary output and the other `out` parameters are additional outputs |
+| final `return` | added when the body has no top-level `return` of its own or the function returns nothing: `return <first out>;`, else `return 0.0;`. A return type whose body never returns is [`DSH6257`](../diagnostics/DSH6xxx.md#dsh6257) |
+| inputs | each `in` parameter is a node input; a texture input gets the engine's `<name>Sampler` beside it |
 
 ## Function name mangling
 
-Every emitted symbol is prefixed. Without it, a `Function Luminance(float3)` would redefine the
+Every embedded helper is prefixed. Without it, a `Function Luminance(float3)` would redefine the
 engine's own `Luminance` from `/Engine/Private/Common.ush` and fail shader compilation with
 `redefinition of 'Luminance'`.
 
 ```text
-DreamShaderFn_ + SanitizeIdentifier(<qualified Function name>)
+DreamShaderFn_ + SanitizeIdentifier(<Function name>)
 ```
 
 `SanitizeIdentifier` applies these rules, in order:
@@ -106,142 +93,118 @@ DreamShaderFn_ + SanitizeIdentifier(<qualified Function name>)
 | 4 | a first character that is not `[A-Za-z_]` gets a `_` prepended |
 | 5 | runs of consecutive underscores collapse to one |
 
-| DSL name | Sanitized | Emitted symbol |
+| DSL name | Function name | Emitted symbol |
 | :-- | :-- | :-- |
 | `Luma` | `Luma` | `DreamShaderFn_Luma` |
 | `Common::ApplyTint` | `Common_ApplyTint` | `DreamShaderFn_Common_ApplyTint` |
 | `Common::Remap01` | `Common_Remap01` | `DreamShaderFn_Common_Remap01` |
-| `2Fast` | `_2Fast` | `DreamShaderFn__2Fast` |
 
-Because `::` and `_` sanitize to the same thing, `Namespace(Name="Common") { Function ApplyTint }`
-and a top-level `Function Common_ApplyTint` collide. That is diagnosed — see
-[Diagnostics](#diagnostics).
+A `Function` inside `Namespace(Name="Common")` is the function `Common_ApplyTint`, so a top-level
+`Function Common_ApplyTint` is the same name declared twice:
+[`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210).
 
 ## Per-function definition shape
 
+An embedded helper, as a member of the wrapper:
+
 ```hlsl
-<RetType> DreamShaderFn_<Name>(<parameters>)
-{
-	<RetType> <Results[0].Name> = (<RetType>)0;
-	<Results[1].Name> = (<T1>)0;
-	…
-	<body>
-	return <Results[0].Name>;
-}
+	<RetType> DreamShaderFn_<Name>(<parameters>)
+	{
+		<out parameter> = (<T>)0;                   // every `out` parameter but the first result
+		<T> <first out> = (<T>)0;                   // when the first result is an `out` parameter
+// Begin DreamShader source: <path>
+// DreamShader custom: <Name> line <N>
+<body, verbatim>
+// End DreamShader source: <path>
+		return <first out>;                         // when the first result is an `out` parameter
+	}
 ```
 
 | Element | Rule |
 | :-- | :-- |
-| `RetType` | the HLSL type of the **first** result — either the declared return type (whose result is named `__return`) or the first `out` parameter. `void` when the `Function` declares no result at all |
-| parameters | every `in` parameter as `<type> <name>`, in declaration order |
-| sampler pairing | immediately after each texture-typed input, an extra `SamplerState <name>Sampler` |
-| secondary results | every result after the first, as `out <type> <name>`, in declaration order |
-| first result | **not** a parameter — it is the HLSL return value |
-| body | the normalized `Function` body, re-indented one extra tab, with sibling calls rewritten to their mangled symbols |
+| `RetType` | the declared return type, or the type of the first `out` parameter when there is none |
+| parameters | every parameter in declaration order but that first `out`; an `out` one as `out <type> <name>` *(since 2.0.0; 1.x put the inputs first)* |
+| sampler pairing | immediately after each texture-typed parameter, an extra `SamplerState <name>Sampler` |
+| other `out` parameters | zero-initialized first: an HLSL `out` arrives uninitialized |
+| body | as in the node's own code: verbatim, between the markers |
 
-Texture-typed inputs, for sampler pairing, are exactly these five tokens, compared
-case-insensitively:
+Texture-typed parameters, for sampler pairing, are these five tokens, compared case-insensitively:
 
 | `Texture2D` | `TextureCube` | `Texture2DArray` | `Texture3D` | `VolumeTexture` |
 | :-- | :-- | :-- | :-- | :-- |
 
 `SamplerState` is **not** one of them; a parameter declared `SamplerState` gets no companion
-argument.
+argument. A texture parameter `T` beside a parameter named `TSampler` is
+[`DSH6255`](../diagnostics/DSH6xxx.md#dsh6255).
 
-One type token is rewritten on the way out:
+A parameter is written with the 2.0 spelling of its declared type:
 
 | Declared token | Emitted HLSL type |
 | :-- | :-- |
+| `vec2`…`vec4`, `ivec*`, `uvec*`, `bvec*`, `mat2`…`mat4` | `float2`…`float4`, `int*`, `uint*`, `bool*`, `float2x2`…`float4x4` |
+| a scalar, vector or matrix type in another case (`Float3`) | lower case |
 | `VolumeTexture` | `Texture3D` |
-| everything else | passed through unchanged |
+| everything else | as declared |
 
-## Attaching the include to a node
+## Includes on the node
 
-The include is referenced by a `UMaterialExpressionCustom` through its `IncludeFilePaths`, using the
-virtual path.
-
-| Call site | Include attached |
-| :-- | :-- |
-| a plain `Function` call from `Graph` | always |
-| a `Function SelfContained` / `Function Inline` call | only when some directly called function was *not* embedded |
-| a `GraphFunction` call | only when its body still calls a non-embedded `Function` |
-| a `ShaderFunction` or `Shader` HLSL body | only when it calls a non-embedded `Function` |
+The `#include "…"` lines at the start of a body are blanked in place — overwritten with spaces, so
+every position after them still matches the source — and added to the node's `IncludeFilePaths`
+instead: the embedded helpers' first, in the order they are embedded, then the function's own, each
+path once. An `#include` with an empty path is [`DSH6258`](../diagnostics/DSH6xxx.md#dsh6258). See
+[Function ▸ Includes](../language/function.md#includes).
 
 ## Self-contained functions
 
-`Function SelfContained Name(…)` (and its exact alias `Function Inline Name(…)`) makes the callee's
-body travel **inside** the Custom node instead of being pulled in from the include.
-
-The compiler computes the **transitive closure** of what the requested roots call: every
-`Function` in the unit has its dependency edges scanned, and the closure is emitted in post-order so
-that a dependency always precedes its dependents. A back edge is rejected:
-
-```text
-SelfContained Function cycle detected: {A -> B -> A}. HLSL Custom nodes cannot compile recursive
-DreamShader functions.
-```
-
-The embedded closure is wrapped in a struct so its members cannot collide with anything else in the
-shader:
-
-```hlsl
-struct generated_wrapper_<SanitizeIdentifier(Hint)>_<CRC32(Hint) as %08X>
-{
-	<definition of dependency>
-
-	<definition of root>
-
-};
-generated_wrapper_<…>_<CRC32(Hint) as %08X> __ds_wrapper_<CRC32(Hint) as %08X>;
-
-<the node's own code, with call sites rewritten>
-```
+A node embeds the **transitive closure** of the `Function`s its body calls: each callee once, a
+dependency before its dependents. Recursion has no HLSL form; a cycle among them is
+[`DSH6260`](../diagnostics/DSH6xxx.md#dsh6260).
 
 | Element | Form |
 | :-- | :-- |
-| struct type | `generated_wrapper_<sanitized hint>_<hash>` |
+| struct type | `generated_wrapper_<sanitized name>_<hash>` |
 | instance variable | `__ds_wrapper_<hash>` |
-| hint | the calling `Function`'s name, or the enclosing `GraphFunction` / `ShaderFunction` / `Shader` name |
-| hash | CRC32 of the **raw, unsanitized** hint, uppercase hex |
+| name | the `Function` the node is built for |
+| hash | CRC32 of the **raw, unsanitized** name, uppercase hex |
 | call sites in the node's own code | `__ds_wrapper_<hash>.DreamShaderFn_<Name>(…)` |
 | call sites between embedded members | plain `DreamShaderFn_<Name>(…)`, no qualifier |
 | member separation | one tab of indentation, one blank line between members |
 
-Call sites are rewritten in three shapes, tried in order:
+A call site is rewritten by **name**: the argument list stays as written, except that a
+`<texture>Sampler` argument is spliced in after each texture argument. That needs the call to pass
+exactly the callee's arguments ([`DSH6262`](../diagnostics/DSH6xxx.md#dsh6262)) and each texture
+argument to be a plain name ([`DSH6263`](../diagnostics/DSH6xxx.md#dsh6263)). A helper returns its
+first result, so a body calls it as a value — `float r = Remap01(x);`. *(since 2.0.0)* The 1.x
+reshaping of a call that passed that result as an argument (`Remap01(x, r);`) is gone.
 
-| Shape | Fires when | Produces |
-| :-- | :-- | :-- |
-| explicit-out | the argument count equals `inputs + results` and there is at least one result | `<outArg0> = <replacement>(<inputs…>[, <input>Sampler]…[, <outArgN>]…)` |
-| value | there is exactly one result and the argument count equals `inputs` | `<replacement>(<inputs…>[, <input>Sampler]…)` |
-| identifier only | otherwise | the callee name is replaced; the argument list is left untouched |
-
-> [!NOTE]
-> A `SelfContained` function is still written into the generated `.ush`. The include contains every
-> `Function` in the unit regardless of the modifier; `SelfContained` changes only how *call sites*
-> reach it.
+A namespace-qualified call inside a body works *(since 2.0.0)*: the body normalisation flattens
+`Common::Remap01(` to `Common_Remap01(`, which is the namespaced function's own name, so it is found
+and embedded like any other call. Through 1.x it called an undefined `Common_Remap01` and the shader
+failed to compile.
 
 > [!WARNING]
-> **A namespace-qualified call inside another `Function` or `GraphFunction` body is not rewritten.**
-> `Function` bodies go through identifier normalization, which collapses `Common::Remap01` to
-> `Common_Remap01` before code generation sees it — and `Common_Remap01` is not a name the rewriter
-> recognizes. The emitted HLSL then calls an undefined `Common_Remap01(...)` and the shader fails to
-> compile. Calls written in a `Graph` block are unaffected, because `Graph` text is not normalized.
-> **Workaround:** call namespaced helpers from `Graph`, or declare the helper at top level and call
-> it unqualified. See [Function](../language/function.md) and [Namespace](../language/namespace.md).
+> **`SelfContained` means the opposite of what it meant in 1.x.** `Function SelfContained Name(…)`
+> (and its spelling `Function Inline Name(…)`, [`DSH6306`](../diagnostics/DSH6xxx.md#dsh6306)) becomes
+> `/// @custom selfcontained`: the node's code is its own body and nothing else. A `Function` it calls
+> is **not** embedded, and each such call is [`DSH6264`](../diagnostics/DSH6xxx.md#dsh6264) — the
+> shader compiler then has to find that symbol in one of the body's own includes. Through 1.x the
+> modifier asked for the closure to be embedded; since 2.0.0 every node embeds it without being asked.
+> A `SelfContained` function that calls no other `Function` builds as before.
 
 ## Diagnostics
 
-Runtime substitutions are rendered as `{Placeholder}`. Duplicate and collision checks compare names
-case-insensitively.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `DreamShader Function '{Name}' is declared more than once.` | two `Function` blocks with the same name in the parse unit, including through `import` |
-| `DreamShader Function '{Name}' collides with another generated helper symbol '{Symbol}'. Rename the Function or Namespace.` | two `Function` names that sanitize to the same symbol, e.g. `Common::B` and `Common_B` |
-| `Failed to write generated helper include '{Path}'.` | the `.ush` could not be written — missing directory permissions, or the file is locked |
-| `SelfContained Function cycle detected: {Path}. HLSL Custom nodes cannot compile recursive DreamShader functions.` | a `SelfContained` closure contains a cycle |
-| `Unknown SelfContained DreamShader Function '{Name}'.` | a requested embedded root does not resolve to a `Function` in the unit |
-| `Generated DreamShader helper include '{Path}' from {File}.` | success message when the unit declares only `Function` blocks |
+| `DSH4210` | two `Function`s with the same name in the file and the headers it imports — including a namespaced one and a top-level one that flatten to the same name |
+| `DSH6260` | the `Function`s a node embeds call each other in a cycle |
+| `DSH6264` | *(warning)* a `SelfContained` `Function` calls another `Function`, which is not embedded |
+| [`DSH6259`](../diagnostics/DSH6xxx.md#dsh6259) | *(warning)* a body calls a name that differs from a `Function` only in case; the call is left as written |
+| [`DSH6261`](../diagnostics/DSH6xxx.md#dsh6261) | a body calls a function that is not a `Function` or `GraphFunction`, such as a `ShaderFunction` |
+| [`DSH6327`](../diagnostics/DSH6xxx.md#dsh6327) | a body calls a `GraphFunction` whose `UE.*` calls were lifted into inputs of its own node |
+| `DSH6262`, `DSH6263` | a call that passes a texture cannot be matched up with the callee's parameters |
+| `DSH6258` | an `#include` line with an empty path |
+
+A call in a body to a name that is no function of the file is left for the shader compiler.
 
 ## Example
 
@@ -269,72 +232,64 @@ Shader(Name="Materials/M_Ramp")
 }
 ```
 
-Generated file (hash values are illustrative):
+The `Remap01` call becomes a Custom node with input `value` and primary output `result`:
 
-```text
-real     <Project>/Intermediate/DreamShader/GeneratedShaders/M_Ramp_9f2c41ab.ush
-virtual  /DreamShaderGenerated/M_Ramp_9f2c41ab.ush
+```hlsl
+float result = (float)0;
+// Begin DreamShader source: DShader/M_Ramp.dsm
+// DreamShader custom: Remap01 line 7
+
+    result = saturate(value * 0.5 + 0.5);
+// End DreamShader source: DShader/M_Ramp.dsm
+return result;
+```
+
+The `Common::ApplyTint` call becomes a Custom node with inputs `color` and `tint`; its body returns:
+
+```hlsl
+// Begin DreamShader source: DShader/M_Ramp.dsm
+// DreamShader custom: Common_ApplyTint line 4
+ return color * tint; 
+// End DreamShader source: DShader/M_Ramp.dsm
+```
+
+Neither body calls another `Function`, so neither node has a wrapper and neither includes anything.
+A function that does call one carries it (hash values are illustrative):
+
+```c
+Function float Luma(in float3 c) { return dot(c, float3(0.299, 0.587, 0.114)); }
+Function float3 Desaturate(in float3 c, in float amount) { float l = Luma(c); return lerp(c, float3(l, l, l), amount); }
 ```
 
 ```hlsl
-// Auto-generated by DreamShader.
-// Changes will be overwritten the next time the source file is saved.
-
-#ifndef DREAMSHADER_GENERATED_M_RAMP_9F2C41AB
-#define DREAMSHADER_GENERATED_M_RAMP_9F2C41AB
-
-float3 DreamShaderFn_Common_ApplyTint(float3 color, float3 tint)
+struct generated_wrapper_Desaturate_1A2B3C4D
 {
-	float3 __return = (float3)0;
-	__return = color * tint;
-	return __return;
-}
-
-float DreamShaderFn_Remap01(float value)
-{
-	float result = (float)0;
-	result = saturate(value * 0.5 + 0.5);
-	return result;
-}
-
-#endif // DREAMSHADER_GENERATED_M_RAMP_9F2C41AB
-```
-
-The `Common::ApplyTint` call from `Graph` becomes a Custom node that includes the file:
-
-```hlsl
-// IncludeFilePaths = [ "/DreamShaderGenerated/M_Ramp_9f2c41ab.ush" ]
-return DreamShaderFn_Common_ApplyTint(color, tint);
-```
-
-The `Remap01` call is `SelfContained`, so its body is embedded and no include is needed:
-
-```hlsl
-struct generated_wrapper_Remap01_1A2B3C4D
-{
-	float DreamShaderFn_Remap01(float value)
+	float DreamShaderFn_Luma(float3 c)
 	{
-		float result = (float)0;
-		result = saturate(value * 0.5 + 0.5);
-		return result;
+// Begin DreamShader source: DShader/M_Gray.dsm
+// DreamShader custom: Luma line 1
+ return dot(c, float3(0.299, 0.587, 0.114)); 
+// End DreamShader source: DShader/M_Gray.dsm
 	}
 
 };
-generated_wrapper_Remap01_1A2B3C4D __ds_wrapper_1A2B3C4D;
+generated_wrapper_Desaturate_1A2B3C4D __ds_wrapper_1A2B3C4D;
 
-float __ds_Remap01_out0 = (float)0;
-__ds_Remap01_out0 = __ds_wrapper_1A2B3C4D.DreamShaderFn_Remap01(value);
-return __ds_Remap01_out0;
+// Begin DreamShader source: DShader/M_Gray.dsm
+// DreamShader custom: Desaturate line 2
+ float l = __ds_wrapper_1A2B3C4D.DreamShaderFn_Luma(c); return lerp(c, float3(l, l, l), amount); 
+// End DreamShader source: DShader/M_Gray.dsm
 ```
 
 ## See also
 
-- [Function](../language/function.md) — the block that produces these definitions
-- [GraphFunction](../language/graph-function.md) — the block that is never emitted into the include
-- [Namespace](../language/namespace.md) — how a qualified name reaches the mangler
+- [Function](../language/function.md) — the block that produces this code
+- [GraphFunction](../language/graph-function.md) — a Custom node whose `UE.*` calls are lifted into the graph
+- [Namespace](../language/namespace.md) — how a qualified name is flattened
+- [`/// @custom` bodies](../language-v2/index.md#-custom-bodies) — the 2.0 form every `Function` becomes
 - [HLSL library](../builtins/hlsl-library.md) — `Shaders/DreamShaderBuiltins.ush`, the hand-written companion
-- [Caching](caching.md) — the *other* hash, and why the include is not covered by it
+- [Caching](caching.md) — the build key that covers this code
 - [Project settings](../settings/project.md) — **Generated Shader Directory**
 - [Ephemeral materials](ephemeral.md) — *Clean Generated Shaders* and the other maintenance actions
-- [Generation](index.md) — where the include is written in the pipeline
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Generation](index.md) — where the code is built in the pipeline
+- [Diagnostics index](../diagnostics/index.md) — every code

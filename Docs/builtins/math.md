@@ -2,203 +2,204 @@
 
 > [DreamShader](../index.md) » [Builtins](index.md) » **Math builtins**
 
-Unprefixed, HLSL-spelled call names that a `Graph` block lowers directly to arithmetic
-`UMaterialExpression` nodes.
+Unprefixed, HLSL-spelled call names that lower directly to arithmetic `UMaterialExpression` nodes.
 
 | | |
 | :-- | :-- |
-| Declared in | `.dsm`, `.dsf` — inside a `Graph { … }` body, an `Outputs` binding expression, or an `Outputs` declaration initializer |
-| Kind | builtin call surface |
-| Generates | one `UMaterialExpression` per call, chosen per name — see [the catalogue](#catalogue). `reflect` and `refract` are the two exceptions and generate a small subgraph |
-| Spellings | 29, covering 26 operations (three alias pairs) |
+| Declared in | `.dsm`, `.dsf` — inside a `Graph { … }` body, an `Outputs` binding expression, or an `Outputs` declaration initializer; a `.dss` takes the same names anywhere an expression stands |
+| Kind | builtin call surface — the compiler's core operations |
+| Generates | one `UMaterialExpression` per call, chosen per name — see [the catalogue](#catalogue). Five names — `fwidth`, `rcp`, `rsqrt`, `reflect`, `refract` — have no node behind them and generate a small subgraph |
+| Spellings | 44 HLSL names, plus four GLSL spellings a 1.x source may still use *(since 2.0.0; 29 spellings through 1.9.x)* |
 | Namespace | none — these are called bare, `saturate(x)`, not `UE.saturate(x)` |
 
 ## Synopsis
 
 ```c
-{ abs | acos | asin | atan | ceil | cos | floor | frac | fract | length
-| normalize | saturate | sin | sqrt } ( <x> )
-{ atan2 | cross | dot | fmod | max | min | mod | pow | reflect | step } ( <x> , <y> )
-{ clamp | lerp | mix | refract | smoothstep } ( <x> , <y> , <z> )
+{ abs | acos | asin | atan | ceil | cos | ddx | ddy | exp | exp2 | floor | frac | fwidth | length
+| log | log2 | log10 | normalize | rcp | round | rsqrt | saturate | sign | sin | sqrt | tan | trunc } ( <x> )
+{ atan2 | cross | distance | dot | fmod | max | min | pow | reflect | step } ( <x> , <y> )
+{ clamp | lerp | refract | smoothstep } ( <x> , <y> , <z> )
 ```
 
 `( )` and `,` are literal DreamShaderLang punctuation; `{ a | b }` is meta-notation and is never
-typed. Each `<x>` / `<y>` / `<z>` is any [Graph expression](../graph/expressions.md).
+typed. Each `<x>` / `<y>` / `<z>` is any [Graph expression](../graph/expressions.md). `sinh`, `cosh`
+and `tanh` are names too, and refused — see [Notes](#notes).
 
-Every name is matched **case-insensitively**: `SATURATE(x)`, `Lerp(a, b, t)` and `Sin(x)` all
-resolve. Every argument must be **positional** — see [the named-argument warning](#named-arguments).
+Names are matched **exactly** *(since 2.0.0)*. A 1.x source still gets the 1.x leniencies, each
+with a diagnostic that says so — see [Name resolution](#name-resolution). An argument is positional,
+or named after the node's pin — see [Named arguments](#named-arguments).
 
 ## Catalogue
 
-One row per accepted spelling. *Return width* is the component count the generator assigns to the
-call's result; *Authoritative* is whether that width is marked authoritative for the widening rules
-in [Conversions](../graph/conversions.md#authoritative-component-counts).
+One row per HLSL name. *Result* is the type the compiler gives the call; *widest operand* means the
+widest of all the arguments, scalars broadcasting to it.
 
-| Spelling | Arity | Lowers to | Input pins wired, in order | Return width | Authoritative |
-| :-- | :-- | :-- | :-- | :-- | :-- |
-| `abs` | 1 | `UMaterialExpressionAbs` | `Input` | width of the argument | inherited from the argument |
-| `acos` *(since 1.6.0)* | 1 | `UMaterialExpressionArccosine` | `Input` | width of the argument | inherited from the argument |
-| `asin` *(since 1.6.0)* | 1 | `UMaterialExpressionArcsine` | `Input` | width of the argument | inherited from the argument |
-| `atan` *(since 1.6.0)* | 1 | `UMaterialExpressionArctangent` | `Input` | width of the argument | inherited from the argument |
-| `atan2` *(since 1.6.0)* | 2 | `UMaterialExpressionArctangent2` | `Y` ← argument 1, `X` ← argument 2 | `max` of both arguments | set when either argument had it |
-| `ceil` | 1 | `UMaterialExpressionCeil` | `Input` | width of the argument | inherited from the argument |
-| `clamp` | 3 | `UMaterialExpressionClamp` | `Input`, `Min`, `Max` | width of argument 1 | from argument 1 |
-| `cos` | 1 | `UMaterialExpressionCosine` | `Input` | width of the argument | inherited from the argument |
-| `cross` *(since 1.6.0)* | 2 | `UMaterialExpressionCrossProduct` | `A`, `B` | **always 3** | always set |
-| `dot` | 2 | `UMaterialExpressionDotProduct` | `A`, `B` | **always 1** | always set |
-| `floor` | 1 | `UMaterialExpressionFloor` | `Input` | width of the argument | inherited from the argument |
-| `fmod` *(since 1.5.0)* | 2 | `UMaterialExpressionFmod` | `A` ← dividend, `B` ← divisor | width of argument 1 | from argument 1 |
-| `frac` | 1 | `UMaterialExpressionFrac` | `Input` | width of the argument | inherited from the argument |
-| `fract` *(since 1.5.0)* | 1 | `UMaterialExpressionFrac` | `Input` | width of the argument | inherited from the argument |
-| `length` *(since 1.6.0)* | 1 | `UMaterialExpressionLength` | `Input` | **always 1** | always set |
-| `lerp` | 3 | `UMaterialExpressionLinearInterpolate` | `A`, `B`, `Alpha` | `max` of arguments 1 and 2 | set when either of arguments 1, 2 had it |
-| `max` | 2 | `UMaterialExpressionMax` | `A`, `B` | `max` of both arguments | set when either argument had it |
-| `min` | 2 | `UMaterialExpressionMin` | `A`, `B` | `max` of both arguments | set when either argument had it |
-| `mix` | 3 | `UMaterialExpressionLinearInterpolate` | `A`, `B`, `Alpha` | `max` of arguments 1 and 2 | set when either of arguments 1, 2 had it |
-| `mod` *(since 1.5.0)* | 2 | `UMaterialExpressionFmod` | `A` ← dividend, `B` ← divisor | width of argument 1 | from argument 1 |
-| `normalize` | 1 | `UMaterialExpressionNormalize` | **`VectorInput`** | width of the argument | inherited from the argument |
-| `pow` | 2 | `UMaterialExpressionPower` | `Base`, `Exponent` | width of argument 1 | from argument 1 |
-| `reflect` *(since 1.6.0)* | 2 | **a 4-node subgraph** — see [below](#reflect-refract) | — | `max` of both arguments | set when either argument had it |
-| `refract` *(since 1.6.0)* | 3 | **a 14-node subgraph** — see [below](#reflect-refract) | — | `max` of arguments 1 and 2 | set when either of arguments 1, 2 had it |
-| `saturate` | 1 | `UMaterialExpressionSaturate` | `Input` | width of the argument | inherited from the argument |
-| `sin` | 1 | `UMaterialExpressionSine` | `Input` | width of the argument | inherited from the argument |
-| `smoothstep` *(since 1.6.0)* | 3 | `UMaterialExpressionSmoothStep` | `Min`, `Max`, `Value` | `max` of all three arguments | set when any argument had it |
-| `sqrt` | 1 | `UMaterialExpressionSquareRoot` | `Input` | width of the argument | inherited from the argument |
-| `step` *(since 1.6.0)* | 2 | `UMaterialExpressionStep` | `Y` ← argument 1 (edge), `X` ← argument 2 (value) | `max` of both arguments | set when either argument had it |
+| Name | Arity | Lowers to | Input pins, in argument order | Result |
+| :-- | :-- | :-- | :-- | :-- |
+| `abs` | 1 | `UMaterialExpressionAbs` | `Input` | the argument's |
+| `acos` *(since 1.6.0)* | 1 | `UMaterialExpressionArccosine` | `Input` | the argument's |
+| `asin` *(since 1.6.0)* | 1 | `UMaterialExpressionArcsine` | `Input` | the argument's |
+| `atan` *(since 1.6.0)* | 1 | `UMaterialExpressionArctangent` | `Input` | the argument's |
+| `atan2` *(since 1.6.0)* | 2 | `UMaterialExpressionArctangent2` | `Y`, `X` | widest operand |
+| `ceil` | 1 | `UMaterialExpressionCeil` | `Input` | the argument's |
+| `clamp` | 3 | `UMaterialExpressionClamp` | `Input`, `Min`, `Max` | widest operand |
+| `cos` | 1 | `UMaterialExpressionCosine` | `Input` | the argument's |
+| `cross` *(since 1.6.0)* | 2 | `UMaterialExpressionCrossProduct` | `A`, `B` | **always `float3`** |
+| `ddx` *(since 2.0.0)* | 1 | `UMaterialExpressionDDX` | `Value` | the argument's |
+| `ddy` *(since 2.0.0)* | 1 | `UMaterialExpressionDDY` | `Value` | the argument's |
+| `distance` *(since 2.0.0)* | 2 | `UMaterialExpressionDistance` | `A`, `B` | **always `float`** |
+| `dot` | 2 | `UMaterialExpressionDotProduct` | `A`, `B` | **always `float`** |
+| `exp` *(since 2.0.0)* | 1 | `UMaterialExpressionExponential` | `Input` | the argument's |
+| `exp2` *(since 2.0.0)* | 1 | `UMaterialExpressionExponential2` | `Input` | the argument's |
+| `floor` | 1 | `UMaterialExpressionFloor` | `Input` | the argument's |
+| `fmod` *(since 1.5.0)* | 2 | `UMaterialExpressionFmod` | `A` ← dividend, `B` ← divisor | widest operand |
+| `frac` | 1 | `UMaterialExpressionFrac` | `Input` | the argument's |
+| `fwidth` *(since 2.0.0)* | 1 | **a subgraph**: `abs(ddx(x)) + abs(ddy(x))` | — | the argument's |
+| `length` *(since 1.6.0)* | 1 | `UMaterialExpressionLength` | `Input` | **always `float`** |
+| `lerp` | 3 | `UMaterialExpressionLinearInterpolate` | `A`, `B`, `Alpha` | widest operand |
+| `log` *(since 2.0.0)* | 1 | `UMaterialExpressionLogarithm` | `Input` | the argument's |
+| `log2` *(since 2.0.0)* | 1 | `UMaterialExpressionLogarithm2` | `X` | the argument's |
+| `log10` *(since 2.0.0)* | 1 | `UMaterialExpressionLogarithm10` | `X` | the argument's |
+| `max` | 2 | `UMaterialExpressionMax` | `A`, `B` | widest operand |
+| `min` | 2 | `UMaterialExpressionMin` | `A`, `B` | widest operand |
+| `normalize` | 1 | `UMaterialExpressionNormalize` | **`VectorInput`** | the argument's |
+| `pow` | 2 | `UMaterialExpressionPower` | `Base`, `Exponent` | widest operand |
+| `rcp` *(since 2.0.0)* | 1 | **a subgraph**: `Divide` with `ConstA = 1` | — | the argument's |
+| `reflect` *(since 1.6.0)* | 2 | **a 4-node subgraph** — see [below](#reflect-refract) | — | **always `float3`** |
+| `refract` *(since 1.6.0)* | 3 | **a 14-node subgraph** — see [below](#reflect-refract) | — | **always `float3`** |
+| `round` *(since 2.0.0)* | 1 | `UMaterialExpressionRound` | `Input` | the argument's |
+| `rsqrt` *(since 2.0.0)* | 1 | **a subgraph**: `SquareRoot`, then `Divide` with `ConstA = 1` | — | the argument's |
+| `saturate` | 1 | `UMaterialExpressionSaturate` | `Input` | the argument's |
+| `sign` *(since 2.0.0)* | 1 | `UMaterialExpressionSign` | `Input` | the argument's |
+| `sin` | 1 | `UMaterialExpressionSine` | `Input` | the argument's |
+| `smoothstep` *(since 1.6.0)* | 3 | `UMaterialExpressionSmoothStep` | `Min`, `Max`, `Value` | widest operand |
+| `sqrt` | 1 | `UMaterialExpressionSquareRoot` | `Input` | the argument's |
+| `step` *(since 1.6.0)* | 2 | `UMaterialExpressionStep` | `Y` ← argument 1 (edge), `X` ← argument 2 (value) | widest operand |
+| `tan` *(since 2.0.0)* | 1 | `UMaterialExpressionTangent` | `Input` | the argument's |
+| `trunc` *(since 2.0.0)* | 1 | `UMaterialExpressionTruncate` | `Input` | the argument's |
 
-Alias pairs — the two spellings in each pair are interchangeable and produce identical nodes:
-`lerp` / `mix`, `frac` / `fract`, `fmod` / `mod`.
+GLSL spellings, read in a 1.x source as the HLSL name, with the warning
+[`DSH5277`](../diagnostics/DSH5xxx.md#dsh5277): `mix` → `lerp`, `fract` → `frac`, `mod` → `fmod`,
+`inversesqrt` → `rsqrt`. In a `.dss` they are [`DSH4250`](../diagnostics/DSH4xxx.md#dsh4250).
+[`dsc migrate`](../tools/migrate.md) respells them.
 
 ## Argument rules
 
-These apply identically to every builtin above.
+These apply identically to every builtin above, in a 1.x source and a `.dss` alike.
 
 | # | Rule | Consequence when violated |
 | :-- | :-- | :-- |
-| 1 | Arity is exact — no defaults, no optional arguments, no varargs | `Math function '{Name}' expects exactly {N} argument(s).` |
-| 2 | Every argument is positional; a named argument is not accepted | reported as an arity error, see [below](#named-arguments) |
-| 3 | Each argument is evaluated as a full Graph expression, including nested builtin calls | the inner error is wrapped as `Math function '{Name}' argument {Index}: {Error}` |
-| 4 | Texture-object values are rejected | `Math function '{Name}' only accepts numeric scalar/vector arguments.` |
-| 5 | `MaterialAttributes` values are rejected | same message |
-| 6 | `Substrate` values are rejected | same message |
-| 7 | Component counts of the arguments are **not** checked, widened or broadcast | nothing here; the mismatch surfaces later as an Unreal material-translation error on the generated node |
+| 1 | Arity is exact — no defaults, no optional arguments, no varargs | [`DSH4224`](../diagnostics/DSH4xxx.md#dsh4224) |
+| 2 | An argument is positional, or named after one of the node's input pins; a positional argument fills the first operand not filled yet. In a `.dss` a positional argument after a named one is [`DSH2158`](../diagnostics/DSH2xxx.md#dsh2158) | an unknown name is [`DSH4216`](../diagnostics/DSH4xxx.md#dsh4216), a pin given twice [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215), a pin left out between given ones [`DSH4217`](../diagnostics/DSH4xxx.md#dsh4217) |
+| 3 | Each argument is evaluated as a full Graph expression, including nested builtin calls | the inner expression reports its own error, at its own position |
+| 4 | Every argument is a number (or a bool, read as 0 / 1) — a texture object, a `MaterialAttributes` value or a `Substrate` value is not | [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226) |
+| 5 | Component counts **are** checked *(since 2.0.0)*: the widest operand sets the width, a scalar broadcasts to it, a narrower vector does not widen | `DSH4226` |
+| 6 | `cross`, `reflect` and `refract` take `float3` operands | a narrower vector is `DSH4226`; a wider one is cut to three in a 1.x source with the note [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) — what 1.x did — and is `DSH4226` in a `.dss` |
+| 7 | Two integer operands of `/` are refused — the graph has no integer division | [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) |
 
-Rule 7 is the one to watch: `dot(vec3Value, floatValue)` is accepted by DreamShader without a
-diagnostic and fails during Unreal's own shader compile. Unlike the arithmetic operators, this path
-has no scalar/vector compatibility test — compare
-[Expressions ▸ Operand rules](../graph/expressions.md#operand-rules).
+Through 1.9.x none of rules 4 – 6 was a compile check: `dot(vec3Value, vec2Value)` was accepted
+without a word and failed later, in Unreal's own material translation.
 
 ## Name resolution
 
-Math-builtin names are resolved **before** any user-declared name. The `Graph` call dispatcher tests,
-in order:
+A call to a bare name is resolved in this order. The full lookup is on
+[Name resolution](../graph/name-resolution.md).
 
 | # | Candidate | Reference |
 | :-- | :-- | :-- |
-| 1 | vector/scalar constructor names (`float3`, `vec4`, `int2`, …) | [Constructors](../graph/constructors.md) |
-| 2 | `UE.SceneTexture` | [`UE.*` catalogue](ue.md) |
-| 3 | any `UE.`-prefixed callee | [`UE.*` catalogue](ue.md) |
-| 4 | any `Substrate.`-prefixed callee | [`Substrate.*`](substrate.md) |
-| 5 | **math builtins — this page** | — |
-| 6 | `SampleTexture2D` | [`UE.*` catalogue](ue.md) |
-| 7 | declared properties (parameter pin-call form) | [Using parameters in `Graph`](../parameters/graph-usage.md) |
-| 8 | `Function`, `GraphFunction`, `ShaderFunction`, `VirtualFunction` | [Calls](../graph/calls.md) |
+| 1 | in a 1.x `Graph`, the spellings the legacy front end rewrites while it reads the call: `SampleTexture2D`, a declared property's pin-call form, `UE.SceneTexture` and the other 1.x call shapes | [`UE.*` catalogue](ue.md) · [Using parameters in `Graph`](../parameters/graph-usage.md) |
+| 2 | type names — constructors such as `float3(…)`, `vec4(…)` | [Constructors](../graph/constructors.md) |
+| 3 | `UE.`- and `Substrate.`-prefixed callees | [`UE.*` catalogue](ue.md) · [`Substrate.*`](substrate.md) |
+| 4 | `Texture2DSample`, `Texture2DSampleLevel` | |
+| 5 | **math builtins — this page**, by the exact HLSL name; then a GLSL spelling (`DSH5277` in 1.x, `DSH4250` in a `.dss`) | — |
+| 6 | functions this file declares or imports — `Function`, `GraphFunction`, `ShaderFunction`, `VirtualFunction`, a `.dss` function | [Calls](../graph/calls.md) |
+| 7 | in a 1.x source only: a builtin or a function whose name matches **ignoring case**, with the warning [`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275) | — |
 
-> [!WARNING]
-> **The 29 names on this page are reserved and shadow user code silently.** A `Function`,
-> `GraphFunction`, `ShaderFunction`, `VirtualFunction` or property named `lerp`, `clamp`, `dot`,
-> `min`, `max`, `pow`, `abs` — or any other spelling in the catalogue — is unreachable from a `Graph`
-> block: the builtin wins at step 5 and no diagnostic is emitted. The declaration still compiles and
-> still generates its asset; only the `Graph` call site is redirected. Rename the user symbol, or
-> call it from a `Function` body instead of a `Graph` block.
->
-> Constructor names (step 1) are reserved the same way. Full lookup order:
-> [Name resolution](../graph/name-resolution.md).
+> [!IMPORTANT]
+> **A function cannot be named like a builtin** *(since 2.0.0)*. A `Function`, `GraphFunction`,
+> `ShaderFunction`, `VirtualFunction` or `.dss` function named `lerp`, `clamp`, `dot`, `min`, `max`,
+> `pow`, `abs` — any HLSL name or GLSL spelling on this page — is
+> [`DSH6206`](../diagnostics/DSH6xxx.md#dsh6206) at its declaration. Through 1.9.x such a function
+> compiled and was silently unreachable from a `Graph` block, because the builtin won.
 
-> [!NOTE]
-> A misspelled builtin is not reported as a math error. `saturte(x)` falls through all eight steps
-> and is reported by the call path as `Unknown Graph function 'saturte'.`
+A misspelled builtin — `saturte(x)` — is [`DSH4208`](../diagnostics/DSH4xxx.md#dsh4208), with a
+*did you mean* when a declared name differs only in case.
 
 <a id="named-arguments"></a>
 
 ## Named arguments
 
-Every arity guard is evaluated as "argument count is wrong **or** an argument is named", and both
-outcomes emit the arity message.
+*(since 2.0.0)* A named argument names one of the node's input pins — the *Input pins* column of the
+catalogue — and fills that operand, wherever it stands in the list:
 
-> [!WARNING]
-> Passing a named argument to a math builtin reports an **arity** error, not a namedness error.
-> `saturate(Input = X)` — one argument, correctly named after the node's pin — fails with
-> `Math function 'saturate' expects exactly 1 argument.` The fix is to drop the name:
-> `saturate(X)`. Named arguments are a `UE.*` / `Substrate.*` feature, not a math-builtin feature.
+```c
+float t = lerp(A, B, Alpha = Mask);     // A, B by position; Alpha by name
+float c = clamp(X, Max = 1.0, Min = 0.0);
+```
+
+The pin names are the engine's, so they are not always HLSL's: `pow` is `Base` / `Exponent`, `step`
+is `Y` (the edge) / `X` (the value), `normalize` is `VectorInput`. A name the node does not have is
+[`DSH4216`](../diagnostics/DSH4xxx.md#dsh4216), which lists the pins. The builtins with no node
+(`fwidth`, `rcp`, `rsqrt`, `reflect`, `refract`) take their arguments in order only.
+
+> [!NOTE]
+> Through 1.9.x a named argument on a math builtin was reported as an **arity** error —
+> `saturate(Input = X)` failed with an "expects exactly 1 argument" message. It selects the pin now.
 
 ## Per-builtin notes
 
 ### clamp
 
 `clamp(Input, Min, Max)` wires all three arguments and leaves the node's `ClampMode` at its default,
-`CMODE_Clamp`. To generate a `Clamp` node in `CMODE_ClampMin` or `CMODE_ClampMax`, use the generic
-form instead: `UE.Expression(Class="Clamp", OutputType="float1", Input=x, Min=a, ClampMode="CMODE_ClampMin")`.
-See [`UE.Expression`](ue-expression.md).
+`CMODE_Clamp`. For `CMODE_ClampMin` or `CMODE_ClampMax`, call the node itself:
+`UE.Clamp(Input = x, Min = a, ClampMode = CMODE_ClampMin)`. See [`UE.Expression`](ue-expression.md).
 
-### dot
+### dot, length, distance, cross
 
-The only builtin with a fixed return width. `dot` always produces a 1-component, authoritative
-result regardless of the argument widths, so `float d = dot(A, B);` needs no swizzle.
+The builtins with a fixed result: `dot`, `length` and `distance` are always one component, `cross`
+always three, whatever the arguments were — so `float d = dot(A, B);` needs no swizzle.
 
-### fmod, mod
+### fmod
 
 Argument 1 is the dividend and argument 2 the divisor; they are wired to the node's `A` and `B` pins
-respectively. The result takes the dividend's width.
+respectively.
 
-`mod` is the GLSL spelling. Inside a [`Function`](../language/function.md) HLSL body the identifier
-`mod` is rewritten to `fmod` by the GLSL-alias pass; in a `Graph` block both spellings are accepted
-directly by this dispatcher, with no rewrite.
+`mod` is the GLSL spelling. In a `Graph` block a 1.x source may still write it, with the warning
+`DSH5277`. Inside a [`Function`](../language/function.md) HLSL body the identifier `mod` is rewritten
+to `fmod` — silently, ignoring case — together with the other GLSL names.
 
-> [!NOTE]
-> The [decompiler](../tools/decompiler.md) has no case for `UMaterialExpressionFmod`. An existing
-> `Fmod` node exports as a generic `UE.Expression(Class="Fmod", …)` call rather than as `fmod(…)`.
-> The exported source is equivalent; it simply does not round-trip to the builtin spelling.
+### lerp
 
-### lerp, mix
-
-The result width is `max` of arguments 1 and 2 — the `Alpha` argument does not participate. A scalar
-`Alpha` blending two `vec3` values yields a `vec3`.
+The result is as wide as the widest of the three arguments, `Alpha` included: a scalar `Alpha`
+blending two `float3` values yields a `float3`, and is broadcast to it. Over two Substrate values,
+`lerp(A, B, t)` is a `Substrate.HorizontalMixing` instead — see
+[Substrate sugar](../language-v2/substrate.md).
 
 ### min, max
 
-The two names share one implementation and differ only in the node class selected. Both take the
-`max` of the two argument widths.
+The two names share one typing rule and differ only in the node class selected.
 
 ### normalize
 
-The only builtin whose input pin is not named `Input`. Inputs on this path are bound by reflected
-property name, and `UMaterialExpressionNormalize` names its pin `VectorInput`; the difference is
-invisible at the call site (`normalize(N)`) but appears in the two `could not bind input` /
-`failed to access input` diagnostics.
+The only builtin whose single input pin is not named `Input`: `UMaterialExpressionNormalize` names it
+`VectorInput`. The difference is invisible at a positional call site (`normalize(N)`), and it is the
+name a named argument has to use.
 
 ### sin, cos
 
-Both leave the node's `Period` property at its default. For a non-default period use
-`UE.Expression(Class="Sine", OutputType="float1", Input=x, Period=2.0)`.
+Both leave the node's `Period` property at its default. For a non-default period call the node
+itself: `UE.Sine(Input = x, Period = 2.0)`.
 
 ### step
 
 `step(edge, x)` returns `x >= edge ? 1 : 0`, as in HLSL. `UMaterialExpressionStep` names its pins the
 other way round — `Y` is the edge and `X` is the value — so argument 1 wires to `Y` and argument 2 to
-`X`. Writing the node form by hand, the equivalent call is
-`UE.Expression(Class="Step", OutputType="float1", Y=edge, X=x)`.
+`X`.
 
 ### smoothstep
 
 `smoothstep(min, max, x)`, argument order as in HLSL, wired straight to the node's `Min`, `Max` and
 `Value` pins.
-
-### length, cross
-
-The two builtins besides `dot` with a fixed return width: `length` is always 1 component and `cross`
-always 3, whatever the arguments were. Both widths are authoritative, and they match what the same
-classes already report when reached through [`UE.Expression`](ue-expression.md).
 
 ### asin, acos, atan, atan2
 
@@ -207,16 +208,21 @@ pins are already named `Y` and `X`, so the mapping is direct.
 
 > [!NOTE]
 > The engine also ships `ArcsineFast`, `ArccosineFast`, `ArctangentFast` and `Arctangent2Fast` —
-> cheaper approximations valid over a limited input range. They have no builtin spelling; reach them
-> with `UE.Expression(Class="ArcsineFast", OutputType="float1", Input=x)`.
+> cheaper approximations valid over a limited input range. They have no builtin spelling; call the node
+> itself, `UE.ArcsineFast(Input = x)`.
+
+### fwidth, rcp, rsqrt
+
+No engine node does any of the three. `fwidth(x)` is built as `abs(ddx(x)) + abs(ddy(x))`, which is
+what the HLSL intrinsic is defined as; `rcp(x)` as a `Divide` with `ConstA = 1`; `rsqrt(x)` as a
+`SquareRoot` feeding such a `Divide`.
 
 <a id="reflect-refract"></a>
 
 ### reflect, refract
 
-The only two builtins with no node behind them. Unreal has no `Reflect` or `Refract`
-`UMaterialExpression`, so both are lowered to the arithmetic HLSL defines them as, and the value
-returned to the caller is the final node of that subgraph.
+Unreal has no `Reflect` or `Refract` `UMaterialExpression`, so both are lowered to the arithmetic
+HLSL defines them as, and the value returned to the caller is the final node of that subgraph.
 
 `reflect(i, n)` becomes `i - 2 * dot(i, n) * n` — four nodes (`DotProduct`, two `Multiply`,
 `Subtract`). The literal `2` rides `Multiply`'s `ConstB` rather than costing a `Constant` node.
@@ -231,71 +237,57 @@ k < 0 ? 0 : eta*i - (eta*dot(n, i) + sqrt(k)) * n
 The total-internal-reflection test is an `If` node, so both sides are translated and one is
 selected; `sqrt` of a negative `k` lands only on the discarded side, exactly as in HLSL. `k == 0`
 still satisfies the formula (`sqrt(0) == 0`) and takes the refracted side. The zero branch is built
-as `i * 0` rather than a constant so that its type always equals `i`'s — `If` requires its two
-branches to agree, and the tracked component count cannot always guarantee a hand-picked constant
-would.
+as `i * 0` rather than a constant so that its width always equals `i`'s, which `If` requires of its
+two branches.
 
 > [!NOTE]
-> Both are node-count-expensive by construction, and neither is common enough in a
-> [`Graph`](../graph/index.md) block to be worth a graph that large. Where the surrounding code is
-> already HLSL, write them in a [`Function`](../language/function.md) body instead and let the
-> intrinsic do it in one node.
+> Both are node-count-expensive by construction. Where the surrounding code is already HLSL, write
+> them in a [`Function`](../language/function.md) body instead and let the intrinsic do it in one node.
 
 ## Notes
 
-- Every math node is created at editor X coordinate `360`, with Y taken from the generator's running
-  layout counter. See [Graph layout](../generation/graph-layout.md).
-- Results are **common-subexpression cached**. Two textually identical calls over identical operand
-  values — `sin(X)` written twice — produce one `Sine` node, not two. The cache key covers the
-  builtin name, the node class and every argument value. See
+- Two identical calls over identical operands — `sin(X)` written twice — become one node: the IR's
+  structural de-duplication merges them before anything is emitted. See
   [Node reuse](../graph/node-reuse.md).
-- **There is no matrix on this surface, and there cannot be one.** The Unreal material graph has no
-  matrix value type at all — no `float3x3`/`float4x4` value, no `mul(M, v)`, no matrix constructor —
-  so matrix arithmetic has no spelling here regardless of what the DSL does. The two things that
-  exist near it are the space-conversion nodes, reached as
-  `UE.Expression(Class="Transform", OutputType="float3", Input=v)` and
-  `UE.Expression(Class="TransformPosition", OutputType="float3", Input=p)` with `TransformSourceType`
-  / `TransformType` naming the spaces. For genuine matrix math, write a
+- Node positions come from the [graph layout](../generation/graph-layout.md), like every other node.
+- **`sinh`, `cosh` and `tanh` are refused** with [`DSH4246`](../diagnostics/DSH4xxx.md#dsh4246): the
+  material graph has no hyperbolic node. Write them in a [`Function`](../language/function.md) body
+  (or a `/// @custom` function in a `.dss`), where the shader compiler has them.
+- **There is no matrix on this surface.** The Unreal material graph has no matrix value type — no
+  `float3x3` value, no `mul(M, v)` — and a matrix that survives constant folding is
+  [`DSH4361`](../diagnostics/DSH4xxx.md#dsh4361). The space-conversion nodes are the
+  [Transform builtins](transform.md). For genuine matrix math, write a
   [`Function`](../language/function.md) HLSL body, where `float4x4` and `mul` are just HLSL.
-- There is still no exponential, logarithmic, `tan`, `sign`, `round`, `trunc` or `distance` builtin.
-  Every one of them does have a node — reach it through [`UE.Expression`](ue-expression.md), for
-  example `UE.Expression(Class="Logarithm2", OutputType="float1", X=x)` or
-  `UE.Expression(Class="Distance", OutputType="float1", A=u, B=v)` — or write the operation in a
-  `Function` HLSL body, where the full HLSL intrinsic set is available.
-- Inside a `Function` HLSL body these names are *not* handled by this dispatcher at all; the body is
+- Inside a `Function` HLSL body these names are *not* handled by the compiler at all; the body is
   emitted verbatim and HLSL's own intrinsics apply.
-- The [decompiler](../tools/decompiler.md) emits these spellings when exporting an existing
-  material: `LinearInterpolate` → `lerp`, `Clamp` (when `ClampMode == CMODE_Clamp`) → `clamp`,
-  `Power` → `pow`, `DotProduct` → `dot`, `Normalize` → `normalize`, `Min`/`Max` → `min`/`max`,
-  `Abs` → `abs`, `Saturate` → `saturate`, `Floor`/`Ceil`/`Frac`/`SquareRoot` →
-  `floor`/`ceil`/`frac`/`sqrt`, and `Sine`/`Cosine` (when `Period` is 1.0) → `sin`/`cos`.
-- The decompiler has no case for the newer builtins either — `Step`, `SmoothStep`, `Length`,
-  `CrossProduct`, `Arcsine`, `Arccosine`, `Arctangent` and `Arctangent2` export as generic
-  `UE.Expression(Class="…", …)` calls, the same way `Fmod` does. The exported source is equivalent
-  and recompiles; it simply does not round-trip to the builtin spelling. `reflect` and `refract`
-  cannot round-trip at all — they leave a subgraph of ordinary arithmetic nodes behind, with nothing
-  marking it as having come from one call.
+- The [decompiler](../tools/decompiler.md) writes these spellings back. Its 2.0 writer (`.dss`, the
+  default) prints the builtin for any node of a class in the catalogue whose input pins are all
+  connected and whose other properties are at their defaults — a `Sine` with a non-default `Period`
+  stays `UE.Sine(...)` — and recognises the subgraphs `fwidth`, `rcp`, `rsqrt`, `reflect` and
+  `refract` lower to when nothing else reads into them. The legacy writer (`-Format Legacy`, the
+  *Export Legacy* entries) keeps its 1.x table.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this table; the compiler emits the
-substituted text. `{Name}` is the spelling as the author wrote it, so its casing is preserved.
-`{Index}` is 1-based.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Math function '{Name}' expects exactly 1 argument.` | wrong argument count for a 1-argument builtin, **or** any argument was named |
-| `Math function '{Name}' expects exactly 2 arguments.` | same, for `dot`, `pow`, `min`, `max`, `fmod`, `mod`, `step`, `cross`, `atan2`, `reflect` |
-| `Math function '{Name}' expects exactly 3 arguments.` | same, for `lerp`, `mix`, `clamp`, `smoothstep`, `refract` |
-| `Math function '{Name}' is missing argument {Index}.` | an argument slot the builtin asked for does not exist |
-| `Math function '{Name}' argument {Index}: {Error}` | evaluating the argument expression failed; `{Error}` is the inner diagnostic |
-| `Math function '{Name}' only accepts numeric scalar/vector arguments.` | an argument is a texture object, a `MaterialAttributes` value or a `Substrate` value |
-| `Failed to create math function '{Name}'.` | the material node could not be created |
-| `Math function '{Name}' could not bind input '{Input}'.` | the node class does not expose the expected input property (the pin-name-driven builtins: every 1-argument one plus `step`, `cross`, `atan2`, `smoothstep`) |
-| `Math function '{Name}' failed to access input '{Input}'.` | the input property exists but its storage could not be reached (same builtins) |
-| `Unknown Graph function '{Name}'.` | the name is not a builtin, constructor, property or user function — emitted by the call path, not by this one |
+| [`DSH4224`](../diagnostics/DSH4xxx.md#dsh4224) | the wrong number of arguments |
+| [`DSH4216`](../diagnostics/DSH4xxx.md#dsh4216) | a named argument names no input pin of the node |
+| [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215) | one pin is given twice |
+| [`DSH4217`](../diagnostics/DSH4xxx.md#dsh4217) | an argument is missing between the ones given |
+| [`DSH2158`](../diagnostics/DSH2xxx.md#dsh2158) | *(`.dss`)* a positional argument after a named one |
+| [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226) | an argument is not a number, or its width does not fit the call's |
+| [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) | *(info, 1.x only)* a wider vector cut down to the width the call takes |
+| [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243) | an integer division |
+| [`DSH4246`](../diagnostics/DSH4xxx.md#dsh4246) | `sinh`, `cosh` or `tanh` |
+| [`DSH5277`](../diagnostics/DSH5xxx.md#dsh5277) | *(warning, 1.x only)* a GLSL spelling |
+| [`DSH4250`](../diagnostics/DSH4xxx.md#dsh4250) | a GLSL spelling in a `.dss` |
+| [`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275) | *(warning, 1.x only)* a name that matches a builtin only ignoring case |
+| [`DSH4208`](../diagnostics/DSH4xxx.md#dsh4208) | the name is no builtin, type, node or function |
+| [`DSH6206`](../diagnostics/DSH6xxx.md#dsh6206) | a function declared with a builtin's name |
+| [`DSH8214`](../diagnostics/DSH8xxx.md#dsh8214) | the emitter could not create a node of the subgraph a builtin lowers to |
 
-The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
+Every code: [diagnostics](../diagnostics/README.md).
 
 ## Example
 
@@ -314,7 +306,7 @@ Shader(Name="Docs/M_MathBuiltins")
         float c     = cos(X);
         float cl    = clamp(X, 0.0, 1.0);
         float sa    = saturate(X);
-        vec3  mixed = lerp(A, B, sa);
+        vec3  mixed = lerp(A, B, Alpha = sa);
         vec3  unit  = normalize(mixed);
         float d     = dot(unit, A);
         Color = mixed * (s + c + cl) + unit * d;
@@ -329,9 +321,9 @@ Sine(X)                       -> s
 Cosine(X)                     -> c
 Clamp(X, 0.0, 1.0)            -> cl
 Saturate(X)                   -> sa
-LinearInterpolate(A, B, sa)   -> mixed     (3 components: max(3, 3))
-Normalize(mixed)              -> unit      (3 components)
-DotProduct(unit, A)           -> d         (1 component, always)
+LinearInterpolate(A, B, sa)   -> mixed     (float3: the widest operand)
+Normalize(mixed)              -> unit      (float3)
+DotProduct(unit, A)           -> d         (float, always)
 Add / Multiply chain          -> Color
 ```
 
@@ -339,17 +331,16 @@ Add / Multiply chain          -> Color
 
 - [Builtins](index.md) — the call surfaces available inside `Graph`
 - [`UE.*` catalogue](ue.md) — every named material-node builtin
-- [`UE.Expression`](ue-expression.md) — the generic escape hatch for any `UMaterialExpression`
-- [`OutputType` values](output-type.md) — the token set `UE.Expression` accepts
+- [`UE.Expression`](ue-expression.md) — any `UMaterialExpression`, called by its class
 - [Transform builtins](transform.md) — `UE.TransformVector` / `UE.TransformPosition`
 - [`Substrate.*`](substrate.md) — Substrate node wrappers (UE 5.4+)
 - [`DreamShaderBuiltins.ush`](hlsl-library.md) — the shipped HLSL helper header
 - [Expressions and operators](../graph/expressions.md) — `+ - * /`, precedence, operand rules
-- [Constructors](../graph/constructors.md) — the constructor names that shadow builtins first
-- [Conversions](../graph/conversions.md) — widening rules and authoritative component counts
+- [Constructors](../graph/constructors.md) — the type names resolved before builtins
+- [Conversions](../graph/conversions.md) — widening and narrowing
 - [Calls](../graph/calls.md) — call syntax, named arguments, out arguments
-- [Name resolution](../graph/name-resolution.md) — the full lookup order and shadowing rules
+- [Name resolution](../graph/name-resolution.md) — the full lookup order
 - [Node reuse](../graph/node-reuse.md) — why repeated calls produce one node
 - [Unsupported constructs](../graph/unsupported.md) — `%` and the other absent operators
 - [`Function`](../language/function.md) — HLSL bodies, where the full intrinsic set applies
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics](../diagnostics/README.md) — every code

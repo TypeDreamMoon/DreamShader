@@ -2,14 +2,13 @@
 
 > [DreamShader](../index.md) » [Graph](index.md) » **Declarations**
 
-A statement that introduces a new name into the `Graph` value map and binds it to a node, an output
-index and a channel mask.
+A statement that introduces a new name into the `Graph` body and binds it to a typed value.
 
 | | |
 | :-- | :-- |
 | Declared in | `.dsm`, `.dsf` — inside a `Graph` block |
 | Kind | statement |
-| Generates | nodes for the initializer; for an uninitialized numeric declaration, a zero `Constant` (plus `AppendVector` for widths above 1) |
+| Generates | nodes for the initializer; a declaration without one is given a zero of its type |
 
 ## Synopsis
 
@@ -20,14 +19,13 @@ index and a channel mask.
 brace-initializer := { [ <expression> [ , <expression> ] … ] }
 ```
 
-A declaration is recognized by splitting the text before the top-level `=` at its **last** top-level
-whitespace character. Parenthesis depth and string state are tracked; brace and bracket depth are
-not. Both halves must be non-empty.
+A statement is a declaration when it starts with two names in a row — a type token and the variable's
+name *(since 2.0.0; 1.x split the text at its last top-level whitespace)*. Both are single tokens.
 
 > [!NOTE]
-> The name half is checked only for being non-empty — it is **not** validated as an identifier.
-> `float3 A.B = x;` declares a variable literally named `A.B`; it is not a `MaterialAttributes`
-> member write. Declarators after the first in a comma list **are** identifier-checked.
+> The name is one identifier. `float3 A.B = x;` is [`DSH2154`](../diagnostics/DSH2xxx.md#dsh2154) at
+> the `.` *(since 2.0.0)*; 1.x declared a variable literally named `A.B`. A member write has no type in
+> front of it: `Attrs.BaseColor = x;`.
 
 ## Accepted type tokens
 
@@ -39,89 +37,78 @@ not. Both halves must be non-empty.
 | `float4` `half4` `vec4` `int4` `uint4` `bool4` `ivec4` `uvec4` `bvec4` | 4 | |
 | `MaterialAttributes` | 0 | see [MaterialAttributes](material-attributes.md) |
 | `Substrate` | 0 | **UE 5.4+**; requires an initializer |
-| `StaticBool` `StaticBoolParameter` | 1 | *(since 1.6.0)* |
-| `Texture2D` `SamplerState` | 0 | texture object of dimension `Texture2D`; requires an initializer |
+| `StaticBool` `StaticBoolParameter` | 1 | a `bool` variable *(since 1.6.0)* |
+| `Texture2D` | 0 | requires an initializer |
 | `TextureCube` | 0 | requires an initializer |
 | `Texture2DArray` | 0 | requires an initializer |
-| `Texture3D` `VolumeTexture` | 0 | dimension `VolumeTexture`; requires an initializer |
+| `Texture3D` `VolumeTexture` | 0 | requires an initializer |
+| `SamplerState` | 0 | a sampler of its own, no longer a `Texture2D` *(since 2.0.0)*; requires an initializer |
 
-Comparison is case-insensitive. For the numeric rows, `MaterialAttributes` and `Substrate` the token
-also has **all internal spaces removed** before matching, so `float 3` resolves as `float3` and
-`Material Attributes` as `MaterialAttributes`; the texture rows and `StaticBool` are matched on the
-token as written, so `Texture 2D` does **not** resolve.
-`int`, `uint`, `bool` and `half` are spellings of the same float widths — see
-[Type tokens](../language/types.md).
+Every row is matched case-insensitively (`Float3`, `VEC3`, `materialattributes`). A type token is one
+token *(since 2.0.0)*: `float 3` and `Material Attributes` are no longer read as types.
+`vec*`, `ivec*`, `uvec*` and `bvec*` read as `float*`, `int*`, `uint*` and `bool*`.
+
+`int`, `uint`, `bool` and `half` are kinds of their own to the compiler — a `/` between two integers
+is [`DSH4243`](../diagnostics/DSH4xxx.md#dsh4243), a condition is a `bool` — and every one of them is
+a float in the generated graph. See [Type tokens](../language/types.md). The matrix spellings
+(`mat3`, `float3x3`) resolve, but the graph has no matrix values:
+[`DSH4361`](../diagnostics/DSH4xxx.md#dsh4361).
 
 ## Uninitialized declarations
 
-`<type> <name>;` binds the name to a default value:
+`<type> <name>;` is given an initializer by the legacy front end, because 1.x read an unset variable
+as zero:
 
-| Declared type | Result |
+| Declared type | Initializer |
 | :-- | :-- |
-| scalar (1 component) | one `Constant` node with `R = 0` |
-| vector (2–4 components) | the **same** zero `Constant` appended N times through `AppendVector` — 1 constant node and N−1 append nodes |
-| `MaterialAttributes` | a `MakeMaterialAttributes` node, component count 0 |
-| `Substrate` | error — `Graph variable type '{Type}' requires an explicit initializer.` |
-| any texture type, `SamplerState` | error — `Graph variable type '{Type}' requires an explicit initializer.` |
-| unresolvable token | error — `Unsupported Graph variable type '{Type}'.` |
+| scalar (1 component) | `0` (`false` for a `bool`) |
+| vector (2–4 components) | `floatN(0, …)` — one zero per component, in the declared kind |
+| `MaterialAttributes` | an empty attribute set (`MakeMaterialAttributes`) |
+| `Substrate` | none — [`DSH2215`](../diagnostics/DSH2xxx.md#dsh2215) |
+| any texture type, `SamplerState` | none — `DSH2215` |
+| a token that does not resolve | [`DSH4201`](../diagnostics/DSH4xxx.md#dsh4201) |
 
 ```c
-float3 c;              // Constant(0) -> AppendVector -> AppendVector
-MaterialAttributes A;  // MakeMaterialAttributes, ready for member writes
-Texture2D T;           // error: requires an explicit initializer
+float3 c;              // float3(0, 0, 0)
+MaterialAttributes A;  // an empty attribute set, ready for member writes
+Texture2D T;           // DSH2215: requires an initializer
 ```
 
 ## Declarations with an initializer
 
-The initializer is evaluated first, then the declaration is typed:
+The initializer is evaluated, then converted to the declared type:
 
 | Order | Step |
 | --: | :-- |
-| 1 | the type token must resolve, else `Unsupported Graph variable type '{Type}' for '{Name}'.` |
-| 2 | if the value carries an **authoritative** component count, both the value and the declared type are plain numeric, and the counts differ — the value is stored **as-is**, unchanged, with no diagnostic (see [below](#authoritative-widths-override-the-declared-width)) |
-| 3 | otherwise the value is coerced to the declared type; failure gives `Graph variable '{Name}' is declared as '{Type}' but assigned an incompatible value. {Detail}` |
+| 1 | the type token must resolve, else `DSH4201` |
+| 2 | a scalar spreads to every component of a vector type |
+| 3 | a wider vector gives its **leading** components — legacy rule L22, said by the info [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) |
+| 4 | anything else that does not fit — a narrower vector, a texture into a number — is [`DSH4228`](../diagnostics/DSH4xxx.md#dsh4228) |
 
-Coercion at step 3 silently narrows a wider value by prefixing an `r` / `rg` / `rgb` mask and splats
-a scalar up to the declared width. It never widens 2 components to 3. See
-[Conversions](conversions.md).
+Step 4 means a 2-component value never widens to 3. See [Conversions](conversions.md).
 
 ## Authoritative widths override the declared width
 
-Some values know their own width for certain. When such a value is assigned to a declaration of a
-different plain-numeric width, the declared type is **ignored**: the value is stored unchanged, no
-coercion happens, and no diagnostic is produced. The mismatch surfaces later, at the first operator
-or output binding that cannot reconcile it.
-
-A value is authoritative when it comes from:
-
-| Source | Width |
-| :-- | --: |
-| `UE.TexCoord` / `TextureCoordinate`, `UE.Panner` / `Panner`, `ScreenPosition`, `Rotator`, `SceneTexelSize` | 2 |
-| `UE.WorldPosition`, `UE.ObjectPositionWS`, `UE.CameraVectorWS`, `UE.VertexNormalWS`, `UE.VertexTangentWS`, `Transform`, `TransformPosition`, `SkyAtmosphereLightDirection`, `PixelNormalWS`, `CrossProduct` | 3 |
-| `PixelDepth`, `TwoSidedSign`, `Arctangent2Fast`, `Length`, `MaterialXLuminance` | 1 |
-| a constant-folded vector constructor — `vec3(0.5)`, `float4(1, 0, 0, 1)` | the constructor's width |
-| `dot(a, b)` | 1 |
-| a swizzle of an authoritative value | the swizzle's width |
-| a binary operator, or an `AppendVector`, with at least one authoritative operand | `max` of the operand widths |
+*(since 2.0.0)* They no longer do: the declared type is the variable's type. 1.x let certain values
+(`UE.TexCoord`, `UE.CameraVectorWS`, a constant-folded constructor, `dot`, …) keep their own width
+whatever the declaration said, so `float2 dir = UE.CameraVectorWS();` made `dir` three components
+without a message. Now `dir` is a `float2`: the leading two components of the value, said by
+`DSH5289` when the value is typed wider.
 
 ```c
 Graph = {
-    float2 dir = UE.CameraVectorWS();   // no error; 'dir' is 3 components, not 2
-    Color = dir * Tint;                 // fails here if Tint is 4 components:
-                                        //   Operator '*' requires matching vector sizes or a
-                                        //   scalar/vector pair, got 3 and 4 component(s).
+    float3 c = Tint;            // Tint is a float4 property: DSH5289, c = Tint.rgb
+    float2 dir = UE.CameraVectorWS();   // dir is two components
 }
 ```
 
-> [!WARNING]
-> The declared width of such a variable is documentation only. Reading `float2 dir` and expecting
-> two channels is wrong; `dir` carries three. Add an explicit swizzle (`UE.CameraVectorWS().xy`) or a
-> constructor when a narrower value is actually wanted.
+A 1.x source that relied on the override builds a different graph than it did through 1.9.x, and
+nothing reports it: [`dsc migrate`](../tools/migrate.md) compares what the 2.0 compiler builds from the
+1.x file with what it builds from the `.dss`, and the two agree. Rebuild such a material and check it.
 
-Binary operators deliberately do **not** narrow an operand to match an authoritative one — they
-report a size mismatch instead, so that channels are never dropped silently. Assignment,
-declaration coercion, function inputs and attribute writes do narrow silently. See
-[Conversions](conversions.md).
+Binary operators never narrow an operand: two operands of different widths, neither of them a
+scalar, are [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226). Assignment, declaration, function inputs
+and pins take the leading components (`DSH5289`). See [Conversions](conversions.md).
 
 ## Comma declarators
 
@@ -129,50 +116,38 @@ declaration coercion, function inputs and attribute writes do narrow silently. S
 float a = 1, b, c = 3;
 ```
 
-One statement per declarator is produced. Rules:
+One variable per declarator is declared. Rules:
 
 | Rule | Behaviour |
 | :-- | :-- |
-| Recognition | applies only when splitting on top-level `,` yields more than one segment **and** the first segment, minus its `= …`, splits into a type and a name |
-| Shared type | every declarator uses the type token of the **first** declarator; a type token on a later declarator is not accepted |
-| Declarator names | must be bare identifiers — `[A-Za-z_][A-Za-z0-9_]*` |
+| Recognition | a declaration whose declarator is followed by `,` and another name |
+| Shared type | every declarator has the type of the **first**; a type token after a `,` is read as the next declarator's name, and what follows it is `DSH2154` |
+| Declarator names | must be identifiers — [`DSH2163`](../diagnostics/DSH2xxx.md#dsh2163) otherwise |
 | Initializers | each declarator may carry its own `= <expression>` or `= { … }`, or none |
-| Source location | all resulting statements report the **same** line and column as the whole list |
+| Source location | each declarator reports its own line and column *(since 2.0.0)* |
 
-`float a = 1, b, c = 3;` declares three 1-component values: `a` initialized to `1`, `b` defaulted to
-`0`, `c` initialized to `3`.
-
-| Message | Cause |
-| :-- | :-- |
-| `In Graph statement '{Text}': '{Declarator}' is not a valid declarator in a comma-separated declaration.` | a declarator after the first is not a bare identifier |
+`float a = 1, b, c = 3;` declares three 1-component values: `a` initialized to `1`, `b` to `0`,
+`c` to `3`.
 
 ## Brace initializers
 
-A right-hand side whose trimmed text is at least two characters long, starts with `{` and ends with
-`}` is a brace initializer. It is re-serialised as `<TargetType>( <inner> )` and evaluated as an
-ordinary constructor call. Brace initializers are therefore **exactly** constructor calls and inherit
-every rule of [Constructors](constructors.md): positional arguments only, a single scalar splats to
-all channels, multiple arguments must sum to exactly the target width.
+A brace list as the initializer of a declaration is rewritten to a constructor call of the declared
+type: `T x = { a, b };` is `T x = T(a, b);`. Brace initializers are therefore **exactly** constructor
+calls and inherit every rule of [Constructors](constructors.md): positional arguments only
+([`DSH4225`](../diagnostics/DSH4xxx.md#dsh4225)), a single scalar spreads to every component, and
+several arguments must add up to exactly the type's width
+([`DSH4222`](../diagnostics/DSH4xxx.md#dsh4222)).
 
-`{}` is special-cased: it produces the target type's default value, as if the declaration had no
-initializer.
+`{}` is special-cased: it is no initializer at all, so the variable gets the zero of its type.
 
-Target-type resolution, in order:
-
-| Order | Situation | Target type |
-| --: | :-- | :-- |
-| 1 | the statement is a declaration | the declared type token |
-| 2 | the target is a `MaterialAttributes` member | the attribute's own type |
-| 3 | the target is an existing variable | derived from its component count: 0 → `MaterialAttributes`, 1 → `float`, 2 → `float2`, 3 → `float3`, 4 → `float4` |
-| 4 | the target matches an `Outputs` declaration | the same component-count mapping |
-| 5 | none of the above | error — `Brace initializer assignment for '{Name}' requires a declared scalar or vector target type.` |
-
-Texture and `Substrate` targets are rejected at steps 3 and 4.
+The target type is always the declared type token. A brace list anywhere else — on the right of an
+assignment or a member write, as an argument — is [`DSH2162`](../diagnostics/DSH2xxx.md#dsh2162)
+*(since 2.0.0)*. A texture, `Substrate` or `MaterialAttributes` type has no constructor:
+`Texture2D t = {x};` is [`DSH4223`](../diagnostics/DSH4xxx.md#dsh4223).
 
 > [!WARNING]
-> Nested braces do not work. `float4 m = {{1,2},{3,4}};` re-serialises to `float4({1,2},{3,4})`, and
-> `{` is not a token the expression lexer knows, so it fails with
-> `Invalid brace initializer for type 'float4'. Unexpected token '{' in Graph expression.`
+> Nested braces do not work. `float4 m = {{1,2},{3,4}};` is
+> [`DSH2214`](../diagnostics/DSH2xxx.md#dsh2214); write `float4(float2(1, 2), float2(3, 4))`.
 
 ```c
 Graph = {
@@ -187,74 +162,67 @@ Graph = {
 
 ## Redeclaration
 
-A declaration whose name is already bound in the current value map fails:
+A declaration whose name is already declared in the same block is
+[`DSH4220`](../diagnostics/DSH4xxx.md#dsh4220). So is a declaration inside an `if` or `else` body of a
+name the enclosing body already declares, and in a `Shader` a declaration named `Base`, which is the
+material itself.
 
-```text
-Graph variable '{Name}' is declared more than once.
-```
-
-The lookup is **case-insensitive**: an exact match is tried first, then a case-insensitive scan. So
-`float a = 1; float A = 2;` is a redeclaration error, while `A` and `a` refer to the same value
-everywhere else.
+The check compares names **exactly** *(since 2.0.0)*: `float a = 1; float A = 2;` declares two
+variables, where 1.x reported a redeclaration. A read of `a` or `A` finds its own variable; a read
+in a case that matches neither exactly finds a unique case-insensitive match, with the warning
+[`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275).
 
 Assignment to an existing name is not a redeclaration — omit the type token to reassign. See
 [Statements](statements.md#assignment).
 
 ## Scope
 
-**There is no block scope.** One value map exists per builder — that is, one per `Shader` and one per
-material function — and every declaration writes into it.
+Each `if` and `else` body is a block with a scope of its own *(since 2.0.0)*; 1.x had one value map
+for the whole body.
 
 | Situation | Visibility after the statement |
 | :-- | :-- |
-| Declaration at body level | visible for the rest of the body |
-| Declaration inside an `if` or `else` branch | see below |
-| A declared `Properties` parameter read inside a branch | not treated as a branch output; the property node is shared, not merged |
-
-Branches are executed against **copies** of the enclosing map, and the copies are then merged:
+| Declaration at body level | visible for the rest of the body. In a `Shader` that body also holds the `Outputs` declarations, before the `Graph` statements |
+| Declaration inside an `if` or `else` body | visible to the end of that body only |
+| A property read inside a branch | a property is a file-scope input, never a branch value |
 
 | Case | Outcome |
 | :-- | :-- |
-| the name is declared in **both** branches, and the two values have the same shape | merged through a `UMaterialExpressionIf` and written into the enclosing map — **it is visible after the `if`** |
-| the name is declared in **both** branches with different shapes | error — `Graph if branches assign variable '{Name}' with inconsistent types` |
-| the name is declared in **only one** branch | error — `Graph if statement could not resolve both branch values for '{Name}'.` |
-| the name is a texture or `Substrate` value | error — `Graph if statement cannot select texture value '{Name}'.` / `… cannot select Substrate value '{Name}'.` |
+| a variable declared **before** the `if` and assigned in a branch | its two values are merged into one conditional node, and the variable keeps the merged value after the `if` — see [if / else](if.md) |
+| a variable declared **inside** a branch | dropped when the branch ends; nothing is merged, and a read after the `if` is [`DSH4200`](../diagnostics/DSH4xxx.md#dsh4200) |
+| a branch declares a name the enclosing body already declares | `DSH4220` |
 
 > [!WARNING]
-> A branch-local temporary is not local. Declaring a helper in one branch only is an error, not a
-> discarded name. Either declare it in both branches with the same width, or hoist the declaration
-> above the `if`.
+> 1.x merged a name declared in both branches and let it be read after the `if`. That name is now
+> branch-local. Declare the variable **before** the `if` and assign it in each branch:
+>
+> ```c
+> float3 Blend = float3(0.0, 0.0, 0.0);
+> if (Mask > 0.5) { Blend = float3(1.0, 0.0, 0.0); }
+> else            { Blend = float3(0.25, 0.25, 0.25); }
+> Color = Blend;
+> ```
 
-Because a merged name becomes an ordinary entry of the enclosing map, declaring that same name again
-after the `if` is a redeclaration error. Merge semantics in full are on [if / else](if.md).
+A branch-local name may be declared again after the `if`: its scope has ended.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this table.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Unsupported Graph variable type '{Type}'.` | the token of an uninitialized declaration does not resolve |
-| `Unsupported Graph variable type '{Type}' for '{Name}'.` | the token of an initialized declaration does not resolve |
-| `Graph variable '{Name}' uses Substrate, which requires Unreal Engine 5.4 or newer.` | `Substrate` declared on UE 5.3 |
-| `Graph variable type '{Type}' requires an explicit initializer.` | a texture, `SamplerState` or `Substrate` declaration with no `=` |
-| `Substrate requires Unreal Engine 5.4 or newer.` | the type resolver rejected `Substrate` on an older engine |
-| `Graph variable '{Name}' is declared more than once.` | redeclaration; matched case-insensitively |
-| `Graph variable '{Name}' is declared as '{Type}' but assigned an incompatible value. {Detail}` | the initializer could not be coerced to the declared type |
-| `Failed to declare Graph variable '{Name}'. {Detail}` | wrapper around a default-value or typing failure |
-| `Failed to evaluate Graph assignment for '{Name}'. {Detail}` | the initializer expression failed |
-| `Failed to create a default literal node.` | the zero `Constant` for a default value could not be created |
-| `Failed to create a MakeMaterialAttributes node.` | a `MaterialAttributes` default value could not be created |
-| `Initializer '{Text}' is not a valid brace initializer.` | the text did not start with `{` and end with `}` |
-| `Invalid brace initializer for type '{Type}'. {Detail}` | the re-serialised constructor call failed |
-| `Brace initializer assignment for '{Name}' requires a declared scalar or vector target type.` | no target type could be resolved |
-| `Brace initializer assignment is not supported for texture variable '{Name}'.` | brace initializer on a texture variable |
-| `Brace initializer assignment is not supported for Substrate variable '{Name}'.` | brace initializer on a `Substrate` variable |
-| `Brace initializer assignment is not supported for texture output '{Name}'.` | brace initializer on a texture `Outputs` declaration |
-| `Brace initializer assignment is not supported for Substrate output '{Name}'.` | brace initializer on a `Substrate` `Outputs` declaration |
-| `In Graph statement '{Text}': '{Declarator}' is not a valid declarator in a comma-separated declaration.` | non-identifier declarator |
-| `Graph if statement could not resolve both branch values for '{Name}'.` | a name declared in only one branch |
-| `Graph if branches assign variable '{Name}' with inconsistent types` | branch declarations of different shapes *(no trailing period)* |
+| `DSH4201` | the type token does not resolve |
+| `DSH2215` | a texture, `SamplerState` or `Substrate` variable has no initializer |
+| `DSH4220` | the name is declared already in this block, by the enclosing body, or is `Base` in a `Shader` |
+| `DSH4228` | the initializer does not fit the declared type |
+| `DSH5289` | *info:* a wider initializer was cut to its leading components |
+| `DSH2154` | a declaration does not end with `;`, or its name is not one identifier |
+| `DSH2163` | a declarator after `,` is not a name |
+| `DSH2162` | a brace list outside a declaration's initializer |
+| `DSH2214` | a brace list inside a brace initializer |
+| `DSH4222` | a brace initializer's components do not add up to the type's width |
+| `DSH4223` | a brace initializer on a type with no constructor |
+| [`DSH2212`](../diagnostics/DSH2xxx.md#dsh2212) | `static` or `const` on a Graph variable |
+| [`DSH2213`](../diagnostics/DSH2xxx.md#dsh2213) | an array declarator, `float w[4];` |
+| [`DSH5294`](../diagnostics/DSH5xxx.md#dsh5294) | a `Substrate` node on an engine that does not have it |
 
 The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
 
@@ -271,14 +239,14 @@ Shader(Name="DreamShaderTests/Corpus/M_Declarations")
     Outputs  = { vec3 Color; Base.EmissiveColor = Color; }
 
     Graph = {
-        float a = 1.0, b = 0.5, c;      // comma declarators; 'c' defaults to 0
-        vec3  rgb  = Src.rgb;           // ordered swizzle: no node, just a mask
+        float a = 1.0, b = 0.5, c;      // comma declarators; 'c' is 0
+        vec3  rgb  = Src.rgb;           // swizzle of a property
         vec4  full = {rgb, a};          // brace initializer -> vec4(rgb, a)
-        vec3  lit;                      // Constant(0) + 2x AppendVector
+        vec3  lit;                      // float3(0, 0, 0)
 
         if (K > 1.0) {
-            lit = full.rgb * b;         // assignment, not declaration: 'lit' already exists,
-        } else {                        // so both branches change the same name and merge
+            lit = full.rgb * b;         // assignment, not declaration: 'lit' exists before the if,
+        } else {                        // so both branches change the same variable and merge
             lit = full.rgb * c;
         }
 
@@ -294,11 +262,11 @@ Shader(Name="DreamShaderTests/Corpus/M_Declarations")
 - [Constructors](constructors.md) — the rules a brace initializer inherits
 - [Conversions](conversions.md) — narrowing, splatting, and where each applies
 - [Expressions](expressions.md) — what may appear on the right of `=`
-- [if / else](if.md) — branch execution and the merge algorithm
-- [Name resolution](name-resolution.md) — case-insensitive lookup and shadowing
+- [if / else](if.md) — branch execution and the merge
+- [Name resolution](name-resolution.md) — exact and case-insensitive lookup
 - [MaterialAttributes](material-attributes.md) — declaring and writing attribute values
 - [Swizzles](swizzle.md) — how a swizzle affects a declared value's width
 - [Node reuse](node-reuse.md) — why two identical initializers share one node
-- [Unsupported constructs](unsupported.md) — `return`, `for`, `+=` and the messages they produce
+- [Unsupported constructs](unsupported.md) — `return`, `for`, `+=` and their codes
 - [Output bindings](../language/output-bindings.md) — `Outputs` declarations and their initializers
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code, by stage

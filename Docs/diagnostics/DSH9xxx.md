@@ -306,7 +306,7 @@ DreamShader failed to create graph dump directory '%s'.
 
 **Fix.** check the `-Out` path exists and is writable, and that no file already occupies one of the directory names the dump needs. With no `-Out` the destination is `<Project>/Saved/DreamShader/GraphBaseline`, which fails only if `Saved/` itself is read-only
 
-**See** [Commandlet](../tools/commandlet.md#dump-graph)
+**See** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 ## DSH9031
 
@@ -326,7 +326,7 @@ DreamShader failed to write graph dump '%s'.
 
 **Fix.** close whatever holds the file, or clear the read-only flag, and re-run. Capturing into a fresh empty directory sidesteps both -- a baseline is written whole, so there is nothing to preserve in an old one
 
-**See** [Commandlet](../tools/commandlet.md#dump-graph)
+**See** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 ## DSH9032
 
@@ -346,7 +346,7 @@ DreamShader could not work out which assets '%s' builds, so there is no graph to
 
 **Fix.** if the message carries a parse error, fix the source; `compile` on the same file reports the same failure with its own code. If the file is a helper that legitimately produces no asset, it has nothing to dump and can be left out of the capture -- `-All` visits it and reports it, which is why a `-All` run over a tree of helper sources exits `1` without anything being wrong with the tree
 
-**See** [Commandlet](../tools/commandlet.md#dump-graph)
+**See** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 ## DSH9033
 
@@ -366,7 +366,7 @@ DreamShader could not resolve generated asset '%s' from '%s' after generation.
 
 **Fix.** run `compile -Force` on the source and see what the compiler says about the same path; a package that cannot be loaded fails there too, with a message about the package rather than about the dump. If the asset was deleted by hand, compiling it once recreates it
 
-**See** [Commandlet](../tools/commandlet.md#dump-graph)
+**See** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 ## DSH9034
 
@@ -386,7 +386,7 @@ DreamShader cannot dump '%s': %s is not a Material, MaterialFunction, material i
 
 **Fix.** look at the asset the message names and either move it aside or change the source's `Name=` / `Root=` so the two stop colliding. The dump is reporting the same clash generation would; it just gets there by a different route because it did not have to write
 
-**See** [Commandlet](../tools/commandlet.md#dump-graph)
+**See** [Commandlet](../tools/commandlet.md#dump-graph-since-190)
 
 ## DSH9035
 

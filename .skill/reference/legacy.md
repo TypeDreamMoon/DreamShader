@@ -17,9 +17,9 @@ tree the 2.0 parser builds — so they get the same binder, the same checks and 
 
 | Extension | Holds | Builds |
 | :-- | :-- | :-- |
-| `.dsm` | **one** `Shader` block (`DSH2250` for a second), plus helper blocks | the material, plus every function asset it declares |
+| `.dsm` | **one** `Shader` block (`DSH2250` for a second), plus helper blocks (`Function`, `GraphFunction`, `Namespace`, `VirtualFunction`) | the material — a `ShaderFunction` or layer beside the `Shader` is `DSH6201`: a file makes a material or function assets, not both |
 | `.dsf` | `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend`, plus helpers; no `Shader` | the function assets |
-| `.dsh` | `Function` / `GraphFunction` / `Namespace` / `VirtualFunction` only | nothing — included by `import` |
+| `.dsh` | `Function` / `GraphFunction` / `Namespace` / `VirtualFunction`, and 2.0 declarations side by side | nothing — included by `import` |
 
 A `.dsh` naming an asset block is `DSH2249`. The check reads tokens, so a comment or a string that mentions
 `Shader(` is fine.
@@ -91,19 +91,21 @@ values (`DSH4361`; a `mat3` property is `DSH3252`).
 
 | Block | Builds | |
 | :-- | :-- | :-- |
-| `Function` | a Custom HLSL node, via a generated `.ush` helper | dense arithmetic; a body that is HLSL |
+| `Function` | a Custom HLSL node holding its body, and the bodies of the `Function`s it calls | dense arithmetic; a body that is HLSL |
 | `GraphFunction` | a Custom node whose `UE.*` calls are pulled out into real nodes wired to its inputs | HLSL that needs engine nodes |
 | `Namespace(Name="N")` | groups `Function`s as `N::F` | |
 | `ShaderFunction` / `ShaderLayer` / `ShaderLayerBlend` | a material function / layer / blend asset | |
 | `VirtualFunction(Name="…") { Options = { Asset = Path(…); } … }` | nothing — declares an existing function asset so `Graph` can call it | multiple outputs: `F(a, OutputIndex=1)` |
 
-- **A function named like a builtin** (`lerp`, `dot`, `saturate`, …) is `DSH6206`, and the builtin is what gets
-  called.
+- **A function named like a builtin** (`lerp`, `dot`, `saturate`, …) is `DSH6206` at its declaration.
 - **Inside a `Function` / `GraphFunction` body**, the whole identifiers `mix` `fract` `mod` `vec2..4` `ivec*`
   `uvec*` `bvec*` `mat2..4` are rewritten case-insensitively (`Mix` → `lerp`) — **silently**, comments and
   strings excepted. A local named `Mix` or `Mod` becomes something else. `Graph` blocks are not rewritten.
-- `#include "/Plugin/X/Y.ush"` lines at the start of a `Function` body are hoisted out to the generated helper's
-  file scope, so a header that defines functions works there.
+- `#include "/Plugin/X/Y.ush"` lines at the start of a `Function` body are hoisted onto the Custom node's include
+  list, so a header that defines functions works there.
+- **`Function SelfContained` / `Inline` means the opposite in 2.0.** It becomes `@custom selfcontained`, which
+  embeds nothing: a call from that body to another `Function` is left to the shader compiler (`DSH6264`), where
+  1.x embedded it. A plain `Function` embeds what it calls; drop the modifier.
 
 ## 5. What 1.x gives you that 2.0 spells differently
 

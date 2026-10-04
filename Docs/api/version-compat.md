@@ -2,7 +2,7 @@
 
 > [DreamShader](../index.md) » [C++ API](index.md) » **DreamShaderVersionCompat.h**
 
-Twelve preprocessor macros that gate every engine-version-dependent behaviour in the plugin — and,
+Thirteen preprocessor macros that gate every engine-version-dependent behaviour in the plugin — and,
 outside the header, one module definition: the Custom Pass gate,
 [`DREAMSHADER_WITH_CUSTOM_PASS`](#dreamshader_with_custom_pass). This page is the source of truth
 for every *(since UE 5.x)* marker in the manual.
@@ -13,8 +13,8 @@ Defined in header `DreamShaderVersionCompat.h`.
 | :-- | :-- |
 | Module | `DreamShader` (Runtime), included by `DreamShader` and `DreamShaderEditor`. `DreamShaderLang` cannot include it — it depends on `Core` alone and has no engine version to gate on |
 | Include | `#include "DreamShaderVersionCompat.h"` |
-| Contents | 12 macros. **No types, no functions, no namespace.** |
-| Only dependency | `Runtime/Launch/Resources/Version.h` |
+| Contents | 13 macros. **No types, no functions, no namespace.** |
+| Dependencies | `Misc/CoreDelegates.h` (for `DREAMSHADER_POST_ENGINE_INIT_DELEGATE`), `Runtime/Launch/Resources/Version.h` |
 | Verified engines | UE `5.3` – `5.8` (Win64) |
 
 ## Synopsis
@@ -23,6 +23,7 @@ The version arithmetic every other macro is built on. The feature gates that use
 [Macros](#macros) below.
 
 ```cpp
+#include "Misc/CoreDelegates.h"
 #include "Runtime/Launch/Resources/Version.h"
 
 #ifndef DREAMSHADER_UE_MAJOR
@@ -57,14 +58,14 @@ The version arithmetic every other macro is built on. The feature gates that use
 | :-- | :-- | :-- | :-- |
 | `DREAMSHADER_UE_MAJOR` | `ENGINE_MAJOR_VERSION` | **yes** — `#ifndef` guarded | The major version every other test is built on. |
 | `DREAMSHADER_UE_MINOR` | `ENGINE_MINOR_VERSION` | **yes** — `#ifndef` guarded | The minor version. |
-| `DREAMSHADER_UE_PATCH` | `ENGINE_PATCH_VERSION` | **yes** — `#ifndef` guarded | Declared for completeness. **Never referenced anywhere in the plugin.** |
+| `DREAMSHADER_UE_PATCH` | `ENGINE_PATCH_VERSION` | **yes** — `#ifndef` guarded | Read only by the preprocessor, as the builtin define `DS_ENGINE_PATCH`. No C++ version test uses it. |
 | `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` | `(MAJOR > 5 \|\| (MAJOR == 5 && MINOR >= 4))` — i.e. **UE ≥ 5.4** | **yes** — `#ifndef` guarded | The single Substrate feature gate. |
 | `DREAMSHADER_WITH_MOON_ENGINE` | `1` when the engine's `SceneTypes.h` declares `MP_MoonEncodedAttribute0`, `0` otherwise | **yes** — `#ifndef` guarded, and `DreamShader.Build.cs` sets it as a `PublicDefinition` from that probe | Moon Engine's extra material attributes. Not a version test: the probe reads the enumerator the guarded code needs, so it works for any fork that carries it. |
 | `DREAMSHADER_UE_VERSION_AT_LEAST(Major, Minor)` | `(MAJOR > Major \|\| (MAJOR == Major && MINOR >= Minor))` | no — unconditional `#define` | The general "at least this engine" test. |
 | `DREAMSHADER_ALLOW_SHRINKING_NO` | `EAllowShrinking::No` on UE ≥ 5.4, `false` below | no — selected by `#if` | Portability shim, described below. |
 | `DREAMSHADER_POST_ENGINE_INIT_DELEGATE()` | `FCoreDelegates::GetOnPostEngineInit()` on UE ≥ 5.8, the `OnPostEngineInit` data member below | no — selected by `#if` | 5.8 added the accessor and deprecated the member, so naming either one directly breaks the other engine. |
 | `DREAMSHADER_THUMBNAIL_PRIM_SHADERBALL` | `TPT_ShaderBall` on UE ≥ 5.8, `TPT_Sphere` below | no — selected by `#if` | `EThumbnailPrimType` stops at `TPT_Cylinder` before 5.8; the preview falls back to the sphere. |
-| `DREAMSHADER_MATERIAL_AGGREGATE_HANDLES_SUBSTRATE` | **UE ≥ 5.8** | no — unconditional `#define` | Whether `MaterialValueTypeToMaterialAggregateAttributeType` has a case for `MCT_Substrate`. Below 5.8 it `checkf(false)`s, so the manifest exporter must not make the call for `UMaterialExpressionAggregate` at all. |
+| `DREAMSHADER_MATERIAL_AGGREGATE_HANDLES_SUBSTRATE` | **UE ≥ 5.8** | no — unconditional `#define` | Whether `MaterialValueTypeToMaterialAggregateAttributeType` has a case for `MCT_Substrate`. Below 5.8 it `checkf(false)`s, so neither the manifest exporter nor the builtin catalog's reflection makes the call for `UMaterialExpressionAggregate` at all. |
 | `DREAMSHADER_WITH_SCALAR_PARAMETER_CONTROL_TYPE` | **UE ≥ 5.7** | no — unconditional `#define` | Whether `UMaterialExpressionScalarParameter` has `ControlType`, `Enumeration` and `EnumerationIndex`. |
 | `DREAMSHADER_WITH_MATERIAL_PARAMETERS_HEADER` | **UE ≥ 5.7** | no — unconditional `#define` | Which header declares `FMaterialParameterInfo`: `Materials/MaterialParameters.h` from 5.7, `MaterialTypes.h` before it. |
 | `DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS` *(since 2.0.0)* | `1` when the engine's `EMaterialParameterType` has a `ParameterCollection` enumerator, `0` otherwise | **yes** — `#ifndef` guarded (falls back to UE ≥ 5.8), and `DreamShader.Build.cs` sets it as a `PublicDefinition` from that probe | Whether a material instance can override a parameter collection. Asked of the header that declares the enum, because a `case` label cannot ask the type. |
@@ -83,7 +84,7 @@ header probes. The plugin's only other definitions are `DREAMSHADER_WITH_CUSTOM_
 > `DREAMSHADER_ALLOW_SHRINKING_NO` carries **no behavioural difference**. It exists solely because
 > UE 5.4 changed the trailing `bool bAllowShrinking` parameter of `TArray::RemoveAt`, `TArray::Pop`,
 > `FString::RightChopInline` and `FString::LeftChopInline` into an `EAllowShrinking` enum. Both
-> spellings mean "do not shrink the allocation". It is used 37 times across the plugin and is not a
+> spellings mean "do not shrink the allocation". It is used throughout the plugin and is not a
 > tuning knob.
 
 > [!NOTE]
@@ -129,15 +130,37 @@ renders them. What `0` compiles out, module by module, is under
 ## Complete version-gated behaviour
 
 Every site in the plugin guarded by one of these macros, grouped by the version it requires.
-Runtime substitutions in quoted messages are shown as `{Placeholder}`.
+Diagnostics are cited by code; the strings still quoted below are log lines, material-compile errors
+and UI text, which carry no code.
+
+### Decided by the node catalog
+
+*(since 2.0.0)* Most of what the 1.x generator gated by engine version is no longer a DreamShader
+gate at all. The `UE.*` and `Substrate.*` nodes, their pins and properties, the values of their
+enumerated properties and the material attributes a source can write come from the **builtin
+catalog**, which is reflected from the running engine (every non-abstract `UMaterialExpression`
+class it has loaded). What an engine does not have, the catalog does not list, and the binder says so:
+
+| What 1.x gated | Gate | Now |
+| :-- | :-- | :-- |
+| A `Substrate.*` call | 5.4 | On UE ≥ 5.4 the `Substrate` namespace holds the engine's Substrate expression classes; on 5.3 it is empty. A name the catalog lacks is [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210); `Substrate.Select` (5.6) and `Substrate.Toon` (5.8), and Substrate sugar that needs a node the engine lacks, are [`DSH5294`](../diagnostics/DSH5xxx.md#dsh5294), which names the version |
+| `Base.FrontMaterial` | 5.4 | A material attribute like any other; an engine whose attribute list has no `FrontMaterial` answers [`DSH5200`](../diagnostics/DSH5xxx.md#dsh5200) |
+| `UE.TransformPosition(PeriodicWorldTileSize=…)` | 5.5 | A pin or property of the engine's node; where the class has no such member, [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213) |
+| `UE.TransformPosition(FirstPersonInterpolationAlpha=…)` | 5.6 | as above, `DSH5213` |
+| The `periodicworld`, `firstperson` and `firstpersontranslatedworld` bases | 5.5 / 5.6 | Matched against the values of the engine's enum behind the node's `Source` / `Destination` property (1.x text loosely, with [`DSH5278`](../diagnostics/DSH5xxx.md#dsh5278)); a spelling that matches no value is [`DSH5215`](../diagnostics/DSH5xxx.md#dsh5215) |
+| `UE.UserSceneTexture` | — | [`DSH5300`](../diagnostics/DSH5xxx.md#dsh5300) on an engine whose catalog lacks it (the binder knows it from 5.6) |
+| `UE.DreamPassBuffer` / `UE.DreamPassOutput` | — | left out of the catalog below 5.8 on purpose, so `DSH5300` (see [UE ≥ 5.8](#ue--58--dreamshader_with_custom_pass)) |
+
+A catalog exported with `dsc export-catalog` from an older engine gives the same answers. The
+version gates that remain in C++ are the ones below.
 
 ### UE ≥ 5.4 — `DREAMSHADER_UE_VERSION_AT_LEAST(5, 4)`
 
 | Feature | On UE ≥ 5.4 | On UE 5.3 |
 | :-- | :-- | :-- |
 | `TArray` / `FString` shrink argument | `EAllowShrinking::No` | `false` |
-| Generated Custom nodes | `UMaterialExpressionCustom::ShowCode = false` on every node the generator creates, so the HLSL body stays collapsed in the material editor | the property does not exist; not set, and generated Custom nodes show their code |
-| Material reset before a rebuild | `bHasPixelAnimation` is cleared along with the other material flags | skipped |
+| Generated Custom nodes | `UMaterialExpressionCustom::ShowCode = false` on every Custom node the IR emitter creates, so the HLSL body stays collapsed in the material editor | the property does not exist; not set, and generated Custom nodes show their code |
+| Material reset before a rebuild, and the generated-asset digest | `bHasPixelAnimation` is cleared along with the other material flags, and recorded in the digest | skipped |
 | Decompiler material-flag export | `bHasPixelAnimation` is included in the emitted `Settings` flag list | excluded |
 
 ### UE ≥ 5.4 — `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`
@@ -147,13 +170,11 @@ threshold is the same 5.4.
 
 | Feature | On UE ≥ 5.4 | On UE 5.3 |
 | :-- | :-- | :-- |
-| `Substrate.*` builtins | The builtin table is compiled in; an unrecognized name fails with `Unsupported Substrate builtin call '{Name}' in Graph.` | The table is absent; every `Substrate.*` call fails with `Substrate builtin call '{Name}' requires Unreal Engine 5.4 or newer.` |
-| `MaterialExpressionSubstrate.h` | included by the generator, the workspace service and the three decompiler files | not included |
-| `ShadingModel = "Substrate"` | accepted | error: `ShadingModel="Substrate" requires Unreal Engine 5.4 or newer.` |
+| `Substrate.*` namespace of the builtin catalog | the engine's `UMaterialExpressionSubstrateBSDF` and `…SubstrateUtilityBase` subclasses are listed under `Substrate.` | every class is listed under `UE.`, so `Substrate.` names nothing: a call is [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210) or `DSH5294` (see [Decided by the node catalog](#decided-by-the-node-catalog)) |
+| `MaterialExpressionSubstrate.h` | included by the builtin catalog's reflection and the three graph-decompiler files | not included |
+| `ShadingModel = "Substrate"` (or `"Strata"`) | accepted | error [`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128) |
 | Shading-model alias catalogue | `MSM_Strata` is kept despite its `Hidden` metadata, and the `Substrate` and `Strata` aliases are added | `MSM_Strata` is skipped and neither alias is added |
-| `Base.FrontMaterial` output binding | resolves to `MP_FrontMaterial` | the token is unknown, and the binding fails with `Base.FrontMaterial requires Unreal Engine 5.4 or newer.` |
-| Material connection type for Substrate values | `MCT_Substrate` | `MCT_Strata` |
-| `IsSubstrateMaterialTypeSupported()` | `true` | `false` |
+| Material connection type for Substrate values (catalog pin types, `IsSubstrateMaterialValueType`) | `MCT_Substrate` | `MCT_Strata` |
 | Decompiler type naming | `MCT_Substrate` prints as `"Substrate"` | `MCT_Strata` prints as `"Substrate"` |
 | Decompiler shading-model export | `"Substrate"` is emitted for `MSM_Strata` | not emitted |
 | Decompiler binding table | `MP_FrontMaterial` is included | excluded |
@@ -166,9 +187,10 @@ threshold is the same 5.4.
 | :-- | :-- | :-- |
 | Counting an expression's inputs | `Expression->CountInputs()` | `Expression->GetInputsView().Num()` |
 | Reading one input pin | `Expression->GetInput(Index)` | `Expression->GetInput(Index)` — identical. `GetInputsView()` would serve too, but it is deprecated in favour of `FExpressionInputIterator` / `GetInput()` and emits C4996 on UE 5.8, so the array view is never built just to reach a single pin |
-| Resolving `UMaterialExpressionObjectPositionWS` | `StaticClass()` and `IsA<>` directly | `FindObject<UClass>(nullptr, "/Script/Engine.MaterialExpressionObjectPositionWS")` |
-| Transform basis `periodicworld` | resolves to `TRANSFORMPOSSOURCE_PeriodicWorld` | unsupported — basis resolution fails |
-| `UE.TransformPosition` argument `PeriodicWorldTileSize` | honoured | not handled |
+| Resolving `UMaterialExpressionObjectPositionWS` (decompiler) | `StaticClass()` and `IsA<>` directly | `FindObject<UClass>(nullptr, "/Script/Engine.MaterialExpressionObjectPositionWS")` |
+
+The `periodicworld` basis and the `PeriodicWorldTileSize` argument are no longer gated here
+*(since 2.0.0)*: see [Decided by the node catalog](#decided-by-the-node-catalog).
 
 ### UE ≥ 5.6
 
@@ -177,23 +199,25 @@ threshold is the same 5.4.
 | Package metadata access | `UPackage::GetMetaData()` returns `FMetaData&` | returns `UMetaData*`, null-checked before use |
 | Expression pin value types | `GetInputValueType` / `GetOutputValueType` | `GetInputType` / `GetOutputType`, cast to `EMaterialValueType` |
 | Rebuilding an expression's outputs | `Expression->RebuildOutputs()` | manual `Outputs.Reset()` followed by a rebuild |
-| Resolving `UMaterialExpressionScreenPosition` | `StaticClass()` and `IsA<>` directly | `FindObject<UClass>(nullptr, "/Script/Engine.MaterialExpressionScreenPosition")` |
-| Workspace-service pin types | `GetInputValueType` | the deprecated `GetInputType`, wrapped in `PRAGMA_DISABLE_DEPRECATION_WARNINGS` |
-| `Shader(Root="Plugin.X")` | additionally requires `Plugin->IsMounted()`; otherwise `DreamShader Root '{Root}' references project plugin '{Plugin}', but the plugin content is not mounted.` | mount check skipped |
-| `Path(Plugin.X, "…")` asset roots | same mount check; otherwise `Asset Path root '{Root}' references plugin '{Plugin}', but the plugin content is not mounted.` | mount check skipped |
-| `UE.TransformPosition` argument `FirstPersonInterpolationAlpha` | honoured | error: `UE.TransformPosition FirstPersonInterpolationAlpha requires Unreal Engine 5.6 or newer.` |
-| Transform bases `firstperson` / `firstpersontranslatedworld` | resolve to `TRANSFORMPOSSOURCE_FirstPersonTranslatedWorld` | unsupported |
+| Resolving `UMaterialExpressionScreenPosition` (decompiler) | `StaticClass()` and `IsA<>` directly | `FindObject<UClass>(nullptr, "/Script/Engine.MaterialExpressionScreenPosition")` |
+| Pin types read off a class default object — the builtin catalog's reflection, the workspace service, the graph importer | `GetInputValueType` / `GetOutputValueType` | the deprecated `GetInputType` / `GetOutputType`, wrapped in `PRAGMA_DISABLE_DEPRECATION_WARNINGS` |
+| `Shader(Root="Plugin.X")` | additionally requires `Plugin->IsMounted()`; otherwise [`DSH8094`](../diagnostics/DSH8xxx.md#dsh8094) | mount check skipped |
+| `Path(Plugin.X, "…")` asset roots | same mount check; otherwise [`DSH8122`](../diagnostics/DSH8xxx.md#dsh8122) | mount check skipped |
+| Texture-collection parameters on a `.dsi` instance | the kind is in the parent's schema, and an override is written to the instance | not in the schema, so an override is refused as unknown; one built by hand fails with [`DSH8252`](../diagnostics/DSH8xxx.md#dsh8252) |
 | Decompiler `TextureSample` export | `GatherMode` is round-tripped | omitted |
-| Unexported engine expression classes — `SceneDepth`, `SceneColor`, `ObjectRadius`, `ObjectBounds`, `PerInstanceRandom`, `PerInstanceFadeAmount` | `StaticClass()` directly, via `DREAMSHADER_ENGINE_EXPRESSION_CLASS` | `FindObject<UClass>(nullptr, "/Script/Engine.MaterialExpression<Name>")`. The `UE.*` builtins behave the same either way; they are only dropped from the table if the lookup fails |
+| `DREAMSHADER_ENGINE_EXPRESSION_CLASS(Name)` (in `DreamShaderMaterialExpressionCompat.h`) | `U<Name>::StaticClass()` | `FindObject<UClass>(nullptr, "/Script/Engine.<Name>")`. Still defined, and called nowhere since 2.0.0: the `UE.*` catalog is built by iterating the loaded classes, which needs no `StaticClass()` |
+
+The `firstperson` bases and the `FirstPersonInterpolationAlpha` argument are no longer gated here
+*(since 2.0.0)*: see [Decided by the node catalog](#decided-by-the-node-catalog).
 
 > [!NOTE]
-> That last row is a **link**-time gate, not a compile-time one. UE 5.6 changed UHT to emit
-> `DECLARE_CLASS2` with an exported `Z_Construct_<Class>_NoRegister`, so `StaticClass()` resolves
-> from a plugin even for a `UCLASS()` that carries neither `MinimalAPI` nor `ENGINE_API`. UE 5.5 and
-> earlier emit `DECLARE_CLASS(..., NO_API)`: `GetPrivateStaticClass` never leaves `Engine.dll`, and
-> naming `StaticClass()` compiles on every engine and then fails with `LNK2019`. Only a full
-> [`RunUAT BuildPlugin`](../contributing/index.md#synopsis) sees it — an editor build against one
-> engine never will.
+> `DREAMSHADER_ENGINE_EXPRESSION_CLASS` is a **link**-time gate, not a compile-time one. UE 5.6
+> changed UHT to emit `DECLARE_CLASS2` with an exported `Z_Construct_<Class>_NoRegister`, so
+> `StaticClass()` resolves from a plugin even for a `UCLASS()` that carries neither `MinimalAPI` nor
+> `ENGINE_API`. UE 5.5 and earlier emit `DECLARE_CLASS(..., NO_API)`: `GetPrivateStaticClass` never
+> leaves `Engine.dll`, and naming `StaticClass()` compiles on every engine and then fails with
+> `LNK2019`. Only a full [`RunUAT BuildPlugin`](../contributing/index.md#synopsis) sees it — an
+> editor build against one engine never will.
 
 ### Asked of the type
 
@@ -223,9 +247,8 @@ or, *(since 2.0.1)*, whether the engine has the node's header at all (`__has_inc
 | Feature | On UE ≥ 5.7 | On UE 5.3 – 5.6 |
 | :-- | :-- | :-- |
 | Material-resource diagnostics in the bridge | iterate every `EShaderPlatform` × `EMaterialQualityLevel` combination | a different, narrower path |
-| Material-parameter-collection expressions | a fresh `ExpressionGUID` is assigned when the existing one is invalid | skipped |
-| `UE.CollectionParam` / `UE.CollectionParameter` | `Group` and `SortPriority` metadata are honoured | ignored |
-| Layer-blend function inputs | `UMaterialExpressionFunctionInput::BlendInputRelevance` is computed | not set |
+| `dsc check -Shaders`, the material resource per quality level | taken for the target's shader platform | taken for `GMaxRHIFeatureLevel` |
+| Layer-blend function inputs | `UMaterialExpressionFunctionInput::BlendInputRelevance` is set from the IR, and the graph importer reads it back | not set, not read |
 | Node preview height in the layout pass | `Expression->ShouldShowPreview()` | `!bHidePreviewWindow && !bCollapsed`, the two flags 5.7 composed it from |
 | Decompiler scalar-parameter metadata | `ControlType`, `Enumeration` and `EnumerationIndex` are exported | not exported — the properties do not exist. A source that carries them still parses; there is nothing to write them to |
 | `FMaterialParameterInfo` include | `Materials/MaterialParameters.h` | `MaterialTypes.h`, which 5.7 keeps only as a deprecation stub |
@@ -235,6 +258,7 @@ or, *(since 2.0.1)*, whether the engine has the node's header at all (`__has_inc
 | Feature | On UE ≥ 5.8 | On UE 5.3 – 5.7 |
 | :-- | :-- | :-- |
 | The builtin catalog's material attributes *(since 2.0.0)* | `FMaterialAttributeDefinitionMap::GetAttributeNameToIDList` | that list is private, so the attributes are reached by walking `EMaterialProperty` through the public `GetID` / `GetProperty` / `GetAttributeName`. The same attributes either way; only their order in the exported catalog differs |
+| Default volumetric-cloud usage written when settings are applied | `UMaterial::SetUsageByFlag(MATUSAGE_VolumetricCloud, …)` | the `bUsedWithVolumetricCloud` field directly. The same value; each spelling is the one that compiles without a deprecation warning on its engines |
 
 ### UE ≥ 5.8 — `DREAMSHADER_WITH_CUSTOM_PASS`
 
@@ -248,11 +272,11 @@ every engine, and so does a `.dss` — what changes is what the engine side can 
 | `DreamShaderPass` | `DreamPass.Dump` | ends each world with the last frame's report: views with passes, passes run, passes skipped | the same listing without the frame report |
 | `DreamShaderPass` | `r.DreamPass.Enable`, `r.DreamPass.DisablePipelines`, `r.DreamPass.Visualize` | registered | registered; with nothing rendering, there is nothing for them to change |
 | `DreamShaderPass` | `UMaterialExpressionDreamPassBuffer` / `…Output` (`UE.DreamPassBuffer`, `UE.DreamPassOutput`) | compile as documented | the classes exist — UHT cannot gate a `UCLASS` — but `Compile` returns `Dream Pass Buffer needs Unreal Engine 5.8 or later.` / `Dream Pass Output needs Unreal Engine 5.8 or later.`, and most of their overrides — pin value types, the referenced texture, the shader tag, `IsAllowedIn` — are compiled out |
-| `DreamShaderCompiler` | The builtin catalog | lists both nodes | leaves both out, so a `.dss` that calls one fails when it is bound: `DSH5300` `'UE.{Name}' needs Unreal Engine 5.8 or later and DreamShader's Custom Pass module (DreamShaderPass), and this engine's node catalog does not have it.` |
-| `DreamShaderCompiler` | Building a `.dsp` | the pipeline and its export render targets are written | `DSH8300` `'{Name}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.` |
-| `DreamShaderCompiler` | What a pass's material is checked against | domain, blendable location, `UserSceneTexture` inputs, `UE.DreamPassOutput` pins, usage flags, pre-exposure and translator settings | domain and blendable location only (`FPipelineReferences::bCustomPassAvailable` is false), with the info `DSH7360` saying the rest was not checked; the [build key](../generation/caching.md#custom-pass-pipelines) carries `CustomPass=0` |
-| `DreamShaderCompiler` | HLSL slot pre-check | compiles each changed slot for the shader formats of the active feature levels and of the target platforms | `DSH8323` `HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to compile them for.` |
-| `DreamShaderCompiler` | `dsc check -Shaders` on a `.dsp` | pre-checks its slots | `DSH8338` `HLSL slots need Unreal Engine 5.8 or later; this engine has no Custom Pass runtime to pre-check them for.` |
+| `DreamShaderCompiler` | The builtin catalog | lists both nodes | leaves both out, so a source that calls one fails when it is bound, with [`DSH5300`](../diagnostics/DSH5xxx.md#dsh5300) naming 5.8 and the Custom Pass module |
+| `DreamShaderCompiler` | Building a `.dsp` | the pipeline and its export render targets are written | [`DSH8300`](../diagnostics/DSH8xxx.md#dsh8300); nothing is built |
+| `DreamShaderCompiler` | What a pass's material is checked against | domain, blendable location, `UserSceneTexture` inputs, `UE.DreamPassOutput` pins, usage flags, pre-exposure and translator settings | domain and blendable location only (`FPipelineReferences::bCustomPassAvailable` is false), with the info [`DSH7360`](../diagnostics/DSH7xxx.md#dsh7360) saying the rest was not checked; the [build key](../generation/caching.md#custom-pass-pipelines) carries `CustomPass=0` |
+| `DreamShaderCompiler` | HLSL slot pre-check | compiles each changed slot for the shader formats of the active feature levels and of the target platforms | [`DSH8323`](../diagnostics/DSH8xxx.md#dsh8323) |
+| `DreamShaderCompiler` | `dsc check -Shaders` on a `.dsp` | pre-checks its slots | [`DSH8338`](../diagnostics/DSH8xxx.md#dsh8338) |
 | `DreamShaderCompiler` | Hot reload of the slot shaders after a registry commit | in the editor, never in a commandlet | none |
 | `DreamShaderEditor` | [Pipeline details panel](../tools/editor-integration.md#pass-pipeline-details-panel) | as documented | one more row in Pipeline Overview: `Custom Pass runs on Unreal Engine 5.8 and later. This engine loads and saves the pipeline, and runs none of it.` |
 | `DreamShaderEditor` | [`pass-keys.json`](../tools/workspace.md#pass-keysjson) | `supported: true` | `supported: false` and `unsupportedReason: "Custom Pass pipelines run on Unreal Engine 5.8 and later."`; the keys, injection points and formats are written either way |
@@ -262,14 +286,16 @@ every engine, and so does a `.dss` — what changes is what the engine side can 
 
 | Version | Features that require it |
 | :-- | :-- |
-| **5.4** | Substrate — `Substrate.*` builtins, `ShadingModel="Substrate"`, `Base.FrontMaterial`, `MSM_Strata` aliases · collapsed Custom-node code (`ShowCode`) · `bHasPixelAnimation` reset and export · `EAllowShrinking` |
-| **5.5** | `periodicworld` transform basis · `UE.TransformPosition(PeriodicWorldTileSize=…)` · `ObjectPositionWS` resolved directly · `CountInputs` |
-| **5.6** | `firstperson` / `firstpersontranslatedworld` transform bases · `UE.TransformPosition(FirstPersonInterpolationAlpha=…)` · plugin-mount validation for `Root=` and `Path(...)` · `TextureSample.GatherMode` round-trip · `FMetaData&`, `GetInputValueType`, `RebuildOutputs`, `ScreenPosition` resolved directly · six unexported expression classes resolved by `StaticClass()` rather than by path (no behaviour difference) |
-| **5.7** | `Group` / `SortPriority` on collection parameters · `BlendInputRelevance` on layer-blend inputs · MPC `ExpressionGUID` repair · per-platform × per-quality material-resource diagnostics · scalar-parameter `ControlType` / `Enumeration` / `EnumerationIndex` round-trip · node preview height from `ShouldShowPreview()` |
-| **5.8** | Custom Pass *(since 2.1.0)* — building and running `.dsp` pipelines, HLSL slots, the `UE.DreamPassBuffer` / `UE.DreamPassOutput` nodes ([`DREAMSHADER_WITH_CUSTOM_PASS`](#dreamshader_with_custom_pass)) |
+| **5.4** | Substrate — the `Substrate.` catalog namespace, `ShadingModel="Substrate"`, `MSM_Strata` aliases, `Base.FrontMaterial` in the decompiler · collapsed Custom-node code (`ShowCode`) · `bHasPixelAnimation` reset, digest and export · `EAllowShrinking` |
+| **5.5** | `ObjectPositionWS` resolved directly · `CountInputs` |
+| **5.6** | plugin-mount validation for `Root=` and `Path(...)` · texture-collection instance parameters · `TextureSample.GatherMode` round-trip · `FMetaData&`, `GetInputValueType`, `RebuildOutputs`, `ScreenPosition` resolved directly |
+| **5.7** | `BlendInputRelevance` on layer-blend inputs · per-platform × per-quality material-resource diagnostics · scalar-parameter `ControlType` / `Enumeration` / `EnumerationIndex` round-trip · node preview height from `ShouldShowPreview()` |
+| **5.8** | Custom Pass *(since 2.1.0)* — building and running `.dsp` pipelines, HLSL slots, the `UE.DreamPassBuffer` / `UE.DreamPassOutput` nodes ([`DREAMSHADER_WITH_CUSTOM_PASS`](#dreamshader_with_custom_pass)) · parameter-collection instance parameters (asked of the engine's enum) |
 
-Everything not listed above works identically on every engine from 5.3 to 5.8. A `.dsp` is the one
-source that parses and binds everywhere and builds on 5.8 only.
+Nodes, pins, enumerators and material attributes that only newer engines have are not in this table:
+the running engine's catalog decides them ([above](#decided-by-the-node-catalog)). Everything else
+works identically on every engine from 5.3 to 5.8. A `.dsp` is the one source that parses and binds
+everywhere and builds on 5.8 only.
 
 ## Notes
 
@@ -281,14 +307,16 @@ source that parses and binds everywhere and builds on 5.8 only.
   UE 5.8 — a warning today, a compile error in whichever release removes it. The remaining call is
   the UE 5.3 – 5.4 branch of `GetDreamShaderExpressionInputCount`, where `CountInputs()` does not
   exist yet and the deprecation is not in force; every other site asks for a pin by index.
-- Many "older branch" paths are **errors with an explicit version message** rather than silent
-  degradation. Every Substrate surface reachable from source — `ShadingModel="Substrate"`, a
-  `Substrate` output or input type on a `Shader`/`Function`/`GraphFunction`, a `Substrate.*` builtin
-  call, `UE.<Name>(OutputType="Substrate")`, `Base.FrontMaterial`, a Graph variable holding a
-  Substrate value — reports a message ending `requires Unreal Engine 5.4 or newer.` on UE 5.3, as
-  does the `substrate-builtins.json` manifest's `unsupportedReason`. The only 5.6 message of this
-  kind is `UE.TransformPosition`'s `FirstPersonInterpolationAlpha` argument. Rows without a quoted
-  message in the tables above degrade silently — the feature simply is not offered.
+- *(since 2.0.0)* A node, pin, enumerator or attribute the engine lacks is missing from its catalog,
+  so a source that uses one is an error when it is bound; 1.x dropped some of them (an unread
+  argument) without a word. Only a few of those errors name
+  a version — [`DSH5294`](../diagnostics/DSH5xxx.md#dsh5294) (a Substrate node from a later
+  engine), [`DSH5300`](../diagnostics/DSH5xxx.md#dsh5300) (`UE.UserSceneTexture`, the Custom Pass
+  nodes), [`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128) (`ShadingModel="Substrate"` on 5.3) and
+  [`DSH8300`](../diagnostics/DSH8xxx.md#dsh8300) (a `.dsp` below 5.8); the rest say that the node,
+  pin, value or attribute does not exist (`DSH5210`, `DSH5213`, `DSH5215`, `DSH5200`). The
+  `substrate-builtins.json` manifest on 5.3 still carries an `unsupportedReason`. To build one source
+  on several engines, guard the newer code with `#if DS_ENGINE_MINOR >= …`.
 - `DREAMSHADER_WITH_SUBSTRATE_BUILTINS` is evaluated as a value, so it must be written
   `#if DREAMSHADER_WITH_SUBSTRATE_BUILTINS`, not `#ifdef`. It is always defined.
 - `DREAMSHADER_UE_VERSION_AT_LEAST` is defined unconditionally, so pre-defining it in a build target
@@ -343,11 +371,11 @@ Shader(Name="Materials/M_Portable")
 - [`DreamShaderSettings.h`](settings.md) — the `Strata` alias gate in the shading-model catalogue
 - [`Substrate.*`](../builtins/substrate.md) — the builtin family behind `DREAMSHADER_WITH_SUBSTRATE_BUILTINS`
 - [Transform builtins](../builtins/transform.md) — the version-gated basis names
-- [`UE.*` catalogue](../builtins/ue.md#uecollectionparam) — the collection-parameter builtin gated at 5.7
+- [`UE.*` catalogue](../builtins/ue.md) — the nodes the reflected catalog offers
 - [Material enums](../settings/material-enums.md) — where `Substrate` appears as a shading model
 - [`Path(...)`](../parameters/path.md) — plugin roots and the 5.6 mount check
 - [Asset paths](../generation/asset-paths.md) — `Root="Plugin.X"` and the 5.6 mount check
 - [Decompiler](../tools/decompiler.md) — the version-gated round-trip properties
 - [`DreamShaderPass`](pass-module.md) — the module whose rules file defines `DREAMSHADER_WITH_CUSTOM_PASS`
 - [Custom Pass runtime](../runtime/index.md) — what runs on 5.8
-- [Diagnostics index](../diagnostics/index.md) — the three explicit version-requirement errors
+- [Diagnostics index](../diagnostics/index.md) — every code, including the version-requirement ones

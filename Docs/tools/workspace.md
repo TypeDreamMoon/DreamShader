@@ -57,12 +57,13 @@ plugin on a different drive — gets its absolute path instead. See
 
 ## Contents
 
-Every key the writer emits. There are no others, and nothing is conditional.
+Every key the writer emits. There are no others; only the number of `folders` entries varies.
 
 | Key | Value | Purpose |
 | :-- | :-- | :-- |
-| `folders[0].name` | `DreamShader Source` | Display name of the single workspace folder. |
+| `folders[0].name` | `DreamShader Source` | Display name of the project root's folder. |
 | `folders[0].path` | `.` | The folder containing the workspace file, i.e. `<SourceDirectory>` itself. |
+| `folders[n].name`, `folders[n].path` | `Plugin: <Name>`, a path relative to the workspace file (absolute when there is none) | One per plugin source root, in root order. |
 | `settings["files.associations"]["*.dss"]` | `dreamshader-dss` | Language id for 2.0 compilation units *(since 2.1.0)*. |
 | `settings["files.associations"]["*.dsi"]` | `dreamshader-dss` | Language id for material instance sources *(since 2.1.0)*. |
 | `settings["files.associations"]["*.dsp"]` | `dreamshader-dsp` | Language id for Custom Pass pipelines *(since 2.1.0)*. Without it a `.dsp` is claimed by whatever else knows the extension -- the Faust language and old Visual C++ projects use it too. |
@@ -85,7 +86,7 @@ language -- `"[dreamshader-dss]": { ... }` -- use the same ids.
 
 ## Open behaviour
 
-The command performs four steps, in this order:
+The command performs five steps, in this order:
 
 | Step | Action | On failure |
 | :-- | :-- | :-- |
@@ -147,9 +148,9 @@ putting it on `PATH`.
 | Action | Launcher | Window behaviour |
 | :-- | :-- | :-- |
 | *Open Dream Shader Workspace (VSCode)* (menu and toolbar) | workspace launcher | honours `bOpenInNewWindow` |
-| *Open source* (Material Content Browser, Gen page) | file launcher | always `--reuse-window` |
+| *Open source* (Material Content Browser) | file launcher | always `--reuse-window` |
 | *OpenVirtualFunction* (asset context menu) | file launcher | always `--reuse-window`, positioned at the declaration's line and column |
-| *Export DSM* / *Export DSF* post-export open | preferred-editor chain | always `--reuse-window` when VSCode is used |
+| *Export .dss* / *.dsi* / *Legacy .dsm* / *Legacy .dsf* post-export open | preferred-editor chain | always `--reuse-window` when VSCode is used |
 
 The file launcher clamps line and column to `1` or greater. Its own fallback chain is VSCode → shell
 default application (`Edit` verb) → Notepad, the same shape as the workspace chain.
@@ -269,7 +270,7 @@ With *Open In New Window* turned off, the same line carries the extra flag:
 - [Editor integration](editor-integration.md) — the Tools menu and toolbar entries that invoke this command
 - [Material Content Browser](material-browser.md) — the *Open source* action that uses the file launcher
 - [VirtualFunction tools](virtual-function-tools.md) — *OpenVirtualFunction* and its line/column jump
-- [Decompiler](decompiler.md) — *Export DSM* / *Export DSF* and the post-export open
+- [Decompiler](decompiler.md) — the *Export* entries and the post-export open
 - [Project settings](../settings/project.md) — `SourceDirectory` and `bOpenInNewWindow`
 - [Source files](../language/source-files.md) — what `.dsm`, `.dsh` and `.dsf` may each contain
 - [Custom Pass pipelines — `.dsp`](../language-v2/passes.md) — the language `pass-keys.json` describes

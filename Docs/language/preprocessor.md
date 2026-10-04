@@ -10,7 +10,7 @@ not taken never reaches the parser and never becomes a node.
 | :-- | :-- |
 | Declared in | `.dsm`, `.dsf`, `.dsh` |
 | Kind | directives |
-| Processed by | the preprocessor, **before** `import` extraction and before the declaration parser |
+| Processed by | the preprocessor, per file, **before** the file is parsed — a header too, on its own, when it is imported |
 | Recognized | line by line, over each file's own text, outside `Function` bodies |
 | Case rule | the eight keywords are matched **lowercase only** |
 | Since | `1.9.0` |
@@ -124,8 +124,9 @@ after the `#`** — matched against a closed list, with nothing waved through on
 
 | Where | After the `#` | Handling |
 | :-- | :-- | :-- |
-| inside a `Function` / `GraphFunction` body | anything at all | **passed through verbatim** — not recognized, not paired, not counted toward nesting, never in the touched set |
-| outside | `region` or `endregion`, in **any** case | **passed through** to the generator |
+| inside a `Function` / `GraphFunction` body (and, in a `.dss` or `.dsh`, a `/// @custom` function body) | anything at all | **passed through verbatim** — not recognized, not paired, not counted toward nesting, never in the touched set |
+| outside | `region` or `endregion`, in **any** case | **passed through** to the parser |
+| outside, in a `.dss` or `.dsh` | `pragma` or `include` | **passed through** to the 2.0 parser, whose lines they are |
 | outside | one of the eight keywords, in **lowercase** | a directive |
 | outside | anything else | `DSH1035` |
 
@@ -152,10 +153,10 @@ lines that quietly do nothing.
 | | `#if` family | `#Region` / `#EndRegion` |
 | :-- | :-- | :-- |
 | Spelling | lowercase only — `#IF` is `DSH1035` | matched **case-insensitively**, so `#Region` and `#REGION` are the same |
-| Read by | the preprocessor, before parsing | the generator, over a stored `Graph` body |
+| Read by | the preprocessor, before parsing | the parser, as a token of the `Graph` body |
 | Valid | on any line outside a `Function` / `GraphFunction` body | only inside `Graph = { … }` |
 | Effect | removes lines from the text the parser sees | names a span of statements, which becomes a comment box |
-| Blank-line rule | a directive line is emitted as an empty line | a directive line is emitted as an equal-length run of spaces |
+| Blank-line rule | a directive line is emitted as an empty line | passed through unchanged |
 | Counts as a directive for [Adopt](#a-source-with-directives-cannot-be-adopted) | yes | **no** |
 
 ### `Function` and `GraphFunction` bodies are the shader compiler's
@@ -513,8 +514,10 @@ import "Shared/Common.dsh";
 #if TOON_FANCY        // ← 0. The header's #define is not visible here.
 ```
 
-The reason is an ordering trade. The preprocessor runs **before** imports are extracted and inlined,
-which is what lets an `#if` wrap an `import` line:
+The reason is the order of the work. Every file is preprocessed **on its own**, against the
+compile's define table, before it is parsed: the importing file first, and a header when an `import`
+of it is read *(since 2.0.0; through 1.9.x before the header's text was inlined)*. That is what lets
+an `#if` wrap an `import` — the `import` is not read at all when its branch is cut:
 
 ```c
 #if DS_SUBSTRATE
@@ -524,10 +527,10 @@ import "Shared/LegacyHelpers.dsh";
 #endif
 ```
 
-Making `#define` behave like C's would mean preprocessing the *assembled* text, after inlining — and
-then the imports would already be in it, so an `#if` could no longer decide which ones to pull. The
-two cannot both be had. Wrapping `import` won, and C's include-order-dependent macro state, which is
-a decades-old source of bugs, is not missed.
+A header's own `#define`s are gone by the time its declarations reach the importing file, and nothing
+is pasted into that file's text for a later `#if` to see. Making `#define` behave like C's would mean
+one preprocessor pass over every file in include order, and C's include-order-dependent macro state,
+which is a decades-old source of bugs, is not missed.
 
 **To define a switch centrally, use a channel built for it**: *Preprocessor Defines* in the project
 settings, `RegisterDreamShaderDefine` from C++, or `-Define=` for a one-off build. A `#define` in a
@@ -626,10 +629,10 @@ conditionals flattened away, which is another way of saying the same thing `DSH8
 Two invariants make the rest of the toolchain keep working across a cut.
 
 **The output has exactly as many lines as the input.** Every directive line and every cut line is
-emitted as an *empty* line rather than removed. Diagnostic line numbers, the
-[import line mapping](import.md#source-line-mapping), and the editor's error markers all count lines
-inside each file's `// Begin/End DreamShader source:` block, so a source with a hundred lines cut
-still reports errors at the line you wrote them on.
+emitted as an *empty* line rather than removed. Every diagnostic carries the line and column of its
+construct in its own file — a header's in the header — and the editor's error markers read them
+(see [`import`](import.md#source-line-mapping)), so a source with a hundred lines cut still reports
+errors at the line you wrote them on.
 
 **The dependency graph reads the raw file, not the preprocessed one.** It scans for `import` lines
 without evaluating any condition, so a file's dependencies are the **union over all branches**.
@@ -677,25 +680,25 @@ could disagree with no visible cause.
 ## Notes
 
 - **Directives are found by a line scan, so a block comment does not hide one.** A `#if` inside
-  `/* … */` is still a directive, exactly as an `import` inside a block comment is still an import.
-  Comment directives out with `//` per line. See [`import`](import.md#recognition) and
-  [Lexical elements](lexical.md#comments).
+  `/* … */` is still a directive. Comment directives out with `//` per line. An `import` is different
+  *(since 2.0.0)*: it is a token, so one inside `/* … */` is commented out. See
+  [`import`](import.md#recognition) and [Lexical elements](lexical.md#comments).
 - **`#if` works inside a `Graph` body.** A `Graph` body is DreamShaderLang, not HLSL, so its
   conditionals are DreamShader's. `Function` and `GraphFunction` bodies are the exception, and the
   only one — see [above](#function-and-graphfunction-bodies-are-the-shader-compilers).
-- **Cutting away a whole `Shader` block does not delete its asset.** The file simply generates
-  nothing, the previously generated asset is left on disk as an orphan, and a warning says so.
-  Silently deleting an asset is far more dangerous than leaving one behind; remove it yourself, or
-  guard the narrower thing instead of the whole block.
+- **Cutting away a whole `Shader` block does not delete its asset.** The file simply stops building
+  it, and the previously generated asset is left on disk. A `.dsm` left with no block at all is
+  [`DSH2254`](../diagnostics/DSH2xxx.md#dsh2254). Silently deleting an asset is far more dangerous
+  than leaving one behind; remove it yourself, or guard the narrower thing instead of the whole block.
 - **A define read through `defined(X)` is recorded like any other read.** Defining `X` later
   therefore rebuilds the sources that asked about it, including the ones that only asked whether it
   existed.
 - **DreamShader's preprocessor has no `#include` and no macro expansion.** A `#define`'s value is a
   value for a `#if` to test; it is never substituted into the source text, and there are no
   function-like macros. Use [`import`](import.md) to bring in another file — writing `#include` at
-  the declaration level is `DSH1035`, and the message says so. The `#include` that DreamShaderLang
-  does have is an HLSL directive inside a `Function` body, where the preprocessor does not look at
-  all; it is hoisted into the generated `.ush` and resolved by the shader compiler. See
+  the declaration level of a `.dsm` / `.dsf` is `DSH1035`, and the message says so. The `#include`
+  that a 1.x file does have is an HLSL directive inside a `Function` body, where the preprocessor does
+  not look at all; it is hoisted into the generated `.ush` and resolved by the shader compiler. See
   [Function ▸ Includes](function.md#includes).
 - **A source with no directives comes back byte for byte.** Line endings are untouched and no
   trailing newline is added, so putting a file through the preprocessor can never be the reason it
@@ -706,16 +709,19 @@ could disagree with no visible cause.
 - **The parser never sees a directive.** By the time the declaration grammar runs, every directive
   line is an empty line, which is why none of the eight keywords appears in the
   [keyword index](keywords.md) as something the parser knows.
-- **The `.dsh` / `.dsf` content rule is applied to the cut text.** That scan is a literal substring
-  search over the file after its directives have been resolved, so a `Shader(` inside a branch that
-  was cut is no longer there to be rejected — and one inside a branch that was *taken* still is. A
-  header may therefore carry a `Shader` block behind a `#if` that is never true, which is legal and
-  almost certainly a mistake. See [Source files](source-files.md#how-the-restriction-is-enforced).
+- **The `.dsh` content rule is applied to the cut text.** The parser decides it declaration by
+  declaration *(since 2.0.0; 1.x searched the text for `Shader(`)*, after the directives have been
+  resolved, so a `Shader` block inside a branch that was cut is no longer there to be rejected — and
+  one inside a branch that was *taken* is [`DSH2249`](../diagnostics/DSH2xxx.md#dsh2249). A header
+  may therefore carry a `Shader` block behind a `#if` that is never true, which is legal and almost
+  certainly a mistake. See [Source files](source-files.md#how-the-restriction-is-enforced).
 
 ## Diagnostics
 
-Preprocessor failures are raised at the **driver** stage, alongside the source-file and import
-diagnostics, and carry the file and line of the offending directive.
+*(since 2.0.0)* A preprocessor failure stops the compile before the file is parsed, and is reported
+as [`DSH8291`](../diagnostics/DSH8xxx.md#dsh8291), whose message names the file — the header, when it
+was a header that failed — and carries the preprocessor's own code below and the file and line of the
+offending directive. The preprocessor stops at its first error.
 
 | Code | Cause |
 | :-- | :-- |
@@ -724,7 +730,7 @@ diagnostics, and carry the file and line of the offending directive.
 | `DSH1032` | `#elif` or `#else` with no matching `#if` |
 | `DSH1033` | `#elif` or a second `#else` after an `#else` |
 | `DSH1034` | the conditional expression is **incomplete or malformed** |
-| `DSH1035` | a `#` line outside a `Function` body that is neither one of the eight lowercase keywords nor `#Region` / `#EndRegion` — `#include`, `#endfi`, and mis-cased spellings such as `#IF` |
+| `DSH1035` | a `#` line outside a `Function` body that is neither one of the eight lowercase keywords nor `#Region` / `#EndRegion` — in a `.dsm` / `.dsf` `#include` and `#pragma` too — `#endfi`, and mis-cased spellings such as `#IF` |
 | `DSH1036` | `#if` or `#elif` with no expression after it |
 | `DSH1037` | nesting deeper than 64 levels — the 65th `#if` is the one that fails |
 | `DSH1038` | `#define` or `#undef` with a missing name, or one that is not `[A-Za-z_][A-Za-z0-9_]*` |
@@ -800,10 +806,11 @@ Shader(Name="Materials/M_Foo", Root="Game")
 }
 ```
 
-The Substrate branch writes no `ShadingModel` at all, because binding `Base.FrontMaterial`
-[force-sets it](../builtins/substrate.md#binding-a-substrate-value-to-basefrontmaterial) and an
-explicit setting there may only say `"Substrate"`. Guarding the *other* branch's line is what lets
-one source satisfy both rules.
+The Substrate branch writes no `ShadingModel` at all. 1.x required that: binding `Base.FrontMaterial`
+force-set the shading model, and an explicit setting there could only say `"Substrate"`. *(since
+2.0.0)* The binding [sets no shading model](../builtins/substrate.md#binding-a-substrate-value-to-basefrontmaterial)
+and refuses none, so guarding the *other* branch's line now just keeps `DefaultLit` out of the
+Substrate build.
 
 With `DS_SUBSTRATE` at `1`, the text that reaches the parser is:
 

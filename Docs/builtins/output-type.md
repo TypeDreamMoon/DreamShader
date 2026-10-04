@@ -2,12 +2,13 @@
 
 > [DreamShader](../index.md) » [Builtins](index.md) » **OutputType**
 
-The argument that tells a reflected builtin call what kind of value it produces, and the only place a
-type token appears inside an argument list.
+The argument with which a 1.x call said what kind of value a reflected builtin produces. Since 2.0.0
+the builtin catalog says it for every class, and `OutputType` keeps two jobs: the output type of a
+Custom node, and a width hint in a 1.x source.
 
 | | |
 | :-- | :-- |
-| Declared in | `.dsm`, `.dsf` — as an argument of a generic `UE.*` call in `Graph`, or of a `UE.*` property declaration |
+| Declared in | `.dsm`, `.dsf` — as an argument of a `UE.*` call in `Graph`, or of a `UE.*` property declaration |
 | Kind | builtin argument |
 | Aliases | `ResultType` |
 
@@ -17,178 +18,121 @@ type token appears inside an argument list.
 { OutputType | ResultType } = <type-token>
 ```
 
-`OutputType` is looked up first; `ResultType` is consulted only when `OutputType` is absent. When both
-are written, `OutputType` wins and `ResultType` is ignored — on the `Graph` surface both are reserved
-names and are never dispatched as properties, and on the declaration surface both are on the
-accepted-argument list of `UE.CollectionParam` / `UE.CollectionParameter` and of every generic
-(reflected) declaration. The other builtins in the
-[declaration-form table](ue.md#properties-declaration-form) do **not** accept either name: writing one
-there fails with `UE.{Name} for property '{Property}' does not support argument '{Argument}'.`
+The legacy front end finds `OutputType` and `ResultType` ignoring case and takes them off the call
+before the binder sees it — on a Custom call it keeps the first of them as the node's output type and
+drops a second. Neither is ever bound as a pin or property. The token may be quoted or bare:
+`OutputType = "float3"` and `OutputType = float3` are identical.
 
-The token may be quoted or bare: `OutputType = "float3"` and `OutputType = float3` are identical.
+It is required nowhere *(since 2.0.0; 1.x required it on every generic call and on a property
+declaration outside its table)*. A `.dss` has no such argument: a reflected node is called as
+`UE.<ClassShortName>(Pin = …, Property = …)` and its value is typed by the catalog.
 
 ## Where it is read
 
-| Surface | Required | Token set | Effect |
-| :-- | :-- | :-- | :-- |
-| Generic `UE.Expression(…)` / `UE.<ClassName>(…)` in `Graph` | **yes** | full | decides which kinds of value are legal; supplies the component count unless the node's own kind or class overrides it (see [Notes](#notes)) |
-| `UE.Expression(Class = "Custom", …)` in `Graph` | **yes** | reduced — numeric families and `MaterialAttributes` only | **authoritative** — written to the Custom node, decides the HLSL return type |
-| `UE.<Name>(…)` property declaration | only when the name is outside the [declaration-form table](ue.md#declared-output-width) | reduced — no `MaterialAttributes`, `Substrate`, `SamplerState`, `StaticBool` or `StaticBoolParameter` | declares the property's type and component count |
-| Registered `UE.*` sugar in `Graph` | never read | — | silently discarded like any other unknown argument |
-| `Substrate.*` in `Graph` | never required | — | **ignored** — the output type is synthesized from the node descriptor |
+| Surface | Tokens | Effect |
+| :-- | :-- | :-- |
+| `UE.Expression(Class = "Custom", …)` in `Graph` | the Custom token set below | **the node's output type** — written to the node, decides the HLSL return type |
+| any other `UE.*` call in `Graph` | a scalar or vector type spelling | on a node with **one numeric output**: the type of the value, as 1.x typed it, the node wired whole. Otherwise dropped |
+| `UE.<Name>(…)` property declaration | any type spelling | the type of the local the declaration becomes — see [Declared output width](ue.md#declared-output-width) |
+| one of the 27 1.x names of the [`UE.*` catalogue](ue.md#catalogue) in `Graph` | — | dropped with [`DSH5254`](../diagnostics/DSH5xxx.md#dsh5254), like any argument the name does not read |
+| `Substrate.*` | — | dropped without a diagnostic |
 
-For a `Substrate.*` call the synthesized type is `Substrate` with 0 components for a BSDF or operator
-node, and `auto` with 1 component for a utility node; supplying `OutputType` changes nothing. See
-[Substrate](substrate.md).
+A token that fits none of these — a texture, `MaterialAttributes`, `Substrate` or `SamplerState`
+token on a non-Custom call, a matrix, a misspelling — is dropped without a diagnostic
+*(since 2.0.0; 1.x reported an unsupported token)*, and the catalog types the value.
+
+> [!NOTE]
+> The width hint follows 1.x where the catalog would build another graph:
+> `float Cam = UE.Expression(Class = "CameraPositionWS", OutputType = "float")` types `Cam` as a
+> `float` and connects the node's whole output wherever `Cam` is read, which is what the 1.x graph
+> did. On a node the engine types the same way the hint does, it changes nothing.
 
 ## Accepted tokens
 
-Every token, on every surface. `✔` = accepted, `✘` = rejected.
+### On a Custom node
 
-| Token | Kind | Components | Generic `UE.*` | Custom node | Property declaration |
-| :-- | :-- | :-- | :-: | :-: | :-: |
-| `float` | numeric | 1 | ✔ | ✔ | ✔ |
-| `float1` | numeric | 1 | ✔ | ✔ | ✔ |
-| `half` | numeric | 1 | ✔ | ✔ | ✔ |
-| `half1` | numeric | 1 | ✔ | ✔ | ✔ |
-| `int` | numeric | 1 | ✔ | ✔ | ✔ |
-| `uint` | numeric | 1 | ✔ | ✔ | ✔ |
-| `bool` | numeric | 1 | ✔ | ✔ | ✔ |
-| `float2` | numeric | 2 | ✔ | ✔ | ✔ |
-| `half2` | numeric | 2 | ✔ | ✔ | ✔ |
-| `vec2` | numeric | 2 | ✔ | ✔ | ✔ |
-| `int2` | numeric | 2 | ✔ | ✔ | ✔ |
-| `uint2` | numeric | 2 | ✔ | ✔ | ✔ |
-| `bool2` | numeric | 2 | ✔ | ✔ | ✔ |
-| `ivec2` | numeric | 2 | ✔ | ✔ | ✔ |
-| `uvec2` | numeric | 2 | ✔ | ✔ | ✔ |
-| `bvec2` | numeric | 2 | ✔ | ✔ | ✔ |
-| `float3` | numeric | 3 | ✔ | ✔ | ✔ |
-| `half3` | numeric | 3 | ✔ | ✔ | ✔ |
-| `vec3` | numeric | 3 | ✔ | ✔ | ✔ |
-| `int3` | numeric | 3 | ✔ | ✔ | ✔ |
-| `uint3` | numeric | 3 | ✔ | ✔ | ✔ |
-| `bool3` | numeric | 3 | ✔ | ✔ | ✔ |
-| `ivec3` | numeric | 3 | ✔ | ✔ | ✔ |
-| `uvec3` | numeric | 3 | ✔ | ✔ | ✔ |
-| `bvec3` | numeric | 3 | ✔ | ✔ | ✔ |
-| `float4` | numeric | 4 | ✔ | ✔ | ✔ |
-| `half4` | numeric | 4 | ✔ | ✔ | ✔ |
-| `vec4` | numeric | 4 | ✔ | ✔ | ✔ |
-| `int4` | numeric | 4 | ✔ | ✔ | ✔ |
-| `uint4` | numeric | 4 | ✔ | ✔ | ✔ |
-| `bool4` | numeric | 4 | ✔ | ✔ | ✔ |
-| `ivec4` | numeric | 4 | ✔ | ✔ | ✔ |
-| `uvec4` | numeric | 4 | ✔ | ✔ | ✔ |
-| `bvec4` | numeric | 4 | ✔ | ✔ | ✔ |
-| `MaterialAttributes` | material attributes | 0 | ✔ | ✔ | ✘ |
-| `Substrate` | Substrate | 0 | ✔ *(UE 5.4)* | ✘ | ✘ |
-| `StaticBool` | numeric | 1 | ✔ | ✘ | ✘ |
-| `StaticBoolParameter` | numeric | 1 | ✔ | ✘ | ✘ |
-| `Texture2D` | texture object — 2D | 0 | ✔ | ✘ | ✔ † |
-| `SamplerState` | texture object — 2D | 0 | ✔ | ✘ | ✘ |
-| `TextureCube` | texture object — cube | 0 | ✔ | ✘ | ✔ † |
-| `Texture2DArray` | texture object — 2D array | 0 | ✔ | ✘ | ✔ † |
-| `Texture3D` | texture object — volume | 0 | ✔ | ✘ | ✔ † |
-| `VolumeTexture` | texture object — volume | 0 | ✔ | ✘ | ✔ † |
+Compared ignoring case and with every space removed. Anything else is
+[`DSH5261`](../diagnostics/DSH5xxx.md#dsh5261).
 
-**44 tokens.** All matching is case-insensitive.
-
-† On the property-declaration surface all five texture tokens resolve to the **same** declared kind —
-a texture-object property with 0 components. The dimension is not recorded there, unlike the `Graph`
-surface where `TextureCube` and `Texture2DArray` produce distinctly typed values. Declare the
-dimension with a plain type token (`TextureCube Tex;`) when it matters; see
-[Types](../language/types.md).
-
-`SamplerState` is an accepted spelling of `Texture2D` on the `Graph` surface only.
-
-`StaticBool` and `StaticBoolParameter` both resolve to a one-component value. They exist so that a
-value can be type-checked against a `StaticBool` function input; nothing else distinguishes them from
-`float`.
-
-## Normalization
-
-The token is not normalized uniformly — three different comparisons are used, and the difference is
-observable when the token carries stray whitespace.
-
-| Token group | Comparison |
+| Tokens | Custom output type |
 | :-- | :-- |
-| The 34 numeric tokens and `MaterialAttributes` | trimmed, lower-cased, and **all** inner spaces removed |
-| `Substrate` | trimmed and all inner spaces removed, compared ignoring case |
-| `StaticBool`, `StaticBoolParameter`, `Texture2D`, `SamplerState`, `TextureCube`, `Texture2DArray`, `Texture3D`, `VolumeTexture` | compared ignoring case against the value **as written** — no trimming, no space removal |
+| `float`, `float1`, `half`, `half1` | `Float1` |
+| `float2`, `vec2`, `half2` | `Float2` |
+| `float3`, `vec3`, `half3` | `Float3` |
+| `float4`, `vec4`, `half4` | `Float4` |
+| `MaterialAttributes` — quoted | `MaterialAttributes` |
 
-> [!NOTE]
-> On the `Graph` surface, `OutputType = " float4 "` resolves and `OutputType = " Texture2D "` does
-> not, because only the numeric families are trimmed. This is only reachable through a quoted literal
-> — a bare token cannot contain whitespace. On the property-declaration surface the value is trimmed
-> before resolution, so the asymmetry does not arise there.
+*(since 2.0.0)* `int`, `uint`, `bool` and their vectors, `ivec*`, `uvec*`, `bvec*`, the texture tokens,
+`StaticBool` and `Substrate` are `DSH5261` here. A bare `MaterialAttributes` is read as the type
+`material` and is `DSH5261` as well; quote it.
 
-Underscores and dashes are never removed from a type token. `float_4` and `Material-Attributes` are
-not accepted spellings.
+### On any other call, and on a property declaration
+
+A token is a 1.x type spelling, compared ignoring case:
+
+| Tokens | Kind | Graph call | Property declaration |
+| :-- | :-- | :-: | :-: |
+| `float`, `half`, `double`, `int`, `uint`, `bool`, and each with `1` | scalar | ✔ | ✔ |
+| the same with `2`, `3`, `4`; `vec2`–`vec4`, `ivec2`–`ivec4`, `uvec2`–`uvec4`, `bvec2`–`bvec4` | vector | ✔ | ✔ |
+| `StaticBool`, `StaticBoolParameter` | read as `bool` | ✔ | ✔ |
+| `Texture2D`, `TextureCube`, `Texture2DArray`, `Texture3D`, `VolumeTexture` | texture | dropped | ✔ — the dimension is kept |
+| `MaterialAttributes` | `material` | dropped | ✔ |
+| `Substrate`, `SamplerState` | | dropped | ✔ |
+| `mat2`–`mat4`, `float3x3` and the other matrices | matrix | dropped | read, but no node's value fits a matrix local |
+
+On a `Graph` call the token is trimmed but keeps its inner spaces (`" float 4 "` is no token); on a
+property declaration every space is removed first. Underscores and dashes are never removed:
+`float_4` and `Material-Attributes` are not spellings.
 
 ## Output mask pseudo-names
 
-Distinct from `OutputType`: the `Output` / `OutputName` argument selects **which** output pin of a
-multi-output node is read. Named outputs are matched by name, case-insensitively. Outputs with no
-name are additionally matched by their channel mask against these seven pseudo-names, tested in this
-order:
+Distinct from `OutputType`: the `Output` / `OutputName` argument selects **which** output of a
+multi-output node is read, and becomes `.Name` on the call. The name is one of the outputs the catalog
+lists for the class. An output the engine leaves unnamed is listed under the channels of its mask —
+`R`, `G`, `B`, `A`, `RG`, `RGB`, `RGBA` — when the class has more than one output, unless the class
+already uses that name. A single output keeps the empty name and is the value of the call.
 
-| Pseudo-name | Matches an unnamed output whose mask is |
+| Node | Outputs as the catalog lists them (UE 5.8) |
 | :-- | :-- |
-| `RG` | R and G |
-| `RGB` | R, G and B |
-| `RGBA` | R, G, B and A |
-| `R` | R only |
-| `G` | G only |
-| `B` | B only |
-| `A` | A only |
+| `VertexColor` | `RGB`, `R`, `G`, `B`, `A` |
+| `TextureSample` | `RGB`, `R`, `G`, `B`, `A`, `RGBA` |
+| `SceneColor` | `RGB`, `A` |
+| `SceneTexture` | `Color`, `Size`, `InvSize` |
 
-An empty or omitted selector reads output 0. The selector text is trimmed. `Output` and `OutputIndex`
-are mutually exclusive. Full rules: [`UE.Expression`](ue-expression.md#selecting-an-output).
+The name is compared exactly; in a 1.x source a name that matches only ignoring case is accepted with
+[`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276). A name no output has is
+[`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201) *(since 2.0.0; 1.x tested the seven mask names against
+every unnamed output, in a fixed order)*. On a node whose outputs are all channel views of one value,
+a swizzle inside one output is that output (`UE.VertexColor().a`). Full rules:
+[`UE.Expression`](ue-expression.md#selecting-an-output).
 
 > [!NOTE]
 > These are not `OutputType` values, and an `OutputType` token is never a valid `Output` selector.
-> `UE.Expression(Class = "BreakMaterialAttributes", OutputType = "float3", Output = "BaseColor")`
-> selects by output *name*; `Output = "RGB"` selects by mask.
+> `UE.Expression(Class = "BreakMaterialAttributes", Output = "BaseColor")` selects by output *name*;
+> `UE.VertexColor(Output = "RGB")` selects the output its mask names.
 
 ## Notes
 
-- **The hint in the diagnostic is not the accepted set.** The message emitted when `OutputType` is
-  missing lists nine spellings; the table above has 44. The message text is not a specification.
-- On the generic `Graph` path the declared token controls which *kinds* of value are legal — a
-  Substrate declaration on a non-Substrate node is an error. The resulting **component count** comes
-  from the node only for a Substrate, `MaterialAttributes` or texture output and for the classes in
-  the generator's [known-width table](ue-expression.md#result-type-and-component-count):
-  `UE.Expression(Class = "WorldPosition", OutputType = "float1")` yields a 3-component value. For any
-  other class the token *is* the width. On `UMaterialExpressionCustom` the token is additionally
-  written to the node, so it also decides the HLSL return type.
-- The token also participates in the node reuse key, in its normalized form. Two calls differing only
-  in `OutputType` spelling — `float3` versus `vec3` — build different keys and therefore produce two
-  nodes even though the resulting value is identical. See [Node reuse](../graph/node-reuse.md).
-- This token set is close to, but not identical with, the language's declaration type tokens. The
-  `Properties` section additionally accepts the 22 parameter-node tokens and the plain `Texture*`
-  family with dimensions preserved; function `Inputs` additionally accept `Substrate` and
-  `MaterialAttributes`. See [Types](../language/types.md),
+- **The width comes from the catalog.** `UE.Expression(Class = "WorldPosition")` is a node whose
+  first output, `XYZ`, is a `float3`; no token is needed or consulted for that. See
+  [Result type and component count](ue-expression.md#result-type-and-component-count).
+- Two calls that differ only in how `OutputType` is spelled — `float3` against `vec3` — are one node:
+  the IR merges nodes, not spellings *(since 2.0.0)*. See [Node reuse](../graph/node-reuse.md).
+- This token set is the 1.x type vocabulary. The `Properties` section additionally accepts the
+  parameter-node tokens; see [Types](../language/types.md),
   [Compact types](../parameters/compact-types.md) and
   [Inputs / Outputs / Results](../language/inputs-outputs.md).
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}`; the compiler emits the substituted text.
-
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Unsupported UE builtin call '{Function}' in Graph. For generic MaterialExpression calls, add OutputType="float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture/Substrate".` | neither `OutputType` nor `ResultType` on a generic `Graph` call |
-| `UE.{Function} OutputType must be a literal value.` | the value is an expression rather than a literal |
-| `UE.{Function} OutputType '{Token}' is not supported.` | the token is not in the table above |
-| `UE.{Function} OutputType="Substrate" requires Unreal Engine 5.4 or newer.` | `Substrate` on UE 5.3 |
-| `UE.{Function} OutputType="Substrate" is not supported by UMaterialExpressionCustom.` | `Substrate` on a Custom node |
-| `UE.{Function} OutputType '{Token}' is not a valid Custom node output type.` | a texture or static-bool token on a Custom node |
-| `Unsupported UE builtin function '{Function}'. Use OutputType="float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture" for generic MaterialExpression calls.` | a property declaration whose name is outside the parser's table and which supplied no accepted `OutputType` |
-| `This builtin is not implemented by the material generator yet. For generic MaterialExpression support, add OutputType="float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture".` | the same, reported at generation time |
-| `{Namespace}.{Function} output is not a Substrate value.` | `OutputType="Substrate"` on a node whose real output is not Substrate |
+| [`DSH5261`](../diagnostics/DSH5xxx.md#dsh5261) | the `OutputType` of a Custom node is not one of the tokens above |
+| [`DSH5254`](../diagnostics/DSH5xxx.md#dsh5254) (warning) | `OutputType` / `ResultType` on one of the 27 1.x names, dropped |
+| [`DSH4228`](../diagnostics/DSH4xxx.md#dsh4228) | a property declaration's type does not take the node's value — a narrower vector than the node makes |
+| [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201) | an `Output` name that is no output of the node |
 
-The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
+Every code is described on its page in [Diagnostics](../diagnostics/index.md).
 
 ## Example
 
@@ -196,7 +140,7 @@ The complete cross-stage list lives in the [diagnostics index](../diagnostics/in
 Shader(Name="Docs/M_OutputTypes")
 {
     Properties {
-        // Declaration surface: the reduced token set.
+        // Declaration surface: the type of the local `Radius`.
         UE.Expression(Class = "ObjectRadius", OutputType = "float1") Radius;
     }
 
@@ -208,18 +152,18 @@ Shader(Name="Docs/M_OutputTypes")
     }
 
     Graph {
-        // Advisory: the node reports float2 regardless of what is declared here.
+        // Not needed: the catalog gives TextureCoordinate a float2.
         float2 uv = UE.Expression(Class = "TextureCoordinate", OutputType = "float2");
 
         // ResultType is the alias.
         float t = UE.Expression(Class = "Time", ResultType = "float1");
 
-        // Authoritative on a Custom node.
+        // The node's own output type on a Custom node.
         float3 tinted = UE.Expression(Class = "Custom", OutputType = "float3",
                                       Code = "return In * 0.5f;", In = vec3(uv.x, uv.y, t));
 
-        // Mask pseudo-name on an unnamed output.
-        float3 vcol = UE.Expression(Class = "VertexColor", OutputType = "float3", Output = "RGB");
+        // An output the catalog names after its mask.
+        float3 vcol = UE.Expression(Class = "VertexColor", Output = "RGB");
 
         Color = tinted * vcol * Radius;
     }
@@ -229,12 +173,12 @@ Shader(Name="Docs/M_OutputTypes")
 ## See also
 
 - [`UE.Expression`](ue-expression.md) — the call form this argument belongs to
-- [`UE.*` catalogue](ue.md) — the registered builtins, which never read this argument
-- [Builtins](index.md) — the five call surfaces
-- [Substrate](substrate.md) — where the output type is synthesized instead
-- [Types](../language/types.md) — the language's declaration type tokens and their validity matrix
+- [`UE.*` catalogue](ue.md) — the 1.x names, which drop this argument
+- [Builtins](index.md) — the call surfaces
+- [Substrate](substrate.md) — where the argument is dropped
+- [Types](../language/types.md) — the language's declaration type tokens
 - [Compact types](../parameters/compact-types.md) — the parameter type tokens
 - [Inputs / Outputs / Results](../language/inputs-outputs.md) — the function parameter type set
-- [Conversions](../graph/conversions.md) — component counts and authoritative widths
-- [Node reuse](../graph/node-reuse.md) — why the token spelling affects node identity
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Conversions](../graph/conversions.md) — widths and how values fit
+- [Node reuse](../graph/node-reuse.md) — identical nodes
+- [Diagnostics index](../diagnostics/index.md) — every code

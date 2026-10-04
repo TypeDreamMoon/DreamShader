@@ -716,7 +716,7 @@ Asset Path root '%s' has an invalid plugin name.
 **Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:210`
 <!-- generated:end DSH8124 -->
 
-**Cause.** The plugin part of a `Plugin.<Name>` root is empty or not a name.
+**Cause.** The plugin part of a `Plugin.<Name>` or `Plugins.<Name>` root is empty or not a name.
 
 **Fix.** Write `Path(Plugin.MyPlugin, "Folder/Asset")`.
 
@@ -734,9 +734,9 @@ Asset Path root '%s' has an invalid plugin name.
 **Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetReferenceResolution.cpp:223`
 <!-- generated:end DSH8125 -->
 
-**Cause.** Same as DSH8124, for the `Plugins.<Name>` spelling.
+**Cause.** Same as DSH8124, for the slash spellings `Plugin/<Name>` and `Plugins/<Name>`.
 
-**Fix.** Write `Path(Plugins.MyPlugin, "Folder/Asset")`.
+**Fix.** Write `Path(Plugin.MyPlugin, "Folder/Asset")`.
 
 ## DSH8126
 
@@ -2287,12 +2287,13 @@ with a different grammar, and an include of one would be parsed as 2.0 text and 
 **Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:581`
 <!-- generated:end DSH8296 -->
 
-**Cause.** The 2.0 pipeline was handed a file whose extension is not `.dss`. `.dsh` answers this too,
-on purpose: a header produces no asset and is compiled only as part of the `.dss` that includes it,
-so compiling one directly could only ever produce nothing.
+**Cause.** The pipeline was handed a file it does not build on its own: a `.dsh` header, or a file
+whose extension is none of `.dss`, `.dsi`, `.dsp`, `.dsm` and `.dsf`. A header produces no asset and is
+compiled only as part of the source that includes or imports it, so compiling one directly could only
+ever produce nothing.
 
-**Fix.** Compile the `.dss` that includes the header. `.dsm` and `.dsf` go to `compile`, which routes
-them to the 1.x generator.
+**Fix.** Compile the source that includes the header. Every other kind — `.dsm` and `.dsf` included,
+through the legacy front end — is built by the same pipeline.
 
 ## DSH8297
 

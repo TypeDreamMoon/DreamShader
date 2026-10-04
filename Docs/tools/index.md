@@ -46,7 +46,7 @@ labelled as such.
 | Preview rendering (PNG frames) | Unreal plugin | the renderer, the mesh set and the clamps are plugin-side — [Preview](preview.md) |
 | Preview camera control, pitch clamping, frame acknowledgement | editor extension | the plugin applies no pitch clamp of its own |
 | Decompiler | Unreal plugin | [Decompiler](decompiler.md) |
-| `.dsm` / `.dsh` / `.dsf` syntax highlighting, completion, hovers | editor extension | fed by the manifests the plugin exports — [Workspace](workspace.md) |
+| `.dss` / `.dsi` / `.dsm` / `.dsh` / `.dsf` syntax highlighting, completion, hovers | editor extension | fed by the manifests the plugin exports — [Workspace](workspace.md) |
 | `.dsp` highlighting and completion | editor extension | the plugin exports `pass-keys.json` and the symbol index for it — [Workspace](workspace.md#pass-keysjson) *(2.1.0)* |
 | `DreamShader.code-workspace` file | Unreal plugin | rewritten on every *Open Dream Shader Workspace* |
 | Package manifest (`dreamshader.package.json`), lock file, install/update commands | editor extension | **no plugin C++ reads either file** — [Packages](packages.md) |
@@ -80,15 +80,16 @@ source-directory watcher, and installs the menus.
 - Menu registration is idempotent and bails during editor shutdown. Bridge menus are owned by the
   ToolMenu owner `DreamShaderEditor`; the browser tab's own entries use `DreamShaderMaterialBrowser`.
 - Every editor log line goes to the `LogDreamShader` category.
-- Toasts raised by the bridge expire after 4 seconds; toasts raised from the Dream Shader Gen page
-  expire after 3.5 seconds.
-- The editor never writes a per-material `.uasset` on its own. See
-  [Ephemeral materials](../generation/ephemeral.md).
+- Toasts raised by the bridge expire after 4 seconds; toasts raised by the Material Content
+  Browser's own actions (compile, materialize) expire after 3.5 seconds.
+- The editor keeps a ThinCustom material Ephemeral — no `.uasset` — until it is materialized; a
+  `Graph` material and a material function are saved by every successful compile *(since 2.0.0)*.
+  See [Ephemeral materials](../generation/ephemeral.md).
 
 ## See also
 
 - [Editor integration](editor-integration.md) — the complete menu and command surface
-- [Project settings](../settings/project.md) — the fourteen settings these tools read
+- [Project settings](../settings/project.md) — the settings these tools read
 - [Generation](../generation/index.md) — what a compile actually does
 - [Diagnostics index](../diagnostics/index.md) — every message, by stage
 - [Getting started](../getting-started.md) — the first-run walkthrough

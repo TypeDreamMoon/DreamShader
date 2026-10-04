@@ -10,12 +10,12 @@ contains with `<Name>::`.
 | Declared in | `.dsm`, `.dsf`, `.dsh` |
 | Kind | top-level block |
 | Generates | nothing directly — its members generate exactly what they would generate at top level |
-| Multiplicity | any number per parse unit; the same name may be opened more than once |
+| Multiplicity | any number per file; the same name may be opened more than once |
 
 ## Synopsis
 
 ```c
-Namespace(Name = "<identifier>" [,])
+Namespace(Name = "<identifier>")
 {
     { <function-declaration> | <graph-function-declaration> } …
 }
@@ -30,21 +30,16 @@ keyword.
 | :-- | :-- | :-- | :-- |
 | **`Name`** | yes | string | The qualifier prepended to every member's name |
 
-`Name` is the only attribute the block reads; any other key is parsed into the attribute map and
-silently ignored. Attribute keys are matched case-insensitively, so `Namespace(name="Common")` works.
-The value may be quoted or bare; a bare value ends at the first `,` or `)`. A trailing comma before
-`)` is accepted. A duplicate key silently overwrites the earlier one.
+`Name` is the only attribute the block reads; any other key is parsed and silently ignored. Attribute
+keys are matched case-insensitively, so `Namespace(name="Common")` works. The value may be quoted or
+bare; a bare value runs to the next `,` or `)` outside parentheses. A key written twice is a warning
+([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins. *(since 2.0.0)* A trailing
+comma before `)` is [`DSH2243`](../diagnostics/DSH2xxx.md#dsh2243).
 
-`Name` must be a valid identifier, validated character by character:
-
-| Position | Accepted characters |
-| :-- | :-- |
-| first | `A`–`Z`, `a`–`z`, `_` |
-| rest | `A`–`Z`, `a`–`z`, `0`–`9`, `_` |
-
-An empty or whitespace-only name is rejected. A name containing `::`, `.`, `-`, a space, or any other
-character fails with `Namespace name '{Name}' is not a valid identifier.` There is therefore **no
-multi-segment declaration form**: `Namespace(Name="A::B")` is a syntax error.
+`Name` must be an identifier — a letter or `_`, then letters, digits and `_`. A missing, empty or
+whitespace-only name, and a name containing `::`, `.`, `-`, a space or any other character, is
+[`DSH6309`](../diagnostics/DSH6xxx.md#dsh6309). There is therefore **no multi-segment declaration
+form**: `Namespace(Name="A::B")` is an error.
 
 ## Body contents
 
@@ -55,56 +50,48 @@ multi-segment declaration form**: `Namespace(Name="A::B")` is a syntax error.
 | Nested `Namespace` | **no** |
 | `Shader`, `ShaderFunction`, `ShaderLayer`, `ShaderLayerBlend`, `VirtualFunction` | **no** |
 | Sections (`Properties`, `Settings`, `Inputs`, `Outputs`, `Graph`, `Layout`, …) | **no** |
-| `import` | not a member — the directive is stripped line by line before parsing and its target is inlined ahead of the whole file, so writing one inside a body has no scoping effect. Put imports at file scope. |
+| `import` | **no** *(since 2.0.0)* — an import stands at file scope only |
 
-Members may appear in any order and any number of times. Both keywords are matched case-sensitively
-inside the body, exactly as at top level. Anything else fails with
-`Namespace '{Name}' may only contain Function or GraphFunction blocks.`
+Members may appear in any order and any number of times; a stray `;` between them is skipped. Both
+keywords are matched case-sensitively inside the body, exactly as at top level. Anything else is
+[`DSH6310`](../diagnostics/DSH6xxx.md#dsh6310), and the parser resumes at the next member keyword or
+the closing `}`.
 
 ### No nesting
 
-`Namespace` is only reachable from the top-level keyword loop; the body parser recognizes just the
-two function keywords. A nested `Namespace` therefore hits the "may only contain" error above. There
-is no way to declare `A::B::C`, and re-opening does not compose:
+`Namespace` is only reachable from the top-level keyword loop; the body recognizes just the two
+function keywords. A nested `Namespace` therefore hits `DSH6310`. There is no way to declare
+`A::B::C`, and re-opening does not compose:
 
 ```c
 Namespace(Name="A") { Namespace(Name="B") { Function f(out float r) { r = 0; } } }
-// Namespace 'A' may only contain Function or GraphFunction blocks.
+// DSH6310 at the inner Namespace
 ```
 
 ## Name flattening
 
 A `Namespace` is not an entity. No object is stored for it, and it creates no scope. Its only effect
-is on the member's recorded name:
+is on the member's name, which *(since 2.0.0)* is the flattened identifier:
 
 ```text
-Namespace(Name = "Common") { Function ApplyTint(…) }   →   name "Common::ApplyTint"
+Namespace(Name = "Common") { Function ApplyTint(…) }   →   Common::ApplyTint   →   function Common_ApplyTint
 ```
 
-Members land in the same flat declaration arrays as top-level functions. Everything downstream — name
-lookup, diagnostics, symbol mangling — sees the single string `Common::ApplyTint`.
-
-For a `Function`, that string is then sanitized into the generated HLSL symbol: every
-non-`[A-Za-z0-9_]` character becomes `_`, and runs of consecutive underscores collapse to one.
-
-```text
-Common::ApplyTint   →   Common__ApplyTint   →   Common_ApplyTint
-                    →   symbol DreamShaderFn_Common_ApplyTint
-```
-
-`GraphFunction` members are never emitted into the generated include and have no HLSL symbol.
+The flattening is the identifier sanitizer: every non-`[A-Za-z0-9_]` character becomes `_`, and runs
+of consecutive underscores collapse to one (`Common__ApplyTint` → `Common_ApplyTint`). Members land
+among the top-level functions under that name; name lookup, binder diagnostics and the generated HLSL
+symbol `DreamShaderFn_Common_ApplyTint` all see `Common_ApplyTint`. The qualified spelling survives in
+one place: the title (`Description`) of the member's Custom node is `Common::ApplyTint`, as in 1.x.
 
 > [!WARNING]
-> Because `::` and `_` collapse to the same thing, `Namespace(Name="Common") { Function ApplyTint … }`
-> and a top-level `Function Common_ApplyTint …` produce the same symbol. The include writer rejects
-> the pair with `DreamShader Function '{Name}' collides with another generated helper symbol
-> '{Symbol}'. Rename the Function or Namespace.`
+> Because `::` and `_` flatten to the same thing, `Namespace(Name="Common") { Function ApplyTint … }`
+> and a top-level `Function Common_ApplyTint …` declare the same name:
+> [`DSH4210`](../diagnostics/DSH4xxx.md#dsh4210).
 
 ## Calling a namespaced function
 
-From a [`Graph`](../graph/index.md) block, use `Ns::Fn(…)`. The expression lexer emits a dedicated
-token for `::`, which is what distinguishes it from the `.` member-access form, and the qualified
-chain is re-joined into the exact string `Ns::Fn` before lookup.
+From a [`Graph`](../graph/index.md) block, use `Ns::Fn(…)`. The `::` chain is read as one name and
+flattened the same way, so the call reaches `Ns_Fn`.
 
 ```c
 Graph = {
@@ -116,83 +103,61 @@ Graph = {
 
 | Rule | Behaviour |
 | :-- | :-- |
-| Resolution | Members are reachable **only** by their fully-qualified name. There is no `using` directive, no import of names, and no unqualified fallback. |
-| Case | The name comparison is case-insensitive over the whole qualified string, so `common::applytint(…)` resolves. |
-| Mangled spelling | The generated symbol is also an accepted spelling, so `DreamShaderFn_Common_ApplyTint(…)` resolves to the same declaration. |
-| Single `:` | A lone `:` is not a token — it terminates the expression and produces `Unexpected token '{Text}' in Graph expression.` |
-| Missing name | `Common::` with nothing after it produces `Expected function name after '::'.` |
+| Resolution | The qualified name, or its flattened spelling `Common_ApplyTint`. There is no `using` directive and no unqualified fallback: a bare `ApplyTint(…)` is [`DSH4208`](../diagnostics/DSH4xxx.md#dsh4208). |
+| Case | *(since 2.0.0)* names are case-sensitive. `common::applytint(…)` still resolves when it matches one function, with [`DSH5275`](../diagnostics/DSH5xxx.md#dsh5275). |
+| Mangled spelling | `DreamShaderFn_Common_ApplyTint(…)` no longer names the function *(since 2.0.0)*: `DSH4208`. |
+| Missing name | `Common::` with nothing after it is [`DSH5260`](../diagnostics/DSH5xxx.md#dsh5260). |
 | Call forms | Identical to unqualified calls. See [Calling functions](../graph/calls.md). |
 
-> [!WARNING]
-> **A `Ns::Fn(…)` call written inside another `Function` or `GraphFunction` body does not resolve.**
-> Every function body is passed through identifier normalisation, which rewrites the qualified token
-> `Common::ApplyTint` to the sanitized identifier `Common_ApplyTint` before codegen ever inspects it.
-> The codegen rewrite table is keyed on the DSL name `Common::ApplyTint` and on the mangled symbol
-> `DreamShaderFn_Common_ApplyTint` — never on `Common_ApplyTint` — so no substitution occurs.
->
-> Observable symptom: the generated `.ush` (or the Custom node's code) contains a call to an
-> undefined `Common_ApplyTint(…)`, and the material fails shader compilation with an
-> undeclared-identifier error naming that symbol. There is no DreamShader diagnostic.
->
-> Workarounds: call the namespaced function from the `Graph` block and pass its result in as a
-> parameter; declare the helper at top level and call it unqualified; or write the mangled symbol
-> `DreamShaderFn_Common_ApplyTint(…)` directly in the body, which the normalizer leaves untouched
-> because it contains no `::`.
->
-> Calls from a `Graph` block are unaffected — `Graph` text is not normalized.
+**Inside another `Function` or `GraphFunction` body** a `Ns::Fn(…)` call works *(since 2.0.0)*. Body
+normalisation rewrites `Common::ApplyTint` to `Common_ApplyTint`, which is now the function's own name,
+so the call is embedded like any other `Function` call. In 1.x it reached the shader compiler as an
+undefined `Common_ApplyTint` and failed there. The qualifier has to be written without spaces around
+`::`.
 
 ## Notes
 
 - **Re-opening is allowed and unchecked.** Two `Namespace(Name="Common")` blocks — in the same file or
-  across imported files — both prefix `Common::`. There is no duplicate-namespace diagnostic. Two
-  members with the same qualified name are caught later, when the include is written.
-- **A namespace does not create a lookup scope.** A member calling a sibling by its bare name is
-  resolving against the whole parse unit, not against the namespace.
-- **`Namespace(Name="X") { }` with an empty body parses but the file then fails.** An empty body
-  contributes no `Function` and no `GraphFunction`, so a file with nothing else fails the
-  parse-unit check `A top-level Shader, Function, GraphFunction, Namespace, ShaderFunction,
-  ShaderLayer, ShaderLayerBlend, or VirtualFunction block was not found.`
-- **The parse unit is the whole import closure.** Namespaces from imported headers are visible without
-  any further declaration, and collide across files exactly as they would within one. See
-  [import](import.md).
-- The qualified name is what appears in every runtime diagnostic. `Function 'Common::ApplyTint' must
-  declare at least one out parameter.` names the member, not the block.
+  across imported headers — both prefix `Common::`. There is no duplicate-namespace diagnostic; two
+  members with the same qualified name are `DSH4210`.
+- **A namespace does not create a lookup scope.** A member calls a sibling by its qualified (or
+  flattened) name. Inside a body, a bare sibling name is not recognised as a call to the sibling and is
+  left for the shader compiler.
+- **`Namespace(Name="X") { }` with an empty body** is accepted and declares nothing *(since 2.0.0; 1.x
+  then failed the file for having no block)*.
+- **Headers are parsed on their own.** Namespaces of an imported header are declared into the
+  importing file, and their members collide across files exactly as within one. See [import](import.md).
+- Parser diagnostics about a member's declaration name the member as written (`ApplyTint`); the ones
+  about a lifted `UE.*` call name it `Common::ApplyTint`; everything after the parser names the
+  flattened `Common_ApplyTint`.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this section.
+Each code carries the line and column of the construct; the code's page has the message.
 
 ### Parse time
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Namespace(Name="...") is required.` | the header has no `Name` attribute |
-| `Namespace name cannot be empty.` | `Name=""`, or a value that is whitespace only |
-| `Namespace name '{Name}' is not a valid identifier.` | an illegal character, including `::`, `.`, `-` and space |
-| `Namespace '{Name}' may only contain Function or GraphFunction blocks.` | any other token in the body — including a nested `Namespace` |
-| `Expected '{Char}' near index {Index}.` | the `(` or `{` opener is missing |
-| `Unterminated block.` | the body `{` is never closed |
-| `Expected ',' or ')' near index {Index}.` | malformed attribute list |
-| `Unterminated string literal.` | the `Name` value's `"` is never closed |
+| [`DSH2241`](../diagnostics/DSH2xxx.md#dsh2241) | no `(` after `Namespace` |
+| `DSH2243` | a malformed attribute list, a trailing comma included |
+| `DSH2244` | an attribute written twice (warning) |
+| `DSH6309` | no `Name`, an empty one, or one that is not an identifier |
+| [`DSH2257`](../diagnostics/DSH2xxx.md#dsh2257) | no `{` after the header |
+| `DSH6310` | anything but `Function` / `GraphFunction` in the body — a nested `Namespace` included |
+| [`DSH2150`](../diagnostics/DSH2xxx.md#dsh2150) | the body is never closed |
+| [`DSH2103`](../diagnostics/DSH2xxx.md#dsh2103) | the `Name` value's `"` is never closed |
 
-Member declarations report their own parse errors under their qualified names — see
-[`Function` § Diagnostics](function.md#diagnostics).
+Member declarations report their own errors — see [`Function` § Diagnostics](function.md#diagnostics).
 
-### Generation time
+### Binding and call time
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `DreamShader Function '{Name}' collides with another generated helper symbol '{Symbol}'. Rename the Function or Namespace.` | two names that sanitize to the same `DreamShaderFn_*` symbol |
-| `DreamShader Function '{Name}' is declared more than once.` | two members with the same qualified name, ignoring case |
-
-### Call time
-
-| Message | Cause |
-| :-- | :-- |
-| `Expected function name after '::'.` | no identifier follows `::` |
-| `Unknown Graph function '{Name}'.` | a value call whose name resolves to no declaration — for example an unqualified call to a namespaced member |
-| `Graph expression statement '{Text}' is unsupported. Only DreamShader Function, GraphFunction, ShaderFunction, ShaderLayer, ShaderLayerBlend, or VirtualFunction calls may use statement syntax.` | a statement call whose name resolves to no declaration |
-| `Graph call '{Name}' is ambiguous because multiple definitions use that name: {Kinds}.` | the qualified name matches more than one callable kind |
+| `DSH4210` | two members flatten to one name, or a member and a top-level function do |
+| `DSH5260` | no name follows `::` |
+| `DSH4208` | the called name declares nothing — for example an unqualified call to a member |
+| `DSH5275` | the called name matches a member only in case (warning) |
 
 The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
 
@@ -231,10 +196,10 @@ Shader(Name="Materials/M_Common")
     }
     Outputs = { vec3 Color; Base.EmissiveColor = Color; }
     Graph = {
-        vec3 Base = vec3(0.5, 0.5, 0.5);
+        vec3 Gray = vec3(0.5, 0.5, 0.5);
 
         vec3 Tinted;
-        Common::ApplyTint(Base, Tint, Tinted);
+        Common::ApplyTint(Gray, Tint, Tinted);
 
         float Key = Common::Remap01(Tinted.r);
 
@@ -246,24 +211,23 @@ Shader(Name="Materials/M_Common")
 }
 ```
 
-Resulting names and symbols:
+Resulting names:
 
 ```text
-declaration                     recorded name        generated HLSL symbol
-Namespace "Common" > ApplyTint  Common::ApplyTint    DreamShaderFn_Common_ApplyTint
-Namespace "Common" > Remap01    Common::Remap01      DreamShaderFn_Common_Remap01
-Namespace "Common" > Pulse      Common::Pulse        (none — GraphFunctions are not emitted)
+declaration                     function name        Custom node title     helper symbol when embedded
+Namespace "Common" > ApplyTint  Common_ApplyTint     Common::ApplyTint     DreamShaderFn_Common_ApplyTint
+Namespace "Common" > Remap01    Common_Remap01       Common::Remap01       DreamShaderFn_Common_Remap01
+Namespace "Common" > Pulse      Common_Pulse         Common::Pulse         (none — it lifts a UE.* call, so it is never embedded)
 ```
 
 ## See also
 
-- [Function](function.md) — the member declaration grammar and the generated `DreamShaderFn_*` symbol
+- [Function](function.md) — the member declaration grammar and the `DreamShaderFn_*` helper symbol
 - [GraphFunction](graph-function.md) — the other legal member kind
-- [Calling functions](../graph/calls.md) — value vs statement calls, and cross-kind ambiguity
+- [Calling functions](../graph/calls.md) — value vs statement calls
 - [Name resolution](../graph/name-resolution.md) — the lookup order a `Graph` block uses
-- [Generated HLSL](../generation/generated-hlsl.md) — the include, its symbols, and the collision checks
-- [import](import.md) — why the parse unit is the whole import closure
+- [import](import.md) — how a header's declarations reach the importing file
 - [Source files](source-files.md) — which of `.dsm` / `.dsh` / `.dsf` may hold a `Namespace`
 - [Lexical elements](lexical.md) — identifiers, `::`, and the case-sensitivity matrix
 - [Keywords](keywords.md) — the complete keyword index
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code, by stage

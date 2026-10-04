@@ -2,7 +2,7 @@
 
 > [DreamShader](../index.md) » [Settings](index.md) » **Shader settings**
 
-The `Settings` section of a [`Shader`](../language/shader.md) block: six hand-handled keys plus a
+The `Settings` section of a [`Shader`](../language/shader.md) block: a few hand-handled keys plus a
 reflection resolver that writes any other key onto the generated `UMaterial`.
 
 | | |
@@ -20,23 +20,23 @@ Shader(Name = "<asset-path>")
         [BlendMode     = <blend-mode>;]     // or RenderType
         [ShadingModel  = <shading-model>;]
         [MaterialDomain = <domain>;]        // or Domain
-        [Backend       = { Graph | ThinCustom | Instance };]
-        [<property-path> = <literal>;] …
+        [Backend       = { Graph | ThinCustom };]
+        [Substrate     = { Legacy | Bridge | Native };]
+        [<property-name> = <literal>;] …
     }
 }
-
-<property-path> := <segment> [ . <segment> ] …
-<segment>       := <property-name> [ [<integer>] ]
 ```
 
-`[<integer>]` is literal DreamShaderLang punctuation; the enclosing `[ … ]` is the optional-marker
-meta-bracket. The block grammar, comment handling, statement splitting and quoting rules are common
-to every `Settings` section and are specified in [Settings](index.md#how-a-statement-is-parsed).
+The block grammar, comment handling, statement splitting and quoting rules are common to every
+`Settings` section and are specified in [Settings](index.md#how-a-statement-is-parsed). Since 2.0.0 a
+key is one name: a nested path or an index is [`DSH3261`](../diagnostics/DSH3xxx.md#dsh3261).
+
+The keys and values are those of the 2.0 `#pragma material(…)`; a `Shader`'s `Settings` becomes one.
 
 ## Special keys
 
-These six keys — matched after trimming, lowercasing **and** deleting spaces, `_` and `-` — never
-reach the reflection resolver.
+These keys never reach the reflection resolver. The emitter skips the six whose name — after
+trimming, lowercasing **and** deleting spaces, `_` and `-` — is one of:
 
 ```text
 blendmode   rendertype   shadingmodel   materialdomain   domain   backend
@@ -47,52 +47,58 @@ blendmode   rendertype   shadingmodel   materialdomain   domain   backend
 | **`BlendMode`** | `RenderType` | one of the [blend-mode spellings](material-enums.md#blendmode) | `Opaque` | sets `UMaterial::BlendMode` |
 | **`ShadingModel`** | — | one of the [shading-model spellings](material-enums.md#shadingmodel) | `DefaultLit` | calls `SetShadingModel` |
 | **`MaterialDomain`** | `Domain` | one of the [domain spellings](material-enums.md#domain) | `Surface` | sets `UMaterial::MaterialDomain` |
-| **`Backend`** | — | `Graph`, `ThinCustom`, `Instance`, or the empty string | the project's *Default Compiler Backend* | selects the materialization strategy — see [Backend](backend.md) |
+| **`Backend`** | — | `Graph` or `ThinCustom`; `Instance` is the old spelling of `ThinCustom` | the project's *Default Compiler Backend* | selects the materialization strategy — see [Backend](backend.md) |
 
 One more key is read by the compiler and never reaches the material *(since 2.0.0)*:
 
 | Key | Value grammar | Value when the key is absent | Effect |
 | :-- | :-- | :-- | :-- |
-| **`Substrate`** | `Legacy`, `Bridge`, `Native` | `Legacy` | how a material written against the legacy attributes is read in a project that has Substrate on — `Bridge` folds the shading attributes of a Surface material into one `Substrate.ShadingModels` node on `FrontMaterial`. See [Substrate sugar](../language-v2/substrate.md#one-source-two-kinds-of-project--substrate-). An unknown mode is `DSH7232`. |
+| **`Substrate`** | `Legacy`, `Bridge`, `Native` | `Legacy` | how a material written against the legacy attributes is read in a project that has Substrate on — `Bridge` folds the shading attributes of a Surface material into one `Substrate.ShadingModels` node on `FrontMaterial`. See [Substrate sugar](../language-v2/substrate.md#one-source-two-kinds-of-project--substrate-). An unknown mode is [`DSH7232`](../diagnostics/DSH7xxx.md#dsh7232). |
+
+`Backend` and `Substrate` are taken out of the settings when the source is bound, matched ignoring
+case; the rest is applied when the material is built.
 
 When both a canonical key and its synonym are present, the **canonical** key wins: `BlendMode` beats
 `RenderType`, `MaterialDomain` beats `Domain`. There is no diagnostic for the conflict.
 
-Key spelling for these four is looked up by trim-and-lowercase only, so `blendmode`, `BlendMode` and
+Key spelling for these is looked up by trim-and-lowercase only, so `blendmode`, `BlendMode` and
 `BLENDMODE` all work.
 
 > [!WARNING]
-> A spelling that differs from a special key only by spaces, underscores or hyphens is **silently
-> dropped**. `Blend_Mode = "Translucent";` does not set the blend mode: the direct probe for
-> `BlendMode` misses the stored key `blend_mode`, and the reflection loop skips it because its
-> separator-stripped form is on the special-key list. No error, no warning, no effect. The same
-> applies to `Render_Type`, `Shading Model`, `Material-Domain`, `Domain ` with an internal space, and
-> `Back_end`. Write the six names without separators.
+> A spelling that differs from a special key only by underscores is **silently dropped**.
+> `Blend_Mode = "Translucent";` does not set the blend mode: the direct probe for `BlendMode` misses
+> the stored key `blend_mode`, and the reflection pass skips it because its separator-stripped form is
+> on the special-key list. No error, no warning, no effect. The same applies to `Render_Type`,
+> `Shading_Model`, `Material_Domain` and `Back_end`. Write the names without separators. (A space or a
+> hyphen cannot stand in a key since 2.0.0: [`DSH3261`](../diagnostics/DSH3xxx.md#dsh3261).)
 
 ### Application order
 
-1. The **whole** block is validated first — every special value is resolved and every generic value
-   is written to a throw-away transient `UMaterial`. A single bad value aborts before the real
-   material is touched.
-2. `BlendMode`, then `ShadingModel`, then `MaterialDomain`.
-3. The generic keys, in the parsed map's iteration order.
+1. The material is reset to the [defaults](#defaults--what-an-omitted-setting-resets-to).
+2. The **whole** block is validated — every special value is resolved and every generic value is
+   written to a throw-away transient `UMaterial`. A single bad value stops the build before the real
+   material is touched, and the rebuild is rolled back.
+3. `BlendMode`, then `ShadingModel`, then `MaterialDomain`; then `bUsedWithVolumetricCloud` follows
+   the domain.
+4. The generic keys, in the settings' iteration order.
 
 > [!NOTE]
-> The generic pass iterates a hash map. **No ordering is guaranteed between two generic keys**, so do
-> not rely on one key being written before another. The three special keys are always written before
-> any generic key, which is why a generic `BlendMode`-adjacent property such as
-> `TranslucencyLightingMode` sees the final blend mode.
+> **No ordering is guaranteed between two generic keys**, so do not rely on one key being written
+> before another. The special keys are always written before any generic key, which is why a generic
+> `BlendMode`-adjacent property such as `TranslucencyLightingMode` sees the final blend mode.
 
-`Backend` is consumed before any material exists — an unrecognized `Backend` value fails the compile
-*before* the rest of `Settings` is validated.
+`Backend` is consumed before any material exists — an unrecognized `Backend` value is a binding error,
+which stops the compile before the rest of `Settings` is applied, so no settings diagnostic of the
+build is reported for that file.
 
 ### Interaction with `Base.FrontMaterial`
 
-When any output binds `Base.FrontMaterial`, an explicit `ShadingModel` that is not `Substrate` or
-`Strata` (compared case-insensitively after trimming) is a hard error; otherwise the shading model is
-force-set to Substrate after the block is applied. Binding `Base.FrontMaterial` and
-`Base.MaterialAttributes` on the same `Shader` is also a hard error. See
-[Output bindings](../language/output-bindings.md) and [Substrate builtins](../builtins/substrate.md).
+*(since 2.0.0)* The two 1.x checks on a `Base.FrontMaterial` binding — an explicit `ShadingModel`
+that is not `Substrate` or `Strata`, and `Base.FrontMaterial` together with `Base.MaterialAttributes`
+on one `Shader` — have no 2.0 diagnostic, and the compiler does not force the shading model to
+Substrate: an explicit `ShadingModel` is applied as written. See
+[Output bindings](../language/output-bindings.md), [Substrate builtins](../builtins/substrate.md) and,
+for `Substrate = Bridge`, [Substrate sugar](../language-v2/substrate.md).
 
 ## The reflection resolver
 
@@ -100,12 +106,14 @@ Every key that is not special is resolved against the generated material by Unre
 
 | # | Step | Detail |
 | --: | :-- | :-- |
-| 1 | Split the key into segments on `.` at bracket depth 0 | `Lightmass.DiffuseBoost` → `Lightmass`, `DiffuseBoost`. A `.` inside `[ … ]` does not split. |
-| 2 | Parse each segment's optional trailing `[<integer>]` | the index must be a non-negative integer and `]` must be the segment's last character |
+| 1 | Split the key into segments on `.` at bracket depth 0 | a 1.x key is one segment since 2.0.0 (see [Nested and indexed paths](#nested-and-indexed-paths)) |
+| 2 | Parse each segment's optional trailing `[<integer>]` | as above |
 | 3 | Map the segment name through the [alias table](#alias-table) | applied **per segment**, before the field scan |
 | 4 | Scan `TFieldIterator<FProperty>` over the current struct, **including super-classes** | so `UMaterial`, `UMaterialInterface` and `UObject` properties are all reachable |
 | 5 | Descend | a non-terminal segment must be an `FStructProperty`; the walk continues inside the struct |
 | 6 | Write the value | parsed according to the resolved property's C++ type — see [Value grammar](#value-grammar) |
+
+No property of that name is [`DSH7118`](../diagnostics/DSH7xxx.md#dsh7118).
 
 ### Property-name matching
 
@@ -114,7 +122,7 @@ lowercasing, is equal to the segment:
 
 | Rule | Example |
 | :-- | :-- |
-| The raw `FProperty` name | `TwoSided` ← `TwoSided`, `two_sided`, `TWO SIDED`, `two-sided` |
+| The raw `FProperty` name | `TwoSided` ← `TwoSided`, `two_sided`, `TWOSIDED` |
 | The property name **with a leading `b` stripped**, when the name is `b` followed by an uppercase letter | `bFullyRough` ← `FullyRough`; `bIsSky` ← `IsSky`; `bIsThinSurface` ← `IsThinSurface` |
 | The property's `DisplayName` metadata | whatever the engine declares for that property |
 
@@ -125,22 +133,24 @@ b-stripped.
 
 ### Nested and indexed paths
 
-| Form | Meaning | Example |
-| :-- | :-- | :-- |
-| `A.B` | `B` inside the struct property `A` | `Lightmass.DiffuseBoost = 1.5;` |
-| `A.B.C` | arbitrary depth, each non-terminal an `FStructProperty` | `NaniteOverrideMaterial.bEnableOverride = true;` |
-| `A[N]` | element `N` of a fixed-size C array (`ArrayDim > 1`) | `PhysicalMaterialMap[2] = Path(Game, "Physics/PM_Metal");` |
-| `A[N].B` | a member of an indexed struct element | index and path segments compose freely |
+The resolver itself still walks `A.B` (a member of a struct property), `A[N]` (element `N` of a
+fixed-size C array) and any composition of the two. *(since 2.0.0)* A 1.x `Settings` key cannot reach
+them: the legacy front end reads one name and reports `DSH3261` at the `.` or the `[`. Two of the
+resolver's checks remain reachable:
 
-`[N]` on a property whose `ArrayDim` is 1 is an error; omitting `[N]` on a property whose `ArrayDim`
-is greater than 1 is also an error. `TArray`, `TMap` and `TSet` properties are **not** indexable this
-way — they fall through to the `ImportText` catch-all in [Value grammar](#value-grammar).
+| Written | Code |
+| :-- | :-- |
+| a fixed-size array (`ArrayDim` greater than 1) named without an index, e.g. `PhysicalMaterialMap = …` | [`DSH7121`](../diagnostics/DSH7xxx.md#dsh7121) |
+| a name no property has | `DSH7118` |
+
+`TArray`, `TMap` and `TSet` properties are not indexable at all — they fall through to the
+`ImportText` catch-all in [Value grammar](#value-grammar).
 
 ### Alias table
 
 Ten fixed key aliases are applied per path segment before the field scan. Alias keys are compared in
-their separator-stripped, lowercased form, so `Lighting_Mode`, `Lighting Mode` and `LIGHTINGMODE` all
-hit the first row.
+their separator-stripped, lowercased form, so `Lighting_Mode` and `LIGHTINGMODE` both hit the first
+row.
 
 | Alias | Resolves to |
 | :-- | :-- |
@@ -155,42 +165,41 @@ hit the first row.
 | `ResponsiveAA` | `bEnableResponsiveAA` |
 | `ThinSurface` | `bIsThinSurface` |
 
-Because the alias applies per segment, `Lightmass.DiffuseBoost` resolves as
-`LightmassSettings` → `DiffuseBoost`.
-
 ## Value grammar
 
 The resolved property's C++ type decides how the value text is parsed. The value has already been
 unquoted by the parser, so `true` and `"true"` are the same input.
 
-| Property type | Accepted literal | Failure message |
+| Property type | Accepted literal | Code on failure |
 | :-- | :-- | :-- |
-| `bool` | `true` / `false`, case-insensitive, trimmed | `'{Value}' is not a valid boolean value for '{Property}'.` |
-| `int32` | signed integer literal | `'{Value}' is not a valid integer value for '{Property}'.` |
-| `uint32` | integer in `[0, 4294967295]` | `'{Value}' is not a valid unsigned integer value for '{Property}'.` |
-| `float` | any numeric literal; also `true` → `1.0` and `false` → `0.0` | `'{Value}' is not a valid numeric value for '{Property}'.` |
-| `double` | as `float` | `'{Value}' is not a valid numeric value for '{Property}'.` |
+| `bool` | `true` / `false`, case-insensitive, trimmed | [`DSH7132`](../diagnostics/DSH7xxx.md#dsh7132) |
+| `int32` | signed integer literal | [`DSH7133`](../diagnostics/DSH7xxx.md#dsh7133) |
+| `uint32` | integer in `[0, 4294967295]` | [`DSH7134`](../diagnostics/DSH7xxx.md#dsh7134) |
+| `float` | a numeric literal — `true` / `false` are not numbers here | [`DSH7135`](../diagnostics/DSH7xxx.md#dsh7135) |
+| `double` | as `float` | [`DSH7136`](../diagnostics/DSH7xxx.md#dsh7136) |
 | `FString` | any text, trimmed — **never fails** | — |
 | `FName` | any text, trimmed — **never fails** | — |
-| object reference | `Path( … )` or an absolute object path such as `/Game/Textures/T_Noise` | `Object property '{Property}' expects Path(...) or an absolute Unreal object path.`; `Failed to load asset '{Path}' for '{Property}'.`; `Asset '{Path}' is not compatible with '{Property}'. Expected '{Class}'.` |
-| `enum class` (`FEnumProperty`) | an [enum literal](#enum-literals) | `'{Value}' is not a valid enum value for '{Property}'.` |
-| `uint8` enum (`FByteProperty` with an enum) | an [enum literal](#enum-literals) | `'{Value}' is not a valid enum value for '{Property}'.` |
-| plain `uint8` | integer in `[0, 255]` | `'{Value}' is not a valid byte value for '{Property}'.` |
-| anything else | Unreal struct-literal text, e.g. `(R=1.0,G=0.0,B=0.0,A=1.0)` | `Property '{Property}' on '{Object}' is not a supported literal type yet.` |
+| object reference | `Path( … )`, an absolute object path such as `/Game/Textures/T_Noise`, or a `Class'…'` reference | [`DSH7137`](../diagnostics/DSH7xxx.md#dsh7137) (not a reference), [`DSH7138`](../diagnostics/DSH7xxx.md#dsh7138) (does not load), [`DSH7139`](../diagnostics/DSH7xxx.md#dsh7139) (wrong class), or the resolver's own code — see [Path](../parameters/path.md#diagnostics) |
+| `enum class` (`FEnumProperty`) | an [enum literal](#enum-literals) | [`DSH7140`](../diagnostics/DSH7xxx.md#dsh7140) |
+| `uint8` enum (`FByteProperty` with an enum) | an [enum literal](#enum-literals) | [`DSH7141`](../diagnostics/DSH7xxx.md#dsh7141) |
+| plain `uint8` | integer in `[0, 255]` | [`DSH7142`](../diagnostics/DSH7xxx.md#dsh7142) |
+| anything else | Unreal struct-literal text, e.g. `(R=1.0,G=0.0,B=0.0,A=1.0)` | [`DSH7143`](../diagnostics/DSH7xxx.md#dsh7143) |
 
-Whichever message applies is wrapped by the caller:
-`Invalid value '{Value}' for setting '{Key}'. {TypeMessage}`.
+A number is read the way Unreal's `LexTryParseString` reads it, which stops at the first character it
+cannot use: `OpacityMaskClipValue = "0.5abc";` is `0.5`.
+
+The type's message is wrapped as [`DSH7125`](../diagnostics/DSH7xxx.md#dsh7125) while the block is
+validated ([`DSH7126`](../diagnostics/DSH7xxx.md#dsh7126) if the real material then refuses it), and
+that reaches you as [`DSH8215`](../diagnostics/DSH8xxx.md#dsh8215), which names the material and quotes
+the code.
 
 > [!NOTE]
 > An object-typed property whose class derives from `UTexture` **and** whose property name is exactly
 > `Texture` or `TextureObject` writes `nullptr` instead of erroring when the asset fails to load.
 > This is the material-expression convention; it also applies here.
 
-> [!WARNING]
-> When an object-typed value *looks* like a path — it starts with `Path(` or `/` — but fails to
-> resolve, the type-specific explanation is empty and the diagnostic degenerates to
-> `Invalid value '/Game/Nope' for setting 'physmaterial'. ` with nothing after the period. Check that
-> the asset exists and that its class matches the property.
+When an object-typed value is a reference — it starts with `Path(` or `/`, or ends with `'` — and does
+not resolve, the sentence after `DSH7125`'s period is the resolver's message.
 
 ### Enum literals
 
@@ -218,14 +227,14 @@ This matching is separate from the `ShadingModel` / `BlendMode` / `Domain` alias
 | `/Game/Foo/Bar` | bare absolute path, no `Path( … )` wrapper |
 
 Backslashes are normalized to `/` and surrounding quotes are trimmed. The complete root catalogue and
-its errors are in [Path](../parameters/path.md).
+its codes are in [Path](../parameters/path.md).
 
 ## Validation
 
 Before anything is written to the real material, each generic key/value pair is applied to a
 transient probe `UMaterial` created in the transient package. The probe write and the real write use
 the same code, so a value that validates always applies. The only failure specific to this stage is
-`Failed to create a transient material for Settings validation.`
+[`DSH7124`](../diagnostics/DSH7xxx.md#dsh7124), a probe that could not be created.
 
 ## Defaults — what an omitted setting resets to
 
@@ -238,6 +247,7 @@ A generated material is reset immediately before `Settings` is applied. An omitt
 | `MaterialDomain` | `Surface` |
 | shading model | `DefaultLit` |
 | `TwoSided` | `false` |
+| `bUseMaterialAttributes` | `false` |
 | `OpacityMaskClipValue` | `0.3333` |
 | `Wireframe` | `false` |
 | `DitheredLODTransition` | `false` |
@@ -310,10 +320,9 @@ Reachable but never emitted by the decompiler, and therefore lost on a round tri
 `OpacityMaskClipValue`, `NumCustomizedUVs`, `TranslucencyLightingMode`, `RefractionMethod`,
 `RefractionDepthBias`, `TranslucencyPass`, `ShadingRate`, `FloatPrecisionMode`, `BlendableLocation`,
 `BlendablePriority`, `bIsBlendable`, `UserSceneTexture`, `StencilCompare`, `StencilRefValue`,
-`bEnableStencilTest`, `MaxWorldPositionOffsetDisplacement`, `PhysMaterial`, `PhysMaterialMask`,
-`PhysicalMaterialMap[N]`, `Lightmass.*`, `DisplacementScaling.*`, `NaniteOverrideMaterial.*`, and
-every other engine property the resolver can reach. Exact availability is engine-version dependent —
-the resolver is pure reflection over the engine's own property set.
+`bEnableStencilTest`, `MaxWorldPositionOffsetDisplacement`, `PhysMaterial`, `PhysMaterialMask`, and
+every other engine property the resolver can reach by name. Exact availability is engine-version
+dependent — the resolver is pure reflection over the engine's own property set.
 
 ## Notes
 
@@ -324,41 +333,37 @@ the resolver is pure reflection over the engine's own property set.
   not on the emitted `UDreamShaderMaterialInstance`. Reading the blend mode off the instance shows
   the inherited value.
 - A `Settings` block on a [`ShaderFunction`](function.md) does **not** share this behaviour. Only
-  four keys are read there, and unknown keys — including every key on this page — are ignored without
-  a diagnostic.
-- Duplicate keys across multiple `Settings` sections merge, last one wins. See
+  four keys are read there, and every key on this page is a
+  [`DSH3263`](../diagnostics/DSH3xxx.md#dsh3263) warning there.
+- Duplicate keys across multiple `Settings` sections merge, last one wins, with a
+  [`DSH3262`](../diagnostics/DSH3xxx.md#dsh3262) warning. See
   [Settings](index.md#how-a-statement-is-parsed).
-- The compiler prefixes every message below with the source file path.
+- A settings failure is reported once for the material, as `DSH8215`; the message names the material
+  and quotes the reflected writer's code and message.
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this page. Because keys are lowercased
-when they are stored, the `{Key}` in these messages is the **lowercased** spelling, not what the
-source wrote.
+Because keys are lowercased when they reach the emitter, the key quoted in these messages is the
+**lowercased** spelling, not what the source wrote.
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Unsupported BlendMode/RenderType '{Value}'.` | the `BlendMode` / `RenderType` value matched no alias |
-| `Unsupported ShadingModel '{Value}'.` | the `ShadingModel` value matched no alias |
-| `ShadingModel="Substrate" requires Unreal Engine 5.4 or newer.` | the value trims and case-folds to `Substrate` or `Strata` on UE 5.3 |
-| `Unsupported MaterialDomain '{Value}'.` | the `MaterialDomain` / `Domain` value matched no alias |
-| `Unsupported material setting '{Key}'.` | no property matched a path segment — the usual "unknown key" error |
-| `Setting path segment cannot be empty.` | an empty `.`-delimited segment, as in `Foo..Bar` |
-| `Invalid array setting segment '{Segment}'.` | malformed brackets — no `]`, `]` before `[`, `]` not last, or nothing before `[` |
-| `Invalid array index '{Index}' in setting segment '{Segment}'.` | the index is not an integer, or is negative |
-| `Setting '{Segment}' is not an indexed array property.` | `[N]` used on a property whose `ArrayDim` is 1 |
-| `Array index {Index} is out of range for setting '{Segment}' (max {Max}).` | the index is at or beyond `ArrayDim` |
-| `Setting '{Segment}' requires an explicit [index].` | a fixed-array property addressed without `[N]` |
-| `Setting path '{Key}' cannot continue through '{Segment}'.` | a non-terminal segment is not a struct property |
-| `Invalid material setting target.` | the resolver was handed no object |
-| `Invalid material setting path '{Key}'.` | the key produced no path segments |
-| `Failed to create a transient material for Settings validation.` | the probe material could not be allocated |
-| `Invalid value '{Value}' for setting '{Key}'. {TypeMessage}` | the literal write failed; `{TypeMessage}` is the type-specific text from [Value grammar](#value-grammar) and is empty for a path-shaped object value that failed to resolve |
-| `{File}: Base.FrontMaterial requires ShadingModel="Substrate" or no explicit ShadingModel setting.` | an explicit non-Substrate shading model with a `Base.FrontMaterial` binding |
-| `{File}: Base.FrontMaterial and Base.MaterialAttributes cannot be used by the same Shader.` | both bindings on one `Shader` |
+| [`DSH7127`](../diagnostics/DSH7xxx.md#dsh7127) | the `BlendMode` / `RenderType` value matched no alias |
+| [`DSH7129`](../diagnostics/DSH7xxx.md#dsh7129) | the `ShadingModel` value matched no alias |
+| [`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128) | the value trims and case-folds to `Substrate` or `Strata` on UE 5.3 |
+| [`DSH7130`](../diagnostics/DSH7xxx.md#dsh7130) | the `MaterialDomain` / `Domain` value matched no alias |
+| `DSH7118` | no property matched — the usual "unknown key" error |
+| `DSH7121` | a fixed-size array property named without an index |
+| `DSH7124` | the probe material could not be allocated |
+| `DSH7125` / `DSH7126` | the literal write failed on the probe / on the real material; the sentence after it is the type-specific code's message from [Value grammar](#value-grammar) |
+| `DSH8215` | the build-time diagnostic every code above reaches you inside |
+| [`DSH7200`](../diagnostics/DSH7xxx.md#dsh7200) | a key is set twice across `#pragma material` lines (a 1.x `Settings` block reports `DSH3262` instead) |
+| `DSH7232` | `Substrate` is not `Legacy`, `Bridge` or `Native` |
+| `DSH3261` | a key that is not one name — including a nested path or an index |
 
-`Unsupported Backend '{Value}'. Supported values: Graph, Instance, ThinCustom.` is raised earlier, by
-the backend resolver — see [Backend](backend.md#diagnostics).
+The `Backend` value is checked when the source is bound — see [Backend](backend.md#diagnostics).
+`DSH7112`–`DSH7117`, `DSH7119`, `DSH7120`, `DSH7122` and `DSH7123` concern nested and indexed paths and
+the resolver's own invariants; a 1.x key does not reach them.
 
 ## Example
 
@@ -387,9 +392,6 @@ Shader(Name="Docs/M_ShaderSettings", Root="Game")
 
         // Alias -> TranslucencyLightingMode, matched by display name.
         LightingMode = "Surface";
-
-        // Nested struct path.
-        Lightmass.DiffuseBoost = 1.5;
 
         // Object reference.
         PhysicalMaterial = Path(Engine, "EngineMaterials/DefaultPhysicalMaterial");
@@ -424,7 +426,6 @@ bIsSky                   = false
 OpacityMaskClipValue     = 0.25
 MaterialDecalResponse    = MDR_ColorNormalRoughness
 TranslucencyLightingMode = TLM_Surface
-LightmassSettings.DiffuseBoost = 1.5
 PhysMaterial             = /Engine/EngineMaterials/DefaultPhysicalMaterial
 ```
 
@@ -432,7 +433,7 @@ PhysMaterial             = /Engine/EngineMaterials/DefaultPhysicalMaterial
 
 - [Settings](index.md) — the block grammar and key normalization shared by every block kind
 - [Material enums](material-enums.md) — every accepted `ShadingModel`, `BlendMode` and `Domain` value
-- [Backend](backend.md) — the fourth special key
+- [Backend](backend.md) — the materialization key
 - [Function settings](function.md) — why none of this applies inside a `ShaderFunction`
 - [Project settings](project.md) — the mapping maps that extend the enum spellings
 - [Shader](../language/shader.md) — the enclosing block
@@ -441,4 +442,4 @@ PhysMaterial             = /Engine/EngineMaterials/DefaultPhysicalMaterial
 - [Metadata](../parameters/metadata.md) — the analogous reflected-property block on parameters
 - [Decompiler](../tools/decompiler.md) — which settings survive a round trip
 - [Regeneration](../generation/regeneration.md) — what a rebuild resets
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code

@@ -2,44 +2,45 @@
 
 > [DreamShader](../index.md) » [Builtins](index.md) » **`Substrate.*`**
 
-A sibling call namespace to [`UE.*`](ue.md) that wraps Unreal's Substrate BSDF, composition and
-utility material nodes with a fixed expression class per name.
+A sibling call namespace to [`UE.*`](ue.md) holding Unreal's Substrate BSDF, composition and utility
+material nodes. Since 2.0.0 it is the builtin catalog's `Substrate` namespace: every Substrate class
+the running engine has, by name.
 
 | | |
 | :-- | :-- |
 | Declared in | `.dsm`, `.dsf` — inside a `Graph { … }` body, an `Outputs` binding expression, or an `Outputs` declaration initializer |
 | Kind | builtin call namespace |
-| Generates | one `UMaterialExpressionSubstrate*` node per call |
-| Names | 24, resolving to 22 distinct engine classes (two alias pairs) |
-| Requires | **UE 5.4 or newer** |
+| Generates | one `UMaterialExpressionSubstrate*` node per call; identical calls are one node |
+| Names | every `UMaterialExpressionSubstrate*` class of the running engine — the 24 names of the [catalogue](#catalogue), the catalog's short names, and a name derived from any other class *(since 2.0.0)* |
+| Requires | an engine with Substrate nodes: **UE 5.4 or newer**; `Substrate.Select` from UE 5.6 |
 
 ## Availability
 
-The whole namespace — the descriptor table, the class check, and the `Substrate` type token — is
-compiled in only when the engine is **UE 5.4 or newer**. On UE 5.3 every `Substrate.*` call fails
-with `Substrate builtin call '{Name}' requires Unreal Engine 5.4 or newer.`
+Nothing is compiled in or out by version in the binder *(since 2.0.0)*: the catalog lists the
+Substrate classes of the running engine, and an engine before UE 5.4 has none.
 
-| Surface | Gate | Below the gate |
-| :-- | :-- | :-- |
-| `Substrate.<Name>(…)` calls | UE 5.4 | `Substrate builtin call '{Name}' requires Unreal Engine 5.4 or newer.` |
-| The `Substrate` declared-type token | UE 5.4 | the token does not resolve |
-| `OutputType="Substrate"` on a generic `UE.*` call | UE 5.4 | `UE.{Name} OutputType="Substrate" requires Unreal Engine 5.4 or newer.` |
-| `Base.FrontMaterial` output binding | UE 5.4 | `Base.FrontMaterial requires Unreal Engine 5.4 or newer.` |
-| `Settings = { ShadingModel = "Substrate"; }` (and the `"Strata"` spelling) | UE 5.4 | `ShadingModel="Substrate" requires Unreal Engine 5.4 or newer.` |
-
-> [!NOTE]
-> DreamShader's own gate is the **engine version only**. Substrate must additionally be enabled for
-> the project (*Project Settings ▸ Engine ▸ Rendering ▸ Substrate*) for the generated graph to
-> compile in the engine. DreamShader does not read that project setting, so a source file that
-> compiles to a Substrate graph on a non-Substrate project produces the asset and then fails during
-> Unreal's own material translation.
+| Surface | On an engine without the node |
+| :-- | :-- |
+| `Substrate.<Name>(…)` | [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210) — for `Select` (UE 5.6) and `Toon` (UE 5.8) [`DSH5294`](../diagnostics/DSH5xxx.md#dsh5294), which names the engine that has it |
+| `A + B`, `A * w`, `lerp(A, B, t)`, a Slab's virtual arguments | `DSH5294`, [`DSH4381`](../diagnostics/DSH4xxx.md#dsh4381) |
+| a run-time branch over two Substrate values | [`DSH4378`](../diagnostics/DSH4xxx.md#dsh4378) below UE 5.6 |
+| `OutputType="Substrate"` on a generic `UE.*` call | dropped like any `OutputType` — see [`OutputType`](output-type.md) |
+| `Base.FrontMaterial` output binding | decided by the material attributes the catalog lists for the engine; a name it lacks is [`DSH5200`](../diagnostics/DSH5xxx.md#dsh5200) |
+| `Settings = { ShadingModel = "Substrate"; }` (and the `"Strata"` spelling) | [`DSH8215`](../diagnostics/DSH8xxx.md#dsh8215), carrying [`DSH7128`](../diagnostics/DSH7xxx.md#dsh7128), below UE 5.4 |
 
 > [!NOTE]
-> The editor tooling reflects the same gate. On UE 5.3 the Bridge manifest
+> Substrate must also be enabled for the project (*Project Settings ▸ Engine ▸ Rendering ▸
+> Substrate*) for a Substrate graph to compile in the engine. DreamShader reads that setting
+> *(since 2.0.0)*: the `Substrate` setting of a `Shader` — `Legacy`, `Bridge` or `Native` — says how
+> a material is built in a project that has it on or off, and `Native` driving `FrontMaterial` with
+> Substrate off is [`DSH4382`](../diagnostics/DSH4xxx.md#dsh4382). See
+> [One source, two kinds of project](../language-v2/substrate.md#one-source-two-kinds-of-project--substrate-).
+
+> [!NOTE]
+> The editor tooling reflects the engine. Below UE 5.4 the Bridge manifest
 > `Saved/DreamShader/Bridge/substrate-builtins.json` is written with an empty entry array,
-> `supported: false` and
-> `unsupportedReason: "Substrate builtins require Unreal Engine 5.4 or newer."` — so completion in
-> the editor extensions offers nothing. See [Bridge](../tools/bridge.md).
+> `supported: false` and an `unsupportedReason` — so completion in the editor extensions offers
+> nothing. See [Bridge](../tools/bridge.md).
 
 ## Synopsis
 
@@ -52,67 +53,73 @@ Substrate . <Name> ( [ <argument-name> = <expression> ]
 
 `Substrate` and `.` are literal; `[ … ]`, `{ a | b }` and `…` are meta-notation.
 
-The namespace prefix and the `<Name>` are matched **case-insensitively**: `SUBSTRATE.UNLIT(…)`
-resolves. Argument names are matched case-insensitively and whitespace-trimmed, but are otherwise
-exact — no separator stripping.
+In a 1.x source the prefix is matched **case-insensitively** — `Substrate` is a 1.x type spelling, and
+those are read ignoring case — and a `<Name>` that matches only ignoring case is accepted with the
+warning [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276): `SUBSTRATE.UNLIT(…)` resolves. Argument names
+are matched the same way — exactly, or ignoring case with `DSH5276` — and are otherwise exact: no
+separator stripping.
 
 ## Argument model
 
-Every `Substrate.*` call goes through the generic reflected-builtin path, so it inherits that path's
-rules.
+A `Substrate.*` call is bound like any reflected node call ([`UE.Expression`](ue-expression.md)),
+against the class the name selects.
 
 | Rule | Behaviour |
 | :-- | :-- |
-| All arguments must be **named** | a positional argument fails with `Generic Substrate.{Name} calls require named arguments.` |
-| `Class=` is **rejected** | `Substrate.{Name} uses a fixed MaterialExpression class and does not accept Class.` — the class comes from the descriptor and cannot be overridden |
-| `OutputType=` / `ResultType=` are **ignored** | the output type is synthesized from the descriptor; supplying either has no effect and no diagnostic |
-| `Output=` / `OutputName=` | selects an output pin by name |
-| `OutputIndex=` | selects an output pin by 0-based index |
-| `Output`/`OutputName` and `OutputIndex` together | `UE.{Name} cannot use OutputName/Output together with OutputIndex.` |
-| Anything else | dispatched by reflection — see below |
+| Arguments are **named** | except on the five composition nodes, which take their operands by position too *(since 2.0.0)*: `Add(A, B)`, `Weight(A, Weight)`, `HorizontalMix(Background, Foreground, Mix)`, `VerticalLayer(Top, Base, Thickness)`, `Select(A, B, SelectValue)`. Elsewhere a positional argument is [`DSH5220`](../diagnostics/DSH5xxx.md#dsh5220) |
+| `Class=` is **rejected** | [`DSH5216`](../diagnostics/DSH5xxx.md#dsh5216) — the name is the class |
+| `OutputType=` / `ResultType=` are **dropped** | by the legacy front end, without a diagnostic; the catalog types the call |
+| `Output=` / `OutputName=` | selects an output by name |
+| `OutputIndex=` | selects an output by 0-based index |
+| `Output`/`OutputName` and `OutputIndex` together | [`DSH5252`](../diagnostics/DSH5xxx.md#dsh5252) |
+| Anything else | bound by the catalog — see below |
 
 ### Reflection-driven binding
 
-Argument binding is not table-driven. For each remaining argument the generator tries, in order:
+For each remaining argument the binder tries, in order:
 
-1. **Input pin name** — every input pin the node reports, compared case-insensitively after
-   trimming.
-2. **`UPROPERTY` name** — any reflected property on the class or a superclass, compared the same
-   way. Boolean properties additionally match with a leading `b` stripped, so `FractionalPart`
-   reaches `bFractionalPart`.
-3. If the property is an `FExpressionInput` or an `FMaterialAttributesInput`, the argument becomes a
-   **wired input** and its value is evaluated as an expression. Otherwise it is written as a
-   **literal property** on the node.
-4. No match → `UE.{Name}: '{Argument}' is not a property on '{Class}'.`
+1. **Input pin** — a pin of the class by its name, or by an alias: its display name in identifier form
+   (`Diffuse_Albedo`), with a property's display name also with its spaces removed.
+2. **Property** — a reflected, editable property of the class by its name or an alias; a bool property
+   also without its leading `b`, so `UseParameterBlending` reaches `bUseParameterBlending`.
+3. **Virtual argument** — on a BSDF that has the pins it feeds, `BaseColor` / `Metallic` / `Specular`,
+   `Haziness`, `Transmittance` / `Thickness` and `IOR` become the input of a conversion node in front
+   of those pins *(since 2.0.0)*. See
+   [Legacy parameters on a slab](../language-v2/substrate.md#legacy-parameters-on-a-slab).
+4. In a 1.x source, a name that is none of these and carries a value is kept with
+   [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291) and connected by name when the node is built
+   ([`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212) if the node has no such pin).
+5. No match → [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213).
 
-A pin-name match wins over a reflected property of the same name.
-
-> [!WARNING]
-> **Engine pin names containing spaces are unreachable.** Argument-name normalization trims and
-> lowercases but does **not** strip spaces, so a pin displayed as `Diffuse Albedo` cannot be spelled
-> as an argument name. Use the `UPROPERTY` name instead — `DiffuseAlbedo` — which is what the tables
-> below list. Where a pin name and property name coincide, either spelling works.
+A pin-name match wins over a property of the same name. A value is checked against the pin's type: a
+number on a Substrate pin, a Substrate value on a numeric pin and anything but a material on a
+`MaterialAttributes` pin are [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214).
 
 > [!NOTE]
-> **Accepted argument names follow the engine, not the plugin.** Because step 1 and step 2 query the
-> live `UMaterialExpressionSubstrate*` class, the exact accepted set is whatever the running engine
-> version exposes; an input added or removed by an engine release appears or disappears with no
-> plugin change. The tables below list the inputs these classes expose; the **Completion** column
-> marks the curated subset DreamShader publishes to editor completion and the Bridge manifest, which
-> *is* fixed by the plugin. Any non-input reflected property on the same class — enums, floats,
-> booleans — is also settable as a literal argument even though it is not listed here.
+> **Engine pin names with spaces in them are reachable** *(since 2.0.0)*: a pin displayed as
+> `Diffuse Albedo` is `Diffuse_Albedo`, and its property name — `DiffuseAlbedo`, which the tables
+> below list — works as before.
+
+> [!NOTE]
+> **Accepted argument names follow the engine, not the plugin.** The catalog is read off the running
+> engine's `UMaterialExpressionSubstrate*` classes, so an input added or removed by an engine release
+> appears or disappears with no plugin change. The tables below list the inputs these classes expose;
+> the **Completion** column marks the curated subset DreamShader publishes to editor completion and the
+> Bridge manifest, which *is* fixed by the plugin. Any editable non-input property of the same class —
+> enums, floats, booleans — is also settable as a literal argument even though it is not listed here.
 
 ### Selecting an output
 
-`Output=` / `OutputName=` matches an output pin's name verbatim, case-insensitively, including names
-that contain spaces (output pin names are matched as whole names, not parsed as argument names).
-`OutputIndex=` takes a 0-based index. Only the utility wrappers below have more than one output.
+`Output=` / `OutputName=` names an output exactly as the catalog lists it, including names that
+contain spaces; in a 1.x source a case-only match is accepted with `DSH5276`. A name no output has is
+[`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201). `OutputIndex=` takes a 0-based index
+([`DSH5282`](../diagnostics/DSH5xxx.md#dsh5282) past the last). Only the utility nodes below have more
+than one output.
 
 ## Catalogue
 
-*Substrate output* marks the wrappers whose result is a Substrate material value (0 components,
-bindable to `Base.FrontMaterial`); the four marked **no** are the utility nodes and return ordinary
-numeric values.
+*Substrate output* marks the classes whose output is a Substrate material value, bindable to
+`Base.FrontMaterial`; the four marked **no** are the utility nodes and return ordinary numeric values.
 
 | `Substrate.<Name>` | `UMaterialExpression` class | Substrate output | Entry |
 | :-- | :-- | :-- | :-- |
@@ -135,47 +142,48 @@ numeric values.
 | `VerticalLayering` **— alias of `VerticalLayer`** | `UMaterialExpressionSubstrateVerticalLayering` | yes | [↓](#substrateverticallayer) |
 | `Add` | `UMaterialExpressionSubstrateAdd` | yes | [↓](#substrateadd) |
 | `Weight` | `UMaterialExpressionSubstrateWeight` | yes | [↓](#substrateweight) |
-| `Select` | `UMaterialExpressionSubstrateSelect` | yes | [↓](#substrateselect) |
+| `Select` *(UE 5.6)* | `UMaterialExpressionSubstrateSelect` | yes | [↓](#substrateselect) |
 | `TransmittanceToMFP` | `UMaterialExpressionSubstrateTransmittanceToMFP` | **no** | [↓](#substratetransmittancetomfp) |
 | `MetalnessToDiffuseAlbedoF0` | `UMaterialExpressionSubstrateMetalnessToDiffuseAlbedoF0` | **no** | [↓](#substratemetalnesstodiffusealbedof0) |
 | `HazinessToSecondaryRoughness` | `UMaterialExpressionSubstrateHazinessToSecondaryRoughness` | **no** | [↓](#substratehazinesstosecondaryroughness) |
 | `ThinFilm` | `UMaterialExpressionSubstrateThinFilm` | **no** | [↓](#substratethinfilm) |
 
 The two alias pairs are exact duplicates: same class, same inputs, same output typing. Neither
-spelling is deprecated.
+spelling is deprecated. Since 2.0.0 two short names join them — `Mix` for `HorizontalMix`, `Layer` for
+`VerticalLayer` — and every class is also reachable by the catalog's short name (`SubstrateSlabBSDF`)
+and by its class name without `MaterialExpressionSubstrate` in front and `BSDF` behind, which is how a
+class this table does not list is called: UE 5.8's `UMaterialExpressionSubstrateToonBSDF` is
+`Substrate.Toon`.
 
 ## Output typing
 
-| Descriptor | Declared output type | Component count | Flags |
-| :-- | :-- | :-- | :-- |
-| Substrate output | `Substrate` | 0 | `Substrate` value, authoritative |
-| Utility node | `auto` | taken from the selected pin's real value type | numeric |
+The catalog types each output from the engine: a BSDF or composition node makes a `Substrate` value;
+a utility node makes numbers, as wide as the engine types each output — or, where the engine does not
+type it, as wide as the place it is read into. A node with several outputs is read by naming one.
 
-The declared type is then checked against the selected output pin's actual value type. If a wrapper
-declared as a Substrate output resolves to a pin that is not a Substrate value, the call fails with
-`Substrate.{Name} output is not a Substrate value.`
-
-A `Substrate` value can only be:
+A `Substrate` value can be:
 
 - assigned to a `Substrate`-typed `Graph` variable or `Outputs` declaration;
-- passed to another `Substrate.*` wrapper's Substrate-typed input, or to a Substrate-typed input pin
-  of a [`UE.Expression`](ue-expression.md) node;
-- selected by a `StaticSwitchParameter` whose **other** branch is also a `Substrate` value;
+- passed to a Substrate-typed input of another `Substrate.*` node or of a
+  [`UE.Expression`](ue-expression.md) node;
+- combined with `+` (`Substrate.Add`), weighted with `* <scalar>` (`Substrate.Weight`) and mixed with
+  `lerp(A, B, t)` (`Substrate.HorizontalMix`) *(since 2.0.0)* — see
+  [Operators and `lerp`](../language-v2/substrate.md#operators-and-lerp);
+- chosen between by a static switch, or by a run-time `if`, which becomes `Substrate.Select`
+  *(since 2.0.0)* — see [`if` over Substrate values](../language-v2/substrate.md#if-and--over-substrate-values);
 - bound to `Base.FrontMaterial`.
 
-It cannot be swizzled, used with `+ - * /`
-(`Arithmetic operators cannot be applied to Substrate values.`), passed to a
-[math builtin](math.md) (`Math function '{Name}' only accepts numeric scalar/vector arguments.`),
-mixed with a numeric value across the two branches of a `StaticSwitchParameter`
-(`StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.`), or produced by an
-HLSL Custom node.
+Any other operator over a Substrate value — `-`, `/`, `A * B`, a compound assignment — and a `lerp`
+of a Substrate value with a number is [`DSH5293`](../diagnostics/DSH5xxx.md#dsh5293); another math
+builtin given a Substrate value is [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226). An HLSL Custom node —
+a `Function` — can neither take nor return one ([`DSH6253`](../diagnostics/DSH6xxx.md#dsh6253)).
 
 > [!NOTE]
 > A static switch over two closures is how a master material picks a shading variant from a static
 > parameter: `UMaterialExpressionStaticSwitchParameter` resolves the bool while the engine builds the
 > material topology tree and descends only the taken branch, so the translator still sees one
-> topology. `Graph if` is a different thing -- it lowers to a runtime node -- and still refuses
-> Substrate values (`Graph if statement cannot select Substrate value '{Name}'.`).
+> topology. [`UE.StaticSwitchParameter`](ue.md#uestaticswitchparameter) does not compare its two
+> branches, so a Substrate value on one side and a number on the other is not reported by DreamShader.
 
 ---
 
@@ -381,9 +389,9 @@ Converts a `MaterialAttributes` value into a Substrate material.
 Output: Substrate value.
 
 `MaterialAttributes` is the reflected property name and `Attributes` is the engine's pin name for the
-same input; both bind input 0. Passing a numeric value to it fails with
-`Substrate.ConvertMaterialAttributes input '{Pin}' expects a MaterialAttributes value.`
-See [`MaterialAttributes`](../graph/material-attributes.md).
+same input; both bind input 0. Passing a numeric value to it is
+[`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214). See
+[`MaterialAttributes`](../graph/material-attributes.md).
 
 ### Substrate.ConvertToDecal
 
@@ -529,7 +537,7 @@ Outputs — numeric:
 ## Binding a Substrate value to Base.FrontMaterial
 
 A Substrate material reaches the generated `UMaterial` through the `Base.FrontMaterial` output
-binding, and through no other route.
+binding.
 
 ```c
 Outputs = {
@@ -543,12 +551,12 @@ Graph = {
 
 | Rule | Behaviour |
 | :-- | :-- |
-| Declared-type token | the single spelling `Substrate`; whitespace-stripped and case-insensitive. `Strata` is **not** a type token. |
-| Shading model | the binding force-sets the material's shading model to Substrate — no `Settings` entry is needed |
-| Explicit `ShadingModel` setting | allowed only as `"Substrate"` or `"Strata"`; any other value fails |
-| `Base.MaterialAttributes` in the same `Shader` | rejected — the two bindings are mutually exclusive |
-| Backend | requires a `Graph` block; an HLSL Custom node cannot produce or drive a Substrate value |
-| Engine version | UE 5.4+ |
+| Declared-type token | the single spelling `Substrate`, any case. `Strata` is **not** a type token. |
+| Binding expression | the right side of `Base.FrontMaterial = …` may be an expression of its own (`Base.FrontMaterial = Substrate.Layer(Coat, Body);`) *(since 2.0.0)* |
+| Shading model | DreamShader sets none for the binding *(since 2.0.0; 1.x force-set Substrate)*; a `Settings` `ShadingModel` is applied as written |
+| Source of the value | a `Graph` block with `Substrate.*` nodes; a `Function` — an HLSL Custom node — cannot produce one (`DSH6253`) |
+| Value kind | a number bound to `Base.FrontMaterial`, or a Substrate value bound to a numeric pin, does not fit (`DSH5214` / `DSH4228`) |
+| Engine | an engine whose catalog lists the `FrontMaterial` attribute; otherwise `DSH5200` |
 
 > [!NOTE]
 > `Strata` is the pre-rename spelling. It is accepted as a `Settings = { ShadingModel = … }` value
@@ -557,89 +565,66 @@ Graph = {
 
 ## Notes
 
-- **There is no wrapper for every Substrate class.** `UMaterialExpressionSubstrateToonBSDF` has no
-  entry in the table. Reach it — and any future Substrate class — through the generic path:
-  `UE.Expression(Class="SubstrateToonBSDF", OutputType="Substrate", …)`. Class-name resolution
-  accepts `SubstrateToonBSDF`, `MaterialExpressionSubstrateToonBSDF` and the full `/Script/Engine.…`
-  object path interchangeably; the `U`-prefixed C++ spelling is **not** accepted. See
-  [`UE.Expression`](ue-expression.md#class-resolution).
-- **Registered `UE.*` sugar does not apply inside this namespace.** `Substrate.TexCoord(…)` is not a
-  thing; unknown names fail with `Unsupported Substrate builtin call '{Name}' in Graph.`
-- Substrate nodes participate in **node reuse**: two textually identical `Substrate.Slab(…)` calls
-  over identical argument values collapse to a single node. See
-  [Node reuse](../graph/node-reuse.md).
-- The [decompiler](../tools/decompiler.md) exports an existing Substrate graph back to
-  DreamShaderLang, deriving channel swizzles from each connection's write mask *(since 1.5.0)*.
-- The complete `Substrate.*` surface is exported for editor tooling to
+- **Every Substrate class is a name.** A class with no row in the [catalogue](#catalogue) is called by
+  its derived name — `Substrate.Toon` on UE 5.8 — or by its class through
+  `UE.Expression(Class = "SubstrateToonBSDF", …)`, which resolves `SubstrateToonBSDF`,
+  `MaterialExpressionSubstrateToonBSDF`, `UMaterialExpressionSubstrateToonBSDF` and the full
+  `/Script/Engine.…` path *(since 2.0.0)*. See [`UE.Expression`](ue-expression.md#class-resolution).
+- **`UE.*` names do not apply inside this namespace.** `Substrate.TexCoord(…)` is not a thing; a name
+  the namespace does not have is [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210).
+- Substrate nodes take part in **node reuse**: two identical `Substrate.Slab(…)` calls over identical
+  argument values are one node. See [Node reuse](../graph/node-reuse.md).
+- A `Substrate.` call inside a [`GraphFunction`](../language/graph-function.md) body is not lifted into
+  a node input, because no Custom node input carries a Substrate value; it stays in the HLSL text, with
+  the warning [`DSH6316`](../diagnostics/DSH6xxx.md#dsh6316).
+- The [decompiler](../tools/decompiler.md) exports an existing Substrate graph back to source,
+  deriving channel swizzles from each connection's write mask *(since 1.5.0)*, and writes each node
+  under the name sources use — see [Decompiling](../language-v2/substrate.md#decompiling).
+- The `Substrate.*` surface is exported for editor tooling to
   `Saved/DreamShader/Bridge/substrate-builtins.json` (schema `DreamShader.SubstrateBuiltins`,
   version 1), one entry per name with its `qualifiedName`, `className`, `outputType`,
   `isSubstrateOutput` and curated `parameters`. See [Bridge](../tools/bridge.md).
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout these tables; the compiler emits the
-substituted text.
-
-> [!NOTE]
-> Several messages below begin with the literal text `UE.` even for a `Substrate.*` call. Those come
-> from the shared generic-builtin path, which formats its prefix as `UE.` unconditionally; only the
-> messages that carry the namespace explicitly render as `Substrate.`. This is cosmetic — the
-> `{Name}` in such a message is still the Substrate wrapper name.
+Every code is listed with its message and its full description on its page in
+[Diagnostics](../diagnostics/index.md).
 
 ### Call site
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Substrate builtin call '{Name}' requires Unreal Engine 5.4 or newer.` | any `Substrate.*` call on UE 5.3 |
-| `Unsupported Substrate builtin call '{Name}' in Graph.` | the name is not one of the 24 in the catalogue |
-| `Generic Substrate.{Name} calls require named arguments.` | any positional argument |
-| `Substrate.{Name} uses a fixed MaterialExpression class and does not accept Class.` | `Class=` was supplied |
-| `Substrate.{Name} resolved to non-Substrate class '{Class}'.` | the descriptor's class is not a Substrate BSDF or utility class |
-| `UE.{Name} could not resolve MaterialExpression class '{Class}'.` | the descriptor's class is not present in the running engine |
-| `UE.{Name} failed to create '{Class}'.` | node creation returned nothing |
-| `UE.{Name}: '{Argument}' is not a property on '{Class}'.` | the argument matched neither a pin name nor a reflected property |
-| `Substrate.{Name} input '{Pin}' expects a Substrate value.` | a Substrate-typed pin was given a numeric value |
-| `Substrate.{Name} input '{Pin}' does not accept Substrate values.` | a numeric pin was given a Substrate value |
-| `Substrate.{Name} input '{Pin}' expects a MaterialAttributes value.` | a `MaterialAttributes` pin was given something else |
-| `Substrate.{Name} input '{Pin}' does not accept MaterialAttributes values.` | a numeric pin was given a `MaterialAttributes` value |
-| `UE.{Name} input '{Pin}': {Error}` | evaluating a wired input's expression failed |
-| `UE.{Name} failed to bind input '{Pin}'.` | the pin could not be connected |
-| `UE.{Name} property '{Property}' must use a literal value.` | a literal property argument was not a literal |
-| `UE.{Name} property '{Property}' must use Path(...) or an Unreal object path.` | an object-typed property argument was not an asset reference |
-| `UE.{Name} property '{Property}': {Error}` | writing the literal property failed |
-| `UE.{Name} cannot use OutputName/Output together with OutputIndex.` | both selectors supplied |
-| `UE.{Name} OutputName must be a literal value.` | `Output=` / `OutputName=` was not a literal |
-| `UE.{Name} output '{Pin}' was not found on '{Class}'.` | the named output pin does not exist |
-| `UE.{Name} OutputIndex is out of range for '{Class}'.` | negative index, or past the last output |
-| `UE.{Name} created '{Class}', but it has no material outputs.` | the node exposes no outputs at all |
-| `Substrate.{Name} output is not a Substrate value.` | the selected pin's value type is not Substrate although the descriptor declares one |
+| [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210) | the name is no Substrate class of the running engine — every `Substrate.*` call below UE 5.4 |
+| [`DSH5294`](../diagnostics/DSH5xxx.md#dsh5294) | the node exists from a later engine on (`Select`, `Toon`), or an operator or virtual argument needs a node this engine lacks |
+| [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276) (warning) | in a 1.x source, a name, argument or output matches only ignoring case |
+| [`DSH5216`](../diagnostics/DSH5xxx.md#dsh5216) | `Class=` was supplied |
+| [`DSH5220`](../diagnostics/DSH5xxx.md#dsh5220), [`DSH5221`](../diagnostics/DSH5xxx.md#dsh5221) | a positional argument on a BSDF, or past the order of a composition node |
+| [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213) | an argument is no pin, property or virtual argument of the class |
+| `DSH5291` (info), `DSH8212` | in a 1.x source, such an argument carrying a value, and the built node without the pin |
+| [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214) | a pin is given a value of the wrong kind |
+| [`DSH5224`](../diagnostics/DSH5xxx.md#dsh5224) | a property is given something that is not a constant |
+| [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215) | an argument is given twice |
+| [`DSH5295`](../diagnostics/DSH5xxx.md#dsh5295), [`DSH5296`](../diagnostics/DSH5xxx.md#dsh5296) | virtual arguments that conflict with each other or the pins, or lack their companion |
+| [`DSH5279`](../diagnostics/DSH5xxx.md#dsh5279) (warning) | in a 1.x source, a required pin is left unconnected |
+| `DSH5250`–`DSH5252`, `DSH5201`, `DSH5282` | an output selector — see [`UE.Expression`](ue-expression.md#selecting-an-output) |
+| [`DSH8214`](../diagnostics/DSH8xxx.md#dsh8214) | the node could not be created |
+| [`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213) | a property value could not be written |
 
 ### Substrate values elsewhere in the pipeline
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Substrate requires Unreal Engine 5.4 or newer.` | a Substrate value or type was requested on UE 5.3 |
-| `Graph variable '{Name}' uses Substrate, which requires Unreal Engine 5.4 or newer.` | a `Substrate`-typed `Graph` declaration on UE 5.3 |
-| `UE.{Name} OutputType="Substrate" requires Unreal Engine 5.4 or newer.` | a generic `UE.*` call declared a Substrate output on UE 5.3 |
-| `UE.{Name} OutputType="Substrate" is not supported by UMaterialExpressionCustom.` | a Substrate output was requested from a `Custom` node |
-| `UE.{Name} Custom input '{Pin}' does not accept Substrate values.` | a Substrate value was fed to a `Custom` node input |
-| `Arithmetic operators cannot be applied to Substrate values.` | a Substrate value used with `+ - * /` |
-| `Math function '{Name}' only accepts numeric scalar/vector arguments.` | a Substrate value passed to a [math builtin](math.md) |
-| `StaticSwitchParameter '{Name}' cannot mix Substrate and numeric branches.` | one branch is a Substrate value and the other is not |
-| `Base.FrontMaterial requires Unreal Engine 5.4 or newer.` | the binding target used on UE 5.3 |
-| `{File}: Base.FrontMaterial requires ShadingModel="Substrate" or no explicit ShadingModel setting.` | a conflicting explicit shading model |
-| `{File}: Base.FrontMaterial and Base.MaterialAttributes cannot be used by the same Shader.` | both bindings present |
-| `{File}: Base.FrontMaterial expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes.` | the binding source came from an HLSL Custom node |
-| `{File}: Material output '{Output}' expects a Substrate value and cannot be driven by a material Custom node. Use a Graph block and Substrate.* nodes.` | same, for another Substrate-typed material output |
-| `{File}: Material output '{Output}' expects a numeric value, but got Substrate.` | a Substrate value bound to a numeric material output |
-| `{File}: Output '{Output}' is declared as Substrate and cannot be generated by a material Custom node. Use a Graph block and Substrate.* nodes.` | a `Substrate`-typed `Outputs` declaration under the Custom-node path |
-| `{Kind} '{Name}' output '{Output}' uses Substrate, which is not supported by HLSL Custom node functions. Use a Graph block and Substrate.* nodes.` | a `Substrate`-typed output on a block generated as a Custom node |
-| `{Kind} '{Name}' output '{Output}' uses Substrate, which requires Unreal Engine 5.4 or newer.` | same, on UE 5.3 |
-| `DreamShader Function '{Name}' result '{Result}' uses Substrate, which is not supported by HLSL Custom node functions. Use GraphFunction or ShaderFunction instead.` | a `Function` declared a `Substrate` result |
-| `DreamShader Function '{Name}' result '{Result}' uses Substrate, which requires Unreal Engine 5.4 or newer.` | same, on UE 5.3 |
-| `ShadingModel="Substrate" requires Unreal Engine 5.4 or newer.` | `Settings = { ShadingModel = "Substrate"; }` or `"Strata"` on UE 5.3 |
-
-The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
+| [`DSH5293`](../diagnostics/DSH5xxx.md#dsh5293) | an operator other than `+` and `* <scalar>`, a compound assignment, or a `lerp` of a Substrate value with a number |
+| [`DSH4226`](../diagnostics/DSH4xxx.md#dsh4226) | another math builtin is given a Substrate value |
+| [`DSH5297`](../diagnostics/DSH5xxx.md#dsh5297)–[`DSH5299`](../diagnostics/DSH5xxx.md#dsh5299), [`DSH4383`](../diagnostics/DSH4xxx.md#dsh4383) | a Substrate value built member by member — see [the 2.0 page](../language-v2/substrate.md#building-a-value-member-by-member) |
+| [`DSH4378`](../diagnostics/DSH4xxx.md#dsh4378) | a branch over a Substrate value and a number, or a run-time branch over Substrate values below UE 5.6 |
+| [`DSH4380`](../diagnostics/DSH4xxx.md#dsh4380) (warning) | a run-time branch selects between two different BSDF classes |
+| [`DSH4381`](../diagnostics/DSH4xxx.md#dsh4381) | a virtual argument's conversion node is missing from this engine |
+| [`DSH4382`](../diagnostics/DSH4xxx.md#dsh4382) | `Substrate = Native` drives `FrontMaterial` and Substrate is off in the project |
+| [`DSH6253`](../diagnostics/DSH6xxx.md#dsh6253) | a `Function` takes or returns a Substrate value |
+| [`DSH6316`](../diagnostics/DSH6xxx.md#dsh6316) (warning) | a `Substrate.` call in a `GraphFunction` body is left in the HLSL text |
+| [`DSH5200`](../diagnostics/DSH5xxx.md#dsh5200) | `Base.FrontMaterial` on an engine whose catalog has no such attribute |
+| [`DSH8215`](../diagnostics/DSH8xxx.md#dsh8215) | `ShadingModel = "Substrate"` or `"Strata"` below UE 5.4 (the message carries `DSH7128`) |
 
 ## Example
 
@@ -683,21 +668,25 @@ Shader(Name="Docs/M_Substrate")
 Generated nodes:
 
 ```text
-SubstrateMetalnessToDiffuseAlbedoF0   -> output "DiffuseAlbedo"  -> Albedo    (3 components)
-                                      -> output "F0"             -> F0        (3 components)
-                                         (one node, reused for both reads)
+SubstrateMetalnessToDiffuseAlbedoF0   -> output "DiffuseAlbedo"  -> Albedo
+                                      -> output "F0"             -> F0
+                                         (one node, read for both)
 SubstrateSlabBSDF                     -> Body                    (Substrate value)
 SubstrateUnlitBSDF                    -> Emissive                (Substrate value)
 SubstrateAdd                          -> Surface                 (Substrate value)
-Material ShadingModel forced to Substrate by the Base.FrontMaterial binding
 ```
+
+Since 2.0.0 the same graph is
+`Surface = Substrate.Slab(BaseColor = BaseColor, Metallic = Metallic, Specular = Specular, Roughness = Rough) + Substrate.Unlit(EmissiveColor = Glow);`
+— the virtual arguments put the conversion node in front of the slab, and `+` is `Substrate.Add`.
 
 ## See also
 
 - [Builtins](index.md) — the call surfaces available inside `Graph`
-- [`UE.*` catalogue](ue.md) — the sibling namespace and its registered builtins
-- [`UE.Expression`](ue-expression.md) — reaching Substrate classes that have no wrapper
-- [`OutputType` values](output-type.md) — including the `Substrate` token
+- [`UE.*` catalogue](ue.md) — the sibling namespace
+- [`UE.Expression`](ue-expression.md) — the binding rules every node call shares
+- [Substrate sugar](../language-v2/substrate.md) — operators, `lerp`, branches, virtual arguments, builders, `Substrate =`
+- [`OutputType` values](output-type.md) — dropped on this namespace
 - [Math builtins](math.md) — the unprefixed numeric call surface
 - [Transform builtins](transform.md) — `UE.TransformVector` / `UE.TransformPosition`
 - [Output bindings](../language/output-bindings.md) — `Base.FrontMaterial` and the full target list
@@ -705,7 +694,7 @@ Material ShadingModel forced to Substrate by the Base.FrontMaterial binding
 - [Types](../language/types.md) — the `Substrate` declared-type token
 - [Enum values](../settings/material-enums.md) — `ShadingModel = "Substrate"` / `"Strata"`
 - [Calls](../graph/calls.md) — named-argument syntax
-- [Node reuse](../graph/node-reuse.md) — why repeated wrapper calls produce one node
+- [Node reuse](../graph/node-reuse.md) — identical calls and nodes
 - [Bridge](../tools/bridge.md) — `substrate-builtins.json` and the editor completion manifest
 - [Decompiler](../tools/decompiler.md) — exporting an existing Substrate graph back to source
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code

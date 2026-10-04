@@ -2,348 +2,305 @@
 
 > [DreamShader](../index.md) » [Builtins](index.md) » **UE.Expression**
 
-The generic reflected call: creates any non-abstract `UMaterialExpression` subclass by name and fills
-its input pins and `UPROPERTY`s from named arguments.
+The reflected node call: creates any `UMaterialExpression` class of the builtin catalog by name and
+fills its input pins and properties from the arguments.
 
 | | |
 | :-- | :-- |
 | Declared in | `.dsm`, `.dsf` — inside a `Graph { … }` body, or a `Properties { … }` section (see [Declaration form](#declaration-form)) |
 | Kind | builtin |
-| Generates | one instance of the resolved `UMaterialExpression` subclass |
+| Generates | one instance of the resolved `UMaterialExpression` class |
 
 ## Synopsis
 
 ```c
-UE.Expression( Class = <class-specifier> , { OutputType | ResultType } = <type-token>
+UE.Expression( Class = <class-specifier>
+               [, { OutputType | ResultType } = <type-token> ]
                [, { { Output | OutputName } = <text> | OutputIndex = <int> } ]
                [, <arg-name> = <expression> ] … )
 
-UE.<ClassName>( { OutputType | ResultType } = <type-token> [, <arg-name> = <expression> ] … )
+UE.<ClassName>( [ <arg-name> = <expression> ] … )
 ```
 
-The two forms are one implementation. `Class` defaults to the function name, so `UE.Sine(…)` and
-`UE.Expression(Class = "Sine", …)` are identical. The name `Expression` is not special except that it
-never resolves to a class, which is what makes `Class=` mandatory in the first form.
+The two forms are one path through the binder. A call names its class with `Class`, or else with the
+name after `UE.`, so `UE.Sine(…)` and `UE.Expression(Class = "Sine", …)` are identical; a `Class`
+argument on another name wins over the name. `Expression` names no class, which is why the first form
+needs `Class` — without it the call is [`DSH5218`](../diagnostics/DSH5xxx.md#dsh5218).
 
-Every argument must be named. A positional argument fails with
-`Generic {Namespace}.{Function} calls require named arguments.`
+`OutputType` is no longer required *(since 2.0.0)*: the catalog knows what every class makes. See
+[OutputType](#outputtype).
+
+Arguments are named. A positional argument binds only on the classes the catalog gives an argument
+order — `TextureCoordinate`, `Constant`, `Constant2Vector`, `Constant3Vector`, `Constant4Vector`,
+`Transform`, `TransformPosition`, `Panner`, `ComponentMask`, `Time`, and the five Substrate
+composition nodes — and is [`DSH5220`](../diagnostics/DSH5xxx.md#dsh5220) elsewhere,
+[`DSH5221`](../diagnostics/DSH5xxx.md#dsh5221) past the end of the order *(since 2.0.0)*. On the 27
+1.x names of the [`UE.*` catalogue](ue.md#catalogue) the legacy front end drops a positional argument
+first ([`DSH5254`](../diagnostics/DSH5xxx.md#dsh5254)), except `Input` of the two transforms.
 
 Text arguments may be quoted or bare: `Class = Sine` and `Class = "Sine"` are the same, as are
 `OutputType = float3` and `OutputType = "float3"`.
 
 ## Order of resolution
 
-The call is processed in this order. The order is observable, because the first failing step is the
-only error reported.
+A call goes through the stages of the compiler. Each stage reports all of its errors, and a stage with
+errors stops the pipeline before the next one *(since 2.0.0; 1.x stopped at the first failing step)*.
 
-| # | Step | Failure |
-| :-- | :-- | :-- |
-| 1 | Reject positional arguments | `Generic {Namespace}.{Function} calls require named arguments.` |
-| 2 | `Substrate.*` descriptor lookup and engine-version gate | see [Substrate](substrate.md) |
-| 3 | Resolve `OutputType` / `ResultType` | `Unsupported UE builtin call …`, `… OutputType must be a literal value.`, `… OutputType '{Token}' is not supported.` |
-| 4 | Resolve `Class` | `… Class must be a literal value.`, `UE.Expression requires Class="MaterialExpressionName".`, `… could not resolve MaterialExpression class '{Class}'.` |
-| 5 | Reject `Output`/`OutputName` together with `OutputIndex` | `… cannot use OutputName/Output together with OutputIndex.` |
-| 6 | Node-reuse lookup | — |
-| 7 | Create the node | `UE.{Function} failed to create '{Class}'.` |
-| 8 | `UMaterialExpressionCustom` setup | `… OutputType="Substrate" is not supported by UMaterialExpressionCustom.`, `… OutputType '{Token}' is not a valid Custom node output type.` |
-| 9 | Dispatch each remaining argument to a pin, a property, or a Custom input | `… '{Argument}' is not a property on '{Class}'.` and the input/property messages |
-| 10 | Synthesize Custom-node outputs | `… OutputName must be a non-empty literal value.` |
-| 11 | Resolve the output index | `… OutputIndex is out of range …`, `… output '{Name}' was not found …`, `… has no material outputs.` |
-| 12 | Register static-switch / static-component-mask parameters on the material | — |
-| 13 | Derive the result type and component count | `{Namespace}.{Function} output is not a Substrate value.` |
-| 14 | Assemble the result and write the reuse cache | — |
-
-> [!NOTE]
-> `UE.Expression()` with no arguments at all reports the **`OutputType`** error, not the missing
-> `Class`, because step 3 runs before step 4.
+| # | Stage | What happens to the call | Codes |
+| :-- | :-- | :-- | :-- |
+| 1 | legacy front end | `Output` / `OutputIndex` become a selection on the call; `OutputType` / `ResultType` are taken off it (and kept on a Custom call); the 1.x shorthands are rewritten | `DSH5250`–`DSH5259`, `DSH5261`, `DSH5263`–`DSH5265` |
+| 2 | binder — the class | `Class`, or the name, is looked up in the catalog | `DSH5216`, `DSH5217`, `DSH5218`, `DSH5212`, `DSH5210`, `DSH5294`, `DSH5300`, `DSH5276` |
+| 3 | binder — the arguments | each is bound to a pin, a property, a Custom input, a Substrate argument, or kept for the built node | `DSH5220`, `DSH5221`, `DSH5285`, `DSH4215`, `DSH5214`, `DSH5224`, `DSH5215`, `DSH5278`, `DSH5284`, `DSH5288`, `DSH5291`, `DSH5213` |
+| 4 | binder — the call | required pins; the type of the value | `DSH5279` (`DSH5219` in a `.dss`), `DSH4231` |
+| 5 | IR builder | property values become literals | `DSH4373` |
+| 6 | emitter | the node is created, its properties written, its pins connected | `DSH8211`, `DSH8214`, `DSH8213`, `DSH8212`, `DSH8254` |
 
 ## Class resolution
 
-`Class` must be a literal (quoted string, bare identifier, or dotted name). The specifier is trimmed
-and then resolved as follows.
+`Class` takes a quoted string, a bare word or a dotted name
+([`DSH5217`](../diagnostics/DSH5xxx.md#dsh5217) otherwise). The specifier is trimmed and looked up in
+the catalog, in this order:
 
-| # | Rule |
+| # | Matches |
 | :-- | :-- |
-| 1 | Empty after trimming → unresolved |
-| 2 | If the text contains `/` or `.`, it is loaded directly as an object path and accepted only if the loaded class derives from `UMaterialExpression` — `Class = "/Script/Engine.MaterialExpressionSine"` |
-| 3 | Otherwise a candidate-name list is built (below) |
-| 4 | Every loaded `UClass` is scanned; the first one that derives from `UMaterialExpression`, is **not** abstract, and whose name equals any candidate ignoring case, wins |
+| 1 | the catalog's short name — `Sine` |
+| 2 | the class name — `MaterialExpressionSine` |
+| 3 | the class path — `/Script/Engine.MaterialExpressionSine` |
+| 4 | `MaterialExpression` + the specifier, and the C++ name with its `U` — `UMaterialExpressionSine` |
+| 5 | an alias the catalog carries — `TexCoord`, `Lerp`, `Mask`, `FunctionCall`, … |
+| 6 | in a 1.x source only: a unique match of rows 1–3 ignoring case, with [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276) |
 
-Candidate names, for a specifier `S`:
-
-| Candidate | Added when |
-| :-- | :-- |
-| `S` | always |
-| `U` + `S` | `S` does not start with `U` |
-| `MaterialExpression` + `S` | `S` does not start with `MaterialExpression` |
-| `UMaterialExpression` + `S` | `S` does not start with `UMaterialExpression` |
-
-Both the `StartsWith` guards and the final comparison are case-insensitive.
+Nothing matched is [`DSH5212`](../diagnostics/DSH5xxx.md#dsh5212). Rows 1–5 are case-sensitive.
 
 > [!IMPORTANT]
-> **The scan compares against the *reflected* class name, which carries no `U` prefix.**
-> `UMaterialExpressionSine`'s reflected name is `MaterialExpressionSine`, so a specifier that already
-> begins with `U` — `USine`, `UMaterialExpressionSine` — never matches, and the `U`-prefixed candidate
-> rows above are unreachable in practice. The spellings that do resolve to `UMaterialExpressionSine`
-> are `Sine`, `sine`, `MaterialExpressionSine` (any casing) and the object path
-> `/Script/Engine.MaterialExpressionSine`.
+> `UMaterialExpressionSine` resolves *(since 2.0.0; 1.x compared against the reflected name and never
+> matched a `U`-prefixed spelling)*. `USine` does not.
 
 > [!NOTE]
-> Only **loaded** classes are scanned. An expression class living in a plugin module that the editor
-> has not loaded will not be found, and the call fails with
-> `UE.{Function} could not resolve MaterialExpression class '{Class}'.` Abstract classes are skipped
-> even when the name matches exactly.
+> The catalog lists the classes loaded when it is built, abstract and deprecated ones left out. An
+> expression class living in a plugin module the editor has not loaded is not in it.
 
-On the `Substrate.*` path the class is fixed by the builtin descriptor and `Class=` is rejected
-outright.
+On the `Substrate.*` path the name is the class, and `Class=` is
+[`DSH5216`](../diagnostics/DSH5xxx.md#dsh5216).
 
 ## OutputType
 
-`OutputType` — or its alias `ResultType`, checked second — is **required** on this path. Omitting it
-produces
+`OutputType` — or its alias `ResultType` — is **not** required *(since 2.0.0)*. The legacy front end
+takes it off the call, and the type of the value comes from the catalog. It still matters in two
+places:
 
-```text
-Unsupported UE builtin call '{Function}' in Graph. For generic MaterialExpression calls, add OutputType="float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture/Substrate".
-```
+- on a `Custom` node it is the node's output type — see [Custom nodes](#custom-nodes);
+- on a node with one numeric output, a numeric type token is the width the value is typed with, as in
+  1.x, and the node is wired whole.
 
-The complete accepted token set is larger than that hint suggests and is tabulated in
-[`OutputType`](output-type.md).
-
-> [!IMPORTANT]
-> `OutputType` is **advisory only for the classes the generator recognizes**. Substrate,
-> `MaterialAttributes` and texture outputs are re-derived from the node's real output value type, and
-> so are the classes in the [known-width table](#result-type-and-component-count) — which is why
-> `UE.Expression(Class = "WorldPosition", OutputType = "float1")` still yields a 3-component value.
-> For every other class the declared token *is* the width, whatever the node's real output type is.
-> On a Custom node the declared `OutputType` is authoritative in a stronger sense: it is written to the
-> node and decides the HLSL return type.
+Everything else it was — a texture, `MaterialAttributes` or `Substrate` token, a misspelled token — is
+dropped without a diagnostic. The token tables are on the [`OutputType`](output-type.md) page.
 
 ## Argument dispatch
 
-These six argument names are reserved and never dispatched:
+These names are not dispatched:
 
-| Reserved name | Purpose |
+| Name | Purpose |
 | :-- | :-- |
-| `Class` | class specifier |
-| `OutputType` | declared output type |
-| `ResultType` | alias of `OutputType` |
-| `Output` | output selector by name |
-| `OutputName` | alias of `Output` |
-| `OutputIndex` | output selector by index |
+| `Class` | class specifier; matched with exactly this spelling |
+| `OutputType`, `ResultType` | declared output type — taken off by the front end, any case |
+| `Output`, `OutputName` | output selector by name — any case |
+| `OutputIndex` | output selector by index — any case |
 
-Every other argument is resolved against the created node in this order. The first match wins.
+Every other argument is resolved against the class's catalog entry in this order. The first match
+wins.
 
 | # | Test | Result |
 | :-- | :-- | :-- |
-| a | The normalized argument name equals the normalized name of one of the node's **input pins** | connect an expression to that pin |
-| b | The normalized argument name equals the normalized name of a reflected `FProperty` on the class or any super | pin path if the property is an expression-input struct, otherwise the literal path |
-| c | The node is a `UMaterialExpressionCustom` | a new Custom input pin named exactly as written |
-| d | — | `UE.{Function}: '{Argument}' is not a property on '{Class}'.` |
+| a | the name is an input pin of the class, or one of its aliases | the value is connected to that pin |
+| b | the name is a property of the class, or one of its aliases | the value is written into the node |
+| c | in a 1.x source: a pin, then a property, whose name or alias is the only one to match ignoring case | as `a` or `b`, with `DSH5276` |
+| d | the class is `Custom` | a new input of the node, named as written — see [Custom nodes](#custom-nodes) |
+| e | the node is a Substrate BSDF and the name a [virtual argument](../language-v2/substrate.md#legacy-parameters-on-a-slab) | the input of a conversion node in front of the pins |
+| f | in a 1.x source: `DefaultValue` on a class that has none | dropped with [`DSH5288`](../diagnostics/DSH5xxx.md#dsh5288) |
+| g | in a 1.x source, or on a class whose pins depend on its properties: the value is a number, a texture, a material, a Substrate value or a node | kept with [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291) and connected by that name when the node is built ([`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212) if the node has no such pin) |
+| h | — | [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213), with a "did you mean" when a spelling is close |
 
-> [!IMPORTANT]
-> **An input-pin name beats a reflected property of the same name.** Several engine expressions carry
-> both — a pin `Input` and a `UPROPERTY` of a related name — and the pin always wins. To reach a
-> property that is shadowed by a pin name, there is no alternative spelling; use the property's real
-> `UPROPERTY` name, which is what the second pass matches.
+An input-pin name beats a property of the same name; a real pin or property name beats an alias.
+The same pin or property twice is [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215).
 
-Property matching runs in two passes:
+The aliases are:
 
-| Pass | Matches | Note |
-| :-- | :-- | :-- |
-| 1 | any `FProperty` whose name equals the argument after trimming and lower-casing | **not** restricted to editable properties — private and non-`EditAnywhere` `UPROPERTY`s are reachable |
-| 2 | `FBoolProperty` only: the property name, lower-cased, with a leading `b` removed | this is how `FractionalPart` reaches `bFractionalPart` |
+| Alias | Example |
+| :-- | :-- |
+| a bool property's name without its leading `b`, where a capital follows the `b` *(since 2.0.0)* | `FractionalPart` → `bFractionalPart` |
+| a property's display name, with its spaces removed or turned into `_` | `ShaderOffsets`, `Shader_Offsets` → `WorldPositionShaderOffset` |
+| a pin's display name in identifier form | `True`, `False` → `StaticSwitch.A`, `StaticSwitch.B` |
+| the 1.x spellings with no rule behind them | `Index` (`TextureCoordinate.CoordinateIndex`), `Origin` (`ObjectPositionWS.OriginType`), `Source` / `Destination` (`Transform`, `TransformPosition`), `Asset` / `Parameter` (`CollectionParameter`), `UV` (`TextureSample.Coordinates`) |
 
-> [!WARNING]
-> Pass 2 lower-cases **before** stripping, and strips a leading `b` from *any* bool property. A bool
-> property named `bTangent` is therefore also reachable as `Tangent`, and a bool property named
-> `BaseColor` is also reachable as `aseColor`. Only bool properties are affected. When two properties
-> collide under these rules, pass 1 wins because it runs first.
+The catalog lists the input pins and the properties that are editable and neither deprecated nor
+transient; 1.x reached any `UPROPERTY`, editable or not *(since 2.0.0)*. Argument names are otherwise
+exact: no separator is stripped.
 
 ### Input pins
 
-An argument that resolves to a pin — by pin name, or by a property whose type is an expression-input
-struct (`FExpressionInput` or a struct named `MaterialAttributesInput`) — has its value evaluated as a
-`Graph` expression and connected. Any channel mask carried by the value is transferred to the
-connection.
+An argument that resolves to a pin is an expression and is connected. Its type is checked against the
+pin's as the catalog types it:
 
-The pin's declared value type is then checked against the value:
-
-| Pin type | Value | Result |
+| Pin | Value | Result |
 | :-- | :-- | :-- |
-| Substrate | non-Substrate | `{Namespace}.{Function} input '{Pin}' expects a Substrate value.` |
-| `MaterialAttributes` | non-attributes | `{Namespace}.{Function} input '{Pin}' expects a MaterialAttributes value.` |
-| numeric | Substrate | `{Namespace}.{Function} input '{Pin}' does not accept Substrate values.` |
-| numeric | `MaterialAttributes` | `{Namespace}.{Function} input '{Pin}' does not accept MaterialAttributes values.` |
-| otherwise | any | connected |
-
-No width check is applied at a pin: connecting a `float4` to a scalar pin is the engine's problem, not
-DreamShader's.
+| `float1`–`float4` | the same width, or a scalar (spread across the pin) | connected |
+| `float1`–`float4` | a narrower vector | connected as it is — what the node does with fewer components is the node's business |
+| `float1`–`float4` | a wider vector | in a 1.x source connected whole, with the info [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289); otherwise [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214) |
+| a pin the engine does not type | any number, a material, a Substrate value | connected as it is |
+| `MaterialAttributes`, Substrate, texture | a value of another kind | `DSH5214` |
 
 ### Literal properties
 
-Any other matched property is written from a literal. Object-typed properties are read as asset
-references; everything else is read as literal text.
+Any other matched name is a property, written into the node when it is built. The binder checks the
+value; the emitter writes it with the 1.x literal writer, and a value it cannot write is
+[`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213), whose message carries the writer's own code.
 
-| Property type | Accepted value syntax | Message on failure |
-| :-- | :-- | :-- |
-| `FBoolProperty` | `true` / `false`, case-insensitive | `'{Value}' is not a valid boolean value for '{Property}'.` |
-| `FIntProperty` | decimal integer | `'{Value}' is not a valid integer value for '{Property}'.` |
-| `FUInt32Property` | integer in `0 … 4294967295` | `'{Value}' is not a valid unsigned integer value for '{Property}'.` |
-| `FFloatProperty` | any numeric literal | `'{Value}' is not a valid numeric value for '{Property}'.` |
-| `FDoubleProperty` | any numeric literal | `'{Value}' is not a valid numeric value for '{Property}'.` |
-| `FStrProperty` | the trimmed text, verbatim — **always succeeds** | — |
-| `FNameProperty` | the trimmed text as an `FName` — **always succeeds** | — |
-| `FObjectPropertyBase` | `Path(…)` or an absolute Unreal object path | see [Object properties](#object-properties) |
-| `FEnumProperty` | see [Enum values](#enum-values) | `'{Value}' is not a valid enum value for '{Property}'.` |
-| `FByteProperty` backed by an enum | see [Enum values](#enum-values) | `'{Value}' is not a valid enum value for '{Property}'.` |
-| `FByteProperty` with no enum | integer in `0 … 255` | `'{Value}' is not a valid byte value for '{Property}'.` |
-| anything else — structs, arrays, sets, maps | Unreal's own import text, e.g. `(R=1,G=0,B=0,A=1)`, `(X=1,Y=2,Z=3)` | `Property '{Property}' on '{Class}' is not a supported literal type yet.` |
+| Property type | The binder accepts | The emitter reads it as | Code inside `DSH8213` |
+| :-- | :-- | :-- | :-- |
+| `FBoolProperty` | a constant | `true` / `false`, case-insensitive | `DSH7132` |
+| `FIntProperty` | a constant | a decimal integer | `DSH7133` |
+| `FUInt32Property` | a constant | an integer in `0 … 4294967295` | `DSH7134` |
+| `FFloatProperty` | a constant | a number | `DSH7135` |
+| `FDoubleProperty` | a constant | a number | `DSH7136` |
+| `FStrProperty` | a quoted string, a word or a dotted name | the trimmed text, verbatim — **always succeeds** | — |
+| `FNameProperty` | the same | the trimmed text as an `FName` — **always succeeds** | — |
+| `FObjectPropertyBase` | the same | see [Object properties](#object-properties) | `DSH7137`–`DSH7139` |
+| `FEnumProperty`, `FByteProperty` with an enum | see [Enum values](#enum-values) | the enum value | `DSH7140`, `DSH7141` |
+| `FByteProperty` without an enum | a constant | an integer in `0 … 255` | `DSH7142` |
+| anything else — structs, arrays | a quoted string or a word | Unreal's own import text, e.g. `"(R=1,G=0,B=0,A=1)"` | `DSH7143` |
 
-All of these are wrapped as `UE.{Function} property '{Property}': {Message}`.
+A value the binder does not accept is [`DSH5224`](../diagnostics/DSH5xxx.md#dsh5224): a computed
+value for a numeric property, or a number for a text property.
 
 > [!WARNING]
-> `FStrProperty` and `FNameProperty` never fail. Whatever text the argument carries — including a
-> misspelled enum name or an unresolvable path — is stored verbatim. Neither a diagnostic nor a
-> fallback value is produced.
+> `FStrProperty` and `FNameProperty` never fail. Whatever text the argument carries — including an
+> unresolvable path — is stored verbatim. Neither a diagnostic nor a fallback value is produced.
 
 ### Enum values
 
-An enum value is matched against every non-hidden entry of the enum in four spellings. Both sides are
-lower-cased and the characters ` `, `_`, `-`, `:`, `.` and `/` are removed before comparison.
+The binder matches an enum value against the values the catalog lists for the property — hidden
+values left out, each written without its prefix (`PostProcessInput0` for `PPI_PostProcessInput0`).
 
-| # | Spelling compared |
-| :-- | :-- |
-| 1 | the entry's short name — `PPI_PostProcessInput0` |
-| 2 | the entry's fully qualified name — `ESceneTextureId::PPI_PostProcessInput0` |
-| 3 | the entry's display name |
-| 4 | the short name with everything up to and including the first `_` removed — `PostProcessInput0` |
+| Written | In a `.dss` | In a 1.x source |
+| :-- | :-- | :-- |
+| `PostProcessInput0` | accepted | accepted |
+| `postprocessinput0` | [`DSH5215`](../diagnostics/DSH5xxx.md#dsh5215), with a "did you mean" | accepted, with [`DSH5278`](../diagnostics/DSH5xxx.md#dsh5278) |
+| `PPI_PostProcessInput0`, `ESceneTextureId::PPI_PostProcessInput0` | `DSH5215` | accepted, with `DSH5278` |
+| a display name that differs from the value's name | `DSH5215` | `DSH5215` *(since 2.0.0)* |
 
-Rule 4 is what makes prefix-less spellings work, and what
-[`UE.SceneTexture`](ue.md#uescenetexture) relies on.
+The 1.x match (rule L12) ignores case, spaces, tabs and the characters `_`, `-`, `:`, `.` and `/`,
+and tries the value whole, after an `Enum::` scope, and after its own prefix. The node is written with
+the catalog's spelling. [`UE.SceneTexture`](ue.md#uescenetexture) and the transform bases rely on
+this.
 
 ### Object properties
 
-An object-typed property takes `Path(<root>, "<asset>")`, `Path("/Game/…")` or a bare absolute object
-path. See [`Path(…)`](../parameters/path.md).
+An object property takes `Path(<root>, "<asset>")`, a quoted object path `"/Game/…"`, or
+`Class'/Game/…'`. A `Path(…)` argument is carried as text and resolved when the node is built. See
+[`Path(…)`](../parameters/path.md).
 
 | Situation | Result |
 | :-- | :-- |
-| The argument is neither a literal nor a `Path(…)` call | `UE.{Function} property '{Property}' must use Path(...) or an Unreal object path.` |
-| The text begins with `Path(` or `/` but does not resolve | the resolver's own message is reported |
-| The text is a literal that is not an asset reference and begins with neither | `Object property '{Property}' expects Path(...) or an absolute Unreal object path.` |
+| The value is neither a quoted string, a word nor a `Path(…)` | `DSH5224` |
+| The text begins with `Path(` or `/`, or ends in `'`, and does not resolve | `DSH8213` with the resolver's own message |
+| The text is no asset reference | `DSH8213` (`DSH7137`) |
 | The asset fails to load, and the property is a `UTexture` named `Texture` or `TextureObject` | the property is set to **null** and this counts as **success** |
-| The asset fails to load, any other property | `Failed to load asset '{Path}' for '{Property}'.` |
-| The asset loads but is the wrong class | `Asset '{Path}' is not compatible with '{Property}'. Expected '{Class}'.` |
+| The asset fails to load, any other property | `DSH8213` (`DSH7138`) |
+| The asset loads but is the wrong class | `DSH8213` (`DSH7139`) |
 
 > [!WARNING]
-> The null-on-failure rule is silent. `UE.Expression(Class = "TextureSample", OutputType = "float4",
+> The null-on-failure rule is silent. `UE.Expression(Class = "TextureSample",
 > Texture = Path(Game, "Missing/T_Nope"))` compiles with an unassigned texture instead of reporting
 > the missing asset. Only the two property names `Texture` and `TextureObject` on `UTexture`-typed
 > properties behave this way.
 
 ## Selecting an output
 
-A node with several outputs is read through one of two mutually exclusive selectors.
+A node with several outputs is read through one of two mutually exclusive selectors, which the front
+end turns into a selection on the call.
 
-| Argument | Aliases | Kind | Semantics |
+| Argument | Aliases | Kind | Becomes |
 | :-- | :-- | :-- | :-- |
-| `Output` | `OutputName` | literal text | resolved by name, then by mask pseudo-name |
-| `OutputIndex` | — | integer ≥ 0 | a direct index into the node's outputs |
+| `Output` | `OutputName` | a quoted name or a word | `.Name` on the call |
+| `OutputIndex` | — | whole number ≥ 0 | `[k]` on the call |
 
-Using both is an error. Using neither selects output 0.
-
-Name resolution walks the outputs in order:
-
-| Output | Matched by |
+| Mistake | Code |
 | :-- | :-- |
-| named output | its name, compared as an `FName` — case-insensitive |
-| unnamed output | one of the mask pseudo-names `RG`, `RGB`, `RGBA`, `R`, `G`, `B`, `A`, tested in that order against the output's channel mask |
+| both selectors | [`DSH5252`](../diagnostics/DSH5xxx.md#dsh5252) |
+| `OutputIndex` not a whole number of zero or more | [`DSH5250`](../diagnostics/DSH5xxx.md#dsh5250) |
+| `Output` neither a quoted name nor a word | [`DSH5251`](../diagnostics/DSH5xxx.md#dsh5251) |
+| a selector on a constructor | [`DSH5253`](../diagnostics/DSH5xxx.md#dsh5253) |
+| a name no output of the class has | [`DSH5201`](../diagnostics/DSH5xxx.md#dsh5201) |
+| an index past the last output | [`DSH5282`](../diagnostics/DSH5xxx.md#dsh5282) |
 
-The specifier is trimmed; an empty specifier selects output 0. The mask pseudo-names are listed in
-full on the [`OutputType`](output-type.md#output-mask-pseudo-names) page.
+The name is compared with the outputs the catalog lists, exactly; in a 1.x source a name that matches
+only ignoring case is accepted with `DSH5276`. It may contain spaces (`Output = "Second Roughness"`).
+An unnamed masked output of a node with several outputs is listed under the channels its mask keeps
+(`RGB`, `R`, `A`); see [output names](output-type.md#output-mask-pseudo-names).
+
+Using neither selector, the call is the node: see
+[Result type and component count](#result-type-and-component-count).
 
 ## Custom nodes
 
-`UMaterialExpressionCustom` is the one class with dedicated handling.
+`UE.Expression(Class = "Custom", …)` — `MaterialExpressionCustom` too — makes a node whose pins are the
+call's (rule L4):
 
 | Aspect | Behaviour |
 | :-- | :-- |
-| `OutputType = "Substrate"` | rejected — `UE.{Function} OutputType="Substrate" is not supported by UMaterialExpressionCustom.` |
-| Other `OutputType` values | must map to a Custom output type; `Texture2D`, `SamplerState`, `TextureCube`, `Texture2DArray`, `Texture3D`, `VolumeTexture`, `StaticBool` and `StaticBoolParameter` are valid `OutputType`s in general but **not** here |
-| Declared `OutputType` | authoritative — written to the node |
-| Unmatched arguments | become new Custom input pins named exactly as written; a Substrate value is rejected with `UE.{Function} Custom input '{Name}' does not accept Substrate values.` |
-| Fresh node | its `Inputs` and `AdditionalOutputs` arrays are cleared before the arguments are applied |
-| `OutputName` | must be a non-empty literal, and implies a request for additional output index 1 |
-| Missing additional outputs | placeholders named `Output1`, `Output2`, … are synthesized up to the requested index, then the node's outputs are rebuilt |
-| Result width | taken from the node's **actual** output value type, so secondary outputs are sized correctly |
-| Node reuse | **disabled** — every Custom call creates its own node |
+| `OutputType` | the node's output type: `float`, `float1`, `half`, `half1` → Float1; `float2`, `vec2`, `half2` → Float2; `float3`, `vec3`, `half3` → Float3; `float4`, `vec4`, `half4` → Float4; `MaterialAttributes` → MaterialAttributes. Compared ignoring case and spaces; anything else is [`DSH5261`](../diagnostics/DSH5xxx.md#dsh5261). Without one, the class's own output type |
+| `AdditionalOutputs` | the node's further outputs, in the engine's import text; each is then selected by its name, and output 0 is called `return` |
+| An argument that is no pin or property | a new input, named exactly as written; a value that is no number, bool or texture is [`DSH5284`](../diagnostics/DSH5xxx.md#dsh5284), the same name twice `DSH4215` |
+| The fresh node | its `Inputs` and `AdditionalOutputs` arrays are cleared before the call's are written |
+| An output selector | names one of the declared outputs: another name is `DSH5201`, an index past them `DSH5282` *(since 2.0.0; 1.x made placeholder outputs `Output1`, `Output2`, … up to the one asked for)* |
+| Node reuse | two identical Custom calls are one node, as any two identical calls are *(since 2.0.0)* |
 
 ## Result type and component count
 
-The result is derived from the resolved output's real value type, in this order.
+The value of a call, by what the catalog says of the class:
 
-| # | Condition | Result |
+| # | The class | The value |
 | :-- | :-- | :-- |
-| 1 | `OutputType = "Substrate"` but the actual output is not Substrate | `{Namespace}.{Function} output is not a Substrate value.` |
-| 2 | Actual output is Substrate | 0 components, Substrate value, authoritative |
-| 3 | Actual output is `MaterialAttributes` | 0 components, attributes value, authoritative |
-| 4 | Actual output is any texture type | texture object, authoritative |
-| 5 | A `Substrate.*` utility builtin | width from the output's value type |
-| 6 | A Custom node | width from the output's value type |
-| 7 | `TextureCoordinate`, `Panner` or `Rotator` | 2 components |
-| 8 | Otherwise | a hard-coded known-width table, else the declared `OutputType` |
+| 1 | has no output (a custom-output class) | none — the call is a statement; used as a value it is [`DSH4231`](../diagnostics/DSH4xxx.md#dsh4231) |
+| 2 | is `Custom` | the type `OutputType` gives; with `AdditionalOutputs`, a node whose outputs are named |
+| 3 | has several outputs | a node: name one, or use it where its first output — or the whole value its channel outputs make up — fits exactly. In a 1.x source a first output of no fixed width is read as that output ([`DSH5287`](../diagnostics/DSH5xxx.md#dsh5287)); otherwise `DSH5201` |
+| 4 | has one output of a known type | that type |
+| 5 | has one output the engine does not type | as wide as the widest number on a pin the engine does not type either — or the Substrate or material value such a pin carries — else as wide as the place it is read into |
 
-The known-width table:
+In a 1.x source, a numeric `OutputType` on a class of row 4 or 5 types the value instead, as above.
+
+An output's type is its mask's width when it has a mask, else the engine's value type; where the
+engine says only "a float", a table of known widths decides — 1.x's own, consulted for a class with
+one output, and a few rows the catalog adds:
 
 | Width | Classes |
 | :-- | :-- |
-| 2 | `TextureCoordinate`, `Panner`, `ScreenPosition`, `Rotator`, `SceneTexelSize` |
-| 3 | `WorldPosition`, `ObjectPositionWS`, `CameraVectorWS`, `VertexNormalWS`, `VertexTangentWS`, `Transform`, `TransformPosition`, `SkyAtmosphereLightDirection`, `PixelNormalWS`, `CrossProduct` |
-| 1 | `PixelDepth`, `TwoSidedSign`, `Arctangent2Fast`, `Length`, `MaterialXLuminance` |
+| 2 | `TextureCoordinate`, `Panner`, `Rotator`, `SceneTexelSize`; `SceneTexture` outputs `Size` and `InvSize` |
+| 3 | `ObjectPositionWS`, `CameraVectorWS`, `VertexNormalWS`, `VertexTangentWS`, `Transform`, `TransformPosition`, `SkyAtmosphereLightDirection`, `PixelNormalWS`, `CrossProduct`, `ObjectBounds`, `CameraPositionWS`, `ReflectionVectorWS` |
+| 1 | `PixelDepth`, `TwoSidedSign`, `Arctangent2Fast`, `Length`, `MaterialXLuminance`, `Time`, `SceneDepth`, `ObjectRadius`, `PerInstanceRandom`, `PerInstanceFadeAmount` |
 
-Five classes then override the width from the values actually bound to their inputs:
-
-| Class | Width |
-| :-- | :-- |
-| `Saturate` | the width of the bound `Input` |
-| `StaticSwitchParameter` | the larger of the bound `True` and `False` |
-| `If` | the largest of the bound `AGreaterThanB`, `AEqualsB` and `ALessThanB` |
-| `StaticComponentMaskParameter` | the number of `DefaultR`/`DefaultG`/`DefaultB`/`DefaultA` set, minimum 1 |
-| `CurveAtlasRowParameter` | the number of channels in the selected output's mask, minimum 1 |
-
-A result with 0 components that is neither a texture nor a Substrate value is a
-[`MaterialAttributes`](../graph/material-attributes.md) value.
+A `MaterialAttributes` result is a [`material`](../graph/material-attributes.md) value.
 
 ## Side effects on the material
 
-Two classes are registered as material parameters when created through this path, so they appear in
-the material instance editor:
+Two classes are registered as material parameters when they are built, so they appear in the
+material instance editor:
 
 | Class | Registration |
 | :-- | :-- |
 | `UMaterialExpressionStaticSwitchParameter` with a parameter name | an editor-only static switch value on the material or material function |
-| `UMaterialExpressionStaticComponentMaskParameter` | an editor-only static component-mask value, from the node's four default channels |
+| `UMaterialExpressionStaticComponentMaskParameter` with a parameter name | an editor-only static component-mask value, from the node's four default channels |
 
 Both are given a fresh expression GUID when theirs is invalid.
 
 ## Node reuse
 
-Two cache keys are built per call:
-
-| Key | Contents |
-| :-- | :-- |
-| expression key | every non-reserved argument, plus the resolved class name and the normalized `OutputType` text |
-| output key | the expression key plus the output selector (`OutputName=…`, `OutputIndex=…`, or `OutputIndex=0`) |
-
-An output-key hit returns the previous result immediately. An expression-key hit reuses the **node**
-and re-resolves only the output. Literal text in a key is normalized by collapsing runs of spaces and
-normalizing line endings. `UMaterialExpressionCustom` subclasses never participate. See
+The IR merges two nodes of the same class with the same properties and the same inputs into one, and
+everything that read the second reads the first *(since 2.0.0)*. The comparison is of the nodes, not
+of the calls' spelling: argument order, an alias or a case-only difference play no part, and a
+`Custom` node merges like any other. A statement — a node with no output — never merges. See
 [Node reuse](../graph/node-reuse.md).
-
-> [!NOTE]
-> When a node is reused, its input and property arguments are **not re-applied**. This is not
-> observable through the language — the arguments are part of the key, so a reused node was built from
-> the same arguments — but it does mean a single node ends up with several call sites in the source.
 
 ## SampleTexture2D
 
@@ -351,113 +308,87 @@ normalizing line endings. `UMaterialExpressionCustom` subclasses never participa
 SampleTexture2D(<texture-object>, <uv>)
 ```
 
-A reserved two-argument form, resolved before user properties and functions and matched
-**case-sensitively**. It rewrites to
+A reserved two-argument form, resolved by the legacy front end before user properties and functions
+and matched **case-sensitively**. It rewrites to
 
 ```c
-UE.Expression(Class = "TextureSample", OutputType = "float4",
-              TextureObject = <arg0>, Coordinates = <arg1>)
+UE.Expression(Class = "TextureSample", TextureObject = <arg0>, Coordinates = <arg1>)
 ```
 
-Both arguments are positional and both are required:
-`SampleTexture2D expects exactly two positional arguments: (textureObject, uv).`
+and the call stands for the whole sample: `float4 t = SampleTexture2D(T, uv)` is the `RGBA` output,
+`float3 c = …` the `RGB` output, `.a` the `A` output. Both arguments are positional and both are
+required; any other shape — a named argument, a third argument, an output selector — is
+[`DSH5256`](../diagnostics/DSH5xxx.md#dsh5256).
 
-For sampling a declared texture *parameter*, prefer the parameter's own pin-call form —
-`BaseTex(Coordinates = uv)` — which reuses the parameter node instead of creating a plain
-`TextureSample`. See [Parameters in Graph](../parameters/graph-usage.md).
+A property declared with a texture-sample parameter token (`TextureSampleParameter2D` and its kin) is
+called with its pins instead — `BaseTex(Coordinates = uv)`. See
+[Parameters in Graph](../parameters/graph-usage.md).
 
 ## Declaration form
 
-A generic `UE.<Name>(…)` may also stand as a property type inside
-[`Properties`](../language/properties.md), where any name outside the
-[declaration-form catalogue](ue.md#properties-declaration-form) is created by the same reflection
-machinery. The rules differ from the `Graph` form:
+A `UE.<Name>(…)` — `UE.Expression(Class = …)` included — may stand as a property type inside
+[`Properties`](../language/properties.md). It is the [declaration form](ue.md#properties-declaration-form)
+of any `UE.` call: a local at the head of each `Graph` body that reads the property, bound like the
+`Graph` form. What differs from 1.x *(since 2.0.0)*:
 
-| Aspect | Declaration form | Graph form |
+| Aspect | Now | 1.x |
 | :-- | :-- | :-- |
-| `OutputType` / `ResultType` | required, from a [reduced token set](output-type.md) | required, from the full set |
-| `Class` | defaults to the builtin name, overridable | same |
-| Input-pin-name matching | **not performed** — only reflected properties are matched | performed first |
-| Unmatched argument | a Custom input on a Custom node, otherwise `'{Argument}' is not a property on '{Class}'.` | same |
-| Input values | a previously declared property, a scalar literal, or a 2–4 component vector literal | any `Graph` expression |
-| `ParameterName` | **auto-set from the property name** when the class exposes one and the author did not | never set |
-| Output selection | `Output` / `OutputName` / `OutputIndex`, Custom placeholders synthesized the same way | same |
-| Metadata `[ … ]` | applied to the node after creation | not applicable |
-| Node canvas X | -800 | 520 |
-
-Additional messages from this surface:
-
-| Message | Cause |
-| :-- | :-- |
-| `Unsupported vector literal '{Value}'.` | an input literal that is not 2–4 numeric components |
-| `Failed to create a scalar constant expression.` | the constant node for a scalar input literal could not be created |
-| `Failed to create a float{N} constant expression.` | the constant node for a vector input literal could not be created |
-| `'{Value}' is not a valid property reference or literal input.` | an input value that is neither a declared property nor a literal |
-| `'{Class}' does not expose a ParameterName property.` | `ParameterName` metadata on a class with no such property |
-| `OutputIndex is out of range for '{Class}'.` | the selected index does not exist |
+| `OutputType` / `ResultType` | optional; the type of the local — see [Declared output width](ue.md#declared-output-width) | required, from a reduced token set |
+| Input-pin names | matched, as in `Graph` | not matched — properties only |
+| Input values | a quoted string, a number, `true` / `false`, or a word (another variable); anything else, a vector literal `float3(…)` among them, is kept as text, which a pin refuses ([`DSH4202`](../diagnostics/DSH4xxx.md#dsh4202)) | a declared property, a scalar, or a 2–4 component vector literal |
+| `ParameterName` | only as written | set from the property name when the class has one |
+| Metadata `[ … ]` | read and not applied | applied to the node |
+| `Output` / `OutputIndex` | ordinary arguments: `DSH5213`, or `DSH5291` and `DSH8212` | select the output |
 
 ## Notes
 
 - Property names are **flat**. Dotted paths and `[index]` selectors are not accepted here; those exist
   only in the [`Settings`](../settings/material.md) section, which is a different resolver.
-- There is no way to leave a required engine pin unconnected on purpose and no way to disconnect one —
-  an argument either connects a value or is absent.
-- Because `Class` defaults to the function name, a typo in a class name produces
-  `could not resolve MaterialExpression class` rather than "unknown builtin"; the two spellings
-  `UE.Sinee(OutputType="float1")` and `UE.Expression(Class="Sinee", OutputType="float1")` report the
-  same thing.
-- A generic call may be swizzled like any other expression:
-  `UE.Expression(Class = "VertexColor", OutputType = "float4").rgb`. See
+- A required pin left unconnected is a warning — [`DSH5279`](../diagnostics/DSH5xxx.md#dsh5279) in a
+  1.x source — and the engine reports it when the material compiles if the node needs the pin.
+- A typo in a name and a typo in `Class` are two codes: `UE.Sinee()` is
+  [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210), `UE.Expression(Class = "Sinee")` is `DSH5212`.
+- A call may be swizzled like any other expression:
+  `UE.Expression(Class = "VertexColor").rgb`. See
   [Swizzle](../graph/swizzle.md#swizzling-a-call-result).
-- The reflected expression manifest the editor exports to
-  `Saved/DreamShader/Bridge/material-expressions.json` lists every resolvable class with its pins and
-  properties, which is the practical way to discover argument names. See
-  [Bridge](../tools/bridge.md).
+- `dsc export-catalog` writes out every class with its pins, properties, aliases and outputs — the
+  practical way to discover argument names. The editor also exports a manifest to
+  `Saved/DreamShader/Bridge/material-expressions.json`; see [Bridge](../tools/bridge.md).
 
 ## Diagnostics
 
-Runtime substitutions are shown as `{Placeholder}` throughout this section; the compiler emits the
-substituted text. `{Function}` preserves the author's spelling and casing; `{Namespace}` is literally
-`UE` or `Substrate`.
+Every code is listed with its message and its full description on its page in
+[Diagnostics](../diagnostics/index.md).
 
-| Message | Cause |
+| Code | Raised when |
 | :-- | :-- |
-| `Generic {Namespace}.{Function} calls require named arguments.` | a positional argument on the generic path |
-| `Unsupported UE builtin call '{Function}' in Graph. For generic MaterialExpression calls, add OutputType="float1/2/3/4/Texture2D/TextureCube/Texture2DArray/VolumeTexture/Substrate".` | no `OutputType` and no `ResultType` |
-| `UE.{Function} OutputType must be a literal value.` | the value is an expression, not a literal |
-| `UE.{Function} OutputType="Substrate" requires Unreal Engine 5.4 or newer.` | `Substrate` on UE 5.3 |
-| `UE.{Function} OutputType '{Token}' is not supported.` | the token is not in the [`OutputType` table](output-type.md) |
-| `UE.{Function} Class must be a literal value.` | the class specifier is an expression |
-| `UE.Expression requires Class="MaterialExpressionName".` | the function name is literally `Expression` and no `Class` was given |
-| `UE.{Function} could not resolve MaterialExpression class '{Class}'.` | no loaded, non-abstract `UMaterialExpression` subclass matched |
-| `Substrate.{Function} uses a fixed MaterialExpression class and does not accept Class.` | `Class=` on a `Substrate.*` call |
-| `Substrate.{Function} resolved to non-Substrate class '{Class}'.` | the descriptor's class is not a Substrate BSDF or utility class |
-| `UE.{Function} cannot use OutputName/Output together with OutputIndex.` | both selectors given |
-| `UE.{Function} failed to create '{Class}'.` | node creation returned nothing |
-| `UE.{Function} OutputType="Substrate" is not supported by UMaterialExpressionCustom.` | Substrate output on a Custom node |
-| `UE.{Function} OutputType '{Token}' is not a valid Custom node output type.` | a texture or static-bool `OutputType` on a Custom node |
-| `UE.{Function}: '{Argument}' is not a property on '{Class}'.` | the argument matched no pin and no property |
-| `UE.{Function} input '{Pin}': {Message}` | the value bound to a pin failed to evaluate |
-| `UE.{Function} Custom input '{Name}' does not accept Substrate values.` | a Substrate value passed to a Custom input |
-| `UE.{Function} failed to bind input '{Pin}'.` | the connection could not be made |
-| `{Namespace}.{Function} input '{Pin}' expects a Substrate value.` | non-Substrate value on a Substrate pin |
-| `{Namespace}.{Function} input '{Pin}' expects a MaterialAttributes value.` | non-attributes value on a `MaterialAttributes` pin |
-| `{Namespace}.{Function} input '{Pin}' does not accept Substrate values.` | Substrate value on a numeric pin |
-| `{Namespace}.{Function} input '{Pin}' does not accept MaterialAttributes values.` | attributes value on a numeric pin |
-| `UE.{Function} property '{Property}' must use Path(...) or an Unreal object path.` | an object property given a value that is neither a literal nor a `Path(…)` call |
-| `Object property '{Property}' expects Path(...) or an absolute Unreal object path.` | an object property given a literal that is not an asset reference |
-| `UE.{Function} property '{Property}' must use a literal value.` | a non-literal value for a literal property |
-| `UE.{Function} property '{Property}': {Message}` | the literal could not be converted — the inner messages are in [Literal properties](#literal-properties) |
-| `UE.{Function} OutputName must be a non-empty literal value.` | empty `OutputName` on a Custom node |
-| `UE.{Function} OutputIndex is out of range for '{Class}'.` | negative, non-integer, or beyond the node's output count |
-| `UE.{Function} OutputName must be a literal value.` | a non-literal output selector |
-| `UE.{Function} output '{Name}' was not found on '{Class}'.` | no named output and no mask pseudo-name matched |
-| `UE.{Function} created '{Class}', but it has no material outputs.` | the node exposes no outputs |
-| `{Namespace}.{Function} output is not a Substrate value.` | `OutputType="Substrate"` on a node whose output is not Substrate |
-| `Invalid reflected property target.` | defensive guard in the literal writer |
-| `SampleTexture2D expects exactly two positional arguments: (textureObject, uv).` | wrong argument count or named arguments |
-
-The complete cross-stage list lives in the [diagnostics index](../diagnostics/index.md).
+| [`DSH5218`](../diagnostics/DSH5xxx.md#dsh5218) | `UE.Expression` without `Class` |
+| [`DSH5217`](../diagnostics/DSH5xxx.md#dsh5217) | `Class` is not a quoted string, a word or a dotted name |
+| [`DSH5212`](../diagnostics/DSH5xxx.md#dsh5212) | `Class` matches no class of the catalog |
+| [`DSH5210`](../diagnostics/DSH5xxx.md#dsh5210) | the name after `UE.` matches no class of the catalog |
+| [`DSH5216`](../diagnostics/DSH5xxx.md#dsh5216) | `Class` on a `Substrate.*` call |
+| [`DSH5276`](../diagnostics/DSH5xxx.md#dsh5276) (warning) | in a 1.x source, a class, pin, property or output matches only ignoring case |
+| [`DSH5220`](../diagnostics/DSH5xxx.md#dsh5220) / [`DSH5221`](../diagnostics/DSH5xxx.md#dsh5221) | a positional argument on a class with no argument order, or past its end |
+| [`DSH5213`](../diagnostics/DSH5xxx.md#dsh5213) | an argument names no pin or property |
+| [`DSH5291`](../diagnostics/DSH5xxx.md#dsh5291) (info) | an argument naming no pin is kept for the built node to name |
+| [`DSH4215`](../diagnostics/DSH4xxx.md#dsh4215) | a pin, property or Custom input is given twice |
+| [`DSH5214`](../diagnostics/DSH5xxx.md#dsh5214) | a value does not fit its pin |
+| [`DSH5289`](../diagnostics/DSH5xxx.md#dsh5289) (info) | in a 1.x source, a wider vector is connected whole |
+| [`DSH5224`](../diagnostics/DSH5xxx.md#dsh5224) | a property value is not a literal or constant of the kind the property takes |
+| [`DSH5215`](../diagnostics/DSH5xxx.md#dsh5215) | an enum value is not a value of the enum |
+| [`DSH5278`](../diagnostics/DSH5xxx.md#dsh5278) (warning) | in a 1.x source, an enum value is spelled the 1.x way |
+| [`DSH5284`](../diagnostics/DSH5xxx.md#dsh5284) | a Custom input is given something a Custom pin cannot carry |
+| [`DSH5261`](../diagnostics/DSH5xxx.md#dsh5261) | a Custom `OutputType` is not one of the accepted tokens |
+| [`DSH5288`](../diagnostics/DSH5xxx.md#dsh5288) (warning) | in a 1.x source, `DefaultValue` on a class that has none is dropped |
+| [`DSH5279`](../diagnostics/DSH5xxx.md#dsh5279) (warning) | in a 1.x source, a required pin is left unconnected |
+| [`DSH5250`](../diagnostics/DSH5xxx.md#dsh5250)–[`DSH5253`](../diagnostics/DSH5xxx.md#dsh5253), `DSH5201`, `DSH5282` | an output selector — see [Selecting an output](#selecting-an-output) |
+| [`DSH4231`](../diagnostics/DSH4xxx.md#dsh4231) | a node with no output is used as a value |
+| [`DSH4373`](../diagnostics/DSH4xxx.md#dsh4373) | a property value is computed at run time |
+| [`DSH5256`](../diagnostics/DSH5xxx.md#dsh5256) | `SampleTexture2D` is not called with exactly two positional arguments |
+| [`DSH8211`](../diagnostics/DSH8xxx.md#dsh8211) | the engine building the asset has no such class |
+| [`DSH8214`](../diagnostics/DSH8xxx.md#dsh8214) | the node could not be created |
+| [`DSH8213`](../diagnostics/DSH8xxx.md#dsh8213) | a property could not be written; the message carries `DSH7131`–`DSH7144` or the asset resolver's code |
+| [`DSH8212`](../diagnostics/DSH8xxx.md#dsh8212) | the built node has no pin of a name kept with `DSH5291` |
 
 ## Example
 
@@ -478,20 +409,20 @@ Shader(Name="Docs/M_Generic")
 
     Graph {
         // Class defaults to the function name.
-        float pulse = UE.Sine(OutputType = "float1", Input = UE.Time());
+        float pulse = UE.Sine(Input = UE.Time());
 
-        // Explicit Class, an enum property by prefix-less name, a bool by its b-stripped alias.
-        float3 scene = UE.Expression(Class = "SceneTexture", OutputType = "float4",
-                                     SceneTextureId = "PostProcessInput0").rgb;
+        // Explicit Class, an enum property by its value's name, then output 0 swizzled.
+        float3 scene = UE.Expression(Class = "SceneTexture",
+                                     SceneTextureId = "PostProcessInput0").Color.rgb;
 
         // An object property through Path(...), and a pin by its pin name.
-        float4 tex = UE.Expression(Class = "TextureSample", OutputType = "float4",
+        float4 tex = UE.Expression(Class = "TextureSample",
                                    Texture      = Path(Game, "Textures/T_Noise"),
                                    Coordinates  = UE.TexCoord(Index = 0));
 
-        // Selecting a named output.
-        float3 sel = UE.Expression(Class = "StaticSwitch", OutputType = "float3",
-                                   True = Dimmed, False = tex.rgb, Value = true);
+        // Pins by their display names (True, False for A, B), and a bool property.
+        float3 sel = UE.Expression(Class = "StaticSwitch",
+                                   True = Dimmed, False = tex.rgb, DefaultValue = true);
 
         Color = (scene + sel) * pulse;
     }
@@ -502,25 +433,26 @@ Generated nodes:
 
 ```text
 Time                                  -> Sine                       (pulse)
-SceneTexture (PPI_PostProcessInput0)  -> mask .rgb                  (scene)
+SceneTexture (PPI_PostProcessInput0)  -> Color, mask .rgb           (scene)
 TextureCoordinate (Index 0)           -> TextureSample.Coordinates
 TextureSample (Texture = T_Noise)                                   (tex)
 Constant3Vector (0.2, 0.2, 0.2)       -> StaticSwitch.True
-StaticSwitch  (Value = true)                                        (sel)
+StaticSwitch  (DefaultValue = true)                                 (sel)
 Add, Multiply                                                       (Color)
 ```
 
 ## See also
 
-- [Builtins](index.md) — the five call surfaces and the dispatch order
-- [`UE.*` catalogue](ue.md) — the registered builtins this page is the fallback for
-- [`OutputType`](output-type.md) — every accepted token, per surface, and the mask pseudo-names
-- [Substrate](substrate.md) — the sibling namespace that shares this code path
+- [Builtins](index.md) — the call surfaces and the resolution order
+- [`UE.*` catalogue](ue.md) — the 1.x names and their argument lists
+- [`OutputType`](output-type.md) — what the argument still does, and the output names
+- [Substrate](substrate.md) — the sibling namespace that shares this path
+- [Substrate sugar](../language-v2/substrate.md) — virtual arguments and operators
 - [`Path(…)`](../parameters/path.md) — asset-reference syntax for object properties
 - [Parameters in Graph](../parameters/graph-usage.md) — the parameter pin-call form
-- [Material attributes](../graph/material-attributes.md) — the 0-component value kind
-- [Conversions](../graph/conversions.md) — authoritative component counts
-- [Node reuse](../graph/node-reuse.md) — the two cache keys in context
+- [Material attributes](../graph/material-attributes.md) — the `material` value kind
+- [Conversions](../graph/conversions.md) — widths and how values fit
+- [Node reuse](../graph/node-reuse.md) — identical nodes
 - [Graph functions](../language/graph-function.md) — `UE.*` calls hoisted into Custom-node pins
 - [Bridge](../tools/bridge.md) — the exported reflected expression manifest
-- [Diagnostics index](../diagnostics/index.md) — every message, by stage
+- [Diagnostics index](../diagnostics/index.md) — every code
