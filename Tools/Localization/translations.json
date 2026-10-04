@@ -2110,5 +2110,6 @@
  "DreamShader.Pass.Slots|PrecheckErrorInSharedHlsl": "[{0}] 文件级 'hlsl' 块在 {1} 的 HLSL 槽位中编译失败：{2}",
  "DreamShader.Pass.Slots|PrecheckViewAtBeginView": "[{0}] Pass '{1}' 运行在 BeginView，此时视图 uniform buffer 还不存在，而它的槽位仍用到了 'View'：它调用的文件级 'hlsl' 块中的某个函数读取了 View。请把该函数需要的值作为参数传入，或把这个 Pass 移到更晚的注入点。",
  "DreamShader.Pass.Slots|SnapshotInlineRootMissing": "无法为 Pass '{0}' 拼出它写在 '.dsp' 中的 HLSL（它的入口不在文件级 'hlsl' 块中），因此没有可存入其槽位快照的内容。",
- "DreamShader.PassEditor.PipelineDetails|OpenInlineHlsl": "打开 {0} 的第 {1} 行"
+ "DreamShader.PassEditor.PipelineDetails|OpenInlineHlsl": "打开 {0} 的第 {1} 行",
+ "DreamShader.Binder.Directives|SliderNotScalar": "滑条范围（'@slider'，或 1.x 属性里的 'Slider(min, max)'）只用于标量参数；这个参数是 '{0}'，没有滑条，所以忽略这个范围。"
 }

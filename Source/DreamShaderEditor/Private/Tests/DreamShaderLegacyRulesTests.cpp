@@ -500,4 +500,158 @@ bool FDreamShaderLegacyRulesInstanceSchemaTest::RunTest(const FString& Parameter
 	return true;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Where a 1.x source's problems are reported (dreamshader-language-support issues #2 and #3)
+// ---------------------------------------------------------------------------------------------
+
+namespace UE::DreamShader::Editor::Private::LegacyRulesTests
+{
+	/** The 1-based line and column of the first character of Marker in Text; (0, 0) when it is not there. */
+	inline FIntPoint LineAndColumnOf(const FString& Text, const TCHAR* Marker)
+	{
+		const int32 Offset = Text.Find(Marker, ESearchCase::CaseSensitive);
+		if (Offset == INDEX_NONE)
+		{
+			return FIntPoint(0, 0);
+		}
+		int32 Line = 1;
+		int32 LineStart = 0;
+		for (int32 Index = 0; Index < Offset; ++Index)
+		{
+			if (Text[Index] == TCHAR('\n'))
+			{
+				++Line;
+				LineStart = Index + 1;
+			}
+		}
+		return FIntPoint(Offset - LineStart + 1, Line);
+	}
+
+	inline const FLangDiagnostic* FindDiagnostic(const FLangDiagnosticSink& Sink, const TCHAR* Code)
+	{
+		return Sink.GetDiagnostics().FindByPredicate([Code](const FLangDiagnostic& Diagnostic) { return Diagnostic.Code.Equals(Code, ESearchCase::CaseSensitive); });
+	}
+
+	inline int32 CountDiagnostics(const FLangDiagnosticSink& Sink, const TCHAR* Code)
+	{
+		int32 Count = 0;
+		for (const FLangDiagnostic& Diagnostic : Sink.GetDiagnostics())
+		{
+			Count += Diagnostic.Code.Equals(Code, ESearchCase::CaseSensitive) ? 1 : 0;
+		}
+		return Count;
+	}
+
+	inline const FIRNode* FindNamedNode(const FIRGraph& Graph, const EIROp Op, const TCHAR* DebugName)
+	{
+		return Graph.Nodes.FindByPredicate([Op, DebugName](const FIRNode& Node) { return Node.Op == Op && Node.DebugName.Equals(DebugName, ESearchCase::CaseSensitive); });
+	}
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderLegacyRulesWhereProblemsLandTest,
+	"DreamShader.Lang2.LegacyRules.WhereProblemsLand",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderLegacyRulesWhereProblemsLandTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private::LegacyRulesTests;
+
+	// #2: an unquoted asset path as a Graph argument. The 1.x generator said "In Graph statement '...'" at 1:1; the error
+	// belongs at the '/' that starts the path.
+	{
+		const FString Text = TEXT(
+			"Shader(Name=\"M_LpIssue2\")\n"
+			"{\n"
+			"    Outputs = { vec3 Color; Base.EmissiveColor = Color; }\n"
+			"\n"
+			"    Graph = {\n"
+			"        float2 WP_UV = UE.WorldPosition().xy;\n"
+			"        vec3 CloudTex = UE.TextureSampleParameter2D(OutputType=\"float3\", ParameterName=\"CloudTexture\", Coordinates=WP_UV, TextureObject=/Engine/Textures/Mask);\n"
+			"        Color = CloudTex;\n"
+			"    }\n"
+			"}\n");
+		FIRRun Run;
+		Lower(Run, TEXT("M_LpIssue2.dsm"), *Text);
+		const FLangDiagnostic* Error = FindDiagnostic(Run.Parse.Diagnostics, TEXT("DSH2151"));
+		const FIntPoint Expected = LineAndColumnOf(Text, TEXT("/Engine/Textures"));
+		if (TestNotNull(FString::Printf(TEXT("the unquoted path is DSH2151 (errors: %s)"), *Run.ErrorText()), Error))
+		{
+			TestEqual(TEXT("at the path's line"), Error->Span.Line, Expected.Y);
+			TestEqual(TEXT("at the path's '/'"), Error->Span.Column, Expected.X);
+		}
+	}
+
+	// #3: Slider(...) on a vec3 property. The 1.x generator failed the whole compile at the Graph line that used the
+	// parameter, naming a 'slidermin' nobody wrote; a vector parameter has no slider. One warning at the Slider entry, the
+	// range dropped -- and a scalar property's Slider still applies.
+	{
+		const FString Text = TEXT(
+			"Shader(Name=\"M_LpIssue3\")\n"
+			"{\n"
+			"    Properties = {\n"
+			"        vec3 Tint = vec3(1.0, 1.0, 1.0) [\n"
+			"            Group = \"Look\"; SortPriority = 10; Slider(0.01, 8);\n"
+			"            ParameterName = \"Base Tint\";\n"
+			"        ];\n"
+			"        float Gain = 0.5 [Slider(0, 4)];\n"
+			"    }\n"
+			"    Outputs = { vec3 Color; Base.EmissiveColor = Color; }\n"
+			"    Graph = {\n"
+			"        Color = Tint * Gain;\n"
+			"    }\n"
+			"}\n");
+		FIRRun Run;
+		Lower(Run, TEXT("M_LpIssue3.dsm"), *Text);
+		TestTrue(FString::Printf(TEXT("the material builds (%s)"), *Run.ErrorText()), Run.Succeeded());
+		TestEqual(FString::Printf(TEXT("one DSH7233, for the vector only (warnings: %s)"), *Run.WarningText()), CountDiagnostics(Run.Bind.Diagnostics, TEXT("DSH7233")), 1);
+		const FLangDiagnostic* Warning = FindDiagnostic(Run.Bind.Diagnostics, TEXT("DSH7233"));
+		const FIntPoint Expected = LineAndColumnOf(Text, TEXT("Slider(0.01"));
+		if (Warning)
+		{
+			TestTrue(TEXT("DSH7233 is a warning"), Warning->Severity == ELangSeverity::Warning);
+			TestEqual(TEXT("at the Slider entry's line"), Warning->Span.Line, Expected.Y);
+			TestEqual(TEXT("at the Slider entry"), Warning->Span.Column, Expected.X);
+		}
+		if (Run.Module.IsValid() && Run.Module->Products.Num() == 1)
+		{
+			const FIRGraph& Graph = Run.Module->Products[0].Graph;
+			const FIRNode* Tint = FindNamedNode(Graph, EIROp::Parameter, TEXT("Tint"));
+			const FIRNode* Gain = FindNamedNode(Graph, EIROp::Parameter, TEXT("Gain"));
+			if (TestNotNull(TEXT("the vector parameter"), Tint))
+			{
+				TestNull(TEXT("carries no slider range"), Tint->FindProperty(Prop::SliderMin));
+			}
+			if (TestNotNull(TEXT("the scalar parameter"), Gain))
+			{
+				TestNotNull(TEXT("keeps its slider range"), Gain->FindProperty(Prop::SliderMax));
+			}
+		}
+	}
+
+	// The same rule in a .dss: '@slider' on a float3 or a bool uniform warns at the directive; on a float it does not.
+	{
+		FIRRun Run;
+		Lower(Run, TEXT("M_Sliders.dss"), TEXT(
+			"/// @slider 0 1\n"
+			"uniform float3 Tint = float3(1, 1, 1);\n"
+			"/// @static @slider 0 1\n"
+			"uniform bool Flip = false;\n"
+			"/// @slider 0 4\n"
+			"uniform float Gain = 0.5;\n"
+			"export void M_Sliders(inout material m)\n"
+			"{\n"
+			"    m.EmissiveColor = Tint * Gain;\n"
+			"}\n"));
+		TestTrue(FString::Printf(TEXT("the .dss builds (%s)"), *Run.ErrorText()), Run.Succeeded());
+		TestEqual(FString::Printf(TEXT("two DSH7233, the float3's and the bool's (warnings: %s)"), *Run.WarningText()), CountDiagnostics(Run.Bind.Diagnostics, TEXT("DSH7233")), 2);
+		const FLangDiagnostic* First = FindDiagnostic(Run.Bind.Diagnostics, TEXT("DSH7233"));
+		if (First)
+		{
+			TestEqual(TEXT("the float3's on its directive line"), First->Span.Line, 1);
+		}
+	}
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

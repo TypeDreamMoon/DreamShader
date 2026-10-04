@@ -35,6 +35,11 @@
 
 ### Fixed
 
+- **A slider range on a parameter that has none says so, where it is written.** `Slider(min, max)` on a 1.x
+  `vec3` property, or `@slider` on a `float3` or `bool` uniform, was written onto a vector parameter or a static
+  switch, which has no slider: the emitter warned twice that `MaterialExpressionVectorParameter` exposes no
+  `SliderMin` and no `SliderMax` field, at the declaration. It is now one warning, DSH7233, at the slider range,
+  and the range is dropped ([dreamshader-language-support#3](https://github.com/TypeDreamMoon/dreamshader-language-support/issues/3)).
 - **A successful compile's warnings reach the editor extension.** The bridge cleared a file's diagnostics when it
   compiled, so a warning -- DSH7233, a metadata key the engine does not know -- was only in the log. A successful
   compile now files its warnings in `diagnostics.json`, with their codes, severity and positions, as a failed

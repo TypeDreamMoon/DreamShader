@@ -202,6 +202,19 @@ namespace UE::DreamShader::Lang::Private
 						Entry.Span,
 						LOCTEXT("SliderRange", "'@slider' needs its minimum below its maximum."));
 				}
+				else if (bOnUniform && DeclaredType && !(DeclaredType->IsScalar() && DeclaredType->Scalar != EScalarKind::Bool))
+				{
+					// A slider range belongs to a ScalarParameter: a vector, a texture or a static switch has none, and
+					// writing one there would only end as the emitter's "exposes no 'SliderMin' field" -- twice, in words
+					// the author never wrote, at the parameter rather than at the range. Said once, here, and dropped.
+					Diagnostics.Warning(
+						TEXT("DSH7233"),
+						CurrentFile,
+						Entry.Span,
+						FText::Format(
+							LOCTEXT("SliderNotScalar", "A slider range ('@slider', or 'Slider(min, max)' in a 1.x property) is for a scalar parameter; this one is '{0}', which has no slider, so the range is ignored."),
+							FText::FromString(DeclaredType->Name)));
+				}
 				else
 				{
 					Out.bHasSlider = true;

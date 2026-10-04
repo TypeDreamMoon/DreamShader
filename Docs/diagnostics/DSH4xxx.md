@@ -770,7 +770,7 @@ nowhere to write the result.
 '#pragma endregion' closes a box that was never opened.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:834`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:853`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:861`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:847`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:866`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:874`
 <!-- generated:end DSH4240 -->
 
 **Cause.** `#pragma region` and `#pragma endregion` do not pair up — an `endregion` with nothing
