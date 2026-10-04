@@ -67,6 +67,7 @@ protect something that was never in danger.
 | a material function's `Description`, `UserExposedCaption`, `ExposeToLibrary`, `LibraryCategories`, usage | **yes** |
 | the instance's parent, or the hidden base material's graph | **yes** |
 | a parameter override on a generated ThinCustom instance | no — `Tweaked` instead, and the rebuild [restores it](#parameter-overrides-on-a-generated-thincustom-instance) *(since 1.9.0)* |
+| the `ExpressionGUID` of a parameter override on a generated instance — UE fills it in when the package loads | no *(through 2.1.1 the first reload of a `.dsi` instance with overrides read as a hand edit, and its rebuild and cook were refused)* |
 | a node dragged to a new position | no |
 | a comment box added by hand (any text — see [regeneration](regeneration.md#what-survives)) | no |
 | a node's comment bubble, collapsed state, preview visibility, `Desc` | no |
