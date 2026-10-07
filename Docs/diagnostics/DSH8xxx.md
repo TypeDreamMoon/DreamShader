@@ -536,7 +536,7 @@ Failed to create material function '%s'.
 Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). %s
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:408`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:410`
 <!-- generated:end DSH8115 -->
 
 **Cause.** the asset no longer matches the output digest stamped at its last generation -- somebody edited it by hand, and a rebuild would destroy that work
@@ -556,7 +556,7 @@ Asset '%s' was edited by hand since DreamShader generated it from '%s', so it wa
 Generated DreamShader asset '%s' could not be saved.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:458`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:460`
 <!-- generated:end DSH8116 -->
 
 **Cause.** A generated asset could not be written to disk: the `.uasset` is read-only or checked in,
@@ -576,7 +576,7 @@ exists in memory only.
 Generated DreamShader asset packages could not be saved.%s
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:488`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:490`
 <!-- generated:end DSH8117 -->
 
 **Cause.** Saving the batch of generated packages failed; the list after the message names each
@@ -1028,7 +1028,7 @@ before any compile and has no sink to raise into, so it has no code).
 Product index {0} does not exist in this module, which has {1}.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1259`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:252`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1259`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:253`
 <!-- generated:end DSH8205 -->
 
 **Cause.** An internal inconsistency: the product index is out of range for the module, or the
@@ -1137,7 +1137,7 @@ is reported as a skip, not a failure.
 '{0}' has no property named '{1}', so that value was not written.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1761`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:324`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:361`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1795`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:324`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:361`
 <!-- generated:end DSH8210 -->
 
 **Cause.** A `/// @key value` on a uniform, or a Group / Desc / SortPriority / slider, named
@@ -1161,7 +1161,7 @@ leave: it starts working when the property appears.
 '{0}' is not a material expression class this engine has.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:509`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:665`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:510`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:666`
 <!-- generated:end DSH8211 -->
 
 **Cause.** A `UE.X(...)` or `UE.Expression(Class = "X")` names a material expression class this
@@ -1183,7 +1183,7 @@ different node or guard the code with `#if`.
 MakeMaterialAttributes has no pin for the attribute '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:124`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:156`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:220`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1740`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:124`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:156`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:220`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1774`
 <!-- generated:end DSH8212 -->
 
 **Cause.** A value has no pin to go to on the node that was made. For a reflected node, the named
@@ -1210,7 +1210,7 @@ through `CustomizedUVs7`.
 '{0}' has no property named '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1768`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1781`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:315`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:372`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1802`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1815`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:315`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:372`
 <!-- generated:end DSH8213 -->
 
 **Cause.** A reflected property refused the value: the wrong literal shape for its type. The quoted
@@ -1232,7 +1232,7 @@ starting with `/`. For a number, remove any unit suffix.
 Failed to create a FunctionInput node.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:123`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:152`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:281`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:40`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:142`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:173`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:239`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:75`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1103`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1136`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1175`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1210`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1242`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1279`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1331`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1735`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:359`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:370`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:382`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:397`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:517`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:674`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:743`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:763`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:784`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:805`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:840`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:862`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:881`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:906`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:937`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:985`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:136`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:150`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:208`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:123`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:152`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:281`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:40`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:142`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:173`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:239`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:75`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1019`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1137`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1209`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1244`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1276`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1313`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1365`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1769`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:360`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:371`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:383`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:398`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:518`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:675`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:743`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:777`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:797`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:818`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:839`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:874`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:896`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:915`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:940`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:971`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:136`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:150`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:208`
 <!-- generated:end DSH8214 -->
 
 **Cause.** `UMaterialEditingLibrary` refused to create an expression of that class in this asset.
@@ -1274,7 +1274,7 @@ value is not valid for that property. The quoted 1.x message says which of the t
 BreakMaterialAttributes does not publish the attribute '{0}', so it cannot be read from a material that came through a pin.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1568`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1811`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1602`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1845`
 <!-- generated:end DSH8216 -->
 
 **Cause.** One of two things. A material attribute name (`m.SomeThing`, a `MakeMaterialAttributes`
@@ -1423,7 +1423,7 @@ binder should have refused first. Report it with the source file.
 The emitter has no rule for the IR operation '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1028`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:334`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1062`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:335`
 <!-- generated:end DSH8223 -->
 
 **Cause.** The IR carries an operation the emitter has no rule for: a core op whose table entry
@@ -1443,7 +1443,7 @@ operation named in the message.
 A SetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to modify.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:181`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:245`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1121`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1149`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1191`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1226`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1265`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1626`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:346`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:694`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:181`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:245`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1155`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1183`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1225`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1260`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1299`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1660`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:347`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:695`
 <!-- generated:end DSH8224 -->
 
 **Cause.** A node's operand or input count does not match its operation — a Select with two
@@ -1463,7 +1463,7 @@ should have caught it.
 This node reads node {0}, which has not been emitted; the graph's topological order is inconsistent.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1553`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1587`
 <!-- generated:end DSH8225 -->
 
 **Cause.** A node reads a value from a node that has not been emitted yet, which means the graph's
@@ -1483,7 +1483,7 @@ cause and `dsc dump-ir` shows it.
 A Swizzle node carries no Mask property.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1057`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1066`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1091`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1100`
 <!-- generated:end DSH8226 -->
 
 **Cause.** A Swizzle node's `Mask` property is missing, empty, longer than four components, or
@@ -1504,7 +1504,7 @@ a message that quotes it. Report it with the source file.
 '{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1369`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1402`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1410`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1403`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1436`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1444`
 <!-- generated:end DSH8227 -->
 
 **Cause.** A `@custom` function's return type, or one of its `out` parameters, does not map to a
@@ -1566,7 +1566,7 @@ built in memory, so the next compile will save it without rebuilding.
 Cannot create a ThinCustom base material without an instance.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:297`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:314`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:340`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:643`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:298`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:319`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:345`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:643`
 <!-- generated:end DSH8230 -->
 
 **Cause.** The hidden base `UMaterial` a ThinCustom instance parents to could not be created as a
@@ -1707,7 +1707,7 @@ the reason (DSH8241, DSH8242 or DSH8253 in words).
 Asset '%s' already exists as a '%s'; a .dsi builds a plain MaterialInstanceConstant. Rename the instance file or move the existing asset.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:252`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:253`
 <!-- generated:end DSH8241 -->
 
 **Cause.** An asset of another class already sits where the `.dsi` would build its instance -- a
@@ -1726,7 +1726,7 @@ material, or a ThinCustom instance of a `.dss` with the same name.
 Asset '%s' already exists and was not generated by DreamShader. Rename the instance file or move/delete the existing asset before building it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:261`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:262`
 <!-- generated:end DSH8242 -->
 
 **Cause.** A material instance already sits at the target path and was not generated by DreamShader.
@@ -1948,7 +1948,7 @@ asset a texture-like override names does not load or is of the wrong class.
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:273`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:280`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:274`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:281`
 <!-- generated:end DSH8253 -->
 
 **Cause.** The instance's package, or the `UMaterialInstanceConstant` in it, could not be created:
@@ -1968,7 +1968,7 @@ the file's name the asset's.
 The material parameter collection '{0}' has no parameter called '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:578`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:579`
 <!-- generated:end DSH8254 -->
 
 **Cause.** A `CollectionParameter` node names a parameter its material parameter collection does not

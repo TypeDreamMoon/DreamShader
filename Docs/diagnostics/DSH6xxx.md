@@ -154,7 +154,7 @@ ambiguous at every call site.
 '{0}' is a {1} asset, not a function this file may call.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3578`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3580`
 <!-- generated:end DSH6208 -->
 
 **Cause.** A call to the material entry, a `@layer` or a `@layerblend`. Those are assets, not
