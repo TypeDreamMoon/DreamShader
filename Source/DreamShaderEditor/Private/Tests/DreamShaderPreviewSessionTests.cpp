@@ -194,4 +194,52 @@ bool FDreamShaderPreviewCapturedMetadataTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDreamShaderPreviewFailedRequestTest,
+	"DreamShader.Preview.Session.FailedRequestCannotResumeOldMaterial",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter | EAutomationTestFlags::NonNullRHI)
+
+bool FDreamShaderPreviewFailedRequestTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::PreviewSessionTests;
+	FScopedDreamShaderGraphBackendPin Backend;
+	FScopedManifest Manifest;
+	FDreamShaderCompile2Fixture Fixture(TEXT("PreviewFailedRequest"));
+	if (!Prepare(*this, Fixture, TEXT("0, 1, 0"))) { return false; }
+	FDreamShaderPreviewSession Session;
+	if (!Begin(*this, Session, Request(Fixture), TEXT("valid"), true)) { return false; }
+	FDreamShaderPreviewFrame Frame;
+	if (!NextFrame(*this, Session, Frame)) { return false; }
+	Session.AckFrame(Frame.FrameIndex);
+
+	FDreamShaderPreviewRequest Missing = Request(Fixture);
+	Missing.SourceFilePath += TEXT(".missing.dss");
+	FDreamShaderPreviewResult Result;
+	TestFalse(TEXT("a missing source fails the replacement request"), Session.BeginPreview(
+		Missing, TEXT("failed"), EDreamShaderPreviewFrameEncoding::RawRGBA8, 1.0 / 60.0, true, Result));
+	TestFalse(TEXT("a failed request cannot retain the previous request's material"), Session.HasMaterial());
+	TestTrue(TEXT("a failed request clears the old source identity"), Session.GetSourceFilePath().IsEmpty());
+	TestTrue(TEXT("a failed request clears the old asset identity"), Session.GetAssetPath().IsEmpty());
+	Session.SetStreaming(true, 1.0 / 60.0);
+	TestFalse(TEXT("visibility resume cannot stream the previous material under the failed request ID"), Session.IsStreaming());
+
+	bool bSentStaleFrame = false;
+	const double Deadline = FPlatformTime::Seconds() + 0.25;
+	while (FPlatformTime::Seconds() < Deadline)
+	{
+		FString Error;
+		bSentStaleFrame |= Session.Tick(FPlatformTime::Seconds(), Frame, Error);
+		TestTrue(TEXT("a failed request stays stopped without render errors"), Error.IsEmpty());
+		FlushRenderingCommands();
+		FPlatformProcess::Sleep(0.001f);
+	}
+	TestFalse(TEXT("no old pixels are delivered for the failed replacement"), bSentStaleFrame);
+	if (!Begin(*this, Session, Request(Fixture), TEXT("recovered"), true)) { return false; }
+	if (!NextFrame(*this, Session, Frame)) { return false; }
+	TestEqual(TEXT("a later valid request can recover"), Session.GetRequestId(), FString(TEXT("recovered")));
+	ExpectGreen(*this, Frame);
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

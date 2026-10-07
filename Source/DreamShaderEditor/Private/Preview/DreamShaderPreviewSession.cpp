@@ -85,7 +85,12 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!bReady)
 		{
-			bStreaming = false;
+			// The request identity already changed. A later visibility/stream control must not
+			// revive the previous material (or its probe) under this failed request's ID.
+			MainMaterial.Reset();
+			SourceFilePath.Reset();
+			AssetPath.Reset();
+			ProbePreview.ClearProbe();
 			return false;
 		}
 
