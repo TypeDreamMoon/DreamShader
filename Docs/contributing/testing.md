@@ -88,6 +88,15 @@ suite takes about a minute and a half headlessly.
 
 ## Running headlessly
 
+The commandlet driver's ownership-aware cleanup can be tested without Unreal:
+
+```powershell
+pwsh -NoProfile -File Tools/Tests/Test-DscAssetCleanup.ps1
+```
+
+This exercises the driver's real helper functions in a temporary fake project, including concurrent
+unrelated writes, pre-existing assets, post-save edits, Content boundaries and invalid save manifests.
+
 | Goal | Filter |
 | :-- | :-- |
 | Fast gate — 1.x parse-equivalence corpus, pure helpers, the preprocessor | `DreamShader.Lang.` |

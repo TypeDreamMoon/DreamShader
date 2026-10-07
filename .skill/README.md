@@ -75,10 +75,14 @@ flag surface: [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md); the ski
 | Engine resolution | from the `.uproject`'s `EngineAssociation`, via the registry — no hard-coded path |
 | Project discovery | walks up from the target file (or `-SourceFile`), then the working directory |
 | Whole messages | a compile's report is one multi-line log message — every `Generated` line, then `Warnings:` and the warnings, or every error — and the engine prefixes only its first line. The driver keeps each message whole, and drops the engine's end-of-run summary that repeats them |
-| Asset accounting | records every `.uasset` under the Content folders of the project and its plugins before the run, and reports what the run created (`NEW`) and rewrote — the latter classified by git where the file is in a repository, with the restore command for a tracked one. It works in a project that is not a repository, and it counts what no log line names: a `.dsp`'s render targets, `check -Shaders`' assets |
-| Cleanup | `-CleanNew` deletes only what the run created, and prunes the folders it leaves empty |
+| Asset accounting | snapshots `.uasset` files under project and plugin Content folders, reports observed changes, and uses a commandlet save manifest to distinguish its own new assets from concurrent editor/importer writes. The manifest also includes a `.dsp`'s saved render targets and `check -Shaders`' assets |
+| Cleanup | `-CleanNew` deletes a new asset only when the current commandlet's save manifest names it and its content still matches the saved fingerprint. Pre-existing, unrelated and subsequently modified files are retained; empty generated folders are pruned |
 | Registry report | after a run that can touch them, the files under `DShader/.dreampass` that changed — sources to commit with the `.dsp` |
 | Paths and lists | a relative `-Out` / `-DiagnosticsOut` is the working directory's, not the engine's Binaries folder; `-Define A=1,B` is split into one `-Define=` per item |
+
+Save manifests are kept in `<Project>/Saved/DreamShader/AssetWrites/<run-id>.json`. A missing, invalid or
+stale manifest disables cleanup; with `-CleanNew`, this also makes an otherwise successful run exit `1`.
+Rebuild the plugin when updating the driver: older commandlet binaries do not produce the manifest.
 
 > [!IMPORTANT]
 > **The commandlet writes real `.uasset` files; the interactive editor, for a ThinCustom material, does not.**

@@ -66,14 +66,16 @@
         record -- every `Generated` line, then `Warnings:` and the warnings, or the first error
         and then the rest -- and the engine prefixes only its first line, so the driver keeps
         records rather than lines, and drops the engine's end-of-run summary echo of them,
-      * a report of every asset the run wrote, found by comparing the Content folders of the
+      * a report of asset changes observed by comparing the Content folders of the
         project and its plugins before and after the run, and classified against git where
         the file is in a repository, so a throw-away probe asset is told apart from a tracked
         asset the run just overwrote,
       * the Custom Pass registry files under `DShader/.dreampass` that the run changed,
-      * `-CleanNew`, which deletes only the assets this run created.
+      * `-CleanNew`, which deletes only new assets named in this commandlet's save manifest
+        whose content still matches the recorded save fingerprint.
 
-    Exit code is the commandlet's own: 0 success, 1 failure.
+    Exit code is the commandlet's own: 0 success, 1 failure. If -CleanNew has no valid save
+    manifest, cleanup is skipped and an otherwise successful run exits 1.
 
 .EXAMPLE
     ./dsc.ps1 compile DShader/Materials/M_Foo.dsm -Force
@@ -394,12 +396,12 @@ function Get-ContentRoots {
 
     $roots = [ordered]@{}
     $game = Join-Path $ProjectDir 'Content'
-    if (Test-Path -LiteralPath $game) { $roots['Game'] = $game }
+    $roots['Game'] = $game
     $plugins = Join-Path $ProjectDir 'Plugins'
     if (Test-Path -LiteralPath $plugins) {
         foreach ($descriptor in Get-ChildItem -LiteralPath $plugins -Filter '*.uplugin' -File -Recurse -Depth 3 -ErrorAction SilentlyContinue) {
             $content = Join-Path $descriptor.DirectoryName 'Content'
-            if ((Test-Path -LiteralPath $content) -and -not $roots.Contains($descriptor.BaseName)) {
+            if (-not $roots.Contains($descriptor.BaseName)) {
                 $roots[$descriptor.BaseName] = $content
             }
         }
@@ -414,7 +416,7 @@ function Get-FileSnapshot {
     $map = @{}
     foreach ($dir in $Directories) {
         if (-not (Test-Path -LiteralPath $dir)) { continue }
-        foreach ($file in Get-ChildItem -LiteralPath $dir -Filter $Filter -File -Recurse -Force -ErrorAction SilentlyContinue) {
+        foreach ($file in Get-ChildItem -LiteralPath $dir -Filter $Filter -File -Recurse -Force -ErrorAction Stop) {
             $map[$file.FullName] = $file.LastWriteTimeUtc.Ticks
         }
     }
@@ -428,6 +430,45 @@ function Compare-FileSnapshot {
     $changed = @($After.Keys | Where-Object { $Before.ContainsKey($_) -and $Before[$_] -ne $After[$_] } | Sort-Object)
     $removed = @($Before.Keys | Where-Object { -not $After.ContainsKey($_) } | Sort-Object)
     return [pscustomobject]@{ New = $new; Changed = $changed; Removed = $removed }
+}
+
+function Read-AssetWriteManifest {
+    param([string]$Path, [string]$RunId)
+
+    $manifest = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
+    if ($manifest -isnot [System.Collections.IDictionary] -or $manifest.schema -ne 'dreamshader-saved-assets' -or $manifest.version -ne 1 -or $manifest.runId -cne $RunId -or -not $manifest.ContainsKey('files')) {
+        throw 'The asset save manifest is missing its schema, version, run id or files.'
+    }
+    $written = @{}
+    foreach ($entry in $manifest.files) {
+        if ([string]::IsNullOrWhiteSpace($entry.path) -or -not [IO.Path]::IsPathFullyQualified($entry.path)) {
+            throw 'The asset save manifest contains a non-absolute filename.'
+        }
+        $written[[IO.Path]::GetFullPath($entry.path)] = [string]$entry.md5
+    }
+    return $written
+}
+
+function Remove-NewAssetIfOwned {
+    # A directory diff is not ownership: an editor/importer may save unrelated assets during this run.
+    param([string]$Path, [hashtable]$Before, [hashtable]$Written, [string[]]$ContentRoots)
+
+    $full = [IO.Path]::GetFullPath($Path)
+    if ($Before.ContainsKey($full) -or -not $Written.ContainsKey($full) -or [IO.Path]::GetExtension($full) -ine '.uasset') {
+        return $false
+    }
+    $root = @($ContentRoots | Where-Object {
+        $boundary = [IO.Path]::GetFullPath($_).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+        $full.StartsWith($boundary, [StringComparison]::OrdinalIgnoreCase)
+    } | Select-Object -First 1)
+    if ($root.Count -eq 0 -or -not (Test-Path -LiteralPath $full -PathType Leaf)) { return $false }
+    $savedHash = $Written[$full]
+    if ($savedHash -notmatch '^[a-fA-F0-9]{32}$' -or (Get-FileHash -LiteralPath $full -Algorithm MD5).Hash -ine $savedHash) {
+        return $false
+    }
+    Remove-Item -LiteralPath $full -Force
+    Remove-EmptyParents -StartDir (Split-Path -Parent $full) -StopAtDir $root[0]
+    return $true
 }
 
 function Get-GitState {
@@ -642,8 +683,27 @@ $assetsBefore = if ($writesAssets) { Get-FileSnapshot -Directories @($contentRoo
 $registryDir = Join-Path $projectDir 'DShader/.dreampass'
 $registryBefore = if ($touchesRegistry) { Get-FileSnapshot -Directories @($registryDir) } else { @{} }
 
+$assetWrites = @{}
+$manifestValid = $false
+$manifestRunId = [guid]::NewGuid().ToString('N')
+$manifestPath = Join-Path $projectDir "Saved/DreamShader/AssetWrites/$manifestRunId.json"
+if ($writesAssets) {
+    $commandletArgs += "-AssetWritesManifest=$($manifestPath -replace '\\', '/')"
+    $commandletArgs += "-AssetWritesRunId=$manifestRunId"
+}
 $output = & $editorCmd @commandletArgs 2>&1 | ForEach-Object { "$_" }
 $exit = $LASTEXITCODE
+
+if ($writesAssets) {
+    try {
+        $assetWrites = Read-AssetWriteManifest -Path $manifestPath -RunId $manifestRunId
+        $manifestValid = $true
+    }
+    catch {
+        Write-Warning "No valid asset save manifest; automatic cleanup is disabled. $($_.Exception.Message)"
+        if ($CleanNew -and $exit -eq 0) { $exit = 1 }
+    }
+}
 
 if ($Raw) { $output | ForEach-Object { Write-Host $_ } }
 
@@ -670,16 +730,20 @@ if ($writesAssets) {
 
     if ($diff.New.Count -gt 0 -or $diff.Changed.Count -gt 0) {
         Write-Host ''
-        Write-Host "Assets written to disk by this run:" -ForegroundColor DarkGray
+        Write-Host "Asset changes observed during this run:" -ForegroundColor DarkGray
     }
     foreach ($full in $diff.New) {
         $relative = [IO.Path]::GetRelativePath($projectDir, $full) -replace '\\', '/'
-        Write-Host "  $relative  [NEW]" -ForegroundColor Yellow
+        $owned = $manifestValid -and $assetWrites.ContainsKey([IO.Path]::GetFullPath($full))
+        $newState = if ($owned) { 'NEW; saved by this commandlet' } else { 'NEW; not attributed to this commandlet' }
+        Write-Host "  $relative  [$newState]" -ForegroundColor Yellow
         if ($CleanNew) {
-            Remove-Item -LiteralPath $full -Force
-            $stopAt = @($contentRoots.Values | Where-Object { $full.StartsWith($_ + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) })[0]
-            if ($stopAt) { Remove-EmptyParents -StartDir (Split-Path -Parent $full) -StopAtDir $stopAt }
-            Write-Host "    deleted (-CleanNew)" -ForegroundColor DarkGray
+            if ($owned -and (Remove-NewAssetIfOwned -Path $full -Before $assetsBefore -Written $assetWrites -ContentRoots @($contentRoots.Values))) {
+                Write-Host "    deleted (-CleanNew)" -ForegroundColor DarkGray
+            }
+            else {
+                Write-Host "    retained (not owned by this run, or changed since its save)" -ForegroundColor DarkGray
+            }
         }
     }
     foreach ($full in $diff.Changed) {
@@ -692,7 +756,7 @@ if ($writesAssets) {
         }
     }
     if ($diff.New.Count -gt 0 -and -not $CleanNew) {
-        Write-Host "  (pass -CleanNew to delete the NEW ones — a leftover ThinCustom file shadows the editor's Ephemeral product)" -ForegroundColor DarkGray
+        Write-Host "  (pass -CleanNew to delete new assets saved by this commandlet and unchanged since their save)" -ForegroundColor DarkGray
     }
 
     # A product the log names that no Content folder of the project shows: an engine mount, or a save that
