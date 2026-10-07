@@ -255,7 +255,7 @@ namespace UE::DreamPass
 			WarnOnce(Private::DescribeBinding(Context, Name), FString::Printf(TEXT("DreamPass: %s: the injection point has no such texture; the pass is skipped."), *Private::DescribeBinding(Context, Name)));
 			return FScreenPassTexture();
 		}
-		return FScreenPassTexture(Texture, Injection.SceneViewRect);
+		return FScreenPassTexture(Texture, Injection.SceneTextureViewRect);
 	}
 
 	FScreenPassRenderTarget ResolveWrite(FExecuteContext& Context, const FDreamPassBufferBinding& Binding)

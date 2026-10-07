@@ -68,6 +68,10 @@ A write to the scene colour goes to a scratch texture and is copied back into th
 post-process chain, handed on as the chain's new colour — so a pass may read the scene colour while it
 writes it.
 
+Depth, custom depth, GBuffer and velocity reads keep their render-resolution view rect after the
+colour chain is upscaled. Their input sizes and UV rects describe those original textures, while
+`SceneColor` and `Translucency` use their own chain input rects.
+
 ## Buffers across frames
 
 Buffers have one mip. Sources with `Mips` other than `1` are rejected, and older assets with such buffers are
