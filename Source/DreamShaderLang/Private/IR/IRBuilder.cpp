@@ -186,6 +186,7 @@ namespace UE::DreamShader::IR::Private
 		Graph = &OutProduct.Graph;
 		Frames.Reset();
 		GlobalValues.Reset();
+		ConditionalValues.Reset();
 		SubstrateBuilders.Reset();
 		// A body's own regions nest under the box its function was declared in.
 		CurrentRegion = INDEX_NONE;
@@ -1333,11 +1334,39 @@ namespace UE::DreamShader::IR::Private
 		return true;
 	}
 
-	bool FIRBuilder::TryEvaluateConstant(FIRValue Value, double& OutValue, int32& Budget) const
+	bool FIRBuilder::TryDefaultArmCondition(FIRValue Condition, bool& bOutHolds) const
+	{
+		for (int32 Index = ConditionStack.Num() - 1; Index >= 0; --Index)
+		{
+			if (ConditionStack[Index].Value == Condition)
+			{
+				bOutHolds = !ConditionStack[Index].bNegated;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool FIRBuilder::TryEvaluateConstant(FIRValue Value, double& OutValue, int32& Budget, bool bUseDefaultArm) const
 	{
 		if (--Budget < 0 || !Graph || !Graph->Nodes.IsValidIndex(Value.Node))
 		{
 			return false;
+		}
+		if (bUseDefaultArm && Value.Output == 0)
+		{
+			if (const FConditionalValue* Choice = ConditionalValues.Find(Value.Node))
+			{
+				bool bHolds = false;
+				double Result = 0.0;
+				const bool bKnown = TryDefaultArmCondition(Choice->Condition, bHolds);
+				if (bKnown || TryEvaluateConstant(Choice->Condition, Result, Budget, true))
+				{
+					// An arm says only whether its condition is nonzero, not that its numeric value is 1.
+					return TryEvaluateConstant((bKnown ? bHolds : Result != 0.0) ? Choice->TrueValue : Choice->FalseValue,
+						OutValue, Budget, true);
+				}
+			}
 		}
 
 		const FIRNode& Node = Graph->Nodes[Value.Node];
@@ -1373,8 +1402,8 @@ namespace UE::DreamShader::IR::Private
 		double A = 0.0;
 		double B = 0.0;
 		if (Arity < 1 || Arity > 2 || !Node.Inputs.IsEmpty()
-			|| !TryEvaluateConstant(Node.Operands[0], A, Budget)
-			|| (Arity == 2 && !TryEvaluateConstant(Node.Operands[1], B, Budget)))
+			|| !TryEvaluateConstant(Node.Operands[0], A, Budget, bUseDefaultArm)
+			|| (Arity == 2 && !TryEvaluateConstant(Node.Operands[1], B, Budget, bUseDefaultArm)))
 		{
 			return false;
 		}
@@ -1404,9 +1433,17 @@ namespace UE::DreamShader::IR::Private
 
 	bool FIRBuilder::TryDecideCondition(FIRValue Condition, bool& bOutHolds) const
 	{
+		// Only lazy default continuation re-enters a previously merged arm. Ordinary compile-time
+		// and uninitialized-read checks retain their existing, unconditional interpretation.
+		const bool bUseDefaultArm = !Frames.IsEmpty() && !Frames.Last()->DefaultArguments.IsEmpty();
+		if (bUseDefaultArm && TryDefaultArmCondition(Condition, bOutHolds))
+		{
+			return true;
+		}
 		double Result = 0.0;
 		int32 Budget = 1024;
-		if (!Condition.IsValid() || !IsCompileTimeConstant(Condition) || !TryEvaluateConstant(Condition, Result, Budget))
+		if (!Condition.IsValid() || (!bUseDefaultArm && !IsCompileTimeConstant(Condition))
+			|| !TryEvaluateConstant(Condition, Result, Budget, bUseDefaultArm))
 		{
 			return false;
 		}
@@ -1543,10 +1580,15 @@ namespace UE::DreamShader::IR::Private
 
 		const int32 Width = FMath::Max(WidthOf(TrueValue), WidthOf(FalseValue));
 		const FIRType Result = FIRType::Float(Width);
+		const auto RememberChoice = [this, Condition, TrueValue, FalseValue](FIRValue Value)
+		{
+			ConditionalValues.Add(Value.Node, { Condition, TrueValue, FalseValue });
+			return Value;
+		};
 
 		if (bStaticCondition && Condition.IsValid())
 		{
-			return MakeCoreOp(EIROp::StaticSwitch, { Condition, TrueValue, FalseValue }, Result, Span);
+			return RememberChoice(MakeCoreOp(EIROp::StaticSwitch, { Condition, TrueValue, FalseValue }, Result, Span));
 		}
 
 		// A scalar comparison as the condition becomes the engine If directly: Compare's five
@@ -1579,12 +1621,12 @@ namespace UE::DreamShader::IR::Private
 				// The engine If compares scalars only; a vector comparison stays a Select.
 				if (WidthOf(Left) == 1 && WidthOf(Right) == 1)
 				{
-					return MakeCoreOp(EIROp::Compare, { Left, Right, Greater, Equal, Less }, Result, Span);
+					return RememberChoice(MakeCoreOp(EIROp::Compare, { Left, Right, Greater, Equal, Less }, Result, Span));
 				}
 			}
 		}
 
-		return MakeCoreOp(EIROp::Select, { Condition, TrueValue, FalseValue }, Result, Span);
+		return RememberChoice(MakeCoreOp(EIROp::Select, { Condition, TrueValue, FalseValue }, Result, Span));
 	}
 
 	void FIRBuilder::SetDebugName(int32 FirstNode, const FString& Name)

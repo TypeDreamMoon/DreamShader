@@ -118,6 +118,10 @@ casts `(float3)x`, constructors `float3(…)`, member/swizzle/index chains, and 
 lists (only as an initializer). Named arguments — `UE.TexCoord(Index = 0)` — are parsed as such;
 a positional argument may not follow a named one.
 
+In a graph body, `condition ? a : b` evaluates its condition once, and only the selected arm's
+assignments and `out` / `inout` writes take effect. Both arms start from the state after the
+condition. A `@custom` body follows the engine's HLSL rules instead.
+
 Literals keep their lexeme exactly as written, so `1.0f`, `0x10`, `2u` and `.5` all print back
 unchanged.
 

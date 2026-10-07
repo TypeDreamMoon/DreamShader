@@ -133,7 +133,8 @@ namespace UE::DreamShader::Editor::Private
 		// DSK5: rebuild chained writes, casts and periodic/round math with corrected semantics.
 		// DSK6: nested returns and parameter defaults changed lowering; invalidate earlier generated
 		// graphs even when their source and the plugin release version are unchanged.
-		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK6");
+		// DSK7: dynamic conditional expressions now merge branch writes instead of applying both.
+		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK7");
 
 		FString GetDreamShaderPluginVersion()
 		{

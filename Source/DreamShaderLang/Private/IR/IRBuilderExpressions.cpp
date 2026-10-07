@@ -1243,12 +1243,29 @@ namespace UE::DreamShader::IR::Private
 			return Live;
 		}
 
+		// Each arm starts after the condition's own effects, but before either arm's writes.
+		// As with an if statement, only the selected arm's assignments and out/inout copybacks
+		// reach the continuation. Lowering the arms into one frame let the false arm overwrite
+		// the true arm and even read values that only the true arm had initialized.
+		const bool bStatic = IsStaticCondition(Condition);
+		const FEnvSnapshot Before = Snapshot();
+		ConstrainDefaultArguments(Condition, true);
+		ConditionStack.Push({ Condition, bStatic, /* bNegated */ false });
 		const FLoweredValue TrueValue = LowerExpr(*Conditional->TrueValue);
+		ConditionStack.Pop();
+		const FEnvSnapshot TrueState = Snapshot();
+
+		Restore(Before);
+		ConstrainDefaultArguments(Condition, false);
+		ConditionStack.Push({ Condition, bStatic, /* bNegated */ true });
 		const FLoweredValue FalseValue = LowerExpr(*Conditional->FalseValue);
+		ConditionStack.Pop();
+		const FEnvSnapshot FalseState = Snapshot();
+		MergeStates(TrueState, FalseState, Condition, bStatic, Expr.Span);
 
 		if (TrueValue.IsMaterial() || FalseValue.IsMaterial() || TrueValue.IsAggregate() || FalseValue.IsAggregate())
 		{
-			return MergeValues(TrueValue, FalseValue, Condition, IsStaticCondition(Condition), Expr.Span, TEXT("?:"));
+			return MergeValues(TrueValue, FalseValue, Condition, bStatic, Expr.Span, TEXT("?:"));
 		}
 		if (!TrueValue.IsValue() || !FalseValue.IsValue())
 		{
@@ -1257,7 +1274,7 @@ namespace UE::DreamShader::IR::Private
 
 		const FIRValue TrueSide = CoerceToWidth(TrueValue.Value, Width, Expr.Span);
 		const FIRValue FalseSide = CoerceToWidth(FalseValue.Value, Width, Expr.Span);
-		return FLoweredValue::Of(MakeConditional(Condition, IsStaticCondition(Condition), TrueSide, FalseSide, Expr.Span));
+		return FLoweredValue::Of(MakeConditional(Condition, bStatic, TrueSide, FalseSide, Expr.Span));
 	}
 
 	// ------------------------------------------------------------------------------ assignment
@@ -1654,7 +1671,8 @@ namespace UE::DreamShader::IR::Private
 		// initializer run later and silently replace the write.
 		if (Ref.bParam && Ref.FrameIndex == Frames.Num() - 1
 			&& Frame().DefaultArguments.IsValidIndex(Ref.BaseIndex)
-			&& Frame().DefaultArguments[Ref.BaseIndex] == EDefaultArgumentState::Pending
+			&& (Frame().DefaultArguments[Ref.BaseIndex].State == EDefaultArgumentState::Pending
+				|| Frame().DefaultArguments[Ref.BaseIndex].State == EDefaultArgumentState::Conditional)
 			&& !ResolveDefaultArgument(Ref.BaseIndex))
 		{
 			return;
@@ -1705,6 +1723,11 @@ namespace UE::DreamShader::IR::Private
 				Slot->Material.Order.Add(Ref.MaterialAttribute);
 			}
 			Slot->Material.Fields.Add(Ref.MaterialAttribute, Stored);
+			if (Ref.SwizzleMask.IsEmpty() && Slot->Material.AssignedWhen.Remove(Ref.MaterialAttribute) > 0)
+			{
+				const int32 Partial = Slot->Material.FindPartialAttribute(Ref.MaterialAttribute);
+				if (Partial != INDEX_NONE) { Slot->Material.PartialAttributes.RemoveAt(Partial); }
+			}
 			// L14: the latest write's spelling is the one the sink shows; a canonical spelling forgets an earlier alias.
 			Slot->Material.SetSpelling(Ref.MaterialAttribute, Ref.MaterialAttributeSpelling);
 			return;

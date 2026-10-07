@@ -67,16 +67,83 @@ namespace UE::DreamShader::IR::Private
 		}
 	}
 
+	static void ConstrainAssignmentPaths(FLoweredValue& Value, FIRValue Condition, bool bHolds)
+	{
+		if (Value.AssignedWhen)
+		{
+			const FDefaultArgumentState State = Value.AssignedWhen->InArm(Condition, bHolds);
+			Value.AssignedWhen = MakeShared<FDefaultArgumentState>(State);
+			if (State.State == EDefaultArgumentState::Ready)
+			{
+				Value.bPartiallyAssigned = false;
+			}
+			// A Pending leaf still represents a missing value, even though the SSA cache holds
+			// the other arm's value. Keep its diagnostic until a write supplies this arm too.
+		}
+		for (FLoweredValue& Field : Value.Fields)
+		{
+			ConstrainAssignmentPaths(Field, Condition, bHolds);
+		}
+		for (TPair<FString, TSharedPtr<const FDefaultArgumentState>>& Attribute : Value.Material.AssignedWhen)
+		{
+			const FDefaultArgumentState State = Attribute.Value->InArm(Condition, bHolds);
+			Attribute.Value = MakeShared<FDefaultArgumentState>(State);
+			if (State.State == EDefaultArgumentState::Ready)
+			{
+				const int32 Partial = Value.Material.FindPartialAttribute(Attribute.Key);
+				if (Partial != INDEX_NONE) { Value.Material.PartialAttributes.RemoveAt(Partial); }
+			}
+		}
+	}
+
+	void FIRBuilder::ConstrainDefaultArguments(FIRValue Condition, bool bHolds)
+	{
+		if (!Frames.ContainsByPredicate([](const TUniquePtr<FFrame>& Each) { return !Each->DefaultArguments.IsEmpty(); }))
+		{
+			return;
+		}
+		for (const TUniquePtr<FFrame>& Each : Frames)
+		{
+			for (FDefaultArgumentState& State : Each->DefaultArguments)
+			{
+				State = State.InArm(Condition, bHolds);
+			}
+			for (FLoweredValue& Value : Each->Locals) { ConstrainAssignmentPaths(Value, Condition, bHolds); }
+			for (FLoweredValue& Value : Each->Params) { ConstrainAssignmentPaths(Value, Condition, bHolds); }
+		}
+	}
+
 	bool FIRBuilder::ResolveDefaultArgument(int32 ParamIndex)
 	{
 		FFrame& Current = Frame();
 		if (!Current.DefaultArguments.IsValidIndex(ParamIndex)
-			|| Current.DefaultArguments[ParamIndex] == EDefaultArgumentState::Ready)
+			|| Current.DefaultArguments[ParamIndex].State == EDefaultArgumentState::Ready)
 		{
 			return true;
 		}
 		const FBoundParam& Param = Current.Function->Params[ParamIndex];
-		if (Current.DefaultArguments[ParamIndex] == EDefaultArgumentState::Evaluating)
+		const FDefaultArgumentState State = Current.DefaultArguments[ParamIndex];
+		if (State.State == EDefaultArgumentState::Conditional)
+		{
+			// Do not initialize a missing arm at the earlier join: the enclosing default may
+			// still be evaluating, and this default is allowed to depend on its completed value.
+			const FEnvSnapshot Before = Snapshot();
+			ConstrainDefaultArguments(State.Condition, true);
+			ConditionStack.Push({ State.Condition, State.bStaticCondition, false });
+			const bool bTrueResolved = ResolveDefaultArgument(ParamIndex);
+			ConditionStack.Pop();
+			const FEnvSnapshot TrueState = Snapshot();
+
+			Restore(Before);
+			ConstrainDefaultArguments(State.Condition, false);
+			ConditionStack.Push({ State.Condition, State.bStaticCondition, true });
+			const bool bFalseResolved = ResolveDefaultArgument(ParamIndex);
+			ConditionStack.Pop();
+			const FEnvSnapshot FalseState = Snapshot();
+			MergeStates(TrueState, FalseState, State.Condition, State.bStaticCondition, Param.Default->Span);
+			return bTrueResolved && bFalseResolved;
+		}
+		if (State.State == EDefaultArgumentState::Evaluating)
 		{
 			Diagnostics.Error(TEXT("DSH6224"), Param.Default->Span, FText::Format(
 				LOCTEXT("IRBuilderDefaultCycle", "The default value of '{0}' in '{1}' depends on itself; pass an explicit value for a parameter in the cycle."),
