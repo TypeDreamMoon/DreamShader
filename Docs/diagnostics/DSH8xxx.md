@@ -536,7 +536,7 @@ Failed to create material function '%s'.
 Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). %s
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:410`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:411`
 <!-- generated:end DSH8115 -->
 
 **Cause.** the asset no longer matches the output digest stamped at its last generation -- somebody edited it by hand, and a rebuild would destroy that work
@@ -556,7 +556,7 @@ Asset '%s' was edited by hand since DreamShader generated it from '%s', so it wa
 Generated DreamShader asset '%s' could not be saved.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:460`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:493`
 <!-- generated:end DSH8116 -->
 
 **Cause.** A generated asset could not be written to disk: the `.uasset` is read-only or checked in,
@@ -576,7 +576,7 @@ exists in memory only.
 Generated DreamShader asset packages could not be saved.%s
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:490`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:526`
 <!-- generated:end DSH8117 -->
 
 **Cause.** Saving the batch of generated packages failed; the list after the message names each
@@ -2335,7 +2335,7 @@ cached copy and `InvalidateDreamShaderBuiltinCatalog`.
 Building '{0}' was cancelled; the asset is as it was before this compile.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1165`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:621`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1183`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:621`
 <!-- generated:end DSH8298 -->
 
 **Cause.** The user pressed Cancel on the compile's progress dialog. Nothing was written: the emit
@@ -2382,7 +2382,7 @@ third function that neither calls back into.
 '{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:999`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1017`
 <!-- generated:end DSH8300 -->
 
 **Cause.** A `.dsp` was compiled on an engine older than Unreal Engine 5.8. The DreamShaderPass module
@@ -2405,7 +2405,7 @@ pipeline, render target, slot or snapshot was written.
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1009`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1039`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1027`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1057`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
 <!-- generated:end DSH8301 -->
 
 **Cause.** The pipeline asset could not be made at the path its `.dsp` resolves to. The message
@@ -2472,7 +2472,7 @@ and copy what you need.
 '{1}' is not a {0} the Custom Pass runtime knows; the pipeline was not built. This is a compiler gap: the binder should have refused it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:581`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:599`
 <!-- generated:end DSH8304 -->
 
 **Cause.** A value of the pipeline reached the emitter in a spelling the DreamShaderPass runtime has no
@@ -2495,7 +2495,7 @@ not at fault. Nothing was built.
 The material '{0}' of pass '{1}' does not load; compile the source that builds it, or correct the Material key.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:760`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:778`
 <!-- generated:end DSH8305 -->
 
 **Cause.** When the pipeline was put together, the material a fullscreen or mesh pass names did not load
@@ -2517,7 +2517,7 @@ material's object path), then compile the `.dsp` again.
 The default of '{0}' could not be applied: {1}.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:642`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:660`
 <!-- generated:end DSH8306 -->
 
 **Cause.** The `/// @default` of a `Texture2D` uniform could not be written into the pipeline: the
@@ -2539,7 +2539,7 @@ write `/// @default None` (or no `@default`) for a parameter without a texture.
 Pass '{0}' selects the layer '{1}', which is not one of the project's pass layers (Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names).
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:836`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:854`
 <!-- generated:end DSH8307 -->
 
 **Cause.** A mesh pass's `Filter = Layer(...)` names a layer that has no bit when the pipeline is built.
@@ -2562,7 +2562,7 @@ it until that pipeline is compiled again.
 Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read an exported buffer as a float texture, which an integer or a depth buffer cannot be. Export a float or normalized buffer, or drop Export.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:687`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:705`
 <!-- generated:end DSH8308 -->
 
 **Cause.** A buffer declared `Export = true` has an integer or depth format (`R32U`, `RG32U`, `Depth32`).
@@ -2584,7 +2584,7 @@ check as it maps the format onto a render target format.
 The render target of the exported buffer '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1144`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1162`
 <!-- generated:end DSH8309 -->
 
 **Cause.** The render target of an exported buffer — `<Pipeline>_<Buffer>`, in the pipeline's folder —
@@ -2605,7 +2605,7 @@ registry and the snapshots are as they were.
 '{0}' was left in place although its buffer is no longer exported: {1}. Delete it by hand once nothing reads it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:559`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:577`
 <!-- generated:end DSH8310 -->
 
 **Cause.** A buffer the pipeline used to export is no longer exported — its `Export` dropped, the buffer
@@ -2626,10 +2626,10 @@ the next compile takes the same render target over again, and its readers stay v
 **Message**
 
 ```
-'{0}' was built but could not be saved with its render targets; its slots are already in the registry. In this session the pipeline in memory is current, so a plain compile of its source skips it: save it, or compile the source again with -Force. {1}
+'{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make the packages writable and compile the source again to retry saving. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1253`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1271`
 <!-- generated:end DSH8311 -->
 
 **Cause.** The pipeline was built and its render targets configured, and saving the packages failed — a
@@ -2654,7 +2654,7 @@ pipeline also prevents a skip. `-Force` is not required.
 '{0}' was deleted: its buffer is no longer exported.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:547`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:565`
 <!-- generated:end DSH8312 -->
 
 **Cause.** Informational. A buffer the pipeline used to export is no longer exported, and nothing but the

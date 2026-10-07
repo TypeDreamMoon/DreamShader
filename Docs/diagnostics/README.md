@@ -389,9 +389,10 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH6210](DSH6xxx.md#dsh6210) | error | '{0}' is '@custom', so '{1}' becomes an input pin of a Custom node, and a Custom node cannot take a materia... |
 | [DSH6211](DSH6xxx.md#dsh6211) | error | '{0}' is an 'out' parameter of '{1}' but the body never assigns it, so a caller would read a value nothing ... |
 | [DSH6220](DSH6xxx.md#dsh6220) | error | '{0}' calls itself, and an inlined function has no stack to recurse on; rewrite it as a loop with a constan... |
-| [DSH6221](DSH6xxx.md#dsh6221) | error | Inlining '{0}' would go {1} calls deep, past the limit of {2}; flatten the call chain or move part of it in... |
+| [DSH6221](DSH6xxx.md#dsh6221) | error | Resolving the defaults of '{0}' would go {1} calls deep, past the limit of {2}; pass explicit values or fla... |
 | [DSH6222](DSH6xxx.md#dsh6222) | error | '{0}' is an '{1}' parameter of {2}, so the argument has to be something that can be assigned to; this expre... |
 | [DSH6223](DSH6xxx.md#dsh6223) | error | '{0}' is this file's material entry and is called by the engine, not by the shader. |
+| [DSH6224](DSH6xxx.md#dsh6224) | error | The default value of '{0}' in '{1}' depends on itself; pass an explicit value for a parameter in the cycle. |
 | [DSH6250](DSH6xxx.md#dsh6250) | error | '{0}' has no verbatim HLSL body, so it cannot become a custom node; only a '/// @custom' function can. |
 | [DSH6251](DSH6xxx.md#dsh6251) | error | '{0}' declares '{1}' as 'inout', which a custom node cannot carry; split it into an 'in' parameter and an '... |
 | [DSH6252](DSH6xxx.md#dsh6252) | error | '{0}' takes the material '{1}' as an input; a custom node cannot accept material attributes on a pin, so re... |
@@ -704,7 +705,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH8308](DSH8xxx.md#dsh8308) | error | Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read an exported buffer as a floa... |
 | [DSH8309](DSH8xxx.md#dsh8309) | error | The render target of the exported buffer '{0}' could not be created or reused. {1} |
 | [DSH8310](DSH8xxx.md#dsh8310) | warning | '{0}' was left in place although its buffer is no longer exported: {1}. Delete it by hand once nothing read... |
-| [DSH8311](DSH8xxx.md#dsh8311) | error | '{0}' was built but could not be saved with its render targets; its slots are already in the registry. In t... |
+| [DSH8311](DSH8xxx.md#dsh8311) | error | '{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make... |
 | [DSH8312](DSH8xxx.md#dsh8312) | info | '{0}' was deleted: its buffer is no longer exported. |
 | [DSH8313](DSH8xxx.md#dsh8313) | error | Asset '%s' already exists as a '%s'; an exported buffer needs a TextureRenderTarget2D there. Move the exist... |
 | [DSH8314](DSH8xxx.md#dsh8314) | error | Failed to create package '%s'. |
