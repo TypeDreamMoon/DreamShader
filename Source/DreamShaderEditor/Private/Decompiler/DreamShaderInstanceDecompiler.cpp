@@ -251,7 +251,13 @@ namespace UE::DreamShader::Editor::Private
 				const int32 SchemaIndex = Schema.bValid ? Schema.Find(Override.ParameterName) : INDEX_NONE;
 				if (SchemaIndex != INDEX_NONE && Schema.Parameters[SchemaIndex].Kind == Kind)
 				{
-					Override.DeclaredType = Schema.Parameters[SchemaIndex].DeclaredType;
+					const IR::FIRParameterSchemaEntry& Entry = Schema.Parameters[SchemaIndex];
+					Override.DeclaredType = Entry.DeclaredType;
+					if (Kind == IR::EIRParameterKind::Texture && Override.DeclaredType.IsError() && Entry.TextureKind != Lang::ETextureKind::None)
+					{
+						// Asset-derived schemas know the texture dimension without a source declaration.
+						Override.DeclaredType = IR::FIRType::TextureOf(Entry.TextureKind);
+					}
 				}
 
 				// A `uniform bool` that is not static is a scalar parameter holding 0 or 1, and anything else it holds now
