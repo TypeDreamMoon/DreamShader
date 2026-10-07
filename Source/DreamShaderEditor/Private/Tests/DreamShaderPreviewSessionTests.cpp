@@ -242,4 +242,69 @@ bool FDreamShaderPreviewFailedRequestTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDreamShaderPreviewAcknowledgementTest,
+	"DreamShader.Preview.Session.AcknowledgementMatchesFrame",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter | EAutomationTestFlags::NonNullRHI)
+
+bool FDreamShaderPreviewAcknowledgementTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::PreviewSessionTests;
+	FScopedDreamShaderGraphBackendPin Backend;
+	FScopedManifest Manifest;
+	FDreamShaderCompile2Fixture Fixture(TEXT("PreviewAcknowledgement"));
+	if (!Prepare(*this, Fixture, TEXT("0, 1, 0"))) { return false; }
+	FDreamShaderPreviewSession Session;
+	if (!Begin(*this, Session, Request(Fixture), TEXT("acks"), true)) { return false; }
+	FDreamShaderPreviewFrame Frame;
+	// Hold the session clock fixed while the real GPU finishes. This exercises the two-second
+	// acknowledgement timeout without sleeps that could themselves make a stale ack overdue.
+	const auto PumpAt = [&](const double Now, const double WaitSeconds)
+	{
+		const double Deadline = FPlatformTime::Seconds() + WaitSeconds;
+		while (FPlatformTime::Seconds() < Deadline)
+		{
+			FString Error;
+			if (Session.Tick(Now, Frame, Error)) { return true; }
+			if (!Error.IsEmpty()) { AddError(Error); return false; }
+			FlushRenderingCommands();
+			FPlatformProcess::Sleep(0.001f);
+		}
+		return false;
+	};
+	const double Start = FPlatformTime::Seconds();
+	if (!TestTrue(TEXT("the first frame arrives"), PumpAt(Start, 3.0))) { return false; }
+	const int32 First = Frame.FrameIndex;
+	Session.SetOrbit(-90.0f, -20.0f);
+	if (!TestTrue(TEXT("timeout replaces a frame whose ack is missing"), PumpAt(Start + 3.0, 3.0))) { return false; }
+	const int32 Second = Frame.FrameIndex;
+	TestEqual(TEXT("the replacement has the next index"), Second, First + 1);
+
+	// The first frame's delayed ack is plausible after timeout; a future or invalid negative
+	// index likewise must not acknowledge the replacement that the client has not consumed.
+	double Now = Start + 3.0;
+	for (const int32 WrongIndex : { First, Second + 10, -2 })
+	{
+		Now += 0.1;
+		Session.SetOrbit(Session.GetOrbitYaw() + 10.0f, -20.0f);
+		Session.AckFrame(WrongIndex);
+		TestFalse(FString::Printf(TEXT("ack %d cannot release frame %d"), WrongIndex, Second), PumpAt(Now, 0.15));
+	}
+	// An early readback may take longer than the rejection probes. Its captured orbit must
+	// also differ from the frame legitimately started by the matching acknowledgement.
+	const float AcceptedYaw = Session.GetOrbitYaw() + 10.0f;
+	Session.SetOrbit(AcceptedYaw, -20.0f);
+	Session.AckFrame(Second);
+	if (!TestTrue(TEXT("the matching ack releases the next frame"), PumpAt(Now + 0.1, 3.0))) { return false; }
+	TestEqual(TEXT("rejected acks did not send extra frames"), Frame.FrameIndex, Second + 1);
+	TestEqual(TEXT("the frame was captured after the matching ack"), Frame.OrbitYaw, AcceptedYaw);
+	ExpectGreen(*this, Frame);
+
+	Session.SetOrbit(Session.GetOrbitYaw() + 10.0f, -20.0f);
+	Session.AckFrame(-1);
+	TestTrue(TEXT("the legacy control-ping sentinel still releases the frame"), PumpAt(Now + 0.2, 3.0));
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

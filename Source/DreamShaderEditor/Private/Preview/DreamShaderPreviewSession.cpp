@@ -153,8 +153,12 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderPreviewSession::AckFrame(const int32 FrameIndex)
 	{
-		(void)FrameIndex;
-		bFrameInFlight = false;
+		// A timed-out frame's delayed acknowledgement cannot release its replacement. The -1
+		// sentinel is kept for legacy control pings that do not carry an explicit frame index.
+		if (FrameIndex == -1 || (bFrameInFlight && FrameIndex == NextFrameIndex - 1))
+		{
+			bFrameInFlight = false;
+		}
 	}
 
 	bool FDreamShaderPreviewSession::SetProbe(const int32 Line, const FString& PreferredName, FString& OutError)

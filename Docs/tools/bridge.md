@@ -528,7 +528,7 @@ session's `requestId` are non-empty they must match, otherwise the message is ig
 | `orbitPitch` | number | keeps the current angle | drag-to-rotate |
 | `width` / `height` | number | keeps the current size | resize the render target; clamped to `[64, 2048]` |
 | `mesh` | string | keeps the current mesh | change the preview primitive |
-| `ackFrameIndex` | number | no ack | acknowledges a delivered frame and releases the flow-control gate |
+| `ackFrameIndex` | number | no ack | releases the flow-control gate only when it matches the current unacknowledged frame; stale or future indices are ignored |
 
 > [!NOTE]
 > Every field except `requestId`/`ackFrameIndex` keeps its current value when omitted *(since
