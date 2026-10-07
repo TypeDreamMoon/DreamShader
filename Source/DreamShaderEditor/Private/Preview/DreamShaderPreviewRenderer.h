@@ -129,10 +129,11 @@ namespace UE::DreamShader::Editor::Private
 		int32 CachedWidth = 0;
 		int32 CachedHeight = 0;
 
-		// Async GPU readback state. The readback object itself is reused across many frames (like
-		// the render target); the promise/future pair is recreated for each individual frame to
+		// Async GPU readback state. The readback object is reused while the dimensions stay the
+		// same; its staging texture cannot resize. The promise/future pair is recreated per frame to
 		// hand its pixel data from the render thread back to the game thread once ready.
 		TSharedPtr<FRHIGPUTextureReadback> PendingReadback;
+		FIntPoint PendingReadbackSize = FIntPoint::ZeroValue;
 		TSharedPtr<TPromise<FDreamShaderPreviewReadbackData>> PendingPromise;
 		TOptional<TFuture<FDreamShaderPreviewReadbackData>> PendingFuture;
 		bool bReadbackInFlight = false;

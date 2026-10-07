@@ -374,9 +374,13 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		if (!PendingReadback.IsValid())
+		const FIntPoint ReadbackSize(CachedWidth, CachedHeight);
+		if (!PendingReadback.IsValid() || PendingReadbackSize != ReadbackSize)
 		{
+			// FRHIGPUTextureReadback reuses its first staging texture without resizing it.
+			// The previous frame has been consumed before KickoffFrame can reach this point.
 			PendingReadback = MakeShared<FRHIGPUTextureReadback>(TEXT("DreamShaderPreviewReadback"));
+			PendingReadbackSize = ReadbackSize;
 		}
 
 		const int32 ReadbackWidth = CachedWidth;
@@ -393,7 +397,9 @@ namespace UE::DreamShader::Editor::Private
 				{
 					return;
 				}
-				RHICmdList.Transition(FRHITransitionInfo(Texture, ERHIAccess::SRVMask, ERHIAccess::CopySrc));
+				// The scene/canvas render may leave the target in RTV rather than SRV state.
+				// Let the RHI use its tracked state instead of asserting a fixed before-state.
+				RHICmdList.Transition(FRHITransitionInfo(Texture, ERHIAccess::Unknown, ERHIAccess::CopySrc));
 				const FResolveRect SrcRect(0, 0, ReadbackWidth, ReadbackHeight);
 				Readback->EnqueueCopy(RHICmdList, Texture, SrcRect);
 				RHICmdList.Transition(FRHITransitionInfo(Texture, ERHIAccess::CopySrc, ERHIAccess::SRVMask));

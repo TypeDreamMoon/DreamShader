@@ -50,16 +50,21 @@ see [Bridge » Message types](bridge.md#message-types).
 | | One-shot thumbnail | Streaming preview |
 | :-- | :-- | :-- |
 | Triggered by | a `previewMaterial` request file, or a `previewMaterial` WebSocket message with `stream` false | a `previewMaterial` WebSocket message with `stream` true (the default) |
-| Readback | synchronous — flushes rendering commands, then blocks on `ReadPixels` | asynchronous — enqueues a GPU readback and polls it on a later tick |
-| Waits for shader compilation | yes — finishes asset compilation, then all shader compilation, then flushes rendering commands | no |
+| Readback | file/PNG: synchronous; WebSocket raw: asynchronous GPU readback | asynchronous — enqueues a GPU readback and polls it on a later tick |
+| Waits for shader compilation | yes; WebSocket raw waits across ticks without blocking the editor | no |
 | Camera control | request-file path: **no** — orbit fields are not read. WebSocket path: yes | yes, through `previewControl` |
-| Result | one PNG plus `preview.json` | one raw RGBA8 frame per tick over the socket (`encoding: "raw"`), or the legacy `preview.json` + tagged PNG pair (`encoding: "png"`) |
+| Result | file/PNG: one PNG plus `preview.json`; WebSocket raw: exactly one RGBA8 frame | one raw RGBA8 frame per tick over the socket (`encoding: "raw"`), or the legacy `preview.json` + tagged PNG pair (`encoding: "png"`) |
 | Tick rate | the 0.1 s bridge ticker | every frame |
 
 > [!NOTE]
 > The streaming path does not wait for shader compilation. Early frames of a freshly edited material
 > can show the previous or default shader until the compile lands; a later frame corrects it. The
-> one-shot path always waits, which is why it is slower and can block the editor briefly.
+> one-shot path waits for the shader to be ready. File/PNG requests can block the editor briefly;
+> raw requests deliver their one frame asynchronously, including when `frameRate <= 0`.
+
+Frames retain the camera, probe, encoding and dimensions used when rendering began. Controls changed
+during GPU readback apply to the next frame. Starting another preview request discards any pending
+frame from the previous request, so it cannot be sent under the new request ID.
 
 The inspector of the [Material Content Browser](material-browser.md#inspector) renders through this
 renderer too: a 224×224 preview, asynchronous, re-rendered on every compile. The 1.x *Dream Shader
@@ -124,7 +129,7 @@ drag-to-orbit viewport write. One is created lazily if the material has none.
 | Aspect | Value |
 | :-- | :-- |
 | Render target | transient, `PF_B8G8R8A8`, linear gamma not forced, cleared to `(0.025, 0.025, 0.03, 1.0)` |
-| Reuse | the render target and the thumbnail scene persist across the frames of one streaming session, and are recreated only when the requested size changes |
+| Reuse | the render target and thumbnail scene persist across frames; changing size recreates the render target and GPU readback buffer |
 | Show flags | game show flags, with **motion blur disabled** and **anti-aliasing disabled** |
 | Screen percentage | fixed at 1.0 |
 | Separate translucency | follows the thumbnail scene's own rule for the material |

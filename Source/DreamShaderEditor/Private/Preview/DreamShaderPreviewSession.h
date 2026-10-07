@@ -75,7 +75,9 @@ namespace UE::DreamShader::Editor::Private
 
 		// Compiles (or hash-skips) the request's source and points the session at the result. Does
 		// NOT wait for the shader map -- streaming starts on the next Tick and the frames carry the
-		// Compiling flag until the map lands. Returns the compile/resolve outcome in OutResult and
+		// Compiling flag until the map lands. Raw one-shot requests wait asynchronously for the map
+		// and deliver one frame through Tick even though IsStreaming() stays false.
+		// Returns the compile/resolve outcome in OutResult and
 		// false when nothing can be streamed. A probe requested earlier for the same source is
 		// re-attached automatically through the debug registry's publish.
 		bool BeginPreview(const FDreamShaderPreviewRequest& Request, const FString& InRequestId, EDreamShaderPreviewFrameEncoding InEncoding, double FrameIntervalSeconds, bool bStream, FDreamShaderPreviewResult& OutResult);
@@ -119,7 +121,6 @@ namespace UE::DreamShader::Editor::Private
 
 	private:
 		void MarkDirty();
-		bool BuildFrame(TArray<uint8>&& Payload, int32 FrameWidth, int32 FrameHeight, uint32 Flags, FDreamShaderPreviewFrame& OutFrame);
 		static bool IsMaterialCompiling(UMaterialInterface* Material);
 
 		FString RequestId;
@@ -134,10 +135,15 @@ namespace UE::DreamShader::Editor::Private
 		float OrbitYaw = -157.5f;
 		float OrbitPitch = -11.25f;
 		bool bStreaming = false;
+		bool bOneShotPending = false;
 		double FrameIntervalSeconds = 0.5;
 
 		TUniquePtr<FDreamShaderPreviewRenderContext> RenderContext;
 		FDreamShaderProbePreview ProbePreview;
+		// A readback describes the request and controls at capture time, not at delivery time.
+		uint64 RequestGeneration = 0;
+		uint64 PendingRequestGeneration = 0;
+		FDreamShaderPreviewFrame PendingFrame;
 
 		// Flow control: at most one frame between send and acknowledgement, with a timeout so a
 		// dropped ack cannot wedge the stream.
