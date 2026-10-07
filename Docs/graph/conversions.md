@@ -156,6 +156,9 @@ Consequences:
 
 - `int x = 7.9;` stores 7.9. Use `floor(…)` if truncation is wanted.
 - `bool b = 0.5;` stores 0.5. There is no conversion to 0 or 1.
+- Explicit graph casts follow the same rule: `(int)0.5` and `(bool)0.5` both retain 0.5,
+  including when a constant expression is evaluated by the binder. Use `trunc(...)` to discard
+  the fractional part or `value != 0` to produce 0/1. Casts inside an `@custom` body are HLSL casts.
 - Assigning a `float4` to an `int3` narrows exactly like `float4` → `float3` (`DSH5289`).
 - The kind matters in one place: `/` between two integer
   [constructor](constructors.md#integer-constructors) calls is

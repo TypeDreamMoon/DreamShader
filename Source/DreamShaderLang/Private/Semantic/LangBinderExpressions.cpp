@@ -27,6 +27,7 @@
 
 #include "IR/IR.h"
 #include "IR/IRCatalog.h"
+#include "IR/IRConstantMath.h"
 #include "IR/IRCoreOps.h"
 #include "IR/IRTypes.h"
 #include "Lang/LangAst.h"
@@ -84,7 +85,7 @@ namespace UE::DreamShader::Lang::Private
 				case IR::EIROp::Abs:          R = FMath::Abs(A); break;
 				case IR::EIROp::Floor:        R = FMath::FloorToDouble(A); break;
 				case IR::EIROp::Ceil:         R = FMath::CeilToDouble(A); break;
-				case IR::EIROp::Round:        R = FMath::RoundToDouble(A); break;
+				case IR::EIROp::Round:        R = IR::Private::ConstantMath::Round(A); break;
 				case IR::EIROp::Frac:         R = A - FMath::FloorToDouble(A); break;
 				case IR::EIROp::Truncate:     R = FMath::TruncToDouble(A); break;
 				case IR::EIROp::Sign:         R = (A > 0.0) ? 1.0 : ((A < 0.0) ? -1.0 : 0.0); break;
@@ -109,8 +110,8 @@ namespace UE::DreamShader::Lang::Private
 				case IR::EIROp::Log:          R = (A <= 0.0) ? 0.0 : FMath::Loge(A); break;
 				case IR::EIROp::Log2:         R = (A <= 0.0) ? 0.0 : (FMath::Loge(A) / FMath::Loge(2.0)); break;
 				case IR::EIROp::Log10:        R = (A <= 0.0) ? 0.0 : (FMath::Loge(A) / FMath::Loge(10.0)); break;
-				case IR::EIROp::Sin:          R = FMath::Sin(A); break;
-				case IR::EIROp::Cos:          R = FMath::Cos(A); break;
+				case IR::EIROp::Sin:          R = IR::Private::ConstantMath::Sin(A); break;
+				case IR::EIROp::Cos:          R = IR::Private::ConstantMath::Cos(A); break;
 				case IR::EIROp::Tan:          R = FMath::Tan(A); break;
 				case IR::EIROp::Asin:         R = FMath::Asin(FMath::Clamp(A, -1.0, 1.0)); break;
 				case IR::EIROp::Acos:         R = FMath::Acos(FMath::Clamp(A, -1.0, 1.0)); break;
@@ -2652,9 +2653,10 @@ namespace UE::DreamShader::Lang::Private
 			for (int32 Index = 0; Index < Width; ++Index)
 			{
 				const double Source = Value[(Components == 1) ? 0 : FMath::Min(Index, Components - 1)];
-				Binding.ConstantValue[Index] = Target.IsIntegral()
-					? FMath::TruncToDouble(Source)
-					: (Target.IsBool() ? ((Source != 0.0) ? 1.0 : 0.0) : Source);
+				// Graph casts change kind and width only, just like constructors and assignments.
+				// Folding a truncation or bool normalisation here would give a constant condition
+				// a different answer from the same cast lowered through a local variable.
+				Binding.ConstantValue[Index] = Source;
 			}
 		}
 

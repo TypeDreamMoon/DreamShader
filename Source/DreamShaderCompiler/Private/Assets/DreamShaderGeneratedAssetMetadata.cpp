@@ -130,7 +130,9 @@ namespace UE::DreamShader::Editor::Private
 		// DSK4: the source digest names each file by its project-relative path, not its absolute one, so the key no
 		// longer depends on where the project is checked out; and 1.x sources build what 1.x built again (SelfContained,
 		// TransformPosition's World destination, `7 / 2`), which an asset stamped DSK3 may not have.
-		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK4");
+		// DSK5: chained lvalue masks, numeric cast folding and periodic/round math now agree across
+		// compile paths. Rebuild old graphs even when their source and the plugin release version are unchanged.
+		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK5");
 
 		FString GetDreamShaderPluginVersion()
 		{

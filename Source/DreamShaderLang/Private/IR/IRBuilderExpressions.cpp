@@ -1458,6 +1458,23 @@ namespace UE::DreamShader::IR::Private
 
 	// --------------------------------------------------------------------------------- lvalues
 
+	/** Each mask is relative to its object; a store needs components of the original slot. */
+	static FString ComposeLValueMask(const FString& Existing, const FString& Mask)
+	{
+		if (Existing.IsEmpty())
+		{
+			return Mask;
+		}
+		FString Result;
+		Result.Reserve(Mask.Len());
+		for (const TCHAR Component : Mask)
+		{
+			// The binder has already checked this component against the intermediate vector's width.
+			Result.AppendChar(Existing[ComponentIndexOf(Component)]);
+		}
+		return Result;
+	}
+
 	bool FIRBuilder::ResolveLValue(const FExpr& Expr, FLValueRef& Out)
 	{
 		const FExpr* Inner = Unparen(&Expr);
@@ -1512,7 +1529,7 @@ namespace UE::DreamShader::IR::Private
 			}
 			else
 			{
-				Out.SwizzleMask = BoundExpr->Swizzle;
+				Out.SwizzleMask = ComposeLValueMask(Out.SwizzleMask, BoundExpr->Swizzle);
 			}
 			return true;
 		}
@@ -1569,7 +1586,7 @@ namespace UE::DreamShader::IR::Private
 			{
 				return false;
 			}
-			Out.SwizzleMask = BoundExpr->Swizzle;
+			Out.SwizzleMask = ComposeLValueMask(Out.SwizzleMask, BoundExpr->Swizzle);
 			return true;
 		}
 

@@ -35,6 +35,7 @@
 #include "DreamShaderVersionCompat.h"
 #include "IR/IRCatalog.h"
 #include "IR/IRCoreOps.h"
+#include "IR/IRGeneratedCoreCode.h"
 #include "IR/IRTypes.h"
 #include "Lang/LangToken.h"
 
@@ -1483,6 +1484,29 @@ namespace UE::DreamShader::Editor::Private
 			if (!Custom)
 			{
 				return false;
+			}
+
+			// Recover only our complete, unchanged lowering. A user's Custom node, including
+			// one with edited code, pins, defines or includes, must retain its own behavior.
+			if (Custom->GetClass() == UMaterialExpressionCustom::StaticClass()
+				&& Custom->Code.Equals(UE::DreamShader::IR::GeneratedCoreCode::Round, ESearchCase::CaseSensitive)
+				&& Custom->Description.Equals(UE::DreamShader::IR::GeneratedCoreCode::RoundDescription, ESearchCase::CaseSensitive)
+				&& Custom->Inputs.Num() == 1
+				&& Custom->Inputs[0].InputName.ToString().Equals(UE::DreamShader::IR::GeneratedCoreCode::RoundInput, ESearchCase::CaseSensitive)
+				&& Custom->AdditionalOutputs.IsEmpty() && Custom->AdditionalDefines.IsEmpty() && Custom->IncludeFilePaths.IsEmpty()
+				&& AreOtherPropertiesDefault(Custom, { FName(TEXT("Code")), FName(TEXT("Description")), FName(TEXT("OutputType")), FName(TEXT("Inputs")) }))
+			{
+				const FIRValue Value = ResolveInput(Custom->Inputs[0].Input);
+				const FIRType OutputType = TypeFromCustomOutputType(Custom->OutputType.GetValue());
+				if (Value.IsValid() && WidthOf(Value) > 0 && WidthOf(Value) == OutputType.GraphComponentCount())
+				{
+					FIRNode Round;
+					Round.Op = EIROp::Round;
+					Round.Operands.Add(Value);
+					Round.Outputs.Add(OutputType);
+					NodeOfExpression.Add(Expression, AddNode(MoveTemp(Round), Expression));
+					return true;
+				}
 			}
 
 			FIRNode Node;

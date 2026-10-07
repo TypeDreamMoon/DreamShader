@@ -67,7 +67,7 @@ widest of all the arguments, scalars broadcasting to it.
 | `rcp` *(since 2.0.0)* | 1 | **a subgraph**: `Divide` with `ConstA = 1` | — | the argument's |
 | `reflect` *(since 1.6.0)* | 2 | **a 4-node subgraph** — see [below](#reflect-refract) | — | **always `float3`** |
 | `refract` *(since 1.6.0)* | 3 | **a 14-node subgraph** — see [below](#reflect-refract) | — | **always `float3`** |
-| `round` *(since 2.0.0)* | 1 | `UMaterialExpressionRound` | `Input` | the argument's |
+| `round` *(since 2.0.0)* | 1 | generated `UMaterialExpressionCustom` with HLSL `round` | `Input` | the argument's |
 | `rsqrt` *(since 2.0.0)* | 1 | **a subgraph**: `SquareRoot`, then `Divide` with `ConstA = 1` | — | the argument's |
 | `saturate` | 1 | `UMaterialExpressionSaturate` | `Input` | the argument's |
 | `sign` *(since 2.0.0)* | 1 | `UMaterialExpressionSign` | `Input` | the argument's |
@@ -189,6 +189,22 @@ name a named argument has to use.
 
 Both leave the node's `Period` property at its default. For a non-default period call the node
 itself: `UE.Sine(Input = x, Period = 2.0)`.
+
+The default period is 1, so these graph builtins take cycles: `sin(0.25)` is 1 and `cos(0.25)` is 0
+(within floating-point precision). Constant expressions use the same period as graph nodes.
+Inside an `@custom` HLSL body, `sin` and `cos` take radians as usual.
+
+### round
+
+The graph builtin and constant folding follow [HLSL's nearest-even rule](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-round)
+at a halfway value: `round(0.5)` is 0,
+`round(2.5)` is 2, and `round(-1.5)` is -2.
+
+The generated Custom node evaluates HLSL `round` for both uniform and varying inputs. This avoids
+the native `UE.Round(Input = x)` node's preshader, which rounds halfway values upward in UE 5.8
+(`0.5` becomes 1). Use the reflected spelling when that native behavior is required. Decompilation
+recovers an unchanged generated node as `round`; a native Round node remains `UE.Round`.
+`dump-ir` shows the language operation and `dump-graph` shows the generated Custom node.
 
 ### step
 
