@@ -53,8 +53,8 @@ namespace UE::DreamPass
 			const FDreamPassBufferDesc& Desc = Buffer.Desc;
 			if (Desc.Format == EDreamPassBufferFormat::Depth32)
 			{
-				// Reverse Z: the far plane is 0.
-				AddClearDepthStencilPass(GraphBuilder, Texture, true, 0.0f, true, 0);
+				// Clear is a depth for Depth32; its default is the reverse-Z far plane, 0.
+				AddClearDepthStencilPass(GraphBuilder, Texture, true, Desc.ClearValue.R, true, 0);
 				return;
 			}
 			if (IsUnsignedFormat(Desc.Format))
@@ -144,7 +144,7 @@ namespace UE::DreamPass
 		}
 
 		const FClearValueBinding ClearBinding = Desc.Format == EDreamPassBufferFormat::Depth32
-			? FClearValueBinding::DepthFar
+			? FClearValueBinding(Desc.ClearValue.R, 0)
 			: FClearValueBinding(Desc.ClearValue);
 
 		FRDGTextureRef Texture = Context.GraphBuilder.CreateTexture(
