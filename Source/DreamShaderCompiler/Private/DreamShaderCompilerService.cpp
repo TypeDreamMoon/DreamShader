@@ -174,7 +174,9 @@ namespace UE::DreamShader::Editor::Compiler
 		const FString& SourceFilePath,
 		const bool bForce,
 		const ::UE::DreamShader::EThinCustomPersistence Persistence,
-		::UE::DreamShader::FDreamShaderError& OutError)
+		::UE::DreamShader::FDreamShaderError& OutError,
+		FDreamShaderLang2PipelineResult* OutPipelineResult,
+		const FString& RequiredParentObjectPath)
 	{
 		::UE::DreamShader::Editor::DreamShaderCompilerServiceDetail::FScopedDreamShaderCompileNotice Notice(SourceFilePath);
 
@@ -185,10 +187,12 @@ namespace UE::DreamShader::Editor::Compiler
 
 		bool bSucceeded = false;
 		{
-			// Scoped so the run's owned state -- the parsed and bound modules and the IR -- is gone before the
-			// notice fires: a subscriber reads assets, never this run's intermediate products.
+			// Normally destroyed before the notice fires. A nested parent compile can retain the run to
+			// read its schema; its notice is still queued until the outermost compile finishes.
 			FDreamShaderLang2PipelineResult Result;
-			const bool bPipelineSucceeded = RunDreamShaderLang2Pipeline(SourceFilePath, Options, Result);
+			const bool bPipelineSucceeded = RequiredParentObjectPath.IsEmpty()
+				? RunDreamShaderLang2Pipeline(SourceFilePath, Options, Result)
+				: RunDreamShaderParentPipeline(SourceFilePath, Options, RequiredParentObjectPath, Result);
 
 			// The symbol index a language service reads, refreshed by every compile that got as far
 			// as a bound module -- a failed one included: navigation matters most in a file that does not build. Not
@@ -218,6 +222,10 @@ namespace UE::DreamShader::Editor::Compiler
 				bPipelineSucceeded,
 				Notice.IsOutermost() ? GetDreamShaderCollectedGenerationWarnings() : NoCollectedWarnings,
 				OutError);
+			if (OutPipelineResult)
+			{
+				*OutPipelineResult = MoveTemp(Result);
+			}
 		}
 
 		Notice.Report(bSucceeded);

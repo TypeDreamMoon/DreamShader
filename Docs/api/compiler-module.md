@@ -245,7 +245,8 @@ emission's — the pipeline, its render targets, the HLSL slots and their pre-ch
 *(since 2.1.0)*.
 
 The build key behind the `Skipped` line covers the preprocessed text of the file **and of every
-header**, the defines the preprocessor read, and — for a `.dsi` — the parent's object path; for a `.dsp`,
+header**, the defines the preprocessor read, and — for a `.dsi` — the parent's object path and any
+inherited channels materialized by a partial vector override (not the parent's whole schema); for a `.dsp`,
 the materials its passes name with the build keys they were built under, the snapshot inputs of its shader
 files, and the pass layer table; for a `.dss` that reads an exported buffer, that buffer's export. See
 [Caching](../generation/caching.md#custom-pass-pipelines).

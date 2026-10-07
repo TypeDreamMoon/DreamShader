@@ -24,6 +24,8 @@ class UMaterialExpressionCustom;
 
 namespace UE::DreamShader::Editor::Compiler
 {
+	struct FDreamShaderLang2PipelineResult;
+
 	/**
 	 * Compiles one source file into its assets and words the result in the wire shape
 	 * FDreamShaderCompileResult::Message documents.
@@ -35,13 +37,16 @@ namespace UE::DreamShader::Editor::Compiler
 	 * diagnostics and none of the collected lines, or the outer report would print them twice.
 	 *
 	 * Returns true when every product is current afterwards. OutError always holds the report; on failure its
-	 * Code is the first error's.
+	 * Code is the first error's. A parent-chain caller may retain the completed run to build its schema without
+	 * parsing the chain a second time. RequiredParentObjectPath checks that parent product before emitting this file.
 	 */
 	bool CompileDreamShaderSourceFile(
 		const FString& SourceFilePath,
 		bool bForce,
 		::UE::DreamShader::EThinCustomPersistence Persistence,
-		::UE::DreamShader::FDreamShaderError& OutError);
+		::UE::DreamShader::FDreamShaderError& OutError,
+		FDreamShaderLang2PipelineResult* OutPipelineResult = nullptr,
+		const FString& RequiredParentObjectPath = FString());
 
 	/** The lines RaiseGenerationWarning collected since the current outermost compile began, in raise order, without duplicates. */
 	const TArray<FString>& GetDreamShaderCollectedGenerationWarnings();

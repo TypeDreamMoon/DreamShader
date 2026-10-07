@@ -20,7 +20,8 @@ digest text    := for each imported header, in the order the include resolver fi
                     "// Begin DreamShader source: <project-relative path>\n" <preprocessed header>
                     "\n// End DreamShader source: <project-relative path>\n\n"
                   then the same block for the file itself
-                  (a `.dsi` adds its resolved parent, a `.dsp` what it references)
+                  (a `.dsi` adds its resolved parent and inherited vector channels,
+                   a `.dsp` what it references)
 build key      := "DSK6|Plugin=<version>|Engine=<major>.<minor>|" <settings> "Defines=<read defines>|"
                   "\n--\n" <digest text>
 build key      ->  CRC32  ->  "%08x"  ->  DreamShader.SourceHash   e.g. "9f2c41ab"
