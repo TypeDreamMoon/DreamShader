@@ -448,4 +448,88 @@ bool FDreamShaderInstanceSourceUniformDefaultsTest::RunTest(const FString& Param
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderInstanceSourceDoublePrecisionTest,
+	"DreamShader.Lang2.InstanceSource.DoublePrecision",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderInstanceSourceDoublePrecisionTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Lang;
+	using namespace UE::DreamShader::IR;
+	using namespace UE::DreamShader::Editor::Private::InstanceSourceTests;
+
+	FIRInstance Desired;
+	Desired.ParentReference = TEXT("/Game/M_Parent");
+	FIRInstanceOverride Vector;
+	Vector.ParameterName = Vector.VariableName = TEXT("Position");
+	Vector.Kind = EIRParameterKind::DoubleVector;
+	Vector.DeclaredType = FIRType::Vector(EIRTypeKind::Double, 4);
+	const double Values[4] = { 16777217.0, 1.0000000000009095, 1.0e40, 1.0e-50 };
+	Vector.Value = FIRPropertyValue::MakeFloat4(Values, 4);
+	Desired.Overrides.Add(Vector);
+
+	const FString Printed = PrintDreamShaderInstance(Desired, TEXT("MI_Double.dsi"), FString());
+	FIRRun PrintedRun;
+	if (Lower(*this, PrintedRun, TEXT("MI_Double.dsi"), Printed)
+		&& TestEqual(TEXT("printed override count"), PrintedRun.Module->Products[0].Instance.Overrides.Num(), 1))
+	{
+		for (int32 Index = 0; Index < 4; ++Index)
+		{
+			TestTrue(FString::Printf(TEXT("printed component %d keeps all double precision: %s"), Index, *Printed),
+				PrintedRun.Module->Products[0].Instance.Overrides[0].Value.V[Index] == Values[Index]);
+		}
+	}
+
+	// These two values collapse to the same float32. Adopt must still replace the initializer.
+	const FString Original = TEXT("#pragma instance(Parent = \"/Game/M_Parent\")\n"
+		"uniform double4 Position = double4(16777216.0, 0.0, 0.0, 0.0); // keep\n");
+	FIRRun Run;
+	if (!Lower(*this, Run, TEXT("MI_AdoptDouble.dsi"), Original))
+	{
+		return false;
+	}
+	const double AdoptValues[4] = { 16777217.0, 0.0, 0.0, 0.0 };
+	Desired.Overrides[0].Value = FIRPropertyValue::MakeFloat4(AdoptValues, 4);
+	TArray<FLangSourceEdit> Edits;
+	FString Rewritten;
+	FLangDiagnosticSink Sink;
+	TestTrue(TEXT("double adopt succeeds"), RewriteDreamShaderInstanceSource(
+		FLangSourceText(TEXT("MI_AdoptDouble.dsi"), Original), *Run.Parse.Module, *Run.Bind.Bound, Desired, Edits, Rewritten, Sink));
+	TestEqual(TEXT("double adopt notices a change below float32 precision"), Edits.Num(), 1);
+	TestTrue(TEXT("double adopt preserves the trailing comment"), Rewritten.Contains(TEXT("; // keep")));
+	FIRRun RewrittenRun;
+	if (Lower(*this, RewrittenRun, TEXT("MI_AdoptDouble.dsi"), Rewritten))
+	{
+		TestTrue(TEXT("adopted double survives source reload exactly"),
+			RewrittenRun.Module->Products[0].Instance.Overrides[0].Value.V[0] == AdoptValues[0]);
+		TArray<FLangSourceEdit> RepeatEdits;
+		FString RepeatText;
+		FLangDiagnosticSink RepeatSink;
+		TestTrue(TEXT("repeating double adopt succeeds"), RewriteDreamShaderInstanceSource(
+			FLangSourceText(TEXT("MI_AdoptDouble.dsi"), Rewritten), *RewrittenRun.Parse.Module, *RewrittenRun.Bind.Bound,
+			Desired, RepeatEdits, RepeatText, RepeatSink));
+		TestEqual(TEXT("repeating double adopt changes nothing"), RepeatEdits.Num(), 0);
+	}
+
+	// The parent schema may identify a float4 declaration as DoubleVector. Storage kind,
+	// not source spelling, decides the precision of an adopted value.
+	const FString FloatSpelling = Original.Replace(TEXT("double4"), TEXT("float4"));
+	FIRRun FloatRun;
+	if (Lower(*this, FloatRun, TEXT("MI_FloatSpelling.dsi"), FloatSpelling))
+	{
+		Desired.Overrides[0].DeclaredType = FIRType::Float(4);
+		TArray<FLangSourceEdit> FloatEdits;
+		FString FloatText;
+		FLangDiagnosticSink FloatSink;
+		TestTrue(TEXT("float4 spelling of a double parameter can be adopted"), RewriteDreamShaderInstanceSource(
+			FLangSourceText(TEXT("MI_FloatSpelling.dsi"), FloatSpelling), *FloatRun.Parse.Module, *FloatRun.Bind.Bound,
+			Desired, FloatEdits, FloatText, FloatSink));
+		TestEqual(TEXT("double parameter comparison ignores float4 spelling"), FloatEdits.Num(), 1);
+		TestTrue(TEXT("double parameter printing preserves precision and the author's type spelling"),
+			FloatText.Contains(TEXT("uniform float4 Position = float4(16777217.0, 0.0, 0.0, 0.0); // keep")));
+	}
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

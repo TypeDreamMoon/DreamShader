@@ -171,6 +171,21 @@ namespace UE::DreamShader::Lang
 			return Trimmed.Equals(TEXT("None"), ESearchCase::IgnoreCase) ? FString() : Trimmed;
 		}
 
+		/** Double-vector parameters are stored as FVector4d, so never narrow their source text to float32. */
+		static FString FormatInstanceDoubleLiteral(const double Value)
+		{
+			if (!FMath::IsFinite(Value))
+			{
+				return TEXT("0.0");
+			}
+			FString Text = FString::Printf(TEXT("%.17g"), Value);
+			if (!Text.Contains(TEXT(".")) && !Text.Contains(TEXT("e"), ESearchCase::IgnoreCase))
+			{
+				Text += TEXT(".0");
+			}
+			return Text;
+		}
+
 		/** The initializer an override prints with, for a declaration of Type; null for texture-like kinds. */
 		static FExprPtr MakeInstanceInitializer(const IR::FIRInstanceOverride& Override, const FTypeRef& Type, const FLangSpan& Span)
 		{
@@ -192,7 +207,9 @@ namespace UE::DreamShader::Lang
 				{
 					return LegacyAst::MakeIntLiteral(static_cast<int64>(FMath::RoundToDouble(Component)), Span);
 				}
-				return LegacyAst::MakeFloatLiteral(FormatDreamShaderFloatLiteral(Component), Component, Span);
+				const FString Text = Override.Kind == IR::EIRParameterKind::DoubleVector
+					? FormatInstanceDoubleLiteral(Component) : FormatDreamShaderFloatLiteral(Component);
+				return LegacyAst::MakeFloatLiteral(Text, Component, Span);
 			};
 
 			if (!Type.IsVector())
@@ -540,7 +557,7 @@ namespace UE::DreamShader::Lang
 			return false;
 		}
 
-		/** Whether Decl already states Want's value, compared the way the engine stores it (float32 channels). */
+		/** Whether Decl already states Want's value, at the precision the engine stores for that parameter kind. */
 		static bool InstanceValueUnchanged(const FBoundModule& Bound, const FVariableDecl& Decl, const IR::FIRInstanceOverride& Want)
 		{
 			if (IsTextureLikeParameterKind(Want.Kind))
@@ -566,7 +583,9 @@ namespace UE::DreamShader::Lang
 				const double Wanted = InstanceValueComponent(Want.Value, Index);
 				const bool bSame = bBool
 					? ((Components[Index] != 0.0) == (Wanted != 0.0))
-					: static_cast<float>(Components[Index]) == static_cast<float>(Wanted);
+					: (Want.Kind == IR::EIRParameterKind::DoubleVector
+						? Components[Index] == Wanted
+						: static_cast<float>(Components[Index]) == static_cast<float>(Wanted));
 				if (!bSame)
 				{
 					return false;
