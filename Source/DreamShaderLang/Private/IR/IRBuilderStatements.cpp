@@ -303,10 +303,12 @@ namespace UE::DreamShader::IR::Private
 		ConditionStack.Pop();
 
 		const bool bThenReturned = Current.bReturned;
+		const bool bThenStateDead = Current.bStateDead;
 		const FEnvSnapshot ThenState = Snapshot();
 		const FLoweredValue ThenReturn = Current.ReturnValue;
 		Current.bReturned = false;
 		Current.ReturnValue = FLoweredValue();
+		Current.bStateDead = false;
 
 		// ----- the `else` arm, from the same starting state
 		Restore(Before);
@@ -318,10 +320,12 @@ namespace UE::DreamShader::IR::Private
 		ConditionStack.Pop();
 
 		const bool bElseReturned = Current.bReturned;
+		const bool bElseStateDead = Current.bStateDead;
 		const FEnvSnapshot ElseState = Snapshot();
 		const FLoweredValue ElseReturn = Current.ReturnValue;
 		Current.bReturned = false;
 		Current.ReturnValue = FLoweredValue();
+		Current.bStateDead = false;
 
 		--BranchDepth;
 
@@ -346,11 +350,14 @@ namespace UE::DreamShader::IR::Private
 			Current.PendingExits.Add(MoveTemp(Exit));
 		};
 
-		if (bThenReturned)
+		// A nested if whose arms both return has already recorded every exit, and has no
+		// live ReturnValue to file again. Its dead join belongs to that arm only: the other
+		// arm (and an outer fallthrough) must retain its own live state.
+		if (bThenReturned && !bThenStateDead)
 		{
 			FileExit(ThenState, ThenReturn, Condition, bStatic, /* bNegated */ false);
 		}
-		if (bElseReturned)
+		if (bElseReturned && !bElseStateDead)
 		{
 			FileExit(ElseState, ElseReturn, Condition, bStatic, /* bNegated */ true);
 		}
