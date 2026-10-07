@@ -445,6 +445,39 @@ bool FDreamShaderInstanceSourceUniformDefaultsTest::RunTest(const FString& Param
 		TestFalse(TEXT("kind mismatch: refused"), RewriteDreamShaderUniformDefaults(Source, *Run.Parse.Module, *Run.Bind.Bound, { WrongKind }, Edits, Text, Sink));
 		TestTrue(TEXT("kind mismatch: DSH9109"), HasCode(Sink, TEXT("DSH9109")));
 	}
+
+	// A .dss uniform's type is part of the shader program. Values that require a type change
+	// must fail atomically, instead of silently coercing the tweak or changing callers' semantics.
+	const FString TypedOriginal = TEXT(
+		"uniform bool Flag = true;\n"
+		"uniform int Count = 1;\n"
+		"uniform uint Index = 0;\n"
+		"export void M_Typed(inout material m) { m.EmissiveColor = float3(Flag ? 1 : 0, Count, Index); }\n");
+	FIRRun TypedRun;
+	if (!Lower(*this, TypedRun, TEXT("M_Typed.dss"), TypedOriginal)) { return false; }
+	const FLangSourceText TypedSource(TEXT("M_Typed.dss"), TypedOriginal);
+	for (const FIRInstanceOverride& Bad : { MakeScalar(TEXT("Flag"), 2), MakeScalar(TEXT("Count"), 0.5), MakeScalar(TEXT("Index"), -1) })
+	{
+		TArray<FLangSourceEdit> Edits;
+		FString Text;
+		FLangDiagnosticSink Sink;
+		TestFalse(TEXT("a scalar requiring a uniform type change is refused"), RewriteDreamShaderUniformDefaults(
+			TypedSource, *TypedRun.Parse.Module, *TypedRun.Bind.Bound, { MakeScalar(TEXT("Count"), 3), Bad }, Edits, Text, Sink));
+		TestTrue(TEXT("the unrepresentable scalar reports DSH9109"), HasCode(Sink, TEXT("DSH9109")));
+		TestEqual(TEXT("no partial edit survives the refused scalar"), Edits.Num(), 0);
+		TestEqual(TEXT("a refused scalar leaves the source unchanged"), Text, TypedOriginal);
+	}
+	{
+		TArray<FLangSourceEdit> Edits;
+		FString Text;
+		FLangDiagnosticSink Sink;
+		TestTrue(TEXT("representable typed scalar defaults still rewrite"), RewriteDreamShaderUniformDefaults(
+			TypedSource, *TypedRun.Parse.Module, *TypedRun.Bind.Bound,
+			{ MakeScalar(TEXT("Flag"), 0), MakeScalar(TEXT("Count"), 2), MakeScalar(TEXT("Index"), 3) }, Edits, Text, Sink));
+		TestTrue(TEXT("the boolean uniform keeps its type"), Text.Contains(TEXT("uniform bool Flag = false;")));
+		TestTrue(TEXT("the integer uniform keeps its type"), Text.Contains(TEXT("uniform int Count = 2;")));
+		TestTrue(TEXT("the unsigned uniform keeps its type"), Text.Contains(TEXT("uniform uint Index = 3;")));
+	}
 	return true;
 }
 

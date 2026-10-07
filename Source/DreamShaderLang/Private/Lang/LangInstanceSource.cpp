@@ -101,7 +101,9 @@ namespace UE::DreamShader::Lang
 			return false;
 		}
 
-		/** The spelling an override is declared with: the parent's declared type when known, else the kind's own. */
+		static bool InstanceScalarNeedsFloat(const IR::FIRInstanceOverride& Override, const FTypeRef& Type);
+
+		/** The parent's spelling when it preserves the value, else the parameter kind's own spelling. */
 		static FString InstanceTypeSpelling(const IR::FIRInstanceOverride& Override)
 		{
 			if (!Override.DeclaredType.IsError())
@@ -110,6 +112,12 @@ namespace UE::DreamShader::Lang
 				FString Spelled = Override.DeclaredType.ToString();
 				if (IsInstanceIdentifierText(Spelled))
 				{
+					FTypeRef Type;
+					FLangParser::ClassifyTypeName(Spelled, Type);
+					if (InstanceScalarNeedsFloat(Override, Type))
+					{
+						return TEXT("float");
+					}
 					return Spelled;
 				}
 			}
@@ -151,6 +159,29 @@ namespace UE::DreamShader::Lang
 				return 0.0;
 			}
 			return 0.0;
+		}
+
+		/** Scalar parameters store floats even when the source spells them bool, int or uint. */
+		static bool InstanceScalarNeedsFloat(const IR::FIRInstanceOverride& Override, const FTypeRef& Type)
+		{
+			if (Override.Kind != IR::EIRParameterKind::Scalar || !Type.IsScalar())
+			{
+				return false;
+			}
+			const double Value = InstanceValueComponent(Override.Value, 0);
+			switch (Type.Scalar)
+			{
+			case EScalarKind::Bool:
+				return Value != 0.0 && Value != 1.0;
+			case EScalarKind::Int:
+				return !FMath::IsFinite(Value) || Value < static_cast<double>(MIN_int32) || Value > static_cast<double>(MAX_int32)
+					|| FMath::TruncToDouble(Value) != Value;
+			case EScalarKind::UInt:
+				return !FMath::IsFinite(Value) || Value < 0.0 || Value > static_cast<double>(MAX_uint32)
+					|| FMath::TruncToDouble(Value) != Value;
+			default:
+				return false;
+			}
 		}
 
 		/** The asset path of a texture-like override: "" (an explicit None) prints as `None`. */
@@ -560,6 +591,10 @@ namespace UE::DreamShader::Lang
 		/** Whether Decl already states Want's value, at the precision the engine stores for that parameter kind. */
 		static bool InstanceValueUnchanged(const FBoundModule& Bound, const FVariableDecl& Decl, const IR::FIRInstanceOverride& Want)
 		{
+			if (InstanceScalarNeedsFloat(Want, Decl.Type))
+			{
+				return false;
+			}
 			if (IsTextureLikeParameterKind(Want.Kind))
 			{
 				return InstanceAssetMatches(Decl, Want)
@@ -688,7 +723,14 @@ namespace UE::DreamShader::Lang
 				return;
 			}
 
-			const FExprPtr Initializer = MakeInstanceInitializer(Want, Decl.Type, FLangSpan());
+			FTypeRef ValueType = Decl.Type;
+			if (InstanceScalarNeedsFloat(Want, Decl.Type))
+			{
+				// Only the type token and initializer change: all documentation and inline comments stay.
+				AddInstanceEdit(Original, OutEdits, Decl.Type.Span.Offset, Decl.Type.Span.Length, TEXT("float"));
+				FLangParser::ClassifyTypeName(TEXT("float"), ValueType);
+			}
+			const FExprPtr Initializer = MakeInstanceInitializer(Want, ValueType, FLangSpan());
 			if (!Initializer.IsValid())
 			{
 				return;
@@ -1074,14 +1116,17 @@ namespace UE::DreamShader::Lang
 				bOk = false;
 				continue;
 			}
-			if (!InstanceDeclShapeFits(*Found, Want))
+			const bool bNeedsScalarTypeChange = InstanceScalarNeedsFloat(Want, Found->Type);
+			if (!InstanceDeclShapeFits(*Found, Want) || bNeedsScalarTypeChange)
 			{
 				Diagnostics.Error(
 					TEXT("DSH9109"),
 					Original.GetPath(),
 					Found->Declarator.NameSpan,
 					FText::Format(
-						LOCTEXT("UniformKindMismatch", "Expected '{0}' to be declared as a {1} parameter to take this default, found a declaration of another kind; no default was written."),
+						bNeedsScalarTypeChange
+							? LOCTEXT("UniformScalarValueNeedsTypeChange", "The scalar value for '{0}' cannot be stated by its declared type; changing a .dss uniform's type can change its callers, so no default was written. Change the source type explicitly or extract the tweak to a .dsi.")
+							: LOCTEXT("UniformKindMismatch", "Expected '{0}' to be declared as a {1} parameter to take this default, found a declaration of another kind; no default was written."),
 						FText::FromString(Found->Declarator.Name),
 						FText::FromString(FString(IR::LexToString(Want.Kind)))));
 				bOk = false;

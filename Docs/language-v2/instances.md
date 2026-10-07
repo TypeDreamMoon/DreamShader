@@ -88,7 +88,9 @@ paths or `None`. An unknown key is `DSH8249`, a bad value `DSH8250`. `Backend`, 
   the parent. Overrides the language cannot state are named and left out (`DSH9101`, `DSH9104`,
   `DSH9105`).
 - **Adopt Into Source** on a hand-edited instance rewrites the `.dsi` in place, value by value, so
-  comments and order in the file survive.
+  comments and order in the file survive. A scalar declared as `bool`, `int` or `uint` becomes
+  `float` if its current value cannot be represented by that type; representable values keep the
+  existing declaration.
 - `dump-graph` dumps an instance as its parent, its overrides and its keys.
 
 ## See also
