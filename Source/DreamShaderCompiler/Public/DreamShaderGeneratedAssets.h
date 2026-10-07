@@ -298,8 +298,14 @@ namespace UE::DreamShader::Editor::Private
 		FScopedDreamShaderRevertDiverged& operator=(const FScopedDreamShaderRevertDiverged&) = delete;
 	};
 	DREAMSHADERCOMPILER_API bool IsRevertingDivergedAssets();
+	/** A failed save invalidates only the source-hash skip; provenance and the output digest remain intact. */
 	DREAMSHADERCOMPILER_API bool SaveAssetPackage(UObject* Asset, FDreamShaderError& OutError);
 	DREAMSHADERCOMPILER_API bool SaveAssetPackages(const TArray<UObject*>& Assets, FDreamShaderError& OutError);
+#if WITH_DEV_AUTOMATION_TESTS
+	/** Returning true simulates a failed save before any file is written. Shared across the compiler and test DLLs. */
+	using FDreamShaderAssetSaveFailurePredicate = TFunction<bool(const TArray<UPackage*>&)>;
+	DREAMSHADERCOMPILER_API FDreamShaderAssetSaveFailurePredicate& GetDreamShaderAssetSaveFailureOverride();
+#endif
 	DREAMSHADERCOMPILER_API UClass* ResolveMaterialExpressionClass(const FString& ClassSpecifier);
 	DREAMSHADERCOMPILER_API FProperty* FindMaterialExpressionArgumentProperty(UClass* ExpressionClass, const FString& ArgumentName);
 	DREAMSHADERCOMPILER_API bool IsMaterialExpressionInputProperty(const FProperty* Property);

@@ -130,8 +130,8 @@ namespace UE::DreamShader::Editor::Private
 		// DSK4: the source digest names each file by its project-relative path, not its absolute one, so the key no
 		// longer depends on where the project is checked out; and 1.x sources build what 1.x built again (SelfContained,
 		// TransformPosition's World destination, `7 / 2`), which an asset stamped DSK3 may not have.
-		// DSK5: chained lvalue masks, numeric cast folding and periodic/round math now agree across
-		// compile paths. Rebuild old graphs even when their source and the plugin release version are unchanged.
+		// DSK5: rebuild chained writes, casts, periodic/round math, nested returns and parameter defaults
+		// with corrected semantics, even when their source and the plugin release version are unchanged.
 		constexpr const TCHAR* BuildKeyVersion = TEXT("DSK5");
 
 		FString GetDreamShaderPluginVersion()
@@ -449,14 +449,46 @@ namespace UE::DreamShader::Editor::Private
 #endif
 	}
 
+#if WITH_DEV_AUTOMATION_TESTS
+	FDreamShaderAssetSaveFailurePredicate& GetDreamShaderAssetSaveFailureOverride()
+	{
+		static FDreamShaderAssetSaveFailurePredicate Predicate;
+		return Predicate;
+	}
+#endif
+
+	namespace
+	{
+		bool SaveGeneratedPackages(const TArray<UPackage*>& Packages)
+		{
+#if WITH_DEV_AUTOMATION_TESTS
+			const FDreamShaderAssetSaveFailurePredicate& FailureOverride = GetDreamShaderAssetSaveFailureOverride();
+			if (FailureOverride && FailureOverride(Packages))
+			{
+				return false;
+			}
+#endif
+			return UEditorLoadingAndSavingUtils::SavePackages(Packages, true);
+		}
+
+		void InvalidateFailedSave(UObject* Asset)
+		{
+			// The graph was built successfully, but its new source hash must not hide an unsaved package on retry.
+			// Keep ownership and the digest of that graph: a hand edit made after this failure must still be refused.
+			RemoveSourceMetadataValue(Asset, TEXT("DreamShader.SourceHash"));
+			Asset->MarkPackageDirty();
+		}
+	}
+
 	bool SaveAssetPackage(UObject* Asset, FDreamShaderError& OutError)
 	{
 		check(Asset);
 
 		TArray<UPackage*> PackagesToSave;
 		PackagesToSave.Add(Asset->GetOutermost());
-		if (!UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true))
+		if (!SaveGeneratedPackages(PackagesToSave))
 		{
+			InvalidateFailedSave(Asset);
 			return FailWith(OutError, TEXT("DSH8116"), FString::Printf(TEXT("Generated DreamShader asset '%s' could not be saved."), *Asset->GetPathName())); /* I18N-EXEMPT: deferred codegen or compatibility path */
 		}
 
@@ -480,11 +512,14 @@ namespace UE::DreamShader::Editor::Private
 			PackagesToSave.AddUnique(Asset->GetOutermost());
 		}
 
-		if (!UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, true))
+		if (!SaveGeneratedPackages(PackagesToSave))
 		{
 			FString FailedAssetList;
 			for (UObject* Asset : Assets)
 			{
+				// A batch can save some packages before another fails. Retry the whole generated set, including
+				// dependent exports whose in-memory configuration already matches the source now.
+				InvalidateFailedSave(Asset);
 				FailedAssetList += FString::Printf(TEXT(" '%s'"), *Asset->GetPathName()); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 			return FailWith(OutError, TEXT("DSH8117"), FString::Printf(TEXT("Generated DreamShader asset packages could not be saved.%s"), *FailedAssetList)); /* I18N-EXEMPT: deferred codegen or compatibility path */

@@ -1552,8 +1552,9 @@ A matrix or a user struct cannot be a function input; pass its components separa
 **Cause.** The asset was built successfully but its package could not be written to disk — read-only
 file, source control, or a path that no longer exists.
 
-**Fix.** Check out the asset, or make the file writable, and compile again. The graph is already
-built in memory, so the next compile will save it without rebuilding.
+**Fix.** Check out the asset, or make the file writable, and compile again. The failed save invalidates
+the source-hash skip, so the next compile rebuilds and retries saving without `-Force`. Hand edits made
+after the failure still trigger the usual divergence protection.
 
 ## DSH8230
 
@@ -2637,10 +2638,10 @@ layer's reason follows. Everything before the save stands: the slot registry and
 written, and in the editor the slot shaders were recompiled and the pipeline in memory already runs the
 new version.
 
-**Fix.** Make the packages writable. In a new process — a commandlet, the next editor session —
-compiling the `.dsp` rebuilds and saves it. In the same editor session the pipeline in memory already
-carries the new source hash, so a plain compile skips it (DSH8237) and saves nothing: save it
-(File ▸ Save All), or compile the source again with `-Force` (or Recompile).
+**Fix.** Make the packages writable and compile the `.dsp` again. The failed save invalidates the
+in-memory source-hash skip, so an ordinary compile retries the pipeline and its unsaved render targets.
+After a partial save and editor restart, a render target whose saved configuration does not match the
+pipeline also prevents a skip. `-Force` is not required.
 
 ## DSH8312
 

@@ -58,7 +58,7 @@ check answer "still current" about an asset that is not:
 | the preprocessed text of the file and of every header it imports | the compile's actual input — which is why a changed `.dsh` needs nothing else here |
 | [Default Compiler Backend](../settings/project.md) | decides whether a `Shader` block becomes a `UMaterial` or a thin instance |
 | the mapping tables | decide what a `Settings` key resolves to |
-| plugin version, plus a hand-bumped format tag — `DSK5` *(`DSK4` in 2.1.1; `DSK3` in 1.9.0 – 2.1.0)* | upgrading the generator invalidates what the old one wrote. `DSK5` rebuilds graphs for the corrected chained writes, cast folding and math semantics, even before the next plugin release |
+| plugin version, plus a hand-bumped format tag — `DSK5` *(`DSK4` in 2.1.1; `DSK3` in 1.9.0 – 2.1.0)* | upgrading the generator invalidates what the old one wrote. `DSK5` rebuilds graphs for corrected chained writes, casts, math, nested returns and parameter defaults, even before the next plugin release |
 | engine version | what is generable moves with it (Substrate, for one) |
 | the [preprocessor defines this source read](../language/preprocessor.md#rebuilds) *(since 1.9.0)* | they decide which branches of the source were compiled at all |
 
@@ -195,6 +195,13 @@ line reads `Skipped {ObjectPath} from {File}; source hash is unchanged (build ke
 the hash is compared, a build that would write to disk is skipped when another editor owns writing
 this project's generated assets ([`DSH8209`](../diagnostics/DSH8xxx.md#dsh8209)).
 
+A failed package save clears the in-memory source hash, so compiling the same source again retries
+generation and saving without `-Force`. The source owner and output digest remain intact: hand edits
+made after the failed save still stop regeneration. A failed batch invalidates every participating
+asset, including packages that may already have reached disk. Pipelines also verify their exported
+render targets' persisted configuration before skipping, so a partially saved batch can be repaired
+after restarting the editor.
+
 Per asset kind:
 
 | Asset | Skip point | Extra condition | Result line |
@@ -202,7 +209,7 @@ Per asset kind:
 | ThinCustom material | after the instance is created or reused, **before** the hidden base is created | — | `Skipped …` |
 | `Graph`-backend material | after the material is created or reused | — | `Skipped …` |
 | Material function | after the function asset is created or reused | the asset's material-function usage must already match the one the block requires | `Skipped …` *(since 2.0.0; through 1.x a function's skip was silent)* |
-| `UDreamPassPipeline` *(2.1.0)* | after the pipeline is reused, before its HLSL slots are planned | the slot registry holds every HLSL pass of the pipeline in the slot the asset records, with a snapshot that passed a pre-check and its files on disk, and every exported buffer has its render target — see [Custom Pass pipelines](#custom-pass-pipelines) | `Skipped …` |
+| `UDreamPassPipeline` *(2.1.0)* | after the pipeline is reused, before its HLSL slots are planned | the slot registry holds every HLSL pass of the pipeline in the slot the asset records, with a snapshot that passed a pre-check and its files on disk, and every exported buffer has a saved, clean render target matching its configuration — see [Custom Pass pipelines](#custom-pass-pipelines) | `Skipped …` |
 
 Placing the ThinCustom check before the base is created is what makes a skip cheap: no base
 material, no ownership check, no graph teardown.

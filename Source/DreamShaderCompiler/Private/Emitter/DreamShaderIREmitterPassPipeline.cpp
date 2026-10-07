@@ -403,40 +403,47 @@ namespace UE::DreamShader::Editor::Compiler
 		 * every reader samples with -- UE.DreamPassBuffer defaults to the texture's own sampler: Clamp for a buffer the size
 		 * of the view, Wrap for a fixed one that tiles. True when anything changed.
 		 */
-		bool ConfigureExportTarget(UTextureRenderTarget2D& Target, const FDreamPassBufferDesc& Buffer, const ETextureRenderTargetFormat Format, const bool bCreated)
+		bool NeedsExportTargetConfiguration(const UTextureRenderTarget2D& Target, const FDreamPassBufferDesc& Buffer,
+			const ETextureRenderTargetFormat Format, const bool bCreated, FIntPoint& OutSize)
 		{
 			const TextureAddress Address = Buffer.Resolution == EDreamPassBufferResolution::Fixed ? TA_Wrap : TA_Clamp;
 			const FLinearColor ClearColor = Buffer.bClear ? Buffer.ClearValue : FLinearColor::Transparent;
 
-			FIntPoint Size(Target.SizeX, Target.SizeY);
+			OutSize = FIntPoint(Target.SizeX, Target.SizeY);
 			if (Buffer.Resolution == EDreamPassBufferResolution::Fixed)
 			{
-				Size = FIntPoint(FMath::Max(Buffer.FixedSize.X, 1), FMath::Max(Buffer.FixedSize.Y, 1));
+				OutSize = FIntPoint(FMath::Max(Buffer.FixedSize.X, 1), FMath::Max(Buffer.FixedSize.Y, 1));
 			}
-			else if (bCreated || Size.X <= 0 || Size.Y <= 0)
+			else if (bCreated || OutSize.X <= 0 || OutSize.Y <= 0)
 			{
-				Size = FIntPoint(64, 64);
+				OutSize = FIntPoint(64, 64);
 			}
 
-			const bool bChanged = bCreated
+			return bCreated
 				|| Target.RenderTargetFormat != Format
 				|| Target.AddressX != Address
 				|| Target.AddressY != Address
 				|| !Target.ClearColor.Equals(ClearColor)
 				|| !Target.bForceLinearGamma
 				|| Target.bAutoGenerateMips
-				|| Target.SizeX != Size.X
-				|| Target.SizeY != Size.Y;
-			if (!bChanged)
+				|| Target.SizeX != OutSize.X
+				|| Target.SizeY != OutSize.Y;
+		}
+
+		bool ConfigureExportTarget(UTextureRenderTarget2D& Target, const FDreamPassBufferDesc& Buffer, const ETextureRenderTargetFormat Format, const bool bCreated)
+		{
+			FIntPoint Size;
+			if (!NeedsExportTargetConfiguration(Target, Buffer, Format, bCreated, Size))
 			{
 				return false;
 			}
 
 			Target.Modify();
 			Target.RenderTargetFormat = Format;
+			const TextureAddress Address = Buffer.Resolution == EDreamPassBufferResolution::Fixed ? TA_Wrap : TA_Clamp;
 			Target.AddressX = Address;
 			Target.AddressY = Address;
-			Target.ClearColor = ClearColor;
+			Target.ClearColor = Buffer.bClear ? Buffer.ClearValue : FLinearColor::Transparent;
 			Target.bForceLinearGamma = true;
 			Target.bAutoGenerateMips = false;
 			Target.SizeX = Size.X;
@@ -453,7 +460,18 @@ namespace UE::DreamShader::Editor::Compiler
 		{
 			for (const FDreamPassBufferDesc& Buffer : Pipeline.Buffers)
 			{
-				if (Buffer.bExport && !Pipeline.GetExportTarget(Buffer.Name))
+				if (!Buffer.bExport)
+				{
+					continue;
+				}
+				UTextureRenderTarget2D* Target = Pipeline.GetExportTarget(Buffer.Name);
+				ETextureRenderTargetFormat Format = RTF_RGBA16f;
+				FIntPoint Size;
+				// A partial batch save may leave a current pipeline beside an older export, even after restarting.
+				// Compare the saved configuration too; a non-null pointer alone does not make the pair current.
+				if (!Target || !MapExportFormat(Buffer.Format, Format)
+					|| !Private::IsGeneratedAssetPersisted(Target) || Target->GetOutermost()->IsDirty()
+					|| NeedsExportTargetConfiguration(*Target, Buffer, Format, /*bCreated*/ false, Size))
 				{
 					return false;
 				}
@@ -1181,7 +1199,8 @@ namespace UE::DreamShader::Editor::Compiler
 		for (const FPendingTarget& Pending : PendingTargets)
 		{
 			const bool bChanged = ConfigureExportTarget(*Pending.Target, *Pending.Buffer, Pending.Format, Pending.bCreated);
-			if (bChanged || Pending.bCreated || !Private::HasDreamShaderSourceMetadata(Pending.Target))
+			if (bChanged || Pending.bCreated || !Private::HasDreamShaderSourceMetadata(Pending.Target)
+				|| Pending.Target->GetOutermost()->IsDirty() || !Private::IsGeneratedAssetPersisted(Pending.Target))
 			{
 				TouchedTargets.AddUnique(Pending.Target);
 				PackagesToSave.AddUnique(Pending.Target);
@@ -1248,10 +1267,9 @@ namespace UE::DreamShader::Editor::Compiler
 		FDreamShaderError SaveError;
 		if (!Private::SaveAssetPackages(PackagesToSave, SaveError))
 		{
-			// The pipeline in memory already carries this build's source hash (the metadata above), so in this editor a plain
-			// compile of the same source skips it as current: it is saved by hand, or by a forced compile.
+			// The shared save helper invalidates the source-hash skip and keeps every package dirty for a plain retry.
 			return Diagnostics.Error(TEXT("DSH8311"), ProductSpan, FText::Format(
-				LOCTEXT("SavePipelineFailedSaveOrForce", "'{0}' was built but could not be saved with its render targets; its slots are already in the registry. In this session the pipeline in memory is current, so a plain compile of its source skips it: save it, or compile the source again with -Force. {1}"),
+				LOCTEXT("SavePipelineFailedRetry", "'{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make the packages writable and compile the source again to retry saving. {1}"),
 				FText::FromString(Pipeline->GetPathName()),
 				WrapAssetError(SaveError)));
 		}
