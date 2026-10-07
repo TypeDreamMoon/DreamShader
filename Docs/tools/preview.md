@@ -137,6 +137,11 @@ drag-to-orbit viewport write. One is created lazily if the material has none.
 | UI-domain materials | forced onto a plane regardless of the requested mesh |
 | Projection aspect | **always 1:1**, never derived from the requested size |
 
+GPU readiness is polled on the render thread after that frame's copy command, so reusing a readback
+buffer cannot mistake the previous frame's completed fence for the current one. The game thread
+checks only the asynchronous result. Disconnecting during a capture releases the pending result
+safely, and an invalid render-target texture reports an error instead of leaving a capture pending.
+
 > [!WARNING]
 > **Request a square `width`/`height`.** The preview renders through `FThumbnailPreviewScene`, whose
 > projection matrix is built as `FReversedZPerspectiveMatrix(halfFov, 1, 1, near)` — the aspect ratio
