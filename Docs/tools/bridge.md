@@ -103,6 +103,15 @@ writes generated assets to disk.
 The commandlet is unaffected: it has no bridge, no lock file and no second process to negotiate
 with, and writing these assets is its entire job.
 
+Only the owner publishes or cleans shared responses, status, diagnostics, `bridge.db` and manifests.
+A non-owner keeps its local diagnostics and browser notifications. When it later acquires ownership,
+it starts a new listening session and publishes its own manifests and current diagnostics; closing a
+non-owner leaves the running owner's files intact.
+
+Saving, adding or removing an included `.dss` queues its direct and transitive consumers, like a
+`.dsh` include. The watcher retains the previous dependency edges for a deletion batch, so removing
+an include still causes its consumers to report the missing file.
+
 ## Request files
 
 | | |

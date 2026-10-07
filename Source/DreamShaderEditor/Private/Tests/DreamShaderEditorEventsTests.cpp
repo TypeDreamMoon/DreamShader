@@ -11,10 +11,59 @@
 #include "Bridge/DreamShaderEditorBridge.h"
 #include "Diagnostics/DreamShaderDiagnosticsStore.h"
 #include "DreamShaderCompilerService.h"
+#include "DreamShaderDependencyGraphService.h"
+#include "DreamShaderGeneratedAssets.h"
 #include "DreamShaderModule.h"
+#include "DreamShaderSettings.h"
+#include "Workspace/DreamShaderWorkspaceService.h"
 
+#include "HAL/FileManager.h"
+#include "HAL/PlatformProcess.h"
+#include "IDirectoryWatcher.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Guid.h"
 #include "Misc/Paths.h"
+
+namespace UE::DreamShader::Editor::Private
+{
+	/** Runs the real watcher and shared-file lifecycle without starting sockets, tickers or menus. */
+	struct FDreamShaderBridgeTestAccess
+	{
+		static bool Acquire(FDreamShaderEditorBridge& Bridge, const uint32 ProcessId = 0)
+		{
+			Bridge.ProcessIdForTesting = ProcessId;
+			return Bridge.TryAcquireBridgeOwnership();
+		}
+		static void Initialize(FDreamShaderEditorBridge& Bridge) { Bridge.InitializeOwnedBridgeFiles(); }
+		static void Clear(FDreamShaderEditorBridge& Bridge) { Bridge.ClearOwnedBridgeFiles(); }
+		static void Release(FDreamShaderEditorBridge& Bridge) { Bridge.ReleaseBridgeOwnership(); }
+		static void ExportCatalogAfterEngineInit(FDreamShaderEditorBridge& Bridge)
+		{
+			Bridge.bPostEngineInitComplete = true;
+			Bridge.ExportBuiltinCatalogManifest();
+		}
+		static void Rebuild(FDreamShaderEditorBridge& Bridge) { Bridge.RebuildDependencyGraph(); }
+		static void ResetQueue(FDreamShaderEditorBridge& Bridge) { Bridge.PendingFiles.Reset(); }
+		static bool IsQueued(const FDreamShaderEditorBridge& Bridge, const FString& Path) { return Bridge.PendingFiles.Contains(Path); }
+		static void Watch(FDreamShaderEditorBridge& Bridge, const TArray<FFileChangeData>& Changes)
+		{
+			TGuardValue<bool> Synchronous(Bridge.bSynchronousDirectoryChangesForTesting, true);
+			Bridge.OnDirectoryChanged(Changes);
+		}
+		static void Record(FDreamShaderEditorBridge& Bridge, const FString& Path, const TCHAR* Message)
+		{
+			FDreamShaderDiagnosticRecord Record;
+			Record.Message = FText::FromString(Message);
+			Record.Severity = TEXT("error");
+			TArray<FDreamShaderDiagnosticRecord> Records;
+			Records.Add(MoveTemp(Record));
+			Bridge.SetDiagnostics(Path, EDreamShaderDiagnosticsProducer::Compile, MoveTemp(Records));
+			Bridge.UpdateDiagnosticsFile();
+		}
+		static void Reply(FDreamShaderEditorBridge& Bridge) { Bridge.RespondTo(TEXT("owner-response"), true, TEXT("answer")); }
+	};
+}
 
 namespace UE::DreamShader::Editor::Private::Tests
 {
@@ -426,6 +475,154 @@ bool FDreamShaderDiagnosticsProducersTest::RunTest(const FString& Parameters)
 	Store.ClearDiagnostics(First);
 	TestNull(TEXT("a deleted source owns nothing, shader errors included"), Store.FindDiagnostics(First));
 	TestNull(TEXT("nor any material's shader compile"), Store.FindOwnedDiagnostics(First, EProducer::MaterialCompile, FirstMaterial));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderDssIncludeWatcherTest,
+	"DreamShader.Browser.Events.DssIncludeChangesQueueConsumers",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderDssIncludeWatcherTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using FAccess = FDreamShaderBridgeTestAccess;
+	FScopedEventsArtifacts Artifacts;
+	const FString Prefix = MakeUniqueTestAssetName(TEXT("DssIncludeWatch"));
+	const FString HeaderName = Prefix + TEXT("_Shared.dss");
+	const FString OtherHeaderName = Prefix + TEXT("_Other.dss");
+	const FString MiddleName = Prefix + TEXT("_Middle.dss");
+	FString Header, OtherHeader, Middle, Consumer, OtherConsumer;
+	auto Write = [&](const FString& Name, const FString& Text, FString& Path)
+	{
+		const bool bOk = WriteAutomationSourceFile(*this, Name, Text, Path);
+		if (bOk) { Artifacts.SourceFiles.AddUnique(Path); }
+		return bOk;
+	};
+	const FString HeaderText = TEXT("float SharedBroken(float x) { return x; }\n");
+	if (!Write(HeaderName, HeaderText, Header)
+		|| !Write(OtherHeaderName, HeaderText, OtherHeader)
+		|| !Write(MiddleName, FString::Printf(TEXT("#include \"%s\"\n"), *HeaderName), Middle)
+		|| !Write(Prefix + TEXT("_M.dss"), MakeSharedHeaderMaterialSource(MiddleName, Prefix + TEXT("_M")), Consumer)
+		|| !Write(Prefix + TEXT("_OtherM.dss"), MakeSharedHeaderMaterialSource(OtherHeaderName, Prefix + TEXT("_OtherM")), OtherConsumer))
+	{
+		return false;
+	}
+	TSet<FString> Dependencies, Visited;
+	FDreamShaderDependencyGraphService::CollectHeaderDependenciesRecursive(Consumer, Dependencies, Visited);
+	TestTrue(TEXT("direct .dss include is a dependency"), Dependencies.Contains(Middle));
+	TestTrue(TEXT("transitive .dss include is a dependency"), Dependencies.Contains(Header));
+
+	UDreamShaderSettings* Settings = GetMutableDefault<UDreamShaderSettings>();
+	TGuardValue<bool> AutoCompile(Settings->bAutoCompileOnSave, true);
+	const TSharedRef<FDreamShaderEditorBridge, ESPMode::ThreadSafe> Bridge = MakeShared<FDreamShaderEditorBridge, ESPMode::ThreadSafe>();
+	FAccess::Rebuild(*Bridge);
+	FAccess::Watch(*Bridge, { FFileChangeData(Header, FFileChangeData::FCA_Modified) });
+	TestTrue(TEXT("saving an included .dss queues itself"), FAccess::IsQueued(*Bridge, Header));
+	TestTrue(TEXT("saving an included .dss queues the direct includer"), FAccess::IsQueued(*Bridge, Middle));
+	TestTrue(TEXT("saving an included .dss queues the transitive material"), FAccess::IsQueued(*Bridge, Consumer));
+	TestFalse(TEXT("unrelated material is not queued"), FAccess::IsQueued(*Bridge, OtherConsumer));
+
+	FAccess::ResetQueue(*Bridge);
+	Bridge->RequestRebuildAfterSourceRewrite({ Header });
+	TestTrue(TEXT("tool-driven rewrites also queue .dss includers"), FAccess::IsQueued(*Bridge, Consumer));
+	FAccess::ResetQueue(*Bridge);
+	TestTrue(TEXT("delete first fixture include"), IFileManager::Get().Delete(*Header, false, true));
+	TestTrue(TEXT("delete second fixture include"), IFileManager::Get().Delete(*OtherHeader, false, true));
+	FAccess::Watch(*Bridge, { FFileChangeData(Header, FFileChangeData::FCA_Removed), FFileChangeData(OtherHeader, FFileChangeData::FCA_Removed) });
+	TestTrue(TEXT("deleted include retains its previous transitive consumers"), FAccess::IsQueued(*Bridge, Consumer));
+	TestTrue(TEXT("a second deletion in the same batch retains its old edges"), FAccess::IsQueued(*Bridge, OtherConsumer));
+	TestFalse(TEXT("a deleted source is not compiled"), FAccess::IsQueued(*Bridge, Header));
+
+	FAccess::ResetQueue(*Bridge);
+	if (!Write(HeaderName, HeaderText, Header)) { return false; }
+	FAccess::Watch(*Bridge, { FFileChangeData(Header, FFileChangeData::FCA_Added) });
+	TestTrue(TEXT("recreating a .dss include queues its consumers"), FAccess::IsQueued(*Bridge, Consumer));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderBridgeOwnershipFilesTest,
+	"DreamShader.Browser.Events.BridgeOwnershipFiles",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderBridgeOwnershipFilesTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using FAccess = FDreamShaderBridgeTestAccess;
+	const FString Directory = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Tests"),
+		TEXT("BridgeOwnership_") + FGuid::NewGuid().ToString(EGuidFormats::Digits)));
+	TGuardValue<FString> IsolatedDirectory(FDreamShaderWorkspaceService::BridgeDirectoryForTesting, Directory);
+	const bool bWasWritable = MayWriteGeneratedAssetsToDisk();
+	ON_SCOPE_EXIT
+	{
+		SetMayWriteGeneratedAssetsToDisk(bWasWritable);
+		IFileManager::Get().DeleteDirectory(*Directory, false, true);
+	};
+	IFileManager::Get().MakeDirectory(*Directory, true);
+	FDreamShaderEditorBridge Owner;
+	FDreamShaderEditorBridge Follower;
+	const FString OwnerSource = UE::DreamShader::NormalizeSourceFilePath(FPaths::Combine(Directory, TEXT("Owner.dss")));
+	const FString FollowerSource = UE::DreamShader::NormalizeSourceFilePath(FPaths::Combine(Directory, TEXT("Follower.dss")));
+	if (!TestTrue(TEXT("initial owner acquires the bridge"), FAccess::Acquire(Owner))) { return false; }
+	FAccess::Record(Owner, OwnerSource, TEXT("owner diagnostic"));
+	FAccess::Reply(Owner);
+
+	auto Snapshot = [&Directory]()
+	{
+		TMap<FString, TArray<uint8>> Result;
+		TArray<FString> Files;
+		IFileManager::Get().FindFilesRecursive(Files, *Directory, TEXT("*"), true, false);
+		for (const FString& File : Files)
+		{
+			TArray<uint8> Bytes;
+			FFileHelper::LoadFileToArray(Bytes, *File);
+			Result.Add(File, MoveTemp(Bytes));
+		}
+		return Result;
+	};
+	const TMap<FString, TArray<uint8>> Before = Snapshot();
+	// The recorded owner is the real, live PID. A different self PID models a second process without launching one.
+	const uint32 OtherPid = FPlatformProcess::GetCurrentProcessId() == 1 ? 2 : 1;
+	TestFalse(TEXT("a follower cannot take a live owner's bridge"), FAccess::Acquire(Follower, OtherPid));
+	FAccess::Initialize(Follower);
+	int32 LocalChanges = 0;
+	Follower.OnDiagnosticsChanged().AddLambda([&LocalChanges]() { ++LocalChanges; });
+	FAccess::Record(Follower, FollowerSource, TEXT("follower diagnostic"));
+	FAccess::ExportCatalogAfterEngineInit(Follower);
+	FAccess::Reply(Follower);
+	FAccess::Clear(Follower);
+	FAccess::Release(Follower);
+	FDreamShaderWorkspaceService::ResetBridgeDatabase();
+	FDreamShaderWorkspaceService::ExportMaterialExpressionManifest();
+	FDreamShaderWorkspaceService::ExportDreamShaderSettingsManifest();
+	FDreamShaderWorkspaceService::ExportSubstrateBuiltinsManifest();
+	FDreamShaderWorkspaceService::ExportPreprocessorDefinesManifest();
+	TestEqual(TEXT("local diagnostics still notify the follower's UI"), LocalChanges, 1);
+	TestNotNull(TEXT("local diagnostics remain readable"), Follower.GetDiagnosticsForSource(FollowerSource));
+	const TMap<FString, TArray<uint8>> After = Snapshot();
+	TestEqual(TEXT("follower created or removed no shared file"), After.Num(), Before.Num());
+	for (const TPair<FString, TArray<uint8>>& File : Before)
+	{
+		const TArray<uint8>* Bytes = After.Find(File.Key);
+		TestTrue(FString::Printf(TEXT("follower preserved %s"), *File.Key), Bytes && *Bytes == File.Value);
+	}
+
+	FAccess::Release(Owner);
+	TestTrue(TEXT("the follower acquires ownership after release"), FAccess::Acquire(Follower));
+	FString Diagnostics;
+	TestTrue(TEXT("takeover publishes diagnostics"), FFileHelper::LoadFileToString(Diagnostics, *FPaths::Combine(Directory, TEXT("diagnostics.json"))));
+	TestTrue(TEXT("takeover publishes the new owner's local diagnostics"), Diagnostics.Contains(TEXT("follower diagnostic")));
+	TestFalse(TEXT("takeover retires the old owner's diagnostics"), Diagnostics.Contains(TEXT("owner diagnostic")));
+	TestTrue(TEXT("takeover publishes status"), IFileManager::Get().FileExists(*FPaths::Combine(Directory, TEXT("status.json"))));
+	TestTrue(TEXT("takeover publishes manifests"), IFileManager::Get().FileExists(*FDreamShaderWorkspaceService::GetMaterialExpressionManifestFilePath()));
+	TestTrue(TEXT("takeover after engine init publishes the builtin catalog"), IFileManager::Get().FileExists(*FPaths::Combine(Directory, TEXT("dreamshader-builtin-catalog.json"))));
+	TestFalse(TEXT("takeover retires responses from the prior session"), IFileManager::Get().FileExists(*FPaths::Combine(Directory, TEXT("Responses/owner-response.json"))));
+	FAccess::Clear(Follower);
+	FAccess::Release(Follower);
+	TestFalse(TEXT("owner shutdown removes status"), IFileManager::Get().FileExists(*FPaths::Combine(Directory, TEXT("status.json"))));
+	TestFalse(TEXT("owner shutdown removes the shared database"), IFileManager::Get().FileExists(*FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath()));
 	return true;
 }
 

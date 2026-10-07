@@ -80,6 +80,11 @@ namespace UE::DreamShader::Editor::Private
 		bool IsBridgeOwner() const { return bIsBridgeOwner; }
 
 	private:
+#if WITH_DEV_AUTOMATION_TESTS
+		friend struct FDreamShaderBridgeTestAccess;
+		uint32 ProcessIdForTesting = 0;
+		bool bSynchronousDirectoryChangesForTesting = false;
+#endif
 		static FString GetBridgeDirectory();
 		static FString GetRequestDirectory();
 		static FString GetResponseDirectory();
@@ -97,6 +102,9 @@ namespace UE::DreamShader::Editor::Private
 		bool TryAcquireBridgeOwnership();
 		void RefreshBridgeOwnershipLock();
 		void ReleaseBridgeOwnership();
+		/** Shared files belong to the owner; acquisition also publishes the new owner's current diagnostics. */
+		void InitializeOwnedBridgeFiles();
+		void ClearOwnedBridgeFiles();
 		static FString GetSourceFileMetadata(UObject* Asset);
 
 		/**
@@ -319,6 +327,7 @@ namespace UE::DreamShader::Editor::Private
 		 */
 		bool bDefineRevisionBaselineTaken = false;
 		bool bIsShuttingDown = false;
+		bool bPostEngineInitComplete = false;
 		/** True while this process holds owner.lock. Starts false: ownership is taken, not assumed. */
 		bool bIsBridgeOwner = false;
 		bool bMenusRegistered = false;

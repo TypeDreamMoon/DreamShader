@@ -15,6 +15,7 @@
 #include "Misc/PackageName.h"
 #include "UObject/MetaData.h"
 #include "UObject/Package.h"
+#include "UObject/UObjectGlobals.h"
 
 namespace UE::DreamShader::Editor::Compiler
 {
@@ -299,14 +300,18 @@ namespace UE::DreamShader::Editor::Compiler
 
 		if (bEphemeral)
 		{
-			// In the transient package: nothing enumerates it, nothing saves it, and the instance hides itself. Named after the
-			// instance's PACKAGE, sanitized into one flat name: a slash in an FName reads as a subobject separator and breaks
-			// the FindObject reuse (1.x leaked a base per rebuild that way), and two instances that share a leaf name in
-			// different folders must not share a base.
-			const FName TransientBaseName(*FString::Printf(TEXT("MB_DreamThinBase_%s"), *UE::DreamShader::SanitizeIdentifier(Instance->GetOutermost()->GetName()))); /* I18N-EXEMPT: object name, not user-facing text */
-			OutBase = FindObject<UMaterial>(GetTransientPackage(), *TransientBaseName.ToString());
+			// Reuse only this instance's attached base. A sanitized package path is a label, not an identity:
+			// /Game/A_B/M and /Game/A/B_M produce the same label. Global name lookup used to share their graphs.
+			UMaterial* ExistingParent = Cast<UMaterial>(Instance->Parent);
+			if (ExistingParent && ExistingParent->GetOuter() == GetTransientPackage()
+				&& ExistingParent->GetName().StartsWith(TEXT("MB_DreamThinBase_")))
+			{
+				OutBase = ExistingParent;
+			}
 			if (!OutBase)
 			{
+				const FName BaseLabel(*FString::Printf(TEXT("MB_DreamThinBase_%s"), *UE::DreamShader::SanitizeIdentifier(Instance->GetOutermost()->GetName()))); /* I18N-EXEMPT: object name, not user-facing text */
+				const FName TransientBaseName = MakeUniqueObjectName(GetTransientPackage(), UMaterial::StaticClass(), BaseLabel);
 				OutBase = NewObject<UMaterial>(GetTransientPackage(), TransientBaseName, RF_Public | RF_Standalone | RF_Transient);
 			}
 			if (!OutBase)

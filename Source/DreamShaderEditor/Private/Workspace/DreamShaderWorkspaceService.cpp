@@ -1072,38 +1072,57 @@ namespace UE::DreamShader::Editor::Private
 		return LaunchTextFileWithNotepad(FilePath);
 	}
 
+#if WITH_DEV_AUTOMATION_TESTS
+	FString FDreamShaderWorkspaceService::BridgeDirectoryForTesting;
+#endif
+
+	FString FDreamShaderWorkspaceService::GetBridgeDirectory()
+	{
+#if WITH_DEV_AUTOMATION_TESTS
+		if (!BridgeDirectoryForTesting.IsEmpty())
+		{
+			return BridgeDirectoryForTesting;
+		}
+#endif
+		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge"));
+	}
+
 	FString FDreamShaderWorkspaceService::GetMaterialExpressionManifestFilePath()
 	{
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/material-expressions.json"));
+		return FPaths::Combine(GetBridgeDirectory(), TEXT("material-expressions.json"));
 	}
 
 	FString FDreamShaderWorkspaceService::GetDreamShaderSettingsManifestFilePath()
 	{
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/settings.json"));
+		return FPaths::Combine(GetBridgeDirectory(), TEXT("settings.json"));
 	}
 
 	FString FDreamShaderWorkspaceService::GetSubstrateBuiltinsManifestFilePath()
 	{
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/substrate-builtins.json"));
+		return FPaths::Combine(GetBridgeDirectory(), TEXT("substrate-builtins.json"));
 	}
 
 	FString FDreamShaderWorkspaceService::GetPreprocessorDefinesManifestFilePath()
 	{
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/preprocessor-defines.json"));
+		return FPaths::Combine(GetBridgeDirectory(), TEXT("preprocessor-defines.json"));
 	}
 
 	FString FDreamShaderWorkspaceService::GetPassKeysManifestFilePath()
 	{
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/pass-keys.json"));
+		return FPaths::Combine(GetBridgeDirectory(), TEXT("pass-keys.json"));
 	}
 
 	FString FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath()
 	{
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader/Bridge/bridge.db"));
+		return FPaths::Combine(GetBridgeDirectory(), TEXT("bridge.db"));
 	}
 
 	void FDreamShaderWorkspaceService::ResetBridgeDatabase()
 	{
+		if (!MayWriteGeneratedAssetsToDisk())
+		{
+			return;
+		}
 		const FString DatabasePath = GetBridgeDatabaseFilePath();
 		IFileManager::Get().Delete(*DatabasePath, false, true, true);
 		IFileManager::Get().Delete(*(DatabasePath + TEXT("-wal")), false, true, true);
@@ -1116,6 +1135,10 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderWorkspaceService::ExportSubstrateBuiltinsManifest()
 	{
+		if (!MayWriteGeneratedAssetsToDisk())
+		{
+			return;
+		}
 		const FString ManifestPath = GetSubstrateBuiltinsManifestFilePath();
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
 
@@ -1189,6 +1212,10 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderWorkspaceService::ExportPreprocessorDefinesManifest()
 	{
+		if (!MayWriteGeneratedAssetsToDisk())
+		{
+			return;
+		}
 		const FString ManifestPath = GetPreprocessorDefinesManifestFilePath();
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
 
@@ -1300,6 +1327,10 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderWorkspaceService::ExportDreamShaderSettingsManifest()
 	{
+		if (!MayWriteGeneratedAssetsToDisk())
+		{
+			return;
+		}
 		const FString ManifestPath = GetDreamShaderSettingsManifestFilePath();
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
 
@@ -1540,6 +1571,10 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderWorkspaceService::ExportPassKeysManifest()
 	{
+		if (!MayWriteGeneratedAssetsToDisk())
+		{
+			return;
+		}
 		namespace PassSpelling = UE::DreamShader::Editor::Private::PassSpelling;
 
 		const FString ManifestPath = GetPassKeysManifestFilePath();
@@ -1693,6 +1728,10 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderWorkspaceService::ExportMaterialExpressionManifest()
 	{
+		if (!MayWriteGeneratedAssetsToDisk())
+		{
+			return;
+		}
 		const FString ManifestPath = GetMaterialExpressionManifestFilePath();
 		IFileManager::Get().MakeDirectory(*FPaths::GetPath(ManifestPath), true);
 

@@ -14,6 +14,11 @@ namespace UE::DreamShader::Editor::Private
 
 	struct FDreamShaderWorkspaceService
 	{
+		static FString GetBridgeDirectory();
+#if WITH_DEV_AUTOMATION_TESTS
+		/** Isolates persistence tests from the running project's bridge files. Empty restores the project directory. */
+		static FString BridgeDirectoryForTesting;
+#endif
 		static FString GetMaterialExpressionManifestFilePath();
 		static FString GetDreamShaderSettingsManifestFilePath();
 		static FString GetSubstrateBuiltinsManifestFilePath();

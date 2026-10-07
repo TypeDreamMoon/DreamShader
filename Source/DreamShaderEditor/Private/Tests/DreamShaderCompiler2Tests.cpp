@@ -771,6 +771,64 @@ bool FDreamShaderCompiler2RebuildRulesTest::RunTest(const FString& Parameters)
 // =================================================================================================
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderCompiler2EphemeralBaseIdentityTest,
+	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
+	"DreamShader.Compiler2.Smoke.EphemeralBaseIdentity",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderCompiler2EphemeralBaseIdentityTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+	using namespace UE::DreamShader::Editor::Private::Compiler2Tests;
+
+	const FString Prefix = TEXT("BaseIdentity_") + FGuid::NewGuid().ToString(EGuidFormats::Digits);
+	FDreamShaderCompile2Fixture First(Prefix + TEXT("_B"), TEXT("Compiler2"));
+	FDreamShaderCompile2Fixture Second(Prefix, TEXT("Compiler2"));
+	const FString FirstPath = First.MakeObjectPath(TEXT("M"));
+	const FString SecondPath = Second.MakeObjectPath(TEXT("B_M"));
+	First.TrackObjectPath(FirstPath);
+	Second.TrackObjectPath(SecondPath);
+	AddExpectedError(First.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
+	AddExpectedError(Second.GetPackagePath(), EAutomationExpectedErrorFlags::Contains, -1);
+	AddExpectedError(TEXT("package was marked as deleted in editor, but has been modified on disk"), EAutomationExpectedErrorFlags::Contains, -1);
+	TestEqual(TEXT("the distinct package paths collide under the old name encoding"),
+		UE::DreamShader::SanitizeIdentifier(FPackageName::ObjectPathToPackageName(FirstPath)),
+		UE::DreamShader::SanitizeIdentifier(FPackageName::ObjectPathToPackageName(SecondPath)));
+	if (!First.WriteSource(*this, MakeThinCustomMaterialSource(TEXT("M")))
+		|| !Second.WriteSource(*this, MakeThinCustomMaterialSource(TEXT("B_M")).Replace(TEXT("float4(1, 0.5, 0.25, 1)"), TEXT("float4(0, 1, 0, 1)"))))
+	{
+		return false;
+	}
+
+	FString Message;
+	if (!TestTrue(TEXT("first ephemeral compile"), CompileDreamShaderTestAssets(First.GetSourceFilePath(), Message, true, true)))
+	{
+		AddInfo(Message);
+		return false;
+	}
+	UDreamShaderMaterialInstance* A = LoadObject<UDreamShaderMaterialInstance>(nullptr, *FirstPath);
+	UMaterial* BaseA = A ? Cast<UMaterial>(A->Parent) : nullptr;
+	if (!TestNotNull(TEXT("first transient base"), BaseA)) { return false; }
+	const FString DigestA = BuildMaterialDigestText(BaseA);
+	if (!TestTrue(TEXT("second ephemeral compile"), CompileDreamShaderTestAssets(Second.GetSourceFilePath(), Message, true, true)))
+	{
+		AddInfo(Message);
+		return false;
+	}
+	UDreamShaderMaterialInstance* B = LoadObject<UDreamShaderMaterialInstance>(nullptr, *SecondPath);
+	UMaterial* BaseB = B ? Cast<UMaterial>(B->Parent) : nullptr;
+	if (!TestNotNull(TEXT("second transient base"), BaseB)) { return false; }
+	TestTrue(TEXT("different instances own different bases despite their colliding labels"), BaseA != BaseB);
+	TestEqual(TEXT("compiling B did not replace A's graph"), BuildMaterialDigestText(BaseA), DigestA);
+	const FString DigestB = BuildMaterialDigestText(BaseB);
+	TestTrue(TEXT("rebuilding A succeeds"), CompileDreamShaderTestAssets(First.GetSourceFilePath(), Message, true, true));
+	TestEqual(TEXT("A reuses its attached base"), A->Parent.Get(), static_cast<UMaterialInterface*>(BaseA));
+	TestEqual(TEXT("rebuilding A leaves B alone"), BuildMaterialDigestText(BaseB), DigestB);
+	return true;
+}
+
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderCompiler2ThinCustomTest,
 	UE::DreamShader::Editor::Private::Tests::FDreamShaderCompile2CorpusTestBase,
 	"DreamShader.Compiler2.Smoke.ThinCustomBackend",
