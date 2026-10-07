@@ -74,7 +74,7 @@ Compiling shaders for '%s' took %.0f seconds. A stall of this length is almost a
 Could not back up '%s' to '%s'; its asset references were left pointing at the old path.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/SourceFiles/DreamShaderAssetRenameSyncService.cpp:1149`
+**Raised by** `Source/DreamShaderEditor/Private/SourceFiles/DreamShaderAssetRenameSyncService.cpp:1147`
 <!-- generated:end DSH9020 -->
 
 **Cause.** an asset a source file references was renamed or moved, so the file had to be rewritten -- but the copy to `<file>.bak` failed, so there was nothing to fall back to. Usually the source (or the `.bak` next to it) is read-only, checked out by version control, held open by another process, or on a full or disconnected drive
@@ -94,7 +94,7 @@ Could not back up '%s' to '%s'; its asset references were left pointing at the o
 Could not write '%s' after renaming an asset it references; the file as it was is in '%s'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/SourceFiles/DreamShaderAssetRenameSyncService.cpp:1165`
+**Raised by** `Source/DreamShaderEditor/Private/SourceFiles/DreamShaderAssetRenameSyncService.cpp:1163`
 <!-- generated:end DSH9021 -->
 
 **Cause.** the backup was taken and then the rewritten source could not be saved over the original. The window between the two is small, so this is nearly always the file becoming unwritable in between -- a version-control lock, or an editor holding it open exclusively
@@ -1904,7 +1904,7 @@ value survives.
 Expected '{0}' to be declared alone to rewrite its value, found it in a declaration shared with other names; split the declaration first.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:602`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1227`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:621`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1227`
 <!-- generated:end DSH9107 -->
 
 **Cause.** An editor action has to rewrite one override's value in a `.dsi`, and that name shares
@@ -1924,7 +1924,7 @@ time.
 Expected every change to this file to touch its own stretch of text, found an edit at line {0} that overlaps another or runs past the end; the file was left unchanged.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:742`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1150`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:761`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1150`
 <!-- generated:end DSH9108 -->
 
 **Cause.** Two text edits computed for one `.dsi` overlap, or one runs past the end of the file. The
@@ -1943,7 +1943,7 @@ file is left as it was. Internal error of the instance source rewriter.
 Expected a '#pragma instance(...)' line in this .dsi file, found none; the file was left unchanged.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1048`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1060`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:893`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:2355`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1067`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1079`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:912`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:2355`
 <!-- generated:end DSH9109 -->
 
 **Cause.** An editor action that rewrites a source in place found nothing to anchor its edit on: a
