@@ -450,4 +450,59 @@ bool FDreamShaderAssetRenameSyncBatchTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderAssetRenameSyncEventOrderTest,
+	"DreamShader.AssetRenameSync.PreservesEventOrder",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderAssetRenameSyncEventOrderTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private;
+	using namespace UE::DreamShader::Editor::Private::Tests;
+
+	CheckRewrite(
+		*this,
+		TEXT("Successive renames of one asset follow it to the final path"),
+		TEXT("X = \"/Game/T_A.T_A\";"),
+		{
+			MakeRename(TEXT("/Game/T_A.T_A"), TEXT("/Game/T_B.T_B")),
+			MakeRename(TEXT("/Game/T_B.T_B"), TEXT("/Game/T_C.T_C"))
+		},
+		TEXT("X = \"/Game/T_C.T_C\";"));
+
+	// B is freed before A takes its name. An unordered transitive closure sends both to C.
+	const FString TwoAssets = TEXT("X = \"/Game/T_A.T_A\";\nY = \"/Game/T_B\";\n");
+	CheckRewrite(
+		*this,
+		TEXT("Reusing a path retains the identity of both assets"),
+		TwoAssets,
+		{
+			MakeRename(TEXT("/Game/T_B.T_B"), TEXT("/Game/T_C.T_C")),
+			MakeRename(TEXT("/Game/T_A.T_A"), TEXT("/Game/T_B.T_B"))
+		},
+		TEXT("X = \"/Game/T_B.T_B\";\nY = \"/Game/T_C\";\n"));
+
+	CheckRewrite(
+		*this,
+		TEXT("Swapping two assets through a temporary name exchanges their references"),
+		TwoAssets,
+		{
+			MakeRename(TEXT("/Game/T_A.T_A"), TEXT("/Game/T_Tmp.T_Tmp")),
+			MakeRename(TEXT("/Game/T_B.T_B"), TEXT("/Game/T_A.T_A")),
+			MakeRename(TEXT("/Game/T_Tmp.T_Tmp"), TEXT("/Game/T_B.T_B"))
+		},
+		TEXT("X = \"/Game/T_B.T_B\";\nY = \"/Game/T_A\";\n"));
+
+	FDreamShaderAssetRenameRewriteResult Undone;
+	const FString Original = TEXT("X = \"/Game/T_A.T_A\";\n");
+	const FString Restored = Rewrite(Original,
+		{
+			MakeRename(TEXT("/Game/T_A.T_A"), TEXT("/Game/T_B.T_B")),
+			MakeRename(TEXT("/Game/T_B.T_B"), TEXT("/Game/T_A.T_A"))
+		}, Undone);
+	TestEqual(TEXT("An undone rename leaves the original reference alone"), Restored, Original);
+	TestFalse(TEXT("An undone rename does not trigger a source rewrite"), Undone.bChanged);
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS
