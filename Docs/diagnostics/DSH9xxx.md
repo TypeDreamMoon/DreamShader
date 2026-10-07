@@ -1789,7 +1789,7 @@ there is nothing to write.
 '{0}' overrides {1} parameter(s) of its material layers or blends, which a '.dsi' cannot address; they are left out.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:294`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:300`
 <!-- generated:end DSH9101 -->
 
 **Cause.** The instance overrides parameters of its material layers or blends. A `.dsi` addresses
@@ -1808,7 +1808,7 @@ global parameters only, so those overrides are left out of the text and would be
 The parameter '{0}' is not a name a variable can have; it is written under another with '/// @name {0}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:283`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:289`
 <!-- generated:end DSH9102 -->
 
 **Cause.** A parameter's name is not an identifier (`Base Color`, `UV-Scale`). The override is
@@ -1846,7 +1846,7 @@ resolves, so the instance's overrides cannot be checked against a parameter list
 '{0}' overrides '{1}', which '#pragma instance' has no key for; the rebuilt instance has the parent's.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:314`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:320`
 <!-- generated:end DSH9104 -->
 
 **Cause.** The instance overrides a base property `#pragma instance` has no key for. The rebuilt
@@ -1865,7 +1865,7 @@ instance takes the parent's value.
 '{0}' is a curve atlas row, and '{1}' picks its curve; a '.dsi' can state the row's number and nothing else, so the rebuilt instance loses the curve.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:275`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:281`
 <!-- generated:end DSH9105 -->
 
 **Cause.** A scalar override is a curve-atlas row: the engine stores the curve and atlas beside the
@@ -1884,7 +1884,7 @@ number. A `.dsi` can state the number only.
 '{0}' is declared 'bool' by the parent's source and '{1}' sets it to {2}; the override is written as a 'float'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:264`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:270`
 <!-- generated:end DSH9106 -->
 
 **Cause.** The parent's source declares the parameter `bool` (a scalar 0/1 parameter), and the
@@ -1904,7 +1904,7 @@ value survives.
 Expected '{0}' to be declared alone to rewrite its value, found it in a declaration shared with other names; split the declaration first.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:621`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1227`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:656`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1227`
 <!-- generated:end DSH9107 -->
 
 **Cause.** An editor action has to rewrite one override's value in a `.dsi`, and that name shares
@@ -1924,7 +1924,7 @@ time.
 Expected every change to this file to touch its own stretch of text, found an edit at line {0} that overlaps another or runs past the end; the file was left unchanged.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:761`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1150`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:803`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:1150`
 <!-- generated:end DSH9108 -->
 
 **Cause.** Two text edits computed for one `.dsi` overlap, or one runs past the end of the file. The
@@ -1943,16 +1943,19 @@ file is left as it was. Internal error of the instance source rewriter.
 Expected a '#pragma instance(...)' line in this .dsi file, found none; the file was left unchanged.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1067`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1079`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:912`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:2355`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1109`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:1122`, `Source/DreamShaderLang/Private/Lang/LangInstanceSource.cpp:954`, `Source/DreamShaderLang/Private/Lang/LangPipelineSource.cpp:2355`
 <!-- generated:end DSH9109 -->
 
 **Cause.** An editor action that rewrites a source in place found nothing to anchor its edit on: a
 `.dsi` without a `#pragma instance(...)` line, or -- when an instance's value is written back as the
 default of its parent's uniform -- no `uniform` of that parameter name declared in the file itself
-(one in an included header cannot be spliced), or one declared as another kind of parameter.
+(one in an included header cannot be spliced), or one declared as another kind of parameter. The
+action also refuses a scalar value that the `.dss` uniform's `bool`, `int` or `uint` type cannot
+represent: changing a shader input's type implicitly could change its callers.
 
 **Fix.** Add the pragma (`#pragma instance(Parent = "...")`), or declare the uniform in the file the
-action targets, and repeat the action.
+action targets, and repeat the action. For an unrepresentable scalar, change the source type
+explicitly or extract the tweak into a `.dsi` instance.
 
 ## DSH9110
 

@@ -1888,7 +1888,7 @@ Until then, rewriting the expression in a simpler form usually avoids the kind t
 This module was bound without a builtin catalog, so no 'UE.*' call and no material attribute can be named; run the bind with a catalog, or pass one in FIRBuildOptions.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:121`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1565`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:915`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:420`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:532`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:121`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1582`, `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:915`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:420`, `Source/DreamShaderLang/Private/IR/IRBuilderMaterial.cpp:532`
 <!-- generated:end DSH4352 -->
 
 **Cause.** Three shapes, told apart by where the message points.
@@ -2138,11 +2138,11 @@ MaterialAttributes, check that the `extern` prototype declares that parameter `m
 '{0}' is assigned in only one arm of this 'if' and has no value before it; assign it in both arms, or give it a value before the 'if'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:622`, `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:646`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:623`, `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:647`
 <!-- generated:end DSH4372 -->
 
-**Cause.** A variable or a material attribute is assigned in one arm of an `if` and not in the
-other, and had no value before the `if`. Both arms of an `if` become nodes and a `Select` picks
+**Cause.** A variable or a material attribute is assigned in one arm of an `if` or `?:` and not in
+the other, and had no value before the branch. Both arms become nodes and a conditional picks
 between them, so the arm that does not assign still has to have something to select.
 
 **Fix.** Give the variable a value before the `if` (`float x = 0;`), or assign it in both arms. For
@@ -2188,7 +2188,7 @@ takes an expression.
 This builds a {0}-component value, but a material graph carries at most four components.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1118`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1119`
 <!-- generated:end DSH4374 -->
 
 **Cause.** A constructor, a swizzle or a coercion asked for more than four components:
@@ -2209,7 +2209,7 @@ cannot make anything wider.
 The two sides of this branch end with a different whole material, and DreamShader chooses between attribute values, not between whole materials; assign the attributes one at a time on both sides, or mix the two materials with UE.BlendMaterialAttributes.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:765`, `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:769`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:846`, `Source/DreamShaderLang/Private/IR/IRBuilderStatements.cpp:850`
 <!-- generated:end DSH4375 -->
 
 **Cause.** The two arms of an `if` -- or the two sides of a `?:`, or a `return` inside an `if` and
@@ -2239,7 +2239,7 @@ version.
 '{0}' is read here, but nothing gives it a value on any path that reaches this line; assign it first, or give it an initializer where it is declared.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1442`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1459`
 <!-- generated:end DSH4376 -->
 
 **Cause.** A local is read -- or compound-assigned (`x += 1`, `++x`), which reads it first -- at a
@@ -2271,7 +2271,7 @@ reading `v`, or a component of it, before anything was written.
 '{0}' writes into the material held in an attribute, and an attribute takes one whole value, not a write to part of it; assign that attribute a whole material, or set the attribute on the material itself.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1458`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderExpressions.cpp:1475`
 <!-- generated:end DSH4377 -->
 
 **Cause.** An assignment writes into the material an attribute holds:
@@ -2297,7 +2297,7 @@ attribute, the same as one component of a local.
 A branch chooses between two {0} values or between two numbers, and this one has one of each.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1500`, `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1518`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1537`, `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1555`
 <!-- generated:end DSH4378 -->
 
 **Cause.** A branch over Substrate values that cannot be built. Two messages: one side of the branch
@@ -2319,7 +2319,7 @@ values with `lerp()`.
 A branch can only choose between numbers, bools and static Substrate values, and these are {0} objects, which no material graph node switches; sample each texture first and branch on the samples.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1489`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1526`
 <!-- generated:end DSH4379 -->
 
 **Cause.** A branch leaves a texture object or a sampler in a variable, with a different one on each
@@ -2339,7 +2339,7 @@ the taken side ends up in the shader.
 This branch becomes a 'Substrate.Select', which parameter-blends its two inputs; they are a '{0}' and a '{1}', and the engine may refuse to blend unlike BSDFs.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1533`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilder.cpp:1570`
 <!-- generated:end DSH4380 -->
 
 **Cause.** A run-time `if` or `?:` chooses between two Substrate values of unlike kinds -- a slab on
