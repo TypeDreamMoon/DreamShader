@@ -676,7 +676,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH8252](DSH8xxx.md#dsh8252) | error | The override of '{0}' could not be applied: {1} |
 | [DSH8253](DSH8xxx.md#dsh8253) | error | Failed to create package '%s'. |
 | [DSH8254](DSH8xxx.md#dsh8254) | error | The material parameter collection '{0}' has no parameter called '{1}'. |
-| [DSH8260](DSH8xxx.md#dsh8260) | error | The parent '{0}' comes from '{1}', which does not compile, so the parameters this instance overrides cannot... |
+| [DSH8260](DSH8xxx.md#dsh8260) | error | The parent source '{0}' failed to compile, so this instance has no parent to build against. {1} |
 | [DSH8261](DSH8xxx.md#dsh8261) | error | No material or instance named '{0}' is built by a source under '{1}'; write the parent's asset path, or che... |
 | [DSH8262](DSH8xxx.md#dsh8262) | error | '{0}' names more than one product under '{1}' ({2}); write the parent's asset path instead. |
 | [DSH8263](DSH8xxx.md#dsh8263) | error | '{0}' is its own ancestor: following Parent from it comes back to it ({1}). |

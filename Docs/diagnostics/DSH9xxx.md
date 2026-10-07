@@ -34,7 +34,7 @@ DSH9001: '{0}' uses conditional compilation, and VirtualFunction sync rewrites a
 Compiling shaders for '%s' took %.0f seconds. A stall of this length is almost always a Custom node whose loop bound is an input (a 'for' or 'while' whose limit is not a literal or a #define) combined with implicit-mip texture sampling -- Texture2DSample / Texture3DSample / .Sample inside divergent flow -- which forces the compiler to fully unroll an iteration count it cannot know. To confirm it is still working rather than hung, check whether ShaderCompileWorker.exe is busy in Task Manager. To fix it, bound the loop with a literal or a #define, or switch the samples to SampleLevel.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp:244`
+**Raised by** `Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp:252`
 <!-- generated:end DSH9011 -->
 
 **Cause.** the shader-compilation half of one asset's generation -- `UpdateStaticPermutation`, `PostEditChange`, the material recompile and the save -- ran for more than thirty seconds. Thirty seconds is not a performance budget; plenty of legitimate materials pass it on a cold shader cache. It is the point past which a still progress bar stops reading as "working" and starts reading as "hung", and this warning exists so that the difference is stated rather than guessed at
@@ -54,7 +54,7 @@ Compiling shaders for '%s' took %.0f seconds. A stall of this length is almost a
 '%s' loops on the input '%s' and samples with '%s', which takes its mip level from screen-space derivatives. The shader compiler cannot know how many iterations to expect, so it fully unrolls the loop to keep the derivatives defined, and compilation can take minutes. Bound the loop with a literal or a #define, or call SampleLevel / SampleGrad instead.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp:272`
+**Raised by** `Source/DreamShaderCompiler/Private/DreamShaderCompilerService.cpp:280`
 <!-- generated:end DSH9012 -->
 
 **Cause.** the HLSL going onto a `Custom` node contains two things that are harmless alone and expensive together: a `for` or `while` whose bound is one of the node's **input pins** (an identifier the shader compiler cannot resolve to a constant, unlike a literal or a `#define`d name), and a sampling call whose mip level is **implicit** -- `Texture2DSample`, `Texture3DSample`, the other `Texture*Sample` helpers or a member `.Sample()`. Implicit-mip sampling derives the level from screen-space derivatives, which are undefined inside divergent control flow, so the compiler keeps them defined by fully unrolling the surrounding loop -- with no iteration count to unroll to. That is what turns a ray-march body into a multi-minute compile
@@ -489,7 +489,7 @@ platforms supports.
 %s: DSH9039: the DreamShader 2.0 pipeline failed without raising a diagnostic.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1152`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1225`
 <!-- generated:end DSH9039 -->
 
 **Cause.** Internal invariant. The 2.0 pipeline returned failure without putting a single error in
@@ -1770,7 +1770,7 @@ either, because the two would declare the same assets.
 '{0}' has no parent material, and a '.dsi' is nothing but overrides of one.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:163`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:175`
 <!-- generated:end DSH9100 -->
 
 **Cause.** The material instance has no parent. A `.dsi` is nothing but overrides of a parent, so
@@ -1789,7 +1789,7 @@ there is nothing to write.
 '{0}' overrides {1} parameter(s) of its material layers or blends, which a '.dsi' cannot address; they are left out.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:282`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:294`
 <!-- generated:end DSH9101 -->
 
 **Cause.** The instance overrides parameters of its material layers or blends. A `.dsi` addresses
@@ -1808,7 +1808,7 @@ global parameters only, so those overrides are left out of the text and would be
 The parameter '{0}' is not a name a variable can have; it is written under another with '/// @name {0}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:271`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:283`
 <!-- generated:end DSH9102 -->
 
 **Cause.** A parameter's name is not an identifier (`Base Color`, `UV-Scale`). The override is
@@ -1846,7 +1846,7 @@ resolves, so the instance's overrides cannot be checked against a parameter list
 '{0}' overrides '{1}', which '#pragma instance' has no key for; the rebuilt instance has the parent's.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:302`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:314`
 <!-- generated:end DSH9104 -->
 
 **Cause.** The instance overrides a base property `#pragma instance` has no key for. The rebuilt
@@ -1865,7 +1865,7 @@ instance takes the parent's value.
 '{0}' is a curve atlas row, and '{1}' picks its curve; a '.dsi' can state the row's number and nothing else, so the rebuilt instance loses the curve.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:263`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:275`
 <!-- generated:end DSH9105 -->
 
 **Cause.** A scalar override is a curve-atlas row: the engine stores the curve and atlas beside the
@@ -1884,7 +1884,7 @@ number. A `.dsi` can state the number only.
 '{0}' is declared 'bool' by the parent's source and '{1}' sets it to {2}; the override is written as a 'float'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:252`
+**Raised by** `Source/DreamShaderEditor/Private/Decompiler/DreamShaderInstanceDecompiler.cpp:264`
 <!-- generated:end DSH9106 -->
 
 **Cause.** The parent's source declares the parameter `bool` (a scalar 0/1 parameter), and the
