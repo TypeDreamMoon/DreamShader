@@ -480,24 +480,29 @@ namespace UE::DreamShader
 			}
 
 		private:
-			/** A `///` line that names `@custom` as a whole word. */
+			/** A doc directive matching LangLexer's comment shape and ParseDocLine's name rules. */
 			static bool IsCustomDocLine(const FString& InLine)
 			{
 				const FString Trimmed = InLine.TrimStart();
-				if (!Trimmed.StartsWith(TEXT("///"), ESearchCase::CaseSensitive))
+				if (!Trimmed.StartsWith(TEXT("///"), ESearchCase::CaseSensitive)
+					|| Trimmed.StartsWith(TEXT("////"), ESearchCase::CaseSensitive))
 				{
 					return false;
 				}
+				// The parser canonicalizes directive names to lower case. A directive starts at the
+				// doc payload's beginning or after whitespace; an address such as author@custom is prose.
+				const FString Payload = Trimmed.Mid(3);
 				static const FString Word = TEXT("@custom");
-				int32 Found = Trimmed.Find(Word, ESearchCase::CaseSensitive);
+				int32 Found = Payload.Find(Word, ESearchCase::IgnoreCase);
 				while (Found != INDEX_NONE)
 				{
 					const int32 After = Found + Word.Len();
-					if (After >= Trimmed.Len() || !(FChar::IsAlnum(Trimmed[After]) || Trimmed[After] == TCHAR('_')))
+					if ((Found == 0 || FChar::IsWhitespace(Payload[Found - 1]))
+						&& (After >= Payload.Len() || !(FChar::IsAlnum(Payload[After]) || Payload[After] == TCHAR('_'))))
 					{
 						return true;
 					}
-					Found = Trimmed.Find(Word, ESearchCase::CaseSensitive, ESearchDir::FromStart, After);
+					Found = Payload.Find(Word, ESearchCase::IgnoreCase, ESearchDir::FromStart, After);
 				}
 				return false;
 			}

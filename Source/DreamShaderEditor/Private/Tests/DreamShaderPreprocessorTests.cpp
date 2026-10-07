@@ -28,6 +28,7 @@
 #include "DreamShaderDefineTable.h"
 #include "DreamShaderDiagnostic.h"
 #include "DreamShaderPreprocessor.h"
+#include "Lang/LangParser.h"
 
 #include "Misc/AutomationTest.h"
 
@@ -2876,6 +2877,95 @@ bool FDreamShaderPreprocessorBuiltinDefinesTest::RunTest(const FString& Paramete
 		}
 	}
 
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderPreprocessorCustomDocRecognitionTest,
+	"DreamShader.Lang.Preprocessor.CustomDocRecognition",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderPreprocessorCustomDocRecognitionTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader;
+	using namespace UE::DreamShader::Lang;
+	using namespace UE::DreamShader::Editor::Private::Tests::Preprocessor;
+
+	struct FDocCase
+	{
+		const TCHAR* Doc;
+		bool bCustom;
+	};
+	const FDocCase Cases[] =
+	{
+		{ TEXT("/// @custom"), true },
+		{ TEXT("///@custom"), true },
+		{ TEXT("/// @Custom"), true },
+		{ TEXT("/// @CUSTOM"), true },
+		{ TEXT("/// description @CuStOm"), true },
+		{ TEXT("//// @custom"), false },
+		{ TEXT("/// author@custom"), false },
+		{ TEXT("/// (@custom)"), false },
+		{ TEXT("/// @desc author@custom"), false },
+		{ TEXT("/// @customized"), false },
+	};
+	struct FDialectCase
+	{
+		EDreamShaderPreprocessDialect Dialect;
+		const TCHAR* Path;
+	};
+	const FDialectCase Dialects[] =
+	{
+		{ EDreamShaderPreprocessDialect::Lang2, TEXT("CustomDoc.dss") },
+		{ EDreamShaderPreprocessDialect::Mixed, TEXT("CustomDoc.dsh") },
+		{ EDreamShaderPreprocessDialect::Pipeline, TEXT("CustomDoc.dsp") },
+	};
+	const FDreamShaderDefineTable Defines;
+	for (const FDialectCase& Dialect : Dialects)
+	{
+		for (const FDocCase& Case : Cases)
+		{
+			const FString What = FString::Printf(TEXT("%s: %s"), Dialect.Path, Case.Doc);
+			const FString Source = FString(Case.Doc) + TEXT(
+				"\nfloat F()\n{\n#if PIXELSHADER\nreturn 1;\n#else\nreturn 0;\n#endif\n}\n");
+			FDreamShaderPreprocessResult Preprocessed;
+			FDreamShaderTextError Error;
+			if (!TestTrue(What + TEXT(" preprocesses"), PreprocessDreamShaderSource(
+				Source, Dialect.Path, Defines, Preprocessed, Error, Dialect.Dialect)))
+			{
+				AddError(Error.Message.ToString());
+				continue;
+			}
+			TestEqual(What + TEXT(" preserves line count"), CountLineFeeds(Preprocessed.Text), CountLineFeeds(Source));
+			TestEqual(What + TEXT(" preserves the shader conditional only in Custom bodies"),
+				Preprocessed.Text.Contains(TEXT("#if PIXELSHADER")), Case.bCustom);
+			TestEqual(What + TEXT(" preserves the pixel branch only in Custom bodies"),
+				Preprocessed.Text.Contains(TEXT("return 1;")), Case.bCustom);
+			TestEqual(What + TEXT(" reads shader defines only in ordinary bodies"),
+				Preprocessed.TouchedDefines.Contains(TEXT("PIXELSHADER")), !Case.bCustom);
+			TestEqual(What + TEXT(" counts directives only in ordinary bodies"), Preprocessed.bHadDirectives, !Case.bCustom);
+			if (Case.bCustom)
+			{
+				TestEqual(What + TEXT(" leaves HLSL byte-identical"), Preprocessed.Text, Source);
+			}
+
+			// Checking the actual parser proves that both stages agree about the annotation, instead
+			// of merely teaching this test a second copy of the preprocessor's recognition rules.
+			FLangParseResult Parsed = ParseDreamShaderLang(FLangSourceText(Dialect.Path, Preprocessed.Text));
+			if (!TestTrue(What + TEXT(" parses after preprocessing"), Parsed.Succeeded()))
+			{
+				continue;
+			}
+			if (TestEqual(What + TEXT(" has one function"), Parsed.Module->Declarations.Num(), 1))
+			{
+				const FFunctionDecl* Function = Parsed.Module->Declarations[0]->As<FFunctionDecl>();
+				if (TestNotNull(What + TEXT(" is a function"), Function))
+				{
+					TestEqual(What + TEXT(" agrees with the parser's Custom classification"), Function->bOpaqueBody, Case.bCustom);
+				}
+			}
+		}
+	}
 	return true;
 }
 
