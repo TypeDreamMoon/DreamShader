@@ -1732,10 +1732,10 @@ namespace UE::DreamShader::Lang::Private
 					double Mips = 1.0;
 					if (ReadNumber(Value, EPipelineValueSite::Buffer, Key, /* bIntegral */ true, Mips))
 					{
-						if (Mips < 1.0 || Mips > 14.0)
+						if (Mips != 1.0)
 						{
 							ReportBadValue(EPipelineValueSite::Buffer, Argument.Span, FText::Format(
-								LOCTEXT("MipsRange", "'Mips' of buffer '{0}' is {1}, and a buffer has 1 to 14 mips."),
+								LOCTEXT("MipsUnsupported", "'Mips' of buffer '{0}' is {1}; only 1 is supported because passes cannot initialize or update a mip chain."),
 								FText::FromString(Decl.Name),
 								FText::AsNumber(static_cast<int64>(Mips))));
 						}

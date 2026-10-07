@@ -125,6 +125,33 @@ bool FDreamPassMeshFilter::UsesStencil() const
 	return false;
 }
 
+bool FDreamPassMeshFilter::MatchesStencilTerms(uint32 Stencil) const
+{
+	for (const FDreamPassFilterClause& Clause : AnyOf)
+	{
+		bool bHasStencil = false;
+		bool bMatches = true;
+		for (const FDreamPassFilterTerm& Term : Clause.AllOf)
+		{
+			if (Term.Kind == EDreamPassFilterKind::Stencil)
+			{
+				bHasStencil = true;
+				const uint32 Mask = uint32(Term.StencilMask) & 0xFFu;
+				if ((Stencil & Mask) != (uint32(Term.StencilValue) & Mask))
+				{
+					bMatches = false;
+					break;
+				}
+			}
+		}
+		if (bHasStencil && bMatches)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 namespace UE::DreamPass
 {
 	namespace Private

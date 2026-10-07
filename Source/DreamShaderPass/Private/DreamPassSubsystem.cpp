@@ -1,9 +1,11 @@
 #include "DreamPassSubsystem.h"
 
 #include "DreamPassConsole.h"
+#include "DreamPassMaterialInstance.h"
 #include "DreamPassPipeline.h"
 #include "DreamPassSettings.h"
 #include "DreamShaderPassModule.h"
+#include "DreamShaderVersionCompat.h"
 
 #include "Algo/StableSort.h"
 #include "ClearQuad.h"
@@ -20,6 +22,10 @@
 #include "SceneViewExtension.h"
 #include "TextureResource.h"
 
+#if WITH_EDITOR
+#include "ObjectCacheEventSink.h"
+#endif
+
 #if DREAMSHADER_WITH_CUSTOM_PASS
 #include "Render/DreamPassSceneViewExtension.h"
 #endif
@@ -28,6 +34,33 @@ namespace UE::DreamPass::Private
 {
 	/** A pool unused for this many frames lets its instances go. */
 	static constexpr uint64 MaterialPoolIdleFrames = 600;
+}
+
+void UDreamPassMaterialInstance::ResetPoolParameters()
+{
+	// ClearParameterValues also resets the parent MIC's editor texture-paint overrides. Only this pooled
+	// instance belongs to us. InitResources replaces its render-side parameter tables in command-queue order.
+	ScalarParameterValues.Reset();
+	VectorParameterValues.Reset();
+	DoubleVectorParameterValues.Reset();
+	TextureParameterValues.Reset();
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 5)
+	TextureCollectionParameterValues.Reset();
+#endif
+#if DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS
+	ParameterCollectionParameterValues.Reset();
+#endif
+	RuntimeVirtualTextureParameterValues.Reset();
+	SparseVolumeTextureParameterValues.Reset();
+	FontParameterValues.Reset();
+	RenamedTextures.Reset();
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 8)
+	CacheTexturesSamplingInfo();
+#endif
+#if WITH_EDITOR
+	FObjectCacheEventSink::NotifyMaterialChanged_Concurrent(this);
+#endif
+	InitResources();
 }
 
 const FDreamPassParameterValue* FDreamPassResolvedPipeline::FindValue(FName Name) const
@@ -668,9 +701,15 @@ UMaterialInstanceDynamic* UDreamPassSubsystem::AcquireMaterialInstance(UMaterial
 	Pool->LastUsedFrame = GFrameCounter;
 	if (Pool->Used == Pool->Instances.Num())
 	{
-		Pool->Instances.Add(UMaterialInstanceDynamic::Create(Base, this));
+		UDreamPassMaterialInstance* Instance = NewObject<UDreamPassMaterialInstance>(this, NAME_None, RF_Transient);
+		Instance->InitializeForPool(Base);
+		Pool->Instances.Add(Instance);
 	}
-	return Pool->Instances[Pool->Used++];
+	UDreamPassMaterialInstance* Instance = CastChecked<UDreamPassMaterialInstance>(Pool->Instances[Pool->Used++]);
+	// The same slot can belong to another pass or view next frame. Restore inherited defaults before applying this
+	// use's bindings, including parameters the previous use set but this one does not mention.
+	Instance->ResetPoolParameters();
+	return Instance;
 }
 
 void UDreamPassSubsystem::DumpState(FOutputDevice& Ar) const

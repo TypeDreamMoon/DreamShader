@@ -145,7 +145,7 @@ depth. `R32U` and `RG32U` are reserved: no pass reads or writes an integer buffe
 | `Size` | `int2(w, h)`, a fixed size instead of `Scale` | — |
 | `Resolution` | `Render` (before the upscaler) or `Output` (after it) | the resolution of the first pass that writes it |
 | `Clear` | a scalar, `float4(...)`, or `None` — with `None`, a read before every write is an error | `0` |
-| `Mips` | integer | `1` |
+| `Mips` | `1` only; other counts are rejected because passes cannot initialize or update a mip chain | `1` |
 | `History` | `true`: kept from one frame to the next, per view; `<Name>.Previous` reads last frame's | `false` |
 | `Export` | `true`: copied, after the last pass that writes it, into a render target asset ordinary materials, Blueprints, UMG and Niagara read — see [Exported buffers](../runtime/index.md#exported-buffers) | `false` |
 

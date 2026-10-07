@@ -148,7 +148,7 @@ namespace UE::DreamPass
 			: FClearValueBinding(Desc.ClearValue);
 
 		FRDGTextureRef Texture = Context.GraphBuilder.CreateTexture(
-			FRDGTextureDesc::Create2D(Extent, Format, ClearBinding, Flags, uint8(FMath::Clamp(Desc.Mips, 1, 14))),
+			FRDGTextureDesc::Create2D(Extent, Format, ClearBinding, Flags),
 			TEXT("DreamPass.Buffer"));
 
 		// Cleared even when the buffer says `Clear = None`: the binder already refused a read before every write, and

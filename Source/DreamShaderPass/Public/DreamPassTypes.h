@@ -245,7 +245,8 @@ struct DREAMSHADERPASS_API FDreamPassBufferDesc
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buffer", meta = (EditCondition = "bClear"))
 	FLinearColor ClearValue = FLinearColor::Transparent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buffer", meta = (ClampMin = "1", ClampMax = "14"))
+	/** Only mip 0 is writable by passes; mip chains are not supported yet. Other counts fail pipeline validation. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Buffer", meta = (ClampMin = "1", ClampMax = "1"))
 	int32 Mips = 1;
 
 	/** Kept from one frame to the next, per view; `<Name>.Previous` reads last frame's. */
@@ -377,6 +378,8 @@ struct DREAMSHADERPASS_API FDreamPassMeshFilter
 	TArray<FDreamPassFilterClause> AnyOf;
 
 	bool UsesStencil() const;
+	/** Matches the stencil terms of a clause using AND, then clauses using OR. Membership-only clauses do not match. */
+	bool MatchesStencilTerms(uint32 Stencil) const;
 	bool IsEmpty() const { return AnyOf.IsEmpty(); }
 };
 

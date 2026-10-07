@@ -505,7 +505,6 @@ namespace UE::DreamShader::Editor::Private::LangPipelineTests
 			Soft.ClearValue[1] = 0.5;
 			Soft.ClearValue[2] = 0.0;
 			Soft.ClearValue[3] = 1.0;
-			Soft.Mips = 3;
 			Soft.bExport = true;
 			Soft.Description = TEXT("Soft.");
 			Pipeline.Buffers.Add(MoveTemp(Soft));
@@ -1042,10 +1041,11 @@ static const bool J = false;
 		Table.Add(TEXT("Buffers.DSH7308.SizeNotWhole"), TEXT("DSH7308"), Raised, Free, WithBase(TEXT("buffer Mask : R8(Size = float2(1.5, 2.0));\n")));
 		Table.Add(TEXT("Buffers.DSH7308.ResolutionFixed"), TEXT("DSH7308"), Raised, Free, WithBase(TEXT("buffer Mask : R8(Resolution = Fixed);\n")));
 		Table.Add(TEXT("Buffers.DSH7308.MipsRange"), TEXT("DSH7308"), Raised, Free, WithBase(TEXT("buffer Mask : R8(Mips = 15);\n")));
+		Table.Add(TEXT("Buffers.DSH7308.MipsUnsupported"), TEXT("DSH7308"), Raised, Free, WithBase(TEXT("buffer Mask : R8(Mips = 2);\n")));
 		Table.Add(TEXT("Buffers.DSH7308.MipsNotWhole"), TEXT("DSH7308"), Raised, Free, WithBase(TEXT("buffer Mask : R8(Mips = 2.0);\n")));
 		Table.Add(TEXT("Buffers.DSH7308.HistoryNotBool"), TEXT("DSH7308"), Raised, Free, WithBase(TEXT("buffer Mask : R8(History = 1);\n")));
 		Table.Add(TEXT("Buffers.DSH7308.ClearBool"), TEXT("DSH7308"), Raised, Free, WithBase(TEXT("buffer Mask : R8(Clear = true);\n")));
-		Table.Add(TEXT("Buffers.DSH7308.EveryKey"), TEXT("DSH7308"), Clean, Free, WithBase(TEXT("buffer Mask : RGBA16F(Scale = 0.5, Resolution = Output, Clear = float4(1.0, 0.0, 0.0, 1.0), Mips = 4, History = true, Export = true);\n")));
+		Table.Add(TEXT("Buffers.DSH7308.EveryKey"), TEXT("DSH7308"), Clean, Free, WithBase(TEXT("buffer Mask : RGBA16F(Scale = 0.5, Resolution = Output, Clear = float4(1.0, 0.0, 0.0, 1.0), Mips = 1, History = true, Export = true);\n")));
 		Table.Add(TEXT("Buffers.DSH7309.SizeAndScale"), TEXT("DSH7309"), Raised, Free, WithBase(TEXT("buffer Mask : R8(Size = int2(64, 64), Scale = 0.5);\n")));
 		Table.Add(TEXT("Buffers.DSH7309.SizeAndResolution"), TEXT("DSH7309"), Raised, Free, WithBase(TEXT("buffer Mask : R8(Size = int2(64, 64), Resolution = Render);\n")));
 		Table.Add(TEXT("Buffers.DSH7355.ExportDepth"), TEXT("DSH7355"), Raised, Free, WithBase(TEXT("buffer Depth : Depth32(Export = true);\n")));
@@ -2110,7 +2110,7 @@ bool FDreamShaderLangPipelinePrintTest::RunTest(const FString& Parameters)
 			TEXT("\n/// @slider 0.5 2.5\nuniform float Gain;\n"),
 			TEXT("\n/// @default /Engine/EngineResources/DefaultTexture\nuniform Texture2D Noise;\nuniform Texture2D Empty;\n"),
 			TEXT("\nbuffer Depth : Depth32;\nbuffer Mask : R8;\nbuffer Field : RG16F(Size = int2(64, 32), Clear = None, History = true);\n"),
-			TEXT("\n/// @desc Soft.\nbuffer Soft : RGBA16F(Scale = 0.25, Clear = float4(1.0, 0.5, 0.0, 1.0), Mips = 3, Export = true);\nbuffer Late : RGBA8(Resolution = Render);\nbuffer Grey : R16F(Clear = 0.5);\n"),
+			TEXT("\n/// @desc Soft.\nbuffer Soft : RGBA16F(Scale = 0.25, Clear = float4(1.0, 0.5, 0.0, 1.0), Export = true);\nbuffer Late : RGBA8(Resolution = Render);\nbuffer Grey : R16F(Clear = 0.5);\n"),
 			TEXT("    Injection = BeginView;\n    Shader = \"/Project/Passes/Sim.usf\";\n    Entry = SimCS;\n    Threads = uint3(16, 4, 1);\n    Dispatch = Field / 2;\n    read Previous = Field.Previous;\n    write Result = Field;\n"),
 			TEXT("    param Scaled = Gain * 2.0 - 1.0;\n    param Weight = DreamPassWeight;\n    param Neg = Gain * -1.0;\n    param Count = 3;\n    param Flag = true;\n    param Pair = float2(0.25, 0.75);\n    param Third = 0.3;\n"),
 			TEXT("    Filter = Layer(Highlight | \"Other Layer\") & Stencil(4, 15) | List(Enemies);\n"),

@@ -1215,7 +1215,7 @@ namespace UE::DreamPass::Private::MeshPass
 	}
 
 	/**
-	 * The custom stencil values the Nanite fill selects, as 256 bits: every Stencil term of the filter, and the value
+	 * The custom stencil values the Nanite fill selects, as 256 bits: the filter's stencil clauses, and the value
 	 * AssignStencil gives the Nanite members of its layers and lists. A pixel only knows its stencil, so a clause's other
 	 * terms do not narrow the fill. False when no value is selected.
 	 */
@@ -1236,14 +1236,12 @@ namespace UE::DreamPass::Private::MeshPass
 			bAny = true;
 		};
 
-		for (const FDreamPassFilterClause& Clause : Mesh.Filter.AnyOf)
+		for (uint32 Stencil = 0; Stencil < 256u; ++Stencil)
 		{
-			for (const FDreamPassFilterTerm& Term : Clause.AllOf)
+			if (Mesh.Filter.MatchesStencilTerms(Stencil))
 			{
-				if (Term.Kind == EDreamPassFilterKind::Stencil)
-				{
-					AddValue(uint32(Term.StencilValue) & 0xFFu, uint32(Term.StencilMask) & 0xFFu);
-				}
+				OutWords[Stencil >> 5u] |= 1u << (Stencil & 31u);
+				bAny = true;
 			}
 		}
 

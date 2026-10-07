@@ -70,6 +70,9 @@ writes it.
 
 ## Buffers across frames
 
+Buffers have one mip. Sources with `Mips` other than `1` are rejected, and older assets with such buffers are
+skipped with a warning. Passes expose mip 0 only; no uninitialized higher mips are allocated or sampled.
+
 `History = true` keeps a buffer per view from one frame to the next; `<Name>.Previous` reads last frame's
 copy. A resized view starts its history over (black), and a view without a view state — a scene capture
 with neither `bCaptureEveryFrame` nor `bAlwaysPersistRenderingState`, a thumbnail — has none at all: `.Previous` reads black there, with one warning.

@@ -1810,7 +1810,7 @@ the pipeline compiles, so a `static const` works and a `uniform` does not.
 - `Resolution` is not `Render` or `Output`. `Resolution = Fixed` is refused too: a fixed size is
   written `Size = int2(w, h)`.
 - `Clear` is not a number, a `float2` to `float4`, or `None`.
-- `Mips` is not a whole number from 1 to 14.
+- `Mips` is not the integer `1`. Passes cannot initialize or update a mip chain yet.
 - `History` or `Export` is not `true` or `false`.
 
 **Fix.** Write the value the message asks for:
