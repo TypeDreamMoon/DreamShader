@@ -88,6 +88,10 @@ asset the compiler makes next to the pipeline (`<Pipeline>_<Buffer>`). Ordinary 
 [`UE.DreamPassBuffer`](../builtins/dream-pass.md#uedreampassbuffer); Blueprints, UMG and Niagara use the
 render target like any other (`UDreamPassBlueprintLibrary::GetExportTarget`).
 
+If the planned last writer is skipped, an earlier successful write is exported at `EndOfView`.
+If no writer succeeds, the frame does not replace the exported copy. A successful planned last writer
+still exports immediately after its pass.
+
 - **One view writes it**: the first view each frame that is a first local player's game view or an editor
   viewport. Split screen, other editor viewports and scene captures still use the buffer within their own
   frame, but never overwrite the exported copy.

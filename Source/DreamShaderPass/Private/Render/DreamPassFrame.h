@@ -165,6 +165,9 @@ namespace UE::DreamPass
 	/** After a pass ran: the copy of every exported buffer it was the last writer of (Render/DreamPassExport.cpp). */
 	void AfterPassWrites(FExecuteContext& Context);
 
+	/** At view end: exports successful earlier writes whose planned last writer did not run. */
+	void FinishViewExports(FRDGBuilder& GraphBuilder, FViewState& ViewState);
+
 	// --- executors (one file each) ------------------------------------------------------------------------------
 
 	// Each returns whether the pass ran; one that could not (a material still compiling, a target the injection point
