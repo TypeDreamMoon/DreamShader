@@ -11,6 +11,9 @@
 #include "Lang/LangInstanceSource.h"
 
 #include "Engine/Font.h"
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+#include "Engine/TextureCollection.h"
+#endif
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialParameterCollection.h"
@@ -91,10 +94,19 @@ namespace UE::DreamShader::Editor::Private
 			case EIRParameterKind::Texture:
 			case EIRParameterKind::RuntimeVirtualTexture:
 			case EIRParameterKind::SparseVolumeTexture:
-			case EIRParameterKind::TextureCollection:
-				// AsTextureObject answers every texture-like kind with the object itself.
 				Override.Value = FIRPropertyValue::MakeObject(ObjectPathOf(Value.AsTextureObject()));
 				return;
+			case EIRParameterKind::TextureCollection:
+			{
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+				// AsTextureObject does not include texture collections.
+				const UObject* Collection = Value.TextureCollection;
+				Override.Value = FIRPropertyValue::MakeObject(ObjectPathOf(Collection));
+#else
+				Override.Value = FIRPropertyValue::MakeObject(FString());
+#endif
+				return;
+			}
 			case EIRParameterKind::Font:
 			{
 				// Not AsTextureObject, which hands back the font's page texture rather than the font.

@@ -16,6 +16,9 @@
 #include "Engine/Texture2DArray.h"
 #include "Engine/TextureCube.h"
 #include "Engine/VolumeTexture.h"
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+#include "Engine/TextureCollection.h"
+#endif
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialInterface.h"
 // FMaterialParameterInfo and its kin: Materials/MaterialParameters.h from UE 5.7, MaterialTypes.h before.
@@ -129,10 +132,19 @@ namespace UE::DreamShader::Editor::Compiler
 			}
 			case IR::EIRParameterKind::RuntimeVirtualTexture:
 			case IR::EIRParameterKind::SparseVolumeTexture:
-			case IR::EIRParameterKind::TextureCollection:
-				// AsTextureObject answers every texture-like kind with the object itself.
 				Entry.ParentValue = IR::FIRPropertyValue::MakeObject(GetDreamShaderSchemaObjectPath(Value.AsTextureObject()));
 				return;
+			case IR::EIRParameterKind::TextureCollection:
+			{
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+				// AsTextureObject does not include texture collections.
+				const UObject* Collection = Value.TextureCollection;
+				Entry.ParentValue = IR::FIRPropertyValue::MakeObject(GetDreamShaderSchemaObjectPath(Collection));
+#else
+				Entry.ParentValue = IR::FIRPropertyValue::MakeObject(FString());
+#endif
+				return;
+			}
 			case IR::EIRParameterKind::Font:
 			{
 				// Not AsTextureObject, which hands back the font's page texture rather than the font.
