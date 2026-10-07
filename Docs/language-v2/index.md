@@ -212,8 +212,8 @@ Helper and `@custom` defaults use the callee's parameters. For example,
 inside another function. Explicit arguments are evaluated in the caller before defaults;
 dependent defaults use the declared parameter types and resolve other defaults as needed.
 A dependency cycle without an explicit value is [DSH6224](../diagnostics/DSH6xxx.md#dsh6224).
-A default may initialize a helper output, but a Custom output must be initialized in its body
-or declared `inout` so the incoming value can cross a Custom input pin.
+A default may initialize a helper output, but a Custom output must be initialized in its body;
+pass any required initial value through a separate input pin.
 An exported or `extern` material-function call leaves omitted pins open and uses the asset's
 own defaults; it does not evaluate a prototype default in the caller.
 

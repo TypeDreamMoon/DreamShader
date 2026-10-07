@@ -253,7 +253,7 @@ namespace UE::DreamShader::IR::Private
 				if (Callee.Params[Index].Direction == EParamDirection::Out && !OutValues[Index].IsEmpty())
 				{
 					Diagnostics.Error(TEXT("DSH6224"), Expr.Span, FText::Format(
-						LOCTEXT("IRBuilderCustomDefaultOut", "A default of '{0}' initializes its 'out' parameter '{1}', but a Custom output has no input pin to carry that value; initialize it in the body or use 'inout'."),
+						LOCTEXT("IRBuilderCustomDefaultOut", "A default of '{0}' initializes its 'out' parameter '{1}', but a Custom output has no input pin to carry that value; pass the initial value through a separate input and assign the output in the body."),
 						FText::FromString(Callee.Name), FText::FromString(Callee.Params[Index].Name)));
 					bResolved = false;
 				}
