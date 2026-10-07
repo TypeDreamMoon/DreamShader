@@ -294,6 +294,10 @@ namespace UE::DreamShader::IR::Private
 			{
 				return FLoweredValue();
 			}
+			if (!ResolveDefaultArgument(BoundExpr->Index))
+			{
+				return FLoweredValue();
+			}
 			ReportPartialRead(Current.Params[BoundExpr->Index]);
 			return Current.Params[BoundExpr->Index];
 		}
@@ -1597,6 +1601,12 @@ namespace UE::DreamShader::IR::Private
 
 	FLoweredValue FIRBuilder::LoadLValue(const FLValueRef& Ref, const FLangSpan& Span)
 	{
+		// Compound assignments read through a slot rather than LowerExpr(Param), but a pending
+		// default must be initialized before that read too.
+		if (Ref.bParam && Ref.FrameIndex == Frames.Num() - 1 && !ResolveDefaultArgument(Ref.BaseIndex))
+		{
+			return FLoweredValue();
+		}
 		FLoweredValue* Slot = ResolveSlot(Ref);
 		if (!Slot)
 		{
@@ -1640,6 +1650,15 @@ namespace UE::DreamShader::IR::Private
 
 	void FIRBuilder::StoreLValue(const FLValueRef& Ref, const FLoweredValue& Value, const FLangSpan& Span)
 	{
+		// A write from another default replaces an initialized parameter; do not let its pending
+		// initializer run later and silently replace the write.
+		if (Ref.bParam && Ref.FrameIndex == Frames.Num() - 1
+			&& Frame().DefaultArguments.IsValidIndex(Ref.BaseIndex)
+			&& Frame().DefaultArguments[Ref.BaseIndex] == EDefaultArgumentState::Pending
+			&& !ResolveDefaultArgument(Ref.BaseIndex))
+		{
+			return;
+		}
 		FLoweredValue* Slot = ResolveSlot(Ref);
 		if (!Slot)
 		{

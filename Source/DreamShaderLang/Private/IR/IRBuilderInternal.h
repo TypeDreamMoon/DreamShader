@@ -265,6 +265,8 @@ namespace UE::DreamShader::IR::Private
 		FLoweredValue ReturnValue;
 	};
 
+	enum class EDefaultArgumentState : uint8 { Pending, Evaluating, Ready };
+
 	/** One function being lowered: the product's own function, or a helper being inlined into it. */
 	struct FFrame
 	{
@@ -272,6 +274,8 @@ namespace UE::DreamShader::IR::Private
 		int32 FunctionIndex = INDEX_NONE;
 		TArray<FLoweredValue> Locals;
 		TArray<FLoweredValue> Params;
+		/** Set only in the temporary callee frame used to resolve omitted arguments. */
+		TArray<EDefaultArgumentState> DefaultArguments;
 		/** Parallel to Params: where an `out`/`inout` parameter writes back, in the caller. */
 		TArray<FLValueRef> OutTargets;
 		TArray<FPendingExit> PendingExits;
@@ -607,7 +611,9 @@ namespace UE::DreamShader::IR::Private
 		FLoweredValue InlineHelper(const FExpr& Expr, const FBoundExpr& Bound, const FBoundFunction& Callee, int32 CalleeIndex);
 		FLoweredValue MakeCustomNode(const FExpr& Expr, const FBoundExpr& Bound, const FBoundFunction& Callee, int32 CalleeIndex);
 		FLoweredValue MakeFunctionCallNode(const FExpr& Expr, const FBoundExpr& Bound, const FBoundFunction& Callee, int32 CalleeIndex);
-		/** The arguments of a call, matched to the callee's parameters; missing ones take the default. */
+		/** Resolve a pending default against the active callee frame; refuse dependency cycles. */
+		bool ResolveDefaultArgument(int32 ParamIndex);
+		/** Arguments in caller scope, then helper/Custom defaults in callee scope; asset pins stay open. */
 		bool BindCallArguments(
 			const FExpr& Expr,
 			const FBoundExpr& Bound,

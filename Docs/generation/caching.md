@@ -21,7 +21,7 @@ digest text    := for each imported header, in the order the include resolver fi
                     "\n// End DreamShader source: <project-relative path>\n\n"
                   then the same block for the file itself
                   (a `.dsi` adds its resolved parent, a `.dsp` what it references)
-build key      := "DSK5|Plugin=<version>|Engine=<major>.<minor>|" <settings> "Defines=<read defines>|"
+build key      := "DSK6|Plugin=<version>|Engine=<major>.<minor>|" <settings> "Defines=<read defines>|"
                   "\n--\n" <digest text>
 build key      ->  CRC32  ->  "%08x"  ->  DreamShader.SourceHash   e.g. "9f2c41ab"
 source path    ->  project-relative, forward slashes  ->  DreamShader.SourceFile
@@ -58,7 +58,7 @@ check answer "still current" about an asset that is not:
 | the preprocessed text of the file and of every header it imports | the compile's actual input — which is why a changed `.dsh` needs nothing else here |
 | [Default Compiler Backend](../settings/project.md) | decides whether a `Shader` block becomes a `UMaterial` or a thin instance |
 | the mapping tables | decide what a `Settings` key resolves to |
-| plugin version, plus a hand-bumped format tag — `DSK5` *(`DSK4` in 2.1.1; `DSK3` in 1.9.0 – 2.1.0)* | upgrading the generator invalidates what the old one wrote. `DSK5` rebuilds graphs for corrected chained writes, casts, math, nested returns and parameter defaults, even before the next plugin release |
+| plugin version, plus a hand-bumped format tag — `DSK6` *(`DSK4` in 2.1.1; `DSK3` in 1.9.0 – 2.1.0)* | upgrading the generator invalidates what the old one wrote. The current key rebuilds graphs for corrected chained writes, casts, math, nested returns and parameter defaults, even before the next plugin release |
 | engine version | what is generable moves with it (Substrate, for one) |
 | the [preprocessor defines this source read](../language/preprocessor.md#rebuilds) *(since 1.9.0)* | they decide which branches of the source were compiled at all |
 

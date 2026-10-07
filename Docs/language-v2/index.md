@@ -207,6 +207,16 @@ What happens to a parsed file:
 | A pin named per node | for a class whose nodes name their pins after a property (`Substrate.MoonToonModifier`, TextureSample's derivative pins, `UE.LandscapeLayerBlend(Layer_Grass = ...)` after its `Layers`), a name the catalog does not list is looked up on the built node (`DSH5291`, refused there with `DSH8212`). The pin's own property name always resolves. |
 | Unpassed optional inputs | stay unconnected on the call node; the callee's default applies. |
 
+Helper and `@custom` defaults use the callee's parameters. For example,
+`float F(float x, float y = x)` called as `F(7)` receives `y = 7`, including when the call is
+inside another function. Explicit arguments are evaluated in the caller before defaults;
+dependent defaults use the declared parameter types and resolve other defaults as needed.
+A dependency cycle without an explicit value is [DSH6224](../diagnostics/DSH6xxx.md#dsh6224).
+A default may initialize a helper output, but a Custom output must be initialized in its body
+or declared `inout` so the incoming value can cross a Custom input pin.
+An exported or `extern` material-function call leaves omitted pins open and uses the asset's
+own defaults; it does not evaluate a prototype default in the caller.
+
 ### Substrate, layout and tooling
 
 | Feature | Spelling |
