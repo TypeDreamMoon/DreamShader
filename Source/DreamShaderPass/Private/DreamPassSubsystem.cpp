@@ -7,6 +7,7 @@
 #include "DreamShaderPassModule.h"
 #include "DreamShaderVersionCompat.h"
 
+#include "Algo/AllOf.h"
 #include "Algo/StableSort.h"
 #include "ClearQuad.h"
 #include "Components/PrimitiveComponent.h"
@@ -34,6 +35,36 @@ namespace UE::DreamPass::Private
 {
 	/** A pool unused for this many frames lets its instances go. */
 	static constexpr uint64 MaterialPoolIdleFrames = 600;
+}
+
+void UDreamPassMaterialInstance::PrepareForPoolUse(const TConstArrayView<FDreamPassMaterialParameterKey>* Parameters)
+{
+	const bool bOverwritesPrevious = Parameters && bPoolParametersKnown
+		&& Algo::AllOf(PoolParameters, [Parameters](const FDreamPassMaterialParameterKey& Previous) { return Parameters->Contains(Previous); });
+	if (!bOverwritesPrevious && HasPoolParameterOverrides())
+	{
+		ResetPoolParameters();
+	}
+	bPoolParametersKnown = Parameters != nullptr;
+	PoolParameters.Reset();
+	if (Parameters)
+	{
+		PoolParameters.Append(Parameters->GetData(), Parameters->Num());
+	}
+}
+
+bool UDreamPassMaterialInstance::HasPoolParameterOverrides() const
+{
+	return !ScalarParameterValues.IsEmpty() || !VectorParameterValues.IsEmpty() || !DoubleVectorParameterValues.IsEmpty()
+		|| !TextureParameterValues.IsEmpty()
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 5)
+		|| !TextureCollectionParameterValues.IsEmpty()
+#endif
+#if DREAMSHADER_WITH_PARAMETER_COLLECTION_PARAMETERS
+		|| !ParameterCollectionParameterValues.IsEmpty()
+#endif
+		|| !RuntimeVirtualTextureParameterValues.IsEmpty() || !SparseVolumeTextureParameterValues.IsEmpty()
+		|| !FontParameterValues.IsEmpty() || !RenamedTextures.IsEmpty();
 }
 
 void UDreamPassMaterialInstance::ResetPoolParameters()
@@ -684,6 +715,16 @@ void UDreamPassSubsystem::BeginMaterialFrame()
 
 UMaterialInstanceDynamic* UDreamPassSubsystem::AcquireMaterialInstance(UMaterialInterface* Base)
 {
+	return AcquirePooledMaterialInstance(Base, nullptr);
+}
+
+UMaterialInstanceDynamic* UDreamPassSubsystem::AcquireMaterialInstance(UMaterialInterface* Base, TConstArrayView<FDreamPassMaterialParameterKey> Parameters)
+{
+	return AcquirePooledMaterialInstance(Base, &Parameters);
+}
+
+UMaterialInstanceDynamic* UDreamPassSubsystem::AcquirePooledMaterialInstance(UMaterialInterface* Base, const TConstArrayView<FDreamPassMaterialParameterKey>* Parameters)
+{
 	if (!Base)
 	{
 		return nullptr;
@@ -708,7 +749,7 @@ UMaterialInstanceDynamic* UDreamPassSubsystem::AcquireMaterialInstance(UMaterial
 	UDreamPassMaterialInstance* Instance = CastChecked<UDreamPassMaterialInstance>(Pool->Instances[Pool->Used++]);
 	// The same slot can belong to another pass or view next frame. Restore inherited defaults before applying this
 	// use's bindings, including parameters the previous use set but this one does not mention.
-	Instance->ResetPoolParameters();
+	Instance->PrepareForPoolUse(Parameters);
 	return Instance;
 }
 

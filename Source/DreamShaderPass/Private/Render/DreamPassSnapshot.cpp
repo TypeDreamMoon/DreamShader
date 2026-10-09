@@ -128,18 +128,44 @@ namespace UE::DreamPass
 			}
 		}
 
+		/** How ApplyMaterialParameter stores a value on the instance. */
+		static EDreamPassMaterialParameterKind MaterialParameterKindOf(const FDreamPassParameterValue& Value)
+		{
+			switch (Value.Type)
+			{
+			case EDreamPassParameterType::Float:
+			case EDreamPassParameterType::Int:
+			case EDreamPassParameterType::Bool:
+				return EDreamPassMaterialParameterKind::Scalar;
+			case EDreamPassParameterType::Texture:
+				return EDreamPassMaterialParameterKind::Texture;
+			default:
+				return EDreamPassMaterialParameterKind::Vector;
+			}
+		}
+
 		/** A material instance of Base for this use, with the pass's parameters and the pipeline's weight set on it. */
 		static UMaterialInstanceDynamic* MakePassMaterial(UDreamPassSubsystem& Subsystem, UMaterialInterface* Base, const FDreamPassResolvedPipeline& Resolved, const FDreamPassDesc& Pass)
 		{
-			UMaterialInstanceDynamic* Instance = Subsystem.AcquireMaterialInstance(Base);
+			// Every parameter this use sets, named before acquiring: the pool then keeps an instance whose previous
+			// use set nothing else, instead of clearing and reinitializing it for every pass every frame.
+			TArray<FDreamPassParameterValue, TInlineAllocator<8>> Values;
+			TArray<FDreamPassMaterialParameterKey, TInlineAllocator<9>> Keys;
+			Keys.Add({ WeightParameterName, EDreamPassMaterialParameterKind::Scalar });
+			for (const FDreamPassParamBinding& Binding : Pass.Params)
+			{
+				const FDreamPassParameterValue& Value = Values.Add_GetRef(ResolveParamBinding(Resolved, Binding));
+				Keys.Add({ Binding.Target, MaterialParameterKindOf(Value) });
+			}
+			UMaterialInstanceDynamic* Instance = Subsystem.AcquireMaterialInstance(Base, Keys);
 			if (!Instance)
 			{
 				return nullptr;
 			}
 			Instance->SetScalarParameterValue(WeightParameterName, Resolved.Weight);
-			for (const FDreamPassParamBinding& Binding : Pass.Params)
+			for (int32 Index = 0; Index < Pass.Params.Num(); ++Index)
 			{
-				ApplyMaterialParameter(*Instance, Binding.Target, ResolveParamBinding(Resolved, Binding));
+				ApplyMaterialParameter(*Instance, Pass.Params[Index].Target, Values[Index]);
 			}
 			return Instance;
 		}

@@ -539,6 +539,108 @@ bool FDreamShaderPassMaterialPoolReuseTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+namespace UE::DreamShader::Editor::Private::PassLogicTests
+{
+	/** One acquisition per frame, so every step reuses the pool's first slot. */
+	class FMaterialPoolKeyedReuseCommand final : public IAutomationLatentCommand
+	{
+	public:
+		explicit FMaterialPoolKeyedReuseCommand(FAutomationTestBase& InTest) : Test(InTest) {}
+
+		virtual bool Update() override
+		{
+			if (!TestWorld)
+			{
+				TestWorld = MakeUnique<FScopedTestWorld>();
+				if (!Test.TestNotNull(TEXT("the keyed pool test world has a subsystem"), TestWorld->GetSubsystem()))
+				{
+					return true;
+				}
+				Base = NewObject<UMaterialInstanceConstant>(TestWorld->World);
+				Base->SetParentEditorOnly(UMaterial::GetDefaultMaterial(MD_Surface), /*RecacheShader*/ false);
+				Base->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(TEXT("Gain")), 0.25f);
+				Base->SetVectorParameterValueEditorOnly(FMaterialParameterInfo(TEXT("Tint")), FLinearColor::Green);
+			}
+			if (Step > 0 && GFrameCounter == Frame)
+			{
+				return false;
+			}
+			Frame = GFrameCounter;
+			UDreamPassSubsystem& Subsystem = *TestWorld->GetSubsystem();
+			const FDreamPassMaterialParameterKey Gain{ TEXT("Gain"), EDreamPassMaterialParameterKind::Scalar };
+			const FDreamPassMaterialParameterKey Tint{ TEXT("Tint"), EDreamPassMaterialParameterKind::Vector };
+			const FDreamPassMaterialParameterKey Both[] = { Gain, Tint };
+			switch (Step++)
+			{
+			case 0:
+			{
+				First = Subsystem.AcquireMaterialInstance(Base, Both);
+				First->SetScalarParameterValue(TEXT("Gain"), 2.0f);
+				First->SetVectorParameterValue(TEXT("Tint"), FLinearColor::Red);
+				return false;
+			}
+			case 1:
+			{
+				// The same pass in the same slot sets both again: nothing to clear first.
+				UMaterialInstanceDynamic* Reused = Subsystem.AcquireMaterialInstance(Base, Both);
+				Test.TestTrue(TEXT("the next frame reuses the first pool slot"), Reused == First);
+				Test.TestEqual(TEXT("a use setting every previous parameter again keeps the instance as it is"), Reused->K2_GetScalarParameterValue(TEXT("Gain")), 2.0f);
+				Test.TestTrue(TEXT("its vector too"), Reused->K2_GetVectorParameterValue(TEXT("Tint")).Equals(FLinearColor::Red));
+				Reused->SetScalarParameterValue(TEXT("Gain"), 3.0f);
+				Reused->SetVectorParameterValue(TEXT("Tint"), FLinearColor::Blue);
+				return false;
+			}
+			case 2:
+			{
+				// A use that no longer sets Tint must not see the previous use's value for it.
+				const FDreamPassMaterialParameterKey OnlyGain[] = { Gain };
+				UMaterialInstanceDynamic* Reused = Subsystem.AcquireMaterialInstance(Base, OnlyGain);
+				Test.TestTrue(TEXT("a use setting fewer parameters clears the omitted vector"), Reused->K2_GetVectorParameterValue(TEXT("Tint")).Equals(FLinearColor::Green));
+				Test.TestEqual(TEXT("and starts every parameter from the parent"), Reused->K2_GetScalarParameterValue(TEXT("Gain")), 0.25f);
+				Reused->SetScalarParameterValue(TEXT("Gain"), 4.0f);
+				return false;
+			}
+			case 3:
+			{
+				// A use that does not say what it sets always starts from the parent's values.
+				UMaterialInstanceDynamic* Reused = Subsystem.AcquireMaterialInstance(Base);
+				Test.TestEqual(TEXT("an unkeyed acquisition clears a keyed use's overrides"), Reused->K2_GetScalarParameterValue(TEXT("Gain")), 0.25f);
+				Reused->SetScalarParameterValue(TEXT("Gain"), 5.0f);
+				return false;
+			}
+			default:
+			{
+				// What an unkeyed use set is not known, so the next keyed use cannot rely on overwriting it.
+				const FDreamPassMaterialParameterKey OnlyGain[] = { Gain };
+				UMaterialInstanceDynamic* Reused = Subsystem.AcquireMaterialInstance(Base, OnlyGain);
+				Test.TestEqual(TEXT("a keyed use after an unkeyed one starts from the parent"), Reused->K2_GetScalarParameterValue(TEXT("Gain")), 0.25f);
+				return true;
+			}
+			}
+		}
+
+	private:
+		FAutomationTestBase& Test;
+		TUniquePtr<FScopedTestWorld> TestWorld;
+		UMaterialInstanceConstant* Base = nullptr;
+		UMaterialInstanceDynamic* First = nullptr;
+		uint64 Frame = 0;
+		int32 Step = 0;
+	};
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderPassMaterialPoolKeyedReuseTest,
+	"DreamShader.Pass.Logic.MaterialPoolKeyedReuse",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderPassMaterialPoolKeyedReuseTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private::PassLogicTests;
+	ADD_LATENT_AUTOMATION_COMMAND(FMaterialPoolKeyedReuseCommand(*this));
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderPassLayerMaskTest,
 	"DreamShader.Pass.Logic.LayerMask",

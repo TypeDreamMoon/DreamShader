@@ -115,6 +115,23 @@ struct FDreamPassApiActivation
 	TArray<FDreamPassParameterOverride> Overrides;
 };
 
+/** How a material instance stores a parameter set on it. */
+enum class EDreamPassMaterialParameterKind : uint8
+{
+	Scalar,
+	Vector,
+	Texture,
+};
+
+/** A parameter one use of a pooled material instance sets on it. */
+struct FDreamPassMaterialParameterKey
+{
+	FName Name;
+	EDreamPassMaterialParameterKind Kind = EDreamPassMaterialParameterKind::Scalar;
+
+	bool operator==(const FDreamPassMaterialParameterKey& Other) const { return Name == Other.Name && Kind == Other.Kind; }
+};
+
 /** The material instances one pass material is drawn through: one per use in a frame, kept across frames. */
 USTRUCT()
 struct FDreamPassMaterialPool
@@ -231,6 +248,13 @@ public:
 	 */
 	UMaterialInstanceDynamic* AcquireMaterialInstance(UMaterialInterface* Base);
 
+	/**
+	 * The same, for a use that sets exactly Parameters on the instance before it renders. Overrides the instance's
+	 * previous use left are cleared only when this use does not set every one of them again; the same pass handed the
+	 * same slot frame after frame keeps its instance as it is, without clearing and reinitializing its parameters.
+	 */
+	UMaterialInstanceDynamic* AcquireMaterialInstance(UMaterialInterface* Base, TConstArrayView<FDreamPassMaterialParameterKey> Parameters);
+
 	/** Starts a frame of AcquireMaterialInstance: hands every instance out afresh, drops pools idle for a while. */
 	void BeginMaterialFrame();
 
@@ -265,6 +289,8 @@ private:
 	};
 
 	void GatherActivations(const FDreamPassViewQuery& View, TArray<FDreamPassActivation>& OutActivations) const;
+	/** Parameters null: a use whose parameters are not known, which always starts from Base's defaults. */
+	UMaterialInstanceDynamic* AcquirePooledMaterialInstance(UMaterialInterface* Base, const TConstArrayView<FDreamPassMaterialParameterKey>* Parameters);
 	void OnSettingsChanged(UObject* Settings, struct FPropertyChangedEvent& Event);
 	void PruneStaleEntries();
 
