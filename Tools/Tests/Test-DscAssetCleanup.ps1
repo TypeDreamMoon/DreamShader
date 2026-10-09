@@ -11,7 +11,7 @@ $driverTokens = $null
 $driverErrors = $null
 $driverAst = [Management.Automation.Language.Parser]::ParseInput($driverText, [ref]$driverTokens, [ref]$driverErrors)
 if ($driverErrors.Count -ne 0) { throw "dsc.ps1 has parse errors: $($driverErrors -join '; ')" }
-foreach ($helperName in @('Remove-EmptyParents', 'Get-ContentRoots', 'Get-FileSnapshot', 'Read-AssetWriteManifest', 'Remove-NewAssetIfOwned')) {
+foreach ($helperName in @('Remove-EmptyParents', 'Get-ContentRoots', 'Get-FileSnapshot', 'Get-FileSnapshotOrNull', 'Read-AssetWriteManifest', 'Remove-NewAssetIfOwned')) {
     $definitions = @($driverAst.FindAll({
         param($node)
         $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq $helperName
@@ -145,6 +145,31 @@ try {
     Assert-Rejected { Read-AssetWriteManifest -Path $manifestPath -RunId $runId } 'relative manifest path is rejected'
     Write-TestManifest -Path $manifestPath -RunId $runId -Files @()
     Assert-True ((Read-AssetWriteManifest -Path $manifestPath -RunId $runId).Count -eq 0) 'empty valid manifest is accepted without attributing any files'
+    Assert-True (Test-Path -LiteralPath $manifestPath) 'reading without -Consume keeps the manifest'
+
+    # The driver consumes its manifest: one run's file is never left behind in Saved, whether it was valid or not.
+    Write-TestManifest -Path $manifestPath -RunId $runId -Files @()
+    Assert-True ((Read-AssetWriteManifest -Path $manifestPath -RunId $runId -Consume).Count -eq 0) 'a consumed valid manifest is still read'
+    Assert-True (-not (Test-Path -LiteralPath $manifestPath)) 'a consumed valid manifest is deleted'
+    Write-TestManifest -Path $manifestPath -RunId $runId -Files @()
+    Assert-Rejected { Read-AssetWriteManifest -Path $manifestPath -RunId ([guid]::NewGuid().ToString('N')) -Consume } 'a consumed stale manifest is still rejected'
+    Assert-True (-not (Test-Path -LiteralPath $manifestPath)) 'a consumed rejected manifest is deleted too'
+    Assert-Rejected { Read-AssetWriteManifest -Path $manifestPath -RunId $runId -Consume } 'consuming a missing manifest is rejected'
+
+    # A folder that cannot be listed disables reporting and cleanup instead of stopping the run.
+    $listed = Get-FileSnapshotOrNull -Directories @($roots.Values) -Filter '*.uasset' -What 'the test Content folders'
+    Assert-True ($null -ne $listed -and $listed.Count -eq (Get-FileSnapshot -Directories @($roots.Values) -Filter '*.uasset').Count) 'a listable snapshot is returned whole'
+    $realSnapshot = ${function:Get-FileSnapshot}
+    try {
+        ${function:Get-FileSnapshot} = { param([string[]]$Directories, [string]$Filter) throw [UnauthorizedAccessException]::new('Access to the path is denied.') }
+        $warnings = @()
+        $unlisted = Get-FileSnapshotOrNull -Directories @($roots.Values) -Filter '*.uasset' -What 'the test Content folders' -WarningVariable warnings -WarningAction SilentlyContinue
+        Assert-True ($null -eq $unlisted) 'an unlistable snapshot is null, never a partial one'
+        Assert-True ($warnings.Count -eq 1 -and "$($warnings[0])" -match 'the test Content folders') 'an unlistable snapshot is warned about'
+    }
+    finally {
+        ${function:Get-FileSnapshot} = $realSnapshot
+    }
 
     Write-Host "PASS: dsc asset cleanup ($script:assertions assertions; no engine required)."
 }

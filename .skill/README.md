@@ -80,8 +80,10 @@ flag surface: [`Docs/tools/commandlet.md`](../Docs/tools/commandlet.md); the ski
 | Registry report | after a run that can touch them, the files under `DShader/.dreampass` that changed — sources to commit with the `.dsp` |
 | Paths and lists | a relative `-Out` / `-DiagnosticsOut` is the working directory's, not the engine's Binaries folder; `-Define A=1,B` is split into one `-Define=` per item |
 
-Save manifests are kept in `<Project>/Saved/DreamShader/AssetWrites/<run-id>.json`. A missing, invalid or
-stale manifest disables cleanup; with `-CleanNew`, this also makes an otherwise successful run exit `1`.
+The commandlet writes its save manifest to `<Project>/Saved/DreamShader/AssetWrites/<run-id>.json`, and the
+driver deletes it once read, valid or not. A missing, invalid or stale manifest disables cleanup; so does a
+Content folder that cannot be listed before or after the run, which also leaves it out of the report. With
+`-CleanNew`, either makes an otherwise successful run exit `1`.
 Rebuild the plugin when updating the driver: older commandlet binaries do not produce the manifest.
 
 > [!IMPORTANT]

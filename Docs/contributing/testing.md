@@ -95,7 +95,8 @@ pwsh -NoProfile -File Tools/Tests/Test-DscAssetCleanup.ps1
 ```
 
 This exercises the driver's real helper functions in a temporary fake project, including concurrent
-unrelated writes, pre-existing assets, post-save edits, Content boundaries and invalid save manifests.
+unrelated writes, pre-existing assets, post-save edits, Content boundaries, invalid and consumed save
+manifests, and Content folders that cannot be listed.
 
 | Goal | Filter |
 | :-- | :-- |

@@ -423,6 +423,21 @@ function Get-FileSnapshot {
     return $map
 }
 
+function Get-FileSnapshotOrNull {
+    # A snapshot, or $null when a folder cannot be listed in full. The run still goes on, but a snapshot that may be
+    # missing files neither proves which assets are new nor feeds a report.
+    [CmdletBinding()]
+    param([string[]]$Directories, [string]$Filter = '*', [string]$What)
+
+    try {
+        return Get-FileSnapshot -Directories $Directories -Filter $Filter
+    }
+    catch {
+        Write-Warning "Could not list $What, so it is not reported and -CleanNew deletes nothing from it: $($_.Exception.Message)"
+        return $null
+    }
+}
+
 function Compare-FileSnapshot {
     param([hashtable]$Before, [hashtable]$After)
 
@@ -433,20 +448,28 @@ function Compare-FileSnapshot {
 }
 
 function Read-AssetWriteManifest {
-    param([string]$Path, [string]$RunId)
+    # -Consume deletes the manifest once read, valid or not: it answers for this run only, so nothing reads it again.
+    param([string]$Path, [string]$RunId, [switch]$Consume)
 
-    $manifest = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
-    if ($manifest -isnot [System.Collections.IDictionary] -or $manifest.schema -ne 'dreamshader-saved-assets' -or $manifest.version -ne 1 -or $manifest.runId -cne $RunId -or -not $manifest.ContainsKey('files')) {
-        throw 'The asset save manifest is missing its schema, version, run id or files.'
-    }
-    $written = @{}
-    foreach ($entry in $manifest.files) {
-        if ([string]::IsNullOrWhiteSpace($entry.path) -or -not [IO.Path]::IsPathFullyQualified($entry.path)) {
-            throw 'The asset save manifest contains a non-absolute filename.'
+    try {
+        $manifest = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable
+        if ($manifest -isnot [System.Collections.IDictionary] -or $manifest.schema -ne 'dreamshader-saved-assets' -or $manifest.version -ne 1 -or $manifest.runId -cne $RunId -or -not $manifest.ContainsKey('files')) {
+            throw 'The asset save manifest is missing its schema, version, run id or files.'
         }
-        $written[[IO.Path]::GetFullPath($entry.path)] = [string]$entry.md5
+        $written = @{}
+        foreach ($entry in $manifest.files) {
+            if ([string]::IsNullOrWhiteSpace($entry.path) -or -not [IO.Path]::IsPathFullyQualified($entry.path)) {
+                throw 'The asset save manifest contains a non-absolute filename.'
+            }
+            $written[[IO.Path]::GetFullPath($entry.path)] = [string]$entry.md5
+        }
+        return $written
     }
-    return $written
+    finally {
+        if ($Consume -and (Test-Path -LiteralPath $Path -PathType Leaf)) {
+            Remove-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 function Remove-NewAssetIfOwned {
@@ -679,9 +702,9 @@ Write-Host "dsc: $Command  project=$(Split-Path -Leaf $uproject)  engine=$engine
 $writesAssets = ($Command -eq 'compile') -or ($Command -eq 'check' -and $Shaders) -or ($Command -eq 'pass-registry' -and $Rebuild)
 $touchesRegistry = $writesAssets -or ($Command -eq 'pass-registry' -and $Gc)
 $contentRoots = if ($writesAssets) { Get-ContentRoots -ProjectDir $projectDir } else { [ordered]@{} }
-$assetsBefore = if ($writesAssets) { Get-FileSnapshot -Directories @($contentRoots.Values) -Filter '*.uasset' } else { @{} }
+$assetsBefore = if ($writesAssets) { Get-FileSnapshotOrNull -Directories @($contentRoots.Values) -Filter '*.uasset' -What 'the Content folders' } else { @{} }
 $registryDir = Join-Path $projectDir 'DShader/.dreampass'
-$registryBefore = if ($touchesRegistry) { Get-FileSnapshot -Directories @($registryDir) } else { @{} }
+$registryBefore = if ($touchesRegistry) { Get-FileSnapshotOrNull -Directories @($registryDir) -What 'DShader/.dreampass' } else { @{} }
 
 $assetWrites = @{}
 $manifestValid = $false
@@ -696,7 +719,7 @@ $exit = $LASTEXITCODE
 
 if ($writesAssets) {
     try {
-        $assetWrites = Read-AssetWriteManifest -Path $manifestPath -RunId $manifestRunId
+        $assetWrites = Read-AssetWriteManifest -Path $manifestPath -RunId $manifestRunId -Consume
         $manifestValid = $true
     }
     catch {
@@ -724,8 +747,14 @@ if (-not $Raw) {
     }
 }
 
-if ($writesAssets) {
-    $assetsAfter = Get-FileSnapshot -Directories @($contentRoots.Values) -Filter '*.uasset'
+$assetsAfter = if ($writesAssets -and $null -ne $assetsBefore) {
+    Get-FileSnapshotOrNull -Directories @($contentRoots.Values) -Filter '*.uasset' -What 'the Content folders'
+}
+if ($writesAssets -and ($null -eq $assetsBefore -or $null -eq $assetsAfter)) {
+    # Cleanup was asked for and could not be done safely: say so in the exit code, as for a missing manifest.
+    if ($CleanNew -and $exit -eq 0) { $exit = 1 }
+}
+elseif ($writesAssets) {
     $diff = Compare-FileSnapshot -Before $assetsBefore -After $assetsAfter
 
     if ($diff.New.Count -gt 0 -or $diff.Changed.Count -gt 0) {
@@ -780,8 +809,9 @@ if ($writesAssets) {
     }
 }
 
-if ($touchesRegistry) {
-    $registryDiff = Compare-FileSnapshot -Before $registryBefore -After (Get-FileSnapshot -Directories @($registryDir))
+$registryAfter = if ($touchesRegistry -and $null -ne $registryBefore) { Get-FileSnapshotOrNull -Directories @($registryDir) -What 'DShader/.dreampass' }
+if ($touchesRegistry -and $null -ne $registryBefore -and $null -ne $registryAfter) {
+    $registryDiff = Compare-FileSnapshot -Before $registryBefore -After $registryAfter
     $touched = @(
         $registryDiff.New | ForEach-Object { "  $([IO.Path]::GetRelativePath($projectDir, $_))  [new]" }
         $registryDiff.Changed | ForEach-Object { "  $([IO.Path]::GetRelativePath($projectDir, $_))  [changed]" }
