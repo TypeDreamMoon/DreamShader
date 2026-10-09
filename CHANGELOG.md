@@ -2,7 +2,69 @@
 
 ## Unreleased
 
+### Changed
+
+- **Every generated asset is rebuilt once.** The build key's format tag is `DSK7` (`DSK4` in 2.1.1): the
+  corrected lowering below changes what some sources generate, so nothing an earlier version wrote counts as
+  current. No source needs touching. See [Caching](Docs/generation/caching.md).
+- **`round` rounds a halfway value to even, whatever its argument.** `round(0.5)` is 0 and `round(2.5)` is 2, as
+  in HLSL. The native Round node agrees for a varying input, but its preshader rounds a uniform one up, as
+  constant folding did (`floor(x + 0.5)`), so the same value rounded differently depending on where it came from.
+  The builtin now lowers to a generated Custom node, which decompiles back to `round`; a uniform argument is
+  rounded per pixel instead of once per draw.
+  `UE.Round(Input = x)` keeps the native node. See [round](Docs/builtins/math.md#round).
+- **Constant `sin` and `cos` take cycles, as the graph nodes do.** The Sine and Cosine nodes keep their default
+  `Period = 1`, but constant folding took radians, so `sin(0.25)` and `sin(T)` with `T = 0.25` disagreed. Both are
+  1 now; an `@custom` body is HLSL and takes radians. ([#43](https://github.com/TypeDreamMoon/DreamShader/issues/43))
+- **A graph cast keeps its value in constants too.** `(int)0.5` and `(bool)0.5` are 0.5, as they already were in
+  the graph and through a variable; folding no longer truncates them, which could flip a constant condition. Use
+  `trunc(...)` or `x != 0`. ([#42](https://github.com/TypeDreamMoon/DreamShader/issues/42))
+- **Only the chosen arm of `c ? a : b` writes.** With a dynamic condition, both arms' assignments, `++` and
+  `out` / `inout` writes reached the code after it, the false arm's last. Each arm now starts from the state after
+  the condition and only the selected one takes effect, as with a constant condition or an `if`.
+  ([#65](https://github.com/TypeDreamMoon/DreamShader/issues/65))
+- **A default argument is evaluated in the callee.** `float F(float x, float y = x)` called as `F(7)` gives
+  `y = 7`; it used to read the caller's parameter slot. Defaults that read each other resolve as they are needed,
+  a cycle is `DSH6224`, and so is a default that would initialize an `@custom` function's output. A call to an exported or `extern` material function
+  leaves an omitted pin open for the asset's own default. ([#56](https://github.com/TypeDreamMoon/DreamShader/issues/56))
+- **A Custom Pass buffer has one mip.** `Mips` above 1 was accepted, but only mip 0 was ever written and the rest
+  were undefined; it is `DSH7308` now. Set existing pipelines' `Mips` to 1.
+  ([#45](https://github.com/TypeDreamMoon/DreamShader/issues/45))
+- **`dsc -CleanNew` deletes only what the commandlet saved.** It took every `.uasset` that appeared in Content
+  during the run for its own, an editor's import as well. The commandlet now records each package it saves and
+  its MD5, and the driver deletes a new file only when that record names it and its content is unchanged. The
+  record is deleted once read. Without a valid one, or with a Content folder that cannot be listed, nothing is
+  deleted and a run that otherwise succeeded exits 1. Rebuild the plugin when updating the driver: older
+  commandlets write no record. See [the driver](.skill/README.md).
+  ([#39](https://github.com/TypeDreamMoon/DreamShader/issues/39))
+
 ### Fixed
+
+- **Thirty findings of a review of 2.1.1** -- PR [#49](https://github.com/TypeDreamMoon/DreamShader/pull/49),
+  each with a regression test, besides those under Changed:
+  - *Language*: a chained swizzle or index write such as `v.zyx.x = 1` writes the component it names (#41); an
+    outer return still reachable after a nested `if` whose branches all return is kept (#50); a Custom annotation
+    is recognised exactly as the parser reads it, whatever its case, instead of dropping an HLSL branch (#61).
+  - *Assets*: Ephemeral ThinCustom parents of paths that sanitise alike no longer overwrite each other (#40); a
+    failed save is retried by the next ordinary compile instead of being skipped by its source hash (#51); saving
+    an included `.dss` rebuilds what includes it (#47); compiling an instance refreshes its stale ancestors (#63);
+    a parent change reaches a child's partly overridden vector (#64); batch renames are followed in event order,
+    so reused, swapped and undone paths keep the right references (#57).
+  - *Instances, decompile and Adopt*: `TextureCollection` references (#62), `double4` precision (#58), scalar values
+    a `bool` or `int` declaration cannot hold (#66), and Cube, Volume and Array textures (#67) survive.
+  - *Bridge*: a second editor on the project no longer deletes or overwrites the owning editor's responses,
+    status, database and diagnostics (#48).
+  - *Custom Pass*: a pooled material instance no longer carries a previous pass's parameters (#44); a Nanite
+    stencil filter's `AND` is not an `OR` (#46); scene textures are read at their own resolution after an upscale
+    (#52); an export still happens when the plan's last writer is skipped (#59); a `Depth32` buffer clears to its
+    configured value (#68).
+  - *Preview*: enlarging the window no longer crashes D3D12 (#55); readbacks are polled on the render thread (#60);
+    switching requests does not label an old frame with the new material (#54); a raw single-frame request sends
+    its frame (#53); a late acknowledgement cannot release a newer frame (#69).
+- **A pooled Custom Pass material instance is reset only when its next use needs it.** The fix for #44 cleared,
+  reinitialised and, in the editor, announced every instance on every acquisition -- every pass, every frame. A pass
+  now names the parameters it sets, and the instance is cleared only when its previous use set one this use does
+  not.
 
 - **A generated material instance is not a hand edit after it is reloaded.** Regeneration writes each parameter
   override with an empty `ExpressionGUID`, and UE fills it in from the parent's expression when the package next

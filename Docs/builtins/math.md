@@ -206,6 +206,11 @@ the native `UE.Round(Input = x)` node's preshader, which rounds halfway values u
 recovers an unchanged generated node as `round`; a native Round node remains `UE.Round`.
 `dump-ir` shows the language operation and `dump-graph` shows the generated Custom node.
 
+What that costs: the engine never evaluates a Custom node ahead of the shader, so a `round` of a uniform value
+-- a parameter, say -- runs per pixel, one instruction, and math downstream of it does too instead of being
+folded into the material's uniforms once per draw. A constant argument still folds at compile time. Where
+that matters more than the halfway case, `UE.Round(Input = x)` keeps the native node and its preshader.
+
 ### step
 
 `step(edge, x)` returns `x >= edge ? 1 : 0`, as in HLSL. `UMaterialExpressionStep` names its pins the
