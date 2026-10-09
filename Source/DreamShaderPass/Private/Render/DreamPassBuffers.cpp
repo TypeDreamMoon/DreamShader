@@ -53,8 +53,8 @@ namespace UE::DreamPass
 			const FDreamPassBufferDesc& Desc = Buffer.Desc;
 			if (Desc.Format == EDreamPassBufferFormat::Depth32)
 			{
-				// Reverse Z: the far plane is 0.
-				AddClearDepthStencilPass(GraphBuilder, Texture, true, 0.0f, true, 0);
+				// Clear is a depth for Depth32; its default is the reverse-Z far plane, 0.
+				AddClearDepthStencilPass(GraphBuilder, Texture, true, Desc.ClearValue.R, true, 0);
 				return;
 			}
 			if (IsUnsignedFormat(Desc.Format))
@@ -144,11 +144,11 @@ namespace UE::DreamPass
 		}
 
 		const FClearValueBinding ClearBinding = Desc.Format == EDreamPassBufferFormat::Depth32
-			? FClearValueBinding::DepthFar
+			? FClearValueBinding(Desc.ClearValue.R, 0)
 			: FClearValueBinding(Desc.ClearValue);
 
 		FRDGTextureRef Texture = Context.GraphBuilder.CreateTexture(
-			FRDGTextureDesc::Create2D(Extent, Format, ClearBinding, Flags, uint8(FMath::Clamp(Desc.Mips, 1, 14))),
+			FRDGTextureDesc::Create2D(Extent, Format, ClearBinding, Flags),
 			TEXT("DreamPass.Buffer"));
 
 		// Cleared even when the buffer says `Clear = None`: the binder already refused a read before every write, and
@@ -255,7 +255,7 @@ namespace UE::DreamPass
 			WarnOnce(Private::DescribeBinding(Context, Name), FString::Printf(TEXT("DreamPass: %s: the injection point has no such texture; the pass is skipped."), *Private::DescribeBinding(Context, Name)));
 			return FScreenPassTexture();
 		}
-		return FScreenPassTexture(Texture, Injection.SceneViewRect);
+		return FScreenPassTexture(Texture, Injection.SceneTextureViewRect);
 	}
 
 	FScreenPassRenderTarget ResolveWrite(FExecuteContext& Context, const FDreamPassBufferBinding& Binding)

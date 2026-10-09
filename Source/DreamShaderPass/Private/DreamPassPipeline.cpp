@@ -32,6 +32,19 @@ UTextureRenderTarget2D* UDreamPassPipeline::GetExportTarget(FName Buffer) const
 
 namespace UE::DreamPass::Private
 {
+	static bool ValidateBufferMips(const FDreamPassBufferDesc& Buffer, TArray<FText>* OutProblems)
+	{
+		if (Buffer.Mips == 1)
+		{
+			return true;
+		}
+		if (OutProblems)
+		{
+			OutProblems->Add(FText::Format(LOCTEXT("BufferMipsUnsupported", "Buffer '{0}': only Mips = 1 is supported; passes cannot initialize or update a mip chain."), FText::FromName(Buffer.Name)));
+		}
+		return false;
+	}
+
 	static bool ValidatePass(const UDreamPassPipeline& Pipeline, const FDreamPassDesc& Pass, TArray<FText>* OutProblems)
 	{
 		bool bOk = true;
@@ -201,6 +214,10 @@ bool UDreamPassPipeline::Validate(TArray<FText>* OutProblems) const
 	TSet<FName> Seen;
 	for (const FDreamPassBufferDesc& Buffer : Buffers)
 	{
+		if (!UE::DreamPass::Private::ValidateBufferMips(Buffer, OutProblems))
+		{
+			bOk = false;
+		}
 		bool bAlreadyIn = false;
 		Seen.Add(Buffer.Name, &bAlreadyIn);
 		if (Buffer.Name.IsNone() || bAlreadyIn || UE::DreamPass::IsBuiltinBuffer(Buffer.Name))
@@ -245,6 +262,20 @@ bool UDreamPassPipeline::Validate(TArray<FText>* OutProblems) const
 void UDreamPassPipeline::RefreshUsablePasses()
 {
 	UsablePasses.Init(false, Passes.Num());
+	TArray<FText> BufferProblems;
+	for (const FDreamPassBufferDesc& Buffer : Buffers)
+	{
+		UE::DreamPass::Private::ValidateBufferMips(Buffer, &BufferProblems);
+	}
+	if (!BufferProblems.IsEmpty())
+	{
+		// Also reject old saved assets and C++ edits: the source binder is not the only way a pipeline reaches rendering.
+		for (const FText& Problem : BufferProblems)
+		{
+			UE_LOG(LogDreamPass, Warning, TEXT("%s: %s The pipeline is skipped."), *GetPathName(), *Problem.ToString());
+		}
+		return;
+	}
 	for (int32 Index = 0; Index < Passes.Num(); ++Index)
 	{
 		TArray<FText> Problems;

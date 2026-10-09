@@ -18,6 +18,7 @@
 #include "DreamShaderVersionCompat.h"
 #include "DreamShaderMaterialExpressionCompat.h"
 #include "DreamShaderGeneratedAssets.h"
+#include "IR/IRGeneratedCoreCode.h"
 
 #include "Materials/MaterialExpressionAbs.h"
 #include "Materials/MaterialExpressionAdd.h"
@@ -727,6 +728,39 @@ namespace UE::DreamShader::Editor::Compiler
 
 		switch (Node.Op)
 		{
+		case IR::EIROp::Round:
+		{
+			// The native Round node's preshader uses floor(x + .5), while HLSL round uses
+			// ties to even. A Custom node keeps uniform and varying inputs on the same path.
+			FEmittedValue Operand;
+			if (!ResolveOperand(Node, 0, Operand))
+			{
+				return false;
+			}
+			auto* Custom = Cast<UMaterialExpressionCustom>(MakeNode(UMaterialExpressionCustom::StaticClass()));
+			if (!Custom)
+			{
+				return Fail(TEXT("DSH8214"), Node, LOCTEXT("RoundFailed", "Failed to create the Custom node a nearest-even round lowers to."));
+			}
+			Custom->Code = IR::GeneratedCoreCode::Round;
+			Custom->Description = IR::GeneratedCoreCode::RoundDescription;
+			const int32 Width = Node.Outputs.Num() > 0 ? Node.Outputs[0].GraphComponentCount() : 1;
+			switch (Width)
+			{
+			case 2: Custom->OutputType = CMOT_Float2; break;
+			case 3: Custom->OutputType = CMOT_Float3; break;
+			case 4: Custom->OutputType = CMOT_Float4; break;
+			default: Custom->OutputType = CMOT_Float1; break;
+			}
+			Custom->Inputs.Reset();
+			FCustomInput& Input = Custom->Inputs.AddDefaulted_GetRef();
+			Input.InputName = FName(IR::GeneratedCoreCode::RoundInput);
+			ConnectValueToInput(Input.Input, Operand);
+			Private::RebuildDreamShaderCustomOutputs(Custom);
+			RegisterNode(NodeIndex, Node, Custom);
+			return true;
+		}
+
 		case IR::EIROp::Negate:
 		{
 			// 1.x: `-x` is `x * -1` with the -1 as a real Constant node (EvaluateUnary in

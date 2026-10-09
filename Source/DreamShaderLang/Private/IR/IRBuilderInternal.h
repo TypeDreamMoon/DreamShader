@@ -39,6 +39,7 @@ namespace UE::DreamShader::IR::Private
 	int32 ComponentIndexOf(TCHAR Component);
 	/** Through FParenExpr, to the expression that actually says something. */
 	const FExpr* Unparen(const FExpr* Expr);
+	struct FDefaultArgumentState;
 
 	/** The attribute map a `material` value is while lowering. */
 	struct FMaterialValue
@@ -62,6 +63,8 @@ namespace UE::DreamShader::IR::Private
 		 * again says nothing. Diagnostic state, not value: not part of operator==.
 		 */
 		TArray<TPair<FString, Lang::FLangSpan>> PartialAttributes;
+		/** Assignment paths retained only while a lazy default may still fill a missing arm. */
+		TMap<FString, TSharedPtr<const FDefaultArgumentState>> AssignedWhen;
 
 		bool HasSource() const { return Source.IsValid(); }
 		bool operator==(const FMaterialValue& Other) const;
@@ -166,6 +169,8 @@ namespace UE::DreamShader::IR::Private
 		bool bPartiallyAssigned = false;
 		Lang::FLangSpan PartialSpan;
 		FString PartialName;
+		/** Ready/Pending leaves describe assigned/missing paths, independently of the cached value. */
+		TSharedPtr<const FDefaultArgumentState> AssignedWhen;
 
 		bool IsEmpty() const { return Kind == EKind::Empty; }
 		bool IsNeverAssigned() const { return Kind == EKind::Empty && bNeverAssigned; }
@@ -265,6 +270,54 @@ namespace UE::DreamShader::IR::Private
 		FLoweredValue ReturnValue;
 	};
 
+	enum class EDefaultArgumentState : uint8 { Pending, Evaluating, Ready, Conditional };
+
+	/** A lazy default can have run on only one path. Keep that path until a later read needs it. */
+	struct FDefaultArgumentState
+	{
+		EDefaultArgumentState State = EDefaultArgumentState::Ready;
+		FIRValue Condition;
+		bool bStaticCondition = false;
+		TSharedPtr<const FDefaultArgumentState> TrueState;
+		TSharedPtr<const FDefaultArgumentState> FalseState;
+
+		FDefaultArgumentState() = default;
+		FDefaultArgumentState(EDefaultArgumentState InState) : State(InState) {}
+		bool operator==(const FDefaultArgumentState& Other) const
+		{
+			return State == Other.State && (State != EDefaultArgumentState::Conditional
+				|| (Condition == Other.Condition && bStaticCondition == Other.bStaticCondition
+					&& TrueState == Other.TrueState && FalseState == Other.FalseState));
+		}
+		static FDefaultArgumentState Merge(const FDefaultArgumentState& True, const FDefaultArgumentState& False,
+			FIRValue InCondition, bool bStatic)
+		{
+			if (True == False) { return True; }
+			FDefaultArgumentState Result(EDefaultArgumentState::Conditional);
+			Result.Condition = InCondition;
+			Result.bStaticCondition = bStatic;
+			Result.TrueState = MakeShared<FDefaultArgumentState>(True);
+			Result.FalseState = MakeShared<FDefaultArgumentState>(False);
+			return Result;
+		}
+		FDefaultArgumentState InArm(FIRValue InCondition, bool bHolds) const
+		{
+			if (State != EDefaultArgumentState::Conditional) { return *this; }
+			if (Condition == InCondition) { return (bHolds ? TrueState : FalseState)->InArm(InCondition, bHolds); }
+			const FDefaultArgumentState True = TrueState->InArm(InCondition, bHolds);
+			const FDefaultArgumentState False = FalseState->InArm(InCondition, bHolds);
+			return True == *TrueState && False == *FalseState ? *this : Merge(True, False, Condition, bStaticCondition);
+		}
+	};
+
+	/** Original arms of an SSA choice, even when emission turns its condition into a Compare. */
+	struct FConditionalValue
+	{
+		FIRValue Condition;
+		FIRValue TrueValue;
+		FIRValue FalseValue;
+	};
+
 	/** One function being lowered: the product's own function, or a helper being inlined into it. */
 	struct FFrame
 	{
@@ -272,6 +325,8 @@ namespace UE::DreamShader::IR::Private
 		int32 FunctionIndex = INDEX_NONE;
 		TArray<FLoweredValue> Locals;
 		TArray<FLoweredValue> Params;
+		/** Set only in the temporary callee frame used to resolve omitted arguments. */
+		TArray<FDefaultArgumentState> DefaultArguments;
 		/** Parallel to Params: where an `out`/`inout` parameter writes back, in the caller. */
 		TArray<FLValueRef> OutTargets;
 		TArray<FPendingExit> PendingExits;
@@ -302,6 +357,7 @@ namespace UE::DreamShader::IR::Private
 	{
 		TArray<TArray<FLoweredValue>> Locals;
 		TArray<TArray<FLoweredValue>> Params;
+		TArray<TArray<FDefaultArgumentState>> DefaultArguments;
 	};
 
 	/**
@@ -509,7 +565,8 @@ namespace UE::DreamShader::IR::Private
 		 * The first component of a compile-time constant, evaluated the way the fold pass would. False when
 		 * it is not one this can evaluate: not constant, an op it does not know, or past `Budget` steps.
 		 */
-		bool TryEvaluateConstant(FIRValue Value, double& OutValue, int32& Budget) const;
+		bool TryEvaluateConstant(FIRValue Value, double& OutValue, int32& Budget, bool bUseDefaultArm = false) const;
+		bool TryDefaultArmCondition(FIRValue Condition, bool& bOutHolds) const;
 		/** Whether a branch condition holds, when the compiler can already tell; false when it cannot. */
 		bool TryDecideCondition(FIRValue Condition, bool& bOutHolds) const;
 		/**
@@ -588,6 +645,13 @@ namespace UE::DreamShader::IR::Private
 			bool bStaticCondition,
 			const Lang::FLangSpan& Span,
 			const FString& What);
+		FLoweredValue MergeValuesCore(
+			const FLoweredValue& TrueValue,
+			const FLoweredValue& FalseValue,
+			FIRValue Condition,
+			bool bStaticCondition,
+			const Lang::FLangSpan& Span,
+			const FString& What);
 		/** Folds the frame's pending exits into its live state; the last thing a function body does. */
 		void ResolveExits();
 		/** DSH4375: two different whole materials meet in a merge. `Name` empty for the unnamed message. */
@@ -607,7 +671,11 @@ namespace UE::DreamShader::IR::Private
 		FLoweredValue InlineHelper(const FExpr& Expr, const FBoundExpr& Bound, const FBoundFunction& Callee, int32 CalleeIndex);
 		FLoweredValue MakeCustomNode(const FExpr& Expr, const FBoundExpr& Bound, const FBoundFunction& Callee, int32 CalleeIndex);
 		FLoweredValue MakeFunctionCallNode(const FExpr& Expr, const FBoundExpr& Bound, const FBoundFunction& Callee, int32 CalleeIndex);
-		/** The arguments of a call, matched to the callee's parameters; missing ones take the default. */
+		/** Resolve a pending default against the active callee frame; refuse dependency cycles. */
+		bool ResolveDefaultArgument(int32 ParamIndex);
+		/** Restrict lazy initialization states when entering an arm, without forcing pending defaults. */
+		void ConstrainDefaultArguments(FIRValue Condition, bool bHolds);
+		/** Arguments in caller scope, then helper/Custom defaults in callee scope; asset pins stay open. */
 		bool BindCallArguments(
 			const FExpr& Expr,
 			const FBoundExpr& Bound,
@@ -682,6 +750,7 @@ namespace UE::DreamShader::IR::Private
 		TArray<FSubstrateBuilderState> SubstrateBuilders;
 
 		TArray<FConditionEntry> ConditionStack;
+		TMap<int32, FConditionalValue> ConditionalValues;
 		int32 CurrentRegion = INDEX_NONE;
 		/** Inside an `if` arm: `break` / `continue` there cannot be unrolled (DSH4363). */
 		int32 BranchDepth = 0;

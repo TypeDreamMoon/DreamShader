@@ -92,7 +92,8 @@ namespace UE::DreamShader::Editor::Private
 
 		FRenameTable BuildRenameTable(const TArray<FDreamShaderAssetRename>& InRenames)
 		{
-			TMap<FString, FString> Direct;
+			TArray<const FDreamShaderAssetRename*> OrderedRenames;
+			TSet<FString> OldPaths;
 			for (const FDreamShaderAssetRename& Rename : InRenames)
 			{
 				if (Rename.OldObjectPath.IsEmpty()
@@ -102,35 +103,32 @@ namespace UE::DreamShader::Editor::Private
 					continue;
 				}
 
-				// Last write wins: the registry reports renames in order, so the newest event for an
-				// old path is the one that describes where the asset ended up.
-				Direct.Add(Rename.OldObjectPath.ToLower(), Rename.NewObjectPath);
+				OrderedRenames.Add(&Rename);
+				OldPaths.Add(Rename.OldObjectPath.ToLower());
 			}
 
 			FRenameTable Table;
-			for (const TPair<FString, FString>& Pair : Direct)
+			for (const FString& OldPath : OldPaths)
 			{
-				// A->B followed by B->C arrives as two events in one batch, and the text is rewritten
-				// in a single pass -- so the chain has to be collapsed here or a reference to A would
-				// be left pointing at B, an asset that no longer exists either.
-				FString Final = Pair.Value;
-				for (int32 Hop = 0; Hop < Direct.Num(); ++Hop)
+				// Follow this reference through the events in their original order. A->B then B->C
+				// ends at C, but B->C then A->B ends at B: the second asset has reused the vacated
+				// path. An unordered transitive closure confuses the two assets and cannot undo a rename.
+				FString Final = OldPath;
+				for (const FDreamShaderAssetRename* Rename : OrderedRenames)
 				{
-					const FString* Next = Direct.Find(Final.ToLower());
-					if (Next == nullptr || Next->Equals(Final, ESearchCase::IgnoreCase))
+					if (Final.Equals(Rename->OldObjectPath, ESearchCase::IgnoreCase))
 					{
-						break;
+						Final = Rename->NewObjectPath;
 					}
-					Final = *Next;
 				}
 
-				if (Final.Equals(Pair.Key, ESearchCase::IgnoreCase))
+				if (Final.Equals(OldPath, ESearchCase::IgnoreCase))
 				{
 					continue;
 				}
 
-				Table.ByObjectPath.Add(Pair.Key, Final);
-				Table.ByPackagePath.Add(GetPackagePathFromObjectPath(Pair.Key), GetPackagePathFromObjectPath(Final));
+				Table.ByObjectPath.Add(OldPath, Final);
+				Table.ByPackagePath.Add(GetPackagePathFromObjectPath(OldPath), GetPackagePathFromObjectPath(Final));
 			}
 
 			return Table;

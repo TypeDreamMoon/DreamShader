@@ -103,6 +103,15 @@ writes generated assets to disk.
 The commandlet is unaffected: it has no bridge, no lock file and no second process to negotiate
 with, and writing these assets is its entire job.
 
+Only the owner publishes or cleans shared responses, status, diagnostics, `bridge.db` and manifests.
+A non-owner keeps its local diagnostics and browser notifications. When it later acquires ownership,
+it starts a new listening session and publishes its own manifests and current diagnostics; closing a
+non-owner leaves the running owner's files intact.
+
+Saving, adding or removing an included `.dss` queues its direct and transitive consumers, like a
+`.dsh` include. The watcher retains the previous dependency edges for a deletion batch, so removing
+an include still causes its consumers to report the missing file.
+
 ## Request files
 
 | | |
@@ -498,7 +507,12 @@ On success the editor resolves and compiles the material transiently, sends a `p
 a `probeState`, and installs a per-connection session that streams frames from the next tick. The
 `png` encoding additionally saves a first-frame PNG under `Bridge/Preview/`, writes `preview.json`,
 and sends that PNG immediately; the `raw` encoding streams its first frame from the tick loop like
-every other one. On failure the connection's session is removed.
+every other one. With `stream: false` or `frameRate <= 0`, raw delivers exactly one frame after the
+shader finishes compiling, without enabling streaming. On failure the connection's session is removed.
+
+Frame metadata describes the controls at capture time. Changes received during readback request a
+new keyframe; they do not relabel the pending pixels. A new `previewMaterial` request supersedes any
+pending frame from the previous request, even when the render context is reused.
 
 ### `previewControl` — client → editor
 
@@ -514,7 +528,7 @@ session's `requestId` are non-empty they must match, otherwise the message is ig
 | `orbitPitch` | number | keeps the current angle | drag-to-rotate |
 | `width` / `height` | number | keeps the current size | resize the render target; clamped to `[64, 2048]` |
 | `mesh` | string | keeps the current mesh | change the preview primitive |
-| `ackFrameIndex` | number | no ack | acknowledges a delivered frame and releases the flow-control gate |
+| `ackFrameIndex` | number | no ack | releases the flow-control gate only when it matches the current unacknowledged frame; stale or future indices are ignored |
 
 > [!NOTE]
 > Every field except `requestId`/`ackFrameIndex` keeps its current value when omitted *(since
@@ -608,13 +622,13 @@ Per connection, evaluated once per editor frame.
 
 Each tick:
 
-1. Do nothing when not streaming, when the material is invalid, when there is no render context, or
-   when the frame interval is not positive.
+1. Do nothing when neither streaming nor a raw one-shot is pending, or when there is no render
+   context. An invalid material stops the session with an error.
 2. If a GPU readback is in flight, poll it without blocking. Ready → deliver the frame (a tag-`3`
    raw frame, or a `previewFrame`+PNG pair) and raise the in-flight gate. Error → send an error
    `previewResult` and stop streaming. Neither → return and retry next tick.
-3. Otherwise start a new frame only when the previous frame has been acknowledged **and** the frame
-   interval has elapsed.
+3. Otherwise start a new frame when the previous frame has been acknowledged (or its acknowledgement
+   timed out) and the frame interval has elapsed. A raw one-shot also waits for its shader map.
 4. A failure to start a frame sends an error `previewResult` and stops streaming.
 
 Two efficiency behaviours sit on top of the loop *(since `1.7.0`)*:

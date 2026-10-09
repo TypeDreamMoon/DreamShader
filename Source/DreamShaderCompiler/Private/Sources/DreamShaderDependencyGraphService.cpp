@@ -408,7 +408,9 @@ namespace UE::DreamShader::Editor::Private
 				continue;
 			}
 
-			if (UE::DreamShader::IsDreamShaderHeaderFile(ResolvedImportPath) || UE::DreamShader::IsDreamShaderFunctionFile(ResolvedImportPath))
+			if (UE::DreamShader::IsDreamShaderHeaderFile(ResolvedImportPath)
+				|| UE::DreamShader::IsDreamShaderFunctionFile(ResolvedImportPath)
+				|| UE::DreamShader::IsDreamShaderLang2File(ResolvedImportPath))
 			{
 				OutHeaders.Add(ResolvedImportPath);
 			}

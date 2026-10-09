@@ -393,7 +393,8 @@ namespace UE::DreamShader::Editor::Compiler
 			const FDreamShaderLang2PipelineOptions& Options,
 			EDreamShaderPipelineStop Stop,
 			bool bShowProgress,
-			FDreamShaderLang2PipelineResult& OutResult);
+			FDreamShaderLang2PipelineResult& OutResult,
+			const FString& RequiredParentObjectPath = FString());
 
 		/** How many instances deep a Parent chain may go before the pipeline calls it a runaway (DSH8265). */
 		constexpr int32 DreamShaderInstanceChainLimit = 16;
@@ -466,15 +467,34 @@ namespace UE::DreamShader::Editor::Compiler
 			TUniquePtr<IR::FIRParameterSchema> Schema = MakeUnique<IR::FIRParameterSchema>();
 			if (!ParentSourceFile.IsEmpty())
 			{
-				// Producer A: the parent source through the front half, passes included -- they record the uniforms the
-				// prune pass removed, which the schema lists so an override of one is told why it is unknown. Nothing is
-				// emitted, and no dialog opens inside the compile that asked.
-				FDreamShaderLang2PipelineOptions ParentOptions;
-				ParentOptions.bEmitAssets = false;
+				// Producer A: visit the whole parent chain once. An emitting run builds stale ancestors from the
+				// root down, even when an intermediate instance's own source key is current. Retain that same run
+				// for the schema instead of lowering the chain again before every conditional parent compile.
 				FDreamShaderLang2PipelineResult ParentRun;
 				Chain.Add(SourceFilePath);
-				const bool bParentLowered = RunDreamShaderPipelineStages(ParentSourceFile, ParentOptions, EDreamShaderPipelineStop::AfterValidate, /*bShowProgress*/ false, ParentRun);
+				bool bParentLowered = false;
+				FDreamShaderError ParentError;
+				if (bCompileStaleParent)
+				{
+					bParentLowered = CompileDreamShaderSourceFile(
+						ParentSourceFile, /*bForce*/ false, ::UE::DreamShader::EThinCustomPersistence::Materialized,
+						ParentError, &ParentRun, ParentObjectPath);
+				}
+				else
+				{
+					FDreamShaderLang2PipelineOptions ParentOptions;
+					ParentOptions.bEmitAssets = false;
+					bParentLowered = RunDreamShaderPipelineStages(ParentSourceFile, ParentOptions, EDreamShaderPipelineStop::AfterValidate, /*bShowProgress*/ false, ParentRun);
+				}
 				Chain.Pop(DREAMSHADER_ALLOW_SHRINKING_NO);
+				if (!bParentLowered && bCompileStaleParent)
+				{
+					OutResult.Diagnostics.Error(TEXT("DSH8260"), ParentArgument->Span, FText::Format(
+						LOCTEXT("ParentCompileFailed", "The parent source '{0}' failed to compile, so this instance has no parent to build against. {1}"),
+						FText::FromString(FPaths::GetCleanFilename(ParentSourceFile)),
+						FText::FromString(ParentError.Message)));
+					return;
+				}
 
 				int32 ParentProductIndex = INDEX_NONE;
 				if (bParentLowered && ParentRun.IR.IsValid())
@@ -506,35 +526,15 @@ namespace UE::DreamShader::Editor::Compiler
 				IR::BuildParameterSchemaFromIR(*ParentRun.IR, ParentProductIndex, ParentRun.Bound.Get(), *Schema);
 				Schema->ParentObjectPath = ParentObjectPath;
 
-				// A missing or stale parent asset is compiled first, through the normal non-forced entry, so the
-				// emitter's drift check (DSH8246) finds the parameters the source declares.
-				if (bCompileStaleParent)
+				// Keep the informational notice specific to a parent that was actually built. Current parents
+				// and a second editor's deferred writes do not claim that an asset was regenerated.
+				if (bCompileStaleParent
+					&& ClassifyLang2ProductEmitOutcome(ParentRun.Diagnostics, ParentRun.IR->Products[ParentProductIndex]) == EDreamShaderLang2EmitOutcome::Built)
 				{
-					UObject* ParentAsset = FindObject<UObject>(nullptr, *ParentObjectPath);
-					if (!ParentAsset && FPackageName::DoesPackageExist(FPackageName::ObjectPathToPackageName(ParentObjectPath)))
-					{
-						ParentAsset = LoadObject<UObject>(nullptr, *ParentObjectPath);
-					}
-					if (!ParentAsset || !Private::IsGeneratedAssetSourceCurrent(ParentAsset, ParentRun.SourceFilePath, ParentRun.SourceHash))
-					{
-						OutResult.Diagnostics.Info(TEXT("DSH8264"), ParentArgument->Span, FText::Format(
-							LOCTEXT("ParentCompiledFirst", "'{0}' was missing or older than its source, so '{1}' was compiled first."),
-							FText::FromString(ParentObjectPath),
-							FText::FromString(FPaths::GetCleanFilename(ParentRun.SourceFilePath))));
-
-						FDreamShaderError ParentError;
-						Chain.Add(SourceFilePath);
-						const bool bParentCompiled = CompileDreamShaderSourceFile(ParentRun.SourceFilePath, /*bForce*/ false, ::UE::DreamShader::EThinCustomPersistence::Materialized, ParentError);
-						Chain.Pop(DREAMSHADER_ALLOW_SHRINKING_NO);
-						if (!bParentCompiled)
-						{
-							OutResult.Diagnostics.Error(TEXT("DSH8260"), ParentArgument->Span, FText::Format(
-								LOCTEXT("ParentCompileFailed", "The parent source '{0}' failed to compile, so this instance has no parent to build against. {1}"),
-								FText::FromString(FPaths::GetCleanFilename(ParentRun.SourceFilePath)),
-								FText::FromString(ParentError.Message)));
-							return;
-						}
-					}
+					OutResult.Diagnostics.Info(TEXT("DSH8264"), ParentArgument->Span, FText::Format(
+						LOCTEXT("ParentCompiledFirst", "'{0}' was missing or older than its source, so '{1}' was compiled first."),
+						FText::FromString(ParentObjectPath),
+						FText::FromString(FPaths::GetCleanFilename(ParentRun.SourceFilePath))));
 				}
 			}
 			else if (UMaterialInterface* ParentAsset = LoadObject<UMaterialInterface>(nullptr, *ParentObjectPath))
@@ -560,7 +560,8 @@ namespace UE::DreamShader::Editor::Compiler
 			const FDreamShaderLang2PipelineOptions& Options,
 			const EDreamShaderPipelineStop Stop,
 			const bool bShowProgress,
-			FDreamShaderLang2PipelineResult& OutResult)
+			FDreamShaderLang2PipelineResult& OutResult,
+			const FString& RequiredParentObjectPath)
 		{
 			using namespace ::UE::DreamShader::Lang;
 			using namespace ::UE::DreamShader::IR;
@@ -842,7 +843,7 @@ namespace UE::DreamShader::Editor::Compiler
 				if (bIsInstanceSource)
 				{
 					// The resolved parent is part of an instance's build key -- a bare-name Parent can re-resolve with no text
-					// change -- and the parent's schema deliberately is not.
+					// change. The full schema is not; inherited vector channels join the key after lowering below.
 					BuildKeyDigestText += FString::Printf(TEXT("Parent=%s\n"), *OutResult.ParentObjectPath); /* I18N-EXEMPT: build-key material, never displayed */
 				}
 				if (bIsPipelineSource)
@@ -902,6 +903,36 @@ namespace UE::DreamShader::Editor::Compiler
 			if (!OutResult.IR.IsValid() || OutResult.Diagnostics.HasErrors())
 			{
 				return false;
+			}
+
+			if (bIsInstanceSource)
+			{
+				// A narrow vector override materializes its unwritten channels from the parent into the
+				// instance's four-channel value. Only those inherited values affect this build key: a
+				// parent graph edit, unrelated parameter or overridden channel must not rebuild the child.
+				FString InheritedChannelKey;
+				for (const FIRProduct& Product : OutResult.IR->Products)
+				{
+					for (const FIRInstanceOverride& Override : Product.Instance.Overrides)
+					{
+						if (Override.Kind != EIRParameterKind::Vector || Override.Value.Kind != EIRPropertyKind::Float4)
+						{
+							continue;
+						}
+						const int32 Written = FMath::Clamp(Override.DeclaredType.GraphComponentCount(), 1, 4);
+						for (int32 Channel = Written; Channel < 4; ++Channel)
+						{
+							// The engine stores Vector parameters as float. Nine significant digits preserve
+							// that value exactly without invalidating on a sub-float source-value change.
+							InheritedChannelKey += FString::Printf(TEXT("InheritedVector=%d:%s:%d:%.9g\n"), /* I18N-EXEMPT: build-key material */
+								Override.ParameterName.Len(), *Override.ParameterName, Channel, static_cast<float>(Override.Value.V[Channel]));
+						}
+					}
+				}
+				if (!InheritedChannelKey.IsEmpty())
+				{
+					OutResult.SourceHash = Private::BuildSourceHash(BuildKeyDigestText + InheritedChannelKey, OutResult.TouchedDefines);
+				}
 			}
 
 			// ------------------------------------------------------------- pass buffer reads (.dss)
@@ -965,6 +996,37 @@ namespace UE::DreamShader::Editor::Compiler
 				// `check`: everything the front end can say has been said, and nothing was written.
 				OutResult.bSucceeded = true;
 				return true;
+			}
+
+			if (!RequiredParentObjectPath.IsEmpty())
+			{
+				// The product index can outlive an included header's edit. Validate the requested parent
+				// before emitting this file so an obsolete record cannot build its other products first.
+				bool bHasParentProduct = false;
+				for (const FIRProduct& Product : OutResult.IR->Products)
+				{
+					if (Product.Kind != EIRProductKind::Material && Product.Kind != EIRProductKind::MaterialInstance)
+					{
+						continue;
+					}
+					FString PackageName;
+					FString ObjectPath;
+					FString LeafName;
+					FDreamShaderError DestinationError;
+					if (ResolveIRProductObjectPath(Product, SourceFilePath, PackageName, ObjectPath, LeafName, DestinationError)
+						&& ObjectPath.Equals(RequiredParentObjectPath, ESearchCase::IgnoreCase))
+					{
+						bHasParentProduct = true;
+						break;
+					}
+				}
+				if (!bHasParentProduct)
+				{
+					OutResult.Diagnostics.Error(TEXT("DSH8260"), FileSpan, FText::Format(
+						LOCTEXT("RequiredParentProductMissing", "The parent source '{0}' no longer builds a material or instance at '{1}'; refresh its source reference."),
+						FText::FromString(FPaths::GetCleanFilename(SourceFilePath)), FText::FromString(RequiredParentObjectPath)));
+					return false;
+				}
 			}
 
 			// ---------------------------------------------------------------------------- emit
@@ -1044,6 +1106,17 @@ namespace UE::DreamShader::Editor::Compiler
 		FDreamShaderLang2PipelineOptions Options;
 		Options.bEmitAssets = false;
 		return RunDreamShaderPipelineStages(SourceFilePath, Options, EDreamShaderPipelineStop::AfterLower, /*bShowProgress*/ false, OutResult);
+	}
+
+	bool RunDreamShaderParentPipeline(
+		const FString& SourceFilePath,
+		const FDreamShaderLang2PipelineOptions& Options,
+		const FString& RequiredParentObjectPath,
+		FDreamShaderLang2PipelineResult& OutResult)
+	{
+		// Parent emission keeps the normal delayed progress dialog and cancellation checks.
+		return RunDreamShaderPipelineStages(SourceFilePath, Options, EDreamShaderPipelineStop::AfterEmit,
+			/*bShowProgress*/ true, OutResult, RequiredParentObjectPath);
 	}
 
 	bool ResolveDreamShaderProductDestination(

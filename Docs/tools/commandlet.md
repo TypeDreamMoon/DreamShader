@@ -55,6 +55,14 @@ Commandlet flags declared by the class: `IsClient = false`, `IsEditor = true`, `
 
 ## Commands
 
+All commands accept optional `-AssetWritesManifest=<unused-json-path>` together with
+`-AssetWritesRunId=<run-id>`. These record successful `.uasset` saves performed by this commandlet,
+including their absolute filenames and MD5 content fingerprints, in a versioned JSON manifest.
+The output path must not already exist; failure to write the requested manifest exits `1`.
+The [PowerShell driver](../../.skill/README.md) uses this provenance and a pre-run snapshot for
+`-CleanNew`, retaining unrelated assets and files modified after the recorded save. The manifest
+does not authorize deletion of pre-existing assets or files outside the driver's Content roots.
+
 The command name is the first **bare** (non-`-`) argument. If there is no bare argument, a
 `Command=<name>` parameter is consulted instead. Matching is case-insensitive; surrounding whitespace
 is trimmed.

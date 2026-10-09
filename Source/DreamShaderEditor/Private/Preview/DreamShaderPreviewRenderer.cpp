@@ -35,6 +35,8 @@
 #include "ThumbnailHelpers.h"
 #include "ThumbnailRendering/SceneThumbnailInfoWithPrimitive.h"
 
+#include <atomic>
+
 #define LOCTEXT_NAMESPACE "DreamShader.Preview"
 
 // A NOTE ON THE `FString& OutError` PARAMETERS BELOW.
@@ -57,8 +59,52 @@
 
 namespace UE::DreamShader::Editor::Private
 {
+	struct FPreviewReadbackState
+	{
+		TPromise<FDreamShaderPreviewReadbackData> Promise;
+		std::atomic<bool> bPollInFlight{ false };
+		std::atomic<bool> bCompleted{ false };
+
+		void Complete(FDreamShaderPreviewReadbackData&& Data)
+		{
+			if (!bCompleted.exchange(true))
+			{
+				Promise.SetValue(MoveTemp(Data));
+			}
+		}
+
+		~FPreviewReadbackState()
+		{
+			if (bCompleted.load()) { return; }
+			// A disconnected session may stop polling before the GPU is ready. The last render
+			// command still owns this state; fulfill its promise before destroying it even then.
+			FDreamShaderPreviewReadbackData Data;
+			Data.Error = TEXT("Preview readback was cancelled."); // I18N-EXEMPT: reaches the preview wire
+			Complete(MoveTemp(Data));
+		}
+	};
+
+#if WITH_DEV_AUTOMATION_TESTS
+	FPreviewReadbackTestObserver& GetPreviewReadbackTestObserver()
+	{
+		static FPreviewReadbackTestObserver Observer;
+		return Observer;
+	}
+#endif
+
 	namespace
 	{
+		bool IsPreviewReadbackReady(FRHIGPUTextureReadback& Readback)
+		{
+#if WITH_DEV_AUTOMATION_TESTS
+			if (FPreviewReadbackTestObserver& Observer = GetPreviewReadbackTestObserver())
+			{
+				Observer(EPreviewReadbackTestEvent::ReadinessPolled, &Readback);
+			}
+#endif
+			return Readback.IsReady();
+		}
+
 		FString BuildPreviewImagePath(const FString& SourceFilePath)
 		{
 			FString RelativePath = SourceFilePath;
@@ -374,35 +420,50 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		if (!PendingReadback.IsValid())
+		const FIntPoint ReadbackSize(CachedWidth, CachedHeight);
+		if (!PendingReadback.IsValid() || PendingReadbackSize != ReadbackSize)
 		{
-			PendingReadback = MakeShared<FRHIGPUTextureReadback>(TEXT("DreamShaderPreviewReadback"));
+			// FRHIGPUTextureReadback reuses its first staging texture without resizing it.
+			// The previous frame has been consumed before KickoffFrame can reach this point.
+			PendingReadback = MakeShared<FRHIGPUTextureReadback, ESPMode::ThreadSafe>(TEXT("DreamShaderPreviewReadback"));
+			PendingReadbackSize = ReadbackSize;
 		}
 
 		const int32 ReadbackWidth = CachedWidth;
 		const int32 ReadbackHeight = CachedHeight;
-		TSharedPtr<FRHIGPUTextureReadback> Readback = PendingReadback;
+		TSharedPtr<FRHIGPUTextureReadback, ESPMode::ThreadSafe> Readback = PendingReadback;
+		PendingState = MakeShared<FPreviewReadbackState, ESPMode::ThreadSafe>();
+		PendingFuture = PendingState->Promise.GetFuture();
+		const TSharedPtr<FPreviewReadbackState, ESPMode::ThreadSafe> State = PendingState;
 		// Mirrors ObjectTools.cpp's ReadbackThumbnailAsync()/FAsyncObjectThumbnail pattern (the
 		// engine's own async thumbnail-readback helper) -- enqueue the GPU->CPU copy on the render
 		// thread and return immediately without waiting for it.
 		ENQUEUE_RENDER_COMMAND(DreamShaderPreviewEnqueueCopy)(
-			[RenderTargetResource, Readback, ReadbackWidth, ReadbackHeight](FRHICommandListImmediate& RHICmdList)
+			[RenderTargetResource, Readback, State, ReadbackWidth, ReadbackHeight](FRHICommandListImmediate& RHICmdList)
 			{
 				FRHITexture* Texture = RenderTargetResource->GetRenderTargetTexture();
 				if (!Texture)
 				{
+					FDreamShaderPreviewReadbackData Data;
+					Data.Error = TEXT("Preview render target texture is not valid."); // I18N-EXEMPT: reaches the preview wire
+					State->Complete(MoveTemp(Data));
 					return;
 				}
-				RHICmdList.Transition(FRHITransitionInfo(Texture, ERHIAccess::SRVMask, ERHIAccess::CopySrc));
+				// The scene/canvas render may leave the target in RTV rather than SRV state.
+				// Let the RHI use its tracked state instead of asserting a fixed before-state.
+				RHICmdList.Transition(FRHITransitionInfo(Texture, ERHIAccess::Unknown, ERHIAccess::CopySrc));
 				const FResolveRect SrcRect(0, 0, ReadbackWidth, ReadbackHeight);
 				Readback->EnqueueCopy(RHICmdList, Texture, SrcRect);
+#if WITH_DEV_AUTOMATION_TESTS
+				if (FPreviewReadbackTestObserver& Observer = GetPreviewReadbackTestObserver())
+				{
+					Observer(EPreviewReadbackTestEvent::CopyEnqueued, Readback.Get());
+				}
+#endif
 				RHICmdList.Transition(FRHITransitionInfo(Texture, ERHIAccess::CopySrc, ERHIAccess::SRVMask));
 			});
 
 		bReadbackInFlight = true;
-		bCopyEnqueued = false;
-		PendingPromise.Reset();
-		PendingFuture.Reset();
 		return true;
 	}
 
@@ -463,34 +524,39 @@ namespace UE::DreamShader::Editor::Private
 
 	bool FDreamShaderPreviewRenderContext::TryConsumeReadyFrameColors(FDreamShaderPreviewReadbackData& OutData, FString& OutError)
 	{
-		if (!bReadbackInFlight || !PendingReadback.IsValid())
+		if (!bReadbackInFlight || !PendingReadback.IsValid() || !PendingState.IsValid() || !PendingFuture.IsSet())
 		{
 			return false;
 		}
 
-		if (!bCopyEnqueued)
+		if (!PendingFuture->IsReady())
 		{
-			// Non-blocking poll (safe to call directly from the game thread -- this mirrors
-			// FAsyncObjectThumbnail::IsTextureReadbackReady() in ObjectTools.cpp, which does the
-			// same). Once true, the GPU has actually finished the copy enqueued by KickoffFrame().
-			if (!PendingReadback->IsReady())
+			// Fence polling must be serialized with EnqueueCopy, which clears the reused fence.
+			// The game thread only reads the future and schedules at most one render-thread poll.
+			if (PendingState->bPollInFlight.exchange(true))
 			{
 				return false;
 			}
 
-			TSharedPtr<TPromise<FDreamShaderPreviewReadbackData>> Promise = MakeShared<TPromise<FDreamShaderPreviewReadbackData>>();
-			PendingFuture = Promise->GetFuture();
-			PendingPromise = Promise;
-
 			const int32 Width = CachedWidth;
 			const int32 Height = CachedHeight;
-			TSharedPtr<FRHIGPUTextureReadback> Readback = PendingReadback;
-			// Also mirrors ObjectTools.cpp's EnqueueReadbackDataCopy(): Lock()/Unlock() must
-			// happen on the render thread, so the copy-to-CPU-memory step is itself another
-			// render command; its result is hand off to the game thread via the promise/future.
+			const TSharedPtr<FRHIGPUTextureReadback, ESPMode::ThreadSafe> Readback = PendingReadback;
+			const TSharedPtr<FPreviewReadbackState, ESPMode::ThreadSafe> State = PendingState;
 			ENQUEUE_RENDER_COMMAND(DreamShaderPreviewCopyReadback)(
-				[Promise, Readback, Width, Height](FRHICommandListImmediate& RHICmdList)
+				[State, Readback, Width, Height](FRHICommandListImmediate& RHICmdList)
 				{
+					// The copy command can already have completed the frame with an invalid-texture
+					// error. Never poll a previous fence or fulfill that promise a second time.
+					if (State->bCompleted.load())
+					{
+						return;
+					}
+					if (!IsPreviewReadbackReady(*Readback))
+					{
+						State->bPollInFlight.store(false);
+						return;
+					}
+
 					FDreamShaderPreviewReadbackData Data;
 					Data.Width = Width;
 					Data.Height = Height;
@@ -525,22 +591,15 @@ namespace UE::DreamShader::Editor::Private
 						Data.Error = TEXT("Failed to lock preview readback buffer.");
 					}
 					Readback->Unlock();
-					Promise->SetValue(MoveTemp(Data));
+					State->Complete(MoveTemp(Data));
 				});
 
-			bCopyEnqueued = true;
-			return false;
-		}
-
-		if (!PendingFuture.IsSet() || !PendingFuture->IsReady())
-		{
 			return false;
 		}
 
 		OutData = PendingFuture->Get();
 		bReadbackInFlight = false;
-		bCopyEnqueued = false;
-		PendingPromise.Reset();
+		PendingState.Reset();
 		PendingFuture.Reset();
 
 		if (!OutData.bSucceeded)

@@ -123,7 +123,7 @@ namespace UE::DreamShader::Editor::Compiler
 		/** True when the user pressed Cancel. Distinct from a failure: nothing was written either way, but nothing is WRONG. */
 		bool bCancelled = false;
 
-		/** `.dsi` only: the parent's resolved object path. Part of the build key; the schema is not. */
+		/** `.dsi` only: the parent's resolved path joins the key, as do materialized inherited vector channels, not the full schema. */
 		FString ParentObjectPath;
 
 		/**

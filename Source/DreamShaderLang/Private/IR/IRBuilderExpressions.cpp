@@ -294,6 +294,10 @@ namespace UE::DreamShader::IR::Private
 			{
 				return FLoweredValue();
 			}
+			if (!ResolveDefaultArgument(BoundExpr->Index))
+			{
+				return FLoweredValue();
+			}
 			ReportPartialRead(Current.Params[BoundExpr->Index]);
 			return Current.Params[BoundExpr->Index];
 		}
@@ -1239,12 +1243,29 @@ namespace UE::DreamShader::IR::Private
 			return Live;
 		}
 
+		// Each arm starts after the condition's own effects, but before either arm's writes.
+		// As with an if statement, only the selected arm's assignments and out/inout copybacks
+		// reach the continuation. Lowering the arms into one frame let the false arm overwrite
+		// the true arm and even read values that only the true arm had initialized.
+		const bool bStatic = IsStaticCondition(Condition);
+		const FEnvSnapshot Before = Snapshot();
+		ConstrainDefaultArguments(Condition, true);
+		ConditionStack.Push({ Condition, bStatic, /* bNegated */ false });
 		const FLoweredValue TrueValue = LowerExpr(*Conditional->TrueValue);
+		ConditionStack.Pop();
+		const FEnvSnapshot TrueState = Snapshot();
+
+		Restore(Before);
+		ConstrainDefaultArguments(Condition, false);
+		ConditionStack.Push({ Condition, bStatic, /* bNegated */ true });
 		const FLoweredValue FalseValue = LowerExpr(*Conditional->FalseValue);
+		ConditionStack.Pop();
+		const FEnvSnapshot FalseState = Snapshot();
+		MergeStates(TrueState, FalseState, Condition, bStatic, Expr.Span);
 
 		if (TrueValue.IsMaterial() || FalseValue.IsMaterial() || TrueValue.IsAggregate() || FalseValue.IsAggregate())
 		{
-			return MergeValues(TrueValue, FalseValue, Condition, IsStaticCondition(Condition), Expr.Span, TEXT("?:"));
+			return MergeValues(TrueValue, FalseValue, Condition, bStatic, Expr.Span, TEXT("?:"));
 		}
 		if (!TrueValue.IsValue() || !FalseValue.IsValue())
 		{
@@ -1253,7 +1274,7 @@ namespace UE::DreamShader::IR::Private
 
 		const FIRValue TrueSide = CoerceToWidth(TrueValue.Value, Width, Expr.Span);
 		const FIRValue FalseSide = CoerceToWidth(FalseValue.Value, Width, Expr.Span);
-		return FLoweredValue::Of(MakeConditional(Condition, IsStaticCondition(Condition), TrueSide, FalseSide, Expr.Span));
+		return FLoweredValue::Of(MakeConditional(Condition, bStatic, TrueSide, FalseSide, Expr.Span));
 	}
 
 	// ------------------------------------------------------------------------------ assignment
@@ -1458,6 +1479,23 @@ namespace UE::DreamShader::IR::Private
 
 	// --------------------------------------------------------------------------------- lvalues
 
+	/** Each mask is relative to its object; a store needs components of the original slot. */
+	static FString ComposeLValueMask(const FString& Existing, const FString& Mask)
+	{
+		if (Existing.IsEmpty())
+		{
+			return Mask;
+		}
+		FString Result;
+		Result.Reserve(Mask.Len());
+		for (const TCHAR Component : Mask)
+		{
+			// The binder has already checked this component against the intermediate vector's width.
+			Result.AppendChar(Existing[ComponentIndexOf(Component)]);
+		}
+		return Result;
+	}
+
 	bool FIRBuilder::ResolveLValue(const FExpr& Expr, FLValueRef& Out)
 	{
 		const FExpr* Inner = Unparen(&Expr);
@@ -1512,7 +1550,7 @@ namespace UE::DreamShader::IR::Private
 			}
 			else
 			{
-				Out.SwizzleMask = BoundExpr->Swizzle;
+				Out.SwizzleMask = ComposeLValueMask(Out.SwizzleMask, BoundExpr->Swizzle);
 			}
 			return true;
 		}
@@ -1569,7 +1607,7 @@ namespace UE::DreamShader::IR::Private
 			{
 				return false;
 			}
-			Out.SwizzleMask = BoundExpr->Swizzle;
+			Out.SwizzleMask = ComposeLValueMask(Out.SwizzleMask, BoundExpr->Swizzle);
 			return true;
 		}
 
@@ -1580,6 +1618,12 @@ namespace UE::DreamShader::IR::Private
 
 	FLoweredValue FIRBuilder::LoadLValue(const FLValueRef& Ref, const FLangSpan& Span)
 	{
+		// Compound assignments read through a slot rather than LowerExpr(Param), but a pending
+		// default must be initialized before that read too.
+		if (Ref.bParam && Ref.FrameIndex == Frames.Num() - 1 && !ResolveDefaultArgument(Ref.BaseIndex))
+		{
+			return FLoweredValue();
+		}
 		FLoweredValue* Slot = ResolveSlot(Ref);
 		if (!Slot)
 		{
@@ -1623,6 +1667,16 @@ namespace UE::DreamShader::IR::Private
 
 	void FIRBuilder::StoreLValue(const FLValueRef& Ref, const FLoweredValue& Value, const FLangSpan& Span)
 	{
+		// A write from another default replaces an initialized parameter; do not let its pending
+		// initializer run later and silently replace the write.
+		if (Ref.bParam && Ref.FrameIndex == Frames.Num() - 1
+			&& Frame().DefaultArguments.IsValidIndex(Ref.BaseIndex)
+			&& (Frame().DefaultArguments[Ref.BaseIndex].State == EDefaultArgumentState::Pending
+				|| Frame().DefaultArguments[Ref.BaseIndex].State == EDefaultArgumentState::Conditional)
+			&& !ResolveDefaultArgument(Ref.BaseIndex))
+		{
+			return;
+		}
 		FLoweredValue* Slot = ResolveSlot(Ref);
 		if (!Slot)
 		{
@@ -1669,6 +1723,11 @@ namespace UE::DreamShader::IR::Private
 				Slot->Material.Order.Add(Ref.MaterialAttribute);
 			}
 			Slot->Material.Fields.Add(Ref.MaterialAttribute, Stored);
+			if (Ref.SwizzleMask.IsEmpty() && Slot->Material.AssignedWhen.Remove(Ref.MaterialAttribute) > 0)
+			{
+				const int32 Partial = Slot->Material.FindPartialAttribute(Ref.MaterialAttribute);
+				if (Partial != INDEX_NONE) { Slot->Material.PartialAttributes.RemoveAt(Partial); }
+			}
 			// L14: the latest write's spelling is the one the sink shows; a canonical spelling forgets an earlier alias.
 			Slot->Material.SetSpelling(Ref.MaterialAttribute, Ref.MaterialAttributeSpelling);
 			return;

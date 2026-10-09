@@ -235,6 +235,7 @@ void FDreamPassSceneViewExtension::PreRenderView_RenderThread(FRDGBuilder& Graph
 	FInjectionContext Context;
 	Context.Injection = EDreamPassInjection::BeginView;
 	Context.SceneViewRect = GetRenderViewRect(InView);
+	Context.SceneTextureViewRect = Context.SceneViewRect;
 	RunInjection(GraphBuilder, *Family, ViewIndex, Context);
 }
 
@@ -262,6 +263,7 @@ void FDreamPassSceneViewExtension::PreRenderBasePass_RenderThread(FRDGBuilder& G
 		Context.SceneTextures = CreateSceneTextureUniformBuffer(GraphBuilder, *State.View, ESceneTextureSetupMode::SceneDepth);
 		Context.SceneDepth = Context.SceneTextures->GetContents()->SceneDepthTexture;
 		Context.SceneViewRect = GetRenderViewRect(*State.View);
+		Context.SceneTextureViewRect = Context.SceneViewRect;
 		RunInjection(GraphBuilder, *Family, ViewIndex, Context);
 	}
 }
@@ -283,6 +285,7 @@ void FDreamPassSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGB
 	// callback, R/Private/DeferredShadingRenderer.cpp:3122); a fresh one binds every texture that has been produced.
 	Context.SceneTextures = CreateSceneTextureUniformBuffer(GraphBuilder, InView, ESceneTextureSetupMode::All);
 	Context.SceneViewRect = GetRenderViewRect(InView);
+	Context.SceneTextureViewRect = Context.SceneViewRect;
 	Context.SceneColor = FScreenPassTexture(RenderTargets[0].GetTexture(), Context.SceneViewRect);
 	Context.bSceneColorWritable = Context.SceneColor.IsValid();
 	Context.SceneDepth = RenderTargets.DepthStencil.GetTexture();
@@ -320,6 +323,7 @@ void FDreamPassSceneViewExtension::RenderAfterOpaque(FRDGBuilder& GraphBuilder, 
 	Context.Injection = EDreamPassInjection::AfterOpaque;
 	Context.SceneTextures = Parameters.SceneTexturesUniformParams;
 	Context.SceneViewRect = Parameters.ViewportRect;
+	Context.SceneTextureViewRect = Context.SceneViewRect;
 	Context.SceneColor = FScreenPassTexture(Parameters.ColorTexture, Parameters.ViewportRect);
 	Context.bSceneColorWritable = Context.SceneColor.IsValid();
 	Context.SceneDepth = Parameters.DepthTexture;
@@ -380,6 +384,7 @@ FScreenPassTexture FDreamPassSceneViewExtension::PostProcessCallback(FRDGBuilder
 	Context.bSceneColorWritable = true;
 	Context.SceneColor = FScreenPassTexture::CopyFromSlice(GraphBuilder, ChainSlice);
 	Context.SceneViewRect = Context.SceneColor.ViewRect;
+	Context.SceneTextureViewRect = GetRenderViewRect(View);
 	Context.SceneTextures = Inputs.SceneTextures.SceneTextures.GetUniformBuffer();
 	Context.SceneDepth = Context.SceneTextures ? Context.SceneTextures->GetContents()->SceneDepthTexture : nullptr;
 	Context.CustomDepth = Inputs.CustomDepthTexture;
@@ -419,6 +424,7 @@ void FDreamPassSceneViewExtension::PostRenderView_RenderThread(FRDGBuilder& Grap
 		FInjectionContext Context;
 		Context.Injection = EDreamPassInjection::EndOfView;
 		Context.SceneViewRect = GetOutputViewRect(InView);
+		Context.SceneTextureViewRect = GetRenderViewRect(InView);
 		if (FRDGTextureRef FamilyTexture = TryCreateViewFamilyTexture(GraphBuilder, *InView.Family))
 		{
 			Context.SceneColor = FScreenPassTexture(FamilyTexture, Context.SceneViewRect);
@@ -431,6 +437,7 @@ void FDreamPassSceneViewExtension::PostRenderView_RenderThread(FRDGBuilder& Grap
 
 	if (State.IsActive())
 	{
+		FinishViewExports(GraphBuilder, State);
 		AddVisualizePass(GraphBuilder, *Family, State, InView);
 		FinishViewBuffers(GraphBuilder, *Family, State);
 	}

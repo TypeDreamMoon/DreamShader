@@ -356,7 +356,7 @@ namespace UE::DreamShader::Editor::Private
 
 	FString FDreamShaderEditorBridge::GetBridgeDirectory()
 	{
-		return FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("DreamShader"), TEXT("Bridge"));
+		return FDreamShaderWorkspaceService::GetBridgeDirectory();
 	}
 
 	FString FDreamShaderEditorBridge::GetRequestDirectory()
@@ -428,7 +428,11 @@ namespace UE::DreamShader::Editor::Private
 	 */
 	bool FDreamShaderEditorBridge::TryAcquireBridgeOwnership()
 	{
-		const uint32 SelfPid = FPlatformProcess::GetCurrentProcessId();
+		const uint32 SelfPid =
+#if WITH_DEV_AUTOMATION_TESTS
+			ProcessIdForTesting != 0 ? ProcessIdForTesting :
+#endif
+			FPlatformProcess::GetCurrentProcessId();
 
 		FString LockText;
 		if (FFileHelper::LoadFileToString(LockText, *GetOwnerLockFilePath()))
@@ -472,6 +476,7 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!bWasOwner)
 		{
+			InitializeOwnedBridgeFiles();
 			UE_LOG(LogDreamShader, Display, TEXT("DreamShader bridge owned by this editor (pid %u)."), SelfPid);
 		}
 		return true;
@@ -504,6 +509,47 @@ namespace UE::DreamShader::Editor::Private
 
 		bIsBridgeOwner = false;
 		IFileManager::Get().Delete(*GetOwnerLockFilePath());
+	}
+
+	void FDreamShaderEditorBridge::InitializeOwnedBridgeFiles()
+	{
+		if (!bIsBridgeOwner)
+		{
+			return;
+		}
+
+		// A takeover is a new listening session too. Non-owners must never discard the live owner's responses.
+		ListeningSince = FDateTime::UtcNow();
+		IFileManager& Files = IFileManager::Get();
+		Files.MakeDirectory(*GetRequestDirectory(), true);
+		Files.MakeDirectory(*GetResponseDirectory(), true);
+		TArray<FString> Stale;
+		Files.FindFiles(Stale, *FPaths::Combine(GetResponseDirectory(), TEXT("*.json")), true, false);
+		for (const FString& Name : Stale)
+		{
+			Files.Delete(*FPaths::Combine(GetResponseDirectory(), Name));
+		}
+		FDreamShaderWorkspaceService::ResetBridgeDatabase();
+		FDreamShaderWorkspaceService::ExportMaterialExpressionManifest();
+		FDreamShaderWorkspaceService::ExportDreamShaderSettingsManifest();
+		FDreamShaderWorkspaceService::ExportSubstrateBuiltinsManifest();
+		FDreamShaderWorkspaceService::ExportPreprocessorDefinesManifest();
+		if (bPostEngineInitComplete)
+		{
+			ExportBuiltinCatalogManifest();
+		}
+		UpdateDiagnosticsFile();
+		PublishStatus();
+	}
+
+	void FDreamShaderEditorBridge::ClearOwnedBridgeFiles()
+	{
+		if (!bIsBridgeOwner)
+		{
+			return;
+		}
+		FDreamShaderWorkspaceService::ResetBridgeDatabase();
+		IFileManager::Get().Delete(*GetStatusFilePath());
 	}
 
 	void FDreamShaderEditorBridge::PublishStatus()
@@ -577,7 +623,10 @@ namespace UE::DreamShader::Editor::Private
 		Writer->WriteObjectEnd();
 		Writer->Close();
 
-		WriteFileAtomically(FPaths::Combine(GetResponseDirectory(), RequestId + TEXT(".json")), Text);
+		if (bIsBridgeOwner)
+		{
+			WriteFileAtomically(FPaths::Combine(GetResponseDirectory(), RequestId + TEXT(".json")), Text);
+		}
 	}
 
 	bool FDreamShaderEditorBridge::IsAbandoned(const FString& RequestPath) const
@@ -632,37 +681,14 @@ namespace UE::DreamShader::Editor::Private
 		IFileManager::Get().MakeDirectory(*GetRequestDirectory(), true);
 		IFileManager::Get().MakeDirectory(*GetResponseDirectory(), true);
 
-		// Before anything touches the request queue or the status file.
-		TryAcquireBridgeOwnership();
-
-		// Responses left by a previous session are answers nobody is waiting for any more,
-		// and a client that reconnects and finds one would act on a stale result.
-		{
-			IFileManager& Files = IFileManager::Get();
-			TArray<FString> Stale;
-			Files.FindFiles(Stale, *FPaths::Combine(GetResponseDirectory(), TEXT("*.json")), true, false);
-			for (const FString& Name : Stale)
-			{
-				Files.Delete(*FPaths::Combine(GetResponseDirectory(), Name));
-			}
-		}
-
 		bBusy = false;
 		BusyAction.Reset();
 		LastResult.Reset();
 		PendingResponsesBySource.Reset();
-		// Stamped before the first poll, so anything already in the queue is recognised as
-		// having been written to a room with nobody in it.
-		ListeningSince = FDateTime::UtcNow();
-		PublishStatus();
+		// Before publishing or removing any shared file. A denied owner keeps its local editor services.
+		TryAcquireBridgeOwnership();
 
 		IFileManager::Get().MakeDirectory(*FDreamShaderPreviewRenderer::GetPreviewDirectory(), true);
-		FDreamShaderWorkspaceService::ResetBridgeDatabase();
-
-		FDreamShaderWorkspaceService::ExportMaterialExpressionManifest();
-		FDreamShaderWorkspaceService::ExportDreamShaderSettingsManifest();
-		FDreamShaderWorkspaceService::ExportSubstrateBuiltinsManifest();
-		FDreamShaderWorkspaceService::ExportPreprocessorDefinesManifest();
 		SyncVirtualFunctionDefinitions();
 
 		// Registered unconditionally and gated inside on the LIVE setting: caching the flag here
@@ -726,13 +752,12 @@ namespace UE::DreamShader::Editor::Private
 	void FDreamShaderEditorBridge::Shutdown()
 	{
 		bIsShuttingDown = true;
-		FDreamShaderWorkspaceService::ResetBridgeDatabase();
 
 		// The heartbeat is how a client tells a running editor from a closed one, and a file
 		// that simply stops being updated is indistinguishable from one whose editor hung.
 		// Deleting it says "gone" in a way a timeout cannot: the client falls back to the CLI
 		// immediately instead of waiting out its liveness window first.
-		IFileManager::Get().Delete(*GetStatusFilePath());
+		ClearOwnedBridgeFiles();
 
 		// Released rather than left to go stale, so a second editor on this project picks the bridge
 		// up on its next heartbeat instead of after the whole staleness window.
@@ -846,6 +871,7 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::HandlePostEngineInit()
 	{
+		bPostEngineInitComplete = true;
 		// The startup sweep is the editor's always-on behavior (source files are the authoring surface).
 		//
 		// This call is also what arms Tick's define poll: the sweep stamps the revision it ran against,
@@ -862,9 +888,14 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::ExportBuiltinCatalogManifest()
 	{
+		if (!bIsBridgeOwner)
+		{
+			return;
+		}
 		FString WrittenPath;
 		FString WriteError;
-		if (!::UE::DreamShader::Editor::Compiler::ExportDreamShaderBuiltinCatalogManifest(FString(), WrittenPath, WriteError))
+		if (!::UE::DreamShader::Editor::Compiler::ExportDreamShaderBuiltinCatalogManifest(
+			FPaths::Combine(GetBridgeDirectory(), TEXT("dreamshader-builtin-catalog.json")), WrittenPath, WriteError))
 		{
 			UE_LOG(LogDreamShader, Warning, TEXT("DreamShader builtin catalog manifest was not written: %s."), *WriteError);
 		}
@@ -1046,9 +1077,18 @@ namespace UE::DreamShader::Editor::Private
 			return;
 		}
 
-		// Same dispatch as OnDirectoryChanged, minus the Auto Compile On Save gate. The graph is
-		// rebuilt once up front rather than per material: every file in the batch is already on disk
-		// (the caller writes the whole batch before asking), so one rebuild sees all of them.
+		// Preserve the old edges across the whole batch: rebuilding for one rewritten source can
+		// remove the old dependency edge of another source in the same batch.
+		for (const FString& RewrittenFile : RewrittenSourceFiles)
+		{
+			if (const TSet<FString>* Previous = HeaderDependentsByFile.Find(UE::DreamShader::NormalizeSourceFilePath(RewrittenFile)))
+			{
+				for (const FString& Dependent : *Previous)
+				{
+					QueueSourceFile(Dependent);
+				}
+			}
+		}
 		RebuildDependencyGraph();
 		for (const FString& RewrittenFile : RewrittenSourceFiles)
 		{
@@ -1060,7 +1100,7 @@ namespace UE::DreamShader::Editor::Private
 			{
 				QueueDependentSourcesForImport(RewrittenFile);
 			}
-			else if (UE::DreamShader::IsDreamShaderFunctionFile(RewrittenFile))
+			else if (UE::DreamShader::IsDreamShaderFunctionFile(RewrittenFile) || UE::DreamShader::IsDreamShaderLang2File(RewrittenFile))
 			{
 				if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(RewrittenFile))
 				{
@@ -1287,7 +1327,7 @@ namespace UE::DreamShader::Editor::Private
 	{
 		TArray<FFileChangeData> ChangesCopy = FileChanges;
 		TWeakPtr<FDreamShaderEditorBridge, ESPMode::ThreadSafe> WeakBridge = AsWeak();
-		AsyncTask(ENamedThreads::GameThread, [WeakBridge, Changes = MoveTemp(ChangesCopy)]()
+		auto HandleChanges = [WeakBridge, Changes = MoveTemp(ChangesCopy)]()
 		{
 			TSharedPtr<FDreamShaderEditorBridge, ESPMode::ThreadSafe> Bridge = WeakBridge.Pin();
 			if (!Bridge.IsValid() || Bridge->bIsShuttingDown || IsEngineExitRequested() || GExitPurge)
@@ -1327,6 +1367,8 @@ namespace UE::DreamShader::Editor::Private
 				return;
 			}
 
+			// Snapshot before any event rebuilds the graph. Two deleted includes can arrive in one batch.
+			const TMap<FString, TSet<FString>> PreviousDependents = Bridge->HeaderDependentsByFile;
 			for (const FFileChangeData& FileChange : Changes)
 			{
 				if (FileChange.Action == FFileChangeData::FCA_RescanRequired)
@@ -1340,13 +1382,21 @@ namespace UE::DreamShader::Editor::Private
 					continue;
 				}
 
+				if (const TSet<FString>* Previous = PreviousDependents.Find(UE::DreamShader::NormalizeSourceFilePath(FileChange.Filename)))
+				{
+					for (const FString& Dependent : *Previous)
+					{
+						Bridge->QueueSourceFile(Dependent);
+					}
+				}
+
 				if (FileChange.Action == FFileChangeData::FCA_Added || FileChange.Action == FFileChangeData::FCA_Modified)
 				{
 					if (UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename))
 					{
 						Bridge->QueueDependentSourcesForImport(FileChange.Filename);
 					}
-					else if (UE::DreamShader::IsDreamShaderFunctionFile(FileChange.Filename))
+					else if (UE::DreamShader::IsDreamShaderFunctionFile(FileChange.Filename) || UE::DreamShader::IsDreamShaderLang2File(FileChange.Filename))
 					{
 						if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(FileChange.Filename))
 						{
@@ -1367,10 +1417,12 @@ namespace UE::DreamShader::Editor::Private
 				else if (FileChange.Action == FFileChangeData::FCA_Removed)
 				{
 					const FString SourceFile = UE::DreamShader::NormalizeSourceFilePath(FileChange.Filename);
-					if (UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename) || UE::DreamShader::IsDreamShaderFunctionFile(FileChange.Filename))
+					if (UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename)
+						|| UE::DreamShader::IsDreamShaderFunctionFile(FileChange.Filename)
+						|| UE::DreamShader::IsDreamShaderLang2File(FileChange.Filename))
 					{
 						Bridge->QueueDependentSourcesForImport(FileChange.Filename);
-						if (UE::DreamShader::IsDreamShaderFunctionFile(FileChange.Filename))
+						if (!UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename))
 						{
 							Bridge->PendingFiles.Remove(SourceFile);
 							Bridge->ForcedPendingFiles.Remove(SourceFile);
@@ -1399,7 +1451,15 @@ namespace UE::DreamShader::Editor::Private
 					UE_LOG(LogDreamShader, Display, TEXT("DreamShader source removed, existing generated assets were left untouched: %s"), *FileChange.Filename);
 				}
 			}
-		});
+		};
+#if WITH_DEV_AUTOMATION_TESTS
+		if (bSynchronousDirectoryChangesForTesting)
+		{
+			HandleChanges();
+			return;
+		}
+#endif
+		AsyncTask(ENamedThreads::GameThread, MoveTemp(HandleChanges));
 	}
 
 	bool FDreamShaderEditorBridge::Tick(float DeltaSeconds)
@@ -3821,9 +3881,12 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderEditorBridge::UpdateDiagnosticsFile()
 	{
-		DiagnosticsStore.WriteToFile(GetDiagnosticsFilePath());
-		DiagnosticsStore.WriteToDirectory(GetDiagnosticsDirectory());
-		DiagnosticsStore.WriteToDatabase(FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath());
+		if (bIsBridgeOwner)
+		{
+			DiagnosticsStore.WriteToFile(GetDiagnosticsFilePath());
+			DiagnosticsStore.WriteToDirectory(GetDiagnosticsDirectory());
+			DiagnosticsStore.WriteToDatabase(FDreamShaderWorkspaceService::GetBridgeDatabaseFilePath());
+		}
 		// The commit point: every compile route ends here once its findings are in the store.
 		DiagnosticsChangedEvent.Broadcast();
 	}

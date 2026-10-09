@@ -18,9 +18,14 @@
 #include "DreamPassVolume.h"
 #include "Lang/LangPipelineSource.h"
 
+#include "CoreGlobals.h"
 #include "Engine/Engine.h"
+#include "Engine/Texture2D.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInstanceConstant.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
 #include "UObject/Package.h"
@@ -372,6 +377,165 @@ bool FDreamShaderPassResolveTest::RunTest(const FString& Parameters)
 	Subsystem->UnregisterSource(SourceKey);
 	Subsystem->ResolveView(MakeGameQuery(), Resolved);
 	TestTrue(TEXT("an unregistered source no longer applies"), !Resolved.ContainsByPredicate([Late](const FDreamPassResolvedPipeline& R) { return R.Pipeline == Late; }));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderPassBufferMipsTest,
+	"DreamShader.Pass.Logic.BufferMips",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderPassBufferMipsTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private::PassLogicTests;
+	UDreamPassPipeline* Pipeline = MakePipeline(TEXT("CP_LogicMips"), 0);
+	for (const int32 Mips : { 0, 2, 14 })
+	{
+		Pipeline->Buffers[0].Mips = Mips;
+		TArray<FText> Problems;
+		TestFalse(FString::Printf(TEXT("Mips = %d is refused before rendering"), Mips), Pipeline->Validate(&Problems));
+		TestTrue(TEXT("the unsupported mip count is explained"), Problems.ContainsByPredicate([](const FText& Problem)
+		{
+			return Problem.ToString().Contains(TEXT("Mips = 1"));
+		}));
+		Pipeline->NotifyChanged();
+		TestFalse(TEXT("an old or edited asset cannot run with unsupported mips"), Pipeline->IsPassUsable(0));
+	}
+	Pipeline->Buffers[0].Mips = 1;
+	Pipeline->NotifyChanged();
+	TestTrue(TEXT("restoring one mip makes the pipeline valid"), Pipeline->Validate());
+	TestTrue(TEXT("its pass can run again"), Pipeline->IsPassUsable(0));
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderPassStencilClausesTest,
+	"DreamShader.Pass.Logic.StencilClauses",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderPassStencilClausesTest::RunTest(const FString& Parameters)
+{
+	auto StencilTerm = [](int32 Value, int32 Mask)
+	{
+		FDreamPassFilterTerm Term;
+		Term.Kind = EDreamPassFilterKind::Stencil;
+		Term.StencilValue = Value;
+		Term.StencilMask = Mask;
+		return Term;
+	};
+
+	FDreamPassMeshFilter Filter;
+	Filter.AnyOf.AddDefaulted_GetRef().AllOf = { StencilTerm(1, 1), StencilTerm(2, 2) };
+	Filter.AnyOf.AddDefaulted_GetRef().AllOf = { StencilTerm(8, 255) };
+	// The stencil mask used for Nanite must preserve (bit 0 AND bit 1) OR exact value 8, over all 256 stencil values.
+	for (uint32 Stencil = 0; Stencil < 256; ++Stencil)
+	{
+		TestEqual(FString::Printf(TEXT("AND and OR at stencil %u"), Stencil), Filter.MatchesStencilTerms(Stencil), (Stencil & 3u) == 3u || Stencil == 8u);
+	}
+
+	Filter.AnyOf[0].AllOf = { StencilTerm(1, 255), StencilTerm(2, 255) };
+	TestFalse(TEXT("contradictory terms do not select the first value"), Filter.MatchesStencilTerms(1));
+	TestFalse(TEXT("contradictory terms do not select the second value"), Filter.MatchesStencilTerms(2));
+	TestTrue(TEXT("a different OR clause still selects its value"), Filter.MatchesStencilTerms(8));
+
+	Filter.AnyOf.Reset();
+	Filter.AnyOf.AddDefaulted();
+	Filter.AnyOf.AddDefaulted_GetRef().AllOf.AddDefaulted_GetRef().Kind = EDreamPassFilterKind::Layer;
+	for (uint32 Stencil = 0; Stencil < 256; ++Stencil)
+	{
+		TestFalse(TEXT("an empty or membership-only clause does not match every stencil"), Filter.MatchesStencilTerms(Stencil));
+	}
+	return true;
+}
+
+namespace UE::DreamShader::Editor::Private::PassLogicTests
+{
+	/** Waits for a real frame boundary so the same pooled MID is reassigned, without changing the engine's frame counter. */
+	class FMaterialPoolReuseCommand final : public IAutomationLatentCommand
+	{
+	public:
+		explicit FMaterialPoolReuseCommand(FAutomationTestBase& InTest) : Test(InTest) {}
+
+		virtual bool Update() override
+		{
+			if (!TestWorld)
+			{
+				TestWorld = MakeUnique<FScopedTestWorld>();
+				UDreamPassSubsystem* Subsystem = TestWorld->GetSubsystem();
+				if (!Test.TestNotNull(TEXT("the pool test world has a subsystem"), Subsystem))
+				{
+					return true;
+				}
+				Base = NewObject<UMaterialInstanceConstant>(TestWorld->World);
+				Base->SetParentEditorOnly(UMaterial::GetDefaultMaterial(MD_Surface), /*RecacheShader*/ false);
+				DefaultTexture = NewObject<UTexture2D>(Base);
+				PreviewTexture = NewObject<UTexture2D>(Base);
+				UTexture2D* OverrideTexture = NewObject<UTexture2D>(Base);
+				Base->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(TEXT("Gain")), 0.25f);
+				Base->SetVectorParameterValueEditorOnly(FMaterialParameterInfo(TEXT("Tint")), FLinearColor::Green);
+				Base->SetTextureParameterValueEditorOnly(FMaterialParameterInfo(TEXT("Image")), DefaultTexture);
+				// Texture painting previews temporarily replace the parent's stored value. Resetting a pooled child
+				// must not call ResetAllTextureParameterOverrides recursively on that shared parent.
+				Base->OverrideTexture(DefaultTexture, PreviewTexture, TestWorld->World->GetFeatureLevel());
+				CheckParentTexturePreview();
+				First = Subsystem->AcquireMaterialInstance(Base);
+				CheckParentTexturePreview();
+				First->SetScalarParameterValue(TEXT("Gain"), 2.0f);
+				First->SetVectorParameterValue(TEXT("Tint"), FLinearColor::Red);
+				First->SetTextureParameterValue(TEXT("Image"), OverrideTexture);
+				Test.TestFalse(TEXT("a texture override records a streaming rename"), First->RenamedTextures.IsEmpty());
+				UMaterialInstanceDynamic* Second = Subsystem->AcquireMaterialInstance(Base);
+				Test.TestTrue(TEXT("uses in the same frame have distinct instances"), First != Second);
+				Test.TestEqual(TEXT("another pass inherits the base gain"), Second->K2_GetScalarParameterValue(TEXT("Gain")), 0.25f);
+				Frame = GFrameCounter;
+				return false;
+			}
+			if (GFrameCounter == Frame)
+			{
+				return false;
+			}
+
+			UMaterialInstanceDynamic* Reused = TestWorld->GetSubsystem()->AcquireMaterialInstance(Base);
+			CheckParentTexturePreview();
+			Base->OverrideTexture(DefaultTexture, nullptr, TestWorld->World->GetFeatureLevel());
+			Test.TestTrue(TEXT("the next frame reuses the first pool slot"), Reused == First);
+			Test.TestEqual(TEXT("an omitted scalar inherits its default"), Reused->K2_GetScalarParameterValue(TEXT("Gain")), 0.25f);
+			Test.TestTrue(TEXT("an omitted vector inherits its default"), Reused->K2_GetVectorParameterValue(TEXT("Tint")).Equals(FLinearColor::Green));
+			Test.TestTrue(TEXT("an omitted texture inherits its default"), Reused->K2_GetTextureParameterValue(TEXT("Image")) == DefaultTexture);
+			Test.TestTrue(TEXT("streaming renames from the previous use are discarded"), Reused->RenamedTextures.IsEmpty());
+			return true;
+		}
+
+	private:
+		void CheckParentTexturePreview()
+		{
+			// GetTextureParameterValue deliberately hides editor previews, so inspect the actual override value.
+			const FTextureParameterValue* Value = Base->TextureParameterValues.FindByPredicate([](const FTextureParameterValue& Parameter)
+			{
+				return Parameter.ParameterInfo.Name == TEXT("Image");
+			});
+			Test.TestTrue(TEXT("acquiring a pooled MID preserves its parent's texture-paint preview"), Value && Value->ParameterValue == PreviewTexture);
+		}
+
+		FAutomationTestBase& Test;
+		TUniquePtr<FScopedTestWorld> TestWorld;
+		UMaterialInstanceConstant* Base = nullptr;
+		UMaterialInstanceDynamic* First = nullptr;
+		UTexture2D* DefaultTexture = nullptr;
+		UTexture2D* PreviewTexture = nullptr;
+		uint64 Frame = 0;
+	};
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderPassMaterialPoolReuseTest,
+	"DreamShader.Pass.Logic.MaterialPoolReuse",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FDreamShaderPassMaterialPoolReuseTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private::PassLogicTests;
+	ADD_LATENT_AUTOMATION_COMMAND(FMaterialPoolReuseCommand(*this));
 	return true;
 }
 

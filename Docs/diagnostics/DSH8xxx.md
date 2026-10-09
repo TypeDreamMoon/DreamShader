@@ -536,7 +536,7 @@ Failed to create material function '%s'.
 Asset '%s' was edited by hand since DreamShader generated it from '%s', so it was NOT rebuilt (rebuilding would destroy those edits). %s
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:408`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:412`
 <!-- generated:end DSH8115 -->
 
 **Cause.** the asset no longer matches the output digest stamped at its last generation -- somebody edited it by hand, and a rebuild would destroy that work
@@ -556,7 +556,7 @@ Asset '%s' was edited by hand since DreamShader generated it from '%s', so it wa
 Generated DreamShader asset '%s' could not be saved.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:458`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:494`
 <!-- generated:end DSH8116 -->
 
 **Cause.** A generated asset could not be written to disk: the `.uasset` is read-only or checked in,
@@ -576,7 +576,7 @@ exists in memory only.
 Generated DreamShader asset packages could not be saved.%s
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:488`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderGeneratedAssetMetadata.cpp:527`
 <!-- generated:end DSH8117 -->
 
 **Cause.** Saving the batch of generated packages failed; the list after the message names each
@@ -916,7 +916,7 @@ rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material 
 '{0}' does not resolve to a valid asset path. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1284`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1105`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1284`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1178`
 <!-- generated:end DSH8200 -->
 
 **Cause.** The product's asset name, or the `/// @name /Game/...` path override, does not resolve
@@ -1028,7 +1028,7 @@ before any compile and has no sink to raise into, so it has no code).
 Product index {0} does not exist in this module, which has {1}.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1259`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:252`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:1259`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:253`
 <!-- generated:end DSH8205 -->
 
 **Cause.** An internal inconsistency: the product index is out of range for the module, or the
@@ -1137,7 +1137,7 @@ is reported as a skip, not a failure.
 '{0}' has no property named '{1}', so that value was not written.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1761`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:324`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:361`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1795`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:324`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:361`
 <!-- generated:end DSH8210 -->
 
 **Cause.** A `/// @key value` on a uniform, or a Group / Desc / SortPriority / slider, named
@@ -1161,7 +1161,7 @@ leave: it starts working when the property appears.
 '{0}' is not a material expression class this engine has.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:509`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:665`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:510`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:666`
 <!-- generated:end DSH8211 -->
 
 **Cause.** A `UE.X(...)` or `UE.Expression(Class = "X")` names a material expression class this
@@ -1183,7 +1183,7 @@ different node or guard the code with `#if`.
 MakeMaterialAttributes has no pin for the attribute '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:124`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:156`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:220`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1740`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:124`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:156`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:220`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1774`
 <!-- generated:end DSH8212 -->
 
 **Cause.** A value has no pin to go to on the node that was made. For a reflected node, the named
@@ -1210,7 +1210,7 @@ through `CustomizedUVs7`.
 '{0}' has no property named '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1768`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1781`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:315`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:372`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1802`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1815`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:315`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:372`
 <!-- generated:end DSH8213 -->
 
 **Cause.** A reflected property refused the value: the wrong literal shape for its type. The quoted
@@ -1232,7 +1232,7 @@ starting with `/`. For a number, remove any unit suffix.
 Failed to create a FunctionInput node.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:123`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:152`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:281`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:40`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:142`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:173`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:239`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:75`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1103`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1136`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1175`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1210`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1242`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1279`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1331`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1735`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:359`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:370`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:382`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:397`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:517`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:674`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:743`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:763`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:784`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:805`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:840`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:862`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:881`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:906`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:937`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:985`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:136`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:150`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:208`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:123`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:152`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:281`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterFunctions.cpp:40`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:142`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:173`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:239`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:339`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:75`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1019`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1137`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1209`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1244`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1276`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1313`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1365`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1769`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:360`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:371`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:383`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:398`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:518`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:675`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:743`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:777`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:797`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:818`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:839`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:874`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:896`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:915`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:940`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:971`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:136`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:150`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:170`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterParameters.cpp:208`
 <!-- generated:end DSH8214 -->
 
 **Cause.** `UMaterialEditingLibrary` refused to create an expression of that class in this asset.
@@ -1274,7 +1274,7 @@ value is not valid for that property. The quoted 1.x message says which of the t
 BreakMaterialAttributes does not publish the attribute '{0}', so it cannot be read from a material that came through a pin.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1568`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1811`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1602`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1845`
 <!-- generated:end DSH8216 -->
 
 **Cause.** One of two things. A material attribute name (`m.SomeThing`, a `MakeMaterialAttributes`
@@ -1423,7 +1423,7 @@ binder should have refused first. Report it with the source file.
 The emitter has no rule for the IR operation '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1028`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:334`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1062`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:335`
 <!-- generated:end DSH8223 -->
 
 **Cause.** The IR carries an operation the emitter has no rule for: a core op whose table entry
@@ -1443,7 +1443,7 @@ operation named in the message.
 A SetMaterialAttributes node has no MaterialAttributes input; there is nothing for it to modify.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:181`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:245`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1121`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1149`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1191`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1226`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1265`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1626`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:346`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:694`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:181`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterMaterial.cpp:245`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1155`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1183`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1225`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1260`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1299`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1660`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:347`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:695`
 <!-- generated:end DSH8224 -->
 
 **Cause.** A node's operand or input count does not match its operation — a Select with two
@@ -1463,7 +1463,7 @@ should have caught it.
 This node reads node {0}, which has not been emitted; the graph's topological order is inconsistent.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1553`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1587`
 <!-- generated:end DSH8225 -->
 
 **Cause.** A node reads a value from a node that has not been emitted yet, which means the graph's
@@ -1483,7 +1483,7 @@ cause and `dsc dump-ir` shows it.
 A Swizzle node carries no Mask property.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1057`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1066`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1091`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1100`
 <!-- generated:end DSH8226 -->
 
 **Cause.** A Swizzle node's `Mask` property is missing, empty, longer than four components, or
@@ -1504,7 +1504,7 @@ a message that quotes it. Report it with the source file.
 '{0}' is not a Custom node output type; expected Float1 through Float4 or MaterialAttributes.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1369`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1402`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1410`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1403`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1436`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:1444`
 <!-- generated:end DSH8227 -->
 
 **Cause.** A `@custom` function's return type, or one of its `out` parameters, does not map to a
@@ -1552,8 +1552,9 @@ A matrix or a user struct cannot be a function input; pass its components separa
 **Cause.** The asset was built successfully but its package could not be written to disk — read-only
 file, source control, or a path that no longer exists.
 
-**Fix.** Check out the asset, or make the file writable, and compile again. The graph is already
-built in memory, so the next compile will save it without rebuilding.
+**Fix.** Check out the asset, or make the file writable, and compile again. The failed save invalidates
+the source-hash skip, so the next compile rebuilds and retries saving without `-Force`. Hand edits made
+after the failure still trigger the usual divergence protection.
 
 ## DSH8230
 
@@ -1566,7 +1567,7 @@ built in memory, so the next compile will save it without rebuilding.
 Cannot create a ThinCustom base material without an instance.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:297`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:314`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:340`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:643`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:298`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:319`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:345`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:643`
 <!-- generated:end DSH8230 -->
 
 **Cause.** The hidden base `UMaterial` a ThinCustom instance parents to could not be created as a
@@ -1707,7 +1708,7 @@ the reason (DSH8241, DSH8242 or DSH8253 in words).
 Asset '%s' already exists as a '%s'; a .dsi builds a plain MaterialInstanceConstant. Rename the instance file or move the existing asset.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:252`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:253`
 <!-- generated:end DSH8241 -->
 
 **Cause.** An asset of another class already sits where the `.dsi` would build its instance -- a
@@ -1726,7 +1727,7 @@ material, or a ThinCustom instance of a `.dss` with the same name.
 Asset '%s' already exists and was not generated by DreamShader. Rename the instance file or move/delete the existing asset before building it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:261`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:262`
 <!-- generated:end DSH8242 -->
 
 **Cause.** A material instance already sits at the target path and was not generated by DreamShader.
@@ -1948,7 +1949,7 @@ asset a texture-like override names does not load or is of the wrong class.
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:273`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:280`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:274`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIRAssets.cpp:281`
 <!-- generated:end DSH8253 -->
 
 **Cause.** The instance's package, or the `UMaterialInstanceConstant` in it, could not be created:
@@ -1968,7 +1969,7 @@ the file's name the asset's.
 The material parameter collection '{0}' has no parameter called '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:578`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterNodes.cpp:579`
 <!-- generated:end DSH8254 -->
 
 **Cause.** A `CollectionParameter` node names a parameter its material parameter collection does not
@@ -1986,10 +1987,10 @@ collection.
 **Message**
 
 ```
-The parent '{0}' comes from '{1}', which does not compile, so the parameters this instance overrides cannot be checked; compile that source to see why.
+The parent source '{0}' failed to compile, so this instance has no parent to build against. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:499`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:531`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:591`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:620`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1025`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:492`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:519`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:591`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:620`
 <!-- generated:end DSH8260 -->
 
 **Cause.** The parent of a `.dsi` cannot be used. It is built by a DreamShader source that does not
@@ -2047,7 +2048,7 @@ instance of that name.
 '{0}' is its own ancestor: following Parent from it comes back to it ({1}).
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:443`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:602`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:650`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:444`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:602`, `Source/DreamShaderCompiler/Private/Sources/DreamShaderProductIndex.cpp:650`
 <!-- generated:end DSH8263 -->
 
 **Cause.** An instance is its own ancestor: `Parent` names the instance itself, by path or by name,
@@ -2066,7 +2067,7 @@ or following `Parent` from it leads back to it (the message lists the chain).
 '{0}' was missing or older than its source, so '{1}' was compiled first.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:520`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:534`
 <!-- generated:end DSH8264 -->
 
 **Cause.** The parent's asset was missing or older than its source when the instance was compiled,
@@ -2085,7 +2086,7 @@ so the parent was compiled first.
 The Parent chain above '{0}' is more than {1} instances deep; a chain that long is almost always a mistake in a Parent key.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:451`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:452`
 <!-- generated:end DSH8265 -->
 
 **Cause.** The chain of `Parent` keys above this instance is deeper than the compiler follows. Real
@@ -2143,7 +2144,7 @@ follows.
 '{0}' could not be read.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:639`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:640`
 <!-- generated:end DSH8290 -->
 
 **Cause.** The compiler could not open the `.dss` it was asked to compile. The path was normalised
@@ -2167,7 +2168,7 @@ on Windows a text editor holding an exclusive lock is enough to cause this.
 '{0}' failed conditional compilation: {1}: {2}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:661`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:228`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:662`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilerIncludes.cpp:228`
 <!-- generated:end DSH8291 -->
 
 **Cause.** The conditional-compilation preprocessor refused the file. The message carries the
@@ -2284,7 +2285,7 @@ with a different grammar, and an include of one would be parsed as 2.0 text and 
 '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:582`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:583`
 <!-- generated:end DSH8296 -->
 
 **Cause.** The pipeline was handed a file it does not build on its own: a `.dsh` header, or a file
@@ -2306,7 +2307,7 @@ through the legacy front end — is built by the same pipeline.
 The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:778`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:779`
 <!-- generated:end DSH8297 -->
 
 **Cause.** The builtin expression catalog — every `UE.*` node, its pins, its properties and the
@@ -2334,7 +2335,7 @@ cached copy and `InvalidateDreamShaderBuiltinCatalog`.
 Building '{0}' was cancelled; the asset is as it was before this compile.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1165`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:621`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitter.cpp:316`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1183`, `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:622`
 <!-- generated:end DSH8298 -->
 
 **Cause.** The user pressed Cancel on the compile's progress dialog. Nothing was written: the emit
@@ -2355,7 +2356,7 @@ engine's own queue and is not cancelled by this.
 The exported functions {0} call one another in a cycle, so there is no order in which they can be built; an exported function may call another only in one direction.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:983`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1045`
 <!-- generated:end DSH8299 -->
 
 **Cause.** Two or more exported functions of one file call one another, directly or through others.
@@ -2381,7 +2382,7 @@ third function that neither calls back into.
 '{0}' is a Custom Pass pipeline, which needs Unreal Engine 5.8 or later; this engine has the DreamShaderPass asset types but no runtime to run them, so nothing was built.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:999`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1017`
 <!-- generated:end DSH8300 -->
 
 **Cause.** A `.dsp` was compiled on an engine older than Unreal Engine 5.8. The DreamShaderPass module
@@ -2404,7 +2405,7 @@ pipeline, render target, slot or snapshot was written.
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1009`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1039`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1027`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1057`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:341`, `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:346`
 <!-- generated:end DSH8301 -->
 
 **Cause.** The pipeline asset could not be made at the path its `.dsp` resolves to. The message
@@ -2471,7 +2472,7 @@ and copy what you need.
 '{1}' is not a {0} the Custom Pass runtime knows; the pipeline was not built. This is a compiler gap: the binder should have refused it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:581`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:599`
 <!-- generated:end DSH8304 -->
 
 **Cause.** A value of the pipeline reached the emitter in a spelling the DreamShaderPass runtime has no
@@ -2494,7 +2495,7 @@ not at fault. Nothing was built.
 The material '{0}' of pass '{1}' does not load; compile the source that builds it, or correct the Material key.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:760`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:778`
 <!-- generated:end DSH8305 -->
 
 **Cause.** When the pipeline was put together, the material a fullscreen or mesh pass names did not load
@@ -2516,7 +2517,7 @@ material's object path), then compile the `.dsp` again.
 The default of '{0}' could not be applied: {1}.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:642`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:660`
 <!-- generated:end DSH8306 -->
 
 **Cause.** The `/// @default` of a `Texture2D` uniform could not be written into the pipeline: the
@@ -2538,7 +2539,7 @@ write `/// @default None` (or no `@default`) for a parameter without a texture.
 Pass '{0}' selects the layer '{1}', which is not one of the project's pass layers (Project Settings > DreamPlugin > DreamShader Custom Pass > Layer Names).
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:836`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:854`
 <!-- generated:end DSH8307 -->
 
 **Cause.** A mesh pass's `Filter = Layer(...)` names a layer that has no bit when the pipeline is built.
@@ -2561,7 +2562,7 @@ it until that pipeline is compiled again.
 Buffer '{0}' is {1} and cannot be exported: materials, Blueprints and UMG read an exported buffer as a float texture, which an integer or a depth buffer cannot be. Export a float or normalized buffer, or drop Export.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:687`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:705`
 <!-- generated:end DSH8308 -->
 
 **Cause.** A buffer declared `Export = true` has an integer or depth format (`R32U`, `RG32U`, `Depth32`).
@@ -2583,7 +2584,7 @@ check as it maps the format onto a render target format.
 The render target of the exported buffer '{0}' could not be created or reused. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1144`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1162`
 <!-- generated:end DSH8309 -->
 
 **Cause.** The render target of an exported buffer — `<Pipeline>_<Buffer>`, in the pipeline's folder —
@@ -2604,7 +2605,7 @@ registry and the snapshots are as they were.
 '{0}' was left in place although its buffer is no longer exported: {1}. Delete it by hand once nothing reads it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:559`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:577`
 <!-- generated:end DSH8310 -->
 
 **Cause.** A buffer the pipeline used to export is no longer exported — its `Export` dropped, the buffer
@@ -2625,10 +2626,10 @@ the next compile takes the same render target over again, and its readers stay v
 **Message**
 
 ```
-'{0}' was built but could not be saved with its render targets; its slots are already in the registry. In this session the pipeline in memory is current, so a plain compile of its source skips it: save it, or compile the source again with -Force. {1}
+'{0}' was built but could not be saved with its render targets; its slots are already in the registry. Make the packages writable and compile the source again to retry saving. {1}
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1253`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:1271`
 <!-- generated:end DSH8311 -->
 
 **Cause.** The pipeline was built and its render targets configured, and saving the packages failed — a
@@ -2637,10 +2638,10 @@ layer's reason follows. Everything before the save stands: the slot registry and
 written, and in the editor the slot shaders were recompiled and the pipeline in memory already runs the
 new version.
 
-**Fix.** Make the packages writable. In a new process — a commandlet, the next editor session —
-compiling the `.dsp` rebuilds and saves it. In the same editor session the pipeline in memory already
-carries the new source hash, so a plain compile skips it (DSH8237) and saves nothing: save it
-(File ▸ Save All), or compile the source again with `-Force` (or Recompile).
+**Fix.** Make the packages writable and compile the `.dsp` again. The failed save invalidates the
+in-memory source-hash skip, so an ordinary compile retries the pipeline and its unsaved render targets.
+After a partial save and editor restart, a render target whose saved configuration does not match the
+pipeline also prevents a skip. `-Force` is not required.
 
 ## DSH8312
 
@@ -2653,7 +2654,7 @@ carries the new source hash, so a plain compile skips it (DSH8237) and saves not
 '{0}' was deleted: its buffer is no longer exported.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:547`
+**Raised by** `Source/DreamShaderCompiler/Private/Emitter/DreamShaderIREmitterPassPipeline.cpp:565`
 <!-- generated:end DSH8312 -->
 
 **Cause.** Informational. A buffer the pipeline used to export is no longer exported, and nothing but the

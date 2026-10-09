@@ -1,4 +1,5 @@
 #include "DreamShaderCommandlet.h"
+#include "Commandlet/DreamShaderAssetWriteManifest.h"
 
 #include "Commandlet/DreamShaderCommandletRunner.h"
 // RunDreamShaderMigrateCommandlet: the `migrate` verb, owned by the decompiler unit.
@@ -15,23 +16,8 @@ UDreamShaderCommandlet::UDreamShaderCommandlet()
 	LogToConsole = true;
 }
 
-int32 UDreamShaderCommandlet::Main(const FString& Params)
+static int32 DispatchDreamShaderCommandlet(const TArray<FString>& Tokens, const TArray<FString>& Switches, const TMap<FString, FString>& ParamValues)
 {
-	TArray<FString> Tokens;
-	TArray<FString> Switches;
-	TMap<FString, FString> ParamValues;
-	ParseCommandLine(*Params, Tokens, Switches, ParamValues);
-
-	// Ahead of the dispatch below, because every branch of it can compile and the define table is
-	// resolved once at the top of each compile. A define installed afterwards is a define that
-	// changed nothing -- and it would change nothing silently, since the run still succeeds.
-	//
-	// Handed the whole command-line string rather than the triple parsed just above: that four-
-	// argument parse folds `-Define=A=1 -Define=B=2` into one TMap entry and deletes both switches
-	// from the array. ApplyDreamShaderCommandletDefines re-tokenizes to get all of them back; its
-	// definition carries the detail.
-	UE::DreamShader::Editor::Private::ApplyDreamShaderCommandletDefines(Params);
-
 	FString Command;
 	if (!Tokens.IsEmpty())
 	{
@@ -120,4 +106,35 @@ int32 UDreamShaderCommandlet::Main(const FString& Params)
 
 	UE_LOG(LogDreamShader, Error, TEXT("Unknown DreamShader command '%s'.\n%s"), *Command, UE::DreamShader::Editor::Private::GetDreamShaderCommandletUsage());
 	return 1;
+}
+
+int32 UDreamShaderCommandlet::Main(const FString& Params)
+{
+	TArray<FString> Tokens;
+	TArray<FString> Switches;
+	TMap<FString, FString> ParamValues;
+	ParseCommandLine(*Params, Tokens, Switches, ParamValues);
+
+	// Ahead of the dispatch below, because every branch of it can compile and the define table is
+	// resolved once at the top of each compile. A define installed afterwards is a define that
+	// changed nothing -- and it would change nothing silently, since the run still succeeds.
+	//
+	// Handed the whole command-line string rather than the triple parsed just above: that four-
+	// argument parse folds `-Define=A=1 -Define=B=2` into one TMap entry and deletes both switches
+	// from the array. ApplyDreamShaderCommandletDefines re-tokenizes to get all of them back; its
+	// definition carries the detail.
+	UE::DreamShader::Editor::Private::ApplyDreamShaderCommandletDefines(Params);
+
+	using namespace UE::DreamShader::Editor::Private;
+	FString ManifestPath;
+	FString RunId;
+	TryGetCommandletParam(Tokens, Switches, ParamValues, TEXT("AssetWritesManifest"), ManifestPath);
+	TryGetCommandletParam(Tokens, Switches, ParamValues, TEXT("AssetWritesRunId"), RunId);
+	FDreamShaderAssetWriteManifest Manifest;
+	if (!Manifest.Start(NormalizeCommandletValue(ManifestPath), NormalizeCommandletValue(RunId)))
+	{
+		return 1;
+	}
+	const int32 Result = DispatchDreamShaderCommandlet(Tokens, Switches, ParamValues);
+	return Manifest.Finish() ? Result : 1;
 }

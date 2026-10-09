@@ -226,7 +226,8 @@ public:
 
 	/**
 	 * A material instance of Base that is this use's alone for the rest of the frame: parameters set on it reach only
-	 * the pass and view it is handed out for. Two families rendered from one frame each get their own.
+	 * the pass and view it is handed out for. Two families rendered from one frame each get their own. Every acquisition
+	 * starts from Base's defaults, with no parameter overrides left over from the instance's previous use.
 	 */
 	UMaterialInstanceDynamic* AcquireMaterialInstance(UMaterialInterface* Base);
 

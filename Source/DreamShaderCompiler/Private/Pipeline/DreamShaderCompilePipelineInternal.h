@@ -28,6 +28,13 @@ namespace UE::DreamShader::Editor::Compiler
 	 */
 	bool RunDreamShaderPipelineToIR(const FString& SourceFilePath, FDreamShaderLang2PipelineResult& OutResult);
 
+	/** An emitting parent run, with its requested material/instance checked before this file emits any product. */
+	bool RunDreamShaderParentPipeline(
+		const FString& SourceFilePath,
+		const FDreamShaderLang2PipelineOptions& Options,
+		const FString& RequiredParentObjectPath,
+		FDreamShaderLang2PipelineResult& OutResult);
+
 	/**
 	 * Words a finished pipeline run as a compile report, in the shape FDreamShaderCompileResult::Message
 	 * documents and `.skill/dsc.ps1` parses.

@@ -68,7 +68,14 @@ A write to the scene colour goes to a scratch texture and is copied back into th
 post-process chain, handed on as the chain's new colour — so a pass may read the scene colour while it
 writes it.
 
+Depth, custom depth, GBuffer and velocity reads keep their render-resolution view rect after the
+colour chain is upscaled. Their input sizes and UV rects describe those original textures, while
+`SceneColor` and `Translucency` use their own chain input rects.
+
 ## Buffers across frames
+
+Buffers have one mip. Sources with `Mips` other than `1` are rejected, and older assets with such buffers are
+skipped with a warning. Passes expose mip 0 only; no uninitialized higher mips are allocated or sampled.
 
 `History = true` keeps a buffer per view from one frame to the next; `<Name>.Previous` reads last frame's
 copy. A resized view starts its history over (black), and a view without a view state — a scene capture
@@ -80,6 +87,10 @@ with neither `bCaptureEveryFrame` nor `bAlwaysPersistRenderingState`, a thumbnai
 asset the compiler makes next to the pipeline (`<Pipeline>_<Buffer>`). Ordinary materials read it with
 [`UE.DreamPassBuffer`](../builtins/dream-pass.md#uedreampassbuffer); Blueprints, UMG and Niagara use the
 render target like any other (`UDreamPassBlueprintLibrary::GetExportTarget`).
+
+If the planned last writer is skipped, an earlier successful write is exported at `EndOfView`.
+If no writer succeeds, the frame does not replace the exported copy. A successful planned last writer
+still exports immediately after its pass.
 
 - **One view writes it**: the first view each frame that is a first local player's game view or an editor
   viewport. Split screen, other editor viewports and scene captures still use the buffer within their own

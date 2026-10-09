@@ -54,8 +54,11 @@ namespace UE::DreamPass
 		/** The post-process chain's inputs, at a PostProcess.* point. */
 		const FPostProcessMaterialInputs* PostProcessInputs = nullptr;
 
-		/** The view rect of the scene textures at this point: render resolution before the upscaler, output after. */
+		/** The rect of this injection point's colour/output: render resolution before the upscaler, output after. */
 		FIntRect SceneViewRect;
+
+		/** Depth, GBuffer and velocity stay at render resolution even when the colour chain has been upscaled. */
+		FIntRect SceneTextureViewRect;
 	};
 
 	struct FViewState
@@ -161,6 +164,9 @@ namespace UE::DreamPass
 
 	/** After a pass ran: the copy of every exported buffer it was the last writer of (Render/DreamPassExport.cpp). */
 	void AfterPassWrites(FExecuteContext& Context);
+
+	/** At view end: exports successful earlier writes whose planned last writer did not run. */
+	void FinishViewExports(FRDGBuilder& GraphBuilder, FViewState& ViewState);
 
 	// --- executors (one file each) ------------------------------------------------------------------------------
 

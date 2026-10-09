@@ -12,6 +12,15 @@ class FRHIGPUTextureReadback;
 
 namespace UE::DreamShader::Editor::Private
 {
+	struct FPreviewReadbackState;
+
+#if WITH_DEV_AUTOMATION_TESTS
+	enum class EPreviewReadbackTestEvent : uint8 { CopyEnqueued, ReadinessPolled };
+	using FPreviewReadbackTestObserver = TFunction<void(EPreviewReadbackTestEvent, const FRHIGPUTextureReadback*)>;
+	/** Observes the thread/order contract only. Install and restore with rendering commands flushed. */
+	FPreviewReadbackTestObserver& GetPreviewReadbackTestObserver();
+#endif
+
 	// Raw pixel data handed from the render thread (which owns the actual GPU readback) back to
 	// the game thread via a TPromise/TFuture -- see FDreamShaderPreviewRenderContext::
 	// TryConsumeReadyFrame(). Kept separate from PNG encoding, which happens back on the game
@@ -129,17 +138,14 @@ namespace UE::DreamShader::Editor::Private
 		int32 CachedWidth = 0;
 		int32 CachedHeight = 0;
 
-		// Async GPU readback state. The readback object itself is reused across many frames (like
-		// the render target); the promise/future pair is recreated for each individual frame to
-		// hand its pixel data from the render thread back to the game thread once ready.
-		TSharedPtr<FRHIGPUTextureReadback> PendingReadback;
-		TSharedPtr<TPromise<FDreamShaderPreviewReadbackData>> PendingPromise;
+		// Async GPU readback state. The readback object is reused while the dimensions stay the
+		// same; its staging texture cannot resize. Only render commands access its fence. A fresh
+		// shared state owns each frame's promise and serializes the render-thread readiness polls.
+		TSharedPtr<FRHIGPUTextureReadback, ESPMode::ThreadSafe> PendingReadback;
+		FIntPoint PendingReadbackSize = FIntPoint::ZeroValue;
+		TSharedPtr<FPreviewReadbackState, ESPMode::ThreadSafe> PendingState;
 		TOptional<TFuture<FDreamShaderPreviewReadbackData>> PendingFuture;
 		bool bReadbackInFlight = false;
-		// True once the Lock/Unlock copy-to-CPU render command has been dispatched for the
-		// CURRENT in-flight readback -- guards against re-dispatching it on every tick spent
-		// waiting for the promise it fulfills to actually resolve.
-		bool bCopyEnqueued = false;
 	};
 
 	class FDreamShaderPreviewRenderer

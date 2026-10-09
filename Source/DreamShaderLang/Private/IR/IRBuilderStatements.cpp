@@ -303,10 +303,12 @@ namespace UE::DreamShader::IR::Private
 		ConditionStack.Pop();
 
 		const bool bThenReturned = Current.bReturned;
+		const bool bThenStateDead = Current.bStateDead;
 		const FEnvSnapshot ThenState = Snapshot();
 		const FLoweredValue ThenReturn = Current.ReturnValue;
 		Current.bReturned = false;
 		Current.ReturnValue = FLoweredValue();
+		Current.bStateDead = false;
 
 		// ----- the `else` arm, from the same starting state
 		Restore(Before);
@@ -318,10 +320,12 @@ namespace UE::DreamShader::IR::Private
 		ConditionStack.Pop();
 
 		const bool bElseReturned = Current.bReturned;
+		const bool bElseStateDead = Current.bStateDead;
 		const FEnvSnapshot ElseState = Snapshot();
 		const FLoweredValue ElseReturn = Current.ReturnValue;
 		Current.bReturned = false;
 		Current.ReturnValue = FLoweredValue();
+		Current.bStateDead = false;
 
 		--BranchDepth;
 
@@ -346,11 +350,14 @@ namespace UE::DreamShader::IR::Private
 			Current.PendingExits.Add(MoveTemp(Exit));
 		};
 
-		if (bThenReturned)
+		// A nested if whose arms both return has already recorded every exit, and has no
+		// live ReturnValue to file again. Its dead join belongs to that arm only: the other
+		// arm (and an outer fallthrough) must retain its own live state.
+		if (bThenReturned && !bThenStateDead)
 		{
 			FileExit(ThenState, ThenReturn, Condition, bStatic, /* bNegated */ false);
 		}
-		if (bElseReturned)
+		if (bElseReturned && !bElseStateDead)
 		{
 			FileExit(ElseState, ElseReturn, Condition, bStatic, /* bNegated */ true);
 		}
@@ -477,10 +484,12 @@ namespace UE::DreamShader::IR::Private
 		FEnvSnapshot State;
 		State.Locals.Reserve(Frames.Num());
 		State.Params.Reserve(Frames.Num());
+		State.DefaultArguments.Reserve(Frames.Num());
 		for (const TUniquePtr<FFrame>& Each : Frames)
 		{
 			State.Locals.Add(Each->Locals);
 			State.Params.Add(Each->Params);
+			State.DefaultArguments.Add(Each->DefaultArguments);
 		}
 		return State;
 	}
@@ -493,6 +502,7 @@ namespace UE::DreamShader::IR::Private
 			{
 				Frames[Index]->Locals = State.Locals[Index];
 				Frames[Index]->Params = State.Params[Index];
+				Frames[Index]->DefaultArguments = State.DefaultArguments[Index];
 			}
 		}
 	}
@@ -537,12 +547,90 @@ namespace UE::DreamShader::IR::Private
 				const FString& Name = Target.Function && Target.Function->Params.IsValidIndex(Slot)
 					? Target.Function->Params[Slot].Name
 					: FString();
-				Target.Params[Slot] = MergeValues(TrueParams[Slot], FalseParams[Slot], Condition, bStaticCondition, Span, Name);
+				const bool bHasDefault = Target.DefaultArguments.IsValidIndex(Slot);
+				if (bHasDefault)
+				{
+					Target.DefaultArguments[Slot] = FDefaultArgumentState::Merge(
+						TrueState.DefaultArguments[FrameIndex][Slot], FalseState.DefaultArguments[FrameIndex][Slot],
+						Condition, bStaticCondition);
+				}
+				// Empty on a pending default's path means "not evaluated yet", not an uninitialized
+				// user variable. Its cached value is only read after ResolveDefaultArgument fills that path.
+				const bool bPendingDefault = bHasDefault && Target.DefaultArguments[Slot].State != EDefaultArgumentState::Ready;
+				Target.Params[Slot] = MergeValues(TrueParams[Slot], FalseParams[Slot], Condition, bStaticCondition, Span,
+					bPendingDefault ? FString() : Name);
 			}
 		}
 	}
 
+	static FDefaultArgumentState AssignmentStateOf(const FLoweredValue& Value)
+	{
+		return Value.AssignedWhen ? *Value.AssignedWhen : FDefaultArgumentState(
+			Value.IsEmpty() || Value.bPartiallyAssigned ? EDefaultArgumentState::Pending : EDefaultArgumentState::Ready);
+	}
+
+	static FDefaultArgumentState AttributeAssignmentStateOf(const FLoweredValue& Value, const FString& Name)
+	{
+		if (Value.IsMaterial())
+		{
+			if (const TSharedPtr<const FDefaultArgumentState>* State = Value.Material.AssignedWhen.Find(Name))
+			{
+				return **State;
+			}
+			if (Value.Material.FindPartialAttribute(Name) == INDEX_NONE
+				&& (Value.Material.HasSource() || Value.Material.Fields.Contains(Name)))
+			{
+				return EDefaultArgumentState::Ready;
+			}
+		}
+		return EDefaultArgumentState::Pending;
+	}
+
+	static void RememberAssignmentPaths(FLoweredValue& Result, const FLoweredValue& True, const FLoweredValue& False,
+		FIRValue Condition, bool bStatic)
+	{
+		// Keep facts per leaf/attribute: a later field write must not restore the old aggregate's values.
+		if (Result.IsAggregate())
+		{
+			for (int32 Index = 0; Index < Result.Fields.Num(); ++Index)
+			{
+				RememberAssignmentPaths(Result.Fields[Index],
+					True.Fields.IsValidIndex(Index) ? True.Fields[Index] : FLoweredValue(),
+					False.Fields.IsValidIndex(Index) ? False.Fields[Index] : FLoweredValue(), Condition, bStatic);
+			}
+		}
+		else if (Result.IsMaterial())
+		{
+			for (const TPair<FString, FLangSpan>& Partial : Result.Material.PartialAttributes)
+			{
+				Result.Material.AssignedWhen.Add(Partial.Key, MakeShared<FDefaultArgumentState>(FDefaultArgumentState::Merge(
+					AttributeAssignmentStateOf(True, Partial.Key), AttributeAssignmentStateOf(False, Partial.Key), Condition, bStatic)));
+			}
+		}
+		else if (Result.bPartiallyAssigned)
+		{
+			Result.AssignedWhen = MakeShared<FDefaultArgumentState>(FDefaultArgumentState::Merge(
+				AssignmentStateOf(True), AssignmentStateOf(False), Condition, bStatic));
+		}
+	}
+
 	FLoweredValue FIRBuilder::MergeValues(
+		const FLoweredValue& TrueValue,
+		const FLoweredValue& FalseValue,
+		FIRValue Condition,
+		bool bStaticCondition,
+		const FLangSpan& Span,
+		const FString& What)
+	{
+		FLoweredValue Result = MergeValuesCore(TrueValue, FalseValue, Condition, bStaticCondition, Span, What);
+		if (Frames.ContainsByPredicate([](const TUniquePtr<FFrame>& Each) { return !Each->DefaultArguments.IsEmpty(); }))
+		{
+			RememberAssignmentPaths(Result, TrueValue, FalseValue, Condition, bStaticCondition);
+		}
+		return Result;
+	}
+
+	FLoweredValue FIRBuilder::MergeValuesCore(
 		const FLoweredValue& TrueValue,
 		const FLoweredValue& FalseValue,
 		FIRValue Condition,

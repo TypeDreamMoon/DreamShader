@@ -11,6 +11,9 @@
 #include "Lang/LangInstanceSource.h"
 
 #include "Engine/Font.h"
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+#include "Engine/TextureCollection.h"
+#endif
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialParameterCollection.h"
@@ -91,10 +94,19 @@ namespace UE::DreamShader::Editor::Private
 			case EIRParameterKind::Texture:
 			case EIRParameterKind::RuntimeVirtualTexture:
 			case EIRParameterKind::SparseVolumeTexture:
-			case EIRParameterKind::TextureCollection:
-				// AsTextureObject answers every texture-like kind with the object itself.
 				Override.Value = FIRPropertyValue::MakeObject(ObjectPathOf(Value.AsTextureObject()));
 				return;
+			case EIRParameterKind::TextureCollection:
+			{
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 6)
+				// AsTextureObject does not include texture collections.
+				const UObject* Collection = Value.TextureCollection;
+				Override.Value = FIRPropertyValue::MakeObject(ObjectPathOf(Collection));
+#else
+				Override.Value = FIRPropertyValue::MakeObject(FString());
+#endif
+				return;
+			}
 			case EIRParameterKind::Font:
 			{
 				// Not AsTextureObject, which hands back the font's page texture rather than the font.
@@ -239,7 +251,13 @@ namespace UE::DreamShader::Editor::Private
 				const int32 SchemaIndex = Schema.bValid ? Schema.Find(Override.ParameterName) : INDEX_NONE;
 				if (SchemaIndex != INDEX_NONE && Schema.Parameters[SchemaIndex].Kind == Kind)
 				{
-					Override.DeclaredType = Schema.Parameters[SchemaIndex].DeclaredType;
+					const IR::FIRParameterSchemaEntry& Entry = Schema.Parameters[SchemaIndex];
+					Override.DeclaredType = Entry.DeclaredType;
+					if (Kind == IR::EIRParameterKind::Texture && Override.DeclaredType.IsError() && Entry.TextureKind != Lang::ETextureKind::None)
+					{
+						// Asset-derived schemas know the texture dimension without a source declaration.
+						Override.DeclaredType = IR::FIRType::TextureOf(Entry.TextureKind);
+					}
 				}
 
 				// A `uniform bool` that is not static is a scalar parameter holding 0 or 1, and anything else it holds now

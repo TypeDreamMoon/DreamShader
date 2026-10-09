@@ -22,6 +22,37 @@
  */
 namespace UE::DreamPass
 {
+	namespace Private::Export
+	{
+		static void CopyBuffer(FRDGBuilder& GraphBuilder, const FSceneView& View, FRDGTextureRef Source,
+			FTextureRenderTargetResource& Resource)
+		{
+			// Fetch the resource every frame: a resize on the game thread replaces its RHI texture.
+			FRHITexture* TargetRHI = Resource.GetRenderTargetTexture();
+			if (!Source || !TargetRHI)
+			{
+				return;
+			}
+			FRDGTextureRef Target = RegisterExternalTexture(GraphBuilder, TargetRHI, TEXT("DreamPass.Export"));
+			const FIntRect SourceRect(FIntPoint::ZeroValue, Source->Desc.Extent);
+			const FIntRect TargetRect(FIntPoint::ZeroValue, Target->Desc.Extent);
+			if (Source->Desc.Format == Target->Desc.Format && Source->Desc.Extent == Target->Desc.Extent)
+			{
+				AddCopyTexturePass(GraphBuilder, Source, Target);
+			}
+			else
+			{
+				AddDrawTexturePass(GraphBuilder, FScreenPassViewInfo(View),
+					FScreenPassTexture(Source, SourceRect),
+					FScreenPassRenderTarget(Target, TargetRect, ERenderTargetLoadAction::ENoAction));
+			}
+
+			// Materials sample through a texture reference RDG does not track. Later passes
+			// must see the exported texture in a shader-readable state.
+			GraphBuilder.UseExternalAccessMode(Target, ERHIAccess::SRVMask);
+		}
+	}
+
 	void PrepareExportTargets(UDreamPassSubsystem& Subsystem, FSnapshotPipeline& Pipeline, const UDreamPassPipeline& Asset, const FSceneView& View)
 	{
 		for (FSnapshotBuffer& Buffer : Pipeline.Buffers)
@@ -78,33 +109,51 @@ namespace UE::DreamPass
 				continue;
 			}
 
-			FRDGTextureRef Source = Context.ViewState.Buffers[Context.PipelineIndex][BufferIndex];
-			FRHITexture* TargetRHI = Buffer.ExportResource->GetRenderTargetTexture();
-			if (!Source || !TargetRHI)
-			{
-				continue;
-			}
+			Private::Export::CopyBuffer(Context.GraphBuilder, Context.GetView(),
+				Context.ViewState.Buffers[Context.PipelineIndex][BufferIndex], *Buffer.ExportResource);
+		}
+	}
 
-			// The render target is fetched from its resource every frame, never cached: a resize on the game thread
-			// replaces the RHI texture (E/Private/TextureRenderTarget2D.cpp:177-206).
-			FRDGTextureRef Target = RegisterExternalTexture(Context.GraphBuilder, TargetRHI, TEXT("DreamPass.Export"));
-
-			const FIntRect SourceRect(FIntPoint::ZeroValue, Source->Desc.Extent);
-			const FIntRect TargetRect(FIntPoint::ZeroValue, Target->Desc.Extent);
-			if (Source->Desc.Format == Target->Desc.Format && Source->Desc.Extent == Target->Desc.Extent)
+	void FinishViewExports(FRDGBuilder& GraphBuilder, FViewState& ViewState)
+	{
+		if (!ViewState.IsActive())
+		{
+			return;
+		}
+		const FViewSnapshot& Snapshot = *ViewState.Snapshot;
+		for (int32 PipelineIndex = 0; PipelineIndex < Snapshot.Pipelines.Num(); ++PipelineIndex)
+		{
+			const FSnapshotPipeline& Pipeline = Snapshot.Pipelines[PipelineIndex];
+			for (int32 BufferIndex = 0; BufferIndex < Pipeline.Buffers.Num(); ++BufferIndex)
 			{
-				AddCopyTexturePass(Context.GraphBuilder, Source, Target);
-			}
-			else
-			{
-				AddDrawTexturePass(Context.GraphBuilder, FScreenPassViewInfo(Context.GetView()),
-					FScreenPassTexture(Source, SourceRect),
-					FScreenPassRenderTarget(Target, TargetRect, ERenderTargetLoadAction::ENoAction));
-			}
+				const FSnapshotBuffer& Buffer = Pipeline.Buffers[BufferIndex];
+				if (!Buffer.ExportResource || !ViewState.Executed.IsValidIndex(Buffer.LastWriterOrder)
+					|| ViewState.Executed[Buffer.LastWriterOrder])
+				{
+					// The normal last writer already exported immediately after it ran. A missing
+					// render resource on that path is not a reason to attempt the same copy again.
+					continue;
+				}
 
-			// Materials sample the render target through a texture reference the render graph does not track; leaving
-			// it in a shader-readable state for every later pass is what makes that safe (as SceneCapture and Water do).
-			Context.GraphBuilder.UseExternalAccessMode(Target, ERHIAccess::SRVMask);
+				// An injection can be absent, or its pass can fail (for example while a material
+				// compiles). Preserve the last successful write instead of keeping an older frame.
+				// A buffer allocated by a read alone is not evidence that any writer succeeded.
+				for (int32 OrderIndex = Buffer.LastWriterOrder - 1; OrderIndex >= 0; --OrderIndex)
+				{
+					const FScheduledPass& Scheduled = Snapshot.Order[OrderIndex];
+					if (Scheduled.Pipeline != PipelineIndex || !ViewState.Executed[OrderIndex])
+					{
+						continue;
+					}
+					if (Pipeline.Passes[Scheduled.Pass].Writes.ContainsByPredicate([&Buffer](const FDreamPassBufferBinding& Write)
+						{ return Write.Buffer == Buffer.Desc.Name; }))
+					{
+						Private::Export::CopyBuffer(GraphBuilder, *ViewState.View,
+							ViewState.Buffers[PipelineIndex][BufferIndex], *Buffer.ExportResource);
+						break;
+					}
+				}
+			}
 		}
 	}
 }

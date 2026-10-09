@@ -13,6 +13,7 @@
 
 #include "IR/IRPasses.h"
 
+#include "IRConstantMath.h"
 #include "IR/IRCoreOps.h"
 #include "IR/IRTypes.h"
 
@@ -94,7 +95,7 @@ namespace UE::DreamShader::IR::Private
 		case EIROp::Abs: Out = FMath::Abs(A); return true;
 		case EIROp::Floor: Out = FMath::FloorToDouble(A); return true;
 		case EIROp::Ceil: Out = FMath::CeilToDouble(A); return true;
-		case EIROp::Round: Out = FMath::RoundToDouble(A); return true;
+		case EIROp::Round: Out = ConstantMath::Round(A); return true;
 		case EIROp::Frac: Out = A - FMath::FloorToDouble(A); return true;
 		case EIROp::Truncate: Out = FMath::TruncToDouble(A); return true;
 		case EIROp::Sign: Out = (A > 0.0) ? 1.0 : ((A < 0.0) ? -1.0 : 0.0); return true;
@@ -119,8 +120,8 @@ namespace UE::DreamShader::IR::Private
 		case EIROp::Log: Out = A > 0.0 ? FMath::Loge(A) : 0.0; return true;
 		case EIROp::Log2: Out = A > 0.0 ? FMath::Log2(A) : 0.0; return true;
 		case EIROp::Log10: Out = A > 0.0 ? FMath::LogX(10.0, A) : 0.0; return true;
-		case EIROp::Sin: Out = FMath::Sin(A); return true;
-		case EIROp::Cos: Out = FMath::Cos(A); return true;
+		case EIROp::Sin: Out = ConstantMath::Sin(A); return true;
+		case EIROp::Cos: Out = ConstantMath::Cos(A); return true;
 		case EIROp::Tan: Out = FMath::Tan(A); return true;
 		case EIROp::Asin: Out = FMath::Asin(FMath::Clamp(A, -1.0, 1.0)); return true;
 		case EIROp::Acos: Out = FMath::Acos(FMath::Clamp(A, -1.0, 1.0)); return true;

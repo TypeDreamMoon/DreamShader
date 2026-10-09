@@ -26,6 +26,7 @@ void FDreamPassSceneViewExtension::PrePostProcessPass_RenderThread(FRDGBuilder& 
 	Context.Injection = EDreamPassInjection::BeforePostProcess;
 	Context.SceneTextures = Inputs.SceneTextures;
 	Context.SceneViewRect = GetRenderViewRect(InView);
+	Context.SceneTextureViewRect = Context.SceneViewRect;
 	Context.SceneColor = FScreenPassTexture(Inputs.SceneTextures->GetContents()->SceneColorTexture, Context.SceneViewRect);
 	Context.bSceneColorWritable = Context.SceneColor.IsValid();
 	Context.SceneDepth = Inputs.SceneTextures->GetContents()->SceneDepthTexture;

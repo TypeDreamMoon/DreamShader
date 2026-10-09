@@ -38,6 +38,9 @@ namespace UE::DreamShader::Editor::Private
 		const bool bStream,
 		FDreamShaderPreviewResult& OutResult)
 	{
+		++RequestGeneration;
+		bStreaming = false;
+		bOneShotPending = false;
 		RequestId = InRequestId;
 		Encoding = InEncoding;
 		FrameIntervalSeconds = InFrameIntervalSeconds;
@@ -82,7 +85,12 @@ namespace UE::DreamShader::Editor::Private
 
 		if (!bReady)
 		{
-			bStreaming = false;
+			// The request identity already changed. A later visibility/stream control must not
+			// revive the previous material (or its probe) under this failed request's ID.
+			MainMaterial.Reset();
+			SourceFilePath.Reset();
+			AssetPath.Reset();
+			ProbePreview.ClearProbe();
 			return false;
 		}
 
@@ -91,6 +99,8 @@ namespace UE::DreamShader::Editor::Private
 			RenderContext = MakeUnique<FDreamShaderPreviewRenderContext>();
 		}
 		bStreaming = bStream && FrameIntervalSeconds > 0.0;
+		bOneShotPending = !bStreaming && Encoding == EDreamShaderPreviewFrameEncoding::RawRGBA8;
+		bHasSentFrame = false;
 		bFrameInFlight = false;
 		LastKickoffSeconds = 0.0;
 		MarkDirty();
@@ -143,8 +153,12 @@ namespace UE::DreamShader::Editor::Private
 
 	void FDreamShaderPreviewSession::AckFrame(const int32 FrameIndex)
 	{
-		(void)FrameIndex;
-		bFrameInFlight = false;
+		// A timed-out frame's delayed acknowledgement cannot release its replacement. The -1
+		// sentinel is kept for legacy control pings that do not carry an explicit frame index.
+		if (FrameIndex == -1 || (bFrameInFlight && FrameIndex == NextFrameIndex - 1))
+		{
+			bFrameInFlight = false;
+		}
 	}
 
 	bool FDreamShaderPreviewSession::SetProbe(const int32 Line, const FString& PreferredName, FString& OutError)
@@ -195,24 +209,10 @@ namespace UE::DreamShader::Editor::Private
 		return Material && Material->IsCompiling();
 	}
 
-	bool FDreamShaderPreviewSession::BuildFrame(TArray<uint8>&& Payload, const int32 FrameWidth, const int32 FrameHeight, const uint32 Flags, FDreamShaderPreviewFrame& OutFrame)
-	{
-		OutFrame.Encoding = Encoding;
-		OutFrame.Width = FrameWidth;
-		OutFrame.Height = FrameHeight;
-		OutFrame.FrameIndex = NextFrameIndex++;
-		OutFrame.Flags = Flags;
-		OutFrame.OrbitYaw = OrbitYaw;
-		OutFrame.OrbitPitch = OrbitPitch;
-		OutFrame.ProbeLine = ProbePreview.GetResolvedProbe().IsSet() ? ProbePreview.GetResolvedProbe()->Line : 0;
-		OutFrame.Payload = MoveTemp(Payload);
-		return true;
-	}
-
 	bool FDreamShaderPreviewSession::Tick(const double NowSeconds, FDreamShaderPreviewFrame& OutFrame, FString& OutError)
 	{
 		OutError.Reset();
-		if (!bStreaming || !RenderContext.IsValid())
+		if ((!bStreaming && !bOneShotPending) || !RenderContext.IsValid())
 		{
 			return false;
 		}
@@ -222,6 +222,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			OutError = TEXT("Preview material is not valid."); // I18N-EXEMPT: reaches the preview wire
 			bStreaming = false;
+			bOneShotPending = false;
 			return false;
 		}
 
@@ -230,11 +231,11 @@ namespace UE::DreamShader::Editor::Private
 		if (RenderContext->IsReadbackInFlight())
 		{
 			TArray<uint8> Payload;
-			int32 FrameWidth = Width;
-			int32 FrameHeight = Height;
+			int32 FrameWidth = PendingFrame.Width;
+			int32 FrameHeight = PendingFrame.Height;
 			FString Error;
 			bool bReady = false;
-			if (Encoding == EDreamShaderPreviewFrameEncoding::Png)
+			if (PendingFrame.Encoding == EDreamShaderPreviewFrameEncoding::Png)
 			{
 				TArray64<uint8> PngData;
 				bReady = RenderContext->TryConsumeReadyFrame(PngData, Error);
@@ -254,7 +255,13 @@ namespace UE::DreamShader::Editor::Private
 				{
 					OutError = Error;
 					bStreaming = false;
+					bOneShotPending = false;
 				}
+				return false;
+			}
+			// Drain a superseded request without attributing its pixels to the new request ID.
+			if (PendingRequestGeneration != RequestGeneration)
+			{
 				return false;
 			}
 
@@ -262,38 +269,30 @@ namespace UE::DreamShader::Editor::Private
 			// PNG session dedupes too (PNG is deterministic for identical input).
 			const uint64 Hash = FXxHash64::HashBuffer(Payload.GetData(), Payload.Num()).Hash;
 			const bool bChanged = !bHasSentFrame || Hash != LastSentFrameHash;
-			if (!bChanged && !bForceNextFrame)
+			if (!bChanged && (PendingFrame.Flags & EDreamShaderPreviewFrameFlags::Keyframe) == 0)
 			{
 				++IdenticalFrameRun;
 				return false;
 			}
 
-			uint32 Flags = EDreamShaderPreviewFrameFlags::None;
-			if (IsMaterialCompiling(Material))
-			{
-				Flags |= EDreamShaderPreviewFrameFlags::Compiling;
-			}
-			if (ProbePreview.IsActive())
-			{
-				Flags |= EDreamShaderPreviewFrameFlags::ProbeActive;
-			}
-			else if (ProbePreview.IsRequested())
-			{
-				Flags |= EDreamShaderPreviewFrameFlags::ProbePending;
-			}
-			if (bForceNextFrame)
-			{
-				Flags |= EDreamShaderPreviewFrameFlags::Keyframe;
-			}
-
-			BuildFrame(MoveTemp(Payload), FrameWidth, FrameHeight, Flags, OutFrame);
+			OutFrame = MoveTemp(PendingFrame);
+			OutFrame.Width = FrameWidth;
+			OutFrame.Height = FrameHeight;
+			OutFrame.FrameIndex = NextFrameIndex++;
+			OutFrame.Payload = MoveTemp(Payload);
 			IdenticalFrameRun = bChanged ? 0 : IdenticalFrameRun + 1;
 			LastSentFrameHash = Hash;
 			bHasSentFrame = true;
-			bForceNextFrame = false;
+			bOneShotPending = false;
 			bFrameInFlight = true;
 			FrameInFlightSinceSeconds = NowSeconds;
 			return true;
+		}
+
+		// A one-shot has no later frame to replace a temporary fallback shader.
+		if (bOneShotPending && !bStreaming && IsMaterialCompiling(Material))
+		{
+			return false;
 		}
 
 		// Nothing in flight on the GPU. Start the next render once the client has acknowledged the
@@ -317,11 +316,30 @@ namespace UE::DreamShader::Editor::Private
 
 		LastKickoffSeconds = NowSeconds;
 		bFrameInFlight = false;
+		PendingRequestGeneration = RequestGeneration;
+		PendingFrame = FDreamShaderPreviewFrame();
+		PendingFrame.Encoding = Encoding;
+		PendingFrame.Width = Width;
+		PendingFrame.Height = Height;
+		PendingFrame.OrbitYaw = OrbitYaw;
+		PendingFrame.OrbitPitch = OrbitPitch;
+		PendingFrame.ProbeLine = ProbePreview.GetResolvedProbe().IsSet() ? ProbePreview.GetResolvedProbe()->Line : 0;
+		if (IsMaterialCompiling(Material)) { PendingFrame.Flags |= EDreamShaderPreviewFrameFlags::Compiling; }
+		if (ProbePreview.IsActive()) { PendingFrame.Flags |= EDreamShaderPreviewFrameFlags::ProbeActive; }
+		else if (ProbePreview.IsRequested()) { PendingFrame.Flags |= EDreamShaderPreviewFrameFlags::ProbePending; }
+		if (bForceNextFrame) { PendingFrame.Flags |= EDreamShaderPreviewFrameFlags::Keyframe; }
 		FString Error;
 		if (!RenderContext->KickoffFrame(Material, Width, Height, Mesh, OrbitYaw, OrbitPitch, Error))
 		{
 			OutError = Error;
 			bStreaming = false;
+			bOneShotPending = false;
+		}
+		else
+		{
+			// Consume this capture's keyframe request now. Controls changed during readback set
+			// it again for the next capture and must not be cleared when this frame is delivered.
+			bForceNextFrame = false;
 		}
 		return false;
 	}

@@ -154,7 +154,7 @@ ambiguous at every call site.
 '{0}' is a {1} asset, not a function this file may call.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3578`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3580`
 <!-- generated:end DSH6208 -->
 
 **Cause.** A call to the material entry, a `@layer` or a `@layerblend`. Those are assets, not
@@ -238,7 +238,7 @@ DreamShaderLang statements.
 '{0}' calls itself, and an inlined function has no stack to recurse on; rewrite it as a loop with a constant trip count, or as a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:258`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:267`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:427`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:436`
 <!-- generated:end DSH6220 -->
 
 **Cause.** An inlined function calls itself, directly or through others. Inlining has no stack:
@@ -257,10 +257,10 @@ call closes the cycle; both functions are named in the message across the two re
 **Message**
 
 ```
-Inlining '{0}' would go {1} calls deep, past the limit of {2}; flatten the call chain or move part of it into a '/// @custom' function.
+Resolving the defaults of '{0}' would go {1} calls deep, past the limit of {2}; pass explicit values or flatten the default call chain.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:275`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:282`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:444`
 <!-- generated:end DSH6221 -->
 
 **Cause.** Inlining went deeper than `MaxInlineDepth` (32 by default) without recursing. A chain of
@@ -282,7 +282,7 @@ nodes. Raising the limit is a pipeline option, not a source one.
 '{0}' is an '{1}' parameter of {2}, so the argument has to be something that can be assigned to; this expression cannot.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:128`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:231`
 <!-- generated:end DSH6222 -->
 
 **Cause.** An argument passed to an `out` or `inout` parameter is not something that can be
@@ -303,7 +303,7 @@ Passing a literal, a call's result or an arithmetic expression to an `out` param
 '{0}' is this file's material entry and is called by the engine, not by the shader.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:234`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:284`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:403`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:453`
 <!-- generated:end DSH6223 -->
 
 **Cause.** Either a call to this file's material entry -- the `void (inout material)` function the
@@ -313,6 +313,30 @@ that is neither `extern` with `/// @asset` nor `/// @custom`.
 **Fix.** For the entry, call the helper the entry calls, not the entry itself. For a body-less
 function, give it a body, mark it `extern` and point `/// @asset` at the material function asset it
 stands for, or mark it `/// @custom` and write its HLSL.
+
+## DSH6224
+
+<!-- generated:begin DSH6224 -->
+**Severity** error
+
+**Message**
+
+```
+The default value of '{0}' in '{1}' depends on itself; pass an explicit value for a parameter in the cycle.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:148`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:166`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:274`, `Source/DreamShaderLang/Private/IR/IRBuilderInline.cpp:322`
+<!-- generated:end DSH6224 -->
+
+**Cause.** An omitted parameter's default depends on itself (directly, through other defaults,
+or through another call with omitted arguments), or reads an input that has no value. The same
+code also reports a Custom function's default expression writing an `out` parameter: that output
+has no input pin through which the graph-computed initial value could reach the HLSL body.
+
+**Fix.** Pass an explicit value to break the dependency cycle, or give the referenced input a
+usable default. For a Custom output, pass its initial value through a separate input and assign
+the output in the HLSL body. Ordinary helper defaults may initialize `out` parameters; those
+values are carried into the helper body and copied back normally.
 
 ## DSH6250
 

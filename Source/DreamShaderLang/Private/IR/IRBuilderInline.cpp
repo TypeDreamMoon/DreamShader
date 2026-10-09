@@ -17,7 +17,7 @@
 // a GraphFunction body (L8), a legacy void custom function's primary output (L9) and the node an output selection reads
 // (L3b, LastCallNode) -- with their lowering in IRBuilderLegacy.cpp.
 //
-// Diagnostics owned by this file: DSH6220, DSH6221, DSH6222, DSH6223.
+// Diagnostics owned by this file: DSH6220, DSH6221, DSH6222, DSH6223, DSH6224.
 
 #include "IRBuilderInternal.h"
 
@@ -65,6 +65,109 @@ namespace UE::DreamShader::IR::Private
 				OutTypes.Add(Param.Type);
 			}
 		}
+	}
+
+	static void ConstrainAssignmentPaths(FLoweredValue& Value, FIRValue Condition, bool bHolds)
+	{
+		if (Value.AssignedWhen)
+		{
+			const FDefaultArgumentState State = Value.AssignedWhen->InArm(Condition, bHolds);
+			Value.AssignedWhen = MakeShared<FDefaultArgumentState>(State);
+			if (State.State == EDefaultArgumentState::Ready)
+			{
+				Value.bPartiallyAssigned = false;
+			}
+			// A Pending leaf still represents a missing value, even though the SSA cache holds
+			// the other arm's value. Keep its diagnostic until a write supplies this arm too.
+		}
+		for (FLoweredValue& Field : Value.Fields)
+		{
+			ConstrainAssignmentPaths(Field, Condition, bHolds);
+		}
+		for (TPair<FString, TSharedPtr<const FDefaultArgumentState>>& Attribute : Value.Material.AssignedWhen)
+		{
+			const FDefaultArgumentState State = Attribute.Value->InArm(Condition, bHolds);
+			Attribute.Value = MakeShared<FDefaultArgumentState>(State);
+			if (State.State == EDefaultArgumentState::Ready)
+			{
+				const int32 Partial = Value.Material.FindPartialAttribute(Attribute.Key);
+				if (Partial != INDEX_NONE) { Value.Material.PartialAttributes.RemoveAt(Partial); }
+			}
+		}
+	}
+
+	void FIRBuilder::ConstrainDefaultArguments(FIRValue Condition, bool bHolds)
+	{
+		if (!Frames.ContainsByPredicate([](const TUniquePtr<FFrame>& Each) { return !Each->DefaultArguments.IsEmpty(); }))
+		{
+			return;
+		}
+		for (const TUniquePtr<FFrame>& Each : Frames)
+		{
+			for (FDefaultArgumentState& State : Each->DefaultArguments)
+			{
+				State = State.InArm(Condition, bHolds);
+			}
+			for (FLoweredValue& Value : Each->Locals) { ConstrainAssignmentPaths(Value, Condition, bHolds); }
+			for (FLoweredValue& Value : Each->Params) { ConstrainAssignmentPaths(Value, Condition, bHolds); }
+		}
+	}
+
+	bool FIRBuilder::ResolveDefaultArgument(int32 ParamIndex)
+	{
+		FFrame& Current = Frame();
+		if (!Current.DefaultArguments.IsValidIndex(ParamIndex)
+			|| Current.DefaultArguments[ParamIndex].State == EDefaultArgumentState::Ready)
+		{
+			return true;
+		}
+		const FBoundParam& Param = Current.Function->Params[ParamIndex];
+		const FDefaultArgumentState State = Current.DefaultArguments[ParamIndex];
+		if (State.State == EDefaultArgumentState::Conditional)
+		{
+			// Do not initialize a missing arm at the earlier join: the enclosing default may
+			// still be evaluating, and this default is allowed to depend on its completed value.
+			const FEnvSnapshot Before = Snapshot();
+			ConstrainDefaultArguments(State.Condition, true);
+			ConditionStack.Push({ State.Condition, State.bStaticCondition, false });
+			const bool bTrueResolved = ResolveDefaultArgument(ParamIndex);
+			ConditionStack.Pop();
+			const FEnvSnapshot TrueState = Snapshot();
+
+			Restore(Before);
+			ConstrainDefaultArguments(State.Condition, false);
+			ConditionStack.Push({ State.Condition, State.bStaticCondition, true });
+			const bool bFalseResolved = ResolveDefaultArgument(ParamIndex);
+			ConditionStack.Pop();
+			const FEnvSnapshot FalseState = Snapshot();
+			MergeStates(TrueState, FalseState, State.Condition, State.bStaticCondition, Param.Default->Span);
+			return bTrueResolved && bFalseResolved;
+		}
+		if (State.State == EDefaultArgumentState::Evaluating)
+		{
+			Diagnostics.Error(TEXT("DSH6224"), Param.Default->Span, FText::Format(
+				LOCTEXT("IRBuilderDefaultCycle", "The default value of '{0}' in '{1}' depends on itself; pass an explicit value for a parameter in the cycle."),
+				FText::FromString(Param.Name), FText::FromString(Current.Function->Name)));
+			return false;
+		}
+
+		Current.DefaultArguments[ParamIndex] = EDefaultArgumentState::Evaluating;
+		const int32 ErrorsBefore = Diagnostics.NumErrors();
+		FLoweredValue Value = LowerExpr(*Param.Default);
+		const int32 Width = Param.Type.GraphComponentCount();
+		if (Value.IsValue() && Width > 0)
+		{
+			Value = FLoweredValue::Of(CoerceToWidth(Value.Value, Width, Param.Default->Span));
+		}
+		Current.Params[ParamIndex] = Value;
+		Current.DefaultArguments[ParamIndex] = EDefaultArgumentState::Ready;
+		if (Value.IsEmpty() && Diagnostics.NumErrors() == ErrorsBefore)
+		{
+			Diagnostics.Error(TEXT("DSH6224"), Param.Default->Span, FText::Format(
+				LOCTEXT("IRBuilderDefaultHasNoValue", "The default value of '{0}' in '{1}' reads a parameter that has no value; pass that input explicitly or initialize its default."),
+				FText::FromString(Param.Name), FText::FromString(Current.Function->Name)));
+		}
+		return !Value.IsEmpty();
 	}
 
 	bool FIRBuilder::BindCallArguments(
@@ -146,18 +249,84 @@ namespace UE::DreamShader::IR::Private
 			}
 		}
 
-		// A parameter nobody passed takes its default, evaluated where the call is: it can only name
-		// globals and constants, so the caller's frame is as good a place as the callee's.
+		// A material-function asset owns its defaults: an omitted pin must stay unconnected.
+		// In particular, do not execute a prototype's default expression in the caller.
+		if (Callee.Kind != EBoundFunctionKind::Helper && Callee.Kind != EBoundFunctionKind::Custom)
+		{
+			return true;
+		}
+		bool bHasDefaults = false;
 		for (int32 Index = 0; Index < Callee.Params.Num(); ++Index)
 		{
-			if (bBound[Index] || !Callee.Params[Index].Default)
-			{
-				continue;
-			}
-			OutValues[Index] = LowerExpr(*Callee.Params[Index].Default);
+			bHasDefaults |= !bBound[Index] && Callee.Params[Index].Default != nullptr;
+		}
+		if (!bHasDefaults)
+		{
+			return true;
 		}
 
-		return true;
+		// Custom bodies are emitted once, but their omitted inputs still expand in the graph.
+		// A recursive default therefore needs the same finite call boundary as a helper body.
+		for (const TUniquePtr<FFrame>& Active : Frames)
+		{
+			if (Active->FunctionIndex == BoundExpr.Index && !Active->DefaultArguments.IsEmpty())
+			{
+				Diagnostics.Error(TEXT("DSH6224"), Expr.Span, FText::Format(
+					LOCTEXT("IRBuilderDefaultCallCycle", "Resolving the defaults of '{0}' calls that function with omitted arguments again; pass explicit values to break the default call cycle."),
+					FText::FromString(Callee.Name)));
+				return false;
+			}
+		}
+		if (Frames.Num() >= Options.MaxInlineDepth)
+		{
+			Diagnostics.Error(TEXT("DSH6221"), Expr.Span, FText::Format(
+				LOCTEXT("IRBuilderDefaultDepth", "Resolving the defaults of '{0}' would go {1} calls deep, past the limit of {2}; pass explicit values or flatten the default call chain."),
+				FText::FromString(Callee.Name), FText::AsNumber(Frames.Num() + 1), FText::AsNumber(Options.MaxInlineDepth)));
+			return false;
+		}
+
+		// Explicit arguments and lvalue targets above belong to the caller. The binder resolves
+		// names in defaults against the callee's parameters, so install those values in a temporary
+		// callee frame before lowering defaults. Reads resolve dependent defaults on demand.
+		PushFrame(Callee, BoundExpr.Index);
+		Frame().CallSite = Expr.Span;
+		Frame().bHasCallSite = true;
+		Frame().Params = OutValues;
+		Frame().DefaultArguments.Init(EDefaultArgumentState::Ready, Callee.Params.Num());
+		for (int32 Index = 0; Index < Callee.Params.Num(); ++Index)
+		{
+			FLoweredValue& Value = Frame().Params[Index];
+			const int32 Width = Callee.Params[Index].Type.GraphComponentCount();
+			if (Value.IsValue() && Width > 0)
+			{
+				Value = FLoweredValue::Of(CoerceToWidth(Value.Value, Width, Expr.Span));
+			}
+			if (!bBound[Index] && Callee.Params[Index].Default)
+			{
+				Frame().DefaultArguments[Index] = EDefaultArgumentState::Pending;
+			}
+		}
+		bool bResolved = true;
+		for (int32 Index = 0; Index < Callee.Params.Num(); ++Index)
+		{
+			bResolved = ResolveDefaultArgument(Index) && bResolved;
+		}
+		OutValues = Frame().Params;
+		PopFrame();
+		if (Callee.Kind == EBoundFunctionKind::Custom)
+		{
+			for (int32 Index = 0; Index < Callee.Params.Num(); ++Index)
+			{
+				if (Callee.Params[Index].Direction == EParamDirection::Out && !OutValues[Index].IsEmpty())
+				{
+					Diagnostics.Error(TEXT("DSH6224"), Expr.Span, FText::Format(
+						LOCTEXT("IRBuilderCustomDefaultOut", "A default of '{0}' initializes its 'out' parameter '{1}', but a Custom output has no input pin to carry that value; pass the initial value through a separate input and assign the output in the body."),
+						FText::FromString(Callee.Name), FText::FromString(Callee.Params[Index].Name)));
+					bResolved = false;
+				}
+			}
+		}
+		return bResolved;
 	}
 
 	void FIRBuilder::WriteBackOutputs(
@@ -301,7 +470,9 @@ namespace UE::DreamShader::IR::Private
 
 		for (int32 Index = 0; Index < Callee.Params.Num(); ++Index)
 		{
-			if (Callee.Params[Index].Direction == EParamDirection::Out || !Arguments.IsValidIndex(Index))
+			// Explicit out arguments start empty, but another parameter's default may have assigned
+			// this slot already. Carry that value into the body just like any other callee state.
+			if (!Arguments.IsValidIndex(Index))
 			{
 				continue;
 			}
@@ -538,9 +709,7 @@ namespace UE::DreamShader::IR::Private
 
 		// An input the call does not pass stays UNCONNECTED, and the asset's own default stands in for it -- which is what
 		// the engine means by an optional input, what 1.x built, and what the decompiler reads back as an argument left
-		// out. BindCallArguments has lowered the prototype's default for it, because a helper and a Custom node need a
-		// value in hand; a call node does not, and wiring that constant in would override the asset with what a prototype
-		// claims about it (for an export of this file the two are the same value anyway).
+		// out. BindCallArguments skips omitted defaults for this kind of call: a prototype cannot override its asset.
 		TArray<bool> bPassed;
 		bPassed.Init(false, Callee.Params.Num());
 		for (const FBoundArgument& Passed : BoundExpr.Args)

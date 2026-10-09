@@ -63,15 +63,14 @@ Two overrides give the class its behaviour:
 
 | State | Base object name | Outer | Object flags |
 | :-- | :-- | :-- | :-- |
-| Ephemeral | `MB_DreamThinBase_<sanitized package>` | the transient package | `RF_Public`, `RF_Standalone`, `RF_Transient` |
+| Ephemeral | `MB_DreamThinBase_<sanitized package>` with a unique object-name suffix when needed | the transient package | `RF_Public`, `RF_Standalone`, `RF_Transient` |
 | Materialized | `MB_DreamThinBase_<instance leaf name>` | **the instance object itself** | `RF_Public`, `RF_Standalone` |
 
 `<sanitized package>` is the instance's package name with every character outside `[A-Za-z0-9_]`
 replaced by `_` and runs of underscores collapsed, so the instance `/Game/Mat/Test` has the base
-`MB_DreamThinBase__Game_Mat_Test` *(since 2.0.0; 1.x sanitized the block's `Name`)*, so two instances
-that share a leaf name in different folders never share a base. Sanitization is not cosmetic: a `/`
-inside an `FName` reads as a subobject separator, which would break base reuse and leak a fresh base
-on every regeneration.
+`MB_DreamThinBase__Game_Mat_Test` before any unique suffix. The instance reuses its attached base on
+regeneration; a new instance allocates a unique object name. Sanitization is only a readable label:
+paths such as `/Game/A_B/M` and `/Game/A/B_M` flatten to the same label but must have separate graphs.
 
 When Materialized the base is a subobject of the instance, so it serializes **into the instance's own
 package** as a plain export. One asset, one `.uasset`, no `MB_DreamThinBase_*` sibling in the Content
