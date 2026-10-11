@@ -13,6 +13,7 @@
 #include "RenderGraphUtils.h"
 #include "RenderingThread.h"
 #include "TextureResource.h"
+#include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 
 namespace UE::DreamPass::ExportTests

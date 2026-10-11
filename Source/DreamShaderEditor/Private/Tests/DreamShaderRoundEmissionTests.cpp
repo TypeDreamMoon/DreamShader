@@ -8,10 +8,10 @@
 #include "IR/IRGeneratedCoreCode.h"
 #include "Preview/DreamShaderPreviewRenderer.h"
 #include "Tools/DreamShaderDecompileTools.h"
+#include "DreamShaderVersionCompat.h"
 #include "MaterialShared.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialExpressionCustom.h"
-#include "Materials/MaterialExpressionRound.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "RenderingThread.h"
 #include "RHIShaderPlatform.h"
@@ -88,13 +88,17 @@ bool FDreamShaderRoundEmissionRoundtripTest::RunTest(const FString& Parameters)
 	}
 	TArray<UMaterialExpressionCustom*> Customs;
 	int32 NativeRounds = 0;
+	// By path, not StaticClass(): before 5.6 the engine does not export UMaterialExpressionRound's class, so
+	// naming it links nowhere outside the Engine module.
+	const UClass* const RoundClass = FindObject<UClass>(nullptr, TEXT("/Script/Engine.MaterialExpressionRound"));
+	TestNotNull(TEXT("the engine has a Round expression"), RoundClass);
 	for (UMaterialExpression* Expression : Material->GetExpressions())
 	{
 		if (auto* Custom = Cast<UMaterialExpressionCustom>(Expression))
 		{
 			Customs.Add(Custom);
 		}
-		NativeRounds += Expression && Expression->IsA<UMaterialExpressionRound>() ? 1 : 0;
+		NativeRounds += Expression && RoundClass && Expression->IsA(RoundClass) ? 1 : 0;
 	}
 	if (!TestEqual(TEXT("all four round widths use HLSL even for uniform inputs"), Customs.Num(), 4))
 	{
@@ -180,7 +184,12 @@ bool FDreamShaderRoundEmissionRenderTest::RunTest(const FString& Parameters)
 	}
 	Material->EnsureIsComplete();
 	FlushRenderingCommands();
+#if DREAMSHADER_UE_VERSION_AT_LEAST(5, 7)
 	const FMaterialResource* Resource = Material->GetMaterialResource(GMaxRHIShaderPlatform);
+#else
+	// Before 5.7 the resource is asked for by feature level, as in the bridge and the shader check.
+	const FMaterialResource* Resource = Material->GetMaterialResource(GMaxRHIFeatureLevel);
+#endif
 	if (!TestTrue(TEXT("round material has complete shaders"), Resource && Resource->IsGameThreadShaderMapComplete())
 		|| !TestTrue(TEXT("round shader compilation has no errors"), Resource && Resource->GetCompileErrors().IsEmpty()))
 	{

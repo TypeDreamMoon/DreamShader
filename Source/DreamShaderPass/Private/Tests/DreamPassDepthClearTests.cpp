@@ -11,6 +11,7 @@
 #include "RenderGraphUtils.h"
 #include "RenderingThread.h"
 #include "TextureResource.h"
+#include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDreamPassDepthInitialClearTest,

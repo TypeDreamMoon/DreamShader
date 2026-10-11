@@ -75,6 +75,12 @@
   empty, or marked by an earlier run — and both deletes go through that check. See
   [The engine matrix](Docs/contributing/index.md#the-engine-matrix).
   ([#71](https://github.com/TypeDreamMoon/DreamShader/issues/71))
+- **Four test files compile in a standalone build again (5.5, 5.6, 5.8).** `RunUAT BuildPlugin` failed where
+  a project build passed. The project's precompiled header had supplied what three test files did not
+  include: `UObject/Package.h` for two Custom Pass tests, `MaterialDomain.h` for the pass logic tests (5.5). And
+  the `round` emission test asked for a material resource by shader platform, which needs 5.7
+  (by feature level before it), and named `UMaterialExpressionRound`, whose class 5.5 does not export (it
+  is looked up by path now). See [Engine versions](Docs/contributing/index.md#engine-versions).
 - **Thirty findings of a review of 2.1.1** -- PR [#49](https://github.com/TypeDreamMoon/DreamShader/pull/49),
   each with a regression test, besides those under Changed:
   - *Language*: a chained swizzle or index write such as `v.zyx.x = 1` writes the component it names (#41); an
