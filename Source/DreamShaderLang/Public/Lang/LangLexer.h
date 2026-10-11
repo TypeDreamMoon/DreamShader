@@ -34,7 +34,9 @@ namespace UE::DreamShader::Lang
 	 *     (or the start of the text) separated it from the previous token;
 	 *   - `//` starts a line comment, skipped -- except `///` (and not `////`), which becomes a
 	 *     DocComment token holding the rest of the line;
-	 *   - `/*` starts a block comment, skipped; unterminated is DSH2102 at the opening;
+	 *   - a slash followed by a star starts a block comment, skipped; unterminated is DSH2102 at the
+	 *     opening (spelled out rather than written literally: clang's -Wcomment is an error under
+	 *     -Werror, and this is itself a block comment);
 	 *   - `#` at line start (only whitespace before it on the line) becomes one Directive token for
 	 *     the rest of the line, with a trailing `//` comment removed; `#` anywhere else is Unknown
 	 *     and reported as DSH2106;
