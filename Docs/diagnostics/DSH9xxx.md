@@ -422,7 +422,7 @@ Note that `-All` never produces this: it enumerates `.dss` files only. It is alw
 The diagnostics JSON could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:800`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:473`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:796`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:473`
 <!-- generated:end DSH9036 -->
 
 **Cause.** `-DiagnosticsOut=` was given and the JSON could not be written. With one source the path
@@ -1968,7 +1968,7 @@ explicitly or extract the tweak into a `.dsi` instance.
 '-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone is on; the command did nothing.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:227`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:228`
 <!-- generated:end DSH9110 -->
 
 **Cause.** a boolean flag of a commandlet verb -- `-Force`, `-All`, `-Check`, `-DryRun`, `-NoBackup`, `-Shaders`,

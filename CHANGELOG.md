@@ -51,6 +51,15 @@
   the plugins under `<Project>/Plugins` — still abort a cook they cannot generate. The plugin-scope
   question also lives in one place now (`UE::DreamShader::IsProjectContentPlugin`), asked both by the
   root list and by gate 3. See [Cook behaviour](Docs/generation/ephemeral.md#cook-behaviour).
+- **A cook on a clean workspace no longer depends on file order.** The cook compiled every source once,
+  in path order, and aborted on any failure — so a material whose `VirtualFunction` names a function
+  another source generates failed with `DSH8219` when its path sorted first, although the function was
+  built moments later. The cook and `compile -All` now share one batch: `.dsf` first, then passes in
+  which a failure is retried while the pass before it built something else. Chains of functions and
+  `.dss` exported functions work the same way. What still fails once a pass builds nothing new — a real
+  error, a missing dependency, a cycle — is reported after the successes and aborts the cook as before.
+  See [`-All` discovery and ordering](Docs/tools/commandlet.md#-all-discovery-and-ordering).
+  ([#72](https://github.com/TypeDreamMoon/DreamShader/issues/72))
 - **The release zip ships `Content/`, and with it the `zh-Hans` translation.** The descriptor's
   `LocalizationTargets` entry loads `Content/Localization/DreamShader/`, but the release workflow never
   staged `Content/`, so every archive from 1.6.0 to 2.1.1 installed with English editor text only. The

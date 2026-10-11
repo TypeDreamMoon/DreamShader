@@ -221,6 +221,7 @@ exists on disk and whose metadata carries a non-empty `DreamShader.SourceFile`.
 | Who generates | **the cook director only** — a process launched with `-cookworker` skips generation and loads what the director saved |
 | When | on post-engine-init, after engine subsystems exist but before the commandlet's `Main` |
 | What | every project DreamShader source file except `.dsh`, generated forced and Materialized |
+| Order | as [`compile -All`](../tools/commandlet.md#-all-discovery-and-ordering): `.dsf` first, then in passes, so a source that calls a function another source generates is retried once that function is built *(after 2.1.1)* |
 | Registry | every package the generation actually wrote is handed to `IAssetRegistry::ScanModifiedAssetFiles` before the commandlet's `Main` |
 | On failure | **the cook aborts**, unless the source belongs to a plugin this project does not write into — see below |
 
@@ -229,6 +230,7 @@ Cook log lines:
 ```text
 DreamShader cook: generating {Count} source file(s) as persistent assets...
   [Cook] {Message}
+DreamShader: retrying {Count} source file(s) that failed before {Count} other(s) in the same pass were built; they may depend on them.
   [Cook] Failed: {Message}
   [Cook] Not this project's to build (plugin '{PluginName}'): {Message}
 DreamShader cook: registered {Count} generated package(s) with the AssetRegistry.
@@ -239,7 +241,9 @@ DreamShader cook asset generation complete.
 > A single generation failure ends the cook with a fatal log entry:
 > `DreamShader cook generation failed for {Count} source file(s); aborting the cook. See the [Cook]
 > Failed entries above.` Compile every source cleanly in the editor, or run the
-> [commandlet](../tools/commandlet.md), before cooking.
+> [commandlet](../tools/commandlet.md), before cooking. A failure is final only once a pass built
+> nothing new, so a source that merely waited for another one's function does not count; every
+> `[Cook] Failed` line comes after the successes.
 
 One exception, and it is why the count in that entry says *this project's*: a source that lives under
 an engine or marketplace plugin's `DShader` folder. That plugin's products are its own — gate 3 refuses

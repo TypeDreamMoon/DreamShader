@@ -14,6 +14,7 @@
 #include "DreamShaderModule.h"
 #include "DreamShaderSourceFileUtils.h"
 #include "Lang/LangDiagnostic.h"
+#include "SourceFiles/DreamShaderBatchCompile.h"
 
 #include "Commandlets/Commandlet.h"
 #include "HAL/FileManager.h"
@@ -450,17 +451,7 @@ namespace UE::DreamShader::Editor::Private
 		{
 			return UE::DreamShader::IsDreamShaderHeaderFile(SourceFile);
 		});
-		OutSourceFiles.Sort([](const FString& Left, const FString& Right)
-		{
-			const int32 LeftRank = UE::DreamShader::IsDreamShaderFunctionFile(Left) ? 0 : 1;
-			const int32 RightRank = UE::DreamShader::IsDreamShaderFunctionFile(Right) ? 0 : 1;
-			if (LeftRank != RightRank)
-			{
-				return LeftRank < RightRank;
-			}
-
-			return Left.Compare(Right, ESearchCase::IgnoreCase) < 0;
-		});
+		SortDreamShaderSourcesForBatch(OutSourceFiles);
 		return true;
 	}
 
@@ -498,6 +489,7 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		bool bSucceeded = true;
+		TArray<FString> CompileUnits;
 		for (const FString& SourceFile : SourceFiles)
 		{
 			if (!UE::DreamShader::IsDreamShaderSourceFile(SourceFile) || UE::DreamShader::IsDreamShaderHeaderFile(SourceFile))
@@ -506,25 +498,29 @@ namespace UE::DreamShader::Editor::Private
 				bSucceeded = false;
 				continue;
 			}
-
-			// Materialized: a commandlet has no editor session to keep an Ephemeral product alive in.
-			::UE::DreamShader::FDreamShaderCompileRequest Request;
-			Request.SourceFilePath = SourceFile;
-			Request.bForce = bForce;
-			Request.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Materialized;
-			const ::UE::DreamShader::FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);
-			if (Result.bSucceeded)
-			{
-				UE_LOG(LogDreamShader, Display, TEXT("%s"), *ToInvariantWireString(Result.Message));
-			}
-			else
-			{
-				UE_LOG(LogDreamShader, Error, TEXT("%s"), *ToInvariantWireString(Result.Message));
-				bSucceeded = false;
-			}
+			CompileUnits.Add(SourceFile);
 		}
 
-		return bSucceeded;
+		// Materialized: a commandlet has no editor session to keep an Ephemeral product alive in. A source
+		// that waits for a function another one generates is retried once that one is built, so -All on a
+		// clean workspace does not depend on the file order (#72).
+		::UE::DreamShader::FDreamShaderCompileRequest RequestTemplate;
+		RequestTemplate.bForce = bForce;
+		RequestTemplate.ThinCustomPersistence = ::UE::DreamShader::EThinCustomPersistence::Materialized;
+		const int32 FailureCount = CompileDreamShaderSourcesInBatch(*Compiler, CompileUnits, RequestTemplate,
+			[](const FDreamShaderBatchCompileEntry& Entry)
+			{
+				if (Entry.Result.bSucceeded)
+				{
+					UE_LOG(LogDreamShader, Display, TEXT("%s"), *ToInvariantWireString(Entry.Result.Message));
+				}
+				else
+				{
+					UE_LOG(LogDreamShader, Error, TEXT("%s"), *ToInvariantWireString(Entry.Result.Message));
+				}
+			});
+
+		return bSucceeded && FailureCount == 0;
 	}
 
 	bool RunDreamShaderDumpGraphCommandlet(

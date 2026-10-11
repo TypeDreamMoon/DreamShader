@@ -130,9 +130,15 @@ directory second.
 | 2 | Drop **everything** under each root's `Packages` folder |
 | 3 | Drop `.dsh` headers — they generate no assets and are compiled through the sources that include them |
 | 4 | Sort: `.dsf` function files first (rank 0), then every other kind (rank 1); ties broken by case-insensitive path comparison |
+| 5 | Compile in passes: a source that fails is held back while its pass still built something else, and retried in the next pass; once a pass builds nothing new, what still fails is reported *(after 2.1.1)* |
 
-Step 4 is a guarantee, not an accident: function assets referenced by a material must exist before
-that material is generated, and the two-rank sort provides that within a single run. Step 2 has a
+A material that calls a function another source generates loads that function's asset, so the asset
+must exist first. The sort covers the common case in one pass — a `.dsm` calling a `.dsf` — but not a
+function calling another function, nor a `.dss` whose exported function another source calls; step 5
+covers every shape, on a clean workspace too. A source that keeps failing — a real error, a dependency
+no source generates, or a cycle — costs at most one extra attempt per pass that built something, and is
+reported with the message of its last attempt, after every success. The cook runs the same steps
+([Cook behaviour](../generation/ephemeral.md#cook-behaviour)). Step 2 has a
 sharp edge for `.dsf` files that live in packages; see [Packages](packages.md#source-file-enumeration).
 A `.dsp` needs no rank of its own *(2.1.0)*: a material one of its passes names that is missing or older
 than its source is compiled first by the `.dsp`'s own compile.
