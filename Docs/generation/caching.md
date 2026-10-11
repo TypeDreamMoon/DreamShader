@@ -59,7 +59,7 @@ check answer "still current" about an asset that is not:
 | the preprocessed text of the file and of every header it imports | the compile's actual input — which is why a changed `.dsh` needs nothing else here |
 | [Default Compiler Backend](../settings/project.md) | decides whether a `Shader` block becomes a `UMaterial` or a thin instance |
 | the mapping tables | decide what a `Settings` key resolves to |
-| plugin version, plus a hand-bumped format tag — `DSK7` *(`DSK4` in 2.1.1; `DSK3` in 1.9.0 – 2.1.0)* | upgrading the generator invalidates what the old one wrote. The current key rebuilds graphs for corrected chained writes, casts, math, nested returns, parameter defaults and conditional-expression writes, even before the next plugin release |
+| plugin version, plus a hand-bumped format tag — `DSK7` *(since 2.1.2; `DSK4` in 2.1.1; `DSK3` in 1.9.0 – 2.1.0)* | upgrading the generator invalidates what the old one wrote. The current key rebuilds graphs for corrected chained writes, casts, math, nested returns, parameter defaults and conditional-expression writes |
 | engine version | what is generable moves with it (Substrate, for one) |
 | the [preprocessor defines this source read](../language/preprocessor.md#rebuilds) *(since 1.9.0)* | they decide which branches of the source were compiled at all |
 

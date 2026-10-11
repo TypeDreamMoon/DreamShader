@@ -221,7 +221,7 @@ exists on disk and whose metadata carries a non-empty `DreamShader.SourceFile`.
 | Who generates | **the cook director only** — a process launched with `-cookworker` skips generation and loads what the director saved |
 | When | on post-engine-init, after engine subsystems exist but before the commandlet's `Main` |
 | What | every project DreamShader source file except `.dsh`, generated forced and Materialized |
-| Order | as [`compile -All`](../tools/commandlet.md#-all-discovery-and-ordering): `.dsf` first, then in passes, so a source that calls a function another source generates is retried once that function is built *(after 2.1.1)* |
+| Order | as [`compile -All`](../tools/commandlet.md#-all-discovery-and-ordering): `.dsf` first, then in passes, so a source that calls a function another source generates is retried once that function is built *(since 2.1.2)* |
 | Registry | every package the generation actually wrote is handed to `IAssetRegistry::ScanModifiedAssetFiles` before the commandlet's `Main` |
 | On failure | **the cook aborts**, unless the source belongs to a plugin this project does not write into — see below |
 

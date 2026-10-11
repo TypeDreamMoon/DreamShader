@@ -53,9 +53,9 @@ first, commit, then tag.
 | 6 | On a tag push, the pushed tag must equal the derived tag. On a manual run, a non-empty `version` input must equal the slug. |
 | 7 | Export `DREAMSHADER_VERSION`, `DREAMSHADER_BASE`, `DREAMSHADER_SLUG`, `DREAMSHADER_TAG` and `DREAMSHADER_PRERELEASE` for the later steps. |
 
-For the current descriptor — `VersionName` `2.1.1`, `IsBetaVersion` `false`, `Version` `211` —
-this yields base `2.1.1`, slug `2.1.1`, tag `v2.1.1`, pre-release `false`, and the archive
-`DreamShader-2.1.1.zip`.
+For the current descriptor — `VersionName` `2.1.2`, `IsBetaVersion` `false`, `Version` `212` —
+this yields base `2.1.2`, slug `2.1.2`, tag `v2.1.2`, pre-release `false`, and the archive
+`DreamShader-2.1.2.zip`.
 
 > [!NOTE]
 > `Version` (the integer, `180`) is never read by the workflow. It is the descriptor's own numeric
@@ -87,7 +87,7 @@ every archive up to `1.5.0` without anyone noticing.
 | `Source/` | |
 | `Resources/` | |
 | `Shaders/` | *(since 1.5.1)* `DreamShaderBuiltins.ush`, so `/Plugin/DreamShader/…` resolves in an archive install; the Custom Pass shaders under `Pass/`, without which the `DreamShaderPass` module's global and mesh-pass shaders do not compile |
-| `Content/` | *(after 2.1.1)* `Localization/DreamShader/` — the `.locmeta` and the `zh-Hans` `.locres` — so the descriptor's `LocalizationTargets` entry has a translation to load in an archive install |
+| `Content/` | *(since 2.1.2)* `Localization/DreamShader/` — the `.locmeta` and the `zh-Hans` `.locres` — so the descriptor's `LocalizationTargets` entry has a translation to load in an archive install |
 | `Docs/` | |
 | `.skill/` | *(since 1.5.1)* the agent skill set and its driver |
 | `DreamShader.uplugin` | |
@@ -118,9 +118,9 @@ Everything else in the repository is absent:
 > archive shipped no `Content/` folder. It was never on the list, so no warning flagged it either.
 > In an install made from one of those zips the descriptor's `LocalizationTargets` entry finds
 > nothing to load, and DreamShader's editor text stays English even in a `zh-Hans` editor. Copying
-> `Content/Localization/` in by hand from the repository at the matching tag fixes it. From the
-> release after `2.1.1` the workflow copies `Content/` whole, as `BuildPlugin` does, so anything
-> added under it later ships too. See [Localization](index.md#localization).
+> `Content/Localization/` in by hand from the repository at the matching tag fixes it. Since `2.1.2`
+> the workflow copies `Content/` whole, as `BuildPlugin` does, so anything added under it later
+> ships too. See [Localization](index.md#localization).
 >
 > Unlike the list above, this one is not left to a warning. After compressing, the step opens the
 > zip and, for every `LocalizationTargets` entry in the descriptor, requires

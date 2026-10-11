@@ -130,7 +130,7 @@ directory second.
 | 2 | Drop **everything** under each root's `Packages` folder |
 | 3 | Drop `.dsh` headers — they generate no assets and are compiled through the sources that include them |
 | 4 | Sort: `.dsf` function files first (rank 0), then every other kind (rank 1); ties broken by case-insensitive path comparison |
-| 5 | Compile in passes: a source that fails is held back while its pass still built something else, and retried in the next pass; once a pass builds nothing new, what still fails is reported *(after 2.1.1)* |
+| 5 | Compile in passes: a source that fails is held back while its pass still built something else, and retried in the next pass; once a pass builds nothing new, what still fails is reported *(since 2.1.2)* |
 
 A material that calls a function another source generates loads that function's asset, so the asset
 must exist first. The sort covers the common case in one pass — a `.dsm` calling a `.dsf` — but not a
