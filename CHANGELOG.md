@@ -40,6 +40,17 @@
 
 ### Fixed
 
+- **A plugin that ships its own `DShader` folder no longer fails a host project's cook.** DreamShader
+  discovers sources under every enabled plugin that has a `DShader` folder, but gate 3 only lets it
+  generate into a plugin under `<Project>/Plugins` — so an engine or marketplace plugin whose sources
+  name their own mount (`Root="Plugin.<Name>"`, what such a plugin writes in its own project) made every
+  project that installed it abort at cook with `DSH8090`, over a file the project cannot generate *or*
+  edit. Such a source is compiled as before, and a failure under it is now logged as
+  `[Cook] Not this project's to build (plugin '<Name>')` and does not abort the cook: those assets ship
+  with that plugin, and the cook packages them. Sources this project owns — its own `DShader` folder and
+  the plugins under `<Project>/Plugins` — still abort a cook they cannot generate. The plugin-scope
+  question also lives in one place now (`UE::DreamShader::IsProjectContentPlugin`), asked both by the
+  root list and by gate 3. See [Cook behaviour](Docs/generation/ephemeral.md#cook-behaviour).
 - **Thirty findings of a review of 2.1.1** -- PR [#49](https://github.com/TypeDreamMoon/DreamShader/pull/49),
   each with a regression test, besides those under Changed:
   - *Language*: a chained swizzle or index write such as `v.zyx.x = 1` writes the component it names (#41); an

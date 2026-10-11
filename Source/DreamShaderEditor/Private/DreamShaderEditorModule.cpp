@@ -149,6 +149,7 @@ private:
 			});
 
 		int32 FailureCount = 0;
+		int32 ForeignFailureCount = 0;
 		for (const FString& SourceFile : SourceFiles)
 		{
 			const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
@@ -157,9 +158,22 @@ private:
 				continue;
 			}
 
+			// Whether this file's products are this project's to build at all. A source under an
+			// engine or marketplace plugin's DShader folder belongs to that plugin: gate 3 refuses to
+			// generate into its mount (DSH8090), and the project may not edit the file either (a
+			// plugin root ships its sources as-is). That plugin ships the assets its sources describe,
+			// so a failure there is reported below and the cook goes on -- the project's own sources,
+			// and those of its own plugins under <Project>/Plugins, stay fatal.
+			const UE::DreamShader::FDreamShaderSourceRoot* const OwnerRoot =
+				UE::DreamShader::FindSourceRootForFile(NormalizedPath);
+			const bool bOwnedByProject = OwnerRoot == nullptr
+				|| OwnerRoot->bIsProjectRoot
+				|| OwnerRoot->bIsProjectPlugin;
+
 			// Forced and Materialized: a cook packages what is on disk, so every product must be there and current.
 			FString Message;
 			bool bSuccess = false;
+			bool bCompiled = false;
 			if (::UE::DreamShader::IDreamShaderCompiler* const Compiler = ::UE::DreamShader::GetDreamShaderCompiler())
 			{
 				::UE::DreamShader::FDreamShaderCompileRequest Request;
@@ -169,20 +183,39 @@ private:
 				const ::UE::DreamShader::FDreamShaderCompileResult Result = Compiler->CompileAssets(Request);
 				Message = Result.Message.ToString();
 				bSuccess = Result.bSucceeded;
+				bCompiled = true;
 			}
 			else
 			{
+				// Without the compiler nothing can be generated at all, whatever the file belongs to.
 				Message = FString::Printf(TEXT("%s: the DreamShader compiler module is not available."), *NormalizedPath); /* I18N-EXEMPT: cook log line */
 			}
 			if (bSuccess)
 			{
 				UE_LOG(LogDreamShader, Display, TEXT("  [Cook] %s"), *Message);
 			}
+			else if (bCompiled && !bOwnedByProject)
+			{
+				// Loud, not silent: the plugin's own build is the only place this source generates, and
+				// a cook that said nothing here would read as if the file had been built.
+				UE_LOG(LogDreamShader, Warning,
+					TEXT("  [Cook] Not this project's to build (plugin '%s'): %s"),
+					*OwnerRoot->DisplayName,
+					*Message);
+				++ForeignFailureCount;
+			}
 			else
 			{
 				UE_LOG(LogDreamShader, Error, TEXT("  [Cook] Failed: %s"), *Message);
 				++FailureCount;
 			}
+		}
+
+		if (ForeignFailureCount > 0)
+		{
+			UE_LOG(LogDreamShader, Warning,
+				TEXT("DreamShader cook: %d source file(s) belong to a plugin that is not a project plugin; those assets ship with that plugin, not with this project. See Docs/generation/asset-paths.md."),
+				ForeignFailureCount);
 		}
 
 		UPackage::PackageSavedWithContextEvent.Remove(PackageSavedHandle);
@@ -198,7 +231,10 @@ private:
 		if (FailureCount > 0)
 		{
 			// Fail the cook rather than package a build that is silently missing (or has a half-built)
-			// DreamShader material. A cook that could not generate every source file must not succeed.
+			// DreamShader material. A cook that could not generate every source file this project owns
+			// must not succeed. A source that belongs to another plugin is not counted here: its
+			// products ship with that plugin, and no host project can generate or even edit it -- see
+			// the [Cook] Not this project's to build entries above.
 			UE_LOG(LogDreamShader, Fatal,
 				TEXT("DreamShader cook generation failed for %d source file(s); aborting the cook. See the [Cook] Failed entries above."),
 				FailureCount);

@@ -22,6 +22,8 @@ Defined in header `DreamShaderModule.h`.
 #include "DreamShaderVersionCompat.h"
 #include "Modules/ModuleManager.h"
 
+class IPlugin;
+
 DREAMSHADER_API DECLARE_LOG_CATEGORY_EXTERN(LogDreamShader, Log, All);
 
 namespace UE::DreamShader
@@ -33,12 +35,14 @@ namespace UE::DreamShader
         FString DisplayName;        // "Project", or the owning plugin's name
         FString PluginName;         // empty for the project root
         bool bIsProjectRoot = false;
+        bool bIsProjectPlugin = false; // true when the plugin is one this project generates into
         bool bWritable = false;     // true for the project root only
     };
 
     DREAMSHADER_API const TArray<FDreamShaderSourceRoot>& GetSourceShaderRoots();
     DREAMSHADER_API const FDreamShaderSourceRoot* FindSourceRootForFile(const FString& InPath);
     DREAMSHADER_API bool IsWritableSourceFilePath(const FString& InPath);
+    DREAMSHADER_API bool IsProjectContentPlugin(const IPlugin& InPlugin);
     DREAMSHADER_API void RefreshSourceShaderRoots();
     DREAMSHADER_API bool IsPathUnderSourceDirectory(const FString& InPath, const FString& InDirectory);
 
@@ -138,6 +142,7 @@ The module starts at `PostConfigInit`, before the settings object can exist, whi
 const TArray<FDreamShaderSourceRoot>& GetSourceShaderRoots();
 const FDreamShaderSourceRoot* FindSourceRootForFile(const FString& InPath);
 bool IsWritableSourceFilePath(const FString& InPath);
+bool IsProjectContentPlugin(const IPlugin& InPlugin);
 void RefreshSourceShaderRoots();
 bool IsPathUnderSourceDirectory(const FString& InPath, const FString& InDirectory);
 ```
@@ -150,11 +155,18 @@ resolution: a file's imports resolve against its own root and that root's `Packa
 | `GetSourceShaderRoots()` | The project root first, then — when *Scan Plugin Source Directories* is on — one root per enabled plugin that has a `DShader` folder. A plugin root that overlaps an earlier root (one contains the other) is dropped with a `LogDreamShader` warning. Cached; rebuilt when the project source directory or the scan toggle changes. The reference is invalidated by the next rebuild, so use it on the game thread and do not keep it |
 | `FindSourceRootForFile(InPath)` | The root that contains `InPath`, or `nullptr` when it is under none |
 | `IsWritableSourceFilePath(InPath)` | `false` for a file under a plugin root; `true` under the project root **and** for a path under no root (an ad-hoc source named explicitly, such as a commandlet `-Source`) |
+| `IsProjectContentPlugin(InPlugin)` | `true` when the plugin is a project plugin (`EPluginType::Project`) whose base directory is under `<Project>/Plugins` — the same question gate 3 asks of a `Plugin.<Name>` root. `false` for an engine or marketplace plugin, whose mount no host project may generate into |
 | `RefreshSourceShaderRoots()` | Drops the cache. Needed only when plugins mount or unmount mid-session |
 | `IsPathUnderSourceDirectory(InPath, InDirectory)` | `true` when the path is the directory itself or below it; both are normalized with `NormalizeSourceFilePath` and compared case-insensitively |
 
 Only the project root is writable: editor features that rewrite sources in place (VirtualFunction
 sync, [asset rename sync](../tools/asset-rename-sync.md)) never touch a plugin root.
+
+`FDreamShaderSourceRoot::bIsProjectPlugin` carries a second, independent answer about a plugin root —
+whether its products are the project's to build at all, computed with `IsProjectContentPlugin`. The
+cook reads it for a source that failed to generate: under a plugin that is not a project plugin the
+failure is reported and the cook goes on, because those assets ship with that plugin. See
+[Cook behaviour](../generation/ephemeral.md#cook-behaviour).
 
 ## `SanitizeIdentifier`
 

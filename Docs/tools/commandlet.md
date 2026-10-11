@@ -700,6 +700,10 @@ never reads `-Force`.
   `Cook` and that does not carry `-cookworker`), DreamShader materializes every project source as a
   persistent asset before the cook proper. A generation failure there is `Fatal` and aborts the cook:
   `DreamShader cook generation failed for {Count} source file(s); aborting the cook. See the [Cook] Failed entries above.`
+  A source that belongs to a plugin the project does not write into — an engine or marketplace plugin
+  — is not counted there: it is compiled like any other, and a failure is logged as
+  `[Cook] Not this project's to build (plugin '<Name>')` without aborting, because those assets ship
+  with that plugin. See [Cook behaviour](../generation/ephemeral.md#cook-behaviour).
 - `-Force` bypasses the source-hash skip only; it does not delete anything. See
   [Caching](../generation/caching.md).
 - **A `.dsp` compile writes outside `Content/`** *(2.1.0)*: the HLSL slot registry and its snapshots under

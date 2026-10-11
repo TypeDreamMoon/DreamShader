@@ -54,7 +54,7 @@ enabled for this project.
 DreamShader Root '%s' must reference a project plugin under '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:66`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:65`
 <!-- generated:end DSH8090 -->
 
 **Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
@@ -64,6 +64,12 @@ marketplace plugin). DreamShader only writes assets into plugins under the proje
 folder.
 
 **Fix.** Target a project plugin, or `Game`.
+
+A cook does not abort over such a source: the assets it describes are the plugin's own, and no host
+project can generate into that mount or even edit the file. The failure is logged as
+`[Cook] Not this project's to build (plugin '<Name>')` and the cook goes on — the plugin ships those
+assets, and they are what gets packaged. See
+[Cook behaviour](../generation/ephemeral.md#cook-behaviour).
 
 ## DSH8091
 
@@ -76,7 +82,7 @@ folder.
 DreamShader Root '%s' references project plugin '%s', but the plugin is not enabled.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:71`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:70`
 <!-- generated:end DSH8091 -->
 
 **Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
@@ -96,7 +102,7 @@ object path). The plugin exists and is disabled, so its content path is not moun
 DreamShader Root '%s' references project plugin '%s', but the plugin cannot contain content.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:76`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:75`
 <!-- generated:end DSH8092 -->
 
 **Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
@@ -116,7 +122,7 @@ object path). The plugin is enabled and its descriptor says `CanContainContent: 
 DreamShader Root '%s' references project plugin '%s', but its Content directory does not exist: '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:82`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:81`
 <!-- generated:end DSH8093 -->
 
 **Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
@@ -136,7 +142,7 @@ object path). The plugin can hold content, and its `Content` directory is not on
 DreamShader Root '%s' references project plugin '%s', but the plugin content is not mounted.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:88`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:87`
 <!-- generated:end DSH8094 -->
 
 **Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
@@ -157,7 +163,7 @@ plugin that was enabled or created while the editor was running.
 DreamShader Root '%s' has an invalid plugin name.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:165`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:164`
 <!-- generated:end DSH8095 -->
 
 **Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
@@ -177,7 +183,7 @@ object path). The plugin part of this root is empty or not a name (`Plugin.` wit
 DreamShader Root '%s' has an invalid plugin name.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:179`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:178`
 <!-- generated:end DSH8096 -->
 
 **Cause.** Same as DSH8095, for the `Plugins.<Name>` spelling of the root.
@@ -195,7 +201,7 @@ DreamShader Root '%s' has an invalid plugin name.
 DreamShader Root '%s' has an invalid package root.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:192`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:191`
 <!-- generated:end DSH8097 -->
 
 **Cause.** A source says where its asset goes with a root: `Game`, `Engine`, or `Plugin.<Name>` (in
@@ -215,7 +221,7 @@ object path). This root is none of those, or resolves to a package root the engi
 DreamShader asset name must resolve to a non-empty asset path.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:306`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:305`
 <!-- generated:end DSH8098 -->
 
 **Cause.** The declared asset name is empty once trimmed.
@@ -233,7 +239,7 @@ DreamShader asset name must resolve to a non-empty asset path.
 DreamShader asset name must resolve to a non-empty asset path.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:313`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:312`
 <!-- generated:end DSH8099 -->
 
 **Cause.** The declared asset name consists of separators only (`/`), so no asset name is left.
@@ -251,7 +257,7 @@ DreamShader asset name must resolve to a non-empty asset path.
 DreamShader asset name '%s' produced an invalid asset name.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:319`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:318`
 <!-- generated:end DSH8100 -->
 
 **Cause.** The last segment of the declared asset name is not a valid object name (it contains a
@@ -270,7 +276,7 @@ character such as `.`, `:` or a space the engine refuses).
 Asset '%s' is open in an asset editor, so it was NOT rebuilt. An open editor works on its own copy of the asset and writes that copy back when you press Apply or Save, 
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:404`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:403`
 <!-- generated:end DSH8101 -->
 
 **Cause.** The asset is open in an asset editor. An open editor works on a copy of the asset and
@@ -290,7 +296,7 @@ changes may also have diverged from the source.
 Asset '%s' already exists and is not a Material.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:498`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:497`
 <!-- generated:end DSH8102 -->
 
 **Cause.** A package already sits where the material would go, and the object in it is not a
@@ -309,7 +315,7 @@ UMaterial.
 Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:507`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:506`
 <!-- generated:end DSH8103 -->
 
 **Cause.** A material already sits at the target path and carries no DreamShader provenance, so it
@@ -329,7 +335,7 @@ first.
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:516`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:515`
 <!-- generated:end DSH8104 -->
 
 **Cause.** `CreatePackage` failed for the material's package -- an invalid long package name, or the
@@ -348,7 +354,7 @@ engine refusing the mount point.
 Failed to create material '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:532`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:531`
 <!-- generated:end DSH8105 -->
 
 **Cause.** The UMaterial object could not be created in its package.
@@ -367,7 +373,7 @@ usual cause); fix up redirectors in that folder.
 Asset '%s' already exists and is not a DreamShader instance material. Delete it (or remove Backend="Instance") before switching backends.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:560`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:559`
 <!-- generated:end DSH8106 -->
 
 **Cause.** `Backend = ThinCustom` builds a DreamShader instance material, and the asset at that path
@@ -386,7 +392,7 @@ is of another class (a plain material from an earlier Graph build, usually).
 Asset '%s' already exists and was not generated by DreamShader. Rename your shader or move/delete the existing asset before regenerating.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:570`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:569`
 <!-- generated:end DSH8107 -->
 
 **Cause.** Same as DSH8103, for a ThinCustom instance: the existing asset was not generated by
@@ -405,7 +411,7 @@ DreamShader.
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:580`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:579`
 <!-- generated:end DSH8108 -->
 
 **Cause.** `CreatePackage` failed for a ThinCustom instance's package.
@@ -423,7 +429,7 @@ Failed to create package '%s'.
 Failed to create instance material '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:592`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:591`
 <!-- generated:end DSH8109 -->
 
 **Cause.** The ThinCustom instance material object could not be created.
@@ -441,7 +447,7 @@ Failed to create instance material '%s'.
 Asset '%s' already exists as '%s', but %s generation requires '%s'. Delete or move the existing asset and regenerate it.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:631`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:630`
 <!-- generated:end DSH8110 -->
 
 **Cause.** A function asset exists at the target path with another class than the source builds: a
@@ -462,7 +468,7 @@ so prefer a new name when the old asset is in use.
 Asset '%s' already exists and is not a MaterialFunction asset.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:637`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:636`
 <!-- generated:end DSH8111 -->
 
 **Cause.** A package already sits where the function would go, and the object in it is no material
@@ -481,7 +487,7 @@ function at all.
 Asset '%s' already exists and was not generated by DreamShader. Rename your function or move/delete the existing asset before regenerating.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:644`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:643`
 <!-- generated:end DSH8112 -->
 
 **Cause.** A material function already sits at the target path and was not generated by DreamShader.
@@ -500,7 +506,7 @@ first.
 Failed to create package '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:653`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:652`
 <!-- generated:end DSH8113 -->
 
 **Cause.** `CreatePackage` failed for a function's package.
@@ -518,7 +524,7 @@ Failed to create package '%s'.
 Failed to create material function '%s'.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:666`
+**Raised by** `Source/DreamShaderCompiler/Private/Assets/DreamShaderAssetFactory.cpp:665`
 <!-- generated:end DSH8114 -->
 
 **Cause.** The material function object could not be created.

@@ -184,6 +184,12 @@ slash, a forced leading slash. If that degenerates to empty or `/`, `/<PluginNam
 > even when they are enabled and mounted. Only plugins physically under `<Project>/Plugins` are
 > accepted. To write into an engine-side mount, use the explicit mount-root branch
 > (`Root="/SomeMount"`), which skips the plugin validator entirely.
+>
+> A cook does not abort over such a source. Its products are the plugin's own — the plugin ships the
+> assets its sources describe — and no host project can generate into that mount or even edit the
+> file (plugin roots are read-only), so a generation failure there is logged and the cook goes on.
+> Only the project's own sources, and those of its own plugins under `<Project>/Plugins`, can fail a
+> cook. See [Cook behaviour](ephemeral.md#cook-behaviour).
 
 ## Per asset kind
 
