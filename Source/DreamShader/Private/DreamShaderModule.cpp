@@ -178,6 +178,10 @@ namespace UE::DreamShader
 					FPaths::Combine(CandidateDirectory, TEXT("Packages")));
 				PluginRoot.DisplayName = Plugin->GetName();
 				PluginRoot.PluginName = Plugin->GetName();
+				// Read-only either way (bWritable stays false), but only a project plugin's products
+				// are the project's to build: an engine or marketplace plugin's mount is refused by
+				// gate 3 (DSH8090), so a failure under this root must not abort a host project's cook.
+				PluginRoot.bIsProjectPlugin = IsProjectContentPlugin(*Plugin);
 			}
 		}
 
@@ -240,6 +244,21 @@ namespace UE::DreamShader
 		// -Source, a test fixture); it is not the plugin's to protect.
 		const FDreamShaderSourceRoot* Root = FindSourceRootForFile(InPath);
 		return Root == nullptr || Root->bWritable;
+	}
+
+	bool IsProjectContentPlugin(const IPlugin& InPlugin)
+	{
+		// The same two conditions gate 3 applies to a `Plugin.<Name>` root
+		// (DreamShaderAssetFactory.cpp: ResolveProjectContentPluginPackageRoot), asked about the
+		// plugin itself so the root list can carry the answer before a destination is ever resolved.
+		if (InPlugin.GetType() != EPluginType::Project)
+		{
+			return false;
+		}
+
+		const FString PluginBaseDirectory = FPaths::ConvertRelativePathToFull(InPlugin.GetBaseDir());
+		const FString ProjectPluginsDirectory = FPaths::ConvertRelativePathToFull(FPaths::ProjectPluginsDir());
+		return FPaths::IsUnderDirectory(PluginBaseDirectory, ProjectPluginsDirectory);
 	}
 
 	void RefreshSourceShaderRoots()

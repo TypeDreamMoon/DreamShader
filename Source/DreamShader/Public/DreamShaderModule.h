@@ -4,6 +4,8 @@
 #include "DreamShaderVersionCompat.h"
 #include "Modules/ModuleManager.h"
 
+class IPlugin;
+
 DREAMSHADER_API DECLARE_LOG_CATEGORY_EXTERN(LogDreamShader, Log, All);
 
 namespace UE::DreamShader
@@ -34,6 +36,15 @@ namespace UE::DreamShader
 		bool bIsProjectRoot = false;
 
 		/**
+		 * Whether the owning plugin is one this project may generate into -- see
+		 * IsProjectContentPlugin. False for an engine or marketplace plugin, whose mount the
+		 * plugin-root resolver refuses (gate 3, DSH8090): its sources are still discovered, compiled
+		 * and browsable, but the assets they describe ship with that plugin, not with the project
+		 * that happens to have it installed. False on the project root, which has no plugin.
+		 */
+		bool bIsProjectPlugin = false;
+
+		/**
 		 * Whether editor features that rewrite source files in place (VirtualFunction sync) may touch
 		 * files under this root. Only the project root is writable: plugin roots are discovered and
 		 * compiled, but a plugin ships its sources as-is and the editor must not rewrite them.
@@ -49,6 +60,18 @@ namespace UE::DreamShader
 
 	/** False for files under a read-only root; true for paths outside every root (ad-hoc sources). */
 	DREAMSHADER_API bool IsWritableSourceFilePath(const FString& InPath);
+
+	/**
+	 * Whether assets may be generated into `InPlugin`'s content: it must be a project plugin
+	 * (`EPluginType::Project`) whose base directory is under `<Project>/Plugins`.
+	 *
+	 * Gate 3 of the plugin-root resolver asks exactly this and refuses everything else with DSH8090
+	 * (see Docs/generation/asset-paths.md). It is also what separates a source this project owns from
+	 * one that merely happens to be enabled: an engine or marketplace plugin's sources describe
+	 * assets that plugin ships itself, so a host project reports a failure to generate one instead of
+	 * aborting the cook over it -- see FDreamShaderSourceRoot::bIsProjectPlugin.
+	 */
+	DREAMSHADER_API bool IsProjectContentPlugin(const IPlugin& InPlugin);
 
 	/** Drops the cached root list. Only needed when plugins mount or unmount mid-session. */
 	DREAMSHADER_API void RefreshSourceShaderRoots();

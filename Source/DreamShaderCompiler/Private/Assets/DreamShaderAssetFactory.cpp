@@ -59,9 +59,8 @@ namespace UE::DreamShader::Editor::Private
 				return FailWith(OutError, TEXT("DSH8089"), FString::Printf(TEXT("DreamShader Root '%s' references project plugin '%s', but no enabled plugin with that name was found."), *Root, *PluginName)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}
 
-			const FString PluginBaseDir = FPaths::ConvertRelativePathToFull(Plugin->GetBaseDir());
 			const FString ProjectPluginsDir = FPaths::ConvertRelativePathToFull(FPaths::ProjectPluginsDir());
-			if (Plugin->GetType() != EPluginType::Project || !FPaths::IsUnderDirectory(PluginBaseDir, ProjectPluginsDir))
+			if (!UE::DreamShader::IsProjectContentPlugin(*Plugin))
 			{
 				return FailWith(OutError, TEXT("DSH8090"), FString::Printf(TEXT("DreamShader Root '%s' must reference a project plugin under '%s'."), *Root, *ProjectPluginsDir)); /* I18N-EXEMPT: deferred codegen or compatibility path */
 			}

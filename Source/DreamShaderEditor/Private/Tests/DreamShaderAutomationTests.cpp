@@ -3742,6 +3742,80 @@ bool FDreamShaderSourceRootImportIsolationTest::RunTest(const FString& Parameter
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderProjectContentPluginScopeTest,
+	"DreamShader.Sources.ProjectContentPluginScope",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// Locks in the rule the cook's failure policy rests on. A source under an engine or marketplace plugin
+// belongs to that plugin: gate 3 refuses to generate into its mount (DSH8090), and the project may not
+// edit the file either, so a failure there must not abort a host project's cook -- those assets ship
+// with that plugin. Everything below reads the live plugin list, so the test holds in whatever project
+// it runs in.
+bool FDreamShaderProjectContentPluginScopeTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader;
+
+	const FString ProjectPluginsDirectory = FPaths::ConvertRelativePathToFull(FPaths::ProjectPluginsDir());
+
+	int32 ProjectPluginCount = 0;
+	for (const TSharedRef<IPlugin>& Plugin : IPluginManager::Get().GetEnabledPlugins())
+	{
+		const bool bUnderProjectPlugins = FPaths::IsUnderDirectory(
+			FPaths::ConvertRelativePathToFull(Plugin->GetBaseDir()),
+			ProjectPluginsDirectory);
+		const bool bProjectPlugin = Plugin->GetType() == EPluginType::Project && bUnderProjectPlugins;
+
+		const FString What = FString::Printf(TEXT("'%s' is a plugin this project generates into."), *Plugin->GetName());
+		if (bProjectPlugin)
+		{
+			TestTrue(What, IsProjectContentPlugin(*Plugin));
+			++ProjectPluginCount;
+		}
+		else
+		{
+			TestFalse(What, IsProjectContentPlugin(*Plugin));
+		}
+	}
+
+	TestTrue(TEXT("The project has at least one plugin of its own."), ProjectPluginCount > 0);
+
+	// A concrete engine plugin, and one DreamShader itself depends on.
+	if (const TSharedPtr<IPlugin> EnginePlugin = IPluginManager::Get().FindPlugin(TEXT("WebSocketNetworking")))
+	{
+		TestFalse(TEXT("An engine plugin is not a plugin this project generates into."), IsProjectContentPlugin(*EnginePlugin));
+	}
+
+	// Every discovered root carries that answer: it is what the cook reads for a source that failed.
+	for (const FDreamShaderSourceRoot& Root : GetSourceShaderRoots())
+	{
+		if (Root.PluginName.IsEmpty())
+		{
+			TestTrue(TEXT("The project root is the project's own."), Root.bIsProjectRoot);
+			continue;
+		}
+
+		const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(Root.PluginName);
+		const FString Discoverable = FString::Printf(TEXT("Root '%s' names a discoverable plugin."), *Root.DisplayName);
+		if (!TestTrue(Discoverable, Plugin.IsValid()))
+		{
+			continue;
+		}
+
+		const FString What = FString::Printf(TEXT("Root '%s' carries the project-plugin answer."), *Root.DisplayName);
+		if (IsProjectContentPlugin(*Plugin))
+		{
+			TestTrue(What, Root.bIsProjectPlugin);
+		}
+		else
+		{
+			TestFalse(What, Root.bIsProjectPlugin);
+		}
+	}
+
+	return true;
+}
+
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(
 	FDreamShaderGraphLayoutNoOverlapTest,
 	FDreamShaderQuietAutomationTestBase,

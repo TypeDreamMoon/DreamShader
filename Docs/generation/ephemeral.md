@@ -222,7 +222,7 @@ exists on disk and whose metadata carries a non-empty `DreamShader.SourceFile`.
 | When | on post-engine-init, after engine subsystems exist but before the commandlet's `Main` |
 | What | every project DreamShader source file except `.dsh`, generated forced and Materialized |
 | Registry | every package the generation actually wrote is handed to `IAssetRegistry::ScanModifiedAssetFiles` before the commandlet's `Main` |
-| On failure | **the cook aborts** |
+| On failure | **the cook aborts**, unless the source belongs to a plugin this project does not write into — see below |
 
 Cook log lines:
 
@@ -230,6 +230,7 @@ Cook log lines:
 DreamShader cook: generating {Count} source file(s) as persistent assets...
   [Cook] {Message}
   [Cook] Failed: {Message}
+  [Cook] Not this project's to build (plugin '{PluginName}'): {Message}
 DreamShader cook: registered {Count} generated package(s) with the AssetRegistry.
 DreamShader cook asset generation complete.
 ```
@@ -239,6 +240,14 @@ DreamShader cook asset generation complete.
 > `DreamShader cook generation failed for {Count} source file(s); aborting the cook. See the [Cook]
 > Failed entries above.` Compile every source cleanly in the editor, or run the
 > [commandlet](../tools/commandlet.md), before cooking.
+
+One exception, and it is why the count in that entry says *this project's*: a source that lives under
+an engine or marketplace plugin's `DShader` folder. That plugin's products are its own — gate 3 refuses
+to generate into its mount ([`DSH8090`](../diagnostics/DSH8xxx.md#dsh8090)) and the project may not edit
+its files either, so a failure there is logged as `[Cook] Not this project's to build (plugin
+'{Name}')` and the cook goes on; the plugin ships the assets its sources describe, and those are what
+the cook packages. Every project-owned source, and every source of a plugin under
+`<Project>/Plugins`, still aborts a cook that could not generate it.
 
 Generation runs on post-engine-init rather than at module startup because the material editing
 library it depends on needs editor subsystems that do not exist during module load. Restricting it
