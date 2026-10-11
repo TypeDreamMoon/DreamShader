@@ -199,7 +199,7 @@ namespace UE::DreamShader::Editor::Compiler
 		 * else.
 		 *
 		 * `UE.TexCoord(Index = 0)` is the spelling of every 1.x Graph line and of all three
-		 * `Lang/Examples/*.dss`, and the engine property is `CoordinateIndex` -- so without these the
+		 * `.dss` files in `Lang/Examples`, and the engine property is `CoordinateIndex` -- so without these the
 		 * examples do not bind at all. Ported from the `AllowedArguments` tables in
 		 * `DreamShaderExpressionFactory.cpp` (~925 onward) and the named-argument handling in
 		 * `DreamShaderMaterialGeneratorCodeUE.cpp`.
