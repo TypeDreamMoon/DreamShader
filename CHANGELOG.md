@@ -74,6 +74,8 @@
   engine builds — no drive root, no overlap with an engine root or the plugin tree, and either absent,
   empty, or marked by an earlier run — and both deletes go through that check. See
   [The engine matrix](Docs/contributing/index.md#the-engine-matrix).
+  The owner marker is deleted last, so a file still held open after a build (UBT keeps
+  `HostProjectModuleRules.dll` loaded) no longer leaves a directory the next run refuses.
   ([#71](https://github.com/TypeDreamMoon/DreamShader/issues/71))
 - **Four test files compile in a standalone build again (5.5, 5.6, 5.8).** `RunUAT BuildPlugin` failed where
   a project build passed. The project's precompiled header had supplied what three test files did not

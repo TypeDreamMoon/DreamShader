@@ -204,6 +204,20 @@ function Remove-OutputDirectory {
     param([string]$OutputDir, [string[]]$Protected)
 
     Assert-OutputDirectory -OutputDir $OutputDir -Protected $Protected
+    if (-not (Test-Path -LiteralPath $OutputDir)) { return }
+
+    # The marker goes last. A file still held open -- UBT leaves HostProjectModuleRules.dll loaded for
+    # a while after a build -- would otherwise stop the delete after the marker was gone, and the
+    # next run would refuse the leftover as somebody else's.
+    Get-ChildItem -LiteralPath $OutputDir -Force |
+        Where-Object { $_.Name -ne $ownerMarkerName } |
+        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
+    $left = @(Get-ChildItem -LiteralPath $OutputDir -Force | Where-Object { $_.Name -ne $ownerMarkerName })
+    if ($left.Count -gt 0) {
+        Write-Host "  Could not delete everything in '$OutputDir' (a file is still in use); the next run reclaims it." -ForegroundColor Yellow
+        return
+    }
     Remove-Item -LiteralPath $OutputDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
