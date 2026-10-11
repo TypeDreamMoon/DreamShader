@@ -99,10 +99,14 @@ jobs:
           New-Item -ItemType Directory -Path $PluginRoot -Force | Out-Null
           New-Item -ItemType Directory -Path $ArtifactRoot -Force | Out-Null
 
+          # Content/ carries Localization/DreamShader/ -- the .locmeta and the zh-Hans .locres the
+          # descriptor's LocalizationTargets entry loads from <Plugin>/Content/Localization/. It is copied
+          # whole, as BuildPlugin copies it, so that path is the same in an archive install.
           $Items = @(
             'Source',
             'Resources',
             'Shaders',
+            'Content',
             'Docs',
             '.skill',
             'DreamShader.uplugin',
@@ -125,6 +129,46 @@ jobs:
           }
 
           Compress-Archive -Path $PluginRoot -DestinationPath $ZipPath -Force
+
+          # The list above only warns, which is how Content/ stayed out unnoticed. A localization
+          # target the descriptor declares is not optional: read the zip back and fail when its
+          # .locmeta, or a culture's .locres the repository has, did not make it in.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $Zip = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+          try {
+            $Entries = @($Zip.Entries | ForEach-Object { $_.FullName.Replace('\', '/') })
+          }
+          finally {
+            $Zip.Dispose()
+          }
+
+          $Descriptor = Get-Content -Raw -Path 'DreamShader.uplugin' | ConvertFrom-Json
+          $Missing = [System.Collections.Generic.List[string]]::new()
+          foreach ($Target in @($Descriptor.LocalizationTargets)) {
+            $Name = [string]$Target.Name
+            if ([string]::IsNullOrWhiteSpace($Name)) { continue }
+
+            $Expected = [System.Collections.Generic.List[string]]::new()
+            $Expected.Add("DreamShader/Content/Localization/$Name/$Name.locmeta")
+            $TargetDir = Join-Path 'Content/Localization' $Name
+            if (Test-Path -LiteralPath $TargetDir) {
+              foreach ($Culture in Get-ChildItem -LiteralPath $TargetDir -Directory) {
+                if (Test-Path -LiteralPath (Join-Path $Culture.FullName "$Name.locres")) {
+                  $Expected.Add("DreamShader/Content/Localization/$Name/$($Culture.Name)/$Name.locres")
+                }
+              }
+            }
+
+            foreach ($Path in $Expected) {
+              if ($Entries -notcontains $Path) { $Missing.Add($Path) }
+            }
+          }
+
+          if ($Missing.Count -gt 0) {
+            foreach ($Path in $Missing) { Write-Output "::error::Release archive is missing '$Path'." }
+            throw "Release archive is missing $($Missing.Count) declared localization file(s)."
+          }
+
           "DREAMSHADER_ZIP=$ZipPath" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Download latest VSCode extension release assets

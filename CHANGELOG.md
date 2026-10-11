@@ -51,6 +51,13 @@
   the plugins under `<Project>/Plugins` — still abort a cook they cannot generate. The plugin-scope
   question also lives in one place now (`UE::DreamShader::IsProjectContentPlugin`), asked both by the
   root list and by gate 3. See [Cook behaviour](Docs/generation/ephemeral.md#cook-behaviour).
+- **The release zip ships `Content/`, and with it the `zh-Hans` translation.** The descriptor's
+  `LocalizationTargets` entry loads `Content/Localization/DreamShader/`, but the release workflow never
+  staged `Content/`, so every archive from 1.6.0 to 2.1.1 installed with English editor text only. The
+  step now copies `Content/` whole and reads the zip back, failing the release when a declared target's
+  `.locmeta` or a culture's `.locres` is missing. Older installs can copy `Content/Localization/` in from
+  the matching tag. See [Release](Docs/contributing/release.md#archive-contents).
+  ([#73](https://github.com/TypeDreamMoon/DreamShader/issues/73))
 - **Thirty findings of a review of 2.1.1** -- PR [#49](https://github.com/TypeDreamMoon/DreamShader/pull/49),
   each with a regression test, besides those under Changed:
   - *Language*: a chained swizzle or index write such as `v.zyx.x = 1` writes the component it names (#41); an
