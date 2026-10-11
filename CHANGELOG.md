@@ -58,6 +58,14 @@
   `.locmeta` or a culture's `.locres` is missing. Older installs can copy `Content/Localization/` in from
   the matching tag. See [Release](Docs/contributing/release.md#archive-contents).
   ([#73](https://github.com/TypeDreamMoon/DreamShader/issues/73))
+- **`build-plugin.ps1` deletes only output directories of its own.** Each engine's output is
+  `<Package>\<EngineLabel>`, deleted before and after the build, and the only check was that `-Package`
+  was outside the plugin tree: `-Engine C:\UE\UE_5.8 -Package C:\UE` named the engine root itself, and
+  an existing directory was deleted whatever was in it. Every output directory is now checked before any
+  engine builds — no drive root, no overlap with an engine root or the plugin tree, and either absent,
+  empty, or marked by an earlier run — and both deletes go through that check. See
+  [The engine matrix](Docs/contributing/index.md#the-engine-matrix).
+  ([#71](https://github.com/TypeDreamMoon/DreamShader/issues/71))
 - **Thirty findings of a review of 2.1.1** -- PR [#49](https://github.com/TypeDreamMoon/DreamShader/pull/49),
   each with a regression test, besides those under Changed:
   - *Language*: a chained swizzle or index write such as `v.zyx.x = 1` writes the component it names (#41); an

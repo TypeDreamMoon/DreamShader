@@ -244,7 +244,7 @@ the number of engines that failed, so `0` means the matrix is green.
 | :-- | :-- |
 | `-Engine` | Engine roots. An array, or one comma-separated string |
 | `-Plugin` | The `.uplugin`. Defaults to the one at or above the script |
-| `-Package` | Staging root. Defaults to `%TEMP%\DreamShaderBuildPlugin`; must be outside the plugin tree |
+| `-Package` | Staging root. Defaults to `%TEMP%\DreamShaderBuildPlugin`; must be outside the plugin tree and every engine root |
 | `-TargetPlatforms` | UAT syntax, `+`-separated. Defaults to `Win64` |
 | `-StopOnFailure` | Stop at the first failing engine instead of finishing the matrix |
 | `-KeepOutput` | Keep the staged plugin. Without it only the log survives — a green build is a few hundred MB per engine |
@@ -252,6 +252,14 @@ the number of engines that failed, so `0` means the matrix is green.
 | `-NoRocket` | Drop `-Rocket` |
 
 The full UAT log of every engine is kept under `<Package>\Logs\<Engine>.log`, pass or fail.
+
+Each engine builds into `<Package>\<Engine>` (`UE_5.8`, from `Build.version`), and that directory is
+deleted before the build, emptied by `BuildPlugin` itself, and deleted again after it unless
+`-KeepOutput`. So before anything is built or written, the script checks every engine's output
+directory and stops when one is a drive root, is or contains or sits inside an engine root or the
+plugin tree (`-Engine C:\UE\UE_5.8 -Package C:\UE` would otherwise name the engine itself), or
+already exists with files in it that the script did not put there. Its own output directories carry
+a `.build-plugin-output` marker, so a run after `-KeepOutput` reclaims them.
 
 ## Engine versions
 

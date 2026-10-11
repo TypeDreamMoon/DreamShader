@@ -43,8 +43,8 @@ param(
     # The .uplugin. Defaults to the one at or above this script.
     [string]$Plugin,
 
-    # Staging root. Each engine builds into <Package>\<EngineLabel>. Must not overlap the
-    # plugin tree -- UAT stages a clean copy there and refuses to nest it inside the source.
+    # Staging root. Each engine builds into <Package>\<EngineLabel>, which is deleted before and
+    # after the build. Must not overlap the plugin tree or any engine root -- see the guards below.
     [string]$Package,
 
     # Passed straight to BuildPlugin, in UAT's own syntax: '+'-separated, not commas.
@@ -142,6 +142,79 @@ function Get-EngineVersion {
     return "$($version.MajorVersion).$($version.MinorVersion).$($version.PatchVersion)"
 }
 
+# ---------------------------------------------------------------- output-directory guards
+#
+# Every engine's output directory is deleted before its build, deleted again after it (unless
+# -KeepOutput), and UAT itself empties it first (BuildPlugin calls DeleteDirectoryContents on -Package
+# and only refuses a directory under <Engine>/Engine -- the engine root itself it would empty). So a
+# directory is handed to Remove-Item or UAT only when it overlaps no input tree and is this script's own.
+
+# Written into each output directory; one that exists without it is not ours to delete.
+$ownerMarkerName = '.build-plugin-output'
+
+function Get-FullDirectory {
+    param([string]$Path)
+    return [System.IO.Path]::GetFullPath($Path).TrimEnd('\', '/')
+}
+
+function Test-PathOverlap {
+    <# True when the two directories are the same, or one is inside the other. #>
+    param([string]$A, [string]$B)
+
+    $a = Get-FullDirectory $A
+    $b = Get-FullDirectory $B
+    return $a.Equals($b, [StringComparison]::OrdinalIgnoreCase) -or
+        $a.StartsWith($b + '\', [StringComparison]::OrdinalIgnoreCase) -or
+        $b.StartsWith($a + '\', [StringComparison]::OrdinalIgnoreCase)
+}
+
+function Assert-OutputDirectory {
+    <#
+        Throws unless $OutputDir may be emptied and deleted: it overlaps none of $Protected (the
+        plugin tree and every engine root), it is not a drive root, and it is either absent, empty,
+        or carries the owner marker from an earlier run of this script.
+    #>
+    param([string]$OutputDir, [string[]]$Protected)
+
+    $full = Get-FullDirectory $OutputDir
+    if ([System.IO.Path]::GetPathRoot($full).TrimEnd('\', '/') -eq $full) {
+        throw "Output directory '$full' is a drive root. Pass a -Package directory below it."
+    }
+
+    foreach ($protectedDir in $Protected) {
+        if (Test-PathOverlap $full $protectedDir) {
+            throw "Output directory '$full' overlaps '$(Get-FullDirectory $protectedDir)'. It would be emptied and deleted; pass a -Package outside every engine root and the plugin tree."
+        }
+    }
+
+    if (-not (Test-Path -LiteralPath $full)) { return }
+    if (-not (Test-Path -LiteralPath $full -PathType Container)) {
+        throw "Output directory '$full' exists and is a file."
+    }
+
+    $hasMarker = Test-Path -LiteralPath (Join-Path $full $ownerMarkerName) -PathType Leaf
+    $isEmpty = $null -eq (Get-ChildItem -LiteralPath $full -Force | Select-Object -First 1)
+    if (-not $hasMarker -and -not $isEmpty) {
+        throw "Output directory '$full' already exists, is not empty, and was not created by this script (no $ownerMarkerName). Delete it yourself or pass another -Package."
+    }
+}
+
+function Remove-OutputDirectory {
+    <# The one way an output directory is deleted: the same guard before and after a build. #>
+    param([string]$OutputDir, [string[]]$Protected)
+
+    Assert-OutputDirectory -OutputDir $OutputDir -Protected $Protected
+    Remove-Item -LiteralPath $OutputDir -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+function Set-OutputOwner {
+    <# Marks an output directory as this script's. Re-run after UAT, which empties the directory. #>
+    param([string]$OutputDir)
+
+    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $OutputDir $ownerMarkerName) -Value "Created by $PSCommandPath. Safe to delete." -Encoding UTF8
+}
+
 $Engine = Expand-EngineList -Entries $Engine
 if ($Engine.Count -eq 0) { throw '-Engine resolved to no engine roots.' }
 
@@ -159,6 +232,20 @@ $Package = [System.IO.Path]::GetFullPath($Package)
 if ($Package.Equals($pluginDir, [StringComparison]::OrdinalIgnoreCase) -or
     $Package.StartsWith($pluginDir.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
     throw "-Package '$Package' is inside the plugin tree. Pick a directory outside '$pluginDir'."
+}
+
+# The plugin and every engine root are off limits to the deletes below. Check every engine's output
+# directory up front: a bad -Package fails before any engine is built, and before anything is written.
+$protectedDirs = @($pluginDir) + @($Engine | ForEach-Object { Get-FullDirectory $_ })
+foreach ($protectedDir in $protectedDirs) {
+    $fullProtected = Get-FullDirectory $protectedDir
+    if ($Package.TrimEnd('\', '/').Equals($fullProtected, [StringComparison]::OrdinalIgnoreCase) -or
+        $Package.StartsWith($fullProtected + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw "-Package '$Package' is inside '$fullProtected'. Pick a directory outside every engine root and the plugin tree."
+    }
+}
+foreach ($engineRoot in $Engine) {
+    Assert-OutputDirectory -OutputDir (Join-Path $Package (Get-EngineLabel -EngineRoot $engineRoot.TrimEnd('\', '/'))) -Protected $protectedDirs
 }
 
 $logDir = Join-Path $Package 'Logs'
@@ -208,7 +295,8 @@ foreach ($engineRoot in $Engine) {
 
     $outputDir = Join-Path $Package $label
     $logFile = Join-Path $logDir "$label.log"
-    Remove-Item -LiteralPath $outputDir -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-OutputDirectory -OutputDir $outputDir -Protected $protectedDirs
+    Set-OutputOwner -OutputDir $outputDir
 
     $uatArguments = @(
         'BuildPlugin',
@@ -235,6 +323,10 @@ foreach ($engineRoot in $Engine) {
     $exit = $LASTEXITCODE
     $stopwatch.Stop()
 
+    # UAT emptied the directory, marker included; claim it again so the cleanup below, or the next
+    # run after -KeepOutput, recognizes it.
+    Set-OutputOwner -OutputDir $outputDir
+
     Set-Content -LiteralPath $logFile -Value $captured -Encoding UTF8
 
     $diagnostics = @($captured | Where-Object { $_ -match $diagnostic } | Select-Object -Unique)
@@ -260,7 +352,7 @@ foreach ($engineRoot in $Engine) {
         })
 
     if (-not $KeepOutput) {
-        Remove-Item -LiteralPath $outputDir -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-OutputDirectory -OutputDir $outputDir -Protected $protectedDirs
     }
 
     if ($exit -ne 0 -and $StopOnFailure) { break }
