@@ -174,7 +174,7 @@ only valid on a numeric value of at least three components, and `m.BaseColor` on
 A value of type {0} has no method '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2985`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3101`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3116`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4907`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2985`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3103`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3118`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4909`
 <!-- generated:end DSH4208 -->
 
 **Cause.** A call was written on something that is not callable: a name that is not a function, a
@@ -300,7 +300,7 @@ every name the header would have declared to be `DSH4200` as well.
 The '{0}' argument of '{1}' is given twice.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3459`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3789`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4456`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4535`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4573`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:697`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3461`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3791`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4458`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4537`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4575`, `Source/DreamShaderLang/Private/Semantic/LangBinderSubstrate.cpp:697`
 <!-- generated:end DSH4215 -->
 
 **Cause.** One argument slot is filled twice in a call: the same parameter named twice, a named
@@ -321,7 +321,7 @@ named argument that names one of those parameters is the duplicate.
 '{0}' takes its arguments in order and has no argument called '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3424`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3767`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3426`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3769`
 <!-- generated:end DSH4216 -->
 
 **Cause.** A named argument names nothing in the callee: no parameter of that function, or no pin
@@ -341,7 +341,7 @@ a function's parameters.
 '{0}' is missing its '{1}' argument.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3487`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3841`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3489`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3843`
 <!-- generated:end DSH4217 -->
 
 **Cause.** A call leaves a parameter with no argument and no default, or a builtin without one of
@@ -361,7 +361,7 @@ function's input optional.
 '{0}' writes back {1}, and this variable is {2}; an out argument has to match exactly.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3902`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3947`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3904`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3949`
 <!-- generated:end DSH4218 -->
 
 **Cause.** An argument passed to an `out` / `inout` parameter is a variable of a different type.
@@ -403,7 +403,7 @@ fine — they are not visible to each other and each gets its own slot.
 {0}() has no components; write the value, as in 'float3(0.0)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3174`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3176`
 <!-- generated:end DSH4221 -->
 
 **Cause.** A constructor was written with no arguments: `float3()`.
@@ -422,7 +422,7 @@ time.
 '{0}' has {1} fields and this list has {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2704`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2809`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2842`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3240`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3312`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2704`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2809`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2842`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3242`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3314`
 <!-- generated:end DSH4222 -->
 
 **Cause.** The pieces do not add up: a constructor whose arguments' components do not total the
@@ -443,7 +443,7 @@ write `v4.xyz`. The one exception is a single scalar, which broadcasts to any wi
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1917`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2603`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2615`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2630`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3153`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1917`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2603`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2615`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2630`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3155`
 <!-- generated:end DSH4223 -->
 
 **Cause.** A cast the graph cannot carry: to or from a type that is not a number or a bool, or a
@@ -463,7 +463,7 @@ For a texture, a sampler, a `material` or a `Substrate` value there is no cast a
 '{0}' takes at most {1} arguments.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3445`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3505`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3715`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4951`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:5018`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3447`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3507`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3717`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4953`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:5020`
 <!-- generated:end DSH4224 -->
 
 **Cause.** A call has more or fewer arguments than the callee takes. For a texture sample the
@@ -483,7 +483,7 @@ on whether it was written.
 A constructor takes its components in order; named arguments belong on 'UE.' nodes and on function calls.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3165`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4919`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3167`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4921`
 <!-- generated:end DSH4225 -->
 
 **Cause.** Named arguments were used where only positional ones are taken: a constructor, a texture
@@ -503,7 +503,7 @@ or a property, and on calls to declared functions, where they match a parameter.
 {0} expects {1}, and this is {2}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1951`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1999`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2542`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3208`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3220`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1951`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:1999`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:2542`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3210`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3222`
 <!-- generated:end DSH4226 -->
 
 **Cause.** An operand does not fit where it is used. The two common shapes are a width that does not
@@ -615,7 +615,7 @@ result would depend on how the graph happened to be built.
 '{0}.{1}' is an output node, not a value: write it as a statement on a line of its own.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4800`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:4802`
 <!-- generated:end DSH4231 -->
 
 **Cause.** A node with no value was used as one. Custom-output classes (`ClearCoatBottomNormal`,
@@ -732,7 +732,7 @@ is not a list.
 '{0}' returns nothing, so its call has no value; its results come back through its out parameters.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3976`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3978`
 <!-- generated:end DSH4238 -->
 
 **Cause.** A call to a function that returns `void` was used as a value.
@@ -751,7 +751,7 @@ parameters, which the caller declares as variables and reads after the call.
 '{0}' is an out parameter of '{1}', so its argument has to be a variable.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3873`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3929`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3875`, `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3931`
 <!-- generated:end DSH4239 -->
 
 **Cause.** The argument passed to an `out` / `inout` parameter is not a variable, so there is
@@ -893,7 +893,7 @@ expression — even a constant one — cannot be used.
 The material graph has no hyperbolic node, so '{0}' cannot be lowered; write it in a '/// @custom' body, where the shader compiler has it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3364`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderExpressions.cpp:3366`
 <!-- generated:end DSH4246 -->
 
 **Cause.** `sinh`, `cosh` or `tanh` was called. The core table carries all three so a `/// @custom`

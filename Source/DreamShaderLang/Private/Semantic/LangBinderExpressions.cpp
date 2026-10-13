@@ -3097,6 +3097,8 @@ namespace UE::DreamShader::Lang::Private
 				Candidates.Add(Struct.Name);
 			}
 			const FString Suggestion = SuggestCaseInsensitive(Name, Candidates);
+			// `BL::Fn` is looked up as `BL_Fn`; the message names what the source wrote.
+			const FString Written = Identifier->WrittenName.IsEmpty() ? Name : Identifier->WrittenName;
 
 			Diagnostics.Error(
 				TEXT("DSH4208"),
@@ -3105,10 +3107,10 @@ namespace UE::DreamShader::Lang::Private
 				Suggestion.IsEmpty()
 					? FText::Format(
 						LOCTEXT("UnknownCallee", "'{0}' is not a function, a builtin or a struct."),
-						FText::FromString(Name))
+						FText::FromString(Written))
 					: FText::Format(
 						LOCTEXT("UnknownCalleeDidYouMean", "'{0}' is not declared; did you mean '{1}'? Names are case-sensitive."),
-						FText::FromString(Name),
+						FText::FromString(Written),
 						FText::FromString(Suggestion)));
 			return Fail(Expr);
 		}

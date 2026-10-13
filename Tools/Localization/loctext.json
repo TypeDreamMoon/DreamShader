@@ -7263,7 +7263,7 @@
   "key": "ArgumentsRightParen",
   "src": "')' to close an argument list",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
-  "line": 619
+  "line": 620
  },
  {
   "ns": "DreamShader.Lang.Expressions",
@@ -7284,14 +7284,14 @@
   "key": "ExpectedExpression",
   "src": "Expected an expression, found {0}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
-  "line": 544
+  "line": 545
  },
  {
   "ns": "DreamShader.Lang.Expressions",
   "key": "ExpectedInitializerList",
   "src": "Expected an initializer list, found {0}.",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
-  "line": 631
+  "line": 632
  },
  {
   "ns": "DreamShader.Lang.Expressions",
@@ -7312,35 +7312,35 @@
   "key": "InitializerListNotAnExpression",
   "src": "An initializer list is only allowed as a variable initializer, not as a general expression.",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
-  "line": 535
+  "line": 536
  },
  {
   "ns": "DreamShader.Lang.Expressions",
   "key": "InitializerListRightBrace",
   "src": "'}' to close an initializer list",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
-  "line": 671
+  "line": 672
  },
  {
   "ns": "DreamShader.Lang.Expressions",
   "key": "ParenRightParen",
   "src": "')' to close a parenthesized expression",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
-  "line": 521
+  "line": 522
  },
  {
   "ns": "DreamShader.Lang.Expressions",
   "key": "PositionalAfterNamedArgument",
   "src": "A positional argument cannot follow a named argument; give this argument a name too.",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
-  "line": 602
+  "line": 603
  },
  {
   "ns": "DreamShader.Lang.Expressions",
   "key": "WhileParsingArgumentList",
   "src": "an argument list",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
-  "line": 561
+  "line": 562
  },
  {
   "ns": "DreamShader.Lang.Expressions",
@@ -7354,7 +7354,7 @@
   "key": "WhileParsingInitializerList",
   "src": "an initializer list",
   "file": "DreamShaderLang\\Private\\Lang\\LangParserExpressions.cpp",
-  "line": 645
+  "line": 646
  },
  {
   "ns": "DreamShader.Lang.InstanceSource",
@@ -7396,49 +7396,49 @@
   "key": "CustomOutputType",
   "src": "Expected 'OutputType' of a Custom expression to be float1 to float4 or MaterialAttributes, found '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1558
+  "line": 1567
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "IgnoredNamedArgument",
   "src": "'{0}' is not an argument '{1}' reads; 1.x ignored it, so it is dropped.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1100
+  "line": 1109
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "IgnoredPositionalArgument",
   "src": "'{0}' takes no positional argument here; 1.x ignored it, so it is dropped.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1091
+  "line": 1100
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "LegacyTransformSpace",
   "src": "'{0}' is the 1.x name of the '{1}' space of '{2}'; a '.dss' writes '{1}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1487
+  "line": 1496
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "OutputIndexNotInteger",
   "src": "Expected 'OutputIndex' to be a whole number of zero or more, found '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1039
+  "line": 1048
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "OutputNotName",
   "src": "Expected 'Output' to name an output with a quoted name or an identifier, found '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1060
+  "line": 1069
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "PinCallPositional",
   "src": "Expected every argument of the parameter call '{0}' to name an input pin, found a positional argument.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1180
+  "line": 1189
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
@@ -7452,70 +7452,70 @@
   "key": "SampleTexture2DShape",
   "src": "Expected 'SampleTexture2D' to take exactly two positional arguments, a texture and coordinates, found {0} argument(s).",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1209
+  "line": 1218
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "SceneTextureShape",
   "src": "Expected 'UE.SceneTexture' to take exactly one argument, 'Id = ...', found {0} argument(s).",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1282
+  "line": 1291
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "SelectorBoth",
   "src": "Expected either 'Output' or 'OutputIndex' on this call, found both.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1027
+  "line": 1036
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "SelectorOnConstructor",
   "src": "Expected an output selector only on a call that has outputs, found one on the constructor '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1076
+  "line": 1085
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "SelectorOnParameterCall",
   "src": "Expected the parameter call '{0}' to take only its inputs, found an output selector.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1120
+  "line": 1129
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "StaticSwitchInputs",
   "src": "Expected the static switch '{0}' to be called with a 'True = ...' and a 'False = ...' input, found at most one of them.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1152
+  "line": 1161
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "StaticSwitchSugarDefault",
   "src": "Expected 'Default' of 'UE.StaticSwitchParameter' to be true or false, found '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1359
+  "line": 1368
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "StaticSwitchSugarInputs",
   "src": "Expected the static switch '{0}' to be called with a 'True = ...' and a 'False = ...' input, found at most one of them.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1339
+  "line": 1348
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "StaticSwitchSugarName",
   "src": "Expected 'UE.StaticSwitchParameter' to name its parameter with 'Name = \"...\"', found no name.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1313
+  "line": 1322
  },
  {
   "ns": "DreamShader.Lang.LegacyExpressions",
   "key": "StaticSwitchSugarSort",
   "src": "Expected 'SortPriority' of 'UE.StaticSwitchParameter' to be a whole number, found '{0}'.",
   "file": "DreamShaderLang\\Private\\Lang\\LangLegacyExpressions.cpp",
-  "line": 1373
+  "line": 1382
  },
  {
   "ns": "DreamShader.Lang.LegacyParser",

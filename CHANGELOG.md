@@ -1,5 +1,16 @@
 # DreamShader ChangeLog
 
+## Unreleased
+
+### Fixed
+
+- **A `.dss` calls a 1.x `Namespace` member as `Ns::Fn(...)`.** A library header such as dreamshader-blender
+  declares its functions in `Namespace(Name = "BL")` and its Graphs call them `BL::TexNoise3D(...)`, but in a
+  `.dss` that included it the same call was `DSH2154` at the second `:` ("Expected ';' after an expression
+  statement, found ':'"); only the flattened `BL_TexNoise3D(...)` reached the function. The `.dss` parser now
+  reads `Ns::Fn` as the 1.x front end does, the printer and `dsc fmt` keep the qualified spelling, and an
+  unknown member is `DSH4208` naming `Ns::Fn` as written. See [Namespace](Docs/language/namespace.md#calling-a-namespaced-function).
+
 ## 2.1.2 - 2026-10-11
 
 ### Changed

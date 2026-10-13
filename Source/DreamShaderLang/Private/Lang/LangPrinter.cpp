@@ -372,7 +372,10 @@ namespace UE::DreamShader::Lang
 				return PrintLiteral(static_cast<const FLiteralExpr&>(Expr));
 
 			case ENodeKind::IdentifierExpr:
-				return static_cast<const FIdentifierExpr&>(Expr).Name;
+			{
+				const FIdentifierExpr& Identifier = static_cast<const FIdentifierExpr&>(Expr);
+				return Identifier.WrittenName.IsEmpty() ? Identifier.Name : Identifier.WrittenName;
+			}
 
 			case ENodeKind::TypeExpr:
 				return PrintType(static_cast<const FTypeExpr&>(Expr).Type);

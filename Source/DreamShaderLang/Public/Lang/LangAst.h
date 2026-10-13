@@ -286,6 +286,12 @@ namespace UE::DreamShader::Lang
 		FIdentifierExpr() : FExpr(StaticKind) {}
 
 		FString Name;
+
+		/**
+		 * `Ns::Fn` as a `.dss` wrote it, when Name is the flattened `Ns_Fn` a 1.x `Namespace` member is declared under;
+		 * empty when Name is what was written. Only the printer and diagnostics read it.
+		 */
+		FString WrittenName;
 	};
 
 	/** A type in expression position: the callee of a constructor call `float3(...)`, or a cast target. */

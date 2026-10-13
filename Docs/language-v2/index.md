@@ -84,6 +84,7 @@ export float2 MF_ToonUV(float UVChannel = 0.0, float4 ScaleOffset = float4(1, 1,
 | `extern <Type> Name(params);` | A prototype bound to an existing asset through `/// @asset`. No body. |
 | `struct Name { … };` | Fields may carry their own `///` block and array dimensions. No methods, no nesting. |
 | `#include "path"` · `import "path";` | The same thing; the spelling is recorded so the printer reproduces what was written. The path must be **double-quoted**: `#include <Engine/Private/Common.ush>` is HLSL's spelling, not this one, and is `DSH3203`. The parser does not open the file; the binder reads and binds it. |
+| `Ns::Fn(…)` | A call to a member of a 1.x `Namespace` in an included header, which is declared as `Ns_Fn`; the qualified spelling is kept by the printer *(after 2.1.2)*. See [Namespace](../language/namespace.md#calling-a-namespaced-function). |
 | `#pragma material(Key = Value, …)` | File-level material settings. |
 | `#pragma layout(Node\|Comment, Key = Value, …)` | Decompiler-written node coordinates. |
 | `#pragma region Name` · `#pragma endregion` | The 2.0 spelling of the 1.x `#Region` comment box. |

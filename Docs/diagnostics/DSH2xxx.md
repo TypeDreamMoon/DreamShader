@@ -216,7 +216,7 @@ function whose `}` is missing; the reported position is the end of the file, not
 Expected an expression, found {0}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:543`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:630`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:544`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:631`
 <!-- generated:end DSH2151 -->
 
 **Cause.** a token that cannot begin a value turned up where a value was required: a stray `,` or
@@ -237,7 +237,7 @@ the previous statement is usually the one missing its `;`.
 Expected ')' to close a cast, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:253`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:521`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:619`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:159`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:259`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:294`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:341`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:253`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:522`, `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:620`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:159`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:259`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:294`, `Source/DreamShaderLang/Private/Lang/LangParserStatements.cpp:341`
 <!-- generated:end DSH2152 -->
 
 **Cause.** an unbalanced `(`. The parser read a complete expression and then found something other
@@ -301,7 +301,7 @@ function.
 Expected '}' to close an initializer list, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:671`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:672`
 <!-- generated:end DSH2155 -->
 
 **Cause.** a `{ … }` initializer whose `}` is missing, or an element that is not an expression
@@ -340,7 +340,7 @@ HLSL, the condition of `if`, `for`, `while` and `do … while` is always parenth
 A positional argument cannot follow a named argument; give this argument a name too.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:602`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:603`
 <!-- generated:end DSH2158 -->
 
 **Cause.** a call that mixes the two argument forms in the wrong order — `Fn(A = 1, x)`. A named
@@ -432,7 +432,7 @@ was meant to be part of a float literal (`1 .5`).
 An initializer list is only allowed as a variable initializer, not as a general expression.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:535`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserExpressions.cpp:536`
 <!-- generated:end DSH2162 -->
 
 **Cause.** a `{ … }` used as a value — as a call argument, in a `return`, or on the right of an

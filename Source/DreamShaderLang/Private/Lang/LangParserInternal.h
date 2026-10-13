@@ -309,8 +309,11 @@ namespace UE::DreamShader::Lang::Private
 
 		/** Legacy classification of a type spelling; true for every builtin the 1.x type tokens name. */
 		static bool IsLegacyBuiltinTypeName(const FString& Name);
-		/** In legacy mode, at `Ident :: Ident ...`: the flattened `N_F` identifier (1.x SanitizeIdentifier). */
-		FExprPtr ParseLegacyQualifiedName();
+		/**
+		 * At `Ident :: Ident ...`: the flattened `N_F` identifier (1.x SanitizeIdentifier). Outside legacy mode the
+		 * written `N::F` is kept on the node for the printer and no migration rename is recorded.
+		 */
+		FExprPtr ParseQualifiedName();
 		/** In legacy mode, a bare read of a property expanded at its uses (TextureSampleParameter2D, ChannelMaskParameter, ...); null when Name is none. */
 		FExprPtr TryExpandLegacyPropertyRead(const FString& Name, const FLangSpan& Span);
 		/** Records one rename into the migration info (no-op without one). */

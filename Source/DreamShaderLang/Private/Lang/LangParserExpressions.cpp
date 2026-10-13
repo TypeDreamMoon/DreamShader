@@ -446,15 +446,16 @@ namespace UE::DreamShader::Lang::Private
 			break;
 
 		case ELangTokenKind::Identifier:
+			// `N::F` is the flattened function `N_F` in both languages: a `.dss` that includes a 1.x header calls its
+			// `Namespace` members the way the header's own Graphs do.
+			if (Peek(1).Kind == ELangTokenKind::Colon && Peek(2).Kind == ELangTokenKind::Colon)
+			{
+				return ParseQualifiedName();
+			}
 			if (IsLegacyMode())
 			{
-				// The 1.x spellings a 2.0 file does not have: `N::F` is the flattened
-				// function `N_F`; `True` and `FALSE` are the bool literals; a type token is classified the 1.x
-				// way; and a bare read of a parameter-node property is its reflected call.
-				if (Peek(1).Kind == ELangTokenKind::Colon && Peek(2).Kind == ELangTokenKind::Colon)
-				{
-					return ParseLegacyQualifiedName();
-				}
+				// The 1.x spellings a 2.0 file does not have: `True` and `FALSE` are the bool literals; a type token
+				// is classified the 1.x way; and a bare read of a parameter-node property is its reflected call.
 				if (Token.Text.Equals(TEXT("true"), ESearchCase::IgnoreCase) || Token.Text.Equals(TEXT("false"), ESearchCase::IgnoreCase))
 				{
 					TUniquePtr<FLiteralExpr> Node = MakeUnique<FLiteralExpr>();

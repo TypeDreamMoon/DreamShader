@@ -390,6 +390,78 @@ bool FDreamShaderLegacyRulesLegacyScopeTest::RunTest(const FString& Parameters)
 }
 
 // ---------------------------------------------------------------------------------------------
+// A `.dss` calls a 1.x Namespace member by its qualified name
+// ---------------------------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FDreamShaderLegacyRulesQualifiedCallFromDssTest,
+	"DreamShader.Lang2.LegacyRules.QualifiedCallFromDss",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+// A library header such as dreamshader-blender declares its functions in `Namespace(Name = "BL")`, and its own
+// Graphs call them `BL::TexNoise3D(...)`. A `.dss` that includes it must be able to write the same thing: it was
+// DSH2154 at the second ':' ("Expected ';' after an expression statement"), and only the flattened `BL_TexNoise3D`
+// reached the function.
+bool FDreamShaderLegacyRulesQualifiedCallFromDssTest::RunTest(const FString& Parameters)
+{
+	using namespace UE::DreamShader::Editor::Private::LegacyRulesTests;
+
+	const FString Directory = FPaths::Combine(UE::DreamShader::Editor::Private::Tests::GetDreamShaderCorpusRoot(), TEXT("Migrate"), TEXT("Headers"));
+	FIRRunOptions Options;
+	Options.IncludeDirectory = Directory;
+
+	{
+		FIRRun Run;
+		Lower(Run, *FPaths::Combine(Directory, TEXT("M_Qualified.dss")), TEXT(
+			"#include \"H_Mixed.dsh\"\n"
+			"export void M_Qualified(inout material m)\n"
+			"{\n"
+			"    float3 Tinted;\n"
+			"    Common::ApplyTint(float3(1, 0.5, 0.25), float3(0.5, 0.5, 0.5), Tinted);\n"
+			"    float2 Texel;\n"
+			"    Common::TexelSize(2.0, Texel);\n"
+			"    m.EmissiveColor = Tinted * Texel.x;\n"
+			"}\n"), Options);
+		TestTrue(FString::Printf(TEXT("`Common::ApplyTint` and `Common::TexelSize` bind and lower (errors: %s)"), *Run.ErrorText()),
+			Run.Succeeded());
+	}
+
+	{
+		FIRRun Run;
+		Lower(Run, *FPaths::Combine(Directory, TEXT("M_QualifiedMissing.dss")), TEXT(
+			"#include \"H_Mixed.dsh\"\n"
+			"export void M_QualifiedMissing(inout material m)\n"
+			"{\n"
+			"    float3 Out;\n"
+			"    Common::Missing(float3(1, 1, 1), Out);\n"
+			"    m.EmissiveColor = Out;\n"
+			"}\n"), Options);
+		TestTrue(FString::Printf(TEXT("an unknown member is DSH4208, named as written (errors: %s)"), *Run.ErrorText()),
+			Run.Errors.ContainsByPredicate([](const FString& Line)
+			{
+				return Line.StartsWith(TEXT("DSH4208")) && Line.Contains(TEXT("'Common::Missing'"));
+			}));
+	}
+
+	{
+		const FLangSourceText Source(TEXT("M_Print.dss"), FString(TEXT(
+			"export void M_Print(inout material m)\n"
+			"{\n"
+			"    float3 r;\n"
+			"    BL::TexNoise3D(float3(0, 0, 0), r);\n"
+			"    m.EmissiveColor = r;\n"
+			"}\n")));
+		const FLangParseResult Parse = ParseDreamShaderLang(Source);
+		if (TestTrue(TEXT("`BL::TexNoise3D(...)` parses in a .dss"), Parse.Succeeded()))
+		{
+			const FString Printed = PrintDreamShaderLang(*Parse.Module);
+			TestTrue(FString::Printf(TEXT("the printer keeps the qualified spelling:\n%s"), *Printed), Printed.Contains(TEXT("BL::TexNoise3D(")));
+		}
+	}
+	return true;
+}
+
+// ---------------------------------------------------------------------------------------------
 // The instance schema
 // ---------------------------------------------------------------------------------------------
 
