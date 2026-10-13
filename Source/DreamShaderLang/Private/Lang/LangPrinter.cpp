@@ -129,6 +129,7 @@ namespace UE::DreamShader::Lang
 			case EPragmaKind::EndRegion: return TEXT("endregion");
 			case EPragmaKind::Instance:  return TEXT("instance");
 			case EPragmaKind::Pipeline:  return TEXT("pipeline");
+			case EPragmaKind::Generate:  return TEXT("generate");
 			case EPragmaKind::Unknown:
 			default:                     return TEXT("");
 			}
@@ -1119,6 +1120,7 @@ namespace UE::DreamShader::Lang
 			case EPragmaKind::Layout:
 			case EPragmaKind::Instance:
 			case EPragmaKind::Pipeline:
+			case EPragmaKind::Generate:
 			{
 				Line += TEXT("(");
 				for (int32 ArgumentIndex = 0; ArgumentIndex < Decl.Arguments.Num(); ++ArgumentIndex)

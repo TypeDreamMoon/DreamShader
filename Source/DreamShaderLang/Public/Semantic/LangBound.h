@@ -47,6 +47,7 @@ namespace UE::DreamShader::Lang
 		inline const TCHAR* const Page = TEXT("page");           // `.dsi` Font override: the font page
 		inline const TCHAR* const Pin = TEXT("pin");             // "<ParamName> <engine pin name...>"
 		inline const TCHAR* const Root = TEXT("root");           // 1.x Root= spelling: Game | Engine | Plugin.Name | Plugins/Name | /Mount
+		inline const TCHAR* const Generate = TEXT("generate");   // in a package header: the material function asset to generate for this function; "none" opts out
 	}
 
 	/** Every directive on one declaration, parsed. Unknown keys sit in Passthrough. */
@@ -59,6 +60,8 @@ namespace UE::DreamShader::Lang
 		FString DefaultAsset;
 		FString Library;
 		FString Asset;
+		/** `@generate`: what a package's asset header generates for the function. Read by the compiler's package pass, not by the binder. */
+		FString Generate;
 		bool bHasSlider = false;
 		double SliderMin = 0.0;
 		double SliderMax = 1.0;
@@ -616,6 +619,12 @@ namespace UE::DreamShader::Lang
 		 * references are taken as written and every check that needs an engine fact is skipped.
 		 */
 		const FPipelineReferences* PipelineReferences = nullptr;
+		/**
+		 * Whether a function's `@generate` may stand in File: only a package's header generates material functions, and only
+		 * the host knows the package trees. Unset, nothing is checked; set (the compiler sets it), a `@generate` in any other
+		 * file is DSH7234 and does nothing.
+		 */
+		TFunction<bool(const FString& File)> IsGenerateAllowedInFile;
 	};
 
 	struct FLangBindResult

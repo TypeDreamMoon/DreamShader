@@ -230,6 +230,7 @@ namespace UE::DreamShader::Lang::Private
 				case EPragmaKind::Pipeline:
 					ReportPipelinePragmaOutsideDsp(Pragma);
 					break;
+				case EPragmaKind::Generate:
 				case EPragmaKind::Unknown:
 					break;
 				}

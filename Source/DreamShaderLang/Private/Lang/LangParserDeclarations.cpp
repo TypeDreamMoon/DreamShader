@@ -689,7 +689,8 @@ namespace UE::DreamShader::Lang::Private
 		const bool bInstance = Name.Equals(TEXT("instance"), ESearchCase::CaseSensitive);
 		const bool bPipeline = Name.Equals(TEXT("pipeline"), ESearchCase::CaseSensitive);
 		const bool bLayout = Name.Equals(TEXT("layout"), ESearchCase::CaseSensitive);
-		if (!bMaterial && !bInstance && !bPipeline && !bLayout)
+		const bool bGenerate = Name.Equals(TEXT("generate"), ESearchCase::CaseSensitive);
+		if (!bMaterial && !bInstance && !bPipeline && !bLayout && !bGenerate)
 		{
 			Pragma->PragmaKind = EPragmaKind::Unknown;
 			Pragma->Text = Arguments;
@@ -697,8 +698,8 @@ namespace UE::DreamShader::Lang::Private
 		}
 		Pragma->PragmaKind = bMaterial
 			? EPragmaKind::Material
-			: (bInstance ? EPragmaKind::Instance : (bPipeline ? EPragmaKind::Pipeline : EPragmaKind::Layout));
-		const bool bKeyedArgumentsOnly = bMaterial || bInstance || bPipeline;
+			: (bInstance ? EPragmaKind::Instance : (bPipeline ? EPragmaKind::Pipeline : (bGenerate ? EPragmaKind::Generate : EPragmaKind::Layout)));
+		const bool bKeyedArgumentsOnly = bMaterial || bInstance || bPipeline || bGenerate;
 
 		// `(` Key = Value {, Key = Value} `)` -- a bare word is positional (`#pragma layout(Node, ...)`).
 		FPragmaScanner Scanner(Arguments);

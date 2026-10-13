@@ -622,6 +622,12 @@ namespace UE::DreamShader::Lang
 		 * arguments like `material`, and a value may also be a dotted name or a `|` list of words (FPragmaArgument::Value).
 		 */
 		Pipeline,
+		/**
+		 * `#pragma generate(Functions = "MF_{Name}", Library = "Cat|Sub", Desc = "...")` -- in a package's asset header:
+		 * every function declared after it, with a body and no linkage keyword, generates a material function (the
+		 * compiler's package pass reads it; `/// @generate` on one function overrides it, `@generate none` opts out).
+		 */
+		Generate,
 		/** Any other `#pragma`; kept for the printer, ignored by everything else. */
 		Unknown,
 	};

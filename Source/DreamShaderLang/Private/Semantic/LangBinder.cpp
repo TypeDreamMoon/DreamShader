@@ -366,6 +366,8 @@ namespace UE::DreamShader::Lang::Private
 				case EPragmaKind::Instance:  ReportInstancePragmaOutsideDsi(Pragma); break;
 				// Only a `.dsp` holds one, and a `.dsp` never reaches the declare pass either (BindPipelineModule).
 				case EPragmaKind::Pipeline:  ReportPipelinePragmaOutsideDsp(Pragma); break;
+				// Read by the compiler's package pass over an asset header; nothing to bind.
+				case EPragmaKind::Generate:  break;
 				case EPragmaKind::Unknown:   break;
 				}
 				break;
@@ -884,6 +886,18 @@ namespace UE::DreamShader::Lang::Private
 			Function.ReturnType = IR::FIRType::Error();
 		}
 		Function.Directives = BindDirectives(Decl.Doc, EDirectiveTarget::Function, nullptr);
+		if (!Function.Directives.Generate.IsEmpty() && Options.IsGenerateAllowedInFile && !Options.IsGenerateAllowedInFile(File))
+		{
+			const FDocDirective* GenerateDirective = Decl.Doc.Find(Directive::Generate);
+			Diagnostics.Warning(
+				TEXT("DSH7234"),
+				File,
+				GenerateDirective && GenerateDirective->Span.Length > 0 ? GenerateDirective->Span : Decl.NameSpan,
+				FText::Format(
+					LOCTEXT("GenerateOutsidePackage", "'{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in one, so nothing is generated. Write an 'export' function (or a 1.x ShaderFunction) to make a material function of your own."),
+					FText::FromString(Decl.Name),
+					FText::FromString(Function.Directives.Generate)));
+		}
 
 		// BindDirectives only knows it is looking at a function. Three keys are read for one linkage
 		// alone and ignored on every other: `@asset` binds an `extern` prototype to its asset, and
@@ -892,10 +906,13 @@ namespace UE::DreamShader::Lang::Private
 		// (a 1.x function of a Namespace block said `N::F` there, and its migrated text still does).
 		// Said here, where the linkage is known, with the code and wording of the other misplaced directives.
 		const bool bCustomFunction = Decl.Doc.Has(Directive::Custom);
+		// A function a package generates (`@generate`) is the one non-export a `@library` describes: the material
+		// function generated from it.
+		const bool bGenerated = Decl.Doc.Has(Directive::Generate);
 		for (const FDocDirective& Entry : Decl.Doc.Directives)
 		{
 			const bool bAsset = Entry.Key.Equals(Directive::Asset, ESearchCase::CaseSensitive);
-			const bool bExportOnly = Entry.Key.Equals(Directive::Library, ESearchCase::CaseSensitive)
+			const bool bExportOnly = (Entry.Key.Equals(Directive::Library, ESearchCase::CaseSensitive) && !bGenerated)
 				|| (Entry.Key.Equals(Directive::Name, ESearchCase::CaseSensitive) && !bCustomFunction);
 			// `@root` (legacy rule L10) is the Root= of a 1.x block that produces an asset, and describes nothing else.
 			const bool bRoot = Entry.Key.Equals(Directive::Root, ESearchCase::CaseSensitive);

@@ -328,6 +328,19 @@ namespace UE::DreamShader::Lang::Private
 					Out.Library = Value;
 				}
 			}
+			else if (Key.Equals(Directive::Generate, ESearchCase::CaseSensitive))
+			{
+				// Meaningful only in a package's asset header, where the compiler's package pass reads it; anywhere else the
+				// compile that sees it says so (DSH8272). Here it is only kept off the reflected pass-through.
+				if (!bOnFunction)
+				{
+					WrongTarget(LOCTEXT("TargetFunctionGenerate", "a function"));
+				}
+				if (RequireValue())
+				{
+					Out.Generate = Value;
+				}
+			}
 			else if (Key.Equals(Directive::Param, ESearchCase::CaseSensitive))
 			{
 				if (!bOnFunction)
