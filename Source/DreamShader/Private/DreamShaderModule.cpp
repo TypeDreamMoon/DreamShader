@@ -281,6 +281,128 @@ namespace UE::DreamShader
 			|| Path.StartsWith(Directory + TEXT("/"), ESearchCase::IgnoreCase);
 	}
 
+	namespace Private
+	{
+		/** The segments of `InPath` below its root's `Packages` folder, or false when it is under none. */
+		static bool SplitPackageRelativePath(const FString& InPath, const FDreamShaderSourceRoot*& OutRoot, TArray<FString>& OutSegments)
+		{
+			OutRoot = FindSourceRootForFile(InPath);
+			if (OutRoot == nullptr || !IsPathUnderSourceDirectory(InPath, OutRoot->PackagesDirectory))
+			{
+				return false;
+			}
+
+			FString PackagesDirectory = NormalizeSourceFilePath(OutRoot->PackagesDirectory);
+			PackagesDirectory.RemoveFromEnd(TEXT("/"));
+			const FString Relative = NormalizeSourceFilePath(InPath).RightChop(PackagesDirectory.Len());
+			Relative.ParseIntoArray(OutSegments, TEXT("/"), /*InCullEmpty*/ true);
+			return true;
+		}
+
+		/** How many leading segments name the package: `@scope/name` is two, `name` is one; 0 when the path is too short to be in one. */
+		static int32 GetPackageSegmentCount(const TArray<FString>& Segments)
+		{
+			const int32 Count = Segments.Num() > 0 && Segments[0].StartsWith(TEXT("@")) ? 2 : 1;
+			// The path must name something inside the package, not the package folder itself.
+			return Segments.Num() > Count ? Count : 0;
+		}
+
+		/** One package-path segment from a folder name: no leading `@`, and `_` for every character a long package name refuses. */
+		static FString SanitizePackageAssetSegment(const FString& Segment)
+		{
+			FString Result = Segment;
+			Result.RemoveFromStart(TEXT("@"));
+			for (TCHAR& Character : Result)
+			{
+				if (!FChar::IsAlnum(Character) && Character != TEXT('_') && Character != TEXT('-'))
+				{
+					Character = TEXT('_');
+				}
+			}
+			return Result;
+		}
+	}
+
+	FString FindPackageDirectoryForFile(const FString& InPath)
+	{
+		const FDreamShaderSourceRoot* Root = nullptr;
+		TArray<FString> Segments;
+		if (!Private::SplitPackageRelativePath(InPath, Root, Segments))
+		{
+			return FString();
+		}
+		const int32 Count = Private::GetPackageSegmentCount(Segments);
+		if (Count == 0)
+		{
+			return FString();
+		}
+
+		FString Directory = NormalizeSourceFilePath(Root->PackagesDirectory);
+		Directory.RemoveFromEnd(TEXT("/"));
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Directory += TEXT("/") + Segments[Index];
+		}
+		return Directory;
+	}
+
+	bool IsPackageFilePath(const FString& InPath)
+	{
+		const FDreamShaderSourceRoot* Root = FindSourceRootForFile(InPath);
+		return Root != nullptr && IsPathUnderSourceDirectory(InPath, Root->PackagesDirectory);
+	}
+
+	bool IsPackageAssetsSourceFile(const FString& InPath)
+	{
+		if (!IsDreamShaderLang2File(InPath) && !IsDreamShaderFunctionFile(InPath) && !IsDreamShaderInstanceFile(InPath))
+		{
+			return false;
+		}
+		const FString PackageDirectory = FindPackageDirectoryForFile(InPath);
+		return !PackageDirectory.IsEmpty() && IsPathUnderSourceDirectory(InPath, PackageDirectory + TEXT("/Assets"));
+	}
+
+	FString GetPackageAssetRoot(const FString& InPath)
+	{
+		const FDreamShaderSourceRoot* Root = nullptr;
+		TArray<FString> Segments;
+		if (!Private::SplitPackageRelativePath(InPath, Root, Segments))
+		{
+			return FString();
+		}
+		const int32 Count = Private::GetPackageSegmentCount(Segments);
+		if (Count == 0)
+		{
+			return FString();
+		}
+
+		// A plugin root's packages build into that plugin's mount point, as the plugin's own sources do.
+		FString AssetRoot = Root->PluginName.IsEmpty()
+			? FString(TEXT("/Game/DreamShaderPackages"))
+			: FString::Printf(TEXT("/%s/DreamShaderPackages"), *Root->PluginName);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			AssetRoot += TEXT("/") + Private::SanitizePackageAssetSegment(Segments[Index]);
+		}
+		return AssetRoot;
+	}
+
+	FString GetPackageAssetsRelativeDirectory(const FString& InPath)
+	{
+		const FString PackageDirectory = FindPackageDirectoryForFile(InPath);
+		if (PackageDirectory.IsEmpty())
+		{
+			return FString();
+		}
+		const FString AssetsDirectory = PackageDirectory + TEXT("/Assets");
+		FString Directory = FPaths::GetPath(NormalizeSourceFilePath(InPath));
+		if (!IsPathUnderSourceDirectory(Directory, AssetsDirectory) || Directory.Len() <= AssetsDirectory.Len())
+		{
+			return FString();
+		}
+		return Directory.RightChop(AssetsDirectory.Len() + 1);
+	}
+
 	FString GetGeneratedShaderDirectory()
 	{
 		const FString VirtualDirectory = GetGeneratedShaderVirtualDirectory();
