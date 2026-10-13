@@ -19,7 +19,7 @@
       </p>
       <p>
         <a href="README.md">English</a> &nbsp;·&nbsp;
-        <a href="Docs/index.md">文档</a> &nbsp;·&nbsp;
+        <a href="Docs/README.md">文档</a> &nbsp;·&nbsp;
         <a href="Docs/getting-started.md">快速上手</a> &nbsp;·&nbsp;
         <a href="Docs/language/index.md">语法参考</a> &nbsp;·&nbsp;
         <a href="Docs/examples/index.md">示例</a> &nbsp;·&nbsp;
