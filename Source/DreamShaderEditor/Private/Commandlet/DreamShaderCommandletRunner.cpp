@@ -446,10 +446,10 @@ namespace UE::DreamShader::Editor::Private
 			return false;
 		}
 
-		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(OutSourceFiles);
+		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(OutSourceFiles, EDreamShaderPackageSources::IncludeBuildable);
 		OutSourceFiles.RemoveAll([](const FString& SourceFile)
 		{
-			return UE::DreamShader::IsDreamShaderHeaderFile(SourceFile);
+			return !FDreamShaderSourceFileUtils::IsCompileUnit(SourceFile);
 		});
 		SortDreamShaderSourcesForBatch(OutSourceFiles);
 		return true;
@@ -492,9 +492,9 @@ namespace UE::DreamShader::Editor::Private
 		TArray<FString> CompileUnits;
 		for (const FString& SourceFile : SourceFiles)
 		{
-			if (!UE::DreamShader::IsDreamShaderSourceFile(SourceFile) || UE::DreamShader::IsDreamShaderHeaderFile(SourceFile))
+			if (!FDreamShaderSourceFileUtils::IsCompileUnit(SourceFile))
 			{
-				UE_LOG(LogDreamShader, Error, TEXT("DreamShader compile requires a .dss, .dsi, .dsp, .dsm or .dsf file: %s"), *SourceFile);
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader compile requires a .dss, .dsi, .dsp, .dsm or .dsf file, or a package's asset header: %s"), *SourceFile);
 				bSucceeded = false;
 				continue;
 			}
@@ -566,9 +566,9 @@ namespace UE::DreamShader::Editor::Private
 		{
 			// Same per-file guard the compile loop applies, and for the same reason: one bad path
 			// must not stop a -All sweep, but the run still has to exit non-zero.
-			if (!UE::DreamShader::IsDreamShaderSourceFile(SourceFile) || UE::DreamShader::IsDreamShaderHeaderFile(SourceFile))
+			if (!FDreamShaderSourceFileUtils::IsCompileUnit(SourceFile))
 			{
-				UE_LOG(LogDreamShader, Error, TEXT("DreamShader dump-graph requires a .dss, .dsi, .dsp, .dsm or .dsf file: %s"), *SourceFile);
+				UE_LOG(LogDreamShader, Error, TEXT("DreamShader dump-graph requires a .dss, .dsi, .dsp, .dsm or .dsf file, or a package's asset header: %s"), *SourceFile);
 				bSucceeded = false;
 				continue;
 			}

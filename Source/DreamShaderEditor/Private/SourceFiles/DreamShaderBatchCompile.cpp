@@ -6,12 +6,13 @@
 
 namespace UE::DreamShader::Editor::Private
 {
+	// A `.dsh` that reaches a batch is a package's asset header, which builds material functions as a `.dsf` does.
 	void SortDreamShaderSourcesForBatch(TArray<FString>& InOutSourceFiles)
 	{
 		InOutSourceFiles.Sort([](const FString& Left, const FString& Right)
 		{
-			const int32 LeftRank = UE::DreamShader::IsDreamShaderFunctionFile(Left) ? 0 : 1;
-			const int32 RightRank = UE::DreamShader::IsDreamShaderFunctionFile(Right) ? 0 : 1;
+			const int32 LeftRank = (UE::DreamShader::IsDreamShaderFunctionFile(Left) || UE::DreamShader::IsDreamShaderHeaderFile(Left)) ? 0 : 1;
+			const int32 RightRank = (UE::DreamShader::IsDreamShaderFunctionFile(Right) || UE::DreamShader::IsDreamShaderHeaderFile(Right)) ? 0 : 1;
 			if (LeftRank != RightRank)
 			{
 				return LeftRank < RightRank;

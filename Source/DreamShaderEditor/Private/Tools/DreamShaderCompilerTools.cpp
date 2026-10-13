@@ -22,6 +22,7 @@
 
 #include "Commandlet/DreamShaderCommandletRunner.h"
 #include "DreamShaderModule.h"
+#include "DreamShaderSourceFileUtils.h"
 #include "IR/IRDump.h"
 #include "IR/IRLayout.h"
 #include "Lang/LangFormat.h"
@@ -229,7 +230,8 @@ namespace UE::DreamShader::Editor::Compiler
 				continue;
 			}
 
-			// Every extension IsDreamShaderLang2Source accepts; a header is compiled only through a source that includes it.
+			// Every extension IsDreamShaderLang2Source accepts. A header is compiled only through a source that includes
+			// it, unless it is a package's asset header, which is looked for in the package tree alone.
 			TArray<FString> Found;
 			for (const TCHAR* const Pattern : { TEXT("*.dss"), TEXT("*.dsi"), TEXT("*.dsp"), TEXT("*.dsm"), TEXT("*.dsf") })
 			{
@@ -241,13 +243,18 @@ namespace UE::DreamShader::Editor::Compiler
 					/*Directories*/ false,
 					/*bClearFileNames*/ false);
 			}
+			if (IFileManager::Get().DirectoryExists(*Root.PackagesDirectory))
+			{
+				IFileManager::Get().FindFilesRecursive(Found, *Root.PackagesDirectory, TEXT("*.dsh"), /*Files*/ true, /*Directories*/ false, /*bClearFileNames*/ false);
+			}
 
 			for (const FString& File : Found)
 			{
 				const FString Normalized = UE::DreamShader::NormalizeSourceFilePath(File);
-				// The Packages tree is a third-party drop, compiled only when something imports it --
-				// the same exclusion FindProjectDreamShaderSourceFiles makes for the 1.x extensions.
-				if (UE::DreamShader::IsPathUnderSourceDirectory(Normalized, Root.PackagesDirectory))
+				// The Packages tree is a third-party drop, compiled only when something imports it -- apart from what a
+				// package asks to have built: its Assets sources and its asset headers (FindProjectDreamShaderSourceFiles).
+				if (UE::DreamShader::IsPathUnderSourceDirectory(Normalized, Root.PackagesDirectory)
+					&& !::UE::DreamShader::Editor::Private::FDreamShaderSourceFileUtils::IsBuildablePackageFile(Normalized))
 				{
 					continue;
 				}

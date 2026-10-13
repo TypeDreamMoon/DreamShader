@@ -412,7 +412,7 @@ namespace UE::DreamShader::Editor::Private
 		UnmanagedCount = 0;
 
 		TArray<FString> SourceFiles;
-		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles);
+		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles, EDreamShaderPackageSources::IncludeBuildable);
 		SourceFiles.Sort();
 
 		DependentsByFile.Reset();

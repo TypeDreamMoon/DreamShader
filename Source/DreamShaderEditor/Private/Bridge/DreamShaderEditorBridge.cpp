@@ -970,7 +970,7 @@ namespace UE::DreamShader::Editor::Private
 		};
 
 		TArray<FString> SourceFiles;
-		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles);
+		FDreamShaderSourceFileUtils::FindProjectDreamShaderSourceFiles(SourceFiles, EDreamShaderPackageSources::IncludeBuildable);
 
 		if (SourceFiles.IsEmpty())
 		{
@@ -991,7 +991,7 @@ namespace UE::DreamShader::Editor::Private
 		for (const FString& SourceFile : SourceFiles)
 		{
 			const FString NormalizedPath = UE::DreamShader::NormalizeSourceFilePath(SourceFile);
-			if (UE::DreamShader::IsDreamShaderHeaderFile(NormalizedPath))
+			if (!FDreamShaderSourceFileUtils::IsCompileUnit(NormalizedPath))
 			{
 				continue;
 			}
@@ -1098,17 +1098,22 @@ namespace UE::DreamShader::Editor::Private
 			}
 			if (UE::DreamShader::IsDreamShaderHeaderFile(RewrittenFile))
 			{
-				QueueDependentSourcesForImport(RewrittenFile);
-			}
-			else if (UE::DreamShader::IsDreamShaderFunctionFile(RewrittenFile) || UE::DreamShader::IsDreamShaderLang2File(RewrittenFile))
-			{
-				if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(RewrittenFile))
+				// A package's asset header builds material functions of its own besides being included.
+				if (FDreamShaderSourceFileUtils::IsPackageAssetHeader(RewrittenFile))
 				{
 					QueueSourceFile(RewrittenFile);
 				}
 				QueueDependentSourcesForImport(RewrittenFile);
 			}
-			else if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(RewrittenFile))
+			else if (UE::DreamShader::IsDreamShaderFunctionFile(RewrittenFile) || UE::DreamShader::IsDreamShaderLang2File(RewrittenFile))
+			{
+				if (!FDreamShaderSourceFileUtils::IsExcludedPackageFile(RewrittenFile))
+				{
+					QueueSourceFile(RewrittenFile);
+				}
+				QueueDependentSourcesForImport(RewrittenFile);
+			}
+			else if (!FDreamShaderSourceFileUtils::IsExcludedPackageFile(RewrittenFile))
 			{
 				QueueSourceFile(RewrittenFile);
 			}
@@ -1394,17 +1399,23 @@ namespace UE::DreamShader::Editor::Private
 				{
 					if (UE::DreamShader::IsDreamShaderHeaderFile(FileChange.Filename))
 					{
+						// A package's asset header builds material functions of its own besides being included.
+						if (FDreamShaderSourceFileUtils::IsPackageAssetHeader(FileChange.Filename))
+						{
+							Bridge->RebuildDependencyGraph();
+							Bridge->QueueSourceFile(FileChange.Filename);
+						}
 						Bridge->QueueDependentSourcesForImport(FileChange.Filename);
 					}
 					else if (UE::DreamShader::IsDreamShaderFunctionFile(FileChange.Filename) || UE::DreamShader::IsDreamShaderLang2File(FileChange.Filename))
 					{
-						if (!FDreamShaderSourceFileUtils::IsPackageMaterialFile(FileChange.Filename))
+						if (!FDreamShaderSourceFileUtils::IsExcludedPackageFile(FileChange.Filename))
 						{
 							Bridge->QueueSourceFile(FileChange.Filename);
 						}
 						Bridge->QueueDependentSourcesForImport(FileChange.Filename);
 					}
-					else if (FDreamShaderSourceFileUtils::IsPackageMaterialFile(FileChange.Filename))
+					else if (FDreamShaderSourceFileUtils::IsExcludedPackageFile(FileChange.Filename))
 					{
 						continue;
 					}
@@ -1431,7 +1442,8 @@ namespace UE::DreamShader::Editor::Private
 						Bridge->ClearDiagnostics(SourceFile);
 						Bridge->UpdateDiagnosticsFile();
 					}
-					else if (FDreamShaderSourceFileUtils::IsPackageMaterialFile(FileChange.Filename))
+					// The file is gone, so only its path can say whether it was a package source the plugin built.
+					else if (UE::DreamShader::IsPackageFilePath(FileChange.Filename) && !UE::DreamShader::IsPackageAssetsSourceFile(FileChange.Filename))
 					{
 						continue;
 					}
