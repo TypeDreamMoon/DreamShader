@@ -1027,7 +1027,47 @@ namespace UE::DreamShader::Editor::Compiler
 			bool bOnDisk = false;
 			/** False for a ThinCustom material that is memory-only right now: it has no file to ignore or to type. */
 			bool bPersistent = true;
+			/** An asset under a package's asset root that no source builds any more (`-All` only; listed in `Json` alone). */
+			bool bOrphaned = false;
 		};
+
+		/**
+		 * Every package file under the package asset roots (`/Game/DreamShaderPackages`, `/<Plugin>/DreamShaderPackages`) that
+		 * Listed does not hold: what a removed package, or a package that stopped generating something, left behind.
+		 */
+		void FindOrphanedPackageAssets(const TSet<FString>& ListedPackages, TArray<FString>& OutPackageNames)
+		{
+			TArray<FString> AssetRoots;
+			AssetRoots.Add(TEXT("/Game/DreamShaderPackages"));
+			for (const UE::DreamShader::FDreamShaderSourceRoot& Root : UE::DreamShader::GetSourceShaderRoots())
+			{
+				if (!Root.PluginName.IsEmpty())
+				{
+					AssetRoots.Add(FString::Printf(TEXT("/%s/DreamShaderPackages"), *Root.PluginName));
+				}
+			}
+
+			for (const FString& AssetRoot : AssetRoots)
+			{
+				FString Directory;
+				if (!FPackageName::TryConvertLongPackageNameToFilename(AssetRoot + TEXT("/"), Directory)
+					|| !IFileManager::Get().DirectoryExists(*Directory))
+				{
+					continue;
+				}
+				TArray<FString> Files;
+				IFileManager::Get().FindFilesRecursive(Files, *Directory, *(FString(TEXT("*")) + FPackageName::GetAssetPackageExtension()), /*Files*/ true, /*Directories*/ false);
+				for (const FString& File : Files)
+				{
+					FString PackageName;
+					if (FPackageName::TryConvertFilenameToLongPackageName(File, PackageName) && !ListedPackages.Contains(PackageName.ToLower()))
+					{
+						OutPackageNames.Add(PackageName);
+					}
+				}
+			}
+			OutPackageNames.Sort();
+		}
 	}
 
 	bool RunDreamShaderListGeneratedCommandlet(
@@ -1154,6 +1194,43 @@ namespace UE::DreamShader::Editor::Compiler
 			return Left.PackageName.Compare(Right.PackageName, ESearchCase::IgnoreCase) < 0;
 		});
 
+		// Over the whole project only: a package asset root holds what every package source builds, so an asset there that no
+		// source lists was left by a package that was removed or stopped generating it. Said, never deleted -- something may
+		// still use it.
+		TArray<FGeneratedAssetRecord> Orphans;
+		if (Private::HasCommandletFlag(Tokens, Switches, Params, TEXT("All"), FlagSink))
+		{
+			TSet<FString> ListedPackages;
+			for (const FGeneratedAssetRecord& Record : Records)
+			{
+				ListedPackages.Add(Record.PackageName.ToLower());
+			}
+			TArray<FString> OrphanPackages;
+			FindOrphanedPackageAssets(ListedPackages, OrphanPackages);
+			for (const FString& PackageName : OrphanPackages)
+			{
+				ToolSink.Warning(TEXT("DSH9111"), NoSpan, FText::Format(
+					LOCTEXT("ListGeneratedOrphan", "'{0}' is in a package's asset folder and no source builds it any more: its package was removed or stopped generating it. Delete it if nothing uses it."),
+					FText::FromString(PackageName)));
+
+				FGeneratedAssetRecord& Orphan = Orphans.AddDefaulted_GetRef();
+				Orphan.PackageName = PackageName;
+				Orphan.ObjectPath = PackageName + TEXT(".") + FPackageName::GetShortName(PackageName);
+				Orphan.bOnDisk = true;
+				Orphan.bOrphaned = true;
+				FString Filename;
+				if (FPackageName::TryConvertLongPackageNameToFilename(PackageName, Filename, FPackageName::GetAssetPackageExtension()))
+				{
+					Orphan.FilePath = FPaths::ConvertRelativePathToFull(Filename);
+					FPaths::NormalizeFilename(Orphan.FilePath);
+					if (Orphan.FilePath.StartsWith(ProjectDirectory, ESearchCase::IgnoreCase))
+					{
+						Orphan.ProjectRelativePath = Orphan.FilePath.RightChop(ProjectDirectory.Len());
+					}
+				}
+			}
+		}
+
 		FString Text;
 		int32 OutsideProject = 0;
 		switch (Format)
@@ -1187,7 +1264,9 @@ namespace UE::DreamShader::Editor::Compiler
 		case EGeneratedListFormat::Json:
 		{
 			TArray<TSharedPtr<FJsonValue>> Assets;
-			for (const FGeneratedAssetRecord& Record : Records)
+			TArray<FGeneratedAssetRecord> JsonRecords = Records;
+			JsonRecords.Append(Orphans);
+			for (const FGeneratedAssetRecord& Record : JsonRecords)
 			{
 				const TSharedRef<FJsonObject> Asset = MakeShared<FJsonObject>();
 				Asset->SetStringField(TEXT("source"), Record.SourceFile);
@@ -1199,6 +1278,7 @@ namespace UE::DreamShader::Editor::Compiler
 				Asset->SetStringField(TEXT("projectRelativeFile"), Record.ProjectRelativePath);
 				Asset->SetBoolField(TEXT("onDisk"), Record.bOnDisk);
 				Asset->SetBoolField(TEXT("persistent"), Record.bPersistent);
+				Asset->SetBoolField(TEXT("orphaned"), Record.bOrphaned);
 				Assets.Add(MakeShared<FJsonValueObject>(Asset));
 			}
 			const TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
