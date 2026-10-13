@@ -1847,7 +1847,85 @@ namespace UE::DreamShader::Lang::Private
 		}
 	}
 
-	FDeclPtr FLangParser::ParseLegacyFunction(const FString& NamespaceName)
+	void FLangParser::ApplyLegacyGenerateAttributes(
+		FFunctionDecl& Function,
+		const FString& Word,
+		const FString& MemberName,
+		const TArray<FPragmaArgument>& Attributes,
+		const FLegacyGenerateDefaults* Defaults)
+	{
+		const FPragmaArgument* Generate = nullptr;
+		const FPragmaArgument* Library = nullptr;
+		const FPragmaArgument* Description = nullptr;
+		for (const FPragmaArgument& Attribute : Attributes)
+		{
+			if (Attribute.Key.Equals(TEXT("Generate"), ESearchCase::IgnoreCase))
+			{
+				Generate = &Attribute;
+			}
+			else if (Attribute.Key.Equals(TEXT("Library"), ESearchCase::IgnoreCase))
+			{
+				Library = &Attribute;
+			}
+			else if (Attribute.Key.Equals(TEXT("Description"), ESearchCase::IgnoreCase))
+			{
+				Description = &Attribute;
+			}
+			else
+			{
+				// The other 1.x blocks ignore an unknown key as 1.x did; this header is new, so a misspelt key is said.
+				Diagnostics.Warning(
+					TEXT("DSH6331"),
+					Attribute.Span,
+					FText::Format(
+						LOCTEXT("FunctionHeaderKey", "'{0}' is not an attribute of a '{1}' block, and was ignored; the header takes Generate, Library and Description."),
+						FText::FromString(Attribute.Key),
+						FText::FromString(Word)));
+			}
+		}
+
+		// `Generate = ""` on the function opts it out of its namespace's template.
+		FString Asset;
+		FLangSpan AssetSpan;
+		if (Generate)
+		{
+			Asset = Generate->Value.TrimStartAndEnd();
+			AssetSpan = Generate->Span;
+		}
+		else if (Defaults && Defaults->bHasTemplate)
+		{
+			Asset = Defaults->Template.Replace(TEXT("{Name}"), *MemberName, ESearchCase::CaseSensitive).TrimStartAndEnd();
+			AssetSpan = Defaults->Span;
+		}
+		if (Asset.IsEmpty())
+		{
+			return;
+		}
+		if (Asset.Contains(TEXT("{")) || Asset.Contains(TEXT("}")))
+		{
+			Diagnostics.Error(
+				TEXT("DSH6332"),
+				AssetSpan,
+				FText::Format(
+					LOCTEXT("GenerateTemplatePlaceholder", "'{0}' holds a placeholder other than '`{Name`}', the only one a Generate template has."),
+					FText::FromString(Asset)));
+			return;
+		}
+
+		LegacyParser::AddLegacyBlockDirective(LegacyInfo, Function, TEXT("generate"), Asset);
+		const FString LibraryValue = Library ? Library->Value.TrimStartAndEnd() : (Defaults ? Defaults->Library : FString());
+		if (!LibraryValue.IsEmpty())
+		{
+			LegacyParser::AddLegacyBlockDirective(LegacyInfo, Function, TEXT("library"), LibraryValue);
+		}
+		const FString DescriptionValue = Description ? Description->Value.TrimStartAndEnd() : (Defaults ? Defaults->Description : FString());
+		if (!DescriptionValue.IsEmpty())
+		{
+			LegacyParser::AddLegacyBlockDirective(LegacyInfo, Function, TEXT("desc"), DescriptionValue);
+		}
+	}
+
+	FDeclPtr FLangParser::ParseLegacyFunction(const FString& NamespaceName, const FLegacyGenerateDefaults* Defaults)
 	{
 		const int32 StartIndex = GetTokenIndex();
 		const FLangToken& WordToken = Advance();
@@ -1868,6 +1946,19 @@ namespace UE::DreamShader::Lang::Private
 		};
 		FLegacyRenameScope RenameScope{ LegacyRenameDecl, LegacyRenameDecl };
 		LegacyRenameDecl = Function.Get();
+
+		// -- `(Generate = ..., Library = ..., Description = ...)` (after 2.1.2): what a package's asset header generates for the
+		// function. 1.x had no header on these two blocks, so nothing that read before reads differently.
+		// Only `( Key =` opens the header: `Function (in float x, ...)` -- a missing name -- stays the parameter list it
+		// was, and is DSH6300 as before.
+		TArray<FPragmaArgument> GenerateAttributes;
+		if (Check(ELangTokenKind::LeftParen)
+			&& Peek(1).Kind == ELangTokenKind::Identifier
+			&& Peek(2).Kind == ELangTokenKind::Assign
+			&& !ParseLegacyAttributes(GenerateAttributes))
+		{
+			return nullptr;
+		}
 
 		// -- `SelfContained` / `Inline`
 		// 1.x embedded a SelfContained function -- and the functions it calls -- in each caller's Custom node rather than
@@ -1958,6 +2049,8 @@ namespace UE::DreamShader::Lang::Private
 				FText::Format(LOCTEXT("FunctionParamsOpen", "Expected '(' to open the parameter list of '{0}', found {1}."), FText::FromString(Name), DescribeToken(Current())));
 			return nullptr;
 		}
+
+		ApplyLegacyGenerateAttributes(*Function, Word, Name, GenerateAttributes, Defaults);
 
 		const FString Qualified = NamespaceName.IsEmpty() ? Name : NamespaceName + TEXT("::") + Name;
 		Function->Name = NamespaceName.IsEmpty() ? Name : LegacyAst::SanitizeIdentifier(Qualified);
@@ -2284,6 +2377,23 @@ namespace UE::DreamShader::Lang::Private
 			return true;
 		}
 
+		// `Generate = "MF_BL_{Name}"` (after 2.1.2): every member generates a material function unless it says otherwise.
+		FLegacyGenerateDefaults GenerateDefaults;
+		if (const FPragmaArgument* GenerateAttribute = LegacyParser::FindLegacyAttribute(Attributes, TEXT("Generate")))
+		{
+			GenerateDefaults.Template = GenerateAttribute->Value.TrimStartAndEnd();
+			GenerateDefaults.bHasTemplate = !GenerateDefaults.Template.IsEmpty();
+			GenerateDefaults.Span = GenerateAttribute->Span;
+		}
+		if (const FPragmaArgument* LibraryAttribute = LegacyParser::FindLegacyAttribute(Attributes, TEXT("Library")))
+		{
+			GenerateDefaults.Library = LibraryAttribute->Value.TrimStartAndEnd();
+		}
+		if (const FPragmaArgument* DescriptionAttribute = LegacyParser::FindLegacyAttribute(Attributes, TEXT("Description")))
+		{
+			GenerateDefaults.Description = DescriptionAttribute->Value.TrimStartAndEnd();
+		}
+
 		if (!Check(ELangTokenKind::LeftBrace))
 		{
 			return Diagnostics.Error(
@@ -2314,7 +2424,7 @@ namespace UE::DreamShader::Lang::Private
 				&& (Current().Text.Equals(TEXT("Function"), ESearchCase::CaseSensitive) || Current().Text.Equals(TEXT("GraphFunction"), ESearchCase::CaseSensitive));
 			if (bFunctionWord)
 			{
-				FDeclPtr Member = ParseLegacyFunction(NamespaceName);
+				FDeclPtr Member = ParseLegacyFunction(NamespaceName, &GenerateDefaults);
 				if (Member.IsValid())
 				{
 					OutDecls.Add(MoveTemp(Member));

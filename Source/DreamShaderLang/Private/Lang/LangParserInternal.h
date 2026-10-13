@@ -242,8 +242,25 @@ namespace UE::DreamShader::Lang::Private
 		bool ParseLegacyBlock(TArray<FDeclPtr>& OutDecls);
 		/** At `(`: the `Key = value, ...` of a block header. */
 		bool ParseLegacyAttributes(TArray<FPragmaArgument>& OutAttributes);
-		/** At `Function` / `GraphFunction`; NamespaceName is empty outside a `Namespace`. */
-		FDeclPtr ParseLegacyFunction(const FString& NamespaceName);
+		/** What a `Namespace(Name = ..., Generate = ..., Library = ..., Description = ...)` header gives every member. */
+		struct FLegacyGenerateDefaults
+		{
+			/** `Generate`, with `{Name}` still in it; meaningful only when bHasTemplate. */
+			FString Template;
+			bool bHasTemplate = false;
+			FString Library;
+			FString Description;
+			FLangSpan Span;
+		};
+
+		/**
+		 * At `Function` / `GraphFunction`; NamespaceName is empty outside a `Namespace`. An optional `(Generate = ...,
+		 * Library = ..., Description = ...)` header after the keyword, and the namespace's Defaults, become `@generate`,
+		 * `@library` and `@desc` directives on the function: what a package's asset header generates for it.
+		 */
+		FDeclPtr ParseLegacyFunction(const FString& NamespaceName, const FLegacyGenerateDefaults* Defaults = nullptr);
+		/** The `Generate` / `Library` / `Description` of a function header (else the namespace's) as directives on Function. */
+		void ApplyLegacyGenerateAttributes(FFunctionDecl& Function, const FString& Word, const FString& MemberName, const TArray<FPragmaArgument>& Attributes, const FLegacyGenerateDefaults* Defaults);
 		/**
 		 * The `UE.Name(...)` calls of Function.RawBody parsed into Function.HoistedCalls, each one an input of the
 		 * function's Custom node (rule L8 for a 1.x GraphFunction; the same lift for a `/// @custom` function).
