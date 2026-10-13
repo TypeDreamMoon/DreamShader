@@ -127,9 +127,9 @@ directory second.
 | Step | Rule |
 | :-- | :-- |
 | 1 | Recursively collect `*.dsm`, `*.dsh`, `*.dsf`, `*.dss`, `*.dsi` and `*.dsp` under every [source root](../language/source-files.md#source-roots) — `<SourceDirectory>`, and the `DShader` folder of every plugin that has one |
-| 2 | Drop **everything** under each root's `Packages` folder |
-| 3 | Drop `.dsh` headers — they generate no assets and are compiled through the sources that include them |
-| 4 | Sort: `.dsf` function files first (rank 0), then every other kind (rank 1); ties broken by case-insensitive path comparison |
+| 2 | Drop everything under each root's `Packages` folder except what a package builds: its `Assets` sources and its asset headers *(after 2.1.2; before, everything)* — see [Packages](packages.md#source-file-enumeration) |
+| 3 | Drop `.dsh` headers — they generate no assets and are compiled through the sources that include them — except a package's asset header |
+| 4 | Sort: `.dsf` function files and asset headers first (rank 0), then every other kind (rank 1); ties broken by case-insensitive path comparison |
 | 5 | Compile in passes: a source that fails is held back while its pass still built something else, and retried in the next pass; once a pass builds nothing new, what still fails is reported *(since 2.1.2)* |
 
 A material that calls a function another source generates loads that function's asset, so the asset
@@ -138,8 +138,7 @@ function calling another function, nor a `.dss` whose exported function another 
 covers every shape, on a clean workspace too. A source that keeps failing — a real error, a dependency
 no source generates, or a cycle — costs at most one extra attempt per pass that built something, and is
 reported with the message of its last attempt, after every success. The cook runs the same steps
-([Cook behaviour](../generation/ephemeral.md#cook-behaviour)). Step 2 has a
-sharp edge for `.dsf` files that live in packages; see [Packages](packages.md#source-file-enumeration).
+([Cook behaviour](../generation/ephemeral.md#cook-behaviour)).
 A `.dsp` needs no rank of its own *(2.1.0)*: a material one of its passes names that is missing or older
 than its source is compiled first by the `.dsp`'s own compile.
 
@@ -478,6 +477,14 @@ failure, and the run ends `RESULT=FAILED` — a list is never silently short. As
 directory (an engine-level plugin's content) have no project-relative path; `Files` and `GitIgnore`
 say how many were left out ([`DSH9049`](../diagnostics/DSH9xxx.md)). An unknown `-As` is `DSH9048`; a
 list that cannot be written is `DSH9047`.
+
+With `-All` *(after 2.1.2)* the package assets are listed too — what a package's `Assets` sources and
+asset headers build ([Packages](packages.md#package-assets)) — and the package asset roots
+(`/Game/DreamShaderPackages`, `/<Plugin>/DreamShaderPackages`) are searched for assets **no source builds
+any more**: a removed package's, or a function a package stopped generating. Each is the warning
+[`DSH9111`](../diagnostics/DSH9xxx.md#dsh9111), and `-As=Json` lists them with `"orphaned": true` (every
+other row says `false`). The plain lists leave them out — they name what the sources build — and nothing
+is deleted.
 
 ## `.dsp` sources
 

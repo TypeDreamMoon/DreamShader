@@ -431,6 +431,8 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH6328](DSH6xxx.md#dsh6328) | error | '{0}' lifts the call behind its input '{1}' out of a place its body does not have, so its custom node's cod... |
 | [DSH6329](DSH6xxx.md#dsh6329) | error | '{0}' carries 'UE.' calls lifted out of its body, and only a '@custom' function with a verbatim body lifts ... |
 | [DSH6330](DSH6xxx.md#dsh6330) | error | '{0}' reaches itself through the 'UE.' calls lifted out of its body, and each call makes a new custom node,... |
+| [DSH6331](DSH6xxx.md#dsh6331) | warning | '{0}' is not an attribute of a '{1}' block, and was ignored; the header takes Generate, Library and Descrip... |
+| [DSH6332](DSH6xxx.md#dsh6332) | error | '{0}' holds a placeholder other than '`{Name`}', the only one a Generate template has. |
 | [DSH7111](DSH7xxx.md#dsh7111) | error | Invalid boolean value '%s' for %s. |
 | [DSH7112](DSH7xxx.md#dsh7112) | error | Setting path segment cannot be empty. |
 | [DSH7113](DSH7xxx.md#dsh7113) | error | Invalid array setting segment '%s'. |
@@ -492,6 +494,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH7231](DSH7xxx.md#dsh7231) | error | '@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}. |
 | [DSH7232](DSH7xxx.md#dsh7232) | error | 'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'. |
 | [DSH7233](DSH7xxx.md#dsh7233) | warning | A slider range ('@slider', or 'Slider(min, max)' in a 1.x property) is for a scalar parameter; this one is ... |
+| [DSH7234](DSH7xxx.md#dsh7234) | warning | '{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in... |
 | [DSH7250](DSH7xxx.md#dsh7250) | error | A '.dsi' needs one '#pragma instance(Parent = "...")' naming the material it is an instance of, and this fi... |
 | [DSH7251](DSH7xxx.md#dsh7251) | error | '#pragma instance' is written a second time, and one '.dsi' is one material instance; the line {0} already ... |
 | [DSH7252](DSH7xxx.md#dsh7252) | error | 'Parent' in '#pragma instance' names the material this is an instance of, and it is empty. |
@@ -623,6 +626,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH8130](DSH8xxx.md#dsh8130) | error | Asset Path(...) expects either 1 argument (/Game/... path) or 2 arguments (Game\|Engine\|Plugin.PluginName, a... |
 | [DSH8131](DSH8xxx.md#dsh8131) | error | Asset reference requires a non-empty path. |
 | [DSH8132](DSH8xxx.md#dsh8132) | error | Invalid asset path '%s'. |
+| [DSH8133](DSH8xxx.md#dsh8133) | error | DSH8133: '{0}' is built from '{1}', a file of an installed package, which the package's installer replaces ... |
 | [DSH8149](DSH8xxx.md#dsh8149) | error | DSH8149: '{0}' uses conditional compilation, and '{1}' holds only the branch that was taken -- adopting it ... |
 | [DSH8155](DSH8xxx.md#dsh8155) | warning | rebuilding '%s' from '%s' dropped %d parameter override(s) the rebuilt material no longer declares: %s. |
 | [DSH8200](DSH8xxx.md#dsh8200) | error | '{0}' does not resolve to a valid asset path. {1} |
@@ -684,6 +688,10 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH8265](DSH8xxx.md#dsh8265) | error | The Parent chain above '{0}' is more than {1} instances deep; a chain that long is almost always a mistake ... |
 | [DSH8270](DSH8xxx.md#dsh8270) | error | The function reference '{0}' does not resolve to an asset path. {1} |
 | [DSH8271](DSH8xxx.md#dsh8271) | error | The default texture reference '{0}' of parameter '{1}' does not resolve to an asset path. {2} |
+| [DSH8273](DSH8xxx.md#dsh8273) | error | '{0}' holds a placeholder other than '`{Name`}', the only one a generate template has. |
+| [DSH8274](DSH8xxx.md#dsh8274) | error | '{0}' cannot be generated as the material function '{1}': {2}. |
+| [DSH8275](DSH8xxx.md#dsh8275) | error | '{0}' is generated a second time here; the line {1} already generates it from another function. |
+| [DSH8276](DSH8xxx.md#dsh8276) | warning | '{0}' is not a key of '#pragma generate', and was ignored; it takes Functions, Library and Desc. |
 | [DSH8290](DSH8xxx.md#dsh8290) | error | '{0}' could not be read. |
 | [DSH8291](DSH8xxx.md#dsh8291) | error | '{0}' failed conditional compilation: {1}: {2} |
 | [DSH8292](DSH8xxx.md#dsh8292) | error | '{0}', included from '{1}', could not be resolved: {2}. |
@@ -825,6 +833,7 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH9108](DSH9xxx.md#dsh9108) | error | Expected every change to this file to touch its own stretch of text, found an edit at line {0} that overlap... |
 | [DSH9109](DSH9xxx.md#dsh9109) | error | Expected a '#pragma instance(...)' line in this .dsi file, found none; the file was left unchanged. |
 | [DSH9110](DSH9xxx.md#dsh9110) | error | '-{0}={1}' is neither on nor off. A flag takes true, 1, yes or on, or false, 0, no or off, and '-{0}' alone... |
+| [DSH9111](DSH9xxx.md#dsh9111) | warning | '{0}' is in a package's asset folder and no source builds it any more: its package was removed or stopped g... |
 | [DSH9200](DSH9xxx.md#dsh9200) | error | The Custom Pass slot registry cannot be read: {0}. 'dsc pass-registry -Rebuild' moves it aside and gives ev... |
 | [DSH9201](DSH9xxx.md#dsh9201) | warning | No .dsp builds '{0}' any more, but the asset is still there and its pass '{1}' points at {2} slot {3}. Dele... |
 | [DSH9202](DSH9xxx.md#dsh9202) | info | {0} slot {1} was freed: {2} |

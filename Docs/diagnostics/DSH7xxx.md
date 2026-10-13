@@ -676,7 +676,7 @@ Invalid reflected property target.
 '{0}' is set twice by '#pragma material'; it was already set on line {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:529`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:542`
 <!-- generated:end DSH7200 -->
 
 **Cause.** One `#pragma material` key is set twice, possibly on two different lines — the lines are
@@ -695,7 +695,7 @@ merged into one settings table. Keys are compared without regard to case, as the
 'Backend' has no value; write 'Backend = Graph' or 'Backend = ThinCustom'. An empty value meant Graph in 1.x and means nothing now.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:577`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:590`
 <!-- generated:end DSH7201 -->
 
 **Cause.** `Backend` was given an empty value. 1.x read `Backend = ""` as `Graph`, which silently
@@ -716,7 +716,7 @@ default.
 'Backend = {0}' is not a backend; the backends are 'Graph' and 'ThinCustom'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:606`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:619`
 <!-- generated:end DSH7202 -->
 
 **Cause.** `Backend` names something that is not a backend.
@@ -736,7 +736,7 @@ works, with a warning.
 '#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1331`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1345`
 <!-- generated:end DSH7203 -->
 
 **Cause.** The file has `#pragma material(...)` and no material entry to configure. A function
@@ -756,7 +756,7 @@ have.
 'Backend = Instance' is the old spelling of 'Backend = ThinCustom'; write the new one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:598`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:611`
 <!-- generated:end DSH7204 -->
 
 **Cause.** `Backend = Instance` — the 1.x deprecation-window spelling of `ThinCustom`.
@@ -774,7 +774,7 @@ have.
 '#pragma material' takes 'Key = Value' pairs; '{0}' has no key.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:513`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:526`
 <!-- generated:end DSH7205 -->
 
 **Cause.** `#pragma material` was given something without a key.
@@ -813,7 +813,7 @@ sample or a node is not a constant — declare it as an ordinary local.
 '{0}' is a file-scope variable with no storage class; write 'uniform' for a material parameter or 'static const' for a compile-time constant.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:750`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:752`
 <!-- generated:end DSH7211 -->
 
 **Cause.** A file-scope variable has no storage class: `float Gain = 1.0;` or `static float …`.
@@ -834,7 +834,7 @@ folded into it (`static const`).
 A file-scope variable of type {0} has no node; a 'uniform' or 'static const' must be numeric, bool, a texture or a sampler.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:777`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:779`
 <!-- generated:end DSH7212 -->
 
 **Cause.** A file-scope variable has a type with no node: a `material`, a `Substrate` value, a user
@@ -854,7 +854,7 @@ aggregate and lives inside a function; a `Substrate` value comes from a `Substra
 A texture uniform has no HLSL initializer; write its default asset as '/// @default /Game/...'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:789`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:791`
 <!-- generated:end DSH7213 -->
 
 **Cause.** A texture `uniform` has an HLSL initializer. A texture has no literal value.
@@ -873,7 +873,7 @@ leave the declaration itself as plain legal HLSL.
 '{0}' is a compile-time constant and must be initialised where it is declared.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:800`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:569`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:802`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:569`
 <!-- generated:end DSH7214 -->
 
 **Cause.** A `static const` — at file scope or inside a function — has no initializer.
@@ -891,7 +891,7 @@ leave the declaration itself as plain legal HLSL.
 '@layer' and '@layerblend' make two different assets; a function is one or the other.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:481`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:494`
 <!-- generated:end DSH7215 -->
 
 **Cause.** One function carries both `@layer` and `@layerblend`. They select two different asset
@@ -911,7 +911,7 @@ classes.
 A 'uniform' array has no parameter node; declare one uniform per element, or make it 'static const'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:822`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:824`
 <!-- generated:end DSH7216 -->
 
 **Cause.** A `uniform` is declared as an array. There is no array parameter node.
@@ -985,7 +985,7 @@ comes from the engine, so an unknown spelling is reported by the emitter and not
 '@static' asks for a static switch and is only meaningful on a 'uniform bool'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:811`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:813`
 <!-- generated:end DSH7223 -->
 
 **Cause.** `@static` sits on something that is not a `uniform bool`. It asks for a static switch,
@@ -1004,7 +1004,7 @@ which only a boolean parameter can become.
 '@{0}' means nothing here; it belongs on {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:910`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:138`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:924`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:138`
 <!-- generated:end DSH7224 -->
 
 **Cause.** A `///` directive is written on a declaration where it cannot mean anything: `@slider` on
@@ -1025,7 +1025,7 @@ warning — they are passed through to the node by reflection.
 '@static {0}' does not name a parameter of '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1016`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1038`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1064`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1030`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1052`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1078`
 <!-- generated:end DSH7225 -->
 
 **Cause.** `@param <name>` names something that is not a parameter of the function. Usually the
@@ -1044,7 +1044,7 @@ parameter was renamed and the comment was not.
 '@custom {0}' is not a modifier this language knows; the only one is 'selfcontained'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:445`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:458`
 <!-- generated:end DSH7226 -->
 
 **Cause.** `@custom` is followed by a word that is not a modifier it knows.
@@ -1062,7 +1062,7 @@ parameter was renamed and the comment was not.
 '@{0}' needs a value after it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:152`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:303`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:342`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:369`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:361`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:471`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:152`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:303`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:355`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:382`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:362`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:472`
 <!-- generated:end DSH7227 -->
 
 **Cause.** A directive that needs a value has none: `@name`, `@asset`, `@library`, `@default`, or
@@ -1082,7 +1082,7 @@ the line.
 '@custom' on '{0}' did not make its body opaque; the directive has to sit in the '///' block directly above the declaration.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1282`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1296`
 <!-- generated:end DSH7228 -->
 
 **Cause.** `@custom` was recorded on a function whose body was parsed as DreamShaderLang rather
@@ -1102,7 +1102,7 @@ block **directly above** the declaration.
 '@{0}' is written twice in this block; the last one wins.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:122`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:389`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:122`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:402`
 <!-- generated:end DSH7229 -->
 
 **Cause.** One key appears twice in one `///` block. The last one wins.
@@ -1121,7 +1121,7 @@ reports this.
 '#pragma layout' expects a whole number for '{0}'; '{1}' was ignored.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:680`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:700`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:762`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:773`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:785`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:796`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:813`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:693`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:713`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:775`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:786`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:798`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:809`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:826`
 <!-- generated:end DSH7230 -->
 
 **Cause.** A `#pragma layout(...)` line could not be read: no `Node`/`Comment` selector, an unknown
@@ -1143,7 +1143,7 @@ layout entry is simply placed by the layout pass.
 '@static {0}' makes a parameter a static bool pin, which only a 'bool' input can be, and '{0}' is {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:991`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:1005`
 <!-- generated:end DSH7231 -->
 
 **Cause.** `/// @static <Parameter>` on a function makes that parameter a StaticBool pin -- a pin
@@ -1162,7 +1162,7 @@ whose value picks a shader permutation -- and the parameter named is not a `bool
 'Substrate = {0}' is not a Substrate mode; the modes are 'Legacy', 'Bridge' and 'Native'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:655`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:668`
 <!-- generated:end DSH7232 -->
 
 **Cause.** `#pragma material(Substrate = ...)` (or the `Substrate` setting of a 1.x `Shader`) names
@@ -1194,6 +1194,24 @@ slider, so it has nowhere to go and is dropped. The compile goes on.
 **Fix.** Remove the range, or put it on a scalar `float`, `half` or `int` parameter -- for a colour that should stay
 in a range, one scalar per channel, or a scalar that scales the colour.
 
+## DSH7234
+
+<!-- generated:begin DSH7234 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' asks to generate '{1}', and only a package's header generates material functions; this file is not in one, so nothing is generated. Write an 'export' function (or a 1.x ShaderFunction) to make a material function of your own.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:892`
+<!-- generated:end DSH7234 -->
+
+**Cause.** A function carries `@generate` -- a 2.0 `/// @generate` or a 1.x `Generate =` header -- in a file that is not in a package. Only a package's header generates material functions ([Packages ▸ Asset headers](../tools/packages.md#asset-headers)); anywhere else the annotation does nothing.
+
+**Fix.** To make a material function of the project's own, write an `export` function in a `.dss` (or a 1.x `ShaderFunction` in a `.dsf`). If the header is meant to be a package's, install it under `DShader/Packages`.
+
 ## DSH7250
 
 <!-- generated:begin DSH7250 -->
@@ -1205,7 +1223,7 @@ in a range, one scalar per channel, or a scalar that scales the colour.
 A '.dsi' needs one '#pragma instance(Parent = "...")' naming the material it is an instance of, and this file has none.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:311`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:312`
 <!-- generated:end DSH7250 -->
 
 **Cause.** A `.dsi` file has no `#pragma instance(...)`. The pragma is what makes the file an
@@ -1225,7 +1243,7 @@ this file, or an object path for any material.
 '#pragma instance' is written a second time, and one '.dsi' is one material instance; the line {0} already declares it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:342`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:343`
 <!-- generated:end DSH7251 -->
 
 **Cause.** A `.dsi` has two `#pragma instance` lines. One file is one instance.
@@ -1243,7 +1261,7 @@ this file, or an object path for any material.
 'Parent' in '#pragma instance' names the material this is an instance of, and it is empty.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:426`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:441`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:427`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:442`
 <!-- generated:end DSH7252 -->
 
 **Cause.** `#pragma instance` has no `Parent`, or `Parent` is there and empty. An instance is
@@ -1263,7 +1281,7 @@ path -- `#pragma instance(Parent = "M_Skin")`.
 '{0}' is set twice by '#pragma instance'; it was already set on line {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:407`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:408`
 <!-- generated:end DSH7253 -->
 
 **Cause.** One key is written twice in `#pragma instance(...)`.
@@ -1281,7 +1299,7 @@ path -- `#pragma instance(Parent = "M_Skin")`.
 A '.dsi' is configured by '#pragma instance', and '#pragma material' configures a material; write these keys in '#pragma instance(...)'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:213`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:254`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:268`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:281`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:294`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:213`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:255`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:269`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:282`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:295`
 <!-- generated:end DSH7254 -->
 
 **Cause.** A `.dsi` holds something an instance has no use for: `#pragma material(...)` (that pragma
@@ -1304,7 +1322,7 @@ includes.
 '#pragma instance' declares a material instance and belongs in a '.dsi' file of its own, and this line is in '{0}'; move it and its overrides into a '.dsi'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:325`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:326`
 <!-- generated:end DSH7255 -->
 
 **Cause.** `#pragma instance` stands in a `.dss` (or a header). A material and its instances are
@@ -1323,7 +1341,7 @@ separate assets and separate files.
 '{0}' overrides a {1} parameter and needs the value it is set to, as 'uniform {2} {0} = ...;', and it has no initializer.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:666`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:667`
 <!-- generated:end DSH7256 -->
 
 **Cause.** An override of a scalar, vector or switch parameter has no initializer, so there is no
@@ -1342,7 +1360,7 @@ value to set.
 '{0}' overrides a {1} parameter, which takes an asset rather than an HLSL value; write '/// @default /Game/...' (or '/// @default None') above it instead of an initializer.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:641`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:652`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:642`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:653`
 <!-- generated:end DSH7257 -->
 
 **Cause.** An override of a texture (or font, runtime virtual texture, collection ...) parameter is
@@ -1363,7 +1381,7 @@ directive, exactly as in the parent.
 '{0}' is not a parameter of the parent '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:852`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:866`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:853`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:867`
 <!-- generated:end DSH7258 -->
 
 **Cause.** The `.dsi` overrides a name that is not a parameter of its parent. Either the name is
@@ -1384,7 +1402,7 @@ override when it is not an identifier). `dsc index` lists a parent's parameters.
 '{0}' is a {1} parameter of type '{2}' in the parent, and this override declares '{3}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:925`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:926`
 <!-- generated:end DSH7259 -->
 
 **Cause.** The override declares another type than the parent's parameter has: `float3` for a scalar
@@ -1403,7 +1421,7 @@ parameter, `bool` without `@static` for a static switch, `Texture2D` for a cube 
 '/// @static' on an instance override means a static switch ('uniform bool') or a static component mask ('uniform bool4'), and '{0}' is declared '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:581`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:612`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:899`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:910`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:582`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:613`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:900`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:911`
 <!-- generated:end DSH7260 -->
 
 **Cause.** `/// @static` and the parent disagree. The directive stands on an override that is
@@ -1425,7 +1443,7 @@ at run time and the override asks for a static one.
 '{0}' is overridden a second time, and one instance sets a parameter once; the override on line {1} already sets it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:882`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:883`
 <!-- generated:end DSH7261 -->
 
 **Cause.** One parameter is overridden twice in a `.dsi`.
@@ -1443,7 +1461,7 @@ at run time and the override asks for a static one.
 '@{0}' has no effect above '#pragma instance', where only '@name' is read; remove it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:375`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:515`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:678`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:376`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:516`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:679`
 <!-- generated:end DSH7262 -->
 
 **Cause.** A directive that describes a parameter (`@group`, `@sort`, `@slider`, `@desc`, `@default`
@@ -1464,7 +1482,7 @@ directives a `.dsi` reads.
 The parameters of the parent are not available here, so the names and types of these overrides are checked only for their shape; compile the parent first, or check the file in the editor.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:787`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:788`
 <!-- generated:end DSH7263 -->
 
 **Cause.** The parent's parameters could not be looked up where this file was bound -- the parent is
@@ -1485,7 +1503,7 @@ have every name verified.
 '{0}' matches the parent parameter '{1}' only in case, and DreamShader names are case-sensitive; write '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:841`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:842`
 <!-- generated:end DSH7264 -->
 
 **Cause.** An override matches a parent parameter only when case is ignored. Parameter names are
@@ -1504,7 +1522,7 @@ case-sensitive in the engine, so the override would silently set nothing.
 '{0}' is set to a value the compiler can fold, a literal or an expression over literals, and this initializer is not one.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:774`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:775`
 <!-- generated:end DSH7265 -->
 
 **Cause.** An override's value is not something the compiler can evaluate: it reads a variable,
@@ -1524,7 +1542,7 @@ calls a node, or uses a run-time function. An instance stores constants.
 '@page' takes one whole number of zero or more, and '{0}' is not that.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:502`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:691`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:503`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:692`
 <!-- generated:end DSH7266 -->
 
 **Cause.** `/// @page` is not a whole number of zero or more, or it stands on an override that is
@@ -1562,7 +1580,7 @@ instance has no graph.
 '{0}' exists in the parent only as a layer or blend parameter, and a '.dsi' overrides global parameters only.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:824`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:825`
 <!-- generated:end DSH7268 -->
 
 **Cause.** The name exists in the parent only as a parameter of a material layer or blend. A `.dsi`
@@ -1583,7 +1601,7 @@ parent.
 '{0}' is an array, and an instance override assigns one parameter; override each element's parameter on its own.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:568`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:624`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:569`, `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:625`
 <!-- generated:end DSH7269 -->
 
 **Cause.** An override is declared as an array, or with a type that is no material parameter type.
@@ -1605,7 +1623,7 @@ with.
 '#pragma instance' takes 'Key = Value' pairs, and '{0}' has no key.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:391`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderInstance.cpp:392`
 <!-- generated:end DSH7270 -->
 
 **Cause.** `#pragma instance(...)` contains a bare value. Every entry is `Key = Value`.

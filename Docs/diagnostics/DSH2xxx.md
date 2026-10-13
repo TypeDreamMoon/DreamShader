@@ -1042,7 +1042,7 @@ so does this front end; the warning is there because the first value is dead tex
 Expected a Shader section (Properties, Settings, Outputs, Graph or Layout), found '{0}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2493`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:948`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2603`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:948`
 <!-- generated:end DSH2245 -->
 
 **Cause.** A word that is no section opens a line inside a block. A Shader has `Properties`,
@@ -1083,7 +1083,7 @@ Expected 'Graph' as the body section of '{0}', found 'Code', which 1.x accepted 
 Expected no body in the VirtualFunction '{0}', which declares an existing asset, found the section '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2485`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2595`
 <!-- generated:end DSH2247 -->
 
 **Cause.** A VirtualFunction has a `Graph` or `Code` section. A VirtualFunction declares the
@@ -1282,7 +1282,7 @@ The material builds, with nothing wired to it.
 Expected '`{' to open the '{0}' block, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2289`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2403`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2442`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2459`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:761`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:834`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:851`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2399`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2513`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2552`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:2569`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:761`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:834`, `Source/DreamShaderLang/Private/Lang/LangLegacyParser.cpp:851`
 <!-- generated:end DSH2257 -->
 
 **Cause.** A block is not opened where one has to be: the attribute list of a `Shader`,
@@ -1687,7 +1687,7 @@ HLSL's, passed to the shader compiler as written.
 Expected '{' after 'hlsl' to open a block of HLSL, found {1}.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:979`
+**Raised by** `Source/DreamShaderLang/Private/Lang/LangParserDeclarations.cpp:980`
 <!-- generated:end DSH2313 -->
 
 **Cause.** In a `.dsp`, `hlsl` opens a block of HLSL -- a pass's code, or the file's shared code -- and the next

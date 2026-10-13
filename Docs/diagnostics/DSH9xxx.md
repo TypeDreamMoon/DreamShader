@@ -114,7 +114,7 @@ Could not write '%s' after renaming an asset it references; the file as it was i
 The IR dump could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:559`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:566`
 <!-- generated:end DSH9022 -->
 
 **Cause.** `dump-ir` could not create its output directory or write the dump file. The message says
@@ -136,7 +136,7 @@ looks wrong.
 The symbol index could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:805`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:812`
 <!-- generated:end DSH9023 -->
 
 **Cause.** `index` could not create its output directory or write the index file. The default
@@ -155,7 +155,7 @@ directory is `<Project>/Saved/DreamShader/Index`.
 The builtin catalog manifest could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1262`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1349`
 <!-- generated:end DSH9024 -->
 
 **Cause.** `export-catalog` could not create its directory or write the manifest. The default path is
@@ -176,7 +176,7 @@ lock or at a read-only `Saved/`.
 The builtin catalog came back empty, so '{0}' describes no expression at all. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1276`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1363`
 <!-- generated:end DSH9025 -->
 
 **Cause.** The manifest was written and describes no expression at all. A language service that binds
@@ -399,7 +399,7 @@ DreamShader cannot dump '%s': %s is not a Material, MaterialFunction, material i
 '{0}' is not a compilable DreamShader source (.dss, .dsi, .dsp, .dsm or .dsf), so '{1}' has nothing to do with it; a .dsh header is checked through a source that includes it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:214`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:215`
 <!-- generated:end DSH9035 -->
 
 **Cause.** `check`, `dump-ir` or `index` was given a file that is not a `.dss`. These three verbs
@@ -422,7 +422,7 @@ Note that `-All` never produces this: it enumerates `.dss` files only. It is alw
 The diagnostics JSON could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:796`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:473`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderCommandletRunner.cpp:796`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:480`
 <!-- generated:end DSH9036 -->
 
 **Cause.** `-DiagnosticsOut=` was given and the JSON could not be written. With one source the path
@@ -489,7 +489,7 @@ platforms supports.
 %s: DSH9039: the DreamShader 2.0 pipeline failed without raising a diagnostic.
 ```
 
-**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1225`
+**Raised by** `Source/DreamShaderCompiler/Private/Pipeline/DreamShaderCompilePipeline.cpp:1250`
 <!-- generated:end DSH9039 -->
 
 **Cause.** Internal invariant. The 2.0 pipeline returned failure without putting a single error in
@@ -511,7 +511,7 @@ whatever the pipeline produced even when it failed.
 The layout dump could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:708`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:715`
 <!-- generated:end DSH9040 -->
 
 **Cause.** `dsc dump-layout` could not write one of its files -- the SVG, or the JSON beside it
@@ -530,7 +530,7 @@ under `-Json`. The message carries the file system's reason.
 '{0}' is not a layout style; -Style takes Blocks, SourceBands, Layered or All.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:631`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:638`
 <!-- generated:end DSH9041 -->
 
 **Cause.** `dsc dump-layout -Style` was given something other than `Blocks`, `SourceBands`, `Layered`
@@ -611,7 +611,7 @@ when formatted again. Nothing was written. This is a fault of the formatter, nev
 '{0}' could not be read, so it was not formatted.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:915`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:959`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:922`, `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:966`
 <!-- generated:end DSH9045 -->
 
 **Cause.** `dsc fmt` could not read a source, or could not write the formatted text back. A file
@@ -631,7 +631,7 @@ second.
 '{0}' is not in the formatter's layout; 'dsc fmt' would rewrite it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:949`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:956`
 <!-- generated:end DSH9046 -->
 
 **Cause.** `dsc fmt -Check` found a file that `fmt` would rewrite. `-Check` writes nothing and fails
@@ -650,7 +650,7 @@ the run, which is the form for CI.
 The list of generated assets could not be written: {0}.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1222`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1309`
 <!-- generated:end DSH9047 -->
 
 **Cause.** `dsc list-generated -Out` could not write the list. The message carries the file system's
@@ -670,7 +670,7 @@ reason.
 '-As={0}' is no list format; the four are Packages, Files, GitIgnore and Json.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1052`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1099`
 <!-- generated:end DSH9048 -->
 
 **Cause.** `dsc list-generated -As` (`-ListAs` in `dsc.ps1`) was given something other than the four
@@ -690,7 +690,7 @@ ignore block, `Json` for everything.
 {0} generated asset(s) lie outside the project directory -- an engine plugin's content -- and have no project-relative path; '-As=Packages' or '-As=Json' lists them.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1210`
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1297`
 <!-- generated:end DSH9049 -->
 
 **Cause.** Some generated assets lie outside the project directory -- the content of a plugin
@@ -1827,7 +1827,7 @@ declared under an identifier and carries `/// @name <real name>`.
 DSH9103: The Parent of '{0}' no longer resolves, so the overrides of '{1}' cannot be written back into it: {2}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:717`
+**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:745`
 <!-- generated:end DSH9103 -->
 
 **Cause.** Adopt (or a tweak action) has to rewrite a `.dsi`, and the file's `Parent` no longer
@@ -1983,6 +1983,24 @@ written with any value read as absent, so `migrate -Check=true` migrated and `fm
 value.
 
 **See** [Commandlet — Boolean flags](../tools/commandlet.md#boolean-flags)
+
+## DSH9111
+
+<!-- generated:begin DSH9111 -->
+**Severity** warning
+
+**Message**
+
+```
+'{0}' is in a package's asset folder and no source builds it any more: its package was removed or stopped generating it. Delete it if nothing uses it.
+```
+
+**Raised by** `Source/DreamShaderEditor/Private/Tools/DreamShaderCompilerTools.cpp:1212`
+<!-- generated:end DSH9111 -->
+
+**Cause.** `list-generated -All` found an asset under a package asset root (`/Game/DreamShaderPackages`, `/<Plugin>/DreamShaderPackages`) that no source builds any more: its package was removed, or the package stopped generating it (a function renamed, an annotation taken off). Packages build into these folders only, so the asset is a leftover. Nothing is deleted: a material may still use it.
+
+**Fix.** Check what references the asset (the Reference Viewer), replace those uses, and delete it. Reinstalling the package, or restoring the annotation, makes a source build it again and the warning goes away.
 
 ## DSH9200
 
@@ -2524,7 +2542,7 @@ not be laid out as a `.dsp` for the printer. Neither is a property of the asset;
 DSH9226: '{0}' is built from the pipeline file '{1}' but is not a pass pipeline, so nothing was adopted.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:459`
+**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:487`
 <!-- generated:end DSH9226 -->
 
 **Cause.** Adopt was asked for an asset whose source stamp (`DreamShader.SourceFile`) names a `.dsp`, and
@@ -2547,7 +2565,7 @@ Material Content Browser. A render target follows its buffer's declaration: chan
 DSH9227: '{0}' is not a .dsp pipeline file, so the settings of '{1}' cannot be spliced into it.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:850`
+**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:878`
 <!-- generated:end DSH9227 -->
 
 **Cause.** The `.dsp` Adopt was handed a file that is not a `.dsp`. Adopt chooses the pipeline route by
@@ -2568,7 +2586,7 @@ Content Browser — which uses the `.dsp` the pipeline is stamped with.
 DSH9228: '{0}' builds no pass pipeline any more, so '{1}' has nothing to be spliced into.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:905`
+**Raised by** `Source/DreamShaderEditor/Private/Provenance/DreamShaderProvenanceActions.cpp:933`
 <!-- generated:end DSH9228 -->
 
 **Cause.** The `.dsp` the pipeline is stamped with checks — it parses, binds and lowers — and nothing it

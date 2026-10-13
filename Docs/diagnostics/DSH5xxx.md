@@ -995,7 +995,7 @@ migrate` writes it.
 The asset of this block and a function this file can call are both named '{0}', which 1.x kept apart; the block is declared as '{1}', and a '.dss' writes that name.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:863`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:865`
 <!-- generated:end DSH5290 -->
 
 **Cause.** Rule L23. A block builds an asset named like a function this file can call (a

@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### Added
+
+- **A package can ship material functions.** Installed libraries were usable from DreamShader sources only; an
+  artist working in the Material Editor got nothing from them. A package now builds the assets it asks for, in the
+  project it is installed in, under its own **asset root** (`/Game/DreamShaderPackages/<scope>/<name>`,
+  `/<Plugin>/DreamShaderPackages/...` for a plugin's package):
+  - every `.dss`, `.dsf` and `.dsi` under the package's `Assets` folder is built like a source of the project — at
+    startup, by `compile -All`, by the cook — into the asset root plus its folder under `Assets`;
+  - a header marks the functions to generate, and the plugin writes the wrappers: `/// @generate MF_X` on a function
+    or `#pragma generate(Functions = "MF_{Name}")` above several in 2.0, `Function(Generate = "MF_X")` /
+    `GraphFunction(Generate = ...)` or `Namespace(Name = "BL", Generate = "MF_BL_{Name}")` in 1.x, with `Library` and
+    `Description` alongside. The material function has an input per `in` parameter, an output per `out` one, and
+    names the header as its source, so rebuilds, *Revert to Source* and the cook come back to it.
+
+  A source calling a package function still inlines it. *Adopt Into Source* on a package's asset is refused
+  (`DSH8133`): its files are the installer's. `list-generated -All` names what is left under a package asset root
+  that no source builds any more (`DSH9111`), and deletes nothing. New diagnostics: `DSH6331`, `DSH6332`, `DSH7234`,
+  `DSH8273`–`DSH8276`. See [Packages ▸ Package assets](Docs/tools/packages.md#package-assets).
+
+### Changed
+
+- **Only a package's `Assets` sources and asset headers are built.** A `.dsf`, `.dss`, `.dsi` or `.dsp` anywhere else
+  in a package was compiled by *Recompile DSM*, the file watcher and the dependency graph, and by none of startup
+  generation, `compile -All` and the cook, so such a package had its assets in an editor session and not in a
+  packaged build. Every path now builds the same files; move a package's buildable sources under `Assets`.
+
 ### Fixed
 
 - **A `.dss` calls a 1.x `Namespace` member as `Ns::Fn(...)`.** A library header such as dreamshader-blender

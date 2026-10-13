@@ -37,7 +37,7 @@ the bottom of the file declares nothing for the code above it.
 '{0}' is not a type; did you mean '{1}'? Type names are case-sensitive.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:557`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:568`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:582`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:704`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:961`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:544`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:559`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:570`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:584`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:706`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:975`, `Source/DreamShaderLang/Private/Semantic/LangBinderStatements.cpp:544`
 <!-- generated:end DSH4201 -->
 
 **Cause.** A type spelling is neither a builtin (`float3`, `Texture2D`, `material`, `Substrate`, …)
@@ -195,7 +195,7 @@ reach an engine node through `UE.Expression(Class = "…")`.
 '{0}' is already declared in this file; one name declares one thing.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:479`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:489`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:857`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:481`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:491`, `Source/DreamShaderLang/Private/Semantic/LangBinderPipeline.cpp:857`
 <!-- generated:end DSH4210 -->
 
 **Cause.** One name is declared twice. Structs, file-scope variables and functions share one
@@ -223,7 +223,7 @@ when their parameter lists differ.
 Including '{0}' from '{1}' closes a cycle; a header may not include itself, directly or through another header.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:442`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:444`
 <!-- generated:end DSH4211 -->
 
 **Cause.** Following an `#include` / `import` leads back to a file already being read. The message
@@ -243,7 +243,7 @@ header both of them include; DreamShaderLang has no include guards to make a cyc
 '{0}' cannot be read: this front end was started without an include resolver, so nothing a header declares is visible.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:406`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:408`
 <!-- generated:end DSH4212 -->
 
 **Cause.** The file has an `#include` / `import` and this front end was started without an include
@@ -264,7 +264,7 @@ every name the header would have declared to be `DSH4200` as well.
 '{0}' is declared twice in struct '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:685`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:687`
 <!-- generated:end DSH4213 -->
 
 **Cause.** A `struct` declares two fields with the same name.
@@ -282,7 +282,7 @@ every name the header would have declared to be `DSH4200` as well.
 '{0}' is declared twice in the parameter list of '{1}'.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:938`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:952`
 <!-- generated:end DSH4214 -->
 
 **Cause.** A parameter list declares one name twice.
@@ -770,7 +770,7 @@ nowhere to write the result.
 '#pragma endregion' closes a box that was never opened.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:847`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:866`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:874`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:860`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:879`, `Source/DreamShaderLang/Private/Semantic/LangBinderDirectives.cpp:887`
 <!-- generated:end DSH4240 -->
 
 **Cause.** `#pragma region` and `#pragma endregion` do not pair up — an `endregion` with nothing
@@ -790,7 +790,7 @@ body, so a region opened in a header cannot be closed by the file that included 
 A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:604`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:606`
 <!-- generated:end DSH4241 -->
 
 **Cause.** A declaration has more than one `[n]`. The graph has no arrays at all; the one dimension
@@ -873,7 +873,7 @@ A matrix row cannot be read: the graph has no matrices. Move the code into a '//
 An unsized array needs an initializer list to take its length from.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:623`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:646`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:656`
+**Raised by** `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:625`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:648`, `Source/DreamShaderLang/Private/Semantic/LangBinder.cpp:658`
 <!-- generated:end DSH4245 -->
 
 **Cause.** An array size is not an integer literal between 1 and 4096, or an unsized `[]` has no

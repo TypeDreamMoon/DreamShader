@@ -88,6 +88,7 @@ export float2 MF_ToonUV(float UVChannel = 0.0, float4 ScaleOffset = float4(1, 1,
 | `#pragma material(Key = Value, …)` | File-level material settings. |
 | `#pragma layout(Node\|Comment, Key = Value, …)` | Decompiler-written node coordinates. |
 | `#pragma region Name` · `#pragma endregion` | The 2.0 spelling of the 1.x `#Region` comment box. |
+| `#pragma generate(Functions = "MF_{Name}", Library = …, Desc = …)` | *(after 2.1.2)* In a package's header: every helper function after it generates a material function. See [Packages ▸ Asset headers](../tools/packages.md#asset-headers). |
 
 Types: `float half double int uint bool`, their vectors (`float2`..`float4`) and matrices
 (`float2x2`..`float4x4`), `Texture2D TextureCube Texture2DArray Texture3D VolumeTexture`,
@@ -105,8 +106,11 @@ text wherever it falls — it does not start a directive. A block with nothing u
 nothing: it is dropped with a warning (`DSH3221`) and never reaches the tree.
 
 Keys the tree carries today include `@group`, `@desc`, `@name`, `@sort`, `@slider`, `@default`,
-`@sampler`, `@static`, `@asset`, `@library`, `@layer`, `@layerblend`, `@param` and `@custom` — the
-parser records them all; only `@custom` changes parsing, by making the body opaque.
+`@sampler`, `@static`, `@asset`, `@library`, `@layer`, `@layerblend`, `@param`, `@custom` and
+`@generate` — the parser records them all; only `@custom` changes parsing, by making the body opaque.
+`@generate <name>` *(after 2.1.2)* asks a package to generate a material function from the function
+(`@generate none` opts it out of a `#pragma generate`); it means something in a package's header only,
+and is `DSH7234` anywhere else — see [Packages ▸ Asset headers](../tools/packages.md#asset-headers).
 
 ### Statements and expressions
 

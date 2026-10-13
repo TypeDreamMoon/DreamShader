@@ -15,7 +15,7 @@ contains with `<Name>::`.
 ## Synopsis
 
 ```c
-Namespace(Name = "<identifier>")
+Namespace(Name = "<identifier>" [ , Generate = "<template>" ] [ , Library = "<category>" ] [ , Description = "<text>" ])
 {
     { <function-declaration> | <graph-function-declaration> } …
 }
@@ -29,8 +29,11 @@ keyword.
 | Attribute | Required | Value | Effect |
 | :-- | :-- | :-- | :-- |
 | **`Name`** | yes | string | The qualifier prepended to every member's name |
+| `Generate` | no | string, `{Name}` the member's name | *(after 2.1.2)* in a package's header, every member generates a material function of that name — see [Packages ▸ Asset headers](../tools/packages.md#asset-headers). A member's own `Generate` wins; `Generate = ""` on it opts it out |
+| `Library` | no | string | *(after 2.1.2)* the function-library category of every generated function |
+| `Description` | no | string | *(after 2.1.2)* the description of every generated function |
 
-`Name` is the only attribute the block reads; any other key is parsed and silently ignored. Attribute
+Any other key is parsed and silently ignored. Attribute
 keys are matched case-insensitively, so `Namespace(name="Common")` works. The value may be quoted or
 bare; a bare value runs to the next `,` or `)` outside parentheses. A key written twice is a warning
 ([`DSH2244`](../diagnostics/DSH2xxx.md#dsh2244)) and the later value wins. A trailing comma
