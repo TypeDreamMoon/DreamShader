@@ -76,6 +76,8 @@
 
 #include "DreamShaderDefineResolution.h"
 #include "DreamShaderModule.h"
+#include "DreamShaderSourceFileUtils.h"
+#include "Pipeline/DreamShaderPackageAssets.h"
 #include "DreamShaderPreprocessor.h"
 #include "DreamShaderSettings.h"
 #include "Lang/LangParser.h"
@@ -98,8 +100,9 @@ namespace UE::DreamShader::Editor::Compiler
 
 	bool IsDreamShaderLang2Source(const FString& SourceFilePath)
 	{
-		// `.dsh` answers false on purpose: a header is compiled only as part of the source that includes it, and
-		// handing one to this pipeline directly would produce no product at all. This is the one place it is decided.
+		// A `.dsh` is compiled only as part of the source that includes it -- handing one to this pipeline directly would
+		// produce no product at all -- except a package's asset header, which is compiled as the wrappers of the material
+		// functions it asks for (Pipeline/DreamShaderPackageAssets.h). This is the one place it is decided.
 		switch (Lang::GetLangFileKindFromPath(SourceFilePath))
 		{
 		case Lang::ELangFileKind::Dss:
@@ -110,6 +113,8 @@ namespace UE::DreamShader::Editor::Compiler
 			return true;
 
 		case Lang::ELangFileKind::Dsh:
+			return ::UE::DreamShader::Editor::Private::FDreamShaderSourceFileUtils::IsPackageAssetHeader(SourceFilePath);
+
 		case Lang::ELangFileKind::Unknown:
 			return false;
 		}
@@ -581,7 +586,7 @@ namespace UE::DreamShader::Editor::Compiler
 			if (!IsDreamShaderLang2Source(SourceFilePath))
 			{
 				OutResult.Diagnostics.Error(TEXT("DSH8296"), FileSpan, FText::Format(
-					LOCTEXT("NotACompilableSource", "'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it."),
+					LOCTEXT("NotACompilableSource", "'{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it, unless it is a package's asset header."),
 					FText::FromString(SourceFilePath)));
 				return false;
 			}
@@ -649,15 +654,30 @@ namespace UE::DreamShader::Editor::Compiler
 			// different define sets, with nothing downstream able to tell.
 			OutResult.Defines = MakeUnique<UE::DreamShader::FDreamShaderDefineTable>(UE::DreamShader::ResolveDreamShaderDefines());
 
+			// A package's asset header (see IsDreamShaderLang2Source): its requests are collected here, and the `.dss` of
+			// their wrappers takes the header's place for every later stage under a path beside it, so its `#include` of
+			// the header resolves. The products still name the header as their source.
+			FString UnitPath = SourceFilePath;
+			if (GetLangFileKindFromPath(SourceFilePath) == ELangFileKind::Dsh)
+			{
+				FString UnitText;
+				if (!BuildDreamShaderPackageAssetUnit(SourceFilePath, RawText, *OutResult.Defines, UnitText, OutResult.Diagnostics))
+				{
+					return false;
+				}
+				RawText = MoveTemp(UnitText);
+				UnitPath = GetDreamShaderPackageAssetUnitPath(SourceFilePath);
+			}
+
 			UE::DreamShader::FDreamShaderPreprocessResult PreprocessResult;
 			UE::DreamShader::FDreamShaderTextError PreprocessError;
 			if (!UE::DreamShader::PreprocessDreamShaderSource(
 				RawText,
-				SourceFilePath,
+				UnitPath,
 				*OutResult.Defines,
 				PreprocessResult,
 				PreprocessError,
-				GetDreamShaderPreprocessDialectForFile(SourceFilePath)))
+				GetDreamShaderPreprocessDialectForFile(UnitPath)))
 			{
 				OutResult.Diagnostics.Error(TEXT("DSH8291"), FileSpan, FText::Format(
 					LOCTEXT("SourcePreprocessFailed", "'{0}' failed conditional compilation: {1}: {2}"),
@@ -696,7 +716,7 @@ namespace UE::DreamShader::Editor::Compiler
 				return ReportCancelled();
 			}
 
-			OutResult.Source = MakeUnique<FLangSourceText>(SourceFilePath, PreprocessResult.Text);
+			OutResult.Source = MakeUnique<FLangSourceText>(UnitPath, PreprocessResult.Text);
 
 			// Auto: the front end follows the file kind -- legacy for `.dsm` / `.dsf`, 2.0 for `.dss` / `.dsi` -- the same
 			// decision GetDreamShaderPreprocessDialectForFile made above for the preprocessor (A4).
@@ -792,6 +812,11 @@ namespace UE::DreamShader::Editor::Compiler
 			BindOptions.ParentObjectPath = OutResult.ParentObjectPath;
 			// `.dsp` only: the materials, shader files and layers resolved above (null for every other kind).
 			BindOptions.PipelineReferences = OutResult.PipelineReferences.Get();
+			// `@generate` means something in a package's header only (DSH7234 anywhere else).
+			BindOptions.IsGenerateAllowedInFile = [](const FString& File)
+			{
+				return UE::DreamShader::IsPackageFilePath(File);
+			};
 
 			FLangBindResult BindResult = BindDreamShaderLang(*OutResult.Module, BindOptions);
 			const bool bBound = BindResult.Succeeded();
