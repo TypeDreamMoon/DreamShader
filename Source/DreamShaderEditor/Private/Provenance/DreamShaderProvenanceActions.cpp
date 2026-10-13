@@ -427,6 +427,30 @@ namespace UE::DreamShader::Editor::Private
 
 	// ----------------------------------------------------------------------------------------- Adopt
 
+	/**
+	 * True, with the refusal in OutRefusal, when SourceFilePath belongs to a package: its installer replaces the package's
+	 * files on every update, so whatever Adopt wrote there would be lost the next time, and the edit with it.
+	 */
+	static bool RefuseAdoptIntoPackageSource(const UObject* Asset, const FString& SourceFilePath, FDreamShaderProvenanceOutcome& OutRefusal)
+	{
+		if (!::UE::DreamShader::IsPackageFilePath(SourceFilePath))
+		{
+			return false;
+		}
+		// Raised through FailWith so .skill/gen-diagnostics.ps1 finds the code (see DSH8149 below).
+		FDreamShaderTextError PackageError;
+		FailWith(
+			PackageError,
+			TEXT("DSH8133"),
+			FText::Format(
+				LOCTEXT("DreamShaderAdoptPackageSource", "DSH8133: '{0}' is built from '{1}', a file of an installed package, which the package's installer replaces on every update; anything adopted into it would be lost then. Use Revert to Source to undo the edit, or Detach to keep the asset as it is."),
+				FText::FromString(Asset ? Asset->GetPathName() : FString()),
+				FText::FromString(SourceFilePath)));
+		UE_LOG(LogDreamShader, Warning, TEXT("DSH8133: '%s' is built from the package file '%s'; Adopt was refused."), Asset ? *Asset->GetPathName() : TEXT(""), *SourceFilePath);
+		OutRefusal = MakeProvenanceRefusal(PackageError.Code, PackageError.Message);
+		return true;
+	}
+
 	FDreamShaderProvenanceOutcome AdoptGeneratedAssetIntoSourceCore(UObject* Asset, const FString& InSourceFilePath, const bool bWriteBackup)
 	{
 		if (!Asset)
@@ -435,6 +459,10 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const FString SourceFilePath = ::UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
+		if (FDreamShaderProvenanceOutcome PackageRefusal; RefuseAdoptIntoPackageSource(Asset, SourceFilePath, PackageRefusal))
+		{
+			return PackageRefusal;
+		}
 		if (::UE::DreamShader::IsDreamShaderInstanceFile(SourceFilePath))
 		{
 			// A `.dsi` builds one plain material instance, never the ThinCustom class.
@@ -1105,6 +1133,10 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		const FString SourceFilePath = ::UE::DreamShader::NormalizeSourceFilePath(InSourceFilePath);
+		if (FDreamShaderProvenanceOutcome PackageRefusal; RefuseAdoptIntoPackageSource(Instance, SourceFilePath, PackageRefusal))
+		{
+			return PackageRefusal;
+		}
 		if (!IsGeneratedInstanceTweaked(Instance))
 		{
 			return MakeProvenanceRefusal(FString(), FText::Format(
