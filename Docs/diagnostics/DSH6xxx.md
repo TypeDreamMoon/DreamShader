@@ -349,7 +349,7 @@ values are carried into the helper body and copied back normally.
 '{0}' has no verbatim HLSL body, so it cannot become a custom node; only a '/// @custom' function can.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1094`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1945`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1957`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1968`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1148`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:2054`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:2066`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:2077`
 <!-- generated:end DSH6250 -->
 
 **Cause.** `BuildDreamShaderCustomNodeCode` was called for a function index that does not exist, or
@@ -373,7 +373,7 @@ calls the entry point directly, pass the index of a function whose `///` block c
 '{0}' declares '{1}' as 'inout', which a custom node cannot carry; split it into an 'in' parameter and an 'out' parameter.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1135`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1189`
 <!-- generated:end DSH6251 -->
 
 **Cause.** A `@custom` parameter is declared `inout`. A custom node carries its `out` parameters as
@@ -403,7 +403,7 @@ is not a custom node.
 '{0}' takes the material '{1}' as an input; a custom node cannot accept material attributes on a pin, so read the fields the body needs and pass them as floats.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1172`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1226`
 <!-- generated:end DSH6252 -->
 
 **Cause.** A `@custom` function takes `material` (material attributes) as an input. The engine's
@@ -433,7 +433,7 @@ only for the function the node is being built for.
 '{0}' uses Substrate on '{1}'; a custom node has no Substrate pins, so build that part of the material out of reflected Substrate nodes.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1146`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1190`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1200`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1244`
 <!-- generated:end DSH6253 -->
 
 **Cause.** A `@custom` signature mentions `Substrate`. A custom node has no Substrate pins in any
@@ -453,7 +453,7 @@ keep the `@custom` function to the float maths around it.
 '{0}' returns a texture through '{1}'; a custom node output carries float1..4 or material attributes, never a texture object.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1158`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1200`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1212`, `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1254`
 <!-- generated:end DSH6254 -->
 
 **Cause.** A `@custom` function returns a texture or a sampler, or hands one back through an `out`
@@ -474,7 +474,7 @@ that carries a texture object, and HLSL will not return one from a function eith
 '{0}' declares '{1}' twice in the HLSL it generates; a texture parameter also claims '{1}Sampler', which the engine declares alongside it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1111`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1165`
 <!-- generated:end DSH6255 -->
 
 **Cause.** Two parameters of one `@custom` function end up with the same name in the HLSL that is
@@ -496,7 +496,7 @@ one to rename when a texture and an explicit sampler meet.
 '{0}' returns void but its body uses 'return;'; a custom node always returns its first output, so give the function a return type or restructure the body.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1213`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1267`
 <!-- generated:end DSH6256 -->
 
 **Cause.** A `@custom` function declared `void` uses a bare `return;` in its body. The function the
@@ -518,7 +518,7 @@ through `out` parameters — it just cannot `return`.
 '{0}' declares a return type but its body never returns a value; the node's first output will be 0.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1226`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1280`
 <!-- generated:end DSH6257 -->
 
 **Cause.** A `@custom` function declares a return type, but its body contains no `return` anywhere
@@ -539,7 +539,7 @@ parameters if the body is only there for its side effects.
 '{0}' has an '#include' with an empty path; write the virtual shader path the header lives at, for example "/Engine/Private/Common.ush".
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:956`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1009`
 <!-- generated:end DSH6258 -->
 
 **Cause.** A `#include` at the top of a `@custom` body has an empty path (`#include ""`). Leading
@@ -562,7 +562,7 @@ statement stays in the body, where it lands inside a function and only works for
 '{0}' differs from the function '{1}' only in case; HLSL is case-sensitive, so this call is left for the shader compiler. Did you mean '{1}'?
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1322`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1376`
 <!-- generated:end DSH6259 -->
 
 **Cause.** A call inside a `@custom` body names something that differs from a function of this module
@@ -585,7 +585,7 @@ there is no way to tell them apart at this level.
 The '@custom' functions {0} call each other in a cycle; HLSL has no recursion, so their bodies cannot be embedded in a custom node.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1361`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1415`
 <!-- generated:end DSH6260 -->
 
 **Cause.** Two or more `@custom` functions call each other, directly or through others. Their bodies
@@ -607,7 +607,7 @@ will still refuse real recursion, but a bounded unrolled form can be written by 
 '{0}' is not a '@custom' function and cannot be called from the HLSL body of '{1}'; a custom node sees no graph values, so mark '{0}' '@custom' as well or move the call out of the body.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1307`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1361`
 <!-- generated:end DSH6261 -->
 
 **Cause.** A `@custom` body calls a function of this module that is not itself `@custom` — a helper,
@@ -634,7 +634,7 @@ float3 Shade(float3 Color, float Mask) { ... }   // Mask computed by the caller,
 '{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by position otherwise.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1618`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1670`
 <!-- generated:end DSH6262 -->
 
 **Cause.** A call to a `@custom` function that takes a texture passes the wrong number of arguments.
@@ -656,7 +656,7 @@ leave it out here — the sampler pairing needs every position.
 The texture argument for '{0}' of '{1}' has to be a plain texture name, because the sampler that goes with it is named after it.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1653`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1755`
 <!-- generated:end DSH6263 -->
 
 **Cause.** The argument in a texture position of a call to a `@custom` function is not a plain name
@@ -679,7 +679,7 @@ chosen one in as a parameter of the outer custom function.
 '{0}' is 'selfcontained', so the '@custom' function '{1}' it calls is not embedded in its node; the call is left for the shader compiler to resolve out of this body's own includes.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1422`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1476`
 <!-- generated:end DSH6264 -->
 
 **Cause.** A `@custom selfcontained` body calls another `@custom` function of the module. A
@@ -690,6 +690,51 @@ call is left for the shader compiler, which will only find the symbol if one of 
 **Fix.** Drop `selfcontained` if the call is meant to be embedded (that is the default behaviour, and
 the closure is pulled in for you). Keep `selfcontained` if the symbol really comes from an included
 header, and rename the local `@custom` function so the two do not look like the same thing.
+
+## DSH6265
+
+<!-- generated:begin DSH6265 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' takes {1} argument(s) in the HLSL it becomes, but this call passes {2}.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1682`
+<!-- generated:end DSH6265 -->
+
+**Cause.** A `@custom` body calls another `@custom` function with a number of arguments the HLSL that function
+becomes does not take. HLSL has no default arguments and a `@custom` function no overloads, so the shader compiler
+would refuse the call; it is refused here instead, at the call. The count is of the HLSL function: a 1.x function
+that returns nothing returns its first `out` (rule L9), so a call of it passes every parameter but that one -- or
+every parameter, which is read as `r = F(a, o)`.
+
+**Fix.** Pass one argument per parameter of the callee, `out` parameters included. A file `dsc migrate` wrote that
+fails here is a fault of the migration; say so.
+
+## DSH6266
+
+<!-- generated:begin DSH6266 -->
+**Severity** error
+
+**Message**
+
+```
+'{0}' returns nothing in the HLSL it becomes, so this call has no value to read; pass a variable for each of its 'out' parameters and read those.
+```
+
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1698`
+<!-- generated:end DSH6266 -->
+
+**Cause.** A `@custom` body reads the value of a call to a `@custom` function that returns nothing --
+`x = F(a, o)`, `return F(a)`, `F(a) + 1`. Its HLSL is `void`, so there is no value. Under 1.x every such function
+returned its first `out` (rule L9), and a 1.x body read that; a `.dss` function is emitted as it is declared.
+
+**Fix.** Pass a variable for each `out` parameter and read it after the call, or declare the function returning
+the value. `dsc migrate` makes a 1.x function return its first `out`; a `Namespace` function keeps its `out`s and a
+body of its file that read one calls an adapter that returns it.
 
 ## DSH6300
 
@@ -1074,7 +1119,7 @@ function.
 '{0}' takes the 'UE.' calls lifted out of its body as inputs of its own custom node, so the HLSL body of '{1}' cannot call it; call it from a graph body instead.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1291`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1345`
 <!-- generated:end DSH6327 -->
 
 **Cause.** An HLSL body calls a function whose own body has `UE.` calls lifted out of it. Those
@@ -1095,7 +1140,7 @@ it into parameters.
 '{0}' lifts the call behind its input '{1}' out of a place its body does not have, so its custom node's code cannot be built.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1015`
+**Raised by** `Source/DreamShaderLang/Private/IR/IRCustomHlsl.cpp:1068`
 <!-- generated:end DSH6328 -->
 
 **Cause.** A lifted call's recorded place lies outside the body text it belongs to. The front end

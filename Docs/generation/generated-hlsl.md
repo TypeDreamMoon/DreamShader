@@ -171,11 +171,16 @@ dependency before its dependents. Recursion has no HLSL form; a cycle among them
 | member separation | one tab of indentation, one blank line between members |
 
 A call site is rewritten by **name**: the argument list stays as written, except that a
-`<texture>Sampler` argument is spliced in after each texture argument. That needs the call to pass
-exactly the callee's arguments ([`DSH6262`](../diagnostics/DSH6xxx.md#dsh6262)) and each texture
-argument to be a plain name ([`DSH6263`](../diagnostics/DSH6xxx.md#dsh6263)). A helper returns its
-first result, so a body calls it as a value — `float r = Remap01(x);`. *(since 2.0.0)* The 1.x
-reshaping of a call that passed that result as an argument (`Remap01(x, r);`) is gone.
+`<texture>Sampler` argument is spliced in after each texture argument. The call has to pass exactly
+the arguments the callee's HLSL takes — HLSL has no default arguments, and a function no overloads
+here ([`DSH6262`](../diagnostics/DSH6xxx.md#dsh6262) when it carries a texture,
+[`DSH6265`](../diagnostics/DSH6xxx.md#dsh6265) otherwise) — and each texture argument has to be a
+plain name ([`DSH6263`](../diagnostics/DSH6xxx.md#dsh6263)). A helper returns its first result, so a
+body calls it as a value — `float r = Remap01(x);` — and a call that passes that result as an
+argument as well, `Remap01(x, r);`, is reshaped as 1.x reshaped it: `r = Remap01(x);`. *(2.0.0 –
+2.1.2 left it as written, one argument too many for the shader compiler.)* The value of a function
+that returns nothing — a `/// @custom` one declared `void`, not a 1.x one — cannot be read
+([`DSH6266`](../diagnostics/DSH6xxx.md#dsh6266)).
 
 A namespace-qualified call inside a body works *(since 2.0.0)*: the body normalisation flattens
 `Common::Remap01(` to `Common_Remap01(`, which is the namespaced function's own name, so it is found
@@ -198,6 +203,8 @@ compiler, [`DSH6264`](../diagnostics/DSH6xxx.md#dsh6264).)*
 | [`DSH6261`](../diagnostics/DSH6xxx.md#dsh6261) | a body calls a function that is not a `Function` or `GraphFunction`, such as a `ShaderFunction` |
 | [`DSH6327`](../diagnostics/DSH6xxx.md#dsh6327) | a body calls a `GraphFunction` whose `UE.*` calls were lifted into inputs of its own node |
 | `DSH6262`, `DSH6263` | a call that passes a texture cannot be matched up with the callee's parameters |
+| [`DSH6265`](../diagnostics/DSH6xxx.md#dsh6265) | a call passes another number of arguments than the callee's HLSL takes |
+| [`DSH6266`](../diagnostics/DSH6xxx.md#dsh6266) | a body reads the value of a call to a function whose HLSL returns nothing |
 | `DSH6258` | an `#include` line with an empty path |
 
 A call in a body to a name that is no function of the file is left for the shader compiler.

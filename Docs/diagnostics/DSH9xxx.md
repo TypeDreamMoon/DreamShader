@@ -1587,7 +1587,7 @@ is lost; the message names the first parse error.
 '{0}' fails conditional compilation ({1}: {2}), and a source with '#if' lines is not migrated in any case.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:104`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:115`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:106`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:117`
 <!-- generated:end DSH9090 -->
 
 **Cause.** The source uses `#if` conditional compilation (or fails it). A migration would only see
@@ -1606,7 +1606,7 @@ the branch taken with today's defines and silently drop the others.
 '{0}' names a source root in front of the path, which '#include' cannot; write the path from the root's own folder (a leading '/') or relative to this file, then migrate again.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:451`
+**Raised by** `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:502`
 <!-- generated:end DSH9091 -->
 
 **Cause.** An `import` names a source root in front of the path (`import
@@ -1626,7 +1626,7 @@ migrate again.
 {0} comment(s) of '{1}' would not be in the migrated file ({2}), so nothing was written; this is a fault of the migration, not of the source.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:601`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:609`
 <!-- generated:end DSH9092 -->
 
 **Cause.** A comment of the 1.x file would be missing from the migrated text. Every rewrite is
@@ -1646,7 +1646,7 @@ quotes the comments.
 '{0}' has no 1.x declaration left; there is nothing to migrate.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:540`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:548`
 <!-- generated:end DSH9093 -->
 
 **Cause.** The file is a `.dsh` that holds 2.0 declarations only. There is nothing left to migrate.
@@ -1664,13 +1664,16 @@ quotes the comments.
 '{0}' keeps its '/// @root', the 1.x spelling of where its asset goes, because the place the new file would put it could not be worked out; check the asset path the first build reports.
 ```
 
-**Raised by** `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:1636`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:386`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:432`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:557`
+**Raised by** `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:2133`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:437`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:483`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:609`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:916`, `Source/DreamShaderLang/Private/Migrate/LangMigrate.cpp:926`
 <!-- generated:end DSH9094 -->
 
 **Cause.** The migrated text differs from the 1.x source in a way the migrator could not avoid and
 that does not stop the build: `/// @root` kept because the new file's place could not be worked out,
 an optional input of a type that has no default to write (it becomes required), a multi-line text
-flattened onto one `///` line, a selected output with no variable to read from.
+flattened onto one `///` line, a selected output with no variable to read from. And a call of a 1.x function
+another file declares, written for that function as it is now: once that file is migrated, a function that
+returned nothing returns its first `out` (rule L9) -- a graph call then passes one argument too many -- and a
+`Namespace` function keeps its `out`s, so a body that read its value has none to read.
 
 **Fix.** Read the message: each case says what changed. Check the asset path or the input the first
 build reports.
@@ -1686,7 +1689,7 @@ build reports.
 '{0}' is not a 1.x source; migrate takes '.dsm', '.dsf' and '.dsh' files.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:506`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:514`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:514`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:522`
 <!-- generated:end DSH9095 -->
 
 **Cause.** `dsc migrate` was given a file that is not a 1.x source, or that cannot be read.
@@ -1704,11 +1707,12 @@ build reports.
 The migrated text of '{0}' does not build as 2.0 source ({1}), so nothing was written; the text is in '{2}'.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:618`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:627`
 <!-- generated:end DSH9097 -->
 
 **Cause.** The rewritten text was parsed, bound and lowered as 2.0 source before being written, and
-it does not build. Nothing was written; the rejected text is kept under
+every call in its `@custom` bodies was matched against the HLSL its callee becomes (`DSH6262`, `DSH6265`,
+`DSH6266`) -- a header lowers to nothing, so nothing else reads its bodies -- and it does not build. Nothing was written; the rejected text is kept under
 `Saved/DreamShader/Migrated/Rejected/` and the diagnostics that follow point into it.
 
 **Fix.** Read the first error in the rejected file. It is either a construct the migrator does not
@@ -1726,7 +1730,7 @@ in the 1.x source and migrate again.
 The migrated text of '{0}' does not build the graph the 1.x file builds: {1}
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:652`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:667`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:661`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:676`
 <!-- generated:end DSH9098 -->
 
 **Cause.** The migrated text builds, and its IR is not equivalent to the 1.x file's: either the
@@ -1749,7 +1753,7 @@ a path difference, add the `/// @name` the message gives.
 '{0}' already exists and is not written over; move it away, or migrate into another folder with -Out.
 ```
 
-**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:146`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:547`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:695`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:711`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:723`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:741`
+**Raised by** `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:148`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:555`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:704`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:720`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:732`, `Source/DreamShaderEditor/Private/Commandlet/DreamShaderMigrate.cpp:750`
 <!-- generated:end DSH9099 -->
 
 **Cause.** The migration could not read, write or replace a file: the builtin catalog is empty

@@ -410,6 +410,8 @@ the 1.x generator to the codes that replaced them, and lists the few messages th
 | [DSH6262](DSH6xxx.md#dsh6262) | error | '{0}' takes {1} argument(s) but this call passes {2}; a call that carries a texture cannot be matched up by... |
 | [DSH6263](DSH6xxx.md#dsh6263) | error | The texture argument for '{0}' of '{1}' has to be a plain texture name, because the sampler that goes with ... |
 | [DSH6264](DSH6xxx.md#dsh6264) | warning | '{0}' is 'selfcontained', so the '@custom' function '{1}' it calls is not embedded in its node; the call is... |
+| [DSH6265](DSH6xxx.md#dsh6265) | error | '{0}' takes {1} argument(s) in the HLSL it becomes, but this call passes {2}. |
+| [DSH6266](DSH6xxx.md#dsh6266) | error | '{0}' returns nothing in the HLSL it becomes, so this call has no value to read; pass a variable for each o... |
 | [DSH6300](DSH6xxx.md#dsh6300) | error | Expected a function name after '{0}', found '('. |
 | [DSH6301](DSH6xxx.md#dsh6301) | error | Expected '[in\|out] Type Name' in the parameter list of '{0}', found '{1}'. |
 | [DSH6302](DSH6xxx.md#dsh6302) | error | Expected 'in' or 'out' before the parameter '{0}' of '{1}', found '{2}'; a 1.x function has no 'inout'. |

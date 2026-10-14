@@ -31,12 +31,15 @@ migrated in the same run: a `.dsh` may hold both dialects, so a half-migrated pr
 
 1. **No comment is lost.** The comments of the source are counted against the comments of the result
    (`DSH9092`).
-2. **The text builds as 2.0.** It is parsed, bound and lowered by the 2.0 front end (`DSH9097`). A
-   rejected text is kept under `Saved/DreamShader/Migrated/Rejected/`, and the diagnostics point into it.
+2. **The text builds as 2.0.** It is parsed, bound and lowered by the 2.0 front end, and every call
+   in its `@custom` bodies is matched against the HLSL its callee becomes — what the shader compiler
+   would do, and what nothing else does for a header, which lowers to nothing on its own (`DSH9097`).
+   A rejected text is kept under `Saved/DreamShader/Migrated/Rejected/`, and the diagnostics point into it.
 3. **It builds the same graph.** The IR of the 1.x file and the IR of the new text are compared from
    their roots (`DSH9098`, a warning with the first differing node). What is one asset written two
    ways does not count: a literal on a pin against its `Const*` twin, an identity swizzle, the
-   spacing of Custom node code, `\r\n` against `\n` in a description, a number at float precision.
+   spacing of Custom node code and where its source markers stand, the name the IR gives a Custom
+   node's first output, `\r\n` against `\n` in a description, a number at float precision.
 4. **The asset stays where it is.** If the new file's place would name another asset path, the
    export gets the `/// @name` that keeps it (`DSH9098` says so when it cannot).
 
@@ -59,6 +62,10 @@ a diagnostic on the 1.x source, so `dsc check` on a `.dsm` shows what a migratio
 | `ShaderFunction` inputs and outputs | parameters; a first output named `Result` is the return value, the others are `out` | |
 | `Function` / `GraphFunction` | `/// @custom`, body verbatim; `UE.` calls in a GraphFunction body are respelled in place | L8 |
 | `Namespace(Name = "N") { Function F }` | `N_F`, with `/// @name N::F` so the Custom node keeps its title; `N::F(` calls follow | |
+| `Function F(in a, out r, out o)`, which returns nothing | `T F(a, out o)`: the body starts `T r = (T)0;` and ends `return r;` | L9 |
+| `F(a, r, o)` passing that first `out` too, in a body or a graph | `r = F(a, o)` | L9 |
+| a `Function` of a `Namespace` block | keeps its `out` parameters | L9 |
+| `x = N::F(a, o)` in a body of the same file | `x = N_F_r(a, o)`, through a `@custom` function added beside `N_F` that returns its first `out` | L9 |
 | `VirtualFunction` | `/// @asset` + `extern` prototype | |
 | `mix`, `fract`, `mod`, `vec3` | `lerp`, `frac`, `fmod`, `float3` | L2 (`DSH5277`) |
 | `F(a).Out`, `F(a, Output = "Out")`, `[k]` on a function | one call statement with a local per output, shared by equal calls | L3b |
@@ -79,6 +86,37 @@ a diagnostic on the 1.x source, so `dsc check` on a `.dsm` shows what a migratio
 
 Comments stay with the statement or declaration they stood by; the comment above a 1.x block goes
 above the first declaration that block became.
+
+### Functions that return nothing (L9)
+
+1.x wrote the HLSL of every `Function` and `GraphFunction` that returns nothing as returning its
+first `out`, zeroed first. That is what lets a 1.x body call one as a value — `fac = Checker(co);` —
+or pass that `out` as well, `Voronoi(co, d, color);`, which 1.x read as `d = Voronoi(co, color);`. A
+`.dss` function is emitted exactly as it is declared, so the migrated function is declared that way:
+
+```hlsl
+/// @custom
+float BLChecker_fac(float3 p)
+{
+    float result = (float)0;
+    ...
+    return result;
+}
+```
+
+and every call that passed the first `out` assigns it instead, in bodies and in graphs. The node a
+graph makes of it is the node 1.x made.
+
+A function of a `Namespace` block is a library's public entry point: its `out` parameters are its
+Custom node's pins and the outputs of the material function made from it, so it keeps them. 1.x
+could not call one from a body (it did not rewrite `N::F` there); where a body of the same file reads
+one's value anyway, the call goes to an adapter migrate adds beside it, `N_F_<first out>`.
+
+The shape of a function is decided in the file that declares it, so **migrate a header before the
+files that include it, in place** — `-All` and a set do. A call of a 1.x function of a header that is
+still 1.x is written for that function as it is now, and `DSH9094` says which calls will need the new
+form once the header is migrated: a graph's call of a function that returns nothing, or a body that
+reads a `Namespace` function's value.
 
 ## What can stop a file
 

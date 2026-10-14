@@ -381,6 +381,8 @@ code is raised; the code's page has the message.
 | `DSH6261` | the body calls a function that is not a `Function` |
 | `DSH6262` | a call to a texture-taking function passes the wrong number of arguments |
 | `DSH6263` | a texture argument of such a call is not a plain name |
+| `DSH6265` | a call to any other function passes another number of arguments than its HLSL takes |
+| `DSH6266` | the body reads the value of a call to a function whose HLSL returns nothing |
 | `DSH6327` | the body calls a `GraphFunction` with lifted `UE.*` calls |
 
 ### Call time
