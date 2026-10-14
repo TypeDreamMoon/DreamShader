@@ -43,6 +43,12 @@ requires updating that mapping and incoming relative links, while retaining its 
 existing URLs stable. English pages are generated from these sources; AI-generated Chinese updates
 are reviewed in a pull request before publication.
 
+A release also updates [the release notes page](changelog/dreamshader.md): it is written for readers of
+the manual — what changes for them, with links into the pages — and is not a copy of `CHANGELOG.md`, so
+neither file is generated from the other. Bump its *Current release* row and add the version's section
+when `CHANGELOG.md` gets one; pages that name the current release, such as
+[Limitations](diagnostics/limitations.md), are reviewed at the same time.
+
 The `zh-CN/` tree mirrors English source paths. Imported translations are unreviewed; the [initial migration snapshot](zh-CN/TRANSLATIONS.md) preserves the original imported and missing translation lists. For current status, run `python -B Docs/translation-status.py` or check the translation status issue in the website repository. `.translations/` records source versions without treating an import as approval. Website-only notes remain in the website repository.
 
 Check translation status locally with `python -B Docs/translation-status.py`; add `--all` to include every source or `--json` for structured output. This read-only tool does not need the website repository or a Git checkout.

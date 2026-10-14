@@ -211,8 +211,9 @@ Cutting the `1.5.1` stable release:
 
 ```powershell
 # 1. Bump the descriptor: VersionName = "1.5.1", IsBetaVersion = false, Version = 151.
-# 2. Add a matching "## 1.5.1 - 2026-08-02" section to CHANGELOG.md.
-git add DreamShader.uplugin CHANGELOG.md
+# 2. Add a matching "## 1.5.1 - 2026-08-02" section to CHANGELOG.md, and the version's section
+#    to Docs/changelog/dreamshader.md (the manual's release notes, written by hand).
+git add DreamShader.uplugin CHANGELOG.md Docs/changelog/dreamshader.md
 git commit -m "Release 1.5.1"
 git push
 
