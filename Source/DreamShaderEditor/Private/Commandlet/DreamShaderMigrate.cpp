@@ -18,6 +18,7 @@
 #include "IR/IR.h"
 #include "IR/IRBuilder.h"
 #include "IR/IRCompare.h"
+#include "IR/IRCustomHlsl.h"
 #include "IR/IRPasses.h"
 #include "IR/IRValidator.h"
 #include "Lang/LangLegacy.h"
@@ -87,9 +88,10 @@ namespace UE::DreamShader::Editor::Private
 
 		/**
 		 * Text as the file at FilePath would be compiled, as far as the validator: the pipeline's front half, from a text
-		 * that does not have to be on disk. A header stops after the bind, because it lowers to nothing on its own.
+		 * that does not have to be on disk. A header stops after the bind, because it lowers to nothing on its own; with
+		 * bCheckCustomBodies the `@custom` bodies it declares are read first, as a material that calls them would.
 		 */
-		static bool RunFrontEnd(const FString& FilePath, const FString& RawText, const bool bKeepTrivia, const bool bRefuseConditionals, FFrontEndRun& Out)
+		static bool RunFrontEnd(const FString& FilePath, const FString& RawText, const bool bKeepTrivia, const bool bRefuseConditionals, FFrontEndRun& Out, const bool bCheckCustomBodies = false)
 		{
 			const Lang::FLangSpan FileSpan;
 			const Lang::ELangFileKind Kind = Lang::GetLangFileKindFromPath(FilePath);
@@ -159,6 +161,12 @@ namespace UE::DreamShader::Editor::Private
 			Out.Bound = MoveTemp(BoundResult.Bound);
 			Out.Diagnostics.Append(MoveTemp(BoundResult.Diagnostics));
 			if (!bBound)
+			{
+				return false;
+			}
+			// Nothing else reads a header's bodies before a material calls them, nor the bodies of a file's functions that
+			// no graph calls: every call in them against the HLSL its callee becomes, as the Custom code builder reads it.
+			if (bCheckCustomBodies && !IR::CheckDreamShaderCustomFunctionBodies(*Out.Bound, Out.Module.Get(), Out.Diagnostics))
 			{
 				return false;
 			}
@@ -607,7 +615,8 @@ namespace UE::DreamShader::Editor::Private
 		}
 
 		FFrontEndRun MigratedRun;
-		if (!RunFrontEnd(NominalOutputPath, Text, /* bKeepTrivia */ false, /* bRefuseConditionals */ false, MigratedRun) || MigratedRun.Diagnostics.HasErrors())
+		if (!RunFrontEnd(NominalOutputPath, Text, /* bKeepTrivia */ false, /* bRefuseConditionals */ false, MigratedRun, /* bCheckCustomBodies */ true)
+			|| MigratedRun.Diagnostics.HasErrors())
 		{
 			// The text goes where it can be opened, and its diagnostics point into it.
 			const FString RejectedPath = MakeSavedPath(TEXT("Rejected"), NominalOutputPath);
