@@ -2138,5 +2138,16 @@
  "DreamShader.IRBuilder|IRBuilderDefaultHasNoValue": "'{1}' 中 '{0}' 的默认值读取了一个没有值的参数；请显式传入该输入或为其默认值赋初值。",
  "DreamShader.Lang.InstanceSource|UniformScalarValueNeedsTypeChange": "'{0}' 的标量值无法用其声明的类型表示；修改 .dss uniform 的类型可能影响其调用方，因此没有写入默认值。请显式修改源码中的类型，或将该调整提取到 .dsi。",
  "DreamShader.Pass.Pipeline|BufferMipsUnsupported": "缓冲区 '{0}'：只支持 Mips = 1；pass 无法初始化或更新 mip 链。",
- "DreamShader.Pipeline|RequiredParentProductMissing": "父源文件 '{0}' 已不再在 '{1}' 构建材质或实例；请刷新其源引用。"
+ "DreamShader.Pipeline|RequiredParentProductMissing": "父源文件 '{0}' 已不再在 '{1}' 构建材质或实例；请刷新其源引用。",
+ "DreamShader.Binder|NoGenerationInHeader": "'{0}' 中的 '#pragma nogeneration' 已被忽略：它只标记写有它的文件，头文件本身不构建任何东西，包含它的文件也不会因此被标记。请改为在每个这样的文件中写它。",
+ "DreamShader.Binder.Directives|TargetFunctionNoGeneration": "一个导出函数",
+ "DreamShader.Lang.Declarations|NoGenerationArguments": "'#pragma nogeneration' 不接受参数，'{0}' 已被忽略：文件仍然被标记。删除这一行才能让它重新被自动构建。",
+ "DreamShader.Lang.LegacyParser|NoGenerationValue": "'{0}' 不是 NoGeneration 的取值，它只能是 true 或 false；该块按 false 构建。",
+ "DreamShader.Pipeline|DisableListEmpty": "一个 'disable_warning' 或 'disable_error' 列表没有写任何代码，因此不屏蔽任何东西；请在其后写上代码，例如 'DSH7224'。",
+ "DreamShader.Pipeline|DisableListMalformed": "'{0}' 不是诊断代码，已被忽略；'disable_warning' 或 'disable_error' 列表接受的是 'DSH7224' 这样的代码。",
+ "DreamShader.Pipeline|NoGenerationCalleeMissing": "'{0}' 调用了 '{1}'，而 '{2}' 将它标记为 NoGeneration，且它从未被构建过，因此没有可调用的资产。请按名称编译一次 '{2}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。",
+ "DreamShader.Pipeline|NoGenerationLeftAlone": "'{0}' 保持原样：'{1}' 将它标记为 NoGeneration，只有按名称编译该文件时才会构建它。",
+ "DreamShader.Pipeline|NoGenerationNeverBuilt": "'{0}' 从未被构建过：'{1}' 将它标记为 NoGeneration，只有按名称编译该文件时才会构建它，而至今没有这样的编译。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。",
+ "DreamShader.Pipeline|NoGenerationParentMissing": "父项 '{0}' 来自 '{1}'，后者将它标记为 NoGeneration，且它从未被构建过，因此没有可用来构建此实例的父项。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。",
+ "DreamShader.Pipeline.References|NoGenerationReferenceMissing": "'{0}' 来自 '{1}'，后者将它标记为 NoGeneration，且它从未被构建过，因此没有可用来检查此引用的资产。请按名称编译一次 '{1}'：在材质内容浏览器中点“编译”，或使用 `compile -Source`。"
 }

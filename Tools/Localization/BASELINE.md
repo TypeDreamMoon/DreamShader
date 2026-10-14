@@ -11,7 +11,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 `-IncludeDeferred` widens which files the R1/R2 literal rules run on; it does not change this count.
 
 ## Expected gather count
-2140
+2151
 
 ## Inventory
 | Namespace | Key | Source text |
@@ -44,6 +44,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder | LinkageTargetLegacyExport | a block of a 1.x source that produces an asset |
 | DreamShader.Binder | MaterialPragmaWithoutEntry | '#pragma material' configures a material, and this file has no 'export void Name(inout material m)' entry to configure. |
 | DreamShader.Binder | MultiDimensionalArray | A multi-dimensional array has no graph form; declare one dimension, or move the code into a '/// @custom' function. |
+| DreamShader.Binder | NoGenerationInHeader | '#pragma nogeneration' in '{0}' was ignored: it marks the file it is written in, a header builds nothing, and the files that include it are not marked by it. Write it in each of those files instead. |
 | DreamShader.Binder | ParamDocUnknown | '@param {0}' does not name a parameter of '{1}'. |
 | DreamShader.Binder | PinDocUnknown | '@pin {0}' does not name a parameter of '{1}'. |
 | DreamShader.Binder | PrototypeWithoutExtern | '{0}' has no body; a prototype has to be 'extern' and carry '/// @asset'. |
@@ -98,6 +99,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Binder.Directives | TargetFunction4 | an exported function |
 | DreamShader.Binder.Directives | TargetFunction5 | an exported function |
 | DreamShader.Binder.Directives | TargetFunctionGenerate | a function |
+| DreamShader.Binder.Directives | TargetFunctionNoGeneration | an exported function |
 | DreamShader.Binder.Directives | TargetFunctionPin | a function |
 | DreamShader.Binder.Directives | TargetFunctionRoot | an exported function |
 | DreamShader.Binder.Directives | TargetTextureUniform | a texture 'uniform' |
@@ -1044,6 +1046,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.Declarations | MalformedDocDirective | A '@' in a '///' line must be followed by a directive name; the text is kept as description. |
 | DreamShader.Lang.Declarations | MalformedInclude | '#include' needs a quoted path: #include "/Game/Shared/Common.dsh". |
 | DreamShader.Lang.Declarations | MalformedPragma | Malformed '#pragma {0}': {1} |
+| DreamShader.Lang.Declarations | NoGenerationArguments | '#pragma nogeneration' takes no arguments, and '{0}' was ignored: the file is still marked. Remove the line to have it built automatically again. |
 | DreamShader.Lang.Declarations | OrphanDocBlock | This '///' block is not followed by a declaration and is ignored. |
 | DreamShader.Lang.Declarations | OrphanDocBlockInStruct | This '///' block is not followed by a field and is ignored. |
 | DreamShader.Lang.Declarations | PragmaExpectedKey | expected a key or a value. |
@@ -1135,6 +1138,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Lang.LegacyParser | NamespaceNoName | Expected a 'Name = "..."' attribute with a name on 'Namespace', found none. |
 | DreamShader.Lang.LegacyParser | NamespaceNotIdentifier | Expected the namespace name to be an identifier, found '{0}'. |
 | DreamShader.Lang.LegacyParser | NamespaceOpen | Expected '`{' to open the namespace '{0}', found {1}. |
+| DreamShader.Lang.LegacyParser | NoGenerationValue | '{0}' is not a value of NoGeneration, which is true or false; the block is built as if it were false. |
 | DreamShader.Lang.LegacyParser | NoLegacyBlock | Expected a top-level Shader, ShaderFunction, ShaderLayer, ShaderLayerBlend, Function, GraphFunction, Namespace or VirtualFunction block in this 1.x file, found none. |
 | DreamShader.Lang.LegacyParser | NoResult | Expected '{0}' to return a value or to have at least one 'out' parameter, found neither. |
 | DreamShader.Lang.LegacyParser | OldLayerWord | '{0}' is the old spelling of '{1}'; it still reads the same. |
@@ -1519,6 +1523,8 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pipeline | CatalogEmpty | The builtin expression catalog came back empty, so nothing that names a 'UE.*' node can be bound. Reflection found no UMaterialExpression classes, which normally means the Engine module is not loaded. |
 | DreamShader.Pipeline | CompileCancelled | Compiling '{0}' was cancelled; nothing was written. |
 | DreamShader.Pipeline | CompilingLang2Source | Compiling DreamShader source '{0}'... |
+| DreamShader.Pipeline | DisableListEmpty | A 'disable_warning' or 'disable_error' list names no code, and disables nothing; write the codes after it, such as 'DSH7224'. |
+| DreamShader.Pipeline | DisableListMalformed | '{0}' is not a diagnostic code, and was ignored; a 'disable_warning' or 'disable_error' list takes codes such as 'DSH7224'. |
 | DreamShader.Pipeline | IncludePreprocessFailed | '{0}' failed conditional compilation: {1}: {2} |
 | DreamShader.Pipeline | IncludeUnparsable | '{0}', included from '{1}', could not be parsed; its own errors are above. |
 | DreamShader.Pipeline | IncludeUnreadable | '{0}', included from '{1}', resolved but could not be read. |
@@ -1532,6 +1538,10 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pipeline | Lang2Parsing | Parsing '{0}'... |
 | DreamShader.Pipeline | Lang2Reading | Reading '{0}'... |
 | DreamShader.Pipeline | Lang2Validating | Validating the IR of '{0}'... |
+| DreamShader.Pipeline | NoGenerationCalleeMissing | '{0}' calls '{1}', which '{2}' marks NoGeneration and which has never been built, so there is nothing to call. Compile '{2}' by name once: Compile in the Material Content Browser, or `compile -Source`. |
+| DreamShader.Pipeline | NoGenerationLeftAlone | '{0}' was left alone: '{1}' marks it NoGeneration, and only a compile that names the file builds it. |
+| DreamShader.Pipeline | NoGenerationNeverBuilt | '{0}' has never been built: '{1}' marks it NoGeneration, so only a compile that names the file builds it, and none has. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`. |
+| DreamShader.Pipeline | NoGenerationParentMissing | The parent '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to build this instance against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`. |
 | DreamShader.Pipeline | NotACompilableSource | '{0}' is not a source the compiler builds on its own; it builds '.dss', '.dsi', '.dsp', '.dsm' and '.dsf' files, and a '.dsh' header only through the source that includes it, unless it is a package's asset header. |
 | DreamShader.Pipeline | ParentCompiledFirst | '{0}' was missing or older than its source, so '{1}' was compiled first. |
 | DreamShader.Pipeline | ParentCompileFailed | The parent source '{0}' failed to compile, so this instance has no parent to build against. {1} |
@@ -1548,6 +1558,7 @@ gathered like any other, so they are listed here rather than quietly dropped.
 | DreamShader.Pipeline.References | MaterialReferenceMalformed | The material '{0}' does not resolve to an asset path. {1} |
 | DreamShader.Pipeline.References | MaterialReferenceNotMaterial | '{0}' is a {1}, not a material or a material instance. |
 | DreamShader.Pipeline.References | MaterialSourceDoesNotCompile | The material '{0}' comes from '{1}', which does not compile, so this pipeline has no material to check its pass against. {2} |
+| DreamShader.Pipeline.References | NoGenerationReferenceMissing | '{0}' comes from '{1}', which marks it NoGeneration, and it has never been built, so there is nothing to check this reference against. Compile '{1}' by name once: Compile in the Material Content Browser, or `compile -Source`. |
 | DreamShader.Pipeline.References | PassBufferNoBuffer | UE.DreamPassBuffer names no Buffer of '{0}': write the exported buffer's name (Buffer = "Blurred"). |
 | DreamShader.Pipeline.References | PassBufferNoPipeline | UE.DreamPassBuffer names no Pipeline: write the name of the '.dsp' (Pipeline = "CP_Highlight") or the pipeline asset's path. |
 | DreamShader.Pipeline.References | PassBufferNotExportedInSource | Buffer '{1}' of the pipeline '{0}' is not exported. Declare it with Export = true in the .dsp. |
@@ -2164,4 +2175,3 @@ Use -IncludeDeferred to lint MaterialAssetGeneration/ and Decompiler/ in the nex
 
 ## Auto-gathered metadata
 Unreal will add any auto-gathered UPROPERTY metadata (for example DisplayName and ToolTip) on top of this compile-time baseline. This file intentionally counts only LOCTEXT/NSLOCTEXT entries.
-
