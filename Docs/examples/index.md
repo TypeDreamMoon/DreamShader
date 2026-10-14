@@ -45,7 +45,7 @@ on each parameter, the zero initialisers 1.x gave each output).
 | [6](#6-if--else-in-graph) | `if` / `else` | [`if`](../graph/if.md) |
 | [7](#7-materialattributes-output-binding) | `MaterialAttributes` | [MaterialAttributes](../graph/material-attributes.md) |
 | [8](#8-substrate-material-ue-54) | Substrate material *(UE 5.4+)* | [`Substrate.*`](../builtins/substrate.md) |
-| [9](#9-shaderfunction-in-a-dsf-called-from-a-material) | `ShaderFunction` in a `.dsf` | [`ShaderFunction`](../language/shader-function.md), [`VirtualFunction`](../language/virtual-function.md) |
+| [9](#9-shaderfunction-in-a-dsf-imported-and-called) | `ShaderFunction` in a `.dsf` | [`ShaderFunction`](../language/shader-function.md), [`VirtualFunction`](../language/virtual-function.md) |
 | [10](#10-shaderlayer--shaderlayerblend) | `ShaderLayer` / `ShaderLayerBlend` | [Layers](../language/shader-layer.md) |
 | [11](#11-virtualfunction-wrapping-an-existing-asset) | `VirtualFunction` | [`VirtualFunction`](../language/virtual-function.md) |
 | [12](#12-graphfunction-hoisting-a-ue-call-into-a-custom-node) | `GraphFunction` hoisting | [`GraphFunction`](../language/graph-function.md) |
