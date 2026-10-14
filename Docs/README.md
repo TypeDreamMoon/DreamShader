@@ -43,6 +43,6 @@ requires updating that mapping and incoming relative links, while retaining its 
 existing URLs stable. English pages are generated from these sources; AI-generated Chinese updates
 are reviewed in a pull request before publication.
 
-The `zh-CN/` tree mirrors English source paths. Imported translations are unreviewed; its README lists missing translations, and `.translations/` records source versions without treating an import as approval. Website-only notes remain in the website repository.
+The `zh-CN/` tree mirrors English source paths. Imported translations are unreviewed; the [initial migration snapshot](zh-CN/TRANSLATIONS.md) preserves the original imported and missing translation lists. For current status, run `python -B Docs/translation-status.py` or check the translation status issue in the website repository. `.translations/` records source versions without treating an import as approval. Website-only notes remain in the website repository.
 
 Check translation status locally with `python -B Docs/translation-status.py`; add `--all` to include every source or `--json` for structured output. This read-only tool does not need the website repository or a Git checkout.
