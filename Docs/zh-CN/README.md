@@ -7,7 +7,7 @@ description: "DreamShader 文档"
 
 # DreamShader 文档
 
-[English](README.md) · [简体中文](README.md)
+[English](../README.md) · 简体中文
 
 本目录是 DreamShader 手册的英文原文。教程和参考页按主题组织在一起，可以在 GitHub 上阅读，也可以在本地 Markdown 阅读器中阅读。[文档站点](https://shader.toolchain.64hz.cn/en/docs)发布这些英文原文以及本插件维护的、经过审阅的中文译文。
 
