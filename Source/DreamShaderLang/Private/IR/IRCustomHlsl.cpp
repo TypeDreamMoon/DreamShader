@@ -42,8 +42,9 @@
 // And one thing a void function with `out` parameters gets (rule L9, the 1.x shape of such a node): its
 // first `out` parameter is the node's primary output rather than an additional one, so the node's own body declares
 // it ahead of the markers and returns it at the end. A 1.x function is written that way as a helper too, because a
-// 1.x body calls one as a value (`float4 a = Fetch(lut, i, size);`); a `/// @custom` helper keeps the signature it
-// declares, which is the one its callers wrote.
+// 1.x body calls one as a value (`float4 a = Fetch(lut, i, size);`) -- or passes that parameter as well,
+// `Fetch(lut, i, size, a);`, which 1.x wrote as `a = Fetch(lut, i, size);` and so is it here. A `/// @custom` helper
+// keeps the signature it declares, which is the one its callers wrote.
 //
 // Engine facts this file encodes as text (all from HLSLMaterialTranslator::CustomExpression, 5.8):
 // an additional output is declared by the engine as `inout MaterialFloatN <Name>` and is already
@@ -55,6 +56,7 @@
 
 #include "IR/IRCustomHlsl.h"
 
+#include "IR/IRCustomHlslInternal.h"
 #include "IR/IRTypes.h"
 #include "Lang/LangAst.h"
 #include "Lang/LangDiagnostic.h"
@@ -191,20 +193,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 	// The 1.x codegen open-coded the same comment/string state machine four times. Here it is
 	// written once: the text is split into code, comment and literal runs that tile it completely,
 	// and every consumer (return detection, call collection, rewriting) works on the code runs.
-
-	enum class EPieceKind : uint8
-	{
-		Code,
-		Comment,
-		Literal,
-	};
-
-	struct FPiece
-	{
-		EPieceKind Kind = EPieceKind::Code;
-		int32 Start = 0;
-		int32 End = 0;
-	};
+	// EPieceKind and FPiece are in IRCustomHlslInternal.h, for migrate.
 
 	void SplitHlslPieces(const FString& Source, TArray<FPiece>& OutPieces)
 	{
@@ -379,6 +368,62 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		}
 
 		return false;
+	}
+
+	ECustomCallUse ClassifyCustomCallUse(const FString& Text, const TArray<FPiece>& Pieces, const int32 CallStart)
+	{
+		// The last code character in front of the call, past whitespace, comments and literals.
+		int32 PieceIndex = Pieces.Num() - 1;
+		int32 Index = FMath::Min(CallStart, Text.Len()) - 1;
+		for (; Index >= 0; --Index)
+		{
+			while (PieceIndex >= 0 && Pieces[PieceIndex].Start > Index)
+			{
+				--PieceIndex;
+			}
+			if (PieceIndex >= 0 && Pieces[PieceIndex].Kind != EPieceKind::Code)
+			{
+				Index = Pieces[PieceIndex].Start;
+				continue;
+			}
+			if (!FChar::IsWhitespace(Text[Index]))
+			{
+				break;
+			}
+		}
+		if (Index < 0)
+		{
+			return ECustomCallUse::Statement;
+		}
+
+		const TCHAR Char = Text[Index];
+		if (Char == TCHAR(';') || Char == TCHAR('{') || Char == TCHAR('}'))
+		{
+			return ECustomCallUse::Statement;
+		}
+		if (Char == TCHAR(')') || Char == TCHAR(':') || Char == TCHAR('#'))
+		{
+			return ECustomCallUse::Unknown;
+		}
+		if (IsIdentifierPart(Char))
+		{
+			int32 WordStart = Index;
+			while (WordStart > 0 && IsIdentifierPart(Text[WordStart - 1]))
+			{
+				--WordStart;
+			}
+			const FString Word = Text.Mid(WordStart, Index + 1 - WordStart);
+			if (Word.Equals(TEXT("return"), ESearchCase::CaseSensitive))
+			{
+				return ECustomCallUse::Value;
+			}
+			if (Word.Equals(TEXT("else"), ESearchCase::CaseSensitive) || Word.Equals(TEXT("do"), ESearchCase::CaseSensitive))
+			{
+				return ECustomCallUse::Statement;
+			}
+			return ECustomCallUse::Unknown;
+		}
+		return ECustomCallUse::Value;
 	}
 
 	// ---------------------------------------------------------------------------- small helpers
@@ -727,6 +772,8 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		TArray<FString> ParamTypes;
 		/** RawBody with the hoisted `#include`s blanked out; exactly as long as RawBody. */
 		FString Body;
+		/** Body as code, comment and literal runs: what is in front of a call says whether its value is read. */
+		TArray<FPiece> BodyPieces;
 		TArray<FString> Includes;
 		FBodyShape Shape;
 		bool bBareExpression = false;
@@ -1069,6 +1116,7 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		HoistLeadingIncludes(Function, Prepared->Body, Prepared->Includes);
 		SubstituteHoistedCalls(Function, Prepared->Body);
 		AnalyseBody(Prepared->Body, Prepared->Shape);
+		SplitHlslPieces(Prepared->Body, Prepared->BodyPieces);
 
 		// A body that is one expression and nothing else -- no top-level `return`, no statement of
 		// its own, no block. That is the 1.x Custom-node idiom, and the engine's own "wrap it in a
@@ -1569,6 +1617,14 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 		FString& OutRewritten,
 		int32& OutNextIndex)
 	{
+		int32 CloseParen = INDEX_NONE;
+		if (!TryFindMatchingParenthesis(Text, OpenParenIndex, CloseParen))
+		{
+			OutRewritten = Replacement;
+			OutNextIndex = IdentifierEnd;
+			return true;
+		}
+
 		bool bCalleeHasTexture = false;
 		for (const FBoundParam& Param : Callee.Params)
 		{
@@ -1577,23 +1633,6 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 				bCalleeHasTexture = true;
 				break;
 			}
-		}
-
-		if (!bCalleeHasTexture)
-		{
-			// Nothing to splice: replace the name and let the scan walk the argument list, so
-			// nested calls and sugar inside it are rewritten in place. This is what 1.x did.
-			OutRewritten = Replacement;
-			OutNextIndex = IdentifierEnd;
-			return true;
-		}
-
-		int32 CloseParen = INDEX_NONE;
-		if (!TryFindMatchingParenthesis(Text, OpenParenIndex, CloseParen))
-		{
-			OutRewritten = Replacement;
-			OutNextIndex = IdentifierEnd;
-			return true;
 		}
 
 		const FString ArgumentBlock = Text.Mid(OpenParenIndex + 1, CloseParen - OpenParenIndex - 1);
@@ -1611,7 +1650,21 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 			}
 		}
 
-		if (Ranges.Num() != ParamOfArgument.Num())
+		// And a call that passes that one as well, `F(a, r, o)`, is how a 1.x body said `r = F(a, o)` (1.x
+		// TryRewriteExplicitOutFunctionCall): the argument in that parameter's place receives what the function returns.
+		const int32 ReceiverArgument = (CalleePrimaryOut != INDEX_NONE && Ranges.Num() == Callee.Params.Num()) ? CalleePrimaryOut : INDEX_NONE;
+		const ECustomCallUse Use = ClassifyCustomCallUse(Owner.Body, Owner.BodyPieces, BaseOffset + IdentifierEnd - Callee.Name.Len());
+
+		if (ReceiverArgument == INDEX_NONE && !bCalleeHasTexture)
+		{
+			// Nothing to splice: replace the name and let the scan walk the argument list, so
+			// nested calls and sugar inside it are rewritten in place. This is what 1.x did.
+			OutRewritten = Replacement;
+			OutNextIndex = IdentifierEnd;
+			return true;
+		}
+
+		if (ReceiverArgument == INDEX_NONE && Ranges.Num() != ParamOfArgument.Num())
 		{
 			// Each sampler has to be spliced in beside its texture, so the positions have to line
 			// up. Without that there is nothing sensible to emit.
@@ -1630,13 +1683,31 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 
 		TArray<FString> Arguments;
 		Arguments.Reserve(Ranges.Num() * 2);
+		FString Receiver;
+		FString ReceiverNewlines;
+		int32 Position = 0;
 		for (int32 ArgumentIndex = 0; ArgumentIndex < Ranges.Num(); ++ArgumentIndex)
 		{
 			const TPair<int32, int32>& Range = Ranges[ArgumentIndex];
 			const FString RawArgument = ArgumentBlock.Mid(Range.Key, Range.Value - Range.Key);
-			Arguments.Add(RewriteText(Owner, RawArgument, BaseOffset + OpenParenIndex + 1 + Range.Key, Replacements));
+			if (ArgumentIndex == ReceiverArgument)
+			{
+				Receiver = RewriteText(Owner, RawArgument, BaseOffset + OpenParenIndex + 1 + Range.Key, Replacements).TrimStartAndEnd();
+				ReceiverNewlines = CarriedNewlines(RawArgument, 0, RawArgument.Len());
+				continue;
+			}
+			FString Rewritten = RewriteText(Owner, RawArgument, BaseOffset + OpenParenIndex + 1 + Range.Key, Replacements);
+			if (Arguments.IsEmpty() && ArgumentIndex > 0)
+			{
+				// The receiver stood first: what was the blank after its comma is not in front of the first argument.
+				while (Rewritten.StartsWith(TEXT(" ")) || Rewritten.StartsWith(TEXT("\t")))
+				{
+					Rewritten.RightChopInline(1);
+				}
+			}
+			Arguments.Add(MoveTemp(Rewritten));
 
-			const FBoundParam& CalleeParam = Callee.Params[ParamOfArgument[ArgumentIndex]];
+			const FBoundParam& CalleeParam = Callee.Params[ParamOfArgument[Position++]];
 			if (!CalleeParam.Type.IsTexture())
 			{
 				continue;
@@ -1665,8 +1736,15 @@ namespace UE::DreamShader::IR::CustomHlslPrivate
 
 		// The whitespace between the callee's name and its `(` is dropped by the rewrite; its
 		// newlines follow the call so the body keeps one emitted line per source line.
-		OutRewritten = Replacement + TEXT("(") + FString::Join(Arguments, TEXT(",")) + TEXT(")")
-			+ CarriedNewlines(Text, IdentifierEnd, OpenParenIndex);
+		OutRewritten = Replacement + TEXT("(") + FString::Join(Arguments, TEXT(",")) + TEXT(")");
+		if (ReceiverArgument != INDEX_NONE)
+		{
+			// Inside an expression the assignment is parenthesised, so it still reads as the value of the call.
+			const bool bInExpression = Use == ECustomCallUse::Value;
+			OutRewritten = FString::Printf(TEXT("%s%s = %s%s"), bInExpression ? TEXT("(") : TEXT(""), *Receiver, *OutRewritten, bInExpression ? TEXT(")") : TEXT(""))
+				+ ReceiverNewlines;
+		}
+		OutRewritten += CarriedNewlines(Text, IdentifierEnd, OpenParenIndex);
 		OutNextIndex = CloseParen + 1;
 		return true;
 	}
